@@ -29,6 +29,8 @@ php_type.pir - PHP type Standard Library
 
 Get the float value of a variable
 
+NOT IMPLEMENTED.
+
 =cut
 
 .sub 'floatval'
@@ -58,6 +60,8 @@ Returns the type of the variable
 
 Get the integer value of a variable using the optional base for the conversion
 
+NOT IMPLEMENTED.
+
 =cut
 
 .sub 'intval'
@@ -67,6 +71,8 @@ Get the integer value of a variable using the optional base for the conversion
 =item C<bool is_array(mixed var)>
 
 Returns true if variable is an array
+
+NOT IMPLEMENTED.
 
 =cut
 
@@ -88,6 +94,8 @@ Returns true if variable is a boolean
 =item C<bool is_callable(mixed var [, bool syntax_only [, string callable_name]])>
 
 Returns true if var is callable.
+
+NOT IMPLEMENTED.
 
 =cut
 
@@ -132,6 +140,8 @@ Returns true if variable is null
 
 Returns true if value is a number or a numeric string
 
+NOT IMPLEMENTED.
+
 =cut
 
 .sub 'is_numeric'
@@ -141,6 +151,8 @@ Returns true if value is a number or a numeric string
 =item C<bool is_object(mixed var)>
 
 Returns true if variable is an object
+
+NOT IMPLEMENTED.
 
 =cut
 
@@ -152,6 +164,8 @@ Returns true if variable is an object
 
 Returns true if variable is a resource
 
+NOT IMPLEMENTED.
+
 =cut
 
 .sub 'is_resource'
@@ -161,6 +175,8 @@ Returns true if variable is a resource
 =item C<bool is_scalar(mixed value)>
 
 Returns true if value is a scalar
+
+NOT IMPLEMENTED.
 
 =cut
 
@@ -182,6 +198,8 @@ Returns true if variable is a string
 =item C<bool settype(mixed var, string type)>
 
 Set the type of the variable
+
+NOT IMPLEMENTED.
 
 =cut
 

@@ -17,6 +17,8 @@ php_string.pir - PHP string Standard Library
 
 Escapes all chars mentioned in charlist with backslash. It creates octal representations if asked to backslash characters with 8th bit set or with ASCII<32 (except '\n', '\r', '\t' etc...)
 
+NOT IMPLEMENTED.
+
 =cut
 
 .sub 'addcslashes'
@@ -26,6 +28,8 @@ Escapes all chars mentioned in charlist with backslash. It creates octal represe
 =item C<string addslashes(string str)>
 
 Escapes single quote, double quotes and backslash characters in a string with backslashes
+
+NOT IMPLEMENTED.
 
 =cut
 
@@ -37,6 +41,8 @@ Escapes single quote, double quotes and backslash characters in a string with ba
 
 Returns the filename component of the path
 
+NOT IMPLEMENTED.
+
 =cut
 
 .sub 'basename'
@@ -46,6 +52,8 @@ Returns the filename component of the path
 =item C<string bin2hex(string data)>
 
 Converts the binary representation of data to hex
+
+NOT IMPLEMENTED.
 
 =cut
 
@@ -57,6 +65,8 @@ Converts the binary representation of data to hex
 
 Converts ASCII code to a character
 
+NOT IMPLEMENTED.
+
 =cut
 
 .sub 'chr'
@@ -66,6 +76,8 @@ Converts ASCII code to a character
 =item C<string chunk_split(string str [, int chunklen [, string ending]])>
 
 Returns split line
+
+NOT IMPLEMENTED.
 
 =cut
 
@@ -77,6 +89,8 @@ Returns split line
 
 Returns info about what characters are used in input
 
+NOT IMPLEMENTED.
+
 =cut
 
 .sub 'count_chars'
@@ -86,6 +100,8 @@ Returns info about what characters are used in input
 =item C<string dirname(string path)>
 
 Returns the directory name component of the path
+
+NOT IMPLEMENTED.
 
 =cut
 
@@ -97,6 +113,8 @@ Returns the directory name component of the path
 
 Splits a string on string separator and return array of components. If limit is positive only limit number of components is returned. If limit is negative all components except the last abs(limit) are returned.
 
+NOT IMPLEMENTED.
+
 =cut
 
 .sub 'explode'
@@ -106,6 +124,8 @@ Splits a string on string separator and return array of components. If limit is 
 =item C<string hebrev(string str [, int max_chars_per_line])>
 
 Converts logical Hebrew text to visual text
+
+NOT IMPLEMENTED.
 
 =cut
 
@@ -117,6 +137,8 @@ Converts logical Hebrew text to visual text
 
 Converts logical Hebrew text to visual text with newline conversion
 
+NOT IMPLEMENTED.
+
 =cut
 
 .sub 'hebrevc'
@@ -126,6 +148,8 @@ Converts logical Hebrew text to visual text with newline conversion
 =item C<string implode([string glue,] array pieces)>
 
 Joins array elements placing glue string between items and return one string
+
+NOT IMPLEMENTED.
 
 =cut
 
@@ -137,6 +161,8 @@ Joins array elements placing glue string between items and return one string
 
 An alias for implode
 
+NOT IMPLEMENTED.
+
 =cut
 
 .sub 'join'
@@ -146,6 +172,8 @@ An alias for implode
 =item C<array localeconv(void)>
 
 Returns numeric formatting information based on the current locale
+
+NOT IMPLEMENTED.
 
 =cut
 
@@ -157,6 +185,8 @@ Returns numeric formatting information based on the current locale
 
 Strips whitespace from the beginning of a string
 
+NOT IMPLEMENTED.
+
 =cut
 
 .sub 'ltrim'
@@ -166,6 +196,8 @@ Strips whitespace from the beginning of a string
 =item C<string money_format(string format , float value)>
 
 Convert monetary value(s) to string
+
+NOT IMPLEMENTED.
 
 =cut
 
@@ -177,6 +209,8 @@ Convert monetary value(s) to string
 
 Converts newlines to HTML line breaks
 
+NOT IMPLEMENTED.
+
 =cut
 
 .sub 'nl2br'
@@ -186,6 +220,8 @@ Converts newlines to HTML line breaks
 =item C<string nl_langinfo(int item)>
 
 Query language and locale information
+
+NOT IMPLEMENTED.
 
 =cut
 
@@ -197,6 +233,8 @@ Query language and locale information
 
 Returns ASCII value of character
 
+NOT IMPLEMENTED.
+
 =cut
 
 .sub 'ord'
@@ -206,6 +244,8 @@ Returns ASCII value of character
 =item C<void parse_str(string encoded_string [, array result])>
 
 Parses GET/POST/COOKIE data and sets global variables
+
+NOT IMPLEMENTED.
 
 =cut
 
@@ -217,6 +257,8 @@ Parses GET/POST/COOKIE data and sets global variables
 
 Returns information about a certain string
 
+NOT IMPLEMENTED.
+
 =cut
 
 .sub 'pathinfo'
@@ -226,6 +268,8 @@ Returns information about a certain string
 =item C<string quotemeta(string str)>
 
 Quotes meta characters
+
+NOT IMPLEMENTED.
 
 =cut
 
@@ -237,6 +281,8 @@ Quotes meta characters
 
 Removes trailing whitespace
 
+NOT IMPLEMENTED.
+
 =cut
 
 .sub 'rtrim'
@@ -246,6 +292,8 @@ Removes trailing whitespace
 =item C<string setlocale(mixed category, string locale [, string ...])>
 
 Set locale information
+
+NOT IMPLEMENTED.
 
 =cut
 
@@ -257,6 +305,8 @@ Set locale information
 
 Calculates the similarity between two strings
 
+NOT IMPLEMENTED.
+
 =cut
 
 .sub 'similar_text'
@@ -266,6 +316,8 @@ Calculates the similarity between two strings
 =item C<mixed sscanf(string str, string format [, string ...])>
 
 Implements an ANSI C compatible sscanf
+
+NOT IMPLEMENTED.
 
 =cut
 
@@ -277,6 +329,8 @@ Implements an ANSI C compatible sscanf
 
 Replaces all occurrences of search in haystack with replace / case-insensitive
 
+NOT IMPLEMENTED.
+
 =cut
 
 .sub 'str_ireplace'
@@ -286,6 +340,8 @@ Replaces all occurrences of search in haystack with replace / case-insensitive
 =item C<string str_pad(string input, int pad_length [, string pad_string [, int pad_type]])>
 
 Returns input string padded on the left or right to specified length with pad_string
+
+NOT IMPLEMENTED.
 
 =cut
 
@@ -297,6 +353,8 @@ Returns input string padded on the left or right to specified length with pad_st
 
 Returns the input string repeat mult times
 
+NOT IMPLEMENTED.
+
 =cut
 
 .sub 'str_repeat'
@@ -306,6 +364,8 @@ Returns the input string repeat mult times
 =item C<mixed str_replace(mixed search, mixed replace, mixed subject [, int &replace_count])>
 
 Replaces all occurrences of search in haystack with replace
+
+NOT IMPLEMENTED.
 
 =cut
 
@@ -317,6 +377,8 @@ Replaces all occurrences of search in haystack with replace
 
 Perform the rot13 transform on a string
 
+NOT IMPLEMENTED.
+
 =cut
 
 .sub 'str_rot13'
@@ -327,6 +389,8 @@ Perform the rot13 transform on a string
 
 Shuffles string. One permutation of all possible is created
 
+NOT IMPLEMENTED.
+
 =cut
 
 .sub 'str_shuffle'
@@ -336,6 +400,8 @@ Shuffles string. One permutation of all possible is created
 =item C<array str_split(string str [, int split_length])>
 
 Convert a string to an array. If split_length is specified, break the string down into chunks each split_length characters long.
+
+NOT IMPLEMENTED.
 
 =cut
 
@@ -356,6 +422,8 @@ string containing alphabetic characters, which also may contain, but not start
 with "'" and "-" characters.
 
 
+NOT IMPLEMENTED.
+
 =cut
 
 .sub 'str_word_count'
@@ -365,6 +433,8 @@ with "'" and "-" characters.
 =item C<string strchr(string haystack, string needle)>
 
 An alias for strstr
+
+NOT IMPLEMENTED.
 
 =cut
 
@@ -376,6 +446,8 @@ An alias for strstr
 
 Compares two strings using the current locale
 
+NOT IMPLEMENTED.
+
 =cut
 
 .sub 'strcoll'
@@ -385,6 +457,8 @@ Compares two strings using the current locale
 =item C<int strcspn(string str, string mask [, start [, len]])>
 
 Finds length of initial segment consisting entirely of characters not found in mask. If start or/and length is provide works like strcspn(substr($s,$start,$len),$bad_chars)
+
+NOT IMPLEMENTED.
 
 =cut
 
@@ -396,6 +470,8 @@ Finds length of initial segment consisting entirely of characters not found in m
 
 Strips HTML and PHP tags from a string
 
+NOT IMPLEMENTED.
+
 =cut
 
 .sub 'strip_tags'
@@ -405,6 +481,8 @@ Strips HTML and PHP tags from a string
 =item C<string stripcslashes(string str)>
 
 Strips backslashes from a string. Uses C-style conventions
+
+NOT IMPLEMENTED.
 
 =cut
 
@@ -416,6 +494,8 @@ Strips backslashes from a string. Uses C-style conventions
 
 Finds position of first occurrence of a string within another, case insensitive
 
+NOT IMPLEMENTED.
+
 =cut
 
 .sub 'stripos'
@@ -425,6 +505,8 @@ Finds position of first occurrence of a string within another, case insensitive
 =item C<string stripslashes(string str)>
 
 Strips backslashes from a string
+
+NOT IMPLEMENTED.
 
 =cut
 
@@ -436,6 +518,8 @@ Strips backslashes from a string
 
 Finds first occurrence of a string within another, case insensitive
 
+NOT IMPLEMENTED.
+
 =cut
 
 .sub 'stristr'
@@ -445,6 +529,8 @@ Finds first occurrence of a string within another, case insensitive
 =item C<int strnatcasecmp(string s1, string s2)>
 
 Returns the result of case-insensitive string comparison using 'natural' algorithm
+
+NOT IMPLEMENTED.
 
 =cut
 
@@ -456,6 +542,8 @@ Returns the result of case-insensitive string comparison using 'natural' algorit
 
 Returns the result of string comparison using 'natural' algorithm
 
+NOT IMPLEMENTED.
+
 =cut
 
 .sub 'strnatcmp'
@@ -465,6 +553,8 @@ Returns the result of string comparison using 'natural' algorithm
 =item C<array strpbrk(string haystack, string char_list)>
 
 Search a string for any of a set of characters
+
+NOT IMPLEMENTED.
 
 =cut
 
@@ -476,6 +566,8 @@ Search a string for any of a set of characters
 
 Finds position of first occurrence of a string within another
 
+NOT IMPLEMENTED.
+
 =cut
 
 .sub 'strpos'
@@ -485,6 +577,8 @@ Finds position of first occurrence of a string within another
 =item C<string strrchr(string haystack, string needle)>
 
 Finds the last occurrence of a character in a string within another
+
+NOT IMPLEMENTED.
 
 =cut
 
@@ -496,6 +590,8 @@ Finds the last occurrence of a character in a string within another
 
 Reverse a string
 
+NOT IMPLEMENTED.
+
 =cut
 
 .sub 'strrev'
@@ -505,6 +601,8 @@ Reverse a string
 =item C<int strripos(string haystack, string needle [, int offset])>
 
 Finds position of last occurrence of a string within another string
+
+NOT IMPLEMENTED.
 
 =cut
 
@@ -516,6 +614,8 @@ Finds position of last occurrence of a string within another string
 
 Finds position of last occurrence of a string within another string
 
+NOT IMPLEMENTED.
+
 =cut
 
 .sub 'strrpos'
@@ -525,6 +625,8 @@ Finds position of last occurrence of a string within another string
 =item C<int strspn(string str, string mask [, start [, len]])>
 
 Finds length of initial segment consisting entirely of characters found in mask. If start or/and length is provided works like strspn(substr($s,$start,$len),$good_chars)
+
+NOT IMPLEMENTED.
 
 =cut
 
@@ -536,6 +638,8 @@ Finds length of initial segment consisting entirely of characters found in mask.
 
 Finds first occurrence of a string within another
 
+NOT IMPLEMENTED.
+
 =cut
 
 .sub 'strstr'
@@ -545,6 +649,8 @@ Finds first occurrence of a string within another
 =item C<string strtok([string str,] string token)>
 
 Tokenize a string
+
+NOT IMPLEMENTED.
 
 =cut
 
@@ -556,6 +662,8 @@ Tokenize a string
 
 Makes a string lowercase
 
+NOT IMPLEMENTED.
+
 =cut
 
 .sub 'strtolower'
@@ -565,6 +673,8 @@ Makes a string lowercase
 =item C<string strtoupper(string str)>
 
 Makes a string uppercase
+
+NOT IMPLEMENTED.
 
 =cut
 
@@ -576,6 +686,8 @@ Makes a string uppercase
 
 Translates characters in str using given translation tables
 
+NOT IMPLEMENTED.
+
 =cut
 
 .sub 'strtr'
@@ -585,6 +697,8 @@ Translates characters in str using given translation tables
 =item C<string substr(string str, int start [, int length])>
 
 Returns part of a string
+
+NOT IMPLEMENTED.
 
 =cut
 
@@ -596,6 +710,8 @@ Returns part of a string
 
 Binary safe optionally case insensitive comparison of 2 strings from an offset, up to length characters
 
+NOT IMPLEMENTED.
+
 =cut
 
 .sub 'substr_compare'
@@ -605,6 +721,8 @@ Binary safe optionally case insensitive comparison of 2 strings from an offset, 
 =item C<int substr_count(string haystack, string needle [, int offset [, int length]])>
 
 Returns the number of times a substring occurs in the string
+
+NOT IMPLEMENTED.
 
 =cut
 
@@ -616,6 +734,8 @@ Returns the number of times a substring occurs in the string
 
 Replaces part of a string with another string
 
+NOT IMPLEMENTED.
+
 =cut
 
 .sub 'substr_replace'
@@ -625,6 +745,8 @@ Replaces part of a string with another string
 =item C<string trim(string str [, string character_mask])>
 
 Strips whitespace from the beginning and end of a string
+
+NOT IMPLEMENTED.
 
 =cut
 
@@ -636,6 +758,8 @@ Strips whitespace from the beginning and end of a string
 
 Makes a string's first character uppercase
 
+NOT IMPLEMENTED.
+
 =cut
 
 .sub 'ucfirst'
@@ -646,6 +770,8 @@ Makes a string's first character uppercase
 
 Uppercase the first character of every word in a string
 
+NOT IMPLEMENTED.
+
 =cut
 
 .sub 'ucwords'
@@ -655,6 +781,8 @@ Uppercase the first character of every word in a string
 =item C<string wordwrap(string str [, int width [, string break [, boolean cut]]])>
 
 Wraps buffer to selected number of characters using string break char
+
+NOT IMPLEMENTED.
 
 =cut
 
