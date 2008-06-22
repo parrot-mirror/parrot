@@ -329,7 +329,7 @@ pass("Completed all tests in $0");
 
 =head1 SYNOPSIS
 
-    % prove t/tools/ops2pmutils/08-sort_ops.t
+    % prove t/tools/ops2pm/08-sort_ops.t
 
 =head1 DESCRIPTION
 
