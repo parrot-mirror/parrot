@@ -3788,7 +3788,7 @@ YY_RULE_SETUP
         c = yylex_skip(valp, interp, " ", yyscanner);
 
         if (c != IDENTIFIER)
-            IMCC_fataly(interp, E_SyntaxError,
+            IMCC_fataly(interp, EXCEPTION_SYNTAX_ERROR,
                "Constant names must be identifiers");
 
         IMCC_INFO(interp)->cur_macro_name = valp->s;
@@ -3797,7 +3797,7 @@ YY_RULE_SETUP
         c = yylex_skip(valp, interp, " ", yyscanner);
 
         if (c != INTC && c != FLOATC && c != STRINGC && c != REG)
-            IMCC_fataly(interp, E_SyntaxError,
+            IMCC_fataly(interp, EXCEPTION_SYNTAX_ERROR,
                 "Constant '%s' value must be a number, "
                 "stringliteral or register", IMCC_INFO(interp)->cur_macro_name);
 
@@ -3840,7 +3840,7 @@ YY_RULE_SETUP
             YYCHOP();
 
             if (!IMCC_INFO(interp)->frames || !IMCC_INFO(interp)->frames->label)
-                    IMCC_fataly(interp, E_SyntaxError, "missing space?");
+                    IMCC_fataly(interp, EXCEPTION_SYNTAX_ERROR, "missing space?");
 
             len = yyleng + 10;
             label = (char *)mem_sys_allocate(len);
@@ -3865,7 +3865,7 @@ YY_RULE_SETUP
 
             /* RT #32421   if$I0 is parsed as if$ I0 */
             if (!IMCC_INFO(interp)->frames || !IMCC_INFO(interp)->frames->label)
-                IMCC_fataly(interp, E_SyntaxError, "missing space?");
+                IMCC_fataly(interp, EXCEPTION_SYNTAX_ERROR, "missing space?");
 
             len = yyleng + 10;
             label = (char *)mem_sys_allocate(len);
@@ -4008,13 +4008,13 @@ YY_RULE_SETUP
         /* Save the string we want to mark the end of the heredoc and snip
            off newline and quote. */
         if (IMCC_INFO(interp)->frames->heredoc_rest)
-            IMCC_fataly(interp, E_SyntaxError,
+            IMCC_fataly(interp, EXCEPTION_SYNTAX_ERROR,
             "nested heredoc not supported");
         IMCC_INFO(interp)->heredoc_end = str_dup(yytext + 3);
         IMCC_INFO(interp)->heredoc_end[strlen(IMCC_INFO(interp)->heredoc_end) - 1] = 0;
 
         if (!strlen(IMCC_INFO(interp)->heredoc_end))
-            IMCC_fataly(interp, E_SyntaxError, "empty heredoc delimiter");
+            IMCC_fataly(interp, EXCEPTION_SYNTAX_ERROR, "empty heredoc delimiter");
 
         frame                     = new_frame(interp);
         frame->s.next             = (parser_state_t *)IMCC_INFO(interp)->frames;
@@ -4048,7 +4048,7 @@ YY_RULE_SETUP
 {
         if (valp) (valp)->s = yytext;
         if (IMCC_INFO(interp)->state->pasm_file)
-                IMCC_fataly(interp, E_SyntaxError,
+                IMCC_fataly(interp, EXCEPTION_SYNTAX_ERROR,
                     "'%s' is not a valid register name in pasm mode", yytext);
         return IREG;
     }
@@ -4059,7 +4059,7 @@ YY_RULE_SETUP
 {
         if (valp) (valp)->s = yytext;
         if (IMCC_INFO(interp)->state->pasm_file)
-                IMCC_fataly(interp, E_SyntaxError,
+                IMCC_fataly(interp, EXCEPTION_SYNTAX_ERROR,
                     "'%s' is not a valid register name in pasm mode", yytext);
         return NREG;
     }
@@ -4070,7 +4070,7 @@ YY_RULE_SETUP
 {
         if (valp) (valp)->s = yytext;
         if (IMCC_INFO(interp)->state->pasm_file)
-                IMCC_fataly(interp, E_SyntaxError,
+                IMCC_fataly(interp, EXCEPTION_SYNTAX_ERROR,
                     "'%s' is not a valid register name in pasm mode", yytext);
         return SREG;
     }
@@ -4081,7 +4081,7 @@ YY_RULE_SETUP
 {
         if (valp) (valp)->s = yytext;
         if (IMCC_INFO(interp)->state->pasm_file)
-                IMCC_fataly(interp, E_SyntaxError,
+                IMCC_fataly(interp, EXCEPTION_SYNTAX_ERROR,
                     "'%s' is not a valid register name in pasm mode", yytext);
         return PREG;
     }
@@ -4090,7 +4090,7 @@ case 133:
 YY_RULE_SETUP
 #line 664 "compilers/imcc/imcc.l"
 {
-        IMCC_fataly(interp, E_SyntaxError,
+        IMCC_fataly(interp, EXCEPTION_SYNTAX_ERROR,
             "'%s' is not a valid register name", yytext);
     }
 	YY_BREAK
@@ -4149,7 +4149,7 @@ YY_RULE_SETUP
 {
 
         if (yylex(valp,yyscanner,interp) != LABEL)
-                IMCC_fataly(interp, E_SyntaxError, "LABEL expected");
+                IMCC_fataly(interp, EXCEPTION_SYNTAX_ERROR, "LABEL expected");
 
         if (valp) {
             char *label;
@@ -5554,7 +5554,7 @@ read_braced(YYSTYPE *valp, PARROT_INTERP, const char *macro_name,
             count++;
 
         if (c <= 0)
-            IMCC_fataly(interp, E_SyntaxError,
+            IMCC_fataly(interp, EXCEPTION_SYNTAX_ERROR,
                         "End of file reached while reading arguments in '%s'",
                         macro_name);
 
@@ -5594,16 +5594,16 @@ read_params(YYSTYPE *valp, PARROT_INTERP, params_t *params,
 
     while (c != ')') {
         if (YYSTATE == heredoc2)
-            IMCC_fataly(interp, E_SyntaxError,
+            IMCC_fataly(interp, EXCEPTION_SYNTAX_ERROR,
                         "Heredoc in macro '%s' not allowed", macro_name);
 
         if (c <= 0)
-            IMCC_fataly(interp, E_SyntaxError,
+            IMCC_fataly(interp, EXCEPTION_SYNTAX_ERROR,
                         "End of file reached while reading arguments in '%s'",
                         macro_name);
         else if (c == ',') {
             if (params->num_param == MAX_PARAM)
-                IMCC_fataly(interp, E_SyntaxError,
+                IMCC_fataly(interp, EXCEPTION_SYNTAX_ERROR,
                             "More then %d params in '%s'",
                             MAX_PARAM, macro_name);
 
@@ -5614,7 +5614,7 @@ read_params(YYSTYPE *valp, PARROT_INTERP, params_t *params,
             c = yylex_skip(&val, interp, " \n", yyscanner);
         }
         else if (need_id && (*current || c != IDENTIFIER) && c != ' ') {
-            IMCC_fataly(interp, E_SyntaxError,
+            IMCC_fataly(interp, EXCEPTION_SYNTAX_ERROR,
                         "Parameter definition in '%s' must be IDENTIFIER",
                         macro_name);
         }
@@ -5661,7 +5661,7 @@ read_macro(YYSTYPE *valp, PARROT_INTERP, void *yyscanner)
     c = yylex_skip(valp, interp, " ", yyscanner);
 
     if (c != IDENTIFIER)
-        IMCC_fataly(interp, E_SyntaxError, "Macro names must be identifiers");
+        IMCC_fataly(interp, EXCEPTION_SYNTAX_ERROR, "Macro names must be identifiers");
 
     IMCC_INFO(interp)->cur_macro_name = valp->s;
     start_line                        = IMCC_INFO(interp)->line++;
@@ -5685,7 +5685,7 @@ read_macro(YYSTYPE *valp, PARROT_INTERP, void *yyscanner)
         int elem_len;
 
         if (c <= 0)
-            IMCC_fataly(interp, E_SyntaxError,
+            IMCC_fataly(interp, EXCEPTION_SYNTAX_ERROR,
                         "File ended before macro '%s' was complete",
                         IMCC_INFO(interp)->cur_macro_name);
 
@@ -5826,7 +5826,7 @@ expand_macro(PARROT_INTERP, ARGIN(const char *name), void *yyscanner)
 
         if (c != '(') {
             if (m->params.num_param != 0)
-                IMCC_fataly(interp, E_SyntaxError,
+                IMCC_fataly(interp, EXCEPTION_SYNTAX_ERROR,
                             "Macro '%s' needs %d arguments",
                             name, m->params.num_param);
             unput(c);
@@ -5847,7 +5847,7 @@ expand_macro(PARROT_INTERP, ARGIN(const char *name), void *yyscanner)
         }
 
         if (frame->expansion.num_param != m->params.num_param) {
-            IMCC_fataly(interp, E_SyntaxError,
+            IMCC_fataly(interp, EXCEPTION_SYNTAX_ERROR,
                         "Macro '%s' requires %d arguments, but %d given",
                         name, m->params.num_param, frame->expansion.num_param);
         }
@@ -5901,7 +5901,7 @@ include_file(PARROT_INTERP, char *file_name, void *yyscanner)
     FILE *file;
 
     if (!s || !(file = fopen(s, "r")))
-        IMCC_fataly(interp, E_IOError, strerror(errno));
+        IMCC_fataly(interp, EXCEPTION_PIO_ERROR, strerror(errno));
 
     mem_sys_free(s);
     frame->s.file   = file_name;

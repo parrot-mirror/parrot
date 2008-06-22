@@ -129,10 +129,10 @@ pop_namespace(PARROT_INTERP, ARGIN(const char *name))
     Namespace * const ns = _namespace;
 
     if (!ns)
-        IMCC_fataly(interp, E_SyntaxError, "pop() on empty namespace stack\n");
+        IMCC_fataly(interp, EXCEPTION_SYNTAX_ERROR, "pop() on empty namespace stack\n");
 
     if (name && !STREQ(name, ns->name))
-        IMCC_fataly(interp, E_SyntaxError, "tried to pop namespace(%s), "
+        IMCC_fataly(interp, EXCEPTION_SYNTAX_ERROR, "tried to pop namespace(%s), "
                 "but top of stack is namespace(%s)\n", name, ns->name);
 
     while (ns->idents) {
