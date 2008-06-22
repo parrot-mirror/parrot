@@ -19,12 +19,12 @@ BEGIN {
     }
     unshift @INC, qq{$topdir/lib};
 }
-use Test::More tests => 27;
+use Test::More tests => 23;
 use Cwd;
 use File::Copy;
 use File::Temp (qw| tempdir |);
 
-use_ok('Parrot::Ops2pm');
+use_ok('Parrot::OpsRenumber');
 
 ok( chdir $main::topdir, "Positioned at top-level Parrot directory" );
 
@@ -47,7 +47,7 @@ ok( chdir $main::topdir, "Positioned at top-level Parrot directory" );
         ok( copy( qq{$cwd/$num}, qq{$tdir/$num} ), "copied ops.num file" );
         my @opsfiles = glob("./src/ops/*.ops");
 
-        my $self = Parrot::Ops2pm->new(
+        my $self = Parrot::OpsRenumber->new(
             {
                 argv    => [@opsfiles],
                 script  => "tools/build/ops2pm.pl",
@@ -55,12 +55,10 @@ ok( chdir $main::topdir, "Positioned at top-level Parrot directory" );
                 renum   => 1,
             }
         );
-        isa_ok( $self, q{Parrot::Ops2pm} );
+        isa_ok( $self, q{Parrot::OpsRenumber} );
 
-        ok( $self->prepare_ops, "prepare_ops() returned successfully" );
-        ok( defined( $self->{ops} ), "'ops' key has been defined" );
-
-        ok( $self->renum_op_map_file(), "renum_op_map_files() completed successfully" );
+        ok( $self->renum_op_map_file(),
+            "renum_op_map_files() completed successfully" );
         ok( -f qq{$tdir/$num}, "ops.num located after renumbering" );
 
         ok( chdir $cwd, 'changed back to starting directory after testing' );
@@ -86,7 +84,7 @@ ok( chdir $main::topdir, "Positioned at top-level Parrot directory" );
         ok( copy( qq{$cwd/$num}, qq{$tdir/$num} ), "copied ops.num file" );
         my @opsfiles = glob("./src/ops/*.ops");
 
-        my $self = Parrot::Ops2pm->new(
+        my $self = Parrot::OpsRenumber->new(
             {
                 argv    => [@opsfiles],
                 script  => "tools/build/ops2pm.pl",
@@ -94,10 +92,7 @@ ok( chdir $main::topdir, "Positioned at top-level Parrot directory" );
                 renum   => 1,
             }
         );
-        isa_ok( $self, q{Parrot::Ops2pm} );
-
-        ok( $self->prepare_ops, "prepare_ops() returned successfully" );
-        ok( defined( $self->{ops} ), "'ops' key has been defined" );
+        isa_ok( $self, q{Parrot::OpsRenumber} );
 
         ok(
             $self->renum_op_map_file(qq{$tdir/$num}),
@@ -115,7 +110,7 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-05-renum_op_map_file.t - test C<Parrot::Ops2pm::renum_op_map_file()>
+05-renum_op_map_file.t - test C<Parrot::OpsRenumber::renum_op_map_file()>
 
 =head1 SYNOPSIS
 
@@ -124,13 +119,13 @@ pass("Completed all tests in $0");
 =head1 DESCRIPTION
 
 The files in this directory test the publicly callable methods of
-F<lib/Parrot/Ops2pm.pm> and F<lib/Parrot/Ops2pm/Auxiliary.pm>.
+F<lib/Parrot/OpsRenumber.pm> and F<lib/Parrot/Ops2pm/Auxiliary.pm>.
 By doing so, they test the functionality of the F<ops2pm.pl> utility.
 That functionality has largely been extracted
 into the methods of F<Utils.pm>.
 
 F<05-renum_op_map_file.t> tests whether
-C<Parrot::Ops2pm::renum_op_map_file()> works properly.
+C<Parrot::OpsRenumber::renum_op_map_file()> works properly.
 
 =head1 TODO
 
@@ -160,7 +155,7 @@ James E Keenan
 
 =head1 SEE ALSO
 
-Parrot::Ops2pm, F<ops2pm.pl>.
+Parrot::OpsRenumber, F<ops2pm.pl>.
 
 =cut
 
