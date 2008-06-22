@@ -203,6 +203,7 @@ rule statement {
             {*}                                  #= statement_mod_cond
         || {*}                                   #= expr
         ]
+    | <?before ';'> {*}                          #= null
 }
 
 rule statement_control {
@@ -321,7 +322,7 @@ rule statement_prefix {
 
 #### Subroutine and method definitions ####
 
-rule plurality_declarator {
+rule multi_declarator {
     $<sym>=[multi|proto|only] <routine_declarator> {*}
 }
 
@@ -350,7 +351,8 @@ rule trait {
 }
 
 rule trait_auxiliary {
-    | $<sym>=[is] <ident><postcircumfix>?
+    | $<sym>=[is] <name><postcircumfix>?
+    | $<sym>=[does] <role_name>
     | $<sym>=[will] <ident> <block>
 }
 
@@ -358,6 +360,8 @@ rule trait_verb {
     | $<sym>=[of|returns] <typename>
     | $<sym>=[handles] <EXPR>
 }
+
+token role_name { <name> [ <?before '['> <postcircumfix> ]? }
 
 token capterm {
     '\\(' <capture> ')'
@@ -396,8 +400,15 @@ rule type_constraint {
     ]
 }
 
+# XXX This rule doesn't appear in STD.pm; we use this to parse things like
+# sub foo(::T $x) { ... }, since it appears STD.pm doesn't cover that yet.
+rule generic_binder {
+    <?before '::'> <variable>
+}
+
 token parameter {
     <type_constraint>*
+    <generic_binder>?
     [
     |   $<quant>=['*'] <param_var>
     |   $<named>=[':'?]
@@ -427,7 +438,7 @@ token special_variable {
 
 #### Terms ####
 
-token term {
+token expect_term {
     | <noun> <postfix>* {*}                      #= noun
     | <listop> {*}                               #= listop
     | '*' {*}                                    #= *
@@ -481,10 +492,12 @@ token postcircumfix {
 # can be a noun too in STD.pm. However, at the moment that seems to lead us
 # to infinite recursion.
 token noun {
+    | <fatarrow> {*}                             #= fatarrow
     | <package_declarator> {*}                   #= package_declarator
     | <scope_declarator> {*}                     #= scope_declarator
-    | <plurality_declarator> {*}                 #= plurality_declarator
+    | <multi_declarator> {*}                     #= multi_declarator
     | <routine_declarator> {*}                   #= routine_declarator
+    | <enum_declarator> {*}                      #= enum_declarator
     | <circumfix> {*}                            #= circumfix
     | <variable> {*}                             #= variable
     | <subcall> {*}                              #= subcall
@@ -495,28 +508,38 @@ token noun {
     | <regex_declarator> {*}                     #= regex_declarator
     | <type_declarator> {*}                      #= type_declarator
     | <colonpair> {*}                            #= colonpair
-    | <fatarrow> {*}                             #= fatarrow
     | 'self' >> {*}                              #= self
     | 'undef' >> {*}                             #= undef
 }
 
 
 rule package_declarator {
-    $<sym>=[module|class|role|grammar]
-    <name>
-    <trait_or_does>* {*}                         #= open
     [
-    || ';' <statement_block> {*}                 #= statement_block
-    || <block> {*}                               #= block
+    | $<sym>=[module|class|grammar] {*}          #= open
+      <package_def> {*}                          #= package_def
+    | $<sym>=[role] {*}                          #= open
+      <role_def> {*}                             #= role_def
     ]
 }
 
 
-# This rule does not appear in STD.pm, but I can't work out how 'does' on a
-# class would be parsed by STD.pm, thus this rule for now.
-rule trait_or_does {
-    | <trait>
-    | $<sym>=[does] <name>
+rule package_def {
+    <name> <trait>* {*}                          #= open
+    <package_block> {*}                          #= close
+}
+
+
+rule role_def {
+    <role_name> <trait>* {*}                     #= open
+    <package_block> {*}                          #= close
+}
+
+
+rule package_block {
+    [
+    || ';' <statement_block> {*}                 #= statement_block
+    || <block> {*}                               #= block
+    ]
 }
 
 
@@ -529,6 +552,15 @@ token variable_decl {
 #    | $<op>=['='|'.='] <.ws> <EXPR>
 #    ]?
     {*}
+}
+
+
+rule enum_declarator {
+    'enum' <name>?
+    [
+    | <?before '[' > <circumfix> {*}             #= circumfix
+    | <?before '<' | '«' > <quote> {*}          #= quote
+    ]
 }
 
 
@@ -561,7 +593,7 @@ token variable {
     | <sigil> <?before '<' > <postcircumfix> {*} #= $<>
 }
 
-token sigil { '$' | '@' | '%' | '&' }
+token sigil { '$' | '@' | '%' | '&' | '::' }
 
 token twigil { <[.!^:*+?=]> }
 
@@ -755,7 +787,7 @@ token desigilname {
 ## rule EXPR is optable { ... }
 
 proto 'term:' is precedence('z=')
-    is parsed(&term)
+    is parsed(&expect_term)
     { ... }
 
 proto 'prefix:' is precedence('e=')

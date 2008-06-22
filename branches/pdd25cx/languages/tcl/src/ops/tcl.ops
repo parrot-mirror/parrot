@@ -9,6 +9,7 @@
 
 #include "parrot/parrot.h"
 #include "parrot/string_funcs.h"
+#include "parrot/exceptions.h"
 
 #include "../binary.h"
 
@@ -84,12 +85,11 @@ inline op tcl_error(in PMC) {
   opcode_t *ret;
   opcode_t *dest;
   PMC      *exception = pmc_new(interp, enum_class_Exception);
-  INTVAL    TCL_ERROR = 1;
   STRING   *message = VTABLE_get_string(interp, $1);
 
   VTABLE_set_string_native(interp, exception, message);
   VTABLE_set_integer_keyed_str(interp, exception, const_string(interp, "type"),
-    TCL_ERROR);
+    CONTROL_ERROR);
   ret  = expr NEXT();
   dest = Parrot_ex_throw_from_op(interp, exception, ret);
   goto ADDRESS(dest);
@@ -99,11 +99,10 @@ inline op tcl_error(in STR) {
   opcode_t *ret;
   opcode_t *dest;
   PMC      *exception = pmc_new(interp, enum_class_Exception);
-  INTVAL    TCL_ERROR = 1;
 
   VTABLE_set_string_native(interp, exception, $1);
   VTABLE_set_integer_keyed_str(interp, exception, const_string(interp, "type"),
-    TCL_ERROR);
+    CONTROL_ERROR);
   ret  = expr NEXT();
   dest = Parrot_ex_throw_from_op(interp, exception, ret);
   goto ADDRESS(dest);
@@ -116,7 +115,6 @@ inline op tcl_error(in STR, in PMC) {
   PMC      * const root_ns = interp->root_namespace;
   PMC      *exception      = pmc_new(interp, enum_class_Exception);
   PMC      *tcl_key        = pmc_new(interp, enum_class_Key);
-  INTVAL    TCL_ERROR      = 1;
 
   VTABLE_set_string_native(interp, tcl_key, string_from_literal(interp, "tcl"));
   ns = Parrot_get_namespace_keyed(interp, root_ns, tcl_key);
@@ -126,7 +124,7 @@ inline op tcl_error(in STR, in PMC) {
 
   VTABLE_set_string_native(interp, exception, $1);
   VTABLE_set_integer_keyed_str(interp, exception, const_string(interp, "type"),
-    TCL_ERROR);
+    CONTROL_ERROR);
 
   ret  = expr NEXT();
   dest = Parrot_ex_throw_from_op(interp, exception, ret);
@@ -160,12 +158,11 @@ inline op tcl_return(in PMC) {
   opcode_t *ret;
   opcode_t *dest;
   PMC      *exception  = pmc_new(interp, enum_class_Exception);
-  INTVAL    TCL_RETURN = 2;
   STRING   *message    = VTABLE_get_string(interp, $1);
 
   VTABLE_set_string_native(interp, exception, message);
   VTABLE_set_integer_keyed_str(interp, exception, const_string(interp, "type"),
-    TCL_RETURN);
+    CONTROL_RETURN);
   ret  = expr NEXT();
   dest = Parrot_ex_throw_from_op(interp, exception, ret);
   goto ADDRESS(dest);
@@ -175,11 +172,10 @@ inline op tcl_return(in STR) {
   opcode_t *ret;
   opcode_t *dest;
   PMC      *exception  = pmc_new(interp, enum_class_Exception);
-  INTVAL    TCL_RETURN = 2;
 
   VTABLE_set_string_native(interp, exception, $1);
   VTABLE_set_integer_keyed_str(interp, exception, const_string(interp, "type"),
-    TCL_RETURN);
+    CONTROL_RETURN);
   ret  = expr NEXT();
   dest = Parrot_ex_throw_from_op(interp, exception, ret);
   goto ADDRESS(dest);
@@ -196,11 +192,10 @@ inline op tcl_break() {
   opcode_t *dest;
   PMC      *exception = pmc_new(interp, enum_class_Exception);
   STRING   *empty     = string_make_empty(interp, enum_stringrep_one, 0);
-  INTVAL    TCL_BREAK = 3;
 
   VTABLE_set_string_native(interp, exception, empty);
   VTABLE_set_integer_keyed_str(interp, exception, const_string(interp, "type"),
-    TCL_BREAK);
+    CONTROL_BREAK);
   ret  = expr NEXT();
   dest = Parrot_ex_throw_from_op(interp, exception, ret);
   goto ADDRESS(dest);
@@ -217,11 +212,10 @@ inline op tcl_continue() {
   opcode_t *dest;
   PMC      *exception    = pmc_new(interp, enum_class_Exception);
   STRING   *empty        = string_make_empty(interp, enum_stringrep_one, 0);
-  INTVAL    TCL_CONTINUE = 4;
 
   VTABLE_set_string_native(interp, exception, empty);
   VTABLE_set_integer_keyed_str(interp, exception, const_string(interp, "type"),
-    TCL_CONTINUE);
+    CONTROL_CONTINUE);
   ret  = expr NEXT();
   dest = Parrot_ex_throw_from_op(interp, exception, ret);
   goto ADDRESS(dest);

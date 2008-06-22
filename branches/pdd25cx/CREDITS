@@ -256,7 +256,7 @@ N: Garrett Rooney
 D: Fix typo in PARROT_BIGENDIAN case
 
 N: Geoff Broadwell (japhb)
-D: OpenGL binding
+D: OpenGL binding and examples
 D: Disassembly/source weaver
 D: Miscellaneous fixes
 
@@ -610,6 +610,9 @@ D: Various code fixes and improvements
 
 N: Stéphane Peiry
 D: Lot of JIT/sun patches
+
+N: Stephen Weeks
+D: ChitChat, a Smalltalk compiler
 
 N: Sterling Hughes
 D: Questions for the FAQ

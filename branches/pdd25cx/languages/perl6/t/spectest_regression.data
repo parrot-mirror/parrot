@@ -15,6 +15,7 @@ S03-operators/equality.t                        # pure
 S03-operators/not.t                             # pure
 S03-operators/relational.t                      # pure
 S03-operators/true.t                            # pure
+S04-statements/terminator.t                     # pure
 S04-statements/try.t
 S04-statements/until.t                          # pure
 S04-statements/while.t
@@ -27,6 +28,7 @@ S12-class/parent_attributes.t                   # pure
 S12-methods/calling_syntax.t                    # pure
 S12-role/attributes.t
 S12-role/composition.t                          # pure
+S12-role/mixin.t                                # pure
 S16-filehandles/connect.t                       # pure
 S16-io/say.t
 S29-any/cmp.t                                   # pure
@@ -62,7 +64,7 @@ S29-num/sign.t
 S29-num/sqrt.t
 S29-str/append.t                                # pure
 S29-str/capitalize.t
-S29-str/comb.t
+S29-str/chop.t
 S29-str/lcfirst.t
 S29-str/sprintf.t
 S29-str/ucfirst.t
