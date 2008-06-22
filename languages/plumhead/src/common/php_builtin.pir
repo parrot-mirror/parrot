@@ -473,12 +473,22 @@ NOT IMPLEMENTED.
 
 Binary safe string comparison
 
-NOT IMPLEMENTED.
-
 =cut
 
 .sub 'strcmp'
-    not_implemented()
+    .param pmc args :slurpy
+    .local int argc
+    argc = args
+    unless argc != 2 goto L1
+    wrong_param_count()
+    .RETURN_NULL()
+  L1:
+    $P1 = shift args
+    $S1 = $P1
+    $P2 = shift args
+    $S2 = $P2
+    $I0 = cmp $S1, $S2
+    .RETURN_LONG($I0)
 .end
 
 =item C<int strlen(string str)>
