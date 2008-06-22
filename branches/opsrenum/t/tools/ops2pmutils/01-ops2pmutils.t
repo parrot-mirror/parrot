@@ -21,7 +21,7 @@ BEGIN {
 }
 use Test::More tests => 3;
 
-use_ok('Parrot::Ops2pm::Utils');
+use_ok('Parrot::Ops2pm');
 
 ok( chdir $main::topdir, "Positioned at top-level Parrot directory" );
 pass("Completed all tests in $0");
@@ -30,7 +30,7 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-01-ops2pmutils.t - test importability of Parrot::Ops2pm::Utils subroutines
+01-ops2pmutils.t - test importability of Parrot::Ops2pm subroutines
 
 =head1 SYNOPSIS
 
@@ -39,12 +39,12 @@ pass("Completed all tests in $0");
 =head1 DESCRIPTION
 
 The files in this directory test the publicly callable subroutines of
-F<lib/Parrot/Ops2pm/Utils.pm> and F<lib/Parrot/Ops2pm/Auxiliary.pm>.
+F<lib/Parrot/Ops2pm.pm> and F<lib/Parrot/Ops2pm/Auxiliary.pm>.
 By doing so, they test the functionality of the F<ops2pm.pl> utility.
 That functionality has largely been extracted
 into the methods of F<Utils.pm>.
 
-F<01-ops2pmutils.t> tests whether Parrot::Ops2pm::Utils is exporting the
+F<01-ops2pmutils.t> tests whether Parrot::Ops2pm is exporting the
 subroutines in its C<@EXPORT_OK>.:
 
 =head1 AUTHOR
@@ -53,7 +53,7 @@ James E Keenan
 
 =head1 SEE ALSO
 
-Parrot::Ops2pm::Utils, F<ops2pm.pl>.
+Parrot::Ops2pm, F<ops2pm.pl>.
 
 =cut
 
