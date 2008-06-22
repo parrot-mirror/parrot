@@ -8,7 +8,7 @@ use Parrot::OpsFile;
 
 =head1 NAME
 
-Parrot::Ops2pm::Base - Constructor for Parrot::Ops2pm and Parrot::OpsRenumber.
+Parrot::Ops2pm::Base - Methods inherited by Parrot::Ops2pm and Parrot::OpsRenumber.
 
 =head1 SYNOPSIS
 
@@ -17,7 +17,6 @@ Parrot::Ops2pm::Base - Constructor for Parrot::Ops2pm and Parrot::OpsRenumber.
     $self = Parrot::Ops2pm->new( {
         argv            => [ @ARGV ],
         nolines         => $nolines_flag,
-        renum           => $renum_flag,
         moddir          => "lib/Parrot/OpLib",
         module          => "core.pm",
         inc_dir         => "include/parrot/oplib",
@@ -25,14 +24,16 @@ Parrot::Ops2pm::Base - Constructor for Parrot::Ops2pm and Parrot::OpsRenumber.
         script          => "tools/build/ops2pm.pl",
     } );
 
+    $self->prepare_ops();
+
 =cut
 
 =head1 DESCRIPTION
 
-Parrot::Ops2pm::Base provides a constructor to be inherited by Parrot::Ops2pm
-and Parrot::OpsRenumber.  The former provides methods called by
-F<tools/build/ops2pm.pl>, a program which is called at the very beginning of
-the Parrot F<make> process.  The latter is called by
+Parrot::Ops2pm::Base provides a constructor and other method(s) to be
+inherited by Parrot::Ops2pm and Parrot::OpsRenumber.  The former provides
+methods called by F<tools/build/ops2pm.pl>, a program which is called at the
+very beginning of the Parrot F<make> process.  The latter is called by
 F<tools/dev/opsrenumber.pl>.
 
 =head1 METHODS
@@ -53,7 +54,6 @@ Hash reference with the following elements:
     argv        :   reference to @ARGV
     nolines     :   set to true value to eliminate #line
                     directives in output
-    renum       :   set to true value if
     moddir      :   directory where output module is created
                     (generally, lib/Parrot/OpLib)
     module      :   name of output module

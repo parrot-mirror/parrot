@@ -22,7 +22,6 @@ Parrot::Ops2pm - Methods holding functionality for F<tools/build/ops2pm.pl>.
     $self = Parrot::Ops2pm->new( {
         argv            => [ @ARGV ],
         nolines         => $nolines_flag,
-        renum           => $renum_flag,
         moddir          => "lib/Parrot/OpLib",
         module          => "core.pm",
         inc_dir         => "include/parrot/oplib",
@@ -31,12 +30,6 @@ Parrot::Ops2pm - Methods holding functionality for F<tools/build/ops2pm.pl>.
     } );
 
     $self->prepare_ops();
-
-    if ($renum_flag) {
-        $self->renum_op_map_file();
-        exit 0;
-    }
-
     $self->load_op_map_files();
     $self->sort_ops();
     $self->prepare_real_ops();
@@ -60,9 +53,9 @@ The program's function is to build two files:
 
 =back
 
-The functionality originally found in F<tools/build/ops2pm.pl> has been
-extracted into this package's methods in order to support component-focused
-testing and future refactoring.
+The functionality once (pre-April 2007) found in F<tools/build/ops2pm.pl> has
+been extracted into this package's methods in order to support
+component-focused testing and future refactoring.
 
 =head1 METHODS
 
@@ -89,9 +82,7 @@ needed.
 =item * Arguments
 
 None.  (Implicitly requires that the C<argv> and C<script> keys
-have been provided to the constructor and that the C<renum> key not have a
-true value -- which will be the case when the C<--renum> option is I<not>
-provided to F<tools/build/ops2pm.pl>.)
+have been provided to the constructor.)
 
 =item * Return Value
 
@@ -101,10 +92,8 @@ C<skiptable> and C<optable>.
 
 =item * Comments
 
-This is the default case, I<i.e.,> the case that prevails when
-F<tools/build/ops2pm.pl> is I<not> called with the C<--renum> flag.  In
-addition to F<src/ops/ops.num>, this method also draws upon information in
-F<src/ops/ops.skip>.
+This is the default case.  In addition to F<src/ops/ops.num>, this method also
+draws upon information in F<src/ops/ops.skip>.
 
 =back
 
@@ -167,9 +156,8 @@ sub load_op_map_files {
 
 =item * Purpose
 
-Internal manipulation of the Parrot::Ops2pm object:
-sorting by number of the list of op codes found in the object's
-C<{ops}-E<gt>{OPS}> element.
+Internal manipulation of the Parrot::Ops2pm object: sorting by number of the
+list of op codes found in the object's C<{ops}-E<gt>{OPS}> element.
 
 =item * Arguments
 
@@ -177,8 +165,7 @@ None.
 
 =item * Return Value
 
-None.  Internally, sets the C<ops> key of the object's data
-structure.
+None.  Internally, sets the C<ops> key of the object's data structure.
 
 =item * Comment
 
@@ -198,14 +185,19 @@ sub sort_ops {
             $el->{CODE} = -1;
         }
         elsif ( $el->{experimental} ) {
-            my $n = $self->{optable}->{ $el->full_name } = ++$self->{max_op_num};
-            warn sprintf( "%-25s %-10s experimental, not in ops.num\n", $el->full_name, $n )
-                if -e "DEVELOPING";
+            my $n = $self->{optable}->{ $el->full_name } =
+                ++$self->{max_op_num};
+            warn sprintf(
+                "%-25s %-10s experimental, not in ops.num\n",
+                $el->full_name, $n
+            ) if -e "DEVELOPING";
             $el->{CODE} = $n;
         }
         else {
-            die sprintf( "%-25s %-10s FATAL: not in ops.num nor ops.skip\n", $el->full_name, "" )
-                if -e "DEVELOPING";
+            die sprintf(
+                "%-25s %-10s FATAL: not in ops.num nor ops.skip\n",
+                $el->full_name, ""
+            ) if -e "DEVELOPING";
             $el->{CODE} = -1;
         }
     }

@@ -30,12 +30,6 @@ my $self = Parrot::Ops2pm->new(
 );
 
 $self->prepare_ops();
-
-if ( $flagref->{renum} ) {
-    $self->renum_op_map_file();
-    exit 0;
-}
-
 $self->load_op_map_files();
 $self->sort_ops();
 $self->prepare_real_ops();
