@@ -1744,6 +1744,9 @@ reconfig : clean
 manitest :
 	$(PERL) tools/dev/manicheck.pl
 
+renumberops :
+	$(PERL) tools/dev/opsrenumber.pl $(OPS_FILES)
+
 ###############################################################################
 #
 # SVN Targets:
