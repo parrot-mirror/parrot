@@ -1,24 +1,25 @@
 # Copyright (C) 2007, The Perl Foundation.
 # $Id$
-package Parrot::Ops2pm::Utils;
+package Parrot::Ops2pm;
 use strict;
 use warnings;
 use Cwd;
 use Data::Dumper ();
 use File::Path ();
 use File::Spec;
-use lib ("lib/");
+use lib qw ( lib );
+use base qw( Parrot::Ops2pm::Base );
 use Parrot::OpsFile;
 
 =head1 NAME
 
-Parrot::Ops2pm::Utils - Methods holding functionality for F<tools/build/ops2pm.pl>.
+Parrot::Ops2pm - Methods holding functionality for F<tools/build/ops2pm.pl>.
 
 =head1 SYNOPSIS
 
-    use Parrot::Ops2pm::Utils;
+    use Parrot::Ops2pm;
 
-    $self = Parrot::Ops2pm::Utils->new( {
+    $self = Parrot::Ops2pm->new( {
         argv            => [ @ARGV ],
         nolines         => $nolines_flag,
         renum           => $renum_flag,
@@ -47,7 +48,7 @@ Parrot::Ops2pm::Utils - Methods holding functionality for F<tools/build/ops2pm.p
 
 =head1 DESCRIPTION
 
-Parrot::Ops2pm::Utils provides methods called by F<tools/build/ops2pm.pl>, a
+Parrot::Ops2pm provides methods called by F<tools/build/ops2pm.pl>, a
 program which is called at the very beginning of the Parrot F<make> process.
 The program's function is to build two files:
 
@@ -67,61 +68,8 @@ testing and future refactoring.
 
 =head2 C<new()>
 
-=over 4
-
-=item * Purpose
-
-Process files provided as command-line arguments to
-F<tools/build/ops2pm.pl> and construct a Parrot::Ops2pm::Utils object.
-
-=item * Arguments
-
-Hash reference with the following elements:
-
-    argv        :   reference to @ARGV
-    nolines     :   set to true value to eliminate #line
-                    directives in output
-    renum       :   set to true value if
-    moddir      :   directory where output module is created
-                    (generally, lib/Parrot/OpLib)
-    module      :   name of output module
-                    (generally, core.pm)
-    inc_dir     :   directory where C-header file is created
-                    (generally, include/parrot/oplib)
-    inc_f       :   name of output C-header file
-                    (generally, ops.h)
-    script      :   name of the script to be executed by 'make'
-                    (generally, tools/build/ops2pm.pl)
-
-=item * Return Value
-
-Parrot::Ops2pm::Utils object.
-
-=item * Comment
-
-Arguments for the constructor have been selected so as to provide
-subsequent methods with all information needed to execute properly and to be
-testable.  A Parrot::Ops2pm::Utils object I<can> be constructed lacking some
-of these arguments and still suffice for the execution of particular methods
--- this is done during the test suite -- but such an object would not suffice
-for F<make>'s call to F<tools/build/ops2pm.pl>.
-
-=back
-
-=cut
-
-sub new {
-    my ( $class, $argsref ) = @_;
-    my @argv = @{ $argsref->{argv} };
-    my $file = shift @argv;
-    die "$argsref->{script}: Could not find ops file '$file'!\n"
-        unless -e $file;
-    $argsref->{file} = $file;
-    $argsref->{argv} = \@argv;
-    $argsref->{num_file}    = "src/ops/ops.num";
-    $argsref->{skip_file}   = "src/ops/ops.skip";
-    return bless $argsref, $class;
-}
+Inherited from Parrot::Ops2pm::Base and documented in
+F<lib/Parrot/Ops2pm/Base.pm>.
 
 =head2 C<prepare_ops()>
 
@@ -215,7 +163,7 @@ Returns true value upon success.
 
 When F<tools/build/ops2pm.pl> is called with the C<--renum> option, this
 method is triggered, after which F<ops2pm.pl> exits.  Consequently, this is
-the only Parrot::Ops2pm::Utils method which is I<not> a
+the only Parrot::Ops2pm method which is I<not> a
 stepping stone on the path to building F<lib/Parrot/OpLib/core.pm>.
 
 =back
@@ -357,7 +305,7 @@ sub load_op_map_files {
 
 =item * Purpose
 
-Internal manipulation of the Parrot::Ops2pm::Utils object:
+Internal manipulation of the Parrot::Ops2pm object:
 sorting by number of the list of op codes found in the object's
 C<{ops}-E<gt>{OPS}> element.
 
@@ -625,7 +573,7 @@ END_C
 
 A suite of test files to accompany this package is found in
 F<t/tools/ops2pmutils>.  This suite has been developed to maximize its
-coverage of the code of Parrot::Ops2pm::Utils (as measured by Perl module
+coverage of the code of Parrot::Ops2pm (as measured by Perl module
 Devel::Cover).  Should you wish to refactor this package, it is recommended
 that you do so in a B<test-driven> manner:
 
@@ -634,7 +582,7 @@ that you do so in a B<test-driven> manner:
 =item 1
 
 Write the specification for any additions or modifications to
-Parrot::Ops2pm::Utils' interface.
+Parrot::Ops2pm' interface.
 
 =item 2
 
@@ -675,7 +623,7 @@ testing provided by the test suite.
 
 See F<tools/build/ops2pm.pl> for a list of the Parrot hackers who, over a
 period of several years, developed the functionality now found in the methods
-of Parrot::Ops2pm::Utils.  Jim Keenan extracted that functionality and placed
+of Parrot::Ops2pm.  Jim Keenan extracted that functionality and placed
 it in this package's methods.
 
 =cut

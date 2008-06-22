@@ -24,7 +24,7 @@ use Cwd;
 use File::Copy;
 use File::Temp (qw| tempdir |);
 
-use_ok('Parrot::Ops2pm::Utils');
+use_ok('Parrot::Ops2pm');
 
 use constant NUM_FILE  => "src/ops/ops.num";
 use constant SKIP_FILE => "src/ops/ops.skip";
@@ -50,7 +50,7 @@ ok( chdir $main::topdir, "Positioned at top-level Parrot directory" );
         ok( copy( qq{$cwd/$skip}, qq{$tdir/$skip} ), "copied ops.skip file" );
         my @opsfiles = glob("./src/ops/*.ops");
 
-        my $self = Parrot::Ops2pm::Utils->new(
+        my $self = Parrot::Ops2pm->new(
             {
                 argv    => [@opsfiles],
                 script  => "tools/build/ops2pm.pl",
@@ -62,7 +62,7 @@ ok( chdir $main::topdir, "Positioned at top-level Parrot directory" );
                 inc_f   => "ops.h",
             }
         );
-        isa_ok( $self, q{Parrot::Ops2pm::Utils} );
+        isa_ok( $self, q{Parrot::Ops2pm} );
 
         ok( $self->prepare_ops, "prepare_ops() returned successfully" );
         ok( defined( $self->{ops} ), "'ops' key has been defined" );
@@ -91,7 +91,7 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-11-print_h.t - test C<Parrot::Ops2pm::Utils::print_h()>
+11-print_h.t - test C<Parrot::Ops2pm::print_h()>
 
 =head1 SYNOPSIS
 
@@ -100,13 +100,13 @@ pass("Completed all tests in $0");
 =head1 DESCRIPTION
 
 The files in this directory test the publicly callable methods of
-F<lib/Parrot/Ops2pm/Utils.pm> and F<lib/Parrot/Ops2pm/Auxiliary.pm>.
+F<lib/Parrot/Ops2pm.pm> and F<lib/Parrot/Ops2pm/Auxiliary.pm>.
 By doing so, they test the functionality of the F<ops2pm.pl> utility.
 That functionality has largely been extracted
 into the methods of F<Utils.pm>.
 
 F<11-print_h.t> tests whether
-C<Parrot::Ops2pm::Utils::print_h()> works properly.
+C<Parrot::Ops2pm::print_h()> works properly.
 
 =head1 TODO
 
@@ -132,7 +132,7 @@ James E Keenan
 
 =head1 SEE ALSO
 
-Parrot::Ops2pm::Utils, F<ops2pm.pl>.
+Parrot::Ops2pm, F<ops2pm.pl>.
 
 =cut
 
