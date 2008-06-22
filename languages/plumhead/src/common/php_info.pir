@@ -17,6 +17,8 @@ php_info.pir - PHP info Standard Library
 
 Return the special ID used to request the PHP logo in phpinfo screens
 
+NOT IMPLEMENTED.
+
 =cut
 
 .sub 'php_egg_logo_guid'
@@ -26,6 +28,8 @@ Return the special ID used to request the PHP logo in phpinfo screens
 =item C<string php_ini_loaded_file(void)>
 
 Return the actual loaded ini filename
+
+NOT IMPLEMENTED.
 
 =cut
 
@@ -37,6 +41,8 @@ Return the actual loaded ini filename
 
 Return comma-separated string of .ini files parsed from the additional ini dir
 
+NOT IMPLEMENTED.
+
 =cut
 
 .sub 'php_ini_scanned_files'
@@ -46,6 +52,8 @@ Return comma-separated string of .ini files parsed from the additional ini dir
 =item C<string php_logo_guid(void)>
 
 Return the special ID used to request the PHP logo in phpinfo screens
+
+NOT IMPLEMENTED.
 
 =cut
 
@@ -57,6 +65,8 @@ Return the special ID used to request the PHP logo in phpinfo screens
 
 Return the special ID used to request the PHP logo in phpinfo screens
 
+NOT IMPLEMENTED.
+
 =cut
 
 .sub 'php_real_logo_guid'
@@ -66,6 +76,8 @@ Return the special ID used to request the PHP logo in phpinfo screens
 =item C<string php_sapi_name(void)>
 
 Return the current SAPI module name
+
+DUMMY IMPLEMENTATION.
 
 =cut
 
@@ -87,6 +99,8 @@ Return the current SAPI module name
 
 Return information about the system PHP was built on
 
+NOT IMPLEMENTED.
+
 =cut
 
 .sub 'php_uname'
@@ -96,6 +110,8 @@ Return information about the system PHP was built on
 =item C<void phpcredits([int flag])>
 
 Prints the list of people who've contributed to the PHP project
+
+NOT IMPLEMENTED.
 
 =cut
 
@@ -107,6 +123,8 @@ Prints the list of people who've contributed to the PHP project
 
 Output a page of useful information about PHP and the current request
 
+NOT IMPLEMENTED.
+
 =cut
 
 .sub 'phpinfo'
@@ -117,6 +135,8 @@ Output a page of useful information about PHP and the current request
 
 Return the current PHP version
 
+NOT IMPLEMENTED.
+
 =cut
 
 .sub 'phpversion'
@@ -126,6 +146,8 @@ Return the current PHP version
 =item C<string zend_logo_guid(void)>
 
 Return the special ID used to request the Zend logo in phpinfo screens
+
+NOT IMPLEMENTED.
 
 =cut
 

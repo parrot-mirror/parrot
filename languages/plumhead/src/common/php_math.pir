@@ -17,6 +17,8 @@ php_math.pir - PHP math Standard Library
 
 Return the absolute value of the number
 
+NOT IMPLEMENTED.
+
 =cut
 
 .sub 'abs'
@@ -26,6 +28,8 @@ Return the absolute value of the number
 =item C<float acos(float number)>
 
 Return the arc cosine of the number in radians
+
+NOT IMPLEMENTED.
 
 =cut
 
@@ -37,6 +41,8 @@ Return the arc cosine of the number in radians
 
 Returns the inverse hyperbolic cosine of the number, i.e. the value whose hyperbolic cosine is number
 
+NOT IMPLEMENTED.
+
 =cut
 
 .sub 'acosh'
@@ -46,6 +52,8 @@ Returns the inverse hyperbolic cosine of the number, i.e. the value whose hyperb
 =item C<float asin(float number)>
 
 Returns the arc sine of the number in radians
+
+NOT IMPLEMENTED.
 
 =cut
 
@@ -57,6 +65,8 @@ Returns the arc sine of the number in radians
 
 Returns the inverse hyperbolic sine of the number, i.e. the value whose hyperbolic sine is number
 
+NOT IMPLEMENTED.
+
 =cut
 
 .sub 'asinh'
@@ -66,6 +76,8 @@ Returns the inverse hyperbolic sine of the number, i.e. the value whose hyperbol
 =item C<float atan(float number)>
 
 Returns the arc tangent of the number in radians
+
+NOT IMPLEMENTED.
 
 =cut
 
@@ -77,6 +89,8 @@ Returns the arc tangent of the number in radians
 
 Returns the arc tangent of y/x, with the resulting quadrant determined by the signs of y and x
 
+NOT IMPLEMENTED.
+
 =cut
 
 .sub 'atan2'
@@ -86,6 +100,8 @@ Returns the arc tangent of y/x, with the resulting quadrant determined by the si
 =item C<float atanh(float number)>
 
 Returns the inverse hyperbolic tangent of the number, i.e. the value whose hyperbolic tangent is number
+
+NOT IMPLEMENTED.
 
 =cut
 
@@ -97,6 +113,8 @@ Returns the inverse hyperbolic tangent of the number, i.e. the value whose hyper
 
 Converts a number in a string from any base <= 36 to any base <= 36
 
+NOT IMPLEMENTED.
+
 =cut
 
 .sub 'base_convert'
@@ -106,6 +124,8 @@ Converts a number in a string from any base <= 36 to any base <= 36
 =item C<int bindec(string binary_number)>
 
 Returns the decimal equivalent of the binary number
+
+NOT IMPLEMENTED.
 
 =cut
 
@@ -117,6 +137,8 @@ Returns the decimal equivalent of the binary number
 
 Returns the next highest integer value of the number
 
+NOT IMPLEMENTED.
+
 =cut
 
 .sub 'ceil'
@@ -126,6 +148,8 @@ Returns the next highest integer value of the number
 =item C<float cos(float number)>
 
 Returns the cosine of the number in radians
+
+NOT IMPLEMENTED.
 
 =cut
 
@@ -137,6 +161,8 @@ Returns the cosine of the number in radians
 
 Returns the hyperbolic cosine of the number, defined as (exp(number) + exp(-number))/2
 
+NOT IMPLEMENTED.
+
 =cut
 
 .sub 'cosh'
@@ -146,6 +172,8 @@ Returns the hyperbolic cosine of the number, defined as (exp(number) + exp(-numb
 =item C<string decbin(int decimal_number)>
 
 Returns a string containing a binary representation of the number
+
+NOT IMPLEMENTED.
 
 =cut
 
@@ -157,6 +185,8 @@ Returns a string containing a binary representation of the number
 
 Returns a string containing a hexadecimal representation of the given number
 
+NOT IMPLEMENTED.
+
 =cut
 
 .sub 'dechex'
@@ -166,6 +196,8 @@ Returns a string containing a hexadecimal representation of the given number
 =item C<string decoct(int decimal_number)>
 
 Returns a string containing an octal representation of the given number
+
+NOT IMPLEMENTED.
 
 =cut
 
@@ -177,6 +209,8 @@ Returns a string containing an octal representation of the given number
 
 Converts the number in degrees to the radian equivalent
 
+NOT IMPLEMENTED.
+
 =cut
 
 .sub 'deg2rad'
@@ -186,6 +220,8 @@ Converts the number in degrees to the radian equivalent
 =item C<float exp(float number)>
 
 Returns e raised to the power of the number
+
+NOT IMPLEMENTED.
 
 =cut
 
@@ -197,6 +233,8 @@ Returns e raised to the power of the number
 
 Returns exp(number) - 1, computed in a way that accurate even when the value of number is close to zero
 
+NOT IMPLEMENTED.
+
 =cut
 
 .sub 'expm1'
@@ -206,6 +244,8 @@ Returns exp(number) - 1, computed in a way that accurate even when the value of 
 =item C<float floor(float number)>
 
 Returns the next lowest integer value from the number
+
+NOT IMPLEMENTED.
 
 =cut
 
@@ -217,6 +257,8 @@ Returns the next lowest integer value from the number
 
 Returns the remainder of dividing x by y as a float
 
+NOT IMPLEMENTED.
+
 =cut
 
 .sub 'fmod'
@@ -226,6 +268,8 @@ Returns the remainder of dividing x by y as a float
 =item C<int hexdec(string hexadecimal_number)>
 
 Returns the decimal equivalent of the hexadecimal number
+
+NOT IMPLEMENTED.
 
 =cut
 
@@ -237,6 +281,8 @@ Returns the decimal equivalent of the hexadecimal number
 
 Returns sqrt(num1*num1 + num2*num2)
 
+NOT IMPLEMENTED.
+
 =cut
 
 .sub 'hypot'
@@ -246,6 +292,8 @@ Returns sqrt(num1*num1 + num2*num2)
 =item C<bool is_finite(float val)>
 
 Returns whether argument is finite
+
+NOT IMPLEMENTED.
 
 =cut
 
@@ -257,6 +305,8 @@ Returns whether argument is finite
 
 Returns whether argument is infinite
 
+NOT IMPLEMENTED.
+
 =cut
 
 .sub 'is_infinite'
@@ -266,6 +316,8 @@ Returns whether argument is infinite
 =item C<bool is_nan(float val)>
 
 Returns whether argument is not a number
+
+NOT IMPLEMENTED.
 
 =cut
 
@@ -277,6 +329,8 @@ Returns whether argument is not a number
 
 Returns the natural logarithm of the number, or the base log if base is specified
 
+NOT IMPLEMENTED.
+
 =cut
 
 .sub 'log'
@@ -286,6 +340,8 @@ Returns the natural logarithm of the number, or the base log if base is specifie
 =item C<float log10(float number)>
 
 Returns the base-10 logarithm of the number
+
+NOT IMPLEMENTED.
 
 =cut
 
@@ -297,6 +353,8 @@ Returns the base-10 logarithm of the number
 
 Returns log(1 + number), computed in a way that accurate even when the value of number is close to zero
 
+NOT IMPLEMENTED.
+
 =cut
 
 .sub 'log1p'
@@ -306,6 +364,8 @@ Returns log(1 + number), computed in a way that accurate even when the value of 
 =item C<string number_format(float number [, int num_decimal_places [, string dec_seperator, string thousands_seperator]])>
 
 Formats a number with grouped thousands
+
+NOT IMPLEMENTED.
 
 =cut
 
@@ -317,6 +377,8 @@ Formats a number with grouped thousands
 
 Returns the decimal equivalent of an octal string
 
+NOT IMPLEMENTED.
+
 =cut
 
 .sub 'octdec'
@@ -326,6 +388,8 @@ Returns the decimal equivalent of an octal string
 =item C<float pi(void)>
 
 Returns an approximation of pi
+
+NOT IMPLEMENTED.
 
 =cut
 
@@ -337,6 +401,8 @@ Returns an approximation of pi
 
 Returns base raised to the power of exponent. Returns integer result when possible
 
+NOT IMPLEMENTED.
+
 =cut
 
 .sub 'pow'
@@ -346,6 +412,8 @@ Returns base raised to the power of exponent. Returns integer result when possib
 =item C<float rad2deg(float number)>
 
 Converts the radian number to the equivalent number in degrees
+
+NOT IMPLEMENTED.
 
 =cut
 
@@ -357,6 +425,8 @@ Converts the radian number to the equivalent number in degrees
 
 Returns the number rounded to specified precision
 
+NOT IMPLEMENTED.
+
 =cut
 
 .sub 'round'
@@ -366,6 +436,8 @@ Returns the number rounded to specified precision
 =item C<float sin(float number)>
 
 Returns the sine of the number in radians
+
+NOT IMPLEMENTED.
 
 =cut
 
@@ -377,6 +449,8 @@ Returns the sine of the number in radians
 
 Returns the hyperbolic sine of the number, defined as (exp(number) - exp(-number))/2
 
+NOT IMPLEMENTED.
+
 =cut
 
 .sub 'sinh'
@@ -386,6 +460,8 @@ Returns the hyperbolic sine of the number, defined as (exp(number) - exp(-number
 =item C<float sqrt(float number)>
 
 Returns the square root of the number
+
+NOT IMPLEMENTED.
 
 =cut
 
@@ -397,6 +473,8 @@ Returns the square root of the number
 
 Returns the tangent of the number in radians
 
+NOT IMPLEMENTED.
+
 =cut
 
 .sub 'tan'
@@ -406,6 +484,8 @@ Returns the tangent of the number in radians
 =item C<float tanh(float number)>
 
 Returns the hyperbolic tangent of the number, defined as sinh(number)/cosh(number)
+
+NOT IMPLEMENTED.
 
 =cut
 
