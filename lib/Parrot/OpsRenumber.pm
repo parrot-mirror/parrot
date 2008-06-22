@@ -13,7 +13,7 @@ use Parrot::OpsFile;
 
 =head1 NAME
 
-Parrot::OpsRenumber - Methods holding functionality for F<tools/build/ops2pm.pl>.
+Parrot::OpsRenumber - Methods holding functionality for F<tools/build/opsrenumber.pl>.
 
 =head1 SYNOPSIS
 
@@ -22,27 +22,15 @@ Parrot::OpsRenumber - Methods holding functionality for F<tools/build/ops2pm.pl>
     $self = Parrot::OpsRenumber->new( {
         argv            => [ @ARGV ],
         nolines         => $nolines_flag,
-        renum           => $renum_flag,
         moddir          => "lib/Parrot/OpLib",
         module          => "core.pm",
         inc_dir         => "include/parrot/oplib",
         inc_f           => "ops.h",
-        script          => "tools/build/ops2pm.pl",
+        script          => "tools/build/opsrenumber.pl",
     } );
 
     $self->prepare_ops();
-
-    if ($renum_flag) {
-        $self->renum_op_map_file();
-        exit 0;
-    }
-
-    $self->load_op_map_files();
-    $self->sort_ops();
-    $self->prepare_real_ops();
-    $self->print_module();
-    $self->print_h();
-    exit 0;
+    $self->renum_op_map_file();
 
 =cut
 
@@ -50,13 +38,14 @@ Parrot::OpsRenumber - Methods holding functionality for F<tools/build/ops2pm.pl>
 
 Parrot::OpsRenumber provides methods called by F<tools/dev/opsrenumber.pl>.
 
-The functionality originally found in F<tools/build/ops2pm.pl> has been
-extracted into this package's methods in order to support component-focused
-testing and future refactoring.
-
 =head1 METHODS
 
 =head2 C<new()>
+
+Inherited from Parrot::Ops2pm::Base and documented in
+F<lib/Parrot/Ops2pm/Base.pm>.
+
+=head2 C<prepare_ops()>
 
 Inherited from Parrot::Ops2pm::Base and documented in
 F<lib/Parrot/Ops2pm/Base.pm>.
@@ -67,26 +56,18 @@ F<lib/Parrot/Ops2pm/Base.pm>.
 
 =item * Purpose
 
-Triggered when F<tools/build/ops2pm.pl> is called with the
-C<--renum> flag, this method renumbers F<src/ops/ops.num> based on the already
+This method renumbers F<src/ops/ops.num> based on the already
 existing file of that name and additional F<.ops> files.
 
 =item * Arguments
 
 String holding name of an F<.ops> file; defaults to
-F<src/ops/ops.num>.  (Implicitly requires that the C<argv>,
-C<script> and C<renum> elements were provided to the constructor.)
+F<src/ops/ops.num>.  (Implicitly requires that the C<argv> and
+C<script> elements were provided to the constructor.)
 
 =item * Return Value
 
 Returns true value upon success.
-
-=item * Comment
-
-When F<tools/build/ops2pm.pl> is called with the C<--renum> option, this
-method is triggered, after which F<ops2pm.pl> exits.  Consequently, this is
-the only Parrot::Ops2pm method which is I<not> a
-stepping stone on the path to building F<lib/Parrot/OpLib/core.pm>.
 
 =back
 
