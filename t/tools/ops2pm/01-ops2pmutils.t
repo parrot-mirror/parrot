@@ -1,7 +1,7 @@
 #! perl
 # Copyright (C) 2007, The Perl Foundation.
 # $Id$
-# 01-ops2pmutils.t
+# 01-ops2pm.t
 
 use strict;
 use warnings;
@@ -30,11 +30,11 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-01-ops2pmutils.t - test importability of Parrot::Ops2pm subroutines
+01-ops2pm.t - test importability of Parrot::Ops2pm subroutines
 
 =head1 SYNOPSIS
 
-    % prove t/tools/ops2pmutils/01-ops2pmutils.t
+    % prove t/tools/ops2pm/01-ops2pm.t
 
 =head1 DESCRIPTION
 
@@ -44,7 +44,7 @@ By doing so, they test the functionality of the F<ops2pm.pl> utility.
 That functionality has largely been extracted
 into the methods of F<Utils.pm>.
 
-F<01-ops2pmutils.t> tests whether Parrot::Ops2pm is exporting the
+F<01-ops2pm.t> tests whether Parrot::Ops2pm is exporting the
 subroutines in its C<@EXPORT_OK>.:
 
 =head1 AUTHOR

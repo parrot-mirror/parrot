@@ -95,7 +95,7 @@ pass("Completed all tests in $0");
 
 =head1 SYNOPSIS
 
-    % prove t/tools/ops2pmutils/11-print_h.t
+    % prove t/tools/ops2pm/11-print_h.t
 
 =head1 DESCRIPTION
 

@@ -120,7 +120,7 @@ pass("Completed all tests in $0");
 
 =head1 SYNOPSIS
 
-    % prove t/tools/ops2pmutils/05-renum_op_map_file.t
+    % prove t/tools/ops2pm/05-renum_op_map_file.t
 
 =head1 DESCRIPTION
 
