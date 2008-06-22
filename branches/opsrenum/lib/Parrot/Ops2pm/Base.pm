@@ -3,6 +3,8 @@
 package Parrot::Ops2pm::Base;
 use strict;
 use warnings;
+use lib qw ( lib );
+use Parrot::OpsFile;
 
 =head1 NAME
 
@@ -92,6 +94,74 @@ sub new {
     $argsref->{num_file}    = "src/ops/ops.num";
     $argsref->{skip_file}   = "src/ops/ops.skip";
     return bless $argsref, $class;
+}
+
+=head2 C<prepare_ops()>
+
+=over 4
+
+=item * Purpose
+
+Call C<Parrot::OpsFile::new()>, then populate the resulting
+C<$opts> hash reference with information from  each of the F<.ops> files
+provided as command-line arguments to F<tools/build/ops2pm.pl>.
+
+=item * Arguments
+
+None.  (Implicitly requires that at least the C<argv> and
+C<script> elements were provided to the constructor.)
+
+=item * Return Value
+
+None.  Internally, sets the C<ops> key in the object's data
+structure.
+
+=item * Comment
+
+This method calls C<Parrot::OpsFile::new()> on the first F<.ops>
+file found in C<@ARGV>, then copies the ops from the remaining F<.ops> files
+to the object just created.  Experimental ops are marked as such.
+
+=back
+
+=cut
+
+sub prepare_ops {
+    my $self = shift;
+    my $ops = Parrot::OpsFile->new( [ $self->{file} ], $self->{nolines} );
+    die "$self->{script}: Could not read ops file '$self->{file}'!\n"
+        unless defined $ops;
+
+    # Copy the ops from the remaining .ops files to the object just created.
+    my %seen;
+
+    while ( defined( my $f = shift( @{ $self->{argv} } ) ) ) {
+        if ( $seen{$f} ) {
+            print STDERR "$self->{script}: Ops file '$f' mentioned more than once!\n";
+            next;
+        }
+        $seen{$f} = 1;
+
+        die "$self->{script}: Could not find ops file '$f'!\n"
+            unless -e $f;
+        my $temp_ops = Parrot::OpsFile->new( [$f], $self->{nolines} );
+        die "$self->{script}: Could not read ops file '$f'!\n"
+            unless defined $temp_ops;
+        die "OPS invalid for $f" unless ref $temp_ops->{OPS};
+
+        my $experimental = $f =~ /experimental/;
+
+        # mark experimental ops
+        if ($experimental) {
+            for my $el ( @{ $temp_ops->{OPS} } ) {
+                $el->{experimental} = 1;
+            }
+        }
+
+        push @{ $ops->{OPS} }, @{ $temp_ops->{OPS} };
+        $ops->{PREAMBLE} .= "\n" . $temp_ops->{PREAMBLE};
+    }
+    $self->{ops} = $ops;
 }
 
 1;

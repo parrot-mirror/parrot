@@ -19,7 +19,7 @@ BEGIN {
     }
     unshift @INC, qq{$topdir/lib};
 }
-use Test::More tests => 23;
+use Test::More tests => 27;
 use Cwd;
 use File::Copy;
 use File::Temp (qw| tempdir |);
@@ -57,6 +57,9 @@ ok( chdir $main::topdir, "Positioned at top-level Parrot directory" );
         );
         isa_ok( $self, q{Parrot::OpsRenumber} );
 
+        ok( $self->prepare_ops, "prepare_ops() returned successfully" );
+        ok( defined( $self->{ops} ), "'ops' key has been defined" );
+
         ok( $self->renum_op_map_file(),
             "renum_op_map_files() completed successfully" );
         ok( -f qq{$tdir/$num}, "ops.num located after renumbering" );
@@ -93,6 +96,9 @@ ok( chdir $main::topdir, "Positioned at top-level Parrot directory" );
             }
         );
         isa_ok( $self, q{Parrot::OpsRenumber} );
+
+        ok( $self->prepare_ops, "prepare_ops() returned successfully" );
+        ok( defined( $self->{ops} ), "'ops' key has been defined" );
 
         ok(
             $self->renum_op_map_file(qq{$tdir/$num}),
