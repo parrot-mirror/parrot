@@ -94,19 +94,18 @@ been no demand.
 sub _handle_darwin_for_macports {
     my ($self, $conf, $osname, $file) = @_;
     if ( $osname =~ /darwin/ ) {
-        my $ports_root = $conf->data->get( 'ports_base_dir' );
-        my $ports_lib_dir = $conf->data->get( 'ports_lib_dir' );
-        my $ports_include_dir = $conf->data->get( 'ports_include_dir' );
-        if ( defined $ports_include_dir && -f qq{$ports_include_dir/$file} ) {
-            $conf->data->add( ' ', linkflags => "-L$ports_lib_dir" );
-            $conf->data->add( ' ', ldflags   => "-L$ports_lib_dir" );
-            $conf->data->add( ' ', ccflags   => "-I$ports_include_dir" );
-            my %intended = (
-                linkflags => "-L$ports_lib_dir",
-                ldflags   => "-L$ports_lib_dir",
-                ccflags   => "-I$ports_include_dir",
-            );
-            _add_flags_not_yet_seen($conf, \%intended);
+#        my $ports_root          = $conf->data->get( 'ports_base_dir' );
+        my $ports_lib_dir       = $conf->data->get( 'ports_lib_dir' );
+        my $ports_include_dir   = $conf->data->get( 'ports_include_dir' );
+        if ( defined $ports_lib_dir && defined $ports_include_dir ) {
+            if ( -f qq{$ports_include_dir/$file} ) {
+                my %intended = (
+                    linkflags => "-L$ports_lib_dir",
+                    ldflags   => "-L$ports_lib_dir",
+                    ccflags   => "-I$ports_include_dir",
+                );
+                _add_flags_not_yet_seen($conf, \%intended);
+            }
         }
     }
     return 1;

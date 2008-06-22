@@ -1,5 +1,7 @@
 # $Id$
 
+# Copyright (C) 2008, The Perl Foundation.
+
 =begin comments
 
 ChitChat::Grammar::Actions - ast transformations for ChitChat
@@ -18,36 +20,117 @@ class ChitChat::Grammar::Actions;
 
 method TOP($/) {
     my $past := PAST::Block.new( :blocktype('declaration'), :node( $/ ) );
-    for $<statement> {
+    for $<exprs> {
         $past.push( $( $_ ) );
     }
     make $past;
 }
 
+method block($/) {
+    my $past := PAST::Block.new( :blocktype('declaration'), :node($/) );
+    for $<id> {
+        my $param := $( $_ );
+        $param.isdecl(1);
+        $param.scope('parameter');
+        $past.push($param);
+    }
+    if $<temps> {
+        my $temps := $( $<temps>[0] );
+        $past.push($temps);
+    }
 
-method statement($/) {
-    my $past := PAST::Op.new( :name('say'), :pasttype('call'), :node( $/ ) );
-    for $<value> {
+    $past.push( $( $<exprs> ) );
+
+    make $past;
+}
+
+method temps($/) {
+    my $past := PAST::Stmts.new( :node($/) );
+    for $<id> {
+        my $temp := $( $_ );
+        $temp.scope('lexical');
+        $temp.isdecl(1);
+        $past.push( $temp );
+    }
+    make $past;
+}
+
+method exprs($/) {
+    my $past := PAST::Stmts.new();
+    for $<expr> {
         $past.push( $( $_ ) );
     }
     make $past;
 }
 
+method expr($/) {
+    make $( $<expr2> );
+}
 
-method value($/, $key) {
+method expr2($/) {
+    make $( $<msgexpr> );
+}
+
+method msgexpr($/,$key) {
     make $( $/{$key} );
 }
 
-
-method integer($/) {
-    make PAST::Val.new( :value( ~$/ ), :returns('Integer'), :node($/) );
+method keyexpr($/) {
+    my $past := PAST::Op.new( :pasttype('callmethod') );
+    $past.push( PAST::Var.new( :name( $( $<keyexpr2>).name() ), :scope('package') ) );
+    my @args := $( $<keymsg> );
+    my $name := '';
+    while +@args {
+        $name := $name ~ ~@args.shift();
+        $past.push( @args.shift() );
+    }
+    $past.name($name);
+    make $past;
 }
 
-
-method quote($/) {
-    make PAST::Val.new( :value( $($<string_literal>) ), :node($/) );
+method keyexpr2($/) {
+    make $( $<primary> );
 }
 
+method keymsg($/) {
+    my @past;
+    my $num := +$<keysel>;
+    my $i := 0;
+    while $i < $num {
+        @past.push( ~$<keysel>[$i] );
+        @past.push( $($<keyexpr2>[$i]) );
+        $i++;
+    }
+    make @past;
+}
+
+method binaryexpr($/) {
+    $/.panic('binary expressions not yet implemented');
+}
+
+method unaryexpr($/) {
+    $/.panic('unary expressions not yet implemented');
+}
+
+method primary($/) {
+    make $( $<unit> );
+}
+
+method unit($/,$key) {
+    make $( $/{$key} );
+}
+
+method literal($/,$key) {
+    make $( $/{$key} );
+}
+
+method string($/) {
+    make PAST::Val.new( :value(~$<text>), :returns('String') );
+}
+
+method id($/) {
+    make PAST::Var.new( :name(~$/), :scope('package'), :node($/) );
+}
 
 # Local Variables:
 #   mode: cperl

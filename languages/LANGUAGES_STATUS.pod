@@ -35,7 +35,7 @@ Part of languages smoke testing.
 
 =item Last verified with parrot version
 
-0.6.2
+0.6.3
 
 =item Location
 
@@ -85,7 +85,7 @@ Part of languages smoke testing.
 
 =item Last verified with parrot version
 
-0.6.2
+0.6.3
 
 =item Location
 
@@ -134,7 +134,7 @@ Passes all tests. Part of languages smoke testing.
 
 =item Last verified with parrot version
 
-0.6.2
+0.6.3
 
 =item Location
 
@@ -173,20 +173,44 @@ C<languages/c99>
 
 =item Description
 
-Implementation of Ruby CVS Head 1.9
+Implementation of Ruby 1.9
 
 =item Status
 
 Parser is pretty complete.
-Generates PIR for basic Ruby programs
+Decent support for aggregates and classes.
+Minimal class hierarchy.
 
 =item Last verified with parrot version
 
-0.6.2
+0.6.3
 
 =item Location
 
 C<languages/cardinal>
+
+=back
+
+=head2 Chitchat
+
+=over 4
+
+=item Description
+
+Smalltalk compiler
+
+=item Status
+
+Parser is decent.
+Everything else is nonexistant.
+
+=item Last verified with parrot version
+
+0.6.3
+
+=item Location
+
+C<languages/chitchat>
 
 =back
 
@@ -260,7 +284,7 @@ has been commented out.
 
 =item Last verified with parrot version
 
-0.6.2
+0.6.3
 
 =item Location
 
@@ -377,7 +401,7 @@ Based on PCT.
 
 =item Last verified with parrot version
 
-0.6.2
+0.6.3
 
 =item Location
 
@@ -415,7 +439,7 @@ Part of languages smoke testing.
 
 =item Last verified with parrot version
 
-0.6.2
+0.6.3
 
 =item Location
 
@@ -470,7 +494,7 @@ Working, but not complete. Part of languages smoke testing.
 
 =item Last verified with parrot version
 
-0.6.2
+0.6.3
 
 =item Location
 
@@ -494,7 +518,7 @@ VISIBLE and BTW "work"
 
 =item Last verified with parrot version
 
-0.6.2
+0.6.3
 
 =item Location
 
@@ -522,7 +546,7 @@ L<http://www.parrotcode.org/talks/LuaOnParrot.pdf>.
 
 =item Last verified with parrot version
 
-0.6.2
+0.6.3
 
 =item Location
 
@@ -584,7 +608,7 @@ Development is stalled. Takers are welcome.  Some tests fail.
 
 =item Last verified with parrot version
 
-0.6.2
+0.6.3
 
 =item Location
 
@@ -631,7 +655,7 @@ In progress.
 
 =item Last verified with parrot version
 
-0.6.2
+0.6.3
 
 =item Location
 
@@ -678,7 +702,7 @@ Working. Part of languages smoke testing.
 
 =item Last verified with parrot version
 
-0.6.2
+0.6.3
 
 =item Location
 
@@ -703,7 +727,7 @@ Part of languages smoke testing.
 
 =item Last verified with Parrot version
 
-0.6.2
+0.6.3
 
 =item Location
 
@@ -731,7 +755,7 @@ builtins.
 
 =item Last verified with Parrot version
 
-0.6.2
+0.6.3
 
 =item Location
 
@@ -809,7 +833,7 @@ Started.
 
 =item Last verified with parrot version
 
-0.6.2
+0.6.3
 
 =item Location
 
@@ -862,7 +886,7 @@ Parser is 90% complete; waiting for more PAST support.
 
 =item Last verified with parrot version
 
-0.6.2
+0.6.3
 
 =item Location
 
@@ -981,7 +1005,7 @@ An example languages from the PCT tutorial.
 
 =item Last verified with parrot version
 
-0.6.1
+0.6.3
 
 =item Location
 
@@ -1006,7 +1030,7 @@ use tcltest.tcl)
 
 =item Last verified with parrot version
 
-0.6.2
+0.6.3
 
 =item Location
 
@@ -1036,7 +1060,7 @@ Working. Part of languages smoke testing.
 
 =item Last verified with parrot version
 
-0.6.2
+0.6.3
 
 =item Location
 
@@ -1060,7 +1084,7 @@ expected to change soon.
 
 =item Last verified with parrot version
 
-0.6.2
+0.6.3
 
 =item Location
 
@@ -1088,7 +1112,7 @@ See details in F<languages/WMLScript/doc/status.pod>.
 
 =item Last verified with parrot version
 
-0.6.2
+0.6.3
 
 =item Location
 

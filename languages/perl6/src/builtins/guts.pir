@@ -248,11 +248,9 @@ Internal helper method to implement the functionality of the does keyword.
 
 .sub '!keyword_does'
     .param pmc class
-    .param string role_name
-    .local pmc role
+    .param pmc role
 
     # Get Parrot to compose the role for us (handles the methods).
-    role = get_hll_global role_name
     addrole class, role
 
     # Parrot doesn't handle composing the attributes; we do that here for now.
@@ -311,6 +309,50 @@ Adds an attribute with the given name to the class or role.
     .param pmc type
     class.'add_attribute'(attr_name, type)
 .end
+
+
+=item !anon_enum(value_list)
+
+Constructs a Mapping, based upon the values list.
+
+=cut
+
+.sub '!anon_enum'
+    .param pmc values
+
+    # For now, we assume integer type, unless we have a first pair that says
+    # otherwise.
+    .local pmc cur_val
+    cur_val = new 'Int'
+    cur_val = 0
+
+    # Iterate over values and make mapping.
+    .local pmc result, values_it, cur_item
+    result = new 'Mapping'
+    values_it = iter values
+  values_loop:
+    unless values_it goto values_loop_end
+    cur_item = shift values_it
+    $I0 = isa cur_item, 'Perl6Pair'
+    if $I0 goto pair
+
+  nonpair:
+    $P0 = 'postfix:++'(cur_val)
+    result[cur_item] = $P0
+    goto values_loop
+
+  pair:
+    cur_val = cur_item.'value'()
+    $P0 = cur_item.'key'()
+    result[$P0] = cur_val
+    cur_val = clone cur_val
+    'postfix:++'(cur_val)
+    goto values_loop
+
+  values_loop_end:
+    .return (result)
+.end
+
 
 =back
 
