@@ -3,10 +3,6 @@
 package Parrot::OpsRenumber;
 use strict;
 use warnings;
-use Cwd;
-use Data::Dumper ();
-use File::Path ();
-use File::Spec;
 use lib qw ( lib );
 use base qw( Parrot::Ops2pm::Base );
 use Parrot::OpsFile;
