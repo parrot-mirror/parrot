@@ -1,6 +1,6 @@
 #! perl
 # Copyright (C) 2008, The Perl Foundation.
-# $Id:  $
+# $Id$
 
 =head1 NAME
 
@@ -25,7 +25,7 @@ use warnings;
 use FindBin;
 use lib "$FindBin::Bin/../../lib";
 
-use Test::More     tests => 12;
+use Test::More     tests => 13;
 use Parrot::Test;
 
 language_output_is( 'Plumhead', <<'CODE', <<'OUTPUT', 'gettype(TRUE)' );
@@ -111,6 +111,22 @@ language_output_is( 'Plumhead', <<'CODE', <<'OUTPUT', 'is_null(NULL)' );
   echo is_null(NULL), "\n";
 ?>
 CODE
+1
+OUTPUT
+
+language_output_is( 'Plumhead', <<'CODE', <<'OUTPUT', 'is_scalar()' );
+<?php
+  echo is_scalar(NULL), "\n";
+  echo is_scalar(TRUE), "\n";
+  echo is_scalar(3.14), "\n";
+  echo is_scalar(42), "\n";
+  echo is_scalar('str'), "\n";
+?>
+CODE
+
+1
+1
+1
 1
 OUTPUT
 
