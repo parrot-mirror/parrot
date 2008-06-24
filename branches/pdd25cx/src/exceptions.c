@@ -190,8 +190,8 @@ PARROT_CAN_RETURN_NULL
 opcode_t *
 Parrot_ex_throw_from_op(PARROT_INTERP, ARGIN(PMC *exception), ARGIN_NULLOK(void *dest))
 {
-    opcode_t *address;
-    opcode_t *want_args;
+    opcode_t   *address;
+    opcode_t   *want_args;
     PMC * const handler = find_exception_handler(interp, exception);
 
     if (!handler)
@@ -216,7 +216,7 @@ Parrot_ex_throw_from_op(PARROT_INTERP, ARGIN(PMC *exception), ARGIN_NULLOK(void 
 
     if (PObj_get_FLAGS(handler) & SUB_FLAG_C_HANDLER) {
         /* it's a C exception handler */
-        Parrot_runloop * const jump_point = (Parrot_runloop *) address;
+        Parrot_runloop * const jump_point = (Parrot_runloop *)address;
         longjmp(jump_point->resume, 1);
     }
 
@@ -267,12 +267,12 @@ PARROT_DOES_NOT_RETURN
 void
 Parrot_ex_throw_from_c(PARROT_INTERP, ARGIN(PMC *exception))
 {
-    PMC * const handler = find_exception_handler(interp, exception);
-    STRING *msg = VTABLE_get_string(interp, exception);
-    RunProfile * const profile = interp->profile;
-    Parrot_runloop *return_point = interp->current_runloop;
+    PMC * const        handler      = find_exception_handler(interp, exception);
+    STRING            *msg          = VTABLE_get_string(interp, exception);
+    RunProfile * const profile      = interp->profile;
+    Parrot_runloop    *return_point = interp->current_runloop;
 
-    /* If profiling remember end time of lastop and generate entry for
+    /* If profiling, remember end time of lastop and generate entry for
      * exception. */
     if (profile && Interp_flags_TEST(interp, PARROT_PROFILE_FLAG)) {
         const FLOATVAL now = Parrot_floatval_time();
@@ -290,6 +290,13 @@ Parrot_ex_throw_from_c(PARROT_INTERP, ARGIN(PMC *exception))
             "Parrot_ex_throw_from_c (severity:%d error:%d): %Ss\n",
             EXCEPT_error, exitcode, msg);
         PDB_backtrace(interp);
+    }
+
+    /* it's a C exception handler */
+    if (PObj_get_FLAGS(handler) & SUB_FLAG_C_HANDLER) {
+        Parrot_runloop * const jump_point =
+            (Parrot_runloop * const)VTABLE_get_pointer(interp, handler);
+        longjmp(jump_point->resume, 1);
     }
 
     /* Run the handler. */
