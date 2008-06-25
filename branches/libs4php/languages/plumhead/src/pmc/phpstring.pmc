@@ -1,0 +1,84 @@
+/*
+Copyright (C) 2008, The Perl Foundation.
+$Id$
+
+=head1 NAME
+
+src/pmc/phpstring.pmc - PHP String
+
+=head1 DESCRIPTION
+
+=head2 Methods
+
+=over 4
+
+=cut
+
+*/
+
+pmclass PhpString
+    extends  String
+    provides scalar
+    provides string
+    dynpmc
+    group    php_group
+    hll      PHP
+    maps     String {
+
+/*
+
+=item C<STRING* name()>
+
+Return the string 'string'.
+
+=cut
+
+*/
+    STRING* name() {
+        return const_string(INTERP, "string");
+    }
+
+/*
+
+=back
+
+=head2 non-Vtable Methods
+
+=over 4
+
+=cut
+
+*/
+
+/*
+
+=back
+
+=head2 Specific Methods
+
+=over 4
+
+=cut
+
+*/
+}
+
+/*
+
+=back
+
+=head1 AUTHORS
+
+Francois Perrad.
+
+=cut
+
+*/
+
+
+/*
+ * Local variables:
+ *   c-file-style: "parrot"
+ * End:
+ * vim: expandtab shiftwidth=4:
+ */
