@@ -4,14 +4,40 @@
 BUILD_DIR     = @build_dir@
 TGE_DIR       = $(BUILD_DIR)/compilers/tge
 LIBRARY_DIR   = $(BUILD_DIR)/runtime/parrot/library
+PMCDIR        = src/pmc
+PARROT_DYNEXT = @build_dir@/runtime/parrot/dynext
 
 # Set up commands
 PARROT        = $(BUILD_DIR)/parrot@exe@
 PERL            = @perl@
 RM_F            = @rm_f@
 RECONFIGURE   = $(PERL) $(BUILD_DIR)/tools/dev/reconfigure.pl
+PMCBUILD      = $(PERL) @build_dir@/tools/build/dynpmc.pl
 NQP           = $(BUILD_DIR)/compilers/nqp/nqp.pbc
 PCT           = $(BUILD_DIR)/runtime/parrot/library/PCT.pbc
+
+PMCS = \
+ phpboolean \
+ phpfloat \
+ phpinteger \
+ phpstring \
+ phpundef
+
+PMC_SOURCES = \
+ $(PMCDIR)/lua.pmc \
+ $(PMCDIR)/luaany.pmc \
+ $(PMCDIR)/luaboolean.pmc \
+ $(PMCDIR)/luabytecode.pmc \
+ $(PMCDIR)/luaclosure.pmc \
+ $(PMCDIR)/luafunction.pmc \
+ $(PMCDIR)/luanil.pmc \
+ $(PMCDIR)/luanumber.pmc \
+ $(PMCDIR)/luastring.pmc \
+ $(PMCDIR)/luatable.pmc \
+ $(PMCDIR)/luathread.pmc \
+ $(PMCDIR)/luauserdata.pmc
+
+PHP_GROUP=$(PMCDIR)/php_group$(LOAD_EXT)
 
 PHP_SRC_STD_EXT= \
   src/common/php_API.pir \
@@ -127,7 +153,7 @@ build:           build-pct
 
 build-all:       build-pct build-phc build-antlr3
 
-build-common:    src/common/plumheadlib.pbc plumhead.pbc $(PHP_EXT)
+build-common:    $(PHP_GROUP) src/common/plumheadlib.pbc plumhead.pbc $(PHP_EXT)
 
 build-pct:       build-common
 
@@ -135,7 +161,7 @@ build-phc:       build-common
 
 build-antlr3:    build-common
 	@echo 'Be sure to have set CLASSPATH as laid out in docs/antlr3.pod'
-	javac src/antlr3/*.java 
+	javac src/antlr3/*.java
 
 src/common/plumheadlib.pbc: src/common/builtins.pir src/common/php_standard.pir $(PHP_SRC_STD_EXT) src/common/php_API.pir src/common/php_MACRO.pir
 	$(PARROT) -o src/common/plumheadlib.pbc src/common/builtins.pir
@@ -162,6 +188,12 @@ plumhead.pbc: \
     src/pct/gen_actions.pir
 	$(PARROT) -o plumhead.pbc src/common/plumhead.pir
 
+$(PHP_GROUP): $(PARROT) $(PMC_FILES)
+	@cd $(PMCDIR) && $(PMCBUILD) generate $(PMCS)
+	@cd $(PMCDIR) && $(PMCBUILD) compile $(PMCS)
+	@cd $(PMCDIR) && $(PMCBUILD) linklibs $(PMCS)
+	@cd $(PMCDIR) && $(PMCBUILD) copy "--destination=$(PARROT_DYNEXT)" $(PMCS)
+
 test:     all test-pct
 
 test-all: all test-php test-phc test-antlr3 test-pct
@@ -182,6 +214,7 @@ clean: clean-common clean-pct clean-antlr3 clean-test
 
 clean-common:
 	$(RM_F) src/common/plumheadlib.pbc plumhead.pbc
+	$(RM_F) "$(PMCDIR)/*.dump" "$(PMCDIR)/*.c" "$(PMCDIR)/*.h" "$(PMCDIR)/*$(LOAD_EXT)" "$(PMCDIR)/*$(O)"
 
 clean-pct:
 	$(RM_F) \
