@@ -71,10 +71,6 @@ CODE
 /^0\.463/
 OUTPUT
 
-TODO:
-{
-    local $TODO = 'to_base';
-
 language_output_is( 'Plumhead', <<'CODE', <<'OUTPUT', 'base_convert' );
 <?php
   echo base_convert(126, 10, 16), "\n";
@@ -90,8 +86,6 @@ language_output_is( 'Plumhead', <<'CODE', <<'OUTPUT', 'bindec' );
 CODE
 5
 OUTPUT
-
-}
 
 language_output_is( 'Plumhead', <<'CODE', <<'OUTPUT', 'ceil' );
 <?php
@@ -117,10 +111,6 @@ CODE
 /^1\.127/
 OUTPUT
 
-TODO:
-{
-    local $TODO = 'to_base';
-
 language_output_is( 'Plumhead', <<'CODE', <<'OUTPUT', 'decbin' );
 <?php
   echo decbin(126), "\n";
@@ -144,8 +134,6 @@ language_output_is( 'Plumhead', <<'CODE', <<'OUTPUT', 'decoct' );
 CODE
 176
 OUTPUT
-
-}
 
 language_output_like( 'Plumhead', <<'CODE', <<'OUTPUT', 'deg2rad' );
 <?php
@@ -179,10 +167,6 @@ CODE
 0.64
 OUTPUT
 
-TODO:
-{
-    local $TODO = 'to_base';
-
 language_output_is( 'Plumhead', <<'CODE', <<'OUTPUT', 'hexdec' );
 <?php
   echo hexdec('7E'), "\n";
@@ -190,8 +174,6 @@ language_output_is( 'Plumhead', <<'CODE', <<'OUTPUT', 'hexdec' );
 CODE
 126
 OUTPUT
-
-}
 
 language_output_like( 'Plumhead', <<'CODE', <<'OUTPUT', 'hypot' );
 <?php
@@ -225,10 +207,6 @@ CODE
 2
 OUTPUT
 
-TODO:
-{
-    local $TODO = 'to_base';
-
 language_output_is( 'Plumhead', <<'CODE', <<'OUTPUT', 'octdec' );
 <?php
   echo octdec('0777'), "\n";
@@ -236,8 +214,6 @@ language_output_is( 'Plumhead', <<'CODE', <<'OUTPUT', 'octdec' );
 CODE
 511
 OUTPUT
-
-}
 
 language_output_like( 'Plumhead', <<'CODE', <<'OUTPUT', 'pi' );
 <?php

@@ -15,6 +15,20 @@ php_math.pir - PHP math Standard Library
 
 .const num PI = 3.14159265358979323846
 
+.sub 'longtobase' :anon
+    .param int value
+    .param int base
+    .const string digits = '0123456789abcdefghijklmnopqrstuvwxyz'
+    $S0 = ''
+  L1:
+    $I0 = value % base
+    $S1 = substr digits, $I0, 1
+    $S0 = concat $S1, $S0
+    value = value / base
+    if value goto L1
+    .return ($S0)
+.end
+
 .macro ROUND_WITH_FUZZ(val, places)
     .local num tmp
     tmp = .val
@@ -209,8 +223,6 @@ NOT IMPLEMENTED.
 
 Converts a number in a string from any base <= 36 to any base <= 36
 
-STILL INCOMPLETE.
-
 =cut
 
 .sub 'base_convert'
@@ -246,8 +258,9 @@ STILL INCOMPLETE.
     $P0 = $P1.'to_base'($I2)
     $I0 = isa $P0, 'PhpInteger'
     unless $I0 goto L6
-    $P0 = $P0.'to_base'($I3)
-    .return ($P0)
+    $I0 = $P0
+    $S0 = longtobase($I0, $I3)
+    .RETURN_STRING($S0)
   L6:
     .RETURN_FALSE()
 .end
@@ -255,8 +268,6 @@ STILL INCOMPLETE.
 =item C<int bindec(string binary_number)>
 
 Returns the decimal equivalent of the binary number
-
-STILL INCOMPLETE.
 
 =cut
 
@@ -352,8 +363,6 @@ Returns the hyperbolic cosine of the number, defined as (exp(number) + exp(-numb
 
 Returns a string containing a binary representation of the number
 
-STILL INCOMPLETE.
-
 =cut
 
 .sub 'decbin'
@@ -366,17 +375,13 @@ STILL INCOMPLETE.
   L1:
     $P1 = shift args
     $I1 = $P1
-    new $P1, 'PhpInteger'
-    set $P1, $I1
-    $P0 = $P1.'to_base'(2)
-    .return ($P0)
+    $S0 = longtobase($I1, 2)
+    .RETURN_STRING($S0)
 .end
 
 =item C<string dechex(int decimal_number)>
 
 Returns a string containing a hexadecimal representation of the given number
-
-STILL INCOMPLETE.
 
 =cut
 
@@ -390,17 +395,13 @@ STILL INCOMPLETE.
   L1:
     $P1 = shift args
     $I1 = $P1
-    new $P1, 'PhpInteger'
-    set $P1, $I1
-    $P0 = $P1.'to_base'(16)
-    .return ($P0)
+    $S0 = longtobase($I1, 16)
+    .RETURN_STRING($S0)
 .end
 
 =item C<string decoct(int decimal_number)>
 
 Returns a string containing an octal representation of the given number
-
-STILL INCOMPLETE.
 
 =cut
 
@@ -414,10 +415,8 @@ STILL INCOMPLETE.
   L1:
     $P1 = shift args
     $I1 = $P1
-    new $P1, 'PhpInteger'
-    set $P1, $I1
-    $P0 = $P1.'to_base'(8)
-    .return ($P0)
+    $S0 = longtobase($I1, 8)
+    .RETURN_STRING($S0)
 .end
 
 =item C<float deg2rad(float number)>
@@ -526,8 +525,6 @@ Returns the remainder of dividing x by y as a float
 =item C<int hexdec(string hexadecimal_number)>
 
 Returns the decimal equivalent of the hexadecimal number
-
-STILL INCOMPLETE.
 
 =cut
 
@@ -707,8 +704,6 @@ NOT IMPLEMENTED.
 =item C<int octdec(string octal_number)>
 
 Returns the decimal equivalent of an octal string
-
-STILL INCOMPLETE.
 
 =cut
 

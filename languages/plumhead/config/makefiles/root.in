@@ -17,6 +17,7 @@ NQP           = $(BUILD_DIR)/compilers/nqp/nqp.pbc
 PCT           = $(BUILD_DIR)/runtime/parrot/library/PCT.pbc
 
 PMCS = \
+ php \
  phpboolean \
  phpfloat \
  phpinteger \
@@ -24,18 +25,12 @@ PMCS = \
  phpundef
 
 PMC_SOURCES = \
- $(PMCDIR)/lua.pmc \
- $(PMCDIR)/luaany.pmc \
- $(PMCDIR)/luaboolean.pmc \
- $(PMCDIR)/luabytecode.pmc \
- $(PMCDIR)/luaclosure.pmc \
- $(PMCDIR)/luafunction.pmc \
- $(PMCDIR)/luanil.pmc \
- $(PMCDIR)/luanumber.pmc \
- $(PMCDIR)/luastring.pmc \
- $(PMCDIR)/luatable.pmc \
- $(PMCDIR)/luathread.pmc \
- $(PMCDIR)/luauserdata.pmc
+ $(PMCDIR)/php.pmc \
+ $(PMCDIR)/phpboolean.pmc \
+ $(PMCDIR)/phpfloat.pmc \
+ $(PMCDIR)/phpinteger.pmc \
+ $(PMCDIR)/phpstring.pmc \
+ $(PMCDIR)/phpundef.pmc
 
 PHP_GROUP=$(PMCDIR)/php_group$(LOAD_EXT)
 
