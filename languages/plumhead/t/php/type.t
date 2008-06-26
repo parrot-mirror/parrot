@@ -25,8 +25,28 @@ use warnings;
 use FindBin;
 use lib "$FindBin::Bin/../../lib";
 
-use Test::More     tests => 13;
+use Test::More     tests => 17;
 use Parrot::Test;
+
+language_output_is( 'Plumhead', <<'CODE', <<'OUTPUT', 'floatval()' );
+<?php
+  echo floatval(TRUE), "\n";
+  echo floatval(NULL), "\n";
+  echo floatval(3), "\n";
+  echo floatval('3.14'), "\n";
+  echo floatval(' 3.14'), "\n";
+  echo floatval(' 3.14 '), "\n";
+  echo floatval('str'), "\n";
+?>
+CODE
+1
+0
+3
+3.14
+3.14
+3.14
+0
+OUTPUT
 
 language_output_is( 'Plumhead', <<'CODE', <<'OUTPUT', 'gettype(TRUE)' );
 <?php
@@ -74,6 +94,32 @@ OUTPUT
 
 }
 
+language_output_is( 'Plumhead', <<'CODE', <<'OUTPUT', 'intval()' );
+<?php
+  echo intval(TRUE), "\n";
+  echo intval(NULL), "\n";
+  echo intval(3.14), "\n";
+  echo intval(3), "\n";
+  echo intval('3'), "\n";
+  echo intval('0x03'), "\n";
+  echo intval('3.14'), "\n";
+  echo intval(' 3'), "\n";
+  echo intval(' 3 '), "\n";
+  echo intval('str'), "\n";
+?>
+CODE
+1
+0
+3
+3
+3
+0
+3
+3
+3
+0
+OUTPUT
+
 language_output_like( 'Plumhead', <<'CODE', <<'OUTPUT', 'is_bool() no args' );
 <?php
   echo is_bool(), "\n";
@@ -114,6 +160,32 @@ CODE
 1
 OUTPUT
 
+language_output_is( 'Plumhead', <<'CODE', <<'OUTPUT', 'is_numeric()' );
+<?php
+  echo is_numeric(3), "\n";
+  echo is_numeric(3.14), "\n";
+  echo is_numeric(NULL), "\n";
+  echo is_numeric(TRUE), "\n";
+  echo is_numeric('3'), "\n";
+  echo is_numeric('0x03'), "\n";
+  echo is_numeric('3.14'), "\n";
+  echo is_numeric(' 3'), "\n";
+  echo is_numeric(' 3 '), "\n";
+  echo is_numeric(' string '), "\n";
+?>
+CODE
+1
+1
+
+
+1
+1
+1
+1
+
+
+OUTPUT
+
 language_output_is( 'Plumhead', <<'CODE', <<'OUTPUT', 'is_scalar()' );
 <?php
   echo is_scalar(NULL), "\n";
@@ -137,6 +209,23 @@ language_output_is( 'Plumhead', <<'CODE', <<'OUTPUT', 'is_string("str")' );
 CODE
 1
 OUTPUT
+
+TODO:
+{
+    local $TODO = 'update compiler';
+
+language_output_is( 'Plumhead', <<'CODE', <<'OUTPUT', 'settype()' );
+<?php
+  $var = 3.14;
+  echo settype($var, 'int'), "\n";
+  echo $var, "\n";
+?>
+CODE
+1
+3
+OUTPUT
+
+}
 
 language_output_is( 'Plumhead', <<'CODE', <<'OUTPUT', 'strval(TRUE)' );
 <?php
