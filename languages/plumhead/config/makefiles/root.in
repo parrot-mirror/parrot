@@ -1,5 +1,9 @@
 # $Id$
 
+# config settings
+LOAD_EXT = @load_ext@
+O        = @o@
+
 # Set up directories
 BUILD_DIR     = @build_dir@
 TGE_DIR       = $(BUILD_DIR)/compilers/tge
@@ -110,6 +114,7 @@ help:
 	@echo "                     Current this has nothing to do."
 	@echo "  build-antlr3       Build support for variant 'Plumhead antlr3'."
 	@echo "                     Needs javac and a proper CLASSPATH."
+	@echo "  pmc				Build all PMCs."
 	@echo ""
 	@echo "Testing:"
 	@echo "  test:              Run the test suite for 'Plumhead pct'."
@@ -118,11 +123,13 @@ help:
 	@echo "  test-phc:          Run the test suite for 'Plumhead phc'."
 	@echo "  test-antlr3:       Run the test suite for 'Plumhead antlr3'."
 	@echo "  test-pct:          Run the test suite for 'Plumhead pct'."
+	@echo "  test-pmc:          Run the test suite for Plumhead's PMCs."
 	@echo ""
 	@echo "Cleaning:"
 	@echo "  clean:             Clean up."
 	@echo "  clean-test:        Clean up temporary files from testing."
-	@echo "  realclean:         clean and remove Makefile."
+	@echo "  clean-pmc:         Clean up temporary files from the PMC build process."
+	@echo "  realclean:         Clean and remove Makefile."
 	@echo ""
 	@echo "Misc:"
 	@echo "  help:              Print this help message."
@@ -146,9 +153,9 @@ maintain-antlr3: src/antlr3/Plumhead.g src/antlr3/GenPastNqp.g
 
 build:           build-pct
 
-build-all:       build-pct build-phc build-antlr3
+build-all:       build-pct build-phc build-antlr3 
 
-build-common:    $(PHP_GROUP) src/common/plumheadlib.pbc plumhead.pbc $(PHP_EXT)
+build-common:    pmc src/common/plumheadlib.pbc plumhead.pbc $(PHP_EXT)
 
 build-pct:       build-common
 
@@ -183,6 +190,8 @@ plumhead.pbc: \
     src/pct/gen_actions.pir
 	$(PARROT) -o plumhead.pbc src/common/plumhead.pir
 
+pmc: $(PHP_GROUP)
+
 $(PHP_GROUP): $(PARROT) $(PMC_FILES)
 	@cd $(PMCDIR) && $(PMCBUILD) generate $(PMCS)
 	@cd $(PMCDIR) && $(PMCBUILD) compile $(PMCS)
@@ -191,7 +200,7 @@ $(PHP_GROUP): $(PARROT) $(PMC_FILES)
 
 test:     all test-pct
 
-test-all: all test-php test-phc test-antlr3 test-pct
+test-all: all test-php test-phc test-antlr3 test-pct test-pmc
 
 test-php:
 	- cd .. && $(PERL) -I../lib -I plumhead/lib plumhead/t/harness --with-php
@@ -205,11 +214,16 @@ test-antlr3:
 test-pct:
 	- cd .. && $(PERL) -I../lib -I plumhead/lib plumhead/t/harness --with-pct
 
+test-pmc:
+	- $(PERL) -I../../lib t/pmc/*t 
+
 clean: clean-common clean-pct clean-antlr3 clean-test
 
-clean-common:
+clean-common: clean-pmc
 	$(RM_F) src/common/plumheadlib.pbc plumhead.pbc
-	$(RM_F) "$(PMCDIR)/*.dump" "$(PMCDIR)/*.c" "$(PMCDIR)/*.h" "$(PMCDIR)/*$(LOAD_EXT)" "$(PMCDIR)/*$(O)"
+
+clean-pmc:
+	$(RM_F) "$(PMCDIR)/*dump" "$(PMCDIR)/*\.c" "$(PMCDIR)/pmc_*h" "$(PMCDIR)/php_group.h" "$(PMCDIR)/*$(O)" "$(PMCDIR)/*$(LOAD_EXT)"
 
 clean-pct:
 	$(RM_F) \
