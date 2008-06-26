@@ -60,6 +60,45 @@ Return the string 'string'.
 
 =over 4
 
+=item C<INTVAL is_numeric()>
+
+=cut
+
+*/
+    METHOD INTVAL is_numeric() {
+        INTVAL       retval = 0;
+        STRING       *rep = SELF.get_string();
+        char         *s   = string_to_cstring(INTERP, rep);
+        char         *s1, *s2;
+        INTVAL       i;
+
+        s1 = s;
+        while (isspace(*s1)) s1++;
+
+        if (*s1 == '0' && (s1[1] == 'X' || s1[1] == 'x')) {
+            s1 += 2;
+            i = strtol(s1, &s2, 16);
+        }
+        else
+            i = strtol(s1, &s2, 10);
+
+        if (s1 != s2 && *s2 == '\0') {
+            retval = 1;
+        }
+        else {
+            FLOATVAL d = strtod(s1, &s2);
+
+            if (s1 != s2 && *s2 == '\0') {
+                retval = 1;
+            }
+        }
+
+        string_cstring_free(s);
+        RETURN(INTVAL retval);
+    }
+
+/*
+
 =item C<PMC* to_base(INTVAL base)>
 
 =cut
@@ -95,7 +134,7 @@ Return the string 'string'.
         s1 = s;
         while (isspace(*s1)) s1++;
 
-        if (s1[0] == '0' && (s1[1] == 'X' || s1[1] == 'x')) {
+        if (*s1 == '0' && (s1[1] == 'X' || s1[1] == 'x')) {
             s1 += 2;
             i = strtol(s1, &s2, 16);
         }

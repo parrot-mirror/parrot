@@ -29,12 +29,19 @@ php_type.pir - PHP type Standard Library
 
 Get the float value of a variable
 
-NOT IMPLEMENTED.
-
 =cut
 
 .sub 'floatval'
-    not_implemented()
+    .param pmc args :slurpy
+    .local int argc
+    argc = args
+    unless argc != 1 goto L1
+    wrong_param_count()
+    .RETURN_NULL()
+  L1:
+    $P1 = shift args
+    $N0 = $P1
+    .RETURN_DOUBLE($N0)
 .end
 
 =item C<string gettype(mixed var)>
@@ -60,12 +67,19 @@ Returns the type of the variable
 
 Get the integer value of a variable using the optional base for the conversion
 
-NOT IMPLEMENTED.
-
 =cut
 
 .sub 'intval'
-    not_implemented()
+    .param pmc args :slurpy
+    .local int argc
+    argc = args
+    unless argc != 1 goto L1
+    wrong_param_count()
+    .RETURN_NULL()
+  L1:
+    $P1 = shift args
+    $I0 = $P1
+    .RETURN_LONG($I0)
 .end
 
 =item C<bool is_array(mixed var)>
@@ -140,12 +154,32 @@ Returns true if variable is null
 
 Returns true if value is a number or a numeric string
 
-NOT IMPLEMENTED.
-
 =cut
 
 .sub 'is_numeric'
-    not_implemented()
+    .param pmc args :slurpy
+    .local int argc
+    argc = args
+    unless argc != 1 goto L1
+    wrong_param_count()
+    .RETURN_NULL()
+  L1:
+    $P1 = shift args
+    $I0 = isa $P1, 'PhpFloat'
+    if $I0 goto L2
+    $I0 = isa $P1, 'PhpInteger'
+    if $I0 goto L2
+    $I0 = isa $P1, 'String'
+    unless $I0 goto L3
+    $S0 = $P1 ###
+    new $P1, 'PhpString' ###
+    set $P1, $S0 ###
+    $I0 = $P1.'is_numeric'()
+    .RETURN_BOOL($I0)
+  L3:
+    .RETURN_FALSE()
+  L2:
+    .RETURN_TRUE()
 .end
 
 =item C<bool is_object(mixed var)>
@@ -220,6 +254,16 @@ NOT IMPLEMENTED.
 =cut
 
 .sub 'settype'
+    .param pmc args :slurpy
+    .local int argc
+    argc = args
+    unless argc != 2 goto L1
+    wrong_param_count()
+    .RETURN_NULL()
+  L1:
+    $P1 = shift args
+    $P2 = shift args
+    $S2 = $P2
     not_implemented()
 .end
 
