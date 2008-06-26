@@ -153,7 +153,7 @@ maintain-antlr3: src/antlr3/Plumhead.g src/antlr3/GenPastNqp.g
 
 build:           build-pct
 
-build-all:       build-pct build-phc build-antlr3 
+build-all:       build-pct build-phc build-antlr3
 
 build-common:    pmc src/common/plumheadlib.pbc plumhead.pbc $(PHP_EXT)
 
@@ -215,7 +215,7 @@ test-pct:
 	- cd .. && $(PERL) -I../lib -I plumhead/lib plumhead/t/harness --with-pct
 
 test-pmc:
-	- $(PERL) -I../../lib t/pmc/*t 
+	- $(PERL) -I../../lib t/pmc/*t
 
 clean: clean-common clean-pct clean-antlr3 clean-test
 
