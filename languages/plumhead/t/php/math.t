@@ -51,8 +51,6 @@ CODE
 /^1\.047/
 OUTPUT
 
-exit 1;
-
 language_output_like( 'Plumhead', <<'CODE', <<'OUTPUT', 'asin' );
 <?php
   echo asin(0.5), "\n";
