@@ -149,7 +149,7 @@ by PHC from PHP source code. It generates an XML representation of a PAST data s
         </past:Var>
       </xsl:when>
       <xsl:otherwise>
-        <past:Var viviself="Hash" scope="package" lvalue="1" >
+        <past:Var viviself="PhpArray" scope="package" lvalue="1" >
           <xsl:attribute name="name" ><xsl:value-of select="concat( '$', phc:Token_variable_name/phc:value )" /></xsl:attribute>
         </past:Var>
       </xsl:otherwise>
