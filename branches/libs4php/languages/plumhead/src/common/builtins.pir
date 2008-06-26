@@ -2,16 +2,6 @@
 
 .loadlib 'php_group'
 
-# a helper for the PHC variant
-.sub 'decode_base64'
-    .param pmc args :slurpy
-    .return base64_decode(args :flat)
-.end
-
-.sub 'print_newline'
-    say ''
-.end
-
 # steal builtins from Perl6
 .sub 'print'
     .param pmc list            :slurpy
