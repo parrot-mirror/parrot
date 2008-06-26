@@ -78,6 +78,51 @@ Return the string 'string'.
         RETURN(PMC *retval);
     }
 
+/*
+
+=item C<PMC* to_number()>
+
+=cut
+
+*/
+    METHOD PMC* to_number() {
+        PMC          *retval;
+        STRING       *rep = SELF.get_string();
+        char         *s   = string_to_cstring(INTERP, rep);
+        char         *s1, *s2;
+        INTVAL       i;
+
+        s1 = s;
+        while (isspace(*s1)) s1++;
+
+        if (s1[0] == '0' && (s1[1] == 'X' || s1[1] == 'x')) {
+            s1 += 2;
+            i = strtol(s1, &s2, 16);
+        }
+        else
+            i = strtol(s1, &s2, 10);
+
+        if (s1 != s2 && (*s2 == '\0' || isspace(*s2))) {
+            retval = pmc_new(INTERP, dynpmc_PhpInteger);
+            PMC_int_val(retval) = i;
+        }
+        else {
+            FLOATVAL d = strtod(s1, &s2);
+
+            if (s1 != s2 && (*s2 == '\0' || isspace(*s2)) ) {
+                retval = pmc_new(INTERP, dynpmc_PhpFloat);
+                PMC_num_val(retval) = d;
+            }
+            else {
+                retval = pmc_new(INTERP, dynpmc_PhpInteger);
+                PMC_int_val(retval) = 0;
+            }
+        }
+
+        string_cstring_free(s);
+        RETURN(PMC *retval);
+    }
+
 }
 
 /*

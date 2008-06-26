@@ -51,8 +51,6 @@ php_math.pir - PHP math Standard Library
 
 Return the absolute value of the number
 
-STILL INCOMPLETE.
-
 =cut
 
 .sub 'abs'
@@ -64,7 +62,7 @@ STILL INCOMPLETE.
     .RETURN_NULL()
   L1:
     $P1 = shift args
-    # $P1 = $P1.'to_number'()
+    $P1 = $P1.'to_number'()
     $I0 = isa $P1, 'PhpFloat'
     unless $I0 goto L2
     $N1 = $P1
@@ -291,8 +289,6 @@ Returns the decimal equivalent of the binary number
 
 Returns the next highest integer value of the number
 
-STILL INCOMPLETE.
-
 =cut
 
 .sub 'ceil'
@@ -304,7 +300,7 @@ STILL INCOMPLETE.
     .RETURN_NULL()
   L1:
     $P1 = shift args
-    # $P1 = $P1.'to_number'()
+    $P1 = $P1.'to_number'()
     $I0 = isa $P1, 'PhpFloat'
     unless $I0 goto L2
     $N1 = $P1
@@ -474,8 +470,6 @@ NOT IMPLEMENTED. WARNING: this function is experimental.
 
 Returns the next lowest integer value from the number
 
-STILL INCOMPLETE.
-
 =cut
 
 .sub 'floor'
@@ -487,7 +481,7 @@ STILL INCOMPLETE.
     .RETURN_NULL()
   L1:
     $P1 = shift args
-    # $P1 = $P1.'to_number'()
+    $P1 = $P1.'to_number'()
     $I0 = isa $P1, 'PhpFloat'
     unless $I0 goto L2
     $N1 = $P1
@@ -738,8 +732,6 @@ Returns an approximation of pi
 
 Returns base raised to the power of exponent. Returns integer result when possible
 
-STILL INCOMPLETE.
-
 =cut
 
 .sub 'pow'
@@ -750,8 +742,8 @@ STILL INCOMPLETE.
     if $I0 goto L1
     .RETURN_NULL()
   L1:
-    #base = base.'to_number'()
-    #exponent = exponent.'to_number'()
+    base = base.'to_number'()
+    exponent = exponent.'to_number'()
     $I0 = isa base, 'PhpInteger'
     unless $I0 goto L2
     $I0 = isa exponent, 'PhpInteger'
