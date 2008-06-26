@@ -16,6 +16,8 @@ src/pmc/phpundef.pmc - PHP Undef
 
 */
 
+#include "php_private.h"
+
 pmclass PhpUndef
     extends  Undef
     dynpmc
@@ -58,9 +60,17 @@ Return the string 'NULL'.
 
 =over 4
 
+=item C<PMC* to_number()>
+
 =cut
 
 */
+    METHOD PMC* to_number() {
+        PMC     *retval = pmc_new(INTERP, dynpmc_PhpInteger);
+        VTABLE_set_integer_native(INTERP, retval, 0);
+        RETURN(PMC *retval);
+    }
+
 }
 
 /*

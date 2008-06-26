@@ -16,6 +16,8 @@ pmc/phpboolean.pmc - PHP Boolean
 
 */
 
+#include "php_private.h"
+
 pmclass PhpBoolean
     extends  Boolean
     provides scalar
@@ -76,9 +78,18 @@ Return the string '1' or ''.
 
 =over 4
 
+=item C<PMC* to_number()>
+
 =cut
 
 */
+    METHOD PMC* to_number() {
+        PMC     *retval = pmc_new(INTERP, dynpmc_PhpInteger);
+        INTVAL  val = SELF.get_integer();
+        VTABLE_set_integer_native(INTERP, retval, val);
+        RETURN(PMC *retval);
+    }
+
 }
 
 /*

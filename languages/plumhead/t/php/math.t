@@ -33,10 +33,14 @@ language_output_is( 'Plumhead', <<'CODE', <<'OUTPUT', 'abs' );
 <?php
   echo abs(-3), "\n";
   echo abs(-3.14), "\n";
+  echo abs(TRUE), "\n";
+  echo abs(NULL), "\n";
 ?>
 CODE
 3
 3.14
+1
+0
 OUTPUT
 
 language_output_like( 'Plumhead', <<'CODE', <<'OUTPUT', 'acos' );
@@ -46,6 +50,8 @@ language_output_like( 'Plumhead', <<'CODE', <<'OUTPUT', 'acos' );
 CODE
 /^1\.047/
 OUTPUT
+
+exit 1;
 
 language_output_like( 'Plumhead', <<'CODE', <<'OUTPUT', 'asin' );
 <?php
