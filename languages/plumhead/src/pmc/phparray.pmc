@@ -49,9 +49,14 @@ Return the string 'array'.
 
 =over 4
 
+=item C<PMC* to_number()>
+
 =cut
 
 */
+    METHOD PMC* to_number() {
+        RETURN(PMC *SELF);
+    }
 
 /*
 
