@@ -261,10 +261,6 @@
     .RETURN_BOOL($I0)
 .end
 
-.sub 'error_reporting'
-  .return()
-.end
-
 
 .include 'languages/plumhead/src/common/php_standard.pir'
 
