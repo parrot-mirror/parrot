@@ -80,10 +80,6 @@ CODE
 double
 OUTPUT
 
-TODO:
-{
-    local $TODO = 'update compiler';
-
 language_output_is( 'Plumhead', <<'CODE', <<'OUTPUT', 'gettype("str")' );
 <?php
   echo gettype('str'), "\n";
@@ -91,8 +87,6 @@ language_output_is( 'Plumhead', <<'CODE', <<'OUTPUT', 'gettype("str")' );
 CODE
 string
 OUTPUT
-
-}
 
 language_output_is( 'Plumhead', <<'CODE', <<'OUTPUT', 'gettype($array)' );
 <?php

@@ -89,7 +89,7 @@ Dumps a string representation of variable to output
     .local string type_of_pmc
     type_of_pmc = typeof a
 
-    ne type_of_pmc, 'String', not_a_string
+    ne type_of_pmc, 'string', not_a_string
         .local int string_len
 
         string_len = elements a

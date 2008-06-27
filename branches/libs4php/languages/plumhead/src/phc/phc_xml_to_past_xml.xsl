@@ -159,7 +159,7 @@ by PHC from PHP source code. It generates an XML representation of a PAST data s
 </xsl:template>
 
 <xsl:template match="phc:Token_string" >
-  <past:Val returns="String" >
+  <past:Val returns="PhpString" >
     <xsl:attribute name="encoding" ><xsl:value-of select="phc:value/@encoding" /></xsl:attribute>
     <xsl:attribute name="value" ><xsl:value-of select="phc:value" /></xsl:attribute>
   </past:Val>
