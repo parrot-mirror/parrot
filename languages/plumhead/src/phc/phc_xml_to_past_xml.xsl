@@ -93,9 +93,8 @@ by PHC from PHP source code. It generates an XML representation of a PAST data s
             <xsl:when test="phc:Token_op/phc:value = 'Jg=='" >infix:&amp;</xsl:when>
           </xsl:choose>
         </xsl:when>
-        <xsl:when test="phc:Token_op/phc:value = '==' and phc:Token_string" >infix:eq</xsl:when>
-        <xsl:when test="phc:Token_op/phc:value = '!=' and phc:Token_string" >infix:ne</xsl:when>
-        <xsl:when test="phc:Token_op/phc:value = '^'" >infix:+^</xsl:when>
+        <xsl:when test="phc:Token_op/phc:value = '&amp;&amp;'" >infix:AND</xsl:when>
+        <xsl:when test="phc:Token_op/phc:value = '||'" >infix:OR</xsl:when>
         <xsl:otherwise>
           <xsl:value-of select="concat('infix:', phc:Token_op/phc:value)" />
         </xsl:otherwise>
