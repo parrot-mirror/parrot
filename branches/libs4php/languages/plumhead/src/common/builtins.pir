@@ -52,9 +52,8 @@
 .end
 
 .sub 'prefix:~' :multi(_)
-    .param pmc a
-    $I1 = a
-    $I0 = bnot $I1
+    .param int a
+    $I0 = bnot a
     .RETURN_LONG($I0)
 .end
 
@@ -101,29 +100,23 @@
 .end
 
 .sub 'infix:&' :multi(_,_)
-    .param pmc a
-    .param pmc b
-    $I1 = a
-    $I2 = b
-    $I0 = band $I1, $I2
+    .param int a
+    .param int b
+    $I0 = band a, b
     .RETURN_LONG($I0)
 .end
 
 .sub 'infix:>>'
-    .param pmc a
-    .param pmc b
-    $I1 = a
-    $I2 = b
-    $I0 = $I1 >> $I2
+    .param int a
+    .param int b
+    $I0 = a >> b
     .RETURN_LONG($I0)
 .end
 
 .sub 'infix:<<'
-    .param pmc a
-    .param pmc b
-    $I1 = a
-    $I2 = b
-    $I0 = $I1 << $I2
+    .param int a
+    .param int b
+    $I0 = a << b
     .RETURN_LONG($I0)
 .end
 
@@ -164,11 +157,9 @@
 .end
 
 .sub 'infix:|' :multi(_,_)
-    .param pmc a
-    .param pmc b
-    $I1 = a
-    $I2 = b
-    $I0 = bor $I1, $I2
+    .param int a
+    .param int b
+    $I0 = bor a, b
     .RETURN_LONG($I0)
 .end
 
@@ -180,11 +171,9 @@
 .end
 
 .sub 'infix:^' :multi(_,_)
-    .param pmc a
-    .param pmc b
-    $I1 = a
-    $I2 = b
-    $I0 = bxor $I1, $I2
+    .param int a
+    .param int b
+    $I0 = bxor a, b
     .RETURN_LONG($I0)
 .end
 
