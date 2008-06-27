@@ -17,7 +17,7 @@ php_type.pir - PHP type Standard Library
     .local int argc
     argc = .args
     unless argc != 1 goto L1
-    error('Only one argument expected')
+    error(E_WARNING, 'Only one argument expected')
     .RETURN_FALSE()
   L1:
     $P1 = shift .args
