@@ -102,19 +102,18 @@ Seeds Mersenne Twister random number generator
 
 .sub 'mt_srand'
     .param pmc args :slurpy
-    .local pmc seed
+    .local int seed
     ($I0, seed) = parse_parameters('|l', args :flat)
     if $I0 goto L1
     .RETURN_NULL()
   L1:
-    if null seed goto L2
-    $I1 = seed
-    goto L3
+    .local int argc
+    argc = args
+    if argc goto L2
+    seed = generate_seed()
   L2:
-    $I1 = generate_seed()
-  L3:
     $P0 = get_hll_global 'mt19937'
-    $P0.'init_genrand'($I1)
+    $P0.'init_genrand'(seed)
     .return ()
 .end
 
@@ -152,19 +151,18 @@ Seeds random number generator
 
 .sub 'srand'
     .param pmc args :slurpy
-    .local pmc seed
+    .local int seed
     ($I0, seed) = parse_parameters('|l', args :flat)
     if $I0 goto L1
     .RETURN_NULL()
   L1:
-    if null seed goto L2
-    $I1 = seed
-    goto L3
+    .local int argc
+    argc = args
+    if argc goto L2
+    seed = generate_seed()
   L2:
-    $I1 = generate_seed()
-  L3:
     new $P0, 'Random'
-    set $P0, $I1
+    set $P0, seed
     .return ()
 .end
 
