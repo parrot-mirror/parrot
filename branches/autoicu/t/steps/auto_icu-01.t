@@ -16,7 +16,7 @@ use Parrot::Configure::Test qw( test_step_thru_runstep);
 
 my $args = process_options(
     {
-        argv => [ ],
+        argv => [ q{--without-icu}  ],
         mode => q{configure},
     }
 );
@@ -41,6 +41,14 @@ ok( $step->description(), "$step_name has description" );
 
 my $ret = $step->runstep($conf);
 ok( $ret, "$step_name runstep() returned true value" );
+
+is( $conf->data->get('has_icu'), 0,
+    "Got expected value for 'has_icu'" );
+is( $conf->data->get('icu_shared'), q{},
+    "Got expected value for 'icu_shared'" );
+is( $conf->data->get('icu_dir'), q{},
+    "Got expected value for 'icu_dir'" );
+is( $step->result(), 'no', "Got expected result" );
 
 pass("Completed all tests in $0");
 

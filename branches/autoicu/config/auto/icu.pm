@@ -16,6 +16,30 @@ Globalization support for software applications."
 
 =cut
 
+=pod
+
+CU Options:
+
+   For using a system ICU, these options can be used:
+
+   --icu-config=/path/to/icu-config
+                        Location of the script used for ICU autodetection.
+                        You just need to specify this option if icu-config
+                        is not in your PATH.
+
+   --icu-config=none    Can be used to disable the autodetection feature.
+                        It will also be disabled if you specify any other
+                        of the following ICU options.
+
+   If you do not have a full ICU installation:
+
+   --without-icu        Build parrot without ICU support
+   --icuheaders=(path)  Location of ICU headers without /unicode
+   --icushared=(flags)  Full linker command to create shared libraries
+   --icudatadir=(path)  Directory to locate ICU's data file(s)
+
+=cut
+
 package auto::icu;
 
 use strict;
@@ -39,7 +63,7 @@ sub _init {
 sub runstep {
     my ( $self, $conf ) = @_;
 
-    my ( $verbose, $icushared, $icuheaders, $icuconfig, $without ) =
+    my ( $verbose, $icushared, $icuheaders, $icuconfig, $without_opt ) =
         $conf->options->get( qw|
             verbose
             icushared
@@ -48,34 +72,53 @@ sub runstep {
             without-icu
     | );
 
-    my @icu_headers = qw(ucnv.h utypes.h uchar.h);
-    my $autodetect  =   ( ! defined($icushared)  )
-                            &&
-                        ( ! defined($icuheaders) );
-print STDERR "ad:  $autodetect\n";
+    # If we haven't provided the path to a specific ICU configuration program
+    # on the command line, then we probe to see if the program 'icu-config' is
+    # available.
 
-    if (! $without) {
-        if ( ! $autodetect ) {
-            if ($verbose) {
-                print "specified a icu config parameter,\nICU autodetection disabled.\n";
-            }
-        }
-        else {
-            if (
-                    ( ! defined $icuconfig )
-                        ||
-                    ( ! $icuconfig )
-                ) {
+    # From the icu-config(1) man page
+    # (L<http://linux.die.net/man/1/icu-config>):
 
-                # From the icu-config(1) man page
-                # (L<http://linux.die.net/man/1/icu-config>):
+    # "icu-config simplifies the task of building and linking
+    # against ICU as compared to manually configuring user
+    # makefiles or equivalent. Because icu-config is an executable
+    # script, it also solves the problem of locating the ICU
+    # libraries and headers, by allowing the system PATH to locate
+    # it."
+
+    # $icuconfig is a string holding the name of an executable program.
+    # So if it's not provided on the command line -- or if it's explicitly
+    # ruled out by being provided with the value 'none' -- an empty string 
+    # is its most appropriate value.
+
+    if ( ( ! $icuconfig ) or ( $icuconfig eq q{none} ) ) {
+        $icuconfig = q{};
+    }
+
+    # $without_opt holds user's command-line value for --without-icu=?
+    # If it's a true value, there's no point in going further.  We set the
+    # values needed in the Parrot::Configure object, set the step result and
+    # return.  If, however, it's a false value, then we're going to try to
+    # configure with ICU and we proceed to probe for ICU.
+
+    if ( $without_opt ) {
+        $conf->data->set(
+            has_icu    => 0,
+            icu_shared => '',    # used for generating src/dynpmc/Makefile
+            icu_dir    => '',
+        );
+        $self->set_result("no");
+        return 1;
+    }
+    else {
+        my @icu_headers = qw(ucnv.h utypes.h uchar.h);
+        my $autodetect  =   ( ! defined($icushared)  )
+                                &&
+                            ( ! defined($icuheaders) );
     
-                # "icu-config simplifies the task of building and linking
-                # against ICU as compared to manually configuring user
-                # makefiles or equivalent. Because icu-config is an executable
-                # script, it also solves the problem of locating the ICU
-                # libraries and headers, by allowing the system PATH to locate
-                # it."
+        my $without = 0;
+        if ( $autodetect ) {
+            if ( ! $icuconfig ) {
     
                 my ( undef, undef, $ret ) =
                     capture_output( "icu-config", "--exists" );
@@ -99,13 +142,18 @@ print STDERR "ad:  $autodetect\n";
             else {
                 # do nothing
             }
-        }
+        } # end $autodetect true
+        else {
+            if ($verbose) {
+                print "Specified an ICU config parameter,\n";
+                print "ICU autodetection disabled.\n";
+            }
+        } # end $autodetect false
 
         if (
             ( ! $without )  &&
             $autodetect     &&
-            $icuconfig      &&
-            ( $icuconfig ne "none" )
+            $icuconfig
         ) {
             my $slash = $conf->data->get('slash');
 
@@ -165,102 +213,99 @@ print STDERR "ad:  $autodetect\n";
         else {
             # do nothing
         }
-    }
-    else {
-        # do nothing
-    }
-
-    if ($verbose) {
-        print "icuconfig: $icuconfig\n"  if defined $icuconfig;
-        print "icushared='$icushared'\n" if defined $icushared;
-        print "headers='$icuheaders'\n"  if defined $icuheaders;
-    }
-
-    if ($without) {
-        $conf->data->set(
-            has_icu    => 0,
-            icu_shared => '',    # used for generating src/dynpmc/Makefile
-            icu_dir    => '',
-        );
-        if (! $self->result) {
-            $self->set_result("no");
-        }
-        else {
-            # do nothing
-        }
-        return 1;
-    }
-    else {
-        my $ok = 1;
     
-        if ( ! defined $icushared ) {
-            warn "error: icushared not defined\n";
-            $ok = 0;
-        }
-        else {
-            # do nothing
+        if ($verbose) {
+            print "icuconfig: $icuconfig\n"  if defined $icuconfig;
+            print "icushared='$icushared'\n" if defined $icushared;
+            print "headers='$icuheaders'\n"  if defined $icuheaders;
         }
     
-        if ( ! ( defined $icuheaders and -d $icuheaders ) ) {
-            warn "error: icuheaders not defined or invalid\n";
-            $ok = 0;
+        if ($without) {
+            $conf->data->set(
+                has_icu    => 0,
+                icu_shared => '',    # used for generating src/dynpmc/Makefile
+                icu_dir    => '',
+            );
+            if (! $self->result) {
+                $self->set_result("no");
+            }
+            else {
+                # do nothing
+            }
+            return 1;
         }
         else {
-            $icuheaders =~ s![\\/]$!!;
-            foreach my $header (@icu_headers) {
-                $header = "$icuheaders/unicode/$header";
-                if  ( ! -e $header ) {
-                    $ok = 0;
-                    warn "error: ICU header '$header' not found\n";
-                }
-                else {
-                    # do nothing
+            my $ok = 1;
+        
+            if ( ! defined $icushared ) {
+                warn "error: icushared not defined\n";
+                $ok = 0;
+            }
+            else {
+                # do nothing
+            }
+        
+            if ( ! ( defined $icuheaders and -d $icuheaders ) ) {
+                warn "error: icuheaders not defined or invalid\n";
+                $ok = 0;
+            }
+            else {
+                $icuheaders =~ s![\\/]$!!;
+                foreach my $header (@icu_headers) {
+                    $header = "$icuheaders/unicode/$header";
+                    if  ( ! -e $header ) {
+                        $ok = 0;
+                        warn "error: ICU header '$header' not found\n";
+                    }
+                    else {
+                        # do nothing
+                    }
                 }
             }
-        }
-    
-        if (! $ok) {
-            die die_message();
-        }
-        else {
-            # do nothing
-        }
-    
-        my $icudir = dirname($icuheaders);
-    
-        $conf->data->set(
-            has_icu    => 1,
-            icu_shared => $icushared,
-            icu_dir    => $icudir,
-        );
-    
-        # Add -I $Icuheaders if necessary
-        my $header = "unicode/ucnv.h";
-        $conf->data->set( testheaders => "#include <$header>\n" );
-        $conf->data->set( testheader  => "$header" );
-        $conf->cc_gen('config/auto/headers/test_c.in');
-    
-        $conf->data->set( testheaders => undef );    # Clean up.
-        $conf->data->set( testheader  => undef );
-        eval { $conf->cc_build(); };
-        if ( ! $@ && $conf->cc_run() =~ /^$header OK/ ) {
-    
-            # Ok, we don't need anything more.
-            if ($verbose) {
-                print "Your compiler found the icu headers... good!\n";
+        
+            if (! $ok) {
+                die die_message();
             }
-        }
-        else {
-            if ($verbose) {
-                print "Adding -I $icuheaders to ccflags for icu headers.\n";
+            else {
+                # do nothing
             }
-            $conf->data->add( ' ', ccflags => "-I $icuheaders" );
+        
+            my $icudir = dirname($icuheaders);
+        
+            $conf->data->set(
+                has_icu    => 1,
+                icu_shared => $icushared,
+                icu_dir    => $icudir,
+            );
+        
+            # Add -I $Icuheaders if necessary
+            my $header = "unicode/ucnv.h";
+            $conf->data->set( testheaders => "#include <$header>\n" );
+            $conf->data->set( testheader  => "$header" );
+            $conf->cc_gen('config/auto/headers/test_c.in');
+        
+            $conf->data->set( testheaders => undef );    # Clean up.
+            $conf->data->set( testheader  => undef );
+            eval { $conf->cc_build(); };
+            if ( ! $@ && $conf->cc_run() =~ /^$header OK/ ) {
+        
+                # Ok, we don't need anything more.
+                if ($verbose) {
+                    print "Your compiler found the icu headers... good!\n";
+                }
+            }
+            else {
+                if ($verbose) {
+                    print "Adding -I $icuheaders to ccflags for icu headers.\n";
+                }
+                $conf->data->add( ' ', ccflags => "-I $icuheaders" );
+            }
+            $conf->cc_clean();
+        
+            $self->set_result("yes");
+        
+            return 1;
         }
-        $conf->cc_clean();
-    
-        $self->set_result("yes");
-    
-        return 1;
     }
 }
 
