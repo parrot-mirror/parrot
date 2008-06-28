@@ -52,7 +52,17 @@ is( $conf->data->get('icu_dir'), q{},
 is( $step->result(), 'no', "Got expected result" );
 
 # Test some internal routines
-my ($icuconfig, $autodetect, $without);
+my $icuconfig;
+my $phony = q{/path/to/icu-config};
+
+is (auto::icu::_handle_icuconfig_opt(undef), q{},
+    "Got expected value for icu-config");
+is (auto::icu::_handle_icuconfig_opt('none'), q{},
+    "Got expected value for icu-config");
+is (auto::icu::_handle_icuconfig_opt($phony), $phony,
+    "Got expected value for icu-config");
+
+my ($autodetect, $without);
 
 ($icuconfig, $autodetect, $without) =
     auto::icu::_handle_search_for_icu_config( {
@@ -111,8 +121,6 @@ is($without, 0, "Continuing to try to configure with ICU");
     like($stdout, qr/icu-config found/,
         "Got expected verbose output");
 }
-
-my $phony = q{/path/to/icu-config};
 
 ($icuconfig, $autodetect, $without) =
     auto::icu::_handle_autodetect( {
