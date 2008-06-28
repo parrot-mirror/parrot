@@ -9,7 +9,7 @@
     .param pmc list            :slurpy
     .local pmc iter
 
-    iter = new .Iterator, list
+    iter = new 'Iterator', list
   iter_loop:
     unless iter goto iter_end
     $P0 = shift iter
@@ -26,7 +26,7 @@
     .param pmc list            :slurpy
 
     .local pmc iter
-    iter = new .Iterator, list
+    iter = new 'Iterator', list
   iter_loop:
     unless iter goto iter_end
     $P0 = shift iter
@@ -36,6 +36,34 @@
   iter_end:
     .return (1)
 .end
+
+## autoincrement
+.sub 'postfix:++'
+    .param pmc a
+    $P0 = clone a
+    inc a
+    .return ($P0)
+.end
+
+.sub 'postfix:--'
+    .param pmc a
+    $P0 = clone a
+    dec a
+    .return ($P0)
+.end
+
+.sub 'prefix:++'
+    .param pmc a
+    inc a
+    .return (a)
+.end
+
+.sub 'prefix:--'
+    .param pmc a
+    dec a
+    .return (a)
+.end
+
 
 ## symbolic unary
 .sub 'prefix:-'
@@ -109,14 +137,14 @@
 .sub 'infix:>>'
     .param int a
     .param int b
-    $I0 = a >> b
+    $I0 = shr a, b
     .RETURN_LONG($I0)
 .end
 
 .sub 'infix:<<'
     .param int a
     .param int b
-    $I0 = a << b
+    $I0 = shl a, b
     .RETURN_LONG($I0)
 .end
 
@@ -247,6 +275,30 @@
     .param pmc a
     .param pmc b
     $I0 = isge a, b
+    .RETURN_BOOL($I0)
+.end
+
+.sub 'infix:==='
+    .param pmc a
+    .param pmc b
+    $S1 = typeof a
+    $S2 = typeof b
+    if $S1 == $S2 goto L1
+    .RETURN_FALSE()
+  L1:
+    $I0 = iseq a, b
+    .RETURN_BOOL($I0)
+.end
+
+.sub 'infix:!=='
+    .param pmc a
+    .param pmc b
+    $S1 = typeof a
+    $S2 = typeof b
+    if $S1 != $S2 goto L1
+    .RETURN_TRUE()
+  L1:
+    $I0 = isne a, b
     .RETURN_BOOL($I0)
 .end
 
