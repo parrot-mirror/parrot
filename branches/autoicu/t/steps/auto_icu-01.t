@@ -112,6 +112,40 @@ is($without, 0, "Continuing to try to configure with ICU");
         "Got expected verbose output");
 }
 
+my $phony = q{/path/to/icu-config};
+
+($icuconfig, $autodetect, $without) =
+    auto::icu::_handle_autodetect( {
+        icuconfig   => $phony,
+        autodetect  => 1,
+        without     => 0,
+        verbose     => 0,
+} );
+is($icuconfig, $phony, "icu-config unchanged, as expected");
+is($autodetect, 1, "Autodetection still active, as expected");
+is($without, 0, "Continuing to try to configure with ICU");
+
+{
+    my ($stdout, $stderr);
+    capture( sub {
+        ($icuconfig, $autodetect, $without) =
+            auto::icu::_handle_autodetect( {
+                icuconfig   => $phony,
+                autodetect  => 0,
+                without     => 0,
+                verbose     => 1,
+            } );
+        },
+        \$stdout,
+        \$stderr,
+    );
+    is($icuconfig, $phony, "icu-config unchanged, as expected");
+    is($autodetect, 0, "Autodetection still inactive, as expected");
+    is($without, 0, "Continuing to try to configure with ICU");
+    like($stdout, qr/ICU autodetection disabled/s,
+        "Got expected verbose output");
+}
+
 pass("Completed all tests in $0");
 
 ################### DOCUMENTATION ###################

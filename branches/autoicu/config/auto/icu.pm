@@ -117,31 +117,13 @@ sub runstep {
                             ( ! defined($icuheaders) );
     
         my $without = 0;
-        if ( $autodetect ) {
-            if ( ! $icuconfig ) {
-    
-                my ( undef, undef, $ret ) =
-                    capture_output( "icu-config", "--exists" );
-    
-                ($icuconfig, $autodetect, $without) =
-                    _handle_search_for_icu_config( {
-                        icuconfig   => $icuconfig,
-                        autodetect  => $autodetect,
-                        without     => $without,
-                        verbose     => $verbose,
-                        ret         => $ret,
-                } );
-            }
-            else {
-                # do nothing
-            }
-        } # end $autodetect true
-        else {
-            if ($verbose) {
-                print "Specified an ICU config parameter,\n";
-                print "ICU autodetection disabled.\n";
-            }
-        } # end $autodetect false
+        ($icuconfig, $autodetect, $without) =
+            _handle_autodetect( {
+                icuconfig   => $icuconfig,
+                autodetect  => $autodetect,
+                without     => $without,
+                verbose     => $verbose,
+        } );
 
         if (
             ( ! $without )  &&
@@ -333,6 +315,36 @@ sub _handle_search_for_icu_config {
             print "icu-config found... good!\n";
         }
     }
+    return ( $arg->{icuconfig}, $arg->{autodetect}, $arg->{without} );
+}
+
+sub _handle_autodetect {
+    my $arg = shift;
+    if ( $arg->{autodetect} ) {
+        if ( ! $arg->{icuconfig} ) {
+
+            my ( undef, undef, $ret ) =
+                capture_output( "icu-config", "--exists" );
+
+            ($arg->{icuconfig}, $arg->{autodetect}, $arg->{without}) =
+                _handle_search_for_icu_config( {
+                    icuconfig   => $arg->{icuconfig},
+                    autodetect  => $arg->{autodetect},
+                    without     => $arg->{without},
+                    verbose     => $arg->{verbose},
+                    ret         => $ret,
+            } );
+        }
+        else {
+            # do nothing
+        }
+    } # end $autodetect true
+    else {
+        if ($arg->{verbose}) {
+            print "Specified an ICU config parameter,\n";
+            print "ICU autodetection disabled.\n";
+        }
+    } # end $autodetect false
     return ( $arg->{icuconfig}, $arg->{autodetect}, $arg->{without} );
 }
 
