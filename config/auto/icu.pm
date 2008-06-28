@@ -137,45 +137,15 @@ sub runstep {
             $autodetect     &&
             $icuconfig
         ) {
-            my $slash = $conf->data->get('slash');
-
             # ldflags
             $icushared = capture_output("$icuconfig --ldflags");
-            if ( defined $icushared ) {
-                chomp $icushared;
-                $icushared =~ s/-licui18n\w*//;    # "-licui18n32" too
-                if (length $icushared == 0) {
-                    $without = 1;
-                }
-                else {
-                    # do nothing
-                }
-            }
-            else {
-                # do nothing
-            }
+            ($icushared, $without) =
+                _handle_icushared($icushared, $without);
 
             # location of header files
             $icuheaders = capture_output("$icuconfig --prefix");
-            if ( defined $icuheaders ) {
-                chomp $icuheaders;
-                if (! -d $icuheaders) {
-                    $without = 1;
-                }
-                else {
-                    # do nothing
-                }
-                $icuheaders .= "${slash}include";
-                if (! -d $icuheaders) {
-                    $without = 1;
-                }
-                else {
-                    # do nothing
-                }
-            }
-            else {
-                # do nothing
-            }
+            ($icuheaders, $without) =
+                _handle_icuheaders($conf, $icuheaders, $without);
 
             if ($without) {
                 $self->set_result("failed");
@@ -360,6 +330,34 @@ sub _handle_autodetect {
         }
     } # end $autodetect false
     return ( $arg->{icuconfig}, $arg->{autodetect}, $arg->{without} );
+}
+
+sub _handle_icushared {
+    my ($icushared, $without) = @_;
+    if ( defined $icushared ) {
+        chomp $icushared;
+        $icushared =~ s/-licui18n\w*//;    # "-licui18n32" too
+        if (length $icushared == 0) {
+            $without = 1;
+        }
+    }
+    return ($icushared, $without);
+}
+
+sub _handle_icuheaders {
+    my ($conf, $icuheaders, $without) = @_;
+    if ( defined $icuheaders ) {
+        chomp $icuheaders;
+        if (! -d $icuheaders) {
+            $without = 1;
+        }
+        my $slash = $conf->data->get('slash');
+        $icuheaders .= "${slash}include";
+        if (! -d $icuheaders) {
+            $without = 1;
+        }
+    }
+    return ($icuheaders, $without);
 }
 
 1;

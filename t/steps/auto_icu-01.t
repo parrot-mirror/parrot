@@ -7,6 +7,9 @@ use strict;
 use warnings;
 use Test::More qw(no_plan); # tests =>  2;
 use Carp;
+use Cwd;
+use File::Path qw( mkpath );
+use File::Temp qw( tempdir );
 use lib qw( lib t/configure/testlib );
 use_ok('config::init::defaults');
 use_ok('config::auto::icu');
@@ -152,6 +155,72 @@ is($without, 0, "Continuing to try to configure with ICU");
     is($without, 0, "Continuing to try to configure with ICU");
     like($stdout, qr/ICU autodetection disabled/s,
         "Got expected verbose output");
+}
+
+my $icushared;
+
+$icushared = qq{-licui18n -lalpha\n};
+($icushared, $without) = auto::icu::_handle_icushared($icushared, 0);
+like($icushared, qr/-lalpha/, "Got expected ld flags");
+is($without, 0, "Continuing to try to configure with ICU");
+
+$icushared = qq{-licui18n\n};
+($icushared, $without) = auto::icu::_handle_icushared($icushared, 0);
+ok(! $icushared, "No icushared, as expected");
+is($without, 1, "No longer trying to configure with ICU");
+
+my $icuheaders;
+($icuheaders, $without) =
+    auto::icu::_handle_icuheaders($conf, undef, 0);
+ok(! defined $icuheaders, "icuheaders path undefined, as expected");
+is($without, 0, "Continuing to try to configure with ICU");
+
+my $cwd = cwd();
+{
+    my $tdir = tempdir();
+    chdir $tdir or croak "Unable to change to temporary directory";
+#    mkdir q{alpha} or croak "Unable to make testing directory";
+    my $expected_dir = q{alpha};
+    my $expected_include_dir =
+        $expected_dir . $conf->data->get('slash') .  q{include};
+    ($icuheaders, $without) =
+        auto::icu::_handle_icuheaders($conf, qq{$expected_dir\n}, 0);
+    is($icuheaders, $expected_include_dir,
+        "Got expected icuheaders path value");
+    is($without, 1, "No longer trying to configure with ICU");
+    chdir $cwd or croak "Unable to change back to starting directory";
+}
+
+{
+    my $tdir = tempdir();
+    chdir $tdir or croak "Unable to change to temporary directory";
+    my $expected_dir = q{alpha};
+    my $expected_include_dir =
+        $expected_dir . $conf->data->get('slash') .  q{include};
+    mkdir $expected_dir or croak "Unable to make testing directory";
+    ($icuheaders, $without) =
+        auto::icu::_handle_icuheaders($conf, qq{$expected_dir\n}, 0);
+    is($icuheaders, $expected_include_dir,
+        "Got expected icuheaders path value");
+    is($without, 1, "No longer trying to configure with ICU");
+    chdir $cwd or croak "Unable to change back to starting directory";
+}
+
+{
+    my $tdir = tempdir();
+    chdir $tdir or croak "Unable to change to temporary directory";
+    my $expected_dir = q{alpha};
+    my $expected_include_dir =
+        $expected_dir . $conf->data->get('slash') .  q{include};
+    mkdir $expected_dir or croak "Unable to make testing directory";
+    mkpath($expected_include_dir, 0, 755)
+        or croak "Unable to make second-level testing directory";
+    ($icuheaders, $without) =
+        auto::icu::_handle_icuheaders($conf, qq{$expected_dir\n}, 0);
+    is($icuheaders, $expected_include_dir,
+        "Got expected icuheaders path value");
+    is($without, 0, "Continuing to try to configure with ICU");
+    chdir $cwd or croak "Unable to change back to starting directory";
 }
 
 pass("Completed all tests in $0");
