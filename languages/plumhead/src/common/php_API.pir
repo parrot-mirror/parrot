@@ -319,9 +319,9 @@ STILL INCOMPLETE (see parse_arg_impl).
 =cut
 
 .sub 'wrong_param_count'
-    .local string msg
-    msg = 'Wrong parameter count for '
-    error(E_WARNING, msg)
+    $P0 = getinterp
+    $P1 = $P0['sub', 1]
+    error(E_WARNING, 'Wrong parameter count for ', $P1, '()')
 .end
 
 
