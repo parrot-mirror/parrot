@@ -39,6 +39,9 @@ ok( defined $step, "$step_name constructor returned defined value" );
 isa_ok( $step, $step_name );
 ok( $step->description(), "$step_name has description" );
 
+my $ret = $step->runstep($conf);
+ok( $ret, "$step_name runstep() returned true value" );
+
 pass("Completed all tests in $0");
 
 ################### DOCUMENTATION ###################

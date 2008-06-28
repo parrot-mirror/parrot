@@ -49,63 +49,125 @@ sub runstep {
     | );
 
     my @icu_headers = qw(ucnv.h utypes.h uchar.h);
-    my $autodetect  = !defined($icushared) && !defined($icuheaders);
+    my $autodetect  =   ( ! defined($icushared)  )
+                            &&
+                        ( ! defined($icuheaders) );
+print STDERR "ad:  $autodetect\n";
 
-    unless ($without) {
-        if ( !$autodetect ) {
-            print "specified a icu config parameter,\nICU autodetection disabled.\n" if $verbose;
+    if (! $without) {
+        if ( ! $autodetect ) {
+            if ($verbose) {
+                print "specified a icu config parameter,\nICU autodetection disabled.\n";
+            }
         }
-        elsif ( !defined $icuconfig || !$icuconfig ) {
+        else {
+            if (
+                    ( ! defined $icuconfig )
+                        ||
+                    ( ! $icuconfig )
+                ) {
 
-            # From the icu-config(1) man page
-            # (L<http://linux.die.net/man/1/icu-config>):
-
-            # "icu-config simplifies the task of building and linking against
-            # ICU as compared to manually configuring user makefiles or
-            # equivalent. Because icu-config is an executable script, it also
-            # solves the problem of locating the ICU libraries and headers, by
-            # allowing the system PATH to locate it."
-
-            my ( undef, undef, $ret ) = capture_output( "icu-config", "--exists" );
-
-            if ( ( $ret == -1 ) || ( ( $ret >> 8 ) != 0 ) ) {
-                undef $icuconfig;
-                $autodetect = 0;
-                $without    = 1;
+                # From the icu-config(1) man page
+                # (L<http://linux.die.net/man/1/icu-config>):
+    
+                # "icu-config simplifies the task of building and linking
+                # against ICU as compared to manually configuring user
+                # makefiles or equivalent. Because icu-config is an executable
+                # script, it also solves the problem of locating the ICU
+                # libraries and headers, by allowing the system PATH to locate
+                # it."
+    
+                my ( undef, undef, $ret ) =
+                    capture_output( "icu-config", "--exists" );
+    
+                if (
+                    ( $ret == -1 )
+                        ||
+                    ( ( $ret >> 8 ) != 0 )
+                ) {
+                    undef $icuconfig;
+                    $autodetect = 0;
+                    $without    = 1;
+                }
+                else {
+                    $icuconfig = "icu-config";
+                    if ($verbose) {
+                        print "icu-config found... good!\n";
+                    }
+                }
             }
             else {
-                $icuconfig = "icu-config";
-                print "icu-config found... good!\n" if $verbose;
+                # do nothing
             }
         }
 
-        if ( !$without && $autodetect && $icuconfig && $icuconfig ne "none" ) {
+        if (
+            ( ! $without )  &&
+            $autodetect     &&
+            $icuconfig      &&
+            ( $icuconfig ne "none" )
+        ) {
             my $slash = $conf->data->get('slash');
 
             # icu-config script to use
-            $icuconfig = "icu-config" if $icuconfig eq "1";
+            if ($icuconfig eq "1") {
+                $icuconfig = "icu-config";
+            }
+            else {
+                # do nothing
+            }
 
             # ldflags
             $icushared = capture_output("$icuconfig --ldflags");
             if ( defined $icushared ) {
                 chomp $icushared;
                 $icushared =~ s/-licui18n\w*//;    # "-licui18n32" too
-                $without = 1 if length $icushared == 0;
+                if (length $icushared == 0) {
+                    $without = 1;
+                }
+                else {
+                    # do nothing
+                }
+            }
+            else {
+                # do nothing
             }
 
             # location of header files
             $icuheaders = capture_output("$icuconfig --prefix");
             if ( defined $icuheaders ) {
                 chomp $icuheaders;
-                $without = 1 unless -d $icuheaders;
+                if (! -d $icuheaders) {
+                    $without = 1;
+                }
+                else {
+                    # do nothing
+                }
                 $icuheaders .= "${slash}include";
-                $without = 1 unless -d $icuheaders;
+                if (! -d $icuheaders) {
+                    $without = 1;
+                }
+                else {
+                    # do nothing
+                }
+            }
+            else {
+                # do nothing
             }
 
             if ($without) {
                 $self->set_result("failed");
             }
+            else {
+                # do nothing
+            }
         }
+        else {
+            # do nothing
+        }
+    }
+    else {
+        # do nothing
     }
 
     if ($verbose) {
@@ -120,33 +182,90 @@ sub runstep {
             icu_shared => '',    # used for generating src/dynpmc/Makefile
             icu_dir    => '',
         );
-        $self->set_result("no") unless $self->result;
+        if (! $self->result) {
+            $self->set_result("no");
+        }
+        else {
+            # do nothing
+        }
         return 1;
     }
-
-    my $ok = 1;
-
-    unless ( defined $icushared ) {
-        warn "error: icushared not defined\n";
-        $ok = 0;
-    }
-
-    unless ( defined $icuheaders and -d $icuheaders ) {
-        warn "error: icuheaders not defined or invalid\n";
-        $ok = 0;
-    }
     else {
-        $icuheaders =~ s![\\/]$!!;
-        foreach my $header (@icu_headers) {
-            $header = "$icuheaders/unicode/$header";
-            unless ( -e $header ) {
-                $ok = 0;
-                warn "error: ICU header '$header' not found\n";
+        my $ok = 1;
+    
+        if ( ! defined $icushared ) {
+            warn "error: icushared not defined\n";
+            $ok = 0;
+        }
+        else {
+            # do nothing
+        }
+    
+        if ( ! ( defined $icuheaders and -d $icuheaders ) ) {
+            warn "error: icuheaders not defined or invalid\n";
+            $ok = 0;
+        }
+        else {
+            $icuheaders =~ s![\\/]$!!;
+            foreach my $header (@icu_headers) {
+                $header = "$icuheaders/unicode/$header";
+                if  ( ! -e $header ) {
+                    $ok = 0;
+                    warn "error: ICU header '$header' not found\n";
+                }
+                else {
+                    # do nothing
+                }
             }
         }
+    
+        if (! $ok) {
+            die die_message();
+        }
+        else {
+            # do nothing
+        }
+    
+        my $icudir = dirname($icuheaders);
+    
+        $conf->data->set(
+            has_icu    => 1,
+            icu_shared => $icushared,
+            icu_dir    => $icudir,
+        );
+    
+        # Add -I $Icuheaders if necessary
+        my $header = "unicode/ucnv.h";
+        $conf->data->set( testheaders => "#include <$header>\n" );
+        $conf->data->set( testheader  => "$header" );
+        $conf->cc_gen('config/auto/headers/test_c.in');
+    
+        $conf->data->set( testheaders => undef );    # Clean up.
+        $conf->data->set( testheader  => undef );
+        eval { $conf->cc_build(); };
+        if ( ! $@ && $conf->cc_run() =~ /^$header OK/ ) {
+    
+            # Ok, we don't need anything more.
+            if ($verbose) {
+                print "Your compiler found the icu headers... good!\n";
+            }
+        }
+        else {
+            if ($verbose) {
+                print "Adding -I $icuheaders to ccflags for icu headers.\n";
+            }
+            $conf->data->add( ' ', ccflags => "-I $icuheaders" );
+        }
+        $conf->cc_clean();
+    
+        $self->set_result("yes");
+    
+        return 1;
     }
+}
 
-    die <<"HELP" unless $ok;
+sub die_message {
+    my $die = <<"HELP";
 Something is wrong with your ICU installation!
 
    If you do not have a full ICU installation:
@@ -156,38 +275,7 @@ Something is wrong with your ICU installation!
    --icuheaders=(path)  Location of ICU headers without /unicode
    --icushared=(flags)  Full linker command to create shared libraries
 HELP
-
-    my $icudir = dirname($icuheaders);
-
-    $conf->data->set(
-        has_icu    => 1,
-        icu_shared => $icushared,
-        icu_dir    => $icudir,
-    );
-
-    # Add -I $Icuheaders if necessary
-    my $header = "unicode/ucnv.h";
-    $conf->data->set( testheaders => "#include <$header>\n" );
-    $conf->data->set( testheader  => "$header" );
-    $conf->cc_gen('config/auto/headers/test_c.in');
-
-    $conf->data->set( testheaders => undef );    # Clean up.
-    $conf->data->set( testheader  => undef );
-    eval { $conf->cc_build(); };
-    if ( !$@ && $conf->cc_run() =~ /^$header OK/ ) {
-
-        # Ok, we don't need anything more.
-        print "Your compiler found the icu headers... good!\n" if $verbose;
-    }
-    else {
-        print "Adding -I $icuheaders to ccflags for icu headers.\n" if $verbose;
-        $conf->data->add( ' ', ccflags => "-I $icuheaders" );
-    }
-    $conf->cc_clean();
-
-    $self->set_result("yes");
-
-    return 1;
+    return $die;
 }
 
 1;
