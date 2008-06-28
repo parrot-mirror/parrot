@@ -57,14 +57,15 @@ sub _init {
     my %data;
     $data{description} = q{Determining whether ICU is installed};
     $data{result}      = q{};
+    $data{icu_headers} = [ qw(ucnv.h utypes.h uchar.h) ];
     return \%data;
 }
 
 sub runstep {
     my ( $self, $conf ) = @_;
 
-    my ( $verbose, $icushared, $icuheaders, $icuconfig_opt, $without_opt ) =
-        $conf->options->get( qw|
+    my ( $verbose, $icushared_opt, $icuheaders_opt,
+        $icuconfig_opt, $without_opt ) = $conf->options->get( qw|
             verbose
             icushared
             icuheaders
@@ -93,6 +94,14 @@ sub runstep {
 
     my $icuconfig = _handle_icuconfig_opt($icuconfig_opt);
 
+    # Oooh, how I wish we had Perl 5.10's defined-or operator available!
+    my $icushared = (defined $icushared_opt)
+        ? $icushared_opt
+        : undef;
+    my $icuheaders = (defined $icuheaders_opt)
+        ? $icuheaders_opt
+        : undef;
+
     # $without_opt holds user's command-line value for --without-icu=?
     # If it's a true value, there's no point in going further.  We set the
     # values needed in the Parrot::Configure object, set the step result and
@@ -109,7 +118,6 @@ sub runstep {
         return 1;
     }
     else {
-        my @icu_headers = qw(ucnv.h utypes.h uchar.h);
         my $autodetect  =   ( ! defined($icushared)  )
                                 &&
                             ( ! defined($icuheaders) );
@@ -224,7 +232,7 @@ sub runstep {
             }
             else {
                 $icuheaders =~ s![\\/]$!!;
-                foreach my $header (@icu_headers) {
+                foreach my $header ( @{ $self->{icu_headers} } ) {
                     $header = "$icuheaders/unicode/$header";
                     if  ( ! -e $header ) {
                         $ok = 0;
