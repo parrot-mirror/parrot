@@ -63,7 +63,7 @@ sub _init {
 sub runstep {
     my ( $self, $conf ) = @_;
 
-    my ( $verbose, $icushared, $icuheaders, $icuconfig, $without_opt ) =
+    my ( $verbose, $icushared, $icuheaders, $icuconfig_opt, $without_opt ) =
         $conf->options->get( qw|
             verbose
             icushared
@@ -91,9 +91,7 @@ sub runstep {
     # ruled out by being provided with the value 'none' -- an empty string 
     # is its most appropriate value.
 
-    if ( ( ! $icuconfig ) or ( $icuconfig eq q{none} ) ) {
-        $icuconfig = q{};
-    }
+    my $icuconfig = _handle_icuconfig_opt($icuconfig_opt);
 
     # $without_opt holds user's command-line value for --without-icu=?
     # If it's a true value, there's no point in going further.  We set the
@@ -282,6 +280,18 @@ sub runstep {
             return 1;
         }
     }
+}
+
+sub _handle_icuconfig_opt {
+    my $icuconfig_opt = shift;
+    my $icuconfig;
+    if ( ( ! $icuconfig_opt ) or ( $icuconfig_opt eq q{none} ) ) {
+        $icuconfig = q{};
+    }
+    else {
+        $icuconfig = $icuconfig_opt;
+    }
+    return $icuconfig;
 }
 
 sub die_message {
