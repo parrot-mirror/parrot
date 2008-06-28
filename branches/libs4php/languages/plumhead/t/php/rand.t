@@ -42,7 +42,7 @@ language_output_like( 'Plumhead', <<'CODE', <<'OUTPUT', 'getrandmax(wrong param)
   echo getrandmax(42);
 ?>
 CODE
-/Wrong parameter count for/
+/Wrong parameter count for getrandmax()/
 OUTPUT
 
 language_output_is( 'Plumhead', <<'CODE', <<'OUTPUT', 'mt_getrandmax()' );
