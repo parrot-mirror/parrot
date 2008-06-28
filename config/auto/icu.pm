@@ -55,9 +55,10 @@ use Parrot::Configure::Utils qw(capture_output);
 sub _init {
     my $self = shift;
     my %data;
-    $data{description} = q{Determining whether ICU is installed};
-    $data{result}      = q{};
-    $data{icu_headers} = [ qw(ucnv.h utypes.h uchar.h) ];
+    $data{description}          = q{Determining whether ICU is installed};
+    $data{result}               = q{};
+    $data{icuconfig_default}    = q{icu-config};
+    $data{icu_headers}          = [ qw(ucnv.h utypes.h uchar.h) ];
     return \%data;
 }
 
@@ -92,7 +93,7 @@ sub runstep {
     # ruled out by being provided with the value 'none' -- an empty string 
     # is its most appropriate value.
 
-    my $icuconfig = _handle_icuconfig_opt($icuconfig_opt);
+    my $icuconfig = $self->_handle_icuconfig_opt($icuconfig_opt);
 
     # Oooh, how I wish we had Perl 5.10's defined-or operator available!
     my $icushared = (defined $icushared_opt)
@@ -137,14 +138,6 @@ sub runstep {
             $icuconfig
         ) {
             my $slash = $conf->data->get('slash');
-
-            # icu-config script to use
-            if ($icuconfig eq "1") {
-                $icuconfig = "icu-config";
-            }
-            else {
-                # do nothing
-            }
 
             # ldflags
             $icushared = capture_output("$icuconfig --ldflags");
@@ -291,10 +284,13 @@ sub runstep {
 }
 
 sub _handle_icuconfig_opt {
-    my $icuconfig_opt = shift;
+    my ($self, $icuconfig_opt) = @_;
     my $icuconfig;
     if ( ( ! $icuconfig_opt ) or ( $icuconfig_opt eq q{none} ) ) {
         $icuconfig = q{};
+    }
+    elsif ( $icuconfig_opt eq '1' ) {
+        $icuconfig = $self->{icuconfig_default};
     }
     else {
         $icuconfig = $icuconfig_opt;

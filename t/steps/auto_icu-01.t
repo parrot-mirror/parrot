@@ -55,11 +55,11 @@ is( $step->result(), 'no', "Got expected result" );
 my $icuconfig;
 my $phony = q{/path/to/icu-config};
 
-is (auto::icu::_handle_icuconfig_opt(undef), q{},
+is($step->_handle_icuconfig_opt(undef), q{},
     "Got expected value for icu-config");
-is (auto::icu::_handle_icuconfig_opt('none'), q{},
+is($step->_handle_icuconfig_opt('none'), q{},
     "Got expected value for icu-config");
-is (auto::icu::_handle_icuconfig_opt($phony), $phony,
+is($step->_handle_icuconfig_opt($phony), $phony,
     "Got expected value for icu-config");
 
 my ($autodetect, $without);
