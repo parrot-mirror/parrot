@@ -13,6 +13,7 @@ use_ok('config::auto::icu');
 use Parrot::Configure;
 use Parrot::Configure::Options qw( process_options );
 use Parrot::Configure::Test qw( test_step_thru_runstep);
+use IO::CaptureOutput qw( capture );
 
 my $args = process_options(
     {
@@ -49,6 +50,67 @@ is( $conf->data->get('icu_shared'), q{},
 is( $conf->data->get('icu_dir'), q{},
     "Got expected value for 'icu_dir'" );
 is( $step->result(), 'no', "Got expected result" );
+
+# Test some internal routines
+my ($icuconfig, $autodetect, $without);
+
+($icuconfig, $autodetect, $without) =
+    auto::icu::_handle_search_for_icu_config( {
+        icuconfig   => q{},
+        autodetect  => 1,
+        without     => 0,
+        verbose     => 0,
+        ret         => -1,
+} );
+ok(! defined $icuconfig, "icu-config not found, as expected");
+is($autodetect, 0, "Autodetection cancelled, as expected");
+is($without, 1, "Continuing to configure without ICU");
+
+($icuconfig, $autodetect, $without) =
+    auto::icu::_handle_search_for_icu_config( {
+        icuconfig   => q{},
+        autodetect  => 1,
+        without     => 0,
+        verbose     => 0,
+        ret         => 256,
+} );
+ok(! defined $icuconfig, "icu-config not found, as expected");
+is($autodetect, 0, "Autodetection cancelled, as expected");
+is($without, 1, "Continuing to configure without ICU");
+
+($icuconfig, $autodetect, $without) =
+    auto::icu::_handle_search_for_icu_config( {
+        icuconfig   => q{},
+        autodetect  => 1,
+        without     => 0,
+        verbose     => 0,
+        ret         => 0,
+} );
+is($icuconfig, q{icu-config}, "icu-config found, as expected");
+is($autodetect, 1, "Autodetection continues, as expected");
+is($without, 0, "Continuing to try to configure with ICU");
+
+{
+    my ($stdout, $stderr);
+    capture( sub {
+            ($icuconfig, $autodetect, $without) =
+                auto::icu::_handle_search_for_icu_config( {
+                    icuconfig   => q{},
+                    autodetect  => 1,
+                    without     => 0,
+                    verbose     => 1,
+                    ret         => 0,
+            } );
+        },
+        \$stdout,
+        \$stderr,
+    );
+    is($icuconfig, q{icu-config}, "icu-config found, as expected");
+    is($autodetect, 1, "Autodetection continues, as expected");
+    is($without, 0, "Continuing to try to configure with ICU");
+    like($stdout, qr/icu-config found/,
+        "Got expected verbose output");
+}
 
 pass("Completed all tests in $0");
 

@@ -123,21 +123,14 @@ sub runstep {
                 my ( undef, undef, $ret ) =
                     capture_output( "icu-config", "--exists" );
     
-                if (
-                    ( $ret == -1 )
-                        ||
-                    ( ( $ret >> 8 ) != 0 )
-                ) {
-                    undef $icuconfig;
-                    $autodetect = 0;
-                    $without    = 1;
-                }
-                else {
-                    $icuconfig = "icu-config";
-                    if ($verbose) {
-                        print "icu-config found... good!\n";
-                    }
-                }
+                ($icuconfig, $autodetect, $without) =
+                    _handle_search_for_icu_config( {
+                        icuconfig   => $icuconfig,
+                        autodetect  => $autodetect,
+                        without     => $without,
+                        verbose     => $verbose,
+                        ret         => $ret,
+                } );
             }
             else {
                 # do nothing
@@ -321,6 +314,26 @@ Something is wrong with your ICU installation!
    --icushared=(flags)  Full linker command to create shared libraries
 HELP
     return $die;
+}
+
+sub _handle_search_for_icu_config {
+    my $arg = shift;
+    if (
+        ( $arg->{ret} == -1 )
+            ||
+        ( ( $arg->{ret} >> 8 ) != 0 )
+    ) {
+        undef $arg->{icuconfig};
+        $arg->{autodetect} = 0;
+        $arg->{without}    = 1;
+    }
+    else {
+        $arg->{icuconfig} = "icu-config";
+        if ($arg->{verbose}) {
+            print "icu-config found... good!\n";
+        }
+    }
+    return ( $arg->{icuconfig}, $arg->{autodetect}, $arg->{without} );
 }
 
 1;
