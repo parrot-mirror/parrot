@@ -30,7 +30,8 @@ STILL INCOMPLETE.
 .sub 'base64_decode'
     .param pmc args :slurpy
     .local string str
-    .local pmc strict # not used, (not handled by MIME::Base64)
+    .local int strict # not used, (not handled by MIME::Base64)
+    strict = 0
     ($I0, str, strict) = parse_parameters('s|b', args :flat)
     if $I0 goto L1
     .RETURN_NULL()

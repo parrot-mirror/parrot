@@ -49,7 +49,8 @@ Calculate the md5 hash of a string
 .sub 'md5'
     .param pmc args :slurpy
     .local string str
-    .local pmc raw_output
+    .local int raw_output
+    raw_output = 0
     ($I0, str, raw_output) = parse_parameters('s|b', args :flat)
     if $I0 goto L1
     .RETURN_NULL()
@@ -59,12 +60,9 @@ Calculate the md5 hash of a string
     md.'Init'()
     md.'Update'(str)
     $S0 = md.'Final'()
-    if null raw_output goto L2
-    $I0 = istrue raw_output
-    if $I0 goto L3
-  L2:
+    if raw_output goto L2
     $S0 = make_digest($S0)
-  L3:
+  L2:
     .RETURN_STRING($S0)
 .end
 
@@ -79,7 +77,8 @@ STILL INCOMPLETE (needs stream for URL).
 .sub 'md5_file'
     .param pmc args :slurpy
     .local string filename
-    .local pmc raw_output
+    .local int raw_output
+    raw_output = 0
     ($I0, filename, raw_output) = parse_parameters('s|b', args :flat)
     if $I0 goto L1
     .RETURN_NULL()
@@ -98,12 +97,9 @@ STILL INCOMPLETE (needs stream for URL).
   L4:
     close f
     $S0 = md.'Final'()
-    if null raw_output goto L5
-    $I0 = istrue raw_output
-    if $I0 goto L6
-  L5:
+    if raw_output goto L5
     $S0 = make_digest($S0)
-  L6:
+  L5:
     .RETURN_STRING($S0)
   L2:
     .RETURN_FALSE()
