@@ -109,14 +109,9 @@ sub runstep {
     # return.  If, however, it's a false value, then we're going to try to
     # configure with ICU and we proceed to probe for ICU.
 
+    # 1st possible return point
     if ( $without_opt ) {
-        $conf->data->set(
-            has_icu    => 0,
-            icu_shared => '',    # used for generating src/dynpmc/Makefile
-            icu_dir    => '',
-        );
-        $self->set_result("no");
-        # 1st possible return point
+        $self->_set_no_configure_with_icu($conf, q{no});
         return 1;
     }
 
@@ -132,6 +127,14 @@ sub runstep {
             without     => $without,
             verbose     => $verbose,
     } );
+    # Inside _handle_autodetect(), $without can be set to 1 by
+    # _handle_search_for_icu_config().  In that case, we're abandoning our
+    # attempt to configure with ICU and so may return here.
+    # 2nd possible return point
+    if ( $without_opt ) {
+        $self->_set_no_configure_with_icu($conf, q{failed});
+        return 1;
+    }
 
     ($without, $icushared, $icuheaders) =
         $self->_try_icuconfig(
@@ -146,16 +149,9 @@ sub runstep {
 
     _verbose_report($verbose, $icuconfig, $icushared, $icuheaders);
 
-    if ($without) {
-        $conf->data->set(
-            has_icu    => 0,
-            icu_shared => '',    # used for generating src/dynpmc/Makefile
-            icu_dir    => '',
-        );
-        if (! $self->result) {
-            $self->set_result("no");
-        }
-        # 2nd possible return point
+    # 3rd possible return point
+    if ( $without_opt ) {
+        $self->_set_no_configure_with_icu($conf, q{no});
         return 1;
     }
 
@@ -163,7 +159,8 @@ sub runstep {
         icushared   => $icushared,
         icuheaders  => $icuheaders,
     } );
-    # 3rd possible return point; this one is a failure
+    # 4th possible return point.  This one is a step configuration failure
+    # because we really expected it to succeed
     return unless defined $icuheaders;
 
     my $icudir = dirname($icuheaders);
@@ -183,13 +180,31 @@ sub runstep {
     $conf->data->set( testheader  => undef );
     eval { $conf->cc_build(); };
     my $ccflags_status = ( ! $@ && $conf->cc_run() =~ /^$header OK/ );
+    _handle_ccflags_status(
+        $conf,
+        {
+            ccflags_status  => $ccflags_status,
+            verbose         => $verbose,
+            icuheaders      => $icuheaders,
+        },
+    );
     $conf->cc_clean();
     $self->set_result("yes");
-    # 4th possible return point; this is the only really successful return.
+    # 5th possible return point; this is the only really successful return.
     return 1;
 }
 
 ########## INTERNAL SUBROUTINES ##########
+
+sub _set_no_configure_with_icu {
+    my ($self, $conf, $result) = @_;
+    $conf->data->set(
+        has_icu    => 0,
+        icu_shared => '',    # used for generating src/dynpmc/Makefile
+        icu_dir    => '',
+    );
+    $self->set_result($result);
+}
 
 sub _handle_icuconfig_opt {
     my ($self, $icuconfig_opt) = @_;
@@ -256,9 +271,6 @@ sub _handle_autodetect {
                     verbose     => $arg->{verbose},
                     ret         => $ret,
             } );
-        }
-        else {
-            # do nothing
         }
     } # end $autodetect true
     else {

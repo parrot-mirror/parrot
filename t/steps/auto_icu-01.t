@@ -413,6 +413,23 @@ like($conf->data->get( 'ccflags'),
 );
 $conf->data->set( ccflags => $status ); # re-set for next test
 
+$conf->data->set( 'has_icu', undef );
+$conf->data->set( 'icu_shared', undef );
+$conf->data->set( 'icu_dir', undef );
+my $result = q{hooray!};
+$step->_set_no_configure_with_icu($conf, $result);
+is($conf->data->get( 'has_icu' ), 0,
+    "Got expected value for 'has_icu'");
+is($conf->data->get( 'icu_shared' ), q{},
+    "Got expected value for 'icu_shared'");
+is($conf->data->get( 'icu_dir' ), q{},
+    "Got expected value for 'icu_dir'");
+is($step->{result}, $result, "Got expected result");
+# reset for next test
+$conf->data->set( 'has_icu', undef );
+$conf->data->set( 'icu_shared', undef );
+$conf->data->set( 'icu_dir', undef );
+
 pass("Completed all tests in $0");
 
 ################### DOCUMENTATION ###################
