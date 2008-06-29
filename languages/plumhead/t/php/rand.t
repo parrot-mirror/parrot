@@ -25,7 +25,7 @@ use warnings;
 use FindBin;
 use lib "$FindBin::Bin/../../lib";
 
-use Test::More     tests => 14;
+use Test::More     tests => 20;
 use Parrot::Test;
 
 
@@ -135,6 +135,49 @@ language_output_like( 'Plumhead', <<'CODE', <<'OUTPUT', 'srand(too many arg)' );
 ?>
 CODE
 /srand\(\) expects at most 1 parameter, 2 given/
+OUTPUT
+
+language_output_is( 'Plumhead', <<'CODE', <<'OUTPUT', 'srand("42")' );
+<?php
+  srand('42');
+?>
+CODE
+OUTPUT
+
+language_output_is( 'Plumhead', <<'CODE', <<'OUTPUT', 'srand(" 42")' );
+<?php
+  srand(' 42');
+?>
+CODE
+OUTPUT
+
+language_output_is( 'Plumhead', <<'CODE', <<'OUTPUT', 'srand(" 42 ")' );
+<?php
+  srand(' 42 ');
+?>
+CODE
+OUTPUT
+
+language_output_like( 'Plumhead', <<'CODE', <<'OUTPUT', 'srand(" str ")' );
+<?php
+  srand('str');
+?>
+CODE
+/srand\(\) expects parameter 1 to be long, string given/
+OUTPUT
+
+language_output_is( 'Plumhead', <<'CODE', <<'OUTPUT', 'srand(TRUE)' );
+<?php
+  srand(TRUE);
+?>
+CODE
+OUTPUT
+
+language_output_is( 'Plumhead', <<'CODE', <<'OUTPUT', 'srand(NULL)' );
+<?php
+  srand(NULL);
+?>
+CODE
 OUTPUT
 
 # Local Variables:

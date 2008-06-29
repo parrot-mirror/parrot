@@ -189,7 +189,7 @@ STILL INCOMPLETE (see parse_arg_impl).
   L12:
     $I0 = isa arg, 'PhpString'
     unless $I0 goto L13
-    $I0 = arg.'is_numeric'()
+    $I0 = arg.'is_numeric'(-1)
     unless $I0 goto L13
     arg = arg.'to_number'()
     $I0 = isa arg, 'PhpFloat'
@@ -216,7 +216,7 @@ STILL INCOMPLETE (see parse_arg_impl).
   L22:
     $I0 = isa arg, 'PhpString'
     unless $I0 goto L23
-    $I0 = arg.'is_numeric'()
+    $I0 = arg.'is_numeric'(-1)
     unless $I0 goto L23
     arg = arg.'to_number'()
     $I0 = isa arg, 'PhpInteger'
