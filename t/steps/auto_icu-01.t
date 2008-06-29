@@ -53,6 +53,7 @@ is( $conf->data->get('icu_shared'), q{},
 is( $conf->data->get('icu_dir'), q{},
     "Got expected value for 'icu_dir'" );
 is( $step->result(), 'no', "Got expected result" );
+$step->set_result(q{});  # prepare for subsequent tests
 
 # Test some internal routines
 my $icuconfig;
@@ -223,7 +224,48 @@ my $cwd = cwd();
     chdir $cwd or croak "Unable to change back to starting directory";
 }
 
-pass("Completed all tests in $0");
+($without, $icushared, $icuheaders) =
+    $step->_try_icuconfig( {
+        conf            => $conf,
+        without         => 1,
+        autodetect      => 1,
+        icuconfig       => 1,
+        verbose         => 0,
+    } );
+is($without, 1, "Not trying to configure with ICU");
+ok(! defined $icushared, "icushared undefined, as expected");
+ok(! defined $icuheaders, "icuheaders undefined, as expected");
+is($step->result(), q{}, "result is still empty string, as expected");
+
+($without, $icushared, $icuheaders) =
+    $step->_try_icuconfig( {
+        conf            => $conf,
+        without         => 0,
+        autodetect      => 0,
+        icuconfig       => 1,
+        verbose         => 0,
+    } );
+is($without, 0, "Still trying to configure with ICU");
+ok(! defined $icushared, "icushared undefined, as expected");
+ok(! defined $icuheaders, "icuheaders undefined, as expected");
+is($step->result(), q{}, "result is still empty string, as expected");
+
+($without, $icushared, $icuheaders) =
+    $step->_try_icuconfig( {
+        conf            => $conf,
+        without         => 0,
+        autodetect      => 1,
+        icuconfig       => q{},
+        verbose         => 0,
+    } );
+is($without, 0, "Still trying to configure with ICU");
+ok(! defined $icushared, "icushared undefined, as expected");
+ok(! defined $icuheaders, "icuheaders undefined, as expected");
+is($step->result(), q{}, "result is still empty string, as expected");
+
+my $die = auto::icu::die_message();
+like($die, qr/Something is wrong with your ICU installation/s,
+    "Got expected die message");
 
 ################### DOCUMENTATION ###################
 

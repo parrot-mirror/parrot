@@ -132,32 +132,14 @@ sub runstep {
                 verbose     => $verbose,
         } );
 
-        if (
-            ( ! $without )  &&
-            $autodetect     &&
-            $icuconfig
-        ) {
-            # ldflags
-            $icushared = capture_output("$icuconfig --ldflags");
-            ($icushared, $without) =
-                _handle_icushared($icushared, $without);
+        ($without, $icushared, $icuheaders) =
+            $self->_try_icuconfig( {
+                conf            => $conf,
+                without         => $without,
+                autodetect      => $autodetect,
+                icuconfig       => $icuconfig,
+            } );
 
-            # location of header files
-            $icuheaders = capture_output("$icuconfig --prefix");
-            ($icuheaders, $without) =
-                _handle_icuheaders($conf, $icuheaders, $without);
-
-            if ($without) {
-                $self->set_result("failed");
-            }
-            else {
-                # do nothing
-            }
-        }
-        else {
-            # do nothing
-        }
-    
         if ($verbose) {
             print "icuconfig: $icuconfig\n"  if defined $icuconfig;
             print "icushared='$icushared'\n" if defined $icushared;
@@ -330,6 +312,33 @@ sub _handle_autodetect {
         }
     } # end $autodetect false
     return ( $arg->{icuconfig}, $arg->{autodetect}, $arg->{without} );
+}
+
+sub _try_icuconfig {
+    my $self = shift;
+    my $arg = shift;
+    my ($icushared, $icuheaders);
+    if (
+        ( ! $arg->{without} )  &&
+        $arg->{autodetect}    &&
+        $arg->{icuconfig}
+    ) {
+        # ldflags
+        $icushared = capture_output("$arg->{icuconfig} --ldflags");
+        ($icushared, $arg->{without}) =
+            _handle_icushared($icushared, $arg->{without});
+
+        # location of header files
+        $icuheaders = capture_output("$arg->{icuconfig} --prefix");
+        ($icuheaders, $arg->{without}) =
+            _handle_icuheaders($arg->{conf}, $icuheaders, $arg->{without});
+
+        if ($arg->{without}) {
+            $self->set_result("failed");
+        }
+    }
+
+    return ($arg->{without}, $icushared, $icuheaders);
 }
 
 sub _handle_icushared {
