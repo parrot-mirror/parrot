@@ -180,7 +180,6 @@ my $cwd = cwd();
 {
     my $tdir = tempdir();
     chdir $tdir or croak "Unable to change to temporary directory";
-#    mkdir q{alpha} or croak "Unable to make testing directory";
     my $expected_dir = q{alpha};
     my $expected_include_dir =
         $expected_dir . $conf->data->get('slash') .  q{include};
@@ -225,39 +224,45 @@ my $cwd = cwd();
 }
 
 ($without, $icushared, $icuheaders) =
-    $step->_try_icuconfig( {
-        conf            => $conf,
-        without         => 1,
-        autodetect      => 1,
-        icuconfig       => 1,
-        verbose         => 0,
-    } );
+    $step->_try_icuconfig(
+        $conf,
+        {
+            without         => 1,
+            autodetect      => 1,
+            icuconfig       => 1,
+            verbose         => 0,
+        }
+    );
 is($without, 1, "Not trying to configure with ICU");
 ok(! defined $icushared, "icushared undefined, as expected");
 ok(! defined $icuheaders, "icuheaders undefined, as expected");
 is($step->result(), q{}, "result is still empty string, as expected");
 
 ($without, $icushared, $icuheaders) =
-    $step->_try_icuconfig( {
-        conf            => $conf,
-        without         => 0,
-        autodetect      => 0,
-        icuconfig       => 1,
-        verbose         => 0,
-    } );
+    $step->_try_icuconfig(
+        $conf,
+        {
+            without         => 0,
+            autodetect      => 0,
+            icuconfig       => 1,
+            verbose         => 0,
+        }
+    );
 is($without, 0, "Still trying to configure with ICU");
 ok(! defined $icushared, "icushared undefined, as expected");
 ok(! defined $icuheaders, "icuheaders undefined, as expected");
 is($step->result(), q{}, "result is still empty string, as expected");
 
 ($without, $icushared, $icuheaders) =
-    $step->_try_icuconfig( {
-        conf            => $conf,
-        without         => 0,
-        autodetect      => 1,
-        icuconfig       => q{},
-        verbose         => 0,
-    } );
+    $step->_try_icuconfig(
+        $conf,
+        {
+            without         => 0,
+            autodetect      => 1,
+            icuconfig       => q{},
+            verbose         => 0,
+        }
+    );
 is($without, 0, "Still trying to configure with ICU");
 ok(! defined $icushared, "icushared undefined, as expected");
 ok(! defined $icuheaders, "icuheaders undefined, as expected");
@@ -335,6 +340,78 @@ like($die, qr/Something is wrong with your ICU installation/s,
     like($stderr, qr/Something is wrong with your ICU installation/s,
         "Got expected warnings");
 }
+
+$icuheaders = q{alpha};
+my $status = $conf->data->get( 'ccflags' );
+
+{
+    my ($stdout, $stderr);
+    capture(
+        sub {
+           auto::icu::_handle_ccflags_status($conf,
+               {
+                   ccflags_status  => 1,
+                   verbose         => 1,
+                   icuheaders      => $icuheaders,
+               },
+           );
+       },
+       \$stdout,
+       \$stderr,
+   );
+   like($stdout, qr/Your compiler found the icu headers/,
+       "Got expected verbose output");
+}
+$conf->data->set( ccflags => $status ); # re-set for next test
+
+{
+    my ($stdout, $stderr);
+    capture(
+        sub {
+           auto::icu::_handle_ccflags_status($conf,
+               {
+                   ccflags_status  => 0,
+                   verbose         => 1,
+                   icuheaders      => $icuheaders,
+               },
+           );
+       },
+       \$stdout,
+       \$stderr,
+   );
+
+   like($stdout, qr/Adding -I $icuheaders to ccflags for icu headers/,
+       "Got expected verbose output");
+}
+like($conf->data->get( 'ccflags'),
+    qr/-I $icuheaders/,
+    "ccflags augmented as expected"
+);
+$conf->data->set( ccflags => $status ); # re-set for next test
+
+{
+    my ($stdout, $stderr);
+    capture(
+        sub {
+           auto::icu::_handle_ccflags_status($conf,
+               {
+                   ccflags_status  => 0,
+                   verbose         => 0,
+                   icuheaders      => $icuheaders,
+               },
+           );
+       },
+       \$stdout,
+       \$stderr,
+   );
+
+   ok(! $stdout, "No verbose output, as expected");
+}
+like($conf->data->get( 'ccflags'),
+    qr/-I $icuheaders/,
+    "ccflags augmented as expected"
+);
+$conf->data->set( ccflags => $status ); # re-set for next test
 
 pass("Completed all tests in $0");
 
