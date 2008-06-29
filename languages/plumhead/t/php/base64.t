@@ -25,7 +25,7 @@ use warnings;
 use FindBin;
 use lib "$FindBin::Bin/../../lib";
 
-use Test::More     tests => 2;
+use Test::More     tests => 3;
 use Parrot::Test;
 
 
@@ -43,6 +43,14 @@ language_output_is( 'Plumhead', <<'CODE', <<'OUTPUT', 'base64_decode(str)' );
 ?>
 CODE
 Plum Headed Parakeet
+OUTPUT
+
+language_output_like( 'Plumhead', <<'CODE', <<'OUTPUT', 'base64_decode(no arg)' );
+<?php
+  echo base64_decode(), "\n";
+?>
+CODE
+/base64_decode\(\) expects at least 1 parameter, 0 given/
 OUTPUT
 
 # Local Variables:

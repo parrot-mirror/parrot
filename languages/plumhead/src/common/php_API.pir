@@ -71,7 +71,9 @@ STILL INCOMPLETE (see parse_arg_impl).
   L4:
     $I0 = index '!/', $S0
     if $I0 > -1 goto L1
-    error(E_WARNING, 'bad type specifier while parsing parameters')
+    $P0 = getinterp
+    $P1 = $P0['sub', 1]
+    error(E_WARNING, $P1, '(): bad type specifier while parsing parameters')
     .return (0)
   L2:
     unless min_num_args < 0 goto L5
@@ -81,6 +83,8 @@ STILL INCOMPLETE (see parse_arg_impl).
     if num_args > max_num_args goto L6
     goto L7
   L6:
+    $P0 = getinterp
+    $P1 = $P0['sub', 1]
     unless min_num_args == max_num_args goto L8
     $S1 = 'exactly'
     goto L9
@@ -103,7 +107,7 @@ STILL INCOMPLETE (see parse_arg_impl).
   L13:
     $S3 = 's'
   L14:
-    error(E_WARNING, 'expects ', $S1, ' ', $I2, ' parameter', $S3, ', ', num_args, ' given')
+    error(E_WARNING, $P1, '() expects ', $S1, ' ', $I2, ' parameter', $S3, ', ', num_args, ' given')
     .return (0)
   L7:
     .local int ifmt, iarg
@@ -136,8 +140,10 @@ STILL INCOMPLETE (see parse_arg_impl).
     .local string expected_type
     (expected_type, $P1, $I2) = parse_arg_impl(arg, fmt, ifmt)
     if expected_type == '' goto L1
+    $P0 = getinterp
+    $P1 = $P0['sub', 2]
     $S3 = typeof arg
-    error(E_WARNING, 'expects parameter ', iarg, ' to be ', expected_type, ', ', $S3, ' given')
+    error(E_WARNING, $P1, '() expects parameter ', iarg, ' to be ', expected_type, ', ', $S3, ' given')
     .return (0)
   L1:
     .return (1, $P1, $I2)
