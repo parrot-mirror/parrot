@@ -25,7 +25,7 @@ use warnings;
 use FindBin;
 use lib "$FindBin::Bin/../../lib";
 
-use Test::More     tests => 3;
+use Test::More     tests => 8;
 use Parrot::Test;
 
 
@@ -35,6 +35,47 @@ language_output_is( 'Plumhead', <<'CODE', <<'OUTPUT', 'base64_encode(str)' );
 ?>
 CODE
 UGx1bSBIZWFkZWQgUGFyYWtlZXQ=
+OUTPUT
+
+language_output_like( 'Plumhead', <<'CODE', <<'OUTPUT', 'base64_encode(no arg)' );
+<?php
+  echo base64_encode(), "\n";
+?>
+CODE
+/base64_encode\(\) expects exactly 1 parameter, 0 given/
+OUTPUT
+
+language_output_is( 'Plumhead', <<'CODE', <<'OUTPUT', 'base64_encode(3.14)' );
+<?php
+  echo base64_encode(3.14), "\n";
+?>
+CODE
+My4xNA==
+OUTPUT
+
+language_output_is( 'Plumhead', <<'CODE', <<'OUTPUT', 'base64_encode(TRUE)' );
+<?php
+  echo base64_encode(TRUE), "\n";
+?>
+CODE
+MQ==
+OUTPUT
+
+language_output_is( 'Plumhead', <<'CODE', <<'OUTPUT', 'base64_encode(NULL)' );
+<?php
+  echo base64_encode(NULL), "\n";
+?>
+CODE
+
+OUTPUT
+
+language_output_like( 'Plumhead', <<'CODE', <<'OUTPUT', 'base64_encode(array)' );
+<?php
+  $hello['world'] = 'hi';
+  echo base64_encode($hello), "\n";
+?>
+CODE
+/base64_encode\(\) expects parameter 1 to be string, array given/
 OUTPUT
 
 language_output_is( 'Plumhead', <<'CODE', <<'OUTPUT', 'base64_decode(str)' );
