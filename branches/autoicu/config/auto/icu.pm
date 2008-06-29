@@ -147,13 +147,13 @@ sub runstep {
             }
         );
 
-    _verbose_report($verbose, $icuconfig, $icushared, $icuheaders);
-
     # 3rd possible return point
     if ( $without_opt ) {
         $self->_set_no_configure_with_icu($conf, q{no});
         return 1;
     }
+
+    _verbose_report($verbose, $icuconfig, $icushared, $icuheaders);
 
     $icuheaders = $self->_handle_icuconfig_errors( {
         icushared   => $icushared,
