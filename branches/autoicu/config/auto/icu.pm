@@ -116,81 +116,76 @@ sub runstep {
             icu_dir    => '',
         );
         $self->set_result("no");
+        # 1st possible return point
+        return 1;
     }
-    else {
-        my $autodetect  =   ( ! defined($icushared)  )
-                                &&
-                            ( ! defined($icuheaders) );
-    
-        my $without = 0;
-        ($icuconfig, $autodetect, $without) =
-            _handle_autodetect( {
-                icuconfig   => $icuconfig,
-                autodetect  => $autodetect,
-                without     => $without,
-                verbose     => $verbose,
-        } );
 
-        ($without, $icushared, $icuheaders) =
-            $self->_try_icuconfig( {
+    my $autodetect  =   ( ! defined($icushared)  )
+                            &&
+                        ( ! defined($icuheaders) );
+
+    my $without = 0;
+    ($icuconfig, $autodetect, $without) =
+        _handle_autodetect( {
+            icuconfig   => $icuconfig,
+            autodetect  => $autodetect,
+            without     => $without,
+            verbose     => $verbose,
+    } );
+
+    ($without, $icushared, $icuheaders) =
+        $self->_try_icuconfig(
+            $conf,
+            {
                 conf            => $conf,
                 without         => $without,
                 autodetect      => $autodetect,
                 icuconfig       => $icuconfig,
-            } );
+            }
+        );
 
-        _verbose_report($verbose, $icuconfig, $icushared, $icuheaders);
-    
-        if ($without) {
-            $conf->data->set(
-                has_icu    => 0,
-                icu_shared => '',    # used for generating src/dynpmc/Makefile
-                icu_dir    => '',
-            );
-            if (! $self->result) {
-                $self->set_result("no");
-            }
+    _verbose_report($verbose, $icuconfig, $icushared, $icuheaders);
+
+    if ($without) {
+        $conf->data->set(
+            has_icu    => 0,
+            icu_shared => '',    # used for generating src/dynpmc/Makefile
+            icu_dir    => '',
+        );
+        if (! $self->result) {
+            $self->set_result("no");
         }
-        else {
-            $icuheaders = $self->_handle_icuconfig_errors( {
-                icushared   => $icushared,
-                icuheaders  => $icuheaders,
-            } );
-            return unless defined $icuheaders;
-        
-            my $icudir = dirname($icuheaders);
-            $conf->data->set(
-                has_icu    => 1,
-                icu_shared => $icushared,
-                icu_dir    => $icudir,
-            );
-        
-            # Add -I $Icuheaders if necessary
-            my $header = "unicode/ucnv.h";
-            $conf->data->set( testheaders => "#include <$header>\n" );
-            $conf->data->set( testheader  => "$header" );
-            $conf->cc_gen('config/auto/headers/test_c.in');
-        
-            $conf->data->set( testheaders => undef );    # Clean up.
-            $conf->data->set( testheader  => undef );
-            eval { $conf->cc_build(); };
-            if ( ! $@ && $conf->cc_run() =~ /^$header OK/ ) {
-        
-                # Ok, we don't need anything more.
-                if ($verbose) {
-                    print "Your compiler found the icu headers... good!\n";
-                }
-            }
-            else {
-                if ($verbose) {
-                    print "Adding -I $icuheaders to ccflags for icu headers.\n";
-                }
-                $conf->data->add( ' ', ccflags => "-I $icuheaders" );
-            }
-            $conf->cc_clean();
-            $self->set_result("yes");
-        }
+        # 2nd possible return point
+        return 1;
     }
+
+    $icuheaders = $self->_handle_icuconfig_errors( {
+        icushared   => $icushared,
+        icuheaders  => $icuheaders,
+    } );
+    # 3rd possible return point; this one is a failure
+    return unless defined $icuheaders;
+
+    my $icudir = dirname($icuheaders);
+    $conf->data->set(
+        has_icu    => 1,
+        icu_shared => $icushared,
+        icu_dir    => $icudir,
+    );
+
+    # Add -I $Icuheaders if necessary
+    my $header = "unicode/ucnv.h";
+    $conf->data->set( testheaders => "#include <$header>\n" );
+    $conf->data->set( testheader  => "$header" );
+    $conf->cc_gen('config/auto/headers/test_c.in');
+
+    $conf->data->set( testheaders => undef );    # Clean up.
+    $conf->data->set( testheader  => undef );
+    eval { $conf->cc_build(); };
+    my $ccflags_status = ( ! $@ && $conf->cc_run() =~ /^$header OK/ );
+    $conf->cc_clean();
+    $self->set_result("yes");
+    # 4th possible return point; this is the only really successful return.
     return 1;
 }
 
@@ -277,6 +272,7 @@ sub _handle_autodetect {
 
 sub _try_icuconfig {
     my $self = shift;
+    my $conf = shift;
     my $arg = shift;
     my ($icushared, $icuheaders);
     if (
@@ -292,7 +288,7 @@ sub _try_icuconfig {
         # location of header files
         $icuheaders = capture_output("$arg->{icuconfig} --prefix");
         ($icuheaders, $arg->{without}) =
-            _handle_icuheaders($arg->{conf}, $icuheaders, $arg->{without});
+            _handle_icuheaders($conf, $icuheaders, $arg->{without});
 
         if ($arg->{without}) {
             $self->set_result("failed");
@@ -370,6 +366,23 @@ sub _handle_icuconfig_errors {
     }
     else {
         return $arg->{icuheaders};
+    }
+}
+
+sub _handle_ccflags_status {
+    my $conf = shift;
+    my $arg = shift;
+    if ($arg->{ccflags_status}) {
+        # Ok, we don't need anything more.
+        if ($arg->{verbose}) {
+            print "Your compiler found the icu headers... good!\n";
+        }
+    }
+    else {
+        if ($arg->{verbose}) {
+            print "Adding -I $arg->{icuheaders} to ccflags for icu headers.\n";
+        }
+        $conf->data->add( ' ', ccflags => "-I $arg->{icuheaders}" );
     }
 }
 
