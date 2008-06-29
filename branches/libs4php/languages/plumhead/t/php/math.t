@@ -25,7 +25,7 @@ use warnings;
 use FindBin;
 use lib "$FindBin::Bin/../../lib";
 
-use Test::More     tests => 32;
+use Test::More     tests => 35;
 use Parrot::Test;
 
 
@@ -212,6 +212,30 @@ language_output_like( 'Plumhead', <<'CODE', <<'OUTPUT', 'hypot' );
 ?>
 CODE
 /^2\.236/
+OUTPUT
+
+language_output_is( 'Plumhead', <<'CODE', <<'OUTPUT', 'is_finite' );
+<?php
+  echo is_finite(3.14), "\n";
+?>
+CODE
+1
+OUTPUT
+
+language_output_is( 'Plumhead', <<'CODE', <<'OUTPUT', 'is_infinite' );
+<?php
+  echo is_infinite(3.14), "\n";
+?>
+CODE
+
+OUTPUT
+
+language_output_is( 'Plumhead', <<'CODE', <<'OUTPUT', 'is_nan' );
+<?php
+  echo is_nan(3.14), "\n";
+?>
+CODE
+
 OUTPUT
 
 language_output_like( 'Plumhead', <<'CODE', <<'OUTPUT', 'log' );

@@ -564,54 +564,51 @@ Returns sqrt(num1*num1 + num2*num2)
 
 Returns whether argument is finite
 
-NOT IMPLEMENTED.
-
 =cut
 
 .sub 'is_finite'
     .param pmc args :slurpy
-    .local num val
+    .local pmc val
     ($I0, val) = parse_parameters('d', args :flat)
     if $I0 goto L1
     .RETURN_NULL()
   L1:
-    not_implemented()
+    $P0 = val.'is_finite'()
+    .return ($P0)
 .end
 
 =item C<bool is_infinite(float val)>
 
 Returns whether argument is infinite
 
-NOT IMPLEMENTED.
-
 =cut
 
 .sub 'is_infinite'
     .param pmc args :slurpy
-    .local num val
+    .local pmc val
     ($I0, val) = parse_parameters('d', args :flat)
     if $I0 goto L1
     .RETURN_NULL()
   L1:
-    not_implemented()
+    $P0 = val.'is_infinite'()
+    .return ($P0)
 .end
 
 =item C<bool is_nan(float val)>
 
 Returns whether argument is not a number
 
-NOT IMPLEMENTED.
-
 =cut
 
 .sub 'is_nan'
     .param pmc args :slurpy
-    .local num val
+    .local pmc val
     ($I0, val) = parse_parameters('d', args :flat)
     if $I0 goto L1
     .RETURN_NULL()
   L1:
-    not_implemented()
+    $P0 = val.'is_nan'()
+    .return ($P0)
 .end
 
 =item C<float log(float number, [float base])>
