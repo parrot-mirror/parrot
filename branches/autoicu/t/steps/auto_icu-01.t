@@ -263,9 +263,80 @@ ok(! defined $icushared, "icushared undefined, as expected");
 ok(! defined $icuheaders, "icuheaders undefined, as expected");
 is($step->result(), q{}, "result is still empty string, as expected");
 
-my $die = auto::icu::die_message();
+my $die = auto::icu::_die_message();
 like($die, qr/Something is wrong with your ICU installation/s,
     "Got expected die message");
+
+{   
+    my $phony = q{/path/to/icu-config};
+    my ($stdout, $stderr);
+    capture(
+        sub { auto::icu::_verbose_report(1, $phony, undef, undef); },
+        \$stdout,
+        \$stderr,
+    );
+    like( $stdout, qr/icuconfig:\s+$phony/s,
+        "Got expected verbose output"
+    );
+}
+
+{   
+    my $phony = q{-lalpha};
+    my ($stdout, $stderr);
+    capture(
+        sub { auto::icu::_verbose_report(1, undef, $phony, undef); },
+        \$stdout,
+        \$stderr,
+    );
+    like( $stdout, qr/icushared='$phony'/s,
+        "Got expected verbose output"
+    );
+}
+
+{   
+    my $phony = q{alpha/include};
+    my ($stdout, $stderr);
+    capture(
+        sub { auto::icu::_verbose_report(1, undef, undef, $phony); },
+        \$stdout,
+        \$stderr,
+    );
+    like( $stdout, qr/headers='$phony'/s,
+        "Got expected verbose output"
+    );
+}
+
+{   
+    my ($stdout, $stderr);
+    capture(
+        sub { auto::icu::_verbose_report(0, 'alpha', 'beta', 'gamma'); },
+        \$stdout,
+        \$stderr,
+    );
+    ok(! $stdout, "No verbose output, as expected");
+}
+
+{
+    my ($stdout, $stderr);
+    capture(
+        sub {
+            $icuheaders = $step->_handle_icuconfig_errors( {
+                icushared   => undef,
+                icuheaders  => undef,
+            } );
+        },
+        \$stdout,
+        \$stderr,
+    );
+    like($stderr, qr/error: icushared not defined/s,
+        "Got expected warnings");
+    like($stderr, qr/error: icuheaders not defined or invalid/s,
+        "Got expected warnings");
+    like($stderr, qr/Something is wrong with your ICU installation/s,
+        "Got expected warnings");
+}
+
+pass("Completed all tests in $0");
 
 ################### DOCUMENTATION ###################
 

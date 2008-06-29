@@ -116,7 +116,6 @@ sub runstep {
             icu_dir    => '',
         );
         $self->set_result("no");
-        return 1;
     }
     else {
         my $autodetect  =   ( ! defined($icushared)  )
@@ -140,11 +139,7 @@ sub runstep {
                 icuconfig       => $icuconfig,
             } );
 
-        if ($verbose) {
-            print "icuconfig: $icuconfig\n"  if defined $icuconfig;
-            print "icushared='$icushared'\n" if defined $icushared;
-            print "headers='$icuheaders'\n"  if defined $icuheaders;
-        }
+        _verbose_report($verbose, $icuconfig, $icushared, $icuheaders);
     
         if ($without) {
             $conf->data->set(
@@ -155,49 +150,15 @@ sub runstep {
             if (! $self->result) {
                 $self->set_result("no");
             }
-            else {
-                # do nothing
-            }
-            return 1;
         }
         else {
-            my $ok = 1;
-        
-            if ( ! defined $icushared ) {
-                warn "error: icushared not defined\n";
-                $ok = 0;
-            }
-            else {
-                # do nothing
-            }
-        
-            if ( ! ( defined $icuheaders and -d $icuheaders ) ) {
-                warn "error: icuheaders not defined or invalid\n";
-                $ok = 0;
-            }
-            else {
-                $icuheaders =~ s![\\/]$!!;
-                foreach my $header ( @{ $self->{icu_headers} } ) {
-                    $header = "$icuheaders/unicode/$header";
-                    if  ( ! -e $header ) {
-                        $ok = 0;
-                        warn "error: ICU header '$header' not found\n";
-                    }
-                    else {
-                        # do nothing
-                    }
-                }
-            }
-        
-            if (! $ok) {
-                die die_message();
-            }
-            else {
-                # do nothing
-            }
+            $icuheaders = $self->_handle_icuconfig_errors( {
+                icushared   => $icushared,
+                icuheaders  => $icuheaders,
+            } );
+            return unless defined $icuheaders;
         
             my $icudir = dirname($icuheaders);
-        
             $conf->data->set(
                 has_icu    => 1,
                 icu_shared => $icushared,
@@ -227,13 +188,13 @@ sub runstep {
                 $conf->data->add( ' ', ccflags => "-I $icuheaders" );
             }
             $conf->cc_clean();
-        
             $self->set_result("yes");
-        
-            return 1;
         }
     }
+    return 1;
 }
+
+########## INTERNAL SUBROUTINES ##########
 
 sub _handle_icuconfig_opt {
     my ($self, $icuconfig_opt) = @_;
@@ -250,7 +211,7 @@ sub _handle_icuconfig_opt {
     return $icuconfig;
 }
 
-sub die_message {
+sub _die_message {
     my $die = <<"HELP";
 Something is wrong with your ICU installation!
 
@@ -367,6 +328,49 @@ sub _handle_icuheaders {
         }
     }
     return ($icuheaders, $without);
+}
+
+sub _verbose_report {
+    my ($verbose, $icuconfig, $icushared, $icuheaders) = @_;
+    if ($verbose) {
+        print "icuconfig: $icuconfig\n"  if defined $icuconfig;
+        print "icushared='$icushared'\n" if defined $icushared;
+        print "headers='$icuheaders'\n"  if defined $icuheaders;
+    }
+}
+
+sub _handle_icuconfig_errors {
+    my $self = shift;
+    my $arg = shift;
+    my $icuconfig_errors = 0;
+
+    if ( ! defined $arg->{icushared} ) {
+        warn "error: icushared not defined\n";
+        $icuconfig_errors++;
+    }
+
+    if ( ! ( defined $arg->{icuheaders} and -d $arg->{icuheaders} ) ) {
+        warn "error: icuheaders not defined or invalid\n";
+        $icuconfig_errors++;
+    }
+    else {
+        $arg->{icuheaders} =~ s![\\/]$!!;
+        foreach my $header ( @{ $self->{icu_headers} } ) {
+            $header = "$arg->{icuheaders}/unicode/$header";
+            if  ( ! -e $header ) {
+                $icuconfig_errors++;
+                warn "error: ICU header '$header' not found\n";
+            }
+        }
+    }
+
+    if ($icuconfig_errors) {
+        warn _die_message();
+        return;
+    }
+    else {
+        return $arg->{icuheaders};
+    }
 }
 
 1;
