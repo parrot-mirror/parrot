@@ -61,8 +61,7 @@ php_math.pir - PHP math Standard Library
     set $P1, $N1
   L2:
     $P0 = $P1. .func ()
-    $N0 = $P0
-    .RETURN_DOUBLE($N0)
+    .return ($P0)
 .endm
 
 
