@@ -60,6 +60,45 @@ Return the string 'double'.
 
 =over 4
 
+=item C<PMC* acosh()>
+
+=cut
+
+*/
+    METHOD acosh() {
+        PMC * const d  = pmc_new(INTERP, VTABLE_type(INTERP, SELF));
+        PMC_num_val(d) = acosh(PMC_num_val(SELF));
+        RETURN(PMC *d);
+    }
+
+/*
+
+=item C<PMC* asinh()>
+
+=cut
+
+*/
+    METHOD asinh() {
+        PMC * const d  = pmc_new(INTERP, VTABLE_type(INTERP, SELF));
+        PMC_num_val(d) = asinh(PMC_num_val(SELF));
+        RETURN(PMC *d);
+    }
+
+/*
+
+=item C<PMC* atanh()>
+
+=cut
+
+*/
+    METHOD atanh() {
+        PMC * const d  = pmc_new(INTERP, VTABLE_type(INTERP, SELF));
+        PMC_num_val(d) = atanh(PMC_num_val(SELF));
+        RETURN(PMC *d);
+    }
+
+/*
+
 =item C<PMC* is_finite()>
 
 =cut
