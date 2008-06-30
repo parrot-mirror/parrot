@@ -66,7 +66,15 @@ by PHC from PHP source code. It generates an XML representation of a PAST data s
 </xsl:template>
 
 <xsl:template match="phc:AST_actual_parameter" >
-  <xsl:apply-templates select="phc:AST_method_invocation | phc:Token_string | phc:Token_int | phc:Token_bool | phc:Token_null | phc:Token_real | phc:AST_bin_op | phc:AST_unary_op | phc:AST_variable" />
+  <xsl:apply-templates select="  phc:AST_method_invocation
+                               | phc:Token_string
+                               | phc:Token_int
+                               | phc:Token_bool
+                               | phc:Token_null
+                               | phc:Token_real
+                               | phc:AST_bin_op
+                               | phc:AST_unary_op
+                               | phc:AST_variable" />
 </xsl:template>
 
 <xsl:template match="phc:AST_bin_op" >
@@ -74,11 +82,11 @@ by PHC from PHP source code. It generates an XML representation of a PAST data s
 
     <xsl:attribute name="pirop" >
       <xsl:choose>
-        <xsl:when test="phc:Token_op/phc:value = '+'"   >n_add</xsl:when>
-        <xsl:when test="phc:Token_op/phc:value = '-'"   >n_sub</xsl:when>
-        <xsl:when test="phc:Token_op/phc:value = '*'"   >n_mul</xsl:when>
-        <xsl:when test="phc:Token_op/phc:value = '/'"   >n_div</xsl:when>
-        <xsl:when test="phc:Token_op/phc:value = '%'"   >n_mod</xsl:when>
+        <xsl:when test="phc:Token_op/phc:value = '+'" >n_add</xsl:when>
+        <xsl:when test="phc:Token_op/phc:value = '-'" >n_sub</xsl:when>
+        <xsl:when test="phc:Token_op/phc:value = '*'" >n_mul</xsl:when>
+        <xsl:when test="phc:Token_op/phc:value = '/'" >n_div</xsl:when>
+        <xsl:when test="phc:Token_op/phc:value = '%'" >n_mod</xsl:when>
       </xsl:choose>
     </xsl:attribute>
 
@@ -101,7 +109,12 @@ by PHC from PHP source code. It generates an XML representation of a PAST data s
       </xsl:choose>
     </xsl:attribute>
 
-    <xsl:apply-templates select="phc:Token_string | phc:Token_int | phc:Token_real | phc:AST_bin_op | phc:AST_unary_op | phc:AST_variable" />
+    <xsl:apply-templates select="  phc:Token_string
+                                 | phc:Token_int
+                                 | phc:Token_real
+                                 | phc:AST_bin_op
+                                 | phc:AST_unary_op
+                                 | phc:AST_variable" />
 
   </past:Op>
 </xsl:template>
@@ -111,7 +124,10 @@ by PHC from PHP source code. It generates an XML representation of a PAST data s
     <xsl:attribute name="name" >
       <xsl:value-of select="concat('prefix:', phc:Token_op/phc:value)" />
     </xsl:attribute>
-    <xsl:apply-templates select="phc:Token_int | phc:Token_real | phc:AST_bin_op | phc:AST_unary_op" />
+    <xsl:apply-templates select="  phc:Token_int
+                                 | phc:Token_real
+                                 | phc:AST_bin_op
+                                 | phc:AST_unary_op" />
   </past:Op>
 </xsl:template>
 
@@ -119,7 +135,9 @@ by PHC from PHP source code. It generates an XML representation of a PAST data s
 <xsl:template match="phc:AST_assignment[string(phc:bool) = 'false']" >
   <past:Op name='infix:=' pasttype='bind' >
     <xsl:apply-templates select="phc:AST_variable" />
-    <xsl:apply-templates select="phc:Token_string | phc:Token_int | phc:AST_bin_op" />
+    <xsl:apply-templates select="  phc:Token_string
+                                 | phc:Token_int
+                                 | phc:AST_bin_op" />
   </past:Op>
 </xsl:template>
 
@@ -127,7 +145,9 @@ by PHC from PHP source code. It generates an XML representation of a PAST data s
 <xsl:template match="phc:AST_assignment[string(phc:bool) = 'true']" >
   <past:Op name='infix::=' pasttype='bind' >
     <xsl:apply-templates select="phc:AST_variable" />
-    <xsl:apply-templates select="phc:Token_string | phc:Token_int | phc:AST_bin_op" />
+    <xsl:apply-templates select="  phc:Token_string
+                                 | phc:Token_int
+                                 | phc:AST_bin_op" />
   </past:Op>
 </xsl:template>
 
@@ -139,7 +159,7 @@ by PHC from PHP source code. It generates an XML representation of a PAST data s
   </past:Var>
 </xsl:template>
 
-<xsl:template match="phc:AST_variable[phc:AST_expr_list/phc:Token_string | phc:AST_expr_list/phc:Token_int]" >
+<xsl:template match="phc:AST_variable[ phc:AST_expr_list/phc:Token_string | phc:AST_expr_list/phc:Token_int ]" >
   <past:Var scope="keyed" viviself="Undef" lvalue="1" >
     <xsl:choose>
       <xsl:when test="phc:Token_variable_name/phc:value = '_GET' or phc:Token_variable_name/phc:value = '_POST'" >
@@ -153,7 +173,8 @@ by PHC from PHP source code. It generates an XML representation of a PAST data s
         </past:Var>
       </xsl:otherwise>
     </xsl:choose>
-    <xsl:apply-templates select="phc:AST_expr_list/phc:Token_string | phc:AST_expr_list/phc:Token_int" />
+    <xsl:apply-templates select="  phc:AST_expr_list/phc:Token_string
+                                 | phc:AST_expr_list/phc:Token_int" />
   </past:Var>
 </xsl:template>
 
@@ -173,8 +194,8 @@ by PHC from PHP source code. It generates an XML representation of a PAST data s
 <xsl:template match="phc:Token_bool" >
   <past:Val returns="PhpBoolean" >
     <xsl:attribute name="value" ><xsl:choose>
-      <xsl:when test="phc:value = 'True'" >1</xsl:when>
-      <xsl:when test="phc:value = 'False'"   >0</xsl:when>
+      <xsl:when test="phc:value = 'True'"  >1</xsl:when>
+      <xsl:when test="phc:value = 'False'" >0</xsl:when>
     </xsl:choose></xsl:attribute>
   </past:Val>
 </xsl:template>
@@ -192,13 +213,19 @@ by PHC from PHP source code. It generates an XML representation of a PAST data s
   </past:Val>
 </xsl:template>
 
-<xsl:template match="phc:value | phc:source_rep" >
+<xsl:template match="  phc:value
+                     | phc:source_rep" >
   <xsl:value-of select="." />
 </xsl:template>
 
 <xsl:template match="phc:AST_if" >
   <past:Op pasttype="if" >
-    <xsl:apply-templates select="phc:Token_string | phc:Token_int | phc:Token_real | phc:AST_bin_op | phc:AST_unary_op | phc:AST_variable" />
+    <xsl:apply-templates select="  phc:Token_string
+                                 | phc:Token_int
+                                 | phc:Token_real
+                                 | phc:AST_bin_op
+                                 | phc:AST_unary_op
+                                 | phc:AST_variable" />
     <past:Block blocktype="immediate" >
       <xsl:apply-templates select="phc:AST_statement_list[1]" />
     </past:Block>
