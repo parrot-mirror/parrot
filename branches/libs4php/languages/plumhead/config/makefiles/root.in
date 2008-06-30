@@ -6,15 +6,14 @@ O        = @o@
 
 # Set up directories
 BUILD_DIR     = @build_dir@
-TGE_DIR       = $(BUILD_DIR)/compilers/tge
 LIBRARY_DIR   = $(BUILD_DIR)/runtime/parrot/library
 PMCDIR        = src/pmc
 PARROT_DYNEXT = @build_dir@/runtime/parrot/dynext
 
 # Set up commands
 PARROT        = $(BUILD_DIR)/parrot@exe@
-PERL            = @perl@
-RM_F            = @rm_f@
+PERL          = @perl@
+RM_F          = @rm_f@
 RECONFIGURE   = $(PERL) $(BUILD_DIR)/tools/dev/reconfigure.pl
 PMCBUILD      = $(PERL) @build_dir@/tools/build/dynpmc.pl
 NQP           = $(BUILD_DIR)/compilers/nqp/nqp.pbc
@@ -173,22 +172,17 @@ src/common/plumheadlib.pbc: src/common/builtins.pir src/common/php_standard.pir 
 src/common/php_ctype.pbc: src/common/php_ctype.pir src/common/php_MACRO.pir
 	$(PARROT) -o src/common/php_ctype.pbc src/common/php_ctype.pir
 
-src/pct/Plumhead_gen.pir: $(LIBRARY_DIR)/PGE/Perl6Grammar.pir src/pct/Plumhead.pg
+src/pct/gen_grammar.pir: $(LIBRARY_DIR)/PGE/Perl6Grammar.pir src/pct/grammar.pg
 	$(PARROT) $(LIBRARY_DIR)/PGE/Perl6Grammar.pir \
-            --output=src/pct/Plumhead_gen.pir src/pct/Plumhead.pg
-
-src/pct/PlumheadPAST_gen.pir: src/pct/PlumheadPAST.tg
-	$(PARROT) $(TGE_DIR)/tgc.pir \
-            --output=src/pct/PlumheadPAST_gen.pir src/pct/PlumheadPAST.tg
+            --output=src/pct/gen_grammar.pir src/pct/grammar.pg
 
 src/pct/gen_actions.pir: $(NQP) $(PCT) src/pct/actions.pm
 	$(PARROT) $(NQP) --output=src/pct/gen_actions.pir \
-	    --target=pir src/pct/actions.pm
+  --target=pir src/pct/actions.pm
 
 plumhead.pbc: \
     src/common/plumhead.pir \
-    src/pct/Plumhead_gen.pir \
-    src/pct/PlumheadPAST_gen.pir \
+    src/pct/gen_grammar.pir \
     src/pct/gen_actions.pir
 	$(PARROT) -o plumhead.pbc src/common/plumhead.pir
 
@@ -222,15 +216,17 @@ test-pmc:
 clean: clean-common clean-pct clean-antlr3 clean-test
 
 clean-common: clean-pmc
-	$(RM_F) src/common/plumheadlib.pbc plumhead.pbc
+	$(RM_F) \
+  src/common/plumheadlib.pbc \
+  src/common/*.pbc \
+  plumhead.pbc
 
 clean-pmc:
-	$(RM_F) "$(PMCDIR)/*dump" "$(PMCDIR)/*\.c" "$(PMCDIR)/pmc_*h" "$(PMCDIR)/php_group.h" "$(PMCDIR)/*$(O)" "$(PMCDIR)/*$(LOAD_EXT)"
+	$(RM_F) "$(PMCDIR)/*dump" "$(PMCDIR)/*.c" "$(PMCDIR)/pmc_*h" "$(PMCDIR)/php_group.h" "$(PMCDIR)/*$(O)" "$(PMCDIR)/*$(LOAD_EXT)"
 
 clean-pct:
 	$(RM_F) \
-  src/pct/Plumhead_gen.pir \
-  src/pct/PlumheadPAST_gen.pir \
+  src/pct/gen_grammar.pir \
   src/pct/gen_actions.pir
 
 clean-antlr3:
