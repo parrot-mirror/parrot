@@ -3,10 +3,10 @@
 
 =begin comments
 
-Plumhead::Grammar::Actions - ast transformations for Plumhead
+Plumhead::Grammar::Actions - AST transformations for Plumhead
 
 This file contains the methods that are used by the parse grammar
-to build the PAST representation of an Plumhead program.
+to build the PAST representation of a Plumhead program.
 Each method below corresponds to a rule in F<src/pct/Plumhead.pg>,
 and is invoked at the point where C<{*}> appears in the rule,
 with the current match object as the first argument.  If the
@@ -17,20 +17,12 @@ value of the comment is passed as the second argument to the method.
 
 class Plumhead::Grammar::Actions;
 
-# The method TOP is invoked per default by the HLLCompiler
 method TOP($/) {
-    make PAST::Block.new(
-             $( $<program> ),
-             :name('Plum-Headed Parakeet'),
-             :node($/)
-         );
-}
-
-method program($/) {
     my $past  := PAST::Stmts.new( :node($/) );
     for $<sea_or_code> {
         $past.push( $($_) );
     }
+
     make $past;
 }
 
@@ -38,71 +30,135 @@ method sea_or_code($/,$key) {
     make $( $/{$key} );
 }
 
-# The surrounding HTML is printed out
+# The sea, HTML, surrounding the island, code, is printed out
 method SEA($/) {
     make PAST::Op.new(
              PAST::Val.new(
                  :value(~$/),
-                 :returns('String')
+                 :returns('PhpString')
              ),
-             :pasttype('call'),
              :name('echo'),
              :node($/)
          );
 }
 
-# loop over the statements in the PHP section
 method code($/) {
-    my $past  := PAST::Stmts.new(
-                     :node($/),
-                     :name('code')
-                 );
+    make $( $<statements> );
+}
+
+method statements($/) {
+    my $past := PAST::Stmts.new( :node($/) );
     for $<statement> {
         $past.push( $($_) );
     }
+
     make $past;
 }
 
 method statement($/,$key) {
-    if $key eq 'ECHO' {
-        make PAST::Op.new(
-                 $( $/[0]<expression> ),
-                 :pasttype('call'),
-                 :name('echo'),
-                 :node($/)
-             );
+    make $( $/{$key} );
+}
+
+method inline_sea($/) {
+   make PAST::Op.new(
+            PAST::Val.new(
+                :value(~$<SEA_empty_allowed>),
+                :returns('PhpString')
+            ),
+            :name('echo'),
+            :node($/)
+        );
+}
+
+method echo_statement($/) {
+    my $past := $( $<arguments> );
+    $past.name( ~$<ECHO> );
+
+    make $past;
+}
+
+method function_call($/) {
+    my $past := $( $<arguments> );
+    $past.name( ~$<FUNCTION_NAME> );
+
+    make $past;
+}
+
+method arguments($/) {
+    my $past := PAST::Op.new(
+                    :pasttype('call'),
+                    :node($/)
+                );
+    for $<expression> {
+        $past.push($($_));
     }
-    elsif $key eq 'VAR_DUMP' {
-        make PAST::Op.new(
-                 $( $<expression> ),
-                 :pasttype('call'),
-                 :name('var_dump'),
-                 :node($/)
-             );
+
+    make $past;
+}
+
+method if_statement($/) {
+    my $past := PAST::Op.new(
+                    $( $<relational_expression> ),
+                    $( $<statements> ),
+                    :pasttype('if'),
+                    :node($/)
+                );
+    for $<else_clause> {
+        $past.push( $( $_ ) );
     }
-    elsif $key eq 'IF' {
-        my $past_if_block := PAST::Stmts.new( );
-        for $<statement> {
-            $past_if_block.push( $($_) );
-        }
-        make PAST::Op.new(
-                 $( $<relational_expression> ),
-                 $past_if_block,
-                 :pasttype('if'),
-                 :node($/)
-             );
-    }
-    elsif $key eq 'inline_sea' {
-        make PAST::Op.new(
-                 PAST::Val.new(
-                     :value(~$<inline_sea><SEA_empty_allowed>),
-                     :returns('String')
-                 ),
-                 :pasttype('call'),
-                 :name('echo'),
-                 :node($/)
-             );
-    }
+
+    make $past;
+}
+
+method scalar_assign($/) {
+    make PAST::Op.new(
+             $( $<var> ),
+             $( $<expression> ),
+             :pasttype('bind'),
+         );
+}
+
+method array_key($/) {
+    make $( $<expression> );
+}
+
+method array_assign($/) {
+    make PAST::Op.new(
+             $( $<array_elem> ),
+             $( $<expression> ),
+             :pasttype('copy'),
+         );
+}
+
+method array_elem($/) {
+    my $past_var_name := $( $<VAR_NAME> );
+    $past_var_name.scope('package');
+    $past_var_name.viviself('PhpArray');
+
+    make PAST::Var.new(
+             $past_var_name,
+             $( $<array_key> ),
+             :scope('keyed'),
+             :viviself('Undef'),
+             :lvalue(1)
+        );
+}
+
+method var($/) {
+    make $( $<VAR_NAME> );
+}
+
+method VAR_NAME($/) {
+    make PAST::Var.new(
+             :scope('package'),
+             :name(~$/),
+             :viviself('Undef'),
+             :lvalue(1)
+         );
+}
+
+method else_clause($/) {
+    make $( $<statements> );
 }
 
 method relational_expression($/) {
@@ -132,12 +188,13 @@ method expression($/,$key) {
 method bitwise_expression($/) {
     my $past := $( $<adding_expression> );
     if $<bitwise_tail> {
+       my %name;
+       %name{'&'} := 'infix:+&';
+       %name{'|'} := 'infix:+|';
+       %name{'^'} := 'infix:+^';
+
        for $<bitwise_tail> {
            my $past_prev := $past;
-           my %name;
-           %name{'&'} := 'infix:+&';
-           %name{'|'} := 'infix:+|';
-           %name{'^'} := 'infix:+^';
            my $name := %name{ $_<BITWISE_OP> };
            $past := PAST::Op.new(
                         $past_prev,
@@ -146,6 +203,7 @@ method bitwise_expression($/) {
                     );
        }
     }
+
     make $past;
 }
 
@@ -162,19 +220,20 @@ method adding_expression($/) {
                     );
        }
     }
+
     make $past;
 }
 
 method multiplying_expression($/) {
-    # make PAST::Val( :name('kkkk'), :value($/) );
     my $past := $( $<unary_expression> );
     if $<multiplicand> {
+       my %pirop;
+       %pirop{'*'} := 'n_mul';
+       %pirop{'/'} := 'n_div';
+       %pirop{'%'} := 'n_mod';
+
        for $<multiplicand> {
            my $past_prev := $past;
-           my %pirop;
-           %pirop{'*'} := 'n_mul';
-           %pirop{'/'} := 'n_div';
-           %pirop{'%'} := 'n_mod';
            my $pir_op := %pirop{ $_<MUL_OP> };
            $past := PAST::Op.new(
                         $past_prev,
@@ -183,6 +242,7 @@ method multiplying_expression($/) {
                     );
        }
     }
+
     make $past;
 }
 
@@ -201,8 +261,22 @@ method unary_expression($/) {
 }
 
 method concat_expression($/) {
-    make $( $<string> );
+    my $past := $( $<string> );
+    if $<concat_tail> {
+       for $<concat_tail> {
+           my $past_prev := $past;
+           my $op := $_<CONCAT_OP> eq '.' ?? '~' !! ~$_<CONCAT_OP>;
+           $past := PAST::Op.new(
+                        $past_prev,
+                        $( $_<string> ),
+                        :name( "infix:" ~ $op )
+                    );
+       }
+    }
+
+    make $past;
 }
+
 
 method postfix_expression($/,$key) {
     make $( $/{$key} );
@@ -212,10 +286,34 @@ method string($/,$key) {
     make $( $/{$key} );
 }
 
+method TRUE($/) {
+    make PAST::Val.new(
+             :value( 1 ),
+             :returns('PhpBoolean'),
+             :node($/)
+         );
+}
+
+method FALSE($/) {
+    make PAST::Val.new(
+             :value( 0 ),
+             :returns('PhpBoolean'),
+             :node($/)
+         );
+}
+
+method NULL($/) {
+    make PAST::Val.new(
+             :value( 0 ),
+             :returns('PhpUndef'),
+             :node($/)
+         );
+}
+
 method INTEGER($/) {
     make PAST::Val.new(
              :value( ~$/ ),
-             :returns('Integer'),
+             :returns('PhpInteger'),
              :node($/)
          );
 }
@@ -223,27 +321,26 @@ method INTEGER($/) {
 method NUMBER($/) {
     make PAST::Val.new(
              :value( +$/ ),
-             :returns('Float'),
+             :returns('PhpFloat'),
              :node($/)
          );
 }
 
 method SINGLEQUOTE_STRING($/) {
     make PAST::Val.new(
-             :value( $($<string_literal>) ),
-             :returns('String'),
+             :value( $( $<string_literal> ) ),
+             :returns('PhpString'),
              :node($/)
          );
 }
 
 method DOUBLEQUOTE_STRING($/) {
     make PAST::Val.new(
-             :value( $($<string_literal>) ),
-             :returns('String'),
+             :value( $( $<string_literal> ) ),
+             :returns('PhpString'),
              :node($/)
          );
 }
-
 
 # Local Variables:
 #   mode: cperl
