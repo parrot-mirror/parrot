@@ -47,10 +47,10 @@ OUTPUT
 
 language_output_is( 'Plumhead', <<'CODE', <<'OUTPUT', 'ltrim' );
 <?php
-  echo ltrim('  abc  '), "\n";
+  echo ltrim('  abc'), "\n";
 ?>
 CODE
-abc  
+abc
 OUTPUT
 
 language_output_is( 'Plumhead', <<'CODE', <<'OUTPUT', 'ord' );
