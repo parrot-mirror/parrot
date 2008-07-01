@@ -231,20 +231,20 @@ inline op ret() :flow {
 
 ########################################
 
-=item B<pbj>(invar PMC, in LABEL)
+=item B<local_branch>(invar PMC, in LABEL)
 
 Go to the location specified by the label in $2. Push the current location onto
 the stack passed in $1 for later returning.
 
 =cut
 
-inline op pbj(invar PMC, in LABEL) :base_core :check_event :flow {
+inline op local_branch(invar PMC, in LABEL) :base_core :check_event :flow {
     INTVAL return_addr;
     opcode_t *dest = expr NEXT();
 
     if (PMC_IS_NULL($1) || $1->vtable->base_type != enum_class_ResizableIntegerArray)
         Parrot_ex_throw_from_c_args(interp, dest, EXCEPTION_INVALID_OPERATION,
-            "Must pass a valid integer array to 'pbj'");
+            "Must pass a valid integer array to 'local_branch'");
 
     return_addr = PTR2INTVAL(dest);
     VTABLE_push_integer(interp, $1, return_addr);
@@ -252,20 +252,20 @@ inline op pbj(invar PMC, in LABEL) :base_core :check_event :flow {
     goto OFFSET($2);
 }
 
-=item B<pbr>()
+=item B<local_return>()
 
 Pop the location off the top of the call stack and go there.
 
 =cut
 
-inline op pbr(invar PMC) :flow {
+inline op local_return(invar PMC) :flow {
     INTVAL return_addr;
     opcode_t *next;
     opcode_t *dest = expr NEXT();
 
     if (PMC_IS_NULL($1) || $1->vtable->base_type != enum_class_ResizableIntegerArray)
         Parrot_ex_throw_from_c_args(interp, dest, EXCEPTION_INVALID_OPERATION,
-            "Must pass a valid integer array to 'pbr'");
+            "Must pass a valid integer array to 'local_return'");
 
     return_addr = VTABLE_pop_integer(interp, $1);
     next = INTVAL2PTR(opcode_t *, return_addr);
@@ -291,48 +291,6 @@ inline op jsr(in LABEL) :base_core :check_event :flow {
     loc = INTVAL2PTR(opcode_t *, $1);
     goto ADDRESS(loc);
 }
-
-########################################
-
-=item B<branchcc>(inconst LABEL)
-
-Branch to the location specified by $1. Capture a continuation for the next op
-and push it into the context's list of handlers, for later returning.
-
-=cut
-
-inline op branchcc(inconst LABEL) :base_core :check_event :flow {
-    /* Create a return continuation for the next op. */
-    PMC *return_cont = pmc_new(interp, enum_class_Continuation);
-    VTABLE_set_pointer(interp, return_cont, expr NEXT());
-
-    /* Store the continuation in the context handler list. */
-    Parrot_cx_add_handler_local(interp, return_cont);
-
-    /* Ordinary branch to a label. */
-    goto OFFSET($1);
-}
-
-=item B<return_branchcc>()
-
-Take the top continuation off the context's list of handlers and invoke it.
-
-=cut
-
-inline op return_branchcc() :flow {
-    /* Retrieve the continuation from the context handler list. */
-    PMC * return_cont = Parrot_cx_find_handler_local(interp, PMCNULL);
-    opcode_t *dest = expr NEXT();
-
-    if (PMC_IS_NULL(return_cont))
-        Parrot_ex_throw_from_c_args(interp, dest, EXCEPTION_INVALID_OPERATION,
-            "No handler found while attempting to return from branchcc");
-
-    dest = (opcode_t *)VTABLE_invoke(interp, return_cont, dest);
-
-    goto ADDRESS(dest);
-}
-
 
 ########################################
 

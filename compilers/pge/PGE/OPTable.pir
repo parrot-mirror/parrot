@@ -352,7 +352,7 @@ Adds (or replaces) a syntactic category's defaults.
     token = keytable[key]
     $I0 = does token, "array"
     if $I0 goto key_array
-    pbj cstack, token_match
+    local_branch cstack, token_match
     if_null oper, key_next
     if oper goto oper_found
     goto key_next
@@ -361,7 +361,7 @@ Adds (or replaces) a syntactic category's defaults.
   key_array_1:
     unless iter goto key_next
     token = shift iter
-    pbj cstack, token_match
+    local_branch cstack, token_match
     if_null oper, key_array_1
     if oper goto oper_found
     goto key_array_1
@@ -437,7 +437,7 @@ Adds (or replaces) a syntactic category's defaults.
     if $P2 == 'right' goto oper_shift                          # (P/A)
 
   oper_reduce:
-    pbj cstack, reduce
+    local_branch cstack, reduce
     goto shift_reduce
 
   oper_close:
@@ -521,7 +521,7 @@ Adds (or replaces) a syntactic category's defaults.
   reduce_saveterm_1:
     push termstack, $P1
   reduce_end:
-    pbr cstack
+    local_return cstack
 
   token_match:
     mpos = pos
@@ -561,13 +561,13 @@ Adds (or replaces) a syntactic category's defaults.
     oper['type'] = $P0
     oper['top'] = token
   token_match_end:
-    pbr cstack
+    local_return cstack
 
   ## At end, reduce any remaining tokens and return result term
   end:
     $I0 = elements tokenstack
     if $I0 < 1 goto end_1
-    pbj cstack, reduce
+    local_branch cstack, reduce
     goto end
   end_1:
     mpos = -1
