@@ -97,7 +97,6 @@ static PMC *
 find_exception_handler(PARROT_INTERP, ARGIN(PMC *exception))
 {
     PMC * const handler = Parrot_cx_find_handler_for_task(interp, exception);
-    Parrot_cx_delete_handler_typed(interp, CONST_STRING(interp, "exception"));
     if (!PMC_IS_NULL(handler)) {
         return handler;
     }

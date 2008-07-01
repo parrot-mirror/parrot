@@ -36,7 +36,9 @@ Initializes the exception handler.
 */
 
     VTABLE void init() {
-        PMC_struct_val(SELF) = new_continuation(INTERP, NULL);
+        Parrot_cont * const cc = new_continuation(INTERP, NULL);
+        PMC_struct_val(SELF) = cc;
+        cc->invoked = 0;
         PMC_pmc_val(SELF)    = PMCNULL;
 
         /* an exception handler has no separate context; it's only a snapshot
@@ -72,6 +74,36 @@ Initializes the exception handler.
 
 /*
 
+=item C<void set_integer_native(INTVAL)>
+
+Mark whether the handler has been invoked.
+
+=cut
+
+*/
+
+    VTABLE void set_integer_native(INTVAL value) {
+        Parrot_cont * const cc = PMC_cont(SELF);
+        cc->invoked = value;
+    }
+
+/*
+
+=item C<INTVAL get_integer()>
+
+Check whether the handler has been invoked.
+
+=cut
+
+*/
+
+    VTABLE INTVAL get_integer() {
+        Parrot_cont * const cc = PMC_cont(SELF);
+        return cc->invoked;
+    }
+
+/*
+
 =back
 
 =head2 Methods
@@ -93,9 +125,15 @@ Report whether the exception handler can handle a particular type of exception.
 */
 
     METHOD can_handle(PMC *exception) {
+
         if (exception->vtable->base_type == enum_class_Exception
                 || VTABLE_isa(INTERP, exception, CONST_STRING(INTERP, "Exception"))) {
-                RETURN(INTVAL 1);
+
+            /* The exception handler has already been used before. */
+            if (VTABLE_get_integer(INTERP, SELF))
+                RETURN(INTVAL 0);
+
+            RETURN(INTVAL 1);
         }
 
         RETURN(INTVAL 0);

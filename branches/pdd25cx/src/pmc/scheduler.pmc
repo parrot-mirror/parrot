@@ -470,6 +470,8 @@ PMCNULL.
             if (!PMC_IS_NULL(handler)) {
                 (INTVAL valid_handler) = PCCINVOKE(INTERP, handler, "can_handle", PMC *task);
                 if (valid_handler) {
+                    if (task->vtable->base_type == enum_class_Exception)
+                        VTABLE_set_integer_native(interp, handler, 1);
                     RETURN(PMC *handler);
                 }
             }
