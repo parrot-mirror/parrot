@@ -84,7 +84,8 @@ auto_icu-05.t - test config::auto::icu
 
 The files in this directory test functionality used by F<Configure.pl>.
 
-The tests in this file test subroutines exported by config::auto::icu.
+The tests in this file test config::auto::icu in the case where the
+command-line options are incomplete.
 
 =head1 AUTHOR
 

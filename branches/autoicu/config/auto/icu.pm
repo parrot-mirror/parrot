@@ -33,6 +33,9 @@ sub _init {
     my %data;
     $data{description}          = q{Determining whether ICU is installed};
     $data{result}               = q{};
+    # The following key-value pairs are defined here rather than being buried
+    # deep inside subroutines below.  Also, so that they can be overridden
+    # during testing.
     $data{icuconfig_default}    = q{icu-config};
     $data{icu_headers}          = [ qw(ucnv.h utypes.h uchar.h) ];
     $data{icu_shared_pattern}   = qr/-licui18n\w*/;
@@ -67,7 +70,7 @@ sub runstep {
 
     # $icuconfig is a string holding the name of an executable program.
     # So if it's not provided on the command line -- or if it's explicitly
-    # ruled out by being provided with the value 'none' -- an empty string 
+    # ruled out by being provided with the value 'none' -- an empty string
     # is its most appropriate value.
 
     my $icuconfig = $self->_handle_icuconfig_opt($icuconfig_opt);
@@ -137,7 +140,7 @@ sub runstep {
         icuheaders  => $icuheaders,
     } );
     # 4th possible return point.  This one is a step configuration failure
-    # because we really expected it to succeed
+    # because we would have really expected it to succeed.
     return unless defined $icuheaders;
 
     my $icudir = dirname($icuheaders);
@@ -147,13 +150,14 @@ sub runstep {
         icu_dir    => $icudir,
     );
 
-    # Add -I $Icuheaders if necessary
+    # Add -I $Icuheaders if necessary.
     my $header = "unicode/ucnv.h";
     $conf->data->set( testheaders => "#include <$header>\n" );
     $conf->data->set( testheader  => "$header" );
     $conf->cc_gen('config/auto/headers/test_c.in');
 
-    $conf->data->set( testheaders => undef );    # Clean up.
+    # Clean up.
+    $conf->data->set( testheaders => undef );
     $conf->data->set( testheader  => undef );
     eval { $conf->cc_build(); };
     my $ccflags_status = ( ! $@ && $conf->cc_run() =~ /^$header OK/ );

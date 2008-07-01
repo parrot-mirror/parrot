@@ -88,7 +88,8 @@ auto_icu-03.t - test config::auto::icu
 
 The files in this directory test functionality used by F<Configure.pl>.
 
-The tests in this file test subroutines exported by config::auto::icu.
+The tests in this file test config::auto::icu with command-line options
+C<--icushared> and C<--icuheaders>.
 
 =head1 AUTHOR
 
