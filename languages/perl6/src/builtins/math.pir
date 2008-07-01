@@ -25,12 +25,17 @@ Absolute Value.
 
 =cut
 
-.sub 'abs'
-    .param pmc a
-    $P0 = abs a
-    .return ($P0)
+.sub 'abs' :multi(_)
+    .param num a
+    $N0 = abs a
+    .return ($N0)
 .end
 
+.sub 'abs' :multi('Integer')
+    .param pmc a
+    $P0 = n_abs a
+    .return ($P0)
+.end
 
 =item floor
 
@@ -224,6 +229,11 @@ error.
 =cut
 
 .sub 'pi'
+    .param pmc x               :slurpy
+    ## 0-argument test, RT#56366
+    unless x goto no_args
+    die "too many arguments passed - 0 params expected"
+  no_args:
     $N0 = atan 1
     $N0 *= 4
     .return ($N0)

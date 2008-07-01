@@ -22,6 +22,7 @@ Perform initializations and create the base classes.
 
 =cut
 
+.namespace []
 .sub 'onload' :anon :init :load
     .local pmc p6meta
     load_bytecode 'P6object.pbc'
@@ -41,11 +42,14 @@ and Mappings to be converted into Array(ref) and Hash(ref).
 .namespace ['Perl6Object']
 .sub 'infix:=' :method
     .param pmc source
-    $P0 = source.'item'()
+    $I0 = can source, 'item'
+    unless $I0 goto have_source
+    source = source.'item'()
+  have_source:
 
     $I0 = isa self, 'Mutable'
     unless $I0 goto copy
-    assign self, $P0
+    assign self, source
     goto end
 
   copy:
@@ -57,8 +61,8 @@ and Mappings to be converted into Array(ref) and Hash(ref).
     die "Type mismatch in assignment."
 
   do_assign:
-    eq_addr self, $P0, end
-    copy self, $P0
+    eq_addr self, source, end
+    copy self, source
   end:
     .return (self)
 .end
@@ -90,7 +94,21 @@ this is simply the invocant itself.
 
 =cut
 
+.namespace []
+.sub 'item'
+    .param pmc x               :slurpy
+    $I0 = elements x
+    unless $I0 == 1 goto have_x
+    x = shift x
+  have_x:
+    $I0 = can x, 'item'
+    unless $I0 goto have_item
+    x = x.'item'()
+  have_item:
+    .return (x)
+.end
 
+.namespace ['Perl6Object']
 .sub 'item' :method
     .return (self)
 .end
@@ -199,15 +217,37 @@ Create a new object having the same class as the invocant.
   iter_loop:
     unless iter goto iter_end
     $S0 = shift iter
+
+    # See if we have an init value; use Undef if not.
+    .local int got_init_value
     $S1 = substr $S0, 2
-    $I0 = exists init_attribs[$S1]
-    if $I0 goto have_init_value
+    got_init_value = exists init_attribs[$S1]
+    if got_init_value goto have_init_value
     $P2 = new 'Undef'
     goto init_done
   have_init_value:
     $P2 = init_attribs[$S1]
     delete init_attribs[$S1]
   init_done:
+
+    # Is it a scalar? If so, want a scalar container with the type set on it.
+    .local string sigil
+    sigil = substr $S0, 0, 1
+    if sigil != '$' goto no_scalar
+    .local pmc attr_info, type
+    attr_info = attribs[$S0]
+    if null attr_info goto no_scalar
+    type = attr_info['type']
+    if null type goto no_scalar
+    if got_init_value goto no_proto_init
+    $I0 = isa type, 'P6protoobject'
+    unless $I0 goto no_proto_init
+    set $P2, type
+  no_proto_init:
+    $P2 = new 'Perl6Scalar', $P2
+    setprop $P2, 'type', type
+  no_scalar:
+
     push_eh set_attrib_eh
     setattribute $P1, cur_class, $S0, $P2
 set_attrib_eh:
@@ -280,6 +320,39 @@ Print the object
 .sub 'say' :method
     $P0 = get_hll_global 'say'
     .return $P0(self)
+.end
+
+=back
+
+=head2 Private methods
+
+=over 4
+
+=item !cloneattr(attrlist)
+
+Create a clone of self, also cloning the attributes given by attrlist.
+
+=cut
+
+.sub '!cloneattr' :method
+    .param string attrlist
+    .local pmc p6meta, result
+    p6meta = get_hll_global ['Perl6Object'], '$!P6META'
+    $P0 = p6meta.'get_parrotclass'(self)
+    result = new $P0
+
+    .local pmc attr_it
+    attr_it = split ' ', attrlist
+  attr_loop:
+    unless attr_it goto attr_end
+    $S0 = shift attr_it
+    unless $S0 goto attr_loop
+    $P1 = getattribute self, $S0
+    $P1 = clone $P1
+    setattribute result, $S0, $P1
+    goto attr_loop
+  attr_end:
+    .return (result)
 .end
 
 =back

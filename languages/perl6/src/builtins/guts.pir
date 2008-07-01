@@ -58,6 +58,23 @@ it understands how to properly merge C<MultiSub> PMCs.
 .end
 
 
+=item !VAR
+
+Helper function for implementing the VAR and .VAR macros.
+
+=cut
+
+.sub '!VAR'
+    .param pmc variable
+    $I0 = isa variable, 'Perl6Scalar'
+    unless $I0 goto nothing
+    $P0 = new 'MutableVAR', variable
+    .return ($P0)
+  nothing:
+    .return (variable)
+.end
+
+
 =item !DOTYPECHECK
 
 Checks that the value and the assignee are type-compatible and does the
@@ -94,6 +111,52 @@ Checks the type of a parameter.
     if $I0 goto ok
     'die'('Parameter type check failed')
 ok:
+.end
+
+
+=item !SAMETYPE_EXACT
+
+Takes two types and returns true if they match exactly (not accounting for any
+subtyping relations, etc).
+
+=cut
+
+.sub '!SAMETYPE_EXACT'
+    .param pmc t1
+    .param pmc t2
+
+    # If they have equal address, obviously the same.
+    .local pmc t1meta, t2meta
+    t1meta = t1.'HOW'()
+    t2meta = t2.'HOW'()
+    eq_addr t1meta, t2meta, same
+
+    # If they are junctions, compare inside them recursively.
+    $I0 = isa t1, 'Junction'
+    unless $I0 goto not_junc
+    $I1 = isa t2, 'Junction'
+    unless $I0 == $I1 goto not_junc
+    .local pmc j1, j2
+    .local int max, i
+    j1 = t1.'values'()
+    j2 = t1.'values'()
+    max = elements j1
+    i = 0
+  junc_loop:
+    if i >= max goto junc_loop_end
+    $P0 = j1[i]
+    $P1 = j2[i]
+    $I0 = '!SAMETYPE_EXACT'($P0, $P1)
+    unless $I0 goto not_same
+    inc i
+    goto junc_loop
+  junc_loop_end:
+  not_junc:
+
+  not_same:
+    .return(0)
+  same:
+    .return (1)
 .end
 
 
@@ -185,23 +248,111 @@ Internal helper method to implement the functionality of the does keyword.
 
 .sub '!keyword_does'
     .param pmc class
-    .param string role_name
-    .local pmc role
-    role = get_hll_global role_name
+    .param pmc role
+
+    # Get Parrot to compose the role for us (handles the methods).
     addrole class, role
+
+    # Parrot doesn't handle composing the attributes; we do that here for now.
+    .local pmc role_attrs, class_attrs, ra_iter
+    .local string cur_attr
+    role_attrs = inspect role, "attributes"
+    class_attrs = inspect class, "attributes"
+    ra_iter = iter role_attrs
+  ra_iter_loop:
+    unless ra_iter goto ra_iter_loop_end
+    cur_attr = shift ra_iter
+
+    # Check that this attribute doesn't conflict with one already in the class.
+    $I0 = exists class_attrs[cur_attr]
+    unless $I0 goto no_conflict
+
+    # We have a name conflict. Let's compare the types. If they match, then we
+    # can merge the attributes.
+    .local pmc class_attr_type, role_attr_type
+    $P0 = class_attrs[cur_attr]
+    if null $P0 goto conflict
+    class_attr_type = $P0['type']
+    if null class_attr_type goto conflict
+    $P0 = role_attrs[cur_attr]
+    if null $P0 goto conflict
+    role_attr_type = $P0['type']
+    if null role_attr_type goto conflict
+    $I0 = '!SAMETYPE_EXACT'(class_attr_type, role_attr_type)
+    if $I0 goto merge
+
+  conflict:
+    $S0 = "Conflict of attribute '"
+    $S0 = concat cur_attr
+    $S0 = concat "' in composition of role '"
+    $S1 = role
+    $S0 = concat $S1
+    $S0 = concat "'"
+    'die'($S0)
+
+  no_conflict:
+    addattribute class, cur_attr
+  merge:
+    goto ra_iter_loop
+  ra_iter_loop_end:
 .end
 
-=item !keyword_has(class, attr_name)
+=item !keyword_has(class, attr_name, type)
 
-Adds an attribute with the given name to the class.
+Adds an attribute with the given name to the class or role.
 
 =cut
 
 .sub '!keyword_has'
     .param pmc class
     .param string attr_name
-    addattribute class, attr_name
+    .param pmc type
+    class.'add_attribute'(attr_name, type)
 .end
+
+
+=item !anon_enum(value_list)
+
+Constructs a Mapping, based upon the values list.
+
+=cut
+
+.sub '!anon_enum'
+    .param pmc values
+
+    # For now, we assume integer type, unless we have a first pair that says
+    # otherwise.
+    .local pmc cur_val
+    cur_val = new 'Int'
+    cur_val = 0
+
+    # Iterate over values and make mapping.
+    .local pmc result, values_it, cur_item
+    result = new 'Mapping'
+    values_it = iter values
+  values_loop:
+    unless values_it goto values_loop_end
+    cur_item = shift values_it
+    $I0 = isa cur_item, 'Perl6Pair'
+    if $I0 goto pair
+
+  nonpair:
+    $P0 = 'postfix:++'(cur_val)
+    result[cur_item] = $P0
+    goto values_loop
+
+  pair:
+    cur_val = cur_item.'value'()
+    $P0 = cur_item.'key'()
+    result[$P0] = cur_val
+    cur_val = clone cur_val
+    'postfix:++'(cur_val)
+    goto values_loop
+
+  values_loop_end:
+    .return (result)
+.end
+
 
 =back
 

@@ -17,7 +17,7 @@ src/classes/List.pir - Perl 6 List class and related functions
     p6meta.'register'('ResizablePMCArray', 'parent'=>listproto, 'protoobject'=>listproto)
 
     $P0 = get_hll_namespace ['List']
-    '!EXPORT'('elems first grep keys kv map pairs reduce reverse values', $P0)
+    '!EXPORT'('first grep keys kv map pairs reduce reverse values', $P0)
 .end
 
 =item clone()    (vtable method)
@@ -104,12 +104,14 @@ Return the List invocant as a Hash.
 
 =item item()
 
-Return the List invocant in scalar context (i.e., an Arrayref).
+Return the List invocant in scalar context (i.e., an Array).
 
 =cut
 
 .sub 'item' :method
-    .return '!Arrayref'(self)
+    $P0 = new 'Perl6Array'
+    splice $P0, self, 0, 0
+    .return ($P0)
 .end
 
 
@@ -119,13 +121,20 @@ Return the List as a list.
 
 =cut
 
+.namespace ['ResizablePMCArray']
 .sub 'list' :method
-    $I0 = isa self, 'List'
-    if $I0 goto have_list
-    $P0 = new 'List'
+    ##  this code morphs a ResizablePMCArray into a List
+    ##  without causing a clone of any of the elements
+    $P0 = new 'ResizablePMCArray'
     splice $P0, self, 0, 0
-    copy self, $P0
-  have_list:
+    $P1 = new 'List'
+    copy self, $P1
+    splice self, $P0, 0, 0
+    .return (self)
+.end
+
+.namespace ['List']
+.sub 'list' :method
     .return (self)
 .end
 
@@ -187,7 +196,7 @@ layer.  It will likely change substantially when we have lazy lists.
     elem = self[i]
     $I0 = defined elem
     unless $I0 goto flat_next
-    $I0 = isa elem, 'Arrayref'
+    $I0 = isa elem, 'Perl6Scalar'
     if $I0 goto flat_next
     $I0 = isa elem, 'Range'
     unless $I0 goto not_range
@@ -205,9 +214,7 @@ layer.  It will likely change substantially when we have lazy lists.
   flat_end:
     $I0 = isa self, 'List'
     if $I0 goto end
-    $P0 = new 'List'
-    splice $P0, self, 0, 0
-    copy self, $P0
+    self.'list'()
   end:
     .return (self)
 .end
@@ -219,15 +226,10 @@ Return the number of elements in the list.
 
 =cut
 
-.sub 'elems' :method :multi('ResizablePMCArray')
+.sub 'elems' :method :multi('ResizablePMCArray') :vtable('get_number')
     self.'!flatten'()
     $I0 = elements self
     .return ($I0)
-.end
-
-.sub 'elems' :multi()
-    .param pmc values          :slurpy
-    .return values.'elems'()
 .end
 
 
@@ -315,25 +317,6 @@ Returns an iterator for the list.
     $P0 = iter self
     .return ($P0)
 .end
-
-
-=item join(SEPARATOR)
-
-Returns a string comprised of all of the list, separated by the string SEPARATOR.  Given an empty list, join returns the empty string.
-
-=cut
-
-#.sub 'join' :method :multi('ResizablePMCArray', _)
-#    .param string sep
-#    $S0 = join sep, self
-#    .return ($S0)
-#.end
-#
-#.sub 'join' :multi('String')
-#    .param string sep
-#    .param pmc values          :slurpy
-#    .return values.'join'(sep)
-#.end
 
 
 =item keys()
@@ -479,20 +462,49 @@ Return a list of Pair(index, value) elements for the invocant.
     .param pmc expression
     .local pmc retv
     .local pmc iter
-    .local pmc block_res
-    .local pmc block_arg
+    .local pmc elem
+    .local pmc args
+    .local int i, arity
+
+    arity = expression.'arity'()
+    if arity < 2 goto error
 
     iter = self.'iterator'()
     unless iter goto empty
     retv = shift iter
   loop:
     unless iter goto done
-    block_arg = shift iter
-    block_res = expression(retv, block_arg)
+
+    # Create arguments for closure
+    args = new 'ResizablePMCArray'
+    # Start with 1. First argument is result of previous call
+    i = 1
+
+  args_loop:
+    if i == arity goto invoke
+    unless iter goto elem_undef
+    elem = shift iter
+    goto push_elem
+  elem_undef:
+    elem = new 'Failure'
+
+  push_elem:
+    push args, elem
+    inc i
+    goto args_loop
+
+  invoke:
+    retv = expression(retv, args :flat)
     goto loop
 
   empty:
     retv = new 'Undef'
+    goto done
+
+  error:
+    'die'('Cannot reduce() using a unary or nullary function.')
+    goto done
+
   done:
     .return(retv)
 .end
@@ -526,60 +538,6 @@ Returns a list of the elements in reverse order.
 .sub 'reverse' :multi()
     .param pmc values          :slurpy
     .return values.'reverse'()
-.end
-
-
-=item sort()
-
-Sort list by copying into FPA, sorting and creating new List.
-
-=cut
-
-.sub 'sort' :method
-    .param pmc by              :optional
-    .param int has_by          :opt_flag
-    .local pmc elem, arr
-    .local int len, i
-
-    # Creating FPA
-    arr = new 'FixedPMCArray'
-    len = self.'elems'()
-    arr = len
-
-    # Copy all elements into it
-    i = 0
-  copy_to:
-    if i == len goto done_to
-    elem = self[i]
-    arr[i] = elem
-    inc i
-    goto copy_to
-  done_to:
-
-    # Check comparer
-    if has_by goto do_sort
-    get_hll_global by, 'infix:cmp'
-  do_sort:
-    # Sort in-place
-    arr.'sort'(by)
-
-    $P0 = get_hll_global 'list'
-    .return $P0(arr)
-.end
-
-.namespace []
-.sub 'sort' :multi()
-    .param pmc values          :slurpy
-    .local pmc by
-    by = get_hll_global 'infix:cmp'
-    unless values goto have_by
-    $P0 = values[0]
-    $I0 = isa $P0, 'Sub'
-    unless $I0 goto have_by
-    by = shift values
-  have_by:
-    $P0 = values.'sort'(by)
-    .return ($P0)
 .end
 
 
@@ -647,6 +605,107 @@ Returns a List containing the values of the invocant.
 .sub 'values' :multi()
     .param pmc values          :slurpy
     .return values.'!flatten'()
+.end
+
+
+=item min()
+
+Return minimum element in list
+
+=cut
+
+.sub 'min' :method :multi('ResizablePMCArray')
+    .param pmc by              :optional
+    .param int has_by          :opt_flag
+    .local pmc elem, res, iter
+
+    if has_by goto start
+    by = get_hll_global 'infix:<=>'
+  start:
+    iter = self.'iterator'()
+    if iter goto do_work
+    res = new 'Failure'
+    goto done
+
+  do_work:
+    res = shift iter
+  loop:
+    unless iter goto done
+    elem = shift iter
+    $I0 = by(elem, res)
+    unless $I0 < 0 goto loop
+    res = elem
+    goto loop
+
+  done:
+    .return(res)
+.end
+
+.namespace []
+.sub 'min' :multi(Closure)
+    .param pmc by
+    .param pmc values          :slurpy
+    $P0 = values.'min'(by)
+    .return ($P0)
+.end
+
+.sub 'min' :multi()
+    .param pmc values          :slurpy
+    .local pmc by
+    by = get_hll_global 'infix:<=>'
+    $P0 = values.'min'(by)
+    .return ($P0)
+.end
+
+
+.namespace ['List']
+=item max()
+
+Return maximum element in list
+
+=cut
+
+.sub 'max' :method :multi('ResizablePMCArray')
+    .param pmc by              :optional
+    .param int has_by          :opt_flag
+    .local pmc elem, res, iter
+
+    if has_by goto start
+    by = get_hll_global 'infix:<=>'
+  start:
+    iter = self.'iterator'()
+    if iter goto do_work
+    res = new 'Failure'
+    goto done
+
+  do_work:
+    res = shift iter
+  loop:
+    unless iter goto done
+    elem = shift iter
+    $I0 = by(elem, res)
+    unless $I0 > 0 goto loop
+    res = elem
+    goto loop
+
+  done:
+    .return(res)
+.end
+
+.namespace []
+.sub 'max' :multi(Closure)
+    .param pmc by
+    .param pmc values          :slurpy
+    $P0 = values.'max'(by)
+    .return ($P0)
+.end
+
+.sub 'max' :multi()
+    .param pmc values          :slurpy
+    .local pmc by
+    by = get_hll_global 'infix:<=>'
+    $P0 = values.'max'(by)
+    .return ($P0)
 .end
 
 

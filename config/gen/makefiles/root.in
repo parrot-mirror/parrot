@@ -105,6 +105,7 @@ LDFLAGS          = @ldflags@ @ld_debug@
 RECONFIGURE      = $(PERL) tools/dev/reconfigure.pl
 INNO_SETUP       = iscc
 JIT_BUILD_TOOL   = $(BUILD_TOOLS_DIR)/jit2c.pl
+#CONDITIONED_LINE(darwin):export MACOSX_DEPLOYMENT_TARGET := @osx_version@
 
 ###############################################################################
 #
@@ -420,7 +421,6 @@ INTERP_O_FILES = \
     $(SRC_DIR)/scheduler$(O) \
     $(SRC_DIR)/spf_render$(O) \
     $(SRC_DIR)/spf_vtable$(O) \
-    $(SRC_DIR)/stack_common$(O) \
     $(SRC_DIR)/stacks$(O) \
     $(SRC_DIR)/stm/backend$(O) \
     $(SRC_DIR)/stm/waitlist$(O) \
@@ -733,8 +733,8 @@ help :
 	@echo "  apilist:           Show list of PARROT_API functions"
 	@echo "  malloclist:        Show list of PARROT_MALLOC functions"
 	@echo "  cover:             Run test suite coverage analysis."
-	@echo "  tags:              Create tags for the vi editor."
-	@echo "  TAGS:              Create tags for the EMACS editor."
+	@echo "  tags-vi:           Create tags for the vi editor."
+	@echo "  tags-emacs:        Create tags for the EMACS editor."
 	@echo ""
 	@echo "Release:"
 	@echo "  release:           Create a tarball."
@@ -1146,8 +1146,6 @@ $(SRC_DIR)/runops_cores$(O) : $(GENERAL_H_FILES)
 
 $(SRC_DIR)/stacks$(O) : $(GENERAL_H_FILES)
 
-$(SRC_DIR)/stack_common$(O) : $(GENERAL_H_FILES)
-
 $(SRC_DIR)/tsq$(O) : $(GENERAL_H_FILES)
 
 $(SRC_DIR)/embed$(O) : $(GENERAL_H_FILES) $(INC_DIR)/debug.h
@@ -1434,6 +1432,10 @@ test_prep : all
 # Normal test package
 test : test_prep
 	$(PERL) t/harness $(EXTRA_TEST_ARGS)
+
+# run the test suite, create a TAP archive and send it off to smolder
+smolder_test : test_prep
+	$(PERL) t/harness $(EXTRA_TEST_ARGS) --archive --send-to-smolder
 
 # "core tests" -- test basic functionality but not ancillaries
 coretest : test_prep
@@ -2146,23 +2148,6 @@ win32-inno-installer : world installable
 
 ###############################################################################
 #
-# miniparrot targets:
-#
-###############################################################################
-
-#miniparrot-prebuild : $(GEN_CONFIGS) $(FLUID_FILES)
-#	@tools/dev/rebuild_miniparrot.pl --action=clean
-#	@tools/dev/rebuild_miniparrot.pl --action=prebuild_classes $(CLASS_O_FILES)
-#	@tools/dev/rebuild_miniparrot.pl --action=copy_src $(GEN_CONFIGS) $(FLUID_FILES) $(ALL_H_FILES)
-#	@tools/dev/rebuild_miniparrot.pl --action=copy_src pmc/*.h $(IMCC_DIR)/main.c $(INC_DIR)/debug.h
-#	@tools/dev/rebuild_miniparrot.pl --action=copy_src_from_obj $(O_FILES)
-#	@tools/dev/rebuild_miniparrot.pl --action=write_buildscripts --executable=parrot $(O_FILES) $(IMCC_DIR)/main$(O)
-#
-#miniparrot-update :
-#	tools/dev/rebuild_miniparrot.pl
-
-###############################################################################
-#
 # exec:
 #
 ###############################################################################
@@ -2185,7 +2170,7 @@ $(LIBGLUTCB_SO): $(LIBPARROT) $(SRC_DIR)/glut_callbacks$(O)
 # emacs etags
 # this needs exuberant-ctags
 
-TAGS: TAGS.dummy
+tags-emacs: tags.emacs.dummy
 	$(RM_F) TAGS
 	@ctags@ -e \
         --links=no --totals \
@@ -2195,12 +2180,12 @@ TAGS: TAGS.dummy
         -I NOTNULL,NULLOK,ARGIN,ARGMOD,ARGOUT,ARGINOUT,ARGIN_NULLOK,ARGOUT_NULLOK,ARGMOD_NULLOK \
         $(CUR_DIR)
 
-TAGS.dummy:
+tags.emacs.dummy:
 
 # vim ctags
 # this needs exuberant-ctags
 
-tags: tags.dummy
+tags-vi: tags.vi.dummy
 	$(RM_F) tags
 	@ctags@ \
     --links=no --totals \
@@ -2211,7 +2196,7 @@ tags: tags.dummy
     $(CUR_DIR)
 	$(PERL) $(BUILD_TOOLS_DIR)/addopstags.pl $(OPS_FILES)
 
-tags.dummy:
+tags.vi.dummy:
 
 # This target will eventually create all the headers automatically.  If you are
 # having problems with linkage in Win32 (or elsewhere), because something is

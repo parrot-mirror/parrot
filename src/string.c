@@ -257,36 +257,39 @@ PARROT_API
 void
 string_init(PARROT_INTERP)
 {
-    size_t i;
+    Hash        *const_cstring_hash;
+    size_t       i;
     const size_t n_parrot_cstrings =
         sizeof (parrot_cstrings) / sizeof (parrot_cstrings[0]);
 
-    /*
-     * when string_init is called, the config hash isn't created
-     * so we can't get at the runtime path
-     * XXX do we still need this --leo
-     */
-
+    /* Set up the cstring cache, then load the basic encodings and charsets */
     if (!interp->parent_interpreter) {
-        /* Load in the basic encodings and charsets */
+        parrot_new_cstring_hash(interp, &const_cstring_hash);
+        interp->const_cstring_hash  = (Hash *)const_cstring_hash;
         Parrot_charsets_encodings_init(interp);
     }
-
     /* initialize the constant string table */
-    if (interp->parent_interpreter) {
+    else {
         interp->const_cstring_table =
             interp->parent_interpreter->const_cstring_table;
+        interp->const_cstring_hash  =
+            interp->parent_interpreter->const_cstring_hash;
         return;
     }
+
     interp->const_cstring_table =
         mem_allocate_n_zeroed_typed(n_parrot_cstrings, STRING *);
 
     for (i = 0; i < n_parrot_cstrings; ++i) {
-        interp->const_cstring_table[i] = string_make_direct(interp,
+        DECL_CONST_CAST;
+        STRING *s = string_make_direct(interp,
                 parrot_cstrings[i].string,
                 parrot_cstrings[i].len,
                 PARROT_DEFAULT_ENCODING, PARROT_DEFAULT_CHARSET,
                 PObj_external_FLAG|PObj_constant_FLAG);
+        parrot_hash_put(interp, const_cstring_hash,
+            PARROT_const_cast(char *, parrot_cstrings[i].string), (void *)s);
+        interp->const_cstring_table[i] = s;
     }
 }
 
@@ -309,6 +312,7 @@ string_deinit(PARROT_INTERP)
         mem_sys_free(interp->const_cstring_table);
         interp->const_cstring_table = NULL;
         Parrot_charsets_encodings_deinit(interp);
+        parrot_hash_destroy(interp, interp->const_cstring_hash);
     }
 }
 
@@ -622,12 +626,23 @@ PARROT_CANNOT_RETURN_NULL
 STRING *
 const_string(PARROT_INTERP, ARGIN(const char *buffer))
 {
+    STRING *s;
+    Hash   *cstring_cache = (Hash *)interp->const_cstring_hash;
+
     PARROT_ASSERT(buffer);
 
-    /* TODO cache the strings */
-    return string_make_direct(interp, buffer, strlen(buffer),
+    s = (STRING *)parrot_hash_get(interp, cstring_cache, buffer);
+
+    if (s)
+        return s;
+
+    s = string_make_direct(interp, buffer, strlen(buffer),
                        PARROT_DEFAULT_ENCODING, PARROT_DEFAULT_CHARSET,
                        PObj_external_FLAG|PObj_constant_FLAG);
+
+    parrot_hash_put(interp, cstring_cache, s, (void *)s);
+
+    return s;
 }
 
 /*
@@ -1509,7 +1524,7 @@ string_bitwise_and(PARROT_INTERP, ARGIN_NULLOK(const STRING *s1),
 #if ! DISABLE_GC_DEBUG
     /* trigger GC for debug */
     if (interp && GC_DEBUG(interp))
-        Parrot_do_dod_run(interp, DOD_trace_stack_FLAG);
+        Parrot_do_dod_run(interp, GC_trace_stack_FLAG);
 #endif
 
     make_writable(interp, &res, minlen, enum_stringrep_one);
@@ -1625,7 +1640,7 @@ string_bitwise_or(PARROT_INTERP, ARGIN_NULLOK(const STRING *s1),
 #if ! DISABLE_GC_DEBUG
     /* trigger GC for debug */
     if (interp && GC_DEBUG(interp))
-        Parrot_do_dod_run(interp, DOD_trace_stack_FLAG);
+        Parrot_do_dod_run(interp, GC_trace_stack_FLAG);
 #endif
 
     make_writable(interp, &res, maxlen, enum_stringrep_one);
@@ -1700,7 +1715,7 @@ string_bitwise_xor(PARROT_INTERP, ARGIN_NULLOK(const STRING *s1),
 #if ! DISABLE_GC_DEBUG
     /* trigger GC for debug */
     if (interp && GC_DEBUG(interp))
-        Parrot_do_dod_run(interp, DOD_trace_stack_FLAG);
+        Parrot_do_dod_run(interp, GC_trace_stack_FLAG);
 #endif
 
     make_writable(interp, &res, maxlen, enum_stringrep_one);
@@ -1776,7 +1791,7 @@ string_bitwise_not(PARROT_INTERP, ARGIN_NULLOK(const STRING *s),
 #if ! DISABLE_GC_DEBUG
     /* trigger GC for debug */
     if (interp && GC_DEBUG(interp))
-        Parrot_do_dod_run(interp, DOD_trace_stack_FLAG);
+        Parrot_do_dod_run(interp, GC_trace_stack_FLAG);
 #endif
 
     make_writable(interp, &res, len, enum_stringrep_one);
@@ -2135,9 +2150,9 @@ string_unpin(PARROT_INTERP, ARGMOD(STRING *s))
      *
      * We have to block GC here, as we have a pointer to bufstart
      */
-    Parrot_block_GC(interp);
+    Parrot_block_GC_sweep(interp);
     Parrot_allocate_string(interp, s, size);
-    Parrot_unblock_GC(interp);
+    Parrot_unblock_GC_sweep(interp);
     mem_sys_memcopy(PObj_bufstart(s), memory, size);
 
     /* Mark the memory as neither immobile nor system allocated */

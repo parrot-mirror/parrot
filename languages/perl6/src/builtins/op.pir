@@ -10,7 +10,7 @@ src/builtins/op.pir - Perl6 builtin operators
 
 =cut
 
-.namespace
+.namespace []
 
 ## autoincrement
 .sub 'postfix:++' :multi(_)
@@ -63,6 +63,12 @@ src/builtins/op.pir - Perl6 builtin operators
 .end
 
 
+.sub 'prefix:^?' :multi(_)
+    .param pmc a
+    .return 'prefix:!'(a)
+.end
+
+
 .sub 'prefix:+' :multi(_)
     .param num a
     .return (a)
@@ -107,54 +113,6 @@ src/builtins/op.pir - Perl6 builtin operators
 
 
 ## TODO: prefix:= prefix:* prefix:** prefix:~^ prefix:+^
-
-
-.sub 'prefix:?^' :multi(_)
-    .param pmc a
-    $I0 = isfalse a
-    .return ($I0)
-.end
-
-
-.sub 'prefix:^' :multi('P6Protoobject')
-    .param pmc proto
-    .return proto.'HOW'()
-.end
-
-
-.sub 'prefix:^' :multi('Integer')
-    .param int to
-    dec to
-    .return 'infix:..'(0, to)
-.end
-
-
-.sub 'prefix:^' :multi('Num')
-    .param num to
-    dec to
-    .return 'infix:..'(0, to)
-.end
-
-
-.sub 'prefix:^' :multi('List')
-    .param pmc list
-
-    # Iterate over the list and build a list of ranges upto the given subscripts.
-    .local pmc ranges, it
-    ranges = 'list'()
-    it = iter list
-  iter_loop:
-    unless it goto iter_loop_end
-    $P0 = shift it
-    $P0 = $P0 - 1
-    $P0 = 'infix:..'(0, $P0)
-    push ranges, $P0
-    goto iter_loop
-  iter_loop_end:
-
-    # Now just use cross operator to make all the permutations.
-    .return 'infix:X'(ranges)
-.end
 
 
 ## multiplicative
@@ -323,13 +281,13 @@ src/builtins/op.pir - Perl6 builtin operators
 .end
 
 
-.sub 'prefix:true' :multi(_)
+.sub 'true' :multi(_)
     .param pmc a
     .return 'prefix:?'(a)
 .end
 
 
-.sub 'prefix:not' :multi(_)
+.sub 'not' :multi(_)
     .param pmc a
     .return 'prefix:!'(a)
 .end
@@ -417,6 +375,72 @@ src/builtins/op.pir - Perl6 builtin operators
     concat $S0, "'"
     'die'($S0)
 .end
+
+
+.sub 'infix:does'
+    .param pmc var
+    .param pmc role
+    .param pmc init_value      :optional
+    .param int have_init_value :opt_flag
+
+    # Get the class of the variable we're adding roles to.
+    .local pmc p6meta, parrot_class
+    p6meta = get_hll_global ['Perl6Object'], '$!P6META'
+    parrot_class = p6meta.get_parrotclass(var)
+
+    # Derive a new class that does the role(s) specified.
+    .local pmc derived
+    derived = new 'Class'
+    addparent derived, parrot_class
+    $I0 = isa role, 'Role'
+    if $I0 goto one_role
+    $I0 = isa role, 'List'
+    if $I0 goto many_roles
+    'die'("'does' expcts a role or a list of roles")
+
+  one_role:
+    '!keyword_does'(derived, role)
+    goto added_roles
+
+  many_roles:
+    .local pmc role_it, cur_role
+    role_it = iter role
+  roles_loop:
+    unless role_it goto roles_loop_end
+    cur_role = shift role_it
+    '!keyword_does'(derived, cur_role)
+    goto roles_loop
+  roles_loop_end:
+  added_roles:
+
+    # We need to make a dummy instance of the class, to force it to internally
+    # construct itself.
+    $P0 = new derived
+
+    # Re-bless the object into the subclass.
+    rebless_subclass var, derived
+
+    # If we were given something to initialize with, do so.
+    unless have_init_value goto no_init
+    .local pmc attrs
+    .local string attr_name
+    attrs = inspect role, "attributes"
+    attrs = attrs.'keys'()
+    $I0 = elements attrs
+    if $I0 != 1 goto attr_error
+    attr_name = attrs[0]
+    attr_name = substr attr_name, 2 # lop of sigil and twigil
+    $P0 = var.attr_name()
+    assign $P0, init_value
+  no_init:
+
+    # We're done - return.
+    .return (var)
+
+attr_error:
+    'die'("Can only supply an initialization value to a role with one attribute")
+.end
+
 
 =back
 
