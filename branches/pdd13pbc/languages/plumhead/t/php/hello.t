@@ -18,17 +18,15 @@ use FindBin;
 use lib "$FindBin::Bin/../../lib";
 
 # core Perl modules
-use Test::More     tests => 16;
+use Test::More     tests => 22;
 
 # Parrot modules
 use Parrot::Test;
-
 
 language_output_is( 'Plumhead', <<'END_CODE', 'Hello, World!', 'sea without newline' );
 Hello, World!<?php
 ?>
 END_CODE
-
 
 language_output_is( 'Plumhead', <<'END_CODE', <<'END_EXPECTED', 'sea with one newline' );
 Hello, World!
@@ -37,7 +35,6 @@ Hello, World!
 END_CODE
 Hello, World!
 END_EXPECTED
-
 
 language_output_is( 'Plumhead', <<'END_CODE', <<'END_EXPECTED', 'sea with two newlines' );
 Hello,
@@ -48,7 +45,6 @@ END_CODE
 Hello,
 World!
 END_EXPECTED
-
 
 language_output_is( 'Plumhead', <<'END_CODE', <<'END_EXPECTED', 'sea without following PHP code' );
 Hello,
@@ -66,7 +62,6 @@ Hello,<?php
 END_CODE
 Hello, World!
 END_EXPECTED
-
 
 language_output_is( 'Plumhead', <<'END_CODE', <<'END_EXPECTED', 'hello' );
 <?php
@@ -173,7 +168,7 @@ Hello, World!
 END_EXPECTED
 
 
-language_output_is( 'Plumhead', <<'END_CODE', <<'END_EXPECTED', 'concatenation of two strings' );
+language_output_is( 'Plumhead', <<'END_CODE', <<'END_EXPECTED', 'concatenation of two strings', todo => 'currently broken' );
 <?php
 echo 'Hello, ' . "World!\n"
 ?>
@@ -182,7 +177,7 @@ Hello, World!
 END_EXPECTED
 
 
-language_output_is( 'Plumhead', <<'END_CODE', <<'END_EXPECTED', 'concatenation of four strings' );
+language_output_is( 'Plumhead', <<'END_CODE', <<'END_EXPECTED', 'concatenation of four strings', todo => 'currently broken' );
 <?php
 echo 'Hell' . 'o, ' . 'World!' . "\n"
 ?>
@@ -190,3 +185,57 @@ END_CODE
 Hello, World!
 END_EXPECTED
 
+language_output_is( 'Plumhead', <<'END_CODE', <<'END_EXPECTED', 'script tags' );
+<script language="php">
+echo "Hello, World!\n";
+</script>
+END_CODE
+Hello, World!
+END_EXPECTED
+
+
+language_output_is( 'Plumhead', <<'END_CODE', <<'END_EXPECTED', 'end of line comment #' );
+<script language="php">
+echo "Hello, World!\n";   # comment till end of line
+</script>
+END_CODE
+Hello, World!
+END_EXPECTED
+
+
+language_output_is( 'Plumhead', <<'END_CODE', <<'END_EXPECTED', 'end of line comment //' );
+<script language="php">
+echo "Hello, World!\n";   // comment till end of line
+</script>
+END_CODE
+Hello, World!
+END_EXPECTED
+
+
+language_output_is( 'Plumhead', <<'END_CODE', <<'END_EXPECTED', 'single line /* */ comment' );
+<script language="php">
+echo "Hello, World!\n";   /* comment till end of line */
+</script>
+END_CODE
+Hello, World!
+END_EXPECTED
+
+
+language_output_is( 'Plumhead', <<'END_CODE', <<'END_EXPECTED', 'multi line /* */ comment' );
+<script language="php">
+echo "Hello, World!\n";   /* multi
+    line
+    comment
+*/
+</script>
+END_CODE
+Hello, World!
+END_EXPECTED
+
+language_output_is( 'Plumhead', <<'END_CODE', <<'END_EXPECTED', 'script tags' );
+<script language="php">
+echo "Hello, World!\n";
+</script>
+END_CODE
+Hello, World!
+END_EXPECTED

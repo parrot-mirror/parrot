@@ -1,28 +1,15 @@
 # $Id$
 
-# a helper for the PHC variant
-.sub 'decode_base64'
-   .param string base64
+.loadlib 'php_group'
 
-   .local pmc dec_sub
-    dec_sub = get_global [ "MIME"; "Base64" ], 'decode_base64'
-
-    .local string result_decode
-    result_decode = dec_sub( base64 )
-
-    .return ( result_decode )
-.end
-
-.sub 'print_newline'
-    say ''
-.end
+.include 'languages/plumhead/src/common/php_MACRO.pir'
 
 # steal builtins from Perl6
 .sub 'print'
     .param pmc list            :slurpy
     .local pmc iter
 
-    iter = new .Iterator, list
+    iter = new 'Iterator', list
   iter_loop:
     unless iter goto iter_end
     $P0 = shift iter
@@ -39,7 +26,7 @@
     .param pmc list            :slurpy
 
     .local pmc iter
-    iter = new .Iterator, list
+    iter = new 'Iterator', list
   iter_loop:
     unless iter goto iter_end
     $P0 = shift iter
@@ -50,315 +37,273 @@
     .return (1)
 .end
 
-.sub 'prefix:-' :multi(Float)
+## autoincrement
+.sub 'postfix:++'
     .param pmc a
-
-    $N0 = a
-    $N0 = neg $N0
-
-    .return ($N0)
+    $P0 = clone a
+    inc a
+    .return ($P0)
 .end
 
-.sub 'prefix:-' :multi(Integer)
+.sub 'postfix:--'
+    .param pmc a
+    $P0 = clone a
+    dec a
+    .return ($P0)
+.end
+
+.sub 'prefix:++'
+    .param pmc a
+    inc a
+    .return (a)
+.end
+
+.sub 'prefix:--'
+    .param pmc a
+    dec a
+    .return (a)
+.end
+
+
+## symbolic unary
+.sub 'prefix:-'
+    .param pmc a
+    $P1 = a.'to_number'()
+    neg $P1
+    .return ($P1)
+.end
+
+.sub 'prefix:~' :multi(PhpString)
+    .param pmc a
+    bnots $P1
+    .return ($P1)
+.end
+
+.sub 'prefix:~' :multi(_)
     .param int a
-
-    $I0 = neg a
-
-    .return ($I0)
+    $I0 = bnot a
+    .RETURN_LONG($I0)
 .end
 
-.sub 'prefix:-' :multi(PMC)
+.sub 'prefix:!'
     .param pmc a
-
-    $N0 = a
-    $N0 = neg $N0
-
-    .return ($N0)
+    $I0 = isfalse a
+    .RETURN_BOOL($I0)
 .end
 
 
-.sub 'infix:+&'
+## multiplicative
+.sub 'infix:*'
+    .param pmc a
+    .param pmc b
+    $P1 = a.'to_number'()
+    $P2 = b.'to_number'()
+    $P0 = mul $P1, $P2
+    .return ($P0)
+.end
+
+.sub 'infix:/'
+    .param pmc a
+    .param pmc b
+    $P1 = a.'to_number'()
+    $P2 = b.'to_number'()
+    $P0 = div $P1, $P2
+    .return ($P0)
+.end
+
+.sub 'infix:%'
+    .param pmc a
+    .param pmc b
+    $P1 = a.'to_number'()
+    $P2 = b.'to_number'()
+    $P0 = mod $P1, $P2
+    .return ($P0)
+.end
+
+.sub 'infix:&' :multi(PhpString,PhpString)
+    .param pmc a
+    .param pmc b
+    $P0 = bands $P1, $P2
+    .return ($P0)
+.end
+
+.sub 'infix:&' :multi(_,_)
     .param int a
     .param int b
-
     $I0 = band a, b
-
-    .return ($I0)
+    .RETURN_LONG($I0)
 .end
 
-.sub 'infix:+|'
+.sub 'infix:>>'
     .param int a
     .param int b
+    $I0 = shr a, b
+    .RETURN_LONG($I0)
+.end
 
+.sub 'infix:<<'
+    .param int a
+    .param int b
+    $I0 = shl a, b
+    .RETURN_LONG($I0)
+.end
+
+
+## additive
+.sub 'infix:+'
+    .param pmc a
+    .param pmc b
+    $P1 = a.'to_number'()
+    $P2 = b.'to_number'()
+    $P0 = add $P1, $P2
+    .return ($P0)
+.end
+
+.sub 'infix:-'
+    .param pmc a
+    .param pmc b
+    $P1 = a.'to_number'()
+    $P2 = b.'to_number'()
+    $P0 = sub $P1, $P2
+    .return ($P0)
+.end
+
+.sub 'infix:.'
+    .param pmc a
+    .param pmc b
+    $S1 = a
+    $S2 = b
+    $S0 = concat $S1, $S2
+    .RETURN_STRING($S0)
+.end
+
+.sub 'infix:|' :multi(PhpString,PhpString)
+    .param pmc a
+    .param pmc b
+    $P0 = bors $P1, $P2
+    .return ($P0)
+.end
+
+.sub 'infix:|' :multi(_,_)
+    .param int a
+    .param int b
     $I0 = bor a, b
-
-    .return ($I0)
+    .RETURN_LONG($I0)
 .end
 
-.sub 'infix:+^'
+.sub 'infix:^' :multi(PhpString,PhpString)
+    .param pmc a
+    .param pmc b
+    $P0 = bxors $P1, $P2
+    .return ($P0)
+.end
+
+.sub 'infix:^' :multi(_,_)
     .param int a
     .param int b
-
     $I0 = bxor a, b
-
-    .return ($I0)
+    .RETURN_LONG($I0)
 .end
 
 
+## logical
+.sub 'infix:AND'
+    .param pmc a
+    .param pmc b
+    $I1 = istrue a
+    $I2 = istrue b
+    $I0 = band $I1, $I2
+    .RETURN_BOOL($I0)
+.end
+
+.sub 'infix:OR'
+    .param pmc a
+    .param pmc b
+    $I1 = istrue a
+    $I2 = istrue b
+    $I0 = bor $I1, $I2
+    .RETURN_BOOL($I0)
+.end
+
+.sub 'infix:XOR'
+    .param pmc a
+    .param pmc b
+    $I1 = istrue a
+    $I2 = istrue b
+    $I0 = bxor $I1, $I2
+    .RETURN_BOOL($I0)
+.end
+
+
+## comparison
 .sub 'infix:<'
     .param pmc a
     .param pmc b
-
-    $I0 = cmp_num a, b
-    $I0 = islt $I0, 0
-
-    .return ($I0)
+    $I0 = islt a, b
+    .RETURN_BOOL($I0)
 .end
-
 
 .sub 'infix:<='
     .param pmc a
     .param pmc b
-
-    $I0 = cmp_num a, b
-    $I0 = isle $I0, 0
-
-    .return ($I0)
+    $I0 = isle a, b
+    .RETURN_BOOL($I0)
 .end
 
 .sub 'infix:=='
     .param pmc a
     .param pmc b
-
-    $I0 = cmp_num a, b
-    $I0 = iseq $I0, 0
-
-    .return ($I0)
+    $I0 = iseq a, b
+    .RETURN_BOOL($I0)
 .end
 
 .sub 'infix:!='
     .param pmc a
     .param pmc b
-
-    $I0 = cmp_num a, b
-    $I0 = isne $I0, 0
-
-    .return ($I0)
+    $I0 = isne a, b
+    .RETURN_BOOL($I0)
 .end
 
-.sub 'infix:eq'
+.sub 'infix:>'
     .param pmc a
     .param pmc b
-
-    $I0 = cmp_str a, b
-    $I0 = iseq $I0, 0
-
-    .return ($I0)
-.end
-
-.sub 'infix:ne'
-    .param pmc a
-    .param pmc b
-
-    $I0 = cmp_str a, b
-    $I0 = isne $I0, 0
-
-    .return ($I0)
+    $I0 = isgt a, b
+    .RETURN_BOOL($I0)
 .end
 
 .sub 'infix:>='
     .param pmc a
     .param pmc b
-
-    $I0 = cmp_num a, b
-    $I0 = isge $I0, 0
-
-    .return ($I0)
+    $I0 = isge a, b
+    .RETURN_BOOL($I0)
 .end
 
-
-.sub 'infix:>'
+.sub 'infix:==='
     .param pmc a
     .param pmc b
-
-    $I0 = cmp_num a, b
-    $I0 = isgt $I0, 0
-
-    .return ($I0)
+    $S1 = typeof a
+    $S2 = typeof b
+    if $S1 == $S2 goto L1
+    .RETURN_FALSE()
+  L1:
+    $I0 = iseq a, b
+    .RETURN_BOOL($I0)
 .end
 
-
-.sub 'infix:!='
+.sub 'infix:!=='
     .param pmc a
     .param pmc b
-
-    $I0 = cmp_num a, b
-    $I0 = isne $I0, 0
-
-    .return ($I0)
+    $S1 = typeof a
+    $S2 = typeof b
+    if $S1 != $S2 goto L1
+    .RETURN_TRUE()
+  L1:
+    $I0 = isne a, b
+    .RETURN_BOOL($I0)
 .end
 
-.sub 'infix:.' :multi( PMC, PMC )
-    .param pmc a
-    .param pmc b
 
-    .local pmc c
-    c = new 'String'
-    c = concat a, b
-
-    .return (c)
-.end
-
-.sub 'infix:.' :multi( PMC, String )
-    .param pmc a
-    .param string b
-
-    .local pmc c
-    c = new 'String'
-    c = concat a, b
-    #c = 'multi PMC, String'
-
-    .return (c)
-.end
-
-.sub 'infix:.' :multi( PMC )
-    .param pmc a
-
-    .return (a)
-.end
-
-.sub 'infix:.' :multi( String, PMC )
-    .param string a
-    .param pmc b
-
-    .local pmc c, d
-    c = new 'String'
-    c = a
-    d = new 'String'
-    d = concat c, b
-
-    .return (d)
-.end
-
-.sub 'infix:|'
-    .param int a
-    .param int b
-
-    $I0 = bor a, b
-
-    .return ($I0)
-.end
-
-.sub 'infix:&'
-    .param int a
-    .param int b
-
-    $I0 = band a, b
-
-    .return ($I0)
-.end
-
-.sub 'infix:~'
-    .param string a
-    .param string b
-
-    $S0 = concat a, b
-
-    .return ($S0)
-.end
-
-.sub 'error_reporting'
-  .return()
-.end
-
-# For now, only plain old CGI is supported
-# Lie about the 'fcgi', in order to keep in line with the reference implementation
-.sub 'php_sapi_name'
-  .return( 'cgi-fcgi' )
-.end
-
-.include "library/dumper.pir"
-.include "cclass.pasm"
-
-# TODO: pass in indent_level, proper escaping
-.sub var_dump
-    .param pmc a
-
-    .local string type_of_pmc
-    type_of_pmc = typeof a
-
-    ne type_of_pmc, 'String', not_a_string
-        .local int string_len
-
-        string_len = elements a
-        print 'string('
-        print string_len
-        print ') "'
-        print a
-        print '"'
-        say ''
-
-       .return()
-
-not_a_string:
-
-    ne type_of_pmc, 'Hash', not_a_hash
-
-        .local int num_elements
-	num_elements = elements a
-        string_len = elements a
-        print 'array('
-        print num_elements
-        say ') {'
-
-        .local pmc    iter, val
-	.local string indent, key
-	.local int    key_starts_with_digit
-	indent = '  '
-        new iter, .Iterator, a
-        set iter, 0
-iter_loop:
-    unless iter, iter_end
-        shift key, iter
-        # TODO: ugly workaround as Hash keys are stringified
-        key_starts_with_digit = is_cclass .CCLASS_NUMERIC, key, 0
-	print indent
-	print '['
-	if key_starts_with_digit goto key_is_an_integer_1
-	    print '"'
-key_is_an_integer_1:
-	print key
-	if key_starts_with_digit goto key_is_an_integer_2
-	    print '"'
-key_is_an_integer_2:
-	say ']=>'
-	print indent
-	val = a[key]
-	var_dump(val)
-
-        branch iter_loop
-iter_end:
-
-
-        say '}'
-       .return()
-
-not_a_hash:
-
-    ne type_of_pmc, 'Integer', not_a_integer
-
-        print 'int('
-        print a
-        say ')'
-
-       .return()
-
-not_a_integer:
-
-    _dumper(a)
-
-    .return()
-.end
+.include 'languages/plumhead/src/common/php_standard.pir'
 
 # Local Variables:
 #   mode: pir

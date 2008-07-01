@@ -15,7 +15,7 @@ as the Perl 6 C<Str> class.
 
 =cut
 
-.namespace ['Perl6Str']
+.namespace ['Str']
 
 .include 'cclass.pasm'
 
@@ -25,6 +25,9 @@ as the Perl 6 C<Str> class.
     strproto = p6meta.'new_class'('Str', 'parent'=>'Perl6Str Any')
     p6meta.'register'('Perl6Str', 'parent'=>strproto, 'protoobject'=>strproto)
     p6meta.'register'('String', 'parent'=>strproto, 'protoobject'=>strproto)
+
+    $P0 = get_hll_namespace ['Str']
+    '!EXPORT'('sprintf', 'from'=>$P0)
 .end
 
 
@@ -229,8 +232,20 @@ Returns a Perl representation of the Str.
     .return ($S0)
 .end
 
-=item substr()
+=item sprintf( *@args )
 
+=cut
+
+.sub 'sprintf' :method
+    .param pmc args            :slurpy
+    args.'!flatten'()
+    $P0 = new 'Str'
+    sprintf $P0, self, args
+    .return ($P0)
+.end
+
+
+=item substr()
 
 =cut
 
@@ -264,7 +279,7 @@ Returns a Perl representation of the Str.
 
 =cut
 
-.namespace
+.namespace []
 
 .include 'cclass.pasm'
 
@@ -387,43 +402,6 @@ B<Note:> partial implementation only
     b = sep
 
     .return a.'split'(b)
-.end
-
-
-=item join
-
-B<Note:> partial implementation only
-
-=cut
-
-.sub 'join'
-    .param pmc args            :slurpy
-    .local pmc flatargs
-    .local string sep
-
-    flatargs = new 'List'
-    sep = ''
-    unless args goto have_flatargs
-    $P0 = args[0]
-    $I0 = isa $P0, 'List'
-    if $I0 goto have_sep
-    $P0 = shift args
-    sep = $P0
-  have_sep:
-  arg_loop:
-    unless args goto have_flatargs
-    $P0 = shift args
-    $I0 = isa $P0, 'List'
-    if $I0 goto arg_array
-    push flatargs, $P0
-    goto arg_loop
-  arg_array:
-    $I0 = elements flatargs
-    splice flatargs, $P0, $I0, 0
-    goto arg_loop
-  have_flatargs:
-    $S0 = join sep, flatargs
-    .return ($S0)
 .end
 
 

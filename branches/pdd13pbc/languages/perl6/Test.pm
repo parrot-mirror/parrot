@@ -100,7 +100,10 @@ sub diag($message) { say '# '~$message; }
 multi sub flunk($reason) { proclaim(0, "flunk $reason")}
 
 
-sub isa_ok($var,$type) { ok($var.isa($type), "The object is-a '$type'"); }
+multi sub isa_ok($var,$type) {
+    ok($var.isa($type), "The object is-a '$type'");
+}
+multi sub isa_ok($var,$type, $msg) { ok($var.isa($type), $msg); }
 
 multi sub dies_ok($closure, $reason) {
     try {
@@ -123,16 +126,14 @@ multi sub lives_ok($closure) {
 }
 
 multi sub eval_dies_ok($code, $reason) {
-    eval ( $code );
-    proclaim((defined $!), $reason);
+    proclaim((defined eval_exception($code)), $reason);
 }
 multi sub eval_dies_ok($code) {
     eval_dies_ok($code, '');
 }
 
 multi sub eval_lives_ok($code, $reason) {
-    try { eval ($code) }
-    proclaim((not defined $!), $reason);
+    proclaim((not defined eval_exception($code)), $reason);
 }
 multi sub eval_lives_ok($code) {
     eval_lives_ok($code, '');
@@ -140,6 +141,12 @@ multi sub eval_lives_ok($code) {
 
 
 ## 'private' subs
+
+sub eval_exception($code) {
+    my $eval_exception;
+    try { eval ($code); $eval_exception = $! }
+    $eval_exception // $!;
+}
 
 sub proclaim($cond, $desc) {
     $testing_started  = 1;

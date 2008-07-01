@@ -76,6 +76,20 @@ Reads a line from the file handle.
 .end
 
 
+=item slurp
+
+Slurp a file into a string.
+
+=cut
+
+.sub 'slurp' :method
+    .local pmc PIO
+    PIO = getattribute self, "$!PIO"
+    $S0 = PIO.slurp('')
+    .return($S0)
+.end
+
+
 =item close
 
 Closes the file.
@@ -90,7 +104,7 @@ Closes the file.
 .end
 
 
-.namespace
+.namespace []
 
 =back
 
