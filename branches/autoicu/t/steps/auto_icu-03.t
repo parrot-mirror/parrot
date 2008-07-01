@@ -29,7 +29,11 @@ use IO::CaptureOutput qw( capture );
 
 my $args = process_options(
     {
-        argv => [ q{--icuheaders=alpha}, q{--icushared=beta}  ],
+        argv => [
+            q{--icu-config=1},
+            q{--icuheaders=alpha},
+            q{--icushared=beta}
+        ],
         mode => q{configure},
     }
 );

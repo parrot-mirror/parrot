@@ -5,7 +5,7 @@
 
 use strict;
 use warnings;
-use Test::More tests => 79;
+use Test::More tests => 81;
 use Carp;
 use Cwd;
 use File::Path qw( mkpath );
@@ -161,18 +161,23 @@ is($without, 0, "Continuing to try to configure with ICU");
 my $icushared;
 
 $icushared = qq{-licui18n -lalpha\n};
-($icushared, $without) = auto::icu::_handle_icushared($icushared, 0);
+($icushared, $without) = $step->_handle_icushared($icushared, 0);
 like($icushared, qr/-lalpha/, "Got expected ld flags");
 is($without, 0, "Continuing to try to configure with ICU");
 
 $icushared = qq{-licui18n\n};
-($icushared, $without) = auto::icu::_handle_icushared($icushared, 0);
+($icushared, $without) = $step->_handle_icushared($icushared, 0);
 ok(! $icushared, "No icushared, as expected");
 is($without, 1, "No longer trying to configure with ICU");
 
+$icushared = undef;
+($icushared, $without) = $step->_handle_icushared($icushared, 0);
+ok(! defined $icushared, "icushared remains undefined, as expected");
+is($without, 0, "Continuing to try to configure with ICU");
+
 my $icuheaders;
 ($icuheaders, $without) =
-    auto::icu::_handle_icuheaders($conf, undef, 0);
+    $step->_handle_icuheaders($conf, undef, 0);
 ok(! defined $icuheaders, "icuheaders path undefined, as expected");
 is($without, 0, "Continuing to try to configure with ICU");
 
@@ -184,7 +189,7 @@ my $cwd = cwd();
     my $expected_include_dir =
         $expected_dir . $conf->data->get('slash') .  q{include};
     ($icuheaders, $without) =
-        auto::icu::_handle_icuheaders($conf, qq{$expected_dir\n}, 0);
+        $step->_handle_icuheaders($conf, qq{$expected_dir\n}, 0);
     is($icuheaders, $expected_include_dir,
         "Got expected icuheaders path value");
     is($without, 1, "No longer trying to configure with ICU");
@@ -199,7 +204,7 @@ my $cwd = cwd();
         $expected_dir . $conf->data->get('slash') .  q{include};
     mkdir $expected_dir or croak "Unable to make testing directory";
     ($icuheaders, $without) =
-        auto::icu::_handle_icuheaders($conf, qq{$expected_dir\n}, 0);
+        $step->_handle_icuheaders($conf, qq{$expected_dir\n}, 0);
     is($icuheaders, $expected_include_dir,
         "Got expected icuheaders path value");
     is($without, 1, "No longer trying to configure with ICU");
@@ -216,7 +221,7 @@ my $cwd = cwd();
     mkpath($expected_include_dir, 0, 755)
         or croak "Unable to make second-level testing directory";
     ($icuheaders, $without) =
-        auto::icu::_handle_icuheaders($conf, qq{$expected_dir\n}, 0);
+        $step->_handle_icuheaders($conf, qq{$expected_dir\n}, 0);
     is($icuheaders, $expected_include_dir,
         "Got expected icuheaders path value");
     is($without, 0, "Continuing to try to configure with ICU");
