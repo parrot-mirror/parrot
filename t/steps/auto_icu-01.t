@@ -451,7 +451,9 @@ auto_icu-01.t - test config::auto::icu
 
 The files in this directory test functionality used by F<Configure.pl>.
 
-The tests in this file test subroutines exported by config::auto::icu.
+The tests in this file test config::auto::icu in the case where configuration
+without ICU is requested.  Also tested are most of the internal subroutines
+and methods.
 
 =head1 AUTHOR
 
