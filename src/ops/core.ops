@@ -270,6 +270,12 @@ inline op local_return(invar PMC) :flow {
     return_addr = VTABLE_pop_integer(interp, $1);
     next = INTVAL2PTR(opcode_t *, return_addr);
 
+    /* The return address must be within the current code segment. */
+    if (! ( next >= interp->code->base.data
+            && next < (interp->code->base.data + interp->code->base.size)) )
+        Parrot_ex_throw_from_c_args(interp, dest, EXCEPTION_INVALID_OPERATION,
+            "Address for 'local_return' must be within the current code segment");
+
     goto ADDRESS(next);
 }
 
