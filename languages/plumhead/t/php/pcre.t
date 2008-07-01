@@ -25,9 +25,25 @@ use warnings;
 use FindBin;
 use lib "$FindBin::Bin/../../lib";
 
-use Test::More     tests => 2;
+use Test::More     tests => 3;
 use Parrot::Test;
 
+
+language_output_is( 'Plumhead', <<'CODE', <<'OUTPUT', 'constants', todo => 'compiler supports constant');
+<?php
+  echo PREG_NO_ERROR, "\n";
+  echo PREG_INTERNAL_ERROR, "\n";
+  echo PREG_BACKTRACK_LIMIT_ERROR, "\n";
+  echo PREG_RECURSION_LIMIT_ERROR, "\n";
+  echo PREG_BAD_UTF8_ERROR, "\n";
+?>
+CODE
+0
+1
+2
+3
+4
+OUTPUT
 
 language_output_is( 'Plumhead', <<'CODE', <<'OUTPUT', 'preg_match()' );
 <?php
