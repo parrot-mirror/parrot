@@ -59,6 +59,7 @@ sub _init {
     $data{result}               = q{};
     $data{icuconfig_default}    = q{icu-config};
     $data{icu_headers}          = [ qw(ucnv.h utypes.h uchar.h) ];
+    $data{icu_shared_pattern}   = qr/-licui18n\w*/;
     return \%data;
 }
 
@@ -297,13 +298,16 @@ sub _try_icuconfig {
         # ldflags
         $icushared = capture_output("$arg->{icuconfig} --ldflags");
         ($icushared, $arg->{without}) =
-            _handle_icushared($icushared, $arg->{without});
-
+            $self->_handle_icushared($icushared, $arg->{without});
         # location of header files
         $icuheaders = capture_output("$arg->{icuconfig} --prefix");
         ($icuheaders, $arg->{without}) =
-            _handle_icuheaders($conf, $icuheaders, $arg->{without});
+            $self->_handle_icuheaders($conf, $icuheaders, $arg->{without});
 
+        # This branch is going to be very difficult to cover during testing
+        # because we would have to be able to manipulate the return values of
+        # either capture_output() call above.  We can't do this because we're
+        # autoconfiguring with the standard icu-config program.
         if ($arg->{without}) {
             $self->set_result("failed");
         }
@@ -313,10 +317,11 @@ sub _try_icuconfig {
 }
 
 sub _handle_icushared {
+    my $self = shift;
     my ($icushared, $without) = @_;
     if ( defined $icushared ) {
         chomp $icushared;
-        $icushared =~ s/-licui18n\w*//;    # "-licui18n32" too
+        $icushared =~ s/$self->{icu_shared_pattern}//;    # "-licui18n32" too
         if (length $icushared == 0) {
             $without = 1;
         }
@@ -325,6 +330,7 @@ sub _handle_icushared {
 }
 
 sub _handle_icuheaders {
+    my $self = shift;
     my ($conf, $icuheaders, $without) = @_;
     if ( defined $icuheaders ) {
         chomp $icuheaders;
