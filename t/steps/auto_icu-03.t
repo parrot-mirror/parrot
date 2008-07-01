@@ -52,8 +52,6 @@ ok( defined $step, "$step_name constructor returned defined value" );
 isa_ok( $step, $step_name );
 ok( $step->description(), "$step_name has description" );
 
-#ok( $ret, "$step_name runstep() returned true value" );
-#is( $step->result(), q{no}, "Got expected result");
 {
     my ($stdout, $stderr, $ret);
     capture(

@@ -1,22 +1,22 @@
 #! perl
 # Copyright (C) 2007, The Perl Foundation.
 # $Id$
-# auto_icu-02.t
+# auto_icu-04.t
 
 use strict;
 use warnings;
-use Test::More tests => 15;
+use Test::More tests => 12;
 use Carp;
 use lib qw( lib t/configure/testlib );
-use_ok('config::init::defaults');
-use_ok('config::auto::icu');
 use Parrot::Configure;
 use Parrot::Configure::Options qw( process_options );
 use Parrot::Configure::Test qw( test_step_thru_runstep);
+use_ok('config::init::defaults');
+use_ok('config::auto::icu');
 
 my $args = process_options(
     {
-        argv => [ q{--without-icu}, q{--icu-config=none}  ],
+        argv => [ ],
         mode => q{configure},
     }
 );
@@ -39,16 +39,14 @@ ok( defined $step, "$step_name constructor returned defined value" );
 isa_ok( $step, $step_name );
 ok( $step->description(), "$step_name has description" );
 
+my $phony = q{phony};
+$step->{icuconfig_default} = $phony;
+
 my $ret = $step->runstep($conf);
 ok( $ret, "$step_name runstep() returned true value" );
-
-is( $conf->data->get('has_icu'), 0,
-    "Got expected value for 'has_icu'" );
-is( $conf->data->get('icu_shared'), q{},
-    "Got expected value for 'icu_shared'" );
-is( $conf->data->get('icu_dir'), q{},
-    "Got expected value for 'icu_dir'" );
-is( $step->result(), 'no', "Got expected result" );
+my $expected = q{failed};
+is($step->result(), $expected,
+    "Got expected return value: $expected");
 
 pass("Completed all tests in $0");
 
@@ -56,11 +54,11 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-auto_icu-02.t - test config::auto::icu
+auto_icu-04.t - test config::auto::icu
 
 =head1 SYNOPSIS
 
-    % prove t/steps/auto_icu-02.t
+    % prove t/steps/auto_icu-04.t
 
 =head1 DESCRIPTION
 
