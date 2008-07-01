@@ -121,7 +121,7 @@ sub runstep {
 
     my $without = 0;
     ($icuconfig, $autodetect, $without) =
-        _handle_autodetect( {
+        $self->_handle_autodetect( {
             icuconfig   => $icuconfig,
             autodetect  => $autodetect,
             without     => $without,
@@ -131,7 +131,7 @@ sub runstep {
     # _handle_search_for_icu_config().  In that case, we're abandoning our
     # attempt to configure with ICU and so may return here.
     # 2nd possible return point
-    if ( $without_opt ) {
+    if ( $without ) {
         $self->_set_no_configure_with_icu($conf, q{failed});
         return 1;
     }
@@ -148,7 +148,7 @@ sub runstep {
         );
 
     # 3rd possible return point
-    if ( $without_opt ) {
+    if ( $without ) {
         $self->_set_no_configure_with_icu($conf, q{no});
         return 1;
     }
@@ -236,6 +236,7 @@ HELP
 }
 
 sub _handle_search_for_icu_config {
+    my $self = shift;
     my $arg = shift;
     if (
         ( $arg->{ret} == -1 )
@@ -247,7 +248,7 @@ sub _handle_search_for_icu_config {
         $arg->{without}    = 1;
     }
     else {
-        $arg->{icuconfig} = "icu-config";
+        $arg->{icuconfig} = $self->{icuconfig_default};
         if ($arg->{verbose}) {
             print "icu-config found... good!\n";
         }
@@ -256,15 +257,16 @@ sub _handle_search_for_icu_config {
 }
 
 sub _handle_autodetect {
+    my $self = shift;
     my $arg = shift;
     if ( $arg->{autodetect} ) {
         if ( ! $arg->{icuconfig} ) {
 
             my ( undef, undef, $ret ) =
-                capture_output( "icu-config", "--exists" );
+                capture_output( $self->{icuconfig_default}, "--exists" );
 
             ($arg->{icuconfig}, $arg->{autodetect}, $arg->{without}) =
-                _handle_search_for_icu_config( {
+                $self->_handle_search_for_icu_config( {
                     icuconfig   => $arg->{icuconfig},
                     autodetect  => $arg->{autodetect},
                     without     => $arg->{without},

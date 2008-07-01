@@ -5,7 +5,7 @@
 
 use strict;
 use warnings;
-use Test::More qw(no_plan); # tests =>  2;
+use Test::More tests => 79;
 use Carp;
 use Cwd;
 use File::Path qw( mkpath );
@@ -69,7 +69,7 @@ is($step->_handle_icuconfig_opt($phony), $phony,
 my ($autodetect, $without);
 
 ($icuconfig, $autodetect, $without) =
-    auto::icu::_handle_search_for_icu_config( {
+    $step->_handle_search_for_icu_config( {
         icuconfig   => q{},
         autodetect  => 1,
         without     => 0,
@@ -81,7 +81,7 @@ is($autodetect, 0, "Autodetection cancelled, as expected");
 is($without, 1, "Continuing to configure without ICU");
 
 ($icuconfig, $autodetect, $without) =
-    auto::icu::_handle_search_for_icu_config( {
+    $step->_handle_search_for_icu_config( {
         icuconfig   => q{},
         autodetect  => 1,
         without     => 0,
@@ -93,7 +93,7 @@ is($autodetect, 0, "Autodetection cancelled, as expected");
 is($without, 1, "Continuing to configure without ICU");
 
 ($icuconfig, $autodetect, $without) =
-    auto::icu::_handle_search_for_icu_config( {
+    $step->_handle_search_for_icu_config( {
         icuconfig   => q{},
         autodetect  => 1,
         without     => 0,
@@ -108,7 +108,7 @@ is($without, 0, "Continuing to try to configure with ICU");
     my ($stdout, $stderr);
     capture( sub {
             ($icuconfig, $autodetect, $without) =
-                auto::icu::_handle_search_for_icu_config( {
+                $step->_handle_search_for_icu_config( {
                     icuconfig   => q{},
                     autodetect  => 1,
                     without     => 0,
@@ -127,7 +127,7 @@ is($without, 0, "Continuing to try to configure with ICU");
 }
 
 ($icuconfig, $autodetect, $without) =
-    auto::icu::_handle_autodetect( {
+    $step->_handle_autodetect( {
         icuconfig   => $phony,
         autodetect  => 1,
         without     => 0,
@@ -141,7 +141,7 @@ is($without, 0, "Continuing to try to configure with ICU");
     my ($stdout, $stderr);
     capture( sub {
         ($icuconfig, $autodetect, $without) =
-            auto::icu::_handle_autodetect( {
+            $step->_handle_autodetect( {
                 icuconfig   => $phony,
                 autodetect  => 0,
                 without     => 0,
