@@ -7,36 +7,12 @@ config/auto/icu.pm - Detect International Components for Unicode (ICU)
 
 =head1 DESCRIPTION
 
-Determines whether ICU is available.  If so, configures ICU and add
+Determines whether ICU is available.  If so, configures ICU and adds
 appropriate targets to the Makefile.
 
 From the ICU home page (L<http://www.icu-project.org/>):  "ICU is a mature,
 widely used set of C/C++ and Java libraries providing Unicode and
 Globalization support for software applications."
-
-=cut
-
-=pod
-
-CU Options:
-
-   For using a system ICU, these options can be used:
-
-   --icu-config=/path/to/icu-config
-                        Location of the script used for ICU autodetection.
-                        You just need to specify this option if icu-config
-                        is not in your PATH.
-
-   --icu-config=none    Can be used to disable the autodetection feature.
-                        It will also be disabled if you specify any other
-                        of the following ICU options.
-
-   If you do not have a full ICU installation:
-
-   --without-icu        Build parrot without ICU support
-   --icuheaders=(path)  Location of ICU headers without /unicode
-   --icushared=(flags)  Full linker command to create shared libraries
-   --icudatadir=(path)  Directory to locate ICU's data file(s)
 
 =cut
 
