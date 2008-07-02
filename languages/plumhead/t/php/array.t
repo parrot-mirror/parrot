@@ -1,3 +1,5 @@
+#! perl
+# Copyright (C) 2008, The Perl Foundation.
 # $Id$
 
 =head1 NAME
@@ -21,9 +23,9 @@ use warnings;
 use FindBin;
 use lib "$FindBin::Bin/../../lib";
 
-use Parrot::Config (); 
+use Parrot::Config ();
 use Parrot::Test;
-use Test::More     tests => 6;
+use Test::More     tests => 5;
 
 
 language_output_is( 'Plumhead', <<'END_CODE', <<'END_OUT', 'less than' );
@@ -64,30 +66,19 @@ END_CODE
 9
 END_OUT
 
-language_output_is( 'Plumhead', <<'END_CODE', <<'END_OUT', 'var_dump() with string key' );
+language_output_is( 'Plumhead', <<'CODE', <<'OUTPUT', 'count' );
 <?php
-$foo['bar'] = 'asdf';
-echo $foo['bar'];
-echo "\n";
-var_dump( $foo ); 
-END_CODE
-asdf
-array(1) {
-  ["bar"]=>
-  string(4) "asdf"
-}
-END_OUT
-
-language_output_is( 'Plumhead', <<'END_CODE', <<'END_OUT', 'var_dump() with int key' );
-<?php
-$twice[1] = 2;
-echo $twice[1];
-echo "\n";
-var_dump( $twice ); 
-END_CODE
+  $hello['world'] = 'hi';
+  $hello['World'] = 'Hi';
+  echo count($hello), "\n";
+?>
+CODE
 2
-array(1) {
-  [1]=>
-  int(2)
-}
-END_OUT
+OUTPUT
+
+# Local Variables:
+#   mode: cperl
+#   cperl-indent-level: 4
+#   fill-column: 100
+# End:
+# vim: expandtab shiftwidth=4:
