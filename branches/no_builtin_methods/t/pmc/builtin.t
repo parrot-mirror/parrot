@@ -28,10 +28,6 @@ Tests builtin opcode-like methods.
     # bound_methods()
     # parrot_io_puts()
 
-    ## This should be last; it outputs TAP directly, so Test::More
-    ## loses track of the index.
-    ## XXX any changes will require the indices to be updated
-    builtin_say()
 .end
 
 .sub three_ways_to_call_a_method
@@ -47,22 +43,6 @@ Tests builtin opcode-like methods.
     # method call
     y = x."cos"()
     is( y, 0.540302, 'method call syntax' )
-.end
-
-.sub builtin_say
-    .local pmc io
-    $I0 = say "ok 4 - say in scalar context"
-    io = getstdout
-    $I0 = say io, "ok 5 - say in scalar context with io pmc"
-    say "ok 6 - say in void context"
-    say io, "ok 7 - say in void context with io pmc"
-    "say"(io, "ok 8 - say in function call syntax with io pmc")
-    .local pmc s
-    s = new 'String'
-    s = "ok 9 - say a String with io pmc"
-    say io, s
-    s = "ok 10 - say a String"
-    say s
 .end
 
 ## skip bound methods - n/y
