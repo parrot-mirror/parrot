@@ -73,7 +73,7 @@ sub renum_op_map_file {
     my $self = shift;
 
     my $file = scalar(@_) ? shift : $self->{num_file};
-    my ( $name, $number, @lines, %seen, %fixed, $fix );
+    my ( $name, $number, @lines, %fixed, $fix );
     $fix = 1;
     open my $OP, '<', $file
         or die "Can't open $file, error $!";
@@ -86,7 +86,6 @@ sub renum_op_map_file {
         s/^\s*//;
         next unless $_;
         ( $name, $number ) = split( /\s+/, $_ );
-        $seen{$name} = $number;
         $fixed{$name} = $number if ($fix);
     }
     close $OP;
@@ -105,7 +104,7 @@ sub renum_op_map_file {
         if ( defined $fixed{ $_->full_name } ) {
             $n = $fixed{ $_->full_name };
         }
-        elsif ( $seen{ $_->full_name } ) {
+        else {
             printf $OP "%-31s%4d\n", $_->full_name, ++$n;
         }
     }
