@@ -25,7 +25,7 @@ use warnings;
 use FindBin;
 use lib "$FindBin::Bin/../../lib";
 
-use Test::More     tests => 3;
+use Test::More     tests => 7;
 use Parrot::Test;
 
 
@@ -57,6 +57,38 @@ CODE
 0
 1
 1
+OUTPUT
+
+language_output_like( 'Plumhead', <<'CODE', <<'OUTPUT', 'preg_match() empty regex' );
+<?php
+  echo preg_match('   ', 'abc'), "\n";
+?>
+CODE
+/Empty regular expression/
+OUTPUT
+
+language_output_like( 'Plumhead', <<'CODE', <<'OUTPUT', 'preg_match() bad delim' );
+<?php
+  echo preg_match(' 7b7', 'abc'), "\n";
+?>
+CODE
+/Delimiter must not be alphanumeric or backslash/
+OUTPUT
+
+language_output_like( 'Plumhead', <<'CODE', <<'OUTPUT', 'preg_match() no end' );
+<?php
+  echo preg_match(' |b', 'abc'), "\n";
+?>
+CODE
+/ No ending delimiter '|' found/
+OUTPUT
+
+language_output_like( 'Plumhead', <<'CODE', <<'OUTPUT', 'preg_match() unknown modif' );
+<?php
+  echo preg_match(' /b/ia', 'abc'), "\n";
+?>
+CODE
+/Unknown modifier 'a'/
 OUTPUT
 
 language_output_is( 'Plumhead', <<'CODE', <<'OUTPUT', 'preg_quote()' );
