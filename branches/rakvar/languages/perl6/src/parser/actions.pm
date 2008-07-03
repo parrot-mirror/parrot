@@ -12,6 +12,9 @@ our $?PERL6SCALAR := 'Perl6Scalar';
 method TOP($/) {
     my $past := $( $<statement_block> );
     $past.blocktype('declaration');
+    declare_implicit_var($past, '$_', 'null');
+    declare_implicit_var($past, '$!', 'null');
+    declare_implicit_var($past, '$/', 'null');
 
     # Attach any initialization code.
     our $?INIT;
@@ -50,32 +53,6 @@ method statement_block($/, $key) {
             $?BLOCK := PAST::Block.new( PAST::Stmts.new(), :node($/));
         }
         @?BLOCK.unshift($?BLOCK);
-        my $init := $?BLOCK[0];
-        unless $?BLOCK.symbol('$_') {
-            $init.push( PAST::Var.new( :name('$_'), :isdecl(1) ) );
-            $?BLOCK.symbol( '$_', :scope('lexical') );
-        }
-        unless $?BLOCK.symbol('$/') {
-            $init.push( PAST::Var.new( :name('$/'), :isdecl(1) ) );
-            $?BLOCK.symbol( '$/', :scope('lexical') );
-            $init.push(
-                PAST::Op.new(
-                    :inline(
-                          "    %r = getinterp\n"
-                        ~ "    push_eh no_match_to_copy\n"
-                        ~ "    %r = %r['lexpad';1]\n"
-                        ~ "    pop_eh\n"
-                        ~ "    if null %r goto no_match_to_copy\n"
-                        ~ "    %r = %r['$/']\n"
-                        ~ "    store_lex '$/', %r\n"
-                        ~ "  no_match_to_copy:\n"
-                    )
-                )
-            );
-        }
-        unless $?BLOCK.symbol('$!') {
-            $init.push( PAST::Var.new( :name('$!'), :isdecl(1) ) );
-            $?BLOCK.symbol( '$!', :scope('lexical') ); }
     }
     if $key eq 'close' {
         my $past := @?BLOCK.shift();
@@ -514,6 +491,9 @@ method routine_declarator($/, $key) {
         $past.pirflags( ~$past.pirflags() ~ ' :instanceof("Perl6Method")');
     }
     $past.node($/);
+    declare_implicit_var($past, '$_', 'null');
+    declare_implicit_var($past, '$!', 'null');
+    declare_implicit_var($past, '$/', 'null');
     make $past;
 }
 
@@ -2302,6 +2282,16 @@ sub build_call($args) {
     }
     $args.pasttype('call');
     $args;
+}
+
+
+sub declare_implicit_var($block, $name, $type) {
+    unless $block.symbol($name) {
+        my $var := PAST::Var.new( :name($name), :isdecl(1) );
+        $var.scope('lexical');
+        $block[0].push($var);
+        $block.symbol($name, :scope('lexical') );
+    }
 }
 
 
