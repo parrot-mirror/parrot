@@ -140,6 +140,7 @@ method if_statement($/) {
     my $expr  := $( $<EXPR>[$count] );
     my $then  := $( $<block>[$count] );
     $then.blocktype('immediate');
+    declare_implicit_immediate_vars($then);
     my $past := PAST::Op.new(
         $expr, $then,
         :pasttype('if'),
@@ -148,6 +149,7 @@ method if_statement($/) {
     if $<else> {
         my $else := $( $<else>[0] );
         $else.blocktype('immediate');
+        declare_implicit_immediate_vars($else);
         $past.push( $else );
     }
     while $count != 0 {
@@ -155,6 +157,7 @@ method if_statement($/) {
         $expr  := $( $<EXPR>[$count] );
         $then  := $( $<block>[$count] );
         $then.blocktype('immediate');
+        declare_implicit_immediate_vars($then);
         $past  := PAST::Op.new(
             $expr, $then, $past,
             :pasttype('if'),
@@ -168,6 +171,7 @@ method if_statement($/) {
 method unless_statement($/) {
     my $then := $( $<block> );
     $then.blocktype('immediate');
+    declare_implicit_immediate_vars($then);
     my $past := PAST::Op.new(
         $( $<EXPR> ), $then,
         :pasttype('unless'),
@@ -277,6 +281,7 @@ method loop_statement($/) {
 method for_statement($/) {
     my $block := $( $<pblock> );
     $block.blocktype('declaration');
+    declare_implicit_function_vars($block);
     my $past := PAST::Op.new(
         PAST::Op.new(:name('list'), $($<EXPR>)),
         $block,
@@ -288,8 +293,6 @@ method for_statement($/) {
 
 method pblock($/) {
     my $block := $( $<block> );
-    declare_implicit_var($block, '$!', 'outer');
-    declare_implicit_var($block, '$/', 'outer');
     make $block;
 }
 
@@ -1761,6 +1764,7 @@ method circumfix($/, $key) {
     }
     elsif $key eq '{ }' {
         $past := $( $<pblock> );
+        declare_implicit_function_vars($past);
     }
     elsif $key eq '$( )' {
         my $method := contextualizer_name($/, $<sigil>);
@@ -2292,6 +2296,21 @@ sub declare_implicit_var($block, $name, $type) {
         $block[0].push($var);
         $block.symbol($name, :scope('lexical') );
     }
+}
+
+
+sub declare_implicit_function_vars($block) {
+    declare_implicit_var($block, '$_',
+        defined($block.arity()) ?? 'outer' !! 'parameter');
+    declare_implicit_var($block, '$!', 'outer');
+    declare_implicit_var($block, '$/', 'outer');
+}
+
+
+sub declare_implicit_immediate_vars($block) {
+    declare_implicit_var($block, '$_', 'outer');
+    declare_implicit_var($block, '$!', 'outer');
+    declare_implicit_var($block, '$/', 'outer');
 }
 
 
