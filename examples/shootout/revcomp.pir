@@ -65,7 +65,7 @@ done:
 	.param string line
 	.local int i, linelen, ch
 	linelen = length line
-       
+
         $P0 = new 'String'
         $P0.'reverse'(line)
 
