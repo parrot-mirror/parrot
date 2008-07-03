@@ -12,9 +12,9 @@ our $?PERL6SCALAR := 'Perl6Scalar';
 method TOP($/) {
     my $past := $( $<statement_block> );
     $past.blocktype('declaration');
-    declare_implicit_var($past, '$_', 'null');
-    declare_implicit_var($past, '$!', 'null');
-    declare_implicit_var($past, '$/', 'null');
+    declare_implicit_var($past, '$_', 'new');
+    declare_implicit_var($past, '$!', 'new');
+    declare_implicit_var($past, '$/', 'new');
 
     # Attach any initialization code.
     our $?INIT;
@@ -288,6 +288,8 @@ method for_statement($/) {
 
 method pblock($/) {
     my $block := $( $<block> );
+    declare_implicit_var($block, '$!', 'outer');
+    declare_implicit_var($block, '$/', 'outer');
     make $block;
 }
 
@@ -485,9 +487,9 @@ method routine_declarator($/, $key) {
         $past.pirflags( ~$past.pirflags() ~ ' :instanceof("Perl6Method")');
     }
     $past.node($/);
-    declare_implicit_var($past, '$_', 'null');
-    declare_implicit_var($past, '$!', 'null');
-    declare_implicit_var($past, '$/', 'null');
+    declare_implicit_var($past, '$_', 'new');
+    declare_implicit_var($past, '$!', 'new');
+    declare_implicit_var($past, '$/', 'new');
     make $past;
 }
 
@@ -2276,7 +2278,17 @@ sub build_call($args) {
 sub declare_implicit_var($block, $name, $type) {
     unless $block.symbol($name) {
         my $var := PAST::Var.new( :name($name), :isdecl(1) );
-        $var.scope('lexical');
+        $var.scope($type eq 'parameter' ?? 'parameter' !! 'lexical');
+        if $type eq 'new' {
+            $var.viviself( 'Perl6Scalar' );
+        }
+        else {
+            my $opast := PAST::Op.new(
+                :name('!OUTER'),
+                PAST::Val.new( :value($name) )
+            );
+            $var.viviself($opast);
+        }
         $block[0].push($var);
         $block.symbol($name, :scope('lexical') );
     }
