@@ -1693,7 +1693,10 @@ pir_error_output_like( <<'CODE', <<'OUTPUT', 'overriding find_method()' );
 .namespace [ 'Override' ]
 
 .sub 'find_method' :vtable
-    say "Finding method"
+    .param string name
+    $S0 = "Finding method"
+    $S1 = $S0 . name
+    say $S1
 .end
 CODE
 /Finding method/

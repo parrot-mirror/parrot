@@ -313,7 +313,8 @@ expand_pcc_sub(PARROT_INTERP, ARGMOD(IMC_Unit *unit), ARGIN(Instruction *ins))
     SymReg      *regs[2];
 
     /* if this sub is a method, unshift 'self' as first param */
-    if (sub->pcc_sub->pragma & P_METHOD) {
+    if ((sub->pcc_sub->pragma & P_METHOD) ||
+        (IMCC_INFO(interp)->cur_unit->is_vtable_method)) {
         SymReg *self = get_sym(interp, "self");
         if (!self) {
             self       = mk_symreg(interp, "self", 'P');
