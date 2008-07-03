@@ -106,7 +106,7 @@ D: Fixes for VMS
 N: Bernhard Schmalhofer
 D: Bugfixes
 D: Parrot m4
-D: Plumhead
+D: Pipp
 D: Tests for languages/lisp
 E: Bernhard.Schmalhofer@gmx.de
 
@@ -157,7 +157,7 @@ E: cdolan@cpan.org
 N: Christoph Otto a.k.a. cotto
 D: Patch for key flags in pdd08
 D: Range check in Env PMC
-D: PHPArray implementation
+D: Pipp
 E: christoph@mksig.org
 
 N: chromatic
@@ -251,6 +251,7 @@ D: build fixes for MinGW
 D: a patch to remove slash_exec from config
 D: language Lua
 D: language WMLScript (PIR translator)
+D: Pipp
 
 N: Garrett Rooney
 D: Fix typo in PARROT_BIGENDIAN case
@@ -401,6 +402,7 @@ N: Klaas-Jan Stol a.k.a. kj[s]?
 D: clean-ups of compilers/imcc and its documentation.
 D: compilers/pirc and languages/PIR.
 D: various updates to PCT-based languages (C99,Punie,Cardinal,Ecmascript)
+D: languages/json
 E: parrotcode@gmail.com
 
 N: Lars Balker Rasmussen
