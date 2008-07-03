@@ -671,8 +671,18 @@ expand_pcc_sub_call(PARROT_INTERP, ARGMOD(IMC_Unit *unit), ARGMOD(Instruction *i
         if (recursive_tail_call(interp, unit, ins, sub))
             return;
 
+    /* If the subroutine is being called indirectly through a variable or a
+       register, we end up here. */
     if (sub->pcc_sub->object) {
+        /* Set the meth_call flag. I believe this flag determines whether we
+           are calling a sub indirectly through a PMC or string variable
+           or register. */
         meth_call = 1;
+
+        /* If the variable is a string, such as $S0(), we call the getclass
+           instruction like this: getclass $P[temp], $S0, and change the
+           object of the call to $P[temp]() instead. I think this has the
+           effect of calling the invoke vtable method of the string class. */
         if (sub->pcc_sub->object->set == 'S') {
             regs[0] = mk_temp_reg(interp, 'P');
             regs[1] = sub->pcc_sub->object;
@@ -680,6 +690,7 @@ expand_pcc_sub_call(PARROT_INTERP, ARGMOD(IMC_Unit *unit), ARGMOD(Instruction *i
 
             sub->pcc_sub->object = regs[0];
         }
+
     }
 
     /*
@@ -713,6 +724,13 @@ expand_pcc_sub_call(PARROT_INTERP, ARGMOD(IMC_Unit *unit), ARGMOD(Instruction *i
         }
     }
 
+    /* If it's an indirect call, we pass a copy of the invoked object itself.
+       This will be used to look up the vtable invoke method, but will not
+       be passed to the vtable method itself.
+
+       I think that if we test for is(vtable) && is_not(method) here and
+       pass an additional copy of the object (to be used in the invoke method
+       itself as the "self" object, this will produce the desired behavior. */
     if (sub->pcc_sub->object)
         unshift_self(sub, sub->pcc_sub->object);
 
