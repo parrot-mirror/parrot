@@ -22,9 +22,7 @@ package auto::jit;
 use strict;
 use warnings;
 
-
 use base qw(Parrot::Configure::Step);
-
 use Parrot::Configure::Utils qw(copy_if_diff);
 
 sub _init {
@@ -36,6 +34,7 @@ sub _init {
         i386 => 1,
         ppc  => 1,
     };
+    $data{jitbase_default} = 'src/jit';   # base path for jit sources
     return \%data;
 }
 
@@ -53,46 +52,23 @@ sub runstep {
     my $cpuarch     = $conf->data->get('cpuarch');
     my $osname      = $conf->data->get('osname');
 
-    my $jitbase  = 'src/jit';   # base path for jit sources
+    my $jitbase  = $self->{jitbase_default};   # base path for jit sources
 
     my $corejit = "$jitbase/$cpuarch/core.jit";
     print( qq{-e $corejit = },
         -e $corejit ? 'yes' : 'no', "\n" )
         if $verbose;
 
-    my $jitcapable = 0;
-    if ( -e $corejit ) {
-
-        # Just because there is a "$jitbase/$cpuarch/core.jit" file,
-        # doesn't mean the JIT is working on that platform.
-        # So build JIT per default only on platforms where JIT in known
-        # to work. Building JIT on other platform most likely breaks the build.
-        # Developer can always call: Configure.pl --jitcapable
-        # This was discussed in RT #43145 (which has been resolved).
-        if ( $self->{jit_is_working}->{$cpuarch} ) {
-            $jitcapable = 1;
-        }
-
-        # Another exception
-        if ( $cpuarch eq 'i386' && $osname eq 'darwin' ) {
-            $jitcapable = 0;
-        }
-    }
+    my $jitcapable =
+        $self->_check_jitcapability($corejit, $cpuarch, $osname);
 
     my $jitarchname = "$cpuarch-$osname";
-    my $sjit = "$jitbase/$cpuarch/$jitarchname.s";
-    my $asm = "$jitbase/$cpuarch/asm.s";
-    if ( -e $sjit ) {
-        copy_if_diff( $sjit, "src/asmfun.s" );
-        $conf->data->set( asmfun_o => 'src/asmfun$(O)' );
-    }
-    elsif ( -e $asm ) {
-        copy_if_diff( $asm, "src/asmfun.s" );
-        $conf->data->set( asmfun_o => 'src/asmfun$(O)' );
-    }
-    else {
-        $conf->data->set( asmfun_o => '' );
-    }
+    _handle_asm( {
+        conf        => $conf,
+        jitbase     => $jitbase,
+        cpuarch     => $cpuarch,
+        jitarchname => $jitarchname,
+    } );
 
     # let developers override the default JIT capability
     $jitcapable = $conf->options->get('jitcapable')
@@ -182,6 +158,47 @@ sub runstep {
     }
 
     return 1;
+}
+
+sub _check_jitcapability {
+    my $self = shift;
+    my ($corejit, $cpuarch, $osname) = @_;
+    my $jitcapable = 0;
+    if ( -e $corejit ) {
+
+        # Just because there is a "$jitbase/$cpuarch/core.jit" file,
+        # doesn't mean the JIT is working on that platform.
+        # So build JIT per default only on platforms where JIT in known
+        # to work. Building JIT on other platform most likely breaks the build.
+        # Developer can always call: Configure.pl --jitcapable
+        # This was discussed in RT #43145 (which has been resolved).
+        if ( $self->{jit_is_working}->{$cpuarch} ) {
+            $jitcapable = 1;
+        }
+
+        # Another exception
+        if ( $cpuarch eq 'i386' && $osname eq 'darwin' ) {
+            $jitcapable = 0;
+        }
+        return $jitcapable;
+    }
+}
+
+sub _handle_asm {
+    my $arg = shift;
+    my $sjit = "$arg->{jitbase}/$arg->{cpuarch}/$arg->{jitarchname}.s";
+    my $asm = "$arg->{jitbase}/$arg->{cpuarch}/asm.s";
+    if ( -e $sjit ) {
+        copy_if_diff( $sjit, "src/asmfun.s" );
+        $arg->{conf}->data->set( asmfun_o => 'src/asmfun$(O)' );
+    }
+    elsif ( -e $asm ) {
+        copy_if_diff( $asm, "src/asmfun.s" );
+        $arg->{conf}->data->set( asmfun_o => 'src/asmfun$(O)' );
+    }
+    else {
+        $arg->{conf}->data->set( asmfun_o => '' );
+    }
 }
 
 sub _handle_execcapable {
