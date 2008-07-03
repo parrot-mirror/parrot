@@ -82,9 +82,11 @@ not found, C<!OUTER> returns null.
     .local int min
     min = 1
 
-    ##  start with caller's outer scope (i.e., outer depth is 2)
+    ##  the depth we use here is one more than the minimum,
+    ##  because we want min/max to be relative to the caller's
+    ##  context, not !OUTER itself.
     .local int depth
-    depth = 2
+    depth = min + 1
     .local pmc lexpad, value
     push_eh outer_err
     null value
