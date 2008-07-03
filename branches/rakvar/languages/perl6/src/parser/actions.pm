@@ -741,9 +741,7 @@ method signature($/) {
         }
     }
     $past.arity( +$/[0] );
-    if +$/[0] {
-        our $?BLOCK_SIGNATURED := $past;
-    }
+    our $?BLOCK_SIGNATURED := $past;
     our $?PARAM_TYPE_CHECK := $type_check;
     $past.push($type_check);
     make $past;
