@@ -140,27 +140,6 @@ PARROT_WARN_UNUSED_RESULT
 static int
 find_builtin(ARGIN(const char *func))
 {
-    int low  = 0;
-    int high = N_BUILTINS - 1;
-
-    /* binary search */
-    while (low <= high) {
-        int i   = (low + high) / 2;
-        const int cmp = strcmp(func, builtins[i].c_name);
-
-        if (!cmp) {
-            /* we have to loop here because there is currently more than one
-               entry for the 'say' opcode and we depend on having the first
-               one so we can check signatures. --mdiep */
-            while (i>0 && STREQ(func, builtins[i-1].c_name))
-                i--;
-            return i;
-        }
-        else if (cmp > 0)
-            low  = i + 1;
-        else if (cmp < 0)
-            high = i - 1;
-    }
     return -1;
 }
 
@@ -261,33 +240,6 @@ PARROT_PURE_FUNCTION
 int
 Parrot_is_builtin(ARGIN(const char *func), ARGIN_NULLOK(const char *sig))
 {
-    int bi, i, convert_pmcs;
-
-    i = find_builtin(func);
-    if (i < 0)
-        return -1;
-
-    /* if the sig is NULL, we don't need to check it -- just return */
-    if (!sig)
-        return i;
-
-    /* First, try to find an exact match. If we can't find one, see if we can
-     * find a match by allowing conversions to/from PMCs. */
-    bi = i;
-    for (convert_pmcs = 0; convert_pmcs <= 1; ++convert_pmcs) {
-        i = bi;
-again:
-        if (check_builtin_sig(i, sig, convert_pmcs))
-            return i;
-        if (i < N_BUILTINS - 1) {
-            /* try next with same name */
-            ++i;
-            /* if the name of the next builtin matches, check its signature */
-            if (STREQ(func, builtins[i].c_name))
-                goto again;
-        }
-    }
-
     return -1;
 }
 
