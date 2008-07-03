@@ -169,7 +169,7 @@ find_builtin(ARGIN(const char *func))
 =item C<static int find_builtin_s>
 
 Locate the first entry corresponding to the supplied method name.
-Returns the indes if a match is found, -1 if not.
+Returns the index if a match is found, -1 if not.
 
 =cut
 
@@ -180,21 +180,6 @@ PARROT_PURE_FUNCTION
 static int
 find_builtin_s(PARROT_INTERP, ARGIN(const STRING *func))
 {
-    int low  = 0;
-    int high = N_BUILTINS - 1;
-
-    /* binary search */ /* XXX isn't there a standard C func for this? */
-    while (low <= high) {
-        const int i   = (low + high) / 2;
-        const int cmp = string_compare(interp, func, builtins[i].meth_name);
-
-        if (!cmp)
-            return i;
-        else if (cmp > 0)
-            low  = i + 1;
-        else if (cmp < 0)
-            high = i - 1;
-    }
     return -1;
 }
 
