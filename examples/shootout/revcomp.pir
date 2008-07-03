@@ -65,11 +65,12 @@ done:
 	.param string line
 	.local int i, linelen, ch
 	linelen = length line
-
-	reverse line
+       
+        $P0 = new 'String'
+        $P0.'reverse'(line)
 
 	.const .Sub tr_00 = 'tr_00_init'
-	trans line, tr_00
+	$P0.'trans'(line, tr_00)
 
 	i = 0
 	$S0 = 'x'
