@@ -57,12 +57,6 @@ method statement_block($/, $key) {
     if $key eq 'close' {
         my $past := @?BLOCK.shift();
         $?BLOCK := @?BLOCK[0];
-        if $past.symbol('___MAYBE_NEED_TOPIC_FIXUP') && !$past.symbol('___HAVE_A_SIGNATURE') {
-            if $past[0][0].name() ne '$_' { $/.panic('$_ handling is very poor right now.') };
-            $past.symbol('$_', :scope('lexical'));
-            $past[0][0].scope('parameter');
-            $past[0][0].isdecl(0);
-        }
         $past.push($($<statementlist>));
         make $past;
     }
@@ -1662,10 +1656,6 @@ method variable($/, $key) {
                 }
                 $block[$i] := $var;
             }
-        }
-
-        if $fullname eq '$_' && !$?BLOCK.symbol('___HAVE_A_SIGNATURE') {
-            $?BLOCK.symbol('___MAYBE_NEED_TOPIC_FIXUP', :scope('lexical'));
         }
 
         # If it's $.x, it's a method call, not a variable.
