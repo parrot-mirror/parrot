@@ -65,6 +65,11 @@
 #define IMCC_FATAL_EXCEPTION      1
 #define IMCC_FATALY_EXCEPTION     2
 
+#define IMCC_TYPED_LIST(name, type) struct { \
+    unsigned int num; \
+    type ** list; \
+} imcc_##name##_list_t;
+
 #define N_ELEMENTS(x) (sizeof (x)/sizeof ((x)[0]))
 
 
