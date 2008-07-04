@@ -54,7 +54,7 @@ $step->{icuconfig_default} = $phony;
     ok( $ret, "$step_name runstep() returned true value" );
     TODO: {
         local $TODO = 'reported failing on Win32';
-        my $expected = q{failed};
+        my $expected = q{no icu-config};
         is($step->result(), $expected,
             "Got expected return value: $expected");
         like($stdout,

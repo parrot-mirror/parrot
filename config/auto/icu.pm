@@ -113,7 +113,7 @@ sub runstep {
     # attempt to configure with ICU and so may return here.
     # 2nd possible return point
     if ( $without ) {
-        $self->_set_no_configure_with_icu($conf, q{failed});
+        $self->_set_no_configure_with_icu($conf, q{no icu-config});
         print "Could not locate an icu-config program\n"
             if $verbose;
         return 1;
@@ -123,7 +123,6 @@ sub runstep {
         $self->_try_icuconfig(
             $conf,
             {
-                conf            => $conf,
                 without         => $without,
                 autodetect      => $autodetect,
                 icuconfig       => $icuconfig,
