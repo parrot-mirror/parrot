@@ -875,20 +875,15 @@ method dotty($/, $key) {
     elsif $key eq '.*' {
         $past := $( $<methodop> );
         if $/[0] eq '.?' || $/[0] eq '.+' || $/[0] eq '.*' {
-            unless $<methodop><name> || $<methodop><quote>  {
+            my $name := $past.name();
+            unless $name {
                 $/.panic("Cannot use " ~ $/[0] ~ " when method is a code ref");
             }
-            my $args := $past;
-            $past := PAST::Op.new(
-                :pasttype('call'),
-                :name('infix:' ~ $/[0])
-            );
-            if $<methodop><name> {
-                $past.push(PAST::Val.new( :value(~$args.name()) ));
+            unless $name.isa(PAST::Node) {
+                $name := PAST::Val.new( :value($name) );
             }
-            for @($args) {
-                $past.push($_);
-            }
+            $past.unshift($name);
+            $past.name('!' ~ $/[0]);
         }
         else {
             $/.panic($/[0] ~ ' method calls not yet implemented');
