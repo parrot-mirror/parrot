@@ -290,7 +290,7 @@ sub _try_icuconfig {
             if $arg->{verbose};
         ($icushared, $arg->{without}) =
             $self->_handle_icushared($icushared, $arg->{without});
-        print "For icushared, found $icushared\n"
+        print "For icushared, found $icushared and $arg->{without}\n"
             if $arg->{verbose};
         
         # location of header files
@@ -301,18 +301,8 @@ sub _try_icuconfig {
             if $arg->{verbose};
         ($icuheaders, $arg->{without}) =
             $self->_handle_icuheaders($conf, $icuheaders, $arg->{without});
-        print "For icuheaders, found $icuheaders\n"
+        print "For icuheaders, found $icuheaders and $arg->{without}\n"
             if $arg->{verbose};
-
-        # This branch is going to be very difficult to cover during testing
-        # because we would have to be able to manipulate the return values of
-        # either capture_output() call above.  We can't do this because we're
-        # autoconfiguring with the standard icu-config program.
-        if ($arg->{without}) {
-            $self->set_result("failed");
-            print "Failed after either --ldflags or --prefix\n"
-                if $arg->{verbose};
-        }
     }
 
     return ($arg->{without}, $icushared, $icuheaders);
