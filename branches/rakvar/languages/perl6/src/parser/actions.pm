@@ -826,25 +826,13 @@ method expect_term($/, $key) {
             $past := $($_);
             if $past.name() eq 'infix:,' { $past.name(''); }
 
-            # Check if it's an indirect call.
-            if $_<dotty><methodop><variable> {
-                # What to call supplied; need to put the invocant second.
-                my $meth := $past[0];
-                $past[0] := $term;
-                $past.unshift($meth);
-            }
-            elsif $_<dotty><methodop><quote> && $past.pasttype() eq 'callmethod' {
-                # First child is something that we evaluate to get the
-                # name. Replace it with PIR to call find_method on it.
-                my $meth_name := $past[0];
-                $past[0] := $term;
-                $past.unshift(
-                    PAST::Op.new(
-                        :inline("$S1000 = %1\n%r = find_method %0, $S1000\n"),
-                        $term,
-                        $meth_name
-                    )
-                );
+            if  $past.isa(PAST::Op)
+                && $past.pasttype() eq 'callmethod'
+                && !$past.name() {
+                    # indirect call, invocant needs to be second arg
+                    my $meth := $past[0];
+                    $past[0] := $term;
+                    $past.unshift($meth);
             }
             else {
                 $past.unshift($term);
@@ -937,7 +925,7 @@ method methodop($/, $key) {
         $past.unshift( $( $<variable> ) );
     }
     else {
-        $past.unshift( $( $<quote> ) );
+        $past.name( $( $<quote> ) );
     }
 
     make $past;
