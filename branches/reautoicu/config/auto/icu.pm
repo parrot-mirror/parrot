@@ -216,17 +216,14 @@ Something is wrong with your ICU installation!
    --icuheaders=(path)  Location of ICU headers without /unicode
    --icushared=(flags)  Full linker command to create shared libraries
 HELP
+#/
     return $die;
 }
 
 sub _handle_search_for_icu_config {
     my $self = shift;
     my $arg = shift;
-    if (
-        ( $arg->{ret} == -1 )
-            ||
-        ( ( $arg->{ret} >> 8 ) != 0 )
-    ) {
+    if ( $arg->{ret} ) {
         undef $arg->{icuconfig};
         $arg->{autodetect} = 0;
         $arg->{without}    = 1;
