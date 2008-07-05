@@ -180,8 +180,8 @@ sub _check_jitcapability {
         if ( $cpuarch eq 'i386' && $osname eq 'darwin' ) {
             $jitcapable = 0;
         }
-        return $jitcapable;
     }
+    return $jitcapable;
 }
 
 sub _handle_asm {
