@@ -5,7 +5,7 @@
 
 use strict;
 use warnings;
-use Test::More tests => 14;
+use Test::More tests => 17;
 use Carp;
 use lib qw( lib t/configure/testlib );
 use Parrot::Configure;
@@ -67,6 +67,27 @@ $step->{icuconfig_default} = $phony;
         );
     }
 }
+$step->set_result( q{} );
+
+$conf->options->set( verbose => undef );
+{
+    my ($stdout, $stderr);
+    my $ret;
+    capture(
+        sub { $ret = $step->runstep($conf); },
+        \$stdout,
+        \$stderr,
+    );
+    ok( $ret, "$step_name runstep() returned true value" );
+    TODO: {
+        local $TODO = 'reported failing on Win32';
+        my $expected = q{no icu-config};
+        is($step->result(), $expected,
+            "Got expected return value: $expected");
+        ok(! $stdout, "No verbose output captured, as expected");
+    }
+}
+
     
 pass("Completed all tests in $0");
 
