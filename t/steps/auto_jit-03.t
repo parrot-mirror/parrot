@@ -5,7 +5,7 @@
 
 use strict;
 use warnings;
-use Test::More tests =>  19;
+use Test::More qw(no_plan); # tests =>  19;
 use Carp;
 use Cwd;
 use File::Path qw( mkpath );
@@ -17,10 +17,11 @@ use_ok('config::auto::jit');
 use Parrot::Configure;
 use Parrot::Configure::Options qw( process_options );
 use Parrot::Configure::Test qw( test_step_thru_runstep);
+use IO::CaptureOutput qw( capture );
 
 my $args = process_options(
     {
-        argv => [ q{--jitcapable=0} ],
+        argv => [ q{--jitcapable=0}, q{--verbose}  ],
         mode => q{configure},
     }
 );
@@ -64,8 +65,16 @@ my $cwd = cwd();
     $step->{jit_is_working} = { $cpuarch => 1 };
     $conf->data->set( cpuarch => $cpuarch );
     $conf->data->set( osname => $osname );
-    my $ret = $step->runstep($conf);
-    ok( $ret, "$step_name runstep() returned true value" );
+    {
+        my ($stdout, $stderr, $ret);
+        capture(
+            sub { $ret = $step->runstep($conf); },
+            \$stdout,
+            \$stderr,
+        );
+        ok( $ret, "$step_name runstep() returned true value" );
+        like($stdout, qr/yes|no/s, "Got expected verbose output");
+    }
     $step->{jit_is_working} = $orig;
     $conf->data->set( cpuarch => undef );
     $conf->data->set( osname => undef );
@@ -86,6 +95,8 @@ my $cwd = cwd();
         "Got expected value for TEMP_exec_o");
     is( $conf->data->get( 'TEMP_exec_dep' ), '',
         "Got expected value for TEMP_exec_dep");
+    is( $step->result(), 'no', 
+        "Got expected result for no JIT");
 
     chdir $cwd or croak "Unable to change back to starting directory";
 }
