@@ -28,7 +28,7 @@ use Parrot::Configure::Utils qw(copy_if_diff);
 sub _init {
     my $self = shift;
     my %data;
-    $data{description} = q{Determining architecture, OS and JIT capability};
+    $data{description} = q{Determining JIT capability};
     $data{result}      = q{};
     $data{jit_is_working} = {
         i386 => 1,
@@ -81,59 +81,7 @@ sub runstep {
     $jitcapable = $conf->options->get('jitcapable')
         if defined $conf->options->get('jitcapable');
 
-    if ($jitcapable) {
-        my ( $jitcpuarch, $jitosname ) = split( /-/, $jitarchname );
-
-        $conf->data->set(
-            jitarchname => $jitarchname,
-            jitcpuarch  => $jitcpuarch,
-            jitcpu      => uc($jitcpuarch),
-            jitosname   => uc($jitosname),
-            jitcapable  => 1,
-            cc_hasjit   => " -DHAS_JIT -D\U$jitcpuarch",
-            TEMP_jit_o =>
-'$(SRC_DIR)/jit$(O) $(SRC_DIR)/jit_cpu$(O) $(SRC_DIR)/jit_debug$(O) $(SRC_DIR)/jit_debug_xcoff$(O)'
-        );
-
-        my $execcapable = $self->_first_probe_for_exec(
-            $jitcpuarch, $osname);
-        $execcapable = $conf->options->get('execcapable')
-            if defined $conf->options->get('execcapable');
-        _handle_execcapable($conf, $execcapable);
-
-        # test for executable malloced memory
-        if ( -e "config/auto/jit/test_exec_$osname.in" ) {
-            print " (has_exec_protect " if $verbose;
-            $conf->cc_gen("config/auto/jit/test_exec_$osname.in");
-            eval { $conf->cc_build(); };
-            if ($@) {
-                print " $@) " if $verbose;
-            }
-            else {
-                if ( $conf->cc_run(0) !~ /ok/ && $conf->cc_run(1) =~ /ok/ ) {
-                    $conf->data->set( has_exec_protect => 1 );
-                    print "yes) " if $verbose;
-                }
-                else {
-                    print "no) " if $verbose;
-                }
-            }
-            $conf->cc_clean();
-        }
-
-        # RT #43146 use executable memory for this test if needed
-        #
-        # test for some instructions
-        if ( $jitcpuarch eq 'i386' ) {
-            $conf->cc_gen('config/auto/jit/test_c.in');
-            eval { $conf->cc_build(); };
-            unless ( $@ || $conf->cc_run() !~ /ok/ ) {
-                $conf->data->set( jit_i386 => 'fcomip' );
-            }
-            $conf->cc_clean();
-        }
-    }
-    else {
+    if (! $jitcapable) {
         $conf->data->set(
             jitarchname    => 'nojit',
             jitcpuarch     => $cpuarch,
@@ -147,8 +95,60 @@ sub runstep {
             TEMP_exec_o    => '',
             TEMP_exec_dep  => '',
         );
+        $self->set_result('no');
+        return 1;
     }
 
+    my ( $jitcpuarch, $jitosname ) = split( /-/, $jitarchname );
+    $conf->data->set(
+        jitarchname => $jitarchname,
+        jitcpuarch  => $jitcpuarch,
+        jitcpu      => uc($jitcpuarch),
+        jitosname   => uc($jitosname),
+        jitcapable  => 1,
+        cc_hasjit   => " -DHAS_JIT -D\U$jitcpuarch",
+        TEMP_jit_o =>
+'$(SRC_DIR)/jit$(O) $(SRC_DIR)/jit_cpu$(O) $(SRC_DIR)/jit_debug$(O) $(SRC_DIR)/jit_debug_xcoff$(O)'
+    );
+
+    my $execcapable = $self->_first_probe_for_exec(
+        $jitcpuarch, $osname);
+    $execcapable = $conf->options->get('execcapable')
+        if defined $conf->options->get('execcapable');
+    _handle_execcapable($conf, $execcapable);
+
+    # test for executable malloced memory
+    if ( -e "config/auto/jit/test_exec_$osname.in" ) {
+        print " (has_exec_protect " if $verbose;
+        $conf->cc_gen("config/auto/jit/test_exec_$osname.in");
+        eval { $conf->cc_build(); };
+        if ($@) {
+            print " $@) " if $verbose;
+        }
+        else {
+            if ( $conf->cc_run(0) !~ /ok/ && $conf->cc_run(1) =~ /ok/ ) {
+                $conf->data->set( has_exec_protect => 1 );
+                print "yes) " if $verbose;
+            }
+            else {
+                print "no) " if $verbose;
+            }
+        }
+        $conf->cc_clean();
+    }
+
+    # RT #43146 use executable memory for this test if needed
+    #
+    # test for some instructions
+    if ( $jitcpuarch eq 'i386' ) {
+        $conf->cc_gen('config/auto/jit/test_c.in');
+        eval { $conf->cc_build(); };
+        unless ( $@ || $conf->cc_run() !~ /ok/ ) {
+            $conf->data->set( jit_i386 => 'fcomip' );
+        }
+        $conf->cc_clean();
+    }
+    $self->set_result('yes');
     return 1;
 }
 
