@@ -35,6 +35,13 @@ sub _init {
         ppc  => 1,
     };
     $data{jitbase_default} = 'src/jit';   # base path for jit sources
+    # jitcpuarch_platforms:  Those which should be examined for possibility of
+    # exec capability.
+    $data{jitcpuarch_platforms} = { map { $_ => 1 } qw( i386 ppc arm ) };
+    # execcapable_oses:  Those which should have exec capability.
+    $data{execcapable_oses} = { map { $_ => 1 }
+        qw( openbsd freebsd netbsd linux darwin cygwin MSWin32 )
+    };
     return \%data;
 }
 
@@ -88,23 +95,8 @@ sub runstep {
 '$(SRC_DIR)/jit$(O) $(SRC_DIR)/jit_cpu$(O) $(SRC_DIR)/jit_debug$(O) $(SRC_DIR)/jit_debug_xcoff$(O)'
         );
 
-        my $execcapable = 0;
-        if (   ( $jitcpuarch eq 'i386' )
-            || ( $jitcpuarch eq 'ppc' )
-            || ( $jitcpuarch eq 'arm' ) )
-        {
-            $execcapable = 1;
-            unless ( ( $osname eq 'openbsd' )
-                || (   $osname eq 'freebsd' )
-                || (   $osname eq 'netbsd' )
-                || (   $osname eq 'linux' )
-                || (   $osname eq 'darwin' )
-                || (   $osname eq 'cygwin' )
-                || (   $osname eq 'MSWin32' ) )
-            {
-                $execcapable = 0;
-            }
-        }
+        my $execcapable = $self->_first_probe_for_exec(
+            $jitcpuarch, $osname);
         $execcapable = $conf->options->get('execcapable')
             if defined $conf->options->get('execcapable');
         _handle_execcapable($conf, $execcapable);
@@ -160,6 +152,8 @@ sub runstep {
     return 1;
 }
 
+#################### INTERNAL SUBROUTINES ####################
+
 sub _check_jitcapability {
     my $self = shift;
     my ($corejit, $cpuarch, $osname) = @_;
@@ -199,6 +193,19 @@ sub _handle_asm {
     else {
         $arg->{conf}->data->set( asmfun_o => '' );
     }
+}
+
+sub _first_probe_for_exec {
+    my $self = shift;
+    my ($jitcpuarch, $osname) = @_;
+    my $execcapable = 0;
+    if ( $self->{jitcpuarch_platforms}->{$jitcpuarch} ) {
+        $execcapable = 1;
+        unless ( $self->{execcapable_oses}->{$osname} ) {
+            $execcapable = 0;
+        }
+    }
+    return $execcapable;
 }
 
 sub _handle_execcapable {
