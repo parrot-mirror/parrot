@@ -5,7 +5,7 @@
 
 use strict;
 use warnings;
-use Test::More tests =>  26;
+use Test::More tests =>  32;
 use Carp;
 use Cwd;
 use File::Path qw( mkpath );
@@ -17,6 +17,7 @@ use_ok('config::auto::jit');
 use Parrot::Configure;
 use Parrot::Configure::Options qw( process_options );
 use Parrot::Configure::Test qw( test_step_thru_runstep);
+use IO::CaptureOutput qw( capture );
 
 my $args = process_options(
     {
@@ -233,6 +234,45 @@ ok(auto::jit::_handle_execcapable($conf, 0),
 is($conf->data->get('execcapable'), 0,
     "Got expected value for execcapable");
 $conf->data->set('execcapable' => undef);
+
+########### _handle_exec_protect() ###########
+
+$conf->data->set( has_exec_protect => undef );
+auto::jit::_handle_exec_protect($conf, 0, 0);
+ok( ! defined $conf->data->get( 'has_exec_protect'),
+    "'has_exec_protect' undefined, as expected");
+
+auto::jit::_handle_exec_protect($conf, 1, 0);
+is( $conf->data->get( 'has_exec_protect'), 1,
+    "Got expected value for 'has_exec_protect'");
+$conf->data->set( has_exec_protect => undef );
+
+{
+    my ($stdout, $stderr);
+    capture(
+        sub { auto::jit::_handle_exec_protect($conf, 0, 1); },
+        \$stdout,
+        \$stderr,
+    );
+    ok( ! defined $conf->data->get( 'has_exec_protect'),
+        "'has_exec_protect' undefined, as expected");
+    like($stdout, qr/no\)/, "Got expected verbose output");
+    $conf->data->set( has_exec_protect => undef );
+}
+
+{
+    my ($stdout, $stderr);
+    capture(
+        sub { auto::jit::_handle_exec_protect($conf, 1, 1); },
+        \$stdout,
+        \$stderr,
+    );
+    is( $conf->data->get( 'has_exec_protect'), 1,
+        "Got expected value for 'has_exec_protect'");
+    like($stdout, qr/yes\)/, "Got expected verbose output");
+    $conf->data->set( has_exec_protect => undef );
+}
+
 
 pass("Completed all tests in $0");
 
