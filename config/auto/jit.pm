@@ -126,13 +126,10 @@ sub runstep {
             print " $@) " if $verbose;
         }
         else {
-            if ( $conf->cc_run(0) !~ /ok/ && $conf->cc_run(1) =~ /ok/ ) {
-                $conf->data->set( has_exec_protect => 1 );
-                print "yes) " if $verbose;
-            }
-            else {
-                print "no) " if $verbose;
-            }
+            my $exec_protect_test = (
+                $conf->cc_run(0) !~ /ok/ && $conf->cc_run(1) =~ /ok/
+            );
+            _handle_exec_protect($conf, $exec_protect_test, $verbose);
         }
         $conf->cc_clean();
     }
@@ -232,6 +229,17 @@ sub _handle_execcapable {
         );
     }
     return 1;
+}
+
+sub _handle_exec_protect {
+    my ($conf, $exec_protect_test, $verbose) = @_;
+    if ($exec_protect_test) {
+        $conf->data->set( has_exec_protect => 1 );
+        print "yes) " if $verbose;
+    }
+    else {
+        print "no) " if $verbose;
+    }
 }
 
 1;
