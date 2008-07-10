@@ -400,8 +400,7 @@ Delete a handler from the scheduler.
 
     METHOD delete_handler(STRING *type :optional, INTVAL got_type :opt_flag) {
         PMC *handlers;
-        INTVAL elements;
-        INTVAL index;
+        INTVAL elements, index;
 
         GET_ATTR_handlers(INTERP, SELF, handlers);
         elements = VTABLE_elements(INTERP, handlers);

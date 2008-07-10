@@ -96,7 +96,7 @@ PARROT_CAN_RETURN_NULL
 static PMC *
 find_exception_handler(PARROT_INTERP, ARGIN(PMC *exception))
 {
-    PMC * const handler = Parrot_cx_find_handler_for_task(interp, exception);
+    PMC * const handler = Parrot_cx_find_handler_local(interp, exception);
     if (!PMC_IS_NULL(handler)) {
         return handler;
     }
@@ -171,7 +171,7 @@ Parrot_ex_add_c_handler(PARROT_INTERP, ARGIN(Parrot_runloop *jp))
     /* Flag to mark a C exception handler */
     PObj_get_FLAGS(handler) |= SUB_FLAG_C_HANDLER;
     VTABLE_set_pointer(interp, handler, jp);
-    Parrot_cx_add_handler(interp, handler);
+    Parrot_cx_add_handler_local(interp, handler);
 }
 
 /*

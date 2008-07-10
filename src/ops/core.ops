@@ -802,15 +802,15 @@ return; C<1> means an exception has been raised.
 inline op push_eh(inconst LABEL) {
     PMC * const eh = pmc_new(interp, enum_class_ExceptionHandler);
     VTABLE_set_pointer(interp, eh, CUR_OPCODE + $1);
-    Parrot_cx_add_handler(interp, eh);
+    Parrot_cx_add_handler_local(interp, eh);
 }
 
 inline op push_eh(invar PMC) {
-    Parrot_cx_add_handler(interp, $1);
+    Parrot_cx_add_handler_local(interp, $1);
 }
 
 inline op pop_eh() {
-    Parrot_cx_delete_handler_typed(interp,
+    Parrot_cx_delete_handler_local(interp,
             string_from_cstring(interp, "exception", 9));
 }
 

@@ -463,9 +463,57 @@ Parrot_cx_add_handler_local(PARROT_INTERP, ARGIN(PMC *handler))
     if (PMC_IS_NULL(CONTEXT(interp)->handlers))
         CONTEXT(interp)->handlers = pmc_new(interp, enum_class_ResizablePMCArray);
 
-    VTABLE_push_pmc(interp, CONTEXT(interp)->handlers, handler);
+    VTABLE_unshift_pmc(interp, CONTEXT(interp)->handlers, handler);
 
 }
+
+/*
+
+=item C<void Parrot_cx_delete_handler_local>
+
+Remove the top task handler of a particular type from the context's list of
+handlers.
+
+=cut
+
+*/
+
+PARROT_API
+void
+Parrot_cx_delete_handler_local(PARROT_INTERP, ARGIN(STRING *handler_type))
+{
+    PMC *handlers  = CONTEXT(interp)->handlers;
+    INTVAL elements, index;
+
+    if (PMC_IS_NULL(handlers))
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INVALID_OPERATION,
+            "No handler to delete.");
+
+    if (STRING_IS_NULL(handler_type) || STRING_IS_EMPTY(handler_type))
+        VTABLE_shift_pmc(interp, handlers);
+
+    /* Loop from newest handler to oldest handler. */
+    elements = VTABLE_elements(interp, handlers);
+    for (index = 0; index < elements; ++index) {
+        PMC *handler = VTABLE_get_pmc_keyed_int(interp, handlers, index);
+        if (!PMC_IS_NULL(handler)) {
+            if (string_equal(interp, handler_type, CONST_STRING(interp, "exception")) == 0
+                        && handler->vtable->base_type == enum_class_ExceptionHandler) {
+                VTABLE_set_pmc_keyed_int(interp, handlers, index, PMCNULL);
+                return;
+            }
+            else if (string_equal(interp, handler_type, CONST_STRING(interp, "event")) == 0
+                        && handler->vtable->base_type == enum_class_EventHandler) {
+                VTABLE_set_pmc_keyed_int(interp, handlers, index, PMCNULL);
+                return;
+           }
+        }
+    }
+
+    Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INVALID_OPERATION,
+        "No handler to delete.");
+}
+
 
 /*
 
@@ -673,29 +721,59 @@ PARROT_CAN_RETURN_NULL
 PMC *
 Parrot_cx_find_handler_local(PARROT_INTERP, ARGIN(PMC *task))
 {
-    PMC *handlers = CONTEXT(interp)->handlers;
-    INTVAL elements, index;
+    Parrot_Context *context;
+    PMC *iter = PMCNULL;
 
-    if (PMC_IS_NULL(handlers))
-        return PMCNULL;
+    /* Exceptions store the handler iterator for rethrow, other kinds of
+     * tasks don't (though they could). */
+    if (task->vtable->base_type == enum_class_Exception &&
+            VTABLE_get_integer_keyed_str(interp, task,
+                CONST_STRING(interp, "handled")) == -1) {
+        iter = VTABLE_get_attr_str(interp, task,
+                CONST_STRING(interp, "handler_iter"));
+        context = VTABLE_get_pointer(interp, task);
+    }
+    else {
+        context = CONTEXT(interp);
+        if (!PMC_IS_NULL(context->handlers))
+            iter = VTABLE_get_iter(interp, context->handlers);
+    }
 
-    elements = VTABLE_elements(interp, handlers);
+    while (context) {
+        /* Loop from newest handler to oldest handler. */
+        while (!PMC_IS_NULL(iter) && VTABLE_get_bool(interp, iter)) {
+            PMC *handler = VTABLE_shift_pmc(interp, iter);
+            INTVAL valid_handler = 0;
 
-    /* Loop from newest handler to oldest handler. */
-    for (index = 0; index < elements; ++index) {
-        PMC *handler = VTABLE_get_pmc_keyed_int(interp, handlers, index);
-        if (!PMC_IS_NULL(handler)) {
-            if (PMC_IS_NULL(task)
-                        && handler->vtable->base_type == enum_class_Continuation) {
-                VTABLE_set_pmc_keyed_int(interp, handlers, index, PMCNULL);
-                return handler;
-            }
-            else if (task->vtable->base_type == enum_class_Exception
-                        && handler->vtable->base_type == enum_class_ExceptionHandler) {
-                return handler;
+            if (!PMC_IS_NULL(handler)) {
+                INTVAL valid_handler;
+                Parrot_PCCINVOKE(interp, handler, CONST_STRING(interp, "can_handle"),
+                        "P->I", task, &valid_handler);
+
+                if (valid_handler) {
+                    if (task->vtable->base_type == enum_class_Exception) {
+                        /* Store iterator and context for a later rethrow. */
+                        VTABLE_set_attr_str(interp, task,
+                                CONST_STRING(interp, "handler_iter"), iter);
+                        VTABLE_set_pointer(interp, task, context);
+
+                        /* Mark that this handler has been used before. */
+                        VTABLE_set_integer_native(interp, handler, 1);
+                    }
+                    return handler;
+                }
             }
         }
+
+        /* Continue the search in the next context up the chain. */
+        context = context->caller_ctx;
+        if (context && !PMC_IS_NULL(context->handlers))
+            iter = VTABLE_get_iter(interp, context->handlers);
+        else
+            iter = PMCNULL;
     }
+
+    /* Reached the end of the context chain without finding a handler. */
 
     return PMCNULL;
 }
