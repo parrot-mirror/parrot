@@ -63,6 +63,7 @@ pmclass Exception {
     ATTR PMC      *stacktrace;   /* The stacktrace of an exception. */
     ATTR INTVAL    handled;      /* Whether the exception has been handled. */
     ATTR PMC      *handler_iter; /* An iterator of handlers (for rethrow). */
+    ATTR Parrot_Context *handler_ctx; /* A stored context for handler iterator. */
 
 /*
 
@@ -390,6 +391,37 @@ Sets the PMC value for C<*key>.
         STRING *s = key_string(INTERP, key);
         SELF.setprop(s, value);
     }
+
+/*
+
+=item C<void set_pointer(void *context)>
+
+Store a context for the handler iterator.
+
+=cut
+
+*/
+
+    VTABLE void set_pointer(void *context) {
+        Parrot_Exception * const core_struct = PARROT_EXCEPTION(SELF);
+        core_struct->handler_ctx = context;
+    }
+
+/*
+
+=item C<void *get_pointer()>
+
+Retrieve a context stored for the handler iterator.
+
+=cut
+
+*/
+
+    VTABLE void *get_pointer() {
+        Parrot_Exception * const core_struct = PARROT_EXCEPTION(SELF);
+        return core_struct->handler_ctx;
+    }
+
 /*
 
 =item C<INTVAL is_equal(PMC *value)>
