@@ -5,18 +5,16 @@
 
 use strict;
 use warnings;
-use Test::More tests =>  9;
+use Test::More tests => 12;
 use Carp;
-use Data::Dumper;
+use Cwd;
+use File::Copy;
+use File::Temp qw(tempdir);
 use lib qw( lib );
 use_ok('config::init::manifest');
 use Parrot::Configure;
 use Parrot::Configure::Options qw( process_options );
-
-=for hints_for_testing See if you can get the program to 'ack' when it
-thinks there are files missing from those listed in the MANIFEST.
-
-=cut
+use IO::CaptureOutput qw | capture |;
 
 my $pkg  = q{init::manifest};
 my $args = process_options(
@@ -28,6 +26,9 @@ my $args = process_options(
 
 my $conf = Parrot::Configure->new;
 $conf->add_steps($pkg);
+
+my $serialized = $conf->pcfreeze();
+
 $conf->options->set( %{$args} );
 
 my $task        = $conf->steps->[0];
@@ -37,11 +38,52 @@ my $step = $step_name->new();
 ok( defined $step, "$step_name constructor returned defined value" );
 isa_ok( $step, $step_name );
 ok( $step->description(), "$step_name has description" );
+
 ok(defined ($step->result), "result defined");
 ok(! ($step->result), "result not yet true");
 my $ret = $step->runstep($conf);
 ok( defined $ret, "$step_name runstep() returned defined value" );
-is( $step->result, q{skipped}, "Because of --nomanicheck, result is 'skipped'." );
+is( $step->result, q{skipped},
+    "Because of --nomanicheck, result is 'skipped'." );
+
+$conf->replenish($serialized);
+
+$args = process_options(
+    {
+        argv => [],
+        mode => q{configure},
+    }
+);
+$conf->options->set( %{$args} );
+
+$task        = $conf->steps->[0];
+$step_name   = $task->step;
+
+$step = $step_name->new();
+ok( defined $step, "$step_name constructor returned defined value" );
+isa_ok( $step, $step_name );
+
+# Lets see if we can trick ExtUtils::Manifest into thinking there are missing
+# files.
+my $cwd = cwd();
+{
+    my $tdir = tempdir( CLEANUP => 1 );
+    chdir $tdir or croak "Unable to change to tempdir";
+    copy( qq{$cwd/MANIFEST}, qq{$tdir/MANIFEST} )
+        or croak "Unable to copy MANIFEST";
+    {
+        my ($rv, $stdout, $stderr);
+        capture(
+            sub { $rv = $step->runstep($conf); },
+            \$stdout,
+            \$stderr,
+        );
+        is( $rv, undef, "$step_name runstep returned undef" );
+    }
+    unlink qq{$tdir/MANIFEST}
+        or croak "Unable to delete file after testing";
+    chdir $cwd or croak "Unable to change back";
+}
 
 pass("Completed all tests in $0");
 

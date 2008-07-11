@@ -8,7 +8,7 @@ use warnings;
 #use lib qw( config lib );
 use lib qw( lib );
 use Carp qw(carp);
-use Storable qw(nstore retrieve);
+use Storable qw(nstore retrieve nfreeze thaw);
 use Parrot::Configure::Data;
 use base qw(Parrot::Configure::Compiler);
 
@@ -446,6 +446,20 @@ sub option_or_data {
 
     my $opt = $conf->options->get($arg);
     return defined $opt ? $opt : $conf->data->get($arg);
+}
+
+sub pcfreeze {
+    my $conf = shift;
+    return nfreeze($conf);
+}
+
+sub replenish {
+    my $conf = shift;
+    my $serialized = shift;
+    my %gut = %{ thaw($serialized) };
+    while ( my ($k, $v) = each %gut ) {
+        $conf->{$k} = $v;
+    }
 }
 
 =back
