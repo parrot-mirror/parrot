@@ -1,90 +1,34 @@
+package Parrot::Configure::Base;
 # Copyright (C) 2001-2007, The Perl Foundation.
 # $Id$
-
-=head1 NAME
-
-Parrot::Configure - Conducts the execution of Configuration Steps
-
-=head1 SYNOPSIS
-
-    use Parrot::Configure;
-
-    my $conf = Parrot::Configure->new;
-    my $data = $conf->data;
-    my $options = $conf->options;
-    my @steps = $conf->steps;
-    $conf->add_steps(@steps);
-    $conf->runsteps;
-
-=head1 DESCRIPTION
-
-This module provides provides a means for registering, executing, and
-coordinating one or more configuration steps.  Please see
-F<docs/configuration.pod> for further details about the configuration
-framework.
-
-=head1 USAGE
-
-=head2 Import Parameters
-
-This module accepts no arguments to its C<import> method and exports no
-I<symbols>.
-
-=cut
-
-package Parrot::Configure;
 
 use strict;
 use warnings;
 
-use lib qw(config);
+#use lib qw( config lib );
+use lib qw( lib );
 use Carp qw(carp);
 use Storable qw(nstore retrieve);
 use Parrot::Configure::Data;
 use base qw(Parrot::Configure::Compiler);
 
-use Class::Struct;
 
-struct(
-    'Parrot::Configure::Task' => {
-        step   => '$',
-        object => 'Parrot::Configure::Step',
-    },
-);
+=head1 NAME
+
+Parrot::Configure::Base - Base class for Parrot::Configure and Parrot::Configure::Parallel
+
+=head1 SYNOPSIS
+
+    use base qw( Parrot::Configure::Base );
+
+=head1 DESCRIPTION
+
+This module provides provides methods which are inherited by Parrot::Configure
+and Parrot::Configure::Parallel.
+
+=head1 USAGE
 
 =head2 Methods
-
-=head3 Constructor
-
-=over 4
-
-=item * C<new()>
-
-Basic constructor.
-
-Accepts no arguments and returns a Parrot::Configure object.
-
-=cut
-
-my $singleton;
-
-BEGIN {
-    $singleton = {
-        steps   => [],
-        data    => Parrot::Configure::Data->new,
-        options => Parrot::Configure::Data->new,
-    };
-    bless $singleton, "Parrot::Configure";
-}
-
-sub new {
-    my $class = shift;
-    return $singleton;
-}
-
-=back
-
-=head3 Object Methods
 
 =over 4
 
@@ -530,3 +474,4 @@ L<Parrot::Configure::Utils>, L<Parrot::Configure::Step>
 #   fill-column: 100
 # End:
 # vim: expandtab shiftwidth=4:
+
