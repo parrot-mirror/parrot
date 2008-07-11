@@ -5,10 +5,9 @@
 
 use strict;
 use warnings;
-use Test::More tests => 19;
+use Test::More tests => 36;
 use Carp;
 use Cwd;
-use Data::Dumper;
 use File::Temp qw(tempdir);
 use lib qw( lib t/configure/testlib );
 use Parrot::Configure;
@@ -36,6 +35,9 @@ my $cwd = cwd();
     );
 
     my $conf = Parrot::Configure->new;
+    
+    my $serialized = $conf->pcfreeze();
+
     test_step_thru_runstep( $conf, q{init::install}, $args );
 
     is( $conf->data->get('prefix'),         $tdir,  "--prefix option confirmed" );
@@ -51,7 +53,61 @@ my $cwd = cwd();
     is( $conf->data->get('oldincludedir'),  $tdir1, "--oldincludedir option confirmed" );
     is( $conf->data->get('infodir'),        $tdir1, "--infodir option confirmed" );
     is( $conf->data->get('mandir'),         $tdir1, "--mandir option confirmed" );
+
+    $conf->replenish($serialized);
+
+    my $tdir2      = tempdir( CLEANUP => 1 );
+    my $tdir_orig = $tdir2;
+    $tdir2 .= q{/};
+    my $tdir3 = tempdir( CLEANUP => 1 );
+    $args  = process_options(
+        {
+            argv => [
+                qq{--prefix=$tdir2},         qq{--exec-prefix=$tdir2},
+                qq{--bindir=$tdir3},        qq{--sbindir=$tdir3},
+                qq{--libexecdir=$tdir3},    qq{--datadir=$tdir3},
+                qq{--sysconfdir=$tdir3},    qq{--sharedstatedir=$tdir3},
+                qq{--localstatedir=$tdir3}, qq{--libdir=$tdir3},
+                qq{--includedir=$tdir3},    qq{--oldincludedir=$tdir3},
+                qq{--infodir=$tdir3},       qq{--mandir=$tdir3},
+            ],
+            mode => q{configure},
+        }
+    );
+
+    my $pkg = q{init::install};
+    my ( $task, $step_name, $step, $ret );
+
+    $conf->add_steps($pkg);
+    $conf->options->set( %{$args} );
+
+    $task        = $conf->steps->[-1];
+    $step_name   = $task->step;
+
+    $step = $step_name->new();
+    ok( defined $step, "$step_name constructor returned defined value" );
+    isa_ok( $step, $step_name );
+    ok( $step->description(), "$step_name has description" );
+    $ret = $step->runstep($conf);
+    ok( defined $ret, "$step_name runstep() returned defined value" );
+
+    is( $conf->data->get('prefix'),
+        $tdir_orig, "--prefix option confirmed; trailing slash stripped" );
+    is( $conf->data->get('exec_prefix'),
+        $tdir_orig, "--exec-prefix option confirmed; trailing slash stripped" );
+    is( $conf->data->get('bindir'),         $tdir3, "--bindir option confirmed" );
+    is( $conf->data->get('sbindir'),        $tdir3, "--sbindir option confirmed" );
+    is( $conf->data->get('libexecdir'),     $tdir3, "--libexecdir option confirmed" );
+    is( $conf->data->get('datadir'),        $tdir3, "--datadir option confirmed" );
+    is( $conf->data->get('sharedstatedir'), $tdir3, "--sharedstatedir option confirmed" );
+    is( $conf->data->get('localstatedir'),  $tdir3, "--localstatedir option confirmed" );
+    is( $conf->data->get('libdir'),         $tdir3, "--libdir option confirmed" );
+    is( $conf->data->get('includedir'),     $tdir3, "--includedir option confirmed" );
+    is( $conf->data->get('oldincludedir'),  $tdir3, "--oldincludedir option confirmed" );
+    is( $conf->data->get('infodir'),        $tdir3, "--infodir option confirmed" );
+    is( $conf->data->get('mandir'),         $tdir3, "--mandir option confirmed" );
 }
+
 
 pass("Completed all tests in $0");
 
