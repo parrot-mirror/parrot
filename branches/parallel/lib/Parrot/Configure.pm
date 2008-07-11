@@ -512,6 +512,9 @@ sub pcfreeze {
 sub replenish {
     my $conf = shift;
     my $serialized = shift;
+    foreach my $k (keys %$conf) {
+        delete $conf->{$k};
+    }
     my %gut = %{ thaw($serialized) };
     while ( my ($k, $v) = each %gut ) {
         $conf->{$k} = $v;
