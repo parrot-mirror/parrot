@@ -2,7 +2,6 @@
 # Copyright (C) 2007, The Perl Foundation.
 # $Id$
 # init_install-01.t
-
 use strict;
 use warnings;
 use Test::More tests => 36;
@@ -107,7 +106,6 @@ my $cwd = cwd();
     is( $conf->data->get('infodir'),        $tdir3, "--infodir option confirmed" );
     is( $conf->data->get('mandir'),         $tdir3, "--mandir option confirmed" );
 }
-
 
 pass("Completed all tests in $0");
 
