@@ -1,4 +1,4 @@
-package Parrot::Configure;
+package Parrot::Configure::Parallel;
 # Copyright (C) 2001-2007, The Perl Foundation.
 # $Id$
 
@@ -28,7 +28,7 @@ BEGIN {
         data    => Parrot::Configure::Data->new,
         options => Parrot::Configure::Data->new,
     };
-    bless $singleton, "Parrot::Configure";
+    bless $singleton, "Parrot::Configure::Parallel";
 }
 
 sub new {
@@ -40,13 +40,13 @@ sub new {
 
 =head1 NAME
 
-Parrot::Configure - Execute configuration steps
+Parrot::Configure::Parallel - Create an object whose structure parallels that of the Parrot::Configure object
 
 =head1 SYNOPSIS
 
-    use Parrot::Configure;
+    use Parrot::Configure::Parallel;
 
-    my $conf = Parrot::Configure->new;
+    my $conf = Parrot::Configure::Parallel->new;
     my $data = $conf->data;
     my $options = $conf->options;
     my @steps = $conf->steps;
@@ -73,16 +73,16 @@ I<symbols>.
 
 =head3 C<new()>
 
-Basic constructor.  Accepts no arguments and returns a Parrot::Configure object.
+Basic constructor.  Accepts no arguments and returns a Parrot::Configure::Parallel object.
 
-The Parrot::Configure object is a singleton.  Over the course of the
+The Parrot::Configure::Parallel object is a singleton.  Over the course of the
 configuration steps, data about the environment in which Parrot is being built
-is stored in the Parrot::Configure object's data structure, then used to
+is stored in the Parrot::Configure::Parallel object's data structure, then used to
 generate Makefiles and other files needed during Parrot's build process.
 
 =head3 Other Methods
 
-Other Parrot::Configure methods are documented in Parrot::Configure::Base and
+Other Parrot::Configure::Parallel methods are documented in Parrot::Configure::Base and
 Parrot::Configure::Compiler.
 
 =head1 CREDITS
