@@ -125,7 +125,7 @@ $step = $step_name->new();
 ok( defined $step, "$step_name constructor returned defined value" );
 isa_ok( $step, $step_name );
 
-my $cwd = cwd();
+$cwd = cwd();
 {
     my $tdir = tempdir( CLEANUP => 1 );
     File::Path::mkpath(qq{$tdir/init/hints})
