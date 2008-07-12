@@ -5,7 +5,7 @@
 
 use strict;
 use warnings;
-use Test::More tests => 13;
+use Test::More tests => 17;
 use Carp;
 use lib qw( lib t/configure/testlib );
 use_ok('config::init::defaults');
@@ -30,6 +30,9 @@ my ( $task, $step_name, $step, $ret );
 my $pkg = q{inter::make};
 
 $conf->add_steps($pkg);
+
+my $serialized = $conf->pcfreeze();
+
 $conf->options->set( %{$args} );
 
 $task        = $conf->steps->[0];
@@ -51,6 +54,39 @@ ok( defined $ret, "$step_name runstep() returned defined value" );
 
 $object = undef;
 untie *STDIN;
+
+$conf->replenish($serialized);
+
+$args = process_options(
+    {
+        argv => [q{--ask}],
+        mode => q{configure},
+    }
+);
+
+$conf->options->set( %{$args} );
+
+$task        = $conf->steps->[0];
+$step_name   = $task->step;
+
+$step = $step_name->new();
+ok( defined $step, "$step_name constructor returned defined value" );
+isa_ok( $step, $step_name );
+
+$conf->data->set('gmake_version' => '4.1');
+my $prog = 'gmake';
+inter::make::_set_make_c($conf, $prog);
+is($conf->data->get('make_c'), 'gmake -C',
+    "make_c correctly set when gmake");
+
+$conf->data->set('gmake_version' => undef);
+my $str = q|$(PERL) -e 'chdir shift @ARGV; system q{$(MAKE)}, @ARGV; exit $$?  >> 8;'|;
+$conf->data->set(make_c => $str);
+$prog = 'make';
+inter::make::_set_make_c($conf, $prog);
+is($conf->data->get('make_c'),
+    q|$(PERL) -e 'chdir shift @ARGV; system q{make}, @ARGV; exit $$?  >> 8;'|,
+    "make_c correctly set when gmake");
 
 pass("Completed all tests in $0");
 
