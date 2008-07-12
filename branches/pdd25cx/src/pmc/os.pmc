@@ -400,7 +400,7 @@ previous one).
         RETURN(INTVAL old);
 #else
         Parrot_ex_throw_from_c_args(interp, NULL,
-            INTERNAL_NOT_EXCEPTION_UNIMPLEMENTED,
+            EXCEPTION_UNIMPLEMENTED,
             "Win32 is not POSIX. Need Win32 developer!");
 #endif
     }
