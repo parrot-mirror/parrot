@@ -1,7 +1,7 @@
 #! perl
 # Copyright (C) 2007, The Perl Foundation.
 # $Id$
-# inter_lex-03.t
+# inter_lex-02.t
 
 use strict;
 use warnings;
@@ -50,11 +50,11 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-inter_lex-03.t - test config::inter::lex
+inter_lex-02.t - test config::inter::lex
 
 =head1 SYNOPSIS
 
-    % prove t/steps/inter_lex-03.t
+    % prove t/steps/inter_lex-02.t
 
 =head1 DESCRIPTION
 
