@@ -5,7 +5,7 @@
 
 use strict;
 use warnings;
-use Test::More tests => 14;
+use Test::More tests => 27;
 use Carp;
 use lib qw( lib t/configure/testlib );
 use_ok('config::init::defaults');
@@ -28,6 +28,9 @@ test_step_thru_runstep( $conf, q{init::defaults}, $args );
 my $pkg = q{auto::byteorder};
 
 $conf->add_steps($pkg);
+
+my $serialized = $conf->pcfreeze();
+
 $conf->options->set( %{$args} );
 
 my ( $task, $step_name, $step);
@@ -45,6 +48,64 @@ ok( $rv, "_evaluate_byteorder() returned true value as expected");
 is( $conf->data->get( 'byteorder'), $byteorder, "Got expected byteorder");
 ok( ! $conf->data->get( 'bigendian' ), "Not big-endian");
 is( $step->result, 'little-endian', "Rather, little-endian");
+
+$conf->replenish($serialized);
+
+$args = process_options(
+    {
+        argv => [ ],
+        mode => q{configure},
+    }
+);
+
+$conf->options->set( %{$args} );
+
+$task        = $conf->steps->[-1];
+$step_name   = $task->step;
+
+$step = $step_name->new();
+ok( defined $step, "$step_name constructor returned defined value" );
+isa_ok( $step, $step_name );
+
+$byteorder = q{8765};
+$rv = $step->_evaluate_byteorder($conf, $byteorder);
+ok( $rv, "_evaluate_byteorder() returned true value as expected");
+is( $conf->data->get( 'byteorder'), $byteorder, "Got expected byteorder");
+ok( $conf->data->get( 'bigendian' ), "Not big-endian");
+is( $step->result, 'big-endian', "Indeed, big-endian");
+
+$byteorder = q{4321};
+$rv = $step->_evaluate_byteorder($conf, $byteorder);
+ok( $rv, "_evaluate_byteorder() returned true value as expected");
+is( $conf->data->get( 'byteorder'), $byteorder, "Got expected byteorder");
+ok( $conf->data->get( 'bigendian' ), "Not big-endian");
+is( $step->result, 'big-endian', "Indeed, big-endian");
+
+$conf->replenish($serialized);
+
+$args = process_options(
+    {
+        argv => [ ],
+        mode => q{configure},
+    }
+);
+
+$conf->options->set( %{$args} );
+
+$task        = $conf->steps->[-1];
+$step_name   = $task->step;
+
+$step = $step_name->new();
+ok( defined $step, "$step_name constructor returned defined value" );
+isa_ok( $step, $step_name );
+
+$byteorder = q{foobar};
+eval {
+    $rv = $step->_evaluate_byteorder($conf, $byteorder);
+};
+like($@,
+    qr/Unsupported byte-order \[$byteorder\]!/,
+    "Got error message expected with bad byte-order");
 
 pass("Completed all tests in $0");
 
