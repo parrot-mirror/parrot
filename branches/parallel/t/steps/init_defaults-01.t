@@ -40,7 +40,7 @@ my $serialized = $conf->pcfreeze();
 
 $conf->options->set( %{$args} );
 
-my $task        = $conf->steps->[0];
+my $task        = $conf->steps->[-1];
 my $step_name   = $task->step;
 
 my $step = $step_name->new();
@@ -72,7 +72,7 @@ my $cwd = cwd();
     );
     $conf->options->set( %{$args} );
 
-    my $task        = $conf->steps->[0];
+    my $task        = $conf->steps->[-1];
     my $step_name   = $task->step;
 
     my $step = $step_name->new();

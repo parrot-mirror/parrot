@@ -35,7 +35,7 @@ my $serialized = $conf->pcfreeze();
 
 $conf->options->set( %{$args} );
 
-$task        = $conf->steps->[0];
+$task        = $conf->steps->[-1];
 $step_name   = $task->step;
 
 $step = $step_name->new();
@@ -66,7 +66,7 @@ $args = process_options(
 
 $conf->options->set( %{$args} );
 
-$task        = $conf->steps->[0];
+$task        = $conf->steps->[-1];
 $step_name   = $task->step;
 
 $step = $step_name->new();
