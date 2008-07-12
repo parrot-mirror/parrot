@@ -5,7 +5,7 @@
 
 use strict;
 use warnings;
-use Test::More tests => 12;
+use Test::More tests => 16;
 use Carp;
 use lib qw( lib t/configure/testlib );
 use_ok('config::init::defaults');
@@ -29,8 +29,11 @@ my ( $task, $step_name, $step, $ret );
 my $pkg = q{inter::lex};
 
 $conf->add_steps($pkg);
+
+my $serialized = $conf->pcfreeze();
+
 $conf->options->set( %{$args} );
-$task        = $conf->steps->[1];
+$task        = $conf->steps->[-1];
 $step_name   = $task->step;
 
 $step = $step_name->new();
@@ -40,6 +43,32 @@ ok( $step->description(), "$step_name has description" );
 $ret = $step->runstep($conf);
 ok( defined $ret, "$step_name runstep() returned defined value" );
 is( $step->result(), q{skipped}, "Step was skipped as expected; no '--maintainer' option" );
+
+$conf->replenish($serialized);
+
+$ENV{LEX} = 'foobar';
+
+$args = process_options(
+    {
+        argv => [ q{--ask}, q{--maintainer} ],
+        mode => q{configure},
+    }
+);
+
+$conf->options->set( %{$args} );
+
+$task        = $conf->steps->[-1];
+$step_name   = $task->step;
+
+$step = $step_name->new();
+ok( defined $step, "$step_name constructor returned defined value" );
+isa_ok( $step, $step_name );
+
+$ret = $step->runstep($conf);
+ok( defined $ret, "$step_name runstep() returned defined value" );
+my $result_expected = q{user defined};
+is( $step->result(), $result_expected,
+    "Result was $result_expected because environmental variable was set" );
 
 pass("Completed all tests in $0");
 
