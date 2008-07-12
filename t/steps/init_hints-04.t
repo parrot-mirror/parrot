@@ -30,7 +30,8 @@ test_step_thru_runstep( $conf, q{init::defaults}, $args );
 my ( $task, $step_name, $step, $ret );
 my $pkg = q{init::hints};
 
-$conf->add_steps($pkg); $conf->options->set( %{$args} );
+$conf->add_steps($pkg);
+$conf->options->set( %{$args} );
 
 $task        = $conf->steps->[-1];
 $step_name   = $task->step;

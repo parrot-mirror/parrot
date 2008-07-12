@@ -6,7 +6,7 @@
 use strict;
 use warnings;
 
-use Test::More qw(no_plan); # tests => 21;
+use Test::More tests => 41;
 use Carp;
 use lib qw( lib t/configure/testlib );
 use_ok('config::init::defaults');
@@ -45,9 +45,12 @@ my ( $task, $step_name, $step, $ret );
 my $pkg = q{inter::progs};
 
 $conf->add_steps($pkg);
+
+my $serialized = $conf->pcfreeze();
+
 $conf->options->set( %{$args} );
 
-$task        = $conf->steps->[3];
+$task        = $conf->steps->[-1];
 $step_name   = $task->step;
 
 $step = $step_name->new();
@@ -92,6 +95,175 @@ capture( sub {
     $conf = inter::progs::_set_debug_and_warn($conf, $debug);
 }, \$stdout);
 ok( defined $conf, "Components of $step_name runstep() tested okay" );
+
+$object = undef;
+untie *STDIN;
+
+$conf->replenish($serialized);
+
+$args = process_options(
+    {
+        argv => [ q{--ask}, q{--debugging=0} ],
+        mode => q{configure},
+    }
+);
+
+$conf->options->set( %{$args} );
+
+$task        = $conf->steps->[-1];
+$step_name   = $task->step;
+
+$step = $step_name->new();
+ok( defined $step, "$step_name constructor returned defined value" );
+isa_ok( $step, $step_name );
+
+
+@prompts = ();
+foreach my $p (
+    qw|
+        cc
+        link
+        ld
+        ccflags
+        linkflags
+        ldflags
+        libs
+        cxx
+    |
+    )
+{
+    push @prompts, $conf->data->get($p);
+}
+push @prompts, q{y};
+
+$object = tie *STDIN, 'Tie::Filehandle::Preempt::Stdin', @prompts;
+can_ok( 'Tie::Filehandle::Preempt::Stdin', ('READLINE') );
+isa_ok( $object, 'Tie::Filehandle::Preempt::Stdin' );
+
+capture( sub {
+    my $verbose = inter::progs::_get_verbose($conf);
+    my $ask = inter::progs::_prepare_for_interactivity($conf);
+    my $cc;
+    ($conf, $cc) = inter::progs::_get_programs($conf, $verbose, $ask);
+    $debug = inter::progs::_get_debug($conf, $ask);
+    $debug_validity = inter::progs::_is_debug_setting_valid($debug);
+}, \$stdout);
+ok( defined $debug_validity, "'debug_validity' set as expected" );
+
+capture( sub {
+    $conf = inter::progs::_set_debug_and_warn($conf, $debug);
+}, \$stdout);
+ok( defined $conf, "Components of $step_name runstep() tested okay" );
+
+$object = undef;
+untie *STDIN;
+
+$conf->replenish($serialized);
+
+$args = process_options(
+    {
+        argv => [q{--ask}],
+        mode => q{configure},
+    }
+);
+
+$conf->options->set( %{$args} );
+
+$task        = $conf->steps->[-1];
+$step_name   = $task->step;
+
+$step = $step_name->new();
+ok( defined $step, "$step_name constructor returned defined value" );
+isa_ok( $step, $step_name );
+
+
+@prompts = ();
+foreach my $p (
+    qw|
+        cc
+        link
+        ld
+        ccflags
+        linkflags
+        ldflags
+        libs
+        cxx
+    |
+    )
+{
+    push @prompts, $conf->data->get($p);
+}
+push @prompts, q{n};
+
+$object = tie *STDIN, 'Tie::Filehandle::Preempt::Stdin', @prompts;
+can_ok( 'Tie::Filehandle::Preempt::Stdin', ('READLINE') );
+isa_ok( $object, 'Tie::Filehandle::Preempt::Stdin' );
+
+#my ($stdout, $debug, $debug_validity);
+capture( sub {
+    my $verbose = inter::progs::_get_verbose($conf);
+    my $ask = inter::progs::_prepare_for_interactivity($conf);
+    my $cc;
+    ($conf, $cc) = inter::progs::_get_programs($conf, $verbose, $ask);
+    $debug = inter::progs::_get_debug($conf, $ask);
+    $debug_validity = inter::progs::_is_debug_setting_valid($debug);
+}, \$stdout);
+ok( defined $debug_validity, "'debug_validity' set as expected" );
+
+capture( sub {
+    $conf = inter::progs::_set_debug_and_warn($conf, $debug);
+}, \$stdout);
+ok( defined $conf, "Components of $step_name runstep() tested okay" );
+
+$object = undef;
+untie *STDIN;
+
+$conf->replenish($serialized);
+
+$args = process_options(
+    {
+        argv => [q{--ask}],
+        mode => q{configure},
+    }
+);
+
+$conf->options->set( %{$args} );
+
+$task        = $conf->steps->[-1];
+$step_name   = $task->step;
+
+$step = $step_name->new();
+ok( defined $step, "$step_name constructor returned defined value" );
+isa_ok( $step, $step_name );
+
+
+@prompts = ();
+foreach my $p (
+    qw|
+        cc
+        link
+        ld
+        ccflags
+        linkflags
+        ldflags
+        libs
+        cxx
+    |
+    )
+{
+    push @prompts, $conf->data->get($p);
+}
+push @prompts, q{0};
+
+$object = tie *STDIN, 'Tie::Filehandle::Preempt::Stdin', @prompts;
+can_ok( 'Tie::Filehandle::Preempt::Stdin', ('READLINE') );
+isa_ok( $object, 'Tie::Filehandle::Preempt::Stdin' );
+
+my $rv;
+capture( sub {
+    $rv = $step->runstep($conf);
+}, \$stdout);
+ok( ! defined $rv, "$step_name runstep returned undef as expected" );
 
 $object = undef;
 untie *STDIN;

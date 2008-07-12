@@ -5,9 +5,12 @@
 
 use strict;
 use warnings;
-use Test::More tests => 12;
+use Test::More tests => 23;
 use Carp;
-use Data::Dumper;
+use Cwd;
+use File::Path ();
+use File::Spec::Functions qw/catfile/;
+use File::Temp qw(tempdir);
 use lib qw( lib t/configure/testlib );
 use_ok('config::init::defaults');
 use_ok('config::init::hints');
@@ -31,6 +34,9 @@ my ( $task, $step_name, $step, $ret );
 my $pkg = q{init::hints};
 
 $conf->add_steps($pkg);
+
+my $serialized = $conf->pcfreeze();
+
 $conf->options->set( %{$args} );
 
 $task        = $conf->steps->[-1];
@@ -51,6 +57,138 @@ ok( $step->description(), "$step_name has description" );
     ok( defined $rv, "$step_name runstep() returned defined value" );
 }
 
+$conf->replenish($serialized);
+
+$args = process_options(
+    {
+        argv => [q{--verbose}],
+        mode => q{configure},
+    }
+);
+
+$conf->options->set( %{$args} );
+
+$task        = $conf->steps->[-1];
+$step_name   = $task->step;
+
+$step = $step_name->new();
+ok( defined $step, "$step_name constructor returned defined value" );
+isa_ok( $step, $step_name );
+
+my $cwd = cwd();
+{
+    my $tdir = tempdir( CLEANUP => 1 );
+    File::Path::mkpath(qq{$tdir/init/hints})
+        or croak "Unable to create directory for local hints";
+    my $localhints = qq{$tdir/init/hints/local.pm};
+    open my $FH, '>', $localhints
+        or croak "Unable to open temp file for writing";
+    print $FH <<END;
+package init::hints::local;
+use strict;
+sub runstep {
+    return 1;
+}
+1;
+END
+    close $FH or croak "Unable to close temp file after writing";
+    unshift( @INC, $tdir );
+
+    # need to capture the --verbose output,
+    # because the fact that it does not end
+    # in a newline confuses Test::Harness
+    {
+     my $rv;
+     my $stdout;
+     capture ( sub {$rv = $step->runstep($conf)}, \$stdout);
+     ok( $stdout, "verbose output:  hints were captured" );
+     ok( defined $rv, "$step_name runstep() returned defined value" );
+    }
+    unlink $localhints or croak "Unable to delete $localhints";
+}
+
+$conf->replenish($serialized);
+
+$args = process_options(
+    {
+        argv => [q{--verbose}],
+        mode => q{configure},
+    }
+);
+
+$conf->options->set( %{$args} );
+
+$task        = $conf->steps->[-1];
+$step_name   = $task->step;
+
+$step = $step_name->new();
+ok( defined $step, "$step_name constructor returned defined value" );
+isa_ok( $step, $step_name );
+
+my $cwd = cwd();
+{
+    my $tdir = tempdir( CLEANUP => 1 );
+    File::Path::mkpath(qq{$tdir/init/hints})
+        or croak "Unable to create directory for local hints";
+    my $localhints = qq{$tdir/init/hints/local.pm};
+    open my $FH, '>', $localhints
+        or croak "Unable to open temp file for writing";
+    print $FH <<END;
+package init::hints::local;
+use strict;
+1;
+END
+    close $FH or croak "Unable to close temp file after writing";
+    unshift( @INC, $tdir );
+
+    # need to capture the --verbose output,
+    # because the fact that it does not end
+    # in a newline confuses Test::Harness
+    {
+     my $rv;
+     my $stdout;
+     capture ( sub {$rv = $step->runstep($conf)}, \$stdout);
+     ok( $stdout, "verbose output:  hints were captured" );
+     ok( defined $rv, "$step_name runstep() returned defined va lue" );
+    }
+    unlink $localhints or croak "Unable to delete $localhints";
+}
+
+$conf->replenish($serialized);
+
+$args = process_options(
+    {
+        argv => [ q{--verbose} ],
+        mode => q{configure},
+    }
+);
+
+$conf->options->set( %{$args} );
+
+$task        = $conf->steps->[-1];
+$step_name   = $task->step;
+
+$step = $step_name->new();
+ok( defined $step, "$step_name constructor returned defined value" );
+isa_ok( $step, $step_name );
+
+
+{
+    my ($stdout, $stderr);
+    $conf->data->set_p5( OSNAME => q{imaginaryOS} );
+    my $osname = lc( $conf->data->get_p5( 'OSNAME' ) );
+    my $hints_file = catfile('config', 'init', 'hints', "$osname.pm");
+    capture (
+        sub { $ret = $step->runstep($conf); },
+        \$stdout,
+        \$stderr,
+    );;
+    like(
+        $stdout,
+        qr/No \Q$hints_file\E found/s,
+        "Got expected verbose output when no hints file found"
+    );
+}
 pass("Completed all tests in $0");
 
 ################### DOCUMENTATION ###################
