@@ -5,14 +5,18 @@
 
 use strict;
 use warnings;
-use Test::More tests => 11;
+use Test::More tests => 19;
 use Carp;
 use lib qw( lib t/configure/testlib );
 use_ok('config::init::defaults');
 use_ok('config::auto::backtrace');
 use Parrot::Configure;
 use Parrot::Configure::Options qw( process_options );
-use Parrot::Configure::Test qw( test_step_thru_runstep);
+use Parrot::Configure::Test qw(
+    test_step_thru_runstep
+    rerun_defaults_for_testing
+    test_step_constructor_and_description
+);
 
 my $args = process_options( {
     argv            => [],
@@ -27,14 +31,27 @@ my ($task, $step_name, $step, $ret);
 my $pkg = q{auto::backtrace};
 
 $conf->add_steps($pkg);
-$conf->options->set(%{$args});
-$task = $conf->steps->[-1];
-$step_name   = $task->step;
 
-$step = $step_name->new();
-ok(defined $step, "$step_name constructor returned defined value");
-isa_ok($step, $step_name);
-ok($step->description(), "$step_name has description");
+my $serialized = $conf->pcfreeze();
+
+$conf->options->set(%{$args});
+$step = test_step_constructor_and_description($conf);
+
+$conf->replenish($serialized);
+
+$conf->options->set(%{$args});
+$step = test_step_constructor_and_description($conf);
+my $error = q{mock_error};
+ok($step->_evaluate_backtrace($conf, $error),
+    "_evaluate_backtrace returned true value");
+is($step->result, 'no', "Got expected result");
+
+$error = q{};
+ok($step->_evaluate_backtrace($conf, $error),
+    "_evaluate_backtrace returned true value");
+is($step->result, 'yes', "Got expected result");
+ok($conf->data->get('backtrace'),
+    "backtrace set as expected");
 
 ok($step->runstep($conf), "runstep() returned true value");
 
