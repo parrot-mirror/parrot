@@ -5,21 +5,24 @@
 
 use strict;
 use warnings;
-use Test::More tests => 12;
+use Test::More tests => 31;
 use Carp;
 use lib qw( lib t/configure/testlib );
 use_ok('config::init::defaults');
 use_ok('config::auto::aio');
 use Parrot::Configure;
 use Parrot::Configure::Options qw( process_options );
-use Parrot::Configure::Test qw( test_step_thru_runstep);
-
-my $args = process_options(
-    {
-        argv => [ ],
-        mode => q{configure},
-    }
+use Parrot::Configure::Test qw(
+    test_step_thru_runstep
+    rerun_defaults_for_testing
+    test_step_constructor_and_description
 );
+use IO::CaptureOutput qw( capture );
+
+my $args = process_options( {
+    argv => [ ],
+    mode => q{configure},
+} );
 
 my $conf = Parrot::Configure->new;
 
@@ -28,24 +31,83 @@ test_step_thru_runstep( $conf, q{init::defaults}, $args );
 my $pkg = q{auto::aio};
 
 $conf->add_steps($pkg);
+
+my $serialized = $conf->pcfreeze();
+
 $conf->options->set( %{$args} );
-
-my ( $task, $step_name, $step);
-$task        = $conf->steps->[-1];
-$step_name   = $task->step;
-
-$step = $step_name->new();
-ok( defined $step, "$step_name constructor returned defined value" );
-isa_ok( $step, $step_name );
-ok( $step->description(), "$step_name has description" );
-
+my $step = test_step_constructor_and_description($conf);
 my $ret = $step->runstep($conf);
-ok( $ret, "$step_name runstep() returned true value" );
+ok( $ret, "runstep() returned true value" );
 like(
     $step->result(),
     qr/^(yes|no)$/i,
     "One of two possible valid results was set"
 );
+
+$conf->replenish($serialized);
+
+$args = process_options(
+    {
+        argv => [ q{--verbose} ],
+        mode => q{configure},
+    }
+);
+$conf->options->set( %{$args} );
+$step = test_step_constructor_and_description($conf);
+{
+    my ($stdout, $stderr);
+    my $ret = capture sub { $step->runstep($conf) }, \$stdout, \$stderr;
+    ok( $ret, "runstep() returned true value" );
+    like(
+        $step->result(),
+        qr/^(yes|no)$/i,
+        "One of two possible valid results was set"
+    );
+    like(
+        $stdout,
+        qr/\s+\((yes|no)\)\s+/,
+        "Got expected verbose output"
+    );
+}
+
+$conf->replenish($serialized);
+
+$args = process_options( {
+    argv => [ ],
+    mode => q{configure},
+} );
+$conf->options->set( %{$args} );
+$step = test_step_constructor_and_description($conf);
+my ($libs, $verbose);
+$libs = q{foobar};
+$verbose = q{};
+ok($step->_handle_error_case($conf, $libs, $verbose),
+    "_handle_error_case() returned true value");
+is($conf->data->get('libs'), $libs, "'libs' set as expected");
+is($step->result, q{no}, "Got expected 'no' result");
+
+$conf->replenish($serialized);
+
+$args = process_options( {
+    argv => [ ],
+    mode => q{configure},
+} );
+$conf->options->set( %{$args} );
+$step = test_step_constructor_and_description($conf);
+$libs = q{foobar};
+$verbose = 1;
+{
+    my ($rv, $stdout);
+    capture(
+        sub { $rv = $step->_handle_error_case($conf, $libs, $verbose); },
+        \$stdout,
+    );
+    ok($rv, "_handle_error_case() returned true value");
+    is($conf->data->get('libs'), $libs, "'libs' set as expected");
+    is($step->result, q{no}, "Got expected 'no' result");
+    like($stdout, qr/no/, "Got expected verbose output");
+}
+
 
 pass("Completed all tests in $0");
 
