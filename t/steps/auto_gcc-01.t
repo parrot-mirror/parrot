@@ -5,7 +5,7 @@
 
 use strict;
 use warnings;
-use Test::More tests => 121;
+use Test::More tests => 133;
 use Carp;
 use lib qw( lib t/configure/testlib );
 use_ok('config::init::defaults');
@@ -16,6 +16,7 @@ use Parrot::Configure::Options qw( process_options );
 use Parrot::Configure::Test qw(
     test_step_thru_runstep
     rerun_defaults_for_testing
+    test_step_constructor_and_description
 );
 use IO::CaptureOutput qw | capture |;
 
@@ -36,29 +37,16 @@ my $pkg = q{auto::gcc};
 
 $conf->add_steps($pkg);
 $conf->options->set(%{$args});
-$task = $conf->steps->[-1];
-$step_name   = $task->step;
-
-$step = $step_name->new();
-ok(defined $step, "$step_name constructor returned defined value");
-isa_ok($step, $step_name);
-ok($step->description(), "$step_name has description");
+$step = test_step_constructor_and_description($conf);
 
 ok($step->runstep($conf), "runstep returned true value");
 
 $conf->replenish($serialized);
 
 rerun_defaults_for_testing($conf, $args );
-
 $conf->add_steps($pkg);
 $conf->options->set(%{$args});
-$task = $conf->steps->[-1];
-$step_name   = $task->step;
-
-$step = $step_name->new();
-ok(defined $step, "$step_name constructor returned defined value");
-isa_ok($step, $step_name);
-
+$step = test_step_constructor_and_description($conf);
 my $gnucref = {};
 ok($step->_evaluate_gcc($conf, $gnucref),
     "_evaluate_gcc() returned true value");
@@ -68,20 +56,12 @@ ok(! defined $conf->data->get( 'gccversion' ),
 $conf->replenish($serialized);
 
 rerun_defaults_for_testing($conf, $args );
-
 $conf->add_steps($pkg);
 $conf->options->set(%{$args});
-$task = $conf->steps->[-1];
-$step_name   = $task->step;
-
-$step = $step_name->new();
-ok(defined $step, "$step_name constructor returned defined value");
-isa_ok($step, $step_name);
-
+$step = test_step_constructor_and_description($conf);
 $gnucref = {};
 $gnucref->{__GNUC__} = 1;
 $gnucref->{__INTEL_COMPILER} = 1;
-
 ok($step->_evaluate_gcc($conf, $gnucref),
     "_evaluate_gcc() returned true value");
 ok(! defined $conf->data->get( 'gccversion' ),
@@ -94,18 +74,10 @@ $args = process_options( {
     argv            => [ q{--verbose} ],
     mode            => q{configure},
 } );
-
 rerun_defaults_for_testing($conf, $args );
-
 $conf->add_steps($pkg);
 $conf->options->set(%{$args});
-$task = $conf->steps->[-1];
-$step_name   = $task->step;
-
-$step = $step_name->new();
-ok(defined $step, "$step_name constructor returned defined value");
-isa_ok($step, $step_name);
-
+$step = test_step_constructor_and_description($conf);
 {
     my $rv;
     my $stdout;
@@ -125,22 +97,13 @@ $args = process_options( {
     argv            => [],
     mode            => q{configure},
 } );
-
 rerun_defaults_for_testing($conf, $args );
-
 $conf->add_steps($pkg);
 $conf->options->set(%{$args});
-$task = $conf->steps->[-1];
-$step_name   = $task->step;
-
-$step = $step_name->new();
-ok(defined $step, "$step_name constructor returned defined value");
-isa_ok($step, $step_name);
-
+$step = test_step_constructor_and_description($conf);
 $gnucref = {};
 $gnucref->{__GNUC__} = 1;
 $gnucref->{__INTEL_COMPILER} = 1;
-
 ok($step->_evaluate_gcc($conf, $gnucref),
     "_evaluate_gcc() returned true value");
 ok(! defined $conf->data->get( 'gccversion' ),
@@ -153,18 +116,10 @@ $args = process_options( {
     argv            => [ q{--verbose} ],
     mode            => q{configure},
 } );
-
 rerun_defaults_for_testing($conf, $args );
-
 $conf->add_steps($pkg);
 $conf->options->set(%{$args});
-$task = $conf->steps->[-1];
-$step_name   = $task->step;
-
-$step = $step_name->new();
-ok(defined $step, "$step_name constructor returned defined value");
-isa_ok($step, $step_name);
-
+$step = test_step_constructor_and_description($conf);
 {
     my $rv;
     my $stdout;
@@ -181,17 +136,9 @@ isa_ok($step, $step_name);
 $conf->replenish($serialized);
 
 rerun_defaults_for_testing($conf, $args );
-
 $conf->add_steps($pkg);
 $conf->options->set(%{$args});
-$task = $conf->steps->[-1];
-$step_name   = $task->step;
-
-$step = $step_name->new();
-ok(defined $step, "$step_name constructor returned defined value");
-isa_ok($step, $step_name);
-
-
+$step = test_step_constructor_and_description($conf);
 {
     my $rv;
     my $stdout;
@@ -214,18 +161,10 @@ $args = process_options( {
     argv            => [],
     mode            => q{configure},
 } );
-
 rerun_defaults_for_testing($conf, $args );
-
 $conf->add_steps($pkg);
 $conf->options->set(%{$args});
-$task = $conf->steps->[-1];
-$step_name   = $task->step;
-
-$step = $step_name->new();
-ok(defined $step, "$step_name constructor returned defined value");
-isa_ok($step, $step_name);
-
+$step = test_step_constructor_and_description($conf);
 {
     my $rv;
     my $stdout;
@@ -247,18 +186,10 @@ $args = process_options( {
     argv            => [ q{--verbose} ],
     mode            => q{configure},
 } );
-
 rerun_defaults_for_testing($conf, $args );
-
 $conf->add_steps($pkg);
 $conf->options->set(%{$args});
-$task = $conf->steps->[-1];
-$step_name   = $task->step;
-
-$step = $step_name->new();
-ok(defined $step, "$step_name constructor returned defined value");
-isa_ok($step, $step_name);
-
+$step = test_step_constructor_and_description($conf);
 {
     my $rv;
     my $stdout;
@@ -275,24 +206,16 @@ isa_ok($step, $step_name);
     is($step->result(), q{yes}, "Got expected result");
 }
 
+$conf->replenish($serialized);
+
 $args = process_options( {
     argv            => [ ],
     mode            => q{configure},
 } );
-
-$conf->replenish($serialized);
-
 rerun_defaults_for_testing($conf, $args );
-
 $conf->add_steps($pkg);
 $conf->options->set(%{$args});
-$task = $conf->steps->[-1];
-$step_name   = $task->step;
-
-$step = $step_name->new();
-ok(defined $step, "$step_name constructor returned defined value");
-isa_ok($step, $step_name);
-
+$step = test_step_constructor_and_description($conf);
 $gnucref = {};
 $gnucref->{__GNUC__} = q{abc123};
 ok($step->_evaluate_gcc($conf, $gnucref),
@@ -301,24 +224,16 @@ ok(! defined $conf->data->get( 'gccversion' ),
     "gccversion undef as expected");
 is($step->result(), q{no}, "Got expected result");
 
+$conf->replenish($serialized);
+
 $args = process_options( {
     argv            => [ q{--maintainer}, q{--cage} ],
     mode            => q{configure},
 } );
-
-$conf->replenish($serialized);
-
 rerun_defaults_for_testing($conf, $args );
-
 $conf->add_steps($pkg);
 $conf->options->set(%{$args});
-$task = $conf->steps->[-1];
-$step_name   = $task->step;
-
-$step = $step_name->new();
-ok(defined $step, "$step_name constructor returned defined value");
-isa_ok($step, $step_name);
-
+$step = test_step_constructor_and_description($conf);
 $gnucref = {};
 $gnucref->{__GNUC__} = q{3};
 $gnucref->{__GNUC_MINOR__} = q{1};
@@ -335,18 +250,10 @@ $args = process_options( {
     argv            => [ q{--miniparrot} ],
     mode            => q{configure},
 } );
-
 rerun_defaults_for_testing($conf, $args );
-
 $conf->add_steps($pkg);
 $conf->options->set(%{$args});
-$task = $conf->steps->[-1];
-$step_name   = $task->step;
-
-$step = $step_name->new();
-ok(defined $step, "$step_name constructor returned defined value");
-isa_ok($step, $step_name);
-
+$step = test_step_constructor_and_description($conf);
 $gnucref = {};
 $gnucref->{__GNUC__} = q{3};
 $gnucref->{__GNUC_MINOR__} = q{1};
@@ -364,18 +271,10 @@ $args = process_options( {
     argv            => [ ],
     mode            => q{configure},
 } );
-
 rerun_defaults_for_testing($conf, $args );
-
 $conf->add_steps($pkg);
 $conf->options->set(%{$args});
-$task = $conf->steps->[-1];
-$step_name   = $task->step;
-
-$step = $step_name->new();
-ok(defined $step, "$step_name constructor returned defined value");
-isa_ok($step, $step_name);
-
+$step = test_step_constructor_and_description($conf);
 $gnucref = {};
 $gnucref->{__GNUC__} = q{3};
 $gnucref->{__GNUC_MINOR__} = q{1};
