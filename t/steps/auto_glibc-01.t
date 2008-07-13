@@ -5,14 +5,18 @@
 
 use strict;
 use warnings;
-use Test::More tests => 11;
+use Test::More tests => 18;
 use Carp;
 use lib qw( lib t/configure/testlib );
 use_ok('config::init::defaults');
 use_ok('config::auto::glibc');
 use Parrot::Configure;
 use Parrot::Configure::Options qw( process_options );
-use Parrot::Configure::Test qw( test_step_thru_runstep);
+use Parrot::Configure::Test qw(
+    test_step_thru_runstep
+    rerun_defaults_for_testing
+    test_step_constructor_and_description
+);
 
 my $args = process_options( {
     argv            => [],
@@ -27,16 +31,29 @@ my ($task, $step_name, $step, $ret);
 my $pkg = q{auto::glibc};
 
 $conf->add_steps($pkg);
+
+my $serialized = $conf->pcfreeze();
+
 $conf->options->set(%{$args});
-$task = $conf->steps->[-1];
-$step_name   = $task->step;
-
-$step = $step_name->new();
-ok(defined $step, "$step_name constructor returned defined value");
-isa_ok($step, $step_name);
-ok($step->description(), "$step_name has description");
-
+$step = test_step_constructor_and_description($conf);
 ok($step->runstep($conf), "runstep() returned true value");
+
+$conf->replenish($serialized);
+
+$conf->options->set(%{$args});
+$step = test_step_constructor_and_description($conf);
+
+my $test = {};
+$test->{glibc} = 1;
+$step->_evaluate_glibc($conf, $test);
+is( $step->result(), q{yes}, "Got expected result" );
+is( $conf->data->get( 'glibc' ), 1, "Got expected value for 'glibc'" );
+
+$test->{glibc} = undef;
+$step->_evaluate_glibc($conf, $test);
+is( $step->result(), q{no}, "Got expected result" );
+ok( ! defined $conf->data->get( 'glibc' ),
+    "'glibc' undefined as expected" );
 
 pass("Completed all tests in $0");
 
