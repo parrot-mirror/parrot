@@ -8,6 +8,7 @@ our ( @ISA, @EXPORT_OK );
 @EXPORT_OK = qw(
     test_step_thru_runstep
     rerun_defaults_for_testing
+    test_step_constructor_and_description
 );
 use Carp;
 *ok     = *Test::More::ok;
@@ -57,6 +58,17 @@ sub rerun_defaults_for_testing {
     ok( $step->description(), "$step_name has description" );
     my $ret = $step->runstep($conf);
     return $ret;
+}
+
+sub test_step_constructor_and_description {
+    my $conf = shift;
+    my $task = $conf->steps->[-1];
+    my $step_name   = $task->step;
+    my $step = $step_name->new();
+    ok(defined $step, "$step_name constructor returned defined value");
+    isa_ok($step, $step_name);
+    ok($step->description(), "$step_name has description");
+    return $step;
 }
 
 1;
