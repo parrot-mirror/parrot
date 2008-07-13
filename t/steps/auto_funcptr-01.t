@@ -5,16 +5,21 @@
 
 use strict;
 use warnings;
-use Test::More tests => 11;
+use Test::More qw(no_plan); # tests => 11;
 use Carp;
 use lib qw( lib t/configure/testlib );
 use_ok('config::init::defaults');
 use_ok('config::auto::funcptr');
-
 use Parrot::BuildUtil;
 use Parrot::Configure;
 use Parrot::Configure::Options qw( process_options );
 use Parrot::Configure::Test qw( test_step_thru_runstep);
+use Parrot::Configure::Test qw(
+    test_step_thru_runstep
+    rerun_defaults_for_testing
+    test_step_constructor_and_description
+);
+use IO::CaptureOutput qw( capture );
 
 my $args = process_options( {
     argv            => [ q{--jitcapable=0} ],
@@ -23,24 +28,66 @@ my $args = process_options( {
 
 my $conf = Parrot::Configure->new();
 
+my $serialized = $conf->pcfreeze();
+
 test_step_thru_runstep($conf, q{init::defaults}, $args);
 
-my ($task, $step_name, $step, $ret);
 my $pkg = q{auto::funcptr};
 
 $conf->add_steps($pkg);
 $conf->options->set(%{$args});
+my $step = test_step_constructor_and_description($conf);
+my $ret = $step->runstep($conf);
+ok($ret, "runstep() returned defined value" );
 
-$task = $conf->steps->[-1];
-$step_name   = $task->step;
+$conf->replenish($serialized);
 
-$step = $step_name->new();
-ok(defined $step, "$step_name constructor returned defined value");
-isa_ok($step, $step_name);
-ok($step->description(), "$step_name has description");
+$args = process_options( {
+    argv            => [ ],
+    mode            => q{configure},
+} );
+rerun_defaults_for_testing($conf, $args );
+$conf->add_steps($pkg);
+$conf->options->set( %{$args} );
+$step = test_step_constructor_and_description($conf);
+{
+    my $stdout;
+    my $ret = capture(
+        sub { auto::funcptr::_cast_void_pointers_msg(); },
+        \$stdout,
+    );
+    like($stdout, qr/Although it is not required/s,
+        "Got expected advisory message");
+}
+{
+    my $stdout;
+    my $ret = capture(
+        sub { auto::funcptr::_set_positive_result($step, $conf); },
+        \$stdout,
+    );
+    is($step->result, q{yes}, "Got expected result");
+    ok(! $stdout, "Nothing printed to STDOUT, as expected");
+}
 
-$ret = $step->runstep($conf);
-ok($ret, "$step_name runstep() returned defined value" );
+$conf->replenish($serialized);
+
+$args = process_options( {
+    argv            => [ q{--verbose} ],
+    mode            => q{configure},
+} );
+rerun_defaults_for_testing($conf, $args );
+$conf->add_steps($pkg);
+$conf->options->set( %{$args} );
+$step = test_step_constructor_and_description($conf);
+{
+    my $stdout;
+    my $ret = capture(
+        sub { auto::funcptr::_set_positive_result($step, $conf); },
+        \$stdout,
+    );
+    is($step->result, q{yes}, "Got expected result");
+    like($stdout, qr/yes/, "Got expected verbose output");
+}
 
 pass("Completed all tests in $0");
 
