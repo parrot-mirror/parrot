@@ -58,17 +58,25 @@ for my $tfile (@tfiles) {
     }
     close($th);
     printf "%s%s..%4d", $tfile, '.' x ($max - length($tfile)), $plan;
-    my $cmd = "../../parrot perl6.pbc $tfile";
+    my $cmd = "../../parrot -G perl6.pbc $tfile";
     my @results = split "\n", `$cmd`;
     my ($test, $pass, $fail, $todo, $skip) = (0,0,0,0,0);
+    my (%skip, %todopass, %todofail);
     for (@results) {
         next unless /^(not )?ok +\d+/;
         $test++;
-        if    (/#\s*SKIP/i)      { $skip++; }
-        elsif (/#\s*TODO/i)      { $todo++; }
-        elsif (/^not ok +\d+/)   { $fail++; }
-        elsif (/^ok +\d+/)       { $pass++; }
+        if    (/#\s*SKIP\s*(.*)/i) { $skip++; $skip{$1}++; }
+        elsif (/#\s*TODO\s*(.*)/i) {
+            my $reason = $1;
+            $todo++;
+            if (/^ok /) { $todopass{$reason}++ }
+            else        { $todofail{$reason}++ }
+        }
+        elsif (/^not ok +\d+/)     { $fail++; }
+        elsif (/^ok +\d+/)         { $pass++; }
     }
+    my $abort = $plan - $test;
+    if ($abort > 0) { $fail += $abort; $test += $abort; }
     printf " %4d %4d %4d %4d %4d\n", $test, $pass, $fail, $todo, $skip;
     $sum{'plan'} += $plan;
     $sum{'test'} += $test;
@@ -76,6 +84,15 @@ for my $tfile (@tfiles) {
     $sum{'fail'} += $fail;
     $sum{'todo'} += $todo;
     $sum{'skip'} += $skip;
+    for (keys %skip) {
+        printf "    %2d skipped: %s\n", $skip{$_}, $_;
+    }
+    for (keys %todofail) {
+        printf "    %2d todo   : %s\n", $todofail{$_}, $_;
+    }
+    for (keys %todopass) {
+        printf "    %2d todo PASSED: %s\n", $todopass{$_}, $_;
+    }
 }
 
 my $total = "  ".scalar(@tfiles)." test files";

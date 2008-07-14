@@ -1,11 +1,11 @@
 #! perl
-# Copyright (C) 2001-2007, The Perl Foundation.
+# Copyright (C) 2001-2008, The Perl Foundation.
 # $Id$
 
 use strict;
 use warnings;
 use lib qw(lib . ../lib ../../lib);
-use Parrot::Test tests => 15;
+use Parrot::Test tests => 19;
 use Test::More;
 
 =head1 NAME
@@ -478,6 +478,67 @@ set_integer_keyed, get_number_keyed: 128.000000
 set_integer_keyed, get_string_keyed: 128
 OUTPUT
 
+pir_output_is( <<'CODE', <<'OUTPUT', "equality" );
+.sub main :main
+    .local pmc fpa1, fpa2, p1, p2
+    .local int i
+    fpa1 = new 'FixedPMCArray'
+    fpa2 = new 'FixedPMCArray'
+
+    print "1:"
+    if fpa1 == fpa2 goto L1
+    print "not "
+L1: say "equal"    
+
+    fpa1 = 3
+    print "2:"
+    if fpa1 == fpa2 goto L2
+    print "not "
+L2: say "equal"
+
+    fpa2 = 3
+
+    p1 = new 'String'
+    p1 = "foobarx"
+    p2 = new 'String'
+    p2 = "foobarx"
+
+    fpa1[0] = p1
+    fpa2[0] = p2
+
+    print "3:"
+    if fpa1 == fpa2 goto L3
+    print "not "
+L3: say "equal"
+
+    p1 = new 'String'
+    p2 = new 'String'
+    p1 = ''
+    p2 = ''
+
+    fpa1[1] = p1
+
+    print "4:"
+    if fpa1 == fpa2 goto L4
+    print "not "
+L4: say "equal"
+
+    fpa2[1] = p2
+
+    print "5:"
+    if fpa1 == fpa2 goto L5
+    print "not "
+L5: say "equal"
+
+.end
+CODE
+1:equal
+2:not equal
+3:equal
+4:not equal
+5:equal
+OUTPUT
+
 pir_output_is( <<'CODE', <<'OUTPUT', "defined" );
 .sub main :main
     .local pmc arr1
@@ -552,6 +613,84 @@ ok 3
 ok 4
 ok 5
 ok 6
+OUTPUT
+
+pir_output_is(<<'CODE', <<'OUTPUT', 'basic splice');
+.sub 'main'
+    .local pmc one
+    one = new 'Integer'
+    one = 1
+
+    .local pmc fpa
+    fpa = new 'FixedPMCArray'
+    fpa = 5
+
+    splice fpa, one, 0, 5
+    print_array( fpa )
+
+    .local pmc two
+    two = new 'Integer'
+    two = 2
+
+    splice fpa, two, 1, 3
+    print_array( fpa )
+
+    .local pmc three
+    three = new 'Integer'
+    three = 3
+
+    splice fpa, three, 2, 3
+    print_array( fpa )
+.end
+
+.sub 'print_array'
+    .param pmc fpa
+
+    .local pmc it
+    iter it, fpa
+
+    .local pmc elem
+  iter_start:
+    elem = shift it
+    print elem
+    if it goto iter_start
+  iter_end:
+    print "\n"
+.end
+CODE
+11111
+12221
+12333
+OUTPUT
+
+pir_error_output_like(<<'CODE', <<'OUTPUT', 'splice out of bounds, offset 0');
+.sub 'main'
+    .local pmc fpa
+    fpa = new 'FixedPMCArray'
+    fpa = 5
+
+    .local pmc nil
+    nil = new 'Undef'
+
+    splice fpa, nil, 0, 6
+.end
+CODE
+/FixedPMCArray: index out of bounds!/
+OUTPUT
+
+pir_error_output_like(<<'CODE', <<'OUTPUT', 'splice out of bounds, big offset');
+.sub 'main'
+    .local pmc fpa
+    fpa = new 'FixedPMCArray'
+    fpa = 5
+
+    .local pmc nil
+    nil = new 'Undef'
+
+    splice fpa, nil, 6, 0
+.end
+CODE
+/FixedPMCArray: index out of bounds!/
 OUTPUT
 
 # Local Variables:

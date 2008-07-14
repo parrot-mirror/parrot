@@ -115,7 +115,13 @@ typedef enum {
         INTERNAL_NOT_IMPLEMENTED,
         ERR_OVERFLOW,
         LOSSY_CONVERSION,
-        ROLE_COMPOSITION_METH_CONFLICT
+        ROLE_COMPOSITION_METH_CONFLICT,
+
+        CONTROL_RETURN,
+        CONTROL_OK,
+        CONTROL_BREAK,
+        CONTROL_CONTINUE,
+        CONTROL_ERROR
 } exception_type_enum;
 
 /* &end_gen */
@@ -301,7 +307,7 @@ void rethrow_c_exception(PARROT_INTERP)
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 /* HEADERIZER END: src/exceptions.c */
 
-#define PANIC(interp, message) do_panic(interp, message, __FILE__, __LINE__)
+#define PANIC(interp, message) do_panic((interp), (message), __FILE__, __LINE__)
 
 #ifdef NDEBUG
 #  define PARROT_ASSERT(x) ((void)0)
