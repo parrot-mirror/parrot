@@ -28,10 +28,11 @@ token comp_stmt {
 }
 
 rule stmts {
-    <.term>?[ <stmt> <.term>+]* {*}
+    <.term>?[ <stmt> [<.term>+ | <.before <end_block>>]]* {*}
 }
 
 token term { \n | ';' }
+token end_block { <.ws> [ 'end' | '}' ] }
 
 token basic_stmt {
     | <alias> {*}           #= alias
@@ -68,6 +69,7 @@ rule expr {
 
 
 token basic_expr {
+    | <classdef> {*}        #= classdef
     | <assignment> {*}      #= assignment
     | <arg> {*}             #= arg
     | <not_expr> {*}        #= not_expr
@@ -126,7 +128,8 @@ rule call {
 }
 
 rule do_block {
-    'do' <do_args> <.term>? <comp_stmt> 'end' {*}
+    | 'do' <do_args> <.term>? <comp_stmt> 'end' {*}
+    | '{' <do_args> <.term>? <comp_stmt> '}' {*}
 }
 
 rule super_call {
@@ -155,8 +158,8 @@ rule do_args {
 
 token variable {
     | <varname> {*}      #= varname
-    | 'nil'              #= nil
-    | 'self'             #= self
+    | 'nil'     {*}      #= nil
+    | 'self'    {*}      #= self
 }
 
 token varname {
@@ -281,6 +284,12 @@ rule module {
     {*}
 }
 
+rule classdef {
+    'class' <module_identifier> {*}  #= open
+    <comp_stmt>
+    'end'                       {*}  #= block
+}
+
 rule functiondef {
     'def' <fname> <argdecl>
     <comp_stmt>
@@ -354,7 +363,7 @@ token identifier {
 }
 
 token module_identifier {
-    <before <[A..Z]>> <ident>
+    <.before <[A..Z]>> <ident>
     {*}
 }
 

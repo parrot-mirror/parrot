@@ -119,13 +119,20 @@ Return the List as a list.
 
 =cut
 
+.namespace ['ResizablePMCArray']
 .sub 'list' :method
-    $I0 = isa self, 'List'
-    if $I0 goto have_list
-    $P0 = new 'List'
+    ##  this code morphs a ResizablePMCArray into a List
+    ##  without causing a clone of any of the elements
+    $P0 = new 'ResizablePMCArray'
     splice $P0, self, 0, 0
-    copy self, $P0
-  have_list:
+    $P1 = new 'List'
+    copy self, $P1
+    splice self, $P0, 0, 0
+    .return (self)
+.end
+
+.namespace ['List']
+.sub 'list' :method
     .return (self)
 .end
 
@@ -205,9 +212,7 @@ layer.  It will likely change substantially when we have lazy lists.
   flat_end:
     $I0 = isa self, 'List'
     if $I0 goto end
-    $P0 = new 'List'
-    splice $P0, self, 0, 0
-    copy self, $P0
+    self.'list'()
   end:
     .return (self)
 .end
@@ -323,17 +328,28 @@ Returns a string comprised of all of the list, separated by the string SEPARATOR
 
 =cut
 
-#.sub 'join' :method :multi('ResizablePMCArray', _)
-#    .param string sep
-#    $S0 = join sep, self
-#    .return ($S0)
-#.end
-#
-#.sub 'join' :multi('String')
-#    .param string sep
-#    .param pmc values          :slurpy
-#    .return values.'join'(sep)
-#.end
+.namespace []
+.sub 'join' :multi('String')
+    .param string sep
+    .param pmc values          :slurpy
+    .return values.'join'(sep)
+.end
+
+.namespace ['List']
+.sub 'join' :method :multi('ResizablePMCArray')
+    .param string sep          :optional
+    .param int has_sep         :opt_flag
+
+    if has_sep goto have_sep
+    sep = ' '
+  have_sep:
+
+    self.'!flatten'()
+    $S0 = join sep, self
+    $P0 = new 'Str'
+    $P0 = $S0
+    .return ($P0)
+.end
 
 
 =item keys()
@@ -479,20 +495,49 @@ Return a list of Pair(index, value) elements for the invocant.
     .param pmc expression
     .local pmc retv
     .local pmc iter
-    .local pmc block_res
-    .local pmc block_arg
+    .local pmc elem
+    .local pmc args
+    .local int i, arity
+
+    arity = expression.'arity'()
+    if arity < 2 goto error
 
     iter = self.'iterator'()
     unless iter goto empty
     retv = shift iter
   loop:
     unless iter goto done
-    block_arg = shift iter
-    block_res = expression(retv, block_arg)
+
+    # Create arguments for closure
+    args = new 'ResizablePMCArray'
+    # Start with 1. First argument is result of previous call
+    i = 1
+
+  args_loop:
+    if i == arity goto invoke
+    unless iter goto elem_undef
+    elem = shift iter
+    goto push_elem
+  elem_undef:
+    elem = new 'Failure'
+
+  push_elem:
+    push args, elem
+    inc i
+    goto args_loop
+
+  invoke:
+    retv = expression(retv, args :flat)
     goto loop
 
   empty:
     retv = new 'Undef'
+    goto done
+
+  error:
+    'die'('Cannot reduce() using a unary or nullary function.')
+    goto done
+
   done:
     .return(retv)
 .end

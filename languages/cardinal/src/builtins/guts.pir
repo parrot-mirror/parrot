@@ -58,23 +58,6 @@ it understands how to properly merge C<MultiSub> PMCs.
 .end
 
 
-=item !VAR
-
-Helper function for implementing the VAR and .VAR macros.
-
-=cut
-
-.sub '!VAR'
-    .param pmc variable
-    $I0 = isa variable, 'Perl6Scalar'
-    unless $I0 goto nothing
-    $P0 = new 'MutableVAR', variable
-    .return ($P0)
-  nothing:
-    .return (variable)
-.end
-
-
 =item !DOTYPECHECK
 
 Checks that the value and the assignee are type-compatible and does the
@@ -224,6 +207,11 @@ Adds an attribute with the given name to the class.
 
 =cut
 
+.sub 'defined'
+    .param pmc x
+    $I0 = defined x
+    .return ($I0)
+.end
 # Local Variables:
 #   mode: pir
 #   fill-column: 100
