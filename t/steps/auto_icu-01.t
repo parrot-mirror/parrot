@@ -5,7 +5,7 @@
 
 use strict;
 use warnings;
-use Test::More tests => 81;
+use Test::More tests => 127;
 use Carp;
 use Cwd;
 use File::Path qw( mkpath );
@@ -15,7 +15,12 @@ use_ok('config::init::defaults');
 use_ok('config::auto::icu');
 use Parrot::Configure;
 use Parrot::Configure::Options qw( process_options );
-use Parrot::Configure::Test qw( test_step_thru_runstep);
+use Parrot::Configure::Test qw(
+    test_step_thru_runstep
+    rerun_defaults_for_testing
+    test_step_constructor_and_description
+);
+use Parrot::Configure::Utils qw( capture_output );
 use IO::CaptureOutput qw( capture );
 
 my $args = process_options(
@@ -27,24 +32,17 @@ my $args = process_options(
 
 my $conf = Parrot::Configure->new;
 
+my $serialized = $conf->pcfreeze();
+
 test_step_thru_runstep( $conf, q{init::defaults}, $args );
 
 my $pkg = q{auto::icu};
 
 $conf->add_steps($pkg);
 $conf->options->set( %{$args} );
-
-my ( $task, $step_name, $step);
-$task        = $conf->steps->[-1];
-$step_name   = $task->step;
-
-$step = $step_name->new();
-ok( defined $step, "$step_name constructor returned defined value" );
-isa_ok( $step, $step_name );
-ok( $step->description(), "$step_name has description" );
-
+my $step = test_step_constructor_and_description($conf);
 my $ret = $step->runstep($conf);
-ok( $ret, "$step_name runstep() returned true value" );
+ok( $ret, "runstep() returned true value" );
 
 is( $conf->data->get('has_icu'), 0,
     "Got expected value for 'has_icu'" );
@@ -434,6 +432,206 @@ is($step->{result}, $result, "Got expected result");
 $conf->data->set( 'has_icu', undef );
 $conf->data->set( 'icu_shared', undef );
 $conf->data->set( 'icu_dir', undef );
+
+$conf->replenish($serialized);
+
+$args = process_options( {
+    argv => [ q{--without-icu}, q{--icu-config=none}  ],
+    mode => q{configure},
+} );
+rerun_defaults_for_testing($conf, $args );
+$conf->add_steps($pkg);
+$conf->options->set( %{$args} );
+$step = test_step_constructor_and_description($conf);
+$ret = $step->runstep($conf);
+ok( $ret, "runstep() returned true value" );
+
+is( $conf->data->get('has_icu'), 0,
+    "Got expected value for 'has_icu'" );
+is( $conf->data->get('icu_shared'), q{},
+    "Got expected value for 'icu_shared'" );
+is( $conf->data->get('icu_dir'), q{},
+    "Got expected value for 'icu_dir'" );
+is( $step->result(), 'not requested', "Got expected result" );
+
+$conf->replenish($serialized);
+
+{
+    my ($stdout, $stderr, $ret);
+    eval { ($stdout, $stderr, $ret) =
+        capture_output( qw| icu-config --exists | ); };
+    SKIP: {
+        skip "icu-config not available", 6 if $stderr;
+        $args = process_options( {
+            argv => [
+                q{--icu-config=1},
+                q{--icuheaders=alpha},
+                q{--icushared=beta}
+            ],
+            mode => q{configure},
+        } );
+        rerun_defaults_for_testing($conf, $args );
+        $conf->add_steps($pkg);
+        $conf->options->set( %{$args} );
+        $step = test_step_constructor_and_description($conf);
+        {
+            my ($stdout, $stderr, $ret);
+            capture(
+                sub { $ret = $step->runstep($conf); },
+                \$stdout,
+                \$stderr,
+            );
+            ok(! defined $ret, "runstep() returned undefined value as expected");
+            like($stderr, qr/error: icuheaders not defined or invalid/s,
+                "Got expected warnings");
+            like($stderr, qr/Something is wrong with your ICU installation/s,
+                "Got expected warnings");
+        }
+    }
+}
+
+$conf->replenish($serialized);
+
+$args = process_options( {
+    argv => [ q{--verbose} ],
+    mode => q{configure},
+} );
+rerun_defaults_for_testing($conf, $args );
+$conf->add_steps($pkg);
+$conf->options->set( %{$args} );
+$step = test_step_constructor_and_description($conf);
+$phony = q{phony};
+$step->{icuconfig_default} = $phony;
+#print STDERR Dumper ($step, $conf);
+
+{
+    my ($stdout, $stderr);
+    my $ret;
+    capture(
+        sub { $ret = $step->runstep($conf); },
+        \$stdout,
+        \$stderr,
+    );
+    ok( $ret, "runstep() returned true value" );
+    my $expected = q{no icu-config};
+    is($step->result(), $expected,
+        "Got expected return value: $expected");
+    like($stdout,
+        qr/Discovered $step->{icuconfig_default} --exists returns/s,
+        "Got expected verbose output re return value",
+    );
+    like($stdout,
+        qr/Could not locate an icu-config program/s,
+        "Got expected verbose output re inability to locate icu-config program",
+    );
+}
+$step->set_result( q{} );
+
+$conf->options->set( verbose => undef );
+{
+    my ($stdout, $stderr);
+    my $ret;
+    capture(
+        sub { $ret = $step->runstep($conf); },
+        \$stdout,
+        \$stderr,
+    );
+    ok( $ret, "runstep() returned true value" );
+    my $expected = q{no icu-config};
+    is($step->result(), $expected,
+        "Got expected return value: $expected");
+    ok(! $stdout, "No verbose output captured, as expected");
+}
+
+$conf->replenish($serialized);
+
+{
+    my ($stdout, $stderr, $ret);
+    eval { ($stdout, $stderr, $ret) =
+        capture_output( qw| icu-config --exists | ); };
+    SKIP: {
+        skip "icu-config not available", 7 if $stderr;
+        $args = process_options(
+            {
+                argv => [ q{--icuheaders=alpha}, ],
+                mode => q{configure},
+            }
+        );
+        
+        rerun_defaults_for_testing($conf, $args );
+        $conf->add_steps($pkg);
+        $conf->options->set( %{$args} );
+        $step = test_step_constructor_and_description($conf);
+        
+        {
+            my ($stdout, $stderr, $ret);
+            capture(
+                sub { $ret = $step->runstep($conf); },
+                \$stdout,
+                \$stderr,
+            );
+            ok(! defined $ret, "runstep() returned undefined value as expected");
+            like($stderr, qr/error: icushared not defined/s,
+                "Got expected warnings");
+            like($stderr, qr/error: icuheaders not defined or invalid/s,
+                "Got expected warnings");
+            like($stderr, qr/Something is wrong with your ICU installation/s,
+                "Got expected warnings");
+        }
+    }
+}
+
+$conf->replenish($serialized);
+
+{
+    my ($stdout, $stderr, $ret);
+    eval { ($stdout, $stderr, $ret) =
+        capture_output( qw| icu-config --exists | ); };
+    SKIP: {
+        skip "icu-config not available", 9 if $stderr;
+        $args = process_options( {
+            argv => [ q{--verbose}, ],
+            mode => q{configure},
+        } );
+        rerun_defaults_for_testing($conf, $args );
+        $conf->add_steps($pkg);
+        $conf->options->set( %{$args} );
+        $step = test_step_constructor_and_description($conf);
+        {
+            my ($stdout, $stderr, $ret);
+            my $icuconfig;
+            my ($without, $icushared, $icuheaders);
+            capture(
+                sub {
+                    $icuconfig = $step->_handle_icuconfig_opt(1);
+                    ($without, $icushared, $icuheaders) = $step->_try_icuconfig(
+                        $conf,
+                        {
+                            without         => 0,
+                            autodetect      => 1,
+                            icuconfig       => $icuconfig,
+                            verbose         => 1,
+                        }
+                    );
+                },
+                \$stdout,
+                \$stderr,
+            );
+            like($stdout, qr/Trying $icuconfig with '--ldflags'/s,
+                "Got expected verbose output re --ldflags");
+            like($stdout, qr/icushared:  captured/s,
+                "Got expected verbose output re icushared");
+            like($stdout, qr/For icushared, found $icushared and $without/s,
+                "Got expected verbose output re icushared");
+            like($stdout, qr/Trying $icuconfig with '--prefix'/s,
+                "Got expected verbose output re --prefix");
+            like($stdout, qr/icuheaders:  captured/s,
+                "Got expected verbose output re icuheaders");
+            like($stdout, qr/For icuheaders, found $icuheaders and $without/s,
+                "Got expected verbose output re icuheaders");
+        }
+    }
+}
 
 pass("Completed all tests in $0");
 
