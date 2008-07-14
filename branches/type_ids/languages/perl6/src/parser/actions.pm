@@ -4,7 +4,9 @@
 
 class Perl6::Grammar::Actions ;
 
-##  Change this to be 'Perl6Scalar' to try the Mutable PMC version.
+##  Change this to be 'Failure' to turn off the Mutable PMC version.
+##  Note that to make this work again, you will also need to change:
+##   * scoped method, to not do new %0, %1
 our $?PERL6SCALAR := 'Perl6Scalar';
 
 method TOP($/) {
@@ -589,7 +591,7 @@ method signature($/) {
                     $cont_traits := $cont_traits + 1;
                 }
                 else {
-                    $/.panic("Cannot apply traits to parameters yet.");
+                    $/.panic("Cannot apply trait " ~ $name ~ " to parameters yet.");
                 }
             }
             else {
@@ -599,7 +601,7 @@ method signature($/) {
 
         # If we had is copy is rw or some other impossible combination, die.
         if $cont_traits > 1 {
-            $/.panic("Can only use one of ro, rw and copy on a parameter.");
+            $/.panic("Can only use one of readonly, rw and copy on a parameter.");
         }
 
         # Add any type check that is needed. The scheme for this: $type_check
@@ -702,7 +704,7 @@ method signature($/) {
                 )
             ));
         }
-        else {
+        elsif $cont_trait eq 'copy' {
             # Create a new container and copy the value into it..
             $past.push(PAST::Op.new(
                 :pasttype('bind'),
@@ -839,15 +841,17 @@ method postfix($/, $key) {
 
 
 method dotty($/, $key) {
-    my $past := $( $<methodop> );
+    my $past;
 
     if $key eq '.' {
-        # Just a normal method call; nothing to do.
+        # Just a normal method call.
+        $past := $( $<methodop> );
     }
     elsif $key eq '!' {
         # Private method call. Need to put ! on the start of the name
         # (unless it was call to a code object, in which case we don't do
         # anything more).
+        $past := $( $<methodop> );
         if $<methodop><name> {
             $past.name('!' ~ $past.name());
         }
@@ -861,6 +865,7 @@ method dotty($/, $key) {
         }
     }
     elsif $key eq '.*' {
+        $past := $( $<methodop> );
         if $/[0] eq '.?' || $/[0] eq '.+' || $/[0] eq '.*' {
             unless $<methodop><name> || $<methodop><quote>  {
                 $/.panic("Cannot use " ~ $/[0] ~ " when method is a code ref");
@@ -880,6 +885,13 @@ method dotty($/, $key) {
         else {
             $/.panic($/[0] ~ ' method calls not yet implemented');
         }
+    }
+    elsif $key eq 'VAR' {
+        $past := PAST::Op.new(
+            :pasttype('call'),
+            :name('!VAR'),
+            :node($/)
+        );
     }
 
     make $past;
@@ -1275,12 +1287,26 @@ method scoped($/) {
     if $<variable_decl> {
         $past := $( $<variable_decl> );
         if $<typename> {
-            my $type_pir := "    %r = new %0\n    %r.'infix:='(%1)\n    setprop %r, 'type', %1\n";
+            my $type_pir := "    %r = new %0, %1\n    setprop %r, 'type', %2\n";
+            my $type := $( $<typename>[0] );
             $past.viviself(
                 PAST::Op.new(
                     :inline($type_pir),
                     PAST::Val.new( :value(~$past.viviself()) ),
-                    $( $<typename>[0] )
+                    PAST::Op.new(
+                        :pasttype('if'),
+                        PAST::Op.new(
+                            :pirop('isa'),
+                            $type,
+                            PAST::Val.new( :value("P6protoobject") )
+                        ),
+                        $type,
+                        PAST::Var.new(
+                            :name('Failure'),
+                            :scope('package')
+                        )
+                    ),
+                    $type
                 )
             );
         }
@@ -1689,7 +1715,7 @@ method integer($/) {
 
 
 method dec_number($/) {
-    make PAST::Val.new( :value( +$/ ), :returns('Num'), :node( $/ ) );
+    make PAST::Val.new( :value( ~$/ ), :returns('Num'), :node( $/ ) );
 }
 
 method radint($/, $key) {
@@ -1783,8 +1809,12 @@ method quote_term($/, $key) {
             :returns('Perl6Str'), :node($/)
         );
     }
-    if ($key eq 'variable') {
+    elsif ($key eq 'variable') {
         $past := $( $<variable> );
+    }
+    elsif ($key eq 'circumfix') {
+        $past := $( $<circumfix> );
+        $past.blocktype('immediate');
     }
     make $past;
 }
@@ -1808,10 +1838,21 @@ method typename($/) {
 }
 
 
-method subcall($/) {
-    my $past := build_call( $( $<semilist> ) );
-    $past.name( ~$<ident> );
-    $past.node( $/ );
+method subcall($/, $key) {
+    my $past;
+    if $key eq 'subcall' {
+        $past := build_call( $( $<semilist> ) );
+        $past.name( ~$<ident> );
+        $past.node( $/ );
+    }
+    elsif $key eq 'VAR' {
+        $past := PAST::Op.new(
+            :pasttype('call'),
+            :name('!VAR'),
+            :node($/),
+            $( $<variable> )
+        );
+    }
     make $past;
 }
 
@@ -1879,12 +1920,11 @@ method EXPR($/, $key) {
     }
     else {
         my $past := PAST::Op.new(
+            :node($/),
             :name($<type>),
-            :pasttype($<top><pasttype>),
-            :pirop($<top><pirop>),
-            :lvalue($<top><lvalue>),
-            :node($/)
+            :opattr($<top>)
         );
+        if $<top><subname> { $past.name(~$<top><subname>); }
         for @($/) {
             unless +$_.from() == +$_.to() { $past.push( $($_) ) };
         }
