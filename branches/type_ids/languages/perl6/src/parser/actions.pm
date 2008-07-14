@@ -569,16 +569,15 @@ method signature($/) {
             ));
         }
 
-        # See if we have any traits. For now, we just handle ro, rw and
-        # copy.
-        my $cont_trait := 'ro';
+        # See if we have any traits. For now, we just handle ro, rw and copy.
+        my $cont_trait := 'readonly';
         my $cont_traits := 0;
         for $_<parameter><trait> {
             if $_<trait_auxiliary> {
                 # Get name of the trait and see if it's one of the special
                 # traits we handle in the compiler.
                 my $name := $_<trait_auxiliary><ident>;
-                if $name eq 'ro' {
+                if $name eq 'readonly' {
                     $cont_traits := $cont_traits + 1;
                 }
                 elsif $name eq 'rw' {
@@ -684,7 +683,7 @@ method signature($/) {
         if $cont_trait eq 'rw' {
             # We just leave it as it is.
         }
-        elsif $cont_trait eq 'ro' {
+        elsif $cont_trait eq 'readonly' {
             # Create a new container with ro set and bind the parameter to it.
             $past.push(PAST::Op.new(
                 :pasttype('bind'),
@@ -693,9 +692,9 @@ method signature($/) {
                     :scope('lexical')
                 ),
                 PAST::Op.new(
-                    :inline("    %r = new 'Perl6Scalar', %0\n" ~
-                            "    $P0 = get_hll_global ['Bool'], 'True'\n" ~
-                            "    setprop %r, 'ro', $P0\n"),
+                    :inline(" %r = new 'Perl6Scalar', %0\n" ~
+                            " $P0 = get_hll_global ['Bool'], 'True'\n" ~
+                            " setprop %r, 'readonly', $P0\n"),
                     PAST::Var.new(
                         :name($parameter.name()),
                         :scope('lexical')
@@ -708,12 +707,12 @@ method signature($/) {
             $past.push(PAST::Op.new(
                 :pasttype('bind'),
                 PAST::Var.new(
-                    :name($parameter.name()),
-                    :scope('lexical')
+                :name($parameter.name()),
+                :scope('lexical')
                 ),
                 PAST::Op.new(
-                    :inline("    %r = new 'Perl6Scalar'\n" ~
-                            "    %r.'infix:='(%0)\n"),
+                    :inline(" %r = new 'Perl6Scalar'\n" ~
+                            " %r.'infix:='(%0)\n"),
                     PAST::Var.new(
                         :name($parameter.name()),
                         :scope('lexical')
@@ -1927,10 +1926,25 @@ method type_declarator($/) {
     # We need a block containing the constraint condition.
     my $past := $( $<EXPR> );
     if $past.WHAT() ne 'Block' {
-        # Make block with the expression as its contents.
+        # Make block with a smart match of the the expression as its contents.
         $past := PAST::Block.new(
-            PAST::Stmts.new(),
-            PAST::Stmts.new( $past )
+            PAST::Stmts.new(
+                PAST::Var.new(
+                    :scope('parameter'),
+                    :name('$_')
+                )
+            ),
+            PAST::Stmts.new(
+                PAST::Op.new(
+                    :pasttype('callmethod'),
+                    :name('ACCEPTS'),
+                    $past,
+                    PAST::Var.new(
+                        :scope('lexical'),
+                        :name('$_')
+                    )
+                )
+            )
         );
     }
 
