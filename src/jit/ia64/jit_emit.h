@@ -233,58 +233,58 @@ enum {
 
 /* Pseudo instructions. */
 #  define jit_emit_mov_ri_i(pc, dest, imm) \
-    emit_x2(pc, dest, ((long)(imm)));
+    emit_x2((pc), (dest), ((long)(imm)));
 
 /* Store a CPU register back to a Parrot register. */
 
 #  define jit_emit_mov_mr_i(pc, addr, reg) \
-    emit_a4(pc, R_INTREP, (((char *)addr) - ((char *)interp)), ISR2); \
-    emit_m4(pc, 0x33, ISR2, reg);
+    emit_a4((pc), R_INTREP, (((char *)(addr)) - ((char *)(interp))), ISR2); \
+    emit_m4((pc), 0x33, ISR2, (reg));
 
 #  define jit_emit_mov_rm_i(pc, reg, addr) \
-    emit_a4(pc, R_INTREP, (((char *)addr) - ((char *)interp)), ISR2); \
-    emit_m1(pc, 0x3, ISR2, reg);
+    emit_a4((pc), R_INTREP, (((char *)(addr)) - ((char *)(interp))), ISR2); \
+    emit_m1((pc), 0x3, ISR2, (reg));
 
 #  define jit_emit_mov_rr(pc, dst, src) \
-    emit_a4(pc, src, 0, dst);
+    emit_a4((pc), (src), 0, (dst));
 
 #  define jit_emit_add_rrr(pc, D, A, B) \
-    emit_a1(pc, 0, 0, 0, 0, A, B, D);
+    emit_a1((pc), 0, 0, 0, 0, (A), (B), (D));
 
 #  define jit_emit_sub_rrr(pc, D, A, B) \
-    emit_a1(pc, 0, 0, 1, 1, B, A, D);
+    emit_a1((pc), 0, 0, 1, 1, (B), (A), (D));
 
 #  define jit_emit_neg_rr(pc, D, A) \
-    emit_a1(pc, 0, 0, 1, 1, A, 0, D);
+    emit_a1((pc), 0, 0, 1, 1, (A), 0, (D));
 
 #  define jit_emit_and_rrr(pc, D, A, B) \
-    emit_a1(pc, 0, 0, 3, 0, A, B, D);
+    emit_a1((pc), 0, 0, 3, 0, (A), (B), (D));
 
 #  define jit_emit_or_rrr(pc, D, A, B) \
-    emit_a1(pc, 0, 0, 3, 2, A, B, D);
+    emit_a1((pc), 0, 0, 3, 2, (A), (B), (D));
 
 #  define jit_emit_xor_rrr(pc, D, A, B) \
-    emit_a1(pc, 0, 0, 3, 3, A, B, D);
+    emit_a1((pc), 0, 0, 3, 3, (A), (B), (D));
 
 #  define jit_emit_mov_nr(pc, dst, src) \
-    emit_m18(pc, fr_sig, dst, src);
+    emit_m18((pc), (fr_sig), (dst), (src));
 
 #  define jit_emit_mov_rn(pc, dst, src) \
-    emit_m19(pc, fr_sig, dst, src);
+    emit_m19((pc), (fr_sig), (dst), (src));
 
 #  define jit_emit_cmp_r0(pc, src) \
     emit_a6(pc, 0xE, 0, 2, 0, 0, 7, src, 0, 6);
 
 #  define jit_emit_nop(pc) \
-    it = emit_fill_nop_m; \
-    pc = loadinst(pc, it, IT_M);
+    (it) = emit_fill_nop_m; \
+    (pc) = loadinst((pc), it, IT_M);
 
 #  define jit_emit_end(pc) \
-    emit_i26(pc, PFS, RSF); \
-    emit_i21(pc, 0, R_RETURN_ADR); \
+    emit_i26((pc), PFS, RSF); \
+    emit_i21((pc), 0, R_RETURN_ADR); \
     jit_emit_mov_rr(NATIVE_PTR, 12, 35); \
-    emit_b4(pc, dh_none, bwh_sptk, 0x21, 0, ph_many, 4); \
-    pc = close_template(pc);
+    emit_b4((pc), dh_none, bwh_sptk, 0x21, 0, ph_many, 4); \
+    (pc) = close_template((pc));
 
 #  define emit_fill_nop 0x4000000
 #  define emit_fill_nop_m 0x8000000
@@ -578,8 +578,7 @@ jit_emit_bc(Parrot_jit_info_t *jit_info, opcode_t disp)
 }
 
 static void
-Parrot_jit_jump_to_ret(Parrot_jit_info_t *jit_info,
-                 PARROT_INTERP)
+Parrot_jit_jump_to_ret(Parrot_jit_info_t *jit_info, PARROT_INTERP)
 {
     jit_emit_sub_rrr(NATIVE_PTR, ISR1, R_RETURN, R_BYTECODE);
     jit_emit_add_rrr(NATIVE_PTR, ISR1, ISR1, R_OPMAP);
@@ -590,8 +589,7 @@ Parrot_jit_jump_to_ret(Parrot_jit_info_t *jit_info,
 }
 
 void
-Parrot_jit_begin(Parrot_jit_info_t *jit_info,
-                 PARROT_INTERP)
+Parrot_jit_begin(Parrot_jit_info_t *jit_info, PARROT_INTERP)
 {
     emit_m34(NATIVE_PTR, RSRV_REG, 2, 0, RSF);
     jit_emit_mov_rr(NATIVE_PTR, 1, 4);
@@ -620,8 +618,7 @@ fixup_jump_addr(char *fixup_ptr, long d)
 }
 
 void
-Parrot_jit_dofixup(Parrot_jit_info_t *jit_info,
-                   PARROT_INTERP)
+Parrot_jit_dofixup(Parrot_jit_info_t *jit_info, PARROT_INTERP)
 {
     Parrot_jit_fixup_t *fixup;
     char *fixup_ptr, *pit, *disp;
@@ -653,8 +650,7 @@ Parrot_jit_dofixup(Parrot_jit_info_t *jit_info,
 }
 
 void
-Parrot_jit_normal_op(Parrot_jit_info_t *jit_info,
-                     PARROT_INTERP)
+Parrot_jit_normal_op(Parrot_jit_info_t *jit_info, PARROT_INTERP)
 {
     emit_a4(NATIVE_PTR, R_BYTECODE,
         ((long)jit_info->cur_op - (long)interp->code->base.data),
@@ -676,8 +672,7 @@ Parrot_jit_normal_op(Parrot_jit_info_t *jit_info,
 }
 
 void
-Parrot_jit_cpcf_op(Parrot_jit_info_t *jit_info,
-                   PARROT_INTERP)
+Parrot_jit_cpcf_op(Parrot_jit_info_t *jit_info, PARROT_INTERP)
 {
     Parrot_jit_normal_op(jit_info, interp);
     Parrot_jit_jump_to_ret(jit_info, interp);
@@ -685,8 +680,7 @@ Parrot_jit_cpcf_op(Parrot_jit_info_t *jit_info,
 
 #  undef Parrot_jit_restart_op
 void
-Parrot_jit_restart_op(Parrot_jit_info_t *jit_info,
-                   PARROT_INTERP)
+Parrot_jit_restart_op(Parrot_jit_info_t *jit_info, PARROT_INTERP)
 {
     char *jmp_ptr, *sav_ptr;
 

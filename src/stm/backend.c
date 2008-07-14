@@ -964,10 +964,8 @@ Parrot_STM_abort(PARROT_INTERP)
 
     STM_TRACE_SAFE("abort");
 
-    if (log->depth == 0) {
+    if (log->depth == 0)
         real_exception(interp, NULL, 1, "stm_abort without transaction\n");
-        return;
-    }
 
     PARROT_ASSERT(log->depth > 0);
 
@@ -1863,7 +1861,7 @@ Parrot_STM_dump_profile(PARROT_INTERP)
     STM_profile_data *profile;
     INTVAL            i;
 
-    Parrot_block_DOD(interp);
+    Parrot_block_GC_mark(interp);
 
     log     = Parrot_STM_tx_log_get(interp);
     profile = &PROFILE(log);
@@ -1895,7 +1893,7 @@ Parrot_STM_dump_profile(PARROT_INTERP)
     fprintf(stderr, "\nAverage cycles: %f\n",
         (double) profile->total_wait_cycles / (double) profile->num_waits);
 
-    Parrot_unblock_DOD(interp);
+    Parrot_unblock_GC_mark(interp);
 }
 
 /*

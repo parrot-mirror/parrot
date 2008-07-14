@@ -25,7 +25,7 @@ generated from F<src/vtable.tbl> by F<tools/build/pmc2c.pl>.
 
 #define INT2KEY(i, k) key_new_integer((i), (k))
 
-/* undef 'interface', because msvc is craptastic */
+/* undef 'interface' to keep MSVC happy */
 #undef interface
 
 /*
@@ -209,7 +209,7 @@ make_prop_hash(PARROT_INTERP, PMC *self) {
         add_pmc_ext(interp, self);
 
     PMC_metadata(self) = prop = pmc_new_noinit(interp, enum_class_Hash);
-    DOD_WRITE_BARRIER(interp, self, NULL, prop);
+    GC_WRITE_BARRIER(interp, self, NULL, prop);
     VTABLE_init(interp, prop);
     propagate_std_props(interp, self, prop);
     return prop;
@@ -915,8 +915,8 @@ true (1) is returned; otherwise, false (0) is returned.
 
     VTABLE INTVAL isa_pmc(PMC *lookup) {
         /* RT #46665 - walk mro */
-        return does_isa(INTERP, VTABLE_get_string(INTERP, lookup),
-                SELF->vtable->isa_str);
+        return parrot_hash_exists(INTERP, SELF->vtable->isa_hash,
+                (void *)VTABLE_get_string(interp, lookup));
     }
 
 /*
@@ -933,7 +933,8 @@ true (1) is returned; otherwise, false (0) is returned.
 
     VTABLE INTVAL isa(STRING *_class) {
         /* RT #46665 - walk mro */
-        return does_isa(INTERP, _class, SELF->vtable->isa_str);
+        return parrot_hash_exists(INTERP, SELF->vtable->isa_hash,
+                    (void *)_class);
     }
 
 /*
@@ -993,11 +994,21 @@ Look for NCI methods and properties.
 
 */
     VTABLE PMC *get_class() {
-        /* Create a proxy */
-        INTVAL  type     = VTABLE_type(interp, SELF);
-        PMC    *type_num = pmc_new(interp, enum_class_Integer);
-        VTABLE_set_integer_native(interp, type_num, type);
-        return pmc_new_init(interp, enum_class_PMCProxy, type_num);
+        PMC *ns     = VTABLE_get_namespace(interp, SELF);
+        PMC *_class = PMCNULL;
+
+        if (!PMC_IS_NULL(ns))
+            _class = VTABLE_get_class(interp, ns);
+
+        if (PMC_IS_NULL(_class)) {
+            INTVAL type      = VTABLE_type(interp, SELF);
+            PMC   *type_num  = pmc_new(interp, enum_class_Integer);
+            VTABLE_set_integer_native(interp, type_num, type);
+            return pmc_new_init(interp, enum_class_PMCProxy, type_num);
+        }
+
+        return _class;
+
     }
 
     VTABLE PMC *get_attr_str(STRING *name) {

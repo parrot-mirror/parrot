@@ -294,9 +294,8 @@ typedef struct _context_mem {
 } context_mem;
 
 struct _handler_node_t; /* forward def - exit.h */
-/*
- * The actual interpreter structure
- */
+
+/* The actual interpreter structure */
 struct parrot_interp_t {
     struct Interp_Context ctx;
     context_mem           ctx_mem;            /* ctx memory managment */
@@ -388,7 +387,8 @@ struct parrot_interp_t {
 
     struct _Caches * caches;                  /* see caches.h */
 
-    STRING **const_cstring_table;             /* CONST_STRING(x) items */
+    STRING     **const_cstring_table;         /* CONST_STRING(x) items */
+    Hash        *const_cstring_hash;          /* cache of const_string items */
 
     struct QUEUE* task_queue;                 /* per interpreter queue */
     struct _handler_node_t *exit_handler_list;/* exit.c */
@@ -456,12 +456,12 @@ typedef enum {
 
 #if PARROT_CATCH_NULL
 PARROT_DATA PMC * PMCNULL;   /* Holds single Null PMC */
-#  define PMC_IS_NULL(p)  ((p) == PMCNULL || (p) == NULL)
 #else
 #  define PMCNULL         ((PMC *)NULL)
-#  define PMC_IS_NULL(p)  ((p) == PMCNULL)
 #endif /* PARROT_CATCH_NULL */
 
+/* Maybe PMC_IS_NULL(interp, pmc) ? */
+#define PMC_IS_NULL(pmc) PMC_is_null(NULL, (pmc))
 
 #define STRING_IS_NULL(s) ((s) == NULL)
 #define STRING_IS_EMPTY(s) !(int)(s)->strlen

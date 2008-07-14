@@ -183,10 +183,10 @@ emit_branch(char *pc,
 }
 
 #  define emit_b(pc, cond, imm) \
-    emit_branch(pc, cond, 0, imm)
+    emit_branch((pc), (cond), 0, (imm))
 
 #  define emit_bl(pc, cond, imm) \
-    emit_branch(pc, cond, 1, imm)
+    emit_branch((pc), (cond), 1, (imm))
 
 
 #  define reg2mask(reg) (1<<(reg))
@@ -261,7 +261,7 @@ emit_ldmstm_x(char *pc,
 /* Is is going to be rare to non existent that anyone needs to use the ^
    syntax on LDM or STM, so make it easy to generate the normal form:  */
 #  define emit_ldmstm(pc, cond, l_s, direction, writeback, base, regmask) \
-      emit_ldmstm_x(pc, cond, l_s, direction, 0, writeback, base, regmask)
+      emit_ldmstm_x((pc), (cond), (l_s), (direction), 0, (writeback), (base), (regmask))
 
 /* Load / Store
  *
@@ -358,14 +358,13 @@ emit_ldrstr_offset(char *pc,
                     int offset)
 {
     ldr_str_dir_t direction = dir_Up;
-    if (offset > 4095 || offset < -4095) {
-        internal_exception(JIT_ERROR,
-                           "Unable to generate offset %d, larger than 4095\n",
-                           offset);
-    }
+    if (offset > 4095 || offset < -4095)
+        real_exception(interp, NULL, JIT_ERROR,
+            "Unable to generate offset %d, larger than 4095\n", offset);
+
     if (offset < 0) {
         direction = dir_Down;
-        offset = -offset;
+        offset    = -offset;
     }
     return emit_ldrstr(pc, cond, l_s, direction, pre, writeback, byte, dest,
                        base, 0, offset);
@@ -559,22 +558,22 @@ constant_not(int value,  struct constant *result)
 
 /* eg add r0, r3, r7  */
 #  define emit_arith_reg(pc, cond, op, status, rd, rn, rm) \
-      emit_arith(pc, cond, op, status, rd, rn, 0, rm)
+      emit_arith((pc), (cond), (op), (status), (rd), (rn), 0, (rm))
 
 /* eg sub r0, r3, r7 lsr #3 */
 #  define emit_arith_reg_shift_const(pc, cond, op, status, rd, rn, rm, shift, by) \
-      emit_arith(pc, cond, op, status, rd, rn, 0, ((by) << 7) | shift | 0 | (rm))
+      emit_arith((pc), (cond), (op), (status), (rd), (rn), 0, ((by) << 7) | (shift) | 0 | (rm))
 
 /* eg orrs r1, r2, r1 rrx */
 #  define emit_arith_reg_rrx(pc, cond, op, status, rd, rn, rm) \
-      emit_arith(pc, cond, op, status, rd, rn, 0, shift_ROR | 0 | (rm))
+      emit_arith((pc), (cond), (op), (status), (rd), (rn), 0, shift_ROR | 0 | (rm))
 
 /* I believe these take 2 cycles (due to having to access a 4th register.  */
 #  define emit_arith_reg_shift_reg(pc, cond, op, status, rd, rn, rm, shift, rs) \
-      emit_arith(pc, cond, op, status, rd, rn, 0, ((rs) << 8) | shift | 0x10 | (rm))
+      emit_arith((pc), (cond), (op), (status), (rd), (rn), 0, ((rs) << 8) | (shift) | 0x10 | (rm))
 
 #  define emit_arith_immediate(pc, cond, op, status, rd, rn, val, rotate) \
-      emit_arith(pc, cond, op, status, rd, rn, 2, ((rotate) << 8) | (val))
+      emit_arith((pc), (cond), (op), (status), (rd), (rn), 2, ((rotate) << 8) | (val))
 
 /* I'll use mov r0, r0 as my NOP for now.  */
 #  define emit_nop(pc) emit_mov((pc), r0, r0)
@@ -678,11 +677,11 @@ Parrot_jit_int_load(Parrot_jit_info_t *jit_info,
         case PARROT_ARG_I:
             offset = ((char *)&interp->int_reg.registers[val])
                 - (char *)interp;
-            if (offset > 4095) {
+            if (offset > 4095)
                 real_exception(interp, NULL, JIT_ERROR,
-                                   "integer load register %d generates offset %d, larger than 4095\n",
-                           val, offset);
-            }
+                       "integer load register %d generates offset %d, "
+                       "larger than 4095\n", val, offset);
+
             jit_info->native_ptr = emit_ldrstr_offset(jit_info->native_ptr,
                                                        cond,
                                                        is_load,
@@ -701,8 +700,7 @@ Parrot_jit_int_load(Parrot_jit_info_t *jit_info,
             break;
         default:
             real_exception(interp, NULL, JIT_ERROR,
-                               "Unsupported op parameter type %d in jit_int_load\n",
-                               op_type);
+               "Unsupported op parameter type %d in jit_int_load\n", op_type);
     }
 }
 
@@ -722,11 +720,12 @@ Parrot_jit_int_store(Parrot_jit_info_t *jit_info,
         case PARROT_ARG_I:
             offset = ((char *)&interp->int_reg.registers[val])
                 - (char *)interp;
-            if (offset > 4095) {
+
+            if (offset > 4095)
                 real_exception(interp, NULL, JIT_ERROR,
-                                   "integer store register %d generates offset %d, larger than 4095\n",
-                           val, offset);
-            }
+                    "integer store register %d generates offset %d, "
+                    "larger than 4095\n", val, offset);
+
             jit_info->native_ptr = emit_ldrstr_offset(jit_info->native_ptr,
                                                        cond,
                                                        is_store,
@@ -740,8 +739,7 @@ Parrot_jit_int_store(Parrot_jit_info_t *jit_info,
         case PARROT_ARG_N:
         default:
             real_exception(interp, NULL, JIT_ERROR,
-                            "Unsupported op parameter type %d in jit_int_store\n",
-                               op_type);
+                "Unsupported op parameter type %d in jit_int_store\n", op_type);
     }
 }
 
@@ -784,15 +782,15 @@ Parrot_jit_arith_const_alternate(Parrot_jit_info_t *jit_info,
 }
 
 #  define Parrot_jit_arith_const_neg(ji, i, cond, plus, minus, dest, src, const_val) \
-      Parrot_jit_arith_const_alternate(ji, i, cond, fits_as_neg, \
-                      plus, minus, dest, src, const_val)
+      Parrot_jit_arith_const_alternate((ji), (i), (cond), fits_as_neg, \
+                      (plus), (minus), (dest), (src), (const_val))
 
 #  define Parrot_jit_arith_const_not(ji, i, cond, plus, minus, dest, src, const_val) \
-      Parrot_jit_arith_const_alternate(ji, i, cond, fits_as_not, \
-                      plus, minus, dest, src, const_val)
+      Parrot_jit_arith_const_alternate((ji), (i), (cond), fits_as_not, \
+                      (plus), (minus), (dest), (src), (const_val))
 #  define Parrot_jit_arith_const(ji, i, cond, plus, dest, src, const_val) \
-      Parrot_jit_arith_const_alternate(ji, i, cond, fits_as_is, \
-                      plus, plus, dest, src, const_val)
+      Parrot_jit_arith_const_alternate((ji), (i), (cond), fits_as_is, \
+                      (plus), (plus), (dest), (src), (const_val))
 
 
 /* branching on if cannot (in future) be conditional (easily), because we
@@ -838,8 +836,7 @@ Parrot_jit_jumpif_const(Parrot_jit_info_t *jit_info,
 
 static void
 Parrot_jump_to_op_in_reg(Parrot_jit_info_t *jit_info,
-                         Interp * interp,
-                         arm_register_t reg)
+                         PARROT_INTERP, arm_register_t reg)
 {
     /* This is effectively the pseudo-opcode ldr - ie load relative to PC.
        So offset includes pipeline.  */
@@ -862,8 +859,7 @@ Parrot_jump_to_op_in_reg(Parrot_jit_info_t *jit_info,
 #endif /* JIT_EMIT */
 #if JIT_EMIT == 2
 
-void Parrot_jit_dofixup(Parrot_jit_info_t *jit_info,
-                        PARROT_INTERP)
+void Parrot_jit_dofixup(Parrot_jit_info_t *jit_info, PARROT_INTERP)
 {
     Parrot_jit_fixup_t *fixup = jit_info->arena.fixups;
 
@@ -881,8 +877,8 @@ void Parrot_jit_dofixup(Parrot_jit_info_t *jit_info,
                 break;
             }
             default:
-                real_exception(interp, NULL, JIT_ERROR, "Unknown fixup type:%d\n",
-                                   fixup->type);
+                real_exception(interp, NULL, JIT_ERROR,
+                    "Unknown fixup type:%d\n", fixup->type);
                 break;
         }
         fixup = fixup->next;
@@ -897,8 +893,7 @@ void Parrot_jit_dofixup(Parrot_jit_info_t *jit_info,
 */
 
 void
-Parrot_jit_begin(Parrot_jit_info_t *jit_info,
-                 PARROT_INTERP)
+Parrot_jit_begin(Parrot_jit_info_t *jit_info, PARROT_INTERP)
 {
     jit_info->native_ptr = emit_mov(jit_info->native_ptr, REG12_ip, REG13_sp);
     jit_info->native_ptr = emit_ldmstm(jit_info->native_ptr,
@@ -952,8 +947,7 @@ need to adr beyond:
     .L2:                      ; next instruction - return point from func.
 */
 void
-Parrot_jit_normal_op(Parrot_jit_info_t *jit_info,
-                     PARROT_INTERP)
+Parrot_jit_normal_op(Parrot_jit_info_t *jit_info, PARROT_INTERP)
 {
     jit_info->native_ptr = emit_mov(jit_info->native_ptr, r1, r4);
 #  ifndef ARM_K_BUG
@@ -984,8 +978,7 @@ Parrot_jit_normal_op(Parrot_jit_info_t *jit_info,
 /* We get back address of opcode in bytecode.
    We want address of equivalent bit of jit code, which is stored as an
    address at the same offset in a jit table. */
-void Parrot_jit_cpcf_op(Parrot_jit_info_t *jit_info,
-                        PARROT_INTERP)
+void Parrot_jit_cpcf_op(Parrot_jit_info_t *jit_info, PARROT_INTERP)
 {
     Parrot_jit_normal_op(jit_info, interp);
     Parrot_jump_to_op_in_reg(jit_info, interp, r0);
@@ -1082,11 +1075,10 @@ arm_sync_d_i_cache(void *start, void *end)
         : "r" ((long)start), "r" ((long)end)
         : "r0", "r1", "r2");
 
-    if (result < 0) {
-        internal_exception(JIT_ERROR,
-                           "Synchronising I and D caches failed with errno=%d\n",
-                           -result);
-    }
+    if (result < 0)
+        real_exception(interp, NULL, JIT_ERROR,
+               "Synchronising I and D caches failed with errno=%d\n", -result);
+
 #      else
 #        error "ARM needs to sync D and I caches, and I don't know how to embed assmbler on this C compiler"
 #      endif
