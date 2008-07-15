@@ -25,7 +25,7 @@ token ws {
 }
 
 rule statement {
-    'puts' '-nonewline'? <expression> ';'
+    'puts' '-nonewline'? <value> ';'
     {*}
 }
 
