@@ -147,9 +147,12 @@ $args = process_options( {
 $conf->options->set(%{$args});
 $step = test_step_constructor_and_description($conf);
 # mock no Macports root directory
-$step->{ports_root} = undef;
-ok($step->runstep($conf), "runstep() returned true value");
-is($step->result(), 'no', "Got expected result");
+SKIP: {
+    skip 'Macports is Darwin only', 2 unless $^O =~ /darwin/;
+    $step->{ports_root} = undef;
+    ok($step->runstep($conf), "runstep() returned true value");
+    is($step->result(), 'no', "Got expected result");
+}
 
 $conf->replenish($serialized);
 
