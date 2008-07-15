@@ -3,6 +3,9 @@
 =begin overview
 
 This is the grammar for tcl written as a sequence of Perl 6 rules.
+Note that this isn't tcl's true grammar, we're cheating a bit to
+pretend the builtins are part of the grammar, when we know they're
+not. We'll eventually remove them if they get redefined.
 
 =end overview
 
@@ -22,7 +25,7 @@ token ws {
 }
 
 rule statement {
-    'puts' <expression> ';'
+    'puts' '-nonewline'? <expression> ';'
     {*}
 }
 
@@ -44,4 +47,3 @@ token term {
 }
 
 rule expression is optable { ... }
-

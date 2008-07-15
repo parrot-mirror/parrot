@@ -2,5 +2,4 @@
 puts "1..3";
 puts "ok 1";
 puts "ok 2";
-puts "ok 3";
-
+puts -nonewline "ok 3"; # This is currently broken.
