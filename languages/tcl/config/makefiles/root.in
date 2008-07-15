@@ -2,6 +2,9 @@
 
 ## arguments we want to run parrot with
 PARROT_ARGS =
+#CONDITIONED_LINE(darwin):
+#CONDITIONED_LINE(darwin):# MACOSX_DEPLOYMENT_TARGET must be defined for OS X compilation/linking
+#CONDITIONED_LINE(darwin):export MACOSX_DEPLOYMENT_TARGET := @osx_version@
 
 ## configuration settings
 BUILD_DIR     = @build_dir@

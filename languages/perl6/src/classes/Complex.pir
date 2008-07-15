@@ -24,9 +24,10 @@ Implementation is a bit different from other basic objects (Int...) because
     p6meta = get_hll_global ['Perl6Object'], '$!P6META'
     complexproto = p6meta.'new_class'('Perl6Complex', 'parent'=>'Complex Any', 'name'=>'Complex')
     p6meta.'register'('Complex', 'parent'=>complexproto, 'protoobject'=>complexproto)
-.end
 
-# TODO ACCEPTS()
+    $P0 = get_hll_namespace ['Perl6Complex']
+    '!EXPORT'('exp polar sqrt', 'from'=>$P0)
+.end
 
 =item perl()
 
@@ -37,6 +38,46 @@ Returns a Perl representation of the Complex.
 .sub 'perl' :method
     $S0 = self
     .return ($S0)
+.end
+
+=back
+
+=head2 Subs
+
+=over 4
+
+=item exp
+
+=cut
+
+.sub 'exp' :method :multi('Complex')
+    $P0 = exp self
+    .return ($P0)
+.end
+
+=item polar
+
+=cut
+
+.sub 'polar' :method :multi('Complex')
+    .local num real, imag, magnitude, angle
+    real = self[0]
+    imag = self[1]
+    $N0 = real * real
+    $N1 = imag * imag
+    $N2 = $N0 + $N1
+    magnitude = sqrt $N2
+    angle = atan imag, real
+    .return 'list'(magnitude, angle)
+.end
+
+=item sqrt
+
+=cut
+
+.sub 'sqrt' :method :multi('Complex')
+    $P0 = sqrt self
+    .return ($P0)
 .end
 
 
@@ -53,10 +94,11 @@ Returns a Perl representation of the Complex.
 .namespace []
 
 .sub 'postfix:i' :multi(_)
-    .param num a
+    .param pmc a
     .local pmc proto
     $P0 = new 'Complex'
-    $P0[1] = a
+    $P0[1] = 1.0
+    mul $P0, $P0, a
     .return ($P0)
 .end
 
@@ -81,6 +123,14 @@ Returns a Perl representation of the Complex.
     .return ($P0)
 .end
 
+=item prefix:+
+
+=cut
+
+.sub 'prefix:+' :multi('Complex')
+    .param pmc a
+    .return (a)
+.end
 
 =item infix:-
 
@@ -100,6 +150,16 @@ Returns a Perl representation of the Complex.
     $P0 = new 'Complex'
     sub $P0, a, b
     .return ($P0)
+.end
+
+=item prefix:-
+
+=cut
+
+.sub 'prefix:-' :multi('Complex')
+    .param pmc a
+    a = neg a
+    .return (a)
 .end
 
 
