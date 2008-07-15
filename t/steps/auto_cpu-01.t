@@ -77,7 +77,7 @@ $conf->add_steps($pkg);
 $conf->options->set( %{$args} );
 $step = test_step_constructor_and_description($conf);
 $conf->data->set('cpuarch' => 'foobar');
-my $ret = $step->runstep($conf);
+$ret = $step->runstep($conf);
 ok($ret, "runstep() returned true value" );
 ok(! $step->result(), "Got (default) false result as expected");
 

@@ -33,7 +33,7 @@ my $pkg = q{auto::format};
 
 $conf->add_steps($pkg);
 $conf->options->set(%{$args});
-my $step = test_step_constructor_and_description($conf);
+$step = test_step_constructor_and_description($conf);
 {
     $conf->data->set( iv => 'int' );
     auto::format::_set_intvalfmt($conf);
