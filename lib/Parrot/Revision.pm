@@ -1,4 +1,4 @@
-# Copyright (C) 2005-2007, The Perl Foundation.
+# Copyright (C) 2005-2008, The Perl Foundation.
 # $Id$
 
 =head1 NAME
@@ -31,7 +31,7 @@ sub update {
     my $prev = _get_revision();
     my $current = _analyze_sandbox();
     if (defined ($prev) && ($current ne $prev)) {
-    	$current = 'unknown' unless defined $current;
+        $current = 'unknown' unless defined $current;
         eval {
             open my $FH, ">", $cache;
             print $FH "$current\n";
