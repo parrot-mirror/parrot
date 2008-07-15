@@ -29,7 +29,7 @@ method TOP($/) {
 
 method statement($/) {
     my $past := PAST::Op.new( :name('puts'), :pasttype('call'), :node( $/ ) );
-    $past.push( $( $<expression> ) );
+    $past.push( $( $<value> ) );
     make $past;
 }
 
