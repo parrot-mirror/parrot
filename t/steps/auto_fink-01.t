@@ -72,9 +72,11 @@ $conf->options->set(%{$args});
 $step = test_step_constructor_and_description($conf);
 $step->{fink_conf} = q{my_ridiculous_foobar};
 my $msg = q{Fink not installed};
-ok($step->runstep($conf), "runstep() returned true value");
-is($step->result(), $msg,
-    "Got expected result for $msg");
+SKIP: {
+    skip 'Fink is Darwin only', 2 unless $^O =~ /darwin/;
+    ok($step->runstep($conf), "runstep() returned true value");
+    is($step->result(), $msg, "Got expected result for $msg");
+}
 
 $conf->replenish($serialized);
 
