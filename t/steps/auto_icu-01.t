@@ -5,7 +5,7 @@
 
 use strict;
 use warnings;
-use Test::More tests => 127;
+use Test::More tests => 136;
 use Carp;
 use Cwd;
 use File::Path qw( mkpath );
