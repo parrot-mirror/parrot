@@ -98,7 +98,7 @@ typedef enum {
 #define Sub_comp_flag_CLEAR(flag, o) (Sub_comp_get_FLAGS(o) &= ~(UINTVAL)(SUB_COMP_FLAG_ ## flag))
 
 #define Sub_comp_flags_SETTO(o, f) Sub_comp_get_FLAGS(o) = (f)
-#define Sub_comp_flags_CLEARALL(o) Sub_comp_flags_SETTO(o, 0)
+#define Sub_comp_flags_CLEARALL(o) Sub_comp_flags_SETTO((o), 0)
 
 #define Sub_comp_INIT_TEST(o) Sub_comp_flag_TEST(PF_INIT, o)
 #define Sub_comp_INIT_SET(o) Sub_comp_flag_SET(PF_INIT, o)
@@ -146,6 +146,7 @@ typedef struct Parrot_sub {
                                   */
     PMC      *namespace_stash;   /* the actual hash, HLL::namespace */
     STRING   *name;              /* name of the sub */
+    STRING   *lexid;             /* The lexical ID of the sub. */
     INTVAL   vtable_index;       /* index in Parrot_vtable_slot_names */
     PMC      *multi_signature;   /* list of types for MMD */
     INTVAL   n_regs_used[4];     /* INSP in PBC */
@@ -178,6 +179,7 @@ typedef struct Parrot_coro {
                                   */
     PMC      *namespace_stash;   /* the actual hash, HLL::namespace */
     STRING   *name;              /* name of the sub */
+    STRING   *lexid;             /* The lexical ID of the sub. */
     INTVAL   vtable_index;       /* index in Parrot_vtable_slot_names */
     PMC      *multi_signature;   /* list of types for MMD */
     INTVAL   n_regs_used[4];     /* INSP in PBC */

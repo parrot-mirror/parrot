@@ -20,6 +20,34 @@ src/classes/Range.pir - methods for the Range class
     p6meta.'new_class'('Range', 'parent'=>'Any', 'attr'=>'$!from $!to $!from_exclusive $!to_exclusive')
 .end
 
+
+=item VTABLE_get integer (vtable method)
+
+=item VTABLE_get_number (vtable method)
+
+=item VTABLE_get_string (vtable method)
+
+=cut
+
+.sub 'VTABLE_get_integer' :method :vtable('get_integer')
+    $P0 = self.'list'()
+    $I0 = $P0
+    .return ($I0)
+.end
+
+.sub 'VTABLE_get_number' :method :vtable('get_number')
+    $P0 = self.'list'()
+    $N0 = $P0
+    .return ($N0)
+.end
+
+.sub 'VTABLE_get_string' :method :vtable('get_string')
+    $P0 = self.'list'()
+    $S0 = $P0
+    .return ($S0)
+.end
+
+
 =item ACCEPTS(topic)
 
 Determines if topic is within the range.
@@ -108,6 +136,54 @@ just return a clone of the Range.
 .end
 
 
+=item min()
+
+=item minmax()
+
+=item max()
+
+=cut
+
+.namespace ['Range']
+
+.sub 'min' :method
+    .return self.'from'()
+.end
+
+.sub 'minmax' :method
+    $P0 = self.'from'()
+    $P1 = self.'to'()
+    $P2 = get_hll_global 'list'
+    .return $P2($P0, $P1)
+.end
+
+.sub 'max' :method
+    .return self.'to'()
+.end
+
+
+=item pop()  (vtable_method)
+
+Generate the next element at the end of the Range.
+
+=cut
+
+.sub 'pop' :method :vtable('pop_pmc')
+    .local pmc to, toexc, value
+    to = getattribute self, '$!to'
+    toexc = getattribute self, '$!to_exclusive'
+    value = 'postfix:--'(to)
+    unless toexc goto have_value
+    value = clone to
+  have_value:
+    $I0 = self.'!from_test'(value)
+    if $I0 goto success
+    value = new 'Failure'
+  success:
+    .return (value)
+.end
+
+
 =item shift()   (vtable_method)
 
 Generate the next element at the front of the Range.
@@ -120,7 +196,7 @@ Generate the next element at the front of the Range.
     fromexc = getattribute self, '$!from_exclusive'
     value = 'postfix:++'(from)
     unless fromexc goto have_value
-    value = from
+    value = clone from
   have_value:
     $I0 = self.'!to_test'(value)
     if $I0 goto success
@@ -314,8 +390,9 @@ honoring exclusive flags.
     $I0 = length $S0
     $S1 = to
     $I1 = length $S1
-    le $I0, $I1, test_value
-    .return (0)
+    eq $I0, $I1, test_value
+    $I0 = islt $I0, $I1
+    .return ($I0)
   test_value:
     toexc = getattribute self, '$!to_exclusive'
     if toexc goto exclusive_test

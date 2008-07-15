@@ -49,6 +49,9 @@ void Parrot_create_mro(PARROT_INTERP, INTVAL type)
         __attribute__nonnull__(1);
 
 PARROT_API
+INTVAL PMC_is_null(SHIM_INTERP, NULLOK(const PMC *pmc));
+
+PARROT_API
 PARROT_CANNOT_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
 PMC * pmc_new(PARROT_INTERP, INTVAL base_type)
@@ -82,9 +85,8 @@ PMC* pmc_reuse(PARROT_INTERP,
 
 PARROT_API
 PARROT_WARN_UNUSED_RESULT
-INTVAL pmc_type(PARROT_INTERP, ARGIN(STRING *name))
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(2);
+INTVAL pmc_type(PARROT_INTERP, ARGIN_NULLOK(STRING *name))
+        __attribute__nonnull__(1);
 
 PARROT_API
 INTVAL pmc_type_p(PARROT_INTERP, ARGIN(PMC *name))

@@ -9,114 +9,204 @@ This is the grammar for ChitChat written as a sequence of Perl 6 rules.
 grammar ChitChat::Grammar is PCT::Grammar;
 
 token TOP {
-    <ws>
+    <.ws>
     [ | <exprs>
       | <methods>
       | '!'
     ]+
-    <ws>
-    [ $ || <panic: 'Syntax error'> ]
+    <.ws>
+    [ $ || <.panic: 'Syntax error'> ]
     {*}
 }
 
 token whitespace { \h | \v | <comment> }
 
-token ws { <whitespace>* }
+token ws { <.whitespace>* }
 
 token comment { '"' <-["]>* '"' }
 
-rule methods { '!' <id> 'class'? 'methodsFor:' <string> '!' [<method> '!']? '!' }
+rule methods {
+    '!' <id> 'class'? 'methodsFor:' <string>
+    '!' [<method> '!']?
+    '!'
+}
 
-rule method { <message> <pragma>? <temps>? <exprs> }
+rule method {
+    <message> <pragma>? <temps>? <exprs>
+    {*}
+}
 
-token message { <id> | <binsel> <.ws> <id> | [<keysel> <.ws> <id>]+ }
+token message {
+    | <id> {*}                      #= id
+    | <binsel> <.ws> <id> {*}       #= binsel
+    | [<keysel> <.ws> <id>]+ {*}    #= keysel
+}
 
 token pragma { '<' <keymsg> '>' }
 
-rule temps { '|' [<id> ]* '|' }
+rule temps {
+    '|' [<id> ]* '|'
+    {*}
+}
 
-token unit { 
-             | <id>                  {*}  #= id
-             | <literal>             {*}  #= literal
-             | <block>               {*}  #= block
-             | <arrayconstructor>    {*}  #= arrayconstructor
-             | '(' <expr> ')'        {*}  #= expr
-           }
+token unit {
+    | <id>                  {*}  #= id
+    | <literal>             {*}  #= literal
+    | <block>               {*}  #= block
+    | <arrayconstructor>    {*}  #= arrayconstructor
+    | '(' <expr> ')'        {*}  #= expr
+}
 
-rule unaryexpr { <unit> [<!keysel><id> ]+ {*} }
+rule unaryexpr {
+    <unit> [<!keysel><id> ]+
+    {*}
+}
 
-token primary { <!unaryexpr> <unit> {*} | <unaryexpr> {*} }
+token primary {
+    | <!unaryexpr> <unit> {*}   #= unit
+    | <unaryexpr> {*}           #= unaryexpr
+}
 
-rule exprs {  [
-                | <expr> [ '.' <expr>]* ['.' '^' <expr>]? '.'?
-                | '^' <expr> '.'?
-              ] {*}
-           }
+rule exprs {
+    [
+    | <expr> [ '.' <expr>]* ['.' '^' <expr>]? '.'?
+    | '^' <expr> '.'?
+    ]
+    {*}
+}
 
-rule expr { [<id> [':='|'_']]* <expr2>  {*} }
+rule expr {
+    [<id> [':='|'_']]* <expr2>
+    {*}
+}
 
-rule expr2 {[ <msgexpr> [ ';' <cascade> ]* | <primary> ] {*} }
+rule expr2 {
+    | <msgexpr> [ ';' <cascade> ]* {*}     #= msgexpr
+    | <primary> {*}                        #= primary
+}
 
 token msgexpr {
-                | <keyexpr>      {*}  #= keyexpr
-                | <binexpr>      {*}  #= binexpr
-                | <unaryexpr>    {*}  #= unaryexpr
-              }
+    | <binexpr>      {*}  #= binexpr
+    | <keyexpr>      {*}  #= keyexpr
+    | <unaryexpr>    {*}  #= unaryexpr
+}
 
-token cascade { <id> | <binmsg> | <keymsg> }
+token cascade {
+    | <id> {*}            #= id
+    | <binmsg> {*}        #= binmsg
+    | <keymsg> {*}        #= keymsg
+}
 
-rule binexpr { <primary> <binmsg> [<binmsg> ]* {*} }
+rule binexpr {
+    <primary> <binmsg>+
+    {*}
+}
 
-rule binmsg { <binsel> <primary> }
+rule binmsg {
+    <binsel> <primary>
+    {*}
+}
 
 token binsel { <binchar>**{1..2} }
 
-rule keyexpr { <keyexpr2> <keymsg> {*} }
+rule keyexpr {
+    <keyexpr2> <keymsg>
+    {*}
+}
 
-token keyexpr2 { <!binexpr> <primary> {*} | <binexpr> {*} }
+token keyexpr2 {
+    | <!binexpr> <primary> {*}      #= primary
+    | <binexpr> {*}                 #= binexpr
+}
 
-rule keymsg { [<keysel> <keyexpr2> ]+ {*} }
+rule keymsg {
+    [<keysel> <keyexpr2> ]+
+    {*}
+}
 
 token keysel { <id> ':' }
 
-rule block { '[' [[':' <id>]* '|']? <temps>? <exprs> ']' }
+rule block {
+    '[' [[':' <id>]* '|']? <temps>? <exprs> ']'
+    {*}
+}
 
-token arrayconstructor { '{' <exprs> '}' }
+token arrayconstructor {
+    '{' <exprs> '}'
+}
 
-token literal { 
-                | <number>           {*}  #= number
-                | <string>           {*}  #= string
-                | <charconst>        {*}  #= charconst
-                | <symconst>         {*}  #= symconst
-                | <arrayconst>       {*}  #= arrayconst
-                | <binding>          {*}  #= binding
-                | <eval>             {*}  #= eval
-              }
+token literal {
+    | <number>           {*}  #= number
+    | <string>           {*}  #= string
+    | <charconst>        {*}  #= charconst
+    | <symconst>         {*}  #= symconst
+    | <arrayconst>       {*}  #= arrayconst
+    | <binding>          {*}  #= binding
+    | <eval>             {*}  #= eval
+}
 
-token arrayconst { '#' <array> | '#' <bytearray> }
+token arrayconst {
+    | '#' <array>
+    | '#' <bytearray>
+}
 
-token bytearray { '[' <number>* ']' }
+token bytearray {
+    '[' <number>* ']'
+}
 
-rule array { '(' [ <literal> | <array> | <bytearray> | <arraysym> ]* ')' }
+rule array {
+    '(' <arrayelem>* ')'
+}
 
-token number { [<.digit>+ 'r']? '-'? <.alnum>+ ['.' <.alnum>+]? [<exp> '-'? <dig>+]? }
+rule arrayelem {
+    | <literal>       {*}  #= literal
+    | <array>         {*}  #= array
+    | <bytearray>     {*}  #= bytearray
+    | <arraysym>      {*}  #= arraysym
+}
 
-token string { \' $<text>:=<-[']>* \' {*} }
+token number {
+    [<.digit>+ 'r']? '-'? <.alnum>+ ['.' <.alnum>+]? [<exp> '-'? <dig>+]?
+    {*}
+}
+
+token string {
+    \' $<text>:=<-[']>* \'
+    {*}
+}
 
 token charconst { '$' . }
 
-token symconst { '#'<symbol> | '#'<string> }
+token symconst {
+    | '#'<symbol>
+    | '#'<string>
+}
 
-token arraysym { [<id> | ':']* }
+token arraysym {
+    [<id> | ':']*
+}
 
-token exp { <[deqs]> }
+token exp {
+    <[deqs]>
+}
 
-token binding { '#{' [<id> '.']* <id> '}' }
+token binding {
+    '#{' [<id> '.']* <id> '}'
+}
 
-token symbol { <id> | <binsel> | <keysel>**{1..2} }
+token symbol {
+    | <id>
+    | <binsel>
+    | <keysel>**{1..2}
+}
 
-rule eval { '##(' <temps>? <exprs> ')' }
+rule eval {
+    '##(' <temps>? <exprs> ')'
+}
 
-token id { <.alpha> [ <.alpha> | <.digit> ]* }
+token id {
+    <alpha> [ <alpha> | <digit> ]*
+    {*}
+}
 
 token binchar { <[+\-*/~,<>=&´?\\%]> }

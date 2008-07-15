@@ -52,11 +52,11 @@ sub runstep {
         eclectus ecmascript
         forth
         hq9plus
-        jako
+        jako json
         lazy-k lisp lolcode lua
         m4
         ook
-        parrot_compiler perl6 pheme PIR plumhead pugs punie pynie
+        parrot_compiler perl6 pheme PIR pipp pugs punie pynie
         regex
         scheme squaak
         tcl

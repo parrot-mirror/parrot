@@ -569,8 +569,8 @@ add_pcc_named_param(PARROT_INTERP, ARGMOD(SymReg *cur_call), ARGIN(const char *n
     SymReg * const r = mk_const(interp, name, 'S');
     r->type         |= VT_NAMED;
 
-    add_pcc_param(cur_call, r);
-    add_pcc_param(cur_call, value);
+    add_pcc_arg(cur_call, r);
+    add_pcc_arg(cur_call, value);
 }
 
 static void
@@ -580,8 +580,8 @@ add_pcc_named_return(PARROT_INTERP, ARGMOD(SymReg *cur_call), ARGIN(const char *
     SymReg * const r = mk_const(interp, name, 'S');
     r->type         |= VT_NAMED;
 
-    add_pcc_return(cur_call, r);
-    add_pcc_return(cur_call, value);
+    add_pcc_result(cur_call, r);
+    add_pcc_result(cur_call, value);
 }
 
 /* XXX Can name be consted? */
@@ -639,7 +639,7 @@ do_loadlib(PARROT_INTERP, ARGIN(const char *lib))
 %token <t> PCC_BEGIN PCC_END PCC_CALL PCC_SUB PCC_BEGIN_RETURN PCC_END_RETURN
 %token <t> PCC_BEGIN_YIELD PCC_END_YIELD NCI_CALL METH_CALL INVOCANT
 %token <t> MAIN LOAD INIT IMMEDIATE POSTCOMP METHOD ANON OUTER NEED_LEX
-%token <t> MULTI VTABLE_METHOD LOADLIB SUB_INSTANCE_OF
+%token <t> MULTI VTABLE_METHOD LOADLIB SUB_INSTANCE_OF SUB_LEXID
 %token <t> UNIQUE_REG
 %token <s> LABEL
 %token <t> EMIT EOM
@@ -659,7 +659,7 @@ do_loadlib(PARROT_INTERP, ARGIN(const char *lib))
 %type <t> argtype_list argtype paramtype_list paramtype
 %type <t> pcc_return_many
 %type <t> proto sub_proto sub_proto_list multi multi_types outer
-%type <t> vtable instanceof
+%type <t> vtable instanceof lexid
 %type <i> instruction assignment conditional_statement labeled_inst opt_label op_assign
 %type <i> if_statement unless_statement
 %type <i> func_assign get_results
@@ -851,6 +851,7 @@ pasm_inst:                     { clear_state(interp); }
            set_lexical(interp, r, $2);
            $$ = 0;
            mem_sys_free($2);
+           mem_sys_free($4);
          }
    | /* none */                { $$ = 0;}
    ;
@@ -923,7 +924,7 @@ sub_params:
                  IMCC_INFO(interp)->adv_named_id = NULL;
            }
            else
-               add_pcc_param(IMCC_INFO(interp)->cur_call, $2);
+               add_pcc_arg(IMCC_INFO(interp)->cur_call, $2);
          }
    ;
 
@@ -995,7 +996,16 @@ instanceof:
      SUB_INSTANCE_OF '(' STRINGC ')'
          {
            $$ = 0;
-           IMCC_INFO(interp)->cur_unit->instance_of = $3;
+           IMCC_INFO(interp)->cur_unit->instance_of = mk_const(interp, $3, 'S');
+           mem_sys_free($3);
+         }
+   ;
+
+lexid:
+     SUB_LEXID '(' STRINGC ')'
+         {
+           $$ = 0;
+           IMCC_INFO(interp)->cur_unit->lexid = $3;
          }
    ;
 
@@ -1117,6 +1127,7 @@ proto:
    | outer
    | vtable
    | instanceof
+   | lexid
    ;
 
 pcc_call:
@@ -1233,12 +1244,12 @@ pcc_returns:
    | pcc_returns '\n'
          {
            if ($1)
-               add_pcc_return(IMCC_INFO(interp)->sr_return, $1);
+               add_pcc_result(IMCC_INFO(interp)->sr_return, $1);
          }
    | pcc_returns pcc_return '\n'
          {
            if ($2)
-               add_pcc_return(IMCC_INFO(interp)->sr_return, $2);
+               add_pcc_result(IMCC_INFO(interp)->sr_return, $2);
          }
    ;
 
@@ -1274,7 +1285,7 @@ var_returns:
                IMCC_INFO(interp)->adv_named_id = NULL;
            }
            else
-               add_pcc_return(IMCC_INFO(interp)->sr_return, $1);
+               add_pcc_result(IMCC_INFO(interp)->sr_return, $1);
          }
    | STRINGC ADV_ARROW var
          {
@@ -1288,7 +1299,7 @@ var_returns:
                IMCC_INFO(interp)->adv_named_id = NULL;
              }
              else
-                 add_pcc_return(IMCC_INFO(interp)->sr_return, $3);
+                 add_pcc_result(IMCC_INFO(interp)->sr_return, $3);
          }
    | var_returns COMMA STRINGC ADV_ARROW var
          {
@@ -1388,8 +1399,8 @@ opt_unique_reg:
 labeled_inst:
      assignment
    | conditional_statement
-   | NAMESPACE IDENTIFIER      { push_namespace($2); mem_sys_free($2); }
-   | ENDNAMESPACE IDENTIFIER   { pop_namespace($2); mem_sys_free($2); }
+   | NAMESPACE IDENTIFIER      { push_namespace(interp, $2); mem_sys_free($2); }
+   | ENDNAMESPACE IDENTIFIER   { pop_namespace(interp, $2); mem_sys_free($2); }
    | LOCAL { is_def=1; } type id_list
          {
            IdList *l = $4;
@@ -1907,7 +1918,7 @@ reg:
    | NREG                      { $$ = mk_symreg(interp, $1, 'N'); }
    | SREG                      { $$ = mk_symreg(interp, $1, 'S'); }
    | PREG                      { $$ = mk_symreg(interp, $1, 'P'); }
-   | REG                       { $$ = mk_pasm_reg(interp, $1);    }
+   | REG                       { $$ = mk_pasm_reg(interp, $1); mem_sys_free($1); }
    ;
 
 const:

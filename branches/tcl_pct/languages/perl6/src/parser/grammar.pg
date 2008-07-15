@@ -1,4 +1,4 @@
-# Copyright (C) 2007, The Perl Foundation.
+# Copyright (C) 2007-2008, The Perl Foundation.
 # $Id$
 
 =begin Introduction
@@ -203,6 +203,7 @@ rule statement {
             {*}                                  #= statement_mod_cond
         || {*}                                   #= expr
         ]
+    | <?before ';'> {*}                          #= null
 }
 
 rule statement_control {
@@ -250,7 +251,8 @@ rule while_statement {
 
 rule given_statement {
     $<sym>=[given]
-    <EXPR> <block>
+    <EXPR>
+    <pblock>
     {*}
 }
 
@@ -321,7 +323,7 @@ rule statement_prefix {
 
 #### Subroutine and method definitions ####
 
-rule plurality_declarator {
+rule multi_declarator {
     $<sym>=[multi|proto|only] <routine_declarator> {*}
 }
 
@@ -350,7 +352,8 @@ rule trait {
 }
 
 rule trait_auxiliary {
-    | $<sym>=[is] <ident><postcircumfix>?
+    | $<sym>=[is] <name><postcircumfix>?
+    | $<sym>=[does] <role_name>
     | $<sym>=[will] <ident> <block>
 }
 
@@ -358,6 +361,8 @@ rule trait_verb {
     | $<sym>=[of|returns] <typename>
     | $<sym>=[handles] <EXPR>
 }
+
+token role_name { <name> [ <?before '['> <postcircumfix> ]? }
 
 token capterm {
     '\\(' <capture> ')'
@@ -375,6 +380,23 @@ rule multisig {
 
 token signature {
     ( <parameter> <.ws> ( ',' <.ws> | ':' <.ws> | <?before ')' | '{'> ) )* <.ws>
+    {*}
+}
+
+token sigterm {
+    ':(' 
+    {{
+        $P0 = new 'Integer'
+        $P0 = 1
+        set_global [ 'Perl6' ; 'Grammar' ; 'Actions' ], '$?SIG_BLOCK_NOT_NEEDED', $P0
+    }}
+    <signature>
+    {{
+        $P0 = new 'Integer'
+        $P0 = 0
+        set_global [ 'Perl6' ; 'Grammar' ; 'Actions' ], '$?SIG_BLOCK_NOT_NEEDED', $P0
+    }}
+    [ ')' || <.panic: "Missing right parenthesis in signature"> ]
     {*}
 }
 
@@ -396,8 +418,15 @@ rule type_constraint {
     ]
 }
 
+# XXX This rule doesn't appear in STD.pm; we use this to parse things like
+# sub foo(::T $x) { ... }, since it appears STD.pm doesn't cover that yet.
+rule generic_binder {
+    <?before '::'> <variable>
+}
+
 token parameter {
     <type_constraint>*
+    <generic_binder>?
     [
     |   $<quant>=['*'] <param_var>
     |   $<named>=[':'?]
@@ -414,7 +443,7 @@ rule default_value {
 }
 
 token param_var {
-    <sigil> <ident>
+    <sigil> <twigil>? <ident>
     {*}
 }
 
@@ -429,7 +458,6 @@ token special_variable {
 
 token expect_term {
     | <noun> <postfix>* {*}                      #= noun
-    | <listop> {*}                               #= listop
     | '*' {*}                                    #= *
 }
 
@@ -477,34 +505,76 @@ token postcircumfix {
 }
 
 
-# XXX Note that 'self' and 'undef' in here should be a term, and that a term
-# can be a noun too in STD.pm. However, at the moment that seems to lead us
-# to infinite recursion.
+# XXX Note that 'self' here should be a term.
 token noun {
+    | <fatarrow> {*}                             #= fatarrow
     | <package_declarator> {*}                   #= package_declarator
     | <scope_declarator> {*}                     #= scope_declarator
-    | <plurality_declarator> {*}                 #= plurality_declarator
+    | <multi_declarator> {*}                     #= multi_declarator
     | <routine_declarator> {*}                   #= routine_declarator
-    | <circumfix> {*}                            #= circumfix
-    | <variable> {*}                             #= variable
-    | <subcall> {*}                              #= subcall
-    | <dotty>                                    #= dotty
-    | <value> {*}                                #= value
-    | <capterm> {*}                              #= capterm
-    | <statement_prefix> {*}                     #= statement_prefix
     | <regex_declarator> {*}                     #= regex_declarator
     | <type_declarator> {*}                      #= type_declarator
-    | <colonpair> {*}                            #= colonpair
-    | <fatarrow> {*}                             #= fatarrow
+    | <enum_declarator> {*}                      #= enum_declarator
+    | <circumfix> {*}                            #= circumfix
+    | <variable> {*}                             #= variable
+    | <statement_prefix> {*}                     #= statement_prefix
+    | <dotty> {*}                                #= dotty
+    | <value> {*}                                #= value
     | 'self' >> {*}                              #= self
-    | 'undef' >> {*}                             #= undef
+    | <term> {*}                                 #= term
+    | <capterm> {*}                              #= capterm
+    | <sigterm> {*}                              #= sigterm
+    | <colonpair> {*}                            #= colonpair
 }
 
 
+token term {
+    [
+    | 'VAR(' <variable> ')' {*}                  #= VAR
+    | <typename> {*}                             #= typename
+    | <ident=named_0ary>
+        [
+        | <.unsp>? '.'? '(' <semilist> ')' {*}   #= func args
+        | :: {*}                                 #= listop noarg
+        ]
+    | <ident>
+        [
+        | \s <arglist> {*}                       #= listop args
+        | <.unsp>? '.'? '(' <semilist> ')' {*}   #= func args
+        | :: {*}                                 #= listop noarg
+        ]
+    | <sigil> \s <arglist> {*}                   #= sigil
+    ]
+}
+
+##  XXX: cheat until we get term:pi, term:rand, term:undef, etc.
+token named_0ary {
+    [pi|rand|undef] >>
+}
+
 rule package_declarator {
-    $<sym>=[module|class|role|grammar]
-    <name>
-    <trait_or_does>* {*}                         #= open
+    [
+    | $<sym>=[module|class|grammar] {*}          #= open
+      <package_def> {*}                          #= package_def
+    | $<sym>=[role] {*}                          #= open
+      <role_def> {*}                             #= role_def
+    ]
+}
+
+
+rule package_def {
+    <name> <trait>* {*}                          #= open
+    <package_block> {*}                          #= close
+}
+
+
+rule role_def {
+    <role_name> <trait>* {*}                     #= open
+    <package_block> {*}                          #= close
+}
+
+
+rule package_block {
     [
     || ';' <statement_block> {*}                 #= statement_block
     || <block> {*}                               #= block
@@ -512,15 +582,7 @@ rule package_declarator {
 }
 
 
-# This rule does not appear in STD.pm, but I can't work out how 'does' on a
-# class would be parsed by STD.pm, thus this rule for now.
-rule trait_or_does {
-    | <trait>
-    | $<sym>=[does] <name>
-}
-
-
-token variable_decl {
+token variable_declarator {
     <variable>
     <trait>*
 # XXX let EXPR handle this automatically until we can pass arguments
@@ -532,14 +594,45 @@ token variable_decl {
 }
 
 
+rule enum_declarator {
+    'enum' <name>?
+    [
+    | <?before '[' > <circumfix> {*}             #= circumfix
+    | <?before '<' | '«' > <quote> {*}          #= quote
+    ]
+}
+
+
+token declarator {
+    [
+    | <variable_declarator>
+    | '(' 
+      {{
+          $P0 = new 'Integer'
+          $P0 = 1
+          set_global [ 'Perl6' ; 'Grammar' ; 'Actions' ], '$?SIG_BLOCK_NOT_NEEDED', $P0
+      }}
+      <signature>
+      {{
+          $P0 = new 'Integer'
+          $P0 = 0
+          set_global [ 'Perl6' ; 'Grammar' ; 'Actions' ], '$?SIG_BLOCK_NOT_NEEDED', $P0
+      }}
+      [ ')' || <.panic: "Missing right parenthsesis after signature"> ]
+    ]
+    {*}
+}
+
+
 rule scoped {
     <fulltypename>*
     [
-    | <variable_decl>
+    | <declarator>
     | <routine_declarator>
     ]
     {*}
 }
+
 
 rule scope_declarator {
     $<sym>=[my|our|state|constant|has]
@@ -561,7 +654,7 @@ token variable {
     | <sigil> <?before '<' > <postcircumfix> {*} #= $<>
 }
 
-token sigil { '$' | '@' | '%' | '&' }
+token sigil { '$' | '@' | '%' | '&' | '::' }
 
 token twigil { <[.!^:*+?=]> }
 
@@ -572,7 +665,6 @@ token name {
 token value {
     | <quote> {*}                                #= quote
     | <number> {*}                               #= number
-    | <typename> {*}                             #= typename
 }
 
 ##  Quoting is tricky -- the <quote_concat> subrule is in
@@ -610,12 +702,17 @@ token integer {
     {*}
 }
 
+token escale {
+    <[Ee]> <[+\-]>? \d+
+}
+
+# careful to distinguish from both integer and 42.method
 token dec_number {
-    \d+[_\d+]*
-        [
-        | '.' \d+[_\d+]* [ <[Ee]> <[+\-]>? \d+ ]?
-        |                  <[Ee]> <[+\-]>? \d+
-        ] # careful to distinguish from both integer and 42.method
+    [
+    |            '.' \d+[_\d+]* <.escale>?
+    | \d+[_\d+]* '.' \d+[_\d+]* <.escale>?
+    | \d+[_\d+]*                <.escale>
+    ]
     {*}
 }
 
@@ -663,11 +760,6 @@ token name {
     {*}
 }
 
-token subcall {
-    | 'VAR(' <variable> ')' {*}             #= VAR
-    | <ident> '.'? '(' <semilist> ')' {*}   #= subcall
-}
-
 # These regex rules are some way off STD.pm at the moment, but we'll work them
 # closer to it over time.
 rule regex_declarator {
@@ -702,20 +794,8 @@ rule semilist {
     {*}
 }
 
-##  S05 has this as prefix:listop... but since the operand (arglist)
-##  is part of the prefix token, PGE's operator precedence parser
-##  is left without an argument to parse.  So, for now we treat
-##  listop as the last (lowest priority) of the terms to be parsed.
-token listop {
-    <sym=ident>
-    [
-    || \s <arglist> {*}                          #= arglist
-    || {*}                                       #= noarg
-    ]
-}
-
 token arglist {
-    <EXPR>   # FIXME: need to parse only to list prefix priority
+    <EXPR: 'e='>                                 # EXPR(%list_assignment)
     {*}
 }
 
@@ -756,8 +836,4 @@ token desigilname {
 
 proto 'term:' is precedence('z=')
     is parsed(&expect_term)
-    { ... }
-
-proto 'prefix:' is precedence('e=')
-    is parsed(&listop)
     { ... }
