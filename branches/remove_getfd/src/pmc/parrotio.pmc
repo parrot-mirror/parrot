@@ -343,6 +343,10 @@ RT#46087 TBD
 
 RT#46089 TBD
 
+=item C<METHOD get_fd()>
+
+RT#48312 TBD
+
 =cut
 
 */
