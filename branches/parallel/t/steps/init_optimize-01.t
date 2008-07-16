@@ -18,6 +18,8 @@ use Parrot::Configure::Test qw(
 );
 use IO::CaptureOutput qw | capture |;
 
+########## no optimization (default) ##########
+
 my $args = process_options( {
     argv => [],
     mode => q{configure},
@@ -40,6 +42,8 @@ ok( defined $ret, "runstep() returned defined value" );
 
 $conf->replenish($serialized);
 
+########## --optimize  ##########
+
 $args = process_options( {
     argv => [q{--optimize}],
     mode => q{configure},
@@ -50,6 +54,8 @@ $ret = $step->runstep($conf);
 ok( defined $ret, "runstep() returned defined value" );
 
 $conf->replenish($serialized);
+
+########## --verbose  ##########
 
 $args = process_options( {
     argv => [q{--verbose}],
@@ -67,6 +73,8 @@ $step = test_step_constructor_and_description($conf);
 
 $conf->replenish($serialized);
 
+########## --optimize=O2  ##########
+
 $args = process_options( {
     argv => [q{--optimize=O2}],
     mode => q{configure},
@@ -77,6 +85,8 @@ $ret = $step->runstep($conf);
 ok( defined $ret, "runstep() returned defined value" );
 
 $conf->replenish($serialized);
+
+########## --optimize; gcc 3.3  ##########
 
 $args = process_options( {
     argv => [q{--optimize}],
@@ -89,6 +99,8 @@ $ret = $step->runstep($conf);
 ok( defined $ret, "runstep() returned defined value" );
 
 $conf->replenish($serialized);
+
+########## --optimize, --verbose; gcc 4.1 ##########
 
 $args = process_options( {
     argv => [q{--optimize}, q{--verbose}],
