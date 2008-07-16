@@ -113,7 +113,7 @@ a line
 OUTPUT
 
 # RT#46843
-pir_output_is( <<'CODE', <<'OUTPUT', "getfd/fdopen", todo => 'get_fd() not implemented yet' );
+pir_output_is( <<'CODE', <<'OUTPUT', "get_fd()/fdopen", todo => 'get_fd() not implemented yet' );
 .sub main :main
     getstdout P0
     I0 = P0.get_fd()
