@@ -461,7 +461,7 @@ $conf->replenish($serialized);
     eval { ($stdout, $stderr, $ret) =
         capture_output( qw| icu-config --exists | ); };
     SKIP: {
-        skip "icu-config not available", 6 if $stderr;
+        skip "icu-config not available", 9 if $stderr;
         $args = process_options( {
             argv => [
                 q{--icu-config=1},
@@ -550,7 +550,7 @@ $conf->replenish($serialized);
     eval { ($stdout, $stderr, $ret) =
         capture_output( qw| icu-config --exists | ); };
     SKIP: {
-        skip "icu-config not available", 7 if $stderr;
+        skip "icu-config not available", 10 if $stderr;
         $args = process_options(
             {
                 argv => [ q{--icuheaders=alpha}, ],
@@ -588,7 +588,7 @@ $conf->replenish($serialized);
     eval { ($stdout, $stderr, $ret) =
         capture_output( qw| icu-config --exists | ); };
     SKIP: {
-        skip "icu-config not available", 9 if $stderr;
+        skip "icu-config not available", 12 if $stderr;
         $args = process_options( {
             argv => [ q{--verbose}, ],
             mode => q{configure},
