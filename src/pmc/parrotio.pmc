@@ -351,9 +351,9 @@ RT#42373: integral file descriptors might not exist outside of the UNIX
 
 */
 
-    METHOD get_fd() {  
+    METHOD get_fd() {
          const INTVAL r = PIO_getfd(INTERP, SELF);
-         RETURN(INTVAL r); 
+         RETURN(INTVAL r);
     }
 
 /*
