@@ -21,10 +21,8 @@ use IO::CaptureOutput qw| capture |;
 
 =for hints_for_testing Testing and refactoring of inter::progs should
 entail understanding of issues discussed in the following RT tickets:
-http://rt.perl.org/rt3/Ticket/Display.html?id=43174;
-http://rt.perl.org/rt3/Ticket/Display.html?id=43173; and
-http://rt.perl.org/rt3/Ticket/Display.html?id=41168.  You will have to
-determine a way to test a user response to a prompt.
+http://rt.perl.org/rt3/Ticket/Display.html?id=43174; and
+http://rt.perl.org/rt3/Ticket/Display.html?id=41168.
 
 =cut
 
