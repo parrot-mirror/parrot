@@ -8,7 +8,7 @@ src/pmc/parrotio.pmc - Parrot IO
 
 =head1 DESCRIPTION
 
-These are the vtable functions for Parrot IO.
+These are the vtable functions and methods for Parrot IO.
 
 =head2 Methods
 
@@ -323,10 +323,6 @@ This does B<not> close the file.
 
 /*
 
-=item C<void class_init()>
-
-Class initialization.
-
 =item C<METHOD eof()>
 
 Returns true or false according to the end of file state of the object.
@@ -343,7 +339,7 @@ RT#46087 TBD
 
 RT#46089 TBD
 
-=item C<METHOD get_fd()>
+=item C<METHOD INTVAL get_fd()>
 
 Get the file descriptor out of the ParrotIO object.
 
@@ -351,12 +347,20 @@ RT#48312 TBD
 RT#42373: integral file descriptors might not exist outside of the UNIX
      platform.
 
-The removed opcode getfd has following implementation:
+=cut
 
-    inline op getfd(out INT, invar PMC) :advanced_io :deprecated {
-      $1 = (INTVAL)PIO_getfd(interp, $2);
+*/
 
-This might help in implementing the method get_fd().
+    METHOD get_fd() {  
+         const INTVAL r = PIO_getfd(INTERP, SELF);
+         RETURN(INTVAL r); 
+    }
+
+/*
+
+=item C<void class_init()>
+
+Class initialization.
 
 =cut
 
