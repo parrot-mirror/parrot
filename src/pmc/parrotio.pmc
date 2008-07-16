@@ -345,7 +345,18 @@ RT#46089 TBD
 
 =item C<METHOD get_fd()>
 
+Get the file descriptor out of the ParrotIO object.
+
 RT#48312 TBD
+RT#42373: integral file descriptors might not exist outside of the UNIX
+     platform.
+
+The removed opcode getfd has following implementation:
+
+    inline op getfd(out INT, invar PMC) :advanced_io :deprecated {
+      $1 = (INTVAL)PIO_getfd(interp, $2);
+
+This might help in implementing the method get_fd().
 
 =cut
 
