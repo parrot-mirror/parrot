@@ -769,7 +769,8 @@ Adds the supplied PMC to the list of parents for the class.
         }
         /* Check is not self */
         if (parent == SELF)
-            real_exception(interp, NULL, E_TypeError, "Can't be own parent");
+            Parrot_ex_throw_from_c_args(interp, NULL,
+                    EXCEPTION_INVALID_OPERATION, "Can't be own parent");
 
         /* Check that none of the parents is self */
         parent_count = VTABLE_elements(interp,
@@ -779,7 +780,8 @@ Adds the supplied PMC to the list of parents for the class.
             PMC * const current_parent = VTABLE_get_pmc_keyed_int(interp,
                 PARROT_CLASS(parent)->all_parents, index);
             if (current_parent == SELF)
-                real_exception(interp, NULL, E_TypeError,
+                Parrot_ex_throw_from_c_args(interp, NULL,
+                    EXCEPTION_INVALID_OPERATION,
                     "Loop in class hierarchy: '%S' is an ancestor of '%S'.",
                     VTABLE_get_string(interp, SELF),
                     VTABLE_get_string(interp, parent));
