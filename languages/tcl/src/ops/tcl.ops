@@ -67,10 +67,6 @@ isn't a TCL_OK).
 
 Generate a TCL_ERROR with $1 as the value, and set $errorCode to $2
 
-=item B<tcl_error>(in INT, in PMC)
-
-Generate a $1 with $2 as the value.
-
 =cut
 
 inline op tcl_error(in STR, in PMC) :flow {
@@ -91,16 +87,6 @@ inline op tcl_error(in STR, in PMC) :flow {
 
     /* Throw the exception */
     dest = Parrot_ex_throw_from_op(interp, exception, ret);
-    goto ADDRESS(dest);
-}
-
-inline op tcl_error(in INT, in PMC) :flow {
-    opcode_t * const ret = expr NEXT();
-    STRING          *msg = PMC_IS_NULL($2)
-                         ? NULL : VTABLE_get_string(interp, $2);
-    PMC            *exception =
-        Parrot_ex_build_exception(interp, EXCEPT_error, $1, msg);
-    opcode_t       *dest = Parrot_ex_throw_from_op(interp, exception, ret);
     goto ADDRESS(dest);
 }
 
