@@ -66,17 +66,13 @@ sub _print_to_cache {
 sub _get_revision {
     my $revision;
     if (-f $cache) {
-        eval {
-            open my $FH, "<", $cache;
-            chomp($revision = <$FH>);
-            close $FH;
-        };
-        return $revision unless $@;
+        open my $FH, "<", $cache
+            or die "Unable to open $cache for reading: $!";
+        chomp($revision = <$FH>);
+        close $FH or die "Unable to close $cache after reading: $!";
     }
-
-    $revision = _analyze_sandbox();
-
-    if (! -f $cache) {
+    else {
+        $revision = _analyze_sandbox();
         _print_to_cache($cache, $revision);
     }
     return $revision;
