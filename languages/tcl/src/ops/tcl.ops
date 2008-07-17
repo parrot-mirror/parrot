@@ -42,7 +42,6 @@ Scan $2 for the fields specified in $3 and return their values in $1.
 
 inline op tcl_binary_scan(out PMC, in STR, in STR) {
     $1 = ParTcl_binary_scan(interp, $2, $3);
-    goto NEXT();
 }
 
 =item B<tcl_binary_format>(out STR, in STR, in PMC)
@@ -53,7 +52,6 @@ Format the values in $3 into a string $1 according to the format in $2.
 
 inline op tcl_binary_format(out STR, in STR, in PMC) {
     $1 = ParTcl_binary_format(interp, $2, $3);
-    goto NEXT();
 }
 
 =back
@@ -81,69 +79,55 @@ Generate a $1 with $2 as the value.
 
 =cut
 
-inline op tcl_error(in PMC) {
-  opcode_t *ret;
-  opcode_t *dest;
-  PMC      *exception = pmc_new(interp, enum_class_Exception);
-  STRING   *message = VTABLE_get_string(interp, $1);
-
-  VTABLE_set_string_native(interp, exception, message);
-  VTABLE_set_integer_keyed_str(interp, exception, const_string(interp, "type"),
-    CONTROL_ERROR);
-  ret  = expr NEXT();
-  dest = Parrot_ex_throw_from_op(interp, exception, ret);
-  goto ADDRESS(dest);
+/* XXX this is now the same as die (in PMC) and can be removed  */
+inline op tcl_error(in PMC) :flow {
+    opcode_t * const ret = expr NEXT();
+    STRING          *msg = PMC_IS_NULL($1)
+                         ? NULL : VTABLE_get_string(interp, $1);
+    PMC            *exception =
+        Parrot_ex_build_exception(interp, EXCEPT_error, CONTROL_ERROR, msg);
+    opcode_t       *dest = Parrot_ex_throw_from_op(interp, exception, ret);
+    goto ADDRESS(dest);
 }
 
-inline op tcl_error(in STR) {
-  opcode_t *ret;
-  opcode_t *dest;
-  PMC      *exception = pmc_new(interp, enum_class_Exception);
-
-  VTABLE_set_string_native(interp, exception, $1);
-  VTABLE_set_integer_keyed_str(interp, exception, const_string(interp, "type"),
-    CONTROL_ERROR);
-  ret  = expr NEXT();
-  dest = Parrot_ex_throw_from_op(interp, exception, ret);
-  goto ADDRESS(dest);
+/* XXX this is now the same as die (in STR) and can be removed */
+inline op tcl_error(in STR) :flow {
+    PMC *exception = Parrot_ex_build_exception(interp, EXCEPT_error,
+            CONTROL_ERROR, $1);
+    opcode_t * const ret  = expr NEXT();
+    opcode_t * const dest = Parrot_ex_throw_from_op(interp, exception, ret);
+    goto ADDRESS(dest);
 }
 
-inline op tcl_error(in STR, in PMC) {
-  opcode_t *ret;
-  opcode_t *dest;
-  PMC      *errorCode, *ns;
-  PMC      * const root_ns = interp->root_namespace;
-  PMC      *exception      = pmc_new(interp, enum_class_Exception);
-  PMC      *tcl_key        = pmc_new(interp, enum_class_Key);
+inline op tcl_error(in STR, in PMC) :flow {
+    PMC      *errorCode, *ns;
+    PMC      *const root_ns = interp->root_namespace;
+    PMC      *tcl_key        = pmc_new(interp, enum_class_Key);
+    PMC *exception = Parrot_ex_build_exception(interp, EXCEPT_error,
+            CONTROL_ERROR, $1);
+    opcode_t * const ret  = expr NEXT();
+    opcode_t * dest;
+  
+    /* Set the global $errorCode */
+    VTABLE_set_string_native(interp, tcl_key, string_from_literal(interp, "tcl"));
+    ns = Parrot_get_namespace_keyed(interp, root_ns, tcl_key);
 
-  VTABLE_set_string_native(interp, tcl_key, string_from_literal(interp, "tcl"));
-  ns = Parrot_get_namespace_keyed(interp, root_ns, tcl_key);
+    errorCode = Parrot_find_global_n(interp, ns, string_from_literal(interp, "$errorCode"));
+    VTABLE_assign_pmc(interp, errorCode, $2);
 
-  errorCode = Parrot_find_global_n(interp, ns, string_from_literal(interp, "$errorCode"));
-  VTABLE_assign_pmc(interp, errorCode, $2);
-
-  VTABLE_set_string_native(interp, exception, $1);
-  VTABLE_set_integer_keyed_str(interp, exception, const_string(interp, "type"),
-    CONTROL_ERROR);
-
-  ret  = expr NEXT();
-  dest = Parrot_ex_throw_from_op(interp, exception, ret);
-  goto ADDRESS(dest);
+    /* Throw the exception */
+    dest = Parrot_ex_throw_from_op(interp, exception, ret);
+    goto ADDRESS(dest);
 }
 
-inline op tcl_error(in INT, in PMC) {
-  opcode_t *ret;
-  opcode_t *dest;
-  PMC      *exception = pmc_new(interp, enum_class_Exception);
-  STRING   *message   = VTABLE_get_string(interp, $2);
-
-  VTABLE_set_string_native(interp, exception, message);
-  VTABLE_set_integer_keyed_str(interp, exception, const_string(interp, "type"),
-    $1);
-
-  ret  = expr NEXT();
-  dest = Parrot_ex_throw_from_op(interp, exception, ret);
-  goto ADDRESS(dest);
+inline op tcl_error(in INT, in PMC) :flow {
+    opcode_t * const ret = expr NEXT();
+    STRING          *msg = PMC_IS_NULL($2)
+                         ? NULL : VTABLE_get_string(interp, $2);
+    PMC            *exception =
+        Parrot_ex_build_exception(interp, EXCEPT_error, $1, msg);
+    opcode_t       *dest = Parrot_ex_throw_from_op(interp, exception, ret);
+    goto ADDRESS(dest);
 }
 
 =item B<tcl_return>(in PMC)
@@ -154,31 +138,22 @@ Generate a TCL_RETURN, returning the specified value
 
 =cut
 
-inline op tcl_return(in PMC) {
-  opcode_t *ret;
-  opcode_t *dest;
-  PMC      *exception  = pmc_new(interp, enum_class_Exception);
-  STRING   *message    = VTABLE_get_string(interp, $1);
-
-  VTABLE_set_string_native(interp, exception, message);
-  VTABLE_set_integer_keyed_str(interp, exception, const_string(interp, "type"),
-    CONTROL_RETURN);
-  ret  = expr NEXT();
-  dest = Parrot_ex_throw_from_op(interp, exception, ret);
-  goto ADDRESS(dest);
+inline op tcl_return(in PMC) :flow {
+    opcode_t * const ret = expr NEXT();
+    STRING          *msg = PMC_IS_NULL($1)
+                         ? NULL : VTABLE_get_string(interp, $1);
+    PMC            *exception =
+        Parrot_ex_build_exception(interp, EXCEPT_error, CONTROL_RETURN, msg);
+    opcode_t       *dest = Parrot_ex_throw_from_op(interp, exception, ret);
+    goto ADDRESS(dest);
 }
 
-inline op tcl_return(in STR) {
-  opcode_t *ret;
-  opcode_t *dest;
-  PMC      *exception  = pmc_new(interp, enum_class_Exception);
-
-  VTABLE_set_string_native(interp, exception, $1);
-  VTABLE_set_integer_keyed_str(interp, exception, const_string(interp, "type"),
-    CONTROL_RETURN);
-  ret  = expr NEXT();
-  dest = Parrot_ex_throw_from_op(interp, exception, ret);
-  goto ADDRESS(dest);
+inline op tcl_return(in STR) :flow {
+    PMC *exception = Parrot_ex_build_exception(interp, EXCEPT_error,
+            CONTROL_RETURN, $1);
+    opcode_t * const ret  = expr NEXT();
+    opcode_t * const dest = Parrot_ex_throw_from_op(interp, exception, ret);
+    goto ADDRESS(dest);
 }
 
 =item B<tcl_break>()
@@ -187,18 +162,13 @@ Generate a TCL_BREAK
 
 =cut
 
-inline op tcl_break() {
-  opcode_t *ret;
-  opcode_t *dest;
-  PMC      *exception = pmc_new(interp, enum_class_Exception);
-  STRING   *empty     = string_make_empty(interp, enum_stringrep_one, 0);
-
-  VTABLE_set_string_native(interp, exception, empty);
-  VTABLE_set_integer_keyed_str(interp, exception, const_string(interp, "type"),
-    CONTROL_BREAK);
-  ret  = expr NEXT();
-  dest = Parrot_ex_throw_from_op(interp, exception, ret);
-  goto ADDRESS(dest);
+inline op tcl_break() :flow {
+    STRING   *empty     = string_make_empty(interp, enum_stringrep_one, 0);
+    PMC *exception = Parrot_ex_build_exception(interp, EXCEPT_error,
+            CONTROL_BREAK, empty);
+    opcode_t * const ret  = expr NEXT();
+    opcode_t * const dest = Parrot_ex_throw_from_op(interp, exception, ret);
+    goto ADDRESS(dest);
 }
 
 =item B<tcl_continue>()
@@ -207,18 +177,13 @@ Generate a TCL_CONTINUE
 
 =cut
 
-inline op tcl_continue() {
-  opcode_t *ret;
-  opcode_t *dest;
-  PMC      *exception    = pmc_new(interp, enum_class_Exception);
-  STRING   *empty        = string_make_empty(interp, enum_stringrep_one, 0);
-
-  VTABLE_set_string_native(interp, exception, empty);
-  VTABLE_set_integer_keyed_str(interp, exception, const_string(interp, "type"),
-    CONTROL_CONTINUE);
-  ret  = expr NEXT();
-  dest = Parrot_ex_throw_from_op(interp, exception, ret);
-  goto ADDRESS(dest);
+inline op tcl_continue() :flow {
+    STRING   *empty     = string_make_empty(interp, enum_stringrep_one, 0);
+    PMC *exception = Parrot_ex_build_exception(interp, EXCEPT_error,
+            CONTROL_CONTINUE, empty);
+    opcode_t * const ret  = expr NEXT();
+    opcode_t * const dest = Parrot_ex_throw_from_op(interp, exception, ret);
+    goto ADDRESS(dest);
 }
 
 =back
