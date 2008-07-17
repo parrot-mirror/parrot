@@ -59,15 +59,9 @@ inline op tcl_binary_format(out STR, in STR, in PMC) {
 =head1 Flow control opcodes
 
 These opcodes are used to generate exception return values. (Anything that
-isn't a TCL_OK)
+isn't a TCL_OK).
 
 =over 4
-
-=item B<tcl_error>(in PMC)
-
-=item B<tcl_error>(in STR)
-
-Generate a TCL_ERROR with $1 as the value.
 
 =item B<tcl_error>(in STR, in PMC)
 
@@ -78,26 +72,6 @@ Generate a TCL_ERROR with $1 as the value, and set $errorCode to $2
 Generate a $1 with $2 as the value.
 
 =cut
-
-/* XXX this is now the same as die (in PMC) and can be removed  */
-inline op tcl_error(in PMC) :flow {
-    opcode_t * const ret = expr NEXT();
-    STRING          *msg = PMC_IS_NULL($1)
-                         ? NULL : VTABLE_get_string(interp, $1);
-    PMC            *exception =
-        Parrot_ex_build_exception(interp, EXCEPT_error, CONTROL_ERROR, msg);
-    opcode_t       *dest = Parrot_ex_throw_from_op(interp, exception, ret);
-    goto ADDRESS(dest);
-}
-
-/* XXX this is now the same as die (in STR) and can be removed */
-inline op tcl_error(in STR) :flow {
-    PMC *exception = Parrot_ex_build_exception(interp, EXCEPT_error,
-            CONTROL_ERROR, $1);
-    opcode_t * const ret  = expr NEXT();
-    opcode_t * const dest = Parrot_ex_throw_from_op(interp, exception, ret);
-    goto ADDRESS(dest);
-}
 
 inline op tcl_error(in STR, in PMC) :flow {
     PMC      *errorCode, *ns;
