@@ -685,6 +685,7 @@ INS(PARROT_INTERP, ARGMOD(IMC_Unit *unit), ARGIN(const char *name),
                 "arg count mismatch: op #%d '%s' needs %d given %d",
                 op, fullname, op_info->op_count-1, n);
 
+    /* XXX Speed up some by keep track of the end of format ourselves */
     for (i = 0; i < n; i++) {
         switch (op_info->dirs[i]) {
             case PARROT_ARGDIR_INOUT:
@@ -703,8 +704,9 @@ INS(PARROT_INTERP, ARGMOD(IMC_Unit *unit), ARGIN(const char *name),
         };
 
         if (keyvec & KEY_BIT(i)) {
-            len          = strlen(format);
-            len         -= 2;
+            /* XXX Assert that len > 2 */
+            len          = strlen(format) - 2;
+            PARROT_ASSERT(len >= 0);
             format[len]  = '\0';
             strcat(format, "[%s], ");
         }
@@ -753,8 +755,8 @@ INS(PARROT_INTERP, ARGMOD(IMC_Unit *unit), ARGIN(const char *name),
         IMCC_INFO(interp)->cur_unit->instructions->symregs[0]->pcc_sub->calls_a_sub
             |= 1 | ITPCCYIELD;
     }
-    else if (!strncmp(name, "invoke", 6) ||
-             !strncmp(name, "callmethod", 10)) {
+    else if ((strncmp(name, "invoke", 6) == 0) ||
+             (strncmp(name, "callmethod", 10) == 0)) {
         if (IMCC_INFO(interp)->cur_unit->type & IMC_PCCSUB)
             IMCC_INFO(interp)->cur_unit->instructions->symregs[0]->pcc_sub->calls_a_sub |= 1;
     }
@@ -1715,6 +1717,8 @@ PARROT_API
 void
 imcc_init(PARROT_INTERP)
 {
+    PARROT_ASSERT(IMCC_INFO(interp) == NULL);
+
     IMCC_INFO(interp) = mem_allocate_zeroed_typed(imc_info_t);
     /* register PASM and PIR compilers to parrot core */
     register_compilers(interp);

@@ -73,7 +73,7 @@ static char * add_ns(PARROT_INTERP, ARGIN(const char *name))
 
 PARROT_CANNOT_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
-static SymReg* mk_pmc_const_2(PARROT_INTERP,
+static SymReg * mk_pmc_const_2(PARROT_INTERP,
     ARGMOD(IMC_Unit *unit),
     ARGIN(SymReg *left),
     ARGMOD(SymReg *rhs))
@@ -593,7 +593,7 @@ mk_ident_ur(PARROT_INTERP, ARGIN(const char *name), int t)
 
 /*
 
-=item C<static SymReg* mk_pmc_const_2>
+=item C<static SymReg * mk_pmc_const_2>
 
 Makes a constant PMC and inserts instructions to access it.
 
@@ -1116,7 +1116,6 @@ free_sym(ARGMOD(SymReg *r))
         mem_sys_free(sub);
     }
 
-    /* TODO free keychain */
     if (r->set == 'K') {
         SymReg *key     = r->nextkey;
         while (key) {

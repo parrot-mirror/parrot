@@ -1,4 +1,4 @@
-# Copyright (C) 2005-2007, The Perl Foundation.
+# Copyright (C) 2005-2008, The Perl Foundation.
 # $Id$
 
 =head1 NAME
@@ -27,6 +27,20 @@ our $cache = q{.parrot_current_rev};
 
 our $current = _get_revision();
 
+sub update {
+    my $prev = _get_revision();
+    my $revision = _analyze_sandbox();
+    if (defined ($prev) && ($revision ne $prev)) {
+        $revision = 'unknown' unless defined $revision;
+        eval {
+            open my $FH, ">", $cache;
+            print $FH "$revision\n";
+            close $FH;
+            $current = $revision;
+        };
+    }
+}
+
 sub _get_revision {
     my $revision;
     if (-f $cache) {
@@ -53,12 +67,17 @@ sub _get_revision {
 sub _analyze_sandbox {
     my $revision = 0;
     # code taken from pugs/util/version_h.pl rev 14410
+    # modified because in xml output commit and entry revision
+    # are difficult to distinguih in a simplified parsing
     my $nul = File::Spec->devnull;
-    if ( my @svn_info = qx/svn --xml info 2>$nul/ and $? == 0 ) {
-        if ( my ($line) = grep /^\s*revision=/, @svn_info ) {
+    my $oldLANG = $ENV{LANG};
+    $ENV{LANG} = 'C';
+    if ( my @svn_info = qx/svn info 2>$nul/ and $? == 0 ) {
+        if ( my ($line) = grep /^Revision:/, @svn_info ) {
             ($revision) = $line =~ /(\d+)/;
         }
     }
+    $ENV{LANG} = $oldLANG;
     return $revision;
 }
 

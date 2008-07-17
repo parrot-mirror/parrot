@@ -46,6 +46,27 @@ PMC * PMCNULL;
 
 /*
 
+=item C<INTVAL PMC_is_null>
+
+Tests if the given pmc is null.
+
+=cut
+
+*/
+
+PARROT_API
+INTVAL
+PMC_is_null(SHIM_INTERP, NULLOK(const PMC *pmc))
+{
+#if PARROT_CATCH_NULL
+    return pmc == PMCNULL || pmc == NULL;
+#else
+    return pmc == NULL;
+#endif
+}
+
+/*
+
 =item C<PMC * pmc_new>
 
 Creates a new PMC of type C<base_type> (which is an index into the list of PMC
@@ -422,20 +443,24 @@ Returns the PMC type for C<name>.
 PARROT_API
 PARROT_WARN_UNUSED_RESULT
 INTVAL
-pmc_type(PARROT_INTERP, ARGIN(STRING *name))
+pmc_type(PARROT_INTERP, ARGIN_NULLOK(STRING *name))
 {
-    PMC * const classname_hash = interp->class_hash;
-    PMC * const item           =
-        (PMC *)VTABLE_get_pointer_keyed_str(interp, classname_hash, name);
+    if (!name)
+        return enum_type_undef;
+    else {
+        PMC * const classname_hash = interp->class_hash;
+        PMC * const item           =
+            (PMC *)VTABLE_get_pointer_keyed_str(interp, classname_hash, name);
 
-    /* nested namespace with same name */
-    if (item->vtable->base_type == enum_class_NameSpace)
-        return 0;
+        /* nested namespace with same name */
+        if (item->vtable->base_type == enum_class_NameSpace)
+            return enum_type_undef;
 
-    if (!PMC_IS_NULL(item))
-        return VTABLE_get_integer(interp, item);
+        if (!PMC_IS_NULL(item))
+            return VTABLE_get_integer(interp, item);
 
-    return Parrot_get_datatype_enum(interp, name);
+        return Parrot_get_datatype_enum(interp, name);
+    }
 }
 
 /*
@@ -596,8 +621,7 @@ dod_register_pmc(PARROT_INTERP, ARGIN(PMC* pmc))
     /* Better not trigger a DOD run with a potentially unanchored PMC */
     Parrot_block_GC_mark(interp);
 
-    if (!interp->DOD_registry)
-        interp->DOD_registry = pmc_new(interp, enum_class_AddrRegistry);
+    PARROT_ASSERT(interp->DOD_registry);
 
     VTABLE_set_pmc_keyed(interp, interp->DOD_registry, pmc, PMCNULL);
     Parrot_unblock_GC_mark(interp);
@@ -616,9 +640,7 @@ Unregisters the PMC from the interpreter's DOD registry.
 void
 dod_unregister_pmc(PARROT_INTERP, ARGIN(PMC* pmc))
 {
-    /* XXX or signal exception? */
-    if (!interp->DOD_registry)
-        return;
+    PARROT_ASSERT(interp->DOD_registry);
 
     VTABLE_delete_keyed(interp, interp->DOD_registry, pmc);
 }

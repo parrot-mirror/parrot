@@ -656,18 +656,9 @@ Return the POST representation of a C<PAST::Block>.
     bpost = $P0.'new'(bpost, 'node'=>node, 'result'=>result)
     if ns goto block_decl_ns
     bpost.'push_pirop'('get_global', result, name)
-    goto block_decl_closure
+    goto block_done
   block_decl_ns:
     bpost.'push_pirop'('get_hll_global', result, ns, name)
-  block_decl_closure:
-    .local pmc closurelabel
-    $P0 = get_hll_global ['POST'], 'Label'
-    closurelabel = $P0.'new'('name'=>'closure_')
-    $S0 = self.'uniquereg'('I')
-    bpost.'push_pirop'('isa', $S0, result, "'Closure'")
-    bpost.'push_pirop'('unless', $S0, closurelabel)
-    bpost.'push_pirop'('newclosure', result, result)
-    bpost.'push'(closurelabel)
     goto block_done
 
   block_immediate:
@@ -675,10 +666,7 @@ Return the POST representation of a C<PAST::Block>.
     $P0 = get_hll_global ['POST'], 'Ops'
     bpost = $P0.'new'(bpost, 'node'=>node, 'result'=>result)
     if ns goto block_immediate_ns
-    $S0 = '$P10'
-    bpost.'push_pirop'('get_global', $S0, name)
-    bpost.'push_pirop'('newclosure', $S0, $S0)
-    bpost.'push_pirop'('call', $S0, 'result'=>result)
+    bpost.'push_pirop'('call', name, 'result'=>result)
     goto block_done
   block_immediate_ns:
     $S0 = '$P10'
@@ -811,8 +799,7 @@ for calling a sub.
     signature = 'vP:'
   have_signature:
 
-    .local pmc ops, posargs, namedargs
-    .local string name
+    .local pmc name, ops, posargs, namedargs
     name = node.'name'()
     if name goto call_by_name
     ##  our first child is the thing to be invoked, so make sure it's a PMC
@@ -821,8 +808,17 @@ for calling a sub.
     goto children_done
   call_by_name:
     (ops, posargs, namedargs) = self.'post_children'(node, 'signature'=>signature)
+    $I0 = isa name, 'PAST::Node'
+    if $I0 goto call_by_name_past
     $S0 = self.'escape'(name)
     unshift posargs, $S0
+    goto children_done
+  call_by_name_past:
+    .local pmc name_post
+    name_post = self.'as_post'(name, 'rtype'=>'s')
+    name_post = self.'coerce'(name_post, 's')
+    ops.'push'(name_post)
+    unshift posargs, name_post
   children_done:
 
     ##  generate the call itself
@@ -1144,19 +1140,18 @@ by C<node>.
     .local pmc arglist
     arglist = new 'ResizablePMCArray'
   arity_loop:
-    if arity < 1 goto arity_end
     .local string nextval
     nextval = self.'uniquereg'('P')
-    push arglist, nextval
     ops.'push_pirop'('shift', nextval, iter)
+    if arity < 1 goto arity_end
+    push arglist, nextval
     dec arity
-    goto arity_loop
+    if arity > 0 goto arity_loop
   arity_end:
 
     .local pmc subpost
     subpost = self.'as_post'(subpast, 'rtype'=>'P')
     ops.'push'(subpost)
-    ops.'push_pirop'('newclosure', subpost, subpost)
     ops.'push_pirop'('call', subpost, arglist :flat)
     ops.'push_pirop'('goto', looplabel)
     ops.'push'(endlabel)
@@ -1598,7 +1593,11 @@ attribute.
     pop_eh
     .return self.$P0(node, bindpost)
   scope_error:
-    .return self.'panic'("Scope ", scope, " not found for PAST::Var '", name, "'")
+    unless scope goto scope_error_1
+    scope = concat " '", scope
+    scope = concat scope, "'"
+  scope_error_1:
+    .return self.'panic'("Scope", scope, " not found for PAST::Var '", name, "'")
 .end
 
 

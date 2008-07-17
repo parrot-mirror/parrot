@@ -114,7 +114,7 @@ static UINTVAL validate(SHIM_INTERP, SHIM(STRING *source_string));
 #endif
 
 #define EXCEPTION(err, str) \
-    Parrot_ex_throw_from_c_args(interp, NULL, err, str)
+    Parrot_ex_throw_from_c_args(interp, NULL, (err), (str))
 
 /*
 

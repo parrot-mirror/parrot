@@ -141,9 +141,14 @@ src/builtins/op.pir - Perl6 builtin operators
 
 
 .sub 'infix:x' :multi(_,_)
-    .param string a
-    .param int b
-    $S0 = repeat a, b
+    .param string str
+    .param int count
+    if count > 0 goto do_work
+    $S0 = ""
+    goto done
+  do_work:
+    $S0 = repeat str, count
+  done:
     .return ($S0)
 .end
 
@@ -293,90 +298,6 @@ src/builtins/op.pir - Perl6 builtin operators
 .end
 
 
-.sub 'infix:.?'
-    .param pmc invocant
-    .param string method_name
-    .param pmc pos_args     :slurpy
-    .param pmc named_args   :slurpy :named
-
-    # For now we won't worry about signature, just if a method exists.
-    $I0 = can invocant, method_name
-    if $I0 goto invoke
-    $P0 = get_hll_global 'Failure'
-    .return ($P0)
-
-    # If we do have a method, call it.
-  invoke:
-    .return invocant.method_name(pos_args :flat, named_args :named :flat)
-.end
-
-
-.sub 'infix:.*'
-    .param pmc invocant
-    .param string method_name
-    .param pmc pos_args     :slurpy
-    .param pmc named_args   :slurpy :named
-
-    # Return an empty list if no methods exist at all.
-    $I0 = can invocant, method_name
-    if $I0 goto invoke
-    .return 'list'()
-
-    # Now find all methods and call them - since we know there are methods,
-    # we just pass on to infix:.+.
-  invoke:
-    .return 'infix:.+'(invocant, method_name, pos_args :flat, named_args :named :flat)
-.end
-
-
-.sub 'infix:.+'
-    .param pmc invocant
-    .param string method_name
-    .param pmc pos_args     :slurpy
-    .param pmc named_args   :slurpy :named
-
-    # We need to find all methods we could call with the right name.
-    .local pmc p6meta, result_list, class, mro, it, cap_class, failure_class
-    result_list = 'list'()
-    p6meta = get_hll_global ['Perl6Object'], '$!P6META'
-    class = invocant.'HOW'()
-    class = p6meta.get_parrotclass(class)
-    mro = inspect class, 'all_parents'
-    it = iter mro
-    cap_class = get_hll_global 'Capture'
-    failure_class = get_hll_global 'Failure'
-  mro_loop:
-    unless it goto mro_loop_end
-    .local pmc cur_class, meths, cur_meth
-    cur_class = shift it
-    meths = inspect cur_class, 'methods'
-    cur_meth = meths[method_name]
-    if null cur_meth goto mro_loop
-
-    # If we're here, found a method. Invoke it and add capture of the results
-    # to the result list.
-    .local pmc pos_res, named_res, cap
-    (pos_res :slurpy, named_res :named :slurpy) = cur_meth(invocant, pos_args :flat, named_args :named :flat)
-    cap = cap_class.'!create'(failure_class, pos_res :flat, named_res :flat :named)
-    push result_list, cap
-    goto mro_loop
-  mro_loop_end:
-
-    # Make sure we got some elements, or we have to die.
-    $I0 = elements result_list
-    if $I0 == 0 goto failure
-    .return (result_list)
-  failure:
-    $S0 = "Could not invoke method '"
-    concat $S0, method_name
-    concat $S0, "' on invocant of type '"
-    $S1 = invocant.WHAT()
-    concat $S0, $S1
-    concat $S0, "'"
-    'die'($S0)
-.end
-
-
 .sub 'infix:does'
     .param pmc var
     .param pmc role
@@ -417,6 +338,12 @@ src/builtins/op.pir - Perl6 builtin operators
     # construct itself.
     $P0 = new derived
 
+    # Register proto-object.
+    .local pmc p6meta, proto
+    p6meta = get_hll_global ['Perl6Object'], '$!P6META'
+    proto = var.'WHAT'()
+    p6meta.register(derived, 'protoobject'=>proto)
+
     # Re-bless the object into the subclass.
     rebless_subclass var, derived
 
@@ -441,6 +368,48 @@ attr_error:
     'die'("Can only supply an initialization value to a role with one attribute")
 .end
 
+
+.sub 'infix:but'
+    .param pmc var
+    .param pmc role
+    .param pmc value      :optional
+    .param int have_value :opt_flag
+
+    # First off, is the role actually a role?
+    $I0 = isa role, 'Role'
+    if $I0 goto have_role
+
+    # If not, it may be an enum. If we don't have a value, get the class of
+    # the thing passed as a role and find out.
+    if have_value goto error
+    .local pmc the_class, prop, role_list
+    push_eh error
+    the_class = class role
+    prop = getprop 'enum', the_class
+    if null prop goto error
+    unless prop goto error
+
+    # We have an enum; get the one role of the class and set the value.
+    role_list = inspect the_class, 'roles'
+    value = role
+    role = role_list[0]
+    goto have_role
+
+    # Did anything go wrong?
+  error:
+    'die'("The but operator can only be used with a role or enum value on the right hand side")
+
+    # Now we have a role, copy the value and call does on the copy.
+  have_role:
+    var = clone var
+    if null value goto no_value
+    'infix:does'(var, role, value)
+    goto return
+  no_value:
+    'infix:does'(var, role)
+  return:
+    .return (var)
+.end
 
 =back
 
