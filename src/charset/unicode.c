@@ -160,7 +160,7 @@ static UINTVAL validate(PARROT_INTERP, ARGIN(STRING *src))
 #  include <unicode/unorm.h>
 #endif
 #define EXCEPTION(err, str) \
-    Parrot_ex_throw_from_c_args(interp, NULL, err, str)
+    Parrot_ex_throw_from_c_args(interp, NULL, (err), (str))
 
 #define UNIMPL EXCEPTION(EXCEPTION_UNIMPLEMENTED, "unimplemented unicode")
 

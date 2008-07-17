@@ -9,10 +9,12 @@ src/gc/dod.c - Dead object destruction of the various headers
 =head1 DESCRIPTION
 
 This file implements I<dead object destruction>. This is documented in
-PDD 9 with supplementary notes in F<docs/dev/dod.pod>.
+PDD 9 with supplementary notes in F<docs/dev/dod.pod> and
+F<docs/memory_internals.pod>.
 
 It's possible to turn on/off the checking of the system stack and
-processor registers. The actual checking is implemented in F<src/cpu_dep.c>.
+processor registers. The actual checking is set up in F<src/cpu_dep.c>
+and is performed in the function C<trace_memory_block> here.
 
 There's also a verbose mode for garbage collection.
 
@@ -75,9 +77,10 @@ int CONSERVATIVE_POINTER_CHASING = 0;
 
 =item C<static void mark_special>
 
-Mark the children of a special PMC. Handle the marking necessary for shared
-PMCs, and ensure timely marking of high-priority PMCs. Ensure PMC_EXT
-structures are properly organized for garbage collection.
+Marks the children of a special PMC. Handles the marking necessary
+for shared PMCs, and ensures timely marking of high-priority PMCs.
+Ensures PMC_EXT structures are properly organized for garbage
+collection.
 
 =cut
 
@@ -234,7 +237,7 @@ pobject_lives(PARROT_INTERP, ARGMOD(PObj *obj))
 
 =item C<int Parrot_dod_trace_root>
 
-Trace the root set. Returns 0 if it's a lazy DOD run and all objects
+Traces the root set. Returns 0 if it's a lazy DOD run and all objects
 that need timely destruction were found.
 
 C<trace_stack> can have these values:
@@ -308,9 +311,9 @@ Parrot_dod_trace_root(PARROT_INTERP, int trace_stack)
     /* Now mark the class hash */
     pobject_lives(interp, (PObj *)interp->class_hash);
 
-    /* Mark the registry if any */
-    if (interp->DOD_registry)
-        pobject_lives(interp, (PObj *)interp->DOD_registry);
+    /* Mark the registry */
+    PARROT_ASSERT(interp->DOD_registry);
+    pobject_lives(interp, (PObj *)interp->DOD_registry);
 
     /* Mark the transaction log */
     /* XXX do this more generically? */
@@ -340,8 +343,9 @@ Parrot_dod_trace_root(PARROT_INTERP, int trace_stack)
 
 =item C<static int trace_active_PMCs>
 
-Do a full trace run and mark all the PMCs as active if they are. Returns
-whether the run completed, that is, whether it's safe to proceed with GC.
+Performs a full trace run and marks all the PMCs as active if they
+are. Returns whether the run completed, that is, whether it's safe
+to proceed with GC.
 
 =cut
 
@@ -362,7 +366,7 @@ trace_active_PMCs(PARROT_INTERP, int trace_stack)
 
 =item C<int Parrot_dod_trace_children>
 
-Returns whether the tracing process completed.
+Returns whether the tracing process has completed.
 
 =cut
 
@@ -447,10 +451,10 @@ Parrot_dod_trace_children(PARROT_INTERP, size_t how_many)
 
 =item C<void Parrot_dod_trace_pmc_data>
 
-if the PMC is an array of PMCs, trace all elements in the array as children.
-touch each object in the array and mark it as being alive. To determine
-whether a PMC is an array to be marked in this way, test it for the
-PObj_data_is_PMC_array_FLAG flag.
+If the PMC is an array of PMCs, trace all elements in the array as children.
+Touches each object in the array to mark it as being alive. To determine
+whether a PMC is an array to be marked in this way, it is tested for the
+C<PObj_data_is_PMC_array_FLAG> flag.
 
 =cut
 
@@ -477,7 +481,7 @@ Parrot_dod_trace_pmc_data(PARROT_INTERP, ARGIN(PMC *p))
 
 =item C<void clear_cow>
 
-Clear the COW ref count.
+Clears the COW ref count.
 
 =cut
 
@@ -522,7 +526,7 @@ clear_cow(PARROT_INTERP, ARGMOD(Small_Object_Pool *pool), int cleanup)
 
 =item C<void used_cow>
 
-Find other users of COW's C<bufstart>.
+Finds other users of COW's C<bufstart>.
 
 =cut
 
@@ -564,8 +568,8 @@ used_cow(PARROT_INTERP, ARGMOD(Small_Object_Pool *pool), int cleanup)
 
 =item C<void Parrot_dod_sweep>
 
-Put any buffers/PMCs that are now unused onto the pool's free list. If
-C<GC_IS_MALLOC>, bufstart gets freed too, if possible. Avoid buffers that
+Puts any buffers/PMCs that are now unused onto the pool's free list. If
+C<GC_IS_MALLOC>, bufstart gets freed too, if possible. Avoids buffers that
 are immune from collection (i.e. constant).
 
 =cut
@@ -653,9 +657,9 @@ next:
 
 =item C<void Parrot_dod_free_pmc>
 
-Free a PMC that is no longer being used. Calls a custom destroy() VTABLE
-method if one is available. If the PMC uses a PMC_EXT structure, frees
-that as well.
+Frees a PMC that is no longer being used. Calls a custom C<destroy>
+VTABLE method if one is available. If the PMC uses a PMC_EXT
+structure, that is freed as well.
 
 =cut
 
@@ -692,7 +696,7 @@ Parrot_dod_free_pmc(PARROT_INTERP, SHIM(Small_Object_Pool *pool),
 
 =item C<void Parrot_free_pmc_ext>
 
-Frees the PMC_EXT structure attached to a PMC, if it exists.
+Frees the C<PMC_EXT> structure attached to a PMC, if it exists.
 
 =cut
 
@@ -723,8 +727,8 @@ Parrot_free_pmc_ext(PARROT_INTERP, ARGMOD(PMC *p))
 
 =item C<void Parrot_dod_free_sysmem>
 
-If the PMC uses memory allocated directly from the system, free that
-memory.
+If the PMC uses memory allocated directly from the system, this function
+frees that memory.
 
 =cut
 
@@ -746,9 +750,9 @@ Parrot_dod_free_sysmem(SHIM_INTERP, SHIM(Small_Object_Pool *pool),
 
 =item C<void Parrot_dod_free_buffer_malloc>
 
-Free the given buffer, returning the storage space to the operating system
+Frees the given buffer, returning the storage space to the operating system
 and removing it from Parrot's memory management system. If the buffer is COW,
-does not free if the reference count is greater then 1.
+The buffer is not freed if the reference count is greater then 1.
 
 =cut
 
@@ -781,7 +785,7 @@ Parrot_dod_free_buffer_malloc(SHIM_INTERP, SHIM(Small_Object_Pool *pool),
 
 =item C<void Parrot_dod_free_buffer>
 
-Free a buffer, return it to the memory pool for Parrot to possibly
+Frees a buffer, returning it to the memory pool for Parrot to possibly
 reuse later.
 
 =cut
@@ -811,7 +815,8 @@ Parrot_dod_free_buffer(SHIM_INTERP, ARGMOD(Small_Object_Pool *pool), ARGMOD(PObj
 
 =item C<static size_t find_common_mask>
 
-Find a mask covering the longest common bit-prefix of C<val1> and C<val2>.
+Finds a mask covering the longest common bit-prefix of C<val1>
+and C<val2>.
 
 =cut
 
@@ -920,8 +925,8 @@ trace_mem_block(PARROT_INTERP, size_t lo_var_ptr, size_t hi_var_ptr)
 
 =item C<static void clear_live_bits>
 
-Run through all PMC arenas and clear live bits. This is used to reset the
-GC system after a full system sweep.
+Runs through all PMC arenas and clear live bits. This is used to reset
+the GC system after a full system sweep.
 
 =cut
 
@@ -949,8 +954,9 @@ clear_live_bits(ARGIN(const Small_Object_Pool *pool))
 
 =item C<void Parrot_dod_clear_live_bits>
 
-Reset the PMC pool, so all objects are marked as "White". Do this after
-a GC run to reset the system and prepare for the next mark phase.
+Resets the PMC pool, so all objects are marked as "White". This
+is done after a GC run to reset the system and prepare for the
+next mark phase.
 
 =cut
 
@@ -984,8 +990,8 @@ Parrot_dod_profile_start(PARROT_INTERP)
 
 =item C<void Parrot_dod_profile_end>
 
-Records the end time of the DOD part C<what> run when profiling is enabled.
-Also record start time of next part.
+Records the end time of the DOD part C<what> run when profiling is
+enabled. Also record start time of next part.
 
 =cut
 
@@ -1018,8 +1024,8 @@ Parrot_dod_profile_end(PARROT_INTERP, int what)
 
 =item C<void Parrot_dod_ms_run_init>
 
-Prepare for a mark & sweep DOD run. The initializer function for the
-MS garbage collector.
+Prepares the collector for a mark & sweep DOD run. This is the
+initializer function for the MS garbage collector.
 
 =cut
 
@@ -1040,8 +1046,9 @@ Parrot_dod_ms_run_init(PARROT_INTERP)
 
 =item C<static int sweep_cb>
 
-Sweep the given pool for the MS collector. End profiling if profiling
-is enabled. Return the total number of objects freed.
+Sweeps the given pool for the MS collector. This function also ends
+the profiling timer, if profiling is enabled. Returns the total number
+of objects freed.
 
 =cut
 
@@ -1077,7 +1084,7 @@ sweep_cb(PARROT_INTERP, ARGMOD(Small_Object_Pool *pool), int flag,
 
 =item C<void Parrot_dod_ms_run>
 
-Run the stop-the-world mark & sweep (MS) collector.
+Runs the stop-the-world mark & sweep (MS) collector.
 
 =cut
 
@@ -1170,7 +1177,8 @@ Parrot_dod_ms_run(PARROT_INTERP, int flags)
 
 =item C<void Parrot_do_dod_run>
 
-Call the configured garbage collector to find and reclaim unused headers.
+Calls the configured garbage collector to find and reclaim unused
+headers.
 
 =cut
 

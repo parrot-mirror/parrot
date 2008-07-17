@@ -39,7 +39,6 @@ my @steps = qw(
     auto::sizes
     auto::byteorder
     auto::va_ptr
-    auto::pack
     auto::format
     auto::isreg
     auto::arch
@@ -63,7 +62,6 @@ my @steps = qw(
     auto::gettext
     auto::snprintf
     auto::perldoc
-    auto::m4
     auto::ctags
     auto::revision
     auto::icu

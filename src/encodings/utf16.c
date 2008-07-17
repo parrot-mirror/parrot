@@ -324,11 +324,11 @@ Sets, in string C<src> at position C<offset>, the codepoint C<codepoint>.
 static void
 set_codepoint(PARROT_INTERP, ARGIN(STRING *src), UINTVAL offset, UINTVAL codepoint)
 {
-    UNIMPL;
     UNUSED(interp);
     UNUSED(src);
     UNUSED(offset);
     UNUSED(codepoint);
+    UNIMPL;
 }
 
 /*
@@ -455,11 +455,11 @@ PARROT_CANNOT_RETURN_NULL
 static STRING *
 get_bytes(PARROT_INTERP, ARGIN(STRING *src), UINTVAL offset, UINTVAL count)
 {
-    UNIMPL;
     UNUSED(interp);
     UNUSED(src);
     UNUSED(offset)
     UNUSED(count);
+    UNIMPL;
 }
 
 /*
@@ -479,12 +479,12 @@ static STRING *
 get_bytes_inplace(PARROT_INTERP, ARGIN(STRING *src),
         UINTVAL offset, UINTVAL count, ARGIN(STRING *return_string))
 {
-    UNIMPL;
     UNUSED(interp);
     UNUSED(src);
     UNUSED(offset)
     UNUSED(count);
     UNUSED(return_string);
+    UNIMPL;
 }
 
 /*
@@ -502,12 +502,12 @@ static void
 set_codepoints(PARROT_INTERP, ARGIN(STRING *src),
         UINTVAL offset, UINTVAL count, ARGIN(STRING *new_codepoints))
 {
-    UNIMPL;
     UNUSED(interp);
     UNUSED(src);
     UNUSED(offset)
     UNUSED(count);
     UNUSED(new_codepoints);
+    UNIMPL;
 }
 
 /*
@@ -525,10 +525,10 @@ static void
 set_bytes(PARROT_INTERP, SHIM(STRING *src),
         UINTVAL offset, UINTVAL count, SHIM(STRING *new_bytes))
 {
-    UNIMPL;
     UNUSED(interp);
     UNUSED(offset)
     UNUSED(count);
+    UNIMPL;
 }
 
 /*
