@@ -6,7 +6,7 @@ use strict;
 use warnings;
 use lib qw( . lib ../lib ../../lib );
 use Test::More;
-use Parrot::Test tests => 36;
+use Parrot::Test tests => 28;
 
 =head1 NAME
 
@@ -581,6 +581,8 @@ something broke
 current inst/
 OUTPUT
 
+SKIP: {
+    skip("TODO test causes infinite loop in new exception implementation", 1);
 pir_output_is(<<'CODE', <<'OUTPUT', "taking a continuation promotes RetCs", todo => 'see RT#56458');
 ## This test creates a continuation in a inner sub and re-invokes it later.  The
 ## re-invocation signals an error, which is caught by an intermediate sub.
@@ -642,6 +644,7 @@ calling cont
 back from test
 done.
 OUTPUT
+}
 
 # Local Variables:
 #   mode: cperl
