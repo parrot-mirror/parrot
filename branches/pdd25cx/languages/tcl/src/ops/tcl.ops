@@ -81,7 +81,7 @@ inline op tcl_error(in STR, in PMC) :flow {
             CONTROL_ERROR, $1);
     opcode_t * const ret  = expr NEXT();
     opcode_t * dest;
-  
+
     /* Set the global $errorCode */
     VTABLE_set_string_native(interp, tcl_key, string_from_literal(interp, "tcl"));
     ns = Parrot_get_namespace_keyed(interp, root_ns, tcl_key);
