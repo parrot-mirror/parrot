@@ -9,7 +9,7 @@ use Parrot::Test tests => 6;
 
 # these tests are run with -O0 by TestCompiler and show
 # generated PASM code for various optimizations at level 0
-pir_2_pasm_like( <<'CODE', <<'OUT', "add_n_i_n" );
+pir_2_pasm_like( <<'CODE', <<'OUT', "add_n_i_n", todo => "RT #57028");
 .sub _ :anon
    add N0, I0, N1
    mul N0, I0, N1
@@ -38,7 +38,7 @@ _:
 OUT
 
 ##############################
-pir_2_pasm_like( <<'CODE', <<'OUT', "sub_n_i_n" );
+pir_2_pasm_like( <<'CODE', <<'OUT', "sub_n_i_n", todo => "RT #57028" );
 .sub _test
    sub N0, I0, N1
    div N0, I0, N1
