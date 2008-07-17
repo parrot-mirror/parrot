@@ -33,7 +33,7 @@ bad_args:
   .return ('') # once all commands are implemented, remove this...
 
 no_args:
-    tcl_error 'wrong # args: should be "binary option ?arg arg ...?"'
+    die 'wrong # args: should be "binary option ?arg arg ...?"'
 .end
 
 .HLL '_Tcl',''
@@ -55,7 +55,7 @@ no_args:
     .return(binStr)
 
 bad_args:
-    tcl_error 'wrong # args: should be "binary format formatString ?arg arg ...?"'
+    die 'wrong # args: should be "binary format formatString ?arg arg ...?"'
 .end
 
 .sub 'scan'
@@ -91,7 +91,7 @@ end:
     .return('')
 
 bad_args:
-    tcl_error 'wrong # args: should be "binary scan value formatString ?varName varName ...?"'
+    die 'wrong # args: should be "binary scan value formatString ?varName varName ...?"'
 .end
 
 # Local Variables:

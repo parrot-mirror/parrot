@@ -57,7 +57,7 @@ bad_args:
   .return ('') # once all commands are implemented, remove this...
 
 no_args:
-  tcl_error 'wrong # args: should be "string subcommand ?argument ...?"'
+  die 'wrong # args: should be "string subcommand ?argument ...?"'
 
 .end
 
@@ -91,7 +91,7 @@ first_do:
   .return(index_1)
 
 bad_args:
-  tcl_error 'wrong # args: should be "string first needleString haystackString ?startIndex?"'
+  die 'wrong # args: should be "string first needleString haystackString ?startIndex?"'
 
 .end
 
@@ -139,7 +139,7 @@ not_found:
   .return(-1)
 
 bad_args:
-  tcl_error 'wrong # args: should be "string last needleString haystackString ?startIndex?"'
+  die 'wrong # args: should be "string last needleString haystackString ?startIndex?"'
 .end
 
 .sub 'index'
@@ -166,7 +166,7 @@ index_null:
   .return ('')
 
 bad_index:
-  tcl_error 'wrong # args: should be "string index string charIndex"'
+  die 'wrong # args: should be "string index string charIndex"'
 
 done:
   .return (retval)
@@ -219,7 +219,7 @@ tolower_return:
   .return($S1)
 
 bad_args:
-  tcl_error 'wrong # args: should be "string tolower string ?first? ?last?"'
+  die 'wrong # args: should be "string tolower string ?first? ?last?"'
 
 .end
 
@@ -272,7 +272,7 @@ toupper_return:
   .return($S1)
 
 bad_args:
-  tcl_error 'wrong # args: should be "string toupper string ?first? ?last?"'
+  die 'wrong # args: should be "string toupper string ?first? ?last?"'
 
 .end
 
@@ -324,7 +324,7 @@ totitle_return:
   .return($S1)
 
 bad_args:
-  tcl_error 'wrong # args: should be "string totitle string ?first? ?last?"'
+  die 'wrong # args: should be "string totitle string ?first? ?last?"'
 
 .end
 
@@ -341,7 +341,7 @@ bad_args:
   .return($I0)
 
 bad_length:
-  tcl_error 'wrong # args: should be "string bytelength string"'
+  die 'wrong # args: should be "string bytelength string"'
 .end
 
 .sub 'length'
@@ -356,7 +356,7 @@ bad_length:
   .return($I0)
 
 bad_length:
-  tcl_error 'wrong # args: should be "string length string"'
+  die 'wrong # args: should be "string length string"'
 .end
 
 .sub 'range'
@@ -401,7 +401,7 @@ done:
   .return(result)
 
 bad_range:
-  tcl_error 'wrong # args: should be "string range string first last"'
+  die 'wrong # args: should be "string range string first last"'
 .end
 
 .sub 'match'
@@ -453,10 +453,10 @@ bad_option:
   $S1 = 'bad option "'
   $S1 .= $S0
   $S1 .= '": must be -nocase'
-  tcl_error $S1
+  die $S1
 
 bad_match:
-  tcl_error 'wrong # args: should be "string match ?-nocase? pattern string"'
+  die 'wrong # args: should be "string match ?-nocase? pattern string"'
 .end
 
 .sub 'repeat'
@@ -484,7 +484,7 @@ nothing:
   .return('')
 
 bad_repeat:
-  tcl_error 'wrong # args: should be "string repeat string count"'
+  die 'wrong # args: should be "string repeat string count"'
 .end
 
 .sub 'map'
@@ -557,16 +557,16 @@ outer_done:
   .return (the_string)
 
 oddly_enough:
-  tcl_error 'char map list unbalanced'
+  die 'char map list unbalanced'
 
 bad_option:
   $S1 = 'bad option "'
   $S1 .= $S0
   $S1 .= '": must be -nocase'
-  tcl_error $S1
+  die $S1
 
 bad_args:
-  tcl_error 'wrong # args: should be "string map ?-nocase? charMap string"'
+  die 'wrong # args: should be "string map ?-nocase? charMap string"'
 .end
 
 .sub 'equal'
@@ -623,7 +623,7 @@ ret_one:
   .return (1)
 
 bad_args:
-  tcl_error 'wrong # args: should be "string equal ?-nocase? ?-length int? string1 string2"'
+  die 'wrong # args: should be "string equal ?-nocase? ?-length int? string1 string2"'
 
 .end
 
@@ -814,7 +814,7 @@ nope:
   .return(0)
 
 bad_args:
-  tcl_error 'wrong # args: should be "string is class ?-strict? ?-failindex var? str"'
+  die 'wrong # args: should be "string is class ?-strict? ?-failindex var? str"'
 .end
 
 
@@ -872,7 +872,7 @@ replace_done:
   .return(the_string)
 
 bad_args:
-  tcl_error 'wrong # args: should be "string replace string first last ?string?"'
+  die 'wrong # args: should be "string replace string first last ?string?"'
 .end
 
 
@@ -909,7 +909,7 @@ trimleft_done:
   .return($S1)
 
 bad_args:
-  tcl_error 'wrong # args: should be "string trimleft string ?chars?"'
+  die 'wrong # args: should be "string trimleft string ?chars?"'
 
 .end
 
@@ -948,7 +948,7 @@ trimright_done:
   .return($S1)
 
 bad_args:
-  tcl_error 'wrong # args: should be "string trimright string ?chars?"'
+  die 'wrong # args: should be "string trimright string ?chars?"'
 
 .end
 
@@ -1000,7 +1000,7 @@ trim_done:
   .return($S1)
 
 bad_args:
-  tcl_error 'wrong # args: should be "string trim string ?chars?"'
+  die 'wrong # args: should be "string trim string ?chars?"'
 
 .end
 
@@ -1059,7 +1059,7 @@ arg_length:
   goto args_processment
 
 bad_args:
-  tcl_error 'wrong # args: should be "string compare ?-nocase? ?-length int? string1 string2"'
+  die 'wrong # args: should be "string compare ?-nocase? ?-length int? string1 string2"'
 
 .end
 
@@ -1076,7 +1076,7 @@ bad_args:
   .return ($S0)
 
 bad_args:
-  tcl_error 'wrong # args: should be "string reverse string"'
+  die 'wrong # args: should be "string reverse string"'
 .end
 
 .sub 'wordend'
@@ -1106,7 +1106,7 @@ return:
   .return($I0)
 
 bad_args:
-  tcl_error 'wrong # args: should be "string wordend string index"'
+  die 'wrong # args: should be "string wordend string index"'
 .end
 
 .sub 'wordstart'
@@ -1154,7 +1154,7 @@ ret_val:
   .return(pos)
 
 bad_args:
-  tcl_error 'wrong # args: should be "string wordstart string index"'
+  die 'wrong # args: should be "string wordstart string index"'
 .end
 
 # Local Variables:

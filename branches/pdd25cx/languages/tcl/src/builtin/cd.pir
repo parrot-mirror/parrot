@@ -34,7 +34,7 @@ END_PIR
   .return(pir)
 
 bad_args:
-  $S0 = "tcl_error 'wrong # args: should be \"cd\ ?dirName?\"'\n"
+  $S0 = "die 'wrong # args: should be \"cd\ ?dirName?\"'\n"
   .return($S0)
 .end
 

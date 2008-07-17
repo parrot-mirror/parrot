@@ -472,7 +472,7 @@ sub inlined_badargs {
     my $usage = create_usage(@args);
     my $code =
         "bad_args: \n"
-        . q{  .return("  tcl_error 'wrong # args: should be }
+        . q{  .return("  die 'wrong # args: should be }
         . "\\\"$cmd$usage\\\"' \\n\") \n";
 
     return $code;
@@ -482,7 +482,7 @@ sub badargs {
     my ( $cmd, @args ) = @_;
 
     my $usage = create_usage(@args);
-    my $code  = "bad_args: \n" . "  tcl_error 'wrong # args: should be \"$cmd$usage\"'\n";
+    my $code  = "bad_args: \n" . "  die 'wrong # args: should be \"$cmd$usage\"'\n";
 
     return $code;
 }

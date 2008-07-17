@@ -65,7 +65,7 @@ no_match:
   error .= '": must be '
   $S1 = __options_to_string(options)
   error .= $S1
-  tcl_error error
+  die error
 
 ambiguous:
   error = 'ambiguous '
@@ -76,7 +76,7 @@ ambiguous:
   # $S1 = __options_to_string(partials)  # Now, I like this better...
   $S1 = __options_to_string(options)
   error .= $S1
-  tcl_error error
+  die error
 .end
 
 =head1 hash options = _Tcl::select_switches(array switches, array argv, ?endswitch:0?, ?catchbad:0?, ?name: 'switch'?)
@@ -189,7 +189,7 @@ throw_error:
   $S1 .= '": must be '
   $S2 = __switches_to_string(switches)
   $S1 .= $S2
-  tcl_error $S1
+  die $S1
 loop_next:
   inc pos
   goto loop

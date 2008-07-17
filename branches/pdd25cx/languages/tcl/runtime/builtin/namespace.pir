@@ -62,7 +62,7 @@ bad_args:
   .return ('') # once all commands are implemented, remove this...
 
 no_args:
-  tcl_error 'wrong # args: should be "namespace subcommand ?arg ...?"'
+  die 'wrong # args: should be "namespace subcommand ?arg ...?"'
 
 .end
 
@@ -84,7 +84,7 @@ no_args:
   .return($S0)
 
 bad_args:
-  tcl_error 'wrong # args: should be "namespace current"'
+  die 'wrong # args: should be "namespace current"'
 .end
 
 .sub 'delete'
@@ -166,7 +166,7 @@ doesnt_exist:
   .return(0)
 
 bad_args:
-  tcl_error 'wrong # args: should be "namespace exists name"'
+  die 'wrong # args: should be "namespace exists name"'
 .end
 
 .sub 'qualifiers'
@@ -192,7 +192,7 @@ WHOLE:
   .return($S0)
 
   bad_args:
-   tcl_error 'wrong # args: should be "namespace qualifiers string"'
+   die 'wrong # args: should be "namespace qualifiers string"'
 
 .end
 
@@ -221,7 +221,7 @@ WHOLE:
   .return($P0)
 
 bad_args:
-  tcl_error 'wrong # args: should be "namespace tail string"'
+  die 'wrong # args: should be "namespace tail string"'
 
 .end
 
@@ -294,7 +294,7 @@ restore_call_chain:
   .rethrow()
 
 bad_args:
-  tcl_error 'wrong # args: should be "namespace eval name arg ?arg...?"'
+  die 'wrong # args: should be "namespace eval name arg ?arg...?"'
 .end
 
 .sub 'export'
@@ -363,13 +363,13 @@ end:
   .return(list)
 
 bad_args:
-  tcl_error 'wrong # args: should be "namespace children ?name? ?pattern?"'
+  die 'wrong # args: should be "namespace children ?name? ?pattern?"'
 
 unknown_namespace:
   $S0 = argv[0]
   $S0 = 'unknown namespace "' . $S0
   $S0 = $S0 . '" in namespace children command'
-  tcl_error $S0
+  die $S0
 .end
 
 .sub 'children_cmp'
@@ -467,7 +467,7 @@ current_in_root:
   .return('')
 
 bad_args:
-  tcl_error 'wrong # args: should be "namespace parent ?name?"'
+  die 'wrong # args: should be "namespace parent ?name?"'
 .end
 
 # RT#40753: Stub

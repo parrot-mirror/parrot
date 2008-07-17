@@ -46,7 +46,7 @@ not_const:
   .return($P0)
 
 bad_args:
-  .return("tcl_error 'wrong # args: should be \"expr arg ?arg ...?\"'\n")
+  .return("die 'wrong # args: should be \"expr arg ?arg ...?\"'\n")
 
 exception:
   .catch()
@@ -57,7 +57,7 @@ exception:
   $P0.replace('"', '\"')
   $S0 = $P0
   .local string error
-  error = 'tcl_error "'
+  error = 'die "'
   error .= $S0
   error .= "\"\n"
   .return(error)

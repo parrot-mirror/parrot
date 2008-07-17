@@ -64,7 +64,7 @@ bad_args:
   .return ('') # once all commands are implemented, remove this...
 
 few_args:
-  tcl_error 'wrong # args: should be "file option ?arg ...?"'
+  die 'wrong # args: should be "file option ?arg ...?"'
 
 .end
 
@@ -117,7 +117,7 @@ name_loop_done:
   .return(result)
 
 bad_args:
-  tcl_error 'wrong # args: should be "file join name ?name ...?"'
+  die 'wrong # args: should be "file join name ?name ...?"'
 .end
 
 .sub 'stat'
@@ -181,9 +181,9 @@ no_file:
   $S0  = 'could not read "'
   $S0 .= file
   $S0 .= '": no such file or directory'
-  tcl_error $S0
+  die $S0
 bad_args:
-  tcl_error 'wrong # args: should be "file stat name varName"'
+  die 'wrong # args: should be "file stat name varName"'
 .end
 
 .sub 'isdirectory'
@@ -217,9 +217,9 @@ no_file:
   $S0  = 'could not read "'
   $S0 .= file
   $S0 .= '": no such file or directory'
-  tcl_error $S0
+  die $S0
 bad_args:
-  tcl_error 'wrong # args: should be "file isdirectory name"'
+  die 'wrong # args: should be "file isdirectory name"'
 
 .end
 
@@ -254,9 +254,9 @@ no_file:
   $S0  = 'could not read "'
   $S0 .= file
   $S0 .= '": no such file or directory'
-  tcl_error $S0
+  die $S0
 bad_args:
-  tcl_error 'wrong # args: should be "file isfile name"'
+  die 'wrong # args: should be "file isfile name"'
 
 .end
 
@@ -289,9 +289,9 @@ no_file:
   $S0  = 'could not read "'
   $S0 .= file
   $S0 .= '": no such file or directory'
-  tcl_error $S0
+  die $S0
 bad_args:
-  tcl_error 'wrong # args: should be "file type name"'
+  die 'wrong # args: should be "file type name"'
 .end
 
 .sub 'size'
@@ -317,9 +317,9 @@ no_file:
   $S0  = 'could not read "'
   $S0 .= file
   $S0 .= '": no such file or directory'
-  tcl_error $S0
+  die $S0
 bad_args:
-  tcl_error 'wrong # args: should be "file size name"'
+  die 'wrong # args: should be "file size name"'
 .end
 
 .sub 'atime'
@@ -345,9 +345,9 @@ no_file:
   $S0  = 'could not read "'
   $S0 .= file
   $S0 .= '": no such file or directory'
-  tcl_error $S0
+  die $S0
 bad_args:
-  tcl_error 'wrong # args: should be "file atime name ?time?"'
+  die 'wrong # args: should be "file atime name ?time?"'
 .end
 
 .sub 'mtime'
@@ -373,9 +373,9 @@ no_file:
   $S0  = 'could not read "'
   $S0 .= file
   $S0 .= '": no such file or directory'
-  tcl_error $S0
+  die $S0
 bad_args:
-  tcl_error 'wrong # args: should be "file mtime name ?time?"'
+  die 'wrong # args: should be "file mtime name ?time?"'
 .end
 
 # RT#40722: needs windows OS testing
@@ -425,7 +425,7 @@ bad_args:
     .return('.')
 
   bad_args:
-    tcl_error 'wrong # args: should be "file dirname name"'
+    die 'wrong # args: should be "file dirname name"'
 .end
 
 # RT#40723: Stub (unixy)
@@ -464,7 +464,7 @@ whole:
   .return($S0)
 
 bad_args:
-  tcl_error 'wrong # args: should be "file tail name"'
+  die 'wrong # args: should be "file tail name"'
 .end
 
 # RT#40724: Stub for test parsing
@@ -499,7 +499,7 @@ false:
     .return(0)
 
 badargs:
-    tcl_error 'wrong # args: should be "file exists name"'
+    die 'wrong # args: should be "file exists name"'
 .end
 
 # RT#40727: Stub for test parsing
@@ -537,7 +537,7 @@ done:
     .return(filename)
 
   bad_args:
-    tcl_error 'wrong # args: should be "file rootname name"'
+    die 'wrong # args: should be "file rootname name"'
 .end
 
 .sub 'extension'
@@ -567,7 +567,7 @@ done:
     .return('')
 
   bad_args:
-    tcl_error 'wrong # args: should be "file extension name"'
+    die 'wrong # args: should be "file extension name"'
 .end
 
 # XXX: Stub
@@ -578,7 +578,7 @@ done:
   if argc != 1 goto bad_args
   .return(0)
 bad_args:
-  tcl_error 'wrong # args: should be "file owned name"'
+  die 'wrong # args: should be "file owned name"'
 .end
 
 # XXX: Stub for test parsing
@@ -597,7 +597,7 @@ bad_args:
   .return('/')
 
 bad_args:
-  tcl_error 'wrong # args: should be "file volumes"'
+  die 'wrong # args: should be "file volumes"'
 .end
 
 # Local Variables:

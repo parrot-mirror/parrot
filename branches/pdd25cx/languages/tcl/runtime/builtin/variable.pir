@@ -31,7 +31,7 @@ loop:
     $S0 = name
     $S0 = "can't define \"" . $S0
     $S0 = $S0 . '": name refers to an element in an array'
-    tcl_error $S0
+    die $S0
 
 store:
     unless iter goto no_value
@@ -64,7 +64,7 @@ end:
     .return('')
 
 bad_args:
-    tcl_error 'wrong # args: should be "variable ?name value...? name ?value?"'
+    die 'wrong # args: should be "variable ?name value...? name ?value?"'
 .end
 
 # Local Variables:
