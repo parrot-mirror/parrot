@@ -1963,7 +1963,8 @@ Parrot_PCCINVOKE(PARROT_INTERP, ARGIN(PMC* pmc), ARGMOD(STRING *method_name),
             case 'p':
                 break;
             default:
-                real_exception(interp, NULL, E_IndexError,
+                Parrot_ex_throw_from_c_args(interp, NULL,
+                    EXCEPTION_INVALID_OPERATION,
                     "Parrot_PCCINVOKE: invalid reg type %c!", *x);
         }
     }

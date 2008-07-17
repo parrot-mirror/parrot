@@ -423,7 +423,7 @@ Parrot_debugger_load(PARROT_INTERP, ARGIN_NULLOK(STRING *filename))
     char *file;
 
     if (!interp->pdb)
-        real_exception(interp, NULL, 0, "No debugger");
+        Parrot_ex_throw_from_c_args(interp, NULL, 0, "No debugger");
 
     file = string_to_cstring(interp, filename);
     PDB_load_source(interp, file);
@@ -435,15 +435,15 @@ void
 Parrot_debugger_break(PARROT_INTERP, ARGIN(opcode_t * cur_opcode))
 {
     if (!interp->pdb)
-        real_exception(interp, NULL, 0, "No debugger");
+        Parrot_ex_throw_from_c_args(interp, NULL, 0, "No debugger");
 
     if (!interp->pdb->file)
-        real_exception(interp, NULL, 0, "No file loaded to debug");
+        Parrot_ex_throw_from_c_args(interp, NULL, 0, "No file loaded to debug");
 
     if (!(interp->pdb->state & PDB_BREAK)) {
         const char * command;
-        new_internal_exception(interp);
-        if (setjmp(interp->exceptions->destination)) {
+        new_runloop_jump_point(interp);
+        if (setjmp(interp->current_runloop->resume)) {
             fprintf(stderr, "Unhandled exception in debugger\n");
             return;
         }

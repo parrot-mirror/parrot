@@ -945,7 +945,8 @@ fix_pmc_syncs(ARGMOD(Interp *dest_interp), ARGIN(Small_Object_Pool *pool))
                 if (PObj_is_PMC_shared_TEST(p))
                     PMC_sync(p)->owner = dest_interp;
                 else
-                    real_exception(dest_interp, NULL, INTERP_ERROR,
+                    Parrot_ex_throw_from_c_args(dest_interp, NULL,
+                        EXCEPTION_INTERP_ERROR,
                         "Unshared PMC still alive after interpreter \
                         destruction. address=%p, base_type=%d\n",
                         p, p->vtable->base_type);
