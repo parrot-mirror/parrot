@@ -104,6 +104,33 @@ Check whether the handler has been invoked.
 
 /*
 
+=item C<opcode_t *invoke(void *next)>
+
+Set up the environment for the exception handler to be invoked.
+
+=cut
+
+*/
+
+    VTABLE opcode_t *invoke(void *next) {
+        Parrot_cont      *cc           = PMC_cont(SELF);
+        parrot_context_t *from_ctx     = CONTEXT(interp);
+        parrot_context_t *to_ctx       = cc->to_ctx;
+        opcode_t         *pc           = cc->address;
+
+        Parrot_continuation_check(interp, SELF, cc);
+        Parrot_continuation_rewind_environment(interp, SELF, cc);
+
+        /* switch code segment if needed */
+        if (INTERP->code != cc->seg)
+            Parrot_switch_to_cs(INTERP, cc->seg, 1);
+
+        return pc;
+    }
+
+
+/*
+
 =back
 
 =head2 Methods

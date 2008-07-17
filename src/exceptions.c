@@ -190,25 +190,15 @@ opcode_t *
 Parrot_ex_throw_from_op(PARROT_INTERP, ARGIN(PMC *exception), ARGIN_NULLOK(void *dest))
 {
     opcode_t   *address;
-    opcode_t   *want_args;
     PMC * const handler = find_exception_handler(interp, exception);
 
     if (!handler)
         return NULL;
 
-    /* VTABLE_invoke does the argument handling for 'throw_from_c', but need to
-     * disable its argument handling from 'throw_from_op' so we can pass
-     * arguments directly. We do that by setting 'current_results' struct
-     * element to a null value. Poking directly into the guts of the PMC is a
-     * bad idea, but gets it working for now. */
-    want_args                                  = PMC_cont(handler)->current_results;
-    PMC_cont(handler)->to_ctx->current_results = NULL;
-    PMC_cont(handler)->current_results         = NULL;
-
     address    = VTABLE_invoke(interp, handler, dest);
 
     /* Set up the continuation context of the handler in the interpreter. */
-    if (want_args)
+    if (PMC_cont(handler)->current_results)
         address = pass_exception_args(interp, "PS", address,
                 CONTEXT(interp), exception,
                 VTABLE_get_string(interp, exception));
