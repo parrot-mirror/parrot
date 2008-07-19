@@ -233,7 +233,26 @@ Set an integer keyed value to the specified value.  Valid keys are:
 
 */
     VTABLE void set_integer_keyed_str(STRING *key, INTVAL value) {
-        real_exception(interp, NULL, E_NotImplementedError, "Not implemented yet.");
+        PackFile *pf = PMC_data_typed(SELF, PackFile *);
+        if (!string_compare(interp, key, CONST_STRING(interp, "version_major"))) {
+            pf->header->major = value;
+            return;
+        }
+        if (!string_compare(interp, key, CONST_STRING(interp, "version_minor"))) {
+            pf->header->minor = value;
+            return;
+        }
+        if (!string_compare(interp, key, CONST_STRING(interp, "version_patch"))) {
+            pf->header->patch = value;
+            return;
+        }
+        if (!string_compare(interp, key, CONST_STRING(interp, "uuid_type"))) {
+            pf->header->uuid_type = value;
+            return;
+        }
+        real_exception(interp, NULL, E_KeyError,
+                       "PackFile: No such integer key \"%s\"",
+                       Parrot_string_cstring(interp, key));
     }
 
 /*
