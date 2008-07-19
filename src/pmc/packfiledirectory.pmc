@@ -32,6 +32,23 @@ pmclass PackfileDirectory extends PackfileSegment {
 
 /*
 
+=item C<void set_pointer(void *dir)>
+
+Initialize this object with a pointer to a Packfile_Directory.
+
+FIXME: This isn't listed as part of the PDD13 API; it is just a hack
+to get Packfile.get_directory() working.
+
+=cut
+
+*/
+    VTABLE void set_pointer(void *dir) {
+        PMC_data(SELF) = dir;
+    }
+
+
+/*
+
 =item C<STRING *pack()>
 
 Serialize the segment.
