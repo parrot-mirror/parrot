@@ -6,7 +6,7 @@ use strict;
 use warnings;
 use lib qw( . lib ../lib ../../lib );
 use Test::More;
-use Parrot::Test tests => 4;
+use Parrot::Test tests => 5;
 
 =head1 NAME
 
@@ -40,7 +40,7 @@ OUT
 # get_integer_keyed_str
 
 pir_output_is( <<'CODE', <<'OUT', 'get_integer_keyed_str' );
-.sub main :main
+.sub 'test' :main
     $P0 = new 'Packfile'
     $S0 = 'version_major'
     $I0 = $P0[$S0]
@@ -66,7 +66,9 @@ OUT
 
 
 # get_string gives us back what set_string_native got
-
+# FIXME: this doesn't actually return the same data.  Same size, but the
+# strings differ.  Figure out why... for now we're just comparing the
+# buffer sizes.
 pir_output_is( <<'CODE', <<'OUT', 'set_string_native -> get_string' );
 .sub 'test' :main
     .include "stat.pasm"
@@ -85,10 +87,40 @@ pir_output_is( <<'CODE', <<'OUT', 'set_string_native -> get_string' );
     eq $I0, $I1, OUT
     print "not "
     OUT:
-    say "ok"
+    say "equal"
 .end
 CODE
-ok
+equal
+OUT
+
+
+# set_integer_keyed_str
+
+pir_output_is( <<'CODE', <<'OUT', 'set_integer_keyed_str' );
+.sub 'test' :main
+    .include "stat.pasm"
+    .include "interpinfo.pasm"
+    $S0 = interpinfo .INTERPINFO_RUNTIME_PREFIX
+    $S0 .= "/runtime/parrot/library/uuid.pbc"
+    $I0 = stat $S0, .STAT_FILESIZE
+    $P0 = open $S0, "<"
+    $S0 = read $P0, $I0
+    close $P0
+    $P0 = new 'Packfile'
+    $P0 = $S0
+    $S0 = $P0
+    $S1 = 'version_major'
+    $I0 = $P0[$S1]
+    inc $I0
+    $P0[$S1] = $I0
+    $S2 = $P0
+    eq $S0, $S2, OUT
+    print "not "
+    OUT:
+    say "equal"
+.end
+CODE
+not equal
 OUT
 
 

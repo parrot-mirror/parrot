@@ -64,11 +64,16 @@ Return raw serialized PBC file data.
 */
     VTABLE STRING *get_string() {
         PackFile *pf = PMC_data_typed(SELF, PackFile *);
-        STRING *str = new_string_header(interp, 0);
         opcode_t length = PackFile_pack_size(interp, pf) * sizeof(opcode_t);
-        Parrot_allocate_string(interp, str, length);
-        PackFile_pack(interp, pf, (opcode_t*)str->strstart);
-        str->bufused = str->strlen = length;
+        char *ptr = mem_sys_allocate(length);
+        PackFile_pack(interp, pf, ptr);
+        /* FIXME: PARROT_BINARY_CHARSET seems like a better choice, but the
+         * comparison function for the binary charset plugin always returns
+         * "equal", which means tests fail.
+         */
+        STRING *str = string_make_direct(interp, ptr, length,
+                PARROT_FIXED_8_ENCODING, PARROT_DEFAULT_CHARSET, 0);
+        mem_sys_free(ptr);
         return str;
     }
 
@@ -255,6 +260,23 @@ Set an integer keyed value to the specified value.  Valid keys are:
                        "PackFile: No such integer key \"%s\"",
                        Parrot_string_cstring(interp, key));
     }
+
+
+/*
+
+=item C<void set_integer_keyed(PMC *key, INTVALval)>
+
+Set a keyed integer value in the packfile object.  Dispatches to
+set_integer_keyed_str.
+
+=cut
+
+*/
+    VTABLE void set_integer_keyed(PMC *key, INTVAL val) {
+        STRING * const s = VTABLE_get_string(INTERP, key);
+        SELF.set_integer_keyed_str(s, val);
+    }
+
 
 /*
 
