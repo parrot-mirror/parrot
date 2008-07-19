@@ -1046,7 +1046,7 @@ find_outer(PARROT_INTERP, ARGIN(const IMC_Unit *unit))
 
     len = strlen(unit->outer->name);
 
-    if (len == 0)
+    if (!len)
         return NULL;
 
     for (s = globals.cs->first; s; s = s->next) {
@@ -1059,7 +1059,7 @@ find_outer(PARROT_INTERP, ARGIN(const IMC_Unit *unit))
     /* could be eval too; check if :outer is the current sub */
     current = CONTEXT(interp)->current_sub;
 
-    if (! current)
+    if (!current)
         IMCC_fatal(interp, 1, "Undefined :outer sub '%s'.\n",
                    unit->outer->name);
 
@@ -1161,8 +1161,8 @@ add_const_pmc_sub(PARROT_INTERP, ARGMOD(SymReg *r), int offs, int end)
         unit->lexid->name = str_dup(unit->lexid->name + 1);
 
         /* Otherwise, create string constant for it. */
-        unit->lexid->color = add_const_str(interp, unit->lexid);
         unit->lexid->name[strlen(unit->lexid->name) - 1] = 0;
+        unit->lexid->color = add_const_str(interp, unit->lexid);
     }
     sub->lexid = ct->constants[unit->lexid->color]->u.string;
 
