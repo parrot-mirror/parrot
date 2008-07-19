@@ -62,7 +62,13 @@ Return raw serialized PBC file data.
 
 */
     VTABLE STRING *get_string() {
-        real_exception(interp, NULL, E_NotImplementedError, "Not implemented yet.");
+        PackFile *pf = PMC_data_typed(SELF, PackFile *);
+        STRING *str = new_string_header(interp, 0);
+        opcode_t length = PackFile_pack_size(interp, pf);
+        Parrot_allocate_string(interp, str, length);
+        PackFile_pack(interp, pf, (opcode_t*)str->strstart);
+        str->bufused = length;
+        return str;
     }
 
 /*
@@ -176,7 +182,7 @@ Fetch a string keyed value from the packfile object.  Valid keys are:
 
 /*
 
-=item C<INTVAL get_integer_keyed(STRING *key)>
+=item C<INTVAL get_integer_keyed(PMC *key)>
 
 Fetch a keyed integer value from the packfile object.  Dispatches to
 get_integer_keyed_str.
@@ -192,7 +198,7 @@ get_integer_keyed_str.
 
 /*
 
-=item C<STRING *get_string_keyed(STRING *key)>
+=item C<STRING *get_string_keyed(PMC *key)>
 
 Fetch a keyed string value from the packfile object.  Dispatches to
 get_string_keyed_str.
