@@ -70,7 +70,9 @@ OUT
 pir_output_is( <<'CODE', <<'OUT', 'set_string_native -> get_string' );
 .sub 'test' :main
     .include "stat.pasm"
-    $S0 = "runtime/parrot/library/uuid.pbc"
+    .include "interpinfo.pasm"
+    $S0 = interpinfo .INTERPINFO_RUNTIME_PREFIX
+    $S0 .= "/runtime/parrot/library/uuid.pbc"
     $I0 = stat $S0, .STAT_FILESIZE
     $P0 = open $S0, "<"
     $S0 = read $P0, $I0
