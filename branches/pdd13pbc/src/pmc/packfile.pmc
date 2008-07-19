@@ -65,13 +65,14 @@ Return raw serialized PBC file data.
     VTABLE STRING *get_string() {
         PackFile *pf = PMC_data_typed(SELF, PackFile *);
         opcode_t length = PackFile_pack_size(interp, pf) * sizeof(opcode_t);
-        char *ptr = mem_sys_allocate(length);
+        opcode_t *ptr = (opcode_t*)mem_sys_allocate(length);
+        STRING *str;
         PackFile_pack(interp, pf, ptr);
         /* FIXME: PARROT_BINARY_CHARSET seems like a better choice, but the
          * comparison function for the binary charset plugin always returns
          * "equal", which means tests fail.
          */
-        STRING *str = string_make_direct(interp, ptr, length,
+        str = string_make_direct(interp, (const char*)ptr, length,
                 PARROT_FIXED_8_ENCODING, PARROT_DEFAULT_CHARSET, 0);
         mem_sys_free(ptr);
         return str;
@@ -291,7 +292,7 @@ start of the packfile.
     METHOD get_directory() {
         PackFile *pf = PMC_data_typed(SELF, PackFile *);
         PMC *dir = pmc_new(interp, enum_class_PackfileDirectory);
-        VTABLE_set_pointer(interp, dir, &pf->directory);
+        PMC_data(dir) = &pf->directory;
         RETURN(PMC *dir);
     }
 
