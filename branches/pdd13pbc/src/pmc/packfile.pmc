@@ -20,6 +20,7 @@ the top level parser and serializer for *.pbc files.
 */
 
 #include "parrot/parrot.h"
+#include "pmc_packfiledirectory.h"
 
 pmclass Packfile {
 
@@ -64,10 +65,10 @@ Return raw serialized PBC file data.
     VTABLE STRING *get_string() {
         PackFile *pf = PMC_data_typed(SELF, PackFile *);
         STRING *str = new_string_header(interp, 0);
-        opcode_t length = PackFile_pack_size(interp, pf);
+        opcode_t length = PackFile_pack_size(interp, pf) * sizeof(opcode_t);
         Parrot_allocate_string(interp, str, length);
         PackFile_pack(interp, pf, (opcode_t*)str->strstart);
-        str->bufused = length;
+        str->bufused = str->strlen = length;
         return str;
     }
 
@@ -265,8 +266,11 @@ start of the packfile.
 =cut
 
 */
-    PMC *get_directory() {
-        real_exception(interp, NULL, E_NotImplementedError, "Not implemented yet.");
+    METHOD get_directory() {
+        PackFile *pf = PMC_data_typed(SELF, PackFile *);
+        PMC *dir = pmc_new(interp, enum_class_PackfileDirectory);
+        VTABLE_set_pointer(interp, dir, &pf->directory);
+        RETURN(PMC *dir);
     }
 
 
