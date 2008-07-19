@@ -36,18 +36,7 @@ as the Perl 6 C<Str> class.
     .return 'infix:eq'(topic, self)
 .end
 
-.sub 'chars' :method
-    .local pmc retv
-
-    retv = new 'Integer'
-    $S0  = self
-    $I0  = length $S0
-    retv = $I0
-
-    .return (retv)
-.end
-
-.sub 'reverse' :method
+.sub 'reverse' :method :multi('String')
     .local pmc retv
 
     retv = self.'split'('')
@@ -57,7 +46,7 @@ as the Perl 6 C<Str> class.
     .return(retv)
 .end
 
-.sub split :method :multi('Perl6Str')
+.sub 'split' :method :multi('Perl6Str')
     .param string delim
     .local string objst
     .local pmc pieces
@@ -226,6 +215,7 @@ Returns a Perl representation of the Str.
 .sub 'perl' :method
     $S0 = "\""
     $S1 = self
+    # TODO: escape $, @, $, {, } and the like
     $S1 = escape $S1
     concat $S0, $S1
     concat $S0, "\""
@@ -423,7 +413,7 @@ B<Note:> partial implementation only
 
     s = new 'Perl6Str'
     s = x
-	.return s.'substr'(start, len)
+    .return s.'substr'(start, len)
 .end
 
 =item chop

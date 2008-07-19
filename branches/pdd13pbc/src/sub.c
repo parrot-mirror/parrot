@@ -188,7 +188,7 @@ new_ret_continuation(PARROT_INTERP)
     cc->from_ctx        = NULL;    /* filled in during a call */
     cc->dynamic_state   = NULL;
     cc->runloop_id      = 0;
-    cc->seg = interp->code;
+    cc->seg             = interp->code;
     cc->current_results = NULL;
     cc->address         = NULL;
     return cc;
@@ -458,15 +458,16 @@ PMC*
 Parrot_find_pad(PARROT_INTERP, ARGIN(STRING *lex_name), ARGIN(const parrot_context_t *ctx))
 {
     while (1) {
-        PMC * const lex_pad = ctx->lex_pad;
-        const parrot_context_t * const outer = ctx->outer_ctx;
+        PMC                    * const lex_pad = ctx->lex_pad;
+        const parrot_context_t * const outer   = ctx->outer_ctx;
 
         if (!outer)
             return lex_pad;
-        if (!PMC_IS_NULL(lex_pad)) {
+
+        if (!PMC_IS_NULL(lex_pad))
             if (VTABLE_exists_keyed_str(interp, lex_pad, lex_name))
                 return lex_pad;
-        }
+
 #if CTX_LEAK_DEBUG
         if (outer == ctx) {
             /* This is a bug; a context can never be its own :outer context.
@@ -506,42 +507,44 @@ parrot_new_closure(PARROT_INTERP, ARGIN(PMC *sub_pmc))
 {
     PMC *cont;
 
-    PMC * const clos_pmc    = VTABLE_clone(interp, sub_pmc);
-    Parrot_sub * const sub  = PMC_sub(sub_pmc);
-    Parrot_sub * const clos = PMC_sub(clos_pmc);
-    /*
-     * the given sub_pmc has to have an :outer(sub) that is
-     * this subroutine
-     */
-    parrot_context_t * const ctx = CONTEXT(interp);
-    if (PMC_IS_NULL(sub->outer_sub)) {
+    PMC        * const clos_pmc = VTABLE_clone(interp, sub_pmc);
+    Parrot_sub * const sub      = PMC_sub(sub_pmc);
+    Parrot_sub * const clos     = PMC_sub(clos_pmc);
+
+    /* the given sub_pmc has to have an :outer(sub) that is this subroutine */
+    Parrot_Context * const ctx  = CONTEXT(interp);
+
+    if (PMC_IS_NULL(sub->outer_sub))
         real_exception(interp, NULL, INVALID_OPERATION,
                 "'%Ss' isn't a closure (no :outer)", sub->name);
-    }
+
     /* if (sub->outer_sub != ctx->current_sub) - fails if outer
-     * is a closure too e.g. test 'closure 4'
-     */
-    if (0 == string_equal(interp,
-                (PMC_sub(ctx->current_sub))->name,
-                sub->name)) {
+     * is a closure too e.g. test 'closure 4' */
+    if (0 == string_equal(interp, (PMC_sub(ctx->current_sub))->name, sub->name))
         real_exception(interp, NULL, INVALID_OPERATION,
-                "'%Ss' isn't the :outer of '%Ss')",
-                (PMC_sub(ctx->current_sub))->name,
-                sub->name);
-    }
-    cont = ctx->current_cont;
+            "'%Ss' isn't the :outer of '%Ss')",
+            (PMC_sub(ctx->current_sub))->name, sub->name);
+
+    cont            = ctx->current_cont;
+
+    /* mark clos_pmc as having been created by newclosure. */
+    SUB_FLAG_flag_SET(NEWCLOSURE, clos_pmc);
+
     /* preserve this frame by converting the continuation */
-    cont->vtable = interp->vtables[enum_class_Continuation];
+    cont->vtable    = interp->vtables[enum_class_Continuation];
+
     /* remember this (the :outer) ctx in the closure */
     clos->outer_ctx = ctx;
+
     /* the closure refs now this context too */
     ctx->ref_count++;
+
 #if CTX_LEAK_DEBUG
-    if (Interp_debug_TEST(interp, PARROT_CTX_DESTROY_DEBUG_FLAG)) {
+    if (Interp_debug_TEST(interp, PARROT_CTX_DESTROY_DEBUG_FLAG))
         fprintf(stderr, "[alloc closure  %p, outer_ctx %p, ref_count=%d]\n",
                 (void *)clos_pmc, (void *)ctx, (int) ctx->ref_count);
-    }
 #endif
+
     return clos_pmc;
 }
 
