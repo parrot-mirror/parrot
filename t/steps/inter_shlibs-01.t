@@ -17,7 +17,6 @@ use Parrot::Configure::Test qw(
     rerun_defaults_for_testing
     test_step_constructor_and_description
 );
-use IO::CaptureOutput qw| capture |;
 use Tie::Filehandle::Preempt::Stdin;
 
 my $args = process_options(
