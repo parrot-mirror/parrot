@@ -27,8 +27,8 @@ src/packout.c - Functions for writing out packfiles
 
 =item C<opcode_t PackFile_pack_size>
 
-Determine the size of the buffer needed in order to pack the PackFile
-into a contiguous region of memory.
+Determine the size (in opcode_t units) of the buffer needed in order to
+pack the PackFile into a contiguous region of memory.
 
 Must be run before C<PackFile_pack()>, so it will allocate an adequate
 buffer.
