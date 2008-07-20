@@ -6,7 +6,8 @@ use strict;
 use warnings;
 use lib qw( . lib ../lib ../../lib );
 use Test::More;
-use Parrot::Test tests => 5;
+use Parrot::Test tests => 6;
+use Parrot::Config;
 
 =head1 NAME
 
@@ -24,12 +25,13 @@ Tests the Packfile PMC.
 =cut
 
 
-# constructor
+# Packfile constructor
 
 pir_output_is( <<'CODE', <<'OUT', 'new' );
 .sub 'test' :main
-    $P0 = new 'Packfile'
-    $I0 = defined $P0
+    .local pmc pf
+    pf = new 'Packfile'
+    $I0 = defined pf
     say $I0
 .end
 CODE
@@ -37,13 +39,14 @@ CODE
 OUT
 
 
-# get_integer_keyed_str
+# Packfile.get_integer_keyed_str
 
 pir_output_is( <<'CODE', <<'OUT', 'get_integer_keyed_str' );
 .sub 'test' :main
-    $P0 = new 'Packfile'
+    .local pmc pf
+    pf = new 'Packfile'
     $S0 = 'version_major'
-    $I0 = $P0[$S0]
+    $I0 = pf[$S0]
     say $I0
 .end
 CODE
@@ -51,12 +54,13 @@ CODE
 OUT
 
 
-# get_directory
+# Packfile.get_directory
 
 pir_output_is( <<'CODE', <<'OUT', 'get_directory' );
 .sub 'test' :main
-    $P0 = new 'Packfile'
-    $P1 = $P0.'get_directory'()
+    .local pmc pf
+    pf = new 'Packfile'
+    $P1 = pf.'get_directory'()
     $I0 = defined $P1
     say $I0
 .end
@@ -65,58 +69,95 @@ CODE
 OUT
 
 
-# get_string gives us back what set_string_native got
-# FIXME: this doesn't actually return the same data.  Same size, but the
-# strings differ.  Figure out why... for now we're just comparing the
-# buffer sizes.
-pir_output_is( <<'CODE', <<'OUT', 'set_string_native -> get_string' );
+# Packfile.set_string_native, Packfile.get_integer_keyed_str
+pir_output_is( <<'CODE', $PConfig{VERSION}, 'set_string_native' );
 .sub 'test' :main
     .include "stat.pasm"
     .include "interpinfo.pasm"
-    $S0 = interpinfo .INTERPINFO_RUNTIME_PREFIX
+    .local pmc pf, conf, pio
+    pf   = new 'Packfile'
+    conf = _config()
+    $S0  = interpinfo .INTERPINFO_RUNTIME_PREFIX
     $S0 .= "/runtime/parrot/library/uuid.pbc"
-    $I0 = stat $S0, .STAT_FILESIZE
-    $P0 = open $S0, "<"
-    $S0 = read $P0, $I0
-    close $P0
-    $P0 = new 'Packfile'
-    $P0 = $S0
-    $S1 = $P0
-    $I0 = length $S0
-    $I1 = length $S1
-    eq $I0, $I1, OUT
-    print "not "
-    OUT:
-    say "equal"
+    $I0  = stat $S0, .STAT_FILESIZE
+    pio  = open $S0, "<"
+    $S0  = read pio, $I0
+    close pio
+    pf   = $S0
+    $S0  = "version_major"
+    $I0  = pf[$S0]
+    $S0  = "version_minor"
+    $I1  = pf[$S0]
+    $S0  = "version_patch"
+    $I2  = pf[$S0]
+    print $I0
+    print "."
+    print $I1
+    print "."
+    print $I2
 .end
+
+.include "library/config.pir"
 CODE
-equal
-OUT
 
 
-# set_integer_keyed_str
+# Packfile.set_integer_keyed_str
 
 pir_output_is( <<'CODE', <<'OUT', 'set_integer_keyed_str' );
 .sub 'test' :main
     .include "stat.pasm"
     .include "interpinfo.pasm"
+    .local pmc pf, pio
     $S0 = interpinfo .INTERPINFO_RUNTIME_PREFIX
     $S0 .= "/runtime/parrot/library/uuid.pbc"
     $I0 = stat $S0, .STAT_FILESIZE
-    $P0 = open $S0, "<"
-    $S0 = read $P0, $I0
-    close $P0
-    $P0 = new 'Packfile'
-    $P0 = $S0
-    $S0 = $P0
+    pio = open $S0, "<"
+    $S0 = read pio, $I0
+    close pio
+    pf  = new 'Packfile'
+    pf  = $S0
     $S1 = 'version_major'
-    $I0 = $P0[$S1]
-    inc $I0
-    $P0[$S1] = $I0
-    $S2 = $P0
-    eq $S0, $S2, OUT
+    $I0 = pf[$S1]
+    $I1 = $I0
+    inc $I1
+    pf[$S1] = $I1
+    $I2 = pf[$S1]
+    eq $I0, $I1, OUT1
     print "not "
-    OUT:
+    OUT1:
+    say "equal"
+    eq $I1, $I2, OUT2
+    print "not "
+    OUT2:
+    say "equal"
+.end
+CODE
+not equal
+equal
+OUT
+
+
+# PackfileSegment.pack
+
+pir_output_is( <<'CODE', <<'OUT', 'set_integer_keyed_str' );
+.sub 'test' :main
+    .include "stat.pasm"
+    .include "interpinfo.pasm"
+    .local pmc pf, pio, pfdir
+    $S0 = interpinfo .INTERPINFO_RUNTIME_PREFIX
+    $S0 .= "/runtime/parrot/library/uuid.pbc"
+    $I0 = stat $S0, .STAT_FILESIZE
+    pio = open $S0, "<"
+    $S0 = read pio, $I0
+    close pio
+    pf  = new 'Packfile'
+    pf  = $S0
+    pfdir = pf.'get_directory'()
+    $S0 = pfdir.'pack'()
+    $I0 = length $S0
+    eq $I0, 0, OUT1
+    print "not "
+    OUT1:
     say "equal"
 .end
 CODE
