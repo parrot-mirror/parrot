@@ -30,7 +30,6 @@ my $conf = Parrot::Configure->new();
 
 test_step_thru_runstep( $conf, q{init::defaults}, $args );
 
-my ( $task, $step_name, $step, $ret );
 my $pkg = q{inter::yacc};
 
 $conf->add_steps($pkg);
