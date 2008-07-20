@@ -45,8 +45,6 @@ my $serialized = $conf->pcfreeze();
 $conf->options->set( %{$args} );
 my $step = test_step_constructor_and_description($conf);
 
-TODO: {
-    local $TODO = 'some problem with testing interactive configuration steps';
 {
     my $rv;
     my $stdout;
@@ -67,7 +65,6 @@ TODO: {
     else {
         ok( $stdout, "prompts were captured" );
     }
-}
 }
 $object = undef;
 $conf->replenish($serialized);
