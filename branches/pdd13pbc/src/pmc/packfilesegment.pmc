@@ -25,7 +25,21 @@ spec.
 
 #include "parrot/parrot.h"
 
-pmclass PackfileSegment abstract no_init {
+pmclass PackfileSegment {
+
+
+/*
+
+=item C<void init()>
+
+Initialize the structure.  (Create a blank PackFile_Segment object.)
+
+=cut
+
+*/
+    VTABLE void init() {
+        PMC_data(SELF) = PackFile_Segment_new(interp, NULL, "", 0);
+    }
 
 
 /*
@@ -40,14 +54,15 @@ Serialize the segment.
     METHOD pack() {
         PackFile_Segment *pfseg = PMC_data_typed(SELF, PackFile_Segment *);
         opcode_t length = PackFile_Segment_packed_size(interp, pfseg) * sizeof(opcode_t);
-        opcode_t *ptr = (opcode_t*)mem_sys_allocate(length);
+        opcode_t *newptr, *ptr = (opcode_t*)mem_sys_allocate(length);
         STRING *str;
-        PackFile_Segment_pack(interp, pfseg, ptr);
+        newptr = PackFile_Segment_pack(interp, pfseg, ptr);
         /* FIXME: PARROT_BINARY_CHARSET seems like a better choice, but the
          * comparison function for the binary charset plugin always returns
          * "equal", which means tests fail.
          */
-        str = string_make_direct(interp, (const char*)ptr, length,
+        str = string_make_direct(interp, (const char*)ptr,
+                (newptr - ptr) * sizeof(opcode_t),
                 PARROT_FIXED_8_ENCODING, PARROT_DEFAULT_CHARSET, 0);
         mem_sys_free(ptr);
         RETURN(STRING *str);
