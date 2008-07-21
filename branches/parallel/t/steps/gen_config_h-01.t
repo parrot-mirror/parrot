@@ -31,7 +31,7 @@ my $step = test_step_constructor_and_description($conf);
 ok(-f 'config/gen/config_h/config_h.in',
     "Prequisite file config_h.in located");
 ok(-f 'config/gen/config_h/feature_h.in',
-    "Prequisite file feathre_h.in located");
+    "Prequisite file feature_h.in located");
 
 pass("Completed all tests in $0");
 
