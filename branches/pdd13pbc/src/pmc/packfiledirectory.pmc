@@ -60,7 +60,7 @@ Fetch a segment PMC from the array.
         PMC *rv;
         int pmc_type;
         if(index < 0 || index >= (INTVAL)pfd->num_segments)
-            return PMCNULL;
+            real_exception(interp, NULL, E_IndexError, "PackfileDirectory: index out of bounds!");
         pfseg = pfd->segments[index];
         switch(pfseg->type) {
             case PF_DIR_SEG:
@@ -97,9 +97,8 @@ Fetch a string containing the name of the specified segment PMC.
         PackFile_Directory *pfd = PMC_data_typed(SELF, PackFile_Directory *);
         PackFile_Segment *pfseg;
         PMC *rv;
-        int pmc_type;
         if(index < 0 || index >= (INTVAL)pfd->num_segments)
-            return PMCNULL;
+            real_exception(interp, NULL, E_IndexError, "PackfileDirectory: index out of bounds!");
         pfseg = pfd->segments[index];
         return const_string(interp, pfseg->name);
     }
