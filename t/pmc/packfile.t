@@ -61,22 +61,21 @@ pir_output_is( <<'CODE', <<'OUT', 'get_directory' );
     .local pmc pf
     pf = new 'Packfile'
     $P1 = pf.'get_directory'()
-    $I0 = defined $P1
-    say $I0
+    $S0 = typeof $P1
+    say $S0
 .end
 CODE
-1
+PackfileDirectory
 OUT
 
 
-# Packfile.set_string_native, Packfile.get_integer_keyed_str
-pir_output_is( <<'CODE', $PConfig{VERSION}, 'set_string_native' );
-.sub 'test' :main
+my $get_uuid_pbc = <<'EOF';
+
+.sub _pbc
     .include "stat.pasm"
     .include "interpinfo.pasm"
-    .local pmc pf, conf, pio
+    .local pmc pf, pio
     pf   = new 'Packfile'
-    conf = _config()
     $S0  = interpinfo .INTERPINFO_RUNTIME_PREFIX
     $S0 .= "/runtime/parrot/library/uuid.pbc"
     $I0  = stat $S0, .STAT_FILESIZE
@@ -84,6 +83,16 @@ pir_output_is( <<'CODE', $PConfig{VERSION}, 'set_string_native' );
     $S0  = read pio, $I0
     close pio
     pf   = $S0
+    .return(pf)
+.end
+EOF
+
+
+# Packfile.set_string_native, Packfile.get_integer_keyed_str
+pir_output_is( <<'CODE' . $get_uuid_pbc, $PConfig{VERSION}, 'set_string_native' );
+.sub 'test' :main
+    .local pmc pf
+    pf   = _pbc()
     $S0  = "version_major"
     $I0  = pf[$S0]
     $S0  = "version_minor"
@@ -96,26 +105,15 @@ pir_output_is( <<'CODE', $PConfig{VERSION}, 'set_string_native' );
     print "."
     print $I2
 .end
-
-.include "library/config.pir"
 CODE
 
 
 # Packfile.set_integer_keyed_str
 
-pir_output_is( <<'CODE', <<'OUT', 'set_integer_keyed_str' );
+pir_output_is( <<'CODE' . $get_uuid_pbc, <<'OUT', 'set_integer_keyed_str' );
 .sub 'test' :main
-    .include "stat.pasm"
-    .include "interpinfo.pasm"
-    .local pmc pf, pio
-    $S0 = interpinfo .INTERPINFO_RUNTIME_PREFIX
-    $S0 .= "/runtime/parrot/library/uuid.pbc"
-    $I0 = stat $S0, .STAT_FILESIZE
-    pio = open $S0, "<"
-    $S0 = read pio, $I0
-    close pio
-    pf  = new 'Packfile'
-    pf  = $S0
+    .local pmc pf
+    pf  = _pbc()
     $S1 = 'version_major'
     $I0 = pf[$S1]
     $I1 = $I0
@@ -137,24 +135,15 @@ equal
 OUT
 
 
-# PackfileSegment.pack
+# PackfileSegment.pack (via subclass PackfileDirectory)
 
-pir_output_is( <<'CODE', <<'OUT', 'set_integer_keyed_str' );
+pir_output_is( <<'CODE' . $get_uuid_pbc, <<'OUT', 'set_integer_keyed_str' );
 .sub 'test' :main
-    .include "stat.pasm"
-    .include "interpinfo.pasm"
-    .local pmc pf, pio, pfdir
-    $S0 = interpinfo .INTERPINFO_RUNTIME_PREFIX
-    $S0 .= "/runtime/parrot/library/uuid.pbc"
-    $I0 = stat $S0, .STAT_FILESIZE
-    pio = open $S0, "<"
-    $S0 = read pio, $I0
-    close pio
-    pf  = new 'Packfile'
-    pf  = $S0
+    .local pmc pf, pfdir
+    pf    = _pbc()
     pfdir = pf.'get_directory'()
-    $S0 = pfdir.'pack'()
-    $I0 = length $S0
+    $S0   = pfdir.'pack'()
+    $I0   = length $S0
     eq $I0, 0, OUT1
     print "not "
     OUT1:
