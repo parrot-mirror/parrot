@@ -15,6 +15,7 @@ use Parrot::Configure;
 use Parrot::Configure::Options qw( process_options );
 use Parrot::Configure::Test qw(
     test_step_thru_runstep
+    test_step_constructor_and_description
 );
 
 my $args = process_options(
@@ -31,7 +32,8 @@ my $pkg = q{gen::core_pmcs};
 $conf->add_steps($pkg);
 $conf->options->set( %{$args} );
 my $step = test_step_constructor_and_description($conf);
-ok( scalar(  split( / /, $conf->data->get('pmc_names') ) ),
+my @pmc_names = split( / /, $conf->data->get('pmc_names') );
+ok( scalar( @pmc_names ),
     "Got nonzero number of pmc names, which is prerequisite for gen:core_pmcs");
 
 pass("Completed all tests in $0");
