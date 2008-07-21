@@ -31,34 +31,6 @@ pmclass PackfileConstantTable extends PackfileSegment {
 
 /*
 
-=item C<STRING *pack()>
-
-Serialize the segment.
-
-=cut
-
-*/
-    STRING *pack() {
-        real_exception(interp, NULL, E_NotImplementedError, "Not implemented yet.");
-    }
-
-
-/*
-
-=item C<void unpack(STRING *data)>
-
-Unpack a serialized segment string.
-
-=cut
-
-*/
-    void unpack(STRING *data) {
-        real_exception(interp, NULL, E_NotImplementedError, "Not implemented yet.");
-    }
-
-
-/*
-
 =item C<INTVAL elements()>
 
 Get the number of elements in the array.
