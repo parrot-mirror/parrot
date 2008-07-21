@@ -6,7 +6,7 @@ use strict;
 use warnings;
 use lib qw( . lib ../lib ../../lib );
 use Test::More;
-use Parrot::Test tests => 6;
+use Parrot::Test tests => 8;
 use Parrot::Config;
 
 =head1 NAME
@@ -151,6 +151,51 @@ pir_output_is( <<'CODE' . $get_uuid_pbc, <<'OUT', 'set_integer_keyed_str' );
 .end
 CODE
 not equal
+OUT
+
+
+# PackfileDirectory.elements
+
+pir_output_is( <<'CODE' . $get_uuid_pbc, <<'OUT', 'set_integer_keyed_str' );
+.sub 'test' :main
+    .local pmc pf, pfdir
+    pf    = _pbc()
+    pfdir = pf.'get_directory'()
+    $I0   = elements pfdir
+    eq $I0, 0, OUT1
+    print "not "
+    OUT1:
+    say "equal"
+.end
+CODE
+not equal
+OUT
+
+
+# PackfileDirectory.get_pmc_keyed_int
+
+pir_output_is( <<'CODE' . $get_uuid_pbc, <<'OUT', 'set_integer_keyed_str' );
+.sub 'test' :main
+    .local pmc pf, pfdir
+    pf    = _pbc()
+    pfdir = pf.'get_directory'()
+    $I0   = elements pfdir
+    $I1   = 0
+    LOOP:
+    $P0   = pfdir[$I1]
+    $I2   = defined $P0
+    eq $I2, 0, ERROR
+    inc $I1
+    eq $I0, $I1, DONE
+    goto LOOP
+    DONE:
+    say "done"
+    .return()
+    ERROR:
+    say "error"
+.end
+CODE
+done
 OUT
 
 
