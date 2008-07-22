@@ -5,7 +5,7 @@
 
 use strict;
 use warnings;
-use Test::More qw(no_plan); # tests =>  2;
+use Test::More tests => 13;
 use Carp;
 use lib qw( lib );
 use_ok('config::init::defaults');
@@ -46,6 +46,15 @@ $step->set_result( q{} );
 
 $conf->replenish($serialized);
 
+#$args = process_options(
+#    {
+#        argv => [ ],
+#        mode => q{configure},
+#    }
+#);
+#$step = test_step_constructor_and_description($conf);
+ok(-f 'config/gen/crypto/digest_pmc.in',
+    "Able to locate source code file");
 
 
 pass("Completed all tests in $0");
