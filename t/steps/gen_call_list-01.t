@@ -5,14 +5,34 @@
 
 use strict;
 use warnings;
-use Test::More tests =>  2;
+use Test::More qw(no_plan); # tests =>  2;
 use Carp;
 use lib qw( lib );
 use_ok('config::gen::call_list');
+use Parrot::Configure;
+use Parrot::Configure::Options qw( process_options );
+use Parrot::Configure::Test qw(
+    test_step_thru_runstep
+    test_step_constructor_and_description
+);
 
-=for hints_for_testing This is just a stub so that Configure.pl will run.
+my $args = process_options(
+    {
+        argv => [ ],
+        mode => q{configure},
+    }
+);
 
-=cut
+my $conf = Parrot::Configure->new;
+my $pkg = q{gen::call_list};
+$conf->add_steps($pkg);
+$conf->options->set( %{$args} );
+my $step = test_step_constructor_and_description($conf);
+my $missing_files = 0;
+foreach my $f ( @{ $step->{fragment_files} } ) {
+    $missing_files++ unless (-f $f);
+}
+is($missing_files, 0, "No needed source files are missing");
 
 pass("Completed all tests in $0");
 

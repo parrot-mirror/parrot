@@ -5,15 +5,40 @@
 
 use strict;
 use warnings;
-use Test::More tests =>  2;
+use Test::More tests =>  7;
 use Carp;
+use Data::Dumper;
 use lib qw( lib );
 use_ok('config::gen::parrot_include');
+use Parrot::Configure;
+use Parrot::Configure::Options qw( process_options );
+use Parrot::Configure::Test qw(
+    test_step_thru_runstep
+    test_step_constructor_and_description
+);
 
-=for hints_for_testing Consider writing a description of what 'runtime
-parrot include' files means.
+my $args = process_options(
+    {
+        argv => [ ],
+        mode => q{configure},
+    }
+);
 
-=cut
+my $conf = Parrot::Configure->new;
+my $pkg = q{gen::parrot_include};
+$conf->add_steps($pkg);
+$conf->options->set( %{$args} );
+my $step = test_step_constructor_and_description($conf);
+TODO: {
+    local $TODO = '2 files in list are generated; need to fix';
+    my %missing_files = ();
+    foreach my $f ( @{ $step->{files} } ) {
+        $missing_files{$f}++ unless (-f $f);
+    }
+    is(keys %missing_files, 0, "No needed source files are missing");
+    print STDERR Dumper \%missing_files;
+}
+ok(-d $step->{destdir}, "Directory needed has been located");
 
 pass("Completed all tests in $0");
 
