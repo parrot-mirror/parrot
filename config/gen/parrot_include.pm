@@ -26,9 +26,8 @@ sub _init {
     my %data;
     $data{description} = q{Generating runtime/parrot/include};
     $data{result} = q{};
-    $data{files} = [ qw(
+    $data{source_files} = [ qw(
         include/parrot/cclass.h
-        include/parrot/core_pmcs.h
         include/parrot/datatypes.h
         include/parrot/enums.h
         include/parrot/events.h
@@ -42,10 +41,13 @@ sub _init {
         include/parrot/stat.h
         include/parrot/string.h
         include/parrot/pmc.h
-        include/parrot/vtable.h
         include/parrot/warnings.h
         src/pmc/timer.pmc
         src/utils.c
+    ) ];
+    $data{generated_files} = [ qw(
+        include/parrot/vtable.h
+        include/parrot/core_pmcs.h
     ) ];
     $data{destdir} = 'runtime/parrot/include';
     return \%data;
@@ -177,29 +179,6 @@ sub parse_file {
     return @d;
 }
 
-#my @files = qw(
-#    include/parrot/cclass.h
-#    include/parrot/core_pmcs.h
-#    include/parrot/datatypes.h
-#    include/parrot/enums.h
-#    include/parrot/events.h
-#    include/parrot/scheduler.h
-#    include/parrot/exceptions.h
-#    include/parrot/interpreter.h
-#    include/parrot/io.h
-#    include/parrot/longopt.h
-#    include/parrot/mmd.h
-#    include/parrot/resources.h
-#    include/parrot/stat.h
-#    include/parrot/string.h
-#    include/parrot/pmc.h
-#    include/parrot/vtable.h
-#    include/parrot/warnings.h
-#    src/pmc/timer.pmc
-#    src/utils.c
-#);
-#my $destdir = 'runtime/parrot/include';
-
 sub runstep {
     my ( $self, $conf ) = @_;
 
@@ -207,8 +186,7 @@ sub runstep {
     system( $^X, "tools/build/vtable_h.pl" );
 
     my @generated;
-#    for my $file (@files) {
-    for my $file ( @{ $self->{files} } ) {
+    for my $file ( @{ $self->{source_files} }, @{ $self->{generated_files} } ) {
         open my $fh, '<', $file or die "Can't open $file: $!\n";
         my @directives = parse_file $file, $fh;
         close $fh;
