@@ -5,7 +5,7 @@
 
 use strict;
 use warnings;
-use Test::More qw(no_plan); # tests =>  2;
+use Test::More tests =>  6;
 use Carp;
 use lib qw( lib );
 use_ok('config::gen::call_list');

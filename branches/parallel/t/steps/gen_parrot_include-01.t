@@ -7,7 +7,6 @@ use strict;
 use warnings;
 use Test::More tests =>  7;
 use Carp;
-use Data::Dumper;
 use lib qw( lib );
 use_ok('config::gen::parrot_include');
 use Parrot::Configure;
@@ -29,15 +28,11 @@ my $pkg = q{gen::parrot_include};
 $conf->add_steps($pkg);
 $conf->options->set( %{$args} );
 my $step = test_step_constructor_and_description($conf);
-TODO: {
-    local $TODO = '2 files in list are generated; need to fix';
-    my %missing_files = ();
-    foreach my $f ( @{ $step->{files} } ) {
-        $missing_files{$f}++ unless (-f $f);
-    }
-    is(keys %missing_files, 0, "No needed source files are missing");
-    print STDERR Dumper \%missing_files;
+my %missing_files = ();
+foreach my $f ( @{ $step->{source_files} } ) {
+    $missing_files{$f}++ unless (-f $f);
 }
+is(keys %missing_files, 0, "No needed source files are missing");
 ok(-d $step->{destdir}, "Directory needed has been located");
 
 pass("Completed all tests in $0");
