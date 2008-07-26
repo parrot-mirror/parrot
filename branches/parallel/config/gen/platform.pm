@@ -51,7 +51,7 @@ sub runstep {
     my $generated = $conf->data->get('TEMP_generated');
     $generated = '' unless defined $generated;
     print " ($generated) " if $verbose;
-    print("\n") if defined $verbose && $verbose == 2;
+    print("\n") if defined $verbose;
 
     my $coda = <<'CODA';
 /*
@@ -106,7 +106,7 @@ END_HERE
 
         if ( -e $header_file ) {
             local $/ = undef;
-            print("\t$header_file\n") if defined $verbose && $verbose == 2;
+            print("\t$header_file\n") if defined $verbose;
             open my $IN_H, "<", "$header_file"
                 or die "Can't open $header_file: $!";
 
@@ -138,7 +138,7 @@ END_HERE
     for (@headers) {
         if ( -e $_ ) {
             local $/ = undef;
-            print("\t$_\n") if defined $verbose && $verbose == 2;
+            print("\t$_\n") if defined $verbose;
             open my $IN_H, "<", "$_" or die "Can't open $_: $!";
             print {$PLATFORM_H} <<"END_HERE";
 /*
@@ -231,7 +231,7 @@ END_HERE
 
         if ( -e $impl_file ) {
             local $/ = undef;
-            print("\t$impl_file\n") if defined $verbose && $verbose == 2;
+            print("\t$impl_file\n") if defined $verbose;
             open my $IN_C, "<", "$impl_file" or die "Can't open $impl_file: $!";
 
             # slurp in the C file
@@ -256,7 +256,7 @@ END_HERE
     for (@impls) {
         if ( -e $_ ) {
             local $/ = undef;
-            print("\t$_\n") if defined $verbose && $verbose == 2;
+            print("\t$_\n") if defined $verbose;
             open my $IN_C, "<", "$_" or die "Can't open $_: $!";
             print {$PLATFORM_C} <<"END_HERE";
 /*
