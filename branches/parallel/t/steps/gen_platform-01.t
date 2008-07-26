@@ -5,16 +5,101 @@
 
 use strict;
 use warnings;
-use Test::More tests =>  2;
+use Test::More qw(no_plan); # tests =>  2;
 use Carp;
 use lib qw( lib );
 use_ok('config::gen::platform');
+use Parrot::Configure;
+use Parrot::Configure::Options qw( process_options );
+use Parrot::Configure::Test qw(
+    test_step_thru_runstep
+    test_step_constructor_and_description
+);
+use IO::CaptureOutput qw( capture );
 
-=for hints_for_testing By definition, test coverage of this package will
-appear low because you can only test the OS you are currently running
-on.  Use Test::More SKIP blocks as needed.
+my $args = process_options(
+    {
+        argv => [ ],
+        mode => q{configure},
+    }
+);
 
-=cut
+my $conf = Parrot::Configure->new;
+my $pkg = q{gen::platform};
+$conf->add_steps($pkg);
+$conf->options->set( %{$args} );
+my $step = test_step_constructor_and_description($conf);
+
+my $platform_orig = $conf->data->get_p5('OSNAME');
+my $archname_orig = $conf->data->get_p5('archname');
+$conf->data->set_p5( archname => 'foo-bar' );
+my $verbose = 0;
+
+$conf->options->set( miniparrot => 1 );
+is( gen::platform::_get_platform( $conf, $verbose ), q{ansi},
+    "Got expected platform for miniparrot");
+$conf->options->set( miniparrot => undef );
+
+$conf->data->set_p5( OSNAME => 'msys' );
+is( gen::platform::_get_platform( $conf, $verbose ), q{win32},
+    "Got expected platform for msys");
+
+$conf->data->set_p5( OSNAME => 'mingw' );
+is( gen::platform::_get_platform( $conf, $verbose ), q{win32},
+    "Got expected platform for mingw");
+
+$conf->data->set_p5( OSNAME => 'MSWin32' );
+is( gen::platform::_get_platform( $conf, $verbose ), q{win32},
+    "Got expected platform for MSWin32");
+
+# re-set to original values
+$conf->data->set_p5( OSNAME => $platform_orig );
+$conf->data->set_p5( archname => $archname_orig );
+
+$conf->data->set_p5( archname => 'ia64-bar' );
+is( gen::platform::_get_platform( $conf, $verbose ), q{ia64},
+    "Got expected platform for ia64");
+
+$conf->data->set_p5( archname => 'foo-bar' );
+$conf->data->set_p5( OSNAME => 'foo' );
+{
+    $verbose = 1;
+    my ($stdout, $stderr, $rv);
+    my $expected = q{generic};
+    capture(
+        sub { $rv = gen::platform::_get_platform( $conf, $verbose ) },
+        \$stdout,
+        \$stderr,
+    );
+    is( $rv, $expected, "Got expected platform for foo");
+    like( $stdout, qr/platform='$expected'/, "Got expected verbose output");
+}
+
+# re-set to original values
+$conf->data->set_p5( archname => $archname_orig );
+$conf->data->set_p5( OSNAME => $platform_orig );
+
+my $TEMP_generated_orig = $conf->data->get('TEMP_generated');
+{
+    $verbose = 1;
+    my ($stdout, $stderr, $rv);
+    my $expected = q{foo};
+    $conf->data->set( TEMP_generated => $expected );
+    capture(
+        sub { $rv = gen::platform::_get_generated( $conf, $verbose ) },
+        \$stdout,
+        \$stderr,
+    );
+    is( $rv, $expected, "Got expected generated");
+    like( $stdout, qr/\($expected\)/, "Got expected verbose output");
+}
+$conf->data->set( TEMP_generated => undef );
+$verbose = 0;
+is( gen::platform::_get_generated( $conf, $verbose ), q{},
+    "Got expected generated");
+
+# re-set to original values
+$conf->data->set( TEMP_generated => $TEMP_generated_orig );
 
 pass("Completed all tests in $0");
 
