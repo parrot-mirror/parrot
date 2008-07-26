@@ -32,7 +32,7 @@ my $pkg = q{gen::core_pmcs};
 $conf->add_steps($pkg);
 $conf->options->set( %{$args} );
 my $step = test_step_constructor_and_description($conf);
-my @pmc_names = split( / /, $conf->data->get('pmc_names') );
+my @pmc_names = split / /, $conf->data->get('pmc_names');
 ok( scalar( @pmc_names ),
     "Got nonzero number of pmc names, which is prerequisite for gen:core_pmcs");
 
