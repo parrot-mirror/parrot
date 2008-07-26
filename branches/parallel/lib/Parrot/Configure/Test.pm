@@ -47,11 +47,11 @@ sub rerun_defaults_for_testing {
     my $args = shift;
     $conf->add_steps(q{init::defaults});
     $conf->options->set( %{$args} );
-    
+
     my ( $task, $step_name, $step );
     $task        = $conf->steps->[ -1 ];
     $step_name   = $task->step;
-    
+
     $step = $step_name->new();
     ok( defined $step, "$step_name constructor returned defined value" );
     isa_ok( $step, $step_name );

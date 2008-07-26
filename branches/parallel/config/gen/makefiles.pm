@@ -28,7 +28,7 @@ sub _init {
     $data{result}      = q{};
     $data{makefiles}   = {
         'Makefile' => { SOURCE => 'config/gen/makefiles/root.in' },
-    
+
         'ext/Makefile' => {
             SOURCE            => 'config/gen/makefiles/ext.in',
             commentType       => '#',
@@ -40,7 +40,7 @@ sub _init {
             replace_slashes   => 0,
             conditioned_lines => 1,
         },
-    
+
         'compilers/nqp/Makefile'     =>
             { SOURCE => 'config/gen/makefiles/nqp.in' },
         'compilers/pct/Makefile'     =>
@@ -61,7 +61,7 @@ sub _init {
             { SOURCE => 'config/gen/makefiles/dynoplibs.in' },
         'editor/Makefile'            =>
             { SOURCE => 'config/gen/makefiles/editor.in' },
-    
+
         'tools/build/dynpmc.pl' => {
             SOURCE            => 'config/gen/makefiles/dynpmc_pl.in',
             comment_type      => '#',
