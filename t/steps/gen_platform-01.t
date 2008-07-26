@@ -5,7 +5,7 @@
 
 use strict;
 use warnings;
-use Test::More qw(no_plan); # tests =>  2;
+use Test::More tests => 16;
 use Carp;
 use lib qw( lib );
 use_ok('config::gen::platform');
@@ -29,6 +29,9 @@ my $pkg = q{gen::platform};
 $conf->add_steps($pkg);
 $conf->options->set( %{$args} );
 my $step = test_step_constructor_and_description($conf);
+
+ok(-f $step->{platform_interface},
+    "Located required platform interface header");
 
 my $platform_orig = $conf->data->get_p5('OSNAME');
 my $archname_orig = $conf->data->get_p5('archname');
