@@ -48,6 +48,7 @@ sub _init {
             version_needed => '0.9.8a',
         },
     };
+    $data{digest_pmc_template} = 'config/gen/crypto/digest_pmc.in';
     return \%data;
 }
 
@@ -77,7 +78,7 @@ sub runstep {
             : '#ifndef OPENSSL_NO_' . $md
         );
         $conf->genfile(
-            'config/gen/crypto/digest_pmc.in' => "src/dynpmc/${file}.pmc",
+            $self->{digest_pmc_template} => "src/dynpmc/${file}.pmc",
             comment_type                      => '/*',
         );
     }
