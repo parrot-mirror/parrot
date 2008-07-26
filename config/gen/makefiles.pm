@@ -41,16 +41,26 @@ sub _init {
             conditioned_lines => 1,
         },
     
-        'compilers/nqp/Makefile'     => { SOURCE => 'config/gen/makefiles/nqp.in' },
-        'compilers/pct/Makefile'     => { SOURCE => 'config/gen/makefiles/pct.in' },
-        'compilers/pge/Makefile'     => { SOURCE => 'config/gen/makefiles/pge.in' },
-        'compilers/tge/Makefile'     => { SOURCE => 'config/gen/makefiles/tge.in' },
-        'compilers/bcg/Makefile'     => { SOURCE => 'config/gen/makefiles/bcg.in' },
-        'compilers/json/Makefile'    => { SOURCE => 'config/gen/makefiles/json.in' },
-        'compilers/pirc/Makefile'    => { SOURCE => 'config/gen/makefiles/pirc.in' },
-        'src/dynpmc/Makefile'        => { SOURCE => 'config/gen/makefiles/dynpmc.in' },
-        'src/dynoplibs/Makefile'     => { SOURCE => 'config/gen/makefiles/dynoplibs.in' },
-        'editor/Makefile'            => { SOURCE => 'config/gen/makefiles/editor.in' },
+        'compilers/nqp/Makefile'     =>
+            { SOURCE => 'config/gen/makefiles/nqp.in' },
+        'compilers/pct/Makefile'     =>
+            { SOURCE => 'config/gen/makefiles/pct.in' },
+        'compilers/pge/Makefile'     =>
+            { SOURCE => 'config/gen/makefiles/pge.in' },
+        'compilers/tge/Makefile'     =>
+            { SOURCE => 'config/gen/makefiles/tge.in' },
+        'compilers/bcg/Makefile'     =>
+            { SOURCE => 'config/gen/makefiles/bcg.in' },
+        'compilers/json/Makefile'    =>
+            { SOURCE => 'config/gen/makefiles/json.in' },
+        'compilers/pirc/Makefile'    =>
+            { SOURCE => 'config/gen/makefiles/pirc.in' },
+        'src/dynpmc/Makefile'        =>
+            { SOURCE => 'config/gen/makefiles/dynpmc.in' },
+        'src/dynoplibs/Makefile'     =>
+            { SOURCE => 'config/gen/makefiles/dynoplibs.in' },
+        'editor/Makefile'            =>
+            { SOURCE => 'config/gen/makefiles/editor.in' },
     
         'tools/build/dynpmc.pl' => {
             SOURCE            => 'config/gen/makefiles/dynpmc_pl.in',
