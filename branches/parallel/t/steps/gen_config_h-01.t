@@ -5,16 +5,20 @@
 
 use strict;
 use warnings;
-use Test::More tests =>  7;
+use Test::More tests => 11;
 use Carp;
+use Cwd;
+use File::Temp qw( tempdir );
 use lib qw( lib );
 use_ok('config::gen::config_h');
 use Parrot::Configure;
 use Parrot::Configure::Options qw( process_options );
 use Parrot::Configure::Test qw(
     test_step_thru_runstep
+    rerun_defaults_for_testing
     test_step_constructor_and_description
 );
+use Parrot::Configure::Utils qw( _slurp );
 
 my $args = process_options(
     {
@@ -24,12 +28,40 @@ my $args = process_options(
 );
 
 my $conf = Parrot::Configure->new;
+
+my $serialized = $conf->pcfreeze();
+
 my $pkg = q{gen::config_h};
 $conf->add_steps($pkg);
 $conf->options->set( %{$args} );
 my $step = test_step_constructor_and_description($conf);
 ok(-f $step->{templates}->{config_h}, "Template for config_h located");
 ok(-f $step->{templates}->{feature_h}, "Template for feature_h located");
+
+$conf->replenish($serialized);
+
+$args = process_options( {
+    argv => [ q{--define=inet_aton} ],
+    mode => q{configure},
+} );
+$conf->add_steps($pkg);
+$conf->options->set( %{$args} );
+$step = test_step_constructor_and_description($conf);
+
+my $cwd = cwd();
+{
+    my $tdir = tempdir( CLEANUP => 1 );
+    chdir $tdir or croak "Unable to change to temporary directory";
+    my $hh = "has_header.h";
+    open( my $HH, ">", "$hh.tmp" )
+        or die "Can't open has_header.h: $!";
+    gen::config_h::_handle_define_option( $conf, $HH );
+    close $HH or die "Can't close temp file: $!";
+    my $text = _slurp("$hh.tmp");
+    like($text, qr/#define PARROT_DEF_INET_ATON 1/s,
+        "Got expected define");
+    chdir $cwd or croak "Unable to change back to starting directory";
+}
 
 pass("Completed all tests in $0");
 

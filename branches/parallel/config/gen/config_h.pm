@@ -85,22 +85,7 @@ EOF
     my $osname = $conf->data->get_p5('OSNAME');
     print {$HH} "\n#define BUILD_OS_NAME \"$osname\"\n";
 
-    my $define = $conf->options->get('define');
-
-    if ($define) {
-        my @vals = split /,/, $define;
-        print {$HH} <<EOF;
-
-/*
- * defines from commandline
- */
-
-EOF
-        for (@vals) {
-            print {$HH} "#define PARROT_DEF_" . uc($_), " 1\n";
-        }
-
-    }
+    _handle_define_option($conf, $HH);
 
     print {$HH} <<EOF;
 
@@ -148,6 +133,25 @@ EOF
     move_if_diff( "$hh.tmp", $hh );
 
     return 1;
+}
+
+sub _handle_define_option {
+    my ($conf, $HH) = @_;
+    my $define = $conf->options->get('define');
+
+    if ($define) {
+        my @vals = split /,/, $define;
+        print {$HH} <<EOF;
+
+/*
+ * defines from commandline
+ */
+
+EOF
+        for my $v (@vals) {
+            print {$HH} "#define PARROT_DEF_" . uc($v), " 1\n";
+        }
+    }
 }
 
 1;
