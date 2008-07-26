@@ -35,6 +35,9 @@ my $pkg = q{gen::crypto};
 $conf->add_steps($pkg);
 $conf->options->set( %{$args} );
 my $step = test_step_constructor_and_description($conf);
+
+ok(-f $step->{digest_pmc_template}, "Able to locate source code file");
+
 my $has_crypto_orig = $conf->data->get('has_crypto');
 $conf->data->set( has_crypto => undef );
 my $ret = $step->runstep($conf);
@@ -45,17 +48,6 @@ $conf->data->set( has_crypto => $has_crypto_orig );
 $step->set_result( q{} );
 
 $conf->replenish($serialized);
-
-#$args = process_options(
-#    {
-#        argv => [ ],
-#        mode => q{configure},
-#    }
-#);
-#$step = test_step_constructor_and_description($conf);
-ok(-f 'config/gen/crypto/digest_pmc.in',
-    "Able to locate source code file");
-
 
 pass("Completed all tests in $0");
 
