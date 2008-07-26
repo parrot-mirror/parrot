@@ -28,10 +28,8 @@ my $pkg = q{gen::config_h};
 $conf->add_steps($pkg);
 $conf->options->set( %{$args} );
 my $step = test_step_constructor_and_description($conf);
-ok(-f 'config/gen/config_h/config_h.in',
-    "Prequisite file config_h.in located");
-ok(-f 'config/gen/config_h/feature_h.in',
-    "Prequisite file feature_h.in located");
+ok(-f $step->{templates}->{config_h}, "Template for config_h located");
+ok(-f $step->{templates}->{feature_h}, "Template for feature_h located");
 
 pass("Completed all tests in $0");
 
