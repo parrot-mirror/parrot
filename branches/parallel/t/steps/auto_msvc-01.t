@@ -14,10 +14,11 @@ use Parrot::Configure;
 use Parrot::Configure::Options qw( process_options );
 use Parrot::Configure::Test qw(
     test_step_thru_runstep
-    rerun_defaults_for_testing
     test_step_constructor_and_description
 );
 use IO::CaptureOutput qw| capture |;
+
+########## Win32 ##########
 
 my $args = process_options( {
     argv            => [],
@@ -43,6 +44,8 @@ SKIP: {
 
 $conf->replenish($serialized);
 
+########## _evaluate_msvc() ##########
+
 $args = process_options( {
     argv            => [],
     mode            => q{configure},
@@ -57,6 +60,8 @@ is($conf->data->get('msvcversion'), '13.99',
     "Got expected msvc version string");
 
 $conf->replenish($serialized);
+
+########## _evaluate_msvc() ##########
 
 $args = process_options( {
     argv            => [],
@@ -77,6 +82,8 @@ like(
 );
 
 $conf->replenish($serialized);
+
+########## _handle_not_msvc() ##########
 
 $args = process_options( {
     argv            => [],
@@ -131,6 +138,8 @@ ok(! defined ($conf->data->get( 'msvcversion' )),
     $step->set_result(undef);
 }
 
+########## _compose_msvcversion() ##########
+
 my $msvcversion;
 
 $major = 13;
@@ -163,7 +172,7 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-auto_msvc-01.t - test config::auto::msvc
+auto_msvc-01.t - test auto::msvc
 
 =head1 SYNOPSIS
 
@@ -173,7 +182,8 @@ auto_msvc-01.t - test config::auto::msvc
 
 The files in this directory test functionality used by F<Configure.pl>.
 
-The tests in this file test subroutines exported by config::auto::msvc.
+The tests in this file test auto::msvc.  Some tests run only if the system is
+Win32.
 
 =head1 AUTHOR
 
