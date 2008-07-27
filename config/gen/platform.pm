@@ -52,12 +52,7 @@ CODA
     # implementation files are merged into platform.c
     _set_implementations($conf, $verbose, $platform, $generated, $coda);
 
-    if ( $conf->data->get('platform_asm') ) {
-        my $asm_file = "config/gen/platform/$platform/asm.s";
-        if ( -e $asm_file ) {
-            copy_if_diff( $asm_file, "src/platform_asm.s" );
-        }
-    }
+    _handle_asm($conf, $platform);
 
     # interface is the same for all platforms
     copy_if_diff( $self->{platform_interface},
@@ -167,22 +162,22 @@ END_HERE
 
     # finally append generated
     @headers = grep { /\.h$/ } split( m/,/, $generated );
-    for (@headers) {
-        if ( -e $_ ) {
+    for my $h (@headers) {
+        if ( -e $h ) {
             local $/ = undef;
-            print("\t$_\n") if $verbose;
-            open my $IN_H, "<", "$_" or die "Can't open $_: $!";
+            print("\t$h\n") if $verbose;
+            open my $IN_H, "<", $h or die "Can't open $h: $!";
             print {$PLATFORM_H} <<"END_HERE";
 /*
-** $_
+** $h
 */
-#line 1 "$_"
+#line 1 "$h"
 END_HERE
             print {$PLATFORM_H} <$IN_H>, "\n\n";
             close $IN_H;
         }
         else {
-            warn("Header file '$_' listed in TEMP_generated but not found\n");
+            warn("Header file '$h' listed in TEMP_generated but not found\n");
         }
     }
 
@@ -258,16 +253,16 @@ END_HERE
 
 END_HERE
 
-    for (@impls) {
-        my $impl_file = "config/gen/platform/generic/$_";
-        if ( -e "config/gen/platform/$platform/$_" ) {
-            $impl_file = "config/gen/platform/$platform/$_";
+    for my $im (@impls) {
+        my $impl_file = "config/gen/platform/generic/$im";
+        if ( -e "config/gen/platform/$platform/$im" ) {
+            $impl_file = "config/gen/platform/$platform/$im";
         }
 
         if ( -e $impl_file ) {
             local $/ = undef;
             print("\t$impl_file\n") if $verbose;
-            open my $IN_C, "<", "$impl_file" or die "Can't open $impl_file: $!";
+            open my $IN_C, "<", $impl_file or die "Can't open $impl_file: $!";
 
             # slurp in the C file
             my $in_c = <$IN_C>;
@@ -288,16 +283,16 @@ END_HERE
 
     # append generated c files
     @impls = grep { /\.c$/ } split( m/,/, $generated );
-    for (@impls) {
-        if ( -e $_ ) {
+    for my $im (@impls) {
+        if ( -e $im ) {
             local $/ = undef;
-            print("\t$_\n") if $verbose;
-            open my $IN_C, "<", "$_" or die "Can't open $_: $!";
+            print("\t$im\n") if $verbose;
+            open my $IN_C, "<", $im or die "Can't open $im: $!";
             print {$PLATFORM_C} <<"END_HERE";
 /*
-** $_:
+** $im:
 */
-#line 1 "$_"
+#line 1 "$im"
 END_HERE
             print {$PLATFORM_C} <$IN_C>, "\n\n";
             close $IN_C;
@@ -312,6 +307,16 @@ END_HERE
 
     close $PLATFORM_C;
     return 1;
+}
+
+sub _handle_asm {
+    my ($conf, $platform) = @_;
+    if ( $conf->data->get('platform_asm') ) {
+        my $asm_file = "config/gen/platform/$platform/asm.s";
+        if ( -e $asm_file ) {
+            copy_if_diff( $asm_file, "src/platform_asm.s" );
+        }
+    }
 }
 
 1;

@@ -5,8 +5,13 @@
 
 use strict;
 use warnings;
-use Test::More tests => 16;
+use Test::More qw(no_plan); # tests => 16;
 use Carp;
+use Cwd;
+use File::Copy;
+use File::Path qw( mkpath );
+use File::Temp qw( tempdir );
+use File::Spec;
 use lib qw( lib );
 use_ok('config::gen::platform');
 use Parrot::Configure;
@@ -15,6 +20,7 @@ use Parrot::Configure::Test qw(
     test_step_thru_runstep
     test_step_constructor_and_description
 );
+use Parrot::Configure::Utils qw( _slurp );
 use IO::CaptureOutput qw( capture );
 
 my $args = process_options(
@@ -103,6 +109,57 @@ is( gen::platform::_get_generated( $conf, $verbose ), q{},
 
 # re-set to original values
 $conf->data->set( TEMP_generated => $TEMP_generated_orig );
+
+my $platform_asm_orig = $conf->data->get('platform_asm');
+my $cwd = cwd();
+{
+    my $tdir = tempdir( CLEANUP => 1 );
+    chdir $tdir or croak "Unable to change to temporary directory";
+    $conf->data->set( platform_asm => 1 );
+    my $platform = 'aix';
+    mkpath( 'src', 0, 755 ) or croak "Unable to make testing directory";
+    my $asmfile = File::Spec->catfile( 'src', 'platform_asm.s' );
+    open my $FH, '>', $asmfile or croak "Unable to open handle for writing";
+    print $FH "Hello asm\n";
+    close $FH or croak "Unable to close handle after writing";
+    gen::platform::_handle_asm($conf, $platform);
+    my $text = _slurp( $asmfile );
+    like($text, qr/Hello asm/s, "File unchanged, as expected");
+
+    chdir $cwd or croak "Unable to change back to starting directory";
+}
+
+{
+    my $tdir = tempdir( CLEANUP => 1 );
+    chdir $tdir or croak "Unable to change to temporary directory";
+    $conf->data->set( platform_asm => 1 );
+    my $platform = 'aix';
+
+    mkpath( 'src', 0, 755 ) or croak "Unable to make testing directory";
+
+    my $asmfile = File::Spec->catfile( 'src', 'platform_asm.s' );
+    open my $FH, '>', $asmfile or croak "Unable to open handle for writing";
+    print $FH "Hello asm\n";
+    close $FH or croak "Unable to close handle after writing";
+
+    my $path = File::Spec->catdir( 'config', 'gen', 'platform', $platform );
+    mkpath( $path, 0, 755 ) or croak "Unable to make testing directory";
+
+    my $configfile = File::Spec->catfile( $path, 'asm.s' );
+    open my $FH2, '>', $configfile or croak "Unable to open handle for writing";
+    print $FH2 "Goodbye world\n";
+    close $FH2 or croak "Unable to close handle after writing";
+
+    gen::platform::_handle_asm($conf, $platform);
+
+    my $text = _slurp( $asmfile );
+    like($text, qr/Goodbye world/s, "File changed, as expected");
+
+    chdir $cwd or croak "Unable to change back to starting directory";
+}
+
+# re-set to original values
+$conf->data->set( platform_asm => $platform_asm_orig );
 
 pass("Completed all tests in $0");
 
