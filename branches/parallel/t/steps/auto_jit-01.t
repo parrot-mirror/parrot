@@ -360,7 +360,7 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-auto_jit-01.t - test config::auto::jit
+auto_jit-01.t - test auto::jit
 
 =head1 SYNOPSIS
 
@@ -370,8 +370,7 @@ auto_jit-01.t - test config::auto::jit
 
 The files in this directory test functionality used by F<Configure.pl>.
 
-The tests in this file tests config::auto::jit with the C<--miniparrot>
-option.
+The tests in this file test auto::jit.
 
 =head1 AUTHOR
 

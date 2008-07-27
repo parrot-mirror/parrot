@@ -19,6 +19,8 @@ use Parrot::Configure::Test qw(
 );
 use IO::CaptureOutput qw| capture |;
 
+########## regular ##########
+
 my $args = process_options( {
     argv            => [],
     mode            => q{configure},
@@ -40,6 +42,8 @@ ok($step->runstep($conf), "runstep() returned true value");
 
 $conf->replenish($serialized);
 
+########## _evaluate_isreg() ##########
+
 $conf->options->set(%{$args});
 $step = test_step_constructor_and_description($conf);
 {
@@ -54,8 +58,9 @@ $step = test_step_constructor_and_description($conf);
     is($step->result, 'yes', "Got expected result");
 }
 
-
 $conf->replenish($serialized);
+
+########## _evaluate_isreg(); verbose ##########
 
 $args = process_options( {
     argv            => [ q{--verbose} ],
@@ -81,7 +86,7 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-auto_isreg-01.t - test config::auto::isreg
+auto_isreg-01.t - test auto::isreg
 
 =head1 SYNOPSIS
 
@@ -91,7 +96,7 @@ auto_isreg-01.t - test config::auto::isreg
 
 The files in this directory test functionality used by F<Configure.pl>.
 
-The tests in this file test subroutines exported by config::auto::isreg.
+The tests in this file test auto::isreg.
 
 =head1 AUTHOR
 

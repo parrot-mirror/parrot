@@ -15,9 +15,10 @@ use Parrot::Configure;
 use Parrot::Configure::Options qw( process_options );
 use Parrot::Configure::Test qw(
     test_step_thru_runstep
-    rerun_defaults_for_testing
     test_step_constructor_and_description
 );
+
+########## _set_intvalfmt() ##########
 
 my $args = process_options( {
     argv            => [],
@@ -82,6 +83,9 @@ $step = test_step_constructor_and_description($conf);
         qr/Can't find a printf-style format specifier for type '$type'/, #'
         "Got expected error message");
 }
+
+########## _set_floatvalfmt_nvsize() ##########
+
 {
     $conf->data->set( nv => 'double' );
     auto::format::_set_floatvalfmt_nvsize($conf);
@@ -123,7 +127,7 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-auto_format-01.t - test config::auto::format
+auto_format-01.t - test auto::format
 
 =head1 SYNOPSIS
 
@@ -133,7 +137,7 @@ auto_format-01.t - test config::auto::format
 
 The files in this directory test functionality used by F<Configure.pl>.
 
-The tests in this file test subroutines exported by config::auto::format.
+The tests in this file test auto::format.
 
 =head1 AUTHOR
 

@@ -45,6 +45,8 @@ is($step->result(), q{skipped}, "Got expected result");
 
 $conf->replenish($serialized);
 
+########## Darwin special case ##########
+
 $args = process_options( {
     argv => [ ],
     mode => q{configure},
@@ -79,6 +81,8 @@ my $errstr;
 
 $conf->replenish($serialized);
 
+########## verbose ##########
+
 $args = process_options( {
     argv => [ q{--verbose} ],
     mode => q{configure},
@@ -103,6 +107,8 @@ $step = test_step_constructor_and_description($conf);
 
 $conf->replenish($serialized);
 
+########## mock architecture ##########
+
 $args = process_options( {
     argv => [ ],
     mode => q{configure},
@@ -122,6 +128,8 @@ is($conf->data->get('osname'), $pseudoarch,
     "'osname' was set as expected");
 
 $conf->replenish($serialized);
+
+########## mock darwin ##########
 
 $args = process_options( {
     argv => [ ],
@@ -145,6 +153,8 @@ is($conf->data->get('osname'), q{darwin},
 
 $conf->replenish($serialized);
 
+########## mock darwin ##########
+
 $args = process_options( {
     argv => [ ],
     mode => q{configure},
@@ -167,6 +177,8 @@ is($conf->data->get('osname'), q{darwin},
 
 $conf->replenish($serialized);
 
+########## mock win32 ##########
+
 $args = process_options( {
     argv => [ ],
     mode => q{configure},
@@ -186,6 +198,8 @@ is($conf->data->get('osname'), q{MSWin32},
     "'osname' was set as expected");
 
 $conf->replenish($serialized);
+
+########## mock win32 ##########
 
 $args = process_options( {
     argv => [ ],
@@ -207,6 +221,8 @@ is($conf->data->get('osname'), q{MSWin32},
 
 $conf->replenish($serialized);
 
+########## mock cygwin ##########
+
 $args = process_options( {
     argv => [ ],
     mode => q{configure},
@@ -227,6 +243,8 @@ is($conf->data->get('osname'), q{cygwin},
 
 $conf->replenish($serialized);
 
+########## mock powerpc-linux ##########
+
 $args = process_options( {
     argv => [ ],
     mode => q{configure},
@@ -246,6 +264,8 @@ is($conf->data->get('osname'), q{linux},
     "'osname' was set as expected");
 
 $conf->replenish($serialized);
+
+########## mock cygwin-i486 ##########
 
 $args = process_options( {
     argv => [ ],
