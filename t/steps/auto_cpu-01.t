@@ -19,6 +19,8 @@ use Parrot::Configure::Test qw(
 );
 use IO::CaptureOutput qw( capture );
 
+########### miniparrot ###########
+
 my $args = process_options(
     {
         argv => [ q{--miniparrot} ],
@@ -42,6 +44,8 @@ ok( $ret, "runstep() returned true value" );
 is($step->result(), q{skipped}, "Got expected result");
 
 $conf->replenish($serialized);
+
+########### verbose ###########
 
 $args = process_options( {
     argv => [ q{--verbose} ],
@@ -68,6 +72,8 @@ $step = test_step_constructor_and_description($conf);
 
 $conf->replenish($serialized);
 
+########### mock cpuarch ###########
+
 $args = process_options( {
     argv => [ ],
     mode => q{configure},
@@ -87,7 +93,7 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-auto_cpu-01.t - test config::auto::cpu
+auto_cpu-01.t - test auto::cpu
 
 =head1 SYNOPSIS
 
@@ -97,8 +103,7 @@ auto_cpu-01.t - test config::auto::cpu
 
 The files in this directory test functionality used by F<Configure.pl>.
 
-The tests in this file test config::auto::cpu in the case where the
-C<--miniparrot> option has been provided to F<Configure.pl>.
+The tests in this file test auto::cpu.
 
 =head1 AUTHOR
 

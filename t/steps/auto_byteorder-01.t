@@ -5,14 +5,19 @@
 
 use strict;
 use warnings;
-use Test::More tests => 27;
+use Test::More tests => 29;
 use Carp;
 use lib qw( lib t/configure/testlib );
 use_ok('config::init::defaults');
 use_ok('config::auto::byteorder');
 use Parrot::Configure;
 use Parrot::Configure::Options qw( process_options );
-use Parrot::Configure::Test qw( test_step_thru_runstep);
+use Parrot::Configure::Test qw(
+    test_step_thru_runstep
+    test_step_constructor_and_description
+);
+
+########## _evaluate_byteorder() ##########
 
 my $args = process_options(
     {
@@ -32,15 +37,7 @@ $conf->add_steps($pkg);
 my $serialized = $conf->pcfreeze();
 
 $conf->options->set( %{$args} );
-
-my ( $task, $step_name, $step);
-$task        = $conf->steps->[-1];
-$step_name   = $task->step;
-
-$step = $step_name->new();
-ok( defined $step, "$step_name constructor returned defined value" );
-isa_ok( $step, $step_name );
-ok( $step->description(), "$step_name has description" );
+my $step = test_step_constructor_and_description($conf);
 
 my $byteorder = q{1234};
 my $rv = $step->_evaluate_byteorder($conf, $byteorder);
@@ -51,6 +48,8 @@ is( $step->result, 'little-endian', "Rather, little-endian");
 
 $conf->replenish($serialized);
 
+########## _evaluate_byteorder() ##########
+
 $args = process_options(
     {
         argv => [ ],
@@ -59,29 +58,25 @@ $args = process_options(
 );
 
 $conf->options->set( %{$args} );
-
-$task        = $conf->steps->[-1];
-$step_name   = $task->step;
-
-$step = $step_name->new();
-ok( defined $step, "$step_name constructor returned defined value" );
-isa_ok( $step, $step_name );
+$step = test_step_constructor_and_description($conf);
 
 $byteorder = q{8765};
 $rv = $step->_evaluate_byteorder($conf, $byteorder);
 ok( $rv, "_evaluate_byteorder() returned true value as expected");
 is( $conf->data->get( 'byteorder'), $byteorder, "Got expected byteorder");
-ok( $conf->data->get( 'bigendian' ), "Not big-endian");
+ok( $conf->data->get( 'bigendian' ), "big-endian");
 is( $step->result, 'big-endian', "Indeed, big-endian");
 
 $byteorder = q{4321};
 $rv = $step->_evaluate_byteorder($conf, $byteorder);
 ok( $rv, "_evaluate_byteorder() returned true value as expected");
 is( $conf->data->get( 'byteorder'), $byteorder, "Got expected byteorder");
-ok( $conf->data->get( 'bigendian' ), "Not big-endian");
+ok( $conf->data->get( 'bigendian' ), "big-endian");
 is( $step->result, 'big-endian', "Indeed, big-endian");
 
 $conf->replenish($serialized);
+
+########## _evaluate_byteorder(); phony byte order ##########
 
 $args = process_options(
     {
@@ -91,13 +86,7 @@ $args = process_options(
 );
 
 $conf->options->set( %{$args} );
-
-$task        = $conf->steps->[-1];
-$step_name   = $task->step;
-
-$step = $step_name->new();
-ok( defined $step, "$step_name constructor returned defined value" );
-isa_ok( $step, $step_name );
+$step = test_step_constructor_and_description($conf);
 
 $byteorder = q{foobar};
 eval {
@@ -113,7 +102,7 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-auto_byteorder-01.t - test config::auto::byteorder
+auto_byteorder-01.t - test auto::byteorder
 
 =head1 SYNOPSIS
 
@@ -123,7 +112,7 @@ auto_byteorder-01.t - test config::auto::byteorder
 
 The files in this directory test functionality used by F<Configure.pl>.
 
-The tests in this file test subroutines exported by config::auto::byteorder.
+The tests in this file test auto::byteorder.
 
 =head1 AUTHOR
 

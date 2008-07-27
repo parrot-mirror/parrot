@@ -5,7 +5,7 @@
 
 use strict;
 use warnings;
-use Test::More tests => 49;
+use Test::More tests => 50;
 use Carp;
 use lib qw( lib t/configure/testlib );
 use_ok('config::init::defaults');
@@ -15,8 +15,11 @@ use Parrot::Configure::Options qw( process_options );
 use Parrot::Configure::Test qw(
     test_step_thru_runstep
     rerun_defaults_for_testing
+    test_step_constructor_and_description
 );
 use IO::CaptureOutput qw | capture |;
+
+########## miniparrot ##########
 
 my $args = process_options(
     {
@@ -35,21 +38,15 @@ my $pkg = q{auto::sizes};
 
 $conf->add_steps($pkg);
 $conf->options->set( %{$args} );
-
-my ( $task, $step_name, $step);
-$task        = $conf->steps->[-1];
-$step_name   = $task->step;
-
-$step = $step_name->new();
-ok( defined $step, "$step_name constructor returned defined value" );
-isa_ok( $step, $step_name );
-ok( $step->description(), "$step_name has description" );
+my $step = test_step_constructor_and_description($conf);
 
 my $ret = $step->runstep($conf);
-ok( $ret, "$step_name runstep() returned true value" );
+ok( $ret, "runstep() returned true value" );
 is($step->result(), q{using miniparrot defaults}, "Expected result was set");
 
 $conf->replenish($serialized);
+
+########## _handle_intval_ptrsize_discrepancy() ##########
 
 $args = process_options(
     {
@@ -64,15 +61,7 @@ $pkg = q{auto::sizes};
 
 $conf->add_steps($pkg);
 $conf->options->set( %{$args} );
-
-$task        = $conf->steps->[-1];
-$step_name   = $task->step;
-
-$step = $step_name->new();
-ok( defined $step, "$step_name constructor returned defined value" );
-isa_ok( $step, $step_name );
-
-
+$step = test_step_constructor_and_description($conf);
 {
     my $stdout;
     my %results = (
@@ -101,6 +90,8 @@ isa_ok( $step, $step_name );
     );
 }
 
+########## _set_int2() ##########
+
 {
     my $stdout;
     my %results = ( shortsize   => 2 );
@@ -125,6 +116,8 @@ isa_ok( $step, $step_name );
     like($stdout, qr/conversion ops might fail/s,
         "Got expected warning");
 }
+
+########## _set_int4() ##########
 
 {
     my $stdout;
@@ -175,6 +168,8 @@ isa_ok( $step, $step_name );
         "Got expected warning");
 }
 
+########## _set_float4() ##########
+
 {
     my $stdout;
     my %results = ( floatsize => 4 );
@@ -200,6 +195,8 @@ isa_ok( $step, $step_name );
         "Got expected warning");
 }
 
+########## _set_float8() ##########
+
 {
     my $stdout;
     my %results = ( doublesize => 8 );
@@ -224,6 +221,8 @@ isa_ok( $step, $step_name );
     like($stdout, qr/conversion ops might fail/s,
         "Got expected warning");
 }
+
+########## _handle_hugeintvalsize() ##########
 
 my (%hugeintval, $intval, $intvalsize);
 
@@ -290,6 +289,8 @@ $conf->data->set( hugeintvalsize => undef );
 $conf->data->set( intval => undef );
 $conf->data->set( intvalsize => undef );
 
+########## _set_hugefloatval() ##########
+
 my $size = 12;
 auto::sizes::_set_hugefloatval( $conf, $size );
 is( $conf->data->get( 'hugefloatval' ), 'long double',
@@ -309,7 +310,7 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-auto_sizes-01.t - test config::auto::sizes
+auto_sizes-01.t - test auto::sizes
 
 =head1 SYNOPSIS
 
@@ -319,7 +320,7 @@ auto_sizes-01.t - test config::auto::sizes
 
 The files in this directory test functionality used by F<Configure.pl>.
 
-The tests in this file test subroutines exported by config::auto::sizes.
+The tests in this file test auto::sizes.
 
 =head1 AUTHOR
 
