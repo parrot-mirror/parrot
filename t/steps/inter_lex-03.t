@@ -15,11 +15,12 @@ use Parrot::Configure;
 use Parrot::Configure::Options qw( process_options );
 use Parrot::Configure::Test qw(
     test_step_thru_runstep
-    rerun_defaults_for_testing
     test_step_constructor_and_description
 );
 use Tie::Filehandle::Preempt::Stdin;
 use IO::CaptureOutput qw | capture |;
+
+########## ask; maintainer; prompt flex ##########
 
 my $args = process_options(
     {

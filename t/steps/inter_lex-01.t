@@ -144,7 +144,7 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-inter_lex-01.t - test config::inter::lex
+inter_lex-01.t - test inter::lex
 
 =head1 SYNOPSIS
 
@@ -154,9 +154,7 @@ inter_lex-01.t - test config::inter::lex
 
 The files in this directory test functionality used by F<Configure.pl>.
 
-The tests in this file test subroutines exported by config::inter::lex.  In
-this case, only the C<--ask> option is provided.  Because the C<--maintainer>
-option is not provided, the step is skipped and no prompt is ever reached.
+The tests in this file test inter::lex.
 
 =head1 AUTHOR
 
