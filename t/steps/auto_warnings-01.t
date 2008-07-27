@@ -16,7 +16,6 @@ use Parrot::Configure;
 use Parrot::Configure::Options qw( process_options );
 use Parrot::Configure::Test qw(
     test_step_thru_runstep
-    rerun_defaults_for_testing
     test_step_constructor_and_description
 );
 use IO::CaptureOutput qw | capture |;
@@ -146,7 +145,7 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-auto_warnings-01.t - test config::auto::warnings
+auto_warnings-01.t - test auto::warnings
 
 =head1 SYNOPSIS
 
@@ -156,7 +155,7 @@ auto_warnings-01.t - test config::auto::warnings
 
 The files in this directory test functionality used by F<Configure.pl>.
 
-The tests in this file test aspects of config::auto::warnings.
+The tests in this file test aspects of auto::warnings.
 
 =head1 AUTHOR
 
