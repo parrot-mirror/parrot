@@ -14,10 +14,11 @@ use Parrot::Configure;
 use Parrot::Configure::Options qw( process_options );
 use Parrot::Configure::Test qw(
     test_step_thru_runstep
-    rerun_defaults_for_testing
     test_step_constructor_and_description
 );
 use Tie::Filehandle::Preempt::Stdin;
+
+########## ask; mock response to prompt  ##########
 
 my $args = process_options(
     {
@@ -60,6 +61,8 @@ untie *STDIN;
 
 $conf->replenish($serialized);
 
+########## ask; empty response to prompt  ##########
+
 $args = process_options(
     {
         argv => [q{--ask}],
@@ -93,7 +96,7 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-inter_shlibs-01.t - test config::inter::shlibs
+inter_shlibs-01.t - test inter::shlibs
 
 =head1 SYNOPSIS
 
@@ -103,7 +106,7 @@ inter_shlibs-01.t - test config::inter::shlibs
 
 The files in this directory test functionality used by F<Configure.pl>.
 
-The tests in this file test subroutines exported by config::inter::shlibs.
+The tests in this file test inter::shlibs.
 
 =head1 AUTHOR
 

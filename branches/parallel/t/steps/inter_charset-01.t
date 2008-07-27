@@ -14,10 +14,11 @@ use Parrot::Configure;
 use Parrot::Configure::Options qw( process_options );
 use Parrot::Configure::Test qw(
     test_step_thru_runstep
-    rerun_defaults_for_testing
     test_step_constructor_and_description
 );
 use Tie::Filehandle::Preempt::Stdin;
+
+########## ask ##########
 
 my $args = process_options(
     {
@@ -46,6 +47,8 @@ my $step = test_step_constructor_and_description($conf);
 }
 
 $conf->replenish($serialized);
+
+########## ask ##########
 
 $args = process_options(
     {
@@ -84,7 +87,7 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-inter_charset-01.t - test config::inter::charset
+inter_charset-01.t - test inter::charset
 
 =head1 SYNOPSIS
 
@@ -94,7 +97,7 @@ inter_charset-01.t - test config::inter::charset
 
 The files in this directory test functionality used by F<Configure.pl>.
 
-The tests in this file test subroutines exported by config::inter::charset.
+The tests in this file test inter::charset.
 
 =head1 AUTHOR
 

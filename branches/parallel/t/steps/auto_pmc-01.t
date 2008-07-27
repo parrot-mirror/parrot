@@ -5,7 +5,7 @@
 
 use strict;
 use warnings;
-use Test::More tests =>  32;
+use Test::More tests =>  36;
 use Carp;
 use Cwd;
 use File::Path qw| mkpath |;
@@ -15,7 +15,12 @@ use_ok('config::init::defaults');
 use_ok('config::auto::pmc');
 use Parrot::Configure;
 use Parrot::Configure::Options qw( process_options );
-use Parrot::Configure::Test qw( test_step_thru_runstep);
+use Parrot::Configure::Test qw(
+    test_step_thru_runstep
+    test_step_constructor_and_description
+);
+
+########## regular ##########
 
 my $args = process_options(
     {
@@ -35,20 +40,14 @@ $conf->add_steps($pkg);
 my $serialized = $conf->pcfreeze();
 
 $conf->options->set( %{$args} );
-
-my ( $task, $step_name, $step);
-$task        = $conf->steps->[-1];
-$step_name   = $task->step;
-
-$step = $step_name->new();
-ok( defined $step, "$step_name constructor returned defined value" );
-isa_ok( $step, $step_name );
-ok( $step->description(), "$step_name has description" );
+my $step = test_step_constructor_and_description($conf);
 
 my $ret = $step->runstep($conf);
-ok( $ret, "$step_name runstep() returned true value" );
+ok( $ret, "runstep() returned true value" );
 
 $conf->replenish($serialized);
+
+########## contains_pccmethod()  ##########
 
 $args = process_options(
     {
@@ -58,13 +57,7 @@ $args = process_options(
 );
 
 $conf->options->set( %{$args} );
-
-$task        = $conf->steps->[-1];
-$step_name   = $task->step;
-
-$step = $step_name->new();
-ok( defined $step, "$step_name constructor returned defined value" );
-
+$step = test_step_constructor_and_description($conf);
 my $cwd = cwd();
 {
     my $tdir = tempdir( CLEANUP => 1 );
@@ -94,6 +87,8 @@ my $cwd = cwd();
 
     ok( chdir $cwd, 'changed back to original directory after testing' );
 }
+
+########## get_pmc_order()  ##########
 
 {
     my $tdir = tempdir( CLEANUP => 1 );
@@ -148,6 +143,8 @@ my $cwd = cwd();
 
 $conf->replenish($serialized);
 
+########## --pmc ##########
+
 my @dummy_options = qw(
 default.pmc null.pmc env.pmc key.pmc random.pmc unmanagedstruct.pmc managedstruct.pmc delegate.pmc exception.pmc vtablecache.pmc parrotio.pmc parrotlibrary.pmc parrotinterpreter.pmc parrotthread.pmc lexpad.pmc timer.pmc pointer.pmc sub.pmc closure.pmc continuation.pmc retcontinuation.pmc exception_handler.pmc coroutine.pmc eval.pmc nci.pmc float.pmc integer.pmc bigint.pmc complex.pmc string.pmc boolean.pmc ref.pmc sharedref.pmc array.pmc fixedintegerarray.pmc intlist.pmc iterator.pmc sarray.pmc fixedstringarray.pmc multiarray.pmc hash.pmc orderedhash.pmc tqueue.pmc os.pmc file.pmc addrregistry.pmc bound_nci.pmc capture.pmc class.pmc codestring.pmc deleg_pmc.pmc enumerate.pmc exporter.pmc fixedbooleanarray.pmc fixedfloatarray.pmc fixedpmcarray.pmc lexinfo.pmc multisub.pmc namespace.pmc object.pmc pair.pmc parrotrunningthread.pmc pccmethod_test.pmc pmcproxy.pmc resizablebooleanarray.pmc resizablefloatarray.pmc resizableintegerarray.pmc resizablepmcarray.pmc resizablestringarray.pmc role.pmc scalar.pmc scheduler.pmc slice.pmc stmlog.pmc stmref.pmc stmvar.pmc task.pmc undef.pmc
 );
@@ -161,18 +158,13 @@ $args = process_options(
 );
 
 $conf->options->set( %{$args} );
-
-$task        = $conf->steps->[-1];
-$step_name   = $task->step;
-
-$step = $step_name->new();
-ok( defined $step, "$step_name constructor returned defined value" );
-isa_ok( $step, $step_name );
-
+$step = test_step_constructor_and_description($conf);
 $ret = $step->runstep($conf);
-ok( $ret, "$step_name runstep() returned true value" );
+ok( $ret, "runstep() returned true value" );
 
 $conf->replenish($serialized);
+
+########## --pmc ##########
 
 @dummy_options = qw(
 default.pmc null.pmc env.pmc key.pmc random.pmc unmanagedstruct.pmc
@@ -188,16 +180,9 @@ $args = process_options(
 );
 
 $conf->options->set( %{$args} );
-
-$task        = $conf->steps->[-1];
-$step_name   = $task->step;
-
-$step = $step_name->new();
-ok( defined $step, "$step_name constructor returned defined value" );
-isa_ok( $step, $step_name );
-
+$step = test_step_constructor_and_description($conf);
 $ret = $step->runstep($conf);
-ok( $ret, "$step_name runstep() returned true value" );
+ok( $ret, "runstep() returned true value" );
 
 pass("Completed all tests in $0");
 
@@ -205,7 +190,7 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-auto_pmc-01.t - test config::auto::pmc
+auto_pmc-01.t - test auto::pmc
 
 =head1 SYNOPSIS
 
@@ -215,8 +200,7 @@ auto_pmc-01.t - test config::auto::pmc
 
 The files in this directory test functionality used by F<Configure.pl>.
 
-The tests in this file test subroutines found in config::auto::pmc in
-the most ordinary case.
+The tests in this file test auto::pmc.
 
 =head1 AUTHOR
 

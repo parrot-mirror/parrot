@@ -14,10 +14,11 @@ use Parrot::Configure;
 use Parrot::Configure::Options qw( process_options );
 use Parrot::Configure::Test qw(
     test_step_thru_runstep
-    rerun_defaults_for_testing
     test_step_constructor_and_description
 );
 use Tie::Filehandle::Preempt::Stdin;
+
+########## no ask ##########
 
 my $args = process_options(
     {
@@ -46,6 +47,8 @@ my $step = test_step_constructor_and_description($conf);
 }
 
 $conf->replenish($serialized);
+
+########## ask; $ENV{TEST_ENCODING} ##########
 
 $ENV{TEST_ENCODING} = 'fixed_8.c';
 do config::inter::encoding;
@@ -80,7 +83,7 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-inter_encoding-01.t - test config::inter::encoding
+inter_encoding-01.t - test inter::encoding
 
 =head1 SYNOPSIS
 
@@ -90,7 +93,7 @@ inter_encoding-01.t - test config::inter::encoding
 
 The files in this directory test functionality used by F<Configure.pl>.
 
-The tests in this file test subroutines exported by config::inter::encoding.
+The tests in this file test inter::encoding.
 
 =head1 AUTHOR
 
