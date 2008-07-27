@@ -65,7 +65,7 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-init_headers-01.t - test config::init::headers
+init_headers-01.t - test init::headers
 
 =head1 SYNOPSIS
 
@@ -75,7 +75,7 @@ init_headers-01.t - test config::init::headers
 
 The files in this directory test functionality used by F<Configure.pl>.
 
-The tests in this file test subroutines exported by config::init::headers.
+The tests in this file test init::headers.
 
 =head1 AUTHOR
 

@@ -6,7 +6,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 41;
+use Test::More tests => 44;
 use Carp;
 use lib qw( lib t/configure/testlib );
 use_ok('config::init::defaults');
@@ -15,7 +15,10 @@ use_ok('config::init::hints');
 use_ok('config::inter::progs');
 use Parrot::Configure;
 use Parrot::Configure::Options qw( process_options );
-use Parrot::Configure::Test qw( test_step_thru_runstep);
+use Parrot::Configure::Test qw(
+    test_step_thru_runstep
+    test_step_constructor_and_description
+);
 use Tie::Filehandle::Preempt::Stdin;
 use IO::CaptureOutput qw| capture |;
 
@@ -25,6 +28,8 @@ http://rt.perl.org/rt3/Ticket/Display.html?id=43174; and
 http://rt.perl.org/rt3/Ticket/Display.html?id=41168.
 
 =cut
+
+########## ask ##########
 
 my $args = process_options(
     {
@@ -39,7 +44,6 @@ test_step_thru_runstep( $conf, q{init::defaults}, $args );
 test_step_thru_runstep( $conf, q{init::install},  $args );
 test_step_thru_runstep( $conf, q{init::hints},    $args );
 
-my ( $task, $step_name, $step, $ret );
 my $pkg = q{inter::progs};
 
 $conf->add_steps($pkg);
@@ -47,14 +51,7 @@ $conf->add_steps($pkg);
 my $serialized = $conf->pcfreeze();
 
 $conf->options->set( %{$args} );
-
-$task        = $conf->steps->[-1];
-$step_name   = $task->step;
-
-$step = $step_name->new();
-ok( defined $step, "$step_name constructor returned defined value" );
-isa_ok( $step, $step_name );
-ok( $step->description(), "$step_name has description" );
+my $step = test_step_constructor_and_description($conf);
 
 my @prompts;
 foreach my $p (
@@ -92,12 +89,14 @@ ok( defined $debug_validity, "'debug_validity' set as expected" );
 capture( sub {
     $conf = inter::progs::_set_debug_and_warn($conf, $debug);
 }, \$stdout);
-ok( defined $conf, "Components of $step_name runstep() tested okay" );
+ok( defined $conf, "Components of runstep() tested okay" );
 
 $object = undef;
 untie *STDIN;
 
 $conf->replenish($serialized);
+
+########## ask; debugging 0  ##########
 
 $args = process_options(
     {
@@ -107,14 +106,7 @@ $args = process_options(
 );
 
 $conf->options->set( %{$args} );
-
-$task        = $conf->steps->[-1];
-$step_name   = $task->step;
-
-$step = $step_name->new();
-ok( defined $step, "$step_name constructor returned defined value" );
-isa_ok( $step, $step_name );
-
+$step = test_step_constructor_and_description($conf);
 
 @prompts = ();
 foreach my $p (
@@ -151,12 +143,14 @@ ok( defined $debug_validity, "'debug_validity' set as expected" );
 capture( sub {
     $conf = inter::progs::_set_debug_and_warn($conf, $debug);
 }, \$stdout);
-ok( defined $conf, "Components of $step_name runstep() tested okay" );
+ok( defined $conf, "Components of runstep() tested okay" );
 
 $object = undef;
 untie *STDIN;
 
 $conf->replenish($serialized);
+
+########## ask ##########
 
 $args = process_options(
     {
@@ -166,14 +160,7 @@ $args = process_options(
 );
 
 $conf->options->set( %{$args} );
-
-$task        = $conf->steps->[-1];
-$step_name   = $task->step;
-
-$step = $step_name->new();
-ok( defined $step, "$step_name constructor returned defined value" );
-isa_ok( $step, $step_name );
-
+$step = test_step_constructor_and_description($conf);
 
 @prompts = ();
 foreach my $p (
@@ -197,7 +184,6 @@ $object = tie *STDIN, 'Tie::Filehandle::Preempt::Stdin', @prompts;
 can_ok( 'Tie::Filehandle::Preempt::Stdin', ('READLINE') );
 isa_ok( $object, 'Tie::Filehandle::Preempt::Stdin' );
 
-#my ($stdout, $debug, $debug_validity);
 capture( sub {
     my $verbose = inter::progs::_get_verbose($conf);
     my $ask = inter::progs::_prepare_for_interactivity($conf);
@@ -211,12 +197,14 @@ ok( defined $debug_validity, "'debug_validity' set as expected" );
 capture( sub {
     $conf = inter::progs::_set_debug_and_warn($conf, $debug);
 }, \$stdout);
-ok( defined $conf, "Components of $step_name runstep() tested okay" );
+ok( defined $conf, "Components of runstep() tested okay" );
 
 $object = undef;
 untie *STDIN;
 
 $conf->replenish($serialized);
+
+########## ask ##########
 
 $args = process_options(
     {
@@ -226,14 +214,7 @@ $args = process_options(
 );
 
 $conf->options->set( %{$args} );
-
-$task        = $conf->steps->[-1];
-$step_name   = $task->step;
-
-$step = $step_name->new();
-ok( defined $step, "$step_name constructor returned defined value" );
-isa_ok( $step, $step_name );
-
+$step = test_step_constructor_and_description($conf);
 
 @prompts = ();
 foreach my $p (
@@ -261,7 +242,7 @@ my $rv;
 capture( sub {
     $rv = $step->runstep($conf);
 }, \$stdout);
-ok( ! defined $rv, "$step_name runstep returned undef as expected" );
+ok( ! defined $rv, "runstep returned undef as expected" );
 
 $object = undef;
 untie *STDIN;
@@ -272,7 +253,7 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-inter_progs-01.t - test config::inter::progs
+inter_progs-01.t - test inter::progs
 
 =head1 SYNOPSIS
 
@@ -282,7 +263,7 @@ inter_progs-01.t - test config::inter::progs
 
 The files in this directory test functionality used by F<Configure.pl>.
 
-The tests in this file test subroutines exported by config::inter::progs.
+The tests in this file test inter::progs.
 
 =head1 AUTHOR
 

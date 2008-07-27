@@ -12,7 +12,10 @@ use lib qw( lib t/configure/testlib );
 use Parrot::Configure;
 use Parrot::Configure::Options qw( process_options );
 use_ok('config::init::install');
-use Parrot::Configure::Test qw( test_step_thru_runstep);
+use Parrot::Configure::Test qw(
+    test_step_thru_runstep
+    test_step_constructor_and_description
+);
 
 my $cwd = cwd();
 {
@@ -75,20 +78,12 @@ my $cwd = cwd();
     );
 
     my $pkg = q{init::install};
-    my ( $task, $step_name, $step, $ret );
-
     $conf->add_steps($pkg);
     $conf->options->set( %{$args} );
+    my $step = test_step_constructor_and_description($conf);
 
-    $task        = $conf->steps->[-1];
-    $step_name   = $task->step;
-
-    $step = $step_name->new();
-    ok( defined $step, "$step_name constructor returned defined value" );
-    isa_ok( $step, $step_name );
-    ok( $step->description(), "$step_name has description" );
-    $ret = $step->runstep($conf);
-    ok( defined $ret, "$step_name runstep() returned defined value" );
+    my $ret = $step->runstep($conf);
+    ok( defined $ret, "runstep() returned defined value" );
 
     is( $conf->data->get('prefix'),
         $tdir_orig, "--prefix option confirmed; trailing slash stripped" );
@@ -113,7 +108,7 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-init_install-01.t - test config::init::install
+init_install-01.t - test init::install
 
 =head1 SYNOPSIS
 
@@ -123,7 +118,7 @@ init_install-01.t - test config::init::install
 
 The files in this directory test functionality used by F<Configure.pl>.
 
-The tests in this file test subroutines exported by config::init::install.
+The tests in this file test init::install.
 
 =head1 AUTHOR
 
