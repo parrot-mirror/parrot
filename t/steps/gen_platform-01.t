@@ -5,7 +5,7 @@
 
 use strict;
 use warnings;
-use Test::More qw(no_plan); # tests => 16;
+use Test::More tests => 20;
 use Carp;
 use Cwd;
 use File::Copy;
@@ -44,21 +44,23 @@ my $archname_orig = $conf->data->get_p5('archname');
 $conf->data->set_p5( archname => 'foo-bar' );
 my $verbose = 0;
 
+########## _gen_platform() ##########
+
 $conf->options->set( miniparrot => 1 );
-is( gen::platform::_get_platform( $conf, $verbose ), q{ansi},
+is( $step->_get_platform( $conf, $verbose ), q{ansi},
     "Got expected platform for miniparrot");
 $conf->options->set( miniparrot => undef );
 
 $conf->data->set_p5( OSNAME => 'msys' );
-is( gen::platform::_get_platform( $conf, $verbose ), q{win32},
+is( $step->_get_platform( $conf, $verbose ), q{win32},
     "Got expected platform for msys");
 
 $conf->data->set_p5( OSNAME => 'mingw' );
-is( gen::platform::_get_platform( $conf, $verbose ), q{win32},
+is( $step->_get_platform( $conf, $verbose ), q{win32},
     "Got expected platform for mingw");
 
 $conf->data->set_p5( OSNAME => 'MSWin32' );
-is( gen::platform::_get_platform( $conf, $verbose ), q{win32},
+is( $step->_get_platform( $conf, $verbose ), q{win32},
     "Got expected platform for MSWin32");
 
 # re-set to original values
@@ -66,7 +68,7 @@ $conf->data->set_p5( OSNAME => $platform_orig );
 $conf->data->set_p5( archname => $archname_orig );
 
 $conf->data->set_p5( archname => 'ia64-bar' );
-is( gen::platform::_get_platform( $conf, $verbose ), q{ia64},
+is( $step->_get_platform( $conf, $verbose ), q{ia64},
     "Got expected platform for ia64");
 
 $conf->data->set_p5( archname => 'foo-bar' );
@@ -76,7 +78,7 @@ $conf->data->set_p5( OSNAME => 'foo' );
     my ($stdout, $stderr, $rv);
     my $expected = q{generic};
     capture(
-        sub { $rv = gen::platform::_get_platform( $conf, $verbose ) },
+        sub { $rv = $step->_get_platform( $conf, $verbose ) },
         \$stdout,
         \$stderr,
     );
@@ -88,6 +90,8 @@ $conf->data->set_p5( OSNAME => 'foo' );
 $conf->data->set_p5( archname => $archname_orig );
 $conf->data->set_p5( OSNAME => $platform_orig );
 
+########## _gen_generated() ##########
+
 my $TEMP_generated_orig = $conf->data->get('TEMP_generated');
 {
     $verbose = 1;
@@ -95,7 +99,7 @@ my $TEMP_generated_orig = $conf->data->get('TEMP_generated');
     my $expected = q{foo};
     $conf->data->set( TEMP_generated => $expected );
     capture(
-        sub { $rv = gen::platform::_get_generated( $conf, $verbose ) },
+        sub { $rv = $step->_get_generated( $conf, $verbose ) },
         \$stdout,
         \$stderr,
     );
@@ -104,11 +108,13 @@ my $TEMP_generated_orig = $conf->data->get('TEMP_generated');
 }
 $conf->data->set( TEMP_generated => undef );
 $verbose = 0;
-is( gen::platform::_get_generated( $conf, $verbose ), q{},
+is( $step->_get_generated( $conf, $verbose ), q{},
     "Got expected generated");
 
 # re-set to original values
 $conf->data->set( TEMP_generated => $TEMP_generated_orig );
+
+########## _handle_asm() ##########
 
 my $platform_asm_orig = $conf->data->get('platform_asm');
 my $cwd = cwd();
@@ -122,12 +128,14 @@ my $cwd = cwd();
     open my $FH, '>', $asmfile or croak "Unable to open handle for writing";
     print $FH "Hello asm\n";
     close $FH or croak "Unable to close handle after writing";
-    gen::platform::_handle_asm($conf, $platform);
+    $step->_handle_asm($conf, $platform);
     my $text = _slurp( $asmfile );
     like($text, qr/Hello asm/s, "File unchanged, as expected");
 
     chdir $cwd or croak "Unable to change back to starting directory";
 }
+# re-set to original values
+$conf->data->set( platform_asm => $platform_asm_orig );
 
 {
     my $tdir = tempdir( CLEANUP => 1 );
@@ -150,16 +158,42 @@ my $cwd = cwd();
     print $FH2 "Goodbye world\n";
     close $FH2 or croak "Unable to close handle after writing";
 
-    gen::platform::_handle_asm($conf, $platform);
+    $step->_handle_asm($conf, $platform);
 
     my $text = _slurp( $asmfile );
     like($text, qr/Goodbye world/s, "File changed, as expected");
 
     chdir $cwd or croak "Unable to change back to starting directory";
 }
-
 # re-set to original values
 $conf->data->set( platform_asm => $platform_asm_orig );
+
+########## _handle_begin_c() ##########
+{
+    my $tdir = tempdir( CLEANUP => 1 );
+    chdir $tdir or croak "Unable to change to temporary directory";
+    my $platform = 'darwin';
+
+    my $path = File::Spec->catdir( 'config', 'gen', 'platform', $platform );
+    mkpath( $path, 0, 755 ) or croak "Unable to make testing directory";
+    copy qq{$cwd/config/gen/platform/$platform/begin.c},
+        qq{$path/begin.c}
+            or croak "Unable to copy file for testing";
+
+    mkpath( 'src', 0, 755 ) or croak "Unable to make testing directory";
+    my $plat_c = q{src/platform.c};
+    open my $PLATFORM_C, '>', $plat_c
+        or croak "Unable to open handle for writing";
+    $step->_handle_begin_c($platform, $PLATFORM_C);
+    close $PLATFORM_C or croak "Unable to close handle after writing";
+
+    my $text = _slurp( $plat_c );
+    like($text, qr/#undef environ.*#undef bool/s,
+        "Got expected text in header file");
+    unlike($text, qr/Local variables/s, "Coda stripped, as desired");
+
+    chdir $cwd or croak "Unable to change back to starting directory";
+}
 
 pass("Completed all tests in $0");
 
