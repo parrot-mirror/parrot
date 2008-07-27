@@ -16,6 +16,8 @@ use Parrot::Configure;
 use Parrot::Configure::Options qw( process_options );
 use IO::CaptureOutput qw | capture |;
 
+########## no manifest check ##########
+
 my $pkg  = q{init::manifest};
 my $args = process_options(
     {
@@ -48,6 +50,8 @@ is( $step->result, q{skipped},
 
 $conf->replenish($serialized);
 
+########## mock missing files ##########
+
 $args = process_options(
     {
         argv => [],
@@ -63,8 +67,6 @@ $step = $step_name->new();
 ok( defined $step, "$step_name constructor returned defined value" );
 isa_ok( $step, $step_name );
 
-# Lets see if we can trick ExtUtils::Manifest into thinking there are missing
-# files.
 my $cwd = cwd();
 {
     my $tdir = tempdir( CLEANUP => 1 );

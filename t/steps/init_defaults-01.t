@@ -5,7 +5,7 @@
 
 use strict;
 use warnings;
-use Test::More tests => 36;
+use Test::More tests => 39;
 use Carp;
 use Cwd;
 use File::Copy;
@@ -16,19 +16,16 @@ use Parrot::Configure;
 use Parrot::Configure::Step;
 use Parrot::Configure::Options qw( process_options );
 use base qw(Parrot::Configure::Step);
+use Parrot::Configure::Test qw(
+    test_step_constructor_and_description
+);
+
+########## no debugging; profile; m 32 ##########
 
 my $pkg  = q{init::defaults};
 my $args = process_options(
     {
         argv => [ q{--debugging=0}, q{--profile}, q{--m=32} ],
-
-        # These 3 options are non-default and inside
-        # init::defaults::runsteps() they create what, from a
-        # testing coverage perspective, create branches or
-        # conditions.  The regular run of Configure.pl during
-        # coverage analysis will cover the default
-        # branches/conditions.  Hence, we supply the
-        # non-default options here to increase coverage.
         mode => q{configure},
     }
 );
@@ -39,29 +36,20 @@ $conf->add_steps($pkg);
 my $serialized = $conf->pcfreeze();
 
 $conf->options->set( %{$args} );
-
-my $task        = $conf->steps->[-1];
-my $step_name   = $task->step;
-
-my $step = $step_name->new();
-ok( defined $step, "$step_name constructor returned defined value" );
-isa_ok( $step, $step_name );
-ok( $step->description(), "$step_name has description" );
+my $step = test_step_constructor_and_description($conf);
 my $ret = $step->runstep($conf);
-ok( defined $ret, "$step_name runstep() returned defined value" );
-
-# RT#44451:  Write a SKIP block which will test the one OS-specific branch in
-# init::defaults.
+ok( defined $ret, "runstep() returned defined value" );
 
 $conf->replenish($serialized);
 
-# DEVELOPING non-existence is faked by working in a tempdir which lacks it
+########## mock absence of 'DEVELOPING' ##########
 
 my $cwd = cwd();
 {
     my $tdir = tempdir( CLEANUP => 1 );
     ok( chdir $tdir, "Changed to temporary directory for testing" );
-    ok( copy( "$cwd/VERSION", "$tdir/VERSION" ), "Able to copy VERSION for testing" );
+    ok( copy( "$cwd/VERSION", "$tdir/VERSION" ),
+        "Able to copy VERSION for testing" );
 
     my $pkg  = q{init::defaults};
     my $args = process_options(
@@ -71,16 +59,10 @@ my $cwd = cwd();
         }
     );
     $conf->options->set( %{$args} );
-
-    my $task        = $conf->steps->[-1];
-    my $step_name   = $task->step;
-
-    my $step = $step_name->new();
-    ok( defined $step, "$step_name constructor returned defined value" );
-    isa_ok( $step, $step_name );
+    my $step = test_step_constructor_and_description($conf);
 
     my $ret = $step->runstep($conf);
-    ok( defined $ret, "$step_name runstep() returned defined value" );
+    ok( defined $ret, "runstep() returned defined value" );
 
     unlink "$tdir/VERSION"
         or croak "Unable to unlink file from tempdir after testing";
@@ -88,6 +70,8 @@ my $cwd = cwd();
 }
 
 $conf->replenish($serialized);
+
+########## m 32 ##########
 
 $args = process_options(
     {
@@ -97,13 +81,7 @@ $args = process_options(
 );
 
 $conf->options->set( %{$args} );
-
-$task        = $conf->steps->[-1];
-$step_name   = $task->step;
-
-$step = $step_name->new();
-ok( defined $step, "$step_name constructor returned defined value" );
-isa_ok( $step, $step_name );
+$step = test_step_constructor_and_description($conf);
 
 $conf->data->set( archname => 'x86_64' );
 $conf->data->set( cc => 'cc' );
@@ -132,6 +110,8 @@ is($conf->data->get( 'linkflags' ), '-bundle -L/usr/local/lib',
 
 $conf->replenish($serialized);
 
+########## regular ##########
+
 $args = process_options(
     {
         argv => [ ],
@@ -140,14 +120,7 @@ $args = process_options(
 );
 
 $conf->options->set( %{$args} );
-
-$task        = $conf->steps->[-1];
-$step_name   = $task->step;
-
-$step = $step_name->new();
-ok( defined $step, "$step_name constructor returned defined value" );
-isa_ok( $step, $step_name );
-
+$step = test_step_constructor_and_description($conf);
 
 $conf->data->set( archname => 'x86_64' );
 $conf->data->set( cc => 'cc' );
@@ -173,6 +146,7 @@ is($conf->data->get( 'ldflags' ), '-bundle -L/usr/local/lib64',
     "Got expected value for 'ldflags'");
 is($conf->data->get( 'linkflags' ), '-bundle -L/usr/local/lib64',
     "Got expected value for 'linkflags'");
+
 pass("Completed all tests in $0");
 
 ################### DOCUMENTATION ###################
@@ -189,7 +163,7 @@ init_defaults-01.t - test config::init::defaults
 
 The files in this directory test functionality used by F<Configure.pl>.
 
-The tests in this file test subroutines exported by config::init::defaults.
+The tests in this file test init::defaults.
 
 =head1 AUTHOR
 
