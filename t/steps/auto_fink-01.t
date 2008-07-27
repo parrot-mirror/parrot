@@ -21,6 +21,8 @@ use Parrot::Configure::Test qw(
 );
 use IO::CaptureOutput qw( capture );
 
+########## Darwin but no good Fink  ##########
+
 my $args = process_options( {
     argv            => [],
     mode            => q{configure},
@@ -50,6 +52,8 @@ SKIP: {
 
 $conf->replenish($serialized);
 
+########## not Darwin ##########
+
 $args = process_options( {
     argv            => [],
     mode            => q{configure},
@@ -62,6 +66,8 @@ ok($step->runstep($conf), "runstep() returned true value");
 is($step->result(), q{skipped}, "Got expected result for non-Darwin OS");
 
 $conf->replenish($serialized);
+
+########## no Fink ##########
 
 $args = process_options( {
     argv            => [],
@@ -79,6 +85,8 @@ SKIP: {
 }
 
 $conf->replenish($serialized);
+
+########## Darwin but defective Fink ##########
 
 $args = process_options( {
     argv            => [],
@@ -103,6 +111,8 @@ SKIP:  {
 
 $conf->replenish($serialized);
 
+########## Darwin but defective Fink ##########
+
 $args = process_options( {
     argv            => [],
     mode            => q{configure},
@@ -125,6 +135,8 @@ SKIP:  {
 }
 
 $conf->replenish($serialized);
+
+########## not Darwin; verbose ##########
 
 $args = process_options( {
     argv            => [ q{--verbose} ],
@@ -149,6 +161,8 @@ $step = test_step_constructor_and_description($conf);
 }
 
 $conf->replenish($serialized);
+
+########## Darwin; verbose; no Fink ##########
 
 $args = process_options( {
     argv            => [ q{--verbose} ],
@@ -175,6 +189,8 @@ SKIP:  {
 }
 
 $conf->replenish($serialized);
+
+########## Darwin; verbose; defective Fink ##########
 
 $args = process_options( {
     argv            => [ q{--verbose} ],
@@ -207,6 +223,8 @@ SKIP:  {
 }
 
 $conf->replenish($serialized);
+
+########## Darwin; verbose; defective Fink ##########
 
 $args = process_options( {
     argv            => [ q{--verbose} ],
@@ -244,7 +262,7 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-auto_fink-01.t - test config::auto::fink
+auto_fink-01.t - test auto::fink
 
 =head1 SYNOPSIS
 
@@ -254,7 +272,8 @@ auto_fink-01.t - test config::auto::fink
 
 The files in this directory test functionality used by F<Configure.pl>.
 
-The tests in this file run on Darwin only and test config::auto::fink.
+The tests in this file test auto::fink.  Some tests will run only on Darwin.
+Others simulate how auto::fink runs on operating systems other than Darwin.
 
 =head1 AUTHOR
 

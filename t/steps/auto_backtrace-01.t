@@ -14,9 +14,10 @@ use Parrot::Configure;
 use Parrot::Configure::Options qw( process_options );
 use Parrot::Configure::Test qw(
     test_step_thru_runstep
-    rerun_defaults_for_testing
     test_step_constructor_and_description
 );
+
+########## regular ##########
 
 my $args = process_options( {
     argv            => [],
@@ -38,6 +39,8 @@ $conf->options->set(%{$args});
 $step = test_step_constructor_and_description($conf);
 
 $conf->replenish($serialized);
+
+########## _evaluate_backtrace()  ##########
 
 $conf->options->set(%{$args});
 $step = test_step_constructor_and_description($conf);
@@ -61,7 +64,7 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-auto_backtrace-01.t - test config::auto::backtrace
+auto_backtrace-01.t - test auto::backtrace
 
 =head1 SYNOPSIS
 
@@ -71,8 +74,7 @@ auto_backtrace-01.t - test config::auto::backtrace
 
 The files in this directory test functionality used by F<Configure.pl>.
 
-The tests in this file test subroutines exported by
-config::auto::backtrace.
+The tests in this file test auto::backtrace.
 
 =head1 AUTHOR
 

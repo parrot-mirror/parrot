@@ -17,10 +17,11 @@ use Parrot::Configure;
 use Parrot::Configure::Options qw( process_options );
 use Parrot::Configure::Test qw(
     test_step_thru_runstep
-    rerun_defaults_for_testing
     test_step_constructor_and_description
 );
 use IO::CaptureOutput qw( capture );
+
+########## not Darwin ##########
 
 my $args = process_options( {
     argv            => [],
@@ -47,6 +48,8 @@ is($step->result(), q{skipped}, "Got expected result for non-Darwin OS");
 
 $conf->replenish($serialized);
 
+########## Darwin but no Macports ##########
+
 $args = process_options( {
     argv            => [],
     mode            => q{configure},
@@ -62,6 +65,8 @@ SKIP: {
 }
 
 $conf->replenish($serialized);
+
+########## Darwin with Macports ##########
 
 $args = process_options( {
     argv            => [],
@@ -93,6 +98,8 @@ SKIP: {
 
 $conf->replenish($serialized);
 
+########## not Darwin; verbose ##########
+
 $args = process_options( {
     argv            => [ q{--verbose} ],
     mode            => q{configure},
@@ -115,6 +122,8 @@ $conf->data->set_p5( 'OSNAME' => $osname );
 }
 
 $conf->replenish($serialized);
+
+########## Darwin; verbose; no Macports ##########
 
 $args = process_options( {
     argv            => [ q{--verbose} ],
@@ -140,6 +149,8 @@ $step->{ports_root} = undef; # prepare for next test
 
 $conf->replenish($serialized);
 
+########## Darwin; defective Macports ##########
+
 $args = process_options( {
     argv            => [ ],
     mode            => q{configure},
@@ -155,6 +166,8 @@ SKIP: {
 }
 
 $conf->replenish($serialized);
+
+########## Darwin; verbose; defective Macports ##########
 
 $args = process_options( {
     argv            => [ q{--verbose} ],
@@ -183,7 +196,7 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-auto_macports-01.t - test config::auto::macports
+auto_macports-01.t - test auto::macports
 
 =head1 SYNOPSIS
 
@@ -193,8 +206,8 @@ auto_macports-01.t - test config::auto::macports
 
 The files in this directory test functionality used by F<Configure.pl>.
 
-The tests in this file test config::auto::macports in the case where the OS is not
-Darwin.
+The tests in this file test auto::macports.  Some tests run only on Darwin.
+Others simulate what happens on operating systems other than Darwin.
 
 =head1 AUTHOR
 
