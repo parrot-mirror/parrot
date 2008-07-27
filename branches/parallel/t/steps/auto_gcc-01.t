@@ -20,6 +20,8 @@ use Parrot::Configure::Test qw(
 );
 use IO::CaptureOutput qw | capture |;
 
+########## regular  ##########
+
 my $args = process_options( {
     argv            => [],
     mode            => q{configure},
@@ -32,16 +34,17 @@ my $serialized = $conf->pcfreeze();
 test_step_thru_runstep($conf, q{init::defaults}, $args);
 test_step_thru_runstep( $conf, q{inter::progs},  $args );
 
-my ($task, $step_name, $step, $ret);
 my $pkg = q{auto::gcc};
 
 $conf->add_steps($pkg);
 $conf->options->set(%{$args});
-$step = test_step_constructor_and_description($conf);
+my $step = test_step_constructor_and_description($conf);
 
 ok($step->runstep($conf), "runstep returned true value");
 
 $conf->replenish($serialized);
+
+########## _evaluate_gcc() ##########
 
 rerun_defaults_for_testing($conf, $args );
 $conf->add_steps($pkg);
@@ -54,6 +57,8 @@ ok(! defined $conf->data->get( 'gccversion' ),
     "gccversion undef as expected");
 
 $conf->replenish($serialized);
+
+########## _evaluate_gcc() ##########
 
 rerun_defaults_for_testing($conf, $args );
 $conf->add_steps($pkg);
@@ -69,6 +74,8 @@ ok(! defined $conf->data->get( 'gccversion' ),
 is($step->result(), q{no}, "Got expected result");
 
 $conf->replenish($serialized);
+
+########## _evaluate_gcc(); verbose ##########
 
 $args = process_options( {
     argv            => [ q{--verbose} ],
@@ -93,6 +100,8 @@ $step = test_step_constructor_and_description($conf);
 
 $conf->replenish($serialized);
 
+########## _evaluate_gcc() ##########
+
 $args = process_options( {
     argv            => [],
     mode            => q{configure},
@@ -111,6 +120,8 @@ ok(! defined $conf->data->get( 'gccversion' ),
 is($step->result(), q{no}, "Got expected result");
 
 $conf->replenish($serialized);
+
+########## _evaluate_gcc(); verbose ##########
 
 $args = process_options( {
     argv            => [ q{--verbose} ],
@@ -135,6 +146,8 @@ $step = test_step_constructor_and_description($conf);
 
 $conf->replenish($serialized);
 
+########## _evaluate_gcc() ##########
+
 rerun_defaults_for_testing($conf, $args );
 $conf->add_steps($pkg);
 $conf->options->set(%{$args});
@@ -156,6 +169,8 @@ $step = test_step_constructor_and_description($conf);
 }
 
 $conf->replenish($serialized);
+
+########## _evaluate_gcc() ##########
 
 $args = process_options( {
     argv            => [],
@@ -181,6 +196,8 @@ $step = test_step_constructor_and_description($conf);
 }
 
 $conf->replenish($serialized);
+
+########## _evaluate_gcc(); verbose ##########
 
 $args = process_options( {
     argv            => [ q{--verbose} ],
@@ -208,6 +225,8 @@ $step = test_step_constructor_and_description($conf);
 
 $conf->replenish($serialized);
 
+########## _evaluate_gcc() ##########
+
 $args = process_options( {
     argv            => [ ],
     mode            => q{configure},
@@ -225,6 +244,8 @@ ok(! defined $conf->data->get( 'gccversion' ),
 is($step->result(), q{no}, "Got expected result");
 
 $conf->replenish($serialized);
+
+########## _evaluate_gcc(); maintaiiner; cage ##########
 
 $args = process_options( {
     argv            => [ q{--maintainer}, q{--cage} ],
@@ -246,6 +267,8 @@ is($step->result(), q{yes}, "Got expected result");
 
 $conf->replenish($serialized);
 
+########## _evaluate_gcc(); miniparrot ##########
+
 $args = process_options( {
     argv            => [ q{--miniparrot} ],
     mode            => q{configure},
@@ -266,6 +289,8 @@ is($conf->data->get( 'ccwarn' ), q{-ansi -pedantic},
 is($step->result(), q{yes}, "Got expected result");
 
 $conf->replenish($serialized);
+
+########## _evaluate_gcc() ##########
 
 $args = process_options( {
     argv            => [ ],
@@ -297,7 +322,7 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-auto_gcc-01.t - test config::auto::gcc
+auto_gcc-01.t - test auto::gcc
 
 =head1 SYNOPSIS
 
@@ -307,7 +332,7 @@ auto_gcc-01.t - test config::auto::gcc
 
 The files in this directory test functionality used by F<Configure.pl>.
 
-The tests in this file test subroutines exported by config::auto::gcc.
+The tests in this file test auto::gcc.
 
 =head1 AUTHOR
 

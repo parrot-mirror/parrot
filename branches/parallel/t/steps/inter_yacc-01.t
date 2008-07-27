@@ -15,7 +15,6 @@ use Parrot::Configure;
 use Parrot::Configure::Options qw( process_options );
 use Parrot::Configure::Test qw(
     test_step_thru_runstep
-    rerun_defaults_for_testing
     test_step_constructor_and_description
 );
 use Tie::Filehandle::Preempt::Stdin;
@@ -148,7 +147,7 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-inter_yacc-01.t - test config::inter::yacc
+inter_yacc-01.t - test inter::yacc
 
 =head1 SYNOPSIS
 
@@ -158,9 +157,7 @@ inter_yacc-01.t - test config::inter::yacc
 
 The files in this directory test functionality used by F<Configure.pl>.
 
-The tests in this file test subroutines exported by config::inter::yacc. In
-this case, only the C<--ask> option is provided.  Because the C<--maintainer>
-option is not provided, the step is skipped and no prompt is ever reached.
+The tests in this file test inter::yacc.
 
 =head1 AUTHOR
 

@@ -14,9 +14,10 @@ use Parrot::Configure;
 use Parrot::Configure::Options qw( process_options );
 use Parrot::Configure::Test qw(
     test_step_thru_runstep
-    rerun_defaults_for_testing
     test_step_constructor_and_description
 );
+
+########## regular ##########
 
 my $args = process_options( {
     argv            => [],
@@ -40,6 +41,8 @@ ok($step->runstep($conf), "runstep() returned true value");
 
 $conf->replenish($serialized);
 
+########## _evaluate_glibc() ##########
+
 $conf->options->set(%{$args});
 $step = test_step_constructor_and_description($conf);
 
@@ -61,7 +64,7 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-auto_glibc-01.t - test config::auto::glibc
+auto_glibc-01.t - test auto::glibc
 
 =head1 SYNOPSIS
 
@@ -71,7 +74,7 @@ auto_glibc-01.t - test config::auto::glibc
 
 The files in this directory test functionality used by F<Configure.pl>.
 
-The tests in this file test the 'normal functioning' of config::auto::glibc.
+The tests in this file test the 'normal functioning' of auto::glibc.
 
 =head1 AUTHOR
 
