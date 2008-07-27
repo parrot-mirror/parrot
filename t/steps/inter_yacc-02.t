@@ -15,9 +15,10 @@ use Parrot::Configure;
 use Parrot::Configure::Options qw( process_options );
 use Parrot::Configure::Test qw(
     test_step_thru_runstep
-    rerun_defaults_for_testing
     test_step_constructor_and_description
 );
+
+########## ask; maintainer; $ENV{TEST_YACC} ##########
 
 my $args = process_options(
     {
