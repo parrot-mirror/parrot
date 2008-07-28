@@ -17,7 +17,7 @@ use Parrot::Configure::Test qw(
     test_step_constructor_and_description
 );
 
-########## miniparrot ##########
+########## --miniparrot ##########
 
 my $args = process_options(
     {

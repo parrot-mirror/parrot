@@ -19,6 +19,8 @@ use Parrot::Configure::Test qw(
 );
 use IO::CaptureOutput qw( capture );
 
+########### regular  ###########
+
 my $args = process_options(
     {
         argv => [ ],
@@ -44,6 +46,8 @@ ok( $ret, "runstep() returned true value" );
 
 $conf->replenish($serialized);
 
+########### --inline ###########
+
 $args = process_options( {
     argv => [ q{--inline} ],
     mode => q{configure},
@@ -54,6 +58,8 @@ $ret = $step->runstep($conf);
 ok( $ret, "runstep() returned true value" );
 
 $conf->replenish($serialized);
+
+########### _evaluate_inline() ###########
 
 $args = process_options( {
     argv => [ ],
@@ -70,6 +76,8 @@ is($conf->data->get( 'inline' ), 1,
 
 $conf->replenish($serialized);
 
+########### _evaluate_inline() ###########
+
 $args = process_options( {
     argv => [ ],
     mode => q{configure},
@@ -84,6 +92,8 @@ is($conf->data->get( 'inline' ), q{},
     "'inline' attribute has expected value");;
 
 $conf->replenish($serialized);
+
+########### _evaluate_inline(); --verbose ###########
 
 $args = process_options( {
     argv => [ q{--verbose} ],
@@ -106,6 +116,8 @@ $step = test_step_constructor_and_description($conf);
 
 $conf->replenish($serialized);
 
+########### _second_probe_for_inline(); _evaluate_inline() ###########
+
 $args = process_options( {
     argv => [ ],
     mode => q{configure},
@@ -123,7 +135,7 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-auto_inline-01.t - test config::auto::inline
+auto_inline-01.t - test auto::inline
 
 =head1 SYNOPSIS
 
@@ -133,7 +145,7 @@ auto_inline-01.t - test config::auto::inline
 
 The files in this directory test functionality used by F<Configure.pl>.
 
-The tests in this file test subroutines exported by config::auto::inline.
+The tests in this file test auto::inline.
 
 =head1 AUTHOR
 

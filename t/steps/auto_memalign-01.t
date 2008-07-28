@@ -19,6 +19,8 @@ use Parrot::Configure::Test qw(
 );
 use IO::CaptureOutput qw| capture |;
 
+########### --miniparrot ###########
+
 my $args = process_options(
     {
         argv => [ q{--miniparrot} ],
@@ -47,6 +49,8 @@ is($conf->data->get('memalign'),
 
 $conf->replenish($serialized);
 
+########### regular ###########
+
 $args = process_options(
     {
         argv => [ ],
@@ -67,6 +71,8 @@ is($conf->data->get('memalign'),
 );
 
 $conf->replenish($serialized);
+
+########### _set_malloc_header()  ###########
 
 $args = process_options(
     {
@@ -96,6 +102,8 @@ $step = test_step_constructor_and_description($conf);
     $conf->data->set('i_malloc' => undef); # reset for next test
 }
 
+########### _set_ptrcast()  ###########
+
 {
     $conf->data->set('ptrsize' => 2);
     $conf->data->set('intsize' => 2);
@@ -119,6 +127,8 @@ $step = test_step_constructor_and_description($conf);
     $conf->data->set('ptrsize' => undef);
     $conf->data->set('intsize' => undef);
 }
+
+########### _set_memalign()  ###########
 
 {
     $conf->data->set( malloc_header => 'malloc.h' );
@@ -165,6 +175,8 @@ $step = test_step_constructor_and_description($conf);
 }
 
 $conf->replenish($serialized);
+
+########### --verbose; _set_memalign() ###########
 
 $args = process_options(
     {
@@ -247,7 +259,6 @@ $step = test_step_constructor_and_description($conf);
     like($stdout, qr/no/,
         "Got expected verbose output");
 }
-
 
 pass("Completed all tests in $0");
 

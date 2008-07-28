@@ -17,6 +17,8 @@ use Parrot::Configure::Test qw(
 );
 use IO::CaptureOutput qw| capture |;
 
+########### --verbose ###########
+
 my $args = process_options(
     {
         argv => [ q{--verbose} ],
@@ -48,6 +50,8 @@ my $step = test_step_constructor_and_description($conf);
 
 $conf->replenish($serialized);
 
+########### --gc=gc ###########
+
 $args = process_options( {
     argv => [ q{--gc=gc} ],
     mode => q{configure},
@@ -60,6 +64,8 @@ is($conf->data->get('gc_flag'), q{},
     "Got expected value for 'gc_flag'");
 
 $conf->replenish($serialized);
+
+########### --gc=libc ###########
 
 $args = process_options( {
     argv => [ q{--gc=libc} ],
@@ -77,6 +83,8 @@ is($conf->data->get('malloc_header'), 'malloc.h',
 
 $conf->replenish($serialized);
 
+########### --gc=libc ###########
+
 $args = process_options( {
     argv => [ q{--gc=libc} ],
     mode => q{configure},
@@ -93,6 +101,8 @@ is($conf->data->get('malloc_header'), 'stdlib.h',
 
 $conf->replenish($serialized);
 
+########### --gc=malloc ###########
+
 $args = process_options( {
     argv => [ q{--gc=malloc} ],
     mode => q{configure},
@@ -105,6 +115,8 @@ is($conf->data->get('gc_flag'), '-DGC_IS_MALLOC',
     "Got expected value for 'gc_flag'");
 
 $conf->replenish($serialized);
+
+########### --gc=malloc-trace ###########
 
 $args = process_options( {
     argv => [ q{--gc=malloc-trace} ],

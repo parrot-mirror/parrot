@@ -21,6 +21,8 @@ use Parrot::Configure::Test qw(
 );
 use IO::CaptureOutput qw( capture );
 
+########### --jitcapable=0  ###########
+
 my $args = process_options( {
     argv            => [ q{--jitcapable=0} ],
     mode            => q{configure},
@@ -42,6 +44,8 @@ ok($ret, "runstep() returned defined value" );
 
 $conf->replenish($serialized);
 
+########### _cast_void_pointers_msg() ###########
+
 $args = process_options( {
     argv            => [ ],
     mode            => q{configure},
@@ -59,6 +63,9 @@ $step = test_step_constructor_and_description($conf);
     like($stdout, qr/Although it is not required/s,
         "Got expected advisory message");
 }
+
+########### _set_positive_result() ###########
+
 {
     my $stdout;
     my $ret = capture(
@@ -70,6 +77,8 @@ $step = test_step_constructor_and_description($conf);
 }
 
 $conf->replenish($serialized);
+
+########### --verbose; _set_positive_result() ###########
 
 $args = process_options( {
     argv            => [ q{--verbose} ],
@@ -95,7 +104,7 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-auto_funcptr-01.t - test config::auto::funcptr
+auto_funcptr-01.t - test auto::funcptr
 
 =head1 SYNOPSIS
 
@@ -105,8 +114,7 @@ auto_funcptr-01.t - test config::auto::funcptr
 
 The files in this directory test functionality used by F<Configure.pl>.
 
-The tests in this file test aspects of config::auto::funcptr in the case where
-the C<--jitcapable> option has been set to C<0>.
+The tests in this file test aspects of auto::funcptr.
 
 =head1 AUTHOR
 

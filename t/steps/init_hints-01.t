@@ -22,7 +22,7 @@ use Parrot::Configure::Test qw(
 );
 use IO::CaptureOutput qw | capture |;
 
-########## verbose ##########
+########## --verbose ##########
 
 my $args = process_options(
     {
@@ -56,7 +56,7 @@ my $step = test_step_constructor_and_description($conf);
 
 $conf->replenish($serialized);
 
-########## verbose; local hints directory ##########
+########## --verbose; local hints directory ##########
 
 $args = process_options(
     {
@@ -99,7 +99,7 @@ END
 
 $conf->replenish($serialized);
 
-########## verbose; local hints directory; no runstep() in local hints ##########
+########## --verbose; local hints directory; no runstep() in local hints ##########
 
 $args = process_options(
     {
@@ -139,7 +139,7 @@ END
 
 $conf->replenish($serialized);
 
-########## verbose; imaginary OS ##########
+########## --verbose; imaginary OS ##########
 
 $args = process_options(
     {
