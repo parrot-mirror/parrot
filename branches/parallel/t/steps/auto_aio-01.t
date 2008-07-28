@@ -19,6 +19,8 @@ use Parrot::Configure::Test qw(
 );
 use IO::CaptureOutput qw( capture );
 
+########### regular ###########
+
 my $args = process_options( {
     argv => [ ],
     mode => q{configure},
@@ -46,6 +48,8 @@ like(
 
 $conf->replenish($serialized);
 
+########### --verbose  ###########
+
 $args = process_options(
     {
         argv => [ q{--verbose} ],
@@ -72,6 +76,8 @@ $step = test_step_constructor_and_description($conf);
 
 $conf->replenish($serialized);
 
+########### _handle_error_case() ###########
+
 $args = process_options( {
     argv => [ ],
     mode => q{configure},
@@ -87,6 +93,8 @@ is($conf->data->get('libs'), $libs, "'libs' set as expected");
 is($step->result, q{no}, "Got expected 'no' result");
 
 $conf->replenish($serialized);
+
+########### _handle_error_case(); --verbose ###########
 
 $args = process_options( {
     argv => [ ],
@@ -115,7 +123,7 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-auto_aio-01.t - test config::auto::aio
+auto_aio-01.t - test auto::aio
 
 =head1 SYNOPSIS
 
@@ -126,7 +134,7 @@ auto_aio-01.t - test config::auto::aio
 The files in this directory test functionality used by F<Configure.pl>.
 
 The tests in this file test methods found in configuration step class
-config::auto::aio.
+auto::aio.
 
 =head1 AUTHOR
 
