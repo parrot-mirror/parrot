@@ -21,6 +21,8 @@ use Parrot::Configure::Test qw(
 );
 use IO::CaptureOutput qw| capture |;
 
+########### --miniparrot ###########
+
 my $args = process_options(
     {
         argv => [ q{--miniparrot} ],
@@ -45,6 +47,8 @@ is($step->result(), q{skipped}, "Expected result was set");
 
 $conf->replenish($serialized);
 
+########### _handle__sighandler_t() ###########
+
 $args = process_options( {
     argv => [ ],
     mode => q{configure},
@@ -59,10 +63,14 @@ ok(auto::signal::_handle__sighandler_t($conf),
 is($conf->data->get( 'has___sighandler_t'), 'define',
     "Got expected value for has__sighandler_t");
 
+########### _handle_sigaction() ###########
+
 ok(auto::signal::_handle_sigaction($conf),
     "_handle_sigaction() returned true value");
 is($conf->data->get( 'has_sigaction'), 'define',
     "Got expected value for has_sigaction");
+
+########### _handle_setitimer() ###########
 
 ok(auto::signal::_handle_setitimer($conf),
     "_handle_setitimer() returned true value");
@@ -70,6 +78,8 @@ is($conf->data->get( 'has_setitimer'), 'define',
     "Got expected value for has_setitimer");
 is($conf->data->get( 'has_sig_atomic_t'), 'define',
     "Got expected value for has_sig_atomic_t");
+
+########### _print_signalpasm() ###########
 
 my $cwd = cwd();
 {
@@ -84,6 +94,8 @@ my $cwd = cwd();
 }
 
 $conf->replenish($serialized);
+
+########### --verbose; _handle__sighandler_t() ###########
 
 $args = process_options( {
     argv => [ q{--verbose} ],
@@ -107,6 +119,8 @@ my $verbose = 1;
     like($stdout, qr/__sighandler_t/, "Got expected verbose output");
 }
 
+########### --verbose; _handle_sigaction() ###########
+
 {
     my ($rv, $stdout);
     capture(
@@ -118,6 +132,8 @@ my $verbose = 1;
         "Got expected value for has_sigaction");
     like($stdout, qr/sigaction/, "Got expected verbose output");
 }
+
+########### --verbose; _handle_setitimer() ###########
 
 {
     my ($rv, $stdout);
@@ -139,7 +155,7 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-auto_signal-01.t - test config::auto::signal
+auto_signal-01.t - test auto::signal
 
 =head1 SYNOPSIS
 
@@ -149,7 +165,7 @@ auto_signal-01.t - test config::auto::signal
 
 The files in this directory test functionality used by F<Configure.pl>.
 
-The tests in this file test subroutines exported by config::auto::signal.
+The tests in this file test auto::signal.
 
 =head1 AUTHOR
 

@@ -19,6 +19,8 @@ use Parrot::Configure::Test qw(
 );
 use IO::CaptureOutput qw( capture );
 
+########### regular ###########
+
 my $args = process_options( {
     argv            => [],
     mode            => q{configure},
@@ -39,6 +41,8 @@ my $step = test_step_constructor_and_description($conf);
 ok($step->runstep($conf), "runstep() returned true value");
 
 $conf->replenish($serialized);
+
+########### _evaluate_env() ###########
 
 $args = process_options( {
     argv            => [],
@@ -65,6 +69,8 @@ $step->_evaluate_env($conf, $setenv, $unsetenv);
 is($step->result(), q{no}, "Got expected result");
 
 $conf->replenish($serialized);
+
+########### --verbose; _evaluate_env() ###########
 
 $args = process_options( {
     argv            => [ q{--verbose} ],
@@ -123,7 +129,7 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-auto_env-01.t - test config::auto::env
+auto_env-01.t - test auto::env
 
 =head1 SYNOPSIS
 
@@ -133,8 +139,7 @@ auto_env-01.t - test config::auto::env
 
 The files in this directory test functionality used by F<Configure.pl>.
 
-The tests in this file test subroutines found in config::auto::env in
-its most ordinary usage.
+The tests in this file test subroutines found in auto::env.
 
 =head1 AUTHOR
 

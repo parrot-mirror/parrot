@@ -28,6 +28,8 @@ to the GNU MP library.
 
 =cut
 
+########### --without-gmp ###########
+
 my $args = process_options( {
     argv => [ q{--without-gmp} ],
     mode => q{configure},
@@ -52,6 +54,8 @@ is($conf->data->get('has_gmp'), 0,
 is($step->result(), q{no}, "Expected result was set");
 
 $conf->replenish($serialized);
+
+########### _add_to_libs() ###########
 
 $args = process_options( {
     argv => [ ],
@@ -106,6 +110,8 @@ like($conf->data->get( 'libs' ), qr/-lgmp/,
     "'libs' modified as expected");
 # Restore value for next test.
 $conf->data->set( 'libs' => $initial_value );
+
+########### _handle_darwin_for_fink() ###########
 
 my ($flagsbefore, $flagsafter);
 $osname = 'foobar';
@@ -163,6 +169,8 @@ my $cwd = cwd();
 
 $conf->replenish($serialized);
 
+########### _evaluate_cc_run() ###########
+
 $args = process_options( {
     argv => [ ],
     mode => q{configure},
@@ -211,6 +219,8 @@ is($has_gmp, 0, "gmp status unchanged");
     $step->set_result(undef);
 }
 
+########### _recheck_settings() ###########
+
 my ($libs, $ccflags, $linkflags);
 
 $libs = q{-lalpha};
@@ -248,6 +258,8 @@ is($step->result, 'no', "Expected result was set");
 }
 
 $conf->replenish($serialized);
+
+########### _handle_darwin_for_fink() ###########
 
 $args = process_options( {
     argv => [ ],
@@ -313,7 +325,7 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-auto_gmp-01.t - test config::auto::gmp
+auto_gmp-01.t - test auto::gmp
 
 =head1 SYNOPSIS
 
@@ -323,8 +335,7 @@ auto_gmp-01.t - test config::auto::gmp
 
 The files in this directory test functionality used by F<Configure.pl>.
 
-The tests in this file test config::auto::gmp in the case where the
-C<--without-gmp> option is set.
+The tests in this file test auto::gmp.
 
 =head1 AUTHOR
 
