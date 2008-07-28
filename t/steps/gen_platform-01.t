@@ -23,6 +23,8 @@ use Parrot::Configure::Test qw(
 use Parrot::Configure::Utils qw( _slurp );
 use IO::CaptureOutput qw( capture );
 
+########## regular ##########
+
 my $args = process_options(
     {
         argv => [ ],
@@ -44,7 +46,7 @@ my $archname_orig = $conf->data->get_p5('archname');
 $conf->data->set_p5( archname => 'foo-bar' );
 my $verbose = 0;
 
-########## _gen_platform() ##########
+########## _get_platform() ##########
 
 $conf->options->set( miniparrot => 1 );
 is( $step->_get_platform( $conf, $verbose ), q{ansi},
@@ -90,7 +92,7 @@ $conf->data->set_p5( OSNAME => 'foo' );
 $conf->data->set_p5( archname => $archname_orig );
 $conf->data->set_p5( OSNAME => $platform_orig );
 
-########## _gen_generated() ##########
+########## _get_generated() ##########
 
 my $TEMP_generated_orig = $conf->data->get('TEMP_generated');
 {
@@ -201,7 +203,7 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-gen_platform-01.t - test config::gen::platform
+gen_platform-01.t - test gen::platform
 
 =head1 SYNOPSIS
 
@@ -211,7 +213,7 @@ gen_platform-01.t - test config::gen::platform
 
 The files in this directory test functionality used by F<Configure.pl>.
 
-The tests in this file test subroutines exported by config::gen::platform.
+The tests in this file test gen::platform.
 
 =head1 AUTHOR
 

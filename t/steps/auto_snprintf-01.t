@@ -22,6 +22,8 @@ use Parrot::Configure::Test qw(
 );
 use IO::CaptureOutput qw| capture |;
 
+########## regular ##########
+
 my $args = process_options( {
     argv            => [],
     mode            => q{configure},
@@ -31,7 +33,6 @@ my $conf = Parrot::Configure->new();
 
 test_step_thru_runstep($conf, q{init::defaults}, $args);
 test_step_thru_runstep($conf, q{init::hints}, $args);
-# test_step_thru_runstep($conf, q{inter::progs}, $args);
 test_step_thru_runstep($conf, q{auto::attributes}, $args);
 test_step_thru_runstep($conf, q{auto::aio}, $args);
 
@@ -64,6 +65,8 @@ my $step = test_step_constructor_and_description($conf);
 
 $conf->replenish($serialized);
 
+########## _evaluate_snprintf() ##########
+
 $args = process_options( {
     argv            => [],
     mode            => q{configure},
@@ -87,6 +90,8 @@ ok($conf->data->get('HAS_SNPRINTF'),
     "Got expected value");
 
 $conf->replenish($serialized);
+
+########## --verbose; _evaluate_snprintf() ##########
 
 $args = process_options( {
     argv            => [ q{--verbose} ],
@@ -112,7 +117,7 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-auto_snprintf-01.t - test config::auto::snprintf
+auto_snprintf-01.t - test auto::snprintf
 
 =head1 SYNOPSIS
 
@@ -122,7 +127,7 @@ auto_snprintf-01.t - test config::auto::snprintf
 
 The files in this directory test functionality used by F<Configure.pl>.
 
-The tests in this file test subroutines exported by config::auto::snprintf.
+The tests in this file test auto::snprintf.
 
 =head1 AUTHOR
 

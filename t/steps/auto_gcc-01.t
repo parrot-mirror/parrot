@@ -75,7 +75,7 @@ is($step->result(), q{no}, "Got expected result");
 
 $conf->replenish($serialized);
 
-########## _evaluate_gcc(); verbose ##########
+########## _evaluate_gcc(); --verbose ##########
 
 $args = process_options( {
     argv            => [ q{--verbose} ],
@@ -121,7 +121,7 @@ is($step->result(), q{no}, "Got expected result");
 
 $conf->replenish($serialized);
 
-########## _evaluate_gcc(); verbose ##########
+########## _evaluate_gcc(); --verbose ##########
 
 $args = process_options( {
     argv            => [ q{--verbose} ],
@@ -197,7 +197,7 @@ $step = test_step_constructor_and_description($conf);
 
 $conf->replenish($serialized);
 
-########## _evaluate_gcc(); verbose ##########
+########## _evaluate_gcc(); --verbose ##########
 
 $args = process_options( {
     argv            => [ q{--verbose} ],
@@ -267,7 +267,7 @@ is($step->result(), q{yes}, "Got expected result");
 
 $conf->replenish($serialized);
 
-########## _evaluate_gcc(); miniparrot ##########
+########## _evaluate_gcc(); --miniparrot ##########
 
 $args = process_options( {
     argv            => [ q{--miniparrot} ],

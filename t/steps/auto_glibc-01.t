@@ -74,7 +74,7 @@ auto_glibc-01.t - test auto::glibc
 
 The files in this directory test functionality used by F<Configure.pl>.
 
-The tests in this file test the 'normal functioning' of auto::glibc.
+The tests in this file test auto::glibc.
 
 =head1 AUTHOR
 

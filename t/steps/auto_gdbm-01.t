@@ -30,6 +30,8 @@ http://rt.perl.org/rt3/Ticket/Display.html?id=43134.
 
 =cut
 
+########## --without-gdbm  ##########
+
 my $args = process_options( {
     argv => [ q{--without-gdbm} ],
     mode => q{configure},
@@ -53,6 +55,8 @@ is($conf->data->get('has_gdbm'), 0,
 is($step->result(), q{no}, "Expected result was set");
 
 $conf->replenish($serialized);
+
+########## --without-gdbm; _handle_darwin_for_fink() ##########
 
 $args = process_options( {
     argv => [ q{--without-gdbm} ],
@@ -117,6 +121,8 @@ my $cwd = cwd();
 
 $conf->replenish($serialized);
 
+########## --without-gdbm; _evaluate_cc_run() ##########
+
 $args = process_options( {
     argv => [ q{--without-gdbm} ],
     mode => q{configure},
@@ -158,6 +164,8 @@ ok(! defined $step->result(), "Result is undefined, as expected");
 }
 
 $conf->replenish($serialized);
+
+########## --without-gdbm; _recheck_settings() ##########
 
 $args = process_options( {
     argv => [ q{--without-gdbm} ],
@@ -210,7 +218,7 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-auto_gdbm-01.t - test config::auto::gdbm
+auto_gdbm-01.t - test auto::gdbm
 
 =head1 SYNOPSIS
 
@@ -220,8 +228,7 @@ auto_gdbm-01.t - test config::auto::gdbm
 
 The files in this directory test functionality used by F<Configure.pl>.
 
-The tests in this file test config::auto::gdbm in the case where the
-C<--without-gdbm> option is set.
+The tests in this file test auto::gdbm.
 
 =head1 AUTHOR
 

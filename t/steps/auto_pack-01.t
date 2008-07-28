@@ -271,7 +271,7 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-auto_pack-01.t - test config::auto::pack
+auto_pack-01.t - test auto::pack
 
 =head1 SYNOPSIS
 
@@ -281,8 +281,7 @@ auto_pack-01.t - test config::auto::pack
 
 The files in this directory test functionality used by F<Configure.pl>.
 
-The tests in this file test auto::pack internal subroutines C<_set_packtypes()>
-and C<_set_ptrcons()>.
+The tests in this file test auto::pack.
 
 =head1 AUTHOR
 

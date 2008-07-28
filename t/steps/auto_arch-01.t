@@ -293,7 +293,7 @@ sub _capture { $errstr = $_[0]; }
 
 =head1 NAME
 
-auto_arch-01.t - test config::auto::arch
+auto_arch-01.t - test auto::arch
 
 =head1 SYNOPSIS
 
@@ -303,8 +303,7 @@ auto_arch-01.t - test config::auto::arch
 
 The files in this directory test functionality used by F<Configure.pl>.
 
-The tests in this file test config::auto::arch when the C<--miniparrot>
-option is provided.
+The tests in this file test auto::arch.
 
 =head1 AUTHOR
 

@@ -89,7 +89,7 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-auto_alignptrs-02.t - test config::auto::alignptrs
+auto_alignptrs-02.t - test auto::alignptrs
 
 =head1 SYNOPSIS
 
@@ -99,7 +99,7 @@ auto_alignptrs-02.t - test config::auto::alignptrs
 
 The files in this directory test functionality used by F<Configure.pl>.
 
-The tests in this file test subroutines exported by config::auto::alignptrs.
+The tests in this file test auto::alignptrs.
 
 =head1 AUTHOR
 

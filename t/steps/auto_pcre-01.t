@@ -19,6 +19,8 @@ use Parrot::Configure::Test qw(
 );
 use IO::CaptureOutput qw| capture |;
 
+########## --without-pcre ##########
+
 my $args = process_options(
     {
         argv => [ q{--without-pcre} ],
@@ -43,6 +45,8 @@ is( $conf->data->get( 'has_pcre' ), 0,
     "Got expected value for 'has_pre'");
 
 $conf->replenish($serialized);
+
+########## _add_to_libs() ##########
 
 $args = process_options( {
     argv => [ ],
@@ -104,6 +108,8 @@ like($conf->data->get( 'libs' ), qr/-lpcre/,
 # Restore value for next test.
 $conf->data->set( 'libs' => $initial_value );
 
+########## _evaluate_cc_run() ##########
+
 # Mock different outcomes of _evaluate_cc_run
 my ($test, $has_pcre);
 my $verbose = $conf->options->get('verbose');
@@ -133,6 +139,8 @@ like($conf->data->get('linkflags'), qr/$linkflags/,
     "Got expected value for 'linkflags'");
 
 $conf->replenish($serialized);
+
+########## --verbose; _evaluate_cc_run() ##########
 
 $args = process_options( {
     argv => [ q{--verbose} ],
@@ -186,7 +194,7 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-  auto_pcre-01.t - test config::auto::pcre
+  auto_pcre-01.t - test auto::pcre
 
 =head1 SYNOPSIS
 
@@ -196,8 +204,7 @@ pass("Completed all tests in $0");
 
 The files in this directory test functionality used by F<Configure.pl>.
 
-The tests in this file test configuration step class auto::pcre in the case
-where C<--without-pcre> has been requested on the command line.
+The tests in this file test configuration step class auto::pcre.
 
 =head1 AUTHOR
 

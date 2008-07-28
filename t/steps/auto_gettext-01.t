@@ -19,6 +19,8 @@ use Parrot::Configure::Test qw(
 );
 use IO::CaptureOutput qw( capture );
 
+########## --without-gettext ##########
+
 my $args = process_options(
     {
         argv => [ q{--without-gettext} ],
@@ -45,6 +47,8 @@ is($conf->data->get('has_gettext'), 0,
 is($step->result(), q{no}, "Expected result was set");
 
 $conf->replenish($serialized);
+
+########## _add_to_libs() ##########
 
 $args = process_options( {
     argv => [ ],
@@ -120,6 +124,8 @@ ok($step->_add_to_libs( {
 like($conf->data->get( 'libs' ), qr/-lintl/,
     "'libs' modified as expected");
 
+########## _evaluate_cc_run() ##########
+
 my ($test, $verbose);
 my $has_gettext;
 
@@ -156,6 +162,8 @@ ok(! defined $step->result(), "As expected, result is not yet defined");
 
 $conf->replenish($serialized);
 
+########## --without-gettext; _handle_gettext() ##########
+
 $args = process_options( {
     argv => [ q{--without-gettext} ],
     mode => q{configure},
@@ -186,14 +194,13 @@ like($conf->data->get( 'ccflags' ), qr/-DHAS_GETTEXT/,
     );
 }
 
-
 pass("Completed all tests in $0");
 
 ################### DOCUMENTATION ###################
 
 =head1 NAME
 
-auto_gettext-01.t - test config::auto::gettext
+auto_gettext-01.t - test auto::gettext
 
 =head1 SYNOPSIS
 
@@ -203,8 +210,7 @@ auto_gettext-01.t - test config::auto::gettext
 
 The files in this directory test functionality used by F<Configure.pl>.
 
-The tests in this file test config::auto::gettext in the case where the
-C<--without-gettext> option is set.
+The tests in this file test auto::gettext.
 
 =head1 AUTHOR
 

@@ -18,7 +18,6 @@ use Parrot::Configure;
 use Parrot::Configure::Options qw( process_options );
 use Parrot::Configure::Test qw(
     test_step_thru_runstep
-    rerun_defaults_for_testing
     test_step_constructor_and_description
 );
 
@@ -47,7 +46,7 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-auto_macports-02.t - test config::auto::macports
+auto_macports-02.t - test auto::macports
 
 =head1 SYNOPSIS
 
@@ -57,8 +56,7 @@ auto_macports-02.t - test config::auto::macports
 
 The files in this directory test functionality used by F<Configure.pl>.
 
-The tests in this file test config::auto::macports by mocking the case where
-the root directory for Macports is not located.
+The tests in this file test auto::macports.
 
 =head1 AUTHOR
 

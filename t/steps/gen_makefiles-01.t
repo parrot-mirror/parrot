@@ -16,6 +16,8 @@ use Parrot::Configure::Test qw(
     test_step_constructor_and_description
 );
 
+########## regular ##########
+
 my $args = process_options(
     {
         argv => [ ],
@@ -42,7 +44,7 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-gen_makefiles-01.t - test config::gen::makefiles
+gen_makefiles-01.t - test gen::makefiles
 
 =head1 SYNOPSIS
 
@@ -52,7 +54,7 @@ gen_makefiles-01.t - test config::gen::makefiles
 
 The files in this directory test functionality used by F<Configure.pl>.
 
-The tests in this file test subroutines exported by config::gen::makefiles.
+The tests in this file test gen::makefiles.
 
 =head1 AUTHOR
 

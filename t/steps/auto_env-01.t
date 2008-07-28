@@ -139,7 +139,7 @@ auto_env-01.t - test auto::env
 
 The files in this directory test functionality used by F<Configure.pl>.
 
-The tests in this file test subroutines found in auto::env.
+The tests in this file test auto::env.
 
 =head1 AUTHOR
 

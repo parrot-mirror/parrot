@@ -50,7 +50,7 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-auto_ops-01.t - test config::auto::ops
+auto_ops-01.t - test auto::ops
 
 =head1 SYNOPSIS
 
@@ -60,7 +60,7 @@ auto_ops-01.t - test config::auto::ops
 
 The files in this directory test functionality used by F<Configure.pl>.
 
-The tests in this file test subroutines exported by config::auto::ops.
+The tests in this file test auto::ops.
 
 =head1 AUTHOR
 

@@ -60,7 +60,7 @@ $step = test_step_constructor_and_description($conf);
 
 $conf->replenish($serialized);
 
-########## _evaluate_isreg(); verbose ##########
+########## _evaluate_isreg(); --verbose ##########
 
 $args = process_options( {
     argv            => [ q{--verbose} ],

@@ -18,6 +18,8 @@ use Parrot::Configure::Test qw(
 );
 use IO::CaptureOutput qw( capture );
 
+########## --without-crypto ##########
+
 my $args = process_options(
     {
         argv => [ q{--without-crypto} ],
@@ -44,6 +46,8 @@ is($conf->data->get('has_crypto'), 0,
 is($step->result(), q{no}, "Expected result was set");
 
 $conf->replenish($serialized);
+
+########## _add_to_libs() ##########
 
 $args = process_options( {
     argv => [ ],
@@ -117,6 +121,8 @@ like($conf->data->get('linkflags'), qr/$linkflags/,
     "Got expected value for 'linkflags'");
 is($step->result, 'no', "Expected result was set");
 
+########## _recheck_settings() ##########
+
 {
     my $stdout;
     $libs = q{-lalpha};
@@ -139,6 +145,8 @@ is($step->result, 'no', "Expected result was set");
 }
 
 $conf->replenish($serialized);
+
+########## --without-crypto; _evaluate_cc_run() ##########
 
 $args = process_options( {
     argv => [ q{--without-crypto} ],
@@ -180,15 +188,13 @@ ok(! defined $step->result(), "Result is undefined, as expected");
     $step->set_result(undef);
 }
 
-
-
 pass("Completed all tests in $0");
 
 ################### DOCUMENTATION ###################
 
 =head1 NAME
 
-auto_crypto-01.t - test config::auto::crypto
+auto_crypto-01.t - test auto::crypto
 
 =head1 SYNOPSIS
 
@@ -198,8 +204,7 @@ auto_crypto-01.t - test config::auto::crypto
 
 The files in this directory test functionality used by F<Configure.pl>.
 
-The tests in this file test config::auto::crypto in the case where the
-C<--without-crypto> option is set.
+The tests in this file test auto::crypto.
 
 =head1 HISTORY
 

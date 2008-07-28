@@ -48,7 +48,7 @@ my $cwd = cwd();
     push @lines, q{include/parrot/phony.h    [main]include};
     untie @lines;
     my $ret = $step->runstep($conf);
-    ok( defined $ret, "$step_name runstep() returned defined value" );
+    ok( defined $ret, "runstep() returned defined value" );
     like( $conf->data->get(q{TEMP_nongen_headers}), qr{\$\(INC_DIR\)/phony\.h\\},
 qq{Header added to MANIFEST for testing purposes correctly detected in Parrot::Configure object data structure}
     );
