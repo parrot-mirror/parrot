@@ -20,6 +20,8 @@ use Parrot::Configure::Test qw(
 );
 use IO::CaptureOutput qw| capture |;
 
+########## regular ##########
+
 my $args = process_options( {
     argv            => [],
     mode            => q{configure},
@@ -48,11 +50,15 @@ ok( ( ($new == 1) or ($new == 0) ),
 
 $conf->replenish($serialized);
 
+########## _initial_content_check() ##########
+
 my $content = undef;
 my $rv = $step->_initial_content_check($conf, $content);
 ok(! defined $rv, "Got expected return value when content was undefined");
 is($step->result(),
     q{no}, "Got expected result when content was undefined");
+
+########## _handle_version() ##########
 
 my $version;
 $version = 0;
@@ -85,9 +91,14 @@ is($conf->data->get('new_perldoc'), 1,
 is($conf->data->get('perldoc'), 'another_path_to_pd',
     "... and expected 'perldoc' path");
 
+########## _handle_old_perldoc() ##########
+
 $version = $step->_handle_old_perldoc();
 is($version, 1, "Got expected version setting for old perldoc");
-is($step->result(), q{yes, old version}, "Got expected result when old perldoc");
+is($step->result(), q{yes, old version},
+    "Got expected result when old perldoc");
+
+########## _handle_no_perldoc() ##########
 
 $version = $step->_handle_no_perldoc();
 is($version, 0, "Got expected version setting for no perldoc");
@@ -99,7 +110,7 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-auto_perldoc-01.t - test config::auto::perldoc
+auto_perldoc-01.t - test auto::perldoc
 
 =head1 SYNOPSIS
 
@@ -109,7 +120,7 @@ auto_perldoc-01.t - test config::auto::perldoc
 
 The files in this directory test functionality used by F<Configure.pl>.
 
-The tests in this file test subroutines exported by config::auto::perldoc.
+The tests in this file test auto::perldoc.
 
 =head1 AUTHOR
 

@@ -136,7 +136,7 @@ SKIP:  {
 
 $conf->replenish($serialized);
 
-########## not Darwin; verbose ##########
+########## not Darwin; --verbose ##########
 
 $args = process_options( {
     argv            => [ q{--verbose} ],
@@ -162,7 +162,7 @@ $step = test_step_constructor_and_description($conf);
 
 $conf->replenish($serialized);
 
-########## Darwin; verbose; no Fink ##########
+########## Darwin; --verbose; no Fink ##########
 
 $args = process_options( {
     argv            => [ q{--verbose} ],
@@ -190,7 +190,7 @@ SKIP:  {
 
 $conf->replenish($serialized);
 
-########## Darwin; verbose; defective Fink ##########
+########## Darwin; --verbose; defective Fink ##########
 
 $args = process_options( {
     argv            => [ q{--verbose} ],
@@ -224,7 +224,7 @@ SKIP:  {
 
 $conf->replenish($serialized);
 
-########## Darwin; verbose; defective Fink ##########
+########## Darwin; --verbose; defective Fink ##########
 
 $args = process_options( {
     argv            => [ q{--verbose} ],

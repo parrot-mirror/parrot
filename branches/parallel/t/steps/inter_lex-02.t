@@ -48,7 +48,7 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-inter_lex-02.t - test config::inter::lex
+inter_lex-02.t - test inter::lex
 
 =head1 SYNOPSIS
 
@@ -58,11 +58,7 @@ inter_lex-02.t - test config::inter::lex
 
 The files in this directory test functionality used by F<Configure.pl>.
 
-The tests in this file test subroutines exported by config::inter::lex.  In
-this case, the C<--ask> and C<--maintainer> options are provided but an
-environmental variable was provided in order to trick the package into not
-finding a real F<lex>-equivalent program.  As a result, no prompt is ever
-reached.
+The tests in this file test inter::lex.
 
 =head1 AUTHOR
 

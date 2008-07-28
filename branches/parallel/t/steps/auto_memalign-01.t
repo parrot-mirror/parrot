@@ -266,7 +266,7 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-auto_memalign-01.t - test config::auto::memalign
+auto_memalign-01.t - test auto::memalign
 
 =head1 SYNOPSIS
 

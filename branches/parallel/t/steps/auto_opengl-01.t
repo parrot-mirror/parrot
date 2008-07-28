@@ -19,6 +19,8 @@ use Parrot::Configure::Test qw(
 );
 use IO::CaptureOutput qw| capture |;
 
+########## --without-opengl ##########
+
 my $args = process_options(
     {
         argv => [ q{--without-opengl} ],
@@ -43,6 +45,8 @@ is( $conf->data->get( 'has_opengl' ), 0,
     "Got expected value for 'has_opengl'");
 
 $conf->replenish($serialized);
+
+########## _add_to_libs() ##########
 
 $args = process_options(
     {
@@ -135,6 +139,8 @@ $conf->data->set( libs => $initial_libs );
 
 $conf->replenish($serialized);
 
+########## --verbose; _evaluate_cc_run() ##########
+
 $args = process_options(
     {
         argv => [ q{--verbose} ],
@@ -189,6 +195,8 @@ my $test = qq{$try[0] $try[1]\n};
     );
 }
 
+########## _handle_glut() ##########
+
 {
     my $glut_api_version = '4';
     my $glut_brand = 'freeglut';
@@ -208,7 +216,6 @@ my $test = qq{$try[0] $try[1]\n};
         "Got expected value for has_glut");
     is( $conf->data->get( 'HAS_GLUT' ),  $glut_api_version,
         "Got expected value for HAS_GLUT");
-
 }
 
 pass("Completed all tests in $0");
@@ -217,7 +224,7 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-  auto_opengl-01.t - test config::auto::opengl
+  auto_opengl-01.t - test auto::opengl
 
 =head1 SYNOPSIS
 
@@ -227,8 +234,7 @@ pass("Completed all tests in $0");
 
 The files in this directory test functionality used by F<Configure.pl>.
 
-The tests in this file test configuration step class auto::opengl in the case
-where C<--without-opengl> has been requested on the command line.
+The tests in this file test configuration step class auto::opengl.
 
 =head1 AUTHOR
 

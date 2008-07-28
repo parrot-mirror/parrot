@@ -87,7 +87,7 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-inter_make-01.t - test config::inter::make
+inter_make-01.t - test inter::make
 
 =head1 SYNOPSIS
 
@@ -97,7 +97,7 @@ inter_make-01.t - test config::inter::make
 
 The files in this directory test functionality used by F<Configure.pl>.
 
-The tests in this file test subroutines exported by config::inter::make.
+The tests in this file test inter::make.
 
 B<Note:>  Since F<inter::make> probes for the F<make> program
 found on a particular OS, it will probably be difficult to achieve high

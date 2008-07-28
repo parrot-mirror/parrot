@@ -98,7 +98,7 @@ SKIP: {
 
 $conf->replenish($serialized);
 
-########## not Darwin; verbose ##########
+########## not Darwin; --verbose ##########
 
 $args = process_options( {
     argv            => [ q{--verbose} ],
@@ -123,7 +123,7 @@ $conf->data->set_p5( 'OSNAME' => $osname );
 
 $conf->replenish($serialized);
 
-########## Darwin; verbose; no Macports ##########
+########## Darwin; --verbose; no Macports ##########
 
 $args = process_options( {
     argv            => [ q{--verbose} ],
@@ -167,7 +167,7 @@ SKIP: {
 
 $conf->replenish($serialized);
 
-########## Darwin; verbose; defective Macports ##########
+########## Darwin; --verbose; defective Macports ##########
 
 $args = process_options( {
     argv            => [ q{--verbose} ],

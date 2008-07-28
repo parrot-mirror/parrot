@@ -14,10 +14,11 @@ use Parrot::Configure;
 use Parrot::Configure::Options qw( process_options );
 use Parrot::Configure::Test qw(
     test_step_thru_runstep
-    rerun_defaults_for_testing
     test_step_constructor_and_description
 );
 use IO::CaptureOutput qw( capture );
+
+########## regular ##########
 
 my $args = process_options( {
     argv => [ ],
@@ -46,6 +47,8 @@ ok($possible_ctags{$conf->data->get('ctags')},
 
 $conf->replenish($serialized);
 
+########## --verbose ##########
+
 $args = process_options( {
     argv => [ q{--verbose} ],
     mode => q{configure},
@@ -66,6 +69,8 @@ $step = test_step_constructor_and_description($conf);
 
 $conf->replenish($serialized);
 
+########## _evaluate_ctags() ##########
+
 $args = process_options( {
     argv => [ ],
     mode => q{configure},
@@ -82,6 +87,8 @@ is($conf->data->get('ctags'), $pseudo_ctags,
 is($step->result(), q{yes}, "Got expected result");
 
 $conf->replenish($serialized);
+
+########## _probe_for_ctags_output() ##########
 
 $args = process_options( {
     argv => [ ],
@@ -124,9 +131,7 @@ t/steps/auto_ctags-01.t - tests Parrot::Configure step auto::ctags
 
 =head1 DESCRIPTION
 
-Regression tests for the L<Parrot::Configure step auto::ctags> module.
-This file holds tests for Parrot::Configure step auto::ctags::runstep()
-(a non-exported subroutine).
+This file holds tests for auto::ctags.
 
 =head1 AUTHOR
 

@@ -153,7 +153,7 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-init_defaults-01.t - test config::init::defaults
+init_defaults-01.t - test init::defaults
 
 =head1 SYNOPSIS
 

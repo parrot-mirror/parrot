@@ -23,6 +23,8 @@ use Parrot::Configure::Test qw(
 use Parrot::Configure::Utils qw( capture_output );
 use IO::CaptureOutput qw( capture );
 
+########## --without-icu ##########
+
 my $args = process_options(
     {
         argv => [ q{--without-icu}  ],
@@ -53,6 +55,8 @@ is( $conf->data->get('icu_dir'), q{},
 is( $step->result(), 'not requested', "Got expected result" );
 $step->set_result(q{});  # prepare for subsequent tests
 
+########## _handle_icuconfig_opt() ##########
+
 # Test some internal routines
 my $icuconfig;
 my $phony = q{/path/to/icu-config};
@@ -63,6 +67,8 @@ is($step->_handle_icuconfig_opt('none'), q{},
     "Got expected value for icu-config");
 is($step->_handle_icuconfig_opt($phony), $phony,
     "Got expected value for icu-config");
+
+########## _handle_search_for_icuconfig() ##########
 
 my ($autodetect, $without);
 
@@ -124,6 +130,8 @@ is($without, 0, "Continuing to try to configure with ICU");
         "Got expected verbose output");
 }
 
+########## _handle_autodetect() ##########
+
 ($icuconfig, $autodetect, $without) =
     $step->_handle_autodetect( {
         icuconfig   => $phony,
@@ -156,6 +164,8 @@ is($without, 0, "Continuing to try to configure with ICU");
         "Got expected verbose output");
 }
 
+########## _handle_icushared() ##########
+
 my $icushared;
 
 $icushared = qq{-licui18n -lalpha\n};
@@ -172,6 +182,8 @@ $icushared = undef;
 ($icushared, $without) = $step->_handle_icushared($icushared, 0);
 ok(! defined $icushared, "icushared remains undefined, as expected");
 is($without, 0, "Continuing to try to configure with ICU");
+
+########## _handle_icuheaders() ##########
 
 my $icuheaders;
 ($icuheaders, $without) =
@@ -226,6 +238,8 @@ my $cwd = cwd();
     chdir $cwd or croak "Unable to change back to starting directory";
 }
 
+########## _try_icuconfig() ##########
+
 ($without, $icushared, $icuheaders) =
     $step->_try_icuconfig(
         $conf,
@@ -270,6 +284,8 @@ is($without, 0, "Still trying to configure with ICU");
 ok(! defined $icushared, "icushared undefined, as expected");
 ok(! defined $icuheaders, "icuheaders undefined, as expected");
 is($step->result(), q{}, "result is still empty string, as expected");
+
+########## _verbose_report() ##########
 
 my $die = auto::icu::_die_message();
 like($die, qr/Something is wrong with your ICU installation/s,
@@ -324,6 +340,8 @@ like($die, qr/Something is wrong with your ICU installation/s,
     ok(! $stdout, "No verbose output, as expected");
 }
 
+########## _handle_icuconfig_errors() ##########
+
 {
     my ($stdout, $stderr);
     capture(
@@ -343,6 +361,8 @@ like($die, qr/Something is wrong with your ICU installation/s,
     like($stderr, qr/Something is wrong with your ICU installation/s,
         "Got expected warnings");
 }
+
+########## _handle_ccflags_status() ##########
 
 $icuheaders = q{alpha};
 my $status = $conf->data->get( 'ccflags' );
@@ -416,6 +436,8 @@ like($conf->data->get( 'ccflags'),
 );
 $conf->data->set( ccflags => $status ); # re-set for next test
 
+########## _set_no_configure_with_icu() ##########
+
 $conf->data->set( 'has_icu', undef );
 $conf->data->set( 'icu_shared', undef );
 $conf->data->set( 'icu_dir', undef );
@@ -434,6 +456,8 @@ $conf->data->set( 'icu_shared', undef );
 $conf->data->set( 'icu_dir', undef );
 
 $conf->replenish($serialized);
+
+########## --without-icu; --icu-config=none ##########
 
 $args = process_options( {
     argv => [ q{--without-icu}, q{--icu-config=none}  ],
@@ -455,6 +479,8 @@ is( $conf->data->get('icu_dir'), q{},
 is( $step->result(), 'not requested', "Got expected result" );
 
 $conf->replenish($serialized);
+
+########## --icu-config=1; --icuheaders; --icushared ##########
 
 {
     my ($stdout, $stderr, $ret);
@@ -492,6 +518,8 @@ $conf->replenish($serialized);
 
 $conf->replenish($serialized);
 
+########## --verbose ##########
+
 $args = process_options( {
     argv => [ q{--verbose} ],
     mode => q{configure},
@@ -502,7 +530,6 @@ $conf->options->set( %{$args} );
 $step = test_step_constructor_and_description($conf);
 $phony = q{phony};
 $step->{icuconfig_default} = $phony;
-#print STDERR Dumper ($step, $conf);
 
 {
     my ($stdout, $stderr);
@@ -545,6 +572,8 @@ $conf->options->set( verbose => undef );
 
 $conf->replenish($serialized);
 
+########## --icuheaders ##########
+
 {
     my ($stdout, $stderr, $ret);
     eval { ($stdout, $stderr, $ret) =
@@ -582,6 +611,8 @@ $conf->replenish($serialized);
 }
 
 $conf->replenish($serialized);
+
+########## --verbose; _try_icuconfig() ##########
 
 {
     my ($stdout, $stderr, $ret);
@@ -639,7 +670,7 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-auto_icu-01.t - test config::auto::icu
+auto_icu-01.t - test auto::icu
 
 =head1 SYNOPSIS
 
@@ -649,9 +680,7 @@ auto_icu-01.t - test config::auto::icu
 
 The files in this directory test functionality used by F<Configure.pl>.
 
-The tests in this file test config::auto::icu in the case where configuration
-without ICU is requested.  Also tested are most of the internal subroutines
-and methods.
+The tests in this file test auto::icu.
 
 =head1 AUTHOR
 

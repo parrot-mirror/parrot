@@ -20,6 +20,8 @@ use Parrot::Configure::Test qw(
 );
 use Parrot::Configure::Utils qw( _slurp );
 
+########## regular ##########
+
 my $args = process_options(
     {
         argv => [ ],
@@ -39,6 +41,8 @@ ok(-f $step->{templates}->{config_h}, "Template for config_h located");
 ok(-f $step->{templates}->{feature_h}, "Template for feature_h located");
 
 $conf->replenish($serialized);
+
+########## --define; _handle_define_option() ##########
 
 $args = process_options( {
     argv => [ q{--define=inet_aton} ],
@@ -69,7 +73,7 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-gen_config_h-01.t - test config::gen::config_h
+gen_config_h-01.t - test gen::config_h
 
 =head1 SYNOPSIS
 

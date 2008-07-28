@@ -18,6 +18,8 @@ use Parrot::Configure::Test qw(
     test_step_constructor_and_description
 );
 
+########## regular ##########
+
 my $args = process_options(
     {
         argv => [ ],
@@ -42,7 +44,7 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-gen_core_pmcs-01.t - test config::gen::core_pmcs
+gen_core_pmcs-01.t - test gen::core_pmcs
 
 =head1 SYNOPSIS
 

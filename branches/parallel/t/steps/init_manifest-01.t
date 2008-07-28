@@ -44,7 +44,7 @@ ok( $step->description(), "$step_name has description" );
 ok(defined ($step->result), "result defined");
 ok(! ($step->result), "result not yet true");
 my $ret = $step->runstep($conf);
-ok( defined $ret, "$step_name runstep() returned defined value" );
+ok( defined $ret, "runstep() returned defined value" );
 is( $step->result, q{skipped},
     "Because of --nomanicheck, result is 'skipped'." );
 
@@ -80,7 +80,7 @@ my $cwd = cwd();
             \$stdout,
             \$stderr,
         );
-        is( $rv, undef, "$step_name runstep returned undef" );
+        is( $rv, undef, "runstep returned undef" );
     }
     unlink qq{$tdir/MANIFEST}
         or croak "Unable to delete file after testing";
@@ -93,7 +93,7 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-init_manifest-01.t - test config::init::manifest
+init_manifest-01.t - test init::manifest
 
 =head1 SYNOPSIS
 
