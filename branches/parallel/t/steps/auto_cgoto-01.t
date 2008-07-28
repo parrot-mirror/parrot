@@ -19,6 +19,8 @@ use Parrot::Configure::Test qw(
 );
 use IO::CaptureOutput qw( capture );
 
+########### --miniparrot  ###########
+
 my $args = process_options(
     {
         argv => [ q{--miniparrot} ],
@@ -41,6 +43,8 @@ is($step->result(), q{skipped}, "Expected result was set");
 
 $conf->replenish($serialized);
 
+########### regular ###########
+
 $args = process_options( {
     argv => [ ],
     mode => q{configure},
@@ -60,6 +64,8 @@ ok(defined($conf->data->get('cg_flag')), "An attribute has been defined");
 
 $conf->replenish($serialized);
 
+########### _probe_for_cgoto() ###########
+
 $args = process_options( {
     argv => [ ],
     mode => q{configure},
@@ -77,6 +83,8 @@ is(auto::cgoto::_probe_for_cgoto($conf), 0,
 $conf->options->set(cgoto => undef);
 ok(defined(auto::cgoto::_probe_for_cgoto($conf)),
     "Probe returned a defined value");
+
+########### _evaluate_cgoto() ###########
 
 $step->_evaluate_cgoto($conf, 1);
 ok($conf->data->get('TEMP_cg_h'), "An attribute was set to true value");
@@ -124,11 +132,16 @@ $step = test_step_constructor_and_description($conf);
         sub { $step->_evaluate_cgoto($conf, 0) },
         \$stdout
     );
-    is($conf->data->get('TEMP_cg_h'), q{}, "An attribute was set to empty string");
-    is($conf->data->get('TEMP_cg_c'), q{}, "An attribute was set to empty string");
-    is($conf->data->get('TEMP_cg_o'), q{}, "An attribute was set to empty string");
-    is($conf->data->get('TEMP_cg_r'), q{}, "An attribute was set to empty string");
-    is($conf->data->get('cg_flag'), q{}, "An attribute was set to empty string");
+    is($conf->data->get('TEMP_cg_h'), q{},
+        "An attribute was set to empty string");
+    is($conf->data->get('TEMP_cg_c'), q{},
+        "An attribute was set to empty string");
+    is($conf->data->get('TEMP_cg_o'), q{},
+        "An attribute was set to empty string");
+    is($conf->data->get('TEMP_cg_r'), q{},
+        "An attribute was set to empty string");
+    is($conf->data->get('cg_flag'), q{},
+        "An attribute was set to empty string");
     is($step->result(), q{no}, "Expected result was set");
 }
 
@@ -139,7 +152,7 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-auto_cgoto-01.t - test config::auto::cgoto
+auto_cgoto-01.t - test auto::cgoto
 
 =head1 SYNOPSIS
 
@@ -149,7 +162,7 @@ auto_cgoto-01.t - test config::auto::cgoto
 
 The files in this directory test functionality used by F<Configure.pl>.
 
-The tests in this file test subroutines exported by config::auto::cgoto.
+The tests in this file test auto::cgoto.
 
 =head1 AUTHOR
 

@@ -19,7 +19,7 @@ use Parrot::Configure::Test qw(
 );
 use IO::CaptureOutput qw| capture |;
 
-########## miniparrot ##########
+########## --miniparrot ##########
 
 my $args = process_options(
     {
@@ -81,7 +81,7 @@ my $errstr;
 
 $conf->replenish($serialized);
 
-########## verbose ##########
+########## --verbose ##########
 
 $args = process_options( {
     argv => [ q{--verbose} ],

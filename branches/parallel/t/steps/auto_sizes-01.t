@@ -19,7 +19,7 @@ use Parrot::Configure::Test qw(
 );
 use IO::CaptureOutput qw | capture |;
 
-########## miniparrot ##########
+########## --miniparrot ##########
 
 my $args = process_options(
     {
