@@ -17,13 +17,13 @@
   value = pop argv
   dec argc
 
-  .local pmc __read, toList, __set
-  __read = get_root_global ['_tcl'], '__read'
+  .local pmc readVar, toList, setVar
+  readVar = get_root_global ['_tcl'], 'readVar'
   toList = get_root_global ['_tcl'], 'toList'
-  __set  = get_root_global ['_tcl'], '__set'
+  setVar  = get_root_global ['_tcl'], 'setVar'
 
   .local pmc retval, list
-  list = __read(name)
+  list = readVar(name)
   list = toList(list)
   retval = list
 
@@ -31,8 +31,8 @@
   if argc == 1 goto replace
 
 lset:
-  .local pmc __index
-  __index = get_root_global ['_tcl'], '__index'
+  .local pmc getIndex
+  getIndex = get_root_global ['_tcl'], 'getIndex'
 
   unless argc == 2 goto iterate
   $P0 = argv[1]
@@ -56,7 +56,7 @@ loop:
   if $I0 == $I1 goto outer_loop
 
   $P0 = indices[$I0]
-  $I2 = __index($P0, list)
+  $I2 = getIndex($P0, list)
   if $I2 < 0 goto out_of_range
   $I3 = elements list
   if $I2 >= $I3 goto out_of_range
@@ -71,7 +71,7 @@ loop:
 
 done:
   prev[$I2] = value
-  __set(name, retval)
+  setVar(name, retval)
   .return(retval)
 
 out_of_range:
@@ -81,7 +81,7 @@ wrong_args:
   die 'wrong # args: should be "lset listVar index ?index...? value"'
 
 replace:
-  .return __set(name, value)
+  .return setVar(name, value)
 .end
 
 # Local Variables:

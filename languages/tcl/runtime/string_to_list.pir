@@ -1,7 +1,7 @@
 .HLL '_Tcl', ''
 .namespace []
 
-.sub __listToDict
+.sub listToDict
   .param pmc list
 
   .local int sizeof_list
@@ -25,9 +25,8 @@ loop:
   $S0 = typeof $P2
   if $S0 == 'TclConst'  goto is_string
   if $S0 == 'TclString'  goto is_string
-  if $S0 == 'String'  goto is_string
 is_list:
-  $P2 = __listToDict($P2)
+  $P2 = listToDict($P2)
   result[$S1] = $P2
   goto loop
 
@@ -37,7 +36,7 @@ is_string:
   $I0 = elements $P3
   if $I0 <= 1 goto only_string
   push_eh only_string
-    $P3 = __listToDict($P3)
+    $P3 = listToDict($P3)
   pop_eh
   result[$S1] = $P3
   goto loop
@@ -53,13 +52,13 @@ odd_args:
   die 'missing value to go with key'
 .end
 
-.sub __stringToDict
+.sub stringToDict
   .param string str
 
   .local pmc list
   $P0 = new 'TclString'
   list = $P0.'get_list'(str)
-  .return __listToDict(list)
+  .return listToDict(list)
 .end
 
 # Local Variables:

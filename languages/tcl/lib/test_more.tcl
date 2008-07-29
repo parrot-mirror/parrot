@@ -25,11 +25,11 @@ set very_bad_global_variable_test_num 0
 
 proc is {value expected {description ""} {special {}}}  {
     global very_bad_global_variable_test_num
-    incr  very_bad_global_variable_test_num 
-    
+    incr  very_bad_global_variable_test_num
+
     set num $very_bad_global_variable_test_num
     set type ""
-  
+
     if {[llength $special] == 2} {
         set type [string toupper [lindex $special 0]]
         if {$type eq "TODO"} {
@@ -46,7 +46,7 @@ proc is {value expected {description ""} {special {}}}  {
         if  {$description ne ""} {
             set description " - $description"
         }
-    } 
+    }
 
     if {$value eq $expected} {
         puts "ok $num$description"
@@ -70,7 +70,7 @@ proc eval_is {code expected {description ""} {special {}}}  {
         set boolean [string compare -nocase [lindex $special 0] skip]
         if {! $boolean} {
             global very_bad_global_variable_test_num
-            incr  very_bad_global_variable_test_num 
+            incr  very_bad_global_variable_test_num
             puts "ok $very_bad_global_variable_test_num # $special"
             return 1
         }
@@ -121,28 +121,51 @@ proc diag {diagnostic} {
 
 # A placeholder that simulates the real tcltest's exported test proc.
 proc test {num description args} {
-    global skipped_tests
-    if {![info exists skipped_tests]} {
+    global skip_tests
+    global todo_tests
+    global abort_after
+    if {![info exists skip_tests]} {
         # get listing of all the tests we can't run.
         source lib/skipped_tests.tcl
     }
-    global abort_after
+
     set full_desc "$num $description"
 
-    set should_skip [dict filter $skipped_tests script {K V} {
+    set should_skip [dict filter $skip_tests script {K V} {
         set val [lsearch -exact $V $num]
         expr {$val != -1}
     }]
 
-    set reason [dict keys $should_skip]
+    set skip_reason [dict keys $should_skip]
 
-    if {[string length $reason]} {
-        pass $full_desc [list SKIP $reason]
+    set should_todo [dict filter $todo_tests script {K V} {
+        set matched no
+        foreach element $V {
+          if {[string match $element $num]} {
+	    set matched yes
+	    break
+	  }
+	}
+        set matched
+    }]
+
+    set todo_reason [dict keys $should_todo]
+
+    if {[string length $skip_reason]} {
+        pass $full_desc [list SKIP $skip_reason]
     } elseif {[llength $args] == 2} {
-        eval_is [lindex $args 0] [lindex $args 1] $full_desc
+        if {[string length $todo_reason]} {
+          eval_is [lindex $args 0] [lindex $args 1] $full_desc "TODO {$todo_reason}"
+	} else {
+          eval_is [lindex $args 0] [lindex $args 1] $full_desc
+	}
     } elseif {[llength $args] == 3} {
         # XXX : we're just skipping the constraint here...
-        eval_is [lindex $args 1] [lindex $args 2] $full_desc
+        if {[string length $todo_reason]} {
+          eval_is [lindex $args 1] [lindex $args 2] $full_desc "TODO {$todo_reason}"
+	} else {
+          eval_is [lindex $args 1] [lindex $args 2] $full_desc
+	}
     } else {
         # Skip test if too many or two few args.
         pass $full_desc [list SKIP {can't deal with this version of test yet}]
@@ -163,7 +186,7 @@ proc test {num description args} {
 # when we shouldn't.
 
 proc testConstraint     {args} {return 0}
-proc temporaryDirectory {args} {return 0}
+proc temporaryDirectory {args} {return .}
 proc makeFile           {args} {return 0}
 proc removeFile         {args} {return 0}
 proc bytestring         {args} {return 0}
@@ -173,6 +196,7 @@ proc interpreter        {args} {return 0}
 proc interp             {args} {return 0}
 proc safeInterp         {args} {return 0}
 proc pid                {args} {return 0}
+proc auto_load          {args} {return 0}
 proc child              {args} {return 0}
 proc child-trusted      {args} {return 0}
 proc makeDirectory      {args} {return 0}
@@ -180,8 +204,21 @@ proc removeDirectory    {args} {return 0}
 proc testobj            {args} {return 0}
 proc testsetplatform    {args} {return 0}
 proc testevalex         {cmd}  { uplevel {*}$cmd }
+proc cleanupTests       {args} {return 0}
+proc PowerSet           {args} {return 0}
 
-namespace eval tcltest  {
+set auto_path {}
+
+namespace eval tcl {
+    set OptDescN 0
+}
+
+namespace eval tcltest {
     set verbose 0
-    proc temporaryDirectory {args} {return 0}
-} 
+    set testSingleFile 0
+    set temporaryDirectory .
+    proc temporaryDirectory {args} {return .}
+    proc testConstraint     {args} {return 0}
+    proc test {args} {return [::test {*}$args]}
+    proc cleanupTests       {args} {return 0}
+}

@@ -104,9 +104,9 @@ transform pir (PAST::Var) {
     if $I0 goto array
 
     pir.emit(<<'END_PIR', ret, name)
-  .local pmc __read
-  __read = get_root_global ['_tcl'], '__read'
-  %0 = __read('%1')
+  .local pmc readVar
+  readVar = get_root_global ['_tcl'], 'readVar'
+  %0 = readVar('%1')
 END_PIR
     .return(pir)
 
@@ -118,12 +118,12 @@ array:
     pir .= $P0
     $S0 = index['ret']
     pir.emit(<<'END_PIR', ret, name, $S0)
-  .local pmc __read
-  __read = get_root_global ['_tcl'], '__read'
+  .local pmc readVar
+  readVar = get_root_global ['_tcl'], 'readVar'
   $S0 = %2
   $S0 = '%1(' . $S0
   $S0 = $S0 . ')'
-  %0 = __read($S0)
+  %0 = readVar($S0)
 END_PIR
     .return(pir)
 }
@@ -133,7 +133,7 @@ transform pir (PAST::Op) {
     .local pmc return_register
  
     pir = new 'CodeString'
-    args = new 'ResizablePMCArray'
+    args = new 'TclList'
     iter = node.'child_iter'()
   iter_loop: 
     unless iter goto iter_done
@@ -168,7 +168,7 @@ transform pir (PAST::MathFunc) {
     .local pmc return_register
  
     pir  = new 'CodeString'
-    args = new 'ResizablePMCArray'
+    args = new 'TclList'
     iter = node.'child_iter'()
   iter_loop: 
     unless iter goto iter_done
@@ -200,16 +200,13 @@ transform pir (PAST::StaticCommand) {
     .local string reg
     
     pir  = new 'CodeString'
-    args = new 'ResizablePMCArray'
+    args = new 'TclList'
     children = node.'get_children'()
     iter = new 'Iterator', children
 
     .local string name
     $P0  = shift iter
     name = $P0['value']
-
-    .local int has_expand
-    has_expand = 0
 
   iter_loop: 
     unless iter goto iter_done
@@ -219,12 +216,9 @@ transform pir (PAST::StaticCommand) {
     push args, reg
     pir .= $P0
     $S0 = typeof $P1
-    if $S0 == 'PAST::Expand' goto iter_expand
+    if $S0 == 'PAST::Expand' goto iter_loop
     unless $S0 == 'PAST::Var' goto iter_loop
     pir.emit("    %0 = clone %0", reg)
-    goto iter_loop
-  iter_expand:
-    has_expand = 1
     goto iter_loop
   iter_done:
     .local string retval
@@ -237,22 +231,7 @@ transform pir (PAST::StaticCommand) {
 
     $P0 = shift children
     $S0 = $P0['value']
-    if has_expand goto dynamic
-    $P1 = get_root_global ['_tcl'; 'builtins'], $S0
-    if null $P1 goto dynamic
 
-    $P0 = $P1(retval, children,args)
-    if null $P0 goto dynamic
-
-    .local pmc epoch
-    epoch = get_root_global ['_tcl'], 'epoch'
-    $S0 = pir.unique('dynamic_')
-    pir.emit('  if epoch != %0 goto %1', epoch, $S0)
-    pir .= $P0
-    pir.emit('  goto %0', done_)
-    pir.emit('%0:', $S0)
-
-  dynamic:
     .local string ns
     ns  = ''
     $S0 = join ", ", args
@@ -327,7 +306,7 @@ transform pir (PAST::DynamicCommand) {
     .local pmc args, children, iter, pir, reg
     
     pir  = new 'CodeString'
-    args = new 'ResizablePMCArray'
+    args = new 'TclList'
     children = node.'get_children'()
     iter = new 'Iterator', children
   iter_loop: 
@@ -416,8 +395,8 @@ transform pir (PAST::Cond) {
     .local string cond_result, then_result, else_result
 
     pir = new 'CodeString'
-    pir.emit('  .local pmc __boolean')
-    pir.emit('  __boolean = get_root_global ["_tcl"], "__boolean"')
+    pir.emit('  .local pmc toBoolean')
+    pir.emit('  toBoolean = get_root_global ["_tcl"], "toBoolean"')
 
     # This node has 3 children. generate PIR so that:
     # if node1 then node2 else node3
@@ -435,7 +414,7 @@ transform pir (PAST::Cond) {
     pir .= $S0
     cond_result = cond['ret']
 
-    pir.emit("  %0 = __boolean(%0)",    cond_result)
+    pir.emit("  %0 = toBoolean(%0)",    cond_result)
     pir.emit("  unless %0 goto else_%1", cond_result, label)
 
     then = children[1] 

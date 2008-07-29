@@ -21,11 +21,11 @@ Create a PIR sub on the fly for this user defined proc.
   args      = argv[1]
   body      = argv[2]
 
-  .local pmc pir_compiler, __script, toList, __namespace
+  .local pmc pir_compiler, compileTcl, toList, splitNamespace
   pir_compiler = compreg 'PIR'
-  __script     = get_root_global ['_tcl'], '__script'
+  compileTcl     = get_root_global ['_tcl'], 'compileTcl'
   toList       = get_root_global ['_tcl'], 'toList'
-  __namespace  = get_root_global ['_tcl'], '__namespace'
+  splitNamespace  = get_root_global ['_tcl'], 'splitNamespace'
 
   .local pmc code, args_code, defaults
   .local string namespace
@@ -36,17 +36,17 @@ Create a PIR sub on the fly for this user defined proc.
 
   .local pmc ns
   .local string name
-  ns   = new 'ResizablePMCArray'
+  ns   = new 'TclList'
   name = ''
 
   if full_name == '' goto create
 
-  ns   = __namespace(full_name, 1)
+  ns   = splitNamespace(full_name, 1)
   $I0  = elements ns
   if $I0 == 0 goto create
   name = pop ns
 
-  if $I0 == 1 goto root
+  if $I0 == 1 goto create
   $P0 = get_hll_namespace ns
   if null $P0 goto unknown_namespace
 
@@ -54,22 +54,6 @@ Create a PIR sub on the fly for this user defined proc.
   namespace = "['" . namespace
   namespace .= "']"
   goto create
-
-root:
-  # check to see if this is inlinable
-  # if it is, we need to update the epoch
-  $S0 = name
-  $P1 = get_root_global ['_tcl'; 'builtins'], $S0
-  if null $P1 goto create
-
-  .local pmc epoch
-  epoch = get_root_global ['_tcl'], 'epoch'
-  inc epoch
-
-  # now we need to delete the helper sub
-  # so we don't try to inline anything else
-  $P1 = get_root_namespace ['_tcl'; 'builtins']
-  delete $P1[$S0]
 
 create:
   code.emit(<<'END_PIR', namespace, name)
@@ -204,7 +188,7 @@ END_PIR
 
   # Save the parsed body.
   .local string parsed_body, body_reg
-  (parsed_body, body_reg) = __script(body, 'pir_only'=>1)
+  (parsed_body, body_reg) = compileTcl(body, 'pir_only'=>1)
 
   code .= parsed_body
 
@@ -251,17 +235,17 @@ END_PIR
   $P1 = new 'TclProc'
   assign $P1, $P0
 
-  $P9 = new 'String'
+  $P9 = new 'TclString'
   $P9 = $S0
   setattribute $P1, 'PIR_source', $P9
 
-  $P9 = new 'String'
+  $P9 = new 'TclString'
   $P9 = 'Tcl'
   setattribute $P1, 'HLL',        $P9
 
   setattribute $P1, 'HLL_source', body
 
-  $P9 = new 'String'
+  $P9 = new 'TclString'
   $P9 = args_info
   setattribute $P1, 'args',       $P9
 
