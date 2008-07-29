@@ -9,20 +9,23 @@ PHP 5.3 has four kinds of literal strings.
 
 =item single quoted
 
-There is neither variable nor special character interpolation within single quotes.
+Neither variable nor backslash interpolation, besides B<\'> and B<\\> is done within single quotes.
 Single quotes need to be escaped with a backslash in order to be not taken for the delimiter.
 A backslash escapes a following backslash.
 A literal backslash needs to be escaped at end of string, as otherwise the delimiting single quote
 would be recognised as a literal single quote.
-Backslashes that preceede any other character besides backslash or single quote are literal.
+In contrast to Perl 5, backslashes that preceede any other character are literal.
 
 =item double quoted
 
-Backslash notation for
-\n, \r, \t, \v, \f, \\, \$, \".
+The escape sequences
+\n, \r, \t, \v, \f, \\, \$, \"
+are recognised.
 
-Octal notation for chars: \[0-7]{1,3}
-Hex notation for chars: \x[0-9A-Fa-f]{1,2}
+Charactes can alse be written in octal notation, \[0-7]{1,3},
+and hexadecimal notation, \x[0-9A-Fa-f]{1,2}.
+The octal notation allows to specify values greater 256. In theses
+cases the value is taken as mod 256.
 
 =item heredoc
 
@@ -54,7 +57,7 @@ Unlike in Perl 5, the newline before the delimiter is not part of the string.
 
 .namespace ['Pipp::Grammar']
 
-# called from code in grammar.pg
+## called from code in grammar.pg
 .sub 'quote_expression' :method
     .param string flags
     .param pmc    options    :slurpy :named
@@ -216,6 +219,9 @@ Unlike in Perl 5, the newline before the delimiter is not part of the string.
     .local string target
     (mob, pos, target) = self.'new'(self)
 
+    .local int dollar_is_literal
+    dollar_is_literal = 0
+
     .local string leadchar, escapes
     escapes = options['escapes']
     leadchar = substr target, pos, 1
@@ -225,8 +231,7 @@ Unlike in Perl 5, the newline before the delimiter is not part of the string.
     if leadchar == '{' goto term_closure
   term_literal:
     mob.'to'(pos)
-    #_dumper(pos)
-    $P0 = mob.'quote_literal'(options)
+    $P0 = mob.'quote_literal'(options, dollar_is_literal)
     unless $P0 goto fail
     pos = $P0.'to'()
     mob['quote_literal'] = $P0
@@ -237,11 +242,14 @@ Unlike in Perl 5, the newline before the delimiter is not part of the string.
   term_scalar:
     mob.'to'(pos)
     $P0 = mob.'var'('action'=>action)
-    unless $P0 goto term_literal
+    unless $P0 goto var_did_not_match
     pos = $P0.'to'()
     key = 'var'
     mob[key] = $P0
     goto succeed
+  var_did_not_match:
+    dollar_is_literal = 1
+    goto term_literal
 
   term_closure:
     mob.'to'(pos)
@@ -269,8 +277,7 @@ Unlike in Perl 5, the newline before the delimiter is not part of the string.
 
 .sub 'quote_literal' :method
     .param pmc options
-
-    #_dumper( options )
+    .param int dollar_is_literal
 
     .local pmc mob
     .local int pos
@@ -305,8 +312,10 @@ Unlike in Perl 5, the newline before the delimiter is not part of the string.
     litchar = substr target, pos, 1
     ##  if we've reached an escape char, we're done
     if litchar == '{' goto add_litchar
+    unless dollar_is_literal goto dollar_is_not_a_literal
+        if litchar == '$' goto add_litchar
+    dollar_is_not_a_literal:
     $I0 = index escapes, litchar
-    #_dumper( escapes )
     if $I0 >= 0 goto succeed
     ##  if this isn't an interpolation, add the char
     unless optq goto add_litchar
@@ -341,13 +350,15 @@ Unlike in Perl 5, the newline before the delimiter is not part of the string.
     goto scan_loop
 
 
-    .local int base, decnum
+    .local int base, decnum, max_digits, cnt_digit
   scan_octal:
     base = 8
+    max_digits = 3
     pos += 1     # octal digits come right after the '\'
     goto got_base
   scan_hex:
     base = 16
+    max_digits = 2
     pos += 2     # skip the 'x'
   got_base:
     ##  Handle hex and octal escapes.
@@ -356,8 +367,11 @@ Unlike in Perl 5, the newline before the delimiter is not part of the string.
     ##  that follow to compute the decimal value of codepoints,
     ##  and add the codepoints to our literal.
     decnum = 0
+    cnt_digit = 1
     $S0 = substr target, pos, 1
   scan_xo_char_loop:
+    if cnt_digit > max_digits goto scan_xo_char_end
+    inc cnt_digit
     $S0 = substr target, pos, 1
     $I0 = index '0123456789abcdef0123456789ABCDEF', $S0
     if $I0 < 0 goto scan_xo_char_end

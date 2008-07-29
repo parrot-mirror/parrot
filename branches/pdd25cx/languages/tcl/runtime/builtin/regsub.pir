@@ -11,7 +11,7 @@
   .local string expression, target, subSpec, original_target
 
   .local pmc options
-  options = new 'ResizablePMCArray'
+  options = new 'TclList'
   push options, 'all'
   push options, 'nocase'
   push options, 'expanded' # RT#40774: use tcl-regexps
@@ -106,11 +106,11 @@ loop_done:
 
   argc = elements argv
   unless argc goto return_it
-  .local pmc __set
-  __set = get_root_global [ '_tcl' ], '__set'
+  .local pmc setVar
+  setVar = get_root_global [ '_tcl' ], 'setVar'
   .local string varName
   varName = shift argv
-  __set (varName, original_target)
+  setVar (varName, original_target)
 
   .return(1)  # XXX fix this when we support multiple replacements
 

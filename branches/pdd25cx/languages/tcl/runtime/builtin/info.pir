@@ -18,7 +18,7 @@
   subcommand_name = shift argv
 
   .local pmc options
-  options = new 'ResizablePMCArray'
+  options = new 'TclList'
   push options, 'args'
   push options, 'body'
   push options, 'cmdcount'
@@ -77,12 +77,12 @@ bad_subcommand:
   .local string procname
   procname = shift argv
 
-  .local pmc __namespace
-  __namespace = get_root_global ['_tcl'], '__namespace'
+  .local pmc splitNamespace
+  splitNamespace = get_root_global ['_tcl'], 'splitNamespace'
 
   .local pmc    ns
   .local string name
-  ns   = __namespace(procname)
+  ns   = splitNamespace(procname)
   name = pop ns
   name = '&' . name
 
@@ -116,12 +116,12 @@ bad_args:
   .local string procname
   procname = argv[0]
 
-  .local pmc __namespace
-  __namespace = get_root_global ['_tcl'], '__namespace'
+  .local pmc splitNamespace
+  splitNamespace = get_root_global ['_tcl'], 'splitNamespace'
 
   .local pmc    ns
   .local string name
-  ns   = __namespace(procname)
+  ns   = splitNamespace(procname)
   name = pop ns
   name = '&' . name
 
@@ -151,7 +151,7 @@ bad_args:
   .local pmc body
   body = argv[0]
   push_eh nope
-    $P1 = __script(body)
+    $P1 = compileTcl(body)
   pop_eh
   .return(1)
 
@@ -183,15 +183,15 @@ bad_args:
   argname  = argv[1]
   varname  = argv[2]
 
-  .local pmc __set
-  __set = get_root_global ['_tcl'], '__set'
+  .local pmc setVar
+  setVar = get_root_global ['_tcl'], 'setVar'
 
-  .local pmc __namespace
-  __namespace = get_root_global ['_tcl'], '__namespace'
+  .local pmc splitNamespace
+  splitNamespace = get_root_global ['_tcl'], 'splitNamespace'
 
   .local pmc    ns
   .local string name
-  ns   = __namespace(procname)
+  ns   = splitNamespace(procname)
   name = pop ns
   name = '&' . name
 
@@ -206,7 +206,7 @@ bad_args:
   $P3 = $P2[argname]
   if_null $P3, check_arg
   push_eh error_on_set
-    __set(varname, $P3)
+    setVar(varname, $P3)
   pop_eh
 
   # store in variable
@@ -232,7 +232,7 @@ not_argument:
 
 no_default:
   push_eh error_on_set
-    __set(varname, '')
+    setVar(varname, '')
   pop_eh
   .return (0)
 
@@ -356,10 +356,10 @@ bad_args:
   .local string varname
   varname = argv[0]
 
-  .local pmc __read, found_var
-  __read  = get_root_global ['_tcl'], '__read'
+  .local pmc readVar, found_var
+  readVar  = get_root_global ['_tcl'], 'readVar'
   push_eh not_found
-    found_var = __read(varname)
+    found_var = readVar(varname)
   pop_eh
   .return (1)
 
@@ -474,15 +474,15 @@ current_level:
   .return($I0)
 
 find_level:
-  .local pmc toInteger, __call_level
+  .local pmc toInteger, getCallLevel
   toInteger    = get_root_global ['_tcl'], 'toInteger'
-  __call_level = get_root_global ['_tcl'], '__call_level'
+  getCallLevel = get_root_global ['_tcl'], 'getCallLevel'
 
   .local pmc level
   level = shift argv
   level = toInteger(level)
   if level >= 0 goto find_info_level
-  level = __call_level(level)
+  level = getCallLevel(level)
   .return(level)
 
 find_info_level:

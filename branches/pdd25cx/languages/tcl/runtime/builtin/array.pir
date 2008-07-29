@@ -21,7 +21,7 @@
   subcommand_name = shift argv
 
   .local pmc options
-  options = new 'ResizablePMCArray'
+  options = new 'TclList'
   options[0] = 'anymore'
   options[1] = 'donesearch'
   options[2] = 'exists'
@@ -53,9 +53,9 @@
 
   null the_array
 
-  .local pmc __find_var
-  __find_var = get_root_global ['_tcl'], '__find_var'
-  the_array  = __find_var(array_name)
+  .local pmc findVar
+  findVar = get_root_global ['_tcl'], 'findVar'
+  the_array  = findVar(array_name)
 
   if_null the_array, array_no
 
@@ -150,7 +150,7 @@ pre_loop:
   .local pmc    val
 
   .local pmc set
-  set = get_root_global ['_tcl'], '__set'
+  set = get_root_global ['_tcl'], 'setVar'
 
   if_null the_array, new_array # create a new array if no var
   goto set_loop
@@ -403,7 +403,7 @@ check_end:
 
   iter = new 'Iterator', the_array
 
-  retval = new 'String'
+  retval = new 'TclString'
   retval = ''
 
 check_loop:
