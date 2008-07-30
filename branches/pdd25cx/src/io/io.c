@@ -1045,7 +1045,8 @@ PIO_putps(PARROT_INTERP, ARGMOD(PMC *pmc), ARGMOD_NULLOK(STRING *s))
             "Cannot put to non-PIO PMC");
 
     if (!io)
-        real_exception(interp, NULL, PIO_ERROR, "Cannot put to a closed PIO handle");
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_PIO_ERROR,
+            "Cannot put to a closed PIO handle");
 
     if (!s)
         return 0;

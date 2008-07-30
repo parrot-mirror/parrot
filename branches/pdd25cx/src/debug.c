@@ -798,8 +798,8 @@ PDB_trace(PARROT_INTERP, ARGIN_NULLOK(const char *command))
     debugee     = pdb->debugee;
 
     /* execute n ops */
-    new_internal_exception(debugee);
-    if (setjmp(debugee->exceptions->destination)) {
+    new_runloop_jump_point(interp);
+    if (setjmp(debugee->current_runloop->resume)) {
         Parrot_eprintf(interp, "Unhandled exception while tracing\n");
         pdb->state |= PDB_STOPPED;
         return;
