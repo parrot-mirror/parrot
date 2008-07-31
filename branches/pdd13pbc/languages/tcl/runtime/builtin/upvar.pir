@@ -1,7 +1,4 @@
-###
-# [upvar]
-
-.HLL 'Tcl', 'tcl_group'
+.HLL 'Tcl', ''
 .namespace []
 
 .sub '&upvar'
@@ -11,15 +8,15 @@
   argc = elements argv
   if argc < 2 goto bad_args
 
-  .local pmc __call_level, call_chain
+  .local pmc getCallLevel, call_chain
   .local int call_level
-  __call_level = get_root_global ['_tcl'], '__call_level'
+  getCallLevel = get_root_global ['_tcl'], 'getCallLevel'
   call_chain   = get_root_global ['_tcl'], 'call_chain'
   call_level   = elements call_chain
 
   .local int new_call_level, defaulted
   $P0 = argv[0]
-  (new_call_level,defaulted) = __call_level($P0)
+  (new_call_level,defaulted) = getCallLevel($P0)
   if defaulted == 1 goto skip
   $P1 = shift argv
   dec argc
@@ -30,13 +27,13 @@ skip:
 
   # for each othervar/myvar pair, created a mapping from
 
-  .local pmc __make, __set, __find_var
-  __make     = get_root_global ['_tcl'], '__make'
-  __set      = get_root_global ['_tcl'], '__set'
-  __find_var = get_root_global ['_tcl'], '__find_var'
+  .local pmc makeVar, setVar, findVar
+  makeVar     = get_root_global ['_tcl'], 'makeVar'
+  setVar      = get_root_global ['_tcl'], 'setVar'
+  findVar = get_root_global ['_tcl'], 'findVar'
 
   .local int counter, argc
-  argc       = argv
+  argc       = elements argv
   counter    = 0
   .local int difference
   difference = call_level - new_call_level
@@ -49,7 +46,7 @@ loop:
   new_var = argv[counter]
 
   if new_call_level == 0 goto store_var
-  $P0 = __find_var(new_var, 'depth'=>1)
+  $P0 = findVar(new_var, 'depth'=>1)
   if null $P0 goto store_var
   $S0 = 'variable "'
   $S0 .= new_var
@@ -58,7 +55,7 @@ loop:
 
 store_var:
   .local pmc saved_call_chain
-  saved_call_chain = new 'ResizablePMCArray'
+  saved_call_chain = new 'TclList'
   $I0 = 0
 save_chain_loop:
   if $I0 == difference goto save_chain_end
@@ -68,7 +65,7 @@ save_chain_loop:
   goto save_chain_loop
 save_chain_end:
 
-  $P1 = __make(old_var, 'depth'=>1)
+  $P1 = makeVar(old_var, 'depth'=>1)
 
   # restore the old level
   $I0 = 0
@@ -87,7 +84,7 @@ restore_chain_end:
 
   .local pmc ns
   .local string name
-  ns   = __namespace(new_var, 1)
+  ns   = splitNamespace(new_var, 1)
   name = pop ns
   name = '$' . name
 

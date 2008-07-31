@@ -1,10 +1,4 @@
-=head1 [gets]
-
-read a line from a channel
-
-=cut
-
-.HLL 'Tcl', 'tcl_group'
+.HLL 'Tcl', ''
 .namespace []
 
 .sub '&gets'
@@ -18,11 +12,11 @@ read a line from a channel
   .local string channelID
   channelID = argv[0]
 
-  .local pmc __channel
-  __channel = get_root_global ['_tcl'], '__channel'
+  .local pmc getChannel
+  getChannel = get_root_global ['_tcl'], 'getChannel'
 
   .local pmc io
-  io = __channel(channelID)
+  io = getChannel(channelID)
 
   $S0 = typeof io
   if $S0 == 'TCPStream' goto stream

@@ -380,7 +380,12 @@ Adds an attribute with the given name to the class or role.
 .sub '!keyword_has'
     .param pmc class
     .param string attr_name
-    .param pmc type
+    .param pmc type     :optional
+    .param int got_type :opt_flag
+    if got_type goto with_type
+    class.'add_attribute'(attr_name)
+    .return ()
+  with_type:
     class.'add_attribute'(attr_name, type)
 .end
 
@@ -425,6 +430,34 @@ Constructs a Mapping, based upon the values list.
 
   values_loop_end:
     .return (result)
+.end
+
+
+=item !find_file_in_path(path, filename)
+
+Searches a standard colon-separated path for a filename.
+
+=cut
+
+.sub '!find_file_in_path'
+    .param string search_path
+    .param string filename
+    .local string path
+    .local pmc iter
+
+    $P0 = split ':', search_path
+    iter = new 'Iterator', $P0
+  iter_start:
+    null path
+    unless iter goto return_path
+    $S0 = shift iter
+    path = concat $S0, '/'
+    path .= filename
+    $I0 = stat path, 0
+    unless $I0 goto iter_start
+
+  return_path:
+    .return(path)
 .end
 
 

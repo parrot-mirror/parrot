@@ -1,7 +1,4 @@
-###
-# [unset]
-
-.HLL 'Tcl', 'tcl_group'
+.HLL 'Tcl', ''
 .namespace []
 
 .sub '&unset'
@@ -29,7 +26,7 @@
 
 flags_done:
   .local pmc find_var, var
-  find_var = get_root_global ['_tcl'], '__find_var'
+  find_var = get_root_global ['_tcl'], 'findVar'
 
   .local string name
 loop:

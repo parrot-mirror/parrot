@@ -1,7 +1,4 @@
-###
-# [variable]
-
-.HLL 'Tcl', 'tcl_group'
+.HLL 'Tcl', ''
 .namespace []
 
 .sub '&variable'
@@ -11,10 +8,10 @@
     argc = elements argv
     if argc == 0 goto bad_args
 
-    .local pmc __find_var, __store_var, __namespace
-    __find_var  = get_root_global ['_tcl'], '__find_var'
-    __store_var = get_root_global ['_tcl'], '__store_var'
-    __namespace = get_root_global ['_tcl'], '__namespace'
+    .local pmc findVar, storeVar, splitNamespace
+    findVar  = get_root_global ['_tcl'], 'findVar'
+    storeVar = get_root_global ['_tcl'], 'storeVar'
+    splitNamespace = get_root_global ['_tcl'], 'splitNamespace'
 
     .local pmc iter, name, value, ns
     iter = new 'Iterator', argv
@@ -37,28 +34,28 @@ store:
     unless iter goto no_value
     value = shift iter
 
-    ns = __namespace(name)
+    ns = splitNamespace(name)
     $S0 = ns[-1]
     # store as a lexical *and* a global
-    __store_var($S0, value)
-    __store_var(name, value, 'global'=>1)
+    storeVar($S0, value)
+    storeVar(name, value, 'global'=>1)
     goto loop
 
 no_value:
-    ns = __namespace(name)
+    ns = splitNamespace(name)
     $S0 = ns[-1]
     # if the variable exists, just insert it as a lexical
     # otherwise, create a new Undef and insert it as both lexical and global
-    value = __find_var(name, 'global'=>1)
+    value = findVar(name, 'global'=>1)
     if null value goto create_new
-    __store_var($S0, value)
+    storeVar($S0, value)
     goto end
 
 create_new:
     value = new 'Undef'
     # store as a lexical *and* a global
-    __store_var($S0, value)
-    __store_var(name, value, 'global'=>1)
+    storeVar($S0, value)
+    storeVar(name, value, 'global'=>1)
 
 end:
     .return('')
