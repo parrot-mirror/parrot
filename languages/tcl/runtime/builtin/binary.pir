@@ -1,4 +1,4 @@
-.HLL 'Tcl', 'tcl_group'
+.HLL 'Tcl', ''
 .namespace []
 
 .sub '&binary'
@@ -13,12 +13,11 @@
     subcommand_name = shift argv
 
     .local pmc options
-    options = new 'ResizablePMCArray'
-    push options, 'format'
-    push options, 'scan'
+    options = get_root_global ['_tcl'; 'helpers'; 'binary'], 'options' 
 
     .local pmc select_option
     select_option  = get_root_global ['_tcl'], 'select_option'
+
     .local string canonical_subcommand
     canonical_subcommand = select_option(options, subcommand_name)
 
@@ -72,8 +71,8 @@ bad_args:
     .local pmc ret
     ret = tcl_binary_scan value, formatString
 
-    .local pmc __set, variables, values
-    __set = get_root_global ['_tcl'], '__set'
+    .local pmc setVar, variables, values
+    setVar = get_root_global ['_tcl'], 'setVar'
     variables = new 'Iterator', argv
     values    = new 'Iterator', ret
 loop:
@@ -83,7 +82,7 @@ loop:
     .local pmc var, value
     var   = shift variables
     value = shift values
-    __set(var, value)
+    setVar(var, value)
 
     goto loop
 end:
@@ -94,6 +93,14 @@ bad_args:
     tcl_error 'wrong # args: should be "binary scan value formatString ?varName varName ...?"'
 .end
 
+.sub 'anon' :anon :load
+    .local pmc options
+    options = new 'TclList'
+    push options, 'format'
+    push options, 'scan'
+
+    set_root_global ['_tcl'; 'helpers'; 'binary'], 'options', options
+.end
 # Local Variables:
 #   mode: pir
 #   fill-column: 100

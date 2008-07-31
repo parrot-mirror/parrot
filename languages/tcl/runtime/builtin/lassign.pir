@@ -1,11 +1,11 @@
-.HLL 'Tcl', 'tcl_group'
+.HLL 'Tcl', ''
 .namespace []
 
 .sub '&lassign'
   .param pmc argv :slurpy
 
   .local int argc
-  argc = argv
+  argc = elements argv
   if argc < 2 goto bad_args
 
   .local pmc retval
@@ -18,7 +18,7 @@
 
   .local string varname
   .local pmc set, value
-  set = get_root_global ['_tcl'], '__set'
+  set = get_root_global ['_tcl'], 'setVar'
 
 var_loop:
   varname = shift argv
@@ -29,7 +29,7 @@ var_loop:
   if argv goto var_loop
 
 list_empty:
-  value = new 'String'
+  value = new 'TclString'
   value = ''
 null_loop:
   unless argv goto var_end

@@ -1,14 +1,11 @@
-.HLL 'Tcl', 'tcl_group'
+.HLL 'Tcl', ''
 .namespace []
 
 .sub '&subst'
     .param pmc argv :slurpy
 
     .local pmc options
-    options = new 'ResizablePMCArray'
-    options[0] = 'nobackslashes'
-    options[1] = 'nocommands'
-    options[2] = 'novariables'
+    options = get_root_global ['_tcl'; 'helpers'; 'subst'], 'options'
 
     .local pmc select_switches, switches
     select_switches  = get_root_global ['_tcl'], 'select_switches'
@@ -35,10 +32,10 @@
     astgrammar = new 'TclExpr::PAST::Grammar'
     pirgrammar = new 'TclExpr::PIR::Grammar'
 
-    .local pmc __namespace, ns
+    .local pmc splitNamespace, ns
     .local string namespace
-    __namespace = get_root_global ['_tcl'], '__namespace'
-    ns          = __namespace('', 2)
+    splitNamespace = get_root_global ['_tcl'], 'splitNamespace'
+    ns          = splitNamespace('', 2)
     namespace   = ''
     $I0 = elements ns
     if $I0 == 0 goto loop
@@ -126,6 +123,17 @@ badswitch:
     $S0 .= '": must be -nobackslashes, -nocommands, or -novariables'
     tcl_error $S0
 .end
+
+.sub 'anon' :anon :load
+    .local pmc options
+    options = new 'TclList'
+    options[0] = 'nobackslashes'
+    options[1] = 'nocommands'
+    options[2] = 'novariables'
+
+    set_root_global ['_tcl'; 'helpers'; 'subst'], 'options', options
+.end
+
 
 # Local Variables:
 #   mode: pir

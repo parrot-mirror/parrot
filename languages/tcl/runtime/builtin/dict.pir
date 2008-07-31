@@ -1,7 +1,4 @@
-###
-# [dict]
-
-.HLL 'Tcl', 'tcl_group'
+.HLL 'Tcl', ''
 .namespace []
 
 .sub '&dict'
@@ -9,36 +6,19 @@
 
   .local pmc retval
 
-  $I3 = argv
-  unless $I3 goto no_args
+  .local int argc
+  argc = elements argv
+  unless argc  goto no_args
 
   .local string subcommand_name
   subcommand_name = shift argv
 
   .local pmc options
-  options = new 'ResizablePMCArray'
-  options[0] = 'append'
-  options[1] = 'create'
-  options[2] = 'exists'
-  options[3] = 'filter'
-  options[4] = 'for'
-  options[5] = 'get'
-  options[6] = 'incr'
-  options[7] = 'info'
-  options[8] = 'keys'
-  options[9] = 'lappend'
-  options[10] = 'merge'
-  options[11] = 'remove'
-  options[12] = 'replace'
-  options[13] = 'set'
-  options[14] = 'size'
-  options[15] = 'unset'
-  options[16] = 'update'
-  options[17] = 'values'
-  options[18] = 'with'
+  options = get_root_global ['_tcl'; 'helpers'; 'dict'], 'options'
 
   .local pmc select_option
   select_option  = get_root_global ['_tcl'], 'select_option'
+
   .local string canonical_subcommand
   canonical_subcommand = select_option(options, subcommand_name, 'subcommand')
 
@@ -68,8 +48,8 @@ no_args:
   if argc < 2 goto bad_args
 
   .local pmc read, set
-  read = get_root_global ['_tcl'], '__read'
-  set  = get_root_global ['_tcl'], '__set'
+  read = get_root_global ['_tcl'], 'readVar'
+  set  = get_root_global ['_tcl'], 'setVar'
 
   .local pmc dictionary, dict_name
   dict_name = shift argv
@@ -107,7 +87,7 @@ loop:
   $S2 = value
   $S2 .= $S1
   .local pmc stringy
-  stringy = new 'String'
+  stringy = new 'TclString'
   stringy = $S2
   copy value, stringy
   goto loop
@@ -204,9 +184,9 @@ bad_args:
   options[1] = 'script'
   options[2] = 'value'
 
-  .local pmc select_option, __script, toBoolean
+  .local pmc select_option, compileTcl, toBoolean
   select_option  = get_root_global ['_tcl'], 'select_option'
-  __script  = get_root_global ['_tcl'], '__script'
+  compileTcl  = get_root_global ['_tcl'], 'compileTcl'
   toBoolean  = get_root_global ['_tcl'], 'toBoolean'
   .local pmc option
   option = shift argv
@@ -270,15 +250,15 @@ do_script_prelude:
   .local pmc retval
   retval = new 'TclDict'
   .local pmc body_proc
-  body_proc = __script(body)
+  body_proc = compileTcl(body)
 
   .local pmc check_key,check_value
 script_loop:
   unless iterator goto end_script_loop
   check_key = shift iterator
-  __set(keyVar,check_key)
+  setVar(keyVar,check_key)
   check_value = dictionary[check_key]
-  __set(valueVar,check_value)
+  setVar(valueVar,check_value)
   push_eh body_handler
     $P1 = body_proc()
   pop_eh
@@ -320,8 +300,8 @@ bad_args:
   if argc != 3 goto bad_args
 
   .local pmc set, script
-  set     = get_root_global ['_tcl'], '__set'
-  script  = get_root_global ['_tcl'], '__script'
+  set     = get_root_global ['_tcl'], 'setVar'
+  script  = get_root_global ['_tcl'], 'compileTcl'
 
   .local pmc varNames
   .local string keyVar, valueVar
@@ -339,17 +319,17 @@ bad_args:
 
   .local pmc body,code
   body = shift argv
-  code = __script(body)
+  code = compileTcl(body)
 
   .local pmc iterator
   iterator = new 'Iterator', dictionary
 for_loop:
   unless iterator goto for_loop_done
   $P1 = shift iterator
-  __set(keyVar,   $P1)
+  setVar(keyVar,   $P1)
   $S1 = $P1
   $P2 = dictionary[$S1]
-  __set(valueVar, $P2)
+  setVar(valueVar, $P2)
 
   push_eh loop_handler
     code()
@@ -425,8 +405,8 @@ bad_args:
   if argc > 3 goto bad_args
 
   .local pmc read, set
-  read = get_root_global ['_tcl'], '__read'
-  set  = get_root_global ['_tcl'], '__set'
+  read = get_root_global ['_tcl'], 'readVar'
+  set  = get_root_global ['_tcl'], 'setVar'
 
   .local pmc dictionary, dict_name
   dict_name = shift argv
@@ -515,8 +495,8 @@ bad_args:
   if argc < 2 goto bad_args
 
   .local pmc read, set
-  read = get_root_global ['_tcl'], '__read'
-  set  = get_root_global ['_tcl'], '__set'
+  read = get_root_global ['_tcl'], 'readVar'
+  set  = get_root_global ['_tcl'], 'setVar'
 
   .local pmc dictionary, dict_name
   dict_name = shift argv
@@ -722,8 +702,8 @@ bad_args:
   if argc < 3 goto bad_args
 
   .local pmc read, set
-  read = get_root_global ['_tcl'], '__read'
-  set  = get_root_global ['_tcl'], '__set'
+  read = get_root_global ['_tcl'], 'readVar'
+  set  = get_root_global ['_tcl'], 'setVar'
 
   .local pmc dictionary, dict_name
   dict_name = shift argv
@@ -804,8 +784,8 @@ bad_args:
   if argc < 2 goto bad_args
 
   .local pmc read, set
-  read = get_root_global ['_tcl'], '__read'
-  set  = get_root_global ['_tcl'], '__set'
+  read = get_root_global ['_tcl'], 'readVar'
+  set  = get_root_global ['_tcl'], 'setVar'
 
   .local pmc dictionary, dict_name
   dict_name = shift argv
@@ -865,8 +845,8 @@ bad_args:
   if $I0 goto bad_args
 
   .local pmc read, set
-  read = get_root_global ['_tcl'], '__read'
-  set  = get_root_global ['_tcl'], '__set'
+  read = get_root_global ['_tcl'], 'readVar'
+  set  = get_root_global ['_tcl'], 'setVar'
 
   .local pmc dictionary, dict_name
   dict_name = shift argv
@@ -887,8 +867,8 @@ got_dict:
   body = pop argv
 
   .local pmc keys,varnames
-  keys = new 'ResizablePMCArray'
-  varnames = new 'ResizablePMCArray'
+  keys = new 'TclList'
+  varnames = new 'TclList'
   # get lists of both keys & varnames, setting the variables.
 key_loop:
   $I0 = elements argv
@@ -898,12 +878,12 @@ key_loop:
   $P2 = shift argv
   push varnames, $P2
   $P3 = dictionary[$P1]
-  __set($P2, $P3)
+  set($P2, $P3)
   goto key_loop
 done_key_loop:
 # run the body of the script. save the return vaalue.
   .local pmc retval
-  $P1 = __script(body)
+  $P1 = compileTcl(body)
   retval = $P1()
 
 # go through the varnames, setting the appropriate keys to those values.
@@ -914,7 +894,7 @@ set_loop:
   unless iter1 goto set_loop_done
   $P1 = shift iter1
   $P2 = shift iter2
-  $P3 = __read($P2)
+  $P3 = readVar($P2)
   dictionary[$P1] = $P3
   goto set_loop
 set_loop_done:
@@ -987,8 +967,8 @@ bad_args:
   if argc ==0  goto bad_args
 
   .local pmc read, set
-  read = get_root_global ['_tcl'], '__read'
-  set  = get_root_global ['_tcl'], '__set'
+  read = get_root_global ['_tcl'], 'readVar'
+  set  = get_root_global ['_tcl'], 'setVar'
 
   .local pmc dictionary, dict_name
   dict_name = shift argv
@@ -1024,18 +1004,18 @@ alias_keys:
   unless iterator goto done_alias
   $P1 = shift iterator
   $P2 = dictionary[$P1]
-  __set($P1,$P2)
+  set($P1,$P2)
   goto alias_keys
 done_alias:
   .local pmc retval
-  $P1 = __script(body)
+  $P1 = compileTcl(body)
   retval = $P1()
 
   iterator = new 'Iterator', dictionary
 update_keys:
   unless iterator goto done_update
   $P1 = shift iterator
-  $P2 = __read($P1)
+  $P2 = readVar($P1)
   dictionary[$P1] = $P2
   goto update_keys
 
@@ -1052,7 +1032,31 @@ bad_args:
   tcl_error 'wrong # args: should be "dict with dictVar ?key ...? script"'
 .end
 
+.sub 'anon' :anon :load
+  .local pmc options
+  options = new 'TclList'
+  options[0] = 'append'
+  options[1] = 'create'
+  options[2] = 'exists'
+  options[3] = 'filter'
+  options[4] = 'for'
+  options[5] = 'get'
+  options[6] = 'incr'
+  options[7] = 'info'
+  options[8] = 'keys'
+  options[9] = 'lappend'
+  options[10] = 'merge'
+  options[11] = 'remove'
+  options[12] = 'replace'
+  options[13] = 'set'
+  options[14] = 'size'
+  options[15] = 'unset'
+  options[16] = 'update'
+  options[17] = 'values'
+  options[18] = 'with'
 
+  set_root_global ['_tcl'; 'helpers'; 'dict'], 'options', options
+.end
 
 # Local Variables:
 #   mode: pir

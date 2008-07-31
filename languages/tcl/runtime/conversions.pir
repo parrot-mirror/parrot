@@ -48,7 +48,7 @@ Given a PMC, get a TclDict from it, converting as needed.
 .sub toDict :multi(TclList)
   .param pmc list
 
-  $P0 = __listToDict(list)
+  $P0 = listToDict(list)
   copy list, $P0
 
   .return(list)
@@ -57,7 +57,7 @@ Given a PMC, get a TclDict from it, converting as needed.
 .sub toDict :multi(_)
   .param pmc value
 
-  $P0 = __stringToDict(value)
+  $P0 = stringToDict(value)
   copy value, $P0
 
   .return(value)
@@ -185,14 +185,14 @@ not_integer_eh:
   rethrow $P99 # preserves the invalid octal message.
 .end
 
-=head2 _Tcl::__index
+=head2 _Tcl::getIndex
 
 Given a tcl string index and an List pmc, return the corresponding numeric
 index.
 
 =cut
 
-.sub __index
+.sub getIndex
   .param string idx
   .param pmc    list
 
@@ -249,13 +249,13 @@ bad_index_done:
   tcl_error $S0
 .end
 
-=head2 _Tcl::__channel
+=head2 _Tcl::getChannel
 
 Given a string, return the appropriate channel.
 
 =cut
 
-.sub __channel
+.sub getChannel
   .param string channelID
 
   .local pmc channels
@@ -283,15 +283,14 @@ bad_channel:
 
 .end
 
-=head2 _Tcl::__expr
+=head2 _Tcl::compileExpr
 
 Given an expression, return a subroutine, or optionally, the raw PIR
 
 =cut
 
-.sub __expr
+.sub compileExpr
     .param string expression
-    .param int    pir_only :named('pir_only') :optional
     .param pmc    ns       :named('ns')       :optional
     .param int    has_ns   :opt_flag
 
@@ -337,7 +336,6 @@ Given an expression, return a subroutine, or optionally, the raw PIR
 
     .local string ret
     ret = ast['ret']
-    if pir_only goto only_pir
 
     .local pmc pir
     pir = new 'CodeString'
@@ -352,9 +350,6 @@ Given an expression, return a subroutine, or optionally, the raw PIR
     $P1 = compreg 'PIR'
     $P2 = $P1(pir)
     .return ($P2)
-
-  only_pir:
-    .return(result, ret)
 
   premature_end:
     $S0 = expression
@@ -372,13 +367,13 @@ Given an expression, return a subroutine, or optionally, the raw PIR
     tcl_error "empty expression\nin expression \"\""
 .end
 
-=head2 _Tcl::__script
+=head2 _Tcl::compileTcl
 
 Given a chunk of tcl code, return a subroutine.
 
 =cut
 
-.sub __script
+.sub compileTcl
     .param string code
     .param int    pir_only    :named('pir_only') :optional
     .param pmc    ns          :named('ns')       :optional
@@ -475,13 +470,13 @@ END_PIR
     tcl_error $S0
 .end
 
-=head2 _Tcl::__namespace
+=head2 _Tcl::splitNamespace
 
 Given a string namespace, return an array of names.
 
 =cut
 
-.sub __namespace
+.sub splitNamespace
   .param string name
   .param int    depth     :optional
   .param int    has_depth :opt_flag
@@ -583,7 +578,7 @@ false:
     .return(0)
 .end
 
-=head2 _Tcl::__call_level
+=head2 _Tcl::getCallLevel
 
 Given a pmc containing the tcl-style call level, return an int-like pmc
 indicating the parrot-style level, and an integer with a boolean 0/1 -
@@ -591,17 +586,17 @@ was this a valid tcl-style level, or did we get this value as a default?
 
 =cut
 
-.sub __call_level
+.sub getCallLevel
   .param pmc tcl_level
   .local pmc parrot_level, defaulted, orig_level
-  defaulted = new 'Integer'
+  defaulted = new 'TclInt'
   defaulted = 0
 
   .local pmc call_chain
   .local int call_level
   call_chain = get_root_global ['_tcl'], 'call_chain'
   call_level = elements call_chain
-  orig_level = new 'Integer'
+  orig_level = new 'TclInt'
   orig_level = call_level
 
   .local int num_length
@@ -627,7 +622,7 @@ get_integer:
 
 default:
   defaulted = 1
-  parrot_level = new 'Integer'
+  parrot_level = new 'TclInt'
   parrot_level = orig_level - 1
   # fallthrough.
 
@@ -687,35 +682,6 @@ not_space:
 
 done:
   .return (contents)
-.end
-
-# Given a list, reverse the elements in the list.
-# Might make sense to make this a method on one of the parrot types we
-# inherit from.
-.sub 'reverse'
-  .param pmc value
-
-  .local int high
-  .local int low
-  .local pmc swap_one
-  .local pmc swap_two
-
-  high = value
-  dec high # need index, not count
-  low = 0
-
- loop:
-  if high <= low goto loop_end
-  swap_one    = value[low]
-  swap_two    = value[high]
-  value[low]  = swap_two
-  value[high] = swap_one
-  inc low
-  dec high
-  goto loop
- loop_end:
-
- .return()
 .end
 
 # Local Variables:

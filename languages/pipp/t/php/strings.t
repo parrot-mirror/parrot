@@ -18,7 +18,7 @@ use FindBin;
 use lib "$FindBin::Bin/../../lib";
 
 # core Perl modules
-use Test::More     tests => 19;
+use Test::More     tests => 21;
 
 # Parrot modules
 use Parrot::Test;
@@ -98,6 +98,20 @@ echo "$var1 $var2\n";
 END_CODE
 VAR1 VAR2
 END_EXPECTED
+
+SKIP: {
+    skip 'runaway process', 1;
+
+    language_output_is( 'Pipp', <<'END_CODE', <<'END_EXPECTED', 'dollar followed by a space' );
+<?php
+ 
+echo ";$ ;", "\n";
+
+?>
+END_CODE
+;$ ;
+END_EXPECTED
+}
 
 language_output_is( 'Pipp', <<'END_CODE', <<'END_EXPECTED', 'curly string interpolation, one var' );
 <?php
@@ -222,6 +236,18 @@ backslash and a dollar: \$dummy
 backslash and twiddles: \{INTERPOLATED}
 END_EXPECTED
 
+language_output_is( 'Pipp', <<'END_CODE', <<'END_EXPECTED', 'curly quotes in double quoted string' );
+<?php
+
+echo ";{;", "\n";
+echo ";\{;", "\n";
+
+?>
+END_CODE
+;{;
+;\{;
+END_EXPECTED
+
 language_output_is( 'Pipp', <<'END_CODE', <<"END_EXPECTED", 'vertical tab, new in PHP 5.3' );
 <?php
 
@@ -282,7 +308,7 @@ END_CODE
 ABC ABC
 END_EXPECTED
 
-language_output_is( 'Pipp', <<'END_CODE', <<"END_EXPECTED", 'hex escapes followed by a digit', todo => 'not implemented yet' );
+language_output_is( 'Pipp', <<'END_CODE', <<"END_EXPECTED", 'hex escapes followed by a digit' );
 <?php
 
 echo "A1B2C3 \x411\x422\x433", "\n";
@@ -292,7 +318,7 @@ END_CODE
 A1B2C3 A1B2C3
 END_EXPECTED
 
-language_output_is( 'Pipp', <<'END_CODE', <<"END_EXPECTED", 'octal escapes followed by a digit', todo => 'not implemented yet' );
+language_output_is( 'Pipp', <<'END_CODE', <<"END_EXPECTED", 'octal escapes followed by a digit' );
 <?php
 
 echo "A1B2C3 \1011\1022\1033", "\n";

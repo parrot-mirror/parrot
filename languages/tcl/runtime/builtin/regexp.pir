@@ -1,25 +1,15 @@
-.HLL 'Tcl', 'tcl_group'
+.HLL 'Tcl', ''
 .namespace []
 
 .sub '&regexp'
   .param pmc argv :slurpy
 
   .local int argc
-  argc = argv
+  argc = elements argv
   if argc < 2 goto badargs
 
   .local pmc options
-  options = new 'ResizablePMCArray'
-  push options, 'all'
-  push options, 'about'
-  push options, 'indices'
-  push options, 'inline'
-  push options, 'expanded' # RT#40774: use tcl-regexps
-  push options, 'line'
-  push options, 'linestop'
-  push options, 'lineanchor'
-  push options, 'nocase'
-  push options, 'start'
+  options = get_root_global ['_tcl'; 'helpers'; 'regexp'], 'options'
 
   .local pmc select_switches, switches
   select_switches  = get_root_global ['_tcl'], 'select_switches'
@@ -47,8 +37,8 @@ ready:
    argc = elements argv
    unless argc goto done
    .local string matchStr, matchVar
-   .local pmc __set
-   __set = get_root_global [ '_tcl' ], '__set'
+   .local pmc setVar
+   setVar = get_root_global [ '_tcl' ], 'setVar'
 
    matchVar = shift argv
 
@@ -63,7 +53,7 @@ ready:
    $I1 -= $I0
    matchStr = substr original_string, $I0, $I1
 
-   __set(matchVar, matchStr)
+   setVar(matchVar, matchStr)
 
    matches = match.'get_array'()
    .local string subMatchStr, subMatchVar
@@ -85,7 +75,7 @@ subMatches:
    subMatchStr = substr original_string, $I0, $I1
 
 set_it:
-   __set(subMatchVar,subMatchStr)
+   setVar(subMatchVar,subMatchStr)
 
 next_submatch:
   goto subMatches
@@ -100,7 +90,7 @@ matches_ind:
   dec $I1
   matchList[0] = $I0
   matchList[1] = $I1
-  __set(matchVar, matchList)
+  setVar(matchVar, matchList)
 
   matches = match.'get_array'()
 
@@ -126,7 +116,7 @@ subMatches_ind_loop:
    subMatchList[1] = $I1
 
 set_it_ind:
-   __set(subMatchVar,subMatchList)
+   setVar(subMatchVar,subMatchList)
 
 next_submatch_ind:
   goto subMatches_ind_loop
@@ -138,6 +128,23 @@ done:
 badargs:
   tcl_error 'wrong # args: should be "regexp ?switches? exp string ?matchVar? ?subMatchVar subMatchVar ...?"'
 
+.end
+
+.sub 'anon' :anon :load
+  .local pmc options
+  options = new 'TclList'
+  push options, 'all'
+  push options, 'about'
+  push options, 'indices'
+  push options, 'inline'
+  push options, 'expanded' # RT#40774: use tcl-regexps
+  push options, 'line'
+  push options, 'linestop'
+  push options, 'lineanchor'
+  push options, 'nocase'
+  push options, 'start'
+
+  set_root_global ['_tcl'; 'helpers'; 'regexp'], 'options', options
 .end
 
 # Local Variables:

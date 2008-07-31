@@ -1,19 +1,16 @@
-###
-# [source]
-
-.HLL 'Tcl', 'tcl_group'
+.HLL 'Tcl', ''
 .namespace []
 
 .sub '&lindex'
   .param pmc argv :slurpy
 
   .local int argc
-  argc = argv
+  argc = elements argv
   if argc < 1 goto bad_args
 
-  .local pmc toList, __index
+  .local pmc toList, getIndex
   toList  = get_root_global ['_tcl'], 'toList'
-  __index = get_root_global ['_tcl'], '__index'
+  getIndex = get_root_global ['_tcl'], 'getIndex'
 
   .local pmc list
   list = argv[0]
@@ -49,7 +46,7 @@ select_loop:
   list = toList(list)
 
   $P0 = indices[$I1]
-  index = __index($P0, list)
+  index = getIndex($P0, list)
 
   $I2 = elements list
   if index >= $I2 goto empty

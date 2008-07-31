@@ -1,58 +1,145 @@
 # skipped_tests - these are all the tests that the partcl implementation
-# cannot pass. Some of the tests cause harness failures (see RT#40716),
-# others simply require some functionality that we haven't implemented yet.
+# not only cannot pass, but cannot compile, or causes a parrot segfault, etc.
+# must use exact test names.
+#
+# todo_tests - these are the tests that are known to fail because they
+# require a feature we haven't implemented yet. Can use globs to specify
+# a range of skippable tests.
 #
 # stored as a dictionary, with the reason as a key, and the list of tests
 # that require the feature (or cause the listed error) as values.
 
-set skipped_tests [dict create \
-  {[binary]} {
+set todo_tests [dict create \
+  {list to string improvements} {
+    list-1.1[23] list-1.26
+  } {update diagnostic messages} {
+    parse-11.2
+  } {parsing errors} {
+    list-1.1[56]
+    parse-6.8 parse-15.15 parse-15.2[78] parse-15.42 parse-15.5[12]
+    parseOld-1.2 parseOld-5.12 parseOld-7.6 parseOld-7.1[01234]
+    parseOld-12.3
+  } {compilation issues} {
+    parse-8.12
+  } {[trace]} {
+    append-7.[12345]
+    appendComp-7.[123456789]
+    if-10.6
+    lset-1.3 lset-5.[12]
+  } {stacktrace support} {
+    apply-2.[2345] apply-5.1
+    cmdMZ-return-2.10 cmdMZ-5.7
+    eval-2.5
+    if-5.3 if-6.4
+    incr-2.3[01]
+    incr-old-2.[45]
+    misc-1.2
+    parse-9.[12] parseOld-10.14
+    set-[24].1
+    switch-4.[15]
+    while-old-4.6
+  } {tcltest - testevalex} {
+    lset-2.2 lset-7.[12] lset-10.3 lset-13.[012] lset-14.[12]
+    parse-11.[58] parse-11.12
+  } {tcltest - testset2} {
+    set-5.1
+  } {tcltest - testparser} {
+    parse-1.[123456789] parse-1.10 parse-2.[12345] parse-3.[1234567]
+    parse-4.[123456] parse-5.[123456789] parse-5.1[01368] parse-5.2[0234567]
+    parse-6.[1234567] parse-6.1[12345678] parse-7.1
+    parse-12.[678] parse-12.1[12348] parse-12.2[01235]
+    parse-14.1[012] parse-14.[123456789] parse-15.[1234]
+  } {tcltest - testevalobjv} {
+    parse-8.[159]
+  } {tcltest - testparsevarname} {
+    parse-12.[123459] parse-12.1[05679] parse-12.24
+  } {tcltest - testparsevar} {
+    parse-13.[12345]
+  } {tcltest - testwordend} {
+    parseOld-14.[123456789] parseOld-14.1? parseOld-14.2[01]
+  } {tcltest - testexprparser} {
+    parseExpr-1.[123] parseExpr-2.[134569] parseExpr-3.[13456]
+    parseExpr-4.[13456] parseExpr-5.[13456] parseExpr-6.[13456]
+    parseExpr-7.[13456] parseExpr-8.[134567] parseExpr-9.[13456789]
+    parseExpr-10.[134567] parseExpr-11.[134567] parseExpr-12.[134567]
+    parseExpr-13.[12345678] parseExpr-14.[1234567] parseExpr-14.1[012]
+    parseExpr-15.[1236789] parseExpr-15.1[0245679] parseExpr-15.2[12569]
+    parseExpr-15.30 parseExpr-16.[12345789] parseExpr-16.11[ab]
+    parseExpr-16.1[03456789] parseExpr-16.2[0123456789]
+    parseExpr-16.3[012456789] parseExpr-16.4[0123] parseExpr-17.1
+  } {tcltest - [makeFile]} {
+    cmdMZ-3.6
+  } {[apply]} {
+    apply-[4678].*
+  } {http://code.google.com/p/partcl/issues/detail?id=2} {
+    subst-5.7 subst-8.[123459] subst-10.[456] subst-10.[123] subst-11.[1236]
+    subst-12.[34]
+  } {[exec]} {
+    subst-5.[89] subst-5.10
+  } {better switch handling} {
+    subst-7.[27]
+    switch-3.1[234]
+  } {[expr wide()]} {
+    incr-3.[12]
+  } {[unknown]} {
+    parse-8.[234] parse-8.1[01]
+  } {[info complete]} {
+    parse-15.17 parse-15.3[689] parse-15.4[35] parse-15.5[09] parse-15.60
+    parseOld-15.2
+  } {[subst]} {
+    parse-16.1
+  } {bigint support} {
+    parseExpr-20.[123]
+  } {[lsort -command]} {
+    cmdIL-1.5
+  } {[lsort -ascii]} {
+    cmdIL-1.4 cmdIL-3.7 cmdIL-4.3[45] cmdIL-5.1
+  } {[lsort -index]} {
+    cmdIL-1.1[1234] cmdIL-1.2[36] cmdIL-3.[23456] cmdIL-3.4.1 cmdIL-5.[234]
+  } {[lsort -indices]} {
+    cmdIL-1.27 cmdIL-1.28
+  } {[lsort -dictionary] - not sorting properly} {
+    cmdIL-4.[145] cmdIL-4.1[27] cmdIL-4.2[089] cmdIL-4.3[0123]
+  } {[lsort] misc} {
+    cmdIL-4.2[45]
+  } {[file] misc} {
+    cmdMZ-1.4
+  } {[return] options} {
+    cmdMZ-return-2.[0123] cmdMZ-return-2.11 cmdMZ-return-3.*
+  } {reset $errorCode} {
+    cmdMZ-4.[12]
+  } {Inf support} {
+    scan-14.[12]
+  } {[scan]} {
+    scan-1.9 scan-3.[389] scan-4.8 scan-4.1[02345679] scan-4.2[3679]
+    scan-4.3[2345789] scan-4.40.[12] scan-4.4[03478] scan-4.5[0123589]
+    scan-4.6[012] scan-5.[123456789] scan-5.1[01234] scan-6.[12345678]
+    scan-7.[345] scan-8.1[0156] scan-10.2 scan-12.[45] scan-13.[56]
+  }
+]
+
+
+set skip_tests [dict create \
+  BOOM {
+    namespace-7.7
+  } {[binary]} {
     string-5.14 string-5.15 string-5.16 string-12.21
     stringComp-5.14 stringComp-5.15 stringComp-5.16 stringComp-9.7
-  } {[exec]} {
-    subst-5.8 subst-5.9 subst-5.10
-  } {[subst]} {
-    parse-18.9 parse-18.12
-  } {[trace]} {
-    append-7.1 append-7.2 append-7.3 append-7.4 append-7.5
-    appendComp-7.1 appendComp-7.2 appendComp-7.3 appendComp-7.4 appendComp-7.5
-    appendComp-7.6 appendComp-7.7 appendComp-7.8 appendComp-7.9
-    if-10.6
-    lset-1.3 lset-5.1 lset-5.2
   } {stacktrace support} {
-    apply-2.2 apply-2.3 apply-2.4 apply-2.5 apply-5.1
     basic-46.1
-    cmdMZ-return-2.10 cmdMZ-3.5 cmdMZ-5.7
     dict-14.12 dict-17.13
     error-1.3 error-2.3 error-2.6 error-4.2 error-4.3 error-4.4
-    eval-2.5
     iocmd-12.6
-    if-5.3 if-6.4
-    incr-2.30 incr-2.31
-    incr-old-2.4 incr-old-2.5
-    misc-1.2
     namespace-8.5 namespace-8.6 namespace-25.6 namespace-25.7 namespace-25.8
     namespace-47.2 namespace-47.4 namespace-47.6 namespace-46.5
-    parse-9.1 parse-9.2 parse-10.14
-    parseOld-10.14
-    proc-old-5.13 proc-old-5.16 proc-old-7.2  proc-old-7.11 proc-old-7.12 
+    proc-old-5.13 proc-old-5.16 proc-old-7.2  proc-old-7.11 proc-old-7.12
     proc-old-7.13 proc-old-7.14
-    set-2.1 set-4.1
-    switch-4.1 switch-4.5
-    while-4.3
-    while-old-4.6
-  } {http://code.google.com/p/partcl/issues/detail?id=2} {
-    subst-5.7
   } {[interp]} {
     basic-11.1 basic-12.1 basic-12.2 basic-13.1 basic-13.2 basic-24.1
-    basic-1.1 basic-10.1 basic-36.1          
+    basic-1.1 basic-10.1 basic-36.1
     namespace-8.7
   } {[file]} {
     cmdAH-2.2 cmdAH-2.3 cmdAH-2.4 cmdAH-2.5 cmdAH-2.6 cmdAH-2.6.1 cmdAH-2.6.2
-  } BOOM {
-    format-3.1 format-3.2
-    namespace-old-2.5 namespace-old-2.6 namespace-old-2.7 namespace-old-4.4
-    namespace-old-7.7
   } {[expr wide()]} {
     dict-11.1 dict-11.2 dict-11.3 dict-11.4 dict-11.5 dict-11.6 dict-11.7
     expr-23.24 expr-23.25 expr-23.26 expr-23.27 expr-23.28 expr-23.29
@@ -67,8 +154,8 @@ set skipped_tests [dict create \
     expr-old-32.51 expr-old-32.52 expr-old-32.53 expr-old-32.48 expr-old-32.49
     expr-old-32.50 expr-old-32.45
   } {[namespace code]} {
-    namespace-22.1 namespace-22.2 namespace-22.3 namespace-22.4 namespace-22.5 
-    namespace-22.6 
+    namespace-22.1 namespace-22.2 namespace-22.3 namespace-22.4 namespace-22.5
+    namespace-22.6
   } {[namespace delete]} {
     namespace-14.1
   } {[namespace export]} {
@@ -88,7 +175,7 @@ set skipped_tests [dict create \
     namespace-27.2 namespace-27.3
   } {nested dictionaries} {
     dict-3.5 dict-3.6 dict-3.7 dict-3.8 dict-3.9 dict-3.10 dict-9.3 dict-9.4
-    dict-9.5 dict-15.3 dict-15.5 dict-16.4
+    dict-9.5 dict-15.3 dict-15.5 dict-16.4 dict-21.16
   } {support for the variable named ""} {
     var-6.3 var-7.12 var-12.1
   } {Cannot get character past end of string} {
@@ -104,7 +191,7 @@ set skipped_tests [dict create \
   } {[seek]} {
     iocmd-5.1 iocmd-5.2 iocmd-5.3 iocmd-5.4 iocmd-12.4
   } {[tell]} {
-    iocmd-6.1 iocmd-6.2 iocmd-6.3 
+    iocmd-6.1 iocmd-6.2 iocmd-6.3
   } {[fblocked]} {
     iocmd-10.1 iocmd-10.2 iocmd-10.3 iocmd-10.4 iocmd-10.5
   } {Inf support} {
@@ -113,7 +200,6 @@ set skipped_tests [dict create \
     expr-41.1 expr-45.7
     expr-old-26.10b expr-old-34.11 expr-old-34.12b expr-old-34.11
     expr-old-34.10
-    scan-14.1 scan-14.2 
   } {NaN support} {
     expr-22.1 expr-22.3  expr-22.5 expr-22.7 expr-22.9 expr-45.8 expr-45.9
     expr-47.3
@@ -125,15 +211,9 @@ set skipped_tests [dict create \
     filename-10.1 filename-10.2 filename-10.3 filename-10.3.1 filename-10.6
     filename-10.7 filename-10.8 filename-10.9 filename-10.10 filename-10.17
     filename-10.18 filename-10.19 filename-10.20 filename-10.21 filename-10.22
-    filename-10.23 filename-10.24 
-  } {[testwordend]} {
-    parseOld-14.1 parseOld-14.2 parseOld-14.3 parseOld-14.4 parseOld-14.5 
-    parseOld-14.6 parseOld-14.7 parseOld-14.8 parseOld-14.9 parseOld-14.10
-    parseOld-14.11 parseOld-14.12 parseOld-14.13 parseOld-14.14 
-    parseOld-14.15 parseOld-14.16 parseOld-14.17 parseOld-14.18 
-    parseOld-14.19 parseOld-14.20 parseOld-14.21
+    filename-10.23 filename-10.24
   } {[testdel]} {
-    rename-4.1 rename-4.2 rename-4.3 rename-4.4 rename-4.5 
+    rename-4.1 rename-4.2 rename-4.3 rename-4.4 rename-4.5
   } {[testchmod]} {
     cmdAH-18.3
   } {[testcmdtoken]} {
@@ -151,36 +231,13 @@ set skipped_tests [dict create \
     expr-old-37.22 expr-old-37.22 expr-old-37.23 expr-old-37.24 expr-old-37.25
   } {[testexprdoubleobj]} {
     expr-39.17 expr-39.19 expr-39.20 expr-39.21 expr-39.22 expr-39.23
-    expr-39.24 expr-39.25 
+    expr-39.24 expr-39.25
   } {[testexprlongobj]} {
     expr-39.1 expr-39.2 expr-39.3 expr-39.4 expr-39.5 expr-39.6 expr-39.8
     expr-39.9 expr-39.11 expr-39.12 expr-39.14 expr-39.15
-  } {[testevalobjv]} {
-    parse-8.1 parse-8.5 parse-8.9
-  } {[testparser]} {
-    parse-1.1 parse-1.2 parse-1.3 parse-1.4 parse-1.5 parse-1.6 parse-1.7
-    parse-1.8 parse-2.1 parse-2.2 parse-2.3 parse-2.4 parse-2.5 parse-3.1
-    parse-3.2 parse-3.3 parse-3.4 parse-3.5 parse-3.6 parse-3.7 parse-4.1
-    parse-4.2 parse-4.3 parse-4.4 parse-4.5 parse-4.6 parse-5.1 parse-5.2
-    parse-5.3 parse-5.4 parse-5.5 parse-5.6 parse-5.7 parse-5.8 parse-5.9
-    parse-5.10 parse-5.11 parse-5.13 parse-5.16 parse-5.18 parse-5.20
-    parse-5.22 parse-5.23 parse-5.24 parse-5.25 parse-5.26 parse-5.27
-    parse-6.1 parse-6.2 parse-6.3 parse-6.4 parse-6.5 parse-6.6 parse-6.7
-    parse-6.11 parse-6.12 parse-6.13 parse-6.14 parse-6.15 parse-6.16
-    parse-6.17 parse-6.18 parse-7.1 parse-12.6 parse-12.7 parse-12.8
-    parse-12.11 parse-12.12 parse-12.13 parse-12.14 parse-12.18 parse-12.20
-    parse-12.21 parse-12.22 parse-12.23 parse-12.25 parse-14.1 parse-14.2
-    parse-14.3 parse-14.4 parse-14.5 parse-14.6 parse-14.7 parse-14.8
-    parse-14.9 parse-14.10 parse-14.11 parse-14.12 parse-15.1 parse-15.2
-    parse-15.3 parse-15.4
-  } {[testparsevar]} {
-    parse-13.1 parse-13.2 parse-13.3 parse-13.4 parse-13.5
-  } {[testparsevarname]} {
-    parse-12.1 parse-12.2 parse-12.3 parse-12.4 parse-12.5 parse-12.9
-    parse-12.10 parse-12.15 parse-12.16 parse-12.17 parse-12.19 parse-12.24
   } {[testupvar]} {
-    upvar-9.1 upvar-9.2 upvar-9.3 upvar-9.4 upvar-9.5 upvar-9.6 upvar-9.7 
-    var-3.3 var-3.4 var-3.4 
+    upvar-9.1 upvar-9.2 upvar-9.3 upvar-9.4 upvar-9.5 upvar-9.6 upvar-9.7
+    var-3.3 var-3.4 var-3.4
   } {[testgetvarfullname]} {
     var-4.1 var-4.2 var-4.3
   } {[testsetnoerr]} {
@@ -188,11 +245,11 @@ set skipped_tests [dict create \
     var-9.1 var-9.11 var-9.12
   } {[testdoubleobj]} {
     execute-3.2 execute-3.8 execute-3.14 execute-3.20 execute-3.26 execute-3.32
-    execute-3.38 execute-3.44 execute-3.50 execute-3.56 execute-3.63 
+    execute-3.38 execute-3.44 execute-3.50 execute-3.56 execute-3.63
     execute-3.64 execute-3.73
   } {[testintobj]} {
     execute-3.1 execute-3.3 execute-3.7 execute-3.9 execute-3.13 execute-3.15
-    execute-3.19 execute-3.21 execute-3.25 execute-3.27 execute-3.31 
+    execute-3.19 execute-3.21 execute-3.25 execute-3.27 execute-3.31
     execute-3.33 execute-3.37 execute-3.39 execute-3.43 execute-3.45
     execute-3.49 execute-3.51 execute-3.55 execute-3.57 execute-3.61
     execute-3.62 execute-3.65 execute-3.66 execute-3.72 execute-3.74
@@ -219,8 +276,6 @@ set skipped_tests [dict create \
     expr-23.43 expr-23.44 expr-23.47 expr-23.48 expr-24.10
     expr-old-32.39 expr-old-32.40 expr-old-36.11 expr-old-36.14 expr-old-34.15
     expr-old-34.16
-  } {[bytestring]} {
-    parseOld-7.12 parseOld-7.13 parseOld-7.14 
   } ]
 
 # Tests after which there is code (in or out of a test) which causes either
@@ -231,15 +286,52 @@ set skipped_tests [dict create \
 # stored as an array of test name -> reason pairs.
 
 array set abort_after {
+  misc-1.2 {300 nearly identical failing tests that require tcltest support}
+
+  parseExpr-20.3 {src/string.c:1109: failed assertion 'src->encoding == Parrot_fixed_8_encoding_ptr'}
+  assocd-1.1           {}
+  async-1.1            {}
+  autoMkindex-1.1      {}
   basic-47.1           {need interp before these can work}
+  case-1.1             {}
   cmdAH-31.13          {invalid command name "cd"}
-  cmdMZ-5.7            {invalid command name "cleanupTests"}
+  cmdinfo-1.1          {}
+  dcall-1.1            {}
+  dstring-1.1          {}
+  encoding-1.1         {}
   env-1.3              {can't read "env(test)" no such element in array}
-  event-4.2            {invalid command name "update"}
+  event-1.1            {invalid command name "update"}
+  fCmd-1.1             {}
   filename-11.13       {invalid command name "cd"}
+  indexObj-1.1         {}
+  init-1.1             {}
   iocmd-12.8           {invalid command name "close"}
+  iogt-1.1             {}
   ioUtil-2.8           {invalid command name "cd"}
+  link-1.1             {}
+  macOSXFCmd-1.1       {}
+  mathop-1.1           {}
+  msgcat-0.0           {}
+  obj-1.1              {}
+  opt-1.1              {don't have the opt package available}
+  package-1.6          {}
+  pkgconfig-1.1        {}
+  pkgMkIndex-4.2       {invalid command name "pkg_mkIndex"}
   parse-19.4           {invalid command name "cleanupTests"}
-  utf-1.4              {Invalid character for UTF-8 encoding}
+  reg-0.1              {invalid command name "doing"}
+  registry-1.1         {}
+  safe-1.1             {}
   source-7.6           {invalid command name "cleanupTests"}
+  Tcl_Main-1.1         {}
+  thread-1.1           {}
+  timer-1.1            {}
+  tcltest-1.1          {}
+  unixFile-1.1         {}
+  unknown-1.1          {}
+  unload-1.1           {}
+  utf-1.1              {}
+  unixInit-1.1         {}
+  winpipe-1.1          {}
+  winNotify-1.1        {}
+  winTime-1.1          {}
 }
