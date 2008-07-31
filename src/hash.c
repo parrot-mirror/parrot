@@ -395,7 +395,7 @@ parrot_mark_hash_values(PARROT_INTERP, ARGIN(Hash *hash))
 
         while (bucket) {
             if (++found > entries)
-                real_exception(interp, NULL, 1,
+            Parrot_ex_throw_from_c_args(interp, NULL, 1,
                         "Detected hash corruption at hash %p entries %d",
                         hash, (int)entries);
 
@@ -419,7 +419,7 @@ parrot_mark_hash_both(PARROT_INTERP, ARGIN(Hash *hash))
 
         while (bucket) {
             if (++found > entries)
-                real_exception(interp, NULL, 1,
+                Parrot_ex_throw_from_c_args(interp, NULL, 1,
                         "Detected hash corruption at hash %p entries %d",
                         hash, (int)entries);
 
