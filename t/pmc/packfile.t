@@ -6,7 +6,7 @@ use strict;
 use warnings;
 use lib qw( . lib ../lib ../../lib );
 use Test::More;
-use Parrot::Test tests => 8;
+use Parrot::Test tests => 11;
 use Parrot::Config;
 
 =head1 NAME
@@ -156,25 +156,22 @@ OUT
 
 # PackfileDirectory.elements
 
-pir_output_is( <<'CODE' . $get_uuid_pbc, <<'OUT', 'set_integer_keyed_str' );
+pir_output_is( <<'CODE' . $get_uuid_pbc, <<'OUT', 'PackfileDirectory.elements' );
 .sub 'test' :main
     .local pmc pf, pfdir
     pf    = _pbc()
     pfdir = pf.'get_directory'()
     $I0   = elements pfdir
-    eq $I0, 0, OUT1
-    print "not "
-    OUT1:
-    say "equal"
+    say $I0
 .end
 CODE
-not equal
+5
 OUT
 
 
 # PackfileDirectory.get_pmc_keyed_int
 
-pir_output_is( <<'CODE' . $get_uuid_pbc, <<'OUT', 'set_integer_keyed_str' );
+pir_output_is( <<'CODE' . $get_uuid_pbc, <<'OUT', 'PackfileDirectory.get_pmc_keyed_int' );
 .sub 'test' :main
     .local pmc pf, pfdir
     pf    = _pbc()
@@ -196,6 +193,96 @@ pir_output_is( <<'CODE' . $get_uuid_pbc, <<'OUT', 'set_integer_keyed_str' );
 .end
 CODE
 done
+OUT
+
+
+# PackfileDirectory.get_string_keyed_int
+
+pir_output_is( <<'CODE' . $get_uuid_pbc, <<'OUT', 'PackfileDirectory.get_string_keyed_int' );
+.sub 'test' :main
+    .local pmc pf, pfdir
+    pf    = _pbc()
+    pfdir = pf.'get_directory'()
+    $I0   = elements pfdir
+    $I1   = 0
+    LOOP:
+    $S0   = pfdir[$I1]
+    say $S0
+    inc $I1
+    eq $I0, $I1, DONE
+    goto LOOP
+    DONE:
+    .return()
+.end
+CODE
+BYTECODE_runtime/parrot/library/uuid.pir
+FIXUP_runtime/parrot/library/uuid.pir
+CONSTANT_runtime/parrot/library/uuid.pir
+PIC_idx_runtime/parrot/library/uuid.pir
+BYTECODE_runtime/parrot/library/uuid.pir_DB
+OUT
+
+
+# PackfileDirectory.get_pmc_keyed_str
+
+pir_output_is( <<'CODE' . $get_uuid_pbc, <<'OUT', 'PackfileDirectory.get_pmc_keyed_str', todo => 'implement this' );
+.sub 'test' :main
+    .local pmc pf, pfdir
+    pf    = _pbc()
+    pfdir = pf.'get_directory'()
+    $I0   = elements pfdir
+    $I1   = 0
+    LOOP:
+    $P0   = pfdir[$I1]
+    $S1   = pfdir[$I1]
+    $P1   = pfdir[$S1]
+    $S0 = $P0
+    $S1 = $P1
+    eq $S0, $S1, GOOD
+    goto ERROR
+    GOOD:
+    inc $I1
+    eq $I0, $I1, DONE
+    goto LOOP
+    DONE:
+    say 'good'
+    .return()
+    ERROR:
+    say 'mismatch'
+.end
+CODE
+good
+OUT
+
+
+# PackfileDirectory.set_pmc_keyed_str
+
+pir_output_is( <<'CODE' . $get_uuid_pbc, <<'OUT', 'PackfileDirectory.set_pmc_keyed_str', todo => 'implement this' );
+.sub 'test' :main
+    .local pmc pf, pfdir
+    pf    = _pbc()
+    pfdir = pf.'get_directory'()
+    $P0   = pfdir[0]
+    $S0   = 'BYTECODE_foo'
+    pfdir[$S0] = $P0
+    $I0   = elements pfdir
+    $I1   = 0
+    LOOP:
+    $S0   = pfdir[$I1]
+    say $S0
+    inc $I1
+    eq $I0, $I1, DONE
+    goto LOOP
+    DONE:
+    .return()
+.end
+CODE
+BYTECODE_runtime/parrot/library/uuid.pir
+FIXUP_runtime/parrot/library/uuid.pir
+CONSTANT_runtime/parrot/library/uuid.pir
+PIC_idx_runtime/parrot/library/uuid.pir
+BYTECODE_runtime/parrot/library/uuid.pir_DB
+BYTECODE_foo
 OUT
 
 

@@ -120,6 +120,22 @@ Search the array for a segment with the given name, and return it if it exists.
 
 /*
 
+=item C<PMC *get_pmc_keyed(PMC *key)>
+
+Fetch a keyed string value from the packfiledirectory object.  Dispatches to
+get_pmc_keyed_str.
+
+=cut
+
+*/
+    VTABLE PMC *get_pmc_keyed(PMC *key) {
+        STRING * const s = VTABLE_get_string(INTERP, key);
+        return SELF.get_pmc_keyed_str(s);
+    }
+
+
+/*
+
 =item C<void set_pmc_keyed_str(STRING *name, PMC *segment)>
 
 Add a segment with the given name to the directory.  If a segment with this
