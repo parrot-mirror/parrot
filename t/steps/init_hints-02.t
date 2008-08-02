@@ -7,7 +7,7 @@ use strict;
 use warnings;
 use Test::More;
 plan( skip_all => 'Macports is Darwin only' ) unless $^O =~ /darwin/;
-plan( tests => 31 );
+plan( tests => 32 );
 use Carp;
 use Cwd;
 use File::Path ();
@@ -70,6 +70,15 @@ is( init::hints::darwin::_get_adjusted_user_options($conf, $flag),
 $flag = 'ld_load_flags';
 is( init::hints::darwin::_get_adjusted_user_options($conf, $flag),
     $fixed, "Got expected value for $flag"); 
+
+# re-set for next test
+map { $conf->options->set($_) => $flags_orig{$_} } @flags;
+
+my $opt = q{-fno-common -DPERL_DARWIN -no-cpp-precomp -fno-strict-aliasing -pipe -I/opt/ -L/Users/me/work/parrot};
+$conf->options->set( ldflags => $opt );
+$flag = 'ldflags';
+is( init::hints::darwin::_get_adjusted_user_options($conf, $flag),
+    $opt, "Got expected value for $flag"); 
 
 # re-set for next test
 map { $conf->options->set($_) => $flags_orig{$_} } @flags;

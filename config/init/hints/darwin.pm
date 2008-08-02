@@ -33,11 +33,6 @@ sub runstep {
 
         my $stored = $conf->data->get($flag) || '';
 
-#        if ($verbose) {
-#            print "Checking $flag...\n";
-#            print "User-specified: " . ($set_flags || '(nil)') . "\n";
-#            print "Pre-check: " . ($stored || '(nil)') . "\n";
-#        }
         _precheck($flag, $set_flags, $stored, $verbose);
 
         for my $arch (@arches) {
