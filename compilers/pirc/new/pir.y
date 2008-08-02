@@ -74,17 +74,15 @@ extern YY_DECL;
 /* some defines to prevent magic "1"s and "0"s in the code */
 #define GLOBALCONST     1
 
-#define IS_PASM_REG     1
-
 #define MAX_NUM_ERRORS  10
 
 
 %}
 
 %union {
-    double dval;
-    int    ival;
-    char  *sval;
+    double              dval;
+    int                 ival;
+    char               *sval;
     struct constant    *constval;
     struct instruction *instr;
     struct expression  *expr;
@@ -92,56 +90,52 @@ extern YY_DECL;
     struct argument    *argm;
     struct invocation  *invo;
 
-    void *fixme;
+    void               *fixme;
 }
 
 
-%token <sval> TK_LABEL  "label"
-       TK_NL            "\n"
+%token <sval> TK_LABEL      "label"
+       TK_NL                "\n"
 
-%token TK_HLL           ".HLL"
-       TK_HLL_MAP       ".HLL_map"
-       TK_N_OPERATORS   "n_operators"
-       TK_PRAGMA        ".pragma"
-       TK_LOADLIB       ".loadlib"
+%token TK_HLL               ".HLL"
+       TK_HLL_MAP           ".HLL_map"
+       TK_N_OPERATORS       "n_operators"
+       TK_PRAGMA            ".pragma"
+       TK_LOADLIB           ".loadlib"
 
-%token TK_SUB           ".sub"
-       TK_END           ".end"
-       TK_PARAM         ".param"
-       TK_LEX           ".lex"
-       TK_LOCAL         ".local"
-       TK_NAMESPACE     ".namespace"
-       TK_INVOCANT      ".invocant"
-       TK_METH_CALL     ".meth_call"
-       TK_GLOBALCONST   ".globalconst"
-       TK_CONST         ".const"
-       TK_RETURN        ".return"
-       TK_YIELD         ".yield"
-       TK_BEGIN_YIELD   ".begin_yield"
-       TK_END_YIELD     ".end_yield"
-       TK_BEGIN_RETURN  ".begin_return"
-       TK_END_RETURN    ".end_return"
-       TK_BEGIN_CALL    ".begin_call"
-       TK_END_CALL      ".end_call"
-       TK_GET_RESULTS   ".get_results"
-       TK_CALL          ".call"
-       TK_ARG           ".arg"
-       TK_RESULT        ".result"
-       TK_NCI_CALL      ".nci_call"
+%token TK_SUB               ".sub"
+       TK_END               ".end"
+       TK_PARAM             ".param"
+       TK_LEX               ".lex"
+       TK_LOCAL             ".local"
+       TK_NAMESPACE         ".namespace"
+       TK_INVOCANT          ".invocant"
+       TK_METH_CALL         ".meth_call"
+       TK_GLOBALCONST       ".globalconst"
+       TK_CONST             ".const"
+       TK_RETURN            ".return"
+       TK_YIELD             ".yield"
+       TK_BEGIN_YIELD       ".begin_yield"
+       TK_END_YIELD         ".end_yield"
+       TK_BEGIN_RETURN      ".begin_return"
+       TK_END_RETURN        ".end_return"
+       TK_BEGIN_CALL        ".begin_call"
+       TK_END_CALL          ".end_call"
+       TK_GET_RESULTS       ".get_results"
+       TK_CALL              ".call"
+       TK_ARG               ".arg"
+       TK_RESULT            ".result"
+       TK_NCI_CALL          ".nci_call"
 
-%token <sval> TK_IDENT         "identifier"
-       <sval> TK_STRINGC       "string constant"
-       <ival> TK_INTC          "integer constant"
-       <dval> TK_NUMC          "number constant"
-       <ival> TK_PASM_PREG     "PMC register"
-       <ival> TK_PASM_NREG     "Number register"
-       <ival> TK_PASM_SREG     "String register"
-       <ival> TK_PASM_IREG     "Integer register"
-       <ival> TK_SYM_PREG      "Symbolic PMC register"
-       <ival> TK_SYM_NREG      "Symbolic number register"
-       <ival> TK_SYM_SREG      "Symbolic string register"
-       <ival> TK_SYM_IREG      "Symbolic integer register"
-       <sval> TK_PARROT_OP     "parrot op"
+%token <sval> TK_IDENT      "identifier"
+       <sval> TK_STRINGC    "string constant"
+       <ival> TK_INTC       "integer constant"
+       <dval> TK_NUMC       "number constant"
+       <ival> TK_PREG       "Symbolic PMC register"
+       <ival> TK_NREG       "Symbolic number register"
+       <ival> TK_SREG       "Symbolic string register"
+       <ival> TK_IREG       "Symbolic integer register"
+       <sval> TK_PARROT_OP  "parrot instruction"
 
 %token TK_INT               "int"
        TK_NUM               "num"
@@ -210,7 +204,6 @@ extern YY_DECL;
              augmented_op
              rel_op
              identifier
-             if_null_type
              sub_id
              opt_paren_string
              paren_string
@@ -222,7 +215,6 @@ extern YY_DECL;
              invokable
              opt_ret_cont
              reg
-             pasm_reg
              target
              result_target
              long_result
@@ -231,7 +223,6 @@ extern YY_DECL;
              opt_target_list
              opt_list
              target_list
-             param_def
              local_id
              local_id_list
 
@@ -269,7 +260,7 @@ extern YY_DECL;
              arg_flag
              sub_flags
              sub_flag
-             if_type
+             if_unless
 
 %type <invo> long_invocation
              methodcall
@@ -323,6 +314,9 @@ extern YY_DECL;
  * The default rule ( $$ = $1; ) is not written explicitly, except if an
  * alternative of the rule has a different action.
  *
+ * Do not write embedded actions; instead, refactor the grammar by adding
+ * a new rule, so that the previously-embedded action becomes a 'normal'
+ * action.
  */
 
 /* Top-level rule */
@@ -366,24 +360,24 @@ loadlib          : ".loadlib" TK_STRINGC
 
 /* HLL stuff     */
 
-hll_specifier    : ".HLL" TK_STRINGC ',' TK_STRINGC
-                           { set_hll($2, $4); }
+hll_specifier    : ".HLL" TK_STRINGC
+                           { /*set_hll($2, $4);*/ }
                  ;
 
-hll_mapping      : ".HLL_map" TK_STRINGC ',' TK_STRINGC
+hll_mapping      : ".HLL_map" TK_STRINGC '=' TK_STRINGC
                            { set_hll_map($2, $4); }
                  ;
 
 
 /* Namespaces */
 
-namespace_decl   : ".namespace" opt_namespace_id
+namespace_decl   : ".namespace" '[' opt_namespace_id ']'
                  ;
 
 opt_namespace_id : /* empty */
                            { $$ = NULL; }
-                 | '[' namespace_id ']'
-                           { $$ = $2; }
+                 | namespace_id
+                           { $$ = $1; }
                  ;
 
 namespace_id     : TK_STRINGC
@@ -395,11 +389,14 @@ namespace_id     : TK_STRINGC
 
 /* Sub definition */
 
-sub_def          : ".sub" sub_id     { new_subr(lexer, $2); }
-                    sub_flags "\n"   { set_sub_flag(lexer, $4); }
-                    parameters
-                    instructions
-                    ".end"
+sub_def          : sub_head sub_flags "\n"
+                   parameters
+                   instructions
+                   ".end"
+                 ;
+
+sub_head         : ".sub" sub_id
+                        { new_subr(lexer, $2); }
                  ;
 
 sub_id           : identifier
@@ -409,7 +406,7 @@ sub_id           : identifier
 sub_flags        : /* empty */
                         { $$ = 0; }
                  | sub_flags sub_flag
-                        { $$ |= $2; }
+                        { { set_sub_flag(lexer, $2); } }
                  ;
 
 sub_flag         : ":anon"
@@ -449,17 +446,13 @@ parameters       : /* empty */
                  | parameters parameter
                  ;
 
-parameter        : ".param" param_def param_flags "\n"
-                        { set_param_flag($2, $3);
+parameter        : ".param" type identifier param_flags "\n"
+                        { /* set_param_flag($2, $3);
                           IF_NAMED_PARAM_SET_ALIAS($2, $3);
+                          */
                         }
                  ;
 
-param_def        : type identifier
-                        { $$ = add_param(lexer, $1, $2); }
-                 | type TK_STRINGC "=>" identifier
-                        { $$ = add_param_named(lexer, $1, $4, $2); }
-                 ;
 
 /* Instructions */
 
@@ -543,6 +536,7 @@ assignment_stat  : target assign_tail "\n"
  *
  *   which should be handled by <target> '=' <parrot_instruction> rule.
  *
+ * TODO: rewrite this whole assignment rule.
  ******************************************************************************/
 
 assign_tail       : augmented_op expression
@@ -603,47 +597,18 @@ keys              : expression
                          { $$ = add_key($1, $3); }
                   ;
 
-conditional_stat  : if_type condition then identifier "\n"
-                         { /* it was "unless", so "invert" the opcode */
-                           if ($1 > 0) {
-                              invert_instr(lexer);
-                           }
-                           add_operand(lexer, expr_from_ident($4));
-                         }
-                  | if_null_type expression then identifier "\n"
-                         { set_instr(lexer, $1);
-                           add_operand(lexer, $2);
-                           add_operand(lexer, expr_from_ident($4));
-                         }
+conditional_stat  : if_unless "null" expression "goto" identifier "\n"
+                  | if_unless expression then identifier "\n"
+                  | if_unless expression rel_op expression "goto" identifier "\n"
                   ;
 
-if_type           : "if"       { $$ = 0; /* no need to invert */ }
+if_unless         : "if"       { $$ = 0; /* no need to invert */ }
                   | "unless"   { $$ = 1; /* yes, invert opname */ }
-                  ;
-
-
-if_null_type      : "if" "null"
-                         { $$ = "if_null"; }
-                  | "unless" "null"
-                         { $$ = "unless_null"; }
                   ;
 
 then              : "goto" /* PIR mode */
                   | ','    /* PASM mode*/
                   ;
-
-
-condition         : expression
-                         { set_instr(lexer, "if");
-                           add_operand(lexer, $1);
-                         }
-                  | expression rel_op expression
-                         { set_instr(lexer, $2);
-                           add_operand(lexer, $1);
-                           add_operand(lexer, $3);
-                         }
-                  ;
-
 
 goto_stat         : "goto" identifier "\n"
                          { set_instr(lexer, "branch");
@@ -783,18 +748,14 @@ method               : invokable
 
 invokable            : identifier
                             { $$ = target_from_ident($1); }
-                     | TK_SYM_PREG
-                            { $$ = reg(PMC_TYPE, $1, !IS_PASM_REG); }
-                     | TK_PASM_PREG
-                            { $$ = reg(PMC_TYPE, $1, IS_PASM_REG); }
+                     | TK_PREG
+                            { $$ = reg(PMC_TYPE, $1, 0); }
                      ;
 
 string_object        : TK_STRINGC
                             { $$ = target_from_string($1); }
-                     | TK_SYM_SREG
-                            { $$ = reg(STRING_TYPE, $1, !IS_PASM_REG); }
-                     | TK_PASM_SREG
-                            { $$ = reg(STRING_TYPE, $1, IS_PASM_REG); }
+                     | TK_SREG
+                            { $$ = reg(STRING_TYPE, $1, 0); }
                      ;
 
 
@@ -1047,17 +1008,10 @@ target      : reg            { $$ = $1; }
             | identifier     { $$ = new_target(UNKNOWN_TYPE, $1); }
             ;
 
-reg         : TK_SYM_PREG    { $$ = reg(PMC_TYPE, $1, !IS_PASM_REG); }
-            | TK_SYM_NREG    { $$ = reg(NUM_TYPE, $1, !IS_PASM_REG); }
-            | TK_SYM_IREG    { $$ = reg(INT_TYPE, $1, !IS_PASM_REG); }
-            | TK_SYM_SREG    { $$ = reg(STRING_TYPE, $1, !IS_PASM_REG); }
-            | pasm_reg
-            ;
-
-pasm_reg    : TK_PASM_PREG   { $$ = reg(PMC_TYPE, $1, IS_PASM_REG); }
-            | TK_PASM_NREG   { $$ = reg(NUM_TYPE, $1, IS_PASM_REG); }
-            | TK_PASM_IREG   { $$ = reg(INT_TYPE, $1, IS_PASM_REG); }
-            | TK_PASM_SREG   { $$ = reg(STRING_TYPE, $1, IS_PASM_REG); }
+reg         : TK_PREG    { $$ = reg(PMC_TYPE, $1, 0); }
+            | TK_NREG    { $$ = reg(NUM_TYPE, $1, 0); }
+            | TK_IREG    { $$ = reg(INT_TYPE, $1, 0); }
+            | TK_SREG    { $$ = reg(STRING_TYPE, $1, 0); }
             ;
 
 identifier  : TK_IDENT

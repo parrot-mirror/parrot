@@ -1,10 +1,4 @@
-=head2 [incr]
-
- Provide introspection about the tcl interpreter. (And by extension, parrot.)
-
-=cut
-
-.HLL 'Tcl', 'tcl_group'
+.HLL 'Tcl', ''
 .namespace []
 
 .sub '&info'
@@ -18,32 +12,11 @@
   subcommand_name = shift argv
 
   .local pmc options
-  options = new 'TclList'
-  push options, 'args'
-  push options, 'body'
-  push options, 'cmdcount'
-  push options, 'commands'
-  push options, 'complete'
-  push options, 'default'
-  push options, 'exists'
-  push options, 'frame'
-  push options, 'functions'
-  push options, 'globals'
-  push options, 'hostname'
-  push options, 'level'
-  push options, 'library'
-  push options, 'loaded'
-  push options, 'locals'
-  push options, 'nameofexecutable'
-  push options, 'patchlevel'
-  push options, 'procs'
-  push options, 'script'
-  push options, 'sharedlibextension'
-  push options, 'tclversion'
-  push options, 'vars'
+  options = get_root_global ['_tcl'; 'helpers'; 'info'], 'options'
 
   .local pmc select_option
   select_option  = get_root_global ['_tcl'], 'select_option'
+
   .local string canonical_subcommand
   canonical_subcommand = select_option(options, subcommand_name)
 
@@ -549,7 +522,7 @@ bad_args:
 .sub 'nameofexecutable'
   .param pmc argv
   .local int argc
-  argc = argv
+  argc = elements argv
   if argc goto bad_args
   $P1 = get_root_global ['_tcl'], 'nameofexecutable'
   .return($P1)
@@ -567,6 +540,35 @@ bad_args:
 .sub 'cmdcount'
   .param pmc argv
   .return(0)
+.end
+
+.sub 'anon' :anon :load
+  .local pmc options
+  options = new 'TclList'
+  push options, 'args'
+  push options, 'body'
+  push options, 'cmdcount'
+  push options, 'commands'
+  push options, 'complete'
+  push options, 'default'
+  push options, 'exists'
+  push options, 'frame'
+  push options, 'functions'
+  push options, 'globals'
+  push options, 'hostname'
+  push options, 'level'
+  push options, 'library'
+  push options, 'loaded'
+  push options, 'locals'
+  push options, 'nameofexecutable'
+  push options, 'patchlevel'
+  push options, 'procs'
+  push options, 'script'
+  push options, 'sharedlibextension'
+  push options, 'tclversion'
+  push options, 'vars'
+
+  set_root_global ['_tcl'; 'helpers'; 'info'], 'options', options
 .end
 
 # Local Variables:
