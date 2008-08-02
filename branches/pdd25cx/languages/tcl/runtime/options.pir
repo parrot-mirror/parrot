@@ -90,7 +90,7 @@ unknown_subcommand:
   error .= '": must be '
   $S1 = optionsToString(options)
   error .= $S1
-  tcl_error error
+  die error
 .end
 
 =head1 hash options = _Tcl::select_switches(array switches, array argv, ?endswitch:0?, ?catchbad:0?, ?name: 'switch'?)
