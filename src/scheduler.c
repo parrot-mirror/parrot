@@ -729,9 +729,9 @@ Parrot_cx_find_handler_local(PARROT_INTERP, ARGIN(PMC *task))
     if (task->vtable->base_type == enum_class_Exception &&
             VTABLE_get_integer_keyed_str(interp, task,
                 CONST_STRING(interp, "handled")) == -1) {
-        iter = VTABLE_get_attr_str(interp, task,
+        iter    = VTABLE_get_attr_str(interp, task,
                 CONST_STRING(interp, "handler_iter"));
-        context = VTABLE_get_pointer(interp, task);
+        context = (Parrot_Context *)VTABLE_get_pointer(interp, task);
     }
     else {
         context = CONTEXT(interp);

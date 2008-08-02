@@ -404,7 +404,7 @@ Store a context for the handler iterator.
 
     VTABLE void set_pointer(void *context) {
         Parrot_Exception * const core_struct = PARROT_EXCEPTION(SELF);
-        core_struct->handler_ctx = context;
+        core_struct->handler_ctx = (Parrot_Context *)context;
     }
 
 /*
