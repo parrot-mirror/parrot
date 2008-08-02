@@ -6,6 +6,11 @@ package init::hints::darwin;
 use strict;
 use warnings;
 
+our %defaults = (
+    uname   => `uname -r`,
+    sw_vers => `sw_vers -productVersion`,
+);
+
 sub runstep {
     my ( $self, $conf ) = @_;
 
@@ -24,18 +29,16 @@ sub runstep {
 
     print "\nChecking for -arch flags not explicitly added:\n" if $verbose;
     for my $flag (@flags) {
-        my $set_flags;
-        if ($flag =~ /^ld/) {
-            $set_flags = $conf->options->get('ldflags')||'';
-        }
-        else {
-            $set_flags = $conf->options->get($flag)||'';
-        }
-        my $stored = $conf->data->get($flag)||'';
+        my $set_flags =  _get_adjusted_user_options($conf, $flag);
 
-        print "Checking $flag...\n" if $verbose;
-        print "User-specified: ".($set_flags||'(nil)')."\n" if $verbose;
-        print "Pre-check: ".($stored||'(nil)')."\n" if $verbose;
+        my $stored = $conf->data->get($flag) || '';
+
+#        if ($verbose) {
+#            print "Checking $flag...\n";
+#            print "User-specified: " . ($set_flags || '(nil)') . "\n";
+#            print "Pre-check: " . ($stored || '(nil)') . "\n";
+#        }
+        _precheck($flag, $set_flags, $stored, $verbose);
 
         for my $arch (@arches) {
             if (!$set_flags || $set_flags !~ /(?:^|\W)-arch\s+$arch(?:\W|$)/) {
@@ -43,30 +46,17 @@ sub runstep {
                 $conf->data->set($flag => $stored);
             }
         }
-        print "Post-check: ".($conf->data->get($flag)||'(nil)')."\n" if $verbose;
+        _postcheck($conf, $flag, $verbose);
     }
     # And now, after possibly losing a few undesired compiler and linker
     # flags, on to the main Darwin config.
 
-    my ( $ccflags, $ldflags, $libs ) = $conf->data->get(qw(ccflags ldflags libs));
+    my ( $ccflags, $ldflags, $libs ) =
+        $conf->data->get(qw(ccflags ldflags libs));
 
-    my $OSVers = `uname -r`;
-    chomp $OSVers;
-    {
-        local $^W;
-        $OSVers =~ /(\d+)/;
-        if ( $1 >= 7 ) {
-            $libs =~ s/-ldl//;
-        }
-    }
+    $libs = _strip_ldl_as_needed($libs);
 
-    unless (exists $ENV{'MACOSX_DEPLOYMENT_TARGET'}) {
-        my $OSX_vers = `sw_vers -productVersion`;
-        chomp $OSX_vers;
-        # remove minor version
-        $OSX_vers =join '.', (split /[.]/, $OSX_vers)[0,1];
-        $ENV{'MACOSX_DEPLOYMENT_TARGET'} = $OSX_vers;
-    }
+    _set_deployment_environment();
 
     my $lib_dir = $conf->data->get('build_dir') . "/blib/lib";
     $ldflags .= " -L$lib_dir";
@@ -89,8 +79,10 @@ sub runstep {
         memalign            => 'some_memalign',
         has_dynamic_linking => 1,
 
-        # RT#43147 when built against a dynamic libparrot installable_parrot records
-        # the path to the blib version of the library
+        # RT 43147:  When built against a dynamic libparrot,
+        # installable_parrot records the path to the blib version 
+        # of the library.
+        
         parrot_is_shared       => 1,
         libparrot_shared       => 'libparrot.$(SOVERSION)$(SHARE_EXT)',
         libparrot_shared_alias => 'libparrot$(SHARE_EXT)',
@@ -101,6 +93,58 @@ sub runstep {
             . "libparrot"
             . $conf->data->get('share_ext')
     );
+}
+
+sub _get_adjusted_user_options {
+    my ($conf, $flag) = @_;
+    my $set_flags = q{};
+    if ($flag =~ /^ld/) {
+        $set_flags = $conf->options->get('ldflags') || '';
+    }
+    else {
+        $set_flags = $conf->options->get($flag) || '';
+    }
+    return $set_flags;
+}
+
+sub _precheck {
+    my ($flag, $set_flags, $stored, $verbose) = @_;
+    if ($verbose) {
+        print "Checking $flag...\n";
+        print "User-specified: " . ($set_flags || '(nil)') . "\n";
+        print "Pre-check: " . ($stored || '(nil)') . "\n";
+    }
+}
+
+sub _postcheck {
+    my ($conf, $flag, $verbose) = @_;
+    if ($verbose) {
+        print "Post-check: ", ( $conf->data->get($flag) or '(nil)' ), "\n";
+    }
+}
+
+sub _strip_ldl_as_needed {
+    my $libs = shift;
+    my $OSVers = $defaults{uname};
+    chomp $OSVers;
+    {
+        local $^W;
+        $OSVers =~ /(\d+)/;
+        if ( $1 >= 7 ) {
+            $libs =~ s/-ldl//;
+        }
+    }
+    return $libs;
+}
+
+sub _set_deployment_environment {
+    unless (defined $ENV{'MACOSX_DEPLOYMENT_TARGET'}) {
+        my $OSX_vers = $defaults{sw_vers};
+        chomp $OSX_vers;
+        # remove minor version
+        $OSX_vers =join '.', (split /[.]/, $OSX_vers)[0,1];
+        $ENV{'MACOSX_DEPLOYMENT_TARGET'} = $OSX_vers;
+    }
 }
 
 1;
