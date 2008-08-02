@@ -1,7 +1,4 @@
-###
-# [string]
-
-.HLL 'Tcl', 'tcl_group'
+.HLL 'Tcl', ''
 .namespace []
 
 .sub '&string'
@@ -9,42 +6,21 @@
 
   .local pmc retval
 
-  $I3 = argv
-  unless $I3 goto no_args
+  .local int argc
+  argc = elements argv
+  unless argc goto no_args
 
   .local string subcommand_name
   subcommand_name = shift argv
 
   .local pmc options
-  options = new 'TclList'
-  push options, 'bytelength'
-  push options, 'compare'
-  push options, 'equal'
-  push options, 'first'
-  push options, 'index'
-  push options, 'is'
-  push options, 'last'
-  push options, 'length'
-  push options, 'map'
-  push options, 'match'
-  push options, 'range'
-  push options, 'repeat'
-  push options, 'replace'
-  push options, 'reverse'
-  push options, 'tolower'
-  push options, 'toupper'
-  push options, 'totitle'
-  push options, 'trim'
-  push options, 'trimleft'
-  push options, 'trimright'
-  push options, 'wordend'
-  push options, 'wordstart'
+  options = get_root_global ['_tcl'; 'helpers'; 'string'], 'options'
 
   .local pmc select_option
   select_option  = get_root_global ['_tcl'], 'select_option'
+
   .local string canonical_subcommand
   canonical_subcommand = select_option(options, subcommand_name)
-
 
   .local pmc subcommand_proc
   null subcommand_proc
@@ -71,7 +47,7 @@ no_args:
   .local int argc
   .local pmc retval
 
-  argc = argv
+  argc = elements argv
   if argc > 3 goto bad_args
   if argc < 2 goto bad_args
   $S1 = argv[0]
@@ -101,7 +77,7 @@ bad_args:
   .local int argc
   .local pmc retval
 
-  argc = argv
+  argc = elements argv
   if argc > 3 goto bad_args
   if argc < 2 goto bad_args
   $S1 = argv[0]
@@ -179,7 +155,7 @@ done:
   .local int argc
   .local pmc retval
 
-  argc = argv
+  argc = elements argv
   if argc > 3 goto bad_args
   if argc < 1 goto bad_args
 
@@ -232,7 +208,7 @@ bad_args:
   .local int argc
   .local pmc retval
 
-  argc = argv
+  argc = elements argv
   if argc > 3 goto bad_args
   if argc < 1 goto bad_args
 
@@ -284,7 +260,7 @@ bad_args:
   .local int argc
   .local pmc retval
 
-  argc = argv
+  argc = elements argv
   if argc > 3 goto bad_args
   if argc < 1 goto bad_args
 
@@ -334,7 +310,7 @@ bad_args:
   .param pmc argv
 
   .local int argc
-  argc = argv
+  argc = elements argv
   if argc != 1 goto bad_length
   $S0 = argv[0]
   $I0 = bytelength $S0
@@ -348,7 +324,7 @@ bad_length:
   .param pmc argv
 
   .local int argc
-  argc = argv
+  argc = elements argv
   if argc != 1 goto bad_length
 
   $S1 = argv[0]
@@ -408,7 +384,7 @@ bad_range:
   .param pmc argv
 
   .local int argc
-  argc = argv
+  argc = elements argv
 
   .local int nocase
   nocase = 0
@@ -463,7 +439,7 @@ bad_match:
   .param pmc argv
 
   .local int argc
-  argc = argv
+  argc = elements argv
 
   if argc != 2 goto bad_repeat
   .local string the_string
@@ -491,7 +467,7 @@ bad_repeat:
   .param pmc argv
 
   .local int argc
-  argc = argv
+  argc = elements argv
   if argc == 0 goto bad_args
   if argc > 3 goto bad_args
   .local int nocase
@@ -572,7 +548,7 @@ bad_args:
 .sub 'equal'
   .param pmc argv
   .local int argc
-  argc = argv
+  argc = elements argv
 
   .local string a, b
   .local int length, nocase
@@ -596,7 +572,7 @@ got_nocase:
   nocase = 1
 gotten:
 
-  argc = argv
+  argc = elements argv
   if argc == 2 goto flags_done
   if argc < 2 goto bad_args
   branch flag_loop
@@ -635,7 +611,7 @@ bad_args:
   .local pmc toNumber
 
   .local int argc
-  argc = argv
+  argc = elements argv
 
   .local int strict
   strict = 0
@@ -830,7 +806,7 @@ bad_args:
   .local pmc getIndex
   getIndex = get_root_global ['_tcl'], 'getIndex'
 
-  argc = argv
+  argc = elements argv
   if argc > 4 goto bad_args
   if argc < 3 goto bad_args
 
@@ -882,7 +858,7 @@ bad_args:
   .local int argc
   .local pmc retval
 
-  argc = argv
+  argc = elements argv
   if argc > 2 goto bad_args
   if argc < 1 goto bad_args
 
@@ -921,7 +897,7 @@ bad_args:
   .local int argc
   .local pmc retval
 
-  argc = argv
+  argc = elements argv
   if argc > 2 goto bad_args
   if argc < 1 goto bad_args
 
@@ -961,7 +937,7 @@ bad_args:
   .local int argc
   .local pmc retval
 
-  argc = argv
+  argc = elements argv
   if argc > 2 goto bad_args
   if argc < 1 goto bad_args
 
@@ -1012,7 +988,7 @@ bad_args:
   .local int size
 
   size = -1
-  argc = argv
+  argc = elements argv
 
   if argc < 1 goto bad_args
 
@@ -1020,7 +996,7 @@ bad_args:
   $S1 = pop argv
 
 args_processment:
-  argc = argv
+  argc = elements argv
   if argc == 0 goto args_processed
   $S4 = shift argv
   if $S4 == '-nocase' goto arg_nocase
@@ -1156,6 +1132,36 @@ ret_val:
 bad_args:
   die 'wrong # args: should be "string wordstart string index"'
 .end
+
+.sub 'anon' :anon :load
+  .local pmc options
+  options = new 'TclList'
+  push options, 'bytelength'
+  push options, 'compare'
+  push options, 'equal'
+  push options, 'first'
+  push options, 'index'
+  push options, 'is'
+  push options, 'last'
+  push options, 'length'
+  push options, 'map'
+  push options, 'match'
+  push options, 'range'
+  push options, 'repeat'
+  push options, 'replace'
+  push options, 'reverse'
+  push options, 'tolower'
+  push options, 'toupper'
+  push options, 'totitle'
+  push options, 'trim'
+  push options, 'trimleft'
+  push options, 'trimright'
+  push options, 'wordend'
+  push options, 'wordstart'
+
+  set_root_global [ '_tcl'; 'helpers'; 'string' ], 'options', options
+.end
+
 
 # Local Variables:
 #   mode: pir

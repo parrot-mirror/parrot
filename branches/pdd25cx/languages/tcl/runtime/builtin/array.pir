@@ -1,7 +1,4 @@
-###
-# [array]
-
-.HLL 'Tcl', 'tcl_group'
+.HLL 'Tcl', ''
 .namespace []
 
 #
@@ -13,7 +10,7 @@
   .param pmc argv :slurpy
 
   .local int argc
-  argc = argv
+  argc = elements argv
 
   if argc < 2 goto few_args  # subcommand *and* array name
 
@@ -21,21 +18,11 @@
   subcommand_name = shift argv
 
   .local pmc options
-  options = new 'TclList'
-  options[0] = 'anymore'
-  options[1] = 'donesearch'
-  options[2] = 'exists'
-  options[3] = 'get'
-  options[4] = 'names'
-  options[5] = 'nextelement'
-  options[6] = 'set'
-  options[7] = 'size'
-  options[8] = 'startsearch'
-  options[9] = 'statistics'
-  options[10] = 'unset'
+  options = get_root_global ['_tcl'; 'helpers'; 'array'], 'options'
 
   .local pmc select_option
   select_option  = get_root_global ['_tcl'], 'select_option'
+
   .local string canonical_subcommand
   canonical_subcommand = select_option(options, subcommand_name)
 
@@ -59,8 +46,8 @@
 
   if_null the_array, array_no
 
-  $I99 = does the_array, 'hash'
-  if $I99==0 goto array_no
+  $I99 = does the_array, 'associative_array'
+  unless $I99 goto array_no
 
   is_array = 1
   goto scommand
@@ -90,7 +77,7 @@ few_args:
   .param pmc argv
 
   .local int argc
-  argc = argv
+  argc = elements argv
   if argc goto bad_args
 
   .return (is_array)
@@ -106,7 +93,7 @@ bad_args:
   .param pmc argv
 
   .local int argc
-  argc = argv
+  argc = elements argv
   if argc goto bad_args
 
   if is_array == 0 goto size_none
@@ -127,7 +114,7 @@ bad_args:
   .param pmc argv
 
   .local int argc
-  argc = argv
+  argc = elements argv
   if argc != 1 goto bad_args
 
   .local pmc elems
@@ -199,7 +186,7 @@ odd_args:
   .param pmc argv
 
   .local int argc
-  argc = argv
+  argc = elements argv
   if argc > 1 goto bad_args
 
   .local string match_str
@@ -263,7 +250,7 @@ not_array:
   .param pmc argv
 
   .local int argc
-  argc = argv
+  argc = elements argv
   if argc > 1 goto bad_args
 
 
@@ -321,7 +308,7 @@ not_array:
   .local pmc retval
 
   .local int argc
-  argc = argv
+  argc = elements argv
   if argc > 2 goto bad_args
 
   .local string mode, pattern
@@ -452,6 +439,24 @@ check_loop:
 check_end:
 
   .return (retval)
+.end
+
+.sub 'anon' :load :anon
+  .local pmc options
+  options = new 'TclList'
+  options[0] = 'anymore'
+  options[1] = 'donesearch'
+  options[2] = 'exists'
+  options[3] = 'get'
+  options[4] = 'names'
+  options[5] = 'nextelement'
+  options[6] = 'set'
+  options[7] = 'size'
+  options[8] = 'startsearch'
+  options[9] = 'statistics'
+  options[10] = 'unset'
+
+  set_root_global ['_tcl'; 'helpers'; 'array'], 'options', options
 .end
 
 # Local Variables:

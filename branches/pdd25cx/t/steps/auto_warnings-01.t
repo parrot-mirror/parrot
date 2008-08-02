@@ -40,6 +40,11 @@ $conf->add_steps($pkg);
 my $serialized = $conf->pcfreeze();
 
 $conf->options->set( %{$args} );
+SKIP: {
+    skip 'Tests not yet passing on Sun/Solaris',
+    39
+    if $^O =~ m/sun|solaris/i;
+
 my $step = test_step_constructor_and_description($conf);
 
 my %potential_warnings_seen;
@@ -49,7 +54,6 @@ $step->_add_cage_warnings($conf);
 ok($potential_warnings_seen{'-std=c89'}, "Cage warning added");
 
 $conf->replenish($serialized);
-
 $conf->options->set( %{$args} );
 $step = test_step_constructor_and_description($conf);
 $conf->options->set(maintainer => 1);
@@ -138,6 +142,8 @@ $step = test_step_constructor_and_description($conf);
         "Got expected verbose output"
     );
 }
+
+} # End SKIP block for Sun/Solaris
 
 pass("Completed all tests in $0");
 

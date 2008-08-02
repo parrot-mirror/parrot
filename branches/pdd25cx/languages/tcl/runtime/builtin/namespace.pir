@@ -9,7 +9,7 @@ real top level namespace.
 
 =cut
 
-.HLL 'Tcl', 'tcl_group'
+.HLL 'Tcl', ''
 .namespace []
 
 .sub '&namespace'
@@ -17,36 +17,19 @@ real top level namespace.
 
   .local pmc retval
 
-  $I3 = argv
-  unless $I3 goto no_args
+  .local int argc
+  argc = elements argv
+  unless argc goto no_args
 
   .local string subcommand_name
   subcommand_name = shift argv
 
   .local pmc options
-  options = new 'TclList'
-  options[0] = 'children'
-  options[1] = 'code'
-  options[2] = 'current'
-  options[3] = 'delete'
-  options[4] = 'ensemble'
-  options[5] = 'eval'
-  options[6] = 'exists'
-  options[7] = 'export'
-  options[8] = 'forget'
-  options[9] = 'import'
-  options[10] = 'inscope'
-  options[11] = 'origin'
-  options[12] = 'parent'
-  options[13] = 'path'
-  options[14] = 'qualifiers'
-  options[15] = 'tail'
-  options[16] = 'unknown'
-  options[17] = 'upvar'
-  options[18] = 'which'
+  options = get_root_global ['_tcl'; 'helpers'; 'namespace'], 'options'
 
   .local pmc select_option
   select_option  = get_root_global ['_tcl'], 'select_option'
+
   .local string canonical_subcommand
   canonical_subcommand = select_option(options, subcommand_name)
 
@@ -73,7 +56,7 @@ no_args:
   .param pmc argv
 
   .local int argc
-  argc = argv
+  argc = elements argv
   if argc goto bad_args
 
   .local pmc ns, splitNamespace
@@ -127,7 +110,7 @@ return:
   .param pmc argv
 
   .local int argc
-  argc = argv
+  argc = elements argv
   if argc != 1 goto bad_args
 
   .local pmc colons, split, name
@@ -173,7 +156,7 @@ bad_args:
   .param pmc argv
 
   .local int argc
-  argc = argv
+  argc = elements argv
   if argc != 1 goto bad_args
 
   .local pmc p6r,match
@@ -200,7 +183,7 @@ WHOLE:
   .param pmc argv
 
   .local int argc
-  argc = argv
+  argc = elements argv
   if argc != 1 goto bad_args
 
   .local pmc p6r,match
@@ -268,7 +251,7 @@ global_ns:
   ($S0, $S1) = compileTcl($S0, 'pir_only'=>1)
   $I0 = code.unique()
   code.emit(<<'END_PIR', namespace, $S0, $I0, $S1)
-.HLL 'tcl', 'tcl_group'
+.HLL 'tcl', ''
 .namespace %0
 # src/compiler.pir :: pir_compiler (2)
 .pragma n_operators 1
@@ -473,6 +456,32 @@ bad_args:
 # RT#40753: Stub
 .sub 'which'
   .return ('')
+.end
+
+.sub 'anon' :anon :load
+  .local pmc options
+  options = new 'TclList'
+  options[0] = 'children'
+  options[1] = 'code'
+  options[2] = 'current'
+  options[3] = 'delete'
+  options[4] = 'ensemble'
+  options[5] = 'eval'
+  options[6] = 'exists'
+  options[7] = 'export'
+  options[8] = 'forget'
+  options[9] = 'import'
+  options[10] = 'inscope'
+  options[11] = 'origin'
+  options[12] = 'parent'
+  options[13] = 'path'
+  options[14] = 'qualifiers'
+  options[15] = 'tail'
+  options[16] = 'unknown'
+  options[17] = 'upvar'
+  options[18] = 'which'
+
+  set_root_global ['_tcl'; 'helpers'; 'namespace'], 'options', options
 .end
 
 # Local Variables:

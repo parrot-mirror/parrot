@@ -1,8 +1,4 @@
-#
-# [lsort]
-#
-
-.HLL 'Tcl', 'tcl_group'
+.HLL 'Tcl', ''
 .namespace []
 
 .sub '&lsort'
@@ -13,7 +9,7 @@
   .local pmc compare
   .local pmc sort
 
-  argc = argv
+  argc = elements argv
   if argc == 0 goto wrong_args
 
   compare = get_root_global ['_tcl';'helpers';'lsort'], 'ascii'
@@ -92,9 +88,8 @@ strip_end:
 skip_unique:
   unless decr goto ordered
 
-  .local pmc reverse
-  reverse = get_root_global ['_tcl'], 'reverse'
-  reverse($P0)
+  $P0 = clone $P0
+  $P0.'reverse'()
 
 ordered:
   .return ($P0)

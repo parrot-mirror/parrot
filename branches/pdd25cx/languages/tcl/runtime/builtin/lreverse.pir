@@ -1,4 +1,4 @@
-.HLL 'Tcl', 'tcl_group'
+.HLL 'Tcl', ''
 .namespace []
 
 .sub '&lreverse'
@@ -10,14 +10,13 @@
 
   .local pmc toList
   toList = get_root_global ['_tcl'], 'toList'
-  .local pmc reverse
-  reverse = get_root_global ['_tcl'], 'reverse'
 
   $P0 = argv[0]
   $P0 = toList($P0)
-  $P0 = reverse($P0)
-  .return ($P0)
+  $P0 = clone $P0
+  $P0.'reverse'()
 
+  .return ($P0)
 bad_args:
   die 'wrong # args: should be "lreverse list"'
 .end
