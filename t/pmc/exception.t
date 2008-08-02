@@ -6,7 +6,7 @@ use strict;
 use warnings;
 use lib qw( . lib ../lib ../../lib );
 use Test::More;
-use Parrot::Test tests => 28;
+use Parrot::Test tests => 29;
 
 =head1 NAME
 
@@ -645,6 +645,27 @@ back from test
 done.
 OUTPUT
 }
+
+pir_error_output_like( <<'CODE', <<'OUTPUT', "throw - no handler" );
+.sub main :main
+    push_eh try
+    failure()
+    pop_eh
+    exit 0
+  try:
+    .get_results($P0,$S0)
+    $S1 = $P0['stacktrace']
+    $S1 .= "\n"
+    say $S1
+.end
+
+.sub failure
+    die 'what'
+.end
+CODE
+/No such string attribute/
+OUTPUT
+
 
 # Local Variables:
 #   mode: cperl
