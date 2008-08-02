@@ -7,8 +7,10 @@ use strict;
 use warnings;
 
 our %defaults = (
-    uname   => `uname -r`,
-    sw_vers => `sw_vers -productVersion`,
+    uname           => `uname -r`,
+    sw_vers         => `sw_vers -productVersion`,
+    problem_flags   => [ qw( ccflags ldflags ) ],
+    architectures   => [ qw( i386 ppc64 ppc x86_64 ) ],
 );
 
 sub runstep {
@@ -16,52 +18,32 @@ sub runstep {
 
     my $verbose = $conf->options->get('verbose');
 
-    # @flags is the list of options that have -arch flags added to them
+    # %flags is the list of options that have -arch flags added to them
     # implicitly through config/init/defaults.pm when using Apple's Perl
     # 5.8 build to run Configure.pl (it's a multi-architecture build).
     # This doesn't play nice with getting parrot to build on PPC systems
     # and causes all sorts of fun issues with lipo and friends.  So, it's
-    # time to remove all -arch flags set in $conf->data that haven't been
-    # requested by command-line options and force a single, native
-    # architecture to being the default build.
-    my @flags = qw(ccflags linkflags ldflags ld_share_flags ld_load_flags);
-    my @arches = qw(i386 ppc64 ppc x86_64);
+    # time to remove all -arch flags set in $conf->data and force a single, 
+    # native architecture to being the default build.
 
-    print "\nChecking for -arch flags not explicitly added:\n" if $verbose;
-    for my $flag (@flags) {
-        my $set_flags =  _get_adjusted_user_options($conf, $flag);
+    my $flagsref = _strip_arch_flags($conf, $verbose);
 
-        my $stored = $conf->data->get($flag) || '';
-
-        _precheck($flag, $set_flags, $stored, $verbose);
-
-        for my $arch (@arches) {
-            if (!$set_flags || $set_flags !~ /(?:^|\W)-arch\s+$arch(?:\W|$)/) {
-                $stored =~ s/-arch\s+$arch//g;
-                $conf->data->set($flag => $stored);
-            }
-        }
-        _postcheck($conf, $flag, $verbose);
-    }
     # And now, after possibly losing a few undesired compiler and linker
     # flags, on to the main Darwin config.
 
-    my ( $ccflags, $ldflags, $libs ) =
-        $conf->data->get(qw(ccflags ldflags libs));
-
-    $libs = _strip_ldl_as_needed($libs);
+    my $libs = _strip_ldl_as_needed( $conf->data->get( 'libs' ) );
 
     _set_deployment_environment();
 
     my $lib_dir = $conf->data->get('build_dir') . "/blib/lib";
-    $ldflags .= " -L$lib_dir";
-    $ccflags .= " -pipe -fno-common -Wno-long-double ";
+    $flagsref->{ldflags} .= " -L$lib_dir";
+    $flagsref->{ccflags} .= " -pipe -fno-common -Wno-long-double ";
 
     $conf->data->set(
         darwin              => 1,
         osx_version         => $ENV{'MACOSX_DEPLOYMENT_TARGET'},
-        ccflags             => $ccflags,
-        ldflags             => $ldflags,
+        ccflags             => $flagsref->{ccflags},
+        ldflags             => $flagsref->{ldflags},
         ccwarn              => "-Wno-shadow",
         libs                => $libs,
         share_ext           => '.dylib',
@@ -90,25 +72,23 @@ sub runstep {
     );
 }
 
-sub _get_adjusted_user_options {
-    my ($conf, $flag) = @_;
-    my $set_flags = q{};
-    if ($flag =~ /^ld/) {
-        $set_flags = $conf->options->get('ldflags') || '';
-    }
-    else {
-        $set_flags = $conf->options->get($flag) || '';
-    }
-    return $set_flags;
-}
+#################### INTERNAL SUBROUTINES ####################
 
 sub _precheck {
-    my ($flag, $set_flags, $stored, $verbose) = @_;
+    my ($flag, $stored, $verbose) = @_;
     if ($verbose) {
         print "Checking $flag...\n";
-        print "User-specified: " . ($set_flags || '(nil)') . "\n";
         print "Pre-check: " . ($stored || '(nil)') . "\n";
     }
+}
+
+sub _strip_arch_flags_engine {
+    my ($arches, $stored, $flagsref, $flag) = @_;
+    for my $arch ( @{ $defaults{architectures} } ) {
+        $stored =~ s/-arch\s+$arch//g;
+        $flagsref->{$flag} = $stored;
+    }
+    return $flagsref;
 }
 
 sub _postcheck {
@@ -116,6 +96,25 @@ sub _postcheck {
     if ($verbose) {
         print "Post-check: ", ( $conf->data->get($flag) or '(nil)' ), "\n";
     }
+}
+
+sub _strip_arch_flags {
+    my ($conf, $verbose) = @_;
+    my $flagsref  = { map { $_ => '' } @{ $defaults{problem_flags} } };
+
+    print "\nStripping -arch flags due to Apple multi-architecture build problems:\n" if $verbose;
+    for my $flag ( keys %{ $flagsref } ) {
+        my $stored = $conf->data->get($flag) || '';
+
+        _precheck($flag, $stored, $verbose);
+
+        $flagsref = _strip_arch_flags_engine(
+            $defaults{architectures}, $stored, $flagsref, $flag
+        );
+
+        _postcheck($conf, $flag, $verbose);
+    }
+    return $flagsref;
 }
 
 sub _strip_ldl_as_needed {

@@ -7,7 +7,7 @@ use strict;
 use warnings;
 use Test::More;
 plan( skip_all => 'Macports is Darwin only' ) unless $^O =~ /darwin/;
-plan( tests => 32 );
+plan( tests => 30 );
 use Carp;
 use Cwd;
 use File::Path ();
@@ -38,106 +38,75 @@ my $serialized = $conf->pcfreeze();
 $conf->options->set( %{$args} );
 my $step = test_step_constructor_and_description($conf);
 
-########### _get_adjusted_user_options() ##########
-
-my @flags = qw(ccflags linkflags ldflags ld_share_flags ld_load_flags);
-my %flags_orig = ();
-map { $flags_orig{$_} => $conf->options->get($_) } @flags;
-my $fixed = 'foo';
-$conf->options->set( ldflags        => $fixed );
-$conf->options->set( ld_share_flags => 'bar' );
-$conf->options->set( ld_load_flags  => 'baz' );
-my $flag = 'ldflags';
-is( init::hints::darwin::_get_adjusted_user_options($conf, $flag),
-    $fixed, "Got expected value for $flag"); 
-$flag = 'ld_share_flags';
-is( init::hints::darwin::_get_adjusted_user_options($conf, $flag),
-    $fixed, "Got expected value for $flag"); 
-$flag = 'ld_load_flags';
-is( init::hints::darwin::_get_adjusted_user_options($conf, $flag),
-    $fixed, "Got expected value for $flag"); 
-
-$conf->options->set( ldflags        => undef );
-$conf->options->set( ld_share_flags => 'bar' );
-$conf->options->set( ld_load_flags  => 'foo' );
-$fixed = '';
-$flag = 'ldflags';
-is( init::hints::darwin::_get_adjusted_user_options($conf, $flag),
-    $fixed, "Got expected value for $flag"); 
-$flag = 'ld_share_flags';
-is( init::hints::darwin::_get_adjusted_user_options($conf, $flag),
-    $fixed, "Got expected value for $flag"); 
-$flag = 'ld_load_flags';
-is( init::hints::darwin::_get_adjusted_user_options($conf, $flag),
-    $fixed, "Got expected value for $flag"); 
-
-# re-set for next test
-map { $conf->options->set($_) => $flags_orig{$_} } @flags;
-
-my $opt = q{-fno-common -DPERL_DARWIN -no-cpp-precomp -fno-strict-aliasing -pipe -I/opt/ -L/Users/me/work/parrot};
-$conf->options->set( ldflags => $opt );
-$flag = 'ldflags';
-is( init::hints::darwin::_get_adjusted_user_options($conf, $flag),
-    $opt, "Got expected value for $flag"); 
-
-# re-set for next test
-map { $conf->options->set($_) => $flags_orig{$_} } @flags;
-
 ########### _precheck() ##########
 
-my ($set_flags, $stored, $verbose);
+my ($flag, $stored, $verbose);
 $flag = 'ccflags';
 {
-    $set_flags = 'bar';
     $stored = 'baz';
     $verbose = 1;
     my ($stdout, $stderr);
     capture (
         sub { init::hints::darwin::_precheck(
-            $flag, $set_flags, $stored, $verbose); },
+            $flag, $stored, $verbose); },
         \$stdout,
         \$stderr,
     );
     like($stdout, qr/Checking $flag/s,
-        "Got expected verbose output for _precheck()");
-    like($stdout, qr/User-specified:\s+$set_flags/s,
         "Got expected verbose output for _precheck()");
     like($stdout, qr/Pre-check:\s+$stored/s,
         "Got expected verbose output for _precheck()");
 }
 
 {
-    $set_flags = q{};
     $stored = q{};
     $verbose = 1;
     my ($stdout, $stderr);
     capture (
         sub { init::hints::darwin::_precheck(
-            $flag, $set_flags, $stored, $verbose); },
+            $flag, $stored, $verbose); },
         \$stdout,
         \$stderr,
     );
     like($stdout, qr/Checking $flag/s,
-        "Got expected verbose output for _precheck()");
-    like($stdout, qr/User-specified:\s+\(nil\)/s,
         "Got expected verbose output for _precheck()");
     like($stdout, qr/Pre-check:\s+\(nil\)/s,
         "Got expected verbose output for _precheck()");
 }
 
 {
-    $set_flags = 'bar';
     $stored = 'baz';
     $verbose = 0;
     my ($stdout, $stderr);
     capture (
         sub { init::hints::darwin::_precheck(
-            $flag, $set_flags, $stored, $verbose); },
+            $flag, $stored, $verbose); },
         \$stdout,
         \$stderr,
     );
     ok(! $stdout, "As expected, got no verbose output");
 }
+
+########### _strip_arch_flags_engine() ##########
+
+my ($arches, $flagsref);
+$arches = $init::hints::darwin::defaults{architecture};
+$stored = q{foo -arch i386 -arch ppc bar -arch i386 baz};
+$flagsref  = {
+    map { $_ => '' }
+        @{ $init::hints::darwin::defaults{problem_flags} }
+};
+$flagsref = init::hints::darwin::_strip_arch_flags_engine(
+    $arches, $stored, $flagsref, 'ccflags'
+);
+$flagsref = init::hints::darwin::_strip_arch_flags_engine(
+    $arches, $stored, $flagsref, 'ldflags'
+);
+my $expected = qr/foo\s+bar\s+baz/;
+like($flagsref->{ccflags}, $expected,
+    "-arch flags stripped appropriately from ccflags" );
+like($flagsref->{ldflags}, $expected,
+    "-arch flags stripped appropriately from ldflags" );
 
 ########### _postcheck() ##########
 
@@ -195,11 +164,44 @@ my $ccflags_orig = $conf->data->get('ccflags');
     $conf->data->set( ccflags => $ccflags_orig );
 }
 
+########### _strip_arch_flags() ##########
+
+my $ldflags_orig  = $conf->data->get( 'ldflags' );
+$conf->data->set( ccflags =>
+    q{foo -arch i386 -arch ppc bar -arch i386 baz} );
+$conf->data->set( ldflags =>
+    q{foo -arch i386 -arch ppc bar -arch i386 baz -arch ppc samba} );
+$verbose = 0;
+$flagsref = init::hints::darwin::_strip_arch_flags($conf, $verbose);
+like( $flagsref->{ccflags}, qr/foo\s+bar\s+baz/,
+    "-arch flags stripped appropriately for ccflags" );
+like( $flagsref->{ldflags}, qr/foo\s+bar\s+baz\s+samba/,
+    "-arch flags stripped appropriately for ldflags" );
+
+$verbose = 1;
+{
+    my ($stdout, $stderr);
+    capture( sub { $flagsref =
+        init::hints::darwin::_strip_arch_flags($conf, $verbose); },
+        \$stdout,
+        \$stderr,
+    );
+    like( $flagsref->{ccflags}, qr/foo\s+bar\s+baz/,
+        "-arch flags stripped appropriately for ccflags" );
+    like( $flagsref->{ldflags}, qr/foo\s+bar\s+baz\s+samba/,
+        "-arch flags stripped appropriately for ldflags" );
+    like( $stdout,
+        qr/Stripping -arch flags due to Apple multi-architecture build problems/,
+        "Got expected verbose output from _strip_arch_flags()" );
+}
+
+# re-set for next test
+$conf->data->set( ccflags => $ccflags_orig );
+$conf->data->set( ldflags => $ldflags_orig );
+
 ########### _strip_ldl_as_needed() ##########
 
-my ( $ldflags_orig, $libs_orig );
-( $ccflags_orig, $ldflags_orig, $libs_orig ) =
-    $conf->data->get(qw(ccflags ldflags libs));
+my $libs_orig = $conf->data->get( 'libs' );
 my $uname_orig = $init::hints::darwin::defaults{uname};
 my $libs;
 
@@ -234,151 +236,6 @@ $init::hints::darwin::defaults{uname} = $uname_orig;
     is( $ENV{'MACOSX_DEPLOYMENT_TARGET'}, q{66.55},
         "Got expected environmental setting");
 }
-
-########### --verbose ##########
-#
-#my $args = process_options(
-#    {
-#        argv => [q{--verbose}],
-#        mode => q{configure},
-#    }
-#);
-#
-#my $conf = Parrot::Configure->new;
-#
-#test_step_thru_runstep( $conf, q{init::defaults}, $args );
-#
-#my $pkg = q{init::hints};
-#
-#$conf->add_steps($pkg);
-#
-#my $serialized = $conf->pcfreeze();
-#
-#$conf->options->set( %{$args} );
-#my $step = test_step_constructor_and_description($conf);
-#
-## need to capture the --verbose output, because the fact that it does not end
-## in a newline confuses Test::Harness
-#{
-#    my $rv;
-#    my $stdout;
-#    capture ( sub {$rv = $step->runstep($conf)}, \$stdout);
-#    ok( $stdout, "verbose output:  hints were captured" );
-#    ok( defined $rv, "runstep() returned defined value" );
-#}
-#
-#$conf->replenish($serialized);
-#
-########### --verbose; local hints directory ##########
-#
-#$args = process_options(
-#    {
-#        argv => [q{--verbose}],
-#        mode => q{configure},
-#    }
-#);
-#
-#$conf->options->set( %{$args} );
-#$step = test_step_constructor_and_description($conf);
-#
-#my $cwd = cwd();
-#{
-#    my $tdir = tempdir( CLEANUP => 1 );
-#    File::Path::mkpath(qq{$tdir/init/hints})
-#        or croak "Unable to create directory for local hints";
-#    my $localhints = qq{$tdir/init/hints/local.pm};
-#    open my $FH, '>', $localhints
-#        or croak "Unable to open temp file for writing";
-#    print $FH <<END;
-#package init::hints::local;
-#use strict;
-#sub runstep {
-#    return 1;
-#}
-#1;
-#END
-#    close $FH or croak "Unable to close temp file after writing";
-#    unshift( @INC, $tdir );
-#
-#    {
-#     my $rv;
-#     my $stdout;
-#     capture ( sub {$rv = $step->runstep($conf)}, \$stdout);
-#     ok( $stdout, "verbose output:  hints were captured" );
-#     ok( defined $rv, "runstep() returned defined value" );
-#    }
-#    unlink $localhints or croak "Unable to delete $localhints";
-#}
-#
-#$conf->replenish($serialized);
-#
-########### --verbose; local hints directory; no runstep() in local hints ##########
-#
-#$args = process_options(
-#    {
-#        argv => [q{--verbose}],
-#        mode => q{configure},
-#    }
-#);
-#
-#$conf->options->set( %{$args} );
-#$step = test_step_constructor_and_description($conf);
-#
-#$cwd = cwd();
-#{
-#    my $tdir = tempdir( CLEANUP => 1 );
-#    File::Path::mkpath(qq{$tdir/init/hints})
-#        or croak "Unable to create directory for local hints";
-#    my $localhints = qq{$tdir/init/hints/local.pm};
-#    open my $FH, '>', $localhints
-#        or croak "Unable to open temp file for writing";
-#    print $FH <<END;
-#package init::hints::local;
-#use strict;
-#1;
-#END
-#    close $FH or croak "Unable to close temp file after writing";
-#    unshift( @INC, $tdir );
-#
-#    {
-#     my $rv;
-#     my $stdout;
-#     capture ( sub {$rv = $step->runstep($conf)}, \$stdout);
-#     ok( $stdout, "verbose output:  hints were captured" );
-#     ok( defined $rv, "runstep() returned defined value" );
-#    }
-#    unlink $localhints or croak "Unable to delete $localhints";
-#}
-#
-#$conf->replenish($serialized);
-#
-########### --verbose; imaginary OS ##########
-#
-#$args = process_options(
-#    {
-#        argv => [ q{--verbose} ],
-#        mode => q{configure},
-#    }
-#);
-#
-#$conf->options->set( %{$args} );
-#$step = test_step_constructor_and_description($conf);
-#{
-#    my ($stdout, $stderr, $ret);
-#    $conf->data->set_p5( OSNAME => q{imaginaryOS} );
-#    my $osname = lc( $conf->data->get_p5( 'OSNAME' ) );
-#    my $hints_file = catfile('config', 'init', 'hints', "$osname.pm");
-#    capture (
-#        sub { $ret = $step->runstep($conf); },
-#        \$stdout,
-#        \$stderr,
-#    );;
-#    like(
-#        $stdout,
-#        qr/No \Q$hints_file\E found/s,
-#        "Got expected verbose output when no hints file found"
-#    );
-#}
 
 pass("Completed all tests in $0");
 
