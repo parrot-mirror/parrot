@@ -341,7 +341,7 @@ CODE
 /No handler to delete./
 OUTPUT
 
-pir_output_is( <<'CODE', <<'OUTPUT', 'pop_eh out of context (2)', todo => 'handler dynamic scope' );
+pir_output_is( <<'CODE', <<'OUTPUT', 'pop_eh out of context (2)');
 .sub main :main
     .local pmc outer, cont
     push_eh handler
