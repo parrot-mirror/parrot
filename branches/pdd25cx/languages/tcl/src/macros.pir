@@ -36,7 +36,7 @@ RT#40687: return the stacktrace for the current exception
 =cut
 
 .macro get_stacktrace (output)
-  .output = exception["stacktrace"]
+  .output = exception['message']
   .output .= "\n"
 .endm
 
