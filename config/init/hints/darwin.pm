@@ -86,15 +86,16 @@ sub _strip_arch_flags_engine {
     my ($arches, $stored, $flagsref, $flag) = @_;
     for my $arch ( @{ $defaults{architectures} } ) {
         $stored =~ s/-arch\s+$arch//g;
+        $stored =~ s/\s+/ /g;
         $flagsref->{$flag} = $stored;
     }
     return $flagsref;
 }
 
 sub _postcheck {
-    my ($conf, $flag, $verbose) = @_;
+    my ($flagsref, $flag, $verbose) = @_;
     if ($verbose) {
-        print "Post-check: ", ( $conf->data->get($flag) or '(nil)' ), "\n";
+        print "Post-check: ", ( $flagsref->{$flag} or '(nil)' ), "\n";
     }
 }
 
@@ -112,7 +113,7 @@ sub _strip_arch_flags {
             $defaults{architectures}, $stored, $flagsref, $flag
         );
 
-        _postcheck($conf, $flag, $verbose);
+        _postcheck($flagsref, $flag, $verbose);
     }
     return $flagsref;
 }

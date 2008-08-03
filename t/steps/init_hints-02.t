@@ -5,9 +5,10 @@
 
 use strict;
 use warnings;
+use Data::Dumper;$Data::Dumper::Indent=1;
 use Test::More;
 plan( skip_all => 'Macports is Darwin only' ) unless $^O =~ /darwin/;
-plan( tests => 30 );
+plan( tests => 29 );
 use Carp;
 use Cwd;
 use File::Path ();
@@ -102,7 +103,7 @@ $flagsref = init::hints::darwin::_strip_arch_flags_engine(
 $flagsref = init::hints::darwin::_strip_arch_flags_engine(
     $arches, $stored, $flagsref, 'ldflags'
 );
-my $expected = qr/foo\s+bar\s+baz/;
+my $expected = qr/foo\sbar\sbaz/;
 like($flagsref->{ccflags}, $expected,
     "-arch flags stripped appropriately from ccflags" );
 like($flagsref->{ldflags}, $expected,
@@ -112,14 +113,12 @@ like($flagsref->{ldflags}, $expected,
 
 my $setting;
 $flag = 'ccflags';
-my $ccflags_orig = $conf->data->get('ccflags');
 {
-    $setting = 'foobar';
+    $setting = 'foo bar baz';
     $verbose = 1;
-    $conf->data->set( ccflags => $setting );
     my ($stdout, $stderr);
     capture (
-        sub { init::hints::darwin::_postcheck($conf, $flag, $verbose); },
+        sub { init::hints::darwin::_postcheck($flagsref, $flag, $verbose); },
         \$stdout,
         \$stderr,
     );
@@ -127,45 +126,23 @@ my $ccflags_orig = $conf->data->get('ccflags');
         qr/Post-check:\s+$setting/s,
         "Got expected verbose output for _postcheck()"
     );
-    # re-set for next test
-    $conf->data->set( ccflags => $ccflags_orig );
 }
 
 {
-    $setting = 'foobar';
-    $verbose = 1;
-    $conf->data->set( ccflags => undef );
-    my ($stdout, $stderr);
-    capture (
-        sub { init::hints::darwin::_postcheck($conf, $flag, $verbose); },
-        \$stdout,
-        \$stderr,
-    );
-    like( $stdout,
-        qr/Post-check:\s+\(nil\)/s,
-        "Got expected verbose output for _postcheck()"
-    );
-    # re-set for next test
-    $conf->data->set( ccflags => $ccflags_orig );
-}
-
-{
-    $setting = 'foobar';
+    $setting = 'foo bar baz';
     $verbose = 0;
-    $conf->data->set( ccflags => $setting );
     my ($stdout, $stderr);
     capture (
-        sub { init::hints::darwin::_postcheck($conf, $flag, $verbose); },
+        sub { init::hints::darwin::_postcheck($flagsref, $flag, $verbose); },
         \$stdout,
         \$stderr,
     );
     ok( ! $stdout, "As expected, got no verbose output");
-    # re-set for next test
-    $conf->data->set( ccflags => $ccflags_orig );
 }
 
 ########### _strip_arch_flags() ##########
 
+my $ccflags_orig  = $conf->data->get( 'ccflags' );
 my $ldflags_orig  = $conf->data->get( 'ldflags' );
 $conf->data->set( ccflags =>
     q{foo -arch i386 -arch ppc bar -arch i386 baz} );
@@ -173,9 +150,9 @@ $conf->data->set( ldflags =>
     q{foo -arch i386 -arch ppc bar -arch i386 baz -arch ppc samba} );
 $verbose = 0;
 $flagsref = init::hints::darwin::_strip_arch_flags($conf, $verbose);
-like( $flagsref->{ccflags}, qr/foo\s+bar\s+baz/,
+like( $flagsref->{ccflags}, qr/foo\sbar\sbaz/,
     "-arch flags stripped appropriately for ccflags" );
-like( $flagsref->{ldflags}, qr/foo\s+bar\s+baz\s+samba/,
+like( $flagsref->{ldflags}, qr/foo\sbar\sbaz\ssamba/,
     "-arch flags stripped appropriately for ldflags" );
 
 $verbose = 1;
@@ -186,9 +163,9 @@ $verbose = 1;
         \$stdout,
         \$stderr,
     );
-    like( $flagsref->{ccflags}, qr/foo\s+bar\s+baz/,
+    like( $flagsref->{ccflags}, qr/foo\sbar\sbaz/,
         "-arch flags stripped appropriately for ccflags" );
-    like( $flagsref->{ldflags}, qr/foo\s+bar\s+baz\s+samba/,
+    like( $flagsref->{ldflags}, qr/foo\sbar\sbaz\ssamba/,
         "-arch flags stripped appropriately for ldflags" );
     like( $stdout,
         qr/Stripping -arch flags due to Apple multi-architecture build problems/,
