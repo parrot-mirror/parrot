@@ -8,7 +8,7 @@ use warnings;
 use Data::Dumper;$Data::Dumper::Indent=1;
 use Test::More;
 plan( skip_all => 'Macports is Darwin only' ) unless $^O =~ /darwin/;
-plan( tests => 29 );
+plan( tests => 32 );
 use Carp;
 use Cwd;
 use File::Path ();
@@ -140,10 +140,27 @@ $flag = 'ccflags';
     ok( ! $stdout, "As expected, got no verbose output");
 }
 
+$flagsref->{ccflags} = q{};
+$flag = 'ccflags';
+{
+    $verbose = 1;
+    my ($stdout, $stderr);
+    capture (
+        sub { init::hints::darwin::_postcheck($flagsref, $flag, $verbose); },
+        \$stdout,
+        \$stderr,
+    );
+    like( $stdout,
+        qr/Post-check:\s+\(nil\)/s,
+        "Got expected verbose output for _postcheck()"
+    );
+}
+
 ########### _strip_arch_flags() ##########
 
 my $ccflags_orig  = $conf->data->get( 'ccflags' );
 my $ldflags_orig  = $conf->data->get( 'ldflags' );
+
 $conf->data->set( ccflags =>
     q{foo -arch i386 -arch ppc bar -arch i386 baz} );
 $conf->data->set( ldflags =>
@@ -171,6 +188,16 @@ $verbose = 1;
         qr/Stripping -arch flags due to Apple multi-architecture build problems/,
         "Got expected verbose output from _strip_arch_flags()" );
 }
+
+$conf->data->set( ccflags => q{} );
+$conf->data->set( ldflags =>
+    q{foo -arch i386 -arch ppc bar -arch i386 baz -arch ppc samba} );
+$verbose = 0;
+$flagsref = init::hints::darwin::_strip_arch_flags($conf, $verbose);
+like( $flagsref->{ccflags}, qr/^$/,
+    "Got appropriate value when ccflags was empty" );
+like( $flagsref->{ldflags}, qr/foo\sbar\sbaz\ssamba/,
+    "-arch flags stripped appropriately for ldflags" );
 
 # re-set for next test
 $conf->data->set( ccflags => $ccflags_orig );
