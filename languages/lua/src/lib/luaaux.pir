@@ -417,7 +417,9 @@ Returns 1 if the value has type boolean, and 0 otherwise.
     if null val goto L1
     res = isa val, 'LuaBoolean'
   L1:
-    .return (res)
+    new $P0, 'LuaBoolean'
+    set $P0, res
+    .return ($P0)
 .end
 
 
@@ -436,7 +438,9 @@ Returns 1 if the value is a function, and 0 otherwise.
     if res goto L1
     res = isa val, 'LuaFunction'
 L1:
-    .return (res)
+    new $P0, 'LuaBoolean'
+    set $P0, res
+    .return ($P0)
 .end
 
 
@@ -453,7 +457,9 @@ Returns 1 if the value is nil, and 0 otherwise.
     if null val goto L1
     res = isa val, 'LuaNil'
   L1:
-    .return (res)
+    new $P0, 'LuaBoolean'
+    set $P0, res
+    .return ($P0)
 .end
 
 
@@ -474,7 +480,9 @@ and 0 otherwise.
     $P0 = val.'tonumber'()
     res = isa $P0, 'LuaNumber'
 L1:
-    .return (res)
+    new $P0, 'LuaBoolean'
+    set $P0, res
+    .return ($P0)
 .end
 
 
@@ -494,7 +502,9 @@ to a string), and 0 otherwise.
     if res goto L1
     res = isa val, 'LuaNumber'
 L1:
-    .return (res)
+    new $P0, 'LuaBoolean'
+    set $P0, res
+    .return ($P0)
 .end
 
 
@@ -511,7 +521,9 @@ Returns 1 if the value is a table, and 0 otherwise.
     if null val goto L1
     res = isa val, 'LuaTable'
   L1:
-    .return (res)
+    new $P0, 'LuaBoolean'
+    set $P0, res
+    .return ($P0)
 .end
 
 
@@ -528,7 +540,9 @@ Returns 1 if the value is a userdata, and 0 otherwise.
     if null val goto L1
     res = isa val, 'LuaUserdata'
   L1:
-    .return (res)
+    new $P0, 'LuaBoolean'
+    set $P0, res
+    .return ($P0)
 .end
 
 
