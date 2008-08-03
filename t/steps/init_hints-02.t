@@ -198,7 +198,8 @@ $init::hints::darwin::defaults{uname} = $uname_orig;
 
 ########### _set_deployment_environment()##########
 {
-    local $ENV{'MACOSX_DEPLOYMENT_TARGET'} = undef;
+    local %ENV = %ENV;
+    delete $ENV{'MACOSX_DEPLOYMENT_TARGET'};
     my $sw_vers_orig = $init::hints::darwin::defaults{sw_vers};
     $init::hints::darwin::defaults{sw_vers} = qq{99.88.77\n};
     init::hints::darwin::_set_deployment_environment();
