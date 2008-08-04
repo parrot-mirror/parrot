@@ -12,6 +12,7 @@ our @EXPORT_OK = qw(
 use Carp;
 use lib qw( lib );
 use Parrot::Configure::Options::Conf::CLI ();
+use Parrot::Configure::Options::Conf::File ();
 use Parrot::Configure::Options::Reconf ();
 
 sub process_options {
@@ -22,6 +23,9 @@ sub process_options {
         unless defined $argsref->{mode};
     if ( $argsref->{mode} =~ m/^reconfigure$/i ) {
         %options_components = %Parrot::Configure::Options::Reconf::options_components;
+    }
+    elsif ( $argsref->{mode} =~ m/^script$/i ) {
+        %options_components = %Parrot::Configure::Options::Conf::File::options_components;
     }
     elsif ( $argsref->{mode} =~ m/^configure$/i ) {
         %options_components = %Parrot::Configure::Options::Conf::CLI::options_components;
@@ -64,10 +68,13 @@ sub process_options {
         return;
     }
     else {
-        $data = &{ $options_components{conditionals} }($data);
-        return $data;
+        my $steps_list_ref;
+        ($data, $steps_list_ref) =
+            &{ $options_components{conditionals} }($data);
+        return ($data, $steps_list_ref);
     }
 }
+
 1;
 
 #################### DOCUMENTATION ####################

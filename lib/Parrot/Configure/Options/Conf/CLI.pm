@@ -13,7 +13,6 @@ our @EXPORT_OK = qw(
     $svnid
 );
 use lib qw( lib );
-#use Parrot::BuildUtil ();
 use Parrot::Configure::Options::Conf qw(
     $script
     $parrot_version
