@@ -15,14 +15,14 @@ BEGIN {
 use Test::More tests => 34;
 use Carp;
 use Parrot::Configure::Options qw| process_options |;
-use Parrot::Configure::Options::Conf qw| @valid_options |;
+use Parrot::Configure::Options::Conf::CLI qw| @valid_options |;
 use IO::CaptureOutput qw| capture |;
 
 my %valid;
 my $badoption = q{samsonanddelilah};
 
 no warnings 'once';
-%valid = map { $_, 1 } @Parrot::Configure::Options::Conf::valid_options;
+%valid = map { $_, 1 } @Parrot::Configure::Options::Conf::CLI::valid_options;
 use warnings;
 ok( scalar keys %valid,          "non-zero quantity of valid options found" );
 ok( defined $valid{debugging},   "debugging option found" );
@@ -231,7 +231,8 @@ James E Keenan
 
 =head1 SEE ALSO
 
-Parrot::Configure::Options, Parrot::Configure::Options::Conf, F<Configure.pl>.
+Parrot::Configure::Options, Parrot::Configure::Options::Conf,
+Parrot::Configure::Options::Conf::CLI, F<Configure.pl>.
 
 =cut
 

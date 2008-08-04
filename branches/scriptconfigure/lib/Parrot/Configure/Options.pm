@@ -11,7 +11,8 @@ our @EXPORT_OK = qw(
 );
 use Carp;
 use lib qw( lib );
-use Parrot::Configure::Options::Conf   ();
+#use Parrot::Configure::Options::Conf   ();
+use Parrot::Configure::Options::Conf::CLI ();
 use Parrot::Configure::Options::Reconf ();
 
 sub process_options {
@@ -24,7 +25,7 @@ sub process_options {
         %options_components = %Parrot::Configure::Options::Reconf::options_components;
     }
     elsif ( $argsref->{mode} =~ m/^configure$/i ) {
-        %options_components = %Parrot::Configure::Options::Conf::options_components;
+        %options_components = %Parrot::Configure::Options::Conf::CLI::options_components;
     }
     else {
         croak "Invalid value for 'mode' argument to process_options()";
