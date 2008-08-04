@@ -68,15 +68,15 @@ sub process_options {
         return;
     }
     else {
-        if ($argsref->{mode} eq 'configure') {
-            $data = &{ $options_components{conditionals} }($data);
-            return $data;
-        }
-        else {  # mode eq 'script'
+        if ($argsref->{mode} eq 'script') {
             my $steps_list_ref;
             ($data, $steps_list_ref) =
                 &{ $options_components{conditionals} }($data);
             return ($data, $steps_list_ref);
+        }
+        else {
+            $data = &{ $options_components{conditionals} }($data);
+            return $data;
         }
     }
 }
