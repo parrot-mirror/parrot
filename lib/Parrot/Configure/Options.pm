@@ -11,7 +11,6 @@ our @EXPORT_OK = qw(
 );
 use Carp;
 use lib qw( lib );
-#use Parrot::Configure::Options::Conf   ();
 use Parrot::Configure::Options::Conf::CLI ();
 use Parrot::Configure::Options::Reconf ();
 
