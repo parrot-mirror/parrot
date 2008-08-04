@@ -4,7 +4,6 @@ package Parrot::Configure::Options::Conf::File;
 
 use strict;
 use warnings;
-use Data::Dumper;$Data::Dumper::Indent = 1;
 use base qw( Exporter );
 our @EXPORT_OK = qw(
     @valid_options
@@ -53,14 +52,11 @@ sub conditional_assignments {
         chomp $line;
         next if $line =~ /^(\s*$|#)/o;
         if ($line =~ /^(\w+::\w+)(?:\s+(\S+\s+)*(\S+))?$/) {
-#print STDERR "$line\n";
             my $step = $1;
             push @steps_list, $step;
             next LINE unless $3;
             my $opts_string = $2 ? qq{$2$3} : $3;
-#print STDERR "$opts_string\n";
             my @opts = split /\s+/, $opts_string;
-#print STDERR Dumper \@opts;
             foreach my $el (@opts) {
                 my ( $key, $value );
                 if ($el =~ m/([-\w]+)(?:=(.*))?/) {
@@ -83,23 +79,6 @@ sub conditional_assignments {
         or die "Unable to close configuration data file $data->{script} after reading: $!";
     return ($data, \@steps_list);;
 }
-
-#    for my $el ( @{ $argsref->{argv} } ) {
-#        my ( $key, $value );
-#        if ($el =~ m/--([-\w]+)(?:=(.*))?/) {
-#            ( $key, $value ) = ($1, $2);
-#        }
-#        $key   = 'help' unless defined $key;
-#        $value = 1      unless defined $value;
-#
-#        unless ( $valid_opts{$key} ) {
-#            die qq/Invalid option "$key". See "perl $script --help" for valid options\n/;
-#        }
-#        if ( $options_components{short_circuits}{$key} ) {
-#            push @short_circuits_seen, $key;
-#        }
-#        $data->{$key} = $value;
-#    }
 
 1;
 

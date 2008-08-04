@@ -7,7 +7,6 @@ use 5.008;
 use strict;
 use warnings;
 use lib 'lib';
-use Data::Dumper;$Data::Dumper::Indent = 1;
 
 use Parrot::Configure;
 use Parrot::Configure::Options qw( process_options );
@@ -46,7 +45,6 @@ my (@rets, $args, $steps_list_ref);
 );
 $args = $rets[0];
 $steps_list_ref = $rets[1] if $rets[1];
-print STDERR Dumper ($args, $steps_list_ref);
 
 exit(1) unless defined $args;
 
