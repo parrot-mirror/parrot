@@ -7,6 +7,7 @@ use 5.008;
 use strict;
 use warnings;
 use lib 'lib';
+use Data::Dumper;$Data::Dumper::Indent = 1;
 
 use Parrot::Configure;
 use Parrot::Configure::Options qw( process_options );
@@ -34,12 +35,17 @@ $| = 1;    # $OUTPUT_AUTOFLUSH = 1;
 # warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 # from Parrot::Configure::Options
-my $args = process_options(
+my ($args, $steps_list_ref);
+($args, $steps_list_ref) = process_options(
     {
-        mode => 'configure',
+        mode => ($ARGV[0] =~ /^--script=/)
+                    ? 'script'
+                    : 'configure',
         argv => [@ARGV],
     }
 );
+print STDERR Dumper ($args, $steps_list_ref);
+
 exit(1) unless defined $args;
 
 my $opttest = Parrot::Configure::Options::Test->new($args);
@@ -58,8 +64,14 @@ Parrot::Revision::update();
 
 my $conf = Parrot::Configure->new();
 
-# from Parrot::Configure::Step::List
-$conf->add_steps( get_steps_list() );
+if ($args->{script}) {
+    delete $args->{script};
+    $conf->add_steps( @{ $steps_list_ref } );
+}
+else {
+    # from Parrot::Configure::Step::List
+    $conf->add_steps( get_steps_list() );
+}
 
 # from Parrot::Configure::Data
 $conf->options->set( %{$args} );
