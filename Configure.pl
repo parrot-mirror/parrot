@@ -35,8 +35,8 @@ $| = 1;    # $OUTPUT_AUTOFLUSH = 1;
 # warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 # from Parrot::Configure::Options
-my ($args, $steps_list_ref);
-($args, $steps_list_ref) = process_options(
+my (@rets, $args, $steps_list_ref);
+@rets = process_options(
     {
         mode => ($ARGV[0] =~ /^--script=/)
                     ? 'script'
@@ -44,6 +44,8 @@ my ($args, $steps_list_ref);
         argv => [@ARGV],
     }
 );
+$args = $rets[0];
+$steps_list_ref = $rets[1] if $rets[1];
 print STDERR Dumper ($args, $steps_list_ref);
 
 exit(1) unless defined $args;
