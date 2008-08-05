@@ -29,10 +29,6 @@ see F<runtime/parrot/library/OpenGL.pir>.
 #    print 'luaopen_gl_binding\n'
     load_bytecode 'OpenGL.pir'
 
-    # Import all OpenGL/GLU/GLUT functions
-    $P0 = get_hll_global ['OpenGL'], '_export_all_functions'
-    $P0()
-
     .local pmc _lua__GLOBAL
     _lua__GLOBAL = get_hll_global '_G'
 
@@ -45,50 +41,10 @@ see F<runtime/parrot/library/OpenGL.pir>.
 
     lua_register($P1, _gl_binding)
 
-    .const .Sub _gl_binding_glBegin = 'glBegin'
-    set $P1, 'glBegin'
-    _gl_binding[$P1] = _gl_binding_glBegin
-
-    .const .Sub _gl_binding_glClear = 'glClear'
-    set $P1, 'glClear'
-    _gl_binding[$P1] = _gl_binding_glClear
-
-    .const .Sub _gl_binding_glColor3d = 'glColor3d'
-    set $P1, 'glColor3d'
-    _gl_binding[$P1] = _gl_binding_glColor3d
-
-    .const .Sub _gl_binding_glColor3dv = 'glColor3dv'
-    set $P1, 'glColor3dv'
-    _gl_binding[$P1] = _gl_binding_glColor3dv
-
-    .const .Sub _gl_binding_glColor4d = 'glColor4d'
-    set $P1, 'glColor4d'
-    _gl_binding[$P1] = _gl_binding_glColor4d
-
-    .const .Sub _gl_binding_glColor4dv = 'glColor4dv'
-    set $P1, 'glColor4dv'
-    _gl_binding[$P1] = _gl_binding_glColor4dv
-
-    .const .Sub _gl_binding_glEnd = 'glEnd'
-    set $P1, 'glEnd'
-    _gl_binding[$P1] = _gl_binding_glEnd
-
-    .const .Sub _gl_binding_glRotated = 'glRotated'
-    set $P1, 'glRotated'
-    _gl_binding[$P1] = _gl_binding_glRotated
-
-    .const .Sub _gl_binding_glVertex2dv = 'glVertex2dv'
-    set $P1, 'glVertex2dv'
-    _gl_binding[$P1] = _gl_binding_glVertex2dv
-
-    .const .Sub _gl_binding_glVertex3dv = 'glVertex3dv'
-    set $P1, 'glVertex3dv'
-    _gl_binding[$P1] = _gl_binding_glVertex3dv
-
-    .const .Sub _gl_binding_glVertex4dv = 'glVertex4dv'
-    set $P1, 'glVertex4dv'
-    _gl_binding[$P1] = _gl_binding_glVertex4dv
-
+    # Import all OpenGL/GLU/GLUT functions
+    $P0 = get_hll_global ['OpenGL'], '_export_all_functions'
+    $P0(_gl_binding)
+    $P0()
 
 
     .const .Sub _gl_binding_get_gl_enum = 'get_gl_enum'
