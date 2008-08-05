@@ -1,7 +1,4 @@
-###
-# [apply]
-
-.HLL 'Tcl', 'tcl_group'
+.HLL 'Tcl', ''
 .namespace []
 
 .sub '&apply'
@@ -11,10 +8,10 @@
   argc = elements argv
   if argc == 0 goto no_args
 
-  .local pmc __list, lambda
-  __list = get_root_global ['_tcl'], '__list'
+  .local pmc toList, lambda
+  toList = get_root_global ['_tcl'], 'toList'
   lambda = argv[0]
-  lambda = __list(lambda)
+  lambda = toList(lambda)
 
   $I0 = elements lambda
   if $I0 < 2 goto bad_lambda
@@ -26,10 +23,10 @@ bad_lambda:
   $S0 = argv[0]
   $S0 = "can't interpret \"" . $S0
   $S0 = $S0 . "\" as a lambda expression"
-  tcl_error $S0
+  die $S0
 
 no_args:
-  tcl_error 'wrong # args: should be "apply lambdaExpr ?arg1 arg2 ...?"'
+  die 'wrong # args: should be "apply lambdaExpr ?arg1 arg2 ...?"'
 .end
 
 # Local Variables:

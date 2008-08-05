@@ -1,10 +1,4 @@
-=head1 [socket]
-
-Sockets!
-
-=cut
-
-.HLL 'Tcl', 'tcl_group'
+.HLL 'Tcl', ''
 .namespace []
 
 .sub '&socket'
@@ -41,7 +35,7 @@ Sockets!
     .return(channel_id)
 
 bad_args:
-    tcl_error 'wrong # args: should be "socket ?-myaddr addr? ?-myport myport? ?-async? host port" or "socket -server command ?-myaddr addr? port"'
+    die 'wrong # args: should be "socket ?-myaddr addr? ?-myport myport? ?-async? host port" or "socket -server command ?-myaddr addr? port"'
 .end
 
 

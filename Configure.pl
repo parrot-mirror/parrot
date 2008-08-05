@@ -3,7 +3,7 @@
 # Copyright (C) 2001-2008, The Perl Foundation.
 # $Id$
 
-use 5.008_000;
+use 5.008;
 use strict;
 use warnings;
 use lib 'lib';
@@ -20,6 +20,7 @@ use Parrot::Configure::Messages qw(
     print_conclusion
 );
 use Parrot::Configure::Step::List qw( get_steps_list );
+use Parrot::Revision;
 
 $| = 1;    # $OUTPUT_AUTOFLUSH = 1;
 
@@ -52,6 +53,9 @@ my $parrot_version = $Parrot::Configure::Options::Conf::parrot_version;
 # from Parrot::Configure::Messages
 print_introduction($parrot_version);
 
+# Update revision number if needed
+Parrot::Revision::update();
+
 my $conf = Parrot::Configure->new();
 
 # from Parrot::Configure::Step::List
@@ -60,9 +64,10 @@ $conf->add_steps( get_steps_list() );
 # from Parrot::Configure::Data
 $conf->options->set( %{$args} );
 
-# Run the actual steps
-# from Parrot::Configure
+# Log files created by Configure.pl in MANIFEST.configure.generated
 $conf->{active_configuration} = 1;
+
+# Run the actual steps from Parrot::Configure
 $conf->runsteps or exit(1);
 
 # build tests will only be run if you requested them

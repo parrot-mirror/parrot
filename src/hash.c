@@ -114,6 +114,15 @@ static int STRING_compare(PARROT_INTERP,
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
+static void
+parrot_mark_hash_keys(PARROT_INTERP, ARGIN(Hash *));
+
+static void
+parrot_mark_hash_values(PARROT_INTERP, ARGIN(Hash *));
+
+static void
+parrot_mark_hash_both(PARROT_INTERP, ARGIN(Hash *));
+
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 /* HEADERIZER END: static */
 
@@ -338,29 +347,87 @@ parrot_mark_hash(PARROT_INTERP, ARGIN(Hash *hash))
     ||  hash->key_type == Hash_key_type_PMC)
         mark_key = 1;
 
-    if (!mark_key && !mark_value)
-        return;
+    if (mark_key) {
+        if (mark_value)
+            parrot_mark_hash_both(interp, hash);
+        else
+            parrot_mark_hash_keys(interp, hash);
+    }
+    else {
+        if (mark_value)
+            parrot_mark_hash_values(interp, hash);
+    }
+}
 
-    entries = hash->entries;
+static void
+parrot_mark_hash_keys(PARROT_INTERP, ARGIN(Hash *hash))
+{
+    UINTVAL entries = hash->entries;
+    UINTVAL found   = 0;
+    INTVAL  i;
 
     for (i = hash->mask; i >= 0; --i) {
         HashBucket *bucket = hash->bi[i];
 
         while (bucket) {
             if (++found > entries)
-                real_exception(interp, NULL, 1,
+                Parrot_ex_throw_from_c_args(interp, NULL, 1,
+                    "Detected hash corruption at hash %p entries %d",
+                    hash, (int)entries);
+
+            PARROT_ASSERT(bucket->key);
+            pobject_lives(interp, (PObj *)bucket->key);
+
+            bucket = bucket->next;
+        }
+    }
+}
+
+static void
+parrot_mark_hash_values(PARROT_INTERP, ARGIN(Hash *hash))
+{
+    UINTVAL entries = hash->entries;
+    UINTVAL found   = 0;
+    INTVAL  i;
+
+    for (i = hash->mask; i >= 0; --i) {
+        HashBucket *bucket = hash->bi[i];
+
+        while (bucket) {
+            if (++found > entries)
+            Parrot_ex_throw_from_c_args(interp, NULL, 1,
                         "Detected hash corruption at hash %p entries %d",
                         hash, (int)entries);
 
-            if (mark_key) {
-                PARROT_ASSERT(bucket->key);
-                pobject_lives(interp, (PObj *)bucket->key);
-            }
+            PARROT_ASSERT(bucket->value);
+            pobject_lives(interp, (PObj *)bucket->value);
 
-            if (mark_value) {
-                PARROT_ASSERT(bucket->value);
-                pobject_lives(interp, (PObj *)bucket->value);
-            }
+            bucket = bucket->next;
+        }
+    }
+}
+
+static void
+parrot_mark_hash_both(PARROT_INTERP, ARGIN(Hash *hash))
+{
+    UINTVAL entries = hash->entries;
+    UINTVAL found   = 0;
+    INTVAL  i;
+
+    for (i = hash->mask; i >= 0; --i) {
+        HashBucket *bucket = hash->bi[i];
+
+        while (bucket) {
+            if (++found > entries)
+                Parrot_ex_throw_from_c_args(interp, NULL, 1,
+                        "Detected hash corruption at hash %p entries %d",
+                        hash, (int)entries);
+
+            PARROT_ASSERT(bucket->key);
+            pobject_lives(interp, (PObj *)bucket->key);
+
+            PARROT_ASSERT(bucket->value);
+            pobject_lives(interp, (PObj *)bucket->value);
 
             bucket = bucket->next;
         }
@@ -407,7 +474,8 @@ hash_thaw(PARROT_INTERP, ARGMOD(Hash *hash), ARGMOD(visit_info *info))
                 }
                 break;
             default:
-                real_exception(interp, NULL, 1, "unimplemented key type");
+                Parrot_ex_throw_from_c_args(interp, NULL, 1,
+                    "unimplemented key type");
                 break;
         } /* switch key_type */
 
@@ -427,7 +495,8 @@ hash_thaw(PARROT_INTERP, ARGMOD(Hash *hash), ARGMOD(visit_info *info))
                     break;
                 }
             default:
-                real_exception(interp, NULL, 1, "unimplemented value type");
+                Parrot_ex_throw_from_c_args(interp, NULL, 1,
+                    "unimplemented value type");
                 break;
         } /* switch entry_type */
     } /* for */
@@ -466,7 +535,8 @@ hash_freeze(PARROT_INTERP, ARGIN(const Hash * const hash), ARGMOD(visit_info* in
                     VTABLE_push_integer(interp, io, (INTVAL)b->key);
                     break;
                 default:
-                    real_exception(interp, NULL, 1, "unimplemented key type");
+                    Parrot_ex_throw_from_c_args(interp, NULL, 1,
+                        "unimplemented key type");
                     break;
             }
             switch (hash->entry_type) {
@@ -477,7 +547,8 @@ hash_freeze(PARROT_INTERP, ARGIN(const Hash * const hash), ARGMOD(visit_info* in
                     VTABLE_push_integer(interp, io, (INTVAL)b->value);
                     break;
                 default:
-                    real_exception(interp, NULL, 1, "unimplemented value type");
+                    Parrot_ex_throw_from_c_args(interp, NULL, 1,
+                        "unimplemented value type");
                     break;
             }
             b = b->next;
@@ -513,7 +584,7 @@ parrot_hash_visit(PARROT_INTERP, ARGMOD(Hash *hash), ARGMOD(void *pinfo))
             hash_freeze(interp, hash, info);
             break;
         default:
-            real_exception(interp, NULL, 1, "unimplemented visit mode");
+            Parrot_ex_throw_from_c_args(interp, NULL, 1, "unimplemented visit mode");
             break;
     }
 }
@@ -941,7 +1012,8 @@ parrot_hash_size(PARROT_INTERP, ARGIN(const Hash *hash))
 {
     if (hash)
         return hash->entries;
-    real_exception(interp, NULL, 1, "parrot_hash_size asked to check a NULL hash\n");
+    Parrot_ex_throw_from_c_args(interp, NULL, 1,
+        "parrot_hash_size asked to check a NULL hash\n");
 }
 
 /*
@@ -1207,8 +1279,8 @@ parrot_hash_clone(PARROT_INTERP, ARGIN(const Hash *hash), ARGOUT(Hash *dest))
 
             default:
                 valtmp = NULL; /* avoid warning */
-                real_exception(interp, NULL, -1, "hash corruption: type = %d\n",
-                                   hash->entry_type);
+                Parrot_ex_throw_from_c_args(interp, NULL, -1,
+                    "hash corruption: type = %d\n", hash->entry_type);
             };
             parrot_hash_put(interp, dest, key, valtmp);
             b = b->next;

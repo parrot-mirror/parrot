@@ -26,7 +26,7 @@ Perform initializations and create the base classes.
 .sub 'onload' :anon :init :load
     .local pmc p6meta
     load_bytecode 'P6object.pbc'
-    $P0 = get_hll_global 'P6metaclass'
+    $P0 = get_root_global ['parrot'], 'P6metaclass'
     $P0.'new_class'('Perl6Object', 'name'=>'Object')
     p6meta = $P0.'HOW'()
     set_hll_global ['Perl6Object'], '$!P6META', p6meta
@@ -304,6 +304,17 @@ Defines the .true method on all objects via C<prefix:?>.
  .return 'prefix:?'(self)
 .end
 
+=item get_bool (vtable)
+
+Returns true if the object is defined, false otherwise.
+
+=cut
+
+.sub '' :vtable('get_bool')
+    $I0 = 'defined'(self)
+    .return ($I0)
+.end
+
 =item print()
 
 =item say()
@@ -320,6 +331,28 @@ Print the object
 .sub 'say' :method
     $P0 = get_hll_global 'say'
     .return $P0(self)
+.end
+
+=item WHERE
+
+Gets the memory address of the object.
+
+=cut
+
+.sub 'WHERE' :method
+    $I0 = get_addr self
+    .return ($I0)
+.end
+
+=item WHICH
+
+Gets the object's identity value
+
+=cut
+
+.sub 'WHICH' :method
+    # For normal objects, this can just be the memory address.
+    .return self.'WHERE'()
 .end
 
 =back
@@ -353,6 +386,182 @@ Create a clone of self, also cloning the attributes given by attrlist.
     goto attr_loop
   attr_end:
     .return (result)
+.end
+
+
+.sub '!.?' :method
+    .param string method_name
+    .param pmc pos_args     :slurpy
+    .param pmc named_args   :slurpy :named
+
+    # For now we won't worry about signature, just if a method exists.
+    $I0 = can self, method_name
+    if $I0 goto invoke
+    $P0 = get_hll_global 'Failure'
+    .return ($P0)
+
+    # If we do have a method, call it.
+  invoke:
+    .return self.method_name(pos_args :flat, named_args :named :flat)
+.end
+
+
+.sub '!.*' :method
+    .param string method_name
+    .param pmc pos_args     :slurpy
+    .param pmc named_args   :slurpy :named
+
+    # Return an empty list if no methods exist at all.
+    $I0 = can self, method_name
+    if $I0 goto invoke
+    .return 'list'()
+
+    # Now find all methods and call them - since we know there are methods,
+    # we just pass on to infix:.+.
+  invoke:
+    .return self.'!.+'(method_name, pos_args :flat, named_args :named :flat)
+.end
+
+
+.sub '!.+' :method
+    .param string method_name
+    .param pmc pos_args     :slurpy
+    .param pmc named_args   :slurpy :named
+
+    # We need to find all methods we could call with the right name.
+    .local pmc p6meta, result_list, class, mro, it, cap_class, failure_class
+    result_list = 'list'()
+    p6meta = get_hll_global ['Perl6Object'], '$!P6META'
+    class = self.'HOW'()
+    class = p6meta.get_parrotclass(class)
+    mro = inspect class, 'all_parents'
+    it = iter mro
+    cap_class = get_hll_global 'Capture'
+    failure_class = get_hll_global 'Failure'
+  mro_loop:
+    unless it goto mro_loop_end
+    .local pmc cur_class, meths, cur_meth
+    cur_class = shift it
+    meths = inspect cur_class, 'methods'
+    cur_meth = meths[method_name]
+    if null cur_meth goto mro_loop
+
+    # If we're here, found a method. Invoke it and add capture of the results
+    # to the result list.
+    .local pmc pos_res, named_res, cap
+    (pos_res :slurpy, named_res :named :slurpy) = cur_meth(self, pos_args :flat, named_args :named :flat)
+    cap = 'prefix:\\'(pos_res :flat, named_res :flat :named)
+    push result_list, cap
+    goto mro_loop
+  mro_loop_end:
+
+    # Make sure we got some elements, or we have to die.
+    $I0 = elements result_list
+    if $I0 == 0 goto failure
+    .return (result_list)
+  failure:
+    $S0 = "Could not invoke method '"
+    concat $S0, method_name
+    concat $S0, "' on invocant of type '"
+    $S1 = self.WHAT()
+    concat $S0, $S1
+    concat $S0, "'"
+    'die'($S0)
+.end
+
+
+.sub '!.^' :method
+    .param string method_name
+    .param pmc pos_args     :slurpy
+    .param pmc named_args   :slurpy :named
+
+    # Get the HOW or the object and do the call on that.
+    .local pmc how
+    how = self.'HOW'()
+    .return how.method_name(self, pos_args :flat, named_args :flat :named)
+.end
+
+
+.namespace ['P6protoobject']
+
+=back
+
+=head2 Methods on P6protoobject
+
+=over
+
+=item WHENCE()
+
+Returns the protoobject's autovivification closure.
+
+=cut
+
+.sub 'WHENCE' :method
+    .local pmc props, whence
+    props = getattribute self, '%!properties'
+    if null props goto ret_undef
+    whence = props['WHENCE']
+    if null whence goto ret_undef
+    .return (whence)
+  ret_undef:
+    whence = new 'Undef'
+    .return (whence)
+.end
+
+
+=item get_pmc_keyed(key)    (vtable method)
+
+Returns a proto-object with an autovivification closure attached to it.
+
+=cut
+
+.sub get_pmc_keyed :vtable :method
+    .param pmc what
+
+    # We'll build auto-vivification hash of values.
+    .local pmc WHENCE, key, val
+    WHENCE = new 'Hash'
+
+    # What is it?
+    $S0 = what.'WHAT'()
+    if $S0 == 'Pair' goto from_pair
+    if $S0 == 'List' goto from_list
+    'die'("Auto-vivification closure did not contain a Pair")
+
+  from_pair:
+    # Just a pair.
+    key = what.'key'()
+    val = what.'value'()
+    WHENCE[key] = val
+    goto done_whence
+
+  from_list:
+    # List.
+    .local pmc list_iter, cur_pair
+    list_iter = new 'Iterator', what
+  list_iter_loop:
+    unless list_iter goto done_whence
+    cur_pair = shift list_iter
+    key = cur_pair.'key'()
+    val = cur_pair.'value'()
+    WHENCE[key] = val
+    goto list_iter_loop
+  done_whence:
+
+    # Now create a clone of the protoobject.
+    .local pmc protoclass, res, props, tmp
+    protoclass = class self
+    res = new protoclass
+
+    # Attach the WHENCE property.
+    props = getattribute self, '%!properties'
+    unless null props goto have_props
+    props = new 'Hash'
+  have_props:
+    props['WHENCE'] = WHENCE
+    setattribute res, '%!properties', props
+
+    .return (res)
 .end
 
 =back

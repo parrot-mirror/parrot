@@ -1,7 +1,4 @@
-###
-# [string]
-
-.HLL 'Tcl', 'tcl_group'
+.HLL 'Tcl', ''
 .namespace []
 
 .sub '&string'
@@ -9,42 +6,21 @@
 
   .local pmc retval
 
-  $I3 = argv
-  unless $I3 goto no_args
+  .local int argc
+  argc = elements argv
+  unless argc goto no_args
 
   .local string subcommand_name
   subcommand_name = shift argv
 
   .local pmc options
-  options = new 'ResizablePMCArray'
-  push options, 'bytelength'
-  push options, 'compare'
-  push options, 'equal'
-  push options, 'first'
-  push options, 'index'
-  push options, 'is'
-  push options, 'last'
-  push options, 'length'
-  push options, 'map'
-  push options, 'match'
-  push options, 'range'
-  push options, 'repeat'
-  push options, 'replace'
-  push options, 'reverse'
-  push options, 'tolower'
-  push options, 'toupper'
-  push options, 'totitle'
-  push options, 'trim'
-  push options, 'trimleft'
-  push options, 'trimright'
-  push options, 'wordend'
-  push options, 'wordstart'
+  options = get_root_global ['_tcl'; 'helpers'; 'string'], 'options'
 
   .local pmc select_option
   select_option  = get_root_global ['_tcl'], 'select_option'
+
   .local string canonical_subcommand
   canonical_subcommand = select_option(options, subcommand_name)
-
 
   .local pmc subcommand_proc
   null subcommand_proc
@@ -57,7 +33,7 @@ bad_args:
   .return ('') # once all commands are implemented, remove this...
 
 no_args:
-  tcl_error 'wrong # args: should be "string subcommand ?argument ...?"'
+  die 'wrong # args: should be "string subcommand ?argument ...?"'
 
 .end
 
@@ -71,7 +47,7 @@ no_args:
   .local int argc
   .local pmc retval
 
-  argc = argv
+  argc = elements argv
   if argc > 3 goto bad_args
   if argc < 2 goto bad_args
   $S1 = argv[0]
@@ -79,11 +55,11 @@ no_args:
   $I0 = 0
   if argc == 2 goto first_do
   $S3 = argv[2]
-  .local pmc __index
-  __index = get_root_global ['_tcl'], '__index'
-  $I0 = __index($S3,$S2)
+  .local pmc getIndex
+  getIndex = get_root_global ['_tcl'], 'getIndex'
+  $I0 = getIndex($S3,$S2)
   if $I0 >0 goto first_do
-  $I0 = 0 # XXX should this be done in __index?
+  $I0 = 0 # XXX should this be done in getIndex?
 
 first_do:
   .local int index_1
@@ -91,7 +67,7 @@ first_do:
   .return(index_1)
 
 bad_args:
-  tcl_error 'wrong # args: should be "string first needleString haystackString ?startIndex?"'
+  die 'wrong # args: should be "string first needleString haystackString ?startIndex?"'
 
 .end
 
@@ -101,7 +77,7 @@ bad_args:
   .local int argc
   .local pmc retval
 
-  argc = argv
+  argc = elements argv
   if argc > 3 goto bad_args
   if argc < 2 goto bad_args
   $S1 = argv[0]
@@ -111,9 +87,9 @@ bad_args:
   if argc == 2 goto last_do
 
   $S3 = argv[2]
-  .local pmc __index
-  __index = get_root_global ['_tcl'], '__index'
-  $I1 = __index($S3,$S2)
+  .local pmc getIndex
+  getIndex = get_root_global ['_tcl'], 'getIndex'
+  $I1 = getIndex($S3,$S2)
 
   if $I1 > $I0 goto last_do
   $I0 = $I1
@@ -139,7 +115,7 @@ not_found:
   .return(-1)
 
 bad_args:
-  tcl_error 'wrong # args: should be "string last needleString haystackString ?startIndex?"'
+  die 'wrong # args: should be "string last needleString haystackString ?startIndex?"'
 .end
 
 .sub 'index'
@@ -152,9 +128,9 @@ bad_args:
   if argc != 2 goto bad_index
   $S1 = argv[0]
   $S2 = argv[1]
-  .local pmc __index
-  __index = get_root_global ['_tcl'], '__index'
-  $I0 = __index($S2,$S1)
+  .local pmc getIndex
+  getIndex = get_root_global ['_tcl'], 'getIndex'
+  $I0 = getIndex($S2,$S1)
   index_1 = length $S1
   inc index_1
   if $I0 > index_1 goto index_null
@@ -166,7 +142,7 @@ index_null:
   .return ('')
 
 bad_index:
-  tcl_error 'wrong # args: should be "string index string charIndex"'
+  die 'wrong # args: should be "string index string charIndex"'
 
 done:
   .return (retval)
@@ -179,7 +155,7 @@ done:
   .local int argc
   .local pmc retval
 
-  argc = argv
+  argc = elements argv
   if argc > 3 goto bad_args
   if argc < 1 goto bad_args
 
@@ -191,17 +167,17 @@ done:
   $I3 = $I1
   if argc == 1 goto tolower_do
 
-  .local pmc __index
-  __index = get_root_global ['_tcl'], '__index'
+  .local pmc getIndex
+  getIndex = get_root_global ['_tcl'], 'getIndex'
 
   $S2 = argv[1]
-  $I2 = __index($S2, $S1)
+  $I2 = getIndex($S2, $S1)
   # if just the first is specified, the last is the same (tclsh says so)
   $I3 = $I2
   if argc == 2 goto tolower_do
 
   $S3 = argv[2]
-  $I3 = __index($S3, $S1)
+  $I3 = getIndex($S3, $S1)
 
 tolower_do:
   if $I2 > $I1  goto tolower_return
@@ -219,7 +195,7 @@ tolower_return:
   .return($S1)
 
 bad_args:
-  tcl_error 'wrong # args: should be "string tolower string ?first? ?last?"'
+  die 'wrong # args: should be "string tolower string ?first? ?last?"'
 
 .end
 
@@ -232,7 +208,7 @@ bad_args:
   .local int argc
   .local pmc retval
 
-  argc = argv
+  argc = elements argv
   if argc > 3 goto bad_args
   if argc < 1 goto bad_args
 
@@ -244,17 +220,17 @@ bad_args:
   $I3 = $I1
   if argc == 1 goto toupper_do
 
-  .local pmc __index
-  __index = get_root_global ['_tcl'], '__index'
+  .local pmc getIndex
+  getIndex = get_root_global ['_tcl'], 'getIndex'
 
   $S2 = argv[1]
-  $I2 = __index($S2, $S1)
+  $I2 = getIndex($S2, $S1)
   # if just the first is specified, the last is the same (tclsh says so)
   $I3 = $I2
   if argc == 2 goto toupper_do
 
   $S3 = argv[2]
-  $I3 = __index($S3, $S1)
+  $I3 = getIndex($S3, $S1)
 
 toupper_do:
   if $I2 > $I1  goto toupper_return
@@ -272,7 +248,7 @@ toupper_return:
   .return($S1)
 
 bad_args:
-  tcl_error 'wrong # args: should be "string toupper string ?first? ?last?"'
+  die 'wrong # args: should be "string toupper string ?first? ?last?"'
 
 .end
 
@@ -284,7 +260,7 @@ bad_args:
   .local int argc
   .local pmc retval
 
-  argc = argv
+  argc = elements argv
   if argc > 3 goto bad_args
   if argc < 1 goto bad_args
 
@@ -296,17 +272,17 @@ bad_args:
   $I3 = $I1
   if argc == 1 goto totitle_do
 
-  .local pmc __index
-  __index = get_root_global ['_tcl'], '__index'
+  .local pmc getIndex
+  getIndex = get_root_global ['_tcl'], 'getIndex'
 
   $S2 = argv[1]
-  $I2 = __index($S2, $S1)
+  $I2 = getIndex($S2, $S1)
   # if just the first is specified, the last is the same (tclsh says so)
   $I3 = $I2
   if argc == 2 goto totitle_do
 
   $S3 = argv[2]
-  $I3 = __index($S3, $S1)
+  $I3 = getIndex($S3, $S1)
 
 totitle_do:
   if $I2 > $I1  goto totitle_return
@@ -324,7 +300,7 @@ totitle_return:
   .return($S1)
 
 bad_args:
-  tcl_error 'wrong # args: should be "string totitle string ?first? ?last?"'
+  die 'wrong # args: should be "string totitle string ?first? ?last?"'
 
 .end
 
@@ -334,21 +310,21 @@ bad_args:
   .param pmc argv
 
   .local int argc
-  argc = argv
+  argc = elements argv
   if argc != 1 goto bad_length
   $S0 = argv[0]
   $I0 = bytelength $S0
   .return($I0)
 
 bad_length:
-  tcl_error 'wrong # args: should be "string bytelength string"'
+  die 'wrong # args: should be "string bytelength string"'
 .end
 
 .sub 'length'
   .param pmc argv
 
   .local int argc
-  argc = argv
+  argc = elements argv
   if argc != 1 goto bad_length
 
   $S1 = argv[0]
@@ -356,7 +332,7 @@ bad_length:
   .return($I0)
 
 bad_length:
-  tcl_error 'wrong # args: should be "string length string"'
+  die 'wrong # args: should be "string length string"'
 .end
 
 .sub 'range'
@@ -376,12 +352,12 @@ bad_length:
   last_index = length teh_string
   dec last_index
 
-  .local pmc __index
-  __index = get_root_global ['_tcl'], '__index'
+  .local pmc getIndex
+  getIndex = get_root_global ['_tcl'], 'getIndex'
 
   .local int first_i, last_i
-  first_i = __index(first_s, teh_string)
-  last_i  = __index(last_s, teh_string)
+  first_i = getIndex(first_s, teh_string)
+  last_i  = getIndex(last_s, teh_string)
 
   if first_i > last_i goto done
 
@@ -401,14 +377,14 @@ done:
   .return(result)
 
 bad_range:
-  tcl_error 'wrong # args: should be "string range string first last"'
+  die 'wrong # args: should be "string range string first last"'
 .end
 
 .sub 'match'
   .param pmc argv
 
   .local int argc
-  argc = argv
+  argc = elements argv
 
   .local int nocase
   nocase = 0
@@ -453,17 +429,17 @@ bad_option:
   $S1 = 'bad option "'
   $S1 .= $S0
   $S1 .= '": must be -nocase'
-  tcl_error $S1
+  die $S1
 
 bad_match:
-  tcl_error 'wrong # args: should be "string match ?-nocase? pattern string"'
+  die 'wrong # args: should be "string match ?-nocase? pattern string"'
 .end
 
 .sub 'repeat'
   .param pmc argv
 
   .local int argc
-  argc = argv
+  argc = elements argv
 
   if argc != 2 goto bad_repeat
   .local string the_string
@@ -471,9 +447,9 @@ bad_match:
   the_string = argv[0]
   the_repeat = argv[1]
 
-  .local pmc __integer
-  __integer = get_root_global ['_tcl'], '__integer'
-  the_repeat = __integer(the_repeat)
+  .local pmc toInteger
+  toInteger = get_root_global ['_tcl'], 'toInteger'
+  the_repeat = toInteger(the_repeat)
 
   $I0 = the_repeat
   if $I0 <= 0 goto nothing
@@ -484,14 +460,14 @@ nothing:
   .return('')
 
 bad_repeat:
-  tcl_error 'wrong # args: should be "string repeat string count"'
+  die 'wrong # args: should be "string repeat string count"'
 .end
 
 .sub 'map'
   .param pmc argv
 
   .local int argc
-  argc = argv
+  argc = elements argv
   if argc == 0 goto bad_args
   if argc > 3 goto bad_args
   .local int nocase
@@ -506,11 +482,11 @@ setup:
   .local pmc map_list
   .local int strpos,strlen,mappos,maplen,skiplen,mapstrlen,replacementstrlen
 
-  .local pmc __list
-  __list = get_root_global ['_tcl'], '__list'
+  .local pmc toList
+  toList = get_root_global ['_tcl'], 'toList'
 
   $P0 = argv[0]
-  map_list = __list($P0)
+  map_list = toList($P0)
   the_string = argv[1]
 
   maplen = map_list
@@ -557,22 +533,22 @@ outer_done:
   .return (the_string)
 
 oddly_enough:
-  tcl_error 'char map list unbalanced'
+  die 'char map list unbalanced'
 
 bad_option:
   $S1 = 'bad option "'
   $S1 .= $S0
   $S1 .= '": must be -nocase'
-  tcl_error $S1
+  die $S1
 
 bad_args:
-  tcl_error 'wrong # args: should be "string map ?-nocase? charMap string"'
+  die 'wrong # args: should be "string map ?-nocase? charMap string"'
 .end
 
 .sub 'equal'
   .param pmc argv
   .local int argc
-  argc = argv
+  argc = elements argv
 
   .local string a, b
   .local int length, nocase
@@ -596,7 +572,7 @@ got_nocase:
   nocase = 1
 gotten:
 
-  argc = argv
+  argc = elements argv
   if argc == 2 goto flags_done
   if argc < 2 goto bad_args
   branch flag_loop
@@ -623,7 +599,7 @@ ret_one:
   .return (1)
 
 bad_args:
-  tcl_error 'wrong # args: should be "string equal ?-nocase? ?-length int? string1 string2"'
+  die 'wrong # args: should be "string equal ?-nocase? ?-length int? string1 string2"'
 
 .end
 
@@ -631,8 +607,11 @@ bad_args:
 # RT#40770: doesn't respect the -strict or -failindex switches
 .sub 'is'
   .param pmc argv
+
+  .local pmc toNumber
+
   .local int argc
-  argc = argv
+  argc = elements argv
 
   .local int strict
   strict = 0
@@ -646,7 +625,7 @@ bad_args:
   the_string = argv[1]
 
   .local pmc options
-  options = new 'ResizablePMCArray'
+  options = new 'TclList'
   push options, 'alnum'
   push options, 'alpha'
   push options, 'ascii'
@@ -724,9 +703,9 @@ digit_check:
   the_cclass = .CCLASS_NUMERIC
   goto cclass_check
 double_check:
-  $P1 = get_root_global ['_tcl'], '__number'
+  toNumber = get_root_global ['_tcl'], 'toNumber'
   push_eh nope
-    $P2 = $P1(the_string)
+    $P2 = toNumber(the_string)
   pop_eh
 
   $S0 = typeof $P2
@@ -746,18 +725,19 @@ graph_check:
   the_cclass = .CCLASS_GRAPHICAL
   goto cclass_check
 integer_check:
-  $P1 = get_root_global ['_tcl'], '__number'
+  toNumber = get_root_global ['_tcl'], 'toNumber'
   push_eh nope
-    $P2 = $P1(the_string)
+    $P2 = toNumber(the_string)
   pop_eh
 
   $S0 = typeof $P2
   if $S0 == 'TclInt' goto yep
   goto nope
 list_check:
-  $P1 = get_root_global ['_tcl'], '__list'
+  .local pmc toList
+  toList = get_root_global ['_tcl'], 'toList'
   push_eh nope
-    $P1(the_string)
+    toList(the_string)
   pop_eh
   goto yep
 lower_check:
@@ -810,7 +790,7 @@ nope:
   .return(0)
 
 bad_args:
-  tcl_error 'wrong # args: should be "string is class ?-strict? ?-failindex var? str"'
+  die 'wrong # args: should be "string is class ?-strict? ?-failindex var? str"'
 .end
 
 
@@ -823,10 +803,10 @@ bad_args:
   .local int len
   .local pmc retval
 
-  .local pmc __index
-  __index = get_root_global ['_tcl'], '__index'
+  .local pmc getIndex
+  getIndex = get_root_global ['_tcl'], 'getIndex'
 
-  argc = argv
+  argc = elements argv
   if argc > 4 goto bad_args
   if argc < 3 goto bad_args
 
@@ -838,12 +818,12 @@ bad_args:
   $S4 = ''
 
   low_s = argv[1]
-  low = __index(low_s, the_string)
+  low = getIndex(low_s, the_string)
 
   if low >= string_len goto replace_done
 
   high_s = argv[2]
-  high = __index(high_s, the_string)
+  high = getIndex(high_s, the_string)
 
   if high < low goto replace_done
 
@@ -868,7 +848,7 @@ replace_done:
   .return(the_string)
 
 bad_args:
-  tcl_error 'wrong # args: should be "string replace string first last ?string?"'
+  die 'wrong # args: should be "string replace string first last ?string?"'
 .end
 
 
@@ -878,7 +858,7 @@ bad_args:
   .local int argc
   .local pmc retval
 
-  argc = argv
+  argc = elements argv
   if argc > 2 goto bad_args
   if argc < 1 goto bad_args
 
@@ -905,7 +885,7 @@ trimleft_done:
   .return($S1)
 
 bad_args:
-  tcl_error 'wrong # args: should be "string trimleft string ?chars?"'
+  die 'wrong # args: should be "string trimleft string ?chars?"'
 
 .end
 
@@ -917,7 +897,7 @@ bad_args:
   .local int argc
   .local pmc retval
 
-  argc = argv
+  argc = elements argv
   if argc > 2 goto bad_args
   if argc < 1 goto bad_args
 
@@ -944,7 +924,7 @@ trimright_done:
   .return($S1)
 
 bad_args:
-  tcl_error 'wrong # args: should be "string trimright string ?chars?"'
+  die 'wrong # args: should be "string trimright string ?chars?"'
 
 .end
 
@@ -957,7 +937,7 @@ bad_args:
   .local int argc
   .local pmc retval
 
-  argc = argv
+  argc = elements argv
   if argc > 2 goto bad_args
   if argc < 1 goto bad_args
 
@@ -996,7 +976,7 @@ trim_done:
   .return($S1)
 
 bad_args:
-  tcl_error 'wrong # args: should be "string trim string ?chars?"'
+  die 'wrong # args: should be "string trim string ?chars?"'
 
 .end
 
@@ -1008,7 +988,7 @@ bad_args:
   .local int size
 
   size = -1
-  argc = argv
+  argc = elements argv
 
   if argc < 1 goto bad_args
 
@@ -1016,7 +996,7 @@ bad_args:
   $S1 = pop argv
 
 args_processment:
-  argc = argv
+  argc = elements argv
   if argc == 0 goto args_processed
   $S4 = shift argv
   if $S4 == '-nocase' goto arg_nocase
@@ -1044,10 +1024,10 @@ arg_length:
   argc = elements argv
   if argc == 0 goto bad_args
 
-  .local pmc __integer
-  __integer = get_root_global ['_tcl'], '__integer'
+  .local pmc toInteger
+  toInteger = get_root_global ['_tcl'], 'toInteger'
   $S4  = shift argv
-  size = __integer($S4)
+  size = toInteger($S4)
   # "if -length is negative, it is ignored"
   if size < 0 goto args_processment
   $S1 = substr $S1, 0, size
@@ -1055,7 +1035,7 @@ arg_length:
   goto args_processment
 
 bad_args:
-  tcl_error 'wrong # args: should be "string compare ?-nocase? ?-length int? string1 string2"'
+  die 'wrong # args: should be "string compare ?-nocase? ?-length int? string1 string2"'
 
 .end
 
@@ -1072,7 +1052,7 @@ bad_args:
   .return ($S0)
 
 bad_args:
-  tcl_error 'wrong # args: should be "string reverse string"'
+  die 'wrong # args: should be "string reverse string"'
 .end
 
 .sub 'wordend'
@@ -1087,9 +1067,9 @@ bad_args:
   str = argv[0]
   idx = argv[1]
 
-  .local pmc __index
-  __index = get_root_global ['_tcl'], '__index'
-  idx = __index(idx, str)
+  .local pmc getIndex
+  getIndex = get_root_global ['_tcl'], 'getIndex'
+  idx = getIndex(idx, str)
 
   $I0 = length str
   $I0 -= idx
@@ -1102,7 +1082,7 @@ return:
   .return($I0)
 
 bad_args:
-  tcl_error 'wrong # args: should be "string wordend string index"'
+  die 'wrong # args: should be "string wordend string index"'
 .end
 
 .sub 'wordstart'
@@ -1117,13 +1097,13 @@ bad_args:
   str = argv[0]
   idx = argv[1]
 
-  .local pmc __index
-  __index = get_root_global ['_tcl'], '__index'
-  idx = __index(idx, str)
+  .local pmc getIndex
+  getIndex = get_root_global ['_tcl'], 'getIndex'
+  idx = getIndex(idx, str)
 
   .local int pos
   pos = idx
-  # XXX should these checks be in __index itself?
+  # XXX should these checks be in getIndex itself?
   if pos >0 goto check_upper
   pos = 0
   goto pre_loop
@@ -1150,8 +1130,38 @@ ret_val:
   .return(pos)
 
 bad_args:
-  tcl_error 'wrong # args: should be "string wordstart string index"'
+  die 'wrong # args: should be "string wordstart string index"'
 .end
+
+.sub 'anon' :anon :load
+  .local pmc options
+  options = new 'TclList'
+  push options, 'bytelength'
+  push options, 'compare'
+  push options, 'equal'
+  push options, 'first'
+  push options, 'index'
+  push options, 'is'
+  push options, 'last'
+  push options, 'length'
+  push options, 'map'
+  push options, 'match'
+  push options, 'range'
+  push options, 'repeat'
+  push options, 'replace'
+  push options, 'reverse'
+  push options, 'tolower'
+  push options, 'toupper'
+  push options, 'totitle'
+  push options, 'trim'
+  push options, 'trimleft'
+  push options, 'trimright'
+  push options, 'wordend'
+  push options, 'wordstart'
+
+  set_root_global [ '_tcl'; 'helpers'; 'string' ], 'options', options
+.end
+
 
 # Local Variables:
 #   mode: pir

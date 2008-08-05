@@ -16,27 +16,6 @@ src/builtins/math.pir - Perl6 math functions
 ## .namespace [ 'Math::Basic' ]
 
 
-=item abs
-
- our Num multi Num::abs ( Num $x )
- our Num multi Math::Basic::abs ( Num $x )
-
-Absolute Value.
-
-=cut
-
-.sub 'abs' :multi(_)
-    .param num a
-    $N0 = abs a
-    .return ($N0)
-.end
-
-.sub 'abs' :multi('Integer')
-    .param pmc a
-    $P0 = n_abs a
-    .return ($P0)
-.end
-
 =item floor
 
  our Int multi Num::floor ( Num $x )
@@ -112,56 +91,6 @@ or more succinctly:
 .end
 
 
-=item sqrt
-
- our Num     multi Num::sqrt ( Num  $x )
- our Complex multi Complex::sqrt ( Num  $x )
- our Complex multi Complex::sqrt ( Complex  $x )
- our Num     multi Math::Basic::sqrt ( Num $x )
-
-C<$x ** 0.5>
-
-=cut
-
-.sub 'sqrt' :multi(_)
-    .param num a
-    a = sqrt a
-    .return (a)
-.end
-
-
-=item truncate
-
- our Int multi Num::truncate ( Num $x )
- our &Num::int ::= &Num::truncate;
-
-Returns the closest integer to $x whose absolute value is not greater
-than the absolute value of $x.  (In other words, just chuck any
-fractional part.)  This is the default rounding function used by an
-C<int()> cast, for historic reasons.  But see Int constructor above
-for a rounded version.
-
-=cut
-
-.sub 'truncate'
-    .param num a
-    eq a, 0, return
-    lt a, 0, under
-    floor a
-    goto return
-  under:
-    ceil a
-  return:
-    $I0 = a
-    .return ($I0)
-.end
-
-.sub 'int'
-    .param num a
-    .return 'truncate'(a)
-.end
-
-
 =item exp
 
  our Num multi Num::exp         ( Num $exponent: Num :$base = Num::e )
@@ -176,23 +105,6 @@ constant I<e>.
     .param num a
     a = exp a
     .return (a)
-.end
-
-
-=item log
-
- our Num multi Num::log         ( Num $x: Num :$base )
- our Num multi Math::Basic::log ( Num $x, Num :$base )
-
-Logarithm of base C<$base>, default Natural. Calling with C<$x == 0> is an
-error.
-
-=cut
-
-.sub 'log'
-    .param num a
-    $N0 = ln a
-    .return ($N0)
 .end
 
 
@@ -487,9 +399,13 @@ The other alternative would be to remove the default. --law]
 
 .sub 'atan2'
     .param num a
-    .param num b
+    .param num b               :optional
+    .param int has_b           :opt_flag
+    if has_b goto have_b
+    b = 1
+  have_b:
     $N0 = atan a, b
-    .return (N0)
+    .return ($N0)
 .end
 
 

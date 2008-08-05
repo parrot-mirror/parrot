@@ -1,19 +1,19 @@
 .HLL '_Tcl', ''
 .namespace []
 
-=head2 _Tcl::__list
+=head2 _Tcl::toList
 
 Given a PMC, get a list from it. If the PMC is a TclList,
 this is as simple as returning the list.
 
 =cut
 
-.sub __list :multi(TclList)
+.sub toList :multi(TclList)
   .param pmc list
   .return(list)
 .end
 
-.sub __list :multi(_)
+.sub toList :multi(_)
   .param pmc value
 
   $P0 = new 'TclString'
@@ -28,59 +28,60 @@ this is as simple as returning the list.
   .return(value)
 
   # The PMC method only throws a regular exception, we need to tcl-ify it.
+  # XXX this may not be necessary anymore.
   convert_to_tcl_error:
     get_results '0,0', $P0, $S0
-    tcl_error $S0
+    die $S0
 
 .end
 
-=head2 _Tcl::__dict
+=head2 _Tcl::toDict
 
 Given a PMC, get a TclDict from it, converting as needed.
 
 =cut
 
-.sub __dict :multi(TclDict)
+.sub toDict :multi(TclDict)
   .param pmc dict
   .return(dict)
 .end
 
-.sub __dict :multi(TclList)
+.sub toDict :multi(TclList)
   .param pmc list
 
-  $P0 = __listToDict(list)
+  $P0 = listToDict(list)
   copy list, $P0
 
   .return(list)
 .end
 
-.sub __dict :multi(_)
+.sub toDict :multi(_)
   .param pmc value
 
-  $P0 = __stringToDict(value)
+  $P0 = stringToDict(value)
   copy value, $P0
 
   .return(value)
 .end
 
 
-=head2 _Tcl::__number
+=head2 _Tcl::toNumber
 
 Given a PMC, get a number from it.
 
 =cut
 
-.sub __number :multi(TclInt)
+.sub toNumber :multi(TclInt)
   .param pmc n
   .return(n)
 .end
 
-.sub __number :multi(TclFloat)
+.sub toNumber :multi(TclFloat)
   .param pmc n
   .return(n)
 .end
 
-.sub __number :multi(_)
+.sub toNumber :multi(_)
   .param pmc number
 
   .local string str
@@ -134,21 +135,21 @@ NaN:
   $S0 = number
   $S1 .= $S0
   $S1 .= '"'
-  tcl_error $S1
+  die $S1
 .end
 
-=head2 _Tcl::__integer
+=head2 _Tcl::toInteger
 
 Given a PMC, get an integer from it.
 
 =cut
 
-.sub __integer :multi(TclInt)
+.sub toInteger :multi(TclInt)
   .param pmc n
   .return(n)
 .end
 
-.sub __integer :multi(_)
+.sub toInteger :multi(_)
   .param pmc value
   .param pmc rawhex :named ('rawhex') :optional
   .param int has_rawhex               :opt_flag
@@ -162,7 +163,7 @@ normal:
   .local pmc integer
 
   push_eh not_integer_eh
-    integer = __number(value)
+    integer = toNumber(value)
   pop_eh
   $S0 = typeof integer
   if $S0 != 'TclInt' goto not_integer
@@ -176,7 +177,7 @@ not_integer:
   $S0 = 'expected integer but got "'
   $S0 .= $S1
   $S0 .= '"'
-  tcl_error $S0
+  die $S0
 
 not_integer_eh:
   get_results '0,0', $P99, $S99
@@ -185,11 +186,14 @@ not_integer_eh:
   rethrow $P99 # preserves the invalid octal message.
 .end
 
-=head2 _Tcl::__index
+=head2 _Tcl::getIndex
+
+Given a tcl string index and an List pmc, return the corresponding numeric
+index.
 
 =cut
 
-.sub __index
+.sub getIndex
   .param string idx
   .param pmc    list
 
@@ -200,14 +204,14 @@ not_integer_eh:
   if $S0 == 'end+' goto after_end
 
   push_eh bad_index
-    $I0 = __integer(idx)
+    $I0 = toInteger(idx)
   pop_eh
   .return($I0)
 
 before_end:
   $S0 = substr idx, 4
   push_eh bad_index
-    $I0 = __integer($S0)
+    $I0 = toInteger($S0)
   pop_eh
 
   $I1 = elements list
@@ -218,7 +222,7 @@ before_end:
 after_end:
   $S0 = substr idx, 4
   push_eh bad_index
-    $I0 = __integer($S0)
+    $I0 = toInteger($S0)
   pop_eh
 
   $I1 = elements list
@@ -243,16 +247,16 @@ bad_index:
   if $I0 != -1 goto bad_index_done # don't squawk on negative indices..
   $S0 .= $S1
 bad_index_done:
-  tcl_error $S0
+  die $S0
 .end
 
-=head2 _Tcl::__channel
+=head2 _Tcl::getChannel
 
 Given a string, return the appropriate channel.
 
 =cut
 
-.sub __channel
+.sub getChannel
   .param string channelID
 
   .local pmc channels
@@ -276,19 +280,18 @@ bad_channel:
   $S0 = 'can not find channel named "'
   $S0 .= channelID
   $S0 .= '"'
-  tcl_error $S0
+  die $S0
 
 .end
 
-=head2 _Tcl::__expr
+=head2 _Tcl::compileExpr
 
 Given an expression, return a subroutine, or optionally, the raw PIR
 
 =cut
 
-.sub __expr
+.sub compileExpr
     .param string expression
-    .param int    pir_only :named('pir_only') :optional
     .param pmc    ns       :named('ns')       :optional
     .param int    has_ns   :opt_flag
 
@@ -334,7 +337,6 @@ Given an expression, return a subroutine, or optionally, the raw PIR
 
     .local string ret
     ret = ast['ret']
-    if pir_only goto only_pir
 
     .local pmc pir
     pir = new 'CodeString'
@@ -350,32 +352,29 @@ Given an expression, return a subroutine, or optionally, the raw PIR
     $P2 = $P1(pir)
     .return ($P2)
 
-  only_pir:
-    .return(result, ret)
-
   premature_end:
     $S0 = expression
     $S0 = 'syntax error in expression "' . $S0
     $S0 = $S0 . '": premature end of expression'
-    tcl_error $S0
+    die $S0
 
   extra_tokens:
     $S0 = expression
     $S0 = 'syntax error in expression "' . $S0
     $S0 = $S0 . '": extra tokens at end of expression'
-    tcl_error $S0
+    die $S0
 
   empty:
-    tcl_error "empty expression\nin expression \"\""
+    die "empty expression\nin expression \"\""
 .end
 
-=head2 _Tcl::__script
+=head2 _Tcl::compileTcl
 
 Given a chunk of tcl code, return a subroutine.
 
 =cut
 
-.sub __script
+.sub compileTcl
     .param string code
     .param int    pir_only    :named('pir_only') :optional
     .param pmc    ns          :named('ns')       :optional
@@ -464,21 +463,21 @@ END_PIR
 
   premature_end:
     say code
-    tcl_error "program doesn't match grammar"
+    die "program doesn't match grammar"
 
   extra_tokens:
     $S0 = substr code, $I1
     $S0 = 'extra tokens at end of program: ' . $S0
-    tcl_error $S0
+    die $S0
 .end
 
-=head2 _Tcl::__namespace
+=head2 _Tcl::splitNamespace
 
 Given a string namespace, return an array of names.
 
 =cut
 
-.sub __namespace
+.sub splitNamespace
   .param string name
   .param int    depth     :optional
   .param int    has_depth :opt_flag
@@ -525,14 +524,14 @@ return:
   .return(ns_name)
 .end
 
-=head2 _Tcl::__boolean
+=head2 _Tcl::toBoolean
 
 Given a string, return its boolean value if it's a valid boolean. Otherwise,
 throw an exception.
 
 =cut
 
-.sub __boolean
+.sub toBoolean
     .param pmc value
 
     .local string lc
@@ -559,11 +558,8 @@ throw an exception.
     if lc == 'off'   goto false
     if lc == 'of'    goto false
 
-    .local pmc __number
-    __number = get_hll_global '__number'
-
     push_eh error
-      value = __number(value)
+      value = toNumber(value)
     pop_eh
     if value goto true
     goto false
@@ -572,7 +568,7 @@ error:
     $S0 = value
     $S0 = 'expected boolean value but got "' . $S0
     $S0 = $S0 . '"'
-    tcl_error $S0
+    die $S0
 
 number:
 
@@ -583,7 +579,7 @@ false:
     .return(0)
 .end
 
-=head2 _Tcl::__call_level
+=head2 _Tcl::getCallLevel
 
 Given a pmc containing the tcl-style call level, return an int-like pmc
 indicating the parrot-style level, and an integer with a boolean 0/1 -
@@ -591,18 +587,17 @@ was this a valid tcl-style level, or did we get this value as a default?
 
 =cut
 
-.sub __call_level
+.sub getCallLevel
   .param pmc tcl_level
   .local pmc parrot_level, defaulted, orig_level
-  defaulted = new 'Integer'
+  defaulted = new 'TclInt'
   defaulted = 0
 
-  .local pmc call_chain, __number
+  .local pmc call_chain
   .local int call_level
   call_chain = get_root_global ['_tcl'], 'call_chain'
   call_level = elements call_chain
-  __number   = get_root_global ['_tcl'], '__number'
-  orig_level = new 'Integer'
+  orig_level = new 'TclInt'
   orig_level = call_level
 
   .local int num_length
@@ -613,13 +608,13 @@ get_absolute:
   $S1 = substr $S0, 0, 1, ''
   if $S1 != '#' goto get_integer
   push_eh default
-    parrot_level = __number($S0)
+    parrot_level = toNumber($S0)
   pop_eh
   goto bounds_check
 
 get_integer:
   push_eh default
-    parrot_level = __number(tcl_level)
+    parrot_level = toNumber(tcl_level)
   pop_eh
 
   if parrot_level < 0 goto default
@@ -628,7 +623,7 @@ get_integer:
 
 default:
   defaulted = 1
-  parrot_level = new 'Integer'
+  parrot_level = new 'TclInt'
   parrot_level = orig_level - 1
   # fallthrough.
 
@@ -644,7 +639,7 @@ bad_level:
   $S0 = tcl_level
   $S0 = 'bad level "' . $S0
   $S0 = $S0 . '"'
-  tcl_error $S0
+  die $S0
 .end
 
 =head2 _Tcl::backslash_newline_subst
@@ -688,35 +683,6 @@ not_space:
 
 done:
   .return (contents)
-.end
-
-# Given a list, reverse the elements in the list.
-# Might make sense to make this a method on one of the parrot types we
-# inherit from.
-.sub 'reverse'
-  .param pmc value
-
-  .local int high
-  .local int low
-  .local pmc swap_one
-  .local pmc swap_two
-
-  high = value
-  dec high # need index, not count
-  low = 0
-
- loop:
-  if high <= low goto loop_end
-  swap_one    = value[low]
-  swap_two    = value[high]
-  value[low]  = swap_two
-  value[high] = swap_one
-  inc low
-  dec high
-  goto loop
- loop_end:
-
- .return()
 .end
 
 # Local Variables:

@@ -27,7 +27,6 @@ providing a compreg-compatible method.
 
 # library files (HLL: _Tcl)
 .include 'languages/tcl/runtime/conversions.pir'
-.include 'languages/tcl/runtime/list_to_string.pir'
 .include 'languages/tcl/runtime/string_to_list.pir'
 .include 'languages/tcl/runtime/variables.pir'
 .include 'languages/tcl/runtime/options.pir'
@@ -47,13 +46,13 @@ providing a compreg-compatible method.
 .HLL '_Tcl', ''
 .namespace []
 
-.sub __load_macros :load :anon
+.sub load_macros :load :anon
   $P0 = compreg 'PIR'
   $P0 = $P0(".sub main\n.include 'languages/tcl/src/macros.pir'\n.end")
   $P0()
 .end
 
-.sub __prepare_lib :load :anon
+.sub prepare_lib :load :anon
 
   # Load any dependant libraries.
   load_bytecode 'Getopt/Obj.pbc'
@@ -184,19 +183,19 @@ env_loop_done:
   # Eventually, we'll need to register MMD for the various Tcl PMCs
   # (Presuming we don't do this from the .pmc definitions.)
 
-  $P1 = new 'ResizablePMCArray'
+  $P1 = new 'TclList'
   store_global 'info_level', $P1
 
-  $P1 = new 'ResizablePMCArray'
+  $P1 = new 'TclList'
   store_global 'events', $P1
 
   # Global variable initialization
 
    #version info
-  $P0 = new 'String'
+  $P0 = new 'TclString'
   $P0 = '0.1'
   set_root_global ['tcl'], '$tcl_patchLevel', $P0
-  $P0 = new 'String'
+  $P0 = new 'TclString'
   $P0 = '0.1'
   set_root_global ['tcl'], '$tcl_version', $P0
 
@@ -219,19 +218,19 @@ env_loop_done:
   store_global 'channels', $P1
 
   # Setup the id # for channels..
-  $P1 = new 'Integer'
+  $P1 = new 'TclInt'
   $P1 = 1
   store_global 'next_channel_id', $P1
 
   # call chain of lex pads (for upvar and uplevel)
-  $P1 = new 'ResizablePMCArray'
+  $P1 = new 'TclList'
   store_global 'call_chain', $P1
 
   # Change counter: when something is compiled, it is compared to
   # This counter: if the counter hasn't changed since it was compiled,
   # it's safe to use the inline version (if available)
   # Otherwise fallback to the interpreted version.
-  $P1 = new 'Integer'
+  $P1 = new 'TclInt'
   $P1 = 0
   store_global 'epoch', $P1
 
@@ -242,11 +241,11 @@ env_loop_done:
   set_hll_global 'colons', colons
 
   # register the TCL compiler.
-  $P1 = get_root_global ['_tcl'], '__script'
+  $P1 = get_root_global ['_tcl'], 'compileTcl'
   compreg 'TCL', $P1
 
   # Setup a global to keep a unique id for compiled subs.
-  $P1 = new 'Integer'
+  $P1 = new 'TclInt'
   $P1 = 0
   store_global 'compiled_num', $P1
 
@@ -262,7 +261,7 @@ env_loop_done:
 .HLL 'Tcl', ''
 .namespace []
 
-.sub __load_stdlib :load :anon
+.sub load_stdlib :load :anon
   .include 'iglobals.pasm'
   .local pmc interp
   interp = getinterp

@@ -17,7 +17,7 @@ sub get_out_fn {
     my $self = shift;
     my ( $count, $options ) = @_;
 
-    return Parrot::Test::per_test( '_php.out', $count );
+    return Parrot::Test::per_test( '_phc.out', $count );
 }
 
 # Use PHP on the command line
@@ -27,7 +27,7 @@ sub get_test_prog {
 
     my $lang_fn = Parrot::Test::per_test( '.php', $count );
 
-    return ("./parrot languages/pipp/pipp.pbc --variant=phc languages/${lang_fn}");
+    return "../$self->{relpath}/parrot ../$self->{relpath}/languages/pipp/pipp.pbc --variant=phc ../$self->{relpath}/languages/${lang_fn}";
 }
 
 # never skip the reference implementation

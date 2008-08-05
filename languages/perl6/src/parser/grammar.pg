@@ -1,4 +1,4 @@
-# Copyright (C) 2007, The Perl Foundation.
+# Copyright (C) 2007-2008, The Perl Foundation.
 # $Id$
 
 =begin Introduction
@@ -251,7 +251,8 @@ rule while_statement {
 
 rule given_statement {
     $<sym>=[given]
-    <EXPR> <block>
+    <EXPR>
+    <pblock>
     {*}
 }
 
@@ -323,7 +324,10 @@ rule statement_prefix {
 #### Subroutine and method definitions ####
 
 rule multi_declarator {
-    $<sym>=[multi|proto|only] <routine_declarator> {*}
+    $<sym>=[multi|proto|only] 
+    [ <routine_declarator> {*}                   #= routine_declarator
+    | <routine_def> {*}                          #= routine_def
+    ]
 }
 
 token routine_declarator {
@@ -352,7 +356,7 @@ rule trait {
 
 rule trait_auxiliary {
     | $<sym>=[is] <name><postcircumfix>?
-    | $<sym>=[does] <role_name>
+    | $<sym>=[does] <name>['['<EXPR>']']?
     | $<sym>=[will] <ident> <block>
 }
 
@@ -360,8 +364,6 @@ rule trait_verb {
     | $<sym>=[of|returns] <typename>
     | $<sym>=[handles] <EXPR>
 }
-
-token role_name { <name> [ <?before '['> <postcircumfix> ]? }
 
 token capterm {
     '\\(' <capture> ')'
@@ -379,6 +381,23 @@ rule multisig {
 
 token signature {
     ( <parameter> <.ws> ( ',' <.ws> | ':' <.ws> | <?before ')' | '{'> ) )* <.ws>
+    {*}
+}
+
+token sigterm {
+    ':(' 
+    {{
+        $P0 = new 'Integer'
+        $P0 = 1
+        set_global [ 'Perl6' ; 'Grammar' ; 'Actions' ], '$?SIG_BLOCK_NOT_NEEDED', $P0
+    }}
+    <signature>
+    {{
+        $P0 = new 'Integer'
+        $P0 = 0
+        set_global [ 'Perl6' ; 'Grammar' ; 'Actions' ], '$?SIG_BLOCK_NOT_NEEDED', $P0
+    }}
+    [ ')' || <.panic: "Missing right parenthesis in signature"> ]
     {*}
 }
 
@@ -425,7 +444,7 @@ rule default_value {
 }
 
 token param_var {
-    <sigil> <ident>
+    <sigil> <twigil>? <ident>
     {*}
 }
 
@@ -487,9 +506,7 @@ token postcircumfix {
 }
 
 
-# XXX Note that 'self' and 'undef' in here should be a term, and that a term
-# can be a noun too in STD.pm. However, at the moment that seems to lead us
-# to infinite recursion.
+# XXX Note that 'self' here should be a term.
 token noun {
     | <fatarrow> {*}                             #= fatarrow
     | <package_declarator> {*}                   #= package_declarator
@@ -502,12 +519,12 @@ token noun {
     | <circumfix> {*}                            #= circumfix
     | <variable> {*}                             #= variable
     | <statement_prefix> {*}                     #= statement_prefix
-    | <dotty>                                    #= dotty
+    | <dotty> {*}                                #= dotty
     | <value> {*}                                #= value
     | 'self' >> {*}                              #= self
-    | 'undef' >> {*}                             #= undef
     | <term> {*}                                 #= term
     | <capterm> {*}                              #= capterm
+    | <sigterm> {*}                              #= sigterm
     | <colonpair> {*}                            #= colonpair
 }
 
@@ -533,7 +550,7 @@ token term {
 
 ##  XXX: cheat until we get term:pi, term:rand, term:undef, etc.
 token named_0ary {
-    [pi|rand] >>
+    [pi|rand|undef|nothing] >>
 }
 
 rule package_declarator {
@@ -547,13 +564,13 @@ rule package_declarator {
 
 
 rule package_def {
-    <name> <trait>* {*}                          #= open
+    <name>? <trait>* {*}                         #= open
     <package_block> {*}                          #= close
 }
 
 
 rule role_def {
-    <role_name> <trait>* {*}                     #= open
+    <name>['['<signature>']']? <trait>* {*}      #= open
     <package_block> {*}                          #= close
 }
 
@@ -566,7 +583,7 @@ rule package_block {
 }
 
 
-token variable_decl {
+token variable_declarator {
     <variable>
     <trait>*
 # XXX let EXPR handle this automatically until we can pass arguments
@@ -587,14 +604,36 @@ rule enum_declarator {
 }
 
 
+token declarator {
+    [
+    | <variable_declarator>
+    | '(' 
+      {{
+          $P0 = new 'Integer'
+          $P0 = 1
+          set_global [ 'Perl6' ; 'Grammar' ; 'Actions' ], '$?SIG_BLOCK_NOT_NEEDED', $P0
+      }}
+      <signature>
+      {{
+          $P0 = new 'Integer'
+          $P0 = 0
+          set_global [ 'Perl6' ; 'Grammar' ; 'Actions' ], '$?SIG_BLOCK_NOT_NEEDED', $P0
+      }}
+      [ ')' || <.panic: "Missing right parenthsesis after signature"> ]
+    ]
+    {*}
+}
+
+
 rule scoped {
     <fulltypename>*
     [
-    | <variable_decl>
+    | <declarator>
     | <routine_declarator>
     ]
     {*}
 }
+
 
 rule scope_declarator {
     $<sym>=[my|our|state|constant|has]
@@ -664,12 +703,17 @@ token integer {
     {*}
 }
 
+token escale {
+    <[Ee]> <[+\-]>? \d+
+}
+
+# careful to distinguish from both integer and 42.method
 token dec_number {
-    \d+[_\d+]*
-        [
-        | '.' \d+[_\d+]* [ <[Ee]> <[+\-]>? \d+ ]?
-        |                  <[Ee]> <[+\-]>? \d+
-        ] # careful to distinguish from both integer and 42.method
+    [
+    |            '.' \d+[_\d+]* <.escale>?
+    | \d+[_\d+]* '.' \d+[_\d+]* <.escale>?
+    | \d+[_\d+]*                <.escale>
+    ]
     {*}
 }
 

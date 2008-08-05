@@ -111,6 +111,16 @@ php_MACRO.pir - PHP API macros
 .endm
 
 
+=item C<.RETURN_RESOURCE( val )>
+
+=cut
+
+.macro RETURN_RESOURCE(val)
+    new $P0, 'PhpResource', .val
+    .return ($P0)
+.endm
+
+
 =item C<.RETURN_STRING( val )>
 
 =cut

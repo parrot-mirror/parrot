@@ -89,12 +89,27 @@ NOT IMPLEMENTED.
 
 Given the name of a constant this function will return the constants associated value
 
-NOT IMPLEMENTED.
-
 =cut
 
 .sub 'constant'
-    not_implemented()
+    .param pmc args :slurpy
+    .local int argc
+    argc = args
+    unless argc != 1 goto L1
+    wrong_param_count()
+    .RETURN_NULL()
+  L1:
+    $P1 = shift args
+    $S1 = $P1
+    .local pmc cst
+    .GET_CONSTANTS(cst)
+    $I0 = exists cst[$S1]
+    unless $I0 goto L2
+    $P0 = cst[$S1]
+    .return ($P0)
+  L2:
+    error(E_WARNING, "Couldn't find constant ", $S1)
+    .RETURN_NULL()
 .end
 
 =item C<array error_get_last()>
@@ -361,7 +376,16 @@ NOT IMPLEMENTED.
 =cut
 
 .sub 'ini_get'
-    not_implemented()
+    .param pmc key
+
+    $P0 = get_hll_global 'pipp_ini'
+    .local string val_s
+    val_s = $P0[key]
+    .local pmc val
+    val = new 'PhpString'
+    val = val_s
+
+    .return ( val )
 .end
 
 =item C<array ini_get_all([string extension])>
@@ -397,7 +421,16 @@ NOT IMPLEMENTED.
 =cut
 
 .sub 'ini_set'
-    not_implemented()
+    .param pmc key
+    .param pmc val
+
+    $P0 = get_hll_global 'pipp_ini'
+    .local string val_s
+    val_s = val
+
+    $P0[key] = val_s
+
+    .return ( val )
 .end
 
 =item C<int ip2long(string ip_address)>

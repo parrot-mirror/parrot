@@ -26,9 +26,14 @@ the moment -- we'll do more complex handling a bit later.)
 .include 'except_types.pasm'
 
 .sub 'return'
-    .param pmc value
-    $P0 = new 'Exception'
-    $P0['_type'] = .CONTROL_RETURN
+    .param pmc value     :optional
+    .param int has_value :opt_flag
+
+    if has_value goto have_value
+    value = 'list'()
+  have_value:
+    $P0         = new 'Exception'
+    $P0['type'] = .CONTROL_RETURN
     setattribute $P0, 'payload', value
     throw $P0
     .return (value)
@@ -57,7 +62,7 @@ the moment -- we'll do more complex handling a bit later.)
     message = "Died\n"
   have_message:
     $P0 = new 'Exception'
-    $P0['_message'] = message
+    $P0 = message
     set_global '$!', $P0
     throw $P0
     .return ()
@@ -108,8 +113,16 @@ to coordinate with entire async model.  -law]
 =cut
 
 .sub 'sleep'
-    .param num a
+    .param num a               :optional
+    .param int has_a           :opt_flag
+    if has_a goto have_a
+    a = 2147483647                               # FIXME: RT #57294
+  have_a:
+    $N0 = time
     sleep a
+    $N1 = time
+    $N2 = $N1 - $N0
+    .return ($N2)
 .end
 
 =item eval
@@ -135,10 +148,10 @@ on error.
 
     .local pmc compiler, invokable
     .local pmc res, exception
+    push_eh catch
     compiler = compreg 'Perl6'
     invokable = compiler.'compile'(code)
 
-    push_eh catch
     res = invokable()
     pop_eh
     exception = new 'Failure'

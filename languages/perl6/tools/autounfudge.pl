@@ -21,7 +21,7 @@ pleae run this script without any options or command line parameters.
 
 =head1 WARNINGS
 
-This tool is very platform dependant, and not tested on anthing but linux.
+This tool is platform dependant, and not tested on anthing but linux.
 
 It assumes that all fudge directives are orthogonal, which might not be the
 case in real world tests. It is not tested with nested fudges (eg a line
@@ -47,25 +47,22 @@ use TAP::Parser::Aggregator;
 use Cwd qw(getcwd);
 use File::Spec;
 use File::Path;
+use Text::Diff;
 
 my $impl = 'rakudo';
 our $debug = 0;
 our $out_filename = 'autounfudge.patch';
 
-if ($^O ne 'linux'){
-    warn <<'WARN';
-Warning: this tool is only tested on linux so far. Currently it depends on
-some linux specific hacks. It requires the `diff' program to be installed.
-If you test this on any platform other than linux, pleaes report your results
-to parrot-porters@perl.org.
-WARN
-}
-
 GetOptions  'impl=s'        => \$impl,
             'debug'         => \$debug,
             'specfile=s'    => \my $specfile,
             'auto'          => \my $auto,
+            'keep-env'      => \my $keep_env,
+            'unskip'        => \my $unskip,
             or usage();
+
+delete $ENV{PERL6LIB} unless $keep_env;
+
 my @files;
 
 $specfile = 't/spectest_regression.data' if $auto;
@@ -77,9 +74,14 @@ else {
     @files = @ARGV or usage();
 }
 
-if (-e $out_filename){
-    unlink $out_filename or warn "Couldn't delete old unfudge.patch";
+open our $diff_fh, '>', $out_filename
+    or die "Can't open '$out_filename' for writing: $!";
+{
+    select $diff_fh;
+    $| = 1;
+    select STDOUT;
 }
+
 our $tmp_dir = tempdir('RAKUDOXXXXXX', CLEANUP => 1);
 
 for (@files){
@@ -93,7 +95,7 @@ sub auto_unfudge_file {
     print "Processing file '$file_name'\n";
     my @fudge_lines;
     while (<$f>) {
-        push @fudge_lines, $. if m/^\s*#\?$impl/ &&
+        push @fudge_lines, [$. , $_] if m/^\s*#\?$impl/ &&
             !m/unspecced|unicode|utf-?8/i;
     }
     close $f;
@@ -112,17 +114,25 @@ sub auto_unfudge_file {
     }
     my @to_unfudge;
     for my $to_unfudge (@fudge_lines){
-        $fudged = fudge(unfudge_some($file_name, 0, $to_unfudge));
+        $fudged = fudge(unfudge_some($file_name, [$to_unfudge->[0], '']));
         if (tests_ok($fudged)){
-            print "WOOOOOT: Can remove fudge instruction on line $to_unfudge\n"
+            print "WOOOOOT: Can remove fudge instruction on line $to_unfudge->[0]\n"
                 if $debug;
-            push @to_unfudge, $to_unfudge,
+            push @to_unfudge, [$to_unfudge->[0], ''],
+        } elsif ($unskip && $to_unfudge->[1] =~ s/\bskip\b/todo/) {
+            # try to replace 'skip' with 'todo'-markers
+            $fudged = fudge(unfudge_some($file_name, $to_unfudge));
+            if (tests_ok($fudged)){
+                print "s/skip/todo/ successful\n" if $debug;
+                push @to_unfudge, $to_unfudge;
+            }
+
         }
     }
 
     if (@to_unfudge){
-        my $u = unfudge_some($file_name, 1, @to_unfudge);
-        system qq{diff -u "$file_name" "$u" >> "$out_filename"};
+        my $u = unfudge_some($file_name, @to_unfudge);
+        print $diff_fh diff($file_name, $u);
         unlink $u;
     }
 
@@ -148,11 +158,12 @@ Valid options:
     --impl impl         Specify a different implementation
     --specfile file     Specification file to read filenames from
     --auto              use t/spectest_regression.data for --specfile
+    --keep-env          Keep PERL6LIB environment variable.
 USAGE
 }
 
 sub unfudge_some {
-    my ($file, $delete, @lines) = @_;
+    my ($file, @lines) = @_;
     my ($fh, $tmp_filename) = tempfile(
             'tempXXXXX',
             SUFFIX => '.t',
@@ -161,8 +172,8 @@ sub unfudge_some {
     open my $in, '<', $file
         or die "Can't open file '$file' for reading: $!";
     while (<$in>){
-        if ($. == $lines[0]){
-            print $fh "###$_" unless $delete;
+        if ($. == $lines[0][0]){
+            print $fh $lines[0][1];
             shift @lines if @lines > 1;
         }
         else {
@@ -208,5 +219,13 @@ sub read_specfile {
 }
 
 END {
+    close $diff_fh;
     File::Path::rmtree($tmp_dir);
 }
+
+# Local Variables:
+#   mode: cperl
+#   cperl-indent-level: 4
+#   fill-column: 100
+# End:
+# vim: expandtab shiftwidth=4:
