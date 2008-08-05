@@ -1,11 +1,11 @@
-.HLL 'Tcl', 'tcl_group'
+.HLL 'Tcl', ''
 .namespace []
 
 .sub '&file'
   .param pmc argv :slurpy
 
   .local int argc
-  argc = argv
+  argc = elements argv
 
   if argc == 0 goto few_args
 
@@ -13,43 +13,11 @@
   subcommand_name = shift argv
 
   .local pmc options
-  options = new 'ResizablePMCArray'
-  push options, 'atime'
-  push options, 'attributes'
-  push options, 'channels'
-  push options, 'copy'
-  push options, 'delete'
-  push options, 'dirname'
-  push options, 'executable'
-  push options, 'exists'
-  push options, 'extension'
-  push options, 'isdirectory'
-  push options, 'isfile'
-  push options, 'join'
-  push options, 'link'
-  push options, 'lstat'
-  push options, 'mtime'
-  push options, 'mkdir'
-  push options, 'nativename'
-  push options, 'normalize'
-  push options, 'owned'
-  push options, 'pathtype'
-  push options, 'readable'
-  push options, 'readlink'
-  push options, 'rename'
-  push options, 'rootname'
-  push options, 'separator'
-  push options, 'size'
-  push options, 'split'
-  push options, 'stat'
-  push options, 'system'
-  push options, 'tail'
-  push options, 'type'
-  push options, 'volumes'
-  push options, 'writable'
+  options = get_root_global ['_tcl'; 'helpers'; 'file'], 'options'
 
   .local pmc select_option
   select_option  = get_root_global ['_tcl'], 'select_option'
+
   .local string canonical_subcommand
   canonical_subcommand = select_option(options, subcommand_name)
 
@@ -64,7 +32,7 @@ bad_args:
   .return ('') # once all commands are implemented, remove this...
 
 few_args:
-  tcl_error 'wrong # args: should be "file option ?arg ...?"'
+  die 'wrong # args: should be "file option ?arg ...?"'
 
 .end
 
@@ -81,7 +49,7 @@ few_args:
   .param pmc argv
 
   .local int argc
-  argc = argv
+  argc = elements argv
   if argc == 0 goto bad_args
 
   .local string dirsep
@@ -117,14 +85,14 @@ name_loop_done:
   .return(result)
 
 bad_args:
-  tcl_error 'wrong # args: should be "file join name ?name ...?"'
+  die 'wrong # args: should be "file join name ?name ...?"'
 .end
 
 .sub 'stat'
   .param pmc argv
 
   .local int argc
-  argc = argv
+  argc = elements argv
 
   if argc != 2 goto bad_args
 
@@ -137,8 +105,8 @@ bad_args:
     $P2 = $P1.'stat'(file)
   pop_eh
 
-  .local pmc __set
-  __set = find_global '__set'
+  .local pmc setVar
+  setVar = find_global 'setVar'
 
   $P3 = new 'TclArray'
   $P1 = $P2[8]
@@ -172,7 +140,7 @@ bad_args:
   $P1 = $P2[4]
   $P3['uid'] = $P1
 
-  __set(varname, $P3)
+  setVar(varname, $P3)
 
   .return('')
 
@@ -181,16 +149,16 @@ no_file:
   $S0  = 'could not read "'
   $S0 .= file
   $S0 .= '": no such file or directory'
-  tcl_error $S0
+  die $S0
 bad_args:
-  tcl_error 'wrong # args: should be "file stat name varName"'
+  die 'wrong # args: should be "file stat name varName"'
 .end
 
 .sub 'isdirectory'
   .param pmc argv
 
   .local int argc
-  argc = argv
+  argc = elements argv
 
   if argc != 1 goto bad_args
 
@@ -217,9 +185,9 @@ no_file:
   $S0  = 'could not read "'
   $S0 .= file
   $S0 .= '": no such file or directory'
-  tcl_error $S0
+  die $S0
 bad_args:
-  tcl_error 'wrong # args: should be "file isdirectory name"'
+  die 'wrong # args: should be "file isdirectory name"'
 
 .end
 
@@ -227,7 +195,7 @@ bad_args:
   .param pmc argv
 
   .local int argc
-  argc = argv
+  argc = elements argv
 
   if argc != 1 goto bad_args
 
@@ -254,9 +222,9 @@ no_file:
   $S0  = 'could not read "'
   $S0 .= file
   $S0 .= '": no such file or directory'
-  tcl_error $S0
+  die $S0
 bad_args:
-  tcl_error 'wrong # args: should be "file isfile name"'
+  die 'wrong # args: should be "file isfile name"'
 
 .end
 
@@ -264,7 +232,7 @@ bad_args:
   .param pmc argv
 
   .local int argc
-  argc = argv
+  argc = elements argv
 
   if argc != 1 goto bad_args
 
@@ -289,16 +257,16 @@ no_file:
   $S0  = 'could not read "'
   $S0 .= file
   $S0 .= '": no such file or directory'
-  tcl_error $S0
+  die $S0
 bad_args:
-  tcl_error 'wrong # args: should be "file type name"'
+  die 'wrong # args: should be "file type name"'
 .end
 
 .sub 'size'
   .param pmc argv
 
   .local int argc
-  argc = argv
+  argc = elements argv
 
   if argc != 1 goto bad_args
 
@@ -317,16 +285,16 @@ no_file:
   $S0  = 'could not read "'
   $S0 .= file
   $S0 .= '": no such file or directory'
-  tcl_error $S0
+  die $S0
 bad_args:
-  tcl_error 'wrong # args: should be "file size name"'
+  die 'wrong # args: should be "file size name"'
 .end
 
 .sub 'atime'
   .param pmc argv
 
   .local int argc
-  argc = argv
+  argc = elements argv
 
   if argc != 1 goto bad_args
 
@@ -345,16 +313,16 @@ no_file:
   $S0  = 'could not read "'
   $S0 .= file
   $S0 .= '": no such file or directory'
-  tcl_error $S0
+  die $S0
 bad_args:
-  tcl_error 'wrong # args: should be "file atime name ?time?"'
+  die 'wrong # args: should be "file atime name ?time?"'
 .end
 
 .sub 'mtime'
   .param pmc argv
 
   .local int argc
-  argc = argv
+  argc = elements argv
 
   if argc != 1 goto bad_args
 
@@ -373,9 +341,9 @@ no_file:
   $S0  = 'could not read "'
   $S0 .= file
   $S0 .= '": no such file or directory'
-  tcl_error $S0
+  die $S0
 bad_args:
-  tcl_error 'wrong # args: should be "file mtime name ?time?"'
+  die 'wrong # args: should be "file mtime name ?time?"'
 .end
 
 # RT#40722: needs windows OS testing
@@ -425,7 +393,7 @@ bad_args:
     .return('.')
 
   bad_args:
-    tcl_error 'wrong # args: should be "file dirname name"'
+    die 'wrong # args: should be "file dirname name"'
 .end
 
 # RT#40723: Stub (unixy)
@@ -464,7 +432,7 @@ whole:
   .return($S0)
 
 bad_args:
-  tcl_error 'wrong # args: should be "file tail name"'
+  die 'wrong # args: should be "file tail name"'
 .end
 
 # RT#40724: Stub for test parsing
@@ -499,7 +467,7 @@ false:
     .return(0)
 
 badargs:
-    tcl_error 'wrong # args: should be "file exists name"'
+    die 'wrong # args: should be "file exists name"'
 .end
 
 # RT#40727: Stub for test parsing
@@ -537,7 +505,7 @@ done:
     .return(filename)
 
   bad_args:
-    tcl_error 'wrong # args: should be "file rootname name"'
+    die 'wrong # args: should be "file rootname name"'
 .end
 
 .sub 'extension'
@@ -567,7 +535,7 @@ done:
     .return('')
 
   bad_args:
-    tcl_error 'wrong # args: should be "file extension name"'
+    die 'wrong # args: should be "file extension name"'
 .end
 
 # XXX: Stub
@@ -578,7 +546,7 @@ done:
   if argc != 1 goto bad_args
   .return(0)
 bad_args:
-  tcl_error 'wrong # args: should be "file owned name"'
+  die 'wrong # args: should be "file owned name"'
 .end
 
 # XXX: Stub for test parsing
@@ -597,7 +565,47 @@ bad_args:
   .return('/')
 
 bad_args:
-  tcl_error 'wrong # args: should be "file volumes"'
+  die 'wrong # args: should be "file volumes"'
+.end
+
+.sub 'anon' :anon :load
+  .local pmc options
+  options = new 'TclList'
+  push options, 'atime'
+  push options, 'attributes'
+  push options, 'channels'
+  push options, 'copy'
+  push options, 'delete'
+  push options, 'dirname'
+  push options, 'executable'
+  push options, 'exists'
+  push options, 'extension'
+  push options, 'isdirectory'
+  push options, 'isfile'
+  push options, 'join'
+  push options, 'link'
+  push options, 'lstat'
+  push options, 'mtime'
+  push options, 'mkdir'
+  push options, 'nativename'
+  push options, 'normalize'
+  push options, 'owned'
+  push options, 'pathtype'
+  push options, 'readable'
+  push options, 'readlink'
+  push options, 'rename'
+  push options, 'rootname'
+  push options, 'separator'
+  push options, 'size'
+  push options, 'split'
+  push options, 'stat'
+  push options, 'system'
+  push options, 'tail'
+  push options, 'type'
+  push options, 'volumes'
+  push options, 'writable'
+
+  set_root_global ['_tcl'; 'helpers'; 'file'], 'options', options
 .end
 
 # Local Variables:

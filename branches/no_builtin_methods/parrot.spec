@@ -1,11 +1,11 @@
 Name:           parrot
-Version:        0.6.3
+Version:        0.6.4
 Release:        1%{?dist}
 Summary:        Parrot Virtual Machine
 License:        Artistic 2.0
 Group:          Development/Libraries
 URL:            http://www.parrotcode.org/
-Source0:        http://www.cpan.org/authors/id/P/PM/PMIC/parrot-%{version}.tar.gz
+Source0:        http://www.cpan.org/authors/id/B/BS/BSCHMAL/parrot-%{version}.tar.gz
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildRequires:  readline-devel
 BuildRequires:  ncurses-devel
@@ -30,8 +30,8 @@ Requires:       %{_libdir}/pkgconfig
 
 %description
 Parrot is a virtual machine designed to efficiently compile and execute
-bytecode for dynamic languages. Parrot is a target for the Perl 6 compiler, and
-is already usable as a backend for Pugs, as well as variety of other languages.
+bytecode for dynamic languages. Parrot is the target for Rakudo Perl 6,
+as well as variety of other languages.
 
 %description languages
 High-level languages which run on the Parrot virtual machine.

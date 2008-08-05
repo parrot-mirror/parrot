@@ -1,17 +1,11 @@
-###
-# [format]
-
-#
-# format string arg arg arg
-
-.HLL 'Tcl', 'tcl_group'
+.HLL 'Tcl', ''
 .namespace []
 
 .sub '&format'
   .param pmc argv :slurpy
 
   .local int argc
-  argc = argv
+  argc = elements argv
   if argc == 0 goto noargs
 
   .local string format
@@ -24,7 +18,7 @@
   .return($S0)
 
 noargs:
-  tcl_error 'wrong # args: should be "format formatString ?arg arg ...?"'
+  die 'wrong # args: should be "format formatString ?arg arg ...?"'
 .end
 
 # Local Variables:

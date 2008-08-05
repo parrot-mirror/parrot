@@ -23,11 +23,11 @@ Functions are very similar to ops, so handle them similarly here.
 .sub '&abs'
     .param pmc a
 
-    .local pmc __number
-    __number = get_root_global ['_tcl'], '__number'
+    .local pmc toNumber
+    toNumber = get_root_global ['_tcl'], 'toNumber'
 
     push_eh is_string
-      a = __number(a)
+      a = toNumber(a)
     pop_eh
 
     .local pmc b
@@ -37,17 +37,17 @@ Functions are very similar to ops, so handle them similarly here.
     .return(b)
 
 is_string:
-    tcl_error "argument to math function didn't have numeric value"
+    die "argument to math function didn't have numeric value"
 .end
 
 .sub '&acos'
     .param pmc a
 
-    .local pmc __number
-    __number = get_root_global ['_tcl'], '__number'
+    .local pmc toNumber
+    toNumber = get_root_global ['_tcl'], 'toNumber'
 
     push_eh is_string
-      a = __number(a)
+      a = toNumber(a)
     pop_eh
 
     if a < -1 goto domain_error
@@ -64,7 +64,7 @@ is_string:
     $S0 = a
     $S0 = 'expected floating-point number but got "' . $S0
     $S0 = $S0 . '"'
-    tcl_error $S0
+    die $S0
 
 domain_error:
     $P0 = new 'TclList'
@@ -78,11 +78,11 @@ domain_error:
 .sub '&asin'
     .param pmc a
 
-    .local pmc __number
-    __number = get_root_global ['_tcl'], '__number'
+    .local pmc toNumber
+    toNumber = get_root_global ['_tcl'], 'toNumber'
 
     push_eh is_string
-      a = __number(a)
+      a = toNumber(a)
     pop_eh
 
     if a < -1 goto domain_error
@@ -99,7 +99,7 @@ is_string:
     $S0 = a
     $S0 = 'expected floating-point number but got "' . $S0
     $S0 = $S0 . '"'
-    tcl_error $S0
+    die $S0
 
 domain_error:
     $P0 = new 'TclList'
@@ -113,11 +113,11 @@ domain_error:
 .sub '&atan'
     .param pmc a
 
-    .local pmc __number
-    __number = get_root_global ['_tcl'], '__number'
+    .local pmc toNumber
+    toNumber = get_root_global ['_tcl'], 'toNumber'
 
     push_eh is_string
-      a = __number(a)
+      a = toNumber(a)
     pop_eh
 
     .local pmc ret
@@ -131,26 +131,26 @@ is_string:
     $S0 = a
     $S0 = 'expected floating-point number but got "' . $S0
     $S0 = $S0 . '"'
-    tcl_error $S0
+    die $S0
 .end
 
 .sub '&bool'
     .param pmc a
 
-    .local pmc __boolean
-    __boolean = get_root_global ['_tcl'], '__boolean'
+    .local pmc toBoolean
+    toBoolean = get_root_global ['_tcl'], 'toBoolean'
 
-    .return __boolean(a)
+    .return toBoolean(a)
 .end
 
 .sub '&ceil'
     .param pmc a
 
-    .local pmc __number
-    __number = get_root_global ['_tcl'], '__number'
+    .local pmc toNumber
+    toNumber = get_root_global ['_tcl'], 'toNumber'
 
     push_eh is_string
-      a = __number(a)
+      a = toNumber(a)
     pop_eh
 
     .local pmc ret
@@ -161,17 +161,17 @@ is_string:
     .return (ret)
 
 is_string:
-    tcl_error "argument to math function didn't have numeric value"
+    die "argument to math function didn't have numeric value"
 .end
 
 .sub '&cos'
     .param pmc a
 
-    .local pmc __number
-    __number = get_root_global ['_tcl'], '__number'
+    .local pmc toNumber
+    toNumber = get_root_global ['_tcl'], 'toNumber'
 
     push_eh is_string
-      a = __number(a)
+      a = toNumber(a)
     pop_eh
 
     .local pmc ret
@@ -185,17 +185,17 @@ is_string:
     $S0 = a
     $S0 = 'expected floating-point number but got "' . $S0
     $S0 = $S0 . '"'
-    tcl_error $S0
+    die $S0
 .end
 
 .sub '&cosh'
     .param pmc a
 
-    .local pmc __number
-    __number = get_root_global ['_tcl'], '__number'
+    .local pmc toNumber
+    toNumber = get_root_global ['_tcl'], 'toNumber'
 
     push_eh is_string
-      a = __number(a)
+      a = toNumber(a)
     pop_eh
 
     .local pmc ret
@@ -209,17 +209,17 @@ is_string:
     $S0 = a
     $S0 = 'expected floating-point number but got "' . $S0
     $S0 = $S0 . '"'
-    tcl_error $S0
+    die $S0
 .end
 
 .sub '&double'
     .param pmc a
 
-    .local pmc __number
-    __number = get_root_global ['_tcl'], '__number'
+    .local pmc toNumber
+    toNumber = get_root_global ['_tcl'], 'toNumber'
 
     push_eh is_string
-      a = __number(a)
+      a = toNumber(a)
     pop_eh
 
     .local pmc ret
@@ -229,17 +229,17 @@ is_string:
     .return (ret)
 
 is_string:
-    tcl_error "argument to math function didn't have numeric value"
+    die "argument to math function didn't have numeric value"
 .end
 
 .sub '&entier'
     .param pmc n
 
-    .local pmc __number
-    __number = get_root_global ['_tcl'], '__number'
+    .local pmc toNumber
+    toNumber = get_root_global ['_tcl'], 'toNumber'
 
     push_eh is_string
-      n = __number(n)
+      n = toNumber(n)
     pop_eh
 
     .local pmc ret
@@ -251,17 +251,17 @@ is_string:
     $S0 = n
     $S0 = 'expected number but got "' . $S0
     $S0 .= '"'
-    tcl_error $S0
+    die $S0
 .end
 
 .sub '&exp'
     .param pmc a
 
-    .local pmc __number
-    __number = get_root_global ['_tcl'], '__number'
+    .local pmc toNumber
+    toNumber = get_root_global ['_tcl'], 'toNumber'
 
     push_eh is_string
-      a = __number(a)
+      a = toNumber(a)
     pop_eh
 
     .local pmc ret
@@ -275,7 +275,7 @@ is_string:
     $S0 = a
     $S0 = 'expected floating-point number but got "' . $S0
     $S0 = $S0 . '"'
-    tcl_error $S0
+    die $S0
 .end
 
 .sub '&floor'
@@ -283,11 +283,11 @@ is_string:
 
     .local pmc result
 
-    .local pmc __number
-    __number = get_root_global ['_tcl'], '__number'
+    .local pmc toNumber
+    toNumber = get_root_global ['_tcl'], 'toNumber'
 
     push_eh is_string
-      result = __number(a)
+      result = toNumber(a)
     pop_eh
 
     if result >= 0 goto positive
@@ -312,17 +312,17 @@ is_string:
     $S1 = a
     $S0 .= $S1
     $S0 .= '"'
-    tcl_error $S0
+    die $S0
 .end
 
 .sub '&int'
     .param pmc a
 
-    .local pmc __number
-    __number = get_root_global ['_tcl'], '__number'
+    .local pmc toNumber
+    toNumber = get_root_global ['_tcl'], 'toNumber'
 
     push_eh is_string
-      a = __number(a)
+      a = toNumber(a)
     pop_eh
 
     $I0 = a
@@ -332,7 +332,7 @@ is_string:
     .return ($P0)
 
 is_string:
-    tcl_error "argument to math function didn't have numeric value"
+    die "argument to math function didn't have numeric value"
 .end
 
 .sub '&isqrt'
@@ -341,11 +341,11 @@ is_string:
 .sub '&log'
     .param pmc a
 
-    .local pmc __number
-    __number = get_root_global ['_tcl'], '__number'
+    .local pmc toNumber
+    toNumber = get_root_global ['_tcl'], 'toNumber'
 
     push_eh is_string
-      a = __number(a)
+      a = toNumber(a)
     pop_eh
 
     if a < 0 goto domain_error
@@ -369,17 +369,17 @@ is_string:
     $S0 = a
     $S0 = 'expected floating-point number but got "' . $S0
     $S0 = $S0 . '"'
-    tcl_error $S0
+    die $S0
 .end
 
 .sub '&log10'
     .param pmc a
 
-    .local pmc __number
-    __number = get_root_global ['_tcl'], '__number'
+    .local pmc toNumber
+    toNumber = get_root_global ['_tcl'], 'toNumber'
 
     push_eh is_string
-      a = __number(a)
+      a = toNumber(a)
     pop_eh
 
     if a < 0 goto domain_error
@@ -403,7 +403,7 @@ is_string:
     $S0 = a
     $S0 = 'expected floating-point number but got "' . $S0
     $S0 = $S0 . '"'
-    tcl_error $S0
+    die $S0
 .end
 
 .sub '&max'
@@ -441,11 +441,11 @@ done:
 .sub '&round'
     .param pmc a
 
-    .local pmc __number
-    __number = get_root_global ['_tcl'], '__number'
+    .local pmc toNumber
+    toNumber = get_root_global ['_tcl'], 'toNumber'
 
     push_eh is_string
-      a = __number(a)
+      a = toNumber(a)
     pop_eh
 
     if a < 0 goto neg
@@ -461,17 +461,17 @@ neg:
     .return ($I0)
 
 is_string:
-    tcl_error "argument to math function didn't have numeric value"
+    die "argument to math function didn't have numeric value"
 .end
 
 .sub '&sin'
     .param pmc a
 
-    .local pmc __number
-    __number = get_root_global ['_tcl'], '__number'
+    .local pmc toNumber
+    toNumber = get_root_global ['_tcl'], 'toNumber'
 
     push_eh is_string
-      a = __number(a)
+      a = toNumber(a)
     pop_eh
 
     .local pmc ret
@@ -485,17 +485,17 @@ is_string:
     $S0 = a
     $S0 = 'expected floating-point number but got "' . $S0
     $S0 = $S0 . '"'
-    tcl_error $S0
+    die $S0
 .end
 
 .sub '&sinh'
     .param pmc a
 
-    .local pmc __number
-    __number = get_root_global ['_tcl'], '__number'
+    .local pmc toNumber
+    toNumber = get_root_global ['_tcl'], 'toNumber'
 
     push_eh is_string
-      a = __number(a)
+      a = toNumber(a)
     pop_eh
 
     .local pmc ret
@@ -509,17 +509,17 @@ is_string:
     $S0 = a
     $S0 = 'expected floating-point number but got "' . $S0
     $S0 = $S0 . '"'
-    tcl_error $S0
+    die $S0
 .end
 
 .sub '&sqrt'
     .param pmc a
 
-    .local pmc __number
-    __number = get_root_global ['_tcl'], '__number'
+    .local pmc toNumber
+    toNumber = get_root_global ['_tcl'], 'toNumber'
 
     push_eh is_string
-      a = __number(a)
+      a = toNumber(a)
     pop_eh
 
     .local pmc ret
@@ -542,7 +542,7 @@ is_string:
     $S0 = a
     $S0 = 'expected floating-point number but got "' . $S0
     $S0 = $S0 . '"'
-    tcl_error $S0
+    die $S0
 .end
 
 .sub '&srand'
@@ -551,11 +551,11 @@ is_string:
 .sub '&tan'
     .param pmc a
 
-    .local pmc __number
-    __number = get_root_global ['_tcl'], '__number'
+    .local pmc toNumber
+    toNumber = get_root_global ['_tcl'], 'toNumber'
 
     push_eh is_string
-      a = __number(a)
+      a = toNumber(a)
     pop_eh
 
     .local pmc ret
@@ -569,17 +569,17 @@ is_string:
     $S0 = a
     $S0 = 'expected floating-point number but got "' . $S0
     $S0 = $S0 . '"'
-    tcl_error $S0
+    die $S0
 .end
 
 .sub '&tanh'
     .param pmc a
 
-    .local pmc __number
-    __number = get_root_global ['_tcl'], '__number'
+    .local pmc toNumber
+    toNumber = get_root_global ['_tcl'], 'toNumber'
 
     push_eh is_string
-      a = __number(a)
+      a = toNumber(a)
     pop_eh
 
     .local pmc ret
@@ -593,18 +593,18 @@ is_string:
     $S0 = a
     $S0 = 'expected floating-point number but got "' . $S0
     $S0 = $S0 . '"'
-    tcl_error $S0
+    die $S0
 .end
 
 # RT#40689: implement wide() - this is just int()
 .sub '&wide'
     .param pmc a
 
-    .local pmc __number
-    __number = get_root_global ['_tcl'], '__number'
+    .local pmc toNumber
+    toNumber = get_root_global ['_tcl'], 'toNumber'
 
     push_eh is_string
-      a = __number(a)
+      a = toNumber(a)
     pop_eh
 
     $I0 = a
@@ -614,7 +614,7 @@ is_string:
     .return ($P0)
 
 is_string:
-    tcl_error "argument to math function didn't have numeric value"
+    die "argument to math function didn't have numeric value"
 .end
 
 =head2 Binary Functions
@@ -625,12 +625,12 @@ is_string:
     .param pmc a
     .param pmc b
 
-    .local pmc __number
-    __number = get_root_global ['_tcl'], '__number'
+    .local pmc toNumber
+    toNumber = get_root_global ['_tcl'], 'toNumber'
 
     push_eh is_string
-      a = __number(a)
-      b = __number(b)
+      a = toNumber(a)
+      b = toNumber(b)
     pop_eh
 
     $N0 = a
@@ -642,19 +642,19 @@ is_string:
     .return(ret)
 
 is_string:
-    tcl_error "argument to math function didn't have numeric value"
+    die "argument to math function didn't have numeric value"
 .end
 
 .sub '&fmod'
     .param pmc a
     .param pmc b
 
-    .local pmc __number
-    __number = get_root_global ['_tcl'], '__number'
+    .local pmc toNumber
+    toNumber = get_root_global ['_tcl'], 'toNumber'
 
     push_eh is_string
-      a = __number(a)
-      b = __number(b)
+      a = toNumber(a)
+      b = toNumber(b)
     pop_eh
 
     if b == 0 goto domain_error
@@ -675,19 +675,19 @@ is_string:
     tcl_error $S0, $P0
 
 is_string:
-    tcl_error "argument to math function didn't have numeric value"
+    die "argument to math function didn't have numeric value"
 .end
 
 .sub '&hypot'
     .param pmc a
     .param pmc b
 
-    .local pmc __number
-    __number = get_root_global ['_tcl'], '__number'
+    .local pmc toNumber
+    toNumber = get_root_global ['_tcl'], 'toNumber'
 
     push_eh is_string
-      a = __number(a)
-      b = __number(b)
+      a = toNumber(a)
+      b = toNumber(b)
     pop_eh
 
     $N0 = a
@@ -704,19 +704,19 @@ is_string:
     .return(ret)
 
 is_string:
-    tcl_error "argument to math function didn't have numeric value"
+    die "argument to math function didn't have numeric value"
 .end
 
 .sub '&pow'
     .param pmc a
     .param pmc b
 
-    .local pmc __number
-    __number = get_root_global ['_tcl'], '__number'
+    .local pmc toNumber
+    toNumber = get_root_global ['_tcl'], 'toNumber'
 
     push_eh is_string
-      a = __number(a)
-      b = __number(b)
+      a = toNumber(a)
+      b = toNumber(b)
     pop_eh
 
     $N0 = a
@@ -727,7 +727,7 @@ is_string:
     .return($P0)
 
 is_string:
-    tcl_error "argument to math function didn't have numeric value"
+    die "argument to math function didn't have numeric value"
 .end
 
 # Local Variables:

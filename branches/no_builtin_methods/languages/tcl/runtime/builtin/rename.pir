@@ -1,14 +1,11 @@
-###
-# [rename]
-
-.HLL 'Tcl', 'tcl_group'
+.HLL 'Tcl', ''
 .namespace []
 
 .sub '&rename'
   .param pmc argv :slurpy
 
   .local int argc
-  argc = argv
+  argc = elements argv
   if argc != 2 goto bad_args
 
   .local string oldName, newName
@@ -37,7 +34,7 @@
 delete_sub:
   delete ns[$S0]
 
-  if delete_only goto delete_builtin
+  if delete_only goto return
 
 add_sub:
   # Create the new sub
@@ -49,22 +46,11 @@ add_sub:
   $S0 = "can't rename to \""
   $S0 .= newName
   $S0 .= '": command already exists'
-  tcl_error $S0
+  die $S0
 
 set_new_sub:
   ns[$S0] = sub
-
-delete_builtin:
-  builtin = get_root_global ['_tcl'; 'builtins'], oldName
-  if null builtin goto return
-
-  $P0 = get_root_namespace ['_tcl'; 'builtins']
-  delete $P0[oldName]
-
   if delete_only goto return
-
-add_builtin:
-  set_root_global ['_tcl'; 'builtins'], newName, builtin
 
 return:
   .return('')
@@ -75,16 +61,16 @@ doesnt_exist:
   $S0 = "can't rename \""
   $S0 .= oldName
   $S0 .= "\": command doesn't exist"
-  tcl_error $S0
+  die $S0
 
 cant_delete:
   $S0 = "can't delete \""
   $S0 .= oldName
   $S0 .= "\": command doesn't exist"
-  tcl_error $S0
+  die $S0
 
 bad_args:
-  tcl_error 'wrong # args: should be "rename oldName newName"'
+  die 'wrong # args: should be "rename oldName newName"'
 .end
 
 # Local Variables:

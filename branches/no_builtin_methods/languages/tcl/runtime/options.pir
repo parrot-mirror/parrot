@@ -26,7 +26,7 @@ Defaults to 'option'.
 got_type_name:
 
   .local pmc partials
-  partials = new 'ResizablePMCArray'
+  partials = new 'TclList'
 
   # is there an exact match?
 
@@ -50,33 +50,48 @@ got_type_name:
 
 check_partial:
   $I1 = elements partials
-  if $I1 == 0 goto no_match
-  if $I1 >1 goto ambiguous
+  if type_name == 'subcommand' goto check_subcommand
+  if $I1 == 0 goto no_match_option
+  if $I1 >1 goto ambiguous_option
+  option = partials[0]
+
+check_subcommand:
+  if $I1 != 1 goto unknown_subcommand
   option = partials[0]
 
 got_match:
   .return (option)
 
-no_match:
+no_match_option:
   error = 'bad '
   error .= type_name
   error .= ' "'
   error .= choice
   error .= '": must be '
-  $S1 = __options_to_string(options)
+  $S1 = optionsToString(options)
   error .= $S1
-  tcl_error error
+  die error
 
-ambiguous:
+ambiguous_option:
   error = 'ambiguous '
   error .= type_name
   error .= ' "'
   error .= choice
   error .= '": must be '
-  # $S1 = __options_to_string(partials)  # Now, I like this better...
-  $S1 = __options_to_string(options)
+  $S1 = optionsToString(options)
   error .= $S1
-  tcl_error error
+  die error
+
+unknown_subcommand:
+  error = 'unknown or ambiguous '
+  error .= type_name
+  error .= ' "'
+  error .= choice
+  error .= '": must be '
+  $S1 = optionsToString(options)
+  error .= $S1
+  die error
+
 .end
 
 =head1 hash options = _Tcl::select_switches(array switches, array argv, ?endswitch:0?, ?catchbad:0?, ?name: 'switch'?)
@@ -187,9 +202,9 @@ throw_error:
   $S1 .= ' "-'
   $S1 .= arg
   $S1 .= '": must be '
-  $S2 = __switches_to_string(switches)
+  $S2 = switchesToString(switches)
   $S1 .= $S2
-  tcl_error $S1
+  die $S1
 loop_next:
   inc pos
   goto loop
@@ -197,14 +212,14 @@ loop_done:
 
   # delete any processed switches from the argv
   if pos <= 0 goto done
-  $P1 = new 'ResizablePMCArray'
+  $P1 = new 'TclList'
   splice argv, $P1, 0, pos
 
 done:
   .return (results)
 .end
 
-.sub __options_to_string
+.sub optionsToString
   .param pmc options
 
   # uncomment this if folks start passing in un-ordered lists...
@@ -240,8 +255,8 @@ done:
   .return (error)
 .end
 
-# Similar to __option_to_string. Refactor??
-.sub __switches_to_string
+# Similar to optionsToString. Refactor??
+.sub switchesToString
   .param pmc switches
 
   # uncomment this if folks start passing in un-ordered lists...

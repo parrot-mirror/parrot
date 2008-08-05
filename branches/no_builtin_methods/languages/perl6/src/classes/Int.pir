@@ -19,6 +19,9 @@ Int - Perl 6 integers
     p6meta = get_hll_global ['Perl6Object'], '$!P6META'
     intproto = p6meta.'new_class'('Int', 'parent'=>'Integer Any')
     p6meta.'register'('Integer', 'parent'=>intproto, 'protoobject'=>intproto)
+
+    $P0 = get_hll_namespace ['Int']
+    '!EXPORT'('abs', 'from'=>$P0)
 .end
 
 
@@ -43,6 +46,37 @@ Returns a Perl representation of the Int.
     .return($S0)
 .end
 
+
+.sub 'abs' :method :multi('Integer')
+    $P0 = n_abs self
+    .return ($P0)
+.end
+
+
+=item WHICH()
+
+Returns the identify value.
+
+=cut
+
+.sub 'WHICH' :method
+    $I0 = self
+    .return ($I0)
+.end
+
+
+=item infix:===
+
+Overridden for Int.
+
+=cut
+
+.namespace []
+.sub 'infix:===' :multi(Integer,Integer)
+    .param int a
+    .param int b
+    .return 'infix:=='(a, b)
+.end
 
 =back
 

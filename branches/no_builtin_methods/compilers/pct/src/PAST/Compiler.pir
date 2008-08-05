@@ -72,6 +72,7 @@ any value type.
     piropsig['n_shl']    = 'PP+'
     piropsig['n_shr']    = 'PP+'
     piropsig['n_sub']    = 'PP+'
+    piropsig['pow']      = 'NN+'
     piropsig['print']    = 'v*'
     piropsig['set']      = 'PP'
     set_global '%piropsig', piropsig
@@ -613,6 +614,7 @@ Return the POST representation of a C<PAST::Block>.
     ##  handle 'return' exceptions
     $S0 = self.'uniquereg'('P')
     bpost.'push_pirop'('getattribute', $S0, 'exception', '"type"')
+    bpost.'push_pirop'('if_null', $S0, rethrowlabel)
     bpost.'push_pirop'('ne', $S0, .CONTROL_RETURN, rethrowlabel)
     bpost.'push_pirop'('getattribute', $S0, 'exception', '"payload"')
     bpost.'push_pirop'('return', $S0)
@@ -799,8 +801,7 @@ for calling a sub.
     signature = 'vP:'
   have_signature:
 
-    .local pmc ops, posargs, namedargs
-    .local string name
+    .local pmc name, ops, posargs, namedargs
     name = node.'name'()
     if name goto call_by_name
     ##  our first child is the thing to be invoked, so make sure it's a PMC
@@ -809,8 +810,17 @@ for calling a sub.
     goto children_done
   call_by_name:
     (ops, posargs, namedargs) = self.'post_children'(node, 'signature'=>signature)
+    $I0 = isa name, 'PAST::Node'
+    if $I0 goto call_by_name_past
     $S0 = self.'escape'(name)
     unshift posargs, $S0
+    goto children_done
+  call_by_name_past:
+    .local pmc name_post
+    name_post = self.'as_post'(name, 'rtype'=>'s')
+    name_post = self.'coerce'(name_post, 's')
+    ops.'push'(name_post)
+    unshift posargs, name_post
   children_done:
 
     ##  generate the call itself
@@ -1132,13 +1142,13 @@ by C<node>.
     .local pmc arglist
     arglist = new 'ResizablePMCArray'
   arity_loop:
-    if arity < 1 goto arity_end
     .local string nextval
     nextval = self.'uniquereg'('P')
-    push arglist, nextval
     ops.'push_pirop'('shift', nextval, iter)
+    if arity < 1 goto arity_end
+    push arglist, nextval
     dec arity
-    goto arity_loop
+    if arity > 0 goto arity_loop
   arity_end:
 
     .local pmc subpost
@@ -1205,7 +1215,7 @@ a return value.
 
     .local string exreg, extype
     exreg = self.'uniquereg'('P')
-    extype = concat exreg, "['_type']"
+    extype = concat exreg, "['type']"
     ops.'push_pirop'('new', exreg, '"Exception"')
     ops.'push_pirop'('set', extype, .CONTROL_RETURN)
 

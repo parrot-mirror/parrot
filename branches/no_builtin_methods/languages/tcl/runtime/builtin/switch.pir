@@ -1,4 +1,4 @@
-.HLL 'Tcl', 'tcl_group'
+.HLL 'Tcl', ''
 .namespace []
 
 .sub '&switch'
@@ -56,11 +56,11 @@ get_body:
   if argc != 1 goto body_from_argv
 
 body_from_list:
-  .local pmc __list
-  __list = get_root_global ['_tcl'], '__list'
+  .local pmc toList
+  toList = get_root_global ['_tcl'], 'toList'
 
   $P0 = shift argv
-  body = __list($P0)
+  body = toList($P0)
   goto got_body
 
 body_from_argv:
@@ -78,7 +78,7 @@ got_body:
   $S0 = body[-2]
   $S0 = 'no body specified for pattern "' . $S0
   $S0 = $S0 . '"'
-  tcl_error $S0
+  die $S0
 
 check_mode:
   .local string pattern, code
@@ -142,25 +142,25 @@ fallthrough:
   code = shift body
 body_match:
   if code == '-' goto fallthrough
-  .local pmc __script
-  __script = get_root_global ['_tcl'], '__script'
-  $P1 = __script(code)
+  .local pmc compileTcl
+  compileTcl = get_root_global ['_tcl'], 'compileTcl'
+  $P1 = compileTcl(code)
   .return $P1()
 
 extra_pattern:
-  tcl_error 'extra switch pattern with no body'
+  die 'extra switch pattern with no body'
 
 bad_args:
-  tcl_error 'wrong # args: should be "switch ?switches? string pattern body ... ?default body?"'
+  die 'wrong # args: should be "switch ?switches? string pattern body ... ?default body?"'
 
 bad_args_with_curlies:
-  tcl_error 'wrong # args: should be "switch ?switches? string {pattern body ... ?default body?}"'
+  die 'wrong # args: should be "switch ?switches? string {pattern body ... ?default body?}"'
 
 bad_flag:
   $S1 = 'bad option "'
   $S1 .= $S0
   $S1 .= '": must be -exact, -glob, -indexvar, -matchvar, -nocase, -regexp, or --'
-  tcl_error $S1
+  die $S1
 .end
 
 # Local Variables:

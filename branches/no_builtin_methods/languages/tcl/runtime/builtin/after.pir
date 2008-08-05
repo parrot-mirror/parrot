@@ -1,4 +1,4 @@
-.HLL 'Tcl', 'tcl_group'
+.HLL 'Tcl', ''
 .namespace []
 
 .sub '&after'
@@ -15,7 +15,7 @@
   .return('')
 
 bad_args:
-  tcl_error 'wrong # args: should be "after option ?arg arg ...?"'
+  die 'wrong # args: should be "after option ?arg arg ...?"'
 .end
 
 

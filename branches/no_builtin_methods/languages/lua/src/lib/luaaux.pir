@@ -404,6 +404,134 @@ with the string C<rep>.
 .end
 
 
+=item C<lua_isboolean (val)>
+
+Returns 1 if the value has type boolean, and 0 otherwise.
+
+=cut
+
+.sub 'lua_isboolean'
+    .param pmc val
+    .local int res
+    res = 0
+    if null val goto L1
+    res = isa val, 'LuaBoolean'
+  L1:
+    .return (res)
+.end
+
+
+=item C<lua_isfunction (val)>
+
+Returns 1 if the value is a function, and 0 otherwise.
+
+=cut
+
+.sub 'lua_isfunction'
+    .param pmc val
+    .local int res
+    res = 0
+    if null val goto L1
+    res = isa val, 'LuaClosure'
+    if res goto L1
+    res = isa val, 'LuaFunction'
+L1:
+    .return (res)
+.end
+
+
+=item C<lua_isnil (val)>
+
+Returns 1 if the value is nil, and 0 otherwise.
+
+=cut
+
+.sub 'lua_isnil'
+    .param pmc val
+    .local int res
+    res = 0
+    if null val goto L1
+    res = isa val, 'LuaNil'
+  L1:
+    .return (res)
+.end
+
+
+=item C<lua_isnumber (val)>
+
+Returns 1 if the value is a number or a string convertible to a number,
+and 0 otherwise.
+
+=cut
+
+.sub 'lua_isnumber'
+    .param pmc val
+    .local int res
+    res = 0
+    if null val goto L1
+    res = isa val, 'LuaNumber'
+    if res goto L1
+    $P0 = val.'tonumber'()
+    res = isa $P0, 'LuaNumber'
+L1:
+    .return (res)
+.end
+
+
+=item C<lua_isstring (val)>
+
+Returns 1 if the value is a string or a number (which is always convertible
+to a string), and 0 otherwise.
+
+=cut
+
+.sub 'lua_isstring'
+    .param pmc val
+    .local int res
+    res = 0
+    if null val goto L1
+    res = isa val, 'LuaString'
+    if res goto L1
+    res = isa val, 'LuaNumber'
+L1:
+    .return (res)
+.end
+
+
+=item C<lua_istable (val)>
+
+Returns 1 if the value is a table, and 0 otherwise.
+
+=cut
+
+.sub 'lua_istable'
+    .param pmc val
+    .local int res
+    res = 0
+    if null val goto L1
+    res = isa val, 'LuaTable'
+  L1:
+    .return (res)
+.end
+
+
+=item C<lua_isuserdata (val)>
+
+Returns 1 if the value is a userdata, and 0 otherwise.
+
+=cut
+
+.sub 'lua_isuserdata'
+    .param pmc val
+    .local int res
+    res = 0
+    if null val goto L1
+    res = isa val, 'LuaUserdata'
+  L1:
+    .return (res)
+.end
+
+
 =item C<lua_load (data, name)>
 
 This function only loads a chunk; it does not run it.
@@ -457,7 +585,7 @@ messages and in debug information.
     pir = $P1.'translate'()
     .local pmc pir_comp
     pir_comp = compreg 'PIR'
-    $P0 = pir_comp.'compile'(pir)
+    $P0 = pir_comp(pir)
     $P0 = $P0[1]
     .local pmc env
     env = get_hll_global '_G'
@@ -776,15 +904,6 @@ This function never returns.
     .param pmc f
     .param pmc vararg :slurpy
     push_eh _handler
-    .const .Sub _traceback = 'traceback'
-    $P0 = newclosure _traceback
-    pushaction $P0
-    .local pmc traceback
-    .lex 'traceback', traceback
-    new traceback, 'LuaString'
-    .local pmc where
-    .lex 'where', where
-    new where, 'LuaString'
     ($P0 :slurpy) = f(vararg :flat)
     .return (0, $P0)
   _handler:
@@ -797,29 +916,26 @@ This function never returns.
     if $I0 == .EXCEPT_EXIT goto L2
   L1:
     .local int lineno
-    $S1 = where
-    $S0 = $S1
+    .local string traceback, where
+    (traceback, where) = 'traceback'()
+    $S0 = where
     $S0 .= ' '
     $S0 .= msg
     $S0 .= "\n"
-    $S1 = traceback
-    $S0 .= $S1
+    $S0 .= traceback
     .return (1, $S0)
   L2:
     rethrow ex
 .end
 
-.sub 'traceback' :anon :outer(docall)
-    .param int flag
-    unless flag == 1 goto L1
-    new $P0, 'Lua'
-    $S0 = $P0.'traceback'(1)
-    $P1 = find_lex 'traceback'
-    set $P1, $S0
-    $S0 = $P0.'where'()
-    $P1 = find_lex 'where'
-    set $P1, $S0
-  L1:
+.sub 'traceback'
+    .local pmc obj
+    .local string traceback, where
+    new obj, 'Lua'
+    traceback = obj.'traceback'(1)
+    where = obj.'where'()
+
+    .return (traceback, where)
 .end
 
 

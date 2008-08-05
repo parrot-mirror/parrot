@@ -3,7 +3,7 @@
 
 =head1 NAME
 
-php_api.pir - PHP API Library
+php_API.pir - PHP API Library
 
 =head1 DESCRIPTION
 
@@ -32,6 +32,34 @@ php_api.pir - PHP API Library
     msg = join '', args
     msg .= "\n"
     printerr msg
+.end
+
+
+=item C<fetch_resource>
+
+=cut
+
+.sub 'fetch_resource'
+    .param pmc val
+    .param string type
+    $I0 = isa val, 'PhpResource'
+    if $I0 goto L1
+    $P0 = getinterp
+    $P1 = $P0['sub', 1]
+    error(E_WARNING, $P1, "(): supplied argument is not a valid ", type, " resource")
+    null $P0
+    .return ($P0)
+  L1:
+    $P0 = deref val
+    $I0 = isa $P0, type
+    unless $I0 goto L2
+    .return ($P0)
+  L2:
+    $P0 = getinterp
+    $P1 = $P0['sub', 1]
+    error(E_WARNING, $P1, "(): supplied resource is not a valid ", type, " resource")
+    null $P0
+    .return ($P0)
 .end
 
 
@@ -275,8 +303,14 @@ STILL INCOMPLETE (see parse_arg_impl).
     .return ('boolean')
   not_boolean:
     unless c == 'r' goto not_resource
-    ###
+    $I0 = isa arg, 'PhpResource'
+    if $I0 goto L5
+    $I0 = isa arg, 'PhpUndef'
+    unless $I0 goto L51
+    unless return_null goto L51
     goto L5
+  L51:
+    .return ('resource')
   not_resource:
     unless c == 'a' goto not_array
     $I0 = isa arg, 'PhpArray'
@@ -336,6 +370,66 @@ STILL INCOMPLETE (see parse_arg_impl).
     error(E_WARNING, 'Wrong parameter count for ', $P1, '()')
 .end
 
+=back
+
+=head2 Stream Functions
+
+=over 4
+
+=cut
+
+.const int PHP_STREAM_COPY_ALL = -1
+
+.const int IGNORE_PATH                      = 0
+.const int USE_PATH                         = 1
+.const int IGNORE_URL                       = 2
+.const int ENFORCE_SAFE_MODE                = 4
+.const int REPORT_ERRORS                    = 8
+.const int STREAM_MUST_SEEK                 = 16
+.const int STREAM_WILL_CAST                 = 32
+.const int STREAM_LOCATE_WRAPPERS_ONLY      = 64
+.const int STREAM_OPEN_FOR_INCLUDE          = 128
+.const int STREAM_USE_URL                   = 256
+.const int STREAM_ONLY_GET_HEADERS          = 512
+.const int STREAM_DISABLE_OPEN_BASEDIR      = 1024
+.const int STREAM_OPEN_PERSISTENT           = 2048
+.const int STREAM_DISABLE_URL_PROTECTION    = 0x00002000
+
+=item C<stream_open>
+
+=cut
+
+.sub 'stream_open'
+    .param string path
+    .param string mode
+    .param int options
+    .param pmc context :optional
+    $P0 = open path, mode
+    .return ($P0)
+.end
+
+=item C<stream_passthru>
+
+=cut
+
+.sub 'stream_passthru'
+    .param pmc stream
+    $S0 = stream.'slurp'('')
+    $I0 = length $S0
+    print $S0
+    .return ($I0)
+.end
+
+=item C<stream_stat>
+
+=cut
+
+.sub 'stream_stat'
+    .param string path
+    .param int type
+    $I0 = stat path, type
+    .return ($I0)
+.end
 
 =back
 

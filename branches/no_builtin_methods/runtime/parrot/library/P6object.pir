@@ -69,10 +69,6 @@ C<P6object> and C<P6metaclass>.
 .namespace ['P6object']
 
 .sub 'onload' :anon :init :load
-    ##  create the %!metaclass hash for parrotclass => metaclass mapping
-    $P0 = new 'Hash'
-    set_hll_global ['P6metaclass'], '%!metaclass', $P0
-
     $P0 = newclass 'P6protoobject'
 
     $P0 = newclass 'P6object'
@@ -98,16 +94,9 @@ Return the C<P6metaclass> of the invocant.
 =cut
 
 .sub 'HOW' :method
-    .local pmc parrotclass, mhash, how
-    mhash = get_hll_global ['P6metaclass'], '%!metaclass'
-    parrotclass = typeof self
-    $I0 = get_addr parrotclass
-    how = mhash[$I0]
-    unless null how goto end
-    $S0 = parrotclass
-    how = mhash[$S0]
-  end:
-    .return (how)
+    $P0 = typeof self
+    $P1 = getprop 'metaclass', $P0
+    .return ($P1)
 .end
 
 
@@ -164,11 +153,12 @@ Return a true value if the invocant 'isa' C<x>.
 =cut
 
 .sub 'isa' :method
+    .param pmc obj
     .param pmc x
 
     .local pmc parrotclass
     parrotclass = self.'get_parrotclass'(x)
-    $P0 = self.'WHAT'()
+    $P0 = obj.'WHAT'()
     $I0 = isa $P0, parrotclass
     .return ($I0)
 .end
@@ -180,9 +170,9 @@ Return a true value if the invocant 'can' C<x>.
 =cut
 
 .sub 'can' :method
+    .param pmc obj
     .param string x
-    .local pmc parrotclass
-    $P0 = self.'WHAT'()
+    $P0 = obj.'WHAT'()
     $I0 = can $P0, x
     .return ($I0)
 .end
@@ -264,10 +254,6 @@ or 'Object').
     if $I0 goto have_parrotclass
     parrotclass = self.'get_parrotclass'(parrotclass)
   have_parrotclass:
-
-    ##  get the mapping hash
-    .local pmc mhash
-    mhash = get_hll_global ['P6metaclass'], '%!metaclass'
 
     ##  add any needed parent classes
     .local pmc parentclass
@@ -352,15 +338,17 @@ or 'Object').
   method_end:
     goto override_loop
   override_end:
-  have_protoclass:
-    ##  register the protoclass in %!metaobject
-    $I0 = get_addr protoclass
-    mhash[$I0] = how
-    ##  save the protoobject
+  have_protoobject:
+    ##  save the protoobject into the metaclass
     setattribute how, 'protoobject', protoobject
 
-    ##  store the long and short names in the protoobject
+    ##  attach the metaclass object to the protoclass
+    setprop protoclass, 'metaclass', how
+
+    ##  store the long and short names in the protoobject; skip if anonymous
     .local pmc longname, shortname
+    $I0 = elements ns
+    if $I0 == 0 goto anonymous_class
     $S0 = join '::', ns
     longname = new 'String'
     longname = $S0
@@ -371,13 +359,18 @@ or 'Object').
     ##  store the protoobject in appropriate namespace
     $S0 = pop ns
     set_hll_global ns, $S0, protoobject
+    goto have_how
+
+    ##  anonymous classes have empty strings for shortname and longname
+  anonymous_class:
+    longname = new 'String'
+    shortname = new 'String'
+    setattribute how, 'longname', longname
+    setattribute how, 'shortname', shortname
 
   have_how:
-    ##  map parrotclass to the metaobject
-    $I0 = get_addr parrotclass
-    mhash[$I0] = how
-    $S0 = parrotclass
-    mhash[$S0] = how
+    ##  attach the metaclass object to the parrotclass
+    setprop parrotclass, 'metaclass', how
 
     ##  return the protoobject
     .return (protoobject)
@@ -516,81 +509,6 @@ will be used in lieu of this one.)
     parrotclass = getattribute $P0, 'parrotclass'
     $P1 = new parrotclass
     .return ($P1)
-.end
-
-
-=item WHENCE()
-
-Returns the protoobject's autovivification closure.
-
-=cut
-
-.sub 'WHENCE' :method
-    .local pmc props, whence
-    props = getattribute self, '%!properties'
-    if null props goto ret_undef
-    whence = props['WHENCE']
-    if null whence goto ret_undef
-    .return (whence)
-  ret_undef:
-    whence = new 'Undef'
-    .return (whence)
-.end
-
-
-=item get_pmc_keyed(key)    (vtable method)
-
-Returns a proto-object with an autovivification closure attached to it.
-
-=cut
-
-.sub get_pmc_keyed :vtable :method
-    .param pmc what
-
-    # We'll build auto-vivification hash of values.
-    .local pmc WHENCE, key, val
-    WHENCE = new 'Hash'
-
-    # What is it?
-    $S0 = what.'WHAT'()
-    if $S0 == 'Pair' goto from_pair
-    if $S0 == 'List' goto from_list
-    'die'("Auto-vivification closure did not contain a Pair")
-
-  from_pair:
-    # Just a pair.
-    key = what.'key'()
-    val = what.'value'()
-    WHENCE[key] = val
-    goto done_whence
-
-  from_list:
-    # List.
-    .local pmc list_iter, cur_pair
-    list_iter = new 'Iterator', what
-  list_iter_loop:
-    unless list_iter goto done_whence
-    cur_pair = shift list_iter
-    key = cur_pair.'key'()
-    val = cur_pair.'value'()
-    WHENCE[key] = val
-    goto list_iter_loop
-  done_whence:
-
-    # Now create a clone of the protoobject.
-    .local pmc protoclass, res, props, tmp
-    protoclass = class self
-    res = new protoclass
-
-    # Attach the WHENCE property.
-    props = getattribute self, '%!properties'
-    unless null props goto have_props
-    props = new 'Hash'
-  have_props:
-    props['WHENCE'] = WHENCE
-    setattribute res, '%!properties', props
-
-    .return (res)
 .end
 
 

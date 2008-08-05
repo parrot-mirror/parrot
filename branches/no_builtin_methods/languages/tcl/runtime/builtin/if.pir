@@ -1,7 +1,4 @@
-###
-# [if]
-
-.HLL 'Tcl', 'tcl_group'
+.HLL 'Tcl', ''
 .namespace []
 
 .sub '&if'
@@ -10,8 +7,8 @@
     .local int argc
     argc = elements argv
 
-    .local pmc __expr
-    __expr = get_root_global ['_tcl'], '__expr'
+    .local pmc compileExpr
+    compileExpr = get_root_global ['_tcl'], 'compileExpr'
 
     if argc == 0 goto no_args
 
@@ -26,7 +23,7 @@
 
     # convert to the expression to a Sub
     $S0 = argv[0]
-    $P0 = __expr($S0, 'ns'=>ns)
+    $P0 = compileExpr($S0, 'ns'=>ns)
 
     $I0 = 1
     if $I0 == argc goto no_script
@@ -61,7 +58,7 @@ arg_elseif:
 
     # convert to the expression to a Sub
     $S0 = argv[$I0]
-    $P0 = __expr($S0)
+    $P0 = compileExpr($S0)
 
     inc $I0
     if $I0 == argc goto no_script
@@ -90,9 +87,9 @@ arg_else:
 arg_end:
 
     # now we can do the actual evaluation
-    .local pmc __script, __boolean
-    __script  = get_root_global ['_tcl'], '__script'
-    __boolean = get_root_global ['_tcl'], '__boolean'
+    .local pmc compileTcl, toBoolean
+    compileTcl  = get_root_global ['_tcl'], 'compileTcl'
+    toBoolean = get_root_global ['_tcl'], 'toBoolean'
 
     .local pmc    cond
     .local string code
@@ -102,9 +99,9 @@ arg_end:
 
 loop:
     $P1 = cond()
-    $I1 = __boolean($P1)
+    $I1 = toBoolean($P1)
     unless $I1 goto next
-    $P0 = __script(code, 'ns'=>ns)
+    $P0 = compileTcl(code, 'ns'=>ns)
     .return $P0()
 
 next:
@@ -129,31 +126,31 @@ elseif:
 else:
     inc $I0
     code = argv[$I0]
-    $P0  = __script(code, 'ns'=>ns)
+    $P0  = compileTcl(code, 'ns'=>ns)
     .return $P0()
 
 extra_words_after_else:
-    tcl_error 'wrong # args: extra words after "else" clause in "if" command'
+    die 'wrong # args: extra words after "else" clause in "if" command'
 
 nothing:
     .return('')
 
 no_args:
-    tcl_error 'wrong # args: no expression after "if" argument'
+    die 'wrong # args: no expression after "if" argument'
 
 no_script:
     dec $I0
     $S0 = argv[$I0]
     $S0 = 'wrong # args: no script following "' . $S0
     $S0 = $S0 . '" argument'
-    tcl_error $S0
+    die $S0
 
 no_expression:
     dec $I0
     $S0 = argv[$I0]
     $S0 = 'wrong # args: no expression after "' . $S0
     $S0 = $S0 . '" argument'
-    tcl_error $S0
+    die $S0
 .end
 
 # Local Variables:

@@ -18,7 +18,7 @@ use FindBin;
 use lib "$FindBin::Bin/../../lib";
 
 # core Perl modules
-use Test::More     tests => 22;
+use Test::More     tests => 17;
 
 # Parrot modules
 use Parrot::Test;
@@ -106,10 +106,7 @@ END_CODE
 Hello, World!
 END_EXPECTED
 
-TODO: {
-    local $TODO = '< not handled correctly';
-
-language_output_is( 'Pipp', <<'END_CODE', <<'END_EXPECTED', 'hello with some HTML', todo => '< not handled correctly' );
+language_output_is( 'Pipp', <<'END_CODE', <<'END_EXPECTED', 'hello with some HTML' );
 <html>
 <head>
   <title>Servus</title>
@@ -134,8 +131,6 @@ Hello, World!
 </body>
 </html>
 END_EXPECTED
-
-}
 
 
 language_output_is( 'Pipp', <<'END_CODE', <<'END_EXPECTED', 'hello in a scalar' );
@@ -168,7 +163,7 @@ Hello, World!
 END_EXPECTED
 
 
-language_output_is( 'Pipp', <<'END_CODE', <<'END_EXPECTED', 'concatenation of two strings', todo => 'currently broken' );
+language_output_is( 'Pipp', <<'END_CODE', <<'END_EXPECTED', 'concatenation of two strings' );
 <?php
 echo 'Hello, ' . "World!\n"
 ?>
@@ -176,14 +171,6 @@ END_CODE
 Hello, World!
 END_EXPECTED
 
-
-language_output_is( 'Pipp', <<'END_CODE', <<'END_EXPECTED', 'concatenation of four strings', todo => 'currently broken' );
-<?php
-echo 'Hell' . 'o, ' . 'World!' . "\n"
-?>
-END_CODE
-Hello, World!
-END_EXPECTED
 
 language_output_is( 'Pipp', <<'END_CODE', <<'END_EXPECTED', 'script tags' );
 <script language="php">
@@ -193,44 +180,6 @@ END_CODE
 Hello, World!
 END_EXPECTED
 
-
-language_output_is( 'Pipp', <<'END_CODE', <<'END_EXPECTED', 'end of line comment #' );
-<script language="php">
-echo "Hello, World!\n";   # comment till end of line
-</script>
-END_CODE
-Hello, World!
-END_EXPECTED
-
-
-language_output_is( 'Pipp', <<'END_CODE', <<'END_EXPECTED', 'end of line comment //' );
-<script language="php">
-echo "Hello, World!\n";   // comment till end of line
-</script>
-END_CODE
-Hello, World!
-END_EXPECTED
-
-
-language_output_is( 'Pipp', <<'END_CODE', <<'END_EXPECTED', 'single line /* */ comment' );
-<script language="php">
-echo "Hello, World!\n";   /* comment till end of line */
-</script>
-END_CODE
-Hello, World!
-END_EXPECTED
-
-
-language_output_is( 'Pipp', <<'END_CODE', <<'END_EXPECTED', 'multi line /* */ comment' );
-<script language="php">
-echo "Hello, World!\n";   /* multi
-    line
-    comment
-*/
-</script>
-END_CODE
-Hello, World!
-END_EXPECTED
 
 language_output_is( 'Pipp', <<'END_CODE', <<'END_EXPECTED', 'script tags' );
 <script language="php">

@@ -145,11 +145,11 @@ unlink($filename);
 $filename = 'test.lolcode';
 open $FH, '>', $filename
         or die "Can't open $filename ($!).\n";
-print $FH q{
+print $FH <<'LOLCODE';
 HAI 1.2
     VISIBLE "HAI WORLD!"
 KTHXBYE
-};
+LOLCODE
 close $FH;
 $out = `$parrot languages/lolcode/lolcode.pbc $filename`;
 ok($out eq "HAI WORLD!\n", "check lolcode");
@@ -176,8 +176,14 @@ $out = `$parrot languages/pheme/pheme.pbc $filename`;
 ok($out eq "Hello, World!\n", "check pheme");
 unlink($filename);
 
-$out = `$parrot languages/pipp/pipp.pbc`;
-ok($out =~ /^usage/, "check pipp");
+$filename = 'test.php';
+open $FH, '>', $filename
+        or die "Can't open $filename ($!).\n";
+print $FH "<?php echo \"Hello, World!\\n\"; ?>";
+close $FH;
+$out = `$parrot languages/pipp/pipp.pbc $filename`;
+ok($out eq "Hello, World!\n", "check pipp");
+unlink($filename);
 
 $filename = 'test.p1';
 open $FH, '>', $filename

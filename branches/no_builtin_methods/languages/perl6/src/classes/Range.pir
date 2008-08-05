@@ -50,17 +50,35 @@ src/classes/Range.pir - methods for the Range class
 
 =item ACCEPTS(topic)
 
-Determines if topic is within the range.
+Determines if topic is within the range or equal to the range.
 
 =cut
 
 .sub 'ACCEPTS' :method
     .param pmc topic
 
+    $I0 = isa topic, 'Range'
+    unless $I0 goto value_in_range_check
+    $I0 = self.'from'()
+    $I1 = topic.'from'()
+    if $I0 != $I1 goto false
+    $I0 = self.'to'()
+    $I1 = topic.'to'()
+    if $I0 != $I1 goto false
+    $P0 = getattribute self, "$!from_exclusive"
+    $P1 = getattribute topic, "$!from_exclusive"
+    if $P0 != $P1 goto false
+    $P0 = getattribute self, "$!to_exclusive"
+    $P1 = getattribute topic, "$!to_exclusive"
+    if $P0 != $P1 goto false
+    goto true
+
+  value_in_range_check:
     $I0 = self.'!from_test'(topic)
     unless $I0 goto false
     $I0 = self.'!to_test'(topic)
     unless $I0 goto false
+
   true:
     $P0 = get_hll_global ['Bool'], 'True'
     .return ($P0)
@@ -133,6 +151,54 @@ just return a clone of the Range.
     goto range_loop
   range_end:
     .return (result)
+.end
+
+
+=item min()
+
+=item minmax()
+
+=item max()
+
+=cut
+
+.namespace ['Range']
+
+.sub 'min' :method
+    .return self.'from'()
+.end
+
+.sub 'minmax' :method
+    $P0 = self.'from'()
+    $P1 = self.'to'()
+    $P2 = get_hll_global 'list'
+    .return $P2($P0, $P1)
+.end
+
+.sub 'max' :method
+    .return self.'to'()
+.end
+
+
+=item pop()  (vtable_method)
+
+Generate the next element at the end of the Range.
+
+=cut
+
+.sub 'pop' :method :vtable('pop_pmc')
+    .local pmc to, toexc, value
+    to = getattribute self, '$!to'
+    toexc = getattribute self, '$!to_exclusive'
+    value = 'postfix:--'(to)
+    unless toexc goto have_value
+    value = clone to
+  have_value:
+    $I0 = self.'!from_test'(value)
+    if $I0 goto success
+    value = new 'Failure'
+  success:
+    .return (value)
 .end
 
 

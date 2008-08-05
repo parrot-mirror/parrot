@@ -58,6 +58,56 @@ it understands how to properly merge C<MultiSub> PMCs.
 .end
 
 
+=item !OUTER(name [,'max'=>max])
+
+Helper function to obtain the lexical C<name> from the
+caller's outer scope.  (Note that it never finds a lexical
+in the caller's lexpad -- use C<find_lex> for that.)  The
+C<max> parameter specifies the maximum outer to search --
+the default value of 1 will search the caller's immediate
+outer scope and no farther.  If the requested lexical is
+not found, C<!OUTER> returns null.
+
+=cut
+
+.sub '!OUTER'
+    .param string name
+    .param int max             :named('max') :optional
+    .param int has_max         :opt_flag
+
+    if has_max goto have_max
+    max = 1
+  have_max:
+
+    .local int min
+    min = 1
+
+    ##  the depth we use here is one more than the minimum,
+    ##  because we want min/max to be relative to the caller's
+    ##  context, not !OUTER itself.
+    .local int depth
+    depth = min + 1
+    .local pmc lexpad, value
+    push_eh outer_err
+    null value
+  loop:
+    unless max >= min goto done
+    $P0 = getinterp
+    lexpad = $P0['outer', depth]
+    unless lexpad goto next
+    value = lexpad[name]
+    unless null value goto done
+  next:
+    inc depth
+    dec max
+    goto loop
+  done:
+    pop_eh
+  outer_err:
+    .return (value)
+.end
+
+
 =item !VAR
 
 Helper function for implementing the VAR and .VAR macros.
@@ -167,11 +217,17 @@ Internal helper method to create a class.
 =cut
 
 .sub '!keyword_class'
-    .param string name
+    .param string name   :optional
+    .param int have_name :opt_flag
     .local pmc class, resolve_list, methods, iter
 
     # Create class.
+    if have_name goto named
+    class = new 'Class'
+    goto created
+  named:
     class = newclass name
+  created:
 
     # Set resolve list to include all methods of the class.
     methods = inspect class, 'methods'
@@ -240,7 +296,25 @@ Internal helper method to create a grammar.
     .return(grammar)
 .end
 
-=item !keyword_does(class, role_name)
+=item !keyword_enum(name)
+
+Internal helper method to create an enum class.
+
+=cut
+
+.sub '!keyword_enum'
+    .param pmc role
+    .local pmc class
+
+    # Create an anonymous class and attach the role.
+    class = new 'Class'
+    $P0 = get_class 'Any'
+    addparent class, $P0
+    "!keyword_does"(class, role)
+    .return(class)
+.end
+
+=item !keyword_does(class, role)
 
 Internal helper method to implement the functionality of the does keyword.
 
@@ -306,7 +380,12 @@ Adds an attribute with the given name to the class or role.
 .sub '!keyword_has'
     .param pmc class
     .param string attr_name
-    .param pmc type
+    .param pmc type     :optional
+    .param int got_type :opt_flag
+    if got_type goto with_type
+    class.'add_attribute'(attr_name)
+    .return ()
+  with_type:
     class.'add_attribute'(attr_name, type)
 .end
 
@@ -351,6 +430,34 @@ Constructs a Mapping, based upon the values list.
 
   values_loop_end:
     .return (result)
+.end
+
+
+=item !find_file_in_path(path, filename)
+
+Searches a standard colon-separated path for a filename.
+
+=cut
+
+.sub '!find_file_in_path'
+    .param string search_path
+    .param string filename
+    .local string path
+    .local pmc iter
+
+    $P0 = split ':', search_path
+    iter = new 'Iterator', $P0
+  iter_start:
+    path = filename
+    unless iter goto return_path
+    $S0 = shift iter
+    path = concat $S0, '/'
+    path .= filename
+    $I0 = stat path, 0
+    unless $I0 goto iter_start
+
+  return_path:
+    .return(path)
 .end
 
 

@@ -1,4 +1,4 @@
-.HLL 'Tcl', 'tcl_group'
+.HLL 'Tcl', ''
 .namespace []
 
 .sub '&scan'
@@ -12,9 +12,9 @@
   .local pmc results
   results = new 'TclList'
 
-  .local pmc __integer, __number
-  __integer = get_root_global [ '_tcl' ], '__integer'
-  __number  = get_root_global [ '_tcl' ], '__number'
+  .local pmc toInteger, toNumber
+  toInteger = get_root_global [ '_tcl' ], 'toInteger'
+  toNumber = get_root_global [ '_tcl' ], 'toNumber'
   .local pmc decimal
   decimal = get_root_global ['parrot'; 'TclExpr::Grammar'], 'decimal'
 
@@ -73,15 +73,15 @@ done:
 
 
 assign_results:
-  .local pmc __set
-  __set = get_root_global ['_tcl'], '__set'
+  .local pmc setVar
+  setVar = get_root_global ['_tcl'], 'setVar'
   $I0 = 0
 var_loop:
   if $I0 >= argc goto var_loop_done
   $S0 = argv[$I0]
   $P0 = results[$I0]
   push_eh bad_var
-    __set($S0, $P0)
+    setVar($S0, $P0)
   pop_eh
   inc $I0
   goto var_loop
@@ -92,7 +92,7 @@ bad_var:
   $S1 = "couldn't set variable \""
   $S1 .= $S0
   $S1 .= '"'
-  tcl_error $S1
+  die $S1
 
 return_list:
   .return(results)
@@ -101,9 +101,9 @@ aborted:
   .return('')
 
 too_many_vars:
-  tcl_error 'variable is not assigned by any conversion specifiers'
+  die 'variable is not assigned by any conversion specifiers'
 not_enough_vars:
-  tcl_error 'different numbers of variable names and field specifiers'
+  die 'different numbers of variable names and field specifiers'
 
 handle_percent:
   inc format_pos
@@ -132,19 +132,19 @@ check_xpg3:
   if $S0 == '$' goto got_xpg3
   # We got a number, but it was the width.
   $S0 = match
-  width = __integer($S0)
+  width = toInteger($S0)
   goto got_width
 
 got_xpg3:
   $S0 = match
-  xpg3 = __integer($S0)
+  xpg3 = toInteger($S0)
 
 get_width:
   inc format_pos
   match = decimal(format, 'pos'=>format_pos, 'grammar'=>'TclExpr::Grammar')
   unless match goto got_width
   $S0 = match
-  width = __integer($S0)
+  width = toInteger($S0)
 
   $I0 = match.'from'()
   $I1 = match.'to'()
@@ -287,7 +287,7 @@ range_loop_done:
   ret
 
 bad_class:
-  tcl_error 'unmatched [ in format string'
+  die 'unmatched [ in format string'
 
 handle_percent_literal:
   $S1 = substr input, input_pos, 1
@@ -308,9 +308,9 @@ handle_character:
   goto next
 
 bad_character_size:
-  tcl_error 'field size modifier may not be specified in %c conversion'
+  die 'field size modifier may not be specified in %c conversion'
 bad_character_width:
-  tcl_error 'field width may not be specified in %c conversion'
+  die 'field width may not be specified in %c conversion'
 
 handle_numchars:
   $P0 = new 'TclInt'
@@ -341,7 +341,7 @@ handle_hex:
 
 hex_width:
   input_pos += $I2
-  $P0 = __integer($S0, 'rawhex'=>1)
+  $P0 = toInteger($S0, 'rawhex'=>1)
   bsr set_val
   goto next
 
@@ -361,7 +361,7 @@ do_integer:
 
 integer_width:
   input_pos += $I2
-  $P0 = __integer($S0)
+  $P0 = toInteger($S0)
   bsr set_val
   goto next
 
@@ -374,7 +374,7 @@ handle_float:
   $I2 = $I0 - $I1
   input_pos += $I2
   $S0 = match
-  $P0 = __number($S0)
+  $P0 = toNumber($S0)
   $S1 = typeof $P0
   if $S1 == 'TclFloat' goto done_float
   $S0 = $S0 . '.0'
@@ -449,23 +449,23 @@ set_xpg3:
   $P1 = results[xpg3]
   $I0 = defined $P1
   if $I0 == 0 goto set_xpg3_ok
-  tcl_error 'variable is assigned by multiple "%n$" conversion specifiers'
+  die 'variable is assigned by multiple "%n$" conversion specifiers'
 set_xpg3_ok:
   results[xpg3] = $P0
 done_xpg3:
   ret
 
 cant_mix:
-  tcl_error 'cannot mix "%" and "%n$" conversion specifiers'
+  die 'cannot mix "%" and "%n$" conversion specifiers'
 
 bad_conversion:
   $S1 = 'bad scan conversion character "'
   $S1 .= $S0
   $S1 .= '"'
-  tcl_error $S1
+  die $S1
 
 bad_args:
-  tcl_error 'wrong # args: should be "scan string format ?varName varName ...?"'
+  die 'wrong # args: should be "scan string format ?varName varName ...?"'
 .end
 
 # Local Variables:

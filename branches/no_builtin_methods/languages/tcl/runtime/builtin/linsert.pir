@@ -1,8 +1,4 @@
-#
-# [linsert]
-#
-
-.HLL 'Tcl', 'tcl_group'
+.HLL 'Tcl', ''
 .namespace []
 
 .sub '&linsert'
@@ -12,21 +8,21 @@
   $I0 = argv
   if $I0 < 3 goto wrong_args
 
-  .local pmc __list
-  __list = get_root_global ['_tcl'], '__list'
+  .local pmc toList
+  toList = get_root_global ['_tcl'], 'toList'
 
   .local pmc the_list
   the_list = shift argv
-  the_list = __list(the_list)
+  the_list = toList(the_list)
 
   .local string position
   position = shift argv
 
-  .local pmc __index
-  __index = get_root_global ['_tcl'], '__index'
+  .local pmc getIndex
+  getIndex = get_root_global ['_tcl'], 'getIndex'
 
   .local int the_index
-  the_index = __index(position, the_list)
+  the_index = getIndex(position, the_list)
 
   $S0 = substr position, 0, 3
   if $S0 != 'end' goto next
@@ -45,7 +41,7 @@ splice_it:
   .return (the_list)
 
 wrong_args:
-  tcl_error 'wrong # args: should be "linsert list index element ?element ...?"'
+  die 'wrong # args: should be "linsert list index element ?element ...?"'
 
 .end
 

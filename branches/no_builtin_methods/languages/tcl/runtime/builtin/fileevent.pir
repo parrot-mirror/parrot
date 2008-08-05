@@ -1,4 +1,4 @@
-.HLL 'Tcl', 'tcl_group'
+.HLL 'Tcl', ''
 .namespace []
 
 .sub '&fileevent'
@@ -10,9 +10,9 @@
     if argc < 2 goto badargs
     if argc > 3 goto badargs
 
-    .local pmc __channel, __script
-    __channel = get_root_global ['_tcl'], '__channel'
-    __script  = get_root_global ['_tcl'], '__script'
+    .local pmc getChannel, compileTcl
+    getChannel = get_root_global ['_tcl'], 'getChannel'
+    compileTcl  = get_root_global ['_tcl'], 'compileTcl'
 
     .local pmc channel, script
     .local string event
@@ -23,20 +23,20 @@
 
     $S0 = 'bad event name "' . event
     $S0 .= '": must be readable or writable'
-    tcl_error $S0
+    die $S0
 
 readable:
-    channel = __channel(channel)
+    channel = getChannel(channel)
 
     if argc == 2 goto readable_2
 
     .local pmc script
     script = args[2]
-    script = __script(script)
+    script = compileTcl(script)
 
     .local pmc events
     events = get_root_global ['_tcl'], 'events'
-    $P0    = new 'ResizablePMCArray'
+    $P0    = new 'TclList'
     push events, $P0
     push $P0, channel
     push $P0, script
@@ -47,11 +47,11 @@ readable_2:
     .return('')
 
 writable:
-    channel = __channel(channel)
+    channel = getChannel(channel)
     .return('')
 
 badargs:
-    tcl_error 'wrong # args: should be "fileevent channelId event ?script?"'
+    die 'wrong # args: should be "fileevent channelId event ?script?"'
 .end
 
 # Local Variables:
