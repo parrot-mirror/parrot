@@ -68,27 +68,27 @@ end
 -- Color (color) -> none
 function Color (...)
     local arg = {...}
-    local num_arg = #arg
+    local num_args = #arg
     if _helpers.lua_istable(arg[1]) then
         num_args, array = gl_binding._get_arrayf(arg[1])
-        if num_arg > 4 then num_arg = 4 end
-        if num_arg == 3 then
+        if num_args > 4 then num_args = 4 end
+        if num_args == 3 then
             gl_binding.glColor3dv(array)
         else
             gl_binding.glColor4dv(array)
         end
         return
     end
-    if num_arg > 4 then num_arg = 4 end
-    for index = 1, num_arg do
+    if num_args > 4 then num_args = 4 end
+    for index = 1, num_args do
         if not _helpers.lua_isnumber(arg[index]) then
             error "incorrect argument to function 'gl.Color'"
         end
     end
-    if num_arg == 3 then
-        gl_binbing.glColor3d(arg[1], arg[2], arg[3])
+    if num_args == 3 then
+        gl_binding.glColor3d(arg[1], arg[2], arg[3])
     else
-        gl_binbing.glColor4d(arg[1], arg[2], arg[3], arg[4])
+        gl_binding.glColor4d(arg[1], arg[2], arg[3], arg[4])
     end
 end
 
@@ -355,9 +355,9 @@ end
 -- Vertex (v) -> none
 function Vertex (...)
     local arg = {...}
-    local num_arg = #arg
+    local num_args = #arg
     local v
-    if num_arg == 0 then
+    if num_args == 0 then
         error "incorrect argument to function 'gl.Vertex'"
     end
     if _helpers.lua_istable(arg[1]) then
