@@ -95,6 +95,10 @@ see F<runtime/parrot/library/OpenGL.pir>.
     set $P1, '_get_gl_enum'
     _gl_binding[$P1] = _gl_binding_get_gl_enum
 
+    .const .Sub _gl_binding_get_str_error = 'get_str_error'
+    set $P1, '_get_str_error'
+    _gl_binding[$P1] = _gl_binding_get_str_error
+
     .const .Sub _gl_binding_get_arrayb = 'get_arrayb'
     set $P1, '_get_arrayb'
     _gl_binding[$P1] = _gl_binding_get_arrayb
@@ -133,6 +137,36 @@ see F<runtime/parrot/library/OpenGL.pir>.
     $I0 = gl_str[$S0]
     res |= $I0
     goto L1
+  L2:
+    .return (res)
+.end
+
+.sub 'get_str_gl_enum' :anon
+    .param int enum
+    .local pmc gl_str
+    gl_str = get_hll_global ['Lua::gl_binding'], 'gl_str'
+    new $P0, 'Iterator', gl_str
+  L1:
+    unless $P0 goto L2
+    $P1 = shift $P0
+    $I0 = gl_str[$P1]
+    unless enum == $I0 goto L1
+    $S0 = $P1
+    .return ($S0)
+  L2:
+    .return ('')
+.end
+
+.sub 'get_str_error' :anon
+    .local pmc res
+    $I0 = glGetError()
+    new res, 'LuaString'
+    if $I0 goto L1
+    set res, 'NO_ERROR'
+    goto L2
+  L1:
+    $S0 = get_str_gl_enum($I0)
+    set res, $S0
   L2:
     .return (res)
 .end
