@@ -20,7 +20,7 @@ use IO::CaptureOutput qw( capture );
 
 ########## --without-crypto ##########
 
-my $args = process_options(
+my ($args, $step_list_ref) = process_options(
     {
         argv => [ q{--without-crypto} ],
         mode => q{configure},
@@ -49,7 +49,7 @@ $conf->replenish($serialized);
 
 ########## _add_to_libs() ##########
 
-$args = process_options( {
+($args, $step_list_ref) = process_options( {
     argv => [ ],
     mode => q{configure},
 } );
@@ -148,7 +148,7 @@ $conf->replenish($serialized);
 
 ########## --without-crypto; _evaluate_cc_run() ##########
 
-$args = process_options( {
+($args, $step_list_ref) = process_options( {
     argv => [ q{--without-crypto} ],
     mode => q{configure},
 } );

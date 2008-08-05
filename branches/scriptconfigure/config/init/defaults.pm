@@ -78,6 +78,8 @@ sub runstep {
         optimize  => '',
         verbose   => $conf->options->get('verbose'),
         build_dir => abs_path($FindBin::Bin),
+        configured_from_file =>
+            $conf->options->get('configured_from_file') || '',
 
         # Compiler -- used to turn .c files into object files.
         # (Usually cc or cl, or something like that.)

@@ -13,7 +13,7 @@ use Parrot::Configure;
 use Parrot::Configure::Options qw( process_options );
 use IO::CaptureOutput qw | capture |;
 
-my $args = process_options(
+my ($args, $step_list_ref) = process_options(
     {
         argv => [],
         mode => q{configure},

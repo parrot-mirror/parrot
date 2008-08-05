@@ -20,6 +20,7 @@ use Parrot::Configure::Options::Conf qw(
     print_help
     print_version
 );
+use Parrot::Configure::Step::List qw( get_steps_list );
 
 our @valid_options = qw{
     ask
@@ -110,7 +111,8 @@ sub conditional_assignments {
     $argsref->{maintainer} = 1
         if defined $argsref->{lex}
             or defined $argsref->{yacc};
-    return $argsref;
+    my @steps_list = get_steps_list();
+    return ( $argsref, [ @steps_list ] );
 }
 
 1;

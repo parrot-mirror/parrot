@@ -10,6 +10,7 @@ our @EXPORT_OK = qw(
     process_options
 );
 use Carp;
+use File::Spec;
 use lib qw( lib );
 use Parrot::Configure::Options::Conf::CLI ();
 use Parrot::Configure::Options::Conf::File ();
@@ -24,7 +25,7 @@ sub process_options {
     if ( $argsref->{mode} =~ m/^reconfigure$/i ) {
         %options_components = %Parrot::Configure::Options::Reconf::options_components;
     }
-    elsif ( $argsref->{mode} =~ m/^script$/i ) {
+    elsif ( $argsref->{mode} =~ m/^file$/i ) {
         %options_components = %Parrot::Configure::Options::Conf::File::options_components;
     }
     elsif ( $argsref->{mode} =~ m/^configure$/i ) {
@@ -68,7 +69,7 @@ sub process_options {
         return;
     }
     else {
-        if ($argsref->{mode} eq 'script') {
+        if ($argsref->{mode} eq 'file' or $argsref->{mode} eq 'configure') {
             my $steps_list_ref;
             ($data, $steps_list_ref) =
                 &{ $options_components{conditionals} }($data);

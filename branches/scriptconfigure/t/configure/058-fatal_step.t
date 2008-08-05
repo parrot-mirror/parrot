@@ -17,7 +17,7 @@ $| = 1;
 is( $|, 1, "output autoflush is set" );
 
 my $s = 1;
-my $args = process_options(
+my ($args, $step_list_ref) = process_options(
     {
         argv => [ qq{--fatal-step=$s} ],
         mode => q{configure},
