@@ -19,7 +19,6 @@ use Parrot::Configure::Messages qw(
     print_introduction
     print_conclusion
 );
-use Parrot::Configure::Step::List qw( get_steps_list );
 use Parrot::Revision;
 
 $| = 1;    # $OUTPUT_AUTOFLUSH = 1;
@@ -34,18 +33,14 @@ $| = 1;    # $OUTPUT_AUTOFLUSH = 1;
 # warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 # from Parrot::Configure::Options
-my (@rets, $args, $steps_list_ref);
-@rets = process_options(
+my ($args, $steps_list_ref) = process_options(
     {
-        mode => ($ARGV[0] =~ /^--script=/)
-                    ? 'script'
+        mode => ($ARGV[0] =~ /^--file=/)
+                    ? 'file'
                     : 'configure',
         argv => [@ARGV],
     }
 );
-$args = $rets[0];
-$steps_list_ref = $rets[1] if $rets[1];
-
 exit(1) unless defined $args;
 
 my $opttest = Parrot::Configure::Options::Test->new($args);
@@ -64,14 +59,7 @@ Parrot::Revision::update();
 
 my $conf = Parrot::Configure->new();
 
-if ($args->{script}) {
-    delete $args->{script};
-    $conf->add_steps( @{ $steps_list_ref } );
-}
-else {
-    # from Parrot::Configure::Step::List
-    $conf->add_steps( get_steps_list() );
-}
+$conf->add_steps( @{ $steps_list_ref } );
 
 # from Parrot::Configure::Data
 $conf->options->set( %{$args} );

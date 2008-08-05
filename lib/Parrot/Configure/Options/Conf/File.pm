@@ -12,6 +12,7 @@ our @EXPORT_OK = qw(
     $parrot_version
     $svnid
 );
+use File::Spec;
 use lib qw( lib );
 use Parrot::Configure::Options::Conf qw(
     $script
@@ -23,7 +24,7 @@ use Parrot::Configure::Options::Conf qw(
 
 our @valid_options = qw{
     help
-    script
+    file
     test
     version
 };
@@ -44,9 +45,8 @@ sub conditional_assignments {
     my $data = shift;
     $data->{debugging} = 1;
     $data->{maintainer} = undef;
-#print STDERR $data->{script}, "\n";
-    open my $IN, '<', $data->{script}
-        or die "Unable to open configuration data file $data->{script} for reading: $!";
+    open my $IN, '<', $data->{file}
+        or die "Unable to open configuration data file $data->{file} for reading: $!";
     my @steps_list = ();
     LINE: while ( my $line = <$IN> ) {
         chomp $line;
@@ -63,20 +63,21 @@ sub conditional_assignments {
                     ( $key, $value ) = ($1, $2);
                 }
                 if (! defined $key) {
-                    die "Unable to process key $key in step $step in configuration data file $data->{script}: $!"
+                    die "Unable to process key $key in step $step in configuration data file $data->{file}: $!"
                 }
                 # We'll have to check here for valid options, which now more
                 # closely resemble those in Conf::CLI.
 #        unless ( $valid_opts{$key} ) {
-#            die qq/Invalid option "$key". See "perl $script --help" for valid options\n/;
+#            die qq/Invalid option "$key". See "perl $file --help" for valid options\n/;
 #        }
                 $value = 1 unless defined $value;
                 $data->{$key} = $value;
             }
         }
     }
+    $data->{configured_from_file} = File::Spec->rel2abs($data->{file});
     close $IN
-        or die "Unable to close configuration data file $data->{script} after reading: $!";
+        or die "Unable to close configuration data file $data->{file} after reading: $!";
     return ($data, \@steps_list);;
 }
 

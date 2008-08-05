@@ -63,8 +63,8 @@ foreach my $m (@possible_methods) {
 }
 ok( !$invalid, "No invalid methods described in POD" );
 
-my $args;
-$args = process_options(
+my ($args, $step_list_ref);
+($args, $step_list_ref) = process_options(
     {
         argv => [],
         mode => q{configure},
@@ -73,21 +73,21 @@ $args = process_options(
 ok( defined $args, "process_options() returned successfully" );
 ok( $args->{debugging}, "debugging turned on by default" );
 
-eval { $args = process_options( { argv => [] } ); };
+eval { ($args, $step_list_ref) = process_options( { argv => [] } ); };
 like(
     $@,
     qr/'mode' argument not provided to process_options\(\)/,
     "process_options() failed due to lack of argument 'mode'"
 );
 
-eval { $args = process_options( { argv => [], mode => 'foobar' } ); };
+eval { ($args, $step_list_ref) = process_options( { argv => [], mode => 'foobar' } ); };
 like(
     $@,
     qr/Invalid value for 'mode' argument to process_options\(\)/,
     "process_options() failed due to invalid 'mode' argument"
 );
 
-$args = process_options(
+($args, $step_list_ref) = process_options(
     {
         mode => q{configure},
         ,
@@ -98,7 +98,7 @@ ok( defined $args,
 
 my $CC = "/usr/bin/gcc-3.3";
 my $CX = "/usr/bin/g++-3.3";
-$args = process_options(
+($args, $step_list_ref) = process_options(
     {
         argv => [
             q{--cc=$CC},      q{--cxx=$CX}, q{--link=$CX}, q{--ld=$CX},
@@ -109,7 +109,7 @@ $args = process_options(
 );
 ok( defined $args, "process_options() returned successfully when options were specified" );
 
-eval { $args = process_options( { argv => [qq<--${badoption}=72>], mode => q{configure}, } ); };
+eval { ($args, $step_list_ref) = process_options( { argv => [qq<--${badoption}=72>], mode => q{configure}, } ); };
 like(
     $@,
     qr/^Invalid option.*$badoption/,
@@ -117,7 +117,7 @@ like(
 );
 
 $badoption = q{step};
-eval { $args = process_options( { argv => [qq<--${badoption}>], mode => q{configure}, } ); };
+eval { ($args, $step_list_ref) = process_options( { argv => [qq<--${badoption}>], mode => q{configure}, } ); };
 like(
     $@,
     qr/^Invalid option.*$badoption/,
@@ -125,7 +125,7 @@ like(
 );
 
 $badoption = q{target};
-eval { $args = process_options( { argv => [qq<--${badoption}>], mode => q{configure}, } ); };
+eval { ($args, $step_list_ref) = process_options( { argv => [qq<--${badoption}>], mode => q{configure}, } ); };
 like(
     $@,
     qr/^Invalid option.*$badoption/,
@@ -169,7 +169,7 @@ like(
     like( $stdout, qr/Parrot Version/i, "got correct message after 'version' option" );
 }
 
-$args = process_options(
+($args, $step_list_ref) = process_options(
     {
         argv => [ q{--lex}, ],
         mode => q{configure},
@@ -178,7 +178,7 @@ $args = process_options(
 ok( defined $args, "process_options() returned successfully after 'lex' option" );
 ok( $args->{maintainer}, "'maintainer' attribute is true after 'lex' option" );
 
-$args = process_options(
+($args, $step_list_ref) = process_options(
     {
         argv => [ q{--yacc}, ],
         mode => q{configure},
@@ -187,7 +187,7 @@ $args = process_options(
 ok( defined $args, "process_options() returned successfully after 'yacc' option" );
 ok( $args->{maintainer}, "'maintainer' attribute is true after 'yacc' option" );
 
-$args = process_options(
+($args, $step_list_ref) = process_options(
     {
         argv => [q{--debugging=1}],
         mode => q{configure},
@@ -196,7 +196,7 @@ $args = process_options(
 ok( defined $args, "process_options() returned successfully" );
 ok( $args->{debugging}, "debugging turned on explicitly" );
 
-$args = process_options(
+($args, $step_list_ref) = process_options(
     {
         argv => [q{--debugging=0}],
         mode => q{configure},
