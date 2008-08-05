@@ -176,6 +176,9 @@ end
 -- GetClipPlane (plane) -> equationArray
 
 -- GetError () -> error flag
+function GetError ()
+    return gl_binding._get_str_error()
+end
 
 -- GetLight (light, pname) -> paramsArray
 
