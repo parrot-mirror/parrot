@@ -574,6 +574,7 @@ STR_FILES = \
     $(SRC_DIR)/builtin.str \
     $(SRC_DIR)/debug.str \
     $(SRC_DIR)/dynext.str \
+    $(SRC_DIR)/events.str \
     $(SRC_DIR)/exceptions.str \
     $(SRC_DIR)/global.str \
     $(SRC_DIR)/global_setup.str \
@@ -586,13 +587,16 @@ STR_FILES = \
     $(SRC_DIR)/key.str \
     $(SRC_DIR)/library.str \
     $(SRC_DIR)/mmd.str \
+    $(SRC_DIR)/nci.str \
     $(SRC_DIR)/packfile.str \
     $(SRC_DIR)/pmc.str \
+    $(SRC_DIR)/pmc_freeze.str \
     $(SRC_DIR)/oo.str \
     $(SRC_DIR)/scheduler.str \
     $(SRC_DIR)/spf_render.str \
     $(SRC_DIR)/spf_vtable.str \
     $(SRC_DIR)/sub.str \
+    $(SRC_DIR)/stacks.str \
     \
     $(CLASS_STR_FILES)
 
@@ -1017,7 +1021,7 @@ $(SRC_DIR)/global$(O) : $(GENERAL_H_FILES) $(SRC_DIR)/global.str
 
 $(SRC_DIR)/pmc$(O) : $(GENERAL_H_FILES)
 
-$(SRC_DIR)/pmc_freeze$(O) : $(GENERAL_H_FILES)
+$(SRC_DIR)/pmc_freeze$(O) : $(GENERAL_H_FILES) $(SRC_DIR)/pmc_freeze.str
 
 $(SRC_DIR)/hash$(O) : $(GENERAL_H_FILES)
 
@@ -1048,7 +1052,7 @@ $(SRC_DIR)/exec_start$(O) : $(GENERAL_H_FILES) @TEMP_exec_h@
 
 $(SRC_DIR)/exec_save$(O) : $(GENERAL_H_FILES) @TEMP_exec_h@
 
-$(SRC_DIR)/key$(O) : $(GENERAL_H_FILES)
+$(SRC_DIR)/key$(O) : $(GENERAL_H_FILES) $(SRC_DIR)/key.str
 
 $(SRC_DIR)/gc/smallobject$(O) : $(GENERAL_H_FILES)
 
@@ -1164,7 +1168,7 @@ $(SRC_DIR)/dataypes$(O) : $(GENERAL_H_FILES) $(SRC_DIR)/dataypes.c
 
 $(SRC_DIR)/exit$(O) : $(GENERAL_H_FILES) $(SRC_DIR)/exit.c
 
-$(SRC_DIR)/nci$(O) : $(GENERAL_H_FILES) $(SRC_DIR)/nci.c
+$(SRC_DIR)/nci$(O) : $(GENERAL_H_FILES) $(SRC_DIR)/nci.c $(SRC_DIR)/nci.str
 
 $(SRC_DIR)/vtables$(O) : $(GENERAL_H_FILES) $(SRC_DIR)/vtables.c
 
@@ -2192,6 +2196,12 @@ tags-emacs: tags.emacs.dummy
         --languages=c,perl --langmap=c:+.h,c:+.pmc,c:+.ops \
         -I NOTNULL,NULLOK,ARGIN,ARGMOD,ARGOUT,ARGINOUT,ARGIN_NULLOK,ARGOUT_NULLOK,ARGMOD_NULLOK \
         $(CUR_DIR)
+
+# this works with an old etags (XEmacs 21.5*)
+tags-xemacs: tags.emacs.dummy
+	$(RM_F) TAGS
+	find $(CUR_DIR) \
+        -name \*.c -o -name \*.h -o -name \*.pmc -o -name \*.ops | etags -l c - -o TAGS
 
 tags.emacs.dummy:
 

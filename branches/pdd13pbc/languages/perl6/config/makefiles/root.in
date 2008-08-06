@@ -77,6 +77,7 @@ BUILTINS_PIR = \
   src/classes/Signature.pir \
   src/classes/Subset.pir \
   src/classes/Grammar.pir \
+  src/classes/Module.pir \
   src/builtins/globals.pir \
   src/builtins/any-list.pir \
   src/builtins/any-num.pir \
@@ -100,8 +101,9 @@ $(PMC_DIR)/mutable.pmc : $(PMC_DIR)/mutable_pmc.template build/gen_mutable_pmc.p
 	$(PERL) build/gen_mutable_pmc.pl $(PMC_DIR)/mutable_pmc.template \
 		$(PMC_DIR)/mutable.pmc
 
-PMCS        = perl6str mutable perl6scalar mutablevar
-PMC_SOURCES = $(PMC_DIR)/perl6str.pmc $(PMC_DIR)/mutable.pmc $(PMC_DIR)/perl6scalar.pmc $(PMC_DIR)/mutablevar.pmc
+PMCS        = perl6str mutable perl6scalar mutablevar perl6multisub
+PMC_SOURCES = $(PMC_DIR)/perl6str.pmc $(PMC_DIR)/mutable.pmc $(PMC_DIR)/perl6scalar.pmc \
+              $(PMC_DIR)/mutablevar.pmc $(PMC_DIR)/perl6multisub.pmc
 PERL6_GROUP = $(PMC_DIR)/perl6_group$(LOAD_EXT)
 
 # targets for building a standalone perl6.
@@ -205,6 +207,10 @@ fulltest: coretest spectest_regression codetest
 # Run the tests in t/localtest.data
 localtest: all t/spec t/localtest.data
 	@$(HARNESS_WITH_FUDGE) --tests-from-file=t/localtest.data
+
+# Run the tests in t/localtest.data with a higher verbosity
+localtest_loud: all t/spec t/localtest.data
+	@$(HARNESS_WITH_FUDGE) --tests-from-file=t/localtest.data --verbosity=1
 
 # Run many tests of your choise.
 # make somtests TESTFILES=t/foo/bar

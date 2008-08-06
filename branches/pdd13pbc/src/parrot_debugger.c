@@ -112,6 +112,7 @@ and C<debug_break> ops in F<ops/debug.ops>.
 #include "../compilers/imcc/imc.h"
 #include "../compilers/imcc/parser.h"
 #include "parrot/embed.h"
+#include "parrot/debug.h"
 
 static void PDB_printwelcome(void);
 static void PDB_run_code(Parrot_Interp interp, int argc, char *argv[]);
@@ -144,6 +145,7 @@ main(int argc, char *argv[])
     interp->pdb      = pdb;
     interp->debugger = debugger;
     pdb->debugee     = interp;
+    pdb->state       = PDB_ENTER;
 
     Parrot_block_GC_mark(interp);
     Parrot_block_GC_sweep(interp);
@@ -176,7 +178,7 @@ main(int argc, char *argv[])
         IMCC_INFO(interp)->state->file = filename;
 
         if (!(imc_yyin_set(fopen(filename, "r"), yyscanner)))    {
-            IMCC_fatal_standalone(interp, E_IOError,
+            IMCC_fatal_standalone(interp, EXCEPTION_PIO_ERROR,
                     "Error reading source file %s.\n",
                     filename);
         }
@@ -200,6 +202,7 @@ main(int argc, char *argv[])
 
     PDB_printwelcome();
 
+    interp->run_core = PARROT_DEBUGGER_CORE;
     PDB_run_code(interp, argc - 1, argv + 1);
 
 
@@ -217,18 +220,15 @@ Adds a default exception handler to PDB.
 static void
 PDB_run_code(Parrot_Interp interp, int argc, char *argv[])
 {
-    Parrot_exception exp;
-
-    if (setjmp(exp.destination)) {
-        char *msg = string_to_cstring(interp, interp->exceptions->msg);
-        fprintf(stderr, "Caught exception: %s\n", msg);
-        string_cstring_free(msg);
+    new_runloop_jump_point(interp);
+    if (setjmp(interp->current_runloop->resume)) {
+        free_runloop_jump_point(interp);
+        fprintf(stderr, "Caught exception\n");
         return;
     }
 
-    push_new_c_exception_handler(interp, &exp);
-
     Parrot_runcode(interp, argc - 1, argv + 1);
+    free_runloop_jump_point(interp);
 }
 
 /*
@@ -244,9 +244,9 @@ Prints out the welcome string.
 static void
 PDB_printwelcome(void)
 {
-    fprintf(stderr, "Parrot Debugger 0.4.x\n");
-    fprintf(stderr, "\nPlease note: ");
-    fprintf(stderr, "the debugger is currently under reconstruction\n");
+    fprintf(stderr,
+        "Parrot " PARROT_VERSION " Debugger\n"
+        "\nPlease note: the debugger is currently under reconstruction\n");
 }
 
 /*

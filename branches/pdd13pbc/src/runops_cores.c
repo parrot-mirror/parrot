@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2001-2006, The Perl Foundation.
+Copyright (C) 2001-2008, The Perl Foundation.
 $Id$
 
 =head1 NAME
@@ -163,8 +163,8 @@ runops_trace_core(PARROT_INTERP, ARGIN(opcode_t *pc))
     trace_op(interp, code_start, code_end, pc);
     while (pc) {
         if (pc < code_start || pc >= code_end)
-            real_exception(interp, NULL, 1,
-                    "attempt to access code outside of current code segment");
+            Parrot_ex_throw_from_c_args(interp, NULL, 1,
+                "attempt to access code outside of current code segment");
 
         CONTEXT(interp)->current_pc = pc;
 
@@ -207,14 +207,15 @@ runops_slow_core(PARROT_INTERP, ARGIN(opcode_t *pc))
 
     if (Interp_trace_TEST(interp, PARROT_TRACE_OPS_FLAG))
         return runops_trace_core(interp, pc);
-
+#if 0
     if (interp->debugger && interp->debugger->pdb)
         return Parrot_debug(interp->debugger, pc);
+#endif
 
     while (pc) {
         if (pc < code_start || pc >= code_end)
-            real_exception(interp, NULL, 1,
-                    "attempt to access code outside of current code segment");
+            Parrot_ex_throw_from_c_args(interp, NULL, 1,
+                "attempt to access code outside of current code segment");
 
         CONTEXT(interp)->current_pc = pc;
 
@@ -244,8 +245,8 @@ runops_gc_debug_core(PARROT_INTERP, ARGIN(opcode_t *pc))
 {
     while (pc) {
         if (pc < code_start || pc >= code_end)
-            real_exception(interp, NULL, 1,
-                    "attempt to access code outside of current code segment");
+            Parrot_ex_throw_from_c_args(interp, NULL, 1,
+                "attempt to access code outside of current code segment");
 
         Parrot_do_dod_run(interp, 0);
         CONTEXT(interp)->current_pc = pc;
@@ -303,6 +304,57 @@ runops_profile_core(PARROT_INTERP, ARGIN(opcode_t *pc))
         /* old opcode continues */
         profile->starttime = Parrot_floatval_time();
         profile->cur_op    = old_op;
+    }
+
+    return pc;
+}
+
+/*
+
+=item C<opcode_t * runops_debugger_core>
+
+Used by the debugger, under construction
+
+=cut
+
+*/
+
+PARROT_WARN_UNUSED_RESULT
+PARROT_CAN_RETURN_NULL
+opcode_t *
+runops_debugger_core(PARROT_INTERP, ARGIN(opcode_t *pc))
+{
+    fprintf(stderr, "Enter runops_debugger_core\n");
+
+    PARROT_ASSERT(interp->pdb);
+
+    if (interp->pdb->state & PDB_ENTER) {
+        Parrot_debugger_start(interp, pc);
+    }
+
+    while (pc) {
+        if (pc < interp->code->base.data || pc >= interp->code->base.data + interp->code->base.size)
+            Parrot_ex_throw_from_c_args(interp, NULL, 1,
+                    "attempt to access code outside of current code segment");
+        Parrot_do_dod_run(interp, 0);
+
+        if (interp->pdb->tracing) {
+            trace_op(interp,
+                    interp->code->base.data,
+                    interp->code->base.data +
+                    interp->code->base.size,
+                    interp->pdb->cur_opcode);
+        }
+
+        CONTEXT(interp)->current_pc = pc;
+
+        DO_OP(pc, interp);
+        interp->pdb->cur_opcode = pc;
+        if (interp->pdb->tracing) {
+            if (--interp->pdb->tracing == 0) {
+                Parrot_debugger_start(interp, pc);
+            }
+        }
     }
 
     return pc;
