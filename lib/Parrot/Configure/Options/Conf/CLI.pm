@@ -20,77 +20,12 @@ use Parrot::Configure::Options::Conf qw(
     print_help
     print_version
 );
+use Parrot::Configure::Options::Conf::Shared qw(
+    @shared_valid_options
+);
 use Parrot::Configure::Step::List qw( get_steps_list );
 
-our @valid_options = qw{
-    ask
-    bindir
-    cage
-    cc
-    ccflags
-    ccwarn
-    cgoto
-    configure_trace
-    cxx
-    datadir
-    debugging
-    define
-    exec-prefix
-    execcapable
-    fatal
-    fatal-step
-    floatval
-    gc
-    help
-    icu-config
-    icuheaders
-    icushared
-    includedir
-    infodir
-    inline
-    intval
-    jitcapable
-    languages
-    ld
-    ldflags
-    lex
-    libdir
-    libexecdir
-    libs
-    link
-    linkflags
-    localstatedir
-    m
-    make
-    maintainer
-    mandir
-    miniparrot
-    nomanicheck
-    oldincludedir
-    opcode
-    ops
-    optimize
-    parrot_is_shared
-    pmc
-    prefix
-    profile
-    sbindir
-    sharedstatedir
-    silent
-    sysconfdir
-    test
-    verbose
-    verbose-step
-    version
-    without-gdbm
-    without-opengl
-    without-pcre
-    without-crypto
-    without-gettext
-    without-gmp
-    without-icu
-    yacc
-};
+our @valid_options = ( 'ask', @shared_valid_options );
 
 my %short_circuits = (
     help    => \&print_help,
