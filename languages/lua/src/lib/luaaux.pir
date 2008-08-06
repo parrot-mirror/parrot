@@ -14,6 +14,7 @@ lib/luaaux.pir - Lua Auxiliary PIR Library
 =cut
 
 .HLL 'Lua', 'lua_group'
+.namespace []
 
 
 =item C<lua_argerror (narg, extramsg, ...)>
@@ -585,7 +586,7 @@ messages and in debug information.
     pir = $P1.'translate'()
     .local pmc pir_comp
     pir_comp = compreg 'PIR'
-    $P0 = pir_comp.'compile'(pir)
+    $P0 = pir_comp(pir)
     $P0 = $P0[1]
     .local pmc env
     env = get_hll_global '_G'
@@ -701,23 +702,23 @@ Opens all standard Lua libraries.
 =cut
 
 .sub 'lua_openlibs'
-    $P0 = get_hll_global ['Lua::basic'], 'luaopen_basic'
+    $P0 = get_hll_global ['basic'], 'luaopen_basic'
     $P0()
-    $P0 = get_hll_global ['Lua::coroutine'], 'luaopen_coroutine'
+    $P0 = get_hll_global ['coroutine'], 'luaopen_coroutine'
     $P0()
-    $P0 = get_hll_global ['Lua::package'], 'luaopen_package'
+    $P0 = get_hll_global ['package'], 'luaopen_package'
     $P0()
-    $P0 = get_hll_global ['Lua::table'], 'luaopen_table'
+    $P0 = get_hll_global ['table'], 'luaopen_table'
     $P0()
-    $P0 = get_hll_global ['Lua::io'], 'luaopen_io'
+    $P0 = get_hll_global ['io'], 'luaopen_io'
     $P0()
-    $P0 = get_hll_global ['Lua::os'], 'luaopen_os'
+    $P0 = get_hll_global ['os'], 'luaopen_os'
     $P0()
-    $P0 = get_hll_global ['Lua::string'], 'luaopen_string'
+    $P0 = get_hll_global ['string'], 'luaopen_string'
     $P0()
-    $P0 = get_hll_global ['Lua::math'], 'luaopen_math'
+    $P0 = get_hll_global ['math'], 'luaopen_math'
     $P0()
-    $P0 = get_hll_global ['Lua::debug'], 'luaopen_debug'
+    $P0 = get_hll_global ['debug'], 'luaopen_debug'
     $P0()
     sweepon
     sweep 1
@@ -904,15 +905,6 @@ This function never returns.
     .param pmc f
     .param pmc vararg :slurpy
     push_eh _handler
-    .const .Sub _traceback = 'traceback'
-    $P0 = newclosure _traceback
-    pushaction $P0
-    .local pmc traceback
-    .lex 'traceback', traceback
-    new traceback, 'LuaString'
-    .local pmc where
-    .lex 'where', where
-    new where, 'LuaString'
     ($P0 :slurpy) = f(vararg :flat)
     .return (0, $P0)
   _handler:
@@ -925,29 +917,26 @@ This function never returns.
     if $I0 == .EXCEPT_EXIT goto L2
   L1:
     .local int lineno
-    $S1 = where
-    $S0 = $S1
+    .local string traceback, where
+    (traceback, where) = 'traceback'()
+    $S0 = where
     $S0 .= ' '
     $S0 .= msg
     $S0 .= "\n"
-    $S1 = traceback
-    $S0 .= $S1
+    $S0 .= traceback
     .return (1, $S0)
   L2:
     rethrow ex
 .end
 
-.sub 'traceback' :anon :outer(docall)
-    .param int flag
-    unless flag == 1 goto L1
-    new $P0, 'Lua'
-    $S0 = $P0.'traceback'(1)
-    $P1 = find_lex 'traceback'
-    set $P1, $S0
-    $S0 = $P0.'where'()
-    $P1 = find_lex 'where'
-    set $P1, $S0
-  L1:
+.sub 'traceback'
+    .local pmc obj
+    .local string traceback, where
+    new obj, 'Lua'
+    traceback = obj.'traceback'(1)
+    where = obj.'where'()
+
+    .return (traceback, where)
 .end
 
 

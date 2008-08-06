@@ -42,7 +42,7 @@ array:
   variable = findVar(var)
   if null variable goto no_such_variable
 
-  $I0 = does variable, 'hash'
+  $I0 = does variable, 'associative_array'
   unless $I0 goto cant_read_not_array
 
   variable = variable[key]
@@ -55,33 +55,33 @@ bad_index:
   $S0 = "can't read \""
   $S0 .= name
   $S0 .= '": no such element in array'
-  tcl_error $S0
+  die $S0
 
 cant_read_not_array:
   $S0 =  "can't read \""
   $S0 .= name
   $S0 .= "\": variable isn't array"
-  tcl_error $S0
+  die $S0
 
 scalar:
   variable = findVar(name)
   if null variable goto no_such_variable
 
-  $S0 = typeof variable
-  if $S0 == 'TclArray' goto cant_read_array
+  $I0 = does variable, 'associative_array'
+  if $I0 goto cant_read_array
   .return(variable)
 
 cant_read_array:
   $S0 = "can't read \""
   $S0 .= name
   $S0 .= '": variable is array'
-  tcl_error $S0
+  die $S0
 
 no_such_variable:
   $S0 = "can't read \""
   $S0 .= name
   $S0 .= '": no such variable'
-  tcl_error $S0
+  die $S0
 .end
 
 =head2 _Tcl::makeVar
@@ -130,7 +130,7 @@ array:
   variable = storeVar(var, variable, 'depth' => depth)
 
 check_is_hash:
-  $I0 = does variable, 'hash'
+  $I0 = does variable, 'associative_array'
   unless $I0 goto cant_read_not_array
 
   $P0 = variable[key]
@@ -146,7 +146,7 @@ cant_read_not_array:
   $S0 =  "can't read \""
   $S0 .= name
   $S0 .= "\": variable isn't array"
-  tcl_error $S0
+  die $S0
 
 scalar:
   variable = findVar(name, 'depth' => depth)
@@ -209,7 +209,7 @@ find_array:
   array = findVar(var)
   if null array goto create_array
 
-  $I0 = does array, 'hash'
+  $I0 = does array, 'associative_array'
   unless $I0 goto cant_set_not_array
   goto set_array
 
@@ -233,13 +233,13 @@ cant_set_not_array:
   $S0 =  "can't set \""
   $S0 .= name
   $S0 .= "\": variable isn't array"
-  tcl_error $S0
+  die $S0
 
 scalar:
   $P0 = findVar(name)
   if null $P0 goto create_scalar
-  $S0 = typeof $P0
-  if $S0 == 'TclArray' goto cant_set_array
+  $I0 = does $P0, 'associative_array'
+  if $I0 goto cant_set_array
 
 create_scalar:
   storeVar(name, value)
@@ -250,7 +250,7 @@ cant_set_array:
   $S0 =  "can't set \""
   $S0 .= name
   $S0 .= "\": variable is array"
-  tcl_error $S0
+  die $S0
 .end
 
 =head2 _Tcl::findVar

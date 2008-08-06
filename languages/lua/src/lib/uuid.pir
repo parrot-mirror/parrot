@@ -18,7 +18,7 @@ This implementation is based on F<runtime/parrot/library/uuid.pir>.
 =cut
 
 .HLL 'Lua', 'lua_group'
-.namespace [ 'Lua::uuid'; 'Lua' ]
+.namespace [ 'Lua'; 'uuid' ]
 
 .sub '__onload' :anon :load
 #    print "__onload uuid\n"
@@ -100,9 +100,7 @@ This implementation is based on F<runtime/parrot/library/uuid.pir>.
   L3:
     $P0 = get_hll_global ['uuid'], $S0
     $P1 = $P0()
-    $P0 = get_hll_global ['uuid'], 'get_string'
-    $S0 = $P0($P1)
-#    $S0 = $P1
+    $S0 = $P1
     new res, 'LuaString'
     set res, $S0
     .return (res)
@@ -142,9 +140,7 @@ This implementation is based on F<runtime/parrot/library/uuid.pir>.
   L1:
     .local pmc res
     new res, 'LuaNumber'
-    $P0 = get_hll_global ['uuid'], 'time'
-    $I0 = $P0($P1)
-#    $I0 = $P1.'time'()
+    $I0 = $P1.'time'()
     set res, $I0
     .return (res)
 .end

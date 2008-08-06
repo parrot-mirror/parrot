@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2001-2007, The Perl Foundation.
+Copyright (C) 2001-2008, The Perl Foundation.
 $Id$
 
 =head1 NAME
@@ -32,6 +32,7 @@ C<STRING> with a vtable.
 */
 
 #include "parrot/parrot.h"
+#include "pmc_freeze.str"
 
 /* default.pmc thawing of properties */
 PARROT_API void
@@ -954,8 +955,9 @@ ft_init(PARROT_INTERP, ARGIN(visit_info *info))
     }
     else {
         if (string_length(interp, s) < header_length) {
-            real_exception(interp, NULL, E_IOError,
-                    "bad string to thaw");
+            Parrot_ex_throw_from_c_args(interp, NULL,
+                EXCEPTION_INVALID_STRING_REPRESENTATION,
+                "bad string to thaw");
         }
         mem_sys_memcopy(pf->header, s->strstart, PACKFILE_HEADER_BYTES);
         PackFile_assign_transforms(pf);
@@ -1087,7 +1089,9 @@ thaw_pmc(PARROT_INTERP, ARGMOD(visit_info *info),
         *type = VTABLE_shift_integer(interp, io);
         info->last_type = *type;
         if (*type <= 0)
-            real_exception(interp, NULL, 1, "Unknown PMC type to thaw %d", (int) *type);
+            Parrot_ex_throw_from_c_args(interp, NULL, 1,
+                "Unknown PMC type to thaw %d", (int) *type);
+
         if (*type >= interp->n_vtable_max ||
             !interp->vtables[*type]) {
             /* that ought to be a class */
@@ -1124,7 +1128,8 @@ do_action(PARROT_INTERP, ARGIN_NULLOK(PMC *pmc), ARGIN(visit_info *info),
                 info->visit_action = pmc->vtable->freeze;
             break;
         default:
-            real_exception(interp, NULL, 1, "Illegal action %ld", (long)info->what);
+            Parrot_ex_throw_from_c_args(interp, NULL, 1, "Illegal action %ld",
+                (long)info->what);
     }
 }
 
@@ -1153,7 +1158,7 @@ thaw_create_pmc(PARROT_INTERP, ARGIN(const visit_info *info),
             pmc = constant_pmc_new_noinit(interp, type);
             break;
         default:
-            real_exception(interp, NULL, 1, "Illegal visit_next type");
+            Parrot_ex_throw_from_c_args(interp, NULL, 1, "Illegal visit_next type");
     }
     return pmc;
 }
@@ -1300,7 +1305,7 @@ id_from_pmc(PARROT_INTERP, ARGIN(PMC* pmc))
         id += arena->total_objects;
     }
 
-    real_exception(interp, NULL, 1, "Couldn't find PMC in arenas");
+    Parrot_ex_throw_from_c_args(interp, NULL, 1, "Couldn't find PMC in arenas");
 }
 
 /*
@@ -1437,7 +1442,7 @@ visit_next_for_GC(PARROT_INTERP, ARGIN(PMC* pmc), ARGIN(visit_info* info))
     const int seen = next_for_GC_seen(interp, pmc, info, &id);
     UNUSED(seen);
 
-    real_exception(interp, NULL, 1, "todo convert to depth first");
+    Parrot_ex_throw_from_c_args(interp, NULL, 1, "todo convert to depth first");
     /* do_action(interp, pmc, info, seen, id); UNCOMMENT WHEN TODO IS DONE*/
     /*
      * TODO probe for class methods that override the default.
@@ -1564,10 +1569,10 @@ visit_loop_todo_list(PARROT_INTERP, ARGIN_NULLOK(PMC *current),
 again:
     while ((list_item = (PMC**)list_shift(interp, todo, enum_type_PMC))) {
         current = *list_item;
-        if (!current) {
-            real_exception(interp, NULL, 1,
-                    "NULL current PMC in visit_loop_todo_list");
-        }
+        if (!current)
+            Parrot_ex_throw_from_c_args(interp, NULL, 1,
+                "NULL current PMC in visit_loop_todo_list");
+
         VTABLE_visit(interp, current, info);
         if (thawing) {
             if (current == info->thaw_result)
@@ -1619,15 +1624,14 @@ Allocate image to some estimated size.
 static void
 create_image(PARROT_INTERP, ARGIN_NULLOK(PMC *pmc), ARGMOD(visit_info *info))
 {
-    INTVAL len;
-    if (!PMC_IS_NULL(pmc) && (VTABLE_does(interp, pmc,
-                string_from_literal(interp, "array")) ||
-        VTABLE_does(interp, pmc,
-                string_from_literal(interp, "hash")))) {
+    STRING *array = CONST_STRING(interp, "array");
+    STRING *hash  = CONST_STRING(interp, "hash");
+    INTVAL  len;
+
+    if (!PMC_IS_NULL(pmc) && (VTABLE_does(interp, pmc, array) ||
+        VTABLE_does(interp, pmc, hash))) {
         const INTVAL items = VTABLE_elements(interp, pmc);
-        /*
-         * TODO check e.g. first item of aggregate and estimate size
-         */
+        /* TODO check e.g. first item of aggregate and estimate size */
         len = items * FREEZE_BYTES_PER_ITEM;
     }
     else

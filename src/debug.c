@@ -402,19 +402,18 @@ PARROT_API
 void
 Parrot_debugger_init(PARROT_INTERP)
 {
-    PDB_t *pdb;
-    Parrot_Interp debugger;
+    if (! interp->pdb) {
+        PDB_t *pdb = mem_allocate_zeroed_typed(PDB_t);
+        Parrot_Interp debugger = Parrot_new(interp);
+        interp->pdb     = pdb;
+        debugger->pdb   = pdb;
+        pdb->debugee    = interp;
+    }
 
-    if (interp->pdb)
-        return;
+    /*PDB_disassemble(interp, NULL);*/
 
-    pdb             = mem_allocate_zeroed_typed(PDB_t);
-    debugger        = Parrot_new(interp);
-    interp->pdb     = pdb;
-    debugger->pdb   = pdb;
-    pdb->debugee    = interp;
-    pdb->cur_opcode = interp->code->base.data;
-    pdb->state     |= PDB_RUNNING;
+    interp->pdb->cur_opcode = interp->code->base.data;
+    interp->pdb->state     |= PDB_RUNNING;
 }
 
 PARROT_API
@@ -424,7 +423,7 @@ Parrot_debugger_load(PARROT_INTERP, ARGIN_NULLOK(STRING *filename))
     char *file;
 
     if (!interp->pdb)
-        real_exception(interp, NULL, 0, "No debugger");
+        Parrot_ex_throw_from_c_args(interp, NULL, 0, "No debugger");
 
     file = string_to_cstring(interp, filename);
     PDB_load_source(interp, file);
@@ -433,18 +432,49 @@ Parrot_debugger_load(PARROT_INTERP, ARGIN_NULLOK(STRING *filename))
 
 PARROT_API
 void
+Parrot_debugger_start(PARROT_INTERP, ARGIN(opcode_t * cur_opcode))
+{
+    /*fprintf(stderr, "Parrot_debugger_start\n");*/
+
+    if (!interp->pdb)
+        Parrot_ex_throw_from_c_args(interp, NULL, 0, "No debugger");
+
+    if (interp->pdb->state & PDB_ENTER) {
+        if (!interp->pdb->file) {
+            /*PDB_disassemble(interp, NULL);*/
+        }
+        interp->pdb->state &= ~PDB_ENTER;
+    }
+
+    interp->pdb->cur_opcode = cur_opcode;
+
+    interp->pdb->state |= PDB_STOPPED;
+
+    while (interp->pdb->state & PDB_STOPPED) {
+        const char * command;
+        PDB_get_command(interp);
+        command = interp->pdb->cur_command;
+
+        PDB_run_command(interp, command);
+    }
+    if (interp->pdb->state & PDB_EXIT)
+        Parrot_exit(interp, 0);
+ }
+
+PARROT_API
+void
 Parrot_debugger_break(PARROT_INTERP, ARGIN(opcode_t * cur_opcode))
 {
     if (!interp->pdb)
-        real_exception(interp, NULL, 0, "No debugger");
+        Parrot_ex_throw_from_c_args(interp, NULL, 0, "No debugger");
 
     if (!interp->pdb->file)
-        real_exception(interp, NULL, 0, "No file loaded to debug");
+        Parrot_ex_throw_from_c_args(interp, NULL, 0, "No file loaded to debug");
 
     if (!(interp->pdb->state & PDB_BREAK)) {
         const char * command;
-        new_internal_exception(interp);
-        if (setjmp(interp->exceptions->destination)) {
+        new_runloop_jump_point(interp);
+        if (setjmp(interp->current_runloop->resume)) {
             fprintf(stderr, "Unhandled exception in debugger\n");
             return;
         }
@@ -512,6 +542,7 @@ PDB_get_command(PARROT_INTERP)
     if (pdb->cur_command && *pdb->cur_command)
         pdb->last_command = pdb->cur_command;
 
+    #if 0
     /* if the program is stopped and running show the next line to run */
     if ((pdb->state & PDB_STOPPED) && (pdb->state & PDB_RUNNING)) {
         PDB_line_t *line = pdb->file->line;
@@ -528,6 +559,7 @@ PDB_get_command(PARROT_INTERP)
                 PIO_eprintf(interp, "%c", *(c++));
         }
     }
+    #endif
 
     i = 0;
 
@@ -708,6 +740,7 @@ PDB_run_command(PARROT_INTERP, ARGIN(const char *command))
         case debug_cmd_q:
         case debug_cmd_quit:
             pdb->state |= PDB_EXIT;
+            pdb->state &= ~PDB_STOPPED;
             break;
         case (enum DebugCmd)0:
             if (pdb->last_command)
@@ -798,8 +831,8 @@ PDB_trace(PARROT_INTERP, ARGIN_NULLOK(const char *command))
     debugee     = pdb->debugee;
 
     /* execute n ops */
-    new_internal_exception(debugee);
-    if (setjmp(debugee->exceptions->destination)) {
+    new_runloop_jump_point(debugee);
+    if (setjmp(debugee->current_runloop->resume)) {
         Parrot_eprintf(interp, "Unhandled exception while tracing\n");
         pdb->state |= PDB_STOPPED;
         return;
@@ -813,6 +846,10 @@ PDB_trace(PARROT_INTERP, ARGIN_NULLOK(const char *command))
                 debugee->pdb->cur_opcode);
         DO_OP(pdb->cur_opcode, debugee);
     }
+    pdb->tracing = n;
+    pdb->debugee->run_core = PARROT_DEBUGGER_CORE;
+
+    runops_int(pdb->debugee, pdb->debugee->code->base.data - pdb->cur_opcode);
 
     /* we just stopped */
     pdb->state |= PDB_STOPPED;
@@ -820,6 +857,8 @@ PDB_trace(PARROT_INTERP, ARGIN_NULLOK(const char *command))
     /* If program ended */
     if (!pdb->cur_opcode)
         (void)PDB_program_end(interp);
+    pdb->state |= PDB_RUNNING;
+    pdb->state &= ~PDB_STOPPED;
 }
 
 /*
@@ -1105,7 +1144,8 @@ PDB_set_break(PARROT_INTERP, ARGIN_NULLOK(const char *command))
         skip_command(command);
     }
     else {
-        real_exception(interp, NULL, 1, "NULL command passed to PDB_set_break");
+        Parrot_ex_throw_from_c_args(interp, NULL, 1,
+            "NULL command passed to PDB_set_break");
     }
     condition = NULL;
 
@@ -1205,8 +1245,27 @@ PDB_continue(PARROT_INTERP, ARGIN_NULLOK(const char *command))
     }
 
     /* Run while no break point is reached */
+    /*
     while (!PDB_break(interp))
         DO_OP(pdb->cur_opcode, pdb->debugee);
+    */
+
+    #if 0
+    pdb->tracing = 0;
+    pdb->debugee->run_core = PARROT_DEBUGGER_CORE;
+    new_internal_exception(pdb->debugee);
+    if (setjmp(pdb->debugee->exceptions->destination)) {
+        Parrot_eprintf(pdb->debugee, "Unhandled exception while debugging: %Ss\n",
+            pdb->debugee->exceptions->msg);
+        pdb->state |= PDB_STOPPED;
+        return;
+    }
+    runops_int(pdb->debugee, pdb->debugee->code->base.data - pdb->cur_opcode);
+    if (!pdb->cur_opcode)
+        (void)PDB_program_end(interp);
+    #endif
+    pdb->state |= PDB_RUNNING;
+    pdb->state &= ~PDB_STOPPED;
 }
 
 /*
@@ -1706,8 +1765,10 @@ PDB_disassemble_op(PARROT_INTERP, ARGOUT(char *dest), int space,
     int         size = 0;
 
     /* Write the opcode name */
-    const char * const p = full_name ? info->full_name : info->name;
-    PARROT_ASSERT(p);
+    const char * p = full_name ? info->full_name : info->name;
+
+    if (! p)
+        p= "**UNKNOWN**";
     strcpy(dest, p);
     size += strlen(p);
 
@@ -1892,7 +1953,7 @@ PDB_disassemble_op(PARROT_INTERP, ARGOUT(char *dest), int space,
             dest[size++] = ']';
             break;
         default:
-            real_exception(interp, NULL, 1, "Unknown opcode type");
+            Parrot_ex_throw_from_c_args(interp, NULL, 1, "Unknown opcode type");
         }
 
         if (j != info->op_count - 1)
@@ -2017,6 +2078,8 @@ PDB_disassemble(PARROT_INTERP, SHIM(const char *command))
     pfile->label         = NULL;
     pfile->size          = 0;
     pfile->source        = (char *)mem_sys_allocate(default_size);
+    pfile->sourcefilename = NULL;
+    pfile->next = NULL;
     pline->source_offset = 0;
 
     alloced              = space = default_size;
@@ -2187,12 +2250,13 @@ Load a source code file.
 
 */
 
+PARROT_API
 void
 PDB_load_source(PARROT_INTERP, ARGIN(const char *command))
 {
     FILE          *file;
     char           f[DEBUG_CMD_BUFFER_LENGTH + 1];
-    int            i, c;
+    int            i, j, c;
     PDB_file_t    *pfile;
     PDB_line_t    *pline;
     PDB_t         * const pdb = interp->pdb;
@@ -2202,11 +2266,13 @@ PDB_load_source(PARROT_INTERP, ARGIN(const char *command))
     /* If there was a file already loaded or the bytecode was
        disassembled, free it */
     if (pdb->file)
-        PDB_free_file(interp);
+        PDB_free_file(interp->pdb->debugee);
 
     /* Get the name of the file */
-    for (i = 0; command[i]; i++)
-        f[i] = command[i];
+    for (j = 0; command[j] == ' '; ++j)
+        continue;
+    for (i = 0; command[j]; i++, j++)
+        f[i] = command[j];
 
     f[i] = '\0';
 
@@ -2215,7 +2281,7 @@ PDB_load_source(PARROT_INTERP, ARGIN(const char *command))
 
     /* abort if fopen failed */
     if (!file) {
-        PIO_eprintf(interp, "Unable to load %s\n", f);
+        PIO_eprintf(interp, "Unable to load '%s'\n", f);
         return;
     }
 
