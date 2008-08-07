@@ -39,7 +39,7 @@ Get the number of elements in the array.
 
 */
     VTABLE INTVAL elements() {
-        real_exception(interp, NULL, E_NotImplementedError, "Not implemented yet.");
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_UNIMPLEMENTED, "Not implemented yet.");
     }
 
 
@@ -53,7 +53,7 @@ Fetch the given PackfileFixupEntry PMC.
 
 */
     VTABLE PMC *get_pmc_keyed_int(INTVAL index)  {
-        real_exception(interp, NULL, E_NotImplementedError, "Not implemented yet.");
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_UNIMPLEMENTED, "Not implemented yet.");
     }
 
 
@@ -67,7 +67,7 @@ Store a PackfileFixupEntry PMC to the given slot.
 
 */
     VTABLE void set_pmc_keyed_int(INTVAL index, PMC *value)  {
-        real_exception(interp, NULL, E_NotImplementedError, "Not implemented yet.");
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_UNIMPLEMENTED, "Not implemented yet.");
     }
 
 

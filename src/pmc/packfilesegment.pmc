@@ -79,7 +79,8 @@ Unpack a serialized segment string.
 
 */
     METHOD unpack(STRING *data) {
-        real_exception(interp, NULL, E_NotImplementedError, "unpack() not implemented.");
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_UNIMPLEMENTED,
+                                    "unpack() not implemented.");
     }
 
 }

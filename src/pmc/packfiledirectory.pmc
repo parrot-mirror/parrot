@@ -60,7 +60,8 @@ Fetch a segment PMC from the array.
         PMC *rv;
         int pmc_type;
         if(index < 0 || index >= (INTVAL)pfd->num_segments)
-            real_exception(interp, NULL, E_IndexError, "PackfileDirectory: index out of bounds!");
+            Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_OUT_OF_BOUNDS,
+                                        "PackfileDirectory: index out of bounds!");
         pfseg = pfd->segments[index];
         switch(pfseg->type) {
             case PF_DIR_SEG:
@@ -98,7 +99,8 @@ Fetch a string containing the name of the specified segment PMC.
         PackFile_Segment *pfseg;
         PMC *rv;
         if(index < 0 || index >= (INTVAL)pfd->num_segments)
-            real_exception(interp, NULL, E_IndexError, "PackfileDirectory: index out of bounds!");
+            Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_OUT_OF_BOUNDS,
+                                        "PackfileDirectory: index out of bounds!");
         pfseg = pfd->segments[index];
         return const_string(interp, pfseg->name);
     }
@@ -114,7 +116,7 @@ Search the array for a segment with the given name, and return it if it exists.
 
 */
     VTABLE PMC *get_pmc_keyed_str(STRING *name)  {
-        real_exception(interp, NULL, E_NotImplementedError, "Not implemented yet.");
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_UNIMPLEMENTED, "Not implemented yet.");
     }
 
 
@@ -145,7 +147,7 @@ name already existed, it will be replaced with the new segment.
 
 */
     VTABLE void set_pmc_keyed_str(STRING *name, PMC *segment)  {
-        real_exception(interp, NULL, E_NotImplementedError, "Not implemented yet.");
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_UNIMPLEMENTED, "Not implemented yet.");
     }
 
 

@@ -93,7 +93,8 @@ Implementation note: taken from the bottom end of Parrot_readbc().
         const opcode_t *ptr = (const opcode_t*)Parrot_string_cstring(interp, str);
         int length = string_length(interp, str);
         if (!PackFile_unpack(interp, pf, ptr, length))
-            real_exception(interp, NULL, EXCEPTION_MALFORMED_PACKFILE, "Can't unpack packfile.");
+            Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_MALFORMED_PACKFILE,
+                                        "Can't unpack packfile.");
 
         /* Set :main routine */
         do_sub_pragmas(interp, pf->cur_cs, PBC_PBC, NULL);
@@ -156,7 +157,7 @@ Fetch an integer keyed value from the packfile object.  Valid keys are:
         if (!string_compare(interp, key, CONST_STRING(interp, "uuid_length")))
             return pf->header->uuid_size;
 
-        real_exception(interp, NULL, E_KeyError,
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_KEY_NOT_FOUND,
                        "PackFile: No such integer key \"%s\"",
                        Parrot_string_cstring(interp, key));
     }
@@ -181,7 +182,7 @@ Fetch a string keyed value from the packfile object.  Valid keys are:
         if (!string_compare(interp, key, CONST_STRING(interp, "uuid")))
             return string_from_cstring(interp, (char*)pf->header->uuid_data, pf->header->uuid_size);
 
-        real_exception(interp, NULL, E_KeyError,
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_KEY_NOT_FOUND,
                        "PackFile: No such string key \"%s\"",
                        Parrot_string_cstring(interp, key));
     }
@@ -257,7 +258,7 @@ Set an integer keyed value to the specified value.  Valid keys are:
             pf->header->uuid_type = value;
             return;
         }
-        real_exception(interp, NULL, E_KeyError,
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_KEY_NOT_FOUND,
                        "PackFile: No such integer key \"%s\"",
                        Parrot_string_cstring(interp, key));
     }
