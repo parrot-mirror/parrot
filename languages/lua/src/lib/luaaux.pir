@@ -14,6 +14,7 @@ lib/luaaux.pir - Lua Auxiliary PIR Library
 =cut
 
 .HLL 'Lua', 'lua_group'
+.namespace []
 
 
 =item C<lua_argerror (narg, extramsg, ...)>
@@ -599,7 +600,7 @@ messages and in debug information.
     pir = $P1.'translate'()
     .local pmc pir_comp
     pir_comp = compreg 'PIR'
-    $P0 = pir_comp.'compile'(pir)
+    $P0 = pir_comp(pir)
     $P0 = $P0[1]
     .local pmc env
     env = get_hll_global '_G'
@@ -715,23 +716,23 @@ Opens all standard Lua libraries.
 =cut
 
 .sub 'lua_openlibs'
-    $P0 = get_hll_global ['Lua::basic'], 'luaopen_basic'
+    $P0 = get_hll_global ['basic'], 'luaopen_basic'
     $P0()
-    $P0 = get_hll_global ['Lua::coroutine'], 'luaopen_coroutine'
+    $P0 = get_hll_global ['coroutine'], 'luaopen_coroutine'
     $P0()
-    $P0 = get_hll_global ['Lua::package'], 'luaopen_package'
+    $P0 = get_hll_global ['package'], 'luaopen_package'
     $P0()
-    $P0 = get_hll_global ['Lua::table'], 'luaopen_table'
+    $P0 = get_hll_global ['table'], 'luaopen_table'
     $P0()
-    $P0 = get_hll_global ['Lua::io'], 'luaopen_io'
+    $P0 = get_hll_global ['io'], 'luaopen_io'
     $P0()
-    $P0 = get_hll_global ['Lua::os'], 'luaopen_os'
+    $P0 = get_hll_global ['os'], 'luaopen_os'
     $P0()
-    $P0 = get_hll_global ['Lua::string'], 'luaopen_string'
+    $P0 = get_hll_global ['string'], 'luaopen_string'
     $P0()
-    $P0 = get_hll_global ['Lua::math'], 'luaopen_math'
+    $P0 = get_hll_global ['math'], 'luaopen_math'
     $P0()
-    $P0 = get_hll_global ['Lua::debug'], 'luaopen_debug'
+    $P0 = get_hll_global ['debug'], 'luaopen_debug'
     $P0()
     sweepon
     sweep 1
@@ -778,18 +779,38 @@ If this argument is absent or is B<nil>, returns C<def>. Otherwise, raises an er
 .end
 
 
-=item C<lua_register (libname, lib)>
+=item C<lua_register (libname, lib, names, env)>
 
 =cut
 
 .sub 'lua_register'
     .param pmc libname
     .param pmc lib
+    .param pmc names
+    .param pmc env :optional
+    if null libname goto L1
     .const .LuaString _loaded = '_LOADED'
     .local pmc _lua__REGISTRY
     _lua__REGISTRY = get_hll_global '_REGISTRY'
     $P0 = _lua__REGISTRY[_loaded]
     $P0[libname] = lib
+  L1:
+    unless null env goto L2
+    env = get_hll_global '_G'
+  L2:
+    .local pmc interp, ns
+    interp = getinterp
+    ns = interp['namespace'; 1]
+    new $P1, 'LuaString'
+  L3:
+    unless names goto L4
+    $S0 = shift names
+    $P0 = ns[$S0]
+    $P0.'setfenv'(env)
+    set $P1, $S0
+    lib[$P1] = $P0
+    goto L3
+  L4:
 .end
 
 
