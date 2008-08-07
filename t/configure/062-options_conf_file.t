@@ -51,8 +51,9 @@ my $data = shift;
 $data->{debugging} = 1;
 $data->{maintainer} = undef;
 my %valid_step_options = map {$_ => 1} @shared_valid_options;
-$data = Parrot::Configure::Options::Conf::File::_set_general($data, $substitutions, $general,
-    \%valid_step_options);
+$data = Parrot::Configure::Options::Conf::File::_set_general(
+    $data, $substitutions, $general, \%valid_step_options
+);
 my $cc = q{/usr/bin/gcc};
 is_deeply($data,
     {
@@ -64,6 +65,40 @@ is_deeply($data,
         'verbose-step'  => 'init::hints',
     },
     "Got expected return value for _set_general()"
+);
+
+my $steps = <<END;
+
+init::manifest nomanicheck
+init::defaults
+auto::icu without-icu
+
+#auto::perldoc
+END
+
+my $steps_list_ref;
+($data, $steps_list_ref) = Parrot::Configure::Options::Conf::File::_set_steps(
+        $data, $steps, \%valid_step_options);
+is_deeply($data,
+    {
+        debugging       => 1,
+        maintainer      => undef,
+        cc              => $cc,
+        verbose         => 1,
+        configure_trace => 1,
+        'verbose-step'  => 'init::hints',
+        nomanicheck     => 1,
+        'without-icu'   => 1,
+    },
+    "Got expected return value for 'data' from _set_steps()"
+);
+is_deeply($steps_list_ref,
+    [ qw( 
+        init::manifest
+        init::defaults
+        auto::icu
+    ) ],
+    "Got expected list of configuration steps"
 );
 
 pass("Completed all tests in $0");
