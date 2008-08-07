@@ -93,20 +93,26 @@ sub _set_general {
     my ($data, $substitutions, $general, $optsref) = @_;
     my @general = split /\n/, $general;
     foreach my $g (@general) {
-        next unless $g =~ m/^(\w+)=(\$?[^\s\$]+)$/;
+        next unless $g =~ m/^([-\w]+)(?:=(\$?[^\s\$]+))?$/;
         my ($k, $v, $prov, $var);
-        ($k, $prov) = ($1, $2);
-        if ($prov =~ m/^\$(.+)/) {
-            $var = $1;
-            if ($substitutions->{$var}) {
-                $v = $substitutions->{$var};
+        if ($2) {
+            ($k, $prov) = ($1, $2);
+            if ($prov =~ m/^\$(.+)/) {
+                $var = $1;
+                if ($substitutions->{$var}) {
+                    $v = $substitutions->{$var};
+                }
+                else {
+                    die "Bad variable substitution in $data->{file}: $!";
+                }
             }
             else {
-                die "Bad variable substitution in $data->{file}: $!";
+                $v = $prov;
             }
         }
         else {
-            $v = $prov;
+            $k = $1;
+            $v = 1;
         }
         if (! $optsref->{$k}) {
             die "Invalid general option $k in $data->{file}: $!";
