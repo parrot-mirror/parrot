@@ -12,10 +12,12 @@ BEGIN {
     our $topdir = realpath($Bin) . "/../..";
     unshift @INC, qq{$topdir/lib};
 }
-use Test::More tests => 34;
+use Test::More qw(no_plan); # tests => 34;
 use Carp;
 use Parrot::Configure::Options qw| process_options |;
-use Parrot::Configure::Options::Conf::CLI qw| @valid_options |;
+use Parrot::Configure::Options::Conf::CLI ();
+use Parrot::Configure::Options::Conf::File ();
+use Parrot::Configure::Options::Reconf ();
 use IO::CaptureOutput qw| capture |;
 
 my %valid;
@@ -107,7 +109,8 @@ my $CX = "/usr/bin/g++-3.3";
         mode => q{configure},
     }
 );
-ok( defined $args, "process_options() returned successfully when options were specified" );
+ok( defined $args,
+    "process_options() returned successfully when options were specified" );
 
 eval { ($args, $step_list_ref) = process_options( { argv => [qq<--${badoption}=72>], mode => q{configure}, } ); };
 like(
@@ -140,7 +143,8 @@ like(
             mode => q{configure},
         }
     ) } , \$stdout);
-    ok( !defined $args, "process_options() returned undef after 'help' option" );
+    ok( !defined $args,
+        "process_options() returned undef after 'help' option" );
     like( $stdout, qr/--help/i, "got correct message after 'help' option" );
 }
 
@@ -165,8 +169,10 @@ like(
             mode => q{configure},
         }
     ) } , \$stdout);
-    ok( !defined $args, "process_options() returned undef after 'version' option" );
-    like( $stdout, qr/Parrot Version/i, "got correct message after 'version' option" );
+    ok( !defined $args,
+        "process_options() returned undef after 'version' option" );
+    like( $stdout, qr/Parrot Version/i,
+        "got correct message after 'version' option" );
 }
 
 ($args, $step_list_ref) = process_options(
@@ -175,7 +181,8 @@ like(
         mode => q{configure},
     }
 );
-ok( defined $args, "process_options() returned successfully after 'lex' option" );
+ok( defined $args,
+    "process_options() returned successfully after 'lex' option" );
 ok( $args->{maintainer}, "'maintainer' attribute is true after 'lex' option" );
 
 ($args, $step_list_ref) = process_options(
@@ -184,7 +191,8 @@ ok( $args->{maintainer}, "'maintainer' attribute is true after 'lex' option" );
         mode => q{configure},
     }
 );
-ok( defined $args, "process_options() returned successfully after 'yacc' option" );
+ok( defined $args,
+    "process_options() returned successfully after 'yacc' option" );
 ok( $args->{maintainer}, "'maintainer' attribute is true after 'yacc' option" );
 
 ($args, $step_list_ref) = process_options(
@@ -204,6 +212,68 @@ ok( $args->{debugging}, "debugging turned on explicitly" );
 );
 ok( defined $args, "process_options() returned successfully" );
 ok( !$args->{debugging}, "debugging explicitly turned off" );
+
+######### Parrot::Configure::Options internal subroutines #########
+
+my ($options_components, $script);
+
+$args = { argv => [], mode => 'configure' };
+($args, $options_components, $script) =
+    Parrot::Configure::Options::_process_options_components($args);
+is_deeply($args->{argv}, [], "Got expected value for 'argv' element");
+is_deeply($options_components,
+    { %Parrot::Configure::Options::Conf::CLI::options_components },
+    "Got expected value for options components");
+is($script, q{Configure.pl}, "Got expected value for script");
+
+$args = { argv => [], mode => 'reconfigure' };
+($args, $options_components, $script) =
+    Parrot::Configure::Options::_process_options_components($args);
+is_deeply($args->{argv}, [], "Got expected value for 'argv' element");
+is_deeply($options_components,
+    { %Parrot::Configure::Options::Reconf::options_components },
+    "Got expected value for options components");
+is($script, q{tools/dev/reconfigure.pl}, "Got expected value for script");
+
+$args = { argv => [], mode => 'file' };
+($args, $options_components, $script) =
+    Parrot::Configure::Options::_process_options_components($args);
+is_deeply($args->{argv}, [], "Got expected value for 'argv' element");
+is_deeply($options_components,
+    { %Parrot::Configure::Options::Conf::File::options_components },
+    "Got expected value for options components");
+is($script, q{Configure.pl}, "Got expected value for script");
+
+my $cc = q{/usr/bin/gcc};
+$args = {
+    argv => [ q{--verbose}, q{--help}, qq{--cc=$cc} ],
+    mode => 'configure',
+};
+($args, $options_components, $script) =
+    Parrot::Configure::Options::_process_options_components($args);
+my ($data, $short_circuits_ref) =
+    Parrot::Configure::Options::_initial_pass(
+        $args, $options_components, $script);
+is($data->{verbose}, 1, "Got expected value for verbose");
+is($data->{help}, 1, "Got expected value for help");
+is($data->{cc}, $cc, "Got expected value for cc");
+is_deeply($short_circuits_ref, [ q{help} ],
+    "Got expected short circuits");
+
+$args = {
+    argv => [ q{--verbose}, qq{--cc=$cc} ],
+    mode => 'configure',
+};
+($args, $options_components, $script) =
+    Parrot::Configure::Options::_process_options_components($args);
+my ($data, $short_circuits_ref) =
+    Parrot::Configure::Options::_initial_pass(
+        $args, $options_components, $script);
+is($data->{verbose}, 1, "Got expected value for verbose");
+ok(! defined $data->{help}, "Got expected value for help");
+is($data->{cc}, $cc, "Got expected value for cc");
+is_deeply($short_circuits_ref, [ ],
+    "Got expected short circuits");
 
 pass("Completed all tests in $0");
 

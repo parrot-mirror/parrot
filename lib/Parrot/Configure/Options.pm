@@ -19,17 +19,51 @@ use Parrot::Configure::Options::Reconf ();
 sub process_options {
     my $argsref = shift;
 
-    my %options_components;
     croak "'mode' argument not provided to process_options()"
         unless defined $argsref->{mode};
+
+    my ($options_components, $script);
+    ($argsref, $options_components, $script) =
+        _process_options_components($argsref);
+
+    my ($data, $short_circuits_seen_ref) =
+        _initial_pass($argsref, $options_components, $script);
+
+    if (@{ $short_circuits_seen_ref }) {
+        # run all the short circuits
+        foreach my $sc (@{ $short_circuits_seen_ref }) {
+            &{ $options_components->{short_circuits}{$sc} };
+        }
+        return;
+    }
+    else {
+        if ($argsref->{mode} eq 'file' or $argsref->{mode} eq 'configure') {
+            my $steps_list_ref;
+            ($data, $steps_list_ref) =
+                &{ $options_components->{conditionals} }($data);
+            return ($data, $steps_list_ref);
+        }
+        else {
+            $data = &{ $options_components->{conditionals} }($data);
+            return $data;
+        }
+    }
+}
+
+sub _process_options_components {
+    my $argsref = shift;
+    my %options_components;
     if ( $argsref->{mode} =~ m/^reconfigure$/i ) {
-        %options_components = %Parrot::Configure::Options::Reconf::options_components;
+        %options_components =
+            %Parrot::Configure::Options::Reconf::options_components;
     }
     elsif ( $argsref->{mode} =~ m/^file$/i ) {
-        %options_components = %Parrot::Configure::Options::Conf::File::options_components;
+        %options_components =
+            %Parrot::Configure::Options::Conf::File::options_components;
     }
     elsif ( $argsref->{mode} =~ m/^configure$/i ) {
-        %options_components = %Parrot::Configure::Options::Conf::CLI::options_components;
+        %options_components =
+            %Parrot::Configure::Options::Conf::CLI::options_components;
     }
     else {
         croak "Invalid value for 'mode' argument to process_options()";
@@ -40,9 +74,14 @@ sub process_options {
           $options_components{script}
         ? $options_components{script}
         : croak "Must provide value for 'script'";
+    return ($argsref, \%options_components, $script);
+}
 
-    my %valid_opts          = map { $_, 1 } @{ $options_components{valid_options} };
-    my $data                = {};
+sub _initial_pass {
+    my ($argsref, $options_components, $script) = @_;
+    my %valid_opts =
+        map { $_, 1 } @{ $options_components->{valid_options} };
+    my $data = {};
     my @short_circuits_seen = ();
     for my $el ( @{ $argsref->{argv} } ) {
         my ( $key, $value );
@@ -55,31 +94,12 @@ sub process_options {
         unless ( $valid_opts{$key} ) {
             die qq/Invalid option "$key". See "perl $script --help" for valid options\n/;
         }
-        if ( $options_components{short_circuits}{$key} ) {
+        if ( $options_components->{short_circuits}{$key} ) {
             push @short_circuits_seen, $key;
         }
         $data->{$key} = $value;
     }
-    if (@short_circuits_seen) {
-
-        # run all the short circuits
-        foreach my $sc (@short_circuits_seen) {
-            &{ $options_components{short_circuits}{$sc} };
-        }
-        return;
-    }
-    else {
-        if ($argsref->{mode} eq 'file' or $argsref->{mode} eq 'configure') {
-            my $steps_list_ref;
-            ($data, $steps_list_ref) =
-                &{ $options_components{conditionals} }($data);
-            return ($data, $steps_list_ref);
-        }
-        else {
-            $data = &{ $options_components{conditionals} }($data);
-            return $data;
-        }
-    }
+    return ($data, \@short_circuits_seen);
 }
 
 1;
