@@ -12,7 +12,7 @@ our @EXPORT_OK = qw(
     $parrot_version
     $svnid
 );
-use Data::Dumper;$Data::Dumper::Indent = 1;
+#use Data::Dumper;$Data::Dumper::Indent = 1;
 use File::Spec;
 use lib qw( lib );
 use Parrot::BuildUtil;
@@ -129,20 +129,14 @@ sub _set_steps {
     my @steplines = split /\n/, $steps;
     my @steps_list = ();
     LINE: foreach my $line (@steplines) {
-        next unless ($line =~ /^(\w+::\w+)(?:\s+(\S+\s+)*(\S+))?$/);
+        next unless ($line =~ /^(\w+::\w+)(?:\s+([-=\w]+\s+)*([-=\w]+))?$/);
         my $step = $1;
         push @steps_list, $step;
         next LINE unless $3;
         my $opts_string = $2 ? qq{$2$3} : $3;
         my @opts = split /\s+/, $opts_string;
         foreach my $el (@opts) {
-            my ( $key, $value );
-            if ($el =~ m/([-\w]+)(?:=(.*))?/) {
-                ( $key, $value ) = ($1, $2);
-            }
-            if (! defined $key) {
-                die "Unable to process key $key in step $step in configuration data file $data->{file}: $!"
-            }
+            my ( $key, $value ) = $el =~ m/([-\w]+)(?:=(.*))?/;
             unless ( $optsref->{$key} ) {
                 die qq/Invalid option "$key". See "perl Configure.pl --help" for options valid within a configuration file\n/;
             }

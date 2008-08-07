@@ -5,7 +5,7 @@
 
 use strict;
 use warnings;
-use Test::More qw(no_plan); # tests =>  9;
+use Test::More qw(no_plan); # tests =>  8;
 #use Carp;
 #use Cwd;
 #use Data::Dumper;
@@ -23,21 +23,27 @@ use Parrot::Configure::Options::Conf::Shared qw(
 );
 #use IO::CaptureOutput qw| capture |;
 
-my $variables = <<END;
+my ($variables, $general, $substitutions);
+my $data = {};;
+my %valid_step_options;
+my ($steps, $steps_list_ref);
+my $cc;
+
+$variables = <<END;
 CC=/usr/bin/gcc
 #CX=/usr/bin/g++
 
 ABC=abc
 END
 
-my $substitutions =
+$substitutions =
     Parrot::Configure::Options::Conf::File::_get_substitutions($variables);
 is_deeply($substitutions,
     { CC => '/usr/bin/gcc', ABC => 'abc' },
     "Got expected substitutions"
 );
 
-my $general = <<END;
+$general = <<END;
 cc=\$CC
 this=will not=work
 #abc=abc
@@ -47,14 +53,13 @@ verbose-step=init::hints
 configure_trace
 END
 
-my $data = shift;
 $data->{debugging} = 1;
 $data->{maintainer} = undef;
-my %valid_step_options = map {$_ => 1} @shared_valid_options;
+%valid_step_options = map {$_ => 1} @shared_valid_options;
 $data = Parrot::Configure::Options::Conf::File::_set_general(
     $data, $substitutions, $general, \%valid_step_options
 );
-my $cc = q{/usr/bin/gcc};
+$cc = q{/usr/bin/gcc};
 is_deeply($data,
     {
         debugging       => 1,
@@ -67,18 +72,17 @@ is_deeply($data,
     "Got expected return value for _set_general()"
 );
 
-my $steps = <<END;
+$steps = <<END;
 
 init::manifest nomanicheck
 init::defaults
-auto::icu without-icu
+auto::icu without-icu fatal-step
 
 #auto::perldoc
 END
 
-my $steps_list_ref;
 ($data, $steps_list_ref) = Parrot::Configure::Options::Conf::File::_set_steps(
-        $data, $steps, \%valid_step_options);
+    $data, $steps, \%valid_step_options);
 is_deeply($data,
     {
         debugging       => 1,
@@ -89,6 +93,7 @@ is_deeply($data,
         'verbose-step'  => 'init::hints',
         nomanicheck     => 1,
         'without-icu'   => 1,
+        'fatal-step'    => 'auto::icu',
     },
     "Got expected return value for 'data' from _set_steps()"
 );
@@ -100,6 +105,89 @@ is_deeply($steps_list_ref,
     ) ],
     "Got expected list of configuration steps"
 );
+
+##### Test of bad variable for substitution
+
+$variables = <<END;
+#CC=/usr/bin/gcc
+#CX=/usr/bin/g++
+
+ABC=abc
+END
+
+$substitutions =
+    Parrot::Configure::Options::Conf::File::_get_substitutions($variables);
+$general = <<END;
+cc=\$CC
+this=will not=work
+#abc=abc
+
+verbose
+verbose-step=init::hints
+configure_trace
+END
+
+undef $data;
+$data->{debugging} = 1;
+$data->{maintainer} = undef;
+$data->{file} = q{Configure.pl};
+%valid_step_options = map {$_ => 1} @shared_valid_options;
+eval { $data = Parrot::Configure::Options::Conf::File::_set_general(
+    $data, $substitutions, $general, \%valid_step_options
+); };
+like($@, qr/Bad variable substitution in $data->{file}/,
+    "Got expected message when _set_general() died");
+$data = {};
+
+##### Test of bad option
+
+$variables = <<END;
+CC=/usr/bin/gcc
+#CX=/usr/bin/g++
+
+ABC=abc
+END
+
+$substitutions =
+    Parrot::Configure::Options::Conf::File::_get_substitutions($variables);
+$general = <<END;
+cc=\$CC
+this=will not=work
+#abc=abc
+
+verbose
+verbose-step=init::hints
+configure_trace
+END
+
+is_deeply($substitutions,
+    { CC => '/usr/bin/gcc', ABC => 'abc' },
+    "Got expected substitutions"
+);
+$data->{debugging} = 1;
+$data->{maintainer} = undef;
+$data->{file} = q{Configure.pl};
+%valid_step_options = map {$_ => 1} @shared_valid_options;
+$data = Parrot::Configure::Options::Conf::File::_set_general(
+    $data, $substitutions, $general, \%valid_step_options
+);
+
+$steps = <<END;
+
+init::manifest nomanicheck
+init::defaults
+auto::icu without-icu fatal-step
+auto::gmp dizzy=like-a-fox
+
+#auto::perldoc
+END
+
+eval {
+    ($data, $steps_list_ref) =
+        Parrot::Configure::Options::Conf::File::_set_steps(
+            $data, $steps, \%valid_step_options);
+};
+like($@, qr/dizzy/, "Invalid option correctly detected");
 
 pass("Completed all tests in $0");
 
