@@ -18,8 +18,53 @@ use Parrot::Configure::Options::Conf::File qw(
     $parrot_version
     $svnid
 );
+use Parrot::Configure::Options::Conf::Shared qw(
+    @shared_valid_options
+);
 #use IO::CaptureOutput qw| capture |;
 
+my $variables = <<END;
+CC=/usr/bin/gcc
+#CX=/usr/bin/g++
+
+ABC=abc
+END
+
+my $substitutions =
+    Parrot::Configure::Options::Conf::File::_get_substitutions($variables);
+is_deeply($substitutions,
+    { CC => '/usr/bin/gcc', ABC => 'abc' },
+    "Got expected substitutions"
+);
+
+my $general = <<END;
+cc=\$CC
+this=will not=work
+#abc=abc
+
+verbose
+verbose-step=init::hints
+configure_trace
+END
+
+my $data = shift;
+$data->{debugging} = 1;
+$data->{maintainer} = undef;
+my %valid_step_options = map {$_ => 1} @shared_valid_options;
+$data = Parrot::Configure::Options::Conf::File::_set_general($data, $substitutions, $general,
+    \%valid_step_options);
+my $cc = q{/usr/bin/gcc};
+is_deeply($data,
+    {
+        debugging       => 1,
+        maintainer      => undef,
+        cc              => $cc,
+        verbose         => 1,
+        configure_trace => 1,
+        'verbose-step'  => 'init::hints',
+    },
+    "Got expected return value for _set_general()"
+);
 
 pass("Completed all tests in $0");
 
