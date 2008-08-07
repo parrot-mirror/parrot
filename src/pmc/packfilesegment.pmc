@@ -53,7 +53,7 @@ Serialize the segment.
 */
     METHOD pack() {
         PackFile_Segment *pfseg = PMC_data_typed(SELF, PackFile_Segment *);
-        opcode_t length = PackFile_Segment_packed_size(interp, pfseg) * sizeof(opcode_t);
+        opcode_t length = PackFile_Segment_packed_size(interp, pfseg) * sizeof (opcode_t);
         opcode_t *newptr, *ptr = (opcode_t*)mem_sys_allocate(length);
         STRING *str;
         newptr = PackFile_Segment_pack(interp, pfseg, ptr);
@@ -62,7 +62,7 @@ Serialize the segment.
          * "equal", which means tests fail.
          */
         str = string_make_direct(interp, (const char*)ptr,
-                (newptr - ptr) * sizeof(opcode_t),
+                (newptr - ptr) * sizeof (opcode_t),
                 PARROT_FIXED_8_ENCODING, PARROT_DEFAULT_CHARSET, 0);
         mem_sys_free(ptr);
         RETURN(STRING *str);

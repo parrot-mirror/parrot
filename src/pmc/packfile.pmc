@@ -64,7 +64,7 @@ Return raw serialized PBC file data.
 */
     VTABLE STRING *get_string() {
         PackFile *pf = PMC_data_typed(SELF, PackFile *);
-        opcode_t length = PackFile_pack_size(interp, pf) * sizeof(opcode_t);
+        opcode_t length = PackFile_pack_size(interp, pf) * sizeof (opcode_t);
         opcode_t *ptr = (opcode_t*)mem_sys_allocate(length);
         STRING *str;
         PackFile_pack(interp, pf, ptr);
