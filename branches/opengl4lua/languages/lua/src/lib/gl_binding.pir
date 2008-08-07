@@ -17,7 +17,7 @@ see F<runtime/parrot/library/OpenGL.pir>.
 =cut
 
 .HLL 'Lua', 'lua_group'
-.namespace [ 'Lua::gl_binding'; 'Lua' ]
+.namespace [ 'gl_binding' ]
 
 .sub '__onload' :anon :load
 #    print '__onload gl_binding\n'
@@ -39,46 +39,26 @@ see F<runtime/parrot/library/OpenGL.pir>.
     set $P1, 'gl_binding'
     _lua__GLOBAL[$P1] = _gl_binding
 
-    lua_register($P1, _gl_binding)
+    $P2 = split ' ', '_get_gl_enum _get_str_error _get_arrayb _get_arrayf _get_arrayi'
+    lua_register($P1, _gl_binding, $P2)
 
     # Import all OpenGL/GLU/GLUT functions
     $P0 = get_hll_global ['OpenGL'], '_export_all_functions'
     $P0(_gl_binding)
     $P0()
 
-
-    .const .Sub _gl_binding_get_gl_enum = 'get_gl_enum'
-    set $P1, '_get_gl_enum'
-    _gl_binding[$P1] = _gl_binding_get_gl_enum
-
-    .const .Sub _gl_binding_get_str_error = 'get_str_error'
-    set $P1, '_get_str_error'
-    _gl_binding[$P1] = _gl_binding_get_str_error
-
-    .const .Sub _gl_binding_get_arrayb = 'get_arrayb'
-    set $P1, '_get_arrayb'
-    _gl_binding[$P1] = _gl_binding_get_arrayb
-
-    .const .Sub _gl_binding_get_arrayf = 'get_arrayf'
-    set $P1, '_get_arrayf'
-    _gl_binding[$P1] = _gl_binding_get_arrayf
-
-    .const .Sub _gl_binding_get_arrayi = 'get_arrayi'
-    set $P1, '_get_arrayi'
-    _gl_binding[$P1] = _gl_binding_get_arrayi
-
     $P0 = _gl_str()
-    set_hll_global ['Lua::gl_binding'], 'gl_str', $P0
+    set_hll_global ['gl_binding'], 'gl_str', $P0
 
     .return (_gl_binding)
 .end
 
 
-.sub 'get_gl_enum' :anon
+.sub '_get_gl_enum'
     .param string str
     .param string err_msg
     .local pmc gl_str
-    gl_str = get_hll_global ['Lua::gl_binding'], 'gl_str'
+    gl_str = get_hll_global ['gl_binding'], 'gl_str'
     .local int res
     res = 0
     $P0 = split ',', str
@@ -97,10 +77,10 @@ see F<runtime/parrot/library/OpenGL.pir>.
     .return (res)
 .end
 
-.sub 'get_str_gl_enum' :anon
+.sub '_get_str_gl_enum'
     .param int enum
     .local pmc gl_str
-    gl_str = get_hll_global ['Lua::gl_binding'], 'gl_str'
+    gl_str = get_hll_global ['gl_binding'], 'gl_str'
     new $P0, 'Iterator', gl_str
   L1:
     unless $P0 goto L2
@@ -113,7 +93,7 @@ see F<runtime/parrot/library/OpenGL.pir>.
     .return ('')
 .end
 
-.sub 'get_str_error' :anon
+.sub '_get_str_error'
     .local pmc res
     $I0 = glGetError()
     new res, 'LuaString'
@@ -121,13 +101,13 @@ see F<runtime/parrot/library/OpenGL.pir>.
     set res, 'NO_ERROR'
     goto L2
   L1:
-    $S0 = get_str_gl_enum($I0)
+    $S0 = _get_str_gl_enum($I0)
     set res, $S0
   L2:
     .return (res)
 .end
 
-.sub 'get_arrayb' :anon
+.sub '_get_arrayb'
     .param pmc table
     .local int n
     n = table.'len'()
@@ -150,7 +130,7 @@ see F<runtime/parrot/library/OpenGL.pir>.
     .return ($P0, a)
 .end
 
-.sub 'get_arrayf' :anon
+.sub '_get_arrayf'
     .param pmc table
     .local int n
     n = table.'len'()
@@ -173,7 +153,7 @@ see F<runtime/parrot/library/OpenGL.pir>.
     .return ($P0, a)
 .end
 
-.sub 'get_arrayi' :anon
+.sub '_get_arrayi'
     .param pmc table
     .local int n
     n = table.'len'()
@@ -196,7 +176,7 @@ see F<runtime/parrot/library/OpenGL.pir>.
     .return ($P0, a)
 .end
 
-.sub 'get_array2f' :anon
+.sub '_get_array2f'
     .param pmc table
     .local int n, size
     n = table.'len'()

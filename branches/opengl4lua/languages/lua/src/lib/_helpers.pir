@@ -14,7 +14,7 @@ lib/_helpers.pir - library
 =cut
 
 .HLL 'Lua', 'lua_group'
-#.namespace [ 'Lua::_helpers'; 'Lua' ]
+.namespace []
 
 .sub '__onload' :anon :load
 #    print "__onload _helpers\n"
@@ -36,35 +36,8 @@ lib/_helpers.pir - library
     set $P1, '_helpers'
     _lua__GLOBAL[$P1] = __helpers
 
-    lua_register($P1, __helpers)
-
-    .const .Sub __helpers_lua_isboolean = 'lua_isboolean'
-    set $P1, 'lua_isboolean'
-    __helpers[$P1] = __helpers_lua_isboolean
-
-    .const .Sub __helpers_lua_isfunction = 'lua_isfunction'
-    set $P1, 'lua_isfunction'
-    __helpers[$P1] = __helpers_lua_isfunction
-
-    .const .Sub __helpers_lua_isnil = 'lua_isnil'
-    set $P1, 'lua_isnil'
-    __helpers[$P1] = __helpers_lua_isnil
-
-    .const .Sub __helpers_lua_isnumber = 'lua_isnumber'
-    set $P1, 'lua_isnumber'
-    __helpers[$P1] = __helpers_lua_isnumber
-
-    .const .Sub __helpers_lua_isstring = 'lua_isstring'
-    set $P1, 'lua_isstring'
-    __helpers[$P1] = __helpers_lua_isstring
-
-    .const .Sub __helpers_lua_istable = 'lua_istable'
-    set $P1, 'lua_istable'
-    __helpers[$P1] = __helpers_lua_istable
-
-    .const .Sub __helpers_lua_isuserdata = 'lua_isuserdata'
-    set $P1, 'lua_isuserdata'
-    __helpers[$P1] = __helpers_lua_isuserdata
+    $P2 = split ' ', 'lua_isboolean lua_isfunction lua_isnil lua_isnumber lua_isstring lua_istable lua_isuserdata'
+    lua_register($P1, __helpers, $P2)
 
     .return (__helpers)
 .end
