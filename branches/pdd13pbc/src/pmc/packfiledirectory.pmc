@@ -59,11 +59,11 @@ Fetch a segment PMC from the array.
         PackFile_Segment *pfseg;
         PMC *rv;
         int pmc_type;
-        if(index < 0 || index >= (INTVAL)pfd->num_segments)
+        if (index < 0 || index >= (INTVAL)pfd->num_segments)
             Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_OUT_OF_BOUNDS,
                                         "PackfileDirectory: index out of bounds!");
         pfseg = pfd->segments[index];
-        switch(pfseg->type) {
+        switch (pfseg->type) {
             case PF_DIR_SEG:
                 pmc_type = enum_class_PackfileDirectory;
                 break;
@@ -98,7 +98,7 @@ Fetch a string containing the name of the specified segment PMC.
         PackFile_Directory *pfd = PMC_data_typed(SELF, PackFile_Directory *);
         PackFile_Segment *pfseg;
         PMC *rv;
-        if(index < 0 || index >= (INTVAL)pfd->num_segments)
+        if (index < 0 || index >= (INTVAL)pfd->num_segments)
             Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_OUT_OF_BOUNDS,
                                         "PackfileDirectory: index out of bounds!");
         pfseg = pfd->segments[index];
