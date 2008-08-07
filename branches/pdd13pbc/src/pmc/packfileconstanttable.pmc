@@ -39,7 +39,7 @@ Get the number of elements in the array.
 
 */
     VTABLE INTVAL elements() {
-        real_exception(interp, NULL, E_NotImplementedError, "Not implemented yet.");
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_UNIMPLEMENTED, "Not implemented yet.");
     }
 
 
@@ -54,7 +54,7 @@ numeric.
 
 */
     VTABLE FLOATVAL get_number_keyed_int(INTVAL index)  {
-        real_exception(interp, NULL, E_NotImplementedError, "Not implemented yet.");
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_UNIMPLEMENTED, "Not implemented yet.");
     }
 
 
@@ -69,7 +69,7 @@ a string.
 
 */
     VTABLE STRING *get_string_keyed_int(INTVAL index)  {
-        real_exception(interp, NULL, E_NotImplementedError, "Not implemented yet.");
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_UNIMPLEMENTED, "Not implemented yet.");
     }
 
 
@@ -83,7 +83,7 @@ Fetch a PMC constant.  An exception is thrown if the given constant isn't a PMC.
 
 */
     VTABLE PMC *get_pmc_keyed_int(INTVAL index)  {
-        real_exception(interp, NULL, E_NotImplementedError, "Not implemented yet.");
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_UNIMPLEMENTED, "Not implemented yet.");
     }
 
 
@@ -97,7 +97,7 @@ Set the constant to the given number.
 
 */
     VTABLE void set_number_keyed_int(INTVAL index, FLOATVAL value)  {
-        real_exception(interp, NULL, E_NotImplementedError, "Not implemented yet.");
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_UNIMPLEMENTED, "Not implemented yet.");
     }
 
 
@@ -111,7 +111,7 @@ Set the constant to the given string.
 
 */
     VTABLE void set_string_keyed_int(INTVAL index, STRING *value)  {
-        real_exception(interp, NULL, E_NotImplementedError, "Not implemented yet.");
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_UNIMPLEMENTED, "Not implemented yet.");
     }
 
 
@@ -125,7 +125,7 @@ Set the constant to the given PMC (or key).
 
 */
     VTABLE void set_pmc_keyed_int(INTVAL index, PMC *value)  {
-        real_exception(interp, NULL, E_NotImplementedError, "Not implemented yet.");
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_UNIMPLEMENTED, "Not implemented yet.");
     }
 
 
@@ -153,7 +153,7 @@ Get the type of the specified constant.  Possible type IDs:
 
 */
     INTVAL get_type(INTVAL index) {
-        real_exception(interp, NULL, E_NotImplementedError, "Not implemented yet.");
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_UNIMPLEMENTED, "Not implemented yet.");
     }
 
 

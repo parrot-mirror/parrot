@@ -38,7 +38,7 @@ Fetch the given entry's name key.
 
 */
     VTABLE STRING *get_string_keyed_int(INTVAL index)  {
-        real_exception(interp, NULL, E_NotImplementedError, "Not implemented yet.");
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_UNIMPLEMENTED, "Not implemented yet.");
     }
 
 
@@ -52,7 +52,7 @@ Store the given entry's name key.
 
 */
     VTABLE void set_string_keyed_int(INTVAL index, STRING *value)  {
-        real_exception(interp, NULL, E_NotImplementedError, "Not implemented yet.");
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_UNIMPLEMENTED, "Not implemented yet.");
     }
 
 
@@ -66,7 +66,7 @@ Fetch the given entry's annotation type.
 
 */
     VTABLE INTVAL get_integer_keyed_int(INTVAL index)  {
-        real_exception(interp, NULL, E_NotImplementedError, "Not implemented yet.");
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_UNIMPLEMENTED, "Not implemented yet.");
     }
 
 
@@ -80,7 +80,7 @@ Store the given entry's annotation type.
 
 */
     VTABLE void set_integer_keyed_int(INTVAL index, INTVAL value)  {
-        real_exception(interp, NULL, E_NotImplementedError, "Not implemented yet.");
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_UNIMPLEMENTED, "Not implemented yet.");
     }
 
 

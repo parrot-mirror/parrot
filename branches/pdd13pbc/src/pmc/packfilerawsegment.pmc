@@ -39,7 +39,7 @@ Get the number of elements in the array.
 
 */
     VTABLE INTVAL elements() {
-        real_exception(interp, NULL, E_NotImplementedError, "Not implemented yet.");
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_UNIMPLEMENTED, "Not implemented yet.");
     }
 
 
@@ -53,7 +53,7 @@ Fetch an integer's worth of data from the segment.
 
 */
     VTABLE INTVAL get_integer_keyed_int(INTVAL key)  {
-        real_exception(interp, NULL, E_NotImplementedError, "Not implemented yet.");
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_UNIMPLEMENTED, "Not implemented yet.");
     }
 
 
@@ -67,7 +67,7 @@ Set an integer's worth of data in the segment.
 
 */
     VTABLE void set_integer_keyed_int(INTVAL key, INTVAL value)  {
-        real_exception(interp, NULL, E_NotImplementedError, "Not implemented yet.");
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_UNIMPLEMENTED, "Not implemented yet.");
     }
 
 

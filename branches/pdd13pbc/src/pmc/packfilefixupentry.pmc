@@ -33,7 +33,7 @@ Fetch the label field of the fixup entry.
 
 */
     VTABLE STRING *get_string() {
-        real_exception(interp, NULL, E_NotImplementedError, "Not implemented yet.");
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_UNIMPLEMENTED, "Not implemented yet.");
     }
 
 /*
@@ -46,7 +46,7 @@ Set the label field of the fixup entry.
 
 */
     VTABLE void set_string_native(STRING *value) {
-        real_exception(interp, NULL, E_NotImplementedError, "Not implemented yet.");
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_UNIMPLEMENTED, "Not implemented yet.");
     }
 
 
@@ -60,7 +60,7 @@ Fetch the offset field of the fixup entry.
 
 */
     VTABLE INTVAL get_integer() {
-        real_exception(interp, NULL, E_NotImplementedError, "Not implemented yet.");
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_UNIMPLEMENTED, "Not implemented yet.");
     }
 
 
@@ -74,7 +74,7 @@ Set the offset field of the fixup entry.
 
 */
     VTABLE void set_integer_native(INTVAL offset) {
-        real_exception(interp, NULL, E_NotImplementedError, "Not implemented yet.");
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_UNIMPLEMENTED, "Not implemented yet.");
     }
 
 
@@ -88,7 +88,7 @@ Fetch the type field of the fixup entry.
 
 */
     INTVAL get_type() {
-        real_exception(interp, NULL, E_NotImplementedError, "Not implemented yet.");
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_UNIMPLEMENTED, "Not implemented yet.");
     }
 
 
@@ -102,7 +102,7 @@ Set the type field of the fixup entry.
 
 */
     void set_type(INTVAL offset) {
-        real_exception(interp, NULL, E_NotImplementedError, "Not implemented yet.");
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_UNIMPLEMENTED, "Not implemented yet.");
     }
 
 }

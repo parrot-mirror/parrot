@@ -34,7 +34,7 @@ Fetch the offset into the bytecode of the instruction that is being annotated.
 
 */
     INTVAL get_offset() {
-        real_exception(interp, NULL, E_NotImplementedError, "Not implemented yet.");
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_UNIMPLEMENTED, "Not implemented yet.");
     }
 
 
@@ -48,7 +48,7 @@ Set the offset into the bytecode of the instruction that is being annotated.
 
 */
     void set_offset(INTVAL offset) {
-        real_exception(interp, NULL, E_NotImplementedError, "Not implemented yet.");
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_UNIMPLEMENTED, "Not implemented yet.");
     }
 
 
@@ -62,7 +62,7 @@ Fetch the ID of the key of the annotation.
 
 */
     INTVAL get_key_id() {
-        real_exception(interp, NULL, E_NotImplementedError, "Not implemented yet.");
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_UNIMPLEMENTED, "Not implemented yet.");
     }
 
 
@@ -76,7 +76,7 @@ Set the ID of the key of the annotation.
 
 */
     void set_key_id(INTVAL offset) {
-        real_exception(interp, NULL, E_NotImplementedError, "Not implemented yet.");
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_UNIMPLEMENTED, "Not implemented yet.");
     }
 
 
@@ -90,7 +90,7 @@ Fetch the value of the annotation.
 
 */
     VTABLE INTVAL get_integer() {
-        real_exception(interp, NULL, E_NotImplementedError, "Not implemented yet.");
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_UNIMPLEMENTED, "Not implemented yet.");
     }
 
 
@@ -104,7 +104,7 @@ Set the value of the annotation.
 
 */
     VTABLE void set_integer(INTVAL offset) {
-        real_exception(interp, NULL, E_NotImplementedError, "Not implemented yet.");
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_UNIMPLEMENTED, "Not implemented yet.");
     }
 
 }
