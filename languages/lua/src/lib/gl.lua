@@ -277,7 +277,12 @@ end
 
 -- GetError () -> error flag
 function GetError ()
-    return gl_binding._get_str_error()
+    local err = gl_binding.glGetError()
+    if err == 0 then
+        return 'NO_ERROR'
+    else
+        return gl_binding._get_str_gl_enum(err)
+    end
 end
 
 -- GetLight (light, pname) -> paramsArray

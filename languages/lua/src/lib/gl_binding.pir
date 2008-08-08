@@ -32,23 +32,21 @@ see F<runtime/parrot/library/OpenGL.pir>.
     .local pmc _lua__GLOBAL
     _lua__GLOBAL = get_hll_global '_G'
 
-    new $P1, 'LuaString'
-
     .local pmc _gl_binding
     new _gl_binding, 'LuaTable'
+    new $P1, 'LuaString'
     set $P1, 'gl_binding'
     _lua__GLOBAL[$P1] = _gl_binding
 
-    $P2 = split ' ', '_get_gl_enum _get_str_error _get_arrayb _get_arrayf _get_arrayi _get_array2f'
+    $P2 = split ' ', '_get_gl_enum _get_str_gl_enum _get_arrayb _get_arrayf _get_arrayi _get_array2f'
     lua_register($P1, _gl_binding, $P2)
+
+    $P0 = _gl_str()
+    set_hll_global ['gl_binding'], 'gl_str', $P0
 
     # Import all OpenGL/GLU/GLUT functions
     $P0 = get_hll_global ['OpenGL'], '_export_all_functions'
     $P0(_gl_binding)
-    $P0()
-
-    $P0 = _gl_str()
-    set_hll_global ['gl_binding'], 'gl_str', $P0
 
     .return (_gl_binding)
 .end
@@ -84,27 +82,16 @@ see F<runtime/parrot/library/OpenGL.pir>.
     new $P0, 'Iterator', gl_str
   L1:
     unless $P0 goto L2
-    $P1 = shift $P0
-    $I0 = gl_str[$P1]
+    $S0 = shift $P0
+    $I0 = gl_str[$S0]
     unless enum == $I0 goto L1
-    $S0 = $P1
-    .return ($S0)
+    goto L3
   L2:
-    .return ('')
-.end
-
-.sub '_get_str_error'
-    .local pmc res
-    $I0 = glGetError()
-    new res, 'LuaString'
-    if $I0 goto L1
-    set res, 'NO_ERROR'
-    goto L2
-  L1:
-    $S0 = _get_str_gl_enum($I0)
-    set res, $S0
-  L2:
-    .return (res)
+    $S0 = ''
+  L3:
+    new $P0, 'LuaString'
+    set $P0, $S0
+    .return ($P0)
 .end
 
 .sub '_get_arrayb'
