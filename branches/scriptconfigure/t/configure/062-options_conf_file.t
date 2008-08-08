@@ -5,12 +5,9 @@
 
 use strict;
 use warnings;
-use Test::More qw(no_plan); # tests =>  8;
-#use Carp;
-#use Cwd;
-#use Data::Dumper;
-#use File::Temp qw( tempdir );
+use Test::More tests =>  9;
 use lib qw( lib );
+use Parrot::Configure::Options ();
 use Parrot::Configure::Options::Conf::File qw(
     @valid_options
     $script
@@ -21,7 +18,6 @@ use Parrot::Configure::Options::Conf::File qw(
 use Parrot::Configure::Options::Conf::Shared qw(
     @shared_valid_options
 );
-#use IO::CaptureOutput qw| capture |;
 
 my ($variables, $general, $substitutions);
 my $data = {};;
@@ -136,8 +132,42 @@ eval { $data = Parrot::Configure::Options::Conf::File::_set_general(
     $data, $substitutions, $general, \%valid_step_options
 ); };
 like($@, qr/Bad variable substitution in $data->{file}/,
-    "Got expected message when _set_general() died");
+    "Got expected message when _set_general() died:  bad substitution");
 $data = {};
+
+##### Test of bad entry in 'general' section
+
+$variables = <<END;
+CC=/usr/bin/gcc
+#CX=/usr/bin/g++
+
+ABC=abc
+END
+
+$substitutions =
+    Parrot::Configure::Options::Conf::File::_get_substitutions($variables);
+$general = <<END;
+cc=\$CC
+this=will not=work
+#abc=abc
+
+verbose
+verbose-step=init::hints
+configure_trace
+dizzy
+END
+
+$data->{debugging} = 1;
+$data->{maintainer} = undef;
+$data->{file} = q{Configure.pl};
+%valid_step_options = map {$_ => 1} @shared_valid_options;
+eval {
+    $data = Parrot::Configure::Options::Conf::File::_set_general(
+        $data, $substitutions, $general, \%valid_step_options
+    );
+};
+like($@, qr/Invalid general option dizzy in $data->{file}/,
+    "Got expected message when _set_general() died:  bad 'general' entry");
 
 ##### Test of bad option
 
@@ -160,10 +190,6 @@ verbose-step=init::hints
 configure_trace
 END
 
-is_deeply($substitutions,
-    { CC => '/usr/bin/gcc', ABC => 'abc' },
-    "Got expected substitutions"
-);
 $data->{debugging} = 1;
 $data->{maintainer} = undef;
 $data->{file} = q{Configure.pl};
@@ -187,7 +213,32 @@ eval {
         Parrot::Configure::Options::Conf::File::_set_steps(
             $data, $steps, \%valid_step_options);
 };
-like($@, qr/dizzy/, "Invalid option correctly detected");
+like($@, qr/dizzy/, "Invalid option correctly detected during _set_steps()");
+
+########## Overall test of conditional_assignments() ##########
+
+{
+    my $args = {
+        mode => 'file',
+        argv => [ q{--file=t/configure/testlib/hisfoobar} ],
+    };
+    my ($options_components, $script);
+    ($args, $options_components, $script) =
+        Parrot::Configure::Options::_process_options_components($args);
+    
+    my ($data, $short_circuits_seen_ref) =
+        Parrot::Configure::Options::_initial_pass(
+            $args, $options_components, $script
+        );
+   
+    my $steps_list_ref;
+    eval {
+        ($data, $steps_list_ref) =
+            &{ $options_components->{conditionals} }($data);
+    };
+    like($@, qr/Configuration file $data->{file} did not parse correctly/,
+        "Got expected die message for options_components()");
+}
 
 pass("Completed all tests in $0");
 
