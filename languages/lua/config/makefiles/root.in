@@ -205,7 +205,7 @@ $(LIBPATH)/bc.pbc: $(LIBPATH)/bc.pir
 $(LIBPATH)/bitlib.pbc: $(LIBPATH)/bitlib.pir
 	-$(PARROT) --output=$(LIBPATH)/bitlib.pbc $(LIBPATH)/bitlib.pir
 
-$(LIBPATH)/gl.pir: $(LIBPATH)/gl.lua
+$(LIBPATH)/gl.pir: $(LIBPATH)/gl.lua lua.pbc
 	-$(PARROT) luap.pir --target=pir $(LIBPATH)/gl.lua > $(LIBPATH)/gl.pir
 
 $(LIBPATH)/gl.pbc: $(LIBPATH)/gl.pir
