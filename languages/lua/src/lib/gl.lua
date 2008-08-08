@@ -9,8 +9,8 @@ See original on L<http://luagl.wikidot.com/>
 
 ]]
 
-require '_helpers'
-require 'gl_binding'
+local _helpers = require '_helpers'
+local gl_binding = require 'gl_binding'
 
 module('gl', package.seeall)
 
@@ -21,6 +21,12 @@ module('gl', package.seeall)
 -- AreTexturesResident (texturesArray) -> residences
 
 -- ArrayElement (i) -> none
+function ArrayElement (i)
+    if not _helpers.lua_isnumber(i) then
+        error "incorrect argument to function 'gl.ArrayElement'"
+    end
+    gl_binding.glArrayElement(i)
+end
 
 -- Begin (mode) -> none
 function Begin (mode)
@@ -37,10 +43,33 @@ end
 -- Bitmap (xorig, yorig, ymove, bitmap) -> none
 
 -- BlendFunc (sfactor, dfactor) -> none
+function BlendFunc (sfactor, dfactor)
+    if not (_helpers.lua_isstring(sfactor)
+        and _helpers.lua_isstring(dfactor)) then
+        error "incorrect argument to function 'gl.BlendFunc'"
+    end
+    gl_binding.glBlendFunc(
+       gl_binding._get_gl_enum(sfactor, "incorrect string argument to function 'gl.BlendFunc'"),
+       gl_binding._get_gl_enum(dfactor, "incorrect string argument to function 'gl.BlendFunc'")
+    )
+end
 
 -- CallList (list) -> none
+function CallList (list)
+    if not _helpers.lua_isnumber(list) then
+        error "incorrect argument to function 'gl.CallList'"
+    end
+    gl_binding.glCallList(list)
+end
 
 -- CallLists (listArray) -> none
+function CallLists (listArray)
+    if not _helpers.lua_istable(listArray) then
+        error "incorrect argument to function 'gl.CallLists'"
+    end
+    local n, lists = gl_binding._get_arrayf(listArray)
+    gl_binding.glCallLists(n, gl_binding._get_gl_enum('FLOAT'), lists)
+end
 
 -- Clear (mask) -> none
 function Clear (mask)
@@ -55,6 +84,15 @@ end
 -- ClearAccum (red, green, blue, alpha) -> none
 
 -- ClearColor (red, green, blue, alpha) -> none
+function ClearColor (red, green, blue, alpha)
+    if not (_helpers.lua_isnumber(red)
+        and _helpers.lua_isnumber(green)
+        and _helpers.lua_isnumber(blue)
+        and _helpers.lua_isnumber(alpha)) then
+        error "incorrect argument to function 'gl.ClearColor'"
+    end
+    gl_binding.glClearColor(red, green, blue, alpha)
+end
 
 -- ClearDepth (depth) -> none
 
@@ -70,9 +108,8 @@ function Color (...)
     local arg = {...}
     local num_args = #arg
     if _helpers.lua_istable(arg[1]) then
-        num_args, array = gl_binding._get_arrayf(arg[1])
-        if num_args > 4 then num_args = 4 end
-        if num_args == 3 then
+        local n, array = gl_binding._get_arrayf(arg[1])
+        if n == 3 then
             gl_binding.glColor3dv(array)
         else
             gl_binding.glColor4dv(array)
@@ -117,14 +154,55 @@ end
 -- DepthRange (zNear, zFar) -> none
 
 -- Disable (cap) -> none
+function Disable (cap)
+    if not _helpers.lua_isstring(cap) then
+        error "incorrect argument to function 'gl.Disable'"
+    end
+    gl_binding.glDisable(
+       gl_binding._get_gl_enum(cap, "incorrect string argument to function 'gl.Disable'")
+    )
+end
 
 -- DisableClientState (array) -> none
+function DisableClientState (array)
+    if not _helpers.lua_isstring(array) then
+        error "incorrect argument to function 'gl.DisableClientState'"
+    end
+    gl_binding.glDisableClientState(
+       gl_binding._get_gl_enum(array, "incorrect string argument to function 'gl.DisableClientState'")
+    )
+end
 
 -- DrawArrays (mode, first, count) -> none
+function DrawArrays (mode, first, count)
+    if not (_helpers.lua_isstring(mode)
+        and _helpers.lua_isnumber(first)
+        and _helpers.lua_isnumber(count)) then
+        error "incorrect argument to function 'gl.DrawArrays'"
+    end
+    gl_binding.glDrawArrays(
+       gl_binding._get_gl_enum(mode, "incorrect string argument to function 'gl.DrawArrays'"),
+       first,
+       count
+    )
+end
 
 -- DrawBuffer (mode) -> none
 
 -- DrawElements (mode, indicesArray) -> none
+function DrawElements (mode, indicesArray)
+    if not (_helpers.lua_isstring(mode)
+        and _helpers.lua_istable(indicesArray)) then
+        error "incorrect argument to function 'gl.DrawElements'"
+    end
+    local n, array = gl_binding._get_arrayf(indicesArray)
+    gl_binding.glDrawElements(
+       gl_binding._get_gl_enum(mode, "incorrect string argument to function 'gl.DrawElements'"),
+       n,
+       gl_binding._get_gl_enum('INT'),
+       array
+    )
+end
 
 -- DrawPixels (width, height, format, pixels) -> none
 
@@ -133,8 +211,24 @@ end
 -- EdgeFlagPointer (flagsArray) -> none
 
 -- Enable (cap) -> none
+function Enable (cap)
+    if not _helpers.lua_isstring(cap) then
+        error "incorrect argument to function 'gl.Enable'"
+    end
+    gl_binding.glEnable(
+       gl_binding._get_gl_enum(cap, "incorrect string argument to function 'gl.Enable'")
+    )
+end
 
 -- EnableClientState (array) -> none
+function EnableClientState (array)
+    if not _helpers.lua_isstring(array) then
+        error "incorrect argument to function 'gl.EnableClientState'"
+    end
+    gl_binding.glEnableClientState(
+       gl_binding._get_gl_enum(array, "incorrect string argument to function 'gl.EnableClientState'")
+    )
+end
 
 -- End () -> none
 function End ()
@@ -142,6 +236,9 @@ function End ()
 end
 
 -- EndList () -> none
+function EndList ()
+    gl_binding.glEndList()
+end
 
 -- EvalCoord (u[, v]) -> none
 -- EvalCoord (coordArray) -> none
@@ -155,6 +252,9 @@ end
 -- Finish () -> none
 
 -- Flush () -> none
+function Flush ()
+   gl_binding.glFlush()
+end
 
 -- Fog (pname, param) -> none
 -- Fog (pname, paramsArray) -> none
@@ -233,6 +333,9 @@ end
 -- ListBase (base) -> none
 
 -- LoadIdentity () -> none
+function LoadIdentity ()
+   gl_binding.glLoadIdentity()
+end
 
 -- LoadMatrix (mArray) -> none
 
@@ -248,10 +351,28 @@ end
 -- Material (face, pname, param) -> none
 
 -- MatrixMode (mode) -> none
+function MatrixMode (mode)
+    if not _helpers.lua_isstring(mode) then
+        error "incorrect argument to function 'gl.MatrixMode'"
+    end
+    gl_binding.glMatrixMode(
+       gl_binding._get_gl_enum(mode, "incorrect string argument to function 'gl.MatrixMode'")
+    )
+end
 
 -- MultMatrix (mArray) -> none
 
 -- NewList (list, mode) -> none
+function NewList (list, mode)
+    if not (_helpers.lua_isnumber(list)
+        and _helpers.lua_isstring(mode)) then
+        error "incorrect argument to function 'gl.NewList'"
+    end
+    gl_binding.glNewList(
+       list,
+       gl_binding._get_gl_enum(mode, "incorrect string argument to function 'gl.NewList'")
+    )
+end
 
 -- Normal (nx, ny, nz) -> none
 -- Normal (nArray) -> none
@@ -259,6 +380,17 @@ end
 -- NormalPointer (normalArray) -> none
 
 -- Ortho (left, right, bottom, top, zNear, zFar) -> none
+function Ortho (left, right, bottom, top, zNear, zFar)
+    if not (_helpers.lua_isnumber(left)
+        and _helpers.lua_isnumber(right)
+        and _helpers.lua_isnumber(bottom)
+        and _helpers.lua_isnumber(top)
+        and _helpers.lua_isnumber(zNear)
+        and _helpers.lua_isnumber(zFar)) then
+        error "incorrect argument to function 'gl.Ortho'"
+    end
+    gl_binding.glOrtho(left, right, bottom, top, zNear, zFar)
+end
 
 -- PassThrough (token) -> none
 
@@ -283,6 +415,9 @@ end
 -- PopClientAttrib () -> none
 
 -- PopMatrix () -> none
+function PopMatrix ()
+   gl_binding.glPopMatrix()
+end
 
 -- PopName () -> none
 
@@ -293,6 +428,9 @@ end
 -- PushClientAttrib (mask) -> none
 
 -- PushMatrix () -> none
+function PushMatrix ()
+    gl_binding.glPushMatrix()
+end
 
 -- PushName (GLuint name) -> none
 
@@ -305,6 +443,21 @@ end
 
 -- Rect (x1, y1, x2, y2) -> none
 -- Rect (v1, v2) -> none
+function Rect (...)
+    local arg = {...}
+    if _helpers.lua_istable(arg[1]) and _helpers.lua_istable(arg[2]) then
+        local n1, v1 = gl_binding._get_arrayf(arg[1])
+        local n2, v2 = gl_binding._get_arrayf(arg[2])
+        gl_binding.glRectdv(v1, v2)
+    elseif _helpers.lua_isnumber(arg[1])
+       and _helpers.lua_isnumber(arg[2])
+       and _helpers.lua_isnumber(arg[3])
+       and _helpers.lua_isnumber(arg[4]) then
+        gl_binding.glRectd(arg[1], arg[2], arg[3], arg[4])
+    else
+        error "incorrect argument to function 'gl.Rect'"
+    end
+end
 
 -- RenderMode (mode) -> none
 
@@ -320,6 +473,14 @@ function Rotate (angle, x, y, z)
 end
 
 -- Scale (x, y, z) -> none
+function Scale (x, y, z)
+    if not (_helpers.lua_isnumber(x)
+        and _helpers.lua_isnumber(y)
+        and _helpers.lua_isnumber(z)) then
+        error "incorrect argument to function 'gl.Scale'"
+    end
+    gl_binding.glScaled(x, y, z)
+end
 
 -- Scissor (x, y, width, height) -> none
 
@@ -353,6 +514,14 @@ end
 -- TexParameter (target, pname, paramsArray) -> none
 
 -- Translate (x, y, z) -> none
+function Translate (x, y, z)
+    if not (_helpers.lua_isnumber(x)
+        and _helpers.lua_isnumber(y)
+        and _helpers.lua_isnumber(z)) then
+        error "incorrect argument to function 'gl.Translate'"
+    end
+    gl_binding.glTranslated(x, y, z)
+end
 
 -- Vertex (x, y, [z, w]) -> none
 -- Vertex (v) -> none
@@ -386,6 +555,25 @@ function Vertex (...)
 end
 
 -- VertexPointer (vertexArray) -> none
+function VertexPointer (vertexArray)
+    if not _helpers.lua_istable(vertexArray) then
+        error "incorrect argument to function 'gl.VertexPointer'"
+    end
+    local n, size, array = gl_binding._get_array2f(vertexArray)
+    if n == -1 then
+        error "incorrect argument to function 'gl.VertexPointer'"
+    end
+    gl_binding.glVertexPointer(size, gl_binding._get_gl_enum('DOUBLE'), 0, array)
+end
 
 -- Viewport (x, y, width, height) -> none
+function Viewport (x, y, width, height)
+    if not (_helpers.lua_isnumber(x)
+        and _helpers.lua_isnumber(y)
+        and _helpers.lua_isnumber(width)
+        and _helpers.lua_isnumber(height)) then
+        error "incorrect argument to function 'gl.Viewport'"
+    end
+    gl_binding.glViewport(x, y, width, height)
+end
 

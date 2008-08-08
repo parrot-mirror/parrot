@@ -39,7 +39,7 @@ see F<runtime/parrot/library/OpenGL.pir>.
     set $P1, 'gl_binding'
     _lua__GLOBAL[$P1] = _gl_binding
 
-    $P2 = split ' ', '_get_gl_enum _get_str_error _get_arrayb _get_arrayf _get_arrayi'
+    $P2 = split ' ', '_get_gl_enum _get_str_error _get_arrayb _get_arrayf _get_arrayi _get_array2f'
     lua_register($P1, _gl_binding, $P2)
 
     # Import all OpenGL/GLU/GLUT functions
@@ -56,7 +56,7 @@ see F<runtime/parrot/library/OpenGL.pir>.
 
 .sub '_get_gl_enum'
     .param string str
-    .param string err_msg
+    .param pmc err_msg :optional
     .local pmc gl_str
     gl_str = get_hll_global ['gl_binding'], 'gl_str'
     .local int res
@@ -214,7 +214,10 @@ see F<runtime/parrot/library/OpenGL.pir>.
   L5:
     goto L2
   L3:
-    .return (n, size, a)
+    set $P0, n
+    new $P1, 'LuaNumber'
+    set $P1, size
+    .return ($P0, $P1, a)
 .end
 
 .sub '_gl_str' :anon
