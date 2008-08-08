@@ -266,7 +266,7 @@ $args = {
 };
 ($args, $options_components, $script) =
     Parrot::Configure::Options::_process_options_components($args);
-my ($data, $short_circuits_ref) =
+($data, $short_circuits_ref) =
     Parrot::Configure::Options::_initial_pass(
         $args, $options_components, $script);
 is($data->{verbose}, 1, "Got expected value for verbose");
