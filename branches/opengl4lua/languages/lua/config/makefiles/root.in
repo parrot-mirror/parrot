@@ -89,7 +89,9 @@ GEN_PIR = \
  src/lua51_gen.pir \
  src/PASTGrammar_gen.pir \
  src/POSTGrammar_gen.pir \
- $(LIBPATH)/luabytecode_gen.pir
+ $(LIBPATH)/luabytecode_gen.pir \
+ $(LIBPATH)/gl.pir \
+ $(LIBPATH)/sha1.pir
 
 GEN_PBC = \
  lua.pbc
@@ -103,6 +105,7 @@ all: \
  $(LIBPATH)/base64.pbc \
  $(LIBPATH)/bc.pbc \
  $(LIBPATH)/bitlib.pbc \
+ $(LIBPATH)/gl.pbc \
  $(LIBPATH)/gl_binding.pbc \
  $(LIBPATH)/glut.pbc \
  $(LIBPATH)/lfs.pbc \
@@ -201,6 +204,12 @@ $(LIBPATH)/bc.pbc: $(LIBPATH)/bc.pir
 
 $(LIBPATH)/bitlib.pbc: $(LIBPATH)/bitlib.pir
 	-$(PARROT) --output=$(LIBPATH)/bitlib.pbc $(LIBPATH)/bitlib.pir
+
+$(LIBPATH)/gl.pir: $(LIBPATH)/gl.lua
+	-$(PARROT) luap.pir --target=pir $(LIBPATH)/gl.lua > $(LIBPATH)/gl.pir
+
+$(LIBPATH)/gl.pbc: $(LIBPATH)/gl.pir
+	-$(PARROT) --output=$(LIBPATH)/gl.pbc $(LIBPATH)/gl.pir
 
 $(LIBPATH)/gl_binding.pbc: $(LIBPATH)/gl_binding.pir
 	-$(PARROT) --output=$(LIBPATH)/gl_binding.pbc $(LIBPATH)/gl_binding.pir
