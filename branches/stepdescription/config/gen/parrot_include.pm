@@ -24,7 +24,7 @@ use Parrot::Configure::Utils ':gen';
 sub _init {
     my $self = shift;
     my %data;
-    $data{description} = q{Generating runtime/parrot/include};
+    $data{description} = q{Generate runtime/parrot/include};
     $data{result} = q{};
     $data{source_files} = [ qw(
         include/parrot/cclass.h

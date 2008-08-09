@@ -392,8 +392,14 @@ sub _run_this_step {
         }
     }
 
+    my $stub = qq{$step_name - };
+    my $message = $stub . 
+        (q{ } x (22 - length($stub))) . 
+        $step->description . 
+        '...';
+    my $length_message = length($message);
     unless ($args->{silent}) {
-        print "\n", $step->description, '...';
+        print "\n", $message;
         print "\n" if $args->{verbose} && $args->{verbose} == 2;
     }
 
@@ -415,6 +421,7 @@ sub _run_this_step {
                         step_name   => $step_name,
                         args        => $args,
                         description => $step->description,
+                        length_message => $length_message,
                     }
                 );
             }
@@ -452,7 +459,7 @@ sub _finish_printing_result {
     if ( $argsref->{args}->{verbose} && $argsref->{args}->{verbose} == 2 ) {
         print "...";
     }
-    print "." x ( 71 - length($argsref->{description}) - length($result) );
+    print "." x ( 78 - ( $argsref->{length_message} + length($result) ) );
     unless ( $argsref->{step_name} =~ m{^inter} && $argsref->{args}->{ask} ) {
         print "$result.";
     }
