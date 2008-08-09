@@ -36,7 +36,15 @@ lib/_helpers.pir - library
     set $P1, '_helpers'
     _lua__GLOBAL[$P1] = __helpers
 
-    $P2 = split ' ', 'lua_isboolean lua_isfunction lua_isnil lua_isnumber lua_isstring lua_istable lua_isuserdata'
+    $P2 = split "\n", <<'LIST'
+lua_isboolean
+lua_isfunction
+lua_isnil
+lua_isnumber
+lua_isstring
+lua_istable
+lua_isuserdata
+LIST
     lua_register($P1, __helpers, $P2)
 
     .return (__helpers)

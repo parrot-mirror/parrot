@@ -38,7 +38,14 @@ see F<runtime/parrot/library/OpenGL.pir>.
     set $P1, 'gl_binding'
     _lua__GLOBAL[$P1] = _gl_binding
 
-    $P2 = split ' ', '_get_gl_enum _get_str_gl_enum _get_arrayb _get_arrayf _get_arrayi _get_array2f'
+    $P2 = split "\n", <<'LIST'
+_get_gl_enum
+_get_str_gl_enum
+_get_arrayb
+_get_arrayf
+_get_arrayi
+_get_array2f
+LIST
     lua_register($P1, _gl_binding, $P2)
 
     $P0 = _gl_str()
