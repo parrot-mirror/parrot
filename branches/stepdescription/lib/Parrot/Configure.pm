@@ -258,9 +258,9 @@ sub runsteps {
             }
         }
         if ( scalar keys %verbose_steps ) {
-            if ( $verbose_steps{$step_name} ) {
-                $this_step_is_verbose = $step_name;
-            }
+             $this_step_is_verbose = $verbose_steps{$step_name}
+                ? $step_name
+                : q{};
         }
 
         $n++;
@@ -268,7 +268,7 @@ sub runsteps {
             {
                 task            => $task,
                 verbose         => $verbose,
-                verbose_step    => $this_step_is_verbose || q{},
+                verbose_step    => $this_step_is_verbose,
                 ask             => $ask,
                 n               => $n,
                 silent          => $silent,
@@ -387,6 +387,7 @@ sub _run_this_step {
 
     # set per step verbosity
     if ( $args->{verbose_step} ) {
+print STDERR "Going verbose\n";
         $conf->options->set( verbose => 2 );
     }
 
