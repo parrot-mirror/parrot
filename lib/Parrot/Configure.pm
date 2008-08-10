@@ -459,16 +459,23 @@ sub _failure_message {
 sub _finish_printing_result {
     my $argsref = shift;
     my $result = $argsref->{step}->result || 'done';
+    my $linelength = 78;
     if ($argsref->{args}->{verbose} or $argsref->{args}->{verbose_step}) {
         # For more readable verbose output, we'll repeat the step description
         print "\n";
         my $spaces = 22;
         print q{ } x $spaces;
         print $argsref->{description};
-        print '.' x ( ( 78 - $spaces ) - ( length($argsref->{description}) + length($result) ) );
+        print '.' x (
+            ( $linelength - $spaces ) -
+            ( length($argsref->{description}) + length($result) + 1 )
+        );
     }
     else {
-        print '.' x ( 78 - ( $argsref->{length_message} + length($result) ) );
+        print '.' x (
+            $linelength -
+            ( $argsref->{length_message} + length($result) + 1 )
+        );
     }
     unless ( $argsref->{step_name} =~ m{^inter} && $argsref->{args}->{ask} ) {
         print "$result.";
