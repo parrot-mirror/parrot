@@ -221,10 +221,10 @@ sub runsteps {
     my $conf = shift;
 
     my $n = 0;    # step number
-    my ( $silent, $verbose, $verbose_step, $fatal, $fatal_step, $ask );
+    my ( $silent, $verbose, $verbose_step_str, $fatal, $fatal_step_str, $ask );
     $silent = $conf->options->get(qw( silent ));
     unless ($silent) {
-        ( $verbose, $verbose_step, $fatal, $fatal_step, $ask ) =
+        ( $verbose, $verbose_step_str, $fatal, $fatal_step_str, $ask ) =
             $conf->options->get(qw( verbose verbose-step fatal fatal-step ask ));
     }
 
@@ -238,20 +238,28 @@ sub runsteps {
     # We make certain that argument to --fatal-step is a comma-delimited
     # string of configuration steps, each of which is a string delimited by
     # two colons, the first half of which is one of init|inter|auto|gen
-    # (This will be modified to take a step sequence number.)
-    elsif ( defined ( $fatal_step ) ) {
-        %steps_to_die_for = $conf->_handle_fatal_step_option( $fatal_step );
+    elsif ( defined ( $fatal_step_str ) ) {
+        %steps_to_die_for = _handle_fatal_step_option( $fatal_step_str );
     }
     else {
         # No action needed; this is the default case where no step is fatal
     }
 
+    my %verbose_steps;
+    if (defined $verbose_step_str) {
+        %verbose_steps = _handle_verbose_step_option( $verbose_step_str );
+    }
     foreach my $task ( $conf->steps ) {
-        my $red_flag;
+        my ($red_flag, $this_step_is_verbose);
         my $step_name   = $task->step;
-        if ( scalar ( keys ( %steps_to_die_for ) ) ) {
+        if ( scalar keys %steps_to_die_for ) {
             if ( $steps_to_die_for{$step_name} ) {
                 $red_flag++;
+            }
+        }
+        if ( scalar keys %verbose_steps ) {
+            if ( $verbose_steps{$step_name} ) {
+                $this_step_is_verbose = $step_name;
             }
         }
 
@@ -260,7 +268,7 @@ sub runsteps {
             {
                 task            => $task,
                 verbose         => $verbose,
-                verbose_step    => $verbose_step,
+                verbose_step    => $this_step_is_verbose || q{},
                 ask             => $ask,
                 n               => $n,
                 silent          => $silent,
@@ -281,24 +289,43 @@ sub runsteps {
 }
 
 sub _handle_fatal_step_option {
-    my $conf = shift;
-    my $fatal_step = shift;
+    my $fatal_step_str = shift;
     my %steps_to_die_for = ();
     my $named_step_pattern = qr/(?:init|inter|auto|gen)::\w+/;
-    if ( $fatal_step =~ /^
+    if ( $fatal_step_str =~ /^
         $named_step_pattern
         (, $named_step_pattern)*
         $/x
     ) {
-        my @fatal_steps = split /,/, $fatal_step;
+        my @fatal_steps = split /,/, $fatal_step_str;
         for my $s (@fatal_steps) {
             $steps_to_die_for{$s}++;
         }
     }
     else {
-        die "Argument to 'fatal-step' option must be comma-delimited string of valid configuration steps or configuration step sequence numbers";
+        die "Argument to 'fatal-step' option must be comma-delimited string of valid configuration steps";
     }
     return %steps_to_die_for;
+}
+
+sub _handle_verbose_step_option {
+    my $verbose_step_str = shift;
+    my %verbose_steps = ();
+    my $named_step_pattern = qr/(?:init|inter|auto|gen)::\w+/;
+    if ( $verbose_step_str =~ /^
+        $named_step_pattern
+        (, $named_step_pattern)*
+        $/x
+    ) {
+        my @verbose_steps = split /,/, $verbose_step_str;
+        for my $s (@verbose_steps) {
+            $verbose_steps{$s}++;
+        }
+    }
+    else {
+        die "Argument to 'verbose-step' option must be comma-delimited string of valid configuration steps";
+    }
+    return %verbose_steps;
 }
 
 =item * C<run_single_step()>
@@ -309,6 +336,9 @@ registered for that step.
 
 Accepts no arguments and modifies the data structure within the
 Parrot::Configure object.
+
+B<Note:>  Currently used only in F<tools/dev/reconfigure.pl>; not used in
+F<Configure.pl>.
 
 =cut
 
@@ -356,26 +386,8 @@ sub _run_this_step {
     my $step = $step_name->new();
 
     # set per step verbosity
-    if ( defined $args->{verbose_step} ) {
-        if (
-                (
-                    # by step number
-                    ( $args->{verbose_step} =~ /^\d+$/ )
-                        and ( $args->{n} == $args->{verbose_step} )
-                )
-                or (
-                    # by step name
-                    ( ${ $conf->{hash_of_steps} }{ $args->{verbose_step} } )
-                        and ( $args->{verbose_step} eq $step_name )
-                )
-                or (
-                    # by description
-                    $step->description =~ /$args->{verbose_step}/
-                )
-            )
-        {
-            $conf->options->set( verbose => 2 );
-        }
+    if ( $args->{verbose_step} ) {
+        $conf->options->set( verbose => 2 );
     }
 
     my $stub = qq{$step_name - };
@@ -385,8 +397,12 @@ sub _run_this_step {
         '...';
     my $length_message = length($message);
     unless ($args->{silent}) {
-        print "\n", $message;
-        print "\n" if $args->{verbose} && $args->{verbose} == 2;
+        # The first newline terminates the report on the *previous* step.
+        # (Probably needed to make interactive output work properly.
+        # Otherwise, we'd put it in _finish_printing_result().
+        print "\n";
+        print $message;
+        print "\n" if $args->{verbose_step};
     }
 
     my $ret;
@@ -400,6 +416,8 @@ sub _run_this_step {
         # A Parrot configuration step can run successfully, but if it fails to
         # achieve its objective it is supposed to return an undefined status.
         if ( $ret ) {
+            # reset verbose value for the next step
+            $conf->options->set( verbose => $args->{verbose} );
             unless ($args->{silent}) {
                 _finish_printing_result(
                     {
@@ -411,8 +429,6 @@ sub _run_this_step {
                     }
                 );
             }
-            # reset verbose value for the next step
-            $conf->options->set( verbose => $args->{verbose} );
             if ($conf->options->get(q{configure_trace}) ) {
                 _update_conftrace(
                     {
@@ -442,10 +458,17 @@ sub _failure_message {
 sub _finish_printing_result {
     my $argsref = shift;
     my $result = $argsref->{step}->result || 'done';
-    if ( $argsref->{args}->{verbose} && $argsref->{args}->{verbose} == 2 ) {
-        print "...";
+    if ($argsref->{args}->{verbose} or $argsref->{args}->{verbose_step}) {
+        # For more readable verbose output, we'll repeat the step description
+        print "\n";
+        my $spaces = 22;
+        print q{ } x $spaces;
+        print $argsref->{description};
+        print '.' x ( ( 78 - $spaces ) - ( length($argsref->{description}) + length($result) ) );
     }
-    print "." x ( 78 - ( $argsref->{length_message} + length($result) ) );
+    else {
+        print '.' x ( 78 - ( $argsref->{length_message} + length($result) ) );
+    }
     unless ( $argsref->{step_name} =~ m{^inter} && $argsref->{args}->{ask} ) {
         print "$result.";
     }
