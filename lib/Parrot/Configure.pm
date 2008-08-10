@@ -392,9 +392,9 @@ print STDERR "Going verbose\n";
     }
 
     my $stub = qq{$step_name - };
-    my $message = $stub . 
-        (q{ } x (22 - length($stub))) . 
-        $step->description . 
+    my $message = $stub .
+        (q{ } x (22 - length($stub))) .
+        $step->description .
         '...';
     my $length_message = length($message);
     unless ($args->{silent}) {
