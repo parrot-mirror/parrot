@@ -51,7 +51,7 @@ is( $conf->options->{c}->{debugging},
 
 eval { $conf->runsteps(); };
 like($@,
-    qr/Argument to 'verbose-step' option must be comma-delimited string of valid configuration steps/,
+    qr/Argument to 'verbose-step' option must be comma-delimited.*?steps/,
     "Got expected error message for bad value to --verbose-step"
 );
 
