@@ -181,6 +181,7 @@ sub parse_file {
 
 sub runstep {
     my ( $self, $conf ) = @_;
+    my $verbose = $conf->options->get('verbose');
 
     # need vtable.h now
     system( $^X, "tools/build/vtable_h.pl" );
@@ -193,7 +194,7 @@ sub runstep {
         for my $d (@directives) {
             my @defs = perform_directive $d;
             for my $target ( @{ $d->{files} } ) {
-                $conf->options->get('verbose') and print "$target ";
+                $verbose and print "$target ";
                 my $gen = join "\n",
                     ( $target =~ /\.pl$/ ? \&const_to_perl : \&const_to_parrot )->(@defs);
                 $conf->append_configure_log(qq{$self->{destdir}/$target});
