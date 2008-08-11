@@ -387,7 +387,6 @@ sub _run_this_step {
 
     # set per step verbosity
     if ( $args->{verbose_step} ) {
-print STDERR "Going verbose\n";
         $conf->options->set( verbose => 2 );
     }
 
