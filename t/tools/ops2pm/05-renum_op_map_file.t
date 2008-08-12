@@ -1,177 +1,130 @@
 #! perl
-# Copyright (C) 2007, The Perl Foundation.
+# Copyright (C) 2007-2008, The Perl Foundation.
 # $Id$
 # 05-renum_op_map_file.t
 
 use strict;
 use warnings;
 
-BEGIN {
-    use FindBin qw($Bin);
-    use Cwd qw(cwd realpath);
-    realpath($Bin) =~ m{^(.*\/parrot)\/[^/]*\/[^/]*\/[^/]*$};
-    our $topdir = $1;
-    if ( defined $topdir ) {
-        print "\nOK:  Parrot top directory located\n";
-    }
-    else {
-        $topdir = realpath($Bin) . "/../../..";
-    }
-    unshift @INC, qq{$topdir/lib};
-}
-use Test::More qw(no_plan); # tests => 27;
+#        my $tdir = tempdir( CLEANUP => 1 );
+
+use Test::More qw( no_plan );
+use Carp;
 use Cwd;
-use File::Copy;
 use File::Temp (qw| tempdir |);
+#use Data::Dumper;$Data::Dumper::Indent=1;
+use File::Basename;
+use File::Copy;
+use Tie::File;
+use lib '/home/jimk/work/opsrenum/lib';
+use Parrot::OpsRenumber;
 
-use_ok('Parrot::OpsRenumber');
+my ($self, @opsfiles);
+my ($lastcode, $lastnumber);
+my $numoutput = q{src/ops/ops.num};
 
-ok( chdir $main::topdir, "Positioned at top-level Parrot directory" );
+##### Stage 1:  Generate ops.num de novo #####
 
-# regular case
-{
-    local @ARGV = qw(
+my @stage1 = qw(
+    src/ops/core.ops.orig
+    src/ops/bit.ops.orig
+    src/ops/ops.num.orig
+);
+
+copy_into_position(\@stage1, q{orig});
+($lastcode, $lastnumber) = run_test_stage(
+    [ qw(
         src/ops/core.ops
         src/ops/bit.ops
-    );
-    my $cwd = cwd();
-    {
-        my $tdir = tempdir( CLEANUP => 1 );
-        ok( chdir $tdir, 'changed to temp directory for testing' );
-        ok( ( mkdir qq{$tdir/src} ),     "able to make tempdir/src" );
-        ok( ( mkdir qq{$tdir/src/ops} ), "able to make tempdir/src" );
-        foreach my $f (@ARGV) {
-            ok( copy( qq{$cwd/$f}, qq{$tdir/$f} ), "copied .ops file" );
-        }
-        my $num = qq{src/ops/ops.num};
-        ok( copy( qq{$cwd/$num}, qq{$tdir/$num} ), "copied ops.num file" );
-        my @opsfiles = glob("./src/ops/*.ops");
+    ) ],
+    $numoutput,
+);
+is($lastcode, q{bxors_s_sc_sc},
+    "Stage 1:  Got expected last opcode");
+is($lastnumber, 190,
+    "Stage 1:  Got expected last opcode number");
 
-        my $self = Parrot::OpsRenumber->new(
-            {
-                argv    => [@opsfiles],
-                moddir  => "lib/Parrot/OpLib",
-                module  => "core.pm",
-                inc_dir => "include/parrot/oplib",
-                inc_f   => "ops.h",
-                script  => "tools/dev/opsrenumber.pl",
-            }
-        );
-        isa_ok( $self, q{Parrot::OpsRenumber} );
+##### Stage 2:  Delete some opcodes and regenerate ops.num #####
 
-        ok( $self->prepare_ops, "prepare_ops() returned successfully" );
-        ok( defined( $self->{ops} ), "'ops' key has been defined" );
-
-        ok( $self->renum_op_map_file(),
-            "renum_op_map_files() completed successfully" );
-        ok( -f qq{$tdir/$num}, "ops.num located after renumbering" );
-
-        ok( chdir $cwd, 'changed back to starting directory after testing' );
-    }
-}
-
-# explicit second argument
-{
-    local @ARGV = qw(
+my @stage2 = qw( src/ops/bit.ops.second );
+copy_into_position(\@stage2, q{second});
+($lastcode, $lastnumber) = run_test_stage(
+    [ qw(
         src/ops/core.ops
         src/ops/bit.ops
-    );
-    my $cwd = cwd();
-    {
-        my $tdir = tempdir( CLEANUP => 1 );
-        ok( chdir $tdir, 'changed to temp directory for testing' );
-        ok( ( mkdir qq{$tdir/src} ),     "able to make tempdir/src" );
-        ok( ( mkdir qq{$tdir/src/ops} ), "able to make tempdir/src" );
-        foreach my $f (@ARGV) {
-            ok( copy( qq{$cwd/$f}, qq{$tdir/$f} ), "copied .ops file" );
-        }
-        my $num = qq{src/ops/ops.num};
-        ok( copy( qq{$cwd/$num}, qq{$tdir/$num} ), "copied ops.num file" );
-        my @opsfiles = glob("./src/ops/*.ops");
+    ) ],
+    $numoutput,
+);
 
-        my $self = Parrot::OpsRenumber->new(
-            {
-                argv    => [@opsfiles],
-                moddir  => "lib/Parrot/OpLib",
-                module  => "core.pm",
-                inc_dir => "include/parrot/oplib",
-                inc_f   => "ops.h",
-                script  => "tools/dev/opsrenumber.pl",
-            }
-        );
-        isa_ok( $self, q{Parrot::OpsRenumber} );
+($lastcode, $lastnumber) = get_last_opcode($numoutput);
+is($lastcode, q{bxor_i_ic_ic},
+    "Stage 2:  Got expected last opcode");
+is($lastnumber, 184,
+    "Stage 2:  Got expected last opcode number");
 
-        ok( $self->prepare_ops, "prepare_ops() returned successfully" );
-        ok( defined( $self->{ops} ), "'ops' key has been defined" );
+##### Stage 3:  Add some opcodes and regenerate ops.num #####
 
-        ok(
-            $self->renum_op_map_file(qq{$tdir/$num}),
-            "renum_op_map_files() completed successfully"
-        );
-        ok( -f qq{$tdir/$num}, "ops.num located after renumbering" );
+my @stage3 = qw( src/ops/pic.ops.orig );
+copy_into_position(\@stage3, q{orig});
+($lastcode, $lastnumber) = run_test_stage(
+    [ qw(
+        src/ops/core.ops
+        src/ops/bit.ops
+        src/ops/pic.ops
+    ) ],
+    $numoutput,
+);
 
-        ok( chdir $cwd, 'changed back to starting directory after testing' );
-    }
-}
+($lastcode, $lastnumber) = get_last_opcode($numoutput);
+is($lastcode, q{pic_callr___pc},
+    "Stage 3:  Got expected last opcode");
+is($lastnumber, 189,
+    "Stage 3:  Got expected last opcode number");
 
 pass("Completed all tests in $0");
 
-################### DOCUMENTATION ###################
+#################### SUBROUTINES ####################
 
-=head1 NAME
+sub run_test_stage {
+    my ($opsfilesref, $numoutput) = @_;
+    my $self = Parrot::OpsRenumber->new(
+        {
+            argv    => $opsfilesref,
+            moddir  => "lib/Parrot/OpLib",
+            module  => "core.pm",
+            inc_dir => "include/parrot/oplib",
+            inc_f   => "ops.h",
+            script  => "tools/dev/opsrenumber.pl",
+        }
+    );
+    
+    $self->prepare_ops();
+    $self->renum_op_map_file();
+    my ($lastcode, $lastnumber) = get_last_opcode($numoutput);
+    return ($lastcode, $lastnumber);
+}
 
-05-renum_op_map_file.t - test C<Parrot::OpsRenumber::renum_op_map_file()>
+sub copy_into_position {
+    my ($stageref, $ext) = @_;
+    foreach my $or ( @{ $stageref } ) {
+        my $base = basename($or);
+        my $real;
+        ($real = $base) =~ s/\.$ext$//;
+        my $fullreal = qq{src/ops/$real};
+        copy $or, $fullreal or croak "Unable to copy $base";
+    }
+}
 
-=head1 SYNOPSIS
+sub get_last_opcode {
+    my $file = shift;
+    croak "$file not found: $!" unless -f $file;
+    my (@lines, $lastline);
+    tie @lines, 'Tie::File', $file or croak "Unable to tie to $file: $!";
+    $lastline = $lines[-1];
+    untie @lines or croak "Unable to untie from $file: $!";
+    my ($lastcode, $lastnumber) = split /\s+/, $lastline, 2;
+    croak "Couldn't parse last line of $file: $!"
+        unless (defined $lastcode and defined $lastnumber);
+    return ($lastcode, $lastnumber);
+}
 
-    % prove t/tools/ops2pm/05-renum_op_map_file.t
-
-=head1 DESCRIPTION
-
-The files in this directory test the publicly callable methods of
-F<lib/Parrot/OpsRenumber.pm> and F<lib/Parrot/Ops2pm/Auxiliary.pm>.
-By doing so, they test the functionality of the F<ops2pm.pl> utility.
-That functionality has largely been extracted
-into the methods of F<Utils.pm>.
-
-F<05-renum_op_map_file.t> tests whether
-C<Parrot::OpsRenumber::renum_op_map_file()> works properly.
-
-=head1 TODO
-
-The following statements, branches and conditions in C<renum_op_map_file()>
-are as yet uncovered:
-
-=over 4
-
-=item *
-
-Uncovered implicit 'else':
-
-    my $file = shift || $NUM_FILE;
-
-=item *
-
-Can I provoke this C<die>?
-
-    open my $OP, '<', $file
-        or die "Can't open $file, error $!";
-
-=back
-
-=head1 AUTHOR
-
-James E Keenan
-
-=head1 SEE ALSO
-
-Parrot::OpsRenumber, F<ops2pm.pl>.
-
-=cut
-
-# Local Variables:
-#   mode: cperl
-#   cperl-indent-level: 4
-#   fill-column: 100
-# End:
-# vim: expandtab shiftwidth=4:
