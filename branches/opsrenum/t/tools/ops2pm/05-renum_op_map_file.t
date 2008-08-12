@@ -19,7 +19,7 @@ BEGIN {
     }
     unshift @INC, qq{$topdir/lib};
 }
-use Test::More tests => 27;
+use Test::More qw(no_plan); # tests => 27;
 use Cwd;
 use File::Copy;
 use File::Temp (qw| tempdir |);
@@ -50,9 +50,11 @@ ok( chdir $main::topdir, "Positioned at top-level Parrot directory" );
         my $self = Parrot::OpsRenumber->new(
             {
                 argv    => [@opsfiles],
-                script  => "tools/build/ops2pm.pl",
-                nolines => undef,
-                renum   => 1,
+                moddir  => "lib/Parrot/OpLib",
+                module  => "core.pm",
+                inc_dir => "include/parrot/oplib",
+                inc_f   => "ops.h",
+                script  => "tools/dev/opsrenumber.pl",
             }
         );
         isa_ok( $self, q{Parrot::OpsRenumber} );
@@ -90,9 +92,11 @@ ok( chdir $main::topdir, "Positioned at top-level Parrot directory" );
         my $self = Parrot::OpsRenumber->new(
             {
                 argv    => [@opsfiles],
-                script  => "tools/build/ops2pm.pl",
-                nolines => undef,
-                renum   => 1,
+                moddir  => "lib/Parrot/OpLib",
+                module  => "core.pm",
+                inc_dir => "include/parrot/oplib",
+                inc_f   => "ops.h",
+                script  => "tools/dev/opsrenumber.pl",
             }
         );
         isa_ok( $self, q{Parrot::OpsRenumber} );
