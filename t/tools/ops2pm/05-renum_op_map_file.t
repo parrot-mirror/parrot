@@ -6,15 +6,15 @@
 use strict;
 use warnings;
 
-#        my $tdir = tempdir( CLEANUP => 1 );
-
 use Test::More qw( no_plan );
 use Carp;
 use Cwd;
-use File::Temp (qw| tempdir |);
-#use Data::Dumper;$Data::Dumper::Indent=1;
+use Data::Dumper;$Data::Dumper::Indent=1;
 use File::Basename;
 use File::Copy;
+use File::Path qw( mkpath );
+use File::Spec;
+use File::Temp qw( tempdir );
 use Tie::File;
 use lib '/home/jimk/work/opsrenum/lib';
 use Parrot::OpsRenumber;
@@ -22,64 +22,77 @@ use Parrot::OpsRenumber;
 my ($self, @opsfiles);
 my ($lastcode, $lastnumber);
 my $numoutput = q{src/ops/ops.num};
+my $cwd = cwd();
+my $samplesdir = File::Spec->catdir( $cwd,
+    ( qw| t tools ops2pm samples | )
+);;
+ok(-d $samplesdir, "Able to locate samples directory");
 
-##### Stage 1:  Generate ops.num de novo #####
+{
+    ##### Prepare temporary directory for testing #####
 
-my @stage1 = qw(
-    src/ops/core.ops.orig
-    src/ops/bit.ops.orig
-    src/ops/ops.num.orig
-);
+    my $tdir = tempdir( CLEANUP => 1 );
+    chdir $tdir or croak "Unable to change to testing directory: $!";
+    my $opsdir = File::Spec->catdir ( $tdir, 'src', 'ops' );
+    mkpath( $opsdir, 0, 755 ) or croak "Unable to make testing directory";
 
-copy_into_position(\@stage1, q{orig});
-($lastcode, $lastnumber) = run_test_stage(
-    [ qw(
-        src/ops/core.ops
-        src/ops/bit.ops
-    ) ],
-    $numoutput,
-);
-is($lastcode, q{bxors_s_sc_sc},
-    "Stage 1:  Got expected last opcode");
-is($lastnumber, 190,
-    "Stage 1:  Got expected last opcode number");
+    ##### Stage 1:  Generate ops.num de novo #####
 
-##### Stage 2:  Delete some opcodes and regenerate ops.num #####
+    my @stage1 = qw(
+        core.ops.orig
+        bit.ops.orig
+        ops.num.orig
+    );
+    copy_into_position($samplesdir, \@stage1, q{orig}, $opsdir);
+    ($lastcode, $lastnumber) = run_test_stage(
+        [ qw(
+            src/ops/core.ops
+            src/ops/bit.ops
+        ) ],
+        $numoutput,
+    );
+    is($lastcode, q{bxors_s_sc_sc},
+        "Stage 1:  Got expected last opcode");
+    is($lastnumber, 190,
+        "Stage 1:  Got expected last opcode number");
 
-my @stage2 = qw( src/ops/bit.ops.second );
-copy_into_position(\@stage2, q{second});
-($lastcode, $lastnumber) = run_test_stage(
-    [ qw(
-        src/ops/core.ops
-        src/ops/bit.ops
-    ) ],
-    $numoutput,
-);
+    ###### Stage 2:  Delete some opcodes and regenerate ops.num #####
 
-($lastcode, $lastnumber) = get_last_opcode($numoutput);
-is($lastcode, q{bxor_i_ic_ic},
-    "Stage 2:  Got expected last opcode");
-is($lastnumber, 184,
-    "Stage 2:  Got expected last opcode number");
+    my @stage2 = qw( bit.ops.second );
+    copy_into_position($samplesdir, \@stage2, q{second}, $opsdir);
+    ($lastcode, $lastnumber) = run_test_stage(
+        [ qw(
+            src/ops/core.ops
+            src/ops/bit.ops
+        ) ],
+        $numoutput,
+    );
+    is($lastcode, q{bxor_i_ic_ic},
+        "Stage 2:  Got expected last opcode");
+    is($lastnumber, 184,
+        "Stage 2:  Got expected last opcode number");
 
-##### Stage 3:  Add some opcodes and regenerate ops.num #####
+    ##### Stage 3:  Add some opcodes and regenerate ops.num #####
 
-my @stage3 = qw( src/ops/pic.ops.orig );
-copy_into_position(\@stage3, q{orig});
-($lastcode, $lastnumber) = run_test_stage(
-    [ qw(
-        src/ops/core.ops
-        src/ops/bit.ops
-        src/ops/pic.ops
-    ) ],
-    $numoutput,
-);
+    my @stage3 = qw( pic.ops.orig );
+    copy_into_position($samplesdir, \@stage3, q{orig}, $opsdir);
+    ($lastcode, $lastnumber) = run_test_stage(
+        [ qw(
+            src/ops/core.ops
+            src/ops/bit.ops
+            src/ops/pic.ops
+        ) ],
+        $numoutput,
+    );
+    ($lastcode, $lastnumber) = get_last_opcode($numoutput);
+    is($lastcode, q{pic_callr___pc},
+        "Stage 3:  Got expected last opcode");
+    is($lastnumber, 189,
+        "Stage 3:  Got expected last opcode number");
 
-($lastcode, $lastnumber) = get_last_opcode($numoutput);
-is($lastcode, q{pic_callr___pc},
-    "Stage 3:  Got expected last opcode");
-is($lastnumber, 189,
-    "Stage 3:  Got expected last opcode number");
+    # Go back where we started to activate cleanup
+    chdir $cwd or croak "Unable to change back to starting directory: $!";
+}
 
 pass("Completed all tests in $0");
 
@@ -94,10 +107,10 @@ sub run_test_stage {
             module  => "core.pm",
             inc_dir => "include/parrot/oplib",
             inc_f   => "ops.h",
-            script  => "tools/dev/opsrenumber.pl",
+            script  => $0,
         }
     );
-    
+
     $self->prepare_ops();
     $self->renum_op_map_file();
     my ($lastcode, $lastnumber) = get_last_opcode($numoutput);
@@ -105,13 +118,13 @@ sub run_test_stage {
 }
 
 sub copy_into_position {
-    my ($stageref, $ext) = @_;
+    my ($samplesdir, $stageref, $ext, $opsdir) = @_;
     foreach my $or ( @{ $stageref } ) {
-        my $base = basename($or);
+        my $fullor = File::Spec->catfile( $samplesdir, $or );
         my $real;
-        ($real = $base) =~ s/\.$ext$//;
-        my $fullreal = qq{src/ops/$real};
-        copy $or, $fullreal or croak "Unable to copy $base";
+        ($real = $or) =~ s/\.$ext$//;
+        my $fullreal = File::Spec->catfile( $opsdir, $real );
+        copy $fullor, $fullreal or croak "Unable to copy $or";
     }
 }
 
