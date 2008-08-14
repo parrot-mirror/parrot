@@ -29,6 +29,9 @@ my $samplesdir = File::Spec->catdir( $cwd,
 ok(-d $samplesdir, "Able to locate samples directory");
 
 {
+    ##### Test pre-Parrot 1.0 case
+    my $major_version = 0;
+
     ##### Prepare temporary directory for testing #####
 
     my $tdir = tempdir( CLEANUP => 1 );
@@ -50,6 +53,7 @@ ok(-d $samplesdir, "Able to locate samples directory");
             src/ops/bit.ops
         ) ],
         $numoutput,
+        $major_version,
     );
     is($lastcode, q{bxors_s_sc_sc},
         "Stage 1:  Got expected last opcode");
@@ -66,6 +70,7 @@ ok(-d $samplesdir, "Able to locate samples directory");
             src/ops/bit.ops
         ) ],
         $numoutput,
+        $major_version,
     );
     is($lastcode, q{bxor_i_ic_ic},
         "Stage 2:  Got expected last opcode");
@@ -83,6 +88,7 @@ ok(-d $samplesdir, "Able to locate samples directory");
             src/ops/pic.ops
         ) ],
         $numoutput,
+        $major_version,
     );
     ($lastcode, $lastnumber) = get_last_opcode($numoutput);
     is($lastcode, q{pic_callr___pc},
@@ -99,7 +105,7 @@ pass("Completed all tests in $0");
 #################### SUBROUTINES ####################
 
 sub run_test_stage {
-    my ($opsfilesref, $numoutput) = @_;
+    my ($opsfilesref, $numoutput, $major_version) = @_;
     my $self = Parrot::OpsRenumber->new(
         {
             argv    => $opsfilesref,
@@ -112,7 +118,7 @@ sub run_test_stage {
     );
 
     $self->prepare_ops();
-    $self->renum_op_map_file();
+    $self->renum_op_map_file($major_version);
     my ($lastcode, $lastnumber) = get_last_opcode($numoutput);
     return ($lastcode, $lastnumber);
 }
