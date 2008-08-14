@@ -479,14 +479,6 @@ passing in the initialization argument, I<init>, which is usually a
 hash. This opcode is most often used with high-level classes, but
 low-level PMCs may instantiate an object of their own type.
 
-=item new_from_string [deprecated: See RT# 47011]
-
-  PMC* new_from_string(INTERP, PMC* self, STRING* rep, INTVAL flags)
-
-Construct a PMC initializing it from a string representation and integer
-flags. [NOTE: this has been replaced by C<instantiate>. Any
-initialization arguments can be passed in the I<init> hash.]
-
 =item inspect
 
   PMC* inspect(INTERP, PMC* self)
