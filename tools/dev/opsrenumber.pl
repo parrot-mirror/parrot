@@ -6,6 +6,7 @@ use strict;
 use warnings;
 
 use lib 'lib';
+use Parrot::Config qw( %PConfig );
 use Parrot::OpsRenumber;
 
 my $self = Parrot::OpsRenumber->new(
@@ -20,7 +21,7 @@ my $self = Parrot::OpsRenumber->new(
 );
 
 $self->prepare_ops();
-$self->renum_op_map_file();
+$self->renum_op_map_file($PConfig{MAJOR});
 
 exit 0;
 
