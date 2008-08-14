@@ -5,7 +5,7 @@ use strict;
 use warnings;
 use lib qw ( lib );
 use base qw( Parrot::Ops2pm::Base );
-use Parrot::OpsFile;
+#use Parrot::OpsFile;
 
 =head1 NAME
 
@@ -111,6 +111,22 @@ sub renum_op_map_file {
     # there are unwanted permutations like 'add_i_ic_ic
     # which aren't opcodes but calced at compile-time
     #
+
+    # The ops element is set by prepare_ops(), which is inherited from
+    # Parrot::Ops2pm::Base.  prepare_ops(), in turn, works off
+    # Parrot::OpsFile.
+
+    # So whether a particular opcode will appear in the *new* ops.num depends
+    # entirely on whether or not it's found in @{ $self->{ops}->{OPS} }.  If a
+    # particular opcode has been deleted or gone missing from that array, then
+    # it won't appear in the new ops.num.  That's acceptable pre-version 1.0,
+    # but not afterwards (per
+    # http://rt.perl.org/rt3/Ticket/Display.html?id=53976).  At and after 1.0,
+    # the opcodes in ops.num will be non-deletable.  New opcodes may be added
+    # to the end of the list and numbered accordingly, but no opcodes may be
+    # deleted.  When we get to that point and need to renumber due to addition
+    # of opcodes, we'll simply determine which opcodes are brand new and
+    # append them to the end of the list in some order yet to be determined.
 
     for ( @{ $self->{ops}->{OPS} } ) {
         # To account for the number of opcodes above the line, we'll increment
