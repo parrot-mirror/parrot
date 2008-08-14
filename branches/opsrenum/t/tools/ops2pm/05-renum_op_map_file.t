@@ -100,6 +100,77 @@ ok(-d $samplesdir, "Able to locate samples directory");
     chdir $cwd or croak "Unable to change back to starting directory: $!";
 }
 
+{
+    ##### Test post-Parrot 1.0 case
+    my $major_version = 0;
+
+    ##### Prepare temporary directory for testing #####
+
+    my $tdir = tempdir( CLEANUP => 1 );
+    chdir $tdir or croak "Unable to change to testing directory: $!";
+    my $opsdir = File::Spec->catdir ( $tdir, 'src', 'ops' );
+    mkpath( $opsdir, 0, 755 ) or croak "Unable to make testing directory";
+
+#    ##### Stage 1:  Generate ops.num de novo #####
+#
+#    my @stage1 = qw(
+#        core.ops.orig
+#        bit.ops.orig
+#        ops.num.orig
+#    );
+#    copy_into_position($samplesdir, \@stage1, q{orig}, $opsdir);
+#    ($lastcode, $lastnumber) = run_test_stage(
+#        [ qw(
+#            src/ops/core.ops
+#            src/ops/bit.ops
+#        ) ],
+#        $numoutput,
+#        $major_version,
+#    );
+#    is($lastcode, q{bxors_s_sc_sc},
+#        "Stage 1:  Got expected last opcode");
+#    is($lastnumber, 190,
+#        "Stage 1:  Got expected last opcode number");
+#
+#    ###### Stage 2:  Delete some opcodes and regenerate ops.num #####
+#
+#    my @stage2 = qw( bit.ops.second );
+#    copy_into_position($samplesdir, \@stage2, q{second}, $opsdir);
+#    ($lastcode, $lastnumber) = run_test_stage(
+#        [ qw(
+#            src/ops/core.ops
+#            src/ops/bit.ops
+#        ) ],
+#        $numoutput,
+#        $major_version,
+#    );
+#    is($lastcode, q{bxor_i_ic_ic},
+#        "Stage 2:  Got expected last opcode");
+#    is($lastnumber, 184,
+#        "Stage 2:  Got expected last opcode number");
+#
+#    ##### Stage 3:  Add some opcodes and regenerate ops.num #####
+#
+#    my @stage3 = qw( pic.ops.orig );
+#    copy_into_position($samplesdir, \@stage3, q{orig}, $opsdir);
+#    ($lastcode, $lastnumber) = run_test_stage(
+#        [ qw(
+#            src/ops/core.ops
+#            src/ops/bit.ops
+#            src/ops/pic.ops
+#        ) ],
+#        $numoutput,
+#        $major_version,
+#    );
+#    ($lastcode, $lastnumber) = get_last_opcode($numoutput);
+#    is($lastcode, q{pic_callr___pc},
+#        "Stage 3:  Got expected last opcode");
+#    is($lastnumber, 189,
+#        "Stage 3:  Got expected last opcode number");
+
+    # Go back where we started to activate cleanup
+    chdir $cwd or croak "Unable to change back to starting directory: $!";
+}
 pass("Completed all tests in $0");
 
 #################### SUBROUTINES ####################

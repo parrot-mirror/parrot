@@ -154,6 +154,45 @@ sub renum_op_map_file {
         }
         close $OP;
     }
+    else {
+
+#        my ( $name, $number, @lines, %fixed, $fix );
+        my ( $name, $number, @lines, %fixed );
+#        $fix = 1;
+        open my $OP, '<', $file
+            or die "Can't open $file, error $!";
+        while (<$OP>) {
+#            push @lines, $_ if $fix;
+            push @lines, $_;
+            chomp;
+#            $fix = 0 if /^###DYNAMIC###/;
+            s/#.*$//;
+            s/\s*$//;
+            s/^\s*//;
+            next unless $_;
+            ( $name, $number ) = split( /\s+/, $_ );
+#            $fixed{$name} = $number if ($fix);
+            $fixed{$name} = $number;
+        }
+        close $OP;
+
+        # Now we re-open the very same file we just read -- this time for
+        # writing.  We directly print all the lines n @lines, i.e., those
+        # above the DYNAMIC line.  For the purpose of renumbering, we create
+        # an index $n.
+
+        open $OP, '>', $file
+            or die "Can't open $file, error $!";
+        print $OP @lines;
+        my $n = scalar keys %fixed;;
+    
+        for my $op ( @{ $self->{ops}->{OPS} } ) {
+            if (! $fixed{$op}) {
+                printf $OP "%-31s%4d\n", $op->full_name, ++$n;
+            }
+        }
+        close $OP;
+    }
     return 1;
 }
 
