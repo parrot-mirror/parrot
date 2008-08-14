@@ -75,6 +75,15 @@ sub renum_op_map_file {
     my $file = scalar(@_) ? shift : $self->{num_file};
     my ( $name, $number, @lines, %fixed, $fix );
     $fix = 1;
+    # We open up the currently existing ops.num and file and read it
+    # line-by-line.  That file is basically divided into two halves separated
+    # by the ###DYNAMIC### line.  Above that line are found (a) inline
+    # comments and (b) the first 7, never-to-be-altered opcodes.  Below that
+    # line are all the remaining opcodes.  All opcode lines match the pattern
+    # /^(\w+)\s+(\d+)$/.  Everything above the line gets pushed into @lines
+    # and, if it's an opcode line, get's split and pushed into %fixed as well.
+    # Essentially nothing happens to the (opcode) lines below the DYNAMIC
+    # line.
     open my $OP, '<', $file
         or die "Can't open $file, error $!";
     while (<$OP>) {
@@ -89,6 +98,9 @@ sub renum_op_map_file {
         $fixed{$name} = $number if ($fix);
     }
     close $OP;
+    # Now we re-open the very same file we just read -- this time for writing.
+    # We directly print all the lines n @lines, i.e., those above the DYNAMIC 
+    # line.  For the purpose of renumbering, we create an index $n.
     open $OP, '>', $file
         or die "Can't open $file, error $!";
     print $OP @lines;
@@ -101,9 +113,13 @@ sub renum_op_map_file {
     #
 
     for ( @{ $self->{ops}->{OPS} } ) {
+        # To account for the number of opcodes above the line, we'll increment
+        # the index by one for every element in %fixed.
         if ( defined $fixed{ $_->full_name } ) {
             $n = $fixed{ $_->full_name };
         }
+        # For all other opcodes, we'll print the opcode, increment the index,
+        # then print the index on that same line.
         else {
             printf $OP "%-31s%4d\n", $_->full_name, ++$n;
         }
