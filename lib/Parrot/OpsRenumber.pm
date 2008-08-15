@@ -155,23 +155,17 @@ sub renum_op_map_file {
         close $OP;
     }
     else {
-
-#        my ( $name, $number, @lines, %fixed, $fix );
         my ( $name, $number, @lines, %fixed );
-#        $fix = 1;
         open my $OP, '<', $file
             or die "Can't open $file, error $!";
         while (<$OP>) {
-#            push @lines, $_ if $fix;
             push @lines, $_;
             chomp;
-#            $fix = 0 if /^###DYNAMIC###/;
             s/#.*$//;
             s/\s*$//;
             s/^\s*//;
             next unless $_;
             ( $name, $number ) = split( /\s+/, $_ );
-#            $fixed{$name} = $number if ($fix);
             $fixed{$name} = $number;
         }
         close $OP;
@@ -184,11 +178,12 @@ sub renum_op_map_file {
         open $OP, '>', $file
             or die "Can't open $file, error $!";
         print $OP @lines;
-        my $n = scalar keys %fixed;;
+        my $n = (scalar keys %fixed) - 1;
     
         for my $op ( @{ $self->{ops}->{OPS} } ) {
-            if (! $fixed{$op}) {
-                printf $OP "%-31s%4d\n", $op->full_name, ++$n;
+            my $fn = $op->full_name;
+            if (! defined $fixed{$fn} ) {
+                printf $OP "%-31s%4d\n", $fn, ++$n;
             }
         }
         close $OP;
