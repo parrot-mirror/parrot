@@ -39,17 +39,20 @@ tools/dev/opsrenumber.pl - Renumber F<src/ops/ops.num>.
 
 This program should be used when adding or removing opcodes.
 
+This program will behave differently depending on whether Parrot has reached
+major version 1 or not.  In the current period (major version 0), all the
+opcodes except the first seven are potentially deletable and the opcodes'
+order may be rearranged.  Once a production version of Parrot has been
+released, all then existing opcodes and their numbers will be deemed
+immutable, though new opcodes may be added at the end of the list.
+
 =head1 SEE ALSO
 
 =over 4
 
-=item F<tools/build/ops2c.pl>.
+=item F<lib/Parrot/Ops2pm/Base.pm>.
 
-=item F<lib/Parrot/Ops2pm.pm>.
-
-=item F<lib/Parrot/Ops2pm/Auxiliary.pm>.
-
-=item F<tools/dev/ops_renum.mak>.
+=item F<lib/Parrot/OpsRenumber.pm>.
 
 =back
 
