@@ -63,7 +63,8 @@ Hash reference with the following elements:
     inc_f       :   name of output C-header file
                     (generally, ops.h)
     script      :   name of the script to be executed by 'make'
-                    (generally, tools/build/ops2pm.pl)
+                    (generally, either tools/build/ops2pm.pl
+                    or tools/dev/opsrenumber.pl)
 
 =item * Return Value
 

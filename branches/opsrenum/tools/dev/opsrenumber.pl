@@ -58,31 +58,10 @@ immutable, though new opcodes may be added at the end of the list.
 
 =head1 AUTHOR
 
-Over the years, the code now found in F<tools/dev/opsrenumber.pl> has been
-worked on by the following Parrot hackers:
+This code was refactored out of F<tools/build/ops2pm.pl>.  That file contains
+a list of the contributors to this code over the years.
 
-  bernhard
-  brentdax
-  chip
-  chromatic
-  coke
-  dan
-  gregor
-  jkeenan
-  leo
-  mikescott
-  particle
-  paultcochrane
-  petdance
-  robert
-  simon
-  tewk
-
-Others who provided code cited in the version control logs include:
-
-  Andy Dougherty
-  Jeff Gof
-  Steve Fink
+The refactoring of this file was done by James E Keenan.
 
 =cut
 
