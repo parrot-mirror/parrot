@@ -623,7 +623,7 @@ $2 and $3.
 =cut
 
 inline op mmdvtregister(in INT, in INT, in INT, invar PMC) {
-  mmd_register_sub(interp, $1, $2, $3, $4);
+  Parrot_mmd_register_sub(interp, $1, $2, $3, $4);
 }
 
 =item B<mmdvtfind>(out PMC, in INT, in INT, in INT)
@@ -633,7 +633,7 @@ Find the sub that would be called for vtable entry $2 for types $3 and $4.
 =cut
 
 inline op mmdvtfind(out PMC, in INT, in INT, in INT) {
-  $1 = mmd_vtfind(interp, $2, $3, $4);
+  $1 = Parrot_mmd_vtfind(interp, $2, $3, $4);
 }
 
 =back

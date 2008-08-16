@@ -77,7 +77,7 @@ pmclass MultiSub extends ResizablePMCArray need_ext provides array {
 
 =head1 SEE ALSO
 
-F<src/mmd.c>,
+F<src/multidispatch.c>,
 F<$perl6/doc/trunk/design/apo/A12.pod>,
 F<$perl6/doc/trunk/design/syn/S12.pod>
 

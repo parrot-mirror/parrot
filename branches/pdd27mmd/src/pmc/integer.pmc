@@ -41,11 +41,11 @@ if (self == dest) {
     /* RT #46621 preserve type system */
     VTABLE_morph(interp, self, enum_class_BigInt);
     VTABLE_set_integer_native(interp, self, a);
-    return mmd_dispatch_p_pip(interp, self, b, dest, mmd);
+    return Parrot_mmd_dispatch_p_pip(interp, self, b, dest, mmd);
 }
 else {
     PMC * const temp = VTABLE_get_bignum(interp, self);
-    return mmd_dispatch_p_pip(interp, temp, b, dest, mmd);
+    return Parrot_mmd_dispatch_p_pip(interp, temp, b, dest, mmd);
 }
 }
 
@@ -60,11 +60,11 @@ if (PARROT_ERRORS_test(interp, PARROT_ERRORS_OVERFLOW_FLAG))
 if (self == dest) {
     VTABLE_morph(interp, self, enum_class_BigInt);
     VTABLE_set_integer_native(interp, self, a);
-    return mmd_dispatch_p_ppp(interp, self, val, dest, mmd);
+    return Parrot_mmd_dispatch_p_ppp(interp, self, val, dest, mmd);
 }
 else {
     PMC * const temp = VTABLE_get_bignum(interp, self);
-    return mmd_dispatch_p_ppp(interp, temp, val, dest, mmd);
+    return Parrot_mmd_dispatch_p_ppp(interp, temp, val, dest, mmd);
 }
 }
 

@@ -1,7 +1,7 @@
-/* mmd.h
+/* multidispatch.h
  *  Copyright (C) 2003-2007, The Perl Foundation.
  *  SVN Info
- *     $Id$
+ *     $Id: multidispatch.h 28111 2008-06-05 19:27:08Z coke $
  *  Overview:
  *     This is the API header for the mmd subsystem
  *  Data Structure and Algorithms:
@@ -45,7 +45,7 @@ typedef struct _MMD_table {
 } MMD_table;
 
 
-/* HEADERIZER BEGIN: src/mmd.c */
+/* HEADERIZER BEGIN: src/multidispatch.c */
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 
 PARROT_API
@@ -61,7 +61,7 @@ funcptr_t get_mmd_dispatch_type(PARROT_INTERP,
         FUNC_MODIFIES(*is_pmc);
 
 PARROT_API
-void mmd_add_by_class(PARROT_INTERP,
+void Parrot_mmd_add_by_class(PARROT_INTERP,
     INTVAL functype,
     ARGIN(STRING *left_class),
     ARGIN(STRING *right_class),
@@ -71,17 +71,17 @@ void mmd_add_by_class(PARROT_INTERP,
         __attribute__nonnull__(4);
 
 PARROT_API
-void mmd_add_function(PARROT_INTERP,
+void Parrot_mmd_add_function(PARROT_INTERP,
     INTVAL func_nr,
     NULLOK(funcptr_t function))
         __attribute__nonnull__(1);
 
 PARROT_API
-void mmd_destroy(PARROT_INTERP)
+void Parrot_mmd_destroy(PARROT_INTERP)
         __attribute__nonnull__(1);
 
 PARROT_API
-INTVAL mmd_dispatch_i_pp(PARROT_INTERP,
+INTVAL Parrot_mmd_dispatch_i_pp(PARROT_INTERP,
     ARGIN(PMC *left),
     ARGIN(PMC *right),
     INTVAL func_nr)
@@ -91,7 +91,7 @@ INTVAL mmd_dispatch_i_pp(PARROT_INTERP,
 
 PARROT_API
 PARROT_CAN_RETURN_NULL
-PMC* mmd_dispatch_p_pip(PARROT_INTERP,
+PMC* Parrot_mmd_dispatch_p_pip(PARROT_INTERP,
     ARGIN(PMC *left),
     INTVAL right,
     ARGIN_NULLOK(PMC *dest),
@@ -101,7 +101,7 @@ PMC* mmd_dispatch_p_pip(PARROT_INTERP,
 
 PARROT_API
 PARROT_CAN_RETURN_NULL
-PMC* mmd_dispatch_p_pnp(PARROT_INTERP,
+PMC* Parrot_mmd_dispatch_p_pnp(PARROT_INTERP,
     ARGIN(PMC *left),
     FLOATVAL right,
     ARGIN_NULLOK(PMC *dest),
@@ -112,7 +112,7 @@ PMC* mmd_dispatch_p_pnp(PARROT_INTERP,
 PARROT_API
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
-PMC* mmd_dispatch_p_ppp(PARROT_INTERP,
+PMC* Parrot_mmd_dispatch_p_ppp(PARROT_INTERP,
     ARGIN(PMC *left),
     ARGIN(PMC *right),
     ARGIN_NULLOK(PMC *dest),
@@ -123,7 +123,7 @@ PMC* mmd_dispatch_p_ppp(PARROT_INTERP,
 
 PARROT_API
 PARROT_CAN_RETURN_NULL
-PMC* mmd_dispatch_p_psp(PARROT_INTERP,
+PMC* Parrot_mmd_dispatch_p_psp(PARROT_INTERP,
     ARGIN(PMC *left),
     ARGIN(STRING *right),
     ARGIN_NULLOK(PMC *dest),
@@ -133,7 +133,7 @@ PMC* mmd_dispatch_p_psp(PARROT_INTERP,
         __attribute__nonnull__(3);
 
 PARROT_API
-void mmd_dispatch_v_pi(PARROT_INTERP,
+void Parrot_mmd_dispatch_v_pi(PARROT_INTERP,
     ARGIN(PMC *left),
     INTVAL right,
     INTVAL func_nr)
@@ -141,7 +141,7 @@ void mmd_dispatch_v_pi(PARROT_INTERP,
         __attribute__nonnull__(2);
 
 PARROT_API
-void mmd_dispatch_v_pn(PARROT_INTERP,
+void Parrot_mmd_dispatch_v_pn(PARROT_INTERP,
     ARGIN(PMC *left),
     FLOATVAL right,
     INTVAL func_nr)
@@ -149,7 +149,7 @@ void mmd_dispatch_v_pn(PARROT_INTERP,
         __attribute__nonnull__(2);
 
 PARROT_API
-void mmd_dispatch_v_pp(PARROT_INTERP,
+void Parrot_mmd_dispatch_v_pp(PARROT_INTERP,
     ARGIN(PMC *left),
     ARGIN(PMC *right),
     INTVAL func_nr)
@@ -158,7 +158,7 @@ void mmd_dispatch_v_pp(PARROT_INTERP,
         __attribute__nonnull__(3);
 
 PARROT_API
-void mmd_dispatch_v_ps(PARROT_INTERP,
+void Parrot_mmd_dispatch_v_ps(PARROT_INTERP,
     ARGIN(PMC *left),
     ARGIN(STRING *right),
     INTVAL func_nr)
@@ -167,7 +167,7 @@ void mmd_dispatch_v_ps(PARROT_INTERP,
         __attribute__nonnull__(3);
 
 PARROT_API
-void mmd_register(PARROT_INTERP,
+void Parrot_mmd_register(PARROT_INTERP,
     INTVAL func_nr,
     INTVAL left_type,
     INTVAL right_type,
@@ -175,7 +175,7 @@ void mmd_register(PARROT_INTERP,
         __attribute__nonnull__(1);
 
 PARROT_API
-void mmd_register_sub(PARROT_INTERP,
+void Parrot_mmd_register_sub(PARROT_INTERP,
     INTVAL func_nr,
     INTVAL left_type,
     INTVAL right_type,
@@ -186,7 +186,7 @@ void mmd_register_sub(PARROT_INTERP,
 PARROT_API
 PARROT_CANNOT_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
-PMC * mmd_vtfind(PARROT_INTERP, INTVAL func_nr, INTVAL left, INTVAL right)
+PMC * Parrot_mmd_vtfind(PARROT_INTERP, INTVAL func_nr, INTVAL left, INTVAL right)
         __attribute__nonnull__(1);
 
 PARROT_API
@@ -225,7 +225,7 @@ void mmd_create_builtin_multi_stub(PARROT_INTERP,
         __attribute__nonnull__(2);
 
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
-/* HEADERIZER END: src/mmd.c */
+/* HEADERIZER END: src/multidispatch.c */
 
 
 #endif /* PARROT_MMD_H_GUARD */

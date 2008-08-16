@@ -601,7 +601,7 @@ The C<==> operation. Compares two array to hold equal elements.
             if (item1 == item2)
                 continue;
 
-            if (!mmd_dispatch_i_pp(INTERP, item1, item2, MMD_EQ))
+            if (!Parrot_mmd_dispatch_i_pp(INTERP, item1, item2, MMD_EQ))
                 return 0;
         }
 
