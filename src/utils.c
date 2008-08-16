@@ -853,7 +853,7 @@ static INTVAL
 COMPARE(PARROT_INTERP, void *a, void *b, PMC *cmp)
 {
     if (PMC_IS_NULL(cmp))
-        return mmd_dispatch_i_pp(interp, (PMC *)a, (PMC *)b, MMD_CMP);
+        return Parrot_mmd_dispatch_i_pp(interp, (PMC *)a, (PMC *)b, MMD_CMP);
 
     if (cmp->vtable->base_type == enum_class_NCI) {
         const sort_func_t f = (sort_func_t)D2FPTR(PMC_struct_val(cmp));

@@ -453,7 +453,7 @@ docs/imcc/operation.pod                                     [main]doc
 docs/intro.pod                                              [main]doc
 docs/jit.pod                                                [main]doc
 docs/memory_internals.pod                                   [main]doc
-docs/mmd.pod                                                [main]doc
+docs/multidispatch.pod                                      [main]doc
 docs/native_exec.pod                                        [main]doc
 docs/optable.pod                                            [main]doc
 docs/overview.pod                                           [main]doc
@@ -893,7 +893,7 @@ include/parrot/list.h                                       [main]include
 include/parrot/longopt.h                                    [main]include
 include/parrot/memory.h                                     [main]include
 include/parrot/misc.h                                       [main]include
-include/parrot/mmd.h                                        [main]include
+include/parrot/multidispatch.h                              [main]include
 include/parrot/nci.h                                        [main]include
 include/parrot/oo.h                                         [main]include
 include/parrot/oo_private.h                                 [main]include
@@ -3037,7 +3037,7 @@ src/main.c                                                  []
 src/malloc-trace.c                                          []
 src/malloc.c                                                []
 src/misc.c                                                  []
-src/mmd.c                                                   []
+src/multidispatch.c                                         []
 src/nci_test.c                                              []
 src/oo.c                                                    []
 src/ops/bit.ops                                             []
@@ -3524,7 +3524,7 @@ t/pmc/key.t                                                 []
 t/pmc/lexinfo.t                                             []
 t/pmc/lexpad.t                                              []
 t/pmc/managedstruct.t                                       []
-t/pmc/mmd.t                                                 []
+t/pmc/multidispatch.t                                       []
 t/pmc/multiarray.t                                          []
 t/pmc/multisub.t                                            []
 t/pmc/n_arithmetics.t                                       []

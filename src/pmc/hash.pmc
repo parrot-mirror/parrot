@@ -887,7 +887,7 @@ Check if two hashes hold the same keys and values.
             if (item1 == item2)
                 continue;
 
-            if (!mmd_dispatch_i_pp(INTERP, item1, item2, MMD_EQ))
+            if (!Parrot_mmd_dispatch_i_pp(INTERP, item1, item2, MMD_EQ))
                 return 0;
         }
 

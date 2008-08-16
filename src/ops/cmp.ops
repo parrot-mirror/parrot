@@ -86,7 +86,7 @@ op eq(in STR, in STR, inconst LABEL) :base_core {
 }
 
 op eq(invar PMC, invar PMC, inconst LABEL) :base_core {
-  if (mmd_dispatch_i_pp(interp, $1, $2, MMD_EQ)) {
+  if (Parrot_mmd_dispatch_i_pp(interp, $1, $2, MMD_EQ)) {
     goto OFFSET($3);
   }
 }
@@ -98,7 +98,7 @@ op eq(invar PMC, in INT, inconst LABEL) :base_core {
    */
   PMC *temp = pmc_new(interp, enum_class_Integer);
   PMC_int_val(temp) = $2;
-  if (mmd_dispatch_i_pp(interp, $1, temp, MMD_EQ)) {
+  if (Parrot_mmd_dispatch_i_pp(interp, $1, temp, MMD_EQ)) {
     goto OFFSET($3);
   }
 }
@@ -123,13 +123,13 @@ op eq(invar PMC, in STR, inconst LABEL) :base_core {
 }
 
 op eq_str(invar PMC, invar PMC, inconst LABEL) :base_core {
-  if (mmd_dispatch_i_pp(interp, $1, $2, MMD_STREQ)) {
+  if (Parrot_mmd_dispatch_i_pp(interp, $1, $2, MMD_STREQ)) {
     goto OFFSET($3);
   }
 }
 
 op eq_num(invar PMC, invar PMC, inconst LABEL) :base_core {
-  if (mmd_dispatch_i_pp(interp, $1, $2, MMD_NUMEQ)) {
+  if (Parrot_mmd_dispatch_i_pp(interp, $1, $2, MMD_NUMEQ)) {
     goto OFFSET($3);
   }
 }
@@ -193,7 +193,7 @@ op ne(in STR, in STR, inconst LABEL) :base_core {
 }
 
 op ne(invar PMC, invar PMC, inconst LABEL) :base_core {
-  if (! mmd_dispatch_i_pp(interp, $1, $2, MMD_EQ)) {
+  if (! Parrot_mmd_dispatch_i_pp(interp, $1, $2, MMD_EQ)) {
     goto OFFSET($3);
   }
 }
@@ -201,7 +201,7 @@ op ne(invar PMC, invar PMC, inconst LABEL) :base_core {
 op ne(invar PMC, in INT, inconst LABEL) :base_core {
   PMC *temp = pmc_new(interp, enum_class_Integer);
   PMC_int_val(temp) = $2;
-  if (! mmd_dispatch_i_pp(interp, $1, temp, MMD_EQ)) {
+  if (! Parrot_mmd_dispatch_i_pp(interp, $1, temp, MMD_EQ)) {
     goto OFFSET($3);
   }
 }
@@ -220,13 +220,13 @@ op ne(invar PMC, in STR, inconst LABEL) :base_core {
 }
 
 op ne_str(invar PMC, invar PMC, inconst LABEL) :base_core {
-  if (mmd_dispatch_i_pp(interp, $1, $2, MMD_STRCMP) != 0) {
+  if (Parrot_mmd_dispatch_i_pp(interp, $1, $2, MMD_STRCMP) != 0) {
     goto OFFSET($3);
   }
 }
 
 op ne_num(invar PMC, invar PMC, inconst LABEL) :base_core {
-  if (mmd_dispatch_i_pp(interp, $1, $2, MMD_NUMCMP) != 0) {
+  if (Parrot_mmd_dispatch_i_pp(interp, $1, $2, MMD_NUMCMP) != 0) {
     goto OFFSET($3);
   }
 }
@@ -286,7 +286,7 @@ op lt(in STR, in STR, inconst LABEL) :base_core {
 }
 
 op lt(invar PMC, invar PMC, inconst LABEL) :base_core {
-  if (mmd_dispatch_i_pp(interp, $1, $2, MMD_CMP) < 0) {
+  if (Parrot_mmd_dispatch_i_pp(interp, $1, $2, MMD_CMP) < 0) {
     goto OFFSET($3);
   }
 }
@@ -294,7 +294,7 @@ op lt(invar PMC, invar PMC, inconst LABEL) :base_core {
 op lt(invar PMC, in INT, inconst LABEL) :base_core {
   PMC *temp = pmc_new(interp, enum_class_Integer);
   PMC_int_val(temp) = $2;
-  if (mmd_dispatch_i_pp(interp, $1, temp, MMD_CMP) < 0) {
+  if (Parrot_mmd_dispatch_i_pp(interp, $1, temp, MMD_CMP) < 0) {
     goto OFFSET($3);
   }
 }
@@ -313,13 +313,13 @@ op lt(invar PMC, in STR, inconst LABEL) :base_core {
 }
 
 op lt_str(invar PMC, invar PMC, inconst LABEL) :base_core {
-  if (mmd_dispatch_i_pp(interp, $1, $2, MMD_STRCMP) < 0) {
+  if (Parrot_mmd_dispatch_i_pp(interp, $1, $2, MMD_STRCMP) < 0) {
     goto OFFSET($3);
   }
 }
 
 op lt_num(invar PMC, invar PMC, inconst LABEL) :base_core {
-  if (mmd_dispatch_i_pp(interp, $1, $2, MMD_NUMCMP) < 0) {
+  if (Parrot_mmd_dispatch_i_pp(interp, $1, $2, MMD_NUMCMP) < 0) {
     goto OFFSET($3);
   }
 }
@@ -367,7 +367,7 @@ op le(in STR, in STR, inconst LABEL) :base_core {
 }
 
 op le(invar PMC, invar PMC, inconst LABEL) :base_core {
-  if (mmd_dispatch_i_pp(interp, $1, $2, MMD_CMP) <= 0) {
+  if (Parrot_mmd_dispatch_i_pp(interp, $1, $2, MMD_CMP) <= 0) {
     goto OFFSET($3);
   }
 }
@@ -375,7 +375,7 @@ op le(invar PMC, invar PMC, inconst LABEL) :base_core {
 op le(invar PMC, in INT, inconst LABEL) :base_core {
   PMC *temp = pmc_new(interp, enum_class_Integer);
   PMC_int_val(temp) = $2;
-  if (mmd_dispatch_i_pp(interp, $1, temp, MMD_CMP) <= 0) {
+  if (Parrot_mmd_dispatch_i_pp(interp, $1, temp, MMD_CMP) <= 0) {
     goto OFFSET($3);
   }
 }
@@ -394,13 +394,13 @@ op le(invar PMC, in STR, inconst LABEL) :base_core {
 }
 
 op le_str(invar PMC, invar PMC, inconst LABEL) :base_core {
-  if (mmd_dispatch_i_pp(interp, $1, $2, MMD_STRCMP) <= 0) {
+  if (Parrot_mmd_dispatch_i_pp(interp, $1, $2, MMD_STRCMP) <= 0) {
     goto OFFSET($3);
   }
 }
 
 op le_num(invar PMC, invar PMC, inconst LABEL) :base_core {
-  if (mmd_dispatch_i_pp(interp, $1, $2, MMD_NUMCMP) <= 0) {
+  if (Parrot_mmd_dispatch_i_pp(interp, $1, $2, MMD_NUMCMP) <= 0) {
     goto OFFSET($3);
   }
 }
@@ -424,7 +424,7 @@ Branch if $1 is greater than $2.
 =cut
 
 op gt(invar PMC, invar PMC, inconst LABEL) :base_core {
-  if (mmd_dispatch_i_pp(interp, $1, $2, MMD_CMP) > 0) {
+  if (Parrot_mmd_dispatch_i_pp(interp, $1, $2, MMD_CMP) > 0) {
     goto OFFSET($3);
   }
 }
@@ -432,7 +432,7 @@ op gt(invar PMC, invar PMC, inconst LABEL) :base_core {
 op gt(invar PMC, in INT, inconst LABEL) :base_core {
   PMC *temp = pmc_new(interp, enum_class_Integer);
   PMC_int_val(temp) = $2;
-  if (mmd_dispatch_i_pp(interp, $1, temp, MMD_CMP) > 0) {
+  if (Parrot_mmd_dispatch_i_pp(interp, $1, temp, MMD_CMP) > 0) {
     goto OFFSET($3);
   }
 }
@@ -451,13 +451,13 @@ op gt(invar PMC, in STR, inconst LABEL) :base_core {
 }
 
 op gt_str(invar PMC, invar PMC, inconst LABEL) :base_core {
-  if (mmd_dispatch_i_pp(interp, $1, $2, MMD_STRCMP) > 0) {
+  if (Parrot_mmd_dispatch_i_pp(interp, $1, $2, MMD_STRCMP) > 0) {
     goto OFFSET($3);
   }
 }
 
 op gt_num(invar PMC, invar PMC, inconst LABEL) :base_core {
-  if (mmd_dispatch_i_pp(interp, $1, $2, MMD_NUMCMP) > 0) {
+  if (Parrot_mmd_dispatch_i_pp(interp, $1, $2, MMD_NUMCMP) > 0) {
     goto OFFSET($3);
   }
 }
@@ -481,7 +481,7 @@ Branch if $1 is greater than or equal to $2.
 =cut
 
 op ge(invar PMC, invar PMC, inconst LABEL) :base_core {
-  if (mmd_dispatch_i_pp(interp, $1, $2, MMD_CMP) >= 0) {
+  if (Parrot_mmd_dispatch_i_pp(interp, $1, $2, MMD_CMP) >= 0) {
     goto OFFSET($3);
   }
 }
@@ -489,7 +489,7 @@ op ge(invar PMC, invar PMC, inconst LABEL) :base_core {
 op ge(invar PMC, in INT, inconst LABEL) :base_core {
   PMC *temp = pmc_new(interp, enum_class_Integer);
   PMC_int_val(temp) = $2;
-  if (mmd_dispatch_i_pp(interp, $1, temp, MMD_CMP) >= 0) {
+  if (Parrot_mmd_dispatch_i_pp(interp, $1, temp, MMD_CMP) >= 0) {
     goto OFFSET($3);
   }
 }
@@ -507,13 +507,13 @@ op ge(invar PMC, in STR, inconst LABEL) :base_core {
 }
 
 op ge_str(invar PMC, invar PMC, inconst LABEL) :base_core {
-  if (mmd_dispatch_i_pp(interp, $1, $2, MMD_STRCMP) >= 0) {
+  if (Parrot_mmd_dispatch_i_pp(interp, $1, $2, MMD_STRCMP) >= 0) {
     goto OFFSET($3);
   }
 }
 
 op ge_num(invar PMC, invar PMC, inconst LABEL) :base_core {
-  if (mmd_dispatch_i_pp(interp, $1, $2, MMD_NUMCMP) >= 0) {
+  if (Parrot_mmd_dispatch_i_pp(interp, $1, $2, MMD_NUMCMP) >= 0) {
     goto OFFSET($3);
   }
 }
@@ -619,7 +619,7 @@ inline op cmp(out INT, in STR, in STR) :base_core {
 }
 
 inline op cmp(out INT, invar PMC, invar PMC) :base_core {
-  $1 = mmd_dispatch_i_pp(interp, $2, $3, MMD_CMP);
+  $1 = Parrot_mmd_dispatch_i_pp(interp, $2, $3, MMD_CMP);
 }
 
 inline op cmp(out INT, invar PMC, in INT) :base_core {
@@ -642,11 +642,11 @@ inline op cmp(out INT, invar PMC, in STR) :base_core {
 }
 
 inline op cmp_str(out INT, invar PMC, invar PMC) :base_core {
-  $1 = mmd_dispatch_i_pp(interp, $2, $3, MMD_STRCMP);
+  $1 = Parrot_mmd_dispatch_i_pp(interp, $2, $3, MMD_STRCMP);
 }
 
 inline op cmp_num(out INT, invar PMC, invar PMC) :base_core {
-  $1 = mmd_dispatch_i_pp(interp, $2, $3, MMD_NUMCMP);
+  $1 = Parrot_mmd_dispatch_i_pp(interp, $2, $3, MMD_NUMCMP);
 }
 
 ########################################
@@ -727,7 +727,7 @@ Sets $1 to 1 if $2 is greater than $3.
 =cut
 
 inline op isgt(out INT, invar PMC, invar PMC) {
-  $1 = (mmd_dispatch_i_pp(interp, $2, $3, MMD_CMP) > 0);
+  $1 = (Parrot_mmd_dispatch_i_pp(interp, $2, $3, MMD_CMP) > 0);
 }
 
 =item B<isge>(out INT, in INT, in INT)
@@ -745,7 +745,7 @@ Sets $1 to 1 if $2 is greater than or equal to $3.
 =cut
 
 inline op isge(out INT, invar PMC, invar PMC) {
-  $1 = (mmd_dispatch_i_pp(interp, $2, $3, MMD_CMP) >= 0);
+  $1 = (Parrot_mmd_dispatch_i_pp(interp, $2, $3, MMD_CMP) >= 0);
 }
 
 =item B<isle>(out INT, in INT, in INT)
@@ -773,7 +773,7 @@ inline op isle(out INT, in STR, in STR) {
 }
 
 inline op isle(out INT, invar PMC, invar PMC) {
-  $1 = (mmd_dispatch_i_pp(interp, $2, $3, MMD_CMP) <= 0);
+  $1 = (Parrot_mmd_dispatch_i_pp(interp, $2, $3, MMD_CMP) <= 0);
 }
 
 =item B<islt>(out INT, in INT, in INT)
@@ -801,7 +801,7 @@ inline op islt(out INT, in STR, in STR) {
 }
 
 inline op islt(out INT, invar PMC, invar PMC) {
-  $1 = (mmd_dispatch_i_pp(interp, $2, $3, MMD_CMP) < 0);
+  $1 = (Parrot_mmd_dispatch_i_pp(interp, $2, $3, MMD_CMP) < 0);
 }
 
 =item B<iseq>(out INT, in INT, in INT)
@@ -832,7 +832,7 @@ inline op iseq(out INT, invar PMC, invar PMC) {
   if (&$2 == &$3)
     $1 = 1;
   else
-    $1 = mmd_dispatch_i_pp(interp, $2, $3, MMD_EQ);
+    $1 = Parrot_mmd_dispatch_i_pp(interp, $2, $3, MMD_EQ);
 }
 
 =item B<isne>(out INT, in INT, in INT)
@@ -863,7 +863,7 @@ inline op isne(out INT, invar PMC, invar PMC) {
   if (&$2 == &$3)
     $1 = 0;
   else
-    $1 = !mmd_dispatch_i_pp(interp, $2, $3, MMD_EQ);
+    $1 = !Parrot_mmd_dispatch_i_pp(interp, $2, $3, MMD_EQ);
 }
 
 =back

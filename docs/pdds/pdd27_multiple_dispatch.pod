@@ -205,7 +205,7 @@ None.
 =head1 REFERENCES
 
 docs/mmd.pod
-src/mmd.c
+src/multidispatch.c
 src/pmc/multisub.pmc
 
 =cut

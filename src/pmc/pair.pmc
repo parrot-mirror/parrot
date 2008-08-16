@@ -210,7 +210,7 @@ Check if two Pairs hold the same keys and values.
         k1 = from->key;
         k2 = to->key;
 
-        if (!mmd_dispatch_i_pp(INTERP, k1, k2, MMD_EQ))
+        if (!Parrot_mmd_dispatch_i_pp(INTERP, k1, k2, MMD_EQ))
             return 0;
 
         p1 = from->value;

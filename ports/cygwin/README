@@ -234,7 +234,7 @@ Files included in the =parrot= package:
   /usr/share/doc/parrot-0.6.4/docs/intro.pod
   /usr/share/doc/parrot-0.6.4/docs/jit.pod
   /usr/share/doc/parrot-0.6.4/docs/memory_internals.pod
-  /usr/share/doc/parrot-0.6.4/docs/mmd.pod
+  /usr/share/doc/parrot-0.6.4/docs/multidispatch.pod
   /usr/share/doc/parrot-0.6.4/docs/native_exec.pod
   /usr/share/doc/parrot-0.6.4/docs/ops/bit.pod
   /usr/share/doc/parrot-0.6.4/docs/ops/cmp.pod
@@ -667,7 +667,7 @@ Files included in the =libparrot-devel= package:
   /usr/include/parrot/longopt.h
   /usr/include/parrot/memory.h
   /usr/include/parrot/misc.h
-  /usr/include/parrot/mmd.h
+  /usr/include/parrot/multidispatch.h
   /usr/include/parrot/nci.h
   /usr/include/parrot/oo.h
   /usr/include/parrot/oo_private.h

@@ -1172,7 +1172,7 @@ The C<==> operation. Compares two array to hold equal elements.
             PMC * const item2 = VTABLE_get_pmc_keyed_int(INTERP, value, j);
 
             if (item1 != item2)
-                if (!mmd_dispatch_i_pp(INTERP, item1, item2, MMD_EQ))
+                if (!Parrot_mmd_dispatch_i_pp(INTERP, item1, item2, MMD_EQ))
                     return 0;
         }
 

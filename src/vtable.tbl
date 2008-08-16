@@ -2,7 +2,7 @@
 # [MAIN] #default section name
 
 # MMD_EQ ... MMD_STRCMP must be in one block
-# see src/mmd.c
+# see src/multidispatch.c
 
 # INPLACE MMD variant must always be normal op + 1
 
