@@ -6,7 +6,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 14;
+use Test::More qw(no_plan); # tests => 14;
 use Carp;
 use Cwd;
 use File::Basename;
@@ -41,13 +41,13 @@ ok(-d $samplesdir, "Able to locate samples directory");
     ##### Stage 1:  Generate ops.num de novo #####
 
     my @stage1 = qw(
-        core.ops.orig
-        bit.ops.orig
-        ops.num.orig
+        core_ops.orig
+        bit_ops.orig
+        ops_num.orig
     );
     copy_into_position($samplesdir, \@stage1, q{orig}, $opsdir);
     foreach my $f ( qw| core bit | ) {
-        copy qq{$samplesdir/$f.ops.orig}, qq{src/ops/$f.ops.post}
+        copy qq{$samplesdir/${f}_ops.orig}, qq{src/ops/$f.ops.post}
             or croak "Unable to store $f for later testing: $!";
     }
     ($lastcode, $lastnumber) = run_test_stage(
@@ -65,7 +65,7 @@ ok(-d $samplesdir, "Able to locate samples directory");
 
     ###### Stage 2:  Delete some opcodes and regenerate ops.num #####
 
-    my @stage2 = qw( bit.ops.second );
+    my @stage2 = qw( bit_ops.second );
     copy_into_position($samplesdir, \@stage2, q{second}, $opsdir);
     ($lastcode, $lastnumber) = run_test_stage(
         [ qw(
@@ -82,7 +82,7 @@ ok(-d $samplesdir, "Able to locate samples directory");
 
     ##### Stage 3:  Add some opcodes and regenerate ops.num #####
 
-    my @stage3 = qw( pic.ops.orig );
+    my @stage3 = qw( pic_ops.orig );
     copy_into_position($samplesdir, \@stage3, q{orig}, $opsdir);
     ($lastcode, $lastnumber) = run_test_stage(
         [ qw(
@@ -102,13 +102,13 @@ ok(-d $samplesdir, "Able to locate samples directory");
     ##### Stage 4:  Again generate ops.num de novo #####
 
     my @stage4 = qw(
-        core.ops.orig
-        bit.ops.orig
-        ops.num.orig
+        core_ops.orig
+        bit_ops.orig
+        ops_num.orig
     );
     copy_into_position($samplesdir, \@stage4, q{orig}, $opsdir);
     foreach my $f ( qw| core bit | ) {
-        copy qq{$samplesdir/$f.ops.orig}, qq{src/ops/$f.ops.post}
+        copy qq{$samplesdir/${f}_ops.orig}, qq{src/ops/$f.ops.post}
             or croak "Unable to store $f for later testing: $!";
     }
     ($lastcode, $lastnumber) = run_test_stage(
@@ -129,7 +129,7 @@ ok(-d $samplesdir, "Able to locate samples directory");
 
     ###### Stage 5:  Delete some opcodes and regenerate ops.num #####
 
-    my @stage5 = qw( bit.ops.second );
+    my @stage5 = qw( bit_ops.second );
     copy_into_position($samplesdir, \@stage5, q{second}, $opsdir);
     ($lastcode, $lastnumber) = run_test_stage(
         [ qw(
@@ -146,7 +146,7 @@ ok(-d $samplesdir, "Able to locate samples directory");
 
     ##### Stage 6:  Add some opcodes and regenerate ops.num #####
 
-    my @stage6 = qw( pic.ops.orig );
+    my @stage6 = qw( pic_ops.orig );
     copy_into_position($samplesdir, \@stage6, q{orig}, $opsdir);
     ($lastcode, $lastnumber) = run_test_stage(
         [ qw(
@@ -196,6 +196,7 @@ sub copy_into_position {
         my $fullor = File::Spec->catfile( $samplesdir, $or );
         my $real;
         ($real = $or) =~ s/\.$ext$//;
+        $real =~ s/_/\./g;
         my $fullreal = File::Spec->catfile( $opsdir, $real );
         copy $fullor, $fullreal or croak "Unable to copy $or";
     }
