@@ -131,7 +131,8 @@ When all is well, then commit your changes:
  svn diff | more
  svn commit
 
-Write down the revision number from this commit. You will need it later in step 7.
+Write down the revision number from this commit. You will need it later in
+step 7.
 
 =item 4.
 
@@ -322,7 +323,6 @@ the 3rd Tuesday of each month. Version numbers for each release will be
 determined each month, and will depend on the features actually present in
 that release.
 
- - August 19th, 2008    - Bob Rogers
  - September 16th, 2008 - Patrick R. Michaud
  - October 21st, 2008   - Jerry Gay
  - November 18th, 2008  - chromatic
