@@ -79,21 +79,39 @@ pmclass MultiSub extends ResizablePMCArray need_ext provides array {
     }
 
     VTABLE PMC *get_pmc() {
-        PMC * const list = Parrot_mmd_sort_manhattan(INTERP, SELF);
+        PMC * list = Parrot_mmd_sort_manhattan(INTERP, SELF);
 
         if (PMC_IS_NULL(list))
             Parrot_ex_throw_from_c_args(INTERP, NULL, 1, "No applicable methods.\n");
-
         return list;
     }
+
+/*
+    VTABLE PMC *get_pmc_keyed(PMC *key) {
+    }
+
+    VTABLE PMC *get_pmc_keyed_string(STRING *s) {
+    }
+*/
 
     /* stub get_iter method. Takes an argument list PMC, sorts the subs in the
        multi according to the closeness to that list, and returns an iterator
        over the sorted list of subs. Or, it could take a string PMC where
        type letters (P S N I) are whitespace delimited. */
-    METHOD PMC *get_iter(PMC *list) {
-    }
+/*
+    METHOD PMC *get_iter(PMC *args) {
+        STRING * const _array  = CONST_STRING(interp, "Array");
+        STRING * const _string = CONST_STRING(interp, "String");
 
+        if (VTABLE_isa(INTERP, args, _array))
+            return VTABLE_get_pmc_keyed(INTERP, SELF, args);
+        else if (VTABLE_isa(INTERP, args, _string))
+            return VTABLE_get_pmc_keyed_string(INTERP, SELF, args);
+        else
+            Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INVALID_OPERATION,
+                    "attempt to call get_iter method with invalid arg type.\n");
+    }
+*/
 }
 
 /*
