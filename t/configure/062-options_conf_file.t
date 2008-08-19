@@ -5,7 +5,7 @@
 
 use strict;
 use warnings;
-use Test::More tests =>  9;
+use Test::More tests =>  11;
 use lib qw( lib );
 use Parrot::Configure::Options ();
 use Parrot::Configure::Options::Conf::File qw(
@@ -215,9 +215,10 @@ eval {
 };
 like($@, qr/dizzy/, "Invalid option correctly detected during _set_steps()");
 
-########## Overall test of conditional_assignments() ##########
+########## Overall tests of conditional_assignments() ##########
 
 {
+    # hisfoobar expected to fail due to lack of ==cut 
     my $args = {
         mode => 'file',
         argv => [ q{--file=t/configure/testlib/hisfoobar} ],
@@ -238,6 +239,40 @@ like($@, qr/dizzy/, "Invalid option correctly detected during _set_steps()");
     };
     like($@, qr/Configuration file $data->{file} did not parse correctly/,
         "Got expected die message for options_components()");
+}
+
+{
+    # herfoobar expected to succeed
+    my $args = {
+        mode => 'file',
+        argv => [ q{--file=t/configure/testlib/herfoobar} ],
+    };
+    my ($options_components, $script);
+    ($args, $options_components, $script) =
+        Parrot::Configure::Options::_process_options_components($args);
+    
+    my ($data, $short_circuits_seen_ref) =
+        Parrot::Configure::Options::_initial_pass(
+            $args, $options_components, $script
+        );
+   
+    my $steps_list_ref;
+    ($data, $steps_list_ref) =
+        &{ $options_components->{conditionals} }($data);
+    is_deeply($data, {
+        'link' => '/usr/bin/g++',
+        'maintainer' => undef,
+        'cxx' => '/usr/bin/g++',
+        'nomanicheck' => 1,
+        'file' => 't/configure/testlib/herfoobar',
+        'debugging' => 1,
+        'cc' => '/usr/bin/gcc',
+        'verbose-step' => 'init::hints',
+        'ld' => '/usr/bin/g++'
+      }, "Got expected configuration data");
+
+    is(scalar(@{ $steps_list_ref }), 66,
+        "Got expected number of configuration steps");
 }
 
 pass("Completed all tests in $0");
