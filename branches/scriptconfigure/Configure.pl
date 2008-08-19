@@ -84,22 +84,42 @@ my $make = $conf->data->get('make');
 
 =head1 NAME
 
-Configure.pl - Parrot's Configuration Script
+Configure.pl - Parrot's configuration script
 
 =head1 SYNOPSIS
 
     % perl Configure.pl [options]
+
+or:
+
+    % perl Configure.pl --file=/path/to/configuration/directives
 
 =head1 DESCRIPTION
 
 This is Parrot's configuration program. It should be run to create
 the necessary system-specific files before building Parrot.
 
-=head2 Command-line Options
+We now offer two interfaces to configuration:
 
-General Options
+=over 4
 
-=over
+=item * Command-Line Interface
+
+All configuration options are placed on the command-line.  You may request
+interactive configuration.
+
+=item * Configuration-File Interface
+
+All configuration options are placed in a special configuration file whose
+full path is invoked on the command-line as
+C<--file=/path/to/configuration/directives> as the sole command-line option.
+You may not request interactive configuration.
+
+=back
+
+=head2 General Options
+
+=over 4
 
 =item C<--help>
 
@@ -147,7 +167,8 @@ Used in combination with C<--step=gen::languages> to regenerate makefiles.
 
 =item C<--ask>
 
-This turns on the user prompts.
+This turns on the user prompts during configuraion.  Available only in
+Command-Line interface.  Not available in Configuration-File interface.
 
 =item C<--test>
 
@@ -178,9 +199,9 @@ run the tests described in C<--test=build>.
 
 =back
 
-Compile Options
+=head2 Compile Options
 
-=over
+=over 4
 
 =item C<--debugging=0>
 
@@ -271,9 +292,9 @@ needed to use inet_aton for systems that lack inet_pton:
 
 =back
 
-Parrot Options
+=head2 Parrot Options
 
-=over
+=over 4
 
 =item C<--intval=(type)>
 
@@ -314,9 +335,9 @@ of: C<gc>, C<libc>, C<malloc> or C<malloc-trace>. The default is C<gc>.
 
 =back
 
-International Components For Unicode (ICU) Options
+=head2 International Components For Unicode (ICU) Options
 
-=over
+=over 4
 
 =item C<--icu-config=/path/to/icu-config>
 
@@ -348,9 +369,9 @@ E.g.
 
 =back
 
-Other Options
+=head2 Other Options
 
-=over
+=over 4
 
 =item C<--maintainer>
 
