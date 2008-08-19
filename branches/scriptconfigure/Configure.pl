@@ -106,14 +106,16 @@ We now offer two interfaces to configuration:
 =item * Command-Line Interface
 
 All configuration options are placed on the command-line.  You may request
-interactive configuration.
+interactive configuration with the C<--ask> option.  You may not use the
+C<--file> option, as that is reserved for the Configuration-File interface.
 
 =item * Configuration-File Interface
 
 All configuration options are placed in a special configuration file whose
 full path is invoked on the command-line as
 C<--file=/path/to/configuration/directives> as the sole command-line option.
-You may not request interactive configuration.
+You may not request interactive configuration.  For specific instructions, see
+B<CONFIGURATION-FILE INTERFACE> below.
 
 =back
 
@@ -383,6 +385,258 @@ Needs a working parser and lexer.
 Build parrot assuming only pure ANSI C is available.
 
 =back
+
+=head1 CONFIGURATION-FILE INTERFACE
+
+In the Configuration-File interface, unlike the Command-Line interface, you
+may delete configuration steps or run them in an order different from that
+listed in Parrot::Configure::Step::List.
+
+A configuration file is a plain-text file located somewhere in or under your
+top-level Parrot directory.  Unless indicated otherwise, all lines in this
+file must have no leading whitespace.  As in Perl 5, lines beginning with C<#>
+marks are comments and are ignored during parsing of the file.  Unlike Perl 5,
+you may not begin comments in the middle of a line.
+
+The configuration file must contain these three sections:
+
+=over 4
+
+=item variables
+
+=over 4
+
+=item *
+
+Section begins with line C<=variables> and must be followed by at least one
+blank line.  All other content in this section is optional.
+
+=item *
+
+Section may contain one or more I<key=value> pairs which assign strings to
+variables much in the way that you would do in a shell script wrapping around
+F<Configure.pl>.
+
+    =variables
+
+    CC=/usr/bin/gcc
+    CX=/usr/bin/g++
+
+So if you typically invoked F<Configure.pl> by wrapping it in a shell script
+for the purpose of setting environmental variables used in options, like this:
+
+    CC="/usr/bin/gcc"
+    CX="/usr/bin/g++"
+    /usr/local/bin/perl Configure.pl \
+        --cc="$CC" \
+        --cxx="$CX" \
+        --link="$CX" \
+        --ld="$CX"
+
+... you would now place the assignments to C<CC> and C<CX> in the
+I<=variables> section of the configuration file (as above).
+
+=back
+
+=item general
+
+=over 4
+
+=item *
+
+Section begins with line C<=general> and must be followed by at least one
+blank line.  All other content in this section is optional.
+
+=item *
+
+This section is the location recommended for listing options whose impact is
+not conceptually limited to a single step.  It is also the location where the
+variables defined in the I<=variables> section are assigned to particular
+parrot configuration options.  Entries in this section must be either
+I<option=value> pairs or be options which will be assigned a true value.
+
+    cc=$CC
+    cxx=$CX
+    link=$CX
+    ld=/usr/bin/g++
+    verbose
+
+Note that when the value is a variable defined in the I<=variables> section,
+it must be preceded by a C<$> sign.
+
+=item *
+
+You I<may> list options here which are I<conceptually> limited to a single
+configuration step.  For example, if you wished to skip validation of the
+F<MANIFEST> during configuration and to configure without ICU, you I<could>,
+in this section, say:
+
+    nomanicheck
+    without-icu
+
+However, as we shall quickly see, it's conceptually clearer to place these
+values next to those configuration steps that actually use them.
+
+=back
+
+=item steps
+
+=over 4
+
+=item *
+
+Section begins with line C<=steps> and must be followed by at least one
+blank line, in turn followed by the list of configuration steps, followed by
+another blank line followed by a line C<=cut> (just like POD).
+
+=item *
+
+The order in which you list the steps is the order in which they will be
+executed.  If you delete a step from the canonical list or comment a step out,
+it will not be executed.
+
+    ...
+    auto::snprintf
+    # auto::perldoc
+    auto::ctags
+    ...
+
+In the above example, step C<auto::perldoc> will be completely skipped.  You
+will not see it listed as C<....skipped> in F<Configure.pl>'s output; it will
+simply not be there at all.
+
+=item *
+
+This is the recommended location to call options whose impact is
+I<conceptually> limited to a single configuration step.  Type the
+configuration step's name, type a whitespace, type the option (with no leading
+C<-->) and repeat as needed for additional step-specific options.
+
+    init::manifest nomanicheck
+    ...
+
+=item *
+
+This is also the location to call options whose impact is limited to one step
+at a time but which may be applied to more than one configuration step.  The
+C<fatal-step> and C<verbose-step> options are the best examples of this case.
+Rather than requesting verbose output from all configuration steps, you may,
+for example, wish to designate only a few steps for verbose output:
+
+    ...
+    init::hints verbose-step
+    init::headers
+    inter::progs fatal-step
+    ...
+    auto::gcc verbose-step
+    ...
+
+In the above example, F<Configure.pl> will grind to a halt if C<inter::progs>
+does not complete successfully.  You will get verbose output only from
+C<init::hints> and C<auto::gcc>; the other 60+ steps will be terse.
+
+=item *
+
+Nothing prevents you from listing general options anywhere in this section.
+
+    init::manifest nomanicheck cc=$CC ld=/usr/bin/g++ verbose
+    init::defaults
+    ...
+
+That will work -- but why would you want to do something that messy?
+
+=back
+
+=back
+
+=head2 Example
+
+Ignoring leading whitespace, this is an example of a correctly formed
+configuration file.
+
+    =variables
+
+    CC=/usr/bin/gcc
+    CX=/usr/bin/g++
+
+    =general
+
+    cc=$CC
+    cxx=$CX
+    link=$CX
+    ld=/usr/bin/g++
+
+    =steps
+
+    init::manifest nomanicheck
+    init::defaults
+    init::install
+    init::miniparrot
+    init::hints verbose-step
+    init::headers
+    inter::progs
+    inter::make
+    inter::lex
+    inter::yacc
+    auto::gcc
+    auto::glibc
+    auto::backtrace
+    auto::fink
+    auto::macports
+    auto::msvc
+    auto::attributes
+    auto::warnings
+    init::optimize
+    inter::shlibs
+    inter::libparrot
+    inter::charset
+    inter::encoding
+    inter::types
+    auto::ops
+    auto::pmc
+    auto::alignptrs
+    auto::headers
+    auto::sizes
+    auto::byteorder
+    auto::va_ptr
+    auto::format
+    auto::isreg
+    auto::arch
+    auto::jit
+    auto::cpu
+    auto::funcptr
+    auto::cgoto
+    auto::inline
+    auto::gc
+    auto::memalign
+    auto::signal
+    auto::socklen_t
+    auto::env
+    auto::aio
+    auto::gmp
+    auto::readline
+    auto::gdbm
+    auto::pcre
+    auto::opengl
+    auto::crypto
+    auto::gettext
+    auto::snprintf
+    # auto::perldoc
+    auto::ctags
+    auto::revision
+    auto::icu
+    gen::config_h
+    gen::core_pmcs
+    gen::crypto
+    gen::parrot_include
+    gen::opengl
+    gen::call_list
+    gen::languages
+    gen::makefiles
+    gen::platform
+    gen::config_pm
+
+    =cut
 
 =head1 SEE ALSO
 
