@@ -89,15 +89,6 @@ static void Parrot_mmd_create_builtin_multi_meth(PARROT_INTERP,
         __attribute__nonnull__(2)
         __attribute__nonnull__(4);
 
-static void Parrot_mmd_create_builtin_multi_meth_2(PARROT_INTERP,
-    ARGIN(PMC *ns),
-    INTVAL func_nr,
-    INTVAL type,
-    INTVAL right,
-    funcptr_t func_ptr)
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(2);
-
 PARROT_CANNOT_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
 static PMC* Parrot_mmd_cvt_to_types(PARROT_INTERP, ARGIN(PMC *multi_sig))
@@ -1896,7 +1887,7 @@ mmd_create_builtin_multi_stub(PARROT_INTERP, ARGIN(PMC *ns), INTVAL func_nr)
 
 /*
 
-=item C<static void mmd_create_builtin_multi_meth_2>
+=item C<static void mmd_create_builtin_multi_meth>
 
 RT #48260: Not yet documented!!!
 
@@ -1905,11 +1896,14 @@ RT #48260: Not yet documented!!!
 */
 
 static void
-mmd_create_builtin_multi_meth_2(PARROT_INTERP, ARGIN(PMC *ns),
-        INTVAL func_nr, INTVAL type, INTVAL right, funcptr_t func_ptr)
+mmd_create_builtin_multi_meth(PARROT_INTERP, ARGIN(PMC *ns), INTVAL type,
+        ARGIN(const MMD_init *entry))
 {
     const char *short_name;
     char signature[6], val_sig;
+    INTVAL func_nr = entry->func_nr;
+    INTVAL right = entry->right;
+    funcptr_t func_ptr = entry->func_ptr;
     STRING *meth_name;
     PMC *method, *multi, *_class, *multi_sig;
 
@@ -1997,26 +1991,6 @@ mmd_create_builtin_multi_meth_2(PARROT_INTERP, ARGIN(PMC *ns),
     PARROT_ASSERT(multi);
     VTABLE_push_pmc(interp, multi, method);
 }
-
-
-/*
-
-=item C<static void mmd_create_builtin_multi_meth>
-
-RT #48260: Not yet documented!!!
-
-=cut
-
-*/
-
-static void
-mmd_create_builtin_multi_meth(PARROT_INTERP, ARGIN(PMC *ns), INTVAL type,
-        ARGIN(const MMD_init *entry))
-{
-    mmd_create_builtin_multi_meth_2(interp, ns,
-            entry->func_nr, type, entry->right, entry->func_ptr);
-}
-
 
 /*
 
