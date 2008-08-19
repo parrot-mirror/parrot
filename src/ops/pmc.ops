@@ -615,24 +615,24 @@ addition or subtraction, or one of the other binary MMD operations.
 
 ########################################
 
-=item B<mmdvtregister>(in INT, in INT, in INT, invar PMC)
+=item B<add_multi>(in INT, in INT, in INT, invar PMC)
 
 Register method $4 as the MMD method for vtable entry $1 for classes
 $2 and $3.
 
 =cut
 
-inline op mmdvtregister(in INT, in INT, in INT, invar PMC) {
+inline op add_multi(in INT, in INT, in INT, invar PMC) {
   Parrot_mmd_register_sub(interp, $1, $2, $3, $4);
 }
 
-=item B<mmdvtfind>(out PMC, in INT, in INT, in INT)
+=item B<find_multi>(out PMC, in INT, in INT, in INT)
 
 Find the sub that would be called for vtable entry $2 for types $3 and $4.
 
 =cut
 
-inline op mmdvtfind(out PMC, in INT, in INT, in INT) {
+inline op find_multi(out PMC, in INT, in INT, in INT) {
   $1 = Parrot_mmd_vtfind(interp, $2, $3, $4);
 }
 
