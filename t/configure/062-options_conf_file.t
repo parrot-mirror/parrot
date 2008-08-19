@@ -218,7 +218,7 @@ like($@, qr/dizzy/, "Invalid option correctly detected during _set_steps()");
 ########## Overall tests of conditional_assignments() ##########
 
 {
-    # hisfoobar expected to fail due to lack of ==cut 
+    # hisfoobar expected to fail due to lack of =cut 
     my $args = {
         mode => 'file',
         argv => [ q{--file=t/configure/testlib/hisfoobar} ],

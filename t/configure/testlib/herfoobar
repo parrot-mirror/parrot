@@ -1,19 +1,19 @@
 # Copyright (C) 2001-2008, The Perl Foundation.
 # $Id$
 
-==variables
+=variables
 
 CC=/usr/bin/gcc
 CX=/usr/bin/g++
 
-==general
+=general
 
 cc=$CC
 cxx=$CX
 link=$CX
 ld=/usr/bin/g++
 
-==steps
+=steps
 
 init::manifest nomanicheck
 init::defaults
@@ -83,5 +83,5 @@ gen::makefiles
 gen::platform
 gen::config_pm
 
-==cut
+=cut
 

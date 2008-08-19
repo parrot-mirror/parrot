@@ -53,16 +53,16 @@ sub conditional_assignments {
     my %valid_step_options = map {$_ => 1} @shared_valid_options;
     my $file_str = Parrot::BuildUtil::slurp_file($data->{file});
     my $steps_list_ref;
-    if ($file_str =~ m/==variables\s*?\n
+    if ($file_str =~ m/=variables\s*?\n
         (.*?)
         \s*\n
-        ==general\s*?\n
+        =general\s*?\n
         (.*?)
         \s*\n
-        ==steps\s*?\n
+        =steps\s*?\n
         (.*?)
         \s*\n
-        ==cut
+        =cut
         /sx ) {
         my ($variables, $general, $steps) = ($1,$2,$3);
         my $substitutions = _get_substitutions($variables);
