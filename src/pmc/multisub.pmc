@@ -69,6 +69,22 @@ pmclass MultiSub extends ResizablePMCArray need_ext provides array {
         func = VTABLE_get_pmc_keyed_int(interp, list, 0);
         return VTABLE_invoke(INTERP, func, next);
     }
+
+    VTABLE PMC *get_iter() {
+        PMC * const list = Parrot_mmd_sort_manhattan(INTERP, SELF);
+
+        if (PMC_IS_NULL(list))
+            Parrot_ex_throw_from_c_args(INTERP, NULL, 1, "No applicable methods.\n");
+        return VTABLE_get_iter(interp, list);
+    }
+
+    /* stub get_iter method. Takes an argument list PMC, sorts the subs in the
+       multi according to the closeness to that list, and returns an iterator
+       over the sorted list of subs. Or, it could take a string PMC where
+       type letters (P S N I) are whitespace delimited. */
+    METHOD PMC *get_iter(PMC *list) {
+    }
+
 }
 
 /*
