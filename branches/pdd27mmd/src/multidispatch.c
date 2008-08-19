@@ -1100,7 +1100,7 @@ Parrot_MMD_search_default_infix(PARROT_INTERP, ARGIN(STRING *meth),
 
 /*
 
-=item C<PMC * Parrot_mmd_sort_candidate_list>
+=item C<PMC * Parrot_mmd_sort_manhattan>
 
 Given an array PMC (usually a MultiSub) sort the mmd candidates by their
 manhatten distance to the current args.
@@ -1113,7 +1113,7 @@ PARROT_API
 PARROT_CAN_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
 PMC *
-Parrot_mmd_sort_candidate_list(PARROT_INTERP, ARGIN(PMC *candidates))
+Parrot_mmd_sort_manhattan(PARROT_INTERP, ARGIN(PMC *candidates))
 {
     PMC   *arg_tuple;
     INTVAL n = VTABLE_elements(interp, candidates);

@@ -214,7 +214,7 @@ PMC * Parrot_MMD_search_default_infix(PARROT_INTERP,
 PARROT_API
 PARROT_CAN_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
-PMC * Parrot_mmd_sort_candidate_list(PARROT_INTERP, ARGIN(PMC *candidates))
+PMC * Parrot_mmd_sort_manhattan(PARROT_INTERP, ARGIN(PMC *candidates))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
