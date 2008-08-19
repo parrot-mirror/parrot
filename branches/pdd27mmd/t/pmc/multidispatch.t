@@ -37,7 +37,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "Integer_divide_PerlInt  10 / 3 = 1003", to
 
     .local pmc divide
     divide = global "Integer_divide_PerlInt"
-    mmdvtregister .MMD_DIVIDE, .Integer, type_perl_int, divide
+    add_multi .MMD_DIVIDE, .Integer, type_perl_int, divide
 
     $P0 = new 'PerlInt'
     $P1 = new 'Integer'
@@ -73,7 +73,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "1+1=3" );
 
     .local pmc add
     add = global "add"
-    mmdvtregister .MMD_ADD, .Integer, .Integer, add
+    add_multi .MMD_ADD, .Integer, .Integer, add
 
     $P0 = new 'Integer'
     $P1 = new 'Integer'
@@ -109,7 +109,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "PASM divide - override builtin 10 / 3 = 42
 
     .local pmc divide
     divide = global "Integer_divide_Integer"
-    mmdvtregister .MMD_DIVIDE, .Integer, .Integer, divide
+    add_multi .MMD_DIVIDE, .Integer, .Integer, divide
 
     $P0 = new 'Integer'
     $P1 = new 'Integer'
@@ -141,7 +141,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "INTVAL return numeq" );
 
     .local pmc comp
     comp = global "Float_cmp_Integer"
-    mmdvtregister .MMD_CMP, .Float, .Integer, comp
+    add_multi .MMD_CMP, .Float, .Integer, comp
 
     $P1 = new 'Float'
     $P2 = new 'Integer'
@@ -163,7 +163,7 @@ CODE
 -42
 OUTPUT
 
-pir_output_is( <<'CODE', <<'OUTPUT', "mmdvtfind" );
+pir_output_is( <<'CODE', <<'OUTPUT', "find_multi" );
 
 .sub _main
 
@@ -172,8 +172,8 @@ pir_output_is( <<'CODE', <<'OUTPUT', "mmdvtfind" );
 
     .local pmc comp
     comp = global "Float_cmp_Integer"
-    mmdvtregister .MMD_NUMCMP, .Float, .Integer, comp
-    $P0 = mmdvtfind .MMD_NUMCMP, .Float, .Integer
+    add_multi .MMD_NUMCMP, .Float, .Integer, comp
+    $P0 = find_multi .MMD_NUMCMP, .Float, .Integer
     if_null $P0, nok
     print "ok 1\n"
     ne_addr $P0, comp, nok
@@ -195,7 +195,7 @@ ok 1
 ok 2
 OUTPUT
 
-pir_output_is( <<'CODE', <<'OUTPUT', "mmdvtfind - invoke it" );
+pir_output_is( <<'CODE', <<'OUTPUT', "find_multi - invoke it" );
 
 .sub _main
 
@@ -204,8 +204,8 @@ pir_output_is( <<'CODE', <<'OUTPUT', "mmdvtfind - invoke it" );
 
     .local pmc comp
     comp = global "Float_cmp_Integer"
-    mmdvtregister .MMD_NUMCMP, .Float, .Integer, comp
-    $P0 = mmdvtfind .MMD_NUMCMP, .Float, .Integer
+    add_multi .MMD_NUMCMP, .Float, .Integer, comp
+    $P0 = find_multi .MMD_NUMCMP, .Float, .Integer
     if_null $P0, nok
     print "ok 1\n"
     ne_addr $P0, comp, nok
@@ -259,7 +259,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "PASM MMD divide - loaded sub" );
     .local pmc divide
     load_bytecode "temp.pir"
     divide = global "Integer_divide_Integer"
-    mmdvtregister .MMD_DIVIDE, .Integer, .Integer, divide
+    add_multi .MMD_DIVIDE, .Integer, .Integer, divide
 
     $P0 = new 'Integer'
     $P1 = new 'Integer'
@@ -280,7 +280,7 @@ pasm_output_is( <<'CODE', <<'OUTPUT', "PASM INTVAL - new result" );
 .include "datatypes.pasm"
 .include "mmd.pasm"
     get_global P10, "Integer_bxor_Intval"
-    mmdvtregister .MMD_BXOR, .Integer, .DATATYPE_INTVAL, P10
+    add_multi .MMD_BXOR, .Integer, .DATATYPE_INTVAL, P10
 
     new P1, 'Integer'
     set P1, 3
@@ -307,7 +307,7 @@ pasm_output_is( <<'CODE', <<'OUTPUT', "PASM INTVAL - existing result" );
 .include "datatypes.pasm"
 .include "mmd.pasm"
     get_global P10, "Integer_bxor_Intval"
-    mmdvtregister .MMD_BXOR, .Integer, .DATATYPE_INTVAL, P10
+    add_multi .MMD_BXOR, .Integer, .DATATYPE_INTVAL, P10
 
     new P0, 'Integer'
     new P1, 'Integer'
@@ -334,7 +334,7 @@ pasm_output_is( <<'CODE', <<'OUTPUT', "PASM INTVAL - mixed" );
 .include "datatypes.pasm"
 .include "mmd.pasm"
     get_global P10, "Integer_bxor_Intval"
-    mmdvtregister .MMD_BXOR, .Integer, .DATATYPE_INTVAL, P10
+    add_multi .MMD_BXOR, .Integer, .DATATYPE_INTVAL, P10
 
     new P0, 'Integer'
     new P1, 'Integer'
@@ -1050,9 +1050,9 @@ pir_output_is( <<'CODE', <<'OUTPUT', "use a core func for an object" );
     .local pmc func
     .local int typ
     .include "mmd.pasm"
-    func = mmdvtfind .MMD_ADD, .Float, .Float
+    func = find_multi .MMD_ADD, .Float, .Float
     typ = typeof l
-    mmdvtregister .MMD_ADD, typ, typ, func
+    add_multi .MMD_ADD, typ, typ, func
     l = 4
     r = 38
     print l
