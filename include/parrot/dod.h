@@ -63,10 +63,11 @@ void clear_cow(PARROT_INTERP, ARGMOD(Small_Object_Pool *pool), int cleanup)
         __attribute__nonnull__(2)
         FUNC_MODIFIES(*pool);
 
-void Parrot_do_dod_run(PARROT_INTERP, UINTVAL flags)
-        __attribute__nonnull__(1);
+void Parrot_clear_live_bits(SHIM_INTERP,
+    ARGIN(const Small_Object_Pool *pool))
+        __attribute__nonnull__(2);
 
-void Parrot_dod_clear_live_bits(PARROT_INTERP)
+void Parrot_do_dod_run(PARROT_INTERP, UINTVAL flags)
         __attribute__nonnull__(1);
 
 void Parrot_dod_free_buffer(SHIM_INTERP,
@@ -96,12 +97,6 @@ void Parrot_dod_free_sysmem(SHIM_INTERP,
         __attribute__nonnull__(3)
         FUNC_MODIFIES(*b);
 
-void Parrot_dod_ms_run(PARROT_INTERP, int flags)
-        __attribute__nonnull__(1);
-
-void Parrot_dod_ms_run_init(PARROT_INTERP)
-        __attribute__nonnull__(1);
-
 void Parrot_dod_profile_end(PARROT_INTERP, int what)
         __attribute__nonnull__(1);
 
@@ -112,9 +107,6 @@ void Parrot_dod_sweep(PARROT_INTERP, ARGMOD(Small_Object_Pool *pool))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         FUNC_MODIFIES(*pool);
-
-int Parrot_dod_trace_children(PARROT_INTERP, size_t how_many)
-        __attribute__nonnull__(1);
 
 void Parrot_dod_trace_pmc_data(PARROT_INTERP, ARGIN(PMC *p))
         __attribute__nonnull__(1)
@@ -157,6 +149,37 @@ extern int CONSERVATIVE_POINTER_CHASING;
 
 
 /* GC subsystem init functions */
+/* HEADERIZER BEGIN: src/gc/gc_ms.c */
+/* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
+
+void gc_pmc_ext_pool_init(ARGMOD(Small_Object_Pool *pool))
+        __attribute__nonnull__(1)
+        FUNC_MODIFIES(*pool);
+
+void Parrot_add_to_free_list(PARROT_INTERP,
+    ARGMOD(Small_Object_Pool *pool),
+    ARGMOD(Small_Object_Arena *arena))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3)
+        FUNC_MODIFIES(*pool)
+        FUNC_MODIFIES(*arena);
+
+void Parrot_dod_ms_run(PARROT_INTERP, int flags)
+        __attribute__nonnull__(1);
+
+void Parrot_dod_ms_run_init(PARROT_INTERP)
+        __attribute__nonnull__(1);
+
+int Parrot_dod_trace_children(PARROT_INTERP, size_t how_many)
+        __attribute__nonnull__(1);
+
+void Parrot_gc_ms_init(PARROT_INTERP)
+        __attribute__nonnull__(1);
+
+/* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
+/* HEADERIZER END: src/gc/gc_ms.c */
+
 /* HEADERIZER BEGIN: src/gc/gc_gms.c */
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 
