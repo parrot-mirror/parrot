@@ -92,7 +92,8 @@ enum DebugCmd {
     debug_cmd_script_file = 617610,
     debug_cmd_disable     = 772140,
     debug_cmd_continue    = 1053405,
-    debug_cmd_disassemble = 1903830
+    debug_cmd_disassemble = 1903830,
+    debug_cmd_gcdebug     = 779790
 };
 
 /* HEADERIZER HFILE: include/parrot/debugger.h */
@@ -663,6 +664,12 @@ PDB_get_command(PARROT_INTERP)
          *       PDB_run_command should return non-void value?
          *       stop execution of script if fails
          * RT #46115: avoid this verbose output? add -v flag? */
+
+#ifdef TRACE_DEBUGGER
+        fprintf(stderr, "(script) %s\n", buf);
+#endif
+
+        #if 0
         if (PDB_run_command(interp, buf)) {
             IMCC_warning(interp, "script_file: "
                 "Error interpreting command (%s).\n",
@@ -670,6 +677,8 @@ PDB_get_command(PARROT_INTERP)
             close_script_file(interp);
             return;
         }
+        #endif
+	strcpy(pdb->cur_command, buf);
     }
     else {
 
@@ -829,6 +838,16 @@ PDB_run_command(PARROT_INTERP, ARGIN(const char *command))
         case debug_cmd_info:
             PDB_info(interp);
             break;
+        case debug_cmd_gcdebug:
+            if (pdb->state & PDB_GCDEBUG) {
+                TRACEDEB_MSG("Disabling gcdebug mode");
+                pdb->state &= ~PDB_GCDEBUG;
+            }
+            else {
+                TRACEDEB_MSG("Enabling gcdebug mode");
+                pdb->state |= PDB_GCDEBUG;
+            }
+            break;
         case debug_cmd_h:
         case debug_cmd_help:
             PDB_help(interp, command);
@@ -843,8 +862,10 @@ PDB_run_command(PARROT_INTERP, ARGIN(const char *command))
             PDB_backtrace(interp);
             break;
         case (enum DebugCmd)0:
+            /*
             if (pdb->last_command)
                 PDB_run_command(interp, pdb->last_command);
+            */
             break;
         default:
             PIO_eprintf(interp,
@@ -923,8 +944,10 @@ PDB_trace(PARROT_INTERP, ARGIN_NULLOK(const char *command))
     TRACEDEB_MSG("PDB_trace");
 
     /* if debugger is not running yet, initialize */
+    /*
     if (!(pdb->state & PDB_RUNNING))
         PDB_init(interp, command);
+    */
 
     command = nextarg(command);
     /* if the number of ops to run is specified, convert to a long */
@@ -955,6 +978,8 @@ PDB_trace(PARROT_INTERP, ARGIN_NULLOK(const char *command))
         (void)PDB_program_end(interp);
     pdb->state |= PDB_RUNNING;
     pdb->state &= ~PDB_STOPPED;
+
+    TRACEDEB_MSG("PDB_trace finished");
 }
 
 /*
@@ -2816,6 +2841,12 @@ after the register type, all registers of that type are printed.\n");
             PIO_eprintf(interp,
                     "Print information about the current interpreter\n");
             break;
+        case debug_cmd_gcdebug:
+            PIO_eprintf(interp,
+"Toggle gcdebug mode.\n\n\
+In gcdebug mode a garbage collection cycle is run before each opcocde,\n\
+same as using the gcdebug core.\n");
+            break;
         case debug_cmd_quit:
             PIO_eprintf(interp, "Exit the debugger.\n");
             break;
@@ -2844,6 +2875,7 @@ List of commands:\n\
     print    (p) -- print the interpreter registers\n\
     stack    (s) -- examine the stack\n\
     info         -- print interpreter information\n\
+    gcdebug      -- toggle gcdebug mode\n\
     quit     (q) -- exit the debugger\n\
     help     (h) -- print this help\n\n\
 Type \"help\" followed by a command name for full documentation.\n\n");

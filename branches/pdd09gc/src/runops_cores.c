@@ -324,7 +324,7 @@ PARROT_CAN_RETURN_NULL
 opcode_t *
 runops_debugger_core(PARROT_INTERP, ARGIN(opcode_t *pc))
 {
-    fprintf(stderr, "Enter runops_debugger_core\n");
+    /*fprintf(stderr, "Enter runops_debugger_core\n");*/
 
     PARROT_ASSERT(interp->pdb);
 
@@ -336,7 +336,9 @@ runops_debugger_core(PARROT_INTERP, ARGIN(opcode_t *pc))
         if (pc < interp->code->base.data || pc >= interp->code->base.data + interp->code->base.size)
             Parrot_ex_throw_from_c_args(interp, NULL, 1,
                     "attempt to access code outside of current code segment");
-        Parrot_do_dod_run(interp, 0);
+
+        if (interp->pdb->state & PDB_GCDEBUG)
+            Parrot_do_dod_run(interp, 0);
 
         if (interp->pdb->tracing) {
             trace_op(interp,
@@ -347,8 +349,8 @@ runops_debugger_core(PARROT_INTERP, ARGIN(opcode_t *pc))
         }
 
         CONTEXT(interp)->current_pc = pc;
-
         DO_OP(pc, interp);
+
         interp->pdb->cur_opcode = pc;
         if (interp->pdb->tracing) {
             if (--interp->pdb->tracing == 0) {
