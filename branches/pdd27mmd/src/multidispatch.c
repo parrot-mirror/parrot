@@ -141,7 +141,7 @@ static int Parrot_mmd_maybe_candidate(PARROT_INTERP,
         __attribute__nonnull__(2)
         __attribute__nonnull__(3);
 
-static void Parrot_mmd_search_builtin(PARROT_INTERP,
+static void Parrot_mmd_search_global(PARROT_INTERP,
     ARGIN(STRING *meth),
     ARGIN(PMC *cl))
         __attribute__nonnull__(1)
@@ -158,7 +158,7 @@ static void Parrot_mmd_search_classes(PARROT_INTERP,
         __attribute__nonnull__(3)
         __attribute__nonnull__(4);
 
-static int Parrot_mmd_search_cur_namespace(PARROT_INTERP,
+static int Parrot_mmd_search_local(PARROT_INTERP,
     ARGIN(STRING *meth),
     ARGIN(PMC *cl))
         __attribute__nonnull__(1)
@@ -1693,10 +1693,10 @@ Parrot_mmd_search_scopes(PARROT_INTERP, ARGIN(STRING *meth))
 {
     PMC * const candidates = pmc_new(interp, enum_class_ResizablePMCArray);
 
-    const int stop         = Parrot_mmd_search_cur_namespace(interp, meth, candidates);
+    const int stop         = Parrot_mmd_search_local(interp, meth, candidates);
 
     if (!stop)
-        Parrot_mmd_search_builtin(interp, meth, candidates);
+        Parrot_mmd_search_global(interp, meth, candidates);
 
     return candidates;
 }
@@ -1780,7 +1780,7 @@ Parrot_mmd_maybe_candidate(PARROT_INTERP, ARGIN(PMC *pmc), ARGIN(PMC *cl))
 
 /*
 
-=item C<static int mmd_search_cur_namespace>
+=item C<static int mmd_search_local>
 
 Search the current package namespace for matching candidates. Return
 TRUE if the MMD search should stop.
@@ -1790,7 +1790,7 @@ TRUE if the MMD search should stop.
 */
 
 static int
-Parrot_mmd_search_cur_namespace(PARROT_INTERP, ARGIN(STRING *meth), ARGIN(PMC *cl))
+Parrot_mmd_search_local(PARROT_INTERP, ARGIN(STRING *meth), ARGIN(PMC *cl))
 {
     PMC * const pmc = Parrot_find_global_cur(interp, meth);
 
@@ -1842,7 +1842,7 @@ mmd_make_ns(PARROT_INTERP)
 
 /*
 
-=item C<static void mmd_search_builtin>
+=item C<static void mmd_search_global>
 
 Search the builtin namespace for matching candidates. This is the last
 search in all the namespaces.
@@ -1852,7 +1852,7 @@ search in all the namespaces.
 */
 
 static void
-Parrot_mmd_search_builtin(PARROT_INTERP, ARGIN(STRING *meth), ARGIN(PMC *cl))
+Parrot_mmd_search_global(PARROT_INTERP, ARGIN(STRING *meth), ARGIN(PMC *cl))
 {
     PMC * const ns  = mmd_get_ns(interp);
     PMC * const pmc = Parrot_find_global_n(interp, ns, meth);
