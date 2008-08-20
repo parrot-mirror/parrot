@@ -1,6 +1,6 @@
 #! perl
 # Copyright (C) 2001-2007, The Perl Foundation.
-# $Id: mmd.t 27849 2008-05-27 15:56:21Z Whiteknight $
+# $Id$
 
 use strict;
 use warnings;
