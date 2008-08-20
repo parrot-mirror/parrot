@@ -1,7 +1,7 @@
 /* multidispatch.h
  *  Copyright (C) 2003-2007, The Perl Foundation.
  *  SVN Info
- *     $Id: multidispatch.h 28111 2008-06-05 19:27:08Z coke $
+ *     $Id$
  *  Overview:
  *     This is the API header for the mmd subsystem
  *  Data Structure and Algorithms:

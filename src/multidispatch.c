@@ -1,6 +1,6 @@
 /*
 Copyright (C) 2003-2008, The Perl Foundation.
-$Id: multidispatch.c 29952 2008-08-02 22:45:13Z allison $
+$Id$
 
 =head1 NAME
 
