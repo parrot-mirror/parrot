@@ -6,6 +6,7 @@ use warnings;
 use constant VTABLE_ENTRY => 'VTABLE_ENTRY';
 use constant VTABLE       => 'VTABLE';
 use constant NON_VTABLE   => 'NON_VTABLE';
+use constant MULTI        => 'MULTI';
 use Parrot::Pmc2c::UtilFunctions qw(count_newlines args_from_parameter_list passable_args_from_parameter_list);
 
 sub new {
