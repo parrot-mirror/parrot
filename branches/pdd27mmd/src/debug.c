@@ -32,7 +32,7 @@ the Parrot debugger, and the C<debug> ops.
 #include "debug.str"
 
 /* Hand switched debugger tracing */
-#define TRACE_DEBUGGER 1
+/*#define TRACE_DEBUGGER 1*/
 
 #ifdef TRACE_DEBUGGER
 #  define TRACEDEB_MSG(msg) fprintf(stderr, "%s\n", (msg))
@@ -59,6 +59,7 @@ enum DebugCmd {
     debug_cmd_c           = 25500,
     debug_cmd_d           = 25755,
     debug_cmd_e           = 26010,
+    debug_cmd_f           = 26265,
     debug_cmd_h           = 26775,
     debug_cmd_i           = 27030,
     debug_cmd_l           = 27795,
@@ -98,6 +99,9 @@ enum DebugCmd {
 
 /* HEADERIZER BEGIN: static */
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
+
+static void close_script_file(PARROT_INTERP)
+        __attribute__nonnull__(1);
 
 static void debugger_cmdline(PARROT_INTERP)
         __attribute__nonnull__(1);
@@ -402,6 +406,20 @@ debugger_cmdline(PARROT_INTERP)
 
         PDB_run_command(interp, command);
     }
+    TRACEDEB_MSG("debugger_cmdline finished");
+}
+
+static void
+close_script_file(PARROT_INTERP)
+{
+    TRACEDEB_MSG("Closing debugger script file");
+    if (interp->pdb->script_file) {
+        fclose(interp->pdb->script_file);
+        interp->pdb->script_file = NULL;
+        interp->pdb->state|= PDB_STOPPED;
+        interp->pdb->last_command[0] = '\0';
+        interp->pdb->cur_command[0] = '\0';
+    }
 }
 
 /*
@@ -484,6 +502,8 @@ void
 Parrot_debugger_load(PARROT_INTERP, ARGIN_NULLOK(STRING *filename))
 {
     char *file;
+
+    TRACEDEB_MSG("Parrot_debugger_load");
 
     if (!interp->pdb)
         Parrot_ex_throw_from_c_args(interp, NULL, 0, "No debugger");
@@ -619,50 +639,66 @@ PDB_get_command(PARROT_INTERP)
 
     PARROT_ASSERT(pdb->last_command);
     PARROT_ASSERT(pdb->cur_command);
-    /* update the last command */
-    if (pdb->cur_command[0] != '\0')
-        strcpy(pdb->last_command, pdb->cur_command);
 
-    #if 0
-    /* if the program is stopped and running show the next line to run */
-    if ((pdb->state & PDB_STOPPED) && (pdb->state & PDB_RUNNING)) {
-        PDB_line_t *line = pdb->file->line;
+    if (interp->pdb->script_file) {
+        FILE *fd = interp->pdb->script_file;
+        char buf[DEBUG_CMD_BUFFER_LENGTH+1];
+        char *ptr = buf;
 
-        while (line && pdb->cur_opcode != line->opcode) {
-                line = line->next;
-        }
+        do {
+            if (fgets(buf, DEBUG_CMD_BUFFER_LENGTH, fd) == NULL) {
+                close_script_file(interp);
+                return;
+            }
 
-        if (line) {
-            PIO_eprintf(interp, "%li  ", line->number);
-            c = pdb->file->source + line->source_offset;
+            /* skip spaces */
+            for (ptr = (char *)&buf; *ptr && isspace((unsigned char)*ptr); ptr++);
 
-            while (c && (*c != '\n'))
-                PIO_eprintf(interp, "%c", *(c++));
+            /* avoid null blank and commented lines */
+            if (*buf == '\0' || *buf == '#')
+                continue;
+        } while (0);
+
+        /* RT #46117: handle command error and print out script line
+         *       PDB_run_command should return non-void value?
+         *       stop execution of script if fails
+         * RT #46115: avoid this verbose output? add -v flag? */
+        if (PDB_run_command(interp, buf)) {
+            IMCC_warning(interp, "script_file: "
+                "Error interpreting command (%s).\n",
+                buf);
+            close_script_file(interp);
+            return;
         }
     }
-    #endif
+    else {
 
-    i = 0;
+        /* update the last command */
+        if (pdb->cur_command[0] != '\0')
+            strcpy(pdb->last_command, pdb->cur_command);
 
-    c = pdb->cur_command;
+        i = 0;
 
-    PIO_eprintf(interp, "\n(pdb) ");
+        c = pdb->cur_command;
 
-    /* skip leading whitespace */
-    do {
-        ch = fgetc(stdin);
-    } while (isspace((unsigned char)ch) && ch != '\n');
+        PIO_eprintf(interp, "\n(pdb) ");
 
-    /* generate string (no more than buffer length) */
-    while (ch != EOF && ch != '\n' && (i < DEBUG_CMD_BUFFER_LENGTH)) {
-        c[i++] = (char)ch;
-        ch     = fgetc(stdin);
+        /* skip leading whitespace */
+        do {
+            ch = fgetc(stdin);
+        } while (isspace((unsigned char)ch) && ch != '\n');
+
+        /* generate string (no more than buffer length) */
+        while (ch != EOF && ch != '\n' && (i < DEBUG_CMD_BUFFER_LENGTH)) {
+            c[i++] = (char)ch;
+            ch     = fgetc(stdin);
+        }
+
+        c[i] = '\0';
+
+        if (ch == -1)
+            strcpy(c, "quit");
     }
-
-    c[i] = '\0';
-
-    if (ch == -1)
-        strcpy(c, "quit");
 }
 
 /*
@@ -675,15 +711,18 @@ Interprets the contents of a file as user input commands
 
 */
 
+PARROT_API
 void
 PDB_script_file(PARROT_INTERP, ARGIN(const char *command))
 {
-    char buf[1024];
-    const char *ptr = (const char *)&buf;
-    int line = 0;
     FILE *fd;
 
-    command = nextarg(command);
+    TRACEDEB_MSG("PDB_script_file");
+
+    /* If already executing a script, close it */
+    close_script_file(interp);
+
+    TRACEDEB_MSG("Opening debugger script file");
 
     fd = fopen(command, "r");
     if (!fd) {
@@ -692,32 +731,8 @@ PDB_script_file(PARROT_INTERP, ARGIN(const char *command))
             command);
         return;
     }
-
-    while (!feof(fd)) {
-        line++;
-        buf[0]='\0';
-        fgets(buf, 1024, fd);
-
-        /* skip spaces */
-        for (ptr = (char *)&buf; *ptr && isspace((unsigned char)*ptr); ptr++);
-
-        /* avoid null blank and commented lines */
-        if (*buf == '\0' || *buf == '#')
-            continue;
-
-        buf[strlen(buf)-1]='\0';
-        /* RT #46117: handle command error and print out script line
-         *       PDB_run_command should return non-void value?
-         *       stop execution of script if fails
-         * RT #46115: avoid this verbose output? add -v flag? */
-        if (PDB_run_command(interp, buf)) {
-            IMCC_warning(interp, "script_file: "
-                "Error interpreting command at line %d (%s).\n",
-                line, command);
-                break;
-        }
-    }
-    fclose(fd);
+    interp->pdb->script_file = fd;
+    TRACEDEB_MSG("PDB_script_file finished");
 }
 
 /*
@@ -753,7 +768,9 @@ PDB_run_command(PARROT_INTERP, ARGIN(const char *command))
         return 0;
 
     switch ((enum DebugCmd)c) {
+        case debug_cmd_f:
         case debug_cmd_script_file:
+            command = nextarg(command);
             PDB_script_file(interp, command);
             break;
         case debug_cmd_disassemble:
@@ -821,6 +838,10 @@ PDB_run_command(PARROT_INTERP, ARGIN(const char *command))
             pdb->state |= PDB_EXIT;
             pdb->state &= ~PDB_STOPPED;
             break;
+        case debug_cmd_s:
+        case debug_cmd_stack:
+            PDB_backtrace(interp);
+            break;
         case (enum DebugCmd)0:
             if (pdb->last_command)
                 PDB_run_command(interp, pdb->last_command);
@@ -828,6 +849,9 @@ PDB_run_command(PARROT_INTERP, ARGIN(const char *command))
         default:
             PIO_eprintf(interp,
                         "Undefined command: \"%s\".  Try \"help\".", original_command);
+#ifdef TRACE_DEBUGGER
+            fprintf(stderr, " (parse_command result: %li)", c);
+#endif
             return 1;
     }
     return 0;
@@ -1839,6 +1863,8 @@ PDB_disassemble_op(PARROT_INTERP, ARGOUT(char *dest), int space,
     /* Write the opcode name */
     const char * p = full_name ? info->full_name : info->name;
 
+    TRACEDEB_MSG("PDB_disassemble_op");
+
     if (! p)
         p= "**UNKNOWN**";
     strcpy(dest, p);
@@ -2055,7 +2081,7 @@ PDB_disassemble_op(PARROT_INTERP, ARGOUT(char *dest), int space,
                                      " :unused004",
                                      " :unused008",
                                      " :const",
-                                     " :flat",	/* should be :slurpy for args */
+                                     " :flat", /* should be :slurpy for args */
                                      " :unused040",
                                      " :optional",
                                      " :opt_flag",
@@ -2136,6 +2162,8 @@ PDB_disassemble(PARROT_INTERP, SHIM(const char *command))
     const unsigned int default_size = 32768;
     size_t space;  /* How much space do we have? */
     size_t size, alloced, n;
+
+    TRACEDEB_MSG("PDB_disassemble");
 
     pfile = mem_allocate_typed(PDB_file_t);
     pline = mem_allocate_typed(PDB_line_t);
@@ -2332,8 +2360,11 @@ PDB_load_source(PARROT_INTERP, ARGIN(const char *command))
     PDB_file_t    *pfile;
     PDB_line_t    *pline;
     PDB_t         * const pdb = interp->pdb;
-    opcode_t      *pc         = pdb->cur_opcode;
+    opcode_t      *pc         = interp->code->base.data;
+
     unsigned long  size = 0;
+
+    TRACEDEB_MSG("PDB_load_source");
 
     /* If there was a file already loaded or the bytecode was
        disassembled, free it */
@@ -2363,6 +2394,9 @@ PDB_load_source(PARROT_INTERP, ARGIN(const char *command))
     pfile->source = (char *)mem_sys_allocate(1024);
     pfile->line   = pline;
     pline->number = 1;
+
+    PARROT_ASSERT(interp->op_info_table);
+    PARROT_ASSERT(pc);
 
     while ((c = fgetc(file)) != EOF) {
         /* Grow it */
@@ -2398,6 +2432,8 @@ PDB_load_source(PARROT_INTERP, ARGIN(const char *command))
 
     pdb->state |= PDB_SRC_LOADED;
     pdb->file   = pfile;
+
+    TRACEDEB_MSG("PDB_load_source finished");
 }
 
 /*
