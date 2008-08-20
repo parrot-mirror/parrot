@@ -27,7 +27,24 @@ method TOP($/) {
     }
 
     # Make sure we have the interpinfo constants.
-    $past.unshift( PAST::Op.new( :inline(".include \"interpinfo.pasm\"\n") ) );
+    $past.unshift( PAST::Op.new( :inline('.include "interpinfo.pasm"') ) );
+
+    #  convert the last operation of the block into a .return op
+    #  so that :load block below isn't used as return value
+    $past.push( PAST::Op.new( $past.pop(), :pirop('return') ) );
+    #  automatically invoke mainline on :load (but not :init)
+    $past.push(
+        PAST::Block.new(
+            PAST::Op.new(
+                :inline(
+                    '$P0 = interpinfo .INTERPINFO_CURRENT_SUB',
+                    '$P0 = $P0."get_outer"()',
+                    '$P0()'
+                )
+            ),
+            :pirflags(':load')
+        )
+    );
 
     make $past;
 }
@@ -340,7 +357,7 @@ method statement_mod_loop($/) {
     }
     elsif ~$<sym> eq 'for' {
         my $past := PAST::Op.new(
-            $expr,
+            PAST::Op.new($expr, :name('list')),
             :pasttype($<sym>),
             :node( $/ )
         );
@@ -504,7 +521,7 @@ method routine_declarator($/, $key) {
                 :scope('lexical'),
                 :isdecl(1)
             ),
-            PAST::Op.new(:inline("    %r = self\n"))
+            PAST::Var.new( :name('self'), :scope('register') )
         ));
 
         # Set up the block details.
@@ -641,7 +658,7 @@ method enum_declarator($/, $key) {
                 )
             ),
             PAST::Op.new(
-                :inline("    setprop %0, 'enum', %1\n"),
+                :inline('    setprop %0, "enum", %1'),
                 PAST::Var.new(
                     :name('$def'),
                     :scope('lexical')
@@ -902,9 +919,7 @@ method signature($/) {
                         :name($parameter.name()),
                         :scope('lexical')
                     ),
-                    PAST::Op.new(
-                        :inline('%r = self')
-                    )
+                    PAST::Var.new( :name('self'), :scope('register') )
                 ));
             }
 
@@ -1025,17 +1040,17 @@ method signature($/) {
         # For signatures, we build a list from the constraints and store it.
         my $sig_type_cons := PAST::Stmts.new(
             PAST::Op.new(
-                :inline("    $P2 = new 'List'\n")
+                :inline('    $P2 = new "List"')
             ),
             PAST::Stmts.new(),
             PAST::Op.new(
-                :inline("    %r = $P2\n")
+                :inline('    %r = $P2')
             )
         );
         for @($cur_param_types) {
             # Just want the type, not the call to the checker.
             $sig_type_cons[1].push(PAST::Op.new(
-                :inline("    push $P2, %0\n"),
+                :inline('    push $P2, %0'),
                 $_[0]
             ));
         }
@@ -1055,9 +1070,11 @@ method signature($/) {
                         :scope('lexical')
                     ),
                     PAST::Op.new(
-                        :inline(" %r = new 'Perl6Scalar', %0\n" ~
-                                " $P0 = get_hll_global ['Bool'], 'True'\n" ~
-                                " setprop %r, 'readonly', $P0\n"),
+                        :inline(
+                            '    %r = new "Perl6Scalar", %0',
+                            '    $P0 = get_hll_global ["Bool"], "True"',
+                            '    setprop %r, "readonly", $P0'
+                        ),
                         PAST::Var.new(
                             :name($parameter.name()),
                             :scope('lexical')
@@ -1074,8 +1091,10 @@ method signature($/) {
                     :scope('lexical')
                     ),
                     PAST::Op.new(
-                        :inline(" %r = new 'Perl6Scalar'\n" ~
-                                " %r.'infix:='(%0)\n"),
+                        :inline(
+                            '    %r = new "Perl6Scalar"',
+                            '    %r."infix:="(%0)'
+                        ),
                         PAST::Var.new(
                             :name($parameter.name()),
                             :scope('lexical')
@@ -1330,6 +1349,7 @@ method noun($/, $key) {
         $past.unshift(PAST::Var.new(
             :name('$_'),
             :scope('lexical'),
+            :viviself('Failure'),
             :node($/)
         ));
     }
@@ -3031,10 +3051,12 @@ sub get_block_setup_sub($block) {
             # For block type; defaults to Block
             PAST::Stmts.new(
                 PAST::Op.new(
-                    :inline("    .local pmc desc\n" ~
-                            "    $P0 = interpinfo .INTERPINFO_CURRENT_SUB\n" ~
-                            "    $P0 = $P0.'get_outer'()\n" ~
-                            "    setprop $P0, '$!proto', %0\n"),
+                    :inline(
+                        '    .local pmc desc',
+                        '    $P0 = interpinfo .INTERPINFO_CURRENT_SUB',
+                        '    $P0 = $P0."get_outer"()',
+                        '    setprop $P0, "$!proto", %0'
+                    ),
                     PAST::Var.new(
                         :name('Block'),
                         :scope('package')
@@ -3045,7 +3067,7 @@ sub get_block_setup_sub($block) {
             # For signature setup - default to empty signature object.
             PAST::Stmts.new(
                 PAST::Op.new(
-                    :inline("    setprop $P0, '$!signature', %0\n"),
+                    :inline('    setprop $P0, "$!signature", %0'),
                     PAST::Op.new(
                         :pasttype('callmethod'),
                         :name('!create'),
@@ -3080,16 +3102,16 @@ sub set_block_sig($block, $sig_obj) {
 # Creates a signature descriptor (for now, just a hash).
 sub sig_descriptor_create() {
     PAST::Stmts.new(
-        PAST::Op.new( :inline("    $P1 = new 'Hash'\n") ),
+        PAST::Op.new( :inline('    $P1 = new "Hash"') ),
         PAST::Stmts.new(),
-        PAST::Op.new( :inline("    %r = $P1\n") )
+        PAST::Op.new( :inline('    %r = $P1') )
     )
 }
 
 # Sets a given value in the signature descriptor.
 sub sig_descriptor_set($descriptor, $name, $value) {
     $descriptor[1].push(PAST::Op.new(
-        :inline("    $P1[%0] = %1\n"),
+        :inline('    $P1[%0] = %1'),
         PAST::Val.new( :value(~$name) ),
         $value
     ));
@@ -3140,9 +3162,11 @@ sub make_accessor($/, $method_name, $attr_name, $rw, $scope) {
     }
     else {
         $getset := PAST::Op.new(
-            :inline("    %r = new 'Perl6Scalar', %0\n" ~
-                    "    $P0 = get_hll_global [ 'Bool' ], 'True'\n" ~
-                    "    setprop %r, 'readonly', $P0\n"),
+            :inline(
+                '    %r = new "Perl6Scalar", %0',
+                '    $P0 = get_hll_global [ "Bool" ], "True"',
+                '    setprop %r, "readonly", $P0'
+            ),
             PAST::Var.new( :name($attr_name), :scope($scope) )
         );
     }
@@ -3238,7 +3262,7 @@ sub make_anon_subset($past, $parameter) {
         :pasttype('call'),
         :name('!TYPECHECKPARAM'),
         PAST::Op.new(
-            :inline("    %r = newclosure %0\n"),
+            :inline('    %r = newclosure %0'),
             $past
         ),
         PAST::Var.new(

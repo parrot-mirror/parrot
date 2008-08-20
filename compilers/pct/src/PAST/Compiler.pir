@@ -38,6 +38,7 @@ any value type.
 
 .include "cclass.pasm"
 .include "except_types.pasm"
+.include "interpinfo.pasm"
 
 .namespace [ 'PAST::Compiler' ]
 
@@ -517,21 +518,27 @@ Return the POST representation of a C<PAST::Block>.
     blockpast = get_global '@?BLOCK'
     unshift blockpast, node
 
-    .local string name
+    .local string name, pirflags, blocktype
+    .local pmc ns
     name = node.'name'()
+    pirflags = node.'pirflags'()
+    blocktype = node.'blocktype'()
+    ns = node.'namespace'()
+
+    ##  handle anonymous blocks
     if name goto have_name
     name = self.'unique'('_block')
+    if ns goto have_name
+    pirflags = concat pirflags, ' :anon'
   have_name:
 
     ##  create a POST::Sub node for this block
-    .local string blocktype
-    blocktype = node.'blocktype'()
-    .local pmc ns, pirflags
-    ns = node.'namespace'()
-    pirflags = node.'pirflags'()
     .local pmc bpost
     $P0 = get_hll_global ['POST'], 'Sub'
-    bpost = $P0.'new'('node'=>node, 'name'=>name, 'blocktype'=>blocktype, 'namespace'=>ns, 'pirflags'=>pirflags)
+    bpost = $P0.'new'('node'=>node, 'name'=>name, 'blocktype'=>blocktype, 'namespace'=>ns)
+    unless pirflags goto pirflags_done
+    bpost.'pirflags'(pirflags)
+  pirflags_done:
 
     ##  determine the outer POST::Sub for the new one
     .local pmc outerpost
@@ -619,7 +626,7 @@ Return the POST representation of a C<PAST::Block>.
     bpost.'push_pirop'('getattribute', $S0, 'exception', '"payload"')
     bpost.'push_pirop'('return', $S0)
     bpost.'push'(rethrowlabel)
-    bpost.'push_pirop'('throw', 'exception')
+    bpost.'push_pirop'('rethrow', 'exception')
     goto sub_done
   control_past:
     $P0 = self.'as_post'(ctrlpast, 'rtype'=>'*')
@@ -636,6 +643,20 @@ Return the POST representation of a C<PAST::Block>.
     bpost.'push'($P0)
 
   sub_done:
+    ##  generate any loadinit code for the sub
+    $I0 = exists node['loadinit']
+    unless $I0 goto loadinit_done
+    .local pmc lipast, lipost
+    lipast = node.'loadinit'()
+    lipost = self.'as_post'(lipast, 'rtype'=>'v')
+    $P0 = get_hll_global ['POST'], 'Sub'
+    lipost = $P0.'new'('outer'=>bpost, 'pirflags'=>':load :init')
+    lipost.'push_pirop'('.local pmc', 'block')
+    lipost.'push_pirop'('interpinfo', '$P20', .INTERPINFO_CURRENT_SUB)
+    lipost.'push_pirop'('callmethod', 'get_outer', '$P20', 'result'=>'block')
+    bpost.'push'(lipost)
+  loadinit_done:
+
     ##  restore previous outer scope and symtable
     set_global '$?SUB', outerpost
     setattribute self, '%!symtable', outersym
@@ -657,7 +678,10 @@ Return the POST representation of a C<PAST::Block>.
     $P0 = get_hll_global ['POST'], 'Ops'
     bpost = $P0.'new'(bpost, 'node'=>node, 'result'=>result)
     if ns goto block_decl_ns
-    bpost.'push_pirop'('get_global', result, name)
+    concat $S0, '.const .Sub ', result
+    concat $S0, ' = '
+    concat $S0, name
+    bpost.'push_pirop'($S0)
     goto block_done
   block_decl_ns:
     bpost.'push_pirop'('get_hll_global', result, ns, name)
@@ -1519,8 +1543,16 @@ node with a 'pasttype' of inline.
     .local pmc ops
     ops = self.'post_children'(node, 'signature'=>'vP')
 
+    .local pmc inline_pmc
     .local string inline
-    inline = node.'inline'()
+    inline_pmc = node.'inline'()
+    $I0 = does inline_pmc, 'array'
+    if $I0 goto inline_array
+    inline = inline_pmc
+    goto have_inline
+  inline_array:
+    inline = join "\n", inline_pmc
+  have_inline:
 
     .local string result
     result = ''
@@ -1873,6 +1905,41 @@ attribute.
     .return $P0.'new'(call_on, name, bindpost, 'pirop'=>'setattribute', 'result'=>bindpost)
   attribute_bind_decl:
     .return $P0.'new'(call_on, name, bindpost, 'pirop'=>'setattribute', 'result'=>bindpost)
+.end
+
+
+.sub 'register' :method :multi(_, ['PAST::Var'])
+    .param pmc node
+    .param pmc bindpost
+
+    .local string name
+    name = node.'name'()
+
+    .local pmc ops
+    $P0 = get_hll_global ['POST'], 'Ops'
+    ops = $P0.'new'('result'=>name, 'node'=>node)
+
+    .local int isdecl
+    isdecl = node.'isdecl'()
+    unless isdecl goto decl_done
+    ops.'push_pirop'('.local pmc', ops)
+  decl_done:
+
+    if bindpost goto register_bind
+
+    .local pmc viviself, vivipost
+    viviself = node.'viviself'()
+    unless viviself goto end
+    vivipost = self.'as_post'(viviself, 'rtype'=>'P')
+    ops.'push'(vivipost)
+    ops.'push_pirop'('set', ops, vivipost)
+    goto end
+
+  register_bind:
+    ops.'push_pirop'('set', ops, bindpost)
+
+  end:
+    .return (ops)
 .end
 
 
