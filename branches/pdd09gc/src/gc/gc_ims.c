@@ -992,7 +992,7 @@ parrot_gc_ims_run(PARROT_INTERP, int flags)
          * Be sure live bits are clear.
          */
         if (g_ims->state >= GC_IMS_RE_INIT || g_ims->state < GC_IMS_FINISHED)
-            Parrot_dod_clear_live_bits(interp);
+            Parrot_clear_live_bits(interp, interp->arena_base->pmc_pool);
 
         Parrot_dod_sweep(interp, interp->arena_base->pmc_pool);
         g_ims->state = GC_IMS_DEAD;

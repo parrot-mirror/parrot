@@ -23,6 +23,15 @@ typedef void * (*get_free_object_fn_type)(PARROT_INTERP, struct Small_Object_Poo
 typedef void (*alloc_objects_fn_type)(PARROT_INTERP, struct Small_Object_Pool *);
 typedef void (*dod_object_fn_type)(PARROT_INTERP, struct Small_Object_Pool *, PObj *);
 
+#define GC_DEBUG_REPLENISH_LEVEL_FACTOR        0.0
+#define GC_DEBUG_UNITS_PER_ALLOC_GROWTH_FACTOR 1
+#define REPLENISH_LEVEL_FACTOR                 0.3
+
+/* this factor is totally arbitrary, but gives good timings for stress.pasm */
+#define UNITS_PER_ALLOC_GROWTH_FACTOR          1.75
+
+#define POOL_MAX_BYTES                         65536 * 128
+
 #if PARROT_GC_GMS
 /*
  * all objects have this header in front of the actual
@@ -144,24 +153,11 @@ INTVAL contained_in_pool(
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
-void gc_pmc_ext_pool_init(ARGMOD(Small_Object_Pool *pool))
-        __attribute__nonnull__(1)
-        FUNC_MODIFIES(*pool);
-
 PARROT_MALLOC
 PARROT_CANNOT_RETURN_NULL
 Small_Object_Pool * new_small_object_pool(
     size_t object_size,
     size_t objects_per_alloc);
-
-void Parrot_add_to_free_list(PARROT_INTERP,
-    ARGMOD(Small_Object_Pool *pool),
-    ARGMOD(Small_Object_Arena *arena))
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(2)
-        __attribute__nonnull__(3)
-        FUNC_MODIFIES(*pool)
-        FUNC_MODIFIES(*arena);
 
 void Parrot_append_arena_in_pool(PARROT_INTERP,
     ARGMOD(Small_Object_Pool *pool),
@@ -172,9 +168,6 @@ void Parrot_append_arena_in_pool(PARROT_INTERP,
         __attribute__nonnull__(3)
         FUNC_MODIFIES(*pool)
         FUNC_MODIFIES(*new_arena);
-
-void Parrot_gc_ms_init(PARROT_INTERP)
-        __attribute__nonnull__(1);
 
 int Parrot_is_const_pmc(PARROT_INTERP, ARGIN(const PMC *pmc))
         __attribute__nonnull__(1)
