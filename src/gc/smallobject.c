@@ -23,58 +23,6 @@ Handles the accessing of small object pools (header pools).
 
 /* HEADERIZER HFILE: include/parrot/smallobject.h */
 
-/* HEADERIZER BEGIN: static */
-/* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
-
-static void gc_ms_add_free_object(SHIM_INTERP,
-    ARGMOD(Small_Object_Pool *pool),
-    ARGIN(void *to_add))
-        __attribute__nonnull__(2)
-        __attribute__nonnull__(3)
-        FUNC_MODIFIES(*pool);
-
-static void gc_ms_add_free_pmc_ext(SHIM_INTERP,
-    ARGMOD(Small_Object_Pool *pool),
-    ARGIN(void *to_add))
-        __attribute__nonnull__(2)
-        __attribute__nonnull__(3)
-        FUNC_MODIFIES(*pool);
-
-static void gc_ms_alloc_objects(PARROT_INTERP,
-    ARGMOD(Small_Object_Pool *pool))
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(2)
-        FUNC_MODIFIES(*pool);
-
-PARROT_CANNOT_RETURN_NULL
-PARROT_WARN_UNUSED_RESULT
-static void * gc_ms_get_free_object(PARROT_INTERP,
-    ARGMOD(Small_Object_Pool *pool))
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(2)
-        FUNC_MODIFIES(*pool);
-
-PARROT_CANNOT_RETURN_NULL
-PARROT_WARN_UNUSED_RESULT
-static void * gc_ms_get_free_pmc_ext(PARROT_INTERP,
-    ARGMOD(Small_Object_Pool *pool))
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(2)
-        FUNC_MODIFIES(*pool);
-
-static void gc_ms_pool_init(SHIM_INTERP, ARGMOD(Small_Object_Pool *pool))
-        __attribute__nonnull__(2)
-        FUNC_MODIFIES(*pool);
-
-static void more_traceable_objects(PARROT_INTERP,
-    ARGMOD(Small_Object_Pool *pool))
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(2)
-        FUNC_MODIFIES(*pool);
-
-/* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
-/* HEADERIZER END: static */
-
 /*
 
 =item C<INTVAL contained_in_pool>
