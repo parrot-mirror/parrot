@@ -26,7 +26,9 @@ enum {
     PDB_BREAK       = 1 << 4, /* Set only from debug_break */
     PDB_EXIT        = 1 << 5,
     PDB_ENTER       = 1 << 6,
-    PDB_GCDEBUG     = 1 << 7
+    PDB_GCDEBUG     = 1 << 7,
+    PDB_TRACING     = 1 << 8,
+    PDB_ECHO        = 1 << 9
 };
 
 enum {
