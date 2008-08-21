@@ -104,20 +104,21 @@ pmclass MultiSub extends ResizablePMCArray need_ext provides array {
         return VTABLE_get_pmc_keyed_string(INTERP, SELF, s);
     }
 
-    /* Naive get_iter method. Takes an argument list PMC, sorts the subs in the
-       multi according to the closeness to that list, and returns an iterator
-       over the sorted list of subs. Or, it could take a string PMC where
-       type letters (P S N I) are whitespace delimited. */
+    /* get_iter method should take one of two inputs: either an array of
+       arguments, or a string with a whitespace delimited function signature
+       (N, I, S, P). It should sort the argument list according to closeness
+       to this input argument list and return an iterator over that list. */
 
     METHOD PMC *get_iter(PMC *args) {
         STRING * const _array  = CONST_STRING(interp, "Array");
         STRING * const _string = CONST_STRING(interp, "String");
 
-        if (VTABLE_isa(INTERP, args, _array))
-            return VTABLE_get_pmc_keyed(INTERP, SELF, args);
+        if (VTABLE_isa(INTERP, args, _array)){
+            /* TODO: What goes here? */
+        }
         else if (VTABLE_isa(INTERP, args, _string)) {
-            STRING * const s = VTABLE_get_string(args);
-            return VTABLE_get_pmc_keyed_string(INTERP, SELF, s);
+            STRING * const s = VTABLE_get_string(INTERP, args);
+            /* TODO: What goes here? */
         }
         else
             Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INVALID_OPERATION,
