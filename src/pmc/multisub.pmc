@@ -79,7 +79,7 @@ pmclass MultiSub extends ResizablePMCArray need_ext provides array {
     }
 
     VTABLE PMC *get_pmc() {
-        PMC * list = Parrot_mmd_sort_manhattan(INTERP, SELF);
+        PMC *list = Parrot_mmd_sort_manhattan(INTERP, SELF);
 
         if (PMC_IS_NULL(list))
             Parrot_ex_throw_from_c_args(INTERP, NULL, 1, "No applicable methods.\n");
@@ -91,15 +91,15 @@ pmclass MultiSub extends ResizablePMCArray need_ext provides array {
        ResizablePMCArray's VTABLE methods of the same names. Hopefully we
        don't need anything beyond that. */
     VTABLE PMC *get_pmc_keyed(PMC *key) {
-        PMC *  list = Parrot_mmd_sort_manhattan(INTERP, SELF);
-        if(PMC_IS_NULL(list))
+        PMC *list = Parrot_mmd_sort_manhattan(INTERP, SELF);
+        if (PMC_IS_NULL(list))
             Parrot_ex_throw_from_c_args(INTERP, NULL, 1, "No applicable methods.\n");
         return VTABLE_get_pmc_keyed(INTERP, list, key);
     }
 
     VTABLE PMC *get_pmc_keyed_string(STRING *s) {
-        PMC * list = Parrot_mmd_sort_manhattan(INTERP, SELF);
-        if(PMC_IS_NULL(list))
+        PMC *list = Parrot_mmd_sort_manhattan(INTERP, SELF);
+        if (PMC_IS_NULL(list))
             Parrot_ex_throw_from_c_args(INTERP, NULL, 1, "No applicable methods.\n");
         return VTABLE_get_pmc_keyed_string(INTERP, SELF, s);
     }
