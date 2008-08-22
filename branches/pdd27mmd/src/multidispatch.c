@@ -55,6 +55,57 @@ static INTVAL distance_cmp(SHIM_INTERP, INTVAL a, INTVAL b);
 static void dump_mmd(PARROT_INTERP, INTVAL function)
         __attribute__nonnull__(1);
 
+PARROT_CANNOT_RETURN_NULL
+PARROT_WARN_UNUSED_RESULT
+static PMC* mmd_arg_tuple_inline(PARROT_INTERP,
+    ARGIN(STRING *signature),
+    va_list args)
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+static void mmd_create_builtin_multi_meth(PARROT_INTERP,
+    ARGIN(PMC *ns),
+    INTVAL type,
+    ARGIN(const MMD_init *entry))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(4);
+
+PARROT_CANNOT_RETURN_NULL
+PARROT_WARN_UNUSED_RESULT
+static PMC* mmd_cvt_to_types(PARROT_INTERP, ARGIN(PMC *multi_sig))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+static UINTVAL mmd_distance(PARROT_INTERP,
+    ARGIN(PMC *pmc),
+    ARGIN(PMC *arg_tuple))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3);
+
+static void mmd_expand_x(PARROT_INTERP, INTVAL func_nr, INTVAL new_x)
+        __attribute__nonnull__(1);
+
+static void mmd_expand_y(PARROT_INTERP, INTVAL func_nr, INTVAL new_y)
+        __attribute__nonnull__(1);
+
+PARROT_CANNOT_RETURN_NULL
+PARROT_WARN_UNUSED_RESULT
+static PMC* mmd_get_ns(PARROT_INTERP)
+        __attribute__nonnull__(1);
+
+PARROT_WARN_UNUSED_RESULT
+static int mmd_is_hidden(PARROT_INTERP, ARGIN(PMC *multi), ARGIN(PMC *cl))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3);
+
+PARROT_CANNOT_RETURN_NULL
+PARROT_WARN_UNUSED_RESULT
+static PMC* mmd_make_ns(PARROT_INTERP)
+        __attribute__nonnull__(1);
+
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 static funcptr_t Parrot_get_mmd_dispatcher(PARROT_INTERP,
@@ -74,75 +125,17 @@ static PMC* Parrot_mmd_arg_tuple_func(PARROT_INTERP)
         __attribute__nonnull__(1);
 
 PARROT_CANNOT_RETURN_NULL
-PARROT_WARN_UNUSED_RESULT
-static PMC* Parrot_mmd_arg_tuple_inline(PARROT_INTERP,
-    ARGIN(STRING *signature),
-    va_list args)
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(2);
-
-static void Parrot_mmd_create_builtin_multi_meth(PARROT_INTERP,
-    ARGIN(PMC *ns),
-    INTVAL type,
-    ARGIN(const MMD_init *entry))
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(2)
-        __attribute__nonnull__(4);
-
-PARROT_CANNOT_RETURN_NULL
-PARROT_WARN_UNUSED_RESULT
-static PMC* Parrot_mmd_cvt_to_types(PARROT_INTERP, ARGIN(PMC *multi_sig))
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(2);
-
-PARROT_CANNOT_RETURN_NULL
 static PMC * Parrot_mmd_deref(PARROT_INTERP, ARGIN(PMC *value))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
-
-static UINTVAL Parrot_mmd_distance(PARROT_INTERP,
-    ARGIN(PMC *pmc),
-    ARGIN(PMC *arg_tuple))
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(2)
-        __attribute__nonnull__(3);
 
 static void Parrot_mmd_ensure_writable(PARROT_INTERP,
     INTVAL function,
     ARGIN_NULLOK(const PMC *pmc))
         __attribute__nonnull__(1);
 
-static void Parrot_mmd_expand_x(PARROT_INTERP, INTVAL func_nr, INTVAL new_x)
-        __attribute__nonnull__(1);
-
-static void Parrot_mmd_expand_y(PARROT_INTERP, INTVAL func_nr, INTVAL new_y)
-        __attribute__nonnull__(1);
-
-PARROT_CANNOT_RETURN_NULL
-PARROT_WARN_UNUSED_RESULT
-static PMC* Parrot_mmd_get_ns(PARROT_INTERP)
-        __attribute__nonnull__(1);
-
-PARROT_WARN_UNUSED_RESULT
-static int Parrot_mmd_is_hidden(PARROT_INTERP, ARGIN(PMC *multi), ARGIN(PMC *cl))
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(2)
-        __attribute__nonnull__(3);
-
-PARROT_CANNOT_RETURN_NULL
-PARROT_WARN_UNUSED_RESULT
-static PMC* Parrot_mmd_make_ns(PARROT_INTERP)
-        __attribute__nonnull__(1);
-
 static int Parrot_mmd_maybe_candidate(PARROT_INTERP,
     ARGIN(PMC *pmc),
-    ARGIN(PMC *cl))
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(2)
-        __attribute__nonnull__(3);
-
-static void Parrot_mmd_search_global(PARROT_INTERP,
-    ARGIN(STRING *meth),
     ARGIN(PMC *cl))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
@@ -158,18 +151,25 @@ static void Parrot_mmd_search_classes(PARROT_INTERP,
         __attribute__nonnull__(3)
         __attribute__nonnull__(4);
 
-static int Parrot_mmd_search_local(PARROT_INTERP,
+PARROT_CAN_RETURN_NULL
+PARROT_WARN_UNUSED_RESULT
+static PMC* Parrot_mmd_search_default(PARROT_INTERP,
+    ARGIN(STRING *meth),
+    ARGIN(PMC *arg_tuple))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3);
+
+static void Parrot_mmd_search_global(PARROT_INTERP,
     ARGIN(STRING *meth),
     ARGIN(PMC *cl))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3);
 
-PARROT_CAN_RETURN_NULL
-PARROT_WARN_UNUSED_RESULT
-static PMC* Parrot_mmd_search_default(PARROT_INTERP,
+static int Parrot_mmd_search_local(PARROT_INTERP,
     ARGIN(STRING *meth),
-    ARGIN(PMC *arg_tuple))
+    ARGIN(PMC *cl))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3);
@@ -1825,6 +1825,8 @@ mmd_get_ns(PARROT_INTERP)
 
 RT #48260: Not yet documented!!!
 
+{{**DEPRECATE**}}
+
 =cut
 
 */
@@ -1868,6 +1870,8 @@ Parrot_mmd_search_global(PARROT_INTERP, ARGIN(STRING *meth), ARGIN(PMC *cl))
 
 RT #48260: Not yet documented!!!
 
+{{**DEPRECATE**}}
+
 =cut
 
 */
@@ -1890,6 +1894,8 @@ mmd_create_builtin_multi_stub(PARROT_INTERP, ARGIN(PMC *ns), INTVAL func_nr)
 =item C<static void mmd_create_builtin_multi_meth>
 
 RT #48260: Not yet documented!!!
+
+{{**DEPRECATE**}}
 
 =cut
 
@@ -1994,9 +2000,84 @@ mmd_create_builtin_multi_meth(PARROT_INTERP, ARGIN(PMC *ns), INTVAL type,
 
 /*
 
+=item C<void Parrot_mmd_add_multi_from_c_args>
+
+Create a MultiSub, or add a variant to an existing MultiSub. The MultiSub is
+stored in the specified namespace.
+
+=cut
+
+*/
+
+PARROT_API
+void
+Parrot_mmd_add_multi_from_c_args(PARROT_INTERP,
+        ARGIN(PMC *namespace), ARGIN(STRING *sub_name),
+        ARGIN(STRING *short_sig), ARGIN(STRING *full_sig),
+        ARGIN(funcptr_t multi_func_ptr))
+{
+        PMC *multi_sub = Parrot_get_global(interp, namespace, sub_name);
+
+        /* Create an NCI sub for the C function */
+        PMC *method = constant_pmc_new(interp, enum_class_NCI);
+
+        VTABLE_set_pointer_keyed_str(interp, method,
+                short_sig, F2DPTR(multi_func_ptr));
+
+        if (PMC_IS_NULL(multi_sub)) {
+            multi_sub = constant_pmc_new(interp, enum_class_MultiSub);
+            Parrot_set_global(interp, namespace, sub_name, multi_sub);
+        }
+
+        PARROT_ASSERT(multi_sub->vtable->base_type == enum_class_MultiSub);
+        VTABLE_push_pmc(interp, multi_sub, method);
+}
+
+/*
+
+=item C<void Parrot_mmd_add_multi_list_from_c_args>
+
+Create a collection of multiple dispatch subs from a C structure of
+information. Iterate through the list of details passed in. For each entry
+create a MultiSub or add a variant to an existing MultiSub. MultiSubs are
+created in the global 'MULTI' namespace in the Parrot HLL.
+
+Typically used to create all the multiple dispatch routines
+declared in a PMC from the PMC's class initialization function.
+
+=cut
+
+*/
+
+PARROT_API
+void
+Parrot_mmd_add_multi_list_from_c_args(PARROT_INTERP,
+        ARGIN(const multi_func_list *mmd_info), INTVAL elements)
+{
+    INTVAL i;
+    PMC * const namespace = Parrot_make_namespace_keyed_str(
+            interp, interp->root_namespace,
+            CONST_STRING(interp, "MULTI"));
+
+    for (i = 0; i < elements; ++i) {
+#ifdef PARROT_HAS_ALIGNED_FUNCPTR
+        PARROT_ASSERT((PTR2UINTVAL(mmd_info[i].func_ptr) & 3) == 0);
+#endif
+        Parrot_mmd_add_multi_from_c_args(interp, namespace,
+                mmd_info[i].multi_name,
+                mmd_info[i].short_sig,
+                mmd_info[i].full_sig,
+                mmd_info[i].func_ptr);
+    }
+}
+
+/*
+
 =item C<void Parrot_mmd_register_table>
 
 Register MMD functions for this PMC type.
+
+{{**DEPRECATE**}}
 
 =cut
 

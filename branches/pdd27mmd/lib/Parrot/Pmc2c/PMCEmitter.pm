@@ -131,8 +131,6 @@ EOH
 Returns the C code function declarations for all the methods for inclusion
 in the PMC's C header file.
 
-TODO include MMD variants.
-
 =cut
 
 sub hdecls {
@@ -382,6 +380,29 @@ sub get_super_mmds {
     return @mmds;
 }
 
+=item C<find_multi_functions()>
+
+Returns an arrayref of MULTI function names declared in the PMC. Used to
+initialize the multiple dispatch function list.
+
+=cut
+
+sub find_multi_functions {
+    my ($self)  = @_;
+
+    my $pmcname = $self->name;
+    my ( @multi_names );
+
+    foreach my $method ( @{ $self->methods } ) {
+        next unless $method->is_multi;
+        my $short_sig = $method->{MULTI_short_sig};
+        my $full_sig = $pmcname . "," . $method->{MULTI_full_sig};
+        my $functionname = 'Parrot_' . $pmcname . '_' . $method->name;
+        push @multi_names, [ $method->symbol, $short_sig, $full_sig, $functionname ];
+    }
+    return ( \@multi_names );
+}
+
 =item C<find_mmd_methods()>
 
 Returns three values:
@@ -542,6 +563,13 @@ sub init_func {
     my $mmd_list = join( ",\n        ",
         map { "{ $_->[0], $_->[1], $_->[2], (funcptr_t) $_->[3] }" } @$mmds );
 
+    my $multi_funcs = $self->find_multi_functions();
+    my $multi_list = join( ",\n        ",
+        map { '{ CONST_STRING(interp, "'. $_->[0] .  '"), ' . "\n          " .
+                'CONST_STRING(interp, "'. $_->[1] .  '"), ' . "\n          " .
+                'CONST_STRING(interp, "'. $_->[2] .  '"), ' . "\n          " .
+                '(funcptr_t) ' . $_->[3] . ' }' } @$multi_funcs );
+
     my @isa = grep { $_ ne 'default' } @{ $self->parents };
 
     my $provides        = join( " ", keys( %{ $self->{flags}{provides} } ) );
@@ -571,6 +599,14 @@ EOC
     }
 
     my $const = ( $self->{flags}{dynpmc} ) ? " " : " const ";
+    if ( @$multi_funcs ) {
+        $cout .= <<"EOC";
+
+   $const multi_func_list _temp_multi_func_list[] = {
+        $multi_list
+    };
+EOC
+    }
     if ( @$mmds ) {
         $cout .= <<"EOC";
 
@@ -777,6 +813,14 @@ EOC
 #define N_MMD_INIT (sizeof(_temp_mmd_init)/sizeof(_temp_mmd_init[0]))
             Parrot_mmd_register_table(interp, entry,
                 _temp_mmd_init, N_MMD_INIT);
+EOC
+    }
+
+    if ( @$multi_funcs ) {
+        $cout .= <<"EOC";
+#define N_MULTI_LIST (sizeof(_temp_multi_func_list)/sizeof(_temp_multi_func_list[0]))
+            Parrot_mmd_add_multi_list_from_c_args(interp,
+                _temp_multi_func_list, N_MULTI_LIST);
 EOC
     }
 

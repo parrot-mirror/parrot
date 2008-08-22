@@ -44,6 +44,13 @@ typedef struct _MMD_table {
     UINTVAL y;               /* The y coord for each table */
 } MMD_table;
 
+typedef struct _multi_func_list {
+        STRING *multi_name;
+        STRING *short_sig;
+        STRING *full_sig;
+        funcptr_t func_ptr;
+} multi_func_list;
+
 
 /* HEADERIZER BEGIN: src/multidispatch.c */
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
@@ -75,6 +82,27 @@ void Parrot_mmd_add_function(PARROT_INTERP,
     INTVAL func_nr,
     NULLOK(funcptr_t function))
         __attribute__nonnull__(1);
+
+PARROT_API
+void Parrot_mmd_add_multi_from_c_args(PARROT_INTERP,
+    ARGIN(PMC *namespace),
+    ARGIN(STRING *sub_name),
+    ARGIN(STRING *short_sig),
+    ARGIN(STRING *full_sig),
+    ARGIN(funcptr_t multi_func_ptr))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3)
+        __attribute__nonnull__(4)
+        __attribute__nonnull__(5)
+        __attribute__nonnull__(6);
+
+PARROT_API
+void Parrot_mmd_add_multi_list_from_c_args(PARROT_INTERP,
+    ARGIN(const multi_func_list *mmd_info),
+    INTVAL elements)
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
 
 PARROT_API
 void Parrot_mmd_destroy(PARROT_INTERP)
@@ -167,6 +195,10 @@ void Parrot_mmd_dispatch_v_ps(PARROT_INTERP,
         __attribute__nonnull__(3);
 
 PARROT_API
+void Parrot_mmd_rebuild_table(PARROT_INTERP, INTVAL type, INTVAL func_nr)
+        __attribute__nonnull__(1);
+
+PARROT_API
 void Parrot_mmd_register(PARROT_INTERP,
     INTVAL func_nr,
     INTVAL left_type,
@@ -182,16 +214,6 @@ void Parrot_mmd_register_sub(PARROT_INTERP,
     ARGIN(const PMC *sub))
         __attribute__nonnull__(1)
         __attribute__nonnull__(5);
-
-PARROT_API
-PARROT_CANNOT_RETURN_NULL
-PARROT_WARN_UNUSED_RESULT
-PMC * Parrot_mmd_vtfind(PARROT_INTERP, INTVAL func_nr, INTVAL left, INTVAL right)
-        __attribute__nonnull__(1);
-
-PARROT_API
-void Parrot_mmd_rebuild_table(PARROT_INTERP, INTVAL type, INTVAL func_nr)
-        __attribute__nonnull__(1);
 
 PARROT_API
 void Parrot_mmd_register_table(PARROT_INTERP,
@@ -217,6 +239,15 @@ PARROT_WARN_UNUSED_RESULT
 PMC * Parrot_mmd_sort_manhattan(PARROT_INTERP, ARGIN(PMC *candidates))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
+
+PARROT_API
+PARROT_CANNOT_RETURN_NULL
+PARROT_WARN_UNUSED_RESULT
+PMC * Parrot_mmd_vtfind(PARROT_INTERP,
+    INTVAL func_nr,
+    INTVAL left,
+    INTVAL right)
+        __attribute__nonnull__(1);
 
 void mmd_create_builtin_multi_stub(PARROT_INTERP,
     ARGIN(PMC *ns),
