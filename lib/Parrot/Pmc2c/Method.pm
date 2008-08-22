@@ -71,6 +71,13 @@ sub is_mmd {
     return 0;
 }
 
+sub is_multi {
+    my ($self) = @_;
+
+    return 1 if $self->{MULTI};
+    return 0;
+}
+
 =head1 C<trans($type)>
 
 Used in C<signature()> to normalize argument types.

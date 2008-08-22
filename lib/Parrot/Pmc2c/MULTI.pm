@@ -48,18 +48,20 @@ Current Method Body
 
 =cut
 
-sub rewrite_parameters {
-    my ($parameters) = @_;
+sub rewrite_multi_sub {
+    my ( $self, $pmc ) = @_;
     my @param_types = ();
     my @new_params = ();
-    my $new_param_string = "";
+    my $short_sig = "JP"; # prepend the short signature interpreter and invocant
 
-    for my $param ( split /,/, $parameters ) {
+    # Fixup the parameters, standardizing PMC types and extracting type names
+    # for the multi name.
+    for my $param ( split /,/, $self->parameters ) {
         my ( $type, $name, $rest ) = split /\s+/, &Parrot::Pmc2c::PCCMETHOD::trim($param), 3;
+        my $sig_char;
 
         die "Invalid MULTI parameter '$param': missing type or name\n"
              unless defined $name;
-
         die "Invalid MULTI parameter '$param': attributes not allowed on multis\n"
              if defined $rest;
 
@@ -72,35 +74,36 @@ sub rewrite_parameters {
 
         # Pass standard parameter types unmodified.
         # All other param types are rewritten as PMCs.
-        if ($type eq 'STRING' or $type eq 'PMC' or $type eq 'INTVAL' or $type eq 'FLOATVAL') {
+        if ($type eq 'STRING' or $type eq 'PMC' or $type eq 'INTVAL') {
+            ($sig_char) = split '', $type; # short signature takes first character of name
+            push @new_params, $param;
+        } elsif ($type eq 'FLOATVAL') {
+            $sig_char = 'N';
             push @new_params, $param;
         } else {
+            $sig_char = 'P';
             push @new_params, "PMC *$name";
         }
+
+        $short_sig .= $sig_char;
     }
-    $new_param_string = join (",", @new_params);
 
-    return ($new_param_string, @param_types);
-}
+    # prepend the short signature return type
+    if ($self->name =~ /^i_/) {
+        $short_sig = "v" . $short_sig;
+    } elsif ($self->name =~ /^is_/ or $self->name =~ /^cmp_/) {
+        $short_sig = "I" . $short_sig;
+    } else {
+        $short_sig = "P" . $short_sig;
+    }
 
-=head3 C<rewrite_multi_sub()>
+    $self->parameters(join (",", @new_params));
 
-    rewrite_multi_sub($method, $pmc);
-
-=cut
-
-sub rewrite_multi_sub {
-    my ( $self, $pmc ) = @_;
-
-    # Fixup the parameters, standardizing PMC types and extracting type names
-    # for the multi name.
-    my ($paramstring, @paramlist) = rewrite_parameters( $self->parameters );
-    $self->parameters($paramstring);
-
-    my $sub_name = "multi_" . $self->name . "_" . join ('_', @paramlist);
-
+    my $sub_name = "multi_" . $self->name . "_" . join ('_', @param_types);
     $self->name($sub_name);
 
+    $self->{MULTI_short_sig} = $short_sig;
+    $self->{MULTI_full_sig}  = join(',', @param_types);
     $self->{MULTI} = 1;
 
     return 1;
