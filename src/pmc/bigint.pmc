@@ -730,29 +730,29 @@ Decrements the integer.
         bigint_sub_bigint_int(INTERP, SELF, 1, SELF);
     }
 
-    VTABLE PMC *add(PMC *value, PMC *dest) {
-MMD_BigInt: {
-                if (dest)
-                    VTABLE_morph(interp, dest, SELF->vtable->base_type);
-                else
-                    dest = pmc_new(INTERP, SELF->vtable->base_type);
+    MULTI PMC *add(BigInt value, PMC *dest) {
+        if (dest)
+            VTABLE_morph(interp, dest, SELF->vtable->base_type);
+        else
+            dest = pmc_new(INTERP, SELF->vtable->base_type);
 
-                bigint_add_bigint(INTERP, SELF, value, dest);
-                return dest;
-            }
-MMD_Integer: {
-                if (dest)
-                    VTABLE_morph(interp, dest, SELF->vtable->base_type);
-                else
-                    dest = pmc_new(INTERP, SELF->vtable->base_type);
+        bigint_add_bigint(INTERP, SELF, value, dest);
+        return dest;
+    }
 
-                bigint_add_bigint_int(INTERP, SELF, PMC_int_val(value), dest);
-                return dest;
-            }
-MMD_DEFAULT: {
-            Parrot_ex_throw_from_c_args(INTERP, NULL,
-                EXCEPTION_INTERNAL_NOT_IMPLEMENTED, "unimp add");
-        }
+    MULTI PMC *add(Integer value, PMC *dest) {
+        if (dest)
+            VTABLE_morph(interp, dest, SELF->vtable->base_type);
+        else
+            dest = pmc_new(INTERP, SELF->vtable->base_type);
+
+        bigint_add_bigint_int(INTERP, SELF, PMC_int_val(value), dest);
+        return dest;
+    }
+
+    MULTI PMC *add(DEFAULT value, PMC *dest) {
+        Parrot_ex_throw_from_c_args(INTERP, NULL,
+            EXCEPTION_INTERNAL_NOT_IMPLEMENTED, "unimp add");
     }
 
     VTABLE PMC *add_int(INTVAL value, PMC *dest) {
