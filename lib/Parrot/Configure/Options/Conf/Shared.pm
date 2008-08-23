@@ -82,7 +82,8 @@ our @shared_valid_options = qw{
 
 =head1 NAME
 
-Parrot::Configure::Options::Conf::Shared
+Parrot::Configure::Options::Conf::Shared - Configuration options shared by
+both Command-Line and Configuration-File configuration modes
 
 =head1 SYNOPSIS
 
@@ -101,13 +102,13 @@ holds the list of options which may be used either on:
 =item *
 
 the L<Configure.pl>
-command-line (corresponding to use of C<mode => configure> in
+command-line (corresponding to use of C<mode =E<gt> configure> in
 C<Parrot::Configure::Options::process_options()>); or
 
 =item *
 
 inside a configuration file where L<Configure.pl> is called with the
-C<--file=path/to/configfile> option (corresponding to use of C<mode => file>
+C<--file=path/to/configfile> option (corresponding to use of C<mode =E<gt> file>
 in C<Parrot::Configure::Options::process_options()>).
 
 =back

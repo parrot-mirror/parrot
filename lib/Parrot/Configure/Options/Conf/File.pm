@@ -152,6 +152,142 @@ sub _set_steps {
 
 1;
 
+#################### DOCUMENTATION ####################
+
+=head1 NAME
+
+Parrot::Configure::Options::Conf::File - Options processing functionality for
+Parrot's configuration-file interface
+
+=head1 SYNOPSIS
+
+    use Parrot::Configure::Options::Conf::File qw(
+        @valid_options
+        $script
+        %options_components
+        $parrot_version
+        $svnid
+    );
+
+=head1 DESCRIPTION
+
+This package exports five variables on demand.
+
+    %options_components
+    @valid_options
+    $script
+    $parrot_version
+    $svnid
+
+Typically, only one of these -- C<%options_components> -- is directly imported
+by Parrot::Configure::Options for use in the case where options are supplied
+to F<Configure.pl> on the command-line.  But all five are, in principle,
+importable by other packages.
+
+=head2 C<%options_components>
+
+    %options_components = (
+        'valid_options'  => \@valid_options,
+        'script'         => $script,
+        'short_circuits' => \%short_circuits,
+        'conditionals'   => \&conditional_assignments,
+    );
+
+Hash with four elements keyed as follows:
+
+=over 4
+
+=item * C<valid_options>
+
+Reference to an array holding a list of options are valid when configuring
+Parrot via the traditional Command-Line interface.  The options are documented
+when you call C<perl Configure.pl --help> and include C<--ask> to request
+interactive configuration.
+
+=item * C<script>
+
+Defaults to string 'Configure.pl', but may be overridden for testing purposes.
+
+=item * C<short_circuits>
+
+Reference to a hash with two elements:
+
+=over 4
+
+=item * C<help>
+
+Reference to subroutine C<print_help>, which prints F<Configure.pl>'s help
+message.  Since this subroutine is shared with another package, it is
+actually imported from Parrot::Configure::Options::Conf.
+
+=item * C<version>
+
+Reference to subroutine C<print_version>, which prints F<Configure.pl>'s
+version number.  Since this subroutine is shared with another package, it is
+actually imported from Parrot::Configure::Options::Conf.
+
+=back
+
+=item * C<conditionals>
+
+Reference to a subroutine private to this package which:
+
+=over 4
+
+=item *
+
+Sets default values for the C<debugging> and C<maintainer> options under most
+situations.
+
+=item *
+
+Fetches the list of configuration steps from Parrot::Configure::Step::List.
+When you configure with the Command-Line Interface, you use the canonical list
+of configuration steps provided by that package.
+
+=back
+
+The subroutine takes a single argument:  a reference to a hash holding
+elements concerned with configuration, such as the valid options.
+
+The subroutine returns a two-argument list:
+
+=over 4
+
+=item *
+
+An augmented version of the hash reference passed in as an argument.
+
+=item *
+
+Reference to array holding list of configuration steps.
+
+=back
+
+That's probably difficult to understand at first.  So here is an example of
+how C<$options_components-E<gt>{conditionals}> is actually used inside
+C<Parrot::Configure::Options::process_options()>.
+
+    my $data;
+    # $data is hash ref which gets assigned some key-value pairs
+    my $steps_list_ref;
+    ($data, $steps_list_ref) =
+        &{ $options_components->{conditionals} }($data);
+
+=back
+
+=head1 NOTES
+
+The functionality in this package originally appeared in F<Configure.pl>.  It
+was transferred here and refactored by James E Keenan.
+
+=head1 SEE ALSO
+
+F<Configure.pl>. Parrot::Configure::Options.  Parrot::Configure::Options::Conf.
+Parrot::Configure::Options::Reconf.  Parrot::Configure::Options::Conf::CLI.
+
+=cut
+
 # Local Variables:
 #   mode: cperl
 #   cperl-indent-level: 4
