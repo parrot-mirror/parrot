@@ -195,6 +195,16 @@ void Parrot_mmd_dispatch_v_ps(PARROT_INTERP,
         __attribute__nonnull__(3);
 
 PARROT_API
+PARROT_CAN_RETURN_NULL
+PMC * Parrot_mmd_multi_dispatch_from_c_args(PARROT_INTERP,
+    ARGIN(const char *name),
+    ARGIN(const char *sig),
+    ...)
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3);
+
+PARROT_API
 void Parrot_mmd_rebuild_table(PARROT_INTERP, INTVAL type, INTVAL func_nr)
         __attribute__nonnull__(1);
 
@@ -239,6 +249,16 @@ PARROT_WARN_UNUSED_RESULT
 PMC * Parrot_mmd_sort_manhattan(PARROT_INTERP, ARGIN(PMC *candidates))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
+
+PARROT_API
+PARROT_CAN_RETURN_NULL
+PARROT_WARN_UNUSED_RESULT
+PMC * Parrot_mmd_sort_manhattan_by_sig_pmc(PARROT_INTERP,
+    ARGIN(PMC *candidates),
+    ARGIN(PMC* invoke_sig))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3);
 
 PARROT_API
 PARROT_CANNOT_RETURN_NULL

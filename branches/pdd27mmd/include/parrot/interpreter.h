@@ -630,6 +630,16 @@ INTVAL Parrot_run_meth_fromc_args_reti(PARROT_INTERP,
 
 PARROT_API
 PARROT_IGNORABLE_RESULT
+PARROT_CAN_RETURN_NULL
+PMC * Parrot_runops_from_sig_pmc(PARROT_INTERP,
+    ARGIN(PMC *sub),
+    ARGIN(PMC *sig))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3);
+
+PARROT_API
+PARROT_IGNORABLE_RESULT
 PARROT_CANNOT_RETURN_NULL
 parrot_context_t * Parrot_runops_fromc(PARROT_INTERP, ARGIN(PMC *sub))
         __attribute__nonnull__(1)
