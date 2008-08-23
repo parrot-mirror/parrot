@@ -638,6 +638,14 @@ configuration file.
 
     =cut
 
+You may see how this works in practice by calling:
+
+    perl Configure.pl --file=xconf/samples/yourfoobar
+
+or
+
+    perl Configure.pl --file=xconf/samples/testfoobar
+
 =head1 SEE ALSO
 
 F<config/init/data.pl>, F<lib/Parrot/Configure.pm>,
