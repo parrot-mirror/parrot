@@ -1744,7 +1744,7 @@ reconfig : clean
 manitest :
 	$(PERL) tools/dev/manicheck.pl
 
-renumberops :
+opsrenumber :
 	$(PERL) tools/dev/opsrenumber.pl $(OPS_FILES)
 
 ###############################################################################
