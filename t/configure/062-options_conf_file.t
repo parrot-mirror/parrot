@@ -5,7 +5,7 @@
 
 use strict;
 use warnings;
-use Test::More tests =>  11;
+use Test::More qw(no_plan); # tests =>   8;
 use lib qw( lib );
 use Parrot::Configure::Options ();
 use Parrot::Configure::Options::Conf::File qw(

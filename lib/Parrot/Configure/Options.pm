@@ -115,14 +115,15 @@ Parrot::Configure::Options - Process command-line options to F<Configure.pl>
     use Parrot::Configure::Options qw( process_options );
 
     $args = process_options( {
-        mode    => q{configure},
+        mode => q{configure},
+        argv => [@ARGV],
     } );
 
 =head1 DESCRIPTION
 
 Parrot::Configure::Options exports on demand the subroutine
 C<process_options()>, which processes the command-line options provided to
-F<Configure.pl>.
+F<Configure.pl> or to F<tools/dev/reconfigure.pl>.
 
 If you provide F<Configure.pl> with either C<--help> or C<--version>,
 C<process_options()>  will print out the appropriate message and perform a
@@ -148,19 +149,14 @@ appropriately.
 
 One argument:  Reference to a hash holding the following key-value pairs:
 
-    argv            : reference to @ARGV; defaults to []
-    script          : Perl's $0:  the calling program;
-                      defaults to 'Configure.pl'
-    parrot_version  : string holding Parrot version number
-                      (currently supplied by
-                      Parrot::BuildUtil::parrot_version())
-    svnid           : string holding Subversion Id string
+    mode    : 'configure', 'reconfigure' or 'file'
+    argv    : reference to @ARGV; defaults to []
 
 =item * Return Value
 
 =over 4
 
-=item * C<--version> or C<--help>
+=item * C<--version> or C<--help> options
 
 Bare return (C<undef>).
 
@@ -172,16 +168,46 @@ Reference to a hash of option names and values.
 
 =item * Comment
 
+The C<mode> element in the argument to C<process_options()> should be set
+according to the following rules:
+
+=over 4
+
+=item *  C<configure>
+
+Command-Line Interface:  Initial Parrot configuration with zero or more
+command-line options (other than the C<--file> option).  This is the most
+typical case.  See F<Configure.pl> or any test file simulating the
+functionality of F<Configure.pl> in the F<t/configure/> or F<t/steps/>
+directories.
+
+=item * C<file>
+
+Configuration-File Interface:  Initial Parrot configuration where the options
+are stored in a configuration file whose location is the value of the sole
+command-line option C<--file>.
+
+=item * C<reconfigure>
+
+After F<Configure.pl> has completed, some Parrot developers need to rerun a
+particular configuration step (typically, C<gen::makefiles>) to debug
+revisions.  F<tools/dev/reconfigure.pl> with the F<--step=step::class> option
+does this and internally calls C<process_options()> in C<reconfigure> mode.
+
+=back
+
 =back
 
 =head1 NOTES
 
-The functionality in this package was transferred from F<Configure.pl> by Jim
-Keenan.
+The functionality in this package originally appeared in F<Configure.pl>.  It
+was transferred here and refactored by James E Keenan.
 
 =head1 SEE ALSO
 
-F<Configure.pl>.
+F<Configure.pl>. Parrot::Configure::Options::Conf.
+Parrot::Configure::Options::Reconf.  Parrot::Configure::Options::Conf::CLI.
+Parrot::Configure::Options::Conf::File.
 
 =cut
 

@@ -160,6 +160,86 @@ EOT
 
 1;
 
+#################### DOCUMENTATION ####################
+
+=head1 NAME
+
+Parrot::Configure::Options::Conf - Functionality shared by all Parrot
+configuration options processing modes
+
+=head1 SYNOPSIS
+
+    use Parrot::Configure::Options::Conf qw(
+        $script
+        $parrot_version
+        $svnid
+        print_help
+        print_version
+     );
+
+=head1 DESCRIPTION
+
+Parrot::Configure::Options::Conf exports on demand certain variables and
+subroutines used in other packages which implement different modes of
+configuration options processing.  Currently, these packages are:
+
+=over 4
+
+=item * Parrot::Configure:Options::Conf::CLI
+
+... for the command-line interface to F<Configure.pl>; and
+
+=item * Parrot::Configure::Options::Conf::File
+
+... for the configuration-file interface to that same program.
+
+=back
+
+=head1 EXPORTED VARIABLES
+
+Three variables are exported on demand.
+
+=head2 C<$script>
+
+Defaults to string 'Configure.pl', but may be overridden for testing purposes.
+
+=head2 C<$parrot_version>
+
+String which is return value of C<Parrot::BuildUtil::parrot_version()>; may be
+overridden for testing purposes.
+
+=head2 C<$svnid>
+
+String holding a standard Subversion 'Id' tag; may be
+overridden for testing purposes.
+
+=head1 EXPORTED SUBROUTINES
+
+Two subroutines are exported on demand.
+
+=head2 C<print_help()>
+
+Help message printed when C<perl Configure.pl --help>  is called.  Takes no
+arguments; prints to STDOUT; implicitly returns true value upon success.
+
+=head2 C<print_version()>
+
+Version number printed when C<perl Configure.pl --version>  is called.  Takes
+no arguments; prints to STDOUT; implicitly returns true value upon success.
+
+=head1 NOTES
+
+The functionality in this package originally appeared in F<Configure.pl>.  It
+was transferred here and refactored by James E Keenan.
+
+=head1 SEE ALSO
+
+F<Configure.pl>. Parrot::Configure::Options::Conf.
+Parrot::Configure::Options::Reconf.  Parrot::Configure::Options::Conf::CLI.
+Parrot::Configure::Options::Conf::File.
+
+=cut
+
 # Local Variables:
 #   mode: cperl
 #   cperl-indent-level: 4
