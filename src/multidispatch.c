@@ -51,6 +51,14 @@ not highest type in table.
 /* HEADERIZER BEGIN: static */
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
+static PMC* convert_varargs_to_sig_pmc(PARROT_INTERP,
+    ARGIN(const char *sig),
+    va_list args)
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
 static INTVAL distance_cmp(SHIM_INTERP, INTVAL a, INTVAL b);
 static void dump_mmd(PARROT_INTERP, INTVAL function)
         __attribute__nonnull__(1);
@@ -105,6 +113,15 @@ PARROT_CANNOT_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
 static PMC* mmd_make_ns(PARROT_INTERP)
         __attribute__nonnull__(1);
+
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
+static PMC* mmd_multi_find_method(PARROT_INTERP,
+    ARGIN(STRING *name),
+    ARGIN(PMC *invoke_sig))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3);
 
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
@@ -338,9 +355,46 @@ get_mmd_dispatch_type(PARROT_INTERP, INTVAL func_nr, INTVAL left_type,
 
 /*
 
+=item C<static PMC* mmd_multi_find_method>
+
+Collect a list of possible candidates for a given sub name and call signature.
+Rank the possible candidates by Manhattan Distance, and return the best
+matching candidate. The candidate list is cached in the CallSignature object,
+to allow for iterating through it.
+
+Currently this only looks in the global "MULTI" namespace.
+
+=cut
+
+*/
+
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
+static PMC*
+mmd_multi_find_method(PARROT_INTERP, ARGIN(STRING *name), ARGIN(PMC *invoke_sig))
+{
+    PMC *candidate_list, *selected_sub;
+    PMC * const namespace = Parrot_make_namespace_keyed_str(
+            interp, interp->root_namespace,
+            CONST_STRING(interp, "MULTI"));
+    PMC *multi_sub = Parrot_get_global(interp, namespace, name);
+
+    if (PMC_IS_NULL(multi_sub))
+        return PMCNULL;
+
+    candidate_list = Parrot_mmd_sort_manhattan_by_sig_pmc(interp, multi_sub, invoke_sig);
+
+    return VTABLE_get_pmc_keyed_int(interp, candidate_list, 0);
+
+}
+
+/*
+
 =item C<static funcptr_t Parrot_get_mmd_dispatcher>
 
 RT #48260: Not yet documented!!!
+
+{{**DEPRECATE**}}
 
 =cut
 
@@ -400,6 +454,103 @@ Parrot_mmd_ensure_writable(PARROT_INTERP, INTVAL function, ARGIN_NULLOK(const PM
             Parrot_MMD_method_name(interp, function));
 }
 
+/*
+
+=item C<static PMC* convert_varargs_to_sig_pmc>
+
+Take a varargs list, and convert it into a CallSignature PMC. The CallSignature
+stores the original short signature string, and an array of integer types to
+pass on to the multiple dispatch search.
+
+=cut
+
+*/
+
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
+static PMC*
+convert_varargs_to_sig_pmc(PARROT_INTERP, ARGIN(const char *sig), va_list args)
+{
+    INTVAL i;
+    PMC *call_object        = pmc_new(interp, enum_class_CallSignature);
+    PMC * const  type_tuple = pmc_new(interp, enum_class_FixedIntegerArray);
+    STRING *string_sig = const_string(interp, sig);
+    const INTVAL sig_len    = string_length(interp, string_sig);
+    if (!sig_len)
+        return call_object;
+    VTABLE_set_integer_native(interp, type_tuple, sig_len);
+    VTABLE_set_pmc(interp, call_object, type_tuple);
+
+    VTABLE_set_string_native(interp, call_object, string_sig);
+
+    for (i = 1; i < sig_len; ++i) {
+        INTVAL type = string_index(interp, string_sig, i);
+        switch (type) { 
+            case 'I': 
+                VTABLE_push_integer(interp, call_object, va_arg(args, INTVAL)); 
+                VTABLE_set_integer_keyed_int(interp, type_tuple,
+                        i, enum_type_INTVAL);
+                break; 
+            case 'N': 
+                VTABLE_push_float(interp, call_object, va_arg(args, FLOATVAL)); 
+                VTABLE_push_integer(interp, type_tuple, enum_type_FLOATVAL);
+                VTABLE_set_integer_keyed_int(interp, type_tuple,
+                        i, enum_type_FLOATVAL);
+                break; 
+            case 'S': 
+                VTABLE_push_string(interp, call_object, va_arg(args, STRING *)); 
+                VTABLE_set_integer_keyed_int(interp, type_tuple,
+                        i, enum_type_STRING);
+                break; 
+            case 'P': 
+            {
+                PMC *arg = va_arg(args, PMC *);
+                INTVAL type = VTABLE_type(interp, arg);
+                VTABLE_set_integer_keyed_int(interp, type_tuple, i, type);
+                VTABLE_push_pmc(interp, call_object, va_arg(args, PMC *)); 
+                break;
+            }
+            default:
+                Parrot_ex_throw_from_c_args(interp, NULL,
+                    EXCEPTION_INVALID_OPERATION,
+                    "Multiple Dispatch: invalid argument type %c!", type);
+        }
+    }
+
+
+    return call_object;
+}
+
+/*
+
+=item C<PMC * Parrot_mmd_multi_dispatch_from_c_args>
+
+Dispatch to a MultiSub, from a variable-sized list of C arguments. The multiple
+dispatch system will figure out which sub should be called based on the types
+of the arguments passed in.
+
+=cut
+
+*/
+
+PARROT_API
+PARROT_CAN_RETURN_NULL
+PMC *
+Parrot_mmd_multi_dispatch_from_c_args(PARROT_INTERP,
+        ARGIN(const char *name), ARGIN(const char *sig), ...)
+{
+    PMC *sig_object, *sub;
+    va_list args;
+    va_start(args, sig); 
+    sig_object = convert_varargs_to_sig_pmc(interp, sig, args); 
+    va_end(args);
+
+    sub = mmd_multi_find_method(interp, const_string(interp, name), sig_object);
+
+    return Parrot_runops_from_sig_pmc(interp, sub, sig_object);
+
+}
+
 
 /*
 
@@ -414,6 +565,8 @@ that returns a new C<dest> always.
 The MMD system will figure out which function should be called based on
 the types of C<left> and C<right> and call it, passing in C<left>,
 C<right>, and possibly C<dest> like any other binary vtable function.
+
+{{**DEPRECATE**}}
 
 =cut
 
@@ -453,6 +606,8 @@ Parrot_mmd_dispatch_p_ppp(PARROT_INTERP, ARGIN(PMC *left), ARGIN(PMC *right),
 =item C<PMC* mmd_dispatch_p_pip>
 
 Like C<mmd_dispatch_p_ppp>, right argument is a native INTVAL.
+
+{{**DEPRECATE**}}
 
 =cut
 
@@ -494,6 +649,8 @@ Parrot_mmd_dispatch_p_pip(PARROT_INTERP,
 
 Like C<mmd_dispatch_p_ppp>, right argument is a native FLOATVAL.
 
+{{**DEPRECATE**}}
+
 =cut
 
 */
@@ -533,6 +690,8 @@ Parrot_mmd_dispatch_p_pnp(PARROT_INTERP,
 
 Like C<mmd_dispatch_p_ppp>, right argument is a native STRING *.
 
+{{**DEPRECATE**}}
+
 =cut
 
 */
@@ -567,6 +726,8 @@ Parrot_mmd_dispatch_p_psp(PARROT_INTERP, ARGIN(PMC *left), ARGIN(STRING *right),
 =item C<void mmd_dispatch_v_pp>
 
 Inplace dispatch function for C<< left <op=> right >>.
+
+{{**DEPRECATE**}}
 
 =cut
 
@@ -603,6 +764,8 @@ Parrot_mmd_dispatch_v_pp(PARROT_INTERP,
 
 Inplace dispatch function for C<< left <op=> right >>.
 
+{{**DEPRECATE**}}
+
 =cut
 
 */
@@ -637,6 +800,8 @@ Parrot_mmd_dispatch_v_pi(PARROT_INTERP,
 =item C<void mmd_dispatch_v_pn>
 
 Inplace dispatch function for C<< left <op=> right >>.
+
+{{**DEPRECATE**}}
 
 =cut
 
@@ -673,6 +838,8 @@ Parrot_mmd_dispatch_v_pn(PARROT_INTERP,
 
 Inplace dispatch function for C<< left <op=> right >>.
 
+{{**DEPRECATE**}}
+
 =cut
 
 */
@@ -708,6 +875,8 @@ Parrot_mmd_dispatch_v_ps(PARROT_INTERP,
 
 Like C<mmd_dispatch_p_ppp()>, only it returns an C<INTVAL>. This is used
 by MMD compare functions.
+
+{{**DEPRECATE**}}
 
 =cut
 
@@ -746,6 +915,8 @@ of. C<func_num> is the number of the new function. C<function> is ignored.
 
 RT #45941 change this to a MMD register interface that takes a function *name*.
 
+{{**DEPRECATE**}}
+
 =cut
 
 */
@@ -778,6 +949,8 @@ Parrot_mmd_add_function(PARROT_INTERP, INTVAL func_nr, SHIM(funcptr_t function))
 =item C<static void mmd_expand_x>
 
 Expands the function table in the X dimension to include C<new_x>.
+
+{{**DEPRECATE**}}
 
 =cut
 
@@ -839,6 +1012,8 @@ mmd_expand_x(PARROT_INTERP, INTVAL func_nr, INTVAL new_x)
 
 Expands the function table in the Y direction.
 
+{{**DEPRECATE**}}
+
 =cut
 
 */
@@ -887,6 +1062,8 @@ installed when it's needed.
 
 The function table must exist, but if it is too small, it will
 automatically be expanded.
+
+{{**DEPRECATE**}}
 
 =cut
 
@@ -937,6 +1114,8 @@ searching, as it assumes that all PMC types have no parent type. This
 can be considered a bug, and will be resolved at some point in the
 future.
 
+{{**DEPRECATE**}}
+
 =cut
 
 */
@@ -979,6 +1158,8 @@ Parrot_mmd_register(PARROT_INTERP, INTVAL func_nr, INTVAL left_type, INTVAL righ
 
 RT #48260: Not yet documented!!!
 
+{{**DEPRECATE**}}
+
 =cut
 
 */
@@ -1005,6 +1186,8 @@ Parrot_mmd_register_sub(PARROT_INTERP, INTVAL func_nr,
 =item C<void mmd_destroy>
 
 Frees all the memory allocated used the MMD subsystem.
+
+{{**DEPRECATE**}}
 
 =cut
 
@@ -1035,6 +1218,8 @@ Parrot_mmd_destroy(PARROT_INTERP)
 Return an MMD PMC function for the given data types. The return result is
 either a Sub PMC (for PASM MMD functions) or a NCI PMC holding the
 C function pointer in PMC_struct_val.
+
+{{**DEPRECATE**}}
 
 =cut
 
@@ -1091,6 +1276,44 @@ Parrot_MMD_search_default_infix(PARROT_INTERP, ARGIN(STRING *meth),
 
 /*
 
+=item C<PMC * Parrot_mmd_sort_manhattan_by_sig_pmc>
+
+Given an array PMC (usually a MultiSub) and a CallSignature PMC sort the mmd
+candidates by their manhattan distance to the signature args.
+
+=cut
+
+*/
+
+PARROT_API
+PARROT_CAN_RETURN_NULL
+PARROT_WARN_UNUSED_RESULT
+PMC *
+Parrot_mmd_sort_manhattan_by_sig_pmc(PARROT_INTERP, ARGIN(PMC *candidates),
+        ARGIN(PMC* invoke_sig))
+{
+    PMC   *arg_tuple = VTABLE_get_pmc(interp, invoke_sig);
+    INTVAL n = VTABLE_elements(interp, candidates);
+
+    if (!n)
+        return PMCNULL;
+
+    candidates = VTABLE_clone(interp, candidates);
+
+    Parrot_mmd_sort_candidates(interp, arg_tuple, candidates);
+
+    /* if there aren't any variants that match the current args, we could end
+       up with an empty list */
+    n = VTABLE_elements(interp, candidates);
+
+    if (!n)
+        return PMCNULL;
+
+    return candidates;
+}
+
+/*
+
 =item C<PMC * Parrot_mmd_sort_manhattan>
 
 Given an array PMC (usually a MultiSub) sort the mmd candidates by their
@@ -1099,7 +1322,6 @@ manhatten distance to the current args.
 =cut
 
 */
-
 PARROT_API
 PARROT_CAN_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
@@ -1134,6 +1356,8 @@ Parrot_mmd_sort_manhattan(PARROT_INTERP, ARGIN(PMC *candidates))
 
 Return a list of argument types. PMC arguments are specified as function
 arguments.
+
+{{**DEPRECATE** Not actually called anywhere.}}
 
 =cut
 */
@@ -1518,7 +1742,6 @@ mmd_distance(PARROT_INTERP, ARGIN(PMC *pmc), ARGIN(PMC *arg_tuple))
     }
     else
         return MMD_BIG_DISTANCE;
-
     n    = VTABLE_elements(interp, multi_sig);
     args = VTABLE_elements(interp, arg_tuple);
 
@@ -2124,6 +2347,8 @@ Parrot_mmd_register_table(PARROT_INTERP, INTVAL type,
 Rebuild the static MMD_table for the given class type and MMD function
 number. If C<type> is negative all classes are rebuilt. If C<func_nr> is
 negative all MMD functions are rebuilt.
+
+{{**DEPRECATE**}}
 
 =cut
 

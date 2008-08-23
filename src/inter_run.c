@@ -299,6 +299,40 @@ Parrot_runops_fromc_args(PARROT_INTERP, ARGIN(PMC *sub), ARGIN(const char *sig),
 
 /*
 
+=item C<PMC * Parrot_runops_from_sig_pmc>
+
+Run parrot ops, called from C code, function arguments are passed as a
+C<CallSignature> PMC signature object. The C<sub> argument is an invocable
+C<Sub> PMC.
+
+Short signature strings stored in the C<CallSignature> follow the same rules as
+Parrot_runops_fromc_args.
+
+Note that this currently only handles C<CallSignature>s that were originally
+created from a C<va_list> call.
+
+=cut
+
+*/
+
+PARROT_API
+PARROT_IGNORABLE_RESULT
+PARROT_CAN_RETURN_NULL
+PMC *
+Parrot_runops_from_sig_pmc(PARROT_INTERP, ARGIN(PMC *sub), ARGIN(PMC *sig))
+{
+    parrot_context_t *ctx;
+    const char *sig_string = 
+            string_to_cstring(interp, VTABLE_get_string(interp, sig));
+    va_list * const args = (va_list *) VTABLE_get_pointer(interp, sig);
+
+    ctx = runops_args(interp, sub, PMCNULL, NULL, sig_string, *args);
+
+    return (PMC *)set_retval(interp, *sig_string, ctx);
+}
+
+/*
+
 =item C<void * Parrot_runops_fromc_args_event>
 
 Run code from within event handlers. This variant deals with some reentrency
