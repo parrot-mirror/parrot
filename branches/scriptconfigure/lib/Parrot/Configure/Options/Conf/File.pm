@@ -12,7 +12,6 @@ our @EXPORT_OK = qw(
     $parrot_version
     $svnid
 );
-#use Data::Dumper;$Data::Dumper::Indent = 1;
 use File::Spec;
 use lib qw( lib );
 use Parrot::BuildUtil;

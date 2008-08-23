@@ -115,7 +115,7 @@ All configuration options are placed in a special configuration file whose
 full path is invoked on the command-line as
 C<--file=/path/to/configuration/directives> as the sole command-line option.
 You may not request interactive configuration.  For specific instructions, see
-B<CONFIGURATION-FILE INTERFACE> below.
+L</"CONFIGURATION-FILE INTERFACE"> below.
 
 =back
 
@@ -402,7 +402,7 @@ The configuration file must contain these three sections:
 
 =over 4
 
-=item variables
+=item * variables
 
 =over 4
 
@@ -438,7 +438,7 @@ I<=variables> section of the configuration file (as above).
 
 =back
 
-=item general
+=item * general
 
 =over 4
 
@@ -452,7 +452,7 @@ blank line.  All other content in this section is optional.
 This section is the location recommended for listing options whose impact is
 not conceptually limited to a single step.  It is also the location where the
 variables defined in the I<=variables> section are assigned to particular
-parrot configuration options.  Entries in this section must be either
+Parrot configuration options.  Entries in this section must be either
 I<option=value> pairs or be options which will be assigned a true value.
 
     cc=$CC
@@ -479,7 +479,7 @@ values next to those configuration steps that actually use them.
 
 =back
 
-=item steps
+=item * steps
 
 =over 4
 
@@ -640,7 +640,7 @@ configuration file.
 
 =head1 SEE ALSO
 
-F<config/init/data.pl>, F<lib/Parrot/Configure/RunSteps.pm>,
+F<config/init/data.pl>, F<lib/Parrot/Configure.pm>,
 F<lib/Parrot/Configure/Step.pm>, F<docs/configuration.pod>
 
 =cut
