@@ -50,6 +50,8 @@ sub conditional_assignments {
     return ( $argsref, [ @steps_list ] );
 }
 
+1;
+
 #################### DOCUMENTATION ####################
 
 =head1 NAME
@@ -98,9 +100,10 @@ Hash with four elements keyed as follows:
 =item * C<valid_options>
 
 Reference to an array holding a list of options are valid when configuring
-Parrot via the traditional Command-Line interface.  The options are documented
-when you call C<perl Configure.pl --help> and include C<--ask> to request
-interactive configuration.
+Parrot via the Configuration-File interface.  The options are documented
+when you call C<perl Configure.pl --help>. C<--ask> is excluded because if you
+know enough about what options you want to put them in a file, you should be
+past the point of needing interactive configuration.
 
 =item * C<script>
 
@@ -134,14 +137,12 @@ Reference to a subroutine private to this package which:
 
 =item *
 
-Sets default values for the C<debugging> and C<maintainer> options under much
+Sets default values for the C<debugging> and C<maintainer> options under most
 situations.
 
 =item *
 
-Fetches the list of configuration steps from Parrot::Configure::Step::List.
-When you configure with the Command-Line Interface, you use the canonical list
-of configuration steps provided by that package.
+Fetches the list of configuration steps from the configuration file.
 
 =back
 
@@ -177,16 +178,14 @@ C<Parrot::Configure::Options::process_options()>.
 =head1 NOTES
 
 The functionality in this package originally appeared in F<Configure.pl>.  It
-was transferred here and refactored by James E Keenan.
+was transferred here and adapted for configuration by file  by James E Keenan.
 
 =head1 SEE ALSO
 
 F<Configure.pl>. Parrot::Configure::Options.  Parrot::Configure::Options::Conf.
-Parrot::Configure::Options::Reconf.  Parrot::Configure::Options::Conf::File.
+Parrot::Configure::Options::Reconf.  Parrot::Configure::Options::Conf::CLI.
 
 =cut
-
-1;
 
 # Local Variables:
 #   mode: cperl
