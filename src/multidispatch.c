@@ -558,7 +558,7 @@ Parrot_mmd_multi_dispatch_from_c_args(PARROT_INTERP,
     va_list args;
     va_start(args, sig); 
     sig_object = convert_varargs_to_sig_pmc(interp, sig, args); 
-
+    name += 2; /* remove leading "__" from old-style MMD name */
     sub = mmd_multi_find_method(interp, const_string(interp, name), sig_object);
 
     result = Parrot_runops_from_sig_pmc(interp, sub, sig_object);
@@ -2256,13 +2256,30 @@ Parrot_mmd_add_multi_from_c_args(PARROT_INTERP,
         ARGIN(STRING *short_sig), ARGIN(STRING *full_sig),
         ARGIN(funcptr_t multi_func_ptr))
 {
+        PMC *multi_sig, *full_types;
+        INTVAL i, param_count;
         PMC *multi_sub = Parrot_get_global(interp, namespace, sub_name);
 
         /* Create an NCI sub for the C function */
         PMC *method = constant_pmc_new(interp, enum_class_NCI);
-
         VTABLE_set_pointer_keyed_str(interp, method,
                 short_sig, F2DPTR(multi_func_ptr));
+
+        /* Attach a type tuple array to the NCI sub for multi dispatch */
+        multi_sig = constant_pmc_new(interp, enum_class_FixedIntegerArray);
+        PMC_pmc_val(method) = multi_sig;
+
+        full_types = string_split(interp, CONST_STRING(interp, ","), full_sig);
+
+        param_count = VTABLE_elements(interp, full_types);
+        VTABLE_set_integer_native(interp, multi_sig, param_count);
+
+        for (i = 0; i < param_count; i++) {
+            INTVAL type = pmc_type(interp, VTABLE_get_string_keyed_int(interp, full_types, i));
+            VTABLE_set_integer_keyed_int(interp, multi_sig, i, type);
+        }
+
+
 
         if (PMC_IS_NULL(multi_sub)) {
             multi_sub = constant_pmc_new(interp, enum_class_MultiSub);
