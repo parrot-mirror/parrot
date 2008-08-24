@@ -35,8 +35,8 @@ General Options:
    --version            Show version information
    --verbose            Output extra information
    --verbose=2          Output every setting change
-   --verbose-step=N     Set verbose for step N only
-   --verbose-step=regex Set verbose for step matching description
+   --verbose-step       Comma-delimited string of configuration steps
+                        for which output will be verbose
    --fatal              Failure of any configuration step will cause
                         Configure.pl to halt
    --fatal-step         Comma-delimited string of configuration steps
