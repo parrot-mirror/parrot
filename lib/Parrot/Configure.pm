@@ -237,7 +237,6 @@ sub runsteps {
     # We make certain that argument to --fatal-step is a comma-delimited
     # string of configuration steps, each of which is a string delimited by
     # two colons, the first half of which is one of init|inter|auto|gen
-    # (This will be modified to take a step sequence number.)
     elsif ( defined ( $fatal_step ) ) {
         %steps_to_die_for = $conf->_handle_fatal_step_option( $fatal_step );
     }
@@ -309,7 +308,7 @@ sub _handle_fatal_step_option {
         }
     }
     else {
-        die "Argument to 'fatal-step' option must be comma-delimited string of valid configuration steps or configuration step sequence numbers";
+        die "Argument to 'fatal-step' option must be comma-delimited string of valid configuration steps";
     }
     return %steps_to_die_for;
 }
