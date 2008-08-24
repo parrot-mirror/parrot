@@ -206,29 +206,28 @@ Adds C<value> to C<SELF> inplace.
 
 */
 
-    VTABLE PMC *add(PMC *value, PMC *dest) {
-MMD_Complex: {
-            const FLOATVAL a = SELF.get_number();
+    MULTI PMC *add(Complex value, PMC *dest) {
+        const FLOATVAL a = SELF.get_number();
 
-            if (dest)
-                VTABLE_morph(INTERP, dest, value->vtable->base_type);
-            else
-                dest = pmc_new(INTERP, VTABLE_type(INTERP, value));
+        if (dest)
+            VTABLE_morph(INTERP, dest, value->vtable->base_type);
+        else
+            dest = pmc_new(INTERP, VTABLE_type(INTERP, value));
 
-            VTABLE_set_number_native(INTERP, dest,
-                    a + VTABLE_get_number_keyed_int(INTERP, value, 0));
-            VTABLE_set_number_keyed_int(INTERP, dest, 1,
-                    VTABLE_get_number_keyed_int(INTERP, value, 1));
-            return dest;
-        }
-MMD_DEFAULT: {
-            if (!dest)
-                dest = pmc_new(INTERP, VTABLE_type(INTERP, SELF));
+        VTABLE_set_number_native(INTERP, dest,
+                a + VTABLE_get_number_keyed_int(INTERP, value, 0));
+        VTABLE_set_number_keyed_int(INTERP, dest, 1,
+                VTABLE_get_number_keyed_int(INTERP, value, 1));
+        return dest;
+    }
 
-            VTABLE_set_number_native(INTERP, dest,
-                    SELF.get_number() + VTABLE_get_number(INTERP, value));
-            return dest;
-        }
+    MULTI PMC *add(DEFAULT value, PMC *dest) {
+        if (!dest)
+            dest = pmc_new(INTERP, VTABLE_type(INTERP, SELF));
+
+        VTABLE_set_number_native(INTERP, dest,
+                SELF.get_number() + VTABLE_get_number(INTERP, value));
+        return dest;
     }
 
     VTABLE PMC *add_int(INTVAL value, PMC *dest) {
@@ -249,20 +248,19 @@ MMD_DEFAULT: {
         return dest;
     }
 
-    VTABLE void i_add(PMC *value) {
-MMD_Complex: {
-            const FLOATVAL a = SELF.get_number();
+    MULTI void i_add(Complex value) {
+        const FLOATVAL a = SELF.get_number();
 
-            VTABLE_morph(INTERP, SELF, value->vtable->base_type);
-            VTABLE_set_number_native(INTERP, SELF,
-                    a + VTABLE_get_number_keyed_int(INTERP, value, 0));
-            VTABLE_set_number_keyed_int(INTERP, SELF, 1,
-                    VTABLE_get_number_keyed_int(INTERP, value, 1));
-        }
-MMD_DEFAULT: {
-            VTABLE_set_number_native(INTERP, SELF,
-                SELF.get_number() + VTABLE_get_number(INTERP, value));
-        }
+        VTABLE_morph(INTERP, SELF, value->vtable->base_type);
+        VTABLE_set_number_native(INTERP, SELF,
+                a + VTABLE_get_number_keyed_int(INTERP, value, 0));
+        VTABLE_set_number_keyed_int(INTERP, SELF, 1,
+                VTABLE_get_number_keyed_int(INTERP, value, 1));
+    }
+
+    MULTI void i_add(DEFAULT value) {
+        VTABLE_set_number_native(INTERP, SELF,
+            SELF.get_number() + VTABLE_get_number(INTERP, value));
     }
 
     VTABLE void i_add_int(INTVAL value) {
@@ -298,27 +296,26 @@ Subtracts C<value> from C<SELF> inplace.
 
 */
 
-    VTABLE PMC *subtract(PMC *value, PMC *dest) {
-MMD_Complex: {
-            const FLOATVAL a = SELF.get_number();
-            if (dest)
-                VTABLE_morph(INTERP, dest, value->vtable->base_type);
-            else
-                dest = pmc_new(INTERP, VTABLE_type(INTERP, value));
+    MULTI PMC *subtract(Complex value, PMC *dest) {
+        const FLOATVAL a = SELF.get_number();
+        if (dest)
+            VTABLE_morph(INTERP, dest, value->vtable->base_type);
+        else
+            dest = pmc_new(INTERP, VTABLE_type(INTERP, value));
 
-            VTABLE_set_number_native(INTERP, dest,
-                    a - VTABLE_get_number_keyed_int(INTERP, value, 0));
-            VTABLE_set_number_keyed_int(INTERP, dest, 1,
-                    -VTABLE_get_number_keyed_int(INTERP, value, 1));
-            return dest;
-        }
-MMD_DEFAULT: {
-            if (!dest)
-                dest = pmc_new(INTERP, VTABLE_type(INTERP, SELF));
-            VTABLE_set_number_native(INTERP, dest,
-                    SELF.get_number() - VTABLE_get_number(INTERP, value));
-            return dest;
-        }
+        VTABLE_set_number_native(INTERP, dest,
+                a - VTABLE_get_number_keyed_int(INTERP, value, 0));
+        VTABLE_set_number_keyed_int(INTERP, dest, 1,
+                -VTABLE_get_number_keyed_int(INTERP, value, 1));
+        return dest;
+    }
+
+    MULTI PMC *subtract(DEFAULT value, PMC *dest) {
+        if (!dest)
+            dest = pmc_new(INTERP, VTABLE_type(INTERP, SELF));
+        VTABLE_set_number_native(INTERP, dest,
+                SELF.get_number() - VTABLE_get_number(INTERP, value));
+        return dest;
     }
 
     VTABLE PMC *subtract_int(INTVAL value, PMC *dest) {
@@ -339,20 +336,19 @@ MMD_DEFAULT: {
         return dest;
     }
 
-    VTABLE void i_subtract(PMC *value) {
-MMD_Complex: {
-            const FLOATVAL a = SELF.get_number();
+    MULTI void i_subtract(Complex value) {
+        const FLOATVAL a = SELF.get_number();
 
-            VTABLE_morph(INTERP, SELF, value->vtable->base_type);
-            VTABLE_set_number_native(INTERP, SELF,
-                    a - VTABLE_get_number_keyed_int(INTERP, value, 0));
-            VTABLE_set_number_keyed_int(INTERP, SELF, 1,
-                    -VTABLE_get_number_keyed_int(INTERP, value, 1));
-        }
-MMD_DEFAULT: {
-            VTABLE_set_number_native(INTERP, SELF,
-                SELF.get_number() - VTABLE_get_number(INTERP, value));
-        }
+        VTABLE_morph(INTERP, SELF, value->vtable->base_type);
+        VTABLE_set_number_native(INTERP, SELF,
+                a - VTABLE_get_number_keyed_int(INTERP, value, 0));
+        VTABLE_set_number_keyed_int(INTERP, SELF, 1,
+                -VTABLE_get_number_keyed_int(INTERP, value, 1));
+    }
+
+    MULTI void i_subtract(DEFAULT value) {
+        VTABLE_set_number_native(INTERP, SELF,
+            SELF.get_number() - VTABLE_get_number(INTERP, value));
     }
 
     VTABLE void i_subtract_int(INTVAL value) {
@@ -379,19 +375,18 @@ Multiplies the number by C<value> and returns the result in C<*dest>.
 
 */
 
-    VTABLE PMC *multiply(PMC *value, PMC *dest) {
-MMD_Complex: {
-            Parrot_ex_throw_from_c_args(INTERP, NULL,
-                EXCEPTION_INTERNAL_NOT_IMPLEMENTED, "TODO mul<Float, Complex>");
-        }
-MMD_DEFAULT: {
-            if (!dest)
-                dest = pmc_new(INTERP, VTABLE_type(INTERP, SELF));
+    MULTI PMC *multiply(Complex value, PMC *dest) {
+        Parrot_ex_throw_from_c_args(INTERP, NULL,
+            EXCEPTION_INTERNAL_NOT_IMPLEMENTED, "TODO mul<Float, Complex>");
+    }
 
-            VTABLE_set_number_native(INTERP, dest,
-                SELF.get_number() * VTABLE_get_number(INTERP, value));
-            return dest;
-        }
+    MULTI PMC *multiply(DEFAULT value, PMC *dest) {
+        if (!dest)
+            dest = pmc_new(INTERP, VTABLE_type(INTERP, SELF));
+
+        VTABLE_set_number_native(INTERP, dest,
+            SELF.get_number() * VTABLE_get_number(INTERP, value));
+        return dest;
     }
 
     VTABLE PMC *multiply_int(INTVAL value, PMC *dest) {
@@ -412,16 +407,15 @@ MMD_DEFAULT: {
         return dest;
     }
 
-    VTABLE void i_multiply(PMC *value) {
-MMD_Complex: {
-            Parrot_ex_throw_from_c_args(INTERP, NULL,
-                EXCEPTION_INTERNAL_NOT_IMPLEMENTED,
-                "TODO i_mul<Float, Complex>");
-        }
-MMD_DEFAULT: {
-            VTABLE_set_number_native(INTERP, SELF,
-                SELF.get_number() * VTABLE_get_number(INTERP, value));
-        }
+    MULTI void i_multiply(Complex value) {
+        Parrot_ex_throw_from_c_args(INTERP, NULL,
+            EXCEPTION_INTERNAL_NOT_IMPLEMENTED,
+            "TODO i_mul<Float, Complex>");
+    }
+
+    MULTI void i_multiply(DEFAULT value) {
+        VTABLE_set_number_native(INTERP, SELF,
+            SELF.get_number() * VTABLE_get_number(INTERP, value));
     }
 
     VTABLE void i_multiply_int(INTVAL value) {
