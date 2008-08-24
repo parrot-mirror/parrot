@@ -46,3 +46,9 @@ realclean: clean
 distclean: realclean
 
 svnclean: realclean
+
+#
+# Local variables:
+# mode: makefile
+# ex: ft=make
+# End:

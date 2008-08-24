@@ -3,13 +3,20 @@
 PERL     = @perl@
 RM_F     = @rm_f@
 PARROT   = ../../parrot@exe@
+RECONFIGURE   = $(PERL) @build_dir@/tools/dev/reconfigure.pl
+#+(cygchkdll):SHRPENV  = env PATH="@build_dir@/blib/lib:$(PATH)"
+#-(cygchkdll):SHRPENV  = env LD_RUN_PATH=@build_dir@/blib/lib
 
 TOOL_DIR = ../..
 PGE_DIR  = ../../compilers/pge
 TGE_DIR  = ../../compilers/tge
 
 # the default target
-all: JSON.pbc
+all: JSON.pbc Makefile
+
+# regenerate the Makefile
+Makefile: @build_dir@/config/gen/makefiles/json.in
+	cd @build_dir@ && $(RECONFIGURE) --step=gen::makefiles --target=compilers/json/Makefile
 
 # This is a listing of all targets, that are meant to be called by users
 help:
@@ -36,19 +43,25 @@ testclean:
 	$(RM_F) "../../t/compilers/json/*.pir" \
 
 JSON.pbc : JSON/grammar.pbc JSON/pge2pir.pbc JSON.pir
-	$(PARROT) --output=JSON.pbc JSON.pir
+	$(SHRPENV) $(PARROT) --output=JSON.pbc JSON.pir
 
 JSON/grammar.pbc : JSON/grammar.pir
-	$(PARROT) --output=JSON/grammar.pbc JSON/grammar.pir
+	$(SHRPENV) $(PARROT) --output=JSON/grammar.pbc JSON/grammar.pir
 
 JSON/grammar.pir : JSON/grammar.pg
-	$(PARROT) $(TOOL_DIR)/runtime/parrot/library/PGE/Perl6Grammar.pbc --output=JSON/grammar.pir JSON/grammar.pg
+	$(SHRPENV) $(PARROT) $(TOOL_DIR)/runtime/parrot/library/PGE/Perl6Grammar.pbc --output=JSON/grammar.pir JSON/grammar.pg
 
 JSON/pge2pir.pbc : JSON/pge2pir.pir
-	$(PARROT) --output=JSON/pge2pir.pbc JSON/pge2pir.pir
+	$(SHRPENV) $(PARROT) --output=JSON/pge2pir.pbc JSON/pge2pir.pir
 
 JSON/pge2pir.pir : JSON/pge2pir.tg
-	$(PARROT) $(TGE_DIR)/tgc.pir --output=JSON/pge2pir.pir JSON/pge2pir.tg
+	$(SHRPENV) $(PARROT) $(TGE_DIR)/tgc.pir --output=JSON/pge2pir.pir JSON/pge2pir.tg
 
 clean : testclean
 	@rm_f@ "JSON/*.pbc" "JSON/*.pir" JSON.pbc
+
+#
+# Local variables:
+# mode: makefile
+# ex: ft=make
+# End:

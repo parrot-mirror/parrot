@@ -12,6 +12,7 @@ no_arg:
 
 	<<PCONFIG>>
 
+	set P0["installed"], I11
 	if I11, is_install
 	set S1, "<<PWD>>"
 	set P0["prefix"], S1

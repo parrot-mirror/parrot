@@ -1,24 +1,35 @@
 # $Id$
 
 # Setup some commands
+LANG     = punie
 LN_S     = @lns@
 PERL     = @perl@
 RM_F     = @rm_f@
 PARROT   = ../../parrot@exe@
 BUILD_DIR     = @build_dir@
+BIN_DIR       = @bin_dir@
+LIB_DIR       = @lib_dir@
+DOC_DIR       = @doc_dir@
+MANDIR	      = @mandir@
+PBC_TO_EXE    = ../../pbc_to_exe@exe@
 RECONFIGURE   = $(PERL) @build_dir@/tools/dev/reconfigure.pl
 PGE_DIR       = ../../compilers/pge
 NQP_DIR       = ../../compilers/nqp
-CP       = @cp@
-#CONDITIONED_LINE(darwin):
-#CONDITIONED_LINE(darwin):# MACOSX_DEPLOYMENT_TARGET must be defined for OS X compilation/linking
-#CONDITIONED_LINE(darwin):export MACOSX_DEPLOYMENT_TARGET := @osx_version@
+CP            = @cp@
+POD2MAN	      = pod2man
+#+(darwin):
+#+(darwin):# MACOSX_DEPLOYMENT_TARGET must be defined for OS X compilation/linking
+#+(darwin):export MACOSX_DEPLOYMENT_TARGET := @osx_version@
 
 PARROT_LIBRARY = ../../runtime/parrot/library
 PGE_LIBRARY   = ../../runtime/parrot/library/PGE
 
+DOCS = MAINTAINER README overview.pod
+
 # the default target
 all: punie.pbc
+
+all: punie.pbc punie@exe@ installable_punie@exe@
 
 SOURCES = punie.pir \
   src/parser/grammar.pg \
@@ -36,8 +47,12 @@ help:
 	@echo ""
 	@echo "Following targets are available for the user:"
 	@echo ""
-	@echo "  all:               punie.pbc"
+	@echo "  build:             punie.pbc"
 	@echo "                     This is the default."
+	@echo "  all:               punie.pbc punie@exe@"
+	@echo "  installable:       Create self-hosting bins and libs."
+	@echo "  install:           Install the installable targets and docs."
+	@echo ""
 	@echo "Testing:"
 	@echo "  test:              Run the test suite."
 	@echo "  testclean:         Clean up test results."
@@ -56,7 +71,26 @@ test: all
 
 # regenerate the Makefile
 Makefile: config/makefiles/root.in
-	cd $(BUILD_DIR) && $(RECONFIGURE) --step=gen::languages --languages=punie
+	cd $(BUILD_DIR) && $(RECONFIGURE) --step=gen::languages --languages=$(LANG)
+
+# TODO: rename build_dir. basic run for missing libs
+test-installable : installable
+	./installable_$(LANG)@exe@ demo.p1
+
+install : installable
+	$(CP) installable_$(LANG)@exe@ $(DESTDIR)$(BIN_DIR)/parrot-$(LANG)@exe@
+	$(POD2MAN) punie.pir > $(DESTDIR)$(MANDIR)/man1/parrot-$(LANG).1
+	mkdir $(DESTDIR)$(DOC_DIR)/languages/$(LANG)
+	$(CP) $(DOCS) $(DESTDIR)$(DOC_DIR)/languages/$(LANG)
+
+$(LANG)@exe@: $(LANG).pbc
+	$(PBC_TO_EXE) $(LANG).pbc
+
+installable : installable_$(LANG)@exe@
+	$(CP) installable_$(LANG)@exe@ $(BUILD_DIR)
+
+installable_$(LANG)@exe@ : $(LANG).pbc
+	$(PBC_TO_EXE) $(LANG).pbc --install
 
 testclean:
 	$(RM_F) "t/*.p1" "t/*.out" "t/*.pir"
@@ -73,3 +107,9 @@ realclean: clean
 	$(RM_F) Makefile
 
 distclean: realclean
+
+#
+# Local variables:
+# mode: makefile
+# ex: ft=make
+# End:

@@ -4,15 +4,23 @@
 # Makefile for languages/unlambda
 
 # configuration settings
-BUILD_DIR       = @build_dir@
+LANG	      = unlambda
+BUILD_DIR     = @build_dir@
+LOAD_EXT      = @load_ext@
+O             = @o@
+BIN_DIR       = @bin_dir@
+LIB_DIR       = @lib_dir@
+DOC_DIR       = @doc_dir@
+MANDIR	      = @mandir@
 
 # Set up commands
 PERL            = @perl@
 RM_F            = @rm_f@
+PBC_TO_EXE    = ../../pbc_to_exe@exe@
 RECONFIGURE     = $(PERL) @build_dir@/tools/dev/reconfigure.pl
-#CONDITIONED_LINE(darwin):
-#CONDITIONED_LINE(darwin):# MACOSX_DEPLOYMENT_TARGET must be defined for OS X compilation/linking
-#CONDITIONED_LINE(darwin):export MACOSX_DEPLOYMENT_TARGET := @osx_version@
+#+(darwin):
+#+(darwin):# MACOSX_DEPLOYMENT_TARGET must be defined for OS X compilation/linking
+#+(darwin):export MACOSX_DEPLOYMENT_TARGET := @osx_version@
 
 # The default target
 default: build
@@ -51,3 +59,9 @@ realclean: clean
 # testing
 test: build
 	$(PERL) t/harness
+
+#
+# Local variables:
+# mode: makefile
+# ex: ft=make
+# End:

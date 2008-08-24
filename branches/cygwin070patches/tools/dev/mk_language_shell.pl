@@ -142,9 +142,14 @@ __config/makefiles/root.in__
 PARROT_ARGS =
 
 ## configuration settings
+LANG          = @lang@
 BUILD_DIR     = @build_dir@
 LOAD_EXT      = @load_ext@
 O             = @o@
+BIN_DIR       = @bin_dir@
+LIB_DIR       = @lib_dir@
+DOC_DIR       = @doc_dir@
+MANDIR	      = @mandir@
 
 ## Setup some commands
 LN_S          = @lns@
@@ -153,8 +158,10 @@ RM_RF         = @rm_rf@
 CP            = @cp@
 PARROT        = ../../parrot@exe@
 CAT           = $(PERL) -MExtUtils::Command -e cat
+PBC_TO_EXE    = ../../pbc_to_exe@exe@
 BUILD_DYNPMC  = $(PERL) $(BUILD_DIR)/tools/build/dynpmc.pl
 RECONFIGURE   = $(PERL) $(BUILD_DIR)/tools/dev/reconfigure.pl
+POD2MAN	      = pod2man
 #CONDITIONED_LINE(darwin):
 #CONDITIONED_LINE(darwin):# MACOSX_DEPLOYMENT_TARGET must be defined for OS X compilation/linking
 #CONDITIONED_LINE(darwin):export MACOSX_DEPLOYMENT_TARGET := @osx_version@
@@ -183,6 +190,7 @@ BUILTINS_PIR = \
 
 # PMCS = @lclang@
 # PMC_SOURCES = $(PMC_DIR)/@lclang@.pmc
+DOCS = MAINTAINER README TODO
 
 # the default target
 @lclang@.pbc: $(PARROT) $(SOURCES)
@@ -207,9 +215,16 @@ $(@UCLANG@_GROUP): $(PARROT) $(PMC_SOURCES)
 	cd $(PMC_DIR) && $(BUILD_DYNPMC) linklibs $(PMCS)
 	cd $(PMC_DIR) && $(BUILD_DYNPMC) copy --destination=$(PARROT_DYNEXT) $(PMCS)
 
+installable : installable_$(LANG)@exe@ $(@UCLANG@_GROUP)
+	cp installable_$(LANG)@exe@ $(BUILD_DIR)
+	cd $(PMC_DIR) && $(BUILD_DYNPMC) copy --destination=$(PARROT_DYNEXT) $(PMCS)
+
+installable_$(LANG)@exe@ : $(LANG).pbc
+	$(PBC_TO_EXE) $(LANG).pbc --install
+
 # regenerate the Makefile
 Makefile: config/makefiles/root.in
-	cd $(BUILD_DIR) && $(RECONFIGURE) --step=gen::languages --languages=@lclang@
+	cd $(BUILD_DIR) && $(RECONFIGURE) --step=gen::languages --languages=$(LANG)
 
 # This is a listing of all targets, that are meant to be called by users
 help:
@@ -218,8 +233,12 @@ help:
 	@echo ""
 	@echo "  all:               @lclang@.pbc"
 	@echo "                     This is the default."
+	@echo "  installable:       Create self-hosting binaries."
+	@echo "  install:           Install the installable targets and docs."
+	@echo ""
 	@echo "Testing:"
 	@echo "  test:              Run the test suite."
+	@echo "  test-installable:  Test self-hosting targets."
 	@echo "  testclean:         Clean up test results."
 	@echo ""
 	@echo "Cleaning:"
@@ -233,6 +252,16 @@ help:
 
 test: all
 	$(PERL) t/harness
+
+# TODO: rename build_dir. basic run for missing libs
+test-installable : installable
+	echo "1" | ./installable_$(LANG)@exe@
+
+install : installable
+	cp installable_$(LANG)@exe@ $(DESTDIR)$(BIN_DIR)/parrot-$(LANG)@exe@
+	$(POD2MAN) $(LANG).pir > $(DESTDIR)$(MANDIR)/man1/parrot-$(LANG).1
+	mkdir $(DESTDIR)$(DOC_DIR)/languages/$(LANG)
+	cp $(DOCS) $(DESTDIR)$(DOC_DIR)/languages/$(LANG)
 
 # this target has nothing to do
 testclean:
@@ -252,6 +281,8 @@ CLEANUPS = \
   $(PMC_DIR)/*.manifest \
   $(PMC_DIR)/*.pdb \
   $(PMC_DIR)/*.lib \
+  $(LANG)@exe@ \
+  installable_$(LANG)@exe@ \
 
 
 clean: testclean

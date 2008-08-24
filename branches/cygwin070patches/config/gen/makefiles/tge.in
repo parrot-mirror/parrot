@@ -6,22 +6,29 @@
 PERL     = @perl@
 RM_F     = @rm_f@
 PARROT   = ../../parrot@exe@
+RECONFIGURE   = $(PERL) @build_dir@/tools/dev/reconfigure.pl
+#+(cygchkdll):SHRPENV  = env PATH="@build_dir@/blib/lib:$(PATH)"
+#-(cygchkdll):SHRPENV  = env LD_RUN_PATH=@build_dir@/blib/lib
 
 # Where to put things
 PARROT_LIBRARY    = ../../runtime/parrot/library
 PERL6GRAMMAR      = $(PARROT_LIBRARY)/PGE/Perl6Grammar.pbc
 
 # the default target
-all: $(PARROT_LIBRARY)/TGE.pbc
+all: $(PARROT_LIBRARY)/TGE.pbc Makefile
 
 $(PARROT_LIBRARY)/TGE.pbc: TGE.pir TGE/Rule.pbc TGE/Parser.pbc TGE/Grammar.pbc TGE/Compiler.pbc TGE/Tree.pbc
-	$(PARROT) -o $(PARROT_LIBRARY)/TGE.pbc --output-pbc TGE.pir
+	$(SHRPENV) $(PARROT) -o $(PARROT_LIBRARY)/TGE.pbc --output-pbc TGE.pir
 
 .pir.pbc :
-	$(PARROT) -o $@ --output-pbc $<
+	$(SHRPENV) $(PARROT) -o $@ --output-pbc $<
 
 TGE/Parser.pir: TGE/Parser.pg
-	$(PARROT) $(PERL6GRAMMAR) --output=TGE//Parser.pir TGE//Parser.pg
+	$(SHRPENV) $(PARROT) $(PERL6GRAMMAR) --output=TGE/Parser.pir TGE/Parser.pg
+
+# regenerate the Makefile
+Makefile: @build_dir@/config/gen/makefiles/tge.in
+	cd @build_dir@ && $(RECONFIGURE) --step=gen::makefiles --target=compilers/tge/Makefile
 
 # This is a listing of all targets, that are meant to be called by users
 help:
@@ -62,3 +69,9 @@ realclean: clean
 	$(RM_F) Makefile
 
 distclean: realclean
+
+#
+# Local variables:
+# mode: makefile
+# ex: ft=make
+# End:

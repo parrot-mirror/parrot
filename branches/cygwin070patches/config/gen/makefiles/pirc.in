@@ -4,7 +4,6 @@
 LN_S          = @lns@
 PERL          = @perl@
 RM_F          = @rm_f@
-PARROT        = ../../parrot@exe@
 TOOL_DIR      = ../..
 CC            = @cc@
 CP            = @cp@
@@ -34,7 +33,7 @@ SOURCES       = src/pirmain.c \
   src/pirutil.c
 
 # the default target
-all: pirc
+all: pirc Makefile
 
 pirc: pirmain$(O) pirparser$(O) pirlexer$(O) pirout$(O) pastout$(O) pirvtable$(O) jsonout$(O) pbcout$(O) pirutil$(O)
 	$(CC) -o pirc$(EXE) pirmain$(O) pirparser$(O) pirlexer$(O) pirout$(O) pastout$(O) pirvtable$(O) jsonout$(O) pbcout$(O) pirutil$(O)
@@ -66,6 +65,9 @@ jsonout$(O): src/jsonout.c src/jsonout.h
 pirutil$(O): src/pirutil.c src/pirutil.h
 	$(CC) $(CFLAGS) -c src/pirutil.c
 
+# regenerate the Makefile
+Makefile: $(BUILD_DIR)/config/gen/makefiles/pirc.in
+	cd $(BUILD_DIR) && $(RECONFIGURE) --step=gen::makefiles --target=compilers/pirc/Makefile
 
 # This is a listing of all targets, that are meant to be called by users
 help:
@@ -109,11 +111,6 @@ test: all
   doc/design.pod \
   README.pod
 
-# regenerate the Makefile
-Makefile: $(BUILD_DIR)/config/gen/makefiles/pirc.in
-	cd $(BUILD_DIR) && $(RECONFIGURE) --step=gen::makefiles --target=compilers/pirc/Makefile
-
-
 clean:
 	$(RM_F) *$(O)
 
@@ -124,3 +121,9 @@ realclean: clean
   doc/*.html
 
 distclean: realclean
+
+#
+# Local variables:
+# mode: makefile
+# ex: ft=make
+# End:

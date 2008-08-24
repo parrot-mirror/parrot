@@ -4,9 +4,14 @@
 PARROT_ARGS =
 
 ## configuration settings
+LANG          = pynie
 BUILD_DIR     = @build_dir@
 LOAD_EXT      = @load_ext@
 O             = @o@
+BIN_DIR       = @bin_dir@
+LIB_DIR       = @lib_dir@
+DOC_DIR       = @doc_dir@
+MANDIR	      = @mandir@
 
 ## Setup some commands
 LN_S          = @lns@
@@ -14,12 +19,14 @@ PERL          = @perl@
 RM_RF         = @rm_rf@
 CP            = @cp@
 PARROT        = ../../parrot@exe@
+PBC_TO_EXE    = ../../pbc_to_exe@exe@
 CAT           = $(PERL) -MExtUtils::Command -e cat
 BUILD_DYNPMC  = $(PERL) $(BUILD_DIR)/tools/build/dynpmc.pl
 RECONFIGURE   = $(PERL) $(BUILD_DIR)/tools/dev/reconfigure.pl
-#CONDITIONED_LINE(darwin):
-#CONDITIONED_LINE(darwin):# MACOSX_DEPLOYMENT_TARGET must be defined for OS X compilation/linking
-#CONDITIONED_LINE(darwin):export MACOSX_DEPLOYMENT_TARGET := @osx_version@
+POD2MAN	      = pod2man
+#+(darwin):
+#+(darwin):# MACOSX_DEPLOYMENT_TARGET must be defined for OS X compilation/linking
+#+(darwin):export MACOSX_DEPLOYMENT_TARGET := @osx_version@
 
 ## places to look for things
 PARROT_DYNEXT = $(BUILD_DIR)/runtime/parrot/dynext
@@ -28,16 +35,18 @@ PERL6GRAMMAR  = $(PGE_LIBRARY)/Perl6Grammar.pbc
 NQP           = $(BUILD_DIR)/compilers/nqp/nqp.pbc
 PCT           = $(BUILD_DIR)/runtime/parrot/library/PCT.pbc
 
-PMC_DIR       = src/pmc
+DOCS = MAINTAINER README
 
-all: pynie.pbc
+build : pynie.pbc
+
+all: pynie.pbc pynie@exe@ installable_pynie@exe@
 
 SOURCES = pynie.pir \
   src/parser/Grammar.pg \
   src/parser/Actions.pm \
   src/builtins/io.pir \
   src/builtins/lists.pir \
-  src/builtins/oper.pir \
+  src/builtins/oper.pir
 
 # the default target
 pynie.pbc: $(PARROT) $(PERL6GRAMMAR) $(NQP) $(PCT) $(SOURCES)
@@ -56,8 +65,12 @@ help:
 	@echo ""
 	@echo "Following targets are available for the user:"
 	@echo ""
-	@echo "  all:               pynie.pbc"
+	@echo "  build:             pynie.pbc"
 	@echo "                     This is the default."
+	@echo "  all:               pynie.pbc pynie@exe@ installable"
+	@echo "  installable:       Create self-hosting bins and libs."
+	@echo "  install:           Install the installable targets and docs."
+	@echo ""
 	@echo "Testing:"
 	@echo "  test:              Run the test suite."
 	@echo "  testclean:         Clean up test results."
@@ -77,6 +90,25 @@ test: all
 # this target has nothing to do
 testclean:
 
+# TODO: rename build_dir. basic run for missing libs
+test-installable : installable
+	./installable_$(LANG)@exe@ t/00-parrot/03-op-logic.t
+
+install : installable
+	$(CP) installable_$(LANG)@exe@ $(DESTDIR)$(BIN_DIR)/parrot-$(LANG)@exe@
+	$(POD2MAN) pynie.pir > $(DESTDIR)$(MANDIR)/man1/parrot-$(LANG).1
+	mkdir $(DESTDIR)$(DOC_DIR)/languages/$(LANG)
+	$(CP) $(DOCS) $(DESTDIR)$(DOC_DIR)/languages/$(LANG)
+
+$(LANG)@exe@: $(LANG).pbc
+	$(PBC_TO_EXE) $(LANG).pbc
+
+installable : installable_$(LANG)@exe@
+	$(CP) installable_$(LANG)@exe@ $(BUILD_DIR)
+
+installable_$(LANG)@exe@ : $(LANG).pbc
+	$(PBC_TO_EXE) $(LANG).pbc --install
+
 CLEANUPS = \
   pynie.pbc \
   src/gen_grammar.pir \
@@ -89,3 +121,9 @@ realclean: clean
 	$(RM_RF) Makefile
 
 distclean: realclean
+
+#
+# Local variables:
+# mode: makefile
+# ex: ft=make
+# End:

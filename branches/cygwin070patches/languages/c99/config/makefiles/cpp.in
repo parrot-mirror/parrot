@@ -4,6 +4,7 @@
 PARROT_ARGS =
 
 ## configuration settings
+LANG          = cpp
 BUILD_DIR     = @build_dir@
 LOAD_EXT      = @load_ext@
 O             = @o@
@@ -14,6 +15,7 @@ PERL          = @perl@
 RM_RF         = @rm_rf@
 CP            = @cp@
 PARROT        = ../../../../parrot@exe@
+PBC_TO_EXE    = $(BUILD_DIR)/pbc_to_exe.exe
 CAT           = $(PERL) -MExtUtils::Command -e cat
 BUILD_DYNPMC  = $(PERL) $(BUILD_DIR)/tools/build/dynpmc.pl
 RECONFIGURE   = $(PERL) $(BUILD_DIR)/tools/dev/reconfigure.pl
@@ -47,6 +49,12 @@ BUILTINS_PIR = \
 cpp.pbc: $(PARROT) $(SOURCES)
 	$(PARROT) $(PARROT_ARGS) -o cpp.pbc cpp.pir
 
+cpp@exe@ : cpp.pbc
+	$(PBC_TO_EXE) cpp.pbc
+
+installable_cpp@exe@ : cpp.pbc
+	$(PBC_TO_EXE) cpp.pbc --install
+
 src/gen_grammar.pir: $(PERL6GRAMMAR) src/parser/grammar.pg
 	$(PARROT) $(PARROT_ARGS) $(PERL6GRAMMAR) \
 	    --output=src/gen_grammar.pir \
@@ -69,12 +77,14 @@ $(C_GROUP): $(PARROT) $(PMC_SOURCES)
 Makefile: ../../config/makefiles/cpp.in
 	cd $(BUILD_DIR) && $(RECONFIGURE) --step=gen::languages --languages=c99
 
+installable : installable_cpp@exe@
+
 # This is a listing of all targets, that are meant to be called by users
 help:
 	@echo ""
 	@echo "Following targets are available for the user:"
 	@echo ""
-	@echo "  all:               c.pbc"
+	@echo "  all:               cpp.pbc"
 	@echo "                     This is the default."
 	@echo "Testing:"
 	@echo "  test:              Run the test suite."
@@ -120,4 +130,8 @@ realclean: clean
 
 distclean: realclean
 
-
+#
+# Local variables:
+# mode: makefile
+# ex: ft=make
+# End:

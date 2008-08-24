@@ -28,7 +28,14 @@ help:
 	@echo "                This is the default."
 	@echo "  test:         Unified test suite for a lot of languages."
 	@echo ""
+	@echo "  installable:  Create self-hosting bins and libs."
+	@echo ""
+	@echo "  test-installable: Test self-hosting bins and libs."
+	@echo ""
+	@echo "  install:      Make install for a lot of languages."
+	@echo ""
 	@echo "  clean:        Clean up a lot of languages."
+	@echo "  realclean:    Clean up and remove Makefiles."
 	@echo ""
 	@echo "  help:         Print this help message."
 	@echo ""
@@ -40,11 +47,14 @@ help:
 	@echo ""
 	@echo "Following languages are available:"
 	@echo "  $(LANGUAGES)"
-	@echo "A particular language <lang> can be built, tested and cleand up"
 	@echo "  make <lang>"
 	@echo "  make <lang>.test"
+	@echo "  make <lang>.installable"
+	@echo "  make <lang>.test-installable"
+	@echo "  make <lang>.install"
 	@echo "  make <lang>.clean"
-	@echo "For the status of individual languages see LANGUAGES.STATUS.pod"
+	@echo "  make <lang>.realclean"
+	@echo "For the status of individual languages see LANGUAGES_STATUS.pod"
 	@echo ""
 
 clean: \
@@ -59,10 +69,15 @@ clean: \
 Parrot-Embed : Parrot-Embed.dummy
 
 Parrot-Embed.dummy:
-#CONDITIONED_LINE(win32):	- cd Parrot-Embed && $(PERL) Makefile.PL && nmake
-#INVERSE_CONDITIONED_LINE(win32):	- cd Parrot-Embed && $(PERL) Makefile.PL && $(MAKE)
+#+(win32):	- cd Parrot-Embed && $(PERL) Makefile.PL && nmake
+#-(win32):	- cd Parrot-Embed && $(PERL) Makefile.PL && $(MAKE)
 
 Parrot-Embed.clean:
-#CONDITIONED_LINE(win32):	- cd Parrot-Embed && nmake clean
-#INVERSE_CONDITIONED_LINE(win32):	- cd Parrot-Embed && $(MAKE) clean
+#+(win32):	- cd Parrot-Embed && nmake clean
+#-(win32):	- cd Parrot-Embed && $(MAKE) clean
 
+#
+# Local variables:
+# mode: makefile
+# ex: ft=make
+# End:

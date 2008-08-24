@@ -48,12 +48,28 @@ undefined values) is undefined, and may be rather funky.
 .sub _config
     .local pmc CONF
     .local string conf_file
+
+    #unless find_sub('_config') goto runtime
+    #$P0 = _config()
+    #.return( $P0 )
+
+runtime:
+    # conf_file = Parrot_locate_runtime_file_str(interp, "config.fpmc", 2)
     conf_file = interpinfo .INTERPINFO_RUNTIME_PREFIX
     conf_file .= "/runtime/parrot/include/config.fpmc"
+    stat $I0, conf_file, 0
+    if $I0 goto conf
 
+    # If installed into /usr/lib/parrot, not /usr/runtime/parrot
+    # This logic has to be reversed when installed versions should run faster
+    # than source builds.
+    conf_file = interpinfo .INTERPINFO_RUNTIME_PREFIX
+    conf_file .= "/lib/parrot/include/config.fpmc"
+conf:
     open CONF, conf_file, "<"
     $I0 = defined CONF
     if $I0 goto ok1
+
     printerr "Can't read '"
     printerr conf_file
     printerr "': "

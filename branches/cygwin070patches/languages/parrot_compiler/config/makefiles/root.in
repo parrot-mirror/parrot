@@ -8,9 +8,9 @@ PERL          = @perl@
 RM_F          = @rm_f@
 PARROT        = ../../@test_prog@@exe@
 RECONFIGURE   = $(PERL) @build_dir@/tools/dev/reconfigure.pl
-#CONDITIONED_LINE(darwin):
-#CONDITIONED_LINE(darwin):# MACOSX_DEPLOYMENT_TARGET must be defined for OS X compilation/linking
-#CONDITIONED_LINE(darwin):export MACOSX_DEPLOYMENT_TARGET := @osx_version@
+#+(darwin):
+#+(darwin):# MACOSX_DEPLOYMENT_TARGET must be defined for OS X compilation/linking
+#+(darwin):export MACOSX_DEPLOYMENT_TARGET := @osx_version@
 
 # Set up directories
 BUILD_DIR     = @build_dir@
@@ -55,3 +55,8 @@ parrot_compiler.pbc : parrot_compiler.pir
 parrot_compiler.pasm : parrot_compiler.pir
 	$(PARROT) -o parrot_compiler.pasm parrot_compiler.pir
 
+#
+# Local variables:
+# mode: makefile
+# ex: ft=make
+# End:

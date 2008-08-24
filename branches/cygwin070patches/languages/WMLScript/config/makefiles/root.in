@@ -1,6 +1,7 @@
 # Copyright (C) 2006-2007, The Perl Foundation.
 # $Id$
 
+LANG    = WMLScript
 RM_F    = @rm_f@
 PERL    = @perl@
 PARROT  = ../../parrot@exe@
@@ -12,10 +13,17 @@ PMCDIR   = pmc
 OPSDIR   = ops
 O        = @o@
 LOAD_EXT = @load_ext@
+BUILD_DIR     = @build_dir@
+BIN_DIR       = @bin_dir@
+LIB_DIR       = @lib_dir@
+DOC_DIR       = @doc_dir@
+MANDIR	      = @mandir@
 PARROT_DYNEXT = @build_dir@/runtime/parrot/dynext
-#CONDITIONED_LINE(darwin):
-#CONDITIONED_LINE(darwin):# MACOSX_DEPLOYMENT_TARGET must be defined for OS X compilation/linking
-#CONDITIONED_LINE(darwin):export MACOSX_DEPLOYMENT_TARGET := @osx_version@
+PBC_TO_EXE    = ../../pbc_to_exe@exe@
+RECONFIGURE   = $(PERL) @build_dir@/tools/dev/reconfigure.pl
+#+(darwin):
+#+(darwin):# MACOSX_DEPLOYMENT_TARGET must be defined for OS X compilation/linking
+#+(darwin):export MACOSX_DEPLOYMENT_TARGET := @osx_version@
 
 SRM=Stack
 
@@ -48,6 +56,9 @@ PBCS = \
 GEN_PIR = \
  src/opcode.pir \
  src/stdlibs.pir
+
+DOCS = \
+ MAINTAINER doc/running.pod doc/status.pod
 
 all: \
  pmc/wmls_group$(LOAD_EXT) \
@@ -90,6 +101,44 @@ $(LIBPATH)/wmlsstring.pbc: $(LIBPATH)/wmlsstring.pir
 
 $(LIBPATH)/wmlsconsole.pbc: $(LIBPATH)/wmlsconsole.pir
 	$(PARROT) --output=$(LIBPATH)/wmlsconsole.pbc $(LIBPATH)/wmlsconsole.pir
+
+wmls2pir@exe@: wmls2pir.pbc
+	$(PBC_TO_EXE) wmls2pir.pbc
+
+wmls2pbc@exe@: wmls2pbc.pbc
+	$(PBC_TO_EXE) wmls2pbc.pbc
+
+wmlsd@exe@: wmlsd.pbc
+	$(PBC_TO_EXE) wmlsd.pbc
+
+wmlsi@exe@: wmlsi.pbc
+	$(PBC_TO_EXE) wmlsi.pbc
+
+installable_wmls2pir@exe@: wmls2pir.pbc
+	$(PBC_TO_EXE) wmls2pir.pbc --install
+
+installable_wmls2pbc@exe@: wmls2pbc.pbc
+	$(PBC_TO_EXE) wmls2pbc.pbc --install
+
+installable_wmlsd@exe@: wmlsd.pbc
+	$(PBC_TO_EXE) wmlsd.pbc --install
+
+installable_wmlsi@exe@: wmlsi.pbc
+	$(PBC_TO_EXE) wmlsi.pbc --install
+
+install : installable
+	$(CP) installable_wmls2pir@exe@ $(DESTDIR)$(BIN_DIR)/parrot-wmls2pir@exe@
+	$(CP) installable_wmls2pbc@exe@ $(DESTDIR)$(BIN_DIR)/parrot-wmls2pbc@exe@
+	$(CP) installable_wmlsd@exe@ $(DESTDIR)$(BIN_DIR)/parrot-wmlsd@exe@
+	$(CP) installable_wmlsi@exe@ $(DESTDIR)$(BIN_DIR)/parrot-wmlsi@exe@
+	@cd $(PMCDIR) && $(PMCBUILD) copy "--destination=$(DESTDIR)$(LIB_DIR)/parrot/dynext" $(PMCS)
+	@cd $(OPSDIR) && $(OPSBUILD) copy "--destination=$(DESTDIR)$(LIB_DIR)/parrot/dynext" $(OPSLIB)
+	$(POD2MAN) pod/running.pod > $(DESTDIR)$(MANDIR)/man1/parrot-wmls.5
+	mkdir $(DESTDIR)$(DOC_DIR)/languages/$(LANG)
+	$(CP) $(DOCS) $(DESTDIR)$(DOC_DIR)/languages/$(LANG)
+
+installable: installable_wmls2pir@exe@ installable_wmls2pbc@exe@ \
+             installable_wmlsd@exe@ installable_wmlsi@exe@
 
 help:
 	@echo ""
@@ -146,3 +195,8 @@ realclean: clean
 
 distclean: realclean
 
+#
+# Local variables:
+# mode: makefile
+# ex: ft=make
+# End:

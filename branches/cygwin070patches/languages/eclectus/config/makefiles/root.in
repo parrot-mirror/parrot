@@ -39,29 +39,37 @@ PMC_SOURCES     = \
     $(PMC_DIR)/eclectuspair.pmc \
     $(PMC_DIR)/eclectusstring.pmc \
     $(PMC_DIR)/eclectusvector.pmc
-
+DOCS = MAINTAINER README docs/eclectus.pod
 
 # The default target
-default: build
+all: build
 
 help :
 	@echo ""
 	@echo "Following targets are available for the user:"
 	@echo ""
-	@echo "  build:             Builds the dynamic PMCSs needed by Eclectus."
+	@echo "  all:               Builds the dynamic PMCSs needed by Eclectus."
 	@echo "                     This is the default target."
+	@echo "  installable:       Create self-hosting bins and libs."
+	@echo "  install:           Install the installable targets and docs."
 	@echo ""
+	@echo "Testing:"
 	@echo "  test:              Run the test suite."
+	@echo "  test-installable:  Test self-hosting targets."
+	@echo "  testclean:         Clean up test results."
 	@echo ""
+	@echo "Cleaning:"
 	@echo "  clean:             Clean up temporary files."
-	@echo ""
 	@echo "  realclean:         Clean up generated files."
+	@echo "  distclean:         Removes also anything built, in theory"
 	@echo ""
+	@echo "Misc:"
 	@echo "  help:              Print this help message."
+	@echo ""
 
 # regenerate the Makefile
 Makefile: config/makefiles/root.in
-	cd $(BUILD_DIR) && $(RECONFIGURE) --step=gen::languages --languages=eclectus
+	cd $(BUILD_DIR) && $(RECONFIGURE) --step=gen::languages --languages=$(LANG)
 
 # Compilation:
 build: $(ECLECTUS_GROUP) driver_nqp.pbc
@@ -77,6 +85,29 @@ driver_nqp.pbc: src/builtins/all.pbc driver_nqp.pir
 
 src/builtins/all.pbc: src/builtins/all.pir
 	$(PARROT) -o src/builtins/all.pbc src/builtins/all.pir
+
+# TODO: rename build_dir. basic run for missing libs
+test-installable : installable
+	./installable_$(LANG)@exe@ tests-driver.scm
+
+install : installable
+	cp installable_$(LANG)@exe@ $(DESTDIR)$(BIN_DIR)/parrot-$(LANG)@exe@
+	cd $(PMC_DIR) && $(BUILD_DYNPMC) copy "--destination=$(DESTDIR)$(LIB_DIR)/parrot/dynext" $(PMCS)
+	$(POD2MAN) docs/eclectus.pod > $(DESTDIR)$(MANDIR)/man1/parrot-$(LANG).1
+	mkdir $(DESTDIR)$(DOC_DIR)/languages/$(LANG)
+	cp $(DOCS) $(DESTDIR)$(DOC_DIR)/languages/$(LANG)
+
+$(LANG)@exe@: driver_nqp.pbc
+	$(PBC_TO_EXE) driver_nqp.pbc
+	mv driver_nqp@exe@ $(LANG)@exe@
+
+installable : installable_$(LANG)@exe@ $(ECLECTUS_GROUP)
+	cp installable_$(LANG)@exe@ $(BUILD_DIR)
+
+installable_$(LANG)@exe@ : driver_nqp.pbc
+	$(PBC_TO_EXE) driver_nqp.pbc --install
+	mv driver_nqp@exe@ installable_$(LANG)@exe@
+
 
 # cleaning up
 
@@ -97,8 +128,9 @@ dynext-clean:
   $(PMC_DIR)/*.ilk \
   $(PMC_DIR)/*.manifest \
   $(PMC_DIR)/*.pdb \
-  $(PMC_DIR)/*.lib
-
+  $(PMC_DIR)/*.lib \
+  installable_$(LANG)@exe@ \
+  $(LANG)@exe@ \
 
 realclean: clean
 	$(RM_F) Makefile
@@ -110,3 +142,11 @@ test: build
 test-clean:
 	$(RM_F) t/*.nqp
 	$(RM_F) t/*.pir
+
+distclean: realclean
+
+#
+# Local variables:
+# mode: makefile
+# ex: ft=make
+# End:
