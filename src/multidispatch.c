@@ -472,51 +472,65 @@ static PMC*
 convert_varargs_to_sig_pmc(PARROT_INTERP, ARGIN(const char *sig), va_list args)
 {
     INTVAL i;
+    INTVAL in_return_sig = 0;
     PMC *call_object        = pmc_new(interp, enum_class_CallSignature);
     PMC * const  type_tuple = pmc_new(interp, enum_class_FixedIntegerArray);
-    STRING *string_sig = const_string(interp, sig);
+    STRING *string_sig      = const_string(interp, sig);
     const INTVAL sig_len    = string_length(interp, string_sig);
+
+    /* Protect call signature object from collection. */
+    dod_register_pmc(interp, call_object);
+
     if (!sig_len)
         return call_object;
+
     VTABLE_set_integer_native(interp, type_tuple, sig_len);
     VTABLE_set_pmc(interp, call_object, type_tuple);
 
     VTABLE_set_string_native(interp, call_object, string_sig);
 
-    for (i = 1; i < sig_len; ++i) {
+    for (i = 0; i < sig_len; ++i) {
         INTVAL type = string_index(interp, string_sig, i);
         switch (type) { 
             case 'I': 
-                VTABLE_push_integer(interp, call_object, va_arg(args, INTVAL)); 
-                VTABLE_set_integer_keyed_int(interp, type_tuple,
-                        i, enum_type_INTVAL);
+                if (!in_return_sig) {
+                    VTABLE_push_integer(interp, call_object, va_arg(args, INTVAL)); 
+                    VTABLE_set_integer_keyed_int(interp, type_tuple,
+                            i, enum_type_INTVAL);
+                }
                 break; 
             case 'N': 
-                VTABLE_push_float(interp, call_object, va_arg(args, FLOATVAL)); 
-                VTABLE_push_integer(interp, type_tuple, enum_type_FLOATVAL);
-                VTABLE_set_integer_keyed_int(interp, type_tuple,
-                        i, enum_type_FLOATVAL);
+                if (!in_return_sig) {
+                    VTABLE_push_float(interp, call_object, va_arg(args, FLOATVAL)); 
+                    VTABLE_set_integer_keyed_int(interp, type_tuple,
+                            i, enum_type_FLOATVAL);
+                }
                 break; 
             case 'S': 
-                VTABLE_push_string(interp, call_object, va_arg(args, STRING *)); 
-                VTABLE_set_integer_keyed_int(interp, type_tuple,
-                        i, enum_type_STRING);
+                if (!in_return_sig) {
+                    VTABLE_push_string(interp, call_object, va_arg(args, STRING *)); 
+                    VTABLE_set_integer_keyed_int(interp, type_tuple,
+                            i, enum_type_STRING);
+                }
                 break; 
             case 'P': 
-            {
-                PMC *arg = va_arg(args, PMC *);
-                INTVAL type = VTABLE_type(interp, arg);
-                VTABLE_set_integer_keyed_int(interp, type_tuple, i, type);
-                VTABLE_push_pmc(interp, call_object, va_arg(args, PMC *)); 
+                if (!in_return_sig) {
+                    PMC *arg = va_arg(args, PMC *);
+                    INTVAL type = VTABLE_type(interp, arg);
+                    VTABLE_set_integer_keyed_int(interp, type_tuple, i, type);
+                    VTABLE_push_pmc(interp, call_object, va_arg(args, PMC *)); 
+                }
                 break;
-            }
+            case '-': 
+                i++; /* skip '>' */
+                in_return_sig = 1;
+                break;
             default:
                 Parrot_ex_throw_from_c_args(interp, NULL,
                     EXCEPTION_INVALID_OPERATION,
                     "Multiple Dispatch: invalid argument type %c!", type);
         }
     }
-
 
     return call_object;
 }
@@ -540,14 +554,17 @@ Parrot_mmd_multi_dispatch_from_c_args(PARROT_INTERP,
         ARGIN(const char *name), ARGIN(const char *sig), ...)
 {
     PMC *sig_object, *sub;
+    PMC *result = PMCNULL;
     va_list args;
     va_start(args, sig); 
     sig_object = convert_varargs_to_sig_pmc(interp, sig, args); 
-    va_end(args);
 
     sub = mmd_multi_find_method(interp, const_string(interp, name), sig_object);
 
-    return Parrot_runops_from_sig_pmc(interp, sub, sig_object);
+    result = Parrot_runops_from_sig_pmc(interp, sub, sig_object);
+    va_end(args);
+
+    return result;
 
 }
 
