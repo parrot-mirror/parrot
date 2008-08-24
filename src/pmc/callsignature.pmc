@@ -30,11 +30,11 @@ information for a multiple dispatch call.
         PARROT_CAPTURE(obj)->hash = pmc_new((i), enum_class_Hash);
 
 pmclass CallSignature extends Capture need_ext provides array provides hash {
-    ATTR PMC    *array;
-    ATTR PMC    *hash;
-    ATTR PMC    *type_tuple;
-    ATTR STRING *short_sig;
-    ATTR void   *varargs;
+    ATTR PMC    *array;      /* Positional arguments */
+    ATTR PMC    *hash;       /* Named arguments */
+    ATTR PMC    *returns;    /* Result PMCs, if they were passed with the call */
+    ATTR PMC    *type_tuple; /* Cached argument types for multiple dispatch */
+    ATTR STRING *short_sig;  /* Simple string signature args & returns */
 
 /*
 
@@ -121,32 +121,48 @@ CallSignature.
 
 /*
 
-=item C<void set_pointer(void *value)>
+=item C<void set_attr_str(STRING *key, PMC *value)>
 
-Sets a pointer to a C var args list (va_list) for the CallSignature.
+Set a PMC value for an attribute by string name.
+
+=over
+
+=item returns
+
+Stores the return signature, an array of PMCs.
+
+=back
 
 =cut
 
 */
 
-    VTABLE void set_pointer(void *value) {
+    VTABLE void set_attr_str(STRING *key, PMC *value) {
         Parrot_CallSignature * const sig_struct = PARROT_CALLSIGNATURE(SELF);
-        sig_struct->varargs = value;
+        sig_struct->returns = value;
     }
 
 /*
 
-=item C<void *get_pointer()>
+=item C<PMC *get_attr_str(STRING *key)>
 
-Returns a pointer to a C var args list (va_list) for the CallSignature.
+Get a PMC value for an attribute by string name.
+
+=over
+
+=item returns
+
+Retrieves the return signature, an array of PMCs.
+
+=back
 
 =cut
 
 */
 
-    VTABLE void *get_pointer() {
+    VTABLE PMC *get_attr_str(STRING *key) {
         Parrot_CallSignature * const sig_struct = PARROT_CALLSIGNATURE(SELF);
-        return sig_struct->varargs;
+        return sig_struct->returns;
     }
 
 }
