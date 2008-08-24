@@ -1,18 +1,27 @@
 # $Id$
 
 # Makefile for languages/ook
+LANG          = ook
 
 # Set up of commands
-PARROT        = ../../parrot
+PARROT        = ../../parrot@exe@
+PBC_TO_EXE    = ../../pbc_to_exe@exe@
 PERL          = @perl@
 RM_F          = @rm_f@
+POD2MAN       = pod2man
 RECONFIGURE   = $(PERL) @build_dir@/tools/dev/reconfigure.pl
-#CONDITIONED_LINE(darwin):
-#CONDITIONED_LINE(darwin):# MACOSX_DEPLOYMENT_TARGET must be defined for OS X compilation/linking
-#CONDITIONED_LINE(darwin):export MACOSX_DEPLOYMENT_TARGET := @osx_version@
+#+(darwin):
+#+(darwin):# MACOSX_DEPLOYMENT_TARGET must be defined for OS X compilation/linking
+#+(darwin):export MACOSX_DEPLOYMENT_TARGET := @osx_version@
 
 # Set up directories
 BUILD_DIR     = @build_dir@
+BIN_DIR       = @bin_dir@
+LIB_DIR       = @lib_dir@
+DOC_DIR       = @doc_dir@
+MANDIR	      = @mandir@
+
+DOCS = Changes MAINTAINER README
 
 default: all
 
@@ -33,15 +42,34 @@ help :
 
 # regenerate the Makefile
 Makefile: config/makefiles/root.in
-	cd $(BUILD_DIR) && $(RECONFIGURE) --step=gen::languages --languages=ook
+	cd $(BUILD_DIR) && $(RECONFIGURE) --step=gen::languages --languages=$(LANG)
 
 all: build
+
+build: ook.pbc
+
+ook.pbc: ook.pasm
+	$(PARROT) -o ook.pbc ook.pasm
 
 test: build
 	$(PERL) -I../../lib t/harness
 
-build: ook.pasm
-	$(PARROT) -o ook.pbc ook.pasm
+ook@exe@: ook.pbc
+	$(PBC_TO_EXE) ook.pbc
+
+installable_ook@exe@: ook.pbc
+	$(PBC_TO_EXE) ook.pbc --install
+
+installable: installable_ook@exe@
+
+# TODO: rename build_dir. basic run for missing libs
+test-installable : installable
+	./installable_$(LANG)@exe@ hello.ook
+
+install : installable
+	cp installable_$(LANG)@exe@ $(DESTDIR)$(BIN_DIR)/parrot-$(LANG)@exe@
+	mkdir $(DESTDIR)$(DOC_DIR)/languages/$(LANG)
+	cp $(DOCS) $(DESTDIR)$(DOC_DIR)/languages/$(LANG)
 
 clean:
 	$(RM_F) core \
@@ -52,3 +80,9 @@ clean:
 
 realclean: clean
 	$(RM_F) Makefile
+
+#
+# Local variables:
+# mode: makefile
+# ex: ft=make
+# End:

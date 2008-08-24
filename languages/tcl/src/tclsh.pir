@@ -11,6 +11,12 @@
 .include 'languages/tcl/src/returncodes.pasm'
 .include 'languages/tcl/src/macros.pir'
 
+.sub '__onload' :load :init
+
+
+
+.end
+
 .macro set_tcl_argv()
   argc = argv # update
   .local pmc tcl_argv
@@ -32,7 +38,19 @@
 .sub _main :main
   .param pmc argv
 
-  load_bytecode 'languages/tcl/runtime/tcllib.pbc'
+  # determine location of libs from the Parrot config
+  .local pmc cfg
+  cfg  = _config()
+  .local string installed, lib_dir, pbc_fn
+  lib_dir = ''
+  installed = cfg['installed']
+  if installed goto inst
+
+  lib_dir = cfg['build_dir']
+  lib_dir .= 'languages/tcl/runtime/'
+inst:
+  pbc_fn = concat lib_dir, 'tcllib.pbc'
+  load_bytecode pbc_fn
 
   .local pmc retval
   .local string mode,contents,filename

@@ -1,12 +1,17 @@
 # $Id$
 
 ## arguments we want to run parrot with
+LANG        = perl6doc
 PARROT_ARGS =
 
 ## configuration settings
 BUILD_DIR     = @build_dir@
 LOAD_EXT      = @load_ext@
 O             = @o@
+BIN_DIR       = @bin_dir@
+LIB_DIR       = @lib_dir@
+DOC_DIR       = @doc_dir@
+MANDIR	      = @mandir@
 
 ## Setup some commands
 LN_S          = @lns@
@@ -63,6 +68,9 @@ help:
 	@echo ""
 	@echo "  all:               perl6doc.pbc"
 	@echo "                     This is the default."
+	@echo "  installable:       Create self-hosting binaries."
+	@echo "  install:           Install the installable targets and docs."
+	@echo ""
 	@echo "Testing:"
 	@echo "  test:              Run the test suite."
 	@echo "  testclean:         Clean up test results."
@@ -75,6 +83,20 @@ help:
 	@echo "Misc:"
 	@echo "  help:              Print this help message."
 	@echo ""
+
+installable_perl6doc@exe@: perl6doc.pbc
+	$(PBC_TO_EXE) perl6doc.pbc --install
+
+install : installable
+	cp installable_$(LANG)@exe@ $(DESTDIR)$(BIN_DIR)/$(LANG)@exe@
+
+installable : installable_$(LANG)@exe@
+	cp installable_$(LANG)@exe@ $(BUILD_DIR)
+
+# TODO: rename build_dir. basic run for missing libs
+test-installable : installable
+	./installable_$(LANG)@exe@ -f 'test'
+
 
 test: all
 	$(PERL) t/harness t/01-sanity
@@ -97,3 +119,9 @@ realclean: clean
 	$(RM_RF) Makefile
 
 distclean: realclean
+
+#
+# Local variables:
+# mode: makefile
+# ex: ft=make
+# End:

@@ -73,7 +73,6 @@ Bernhard Schmalhofer - L<Bernhard.Schmalhofer@gmx.de>
 
     load_bytecode 'config.pbc'
 
-    load_bytecode 'config.pbc'
     load_bytecode 'PGE.pbc'
     load_bytecode 'PGE/Text.pbc'
     load_bytecode 'PGE/Util.pbc'
@@ -84,17 +83,21 @@ Bernhard Schmalhofer - L<Bernhard.Schmalhofer@gmx.de>
     # determine location of libs from the Parrot config
     .local pmc cfg
     cfg  = _config()
-    .local string lib_dir, pbc_fn
-    lib_dir = cfg['build_dir']
-    lib_dir .= '/languages/pipp/src/common'
+    .local string installed, lib_dir, pbc_fn
+    lib_dir = ''
+    installed = cfg['installed']
+    if installed goto inst
 
-    pbc_fn = concat lib_dir, '/pipplib.pbc'
+    lib_dir = cfg['build_dir']
+    lib_dir .= '/languages/pipp/src/common/'
+inst:
+    pbc_fn = concat lib_dir, 'pipplib.pbc'
     load_bytecode pbc_fn
-    pbc_fn = concat lib_dir, '/php_ctype.pbc'
+    pbc_fn = concat lib_dir, 'php_ctype.pbc'
     load_bytecode pbc_fn
-    pbc_fn = concat lib_dir, '/php_gmp.pbc'
+    pbc_fn = concat lib_dir, 'php_gmp.pbc'
     load_bytecode pbc_fn
-    pbc_fn = concat lib_dir, '/php_pcre.pbc'
+    pbc_fn = concat lib_dir, 'php_pcre.pbc'
     load_bytecode pbc_fn
 
     load_bytecode 'CGI/QueryHash.pbc'

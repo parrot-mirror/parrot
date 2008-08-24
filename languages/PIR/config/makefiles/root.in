@@ -17,9 +17,9 @@ PARROT        = ../../parrot@exe@
 CAT           = $(PERL) -MExtUtils::Command -e cat
 BUILD_DYNPMC  = $(PERL) $(BUILD_DIR)/tools/build/dynpmc.pl
 RECONFIGURE   = $(PERL) $(BUILD_DIR)/tools/dev/reconfigure.pl
-#CONDITIONED_LINE(darwin):
-#CONDITIONED_LINE(darwin):# MACOSX_DEPLOYMENT_TARGET must be defined for OS X compilation/linking
-#CONDITIONED_LINE(darwin):export MACOSX_DEPLOYMENT_TARGET := @osx_version@
+#+(darwin):
+#+(darwin):# MACOSX_DEPLOYMENT_TARGET must be defined for OS X compilation/linking
+#+(darwin):export MACOSX_DEPLOYMENT_TARGET := @osx_version@
 
 ## places to look for things
 PARROT_DYNEXT = $(BUILD_DIR)/runtime/parrot/dynext
@@ -102,7 +102,7 @@ src/pasm/gen_pasm_instr.pbc: src/pasm/gen_pasm_instr.pir
 
 src/pasm/gen_pasm_args.pbc: src/pasm/gen_pasm_args.pir
 	$(PARROT) --output-pbc -o src/pasm/gen_pasm_args.pbc src/pasm/gen_pasm_args.pir
-	
+
 src/pasm/gen_pasm_io.pbc: src/pasm/gen_pasm_io.pir
 	$(PARROT) --output-pbc -o src/pasm/gen_pasm_io.pbc src/pasm/gen_pasm_io.pir
 
@@ -111,7 +111,7 @@ src/pasm/gen_pasm_pmc.pbc: src/pasm/gen_pasm_pmc.pir
 
 src/pasm/gen_pasm_core.pbc: src/pasm/gen_pasm_core.pir
 	$(PARROT) --output-pbc -o src/pasm/gen_pasm_core.pbc src/pasm/gen_pasm_core.pir
-	
+
 # regenerate the Makefile
 Makefile: config/makefiles/root.in
 	cd $(BUILD_DIR) && $(RECONFIGURE) --step=gen::languages --languages=PIR
@@ -177,3 +177,9 @@ realclean: clean
 	$(RM_RF) Makefile
 
 distclean: realclean
+
+#
+# Local variables:
+# mode: makefile
+# ex: ft=make
+# End:

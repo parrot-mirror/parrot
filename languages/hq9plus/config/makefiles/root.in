@@ -4,17 +4,25 @@
 PARROT_ARGS =
 
 ## configuration settings
+LANG          = hq9plus
 BUILD_DIR     = @build_dir@
+BIN_DIR       = @bin_dir@
+LIB_DIR       = @lib_dir@
+DOC_DIR       = @doc_dir@
+MANDIR	      = @mandir@
 
 ## Setup some commands
 PERL          = @perl@
 RM_RF         = @rm_rf@
+CP            = @cp@
 PARROT        = ../../parrot@exe@
+PBC_TO_EXE    = ../../pbc_to_exe@exe@
 CAT           = $(PERL) -MExtUtils::Command -e cat
 RECONFIGURE   = $(PERL) $(BUILD_DIR)/tools/dev/reconfigure.pl
-#CONDITIONED_LINE(darwin):
-#CONDITIONED_LINE(darwin):# MACOSX_DEPLOYMENT_TARGET must be defined for OS X compilation/linking
-#CONDITIONED_LINE(darwin):export MACOSX_DEPLOYMENT_TARGET := @osx_version@
+POD2MAN	      = pod2man
+#+(darwin):
+#+(darwin):# MACOSX_DEPLOYMENT_TARGET must be defined for OS X compilation/linking
+#+(darwin):export MACOSX_DEPLOYMENT_TARGET := @osx_version@
 
 ## places to look for things
 PGE_LIBRARY   = $(BUILD_DIR)/runtime/parrot/library/PGE
@@ -35,6 +43,8 @@ BUILTINS_PIR = \
   src/builtins/nintynine_bottles_of_beer.pir \
   src/builtins/plus.pir \
 
+DOCS = MAINTAINER README
+
 # the default target
 hq9plus.pbc: $(PARROT) $(SOURCES)
 	$(PARROT) $(PARROT_ARGS) -o hq9plus.pbc hq9plus.pir
@@ -53,7 +63,7 @@ src/gen_builtins.pir: $(BUILTINS_PIR)
 
 # regenerate the Makefile
 Makefile: config/makefiles/root.in
-	cd $(BUILD_DIR) && $(RECONFIGURE) --step=gen::languages --languages=hq9plus
+	cd $(BUILD_DIR) && $(RECONFIGURE) --step=gen::languages --languages=$(LANG)
 
 # This is a listing of all targets, that are meant to be called by users
 help:
@@ -62,8 +72,12 @@ help:
 	@echo ""
 	@echo "  all:               hq9plus.pbc"
 	@echo "                     This is the default."
+	@echo "  installable:       Create self-hosting bins and libs."
+	@echo "  install:           Install the installable targets and docs."
+	@echo ""
 	@echo "Testing:"
 	@echo "  test:              Run the test suite."
+	@echo "  test-installable:  Test self-hosting targets."
 	@echo "  testclean:         Clean up test results."
 	@echo ""
 	@echo "Cleaning:"
@@ -77,6 +91,25 @@ help:
 
 test: all
 	$(PERL) t/harness
+
+# TODO: rename build_dir. basic run for missing libs
+test-installable : installable
+	./installable_$(LANG)@exe@
+
+install : installable
+	$(CP) installable_$(LANG)@exe@ $(DESTDIR)$(BIN_DIR)/parrot-$(LANG)@exe@
+	$(POD2MAN) $(LANG).pir > $(DESTDIR)$(MANDIR)/man1/parrot-$(LANG).1
+	mkdir $(DESTDIR)$(DOC_DIR)/languages/$(LANG)
+	$(CP) $(DOCS) $(DESTDIR)$(DOC_DIR)/languages/$(LANG)
+
+$(LANG)@exe@: $(LANG).pbc
+	$(PBC_TO_EXE) $(LANG).pbc
+
+installable : installable_$(LANG)@exe@
+	cp installable_$(LANG)@exe@ $(BUILD_DIR)
+
+installable_$(LANG)@exe@ : $(LANG).pbc
+	$(PBC_TO_EXE) $(LANG).pbc --install
 
 # this target has nothing to do
 testclean:
@@ -96,4 +129,10 @@ clean:
 realclean: clean
 	$(RM_RF) Makefile
 
-distclean: realclean
+distclean: clean realclean
+
+#
+# Local variables:
+# mode: makefile
+# ex: ft=make
+# End:

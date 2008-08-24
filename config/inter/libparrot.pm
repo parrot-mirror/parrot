@@ -46,6 +46,8 @@ sub runstep {
     # of the shared parrot library. However, 'libparrot.so' will catch
     # at least some of the problems.
     # RT#52288: the check for old_versions should be improved
+    # The cygwin build with a preexisting libparrot.dll in the PATH
+    # works fine if blib/lib is in the PATH before.
     my $old_version
         = File::Spec->catfile($conf->data->get('libdir'), 'libparrot.so');
     if (-e $old_version) {
@@ -91,6 +93,16 @@ sub runstep {
         . $conf->data->get('blib_dir')
         . ' -lparrot'
         );
+    }
+
+    # 39742 installed parrot conflicts with dev parrot:
+    # move -L/usr/lib in ldflags to the back after -lparrot
+    if ($parrot_is_shared and $conf->data->get('ldflags') =~ /(-L\S+)/) {
+       my $ldflags = $conf->data->get('ldflags');
+       my $lpath = $1;
+       $ldflags =~ s|$1||;
+       $conf->data->set('libs' => $lpath . " " . $conf->data->get('libs'));
+       $conf->data->set('ldflags' => $ldflags);
     }
 
     $self->set_result( $parrot_is_shared ? 'yes' : 'no' );

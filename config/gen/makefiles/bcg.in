@@ -1,25 +1,25 @@
-RM_F		    = @rm_f@
-PERL		    = @perl@
+RM_F		= @rm_f@
+PERL		= @perl@
 PARROT	    	= @build_dir@/parrot@exe@
-#CONDITIONED_LINE(win32):LIBPARROT = @build_dir@/libparrot@a@
-#INVERSE_CONDITIONED_LINE(win32):LIBPARROT = @build_dir@/@blib_dir@/libparrot@a@
-O		        = @o@
-LOAD_EXT	    = @load_ext@
-CC         	    = @cc@
-CC_INC     	    = @cc_inc@ -I@build_dir@/include
-C_LIBS     	    = @libs@ 
-CC_SHARED  	    = @cc_shared@
-CFLAGS     	    = $(CC_INC) @ccflags@ @cc_debug@ @ccwarn@ @cc_hasjit@ @cg_flag@ @gc_flag@ $(CC_SHARED)
+#+(win32):LIBPARROT = @build_dir@/libparrot@a@
+#-(win32):LIBPARROT = @build_dir@/@blib_dir@/libparrot@a@
+O		= @o@
+LOAD_EXT	= @load_ext@
+CC         	= @cc@
+CC_INC     	= @cc_inc@ -I@build_dir@/include
+C_LIBS     	= @libs@
+CC_SHARED  	= @cc_shared@
+CFLAGS     	= $(CC_INC) @ccflags@ @cc_debug@ @ccwarn@ @cc_hasjit@ @cg_flag@ @gc_flag@ $(CC_SHARED)
 LINK_DYNAMIC  	= @link_dynamic@
-LINK       	    = @link@
-LINKFLAGS  	    = @linkflags@ @link_debug@ @ld_debug@ 
-LD         	    = @ld@
-#CONDITIONED_LINE(win32):LDFLAGS = @ldflags@ @ld_debug@ $(LIBPARROT)
-#INVERSE_CONDITIONED_LINE(win32):LDFLAGS = @ldflags@ @ld_debug@ -L@build_dir@/blib/lib/ -lparrot
+LINK       	= @link@
+LINKFLAGS  	= @linkflags@ @link_debug@ @ld_debug@
+LD         	= @ld@
+#+(win32):LDFLAGS = @ldflags@ @ld_debug@ $(LIBPARROT)
+#-(win32):LDFLAGS = @ldflags@ @ld_debug@ -L@build_dir@/blib/lib/ -lparrot
 SHARE_EXT       = @share_ext@
 LD_SHARE_FLAGS  = @ld_share_flags@
 BUILD_PMC   	= $(PERL) @build_dir@/tools/build/dynpmc.pl
-SRC_PMC_DIR	    = src/pmc
+SRC_PMC_DIR	= src/pmc
 DEST_PMC_DIR	= @build_dir@/runtime/parrot/dynext
 PMC_GROUP       = $(DEST_PMC_DIR)/bcg_group$(LOAD_EXT)
 LIB_BCG         = @build_dir@/blib/lib/libbcg$(SHARE_EXT)
@@ -60,8 +60,7 @@ PMC_GEN_FILES = \
  $(SRC_PMC_DIR)/*$(LOAD_EXT) \
  $(PMC_GROUP)
 
-all: pmcs
-
+all: pmcs Makefile
 
 #
 # Build Targets
@@ -72,7 +71,6 @@ $(LIB_BCG): $(BCG_O_FILES)
 	$(LD) $(LD_SHARE_FLAGS) $(LDFLAGS) @ld_out@$@ $(BCG_O_FILES) @libs@
     $(CP) @build_dir@/blib/lib/libbcg$(SHARE_EXT) @build_dir@
 
-	
 pmcs: $(LIB_BCG)
 	@cd $(SRC_PMC_DIR) && $(BUILD_PMC) generate $(PMCS)
 	@cd $(SRC_PMC_DIR) && $(BUILD_PMC) compile $(PMCS)
@@ -80,6 +78,9 @@ pmcs: $(LIB_BCG)
 	@cd $(SRC_PMC_DIR) && $(BUILD_PMC) copy "--destination=$(DEST_PMC_DIR)" \
 		 $(PMCS)
 
+# regenerate the Makefile
+Makefile: @build_dir@/config/gen/makefiles/docs.in
+	cd @build_dir@ && $(RECONFIGURE) --step=gen::makefiles --target=docs/Makefile
 
 #
 # Test Targets
@@ -102,3 +103,9 @@ clean: testclean
 realclean: clean
 
 distclean: realclean
+
+#
+# Local variables:
+# mode: makefile
+# ex: ft=make
+# End:

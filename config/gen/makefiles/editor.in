@@ -10,10 +10,15 @@ PERL   = @perl@
 CP     = @cp@
 MKPATH = @mkpath@
 RM_F   = @rm_f@
+RECONFIGURE   = $(PERL) @build_dir@/tools/dev/reconfigure.pl
 
 default: all
 
-all: pir.vim imc.kate
+all: pir.vim imc.kate Makefile
+
+# regenerate the Makefile
+Makefile: @build_dir@/config/gen/makefiles/editor.in
+	cd @build_dir@ && $(RECONFIGURE) --step=gen::makefiles --target=editor/Makefile
 
 # This is a listing of all targets, that are meant to be called by users
 help :
@@ -65,3 +70,9 @@ clean:
 
 realclean: clean
 	$(RM_F) Makefile
+
+#
+# Local variables:
+# mode: makefile
+# ex: ft=make
+# End:

@@ -2,6 +2,7 @@
 # $Id$
 
 ## configuration settings
+LANG     = lua
 O        = @o@
 LOAD_EXT = @load_ext@
 
@@ -10,20 +11,26 @@ MAKE    = @make_c@
 RM_F    = @rm_f@
 PERL    = @perl@
 PARROT  = ../../parrot@exe@
-PBC_MERGE = ../../pbc_merge@exe@
-PGE      = $(PARROT) ../../runtime/parrot/library/PGE/Perl6Grammar.pir
-TGE      = $(PARROT) ../../compilers/tge/tgc.pir
-PBC_TO_EXE = ../../pbc_to_exe@exe@
+PBC_MERGE   = ../../pbc_merge@exe@
+PBC_TO_EXE  = ../../pbc_to_exe@exe@
+PGE         = $(PARROT) ../../runtime/parrot/library/PGE/Perl6Grammar.pir
+TGE         = $(PARROT) ../../compilers/tge/tgc.pir
 RECONFIGURE = $(PERL) @build_dir@/tools/dev/reconfigure.pl
 PMCBUILD = $(PERL) @build_dir@/tools/build/dynpmc.pl
-#CONDITIONED_LINE(darwin):
-#CONDITIONED_LINE(darwin):# MACOSX_DEPLOYMENT_TARGET must be defined for OS X compilation/linking
-#CONDITIONED_LINE(darwin):export MACOSX_DEPLOYMENT_TARGET := @osx_version@
+#+(darwin):
+#+(darwin):# MACOSX_DEPLOYMENT_TARGET must be defined for OS X compilation/linking
+#+(darwin):export MACOSX_DEPLOYMENT_TARGET := @osx_version@
 
 ## places to look for things
-LIBPATH  = src/lib
-PMCDIR   = src/pmc
+LIBPATH       = src/lib
+PMCDIR        = src/pmc
 PARROT_DYNEXT = @build_dir@/runtime/parrot/dynext
+BUILD_DIR     = @build_dir@
+BIN_DIR       = @bin_dir@
+LIB_DIR       = @lib_dir@
+DOC_DIR       = @doc_dir@
+MANDIR	      = @mandir@
+
 
 PMCS = \
  lua \
@@ -96,6 +103,8 @@ GEN_PIR = \
 GEN_PBC = \
  lua.pbc
 
+DOCS = MAINTAINER doc/running.pod doc/status.pod
+
 all: \
  $(PMCDIR)/lua_group$(LOAD_EXT) \
  $(LIB_PBCS) \
@@ -117,6 +126,16 @@ all: \
  $(GEN_PBC) \
  src/yapp/Lua/parser.pm
 
+# TODO: rename build_dir. basic run for missing libs
+test-installable : installable
+	echo "a=1" | ./installable_$(LANG)@exe@
+
+install : installable
+	cp installable_$(LANG)@exe@ $(DESTDIR)$(BIN_DIR)/parrot-$(LANG)@exe@
+	@cd $(PMCDIR) && $(PMCBUILD) copy "--destination=$(DESTDIR)$(LIB_DIR)/parrot/dynext" $(PMCS)
+	pod2man doc/running.pod > $(DESTDIR)$(MANDIR)/man1/parrot-$(LANG).1
+	mkdir $(DESTDIR)$(DOC_DIR)/languages/$(LANG)
+	cp $(DOCS) $(DESTDIR)$(DOC_DIR)/languages/$(LANG)
 
 src/lua51_testlex_gen.pir: src/lua51_testlex.pg
 	$(PGE) --output=src/lua51_testlex_gen.pir src/lua51_testlex.pg
@@ -134,10 +153,16 @@ src/POSTGrammar_gen.pir: src/POSTGrammar.tg
 	$(TGE) --output=src/POSTGrammar_gen.pir src/POSTGrammar.tg
 
 lua.pbc: lua.pir src/lua51.pir src/grammar51.pir src/lua51_gen.pir src/PASTGrammar_gen.pir src/POSTGrammar_gen.pir $(LIB_SRCS)
-	$(PARROT) -o lua.pbc --output-pbc lua.pir
+	$(PARROT) -o lua_i.pbc --output-pbc lua.pir
+	$(PBC_MERGE) -o lua.pbc lua_i.pbc ../../compilers/tge/TGE/Rule.pbc
 
 lua@exe@: lua.pbc
 	$(PBC_TO_EXE) lua.pbc
+
+installable_lua@exe@: lua.pbc
+	$(PBC_TO_EXE) lua.pbc --install
+
+installable: installable_lua@exe@ $(PMCDIR)/lua_group$(LOAD_EXT)
 
 $(LIBPATH)/lualibs.pbc: $(LIB_PBCS)
 	$(PBC_MERGE) -o $(LIBPATH)/lualibs.pbc $(LIB_PBCS)
@@ -241,7 +266,7 @@ src/yapp/Lua/parser.pm: src/yapp/Lua/lua51.yp
 
 # regenerate the Makefile
 Makefile: config/makefiles/root.in
-	cd ../.. && $(RECONFIGURE) --step=gen::languages --languages=lua
+	cd ../.. && $(RECONFIGURE) --step=gen::languages --languages=$(LANG)
 
 help:
 	@echo ""
@@ -249,8 +274,12 @@ help:
 	@echo ""
 	@echo "  all:"
 	@echo "                     This is the default."
+	@echo "  installable:       Create self-hosting binaries."
+	@echo "  install:           Install the installable targets and docs."
+	@echo ""
 	@echo "Testing:"
 	@echo "  test:              Run the test suite."
+	@echo "  test-installable:  Test self-hosting targets."
 	@echo "  testclean:         Clean up test results."
 	@echo ""
 	@echo "Cleaning:"
@@ -265,7 +294,6 @@ help:
 test: all
 	cd .. && $(PERL) t/harness --languages=lua
 
-
 TEST_CLEANERS = \
  "t/pmc/*.pir" \
  "t/*.pir" \
@@ -279,6 +307,7 @@ testclean:
 
 BUILD_CLEANERS = \
  lua@exe@ \
+ installable_lua@exe@ \
  lua$(O) \
  lua.c \
  "*.pbc" \
@@ -289,7 +318,8 @@ BUILD_CLEANERS = \
  "$(PMCDIR)/*_group.h" \
  "$(PMCDIR)/*$(LOAD_EXT)" \
  "$(PMCDIR)/*$(O)" \
- "$(LIBPATH)/*.pbc"
+ "$(LIBPATH)/*.pbc" \
+ installable_$(LANG)@exe@ \
 
 clean:
 	$(RM_F) $(BUILD_CLEANERS) $(TEST_CLEANERS)
@@ -298,3 +328,9 @@ realclean: clean
 	$(RM_F) Makefile
 
 distclean: realclean
+
+#
+# Local variables:
+# mode: makefile
+# ex: ft=make
+# End:

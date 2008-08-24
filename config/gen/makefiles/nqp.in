@@ -4,6 +4,9 @@
 PERL     = @perl@
 RM_F     = @rm_f@
 PARROT   = ../../parrot@exe@
+RECONFIGURE   = $(PERL) @build_dir@/tools/dev/reconfigure.pl
+#+(cygchkdll): SHRPENV  = env PATH="@build_dir@/blib/lib:$(PATH)"
+#-(cygchkdll): SHRPENV  = env LD_RUN_PATH=@build_dir@/blib/lib
 
 PARROT_LIBRARY = @build_dir@/runtime/parrot/library
 PGE_LIBRARY  = @build_dir@/runtime/parrot/library/PGE
@@ -20,16 +23,20 @@ BOOTSRC = bootstrap/nqp.pir \
 
 # the default target
 nqp.pbc: $(PARROT) $(PGE_LIBRARY)/Perl6Grammar.pir $(SOURCES)
-	$(PARROT) $(PARROT_ARGS) $(PGE_LIBRARY)/Perl6Grammar.pir \
+	$(SHRPENV) $(PARROT) $(PARROT_ARGS) $(PGE_LIBRARY)/Perl6Grammar.pir \
 	    --output=src/Grammar_gen.pir src/Grammar.pg
-	$(PARROT) -o nqp.pbc nqp.pir
+	$(SHRPENV) $(PARROT) -o nqp.pbc nqp.pir
 
 boot: $(BOOTSRC)
-	$(PARROT) nqp.pbc \
-	--output=bootstrap/gen_actions.pir \
-	--target=pir \
-	bootstrap/actions.pm
-	$(PARROT) --output-pbc -o bootstrap/nqp.pbc bootstrap/nqp.pir
+	$(SHRPENV) $(PARROT) nqp.pbc \
+	  --output=bootstrap/gen_actions.pir \
+	  --target=pir \
+	  bootstrap/actions.pm
+	$(SHRPENV) $(PARROT) --output-pbc -o bootstrap/nqp.pbc bootstrap/nqp.pir
+
+# regenerate the Makefile
+Makefile: @build_dir@/config/gen/makefiles/nqp.in
+	cd @build_dir@ && $(RECONFIGURE) --step=gen::makefiles --target=compilers/nqp/Makefile
 
 # This is a listing of all targets, that are meant to be called by users
 help:
@@ -71,3 +78,9 @@ realclean: clean
 	$(RM_F) Makefile
 
 distclean: realclean
+
+#
+# Local variables:
+# mode: makefile
+# ex: ft=make
+# End:

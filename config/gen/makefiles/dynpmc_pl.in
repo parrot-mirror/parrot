@@ -36,7 +36,7 @@ our $O = q[@o@];
 our $CFLAGS = q[@ccflags@ @cc_shared@ @cc_debug@ @ccwarn@ @cc_hasjit@ @cg_flag@ @gc_flag@];
 
 our $LIBPARROT = q[];
-#CONDITIONED_LINE(parrot_is_shared):$LIBPARROT = q[@libparrot_ldflags@];
+#+(parrot_is_shared):$LIBPARROT = q[@libparrot_ldflags@];
 
 # Here comes some stuff for Win32.
 our $PATHQUOTE = '';
@@ -72,8 +72,15 @@ sub partial_link_cmd {
 
     my $liblist;
     if ($^O =~ /mswin32/i) {
-        # Need to put various libraries in the link line.
-        $liblist = join( ' ', map { "$_.lib" } keys %$libs );
+        # Note that we may need to look in the Parrot blib directory first.
+        if ($CC =~ /gcc/i) {
+            $liblist = qq{ -Wl,-L "@build_dir@/blib/lib"};
+        }
+        else {
+            $liblist = qq{ /LIBPATH:"@build_dir@/blib/lib"};
+        }
+        # Need to add various libraries in the link line.
+        $liblist .= join( ' ', map { "$_.lib" } keys %$libs );
         if ($CC =~ /gcc/i) {
             $liblist =~ s/libgdbm\.lib/-llibgdbm/i;
         }
@@ -81,14 +88,6 @@ sub partial_link_cmd {
         $extraLibs =~ s/blib/..\\blib/g;
         $extraLibs =~ s/\Q$(A)\E/.lib/g;
         $liblist .= ' ' . $extraLibs;
-
-        # Also note that we may need to look in the Parrot blib directory.
-        if ($CC =~ /gcc/i) {
-            $liblist .= qq{ -Wl,-L "@build_dir@/blib/lib"};
-        }
-        else {
-            $liblist .= qq{ /LIBPATH:"@build_dir@/blib/lib"};
-        }
     }
     else {
         $liblist = join( ' ', map { "-l$_" } keys %$libs );
@@ -96,11 +95,14 @@ sub partial_link_cmd {
         $liblist .= ' ' . $extraLibs;
     }
 
+    # LDFLAGS, LIBS or ICU_SHARED may contain -L/usr/lib or -L/usr/local/lib
+    # falsely favoring an already installed libparrot.{so,dll}. So put liblist
+    # to the end.
     return
         "$LD ".
         '@ld_out@' . $target . " " .
         join(" ", map {"$PATHQUOTE$_$PATHQUOTE"} @$sources) .
-        " $liblist $LDFLAGS $LD_LOAD_FLAGS $PATHQUOTE$LIBPARROT$PATHQUOTE";
+        " $LDFLAGS $LD_LOAD_FLAGS $PATHQUOTE$LIBPARROT$PATHQUOTE $liblist";
 }
 
 our $NOW = time();

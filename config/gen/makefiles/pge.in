@@ -7,12 +7,15 @@ RM_F     = @rm_f@
 PARROT   = ../../parrot@exe@
 TOOL_DIR = ../..
 CP       = @cp@
+RECONFIGURE   = $(PERL) @build_dir@/tools/dev/reconfigure.pl
+#+(cygchkdll):SHRPENV  = env PATH="@build_dir@/blib/lib:$(PATH)"
+#-(cygchkdll):SHRPENV  = env LD_RUN_PATH=@build_dir@/blib/lib
 
 # Where to put things
 PARROT_LIBRARY    = ../../runtime/parrot/library
 
 # the default target
-all: $(PARROT_LIBRARY)/PGE.pbc
+all: $(PARROT_LIBRARY)/PGE.pbc Makefile
 
 SOURCES = PGE.pir \
   PGE/Exp.pir \
@@ -29,10 +32,14 @@ $(PARROT_LIBRARY)/PGE.pbc: PGE.pbc
 PGE.pbc: $(PARROT) $(SOURCES)
 	$(RM_F) PGE.pbc $(PARROT_LIBRARY)/PGE.pbc
 	$(PERL) -e "" >PGE/builtins_gen.pir
-	$(PARROT) -o PGE.pbc --output-pbc PGE.pir
-	$(PARROT) $(PARROT_LIBRARY)/PGE/Perl6Grammar.pir  --output=PGE/builtins_gen.pir PGE/builtins.pg
+	$(SHRPENV) $(PARROT) -o PGE.pbc --output-pbc PGE.pir
+	$(SHRPENV) $(PARROT) $(PARROT_LIBRARY)/PGE/Perl6Grammar.pir --output=PGE/builtins_gen.pir PGE/builtins.pg
 	$(RM_F) PGE.pbc
-	$(PARROT) -o PGE.pbc --output-pbc PGE.pir
+	$(SHRPENV) $(PARROT) -o PGE.pbc --output-pbc PGE.pir
+
+# regenerate the Makefile
+Makefile: @build_dir@/config/gen/makefiles/pge.in
+	cd @build_dir@ && $(RECONFIGURE) --step=gen::makefiles --target=compilers/pge/Makefile
 
 # This is a listing of all targets, that are meant to be called by users
 help:
@@ -75,3 +82,9 @@ realclean: clean
 	$(RM_F) Makefile
 
 distclean: realclean
+
+#
+# Local variables:
+# mode: makefile
+# ex: ft=make
+# End:

@@ -32,7 +32,7 @@ our $O = q[@o@];
 our $CFLAGS = q[@ccflags@ @cc_shared@ @cc_debug@ @ccwarn@ @cc_hasjit@ @cg_flag@ @gc_flag@];
 
 our $LIBPARROT = q[];
-#CONDITIONED_LINE(parrot_is_shared):$LIBPARROT = q[@libparrot_ldflags@];
+#+(parrot_is_shared):$LIBPARROT = q[@libparrot_ldflags@];
 
 # Here comes some stuff for Win32.
 our $PATHQUOTE = q[];
@@ -46,15 +46,15 @@ if ($^O eq 'MSWin32') {
 }
 
 # OPS2C Config
-our $OPS2C = "$PERL -I $PATHQUOTE" . 
+our $OPS2C = "$PERL -I $PATHQUOTE" .
              q[@build_dir@@slash@lib] .
              "$PATHQUOTE $PATHQUOTE" .
              q[@build_dir@@slash@tools@slash@build@slash@ops2c.pl] .
              $PATHQUOTE;
 our %cores = (
     C       => q[],
-#CONDITIONED_LINE(cg_flag):   CGP     => '_cgp',
-#CONDITIONED_LINE(cg_flag):   CGoto   => '_cg',
+#+(cg_flag):   CGP     => '_cgp',
+#+(cg_flag):   CGoto   => '_cg',
     CSwitch => '_switch'
 );
 
@@ -73,7 +73,7 @@ sub compile_cmd {
 
 sub partial_link_cmd {
     my ($target, $libs, $sources) = @_;
-    
+
     my $liblist;
     if ($^O =~ /mswin32/i) {
         # Need to put various libraries in the link line.
@@ -93,7 +93,7 @@ sub partial_link_cmd {
         "$LD ".
         "@ld_out@" . $target . " " .
         join(" ", map {"$PATHQUOTE$_$PATHQUOTE"} @$sources) .
-        " $liblist $LDFLAGS $LD_LOAD_FLAGS $PATHQUOTE$LIBPARROT$PATHQUOTE";
+        " $LDFLAGS $LD_LOAD_FLAGS $PATHQUOTE$LIBPARROT$PATHQUOTE $liblist";
 }
 
 our $NOW = time();

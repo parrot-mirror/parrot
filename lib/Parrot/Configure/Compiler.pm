@@ -191,14 +191,37 @@ defaults to true.
 
 =item conditioned_lines
 
-If C<conditioned_lines> is true, then lines in the file that begin with:
-C<#CONDITIONED_LINE(var):> are skipped if the C<var> condition is false. Lines
-that begin with C<#INVERSE_CONDITIONED_LINE(var):> are skipped if
-the C<var> condition is true.  For instance:
+If conditioned_lines is true, then lines in the file that begin with
+C<#+(var):> are skipped if the var condition is false.
+Lines that begin with C<#-(var):> are skipped if the var condition is true.
+For legacy the old syntax #CONDITIONED_LINE(var): and #INVERSE_CONDITIONED_LINE(var):
+is also supported.
 
-  #CONDITIONED_LINE(win32): $(SRC_DIR)/atomic/gcc_x86$(O)
+A condition var may be a single keyword, which is true if a config key is true
+or equal to the platform name,
+or a logical combination or (and var1 var2...) or (or var1 var2...) or (not var1...)
+as in the common lisp reader, with OR being the default for multiple keys.
+Keys are space seperated.
+Keys may also consist of key=value pairs, where the key is checked for equalness
+to the value. Note that values may contain no spaces here. (TODO: support quotes
+in values)
+
+  #+(var1 var2...) defaults to #+(or var1 var2...)
+  #-(var1 var2...) defaults to #-(or var1 var2...)
+
+For instance:
+
+  #+(win32): $(SRC_DIR)/atomic/gcc_x86$(O)
 
 will be processed if the platform is win32.
+
+  #-(win32 cygwin): $(SRC_DIR)/atomic/gcc_x86$(O)
+
+will be skipped if the platform is win32 or cygwin.
+
+  #+(and win32 glut (not cygwin)):
+
+will be used on win32 and if glut is defined, but not on cygwin.
 
 =item comment_type
 
@@ -329,12 +352,20 @@ sub genfile {
             last;
         }
         if ( $options{conditioned_lines} ) {
-            if ( $line =~ m/^#CONDITIONED_LINE\(([^)]+)\):(.*)/s ) {
-                next unless $conf->data->get($1);
+	    # allow nested parens here
+            if ( $line =~ m/^#([-+])\((.+)\):(.*)/s ) {
+		my $truth = cond_eval($conf, $2);
+		next if ($1 eq '-') and $truth;
+		next if ($1 eq '+') and not $truth;
+                $line = $3;
+	    }
+	    # but here not (legacy)
+	    elsif ( $line =~ m/^#CONDITIONED_LINE\(([^)]+)\):(.*)/s ) {
+                next unless cond_eval($conf, $1);
                 $line = $2;
             }
             elsif ( $line =~ m/^#INVERSE_CONDITIONED_LINE\(([^)]+)\):(.*)/s ) {
-                next if $conf->data->get($1);
+                next if cond_eval($conf, $1);
                 $line = $2;
             }
         }
@@ -432,6 +463,18 @@ sub genfile {
     close($out) or die "Can't close $target: $!";
 
     move_if_diff( "$target.tmp", $target, $options{ignore_pattern} );
+}
+
+# Just checks the logical truth of the hash value (exists and not empty)
+# TODO: also check the platform name if the hash key does not exist
+# TODO: recursive (), evaluate AND, OR, NOT with multiple keys
+# TODO: check for key=value, like #+(ld=gcc)
+sub cond_eval {
+    my $conf = shift;
+    my $expr = shift;
+    # TODO: parse for parens and multiple keys in the expression and
+    # evaluate it recursively.
+    return $conf->data->get($expr);
 }
 
 sub append_configure_log {

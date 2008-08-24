@@ -4,9 +4,14 @@
 PARROT_ARGS =
 
 ## configuration settings
+LANG          = cardinal
 BUILD_DIR     = @build_dir@
 LOAD_EXT      = @load_ext@
 O             = @o@
+BIN_DIR       = @bin_dir@
+LIB_DIR       = @lib_dir@
+DOC_DIR       = @doc_dir@
+MANDIR	      = @mandir@
 
 ## Setup some commands
 LN_S          = @lns@
@@ -15,11 +20,13 @@ RM_RF         = @rm_rf@
 CP            = @cp@
 PARROT        = ../../parrot@exe@
 CAT           = $(PERL) -MExtUtils::Command -e cat
+PBC_TO_EXE    = ../../pbc_to_exe@exe@
 BUILD_DYNPMC  = $(PERL) $(BUILD_DIR)/tools/build/dynpmc.pl
 RECONFIGURE   = $(PERL) $(BUILD_DIR)/tools/dev/reconfigure.pl
-#CONDITIONED_LINE(darwin):
-#CONDITIONED_LINE(darwin):# MACOSX_DEPLOYMENT_TARGET must be defined for OS X compilation/linking
-#CONDITIONED_LINE(darwin):export MACOSX_DEPLOYMENT_TARGET := @osx_version@
+POD2MAN	      = pod2man
+#+(darwin):
+#+(darwin):# MACOSX_DEPLOYMENT_TARGET must be defined for OS X compilation/linking
+#+(darwin):export MACOSX_DEPLOYMENT_TARGET := @osx_version@
 
 ## places to look for things
 PARROT_DYNEXT = $(BUILD_DIR)/runtime/parrot/dynext
@@ -52,10 +59,17 @@ BUILTINS_PIR = \
 
 # PMCS = cardinal
 # PMC_SOURCES = $(PMC_DIR)/cardinal.pmc
+DOCS          = README
 
 # the default target
 cardinal.pbc: $(PARROT) $(SOURCES)
 	$(PARROT) $(PARROT_ARGS) -o cardinal.pbc cardinal.pir
+
+cardinal@exe@: cardinal.pbc
+	$(PBC_TO_EXE) cardinal.pbc
+
+installable_cardinal@exe@: cardinal.pbc
+	$(PBC_TO_EXE) cardinal.pbc --install
 
 src/gen_grammar.pir: $(PERL6GRAMMAR) src/parser/grammar.pg
 	$(PARROT) $(PARROT_ARGS) $(PERL6GRAMMAR) \
@@ -77,7 +91,10 @@ $(CARDINAL_GROUP): $(PARROT) $(PMC_SOURCES)
 
 # regenerate the Makefile
 Makefile: config/makefiles/root.in
-	cd $(BUILD_DIR) && $(RECONFIGURE) --step=gen::languages --languages=cardinal
+	cd $(BUILD_DIR) && $(RECONFIGURE) --step=gen::languages --languages=$(LANG)
+
+installable : installable_$(LANG)@exe@
+	cp installable_$(LANG)@exe@ $(BUILD_DIR)
 
 # This is a listing of all targets, that are meant to be called by users
 help:
@@ -86,8 +103,12 @@ help:
 	@echo ""
 	@echo "  all:               cardinal.pbc"
 	@echo "                     This is the default."
+	@echo "  installable:       Create self-hosting bins and libs."
+	@echo "  install:           Install the installable targets and docs."
+	@echo ""
 	@echo "Testing:"
 	@echo "  test:              Run the test suite."
+	@echo "  test-installable:  Test self-hosting targets."
 	@echo "  testclean:         Clean up test results."
 	@echo ""
 	@echo "Cleaning:"
@@ -105,8 +126,20 @@ test: all
 # this target has nothing to do
 testclean:
 
+# TODO: rename build_dir. basic run for missing libs
+test-installable : installable
+	./installable_$(LANG)@exe@ t/00-sanity.t
+
+install : installable
+	cp installable_$(LANG)@exe@ $(DESTDIR)$(BIN_DIR)/parrot-$(LANG)@exe@
+	pod2man $(LANG).pir > $(DESTDIR)$(MANDIR)/man1/parrot-$(LANG).1
+	mkdir $(DESTDIR)$(DOC_DIR)/languages/$(LANG)
+	cp $(DOCS) $(DESTDIR)$(DOC_DIR)/languages/$(LANG)
+
 CLEANUPS = \
   cardinal.pbc \
+  cardinal@exe@ \
+  installable_cardinal@exe@ \
   src/gen_grammar.pir \
   src/gen_actions.pir \
   src/gen_builtins.pir \
@@ -130,4 +163,8 @@ realclean: clean
 
 distclean: realclean
 
-
+#
+# Local variables:
+# mode: makefile
+# ex: ft=make
+# End:
