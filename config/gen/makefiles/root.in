@@ -550,7 +550,6 @@ MAKE = @make_c@
 
 all : \
     flags_dummy \
-    Makefile \
     PARROT_LIBS \
     $(PARROT) \
     runtime/parrot/include/parrotlib.pbc \
@@ -622,10 +621,6 @@ PMC2CV = $(PERL) $(BUILD_TOOLS_DIR)/pmc2c.pl --vtable
 
 vtable.dump : src/vtable.tbl
 	$(PMC2CV)
-
-# regenerate the Makefile
-Makefile: config/gen/makefiles/root.in
-	$(RECONFIGURE) --step=gen::makefiles --target=Makefile
 
 # This is a listing of all targets meant to be called by users
 help :
@@ -1001,20 +996,6 @@ $(IMCC_DIR)/main$(O) : $(IMCC_DIR)/main.c $(GENERAL_H_FILES) $(IMCC_H_FILES)
 $(INC_DIR)/oplib/ops.h lib/Parrot/OpLib/core.pm : $(OPS_FILES) $(BUILD_TOOLS_DIR)/ops2pm.pl \
     lib/Parrot/OpsFile.pm lib/Parrot/Op.pm $(OPS_DIR)/ops.num $(OPS_DIR)/ops.skip
 	$(PERL) $(BUILD_TOOLS_DIR)/ops2pm.pl $(OPS_FILES)
-
-# FIXME: This creates a cycle sometimes
-#lib/Parrot/Config/Generated.pm \
-#    $(SRC_DIR)/platform.c \
-##CONDITIONED_LINE(platform_asm):    $(SRC_DIR)/platform_asm.s \
-##CONDITIONED_LINE(has_opengl):    config/gen/call_list/opengl.in \
-##CONDITIONED_LINE(has_glut):    $(SRC_DIR)/glut_callbacks.c \
-#    config_lib.pasm \
-#    $(BUILD_TOOLS_DIR)/dynpmc.pl \
-#    $(BUILD_TOOLS_DIR)/dynoplibs.pl \
-# : Configure.pl lib/Parrot/Configure.pm \
-#   lib/Parrot/Configure/Step/List.pm lib/Parrot/Configure/Step/Methods.pm
-#	@echo "  Makefile out-of-date: reconfigure"
-#	$(PERL) Configure.pl $(CONFIG_ARGS)
 
 ###############################################################################
 #

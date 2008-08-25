@@ -354,15 +354,15 @@ sub genfile {
             last;
         }
         if ( $options{conditioned_lines} ) {
-	    # allow multiple keys and nested parens here
+            # allow multiple keys and nested parens here
             if ( $line =~ m/^#([-+])\((.+)\):(.*)/s ) {
-		my $truth = cond_eval($conf, $2);
-		next if ($1 eq '-') and $truth;
-		next if ($1 eq '+') and not $truth;
+          my $truth = cond_eval($conf, $2);
+              next if ($1 eq '-') and $truth;
+                next if ($1 eq '+') and not $truth;
                 $line = $3;
-	    }
-	    # but here not (legacy)
-	    elsif ( $line =~ m/^#CONDITIONED_LINE\(([^)]+)\):(.*)/s ) {
+            }
+      # but here not (legacy)
+        elsif ( $line =~ m/^#CONDITIONED_LINE\(([^)]+)\):(.*)/s ) {
                 next unless cond_eval($conf, $1);
                 $line = $2;
             }
@@ -475,15 +475,16 @@ sub next_expr {
     my $s = $_[0];
     return "" unless $s;
     if ($s =~ /^\((.+)\)\s*(.*)/) { # longest match to matching closing paren
-	$_[0] = $2 ? $2 : "";	    # modify the 2nd arg
-	#print "** \"$s\" => (\"$1\",\"$_[0]\")\n";
-	return $1;
-    } else {
-	$s =~ s/^\s+//;    		# left-trim to make it more robust
-	$s =~ m/^([^ \(]+)\s*(.*)?/;    # shortest match to next whitespace or open paren
-	$_[0] = $2 ? $2 : "";		# modify the 2nd arg
-	#print "** \"$s\" => (\"$1\",\"$_[0]\")\n";
-	return $1;
+        $_[0] = $2 ? $2 : "";       # modify the 2nd arg
+        #print "** \"$s\" => (\"$1\",\"$_[0]\")\n";
+        return $1;
+    }
+    else {
+        $s =~ s/^\s+//;                 # left-trim to make it more robust
+        $s =~ m/^([^ \(]+)\s*(.*)?/;    # shortest match to next whitespace or open paren
+        $_[0] = $2 ? $2 : "";           # modify the 2nd arg
+        #print "** \"$s\" => (\"$1\",\"$_[0]\")\n";
+        return $1;
     }
 }
 
@@ -497,30 +498,32 @@ sub cond_eval {
     my $key = $expr;
     my @count = split /\s+/, $expr;
     if (@count > 1) { # multiple keys: recurse into
-	my $truth;
-	my $op = next_expr($expr);
-	if ($op =~ /^(or|and|not)$/i) {
-	    $op  = lc($op);
-	    $key = next_expr($expr);
-	} else {
+        my $truth;
+        my $op = next_expr($expr);
+        if ($op =~ /^(or|and|not)$/i) {
+            $op  = lc($op);
+            $key = next_expr($expr);
+        }
+        else {
             $key = $op;
-	    $op  = 'or';
-	}
-	while ($key) {
-	    last if $truth and ($op eq 'or'); # logical shortcut on OR and already $truth
-	    $truth = cond_eval($conf, $key);
-	    if    ($op eq 'not') { $truth = $truth ? 0 : 1; }
-	    elsif ($op eq 'and') { last unless $truth; } # skip on early fail
-	    $key = next_expr($expr);
-	}
-	return $truth;
+            $op  = 'or';
+        }
+        while ($key) {
+            last if $truth and ($op eq 'or'); # logical shortcut on OR and already $truth
+            $truth = cond_eval($conf, $key);
+            if    ($op eq 'not') { $truth = $truth ? 0 : 1; }
+            elsif ($op eq 'and') { last unless $truth; } # skip on early fail
+            $key = next_expr($expr);
+        }
+        return $truth;
     }
     if ($key =~ /^(\w+)=(.+)$/) {
-      return $conf->data->get($1) eq $2;
-    } else {
-      return exists($conf->data->{c}->{$key})
-        ? $conf->data()->get($key)
-	: $key eq $^O;
+        return $conf->data->get($1) eq $2;
+    }
+    else {
+        return exists($conf->data->{c}->{$key})
+               ? $conf->data()->get($key)
+               : $key eq $^O;
   }
 }
 
