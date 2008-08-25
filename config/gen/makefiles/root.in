@@ -107,8 +107,8 @@ RECONFIGURE      = $(PERL) tools/dev/reconfigure.pl
 INNO_SETUP       = iscc
 JIT_BUILD_TOOL   = $(BUILD_TOOLS_DIR)/jit2c.pl
 #+(darwin):export MACOSX_DEPLOYMENT_TARGET := @osx_version@
-#+(cygchkdll):SHRPENV  = env PATH="@build_dir@/blib/lib:$(PATH)"
-#-(cygchkdll):SHRPENV  = env LD_RUN_PATH=@build_dir@/blib/lib
+#+(cygwin):SHRPENV  = env PATH="@build_dir@/blib/lib:$(PATH)"
+#-(cygwin):SHRPENV  = env LD_RUN_PATH=@build_dir@/blib/lib
 
 ###############################################################################
 #
@@ -893,7 +893,7 @@ $(LIBPARROT_STATIC) : $(O_FILES)
 $(LIBPARROT_SHARED) : $(O_FILES)
 	$(MKPATH) @blib_dir@
 	$(LD) $(LD_SHARE_FLAGS) $(LDFLAGS) @ld_out@$@ @libparrot_soname@ \
-#+(cygchkdll):		-Wl,--out-implib=blib/lib/libparrot.dll.a \
+#+(cygwin):		-Wl,--out-implib=blib/lib/libparrot.dll.a \
 		$(O_FILES) $(C_LIBS) $(ICU_SHARED)
 #+(win32):	if exist $@.manifest mt.exe -nologo -manifest $@.manifest -outputresource:$@;2
 #+(libparrot_shared_alias):	( cd @blib_dir@ ; ln -sf @libparrot_shared@ @libparrot_shared_alias@ )
