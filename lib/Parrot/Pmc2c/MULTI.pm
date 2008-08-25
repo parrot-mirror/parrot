@@ -65,9 +65,11 @@ sub rewrite_multi_sub {
         die "Invalid MULTI parameter '$param': attributes not allowed on multis\n"
              if defined $rest;
 
+        # Clean any '*' out of the name or type.
         if ($name =~ /[\**]?(\"?\w+\"?)/) {
             $name = $1;
         }
+        $type =~ s/\*+//;
 
         # Capture the actual type for the sub name
         push @param_types, $type;
