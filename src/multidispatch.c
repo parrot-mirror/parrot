@@ -2275,7 +2275,12 @@ Parrot_mmd_add_multi_from_c_args(PARROT_INTERP,
         VTABLE_set_integer_native(interp, multi_sig, param_count);
 
         for (i = 0; i < param_count; i++) {
-            INTVAL type = pmc_type(interp, VTABLE_get_string_keyed_int(interp, full_types, i));
+            INTVAL type;
+            STRING *type_name = VTABLE_get_string_keyed_int(interp, full_types, i);
+            if (string_equal(interp, type_name, CONST_STRING(interp, "DEFAULT"))==0) 
+                type = enum_type_PMC;
+            else
+                type = pmc_type(interp, type_name);
             VTABLE_set_integer_keyed_int(interp, multi_sig, i, type);
         }
 
