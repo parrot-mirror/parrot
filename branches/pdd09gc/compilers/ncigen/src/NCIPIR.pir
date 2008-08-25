@@ -174,7 +174,7 @@ Return pir for an operation node.
 
 .sub 'pir' :method :multi(_,['c99AST::FuncDecl'])
     .param pmc node
-    
+
     ##  get list of arguments to operation
     .local pmc arglist
     arglist = node.'list'()
@@ -218,7 +218,7 @@ Return pir for an operation node.
   $S0 = node.'primitive_type'()
 
   if $I0, LPOINTER
-  
+
   iseq $I1, $S0, 'void'
   unless $I1, LL2
   if returncode, LL11
@@ -250,7 +250,7 @@ Return pir for an operation node.
   $I0 = node.'pointer_cnt'()
   iseq $I1, $I0, 1
   unless $I1, LL7
-    .return("S")
+    .return("t")
   LL7:
     .return("p")
 .end
