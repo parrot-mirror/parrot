@@ -472,9 +472,10 @@ static PMC*
 convert_varargs_to_sig_pmc(PARROT_INTERP, ARGIN(const char *sig), va_list args)
 {
     INTVAL i;
-    INTVAL in_return_sig = 0;
-    PMC *call_object        = pmc_new(interp, enum_class_CallSignature);
-    PMC * const  type_tuple = pmc_new(interp, enum_class_FixedIntegerArray);
+    INTVAL in_return_sig    = 0;
+    PMC   *returns          = PMCNULL;
+    PMC   *call_object      = pmc_new(interp, enum_class_CallSignature);
+    PMC * const type_tuple  = pmc_new(interp, enum_class_FixedIntegerArray);
     STRING *string_sig      = const_string(interp, sig);
     const INTVAL sig_len    = string_length(interp, string_sig);
 
@@ -491,36 +492,54 @@ convert_varargs_to_sig_pmc(PARROT_INTERP, ARGIN(const char *sig), va_list args)
 
     for (i = 0; i < sig_len; ++i) {
         INTVAL type = string_index(interp, string_sig, i);
+
+        /* Only create the returns array if it's needed */
+        if (in_return_sig && PMC_IS_NULL(returns)) {
+            returns = pmc_new(interp, enum_class_ResizablePMCArray);
+            VTABLE_set_attr_str(interp, call_object,
+                    CONST_STRING(interp, "returns"), returns);
+        }
+
         switch (type) { 
             case 'I': 
-                if (!in_return_sig) {
+                if (in_return_sig) {
+                    VTABLE_push_integer(interp, returns, va_arg(args, INTVAL)); 
+                } else {
                     VTABLE_push_integer(interp, call_object, va_arg(args, INTVAL)); 
                     VTABLE_set_integer_keyed_int(interp, type_tuple,
                             i, enum_type_INTVAL);
                 }
                 break; 
             case 'N': 
-                if (!in_return_sig) {
+                if (in_return_sig) {
+                    VTABLE_push_float(interp, returns, va_arg(args, FLOATVAL)); 
+                } else {
                     VTABLE_push_float(interp, call_object, va_arg(args, FLOATVAL)); 
                     VTABLE_set_integer_keyed_int(interp, type_tuple,
                             i, enum_type_FLOATVAL);
                 }
                 break; 
             case 'S': 
-                if (!in_return_sig) {
+                if (in_return_sig) {
+                    VTABLE_push_string(interp, returns, va_arg(args, STRING *)); 
+                } else {
                     VTABLE_push_string(interp, call_object, va_arg(args, STRING *)); 
                     VTABLE_set_integer_keyed_int(interp, type_tuple,
                             i, enum_type_STRING);
                 }
                 break; 
             case 'P': 
-                if (!in_return_sig) {
-                    PMC *arg = va_arg(args, PMC *);
-                    INTVAL type = VTABLE_type(interp, arg);
-                    VTABLE_set_integer_keyed_int(interp, type_tuple, i, type);
-                    VTABLE_push_pmc(interp, call_object, va_arg(args, PMC *)); 
+            {
+                PMC *pmc_arg = va_arg(args, PMC *);
+                if (in_return_sig) {
+                    VTABLE_push_pmc(interp, returns, pmc_arg); 
+                } else {
+                    VTABLE_set_integer_keyed_int(interp, type_tuple, i,
+                            VTABLE_type(interp, pmc_arg));
+                    VTABLE_push_pmc(interp, call_object, pmc_arg); 
                 }
                 break;
+             }
             case '-': 
                 i++; /* skip '>' */
                 in_return_sig = 1;
