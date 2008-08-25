@@ -168,7 +168,8 @@ parrot_init_library_paths(PARROT_INTERP)
         entry = CONST_STRING(interp, "lib/parrot/");
         VTABLE_push_string(interp, paths, entry);
 #ifdef ENABLE_PARROT_LIBRARY_INSTALLED
-    } else {
+    }
+    else {
 #endif
         entry = CONST_STRING(interp, "runtime/parrot/include/");
         VTABLE_push_string(interp, paths, entry);
@@ -192,7 +193,8 @@ parrot_init_library_paths(PARROT_INTERP)
         entry = CONST_STRING(interp, "lib/parrot/");
         VTABLE_push_string(interp, paths, entry);
 #ifdef ENABLE_PARROT_LIBRARY_INSTALLED
-    } else {
+    }
+    else {
 #endif
         entry = CONST_STRING(interp, "runtime/parrot/library/");
         VTABLE_push_string(interp, paths, entry);
@@ -214,7 +216,8 @@ parrot_init_library_paths(PARROT_INTERP)
         entry = CONST_STRING(interp, "lib/parrot/dynext/");
         VTABLE_push_string(interp, paths, entry);
 #ifdef ENABLE_PARROT_LIBRARY_INSTALLED
-    } else {
+    }
+    else {
 #endif
         entry = CONST_STRING(interp, "runtime/parrot/dynext/");
         VTABLE_push_string(interp, paths, entry);
