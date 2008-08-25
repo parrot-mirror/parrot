@@ -31,10 +31,13 @@ the Parrot debugger, and the C<debug> ops.
 #include "parrot/oplib/ops.h"
 #include "debug.str"
 
-/* Hand switched debugger tracing */
-/*#define TRACE_DEBUGGER 1*/
+/* Hand switched debugger tracing
+ * Set to 1 to enable tracing to stderr
+ * Set to 0 to disable
+ */
+#define TRACE_DEBUGGER 0
 
-#ifdef TRACE_DEBUGGER
+#if TRACE_DEBUGGER
 #  define TRACEDEB_MSG(msg) fprintf(stderr, "%s\n", (msg))
 #else
 #  define TRACEDEB_MSG(msg)
@@ -92,13 +95,19 @@ enum DebugCmd {
     debug_cmd_script_file = 617610,
     debug_cmd_disable     = 772140,
     debug_cmd_continue    = 1053405,
-    debug_cmd_disassemble = 1903830
+    debug_cmd_disassemble = 1903830,
+    debug_cmd_gcdebug     = 779790,
+    debug_cmd_echo        = 276675
 };
 
 /* HEADERIZER HFILE: include/parrot/debugger.h */
 
 /* HEADERIZER BEGIN: static */
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
+
+static void chop_newline(ARGMOD(char * buf))
+        __attribute__nonnull__(1)
+        FUNC_MODIFIES(* buf);
 
 static void close_script_file(PARROT_INTERP)
         __attribute__nonnull__(1);
@@ -167,6 +176,395 @@ static const char * skip_command(ARGIN(const char *str))
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 /* HEADERIZER END: static */
 
+/*
+ *  Command functions and help dispatch
+ */
+
+typedef void (* debugger_func_t)(ARGIN(PDB_t * pdb), ARGIN(const char * cmd));
+
+
+static void dbg_break(ARGIN(PDB_t * pdb), ARGIN(const char * cmd)) /* HEADERIZER SKIP */
+{
+    TRACEDEB_MSG("dbg_break");
+
+    PDB_set_break(pdb->debugee, cmd);
+}
+
+static void dbg_continue(ARGIN(PDB_t * pdb), ARGIN(const char * cmd)) /* HEADERIZER SKIP */
+{
+    TRACEDEB_MSG("dbg_continue");
+
+    PDB_continue(pdb->debugee, cmd);
+}
+
+static void dbg_delete(ARGIN(PDB_t * pdb), ARGIN(const char * cmd)) /* HEADERIZER SKIP */
+{
+    TRACEDEB_MSG("dbg_delete");
+
+    PDB_delete_breakpoint(pdb->debugee, cmd);
+}
+
+static void dbg_disable(ARGIN(PDB_t * pdb), ARGIN(const char * cmd)) /* HEADERIZER SKIP */
+{
+    TRACEDEB_MSG("dbg_disable");
+
+    PDB_disable_breakpoint(pdb->debugee, cmd);
+}
+
+static void dbg_disassemble(ARGIN(PDB_t * pdb), ARGIN(const char * cmd)) /* HEADERIZER SKIP */
+{
+    TRACEDEB_MSG("dbg_disassemble");
+
+    PDB_disassemble(pdb->debugee, cmd);
+}
+
+static void dbg_echo(ARGIN(PDB_t * pdb), ARGIN(const char * cmd)) /* HEADERIZER SKIP */
+{
+    TRACEDEB_MSG("dbg_echo");
+
+    if (pdb->state & PDB_ECHO) {
+        TRACEDEB_MSG("Disabling echo");
+        pdb->state &= ~PDB_ECHO;
+    }
+    else {
+        TRACEDEB_MSG("Enabling echo");
+        pdb->state |= PDB_ECHO;
+    }
+}
+
+static void dbg_enable(ARGIN(PDB_t * pdb), ARGIN(const char * cmd)) /* HEADERIZER SKIP */
+{
+    PDB_enable_breakpoint(pdb->debugee, cmd);
+}
+
+static void dbg_eval(ARGIN(PDB_t * pdb), ARGIN(const char * cmd)) /* HEADERIZER SKIP */
+{
+    PDB_eval(pdb->debugee, cmd);
+}
+
+static void dbg_gcdebug(ARGIN(PDB_t * pdb), ARGIN(const char * cmd)) /* HEADERIZER SKIP */
+{
+    TRACEDEB_MSG("dbg_gcdebug");
+
+    if (pdb->state & PDB_GCDEBUG) {
+        TRACEDEB_MSG("Disabling gcdebug mode");
+        pdb->state &= ~PDB_GCDEBUG;
+    }
+    else {
+        TRACEDEB_MSG("Enabling gcdebug mode");
+        pdb->state |= PDB_GCDEBUG;
+    }
+}
+
+static void dbg_help(ARGIN(PDB_t * pdb), ARGIN(const char * cmd)) /* HEADERIZER SKIP */
+{
+    TRACEDEB_MSG("dbg_help");
+
+    PDB_help(pdb->debugee, cmd);
+}
+
+static void dbg_info(ARGIN(PDB_t * pdb), ARGIN(const char * cmd)) /* HEADERIZER SKIP */
+{
+    TRACEDEB_MSG("dbg_info");
+
+    PDB_info(pdb->debugee);
+}
+
+static void dbg_list(ARGIN(PDB_t * pdb), ARGIN(const char * cmd)) /* HEADERIZER SKIP */
+{
+    TRACEDEB_MSG("dbg_list");
+
+    PDB_list(pdb->debugee, cmd);
+}
+
+static void dbg_load(ARGIN(PDB_t * pdb), ARGIN(const char * cmd)) /* HEADERIZER SKIP */
+{
+    TRACEDEB_MSG("dbg_load");
+
+    PDB_load_source(pdb->debugee, cmd);
+}
+
+static void dbg_next(ARGIN(PDB_t * pdb), ARGIN(const char * cmd)) /* HEADERIZER SKIP */
+{
+    TRACEDEB_MSG("dbg_next");
+
+    PDB_next(pdb->debugee, cmd);
+}
+
+static void dbg_print(ARGIN(PDB_t * pdb), ARGIN(const char * cmd)) /* HEADERIZER SKIP */
+{
+    TRACEDEB_MSG("dbg_print");
+
+    PDB_print(pdb->debugee, cmd);
+}
+
+static void dbg_quit(ARGIN(PDB_t * pdb), ARGIN(const char * cmd)) /* HEADERIZER SKIP */
+{
+    TRACEDEB_MSG("dbg_quit");
+
+    pdb->state |= PDB_EXIT;
+    pdb->state &= ~PDB_STOPPED;
+}
+
+static void dbg_run(ARGIN(PDB_t * pdb), ARGIN(const char * cmd)) /* HEADERIZER SKIP */
+{
+    TRACEDEB_MSG("dbg_run");
+
+    PDB_init(pdb->debugee, cmd);
+    PDB_continue(pdb->debugee, NULL);
+}
+
+static void dbg_script(ARGIN(PDB_t * pdb), ARGIN(const char * cmd)) /* HEADERIZER SKIP */
+{
+    TRACEDEB_MSG("dbg_script");
+
+    PDB_script_file(pdb->debugee, cmd);
+}
+
+static void dbg_stack(ARGIN(PDB_t * pdb), ARGIN(const char * cmd)) /* HEADERIZER SKIP */
+{
+    TRACEDEB_MSG("dbg_stack");
+
+    PDB_backtrace(pdb->debugee);
+}
+
+static void dbg_trace(ARGIN(PDB_t * pdb), ARGIN(const char * cmd)) /* HEADERIZER SKIP */
+{
+    TRACEDEB_MSG("dbg_trace");
+
+    PDB_trace(pdb->debugee, cmd);
+}
+
+static void dbg_watch(ARGIN(PDB_t * pdb), ARGIN(const char * cmd)) /* HEADERIZER SKIP */
+{
+    TRACEDEB_MSG("dbg_watch");
+
+    PDB_watchpoint(pdb->debugee, cmd);
+}
+
+typedef struct DebuggerCmd_t {
+    debugger_func_t func;
+    const char * const help;
+} DebuggerCmd;
+
+static const DebuggerCmd
+    cmd_break = {
+        & dbg_break,
+"Set a breakpoint at a given line number (which must be specified).\n\n\
+Optionally, specify a condition, in which case the breakpoint will only\n\
+activate if the condition is met. Conditions take the form:\n\n\
+           if [REGISTER] [COMPARISON] [REGISTER or CONSTANT]\n\n\
+\
+For example:\n\n\
+           break 10 if I4 > I3\n\n\
+           break 45 if S1 == \"foo\"\n\n\
+The command returns a number which is the breakpoint identifier."
+    },
+    cmd_continue = {
+        & dbg_continue,
+"Continue the program execution.\n\n\
+Without arguments, the program runs until a breakpoint is found\n\
+(or until the program terminates for some other reason).\n\n\
+If a number is specified, then skip that many breakpoints.\n\n\
+If the program has terminated, then \"continue\" will do nothing;\n\
+use \"run\" to re-run the program."
+    },
+    cmd_delete = {
+        & dbg_delete,
+"Delete a breakpoint.\n\n\
+The breakpoint to delete must be specified by its breakpoint number.\n\
+Deleted breakpoints are gone completely. If instead you want to\n\
+temporarily disable a breakpoint, use \"disable\"."
+    },
+    cmd_disable = {
+        & dbg_disable,
+"Disable a breakpoint.\n\n\
+The breakpoint to disable must be specified by its breakpoint number.\n\
+Disabled breakpoints are not forgotten, but have no effect until re-enabled\n\
+with the \"enable\" command."
+    },
+    cmd_disassemble = {
+        & dbg_disassemble,
+"Disassemble code"
+    },
+    cmd_echo = {
+        & dbg_echo,
+"Toggle echo mode.\n\n\
+In echo mode the script commands are written to stderr before executing."
+    },
+    cmd_enable = {
+        & dbg_enable,
+"Re-enable a disabled breakpoint."
+    },
+    cmd_eval = {
+        & dbg_eval,
+"No documentation yet"
+    },
+    cmd_gcdebug = {
+        & dbg_gcdebug,
+"Toggle gcdebug mode.\n\n\
+In gcdebug mode a garbage collection cycle is run before each opcocde,\n\
+same as using the gcdebug core."
+    },
+    cmd_help = {
+        & dbg_help,
+"Print a list of available commands."
+    },
+    cmd_info = {
+        & dbg_info,
+"Print information about the current interpreter"
+    },
+    cmd_list = {
+        & dbg_list,
+"List the source code.\n\n\
+Optionally specify the line number to begin the listing from and the number\n\
+of lines to display."
+    },
+    cmd_load = {
+        & dbg_load,
+"Load a source code file."
+    },
+    cmd_next = {
+        & dbg_next,
+"Execute a specified number of instructions.\n\n\
+If a number is specified with the command (e.g. \"next 5\"), then\n\
+execute that number of instructions, unless the program reaches a\n\
+breakpoint, or stops for some other reason.\n\n\
+If no number is specified, it defaults to 1."
+    },
+    cmd_print = {
+        & dbg_print,
+"Print register: e.g. \"p i2\"\n\
+Note that the register type is case-insensitive. If no digits appear\n\
+after the register type, all registers of that type are printed."
+    },
+    cmd_quit = {
+        & dbg_quit,
+"Exit the debugger"
+    },
+    cmd_run = {
+        & dbg_run,
+"Run (or restart) the program being debugged.\n\n\
+Arguments specified after \"run\" are passed as command line arguments to\n\
+the program.\n"
+    },
+    cmd_script = {
+        & dbg_script,
+"Interprets a file s user commands.\n\
+Usage:\n\
+(pdb) script file.script"
+    },
+    cmd_stack = {
+        & dbg_stack,
+"Print a stack trace of the parrot VM"
+    },
+    cmd_trace = {
+        & dbg_trace,
+"Similar to \"next\", but prints additional trace information.\n\
+This is the same as the information you get when running Parrot with\n\
+the -t option.\n"
+    },
+    cmd_watch = {
+        & dbg_watch,
+"Add a watchpoint"
+    };
+
+static const DebuggerCmd * get_command(long cmdhash) /* HEADERIZER SKIP */
+{
+    switch ((enum DebugCmd)cmdhash) {
+        case debug_cmd_break:
+            return & cmd_break;
+        case debug_cmd_continue:
+        case debug_cmd_c:
+            return & cmd_continue;
+        case debug_cmd_delete:
+        case debug_cmd_d:
+            return & cmd_delete;
+        case debug_cmd_disable:
+            return & cmd_disable;
+        case debug_cmd_disassemble:
+            return & cmd_disassemble;
+        case debug_cmd_echo:
+            return & cmd_echo;
+        case debug_cmd_enable:
+            return & cmd_enable;
+        case debug_cmd_eval:
+        case debug_cmd_e:
+            return & cmd_eval;
+        case debug_cmd_gcdebug:
+            return & cmd_gcdebug;
+        case debug_cmd_help:
+        case debug_cmd_h:
+            return & cmd_help;
+        case debug_cmd_info:
+            return & cmd_info;
+        case debug_cmd_list:
+        case debug_cmd_l:
+            return & cmd_list;
+        case debug_cmd_load:
+            return & cmd_load;
+        case debug_cmd_next:
+        case debug_cmd_n:
+            return & cmd_next;
+        case debug_cmd_print:
+        case debug_cmd_p:
+             return & cmd_print;
+        case debug_cmd_quit:
+        case debug_cmd_q:
+             return & cmd_quit;
+        case debug_cmd_r:
+        case debug_cmd_run:
+             return & cmd_run;
+        case debug_cmd_script_file:
+        case debug_cmd_f:
+            return & cmd_script;
+        case debug_cmd_stack:
+        case debug_cmd_s:
+            return & cmd_stack;
+        case debug_cmd_trace:
+        case debug_cmd_t:
+            return & cmd_trace;
+        default:
+            return NULL;
+    }
+}
+
+
+static const char * skip_whitespace(ARGIN(const char *cmd)) /* HEADERIZER SKIP */
+{
+    while (isspace((unsigned char)*cmd))
+        ++cmd;
+    return cmd;
+}
+
+static unsigned long get_ulong(ARGMOD(const char **cmd), unsigned long def) /* HEADERIZER SKIP */
+{
+    char *cmdnext;
+    unsigned long result = strtoul(skip_whitespace(* cmd), & cmdnext, 0);
+    if (cmdnext != * cmd)
+        * cmd = cmdnext;
+    else
+        result = def;
+    return result;
+}
+
+/*
+
+=item C<static void chop_newline>
+
+If the C string argument end with a newline, delete it.
+
+=cut
+
+*/
+
+static void
+chop_newline(ARGMOD(char * buf))
+{
+    int l = strlen(buf);
+    if (l > 0 && buf [l - 1] == '\n')
+        buf [l - 1] = '\0';
+}
 
 /*
 
@@ -194,8 +592,7 @@ nextarg(ARGIN_NULLOK(const char *command))
             command++;
 
         /* eat as much space as possible */
-        while (isspace((unsigned char) *command))
-            command++;
+        command = skip_whitespace(command);
     }
 
     return command;
@@ -223,10 +620,7 @@ skip_command(ARGIN(const char *str))
         str++;
 
     /* eat all space after that */
-    while (*str && isspace((unsigned char) *str))
-        str++;
-
-    return str;
+    return skip_whitespace(str);
 }
 
 /*
@@ -371,8 +765,7 @@ parse_command(ARGIN(const char *command), ARGOUT(unsigned long *cmdP))
     unsigned long c = 0;
 
     /* Skip leading whitespace. */
-    while (isspace((unsigned char) *command))
-        command++;
+    command = skip_whitespace(command);
 
     if (*command == '\0') {
         *cmdP = c;
@@ -391,6 +784,19 @@ parse_command(ARGIN(const char *command), ARGOUT(unsigned long *cmdP))
     return command;
 }
 
+/*
+
+=item C<static void debugger_cmdline>
+
+Debugger command line.
+
+Gets and executes commands, looping until the debugger state
+is chnaged, either to exit or to start executing code.
+
+=cut
+
+*/
+
 static void
 debugger_cmdline(PARROT_INTERP)
 {
@@ -399,6 +805,7 @@ debugger_cmdline(PARROT_INTERP)
     /*while (!(interp->pdb->state & PDB_EXIT)) {*/
     while (interp->pdb->state & PDB_STOPPED) {
         const char * command;
+        interp->pdb->state &= ~PDB_TRACING;
         PDB_get_command(interp);
         command = interp->pdb->cur_command;
         if (command[0] == '\0')
@@ -408,6 +815,16 @@ debugger_cmdline(PARROT_INTERP)
     }
     TRACEDEB_MSG("debugger_cmdline finished");
 }
+
+/*
+
+=item C<static void close_script_file>
+
+Close the script file, returning to command prompt mode.
+
+=cut
+
+*/
 
 static void
 close_script_file(PARROT_INTERP)
@@ -643,7 +1060,7 @@ PDB_get_command(PARROT_INTERP)
     if (interp->pdb->script_file) {
         FILE *fd = interp->pdb->script_file;
         char buf[DEBUG_CMD_BUFFER_LENGTH+1];
-        char *ptr = buf;
+        const char *ptr;
 
         do {
             if (fgets(buf, DEBUG_CMD_BUFFER_LENGTH, fd) == NULL) {
@@ -651,18 +1068,27 @@ PDB_get_command(PARROT_INTERP)
                 return;
             }
 
-            /* skip spaces */
-            for (ptr = (char *)&buf; *ptr && isspace((unsigned char)*ptr); ptr++);
+            chop_newline(buf);
 
-            /* avoid null blank and commented lines */
-            if (*buf == '\0' || *buf == '#')
-                continue;
-        } while (0);
+            /* skip spaces */
+            ptr = skip_whitespace(buf);
+
+            /* skip blank and commented lines */
+       } while (*ptr == '\0' || *ptr == '#');
+
+        if (pdb->state & PDB_ECHO)
+            fprintf(stderr, "[%s]\n", buf);
 
         /* RT #46117: handle command error and print out script line
          *       PDB_run_command should return non-void value?
          *       stop execution of script if fails
          * RT #46115: avoid this verbose output? add -v flag? */
+
+#if TRACE_DEBUGGER
+        fprintf(stderr, "(script) %s\n", buf);
+#endif
+
+        #if 0
         if (PDB_run_command(interp, buf)) {
             IMCC_warning(interp, "script_file: "
                 "Error interpreting command (%s).\n",
@@ -670,6 +1096,8 @@ PDB_get_command(PARROT_INTERP)
             close_script_file(interp);
             return;
         }
+        #endif
+        strcpy(pdb->cur_command, buf);
     }
     else {
 
@@ -754,6 +1182,7 @@ PDB_run_command(PARROT_INTERP, ARGIN(const char *command))
     unsigned long c;
     PDB_t        * const pdb = interp->pdb;
     const char   * const original_command = command;
+    const DebuggerCmd *cmd;
 
     TRACEDEB_MSG("PDB_run_command");
 
@@ -763,98 +1192,32 @@ PDB_run_command(PARROT_INTERP, ARGIN(const char *command))
     command = parse_command(original_command, &c);
 
     if (command)
-        skip_command(command);
+        command = skip_command(command);
     else
         return 0;
 
-    switch ((enum DebugCmd)c) {
-        case debug_cmd_f:
-        case debug_cmd_script_file:
-            command = nextarg(command);
-            PDB_script_file(interp, command);
-            break;
-        case debug_cmd_disassemble:
-            PDB_disassemble(interp, command);
-            break;
-        case debug_cmd_load:
-            PDB_load_source(interp, command);
-            break;
-        case debug_cmd_l:
-        case debug_cmd_list:
-            PDB_list(interp, command);
-            break;
-        case debug_cmd_b:
-        case debug_cmd_break:
-            PDB_set_break(interp, command);
-            break;
-        case debug_cmd_w:
-        case debug_cmd_watch:
-            PDB_watchpoint(interp, command);
-            break;
-        case debug_cmd_d:
-        case debug_cmd_delete:
-            PDB_delete_breakpoint(interp, command);
-            break;
-        case debug_cmd_disable:
-            PDB_disable_breakpoint(interp, command);
-            break;
-        case debug_cmd_enable:
-            PDB_enable_breakpoint(interp, command);
-            break;
-        case debug_cmd_r:
-        case debug_cmd_run:
-            PDB_init(interp, command);
-            PDB_continue(interp, NULL);
-            break;
-        case debug_cmd_c:
-        case debug_cmd_continue:
-            PDB_continue(interp, command);
-            break;
-        case debug_cmd_p:
-        case debug_cmd_print:
-            PDB_print(interp, command);
-            break;
-        case debug_cmd_n:
-        case debug_cmd_next:
-            PDB_next(interp, command);
-            break;
-        case debug_cmd_t:
-        case debug_cmd_trace:
-            PDB_trace(interp, command);
-            break;
-        case debug_cmd_e:
-        case debug_cmd_eval:
-            PDB_eval(interp, command);
-            break;
-        case debug_cmd_info:
-            PDB_info(interp);
-            break;
-        case debug_cmd_h:
-        case debug_cmd_help:
-            PDB_help(interp, command);
-            break;
-        case debug_cmd_q:
-        case debug_cmd_quit:
-            pdb->state |= PDB_EXIT;
-            pdb->state &= ~PDB_STOPPED;
-            break;
-        case debug_cmd_s:
-        case debug_cmd_stack:
-            PDB_backtrace(interp);
-            break;
-        case (enum DebugCmd)0:
+    cmd= get_command(c);
+    if (cmd) {
+        (* cmd->func)(pdb, command);
+        return 0;
+    }
+    else {
+        if (c == 0) {
+            /*
             if (pdb->last_command)
                 PDB_run_command(interp, pdb->last_command);
-            break;
-        default:
+            */
+            return 0;
+        }
+        else {
             PIO_eprintf(interp,
                         "Undefined command: \"%s\".  Try \"help\".", original_command);
-#ifdef TRACE_DEBUGGER
+#if TRACE_DEBUGGER
             fprintf(stderr, " (parse_command result: %li)", c);
 #endif
             return 1;
+        }
     }
-    return 0;
 }
 
 /*
@@ -872,20 +1235,24 @@ Inits the program if needed, runs the next N >= 1 operations and stops.
 void
 PDB_next(PARROT_INTERP, ARGIN_NULLOK(const char *command))
 {
-    unsigned long  n   = 1;
+    unsigned long  n;
     PDB_t  * const pdb = interp->pdb;
+    Interp *debugee;
+
+    TRACEDEB_MSG("PDB_next");
 
     /* Init the program if it's not running */
     if (!(pdb->state & PDB_RUNNING))
         PDB_init(interp, command);
 
-    command = nextarg(command);
     /* Get the number of operations to execute if any */
-    if (command && isdigit((unsigned char) *command))
-        n = atol(command);
+    n = get_ulong(& command, 1);
 
     /* Erase the stopped flag */
     pdb->state &= ~PDB_STOPPED;
+
+    /* Testing use of the debugger runloop */
+    #if 0
 
     /* Execute */
     for (; n && pdb->cur_opcode; n--)
@@ -901,6 +1268,20 @@ PDB_next(PARROT_INTERP, ARGIN_NULLOK(const char *command))
      */
     if (!pdb->cur_opcode)
         (void)PDB_program_end(interp);
+    #endif
+
+    debugee     = pdb->debugee;
+
+    new_runloop_jump_point(debugee);
+    if (setjmp(debugee->current_runloop->resume)) {
+        Parrot_eprintf(interp, "Unhandled exception while tracing\n");
+        pdb->state |= PDB_STOPPED;
+        return;
+    }
+    pdb->tracing = n;
+    pdb->debugee->run_core = PARROT_DEBUGGER_CORE;
+
+    TRACEDEB_MSG("PDB_next finished");
 }
 
 /*
@@ -916,20 +1297,20 @@ Execute the next N operations; if no number is specified, it defaults to 1.
 void
 PDB_trace(PARROT_INTERP, ARGIN_NULLOK(const char *command))
 {
-    unsigned long  n   = 1;
+    unsigned long  n;
     PDB_t *  const pdb = interp->pdb;
     Interp        *debugee;
 
     TRACEDEB_MSG("PDB_trace");
 
     /* if debugger is not running yet, initialize */
+    /*
     if (!(pdb->state & PDB_RUNNING))
         PDB_init(interp, command);
+    */
 
-    command = nextarg(command);
-    /* if the number of ops to run is specified, convert to a long */
-    if (command && isdigit((unsigned char) *command))
-        n = atol(command);
+    /* ge the number of ops to run, if specified */
+    n = get_ulong(& command, 1);
 
     /* clear the PDB_STOPPED flag, we'll be running n ops now */
     pdb->state &= ~PDB_STOPPED;
@@ -944,6 +1325,7 @@ PDB_trace(PARROT_INTERP, ARGIN_NULLOK(const char *command))
     }
     pdb->tracing = n;
     pdb->debugee->run_core = PARROT_DEBUGGER_CORE;
+    pdb->state |= PDB_TRACING;
 
     /* Clear the following when done some testing */
 
@@ -955,6 +1337,8 @@ PDB_trace(PARROT_INTERP, ARGIN_NULLOK(const char *command))
         (void)PDB_program_end(interp);
     pdb->state |= PDB_RUNNING;
     pdb->state &= ~PDB_STOPPED;
+
+    TRACEDEB_MSG("PDB_trace finished");
 }
 
 /*
@@ -1191,75 +1575,85 @@ PDB_set_break(PARROT_INTERP, ARGIN_NULLOK(const char *command))
 {
     PDB_t            * const pdb      = interp->pdb;
     PDB_breakpoint_t *newbreak;
-    PDB_breakpoint_t *sbreak;
-    PDB_condition_t  *condition;
-    PDB_line_t       *line;
-    long              i;
+    PDB_breakpoint_t **lbreak;
+    PDB_line_t       *line = NULL;
+    long              bp_id;
+    opcode_t         *breakpos = NULL;
 
-    command = nextarg(command);
-    /* If no line number was specified, set it at the current line */
-    if (command && *command) {
-        const long ln = atol(command);
-        int i;
+    unsigned long ln = get_ulong(& command, 0);
 
-        /* Move to the line where we will set the break point */
-        line = pdb->file->line;
+    TRACEDEB_MSG("PDB_set_break");
 
-        for (i = 1; ((i < ln) && (line->next)); i++)
+
+    /* If there is a source file use line number, else opcode position */
+
+    if (pdb->file) {
+        /* If no line number was specified, set it at the current line */
+        if (ln != 0) {
+            unsigned long i;
+
+            /* Move to the line where we will set the break point */
+            line = pdb->file->line;
+
+            for (i = 1; ((i < ln) && (line->next)); i++)
+                line = line->next;
+
+            /* Abort if the line number provided doesn't exist */
+            if (!line->next) {
+                PIO_eprintf(interp,
+                    "Can't set a breakpoint at line number %li\n", ln);
+                return;
+            }
+        }
+        else {
+            /* Get the line to set it */
+            line = pdb->file->line;
+
+            while (line->opcode != pdb->cur_opcode) {
+                line = line->next;
+                if (!line) {
+                    PIO_eprintf(interp,
+                       "No current line found and no line number specified\n");
+                    return;
+                }
+            }
+        }
+        /* Skip lines that are not related to an opcode */
+        while (line && !line->opcode)
             line = line->next;
-
         /* Abort if the line number provided doesn't exist */
-        if (!line->next) {
+        if (!line) {
             PIO_eprintf(interp,
                 "Can't set a breakpoint at line number %li\n", ln);
             return;
         }
+
+        breakpos = line->opcode;
     }
     else {
-        /* Get the line to set it */
-        line = pdb->file->line;
-
-        while (line->opcode != pdb->cur_opcode) {
-            line = line->next;
-            if (!line) {
-                PIO_eprintf(interp,
-                   "No current line found and no line number specified\n");
-                return;
-            }
-        }
+        breakpos = interp->code->base.data + ln;
     }
 
-    /* Skip lines that are not related to an opcode */
-    while (!line->opcode)
-        line = line->next;
-
     /* Allocate the new break point */
-    newbreak = mem_allocate_typed(PDB_breakpoint_t);
+    newbreak = mem_allocate_zeroed_typed(PDB_breakpoint_t);
 
     if (command) {
-        skip_command(command);
+        command = skip_command(command);
     }
     else {
         Parrot_ex_throw_from_c_args(interp, NULL, 1,
             "NULL command passed to PDB_set_break");
     }
-    condition = NULL;
 
     /* if there is another argument to break, besides the line number,
      * it should be an 'if', so we call another handler. */
     if (command && *command) {
         skip_command(command);
-        if ((condition = PDB_cond(interp, command)))
-            newbreak->condition = condition;
+        newbreak->condition = PDB_cond(interp, command);
     }
 
-    /* If there are no other arguments, or if there isn't a valid condition,
-       then condition will be NULL */
-    if (!condition)
-        newbreak->condition = NULL;
-
     /* Set the address where to stop */
-    newbreak->pc   = line->opcode;
+    newbreak->pc   = breakpos;
 
     /* No next breakpoint */
     newbreak->next = NULL;
@@ -1268,24 +1662,22 @@ PDB_set_break(PARROT_INTERP, ARGIN_NULLOK(const char *command))
     newbreak->skip = 0;
 
     /* Add the breakpoint to the end of the list */
-    i      = 0;
-    sbreak = pdb->breakpoint;
-
-    if (sbreak) {
-        while (sbreak->next)
-            sbreak = sbreak->next;
-
-        newbreak->prev = sbreak;
-        sbreak->next   = newbreak;
-        i              = sbreak->next->id = sbreak->id + 1;
+    bp_id = 1;
+    lbreak = & pdb->breakpoint;
+    while (*lbreak) {
+        bp_id = (*lbreak)->id + 1;
+        lbreak = & (*lbreak)->next;
     }
-    else {
-        newbreak->prev  = NULL;
-        pdb->breakpoint = newbreak;
-        i               = pdb->breakpoint->id = 0;
-    }
+    newbreak->prev = *lbreak;
+    *lbreak = newbreak;
+    newbreak->id = bp_id;
 
-    PIO_eprintf(interp, "Breakpoint %li at line %li\n", i, line->number);
+    /* Show breakpoint position */
+
+    PIO_eprintf(interp, "Breakpoint %li at", newbreak->id);
+    if (line)
+        PIO_eprintf(interp, " line %li", line->number);
+    PIO_eprintf(interp, " pos %li\n", newbreak->pc - interp->code->base.data);
 }
 
 /*
@@ -1326,17 +1718,18 @@ void
 PDB_continue(PARROT_INTERP, ARGIN_NULLOK(const char *command))
 {
     PDB_t * const pdb = interp->pdb;
+    unsigned long ln = 0;
+
+    TRACEDEB_MSG("PDB_continue");
 
     /* Skip any breakpoint? */
-    if (command && *command) {
-        long ln;
+    if (command)
+        ln = get_ulong(& command, 0);
+    if (ln != 0) {
         if (!pdb->breakpoint) {
             PIO_eprintf(interp, "No breakpoints to skip\n");
             return;
         }
-
-        command = nextarg(command);
-        ln = atol(command);
         PDB_skip_breakpoint(interp, ln);
     }
 
@@ -1380,9 +1773,9 @@ PARROT_WARN_UNUSED_RESULT
 PDB_breakpoint_t *
 PDB_find_breakpoint(PARROT_INTERP, ARGIN(const char *command))
 {
-    command = nextarg(command);
-    if (isdigit((unsigned char) *command)) {
-        const long n = atol(command);
+    const char *oldcmd = command;
+    const unsigned long n = get_ulong(&command, 0);
+    if (command != oldcmd) {
         PDB_breakpoint_t *breakpoint = interp->pdb->breakpoint;
 
         while (breakpoint && breakpoint->id != n)
@@ -1540,7 +1933,11 @@ Skip C<i> times all breakpoints.
 void
 PDB_skip_breakpoint(PARROT_INTERP, long i)
 {
-    interp->pdb->breakpoint_skip = i ? i-1 : i;
+#if TRACE_DEBUGGER
+        fprintf(stderr, "PDB_skip_breakpoint: %li\n", i);
+#endif
+
+    interp->pdb->breakpoint_skip = i;
 }
 
 /*
@@ -1653,6 +2050,28 @@ PDB_check_condition(PARROT_INTERP, ARGIN(const PDB_condition_t *condition))
 
 /*
 
+=item C<static PDB_breakpoint_t * current_breakpoint>>
+
+Returns a pointer to the breakpoint at the current position,
+or NULL if there is none.
+
+=cut
+
+*/
+
+static PDB_breakpoint_t * current_breakpoint(ARGIN(PDB_t * pdb)) /* HEADERIZER SKIP */
+{
+    PDB_breakpoint_t *breakpoint = pdb->breakpoint;
+    while (breakpoint) {
+        if (pdb->cur_opcode == breakpoint->pc)
+            break;
+        breakpoint = breakpoint->next;
+    }
+    return breakpoint;
+}
+
+/*
+
 =item C<char PDB_break>
 
 Returns true if we have to stop running.
@@ -1666,8 +2085,10 @@ char
 PDB_break(PARROT_INTERP)
 {
     PDB_t            * const pdb = interp->pdb;
-    PDB_breakpoint_t *breakpoint = pdb->breakpoint;
     PDB_condition_t  *watchpoint = pdb->watchpoint;
+    PDB_breakpoint_t *breakpoint;
+
+    TRACEDEB_MSG("PDB_break");
 
     /* Check the watchpoints first. */
     while (watchpoint) {
@@ -1689,28 +2110,28 @@ PDB_break(PARROT_INTERP)
         return 0;
     }
 
-    /* If we have to skip breakpoints, do so. */
-    if (pdb->breakpoint_skip) {
-        pdb->breakpoint_skip--;
-        return 0;
-    }
+    breakpoint = current_breakpoint(pdb);
+    if (breakpoint) {
+        /* If we have to skip breakpoints, do so. */
+        if (pdb->breakpoint_skip) {
+            TRACEDEB_MSG("PDB_break skipping");
+            pdb->breakpoint_skip--;
+            return 0;
+        }
 
-    while (breakpoint) {
-        /* if we are in a break point */
-        if (pdb->cur_opcode == breakpoint->pc) {
-            if (breakpoint->skip < 0)
+        if (breakpoint->skip < 0)
+            return 0;
+
+        /* Check if there is a condition for this breakpoint */
+        if ((breakpoint->condition) &&
+            (!PDB_check_condition(interp, breakpoint->condition)))
                 return 0;
 
-            /* Check if there is a condition for this breakpoint */
-            if ((breakpoint->condition) &&
-                (!PDB_check_condition(interp, breakpoint->condition)))
-                    return 0;
+        TRACEDEB_MSG("PDB_break stopping");
 
-            /* Add the STOPPED state and stop */
-            pdb->state |= PDB_STOPPED;
-            return 1;
-        }
-        breakpoint = breakpoint->next;
+        /* Add the STOPPED state and stop */
+        pdb->state |= PDB_STOPPED;
+        return 1;
     }
 
     return 0;
@@ -2496,7 +2917,7 @@ void
 PDB_list(PARROT_INTERP, ARGIN(const char *command))
 {
     char          *c;
-    long           line_number;
+    unsigned long  line_number;
     unsigned long  i;
     PDB_line_t    *line;
     PDB_t         *pdb = interp->pdb;
@@ -2507,26 +2928,12 @@ PDB_list(PARROT_INTERP, ARGIN(const char *command))
         return;
     }
 
-    command = nextarg(command);
     /* set the list line if provided */
-    if (isdigit((unsigned char) *command)) {
-        line_number = atol(command) - 1;
-        if (line_number < 0)
-            pdb->file->list_line = 0;
-        else
-            pdb->file->list_line = (unsigned long) line_number;
-
-        skip_command(command);
-    }
-    else {
-        pdb->file->list_line = 0;
-    }
+    line_number = get_ulong(&command, 0);
+    pdb->file->list_line = (unsigned long) line_number;
 
     /* set the number of lines to print */
-    if (isdigit((unsigned char) *command)) {
-        n = atol(command);
-        skip_command(command);
-    }
+    n = get_ulong(&command, 10);
 
     /* if n is zero, we simply return, as we don't have to print anything */
     if (n == 0)
@@ -2719,110 +3126,18 @@ void
 PDB_help(PARROT_INTERP, ARGIN(const char *command))
 {
     unsigned long c;
+    const DebuggerCmd *cmd;
 
     /* Extract the command after leading whitespace (for error messages). */
-    while (*command && isspace((unsigned char)*command))
-        command++;
+    command = skip_whitespace(command);
     parse_command(command, &c);
 
-    switch (c) {
-        case debug_cmd_disassemble:
-            PIO_eprintf(interp, "No documentation yet");
-            break;
-        case debug_cmd_load:
-            PIO_eprintf(interp, "No documentation yet");
-            break;
-        case debug_cmd_list:
-            PIO_eprintf(interp,
-            "List the source code.\n\n\
-Optionally specify the line number to begin the listing from and the number\n\
-of lines to display.\n");
-            break;
-        case debug_cmd_run:
-            PIO_eprintf(interp,
-            "Run (or restart) the program being debugged.\n\n\
-Arguments specified after \"run\" are passed as command line arguments to\n\
-the program.\n");
-            break;
-        case debug_cmd_break:
-            PIO_eprintf(interp,
-"Set a breakpoint at a given line number (which must be specified).\n\n\
-Optionally, specify a condition, in which case the breakpoint will only\n\
-activate if the condition is met. Conditions take the form:\n\n\
-           if [REGISTER] [COMPARISON] [REGISTER or CONSTANT]\n\n\
-\
-For example:\n\n\
-           break 10 if I4 > I3\n\n\
-           break 45 if S1 == \"foo\"\n\n\
-The command returns a number which is the breakpoint identifier.");
-            break;
-        case debug_cmd_script_file:
-PIO_eprintf(interp, "Interprets a file.\n\
-Usage:\n\
-(pdb) script file.script\n");
-            break;
-        case debug_cmd_watch:
-            PIO_eprintf(interp, "No documentation yet");
-            break;
-        case debug_cmd_delete:
-            PIO_eprintf(interp,
-"Delete a breakpoint.\n\n\
-The breakpoint to delete must be specified by its breakpoint number.\n\
-Deleted breakpoints are gone completely. If instead you want to\n\
-temporarily disable a breakpoint, use \"disable\".\n");
-            break;
-        case debug_cmd_disable:
-            PIO_eprintf(interp,
-"Disable a breakpoint.\n\n\
-The breakpoint to disable must be specified by its breakpoint number.\n\
-Disabled breakpoints are not forgotten, but have no effect until re-enabled\n\
-with the \"enable\" command.\n");
-            break;
-        case debug_cmd_enable:
-            PIO_eprintf(interp, "Re-enable a disabled breakpoint.\n");
-            break;
-        case debug_cmd_continue:
-            PIO_eprintf(interp,
-"Continue the program execution.\n\n\
-Without arguments, the program runs until a breakpoint is found\n\
-(or until the program terminates for some other reason).\n\n\
-If a number is specified, then skip that many breakpoints.\n\n\
-If the program has terminated, then \"continue\" will do nothing;\n\
-use \"run\" to re-run the program.\n");
-            break;
-        case debug_cmd_next:
-            PIO_eprintf(interp,
-"Execute a specified number of instructions.\n\n\
-If a number is specified with the command (e.g. \"next 5\"), then\n\
-execute that number of instructions, unless the program reaches a\n\
-breakpoint, or stops for some other reason.\n\n\
-If no number is specified, it defaults to 1.\n");
-            break;
-        case debug_cmd_eval:
-            PIO_eprintf(interp, "No documentation yet");
-            break;
-        case debug_cmd_trace:
-            PIO_eprintf(interp,
-"Similar to \"next\", but prints additional trace information.\n\
-This is the same as the information you get when running Parrot with\n\
-the -t option.\n");
-            break;
-        case debug_cmd_print:
-            PIO_eprintf(interp, "Print register: e.g. \"p i2\"\n\
-Note that the register type is case-insensitive.  If no digits appear\n\
-after the register type, all registers of that type are printed.\n");
-            break;
-        case debug_cmd_info:
-            PIO_eprintf(interp,
-                    "Print information about the current interpreter\n");
-            break;
-        case debug_cmd_quit:
-            PIO_eprintf(interp, "Exit the debugger.\n");
-            break;
-        case debug_cmd_help:
-            PIO_eprintf(interp, "Print a list of available commands.\n");
-            break;
-        case 0:
+    cmd = get_command(c);
+    if (cmd) {
+        PIO_eprintf(interp, "%s\n", cmd->help);
+    }
+    else {
+        if (c == 0) {
             /* C89: strings need to be 509 chars or less */
             PIO_eprintf(interp, "\
 List of commands:\n\
@@ -2832,6 +3147,7 @@ List of commands:\n\
     run      (r) -- run the program\n\
     break    (b) -- add a breakpoint\n\
     script   (f) -- interprets a file as user commands\n\
+    echo         -- toggle echo of script commands\n\
     watch    (w) -- add a watchpoint\n\
     delete   (d) -- delete a breakpoint\n\
     disable      -- disable a breakpoint\n\
@@ -2844,13 +3160,14 @@ List of commands:\n\
     print    (p) -- print the interpreter registers\n\
     stack    (s) -- examine the stack\n\
     info         -- print interpreter information\n\
+    gcdebug      -- toggle gcdebug mode\n\
     quit     (q) -- exit the debugger\n\
     help     (h) -- print this help\n\n\
 Type \"help\" followed by a command name for full documentation.\n\n");
-            break;
-        default:
-            PIO_eprintf(interp, "Unknown command: \"%s\".", command);
-            break;
+        }
+        else {
+            PIO_eprintf(interp, "Unknown command\n");
+        }
     }
 }
 
