@@ -8,7 +8,7 @@ EXE           = @exe@
 
 # Set up directories
 BUILD_DIR     = @build_dir@
-LIBRARY_DIR   = $(BUILD_DIR)/runtime/parrot/library
+LIBRARY_DIR   = @build_dir@/runtime/parrot/library
 PMCDIR        = src/pmc
 PARROT_DYNEXT = @build_dir@/runtime/parrot/dynext
 BIN_DIR       = @bin_dir@
@@ -22,7 +22,7 @@ PBC_MERGE     = $(BUILD_DIR)/pbc_merge$(EXE)
 PBC_TO_EXE    = $(BUILD_DIR)/pbc_to_exe$(EXE)
 PERL          = @perl@
 RM_F          = @rm_f@
-RECONFIGURE   = $(PERL) $(BUILD_DIR)/tools/dev/reconfigure.pl
+RECONFIGURE   = $(PERL) @build_dir@/tools/dev/reconfigure.pl
 PMCBUILD      = $(PERL) @build_dir@/tools/build/dynpmc.pl
 NQP           = $(BUILD_DIR)/compilers/nqp/nqp.pbc
 PCT           = $(BUILD_DIR)/runtime/parrot/library/PCT.pbc

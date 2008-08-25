@@ -189,22 +189,24 @@ to '#', C<replace_slashes> to enabled, and C<conditioned_lines> to enabled.
 If the name of the file being generated ends in C<Makefile>, this option
 defaults to true.
 
-=item conditioned_lines
+=item conditioned_lines #+(): #-():
 
 If conditioned_lines is true, then lines in the file that begin with
-C<#+(var):> are skipped if the var condition is false.
-Lines that begin with C<#-(var):> are skipped if the var condition is true.
-For legacy the old syntax #CONDITIONED_LINE(var): and #INVERSE_CONDITIONED_LINE(var):
-is also supported.
+C<#+(expr):> are skipped if the expr condition is false.
+Lines that begin with C<#-(var):> are skipped if the expr condition is true.
+For legacy the old syntax #CONDITIONED_LINE(var): and
+#INVERSE_CONDITIONED_LINE(var): is also supported.
 
-A condition var may be a single keyword, which is true if a config key is true
-or equal to the platform name,
-or a logical combination or (and var1 var2...) or (or var1 var2...) or (not var1...)
-as in the common lisp reader, with OR being the default for multiple keys.
-Keys are space seperated.
-Keys may also consist of key=value pairs, where the key is checked for equalness
-to the value. Note that values may contain no spaces here. (TODO: support quotes
-in values)
+A condition expr may be a single keyword, which is true if a config key is true
+or equal to the platform name  (case-sensitive),
+or a logical combination of AND, OR and NOT in case-insensitive LISP syntax
+  like (AND var1 var2...) or (OR var1 var2...) or (NOT var1...)
+  as in the common lisp reader, 'OR' being the default for multiple keys.
+Multiple keys are space seperated.
+
+Keys may also consist of key=value pairs, where the key is checked for
+equalness to the value. Note that values may contain no spaces here.
+TODO: support quotes in values
 
   #+(var1 var2...) defaults to #+(or var1 var2...)
   #-(var1 var2...) defaults to #-(or var1 var2...)
@@ -352,7 +354,7 @@ sub genfile {
             last;
         }
         if ( $options{conditioned_lines} ) {
-	    # allow nested parens here
+	    # allow multiple keys and nested parens here
             if ( $line =~ m/^#([-+])\((.+)\):(.*)/s ) {
 		my $truth = cond_eval($conf, $2);
 		next if ($1 eq '-') and $truth;
@@ -465,16 +467,61 @@ sub genfile {
     move_if_diff( "$target.tmp", $target, $options{ignore_pattern} );
 }
 
-# Just checks the logical truth of the hash value (exists and not empty)
-# TODO: also check the platform name if the hash key does not exist
-# TODO: recursive (), evaluate AND, OR, NOT with multiple keys
-# TODO: check for key=value, like #+(ld=gcc)
+# Return the next subexpression from the expression in $_[0] and
+# remove it from the input expression.
+# E.g. "and (not win32) has_glut"
+#      => and => (not win32) => has_glut
+sub next_expr {
+    my $s = $_[0];
+    return "" unless $s;
+    if ($s =~ /^\((.+)\)\s*(.*)/) { # longest match to matching closing paren
+	$_[0] = $2 ? $2 : "";	    # modify the 2nd arg
+	#print "** \"$s\" => (\"$1\",\"$_[0]\")\n";
+	return $1;
+    } else {
+	$s =~ s/^\s+//;    		# left-trim to make it more robust
+	$s =~ m/^([^ \(]+)\s*(.*)?/;    # shortest match to next whitespace or open paren
+	$_[0] = $2 ? $2 : "";		# modify the 2nd arg
+	#print "** \"$s\" => (\"$1\",\"$_[0]\")\n";
+	return $1;
+    }
+}
+
+# Recursively evaluate AND, OR, NOT for multiple keys as LISP expressions.
+# Checks the logical truth of the hash value: exists and not empty.
+# Also check the platform name if the hash key does not exist.
+# Also check for key=value, like #+(ld=gcc)
 sub cond_eval {
-    my $conf = shift;
-    my $expr = shift;
-    # TODO: parse for parens and multiple keys in the expression and
-    # evaluate it recursively.
-    return $conf->data->get($expr);
+    my $conf = $_[0];
+    my $expr = $_[1];
+    my $key = $expr;
+    my @count = split /\s+/, $expr;
+    if (@count > 1) { # multiple keys: recurse into
+	my $truth;
+	my $op = next_expr($expr);
+	if ($op =~ /^(or|and|not)$/i) {
+	    $op  = lc($op);
+	    $key = next_expr($expr);
+	} else {
+            $key = $op;
+	    $op  = 'or';
+	}
+	while ($key) {
+	    last if $truth and ($op eq 'or'); # logical shortcut on OR and already $truth
+	    $truth = cond_eval($conf, $key);
+	    if    ($op eq 'not') { $truth = $truth ? 0 : 1; }
+	    elsif ($op eq 'and') { last unless $truth; } # skip on early fail
+	    $key = next_expr($expr);
+	}
+	return $truth;
+    }
+    if ($key =~ /^(\w+)=(.+)$/) {
+      return $conf->data->get($1) eq $2;
+    } else {
+      return exists($conf->data->{c}->{$key})
+        ? $conf->data()->get($key)
+	: $key eq $^O;
+  }
 }
 
 sub append_configure_log {

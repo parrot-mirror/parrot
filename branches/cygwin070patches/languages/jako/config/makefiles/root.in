@@ -4,18 +4,29 @@
 # $Id$
 #
 
+LANG          = jako
+BUILD_DIR     = @build_dir@
+LOAD_EXT      = @load_ext@
+O             = @o@
+BIN_DIR       = @bin_dir@
+PERLLIB_DIR   = $(shell $(PERL) -V::sitelib:)
+DOC_DIR       = @doc_dir@
+MANDIR	      = @mandir@
+
 PERL          = @perl@
 RM_F          = @rm_f@
 JAKOC         = $(PERL) -I lib jakoc
 INTERP        = ../../@test_prog@
+PBC_TO_EXE    = ../../pbc_to_exe@exe@
 BUILD_DIR     = @build_dir@
 RECONFIGURE   = $(PERL) @build_dir@/tools/dev/reconfigure.pl
 #CONDITIONED_LINE(darwin):
 #CONDITIONED_LINE(darwin):# MACOSX_DEPLOYMENT_TARGET must be defined for OS X compilation/linking
 #CONDITIONED_LINE(darwin):export MACOSX_DEPLOYMENT_TARGET := @osx_version@
 
-.SUFFIXES: .jako .pir
+DOCS = README MAINTAINER
 
+.SUFFIXES: .jako .pir
 
 # default target
 all: \
@@ -136,5 +147,7 @@ installable : jako jakoc
 testclean:
 
 #
-# End of file.
-#
+# Local variables:
+# mode: makefile
+# ex: ft=make
+# End:
