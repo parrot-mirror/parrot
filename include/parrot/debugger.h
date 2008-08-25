@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2002-2007, The Perl Foundation
+ * Copyright (C) 2002-2008, The Perl Foundation
  */
 
 /*
@@ -25,7 +25,10 @@ enum {
     PDB_STOPPED     = 1 << 3,
     PDB_BREAK       = 1 << 4, /* Set only from debug_break */
     PDB_EXIT        = 1 << 5,
-    PDB_ENTER       = 1 << 6
+    PDB_ENTER       = 1 << 6,
+    PDB_GCDEBUG     = 1 << 7,
+    PDB_TRACING     = 1 << 8,
+    PDB_ECHO        = 1 << 9
 };
 
 enum {
@@ -136,7 +139,7 @@ typedef struct PDB_breakpoint *PDB_breakpoint_ptr;
 
 typedef struct PDB_breakpoint {
     opcode_t                *pc;
-    long                    id;
+    unsigned long           id;
     long                    skip;
     PDB_condition_t         *condition;
     PDB_breakpoint_ptr      prev;

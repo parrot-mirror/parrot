@@ -14,7 +14,9 @@ S02-builtin_data_types/num.t
 S02-builtin_data_types/range.t
 S02-builtin_data_types/subscripts_and_context.t
 S02-builtin_data_types/type.t
+S02-literals/array-interpolation.t
 S02-literals/autoref.t
+S02-literals/hash-interpolation.t
 S02-literals/hex_chars.t
 S02-literals/radix.t
 S02-magicals/dollar-underscore.t
@@ -56,6 +58,7 @@ S04-statements/while.t
 S05-metasyntax/changed.t
 S05-metasyntax/regex.t
 S05-metasyntax/unknown.t
+S05-substitution/subst.t
 S05-transliteration/trans.t
 S06-multi/syntax.t
 S06-multi/type-based.t
@@ -92,6 +95,7 @@ S29-array/pop.t
 S29-array/push.t
 S29-array/shift.t
 S29-array/unshift.t
+S29-hash/delete.t
 S29-list/first.t
 S29-list/grep.t
 S29-list/join.t
