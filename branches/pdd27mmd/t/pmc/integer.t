@@ -7,7 +7,7 @@ use warnings;
 use lib qw( . lib ../lib ../../lib );
 
 use Test::More;
-use Parrot::Test tests => 17;
+use Parrot::Test tests => 18;
 
 =head1 NAME
 
@@ -313,6 +313,28 @@ ok 2
 ok 3
 ok 4
 OUTPUT
+
+pasm_output_is( <<'CODE', <<'OUT', "add" );
+   new P0, 'Integer'
+   set P0, 5
+   new P1, 'Integer'
+   set P1, 10
+   new P2, 'Integer'
+   add P2, P0, P1
+   set S0, P2
+   print S0
+   print "\n"
+   set P0, "20"
+   set P1, "30"
+   add P2, P1, P0
+   set S0, P2
+   print S0
+   print "\n"
+   end
+CODE
+15
+30
+OUT
 
 pir_output_is( << 'CODE', << 'OUTPUT', "n_<oper>" );
 .sub main :main
