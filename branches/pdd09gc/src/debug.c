@@ -870,18 +870,16 @@ Parrot_debugger_init(PARROT_INTERP)
     TRACEDEB_MSG("Parrot_debugger_init");
 
     if (! interp->pdb) {
-        PDB_t *pdb = mem_allocate_zeroed_typed(PDB_t);
-        Parrot_Interp debugger = Parrot_new(interp);
-        interp->pdb     = pdb;
-        debugger->pdb   = pdb;
-        pdb->debugee    = interp;
-        pdb->debugger   = debugger;
+        PDB_t          *pdb      = mem_allocate_zeroed_typed(PDB_t);
+        Parrot_Interp   debugger = Parrot_new(interp);
+        interp->pdb              = pdb;
+        debugger->pdb            = pdb;
+        pdb->debugee             = interp;
+        pdb->debugger            = debugger;
 
         /* Allocate space for command line buffers, NUL terminated c strings */
-        pdb->cur_command = (char *)mem_sys_allocate(DEBUG_CMD_BUFFER_LENGTH + 1);
-        pdb->cur_command[0] = '\0';
-        pdb->last_command = (char *)mem_sys_allocate(DEBUG_CMD_BUFFER_LENGTH + 1);
-        pdb->last_command[0] = '\0';
+        pdb->cur_command = (char *)mem_sys_allocate_zeroed(DEBUG_CMD_BUFFER_LENGTH + 1);
+        pdb->last_command = (char *)mem_sys_allocate_zeroed(DEBUG_CMD_BUFFER_LENGTH + 1);
     }
 
     /* PDB_disassemble(interp, NULL); */
@@ -1083,8 +1081,11 @@ PDB_get_command(PARROT_INTERP)
                 close_script_file(interp);
                 return;
             }
-
+            ++pdb->script_line;
             chop_newline(buf);
+#if TRACE_DEBUGGER
+            fprintf(stderr, "script (%lu): '%s'\n", pdb->script_line, buf);
+#endif
 
             /* skip spaces */
             ptr = skip_whitespace(buf);
@@ -1093,26 +1094,12 @@ PDB_get_command(PARROT_INTERP)
        } while (*ptr == '\0' || *ptr == '#');
 
         if (pdb->state & PDB_ECHO)
-            Parrot_eprintf(pdb->debugger, "[%s]\n", buf);
-
-        /* RT #46117: handle command error and print out script line
-         *       PDB_run_command should return non-void value?
-         *       stop execution of script if fails
-         * RT #46115: avoid this verbose output? add -v flag? */
+            Parrot_eprintf(pdb->debugger, "[%lu %s]\n", pdb->script_line, buf);
 
 #if TRACE_DEBUGGER
         fprintf(stderr, "(script) %s\n", buf);
 #endif
 
-        #if 0
-        if (PDB_run_command(interp, buf)) {
-            IMCC_warning(interp, "script_file: "
-                "Error interpreting command (%s).\n",
-                buf);
-            close_script_file(interp);
-            return;
-        }
-        #endif
         strcpy(pdb->cur_command, buf);
     }
     else {
@@ -1176,6 +1163,7 @@ PDB_script_file(PARROT_INTERP, ARGIN(const char *command))
         return;
     }
     interp->pdb->script_file = fd;
+    interp->pdb->script_line = 0;
     TRACEDEB_MSG("PDB_script_file finished");
 }
 
@@ -1205,11 +1193,6 @@ PDB_run_command(PARROT_INTERP, ARGIN(const char *command))
 
     TRACEDEB_MSG("PDB_run_command");
 
-    if (cmdline)
-        cmdline = skip_command(cmdline);
-    else
-        return 0;
-
     cmd= get_command(c);
     if (cmd) {
         (* cmd->func)(pdb, cmdline);
@@ -1225,10 +1208,14 @@ PDB_run_command(PARROT_INTERP, ARGIN(const char *command))
         }
         else {
             PIO_eprintf(pdb->debugger,
-                        "Undefined command: \"%s\".  Try \"help\".", command);
+                        "Undefined command: \"%s\"", command);
+            if (pdb->script_file)
+                PIO_eprintf(pdb->debugger, " in line %lu", pdb->script_line);
+            PIO_eprintf(pdb->debugger, ".  Try \"help\".");
 #if TRACE_DEBUGGER
             fprintf(stderr, " (parse_command result: %li)", c);
 #endif
+            close_script_file(interp);
             return 1;
         }
     }
@@ -1355,7 +1342,7 @@ PDB_trace(PARROT_INTERP, ARGIN_NULLOK(const char *command))
     TRACEDEB_MSG("PDB_trace finished");
 }
 
-unsigned short condition_regtype(ARGIN(const char *cmd)) /* HEADERIZER SKIP */
+static unsigned short condition_regtype(ARGIN(const char *cmd)) /* HEADERIZER SKIP */
 {
     switch (*cmd) {
         case 'i':
@@ -1390,9 +1377,12 @@ PDB_condition_t *
 PDB_cond(PARROT_INTERP, ARGIN(const char *command))
 {
     PDB_condition_t *condition;
-    int              i, reg_number;
-    const char * auxcmd;
+    const char      *auxcmd;
     char             str[DEBUG_CMD_BUFFER_LENGTH + 1];
+    unsigned short   cond_argleft;
+    unsigned short   cond_type;
+    unsigned char    regleft;
+    int              i, reg_number;
 
     /* Return if no more arguments */
     if (!(command && *command)) {
@@ -1400,23 +1390,18 @@ PDB_cond(PARROT_INTERP, ARGIN(const char *command))
         return NULL;
     }
 
+    command = skip_whitespace(command);
 #if TRACE_DEBUGGER
     fprintf(stderr, "PDB_trace: '%s'\n", command);
 #endif
 
-    unsigned short cond_argleft = condition_regtype(command);
-
-    /* Allocate new condition */
-    condition = mem_allocate_typed(PDB_condition_t);
-
-    condition->type = cond_argleft;
+    cond_argleft = condition_regtype(command);
 
     /* get the register number */
     auxcmd = ++command;
-    condition->reg = (unsigned char)get_uint(&command, 0);
+    regleft = (unsigned char)get_uint(&command, 0);
     if (auxcmd == command) {
         PIO_eprintf(interp->pdb->debugger, "Invalid register\n");
-            mem_sys_free(condition);
             return NULL;
     }
 
@@ -1425,31 +1410,37 @@ PDB_cond(PARROT_INTERP, ARGIN(const char *command))
     switch (*command) {
         case '>':
             if (*(command + 1) == '=')
-                condition->type |= PDB_cond_ge;
+                cond_type = PDB_cond_ge;
             else
-                condition->type |= PDB_cond_gt;
+                cond_type = PDB_cond_gt;
             break;
         case '<':
             if (*(command + 1) == '=')
-                condition->type |= PDB_cond_le;
+                cond_type = PDB_cond_le;
             else
-                condition->type |= PDB_cond_lt;
+                cond_type = PDB_cond_lt;
             break;
         case '=':
             if (*(command + 1) == '=')
-                condition->type |= PDB_cond_eq;
+                cond_type = PDB_cond_eq;
             else
                 goto INV_COND;
             break;
         case '!':
             if (*(command + 1) == '=')
-                condition->type |= PDB_cond_ne;
+                cond_type = PDB_cond_ne;
             else
                 goto INV_COND;
             break;
+        case '\0':
+            if (cond_argleft != PDB_cond_str && cond_argleft != PDB_cond_pmc) {
+                PIO_eprintf(interp->pdb->debugger, "Invalid null condition\n");
+                return NULL;
+            }
+            cond_type = PDB_cond_notnull;
+            break;
         default:
 INV_COND:   PIO_eprintf(interp->pdb->debugger, "Invalid condition\n");
-            mem_sys_free(condition);
             return NULL;
     }
 
@@ -1461,75 +1452,80 @@ INV_COND:   PIO_eprintf(interp->pdb->debugger, "Invalid condition\n");
 
     command = skip_whitespace(command);
 
-    /* return if no more arguments */
-    if (!(command && *command)) {
+    /* return if no notnull condition and no more arguments */
+    if (!(command && *command) && (cond_type != PDB_cond_notnull)) {
         PIO_eprintf(interp->pdb->debugger, "Can't compare a register with nothing\n");
-        mem_sys_free(condition);
         return NULL;
     }
 
-    if (isalpha((unsigned char)*command)) {
-        /* It's a register - we first check that it's the correct type */
+    /* Allocate new condition */
+    condition = mem_allocate_zeroed_typed(PDB_condition_t);
 
-        unsigned short cond_argright = condition_regtype(command);
+    condition->type = cond_argleft | cond_type;
 
-        if (cond_argright != cond_argleft) {
-            PIO_eprintf(interp->pdb->debugger, "Register types don't agree\n");
-            mem_sys_free(condition);
-            return NULL;
-        }
+    if (cond_type != PDB_cond_notnull) {
 
-        /* Now we check and store the register number */
-        auxcmd = ++command;
-        reg_number = (int)get_uint(&command, 0);
-        if (auxcmd == command) {
-            PIO_eprintf(interp->pdb->debugger, "Invalid register\n");
+        if (isalpha((unsigned char)*command)) {
+            /* It's a register - we first check that it's the correct type */
+
+            unsigned short cond_argright = condition_regtype(command);
+
+            if (cond_argright != cond_argleft) {
+                PIO_eprintf(interp->pdb->debugger, "Register types don't agree\n");
                 mem_sys_free(condition);
                 return NULL;
-        }
+            }
 
-        if (reg_number < 0) {
-            PIO_eprintf(interp->pdb->debugger, "Out-of-bounds register\n");
+            /* Now we check and store the register number */
+            auxcmd = ++command;
+            reg_number = (int)get_uint(&command, 0);
+            if (auxcmd == command) {
+                PIO_eprintf(interp->pdb->debugger, "Invalid register\n");
+                    mem_sys_free(condition);
+                    return NULL;
+            }
+
+            if (reg_number < 0) {
+                PIO_eprintf(interp->pdb->debugger, "Out-of-bounds register\n");
+                mem_sys_free(condition);
+                return NULL;
+            }
+
+            condition->value         = mem_allocate_typed(int);
+            *(int *)condition->value = reg_number;
+        }
+        /* If the first argument was an integer */
+        else if (condition->type & PDB_cond_int) {
+            /* This must be either an integer constant or register */
+            condition->value             = mem_allocate_typed(INTVAL);
+            *(INTVAL *)condition->value  = (INTVAL)atoi(command);
+            condition->type             |= PDB_cond_const;
+        }
+        else if (condition->type & PDB_cond_num) {
+            condition->value               = mem_allocate_typed(FLOATVAL);
+            *(FLOATVAL *)condition->value  = (FLOATVAL)atof(command);
+            condition->type               |= PDB_cond_const;
+        }
+        else if (condition->type & PDB_cond_str) {
+            for (i = 1; ((command[i] != '"') && (i < DEBUG_CMD_BUFFER_LENGTH)); i++)
+                str[i - 1] = command[i];
+            str[i - 1] = '\0';
+#if TRACE_DEBUGGER
+            fprintf(stderr, "PDB_break: '%s'\n", str);
+#endif
+            condition->value = string_make(interp,
+                str, i - 1, NULL, 0);
+            condition->type |= PDB_cond_const;
+        }
+        else if (condition->type & PDB_cond_pmc) {
+            /* RT #46123 Need to figure out what to do in this case.
+             * For the time being, we just bail. */
+            PIO_eprintf(interp->pdb->debugger, "Can't compare PMC with constant\n");
             mem_sys_free(condition);
             return NULL;
         }
 
-        condition->value         = mem_allocate_typed(int);
-        *(int *)condition->value = reg_number;
     }
-    /* If the first argument was an integer */
-    else if (condition->type & PDB_cond_int) {
-        /* This must be either an integer constant or register */
-        condition->value             = mem_allocate_typed(INTVAL);
-        *(INTVAL *)condition->value  = (INTVAL)atoi(command);
-        condition->type             |= PDB_cond_const;
-    }
-    else if (condition->type & PDB_cond_num) {
-        condition->value               = mem_allocate_typed(FLOATVAL);
-        *(FLOATVAL *)condition->value  = (FLOATVAL)atof(command);
-        condition->type               |= PDB_cond_const;
-    }
-    else if (condition->type & PDB_cond_str) {
-        for (i = 1; ((command[i] != '"') && (i < DEBUG_CMD_BUFFER_LENGTH)); i++)
-            str[i - 1] = command[i];
-        str[i - 1] = '\0';
-#if TRACE_DEBUGGER
-        fprintf(stderr, "PDB_break: '%s'\n", str);
-#endif
-        condition->value = string_make(interp,
-            str, i - 1, NULL, 0);
-        condition->type |= PDB_cond_const;
-    }
-    else if (condition->type & PDB_cond_pmc) {
-        /* RT #46123 Need to figure out what to do in this case.
-         * For the time being, we just bail. */
-        PIO_eprintf(interp->pdb->debugger, "Can't compare PMC with constant\n");
-        mem_sys_free(condition);
-        return NULL;
-    }
-
-    /* We're not part of a list yet */
-    condition->next = NULL;
 
     return condition;
 }
@@ -1979,14 +1975,17 @@ PARROT_WARN_UNUSED_RESULT
 char
 PDB_check_condition(PARROT_INTERP, ARGIN(const PDB_condition_t *condition))
 {
+    Parrot_Context *ctx = CONTEXT(interp);
+
     TRACEDEB_MSG("PDB_check_condition");
+
+    PARROT_ASSERT(ctx);
 
     if (condition->type & PDB_cond_int) {
         INTVAL   i,  j;
-        /*
-         * RT #46125 verify register is in range
-         */
-        i = REG_INT(interp, condition->reg);
+        if (condition->reg >= ctx->n_regs_used[REGNO_INT])
+            return 0;
+        i = CTX_REG_INT(ctx, condition->reg);
 
         if (condition->type & PDB_cond_const)
             j = *(INTVAL *)condition->value;
@@ -2006,7 +2005,9 @@ PDB_check_condition(PARROT_INTERP, ARGIN(const PDB_condition_t *condition))
     else if (condition->type & PDB_cond_num) {
         FLOATVAL k,  l;
 
-        k = REG_NUM(interp, condition->reg);
+        if (condition->reg >= ctx->n_regs_used[REGNO_NUM])
+            return 0;
+        k = CTX_REG_NUM(ctx, condition->reg);
 
         if (condition->type & PDB_cond_const)
             l = *(FLOATVAL *)condition->value;
@@ -2026,7 +2027,12 @@ PDB_check_condition(PARROT_INTERP, ARGIN(const PDB_condition_t *condition))
     else if (condition->type & PDB_cond_str) {
         STRING  *m, *n;
 
-        m = REG_STR(interp, condition->reg);
+        if (condition->reg >= ctx->n_regs_used[REGNO_STR])
+            return 0;
+        m = CTX_REG_STR(ctx, condition->reg);
+
+        if (condition->type & PDB_cond_notnull)
+            return ! STRING_IS_NULL(m);
 
         if (condition->type & PDB_cond_const)
             n = (STRING *)condition->value;
@@ -2049,8 +2055,19 @@ PDB_check_condition(PARROT_INTERP, ARGIN(const PDB_condition_t *condition))
 
         return 0;
     }
+    else if (condition->type & PDB_cond_pmc) {
+        PMC *m;
 
-    return 0;
+        if (condition->reg >= ctx->n_regs_used[REGNO_PMC])
+            return 0;
+        m = CTX_REG_PMC(ctx, condition->reg);
+
+        if (condition->type & PDB_cond_notnull)
+            return ! PMC_IS_NULL(m);
+        return 0;
+    }
+    else
+        return 0;
 }
 
 /*
@@ -2591,25 +2608,19 @@ PDB_disassemble(PARROT_INTERP, SHIM(const char *command))
 
     TRACEDEB_MSG("PDB_disassemble");
 
-    pfile = mem_allocate_typed(PDB_file_t);
-    pline = mem_allocate_typed(PDB_line_t);
+    pfile = mem_allocate_zeroed_typed(PDB_file_t);
+    pline = mem_allocate_zeroed_typed(PDB_line_t);
 
     /* If we already got a source, free it */
     if (pdb->file)
         PDB_free_file(interp);
 
-    pline->number        = 1;
-    pline->label         = NULL;
-    pfile->line          = pline;
-    pfile->label         = NULL;
-    pfile->size          = 0;
-    pfile->source        = (char *)mem_sys_allocate(default_size);
-    pfile->sourcefilename = NULL;
-    pfile->next = NULL;
-    pline->source_offset = 0;
+    pfile->line   = pline;
+    pline->number = 1;
+    pfile->source = (char *)mem_sys_allocate(default_size);
 
-    alloced              = space = default_size;
-    code_end             = pc + interp->code->base.size;
+    alloced       = space = default_size;
+    code_end      = pc + interp->code->base.size;
 
     while (pc != code_end) {
         /* Grow it early */
@@ -2730,14 +2741,14 @@ PDB_free_file(PARROT_INTERP)
 
     while (file) {
         /* Free all of the allocated line structures */
-        PDB_line_t *line = file->line;
+        PDB_line_t  *line = file->line;
         PDB_label_t *label;
         PDB_file_t  *nfile;
 
         while (line) {
             PDB_line_t * const nline = line->next;
             mem_sys_free(line);
-            line  = nline;
+            line = nline;
         }
 
         /* Free all of the allocated label structures */
@@ -2838,15 +2849,19 @@ PDB_load_source(PARROT_INTERP, ARGIN(const char *command))
         if (c == '\n') {
             /* If the line has an opcode move to the next one,
                otherwise leave it with NULL to skip it. */
-            PDB_line_t *newline;
+            PDB_line_t *newline = mem_allocate_zeroed_typed(PDB_line_t);
+
             if (PDB_hasinstruction(pfile->source + pline->source_offset)) {
-                size_t n;
+                size_t n      = interp->op_info_table[*pc].op_count;
                 pline->opcode = pc;
-                n             = interp->op_info_table[*pc].op_count;
                 ADD_OP_VAR_PART(interp, interp->code, pc, n);
-                pc += n;
+                pc           += n;
+
+                /* don't walk off the end of the program into neverland */
+                if (pc >= interp->code->base.data + interp->code->base.size)
+                    return;
             }
-            newline              = mem_allocate_zeroed_typed(PDB_line_t);
+
             newline->number      = pline->number + 1;
             pline->next          = newline;
             pline                = newline;

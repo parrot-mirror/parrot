@@ -21,7 +21,7 @@ Tests the PhpArray PMC.
 .sub main :main
     .include 'include/test_more.pir'
 
-    plan(27)
+    plan(69)
 
     basic_get_set()
     stack_and_queue_ops()
@@ -32,6 +32,11 @@ Tests the PhpArray PMC.
     generic_iterator_tests()
     php_iterator_tests()
     php_array_func_tests()
+    shallow_cmp_tests()
+    um_wtf()
+    deep_cmp_tests()
+    shallow_equals_tests()
+    deep_equals_tests()
 .end
 
 .sub basic_get_set
@@ -40,7 +45,7 @@ Tests the PhpArray PMC.
     .local string s
     .local num n
 
-    p = new PhpArray
+    p = new 'PhpArray'
     s = p
     i = s == 'Array'
     ok(i, "unkeyed get string returns 'Array'")
@@ -77,7 +82,7 @@ Tests the PhpArray PMC.
     is_ok = i == 9
     ok(is_ok, "basic string-keyed get and set")
 
-    extra_pmc = new FixedBooleanArray
+    extra_pmc = new 'FixedBooleanArray'
     extra_pmc = 6
     p['pmc'] = extra_pmc
     p['float'] = 1.12345678
@@ -96,7 +101,7 @@ Tests the PhpArray PMC.
     s = p['string']
     unless s == 'one' goto basic_set_get_not_ok
 
-    extra_pmc = new FixedBooleanArray
+    extra_pmc = new 'FixedBooleanArray'
     extra_pmc = 6
     p[0] = extra_pmc
     p[1] = 1.12345678
@@ -128,8 +133,8 @@ basic_set_get_ok:
     .local string s
     .local num n
 
-    p = new PhpArray
-    ar = new ResizableIntegerArray
+    p = new 'PhpArray'
+    ar = new 'ResizableIntegerArray'
     ar[0] = 1234321
     ar[6] = 9876543
 
@@ -158,7 +163,7 @@ push_pop_not_ok:
 push_pop_ok:
     ok(is_ok, "push/pop with various values")
 
-    p = new PhpArray
+    p = new 'PhpArray'
     is_ok = 1
 
     unshift p, "foo"
@@ -191,7 +196,7 @@ unshift_shift_ok:
     .local string s
     .local int i, is_ok
 
-    p = new PhpArray
+    p = new 'PhpArray'
     is_ok = 1
 
     p[-124] = 0 #next_index should be 0  (assign -124)
@@ -230,7 +235,7 @@ ii_end:
     .local string s
     .local int is_ok
 
-    p = new PhpArray
+    p = new 'PhpArray'
     p[1] = 'fo' #as in shizzle
     s = p['1']
     is_ok = s == 'fo'
@@ -250,7 +255,7 @@ ii_end:
     .local int i, is_ok
     .local string s
 
-    p = new PhpArray
+    p = new 'PhpArray'
 
     p["one";2;3;"four";"five";6;7] = "magic"
     s = p["one";2;3;"four";"five";6;7]
@@ -272,7 +277,7 @@ ii_end:
     .local pmc p
     .local int is_ok, i
 
-    p = new PhpArray
+    p = new 'PhpArray'
     p['asf'] = 8
     is_ok = exists p['asf']
     ok(is_ok, "shallow string-keyed exists")
@@ -307,7 +312,7 @@ ii_end:
     .local string s, val_str
     .local int is_ok
 
-    p = new PhpArray
+    p = new 'PhpArray'
     p['asdf'] = 'im '
     p[444444] = 'not in '
     p[0]      = 'ur '
@@ -339,7 +344,7 @@ iter_done1:
     .local string s, val_str, s1, s2
     .local int is_ok
 
-    p = new PhpArray
+    p = new 'PhpArray'
 
     p["skip"] = "/dev/null"
     p[9]      = "Beware the Jabberwock"
@@ -424,7 +429,7 @@ iter_done1:
 
 
     is_ok = 1
-    p = new PhpArray
+    p = new 'PhpArray'
     p['a'] = "p['a']"
     p['b'] = "p['b']"
     p[3]   = "p[3]"
@@ -460,7 +465,7 @@ iter_test_done:
 
 
     s = ''
-    p = new PhpArray
+    p = new 'PhpArray'
     push p, 'SKIP'
     push p, 'I '
     push p, 'SKIP'
@@ -488,7 +493,7 @@ iter_skip_done:
 
 
     is_ok = 1
-    p = new PhpArray
+    p = new 'PhpArray'
     push p, "This "
     push p, "is "
     push p, "yet "
@@ -539,7 +544,7 @@ each_iter_end:
     .local string s
     .local int is_ok
 
-    p = new PhpArray
+    p = new 'PhpArray'
     p['pears']        = 'pear tree'
     p['donuts']       = 'donut tree' #they're healthy if they grow on trees
     p['cheezburgers'] = 'cheezburger tree' #DO WANT
@@ -562,9 +567,296 @@ current_and_key_not_ok:
     is_ok = 0
 current_and_key_ok:
     ok(is_ok, "current() and key() work properly")
-
 .end
 
+.sub shallow_cmp_tests
+    .local pmc p1, p2
+    .local int i, j, is_ok
+
+    p1 = new 'PhpArray'
+    p2 = new 'PhpArray'
+    i = cmp p1, p2
+    is_ok = i == 0
+    ok(is_ok, "cmp empty phparrays")
+    i = cmp p1, p1
+    is_ok = i == 0
+    ok(is_ok, "cmp empty phparray against itself")
+
+    p1['quux'] = 90
+    p1[23141]  = 1.0202
+    p1['awfe'] = 0
+    p1['poi']  = 'sdfeww'
+
+    p2['poi']  = 'sdfeww'
+    p2['awfe'] = 0
+    p2['quux'] = 90
+    p2[23141]  = 1.0202
+
+    i = cmp p1, p2
+    is_ok = ! i
+    ok(is_ok, "cmp similar phparrays with different ordering (a)")
+    i = cmp p2, p1
+    is_ok = ! i
+    ok(is_ok, "cmp similar phparrays with different ordering (b)")
+
+    p1['adfwef'] = 'adfwef'
+    is_ok = cmp p1, p2
+    ok(is_ok, "cmp different phparrays (different size, a)")
+    is_ok = cmp p2, p1
+    ok(is_ok, "cmp different phparrays (different size, b)")
+
+    p2['adfwef'] = 'ADFWEF'
+    is_ok = cmp p1, p2
+    ok(is_ok, "cmp different phparrays (same size, a)")
+    is_ok = cmp p2, p1
+    ok(is_ok, "cmp different phparrays (same size, b)")
+
+    p2['adfwef'] = 'adfwef'
+    i = cmp p1, p2
+    is_ok = ! i
+    ok(is_ok, "cmp similar phparrays again (a)")
+    i = cmp p2, p1
+    is_ok = ! i
+    ok(is_ok, "cmp similar phparrays again (b)")
+.end
+
+.sub um_wtf
+    .local pmc p1, p2
+    .local int is_ok, i
+
+    #note: this is how Zend PHP works.  Try the following for fun:
+    #$a['a'] = 1; $a['b'] = 2; $b['b'] = 1; $b['a'] = 2;
+    #if ($a > $b) echo "a > b\n"; if ($b > $a) echo "b > a\n";
+    #if ($a < $b) echo "a < b\n"; if ($b < $a) echo "b < a\n";
+
+    p1 = new 'PhpArray'
+    p2 = new 'PhpArray'
+    p1['a'] = 1
+    p1['b'] = 2
+    p2['b'] = 1
+    p2['a'] = 2
+
+    i = cmp p1, p2
+    is_ok = i == -1
+    ok(is_ok, "goofy cmp check, part 1")
+    i = cmp p2, p1
+    is_ok = i == -1
+    ok(is_ok, "goofy cmp check, part 2")
+.end
+
+.sub deep_cmp_tests
+    .local pmc p1, p1a, p1b, p1c, p1d
+    .local pmc p2, p2a, p2b, p2c, p2d
+    .local int is_ok, i, j
+
+    p1 = new 'PhpArray'
+    p1a = new 'PhpArray' #empty
+    p1b = new 'PhpArray'
+    p1c = new 'PhpArray' #empty
+    p1d = new 'PhpArray'
+
+    p2 = new 'PhpArray'
+    p2a = new 'PhpArray' #empty
+    p2b = new 'PhpArray'
+    p2c = new 'PhpArray' #empty
+    p2d = new 'PhpArray'
+
+    p1['a'] = 1.2
+    p1[2]   = 'c'
+    p1[4]   = p1a #empty
+    p1['w'] = 'x'
+    p1['c'] = p1b
+    p1[4;5;6;7;8] = 9
+
+    p1b['a'] = p1c #empty
+    p1b['b'] = p1d
+    p1b['c'] = ''
+
+    p1d['w'] = 2.5
+    p1d['x'] = 6
+
+    is_ok = cmp p1, p2
+    ok(is_ok, "cmp deep vs empty (a)")
+    is_ok = cmp p2, p1
+    ok(is_ok, "cmp deep vs empty (b)")
+
+    p2['a'] = 1.2
+    p2[2]   = 'c'
+    p2[4]   = p2a #empty
+    p2['w'] = 'x'
+    p2['c'] = p2b
+    p2[4;5;6;7;8] = 8 #different
+
+    is_ok = cmp p1, p2
+    ok(is_ok, "cmp deep vs deep, not same (a)")
+    is_ok = cmp p2, p1
+    ok(is_ok, "cmp deep vs deep, not same (b)")
+
+    p2b['a'] = p2c #empty
+    p2b['b'] = p2d
+    p2b['c'] = ''
+
+    p2d['w'] = 2.5
+    p2d['x'] = 6
+
+    is_ok = cmp p1, p2
+    ok(is_ok, "cmp deep vs deep, almost same (a)")
+    is_ok = cmp p2, p1
+    ok(is_ok, "cmp deep vs deep, almost same (b)")
+
+    p2[4;5;6;7;8] = 9
+
+    i = cmp p1, p2
+    is_ok = ! i
+    ok(is_ok, "cmp deep vs deep, same (a)")
+    i = cmp p2, p1
+    is_ok = ! i
+    ok(is_ok, "cmp deep vs deep, same (b)")
+
+    p2[4;5;6;7;7] = ''
+
+    is_ok = cmp p1, p2
+    ok(is_ok, "cmp deep vs deep, different again (a)")
+    is_ok = cmp p2, p1
+    ok(is_ok, "cmp deep vs deep, different again (b)")
+
+    i = cmp p1, p1
+    is_ok = ! i
+    ok(is_ok, "cmp a deep array against itself")
+.end
+
+.sub shallow_equals_tests
+    .local pmc p1, p2
+    .local int i, j, is_ok
+
+    p1 = new 'PhpArray'
+    p2 = new 'PhpArray'
+    is_ok = p1 == p2
+    ok(is_ok, "eq empty arrays")
+
+    p1['quux'] = 90
+    p1[23141]  = 1.0202
+    p1['awfe'] = 0
+    p1['poi']  = 'sdfeww'
+
+    p2['poi']  = 'sdfeww'
+    p2['awfe'] = 0
+    p2['quux'] = 90
+    p2[23141]  = 1.0202
+
+    is_ok = p1 == p2
+    ok(is_ok, "eq similar phparrays with different ordering (a)")
+    is_ok = p2 == p1
+    ok(is_ok, "eq similar phparrays with different ordering (b)")
+
+    p1['adfwef'] = 'adfwef'
+    is_ok = 1
+    i = p1 == p2
+    is_ok = ! i
+    ok(is_ok, "eq different phparrays (different size, a)")
+    i = p2 == p1
+    is_ok = ! i
+    ok(is_ok, "eq different phparrays (different size, b)")
+
+    p2['adfwef'] = 'ADFWEF'
+    is_ok = 1
+    i = p1 == p2
+    is_ok = ! i
+    ok(is_ok, "eq different phparrays (same size, a)")
+    i = p2 == p1
+    is_ok = ! i
+    ok(is_ok, "eq different phparrays (same size, b)")
+
+    p2['adfwef'] = 'adfwef'
+    is_ok = p1 == p2
+    ok(is_ok, "eq similar phparrays again (a)")
+    is_ok = p2 == p1
+    ok(is_ok, "eq similar phparrays again (b)")
+.end
+
+
+.sub deep_equals_tests
+    .local pmc p1, p1a, p1b, p1c, p1d
+    .local pmc p2, p2a, p2b, p2c, p2d
+    .local int is_ok, i, j
+
+    p1 = new 'PhpArray'
+    p1a = new 'PhpArray' #empty
+    p1b = new 'PhpArray'
+    p1c = new 'PhpArray' #empty
+    p1d = new 'PhpArray'
+
+    p2 = new 'PhpArray'
+    p2a = new 'PhpArray' #empty
+    p2b = new 'PhpArray'
+    p2c = new 'PhpArray' #empty
+    p2d = new 'PhpArray'
+
+    p1['a'] = 1.2
+    p1[2]   = 'c'
+    p1[4]   = p1a #empty
+    p1['w'] = 'x'
+    p1['c'] = p1b
+    p1[4;5;6;7;8] = 9
+
+    p1b['a'] = p1c #empty
+    p1b['b'] = p1d
+    p1b['c'] = ''
+
+    p1d['w'] = 2.5
+    p1d['x'] = 6
+
+    i = p1 == p2
+    is_ok = ! i
+    ok(is_ok, "eq deep vs empty (a)")
+    i = p2 == p1
+    is_ok = ! i
+    ok(is_ok, "eq deep vs empty (b)")
+
+    p2['a'] = 1.2
+    p2[2]   = 'c'
+    p2[4]   = p2a #empty
+    p2['w'] = 'x'
+    p2['c'] = p2b
+    p2[4;5;6;7;8] = 8 #different
+
+    i = p1 == p2
+    is_ok = ! i
+    ok(is_ok, "eq deep vs deep, not same (a)")
+    i = p2 == p1
+    is_ok = ! i
+    ok(is_ok, "eq deep vs deep, not same (b)")
+
+    p2b['a'] = p2c #empty
+    p2b['b'] = p2d
+    p2b['c'] = ''
+
+    p2d['w'] = 2.5
+    p2d['x'] = 6
+
+    i = p1 == p2
+    is_ok = ! i
+    ok(is_ok, "eq deep vs deep, almost same (a)")
+    i = p2 == p1
+    is_ok = ! i
+    ok(is_ok, "eq deep vs deep, almost same (a)")
+
+    p2[4;5;6;7;8] = 9
+
+    i = p1 == p2
+    ok(is_ok, "cmp deep vs deep, same (a)")
+    i = p2 == p1
+    ok(is_ok, "cmp deep vs deep, same (b)")
+
+    p2[4;5;6;7;7] = ''
+
+    i = p1 == p2
+    is_ok = ! i
+    ok(is_ok, "cmp deep vs deep, different again (a)")
+    i = p2 == p1
+    is_ok = ! i
+    ok(is_ok, "cmp deep vs deep, different again (b)")
+.end
 # Local Variables:
 #   mode: pir
 #   fill-column: 100

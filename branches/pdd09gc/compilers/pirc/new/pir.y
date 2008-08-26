@@ -15,6 +15,7 @@ pir.y
 
 This is a complete rewrite of the parser for the PIR language.
 
+=cut
 
 TODO:
 1. [done 9/8/8]  fix argument stuff related to the :named flag.
@@ -25,8 +26,6 @@ TODO:
 6. [done 12/8/8] write vanilla register allocator
 7. generate PBC, using Parrot_PackFile (and related) data structures. This needs
    linkage to libparrot, which seems to fail.
-
-=cut
 
 */
 
@@ -135,8 +134,8 @@ static int evaluate_i_i(int a, pir_rel_operator op, int b);
 static int evaluate_n_n(double a, pir_rel_operator op, double b);
 static int evaluate_i_n(int a, pir_rel_operator op, double b);
 static int evaluate_n_i(double a, pir_rel_operator op, int b);
-static int evaluate_s_s(char *a, pir_rel_operator op, char *b);
-static int evaluate_s(char *s);
+static int evaluate_s_s(char * const a, pir_rel_operator op, char * const b);
+static int evaluate_s(char * const s);
 static char *concat_strings(char *a, char *b);
 
 
@@ -303,7 +302,7 @@ extern YY_DECL;
              opt_paren_string
              paren_string
              local_var_name
-             const_name
+             special_op
 
 %type <targ> sub
              method
@@ -665,9 +664,9 @@ assignment_stat   : assignment "\n"
 
 /*
 
-=head2 Constant folding and Instruction Selection
+=head1 INSTRUCTION SELECTION
 
-Constant folding is implemented in the parser. This is done by writing
+Instruction selection is implemented in the parser. This is done by writing
 many specific alternatives, instead of using C<general> rules that
 would match all input. This way, the parser's matching mechanism is
 used to select specific cases, for instance adding 2 integer numbers.
@@ -677,28 +676,30 @@ by selecting more efficient equivalent instructions.
 
 The table below specifies how this is done. Terminals are numbered and
 referenced using YACC syntax ($1 for the first terminal, $2 for the
-second, etc.).
+second, etc.). This table only lists the special cases; normal cases,
+such as C<$I0 = $I1 + 2>, where each of the operands is different are
+not listed.
 
 
- rule                                   | instruction         | condition
- =================================================================================
- target '=' {integer, number}           | set $1, $3          | $3 != 0
-                                        | null $1             | $3 == 0
-                                        |                     |
- target '=' target                      | set $1, $3          | $1 != $3
-                                        | noop                | $1 == $3
-                                        |                     |
- target '=' target binop {integer,      | $4 $1, $3, $5       | $1 != $3
-                          number}       | inc/dec $1          | $1 == $3, $5 == 1, $4 == {'+', '-'}
-                                        | noop                | $1 == $3, $5 == 0, $4 == {'+', '-'}
-                                        | null $1             | $1 == $3, $5 == 0, $4 == {'*'}
-                                        | error: divide by 0  | $1 == $3, $5 == 0, $4 == {'/', '//'}
-                                        | $4 $1, $5           | $1 == $3, $5 != {0, 1}
-                                        |                     |
- target '=' target binop {string,       | $4 $1, $5           | $1 == $3
-                          target}       | $4 $1, $3, $5       | $1 != $3
-                                        |                     |
+ rule              | instruction         | condition
+ =============================================================
+ T = 0             | null $1             |
+                   |                     |
+ T = T             | set $1, $3          | $1 != $3
+                   | noop                | $1 == $3
+                   |                     |
+ T = T * 0         | null $1             | $1 == $3
+ T = T / 1         | noop                | $1 == $3
+ T = T / 0         | error: divide by 0  | $1 == $3
+                   |                     |
+ T = T + 1         | inc $1              | $1 == $3
+ T = T + {I,N}     | add $1, $5          | $1 == $3
+ T = T + 0         | noop                | $1 == $3
+                   |                     |
+                   |                     |
 
+C<T> means C<target>, C<I> means C<integer constant>, C<N> means C<numeric constant>,
+and C<S> means C<string literal>.
 
 =cut
 
@@ -838,6 +839,30 @@ augmentive_expr   : augm_add_op TK_INTC
                   ;
 
 
+/*
+
+=head1 CONSTANT FOLDING
+
+A binary expression consists of two expressions, separated by a binary
+operator. An expression can be a C<target> or a literal value. Such a
+value can be an C<integer>, C<floating-point> or C<string> literal.
+
+In the case that both operands are constants, we can pre-evaluate
+the result of these constants, effectively preventing any calculation
+during runtime. For instance:
+
+ $I0 = 42 + 1
+
+can be pre-evaluated as
+
+ $I0 = 43
+
+which will be assembled using the C<set> opcode. Likewise, concatenation
+of two strings is done during compile time.
+
+=cut
+
+*/
 binary_expr       : TK_INTC binop target
                          { set_instrf(lexer, opnames[$2], "%i%T", $1, $3); }
                   | TK_NUMC binop target
@@ -1139,6 +1164,15 @@ math_instruction  : math_op target ',' TK_INTC
                         }
                   ;
 
+/* Because instruction selection is implemented in the parser, some instructions are
+ * handled in a special way: these are some math. operators and the C<set> opcode.
+ * These tokens must therefore be handled as separate tokens, which also means they
+ * must be handled as a possible alternative for identifiers (as opcode names are
+ * allowed as identifiers).
+ * Whenever a certain opcode is handled specially in the parser, it must be added
+ * to the C<special_op> rule.
+ */
+
 math_op           : "add"    { $$ = OP_ADD; }
                   | "sub"    { $$ = OP_SUB; }
                   | "mul"    { $$ = OP_MUL; }
@@ -1146,6 +1180,9 @@ math_op           : "add"    { $$ = OP_ADD; }
                   | "fdiv"   { $$ = OP_FDIV; }
                   ;
 
+special_op        : math_op  { $$ = opnames[$1]; }
+                  | "set"    { $$ = "set"; }
+                  ;
 
 conditional_stat  : conditional_instr "\n"
                   ;
@@ -1246,8 +1283,6 @@ local_id          : local_var_name has_unique_reg
 
 local_var_name    : identifier
                         { $$ = $1; }
-                  | math_op
-                        { $$ = opnames[$1]; }
                   | TK_SYMBOL
                         { /* if a symbol was found, that means it was already declared */
                           yyerror(yyscanner, lexer, "local symbol already declared!");
@@ -1593,13 +1628,13 @@ globalconst_decl      : ".globalconst" const_tail
                             { /* XXX is .globalconst to be kept? */ }
                       ;
 
-const_tail            : "int" const_name '=' TK_INTC
+const_tail            : "int" identifier '=' TK_INTC
                             { $$ = new_named_const(INT_TYPE, $2, $4); }
-                      | "num" const_name '=' TK_NUMC
+                      | "num" identifier '=' TK_NUMC
                             { $$ = new_named_const(NUM_TYPE, $2, $4); }
-                      | "string" const_name '=' TK_STRINGC
+                      | "string" identifier '=' TK_STRINGC
                             { $$ = new_named_const(STRING_TYPE, $2, $4); }
-                      | "pmc" const_name '=' TK_STRINGC
+                      | "pmc" identifier '=' TK_STRINGC
                             { $$ = new_named_const(PMC_TYPE, $2, $4); }
                       /* this might be useful, for:
                          .const "Sub" foo = "foo" # make a Sub PMC of subr. "foo"
@@ -1607,16 +1642,11 @@ const_tail            : "int" const_name '=' TK_INTC
 
                         Is: .const pmc x = 'foo' any useful? Type of x is not clear.
 
-                      | TK_STRINGC const_name '=' constant
+                      | TK_STRINGC identifier '=' constant
                             { $$ = new_pmc_const($1, $2, $4); }
                       */
                       ;
 
-const_name            : identifier
-                            { $$ = $1; }
-                      | math_op
-                            { $$ = opnames[$1]; }
-                      ;
 
 
 /* Expressions, variables and operators */
@@ -1669,6 +1699,7 @@ symbol      : TK_PREG    { $$ = reg(lexer, PMC_TYPE, $1);    }
 
 identifier  : TK_IDENT
             | TK_PARROT_OP
+            | special_op
             ;
 
 unop        : '-'            { $$ = "neg"; }
@@ -2228,7 +2259,7 @@ result is returned.
 
 */
 static int
-evaluate_s_s(char *a, pir_rel_operator op, char *b) {
+evaluate_s_s(char * const a, pir_rel_operator op, char * const b) {
     int result = strcmp(a, b);
 
     switch (op) {
@@ -2262,7 +2293,7 @@ Otherwise, it's true.
 
 */
 static int
-evaluate_s(char *s) {
+evaluate_s(char * const s) {
     int strlen_s = strlen(s);
 
     if (strlen_s > 0) {
