@@ -4,7 +4,7 @@
 PARROT_ARGS =
 
 ## configuration settings
-LANG          = lolcode
+TMPL          = lolcode
 BUILD_DIR     = @build_dir@
 LOAD_EXT      = @load_ext@
 O             = @o@
@@ -18,15 +18,16 @@ LN_S          = @lns@
 PERL          = @perl@
 RM_RF         = @rm_rf@
 CP            = @cp@
+MKPATH        = @mkpath@
+POD2MAN       = pod2man
 PARROT        = ../../parrot@exe@
-CAT           = $(PERL) -MExtUtils::Command -e cat
 PBC_TO_EXE    = ../../pbc_to_exe@exe@
+CAT           = $(PERL) -MExtUtils::Command -e cat
 BUILD_DYNPMC  = $(PERL) $(BUILD_DIR)/tools/build/dynpmc.pl
 RECONFIGURE   = $(PERL) $(BUILD_DIR)/tools/dev/reconfigure.pl
-POD2MAN	      = pod2man
-#+(darwin):
-#+(darwin):# MACOSX_DEPLOYMENT_TARGET must be defined for OS X compilation/linking
-#+(darwin):export MACOSX_DEPLOYMENT_TARGET := @osx_version@
+#IF(darwin):
+#IF(darwin):# MACOSX_DEPLOYMENT_TARGET must be defined for OS X compilation/linking
+#IF(darwin):export MACOSX_DEPLOYMENT_TARGET := @osx_version@
 
 ## places to look for things
 PARROT_DYNEXT = $(BUILD_DIR)/runtime/parrot/dynext
@@ -104,17 +105,17 @@ test: all
 
 # TODO: rename build_dir. basic run for missing libs
 test-installable : installable
-	./installable_$(LANG)@exe@ t/00-sanity.t
+	./installable_$(TMPL)@exe@ t/00-sanity.t
 
 install : installable
-	$(CP) installable_$(LANG)@exe@ $(DESTDIR)$(BIN_DIR)/parrot-$(LANG)@exe@
-	$(POD2MAN) $(LANG).pir > $(DESTDIR)$(MANDIR)/man1/parrot-$(LANG).1
+	$(CP) installable_$(TMPL)@exe@ $(DESTDIR)$(BIN_DIR)/parrot-$(TMPL)@exe@
+	$(POD2MAN) $(TMPL).pir > $(DESTDIR)$(MANDIR)/man1/parrot-$(TMPL).1
 
-installable : installable_$(LANG)@exe@
-	$(CP) installable_$(LANG)@exe@ $(BUILD_DIR)
+installable : installable_$(TMPL)@exe@
+	$(CP) installable_$(TMPL)@exe@ $(BUILD_DIR)
 
-installable_$(LANG)@exe@ : $(LANG).pbc
-	$(PBC_TO_EXE) $(LANG).pbc --install
+installable_$(TMPL)@exe@ : $(TMPL).pbc
+	$(PBC_TO_EXE) $(TMPL).pbc --install
 
 # this target has nothing to do
 testclean:

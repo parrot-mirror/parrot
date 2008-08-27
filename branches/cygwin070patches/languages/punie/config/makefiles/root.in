@@ -1,25 +1,26 @@
 # $Id$
 
 # Setup some commands
-LANG     = punie
-LN_S     = @lns@
-PERL     = @perl@
-RM_F     = @rm_f@
-PARROT   = ../../parrot@exe@
+TMPL          = punie
+LN_S          = @lns@
+PERL          = @perl@
+RM_F          = @rm_f@
+CP            = @cp@
+MKPATH        = @mkpath@
+POD2MAN       = pod2man
+PARROT        = ../../parrot@exe@
+PBC_TO_EXE    = ../../pbc_to_exe@exe@
 BUILD_DIR     = @build_dir@
 BIN_DIR       = @bin_dir@
 LIB_DIR       = @lib_dir@
 DOC_DIR       = @doc_dir@
 MANDIR	      = @mandir@
-PBC_TO_EXE    = ../../pbc_to_exe@exe@
 RECONFIGURE   = $(PERL) @build_dir@/tools/dev/reconfigure.pl
 PGE_DIR       = ../../compilers/pge
 NQP_DIR       = ../../compilers/nqp
-CP            = @cp@
-POD2MAN	      = pod2man
-#+(darwin):
-#+(darwin):# MACOSX_DEPLOYMENT_TARGET must be defined for OS X compilation/linking
-#+(darwin):export MACOSX_DEPLOYMENT_TARGET := @osx_version@
+#IF(darwin):
+#IF(darwin):# MACOSX_DEPLOYMENT_TARGET must be defined for OS X compilation/linking
+#IF(darwin):export MACOSX_DEPLOYMENT_TARGET := @osx_version@
 
 PARROT_LIBRARY = ../../runtime/parrot/library
 PGE_LIBRARY   = ../../runtime/parrot/library/PGE
@@ -71,26 +72,26 @@ test: all
 
 # regenerate the Makefile
 Makefile: config/makefiles/root.in
-	cd $(BUILD_DIR) && $(RECONFIGURE) --step=gen::languages --languages=$(LANG)
+	cd $(BUILD_DIR) && $(RECONFIGURE) --step=gen::languages --languages=$(TMPL)
 
 # TODO: rename build_dir. basic run for missing libs
 test-installable : installable
-	./installable_$(LANG)@exe@ demo.p1
+	./installable_$(TMPL)@exe@ demo.p1
 
 install : installable
-	$(CP) installable_$(LANG)@exe@ $(DESTDIR)$(BIN_DIR)/parrot-$(LANG)@exe@
-	$(POD2MAN) punie.pir > $(DESTDIR)$(MANDIR)/man1/parrot-$(LANG).1
-	mkdir $(DESTDIR)$(DOC_DIR)/languages/$(LANG)
-	$(CP) $(DOCS) $(DESTDIR)$(DOC_DIR)/languages/$(LANG)
+	$(CP) installable_$(TMPL)@exe@ $(DESTDIR)$(BIN_DIR)/parrot-$(TMPL)@exe@
+	$(POD2MAN) punie.pir > $(DESTDIR)$(MANDIR)/man1/parrot-$(TMPL).1
+	$(MKPATH) $(DESTDIR)$(DOC_DIR)/languages/$(TMPL)
+	$(CP) $(DOCS) $(DESTDIR)$(DOC_DIR)/languages/$(TMPL)
 
-$(LANG)@exe@: $(LANG).pbc
-	$(PBC_TO_EXE) $(LANG).pbc
+$(TMPL)@exe@: $(TMPL).pbc
+	$(PBC_TO_EXE) $(TMPL).pbc
 
-installable : installable_$(LANG)@exe@
-	$(CP) installable_$(LANG)@exe@ $(BUILD_DIR)
+installable : installable_$(TMPL)@exe@
+	$(CP) installable_$(TMPL)@exe@ $(BUILD_DIR)
 
-installable_$(LANG)@exe@ : $(LANG).pbc
-	$(PBC_TO_EXE) $(LANG).pbc --install
+installable_$(TMPL)@exe@ : $(TMPL).pbc
+	$(PBC_TO_EXE) $(TMPL).pbc --install
 
 testclean:
 	$(RM_F) "t/*.p1" "t/*.out" "t/*.pir"

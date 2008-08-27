@@ -4,8 +4,8 @@ PERL     = @perl@
 RM_F     = @rm_f@
 PARROT   = ../../parrot@exe@
 RECONFIGURE   = $(PERL) @build_dir@/tools/dev/reconfigure.pl
-#+(cygwin):SHRPENV  = env PATH="@build_dir@/blib/lib:$(PATH)"
-#-(cygwin):SHRPENV  = env LD_RUN_PATH=@build_dir@/blib/lib
+#IF(cygwin):SHRPENV  = env PATH="@build_dir@/blib/lib:$(PATH)"
+#ELSIF(!win32):SHRPENV  = env LD_RUN_PATH="@build_dir@/blib/lib"
 
 TOOL_DIR = ../..
 PGE_DIR  = ../../compilers/pge

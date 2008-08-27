@@ -2,7 +2,7 @@
 # $Id$
 
 ## configuration settings
-LANG     = lua
+TMPL     = lua
 O        = @o@
 LOAD_EXT = @load_ext@
 
@@ -17,9 +17,9 @@ PGE         = $(PARROT) ../../runtime/parrot/library/PGE/Perl6Grammar.pir
 TGE         = $(PARROT) ../../compilers/tge/tgc.pir
 RECONFIGURE = $(PERL) @build_dir@/tools/dev/reconfigure.pl
 PMCBUILD = $(PERL) @build_dir@/tools/build/dynpmc.pl
-#+(darwin):
-#+(darwin):# MACOSX_DEPLOYMENT_TARGET must be defined for OS X compilation/linking
-#+(darwin):export MACOSX_DEPLOYMENT_TARGET := @osx_version@
+#IF(darwin):
+#IF(darwin):# MACOSX_DEPLOYMENT_TARGET must be defined for OS X compilation/linking
+#IF(darwin):export MACOSX_DEPLOYMENT_TARGET := @osx_version@
 
 ## places to look for things
 LIBPATH       = src/lib
@@ -128,14 +128,14 @@ all: \
 
 # TODO: rename build_dir. basic run for missing libs
 test-installable : installable
-	echo "a=1" | ./installable_$(LANG)@exe@
+	echo "a=1" | ./installable_$(TMPL)@exe@
 
 install : installable
-	cp installable_$(LANG)@exe@ $(DESTDIR)$(BIN_DIR)/parrot-$(LANG)@exe@
+	$(CP) installable_$(TMPL)@exe@ $(DESTDIR)$(BIN_DIR)/parrot-$(TMPL)@exe@
 	@cd $(PMCDIR) && $(PMCBUILD) copy "--destination=$(DESTDIR)$(LIB_DIR)/parrot/dynext" $(PMCS)
-	pod2man doc/running.pod > $(DESTDIR)$(MANDIR)/man1/parrot-$(LANG).1
-	mkdir $(DESTDIR)$(DOC_DIR)/languages/$(LANG)
-	cp $(DOCS) $(DESTDIR)$(DOC_DIR)/languages/$(LANG)
+	$(POD2MAN) doc/running.pod > $(DESTDIR)$(MANDIR)/man1/parrot-$(TMPL).1
+	$(MKPATH) $(DESTDIR)$(DOC_DIR)/languages/$(TMPL)
+	$(CP) $(DOCS) $(DESTDIR)$(DOC_DIR)/languages/$(TMPL)
 
 src/lua51_testlex_gen.pir: src/lua51_testlex.pg
 	$(PGE) --output=src/lua51_testlex_gen.pir src/lua51_testlex.pg
@@ -266,7 +266,7 @@ src/yapp/Lua/parser.pm: src/yapp/Lua/lua51.yp
 
 # regenerate the Makefile
 Makefile: config/makefiles/root.in
-	cd ../.. && $(RECONFIGURE) --step=gen::languages --languages=$(LANG)
+	cd ../.. && $(RECONFIGURE) --step=gen::languages --languages=$(TMPL)
 
 help:
 	@echo ""
@@ -319,7 +319,7 @@ BUILD_CLEANERS = \
  "$(PMCDIR)/*$(LOAD_EXT)" \
  "$(PMCDIR)/*$(O)" \
  "$(LIBPATH)/*.pbc" \
- installable_$(LANG)@exe@ \
+ installable_$(TMPL)@exe@ \
 
 clean:
 	$(RM_F) $(BUILD_CLEANERS) $(TEST_CLEANERS)

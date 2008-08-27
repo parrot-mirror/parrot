@@ -13,13 +13,15 @@ LN_S          = @lns@
 PERL          = @perl@
 RM_RF         = @rm_rf@
 CP            = @cp@
+MKPATH        = @mkpath@
+POD2MAN       = pod2man
 PARROT        = ../../parrot@exe@
 CAT           = $(PERL) -MExtUtils::Command -e cat
 BUILD_DYNPMC  = $(PERL) $(BUILD_DIR)/tools/build/dynpmc.pl
 RECONFIGURE   = $(PERL) $(BUILD_DIR)/tools/dev/reconfigure.pl
-#+(darwin):
-#+(darwin):# MACOSX_DEPLOYMENT_TARGET must be defined for OS X compilation/linking
-#+(darwin):export MACOSX_DEPLOYMENT_TARGET := @osx_version@
+#IF(darwin):
+#IF(darwin):# MACOSX_DEPLOYMENT_TARGET must be defined for OS X compilation/linking
+#IF(darwin):export MACOSX_DEPLOYMENT_TARGET := @osx_version@
 
 ## places to look for things
 PARROT_DYNEXT = $(BUILD_DIR)/runtime/parrot/dynext

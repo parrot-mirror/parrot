@@ -1,7 +1,7 @@
 # $Id$
 
 # Makefile for languages/Zcode
-LANG	      = Zcode
+TMPL	      = Zcode
 
 # Setup of some commands
 BUILD_DIR  = @build_dir@
@@ -9,9 +9,9 @@ PARROT     = ../../parrot@exe@
 PERL       = @perl@
 RM_F       = @rm_f@
 RECONFIGURE   = $(PERL) $(BUILD_DIR)/tools/dev/reconfigure.pl
-#+(darwin):
-#+(darwin):# MACOSX_DEPLOYMENT_TARGET must be defined for OS X compilation/linking
-#+(darwin):export MACOSX_DEPLOYMENT_TARGET := @osx_version@
+#IF(darwin):
+#IF(darwin):# MACOSX_DEPLOYMENT_TARGET must be defined for OS X compilation/linking
+#IF(darwin):export MACOSX_DEPLOYMENT_TARGET := @osx_version@
 
 EXAMPLES = examples/small.z3 examples/hello.z3
 
@@ -57,7 +57,7 @@ examples: $(EXAMPLES)
 
 # regenerate the Makefile
 Makefile: config/makefiles/root.in
-	cd $(BUILD_DIR) && $(RECONFIGURE) --step=gen::languages --languages=$(LANG)
+	cd $(BUILD_DIR) && $(RECONFIGURE) --step=gen::languages --languages=$(TMPL)
 
 clean:
 	@echo "No temp files to clean"

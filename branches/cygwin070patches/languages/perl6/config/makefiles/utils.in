@@ -1,7 +1,7 @@
 # $Id$
 
 ## arguments we want to run parrot with
-LANG        = perl6doc
+TMPL        = perl6doc
 PARROT_ARGS =
 
 ## configuration settings
@@ -18,6 +18,8 @@ LN_S          = @lns@
 PERL          = @perl@
 RM_RF         = @rm_rf@
 CP            = @cp@
+MKPATH        = @mkpath@
+POD2MAN       = pod2man
 MAKE          = @make_c@
 PARROT        = ../../../../parrot@exe@
 CAT           = $(PERL) -MExtUtils::Command -e cat
@@ -88,14 +90,14 @@ installable_perl6doc@exe@: perl6doc.pbc
 	$(PBC_TO_EXE) perl6doc.pbc --install
 
 install : installable
-	cp installable_$(LANG)@exe@ $(DESTDIR)$(BIN_DIR)/$(LANG)@exe@
+	$(CP) installable_$(TMPL)@exe@ $(DESTDIR)$(BIN_DIR)/$(TMPL)@exe@
 
-installable : installable_$(LANG)@exe@
-	cp installable_$(LANG)@exe@ $(BUILD_DIR)
+installable : installable_$(TMPL)@exe@
+	$(CP) installable_$(TMPL)@exe@ $(BUILD_DIR)
 
 # TODO: rename build_dir. basic run for missing libs
 test-installable : installable
-	./installable_$(LANG)@exe@ -f 'test'
+	./installable_$(TMPL)@exe@ -f 'test'
 
 
 test: all

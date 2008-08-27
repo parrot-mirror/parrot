@@ -1,7 +1,7 @@
 # $Id$
 
 # configuration settings
-LANG          = pheme
+TMPL          = pheme
 BUILD_DIR     = @build_dir@
 BIN_DIR       = @bin_dir@
 LIB_DIR       = @lib_dir@
@@ -11,6 +11,8 @@ MANDIR	      = @mandir@
 # Setup some commands
 PERL          = @perl@
 RM_F          = @rm_f@
+CP            = @cp@
+MKPATH        = @mkpath@
 POD2MAN	      = pod2man
 EXE           = @exe@
 PARROT        = ../../parrot@exe@
@@ -19,9 +21,9 @@ TGE_DIR       = ../../compilers/tge
 PGE_LIBRARY   = $(BUILD_DIR)/runtime/parrot/library/PGE
 PERL6GRAMMAR  = $(PGE_LIBRARY)/Perl6Grammar.pbc
 RECONFIGURE   = $(PERL) $(BUILD_DIR)/tools/dev/reconfigure.pl
-#+(darwin):
-#+(darwin):# MACOSX_DEPLOYMENT_TARGET must be defined for OS X compilation/linking
-#+(darwin):export MACOSX_DEPLOYMENT_TARGET := @osx_version@
+#IF(darwin):
+#IF(darwin):# MACOSX_DEPLOYMENT_TARGET must be defined for OS X compilation/linking
+#IF(darwin):export MACOSX_DEPLOYMENT_TARGET := @osx_version@
 
 DOCS = MAINTAINER MANIFEST README TODO
 
@@ -82,16 +84,16 @@ testclean:
 
 # TODO: rename build_dir. basic run for missing libs
 test-installable : installable
-	./installable_$(LANG)@exe@ -e'say 1'
+	./installable_$(TMPL)@exe@ -e'say 1'
 
 install : installable
-	cp installable_$(LANG)@exe@ $(DESTDIR)$(BIN_DIR)/parrot-$(LANG)@exe@
-	pod2man $(LANG).pir > $(DESTDIR)$(MANDIR)/man1/parrot-$(LANG).1
-	mkdir $(DESTDIR)$(DOC_DIR)/languages/$(LANG)
-	cp $(DOCS) $(DESTDIR)$(DOC_DIR)/languages/$(LANG)
+	$(CP) installable_$(TMPL)@exe@ $(DESTDIR)$(BIN_DIR)/parrot-$(TMPL)@exe@
+	$(POD2MAN) $(TMPL).pir > $(DESTDIR)$(MANDIR)/man1/parrot-$(TMPL).1
+	$(MKPATH) $(DESTDIR)$(DOC_DIR)/languages/$(TMPL)
+	$(CP) $(DOCS) $(DESTDIR)$(DOC_DIR)/languages/$(TMPL)
 
-installable : installable_$(LANG)@exe@
-	cp installable_$(LANG)@exe@ $(BUILD_DIR)
+installable : installable_$(TMPL)@exe@
+	$(CP) installable_$(TMPL)@exe@ $(BUILD_DIR)
 
 clean: testclean
 	$(RM_F) pheme.pbc

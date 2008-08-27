@@ -1,7 +1,6 @@
 # $Id$
 
 # Makefile for languages/urm
-LANG          = urm
 
 # Setup of some commands
 RM_F          = @rm_f@
@@ -9,9 +8,9 @@ PERL          = @perl@
 PARROT        = ../../parrot@exe@
 BUILD_DIR     = @build_dir@
 RECONFIGURE   = $(PERL) @build_dir@/tools/dev/reconfigure.pl
-#+(darwin):
-#+(darwin):# MACOSX_DEPLOYMENT_TARGET must be defined for OS X compilation/linking
-#+(darwin):export MACOSX_DEPLOYMENT_TARGET := @osx_version@
+#IF(darwin):
+#IF(darwin):# MACOSX_DEPLOYMENT_TARGET must be defined for OS X compilation/linking
+#IF(darwin):export MACOSX_DEPLOYMENT_TARGET := @osx_version@
 
 default: all
 

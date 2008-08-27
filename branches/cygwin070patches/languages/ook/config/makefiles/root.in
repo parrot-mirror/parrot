@@ -1,18 +1,20 @@
 # $Id$
 
 # Makefile for languages/ook
-LANG          = ook
+TMPL          = ook
 
 # Set up of commands
 PARROT        = ../../parrot@exe@
 PBC_TO_EXE    = ../../pbc_to_exe@exe@
 PERL          = @perl@
 RM_F          = @rm_f@
+CP            = @cp@
+MKPATH        = @mkpath@
 POD2MAN       = pod2man
 RECONFIGURE   = $(PERL) @build_dir@/tools/dev/reconfigure.pl
-#+(darwin):
-#+(darwin):# MACOSX_DEPLOYMENT_TARGET must be defined for OS X compilation/linking
-#+(darwin):export MACOSX_DEPLOYMENT_TARGET := @osx_version@
+#IF(darwin):
+#IF(darwin):# MACOSX_DEPLOYMENT_TARGET must be defined for OS X compilation/linking
+#IF(darwin):export MACOSX_DEPLOYMENT_TARGET := @osx_version@
 
 # Set up directories
 BUILD_DIR     = @build_dir@
@@ -42,7 +44,7 @@ help :
 
 # regenerate the Makefile
 Makefile: config/makefiles/root.in
-	cd $(BUILD_DIR) && $(RECONFIGURE) --step=gen::languages --languages=$(LANG)
+	cd $(BUILD_DIR) && $(RECONFIGURE) --step=gen::languages --languages=$(TMPL)
 
 all: build
 
@@ -64,12 +66,12 @@ installable: installable_ook@exe@
 
 # TODO: rename build_dir. basic run for missing libs
 test-installable : installable
-	./installable_$(LANG)@exe@ hello.ook
+	./installable_$(TMPL)@exe@ hello.ook
 
 install : installable
-	cp installable_$(LANG)@exe@ $(DESTDIR)$(BIN_DIR)/parrot-$(LANG)@exe@
-	mkdir $(DESTDIR)$(DOC_DIR)/languages/$(LANG)
-	cp $(DOCS) $(DESTDIR)$(DOC_DIR)/languages/$(LANG)
+	$(CP) installable_$(TMPL)@exe@ $(DESTDIR)$(BIN_DIR)/parrot-$(TMPL)@exe@
+	$(MKPATH) $(DESTDIR)$(DOC_DIR)/languages/$(TMPL)
+	$(CP) $(DOCS) $(DESTDIR)$(DOC_DIR)/languages/$(TMPL)
 
 clean:
 	$(RM_F) core \

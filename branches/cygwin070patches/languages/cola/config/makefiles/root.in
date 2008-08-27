@@ -3,7 +3,7 @@
 # Makefile for languages/cola
 
 ## configuration settings
-LANG          = cola
+TMPL          = cola
 BUILD_DIR     = @build_dir@
 O             = @o@
 EXE           = @exe@
@@ -22,9 +22,9 @@ YACC          = @yacc@
 LEX           = @lex@
 RECONFIGURE   = $(PERL) @build_dir@/tools/dev/reconfigure.pl
 POD2MAN	      = pod2man
-#+(darwin):
-#+(darwin):# MACOSX_DEPLOYMENT_TARGET must be defined for OS X compilation/linking
-#+(darwin):export MACOSX_DEPLOYMENT_TARGET := @osx_version@
+#IF(darwin):
+#IF(darwin):# MACOSX_DEPLOYMENT_TARGET must be defined for OS X compilation/linking
+#IF(darwin):export MACOSX_DEPLOYMENT_TARGET := @osx_version@
 
 # Libraries:  Ordinarily, no special libraries are needed
 # for cola, but one of the following settings might be helpful
@@ -78,7 +78,7 @@ help :
 
 # regenerate the Makefile
 Makefile: config/makefiles/root.in
-	cd $(BUILD_DIR) && $(RECONFIGURE) --step=gen::languages --languages=$(LANG)
+	cd $(BUILD_DIR) && $(RECONFIGURE) --step=gen::languages --languages=$(TMPL)
 
 nogen : gen$(O) semant$(O) sym$(O) type$(O)
 	$(CC) $(DEBUG) -c parser.c
@@ -137,20 +137,20 @@ colacc$(EXE) : parser$(O) lexer$(O) gen$(O) semant$(O) sym$(O) type$(O)
 	$(CC) $(DEBUG) -o colacc$(EXE) parser$(O) lexer$(O) gen$(O) semant$(O) sym$(O) type$(O) $(LIBS)
 
 test: default
-	cd .. && $(PERL) t/harness --languages=$(LANG)
+	cd .. && $(PERL) t/harness --languages=$(TMPL)
 
 # TODO: rename build_dir. basic run for missing libs
 test-installable : installable
 	./colacc$(EXE) examples/fib.cola
 
 install : installable
-	cp colacc$(EXE) $(DESTDIR)$(BIN_DIR)/parrot-colacc$(EXE)
+	$(CP) colacc$(EXE) $(DESTDIR)$(BIN_DIR)/parrot-colacc$(EXE)
 	ascii2man README > $(DESTDIR)$(MANDIR)/man1/parrot-colacc.1
-	mkdir $(DESTDIR)$(DOC_DIR)/languages/$(LANG)
-	cp $(DOCS) $(DESTDIR)$(DOC_DIR)/languages/$(LANG)
+	$(MKPATH) $(DESTDIR)$(DOC_DIR)/languages/$(TMPL)
+	$(CP) $(DOCS) $(DESTDIR)$(DOC_DIR)/languages/$(TMPL)
 
 installable : colacc$(EXE)
-	cp colacc$(EXE) $(BUILD_DIR)/installable_colacc$(EXE)
+	$(CP) colacc$(EXE) $(BUILD_DIR)/installable_colacc$(EXE)
 
 #
 # Local variables:

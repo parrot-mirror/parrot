@@ -4,7 +4,7 @@
 PARROT_ARGS =
 
 ## configuration settings
-LANG          = cpp
+TMPL          = cpp
 BUILD_DIR     = @build_dir@
 LOAD_EXT      = @load_ext@
 O             = @o@
@@ -14,6 +14,8 @@ LN_S          = @lns@
 PERL          = @perl@
 RM_RF         = @rm_rf@
 CP            = @cp@
+MKPATH        = @mkpath@
+POD2MAN       = pod2man
 PARROT        = ../../../../parrot@exe@
 PBC_TO_EXE    = $(BUILD_DIR)/pbc_to_exe.exe
 CAT           = $(PERL) -MExtUtils::Command -e cat
@@ -29,21 +31,17 @@ PCT           = $(BUILD_DIR)/runtime/parrot/library/PCT.pbc
 
 PMC_DIR       = src/pmc
 
-all: cpp.pbc
+build: cpp.pbc
 
-C_GROUP = $(PMC_DIR)/c_group$(LOAD_EXT)
+all: cpp.pbc cpp@exe@
 
 SOURCES = cpp.pir \
   src/gen_grammar.pir \
   src/gen_actions.pir \
-  src/gen_builtins.pir \
-#  $(C_GROUP)
+  src/gen_builtins.pir
 
 BUILTINS_PIR = \
   src/builtins/say.pir \
-
-# PMCS = c
-# PMC_SOURCES = $(PMC_DIR)/c.pmc
 
 # the default target
 cpp.pbc: $(PARROT) $(SOURCES)
@@ -66,12 +64,6 @@ src/gen_actions.pir: $(NQP) $(PCT) src/parser/actions.pm
 
 src/gen_builtins.pir: $(BUILTINS_PIR)
 	$(CAT) $(BUILTINS_PIR) >src/gen_builtins.pir
-
-$(C_GROUP): $(PARROT) $(PMC_SOURCES)
-	cd $(PMC_DIR) && $(BUILD_DYNPMC) generate $(PMCS)
-	cd $(PMC_DIR) && $(BUILD_DYNPMC) compile $(PMCS)
-	cd $(PMC_DIR) && $(BUILD_DYNPMC) linklibs $(PMCS)
-	cd $(PMC_DIR) && $(BUILD_DYNPMC) copy --destination=$(PARROT_DYNEXT) $(PMCS)
 
 # regenerate the Makefile
 Makefile: ../../config/makefiles/cpp.in
@@ -109,18 +101,7 @@ CLEANUPS = \
   cpp.pbc \
   src/gen_grammar.pir \
   src/gen_actions.pir \
-  src/gen_builtins.pir \
-  $(PMC_DIR)/*.h \
-  $(PMC_DIR)/*.c \
-  $(PMC_DIR)/*.dump \
-  $(PMC_DIR)/*$(O) \
-  $(PMC_DIR)/*$(LOAD_EXT) \
-  $(PMC_DIR)/*.exp \
-  $(PMC_DIR)/*.ilk \
-  $(PMC_DIR)/*.manifest \
-  $(PMC_DIR)/*.pdb \
-  $(PMC_DIR)/*.lib \
-
+  src/gen_builtins.pir
 
 clean:
 	$(RM_RF) $(CLEANUPS)

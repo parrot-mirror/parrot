@@ -8,8 +8,8 @@ PARROT   = ../../parrot@exe@
 TOOL_DIR = ../..
 CP       = @cp@
 RECONFIGURE   = $(PERL) @build_dir@/tools/dev/reconfigure.pl
-#+(cygwin):SHRPENV  = env PATH="@build_dir@/blib/lib:$(PATH)"
-#-(cygwin):SHRPENV  = env LD_RUN_PATH=@build_dir@/blib/lib
+#IF(cygwin):SHRPENV  = env PATH="@build_dir@/blib/lib:$(PATH)"
+#ELSIF(!win32):SHRPENV  = env LD_RUN_PATH="@build_dir@/blib/lib"
 
 # Where to put things
 PARROT_LIBRARY    = ../../runtime/parrot/library

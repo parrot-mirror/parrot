@@ -14,30 +14,30 @@ PMCS = \
   dynlexpad \
   foo \
   rotest \
-#+(has_gdbm):  gdbmhash \
+#IF(has_gdbm):  gdbmhash \
   rational \
-#+(has_crypto):  md2 \
-#+(has_crypto):  md4 \
-#+(has_crypto):  md5 \
-#+(has_crypto):  ripemd160 \
-#+(has_crypto):  sha \
-#+(has_crypto):  sha1 \
-#+(has_crypto):  sha256 \
-#+(has_crypto):  sha512 \
+#IF(has_crypto):  md2 \
+#IF(has_crypto):  md4 \
+#IF(has_crypto):  md5 \
+#IF(has_crypto):  ripemd160 \
+#IF(has_crypto):  sha \
+#IF(has_crypto):  sha1 \
+#IF(has_crypto):  sha256 \
+#IF(has_crypto):  sha512 \
   subproxy 
 
 BUILD = $(PERL) @build_dir@/tools/build/dynpmc.pl
 
 # some *.pmc file are generated
 GEN_PMC_DEFINITIONS = \
-#+(has_crypto):  md2.pmc \
-#+(has_crypto):  md4.pmc \
-#+(has_crypto):  md5.pmc \
-#+(has_crypto):  ripemd160.pmc \
-#+(has_crypto):  sha.pmc \
-#+(has_crypto):  sha1.pmc \
-#+(has_crypto):  sha256.pmc \
-#+(has_crypto):  sha512.pmc
+#IF(has_crypto):  md2.pmc \
+#IF(has_crypto):  md4.pmc \
+#IF(has_crypto):  md5.pmc \
+#IF(has_crypto):  ripemd160.pmc \
+#IF(has_crypto):  sha.pmc \
+#IF(has_crypto):  sha1.pmc \
+#IF(has_crypto):  sha256.pmc \
+#IF(has_crypto):  sha512.pmc
 
 all :
 	@$(BUILD) generate $(PMCS)
