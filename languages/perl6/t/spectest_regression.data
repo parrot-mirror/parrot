@@ -24,6 +24,7 @@ S02-names_and_variables/perl.t
 S02-polymorphic_types/subset-code.t
 S02-polymorphic_types/subset-range.t
 S02-whitespace_and_comments/one-pass-parsing.t
+S03-junctions/boolean-context.t
 S03-junctions/misc.t
 S03-operators/arith.t
 S03-operators/assign-is-not-binding.t
@@ -48,11 +49,14 @@ S04-declarations/my.t
 S04-statements/do.t
 S04-statements/for.t
 S04-statements/given.t
+S04-statements/if.t
+S04-statements/loop.t
 S04-statements/no-implicit-block.t
 S04-statements/repeat.t
 S04-statements/return.t
 S04-statements/terminator.t
 S04-statements/try.t
+S04-statements/unless.t
 S04-statements/until.t
 S04-statements/while.t
 S05-metasyntax/changed.t
