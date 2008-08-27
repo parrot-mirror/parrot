@@ -6,7 +6,7 @@ use strict;
 use warnings;
 use lib qw( . lib ../lib ../../lib );
 use Test::More;
-use Parrot::Test tests => 64;
+use Parrot::Test tests => 65;
 use Parrot::Config;
 
 =head1 NAME
@@ -1738,6 +1738,36 @@ pir_error_output_like( <<'CODE', <<OUT, "NameSpace with no class, RT #55620" );
 CODE
 /Null PMC access in get_string()/
 OUT
+
+pir_output_is( <<'CODE', <<OUT, "iterate through a NameSpace PMC" );
+.namespace [ 'bar' ]
+
+.sub 'main' :main
+    $P0 = get_namespace
+    say $P0
+    $I0 = elements $P0
+    say $I0
+    new $P1 , 'Iterator', $P0
+  L1:
+    unless $P1 goto L2
+    $P2 = shift $P1
+    say $P2
+    goto L1
+  L2:
+    say 'OK'
+.end
+
+.sub 'foo'
+    say 'foo'
+.end
+CODE
+bar
+2
+main
+foo
+OK
+OUT
+
 
 # Local Variables:
 #   mode: cperl

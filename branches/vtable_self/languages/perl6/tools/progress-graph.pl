@@ -30,7 +30,8 @@ use warnings;
 use GD::Graph::bars;
 use Text::CSV_XS;
 use List::Util qw(max sum);
-use POSIX qw(log10);
+use POSIX qw(log10 ceil);
+use Getopt::Long;
 
 # column names
 use constant DATE       => 0;
@@ -44,6 +45,12 @@ use constant SKIP       => 7;
 
 use constant MAX_COL    => 7;
 
+my $size = '600x400';
+
+GetOptions
+    'size=s'    => \$size,
+    or usage();
+
 my $fn = $ARGV[0] || 'docs/spectest-progress.csv';
 open my $f, '<', $fn or die "Can't open file '$fn' for reading: $!";
 my @data = map [], 0 .. MAX_COL;
@@ -55,6 +62,7 @@ my $csv = Text::CSV_XS->new({
 
 my $max = 0;
 my @columns_to_plot = (PASS, FAIL, TODO, SKIP);
+my $rows = 0;
 
 while (<$f>) {
     next if m/^"[a-z]+"/i; # skip header line
@@ -66,17 +74,19 @@ while (<$f>) {
         push @{$data[$_]}, $cols[$_];
     }
     $max = max $max, sum @cols[@columns_to_plot];
+    $rows++;
 }
 
 my $last_date = $data[DATE][-1];
 
-my $p = GD::Graph::bars->new(600, 400);
+print scalar(@data), $/;
+my $p = GD::Graph::bars->new(split m/x/, $size, 2);
 no warnings 'qw';
 $p->set(
         x_label             => 'Date',
         y_label             => 'Tests',
         title               => 'Passing Rakudo Spectests',
-        x_label_skip        => 2,
+        x_label_skip        => ceil($rows/20),
         x_labels_vertical   => 1,
         cumulate            => 1,
         borderclrs          => [undef],
@@ -98,6 +108,16 @@ binmode $o;
 print $o $g->png;
 close $o;
 print "Image written to file '$out_file'\n";
+
+sub usage {
+    print <<USAGE;
+Usage:
+    $0 [--size XXXxYYY] [data_file [output_file]]
+Options
+    --size  Size of the output image, default is 600x400
+USAGE
+    exit 1;
+}
 
 # Local Variables:
 #   mode: cperl

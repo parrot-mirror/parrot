@@ -194,6 +194,10 @@ void Parrot_process_args(PARROT_INTERP,
         __attribute__nonnull__(2)
         FUNC_MODIFIES(*st);
 
+PARROT_API
+int Parrot_store_arg(SHIM_INTERP, ARGIN(const call_state *st))
+        __attribute__nonnull__(2);
+
 PARROT_CANNOT_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
 opcode_t * parrot_pass_args_fromc(PARROT_INTERP,
@@ -206,9 +210,6 @@ opcode_t * parrot_pass_args_fromc(PARROT_INTERP,
         __attribute__nonnull__(3)
         __attribute__nonnull__(4)
         FUNC_MODIFIES(*dest);
-
-int Parrot_store_arg(SHIM_INTERP, ARGIN(const call_state *st))
-        __attribute__nonnull__(2);
 
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
@@ -247,7 +248,7 @@ STRING* set_retval_s(PARROT_INTERP,
 
 #define ASSERT_SIG_PMC(sig) \
     PARROT_ASSERT(PObj_is_PMC_TEST(sig)); \
-    PARROT_ASSERT(sig->vtable->base_type == enum_class_FixedIntegerArray)
+    PARROT_ASSERT((sig)->vtable->base_type == enum_class_FixedIntegerArray)
 
 #define SIG_ELEMS(sig) PMC_int_val(sig)
 #define SIG_ARRAY(sig) (INTVAL*)PMC_data(sig)
@@ -259,8 +260,8 @@ STRING* set_retval_s(PARROT_INTERP,
             *(pc) == PARROT_OP_get_results_pc || \
             *(pc) == PARROT_OP_get_params_pc || \
             *(pc) == PARROT_OP_set_returns_pc) { \
-        PMC * const sig = seg->const_table->constants[pc[1]]->u.key; \
-        n += SIG_ELEMS(sig); \
+        PMC * const sig = (seg)->const_table->constants[(pc)[1]]->u.key; \
+        (n) += SIG_ELEMS(sig); \
     } \
 } while (0)
 

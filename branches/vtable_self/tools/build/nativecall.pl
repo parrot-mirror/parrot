@@ -1,5 +1,5 @@
 #! perl
-# Copyright (C) 2001-2007, The Perl Foundation.
+# Copyright (C) 2001-2008, The Perl Foundation.
 # $Id$
 
 =head1 NAME
@@ -82,6 +82,7 @@ my %proto_type = (
     B   => "void **",
     L   => "long *",
     T   => "char **",
+    V   => "void **",
     '@' => "PMC *",           # slurpy array
 );
 
@@ -186,6 +187,7 @@ my %sig_char = (
     N   => "N",
     B   => "S",
     v   => "v",
+    V   => "P",
     J   => "",
     '@' => '@',
 );
@@ -288,6 +290,7 @@ sub print_head {
 #include "parrot/parrot.h"
 #include "parrot/hash.h"
 #include "parrot/oplib/ops.h"
+#include "nci.str"
 
 /* HEADERIZER HFILE: none */
 /* HEADERIZER STOP */
@@ -311,10 +314,10 @@ sub print_head {
 static INTVAL
 get_nci_I(PARROT_INTERP, ARGMOD(call_state *st), int n)
 {
-    if (n >= st->src.n) {
-        real_exception(interp, NULL, E_ValueError,
-                    "too few arguments passed to NCI function");
-    }
+    if (n >= st->src.n)
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INVALID_OPERATION,
+            "too few arguments passed to NCI function");
+
     Parrot_fetch_arg_nci(interp, st);
 
     return UVal_int(st->val);
@@ -323,10 +326,10 @@ get_nci_I(PARROT_INTERP, ARGMOD(call_state *st), int n)
 static FLOATVAL
 get_nci_N(PARROT_INTERP, ARGMOD(call_state *st), int n)
 {
-    if (n >= st->src.n) {
-        real_exception(interp, NULL, E_ValueError,
-                    "too few arguments passed to NCI function");
-    }
+    if (n >= st->src.n)
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INVALID_OPERATION,
+            "too few arguments passed to NCI function");
+
     Parrot_fetch_arg_nci(interp, st);
 
     return UVal_num(st->val);
@@ -338,10 +341,10 @@ static STRING*
 get_nci_S(PARROT_INTERP, ARGMOD(call_state *st), int n)
 {
     /* TODO or act like below? */
-    if (n >= st->src.n) {
-        real_exception(interp, NULL, E_ValueError,
-                    "too few arguments passed to NCI function");
-    }
+    if (n >= st->src.n)
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INVALID_OPERATION,
+            "too few arguments passed to NCI function");
+
     Parrot_fetch_arg_nci(interp, st);
 
     return UVal_str(st->val);
@@ -438,6 +441,11 @@ sub make_arg {
         push @{$temps_ref},          "PMC *t_$temp_num;";
         push @{$extra_preamble_ref}, "t_$temp_num = GET_NCI_P($reg_num);";
         return "PMC_data(t_$temp_num)";
+    };
+    /V/ && do {
+        push @{$temps_ref},          "PMC *t_$temp_num;";
+        push @{$extra_preamble_ref}, "t_$temp_num = GET_NCI_P($reg_num);";
+        return "(void**)&PMC_data(t_$temp_num)";
     };
     /i/ && do {
         push @{$temps_ref},          "int t_$temp_num;";
@@ -624,8 +632,8 @@ HEADER
 
     push @{$put_pointer_ref}, <<"PUT_POINTER";
         temp_pmc = pmc_new(interp, enum_class_UnManagedStruct);
-        PMC_data(temp_pmc) = (void*)$value;
-        VTABLE_set_pmc_keyed_str(interp, HashPointer, string_from_literal(interp, "$key"), temp_pmc);
+        PMC_data(temp_pmc) = (void *)$value;
+        VTABLE_set_pmc_keyed_str(interp, HashPointer, CONST_STRING(interp, "$key"), temp_pmc);
 PUT_POINTER
 
     #        qq|        parrot_hash_put( interp, known_frames, const_cast("$key"), $value );|;
@@ -643,10 +651,17 @@ sub print_tail {
    signature for a C function we want to call and returns a pointer
    to a function that can call it. */
 void *
-build_call_func(PARROT_INTERP, SHIM(PMC *pmc_nci), NOTNULL(STRING *signature))
+build_call_func(PARROT_INTERP,
+#if defined(CAN_BUILD_CALL_FRAMES)
+PMC *pmc_nci,
+#else
+SHIM(PMC *pmc_nci),
+#endif
+NOTNULL(STRING *signature), NOTNULL(int *jitted))
 {
     char       *c;
     STRING     *ns, *message;
+    STRING     *jit_key_name;
     PMC        *b;
     PMC        *iglobals;
     PMC        *temp_pmc;
@@ -654,12 +669,6 @@ build_call_func(PARROT_INTERP, SHIM(PMC *pmc_nci), NOTNULL(STRING *signature))
 
     PMC        *HashPointer   = NULL;
 
-#if defined(CAN_BUILD_CALL_FRAMES)
-    /* Try if JIT code can build that signature. If yes, we are done */
-    void * const result = Parrot_jit_build_call_func(interp, pmc_nci, signature);
-    if (result)
-        return result;
-#endif
     /* And in here is the platform-independent way. Which is to say
        "here there be hacks" */
     signature_len = string_length(interp, signature);
@@ -687,6 +696,30 @@ build_call_func(PARROT_INTERP, SHIM(PMC *pmc_nci), NOTNULL(STRING *signature))
 $put_pointer
 
     }
+
+#if defined(CAN_BUILD_CALL_FRAMES)
+    /* Try if JIT code can build that signature. If yes, we are done */
+
+    jit_key_name = string_from_literal(interp, "_XJIT_");
+    jit_key_name = string_append(interp, jit_key_name, signature);
+    b = VTABLE_get_pmc_keyed_str(interp, HashPointer, jit_key_name);
+
+    if (b && b->vtable->base_type == enum_class_UnManagedStruct) {
+        *jitted = 1;
+        return F2DPTR(PMC_data(b));
+    }
+    else {
+        void * const result = Parrot_jit_build_call_func(interp, pmc_nci, signature);
+        if (result) {
+            *jitted = 1;
+            temp_pmc = pmc_new(interp, enum_class_UnManagedStruct);
+            PMC_data(temp_pmc) = (void*)result;
+            VTABLE_set_pmc_keyed_str(interp, HashPointer, jit_key_name, temp_pmc);
+            return result;
+        }
+    }
+
+#endif
 
     b = VTABLE_get_pmc_keyed_str(interp, HashPointer, signature);
 

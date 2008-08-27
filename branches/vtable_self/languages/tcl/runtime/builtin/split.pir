@@ -1,11 +1,11 @@
-.HLL 'Tcl', 'tcl_group'
+.HLL 'Tcl', ''
 .namespace []
 
 .sub '&split'
   .param pmc argv :slurpy
 
   .local int argc
-  argc = argv
+  argc = elements argv
 
   if argc == 0 goto bad_args
   if argc >  2 goto bad_args
@@ -96,7 +96,7 @@ empty_done:
   .return(results)
 
 bad_args:
-  tcl_error 'wrong # args: should be "split string ?splitChars?"'
+  die 'wrong # args: should be "split string ?splitChars?"'
 .end
 
 # Local Variables:

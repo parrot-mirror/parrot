@@ -29,13 +29,13 @@ node object.
 
 .namespace [ 'PAST' ]
 
-=item C<__onload()>
+=item C<onload()>
 
 Creates the C<PAST::*> classes.
 
 =cut
 
-.sub '__onload' :load
+.sub 'onload' :load :anon
     .local pmc base
     $P0 = get_class 'Hash'
     base = subclass $P0, 'PAST::Node'
@@ -54,7 +54,7 @@ Creates the C<PAST::*> classes.
     $P0 = subclass base, 'PAST::Val'
     $P0 = subclass base, 'PAST::Var'
 
-    $P0 = new 'Integer'
+    $P0 = new 'TclInt'
     store_global 'TclExpr::PAST', '$!serno', $P0
 .end
 
@@ -66,16 +66,16 @@ Creates the C<PAST::*> classes.
 
 =over 4
 
-=item C<__init()>
+=item C<init()>
 
 Initializes a new C<PAST::Node> object.
 
 =cut
 
-.sub init :vtable :method
-    $P0 = new 'String'
-    $P1 = new 'Integer'
-    $P2 = new 'ResizablePMCArray'
+.sub init :vtable
+    $P0 = new 'TclString'
+    $P1 = new 'TclInt'
+    $P2 = new 'TclList'
 
     setattribute self, '$.source',   $P0
     setattribute self, '$.pos',      $P1

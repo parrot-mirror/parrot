@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2001-2003, The Perl Foundation.
+Copyright (C) 2001-2008, The Perl Foundation.
 $Id$
 
 =head1 NAME
@@ -91,9 +91,9 @@ Parrot_exec_save(PARROT_INTERP, Parrot_exec_objfile_t *obj, const char *file)
                 rellocation.r_extern = 1;
                 break;
             default:
-                real_exception(interp, NULL, EXEC_ERROR,
+                Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_EXEC_ERROR,
                     "Unknown text rellocation type: %d\n",
-                        obj->text_rellocation_table[i].type);
+                    obj->text_rellocation_table[i].type);
                 break;
         }
         save_struct(fp, &rellocation, sizeof (struct relocation_info));
@@ -120,8 +120,8 @@ Parrot_exec_save(PARROT_INTERP, Parrot_exec_objfile_t *obj, const char *file)
                 symlst.n_type = N_EXT;
                 break;
             default:
-                real_exception(interp, NULL, EXEC_ERROR, "Unknown symbol type: %d\n",
-                    obj->symbol_table[i].type);
+                Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_EXEC_ERROR,
+                    "Unknown symbol type: %d\n", obj->symbol_table[i].type);
                 break;
         }
         save_struct(fp, &symlst, sizeof (struct nlist));
@@ -165,21 +165,21 @@ Parrot_exec_save(PARROT_INTERP, Parrot_exec_objfile_t *obj, const char *file)
 #  define sh_add(n, t, f, s, l, i, a, e) { \
     bzero(&sechdr, sizeof (Elf32_Ehdr)); \
     sechdr.sh_name = shste - shst; \
-    shste += sprintf(shste, "%s", n); \
+    shste += sprintf(shste, "%s", (n)); \
     shste++; \
-    sechdr.sh_type = t; \
-    sechdr.sh_flags = f; \
+    sechdr.sh_type = (t); \
+    sechdr.sh_flags = (f); \
     sechdr.sh_addr = 0; \
     sechdr.sh_offset = current_offset; \
-    sechdr.sh_size = s; \
-    sechdr.sh_link = l; \
-    sechdr.sh_info = i; \
-    sechdr.sh_addralign = a; \
-    sechdr.sh_entsize = e; \
+    sechdr.sh_size = (s); \
+    sechdr.sh_link = (l); \
+    sechdr.sh_info = (i); \
+    sechdr.sh_addralign = (a); \
+    sechdr.sh_entsize = (e); \
     save_struct(fp, &sechdr, sizeof (Elf32_Shdr)); \
-    current_offset += s; \
-    if (s % 4) \
-      current_offset += (4 - s % 4); \
+    current_offset += (s); \
+    if ((s) % 4) \
+      current_offset += (4 - (s) % 4); \
    }
 
 /* Sizeof the section header string table */
@@ -322,9 +322,9 @@ Parrot_exec_save(PARROT_INTERP, Parrot_exec_objfile_t *obj, const char *file)
                             R_386_32);
                 break;
             default:
-                real_exception(interp, NULL, EXEC_ERROR,
+                Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_EXEC_ERROR,
                     "Unknown text rellocation type: %d\n",
-                        obj->text_rellocation_table[i].type);
+                    obj->text_rellocation_table[i].type);
                 break;
         }
         save_struct(fp, &rellocation, sizeof (Elf32_Rel));
@@ -364,9 +364,9 @@ Parrot_exec_save(PARROT_INTERP, Parrot_exec_objfile_t *obj, const char *file)
                         obj->text_rellocation_table[i].offset - 4])) << 16;
                 break;
             default:
-                real_exception(interp, NULL, EXEC_ERROR,
+                Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_EXEC_ERROR,
                     "Unknown text rellocation type: %d\n",
-                        obj->text_rellocation_table[i].type);
+                    obj->text_rellocation_table[i].type);
                 break;
         }
         save_struct(fp, &rel_addend, sizeof (Elf32_Rela));
@@ -388,9 +388,9 @@ Parrot_exec_save(PARROT_INTERP, Parrot_exec_objfile_t *obj, const char *file)
                             R_ARM_ABS32);
                 break;
             default:
-                real_exception(interp, NULL, EXEC_ERROR,
+                Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_EXEC_ERROR,
                     "Unknown text rellocation type: %d\n",
-                        obj->text_rellocation_table[i].type);
+                    obj->text_rellocation_table[i].type);
                 break;
         }
         save_struct(fp, &rellocation, sizeof (Elf32_Rel));
@@ -441,8 +441,8 @@ Parrot_exec_save(PARROT_INTERP, Parrot_exec_objfile_t *obj, const char *file)
                 symlst.st_info = ELF32_ST_INFO(STB_GLOBAL, STT_NOTYPE);
                 break;
             default:
-                real_exception(interp, NULL, EXEC_ERROR, "Unknown symbol type: %d\n",
-                    obj->symbol_table[i].type);
+                Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_EXEC_ERROR,
+                    "Unknown symbol type: %d\n", obj->symbol_table[i].type);
                 break;
         }
         save_struct(fp, &symlst, sizeof (Elf32_Sym));
@@ -652,9 +652,9 @@ Parrot_exec_save(PARROT_INTERP, Parrot_exec_objfile_t *obj, const char *file)
                 save_short(fp, 0x06);
                 break;
             default:
-                real_exception(interp, NULL, EXEC_ERROR,
+                Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_EXEC_ERROR,
                     "Unknown text rellocation type: %d\n",
-                        obj->text_rellocation_table[i].type);
+                    obj->text_rellocation_table[i].type);
                 break;
         }
     }
@@ -681,8 +681,8 @@ Parrot_exec_save(PARROT_INTERP, Parrot_exec_objfile_t *obj, const char *file)
                 save_short(fp, 0x20);
                 break;
             default:
-                real_exception(interp, NULL, EXEC_ERROR, "Unknown symbol type: %d\n",
-                    obj->symbol_table[i].type);
+                Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_EXEC_ERROR,
+                    "Unknown symbol type: %d\n", obj->symbol_table[i].type);
                 break;
         }
         putc(2, fp); /* "extern" class */

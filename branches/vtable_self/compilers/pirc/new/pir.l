@@ -2,7 +2,7 @@
 
 /*
  * $Id$
- * Copyright (C) 2007, The Perl Foundation.
+ * Copyright (C) 2007-2008, The Perl Foundation.
  */
 
 /*
@@ -46,6 +46,7 @@ easier to maintain, and preferable.
 #include <assert.h>
 #include "pirparser.h"
 #include "pircompiler.h"
+#include "pirsymbol.h"
 
 /* Windows doesn't have <unistd.h> */
 #define YY_NO_UNISTD_H
@@ -54,8 +55,8 @@ easier to maintain, and preferable.
 #define YY_EXTRA_TYPE  struct lexer_state *
 
 /* accessor methods for setting and getting the lexer_state */
-extern YY_EXTRA_TYPE  yyget_extra(yyscan_t scanner);
-extern void yyset_extra(YY_EXTRA_TYPE lexer , yyscan_t scanner);
+extern YY_EXTRA_TYPE yyget_extra(yyscan_t scanner);
+extern void yyset_extra(YY_EXTRA_TYPE lexer, yyscan_t scanner);
 
 /* accessor method to get yytext */
 extern char *yyget_text(yyscan_t yyscanner);
@@ -63,7 +64,8 @@ extern char *yyget_text(yyscan_t yyscanner);
 /* declaration of yylex */
 extern int yylex(YYSTYPE *yylval, yyscan_t yyscanner);
 
-extern void syntax_error(yyscan_t yyscanner, lexer_state *lexer, char *message);
+/* declaration of yyerror */
+extern void yyerror(yyscan_t yyscanner, lexer_state * const lexer, char *message);
 
 
 
@@ -84,8 +86,6 @@ extern void syntax_error(yyscan_t yyscanner, lexer_state *lexer, char *message);
  */
 static int is_parrot_op(char const * const spelling);
 
-
-
 #define DEBUG1
 /* think of a smarter way to do this; only print when DEBUG is defined */
 #ifdef DEBUG
@@ -101,41 +101,14 @@ void noprint(FILE *fp, char *format, ...) { }
 
 =over 4
 
-=item C<update_location>
-
-Update the line number. The yytext buffer is scanned for '\n'
-characters; for each one, the line number is incremented. It's done this
-way, because we can't increment it in the rule for matching newlines, as
-a set of consecutive newlines are matched together and a single newline
-token is returned.
-
-*/
-static void
-update_location(void *yyscanner, lexer_state * const lexer) {
-    char const *iter = yyget_text(yyscanner);
-    assert(lexer != NULL);
-
-    /* TODO: is yytext NULL terminated? */
-    while (*iter != '\0') {
-        if (*iter == '\n') {
-            ++lexer->line_nr;
-            lexer->line_pos = 1; /* reset column */
-        }
-        else {
-            ++lexer->line_pos;
-        }
-        iter++;
-    }
-}
-
-/*
-
 =item C<dupstr>
 
 The C89 standard does not define a strdup() in the C library,
 so define our own strdup. Function names beginning with "str"
 are reserved (I think), so make it dupstr, as that is what it
 does: duplicate a string.
+
+=cut
 
 */
 static char *
@@ -153,6 +126,8 @@ dupstr(char const * const source) {
 See dupstr, except that this version takes the number of characters to be
 copied. Easy for copying a string except the quotes.
 
+=cut
+
 */
 static char *
 dupstrn(char const * const source, size_t num_chars) {
@@ -164,22 +139,13 @@ dupstrn(char const * const source, size_t num_chars) {
 }
 
 
-/* after each rule execute update_location() */
-#define YY_USER_ACTION  do {                                                \
-                            lexer_state *my_lexer = yyget_extra(yyscanner); \
-                            update_location(yyscanner, my_lexer);           \
-                        }                                                   \
-                        while(0);
-
-
-
-
-
 /*
 
 =item C<new_lexer>
 
 constructor for a lexer. It's very important to initialize all fields.
+
+=cut
 
 */
 lexer_state *
@@ -187,17 +153,67 @@ new_lexer(char * const filename) {
     lexer_state *lexer   = (lexer_state *)malloc(sizeof (lexer_state));
     assert(lexer != NULL);
 
-    lexer->filename      = filename;
-    lexer->line_nr       = 1;
-    lexer->line_pos      = 1;
-    lexer->parse_errors  = 0;
+    /* clear all fields */
+    memset(lexer, 0, sizeof (lexer_state));
 
+    lexer->filename      = filename;
+    /*
+    lexer->parse_errors  = 0;
+    lexer->current_ns    = NULL;
     lexer->subs          = NULL;
-    lexer->is_instr      = 0;
+    lexer->curtarget     = NULL;
+    lexer->curarg        = NULL;
+    lexer->globals       = NULL;
+    lexer->constants     = NULL;
+    */
 
     printdebug(stderr, "Constructing new lexer\n");
 
     return lexer;
+}
+
+
+/*
+
+=item C<int
+check_symbol(lexer_state * const lexer, char * const text, YYSTYPE *lval, int opcode)>
+
+Check whether there is a symbol declared by the name of C<text>; it may be
+a local symbol, a local or global constant (XXX: implement local constants).
+
+If C<text> is not the name of a symbol, then C<opcode> is returned.
+
+=cut
+
+*/
+int
+check_symbol(lexer_state * const lexer, char * const text, YYSTYPE *lval, int opcode) {
+    symbol *sym        = find_symbol(lexer, text);
+    if (sym) {
+        lval->symb = sym;
+        return TK_SYMBOL;
+    }
+    else {
+        constant *con = find_constant(lexer, text);
+        if (con != NULL) {
+            switch (con->type) {
+                case INT_TYPE:
+                    lval->ival = con->val.ival;
+                    return TK_INTC;
+                case NUM_TYPE:
+                    lval->dval = con->val.nval;
+                    return TK_NUMC;
+                case STRING_TYPE:
+                    lval->sval = con->val.sval;
+                    return TK_STRINGC;
+                case PMC_TYPE:
+                case UNKNOWN_TYPE:
+                default:
+                    fprintf(stderr, "invalid constant type!\n");
+            }
+        }
+    }
+    return opcode;
 }
 
 /*
@@ -249,6 +265,9 @@ Q_STRING       {SQ_STRING}|{DQ_STRING}
 
 %option nounput
 
+/* use flex' built-in capability for line counting */
+%option yylineno
+
 /* make the scanner re-entrant */
 %option reentrant
 
@@ -269,6 +288,8 @@ Q_STRING       {SQ_STRING}|{DQ_STRING}
 
 
 {WS}             { /* ignore whitespace */ }
+
+#.*\n            { /* ignore line comments */ }
 
 {EOL}[\t\r\n ]*  { /* a set of continuous newlines yields a single newline token. */
                    return TK_NL;
@@ -308,7 +329,22 @@ Q_STRING       {SQ_STRING}|{DQ_STRING}
 {WS}"."{WS} { /* if the dot is surrounded by whitespace, it's a concatenation operator */
               return TK_CONC;
             }
-"."         { return '.'; }
+
+{WS}"."     { /* $P0 .$P1 means concatenation */
+              return TK_CONC;
+            }
+
+"."{WS}     { /* $P0. $P1 means concatenation */
+              return TK_CONC;
+            }
+
+"."         { /* at this point all dot-whitespace combinations have been covered;
+               * so we can be sure that the dot does not have any surrounding
+               * whitespace: that's the method-call dot, as in $P0.$P1().
+               */
+               return '.';
+            }
+
 "="         { return '='; }
 ";"         { return ';'; }
 
@@ -326,9 +362,16 @@ Q_STRING       {SQ_STRING}|{DQ_STRING}
 
 "if"              { return TK_IF; }
 "goto"            { return TK_GOTO; }
-"n_operators"     { return TK_N_OPERATORS; }
 "unless"          { return TK_UNLESS; }
 "null"            { return TK_NULL; }
+
+"set"             { return check_symbol(yyget_extra(yyscanner), yytext, yylval, TK_PARROT_SET); }
+"add"             { return check_symbol(yyget_extra(yyscanner), yytext, yylval, TK_PARROT_ADD); }
+"sub"             { return check_symbol(yyget_extra(yyscanner), yytext, yylval, TK_PARROT_SUB); }
+"mul"             { return check_symbol(yyget_extra(yyscanner), yytext, yylval, TK_PARROT_MUL); }
+"div"             { return check_symbol(yyget_extra(yyscanner), yytext, yylval, TK_PARROT_DIV); }
+"fdiv"            { return check_symbol(yyget_extra(yyscanner), yytext, yylval, TK_PARROT_FDIV); }
+
 
 "int"             { return TK_INT; }
 "num"             { return TK_NUM; }
@@ -359,7 +402,6 @@ Q_STRING       {SQ_STRING}|{DQ_STRING}
 ".end_call"       { return TK_END_CALL; }
 ".end_return"     { return TK_END_RETURN; }
 ".end_yield"      { return TK_END_YIELD; }
-".pragma"         { return TK_PRAGMA; }
 ".result"         { return TK_RESULT; }
 ".return"         { return TK_RETURN; }
 ".sub"            { return TK_SUB; }
@@ -377,6 +419,7 @@ Q_STRING       {SQ_STRING}|{DQ_STRING}
 ":vtable"     { return TK_FLAG_VTABLE; }
 ":multi"      { return TK_FLAG_MULTI; }
 ":lexid"      { return TK_FLAG_LEXID; }
+":instanceof" { return TK_INSTANCEOF; }
 
 ":unique_reg" { return TK_FLAG_UNIQUE_REG; }
 ":optional"   { return TK_FLAG_OPTIONAL; }
@@ -392,24 +435,62 @@ Q_STRING       {SQ_STRING}|{DQ_STRING}
                return TK_STRINGC;
              }
 
-"P"{DIGIT}+  { yylval->ival = atoi(yytext + 1); return TK_PASM_PREG; }
-"S"{DIGIT}+  { yylval->ival = atoi(yytext + 1); return TK_PASM_SREG; }
-"N"{DIGIT}+  { yylval->ival = atoi(yytext + 1); return TK_PASM_NREG; }
-"I"{DIGIT}+  { yylval->ival = atoi(yytext + 1); return TK_PASM_IREG; }
-
-"$P"{DIGIT}+  { yylval->ival = atoi(yytext + 2); return TK_SYM_PREG; }
-"$S"{DIGIT}+  { yylval->ival = atoi(yytext + 2); return TK_SYM_SREG; }
-"$N"{DIGIT}+  { yylval->ival = atoi(yytext + 2); return TK_SYM_NREG; }
-"$I"{DIGIT}+  { yylval->ival = atoi(yytext + 2); return TK_SYM_IREG; }
+"$P"{DIGIT}+  { yylval->ival = atoi(yytext + 2); return TK_PREG; }
+"$S"{DIGIT}+  { yylval->ival = atoi(yytext + 2); return TK_SREG; }
+"$N"{DIGIT}+  { yylval->ival = atoi(yytext + 2); return TK_NREG; }
+"$I"{DIGIT}+  { yylval->ival = atoi(yytext + 2); return TK_IREG; }
 
 {IDENT}":"    { /* make the label Id available in the parser. remove the ":" first. */
                 yylval->sval = dupstrn(yytext, yyleng - 1);
                 return TK_LABEL;
               }
 
-{IDENT}       { /* make the Id or op available in the parser. */
+{IDENT}       { /* identifier; can be a global (sub or const), local or parrot op */
+                lexer_state *lexer = yyget_extra(yyscanner);
+                symbol      *sym   = find_symbol(lexer, yytext);
+                constant    *con;
+
+                /* if the id was declared as a local, return the pointer to the symbol
+                 * node. Note that .locals can "hide" opcodes.
+                 */
+                if (sym != NULL) {
+                    yylval->symb = sym;
+                    return TK_SYMBOL;
+                }
+
+                /* maybe it was a declared .const; if that's the case, then that .const's
+                 * value is returned as if the literal constant was parsed.
+                 */
+                con = find_constant(lexer, yytext);
+                if (con != NULL) {
+                    switch (con->type) {
+                        case INT_TYPE:
+                            yylval->ival = con->val.ival;
+                            return TK_INTC;
+                        case NUM_TYPE:
+                            yylval->dval = con->val.nval;
+                            return TK_NUMC;
+                        case STRING_TYPE:
+                            yylval->sval = con->val.sval;
+                            return TK_STRINGC;
+                        case PMC_TYPE:
+                        case UNKNOWN_TYPE:
+                        default:
+                            fprintf(stderr, "invalid constant type!\n");
+                    }
+                }
+
+                /* at this point we need to duplicate the string */
                 yylval->sval = dupstr(yytext);
-                return is_parrot_op(yytext) ? TK_PARROT_OP : TK_IDENT;
+
+                /* at this point it was no local or constant; check whether it's an op. */
+                if (is_parrot_op(yytext))
+                    return TK_PARROT_OP;
+
+                /* just an identifier; at this point it can be a label identifier or a
+                 * constant/local being defined.
+                 */
+                return TK_IDENT;
               }
 
 
@@ -423,8 +504,7 @@ Q_STRING       {SQ_STRING}|{DQ_STRING}
 
 
 .      { /* any character not covered in the rules above is an error. */
-         lexer_state *my_lexer = yyget_extra(yyscanner);
-         syntax_error(yyscanner, my_lexer, "Unexpected character");
+         yyerror(yyscanner, yyget_extra(yyscanner), "Unexpected character");
        }
 
 
@@ -435,26 +515,60 @@ Q_STRING       {SQ_STRING}|{DQ_STRING}
 %%
 
 
-static int
-is_parrot_op(char const * const spelling) {
 
+/*
+
+=head1 AUX. FUNCTIONS
+
+=over 4
+
+=item C<static int
+is_parrot_op(char const * const spelling)>
+
+=cut
+
+*/
+static int
+is_parrot_op(char const * const spelling)
+{
     /* only these are currently recognized as a Parrot instruction */
-    if (strcmp(spelling, "print") == 0)
-        return 1;
-    if (strcmp(spelling, "null") == 0)
-        return 1;
-    if (strcmp(spelling, "new") == 0)
-        return 1;
-    if (strcmp(spelling, "newclass") == 0)
-        return 1;
-    if (strcmp(spelling, "end") == 0)
-        return 1;
-    if (strcmp(spelling, "setline") == 0)
-        return 1;
-    if (strcmp(spelling, "setfile") == 0)
-        return 1;
+    char const * ops[] = {
+        "print",
+        "new",
+        "newclass",
+        "end",
+        "set",
+        "find_global",
+        "set_hll_global",
+        "get_hll_global",
+        "setfile",
+        "setline",
+        "add",
+        "sub",
+        NULL
+    };
+
+
+    char const **iter = ops;
+
+    while (*iter != NULL) {
+        if (strcmp(spelling, *iter) == 0)
+            return 1;
+        iter++;
+    }
+
     return 0;
 }
+
+
+
+/*
+
+=back
+
+=cut
+
+*/
 
 
 

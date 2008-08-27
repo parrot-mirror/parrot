@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2004-2007, The Perl Foundation.
+Copyright (C) 2004-2008, The Perl Foundation.
 $Id$
 
 =head1 NAME
@@ -95,20 +95,21 @@ internal_ns_keyed(PARROT_INTERP, ARGIN(PMC *base_ns), ARGIN_NULLOK(PMC *pmc_key)
         if (str_key)
             part = str_key;
         else if (n == max_intval) {
-            if (!pmc_key) {
-                real_exception(interp, NULL, 1,
-                        "Passing a NULL pmc_key into key_string()");
-            }
-            part = key_string(interp, pmc_key);
+            if (!pmc_key)
+                Parrot_ex_throw_from_c_args(interp, NULL, 1,
+                    "Passing a NULL pmc_key into key_string()");
+
+            part    = key_string(interp, pmc_key);
             pmc_key = key_next(interp, pmc_key);
-            if (! pmc_key)
+
+            if (!pmc_key)
                 n = i + 1;      /* now we know how big the key is */
         }
         else {
-            if (!pmc_key) {
-                real_exception(interp, NULL, 1,
-                        "Passed a NULL pmc_key into VTABLE_get_string_keyed_int");
-            }
+            if (!pmc_key)
+                Parrot_ex_throw_from_c_args(interp, NULL, 1,
+                    "Passed a NULL pmc_key into VTABLE_get_string_keyed_int");
+
             part = VTABLE_get_string_keyed_int(interp, pmc_key, i);
         }
 
@@ -410,7 +411,7 @@ Parrot_find_global_n(PARROT_INTERP, ARGIN_NULLOK(PMC *ns), ARGIN_NULLOK(STRING *
 
 =item C<PMC * Parrot_find_global_cur>
 
-RT#48260: Not yet documented!!!
+Finds and returns the data time named C<globalname> in the current namespace.
 
 =cut
 
@@ -513,7 +514,7 @@ Parrot_store_global_n(PARROT_INTERP, ARGIN_NULLOK(PMC *ns),
 
 =item C<void Parrot_store_global_cur>
 
-RT#48260: Not yet documented!!!
+Store the value C<val> with name C<globalname> in the current namespace.
 
 =cut
 
@@ -621,8 +622,8 @@ Parrot_find_global_op(PARROT_INTERP, ARGIN(PMC *ns),
     PMC *res;
 
     if (!globalname)
-        real_exception(interp, next, E_NameError,
-                       "Tried to get null global");
+        Parrot_ex_throw_from_c_args(interp, next, EXCEPTION_GLOBAL_NOT_FOUND,
+            "Tried to get null global");
 
     res = Parrot_find_global_n(interp, ns, globalname);
     if (!res)
@@ -663,18 +664,11 @@ Parrot_find_name_op(PARROT_INTERP, ARGIN(STRING *name), SHIM(void *next))
 
     /* RT#46171 - walk up the scopes!  duh!! */
 
-    if (PMC_IS_NULL(g)) {
+    if (PMC_IS_NULL(g))
         g = Parrot_find_global_cur(interp, name);
 
-        if (PMC_IS_NULL(g)) {
-            g = Parrot_find_global_n(interp,
-                    Parrot_get_ctx_HLL_namespace(interp), name);
-
-            if (PMC_IS_NULL(g)) {
-                g = Parrot_find_builtin(interp, name);
-            }
-        }
-    }
+    if (PMC_IS_NULL(g))
+        g = Parrot_find_global_n(interp, Parrot_get_ctx_HLL_namespace(interp), name);
 
     if (PMC_IS_NULL(g))
         return PMCNULL;
@@ -686,7 +680,8 @@ Parrot_find_name_op(PARROT_INTERP, ARGIN(STRING *name), SHIM(void *next))
 
 =item C<static PMC * get_namespace_pmc>
 
-RT#48260: Not yet documented!!!
+Return the namespace PMC associated with the PMC C<sub>. If C<sub> is NULL,
+return the Associated HLL namespace PMC instead.
 
 =cut
 
@@ -715,7 +710,8 @@ get_namespace_pmc(PARROT_INTERP, ARGIN(PMC *sub))
 
 =item C<static void store_sub_in_multi>
 
-RT#48260: Not yet documented!!!
+Adds the sub C<sub> into a mulisub of the same name in the namespace C<ns>.
+If no multisub by that name currently exists, we create one.
 
 =cut
 
@@ -751,7 +747,8 @@ store_sub_in_multi(PARROT_INTERP, ARGIN(PMC *sub), ARGIN(PMC *ns))
 
 =item C<void Parrot_store_sub_in_namespace>
 
-RT#48260: Not yet documented!!!
+Adds the PMC C<sub> into the current namespace. Adds the sub to a multi of the
+same name if it's defined as a multi.
 
 =cut
 

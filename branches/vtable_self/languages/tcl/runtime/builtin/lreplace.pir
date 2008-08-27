@@ -1,7 +1,4 @@
-##
-# [lreplace]
-
-.HLL 'Tcl', 'tcl_group'
+.HLL 'Tcl', ''
 .namespace []
 
 .sub '&lreplace'
@@ -11,11 +8,11 @@
     argc = elements argv
     if argc < 3 goto bad_args
 
-    .local pmc list, __list, retval, iterator, __index
-    __list = get_root_global ['_tcl'], '__list'
-    __index = get_root_global ['_tcl'], '__index'
+    .local pmc list, toList, retval, iterator, getIndex
+    toList = get_root_global ['_tcl'], 'toList'
+    getIndex = get_root_global ['_tcl'], 'getIndex'
     $P0 = shift argv
-    list = __list($P0)
+    list = toList($P0)
     list = clone list
 
     .local int size
@@ -23,9 +20,9 @@
 
     .local int first, last, count
     $S0 = shift argv
-    first = __index($S0,list)
+    first = getIndex($S0,list)
     $S0  = shift argv
-    last = __index($S0,list)
+    last = getIndex($S0,list)
 
     if size == 0   goto empty
     if last < size goto first_1
@@ -54,12 +51,12 @@ empty:
     .return(list)
 
 bad_args:
-    tcl_error 'wrong # args: should be "lreplace list first last ?element element ...?"'
+    die 'wrong # args: should be "lreplace list first last ?element element ...?"'
 
 doesnt_contain_elem:
     $S0 = first
     $S0 = "list doesn't contain element " . $S0
-    tcl_error $S0
+    die $S0
 .end
 
 # Local Variables:

@@ -459,7 +459,8 @@ again:
 
         /* check that fullname isn't NULL, just in case */
         if (!fullname)
-            real_exception(interp, NULL, 1, "Trying to open a NULL filename");
+            Parrot_ex_throw_from_c_args(interp, NULL, 1,
+                "Trying to open a NULL filename");
 
         fd = open(fullname, O_RDONLY | O_BINARY);
 
@@ -912,7 +913,7 @@ Parrot_runcode(PARROT_INTERP, int argc, ARGIN(char **argv))
                 PIO_eprintf(interp, "EXEC core");
                 break;
             default:
-                real_exception(interp, NULL, 1, "Unknown run core");
+                Parrot_ex_throw_from_c_args(interp, NULL, 1, "Unknown run core");
         }
 
         PIO_eprintf(interp, " ***\n");
@@ -964,10 +965,9 @@ Runs the interpreter's bytecode in debugging mode.
 PARROT_API
 PARROT_CAN_RETURN_NULL
 opcode_t *
-Parrot_debug(NOTNULL(Parrot_Interp debugger), opcode_t * pc)
+Parrot_debug(PARROT_INTERP, NOTNULL(Parrot_Interp debugger), opcode_t * pc)
 {
     const char *command;
-    Interp     *interp;
     PDB_t      * const pdb = debugger->pdb;
 
     pdb->cur_opcode        = pc;
@@ -975,8 +975,10 @@ Parrot_debug(NOTNULL(Parrot_Interp debugger), opcode_t * pc)
     PDB_init(debugger, NULL);
 
     /* disassemble needs this for now */
+    /*
     interp               = pdb->debugee;
     interp->pdb          = pdb;
+    */
     debugger->lo_var_ptr = interp->lo_var_ptr;
 
     PDB_disassemble(interp, NULL);

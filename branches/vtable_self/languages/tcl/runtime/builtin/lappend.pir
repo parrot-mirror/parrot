@@ -1,7 +1,4 @@
-##
-# [list]
-
-.HLL 'Tcl', 'tcl_group'
+.HLL 'Tcl', ''
 .namespace []
 
 .sub '&lappend'
@@ -10,7 +7,7 @@
   .local pmc value, retval
   .local int return_type
   .local int argc
-  argc = argv
+  argc = elements argv
   if argc == 0 goto error
 
   .local string listname
@@ -19,15 +16,15 @@
   cnt = 1
 
   .local pmc read
-  read = get_root_global ['_tcl'], '__read'
+  read = get_root_global ['_tcl'], 'readVar'
   push_eh new_variable
     value = read(listname)
   pop_eh
 
-  .local pmc __list
+  .local pmc toList
 
-  __list = get_root_global ['_tcl'], '__list'
-  value  = __list(value)
+  toList = get_root_global ['_tcl'], 'toList'
+  value  = toList(value)
   goto loop
 
 new_variable:
@@ -42,11 +39,11 @@ loop:
   goto loop
 loop_done:
   .local pmc set
-  set = get_root_global ['_tcl'], '__set'
+  set = get_root_global ['_tcl'], 'setVar'
   .return set(listname, value)
 
 error:
-  tcl_error 'wrong # args: should be "lappend varName ?value value ...?"'
+  die 'wrong # args: should be "lappend varName ?value value ...?"'
 
 .end
 

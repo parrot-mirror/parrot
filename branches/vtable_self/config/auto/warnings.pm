@@ -31,10 +31,9 @@ use Parrot::BuildUtil;
 sub _init {
     my $self = shift;
     my %data;
-    $data{description} = q{Detecting supported compiler warnings (-Wxxx)};
+    $data{description} = q{Detect supported compiler warnings};
     $data{result}      = q{};
 
-    # potential addition? -fvisibility=hidden
     # Please keep these sorted by flag name, such that "-Wno-foo" is
     # sorted as "-Wfoo", so we can turn off/on as needed.
     my @potential_warnings = qw(
@@ -227,9 +226,15 @@ sub try_warning {
     );
     _set_warning($conf, $warning, $exit_code, $verbose);
 
-    return if $exit_code;
+    $conf->cc_clean();
+
+    if ($exit_code) {
+        unlink $output_file or die "Unable to unlink $output_file: $!";
+        return;
+    }
 
     my $output = Parrot::BuildUtil::slurp_file($output_file);
+    unlink $output_file or die "Unable to unlink $output_file: $!";
     return _set_ccflags($conf, $output, $tryflags, $verbose);
 }
 

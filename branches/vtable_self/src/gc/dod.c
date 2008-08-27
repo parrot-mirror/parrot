@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2001-2007, The Perl Foundation.
+Copyright (C) 2001-2008, The Perl Foundation.
 $Id$
 
 =head1 NAME
@@ -295,10 +295,6 @@ Parrot_dod_trace_root(PARROT_INTERP, int trace_stack)
      */
     mark_vtables(interp);
 
-    /* mark exception list */
-    for (i = 0; i <= E_LAST_PYTHON_E; ++i)
-        pobject_lives(interp, (PObj*)interp->exception_list[i]);
-
     /* mark the root_namespace */
     pobject_lives(interp, (PObj *)interp->root_namespace);
 
@@ -315,9 +311,9 @@ Parrot_dod_trace_root(PARROT_INTERP, int trace_stack)
     /* Now mark the class hash */
     pobject_lives(interp, (PObj *)interp->class_hash);
 
-    /* Mark the registry if any */
-    if (interp->DOD_registry)
-        pobject_lives(interp, (PObj *)interp->DOD_registry);
+    /* Mark the registry */
+    PARROT_ASSERT(interp->DOD_registry);
+    pobject_lives(interp, (PObj *)interp->DOD_registry);
 
     /* Mark the transaction log */
     /* XXX do this more generically? */
@@ -849,7 +845,7 @@ find_common_mask(PARROT_INTERP, size_t val1, size_t val2)
         return 0;
     }
 
-    real_exception(interp, NULL, INTERP_ERROR,
+    Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INTERP_ERROR,
             "Unexpected condition in find_common_mask()!\n");
 }
 

@@ -1,20 +1,14 @@
-###
-# [append]
-
-#
-# append var [...]
-
-.HLL 'Tcl', 'tcl_group'
+.HLL 'Tcl', ''
 .namespace []
 
 .sub '&append'
   .param pmc argv :slurpy
 
   .local int argc
-  argc = argv
+  argc = elements argv
 
   .local pmc read
-  read = get_root_global ['_tcl'], '__read'
+  read = get_root_global ['_tcl'], 'readVar'
 
   .local string value
   .local int looper
@@ -48,14 +42,14 @@ loop:
 
 loop_done:
   .local pmc set
-  set = get_root_global ['_tcl'], '__set'
+  set = get_root_global ['_tcl'], 'setVar'
   .return set(name, value)
 
 getter:
   .return read(name)
 
 badargs:
-  tcl_error 'wrong # args: should be "append varName ?value value ...?"'
+  die 'wrong # args: should be "append varName ?value value ...?"'
 .end
 
 # Local Variables:

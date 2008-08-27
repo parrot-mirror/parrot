@@ -68,19 +68,6 @@ inline op fdopen(out PMC, in INT, in STR) :filesys_open {
     string_cstring_free(mode);
 }
 
-=item B<getfd>(out INT, invar PMC)
-
-Get the file descriptor out of the ParrotIO object $2 and store it in $1
-
-RT#42373: integral file descriptors might not exist outside of the UNIX
-     platform.
-
-=cut
-
-inline op getfd(out INT, invar PMC) :advanced_io :deprecated {
-  $1 = (INTVAL)PIO_getfd(interp, $2);
-}
-
 =item B<getstdin>(out PMC)
 
 Create a new ParrotIO object for the stdin file descriptor and
@@ -182,23 +169,59 @@ inline op print(in INT) :base_io {
 }
 
 inline op print(in NUM) :base_io {
-  PIO_printf(interp, "%f", (double)$1);
+  PIO_printf(interp, FLOATVAL_FMT, $1);
 }
 
 op print(in STR) :base_io {
   STRING * const s = $1;
-  if (s && string_length(interp, s)) {
+  if (s && string_length(interp, s))
     PIO_putps(interp, _PIO_STDOUT(interp), s);
-  }
 }
 
 op print(invar PMC) :base_io {
   PMC * const p = $1;
   STRING * const s = (VTABLE_get_string(interp, p));
-  if (s) {
+  if (s)
     PIO_putps(interp, _PIO_STDOUT(interp), s);
-  }
 }
+
+=item B<say>(in INT)
+
+=item B<say>(in NUM)
+
+=item B<say>(invar PMC)
+
+=item B<say>(in STR)
+
+Print $1 to standard output with a trailing newline.
+
+=cut
+
+inline op say(in INT) :base_io {
+  PIO_printf(interp, INTVAL_FMT "\n", (INTVAL)$1);
+}
+
+inline op say(in NUM) :base_io {
+  PIO_printf(interp, FLOATVAL_FMT "\n", $1);
+}
+
+op say(in STR) :base_io {
+  STRING * const s = $1;
+  if (s && string_length(interp, s))
+    PIO_putps(interp, _PIO_STDOUT(interp), s);
+  PIO_puts(interp, _PIO_STDOUT(interp), "\n");
+}
+
+op say(invar PMC) :base_io {
+  PMC * const p = $1;
+  STRING * const s = (VTABLE_get_string(interp, p));
+  if (s)
+    PIO_putps(interp, _PIO_STDOUT(interp), s);
+  PIO_puts(interp, _PIO_STDOUT(interp), "\n");
+}
+
+
+
 
 ##########################################
 
@@ -219,7 +242,7 @@ op printerr(in INT) :base_io {
 }
 
 op printerr(in NUM) :base_io {
-  PIO_eprintf(interp, "%f", (double)$1);
+  PIO_eprintf(interp, FLOATVAL_FMT, $1);
 }
 
 op printerr(in STR) :base_io {
@@ -258,7 +281,7 @@ op print(invar PMC, in INT) :base_io {
 
 op print(invar PMC, in NUM) :base_io {
   if ($1) {
-    STRING * const s = Parrot_sprintf_c(interp, "%f", (double)$2);
+    STRING * const s = Parrot_sprintf_c(interp, FLOATVAL_FMT, $2);
     PIO_putps(interp, $1, s);
   }
 }
@@ -310,11 +333,11 @@ inline op readline(out STR, invar PMC) :base_io {
      * io stuff are methods
      */
     if (pio->vtable->base_type != enum_class_ParrotIO)
-        real_exception(interp, NULL, PIO_ERROR,
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_PIO_ERROR,
                 "Cannot read line from empty filehandle");
     io = (ParrotIO *)PMC_data(pio);
     if (!io)
-        real_exception(interp, NULL, PIO_ERROR,
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_PIO_ERROR,
                 "Cannot read line from empty filehandle");
 
     if (!(io->flags & PIO_F_LINEBUF))
@@ -402,17 +425,17 @@ INTVALS.
 
 op seek(invar PMC, in INT, in INT) :base_io {
   if ($1) {
-    if (PIO_seek(interp, $1, PIO_make_offset($2), $3) < 0) {
-      real_exception(interp, NULL, PIO_ERROR, "seek failed (32bit)");
-    }
+    if (PIO_seek(interp, $1, PIO_make_offset($2), $3) < 0)
+      Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_PIO_ERROR,
+            "seek failed (32bit)");
   }
 }
 
 op seek(invar PMC, in INT, in INT, in INT) :base_io {
   if ($1) {
-    if (PIO_seek(interp, $1, PIO_make_offset32($2, $3), $4) < 0) {
-      real_exception(interp, NULL, PIO_ERROR, "seek failed (64bit)");
-    }
+    if (PIO_seek(interp, $1, PIO_make_offset32($2, $3), $4) < 0)
+      Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_PIO_ERROR,
+            "seek failed (64bit)");
   }
 }
 

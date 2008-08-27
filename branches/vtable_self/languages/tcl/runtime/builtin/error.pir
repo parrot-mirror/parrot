@@ -1,19 +1,11 @@
-###
-# [error]
-
-# RT#40757: only handles the one arg form of error right now.
-# need global vars before setting errorInfo, and stack tracing isn't
-# ready yet.
-# (So, the usage statement lies)
-
-.HLL 'Tcl', 'tcl_group'
+.HLL 'Tcl', ''
 .namespace []
 
 .sub '&error'
   .param pmc argv :slurpy
 
   .local int argc
-  argc = argv
+  argc = elements argv
 
   if argc < 1 goto badargs
   if argc > 3 goto badargs
@@ -44,10 +36,10 @@ finish:
   $P1 = get_hll_global '$errorCode'
   assign $P1, errorCode
   $P0 = argv[0]
-  tcl_error $P0
+  die $P0
 
 badargs:
-  tcl_error 'wrong # args: should be "error message ?errorInfo? ?errorCode?"'
+  die 'wrong # args: should be "error message ?errorInfo? ?errorCode?"'
 .end
 
 # Local Variables:

@@ -294,17 +294,20 @@ static void split_chunk(PARROT_INTERP,
 /* HEADERIZER END: static */
 
 #define chunk_list_size(list) \
-                (PObj_buflen(&list->chunk_list) / sizeof (List_chunk *))
+                (PObj_buflen(&(list)->chunk_list) / sizeof (List_chunk *))
 
 /* hide the ugly cast somehow: */
 #define chunk_list_ptr(list, idx) \
-        ((List_chunk**) PObj_bufstart(&list->chunk_list))[idx]
+        ((List_chunk**) PObj_bufstart(&(list)->chunk_list))[(idx)]
 
 /*
 
 =item C<static List_chunk * allocate_chunk>
 
-Make a new chunk, size bytes big, holding items items.
+Makes a new chunk, and allocates C<size> bytes for buffer storage from the
+generic memory pool. The chunk holds C<items> items. Marks the chunk as
+being part of C<< list->container >>, if it exists, for the purposes of GC. Does
+not install the chunk into C<< list->container >> yet.
 
 =cut
 
@@ -340,9 +343,8 @@ allocate_chunk(PARROT_INTERP, ARGIN(List *list), UINTVAL items, UINTVAL size)
 
 =item C<static void rebuild_chunk_ptrs>
 
-Rebuild chunk_list and update/optimize chunk usage, helper functions.
-
-Delete empty chunks, count chunks and fix prev pointers.
+Rebuilds C<list> and updates/optimizes chunk usage. Deletes empty chunks,
+counts chunks and fixes C<prev> pointers.
 
 =cut
 
@@ -391,7 +393,7 @@ rebuild_chunk_ptrs(ARGMOD(List *list), int cut)
 
 =item C<static void rebuild_sparse>
 
-Coalesce adjacent sparse chunks.
+Combines together adjacent sparse chunks in C<list>.
 
 =cut
 
@@ -422,7 +424,7 @@ rebuild_sparse(ARGMOD(List *list))
 
 =item C<static void rebuild_other>
 
-Coalesce adjacent irregular chunks.
+Combines together adjacent irregular chunks in C<list>.
 
 =cut
 
@@ -489,6 +491,7 @@ rebuild_other(PARROT_INTERP, ARGMOD(List *list))
 
 =item C<static void rebuild_fix_ends>
 
+Resets some values in C<list> and the lists's first chunk.
 Called by C<rebuild_chunk_list()>.
 
 =cut
@@ -517,7 +520,9 @@ rebuild_fix_ends(ARGMOD(List *list))
 
 =item C<static UINTVAL rebuild_chunk_list>
 
-Called to optimise the list when modifying it in some way.
+Optimises C<list> when it's been modified in some way. Combines adjacent
+chunks if they are both sparse or irregular. Updates the grow policies
+and computes list statistics.
 
 =cut
 
@@ -628,7 +633,9 @@ rebuild_chunk_list(PARROT_INTERP, ARGMOD(List *list))
 
 =item C<static List_chunk * alloc_next_size>
 
-Calculate size and items for next chunk and allocate it.
+Calculates the size and number of items for the next chunk and allocates it.
+Adds the number of allocated items to the list's total, but does not
+directly add the chunk to the C<list>.
 
 =cut
 
@@ -727,7 +734,8 @@ alloc_next_size(PARROT_INTERP, ARGMOD(List *list), int where, UINTVAL idx)
 
 =item C<static List_chunk * add_chunk>
 
-Add chunk at start or end.
+Adds a new chunk to the C<list>. If C<where> is 0, the chunk is added to
+the front of the list. If 0, it is added to the end of the list.
 
 =cut
 
@@ -762,9 +770,8 @@ add_chunk(PARROT_INTERP, ARGMOD(List *list), int where, UINTVAL idx)
 
 =item C<UINTVAL ld>
 
-Calculates log2(x).
-
-Stolen from F<src/malloc.c>.
+Calculates log2(x), or a useful approximation thereof. Stolen from
+F<src/malloc.c>.
 
 =cut
 
@@ -811,9 +818,9 @@ ld(UINTVAL x)
 
 Get the chunk for C<idx>, also update the C<idx> to point into the chunk.
 
-This routine will be called for every operation on list, so its
-optimized to be fast and needs an up to date chunk statistic, that
-C<rebuild_chunk_list> does provide.
+This routine will be called for every operation on list, so it's
+optimized to be fast and needs an up-to-date chunk statistic.
+C<rebuild_chunk_list> provides the necessary chunk statistics.
 
 The scheme of operations is:
 
@@ -877,15 +884,21 @@ get_chunk(PARROT_INTERP, ARGMOD(List *list), ARGMOD(UINTVAL *idx))
         rebuild_chunk_list(interp, list);
 #endif
 #ifdef SLOW_AND_BORING
+    /* in SLOW_AND_BORING mode, we loop through each chunk, and determine if
+       idx is in the chunk using basic bounds checking. If the loop completes
+       without finding idx we panic. "Panic" is probably not the best
+       reaction, however. */
     UNUSED(interp);
     for (chunk = list->first; chunk; chunk = chunk->next) {
         if (*idx < chunk->items)
             return chunk;
         *idx -= chunk->items;
     }
-    real_exception(interp, NULL, INTERNAL_PANIC, "list structure chaos!\n");
-#endif
 
+    Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INTERNAL_PANIC,
+        "Reached end of list %p without finding item index %d\n",
+        list, *idx);
+#endif
 
     /* fixed sized chunks - easy: all MAX_ITEMS sized */
     if (list->grow_policy == enum_grow_fixed) {
@@ -950,16 +963,22 @@ get_chunk(PARROT_INTERP, ARGMOD(List *list), ARGMOD(UINTVAL *idx))
             chunk = chunk->next;
             continue;
         }
-        real_exception(interp, NULL, INTERNAL_PANIC, "list structure chaos #1!\n");
+
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INTERNAL_PANIC,
+            "Cannot determine how to find location %d in list %p of %d items\n",
+            *idx, list, list->cap);
     }
-    real_exception(interp, NULL, INTERNAL_PANIC, "list structure chaos #2!\n");
+
+    Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INTERNAL_PANIC,
+        "Cannot find index %d in list %p of %d items using any method\n",
+        *idx, list, list->cap);
 }
 
 /*
 
 =item C<static void split_chunk>
 
-Split a sparse chunk, so that we have
+Splits a sparse chunk, so that we have
 
 - allocated space at C<idx>
 
@@ -1031,7 +1050,7 @@ split_chunk(PARROT_INTERP, ARGMOD(List *list), ARGMOD(List_chunk *chunk), UINTVA
 
 =item C<static void list_set>
 
-Set C<item> of type C<type> in chunk at C<idx>.
+Sets C<item> of type C<type> in chunk at C<idx>.
 
 =cut
 
@@ -1088,7 +1107,7 @@ list_set(PARROT_INTERP, ARGMOD(List *list), ARGIN(void *item), INTVAL type, INTV
         ((STRING **) PObj_bufstart(&chunk->data))[idx] = (STRING *)item;
         break;
     default:
-        real_exception(interp, NULL, 1, "Unknown list entry type\n");
+        Parrot_ex_throw_from_c_args(interp, NULL, 1, "Unknown list entry type\n");
         break;
     }
 }
@@ -1140,7 +1159,7 @@ list_item(PARROT_INTERP, ARGMOD(List *list), int type, INTVAL idx)
         case enum_type_STRING:
             return (void *)&((STRING **) PObj_bufstart(&chunk->data))[idx];
         default:
-            real_exception(interp, NULL, 1, "Unknown list entry type\n");
+            Parrot_ex_throw_from_c_args(interp, NULL, 1, "Unknown list entry type\n");
     }
 }
 
@@ -1148,7 +1167,7 @@ list_item(PARROT_INTERP, ARGMOD(List *list), int type, INTVAL idx)
 
 =item C<static void list_append>
 
-Add one or more chunks to end of list.
+Adds one or more chunks to end of list.
 
 =cut
 
@@ -1215,7 +1234,7 @@ list_new(PARROT_INTERP, PARROT_DATA_TYPE type)
         list->item_size = sizeof (STRING *);
         break;
     default:
-        real_exception(interp, NULL, 1, "Unknown list type\n");
+        Parrot_ex_throw_from_c_args(interp, NULL, 1, "Unknown list type\n");
         break;
     }
     return list;
@@ -1225,7 +1244,7 @@ list_new(PARROT_INTERP, PARROT_DATA_TYPE type)
 
 =item C<void list_pmc_new>
 
-Create a new list containing PMC* values in PMC_data(container).
+Creates a new list containing PMC* values in C<PMC_data(container)>.
 
 =cut
 
@@ -1275,12 +1294,13 @@ list_new_init(PARROT_INTERP, PARROT_DATA_TYPE type, ARGIN(PMC *init))
     INTVAL i, len;
 
     if (!init->vtable)
-        real_exception(interp, NULL, 1, "Illegal initializer for init\n");
+        Parrot_ex_throw_from_c_args(interp, NULL, 1,
+            "Illegal initializer for init\n");
 
     len = VTABLE_elements(interp, init);
 
     if (len & 1)
-        real_exception(interp, NULL, 1,
+        Parrot_ex_throw_from_c_args(interp, NULL, 1,
             "Illegal initializer for init: odd elements\n");
 
     for (i = 0; i < len; i += 2) {
@@ -1308,16 +1328,18 @@ list_new_init(PARROT_INTERP, PARROT_DATA_TYPE type, ARGIN(PMC *init))
                         interp, init, val);
                 break;
             default:
-                real_exception(interp, NULL, 1,
+                Parrot_ex_throw_from_c_args(interp, NULL, 1,
                     "Invalid initializer for list\n");
         }
     }
     list = list_new(interp, type);
     if (list->item_type == enum_type_sized) { /* override item_size */
-        if (!item_size) {
-            real_exception(interp, NULL, 1, "No item_size for type_sized list\n");
-        }
-        list->item_size = item_size;
+
+        if (!item_size)
+            Parrot_ex_throw_from_c_args(interp, NULL, 1,
+                "No item_size for type_sized list\n");
+
+        list->item_size       = item_size;
         list->items_per_chunk =
             items_per_chunk
                 ? (1 << (ld(items_per_chunk) + 1)) /* make power of 2 */
@@ -1339,7 +1361,7 @@ list_new_init(PARROT_INTERP, PARROT_DATA_TYPE type, ARGIN(PMC *init))
 
 =item C<void list_pmc_new_init>
 
-Create a new list containing PMC* values in PMC_data(container).
+Creates a new list of PMC* values in C<PMC_data(container)>.
 
 =cut
 
@@ -1362,7 +1384,7 @@ list_pmc_new_init(PARROT_INTERP, ARGMOD(PMC *container), ARGIN(PMC *init))
 
 =item C<List * list_clone>
 
-Return a clone of the list.
+Returns a clone of the C<other> list.
 
 TODO - Barely tested. Optimize new array structure, fixed if big.
 
@@ -1440,7 +1462,7 @@ list_clone(PARROT_INTERP, ARGIN(const List *other))
 
 =item C<void list_mark>
 
-Mark the list and its contents as live.
+Marks the list and its contents as live for the memory management system.
 
 =cut
 
@@ -1573,7 +1595,7 @@ list_set_length(PARROT_INTERP, ARGMOD(List *list), INTVAL len)
 
 =item C<void list_insert>
 
-Make room for C<n_items> at C<idx>.
+Makes room for C<n_items> at C<idx>.
 
 =cut
 
@@ -1646,7 +1668,7 @@ list_insert(PARROT_INTERP, ARGMOD(List *list), INTVAL idx, INTVAL n_items)
 
 =item C<void list_delete>
 
-Delete C<n_items> at C<idx>.
+Deletes C<n_items> at C<idx>.
 
 =cut
 
@@ -1925,16 +1947,18 @@ list_splice(PARROT_INTERP, ARGMOD(List *list), ARGIN_NULLOK(List *value_list),
     const int type = list->item_type;
     INTVAL i, j;
 
-    if (value_list && type != value_list->item_type) {
-        real_exception(interp, NULL, 1, "Item type mismatch in splice\n");
-    }
+    if (value_list && type != value_list->item_type)
+        Parrot_ex_throw_from_c_args(interp, NULL, 1,
+            "Item type mismatch in splice\n");
 
     /* start from end */
     if (offset < 0) {
         offset += length;
         if (offset < 0)
-            real_exception(interp, NULL, OUT_OF_BOUNDS, "illegal splice offset\n");
+            Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_OUT_OF_BOUNDS,
+                "illegal splice offset\n");
     }
+
     /* "leave that many elements off the end of the array" */
     if (count < 0) {
         count += length - offset + 1;

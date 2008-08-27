@@ -1,7 +1,4 @@
-###
-# [source]
-
-.HLL 'Tcl', 'tcl_group'
+.HLL 'Tcl', ''
 .namespace []
 
 .sub '&source'
@@ -24,9 +21,9 @@
   interp = getinterp
   ns = interp['namespace';1]
 
-  .local pmc __script, code
-  __script = get_root_global ['_tcl'], '__script'
-  code = __script ( file_contents, 'ns' => ns, 'bsnl' => 1)
+  .local pmc compileTcl, code
+  compileTcl = get_root_global ['_tcl'], 'compileTcl'
+  code = compileTcl ( file_contents, 'ns' => ns, 'bsnl' => 1)
 
   .return code()
 
@@ -34,10 +31,10 @@ badfile:
   $S0 = "couldn't read file \""
   $S0 .= filename
   $S0 .= '": no such file or directory'
-  tcl_error $S0
+  die $S0
 
 bad_args:
-  tcl_error 'wrong # args: should be "source fileName"'
+  die 'wrong # args: should be "source fileName"'
 .end
 
 # Local Variables:

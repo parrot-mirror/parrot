@@ -71,7 +71,8 @@ Returns the list as a string
                     case '}':
                         if (--count < 0) goto escape;
                         break;
-
+                    default:
+                        break;
                 }
                 pos++;
             }
@@ -203,8 +204,6 @@ An alias to assign_pmc to make other things happy before set_pmc is removed.
 
 Copy the contents of other to self.
 
-=back
-
 =cut
 
 */
@@ -237,11 +236,59 @@ Copy the contents of other to self.
             pmc_reuse(INTERP, SELF, other->vtable->base_type, 0);
         }
         else
-        {
-            real_exception(INTERP, NULL, E_TypeError,
-                           "unable to assign self to TclList");
-        }
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
+                "unable to assign self to TclList");
     }
+
+/*
+
+=item METHOD get_list
+
+Return a list version of ourself
+
+=cut
+
+*/
+
+    METHOD get_list() {
+        RETURN(PMC *SELF);
+    }
+
+/*
+
+=item METHOD reverse
+
+Reverse ourselves.
+
+This algorithm is very generic and could easily be
+moved back into parrot core where we'd be happy to inherit it.
+
+=cut
+
+*/
+
+    METHOD reverse() {
+        INTVAL low  = 0;
+        INTVAL high = SELF.get_integer() - 1;
+        PMC*  swap;
+
+        while (low < high) {
+            swap = SELF.get_pmc_keyed_int(high);
+            SELF.set_pmc_keyed_int(high, SELF.get_pmc_keyed_int(low)) ;
+            SELF.set_pmc_keyed_int(low, swap);
+
+            low++;
+            high--;
+        }
+
+        RETURN(PMC *SELF);
+    }
+
+/*
+
+=back
+
+*/
 
 }
 

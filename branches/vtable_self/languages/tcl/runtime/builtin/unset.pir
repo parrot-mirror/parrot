@@ -1,7 +1,4 @@
-###
-# [unset]
-
-.HLL 'Tcl', 'tcl_group'
+.HLL 'Tcl', ''
 .namespace []
 
 .sub '&unset'
@@ -29,7 +26,7 @@
 
 flags_done:
   .local pmc find_var, var
-  find_var = get_root_global ['_tcl'], '__find_var'
+  find_var = get_root_global ['_tcl'], 'findVar'
 
   .local string name
 loop:
@@ -58,7 +55,7 @@ array:
 
   var = find_var(array_name)
   if null var goto no_such_var
-  $I0 = isa var, 'TclArray'
+  $I0 = does var, 'associative_array'
   unless $I0 goto variable_isnt_array
 
   $I0 = exists var[key]
@@ -71,14 +68,14 @@ variable_isnt_array:
   $S0 = "can't unset \""
   $S0 .= name
   $S0 .= "\": variable isn't array"
-  tcl_error $S0
+  die $S0
 
 no_such_element:
   if nocomplain goto next
   $S0 = "can't unset \""
   $S0 .= name
   $S0 .= '": no such element in array'
-  tcl_error $S0
+  die $S0
 
 scalar:
   var = find_var(name)
@@ -100,7 +97,7 @@ no_such_var:
   $S0 = "can't unset \""
   $S0 .= name
   $S0 .= '": no such variable'
-  tcl_error $S0
+  die $S0
 .end
 
 

@@ -1,10 +1,4 @@
-=head1 [proc]
-
-Create a PIR sub on the fly for this user defined proc.
-
-=cut
-
-.HLL 'Tcl', 'tcl_group'
+.HLL 'Tcl', ''
 .namespace []
 
 .sub '&proc'
@@ -21,11 +15,11 @@ Create a PIR sub on the fly for this user defined proc.
   args      = argv[1]
   body      = argv[2]
 
-  .local pmc pir_compiler, __script, __list, __namespace
+  .local pmc pir_compiler, compileTcl, toList, splitNamespace
   pir_compiler = compreg 'PIR'
-  __script     = get_root_global ['_tcl'], '__script'
-  __list       = get_root_global ['_tcl'], '__list'
-  __namespace  = get_root_global ['_tcl'], '__namespace'
+  compileTcl     = get_root_global ['_tcl'], 'compileTcl'
+  toList       = get_root_global ['_tcl'], 'toList'
+  splitNamespace  = get_root_global ['_tcl'], 'splitNamespace'
 
   .local pmc code, args_code, defaults
   .local string namespace
@@ -36,17 +30,17 @@ Create a PIR sub on the fly for this user defined proc.
 
   .local pmc ns
   .local string name
-  ns   = new 'ResizablePMCArray'
+  ns   = new 'TclList'
   name = ''
 
   if full_name == '' goto create
 
-  ns   = __namespace(full_name, 1)
+  ns   = splitNamespace(full_name, 1)
   $I0  = elements ns
   if $I0 == 0 goto create
   name = pop ns
 
-  if $I0 == 1 goto root
+  if $I0 == 1 goto create
   $P0 = get_hll_namespace ns
   if null $P0 goto unknown_namespace
 
@@ -55,32 +49,11 @@ Create a PIR sub on the fly for this user defined proc.
   namespace .= "']"
   goto create
 
-root:
-  # check to see if this is inlinable
-  # if it is, we need to update the epoch
-  $S0 = name
-  $P1 = get_root_global ['_tcl'; 'builtins'], $S0
-  if null $P1 goto create
-
-  .local pmc epoch
-  epoch = get_root_global ['_tcl'], 'epoch'
-  inc epoch
-
-  # now we need to delete the helper sub
-  # so we don't try to inline anything else
-  $P1 = get_root_namespace ['_tcl'; 'builtins']
-  delete $P1[$S0]
-
 create:
   code.emit(<<'END_PIR', namespace, name)
 .sub 'xxx' :anon
   .param pmc args :slurpy
   .include 'languages/tcl/src/returncodes.pasm'
-  .local pmc epoch, colons, split, unk, interactive :unique_reg
-  epoch  = get_root_global ['_tcl'], 'epoch'
-  colons = get_root_global ['_tcl'], 'colons'
-  split  = get_root_global ['parrot'; 'PGE::Util'], 'split'
-  interactive = get_root_global ['tcl'], '$tcl_interactive'
 
   .local pmc call_chain, lexpad
   call_chain = get_root_global ['_tcl'], 'call_chain'
@@ -103,7 +76,7 @@ END_PIR
   .local pmc arg
   args_usage = ''
   args_info  = ''
-  args  = __list(args)
+  args  = toList(args)
   i     = 0
   elems = elements args
   min   = 0
@@ -118,7 +91,7 @@ END_PIR
 args_loop:
   if i == elems goto args_loop_done
   arg = args[i]
-  arg = __list(arg)
+  arg = toList(arg)
 
   $S0 = arg[0]
   args_info .= $S0
@@ -202,14 +175,14 @@ done_args:
   goto ARGS_OK
 BAD_ARGS:
   $P0 = pop call_chain
-  tcl_error 'wrong # args: should be "%0%1"'
+  die 'wrong # args: should be "%0%1"'
 ARGS_OK:
   push_eh is_return
 END_PIR
 
   # Save the parsed body.
   .local string parsed_body, body_reg
-  (parsed_body, body_reg) = __script(body, 'pir_only'=>1)
+  (parsed_body, body_reg) = compileTcl(body, 'pir_only'=>1)
 
   code .= parsed_body
 
@@ -231,9 +204,9 @@ is_return:
   .get_message($P0)
   .return ($P0)
 bad_continue:
-  tcl_error 'invoked "continue" outside of a loop'
+  die 'invoked "continue" outside of a loop'
 bad_break:
-  tcl_error 'invoked "break" outside of a loop'
+  die 'invoked "break" outside of a loop'
 not_return_nor_ok:
   .rethrow()
 .end
@@ -256,17 +229,17 @@ END_PIR
   $P1 = new 'TclProc'
   assign $P1, $P0
 
-  $P9 = new 'String'
+  $P9 = new 'TclString'
   $P9 = $S0
   setattribute $P1, 'PIR_source', $P9
 
-  $P9 = new 'String'
+  $P9 = new 'TclString'
   $P9 = 'Tcl'
   setattribute $P1, 'HLL',        $P9
 
   setattribute $P1, 'HLL_source', body
 
-  $P9 = new 'String'
+  $P9 = new 'TclString'
   $P9 = args_info
   setattribute $P1, 'args',       $P9
 
@@ -294,17 +267,17 @@ unknown_namespace:
   $S0 = "can't create procedure \""
   $S0 .= full_name
   $S0 .= '": unknown namespace'
-  tcl_error $S0
+  die $S0
 
 too_many_fields:
   $S0 = arg
   $S1 = 'too many fields in argument specifier "'
   $S1 .= $S0
   $S1 .= '"'
-  tcl_error $S1
+  die $S1
 
 error:
-  tcl_error 'wrong # args: should be "proc name args body"'
+  die 'wrong # args: should be "proc name args body"'
 .end
 
 # Local Variables:

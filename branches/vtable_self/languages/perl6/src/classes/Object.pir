@@ -236,9 +236,9 @@ Create a new object having the same class as the invocant.
     if sigil != '$' goto no_scalar
     .local pmc attr_info, type
     attr_info = attribs[$S0]
-    if null attr_info goto no_scalar
+    if null attr_info goto set_attrib
     type = attr_info['type']
-    if null type goto no_scalar
+    if null type goto set_attrib
     if got_init_value goto no_proto_init
     $I0 = isa type, 'P6protoobject'
     unless $I0 goto no_proto_init
@@ -246,11 +246,25 @@ Create a new object having the same class as the invocant.
   no_proto_init:
     $P2 = new 'Perl6Scalar', $P2
     setprop $P2, 'type', type
+    goto set_attrib
   no_scalar:
 
+    # Is it an array? If so, initialize to Perl6Array.
+    if sigil != '@' goto no_array
+    $P2 = new 'Perl6Array'
+    goto set_attrib
+  no_array:
+
+    # Is it a Hash? If so, initialize to Perl6Hash.
+    if sigil != '%' goto no_hash
+    $P2 = new 'Perl6Hash'
+    goto set_attrib
+  no_hash:
+
+  set_attrib:
     push_eh set_attrib_eh
     setattribute $P1, cur_class, $S0, $P2
-set_attrib_eh:
+  set_attrib_eh:
     goto iter_loop
   iter_end:
 
@@ -304,6 +318,17 @@ Defines the .true method on all objects via C<prefix:?>.
  .return 'prefix:?'(self)
 .end
 
+=item get_bool (vtable)
+
+Returns true if the object is defined, false otherwise.
+
+=cut
+
+.sub '' :vtable('get_bool')
+    $I0 = 'defined'(self)
+    .return ($I0)
+.end
+
 =item print()
 
 =item say()
@@ -320,6 +345,28 @@ Print the object
 .sub 'say' :method
     $P0 = get_hll_global 'say'
     .return $P0(self)
+.end
+
+=item WHERE
+
+Gets the memory address of the object.
+
+=cut
+
+.sub 'WHERE' :method
+    $I0 = get_addr self
+    .return ($I0)
+.end
+
+=item WHICH
+
+Gets the object's identity value
+
+=cut
+
+.sub 'WHICH' :method
+    # For normal objects, this can just be the memory address.
+    .return self.'WHERE'()
 .end
 
 =back
@@ -417,7 +464,7 @@ Create a clone of self, also cloning the attributes given by attrlist.
     # to the result list.
     .local pmc pos_res, named_res, cap
     (pos_res :slurpy, named_res :named :slurpy) = cur_meth(self, pos_args :flat, named_args :named :flat)
-    cap = cap_class.'!create'(failure_class, pos_res :flat, named_res :flat :named)
+    cap = 'prefix:\\'(pos_res :flat, named_res :flat :named)
     push result_list, cap
     goto mro_loop
   mro_loop_end:
@@ -436,6 +483,100 @@ Create a clone of self, also cloning the attributes given by attrlist.
     'die'($S0)
 .end
 
+
+.sub '!.^' :method
+    .param string method_name
+    .param pmc pos_args     :slurpy
+    .param pmc named_args   :slurpy :named
+
+    # Get the HOW or the object and do the call on that.
+    .local pmc how
+    how = self.'HOW'()
+    .return how.method_name(self, pos_args :flat, named_args :flat :named)
+.end
+
+
+.namespace ['P6protoobject']
+
+=back
+
+=head2 Methods on P6protoobject
+
+=over
+
+=item WHENCE()
+
+Returns the protoobject's autovivification closure.
+
+=cut
+
+.sub 'WHENCE' :method
+    .local pmc props, whence
+    props = getattribute self, '%!properties'
+    if null props goto ret_undef
+    whence = props['WHENCE']
+    if null whence goto ret_undef
+    .return (whence)
+  ret_undef:
+    whence = new 'Undef'
+    .return (whence)
+.end
+
+
+=item get_pmc_keyed(key)    (vtable method)
+
+Returns a proto-object with an autovivification closure attached to it.
+
+=cut
+
+.sub get_pmc_keyed :vtable :method
+    .param pmc what
+
+    # We'll build auto-vivification hash of values.
+    .local pmc WHENCE, key, val
+    WHENCE = new 'Hash'
+
+    # What is it?
+    $S0 = what.'WHAT'()
+    if $S0 == 'Pair' goto from_pair
+    if $S0 == 'List' goto from_list
+    'die'("Auto-vivification closure did not contain a Pair")
+
+  from_pair:
+    # Just a pair.
+    key = what.'key'()
+    val = what.'value'()
+    WHENCE[key] = val
+    goto done_whence
+
+  from_list:
+    # List.
+    .local pmc list_iter, cur_pair
+    list_iter = new 'Iterator', what
+  list_iter_loop:
+    unless list_iter goto done_whence
+    cur_pair = shift list_iter
+    key = cur_pair.'key'()
+    val = cur_pair.'value'()
+    WHENCE[key] = val
+    goto list_iter_loop
+  done_whence:
+
+    # Now create a clone of the protoobject.
+    .local pmc protoclass, res, props, tmp
+    protoclass = class self
+    res = new protoclass
+
+    # Attach the WHENCE property.
+    props = getattribute self, '%!properties'
+    unless null props goto have_props
+    props = new 'Hash'
+  have_props:
+    props['WHENCE'] = WHENCE
+    setattribute res, '%!properties', props
+
+    .return (res)
+.end
 
 =back
 

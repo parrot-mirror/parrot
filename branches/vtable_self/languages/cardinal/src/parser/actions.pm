@@ -156,6 +156,17 @@ method indexed_assignment($/) {
 
     make $past;
 }
+method member_assignment($/) {
+    my $rhs := $( $<rhs> );
+    my $primary := $( $<basic_primary> );
+
+    my $past := PAST::Op.new( :name(~$<key><ident> ~ '='), :pasttype('callmethod'), :node($/) );
+
+    $past.push( $primary );
+    $past.push( $rhs );
+
+    make $past;
+}
 method assignment($/) {
     my $lhs := $( $<mlhs> );
     our $?BLOCK;
@@ -230,13 +241,17 @@ method variable($/, $key) {
         $past := PAST::Op.new(:inline('%r = self'));
     }
     elsif $key eq 'nil' {
-        $/.panic('nil is not yet implemented');
+        $past := PAST::Var.new(:scope('package'), :name('nil'));
     }
     make $past;
 }
 
 method varname($/, $key) {
-    make $( $/{$key} );
+    my $past := $( $/{$key} );
+    if is_a_sub(~$/) { # unary sub
+        $past := PAST::Op.new( :pasttype('call'), :node($/), $past );
+    }
+    make $past;
 }
 
 method global($/) {
@@ -264,6 +279,19 @@ method instance_variable($/) {
 
         $block.symbol(~$name, :scope('attribute'));
         $?BLOCK.symbol(~$name, :scope('attribute'));
+    }
+    make $past;
+}
+
+method class_variable($/) {
+    our $?CLASS;
+    our $?BLOCK;
+    my $name := ~$/;
+    my $past := PAST::Var.new(  :name($name), :scope('package'), :viviself('Undef'), :node($/) );
+    my $block := $?CLASS[0];
+    unless $block.symbol(~$/) {
+        $block.symbol(~$name, :scope('package'));
+        $?BLOCK.symbol(~$name, :scope('package'));
     }
     make $past;
 }
@@ -300,6 +328,10 @@ method local_variable($/) {
     make $past;
 }
 
+method funcall($/) {
+    my $past := $( $<local_variable> );
+    make $past;
+}
 
 method constant_variable($/) {
     my @a;
@@ -467,19 +499,20 @@ method classdef($/,$key) {
 method functiondef($/) {
     my $past := $( $<comp_stmt> );
     my $name := $<fname>;
+    my $arity := +$past[0]<arity>;
     #my $args := $( $<argdecl> );
     #$past.push($args);
     $past.name(~$name);
     our $?BLOCK;
     our $?CLASS;
-    $?BLOCK.symbol(~$name, :scope('package'));
+    $?BLOCK.symbol(~$name, :scope('package'), :arity($arity));
     if defined($?CLASS) {
         $past.pirflags(':method');
     }
     make $past;
 }
 
-method argdecl($/) {
+method block_signature($/) {
     my $params := PAST::Stmts.new( :node($/) );
     my $past := PAST::Block.new($params, :blocktype('declaration'));
     for $<identifier> {
@@ -493,9 +526,11 @@ method argdecl($/) {
     }
 
     if $<block_param> {
-
+        my $block := $( $<block_param>[0] );
+        $past.symbol($block.name(), :scope('lexical'));
+        $params.push($block);
     }
-    $params.arity( +$<identifier> );
+    $params.arity( +$<identifier> + +$<block_param> );
     our $?BLOCK_SIGNATURED := $past;
     make $past;
 }
@@ -509,7 +544,7 @@ method slurpy_param($/) {
 
 method block_param($/) {
     my $past := $( $<identifier> );
-    # XXX
+    $past.scope('parameter');
     make $past;
 }
 
@@ -561,25 +596,16 @@ method operation($/) {
 }
 
 method call_args($/) {
-    if ~$/ ne '()' {
-        make $( $<args> );
+    my $past;
+    if $<args> {
+        $past := $( $<args> );
     }
     else {
-        make PAST::Op.new( :pasttype('call'), :node($/) );
+        $past := PAST::Op.new( :pasttype('call'), :node($/) );
     }
-}
-
-method do_args($/) {
-    my $params := PAST::Stmts.new( :node($/) );
-    my $past := PAST::Block.new($params, :blocktype('declaration'));
-    for $<identifier> {
-        my $parameter := $( $_ );
-        $past.symbol($parameter.name(), :scope('lexical'));
-        $parameter.scope('parameter');
-        $params.push($parameter);
+    if $<do_block> {
+        $past.push( $( $<do_block>[0] ) );
     }
-    $params.arity( +$<identifier> );
-    our $?BLOCK_SIGNATURED := $past;
     make $past;
 }
 
@@ -695,6 +721,34 @@ method arg($/, $key) {
     }
 }
 
+sub is_a_sub($name) {
+    our $?BLOCK;
+    our @?BLOCK;
+    if $?BLOCK.symbol(~$name) {
+        if defined($?BLOCK.symbol(~$name)<arity>) {
+            return(1);
+        }
+        else {
+            return(0);
+        }
+    }
+    for @?BLOCK {
+        if $_ {
+            my $sym_table := $_.symbol(~$name);
+            if $sym_table {
+                if defined($sym_table<arity>) {
+                    return(1);
+                }
+                else {
+                    return(0);
+                }
+            }
+        }
+    }
+    my $lex := lex_lookup($name);
+    if $lex && ~lookup_class($lex) eq 'Sub' { return(1); }
+    return(0);
+}
 
 # Local Variables:
 #   mode: cperl

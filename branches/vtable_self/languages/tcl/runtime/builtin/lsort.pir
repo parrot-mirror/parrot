@@ -1,8 +1,4 @@
-#
-# [lsort]
-#
-
-.HLL 'Tcl', 'tcl_group'
+.HLL 'Tcl', ''
 .namespace []
 
 .sub '&lsort'
@@ -13,7 +9,7 @@
   .local pmc compare
   .local pmc sort
 
-  argc = argv
+  argc = elements argv
   if argc == 0 goto wrong_args
 
   compare = get_root_global ['_tcl';'helpers';'lsort'], 'ascii'
@@ -33,7 +29,7 @@ chew_flag:
   if $P0 == '-integer' goto c_int
   if $P0 == '-real' goto c_real
   if $P0 == '-dictionary' goto c_dict
-  # RT#40749: command etc necessary
+  if $P0 == '-command' goto c_command
   branch bad_opt
 
 c_dict:
@@ -54,13 +50,18 @@ c_uniq:
 c_int:
   compare = get_root_global ['_tcl';'helpers';'lsort'], 'integer'
   branch chew_flag
-
+c_command:
+  .local string compareName
+  compareName = shift argv
+  $S0 = '&' . compareName
+  compare = find_global $S0
+  branch chew_flag
 
 got_list:
 
-  .local pmc __list
-  __list = get_root_global ['_tcl'], '__list'
-  $P0 = __list($P0)
+  .local pmc toList
+  toList = get_root_global ['_tcl'], 'toList'
+  $P0 = toList($P0)
 
   $P0.'sort'(compare)
 
@@ -87,9 +88,8 @@ strip_end:
 skip_unique:
   unless decr goto ordered
 
-  .local pmc reverse
-  reverse = get_root_global ['_tcl'], 'reverse'
-  reverse($P0)
+  $P0 = clone $P0
+  $P0.'reverse'()
 
 ordered:
   .return ($P0)
@@ -99,9 +99,9 @@ bad_opt:
   $S1 = $P0
   $S0 .= $S1
   $S0 .= '": must be -ascii, -command, -decreasing, -dictionary, -increasing, -index, -indices, -integer, -nocase, -real, or -unique'
-  tcl_error $S0
+  die $S0
 wrong_args:
-  tcl_error 'wrong # args: should be "lsort ?options? list"'
+  die 'wrong # args: should be "lsort ?options? list"'
 .end
 
 .HLL '_Tcl', ''
@@ -119,13 +119,15 @@ wrong_args:
   .param pmc s2
 
   # check that they're actually integers.
-  # This points out that we should really be caching
-  # the integer value rather than recalculating on each compare.
-  .local pmc __integer
-  __integer = get_root_global ['_tcl'], '__integer'
+  # We recalculate this every time, but without smarter PMCs, we can't
+  # afford to change the string value of the given PMC.
+  .local pmc toInteger
+  toInteger = get_root_global ['_tcl'], 'toInteger'
   .local pmc i1,i2
-  i1 = __integer(s1)
-  i2 = __integer(s2)
+  s1 = clone s1
+  s2 = clone s2
+  i1 = toInteger(s1)
+  i2 = toInteger(s2)
   $I0 = cmp_num i1, i2
   .return ($I0)
 
@@ -208,10 +210,12 @@ greater:
   .param pmc s2
 
   # check that they're actually numbers
-  .local pmc __number
-  __number = get_root_global ['_tcl'], '__number'
-  s1 = __number(s1)
-  s2 = __number(s2)
+  .local pmc toNumber
+  toNumber = get_root_global ['_tcl'], 'toNumber'
+  s1 = clone s1
+  s2 = clone s2
+  s1 = toNumber(s1)
+  s2 = toNumber(s2)
 
   $I0 = cmp_num s1, s2
   .return ($I0)

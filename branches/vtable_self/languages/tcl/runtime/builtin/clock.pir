@@ -1,11 +1,11 @@
-.HLL 'Tcl', 'tcl_group'
+.HLL 'Tcl', ''
 .namespace []
 
 .sub '&clock'
   .param pmc argv :slurpy
 
   .local int argc
-  argc = argv
+  argc = elements argv
 
   if argc == 0 goto few_args
 
@@ -13,16 +13,11 @@
   subcommand_name = shift argv
 
   .local pmc options
-  options = new 'ResizablePMCArray'
-  push options, 'add'
-  push options, 'clicks'
-  push options, 'format'
-  push options, 'microseconds'
-  push options, 'milliseconds'
-  push options, 'scan'
-  push options, 'seconds'
+  options = get_root_global ['_tcl'; 'helpers'; 'clock'], 'options'
+
   .local pmc select_option
   select_option  = get_root_global ['_tcl'], 'select_option'
+
   .local string canonical_subcommand
   canonical_subcommand = select_option(options, subcommand_name)
 
@@ -37,7 +32,7 @@ bad_args:
   .return ('') # once all commands are implemented, remove this...
 
 few_args:
-  tcl_error 'wrong # args: should be "clock subcommand ?argument ...?"'
+  die 'wrong # args: should be "clock subcommand ?argument ...?"'
 .end
 
 .HLL '_Tcl', ''
@@ -53,7 +48,7 @@ few_args:
   $I0 = $N0
   .return ($I0)
 bad_args:
-  tcl_error 'wrong # args: should be "clock microseconds"'
+  die 'wrong # args: should be "clock microseconds"'
 .end
 
 # XXX Need bignum support
@@ -66,7 +61,7 @@ bad_args:
   $I0 = $N0
   .return ($I0)
 bad_args:
-  tcl_error 'wrong # args: should be "clock milliseconds"'
+  die 'wrong # args: should be "clock milliseconds"'
 .end
 
 
@@ -77,7 +72,21 @@ bad_args:
   $I0 = time
   .return ($I0)
 bad_args:
-  tcl_error 'wrong # args: should be "clock seconds"'
+  die 'wrong # args: should be "clock seconds"'
+.end
+
+.sub 'anon' :anon :load
+  .local pmc options
+  options = new 'TclList'
+  push options, 'add'
+  push options, 'clicks'
+  push options, 'format'
+  push options, 'microseconds'
+  push options, 'milliseconds'
+  push options, 'scan'
+  push options, 'seconds'
+
+  set_root_global ['_tcl'; 'helpers'; 'clock'], 'options', options
 .end
 
 # Local Variables:
