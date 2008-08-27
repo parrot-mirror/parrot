@@ -1,5 +1,5 @@
 # $Id$
-LANG    = tcl
+TMPL    = tcl
 RM_F    = @rm_f@
 PERL    = @perl@
 POD2MAN = pod2man
