@@ -1,6 +1,6 @@
 # $Id$
 
-LANG   = forth
+TMPL   = forth
 PERL   = @perl@
 RM_RF  = @rm_rf@
 PARROT        = ../../parrot@exe@
@@ -8,9 +8,9 @@ PBC_MERGE     = ../../pbc_merge@exe@
 PBC_TO_EXE    = ../../pbc_to_exe@exe@
 RECONFIGURE   = $(PERL) @build_dir@/tools/dev/reconfigure.pl
 POD2MAN	      = pod2man
-#+(darwin):
-#+(darwin):# MACOSX_DEPLOYMENT_TARGET must be defined for OS X compilation/linking
-#+(darwin):export MACOSX_DEPLOYMENT_TARGET := @osx_version@
+#IF(darwin):
+#IF(darwin):# MACOSX_DEPLOYMENT_TARGET must be defined for OS X compilation/linking
+#IF(darwin):export MACOSX_DEPLOYMENT_TARGET := @osx_version@
 
 BUILD_DIR     = @build_dir@
 BIN_DIR       = @bin_dir@
@@ -30,7 +30,7 @@ all: $(DEPENDENCIES) forth@exe@ installable
 
 # regenerate the Makefile
 Makefile: config/makefiles/root.in
-	cd $(BUILD_DIR) && $(RECONFIGURE) --step=gen::languages --languages=$(LANG)
+	cd $(BUILD_DIR) && $(RECONFIGURE) --step=gen::languages --languages=$(TMPL)
 
 prompt: all
 	$(PARROT) forth.pbc
@@ -76,31 +76,31 @@ help:
 
 # TODO: rename build_dir. basic run for missing libs
 test-installable : installable
-	echo "2-1" | ./installable_$(LANG)@exe@
+	echo "2-1" | ./installable_$(TMPL)@exe@
 
 install : installable
-	cp installable_$(LANG)@exe@ $(DESTDIR)$(BIN_DIR)/parrot-$(LANG)@exe@
-	cp tokenstream.pbc $(DESTDIR)$(LIB_DIR)/parrot/library/forth_tokenstream.pbc
-	cp variablestack.pbc $(DESTDIR)$(LIB_DIR)/parrot/library/forth_variablestack.pbc
-	cp virtualstack.pbc $(DESTDIR)$(LIB_DIR)/parrot/library/forth_virtualstack.pbc
-	-mkdir $(DESTDIR)$(DOC_DIR)/languages/$(LANG)
-	cp $(DOCS) $(DESTDIR)$(DOC_DIR)/languages/$(LANG)
+	$(CP) installable_$(TMPL)@exe@ $(DESTDIR)$(BIN_DIR)/parrot-$(TMPL)@exe@
+	$(CP) tokenstream.pbc $(DESTDIR)$(LIB_DIR)/parrot/library/forth_tokenstream.pbc
+	$(CP) variablestack.pbc $(DESTDIR)$(LIB_DIR)/parrot/library/forth_variablestack.pbc
+	$(CP) virtualstack.pbc $(DESTDIR)$(LIB_DIR)/parrot/library/forth_virtualstack.pbc
+	-$(MKPATH) $(DESTDIR)$(DOC_DIR)/languages/$(TMPL)
+	$(CP) $(DOCS) $(DESTDIR)$(DOC_DIR)/languages/$(TMPL)
 
-$(LANG)@exe@: $(LANG).pbc
-	$(PBC_TO_EXE) $(LANG).pbc
+$(TMPL)@exe@: $(TMPL).pbc
+	$(PBC_TO_EXE) $(TMPL).pbc
 
-installable : installable_$(LANG)@exe@
-	cp installable_$(LANG)@exe@ $(BUILD_DIR)
+installable : installable_$(TMPL)@exe@
+	$(CP) installable_$(TMPL)@exe@ $(BUILD_DIR)
 
-installable_$(LANG)@exe@ : $(LANG).pbc
-	$(PBC_TO_EXE) $(LANG).pbc --install
+installable_$(TMPL)@exe@ : $(TMPL).pbc
+	$(PBC_TO_EXE) $(TMPL).pbc --install
 
 testclean:
 
 CLEANUPS = \
-  installable_$(LANG)@exe@ \
+  installable_$(TMPL)@exe@ \
   *.pbc \
-  $(LANG)@exe@ \
+  $(TMPL)@exe@ \
 
 clean:
 	$(RM_RF) $(CLEANUPS)

@@ -21,6 +21,9 @@ PMCDIR    = src/pmc
 OPSDIR    = src/ops
 CLASSDIR  = src/class
 LOAD_EXT  = @load_ext@
+RM_F      = @rm_f@
+MKPATH    = @mkpath@
+POD2MAN   = pod2man
 COPY      = @cp@
 RENAME    = @mv@
 BIN_DIR   = @bin_dir@
@@ -143,9 +146,9 @@ install : installable
 	@cd $(OPSDIR) && $(OPSBUILD) copy "--destination=$(DESTDIR)$(LIB_DIR)/parrot/dynext" tcl
 	@cd $(PMCDIR) && $(PMCBUILD) copy "--destination=$(DESTDIR)$(LIB_DIR)/parrot/dynext" $(PMCS)
 	$(COPY) runtime/tcllib.pbc $(DESTDIR)$(LIB_DIR)/parrot/library
-	$(POD2MAN) README.pod > $(DESTDIR)$(MANDIR)/man1/parrot-$(LANG).1
-	mkdir $(DESTDIR)$(DOC_DIR)/languages/$(LANG)
-	$(COPY) $(DOCS) $(DESTDIR)$(DOC_DIR)/languages/$(LANG)
+	$(POD2MAN) README.pod > $(DESTDIR)$(MANDIR)/man1/parrot-$(TMPL).1
+	$(MKPATH) $(DESTDIR)$(DOC_DIR)/languages/$(TMPL)
+	$(COPY) $(DOCS) $(DESTDIR)$(DOC_DIR)/languages/$(TMPL)
 
 test: tcl.pbc
 	prove -r t
@@ -317,7 +320,7 @@ runtime/builtins.pir \
 "$(PMCDIR)/*_group.h" \
 "$(PMCDIR)/*$(LOAD_EXT)" \
 "$(PMCDIR)/*.dump" \
-#+(ld_parrot_exe_def):"$(PMCDIR)/*.def" \
+#IF(ld_parrot_exe_def):"$(PMCDIR)/*.def" \
 "$(PMCDIR)/*.c" \
 "$(PMCDIR)/*$(O)" \
 "$(PMCDIR)/*.exp" \

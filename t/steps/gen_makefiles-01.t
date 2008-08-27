@@ -9,7 +9,38 @@ my @cond_tests;
 my @conf_args = ( dummy1 => 1, dummy2 => 0, dummy3 => 'xx' );
 BEGIN {
     @cond_tests =
-      (# test                true or false
+      (
+       # perl-syntax       true or false
+       ["IF(dummy1)", 		1],
+       ["IF(dummy2)", 		0],
+       ["IF(dummy1 | dummy2)",	1],
+       ["IF(dummy1 & dummy2)",  0],
+       ["UNLESS(dummy1)",	0],
+       ["UNLESS(dummy2)",	1],
+       ["UNLESS(dummy1|dummy2)",0],
+       ["UNLESS(dummy1&dummy2)",1],
+       ["IF(!dummy2)", 		1],
+       ["IF(dummy1)", 		1],
+       ["ELSIF(dummy3)", 	0],
+       ["ELSE", 	        0],
+       ["IF(dummy2)", 		0],
+       ["ELSIF(dummy3)", 	1],
+       ["ELSE", 	        0],
+       ["IF(dummy2)", 		0],
+       ["ELSIF(dummy2)", 	0],
+       ["ELSE", 	        1],
+       # no ws, strangle the parser
+       ["IF(dummy1&!dummy2&dummy3)",            1],
+       ["UNLESS(!(dummy1&!dummy2&dummy3))",     1],
+       ["IF(dummy1&(!dummy2&dummy3))",          1],
+       ["IF(dummy1 & (dummy3=xx & (!dummy2)))", 1],
+       ["IF(someplatform)",		1],
+       ["IF(not someplatform)",		0],
+       ["UNLESS(someplatform)",		0],
+       ["UNLESS(not someplatform)",	1],
+
+       # lisp-syntax       true or false
+       ["-(lisp-syntax)",       1],
        ["+(dummy1)", 		1],
        ["+(dummy2)", 		0],
        ["+(dummy1 dummy2)",	1],
@@ -24,10 +55,10 @@ BEGIN {
        ["-(dummy3=xxy)",	1],
        ["+(dummy1=1)",		1],
        ["+(dummy2=0)",		1],
-       ["+($^O)",		1],
-       ["+(not$^O)",		0],
-       ["-($^O)",		0],
-       ["-(not$^O)",		1],
+       ["+(someplatform)",	1],
+       ["+(not someplatform)",	0],
+       ["-(someplatform)",	0],
+       ["-(not someplatform)",	1],
        ["+(or dummy1 dummy2)",	1],
        ["-(or dummy1 dummy2)",	0],
        ["+(or dummy1 (not dummy2))",	1],
@@ -36,6 +67,12 @@ BEGIN {
        # break it with whitespace
        ["+( or dummy1(not dummy2))",	1],
        ["+(or dummy1(not dummy2))",	1],
+
+       # old-syntax                    true or false
+       ["CONDITIONED_LINE(dummy1)", 	    1],
+       ["INVERSE_CONDITIONED_LINE(dummy1)", 0],
+       ["CONDITIONED_LINE(dummy2)", 	    0],
+       ["INVERSE_CONDITIONED_LINE(dummy2)", 1],
       );
 }
 use Test::More tests => (7 + scalar(@cond_tests));
@@ -71,19 +108,24 @@ foreach my $k ( keys %makefiles ) {
 is($missing_SOURCE, 0, "No Makefile source file missing");
 ok(-f $step->{CFLAGS_source}, "CFLAGS source file located");
 
+my $i = undef;
 sub result {
     my $c = shift;
     my $s = $c->[0];
     $s =~ s/^\+/plus_/;
     $s =~ s/^\-/minus_/;
+    $s =~ s/\|/OR/g;
+    $s =~ s/\&/AND/g;
+    $s =~ s/\!/NOT/g;
     $s =~ s/[\()]//g;
     $s =~ s/ /_/g;
+    $s .= ("_".++$i) if $s =~ /^(ELSE|ELSIF)/;
     return $s."=".($c->[1]?"true":"false");
 }
 # test #+(keys):line RT #57548
-$conf->data->set( @conf_args );
+$conf->data->set( @conf_args, ('osname' => 'someplatform' ) );
 open IN, ">", "Makefile_$$.in";
-print IN "# There should only be true results in .out\n";
+print IN "# There should only be =true results in .out\n";
 for my $c (@cond_tests) {
     my $result = result($c);
     print IN "#$c->[0]:$result\n";
@@ -100,6 +142,7 @@ my $f;
 END {
     unlink "Makefile_$$.in", "Makefile_$$.out";
 }
+$i = undef;
 for my $c (@cond_tests) {
     my $result = result($c);
     ok(($c->[1] ? $f =~ /^$result$/m : $f !~ /^$result$/m), "$result");

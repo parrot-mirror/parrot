@@ -4,7 +4,7 @@
 # $Id$
 #
 
-LANG          = jako
+TMPL          = jako
 BUILD_DIR     = @build_dir@
 LOAD_EXT      = @load_ext@
 O             = @o@
@@ -129,18 +129,18 @@ test: all
 
 # TODO: rename build_dir. basic run for missing libs
 test-installable : installable
-	echo "2-1" | ./installable_$(LANG)@exe@
+	echo "2-1" | ./installable_$(TMPL)@exe@
 
 install : installable
-	cp jako $(DESTDIR)$(BIN_DIR)/parrot-jako
-	cp jakoc $(DESTDIR)$(BIN_DIR)/parrot-jakoc
-	cp -R lib/Jako $(DESTDIR)$(PERLLIB_DIR)
-	$(POD2MAN) docs/jako.pod > $(DESTDIR)$(MANDIR)/man1/parrot-$(LANG).1
-	mkdir $(DESTDIR)$(DOC_DIR)/languages/$(LANG)
-	mkdir $(DESTDIR)$(DOC_DIR)/languages/$(LANG)/examples
-	cp $(DOCS) $(DESTDIR)$(DOC_DIR)/languages/$(LANG)
-	cp *.jako $(DESTDIR)$(DOC_DIR)/languages/$(LANG)
-	cp examples/*.jako $(DESTDIR)$(DOC_DIR)/languages/$(LANG)/examples
+	$(CP) jako $(DESTDIR)$(BIN_DIR)/parrot-jako
+	$(CP) jakoc $(DESTDIR)$(BIN_DIR)/parrot-jakoc
+	$(CP) -R lib/Jako $(DESTDIR)$(PERLLIB_DIR)
+	$(POD2MAN) docs/jako.pod > $(DESTDIR)$(MANDIR)/man1/parrot-$(TMPL).1
+	$(MKPATH) $(DESTDIR)$(DOC_DIR)/languages/$(TMPL)
+	$(MKPATH) $(DESTDIR)$(DOC_DIR)/languages/$(TMPL)/examples
+	$(CP) $(DOCS) $(DESTDIR)$(DOC_DIR)/languages/$(TMPL)
+	$(CP) *.jako $(DESTDIR)$(DOC_DIR)/languages/$(TMPL)
+	$(CP) examples/*.jako $(DESTDIR)$(DOC_DIR)/languages/$(TMPL)/examples
 
 installable : jako jakoc
 

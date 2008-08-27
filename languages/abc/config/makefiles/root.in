@@ -4,7 +4,7 @@
 PARROT_ARGS =
 
 ## configuration settings
-LANG          = abc
+TMPL          = abc
 BUILD_DIR     = @build_dir@
 LOAD_EXT      = @load_ext@
 O             = @o@
@@ -18,15 +18,16 @@ LN_S          = @lns@
 PERL          = @perl@
 RM_RF         = @rm_rf@
 CP            = @cp@
+MKPATH        = @mkpath@
+POD2MAN       = pod2man
 PARROT        = ../../parrot@exe@
-CAT           = $(PERL) -MExtUtils::Command -e cat
 PBC_TO_EXE    = ../../pbc_to_exe@exe@
+CAT           = $(PERL) -MExtUtils::Command -e cat
 BUILD_DYNPMC  = $(PERL) $(BUILD_DIR)/tools/build/dynpmc.pl
 RECONFIGURE   = $(PERL) $(BUILD_DIR)/tools/dev/reconfigure.pl
-POD2MAN	      = pod2man
-#+(darwin):
-#+(darwin):# MACOSX_DEPLOYMENT_TARGET must be defined for OS X compilation/linking
-#+(darwin):export MACOSX_DEPLOYMENT_TARGET := @osx_version@
+#IF(darwin):
+#IF(darwin):# MACOSX_DEPLOYMENT_TARGET must be defined for OS X compilation/linking
+#IF(darwin):export MACOSX_DEPLOYMENT_TARGET := @osx_version@
 
 ## places to look for things
 PARROT_DYNEXT = $(BUILD_DIR)/runtime/parrot/dynext
@@ -51,8 +52,8 @@ DOCS = MAINTAINER README TODO
 abc.pbc: $(PARROT) $(SOURCES)
 	$(PARROT) $(PARROT_ARGS) -o abc.pbc abc.pir
 
-$(LANG)@exe@: $(LANG).pbc
-	$(PBC_TO_EXE) $(LANG).pbc
+$(TMPL)@exe@: $(TMPL).pbc
+	$(PBC_TO_EXE) $(TMPL).pbc
 
 src/gen_grammar.pir: $(PERL6GRAMMAR) src/parser/grammar.pg src/parser/grammar-oper.pg
 	$(PARROT) $(PARROT_ARGS) $(PERL6GRAMMAR) \
@@ -67,15 +68,15 @@ src/gen_actions.pir: $(NQP) $(PCT) src/parser/actions.pm
 src/gen_builtins.pir: $(BUILTINS_PIR)
 	$(CAT) $(BUILTINS_PIR) >src/gen_builtins.pir
 
-installable : installable_$(LANG)@exe@
-	cp installable_$(LANG)@exe@ $(BUILD_DIR)
+installable : installable_$(TMPL)@exe@
+	$(CP) installable_$(TMPL)@exe@ $(BUILD_DIR)
 
-installable_$(LANG)@exe@ : $(LANG).pbc
-	$(PBC_TO_EXE) $(LANG).pbc --install
+installable_$(TMPL)@exe@ : $(TMPL).pbc
+	$(PBC_TO_EXE) $(TMPL).pbc --install
 
 # regenerate the Makefile
 Makefile: config/makefiles/root.in
-	cd $(BUILD_DIR) && $(RECONFIGURE) --step=gen::languages --languages=$(LANG)
+	cd $(BUILD_DIR) && $(RECONFIGURE) --step=gen::languages --languages=$(TMPL)
 
 # This is a listing of all targets, that are meant to be called by users
 help:
@@ -106,13 +107,13 @@ test: all
 
 # TODO: rename build_dir. basic run for missing libs
 test-installable : installable
-	echo "2-1" | ./installable_$(LANG)@exe@
+	echo "2-1" | ./installable_$(TMPL)@exe@
 
 install : installable
-	cp installable_$(LANG)@exe@ $(DESTDIR)$(BIN_DIR)/parrot-$(LANG)@exe@
-	pod2man $(LANG).pir > $(DESTDIR)$(MANDIR)/man1/parrot-$(LANG).1
-	mkdir $(DESTDIR)$(DOC_DIR)/languages/$(LANG)
-	cp $(DOCS) $(DESTDIR)$(DOC_DIR)/languages/$(LANG)
+	$(CP) installable_$(TMPL)@exe@ $(DESTDIR)$(BIN_DIR)/parrot-$(TMPL)@exe@
+	$(POD2MAN) $(TMPL).pir > $(DESTDIR)$(MANDIR)/man1/parrot-$(TMPL).1
+	$(MKPATH) $(DESTDIR)$(DOC_DIR)/languages/$(TMPL)
+	$(CP) $(DOCS) $(DESTDIR)$(DOC_DIR)/languages/$(TMPL)
 
 testclean:
 	$(RM_RF) "t/*.pir" "t/*.out"
@@ -122,8 +123,8 @@ CLEANUPS = \
   src/gen_grammar.pir \
   src/gen_actions.pir \
   src/gen_builtins.pir \
-  $(LANG)@exe@ \
-  installable_$(LANG)@exe@
+  $(TMPL)@exe@ \
+  installable_$(TMPL)@exe@
 
 clean: testclean
 	$(RM_RF) $(CLEANUPS)

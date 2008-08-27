@@ -36,7 +36,7 @@ our $O = q[@o@];
 our $CFLAGS = q[@ccflags@ @cc_shared@ @cc_debug@ @ccwarn@ @cc_hasjit@ @cg_flag@ @gc_flag@];
 
 our $LIBPARROT = q[];
-#+(parrot_is_shared):$LIBPARROT = q[@libparrot_ldflags@];
+#IF(parrot_is_shared):$LIBPARROT = q[@libparrot_ldflags@];
 
 # Here comes some stuff for Win32.
 our $PATHQUOTE = '';
@@ -140,7 +140,7 @@ elsif ($mode eq 'compile') {
         compile("$group", "lib-$group")
           or die "compile $group.c failed ($?)\n";
     }
-} 
+}
 elsif ($mode eq 'linklibs') {
     my ($group_files, $group_libs, $pmc_group, $pmc_libs) =
         gather_groups_and_libs(@pmcs);
@@ -154,7 +154,7 @@ elsif ($mode eq 'linklibs') {
     # Link non-grouped PMCs individually
     my @ungrouped_pmcs = grep { ! exists $pmc_group->{$_} } @pmcs;
     partial_link($_, $pmc_libs->{$_}, [ $_ ] ) foreach (@ungrouped_pmcs);
-} 
+}
 elsif ($mode eq 'copy') {
     # Copy *.so -> destination, where destination is the first
     # argument, given as --destination=DIRECTORY
@@ -227,7 +227,7 @@ sub modtime {
 
     if (defined $ago) {
         return $NOW - $ago;
-    } 
+    }
     else {
         return;
     }

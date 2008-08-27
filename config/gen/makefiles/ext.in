@@ -69,12 +69,12 @@ clean: \
 Parrot-Embed : Parrot-Embed.dummy
 
 Parrot-Embed.dummy:
-#+(win32):	- cd Parrot-Embed && $(PERL) Makefile.PL && nmake
-#-(win32):	- cd Parrot-Embed && $(PERL) Makefile.PL && $(MAKE)
+#IF(win32):	- cd Parrot-Embed && $(PERL) Makefile.PL && nmake
+#ELSE:	- cd Parrot-Embed && $(PERL) Makefile.PL && $(MAKE)
 
 Parrot-Embed.clean:
-#+(win32):	- cd Parrot-Embed && nmake clean
-#-(win32):	- cd Parrot-Embed && $(MAKE) clean
+#IF(win32):	- cd Parrot-Embed && nmake clean
+#ELSE:	- cd Parrot-Embed && $(MAKE) clean
 
 #
 # Local variables:

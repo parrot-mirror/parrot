@@ -2,15 +2,15 @@
 # $Id$
 
 # Makefile for languages/scheme
-LANG          = scheme
+TMPL          = scheme
 
 # Set up commands
 PERL          = @perl@
 RM_F          = @rm_f@
 RECONFIGURE   = $(PERL) @build_dir@/tools/dev/reconfigure.pl
-#+(darwin):
-#+(darwin):# MACOSX_DEPLOYMENT_TARGET must be defined for OS X compilation/linking
-#+(darwin):export MACOSX_DEPLOYMENT_TARGET := @osx_version@
+#IF(darwin):
+#IF(darwin):# MACOSX_DEPLOYMENT_TARGET must be defined for OS X compilation/linking
+#IF(darwin):export MACOSX_DEPLOYMENT_TARGET := @osx_version@
 
 # Set up directories
 BUILD_DIR     = @build_dir@
@@ -39,21 +39,21 @@ help :
 
 # regenerate the Makefile
 Makefile: config/makefiles/root.in
-	cd $(BUILD_DIR) && $(RECONFIGURE) --step=gen::languages --languages=$(LANG)
+	cd $(BUILD_DIR) && $(RECONFIGURE) --step=gen::languages --languages=$(TMPL)
 
 # Compilation:
 build:
 	$(PERL) -c schemec
 
 # perl libs where? need @ perl_lib @
-#	-mkdir $(DESTDIR)$(LIB_DIR)
-#	-mkdir $(DESTDIR)$(LIB_DIR)/Scheme
+#	-$(MKPATH) $(DESTDIR)$(LIB_DIR)
+#	-$(MKPATH) $(DESTDIR)$(LIB_DIR)/Scheme
 #	$(CP) lib/Scheme.pm $(DESTDIR)$(LIB_DIR)/Scheme.pm
 #	$(CP) lib/Scheme/*.pm $(DESTDIR)$(LIB_DIR)/Scheme
 install : installable
 	$(CP) schemec $(DESTDIR)$(BIN_DIR)/parrot-schemec
-	mkdir $(DESTDIR)$(DOC_DIR)/languages/$(LANG)
-	$(CP) $(DOCS) $(DESTDIR)$(DOC_DIR)/languages/$(LANG)
+	$(MKPATH) $(DESTDIR)$(DOC_DIR)/languages/$(TMPL)
+	$(CP) $(DOCS) $(DESTDIR)$(DOC_DIR)/languages/$(TMPL)
 
 # cleaning up
 
