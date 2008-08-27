@@ -32,6 +32,11 @@ Bernhard Schmalhofer - <Bernhard.Schmalhofer@gmx.de>
 =cut
 
 # Set up expected output for examples
+my $fact15 = eval join '*', (1 .. 15);
+if ($PConfig{intvalsize} == 4) {
+    $fact15 = hex(substr(sprintf('%x',$fact15),-8,8));
+}
+
 my %expected = (
     'board.pir' => << 'END_EXPECTED',
   +---+---+---+---+---+---+---+---+
@@ -60,10 +65,10 @@ Algorithm E (Euclid's algorithm)
   ... = 32
 END_EXPECTED
 
-    'fact.pir' => << 'END_EXPECTED',
+    'fact.pir' => << "END_EXPECTED",
 Algorithm F1 (The factorial function)
     Calculating fact(15) = ...
-    ... = 2004189184
+    ... = $fact15
 END_EXPECTED
 
     'fib.pir' => << 'END_EXPECTED',

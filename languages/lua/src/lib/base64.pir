@@ -18,7 +18,7 @@ This implementation is based on F<runtime/parrot/library/MIME/Base64.pir>.
 =cut
 
 .HLL 'Lua', 'lua_group'
-.namespace [ 'Lua::base64'; 'Lua' ]
+.namespace [ 'base64' ]
 
 .sub '__onload' :anon :load
 #    print "__onload base64\n"
@@ -43,17 +43,11 @@ This implementation is based on F<runtime/parrot/library/MIME/Base64.pir>.
     set $P1, MYNAME
     _lua__GLOBAL[$P1] = _base64
 
-    lua_register($P1, _base64)
-
-    .const .Sub _base64_decode = 'decode'
-    _base64_decode.'setfenv'(_lua__GLOBAL)
-    set $P1, 'decode'
-    _base64[$P1] = _base64_decode
-
-    .const .Sub _base64_encode = 'encode'
-    _base64_encode.'setfenv'(_lua__GLOBAL)
-    set $P1, 'encode'
-    _base64[$P1] = _base64_encode
+    $P2 = split "\n", <<'LIST'
+decode
+encode
+LIST
+    lua_register($P1, _base64, $P2)
 
     new $P2, 'LuaString'
 
@@ -70,6 +64,11 @@ This implementation is based on F<runtime/parrot/library/MIME/Base64.pir>.
 #    set $P1, "_VERSION"
 #    _base64[$P1] = $P2
 
+    $P0 = get_hll_namespace ['MIME'; 'Base64']
+    $P1 = get_namespace
+    $P2 = split ' ', 'decode_base64 encode_base64'
+    $P0.'export_to'($P1, $P2)
+
     .return (_base64)
 .end
 
@@ -78,13 +77,12 @@ This implementation is based on F<runtime/parrot/library/MIME/Base64.pir>.
 
 =cut
 
-.sub 'decode' :anon
-    .param pmc s :optional
+.sub 'decode'
+    .param pmc str :optional
     .param pmc extra :slurpy
     .local pmc res
-    $S1 = lua_checkstring(1, s)
-    $P0 = get_hll_global ['MIME'; 'Base64'], 'decode_base64'
-    $S0 = $P0($S1)
+    $S1 = lua_checkstring(1, str)
+    $S0 = decode_base64($S1)
     new res, 'LuaString'
     set res, $S0
     .return (res)
@@ -95,13 +93,12 @@ This implementation is based on F<runtime/parrot/library/MIME/Base64.pir>.
 
 =cut
 
-.sub 'encode' :anon
-    .param pmc s :optional
+.sub 'encode'
+    .param pmc str :optional
     .param pmc extra :slurpy
     .local pmc res
-    $S1 = lua_checkstring(1, s)
-    $P0 = get_hll_global ['MIME'; 'Base64'], 'encode_base64'
-    $S0 = $P0($S1)
+    $S1 = lua_checkstring(1, str)
+    $S0 = encode_base64($S1)
     new res, 'LuaString'
     set res, $S0
     .return (res)

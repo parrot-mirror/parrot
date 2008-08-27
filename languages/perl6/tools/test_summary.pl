@@ -23,27 +23,26 @@ my $testlist = $ARGV[0] || 't/spectest_regression.data';
 my $fh;
 open($fh, '<', $testlist) || die "Can't read $testlist: $!";
 
-my(@fudge, @pure);
+my @tfiles;
 while (<$fh>) {
     /^ *#/ && next;
     my ($specfile) = split ' ', $_;
     next unless $specfile;
-    $specfile = "t/spec/$specfile";
-    if (/#pure/) { push @pure, $specfile; }
-    else { push @fudge, $specfile; }
+    push @tfiles, "t/spec/$specfile";
 }
 close($fh);
 
-if (@fudge) {
-    my $cmd = join ' ', $^X, 't/spec/fudgeall', 'rakudo', @fudge;
+{
+    my $cmd = join ' ', $^X, 't/spec/fudgeall', 'rakudo', @tfiles;
     print "$cmd\n";
-    @fudge = split ' ', `$cmd`;
+    @tfiles = split ' ', `$cmd`;
 }
 
-my @tfiles = sort @pure, @fudge;
+@tfiles = sort @tfiles;
 my $max = 0;
 for my $tfile (@tfiles) {
-    if (length($tfile) > $max) { $max = length($tfile); }
+    my $tname = $tfile; $tname =~ s!^t/spec/!!;
+    if (length($tname) > $max) { $max = length($tname); }
 }
 
 $| = 1;
@@ -57,16 +56,22 @@ for my $tfile (@tfiles) {
        if (/^\s*plan\D*(\d+)/) { $plan = $1; last; }
     }
     close($th);
-    printf "%s%s..%4d", $tfile, '.' x ($max - length($tfile)), $plan;
+    my $tname = $tfile; $tname =~ s!^t/spec/!!;
+    printf "%s%s..%4d", $tname, '.' x ($max - length($tname)), $plan;
     my $cmd = "../../parrot -G perl6.pbc $tfile";
     my @results = split "\n", `$cmd`;
     my ($test, $pass, $fail, $todo, $skip) = (0,0,0,0,0);
-    my %skip;
+    my (%skip, %todopass, %todofail);
     for (@results) {
         next unless /^(not )?ok +\d+/;
         $test++;
         if    (/#\s*SKIP\s*(.*)/i) { $skip++; $skip{$1}++; }
-        elsif (/#\s*TODO/i)        { $todo++; }
+        elsif (/#\s*TODO\s*(.*)/i) {
+            my $reason = $1;
+            $todo++;
+            if (/^ok /) { $todopass{$reason}++ }
+            else        { $todofail{$reason}++ }
+        }
         elsif (/^not ok +\d+/)     { $fail++; }
         elsif (/^ok +\d+/)         { $pass++; }
     }
@@ -80,7 +85,13 @@ for my $tfile (@tfiles) {
     $sum{'todo'} += $todo;
     $sum{'skip'} += $skip;
     for (keys %skip) {
-        printf "    %d skipped: %s\n", $skip{$_}, $_;
+        printf "    %2d skipped: %s\n", $skip{$_}, $_;
+    }
+    for (keys %todofail) {
+        printf "    %2d todo   : %s\n", $todofail{$_}, $_;
+    }
+    for (keys %todopass) {
+        printf "    %2d todo PASSED: %s\n", $todopass{$_}, $_;
     }
 }
 

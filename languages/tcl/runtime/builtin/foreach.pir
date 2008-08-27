@@ -1,4 +1,4 @@
-.HLL 'Tcl', 'tcl_group'
+.HLL 'Tcl', ''
 .namespace []
 
 .sub '&foreach'
@@ -17,16 +17,16 @@
   $P0 = getinterp
   ns  = $P0['namespace'; 1]
 
-  .local pmc __list, __script, __set
-  __list   = get_root_global ['_tcl'], '__list'
-  __script = get_root_global ['_tcl'], '__script'
-  __set    = get_root_global ['_tcl'], '__set'
+  .local pmc toList, compileTcl, setVar
+  toList   = get_root_global ['_tcl'], 'toList'
+  compileTcl = get_root_global ['_tcl'], 'compileTcl'
+  setVar    = get_root_global ['_tcl'], 'setVar'
 
   .local pmc varLists, lists, command
   varLists = new 'TclList'
   lists    = new 'TclList'
   command  = pop argv
-  command  = __script(command, 'ns'=>ns)
+  command  = compileTcl(command, 'ns'=>ns)
 
   .local int iterations
   iterations = 0
@@ -37,9 +37,9 @@ arg_loop:
 
   .local pmc varList, list
   varList = shift iter
-  varList = __list(varList)
+  varList = toList(varList)
   list    = shift iter
-  list    = __list(list)
+  list    = toList(list)
 
   $I0 = elements varList
   if $I0 == 0 goto bad_varlist
@@ -89,17 +89,13 @@ next_variable:
   unless list goto empty_var
   value = shift list
   value = clone value
-  push_eh couldnt_set
-    __set(varname, value)
-  pop_eh
+  setVar(varname, value)
   goto next_variable
 
 empty_var:
   value = new 'TclString'
   value = ''
-  push_eh couldnt_set
-    __set(varname, value)
-  pop_eh
+  setVar(varname, value)
   goto next_variable
 
 execute_command:
@@ -119,17 +115,11 @@ handle_continue:
 done:
   .return('')
 
-couldnt_set:
-  $S0 =  "couldn't set loop variable: \""
-  $S0 .= varname
-  $S0 .= '"'
-  tcl_error $S0
-
 bad_args:
-  tcl_error 'wrong # args: should be "foreach varList list ?varList list ...? command"'
+  die 'wrong # args: should be "foreach varList list ?varList list ...? command"'
 
 bad_varlist:
-  tcl_error 'foreach varlist is empty'
+  die 'foreach varlist is empty'
 .end
 
 # Local Variables:

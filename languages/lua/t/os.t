@@ -27,8 +27,9 @@ use warnings;
 use FindBin;
 use lib "$FindBin::Bin";
 
-use Parrot::Test tests => 25;
+use Parrot::Test tests => 26;
 use Test::More;
+use Parrot::Config;
 
 language_output_is( 'lua', << 'CODE', << 'OUTPUT', 'function os.clock' );
 clk = os.clock()
@@ -175,13 +176,13 @@ OUTPUT
 language_output_like( 'lua', << 'CODE', << 'OUTPUT', 'function os.time' );
 print(os.time())
 CODE
-/^\d+/
+/^\d+(\.\d+)?$/
 OUTPUT
 
 language_output_like( 'lua', << 'CODE', << 'OUTPUT', 'function os.time' );
 print(os.time(nil))
 CODE
-/^\d+/
+/^\d+(\.\d+)?$/
 OUTPUT
 
 language_output_like( 'lua', << 'CODE', << 'OUTPUT', 'function os.time' );
@@ -194,8 +195,16 @@ print(os.time({
     year = 2000,
     isdst = 0,
 }))
+CODE
+/^946\d+$/
+OUTPUT
 
--- os.time returns nil when C mktime returns -1
+SKIP:
+{
+    skip "skipped on 64bit platforms" => 1 if ( $PConfig{intvalsize} == 8 );
+
+language_output_like( 'lua', << 'CODE', << 'OUTPUT', 'function os.time -> nil' );
+-- os.time returns nil when C mktime returns < 0
 -- this test needs a out of range value on any platform
 print(os.time({
     sec = 0,
@@ -207,11 +216,9 @@ print(os.time({
     isdst = 0,
 }))
 CODE
-/^
-946\d+\n
-nil\n
-$/x
+/^nil$/
 OUTPUT
+}
 
 language_output_like( 'lua', << 'CODE', << 'OUTPUT', 'function os.time (missing field)' );
 print(os.time({}))

@@ -43,14 +43,24 @@ method SEA($/) {
 }
 
 method code_tp1($/) {
-    make $( $<statements> );
+    my $past := PAST::Stmts.new( :node($/) );
+    for $<statement> {
+        $past.push( $($_) );
+    }
+
+    make $past;
 }
 
 method code_tp2($/) {
-    make $( $<statements> );
+    my $past := PAST::Stmts.new( :node($/) );
+    for $<statement> {
+        $past.push( $($_) );
+    }
+
+    make $past;
 }
 
-method statements($/) {
+method block($/) {
     my $past := PAST::Stmts.new( :node($/) );
     for $<statement> {
         $past.push( $($_) );
@@ -76,14 +86,42 @@ method inline_sea_tp1($/) {
 
 method echo_statement($/) {
     my $past := $( $<arguments> );
-    $past.name( ~$<ECHO> );
+    $past.name( 'echo' );
 
     make $past;
+}
+
+method expression_statement($/) {
+    make $( $<expression> );
 }
 
 method function_call($/) {
     my $past := $( $<arguments> );
     $past.name( ~$<FUNCTION_NAME> );
+
+    make $past;
+}
+
+method method_call($/) {
+    my $past := PAST::Op.new(
+                    :name( ~$<METHOD_NAME> ),
+                    :pasttype( 'callmethod' ),
+                    :name( ~$<METHOD_NAME> ),
+                    $( $<var> )
+                );
+
+    make $past;
+}
+
+method constructor_call($/) {
+    my $past := PAST::Op.new(
+                    :name( 'new' ),
+                    :pasttype( 'callmethod' ),
+                    PAST::Var.new(
+                        :name( ~$<CLASS_NAME> ),
+                        :scope( 'package' ),
+                    )
+                );
 
     make $past;
 }
@@ -112,8 +150,8 @@ method arguments($/) {
 
 method if_statement($/) {
     my $past := PAST::Op.new(
-                    $( $<relational_expression> ),
-                    $( $<statements> ),
+                    $( $<expression> ),
+                    $( $<block> ),
                     :pasttype('if'),
                     :node($/)
                 );
@@ -124,23 +162,11 @@ method if_statement($/) {
     make $past;
 }
 
-method scalar_assign($/) {
+method var_assign($/) {
     make PAST::Op.new(
              $( $<var> ),
              $( $<expression> ),
              :pasttype('bind'),
-         );
-}
-
-method array_key($/) {
-    make $( $<expression> );
-}
-
-method array_assign($/) {
-    make PAST::Op.new(
-             $( $<array_elem> ),
-             $( $<expression> ),
-             :pasttype('copy'),
          );
 }
 
@@ -151,15 +177,15 @@ method array_elem($/) {
 
     make PAST::Var.new(
              $past_var_name,
-             $( $<array_key> ),
+             $( $<expression> ),
              :scope('keyed'),
              :viviself('Undef'),
              :lvalue(1)
-        );
+         );
 }
 
-method var($/) {
-    make $( $<VAR_NAME> );
+method var($/,$key) {
+    make $( $/{$key} );
 }
 
 method VAR_NAME($/) {
@@ -171,33 +197,43 @@ method VAR_NAME($/) {
          );
 }
 
+method this($/) {
+    make PAST::Op.new(
+             :inline( "%r = self" )
+         );
+}
+
 method else_clause($/) {
-    make $( $<statements> );
+    make $( $<block> );
 }
 
-method relational_expression($/) {
-    if $<rel_op_clause> {
-        my $rel_op_clause := $/{'rel_op_clause'}{'REL_OP'};
-        my $op            := ~$rel_op_clause{'REL_OP'};
-        my $name          := 'infix:' ~ $op;
-        make PAST::Op.new(
-                 $( $<expression> ),
-                 $( $rel_op_clause{'expression'} ),
-                 :node($/),
-                 :name($name)
-             );
-    }
-    else {
-        make $( $<expression> );
-    }
+method while_statement($/) {
+    my $cond  := $( $<expression> );
+    my $block := $( $<block> );
+
+    make PAST::Op.new( $cond,
+                       $block,
+                       :pasttype('while'),
+                       :node($/) );
 }
 
-method expression($/,$key) {
-    make $( $/{$key} );
+method for_statement($/) {
+    my $init  := $( $<var_assign> );
+    my $cond  := $( $<expression>[0] );
+    my $work  := PAST::Stmts.new( $( $<block> ), $( $<expression>[1] ) );
+    
+    my $while := PAST::Op.new(
+                       $cond,
+                       $work,
+                       :pasttype('while'),
+                 );
+
+    make PAST::Stmts.new( $init, $while );
 }
 
-## Handle the operator precedence table.
-method bitwise_expression($/, $key) {
+
+# Handle the operator precedence table.
+method expression($/, $key) {
     if ($key eq 'end') {
         make $($<expr>);
     }
@@ -215,26 +251,12 @@ method bitwise_expression($/, $key) {
     }
 }
 
-method concat_expression($/) {
-    my $past := $( $<string> );
-    for $<concat_tail> {
-        my $past_prev := $past;
-        $past := PAST::Op.new(
-                     $past_prev,
-                     $( $_<string> ),
-                     :name( "infix:" ~ $_<CONCAT_OP> )
-                 );
-    }
 
-    make $past;
-}
-
-
-method postfix_expression($/,$key) {
+method term($/,$key) {
     make $( $/{$key} );
 }
 
-method string($/,$key) {
+method literal($/,$key) {
     make $( $/{$key} );
 }
 
@@ -278,51 +300,152 @@ method NUMBER($/) {
          );
 }
 
-method SINGLEQUOTE_STRING($/) {
-    make PAST::Val.new(
-             :value( $( $<string_literal> ) ),
-             :returns('PhpString'),
-             :node($/)
-         );
-}
-
-method DOUBLEQUOTE_STRING($/) {
-    make PAST::Val.new(
-             :value( $( $<string_literal> ) ),
-             :returns('PhpString'),
-             :node($/)
-         );
-}
-
 method function_definition($/) {
 
-    ## note that $<parameters> creates a new PAST::Block.
-    my $past := $( $<parameters> );
+    # note that $<param_list> creates a new PAST::Block.
+    my $past := $( $<param_list> );
 
-    ## set the function name
     $past.name( ~$<FUNCTION_NAME> );
-    for $<statement> {
-        $past.push($($_));
-    }
-
     $past.control('return_pir');
+    $past.push( $( $<block> ) );
 
     make $past;
 }
 
-method parameters($/) {
+method member_definition($/) {
+    make PAST::Op.new(
+             $( $<var> ),
+             $( $<literal> ),
+             :pasttype('bind'),
+         );
+}
 
-    my $past := PAST::Block.new( :blocktype('declaration'), :node($/) );
+method method_definition($/) {
+
+    # note that $<param_list> creates a new PAST::Block.
+    my $past := $( $<param_list> );
+
+    $past.name( ~$<METHOD_NAME> );
+    $past.blocktype( 'method' );
+    $past.control('return_pir');
+    $past.push( $( $<block> ) );
+
+    make $past;
+}
+
+method param_list($/) {
+
+    my $past := PAST::Block.new(
+                    :blocktype('declaration'),
+                    :node($/)
+                );
     for $<VAR_NAME> {
         my $param := $( $_ );
         $param.scope('parameter');
         $past.push($param);
 
-        ## enter the parameter as a lexical into the block's symbol table
-        $past.symbol($param.name(), :scope('lexical'));
+        # enter the parameter as a lexical into the block's symbol table
+        $past.symbol(
+             :scope('lexical'),
+             $param.name()
+        );
     }
 
     make $past;
+}
+
+method class_definition($/) {
+    my $past := PAST::Block.new(
+                    :node($/),
+                    :blocktype('declaration'),
+                    :namespace( $<CLASS_NAME><ident> ),
+                    :pirflags( ':init :load' ),
+                    :lexical( 0 ),
+                    PAST::Stmts.new(
+                        PAST::Op.new(
+                            :inline(   "$P0 = get_hll_global 'P6metaclass'\n $P1 = split '::', '"
+                                     ~ $<CLASS_NAME>
+                                     ~ "'\n push_eh subclass_done\n $P2 = $P0.'new_class'($P1)\n pop_eh\n subclass_done:\n" ),
+                            :pasttype( 'inline' )
+                        )
+                    )
+                );
+    for $<method_definition> {
+        $past.push( $($_) );
+    }
+
+    make $past;
+}
+
+
+method quote($/) {
+    make $( $<quote_expression> );
+}
+
+method quote_expression($/, $key) {
+    my $past;
+    if $key eq 'quote_regex' {
+        our $?NS;
+        $past := PAST::Block.new(
+            $<quote_regex>,
+            :compiler('PGE::Perl6Regex'),
+            :namespace($?NS),
+            :blocktype('declaration'),
+            :node( $/ )
+        );
+    }
+    elsif $key eq 'quote_concat' {
+        if +$<quote_concat> == 1 {
+            $past := $( $<quote_concat>[0] );
+        }
+        else {
+            $past := PAST::Op.new(
+                :name('list'),
+                :pasttype('call'),
+                :node( $/ )
+            );
+            for $<quote_concat> {
+                $past.push( $($_) );
+            }
+        }
+    }
+    make $past;
+}
+
+method quote_concat($/) {
+    my $terms := +$<quote_term>;
+    my $count := 1;
+    my $past := $( $<quote_term>[0] );
+    while ($count != $terms) {
+        $past := PAST::Op.new(
+            $past,
+            $( $<quote_term>[$count] ),
+            :pirop('n_concat'),
+            :pasttype('pirop')
+        );
+        $count := $count + 1;
+    }
+    make $past;
+}
+
+method quote_term($/, $key) {
+    my $past;
+    if ($key eq 'literal') {
+        $past := PAST::Val.new(
+            :value( ~$<quote_literal> ),
+            :returns('PhpString'),
+            :node($/)
+        );
+    }
+    else {
+        $past := $( $/{ $key } );
+    }
+
+    make $past;
+}
+
+method curly_interpolation($/) {
+    make $( $<var> );
 }
 
 

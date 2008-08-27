@@ -8,7 +8,7 @@ src/pmc/parrotio.pmc - Parrot IO
 
 =head1 DESCRIPTION
 
-These are the vtable functions for Parrot IO.
+These are the vtable functions and methods for Parrot IO.
 
 =head2 Methods
 
@@ -304,8 +304,8 @@ This does B<not> close the file.
         else {
             /* slurp open file */
             if (!PMC_data(SELF))
-                real_exception(interp, NULL, PIO_ERROR,
-                        "Cannot slurp from empty filehandle");
+                Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_PIO_ERROR,
+                    "Cannot slurp from empty filehandle");
 
             result = NULL;
 
@@ -323,10 +323,6 @@ This does B<not> close the file.
 
 /*
 
-=item C<void class_init()>
-
-Class initialization.
-
 =item C<METHOD eof()>
 
 Returns true or false according to the end of file state of the object.
@@ -342,6 +338,28 @@ RT#46087 TBD
 =item C<METHOD setlinebuf()>
 
 RT#46089 TBD
+
+=item C<METHOD INTVAL get_fd()>
+
+Get the file descriptor out of the ParrotIO object.
+
+RT#48312 Still to do: integral file descriptors might not exist outside of the UNIX platform.
+                      or for other streams.
+
+=cut
+
+*/
+
+    METHOD get_fd() {
+         const INTVAL r = PIO_getfd(INTERP, SELF);
+         RETURN(INTVAL r);
+    }
+
+/*
+
+=item C<void class_init()>
+
+Class initialization.
 
 =cut
 
@@ -445,8 +463,8 @@ Set SELF to the data in other.
 
         }
         else {
-            real_exception(INTERP, NULL, E_TypeError,
-                           "Can't assign a non-IO type to an IO");
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
+                "Can't assign a non-IO type to an IO");
         }
     }
 

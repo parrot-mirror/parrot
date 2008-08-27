@@ -61,13 +61,14 @@ my @dir = ( 'lua', 't', 'test' );
 #       bisection method for solving non-linear equations
 #
 
-TODO:
-{
-    local $TODO = 'floating point format';
-
 $code = Parrot::Test::slurp_file(File::Spec->catfile( @dir, 'bisect.lua' ));
-$out = Parrot::Test::slurp_file(File::Spec->catfile( @dir, 'bisect-output.txt' ));
-language_output_is( 'lua', $code, $out, 'bisect' );
+if ($^O =~ /Win32/) {
+    $out = Parrot::Test::slurp_file(File::Spec->catfile( @dir, 'bisect-output-win32.txt' ));
+    language_output_is( 'lua', $code, $out, 'bisect', todo => 'floating point format' );
+}
+else {
+    $out = Parrot::Test::slurp_file(File::Spec->catfile( @dir, 'bisect-output-unix.txt' ));
+    language_output_is( 'lua', $code, $out, 'bisect' );
 }
 
 #
@@ -142,7 +143,7 @@ OUTPUT
 
 SKIP:
 {
-    skip('crash', 1) unless ($test_prog eq 'lua');
+    skip('uses too much memory with default runcore', 1) unless ($test_prog eq 'lua');
 
 $code = Parrot::Test::slurp_file(File::Spec->catfile( @dir, 'life.lua' ));
 $out = Parrot::Test::slurp_file(File::Spec->catfile( @dir, 'life-output.txt' ));
@@ -175,14 +176,9 @@ OUTPUT
 #       the sieve of of Eratosthenes programmed with coroutines
 #
 
-TODO:
-{
-    local $TODO = 'just one ?';
-
 $code = Parrot::Test::slurp_file(File::Spec->catfile( @dir, 'sieve.lua' ));
 $out = Parrot::Test::slurp_file(File::Spec->catfile( @dir, 'sieve-output.txt' ));
 language_output_is( 'lua', $code, $out, 'sieve' );
-}
 
 #
 #   sort.lua

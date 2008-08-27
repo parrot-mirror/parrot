@@ -24,7 +24,7 @@ use base qw(Parrot::Configure::Step);
 sub _init {
     my $self = shift;
     my %data;
-    $data{description} = q{Determining CPU architecture and OS};
+    $data{description} = q{Determine CPU architecture and OS};
     $data{result}      = q{};
     return \%data;
 }
@@ -59,7 +59,7 @@ sub runstep {
     # the above split fails because archname is "darwin-thread-multi-2level".
     if ( $cpuarch =~ /darwin/ ) {
         $osname = 'darwin';
-        if ( $conf->data->get('byteorder') == 1234 ) {
+         if ( $conf->data->get('byteorder') =~ /^1234/ ) {
             $cpuarch = 'i386';
         }
         else {

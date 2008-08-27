@@ -268,6 +268,7 @@ Returns a Perl representation of the Str.
 .sub 'perl' :method
     $S0 = "\""
     $S1 = self
+    # TODO: escape $, @, $, {, } and the like
     $S1 = escape $S1
     concat $S0, $S1
     concat $S0, "\""
@@ -287,31 +288,17 @@ Returns a Perl representation of the Str.
 .end
 
 
-=item substr()
+=item WHICH()
+
+Returns the identify value.
 
 =cut
 
-.sub 'substr' :method
-    .param int start
-    .param int len     :optional
-    .param int has_len :opt_flag
-    .local pmc s
-
-    if has_len goto check_len
-    len = self.'chars'()
-
-  check_len:
-    if len > 0 goto end
-    $I0 = self.'chars'()
-    len = $I0 + len
-    len = len - start
-
-  end:
-    $S0 = substr self, start, len
-    s = new 'Str'
-    s = $S0
-    .return (s)
+.sub 'WHICH' :method
+    $S0 = self
+    .return ($S0)
 .end
+
 
 =back
 
@@ -447,27 +434,6 @@ B<Note:> partial implementation only
 .end
 
 
-=item substr
-
- multi substr (Str $s, StrPos $start  : StrPos $end,      $replace)
- multi substr (Str $s, StrPos $start,   StrLen $length  : $replace)
- multi substr (Str $s, StrLen $offset : StrLen $length,   $replace)
-
-B<Note:> partial implementation only
-
-=cut
-
-.sub 'substr'
-    .param string x
-    .param int start
-    .param int len     :optional
-    .local pmc s
-
-    s = new 'Perl6Str'
-    s = x
-    .return s.'substr'(start, len)
-.end
-
 =item chop
 
  our Str method Str::chop ( Str  $string: )
@@ -483,6 +449,21 @@ Returns string with one Char removed from the end.
     s = a
     .return s.'chop'()
 .end
+
+
+=item infix:===
+
+Overridden for Str.
+
+=cut
+
+.namespace []
+.sub 'infix:===' :multi(String,String)
+    .param string a
+    .param string b
+    .return 'infix:eq'(a, b)
+.end
+
 
 =back
 

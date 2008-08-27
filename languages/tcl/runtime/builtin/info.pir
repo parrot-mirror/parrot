@@ -1,10 +1,4 @@
-=head2 [incr]
-
- Provide introspection about the tcl interpreter. (And by extension, parrot.)
-
-=cut
-
-.HLL 'Tcl', 'tcl_group'
+.HLL 'Tcl', ''
 .namespace []
 
 .sub '&info'
@@ -18,32 +12,11 @@
   subcommand_name = shift argv
 
   .local pmc options
-  options = new 'ResizablePMCArray'
-  push options, 'args'
-  push options, 'body'
-  push options, 'cmdcount'
-  push options, 'commands'
-  push options, 'complete'
-  push options, 'default'
-  push options, 'exists'
-  push options, 'frame'
-  push options, 'functions'
-  push options, 'globals'
-  push options, 'hostname'
-  push options, 'level'
-  push options, 'library'
-  push options, 'loaded'
-  push options, 'locals'
-  push options, 'nameofexecutable'
-  push options, 'patchlevel'
-  push options, 'procs'
-  push options, 'script'
-  push options, 'sharedlibextension'
-  push options, 'tclversion'
-  push options, 'vars'
+  options = get_root_global ['_tcl'; 'helpers'; 'info'], 'options'
 
   .local pmc select_option
   select_option  = get_root_global ['_tcl'], 'select_option'
+
   .local string canonical_subcommand
   canonical_subcommand = select_option(options, subcommand_name)
 
@@ -59,7 +32,7 @@ bad_subcommand:
   .return ('') # once all commands are implemented, remove this...
 
  bad_args:
-  tcl_error 'wrong # args: should be "info subcommand ?argument ...?"'
+  die 'wrong # args: should be "info subcommand ?argument ...?"'
 .end
 
 .HLL '_Tcl', ''
@@ -77,12 +50,12 @@ bad_subcommand:
   .local string procname
   procname = shift argv
 
-  .local pmc __namespace
-  __namespace = get_root_global ['_tcl'], '__namespace'
+  .local pmc splitNamespace
+  splitNamespace = get_root_global ['_tcl'], 'splitNamespace'
 
   .local pmc    ns
   .local string name
-  ns   = __namespace(procname)
+  ns   = splitNamespace(procname)
   name = pop ns
   name = '&' . name
 
@@ -100,10 +73,10 @@ no_args:
   $S0 = '"'
   $S0 .= procname
   $S0 .= "\" isn't a procedure"
-  tcl_error $S0
+  die $S0
 
 bad_args:
-  tcl_error 'wrong # args: should be "info args procname"'
+  die 'wrong # args: should be "info args procname"'
 .end
 
 .sub 'body'
@@ -116,12 +89,12 @@ bad_args:
   .local string procname
   procname = argv[0]
 
-  .local pmc __namespace
-  __namespace = get_root_global ['_tcl'], '__namespace'
+  .local pmc splitNamespace
+  splitNamespace = get_root_global ['_tcl'], 'splitNamespace'
 
   .local pmc    ns
   .local string name
-  ns   = __namespace(procname)
+  ns   = splitNamespace(procname)
   name = pop ns
   name = '&' . name
 
@@ -136,10 +109,10 @@ no_body:
   $S0 = '"'
   $S0 .= procname
   $S0 .= "\" isn't a procedure"
-  tcl_error $S0
+  die $S0
 
 bad_args:
-  tcl_error 'wrong # args: should be "info body procname"'
+  die 'wrong # args: should be "info body procname"'
 .end
 
 .sub 'complete'
@@ -151,7 +124,7 @@ bad_args:
   .local pmc body
   body = argv[0]
   push_eh nope
-    $P1 = __script(body)
+    $P1 = compileTcl(body)
   pop_eh
   .return(1)
 
@@ -166,7 +139,7 @@ fail:
   .return(0)
 
 bad_args:
-  tcl_error 'wrong # args: should be "info complete command"'
+  die 'wrong # args: should be "info complete command"'
 .end
 
 .sub 'default'
@@ -183,15 +156,15 @@ bad_args:
   argname  = argv[1]
   varname  = argv[2]
 
-  .local pmc __set
-  __set = get_root_global ['_tcl'], '__set'
+  .local pmc setVar
+  setVar = get_root_global ['_tcl'], 'setVar'
 
-  .local pmc __namespace
-  __namespace = get_root_global ['_tcl'], '__namespace'
+  .local pmc splitNamespace
+  splitNamespace = get_root_global ['_tcl'], 'splitNamespace'
 
   .local pmc    ns
   .local string name
-  ns   = __namespace(procname)
+  ns   = splitNamespace(procname)
   name = pop ns
   name = '&' . name
 
@@ -206,7 +179,7 @@ bad_args:
   $P3 = $P2[argname]
   if_null $P3, check_arg
   push_eh error_on_set
-    __set(varname, $P3)
+    setVar(varname, $P3)
   pop_eh
 
   # store in variable
@@ -214,7 +187,7 @@ bad_args:
 
 check_arg:
   # there's no default. is there even an arg?
-  $P3 = __list($P9)
+  $P3 = toList($P9)
   $P4 = new 'Iterator', $P3
 loop:
   unless $P4 goto not_argument
@@ -228,11 +201,11 @@ not_argument:
   $S0 .= "\" doesn't have an argument \""
   $S0 .= argname
   $S0 .= '"'
-  tcl_error $S0
+  die $S0
 
 no_default:
   push_eh error_on_set
-    __set(varname, '')
+    setVar(varname, '')
   pop_eh
   .return (0)
 
@@ -240,17 +213,17 @@ error_on_set:
   $S0 = "couldn't store default value in variable \""
   $S0 .= varname
   $S0 .= '"'
-  tcl_error $S0
+  die $S0
 
 not_proc:
   $S0 = '"'
   $S0 .= procname
   $S0 .= "\" isn't a procedure"
-  tcl_error $S0
+  die $S0
 
 
 bad_args:
-  tcl_error 'wrong # args: should be "info default procname arg varname"'
+  die 'wrong # args: should be "info default procname arg varname"'
 .end
 
 
@@ -291,7 +264,7 @@ end:
   .return(retval)
 
 bad_args:
-  tcl_error 'wrong # args: should be "info functions ?pattern?"'
+  die 'wrong # args: should be "info functions ?pattern?"'
 .end
 
 .sub 'commands'
@@ -342,7 +315,7 @@ bad_args:
     .return(result)
 
   bad_args:
-    tcl_error 'wrong # args: should be "info commands ?pattern?"'
+    die 'wrong # args: should be "info commands ?pattern?"'
 
 .end
 
@@ -356,10 +329,10 @@ bad_args:
   .local string varname
   varname = argv[0]
 
-  .local pmc __read, found_var
-  __read  = get_root_global ['_tcl'], '__read'
+  .local pmc readVar, found_var
+  readVar  = get_root_global ['_tcl'], 'readVar'
   push_eh not_found
-    found_var = __read(varname)
+    found_var = readVar(varname)
   pop_eh
   .return (1)
 
@@ -367,7 +340,7 @@ not_found:
   .return (0)
 
 bad_args:
-  tcl_error 'wrong # args: should be "info exists varName"'
+  die 'wrong # args: should be "info exists varName"'
 .end
 
 .sub 'tclversion'
@@ -382,7 +355,7 @@ bad_args:
   .return($P1)
 
 bad_args:
-  tcl_error 'wrong # args: should be "info tclversion"'
+  die 'wrong # args: should be "info tclversion"'
 
 .end
 
@@ -398,7 +371,7 @@ bad_args:
   .return($P1)
 
 bad_args:
-  tcl_error 'wrong # args: should be "info patchlevel"'
+  die 'wrong # args: should be "info patchlevel"'
 
 .end
 
@@ -414,7 +387,7 @@ bad_args:
   .return($P1)
 
 bad_args:
-  tcl_error 'wrong # args: should be "info library"'
+  die 'wrong # args: should be "info library"'
 
 .end
 
@@ -450,7 +423,7 @@ end:
   .return(retval)
 
 bad_args:
-  tcl_error 'wrong # args: should be "info vars ?pattern?"'
+  die 'wrong # args: should be "info vars ?pattern?"'
 
 get_globals:
   .return 'globals'(argv)
@@ -465,7 +438,7 @@ get_globals:
   if argc == 0 goto current_level
   if argc == 1 goto find_level
 
-  tcl_error 'wrong # args: should be "info level ?number?"'
+  die 'wrong # args: should be "info level ?number?"'
 
 current_level:
   .local pmc call_chain
@@ -474,15 +447,15 @@ current_level:
   .return($I0)
 
 find_level:
-  .local pmc __integer, __call_level
-  __integer    = get_root_global ['_tcl'], '__integer'
-  __call_level = get_root_global ['_tcl'], '__call_level'
+  .local pmc toInteger, getCallLevel
+  toInteger    = get_root_global ['_tcl'], 'toInteger'
+  getCallLevel = get_root_global ['_tcl'], 'getCallLevel'
 
   .local pmc level
   level = shift argv
-  level = __integer(level)
+  level = toInteger(level)
   if level >= 0 goto find_info_level
-  level = __call_level(level)
+  level = getCallLevel(level)
   .return(level)
 
 find_info_level:
@@ -529,7 +502,7 @@ end:
   .return(retval)
 
 bad_args:
-  tcl_error 'wrong # args: should be "info globals ?pattern?"'
+  die 'wrong # args: should be "info globals ?pattern?"'
 .end
 
 # RT#40739: stub
@@ -549,12 +522,12 @@ bad_args:
 .sub 'nameofexecutable'
   .param pmc argv
   .local int argc
-  argc = argv
+  argc = elements argv
   if argc goto bad_args
   $P1 = get_root_global ['_tcl'], 'nameofexecutable'
   .return($P1)
 bad_args:
-  tcl_error 'wrong # args: should be "info nameofexecutable"'
+  die 'wrong # args: should be "info nameofexecutable"'
 .end
 
 # RT#40742: stub
@@ -567,6 +540,35 @@ bad_args:
 .sub 'cmdcount'
   .param pmc argv
   .return(0)
+.end
+
+.sub 'anon' :anon :load
+  .local pmc options
+  options = new 'TclList'
+  push options, 'args'
+  push options, 'body'
+  push options, 'cmdcount'
+  push options, 'commands'
+  push options, 'complete'
+  push options, 'default'
+  push options, 'exists'
+  push options, 'frame'
+  push options, 'functions'
+  push options, 'globals'
+  push options, 'hostname'
+  push options, 'level'
+  push options, 'library'
+  push options, 'loaded'
+  push options, 'locals'
+  push options, 'nameofexecutable'
+  push options, 'patchlevel'
+  push options, 'procs'
+  push options, 'script'
+  push options, 'sharedlibextension'
+  push options, 'tclversion'
+  push options, 'vars'
+
+  set_root_global ['_tcl'; 'helpers'; 'info'], 'options', options
 .end
 
 # Local Variables:

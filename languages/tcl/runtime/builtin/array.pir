@@ -1,7 +1,4 @@
-###
-# [array]
-
-.HLL 'Tcl', 'tcl_group'
+.HLL 'Tcl', ''
 .namespace []
 
 #
@@ -13,7 +10,7 @@
   .param pmc argv :slurpy
 
   .local int argc
-  argc = argv
+  argc = elements argv
 
   if argc < 2 goto few_args  # subcommand *and* array name
 
@@ -21,21 +18,11 @@
   subcommand_name = shift argv
 
   .local pmc options
-  options = new 'ResizablePMCArray'
-  options[0] = 'anymore'
-  options[1] = 'donesearch'
-  options[2] = 'exists'
-  options[3] = 'get'
-  options[4] = 'names'
-  options[5] = 'nextelement'
-  options[6] = 'set'
-  options[7] = 'size'
-  options[8] = 'startsearch'
-  options[9] = 'statistics'
-  options[10] = 'unset'
+  options = get_root_global ['_tcl'; 'helpers'; 'array'], 'options'
 
   .local pmc select_option
   select_option  = get_root_global ['_tcl'], 'select_option'
+
   .local string canonical_subcommand
   canonical_subcommand = select_option(options, subcommand_name)
 
@@ -53,14 +40,14 @@
 
   null the_array
 
-  .local pmc __find_var
-  __find_var = get_root_global ['_tcl'], '__find_var'
-  the_array  = __find_var(array_name)
+  .local pmc findVar
+  findVar = get_root_global ['_tcl'], 'findVar'
+  the_array  = findVar(array_name)
 
   if_null the_array, array_no
 
-  $I99 = does the_array, 'hash'
-  if $I99==0 goto array_no
+  $I99 = does the_array, 'associative_array'
+  unless $I99 goto array_no
 
   is_array = 1
   goto scommand
@@ -75,7 +62,7 @@ bad_args:
   .return ('') # once all commands are implemented, remove this...
 
 few_args:
-  tcl_error 'wrong # args: should be "array option arrayName ?arg ...?"'
+  die 'wrong # args: should be "array option arrayName ?arg ...?"'
 
 .end
 
@@ -90,13 +77,13 @@ few_args:
   .param pmc argv
 
   .local int argc
-  argc = argv
+  argc = elements argv
   if argc goto bad_args
 
   .return (is_array)
 
 bad_args:
-  tcl_error 'wrong # args: should be "array exists arrayName"'
+  die 'wrong # args: should be "array exists arrayName"'
 .end
 
 .sub 'size'
@@ -106,7 +93,7 @@ bad_args:
   .param pmc argv
 
   .local int argc
-  argc = argv
+  argc = elements argv
   if argc goto bad_args
 
   if is_array == 0 goto size_none
@@ -117,7 +104,7 @@ size_none:
   .return (0)
 
 bad_args:
-  tcl_error 'wrong # args: should be "array size arrayName"'
+  die 'wrong # args: should be "array size arrayName"'
 .end
 
 .sub 'set'
@@ -127,15 +114,15 @@ bad_args:
   .param pmc argv
 
   .local int argc
-  argc = argv
+  argc = elements argv
   if argc != 1 goto bad_args
 
   .local pmc elems
   elems = argv[0]
 
-  .local pmc __list
-  __list = get_root_global ['_tcl'], '__list'
-  elems  = __list(elems)
+  .local pmc toList
+  toList = get_root_global ['_tcl'], 'toList'
+  elems  = toList(elems)
 
 pre_loop:
   .local int count
@@ -150,7 +137,7 @@ pre_loop:
   .local pmc    val
 
   .local pmc set
-  set = get_root_global ['_tcl'], '__set'
+  set = get_root_global ['_tcl'], 'setVar'
 
   if_null the_array, new_array # create a new array if no var
   goto set_loop
@@ -184,10 +171,10 @@ done:
   .return ('')
 
 bad_args:
-  tcl_error 'wrong # args: should be "array set arrayName list"'
+  die 'wrong # args: should be "array set arrayName list"'
 
 odd_args:
-  tcl_error 'list must have an even number of elements'
+  die 'list must have an even number of elements'
 .end
 
 
@@ -199,7 +186,7 @@ odd_args:
   .param pmc argv
 
   .local int argc
-  argc = argv
+  argc = elements argv
   if argc > 1 goto bad_args
 
   .local string match_str
@@ -250,7 +237,7 @@ push_end:
   .return(retval)
 
 bad_args:
-  tcl_error 'wrong # args: should be "array get arrayName ?pattern?"'
+  die 'wrong # args: should be "array get arrayName ?pattern?"'
 
 not_array:
   .return ('')
@@ -263,7 +250,7 @@ not_array:
   .param pmc argv
 
   .local int argc
-  argc = argv
+  argc = elements argv
   if argc > 1 goto bad_args
 
 
@@ -306,7 +293,7 @@ push_end:
 
 
 bad_args:
-   tcl_error 'wrong # args: should be "array unset arrayName ?pattern?"'
+   die 'wrong # args: should be "array unset arrayName ?pattern?"'
 
 not_array:
    .return ('')
@@ -321,7 +308,7 @@ not_array:
   .local pmc retval
 
   .local int argc
-  argc = argv
+  argc = elements argv
   if argc > 2 goto bad_args
 
   .local string mode, pattern
@@ -346,16 +333,16 @@ skip_args:
   .return match_proc(the_array, pattern)
 
 bad_args:
-  tcl_error 'wrong # args: should be "array names arrayName ?mode? ?pattern?"'
+  die 'wrong # args: should be "array names arrayName ?mode? ?pattern?"'
 
 bad_mode:
   $S0 = 'bad option "'
   $S0 .= mode
   $S0 .= '": must be -exact, -glob, or -regexp'
-  tcl_error $S0
+  die $S0
 
 not_array:
-  tcl_error '' # is this right? -Coke
+  die '' # is this right? -Coke
 .end
 
 .namespace [ 'helpers' ; 'array'; 'names_helper' ]
@@ -403,7 +390,7 @@ check_end:
 
   iter = new 'Iterator', the_array
 
-  retval = new 'String'
+  retval = new 'TclString'
   retval = ''
 
 check_loop:
@@ -452,6 +439,24 @@ check_loop:
 check_end:
 
   .return (retval)
+.end
+
+.sub 'anon' :load :anon
+  .local pmc options
+  options = new 'TclList'
+  options[0] = 'anymore'
+  options[1] = 'donesearch'
+  options[2] = 'exists'
+  options[3] = 'get'
+  options[4] = 'names'
+  options[5] = 'nextelement'
+  options[6] = 'set'
+  options[7] = 'size'
+  options[8] = 'startsearch'
+  options[9] = 'statistics'
+  options[10] = 'unset'
+
+  set_root_global ['_tcl'; 'helpers'; 'array'], 'options', options
 .end
 
 # Local Variables:

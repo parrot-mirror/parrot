@@ -1,23 +1,20 @@
-###
-# [source]
-
-.HLL 'Tcl', 'tcl_group'
+.HLL 'Tcl', ''
 .namespace []
 
 .sub '&lindex'
   .param pmc argv :slurpy
 
   .local int argc
-  argc = argv
+  argc = elements argv
   if argc < 1 goto bad_args
 
-  .local pmc __list, __index
-  __list  = get_root_global ['_tcl'], '__list'
-  __index = get_root_global ['_tcl'], '__index'
+  .local pmc toList, getIndex
+  toList  = get_root_global ['_tcl'], 'toList'
+  getIndex = get_root_global ['_tcl'], 'getIndex'
 
   .local pmc list
   list = argv[0]
-  list = __list(list)
+  list = toList(list)
 
 have_list:
   if argc == 1 goto done
@@ -30,7 +27,7 @@ select_elem:
   $P0 = argv[$I0]
   .local pmc indices
   push_eh not_a_list
-    indices = __list($P0)
+    indices = toList($P0)
   pop_eh
   goto select
 
@@ -46,10 +43,10 @@ select:
   $I1 = 0
 select_loop:
   if $I1 >= elems goto select_elem
-  list = __list(list)
+  list = toList(list)
 
   $P0 = indices[$I1]
-  index = __index($P0, list)
+  index = getIndex($P0, list)
 
   $I2 = elements list
   if index >= $I2 goto empty
@@ -67,7 +64,7 @@ empty:
   .return('')
 
 bad_args:
-  tcl_error 'wrong # args: should be "lindex list ?index...?"'
+  die 'wrong # args: should be "lindex list ?index...?"'
 .end
 
 # Local Variables:

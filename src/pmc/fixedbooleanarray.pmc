@@ -156,7 +156,7 @@ Returns the integer value of the element at index C<key>.
         const Parrot_UInt1 * const sd = PMC_data_typed(SELF, Parrot_UInt1 *);
 
         if (key < 0 || key >= PMC_int_val(SELF))
-            real_exception(INTERP, NULL, E_IndexError,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_OUT_OF_BOUNDS,
                 "FixedBooleanArray: index out of bounds!");
 
         return (sd[key / BITS_PER_CHAR] & (1 << (key % BITS_PER_CHAR))) ? 1 : 0;
@@ -207,6 +207,33 @@ Returns the floating-point value of the element at index C<*key>.
     VTABLE FLOATVAL get_number_keyed(PMC *key) {
         const INTVAL k = key_integer(INTERP, key);
         return SELF.get_number_keyed_int(k);
+    }
+
+/*
+
+=item C<STRING *get_string()>
+
+Returns the Parrot string representation of the array.
+
+=cut
+
+*/
+
+    VTABLE STRING *get_string() {
+        INTVAL i, elems;
+        STRING *str = NULL;
+
+        elems = SELF.elements();
+        string_repeat(INTERP, CONST_STRING(INTERP, '0'), elems, &str);
+
+        for (i = 0; i < elems; i++) {
+            if (SELF.get_integer_keyed_int(i)) {
+                *(str->strstart+i) = '1';
+            }
+        }
+
+        return str;
+
     }
 
 /*
@@ -284,8 +311,8 @@ Resizes the array to C<size> elements.
 
     VTABLE void set_integer_native(INTVAL size) {
         if (PMC_int_val(SELF) || size < 1)
-            real_exception(INTERP, NULL, E_IndexError,
-                    "FixedBooleanArray: Can't resize!");
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_OUT_OF_BOUNDS,
+                "FixedBooleanArray: Can't resize!");
 
         PMC_int_val(SELF)  = size;
         PMC_int_val2(SELF) = (size / BITS_PER_CHAR + 1) * BITS_PER_CHAR;
@@ -307,7 +334,7 @@ Sets the integer value of the element at index C<key> to C<value>.
         Parrot_UInt1 * const sd = PMC_data_typed(SELF, Parrot_UInt1 *);
 
         if (key < 0 || key >= PMC_int_val(SELF))
-            real_exception(INTERP, NULL, E_IndexError,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_OUT_OF_BOUNDS,
                 "FixedBooleanArray: index out of bounds!");
 
         if (value)

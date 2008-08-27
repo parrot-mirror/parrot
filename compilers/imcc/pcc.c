@@ -313,13 +313,13 @@ expand_pcc_sub(PARROT_INTERP, ARGMOD(IMC_Unit *unit), ARGIN(Instruction *ins))
     SymReg      *regs[2];
 
     /* if this sub is a method, unshift 'self' as first param */
-    if ((sub->pcc_sub->pragma & P_METHOD) ||
-        (IMCC_INFO(interp)->cur_unit->is_vtable_method)) {
+    if ((unit->type & IMC_HAS_SELF) || (sub->pcc_sub->pragma & P_METHOD)) {
         SymReg *self = get_sym(interp, "self");
         if (!self) {
             self       = mk_symreg(interp, "self", 'P');
             self->type = VTIDENTIFIER;
         }
+
         unshift_self(sub, self);
     }
 
@@ -352,10 +352,11 @@ expand_pcc_sub(PARROT_INTERP, ARGMOD(IMC_Unit *unit), ARGIN(Instruction *ins))
 
         /* check to make sure the sub is ok before we try to use it */
         if (!sub)
-            real_exception(interp, NULL, 1, "NULL sub detected");
+            Parrot_ex_throw_from_c_args(interp, NULL, 1, "NULL sub detected");
 
         if (!sub->pcc_sub)
-            real_exception(interp, NULL, 1, "NULL sub->pcc_sub detected");
+            Parrot_ex_throw_from_c_args(interp, NULL, 1,
+                "NULL sub->pcc_sub detected");
 
         if (sub->pcc_sub->pragma & P_MAIN)
             tmp = INS(interp, unit, "end", NULL, regs, 0, 0, 0);
@@ -671,27 +672,11 @@ expand_pcc_sub_call(PARROT_INTERP, ARGMOD(IMC_Unit *unit), ARGMOD(Instruction *i
         if (recursive_tail_call(interp, unit, ins, sub))
             return;
 
-    /* If the subroutine is being called indirectly through a variable or a
-       register, we end up here. */
-    if (sub->pcc_sub->object) {
+    if (sub->pcc_sub->object)
         /* Set the meth_call flag. I believe this flag determines whether we
            are calling a sub indirectly through a PMC or string variable
            or register. */
         meth_call = 1;
-
-        /* If the variable is a string, such as $S0(), we call the getclass
-           instruction like this: getclass $P[temp], $S0, and change the
-           object of the call to $P[temp]() instead. I think this has the
-           effect of calling the invoke vtable method of the string class. */
-        if (sub->pcc_sub->object->set == 'S') {
-            regs[0] = mk_temp_reg(interp, 'P');
-            regs[1] = sub->pcc_sub->object;
-            ins     = insINS(interp, unit, ins, "getclass", regs, 2);
-
-            sub->pcc_sub->object = regs[0];
-        }
-
-    }
 
     /*
      * See if we need to create a temporary sub object for the short

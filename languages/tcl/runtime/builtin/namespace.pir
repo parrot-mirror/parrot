@@ -9,7 +9,7 @@ real top level namespace.
 
 =cut
 
-.HLL 'Tcl', 'tcl_group'
+.HLL 'Tcl', ''
 .namespace []
 
 .sub '&namespace'
@@ -17,36 +17,19 @@ real top level namespace.
 
   .local pmc retval
 
-  $I3 = argv
-  unless $I3 goto no_args
+  .local int argc
+  argc = elements argv
+  unless argc goto no_args
 
   .local string subcommand_name
   subcommand_name = shift argv
 
   .local pmc options
-  options = new 'ResizablePMCArray'
-  options[0] = 'children'
-  options[1] = 'code'
-  options[2] = 'current'
-  options[3] = 'delete'
-  options[4] = 'ensemble'
-  options[5] = 'eval'
-  options[6] = 'exists'
-  options[7] = 'export'
-  options[8] = 'forget'
-  options[9] = 'import'
-  options[10] = 'inscope'
-  options[11] = 'origin'
-  options[12] = 'parent'
-  options[13] = 'path'
-  options[14] = 'qualifiers'
-  options[15] = 'tail'
-  options[16] = 'unknown'
-  options[17] = 'upvar'
-  options[18] = 'which'
+  options = get_root_global ['_tcl'; 'helpers'; 'namespace'], 'options'
 
   .local pmc select_option
   select_option  = get_root_global ['_tcl'], 'select_option'
+
   .local string canonical_subcommand
   canonical_subcommand = select_option(options, subcommand_name)
 
@@ -62,7 +45,7 @@ bad_args:
   .return ('') # once all commands are implemented, remove this...
 
 no_args:
-  tcl_error 'wrong # args: should be "namespace subcommand ?arg ...?"'
+  die 'wrong # args: should be "namespace subcommand ?arg ...?"'
 
 .end
 
@@ -73,18 +56,18 @@ no_args:
   .param pmc argv
 
   .local int argc
-  argc = argv
+  argc = elements argv
   if argc goto bad_args
 
-  .local pmc ns, __namespace
-  __namespace = get_root_global ['_tcl'], '__namespace'
-  ns  = __namespace('')
+  .local pmc ns, splitNamespace
+  splitNamespace = get_root_global ['_tcl'], 'splitNamespace'
+  ns  = splitNamespace('')
   $S0 = join '::', ns
   $S0 = '::' . $S0
   .return($S0)
 
 bad_args:
-  tcl_error 'wrong # args: should be "namespace current"'
+  die 'wrong # args: should be "namespace current"'
 .end
 
 .sub 'delete'
@@ -95,15 +78,15 @@ bad_args:
   # no arg delete does nothing
   if argc == 0 goto return
 
-  .local pmc __namespace, ns_root
-  __namespace = get_root_global ['_tcl'], '__namespace'
+  .local pmc splitNamespace, ns_root
+  splitNamespace = get_root_global ['_tcl'], 'splitNamespace'
   ns_root = get_root_namespace ['tcl']
 
   $I0 = 0
 delete_loop:
   if $I0 == argc goto return
   $S0 = argv[$I0]
-  $P0 = __namespace($S0)
+  $P0 = splitNamespace($S0)
   $I1 = 0
   $I2 = elements $P0
   dec $I2
@@ -127,7 +110,7 @@ return:
   .param pmc argv
 
   .local int argc
-  argc = argv
+  argc = elements argv
   if argc != 1 goto bad_args
 
   .local pmc colons, split, name
@@ -166,14 +149,14 @@ doesnt_exist:
   .return(0)
 
 bad_args:
-  tcl_error 'wrong # args: should be "namespace exists name"'
+  die 'wrong # args: should be "namespace exists name"'
 .end
 
 .sub 'qualifiers'
   .param pmc argv
 
   .local int argc
-  argc = argv
+  argc = elements argv
   if argc != 1 goto bad_args
 
   .local pmc p6r,match
@@ -192,7 +175,7 @@ WHOLE:
   .return($S0)
 
   bad_args:
-   tcl_error 'wrong # args: should be "namespace qualifiers string"'
+   die 'wrong # args: should be "namespace qualifiers string"'
 
 .end
 
@@ -200,7 +183,7 @@ WHOLE:
   .param pmc argv
 
   .local int argc
-  argc = argv
+  argc = elements argv
   if argc != 1 goto bad_args
 
   .local pmc p6r,match
@@ -221,7 +204,7 @@ WHOLE:
   .return($P0)
 
 bad_args:
-  tcl_error 'wrong # args: should be "namespace tail string"'
+  die 'wrong # args: should be "namespace tail string"'
 
 .end
 
@@ -234,7 +217,7 @@ bad_args:
 
   .local pmc call_chain, temp_call_chain
   call_chain      = get_root_global ['_tcl'], 'call_chain'
-  temp_call_chain = new 'ResizablePMCArray'
+  temp_call_chain = new 'TclList'
   set_root_global ['_tcl'], 'call_chain', temp_call_chain
 
   .local pmc info_level
@@ -245,11 +228,11 @@ bad_args:
   unshift $P0, 'namespace'
   unshift info_level, $P0
 
-  .local pmc ns, __namespace
-  __namespace = get_root_global ['_tcl'], '__namespace'
+  .local pmc ns, splitNamespace
+  splitNamespace = get_root_global ['_tcl'], 'splitNamespace'
 
   ns = shift argv
-  ns = __namespace(ns, 1)
+  ns = splitNamespace(ns, 1)
 
   .local string namespace
   namespace = ''
@@ -261,24 +244,19 @@ bad_args:
   namespace .= "']"
 
 global_ns:
-  .local pmc __script, code
-  __script = get_root_global ['_tcl'], '__script'
+  .local pmc compileTcl, code
+  compileTcl = get_root_global ['_tcl'], 'compileTcl'
   code     = new 'CodeString'
   $S0 = join ' ', argv
-  ($S0, $S1) = __script($S0, 'pir_only'=>1)
+  ($S0, $S1) = compileTcl($S0, 'pir_only'=>1)
   $I0 = code.unique()
   code.emit(<<'END_PIR', namespace, $S0, $I0, $S1)
-.HLL 'tcl', 'tcl_group'
+.HLL 'tcl', ''
 .namespace %0
 # src/compiler.pir :: pir_compiler (2)
 .pragma n_operators 1
 .sub compiled_tcl_sub_%2
   .include 'languages/tcl/src/returncodes.pasm'
-  .local pmc epoch, colons, split, unk, interactive :unique_reg
-  epoch  = get_root_global ['_tcl'], 'epoch'
-  colons = get_root_global ['_tcl'], 'colons'
-  split  = get_root_global ['parrot'; 'PGE::Util'], 'split'
-  interactive = get_root_global ['tcl'], '$tcl_interactive'
   %1
   .return(%3)
 .end
@@ -299,7 +277,7 @@ restore_call_chain:
   .rethrow()
 
 bad_args:
-  tcl_error 'wrong # args: should be "namespace eval name arg ?arg...?"'
+  die 'wrong # args: should be "namespace eval name arg ?arg...?"'
 .end
 
 .sub 'export'
@@ -327,15 +305,15 @@ iterate:
   .local pmc list
   list = new 'TclList'
 
-  .local pmc __namespace, ns, ns_name
+  .local pmc splitNamespace, ns, ns_name
   .local string name
-  __namespace = get_root_global ['_tcl'], '__namespace'
+  splitNamespace = get_root_global ['_tcl'], 'splitNamespace'
   name = ''
   if argc == 0 goto getname
 
   name = argv[0]
 getname:
-  ns_name  = __namespace(name, 1)
+  ns_name  = splitNamespace(name, 1)
 
   unshift ns_name, 'tcl'
   ns = get_root_namespace ns_name
@@ -368,13 +346,13 @@ end:
   .return(list)
 
 bad_args:
-  tcl_error 'wrong # args: should be "namespace children ?name? ?pattern?"'
+  die 'wrong # args: should be "namespace children ?name? ?pattern?"'
 
 unknown_namespace:
   $S0 = argv[0]
   $S0 = 'unknown namespace "' . $S0
   $S0 = $S0 . '" in namespace children command'
-  tcl_error $S0
+  die $S0
 .end
 
 .sub 'children_cmp'
@@ -455,9 +433,9 @@ b_first:
   name = argv[0]
 
 get_parent:
-  .local pmc ns, __namespace
-  __namespace = get_root_global ['_tcl'], '__namespace'
-  ns  = __namespace(name)
+  .local pmc ns, splitNamespace
+  splitNamespace = get_root_global ['_tcl'], 'splitNamespace'
+  ns  = splitNamespace(name)
   if $S0 != '' goto no_pop
   # for when someone calls [namespace current] from ::
   push_eh current_in_root
@@ -472,12 +450,38 @@ current_in_root:
   .return('')
 
 bad_args:
-  tcl_error 'wrong # args: should be "namespace parent ?name?"'
+  die 'wrong # args: should be "namespace parent ?name?"'
 .end
 
 # RT#40753: Stub
 .sub 'which'
   .return ('')
+.end
+
+.sub 'anon' :anon :load
+  .local pmc options
+  options = new 'TclList'
+  options[0] = 'children'
+  options[1] = 'code'
+  options[2] = 'current'
+  options[3] = 'delete'
+  options[4] = 'ensemble'
+  options[5] = 'eval'
+  options[6] = 'exists'
+  options[7] = 'export'
+  options[8] = 'forget'
+  options[9] = 'import'
+  options[10] = 'inscope'
+  options[11] = 'origin'
+  options[12] = 'parent'
+  options[13] = 'path'
+  options[14] = 'qualifiers'
+  options[15] = 'tail'
+  options[16] = 'unknown'
+  options[17] = 'upvar'
+  options[18] = 'which'
+
+  set_root_global ['_tcl'; 'helpers'; 'namespace'], 'options', options
 .end
 
 # Local Variables:

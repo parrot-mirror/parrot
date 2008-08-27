@@ -32,7 +32,7 @@ use Parrot::Configure::Utils qw(capture_output);
 sub _init {
     my $self = shift;
     my %data;
-    $data{description}          = q{Determining whether ICU is installed};
+    $data{description}          = q{Is ICU installed};
     $data{result}               = q{};
     # The following key-value pairs are defined here rather than being buried
     # deep inside subroutines below.  Also, so that they can be overridden
@@ -127,9 +127,10 @@ sub runstep {
                 autodetect      => $autodetect,
                 icuconfig       => $icuconfig,
                 verbose         => $verbose,
-            }
+                icushared       => $icushared,
+                icuheaders      => $icuheaders,
+            },
         );
-
     # 3rd possible return point
     if ( $without ) {
         $self->_set_no_configure_with_icu($conf, q{not found});
@@ -272,7 +273,12 @@ sub _try_icuconfig {
     my $self = shift;
     my $conf = shift;
     my $arg = shift;
-    my ($icushared, $icuheaders);
+    my $icushared = ( defined $arg->{icushared} )
+        ? $arg->{icushared}
+        : undef;
+    my $icuheaders = ( defined $arg->{icuheaders} )
+        ? $arg->{icuheaders}
+        : undef;
     if (
         ( ! $arg->{without} )  &&
         $arg->{autodetect}    &&

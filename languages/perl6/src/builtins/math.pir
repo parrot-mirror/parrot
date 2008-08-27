@@ -108,23 +108,6 @@ constant I<e>.
 .end
 
 
-=item log
-
- our Num multi Num::log         ( Num $x: Num :$base )
- our Num multi Math::Basic::log ( Num $x, Num :$base )
-
-Logarithm of base C<$base>, default Natural. Calling with C<$x == 0> is an
-error.
-
-=cut
-
-.sub 'log'
-    .param num a
-    $N0 = ln a
-    .return ($N0)
-.end
-
-
 =item log10
 
  &log10 := &log.assuming:base(10);
@@ -416,9 +399,13 @@ The other alternative would be to remove the default. --law]
 
 .sub 'atan2'
     .param num a
-    .param num b
+    .param num b               :optional
+    .param int has_b           :opt_flag
+    if has_b goto have_b
+    b = 1
+  have_b:
     $N0 = atan a, b
-    .return (N0)
+    .return ($N0)
 .end
 
 

@@ -1,7 +1,4 @@
-###
-# [encoding]
-
-.HLL 'Tcl', 'tcl_group'
+.HLL 'Tcl', ''
 .namespace []
 
 .sub '&encoding'
@@ -9,22 +6,19 @@
 
   .local pmc retval
 
-  $I3 = argv
-  unless $I3 goto no_args
+  .local int argc
+  argc = elements argv
+  unless argc goto no_args
 
   .local string subcommand_name
   subcommand_name = shift argv
 
   .local pmc options
-  options = new 'ResizablePMCArray'
-  push options, 'convertfrom'
-  push options, 'convertto'
-  push options, 'dirs'
-  push options, 'names'
-  push options, 'system'
+  options = get_root_global ['_tcl'; 'helpers'; 'encoding'], 'options'
 
   .local pmc select_option
   select_option  = get_root_global ['_tcl'], 'select_option'
+
   .local string canonical_subcommand
   canonical_subcommand = select_option(options, subcommand_name)
 
@@ -39,7 +33,7 @@ bad_args:
   .return ('') # once all commands are implemented, remove this...
 
 no_args:
-  tcl_error 'wrong # args: should be "encoding option ?arg ...?"'
+  die 'wrong # args: should be "encoding option ?arg ...?"'
 
 .end
 
@@ -59,7 +53,7 @@ no_args:
   .return('')
 
 bad_args:
-  tcl_error 'wrong # args: should be "encoding convertfrom ?encoding? data"'
+  die 'wrong # args: should be "encoding convertfrom ?encoding? data"'
 .end
 
 .sub 'convertto'
@@ -74,7 +68,7 @@ bad_args:
   .return('')
 
 bad_args:
-  tcl_error 'wrong # args: should be "encoding convertto ?encoding? data"'
+  die 'wrong # args: should be "encoding convertto ?encoding? data"'
 .end
 
 .sub 'dirs'
@@ -88,7 +82,7 @@ bad_args:
   .return('')
 
 bad_args:
-  tcl_error 'wrong # args: should be "encoding dirs ?directoryList?"'
+  die 'wrong # args: should be "encoding dirs ?directoryList?"'
 .end
 
 .sub 'names'
@@ -102,7 +96,7 @@ bad_args:
   .return('')
 
 bad_args:
-  tcl_error 'wrong # args: should be "encoding names"'
+  die 'wrong # args: should be "encoding names"'
 .end
 
 .sub 'system'
@@ -116,7 +110,19 @@ bad_args:
   .return('')
 
 bad_args:
-  tcl_error 'wrong # args: should be "encoding system ?encoding?"'
+  die 'wrong # args: should be "encoding system ?encoding?"'
+.end
+
+.sub 'anon' :anon :load
+  .local pmc options
+  options = new 'TclList'
+  push options, 'convertfrom'
+  push options, 'convertto'
+  push options, 'dirs'
+  push options, 'names'
+  push options, 'system'
+
+  set_root_global ['_tcl'; 'helpers'; 'encoding'], 'options', options
 .end
 
 # Local Variables:
