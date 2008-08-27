@@ -146,7 +146,7 @@ install : installable
 	@cd $(OPSDIR) && $(OPSBUILD) copy "--destination=$(DESTDIR)$(LIB_DIR)/parrot/dynext" tcl
 	@cd $(PMCDIR) && $(PMCBUILD) copy "--destination=$(DESTDIR)$(LIB_DIR)/parrot/dynext" $(PMCS)
 	$(COPY) runtime/tcllib.pbc $(DESTDIR)$(LIB_DIR)/parrot/library
-	$(POD2MAN) README.pod > $(DESTDIR)$(MANDIR)/man1/parrot-$(TMPL).1
+	$(POD2MAN) README.pod > $(DESTDIR)$(MANDIR)/man1/parrot-tclsh.1
 	$(MKPATH) $(DESTDIR)$(DOC_DIR)/languages/$(TMPL)
 	$(COPY) $(DOCS) $(DESTDIR)$(DOC_DIR)/languages/$(TMPL)
 
