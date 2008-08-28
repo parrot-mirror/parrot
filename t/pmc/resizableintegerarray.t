@@ -6,7 +6,7 @@ use strict;
 use warnings;
 use lib qw( . lib ../lib ../../lib );
 use Test::More;
-use Parrot::Test tests => 15;
+use Parrot::Test tests => 17;
 
 =head1 NAME
 
@@ -123,7 +123,37 @@ ok 2
 ok 3
 OUTPUT
 
-# RT#46823: Rewrite these properly when we have exceptions
+pasm_output_is( <<'CODE', <<'OUTPUT', "Setting negatively indexed elements" );
+    new P0, 'ResizableIntegerArray'
+    set P0, 1
+
+    push_eh eh
+    set P0[-1], -7
+    pop_eh
+    print "no ex\n"
+    end
+eh:
+    say "got an ex"    
+    end
+CODE
+got an ex
+OUTPUT
+
+pasm_output_is( <<'CODE', <<'OUTPUT', "Getting negatively indexed elements" );
+    new P0, 'ResizableIntegerArray'
+    set P0, 1
+
+    push_eh eh
+    set I0, P0[-1]
+    pop_eh
+    print "no ex\n"
+    end
+eh:
+    say "got an ex"
+    end    
+CODE
+got an ex
+OUTPUT
 
 pasm_output_is( <<'CODE', <<'OUTPUT', "Setting out-of-bounds elements" );
     new P0, 'ResizableIntegerArray'
