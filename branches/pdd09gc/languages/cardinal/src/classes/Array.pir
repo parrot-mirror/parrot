@@ -270,12 +270,12 @@ Treats the list as a stack, pushing ELEMENTS onto the end of the list.  Returns 
 
 =item join(SEPARATOR)
 
-Returns a string comprised of all of the list, separated by the string SEPARATOR.  Given an empty list, join returns the empty string.
+Returns a string comprised of all of the list, separated by the string SEPARATOR.  Given an empty list, join returns the empty string. SEPARATOR is an optional parameter
 
 =cut
 
 .sub 'join' :method
-    .param string sep
+    .param string sep :optional
     .local string res
     .local string tmp
     .local int len
@@ -337,6 +337,35 @@ loop:
 
 done:
     .return(res)
+.end
+
+=item reverse!()
+
+Reverses a list in place.  Destructive update.
+Returns self.
+
+=cut
+
+.sub 'reverse!' :method
+    .local int pos
+    .local int len
+    .local pmc tmp1
+    .local pmc tmp2
+    pos = elements self
+    len = pos
+    dec len
+    pos = pos / 2
+  loop:
+    if pos == 0 goto done
+    dec pos
+    tmp1 = self[pos]
+    $I0 = len-pos
+    tmp2 = self[$I0]
+    self[pos] = tmp2
+    self[$I0] = tmp1
+    goto loop
+  done:
+    .return(self)
 .end
 
 =item delete()
@@ -638,7 +667,62 @@ Run C<block> once for each item in C<self>, with the item passed as an arg.
   each_loop_end:
 .end
 
+=item flatten
 
+ recursively flatten any inner arrays into a single outer array
+
+=cut
+.sub 'flatten' :method
+    .local pmc returnMe
+    .local pmc iterator
+    returnMe = new 'CardinalArray'
+    iterator = new 'Iterator', self
+  each_loop:
+    unless iterator goto each_loop_end
+    $P1 = shift iterator
+    #if $P1 is an array call flatten
+    $I0 = isa $P1, 'CardinalArray'
+    if $I0 goto inner_flatten
+    push returnMe, $P1
+    goto each_loop
+  inner_flatten:
+    $P2 = $P1.'flatten'()
+    $P3 = new 'Iterator', $P2
+    inner_loop:
+        unless $P3 goto each_loop
+        $P4 = shift $P3
+        push returnMe, $P4
+        goto inner_loop
+    goto each_loop
+  each_loop_end:
+  .return(returnMe)
+.end
+
+=item size
+
+Retrieve the number of elements in C<self>
+
+=cut
+.sub 'size' :method
+     $I0 = self
+     .return($I0)
+.end
+
+=item length
+
+Retrieve the number of elements in C<self>
+
+=cut
+.sub 'length' :method
+     $I0 = self
+     .return($I0)
+.end
+
+=item at(index)
+
+    Retrieve element from position C<index>.
+
+=cut
 .sub 'at' :method
     .param pmc i
     $P0 = self[i]
@@ -659,7 +743,26 @@ Run C<block> once for each item in C<self>, with the item passed as an arg.
 .end
 
 
+=item slice
 
+Retrieve the number of elements in C<self>
+
+=cut
+.sub 'slice' :method
+    .param int start
+    .param int end
+    .local pmc returnMe
+    returnMe = new 'CardinalArray'
+    $I0 = start
+  each_loop:
+    unless $I0 <= end goto each_loop_end
+    $P0 = self[$I0]
+    inc $I0
+    push returnMe, $P0
+    goto each_loop
+  each_loop_end:
+  .return(returnMe)
+.end
 
 =back
 
