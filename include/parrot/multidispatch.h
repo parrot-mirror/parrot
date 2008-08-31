@@ -196,7 +196,7 @@ void Parrot_mmd_dispatch_v_ps(PARROT_INTERP,
 
 PARROT_API
 PARROT_CAN_RETURN_NULL
-PMC * Parrot_mmd_multi_dispatch_from_c_args(PARROT_INTERP,
+void Parrot_mmd_multi_dispatch_from_c_args(PARROT_INTERP,
     ARGIN(const char *name),
     ARGIN(const char *sig),
     ...)
