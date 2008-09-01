@@ -59,51 +59,88 @@ These opcodes return a new result PMC $2.
 =cut
 
 inline op infix(inconst INT, invar PMC, in INT) :base_core {
-  Parrot_mmd_dispatch_v_pi(interp, $2, $3, $1);
+/*  Parrot_mmd_dispatch_v_pi(interp, $2, $3, $1); */
+  Parrot_mmd_multi_dispatch_from_c_args(interp,
+      Parrot_MMD_method_name(interp, $1),
+      "PI", $2, $3);
 }
 
 inline op infix(inconst INT, invar PMC, in NUM) :base_core {
-  Parrot_mmd_dispatch_v_pn(interp, $2, $3, $1);
+/*  Parrot_mmd_dispatch_v_pn(interp, $2, $3, $1); */
+  Parrot_mmd_multi_dispatch_from_c_args(interp,
+      Parrot_MMD_method_name(interp, $1),
+      "PN", $2, $3);
 }
 
 inline op infix(inconst INT, invar PMC, in STR) :base_core {
-  Parrot_mmd_dispatch_v_ps(interp, $2, $3, $1);
+/*  Parrot_mmd_dispatch_v_ps(interp, $2, $3, $1); */
+  Parrot_mmd_multi_dispatch_from_c_args(interp,
+      Parrot_MMD_method_name(interp, $1),
+      "PS", $2, $3);
 }
 
 inline op infix(inconst INT, invar PMC, invar PMC) :base_core {
-  Parrot_mmd_dispatch_v_pp(interp, $2, $3, $1);
+/*  Parrot_mmd_dispatch_v_pp(interp, $2, $3, $1); */
+  Parrot_mmd_multi_dispatch_from_c_args(interp,
+      Parrot_MMD_method_name(interp, $1),
+      "PP", $2, $3);
 }
 
 inline op infix(inconst INT, out PMC, invar PMC, in INT) :base_core {
-  $2 = Parrot_mmd_dispatch_p_pip(interp, $3, $4, $2, $1);
+/*  $2 = Parrot_mmd_dispatch_p_pip(interp, $3, $4, $2, $1); */
+  Parrot_mmd_multi_dispatch_from_c_args(interp,
+      Parrot_MMD_method_name(interp, $1),
+      "PIP->P", $3, $4, $2, &$2);
 }
 
 inline op infix(inconst INT, out PMC, invar PMC, in NUM) :base_core {
-  $2 = Parrot_mmd_dispatch_p_pnp(interp, $3, $4, $2, $1);
+/*  $2 = Parrot_mmd_dispatch_p_pnp(interp, $3, $4, $2, $1); */
+  Parrot_mmd_multi_dispatch_from_c_args(interp,
+      Parrot_MMD_method_name(interp, $1),
+      "PNP->P", $3, $4, $2, &$2);
 }
 
 inline op infix(inconst INT, out PMC, invar PMC, in STR) :base_core {
-  $2 = Parrot_mmd_dispatch_p_psp(interp, $3, $4, $2, $1);
+/*  $2 = Parrot_mmd_dispatch_p_psp(interp, $3, $4, $2, $1); */
+  Parrot_mmd_multi_dispatch_from_c_args(interp,
+      Parrot_MMD_method_name(interp, $1),
+      "PSP->P", $3, $4, $2, &$2);
 }
 
 inline op infix(inconst INT, out PMC, invar PMC, invar PMC) :base_core {
-  $2 = Parrot_mmd_dispatch_p_ppp(interp, $3, $4, $2, $1);
+/*  $2 = Parrot_mmd_dispatch_p_ppp(interp, $3, $4, $2, $1); */
+  Parrot_mmd_multi_dispatch_from_c_args(interp,
+      Parrot_MMD_method_name(interp, $1),
+      "PPP->P", $3, $4, $2, &$2);
+
 }
 
 inline op n_infix(inconst INT, out PMC, invar PMC, in INT) :base_core {
-  $2 = Parrot_mmd_dispatch_p_pip(interp, $3, $4, NULL, $1);
+/*  $2 = Parrot_mmd_dispatch_p_pip(interp, $3, $4, NULL, $1); */
+  Parrot_mmd_multi_dispatch_from_c_args(interp,
+      Parrot_MMD_method_name(interp, $1),
+      "PIP->P", $3, $4, PMCNULL, &$2);
 }
 
 inline op n_infix(inconst INT, out PMC, invar PMC, in NUM) :base_core {
-  $2 = Parrot_mmd_dispatch_p_pnp(interp, $3, $4, NULL, $1);
+/*  $2 = Parrot_mmd_dispatch_p_pnp(interp, $3, $4, NULL, $1); */
+  Parrot_mmd_multi_dispatch_from_c_args(interp,
+      Parrot_MMD_method_name(interp, $1),
+      "PNP->P", $3, $4, PMCNULL, &$2);
 }
 
 inline op n_infix(inconst INT, out PMC, invar PMC, in STR) :base_core {
-  $2 = Parrot_mmd_dispatch_p_psp(interp, $3, $4, NULL, $1);
+/*  $2 = Parrot_mmd_dispatch_p_psp(interp, $3, $4, NULL, $1); */
+  Parrot_mmd_multi_dispatch_from_c_args(interp,
+      Parrot_MMD_method_name(interp, $1),
+      "PSP->P", $3, $4, PMCNULL, &$2);
 }
 
 inline op n_infix(inconst INT, out PMC, invar PMC, invar PMC) :base_core {
-  $2 = Parrot_mmd_dispatch_p_ppp(interp, $3, $4, NULL, $1);
+/*  $2 = Parrot_mmd_dispatch_p_ppp(interp, $3, $4, NULL, $1); */
+  Parrot_mmd_multi_dispatch_from_c_args(interp,
+      Parrot_MMD_method_name(interp, $1),
+      "PPP->P", $3, $4, PMCNULL, &$2);
 }
 ###############################################################################
 
