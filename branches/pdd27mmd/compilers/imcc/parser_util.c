@@ -369,12 +369,13 @@ is_infix(ARGIN(const char *name), int n, ARGIN(SymReg **r))
     /* TODO use a generic Parrot interface function,
      *      which handles user infix extensions too
      */
-    if (STREQ(name, "add"))
+/*    if (STREQ(name, "add"))
         return MMD_ADD;
     if (STREQ(name, "sub"))
         return MMD_SUBTRACT;
     if (STREQ(name, "mul"))
         return MMD_MULTIPLY;
+        */
     if (STREQ(name, "div"))
         return MMD_DIVIDE;
     if (STREQ(name, "fdiv"))
