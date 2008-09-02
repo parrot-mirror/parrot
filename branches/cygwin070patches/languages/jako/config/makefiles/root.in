@@ -4,7 +4,7 @@
 # $Id$
 #
 
-TMPL          = jako
+HLLNAME       = jako
 BUILD_DIR     = @build_dir@
 LOAD_EXT      = @load_ext@
 O             = @o@
@@ -15,10 +15,14 @@ MANDIR	      = @mandir@
 
 PERL          = @perl@
 RM_F          = @rm_f@
+CP            = @cp@
+MKPATH        = @mkpath@
+POD2MAN       = pod2man
 JAKOC         = $(PERL) -I lib jakoc
-INTERP        = ../../@test_prog@
-PBC_TO_EXE    = ../../pbc_to_exe@exe@
-BUILD_DIR     = @build_dir@
+#IF(cygwin):SHRPENV  = env PATH="@build_dir@/blib/lib:$(PATH)"
+#ELSEIF(not win32):SHRPENV  = env LD_RUN_PATH="@build_dir@/blib/lib"
+INTERP        = $(SHRPENV) ../../@test_prog@
+PBC_TO_EXE    = $(SHRPENV) ../../pbc_to_exe@exe@
 RECONFIGURE   = $(PERL) @build_dir@/tools/dev/reconfigure.pl
 #CONDITIONED_LINE(darwin):
 #CONDITIONED_LINE(darwin):# MACOSX_DEPLOYMENT_TARGET must be defined for OS X compilation/linking
@@ -129,18 +133,18 @@ test: all
 
 # TODO: rename build_dir. basic run for missing libs
 test-installable : installable
-	echo "2-1" | ./installable_$(TMPL)@exe@
+	echo "2-1" | ./installable_$(HLLNAME)@exe@
 
 install : installable
 	$(CP) jako $(DESTDIR)$(BIN_DIR)/parrot-jako
 	$(CP) jakoc $(DESTDIR)$(BIN_DIR)/parrot-jakoc
 	$(CP) -R lib/Jako $(DESTDIR)$(PERLLIB_DIR)
-	$(POD2MAN) docs/jako.pod > $(DESTDIR)$(MANDIR)/man1/parrot-$(TMPL).1
-	$(MKPATH) $(DESTDIR)$(DOC_DIR)/languages/$(TMPL)
-	$(MKPATH) $(DESTDIR)$(DOC_DIR)/languages/$(TMPL)/examples
-	$(CP) $(DOCS) $(DESTDIR)$(DOC_DIR)/languages/$(TMPL)
-	$(CP) *.jako $(DESTDIR)$(DOC_DIR)/languages/$(TMPL)
-	$(CP) examples/*.jako $(DESTDIR)$(DOC_DIR)/languages/$(TMPL)/examples
+	$(POD2MAN) docs/jako.pod > $(DESTDIR)$(MANDIR)/man1/parrot-$(HLLNAME).1
+	$(MKPATH) $(DESTDIR)$(DOC_DIR)/languages/$(HLLNAME)
+	$(MKPATH) $(DESTDIR)$(DOC_DIR)/languages/$(HLLNAME)/examples
+	$(CP) $(DOCS) $(DESTDIR)$(DOC_DIR)/languages/$(HLLNAME)
+	$(CP) *.jako $(DESTDIR)$(DOC_DIR)/languages/$(HLLNAME)
+	$(CP) examples/*.jako $(DESTDIR)$(DOC_DIR)/languages/$(HLLNAME)/examples
 
 installable : jako jakoc
 

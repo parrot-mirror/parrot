@@ -4,7 +4,7 @@
 # Makefile for languages/unlambda
 
 # configuration settings
-TMPL	      = unlambda
+HLLNAME	      = unlambda
 BUILD_DIR     = @build_dir@
 LOAD_EXT      = @load_ext@
 O             = @o@
@@ -14,16 +14,26 @@ DOC_DIR       = @doc_dir@
 MANDIR	      = @mandir@
 
 # Set up commands
-PERL            = @perl@
-RM_F            = @rm_f@
-PBC_TO_EXE    = ../../pbc_to_exe@exe@
-RECONFIGURE     = $(PERL) @build_dir@/tools/dev/reconfigure.pl
+PERL          = @perl@
+RM_F          = @rm_f@
+CP            = @cp@
+MKPATH        = @mkpath@
+POD2MAN       = pod2man
+#IF(cygwin):SHRPENV  = env PATH="@build_dir@/blib/lib:$(PATH)"
+#ELSEIF(not win32):SHRPENV  = env LD_RUN_PATH="@build_dir@/blib/lib"
+PARROT        = $(SHRPENV) ../../parrot@exe@
+PBC_TO_EXE    = $(SHRPENV) ../../pbc_to_exe@exe@
+RECONFIGURE   = $(PERL) @build_dir@/tools/dev/reconfigure.pl
 #IF(darwin):
 #IF(darwin):# MACOSX_DEPLOYMENT_TARGET must be defined for OS X compilation/linking
 #IF(darwin):export MACOSX_DEPLOYMENT_TARGET := @osx_version@
 
+DOCS = MAINTAINER README
+
 # The default target
-default: build
+build : $(HLLNAME).pbc
+
+all : $(HLLNAME).pbc Makefile installable
 
 help :
 	@echo ""
@@ -31,6 +41,8 @@ help :
 	@echo ""
 	@echo "  build:             does nothing."
 	@echo "                     This is the default target."
+	@echo "  install:           install the installable targets and docs."
+	@echo ""
 	@echo ""
 	@echo "  test:              Run the test suite."
 	@echo ""
@@ -45,13 +57,36 @@ Makefile: config/makefiles/root.in
 	cd $(BUILD_DIR) && $(RECONFIGURE) --step=gen::languages --languages=unlambda
 
 # Compilation:
-build:
-	@echo "nothing to do"
+build:  $(HLLNAME).pbc
+
+$(HLLNAME).pbc: unl.pir
+	$(PARROT) $(PARROT_ARGS) -o $@ unl.pir
+
+installable : installable_unlambda@exe@ $(PARROT_LIB)/$(HLLNAME).pbc
+	$(CP) installable_unlambda@exe@ $(BUILD_DIR)
+
+installable_unlambda@exe@: $(HLLNAME).pbc
+	$(PBC_TO_EXE) $(HLLNAME).pbc --install
+
+# TODO: test for installed libs, rename build_dir. basic run for missing libs
+test-installable : installable
+	./installable_$(HLLNAME)@exe@ examples/h.unl
+
+install : installable
+	$(CP) installable_unlambda@exe@ $(DESTDIR)$(BIN_DIR)/parrot-unlambda@exe@
+	$(CP) $(HLLNAME).pbc $(DESTDIR)$(LIB_DIR)/parrot/library/$(HLLNAME).pbc
+	$(POD2MAN) $(HLLNAME).pir > $(DESTDIR)$(MANDIR)/man1/parrot-unlambda.1
+	$(MKPATH) $(DESTDIR)$(DOC_DIR)/languages/unlambda
+	$(CP) $(DOCS) $(DESTDIR)$(DOC_DIR)/languages/unlambda
 
 # cleaning up
+CLEANUPS = \
+  unl.pbc \
+  $(HLLNAME)@exe@ \
+  installable_$(HLLNAME)@exe@ \
 
 clean: 
-	@echo "nothing to do"
+	$(RM_F) $(CLEANUPS)
 
 realclean: clean
 	$(RM_F) Makefile

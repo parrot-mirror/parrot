@@ -220,30 +220,24 @@ the evaluation of the expression.
 Lines beginning with C<#IF(expr):> are skipped if the expr
 condition is false, otherwise the content after the C<:> is inserted.
 Lines beginning with C<#UNLESS(expr):> are skipped if the expr condition
-is true.
-Lines beginning with C<#ELSIF(expr):> are evaluated if the former C<#IF(expr):>
-evaluated to false.
-Lines beginning with C<#ELSE:> are evaluated if the former C<#IF(expr):> or
-C<#ELSIF(expr):> evaluated to false.
-
-For legacy the old syntax #CONDITIONED_LINE(var): and
-#INVERSE_CONDITIONED_LINE(var): is also supported.
-For lispers the well-known reader-macro syntax #+(and key1 (not key2)):
-is also supported, #+ #- with and, or and not, or being the default
-for multiple keys without operator. But note the ending C<:>.
+is true, otherwise the content after the C<:> is inserted.
+Lines beginning with C<#ELSIF(expr):> or C<#ELSE:> are evaluated if the
+former C<#IF(expr):> evaluated to false.
 
 A condition expr may be:
 
   * a single key, which is true if a config key is true
     - not 0 and not undef and not an empty string,
-  * or equal to the platform name, the perl5 osname - case-sensitive,
-  * or a key=value expression, which checks for the config key,
+  * or equal to the platform name, the osname - case-sensitive,
+  * or a C<key==value> expression, which checks for the config key,
     Note that values may contain no spaces here. Quotes in values
     are not supported.
-  * or a logical combination of C<|> (or), C<&> (and) and C<!> (not),
-    with the following order of precedence:  ! & |
+  * or a logical combination of C<|>, C<OR>, C<&>, C<AND>, C<!>, C<NOT>,
+    The verbose ops AND, OR and NOT are case-insensitive.
+    ! and NOT bind closer than &, AND and |, OR.
+    The order of precedence for AND and OR is undefined.
 
-A key must only consist of word characters, and is checked
+A key must only consist of the chars A-Z a-z 0-9 _ -, and is checked
 case-sensitively against the config key or the platform name.
 
 For instance:
@@ -252,21 +246,26 @@ For instance:
 
 will be processed if the platform is win32.
 
-  #IF(cpuarch=i386): $(SRC_DIR)/atomic/gcc_x86$(O)
+  #IF(cpuarch==i386): $(SRC_DIR)/atomic/gcc_x86$(O)
 
 will be skipped if the value of the config key "cpuarch" is not "i386".
 
-  #IF(cpuarch=i386): $(SRC_DIR)/atomic/gcc_x86$(O)
-  #ELSIF(cpuarch=sparcv9): $(SRC_DIR)/atomic/sparc_v9.s
+  #IF(cpuarch==i386): $(SRC_DIR)/atomic/gcc_x86$(O)
+  #ELSIF(cpuarch==sparcv9): $(SRC_DIR)/atomic/sparc_v9.s
   #ELSE:
 
-will use " $(SRC_DIR)/atomic/gcc_x86$(O)" on cpuarch=i386,
-" $(SRC_DIR)/atomic/sparc_v9.s" on cpuarch=sparcv9
+will use " $(SRC_DIR)/atomic/gcc_x86$(O)" on cpuarch "i386",
+" $(SRC_DIR)/atomic/sparc_v9.s" on cpuarch "sparcv9"
 and print an empty line otherwise.
 
-  #IF(win32 & glut & !cygwin):
+  #IF(win32 and glut and not cygwin):
 
 will be used on win32 and if glut is defined, but not on cygwin.
+
+B<Legacy Syntax:>
+
+The old syntax #CONDITIONED_LINE(var): and
+#INVERSE_CONDITIONED_LINE(var): is still supported, but is deprecated.
 
 =item comment_type
 
@@ -341,6 +340,7 @@ sub genfile {
 
     open my $in,  '<', $source       or die "Can't open $source: $!";
     open my $out, '>', "$target.tmp" or die "Can't open $target.tmp: $!";
+    $DEBUG++ if $ENV{TEST_VERBOSE};
 
     if ( !exists $options{file_type}) {
         if ( $target =~ m/makefile$/i ) {
@@ -408,6 +408,7 @@ sub genfile {
     # is dependent on <IN> being evaluated lazily
 
     my $former_truth = 99;
+  LINE:
     while ( my $line = <$in> ) {
 
         # everything after the line starting with #perl is eval'ed
@@ -424,48 +425,41 @@ sub genfile {
             $text =~ s{ \@ (\w+) \@ }{\$conf->data->get("$1")}gx;
             eval $text;
             die $@ if $@;
-            last;
+            last LINE;
         }
         if ( $options{conditioned_lines} ) {
             my ($op, $expr, $rest);
             # allow multiple keys and nested parens here
             if (($op,$expr,$rest)=($line =~ m/^#(IF|UNLESS|ELSIF)\((.+)\):(.*)/s)) {
                 if (($op eq 'ELSIF') and $former_truth) {
-                    next;  # no useless check if former IF was true
+                    next LINE;  # no useless check if former IF was true
                 }
                 my $truth = cond_eval($conf, $expr);
                 if ($op eq 'IF') {
                     $former_truth = $truth;
-                    next unless $truth;
+                    next LINE unless $truth;
                 }
                 elsif ($op eq 'UNLESS') {
                     $former_truth = !$truth;
-                    next if $truth;
+                    next LINE if $truth;
                 }
                 elsif ($op eq 'ELSIF') {
                     $former_truth = $truth;
-                    next unless $truth;
+                    next LINE unless $truth;
                 }
                 $line = $rest;
             }
             elsif ( $former_truth != 99 and $line =~ m/^#ELSE:(.*)/s ) {
-                next if $former_truth;
+                next LINE if $former_truth;
                 $line = $1;
             }
-            # lisp-style syntax
-            elsif (($op,$expr,$rest)=($line =~ m/^#([-+])\((.+)\):(.*)/s)) {
-                my $truth = cond_eval_lisp($conf, $expr);
-                next if ($op eq '-') and $truth;
-                next if ($op eq '+') and not $truth;
-                $line = $rest;
-            }
-            # legacy
+            # Legacy, DEPRECATED.
             elsif (($expr,$rest)=($line =~ m/^#CONDITIONED_LINE\(([^)]+)\):(.*)/s)) {
-                next unless cond_eval($conf, $expr);
+                next LINE unless cond_eval($conf, $expr);
                 $line = $rest;
             }
             elsif (($expr,$rest)=($line =~ m/^#INVERSE_CONDITIONED_LINE\(([^)]+)\):(.*)/s )) {
-                next if cond_eval($conf, $expr);
+                next LINE if cond_eval($conf, $expr);
                 $line = $rest;
             }
 
@@ -571,22 +565,19 @@ sub genfile {
 
 # Return the next subexpression from the expression in $_[0]
 # and remove it from the input expression.
-# E.g. "and (not win32) has_glut" - lisp-style
-#        => and => (not win32) => has_glut
-#      "(!win32&has_glut)|cygwin"   - perl-style
-#        !win32&has_glut => !win32 => &has_glut => |cygwin
+# Allowed chars: A-Z a-z 0-9 _ -, so let's take [-\w].
 sub next_expr {
     my $s = $_[0];
     return "" unless $s;
     # start of a subexpression?
     if ($s =~ /^\((.+)\)\s*(.*)/o) {    # longest match to matching closing paren
         $_[0] = $2 ? $2 : "";           # modify the 2nd arg
-        print "#** nextsub \"$s\" => (\"$1\",\"$_[0]\")\n";
+        print "#** nextsub \"$s\" => (\"$1\",\"$_[0]\")\n" if $DEBUG;
         return $1;
     }
     else {
         $s =~ s/^\s+//;                 # left-trim to make it more robust
-        if ($s =~ m/^([\w=]+)\s*(.*)?/o) { # shortest match to next non-word char
+        if ($s =~ m/^([-\w=]+)\s*(.*)?/o) { # shortest match to next non-word char
             # start with word expr
             $_[0] = $2 ? $2 : "";       # modify the 2nd arg expr in the caller
             print "#** nextexpr \"$s\" => (\"$1\",\"$_[0]\")\n" if $DEBUG;
@@ -603,13 +594,13 @@ sub next_expr {
 }
 
 # Checks the logical truth of the hash value: exists and not empty.
-# Also check the platform name if the hash key does not exist.
-# Also check for key=value, like #+(ld=gcc)
+# Also check the platform name, the 'osname' key, if the hash key does not exist.
+# Also check for key==value, like #IF(ld==gcc)
 sub cond_eval_single {
     my $conf = $_[0];
     my $key  = $_[1];
     return unless defined $key;
-    if ($key =~ /^(\w+)=(.+)$/) {
+    if ($key =~ /^([-\w]+)==(.+)$/) {
         return ($2 eq $conf->data->get($1));
     }
     else {
@@ -619,85 +610,78 @@ sub cond_eval_single {
     }
 }
 
+sub truth { $_[0] ? "true" : "false"; }
+
 # Recursively evaluate boolean expressions with multiple keys and | & ! ops.
-# Order of precedence: ! & | (NOT, AND, OR)
+# Order of precedence: Just "!" and "NOT" binds tighter than AND and OR.
+# There's no precedence for AND over OR defined, just left to right.
 sub cond_eval {
     my $conf = $_[0];
     my $expr = $_[1];
-    my @count = split /[\s!&|]+/, $expr;
+    my @count = split /[\s!&|\(]+/, $expr; # optimizable with tr
     if (@count > 1) { # multiple keys: recurse into
         my $truth = 0;
-        if (substr($expr,0,1) eq '!') { # NOT is the only op which may start an expr
-            print "#* ! \"$expr\"\n" if $DEBUG;
-            return !cond_eval($conf, substr($expr,1));
-        }
-        else {
-            my $key = next_expr($expr);
-            my $op  = '';
-            while ($key) {
-                print "#* op=\"$op\" key=\"$key\"" if $DEBUG;
-                if ($key eq '!' or uc($key) eq 'NOT') {
-                    $key = next_expr($expr);
-                    print "\n#* op=\"!\" key=\"$key\"" if $DEBUG;
-                    $truth = !cond_eval($conf, $key);
-                }
-                else {
-                    # log OR shortcut if already $truth
-                    last if $truth and ($op eq '|' or uc($op) eq 'OR');
-                    $truth = cond_eval($conf, $key);
-                }
-                print " => ",$truth?'true':'false'," rest=\"$expr\"\n" if $DEBUG;
-                if ($op eq '!'  or uc($op) eq 'NOT') {
-                    $truth = $truth ? 0 : 1;
-                }
-                elsif ($op eq '&' or uc($op) eq 'AND') {
-                    last unless $truth; # skip on early fail
-                }
-                my $prevexpr = $expr;
-                $op  = next_expr($expr);
-                if ($op) {
-                    $key = next_expr($expr);
-                }
-                elsif($prevexpr) {
-                    die "Makefile syntax error: missing op in \"$_[1]\" at \"$prevexpr\".\n";
-                }
-                else {
-                    last; # end of expr, nothing left
-                }
-            }
+        my $prevtruth = 0;
+	my $key = next_expr($expr);
+	my $op  = '';
+      LOOP:
+	while ($key) {
+	    if (($key eq '!') or (uc($key) eq 'NOT')) {
+		# bind next key immediately
+		$op = 'NOT';
+		$key = next_expr($expr);
+	    }
+	    elsif ($truth and ($op eq 'OR')) {
+		# true OR: => true
+		print "#* => ",truth(1)," rest=\"$expr\" SKIP on true OR\n" if $DEBUG;
+		last LOOP;
+	    }
+	    print "#* truth=",truth($truth)," op=\"$op\" key=\"$key\"\n" if $DEBUG;
+	    $prevtruth = $truth;
+	    if (!$truth and ($op eq 'AND')) { # false AND: => false, skip rest
+		print "#* => ",truth(0)," rest=\"$expr\" SKIP already false\n" if $DEBUG;
+		last LOOP;
+	    }
+	    $truth = cond_eval($conf, $key);
+	    if ($op eq 'NOT') { # NOT *: invert
+		$truth = $truth ? 0 : 1;
+	    }
+	    elsif ($op eq 'AND' and !$truth) { # * AND false: => false
+		print "#* => ",truth(0)," rest=\"$expr\" SKIP rest\n" if $DEBUG;
+		last LOOP;
+	    }
+	    # * OR false => * (keep $truth). true OR * already handled before
+	    print "#* => ",truth($truth)," rest=\"$expr\"\n" if $DEBUG;
+	    my $prevexpr = $expr;
+	    $op  = next_expr($expr);
+	    if ($op) {
+		if ($op eq '|' or uc($op) eq 'OR') {
+		    $op = 'OR';
+		}
+		elsif ($op eq '&' or uc($op) eq 'AND') {
+		    $op = 'AND';
+		}
+		elsif ($op eq '!' or uc($op) eq 'NOT') {
+		    $op = 'NOT';
+		}
+		else {
+		    die "invalid op \"$op\" in \"$_[1]\" at \"$prevexpr\".\n";
+		}
+		$key = next_expr($expr);
+	    }
+	    elsif ($prevexpr) {
+		die "Makefile conditional syntax error: missing op in \"$_[1]\" at \"$prevexpr\".\n";
+	    }
+	    else {
+		last LOOP; # end of expr, nothing left
+	    }
+	    if ($prevexpr eq $expr) {
+		die "Makefile conditional parser error in \"$_[1]\" at \"$prevexpr\".\n";
+	    }
         }
         return $truth;
     }
     cond_eval_single($conf, $expr);
-}
-
-# Recursively evaluate boolean AND, OR and NOT lisp expressions for multiple keys.
-sub cond_eval_lisp {
-    my $conf = $_[0];
-    my $expr = $_[1];
-    my $key = $expr;
-    my @count = split /\s+/, $expr;
-    if (@count > 1) { # multiple keys: recurse into
-        my $truth;
-        my $op = next_expr($expr);
-        if ($op =~ /^(or|and|not)$/i) {
-            $op  = lc($op);
-            $key = next_expr($expr);
-        }
-        else {
-            $key = $op;
-            $op  = 'or';
-        }
-        while ($key) {
-            last if $truth and ($op eq 'or'); # logical shortcut on OR and already $truth
-            $truth = cond_eval_lisp($conf, $key);
-            if    ($op eq 'not') { $truth = $truth ? 0 : 1; }
-            elsif ($op eq 'and') { last unless $truth; } # skip on early fail
-            $key = next_expr($expr);
-        }
-        return $truth;
-    }
-    cond_eval_single($conf, $key);
 }
 
 sub append_configure_log {
@@ -727,6 +711,6 @@ sub append_configure_log {
 # Local Variables:
 #   mode: cperl
 #   cperl-indent-level: 4
-#   fill-column: 100
+#   fill-column: 80
 # End:
 # vim: expandtab shiftwidth=4:

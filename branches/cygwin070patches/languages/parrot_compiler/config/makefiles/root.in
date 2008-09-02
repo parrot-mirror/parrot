@@ -6,7 +6,10 @@
 # Set up commands
 PERL          = @perl@
 RM_F          = @rm_f@
-PARROT        = ../../@test_prog@@exe@
+#IF(cygwin):SHRPENV  = env PATH="@build_dir@/blib/lib:$(PATH)"
+#ELSEIF(not win32):SHRPENV  = env LD_RUN_PATH="@build_dir@/blib/lib"
+PARROT        = $(SHRPENV) ../../@test_prog@@exe@
+PBC_TO_EXE    = $(SHRPENV) ../../pbc_to_exe@exe@
 RECONFIGURE   = $(PERL) @build_dir@/tools/dev/reconfigure.pl
 #IF(darwin):
 #IF(darwin):# MACOSX_DEPLOYMENT_TARGET must be defined for OS X compilation/linking

@@ -1,15 +1,19 @@
 # $Id$
 
 # Makefile for languages/lazy-k
-TMPL          = lazy-k
+HLLNAME       = lazy-k
 
 # Setup of some commands
-PARROT        = @build_dir@/parrot@exe@
 PERL          = @perl@
 RM_F          = @rm_f@
-PBC_TO_EXE    = ../../pbc_to_exe@exe@
+CP            = @cp@
+MKPATH        = @mkpath@
+POD2MAN       = pod2man
+#IF(cygwin):SHRPENV  = env PATH="@build_dir@/blib/lib:$(PATH)"
+#ELSEIF(not win32):SHRPENV  = env LD_RUN_PATH="@build_dir@/blib/lib"
+PARROT        = $(SHRPENV) ../../parrot@exe@
+PBC_TO_EXE    = $(SHRPENV) ../../pbc_to_exe@exe@
 RECONFIGURE   = $(PERL) @build_dir@/tools/dev/reconfigure.pl
-POD2MAN	      = pod2man
 #IF(darwin):
 #IF(darwin):# MACOSX_DEPLOYMENT_TARGET must be defined for OS X compilation/linking
 #IF(darwin):export MACOSX_DEPLOYMENT_TARGET := @osx_version@
@@ -20,11 +24,14 @@ BIN_DIR       = @bin_dir@
 LIB_DIR       = @lib_dir@
 DOC_DIR       = @doc_dir@
 MANDIR	      = @mandir@
+PARROT_LIB    = $(BUILD_DIR)/runtime/parrot/library
 
-all: lazy-k.pbc
+build: lazy-k.pbc
 
-lazy-k.pbc : $(PARROT) $(SOURCES)
-	$(PARROT) $(PARROT_ARGS) -o lazy-k.pbc lazy-k.pir
+all: lazy-k.pbc lazy-k@exe@ Makefile installable
+
+lazy-k.pbc : $(SOURCES)
+	$(PARROT) $(PARROT_ARGS) -o lazy-k.pbc lazy.pir
 
 help :
 	@echo ""
@@ -51,36 +58,37 @@ help :
 
 # regenerate the Makefile
 Makefile: config/makefiles/root.in
-	cd $(BUILD_DIR) && $(RECONFIGURE) --step=gen::languages --languages=$(TMPL)
+	cd $(BUILD_DIR) && $(RECONFIGURE) --step=gen::languages --languages=$(HLLNAME)
 
 test: all
 	cd .. && $(PERL) t/harness --languages=lazy-k
 
 # TODO: rename build_dir. basic run for missing libs
 test-installable : installable
-	echo '1+2*3' |  ./installable_$(TMPL)@exe@ calc.lazy
+	echo '1+2*3' |  ./installable_$(HLLNAME)@exe@ calc.lazy
 
 install : installable
-	$(CP) installable_$(TMPL)@exe@ $(DESTDIR)$(BIN_DIR)/parrot-$(TMPL)@exe@
-	$(POD2MAN) $(TMPL).pir > $(DESTDIR)$(MANDIR)/man1/parrot-$(TMPL).1
-	$(MKPATH) $(DESTDIR)$(DOC_DIR)/languages/$(TMPL)
-	$(CP) $(DOCS) $(DESTDIR)$(DOC_DIR)/languages/$(TMPL)
+	$(CP) installable_$(HLLNAME)@exe@ $(DESTDIR)$(BIN_DIR)/parrot-$(HLLNAME)@exe@
+	$(CP) $(HLLNAME).pbc $(DESTDIR)$(LIB_DIR)/parrot/library/$(HLLNAME).pbc
+	$(POD2MAN) lazy.pir > $(DESTDIR)$(MANDIR)/man1/parrot-$(HLLNAME).1
+	$(MKPATH) $(DESTDIR)$(DOC_DIR)/languages/$(HLLNAME)
+	$(CP) $(DOCS) $(DESTDIR)$(DOC_DIR)/languages/$(HLLNAME)
 
-$(TMPL)@exe@: $(TMPL).pbc
-	$(PBC_TO_EXE) $(TMPL).pbc
+installable : installable_$(HLLNAME)@exe@ $(HLLNAME).pbc
+	$(CP) installable_$(HLLNAME)@exe@ $(BUILD_DIR)
+	$(CP) $(HLLNAME).pbc $(PARROT_LIB)/$(HLLNAME).pbc
 
-installable : installable_$(TMPL)@exe@
-	$(CP) installable_$(TMPL)@exe@ $(BUILD_DIR)
-	cd $(PMC_DIR) && $(BUILD_DYNPMC) copy --destination=$(PARROT_DYNEXT) $(PMCS)
+$(HLLNAME)@exe@: $(HLLNAME).pbc
+	$(PBC_TO_EXE) $(HLLNAME).pbc
 
-installable_$(TMPL)@exe@ : $(TMPL).pbc
-	$(PBC_TO_EXE) $(TMPL).pbc --install
+installable_$(HLLNAME)@exe@ : $(HLLNAME).pbc
+	$(PBC_TO_EXE) $(HLLNAME).pbc --install
 
 clean:
 	$(RM_F) core \
     "*.pbc" \
     "*~" \
-    "installable_$(TMPL)@exe@"
+    "installable_$(HLLNAME)@exe@"
 
 realclean: clean
 	$(RM_F) Makefile

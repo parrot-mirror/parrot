@@ -1,7 +1,7 @@
 # $Id$
 
 ## arguments we want to run parrot with
-TMPL        = perl6doc
+HLLNAME        = perl6doc
 PARROT_ARGS =
 
 ## configuration settings
@@ -21,7 +21,10 @@ CP            = @cp@
 MKPATH        = @mkpath@
 POD2MAN       = pod2man
 MAKE          = @make_c@
-PARROT        = ../../../../parrot@exe@
+#IF(cygwin):SHRPENV  = env PATH="@build_dir@/blib/lib:$(PATH)"
+#ELSEIF(not win32):SHRPENV  = env LD_RUN_PATH="@build_dir@/blib/lib"
+PARROT        = $(SHRPENV) $(BUILD_DIR)/parrot@exe@
+PBC_TO_EXE    = $(SHRPENV) $(BUILD_DIR)/pbc_to_exe@exe@
 CAT           = $(PERL) -MExtUtils::Command -e cat
 BUILD_DYNPMC  = $(PERL) $(BUILD_DIR)/tools/build/dynpmc.pl
 RECONFIGURE   = $(PERL) $(BUILD_DIR)/tools/dev/reconfigure.pl
@@ -46,7 +49,7 @@ PERL6DOC_SOURCES = \
 perl6doc@exe@: perl6doc.pbc
 	$(PBC_TO_EXE) perl6doc.pbc
 
-perl6doc.pbc: $(PARROT) $(PERL6DOC_SOURCES)
+perl6doc.pbc: $(PERL6DOC_SOURCES)
 	$(PARROT) $(PARROT_ARGS) -o perl6doc.pbc perl6doc.pir
 
 perl6doc/gen_grammar.pir: $(PERL6GRAMMAR) perl6doc/grammar.pg
@@ -90,14 +93,14 @@ installable_perl6doc@exe@: perl6doc.pbc
 	$(PBC_TO_EXE) perl6doc.pbc --install
 
 install : installable
-	$(CP) installable_$(TMPL)@exe@ $(DESTDIR)$(BIN_DIR)/$(TMPL)@exe@
+	$(CP) installable_$(HLLNAME)@exe@ $(DESTDIR)$(BIN_DIR)/$(HLLNAME)@exe@
 
-installable : installable_$(TMPL)@exe@
-	$(CP) installable_$(TMPL)@exe@ $(BUILD_DIR)
+installable : installable_$(HLLNAME)@exe@
+	$(CP) installable_$(HLLNAME)@exe@ $(BUILD_DIR)
 
 # TODO: rename build_dir. basic run for missing libs
 test-installable : installable
-	./installable_$(TMPL)@exe@ -f 'test'
+	./installable_$(HLLNAME)@exe@ -f 'test'
 
 
 test: all

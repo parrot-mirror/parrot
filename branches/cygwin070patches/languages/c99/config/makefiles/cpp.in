@@ -4,7 +4,7 @@
 PARROT_ARGS =
 
 ## configuration settings
-TMPL          = cpp
+HLLNAME       = cpp
 BUILD_DIR     = @build_dir@
 LOAD_EXT      = @load_ext@
 O             = @o@
@@ -13,11 +13,10 @@ O             = @o@
 LN_S          = @lns@
 PERL          = @perl@
 RM_RF         = @rm_rf@
-CP            = @cp@
-MKPATH        = @mkpath@
-POD2MAN       = pod2man
-PARROT        = ../../../../parrot@exe@
-PBC_TO_EXE    = $(BUILD_DIR)/pbc_to_exe.exe
+#IF(cygwin):SHRPENV  = env PATH="@build_dir@/blib/lib:$(PATH)"
+#ELSEIF(not win32):SHRPENV  = env LD_RUN_PATH="@build_dir@/blib/lib"
+PARROT        = $(SHRPENV) $(BUILD_DIR)/parrot@exe@
+PBC_TO_EXE    = $(SHRPENV) $(BUILD_DIR)/pbc_to_exe@exe@
 CAT           = $(PERL) -MExtUtils::Command -e cat
 BUILD_DYNPMC  = $(PERL) $(BUILD_DIR)/tools/build/dynpmc.pl
 RECONFIGURE   = $(PERL) $(BUILD_DIR)/tools/dev/reconfigure.pl
@@ -44,7 +43,7 @@ BUILTINS_PIR = \
   src/builtins/say.pir \
 
 # the default target
-cpp.pbc: $(PARROT) $(SOURCES)
+cpp.pbc: $(SOURCES)
 	$(PARROT) $(PARROT_ARGS) -o cpp.pbc cpp.pir
 
 cpp@exe@ : cpp.pbc

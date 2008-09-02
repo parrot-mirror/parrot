@@ -3,7 +3,7 @@
 # Makefile for languages/cola
 
 ## configuration settings
-TMPL          = cola
+HLLNAME       = cola
 BUILD_DIR     = @build_dir@
 O             = @o@
 EXE           = @exe@
@@ -78,7 +78,7 @@ help :
 
 # regenerate the Makefile
 Makefile: config/makefiles/root.in
-	cd $(BUILD_DIR) && $(RECONFIGURE) --step=gen::languages --languages=$(TMPL)
+	cd $(BUILD_DIR) && $(RECONFIGURE) --step=gen::languages --languages=$(HLLNAME)
 
 nogen : gen$(O) semant$(O) sym$(O) type$(O)
 	$(CC) $(DEBUG) -c parser.c
@@ -137,7 +137,7 @@ colacc$(EXE) : parser$(O) lexer$(O) gen$(O) semant$(O) sym$(O) type$(O)
 	$(CC) $(DEBUG) -o colacc$(EXE) parser$(O) lexer$(O) gen$(O) semant$(O) sym$(O) type$(O) $(LIBS)
 
 test: default
-	cd .. && $(PERL) t/harness --languages=$(TMPL)
+	cd .. && $(PERL) t/harness --languages=$(HLLNAME)
 
 # TODO: rename build_dir. basic run for missing libs
 test-installable : installable
@@ -146,8 +146,8 @@ test-installable : installable
 install : installable
 	$(CP) colacc$(EXE) $(DESTDIR)$(BIN_DIR)/parrot-colacc$(EXE)
 	ascii2man README > $(DESTDIR)$(MANDIR)/man1/parrot-colacc.1
-	$(MKPATH) $(DESTDIR)$(DOC_DIR)/languages/$(TMPL)
-	$(CP) $(DOCS) $(DESTDIR)$(DOC_DIR)/languages/$(TMPL)
+	$(MKPATH) $(DESTDIR)$(DOC_DIR)/languages/$(HLLNAME)
+	$(CP) $(DOCS) $(DESTDIR)$(DOC_DIR)/languages/$(HLLNAME)
 
 installable : colacc$(EXE)
 	$(CP) colacc$(EXE) $(BUILD_DIR)/installable_colacc$(EXE)

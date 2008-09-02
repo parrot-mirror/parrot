@@ -4,7 +4,7 @@
 PARROT_ARGS =
 
 ## configuration settings
-TMPL          = pynie
+HLLNAME       = pynie
 BUILD_DIR     = @build_dir@
 LOAD_EXT      = @load_ext@
 O             = @o@
@@ -20,8 +20,10 @@ RM_RF         = @rm_rf@
 CP            = @cp@
 MKPATH        = @mkpath@
 POD2MAN       = pod2man
-PARROT        = ../../parrot@exe@
-PBC_TO_EXE    = ../../pbc_to_exe@exe@
+#IF(cygwin):SHRPENV  = env PATH="@build_dir@/blib/lib:$(PATH)"
+#ELSEIF(not win32):SHRPENV  = env LD_RUN_PATH="@build_dir@/blib/lib"
+PARROT        = $(SHRPENV) ../../parrot@exe@
+PBC_TO_EXE    = $(SHRPENV) ../../pbc_to_exe@exe@
 CAT           = $(PERL) -MExtUtils::Command -e cat
 BUILD_DYNPMC  = $(PERL) $(BUILD_DIR)/tools/build/dynpmc.pl
 RECONFIGURE   = $(PERL) $(BUILD_DIR)/tools/dev/reconfigure.pl
@@ -31,16 +33,17 @@ RECONFIGURE   = $(PERL) $(BUILD_DIR)/tools/dev/reconfigure.pl
 
 ## places to look for things
 PARROT_DYNEXT = $(BUILD_DIR)/runtime/parrot/dynext
-PGE_LIBRARY   = $(BUILD_DIR)/runtime/parrot/library/PGE
+PARROT_LIB    = $(BUILD_DIR)/runtime/parrot/library
+PGE_LIBRARY   = $(PARROT_LIB)/PGE
+PCT           = $(PARROT_LIB)/PCT.pbc
 PERL6GRAMMAR  = $(PGE_LIBRARY)/Perl6Grammar.pbc
 NQP           = $(BUILD_DIR)/compilers/nqp/nqp.pbc
-PCT           = $(BUILD_DIR)/runtime/parrot/library/PCT.pbc
 
 DOCS = MAINTAINER README
 
 build : pynie.pbc
 
-all: pynie.pbc pynie@exe@ installable_pynie@exe@
+all: pynie.pbc Makefile pynie@exe@ installable
 
 SOURCES = pynie.pir \
   src/parser/Grammar.pg \
@@ -50,7 +53,7 @@ SOURCES = pynie.pir \
   src/builtins/oper.pir
 
 # the default target
-pynie.pbc: $(PARROT) $(PERL6GRAMMAR) $(NQP) $(PCT) $(SOURCES)
+pynie.pbc: $(PERL6GRAMMAR) $(NQP) $(PCT) $(SOURCES)
 	$(PARROT) $(PARROT_ARGS) $(PERL6GRAMMAR) \
 	    --output=src/gen_grammar.pir src/parser/Grammar.pg
 	$(PARROT) $(PARROT_ARGS) $(NQP) --target=pir \
@@ -93,27 +96,31 @@ testclean:
 
 # TODO: rename build_dir. basic run for missing libs
 test-installable : installable
-	./installable_$(TMPL)@exe@ t/00-parrot/03-op-logic.t
+	./installable_$(HLLNAME)@exe@ t/00-parrot/03-op-logic.t
+
+$(HLLNAME)@exe@: $(HLLNAME).pbc
+	$(PBC_TO_EXE) $(HLLNAME).pbc
+
+installable_$(HLLNAME)@exe@ : $(HLLNAME).pbc
+	$(PBC_TO_EXE) $(HLLNAME).pbc --install
+
+installable : installable_$(HLLNAME)@exe@ $(HLLNAME).pbc
+	$(CP) installable_$(HLLNAME)@exe@ $(BUILD_DIR)
+	$(CP) $(HLLNAME).pbc $(PARROT_LIB)/$(HLLNAME).pbc
 
 install : installable
-	$(CP) installable_$(TMPL)@exe@ $(DESTDIR)$(BIN_DIR)/parrot-$(TMPL)@exe@
-	$(POD2MAN) pynie.pir > $(DESTDIR)$(MANDIR)/man1/parrot-$(TMPL).1
-	$(MKPATH) $(DESTDIR)$(DOC_DIR)/languages/$(TMPL)
-	$(CP) $(DOCS) $(DESTDIR)$(DOC_DIR)/languages/$(TMPL)
-
-$(TMPL)@exe@: $(TMPL).pbc
-	$(PBC_TO_EXE) $(TMPL).pbc
-
-installable : installable_$(TMPL)@exe@
-	$(CP) installable_$(TMPL)@exe@ $(BUILD_DIR)
-
-installable_$(TMPL)@exe@ : $(TMPL).pbc
-	$(PBC_TO_EXE) $(TMPL).pbc --install
+	$(CP) installable_$(HLLNAME)@exe@ $(DESTDIR)$(BIN_DIR)/parrot-$(HLLNAME)@exe@
+	$(CP) $(HLLNAME).pbc $(DESTDIR)$(LIB_DIR)/parrot/library/$(HLLNAME).pbc
+	$(POD2MAN) pynie.pir > $(DESTDIR)$(MANDIR)/man1/parrot-$(HLLNAME).1
+	$(MKPATH) $(DESTDIR)$(DOC_DIR)/languages/$(HLLNAME)
+	$(CP) $(DOCS) $(DESTDIR)$(DOC_DIR)/languages/$(HLLNAME)
 
 CLEANUPS = \
   pynie.pbc \
   src/gen_grammar.pir \
   src/gen_actions.pir \
+  $(PARROT_LIB)/$(HLLNAME).pbc \
+  $(HLLNAME)@exe@ installable_*
 
 clean:
 	$(RM_RF) $(CLEANUPS)
