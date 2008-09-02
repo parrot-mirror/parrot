@@ -2282,8 +2282,6 @@ Parrot_pcc_invoke_sub_from_sig_object(PARROT_INTERP, ARGIN(PMC *sub_obj),
             CONST_STRING(interp, "results"));
 
     parrot_context_t *ctx;
-    PMC              *pccinvoke_meth;
-
     opcode_t         *save_current_args;
     PMC              *save_args_signature;
     PMC              *save_current_object;
