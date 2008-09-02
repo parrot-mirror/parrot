@@ -86,7 +86,10 @@ op eq(in STR, in STR, inconst LABEL) :base_core {
 }
 
 op eq(invar PMC, invar PMC, inconst LABEL) :base_core {
-  if (Parrot_mmd_dispatch_i_pp(interp, $1, $2, MMD_EQ)) {
+  INTVAL result;
+  Parrot_mmd_multi_dispatch_from_c_args(interp, 
+          "is_equal", "PP->I", $1, $2, &result);
+  if (result) {
     goto OFFSET($3);
   }
 }
@@ -96,9 +99,12 @@ op eq(invar PMC, in INT, inconst LABEL) :base_core {
    * see also #34949
    * the temp is necessary, *if* $1 isa BigInt
    */
+  INTVAL result;
   PMC *temp = pmc_new(interp, enum_class_Integer);
   PMC_int_val(temp) = $2;
-  if (Parrot_mmd_dispatch_i_pp(interp, $1, temp, MMD_EQ)) {
+  Parrot_mmd_multi_dispatch_from_c_args(interp, 
+          "is_equal", "PP->I", temp, $2, &result);
+  if (result) {
     goto OFFSET($3);
   }
 }
@@ -123,13 +129,19 @@ op eq(invar PMC, in STR, inconst LABEL) :base_core {
 }
 
 op eq_str(invar PMC, invar PMC, inconst LABEL) :base_core {
-  if (Parrot_mmd_dispatch_i_pp(interp, $1, $2, MMD_STREQ)) {
+  INTVAL result;
+  Parrot_mmd_multi_dispatch_from_c_args(interp,
+          "is_equal_string", "PP->I", $1, $2, &result);
+  if (result) {
     goto OFFSET($3);
   }
 }
 
 op eq_num(invar PMC, invar PMC, inconst LABEL) :base_core {
-  if (Parrot_mmd_dispatch_i_pp(interp, $1, $2, MMD_NUMEQ)) {
+  INTVAL result;
+  Parrot_mmd_multi_dispatch_from_c_args(interp,
+          "is_equal_num", "PP->I", $1, $2, &result);
+  if (result) {
     goto OFFSET($3);
   }
 }
@@ -193,15 +205,21 @@ op ne(in STR, in STR, inconst LABEL) :base_core {
 }
 
 op ne(invar PMC, invar PMC, inconst LABEL) :base_core {
-  if (! Parrot_mmd_dispatch_i_pp(interp, $1, $2, MMD_EQ)) {
+  INTVAL result;
+  Parrot_mmd_multi_dispatch_from_c_args(interp, 
+          "is_equal", "PP->I", $1, $2, &result);
+  if (!result) {
     goto OFFSET($3);
   }
 }
 
 op ne(invar PMC, in INT, inconst LABEL) :base_core {
+  INTVAL result;
   PMC *temp = pmc_new(interp, enum_class_Integer);
   PMC_int_val(temp) = $2;
-  if (! Parrot_mmd_dispatch_i_pp(interp, $1, temp, MMD_EQ)) {
+  Parrot_mmd_multi_dispatch_from_c_args(interp, 
+          "is_equal", "PP->I", $1, temp, &result);
+  if (!result) {
     goto OFFSET($3);
   }
 }
