@@ -384,6 +384,11 @@ mmd_multi_find_method(PARROT_INTERP, ARGIN(STRING *name), ARGIN(PMC *invoke_sig)
 
     candidate_list = Parrot_mmd_sort_manhattan_by_sig_pmc(interp, multi_sub, invoke_sig);
 
+#if MMD_DEBUG
+    fprintf(stderr, "there were '%d' elements in the candidate_list\n",
+            (int) VTABLE_elements(interp, candidate_list));
+#endif
+
     return VTABLE_get_pmc_keyed_int(interp, candidate_list, 0);
 
 }
@@ -597,12 +602,21 @@ Parrot_mmd_multi_dispatch_from_c_args(PARROT_INTERP,
     sig_object = convert_varargs_to_sig_pmc(interp, sig, args); 
     va_end(args);
 
-    name += 2; /* remove leading "__" from old-style MMD name */
+    /* remove leading "__" from old-style MMD name */
+    if (name[0] == '_' && name[1] == '_')
+        name += 2;
+
     sub = mmd_multi_find_method(interp, const_string(interp, name), sig_object);
 
-    Parrot_pcc_invoke_sub_from_sig_object(interp, sub, sig_object);
- /*   result = Parrot_runops_from_sig_pmc(interp, sub, sig_object); */
+#if MMD_DEBUG
+    fprintf(stderr, "candidate found for '%s', with signature '%s'\n", name, sig);
+#endif
 
+    if (PMC_IS_NULL(sub))
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_METH_NOT_FOUND,
+                "Multiple Dispatch: No suitable candidate found for '%s', with signature '%s'", name, sig);
+
+    Parrot_pcc_invoke_sub_from_sig_object(interp, sub, sig_object);
 }
 
 
@@ -2316,6 +2330,8 @@ Parrot_mmd_add_multi_from_c_args(PARROT_INTERP,
             STRING *type_name = VTABLE_get_string_keyed_int(interp, full_types, i);
             if (string_equal(interp, type_name, CONST_STRING(interp, "DEFAULT"))==0) 
                 type = enum_type_PMC;
+            else if (string_equal(interp, type_name, CONST_STRING(interp, "STRING"))==0) 
+                type = enum_type_STRING;
             else
                 type = pmc_type(interp, type_name);
             VTABLE_set_integer_keyed_int(interp, multi_sig, i, type);
