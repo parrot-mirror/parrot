@@ -4,7 +4,7 @@
 # Makefile for languages/eclectus
 
 # configuration settings
-TMPL          = eclectus
+HLLNAME       = eclectus
 BUILD_DIR     = @build_dir@
 LOAD_EXT      = @load_ext@
 O             = @o@
@@ -14,8 +14,10 @@ DOC_DIR       = @doc_dir@
 MANDIR	      = @mandir@
 
 # Set up commands
-PARROT        = ../../parrot@exe@
-PBC_TO_EXE    = ../../pbc_to_exe@exe@
+#IF(cygwin):SHRPENV  = env PATH="@build_dir@/blib/lib:$(PATH)"
+#ELSEIF(not win32):SHRPENV  = env LD_RUN_PATH="@build_dir@/blib/lib"
+PARROT        = $(SHRPENV) ../../parrot@exe@
+PBC_TO_EXE    = $(SHRPENV) ../../pbc_to_exe@exe@
 PERL          = @perl@
 RM_F          = @rm_f@
 RENAME        = @mv@
@@ -30,6 +32,7 @@ BUILD_DYNPMC  = $(PERL) @build_dir@/tools/build/dynpmc.pl
 
 # Set up directories
 PARROT_DYNEXT   = @build_dir@/runtime/parrot/dynext
+PARROT_LIB    = $(BUILD_DIR)/runtime/parrot/library
 PMC_DIR         = src/pmc
 
 ECLECTUS_GROUP  = $(PMC_DIR)/eclectus_group@load_ext@
@@ -52,7 +55,9 @@ PMC_SOURCES     = \
 DOCS = MAINTAINER README docs/eclectus.pod
 
 # The default target
-all: build
+default: build
+
+all: build Makefile $(HLLNAME)@exe@ installable
 
 help :
 	@echo ""
@@ -79,44 +84,45 @@ help :
 
 # regenerate the Makefile
 Makefile: config/makefiles/root.in
-	cd $(BUILD_DIR) && $(RECONFIGURE) --step=gen::languages --languages=$(TMPL)
+	cd $(BUILD_DIR) && $(RECONFIGURE) --step=gen::languages --languages=$(HLLNAME)
 
 # Compilation:
-build: $(ECLECTUS_GROUP) driver_nqp.pbc
+build: $(ECLECTUS_GROUP) $(HLLNAME).pbc
 
-$(ECLECTUS_GROUP): $(PARROT) $(PMC_SOURCES)
+$(ECLECTUS_GROUP): $(PMC_SOURCES)
 	cd $(PMC_DIR) && $(BUILD_DYNPMC) generate $(PMCS)
 	cd $(PMC_DIR) && $(BUILD_DYNPMC) compile $(PMCS)
 	cd $(PMC_DIR) && $(BUILD_DYNPMC) linklibs $(PMCS)
 	cd $(PMC_DIR) && $(BUILD_DYNPMC) copy --destination=$(PARROT_DYNEXT) $(PMCS)
 
-driver_nqp.pbc: src/builtins/all.pbc driver_nqp.pir
-	$(PARROT) -o driver_nqp.pbc driver_nqp.pir
+# TODO: merge those two and fix driver_nqp.pir
+$(HLLNAME).pbc: src/builtins/all.pbc driver_nqp.pir
+	$(PARROT) -o $(HLLNAME).pbc driver_nqp.pir
 
 src/builtins/all.pbc: src/builtins/all.pir
 	$(PARROT) -o src/builtins/all.pbc src/builtins/all.pir
 
 # TODO: rename build_dir. basic run for missing libs
 test-installable : installable
-	./installable_$(TMPL)@exe@ tests-driver.scm
+	./installable_$(HLLNAME)@exe@ tests-driver.scm
 
 install : installable
-	$(CP) installable_$(TMPL)@exe@ $(DESTDIR)$(BIN_DIR)/parrot-$(TMPL)@exe@
+	$(CP) installable_$(HLLNAME)@exe@ $(DESTDIR)$(BIN_DIR)/parrot-$(HLLNAME)@exe@
+	$(CP) $(HLLNAME).pbc $(DESTDIR)$(LIB_DIR)/parrot/library/$(HLLNAME).pbc
 	cd $(PMC_DIR) && $(BUILD_DYNPMC) copy "--destination=$(DESTDIR)$(LIB_DIR)/parrot/dynext" $(PMCS)
-	$(POD2MAN) docs/eclectus.pod > $(DESTDIR)$(MANDIR)/man1/parrot-$(TMPL).1
-	$(MKPATH) $(DESTDIR)$(DOC_DIR)/languages/$(TMPL)
-	$(CP) $(DOCS) $(DESTDIR)$(DOC_DIR)/languages/$(TMPL)
+	$(POD2MAN) docs/$(HLLNAME).pod > $(DESTDIR)$(MANDIR)/man1/parrot-$(HLLNAME).1
+	$(MKPATH) $(DESTDIR)$(DOC_DIR)/languages/$(HLLNAME)
+	$(CP) $(DOCS) $(DESTDIR)$(DOC_DIR)/languages/$(HLLNAME)
 
-$(TMPL)@exe@: driver_nqp.pbc
-	$(PBC_TO_EXE) driver_nqp.pbc
-	$(RENAME) driver_nqp@exe@ $(TMPL)@exe@
+$(HLLNAME)@exe@: $(HLLNAME).pbc
+	$(PBC_TO_EXE) $(HLLNAME).pbc
 
-installable : installable_$(TMPL)@exe@ $(ECLECTUS_GROUP)
-	$(CP) installable_$(TMPL)@exe@ $(BUILD_DIR)
+installable : installable_$(HLLNAME)@exe@ $(ECLECTUS_GROUP) $(HLLNAME).pbc
+	$(CP) installable_$(HLLNAME)@exe@ $(BUILD_DIR)
+	$(CP) $(HLLNAME).pbc $(PARROT_LIB)/$(HLLNAME).pbc
 
-installable_$(TMPL)@exe@ : driver_nqp.pbc
-	$(PBC_TO_EXE) driver_nqp.pbc --install
-	$(RENAME) driver_nqp@exe@ installable_$(TMPL)@exe@
+installable_$(HLLNAME)@exe@ : $(HLLNAME).pbc
+	$(PBC_TO_EXE) $(HLLNAME).pbc --install
 
 
 # cleaning up
@@ -139,8 +145,10 @@ dynext-clean:
   $(PMC_DIR)/*.manifest \
   $(PMC_DIR)/*.pdb \
   $(PMC_DIR)/*.lib \
-  installable_$(TMPL)@exe@ \
-  $(TMPL)@exe@ \
+  installable_$(HLLNAME)@exe@ \
+  $(HLLNAME)@exe@ \
+  $(HLLNAME).pbc \
+  $(PARROT_LIB)/$(HLLNAME).pbc
 
 realclean: clean
 	$(RM_F) Makefile

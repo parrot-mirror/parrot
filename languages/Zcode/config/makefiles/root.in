@@ -1,13 +1,16 @@
 # $Id$
 
 # Makefile for languages/Zcode
-TMPL	      = Zcode
+HLLNAME	      = Zcode
 
 # Setup of some commands
-BUILD_DIR  = @build_dir@
-PARROT     = ../../parrot@exe@
-PERL       = @perl@
-RM_F       = @rm_f@
+BUILD_DIR     = @build_dir@
+PERL          = @perl@
+RM_F          = @rm_f@
+#IF(cygwin):SHRPENV  = env PATH="@build_dir@/blib/lib:$(PATH)"
+#ELSEIF(not win32):SHRPENV  = env LD_RUN_PATH="@build_dir@/blib/lib"
+PARROT        = $(SHRPENV) ../../parrot@exe@
+PBC_TO_EXE    = $(SHRPENV) ../../pbc_to_exe@exe@
 RECONFIGURE   = $(PERL) $(BUILD_DIR)/tools/dev/reconfigure.pl
 #IF(darwin):
 #IF(darwin):# MACOSX_DEPLOYMENT_TARGET must be defined for OS X compilation/linking
@@ -57,7 +60,7 @@ examples: $(EXAMPLES)
 
 # regenerate the Makefile
 Makefile: config/makefiles/root.in
-	cd $(BUILD_DIR) && $(RECONFIGURE) --step=gen::languages --languages=$(TMPL)
+	cd $(BUILD_DIR) && $(RECONFIGURE) --step=gen::languages --languages=$(HLLNAME)
 
 clean:
 	@echo "No temp files to clean"

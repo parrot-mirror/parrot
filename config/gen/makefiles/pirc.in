@@ -7,6 +7,8 @@ RM_F          = @rm_f@
 TOOL_DIR      = ../..
 CC            = @cc@
 CP            = @cp@
+POD2HTML      = pod2html
+PODCHECKER    = podchecker
 BUILD         = $(PERL) @build_dir@/tools/build/dynpmc.pl
 O             = @o@
 EXE           = @exe@
@@ -95,19 +97,19 @@ help:
 
 
 docs: src/pirlexer.c src/pirparser.c doc/design.pod
-	pod2html --css=http://www.parrotcode.org/css/perl.css src/pirlexer.c > doc/pirlexer.html
-	pod2html --css=http://www.parrotcode.org/css/perl.css src/pirparser.c > doc/pirparser.html
-	pod2html --css=http://www.parrotcode.org/css/perl.css src/pirvtable.c > doc/pirvtable.html
-	pod2html --css=http://www.parrotcode.org/css/perl.css src/pirout.c > doc/pirout.html
-	pod2html --css=http://www.parrotcode.org/css/perl.css src/jsonout.c > doc/jsonout.html
-	pod2html --css=http://www.parrotcode.org/css/perl.css src/pastout.c > doc/pastout.html
-	pod2html --css=http://www.parrotcode.org/css/perl.css src/pirutil.c > doc/pirutil.html
-	pod2html --css=http://www.parrotcode.org/css/perl.css doc/design.pod > doc/design.html
-	pod2html --css=http://www.parrotcode.org/css/perl.css README.pod > doc/README.html
+	$(POD2HTML) --css=http://www.parrotcode.org/css/perl.css src/pirlexer.c > doc/pirlexer.html
+	$(POD2HTML) --css=http://www.parrotcode.org/css/perl.css src/pirparser.c > doc/pirparser.html
+	$(POD2HTML) --css=http://www.parrotcode.org/css/perl.css src/pirvtable.c > doc/pirvtable.html
+	$(POD2HTML) --css=http://www.parrotcode.org/css/perl.css src/pirout.c > doc/pirout.html
+	$(POD2HTML) --css=http://www.parrotcode.org/css/perl.css src/jsonout.c > doc/jsonout.html
+	$(POD2HTML) --css=http://www.parrotcode.org/css/perl.css src/pastout.c > doc/pastout.html
+	$(POD2HTML) --css=http://www.parrotcode.org/css/perl.css src/pirutil.c > doc/pirutil.html
+	$(POD2HTML) --css=http://www.parrotcode.org/css/perl.css doc/design.pod > doc/design.html
+	$(POD2HTML) --css=http://www.parrotcode.org/css/perl.css README.pod > doc/README.html
 
 test: all
 	cd t && prove && cd ..
-	podchecker $(SOURCES) \
+	$(PODCHECKER) $(SOURCES) \
   doc/design.pod \
   README.pod
 

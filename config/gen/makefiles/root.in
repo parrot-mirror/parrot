@@ -471,7 +471,7 @@ PINFO               = $(CUR_DIR)/pbc_info$(EXE)
 PBCMERGE            = $(CUR_DIR)/pbc_merge$(EXE)
 PDB                 = $(CUR_DIR)/parrot_debugger$(EXE)
 PBC_TO_EXE          = $(CUR_DIR)/pbc_to_exe$(EXE)
-PARROT_CONFIG       = $(CUR_DIR)/parrot-config$(EXE)
+PARROT_CONFIG       = $(CUR_DIR)/parrot_config$(EXE)
 
 # HLL Executables
 PERL6               = $(CUR_DIR)/perl6$(EXE)
@@ -771,9 +771,9 @@ runtime/parrot/include/parrotlib.pbc: runtime/parrot/library/parrotlib.pir $(PAR
 	$(SHRPENV) $(PARROT) -o $@ runtime/parrot/library/parrotlib.pir
 
 runtime/parrot/include/config.fpmc : myconfig config_lib.pasm $(MINIPARROT)
-	@cygchkdll@
+#CONDITIONED_LINE(cygchkdll):	$(SHRPENV) @cygchkdll@
 	@echo Invoking Parrot to generate runtime/parrot/include/config.fpmc --cross your fingers
-	$(MINIPARROT) config_lib.pasm > $@
+	$(SHRPENV) $(MINIPARROT) config_lib.pasm > $@
 
 $(PARROT) : $(SRC_DIR)/main$(O) $(GEN_HEADERS) $(LIBPARROT) CFLAGS \
     lib/Parrot/OpLib/core.pm $(SRC_DIR)/parrot_config$(O) \
@@ -796,7 +796,7 @@ $(PARROT_CONFIG) : tools/util/parrot-config.pir $(PARROT)
 	$(SHRPENV) $(PARROT) pbc_to_exe.pir parrot_config.pbc
 
 # HLL Executable targets
-#IF(win32):perl6 : $(PERL6)
+#IF(win32 or cygwin):perl6 : $(PERL6)
 
 $(PERL6) : compilers $(PBC_TO_EXE)
 	$(MAKE) languages/perl6 perl6$(EXE)
@@ -1776,6 +1776,9 @@ reconfig : clean
 
 manitest :
 	$(PERL) tools/dev/manicheck.pl
+
+opsrenumber :
+	$(PERL) tools/dev/opsrenumber.pl $(OPS_FILES)
 
 ###############################################################################
 #

@@ -1,7 +1,7 @@
 # $Id$
 
 # Makefile for languages/befunge
-TMPL = befunge
+HLLNAME       = befunge
 
 ## configuration settings
 BUILD_DIR     = @build_dir@
@@ -11,19 +11,24 @@ DOC_DIR       = @doc_dir@
 MANDIR	      = @mandir@
 
 # Setup of some commands
-PERL       = @perl@
-RM_F       = @rm_f@
-PARROT        = ../../parrot
-PBC_TO_EXE    = ../../pbc_to_exe@exe@
-RECONFIGURE   = $(PERL) @build_dir@/tools/dev/reconfigure.pl
+PERL          = @perl@
+RM_F          = @rm_f@
+CP            = @cp@
+MKPATH        = @mkpath@
 POD2MAN	      = pod2man
+#IF(cygwin):SHRPENV  = env PATH="@build_dir@/blib/lib:$(PATH)"
+#ELSEIF(not win32):SHRPENV  = env LD_RUN_PATH="@build_dir@/blib/lib"
+PARROT        = $(SHRPENV) ../../parrot@exe@
+PBC_TO_EXE    = $(SHRPENV) ../../pbc_to_exe@exe@
+RECONFIGURE   = $(PERL) @build_dir@/tools/dev/reconfigure.pl
 #IF(darwin):
 #IF(darwin):# MACOSX_DEPLOYMENT_TARGET must be defined for OS X compilation/linking
 #IF(darwin):export MACOSX_DEPLOYMENT_TARGET := @osx_version@
+PARROT_LIB    = $(BUILD_DIR)/runtime/parrot/library
 
 DOCS = MAINTAINER README Changes
 
-default: all
+build: befunge.pbc
 
 help :
 	@echo ""
@@ -46,41 +51,44 @@ help :
 	@echo "  help:              Print this help message"
 
 
-all: build
-
-build: befunge.pbc
+all: befunge.pbc befunge@exe@
 
 befunge.pbc: befunge.pasm debug.pasm flow.pasm io.pasm load.pasm maths.pasm stack.pasm
 	$(PARROT) -o befunge.pbc befunge.pasm
 
-# regenerate the Makefile
-Makefile: config/makefiles/root.in
-	cd $(BUILD_DIR) && $(RECONFIGURE) --step=gen::languages --languages=$(TMPL)
+$(HLLNAME)@exe@: $(HLLNAME).pbc
+	$(PBC_TO_EXE) $(HLLNAME).pbc
 
-installable_$(TMPL)@exe@: $(TMPL).pbc
-	$(PBC_TO_EXE) $(TMPL).pbc --install
+installable_$(HLLNAME)@exe@: $(HLLNAME).pbc
+	$(PBC_TO_EXE) $(HLLNAME).pbc --install
 
-installable : installable_$(TMPL)@exe@
-	$(CP) installable_$(TMPL)@exe@ $(BUILD_DIR)
+installable : installable_$(HLLNAME)@exe@ $(HLLNAME).pbc
+	$(CP) installable_$(HLLNAME)@exe@ $(BUILD_DIR)
+	$(CP) $(HLLNAME).pbc $(PARROT_LIB)/$(HLLNAME).pbc
 
 test: befunge.pbc
-	cd .. && $(PERL) t/harness --languages=$(TMPL)
+	cd .. && $(PERL) t/harness --languages=$(HLLNAME)
 
 # TODO: rename build_dir. basic run for missing libs
 test-installable : installable
-	./installable_$(TMPL)@exe@ test.bef
+	./installable_$(HLLNAME)@exe@ test.bef
 
 install : installable
-	$(CP) installable_$(TMPL)@exe@ $(DESTDIR)$(BIN_DIR)/parrot-$(TMPL)@exe@
-	$(POD2MAN) $(TMPL).pir > $(DESTDIR)$(MANDIR)/man1/parrot-$(TMPL).1
-	$(MKPATH) $(DESTDIR)$(DOC_DIR)/languages/$(TMPL)
-	$(CP) $(DOCS) $(DESTDIR)$(DOC_DIR)/languages/$(TMPL)
+	$(CP) installable_$(HLLNAME)@exe@ $(DESTDIR)$(BIN_DIR)/parrot-$(HLLNAME)@exe@
+	$(CP) $(HLLNAME).pbc $(DESTDIR)$(LIB_DIR)/parrot/library/$(HLLNAME).pbc
+	$(POD2MAN) $(HLLNAME).pir > $(DESTDIR)$(MANDIR)/man1/parrot-$(HLLNAME).1
+	$(MKPATH) $(DESTDIR)$(DOC_DIR)/languages/$(HLLNAME)
+	$(CP) $(DOCS) $(DESTDIR)$(DOC_DIR)/languages/$(HLLNAME)
+
+# regenerate the Makefile
+Makefile: config/makefiles/root.in
+	cd $(BUILD_DIR) && $(RECONFIGURE) --step=gen::languages --languages=$(HLLNAME)
 
 clean:
 	$(RM_F) core \
     "*.pbc" \
     "*~" \
-    "installable_$(TMPL)@exe@"
+    "installable_$(HLLNAME)@exe@"
 
 realclean: clean
 	$(RM_F) Makefile

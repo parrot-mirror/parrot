@@ -2,7 +2,7 @@
 # $Id$
 
 # Makefile for languages/scheme
-TMPL          = scheme
+HLLNAME       = scheme
 
 # Set up commands
 PERL          = @perl@
@@ -39,7 +39,7 @@ help :
 
 # regenerate the Makefile
 Makefile: config/makefiles/root.in
-	cd $(BUILD_DIR) && $(RECONFIGURE) --step=gen::languages --languages=$(TMPL)
+	cd $(BUILD_DIR) && $(RECONFIGURE) --step=gen::languages --languages=$(HLLNAME)
 
 # Compilation:
 build:
@@ -52,8 +52,8 @@ build:
 #	$(CP) lib/Scheme/*.pm $(DESTDIR)$(LIB_DIR)/Scheme
 install : installable
 	$(CP) schemec $(DESTDIR)$(BIN_DIR)/parrot-schemec
-	$(MKPATH) $(DESTDIR)$(DOC_DIR)/languages/$(TMPL)
-	$(CP) $(DOCS) $(DESTDIR)$(DOC_DIR)/languages/$(TMPL)
+	$(MKPATH) $(DESTDIR)$(DOC_DIR)/languages/$(HLLNAME)
+	$(CP) $(DOCS) $(DESTDIR)$(DOC_DIR)/languages/$(HLLNAME)
 
 # cleaning up
 

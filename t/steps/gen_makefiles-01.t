@@ -6,73 +6,74 @@
 use strict;
 use warnings;
 my @cond_tests;
-my @conf_args = ( dummy1 => 1, dummy2 => 0, dummy3 => 'xx' );
+my @conf_args = ( true => 1, false => 0, value => 'xx' );
 BEGIN {
     @cond_tests =
       (
        # perl-syntax       true or false
-       ["IF(dummy1)", 		1],
-       ["IF(dummy2)", 		0],
-       ["IF(dummy1 | dummy2)",	1],
-       ["IF(dummy1 & dummy2)",  0],
-       ["UNLESS(dummy1)",	0],
-       ["UNLESS(dummy2)",	1],
-       ["UNLESS(dummy1|dummy2)",0],
-       ["UNLESS(dummy1&dummy2)",1],
-       ["IF(!dummy2)", 		1],
-       ["IF(dummy1)", 		1],
-       ["ELSIF(dummy3)", 	0],
+       ["IF(true)", 		1],
+       ["IF(false)", 		0],
+       ["UNLESS(true)",	        0],
+       ["UNLESS(false)",	1],
+       ["IF(true | false)",	1],
+       ["IF(true & false)",     0],
+       ["IF(true or true)",     1],
+       ["IF(true or false)",    1],
+       ["IF(false or true)",    1],
+       ["IF(false or false)",   0],
+       ["IF(true and true)",    1],
+       ["IF(true and false)",   0],
+       ["IF(false and true)",   0],
+       ["IF(false and false)",  0],
+       ["UNLESS(true|false)",   0],
+       ["UNLESS(true&false)",   1],
+       ["IF(!false)", 		1],
+       ["IF(true)", 		1],
+       ["ELSIF(value)", 	0],
        ["ELSE", 	        0],
-       ["IF(dummy2)", 		0],
-       ["ELSIF(dummy3)", 	1],
+       ["IF(false)", 		0],
+       ["ELSIF(value)", 	1],
        ["ELSE", 	        0],
-       ["IF(dummy2)", 		0],
-       ["ELSIF(dummy2)", 	0],
+       ["IF(false)", 		0],
+       ["ELSIF(false)", 	0],
        ["ELSE", 	        1],
-       # no ws, strangle the parser
-       ["IF(dummy1&!dummy2&dummy3)",            1],
-       ["UNLESS(!(dummy1&!dummy2&dummy3))",     1],
-       ["IF(dummy1&(!dummy2&dummy3))",          1],
-       ["IF(dummy1 & (dummy3=xx & (!dummy2)))", 1],
-       ["IF(someplatform)",		1],
-       ["IF(not someplatform)",		0],
-       ["UNLESS(someplatform)",		0],
-       ["UNLESS(not someplatform)",	1],
+       # Strangle the parser a bit
+       ["IF(true and (!false and value))",  1],
+       ["IF(true and (!false) and value)",  1],
+       ["IF(true and !false and value)",    1, 'no parens'],
+       ["IF(true and not false and value)", 1, 'no parens'],
+       ["IF(true&!false&value)",            1],
+       ["IF(false or (!false and value))",  1, 'not parser problem'],
+       ["UNLESS(!(true&!false&value))",     1, 'no ws, but nested parens'],
+       ["IF(true&(!false&false))",          0, 'not precedence'],
+       ["IF(true&(!false&value))",          1],
+       ["IF(not true and value)",           0, 'not precedence over and'],
+       ["IF(not false and value)",          1],
+       ["IF((not false) and value)",        1],
+       ["IF(not (false and value))",        1],
+       ["IF(not (false or value))",         0],
+       ["IF(true and not false)",           1],
+       # platform
+       ["IF(someplatform)",		    1],
+       ["IF(not someplatform)",		    0],
+       ["UNLESS(someplatform)",		    0],
+       ["UNLESS(not someplatform)",	    1],
+       # key==value
+       ["IF(value==xx)",                    1],
+       ["IF(value==xxy)",                   0],
+       ["UNLESS(value==xx)",                0],
+       ["UNLESS(value==xxy)",               1],
+       ["IF(true & (value==xx & (!false)))",1],
+       # These are invalid:
+       #["IF(value == xx)",                  0], # invalid op error
+       #["IF(value = xx)",                   0], # invalid op error
+       ["IF(value=xx)",                     0], # also invalid, no warning. checks for key value=xx
 
-       # lisp-syntax       true or false
-       ["-(lisp-syntax)",       1],
-       ["+(dummy1)", 		1],
-       ["+(dummy2)", 		0],
-       ["+(dummy1 dummy2)",	1],
-       ["+(and dummy1 dummy2)", 0],
-       ["-(dummy1)",		0],
-       ["-(dummy2)",		1],
-       ["-(dummy1 dummy2)",	0],
-       ["-(and dummy1 dummy2)",	1],
-       ["+(dummy3=xx)",		1],
-       ["+(dummy3=xxy)",	0],
-       ["-(dummy3=xx)",		0],
-       ["-(dummy3=xxy)",	1],
-       ["+(dummy1=1)",		1],
-       ["+(dummy2=0)",		1],
-       ["+(someplatform)",	1],
-       ["+(not someplatform)",	0],
-       ["-(someplatform)",	0],
-       ["-(not someplatform)",	1],
-       ["+(or dummy1 dummy2)",	1],
-       ["-(or dummy1 dummy2)",	0],
-       ["+(or dummy1 (not dummy2))",	1],
-       ["+(and dummy1 (not dummy2))",	1],
-       ["+(and (not dummy2) dummy1)",	1],
-       # break it with whitespace
-       ["+( or dummy1(not dummy2))",	1],
-       ["+(or dummy1(not dummy2))",	1],
-
-       # old-syntax                    true or false
-       ["CONDITIONED_LINE(dummy1)", 	    1],
-       ["INVERSE_CONDITIONED_LINE(dummy1)", 0],
-       ["CONDITIONED_LINE(dummy2)", 	    0],
-       ["INVERSE_CONDITIONED_LINE(dummy2)", 1],
+       # Legacy syntax                 true or false
+       ["CONDITIONED_LINE(true)", 	    1],
+       ["INVERSE_CONDITIONED_LINE(true)",   0],
+       ["CONDITIONED_LINE(false)", 	    0],
+       ["INVERSE_CONDITIONED_LINE(false)",  1],
       );
 }
 use Test::More tests => (7 + scalar(@cond_tests));
@@ -145,7 +146,13 @@ END {
 $i = undef;
 for my $c (@cond_tests) {
     my $result = result($c);
-    ok(($c->[1] ? $f =~ /^$result$/m : $f !~ /^$result$/m), "$result");
+    if ($c->[2] and $c->[2] =~ /^TODO(.*)$/) {
+        local $TODO = $1;
+        ok(($c->[1] ? $f =~ /^$result$/m : $f !~ /^$result$/m), "$result");
+    }
+    else {
+        ok(($c->[1] ? $f =~ /^$result$/m : $f !~ /^$result$/m), "$result".($c->[2]?" $c->[2]":''));
+    }
 }
 
 pass("Completed all tests in $0");

@@ -72,9 +72,9 @@ $(RUNTIME_PIR)
 
 build: tcl.pbc
 
-all: tcl.pbc Makefile installable
+all: tcl.pbc tclsh@exe@ Makefile installable
 
-tcl.pbc: $(PARROT) pmcs ops runtime/tcllib.pbc src/tclsh.pir
+tcl.pbc: pmcs ops runtime/tcllib.pbc src/tclsh.pir
 	$(PARROT) --output=tcl.pbc src/tclsh.pir
 
 .SUFFIXES : .exe .pbc .pir .pg .tg .tcl
@@ -119,19 +119,22 @@ ops: src/binary$(O)
 runtime/builtins.pir: $(DEPS) tools/gen_builtins.pl
 	$(PERL) tools/gen_builtins.pl > runtime/builtins.pir
 
-runtime/tcllib.pbc: $(PARROT) runtime/tcllib.pir runtime/builtins.pir $(CLASSES)
-	$(PARROT) --output=runtime/tcllib.pbc runtime/tcllib.pir
+runtime/tcllib.pbc: runtime/tcllib.pir runtime/builtins.pir $(CLASSES)
+	$(PARROT) --output=$@ runtime/tcllib.pir
+
+$(PARROT_LIB)/tcllib.pbc: runtime/tcllib.pbc
+	$(CP) runtime/tcllib.pbc $(PARROT_LIB)/tcllib.pbc
 
 # targets for building a standalone tclsh
 # (We're not quite ready to make this a default target.)
-tclsh@exe@: tcl.pbc $(PBC_TO_EXE)
+tclsh@exe@: tcl.pbc
 	$(PBC_TO_EXE) tcl.pbc
 	$(RENAME) tcl@exe@ tclsh@exe@
 
-$(PBC_TO_EXE):
-	$(MAKE) $(BUILD_DIR) ./pbc_to_exe@exe@
-
-installable : installable_tclsh@exe@
+installable : installable_tclsh@exe@ tcllib.pbc $(HLLNAME).pbc
+	$(CP) installable_tclsh@exe@ $(BUILD_DIR)
+	$(CP) tcl.pbc $(PARROT_LIB)/tcl.pbc
+	$(CP) tcllib.pbc $(PARROT_LIB)/tcllib.pbc
 
 installable_tclsh@exe@: tcl.pbc
 	$(PBC_TO_EXE) tcl.pbc --install
@@ -143,12 +146,14 @@ test-installable : installable
 
 install : installable
 	$(COPY) installable_tclsh@exe@ $(DESTDIR)$(BIN_DIR)/parrot-tclsh@exe@
+	$(CP) $(HLLNAME).pbc $(DESTDIR)$(LIB_DIR)/parrot/library/$(HLLNAME).pbc
+	$(CP) runtime/tcllib.pbc $(DESTDIR)$(LIB_DIR)/parrot/library/tcllib.pbc
 	@cd $(OPSDIR) && $(OPSBUILD) copy "--destination=$(DESTDIR)$(LIB_DIR)/parrot/dynext" tcl
 	@cd $(PMCDIR) && $(PMCBUILD) copy "--destination=$(DESTDIR)$(LIB_DIR)/parrot/dynext" $(PMCS)
 	$(COPY) runtime/tcllib.pbc $(DESTDIR)$(LIB_DIR)/parrot/library
 	$(POD2MAN) README.pod > $(DESTDIR)$(MANDIR)/man1/parrot-tclsh.1
-	$(MKPATH) $(DESTDIR)$(DOC_DIR)/languages/$(TMPL)
-	$(COPY) $(DOCS) $(DESTDIR)$(DOC_DIR)/languages/$(TMPL)
+	$(MKPATH) $(DESTDIR)$(DOC_DIR)/languages/$(HLLNAME)
+	$(COPY) $(DOCS) $(DESTDIR)$(DOC_DIR)/languages/$(HLLNAME)
 
 test: tcl.pbc
 	prove -r t
@@ -345,7 +350,9 @@ src/grammar/expr/pge2past.pir \
 "$(TCL_LIB)/*.pir" \
 lib/*.pre_c \
 installable_tclsh@exe@ \
-tcl@exe@ tclsh@exe@
+tcl@exe@ tclsh@exe@ \
+$(PARROT_LIB)/tcl.pbc \
+$(PARROT_LIB)/tcllib.pbc
 
 # that last line should be cleaned up for x-platform.
 
@@ -360,7 +367,6 @@ distclean: realclean
 # regenerate the Makefile
 Makefile: config/makefiles/root.in
 	cd $(BUILD_DIR) && $(RECONFIGURE) --step=gen::languages --languages=tcl
-
 
 #
 # Local variables:

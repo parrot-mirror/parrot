@@ -13,12 +13,14 @@
 # #########################
 PERL     = ${perl}
 RM_F     = ${rm_f}
-PARROT   = ${trans_parrot_path}${slash}parrot${exe}
 MONOLIB  = ${trans_mono_lib_path}
-PBCMERGE = ${trans_parrot_path}${slash}pbc_merge${exe}
-PBC_TO_EXE = ${trans_parrot_path}${slash}pbc_to_exe.exe
-PMCBUILD = $(PERL) ${build_dir}${slash}tools${slash}build${slash}dynpmc.pl
-OPSBUILD = $(PERL) ${build_dir}${slash}tools${slash}build${slash}dynoplibs.pl
+#IF(cygwin):SHRPENV  = env PATH="@build_dir@/blib/lib:$(PATH)"
+#ELSEIF(not win32):SHRPENV  = env LD_RUN_PATH="@build_dir@/blib/lib"
+PARROT     = $(SHRPENV) ${trans_parrot_path}${slash}parrot${exe}
+PBCMERGE   = $(SHRPENV) ${trans_parrot_path}${slash}pbc_merge${exe}
+PBC_TO_EXE = $(SHRPENV) ${trans_parrot_path}${slash}pbc_to_exe.exe
+PMCBUILD   = $(PERL) ${build_dir}${slash}tools${slash}build${slash}dynpmc.pl
+OPSBUILD   = $(PERL) ${build_dir}${slash}tools${slash}build${slash}dynoplibs.pl
 PARROT_DYNEXT  = ${build_dir}${slash}runtime${slash}parrot${slash}dynext
 #CONDITIONED_LINE(darwin):
 #CONDITIONED_LINE(darwin):# MACOSX_DEPLOYMENT_TARGET must be defined for OS X compilation/linking

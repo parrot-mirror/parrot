@@ -15,6 +15,7 @@
     load_bytecode 'PGE/Dumper.pbc'
     load_bytecode 'PCT.pbc'
 
+    # TODO: make that installable
     load_bytecode 'languages/eclectus/src/builtins/all.pbc'
 .end
 
@@ -32,6 +33,7 @@
     .local int ret
     clone pir_fn, nqp_fn
     substr pir_fn, -3, 3, 'pir'
+    # TODO: make that installable
     cmd = "../../parrot ../../compilers/nqp/nqp.pbc --target=pir --output="
     concat cmd, pir_fn
     concat cmd, " "
@@ -39,7 +41,7 @@
     # say cmd
     ret = spawnw cmd
 
-    # load the generated PIR
+    # load the generated PIR. TODO: make that installable
     $S1 = concat "languages/eclectus/", pir_fn
     load_bytecode $S1
 
