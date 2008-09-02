@@ -1274,3 +1274,9 @@ fdiv_p_p_i                     1243
 fdiv_p_p_ic                    1244
 fdiv_p_p_n                     1245
 fdiv_p_p_nc                    1246
+concat_p_s                     1247
+concat_p_sc                    1248
+concat_p_p                     1249
+concat_p_p_p                   1250
+concat_p_p_s                   1251
+concat_p_p_sc                  1252
