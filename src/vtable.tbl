@@ -137,29 +137,29 @@ void splice(PMC* value, INTVAL offset, INTVAL count)
 
 # XXX marking writing here?
 [MATH]
-PMC* add(PMC* value, PMC* dest)             MMD_ADD
-PMC* add_int(INTVAL value, PMC* dest)       MMD_ADD_INT
-PMC* add_float(FLOATVAL value, PMC* dest)   MMD_ADD_FLOAT
+PMC* add(PMC* value, PMC* dest)
+PMC* add_int(INTVAL value, PMC* dest)
+PMC* add_float(FLOATVAL value, PMC* dest)
 
-void i_add(PMC* value)                      MMD_I_ADD
-void i_add_int(INTVAL value)                MMD_I_ADD_INT
-void i_add_float(FLOATVAL value)            MMD_I_ADD_FLOAT
+void i_add(PMC* value)
+void i_add_int(INTVAL value)
+void i_add_float(FLOATVAL value)
 
-PMC* subtract(PMC* value, PMC* dest)        MMD_SUBTRACT
-PMC* subtract_int(INTVAL value, PMC* dest)  MMD_SUBTRACT_INT
-PMC* subtract_float(FLOATVAL value, PMC* dest)  MMD_SUBTRACT_FLOAT
+PMC* subtract(PMC* value, PMC* dest)
+PMC* subtract_int(INTVAL value, PMC* dest)
+PMC* subtract_float(FLOATVAL value, PMC* dest)
 
-void i_subtract(PMC* value)                 MMD_I_SUBTRACT
-void i_subtract_int(INTVAL value)           MMD_I_SUBTRACT_INT
-void i_subtract_float(FLOATVAL value)       MMD_I_SUBTRACT_FLOAT
+void i_subtract(PMC* value)
+void i_subtract_int(INTVAL value)
+void i_subtract_float(FLOATVAL value)
 
-PMC* multiply(PMC* value, PMC* dest)        MMD_MULTIPLY
-PMC* multiply_int(INTVAL value, PMC* dest)  MMD_MULTIPLY_INT
-PMC* multiply_float(FLOATVAL value, PMC* dest)  MMD_MULTIPLY_FLOAT
+PMC* multiply(PMC* value, PMC* dest)
+PMC* multiply_int(INTVAL value, PMC* dest)
+PMC* multiply_float(FLOATVAL value, PMC* dest)
 
-void i_multiply(PMC* value)                 MMD_I_MULTIPLY
-void i_multiply_int(INTVAL value)           MMD_I_MULTIPLY_INT
-void i_multiply_float(FLOATVAL value)       MMD_I_MULTIPLY_FLOAT
+void i_multiply(PMC* value)
+void i_multiply_int(INTVAL value)
+void i_multiply_float(FLOATVAL value)
 
 PMC* divide(PMC* value, PMC* dest)           MMD_DIVIDE
 PMC* divide_int(INTVAL value, PMC* dest)     MMD_DIVIDE_INT
