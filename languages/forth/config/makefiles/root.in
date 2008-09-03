@@ -7,7 +7,7 @@ CP            = @cp@
 MKPATH        = @mkpath@
 POD2MAN	      = pod2man
 #IF(cygwin):SHRPENV  = env PATH="@build_dir@/blib/lib:$(PATH)"
-#ELSEIF(not win32):SHRPENV  = env LD_RUN_PATH="@build_dir@/blib/lib"
+#ELSIF(not win32):SHRPENV  = env LD_RUN_PATH="@build_dir@/blib/lib"
 PARROT        = $(SHRPENV) ../../parrot@exe@
 PBC_TO_EXE    = $(SHRPENV) ../../pbc_to_exe@exe@
 PBC_MERGE     = $(SHRPENV) ../../pbc_merge@exe@
@@ -24,8 +24,8 @@ MANDIR	      = @mandir@
 PARROT_LIB    = $(BUILD_DIR)/runtime/parrot/library
 
 PBCS = tokenstream.pbc \
-    variablestack.pbc \
-    virtualstack.pbc
+       variablestack.pbc \
+       virtualstack.pbc
 DEPENDENCIES = forth.pbc $(PBCS)
 DOCS = MAINTAINER
 
@@ -86,21 +86,23 @@ test-installable : installable
 install : installable
 	$(CP) installable_$(HLLNAME)@exe@ $(DESTDIR)$(BIN_DIR)/parrot-$(HLLNAME)@exe@
 	$(CP) $(HLLNAME).pbc    $(DESTDIR)$(LIB_DIR)/parrot/library/$(HLLNAME).pbc
-	$(CP) tokenstream.pbc   $(DESTDIR)$(LIB_DIR)/parrot/library/forth_tokenstream.pbc
-	$(CP) variablestack.pbc $(DESTDIR)$(LIB_DIR)/parrot/library/forth_variablestack.pbc
-	$(CP) virtualstack.pbc  $(DESTDIR)$(LIB_DIR)/parrot/library/forth_virtualstack.pbc
+	-$(MKPATH) $(DESTDIR)$(LIB_DIR)/parrot/library/forth
+	$(CP) tokenstream.pbc   $(DESTDIR)$(LIB_DIR)/parrot/library/forth/tokenstream.pbc
+	$(CP) variablestack.pbc $(DESTDIR)$(LIB_DIR)/parrot/library/forth/variablestack.pbc
+	$(CP) virtualstack.pbc  $(DESTDIR)$(LIB_DIR)/parrot/library/forth/virtualstack.pbc
 	-$(MKPATH) $(DESTDIR)$(DOC_DIR)/languages/$(HLLNAME)
 	$(CP) $(DOCS) $(DESTDIR)$(DOC_DIR)/languages/$(HLLNAME)
 
 $(HLLNAME)@exe@: $(HLLNAME).pbc
 	$(PBC_TO_EXE) $(HLLNAME).pbc
 
-installable : installable_$(HLLNAME)@exe@ $(PARROT_LIB)/$(HLLNAME).pbc
+installable : installable_$(HLLNAME)@exe@ $(HLLNAME).pbc
 	$(CP) installable_$(HLLNAME)@exe@ $(BUILD_DIR)
 	$(CP) $(HLLNAME).pbc    $(PARROT_LIB)/$(HLLNAME).pbc
-	$(CP) tokenstream.pbc   $(PARROT_LIB)/forth_tokenstream.pbc
-	$(CP) variablestack.pbc $(PARROT_LIB)/forth_variablestack.pbc
-	$(CP) virtualstack.pbc  $(PARROT_LIB)/forth_virtualstack.pbc
+	-$(MKPATH) $(PARROT_LIB)/forth
+	$(CP) tokenstream.pbc   $(PARROT_LIB)/forth/tokenstream.pbc
+	$(CP) variablestack.pbc $(PARROT_LIB)/forth/variablestack.pbc
+	$(CP) virtualstack.pbc  $(PARROT_LIB)/forth/virtualstack.pbc
 
 installable_$(HLLNAME)@exe@ : $(HLLNAME).pbc
 	$(PBC_TO_EXE) $(HLLNAME).pbc --install

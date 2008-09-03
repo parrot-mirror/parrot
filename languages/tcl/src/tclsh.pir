@@ -37,17 +37,18 @@
 
 .sub _main :main
   .param pmc argv
-
   # determine location of libs from the Parrot config
+  load_bytecode 'config.pir'
   .local pmc cfg
   cfg  = _config()
-  .local string installed, lib_dir, pbc_fn
+  .local int installed
+  .local string lib_dir, pbc_fn
   lib_dir = ''
   installed = cfg['installed']
   if installed goto inst
 
   lib_dir = cfg['build_dir']
-  lib_dir .= 'languages/tcl/runtime/'
+  lib_dir .= '/languages/tcl/runtime/'
 inst:
   pbc_fn = concat lib_dir, 'tcllib.pbc'
   load_bytecode pbc_fn

@@ -231,9 +231,9 @@ abc.test:
 abc.installable:
 	- $(MAKE) abc installable
 abc.test-installable:
-	- $(MAKE) abc test-installable
+	- $(MAKE) abc test-installable DESTDIR=$(DESTDIR)
 abc.install:
-	- $(MAKE) abc install
+	- $(MAKE) abc install DESTDIR=$(DESTDIR)
 abc.clean:
 	- $(MAKE) abc clean
 abc.realclean:
@@ -247,9 +247,9 @@ APL.test:
 APL.installable:
 	- $(MAKE) APL installable
 APL.test-installable:
-	- $(MAKE) APL test-installable
+	- $(MAKE) APL test-installable DESTDIR=$(DESTDIR)
 APL.install:
-	- $(MAKE) APL install
+	- $(MAKE) APL install DESTDIR=$(DESTDIR)
 APL.clean:
 	- $(MAKE) APL clean
 APL.realclean:
@@ -277,9 +277,9 @@ befunge.test:
 befunge.installable:
 	- $(MAKE) befunge installable
 befunge.test-installable:
-	- $(MAKE) befunge test-installable
+	- $(MAKE) befunge test-installable DESTDIR=$(DESTDIR)
 befunge.install:
-	- $(MAKE) befunge install
+	- $(MAKE) befunge install DESTDIR=$(DESTDIR)
 befunge.clean:
 	- $(MAKE) befunge clean
 befunge.realclean:
@@ -293,9 +293,9 @@ bf.test:
 bf.installable:
 	- $(MAKE) bf installable
 bf.test-installable:
-	- $(MAKE) bf test-installable
+	- $(MAKE) bf test-installable DESTDIR=$(DESTDIR)
 bf.install:
-	- $(MAKE) bf install
+	- $(MAKE) bf install DESTDIR=$(DESTDIR)
 bf.clean:
 	- $(MAKE) bf clean
 bf.realclean:
@@ -309,9 +309,9 @@ c99.test:
 c99.installable:
 	- $(MAKE) c99 installable
 c99.test-installable:
-	- $(MAKE) c99 test-installable
+	- $(MAKE) c99 test-installable DESTDIR=$(DESTDIR)
 c99.install:
-	- $(MAKE) c99 install
+	- $(MAKE) c99 install DESTDIR=$(DESTDIR)
 c99.clean:
 	- $(MAKE) c99 clean
 c99.realclean:
@@ -325,9 +325,9 @@ cardinal.test:
 cardinal.installable:
 	- $(MAKE) cardinal installable
 cardinal.test-installable:
-	- $(MAKE) cardinal test-installable
+	- $(MAKE) cardinal test-installable DESTDIR=$(DESTDIR)
 cardinal.install:
-	- $(MAKE) cardinal install
+	- $(MAKE) cardinal install DESTDIR=$(DESTDIR)
 cardinal.clean:
 	- $(MAKE) cardinal clean
 cardinal.realclean:
@@ -341,9 +341,9 @@ chitchat.test:
 chitchat.installable:
 	- $(MAKE) chitchat installable
 chitchat.test-installable:
-	- $(MAKE) chitchat test-installable
+	- $(MAKE) chitchat test-installable DESTDIR=$(DESTDIR)
 chitchat.install:
-	- $(MAKE) chitchat install
+	- $(MAKE) chitchat install DESTDIR=$(DESTDIR)
 chitchat.clean:
 	- $(MAKE) chitchat clean
 chitchat.realclean:
@@ -357,9 +357,9 @@ cola.test:
 cola.installable:
 	- $(MAKE) cola installable
 cola.test-installable:
-	- $(MAKE) cola test-installable
+	- $(MAKE) cola test-installable DESTDIR=$(DESTDIR)
 cola.install:
-	- $(MAKE) cola install
+	- $(MAKE) cola install DESTDIR=$(DESTDIR)
 cola.clean:
 	- $(MAKE) cola clean
 cola.realclean:
@@ -374,9 +374,9 @@ dotnet.test:
 dotnet.installable:
 	- $(MAKE) dotnet installable
 dotnet.test-installable:
-	- $(MAKE) dotnet test-installable
+	- $(MAKE) dotnet test-installable DESTDIR=$(DESTDIR)
 dotnet.install:
-	- $(MAKE) dotnet install
+	- $(MAKE) dotnet install DESTDIR=$(DESTDIR)
 dotnet.clean:
 	- $(MAKE) dotnet clean
 dotnet.realclean:
@@ -390,9 +390,9 @@ eclectus.test :
 eclectus.installable:
 	- $(MAKE) eclectus installable
 eclectus.test-installable:
-	- $(MAKE) eclectus test-installable
+	- $(MAKE) eclectus test-installable DESTDIR=$(DESTDIR)
 eclectus.install:
-	- $(MAKE) eclectus install
+	- $(MAKE) eclectus install DESTDIR=$(DESTDIR)
 eclectus.clean :
 	- $(MAKE) eclectus clean
 eclectus.realclean :
@@ -406,9 +406,9 @@ ecmascript.test:
 ecmascript.installable:
 	- $(MAKE) ecmascript installable
 ecmascript.test-installable:
-	- $(MAKE) ecmascript test-installable
+	- $(MAKE) ecmascript test-installable DESTDIR=$(DESTDIR)
 ecmascript.install:
-	- $(MAKE) ecmascript install
+	- $(MAKE) ecmascript install DESTDIR=$(DESTDIR)
 ecmascript.clean:
 	- $(MAKE) ecmascript clean
 ecmascript.realclean:
@@ -422,9 +422,9 @@ forth.test:
 forth.installable:
 	- $(MAKE) forth installable
 forth.test-installable:
-	- $(MAKE) forth test-installable
+	- $(MAKE) forth test-installable DESTDIR=$(DESTDIR)
 forth.install:
-	- $(MAKE) forth install
+	- $(MAKE) forth install DESTDIR=$(DESTDIR)
 forth.clean:
 	- $(MAKE) forth clean
 forth.realclean:
@@ -438,9 +438,9 @@ hq9plus.test:
 hq9plus.installable:
 	- $(MAKE) hq9plus installable
 hq9plus.test-installable:
-	- $(MAKE) hq9plus test-installable
+	- $(MAKE) hq9plus test-installable DESTDIR=$(DESTDIR)
 hq9plus.install:
-	- $(MAKE) hq9plus install
+	- $(MAKE) hq9plus install DESTDIR=$(DESTDIR)
 hq9plus.clean:
 	- $(MAKE) hq9plus clean
 hq9plus.realclean:
@@ -454,9 +454,9 @@ jako.test:
 jako.installable:
 	- $(MAKE) jako installable
 jako.test-installable:
-	- $(MAKE) jako test-installable
+	- $(MAKE) jako test-installable DESTDIR=$(DESTDIR)
 jako.install:
-	- $(MAKE) jako install
+	- $(MAKE) jako install DESTDIR=$(DESTDIR)
 jako.clean:
 	- $(MAKE) jako clean
 jako.realclean:
@@ -470,9 +470,9 @@ json.test:
 json.installable:
 	- $(MAKE) json installable
 json.test-installable:
-	- $(MAKE) json test-installable
+	- $(MAKE) json test-installable DESTDIR=$(DESTDIR)
 json.install:
-	- $(MAKE) json install
+	- $(MAKE) json install DESTDIR=$(DESTDIR)
 json.clean:
 	- $(MAKE) json clean
 json.realclean:
@@ -486,9 +486,9 @@ lazy-k.test:
 lazy-k.installable:
 	- $(MAKE) lazy-k installable
 lazy-k.test-installable:
-	- $(MAKE) lazy-k test-installable
+	- $(MAKE) lazy-k test-installable DESTDIR=$(DESTDIR)
 lazy-k.install:
-	- $(MAKE) lazy-k install
+	- $(MAKE) lazy-k install DESTDIR=$(DESTDIR)
 lazy-k.clean:
 	- $(MAKE) lazy-k clean
 lazy-k.realclean:
@@ -502,9 +502,9 @@ lisp.test:
 lisp.installable:
 	- $(MAKE) lisp installable
 lisp.test-installable:
-	- $(MAKE) lisp test-installable
+	- $(MAKE) lisp test-installable DESTDIR=$(DESTDIR)
 lisp.install:
-	- $(MAKE) lisp install
+	- $(MAKE) lisp install DESTDIR=$(DESTDIR)
 lisp.clean:
 	- $(MAKE) lisp clean
 lisp.realclean:
@@ -518,9 +518,9 @@ lolcode.test:
 lolcode.installable:
 	- $(MAKE) lolcode installable
 lolcode.test-installable:
-	- $(MAKE) lolcode test-installable
+	- $(MAKE) lolcode test-installable DESTDIR=$(DESTDIR)
 lolcode.install:
-	- $(MAKE) lolcode install
+	- $(MAKE) lolcode install DESTDIR=$(DESTDIR)
 lolcode.clean:
 	- $(MAKE) lolcode clean
 lolcode.realclean:
@@ -534,9 +534,9 @@ lua.test:
 lua.installable:
 	- $(MAKE) lua installable
 lua.test-installable:
-	- $(MAKE) lua test-installable
+	- $(MAKE) lua test-installable DESTDIR=$(DESTDIR)
 lua.install:
-	- $(MAKE) lua install
+	- $(MAKE) lua install DESTDIR=$(DESTDIR)
 lua.clean:
 	- $(MAKE) lua clean
 lua.realclean:
@@ -550,9 +550,9 @@ m4.test:
 m4.installable:
 	- $(MAKE) m4 installable
 m4.test-installable:
-	- $(MAKE) m4 test-installable
+	- $(MAKE) m4 test-installable DESTDIR=$(DESTDIR)
 m4.install:
-	- $(MAKE) m4 install
+	- $(MAKE) m4 install DESTDIR=$(DESTDIR)
 m4.clean:
 	- $(MAKE) m4 clean
 m4.realclean:
@@ -566,9 +566,9 @@ ook.test:
 ook.installable:
 	- $(MAKE) ook installable
 ook.test-installable:
-	- $(MAKE) ook test-installable
+	- $(MAKE) ook test-installable DESTDIR=$(DESTDIR)
 ook.install:
-	- $(MAKE) ook install
+	- $(MAKE) ook install DESTDIR=$(DESTDIR)
 ook.clean:
 	- $(MAKE) ook clean
 ook.realclean:
@@ -582,9 +582,9 @@ parrot_compiler.test:
 parrot_compiler.installable:
 	- $(MAKE) ook installable
 parrot_compiler.test-installable:
-	- $(MAKE) ook test-installable
+	- $(MAKE) ook test-installable DESTDIR=$(DESTDIR)
 parrot_compiler.install:
-	- $(MAKE) ook install
+	- $(MAKE) ook install DESTDIR=$(DESTDIR)
 parrot_compiler.clean:
 	- $(MAKE) parrot_compiler clean
 parrot_compiler.realclean:
@@ -598,9 +598,9 @@ perl6.test:
 perl6.installable:
 	- $(MAKE) perl6 installable
 perl6.test-installable:
-	- $(MAKE) perl6 test-installable
+	- $(MAKE) perl6 test-installable DESTDIR=$(DESTDIR)
 perl6.install:
-	- $(MAKE) perl6 install
+	- $(MAKE) perl6 install DESTDIR=$(DESTDIR)
 perl6.clean:
 	- $(MAKE) perl6 clean
 perl6.realclean:
@@ -614,9 +614,9 @@ pheme.test:
 pheme.installable:
 	- $(MAKE) pheme installable
 pheme.test-installable:
-	- $(MAKE) pheme test-installable
+	- $(MAKE) pheme test-installable DESTDIR=$(DESTDIR)
 pheme.install:
-	- $(MAKE) pheme install
+	- $(MAKE) pheme install DESTDIR=$(DESTDIR)
 pheme.clean:
 	- $(MAKE) pheme clean
 pheme.realclean:
@@ -630,9 +630,9 @@ pipp.test:
 pipp.installable:
 	- $(MAKE) pipp installable
 pipp.test-installable:
-	- $(MAKE) pipp test-installable
+	- $(MAKE) pipp test-installable DESTDIR=$(DESTDIR)
 pipp.install:
-	- $(MAKE) pipp install
+	- $(MAKE) pipp install DESTDIR=$(DESTDIR)
 pipp.clean:
 	- $(MAKE) pipp clean
 pipp.realclean:
@@ -646,9 +646,9 @@ PIR.test:
 PIR.installable:
 	- $(MAKE) PIR installable
 PIR.test-installable:
-	- $(MAKE) PIR test-installable
+	- $(MAKE) PIR test-installable DESTDIR=$(DESTDIR)
 PIR.install:
-	- $(MAKE) PIR install
+	- $(MAKE) PIR install DESTDIR=$(DESTDIR)
 PIR.clean:
 	- $(MAKE) PIR clean
 PIR.realclean:
@@ -662,9 +662,9 @@ punie.test:
 punie.installable:
 	- $(MAKE) punie installable
 punie.test-installable:
-	- $(MAKE) punie test-installable
+	- $(MAKE) punie test-installable DESTDIR=$(DESTDIR)
 punie.install:
-	- $(MAKE) punie install
+	- $(MAKE) punie install DESTDIR=$(DESTDIR)
 punie.clean:
 	- $(MAKE) punie clean
 punie.realclean:
@@ -678,9 +678,9 @@ pynie.test:
 pynie.installable:
 	- $(MAKE) pynie installable
 pynie.test-installable:
-	- $(MAKE) pynie test-installable
+	- $(MAKE) pynie test-installable DESTDIR=$(DESTDIR)
 pynie.install:
-	- $(MAKE) pynie install
+	- $(MAKE) pynie install DESTDIR=$(DESTDIR)
 pynie.clean:
 	- $(MAKE) pynie clean
 pynie.realclean:
@@ -694,9 +694,9 @@ regex.test :
 regex.installable:
 	- $(MAKE) regex installable
 regex.test-installable:
-	- $(MAKE) regex test-installable
+	- $(MAKE) regex test-installable DESTDIR=$(DESTDIR)
 regex.install:
-	- $(MAKE) regex install
+	- $(MAKE) regex install DESTDIR=$(DESTDIR)
 regex.clean :
 	- $(MAKE) regex clean
 regex.realclean :
@@ -710,9 +710,9 @@ scheme.test :
 scheme.installable:
 	- $(MAKE) scheme installable
 scheme.test-installable:
-	- $(MAKE) scheme test-installable
+	- $(MAKE) scheme test-installable DESTDIR=$(DESTDIR)
 scheme.install:
-	- $(MAKE) scheme install
+	- $(MAKE) scheme install DESTDIR=$(DESTDIR)
 scheme.clean :
 	- $(MAKE) scheme clean
 scheme.realclean :
@@ -726,9 +726,9 @@ squaak.test:
 squaak.installable:
 	- $(MAKE) squaak installable
 squaak.test-installable:
-	- $(MAKE) squaak test-installable
+	- $(MAKE) squaak test-installable DESTDIR=$(DESTDIR)
 squaak.install:
-	- $(MAKE) squaak install
+	- $(MAKE) squaak install DESTDIR=$(DESTDIR)
 squaak.clean:
 	- $(MAKE) squaak clean
 squaak.realclean:
@@ -742,9 +742,9 @@ tcl.test:
 tcl.installable:
 	- $(MAKE) tcl installable
 tcl.test-installable:
-	- $(MAKE) tcl test-installable
+	- $(MAKE) tcl test-installable DESTDIR=$(DESTDIR)
 tcl.install:
-	- $(MAKE) tcl install
+	- $(MAKE) tcl install DESTDIR=$(DESTDIR)
 tcl.clean:
 	- $(MAKE) tcl clean
 tcl.realclean:
@@ -758,9 +758,9 @@ unlambda.test :
 unlambda.installable:
 	- $(MAKE) unlambda installable
 unlambda.test-installable:
-	- $(MAKE) unlambda test-installable
+	- $(MAKE) unlambda test-installable DESTDIR=$(DESTDIR)
 unlambda.install:
-	- $(MAKE) unlambda install
+	- $(MAKE) unlambda install DESTDIR=$(DESTDIR)
 unlambda.clean :
 	- $(MAKE) unlambda clean
 unlambda.realclean :
@@ -774,9 +774,9 @@ urm.test:
 urm.installable:
 	- $(MAKE) urm installable
 urm.test-installable:
-	- $(MAKE) urm test-installable
+	- $(MAKE) urm test-installable DESTDIR=$(DESTDIR)
 urm.install:
-	- $(MAKE) urm install
+	- $(MAKE) urm install DESTDIR=$(DESTDIR)
 urm.clean:
 	- $(MAKE) urm clean
 urm.realclean:
@@ -790,9 +790,9 @@ WMLScript.test:
 WMLScript.installable:
 	- $(MAKE) WMLScript installable
 WMLScript.test-installable:
-	- $(MAKE) WMLScript test-installable
+	- $(MAKE) WMLScript test-installable DESTDIR=$(DESTDIR)
 WMLScript.install:
-	- $(MAKE) WMLScript install
+	- $(MAKE) WMLScript install DESTDIR=$(DESTDIR)
 WMLScript.clean:
 	- $(MAKE) WMLScript clean
 WMLScript.realclean:

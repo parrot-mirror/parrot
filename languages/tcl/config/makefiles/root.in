@@ -8,7 +8,7 @@ POD2MAN    = pod2man
 
 BUILD_DIR   = @build_dir@
 #IF(cygwin):SHRPENV  = env PATH="@build_dir@/blib/lib:$(PATH)"
-#ELSEIF(not win32):SHRPENV  = env LD_RUN_PATH="@build_dir@/blib/lib"
+#ELSIF(not win32):SHRPENV  = env LD_RUN_PATH="@build_dir@/blib/lib"
 PARROT      = $(SHRPENV) ../../parrot@exe@
 PBC_TO_EXE  = $(SHRPENV) ../../pbc_to_exe@exe@
 RECONFIGURE = $(PERL) $(BUILD_DIR)/tools/dev/reconfigure.pl
@@ -161,7 +161,7 @@ install : installable
 	$(COPY) $(DOCS) $(DESTDIR)$(DOC_DIR)/languages/$(HLLNAME)
 
 test: tcl.pbc
-	prove -r t
+	$(SHRPENV) prove -r t
 
 # Can only run a few of these cleanly with test_more at the moment.
 # eventually, as the list of commented out tests is smaller, just
@@ -312,11 +312,12 @@ DYING_TCL_TESTS = \
 spectest: t_tcl tcl.pbc
     # For now, just test the ones that ``work'' with test_more
 	prove $(RUNNABLE_TCL_TESTS)
+
 t_tcl:
-	$(PERL) tools/tcl_test.pl
+	$(SHRPENV) $(PERL) tools/tcl_test.pl
 
 devtest:
-	cd t && $(PERL) -e 'use Test::Harness qw($$verbose runtests) ; $$Test::Harness::verbose=1;runtests(glob("*.t"))' && cd ..
+	cd t && $(SHRPENV) $(PERL) -e 'use Test::Harness qw($$verbose runtests) ; $$Test::Harness::verbose=1;runtests(glob("*.t"))' && cd ..
 
 CLEANERS = \
 tcl.c \

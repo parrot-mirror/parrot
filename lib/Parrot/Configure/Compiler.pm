@@ -622,62 +622,62 @@ sub cond_eval {
     if (@count > 1) { # multiple keys: recurse into
         my $truth = 0;
         my $prevtruth = 0;
-	my $key = next_expr($expr);
-	my $op  = '';
+        my $key = next_expr($expr);
+        my $op  = '';
       LOOP:
-	while ($key) {
-	    if (($key eq '!') or (uc($key) eq 'NOT')) {
-		# bind next key immediately
-		$op = 'NOT';
-		$key = next_expr($expr);
-	    }
-	    elsif ($truth and ($op eq 'OR')) {
-		# true OR: => true
-		print "#* => ",truth(1)," rest=\"$expr\" SKIP on true OR\n" if $DEBUG;
-		last LOOP;
-	    }
-	    print "#* truth=",truth($truth)," op=\"$op\" key=\"$key\"\n" if $DEBUG;
-	    $prevtruth = $truth;
-	    if (!$truth and ($op eq 'AND')) { # false AND: => false, skip rest
-		print "#* => ",truth(0)," rest=\"$expr\" SKIP already false\n" if $DEBUG;
-		last LOOP;
-	    }
-	    $truth = cond_eval($conf, $key);
-	    if ($op eq 'NOT') { # NOT *: invert
-		$truth = $truth ? 0 : 1;
-	    }
-	    elsif ($op eq 'AND' and !$truth) { # * AND false: => false
-		print "#* => ",truth(0)," rest=\"$expr\" SKIP rest\n" if $DEBUG;
-		last LOOP;
-	    }
-	    # * OR false => * (keep $truth). true OR * already handled before
-	    print "#* => ",truth($truth)," rest=\"$expr\"\n" if $DEBUG;
-	    my $prevexpr = $expr;
-	    $op  = next_expr($expr);
-	    if ($op) {
-		if ($op eq '|' or uc($op) eq 'OR') {
-		    $op = 'OR';
-		}
-		elsif ($op eq '&' or uc($op) eq 'AND') {
-		    $op = 'AND';
-		}
-		elsif ($op eq '!' or uc($op) eq 'NOT') {
-		    $op = 'NOT';
-		}
-		else {
-		    die "invalid op \"$op\" in \"$_[1]\" at \"$prevexpr\".\n";
-		}
-		$key = next_expr($expr);
-	    }
-	    elsif ($prevexpr) {
-		die "Makefile conditional syntax error: missing op in \"$_[1]\" at \"$prevexpr\".\n";
-	    }
-	    else {
-		last LOOP; # end of expr, nothing left
-	    }
-	    if ($prevexpr eq $expr) {
-		die "Makefile conditional parser error in \"$_[1]\" at \"$prevexpr\".\n";
-	    }
+        while ($key) {
+            if (($key eq '!') or (uc($key) eq 'NOT')) {
+                # bind next key immediately
+                $op = 'NOT';
+                $key = next_expr($expr);
+            }
+            elsif ($truth and ($op eq 'OR')) {
+                # true OR: => true
+                print "#* => ",truth(1)," rest=\"$expr\" SKIP on true OR\n" if $DEBUG;
+                last LOOP;
+            }
+            print "#* truth=",truth($truth)," op=\"$op\" key=\"$key\"\n" if $DEBUG;
+            $prevtruth = $truth;
+            if (!$truth and ($op eq 'AND')) { # false AND: => false, skip rest
+                print "#* => ",truth(0)," rest=\"$expr\" SKIP already false\n" if $DEBUG;
+                last LOOP;
+            }
+            $truth = cond_eval($conf, $key);
+            if ($op eq 'NOT') { # NOT *: invert
+                $truth = $truth ? 0 : 1;
+            }
+            elsif ($op eq 'AND' and !$truth) { # * AND false: => false
+                print "#* => ",truth(0)," rest=\"$expr\" SKIP rest\n" if $DEBUG;
+                last LOOP;
+            }
+            # * OR false => * (keep $truth). true OR * already handled before
+            print "#* => ",truth($truth)," rest=\"$expr\"\n" if $DEBUG;
+            my $prevexpr = $expr;
+            $op  = next_expr($expr);
+            if ($op) {
+                if ($op eq '|' or uc($op) eq 'OR') {
+                    $op = 'OR';
+                }
+                elsif ($op eq '&' or uc($op) eq 'AND') {
+                    $op = 'AND';
+                }
+                elsif ($op eq '!' or uc($op) eq 'NOT') {
+                    $op = 'NOT';
+                }
+                else {
+                    die "invalid op \"$op\" in \"$_[1]\" at \"$prevexpr\".\n";
+                }
+                $key = next_expr($expr);
+            }
+            elsif ($prevexpr) {
+                die "Makefile conditional syntax error: missing op in \"$_[1]\" at \"$prevexpr\".\n";
+            }
+            else {
+                last LOOP; # end of expr, nothing left
+            }
+            if ($prevexpr eq $expr) {
+                die "Makefile conditional parser error in \"$_[1]\" at \"$prevexpr\".\n";
+            }
         }
         return $truth;
     }
@@ -711,6 +711,6 @@ sub append_configure_log {
 # Local Variables:
 #   mode: cperl
 #   cperl-indent-level: 4
-#   fill-column: 80
+#   fill-column: 100
 # End:
 # vim: expandtab shiftwidth=4:

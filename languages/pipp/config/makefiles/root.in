@@ -18,7 +18,7 @@ MANDIR	      = @mandir@
 
 # Set up commands
 #IF(cygwin):SHRPENV  = env PATH="@build_dir@/blib/lib:$(PATH)"
-#ELSEIF(not win32):SHRPENV  = env LD_RUN_PATH="@build_dir@/blib/lib"
+#ELSIF(not win32):SHRPENV  = env LD_RUN_PATH="@build_dir@/blib/lib"
 PARROT        = $(SHRPENV) ../../parrot@exe@
 PBC_TO_EXE    = $(SHRPENV) ../../pbc_to_exe@exe@
 PBC_MERGE     = $(SHRPENV) $(BUILD_DIR)/pbc_merge$(EXE)
@@ -229,9 +229,10 @@ $(PHP_GROUP): $(PMC_SOURCES)
 	@cd $(PMCDIR) && $(PMCBUILD) linklibs $(PMCS)
 	@cd $(PMCDIR) && $(PMCBUILD) copy "--destination=$(PARROT_DYNEXT)" $(PMCS)
 
-installable : installable_$(HLLNAME)@exe@ pmc $(HLLNAME).pbc
+installable : installable_$(HLLNAME)@exe@ pmc $(HLLNAME).pbc src/common/pipplib.pbc $(PHP_EXT)
 	$(CP) installable_$(HLLNAME)@exe@ $(BUILD_DIR)
 	$(CP) $(HLLNAME).pbc $(PARROT_LIB)/$(HLLNAME).pbc
+	$(CP) src/common/pipplib.pbc $(PHP_EXT) $(PARROT_LIB)
 
 install : installable
 	$(CP) installable_$(HLLNAME)@exe@ $(DESTDIR)$(BIN_DIR)/parrot-$(HLLNAME)@exe@
