@@ -383,7 +383,6 @@ is_infix(ARGIN(const char *name), int n, ARGIN(SymReg **r))
         return MMD_MOD;
     if (STREQ(name, "cmod"))
         return MMD_CMOD;
-        */
     if (STREQ(name, "pow"))
         return MMD_POW;
 
@@ -393,6 +392,7 @@ is_infix(ARGIN(const char *name), int n, ARGIN(SymReg **r))
         return MMD_BAND;
     if (STREQ(name, "bxor"))
         return MMD_BXOR;
+        */
     if (STREQ(name, "bors"))
         return MMD_SOR;
     if (STREQ(name, "bands"))

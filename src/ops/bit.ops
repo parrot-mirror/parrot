@@ -42,10 +42,18 @@ If possible, they use the appropriate language type, specified with C<.HLL>.
 
 =item B<band>(inout INT, in INT)
 
+=item B<band>(invar PMC, in INT)
+
+=item B<band>(invar PMC, invar PMC)
+
 Set the bits of $1 according to the B<and> of the corresponding bits
 from $1 and $2.
 
 =item B<band>(out INT, in INT, in INT)
+
+=item B<band>(invar PMC, invar PMC, in INT)
+
+=item B<band>(invar PMC, invar PMC, invar PMC)
 
 Set the bits of $1 according to the B<and> of the corresponding bits
 from $2 and $3.
@@ -56,8 +64,24 @@ inline op band(inout INT, in INT) :base_core {
   $1 &= $2;
 }
 
+inline op band(invar PMC, in INT) :base_core {
+      VTABLE_i_bitwise_and_int(interp, $1, $2);
+}
+
+inline op band(invar PMC, invar PMC) :base_core {
+      VTABLE_i_bitwise_and(interp, $1, $2);
+}
+
 inline op band(out INT, in INT, in INT) :base_core {
   $1 = $2 & $3;
+}
+
+inline op band(invar PMC, invar PMC, in INT) :base_core {
+      $1 = VTABLE_bitwise_and_int(interp, $2, $3, $1);
+}
+
+inline op band(invar PMC, invar PMC, invar PMC) :base_core {
+      $1 = VTABLE_bitwise_and(interp, $2, $3, $1);
 }
 
 =item B<bands>(inout STR, in STR)
@@ -156,10 +180,18 @@ inline op n_bnots(out PMC, invar PMC) :base_core {
 
 =item B<bor>(inout INT, in INT)
 
+=item B<bor>(invar PMC, in INT)
+
+=item B<bor>(invar PMC, invar PMC)
+
 Set the bits of $1 according to the B<or> of the corresponding bits
 from $1 and $2.
 
 =item B<bor>(out INT, in INT, in INT)
+
+=item B<bor>(invar PMC, invar PMC, in INT)
+
+=item B<bor>(invar PMC, invar PMC, invar PMC)
 
 Set the bits of $1 according to the B<or> of the corresponding bits
 from $2 and $3.
@@ -170,8 +202,24 @@ inline op bor(inout INT, in INT) :base_core {
   $1 |= $2;
 }
 
+inline op bor(invar PMC, in INT) :base_core {
+      VTABLE_i_bitwise_or_int(interp, $1, $2);
+}
+
+inline op bor(invar PMC, invar PMC) :base_core {
+      VTABLE_i_bitwise_or(interp, $1, $2);
+}
+
 inline op bor(out INT, in INT, in INT) :base_core {
   $1 = $2 | $3;
+}
+
+inline op bor(invar PMC, invar PMC, in INT) :base_core {
+      $1 = VTABLE_bitwise_or_int(interp, $2, $3, $1);
+}
+
+inline op bor(invar PMC, invar PMC, invar PMC) :base_core {
+      $1 = VTABLE_bitwise_or(interp, $2, $3, $1);
 }
 
 =item B<bors>(inout STR, in STR)
@@ -290,10 +338,18 @@ inline op rot(out INT, in INT, in INT, inconst INT) {
 
 =item B<bxor>(inout INT, in INT)
 
+=item B<bxor>(invar PMC, in INT)
+
+=item B<bxor>(invar PMC, invar PMC)
+
 Set the bits of $1 according to the B<xor> of the corresponding bits
 from $1 and $2.
 
 =item B<bxor>(out INT, in INT, in INT)
+
+=item B<bxor>(invar PMC, invar PMC, in INT)
+
+=item B<bxor>(invar PMC, invar PMC, invar PMC)
 
 Set the bits of $1 according to the B<xor> of the corresponding bits
 from $2 and $3.
@@ -304,8 +360,24 @@ inline op bxor(inout INT, in INT) :base_core {
   $1 ^= $2;
 }
 
+inline op bxor(invar PMC, in INT) :base_core {
+      VTABLE_i_bitwise_xor_int(interp, $1, $2);
+}
+
+inline op bxor(invar PMC, invar PMC) :base_core {
+      VTABLE_i_bitwise_xor(interp, $1, $2);
+}
+
 inline op bxor(out INT, in INT, in INT) :base_core {
   $1 = $2 ^ $3;
+}
+
+inline op bxor(invar PMC, invar PMC, in INT) :base_core {
+      $1 = VTABLE_bitwise_xor_int(interp, $2, $3, $1);
+}
+
+inline op bxor(invar PMC, invar PMC, invar PMC) :base_core {
+      $1 = VTABLE_bitwise_xor(interp, $2, $3, $1);
 }
 
 =item B<bxors>(inout STR, in STR)
