@@ -379,11 +379,11 @@ is_infix(ARGIN(const char *name), int n, ARGIN(SymReg **r))
         return MMD_DIVIDE;
     if (STREQ(name, "fdiv"))
         return MMD_FLOOR_DIVIDE;
-        */
     if (STREQ(name, "mod"))
         return MMD_MOD;
     if (STREQ(name, "cmod"))
         return MMD_CMOD;
+        */
     if (STREQ(name, "pow"))
         return MMD_POW;
 
