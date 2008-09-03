@@ -221,23 +221,23 @@ PMC* bitwise_xor_int(INTVAL value, PMC* dest)
 void i_bitwise_xor(PMC* value)
 void i_bitwise_xor_int(INTVAL value)
 
-PMC* bitwise_ors(PMC* value, PMC* dest)         MMD_SOR
-PMC* bitwise_ors_str(STRING* value, PMC* dest)  MMD_SOR_STR
+PMC* bitwise_ors(PMC* value, PMC* dest)
+PMC* bitwise_ors_str(STRING* value, PMC* dest)
 
-void i_bitwise_ors(PMC* value)                  MMD_I_SOR
-void i_bitwise_ors_str(STRING* value)           MMD_I_SOR_STR
+void i_bitwise_ors(PMC* value)
+void i_bitwise_ors_str(STRING* value)
 
-PMC* bitwise_ands(PMC* value, PMC* dest)        MMD_SAND
-PMC* bitwise_ands_str(STRING* value, PMC* dest) MMD_SAND_STR
+PMC* bitwise_ands(PMC* value, PMC* dest)
+PMC* bitwise_ands_str(STRING* value, PMC* dest)
 
-void i_bitwise_ands(PMC* value)                 MMD_I_SAND
-void i_bitwise_ands_str(STRING* value)          MMD_I_SAND_STR
+void i_bitwise_ands(PMC* value)
+void i_bitwise_ands_str(STRING* value)
 
-PMC* bitwise_xors(PMC* value, PMC* dest)        MMD_SXOR
-PMC* bitwise_xors_str(STRING* value, PMC* dest) MMD_SXOR_STR
+PMC* bitwise_xors(PMC* value, PMC* dest)
+PMC* bitwise_xors_str(STRING* value, PMC* dest)
 
-void i_bitwise_xors(PMC* value)                 MMD_I_SXOR
-void i_bitwise_xors_str(STRING* value)          MMD_I_SXOR_STR
+void i_bitwise_xors(PMC* value)
+void i_bitwise_xors_str(STRING* value)
 
 PMC* bitwise_not(PMC* dest)
 void i_bitwise_not() :write
