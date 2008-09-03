@@ -268,7 +268,7 @@ to a number or PMC).
 
 */
 
-    VTABLE void get_number(FLOATVAL value) {
+    VTABLE void set_number_native(FLOATVAL value) {
         Parrot_CPointer * const data = PARROT_CPOINTER(SELF);
 
         if (string_equal(interp, data->sig, CONST_STRING(interp, "N"))) {
