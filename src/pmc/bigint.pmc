@@ -1052,16 +1052,6 @@ Decrements the integer.
             EXCEPTION_INTERNAL_NOT_IMPLEMENTED, "unimp mod");
     }
 
-    MULTI PMC *cmodulus(BigInt value, PMC *dest) {
-        return Parrot_BigInt_multi_modulus_BigInt_PMC(INTERP, SELF, value, dest);
-    }
-    MULTI PMC *cmodulus(Integer value, PMC *dest) {
-        return Parrot_BigInt_multi_modulus_Integer_PMC(INTERP, SELF, value, dest);
-    }
-    MULTI PMC *cmodulus(DEFAULT value, PMC *dest) {
-        return Parrot_BigInt_multi_modulus_DEFAULT_PMC(INTERP, SELF, value, dest);
-    }
-
     MULTI void i_modulus(BigInt value) {
         bigint_mod_bigint(INTERP, SELF, value, SELF);
     }
@@ -1072,18 +1062,6 @@ Decrements the integer.
         Parrot_ex_throw_from_c_args(INTERP, NULL,
             EXCEPTION_INTERNAL_NOT_IMPLEMENTED, "unimp mod");
     }
-
-    MULTI void i_cmodulus(BigInt value) {
-        bigint_mod_bigint(INTERP, SELF, value, SELF);
-    }
-    MULTI void i_cmodulus(Integer value) {
-        bigint_mod_bigint_int(INTERP, SELF, PMC_int_val(value), SELF);
-    }
-    MULTI void i_cmodulus(DEFAULT value) {
-        Parrot_ex_throw_from_c_args(INTERP, NULL,
-            EXCEPTION_INTERNAL_NOT_IMPLEMENTED, "unimp cmod");
-    }
-
 
     MULTI INTVAL cmp(BigInt value) {
         return bigint_cmp(INTERP, SELF, value);
