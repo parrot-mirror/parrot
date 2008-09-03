@@ -10,11 +10,23 @@
 
 .sub main :main
     .param pmc args
-    .local int argc
+    .local int argc, installed
+    .local string lib_dir, pbc_fn
     $P0  = shift args
     argc = elements args
 
-    load_bytecode 'languages/forth/forth.pir'
+    # determine location of libs from the Parrot config
+    .local pmc cfg
+    cfg  = _config()
+    lib_dir = 'forth/'
+    installed = cfg['installed']
+    if installed goto inst
+
+    lib_dir = cfg['build_dir']
+    lib_dir .= 'languages/forth/'
+inst:
+    pbc_fn = concat lib_dir, 'forth'
+    load_bytecode pbc_fn
 
     .local pmc iter
     iter = new .Iterator, args

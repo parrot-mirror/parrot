@@ -20,7 +20,7 @@ MANDIR	      = @mandir@
 PARROT_DYNEXT = $(BUILD_DIR)/runtime/parrot/dynext
 PARROT_LIB    = $(BUILD_DIR)/runtime/parrot/library
 #IF(cygwin):SHRPENV  = env PATH="@build_dir@/blib/lib:$(PATH)"
-#ELSEIF(not win32):SHRPENV  = env LD_RUN_PATH="@build_dir@/blib/lib"
+#ELSIF(not win32):SHRPENV  = env LD_RUN_PATH="@build_dir@/blib/lib"
 PARROT        = $(SHRPENV) ../../parrot@exe@
 PBC_TO_EXE    = $(SHRPENV) ../../pbc_to_exe@exe@
 RECONFIGURE   = $(PERL) @build_dir@/tools/dev/reconfigure.pl

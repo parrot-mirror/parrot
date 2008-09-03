@@ -7,15 +7,17 @@
 .sub ' init' :load
 
     # determine location of libs from the Parrot config
+    load_bytecode 'config.pir'
     .local pmc cfg
     cfg  = _config()
-    .local string installed, lib_dir, pbc_fn
-    lib_dir = 'forth_'
+    .local int installed
+    .local string lib_dir, pbc_fn
+    lib_dir = 'forth/'
     installed = cfg['installed']
     if installed goto inst
 
     lib_dir = cfg['build_dir']
-    lib_dir .= 'languages/forth/'
+    lib_dir .= '/languages/forth/'
 inst:
     # load the libraries we depend on
     pbc_fn = concat lib_dir, 'tokenstream.pbc'
