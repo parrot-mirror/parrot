@@ -410,9 +410,9 @@ is_infix(ARGIN(const char *name), int n, ARGIN(SymReg **r))
     /*
     if (STREQ(name, "concat"))
         return MMD_CONCAT;
-    */
     if (STREQ(name, "repeat"))
         return MMD_REPEAT;
+    */
 
     if (STREQ(name, "or"))
         return MMD_LOR;

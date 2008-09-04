@@ -291,11 +291,11 @@ PMC* concatenate_str(STRING* value, PMC* dest)
 void i_concatenate(PMC* value)
 void i_concatenate_str(STRING* value)
 
-PMC* repeat(PMC* value, PMC* dest)           MMD_REPEAT
-PMC* repeat_int(INTVAL value, PMC* dest)     MMD_REPEAT_INT
+PMC* repeat(PMC* value, PMC* dest)
+PMC* repeat_int(INTVAL value, PMC* dest)
 
-void i_repeat(PMC* value)                    MMD_I_REPEAT
-void i_repeat_int(INTVAL value)              MMD_I_REPEAT_INT
+void i_repeat(PMC* value)
+void i_repeat_int(INTVAL value)
 
 void substr(INTVAL offset, INTVAL length, PMC* dest)
 STRING* substr_str(INTVAL offset, INTVAL length)

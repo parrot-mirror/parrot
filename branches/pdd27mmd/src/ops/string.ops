@@ -126,13 +126,9 @@ inline op concat(invar PMC, invar PMC, invar PMC) :base_core {
 
 =item B<repeat>(out STR, in STR, in INT)
 
-=item B<repeat>(in PMC, in PMC, in INT)
+=item B<repeat>(invar PMC, invar PMC, in INT)
 
-=item B<repeat>(in PMC, in PMC, in PMC)
-
-=item B<n_repeat>(out PMC, in PMC, in INT)
-
-=item B<n_repeat>(out PMC, in PMC, in PMC)
+=item B<repeat>(invar PMC, invar PMC, invar PMC)
 
 Repeat string $2 integer $3 times and return result in string $1.
 The C<PMC> versions are MMD operations.
@@ -144,6 +140,14 @@ inline op repeat(out STR, in STR, in INT) :base_mem {
         Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_NEG_REPEAT,
                 "Cannot repeat with negative arg");
     $1 = string_repeat(interp, $2, (UINTVAL)$3, NULL);
+}
+
+inline op repeat(invar PMC, invar PMC, in INT) :base_core {
+      $1 = VTABLE_repeat_int(interp, $2, $3, $1);
+}
+
+inline op repeat(invar PMC, invar PMC, invar PMC) :base_core {
+      $1 = VTABLE_repeat(interp, $2, $3, $1);
 }
 
 
