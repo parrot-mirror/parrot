@@ -245,23 +245,23 @@ void i_bitwise_not() :write
 PMC* bitwise_nots(PMC* dest)
 void i_bitwise_nots() :write
 
-PMC* bitwise_shl(PMC* value, PMC* dest)         MMD_BSL
-PMC* bitwise_shl_int(INTVAL value, PMC* dest)   MMD_BSL_INT
+PMC* bitwise_shl(PMC* value, PMC* dest)
+PMC* bitwise_shl_int(INTVAL value, PMC* dest)
 
-void i_bitwise_shl(PMC* value)                  MMD_I_BSL
-void i_bitwise_shl_int(INTVAL value)            MMD_I_BSL_INT
+void i_bitwise_shl(PMC* value)
+void i_bitwise_shl_int(INTVAL value)
 
-PMC* bitwise_shr(PMC* value, PMC* dest)         MMD_BSR
-PMC* bitwise_shr_int(INTVAL value, PMC* dest)   MMD_BSR_INT
+PMC* bitwise_shr(PMC* value, PMC* dest)
+PMC* bitwise_shr_int(INTVAL value, PMC* dest)
 
-void i_bitwise_shr(PMC* value)                  MMD_I_BSR
-void i_bitwise_shr_int(INTVAL value)            MMD_I_BSR_INT
+void i_bitwise_shr(PMC* value)
+void i_bitwise_shr_int(INTVAL value)
 
-PMC* bitwise_lsr(PMC* value, PMC* dest)         MMD_LSR
-PMC* bitwise_lsr_int(INTVAL value, PMC* dest)   MMD_LSR_INT
+PMC* bitwise_lsr(PMC* value, PMC* dest)
+PMC* bitwise_lsr_int(INTVAL value, PMC* dest)
 
-void i_bitwise_lsr(PMC* value)                  MMD_I_LSR
-void i_bitwise_lsr_int(INTVAL value)            MMD_I_LSR_INT
+void i_bitwise_lsr(PMC* value)
+void i_bitwise_lsr_int(INTVAL value)
 
 [CMP]
 INTVAL is_equal(PMC* value)                  MMD_EQ
