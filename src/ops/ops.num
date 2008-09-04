@@ -1354,3 +1354,6 @@ lsr_p_ic                       1323
 lsr_p_p_p                      1324
 lsr_p_p_i                      1325
 lsr_p_p_ic                     1326
+repeat_p_p_p                   1327
+repeat_p_p_i                   1328
+repeat_p_p_ic                  1329
