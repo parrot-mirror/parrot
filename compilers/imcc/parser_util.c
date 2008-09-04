@@ -322,8 +322,9 @@ to_infix(PARROT_INTERP, ARGIN(const char *name), ARGMOD(SymReg **r),
     PARROT_ASSERT(*n >= 2);
 
     is_n = (IMCC_INFO(interp)->state->pragmas & PR_N_OPERATORS) ||
-        (name[0] == 'n' && name[1] == '_') ||
+        (name[0] == 'n' && name[1] == '_'); /* ||
         (mmd_op == MMD_LOR || mmd_op == MMD_LAND || mmd_op == MMD_LXOR);
+        */
 
     if (*n == 3 && r[0] == r[1] && !is_n) {       /* cvt to inplace */
         char buf[10];
@@ -412,7 +413,6 @@ is_infix(ARGIN(const char *name), int n, ARGIN(SymReg **r))
         return MMD_CONCAT;
     if (STREQ(name, "repeat"))
         return MMD_REPEAT;
-    */
 
     if (STREQ(name, "or"))
         return MMD_LOR;
@@ -420,6 +420,7 @@ is_infix(ARGIN(const char *name), int n, ARGIN(SymReg **r))
         return MMD_LAND;
     if (STREQ(name, "xor"))
         return MMD_LXOR;
+    */
 
     /* now try n_<op> */
     if (name[0] == 'n' && name[1] == '_')

@@ -903,12 +903,18 @@ These operations apply logical functions to their arguments.
 
 =item B<and>(out INT, in INT, in INT)
 
+=item B<and>(invar PMC, invar PMC, invar PMC)
+
 Short-circuiting logical and.  Returns $2 if it's false, else returns $3.
 
 =cut
 
 inline op and(out INT, in INT, in INT) :base_core {
   $1 = $2 ? $3 : $2;
+}
+
+inline op and(invar PMC, invar PMC, invar PMC) :base_core {
+      $1 = VTABLE_logical_and(interp, $2, $3, $1);
 }
 
 ########################################
@@ -953,6 +959,8 @@ inline op n_not(out PMC, invar PMC) :base_core {
 
 =item B<or>(out INT, in INT, in INT)
 
+=item B<or>(invar PMC, invar PMC, invar PMC)
+
 Short-circuiting logical or.  Returns $2 if it's true, else returns $3.
 
 =cut
@@ -961,9 +969,15 @@ inline op or(out INT, in INT, in INT) :base_core {
   $1 = $2 ? $2 : $3;
 }
 
+inline op or(invar PMC, invar PMC, invar PMC) :base_core {
+      $1 = VTABLE_logical_or(interp, $2, $3, $1);
+}
+
 ########################################
 
 =item B<xor>(out INT, in INT, in INT)
+
+=item B<xor>(invar PMC, invar PMC, invar PMC)
 
 Logical xor.  Returns $2 if it's true and $3 isn't,
 returns $3 if it's true and $2 isn't, else returns false.
@@ -972,6 +986,10 @@ returns $3 if it's true and $2 isn't, else returns false.
 
 inline op xor(out INT, in INT, in INT) :base_core {
   $1 = ($2 && ! $3) ? $2 : ($3 && ! $2) ? $3 : 0;
+}
+
+inline op xor(invar PMC, invar PMC, invar PMC) :base_core {
+      $1 = VTABLE_logical_xor(interp, $2, $3, $1);
 }
 
 =back
