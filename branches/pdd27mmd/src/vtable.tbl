@@ -274,11 +274,11 @@ INTVAL cmp(PMC* value)                       MMD_CMP
 INTVAL cmp_num(PMC* value)                   MMD_NUMCMP
 INTVAL cmp_string(PMC* value)                MMD_STRCMP
 
-PMC* logical_or(PMC* value, PMC* dest)       MMD_LOR
+PMC* logical_or(PMC* value, PMC* dest)
 
-PMC* logical_and(PMC* value, PMC* dest)      MMD_LAND
+PMC* logical_and(PMC* value, PMC* dest)
 
-PMC* logical_xor(PMC* value, PMC* dest)      MMD_LXOR
+PMC* logical_xor(PMC* value, PMC* dest)
 
 PMC* logical_not(PMC* dest)
 void i_logical_not() :write

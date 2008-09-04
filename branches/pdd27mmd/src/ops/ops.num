@@ -1357,3 +1357,6 @@ lsr_p_p_ic                     1326
 repeat_p_p_p                   1327
 repeat_p_p_i                   1328
 repeat_p_p_ic                  1329
+and_p_p_p                      1330
+or_p_p_p                       1331
+xor_p_p_p                      1332
