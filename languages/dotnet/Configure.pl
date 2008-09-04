@@ -21,6 +21,7 @@ use Getopt::Long;
 
 # Parrot specific Perl 5 modules
 use Parrot::Config;
+use Parrot::Configure;
 
 # Parse command line.
 my ( $parrot_path, $mono_lib_path, $srm );
@@ -68,24 +69,18 @@ sub generate_makefile {
     # Generate class library make instructions.
     my $class_lib_make = generate_classlib_make($mono_lib_path);
 
-    # Read in makefile template.
-    open my $in_fh, '<', 'config/Makefile.in'
-        or die "Unable to open config/Makefile.in\n";
+    # Generate Makefile in two steps
+    my $conf = Parrot::Configure->new;
+    $conf->data()->slurp();
+    $conf->genfile('config/Makefile.in', 'config/Makefile.tmp');
+    # and read temp. makefile template to fill in ${trans_mono_lib_path}, ${trans_class_library}
+    open my $in_fh, '<', 'config/Makefile.tmp'
+        or die "Unable to open config/Makefile.tmp\n";
     my $makefile = join( '', <$in_fh> );
     close $in_fh;
 
-    # Sub in config data.
-    for ( keys %{$config} ) {
-        # warnings flags aren't substituted in Makefile.in; skip them
-        next if m/^-W/g;
-
-        $makefile =~ s/\${$_}/$config->{$_}/g;
-    }
-    $makefile =~ s/\$\{build_dir\}/$parrot_path/g;
-
     my $local_mono_lib_path = $mono_lib_path || q{};
     $makefile =~ s/\$\{trans_mono_lib_path\}/$local_mono_lib_path/g;
-
     $makefile =~ s/\$\{trans_class_library\}/$class_lib_make/g;
 
     # Write makefile.

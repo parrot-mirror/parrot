@@ -12,10 +12,10 @@ use File::Spec;
 
 sub import {
     if ($^O eq 'cygwin' or $^O eq 'MSWin32') {
-	$ENV{PATH} = $PConfig{build_dir}.":".$ENV{PATH};
+        $ENV{PATH} = $PConfig{build_dir}.":".$ENV{PATH};
     }
     else {
-	$ENV{LD_RUN_PATH} = $PConfig{build_dir};
+        $ENV{LD_RUN_PATH} = $PConfig{build_dir};
     }
     my $parrot = File::Spec->catfile( $PConfig{build_dir}, 'parrot' );
     my $tcl = File::Spec->catdir( $PConfig{build_dir}, qw(languages tcl) );
