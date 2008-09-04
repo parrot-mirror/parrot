@@ -398,7 +398,6 @@ is_infix(ARGIN(const char *name), int n, ARGIN(SymReg **r))
         return MMD_SAND;
     if (STREQ(name, "bxors"))
         return MMD_SXOR;
-        */
 
     if (STREQ(name, "shl"))
         return MMD_BSL;
@@ -406,6 +405,7 @@ is_infix(ARGIN(const char *name), int n, ARGIN(SymReg **r))
         return MMD_BSR;
     if (STREQ(name, "lsr"))
         return MMD_LSR;
+        */
 
     /*
     if (STREQ(name, "concat"))
