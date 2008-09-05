@@ -103,7 +103,7 @@ op eq(invar PMC, in INT, inconst LABEL) :base_core {
   PMC *temp = pmc_new(interp, enum_class_Integer);
   PMC_int_val(temp) = $2;
   Parrot_mmd_multi_dispatch_from_c_args(interp, 
-          "is_equal", "PP->I", temp, $2, &result);
+          "is_equal", "PP->I", $1, temp, &result);
   if (result) {
     goto OFFSET($3);
   }
