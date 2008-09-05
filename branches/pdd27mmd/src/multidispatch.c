@@ -554,8 +554,10 @@ convert_varargs_to_sig_pmc(PARROT_INTERP, ARGIN(const char *sig), va_list args)
                 case 'P': 
                 {
                     PMC *pmc_arg = va_arg(args, PMC *);
-                    VTABLE_set_integer_keyed_int(interp, type_tuple, i,
-                            VTABLE_type(interp, pmc_arg));
+                    if (!PMC_IS_NULL(pmc_arg))
+                        VTABLE_set_integer_keyed_int(interp, type_tuple, i,
+                                VTABLE_type(interp, pmc_arg));
+
                     VTABLE_push_pmc(interp, call_object, pmc_arg); 
                     break;
                 }
