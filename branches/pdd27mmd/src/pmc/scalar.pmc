@@ -57,8 +57,8 @@ bitwise_left_shift_internal(PARROT_INTERP, PMC *self,
 
     /* Store the result. */
     if (! overflow_p) {
-        if (!dest)
-            dest = pmc_new(interp, VTABLE_type(interp, self));
+        dest = pmc_new(interp, VTABLE_type(interp, self));
+
         VTABLE_set_integer_native(interp, dest, result);
     }
     else if (PARROT_ERRORS_test(interp, PARROT_ERRORS_OVERFLOW_FLAG)) {
@@ -67,15 +67,7 @@ bitwise_left_shift_internal(PARROT_INTERP, PMC *self,
     }
     else {
         /* Overflow; must promote dest to BigInt, and do a BigInt shift. */
-        if (dest)
-            VTABLE_morph(interp, dest, enum_class_BigInt);
-        else {
-            /* Arguably, we should throw an error here if dest == self and self
-             * is not a numeric type.  However, that would require a firmer
-             * definition of "numeric type."
-             */
-            dest = pmc_new(interp, enum_class_BigInt);
-        }
+        dest = pmc_new(interp, enum_class_BigInt);
 
         VTABLE_set_integer_native(interp, dest, base);
         Parrot_BigInt_bitwise_shl_int(interp, dest, shift_amount, dest);
@@ -635,8 +627,7 @@ Calculates modulus inplace
             Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_DIV_BY_ZERO,
                 "float modulus by zero");
 
-        if (!dest)
-            dest = pmc_new(INTERP, VTABLE_type(INTERP, SELF));
+        dest = pmc_new(INTERP, VTABLE_type(INTERP, SELF));
 
         VTABLE_set_number_native(INTERP, dest,
                 floatval_mod(SELF.get_number(), d));
@@ -648,8 +639,7 @@ Calculates modulus inplace
             Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_DIV_BY_ZERO,
                 "float modulus by zero");
 
-        if (!dest)
-            dest = pmc_new(INTERP, VTABLE_type(INTERP, SELF));
+        dest = pmc_new(INTERP, VTABLE_type(INTERP, SELF));
 
         VTABLE_set_number_native(INTERP, dest,
                 floatval_mod(SELF.get_number(), value));
@@ -661,8 +651,7 @@ Calculates modulus inplace
             Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_DIV_BY_ZERO,
                 "float modulus by zero");
 
-        if (!dest)
-            dest = pmc_new(INTERP, VTABLE_type(INTERP, SELF));
+        dest = pmc_new(INTERP, VTABLE_type(INTERP, SELF));
 
         VTABLE_set_number_native(INTERP, dest,
                 floatval_mod(SELF.get_number(), value));
