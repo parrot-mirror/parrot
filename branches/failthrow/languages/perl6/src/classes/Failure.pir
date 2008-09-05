@@ -45,7 +45,9 @@
     $I0 = self.'handled'()
     if $I0 goto done
     $P0 = self.'!exception'()
-    throw $P0
+    $S0 = $P0['message']
+    $S0 = concat $S0, "\n"
+    printerr $S0
   done:
 .end
 
