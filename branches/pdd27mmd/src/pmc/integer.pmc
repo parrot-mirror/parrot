@@ -347,8 +347,7 @@ MULTI PMC *add(Integer value, PMC *dest) {
     const INTVAL c = a + b;
 
     if ((c^a) >= 0 || (c^b) >= 0) {
-        if (!dest)
-            dest = pmc_new(INTERP, VTABLE_type(interp, SELF));
+        dest = pmc_new(INTERP, VTABLE_type(interp, SELF));
 
         /* need this for e.g. Undef PMC */
         VTABLE_set_integer_native(INTERP, dest, c);
@@ -360,10 +359,7 @@ MULTI PMC *add(Integer value, PMC *dest) {
 
 MULTI PMC *add(Complex value, PMC *dest) {
     const INTVAL a = SELF.get_integer();
-    if (dest)
-        VTABLE_morph(INTERP, dest, VTABLE_type(interp, value));
-    else
-        dest = pmc_new(INTERP, VTABLE_type(interp, value));
+    dest = pmc_new(INTERP, VTABLE_type(interp, value));
 
     VTABLE_set_number_native(INTERP, dest,
             a + VTABLE_get_number_keyed_int(INTERP, value, 0));
@@ -378,8 +374,7 @@ MULTI PMC *add(BigInt value, PMC *dest) {
 }
 
 MULTI PMC *add(DEFAULT value, PMC *dest) {
-    if (!dest)
-        dest = pmc_new(INTERP, VTABLE_type(interp, value));
+    dest = pmc_new(INTERP, VTABLE_type(interp, value));
 
     VTABLE_set_number_native(INTERP, dest,
         SELF.get_integer() + VTABLE_get_number(INTERP, value));
@@ -391,8 +386,7 @@ VTABLE PMC *add_int(INTVAL b, PMC *dest) {
     const INTVAL c = a + b;
 
     if ((c^a) >= 0 || (c^b) >= 0) {
-        if (!dest)
-            dest = pmc_new(INTERP, VTABLE_type(INTERP, SELF));
+        dest = pmc_new(INTERP, VTABLE_type(INTERP, SELF));
 
         VTABLE_set_integer_native(INTERP, dest, c);
         return dest;
@@ -465,8 +459,7 @@ MULTI PMC *subtract(Integer value, PMC *dest) {
     const INTVAL c = a - b;
 
     if ((c^a) >= 0 || (c^~b) >= 0) {
-        if (!dest)
-            dest = pmc_new(INTERP, VTABLE_type(INTERP, SELF));
+        dest = pmc_new(INTERP, VTABLE_type(INTERP, SELF));
 
         VTABLE_set_integer_native(INTERP, dest, c);
         return dest;
@@ -495,8 +488,7 @@ MULTI PMC *subtract(BigInt value, PMC *dest) {
 }
 
 MULTI PMC *subtract(DEFAULT value, PMC *dest) {
-    if (!dest)
-        dest = pmc_new(INTERP, VTABLE_type(INTERP, value));
+    dest = pmc_new(INTERP, VTABLE_type(INTERP, value));
 
     VTABLE_set_number_native(INTERP, dest,
         SELF.get_integer() - VTABLE_get_number(INTERP, value));
@@ -517,8 +509,7 @@ VTABLE PMC *subtract_int(INTVAL b, PMC *dest) {
     const INTVAL c = a - b;
 
     if ((c^a) >= 0 || (c^~b) >= 0) {
-        if (!dest)
-            dest = pmc_new(INTERP, VTABLE_type(INTERP, SELF));
+        dest = pmc_new(INTERP, VTABLE_type(INTERP, SELF));
 
         VTABLE_set_integer_native(INTERP, dest, c);
         return dest;
@@ -602,8 +593,7 @@ MULTI PMC *multiply(Integer value, PMC *dest) {
     const INTVAL c  = a * b;
 
     if ((double) c == cf) {
-        if (!dest)
-            dest = pmc_new(INTERP, VTABLE_type(interp, SELF));
+        dest = pmc_new(INTERP, VTABLE_type(interp, SELF));
 
         VTABLE_set_integer_native(INTERP, dest, c);
         return dest;
@@ -629,8 +619,7 @@ MULTI PMC *multiply(String value, PMC *dest) {
 
 MULTI PMC *multiply(DEFAULT value, PMC *dest) {
     const FLOATVAL valf = VTABLE_get_number(INTERP, value);
-    if (!dest)
-        dest = pmc_new(INTERP, VTABLE_type(INTERP, SELF));
+    dest = pmc_new(INTERP, VTABLE_type(INTERP, SELF));
 
     VTABLE_set_number_native(INTERP, dest, SELF.get_number() * valf);
     return dest;
@@ -642,8 +631,7 @@ VTABLE PMC *multiply_int(INTVAL b, PMC *dest) {
     const INTVAL c  = a * b;
 
     if ((double) c == cf) {
-        if (!dest)
-            dest = pmc_new(INTERP, VTABLE_type(INTERP, SELF));
+        dest = pmc_new(INTERP, VTABLE_type(INTERP, SELF));
 
         VTABLE_set_integer_native(INTERP, dest, c);
         return dest;
@@ -735,8 +723,7 @@ MULTI PMC *divide(DEFAULT value, PMC *dest) {
         Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_DIV_BY_ZERO,
             "float division by zero");
 
-    if (!dest)
-        dest = pmc_new(INTERP, VTABLE_type(INTERP, SELF));
+    dest = pmc_new(INTERP, VTABLE_type(INTERP, SELF));
     VTABLE_set_number_native(INTERP, dest, SELF.get_number() / d);
     return dest;
 }
@@ -789,8 +776,7 @@ MULTI PMC *floor_divide(DEFAULT value, PMC *dest) {
         Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_DIV_BY_ZERO,
                 "float division by zero");
 
-    if (!dest)
-        dest = pmc_new(INTERP, VTABLE_type(INTERP, SELF));
+    dest = pmc_new(INTERP, VTABLE_type(INTERP, SELF));
 
     f = floor(SELF.get_number() / d);
     VTABLE_set_integer_native(INTERP, dest, (INTVAL)f);
@@ -804,8 +790,7 @@ VTABLE PMC *floor_divide_int(INTVAL value, PMC *dest) {
         Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_DIV_BY_ZERO,
             "float division by zero");
 
-    if (!dest)
-        dest = pmc_new(INTERP, VTABLE_type(INTERP, SELF));
+    dest = pmc_new(INTERP, VTABLE_type(INTERP, SELF));
 
     f = floor(SELF.get_number() / value);
     VTABLE_set_integer_native(INTERP, dest, (INTVAL)f);
@@ -820,8 +805,7 @@ VTABLE PMC *floor_divide_float(FLOATVAL value, PMC *dest) {
         Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_DIV_BY_ZERO,
             "float division by zero");
 
-    if (!dest)
-        dest = pmc_new(INTERP, VTABLE_type(INTERP, SELF));
+    dest = pmc_new(INTERP, VTABLE_type(INTERP, SELF));
 
     f = floor(SELF.get_number() / value);
     VTABLE_set_integer_native(INTERP, dest, (INTVAL)f);
@@ -901,8 +885,7 @@ MULTI PMC *modulus(DEFAULT value, PMC *dest) {
         Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_DIV_BY_ZERO,
             "int modulus by zero");
 
-    if (!dest)
-        dest = pmc_new(INTERP, VTABLE_type(INTERP, SELF));
+    dest = pmc_new(INTERP, VTABLE_type(INTERP, SELF));
 
     VTABLE_set_integer_native(INTERP, dest,
             intval_mod(SELF.get_integer(), d));
