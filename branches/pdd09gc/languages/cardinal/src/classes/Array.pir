@@ -14,10 +14,16 @@ Stolen from Rakudo
 .namespace ['CardinalArray']
 
 .sub 'onload' :anon :load :init
-    .local pmc cardinalmeta, arrayproto
+    .local pmc cardinalmeta, arrayproto, interp, core_type, hll_type
     cardinalmeta = get_hll_global ['CardinalObject'], '!CARDINALMETA'
     arrayproto = cardinalmeta.'new_class'('CardinalArray', 'parent'=>'ResizablePMCArray CardinalObject')
     cardinalmeta.'register'('ResizablePMCArray', 'parent'=>'CardinalObject', 'protoobject'=>arrayproto)
+    core_type = get_class 'ResizablePMCArray'
+    hll_type = get_class 'CardinalArray'
+
+    interp = getinterp
+    interp.'hll_map'(core_type, hll_type)
+
 .end
 
 
@@ -41,7 +47,7 @@ Return a CardinalString representing the Array.
 =cut
 
 .sub 'to_s' :method
-    $S0 = self.get_string()
+    $S0 = join '', self
     $P0 = new 'CardinalString'
     $P0 = $S0
     .return($P0)
@@ -121,6 +127,129 @@ Return the number of elements in the list.
     $I0 = elements self
     .return ($I0)
 .end
+
+=item sort()
+
+Return a sorted copy of the list
+
+=cut
+
+.sub 'sort' :method
+    .param pmc by              :optional
+    .param int has_by          :opt_flag
+    if has_by goto have_by
+    by = get_hll_global 'infix:cmp'
+  have_by:
+
+    .local pmc list, fpa
+    .local int elems
+
+    list = self
+    elems = list.'elems'()
+    fpa = new 'FixedPMCArray'
+    fpa = elems
+
+    .local int i
+    i = 0
+  fpa_loop:
+    unless i < elems goto fpa_end
+    $P0 = list[i]
+    fpa[i] = $P0
+    inc i
+    goto fpa_loop
+  fpa_end:
+    fpa.'sort'(by)
+    .return 'list'(fpa :flat)
+.end
+
+.sub 'sort!' :method
+    .param pmc by              :optional
+    .param int has_by          :opt_flag
+    if has_by goto have_by
+    by = get_hll_global 'infix:cmp'
+  have_by:
+    $P0 = self.sort()
+    self = 0
+    self.append($P0)
+.end
+
+=item uniq(...)
+
+=cut
+
+# TODO Rewrite it. It's too naive.
+
+.sub uniq :method
+    .local pmc ulist
+    .local pmc key
+    .local pmc val
+    .local pmc uval
+    .local int len
+    .local int i
+    .local int ulen
+    .local int ui
+
+    ulist = new 'CardinalArray'
+    len = self.'elems'()
+    i = 0
+
+  loop:
+    if i == len goto done
+
+    val = self[i]
+
+    ui = 0
+    ulen = ulist.'elems'()
+    inner_loop:
+        if ui == ulen goto inner_loop_done
+
+        uval = ulist[ui]
+        if uval == val goto found
+
+        inc ui
+        goto inner_loop
+    inner_loop_done:
+
+    ulist.'push'(val)
+
+    found:
+
+    inc i
+    goto loop
+
+  done:
+    .return(ulist)
+.end
+
+.sub 'uniq!' :method
+    $P0 = self.uniq()
+    self = 0
+    self.append($P0)
+.end
+
+
+=item include?(ELEMENT)
+
+Return true if self contains ELEMENT
+
+=cut
+.sub 'include?' :method
+    .param pmc args
+    .local pmc iter
+    iter = new 'Iterator', self
+  iter_loop:
+    unless iter goto done_f
+    $P0 = shift iter
+    eq $P0, args, done_t
+    goto iter_loop
+   done_f:
+        $P0 = get_hll_global ['Bool'], 'False'
+        .return($P0)
+   done_t:
+        $P0 = get_hll_global ['Bool'], 'True'
+        .return($P0)
+.end
+
 
 =item unshift(ELEMENTS)
 
@@ -663,6 +792,56 @@ Run C<block> once for each item in C<self>, with the item passed as an arg.
     unless $P0 goto each_loop_end
     $P1 = shift $P0
     block($P1)
+    goto each_loop
+  each_loop_end:
+.end
+
+.sub 'each_with_index' :method
+    .param pmc block
+    .local int len
+    len = elements self
+    $I0 = 0
+  each_loop:
+    if $I0 == len goto each_loop_end
+    $P0 = self[$I0]
+    block($P0,$I0)
+    inc $I0
+    goto each_loop
+  each_loop_end:
+.end
+
+=item collect(block)
+
+Run C<block> once for each item in C<self>, with the item passed as an arg.
+Creates a new Array containing the results and returns it.
+
+=cut
+
+.sub 'collect' :method
+    .param pmc block
+    .local pmc result
+    result = new 'CardinalArray'
+    $P0 = new 'Iterator', self
+  each_loop:
+    unless $P0 goto each_loop_end
+    $P1 = shift $P0
+    $P2 = block($P1)
+    result.push($P2)
+    goto each_loop
+  each_loop_end:
+    .return (result)
+.end
+
+.sub 'each_with_index' :method
+    .param pmc block
+    .local int len
+    len = elements self
+    $I0 = 0
+  each_loop:
+    if $I0 == len goto each_loop_end
+    $P0 = self[$I0]
+    block($P0,$I0)
+    inc $I0
     goto each_loop
   each_loop_end:
 .end
