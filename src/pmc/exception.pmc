@@ -101,6 +101,40 @@ Initializes the exception with default values.
 
 /*
 
+=item C<void init_pmc()>
+
+Initializes the exception with supplied values.
+
+=cut
+
+*/
+
+    VTABLE void init_pmc(PMC *values) {
+        Parrot_Exception * const core_struct =
+            mem_allocate_zeroed_typed(Parrot_Exception);
+        INTVAL ishash = VTABLE_isa(interp, values, CONST_STRING(interp, 'Hash'));
+
+        /* Set flags for custom DOD mark and destroy. */
+        PObj_custom_mark_SET(SELF);
+        PObj_active_destroy_SET(SELF);
+
+        /* Set up the core struct and default values for the exception object. */
+        PMC_data(SELF)          = core_struct;
+        core_struct->severity   = ishash ?
+            VTABLE_get_integer_keyed_str(interp, values, CONST_STRING(interp, 'severity')) :
+            0;
+        core_struct->handled    = 0;
+        core_struct->message    = ishash ?
+            VTABLE_get_string_keyed_str(interp, values, CONST_STRING(interp, 'message')) :
+            VTABLE_get_string(interp, values);
+        core_struct->payload    = PMCNULL;
+        core_struct->resume     = PMCNULL;
+        core_struct->stacktrace = PMCNULL;
+        core_struct->handler_iter = PMCNULL;
+    }
+
+/*
+
 =item C<void mark()>
 
 Mark any active exception data as live.
@@ -183,7 +217,7 @@ C<key> is "message".
 */
 
     VTABLE STRING *get_string_keyed(PMC *key) {
-        STRING *name = key_string(INTERP, key);
+        STRING *name = VTABLE_get_string(INTERP, key);
         STRING *message;
 
         if (string_equal(INTERP, name, CONST_STRING(INTERP, "message")) == 0) {
@@ -209,7 +243,7 @@ Returns the integer value for C<*key>.
 */
 
     VTABLE INTVAL get_integer_keyed(PMC *key) {
-        STRING *name      = key_string(INTERP, key);
+        STRING *name   = VTABLE_get_string(INTERP, key);
         INTVAL  result = 0;
 
         if (string_equal(INTERP, name, CONST_STRING(INTERP, "type")) == 0) {
@@ -278,7 +312,7 @@ Returns the PMC value for C<*key>.
 */
 
     VTABLE PMC *get_pmc_keyed(PMC *key) {
-        STRING *s = key_string(INTERP, key);
+        STRING *s = VTABLE_get_string(INTERP, key);
         return SELF.get_attr_str(s);
     }
 
@@ -338,7 +372,7 @@ Sets the Parrot string value for C<*key>.
 */
 
     VTABLE void set_string_keyed(PMC *key, STRING *value) {
-        STRING *name = key_string(INTERP, key);
+        STRING *name = VTABLE_get_string(INTERP, key);
 
         if (string_equal(INTERP, name, CONST_STRING(INTERP, "message")) == 0) {
             SET_ATTR_message(interp, SELF, value);
@@ -361,7 +395,7 @@ Sets the integer value for C<*key>.
 */
 
     VTABLE void set_integer_keyed(PMC *key, INTVAL value) {
-        STRING *name = key_string(INTERP, key);
+        STRING *name = VTABLE_get_string(INTERP, key);
 
         if (string_equal(INTERP, name, CONST_STRING(INTERP, "type")) == 0) {
             SET_ATTR_type(interp, SELF, value);
@@ -423,7 +457,7 @@ Sets the PMC value for C<*key>.
 */
 
     VTABLE void set_pmc_keyed(PMC *key, PMC *value) {
-        STRING *s = key_string(INTERP, key);
+        STRING *s = VTABLE_get_string(INTERP, key);
         SELF.set_attr_str(s, value);
     }
 
