@@ -14,8 +14,8 @@ DOC_DIR       = @doc_dir@
 MANDIR	      = @mandir@
 
 # Set up commands
-#IF(cygwin):SHRPENV  = env PATH="@build_dir@/blib/lib:$(PATH)"
-#ELSIF(not win32):SHRPENV  = env LD_RUN_PATH="@build_dir@/blib/lib"
+#IF(cygwin):SHRPENV     = env PATH="@build_dir@/blib/lib:$(PATH)"
+#ELSIF(not win32):SHRPENV     = env LD_RUN_PATH="@build_dir@/blib/lib"
 PARROT        = $(SHRPENV) ../../parrot@exe@
 PBC_TO_EXE    = $(SHRPENV) ../../pbc_to_exe@exe@
 PERL          = @perl@

@@ -1,5 +1,5 @@
-#IF(cygwin):SHRPENV  = env PATH="@build_dir@/blib/lib:$(PATH)"
-#ELSIF(not win32):SHRPENV  = env LD_RUN_PATH="@build_dir@/blib/lib"
+#IF(cygwin):SHRPENV     = env PATH="@build_dir@/blib/lib:$(PATH)"
+#ELSIF(not win32):SHRPENV     = env LD_RUN_PATH="@build_dir@/blib/lib"
 PARROT      = $(SHRPENV) @build_dir@/parrot@exe@
 PARROT_ARGS = --gc-debug
 

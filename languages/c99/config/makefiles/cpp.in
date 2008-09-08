@@ -13,8 +13,8 @@ O             = @o@
 LN_S          = @lns@
 PERL          = @perl@
 RM_RF         = @rm_rf@
-#IF(cygwin):SHRPENV  = env PATH="@build_dir@/blib/lib:$(PATH)"
-#ELSIF(not win32):SHRPENV  = env LD_RUN_PATH="@build_dir@/blib/lib"
+#IF(cygwin):SHRPENV     = env PATH="@build_dir@/blib/lib:$(PATH)"
+#ELSIF(not win32):SHRPENV     = env LD_RUN_PATH="@build_dir@/blib/lib"
 PARROT        = $(SHRPENV) $(BUILD_DIR)/parrot@exe@
 PBC_TO_EXE    = $(SHRPENV) $(BUILD_DIR)/pbc_to_exe@exe@
 CAT           = $(PERL) -MExtUtils::Command -e cat
