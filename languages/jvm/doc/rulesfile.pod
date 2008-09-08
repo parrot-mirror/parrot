@@ -1,4 +1,3 @@
-# Copyright (C) 2006,2008 The Perl Foundation.
 # $Id$
 
 =head1 Translation Rules File
@@ -322,7 +321,7 @@ concatenate extra ones on to it to emit more. Simple.
 
 =head3 ${BC}
 
-This is the DotNetBytecode PMC, used for walking the bytecode. Hopefully, it
+This is the JavaBytecode PMC, used for walking the bytecode. Hopefully, it
 should not be required to play with this too often. However, there is a case
 when it will be needed - iterating over the var arg switch instruction.
 
@@ -384,9 +383,3 @@ place. Well, if the translator was written badly enough to allow mistakes
 like this to slip through anyway. However, more subtle ones are very likely
 possible and probably easy to make.
 
-=cut
-
-# Local Variables:
-#   fill-column:78
-# End:
-# vim: expandtab shiftwidth=4:

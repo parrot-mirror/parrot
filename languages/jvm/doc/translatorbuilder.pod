@@ -1,43 +1,34 @@
-# Copyright (C) 2006,2008 The Perl Foundation.
 # $Id$
 
 =head1 The Translator Builder
 
-The subsystem that translates the .NET and java classfile instruction
-stream into a stream of Parrot instructions is not written directly in
-PIR, but instead is generated from a rules file, as described in
-L<rulesfile.pod>, by the translator builder in conjunction with a
-particular stack to register mapping module. The idea behind this is
-to seperate the concerns of instruction mapping, walking the
-instruction stream and stack to register mapping. Writing this
-directly in PIR would be error prone and would make it more difficult
-to try out different stack to register mapping schemes or optimize the
-instruction translation code lookup.
-
-The SRM translator is mainly written for dotnet, and currently also
-used by WMLScript - a trimmed-down local version - and jvm. Where
-ever you read .NET, it may also be partially true for the Java JVM.
+The subsystem that translates the .NET instruction stream into a stream of 
+Parrot instructions is not written directly in PIR, but instead is generated
+from a rules file, as described in L<rulesfile.pod>, by the translator builder
+in conjunction with a particular stack to register mapping module. The idea
+behind this is to seperate the concerns of instruction mapping, walking the
+instruction stream and stack to register mapping. Writing this directly in
+PIR would be error prone and would make it more difficult to try out different
+stack to register mapping schemes or optimize the instruction translation
+code lookup.
 
 =head2 Generating Code That...Generates Code
 
-The translator builder is generating the code that will translate
-stack-based bytecode instructions into register-based Parrot
-instructions. That code in turn is also generating code. The key to
-hacking on this part of the system is keeping a firm hold on what code
-is being talked about - the code of the instruction translator or the
-code that the instruction translator will generate.
+The translator builder is generating the code that will translate .NET CLI
+instructions into Parrot instructions. That code in turn is also generating
+code. The key to hacking on this part of the system is keeping a firm hold
+on what code is being talked about - the code of the instruction translator
+or the code that the instruction translator will generate.
 
 =head2 Usage
 
 The translator builder is invoked as follows:-
 
-  perl build/translator.pl src/translation.rules --srm Stack \
-    --output src/it.pir --config N2PConfig
+  perl build/translator.pl src/translation.rules --srm Stack --ouptput src/it.pir
 
-Where F<translation.rules> is the input translation rules file, F<Stack> is the
-stack to register mapping ("SRM") package to use, F<src/it.pir> is the output
-PIR file to generate and N2PConfig is the name of the perl config package.
-N2PConfig for C<dotnet> and J2PConfig for C<jvm>.
+Where translation.rules is the input translation rules file, Stack is the
+stack to register mapping algorithm to use and src/it.pir is the output
+PIR file to generate.
 
 =head2 Steps
 
@@ -51,7 +42,7 @@ allows easy access to the data for each rule.
 
 Next, a stack to register mapping module must be loaded, as specified in the
 command line arguments to the script. These all adhere to a standard interface
-as defined in C<SRM::Base>, and indeed inherit from C<SRM::Base>. These modules are
+as defined in SRM::Base, and indeed inhreit from SRM::Base. These modules are
 used to provide ways of turning stack based code into register based code and
 by being modules easily allow a number of different mapping algorithms to be
 benchmarked.
@@ -66,7 +57,7 @@ would like to.
 
 It is desirable to be able to dispatch to the translation code for a particular
 instruction efficiently. This step emits PIR code that does this. The lookup
-will happen in a number of steps C<O(log n)> where n is the number of instructions
+will happen in a number of steps O(log n) where n is the number of instructions
 we know how to translate.
 
 =head3 Build Rule Translation Code
@@ -294,9 +285,6 @@ code for the stack to register mapper.
 
 Only ${LTYPES} and ${PTYPES} will be available in this method.
 
-This is optionally added by the C<pre_translate> translation rule option and
-also by the dotnet specific @need_enum_fix in the config package.
-
 =head3 post_translation()
 
 The PIR returned by this method will be placed near the end of the translator so
@@ -318,7 +306,7 @@ Label generation is given to the stack to register mapping module as one of its
 tasks. Why? Because the SRM is likely to need to know about basic blocks as
 this knowledge is needed by most stack to register mapping algorithms. In the
 case that the stack to register mapping algorithm doesn't know, a default
-implementation of this method is provided that emits a label for every
+implementation of this method is provided that emits a label for every 
 instruction whether or not it is named as a branch target.
 
 Meta-variables are available to this method, however the only one that is
@@ -334,7 +322,7 @@ instruction that only operates on values on the top of the stack. This is
 always modelled as popping the registers off the stack, doing the compuation
 and pushing the results back on the top of the stack. The code generated by
 pre_op relates to the pop phase, but must produce register names for both the
-items being popped off the stack and the items being pushed onto the stack.
+items being popped off the stack and the items being pushed onto the stack. 
 
 The count of values that are popped off the top of the stack is passed in as
 POP_COUNT. The count of values that are pushed onto the top of the stack is
@@ -478,9 +466,3 @@ This is called to generate code that follows the translation code for a
 calling instruction. This could be used, for example, to put a returned
 value back onto the stack.
 
-=cut
-
-# Local Variables:
-#   fill-column:78
-# End:
-# vim: expandtab shiftwidth=4:
