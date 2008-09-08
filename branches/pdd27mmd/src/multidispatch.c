@@ -384,6 +384,9 @@ mmd_multi_find_method(PARROT_INTERP, ARGIN(STRING *name), ARGIN(PMC *invoke_sig)
 
     candidate_list = Parrot_mmd_sort_manhattan_by_sig_pmc(interp, multi_sub, invoke_sig);
 
+    if (PMC_IS_NULL(candidate_list))
+        return PMCNULL;
+
 #if MMD_DEBUG
     fprintf(stderr, "there were '%d' elements in the candidate_list\n",
             (int) VTABLE_elements(interp, candidate_list));
