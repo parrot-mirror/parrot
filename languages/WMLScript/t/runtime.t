@@ -22,7 +22,7 @@ pir_output_is( << 'CODE', << 'OUTPUT', 'WMLScript.pbc' );
 .HLL 'WMLScript', 'wmls_group'
 
 .sub '_init' :anon
-  load_bytecode 'languages/WMLScript/src/WMLScript.pbc'
+  load_bytecode 'WMLScript.pbc'
 .end
 
 .sub 'function0' :anon
@@ -58,7 +58,7 @@ pir_output_is( << 'CODE', << 'OUTPUT', 'alternate way' );
 .HLL 'WMLScript', 'wmls_group'
 
 .sub '_init' :anon
-  load_bytecode 'languages/WMLScript/src/wmlsstdlibs.pir'
+  load_bytecode 'languages/WMLScript/wmlsstdlibs.pir'
 .end
 
 .sub 'function0' :anon

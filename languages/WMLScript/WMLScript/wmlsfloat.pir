@@ -3,7 +3,7 @@
 
 =head1 NAME
 
-runtime/wmlsfloat.pir - WMLScript Float library
+WMLScript/wmlsfloat.pir - WMLScript Float library
 
 =head1 DESCRIPTION
 

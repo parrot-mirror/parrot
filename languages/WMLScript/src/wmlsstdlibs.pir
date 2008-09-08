@@ -11,13 +11,13 @@ See "WMLScript Standard Libraries Specification".
 
 =over 4
 
-=item * Lang : F<languages/WMLScript/runtime/wmlslang.pir>
+=item * Lang : F<WMLScript/wmlslang.pir>
 
-=item * Float : F<languages/WMLScript/runtime/wmlsfloat.pir>
+=item * Float : F<WMLScript/wmlsfloat.pir>
 
-=item * String : F<languages/WMLScript/runtime/wmlsstring.pir>
+=item * String : F<WMLScript/wmlsstring.pir>
 
-=item * Console : F<languages/WMLScript/runtime/wmlsconsole.pir>
+=item * Console : F<WMLScript/wmlsconsole.pir>
 
 =back
 
@@ -28,10 +28,10 @@ See "WMLScript Standard Libraries Specification".
 
 .sub '__onload' :load :anon
 #    print "__onload (wmlsstdlibs.pir)\n"
-    load_bytecode 'languages/WMLScript/runtime/wmlslang.pbc'
-    load_bytecode 'languages/WMLScript/runtime/wmlsfloat.pbc'
-    load_bytecode 'languages/WMLScript/runtime/wmlsstring.pbc'
-    load_bytecode 'languages/WMLScript/runtime/wmlsconsole.pbc'
+    load_bytecode 'WMLScript/wmlslang.pbc'
+    load_bytecode 'WMLScript/wmlsfloat.pbc'
+    load_bytecode 'WMLScript/wmlsstring.pbc'
+    load_bytecode 'WMLScript/wmlsconsole.pbc'
 
     new $P0, 'Hash'
     $P1 = getLang()

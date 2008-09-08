@@ -3,7 +3,7 @@
 
 =head1 NAME
 
-runtime/wmlslang.pir - WMLScript Lang library
+WMLScript/wmlslang.pir - WMLScript Lang library
 
 =head1 DESCRIPTION
 
