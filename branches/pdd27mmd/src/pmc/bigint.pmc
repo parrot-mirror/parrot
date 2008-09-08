@@ -1102,8 +1102,7 @@ Sets C<dest> to the absolute value of SELF.
 */
 
     VTABLE PMC *absolute(PMC *dest) {
-        if (!dest)
-            dest = pmc_new(INTERP, SELF->vtable->base_type);
+        dest = pmc_new(INTERP, SELF->vtable->base_type);
 
         bigint_abs(INTERP, SELF, dest);
         return dest;
@@ -1127,8 +1126,7 @@ Set C<dest> to the negated value of C<SELF>.
 */
 
     VTABLE PMC *neg(PMC *dest) {
-        if (!dest)
-            dest = pmc_new(INTERP, SELF->vtable->base_type);
+        dest = pmc_new(INTERP, SELF->vtable->base_type);
 
         bigint_neg(INTERP, SELF, dest);
         return dest;

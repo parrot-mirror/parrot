@@ -897,8 +897,7 @@ VTABLE PMC *modulus_int(INTVAL value, PMC *dest) {
         Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_DIV_BY_ZERO,
             "int modulus by zero");
 
-    if (!dest)
-        dest = pmc_new(INTERP, VTABLE_type(INTERP, SELF));
+    dest = pmc_new(INTERP, VTABLE_type(INTERP, SELF));
 
     VTABLE_set_integer_native(INTERP, dest,
             intval_mod(SELF.get_integer(), value));
@@ -910,8 +909,7 @@ VTABLE PMC *modulus_float(FLOATVAL value, PMC *dest) {
         Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_DIV_BY_ZERO,
             "int modulus by zero");
 
-    if (!dest)
-        dest = pmc_new(INTERP, VTABLE_type(INTERP, SELF));
+    dest = pmc_new(INTERP, VTABLE_type(INTERP, SELF));
 
     VTABLE_set_integer_native(INTERP, dest,
             intval_mod(SELF.get_integer(), (INTVAL)value));
@@ -1007,8 +1005,7 @@ VTABLE PMC *pow_int(INTVAL b, PMC *dest) {
         }
     }
 
-    if (!dest)
-        dest = pmc_new(INTERP, VTABLE_type(INTERP, SELF));
+    dest = pmc_new(INTERP, VTABLE_type(INTERP, SELF));
 
     VTABLE_set_integer_native(INTERP, dest, r);
     return dest;
@@ -1160,8 +1157,7 @@ VTABLE PMC *absolute(PMC *dest) {
     const INTVAL a = abs(SELF.get_integer());
 
     /* RT #46635 overlflow for -maxint */
-    if (!dest)
-        dest = pmc_new(INTERP, VTABLE_type(INTERP, SELF));
+    dest = pmc_new(INTERP, VTABLE_type(INTERP, SELF));
 
     VTABLE_set_integer_native(INTERP, dest, a);
     return dest;

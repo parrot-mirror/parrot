@@ -219,8 +219,7 @@ Set C<dest> to the negated value of C<SELF>.
     VTABLE PMC *neg(PMC *dest) {
         const FLOATVAL a = -SELF.get_number();
 
-        if (!dest)
-            dest = pmc_new(INTERP, VTABLE_type(INTERP, SELF));
+        dest = pmc_new(INTERP, VTABLE_type(INTERP, SELF));
 
         VTABLE_set_number_native(INTERP, dest, a);
         return dest;
@@ -341,8 +340,7 @@ Sets C<dest> to the absolute value of SELF.
     VTABLE PMC *absolute(PMC *dest) {
         const FLOATVAL a = fabs(SELF.get_number());
 
-        if (!dest)
-            dest = pmc_new(INTERP, VTABLE_type(INTERP, SELF));
+        dest = pmc_new(INTERP, VTABLE_type(INTERP, SELF));
 
         VTABLE_set_number_native(INTERP, dest, a);
         return dest;
