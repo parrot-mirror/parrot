@@ -161,8 +161,8 @@ src/POSTGrammar_gen.pir: src/POSTGrammar.tg
 	$(TGE) --output=src/POSTGrammar_gen.pir src/POSTGrammar.tg
 
 lua.pbc: lua.pir src/lua51.pir src/grammar51.pir src/lua51_gen.pir src/PASTGrammar_gen.pir src/POSTGrammar_gen.pir $(LIB_SRCS)
-	$(PARROT) -o lua_i.pbc --output-pbc lua.pir
-	$(PBC_MERGE) -o lua.pbc lua_i.pbc ../../compilers/tge/TGE/Rule.pbc
+	$(PARROT) -o lua.pbc --output-pbc lua.pir
+# $(PBC_MERGE) -o lua.pbc lua_i.pbc ../../compilers/tge/TGE/Rule.pbc
 
 lua@exe@: lua.pbc
 	$(PBC_TO_EXE) lua.pbc
