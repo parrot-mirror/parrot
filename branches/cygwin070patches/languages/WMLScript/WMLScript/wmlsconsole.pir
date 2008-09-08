@@ -3,7 +3,7 @@
 
 =head1 NAME
 
-runtime/wmlsconsole.pir - WMLScript Console library
+WMLScript/wmlsconsole.pir - WMLScript Console library
 
 =head1 DESCRIPTION
 
