@@ -506,28 +506,33 @@ convert_varargs_to_sig_pmc(PARROT_INTERP, ARGIN(const char *sig), va_list args)
         }
 
         if (in_return_sig) {
+            STRING const *signature = CONST_STRING(interp, "signature");
             /* Returns store the original passed-in pointer, so they can pass
              * the result back to the caller. */
-
             PMC *val_pointer = pmc_new(interp, enum_class_CPointer);
-            VTABLE_set_string_keyed_str(interp, val_pointer,
-                    CONST_STRING(interp, "signature"),
-                    CONST_STRING(interp, type));
-            VTABLE_push_pmc(interp, returns, val_pointer); 
+            VTABLE_push_pmc(interp, returns, val_pointer);
 
-            switch (type) { 
-                case 'I': 
-                    VTABLE_set_pointer(interp, val_pointer, (void *) va_arg(args, INTVAL*)); 
-                    break; 
-                case 'N': 
-                    VTABLE_set_pointer(interp, val_pointer, (void *) va_arg(args, FLOATVAL*)); 
-                    break; 
-                case 'S': 
-                    VTABLE_set_pointer(interp, val_pointer, (void *) va_arg(args, STRING**)); 
-                    break; 
-                case 'P': 
-                    VTABLE_set_pointer(interp, val_pointer, (void *) va_arg(args, PMC**)); 
-                    break; 
+            switch (type) {
+                case 'I':
+                    VTABLE_set_pointer(interp, val_pointer, (void *) va_arg(args, INTVAL*));
+                    VTABLE_set_string_keyed_str(interp, val_pointer,
+                        signature, CONST_STRING(interp, "I"));
+                    break;
+                case 'N':
+                    VTABLE_set_pointer(interp, val_pointer, (void *) va_arg(args, FLOATVAL*));
+                    VTABLE_set_string_keyed_str(interp, val_pointer,
+                        signature, CONST_STRING(interp, "N"));
+                    break;
+                case 'S':
+                    VTABLE_set_pointer(interp, val_pointer, (void *) va_arg(args, STRING**));
+                    VTABLE_set_string_keyed_str(interp, val_pointer,
+                        signature, CONST_STRING(interp, "S"));
+                    break;
+                case 'P':
+                    VTABLE_set_pointer(interp, val_pointer, (void *) va_arg(args, PMC**));
+                    VTABLE_set_string_keyed_str(interp, val_pointer,
+                        signature, CONST_STRING(interp, "P"));
+                    break;
                 default:
                     Parrot_ex_throw_from_c_args(interp, NULL,
                         EXCEPTION_INVALID_OPERATION,
@@ -536,32 +541,32 @@ convert_varargs_to_sig_pmc(PARROT_INTERP, ARGIN(const char *sig), va_list args)
         }
         else {
             /* Regular arguments just set the value */
-            switch (type) { 
-                case 'I': 
-                    VTABLE_push_integer(interp, call_object, va_arg(args, INTVAL)); 
+            switch (type) {
+                case 'I':
+                    VTABLE_push_integer(interp, call_object, va_arg(args, INTVAL));
                     VTABLE_set_integer_keyed_int(interp, type_tuple,
                             i, enum_type_INTVAL);
-                    break; 
-                case 'N': 
+                    break;
+                case 'N':
                     VTABLE_set_integer_keyed_int(interp, type_tuple,
                             i, enum_type_FLOATVAL);
-                    break; 
-                case 'S': 
-                    VTABLE_push_string(interp, call_object, va_arg(args, STRING *)); 
+                    break;
+                case 'S':
+                    VTABLE_push_string(interp, call_object, va_arg(args, STRING *));
                     VTABLE_set_integer_keyed_int(interp, type_tuple,
                             i, enum_type_STRING);
-                    break; 
-                case 'P': 
+                    break;
+                case 'P':
                 {
                     PMC *pmc_arg = va_arg(args, PMC *);
                     if (!PMC_IS_NULL(pmc_arg))
                         VTABLE_set_integer_keyed_int(interp, type_tuple, i,
                                 VTABLE_type(interp, pmc_arg));
 
-                    VTABLE_push_pmc(interp, call_object, pmc_arg); 
+                    VTABLE_push_pmc(interp, call_object, pmc_arg);
                     break;
                 }
-                case '-': 
+                case '-':
                     i++; /* skip '>' */
                     in_return_sig = 1;
                     break;
@@ -600,8 +605,8 @@ Parrot_mmd_multi_dispatch_from_c_args(PARROT_INTERP,
     PMC *sig_object, *sub;
 
     va_list args;
-    va_start(args, sig); 
-    sig_object = convert_varargs_to_sig_pmc(interp, sig, args); 
+    va_start(args, sig);
+    sig_object = convert_varargs_to_sig_pmc(interp, sig, args);
     va_end(args);
 
     /* remove leading "__" from old-style MMD name */
@@ -2330,9 +2335,9 @@ Parrot_mmd_add_multi_from_c_args(PARROT_INTERP,
         for (i = 0; i < param_count; i++) {
             INTVAL type;
             STRING *type_name = VTABLE_get_string_keyed_int(interp, full_types, i);
-            if (string_equal(interp, type_name, CONST_STRING(interp, "DEFAULT"))==0) 
+            if (string_equal(interp, type_name, CONST_STRING(interp, "DEFAULT"))==0)
                 type = enum_type_PMC;
-            else if (string_equal(interp, type_name, CONST_STRING(interp, "STRING"))==0) 
+            else if (string_equal(interp, type_name, CONST_STRING(interp, "STRING"))==0)
                 type = enum_type_STRING;
             else
                 type = pmc_type(interp, type_name);
