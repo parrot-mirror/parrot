@@ -303,12 +303,12 @@ Translates .Net bytecode to PIR.
 
 =item Status
 
-Much is left to do, but it's complete enough to tranlate 75% of the .Net class
+Much is left to do, but it's complete enough to translate 75% of the .Net class
 library.
 
 =item Last verified with parrot version
 
-0.4.15
+0.7.0
 
 =item Location
 
@@ -470,6 +470,29 @@ not verified
 =item Location
 
 C<languages/json>
+
+=back
+
+=head2 Java JVM To PIR Translator
+
+=over 4
+
+=item Description
+
+Translates Java JVM .class and .jar files to PIR.
+
+=item Status
+
+Only about 20% of the bytecodes are defined, the pmc's do not work yet. 
+This just began with 0.7.0
+
+=item Last verified with parrot version
+
+0.7.0
+
+=item Location
+
+C<languages/jvm>
 
 =back
 

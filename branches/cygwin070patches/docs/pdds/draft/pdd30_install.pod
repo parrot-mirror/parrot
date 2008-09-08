@@ -1,5 +1,5 @@
 # Copyright (C) 2008, The Perl Foundation.
-# $Id: pdd30_install.pod 30644 2008-08-29 23:21:00Z jkeenan $
+# $Id$
 
 =head1 NAME
 
@@ -15,7 +15,7 @@ bootstrapping if a frozen config_hash is already linked.
 
 =head1 VERSION
 
-$Revision: 30644 $
+$Revision$
 
 =head1 SYNOPSIS
 

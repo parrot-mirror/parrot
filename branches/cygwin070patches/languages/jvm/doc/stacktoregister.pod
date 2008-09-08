@@ -1,11 +1,8 @@
-# Copyright (C) 2006,2008 The Perl Foundation.
-# $Id$
-
 =head1 Stack To Register Translation
 
-The .NET CLI and Java JVM is a stack based virtual machine whereas
-Parrot is register based.  This document details what that means and
-how the challenges the difference presents will be dealt with.
+The .NET CLI is a stack based virtual machine whereas Parrot is register based.
+This document details what that means and how the challenges the difference
+presents will be dealt with.
 
 =head2 Parrot's Register Architecture
 
@@ -133,7 +130,7 @@ can always be determined statically; that is, at translation time.
 
 =head2 Data On The Stack
 
-There are essentially 3 types of item found on the .NET CLI's execution stack
+There are essentially 3 types of item found on the .NET CLI's execution stack 
 that need to be mapped to Parrot registers.
 
 =head3 Arguments
@@ -176,19 +173,19 @@ function in PIR.
   .sub fact
       # Get input parameter.
       .param int n
-
+      
       # return (n > 1 ? n * _fact(n - 1) : 1)
       .local int result
-
+      
       if n > 1 goto recurse
       result = 1
       goto return
-
+  
   recurse:
       $I0 = n - 1
       result = fact($I0)
       result *= n
-
+      
   return:
       .return (result)
   .end
@@ -285,8 +282,8 @@ addition is translated.
   ldarg 1           local1, arg1
   if_ge END                           if local1 >= arg1 goto END
   ldlocal 2         local2
-  ldarg 2           local2, arg2
-  add
+  ldarg 2           local2, arg2      
+  add                                 
   stlocal 2         --> LOOKAHEAD     add local2, local2, arg2
   ldlocal 1         local1
   iconst 1          local1, 1
@@ -334,7 +331,7 @@ they do provide an algorithm for checking that this is the case in the paper.
 This approach means that each stack instruction becomes one register
 instruction, provided there is a single register instruction with equivalent
 semantics to the stack instruction (that is, some .NET instructions may map
-to multiple Parrot instructions independent of the stack to register
+to multiple Parrot instructions independent of the stack to register 
 translation method used).
 
 The following example demonstrates the translation of some stack code to
@@ -414,9 +411,3 @@ Description of basic blocks.
 
 B<[3] The Case For Virtual Register Machines>
 
-=cut
-
-# Local Variables:
-#   fill-column:78
-# End:
-# vim: expandtab shiftwidth=4:

@@ -18,7 +18,7 @@ LANGUAGES = \
     eclectus ecmascript \
     forth \
     hq9plus \
-    jako json \
+    jako json jvm \
     lazy-k lisp lolcode lua \
     m4 \
     ook \
@@ -95,7 +95,7 @@ test-separate: all \
     eclectus.test ecmascript.test \
     forth.test \
     hq9plus.test \
-    jako.test json.test \
+    jako.test json.test jvm.test \
     lazy-k.test lisp.test lolcode.test lua.test \
     m4.test \
     ook.test \
@@ -115,7 +115,7 @@ installable : all \
     eclectus.installable ecmascript.installable \
     forth.installable \
     hq9plus.installable \
-    jako.installable json.installable \
+    jako.installable json.installable jvm.installable \
     lazy-k.installable lisp.installable lolcode.installable lua.installable \
     m4.installable \
     ook.installable \
@@ -135,7 +135,7 @@ test-installable : all \
     eclectus.test-installable ecmascript.test-installable \
     forth.test-installable \
     hq9plus.test-installable \
-    jako.test-installable json.test-installable \
+    jako.test-installable json.test-installable jvm.test-installable \
     lazy-k.test-installable lisp.test-installable lolcode.test-installable lua.test-installable \
     m4.test-installable \
     ook.test-installable \
@@ -155,7 +155,7 @@ install : all \
     eclectus.install ecmascript.install \
     forth.install \
     hq9plus.install \
-    jako.install json.install \
+    jako.install json.install jvm.install \
     lazy-k.install lisp.install lolcode.install lua.install \
     m4.install \
     ook.install \
@@ -182,7 +182,7 @@ clean: \
     ecmascript.clean \
     forth.clean \
     hq9plus.clean \
-    jako.clean json.clean \
+    jako.clean json.clean jvm.clean \
     lisp.clean \
     lolcode.clean lua.clean \
     m4.clean \
@@ -204,7 +204,7 @@ realclean: \
     eclectus.realclean ecmascript.realclean \
     forth.realclean \
     hq9plus.realclean \
-    jako.realclean json.realclean \
+    jako.realclean json.realclean jvm.realclean \
     lazy-k.realclean lisp.realclean lolcode.realclean lua.realclean \
     m4.realclean \
     ook.realclean \
@@ -477,6 +477,22 @@ json.clean:
 	- $(MAKE) json clean
 json.realclean:
 	- $(MAKE) json realclean
+
+jvm: jvm.dummy
+jvm.dummy:
+	- $(MAKE) jvm
+jvm.test:
+	- $(MAKE) jvm test
+jvm.installable:
+	- $(MAKE) jvm installable
+jvm.test-installable:
+	- $(MAKE) jvm test-installable DESTDIR=$(DESTDIR)
+jvm.install:
+	- $(MAKE) jvm install DESTDIR=$(DESTDIR)
+jvm.clean:
+	- $(MAKE) jvm clean
+jvm.realclean:
+	- $(MAKE) jvm realclean
 
 lazy-k: lazy-k.dummy
 lazy-k.dummy:
