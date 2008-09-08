@@ -33,10 +33,9 @@ GetOptions(
 
 # Get Parrot configuration.
 $parrot_path ||= '../..';
-$parrot_path =~ s|/|\\|g if $^O =~ /win32/i;
-
 $srm ||= 'OptRegister';
-die "No such SRM module!\n" unless -e "build/SRM/$srm.pm";
+die "No such SRM module!\n" unless -e "$parrot_path/lib/SRM/$srm.pm";
+$parrot_path =~ s|/|\\|g if $^O =~ /win32/i;
 
 my %config = get_parrot_config( $parrot_path, $srm );
 
@@ -73,7 +72,7 @@ sub generate_makefile {
     my $conf = Parrot::Configure->new;
     $conf->data()->slurp();
     $conf->genfile('config/Makefile.in', 'config/Makefile.tmp');
-    # and read temp. makefile template to fill in ${trans_mono_lib_path}, ${trans_class_library}
+    # and read temp. makefile template to fill in srm, trans_mono_lib_path, trans_class_library
     open my $in_fh, '<', 'config/Makefile.tmp'
         or die "Unable to open config/Makefile.tmp\n";
     my $makefile = join( '', <$in_fh> );
@@ -82,11 +81,13 @@ sub generate_makefile {
     my $local_mono_lib_path = $mono_lib_path || q{};
     $makefile =~ s/\$\{trans_mono_lib_path\}/$local_mono_lib_path/g;
     $makefile =~ s/\$\{trans_class_library\}/$class_lib_make/g;
+    $makefile =~ s/\$\{srm\}/$srm/g;
 
     # Write makefile.
     open my $out_fh, '>', 'Makefile' or die "Unable to open Makefile\n";
     print $out_fh $makefile;
     close $out_fh;
+    unlink "config/Makefile.tmp";
 
     return;
 }
@@ -127,7 +128,7 @@ sub generate_classlib_make {
 
     if ( ! $mono_class_lib) {
         # Just say that we weren't configured with mono path, so no can do.
-        return "\techo Oops, I was not configured with the path to Mono class library.\n";
+        return "echo Oops, I was not configured with the path to Mono class library.\n";
     }
 
     # Generate code to translate each library.

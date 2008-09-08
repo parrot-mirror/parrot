@@ -41,6 +41,7 @@ DOC_DIR       = @doc_dir@
 MANDIR	      = @mandir@
 PARROT_DYNEXT = $(BUILD_DIR)/runtime/parrot/dynext
 PARROT_LIB    = $(BUILD_DIR)/runtime/parrot/library
+SRM_PATH      = $(BUILD_DIR)/lib/SRM
 PMCDIR    = pmc
 PMCS      = dotnetassembly dotnetclassmetadata dotnetmethodmetadata \
             dotnetfieldmetadata dotnetparammetadata dotnetsignature \
@@ -84,11 +85,12 @@ ops/dotnet_ops$(LOAD_EXT) : $(OPS_FILES)
 	@cd $(OPSDIR) && $(OPSBUILD) linklibs $(OPSLIB)
 	@cd $(OPSDIR) && $(OPSBUILD) copy "--destination=$(PARROT_DYNEXT)" $(OPSLIB)
 
-src/it.pbc : src/translation.rules build/translator.pl build/SRM/Stack.pm \
-             build/SRM/Register.pm build/SRM/OptRegister.pm
-	$(PERL) build/translator.pl src/translation.rules --srm ${srm} \
-	  --output src/it.pir
+src/it.pbc : src/it.pir
 	$(PARROT) -o src/it.pbc src/it.pir
+
+src/it.pir : src/translation.rules $(SRM_PATH)/translator.pl config/N2PConfig.pm
+	$(PERL) $(SRM_PATH)/translator.pl src/translation.rules --srm ${srm} \
+	  --output src/it.pir --config N2PConfig
 
 src/builtins.pbc : src/builtins.pir
 	$(PARROT) -o src/builtins.pbc src/builtins.pir
@@ -144,10 +146,6 @@ $(TRAN_PIR) :
 
 src/translation.rules : 
 
-build/translator.pl :
-
-src/build/SRM/Stack.pm :
-
 
 # TEST TARGETS
 # ############
@@ -161,7 +159,7 @@ installable_test : installable
 
 install : all installable
 	$(CP) installable_net2pbc$(EXE) $(DESTDIR)$(BIN_DIR)/parrot-net2pbc$(EXE)
-	@cd $(PMCDIR) && $(BUILD_DYNPMC) copy "--destination=$(DESTDIR)$(LIB_DIR)/parrot/dynext" $(OPLIBS)
+	@cd $(OPSDIR) && $(OPSBUILD) copy "--destination=$(DESTDIR)$(LIB_DIR)/parrot/dynext" $(OPSLIB)
 	@cd $(PMCDIR) && $(BUILD_DYNPMC) copy "--destination=$(DESTDIR)$(LIB_DIR)/parrot/dynext" $(PMCS)
 	$(POD2MAN) doc/running.pod > $(DESTDIR)$(MANDIR)/man1/parrot-net2pbc.1
 	$(MKPATH) $(DESTDIR)$(DOC_DIR)/languages/$(LANG)
