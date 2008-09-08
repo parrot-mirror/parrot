@@ -1063,10 +1063,7 @@ Set C<dest> to the negated value of C<SELF>.
 */
 
     VTABLE PMC *neg(PMC *dest) {
-        if (!dest)
-            dest = pmc_new(INTERP, SELF->vtable->base_type);
-        else
-            VTABLE_morph(INTERP, dest, SELF->vtable->base_type);
+        dest = pmc_new(INTERP, SELF->vtable->base_type);
 
         RE(dest) = -RE(SELF);
         IM(dest) = -IM(SELF);
@@ -1127,9 +1124,8 @@ Sets C<dest> to the absolute value of SELF that is the distance from (0.0).
     VTABLE PMC *absolute(PMC *dest) {
         FLOATVAL d = sqrt(RE(SELF)*RE(SELF) + IM(SELF)*IM(SELF));
 
-        if (!dest)
-            dest = pmc_new(INTERP,
-                Parrot_get_ctx_HLL_type(INTERP, enum_class_Float));
+        dest = pmc_new(INTERP,
+            Parrot_get_ctx_HLL_type(INTERP, enum_class_Float));
 
         VTABLE_set_number_native(INTERP, dest, d);
         return dest;
