@@ -51,6 +51,7 @@ Initializes a newly created CallSignature object.
         PMC_data(SELF)         = sig_struct;
         sig_struct->short_sig  = NULL;
         sig_struct->type_tuple = PMCNULL;
+        sig_struct->returns    = PMCNULL;
         sig_struct->array      = NULL;
         sig_struct->hash       = NULL;
         PMC_int_val(SELF)      = CAPTURE_DATA_SIZE;
@@ -165,7 +166,32 @@ Retrieves the return signature, an array of PMCs.
         return sig_struct->returns;
     }
 
-}
+/*
+
+=item C<void mark()>
+
+Mark any referenced strings and PMCs.
+
+=cut
+
+*/
+    VTABLE void mark() {
+        if (PARROT_CALLSIGNATURE(SELF)) {
+            Parrot_CallSignature * const attrs = PARROT_CALLSIGNATURE(SELF);
+
+            if (attrs->array)
+                pobject_lives(interp, (PObj*)attrs->array);
+            if (attrs->hash)
+                pobject_lives(interp, (PObj*)attrs->hash);
+            if (attrs->returns)
+                pobject_lives(interp, (PObj*)attrs->returns);
+            if (attrs->type_tuple)
+                pobject_lives(interp, (PObj*)attrs->type_tuple);
+            if (attrs->short_sig)
+                pobject_lives(interp, (PObj*)attrs->short_sig);
+        }
+    }
+
 
 /*
 
@@ -174,6 +200,8 @@ Retrieves the return signature, an array of PMCs.
 =cut
 
 */
+
+} /* end pmclass */
 
 /*
  * Local variables:
