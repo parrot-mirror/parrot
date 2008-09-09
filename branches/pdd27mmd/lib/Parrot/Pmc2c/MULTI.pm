@@ -79,10 +79,12 @@ sub rewrite_multi_sub {
         if ($type eq 'STRING' or $type eq 'PMC' or $type eq 'INTVAL') {
             ($sig_char) = split '', $type; # short signature takes first character of name
             push @new_params, $param;
-        } elsif ($type eq 'FLOATVAL') {
+        }
+        elsif ($type eq 'FLOATVAL') {
             $sig_char = 'N';
             push @new_params, $param;
-        } else {
+        }
+        else {
             $sig_char = 'P';
             push @new_params, "PMC *$name";
         }
@@ -93,7 +95,8 @@ sub rewrite_multi_sub {
     # prepend the short signature return type
     if ($self->name =~ /^i_/) {
         $short_sig = "v" . $short_sig;
-    } else {
+    }
+    else {
         $short_sig = $self->trans( $self->return_type() ) . $short_sig;
     }
 
