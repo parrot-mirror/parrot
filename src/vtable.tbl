@@ -270,9 +270,9 @@ INTVAL is_equal_string(PMC* value)           MMD_STREQ
 
 INTVAL is_same(PMC* value)
 
-INTVAL cmp(PMC* value)                       MMD_CMP
-INTVAL cmp_num(PMC* value)                   MMD_NUMCMP
-INTVAL cmp_string(PMC* value)                MMD_STRCMP
+INTVAL cmp(PMC* value)
+INTVAL cmp_num(PMC* value)
+INTVAL cmp_string(PMC* value)
 
 PMC* logical_or(PMC* value, PMC* dest)
 
