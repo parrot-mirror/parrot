@@ -196,6 +196,46 @@ enum Tag {
   ITEM_Uninitialized,
 };
 
+/* KAFFE */
+typedef struct _classpathEntry {
+    int     type;
+    char*   path;
+    union {
+        ZZIP_DIR*        jar;
+        struct {
+            int     loaded;
+        } sof;
+    } u;
+    struct _classpathEntry* next;
+} classpathEntry;
+
+typedef enum ClassFileType {
+	CP_NULLCLASS = -1,
+	CP_INVALID  = 0,
+	CP_ZIPFILE  = 1,
+	CP_DIR      = 2,
+	CP_SOFILE   = 3,
+	CP_BYTEARRAY= 4
+} ClassFileType;
+
+typedef enum ClassFileType {
+	CP_NULLCLASS = -1,
+	CP_INVALID  = 0,
+	CP_ZIPFILE  = 1,
+	CP_DIR      = 2,
+	CP_SOFILE   = 3,
+	CP_BYTEARRAY= 4
+} ClassFileType;
+ 
+typedef struct classFile {
+    unsigned char*       mem;
+    const unsigned char* base;
+    const unsigned char* cur;
+    size_t	         size;
+    ClassFileType	 type;
+} classFile;
+
+
 /*  JDK 1.3 version */
 typedef struct real_jzentry13 { 	/* Zip file entry */
     char *name;	  	  	/* entry name */

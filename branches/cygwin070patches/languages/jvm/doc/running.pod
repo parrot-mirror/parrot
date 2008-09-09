@@ -28,3 +28,9 @@ A number of additional flags are available:
   -t  Trace the translation process, producing useful debug info.
   -q  Quiet mode; suppress output of summary at the end.
 
+=cut
+
+# Local Variables:
+#   fill-column:78
+# End:
+# vim: expandtab shiftwidth=4:
