@@ -2318,7 +2318,7 @@ mmd_create_builtin_multi_meth(PARROT_INTERP, ARGIN(PMC *ns), INTVAL type,
     strcpy(signature, "PJP.P");
     signature[3] = val_sig;
 
-    if (func_nr >= MMD_EQ && func_nr <= MMD_STRCMP) {
+    if (func_nr >= MMD_EQ && func_nr <= MMD_STREQ) {
         signature[0] = 'I';
         signature[4] = '\0';
     }
