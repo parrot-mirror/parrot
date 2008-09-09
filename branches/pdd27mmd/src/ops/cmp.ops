@@ -87,7 +87,7 @@ op eq(in STR, in STR, inconst LABEL) :base_core {
 
 op eq(invar PMC, invar PMC, inconst LABEL) :base_core {
   INTVAL result;
-  Parrot_mmd_multi_dispatch_from_c_args(interp, 
+  Parrot_mmd_multi_dispatch_from_c_args(interp,
           "is_equal", "PP->I", $1, $2, &result);
   if (result) {
     goto OFFSET($3);
@@ -102,7 +102,7 @@ op eq(invar PMC, in INT, inconst LABEL) :base_core {
   INTVAL result;
   PMC *temp = pmc_new(interp, enum_class_Integer);
   PMC_int_val(temp) = $2;
-  Parrot_mmd_multi_dispatch_from_c_args(interp, 
+  Parrot_mmd_multi_dispatch_from_c_args(interp,
           "is_equal", "PP->I", $1, temp, &result);
   if (result) {
     goto OFFSET($3);
@@ -206,7 +206,7 @@ op ne(in STR, in STR, inconst LABEL) :base_core {
 
 op ne(invar PMC, invar PMC, inconst LABEL) :base_core {
   INTVAL result;
-  Parrot_mmd_multi_dispatch_from_c_args(interp, 
+  Parrot_mmd_multi_dispatch_from_c_args(interp,
           "is_equal", "PP->I", $1, $2, &result);
   if (!result) {
     goto OFFSET($3);
@@ -217,7 +217,7 @@ op ne(invar PMC, in INT, inconst LABEL) :base_core {
   INTVAL result;
   PMC *temp = pmc_new(interp, enum_class_Integer);
   PMC_int_val(temp) = $2;
-  Parrot_mmd_multi_dispatch_from_c_args(interp, 
+  Parrot_mmd_multi_dispatch_from_c_args(interp,
           "is_equal", "PP->I", $1, temp, &result);
   if (!result) {
     goto OFFSET($3);

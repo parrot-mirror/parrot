@@ -2457,7 +2457,7 @@ Parrot_pcc_invoke_sub_from_sig_object(PARROT_INTERP, ARGIN(PMC *sub_obj),
 
     interp->current_args   = arg_indexes;
     interp->args_signature = args_sig;
-    ctx->current_results   = result_indexes; 
+    ctx->current_results   = result_indexes;
     ctx->results_signature = results_sig;
 
     /* arg_accessors assigned in loop above */
