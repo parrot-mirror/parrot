@@ -23,13 +23,19 @@ For a language 'Xyz', this script will create the following
 files and directories (relative to C<path>, which defaults
 to F<languages/xyz> if an explicit C<path> isn't given):
 
+    MAINTAINER
     README
+    STATUS
     xyz.pir
     config/makefiles/root.in
+    docs/running.pod
+    docs/Xyz.pod
+    src/builtins/say.pir
     src/parser/grammar.pg
     src/parser/grammar-oper.pg
     src/parser/actions.pm
-    src/builtins/say.pir
+    src/pmc/Xyz.pmc
+    src/ops/Xyz.ops
     t/harness
     t/00-sanity.t
 
@@ -135,6 +141,20 @@ __DATA__
 __README__
 Language '@lang@' was created with @script@, @rev@.
 
+See docs/@lang@.pod for the documentation, and
+docs/running.pod for the command-line options.
+
+__MAINTAINER__
+# @Id@
+
+N: My Name
+E: My Email
+
+__STATUS__
+Number of tests passing:
+Percentage of implementation finished:
+TODO:
+
 __config/makefiles/root.in__
 ## @Id@
 
@@ -142,7 +162,7 @@ __config/makefiles/root.in__
 PARROT_ARGS =
 
 ## configuration settings
-LANG          = @lang@
+HLLNAME       = @lclang@
 BUILD_DIR     = @build_dir@
 LOAD_EXT      = @load_ext@
 O             = @o@
@@ -150,32 +170,41 @@ BIN_DIR       = @bin_dir@
 LIB_DIR       = @lib_dir@
 DOC_DIR       = @doc_dir@
 MANDIR	      = @mandir@
+HLL_LIBPATH   = $(BUILD_DIR)/runtime/parrot/library
+PARROT_DYNEXT = $(BUILD_DIR)/runtime/parrot/dynext
 
 ## Setup some commands
 LN_S          = @lns@
 PERL          = @perl@
 RM_RF         = @rm_rf@
 CP            = @cp@
-PARROT        = ../../parrot@exe@
+MKPATH        = @mkpath@
+POD2MAN       = pod2man
+#IF(cygwin):SHRPENV       = env PATH="@build_dir@/blib/lib:$(PATH)"
+#ELSIF(not win32):SHRPENV       = env LD_RUN_PATH="@build_dir@/blib/lib"
+PARROT        = $(SHRPENV) ../../parrot@exe@
+PBC_TO_EXE    = $(SHRPENV) ../../pbc_to_exe@exe@
 CAT           = $(PERL) -MExtUtils::Command -e cat
-PBC_TO_EXE    = ../../pbc_to_exe@exe@
-BUILD_DYNPMC  = $(PERL) $(BUILD_DIR)/tools/build/dynpmc.pl
+PMCBUILD      = $(PERL) $(BUILD_DIR)/tools/build/dynpmc.pl
+OPSBUILD      = $(PERL) $(BUILD_DIR)/tools/build/dynoplibs.pl
 RECONFIGURE   = $(PERL) $(BUILD_DIR)/tools/dev/reconfigure.pl
-POD2MAN	      = pod2man
-#CONDITIONED_LINE(darwin):
-#CONDITIONED_LINE(darwin):# MACOSX_DEPLOYMENT_TARGET must be defined for OS X compilation/linking
-#CONDITIONED_LINE(darwin):export MACOSX_DEPLOYMENT_TARGET := @osx_version@
+#IF(darwin):
+#IF(darwin):# MACOSX_DEPLOYMENT_TARGET must be defined for OS X compilation/linking
+#IF(darwin):export MACOSX_DEPLOYMENT_TARGET := @osx_version@
 
 ## places to look for things
-PARROT_DYNEXT = $(BUILD_DIR)/runtime/parrot/dynext
 PGE_LIBRARY   = $(BUILD_DIR)/runtime/parrot/library/PGE
+PCT           = $(BUILD_DIR)/runtime/parrot/library/PCT.pbc
 PERL6GRAMMAR  = $(PGE_LIBRARY)/Perl6Grammar.pbc
 NQP           = $(BUILD_DIR)/compilers/nqp/nqp.pbc
-PCT           = $(BUILD_DIR)/runtime/parrot/library/PCT.pbc
 
 PMC_DIR       = src/pmc
+OPS_DIR       = src/ops
+OPSLIB        = @lclang@
 
-all: @lclang@.pbc
+build: @lclang@.pbc
+
+all: @lclang@.pbc Makefile @lclang@@exe@ installable
 
 @UCLANG@_GROUP = $(PMC_DIR)/@lclang@_group$(LOAD_EXT)
 
@@ -183,18 +212,22 @@ SOURCES = @lclang@.pir \
   src/gen_grammar.pir \
   src/gen_actions.pir \
   src/gen_builtins.pir \
-#  $(@UCLANG@_GROUP)
+  $(@UCLANG@_GROUP)
 
 BUILTINS_PIR = \
-  src/builtins/say.pir \
+  src/builtins/say.pir
 
-# PMCS = @lclang@
-# PMC_SOURCES = $(PMC_DIR)/@lclang@.pmc
+PMCS = @lang@
+PMC_SOURCES = $(PMC_DIR)/@lang@.pmc
+OPS_SOURCES = $(OPS_DIR)/@lang@.ops
 DOCS = MAINTAINER README TODO
 
 # the default target
-@lclang@.pbc: $(PARROT) $(SOURCES)
+@lclang@.pbc: $(SOURCES)
 	$(PARROT) $(PARROT_ARGS) -o @lclang@.pbc @lclang@.pir
+
+@lclang@@exe@: @lclang@.pbc
+	$(PBC_TO_EXE) @lclang@.pbc
 
 src/gen_grammar.pir: $(PERL6GRAMMAR) src/parser/grammar.pg src/parser/grammar-oper.pg
 	$(PARROT) $(PARROT_ARGS) $(PERL6GRAMMAR) \
@@ -209,31 +242,39 @@ src/gen_actions.pir: $(NQP) $(PCT) src/parser/actions.pm
 src/gen_builtins.pir: $(BUILTINS_PIR)
 	$(CAT) $(BUILTINS_PIR) >src/gen_builtins.pir
 
-$(@UCLANG@_GROUP): $(PARROT) $(PMC_SOURCES)
-	cd $(PMC_DIR) && $(BUILD_DYNPMC) generate $(PMCS)
-	cd $(PMC_DIR) && $(BUILD_DYNPMC) compile $(PMCS)
-	cd $(PMC_DIR) && $(BUILD_DYNPMC) linklibs $(PMCS)
-	cd $(PMC_DIR) && $(BUILD_DYNPMC) copy --destination=$(PARROT_DYNEXT) $(PMCS)
+$(@UCLANG@_GROUP): $(PMC_SOURCES)
+	@cd $(PMC_DIR) && $(PMCBUILD) generate $(PMCS)
+	@cd $(PMC_DIR) && $(PMCBUILD) compile  $(PMCS)
+	@cd $(PMC_DIR) && $(PMCBUILD) linklibs $(PMCS)
+	@cd $(PMC_DIR) && $(PMCBUILD) copy "--destination=$(PARROT_DYNEXT)" $(PMCS)
 
-installable : installable_$(LANG)@exe@ $(@UCLANG@_GROUP)
-	cp installable_$(LANG)@exe@ $(BUILD_DIR)
-	cd $(PMC_DIR) && $(BUILD_DYNPMC) copy --destination=$(PARROT_DYNEXT) $(PMCS)
+ops/@lang@$(LOAD_EXT) : $(OPS_SOURCES)
+	@cd $(OPS_DIR) && $(OPSBUILD) generate $(OPSLIB)
+	@cd $(OPS_DIR) && $(OPSBUILD) compile  $(OPSLIB)
+	@cd $(OPS_DIR) && $(OPSBUILD) linklibs $(OPSLIB)
+	@cd $(OPS_DIR) && $(OPSBUILD) copy "--destination=$(PARROT_DYNEXT)" $(OPSLIB)
 
-installable_$(LANG)@exe@ : $(LANG).pbc
-	$(PBC_TO_EXE) $(LANG).pbc --install
+installable : installable_@lclang@@exe@ $(@UCLANG@_GROUP) ops/@lang@$(LOAD_EXT)
+	cp installable_@lclang@@exe@ $(BUILD_DIR)
+	$(CP) @lclang@.pbc $(HLL_LIBPATH)/@lclang@.pbc
+
+installable_@lclang@@exe@ : @lclang@.pbc
+	$(PBC_TO_EXE) @lclang@.pbc --install
 
 # regenerate the Makefile
 Makefile: config/makefiles/root.in
-	cd $(BUILD_DIR) && $(RECONFIGURE) --step=gen::languages --languages=$(LANG)
+	cd $(BUILD_DIR) && $(RECONFIGURE) --step=gen::languages --languages=@lclang@
 
 # This is a listing of all targets, that are meant to be called by users
 help:
 	@echo ""
 	@echo "Following targets are available for the user:"
 	@echo ""
-	@echo "  all:               @lclang@.pbc"
+	@echo "  build:             @lclang@.pbc"
 	@echo "                     This is the default."
-	@echo "  installable:       Create self-hosting binaries."
+	@echo "  @lclang@@exe@      Self-hosting binary not to be installed."
+	@echo "  all:               @lclang@.pbc @lclang@@exe@ installable Makefile"
+	@echo "  installable:       Create libs and self-hosting binaries to be installed."
 	@echo "  install:           Install the installable targets and docs."
 	@echo ""
 	@echo "Testing:"
@@ -255,15 +296,19 @@ test: all
 
 # TODO: rename build_dir. basic run for missing libs
 test-installable : installable
-	echo "1" | ./installable_$(LANG)@exe@
+	echo "1" | ./installable_@lclang@@exe@
 
 install : installable
-	cp installable_$(LANG)@exe@ $(DESTDIR)$(BIN_DIR)/parrot-$(LANG)@exe@
-	$(POD2MAN) $(LANG).pir > $(DESTDIR)$(MANDIR)/man1/parrot-$(LANG).1
-	mkdir $(DESTDIR)$(DOC_DIR)/languages/$(LANG)
-	cp $(DOCS) $(DESTDIR)$(DOC_DIR)/languages/$(LANG)
+	$(CP) installable_@lclang@@exe@ $(DESTDIR)$(BIN_DIR)/parrot-@lclang@@exe@
+	@cd $(OPS_DIR) && $(OPSBUILD) copy "--destination=$(DESTDIR)$(LIB_DIR)/parrot/dynext" $(OPSLIB)
+	@cd $(PMC_DIR) && $(PMCBUILD) copy "--destination=$(DESTDIR)$(LIB_DIR)/parrot/dynext" $(PMCS)
+	$(CP) @lclang@.pbc $(DESTDIR)$(LIB_DIR)/parrot/library/@lclang@.pbc
+	-$(MKPATH) $(DESTDIR)$(MANDIR)/man1
+	$(POD2MAN) docs/running.pod > $(DESTDIR)$(MANDIR)/man1/parrot-@lclang@.1
+	-$(MKPATH) $(DESTDIR)$(DOC_DIR)/languages/@lclang@
+	$(CP) $(DOCS) $(DESTDIR)$(DOC_DIR)/languages/@lclang@
 
-# this target has nothing to do
+# clean intermediate test files
 testclean:
 
 CLEANUPS = \
@@ -281,8 +326,9 @@ CLEANUPS = \
   $(PMC_DIR)/*.manifest \
   $(PMC_DIR)/*.pdb \
   $(PMC_DIR)/*.lib \
-  $(LANG)@exe@ \
-  installable_$(LANG)@exe@ \
+  @lclang@@exe@ \
+  $(HLL_LIBPATH)/@lclang@.pbc \
+  installable_@lclang@@exe@ \
 
 
 clean: testclean
@@ -293,7 +339,47 @@ realclean: clean
 
 distclean: realclean
 
+__docs/@lang@.pod__
+# @Id@
 
+=head1 @lang@
+
+=head1 Design
+
+=head1 SEE ALSO
+
+=cut
+
+# Local Variables:
+#   fill-column:78
+# End:
+# vim: expandtab shiftwidth=4:
+__docs/running.pod__
+# @Id@
+
+=head1 Running
+
+This document describes how to use the command line @lclang@ program, which
+...
+
+=head2 Usage
+
+  parrot @lclang@.pbc [OPTIONS] <input>
+
+or
+
+  parrot-@lclang@@exe [OPTIONS] <input>
+
+A number of additional options are available:
+
+  -q  Quiet mode; suppress output of summary at the end.
+
+=cut
+
+# Local Variables:
+#   fill-column:78
+# End:
+# vim: expandtab shiftwidth=4:
 __@lclang@.pir__
 =head1 TITLE
 
@@ -518,6 +604,221 @@ method quote($/) {
 # End:
 # vim: expandtab shiftwidth=4:
 
+__src/pmc/@lang@.pmc__
+/*
+Copyright (C) 20xx, The Perl Foundation.
+@Id@
+
+=head1 NAME
+
+src/pmc/@lang@.pmc - @lang@
+
+=head1 DESCRIPTION
+
+These are the vtable functions for the @lang@ class.
+
+=cut
+
+=head2 Helper functions
+
+=over 4
+
+=item INTVAL size(INTERP, PMC, PMC)
+
+*/
+
+#include "parrot/parrot.h"
+
+static INTVAL
+size(Interp *interp, PMC* self, PMC* obj)
+{
+    INTVAL retval;
+    INTVAL dimension;
+    INTVAL length;
+    INTVAL pos;
+
+    if (!obj || PMC_IS_NULL(obj)) {
+        /* not set, so a simple 1D */
+        return VTABLE_get_integer(interp, self);
+    }
+
+    retval = 1;
+    dimension = VTABLE_get_integer(interp, obj);
+    for (pos = 0; pos < dimension; pos++)
+    {
+        length = VTABLE_get_integer_keyed_int(interp, obj, pos);
+        retval *= length;
+    }
+    return retval;
+}
+
+/*
+
+=back
+
+=head2 Methods
+
+=over 4
+
+=cut
+
+*/
+
+pmclass @lang@
+    extends ResizablePMCArray
+    provides array
+    group   @lclang@_group
+
+    need_ext
+    dynpmc
+    {
+/*
+
+=item C<void class_init()>
+
+initialize the pmc class. Store some constants, etc.
+
+=cut
+
+*/
+
+    /* RT#48194: move any constant string declarations here so we just do them once. */
+    void class_init() {
+    }
+
+
+/*
+
+=item C<PMC* init()>
+
+initialize the instance.
+
+=cut
+
+*/
+
+void init() {
+    SUPER();
+};
+
+=item C<PMC* get()>
+
+Returns a vector-like PMC.
+
+=cut
+
+*/
+
+    METHOD PMC* get() {
+        PMC* property;
+        INTVAL array_t;
+        STRING* property_name;
+
+        property_name = string_from_literal(INTERP, "property");
+        shape = VTABLE_getprop(INTERP, SELF, property_name);
+        if (PMC_IS_NULL(property)) {
+           /*
+            * No property has been set yet. This means that we are
+            * a simple vector
+            *
+            * we use our own type here. Perhaps a better way to
+            * specify it?
+            */
+            /*
+            array_t = pmc_type(INTERP,
+                string_from_literal(INTERP, "@lang@"));
+            */
+            property = pmc_new(INTERP, VTABLE_type(INTERP, SELF));
+
+            VTABLE_set_integer_native(INTERP, property, 1);
+            VTABLE_set_integer_keyed_int(INTERP, property, 0,
+                VTABLE_get_integer(INTERP, SELF));
+            VTABLE_setprop(INTERP, SELF, property_name, property);
+        }
+        RETURN(PMC* property);
+    }
+
+/*
+
+=item C<PMC* set()>
+
+Change the existing @lang@ by passing in an existing vector.
+
+If the new property is larger than our old property, pad the end of the APLv
+with elements from the beginning.
+
+If the new property is shorter than our old property, truncate elements from
+the end of the APLv.
+
+=cut
+
+*/
+
+    METHOD set(PMC *new_property) {
+        STRING* property_name;
+        PMC*    old_property;
+        INTVAL  old_size, new_size, pos;
+
+        /* save the old property momentarily, set the new property */
+        property_name = string_from_literal(INTERP, "property");
+        old_property = VTABLE_getprop(INTERP, SELF, property_name);
+        VTABLE_setprop(INTERP, SELF, property_name, new_property);
+
+        /* how big are these property? */
+        old_size = size(INTERP, SELF, old_property);
+        new_size = size(INTERP, SELF, new_property);
+
+        if (old_size > new_size) {
+            for (; new_size != old_size; new_size++) {
+                VTABLE_pop_pmc(INTERP, SELF);
+            }
+        } else if (new_size > old_size) {
+            pos = 0;
+            for (; new_size != old_size; old_size++, pos++) {
+                /* RT#48196 clone this? */
+                VTABLE_push_pmc(INTERP, SELF,
+                    VTABLE_get_pmc_keyed_int(INTERP, SELF, pos));
+            }
+        }
+    }
+
+/*
+
+=back
+
+=cut
+
+*/
+
+}
+
+/*
+ * Local variables:
+ *   c-file-style: "parrot"
+ * End:
+ * vim: expandtab shiftwidth=4:
+ */
+__src/ops/@lang@.ops__
+/*
+ * @id@
+ * Copyright (C) 20xx, The Perl Foundation.
+ */
+
+#include "parrot/dynext.h"
+VERSION = PARROT_VERSION;
+
+/* Op to get the address of a PMC. */
+inline op @lclang@_pmc_addr(out INT, invar PMC) :base_core {
+    $1 = (int) $2;
+    goto NEXT();
+}
+
+/*
+ * Local variables:
+ *   c-file-style: "parrot"
+ * End:
+ * vim: expandtab shiftwidth=4:
+ */
 __src/builtins/say.pir__
 # @Id@
 
