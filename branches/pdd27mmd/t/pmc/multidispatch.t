@@ -125,7 +125,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "INTVAL return numeq" );
 .sub _main
     .local pmc comp
     comp = global "Float_cmp_Integer"
-    add_multi "CMP", "Float,Integer", comp
+    add_multi "cmp", "Float,Integer", comp
 
     $P1 = new 'Float'
     $P2 = new 'Integer'
