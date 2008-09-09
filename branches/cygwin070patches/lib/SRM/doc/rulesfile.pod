@@ -8,7 +8,7 @@ translator builder, as documented in L<translatorbuilder.pod>.
 
 =head2 Syntax
 
-The file contains an entry for each .NET instruction to translate. The entry
+The file contains an entry for each bytecode instruction to translate. The entry
 for an instruction starts with its full name in square brackets on a line of
 its own.
 
@@ -55,7 +55,9 @@ that is being translated. These are needed by the translator generator.
 =head3 code
 
 This entry specifies the numerical representation of the instruction. It is
-specified as one or more pairs of hexadecimal digits seperated by spaces.
+specified as one or more pairs of uppercase hexadecimal digits seperated by
+spaces.
+
 Examples:
 
   code = 2E
@@ -173,8 +175,8 @@ This entry is B<optional> if there are no arguments.
 
 =head2 Translation Entries
 
-These specify the translation itself. One of instruction or pir is required
-(that is, not both).
+These specify the translation itself. Either the entry C<instruction> or C<pir> 
+is required. That is, not both, but at least one.
 
 =head3 instruction
 
@@ -206,21 +208,22 @@ code specified with instruction is what the translator will *emit*.
 =head3 pre_translate
 
 Add some pir code before the pir or instruction code.
-Multiple lines of pre_translate are allowed.
+Multiple lines of C<pre_translate> are allowed.
 
-This is currently only used for enum_fixup for branch, arithmetic/logical
-and compare ops.
+This migth be used for enum_fixup for branch, arithmetic/logical and compare
+ops.
 
   pre_translate = <<PIR
-    (${STEMP0}, ${STACK0}, ${STACK1}) = fix_enum_operands(${STYPES}, ${STACK0}, ${STACK1})
+    (${STEMP0}, ${STACK0}, ${STACK1}) = fix_enum_operands(${STYPES}, ${STACK0}, 
+                                                          ${STACK1})
     ${INS} = concat ${STEMP0}
   PIR
 
 =head2 Dataflow Analysis Entries
 
 There is a single entry that needs to be made for all rules with class
-op or load. In the case of op, it needs to populate ${DTYPES}. In the
-case of load, it needs to populate ${LOADTYPE}.
+C<op> or C<load>. In the case of C<op>, it needs to populate C<${DTYPES}>. In the
+case of C<load>, it needs to populate C<${LOADTYPE}>.
 
 =head3 typeinfo
 
@@ -241,59 +244,61 @@ Example for an op instruction:
   ${DTYPES}[1] = ${STYPES}[0]
   PIR
 
-Constants as specified in Partition II Section 22.1.15 will be set.
+Constants as specified e.g. in .NET Partition II Section 22.1.15 will be set.
 
 =head2 Meta-variables
 
 =head3 ${STACK0}, ${STACK1}, ...
 
-These refer to locations on the stack. ${STACK0} refers to the stack top,
-${STACK1} refers to the element second from the top, etc. Note that these
+These refer to locations on the stack. C<${STACK0}> refers to the stack top,
+C<${STACK1}> refers to the element second from the top, etc. Note that these
 will be popped from the stack down to the lowest point in the stack tha is
-accessed. or example, if ${STACK0} and ${STACK2} are used, then the second
-location in the stack (which would be called ${STACK1}) will also be popped
+accessed. or example, if C<${STACK0}> and C<${STACK2}> are used, then the second
+location in the stack (which would be called C<${STACK1}>) will also be popped
 off.
 
 =head3 ${DEST0}, ${DEST1}, ...
 
-For instructions in the op class, these are the locations that the results of
-the operation will be placed. For instructions in the load class, ${DEST0} is
-sometimes used to mean the register that the loaded content will be placed in.
-These are used when new data needs to be pushed onto the stack. This works the
-opposite way round to the ${STACKn} meta-variables; ${DEST0} will be pushed
-first, followed by ${DEST1}, etc. If this is used when the class is anything
-other than op or load, or is used in a load and also mention ${LOADREG}, then
-a monkey may explode. Oh, and you'll get an error.
+For instructions in the C<op> class, these are the locations that the results
+of the operation will be placed. For instructions in the C<load> class,
+C<${DEST0}> is sometimes used to mean the register that the loaded content
+will be placed in.  These are used when new data needs to be pushed onto the
+stack. This works the opposite way round to the C<${STACKn}> meta-variables;
+C<${DEST0}> will be pushed first, followed by C<${DEST1}>, etc. If this is
+used when the class is anything other than C<op> or C<load>, or is used in a
+C<load> and also mention C<${LOADREG}>, then a monkey may explode. Oh, and
+you'll get an error.
 
 =head3 ${ARG0}, ${ARG1}, ...
 
 These refer to the arguments for the instruction, as specified in the
-"arguments" entry. Here, ${ARG0} is the first argument, ${ARG1} the second,
-etc.
+C<"arguments"> entry. Here, C<${ARG0}> is the first argument, C<${ARG1}> the
+second, etc.
 
 =head3 ${ITEMP0}, ${ITEMP1}, ...
 
 These are temporary variables that can be used in any PIR code. They will
-alway map to an I register. Do not assume anything about the contents of
-these - they will likely contain junk from whatever used them last.
+alway map to an C<I> parrot register. Do not assume anything about the
+contents of these - they will likely contain junk from whatever used them
+last.
 
 =head3 ${NTEMP0}, ${NTEMP1}, ...
 
 These are temporary variables that can be used in any PIR code. They will
-alway map to a N register. Do not assume anything about the contents of
-these - they will likely contain junk from whatever used them last.
+alway map to a C<N> parrot register. Do not assume anything about the contents
+of these - they will likely contain junk from whatever used them last.
 
 =head3 ${STEMP0}, ${STEMP1}, ...
 
 These are temporary variables that can be used in any PIR code. They will
-alway map to a S register. Do not assume anything about the contents of
-these - they will likely contain junk from whatever used them last.
+alway map to a C<S> parrot register. Do not assume anything about the contents
+of these - they will likely contain junk from whatever used them last.
 
 =head3 ${PTEMP0}, ${PTEMP1}, ...
 
 These are temporary variables that can be used in any PIR code. They will
-alway map to a P register. Do not assume anything about the contents of
-these - they will likely contain junk from whatever used them last.
+alway map to a C<P> parrot register. Do not assume anything about the contents
+of these - they will likely contain junk from whatever used them last.
 
 =head3 ${LOADREG}
 
@@ -322,7 +327,7 @@ concatenate extra ones on to it to emit more. Simple.
 
 =head3 ${BC}
 
-This is the DotNetBytecode PMC, used for walking the bytecode. Hopefully, it
+This is the bytecode PMC, used for walking the bytecode. Hopefully, it
 should not be required to play with this too often. However, there is a case
 when it will be needed - iterating over the var arg switch instruction.
 
@@ -369,7 +374,7 @@ are not suitable here as the number of parameters is not known until runtime.
 
 There are three levels at which this system is working. There's the translated
 code that is produced, which is PIR code. There's the translator that takes the
-.NET instructions and produces this PIR code, and that translator is written in
+bytecode instructions and produces this PIR code, and that translator is written in
 PIR. Finally, there is the translator builder.
 
 When using the "instruction" entry, this is specifying the instruction that the
