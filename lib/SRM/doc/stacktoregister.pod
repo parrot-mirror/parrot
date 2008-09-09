@@ -3,7 +3,7 @@
 
 =head1 Stack To Register Translation
 
-The .NET CLI and Java JVM is a stack based virtual machine whereas
+The .NET CLI and Java JVM are stack based virtual machines whereas
 Parrot is register based.  This document details what that means and
 how the challenges the difference presents will be dealt with.
 
@@ -134,13 +134,13 @@ can always be determined statically; that is, at translation time.
 =head2 Data On The Stack
 
 There are essentially 3 types of item found on the .NET CLI's execution stack
-that need to be mapped to Parrot registers.
+that need to be mapped to Parrot registers. The JVM architecture is the same.
 
 =head3 Arguments
 
 This is the data that has been passed to a method. In a stack architecture, the
 calling convention is that parameters for the method are pushed onto the stack
-before the method is called. They are accessed by a number of .NET instructions
+before the method is called. They are accessed by a number of instructions
 that simply access the part of the stack where the currently executing method's
 arguments are located. These intructions load the arguments onto the top of the
 stack so they can be manipulated. The space they consume on the stack is
@@ -196,10 +196,10 @@ function in PIR.
 Calling a function is simply written as it might be in a high level language -
 the function name with arguments in parentheses. Parameters are retrieved by
 the ".param" directive. Each ".param" is stored in a named virtual register.
-.NET CLI code always retrieves parameters by number, the argument number being
-a constant and thus known at translation time. Therefore, a naming scheme that
-has the first parameter named "arg0", the second parameter named "arg1" etc.
-will be sufficient.
+.NET CLI and JVM bytecode always retrieves parameters by number, the argument
+number being a constant and thus known at translation time. Therefore, a
+naming scheme that has the first parameter named "arg0", the second parameter
+named "arg1" etc.  will be sufficient.
 
 =head2 Solutions For Allocating Locals
 
@@ -207,10 +207,10 @@ PIR provides a ".local" directive for declaring a local in a named register.
 
   .local int name
 
-.NET CLI code retrieves parameters by number, the number being a constant
-and thus known at translation time. Therefore, a naming scheme that has
-the first local named "local0", the second local named "local1" etc. will be
-sufficient.
+.NET CLI and he Java JVM bytecode retrieves parameters by number, the number
+being a constant and thus known at translation time. Therefore, a naming
+scheme that has the first local named "local0", the second local named
+"local1" etc. will be sufficient.
 
 =head2 Solutions For Allocating Temporaries
 
