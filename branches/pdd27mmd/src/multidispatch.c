@@ -619,12 +619,14 @@ Parrot_mmd_multi_dispatch_from_c_args(PARROT_INTERP,
 
 #if MMD_DEBUG
     fprintf(stderr, "candidate found for '%s', with signature '%s'\n", name, sig);
-    fprintf(stderr, "type of candidate found: %s\n", string_to_cstring(interp, VTABLE_name(interp, sub)));
+    fprintf(stderr, "type of candidate found: %s\n",
+            string_to_cstring(interp, VTABLE_name(interp, sub)));
 #endif
 
     if (PMC_IS_NULL(sub))
         Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_METH_NOT_FOUND,
-                "Multiple Dispatch: No suitable candidate found for '%s', with signature '%s'", name, sig);
+                "Multiple Dispatch: No suitable candidate found for '%s',"
+                " with signature '%s'", name, sig);
 
     Parrot_pcc_invoke_sub_from_sig_object(interp, sub, sig_object);
 }
