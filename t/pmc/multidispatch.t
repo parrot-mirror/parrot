@@ -254,7 +254,7 @@ pasm_output_is( <<'CODE', <<'OUTPUT', "PASM INTVAL - new result" );
 
     new P1, 'Integer'
     set P1, 3
-    bxor P9, P1, 2    # create new result
+    bxor P9, P1, 2
     print P9
     print "\n"
     end
@@ -275,12 +275,12 @@ OUTPUT
 pasm_output_is( <<'CODE', <<'OUTPUT', "PASM INTVAL - existing result" );
 .include "datatypes.pasm"
     get_global P10, "Integer_bxor_Intval"
-    add_multi "bxor", "Integer,INTVAL", P10
+    add_multi "bitwise_xor_int", "Integer,INTVAL,PMC", P10
 
     new P0, 'Integer'
     new P1, 'Integer'
     set P1, 3
-    bxor P0, P1, 2    # use result
+    bxor P0, P1, 2
     print P0
     print "\n"
     end
@@ -300,27 +300,24 @@ OUTPUT
 pasm_output_is( <<'CODE', <<'OUTPUT', "PASM INTVAL - mixed" );
 .include "datatypes.pasm"
     get_global P10, "Integer_bxor_Intval"
-    add_multi "bxor", "Integer,INTVAL", P10
+    add_multi "bitwise_xor_int", "Integer,INTVAL,PMC", P10
 
     new P0, 'Integer'
     new P1, 'Integer'
     set P1, 3
-    bxor P0, P1, 2      # reuse destination
+    bxor P0, P1, 2
     print P0
     print "\n"
-    bxor P9, P1, 2    # create new result
+    bxor P9, P1, 2
     print P9
     print "\n"
     end
 .pcc_sub Integer_bxor_Intval:
-    # the destination is optional, depending on the infix op used
-    get_params "0,0,0x80,0x100", P5, I5, P6, I7
+    get_params "0,0,0", P5, I5, P6
     print "ok\n"
     set I10, P5
     bxor I11, I10, I5
-    if I7, has_dest
     new P6, 'Integer'
-has_dest:
     set P6, I11
     set_returns "0", P6
     returncc
@@ -790,8 +787,8 @@ pir_output_is( <<'CODE', <<'OUTPUT', "__add as function - Int, Float" );
     r = new 'Float'
     l = 3
     r = 39.42
-    a = get_root_global ["__parrot_core"], "__add"
-    a(l, r, d)
+    a = get_root_global ["MULTI"], "add"
+    d = a(l, r, d)
     print d
     print "\n"
     end
@@ -800,14 +797,14 @@ CODE
 42.42
 OUTPUT
 
-pir_output_is( <<'CODE', <<'OUTPUT', "__add as method" );
+pir_output_is( <<'CODE', <<'OUTPUT', "add as method" );
 .sub main :main
     .local pmc d, l, r
     l = new 'Integer'
     r = new 'Integer'
     l = 3
     r = 39
-    d = l."__add"(r)
+    d = l."add"(r)
     print d
     print "\n"
     end
