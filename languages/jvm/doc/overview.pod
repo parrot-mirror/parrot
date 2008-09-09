@@ -1,17 +1,17 @@
 =head1 Overview
 
-This document contains an overview of the internals of the .NET EXE/DLL file to
+This document contains an overview of the internals of the Java class file to
 PIR translator. If you are looking to use the translator rather than hack on it,
 you're probably reading the wrong document; see L<contents.pod> instead.
 
 =head2 Process Overview
 
-This describes the steps that take place in converting a .NET EXE or DLL file
+This describes the steps that take place in converting a Java class or jar file
 into Parrot bytecode, ready to execute natively in Parrot or write to a file
 for later loading by Parrot programs.
 
                    +----------------------------+
-                   |  .NET CLI EXE or DLL File  |
+                   |   Java class or jar File   |
                    +------------||--------------+
                                 ||
                                _||_
@@ -45,14 +45,14 @@ performed on them from Parrot programs. In this translation system, they
 are being used to enable parts of the system to be written in C.
 
 Details of them can be found in L<pmcs.pod> and the source files are in
-the "pmc" directory and have file extension ".pmc". The .c and most of
-the .h files are generated, so should not be modified; "structures.h"
-and "tableinfo.h" are the two exceptions to this rule.
+the F<"pmc"> directory and have file extension F<.pmc>. The F<.c> and most of
+the F<.h> files are generated, so should not be modified; F<"structures.h">
+and F<"tableinfo.h"> are the two exceptions to this rule.
 
 =head2 Metadata Translator
 
-In .NET, A lot of data about classes and their methods and fields is not
-stored in the instruction stream but rather in a set of tables. This
+In Java as with .NET a lot of data about classes and their methods and fields
+is not stored in the instruction stream but rather in a set of tables. This
 part of the system takes the data in the tables and turns it into Parrot
 intermediate code.
 
@@ -61,18 +61,18 @@ fields and method headers with their parameter list and local variables.
 It delegates the translation of the method body to the instruction
 translator.
 
-The source for this subsystem is found in the "src" directory. It is
+The source for this subsystem is found in the F<"src"> directory. It is
 written in PIR.
 
 =head2 Instruction Translator
 
-This part of the system translates .NET method bodies into PIR. It maps
-.NET instructions to Parrot instructions and maps the stack onto some
+This part of the system translates bytecode method bodies into PIR. It maps
+JVM instructions to Parrot instructions and maps the stack onto some
 Parrot registers. This is easily the most complex part of the system.
 
-Rules and stack to register mapping are specified in a number of files
-and a build tool (located in the "build" directory) turns them into
-PIR. This resultant PIR ends up in the "src" directory.
+Rules and stack to register mapping are specified in a number of files and a
+build tool (located in F<lib/SRM>) turns them into PIR. This resultant PIR
+F<it.pir> ends up in the F<"src"> directory.
 
 =head2 The PIR Compiler
 
@@ -80,3 +80,9 @@ This is a part of Parrot, not of the translation system. It simply turns
 Parrot Intermediate Representation into Parrot bytecode, which the Parrot
 virtual machine can execute.
 
+=cut
+
+# Local Variables:
+#   fill-column:78
+# End:
+# vim: expandtab shiftwidth=4:

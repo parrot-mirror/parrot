@@ -1,48 +1,51 @@
 =head1 PMCs
 
 This document details the PMCs (Parrot Magic Cookies) that are used to read in
-.NET assemblies and provide access to the data held in them from PIR.
+Java class files and provide access to the data held in them from PIR.
 
-=head2 JavaAssembly
+=head2 JavaClassFile
 
-This PMC represents an entire .NET CLI EXE or DLL file. It handles loading of
-a .NET assembly and instantiates all other PMCs that relate to the assembly.
-It also provides access to some of the global data 
+This PMC represents an entire Java class file or a jar container of multiple
+class files. It handles loading of a Java class file, unpacking a jar file and
+it instantiates all other PMCs that relate to the class file. It also provides
+access to some of the global data.
 
 =head3 Synopsis
 
-  # Load an .NET CLI DLL or EXE file.
-  $P1 = new .JavaAssembly
-  $P1 = "Example.dll"
-  $P1.load()
+  .local pmc jar
+  # Load an Java class file.
+  loadlib $P0, "jvm"
+  jar = new "JavaClassFile"
+  jar = "example.class"
+  jar.load()
   
   # Get name of loaded file.
-  $S1 = $P1
+  $S1 = jar
   
-  # Is it a DLL?
-  $I1 = $P1.is_dll()
-  if $I1 = 0 goto EXE
-  print "This is a DLL\n"
+  # Is it a jar?
+  $I1 = jar.is_jar()
+  if $I1 = 0 goto CLASSFILE
+  print "This is a JAR container\n"
   goto CONTINUE
-EXE:
-  print "This is an EXE file\n"
-CONTINUE:
+ CLASSFILE:
+  print "This is a class file\n"
+ CONTINUE:
   
   # Get an array of classes.
-  $P2 = $P1.get_classes()
+  $P2 = jar.get_classes()
   
   # Get the globals pseudo-class.
-  $P3 = $P1.get_global()
+  $P3 = jar.get_global()
   
 =head3 Vtable Methods
 
 =head4 set_string_native
 
-Sets the filename of the .NET assembly to be loaded.
+Sets the filename of the class file to be loaded.
 
 =head4 get_string
 
-Gets the filename of the .NET assembly that is loaded or to be loaded.
+Gets the filename of the class file that is loaded or to be loaded.
 
 =head3 Additional Methods
 
@@ -51,28 +54,28 @@ when after the load method.
 
 =head4 void load()
 
-Attempts to load the .NET assembly whose filenmae is stored in the string
+Attempts to load the class file whose filename is stored in the string
 representation of the PMC.
 
-=head4 INTVAL is_dll()
+=head4 INTVAL is_jar()
 
-Returns a non-zero integer if the file is a DLL and zero otherwise.
+Returns a non-zero integer if the file is a jar container and zero otherwise.
 
 =head4 STRING* get_internal_string(INTVAL i)
 
-Gets the string with at the position identifier i from the strings heap.
+Gets the string with at the position identifier C<i> from the strings heap.
 This is the string heap that is used for internal identifiers and are
 UTF-8 encoded.
 
 =head4 STRING* get_user_string(INTVAL i)
 
-Gets the string at position i from the user strings heap. This is the
+Gets the string at position C<i> from the user strings heap. This is the
 string heap that is used for strings that make up various bits of user
 data. Strings on the user heap are encoded as 16-bit unicode.
 
 =head4 STRING* get_blob(INTVAL i)
 
-Gets the blob at position i from the blobs heap. A blob is a lump of
+Gets the blob at position C<i> from the blobs heap. A blob is a lump of
 binary data; Parrot strings can handle these fine, though.
 
 =head4 PMC* get_classes()
@@ -146,8 +149,7 @@ Returns a string that is the namespace the class is in.
 
 =head4 get_flags
 
-Returns a bit vector of flags set on the method. For details of what the
-flags mean, see Partition II Clause 22.1.4 of the .NET Specification.
+Returns a bit vector of flags set on the method.
 
 =head4 PMC* get_fields()
 
@@ -166,7 +168,7 @@ Returns the ID of the parent class.
 =head4 get_parent_type()
 
 Returns the type of the parent class ID - that is, whether it is a type
-in the current assembly or in another one.
+in the current classfile or in another one.
 
 =head4 get_interface_ids()
 
@@ -176,7 +178,7 @@ the type implements.
 =head4 get_interface_types()
 
 Returns an integer array PMC containing the type of each of the IDs
-that was returned by get_interface_ids.
+that was returned by C<get_interface_ids>.
 
 =head2 JavaMethodMetadata
 
@@ -221,8 +223,7 @@ signature for the method.
 
 =head4 get_flags
 
-Returns a bit vector of flags set on the method. For details of what the
-flags mean, see Partition II Clause 22.1.9 of the .NET Specification.
+Returns a bit vector of flags set on the method.
 
 =head4 get_bytecode
 
@@ -267,8 +268,7 @@ signature for the field.
 
 =head4 get_flags
 
-Returns a bit vector of flags set on the field. For details of what the
-flags mean, see Partition II Clause 22.1.5 of the .NET Specification.
+Returns a bit vector of flags set on the field.
 
 =head3 TODO
 
@@ -302,21 +302,20 @@ Gets the name of the parameter.
 
 =head4 get_flags
 
-Returns a bit vector of flags set on the parameter. For details of what
-the flags mean, see Partition II Clause 22.1.12 of the .NET Specification.
+Returns a bit vector of flags set on the parameter.
 
 =head4 get_sequence
 
 Returns an integer specifying the sequence number of the parameter.
 This is the position of the parameter. Sequence number 0 corresponds
 to the return value rather than a parameter. Sequence numbers should
-then increase, according to the .NET specification, however gaps are
+then increase, according to the Java vmspec, however gaps are
 allowed. Quite what a gap in the sequence would imply is unclear,
 however.
 
 =head2 JavaSignature
 
-Signatures in .NET are represented as binary blobs of data. This PMC,
+Signatures in Java are represented as binary blobs of data. This PMC,
 one assigned a string representing a blob, provides some assistance
 to programs walking signatures, hiding away the compression scheme.
 This PMC does not understand the structure of different types of
@@ -324,7 +323,7 @@ signature.
 
 =head3 Synopsis
 
-  $P0 = new JavaSignature
+  $P0 = new "JavaSignature"
   $S0 = assembly.get_blob(blob_position)
   $P0 = $S0
   type = $P0.read_byte()
@@ -348,14 +347,12 @@ pointer.
 
 =head4 read_compressed
 
-Reads a compressed integer, compressed according to the method described
-in Partition II Section 22.2 of the .NET specification. Updates the
-current internal position pointer.
+Reads a compressed integer. Updates the current internal position pointer. (?)
 
 
 =head2 JavaBytecode
 
-This PMC provides useful methods for walking .NET CLI instruction streams
+This PMC provides useful methods for walking the JVM instruction streams
 and accessing data in the metadata encoded within the instruction stream,
 rather than the main metadata tables.
 
@@ -485,3 +482,9 @@ XXX TO DO
 
 XXX TO DO
 
+=cut
+
+# Local Variables:
+#   fill-column:78
+# End:
+# vim: expandtab shiftwidth=4:
