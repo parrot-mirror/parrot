@@ -26,10 +26,6 @@ Tests the multi-method dispatch.
 pir_output_is( <<'CODE', <<'OUTPUT', "Integer_divide_PerlInt  10 / 3 = 1003", todo => 'RT #41374' );
 
 .sub 'test' :main
-
-.include "pmctypes.pasm"
-.include "mmd.pasm"
-
     .local  pmc lib_perl_group
     lib_perl_group    = loadlib 'perl_group'
     .local int type_perl_int
@@ -67,10 +63,6 @@ OUTPUT
 pir_output_is( <<'CODE', <<'OUTPUT', "1+1=3" );
 
 .sub _main
-
-.include "pmctypes.pasm"
-.include "mmd.pasm"
-
     .local pmc add
     add = global "add"
     add_multi "add", "Integer,Integer,Integer", add
@@ -103,10 +95,6 @@ OUTPUT
 pir_output_is( <<'CODE', <<'OUTPUT', "PASM divide - override builtin 10 / 3 = 42" );
 
 .sub _main
-
-.include "pmctypes.pasm"
-.include "mmd.pasm"
-
     .local pmc divide
     divide = global "Integer_divide_Integer"
     add_multi "divide", "Integer,Integer,Integer", divide
@@ -135,10 +123,6 @@ OUTPUT
 pir_output_is( <<'CODE', <<'OUTPUT', "INTVAL return numeq" );
 
 .sub _main
-
-.include "pmctypes.pasm"
-.include "mmd.pasm"
-
     .local pmc comp
     comp = global "Float_cmp_Integer"
     add_multi "CMP", "Float,Integer", comp
@@ -166,10 +150,6 @@ OUTPUT
 pir_output_is( <<'CODE', <<'OUTPUT', "find_multi" );
 
 .sub _main
-
-.include "pmctypes.pasm"
-.include "mmd.pasm"
-
     .local pmc comp
     comp = global "Float_cmp_Integer"
     add_multi "cmp_num", "Float,Integer", comp
@@ -198,10 +178,6 @@ OUTPUT
 pir_output_is( <<'CODE', <<'OUTPUT', "find_multi - invoke it" );
 
 .sub _main
-
-.include "pmctypes.pasm"
-.include "mmd.pasm"
-
     .local pmc comp
     comp = global "Float_cmp_Integer"
     add_multi "cmp_num", "Float,Integer", comp
@@ -252,10 +228,6 @@ close $S;
 pir_output_is( <<'CODE', <<'OUTPUT', "PASM MMD divide - loaded sub" );
 
 .sub _main
-
-.include "pmctypes.pasm"
-.include "mmd.pasm"
-
     .local pmc divide
     load_bytecode "temp.pir"
     divide = global "Integer_divide_Integer"
@@ -276,9 +248,7 @@ CODE
 OUTPUT
 
 pasm_output_is( <<'CODE', <<'OUTPUT', "PASM INTVAL - new result" );
-.include "pmctypes.pasm"
 .include "datatypes.pasm"
-.include "mmd.pasm"
     get_global P10, "Integer_bxor_Intval"
     add_multi "bxor", "Integer,INTVAL", P10
 
@@ -303,9 +273,7 @@ ok
 OUTPUT
 
 pasm_output_is( <<'CODE', <<'OUTPUT', "PASM INTVAL - existing result" );
-.include "pmctypes.pasm"
 .include "datatypes.pasm"
-.include "mmd.pasm"
     get_global P10, "Integer_bxor_Intval"
     add_multi "bxor", "Integer,INTVAL", P10
 
@@ -330,9 +298,7 @@ ok
 OUTPUT
 
 pasm_output_is( <<'CODE', <<'OUTPUT', "PASM INTVAL - mixed" );
-.include "pmctypes.pasm"
 .include "datatypes.pasm"
-.include "mmd.pasm"
     get_global P10, "Integer_bxor_Intval"
     add_multi "bxor", "Integer,INTVAL", P10
 
@@ -1049,7 +1015,6 @@ pir_output_is( <<'CODE', <<'OUTPUT', "use a core func for an object" );
     r = new "AInt"
     .local pmc func
     .local string typ
-    .include "mmd.pasm"
     func = find_multi "add", "Float,Float"
     $S0 = typeof l
     typ = $S0 . ","
