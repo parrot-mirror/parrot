@@ -883,7 +883,7 @@ Inplace bitwise and.
 
 */
 
-    VTABLE PMC *bitwise_xor(PMC *value, PMC *dest) {
+    MULTI PMC *bitwise_xor(PMC *value, PMC *dest) {
         const INTVAL result =
             SELF.get_integer() ^ VTABLE_get_integer(INTERP, value);
 
@@ -893,7 +893,7 @@ Inplace bitwise and.
         return dest;
     }
 
-    VTABLE PMC *bitwise_xor_int(INTVAL value, PMC *dest) {
+    MULTI PMC *bitwise_xor_int(INTVAL value, PMC *dest) {
         const INTVAL result = SELF.get_integer() ^ value;
 
         dest = pmc_new(INTERP, VTABLE_type(INTERP, SELF));
