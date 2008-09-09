@@ -2185,6 +2185,8 @@ Parrot_mmd_search_local(PARROT_INTERP, ARGIN(STRING *meth), ARGIN(PMC *cl))
 
 RT #48260: Not yet documented!!!
 
+{{**DEPRECATE**}}
+
 =cut
 
 */
