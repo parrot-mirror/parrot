@@ -250,7 +250,7 @@ OUTPUT
 pasm_output_is( <<'CODE', <<'OUTPUT', "PASM INTVAL - new result" );
 .include "datatypes.pasm"
     get_global P10, "Integer_bxor_Intval"
-    add_multi "bxor", "Integer,INTVAL", P10
+    add_multi "bitwise_xor_int", "Integer,INTVAL,PMC", P10
 
     new P1, 'Integer'
     set P1, 3
@@ -259,7 +259,7 @@ pasm_output_is( <<'CODE', <<'OUTPUT', "PASM INTVAL - new result" );
     print "\n"
     end
 .pcc_sub Integer_bxor_Intval:
-    get_params "0,0", P5, I5
+    get_params "0,0,0", P5, I5, P6
     print "ok\n"
     set I10, P5
     bxor I11, I10, I5
