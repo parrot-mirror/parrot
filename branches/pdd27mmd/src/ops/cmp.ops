@@ -311,6 +311,7 @@ op lt(invar PMC, invar PMC, inconst LABEL) :base_core {
 
 op lt(invar PMC, in INT, inconst LABEL) :base_core {
   PMC *temp = pmc_new(interp, enum_class_Integer);
+  INTVAL result;
   PMC_int_val(temp) = $2;
   if (VTABLE_cmp(interp, $1, temp) < 0) {
     goto OFFSET($3);
@@ -850,7 +851,8 @@ inline op iseq(out INT, invar PMC, invar PMC) {
   if (&$2 == &$3)
     $1 = 1;
   else
-    $1 = Parrot_mmd_dispatch_i_pp(interp, $2, $3, MMD_EQ);
+    Parrot_mmd_multi_dispatch_from_c_args(interp, "is_equal", "PP->I",
+      $2, $3, &$1);
 }
 
 =item B<isne>(out INT, in INT, in INT)
@@ -881,7 +883,8 @@ inline op isne(out INT, invar PMC, invar PMC) {
   if (&$2 == &$3)
     $1 = 0;
   else
-    $1 = !Parrot_mmd_dispatch_i_pp(interp, $2, $3, MMD_EQ);
+    Parrot_mmd_multi_dispatch_from_c_args(interp, "is_equal", "PP->I",
+      $2, $3, &$1);
 }
 
 =back
@@ -914,7 +917,7 @@ inline op and(out INT, in INT, in INT) :base_core {
 }
 
 inline op and(invar PMC, invar PMC, invar PMC) :base_core {
-      $1 = VTABLE_logical_and(interp, $2, $3, $1);
+  $1 = VTABLE_logical_and(interp, $2, $3, $1);
 }
 
 ########################################
