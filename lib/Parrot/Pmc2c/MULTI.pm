@@ -93,10 +93,8 @@ sub rewrite_multi_sub {
     # prepend the short signature return type
     if ($self->name =~ /^i_/) {
         $short_sig = "v" . $short_sig;
-    } elsif ($self->name =~ /^is_/ or $self->name =~ /^cmp_/) {
-        $short_sig = "I" . $short_sig;
     } else {
-        $short_sig = "P" . $short_sig;
+        $short_sig = $self->trans( $self->return_type() ) . $short_sig;
     }
 
     $self->parameters(join (",", @new_params));
