@@ -1,5 +1,5 @@
 # Copyright (C) 2004-2008, The Perl Foundation.
-# $Id: PCCMETHOD.pm 29952 2008-08-02 22:45:13Z allison $
+# $Id$
 
 package Parrot::Pmc2c::MULTI;
 #use base 'Parrot::Pmc2c::PCCMETHOD';
