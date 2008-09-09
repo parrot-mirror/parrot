@@ -1360,3 +1360,11 @@ repeat_p_p_ic                  1329
 and_p_p_p                      1330
 or_p_p_p                       1331
 xor_p_p_p                      1332
+add_multi_s_s_p                1333
+add_multi_sc_s_p               1334
+add_multi_s_sc_p               1335
+add_multi_sc_sc_p              1336
+find_multi_p_s_s               1337
+find_multi_p_sc_s              1338
+find_multi_p_s_sc              1339
+find_multi_p_sc_sc             1340

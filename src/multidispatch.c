@@ -71,6 +71,13 @@ static PMC* mmd_arg_tuple_inline(PARROT_INTERP,
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
+PARROT_CANNOT_RETURN_NULL
+PARROT_WARN_UNUSED_RESULT
+static PMC* mmd_build_type_tuple_from_long_sig(PARROT_INTERP,
+    ARGIN(STRING *long_sig))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
 static void mmd_create_builtin_multi_meth(PARROT_INTERP,
     ARGIN(PMC *ns),
     INTVAL type,
@@ -113,15 +120,6 @@ PARROT_CANNOT_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
 static PMC* mmd_make_ns(PARROT_INTERP)
         __attribute__nonnull__(1);
-
-PARROT_WARN_UNUSED_RESULT
-PARROT_CANNOT_RETURN_NULL
-static PMC* mmd_multi_find_method(PARROT_INTERP,
-    ARGIN(STRING *name),
-    ARGIN(PMC *invoke_sig))
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(2)
-        __attribute__nonnull__(3);
 
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
@@ -355,7 +353,7 @@ get_mmd_dispatch_type(PARROT_INTERP, INTVAL func_nr, INTVAL left_type,
 
 /*
 
-=item C<static PMC* mmd_multi_find_method>
+=item C<PMC* Parrot_mmd_find_multi_from_sig_obj>
 
 Collect a list of possible candidates for a given sub name and call signature.
 Rank the possible candidates by Manhattan Distance, and return the best
@@ -368,12 +366,13 @@ Currently this only looks in the global "MULTI" namespace.
 
 */
 
+PARROT_API
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
-static PMC*
-mmd_multi_find_method(PARROT_INTERP, ARGIN(STRING *name), ARGIN(PMC *invoke_sig))
+PMC*
+Parrot_mmd_find_multi_from_sig_obj(PARROT_INTERP, ARGIN(STRING *name), ARGIN(PMC *invoke_sig))
 {
-    PMC *candidate_list, *selected_sub;
+    PMC *candidate_list;
     PMC * const namespace = Parrot_make_namespace_keyed_str(
             interp, interp->root_namespace,
             CONST_STRING(interp, "MULTI"));
@@ -509,7 +508,7 @@ convert_varargs_to_sig_pmc(PARROT_INTERP, ARGIN(const char *sig), va_list args)
         }
 
         if (in_return_sig) {
-            STRING const *signature = CONST_STRING(interp, "signature");
+            STRING *signature = CONST_STRING(interp, "signature");
             /* Returns store the original passed-in pointer, so they can pass
              * the result back to the caller. */
             PMC *val_pointer = pmc_new(interp, enum_class_CPointer);
@@ -616,10 +615,11 @@ Parrot_mmd_multi_dispatch_from_c_args(PARROT_INTERP,
     if (name[0] == '_' && name[1] == '_')
         name += 2;
 
-    sub = mmd_multi_find_method(interp, const_string(interp, name), sig_object);
+    sub = Parrot_mmd_find_multi_from_sig_obj(interp, const_string(interp, name), sig_object);
 
 #if MMD_DEBUG
     fprintf(stderr, "candidate found for '%s', with signature '%s'\n", name, sig);
+    fprintf(stderr, "type of candidate found: %s\n", string_to_cstring(interp, VTABLE_name(interp, sub)));
 #endif
 
     if (PMC_IS_NULL(sub))
@@ -1291,6 +1291,47 @@ Parrot_mmd_destroy(PARROT_INTERP)
 
 /*
 
+=item C<PMC * Parrot_mmd_find_multi_from_long_sig>
+
+Find the best candidate multi for a given sub name and signature. The signature
+is a string containing a comma-delimited list of type names.
+
+Currently only searches the global MULTI namespace.
+
+=cut
+
+*/
+
+PARROT_API
+PARROT_CANNOT_RETURN_NULL
+PARROT_WARN_UNUSED_RESULT
+PMC *
+Parrot_mmd_find_multi_from_long_sig(PARROT_INTERP, ARGIN(STRING *name),
+        ARGIN(STRING *long_sig))
+{
+    PMC *type_tuple, *candidate_list;
+    PMC * const namespace = Parrot_make_namespace_keyed_str(
+            interp, interp->root_namespace,
+            CONST_STRING(interp, "MULTI"));
+    PMC *multi_sub = Parrot_get_global(interp, namespace, name);
+
+    if (PMC_IS_NULL(multi_sub))
+        return PMCNULL;
+
+    type_tuple = mmd_build_type_tuple_from_long_sig(interp, long_sig);
+
+    candidate_list = VTABLE_clone(interp, multi_sub);
+
+    Parrot_mmd_sort_candidates(interp, type_tuple, candidate_list);
+
+    if (PMC_IS_NULL(candidate_list))
+        return PMCNULL;
+
+    return VTABLE_get_pmc_keyed_int(interp, candidate_list, 0);
+}
+
+/*
+
 =item C<PMC * mmd_vtfind>
 
 Return an MMD PMC function for the given data types. The return result is
@@ -1737,6 +1778,45 @@ distance_cmp(SHIM_INTERP, INTVAL a, INTVAL b)
     return da > db ? 1 : da < db ? -1 : 0;
 }
 
+
+/*
+
+=item C<static PMC* mmd_build_type_tuple_from_long_sig>
+
+Construct a FixedIntegerArray of type numbers from a comma-delimited string of
+type names. Used for multiple dispatch.
+
+=cut
+
+*/
+
+PARROT_CANNOT_RETURN_NULL
+PARROT_WARN_UNUSED_RESULT
+static PMC*
+mmd_build_type_tuple_from_long_sig(PARROT_INTERP, ARGIN(STRING *long_sig))
+{
+    PMC *type_list;
+    INTVAL i, param_count;
+    PMC *multi_sig = constant_pmc_new(interp, enum_class_FixedIntegerArray);
+    type_list = string_split(interp, CONST_STRING(interp, ","), long_sig);
+
+    param_count = VTABLE_elements(interp, type_list);
+    VTABLE_set_integer_native(interp, multi_sig, param_count);
+
+    for (i = 0; i < param_count; i++) {
+        INTVAL type;
+        STRING *type_name = VTABLE_get_string_keyed_int(interp, type_list, i);
+        if (string_equal(interp, type_name, CONST_STRING(interp, "DEFAULT"))==0)
+            type = enum_type_PMC;
+        else if (string_equal(interp, type_name, CONST_STRING(interp, "STRING"))==0)
+            type = enum_type_STRING;
+        else
+            type = pmc_type(interp, type_name);
+
+        VTABLE_set_integer_keyed_int(interp, multi_sig, i, type);
+    }
+    return multi_sig;
+}
 
 /*
 
@@ -2301,6 +2381,55 @@ mmd_create_builtin_multi_meth(PARROT_INTERP, ARGIN(PMC *ns), INTVAL type,
 
 /*
 
+=item C<void Parrot_mmd_add_multi_from_long_sig>
+
+Create a MultiSub, or add a variant to an existing MultiSub. The MultiSub is
+stored in the global MULTI namespace.
+
+=cut
+
+*/
+
+PARROT_API
+void
+Parrot_mmd_add_multi_from_long_sig(PARROT_INTERP,
+        ARGIN(STRING *sub_name), ARGIN(STRING *long_sig),
+        ARGIN(PMC *sub_obj))
+{
+        PMC *multi_sig;
+        PMC * const namespace = Parrot_make_namespace_keyed_str(
+            interp, interp->root_namespace,
+            CONST_STRING(interp, "MULTI"));
+        PMC *multi_sub = Parrot_get_global(interp, namespace, sub_name);
+
+        if (PMC_IS_NULL(sub_obj))
+            Parrot_ex_throw_from_c_args(interp, NULL,
+                EXCEPTION_INVALID_OPERATION,
+                "Multiple Dispatch: attempt to install null multi for %S!", sub_name);
+
+        /* Attach a type tuple array to the sub for multi dispatch */
+        multi_sig = mmd_build_type_tuple_from_long_sig(interp, long_sig);
+
+        if (sub_obj->vtable->base_type == enum_class_NCI) {
+            PMC_pmc_val(sub_obj) = multi_sig;
+        }
+        else if (VTABLE_isa(interp, sub_obj, CONST_STRING(interp, "Sub"))
+             ||  VTABLE_isa(interp, sub_obj, CONST_STRING(interp, "Closure"))) {
+            PMC_sub(sub_obj)->multi_signature = multi_sig;
+        }
+
+
+        if (PMC_IS_NULL(multi_sub)) {
+            multi_sub = constant_pmc_new(interp, enum_class_MultiSub);
+            Parrot_set_global(interp, namespace, sub_name, multi_sub);
+        }
+
+        PARROT_ASSERT(multi_sub->vtable->base_type == enum_class_MultiSub);
+        VTABLE_push_pmc(interp, multi_sub, sub_obj);
+}
+
+/*
+
 =item C<void Parrot_mmd_add_multi_from_c_args>
 
 Create a MultiSub, or add a variant to an existing MultiSub. The MultiSub is
@@ -2314,11 +2443,10 @@ PARROT_API
 void
 Parrot_mmd_add_multi_from_c_args(PARROT_INTERP,
         ARGIN(PMC *namespace), ARGIN(STRING *sub_name),
-        ARGIN(STRING *short_sig), ARGIN(STRING *full_sig),
+        ARGIN(STRING *short_sig), ARGIN(STRING *long_sig),
         ARGIN(funcptr_t multi_func_ptr))
 {
         PMC *multi_sig, *full_types;
-        INTVAL i, param_count;
         PMC *multi_sub = Parrot_get_global(interp, namespace, sub_name);
 
         /* Create an NCI sub for the C function */
@@ -2327,26 +2455,8 @@ Parrot_mmd_add_multi_from_c_args(PARROT_INTERP,
                 short_sig, F2DPTR(multi_func_ptr));
 
         /* Attach a type tuple array to the NCI sub for multi dispatch */
-        multi_sig = constant_pmc_new(interp, enum_class_FixedIntegerArray);
+        multi_sig = mmd_build_type_tuple_from_long_sig(interp, long_sig);
         PMC_pmc_val(method) = multi_sig;
-
-        full_types = string_split(interp, CONST_STRING(interp, ","), full_sig);
-
-        param_count = VTABLE_elements(interp, full_types);
-        VTABLE_set_integer_native(interp, multi_sig, param_count);
-
-        for (i = 0; i < param_count; i++) {
-            INTVAL type;
-            STRING *type_name = VTABLE_get_string_keyed_int(interp, full_types, i);
-            if (string_equal(interp, type_name, CONST_STRING(interp, "DEFAULT"))==0)
-                type = enum_type_PMC;
-            else if (string_equal(interp, type_name, CONST_STRING(interp, "STRING"))==0)
-                type = enum_type_STRING;
-            else
-                type = pmc_type(interp, type_name);
-            VTABLE_set_integer_keyed_int(interp, multi_sig, i, type);
-        }
-
 
 
         if (PMC_IS_NULL(multi_sub)) {
