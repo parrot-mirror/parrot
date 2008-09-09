@@ -2282,6 +2282,7 @@ Parrot_pcc_invoke_sub_from_sig_object(PARROT_INTERP, ARGIN(PMC *sub_obj),
             CONST_STRING(interp, "results"));
 
     parrot_context_t *ctx;
+    opcode_t         *dest;
     opcode_t         *save_current_args;
     PMC              *save_args_signature;
     PMC              *save_current_object;
@@ -2467,7 +2468,14 @@ Parrot_pcc_invoke_sub_from_sig_object(PARROT_INTERP, ARGIN(PMC *sub_obj),
     PMC_cont(ret_cont)->from_ctx = ctx;
     ctx->ref_count++;
 
-    VTABLE_invoke(interp, sub_obj, NULL);
+    dest = VTABLE_invoke(interp, sub_obj, NULL);
+
+    /* PIR Subs need runops to run their opcodes. */
+    if (sub_obj->vtable->base_type == enum_class_Sub) {
+        opcode_t offset;
+        offset = dest - interp->code->base.data;
+        runops(interp, offset);
+    }
 
     /* result_accessors perform the arg accessor function,
      * assigning the corresponding registers to the result variables */

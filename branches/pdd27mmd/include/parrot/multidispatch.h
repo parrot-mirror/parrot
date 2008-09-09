@@ -88,7 +88,7 @@ void Parrot_mmd_add_multi_from_c_args(PARROT_INTERP,
     ARGIN(PMC *namespace),
     ARGIN(STRING *sub_name),
     ARGIN(STRING *short_sig),
-    ARGIN(STRING *full_sig),
+    ARGIN(STRING *long_sig),
     ARGIN(funcptr_t multi_func_ptr))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
@@ -96,6 +96,16 @@ void Parrot_mmd_add_multi_from_c_args(PARROT_INTERP,
         __attribute__nonnull__(4)
         __attribute__nonnull__(5)
         __attribute__nonnull__(6);
+
+PARROT_API
+void Parrot_mmd_add_multi_from_long_sig(PARROT_INTERP,
+    ARGIN(STRING *sub_name),
+    ARGIN(STRING *long_sig),
+    ARGIN(PMC *sub_obj))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3)
+        __attribute__nonnull__(4);
 
 PARROT_API
 void Parrot_mmd_add_multi_list_from_c_args(PARROT_INTERP,
@@ -190,6 +200,26 @@ void Parrot_mmd_dispatch_v_ps(PARROT_INTERP,
     ARGIN(PMC *left),
     ARGIN(STRING *right),
     INTVAL func_nr)
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3);
+
+PARROT_API
+PARROT_CANNOT_RETURN_NULL
+PARROT_WARN_UNUSED_RESULT
+PMC * Parrot_mmd_find_multi_from_long_sig(PARROT_INTERP,
+    ARGIN(STRING *name),
+    ARGIN(STRING *long_sig))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3);
+
+PARROT_API
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
+PMC* Parrot_mmd_find_multi_from_sig_obj(PARROT_INTERP,
+    ARGIN(STRING *name),
+    ARGIN(PMC *invoke_sig))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3);

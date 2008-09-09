@@ -37,7 +37,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "Integer_divide_PerlInt  10 / 3 = 1003", to
 
     .local pmc divide
     divide = global "Integer_divide_PerlInt"
-    add_multi .MMD_DIVIDE, .Integer, type_perl_int, divide
+    add_multi "divide", "Integer,PerlInt", divide
 
     $P0 = new 'PerlInt'
     $P1 = new 'Integer'
@@ -73,7 +73,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "1+1=3" );
 
     .local pmc add
     add = global "add"
-    add_multi .MMD_ADD, .Integer, .Integer, add
+    add_multi "add", "Integer,Integer,Integer", add
 
     $P0 = new 'Integer'
     $P1 = new 'Integer'
@@ -109,7 +109,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "PASM divide - override builtin 10 / 3 = 42
 
     .local pmc divide
     divide = global "Integer_divide_Integer"
-    add_multi .MMD_DIVIDE, .Integer, .Integer, divide
+    add_multi "divide", "Integer,Integer,Integer", divide
 
     $P0 = new 'Integer'
     $P1 = new 'Integer'
@@ -141,7 +141,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "INTVAL return numeq" );
 
     .local pmc comp
     comp = global "Float_cmp_Integer"
-    add_multi .MMD_CMP, .Float, .Integer, comp
+    add_multi "CMP", "Float,Integer", comp
 
     $P1 = new 'Float'
     $P2 = new 'Integer'
@@ -172,8 +172,8 @@ pir_output_is( <<'CODE', <<'OUTPUT', "find_multi" );
 
     .local pmc comp
     comp = global "Float_cmp_Integer"
-    add_multi .MMD_NUMCMP, .Float, .Integer, comp
-    $P0 = find_multi .MMD_NUMCMP, .Float, .Integer
+    add_multi "cmp_num", "Float,Integer", comp
+    $P0 = find_multi "cmp_num", "Float,Integer"
     if_null $P0, nok
     print "ok 1\n"
     ne_addr $P0, comp, nok
@@ -204,8 +204,8 @@ pir_output_is( <<'CODE', <<'OUTPUT', "find_multi - invoke it" );
 
     .local pmc comp
     comp = global "Float_cmp_Integer"
-    add_multi .MMD_NUMCMP, .Float, .Integer, comp
-    $P0 = find_multi .MMD_NUMCMP, .Float, .Integer
+    add_multi "cmp_num", "Float,Integer", comp
+    $P0 = find_multi "cmp_num", "Float,Integer"
     if_null $P0, nok
     print "ok 1\n"
     ne_addr $P0, comp, nok
@@ -259,7 +259,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "PASM MMD divide - loaded sub" );
     .local pmc divide
     load_bytecode "temp.pir"
     divide = global "Integer_divide_Integer"
-    add_multi .MMD_DIVIDE, .Integer, .Integer, divide
+    add_multi "divide", "Integer,Integer", divide
 
     $P0 = new 'Integer'
     $P1 = new 'Integer'
@@ -280,11 +280,11 @@ pasm_output_is( <<'CODE', <<'OUTPUT', "PASM INTVAL - new result" );
 .include "datatypes.pasm"
 .include "mmd.pasm"
     get_global P10, "Integer_bxor_Intval"
-    add_multi .MMD_BXOR, .Integer, .DATATYPE_INTVAL, P10
+    add_multi "bxor", "Integer,INTVAL", P10
 
     new P1, 'Integer'
     set P1, 3
-    n_bxor P9, P1, 2    # create new result
+    bxor P9, P1, 2    # create new result
     print P9
     print "\n"
     end
@@ -307,7 +307,7 @@ pasm_output_is( <<'CODE', <<'OUTPUT', "PASM INTVAL - existing result" );
 .include "datatypes.pasm"
 .include "mmd.pasm"
     get_global P10, "Integer_bxor_Intval"
-    add_multi .MMD_BXOR, .Integer, .DATATYPE_INTVAL, P10
+    add_multi "bxor", "Integer,INTVAL", P10
 
     new P0, 'Integer'
     new P1, 'Integer'
@@ -334,7 +334,7 @@ pasm_output_is( <<'CODE', <<'OUTPUT', "PASM INTVAL - mixed" );
 .include "datatypes.pasm"
 .include "mmd.pasm"
     get_global P10, "Integer_bxor_Intval"
-    add_multi .MMD_BXOR, .Integer, .DATATYPE_INTVAL, P10
+    add_multi "bxor", "Integer,INTVAL", P10
 
     new P0, 'Integer'
     new P1, 'Integer'
@@ -342,7 +342,7 @@ pasm_output_is( <<'CODE', <<'OUTPUT', "PASM INTVAL - mixed" );
     bxor P0, P1, 2      # reuse destination
     print P0
     print "\n"
-    n_bxor P9, P1, 2    # create new result
+    bxor P9, P1, 2    # create new result
     print P9
     print "\n"
     end
@@ -938,7 +938,7 @@ CODE
 42
 OUTPUT
 
-pir_output_is( <<'CODE', <<'OUTPUT', "Integer subclasses, n_add" );
+pir_output_is( <<'CODE', <<'OUTPUT', "Integer subclasses, add" );
 .sub main :main
     $P0 = subclass "Integer", "AInt"
     $P0 = new "AInt"
@@ -946,7 +946,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "Integer subclasses, n_add" );
     set $P0, 6
     set $P1, 2
 
-    $P2 = n_add  $P0, $P1
+    $P2 = add  $P0, $P1
     print $P2
     print "\n"
 .end
@@ -984,7 +984,7 @@ print $P <<'EOF';
 EOF
 close $P;
 
-pir_output_is( <<'CODE', <<'OUTPUT', "override builtin n_add" );
+pir_output_is( <<'CODE', <<'OUTPUT', "override builtin add" );
 .sub main
     load_bytecode "temp.pir"
     $P0 = new 'Integer'
@@ -992,7 +992,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "override builtin n_add" );
     set $P0, 6
     set $P1, 2
 
-    $P2 = n_add  $P0, $P1
+    $P2 = add  $P0, $P1
     print $P2
     print "\n"
 .end
@@ -1048,11 +1048,13 @@ pir_output_is( <<'CODE', <<'OUTPUT', "use a core func for an object" );
     l = new "AInt"
     r = new "AInt"
     .local pmc func
-    .local int typ
+    .local string typ
     .include "mmd.pasm"
-    func = find_multi .MMD_ADD, .Float, .Float
-    typ = typeof l
-    add_multi .MMD_ADD, typ, typ, func
+    func = find_multi "add", "Float,Float"
+    $S0 = typeof l
+    typ = $S0 . ","
+    typ .= $S0
+    add_multi "add", typ, func
     l = 4
     r = 38
     print l
