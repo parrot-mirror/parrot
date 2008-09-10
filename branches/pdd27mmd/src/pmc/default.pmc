@@ -767,7 +767,7 @@ Default fallback. Performs a multiple dispatch call for 'is_equal_num'.
 
 /*
 
-=item C<INTVAL is_equal_str(PMC *value)>
+=item C<INTVAL is_equal_string(PMC *value)>
 
 Default fallback. Performs a multiple dispatch call for 'is_equal'.
 
@@ -775,10 +775,10 @@ Default fallback. Performs a multiple dispatch call for 'is_equal'.
 
 */
 
-    VTABLE INTVAL is_equal_str(PMC *value) {
+    VTABLE INTVAL is_equal_string(PMC *value) {
         INTVAL retval;
         Parrot_mmd_multi_dispatch_from_c_args(interp,
-                "is_equal_str", "PP->I", SELF, value, &retval);
+                "is_equal_string", "PP->I", SELF, value, &retval);
 
         return retval;
     }
