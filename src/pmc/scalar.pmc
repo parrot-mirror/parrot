@@ -1252,7 +1252,7 @@ Returns whether the PMC is numerically equal to C<*value>.
 
 /*
 
-=item C<INTVAL is_equal_str(PMC *value)>
+=item C<INTVAL is_equal_string(PMC *value)>
 
 Returns whether the PMC has string equality with C<*value>.
 
@@ -1260,7 +1260,7 @@ Returns whether the PMC has string equality with C<*value>.
 
 */
 
-    MULTI INTVAL is_equal_str(PMC *value) {
+    MULTI INTVAL is_equal_string(PMC *value) {
         return (0 == string_equal(INTERP, VTABLE_get_string(INTERP, SELF),
                                           VTABLE_get_string(INTERP, value)));
     }
