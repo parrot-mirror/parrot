@@ -67,7 +67,10 @@ bitwise_left_shift_internal(PARROT_INTERP, PMC *self,
     }
     else {
         /* Overflow; must promote dest to BigInt, and do a BigInt shift. */
-        dest = pmc_new(interp, enum_class_BigInt);
+        if (self == dest)
+            VTABLE_morph(interp, self, enum_class_BigInt);
+        else
+            dest = pmc_new(interp, enum_class_BigInt);
 
         VTABLE_set_integer_native(interp, dest, base);
         Parrot_BigInt_bitwise_shl_int(interp, dest, shift_amount, dest);
