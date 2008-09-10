@@ -2322,10 +2322,12 @@ mmd_create_builtin_multi_meth(PARROT_INTERP, ARGIN(PMC *ns), INTVAL type,
     strcpy(signature, "PJP.P");
     signature[3] = val_sig;
 
+/*
     if (func_nr >= MMD_EQ && func_nr <= MMD_STREQ) {
         signature[0] = 'I';
         signature[4] = '\0';
     }
+*/
 
     /* implace infix like __i_add don't return a result */
     if (memcmp(short_name, "__i_", 4) == 0)

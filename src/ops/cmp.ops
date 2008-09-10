@@ -86,25 +86,18 @@ op eq(in STR, in STR, inconst LABEL) :base_core {
 }
 
 op eq(invar PMC, invar PMC, inconst LABEL) :base_core {
-  INTVAL result;
-  Parrot_mmd_multi_dispatch_from_c_args(interp,
-          "is_equal", "PP->I", $1, $2, &result);
-  if (result) {
+  if (VTABLE_is_equal(interp, $1, $2)) {
     goto OFFSET($3);
   }
 }
 
 op eq(invar PMC, in INT, inconst LABEL) :base_core {
   /*
-   * see also #34949
-   * the temp is necessary, *if* $1 isa BigInt
+   * Promote integer to a PMC, for vtable dispatch.
    */
-  INTVAL result;
   PMC *temp = pmc_new(interp, enum_class_Integer);
-  PMC_int_val(temp) = $2;
-  Parrot_mmd_multi_dispatch_from_c_args(interp,
-          "is_equal", "PP->I", $1, temp, &result);
-  if (result) {
+  VTABLE_set_integer_native(interp, temp, $2);
+  if (VTABLE_is_equal(interp, $1, temp)) {
     goto OFFSET($3);
   }
 }
@@ -129,19 +122,13 @@ op eq(invar PMC, in STR, inconst LABEL) :base_core {
 }
 
 op eq_str(invar PMC, invar PMC, inconst LABEL) :base_core {
-  INTVAL result;
-  Parrot_mmd_multi_dispatch_from_c_args(interp,
-          "is_equal_string", "PP->I", $1, $2, &result);
-  if (result) {
+  if (VTABLE_is_equal_string(interp, $1, $2)) {
     goto OFFSET($3);
   }
 }
 
 op eq_num(invar PMC, invar PMC, inconst LABEL) :base_core {
-  INTVAL result;
-  Parrot_mmd_multi_dispatch_from_c_args(interp,
-          "is_equal_num", "PP->I", $1, $2, &result);
-  if (result) {
+  if (VTABLE_is_equal_num(interp, $1, $2)) {
     goto OFFSET($3);
   }
 }
@@ -205,21 +192,15 @@ op ne(in STR, in STR, inconst LABEL) :base_core {
 }
 
 op ne(invar PMC, invar PMC, inconst LABEL) :base_core {
-  INTVAL result;
-  Parrot_mmd_multi_dispatch_from_c_args(interp,
-          "is_equal", "PP->I", $1, $2, &result);
-  if (!result) {
+  if (!VTABLE_is_equal(interp, $1, $2)) {
     goto OFFSET($3);
   }
 }
 
 op ne(invar PMC, in INT, inconst LABEL) :base_core {
-  INTVAL result;
   PMC *temp = pmc_new(interp, enum_class_Integer);
-  PMC_int_val(temp) = $2;
-  Parrot_mmd_multi_dispatch_from_c_args(interp,
-          "is_equal", "PP->I", $1, temp, &result);
-  if (!result) {
+  VTABLE_set_integer_native(interp, temp, $2);
+  if (!VTABLE_is_equal(interp, $1, temp)) {
     goto OFFSET($3);
   }
 }
@@ -851,8 +832,7 @@ inline op iseq(out INT, invar PMC, invar PMC) {
   if (&$2 == &$3)
     $1 = 1;
   else
-    Parrot_mmd_multi_dispatch_from_c_args(interp, "is_equal", "PP->I",
-      $2, $3, &$1);
+    $1 = VTABLE_is_equal(interp, $2, $3);
 }
 
 =item B<isne>(out INT, in INT, in INT)
@@ -883,8 +863,7 @@ inline op isne(out INT, invar PMC, invar PMC) {
   if (&$2 == &$3)
     $1 = 0;
   else
-    Parrot_mmd_multi_dispatch_from_c_args(interp, "is_equal", "PP->I",
-      $2, $3, &$1);
+    $1 = VTABLE_is_equal(interp, $2, $3);
 }
 
 =back
