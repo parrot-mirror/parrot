@@ -354,7 +354,7 @@ MULTI PMC *add(Integer value, PMC *dest) {
         return dest;
     }
     else
-        return overflow(INTERP, SELF, b, dest, "add");
+        return overflow_p(INTERP, SELF, value, dest, "add");
 }
 
 MULTI PMC *add(Complex value, PMC *dest) {
@@ -433,7 +433,7 @@ VTABLE void i_add_int(INTVAL b) {
     if ((c^a) >= 0 || (c^b) >= 0)
         VTABLE_set_integer_native(INTERP, SELF, c);
     else
-        overflow(INTERP, SELF, b, SELF, "subtract");
+        overflow(INTERP, SELF, b, SELF, "add");
 }
 
 VTABLE void i_add_float(FLOATVAL value) {
