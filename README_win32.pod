@@ -155,6 +155,10 @@ properties so they are available whenever you open a shell.)
 Note: It is possible to use ActiveState Perl with the Toolkit: you don't
 have to compile your own perl.
 
+If you want to use MSVC with a mingw-gcc perl you can use 
+C<--cc=cl --link=link>. Just F<ar> in F<config_lib.pasm> has to be changed 
+to F<lib> and C<LIBPARROT = $(LIBPARROT_STATIC)> in F<Makefile>.
+
 =item Strawberry Perl
 
 With the Strawberry perl distro from

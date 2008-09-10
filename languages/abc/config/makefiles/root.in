@@ -117,7 +117,7 @@ install : installable
 	$(CP) installable_$(HLLNAME)@exe@ $(DESTDIR)$(BIN_DIR)/parrot-$(HLLNAME)@exe@
 	$(CP) $(HLLNAME).pbc $(DESTDIR)$(LIB_DIR)/parrot/library/$(HLLNAME).pbc
 	$(POD2MAN) $(HLLNAME).pir > $(DESTDIR)$(MANDIR)/man1/parrot-$(HLLNAME).1
-	$(MKPATH) $(DESTDIR)$(DOC_DIR)/languages/$(HLLNAME)
+	-$(MKPATH) $(DESTDIR)$(DOC_DIR)/languages/$(HLLNAME)
 	$(CP) $(DOCS) $(DESTDIR)$(DOC_DIR)/languages/$(HLLNAME)
 
 testclean:
