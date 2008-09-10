@@ -733,51 +733,57 @@ and C<value>.
 
 =item C<INTVAL is_equal(PMC *value)>
 
-Returns whether the PMC is equal to C<*value>.
+Default fallback. Performs a multiple dispatch call for 'is_equal'.
 
 =cut
 
 */
 
     VTABLE INTVAL is_equal(PMC *value) {
-        return (SELF->vtable         == value->vtable
-            &&  PMC_struct_val(SELF) == PMC_struct_val(value)
-            &&  PMC_data(SELF)       == PMC_data(value));
+        INTVAL retval;
+        Parrot_mmd_multi_dispatch_from_c_args(interp,
+                "is_equal", "PP->I", SELF, value, &retval);
+
+        return retval;
     }
 
 /*
 
 =item C<INTVAL is_equal_num(PMC *value)>
 
-Returns whether the PMC is numerically equal to C<*value>.
+Default fallback. Performs a multiple dispatch call for 'is_equal_num'.
 
 =cut
 
 */
 
     VTABLE INTVAL is_equal_num(PMC *value) {
-        return (VTABLE_get_number(INTERP, SELF) ==
-                VTABLE_get_number(INTERP, value));
+        INTVAL retval;
+        Parrot_mmd_multi_dispatch_from_c_args(interp,
+                "is_equal_num", "PP->I", SELF, value, &retval);
+
+        return retval;
     }
 
 /*
 
 =item C<INTVAL is_equal_str(PMC *value)>
 
-Returns whether the PMC has string equality with C<*value>.
+Default fallback. Performs a multiple dispatch call for 'is_equal'.
 
 =cut
 
 */
 
     VTABLE INTVAL is_equal_str(PMC *value) {
-        return (0 == string_equal(INTERP, VTABLE_get_string(INTERP, SELF),
-                                          VTABLE_get_string(INTERP, value)));
+        INTVAL retval;
+        Parrot_mmd_multi_dispatch_from_c_args(interp,
+                "is_equal_str", "PP->I", SELF, value, &retval);
+
+        return retval;
     }
 
 /*
-
-
 
 =item C<INTVAL exists_keyed_int(INTVAL key)>
 
