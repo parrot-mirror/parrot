@@ -863,7 +863,7 @@ inline op isne(out INT, invar PMC, invar PMC) {
   if (&$2 == &$3)
     $1 = 0;
   else
-    $1 = VTABLE_is_equal(interp, $2, $3);
+    $1 = !VTABLE_is_equal(interp, $2, $3);
 }
 
 =back
