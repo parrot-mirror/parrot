@@ -57,6 +57,7 @@ Initializes a newly created CallSignature object.
         PMC_int_val(SELF)      = CAPTURE_DATA_SIZE;
         PObj_active_destroy_SET(SELF);
         PObj_data_is_PMC_array_SET(SELF);
+        PObj_custom_mark_SET(SELF);
     }
 
 /*
