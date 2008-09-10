@@ -71,26 +71,23 @@ ex:
     $I2 = lev * 4
     spac = repeat " ", $I2
 
-# This code doesn't work, because a MultiSub could contain either Sub PMCs or
-# NCI PMCs.
-#
-#loop:
-#    print spac
-#    $P0 = multi[i]
-#    $P1 = $P0."get_multisig"()
-#    m = elements $P1
-#    j = 0
-#lp2:
-#    $I0 = $P1[j]
-#    typeof $S0, $I0
-#    print $S0
-#    print " "
-#    inc j
-#    if j < m goto lp2
-#
-#    print "\n"
-#    inc i
-#    if i < n goto loop
+loop:
+    print spac
+    $P0 = multi[i]
+    $P1 = $P0."get_multisig"()
+    m = elements $P1
+    j = 0
+lp2:
+    $I0 = $P1[j]
+    typeof $S0, $I0
+    print $S0
+    print " "
+    inc j
+    if j < m goto lp2
+
+    print "\n"
+    inc i
+    if i < n goto loop
 .end
 
 # Local Variables:
