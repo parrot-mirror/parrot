@@ -263,11 +263,11 @@ CODE
 0
 OUTPUT
 
-pasm_output_is( <<'CODE', <<'OUTPUT', "add ref, ref, ref" );
+pasm_output_is( <<'CODE', <<'OUTPUT', "add ref, ref" );
     new P2, 'Integer'
     new P1, 'Ref', P2
         set P1, 10
-        add P1, P1, P1
+        add P1, P1
         print P2
         print "\n"
     end
@@ -275,13 +275,13 @@ CODE
 20
 OUTPUT
 
-pasm_output_is( <<'CODE', <<'OUTPUT', "add ref, ref, int" );
+pasm_output_is( <<'CODE', <<'OUTPUT', "add ref, int" );
     new P3, 'Integer'
     new P2, 'Integer'
     new P1, 'Ref', P2
         set P3, 12
         set P1, 10
-        add P1, P1, P3
+        add P1, P3
         print P2
         print "\n"
     end
@@ -289,32 +289,32 @@ CODE
 22
 OUTPUT
 
-pasm_output_is( <<'CODE', <<'OUTPUT', "add ref, int, ref" );
+pasm_output_is( <<'CODE', <<'OUTPUT', "add dest, int, ref" );
     new P3, 'Integer'
     new P2, 'Integer'
     new P1, 'Ref', P2
         set P3, 12
         set P1, 10
-        add P1, P3, P1
-        print P2
+        add P4, P3, P1
+        print P4
         print "\n"
     end
 CODE
 22
 OUTPUT
 
-pasm_output_is( <<'CODE', <<'OUTPUT', "add ref, int, int" );
+pasm_output_is( <<'CODE', <<'OUTPUT', "add dest, ref, int" );
     new P3, 'Integer'
     new P2, 'Integer'
     new P1, 'Ref', P2
         set P3, 12
         set P1, 10
-        add P1, P3, P3
-        print P2
+        add P4, P1, P3
+        print P4
         print "\n"
     end
 CODE
-24
+22
 OUTPUT
 
 # Local Variables:
