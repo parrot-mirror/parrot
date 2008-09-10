@@ -333,7 +333,7 @@ pasm_output_is( <<'CODE', <<'OUT', "add" );
    end
 CODE
 15
-30
+50
 OUT
 
 pir_output_is( << 'CODE', << 'OUTPUT', "<oper>" );
