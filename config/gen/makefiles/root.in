@@ -483,6 +483,7 @@ INSTALLABLEPDUMP    = $(CUR_DIR)/installable_pdump$(EXE)
 INSTALLABLEPINFO    = $(CUR_DIR)/installable_pbc_info$(EXE)
 INSTALLABLEPBCMERGE = $(CUR_DIR)/installable_pbc_merge$(EXE)
 INSTALLABLEPDB      = $(CUR_DIR)/installable_parrot_debugger$(EXE)
+INSTALLABLECONFIG   = $(CUR_DIR)/installable_parrot_config$(EXE)
 
 # Libraries
 LIBPARROT_STATIC    = @blib_dir@/@libparrot_static@
@@ -762,7 +763,8 @@ world : all parrot_utils
 
 parrot_utils : $(PDUMP) $(DIS) $(PINFO) $(PDB) $(PBCMERGE) $(PBC_TO_EXE) $(PARROT_CONFIG)
 
-installable: build parrot_utils $(INSTALLABLEPARROT) $(INSTALLABLEPDUMP) $(INSTALLABLEDIS) $(INSTALLABLEPINFO) $(INSTALLABLEPDB) $(INSTALLABLEPBCMERGE)
+installable: build parrot_utils $(INSTALLABLEPARROT) $(INSTALLABLEPDUMP) $(INSTALLABLEDIS) \
+             $(INSTALLABLEPINFO) $(INSTALLABLEPDB) $(INSTALLABLEPBCMERGE) $(INSTALLABLECONFIG)
 
 
 flags_dummy :
@@ -796,6 +798,10 @@ $(PBC_TO_EXE) : pbc_to_exe.pir $(PARROT)
 $(PARROT_CONFIG) : tools/util/parrot-config.pir $(PARROT)
 	$(SHRPENV) $(PARROT) -o parrot_config.pbc tools/util/parrot-config.pir
 	$(SHRPENV) $(PARROT) pbc_to_exe.pir parrot_config.pbc
+
+$(INSTALLABLECONFIG) : $(SRC_DIR)/install_config$(O) $(PARROT_CONFIG) $(PBC_TO_EXE)
+	$(SHRPENV) $(PARROT) -o parrot_config.pbc tools/util/parrot-config.pir
+	$(SHRPENV) $(PBC_TO_EXE) parrot_config.pbc --install
 
 # HLL Executable targets
 #IF(win32 or cygwin):perl6 : $(PERL6)
