@@ -59,7 +59,7 @@ sub translate($$) {
     my $blib_path = File::Spec->catfile( $path_to_parrot, 'blib', 'lib' );
     if ($^O eq 'cygwin') {
         $ENV{PATH} = $blib_path . ':' . $ENV{PATH};
-    } 
+    }
     elsif ($^O eq 'MSWin32') {
         $ENV{PATH} = $blib_path . ';' . $ENV{PATH};
     }

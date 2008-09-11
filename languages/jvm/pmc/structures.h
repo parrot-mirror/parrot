@@ -31,7 +31,7 @@
 #define JVM_ACC_NATIVE        0x0100  /* implemented in C */
 #define JVM_ACC_INTERFACE     0x0200  /* class is an interface */
 #define JVM_ACC_ABSTRACT      0x0400  /* no definition provided */
-#define JVM_ACC_STRICT	      0x0800  /* strict floating point */
+#define JVM_ACC_STRICT        0x0800  /* strict floating point */
 #define JVM_ACC_SYNTHETIC     0x1000  /* compiler-generated class, method or field */
 #define JVM_ACC_ANNOTATION    0x2000  /* annotation type */
 #define JVM_ACC_ENUM          0x4000  /* field is declared as element of enum */
@@ -50,26 +50,10 @@
 #define JVM_ACC_NATIVE_BIT        8
 #define JVM_ACC_INTERFACE_BIT     9
 #define JVM_ACC_ABSTRACT_BIT      10
-#define JVM_ACC_STRICT_BIT	  11
+#define JVM_ACC_STRICT_BIT        11
 #define JVM_ACC_SYNTHETIC_BIT     12
-#define JVM_ACC_ANNOTATION_BIT	  13
+#define JVM_ACC_ANNOTATION_BIT    13
 #define JVM_ACC_ENUM_BIT          14
-
-// NOTE: replicated in SA in vm/agent/sun/jvm/hotspot/utilities/ConstantTag.java
-enum {
-    JVM_CONSTANT_Utf8 = 1,
-    JVM_CONSTANT_Unicode,		/* unused */
-    JVM_CONSTANT_Integer,
-    JVM_CONSTANT_Float,
-    JVM_CONSTANT_Long,      
-    JVM_CONSTANT_Double,
-    JVM_CONSTANT_Class,
-    JVM_CONSTANT_String,
-    JVM_CONSTANT_Fieldref,
-    JVM_CONSTANT_Methodref,
-    JVM_CONSTANT_InterfaceMethodref,
-    JVM_CONSTANT_NameAndType
-};
 
 /* Used in the newarray instruction. */
 
@@ -84,67 +68,67 @@ enum {
 
 /* JVM method signatures */
 
-#define JVM_SIGNATURE_ARRAY		'['
-#define JVM_SIGNATURE_BYTE		'B'
-#define JVM_SIGNATURE_CHAR		'C'
-#define JVM_SIGNATURE_CLASS		'L'
-#define JVM_SIGNATURE_ENDCLASS	        ';'
-#define JVM_SIGNATURE_ENUM		'E'
-#define JVM_SIGNATURE_FLOAT		'F'
+#define JVM_SIGNATURE_ARRAY             '['
+#define JVM_SIGNATURE_BYTE              'B'
+#define JVM_SIGNATURE_CHAR              'C'
+#define JVM_SIGNATURE_CLASS             'L'
+#define JVM_SIGNATURE_ENDCLASS          ';'
+#define JVM_SIGNATURE_ENUM              'E'
+#define JVM_SIGNATURE_FLOAT             'F'
 #define JVM_SIGNATURE_DOUBLE            'D'
-#define JVM_SIGNATURE_FUNC		'('
-#define JVM_SIGNATURE_ENDFUNC	        ')'
-#define JVM_SIGNATURE_INT		'I'
-#define JVM_SIGNATURE_LONG		'J'
-#define JVM_SIGNATURE_SHORT		'S'
-#define JVM_SIGNATURE_VOID		'V'
-#define JVM_SIGNATURE_BOOLEAN	        'Z' 
+#define JVM_SIGNATURE_FUNC              '('
+#define JVM_SIGNATURE_ENDFUNC           ')'
+#define JVM_SIGNATURE_INT               'I'
+#define JVM_SIGNATURE_LONG              'J'
+#define JVM_SIGNATURE_SHORT             'S'
+#define JVM_SIGNATURE_VOID              'V'
+#define JVM_SIGNATURE_BOOLEAN           'Z'
 
 #define JVM_RECOGNIZED_CLASS_MODIFIERS (JVM_ACC_PUBLIC | \
-					JVM_ACC_FINAL | \
-					JVM_ACC_SUPER | \
-					JVM_ACC_INTERFACE | \
-					JVM_ACC_ABSTRACT | \
-					JVM_ACC_ANNOTATION | \
-					JVM_ACC_SYNTHETIC)
-       
+                                        JVM_ACC_FINAL | \
+                                        JVM_ACC_SUPER | \
+                                        JVM_ACC_INTERFACE | \
+                                        JVM_ACC_ABSTRACT | \
+                                        JVM_ACC_ANNOTATION | \
+                                        JVM_ACC_SYNTHETIC)
+
 #define JVM_RECOGNIZED_FIELD_MODIFIERS (JVM_ACC_PUBLIC | \
-					JVM_ACC_PRIVATE | \
-					JVM_ACC_PROTECTED | \
-					JVM_ACC_STATIC | \
-					JVM_ACC_FINAL | \
-					JVM_ACC_VOLATILE | \
-					JVM_ACC_TRANSIENT | \
-					JVM_ACC_ENUM | \
-					JVM_ACC_SYNTHETIC)
+                                        JVM_ACC_PRIVATE | \
+                                        JVM_ACC_PROTECTED | \
+                                        JVM_ACC_STATIC | \
+                                        JVM_ACC_FINAL | \
+                                        JVM_ACC_VOLATILE | \
+                                        JVM_ACC_TRANSIENT | \
+                                        JVM_ACC_ENUM | \
+                                        JVM_ACC_SYNTHETIC)
 
 #define JVM_RECOGNIZED_METHOD_MODIFIERS (JVM_ACC_PUBLIC | \
-					 JVM_ACC_PRIVATE | \
-					 JVM_ACC_PROTECTED | \
-					 JVM_ACC_STATIC | \
-					 JVM_ACC_FINAL | \
-					 JVM_ACC_SYNCHRONIZED | \
-					 JVM_ACC_BRIDGE | \
-					 JVM_ACC_VARARGS | \
-					 JVM_ACC_NATIVE | \
-					 JVM_ACC_ABSTRACT | \
-					 JVM_ACC_STRICT | \
-					 JVM_ACC_SYNTHETIC) 
+                                         JVM_ACC_PRIVATE | \
+                                         JVM_ACC_PROTECTED | \
+                                         JVM_ACC_STATIC | \
+                                         JVM_ACC_FINAL | \
+                                         JVM_ACC_SYNCHRONIZED | \
+                                         JVM_ACC_BRIDGE | \
+                                         JVM_ACC_VARARGS | \
+                                         JVM_ACC_NATIVE | \
+                                         JVM_ACC_ABSTRACT | \
+                                         JVM_ACC_STRICT | \
+                                         JVM_ACC_SYNTHETIC)
 
 /* See http://jcp.org/aboutJava/communityprocess/final/jsr202/index.html */
 
 /*
  * Support for a VM-independent class format checker.
- */ 
-typedef struct {
+ */
+typedef struct jvm_method_size_info {
     unsigned long code;    /* byte code */
     unsigned long excs;    /* exceptions */
     unsigned long etab;    /* catch table */
     unsigned long lnum;    /* line number */
     unsigned long lvar;    /* local vars */
-} method_size_info;
+} jvm_method_size_info;
 
-typedef struct {
+typedef struct jvm_class_size_info {
     unsigned int constants;    /* constant pool */
     unsigned int fields;
     unsigned int methods;
@@ -152,158 +136,24 @@ typedef struct {
     unsigned int fields2;      /* number of static 2-word fields */
     unsigned int innerclasses; /* # of records in InnerClasses attr */
 
-    method_size_info clinit;   /* memory used in clinit */
-    method_size_info main;     /* used everywhere else */
-} class_size_info;
+    jvm_method_size_info clinit;   /* memory used in clinit */
+    jvm_method_size_info main;     /* used everywhere else */
+} jvm_class_size_info;
 
-typedef struct java6_ClassFile {
-    Parrot_UInt4 magic;             /* 0xCAFEBABE */
-    Parrot_UInt2 minor_version;
-    Parrot_UInt2 major_version;
-    Parrot_UInt2 constant_pool_count;
-#ifdef TODO
-    cp_info      *constant_pool; /* [constant_pool_count-1] */
-#endif
-    Parrot_UInt2 access_flags;
-    Parrot_UInt2 this_class;
-    Parrot_UInt2 super_class;
-    Parrot_UInt2 interfaces_count;
-    Parrot_UInt2 *interfaces;
-    Parrot_UInt2 fields_count;
-#ifdef TODO
-    field_info   *fields;
-#endif
-    Parrot_UInt2 methods_count;
-#ifdef TODO
-    method_info  *methods;
-#endif
-    Parrot_UInt2 attributes_count;
-#ifdef TODO
-    attribute_info *attributes;
-#endif
-} java6_ClassFile;
-
-#ifdef TODO
-enum Tag {
-  ITEM_Bogus,             /*  Unused  */
-  ITEM_Integer,
-  ITEM_Float,
-  ITEM_Double,
-  ITEM_Long,
-  ITEM_Null,              /*  Result of aconst_null  */
-  ITEM_UninitializedThis, /*  "this" is in <init> method, before call to super()  */
-  ITEM_Object,
-  ITEM_Uninitialized,
-};
-
-/* KAFFE */
-typedef struct _classpathEntry {
-    int     type;
-    char*   path;
-    union {
-        ZZIP_DIR*        jar;
-        struct {
-            int     loaded;
-        } sof;
-    } u;
-    struct _classpathEntry* next;
-} classpathEntry;
-
-typedef enum ClassFileType {
-	CP_NULLCLASS = -1,
-	CP_INVALID  = 0,
-	CP_ZIPFILE  = 1,
-	CP_DIR      = 2,
-	CP_SOFILE   = 3,
-	CP_BYTEARRAY= 4
-} ClassFileType;
-
-typedef enum ClassFileType {
-	CP_NULLCLASS = -1,
-	CP_INVALID  = 0,
-	CP_ZIPFILE  = 1,
-	CP_DIR      = 2,
-	CP_SOFILE   = 3,
-	CP_BYTEARRAY= 4
-} ClassFileType;
- 
-typedef struct classFile {
-    unsigned char*       mem;
-    const unsigned char* base;
-    const unsigned char* cur;
-    size_t	         size;
-    ClassFileType	 type;
-} classFile;
-
-
-/*  JDK 1.3 version */
-typedef struct real_jzentry13 { 	/* Zip file entry */
-    char *name;	  	  	/* entry name */
-    int time;            	/* modification time */
-    int size;	  	  	/* size of uncompressed data */
-    int csize;  	  	/* size of compressed data (zero if uncompressed) */
-    int crc;		  	/* crc of uncompressed data */
-    char *comment;	  	/* optional zip file comment */
-    char *extra;	  	/* optional extra data */
-    int pos;	  	  	/* position of LOC header (if negative) or data */
-} real_jzentry13;
-
-typedef struct real_jzfile13 {  /* Zip file */
-    char *name;	  	        /* zip file name */
-    int refs;		        /* number of active references */
-    int fd;		        /* open file descriptor */
-    void *lock;		        /* read lock */
-    char *comment; 	        /* zip file comment */
-    char *msg;		        /* zip error message */
-    void *entries;          	/* array of hash cells */
-    int total;	  	        /* total number of entries */
-    unsigned short *table;      /* Hash chain heads: indexes into entries */
-    int tablelen;	        /* number of hash eads */
-    real_jzfile13 *next;        /* next zip file in search list */
-    jzentry *cache;             /* we cache the most recently freed jzentry */
-    /* Information on metadata names in META-INF directory */
-    char **metanames;           /* array of meta names (may have null names) */
-    int metacount;	        /* number of slots in metanames array */
-    /* If there are any per-entry comments, they are in the comments array */
-    char **comments;
-} real_jzfile13;
-
-/*  JDK 1.2 version */
-typedef struct real_jzentry12 {  /* Zip file entry */
-    char *name;                  /* entry name */
-    int time;                   /* modification time */
-    int size;                   /* size of uncompressed data */
-    int csize;                  /* size of compressed data (zero if uncompressed) */
-    int crc;                    /* crc of uncompressed data */
-    char *comment;               /* optional zip file comment */
-    char *extra;                /* optional extra data */
-    int pos;                    /* position of LOC header (if negative) or data */
-    struct real_jzentry12 *next; /* next entry in hash table */
-} real_jzentry12;
-
-typedef jzfile void;
-typedef struct real_jzfile12 {  /* Zip file */
-    char *name;                 /* zip file name */
-    int refs;                  /* number of active references */
-    int fd;                    /* open file descriptor */
-    void *lock;                 /* read lock */
-    char *comment;              /* zip file comment */
-    char *msg;                  /* zip error message */
-    real_jzentry12 *entries;    /* array of zip entries */
-    int total;                 /* total number of entries */
-    real_jzentry12 **table;     /* hash table of entries */
-    int tablelen;              /* number of buckets */
-    jzfile *next;               /* next zip file in search list */
-} real_jzfile12;
-
-#endif
+typedef struct jvm_classfile {
+} jvm_classfile;
 
 /* This structure describes a loaded Java class file */
 typedef struct jvm_classfile {
     /* Details that the user of the PMC may be interested in. */
     STRING *filename;
     int is_jar;
-    Parrot_UInt4 entry_point;
+    Parrot_UInt4 entry_point;    /* ? */
+
+    /* header */
+    Parrot_UInt2 minor_version;
+    Parrot_UInt2 major_version;
+    Parrot_UInt2 access_flags;
 
     /* Heaps and tables pointers, sizes and pointer sizes if needed. */
     char *strings;
@@ -318,6 +168,13 @@ typedef struct jvm_classfile {
     Parrot_UInt4 tables_size;
     Parrot_UInt4 guid_ptr_size;
 
+    Parrot_UInt2 this_class;
+    Parrot_UInt2 super_class;
+    Parrot_UInt2 interfaces_size;
+    Parrot_UInt2 fields_size;
+    Parrot_UInt2 methods_size;
+    Parrot_UInt2 attributes_size;
+
     /* Table info. */
     Parrot_UInt4 valid_hi;
     Parrot_UInt4 valid_lo;
@@ -325,6 +182,7 @@ typedef struct jvm_classfile {
     Parrot_UInt4 rows[MAX_TABLE];
 
     /* Globals PMC and classes PMC array. */
+    PMC *interfaces;
     PMC *globals;
     PMC *classes;
     PMC *class_order;
@@ -332,23 +190,16 @@ typedef struct jvm_classfile {
     /* Field and method tables pointing to field and method PMCs. */
     PMC *fields;
     PMC *methods;
+    PMC *attributes;
 
     /* Linkage related PMCs. */
     PMC *typerefs;
     PMC *memberrefs;
-    PMC *assemblyrefs;
+    PMC *classfilerefs;
 
-    /* Internal stuff relating to PE headers. */
-/*
-    Parrot_UInt2 pe_sections;
-    int pe_sections_pos;
-    Parrot_UInt4 rva_code;
-    Parrot_UInt4 rva_data;
-*/
     /* Flag indicating if the file has been loaded. */
     int loaded;
 } jvm_classfile;
-
 
 /* This structure describes a reference to another jar file. */
 typedef struct jvm_classfileref {
@@ -358,7 +209,7 @@ typedef struct jvm_classfileref {
     Parrot_UInt2 version_build;
     Parrot_UInt2 version_revision;
 
-    /* Info about the assembly and its author. */
+    /* Info about the class and its author. */
     Parrot_UInt4 flags;
     Parrot_UInt4 public_key;
     STRING *str_name;
@@ -526,6 +377,7 @@ typedef enum jvm_managed_ptr_type {
     PTR_TYPE_ELEMENT,
     PTR_TYPE_PMC
 } Dotnet_Ptr_Type;
+
 typedef enum jvm_managed_ptr_reg_type {
     PTR_REGTYPE_I,
     PTR_REGTYPE_N,
