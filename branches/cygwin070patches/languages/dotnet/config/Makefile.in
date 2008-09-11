@@ -5,7 +5,7 @@
 # requires special treatment for: trans_mono_lib_path, trans_class_library
 # Configure.pl: generate_makefile
 
-HLLNAME       = dotnet # or net2pbc?
+HLLNAME       = dotnet
 
 # BUILD TOOLS AND UTILITIES
 # #########################

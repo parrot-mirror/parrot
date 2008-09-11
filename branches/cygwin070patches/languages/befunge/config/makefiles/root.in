@@ -51,7 +51,7 @@ help :
 	@echo "  help:              Print this help message"
 
 
-all: befunge.pbc befunge@exe@
+all: befunge.pbc Makefile befunge@exe@
 
 befunge.pbc: befunge.pasm debug.pasm flow.pasm io.pasm load.pasm maths.pasm stack.pasm
 	$(PARROT) -o befunge.pbc befunge.pasm

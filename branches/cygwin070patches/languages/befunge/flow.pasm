@@ -29,7 +29,8 @@ FLOW_GO_WEST:
         branch MOVE_PC
 
 FLOW_GO_AWAY:
-        save 4
+        set I2, 4
+        save I2
         bsr MATHS_RAND
         restore I10
         set I2, I10

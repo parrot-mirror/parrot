@@ -1,4 +1,6 @@
 ## TODO: generate/fix the opcodes from the vmspec
+## The vmspec is in html or pdf form at java.sun.com, or in 
+## the KAFFE sources kaffevm/bytecode.h
 
 # --------already converted to jvm------------
 

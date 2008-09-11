@@ -43,7 +43,9 @@ NQP           = $(BUILD_DIR)/compilers/nqp/nqp.pbc
 PMC_DIR       = src/pmc
 DOCS = MAINTAINER
 
-all: c99.pbc src/cpp/cpp.pbc
+build: c99.pbc src/cpp/cpp.pbc
+
+all: build Makefile installable
 
 C_GROUP = $(PMC_DIR)/c_group$(LOAD_EXT)
 
@@ -58,7 +60,7 @@ BUILTINS_PIR = \
 # the default target
 c99.pbc: $(SOURCES)
 	$(PARROT) $(PARROT_ARGS) -o c99.pbc c99.pir
-	cd src/cpp; $(MAKE)
+	cd src/cpp && $(MAKE)
 
 c99@exe@: c99.pbc
 	$(PBC_TO_EXE) c99.pbc
@@ -67,10 +69,10 @@ installable_c99@exe@ : c99.pbc
 	$(PBC_TO_EXE) c99.pbc --install
 
 src/cpp/cpp.pbc: src/cpp/cpp.pir
-	make installable_cpp@exe@ -C src/cpp
+	cd src/cpp && $(MAKE) installable_cpp@exe@
 
 installable_cpp@exe@ : src/cpp/cpp.pbc
-	mv src/cpp/installable_cpp@exe@ installable_cpp@exe@
+	$(CP) src/cpp/installable_cpp@exe@ installable_cpp@exe@
 
 src/gen_grammar.pir: $(PERL6GRAMMAR) src/parser/grammar.pg
 	$(PARROT) $(PARROT_ARGS) $(PERL6GRAMMAR) \
@@ -85,7 +87,7 @@ src/gen_builtins.pir: $(BUILTINS_PIR)
 	$(CAT) $(BUILTINS_PIR) >src/gen_builtins.pir
 
 # regenerate the Makefile
-Makefile: config/makefiles/root.in
+Makefile: config/makefiles/root.in config/makefiles/cpp.in
 	cd $(BUILD_DIR) && $(RECONFIGURE) --step=gen::languages --languages=c99
 
 # This is a listing of all targets, that are meant to be called by users
