@@ -20,14 +20,14 @@ GETARGS:
     elems = elements argv
     if elems == 0 goto ERRORARG
     temp = shift argv
-    if temp == "-o" goto OUTPUTARG
-    if temp == "-p" goto PIRARG
-    if temp == "-f" goto FORCEARG
-    if temp == "-t" goto TRACEARG
-    if temp == "-tD" goto TRACEDETAILARG
-    if temp == "-q" goto QUIETARG
-    if temp == "-s" goto STANDALONEARG
-    if temp == "" goto ERRORARG
+    if temp == "-o"   goto OUTPUTARG
+    if temp == "-p"   goto PIRARG
+    if temp == "-f"   goto FORCEARG
+    if temp == "-t"   goto TRACEARG
+    if temp == "-tD"  goto TRACEDETAILARG
+    if temp == "-q"   goto QUIETARG
+    if temp == "-s"   goto STANDALONEARG
+    if temp == ""     goto ERRORARG
     if filename != "" goto ERRORARG
     filename = temp
     goto GOTARGS

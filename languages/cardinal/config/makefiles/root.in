@@ -58,8 +58,10 @@ BUILTINS_PIR = \
   src/classes/Integer.pir \
   src/classes/Array.pir \
   src/classes/Hash.pir \
+  src/builtins/globals.pir \
+  src/builtins/eval.pir
 
-DOCS          = README
+DOCS = README
 
 # the default target
 cardinal.pbc: $(SOURCES)

@@ -46,3 +46,4 @@ a.clear
 a.each() do |i|
     puts 'ok ', i
 end
+

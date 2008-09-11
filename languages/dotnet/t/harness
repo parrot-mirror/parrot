@@ -7,13 +7,13 @@ languages/dotnet/t/harness - A harness for java
 
 =head1 SYNOPSIS
 
-    cd languages && perl -Idotnet/t dotnet/t/harness --files
+    cd languages && perl -Ijvm/t jvm/t/harness --files
 
-    cd languages && perl -Idotnet/t dotnet/t/harness
+    cd languages && perl -Ijvm/t jvm/t/harness
 
-    cd languages/dotnet && perl -It t/harness
+    cd languages/jvm && perl -It t/harness
 
-    cd languages/dotnet && perl -It t/harness t/examples.t
+    cd languages/jvm && perl -It t/harness t/examples.t
 
 =head1 DESCRIPTION
 
@@ -32,7 +32,7 @@ use strict;
 use Test::Harness;
 use File::Spec;
 
-my $language = 'dotnet';
+my $language = 'jvm';
 
 # Check that we have the Mono C# compiler handy.
 my $check = `mcs --version`;
@@ -76,7 +76,7 @@ runtests(@files);
 
 =head1 HISTORY
 
-Mostly taken from F<languages/bc/t/harness>.
+Mostly taken from F<languages/dotnet/t/harness>.
 
 =head1 SEE ALSO
 

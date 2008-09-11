@@ -8,11 +8,17 @@ HLLNAME       = cpp
 BUILD_DIR     = @build_dir@
 LOAD_EXT      = @load_ext@
 O             = @o@
+BIN_DIR       = @bin_dir@
+LIB_DIR       = @lib_dir@
+DOC_DIR       = @doc_dir@
+MANDIR	      = @mandir@
 
 ## Setup some commands
-LN_S          = @lns@
 PERL          = @perl@
-RM_RF         = @rm_rf@
+RM_F          = @rm_f@
+CP            = @cp@
+MKPATH        = @mkpath@
+POD2MAN       = pod2man
 #IF(cygwin):SHRPENV     = env PATH="@build_dir@/blib/lib:$(PATH)"
 #ELSIF(not win32):SHRPENV     = env LD_RUN_PATH="@build_dir@/blib/lib"
 PARROT        = $(SHRPENV) $(BUILD_DIR)/parrot@exe@
@@ -23,6 +29,7 @@ RECONFIGURE   = $(PERL) $(BUILD_DIR)/tools/dev/reconfigure.pl
 
 ## places to look for things
 PARROT_DYNEXT = $(BUILD_DIR)/runtime/parrot/dynext
+PARROT_LIB    = $(BUILD_DIR)/runtime/parrot/library
 PGE_LIBRARY   = $(BUILD_DIR)/runtime/parrot/library/PGE
 PERL6GRAMMAR  = $(PGE_LIBRARY)/Perl6Grammar.pbc
 NQP           = $(BUILD_DIR)/compilers/nqp/nqp.pbc
@@ -32,7 +39,7 @@ PMC_DIR       = src/pmc
 
 build: cpp.pbc
 
-all: cpp.pbc cpp@exe@
+all: cpp.pbc cpp@exe@ src/cpp/Makefile installable
 
 SOURCES = cpp.pir \
   src/gen_grammar.pir \
@@ -68,14 +75,16 @@ src/gen_builtins.pir: $(BUILTINS_PIR)
 Makefile: ../../config/makefiles/cpp.in
 	cd $(BUILD_DIR) && $(RECONFIGURE) --step=gen::languages --languages=c99
 
-installable : installable_cpp@exe@
+installable : installable_cpp@exe@ cpp.pbc
+	$(CP) installable_cpp@exe@ $(BUILD_DIR)
+	$(CP) cpp.pbc $(PARROT_LIB)/cpp.pbc
 
 # This is a listing of all targets, that are meant to be called by users
 help:
 	@echo ""
 	@echo "Following targets are available for the user:"
 	@echo ""
-	@echo "  all:               cpp.pbc"
+	@echo "  build:             cpp.pbc"
 	@echo "                     This is the default."
 	@echo "Testing:"
 	@echo "  test:              Run the test suite."
@@ -90,7 +99,7 @@ help:
 	@echo "  help:              Print this help message."
 	@echo ""
 
-test: all
+test: build
 	$(PERL) t/harness
 
 # this target has nothing to do

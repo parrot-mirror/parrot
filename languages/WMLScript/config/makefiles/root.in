@@ -5,8 +5,8 @@
 HLLNAME = WMLScript
 
 ## Setup some commands
-RM_F    = @rm_f@
-PERL    = @perl@
+PERL          = @perl@
+RM_F          = @rm_f@
 CP            = @cp@
 MKPATH        = @mkpath@
 POD2MAN       = pod2man
@@ -14,7 +14,6 @@ PMCBUILD      = $(PERL) @build_dir@/tools/build/dynpmc.pl
 OPSBUILD      = $(PERL) @build_dir@/tools/build/dynoplibs.pl
 O             = @o@
 LOAD_EXT      = @load_ext@
-MANDIR	      = @mandir@
 #IF(cygwin):SHRPENV       = env PATH="@build_dir@/blib/lib:$(PATH)"
 #ELSIF(not win32):SHRPENV       = env LD_RUN_PATH="@build_dir@/blib/lib"
 PARROT        = $(SHRPENV) ../../parrot@exe@
@@ -26,6 +25,8 @@ BUILD_DIR     = @build_dir@
 BIN_DIR       = @bin_dir@
 LIB_DIR       = @lib_dir@
 DOC_DIR       = @doc_dir@
+MANDIR	      = @mandir@
+
 LIBPATH       = WMLScript
 PMCDIR        = pmc
 OPSDIR        = ops
@@ -54,8 +55,9 @@ PMC_FILES = \
  $(PMCDIR)/wmlsbytecode.pmc
 
 OPS_FILES = $(OPSDIR)/wmls.ops
-
 OPSLIB    = wmls
+
+CMDS = wmls2pir wmls2pbc wmlsd wmlsi
 
 PBCS = \
  $(LIBPATH)/wmlslang.pbc \
@@ -226,7 +228,11 @@ BUILD_CLEANERS = \
  "$(OPSDIR)/*.h" \
  "$(OPSDIR)/*$(LOAD_EXT)" \
  "$(OPSDIR)/*$(O)" \
- "$(LIBPATH)/*.pbc"
+ "$(LIBPATH)/*.pbc" \
+  $(PARROT_LIB)/$(HLLNAME).pbc \
+  $(HLLNAME).pbc installable_*@exe@ \
+  wmls2pir@exe@ wmls2pbc@exe@ wmlsd@exe@ wmlsi@exe@ \
+  $(PARROT_LIB)/$(HLLNAME)/*.pbc
 
 clean:
 	$(RM_F) $(BUILD_CLEANERS) $(TEST_CLEANERS)
