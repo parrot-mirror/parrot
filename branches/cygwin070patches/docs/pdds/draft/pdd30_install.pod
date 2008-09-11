@@ -122,7 +122,7 @@ F<library/config.pir>, or as frozen PMC embedded in the test executable
 (F<config.fpmc>), the installable executable (F<install_config.fpmc>) or empty
 for miniparrot (F<null_config.fpmc>).
 
-=head2 Layout 1 "A language pbc is a simple library"
+=head2 Layout 1 "A language pbc is simply a library"
 
 Rationale: A language pbc is not much more than a normal library, so it should
 go to the normal parrot library path. The library searchpath needs no extension 
@@ -133,17 +133,21 @@ replaced by C<load_bytecode 'WMLScript'> and F<WMLScript.pbc> should be
 installed to F<runtime/parrot/library/WMLScript.pbc> which ends up in
 F<$prefix/lib/parrot/library/WMLScript.pbc>.
 
-Usage: C<load_bytecode 'WMLScript'> =>
-       F<runtime/parrot/library/WMLScript.pbc> =>
+Usage: C<load_bytecode 'WMLScript'> =C<gt>
+       F<runtime/parrot/library/WMLScript.pbc> =C<gt>
        F<$prefix/lib/parrot/library/WMLScript.pbc>
+
+{{rurban favors this one}}
 
 =head2 Layout 1, Variant a "Don't mix the libraries with the languages"
 
 Rationale: A language pbc is a library under the C<languages> namespace. 
 The library searchpath needs no extension for languages.
+C<load_bytecode 'languages/bla'> makes it clear that C<bla> is a 
+language, not a library.
 
-Usage: C<load_bytecode 'languages/WMLScript'> =>
-       F<runtime/parrot/library/languages/WMLScript.pbc> =>
+Usage: C<load_bytecode 'languages/WMLScript'> =C<gt>
+       F<runtime/parrot/library/languages/WMLScript.pbc> =C<gt>
        F<$prefix/lib/parrot/library/languages/WMLScript.pbc>.
 
 =head2 Layout 2 "A language is special"
@@ -162,8 +166,8 @@ by C<load_language 'WMLScript'> and F<WMLScript.pbc> should be installed
 to F<runtime/languages/library/WMLScript.pbc> which ends up in 
 F<$prefix/lib/parrot/languages/library/WMLScript.pbc>.
 
-Usage: C<load_language 'WMLScript'> =>
-       F<runtime/language/library/WMLScript.pbc> =>
+Usage: C<load_language 'WMLScript'> =C<gt>
+       F<runtime/language/library/WMLScript.pbc> =C<gt>
        F<$prefix/lib/parrot/WMLScript/library/WMLScript.pbc>
      or Variant 2a:
        F<$prefix/lib/parrot/languages/WMLScript/library/WMLScript.pbc>.
