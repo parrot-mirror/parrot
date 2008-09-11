@@ -566,7 +566,7 @@ build : \
     $(DIS) \
     $(PBCMERGE)
 
-all : build parrot_utils languages perl6
+all : build parrot_utils installable $(PERL6) languages
 
 $(GEN_LIBRARY) : $(PARROT)
 
@@ -762,7 +762,7 @@ world : all parrot_utils
 
 parrot_utils : $(PDUMP) $(DIS) $(PINFO) $(PDB) $(PBCMERGE) $(PBC_TO_EXE) $(PARROT_CONFIG)
 
-installable: all $(INSTALLABLEPARROT) $(INSTALLABLEPDUMP) $(INSTALLABLEDIS) $(INSTALLABLEPINFO) $(INSTALLABLEPDB) $(INSTALLABLEPBCMERGE)
+installable: build parrot_utils $(INSTALLABLEPARROT) $(INSTALLABLEPDUMP) $(INSTALLABLEDIS) $(INSTALLABLEPINFO) $(INSTALLABLEPDB) $(INSTALLABLEPBCMERGE)
 
 
 flags_dummy :
