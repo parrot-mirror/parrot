@@ -45,6 +45,10 @@ See RT #48567.
 
 See RT #47011.
 
+=item * C<cmodulus> and variants [post 0.7.0]
+
+See RT #58550.
+
 =back
 
 =head1 Opcodes
@@ -70,6 +74,10 @@ See RT #47011.
 =item * C<get_mro> [post 0.5.0]
 
 See RT #47976.
+
+=item * C<n_*> math opcode variants [post 0.7.1]
+
+See RT #58410.
 
 =back
 

@@ -1,5 +1,5 @@
 # Copyright (C) 2008, The Perl Foundation.
-# $Id: pdd31_hll_interop.pod 31023 2008-09-12 13:18:26Z rurban $
+# $Id$
 
 =head1 NAME
 
@@ -7,7 +7,7 @@ docs/pdds/pddxx_language_interop.pod - Inter-language calling
 
 =head1 VERSION
 
-$Revision: 31023 $
+$Revision$
 
 =head1 ABSTRACT
 
