@@ -85,7 +85,6 @@ void Parrot_mmd_add_function(PARROT_INTERP,
 
 PARROT_API
 void Parrot_mmd_add_multi_from_c_args(PARROT_INTERP,
-    ARGIN(PMC *namespace),
     ARGIN(STRING *sub_name),
     ARGIN(STRING *short_sig),
     ARGIN(STRING *long_sig),
@@ -94,8 +93,7 @@ void Parrot_mmd_add_multi_from_c_args(PARROT_INTERP,
         __attribute__nonnull__(2)
         __attribute__nonnull__(3)
         __attribute__nonnull__(4)
-        __attribute__nonnull__(5)
-        __attribute__nonnull__(6);
+        __attribute__nonnull__(5);
 
 PARROT_API
 void Parrot_mmd_add_multi_from_long_sig(PARROT_INTERP,

@@ -63,6 +63,13 @@ static INTVAL distance_cmp(SHIM_INTERP, INTVAL a, INTVAL b);
 static void dump_mmd(PARROT_INTERP, INTVAL function)
         __attribute__nonnull__(1);
 
+static void mmd_add_multi_global(PARROT_INTERP,
+    ARGIN(STRING *sub_name),
+    ARGIN(PMC *sub_obj))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3);
+
 PARROT_CANNOT_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
 static PMC* mmd_arg_tuple_inline(PARROT_INTERP,
@@ -2387,6 +2394,34 @@ mmd_create_builtin_multi_meth(PARROT_INTERP, ARGIN(PMC *ns), INTVAL type,
 
 /*
 
+=item C<static void mmd_add_multi_global>
+
+Create a MultiSub, or add a variant to an existing MultiSub. The MultiSub is
+stored in the global MULTI namespace.
+
+=cut
+
+*/
+
+static void
+mmd_add_multi_global(PARROT_INTERP, ARGIN(STRING *sub_name), ARGIN(PMC *sub_obj))
+{
+        PMC * const namespace = Parrot_make_namespace_keyed_str(
+            interp, interp->root_namespace,
+            CONST_STRING(interp, "MULTI"));
+        PMC *multi_sub = Parrot_get_global(interp, namespace, sub_name);
+
+        if (PMC_IS_NULL(multi_sub)) {
+            multi_sub = constant_pmc_new(interp, enum_class_MultiSub);
+            Parrot_set_global(interp, namespace, sub_name, multi_sub);
+        }
+
+        PARROT_ASSERT(multi_sub->vtable->base_type == enum_class_MultiSub);
+        VTABLE_push_pmc(interp, multi_sub, sub_obj);
+}
+
+/*
+
 =item C<void Parrot_mmd_add_multi_from_long_sig>
 
 Create a MultiSub, or add a variant to an existing MultiSub. The MultiSub is
@@ -2403,15 +2438,6 @@ Parrot_mmd_add_multi_from_long_sig(PARROT_INTERP,
         ARGIN(PMC *sub_obj))
 {
         PMC *multi_sig;
-        PMC * const namespace = Parrot_make_namespace_keyed_str(
-            interp, interp->root_namespace,
-            CONST_STRING(interp, "MULTI"));
-        PMC *multi_sub = Parrot_get_global(interp, namespace, sub_name);
-
-        if (PMC_IS_NULL(sub_obj))
-            Parrot_ex_throw_from_c_args(interp, NULL,
-                EXCEPTION_INVALID_OPERATION,
-                "Multiple Dispatch: attempt to install null multi for %S!", sub_name);
 
         /* Attach a type tuple array to the sub for multi dispatch */
         multi_sig = mmd_build_type_tuple_from_long_sig(interp, long_sig);
@@ -2424,14 +2450,7 @@ Parrot_mmd_add_multi_from_long_sig(PARROT_INTERP,
             PMC_sub(sub_obj)->multi_signature = multi_sig;
         }
 
-
-        if (PMC_IS_NULL(multi_sub)) {
-            multi_sub = constant_pmc_new(interp, enum_class_MultiSub);
-            Parrot_set_global(interp, namespace, sub_name, multi_sub);
-        }
-
-        PARROT_ASSERT(multi_sub->vtable->base_type == enum_class_MultiSub);
-        VTABLE_push_pmc(interp, multi_sub, sub_obj);
+        mmd_add_multi_global(interp, sub_name, sub_obj);
 }
 
 /*
@@ -2447,31 +2466,22 @@ stored in the specified namespace.
 
 PARROT_API
 void
-Parrot_mmd_add_multi_from_c_args(PARROT_INTERP,
-        ARGIN(PMC *namespace), ARGIN(STRING *sub_name),
+Parrot_mmd_add_multi_from_c_args(PARROT_INTERP, ARGIN(STRING *sub_name),
         ARGIN(STRING *short_sig), ARGIN(STRING *long_sig),
         ARGIN(funcptr_t multi_func_ptr))
 {
-        PMC *multi_sig, *full_types;
-        PMC *multi_sub = Parrot_get_global(interp, namespace, sub_name);
+        PMC *multi_sig;
 
         /* Create an NCI sub for the C function */
-        PMC *method = constant_pmc_new(interp, enum_class_NCI);
-        VTABLE_set_pointer_keyed_str(interp, method,
+        PMC *sub_obj = constant_pmc_new(interp, enum_class_NCI);
+        VTABLE_set_pointer_keyed_str(interp, sub_obj,
                 short_sig, F2DPTR(multi_func_ptr));
 
         /* Attach a type tuple array to the NCI sub for multi dispatch */
         multi_sig = mmd_build_type_tuple_from_long_sig(interp, long_sig);
-        PMC_pmc_val(method) = multi_sig;
+        PMC_pmc_val(sub_obj) = multi_sig;
 
-
-        if (PMC_IS_NULL(multi_sub)) {
-            multi_sub = constant_pmc_new(interp, enum_class_MultiSub);
-            Parrot_set_global(interp, namespace, sub_name, multi_sub);
-        }
-
-        PARROT_ASSERT(multi_sub->vtable->base_type == enum_class_MultiSub);
-        VTABLE_push_pmc(interp, multi_sub, method);
+        mmd_add_multi_global(interp, sub_name, sub_obj);
 }
 
 /*
@@ -2504,7 +2514,7 @@ Parrot_mmd_add_multi_list_from_c_args(PARROT_INTERP,
 #ifdef PARROT_HAS_ALIGNED_FUNCPTR
         PARROT_ASSERT((PTR2UINTVAL(mmd_info[i].func_ptr) & 3) == 0);
 #endif
-        Parrot_mmd_add_multi_from_c_args(interp, namespace,
+        Parrot_mmd_add_multi_from_c_args(interp,
                 mmd_info[i].multi_name,
                 mmd_info[i].short_sig,
                 mmd_info[i].full_sig,
