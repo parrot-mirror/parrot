@@ -804,7 +804,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "add as method" );
     r = new 'Integer'
     l = 3
     r = 39
-    d = l."add"(r)
+    d = l."add"(r, d)
     print d
     print "\n"
     end
@@ -813,7 +813,7 @@ CODE
 42
 OUTPUT
 
-pir_output_is( <<'CODE', <<'OUTPUT', "__add as method - inherited", todo => 'RT #41374' );
+pir_output_is( <<'CODE', <<'OUTPUT', "add as method - inherited", todo => 'RT #41374' );
 .sub main :main
     .local  pmc  lib_perl_group
     lib_perl_group    = loadlib 'perl_group'
@@ -823,7 +823,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "__add as method - inherited", todo => 'RT 
     r = new 'PerlInt'
     l = 3
     r = 39
-    d = l."__add"(r)
+    d = l."add"(r, d)
     print d
     print "\n"
 .end
@@ -831,14 +831,14 @@ CODE
 42
 OUTPUT
 
-pir_output_is( <<'CODE', <<'OUTPUT', "__add as method - Int, Float" );
+pir_output_is( <<'CODE', <<'OUTPUT', "add as method - Int, Float" );
 .sub main :main
     .local pmc d, l, r
     l = new 'Integer'
     r = new 'Float'
     l = 3
     r = 39.42
-    d = l."__add"(r)
+    d = l."add"(r, d)
     print d
     print "\n"
     end
@@ -847,7 +847,7 @@ CODE
 42.42
 OUTPUT
 
-pir_output_is( <<'CODE', <<'OUTPUT', "bound __add method" );
+pir_output_is( <<'CODE', <<'OUTPUT', "bound add method" );
 .sub main :main
     .local pmc d, l, r, m
     d = new 'Integer'
@@ -855,14 +855,14 @@ pir_output_is( <<'CODE', <<'OUTPUT', "bound __add method" );
     r = new 'Float'
     l = 3
     r = 39.42
-    m = get_global ['Float'], "__add"
-    d = m(r, l)
+    m = get_global ['Float'], "add"
+    d = m(r, l, d)
     print d
     print "\n"
     r = new 'Integer'
     r = 39
-    m = get_global ['Integer'], "__add"
-    d = m(r, l)
+    m = get_global ['Integer'], "add"
+    d = m(r, l, d)
     print d
     print "\n"
     end
