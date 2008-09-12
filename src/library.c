@@ -8,7 +8,7 @@ src/library.c - Interface to Parrot's bytecode library
 
 =head1 DESCRIPTION
 
-This file contains a C function to access Parrot's bytecode library functions.
+This file contains C functions to access Parrot's bytecode library functions.
 
 =head2 Functions
 
@@ -502,7 +502,7 @@ try_load_path(PARROT_INTERP, ARGMOD(STRING* path))
 
 guess extensions, so that the user can drop the extensions
 leaving it up to the build process/install whether or not
-a .pbc or a .pir file is used.
+a .pbc, .pasm, .past or a .pir file is used.
 
 =cut
 
@@ -518,8 +518,8 @@ try_bytecode_extensions(PARROT_INTERP, ARGMOD(STRING* path))
     int guess;
 
     /*
-      first try the path without guessing to ensure compatibility with
-      existing code.
+      first try the path without guessing the extension to ensure compatibility
+      with existing code.
      */
 
     with_ext = string_copy(interp, path);
@@ -549,13 +549,40 @@ try_bytecode_extensions(PARROT_INTERP, ARGMOD(STRING* path))
 
 /*
 
-=item C<STRING* Parrot_locate_runtime_file_str>
+=item C<void Parrot_add_library_path>
+
+Add a path to the library searchpath of the given type.
+
+TODO:
+  - allow path to be a list of paths.
+
+=cut
+
+*/
+
+PARROT_API
+void
+Parrot_add_library_path(PARROT_INTERP,
+        ARGIN(const char *path),
+        enum_lib_paths which)
+{
+    PMC * const iglobals = interp->iglobals;
+    PMC * const lib_paths = VTABLE_get_pmc_keyed_int(interp, iglobals,
+        IGLOBALS_LIB_PATHS);
+    PMC * paths = VTABLE_get_pmc_keyed_int(interp, lib_paths, which);
+    STRING * const path_str = string_from_cstring(interp, path, 0);
+    VTABLE_push_string(interp, paths, path_str);
+}
+
+/*
+
+=item C<char* Parrot_locate_runtime_file>
 
 Locate the full path for C<file_name> and the given file type(s). If
 successful, returns a C-string allocated with C<string_to_cstring> or
 NULL otherwise.  Remember to free the string with C<string_cstring_free()>.
 
-=item C<Parrot_locate_runtime_file_str>
+=item C<STRING* Parrot_locate_runtime_file_str>
 
 Like above but use and return STRINGs. If successful, the returned STRING
 is 0-terminated so that C<result-E<gt>strstart> is usable as B<const char*>
@@ -624,18 +651,6 @@ Parrot_locate_runtime_file_str(PARROT_INTERP, ARGMOD(STRING *file),
 
     return full_name;
 }
-
-/*
-
-=item C<char* Parrot_locate_runtime_file>
-
-Determines whether a file name given by a fixed-8 or utf8 C<STRING> is an
-absolute file name. Returns C<1> if the filename is absolute, returns C<0>
-otherwise.
-
-=cut
-
-*/
 
 PARROT_API
 PARROT_WARN_UNUSED_RESULT

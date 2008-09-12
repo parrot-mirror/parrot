@@ -147,10 +147,9 @@ Accepts no arguments and returns a list in list context or an arrayref in
 scalar context.
 
 B<Note:> The list of step names returned by C<get_list_of_steps()> will be the
-same as that returned by C<Parrot::Configure::Step::List::get_steps_list()>
-B<provided> that you have not used C<add_step()> or C<add_steps()> to add any
-configuration tasks other than those named in
-C<Parrot::Configure::Step::List::get_steps_list()>.
+same as that in the second argument returned by
+C<Parrot::Configure::Options::process_options()> B<provided> that you have not
+used C<add_step()> or C<add_steps()> to add any configuration steps.
 
 =cut
 
@@ -529,6 +528,8 @@ sub option_or_data {
 
 sub pcfreeze {
     my $conf = shift;
+    local $Storable::Deparse = 1;
+    local $Storable::Eval = 1;
     return nfreeze($conf);
 }
 
@@ -538,6 +539,8 @@ sub replenish {
     foreach my $k (keys %$conf) {
         delete $conf->{$k};
     }
+    local $Storable::Deparse = 1;
+    local $Storable::Eval = 1;
     my %gut = %{ thaw($serialized) };
     while ( my ($k, $v) = each %gut ) {
         $conf->{$k} = $v;
