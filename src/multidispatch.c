@@ -70,6 +70,15 @@ static void mmd_add_multi_global(PARROT_INTERP,
         __attribute__nonnull__(2)
         __attribute__nonnull__(3);
 
+static void mmd_add_multi_to_namespace(PARROT_INTERP,
+    ARGIN(STRING *ns_name),
+    ARGIN(STRING *sub_name),
+    ARGIN(PMC *sub_obj))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3)
+        __attribute__nonnull__(4);
+
 PARROT_CANNOT_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
 static PMC* mmd_arg_tuple_inline(PARROT_INTERP,
@@ -82,6 +91,13 @@ PARROT_CANNOT_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
 static PMC* mmd_build_type_tuple_from_long_sig(PARROT_INTERP,
     ARGIN(STRING *long_sig))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+PARROT_CANNOT_RETURN_NULL
+PARROT_WARN_UNUSED_RESULT
+static PMC* mmd_build_type_tuple_from_type_list(PARROT_INTERP,
+    ARGIN(PMC *type_list))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
@@ -1542,7 +1558,7 @@ mmd_arg_tuple_inline(PARROT_INTERP, ARGIN(STRING *signature), va_list args)
 
 =item C<static PMC* Parrot_mmd_arg_tuple_func>
 
-Return a list of argument types. PMC arguments are take from registers
+Return a list of argument types. PMC arguments are taken from registers
 according to calling conventions.
 
 =cut
@@ -1609,7 +1625,12 @@ Parrot_mmd_arg_tuple_func(PARROT_INTERP)
                     arg = constants[idx]->u.key;
                 else
                     arg = REG_PMC(interp, idx);
-                type = VTABLE_type(interp, arg);
+
+                if (PMC_IS_NULL(arg))
+                    type = enum_type_PMC;
+                else
+                    type = VTABLE_type(interp, arg);
+
                 VTABLE_push_integer(interp, arg_tuple, type);
                 }
                 break;
@@ -1787,6 +1808,46 @@ distance_cmp(SHIM_INTERP, INTVAL a, INTVAL b)
     return da > db ? 1 : da < db ? -1 : 0;
 }
 
+/*
+
+=item C<static PMC* mmd_build_type_tuple_from_type_list>
+
+Construct a FixedIntegerArray of type numbers from an array of
+type names. Used for multiple dispatch.
+
+=cut
+
+*/
+
+PARROT_CANNOT_RETURN_NULL
+PARROT_WARN_UNUSED_RESULT
+static PMC*
+mmd_build_type_tuple_from_type_list(PARROT_INTERP, ARGIN(PMC *type_list))
+{
+    INTVAL i, param_count;
+    PMC *multi_sig = constant_pmc_new(interp, enum_class_FixedIntegerArray);
+
+    param_count = VTABLE_elements(interp, type_list);
+    VTABLE_set_integer_native(interp, multi_sig, param_count);
+
+    for (i = 0; i < param_count; i++) {
+        INTVAL type;
+        STRING *type_name = VTABLE_get_string_keyed_int(interp, type_list, i);
+        if (string_equal(interp, type_name, CONST_STRING(interp, "DEFAULT"))==0)
+            type = enum_type_PMC;
+        else if (string_equal(interp, type_name, CONST_STRING(interp, "STRING"))==0)
+            type = enum_type_STRING;
+        else if (string_equal(interp, type_name, CONST_STRING(interp, "INTVAL"))==0)
+            type = enum_type_INTVAL;
+        else if (string_equal(interp, type_name, CONST_STRING(interp, "FLOATVAL"))==0)
+            type = enum_type_FLOATVAL;
+        else
+            type = pmc_type(interp, type_name);
+
+        VTABLE_set_integer_keyed_int(interp, multi_sig, i, type);
+    }
+    return multi_sig;
+}
 
 /*
 
@@ -1804,27 +1865,9 @@ PARROT_WARN_UNUSED_RESULT
 static PMC*
 mmd_build_type_tuple_from_long_sig(PARROT_INTERP, ARGIN(STRING *long_sig))
 {
-    PMC *type_list;
-    INTVAL i, param_count;
-    PMC *multi_sig = constant_pmc_new(interp, enum_class_FixedIntegerArray);
-    type_list = string_split(interp, CONST_STRING(interp, ","), long_sig);
+    PMC *type_list = string_split(interp, CONST_STRING(interp, ","), long_sig);
 
-    param_count = VTABLE_elements(interp, type_list);
-    VTABLE_set_integer_native(interp, multi_sig, param_count);
-
-    for (i = 0; i < param_count; i++) {
-        INTVAL type;
-        STRING *type_name = VTABLE_get_string_keyed_int(interp, type_list, i);
-        if (string_equal(interp, type_name, CONST_STRING(interp, "DEFAULT"))==0)
-            type = enum_type_PMC;
-        else if (string_equal(interp, type_name, CONST_STRING(interp, "STRING"))==0)
-            type = enum_type_STRING;
-        else
-            type = pmc_type(interp, type_name);
-
-        VTABLE_set_integer_keyed_int(interp, multi_sig, i, type);
-    }
-    return multi_sig;
+    return mmd_build_type_tuple_from_type_list(interp, type_list);
 }
 
 /*
@@ -2422,6 +2465,35 @@ mmd_add_multi_global(PARROT_INTERP, ARGIN(STRING *sub_name), ARGIN(PMC *sub_obj)
 
 /*
 
+=item C<static void mmd_add_multi_to_namespace>
+
+Create a MultiSub, or add a variant to an existing MultiSub. The MultiSub is
+added as a method to a class.
+
+=cut
+
+*/
+
+static void
+mmd_add_multi_to_namespace(PARROT_INTERP, ARGIN(STRING *ns_name),
+            ARGIN(STRING *sub_name), ARGIN(PMC *sub_obj))
+{
+        PMC * const hll_ns    = VTABLE_get_pmc_keyed_int(interp,
+                interp->HLL_namespace, CONTEXT(interp)->current_HLL);
+        PMC * const namespace = Parrot_make_namespace_keyed_str(interp, hll_ns, ns_name);
+        PMC *multi_sub = Parrot_get_global(interp, namespace, sub_name);
+
+        if (PMC_IS_NULL(multi_sub)) {
+            multi_sub = constant_pmc_new(interp, enum_class_MultiSub);
+            Parrot_set_global(interp, namespace, sub_name, multi_sub);
+        }
+
+        PARROT_ASSERT(multi_sub->vtable->base_type == enum_class_MultiSub);
+        VTABLE_push_pmc(interp, multi_sub, sub_obj);
+}
+
+/*
+
 =item C<void Parrot_mmd_add_multi_from_long_sig>
 
 Create a MultiSub, or add a variant to an existing MultiSub. The MultiSub is
@@ -2437,10 +2509,11 @@ Parrot_mmd_add_multi_from_long_sig(PARROT_INTERP,
         ARGIN(STRING *sub_name), ARGIN(STRING *long_sig),
         ARGIN(PMC *sub_obj))
 {
-        PMC *multi_sig;
+        PMC *type_list = string_split(interp, CONST_STRING(interp, ","), long_sig);
+        STRING *namespace_name = VTABLE_get_string_keyed_int(interp, type_list, 0);
 
         /* Attach a type tuple array to the sub for multi dispatch */
-        multi_sig = mmd_build_type_tuple_from_long_sig(interp, long_sig);
+        PMC *multi_sig = mmd_build_type_tuple_from_type_list(interp, type_list);
 
         if (sub_obj->vtable->base_type == enum_class_NCI) {
             PMC_pmc_val(sub_obj) = multi_sig;
@@ -2450,6 +2523,7 @@ Parrot_mmd_add_multi_from_long_sig(PARROT_INTERP,
             PMC_sub(sub_obj)->multi_signature = multi_sig;
         }
 
+        mmd_add_multi_to_namespace(interp, namespace_name, sub_name, sub_obj);
         mmd_add_multi_global(interp, sub_name, sub_obj);
 }
 
@@ -2471,6 +2545,8 @@ Parrot_mmd_add_multi_from_c_args(PARROT_INTERP, ARGIN(STRING *sub_name),
         ARGIN(funcptr_t multi_func_ptr))
 {
         PMC *multi_sig;
+        PMC *type_list = string_split(interp, CONST_STRING(interp, ","), long_sig);
+        STRING *namespace_name = VTABLE_get_string_keyed_int(interp, type_list, 0);
 
         /* Create an NCI sub for the C function */
         PMC *sub_obj = constant_pmc_new(interp, enum_class_NCI);
@@ -2481,6 +2557,7 @@ Parrot_mmd_add_multi_from_c_args(PARROT_INTERP, ARGIN(STRING *sub_name),
         multi_sig = mmd_build_type_tuple_from_long_sig(interp, long_sig);
         PMC_pmc_val(sub_obj) = multi_sig;
 
+        mmd_add_multi_to_namespace(interp, namespace_name, sub_name, sub_obj);
         mmd_add_multi_global(interp, sub_name, sub_obj);
 }
 
