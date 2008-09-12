@@ -731,20 +731,14 @@ Decrements the integer.
     }
 
     MULTI PMC *add(BigInt value, PMC *dest) {
-        if (dest)
-            VTABLE_morph(interp, dest, SELF->vtable->base_type);
-        else
-            dest = pmc_new(INTERP, SELF->vtable->base_type);
+        dest = pmc_new(INTERP, SELF->vtable->base_type);
 
         bigint_add_bigint(INTERP, SELF, value, dest);
         return dest;
     }
 
     MULTI PMC *add(Integer value, PMC *dest) {
-        if (dest)
-            VTABLE_morph(interp, dest, SELF->vtable->base_type);
-        else
-            dest = pmc_new(INTERP, SELF->vtable->base_type);
+        dest = pmc_new(INTERP, SELF->vtable->base_type);
 
         bigint_add_bigint_int(INTERP, SELF, PMC_int_val(value), dest);
         return dest;
@@ -756,10 +750,7 @@ Decrements the integer.
     }
 
     VTABLE PMC *add_int(INTVAL value, PMC *dest) {
-        if (dest)
-            VTABLE_morph(interp, dest, SELF->vtable->base_type);
-        else
-            dest = pmc_new(INTERP, SELF->vtable->base_type);
+        dest = pmc_new(INTERP, SELF->vtable->base_type);
 
         bigint_add_bigint_int(INTERP, SELF, value, dest);
         return dest;
@@ -775,7 +766,7 @@ Decrements the integer.
 
     MULTI void i_add(DEFAULT value) {
         Parrot_ex_throw_from_c_args(INTERP, NULL,
-            EXCEPTION_INTERNAL_NOT_IMPLEMENTED, "unimp add");
+            EXCEPTION_INTERNAL_NOT_IMPLEMENTED, "unimp i_add");
     }
 
     VTABLE void i_add_int(INTVAL value) {
