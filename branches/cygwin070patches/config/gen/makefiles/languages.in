@@ -20,7 +20,7 @@ LANGUAGES = \
     hq9plus \
     jako json jvm \
     lazy-k lisp lolcode lua \
-    m4 \
+    m4 markdown \
     ook \
     parrot_compiler perl6 pheme PIR pipp punie pynie \
     regex \
@@ -97,7 +97,7 @@ test-separate: all \
     hq9plus.test \
     jako.test json.test jvm.test \
     lazy-k.test lisp.test lolcode.test lua.test \
-    m4.test \
+    m4.test markdown.test \
     ook.test \
     parrot_compiler.test perl6.test pheme.test PIR.test pipp.test punie.test pynie.test \
     regex.test \
@@ -117,7 +117,7 @@ installable : all \
     hq9plus.installable \
     jako.installable json.installable jvm.installable \
     lazy-k.installable lisp.installable lolcode.installable lua.installable \
-    m4.installable \
+    m4.installable markdown.installable \
     ook.installable \
     parrot_compiler.installable perl6.installable pheme.installable PIR.installable pipp.installable punie.installable pynie.installable \
     regex.installable \
@@ -137,7 +137,7 @@ test-installable : all \
     hq9plus.test-installable \
     jako.test-installable json.test-installable jvm.test-installable \
     lazy-k.test-installable lisp.test-installable lolcode.test-installable lua.test-installable \
-    m4.test-installable \
+    m4.test-installable markdown.test-installable \
     ook.test-installable \
     parrot_compiler.test-installable perl6.test-installable pheme.test-installable PIR.test-installable pipp.test-installable punie.test-installable pynie.test-installable \
     regex.test-installable \
@@ -157,7 +157,7 @@ install : all \
     hq9plus.install \
     jako.install json.install jvm.install \
     lazy-k.install lisp.install lolcode.install lua.install \
-    m4.install \
+    m4.install markdown.install \
     ook.install \
     parrot_compiler.install perl6.install pheme.install PIR.install pipp.install punie.install pynie.install \
     regex.install \
@@ -185,7 +185,7 @@ clean: \
     jako.clean json.clean jvm.clean \
     lisp.clean \
     lolcode.clean lua.clean \
-    m4.clean \
+    m4.clean markdown.clean \
     ook.clean \
     parrot_compiler.clean perl6.clean pheme.clean PIR.clean pipp.clean punie.clean pynie.clean \
     regex.clean \
@@ -206,7 +206,7 @@ realclean: \
     hq9plus.realclean \
     jako.realclean json.realclean jvm.realclean \
     lazy-k.realclean lisp.realclean lolcode.realclean lua.realclean \
-    m4.realclean \
+    m4.realclean markdown.realclean \
     ook.realclean \
     parrot_compiler.realclean perl6.realclean pheme.realclean PIR.realclean pipp.realclean punie.realclean pynie.realclean \
     regex.realclean \
@@ -573,6 +573,22 @@ m4.clean:
 	- $(MAKE) m4 clean
 m4.realclean:
 	- $(MAKE) m4 realclean
+
+markdown: markdown.dummy
+markdown.dummy:
+	- $(MAKE) markdown
+markdown.test:
+	- $(MAKE) markdown test
+markdown.installable:
+	- $(MAKE) markdown installable
+markdown.test-installable:
+	- $(MAKE) markdown test-installable DESTDIR=$(DESTDIR)
+markdown.install:
+	- $(MAKE) markdown install DESTDIR=$(DESTDIR)
+markdown.clean:
+	- $(MAKE) markdown clean
+markdown.realclean:
+	- $(MAKE) markdown realclean
 
 ook : ook.dummy
 ook.dummy:

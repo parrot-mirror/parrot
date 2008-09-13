@@ -1,10 +1,11 @@
-# $Id$
+# Copyright (C) 2008, The Perl Foundation.
+# $Id: root.in 31074 2008-09-13 17:09:46Z fperrad $
 
 ## arguments we want to run parrot with
 PARROT_ARGS =
 
 ## configuration settings
-HLLNAME       = abc
+HLLNAME	      = markdown
 BUILD_DIR     = @build_dir@
 LOAD_EXT      = @load_ext@
 O             = @o@
@@ -16,7 +17,7 @@ MANDIR	      = @mandir@
 ## Setup some commands
 LN_S          = @lns@
 PERL          = @perl@
-RM_RF         = @rm_rf@
+RM_F          = @rm_f@
 CP            = @cp@
 MKPATH        = @mkpath@
 POD2MAN       = pod2man
@@ -25,71 +26,63 @@ POD2MAN       = pod2man
 PARROT        = $(SHRPENV) ../../parrot@exe@
 PBC_TO_EXE    = $(SHRPENV) ../../pbc_to_exe@exe@
 CAT           = $(PERL) -MExtUtils::Command -e cat
-BUILD_DYNPMC  = $(PERL) $(BUILD_DIR)/tools/build/dynpmc.pl
 RECONFIGURE   = $(PERL) $(BUILD_DIR)/tools/dev/reconfigure.pl
 #IF(darwin):
 #IF(darwin):# MACOSX_DEPLOYMENT_TARGET must be defined for OS X compilation/linking
 #IF(darwin):export MACOSX_DEPLOYMENT_TARGET := @osx_version@
 
 ## places to look for things
-PARROT_DYNEXT = $(BUILD_DIR)/runtime/parrot/dynext
 PARROT_LIB    = $(BUILD_DIR)/runtime/parrot/library
-PGE_LIBRARY   = $(PARROT_LIB)/PGE
-PCT           = $(PARROT_LIB)/PCT.pbc
+PGE_LIBRARY   = $(BUILD_DIR)/runtime/parrot/library/PGE
 PERL6GRAMMAR  = $(PGE_LIBRARY)/Perl6Grammar.pbc
 NQP           = $(BUILD_DIR)/compilers/nqp/nqp.pbc
+PCT           = $(BUILD_DIR)/runtime/parrot/library/PCT.pbc
 
-all: abc.pbc
+DOCS          = README
 
-SOURCES = abc.pir \
+build: markdown.pbc
+
+all: markdown.pbc Makefile markdown@exe@ installable
+
+SOURCES = \
+  markdown.pir \
+  src/Compiler.pir \
+  src/Node.pir \
   src/gen_grammar.pir \
-  src/gen_actions.pir \
-  src/gen_builtins.pir \
-
-BUILTINS_PIR = \
-  src/builtins/all.pir \
-
-DOCS = MAINTAINER README TODO
+  src/gen_actions.pir
 
 # the default target
-abc.pbc: $(SOURCES)
-	$(PARROT) $(PARROT_ARGS) -o abc.pbc abc.pir
+markdown.pbc: $(SOURCES)
+	$(PARROT) $(PARROT_ARGS) -o markdown.pbc markdown.pir
 
-$(HLLNAME)@exe@: $(HLLNAME).pbc
-	$(PBC_TO_EXE) $(HLLNAME).pbc
-
-src/gen_grammar.pir: $(PERL6GRAMMAR) src/parser/grammar.pg src/parser/grammar-oper.pg
+src/gen_grammar.pir: $(PERL6GRAMMAR) src/parser/grammar.pg
 	$(PARROT) $(PARROT_ARGS) $(PERL6GRAMMAR) \
 	    --output=src/gen_grammar.pir \
-	    src/parser/grammar.pg \
-	    src/parser/grammar-oper.pg \
+	    src/parser/grammar.pg
 
 src/gen_actions.pir: $(NQP) $(PCT) src/parser/actions.pm
 	$(PARROT) $(PARROT_ARGS) $(NQP) --output=src/gen_actions.pir \
 	    --target=pir src/parser/actions.pm
 
-src/gen_builtins.pir: $(BUILTINS_PIR)
-	$(CAT) $(BUILTINS_PIR) >src/gen_builtins.pir
-
 installable : installable_$(HLLNAME)@exe@ $(HLLNAME).pbc
 	$(CP) installable_$(HLLNAME)@exe@ $(BUILD_DIR)
 	$(CP) $(HLLNAME).pbc $(PARROT_LIB)/$(HLLNAME).pbc
 
-installable_$(HLLNAME)@exe@ : $(HLLNAME).pbc
+installable_$(HLLNAME)@exe@: $(HLLNAME).pbc
 	$(PBC_TO_EXE) $(HLLNAME).pbc --install
 
 # regenerate the Makefile
 Makefile: config/makefiles/root.in
-	cd $(BUILD_DIR) && $(RECONFIGURE) --step=gen::languages --languages=$(HLLNAME)
+	cd $(BUILD_DIR) && $(RECONFIGURE) --step=gen::languages --languages=markdown
 
 # This is a listing of all targets, that are meant to be called by users
 help:
 	@echo ""
 	@echo "Following targets are available for the user:"
 	@echo ""
-	@echo "  build:             abc.pbc"
+	@echo "  build:             markdown.pbc"
 	@echo "                     This is the default."
-	@echo "  all:               abc.pbc abc@exe@ installable"
+	@echo "  all:               markdown.pbc markdown@exe@ installable"
 	@echo "  installable:       Create self-hosting bins and libs."
 	@echo "  install:           Install the installable targets and docs."
 	@echo ""
@@ -108,7 +101,7 @@ help:
 	@echo ""
 
 test: all
-	prove -r t
+	cd .. && $(PERL) t/harness --languages=markdown
 
 # TODO: rename build_dir. basic run for missing libs
 test-installable : installable
@@ -121,23 +114,23 @@ install : installable
 	-$(MKPATH) $(DESTDIR)$(DOC_DIR)/languages/$(HLLNAME)
 	$(CP) $(DOCS) $(DESTDIR)$(DOC_DIR)/languages/$(HLLNAME)
 
-testclean:
-	$(RM_RF) "t/*.pir" "t/*.out"
+TEST_CLEANUPS = \
+  "t/*.html" \
+  "t/*.text"
 
-CLEANUPS = \
-  abc.pbc \
+testclean:
+	$(RM_F) $(TEST_CLEANUPS)
+
+GEN_CLEANUPS = \
+  markdown.pbc \
   src/gen_grammar.pir \
-  src/gen_actions.pir \
-  src/gen_builtins.pir \
-  $(PARROT_LIB)/$(HLLNAME).pbc \
-  $(HLLNAME)@exe@ \
-  installable_$(HLLNAME)@exe@
+  src/gen_actions.pir
 
 clean: testclean
-	$(RM_RF) $(CLEANUPS)
+	$(RM_F) $(GEN_CLEANUPS)
 
 realclean: clean
-	$(RM_RF) Makefile
+	$(RM_F) Makefile
 
 distclean: realclean
 
