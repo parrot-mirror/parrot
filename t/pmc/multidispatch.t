@@ -855,7 +855,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "bound add method" );
     r = new 'Float'
     l = 3
     r = 39.42
-    m = get_global ['Float'], "add"
+    m = get_global ['scalar'], "add"
     d = m(r, l, d)
     print d
     print "\n"
