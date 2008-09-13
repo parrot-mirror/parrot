@@ -810,7 +810,7 @@ $(PERL6) : compilers $(PBC_TO_EXE)
 	$(MAKE) languages/perl6 perl6$(EXE)
 	$(CP) languages/perl6/perl6$(EXE) $(PERL6)
 	$(CHMOD) 0755 $(PERL6)
-	$(PERL6) -e"say 'Hello, world.'"
+	$(SHRPENV) $(PERL6) -e"say 'Hello, world.'"
 
 
 # build the real miniparrot
