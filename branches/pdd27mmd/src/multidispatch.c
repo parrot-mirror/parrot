@@ -420,31 +420,6 @@ Parrot_mmd_find_multi_from_sig_obj(PARROT_INTERP, ARGIN(STRING *name), ARGIN(PMC
 
 /*
 
-=item C<static funcptr_t Parrot_get_mmd_dispatcher>
-
-RT #48260: Not yet documented!!!
-
-{{**DEPRECATE**}}
-
-=cut
-
-*/
-
-PARROT_WARN_UNUSED_RESULT
-PARROT_CANNOT_RETURN_NULL
-static funcptr_t
-Parrot_get_mmd_dispatcher(PARROT_INTERP, ARGIN(PMC *left), ARGIN(PMC *right),
-        INTVAL function, ARGOUT(int *is_pmc))
-{
-    const UINTVAL left_type  = VTABLE_type(interp, left);
-    const UINTVAL right_type = VTABLE_type(interp, right);
-    return get_mmd_dispatch_type(interp, function, left_type, right_type,
-            is_pmc);
-}
-
-
-/*
-
 =item C<static PMC * Parrot_mmd_deref>
 
 If C<value> is a reference-like PMC, dereference it so we can make an MMD
@@ -1003,41 +978,6 @@ Parrot_mmd_find_multi_from_long_sig(PARROT_INTERP, ARGIN(STRING *name),
         return PMCNULL;
 
     return VTABLE_get_pmc_keyed_int(interp, candidate_list, 0);
-}
-
-/*
-
-=item C<PMC * mmd_vtfind>
-
-Return an MMD PMC function for the given data types. The return result is
-either a Sub PMC (for PASM MMD functions) or a NCI PMC holding the
-C function pointer in PMC_struct_val.
-
-{{**DEPRECATE**}}
-
-=cut
-
-*/
-
-PARROT_API
-PARROT_CANNOT_RETURN_NULL
-PARROT_WARN_UNUSED_RESULT
-PMC *
-Parrot_mmd_vtfind(PARROT_INTERP, INTVAL func_nr, INTVAL left, INTVAL right)
-{
-    int             is_pmc;
-    const funcptr_t func = get_mmd_dispatch_type(interp,
-            func_nr, left, right, &is_pmc);
-    PMC            *f;
-
-    /* RT #45945 if is_pmc == 2 a Bound_NCI is returned, which actually should
-     * be filled with one of the wrapper functions */
-    if (func && is_pmc)
-        return (PMC *)F2DPTR(func);
-
-    f                 = pmc_new(interp, enum_class_NCI);
-    VTABLE_set_pointer(interp, f, F2DPTR(func));
-    return f;
 }
 
 
