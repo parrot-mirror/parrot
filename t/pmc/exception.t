@@ -97,7 +97,7 @@ pasm_output_is( <<'CODE', <<'OUTPUT', "get_results" );
     end
 handler:
     get_results "0,0", P0, P3
-    S0 = P0
+    set S0, P0
     print "caught it\n"
     typeof S1, P0
     print S1
@@ -138,7 +138,7 @@ pasm_output_is( <<'CODE', <<'OUTPUT', "exception attributes" );
     end
 handler:
     get_results "0,0", P0, P6
-    S0 = P0
+    set S0, P0
     print "caught it\n"
     getattribute P16, P0, 'message'
     print P16
@@ -236,7 +236,7 @@ pasm_output_is( <<'CODE', <<'OUTPUT', "push_eh - throw - message" );
     end
 _handler:
     get_results "0,0", P5, P6
-    S0 = P5
+    set S0, P5
     print "caught it\n"
     print S0
     print "\n"
@@ -295,16 +295,16 @@ pasm_output_is( <<'CODE', <<'OUTPUT', "2 exception handlers" );
     end
 _handler1:
     get_results "0,0", P5, P6
-    S0 = P5
+    getattribute P2, P5, "message"
     print "caught it in 1\n"
-    print S0
+    print P2
     print "\n"
     end
 _handler2:
     get_results "0,0", P0, P1
-    S0 = P5
+    getattribute P2, P0, "message"
     print "caught it in 2\n"
-    print S0
+    print P2
     print "\n"
     end
 CODE
@@ -327,14 +327,14 @@ pasm_output_is( <<'CODE', <<'OUTPUT', "2 exception handlers, throw next" );
     end
 _handler1:
     get_results "0,0", P5, P6
-    S0 = P5
+    set S0, P5
     print "caught it in 1\n"
     print S0
     print "\n"
     end
 _handler2:
     get_results "0,0", P5, P6
-    S0 = P5
+    set S0, P5
     print "caught it in 2\n"
     print S0
     print "\n"
@@ -367,7 +367,7 @@ pasm_output_is( <<'CODE', <<OUT, "die, error, severity" );
     end
 _handler:
     get_results "0,0", P5, P6
-    S0 = P5
+    set S0, P5
     print "caught it\n"
     set I0, P5['severity']
     print "severity "
