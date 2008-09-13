@@ -450,6 +450,8 @@ Parrot_get_mmd_dispatcher(PARROT_INTERP, ARGIN(PMC *left), ARGIN(PMC *right),
 If C<value> is a reference-like PMC, dereference it so we can make an MMD
 call on the 'real' value.
 
+{{**DEPRECATE**}}
+
 =cut
 
 */
@@ -471,6 +473,8 @@ Parrot_mmd_deref(PARROT_INTERP, ARGIN(PMC *value))
 =item C<static void Parrot_mmd_ensure_writable>
 
 Make sure C<pmc> is writable enough for C<function>.
+
+{{**DEPRECATE**}}
 
 =cut
 
@@ -652,360 +656,6 @@ Parrot_mmd_multi_dispatch_from_c_args(PARROT_INTERP,
 #endif
 
     Parrot_pcc_invoke_sub_from_sig_object(interp, sub, sig_object);
-}
-
-
-/*
-
-=item C<PMC* mmd_dispatch_p_ppp>
-
-Dispatch to a multimethod that returns a PMC. C<left>, C<right>, and
-C<dest> are all PMC pointers, while C<func_num> is the MMD table that
-should be used to do the dispatching.
-If the C<dest> pointer is NULL, it dispatches two a two-argument function
-that returns a new C<dest> always.
-
-The MMD system will figure out which function should be called based on
-the types of C<left> and C<right> and call it, passing in C<left>,
-C<right>, and possibly C<dest> like any other binary vtable function.
-
-{{**DEPRECATE**}}
-
-=cut
-
-*/
-
-PARROT_API
-PARROT_WARN_UNUSED_RESULT
-PARROT_CANNOT_RETURN_NULL
-PMC*
-Parrot_mmd_dispatch_p_ppp(PARROT_INTERP, ARGIN(PMC *left), ARGIN(PMC *right),
-        ARGIN_NULLOK(PMC *dest), INTVAL func_nr)
-{
-    mmd_f_p_ppp real_function;
-    int         is_pmc;
-
-    left  = Parrot_mmd_deref(interp, left);
-    right = Parrot_mmd_deref(interp, right);
-
-    real_function = (mmd_f_p_ppp)Parrot_get_mmd_dispatcher(interp,
-            left, right, func_nr, &is_pmc);
-
-    if (is_pmc) {
-        PMC * const sub = (PMC*)real_function;
-        if (dest)
-            return Parrot_runops_fromc_args(interp, sub, "PPPP",
-                    left, right, dest);
-        else
-            return Parrot_runops_fromc_args(interp, sub, "PPP", left, right);
-    }
-
-    return (*real_function)(interp, left, right, dest);
-}
-
-
-/*
-
-=item C<PMC* mmd_dispatch_p_pip>
-
-Like C<mmd_dispatch_p_ppp>, right argument is a native INTVAL.
-
-{{**DEPRECATE**}}
-
-=cut
-
-*/
-
-PARROT_API
-PARROT_CAN_RETURN_NULL
-PMC*
-Parrot_mmd_dispatch_p_pip(PARROT_INTERP,
-        ARGIN(PMC *left), INTVAL right, ARGIN_NULLOK(PMC *dest), INTVAL func_nr)
-{
-    int         is_pmc;
-    UINTVAL     left_type;
-    mmd_f_p_pip real_function;
-
-    left      = Parrot_mmd_deref(interp, left);
-    left_type = VTABLE_type(interp, left);
-
-    real_function =
-        (mmd_f_p_pip)get_mmd_dispatch_type(interp, func_nr, left_type,
-                                           enum_type_INTVAL, &is_pmc);
-
-    if (is_pmc) {
-        PMC * const sub = (PMC *)real_function;
-        if (dest)
-            return Parrot_runops_fromc_args(interp, sub, "PPIP",
-                    left, right, dest);
-        else
-            return Parrot_runops_fromc_args(interp, sub, "PPI", left, right);
-    }
-
-    return (*real_function)(interp, left, right, dest);
-}
-
-
-/*
-
-=item C<PMC* mmd_dispatch_p_pnp>
-
-Like C<mmd_dispatch_p_ppp>, right argument is a native FLOATVAL.
-
-{{**DEPRECATE**}}
-
-=cut
-
-*/
-
-PARROT_API
-PARROT_CAN_RETURN_NULL
-PMC*
-Parrot_mmd_dispatch_p_pnp(PARROT_INTERP,
-        ARGIN(PMC *left), FLOATVAL right, ARGIN_NULLOK(PMC *dest), INTVAL func_nr)
-{
-    mmd_f_p_pnp real_function;
-    int         is_pmc;
-    UINTVAL     left_type;
-
-    left          = Parrot_mmd_deref(interp, left);
-    left_type     = VTABLE_type(interp, left);
-
-    real_function = (mmd_f_p_pnp)get_mmd_dispatch_type(interp,
-            func_nr, left_type, enum_type_FLOATVAL, &is_pmc);
-
-    if (is_pmc) {
-        PMC * const sub = (PMC*)real_function;
-        if (dest)
-            return Parrot_runops_fromc_args(interp, sub, "PPNP",
-                    left, right, dest);
-        else
-            return Parrot_runops_fromc_args(interp, sub, "PPN", left, right);
-    }
-
-    return (*real_function)(interp, left, right, dest);
-}
-
-
-/*
-
-=item C<PMC* Parrot_mmd_dispatch_p_psp>
-
-Like C<mmd_dispatch_p_ppp>, right argument is a native STRING *.
-
-{{**DEPRECATE**}}
-
-=cut
-
-*/
-
-PARROT_API
-PARROT_CAN_RETURN_NULL
-PMC*
-Parrot_mmd_dispatch_p_psp(PARROT_INTERP, ARGIN(PMC *left), ARGIN(STRING *right),
-        ARGIN_NULLOK(PMC *dest), INTVAL func_nr)
-{
-    int               is_pmc;
-    const UINTVAL     left_type     = VTABLE_type(interp, left);
-    const mmd_f_p_psp real_function =
-        (mmd_f_p_psp)get_mmd_dispatch_type(interp,
-            func_nr, left_type, enum_type_STRING, &is_pmc);
-
-    if (is_pmc) {
-        PMC * const sub = (PMC*)real_function;
-        if (dest)
-            return Parrot_runops_fromc_args(interp, sub, "PPSP",
-                    left, right, dest);
-        else
-            return Parrot_runops_fromc_args(interp, sub, "PPS", left, right);
-    }
-
-    return (*real_function)(interp, left, right, dest);
-}
-
-
-/*
-
-=item C<void mmd_dispatch_v_pp>
-
-Inplace dispatch function for C<< left <op=> right >>.
-
-{{**DEPRECATE**}}
-
-=cut
-
-*/
-
-PARROT_API
-void
-Parrot_mmd_dispatch_v_pp(PARROT_INTERP,
-        ARGIN(PMC *left), ARGIN(PMC *right), INTVAL func_nr)
-{
-    mmd_f_v_pp real_function;
-    int        is_pmc;
-
-    left  = Parrot_mmd_deref(interp, left);
-    right = Parrot_mmd_deref(interp, right);
-
-    Parrot_mmd_ensure_writable(interp, func_nr, left);
-
-    real_function = (mmd_f_v_pp)Parrot_get_mmd_dispatcher(interp,
-            left, right, func_nr, &is_pmc);
-
-    if (is_pmc) {
-        PMC * const sub = (PMC*)real_function;
-        Parrot_runops_fromc_args(interp, sub, "vPP", left, right);
-    }
-
-    (*real_function)(interp, left, right);
-}
-
-
-/*
-
-=item C<void mmd_dispatch_v_pi>
-
-Inplace dispatch function for C<< left <op=> right >>.
-
-{{**DEPRECATE**}}
-
-=cut
-
-*/
-
-PARROT_API
-void
-Parrot_mmd_dispatch_v_pi(PARROT_INTERP,
-        ARGIN(PMC *left), INTVAL right, INTVAL func_nr)
-{
-    int        is_pmc;
-    UINTVAL    left_type;
-    mmd_f_v_pi real_function;
-
-    left = Parrot_mmd_deref(interp, left);
-    Parrot_mmd_ensure_writable(interp, func_nr, left);
-
-    left_type     = VTABLE_type(interp, left);
-    real_function = (mmd_f_v_pi)get_mmd_dispatch_type(interp,
-            func_nr, left_type, enum_type_INTVAL, &is_pmc);
-
-    if (is_pmc) {
-        PMC * const sub = (PMC *)real_function;
-        Parrot_runops_fromc_args(interp, sub, "vPI", left, right);
-    }
-
-    (*real_function)(interp, left, right);
-}
-
-
-/*
-
-=item C<void mmd_dispatch_v_pn>
-
-Inplace dispatch function for C<< left <op=> right >>.
-
-{{**DEPRECATE**}}
-
-=cut
-
-*/
-
-PARROT_API
-void
-Parrot_mmd_dispatch_v_pn(PARROT_INTERP,
-        ARGIN(PMC *left), FLOATVAL right, INTVAL func_nr)
-{
-    int        is_pmc;
-    UINTVAL    left_type;
-    mmd_f_v_pn real_function;
-
-    left = Parrot_mmd_deref(interp, left);
-    Parrot_mmd_ensure_writable(interp, func_nr, left);
-
-    left_type     = VTABLE_type(interp, left);
-    real_function = (mmd_f_v_pn)get_mmd_dispatch_type(interp,
-            func_nr, left_type, enum_type_FLOATVAL, &is_pmc);
-
-    if (is_pmc) {
-        PMC * const sub = (PMC *)real_function;
-        Parrot_runops_fromc_args(interp, sub, "vPN", left, right);
-    }
-
-    (*real_function)(interp, left, right);
-}
-
-
-/*
-
-=item C<void mmd_dispatch_v_ps>
-
-Inplace dispatch function for C<< left <op=> right >>.
-
-{{**DEPRECATE**}}
-
-=cut
-
-*/
-
-PARROT_API
-void
-Parrot_mmd_dispatch_v_ps(PARROT_INTERP,
-        ARGIN(PMC *left), ARGIN(STRING *right), INTVAL func_nr)
-{
-    int        is_pmc;
-    UINTVAL    left_type;
-    mmd_f_v_ps real_function;
-
-    left = Parrot_mmd_deref(interp, left);
-    Parrot_mmd_ensure_writable(interp, func_nr, left);
-
-    left_type     = VTABLE_type(interp, left);
-    real_function = (mmd_f_v_ps)get_mmd_dispatch_type(interp,
-            func_nr, left_type, enum_type_STRING, &is_pmc);
-
-    if (is_pmc) {
-        PMC * const sub = (PMC *)real_function;
-        Parrot_runops_fromc_args(interp, sub, "vPS", left, right);
-    }
-
-    (*real_function)(interp, left, right);
-}
-
-
-/*
-
-=item C<INTVAL mmd_dispatch_i_pp>
-
-Like C<mmd_dispatch_p_ppp()>, only it returns an C<INTVAL>. This is used
-by MMD compare functions.
-
-{{**DEPRECATE**}}
-
-=cut
-
-*/
-
-PARROT_API
-INTVAL
-Parrot_mmd_dispatch_i_pp(PARROT_INTERP,
-        ARGIN(PMC *left), ARGIN(PMC *right), INTVAL func_nr)
-{
-    int        is_pmc;
-    mmd_f_i_pp real_function;
-
-    left  = Parrot_mmd_deref(interp, left);
-    right = Parrot_mmd_deref(interp, right);
-
-    real_function = (mmd_f_i_pp)Parrot_get_mmd_dispatcher(interp,
-            left, right, func_nr, &is_pmc);
-
-    if (is_pmc) {
-        PMC * const sub = (PMC *)real_function;
-        return Parrot_runops_fromc_args_reti(interp, sub, "IPP",
-                left, right);
-    }
-
-    return (*real_function)(interp, left, right);
 }
 
 
@@ -1397,6 +1047,8 @@ Parrot_mmd_vtfind(PARROT_INTERP, INTVAL func_nr, INTVAL left, INTVAL right)
 
 RT #48260: Not yet documented!!!
 
+{{**DEPRECATE**}}
+
 =cut
 
 */
@@ -1669,6 +1321,8 @@ Default implementation of MMD search. Search scopes for candidates, walk the
 class hierarchy, sort all candidates by their Manhattan distance, and return
 result
 
+{{**DEPRECATE?? **}}
+
 =cut
 
 */
@@ -1875,6 +1529,8 @@ mmd_build_type_tuple_from_long_sig(PARROT_INTERP, ARGIN(STRING *long_sig))
 =item C<static PMC* mmd_cvt_to_types>
 
 RT #48260: Not yet documented!!!
+
+{{**DEPRECATE**}}
 
 =cut
 
