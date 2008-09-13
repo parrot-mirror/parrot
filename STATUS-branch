@@ -1,0 +1,38 @@
+STATUS of the cygwin070patches branch as of 2008-09-13 23:02:13 rurban
+
+cygwin + gcc 3.4.4
+------------------
+  make smoke + fulltest + languages + install basically ok
+  (same languages failures as in trunk.)
+
+mingw + gcc 3.4.4
+-----------------
+* wrong readline detection in Configure, same as in trunk
+
+    src\pmc\parrotio.o: In function `Parrot_ParrotIO_nci_readline':
+    N:/usr/src/perl/parrot/cygwin070patches/src/pmc/parrotio.pmc:212: undefined reference to `readline'
+    N:/usr/src/perl/parrot/cygwin070patches/src/pmc/parrotio.pmc:219: undefined reference to `add_history' 
+  HAS_READLINE = 0
+  readline = define
+* wrong win32+mingw default prefix + install paths: libdir, bindir, libexecdir, includedir, infodir, 
+  mandir, docdir, htmldir, sbindir, shareddirstate, sysconfdir
+  fix prefix: "/usr/local" => "<drive>:\parrot"
+
+MSWin32 + MSVC6
+---------------
+Not tested with ActivePerl yet. 
+With a mingw perl and cc+link overrides I couldn't pass make yet.
+
+
+linux fc1 + perl 5.8.3
+----------------------
+Same blocker as in trunk: Too old Storable.
+
+/usr/bin/perl /usr/src/parrot/cygwin070patches/tools/build/pmc2c.pl --c subproxy.pmc
+Cannot restore overloading on HASH(0x81821a8) (package Parrot::Pmc2c::Emitter) at ../../lib/Storable.pm (autosplit into ../../lib/auto/Storable/_retrieve.al) line 323, at /usr/src/parrot/cygwin070patches/tools/build/dynpmc.pl line 204
+gmake[1]: *** [all] Error 255
+gmake[1]: Leaving directory `/usr/src/parrot/cygwin070patches/src/dynpmc'
+
+freebsd 7 + gcc 4.2.1:
+  make smoke + fulltest + languages basically ok
+
