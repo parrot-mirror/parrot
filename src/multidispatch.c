@@ -128,21 +128,11 @@ static void mmd_expand_x(PARROT_INTERP, INTVAL func_nr, INTVAL new_x)
 static void mmd_expand_y(PARROT_INTERP, INTVAL func_nr, INTVAL new_y)
         __attribute__nonnull__(1);
 
-PARROT_CANNOT_RETURN_NULL
-PARROT_WARN_UNUSED_RESULT
-static PMC* mmd_get_ns(PARROT_INTERP)
-        __attribute__nonnull__(1);
-
 PARROT_WARN_UNUSED_RESULT
 static int mmd_is_hidden(PARROT_INTERP, ARGIN(PMC *multi), ARGIN(PMC *cl))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3);
-
-PARROT_CANNOT_RETURN_NULL
-PARROT_WARN_UNUSED_RESULT
-static PMC* mmd_make_ns(PARROT_INTERP)
-        __attribute__nonnull__(1);
 
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
@@ -198,16 +188,16 @@ static PMC* Parrot_mmd_search_default(PARROT_INTERP,
         __attribute__nonnull__(2)
         __attribute__nonnull__(3);
 
-static void Parrot_mmd_search_global(PARROT_INTERP,
-    ARGIN(STRING *meth),
-    ARGIN(PMC *cl))
+static void mmd_search_global(PARROT_INTERP,
+    ARGIN(STRING *name),
+    ARGIN(PMC *candidates))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3);
 
-static int Parrot_mmd_search_local(PARROT_INTERP,
-    ARGIN(STRING *meth),
-    ARGIN(PMC *cl))
+static int mmd_search_local(PARROT_INTERP,
+    ARGIN(STRING *name),
+    ARGIN(PMC *candidates))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3);
@@ -395,16 +385,13 @@ PARROT_CANNOT_RETURN_NULL
 PMC*
 Parrot_mmd_find_multi_from_sig_obj(PARROT_INTERP, ARGIN(STRING *name), ARGIN(PMC *invoke_sig))
 {
-    PMC *candidate_list;
-    PMC * const namespace = Parrot_make_namespace_keyed_str(
-            interp, interp->root_namespace,
-            CONST_STRING(interp, "MULTI"));
-    PMC *multi_sub = Parrot_get_global(interp, namespace, name);
+    PMC *candidate_list = pmc_new(interp, enum_class_ResizablePMCArray);
+/*    const INTVAL stop_search = mmd_search_local(interp, name, candidate_list);
 
-    if (PMC_IS_NULL(multi_sub))
-        return PMCNULL;
+    if (!stop_search) */
+        mmd_search_global(interp, name, candidate_list);
 
-    candidate_list = Parrot_mmd_sort_manhattan_by_sig_pmc(interp, multi_sub, invoke_sig);
+    candidate_list = Parrot_mmd_sort_manhattan_by_sig_pmc(interp, candidate_list, invoke_sig);
 
     if (PMC_IS_NULL(candidate_list))
         return PMCNULL;
@@ -1722,10 +1709,10 @@ Parrot_mmd_search_scopes(PARROT_INTERP, ARGIN(STRING *meth))
 {
     PMC * const candidates = pmc_new(interp, enum_class_ResizablePMCArray);
 
-    const int stop         = Parrot_mmd_search_local(interp, meth, candidates);
+    const int stop         = mmd_search_local(interp, meth, candidates);
 
     if (!stop)
-        Parrot_mmd_search_global(interp, meth, candidates);
+        mmd_search_global(interp, meth, candidates);
 
     return candidates;
 }
@@ -1819,57 +1806,11 @@ TRUE if the MMD search should stop.
 */
 
 static int
-Parrot_mmd_search_local(PARROT_INTERP, ARGIN(STRING *meth), ARGIN(PMC *cl))
+mmd_search_local(PARROT_INTERP, ARGIN(STRING *name), ARGIN(PMC *candidates))
 {
-    PMC * const pmc = Parrot_find_global_cur(interp, meth);
+    PMC * const multi_sub = Parrot_find_global_cur(interp, name);
 
-    return pmc && Parrot_mmd_maybe_candidate(interp, pmc, cl);
-}
-
-
-/*
-
-=item C<static PMC* mmd_get_ns>
-
-RT #48260: Not yet documented!!!
-
-{{**DEPRECATE**}}
-
-=cut
-
-*/
-
-PARROT_CANNOT_RETURN_NULL
-PARROT_WARN_UNUSED_RESULT
-static PMC*
-mmd_get_ns(PARROT_INTERP)
-{
-    STRING * const ns_name = CONST_STRING(interp, "__parrot_core");
-    return Parrot_get_namespace_keyed_str(interp, interp->root_namespace,
-                                          ns_name);
-}
-
-
-/*
-
-=item C<static PMC* mmd_make_ns>
-
-RT #48260: Not yet documented!!!
-
-{{**DEPRECATE**}}
-
-=cut
-
-*/
-
-PARROT_CANNOT_RETURN_NULL
-PARROT_WARN_UNUSED_RESULT
-static PMC*
-mmd_make_ns(PARROT_INTERP)
-{
-    STRING * const ns_name = CONST_STRING(interp, "__parrot_core");
-    return Parrot_make_namespace_keyed_str(interp, interp->root_namespace,
-                                           ns_name);
+    return multi_sub && Parrot_mmd_maybe_candidate(interp, multi_sub, candidates);
 }
 
 
@@ -1877,21 +1818,24 @@ mmd_make_ns(PARROT_INTERP)
 
 =item C<static void mmd_search_global>
 
-Search the builtin namespace for matching candidates. This is the last
-search in all the namespaces.
+Search the builtin namespace for matching candidates.
 
 =cut
 
 */
 
 static void
-Parrot_mmd_search_global(PARROT_INTERP, ARGIN(STRING *meth), ARGIN(PMC *cl))
+mmd_search_global(PARROT_INTERP, ARGIN(STRING *name), ARGIN(PMC *cl))
 {
-    PMC * const ns  = mmd_get_ns(interp);
-    PMC * const pmc = Parrot_find_global_n(interp, ns, meth);
+    PMC *multi_sub;
+    PMC * const namespace = Parrot_get_namespace_keyed_str(
+            interp, interp->root_namespace,
+            CONST_STRING(interp, "MULTI"));
 
-    if (pmc)
-        Parrot_mmd_maybe_candidate(interp, pmc, cl);
+    multi_sub = Parrot_get_global(interp, namespace, name);
+
+    if (multi_sub)
+        Parrot_mmd_maybe_candidate(interp, multi_sub, cl);
 }
 
 
@@ -2179,10 +2123,6 @@ Parrot_mmd_add_multi_list_from_c_args(PARROT_INTERP,
         ARGIN(const multi_func_list *mmd_info), INTVAL elements)
 {
     INTVAL i;
-    PMC * const namespace = Parrot_make_namespace_keyed_str(
-            interp, interp->root_namespace,
-            CONST_STRING(interp, "MULTI"));
-
     for (i = 0; i < elements; ++i) {
 #ifdef PARROT_HAS_ALIGNED_FUNCPTR
         PARROT_ASSERT((PTR2UINTVAL(mmd_info[i].func_ptr) & 3) == 0);
@@ -2212,8 +2152,10 @@ void
 Parrot_mmd_register_table(PARROT_INTERP, INTVAL type,
         ARGIN(const MMD_init *mmd_table), INTVAL n)
 {
-    MMD_table * const table = interp->binop_mmd_funcs;
-    PMC       * const ns    = mmd_make_ns(interp);
+    MMD_table * const table   = interp->binop_mmd_funcs;
+    STRING    * const ns_name = CONST_STRING(interp, "__parrot_core");
+    PMC       * const ns      = Parrot_make_namespace_keyed_str(interp,
+                                      interp->root_namespace, ns_name);
     INTVAL            i;
 
     if ((INTVAL)table->x < type && type < enum_class_core_max) {
