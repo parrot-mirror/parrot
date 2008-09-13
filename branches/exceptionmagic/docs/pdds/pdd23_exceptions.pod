@@ -64,17 +64,11 @@ replacing the stack with that execution context of the invocable pmc.
 Pop the most recently pushed exception handler off the exception handler
 stack.
 
-=item B<throw I<EXCEPTION>>
-
-Throw an exception consisting of the given I<EXCEPTION> PMC.  Active exception
-handlers (if any) will be invoked with I<EXCEPTION> as the only parameter.
-
-
 =item B<throw I<EXCEPTION> [ , I<CONTINUATION> ]>
 
-Throw an exception consisting of the given I<EXCEPTION> PMC after taking
-a continuation at the next opcode.  When a I<CONTINUATION> is passed in,
-it will use that instead. Active exception handlers (if any) will be
+Throw the given I<EXCEPTION> PMC to the active exception handlers.
+If a I<CONTINUATION> is not passed in, throw will take a new one at
+the next opcode.  Active exception handlers (if any) will be
 invoked with I<EXCEPTION> and the given continuation as parameters.
 
 Any type of PMC can be thrown as an exception.  However, if there's any chance
@@ -87,7 +81,7 @@ private sandbox should meet the minimal interface requirements of the
 C<parrot;exception> class, described below.
 
 Exception handlers can resume execution immediately after the C<throw> opcode
-by invoking the resume continuation which is stored in the exception object.
+by invoking the resume continuation which is passed in as the second argument.
 That continuation must be invoked with no parameters; in other words, C<throw>
 never returns a value.
 
