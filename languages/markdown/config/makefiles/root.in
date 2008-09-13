@@ -21,8 +21,8 @@ RM_F          = @rm_f@
 CP            = @cp@
 MKPATH        = @mkpath@
 POD2MAN       = pod2man
-#IF(cygwin):SHRPENV     = env PATH="@build_dir@/blib/lib:$(PATH)"
-#ELSIF(not win32):SHRPENV     = env LD_RUN_PATH="@build_dir@/blib/lib"
+#IF(cygwin):SHRPENV       = env PATH="@build_dir@/blib/lib:$(PATH)"
+#ELSIF(parrot_is_shared and not win32):SHRPENV       = env LD_RUN_PATH="@build_dir@/blib/lib"
 PARROT        = $(SHRPENV) ../../parrot@exe@
 PBC_TO_EXE    = $(SHRPENV) ../../pbc_to_exe@exe@
 CAT           = $(PERL) -MExtUtils::Command -e cat
@@ -67,6 +67,9 @@ src/gen_actions.pir: $(NQP) $(PCT) src/parser/actions.pm
 installable : installable_$(HLLNAME)@exe@ $(HLLNAME).pbc
 	$(CP) installable_$(HLLNAME)@exe@ $(BUILD_DIR)
 	$(CP) $(HLLNAME).pbc $(PARROT_LIB)/$(HLLNAME).pbc
+
+$(HLLNAME)@exe@: $(HLLNAME).pbc
+	$(PBC_TO_EXE) $(HLLNAME).pbc
 
 installable_$(HLLNAME)@exe@: $(HLLNAME).pbc
 	$(PBC_TO_EXE) $(HLLNAME).pbc --install

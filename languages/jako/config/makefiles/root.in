@@ -20,7 +20,7 @@ MKPATH        = @mkpath@
 POD2MAN       = pod2man
 JAKOC         = $(PERL) -I lib jakoc
 #IF(cygwin):SHRPENV     = env PATH="@build_dir@/blib/lib:$(PATH)"
-#ELSIF(not win32):SHRPENV     = env LD_RUN_PATH="@build_dir@/blib/lib"
+#ELSIF(parrot_is_shared and not win32):SHRPENV     = env LD_RUN_PATH="@build_dir@/blib/lib"
 INTERP        = $(SHRPENV) ../../@test_prog@
 PBC_TO_EXE    = $(SHRPENV) ../../pbc_to_exe@exe@
 RECONFIGURE   = $(PERL) @build_dir@/tools/dev/reconfigure.pl
