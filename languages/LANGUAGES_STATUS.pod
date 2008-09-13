@@ -483,8 +483,8 @@ Translates Java JVM .class and .jar files to PIR.
 
 =item Status
 
+Early stage.
 Only about 20% of the bytecodes are defined, the pmc's do not work yet. 
-This just began with 0.7.0
 
 =item Last verified with parrot version
 
@@ -662,6 +662,32 @@ Development is stalled. Takers are welcome.  Some tests fail.
 =item Location
 
 C<languages/m4>
+
+=back
+
+=head2 Markdown
+
+=over 4
+
+=item Description
+
+Port of Markdown, see L<http://daringfireball.net/projects/markdown/>.
+
+=item Status
+
+Early stage.
+
+Based on PCT/NQP/PGE.
+
+Part of languages smoke testing.
+
+=item Last verified with parrot version
+
+0.7.0
+
+=item Location
+
+C<languages/markdown>
 
 =back
 
