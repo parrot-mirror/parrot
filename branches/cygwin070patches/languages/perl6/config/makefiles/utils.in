@@ -22,7 +22,7 @@ MKPATH        = @mkpath@
 POD2MAN       = pod2man
 MAKE          = @make_c@
 #IF(cygwin):SHRPENV     = env PATH="@build_dir@/blib/lib:$(PATH)"
-#ELSIF(not win32):SHRPENV     = env LD_RUN_PATH="@build_dir@/blib/lib"
+#ELSIF(parrot_is_shared and not win32):SHRPENV     = env LD_RUN_PATH="@build_dir@/blib/lib"
 PARROT        = $(SHRPENV) $(BUILD_DIR)/parrot@exe@
 PBC_TO_EXE    = $(SHRPENV) $(BUILD_DIR)/pbc_to_exe@exe@
 CAT           = $(PERL) -MExtUtils::Command -e cat
