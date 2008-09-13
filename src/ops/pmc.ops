@@ -623,6 +623,9 @@ $2 and $3.
 =cut
 
 inline op add_multi(in INT, in INT, in INT, invar PMC) {
+  /* {{**DEPRECATE**}} */
+  Parrot_ex_throw_from_c_args(interp, expr NEXT(), EXCEPTION_INVALID_OPERATION,
+      "Must add multi by function and type name, not number");
 }
 
 inline op add_multi(in STR, in STR, invar PMC) {
@@ -636,7 +639,9 @@ Find the sub that would be called for vtable entry $2 for types $3 and $4.
 =cut
 
 inline op find_multi(out PMC, in INT, in INT, in INT) {
-  /*$1 = Parrot_mmd_vtfind(interp, $2, $3); */
+  /* {{**DEPRECATE**}} */
+  Parrot_ex_throw_from_c_args(interp, expr NEXT(), EXCEPTION_INVALID_OPERATION,
+      "Must find multi by function and type name, not number");
 }
 
 inline op find_multi(out PMC, in STR, in STR) {
