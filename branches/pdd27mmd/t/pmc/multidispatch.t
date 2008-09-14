@@ -779,7 +779,7 @@ Any    42
 Any    43
 OUT
 
-pir_output_is( <<'CODE', <<'OUTPUT', "__add as function - Int, Float" );
+pir_output_is( <<'CODE', <<'OUTPUT', "add as function - Int, Float" );
 .sub main :main
     .local pmc d, l, r, a
     d = new 'Integer'
@@ -914,15 +914,16 @@ pir_output_is( <<'CODE', <<'OUTPUT', "Integer subclasses, add" );
     print "\n"
 .end
 .namespace ["AInt"]
-.sub __add :multi(AInt, Integer)
+.sub add :multi(AInt, Integer, PMC)
     .param pmc l
     .param pmc r
+    .param pmc d
     print l
     print r
     print "\n"
-    $P0 = new 'Integer'
-    $P0 = 2
-    .return($P0)
+    d = new 'Integer'
+    d = 2
+    .return(d)
 .end
 CODE
 62
