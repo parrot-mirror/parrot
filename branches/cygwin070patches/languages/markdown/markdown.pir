@@ -1,11 +1,32 @@
 # Copyright (C) 2008, The Perl Foundation.
-# $Id: markdown.pir 31072 2008-09-13 16:30:57Z fperrad $
+# $Id: markdown.pir 31106 2008-09-14 10:14:20Z fperrad $
 
 =head1 TITLE
 
 markdown.pir - A Markdown compiler.
 
-=head2 Description
+=head1 SYNOPSIS
+
+as a command line (without interactive mode) :
+
+    $ parrot markdown.pbc document.text
+    $ parrot markdown.pbc --target=parse document.text
+                                   PAST
+                                   HTML
+
+or as a library :
+
+     load_bytecode 'Markdown.pbc'
+     $P0 = compreg 'Markdown'
+     $S0 = <<'MARKDOWN'
+ Title
+ =====
+ Some text.
+ MARKDOWN
+     $P1 = $P0.'compile'($S0)
+     print $P1
+
+=head1 DESCRIPTION
 
 This is the base file for the Markdown compiler.
 
@@ -44,7 +65,7 @@ object.
 
 =item html(source [, adverbs :slurpy :named])
 
-Transform PAST C<source> into a String containing HTML.
+Transform MAST C<source> into a String containing HTML.
 
 =cut
 
@@ -82,6 +103,7 @@ to the Markdown compiler.
 
 .include 'src/gen_grammar.pir'
 .include 'src/gen_actions.pir'
+.include 'src/gen_builtins.pir'
 .include 'src/Compiler.pir'
 .include 'src/Node.pir'
 
