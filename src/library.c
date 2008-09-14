@@ -454,7 +454,7 @@ path_concat(PARROT_INTERP, ARGMOD(STRING *l_path), ARGMOD(STRING *r_path))
     return join;
 }
 
-#define LOAD_EXT_CODE_LAST 3
+#define LOAD_EXT_CODE_LAST 2
 
 static const char* load_ext_code[ LOAD_EXT_CODE_LAST + 1 ] = {
     ".pbc",
@@ -462,7 +462,6 @@ static const char* load_ext_code[ LOAD_EXT_CODE_LAST + 1 ] = {
     /* source level files */
 
     ".pasm",
-    ".past",
     ".pir",
 };
 
@@ -502,7 +501,7 @@ try_load_path(PARROT_INTERP, ARGMOD(STRING* path))
 
 guess extensions, so that the user can drop the extensions
 leaving it up to the build process/install whether or not
-a .pbc, .pasm, .past or a .pir file is used.
+a .pbc, .pasm or a .pir file is used.
 
 =cut
 

@@ -421,6 +421,15 @@ method statement_prefix($/) {
         my $elsepir  := "    new %r, 'Failure'\n    store_lex '$!', %r";
         $past.push( PAST::Op.new( :inline( $elsepir ) ) );
     }
+    elsif $sym eq 'gather' {
+        if $past.isa(PAST::Block) {
+            $past.blocktype('declaration');
+        }
+        else {
+            $past := PAST::Block.new(:blocktype('declaration'), $past)
+        }
+        $past := PAST::Op.new( $past, :pasttype('call'), :name('gather'), :node($/) );
+    }
     else {
         $/.panic( $sym ~ ' not implemented');
     }
@@ -438,64 +447,24 @@ method multi_declarator($/, $key) {
 
     # If it was multi, then emit a :multi and a type list.
     if $<sym> eq 'multi' {
-        our $?PARAM_TYPE_CHECK;
-        my @check_list;
-        if $?PARAM_TYPE_CHECK {
-            @check_list := @($?PARAM_TYPE_CHECK);
-            $?PARAM_TYPE_CHECK := 0;
-        }
+        # For now, if this is a multi we need to add code to transform the sub's
+        # multi container to a Perl6MultiSub.
+        $past.loadinit().push(
+            PAST::Op.new(
+                :pasttype('call'),
+                :name('!TOPERL6MULTISUB'),
+                PAST::Var.new(
+                    :name('block'),
+                    :scope('register')
+                )
+            )
+        );
 
-        # Go over the parameters and build multi-sig.
-        my $pirflags := ~ $past.pirflags();
-        $pirflags := $pirflags ~ ' :multi(';
-        my $arity := +@check_list;
-        my $count := 0;
-        if $<routine_declarator><sym> eq 'method' {
-            # For methods, need to have a slot in the multi list for the
-            # invocant. XXX could be a type constraint in the sig on self.
-            $pirflags := $pirflags ~ '_';
-            if $arity {
-                $pirflags := $pirflags ~ ', ';
-            }
-        }
-        while $count != $arity {
-            # How many types do we have?
-            my $checks := @check_list[$count];
-            my $num_checks := +@($checks);
-            if $num_checks == 0 {
-                # XXX Should be Any, once type hierarchy is fixed up.
-                $pirflags := $pirflags ~ '_';
-            }
-            elsif $num_checks == 1 {
-                # At the moment, can only handle a named check.
-                my $check_code := $checks[0];
-                if $check_code.WHAT() eq 'Op'
-                        && $check_code[0].WHAT() eq 'Var' {
-                    $pirflags := $pirflags
-                        ~ '\'' ~ $check_code[0].name() ~ '\'';
-                }
-                else {
-                    $/.panic(
-                        'Can only use type names in a multi,'
-                        ~ ' not anonymous constraints.'
-                    );
-                }
-            }
-            else {
-                $/.panic(
-                    'Cannot have more than one type constraint'
-                    ~ ' on a parameter in a multi yet.'
-                );
-            }
-
-            # Comma separator if needed.
-            $count := $count + 1;
-            if $count != $arity {
-                $pirflags := $pirflags ~ ', ';
-            }
-        }
-        $pirflags := $pirflags ~ ')';
-        $past.pirflags($pirflags);
+        # Flag the sub as multi, but it will get the signature from the
+        # signature object, so don't worry about that here.
+        my $pirflags := $past.pirflags();
+        unless $pirflags { $pirflags := '' }
+        $past.pirflags($pirflags  ~ ' :multi()');
     }
     make $past;
 }
@@ -536,6 +505,9 @@ method routine_declarator($/, $key) {
         set_block_proto($past, 'Method');
         if $<method_def><multisig> {
             set_block_sig($past, $( $<method_def><multisig>[0]<signature> ));
+        }
+        else {
+            set_block_sig($past, empty_signature());
         }
         $past := add_method_to_class($past);
     }
@@ -3049,7 +3021,10 @@ sub create_sub($/, $past) {
     $past.blocktype('declaration');
     set_block_proto($past, 'Sub');
     if $<routine_def><multisig> {
-        #set_block_sig($past, $( $<routine_def><multisig>[0]<signature> ));
+        set_block_sig($past, $( $<routine_def><multisig>[0]<signature> ));
+    }
+    else {
+        set_block_sig($past, empty_signature());
     }
 }
 
@@ -3077,6 +3052,20 @@ sub set_block_sig($block, $sig_obj) {
             $sig_obj
         )
     );
+}
+
+
+# Create an empty signautre object for subs with no signatures.
+sub empty_signature() {
+    PAST::Op.new(
+        :pasttype('callmethod'),
+        :name('!create'),
+        PAST::Var.new(
+            :name('Signature'),
+            :scope('package'),
+            :namespace(list())
+        )
+    )
 }
 
 
