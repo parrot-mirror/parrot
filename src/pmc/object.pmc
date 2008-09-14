@@ -403,6 +403,31 @@ Get the class PMC representing the class that this object is an instance of.
 
 /*
 
+=item C<PMC *get_namespace()>
+
+Get the namespace PMC associated with the class that this object is an instance of.
+
+=cut
+
+*/
+
+    VTABLE PMC *get_namespace() {
+        PMC    * const classobj = VTABLE_get_class(interp, SELF);
+        STRING *get_namespace   = CONST_STRING(interp, "get_namespace");
+        /* If there's a vtable override for 'get_namespace' run that instead. */
+        PMC * const method = Parrot_oo_find_vtable_override(interp,
+                classobj, get_namespace);
+
+        if (!PMC_IS_NULL(method))
+            return (PMC *)Parrot_run_meth_fromc_args(interp, method, SELF,
+                    get_namespace, "P");
+        else
+            return VTABLE_inspect_str(interp, classobj, CONST_STRING(interp, "namespace"));
+
+    }
+
+/*
+
 =item C<INTVAL can(STRING *method_name)>
 
 Returns 0 if the class does not have a method with the given name and a
