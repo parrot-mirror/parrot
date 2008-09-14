@@ -1,5 +1,5 @@
 # Copyright (C) 2008, The Perl Foundation.
-# $Id: Compiler.pir 31103 2008-09-14 08:10:56Z fperrad $
+# $Id$
 
 =head1 NAME
 

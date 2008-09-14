@@ -1,5 +1,5 @@
 # Copyright (C) 2008, The Perl Foundation.
-# $Id: markdown.pir 31106 2008-09-14 10:14:20Z fperrad $
+# $Id$
 
 =head1 TITLE
 
