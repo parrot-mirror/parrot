@@ -136,7 +136,7 @@ ok($out =~ /Rakudo/, "check rakudo");
 
 $filename = 'test.pg';
 open $FH, '>', $filename
-        or die "Can't open $filename ($!).\n";
+  or die "Can't open $filename ($!).\n";
 print $FH "token TOP { \\s* }\n";
 close $FH;
 $out = `$parrot $libdir/parrot/library/PGE/Perl6Grammar.pir $filename`;
@@ -146,7 +146,7 @@ unlink($filename);
 # compilers/tge is typically not installed
 $filename = 'test.tg';
 open $FH, '>', $filename
-        or die "Can't open $filename ($!).\n";
+  or die "Can't open $filename ($!).\n";
 print $FH "transform past (ROOT) { }\n";
 close $FH;
 $out = `$parrot compilers/tge/tgc.pir $filename`;
@@ -156,7 +156,7 @@ unlink($filename);
 # compilers/nqp is typically not installed
 $filename = 'test.nqp';
 open $FH, '>', $filename
-        or die "Can't open $filename ($!).\n";
+  or die "Can't open $filename ($!).\n";
 print $FH "say('hello world!');\n";
 close $FH;
 $out = `$parrot compilers/nqp/nqp.pbc $filename`;
@@ -164,12 +164,13 @@ ok($out eq "hello world!\n", "check nqp");
 unlink($filename);
 
 #
-# some languages
-#
+# Some languages.
+# Now we just need to know where the HLL pbc's are installed.
+# See L<pdd30_install.pod>
 
 $filename = 'test.bc';
 open $FH, '>', $filename
-        or die "Can't open $filename ($!).\n";
+  or die "Can't open $filename ($!).\n";
 print $FH "1 + 2\n";
 close $FH;
 $out = `$parrot languages/abc/abc.pbc $filename`;
@@ -178,7 +179,7 @@ unlink($filename);
 
 $filename = 'test.apl';
 open $FH, '>', $filename
-        or die "Can't open $filename ($!).\n";
+  or die "Can't open $filename ($!).\n";
 print $FH "\"Hello world!\"";
 close $FH;
 $out = `$parrot languages/APL/APL.pbc $filename`;
@@ -200,7 +201,7 @@ ok($out =~ /^Usage/, "check dotnet");
 
 $filename = 'test.js';
 open $FH, '>', $filename
-        or die "Can't open $filename ($!).\n";
+  or die "Can't open $filename ($!).\n";
 print $FH "print(\"Hello World from JS\\n\");";
 close $FH;
 $out = `$parrot languages/ecmascript/js.pbc $filename`;
@@ -209,7 +210,7 @@ unlink($filename);
 
 $filename = 'test.HQ9Plus';
 open $FH, '>', $filename
-        or die "Can't open $filename ($!).\n";
+  or die "Can't open $filename ($!).\n";
 print $FH "H";
 close $FH;
 $out = `$parrot languages/hq9plus/hq9plus.pbc $filename`;
@@ -218,7 +219,7 @@ unlink($filename);
 
 $filename = 'test.l';
 open $FH, '>', $filename
-        or die "Can't open $filename ($!).\n";
+  or die "Can't open $filename ($!).\n";
 print $FH "( print \"Hello, World!\" )\n";
 close $FH;
 $out = `$parrot languages/lisp/lisp.pbc $filename`;
@@ -227,7 +228,7 @@ unlink($filename);
 
 $filename = 'test.lolcode';
 open $FH, '>', $filename
-        or die "Can't open $filename ($!).\n";
+  or die "Can't open $filename ($!).\n";
 print $FH <<'LOLCODE';
 HAI 1.2
     VISIBLE "HAI WORLD!"
@@ -246,7 +247,7 @@ ok($out =~ /^Usage/, "check m4");
 
 $filename = 'test.text';
 open $FH, '>', $filename
-        or die "Can't open $filename ($!).\n";
+  or die "Can't open $filename ($!).\n";
 print $FH "Hello, World!\n";
 close $FH;
 $out = `$parrot languages/markdown/markdown.pbc $filename`;
@@ -261,7 +262,7 @@ ok($out eq "hello world\n", "check rakudo");
 
 $filename = 'test.l';
 open $FH, '>', $filename
-        or die "Can't open $filename ($!).\n";
+  or die "Can't open $filename ($!).\n";
 print $FH "( write \"Hello, World!\\n\" )\n";
 close $FH;
 $out = `$parrot languages/pheme/pheme.pbc $filename`;
@@ -270,7 +271,7 @@ unlink($filename);
 
 $filename = 'test.php';
 open $FH, '>', $filename
-        or die "Can't open $filename ($!).\n";
+  or die "Can't open $filename ($!).\n";
 print $FH "<?php echo \"Hello, World!\\n\"; ?>";
 close $FH;
 $out = `$parrot languages/pipp/pipp.pbc $filename`;
@@ -279,7 +280,7 @@ unlink($filename);
 
 $filename = 'test.p1';
 open $FH, '>', $filename
-        or die "Can't open $filename ($!).\n";
+  or die "Can't open $filename ($!).\n";
 print $FH "print \"Hello, World!\\n\";\n";
 close $FH;
 $out = `$parrot languages/punie/punie.pbc $filename`;
@@ -288,7 +289,7 @@ unlink($filename);
 
 $filename = 'test.py';
 open $FH, '>', $filename
-        or die "Can't open $filename ($!).\n";
+  or die "Can't open $filename ($!).\n";
 print $FH "print 'Hello, World!'\n";
 close $FH;
 $out = `$parrot languages/pynie/pynie.pbc $filename`;
@@ -297,7 +298,7 @@ unlink($filename);
 
 $filename = 'test.squaak';
 open $FH, '>', $filename
-        or die "Can't open $filename ($!).\n";
+  or die "Can't open $filename ($!).\n";
 print $FH "print(\"Hello, World!\")\n";
 close $FH;
 $out = `$parrot languages/squaak/squaak.pbc $filename`;
@@ -309,7 +310,7 @@ TODO: {
 
 $filename = 'test.tcl';
 open $FH, '>', $filename
-        or die "Can't open $filename ($!).\n";
+  or die "Can't open $filename ($!).\n";
 print $FH "puts {hello world!}\n";
 close $FH;
 $out = `$parrot languages/tcl/tcl.pbc $filename`;
@@ -323,4 +324,3 @@ unlink($filename);
 #   fill-column: 100
 # End:
 # vim: expandtab shiftwidth=4:
-
