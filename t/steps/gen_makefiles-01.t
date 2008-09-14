@@ -99,7 +99,7 @@ my $args = process_options(
 my $conf = Parrot::Configure->new;
 my $pkg = q{gen::makefiles};
 $conf->add_steps($pkg);
-$conf->options->set( %{$args} );
+$conf->options->set( @{$args} );
 my $step = test_step_constructor_and_description($conf);
 my $missing_SOURCE = 0;
 my %makefiles = %{ $step->{makefiles} };
