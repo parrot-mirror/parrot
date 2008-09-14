@@ -254,14 +254,6 @@ void Parrot_mmd_register_sub(PARROT_INTERP,
         __attribute__nonnull__(5);
 
 PARROT_API
-void Parrot_mmd_register_table(PARROT_INTERP,
-    INTVAL type,
-    ARGIN(const MMD_init *mmd_table),
-    INTVAL n)
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(3);
-
-PARROT_API
 PARROT_CANNOT_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
 PMC * Parrot_MMD_search_default_infix(PARROT_INTERP,
@@ -287,21 +279,6 @@ PMC * Parrot_mmd_sort_manhattan_by_sig_pmc(PARROT_INTERP,
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3);
-
-PARROT_API
-PARROT_CANNOT_RETURN_NULL
-PARROT_WARN_UNUSED_RESULT
-PMC * Parrot_mmd_vtfind(PARROT_INTERP,
-    INTVAL func_nr,
-    INTVAL left,
-    INTVAL right)
-        __attribute__nonnull__(1);
-
-void mmd_create_builtin_multi_stub(PARROT_INTERP,
-    ARGIN(PMC *ns),
-    INTVAL func_nr)
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(2);
 
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 /* HEADERIZER END: src/multidispatch.c */
