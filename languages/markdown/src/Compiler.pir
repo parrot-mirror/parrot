@@ -1,5 +1,5 @@
 # Copyright (C) 2008, The Perl Foundation.
-# $Id: Compiler.pir 31072 2008-09-13 16:30:57Z fperrad $
+# $Id: Compiler.pir 31103 2008-09-14 08:10:56Z fperrad $
 
 =head1 NAME
 
@@ -8,6 +8,10 @@ Markdown::HTML::Compiler - MAST Compiler
 =head1 DESCRIPTION
 
 Markdown::HTML::Compiler implements a compiler for MAST nodes.
+
+=head1 METHODS
+
+=over
 
 =cut
 
@@ -75,8 +79,6 @@ Return generated HTML for all of its children.
     .param pmc node
     $S1 = node.'text'()
     $S2 = node.'level'()
-    $I2 = length $S2
-    $S2 = $I2
     .local pmc code
     new code, 'CodeString'
     $S0 = "<h"
@@ -106,7 +108,6 @@ Return generated HTML for all of its children.
     set code, $S0
     .return (code)
 .end
-
 
 =back
 
