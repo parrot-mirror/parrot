@@ -1,5 +1,5 @@
 # Copyright (C) 2008, The Perl Foundation.
-# $Id: root.in 31103 2008-09-14 08:10:56Z fperrad $
+# $Id$
 
 ## arguments we want to run parrot with
 PARROT_ARGS =

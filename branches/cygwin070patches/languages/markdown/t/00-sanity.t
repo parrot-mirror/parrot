@@ -1,6 +1,6 @@
 #! perl
 # Copyright (C) 2008, The Perl Foundation.
-# $Id: 00-sanity.t 31074 2008-09-13 17:09:46Z fperrad $
+# $Id$
 
 =head1 NAME
 
