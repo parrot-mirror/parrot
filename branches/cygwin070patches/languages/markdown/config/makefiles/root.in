@@ -113,6 +113,15 @@ help:
 test: all
 	cd .. && $(PERL) t/harness --languages=markdown
 
+spectest: all t/MarkdownTest_1.0
+	cd .. && $(PERL) t/harness --languages=markdown
+
+t/MarkdownTest_1.0.zip:
+	cd t && perl -MLWP::Simple -e "getstore(q{http:////daringfireball.net//projects//downloads//MarkdownTest_1.0.zip}, q{MarkdownTest_1.0.zip});"
+
+t/MarkdownTest_1.0: t/MarkdownTest_1.0.zip
+	cd t && perl -MArchive::Zip -e "Archive::Zip->new(q{MarkdownTest_1.0.zip})->extractTree();"
+
 # TODO: rename build_dir. basic run for missing libs
 test-installable : installable
 	echo "2-1" | ./installable_$(HLLNAME)@exe@

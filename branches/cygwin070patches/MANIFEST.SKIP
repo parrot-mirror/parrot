@@ -967,6 +967,23 @@
 # generated from svn:ignore of 'languages/m4/t/regex/'
 ^languages/m4/t/regex/.*\.pir$
 ^languages/m4/t/regex/.*\.pir/
+# generated from svn:ignore of 'languages/markdown/'
+^languages/markdown/.*\.pbc$
+^languages/markdown/.*\.pbc/
+^languages/markdown/Makefile$
+^languages/markdown/Makefile/
+# generated from svn:ignore of 'languages/markdown/src/'
+^languages/markdown/src/gen_.*\.pir$
+^languages/markdown/src/gen_.*\.pir/
+# generated from svn:ignore of 'languages/markdown/t/'
+^languages/markdown/t/.*\.html$
+^languages/markdown/t/.*\.html/
+^languages/markdown/t/.*\.text$
+^languages/markdown/t/.*\.text/
+^languages/markdown/t/.*\.zip$
+^languages/markdown/t/.*\.zip/
+^languages/markdown/t/MarkdownTest_1\.0$
+^languages/markdown/t/MarkdownTest_1\.0/
 # generated from svn:ignore of 'languages/ook/'
 ^languages/ook/.*\.pbc$
 ^languages/ook/.*\.pbc/
@@ -991,6 +1008,8 @@
 ^languages/perl6/.*\.pbc/
 ^languages/perl6/Makefile$
 ^languages/perl6/Makefile/
+^languages/perl6/Test\.pir$
+^languages/perl6/Test\.pir/
 ^languages/perl6/perl6$
 ^languages/perl6/perl6/
 ^languages/perl6/perl6\.c$
