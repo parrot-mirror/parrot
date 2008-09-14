@@ -210,7 +210,7 @@ code specified with instruction is what the translator will *emit*.
 Add some pir code before the pir or instruction code.
 Multiple lines of C<pre_translate> are allowed.
 
-This migth be used for enum_fixup for branch, arithmetic/logical and compare
+This migth be used for enum_fixup for branch, arithmetic, logical and compare
 ops.
 
   pre_translate = <<PIR

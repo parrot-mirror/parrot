@@ -95,7 +95,7 @@ on the stack.
 
 In practice the push instructions would actually be instructions to load a
 local variable or argument of the current method, a field of the current
-object/class or some other global data. Instructions exist to store data on
+object, class or some other global data. Instructions exist to store data on
 the top of the stack back to these locations once computation has taken place.
 
 The stack locations as used in the above example are "untyped". In the above
@@ -343,7 +343,7 @@ is internal to the translator and simply denotes which virtual registers
 hold the operands. Note also that the "set" instruction is how Parrot spells
 "move".
 
-  STACK CODE        REGISTER CODE             STACK POINTER (BEFORE/AFTER)
+  STACK CODE        REGISTER CODE             STACK POINTER (BEFORE / AFTER)
 
   LOOP:             LOOP:                     0 / 0
   ldlocal 1         set $I0, local1           0 / 1

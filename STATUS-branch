@@ -1,4 +1,8 @@
-STATUS of the cygwin070patches branch as of 2008-09-13 23:02:13 rurban
+STATUS of the cygwin070patches branch as of 2008-09-14 10:48:36 rurban
+
+merging with trunk r31103 caused:
+ * perl6: Null PMC access in get_bool()
+ * src/string.c:2241: failed assertion '(s)->encoding' in loadlib
 
 cygwin + gcc 3.4.4
 ------------------
@@ -7,6 +11,7 @@ cygwin + gcc 3.4.4
 
 mingw + gcc 3.4.4
 -----------------
+same failures as in trunk:
 * wrong readline detection in Configure, same as in trunk
 
     src\pmc\parrotio.o: In function `Parrot_ParrotIO_nci_readline':
