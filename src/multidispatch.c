@@ -120,24 +120,28 @@ static void mmd_expand_x(PARROT_INTERP, INTVAL func_nr, INTVAL new_x)
 static void mmd_expand_y(PARROT_INTERP, INTVAL func_nr, INTVAL new_y)
         __attribute__nonnull__(1);
 
-PARROT_WARN_UNUSED_RESULT
-static int mmd_is_hidden(PARROT_INTERP, ARGIN(PMC *multi), ARGIN(PMC *cl))
+static void mmd_search_by_sig_obj(PARROT_INTERP,
+    ARGIN(STRING *name),
+    ARGIN(PMC *sig_obj),
+    ARGIN(PMC *candidates))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3)
+        __attribute__nonnull__(4);
+
+static void mmd_search_global(PARROT_INTERP,
+    ARGIN(STRING *name),
+    ARGIN(PMC *cl))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3);
 
-PARROT_WARN_UNUSED_RESULT
-PARROT_CANNOT_RETURN_NULL
-static funcptr_t Parrot_get_mmd_dispatcher(PARROT_INTERP,
-    ARGIN(PMC *left),
-    ARGIN(PMC *right),
-    INTVAL function,
-    ARGOUT(int *is_pmc))
+static int mmd_search_local(PARROT_INTERP,
+    ARGIN(STRING *name),
+    ARGIN(PMC *candidates))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
-        __attribute__nonnull__(3)
-        __attribute__nonnull__(5)
-        FUNC_MODIFIES(*is_pmc);
+        __attribute__nonnull__(3);
 
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
@@ -176,20 +180,6 @@ PARROT_WARN_UNUSED_RESULT
 static PMC* Parrot_mmd_search_default(PARROT_INTERP,
     ARGIN(STRING *meth),
     ARGIN(PMC *arg_tuple))
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(2)
-        __attribute__nonnull__(3);
-
-static void mmd_search_global(PARROT_INTERP,
-    ARGIN(STRING *name),
-    ARGIN(PMC *candidates))
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(2)
-        __attribute__nonnull__(3);
-
-static int mmd_search_local(PARROT_INTERP,
-    ARGIN(STRING *name),
-    ARGIN(PMC *candidates))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3);
@@ -378,10 +368,9 @@ PMC*
 Parrot_mmd_find_multi_from_sig_obj(PARROT_INTERP, ARGIN(STRING *name), ARGIN(PMC *invoke_sig))
 {
     PMC *candidate_list = pmc_new(interp, enum_class_ResizablePMCArray);
-/*    const INTVAL stop_search = mmd_search_local(interp, name, candidate_list);
 
-    if (!stop_search) */
-        mmd_search_global(interp, name, candidate_list);
+    mmd_search_by_sig_obj(interp, name, invoke_sig, candidate_list);
+    mmd_search_global(interp, name, candidate_list);
 
     candidate_list = Parrot_mmd_sort_manhattan_by_sig_pmc(interp, candidate_list, invoke_sig);
 
@@ -1339,7 +1328,6 @@ Parrot_mmd_search_classes(PARROT_INTERP, ARGIN(STRING *meth),
 
             if (!PMC_IS_NULL(methodobj)) {
                 /*
-                 * mmd_is_hidden would consider all previous candidates
                  * RT #45949 pass current n so that only candidates from this
                  *     mro are used?
                  */
@@ -1712,34 +1700,6 @@ Parrot_mmd_search_scopes(PARROT_INTERP, ARGIN(STRING *meth))
 
 /*
 
-=item C<static int mmd_is_hidden>
-
-Check if the given multi sub is hidden by any inner multi sub (already in
-the candidate list C<cl>.
-
-=cut
-
-*/
-
-PARROT_WARN_UNUSED_RESULT
-static int
-mmd_is_hidden(PARROT_INTERP, ARGIN(PMC *multi), ARGIN(PMC *cl))
-{
-    /*
-     * if the candidate list already has the a sub with the same
-     * signature (long name), the outer multi is hidden
-     *
-     * RT #45957
-     */
-    UNUSED(interp);
-    UNUSED(multi);
-    UNUSED(cl);
-    return 0;
-}
-
-
-/*
-
 =item C<static int mmd_maybe_candidate>
 
 If the candidate C<pmc> is a Sub PMC, push it on the candidate list and
@@ -1777,9 +1737,7 @@ Parrot_mmd_maybe_candidate(PARROT_INTERP, ARGIN(PMC *pmc), ARGIN(PMC *cl))
 
     for (i = 0; i < n; ++i) {
         PMC * const multi_sub = VTABLE_get_pmc_keyed_int(interp, pmc, i);
-
-        if (!mmd_is_hidden(interp, multi_sub, cl))
-            VTABLE_push_pmc(interp, cl, multi_sub);
+        VTABLE_push_pmc(interp, cl, multi_sub);
     }
 
     return 0;
@@ -1803,6 +1761,40 @@ mmd_search_local(PARROT_INTERP, ARGIN(STRING *name), ARGIN(PMC *candidates))
     PMC * const multi_sub = Parrot_find_global_cur(interp, name);
 
     return multi_sub && Parrot_mmd_maybe_candidate(interp, multi_sub, candidates);
+}
+
+/*
+
+=item C<static void mmd_search_by_sig_obj>
+
+Search the namespace of the first argument to the sub call for matching
+candidates.
+
+=cut
+
+*/
+
+static void
+mmd_search_by_sig_obj(PARROT_INTERP, ARGIN(STRING *name),
+        ARGIN(PMC *sig_obj), ARGIN(PMC *candidates))
+{
+    PMC *namespace, *multi_sub;
+    PMC *first_arg = VTABLE_get_pmc_keyed_int(interp, sig_obj, 0);
+
+    if (PMC_IS_NULL(first_arg))
+        return;
+
+    namespace = VTABLE_get_namespace(interp, first_arg);
+
+    if (PMC_IS_NULL(namespace))
+        return;
+
+    multi_sub = Parrot_get_global(interp, namespace, name);
+
+    if (PMC_IS_NULL(multi_sub))
+        return;
+
+    Parrot_mmd_maybe_candidate(interp, multi_sub, candidates);
 }
 
 
