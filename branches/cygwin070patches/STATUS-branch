@@ -1,7 +1,7 @@
-STATUS of the cygwin070patches branch as of 2008-09-14 10:48:36 rurban
+STATUS of the cygwin070patches branch as of 2008-09-14 15:26:14 rurban
 
 merging with trunk r31103 caused:
- * perl6: Null PMC access in get_bool()
+ * perl6: Null PMC access in get_bool() fixed with r31108.
  * src/string.c:2241: failed assertion '(s)->encoding' in loadlib
 
 cygwin + gcc 3.4.4
