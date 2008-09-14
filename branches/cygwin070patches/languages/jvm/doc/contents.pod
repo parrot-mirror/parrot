@@ -31,6 +31,8 @@ This is a list of documents relating to the Java JVM
 
 =head2 CONSTRUCT TRANSLATION DETAILS
 
+=over 4
+
 =item L<../languages/dotnet/doc/contents.pod>: dotnet details
 
 =item L<../../lib/SRM/doc/rulesfile.pod>: The rules file
@@ -38,6 +40,8 @@ This is a list of documents relating to the Java JVM
 =item L<../../lib/SRM/doc/translatorbuilder.pod>: The translator builder
 
 =item L<../../lib/SRM/doc/stacktoregister.pod>: Notes on stack to register mapping
+
+=back
 
 
 =head2 FURTHER REFERENCES

@@ -11,7 +11,7 @@ Representation translator.
 
 =item L<building.pod>: Building
 
-=item L<running.pod>: Running the EXE/DLL => PBC translator
+=item L<running.pod>: Running the EXE, DLL => PBC translator
 
 =item L<pirinterface.pod>: Loading .NET classes directly from PIR code
 
