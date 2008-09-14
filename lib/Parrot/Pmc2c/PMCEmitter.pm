@@ -560,9 +560,6 @@ sub init_func {
     my $enum_name   = $self->is_dynamic ? -1 : "enum_class_$classname";
     my $vtable_decl = $self->vtable_decl( 'temp_base_vtable', $enum_name );
 
-    my $mmd_list = join( ",\n        ",
-        map { "{ $_->[0], $_->[1], $_->[2], (funcptr_t) $_->[3] }" } @$mmds );
-
     my $multi_funcs = $self->find_multi_functions();
     my $multi_list = join( ",\n        ",
         map { '{ CONST_STRING(interp, "'. $_->[0] .  '"), ' . "\n          " .
@@ -605,15 +602,6 @@ EOC
    $const multi_func_list _temp_multi_func_list[] = {
         $multi_list
     };
-EOC
-    }
-    if ( @$mmds ) {
-        $cout .= <<"EOC";
-
-   $const MMD_init _temp_mmd_init[] = {
-        $mmd_list
-    };
-    /* Dynamic PMCs need the runtime type which is passed in entry to class_init. */
 EOC
     }
 
@@ -808,13 +796,6 @@ EOC
 EOC
     }
 
-    if ( @$mmds ) {
-        $cout .= <<"EOC";
-#define N_MMD_INIT (sizeof(_temp_mmd_init)/sizeof(_temp_mmd_init[0]))
-            Parrot_mmd_register_table(interp, entry,
-                _temp_mmd_init, N_MMD_INIT);
-EOC
-    }
 
     if ( @$multi_funcs ) {
         $cout .= <<"EOC";
