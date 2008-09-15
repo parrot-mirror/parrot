@@ -1818,8 +1818,10 @@ mmd_search_global(PARROT_INTERP, ARGIN(STRING *name), ARGIN(PMC *cl))
 
     multi_sub = Parrot_get_global(interp, namespace, name);
 
-    if (multi_sub)
-        Parrot_mmd_maybe_candidate(interp, multi_sub, cl);
+    if (PMC_IS_NULL(multi_sub))
+        return;
+
+    Parrot_mmd_maybe_candidate(interp, multi_sub, cl);
 }
 
 
