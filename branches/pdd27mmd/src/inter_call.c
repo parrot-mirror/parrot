@@ -2287,6 +2287,9 @@ Parrot_pcc_invoke_sub_from_sig_object(PARROT_INTERP, ARGIN(PMC *sub_obj),
     PMC              *save_args_signature;
     PMC              *save_current_object;
 
+    /* !! Start good subroutine break (building register set for context),
+     * should be the same as PCCINVOKE. !! */
+
     /* temporary state vars for building PCC index and PCC signature arrays. */
 
     /* arg_indexes, result_indexes */
@@ -2375,7 +2378,10 @@ Parrot_pcc_invoke_sub_from_sig_object(PARROT_INTERP, ARGIN(PMC *sub_obj),
     n_regs_used[2] = 0;
     n_regs_used[3] = 0;
 
-    /* !! Good spot for subroutine refactor. !! */
+    /* !! End good subroutine break (building register set for context). !! */
+
+    /* !! Start good subroutine break (setting arguments), not the same as
+     * PCCINVOKE, but will become standard later. !! */
 
     /* second loop through signature to build all index and arg_flag
      * loop also assigns args(up to the ->) to registers */
@@ -2460,6 +2466,8 @@ Parrot_pcc_invoke_sub_from_sig_object(PARROT_INTERP, ARGIN(PMC *sub_obj),
     ctx->current_results   = result_indexes;
     ctx->results_signature = results_sig;
 
+    /* !! End good subroutine break (setting arguments). !! */
+
     /* arg_accessors assigned in loop above */
 
     interp->current_object       = PMCNULL;
@@ -2476,6 +2484,9 @@ Parrot_pcc_invoke_sub_from_sig_object(PARROT_INTERP, ARGIN(PMC *sub_obj),
         offset = dest - interp->code->base.data;
         runops(interp, offset);
     }
+
+    /* !! Start good subroutine break (setting returns), not the same as
+     * PCCINVOKE, but will become standard later. !! */
 
     /* result_accessors perform the arg accessor function,
      * assigning the corresponding registers to the result variables */
@@ -2517,6 +2528,7 @@ Parrot_pcc_invoke_sub_from_sig_object(PARROT_INTERP, ARGIN(PMC *sub_obj),
             }
         }
     }
+    /* !! End good subroutine break (setting returns). !! */
 
     PObj_live_CLEAR(args_sig);
     PObj_live_CLEAR(results_sig);
