@@ -2450,6 +2450,12 @@ Default fallback. Performs a multiple dispatch call for 'cmp'.
 
     VTABLE INTVAL cmp(PMC *value) {
         INTVAL retval;
+
+        /* Don't multidispatch if you've got two pointers to the same PMC. They
+         * are equal. */
+        if (SELF == value)
+            return 0;
+
         Parrot_mmd_multi_dispatch_from_c_args(interp,
                 "cmp", "PP->I", SELF, value, &retval);
 
