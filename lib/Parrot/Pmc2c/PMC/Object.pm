@@ -60,11 +60,7 @@ sub pre_method_gen {
 EOC
 
         # Multiply dispatched math opcodes shouldn't be invoked on a proxy object.
-        unless ($vt_method_name =~
-            m/^ (?:i_)?
-                (?:add|subtract|multiply|divide|floor_divide|modulus|pow)
-                (?:_int|_float)?
-              $/x) {
+        unless ($self->vtable_method_does_multi($vt_method_name)) {
             $method_body_text .= <<"EOC";
         if (cur_class->vtable->base_type == enum_class_PMCProxy) {
             /* Get the PMC instance and call the vtable method on that. */
