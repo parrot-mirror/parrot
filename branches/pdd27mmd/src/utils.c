@@ -853,10 +853,7 @@ static INTVAL
 COMPARE(PARROT_INTERP, void *a, void *b, PMC *cmp)
 {
     if (PMC_IS_NULL(cmp)) {
-        INTVAL result;
-        Parrot_mmd_multi_dispatch_from_c_args(interp, "cmp", "PP->I",
-            (PMC*)a, (PMC*)b, &result);
-        return result;
+        return VTABLE_cmp(interp, (PMC*)a, (PMC*)b);
     }
 
     if (cmp->vtable->base_type == enum_class_NCI) {
