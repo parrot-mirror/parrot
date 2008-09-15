@@ -935,15 +935,16 @@ OUTPUT
 
 open my $P, '>', "$temp" or die "can't write $temp";
 print $P <<'EOF';
-.sub __add :multi(Integer, Integer)
+.sub add :multi(Integer, Integer, _)
     .param pmc l
     .param pmc r
+    .param pmc d
     print l
     print r
     print "\n"
-    $P0 = new 'Integer'
-    $P0 = 2
-    .return($P0)
+    d = new 'Integer'
+    d = 2
+    .return(d)
 .end
 EOF
 close $P;
