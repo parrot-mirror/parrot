@@ -92,12 +92,7 @@ op eq(invar PMC, invar PMC, inconst LABEL) :base_core {
 }
 
 op eq(invar PMC, in INT, inconst LABEL) :base_core {
-  /*
-   * Promote integer to a PMC, for vtable dispatch.
-   */
-  PMC *temp = pmc_new(interp, enum_class_Integer);
-  VTABLE_set_integer_native(interp, temp, $2);
-  if (VTABLE_is_equal(interp, $1, temp)) {
+  if (VTABLE_get_integer(interp, $1) == $2) {
     goto OFFSET($3);
   }
 }
