@@ -1,13 +1,24 @@
-# check compare ops
-puts '1..9';
+require 'test'
+plan 12
 
-puts 'ok 1' if 1 < 2;
-puts 'ok 2' if 1 > 2 or 2; #will print because of the or 2
-puts 'ok 3' if 1 <= 2;
-puts 'ok 4' if 2 >= 1;
-puts 'ok 5' if 1 == 1;
-puts 'ok 6' unless 1 == 2;
-puts 'ok 7' if 1 < 2;
-puts 'ok 8' if 4 > 3;
-puts 'ok 9' if 1 != 2;
-puts 'nok 10' if 1 != 1;
+ok 1 < 2, '<';
+nok 1 > 2, '>';
+ok 1 <= 2, '<=';
+ok 2 >= 1, '>=';
+ok 1 == 1, '==';
+nok 1 == 2, '==';
+ok 1 != 2, '!=';
+nok 1 != 1, '!=';
+
+#math ops
+num = 3 - 2
+ok num == 1, '-'
+num = 2 + 1
+ok num == 3, '+'
+num = 1 * 2
+ok num == 2, '*'
+num = 4 % 2
+ok num == 0, '%'
+# somthing is up with the / 
+#num = 4 / 2
+#ok num == 2, 'div'

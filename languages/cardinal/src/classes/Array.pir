@@ -433,6 +433,7 @@ Returns a string comprised of all of the list, separated by the string SEPARATOR
     concat res, tmp
 
   done:
+    $S0 = res
     .return(res)
 .end
 
@@ -832,20 +833,6 @@ Creates a new Array containing the results and returns it.
     .return (result)
 .end
 
-.sub 'each_with_index' :method
-    .param pmc block
-    .local int len
-    len = elements self
-    $I0 = 0
-  each_loop:
-    if $I0 == len goto each_loop_end
-    $P0 = self[$I0]
-    block($P0,$I0)
-    inc $I0
-    goto each_loop
-  each_loop_end:
-.end
-
 =item flatten
 
  recursively flatten any inner arrays into a single outer array
@@ -943,6 +930,50 @@ Retrieve the number of elements in C<self>
   .return(returnMe)
 .end
 
+=item zip
+
+The zip operator.
+
+=cut
+
+.sub 'zip' :method
+    .param pmc args :slurpy
+    .local int num_args
+    .local pmc zipped
+    num_args = elements args
+
+    zipped = new 'CardinalArray'
+
+    # Get minimum element count - what we'll zip to.
+    .local pmc iterator, args_iter, arg, item
+    .local int i
+    iterator = new 'Iterator', self
+    i = 0
+
+  setup_loop:
+    unless iterator, setup_loop_done
+    args_iter = new 'Iterator', args
+    item = new 'CardinalArray'
+    $P0 = shift iterator
+    item.push($P0)
+  inner_loop:
+    unless args_iter, inner_loop_done
+    arg = shift args_iter
+    $P0 = arg[i]
+    unless null $P0 goto arg_not_null
+    $P0 = get_hll_global 'nil'
+  arg_not_null:
+    item.push($P0)
+    goto inner_loop
+  inner_loop_done:
+    inc i
+    zipped.push(item)
+    goto setup_loop
+  setup_loop_done:
+
+    .return (zipped)
+.end
+
 =back
 
 =head1 Functions
@@ -999,7 +1030,7 @@ The zip operator.
 =cut
 
 .sub 'infix:Z'
-    .param pmc args :slurpy
+    .param pmc args # :slurpy
     .local int num_args
     num_args = elements args
 
