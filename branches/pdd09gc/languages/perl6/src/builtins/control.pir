@@ -24,6 +24,7 @@ the moment -- we'll do more complex handling a bit later.)
 =cut
 
 .include 'except_types.pasm'
+.include 'except_severity.pasm'
 
 .sub 'return'
     .param pmc value           :optional
@@ -55,6 +56,64 @@ the moment -- we'll do more complex handling a bit later.)
     $P1 = new 'Failure'
     setattribute $P1, '$!exception', $P0
     .return ($P1)
+.end
+
+
+=item take
+
+=cut
+
+.sub 'take'
+    .param pmc value
+
+    $P0         = new 'Exception'
+    $P0['type'] = .CONTROL_TAKE
+    $P0['severity'] = .EXCEPT_NORMAL
+    setattribute $P0, 'payload', value
+    throw $P0
+    .return (value)
+.end
+
+=item gather
+
+=cut
+
+.sub 'gather'
+    .param pmc block
+    .local pmc list
+    .local pmc eh
+    list = 'list'()
+    eh = new 'ExceptionHandler'
+    set_addr eh, handler
+    push_eh eh
+    block()
+    pop_eh
+    .return (list)
+  handler:
+    .local pmc exception
+    .local string message
+    .local pmc continuation
+    .get_results(exception,message)
+    continuation = exception['resume']
+    $P0 = exception['payload']
+    list.push($P0)
+    eh = 0 # work around the workaround
+    continuation()
+.end
+
+
+=item term:...
+
+=cut
+
+.sub '...'
+    .param pmc message        :optional
+    .param int have_message   :opt_flag
+    if have_message goto message_done
+    message = new 'Perl6Str'
+    message = "Attempt to execute stub code (...)"
+  message_done:
+    'fail'(message)
 .end
 
 

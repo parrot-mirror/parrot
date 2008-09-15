@@ -75,6 +75,57 @@ the size of that file down and to emphasize their generic,
     .return ($P0)
 .end
 
+=item rindex()
+
+=cut
+
+.namespace ['Any']
+.sub 'rindex' :method :multi(_, _)
+    .param string substring
+    .param int pos             :optional
+    .param int has_pos         :opt_flag
+    .local pmc retv
+
+  check_substring:
+    if substring goto substring_search
+
+    # we do not have substring return pos or length
+
+    .local string s
+    s = self
+    $I0 = length s
+
+    if has_pos goto have_pos
+    pos = $I0
+    goto done
+  have_pos:
+    if pos < $I0 goto done
+    pos = $I0
+    goto done
+
+  substring_search:
+    $I0 = self.'isa'('String')
+    if $I0 goto self_string
+    $P0 = new 'String'
+    $S0 = self
+    $P0 = $S0
+    goto do_search
+  self_string:
+    $P0 = self
+  do_search:
+    pos = $P0.'reverse_index'(substring, pos)
+    if pos < 0 goto fail
+
+  done:
+    $P0 = new 'Int'
+    $P0 = pos
+    .return ($P0)
+
+  fail:
+    $P0 = new 'Failure'
+    .return ($P0)
+.end
+
 =item substr()
 
 =cut

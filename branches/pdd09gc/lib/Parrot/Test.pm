@@ -309,14 +309,29 @@ sub run_command {
     while ( my ( $key, $value ) = each %options ) {
         $key =~ m/^STD(OUT|ERR)$/
             or die "I don't know how to redirect '$key' yet!";
-        $value = File::Spec->devnull()
-            if $value eq '/dev/null';
+        my $strvalue = "$value";        # filehandle `eq' string will fail
+        $value = File::Spec->devnull()  # on older perls, so stringify it
+            if $strvalue eq '/dev/null';
     }
 
     my $out = $options{'STDOUT'} || '';
     my $err = $options{'STDERR'} || '';
 
-    if ( $out and $err and $out eq $err ) {
+    local $ENV;
+    if ($PConfig{parrot_is_shared}) {
+        my $blib_path = File::Spec->catfile( $PConfig{build_dir}, 'blib', 'lib' );
+        if ($^O eq 'cygwin') {
+            $ENV{PATH} = $blib_path . ':' . $ENV{PATH};
+        }
+        elsif ($^O eq 'MSWin32') {
+            $ENV{PATH} = $blib_path . ';' . $ENV{PATH};
+        }
+        else {
+            $ENV{LD_RUN_PATH} = $blib_path;
+        }
+    }
+
+    if ( $out and $err and "$out" eq "$err" ) {
         $err = "&STDOUT";
     }
 

@@ -31,6 +31,35 @@ Swiped from Rakudo.
     .return 'prefix:?'($I0)
 .end
 
+.sub 'infix:==' :multi(Bool,Bool)
+    .param int a
+    .param int b
+    $I0 = a == b
+    $P0 = 'prefix:?'($I0)
+    .return ($P0)
+.end
+
+.sub 'infix:==' :multi(CardinalString,CardinalString)
+    .param pmc a
+    .param pmc b
+    $I0 = iseq a, b
+    .return 'prefix:?'($I0)
+.end
+
+.sub 'infix:==' :multi(NilClass,_)
+    .param pmc a
+    .param pmc b
+    $I0 = iseq a, b
+    .return 'prefix:?'($I0)
+.end
+
+.sub 'infix:==' :multi(_,NilClass)
+    .param pmc a
+    .param pmc b
+    $I0 = iseq a, b
+    .return 'prefix:?'($I0)
+.end
+
 .sub 'infix:==' :multi(CardinalArray,CardinalArray)
     .param pmc a
     .param pmc b
@@ -47,9 +76,9 @@ Swiped from Rakudo.
     inc i
     if $I0 goto loop
   fail:
-    .return (0)
+    .return 'prefix:?'(0)
   success:
-    .return (1)
+    .return 'prefix:?'(1)
 .end
 
 

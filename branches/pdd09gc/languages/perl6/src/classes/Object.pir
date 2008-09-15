@@ -189,6 +189,12 @@ Create a new object having the same class as the invocant.
     .local pmc cur_class
     cur_class = shift class_iter
 
+    # If it's PMCProxy, then skip over it, since it's attribute is the delegate
+    # instance of a parent PMC class, which we should not change to Undef.
+    .local int is_pmc_proxy
+    is_pmc_proxy = isa cur_class, "PMCProxy"
+    if is_pmc_proxy goto class_iter_loop_end
+
     # If this the current class?
     .local pmc init_attribs
     eq_addr cur_class, $P0, current_class
@@ -547,6 +553,28 @@ Returns the protoobject's autovivification closure.
 .sub 'defined' :method
     $P0 = get_hll_global ['Bool'], 'False'
     .return ($P0)
+.end
+
+
+=item item()
+
+Returns itself in item context.
+
+=cut
+
+.sub 'item' :method
+    .return (self)
+.end
+
+
+=item list()
+
+Returns a list containing itself in list context.
+
+=cut
+
+.sub 'list' :method
+    .return 'list'(self)
 .end
 
 
