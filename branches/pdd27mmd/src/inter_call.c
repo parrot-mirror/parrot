@@ -1926,7 +1926,7 @@ count_signature_elements(PARROT_INTERP, ARGIN(const char* signature),
                     "Parrot_PCCINVOKE: invalid reg type %c!", *x);
         }
     }
- 
+
     /* calculate max reg types needed for both args and results */
     n_regs_used[0] = PARROT_MAX(max_regs[0], max_regs[4]);
     n_regs_used[1] = PARROT_MAX(max_regs[1], max_regs[5]);
