@@ -168,6 +168,15 @@ static void too_many(PARROT_INTERP,
         __attribute__nonnull__(2)
         __attribute__nonnull__(3);
 
+static void count_signature_elements(PARROT_INTERP,
+    ARGIN(const char* signature),
+    ARGMOD(int *max_regs),
+    ARGMOD(int *arg_ret_cnt))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3)
+        __attribute__nonnull__(4);
+
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 /* HEADERIZER END: static */
 
@@ -1847,6 +1856,66 @@ commit_last_arg(PARROT_INTERP, int index, int cur,
     }
 }
 
+/*
+
+=item C<count_signature_elements>
+
+Counts the number of each type of register in a signature object
+
+=cut
+
+*/
+
+static void
+count_signature_elements(PARROT_INTERP, ARGIN(const char* signature),
+    ARGMOD(int *max_regs), ARGMOD(int *arg_ret_cnt))
+{
+    const char *x;
+    unsigned int seen_arrow = 0;
+
+    /* first loop through signature to get sizing info */
+    for (x = signature; *x != '\0'; x++) {
+        switch (*x) {
+            case '-':
+                /* detect -> separator */
+                seen_arrow = 1 ;
+                ++x;
+                if (*x != '>')
+                    Parrot_ex_throw_from_c_args(interp, NULL,
+                        EXCEPTION_INVALID_OPERATION,
+                        "Parrot_PCCINVOKE: invalid signature separator %c!",
+                        *x);
+                break;
+            case 'I':
+                arg_ret_cnt[seen_arrow]++;
+                max_regs[seen_arrow * 4 + REGNO_INT]++;
+                break;
+            case 'N':
+                arg_ret_cnt[seen_arrow]++;
+                max_regs[seen_arrow * 4 + REGNO_NUM]++;
+                break;
+            case 'S':
+                arg_ret_cnt[seen_arrow]++;
+                max_regs[seen_arrow * 4 + REGNO_STR]++;
+                break;
+            case 'P':
+                arg_ret_cnt[seen_arrow]++;
+                max_regs[seen_arrow * 4 + REGNO_PMC]++;
+                break;
+            case 'f':
+            case 'n':
+            case 's':
+            case 'o':
+            case 'p':
+                break;
+            default:
+                Parrot_ex_throw_from_c_args(interp, NULL,
+                    EXCEPTION_INVALID_OPERATION,
+                    "Parrot_PCCINVOKE: invalid reg type %c!", *x);
+        }
+    }
+}
+
 
 /*
 
@@ -1962,47 +2031,7 @@ Parrot_PCCINVOKE(PARROT_INTERP, ARGIN(PMC* pmc), ARGMOD(STRING *method_name),
     arg_ret_cnt[seen_arrow]++;
     max_regs[REGNO_PMC]++;
 
-    /* first loop through signature to get sizing info */
-    for (x = signature; *x != '\0'; x++) {
-        switch (*x) {
-            case '-':
-                /* detect -> separator */
-                seen_arrow = 1 ;
-                ++x;
-                if (*x != '>')
-                    Parrot_ex_throw_from_c_args(interp, NULL,
-                        EXCEPTION_INVALID_OPERATION,
-                        "Parrot_PCCINVOKE: invalid signature separator %c!",
-                        *x);
-                break;
-            case 'I':
-                arg_ret_cnt[seen_arrow]++;
-                max_regs[seen_arrow * 4 + REGNO_INT]++;
-                break;
-            case 'N':
-                arg_ret_cnt[seen_arrow]++;
-                max_regs[seen_arrow * 4 + REGNO_NUM]++;
-                break;
-            case 'S':
-                arg_ret_cnt[seen_arrow]++;
-                max_regs[seen_arrow * 4 + REGNO_STR]++;
-                break;
-            case 'P':
-                arg_ret_cnt[seen_arrow]++;
-                max_regs[seen_arrow * 4 + REGNO_PMC]++;
-                break;
-            case 'f':
-            case 'n':
-            case 's':
-            case 'o':
-            case 'p':
-                break;
-            default:
-                Parrot_ex_throw_from_c_args(interp, NULL,
-                    EXCEPTION_INVALID_OPERATION,
-                    "Parrot_PCCINVOKE: invalid reg type %c!", *x);
-        }
-    }
+    count_signature_elements(interp, signature, max_regs, arg_ret_cnt);
 
     /* calculate max reg types needed for both args and results */
     n_regs_used[0] = PARROT_MAX(max_regs[0], max_regs[4]);
@@ -2180,6 +2209,7 @@ Parrot_PCCINVOKE(PARROT_INTERP, ARGIN(PMC* pmc), ARGMOD(STRING *method_name),
     interp->current_args   = save_current_args;
     interp->args_signature = save_args_signature;
     interp->current_object = save_current_object;
+    va_end(list);
 }
 
 /*
@@ -2315,47 +2345,7 @@ Parrot_pcc_invoke_sub_from_sig_object(PARROT_INTERP, ARGIN(PMC *sub_obj),
     sigs[0]    = args_sig;
     sigs[1]    = results_sig;
 
-    /* first loop through signature to get sizing info */
-    for (x = signature; *x != '\0'; x++) {
-        switch (*x) {
-            case '-':
-                /* detect -> separator */
-                seen_arrow = 1 ;
-                ++x;
-                if (*x != '>')
-                    Parrot_ex_throw_from_c_args(interp, NULL,
-                        EXCEPTION_INVALID_OPERATION,
-                        "Parrot_pcc_invoke_sub_from_sig_object: invalid signature separator %c!",
-                        *x);
-                break;
-            case 'I':
-                arg_ret_cnt[seen_arrow]++;
-                max_regs[seen_arrow * 4 + REGNO_INT]++;
-                break;
-            case 'N':
-                arg_ret_cnt[seen_arrow]++;
-                max_regs[seen_arrow * 4 + REGNO_NUM]++;
-                break;
-            case 'S':
-                arg_ret_cnt[seen_arrow]++;
-                max_regs[seen_arrow * 4 + REGNO_STR]++;
-                break;
-            case 'P':
-                arg_ret_cnt[seen_arrow]++;
-                max_regs[seen_arrow * 4 + REGNO_PMC]++;
-                break;
-            case 'f':
-            case 'n':
-            case 's':
-            case 'o':
-            case 'p':
-                break;
-            default:
-                Parrot_ex_throw_from_c_args(interp, NULL,
-                    EXCEPTION_INVALID_OPERATION,
-                    "Parrot_pcc_invoke_sub_from_sig_object: invalid reg type %c!", *x);
-        }
-    }
+    count_signature_elements(interp, signature, max_regs, arg_ret_cnt);
 
     /* calculate max reg types needed for both args and results */
     n_regs_used[0] = PARROT_MAX(max_regs[0], max_regs[4]);
