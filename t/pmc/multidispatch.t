@@ -1014,9 +1014,11 @@ pir_output_is( <<'CODE', <<'OUTPUT', "use a core func for an object" );
     r = new "AInt"
     .local pmc func
     .local string typ
-    func = find_multi "add", "Float,Float"
+    func = find_multi "add", "Float,Float,PMC"
     $S0 = typeof l
     typ = $S0 . ","
+    typ .= $S0
+    typ .= ","
     typ .= $S0
     add_multi "add", typ, func
     l = 4
