@@ -168,10 +168,11 @@ static void too_many(PARROT_INTERP,
         __attribute__nonnull__(2)
         __attribute__nonnull__(3);
 
-static void count_signature_elements(PARROT_INTERP,
+static parrot_context_t * count_signature_elements(PARROT_INTERP,
     ARGIN(const char* signature),
-    ARGMOD(int *max_regs),
-    ARGMOD(int *arg_ret_cnt))
+    ARGMOD(PMC* args_sig),
+    ARGMOD(PMC* results_sig),
+    int flag)
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3)
@@ -1866,12 +1867,23 @@ Counts the number of each type of register in a signature object
 
 */
 
-static void
+static parrot_context_t *
 count_signature_elements(PARROT_INTERP, ARGIN(const char* signature),
-    ARGMOD(int *max_regs), ARGMOD(int *arg_ret_cnt))
+    ARGMOD(PMC * args_sig), ARGMOD(PMC * results_sig), int flag)
 {
+    int         max_regs[8]    = { 0, 0, 0, 0, 0, 0, 0, 0 };
     const char *x;
     unsigned int seen_arrow = 0;
+    /* variables from PCCINVOKE impl in PCCMETHOD.pm */
+    /* args INSP, returns INSP */
+    INTVAL n_regs_used[] = { 0, 0, 0, 0, 0, 0, 0, 0 };
+    /* # of arg args, # of result args */
+    int arg_ret_cnt[2] = { 0, 0 };
+
+    if (flag) {
+        arg_ret_cnt[seen_arrow]++;
+        max_regs[REGNO_PMC]++;
+    }
 
     /* first loop through signature to get sizing info */
     for (x = signature; *x != '\0'; x++) {
@@ -1914,6 +1926,21 @@ count_signature_elements(PARROT_INTERP, ARGIN(const char* signature),
                     "Parrot_PCCINVOKE: invalid reg type %c!", *x);
         }
     }
+ 
+    /* calculate max reg types needed for both args and results */
+    n_regs_used[0] = PARROT_MAX(max_regs[0], max_regs[4]);
+    n_regs_used[1] = PARROT_MAX(max_regs[1], max_regs[5]);
+    n_regs_used[2] = PARROT_MAX(max_regs[2], max_regs[6]);
+    n_regs_used[3] = PARROT_MAX(max_regs[3], max_regs[7]);
+
+    /* initialize arg and return sig FIAs with collected info */
+    if (arg_ret_cnt[0] > 0)
+        VTABLE_set_integer_native(interp, args_sig, arg_ret_cnt[0]);
+
+    if (arg_ret_cnt[1] > 0)
+        VTABLE_set_integer_native(interp, results_sig, arg_ret_cnt[1]);
+
+    return Parrot_push_context(interp, n_regs_used);
 }
 
 
@@ -2003,11 +2030,6 @@ Parrot_PCCINVOKE(PARROT_INTERP, ARGIN(PMC* pmc), ARGMOD(STRING *method_name),
     /* args_sig, results_sig */
     PMC *sigs[2];
 
-    /* # of arg args, # of result args */
-    int arg_ret_cnt[2] = { 0, 0 };
-
-    /* INSP args, INSP results */
-    int         max_regs[8]    = { 0, 0, 0, 0, 0, 0, 0, 0 };
     int         seen_arrow     = 0;
 
     const char *x;
@@ -2028,36 +2050,10 @@ Parrot_PCCINVOKE(PARROT_INTERP, ARGIN(PMC* pmc), ARGMOD(STRING *method_name),
         Parrot_ex_throw_from_c_args(interp, NULL, 1,
             "NULL PMC passed into Parrot_PCCINVOKE");
 
-    arg_ret_cnt[seen_arrow]++;
-    max_regs[REGNO_PMC]++;
-
-    count_signature_elements(interp, signature, max_regs, arg_ret_cnt);
-
-    /* calculate max reg types needed for both args and results */
-    n_regs_used[0] = PARROT_MAX(max_regs[0], max_regs[4]);
-    n_regs_used[1] = PARROT_MAX(max_regs[1], max_regs[5]);
-    n_regs_used[2] = PARROT_MAX(max_regs[2], max_regs[6]);
-    n_regs_used[3] = PARROT_MAX(max_regs[3], max_regs[7]);
-
-    /* initialize arg and return sig FIAs with collected info */
-    if (arg_ret_cnt[0] > 0)
-        VTABLE_set_integer_native(interp, args_sig, arg_ret_cnt[0]);
-
-    if (arg_ret_cnt[1] > 0)
-        VTABLE_set_integer_native(interp, results_sig, arg_ret_cnt[1]);
-
-    ctx = Parrot_push_context(interp, n_regs_used);
-
-    /* reset n_regs_used for reuse reused during arg index allocation step */
-    n_regs_used[0] = 0;
-    n_regs_used[1] = 0;
-    n_regs_used[2] = 0;
-    n_regs_used[3] = 0;
+    ctx = count_signature_elements(interp, signature, args_sig, results_sig, 1);
 
     /* second loop through signature to build all index and arg_flag
      * loop also assigns args(up to the ->) to registers */
-    index      = -1;
-    seen_arrow =  0;
 
     /* account for passing invocant in-band */
     indexes[0][0] = 0;
@@ -2317,9 +2313,6 @@ Parrot_pcc_invoke_sub_from_sig_object(PARROT_INTERP, ARGIN(PMC *sub_obj),
     PMC              *save_args_signature;
     PMC              *save_current_object;
 
-    /* !! Start good subroutine break (building register set for context),
-     * should be the same as PCCINVOKE. !! */
-
     /* temporary state vars for building PCC index and PCC signature arrays. */
 
     /* arg_indexes, result_indexes */
@@ -2327,12 +2320,6 @@ Parrot_pcc_invoke_sub_from_sig_object(PARROT_INTERP, ARGIN(PMC *sub_obj),
 
     /* args_sig, results_sig */
     PMC *sigs[2];
-
-    /* # of arg args, # of result args */
-    int arg_ret_cnt[2] = { 0, 0 };
-
-    /* INSP args, INSP results */
-    int         max_regs[8]    = { 0, 0, 0, 0, 0, 0, 0, 0 };
     int         seen_arrow     = 0;
 
     const char *x;
@@ -2345,30 +2332,7 @@ Parrot_pcc_invoke_sub_from_sig_object(PARROT_INTERP, ARGIN(PMC *sub_obj),
     sigs[0]    = args_sig;
     sigs[1]    = results_sig;
 
-    count_signature_elements(interp, signature, max_regs, arg_ret_cnt);
-
-    /* calculate max reg types needed for both args and results */
-    n_regs_used[0] = PARROT_MAX(max_regs[0], max_regs[4]);
-    n_regs_used[1] = PARROT_MAX(max_regs[1], max_regs[5]);
-    n_regs_used[2] = PARROT_MAX(max_regs[2], max_regs[6]);
-    n_regs_used[3] = PARROT_MAX(max_regs[3], max_regs[7]);
-
-    /* initialize arg and return sig FIAs with collected info */
-    if (arg_ret_cnt[0] > 0)
-        VTABLE_set_integer_native(interp, args_sig, arg_ret_cnt[0]);
-
-    if (arg_ret_cnt[1] > 0)
-        VTABLE_set_integer_native(interp, results_sig, arg_ret_cnt[1]);
-
-    ctx = Parrot_push_context(interp, n_regs_used);
-
-    /* reset n_regs_used for reuse reused during arg index allocation step */
-    n_regs_used[0] = 0;
-    n_regs_used[1] = 0;
-    n_regs_used[2] = 0;
-    n_regs_used[3] = 0;
-
-    /* !! End good subroutine break (building register set for context). !! */
+    ctx = count_signature_elements(interp, signature, args_sig, results_sig, 0);
 
     /* !! Start good subroutine break (setting arguments), not the same as
      * PCCINVOKE, but will become standard later. !! */
