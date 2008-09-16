@@ -1797,7 +1797,7 @@ set_retval_p(PARROT_INTERP, int sig_ret, ARGIN(parrot_context_t *ctx))
 
 =item C<static void commit_last_arg>
 
-Called by Parrot_PCCINVOKE when it reaches the end of each arg in the arg
+Called by C<Parrot_PCCINVOKE> when it reaches the end of each arg in the arg
 signature.  See C<Parrot_PCCINVOKE> for signature syntax.
 
 =cut
@@ -1871,31 +1871,39 @@ static parrot_context_t *
 count_signature_elements(PARROT_INTERP, ARGIN(const char* signature),
     ARGMOD(PMC * args_sig), ARGMOD(PMC * results_sig), int flag)
 {
-    int         max_regs[8]    = { 0, 0, 0, 0, 0, 0, 0, 0 };
-    const char *x;
-    unsigned int seen_arrow = 0;
+    const char  *x;
+    unsigned int seen_arrow  = 0;
+
+    /*Count of number of each type of arg and result, INSP->INSP */
+    int          max_regs[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
+
     /* variables from PCCINVOKE impl in PCCMETHOD.pm */
     /* args INSP, returns INSP */
-    INTVAL n_regs_used[] = { 0, 0, 0, 0, 0, 0, 0, 0 };
-    /* # of arg args, # of result args */
-    int arg_ret_cnt[2] = { 0, 0 };
+    INTVAL n_regs_used[]     = { 0, 0, 0, 0, 0, 0, 0, 0 };
 
+    /* # of args, # of results */
+    int arg_ret_cnt[2]       = { 0, 0 };
+
+    /* Increment these values if we are not calling from a CallSignature
+       PMC */
     if (flag) {
         arg_ret_cnt[seen_arrow]++;
         max_regs[REGNO_PMC]++;
     }
 
-    /* first loop through signature to get sizing info */
+    /* Loop through the signature string to count the number of each
+       type of object required. We need to know so we can allocate
+       an appropriate number of registers for it. */
     for (x = signature; *x != '\0'; x++) {
         switch (*x) {
             case '-':
                 /* detect -> separator */
-                seen_arrow = 1 ;
+                seen_arrow = 1;
                 ++x;
                 if (*x != '>')
                     Parrot_ex_throw_from_c_args(interp, NULL,
                         EXCEPTION_INVALID_OPERATION,
-                        "Parrot_PCCINVOKE: invalid signature separator %c!",
+                        "PCCINVOKE: invalid signature separator %c!",
                         *x);
                 break;
             case 'I':
@@ -1948,14 +1956,15 @@ count_signature_elements(PARROT_INTERP, ARGIN(const char* signature),
 
 =item C<void Parrot_PCCINVOKE>
 
-pmc is the invocant.
+C<pmc> is the invocant.
 
-method_name is the method_name used in the find_method VTABLE call
+C<method_name> is the same C<method_name> used in the C<find_method>
+VTABLE call
 
-signature is a string describing the Parrot calling conventions for
-Parrot_PCCINVOKE.  ... variable args contains the IN arguments followed by the
-OUT results variables.  You must pass the address_of(&) the OUT results of
-course.
+C<signature> is a C string describing the Parrot calling conventions for
+Parrot_PCCINVOKE.  ... variable args contains the IN arguments followed
+by the OUT results variables.  You must pass the address_of(&) the OUT
+results, of course.
 
 Signatures:
   uppercase letters repesent each arg and denote its types
@@ -1974,7 +1983,8 @@ Signatures:
   o optional
   p opt flag
 
-  -> is the separator between args and results, similar to type theory notation.
+  -> is the separator between args and results, similar to type theory
+  notation.
 
   Named args require two arg slots. The first is the name, the second the arg.
 
@@ -2015,7 +2025,7 @@ Parrot_PCCINVOKE(PARROT_INTERP, ARGIN(PMC* pmc), ARGMOD(STRING *method_name),
     PMC * const results_sig = pmc_new(interp, enum_class_FixedIntegerArray);
     PMC * const ret_cont    = new_ret_continuation_pmc(interp, NULL);
 
-    parrot_context_t *ctx;
+    parrot_context_t *ctx;              /* The newly created context */
     PMC              *pccinvoke_meth;
 
     opcode_t         *save_current_args;
@@ -2025,17 +2035,17 @@ Parrot_PCCINVOKE(PARROT_INTERP, ARGIN(PMC* pmc), ARGMOD(STRING *method_name),
     /* temporary state vars for building PCC index and PCC signature arrays. */
 
     /* arg_indexes, result_indexes */
-    opcode_t *indexes[2];
+    opcode_t   *indexes[2];
 
     /* args_sig, results_sig */
-    PMC *sigs[2];
+    PMC        *sigs[2];
 
-    int         seen_arrow     = 0;
+    int         seen_arrow = 0;
 
     const char *x;
-    const char *ret_x  = NULL;
-    int         index  = -1;
-    int         cur    =  0;
+    const char *ret_x = NULL;
+    int         index = -1;
+    int         cur   =  0;
 
     va_list list;
     va_start(list, signature);
@@ -2061,7 +2071,7 @@ Parrot_PCCINVOKE(PARROT_INTERP, ARGIN(PMC* pmc), ARGMOD(STRING *method_name),
     VTABLE_set_integer_keyed_int(interp, sigs[0], 0, PARROT_ARG_PMC);
     CTX_REG_PMC(ctx, 0) = pmc;
 
-    n_regs_used[seen_arrow * 4 + REGNO_PMC]++;
+    n_regs_used[REGNO_PMC]++;
     index = 0;
 
     for (x = signature; *x != '\0'; x++) {
