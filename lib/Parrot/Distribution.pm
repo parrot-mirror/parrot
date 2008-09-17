@@ -481,7 +481,6 @@ sub get_perl_exemption_regexp {
         lib/Pod/
         examples/sdl/
     };
-#        lib/SmartLink.pm
 
     my $regex = join '|', map { quotemeta $_ } @paths;
 
