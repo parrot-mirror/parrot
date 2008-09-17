@@ -848,22 +848,16 @@ Decrements the integer.
 
 
     MULTI PMC *multiply(BigInt value, PMC *dest) {
-        if (dest)
-            VTABLE_morph(interp, dest, SELF->vtable->base_type);
-        else
-            dest = pmc_new(INTERP, SELF->vtable->base_type);
+        dest = pmc_new(INTERP, SELF->vtable->base_type);
 
         bigint_mul_bigint(INTERP, SELF, value, dest);
         return dest;
     }
 
     MULTI PMC *multiply(Integer value, PMC *dest) {
-        if (dest)
-            VTABLE_morph(interp, dest, SELF->vtable->base_type);
-        else
-            dest = pmc_new(INTERP, SELF->vtable->base_type);
+        dest = pmc_new(INTERP, SELF->vtable->base_type);
 
-        bigint_mul_bigint_int(INTERP, SELF, PMC_int_val(value), dest);
+        bigint_mul_bigint_int(INTERP, SELF, VTABLE_get_integer(interp, value), dest);
         return dest;
     }
 
@@ -875,10 +869,7 @@ Decrements the integer.
     }
 
     VTABLE PMC *multiply_int(INTVAL value, PMC *dest) {
-        if (dest)
-            VTABLE_morph(interp, dest, SELF->vtable->base_type);
-        else
-            dest = pmc_new(INTERP, SELF->vtable->base_type);
+        dest = pmc_new(INTERP, SELF->vtable->base_type);
 
         bigint_mul_bigint_int(INTERP, SELF, value, dest);
         return dest;
