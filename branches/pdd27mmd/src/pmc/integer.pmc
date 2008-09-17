@@ -599,7 +599,7 @@ MULTI PMC *multiply(Integer value, PMC *dest) {
         return dest;
     }
     else
-        return overflow(INTERP, SELF, b, dest, "multiply");
+        return overflow_p(INTERP, SELF, value, dest, "multiply");
 }
 
 MULTI PMC *multiply(Complex value, PMC *dest) {
@@ -636,8 +636,11 @@ VTABLE PMC *multiply_int(INTVAL b, PMC *dest) {
         VTABLE_set_integer_native(INTERP, dest, c);
         return dest;
     }
-    else
-        return overflow(INTERP, SELF, b, dest, "multiply");
+    else {
+        PMC *temp = pmc_new(interp, enum_class_Integer);
+        VTABLE_set_integer_native(interp, temp, b);
+        return overflow_p(INTERP, SELF, temp, dest, "multiply");
+    }
 }
 
 /*
@@ -681,8 +684,11 @@ VTABLE void i_multiply_int(INTVAL b) {
 
     if ((double) c == cf)
         SELF.set_integer_native(c);
-    else
-        overflow(INTERP, SELF, b, SELF, "multiply");
+    else {
+        PMC * temp = pmc_new(interp, enum_class_Integer);
+        VTABLE_set_integer_native(interp, temp, b);
+        overflow_p(INTERP, SELF, temp, SELF, "multiply");
+    }
 }
 
 VTABLE void i_multiply_float(FLOATVAL value) {
