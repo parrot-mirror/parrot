@@ -515,7 +515,7 @@ Divides C<SELF> by C<value> inplace.
 
 */
 
-    VTABLE PMC *floor_divide(PMC *value, PMC *dest) {
+    MULTI PMC *floor_divide(PMC *value, PMC *dest) {
         FLOATVAL d = VTABLE_get_number(INTERP, value);
 
         if (FLOAT_IS_ZERO(d))
