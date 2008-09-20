@@ -595,14 +595,15 @@ fetch_arg_op(PARROT_INTERP, ARGMOD(call_state *st))
 
 =item C<int Parrot_fetch_arg>
 
-RT#48260: Not yet documented!!!
+Fetches an argument from the current call state object. Retrieves the
+next argument in the parameter list, or the next argument in a flattened
+array, if given. If the parameter is a named object, fetches both the
+name and the value.
 
 =cut
 
 */
 
-/* Fetch a new argument.
- */
 PARROT_API
 int
 Parrot_fetch_arg(PARROT_INTERP, ARGMOD(call_state *st))
@@ -854,8 +855,8 @@ convert_arg_from_pmc(PARROT_INTERP, ARGMOD(call_state *st))
 
 =item C<static void check_for_opt_flag>
 
-Processes the next argument, if it has the optional flag set.  Otherwise moves
-on.
+Processes the next argument, if it has the optional flag set.
+Otherwise moves on.
 
 =cut
 
@@ -1304,7 +1305,9 @@ init_call_stats(ARGMOD(call_state *st))
 
 =item C<void Parrot_process_args>
 
-RT#48260: Not yet documented!!!
+Gets args for the current function call and puts them into position.
+First it gets the positional non-slurpy parameters, then the positional
+slurpy parameters, and finally the named parameters.
 
 =cut
 
@@ -1615,7 +1618,8 @@ parrot_pass_args_fromc(PARROT_INTERP, ARGIN(const char *sig),
 
 =item C<static int set_retval_util>
 
-RT#48260: Not yet documented!!!
+Adds the current return parameter to the current context, and fetches
+the next return parameter from the call state object.
 
 =cut
 
@@ -1861,7 +1865,10 @@ commit_last_arg(PARROT_INTERP, int index, int cur,
 
 =item C<count_signature_elements>
 
-Counts the number of each type of register in a signature object
+Counts the number of each type of register in a signature object. Returns
+the total number of parameter arguments, the total number of result
+arguments, and the number of each type needed for register allocation.
+Adds the necessary registers to a new context and returns the context.
 
 =cut
 
