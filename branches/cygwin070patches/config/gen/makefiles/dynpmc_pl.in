@@ -72,12 +72,12 @@ sub partial_link_cmd {
 
     my $liblist;
     if ($^O =~ /mswin32/i) {
-        # Note that we may need to look in the Parrot blib directory first.
+        # Note that we may need to look in the Parrot directory first.
         if ($CC =~ /gcc/i) {
-            $liblist = qq{ -Wl,-L "@build_dir@/blib/lib"};
+            $liblist = qq{ -Wl,-L "@build_dir@"};
         }
         else {
-            $liblist = qq{ /LIBPATH:"@build_dir@/blib/lib"};
+            $liblist = qq{ /LIBPATH:"@build_dir@"};
         }
         # Need to add various libraries in the link line.
         $liblist .= join( ' ', map { "$_.lib" } keys %$libs );

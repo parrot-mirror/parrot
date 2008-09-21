@@ -4,8 +4,7 @@ PERL     = @perl@
 RM_F     = @rm_f@
 PARROT   = ../../parrot@exe@
 RECONFIGURE   = $(PERL) @build_dir@/tools/dev/reconfigure.pl
-#IF(cygwin):SHRPENV  = env PATH="@build_dir@/blib/lib:$(PATH)"
-#ELSIF(!win32):SHRPENV  = env LD_RUN_PATH="@build_dir@/blib/lib"
+#IF(parrot_is_shared and !(cygwin|win32)):export LD_RUN_PATH := @blib_dir@:$(LD_RUN_PATH)
 
 TOOL_DIR = ../..
 PGE_DIR  = ../../compilers/pge
@@ -43,19 +42,19 @@ testclean:
 	$(RM_F) "../../t/compilers/json/*.pir" \
 
 JSON.pbc : JSON/grammar.pbc JSON/pge2pir.pbc JSON.pir
-	$(SHRPENV) $(PARROT) --output=JSON.pbc JSON.pir
+	$(PARROT) --output=JSON.pbc JSON.pir
 
 JSON/grammar.pbc : JSON/grammar.pir
-	$(SHRPENV) $(PARROT) --output=JSON/grammar.pbc JSON/grammar.pir
+	$(PARROT) --output=JSON/grammar.pbc JSON/grammar.pir
 
 JSON/grammar.pir : JSON/grammar.pg
-	$(SHRPENV) $(PARROT) $(TOOL_DIR)/runtime/parrot/library/PGE/Perl6Grammar.pbc --output=JSON/grammar.pir JSON/grammar.pg
+	$(PARROT) $(TOOL_DIR)/runtime/parrot/library/PGE/Perl6Grammar.pbc --output=JSON/grammar.pir JSON/grammar.pg
 
 JSON/pge2pir.pbc : JSON/pge2pir.pir
-	$(SHRPENV) $(PARROT) --output=JSON/pge2pir.pbc JSON/pge2pir.pir
+	$(PARROT) --output=JSON/pge2pir.pbc JSON/pge2pir.pir
 
 JSON/pge2pir.pir : JSON/pge2pir.tg
-	$(SHRPENV) $(PARROT) $(TGE_DIR)/tgc.pir --output=JSON/pge2pir.pir JSON/pge2pir.tg
+	$(PARROT) $(TGE_DIR)/tgc.pir --output=JSON/pge2pir.pir JSON/pge2pir.tg
 
 clean : testclean
 	@rm_f@ "JSON/*.pbc" "JSON/*.pir" JSON.pbc

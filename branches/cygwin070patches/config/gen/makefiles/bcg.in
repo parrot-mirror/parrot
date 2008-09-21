@@ -1,8 +1,6 @@
 RM_F		= @rm_f@
 PERL		= @perl@
 PARROT	    	= @build_dir@/parrot@exe@
-#IF(win32):LIBPARROT = @build_dir@/libparrot@a@
-#ELSE:LIBPARROT = @build_dir@/@blib_dir@/libparrot@a@
 O		= @o@
 LOAD_EXT	= @load_ext@
 CC         	= @cc@
@@ -14,8 +12,11 @@ LINK_DYNAMIC  	= @link_dynamic@
 LINK       	= @link@
 LINKFLAGS  	= @linkflags@ @link_debug@ @ld_debug@
 LD         	= @ld@
-#IF(win32):LDFLAGS = @ldflags@ @ld_debug@ $(LIBPARROT)
-#ELSE:LDFLAGS = @ldflags@ @ld_debug@ -L@build_dir@/blib/lib/ -lparrot
+#IF(cygwin or win32):LIBPARROT_SHARED= @libparrot_shared@
+#ELSE:LIBPARROT_SHARED= @blib_dir@/@libparrot_shared@
+LIBPARROT_STATIC= @blib_dir@/@libparrot_static@
+LIBPARROT       = @libparrot@
+LDFLAGS         = @ldflags@ @ld_debug@
 SHARE_EXT       = @share_ext@
 LD_SHARE_FLAGS  = @ld_share_flags@
 BUILD_PMC   	= $(PERL) @build_dir@/tools/build/dynpmc.pl
@@ -26,6 +27,7 @@ LIB_BCG         = @build_dir@/blib/lib/libbcg$(SHARE_EXT)
 SRC_DIR         = src
 INCLUDE_DIR     = include
 CP              = @cp@
+#IF(parrot_is_shared and !(cygwin|win32)):export LD_RUN_PATH := @blib_dir@:$(LD_RUN_PATH)
 
 .SUFFIXES : .c .h .pmc .dump $(O) .str .pir .pbc
 
@@ -68,7 +70,7 @@ all: pmcs Makefile
 $(BCG_O_FILES): $(BCG_H_FILES)
 
 $(LIB_BCG): $(BCG_O_FILES)
-	$(LD) $(LD_SHARE_FLAGS) $(LDFLAGS) @ld_out@$@ $(BCG_O_FILES) @libs@
+	$(LD) $(LD_SHARE_FLAGS) $(LDFLAGS) @libparrot_ldflags@ @ld_out@$@ $(BCG_O_FILES) @libs@
     $(CP) @build_dir@/blib/lib/libbcg$(SHARE_EXT) @build_dir@
 
 pmcs: $(LIB_BCG)
