@@ -162,6 +162,9 @@ N: Chris Dolan
 D: TAP language author, and Parrot Bug fixes
 E: cdolan@cpan.org
 
+N: Chris Fields (cjfields)
+D: Rakudo patches
+
 N: Christoph Otto a.k.a. cotto
 D: Patch for key flags in pdd08
 D: Range check in Env PMC
@@ -562,7 +565,7 @@ E: pat.eyler@gmail.com
 
 N: Patrick R. Michaud
 D: Parrot Grammar Engine
-D: Perl 6 pumpking
+D: Perl 6 (Rakudo Perl) pumpking
 D: NQP, PCT, PAST, POST
 D: APL
 D: Pynie

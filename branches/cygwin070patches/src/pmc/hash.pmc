@@ -691,7 +691,7 @@ Returns whether the hash is the same as C<*other>.
 
         /* check if we really have Hash_key_type_int */
         if (hash->key_type == Hash_key_type_int)
-            parrot_hash_put(INTERP, hash, key, value);
+            parrot_hash_put(INTERP, hash, (void *)key, (void *)value);
         else {
             SUPER(key, value);
         }
