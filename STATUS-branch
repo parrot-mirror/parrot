@@ -1,12 +1,9 @@
 DESCRIPTION
 -----------
 
-This branch has almost nothing to do with the cygwin architecture.  It
-was named "cygwin070patches" because it contains all the patches from
-the cygwin 0.7.0 release package.
-
-It really is a "pdd30_install" branch and contains the following
-patches:
+This branch started as "cygwin070patches" because it contained all 
+the patches from the cygwin 0.7.0 release package, and was then renamed
+to "pdd30_install". It contains the following patches:
 
   39742-installed-conflict.patch
   56544-install_files.patch
@@ -48,10 +45,8 @@ TODO
 
 STATUS
 -------
-Of the cygwin070patches branch as of 2008-09-21 10:42:43 rurban
+As of 2008-09-21 19:26:43 CEST rurban
 
-merging with trunk r31103 caused:
- * perl6: Null PMC access in get_bool() fixed with r31108.
 
 cygwin + gcc 3.4.4
 ------------------
