@@ -371,7 +371,8 @@ BCG_label(BCG_info * bcg_info, char *label)
 =item C<void
 BCG_print_pasm(BCG_info * bcg_info)>
 
-RT#48260: Not yet documented!!!
+This is the implementation for the op printPASM(),
+which decompiles the bytecode to PASM.
 
 =cut
 
