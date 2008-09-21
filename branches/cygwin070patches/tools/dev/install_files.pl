@@ -206,7 +206,7 @@ while (<>) {
     else {
         $dest =~ s|^src/|lib/parrot/src/|;
         next if $dest =~ /^compilers|config|language|tools/;
-        $dest =~ s/^runtime/lib/ if /\[library]/;
+        $dest =~ s/^runtime/lib/;
         $dest = File::Spec->catdir( $options{prefix}, $dest );
     }
 
