@@ -10,8 +10,7 @@ PGE_DIR  = ../../compilers/pge
 TEST_DIR = ../../t/compilers/pct
 CP       = @cp@
 RECONFIGURE   = $(PERL) @build_dir@/tools/dev/reconfigure.pl
-#IF(cygwin):SHRPENV  = env PATH="@build_dir@/blib/lib:$(PATH)"
-#ELSIF(!win32):SHRPENV  = env LD_RUN_PATH="@build_dir@/blib/lib"
+#IF(parrot_is_shared and !(cygwin|win32)):export LD_RUN_PATH := @blib_dir@:$(LD_RUN_PATH)
 
 # Where to put things
 PARROT_LIBRARY    = ../../runtime/parrot/library
@@ -36,10 +35,10 @@ PCT_SOURCES = \
 all: $(PARROT_LIBRARY)/PCT.pbc Makefile
 
 $(PARROT_LIBRARY)/PCT.pbc: $(PARROT) $(PCT_SOURCES)
-	$(SHRPENV) $(PARROT) -o $(PARROT_LIBRARY)/PCT.pbc --output-pbc PCT.pir
-	$(SHRPENV) $(PARROT) -o $(PARROT_LIBRARY)/PCT/PAST.pbc --output-pbc src/PAST.pir
-	$(SHRPENV) $(PARROT) -o $(PARROT_LIBRARY)/PCT/Grammar.pbc --output-pbc src/PCT/Grammar.pir
-	$(SHRPENV) $(PARROT) -o $(PARROT_LIBRARY)/PCT/HLLCompiler.pbc --output-pbc src/PCT/HLLCompiler.pir
+	$(PARROT) -o $(PARROT_LIBRARY)/PCT.pbc --output-pbc PCT.pir
+	$(PARROT) -o $(PARROT_LIBRARY)/PCT/PAST.pbc --output-pbc src/PAST.pir
+	$(PARROT) -o $(PARROT_LIBRARY)/PCT/Grammar.pbc --output-pbc src/PCT/Grammar.pir
+	$(PARROT) -o $(PARROT_LIBRARY)/PCT/HLLCompiler.pbc --output-pbc src/PCT/HLLCompiler.pir
 
 # regenerate the Makefile
 Makefile: @build_dir@/config/gen/makefiles/pct.in

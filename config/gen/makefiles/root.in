@@ -107,8 +107,6 @@ RECONFIGURE      = $(PERL) tools/dev/reconfigure.pl
 INNO_SETUP       = iscc
 JIT_BUILD_TOOL   = $(BUILD_TOOLS_DIR)/jit2c.pl
 #IF(darwin):export MACOSX_DEPLOYMENT_TARGET := @osx_version@
-#IF(cygwin):SHRPENV  = env PATH="@build_dir@/blib/lib:$(PATH)"
-#ELSIF(!win32):SHRPENV  = env LD_RUN_PATH="@build_dir@/blib/lib"
 
 ###############################################################################
 #
@@ -142,12 +140,13 @@ NONGEN_HEADERS   = @TEMP_nongen_headers@
 GEN_MAKEFILES = \
     Makefile \
 #IF(has_perldoc):    docs/Makefile \
+    compilers/bcg/Makefile \
+    compilers/json/Makefile \
+    compilers/ncigen/Makefile \
     compilers/nqp/Makefile \
     compilers/pct/Makefile \
     compilers/pge/Makefile \
     compilers/tge/Makefile \
-    compilers/bcg/Makefile \
-    compilers/json/Makefile \
     editor/Makefile \
     ext/Makefile \
     languages/Makefile \
@@ -488,8 +487,9 @@ INSTALLABLECONFIG   = $(CUR_DIR)/installable_parrot_config$(EXE)
 # Libraries
 LIBPARROT_STATIC    = @blib_dir@/@libparrot_static@
 #IF(darwin):export DYLD_LIBRARY_PATH := @blib_dir@:$(DYLD_LIBRARY_PATH)
-#IF(win32):LIBPARROT_SHARED  = @libparrot_shared@
-#ELSE:LIBPARROT_SHARED  = @blib_dir@/@libparrot_shared@
+#IF(parrot_is_shared and !(cygwin|win32)):export LD_RUN_PATH := @blib_dir@:$(LD_RUN_PATH)
+#IF(cygwin or win32):LIBPARROT_SHARED    = @libparrot_shared@
+#ELSE:LIBPARROT_SHARED    = @blib_dir@/@libparrot_shared@
 
 # This line controls whether a static or shared library is built
 LIBPARROT           = @libparrot@
@@ -535,10 +535,10 @@ MAKE = @make_c@
 # here, though. Ignored on Mac OS X, at least.
 
 .pir.pbc :
-	$(SHRPENV) $(PARROT) -o $@ $<
+	$(PARROT) -o $@ $<
 
 .pbc$(O) :
-	$(SHRPENV) $(PARROT) -o $@ $<
+	$(PARROT) -o $@ $<
 
 
 ###############################################################################
@@ -772,12 +772,11 @@ flags_dummy :
 	@$(PERL) tools/dev/cc_flags.pl $(CUR_DIR)/CFLAGS echo $(CC) $(CFLAGS) -I$(@D) @cc_o_out@ xx$(O) -c xx.c
 
 runtime/parrot/include/parrotlib.pbc: runtime/parrot/library/parrotlib.pir $(PARROT)
-	$(SHRPENV) $(PARROT) -o $@ runtime/parrot/library/parrotlib.pir
+	$(PARROT) -o $@ runtime/parrot/library/parrotlib.pir
 
 runtime/parrot/include/config.fpmc : myconfig config_lib.pasm $(MINIPARROT)
-#CONDITIONED_LINE(cygchkdll):	$(SHRPENV) @cygchkdll@
 	@echo Invoking Parrot to generate runtime/parrot/include/config.fpmc --cross your fingers
-	$(SHRPENV) $(MINIPARROT) config_lib.pasm > $@
+	$(MINIPARROT) config_lib.pasm > $@
 
 $(PARROT) : $(SRC_DIR)/main$(O) $(GEN_HEADERS) $(LIBPARROT) CFLAGS \
     lib/Parrot/OpLib/core.pm $(SRC_DIR)/parrot_config$(O) \
@@ -792,16 +791,16 @@ pbc_to_exe.pir : $(PARROT) tools/dev/pbc_to_exe_gen.pl
     > pbc_to_exe.pir
 
 $(PBC_TO_EXE) : pbc_to_exe.pir $(PARROT)
-	$(SHRPENV) $(PARROT) -o pbc_to_exe.pbc pbc_to_exe.pir
-	$(SHRPENV) $(PARROT) pbc_to_exe.pir pbc_to_exe.pbc
+	$(PARROT) -o pbc_to_exe.pbc pbc_to_exe.pir
+	$(PARROT) pbc_to_exe.pir pbc_to_exe.pbc
 
 $(PARROT_CONFIG) : tools/util/parrot-config.pir $(PARROT)
-	$(SHRPENV) $(PARROT) -o parrot_config.pbc tools/util/parrot-config.pir
-	$(SHRPENV) $(PARROT) pbc_to_exe.pir parrot_config.pbc
+	$(PARROT) -o parrot_config.pbc tools/util/parrot-config.pir
+	$(PARROT) pbc_to_exe.pir parrot_config.pbc
 
 $(INSTALLABLECONFIG) : $(SRC_DIR)/install_config$(O) $(PARROT_CONFIG) $(PBC_TO_EXE)
-	$(SHRPENV) $(PARROT) -o parrot_config.pbc tools/util/parrot-config.pir
-	$(SHRPENV) $(PBC_TO_EXE) parrot_config.pbc --install
+	$(PARROT) -o parrot_config.pbc tools/util/parrot-config.pir
+	$(PBC_TO_EXE) parrot_config.pbc --install
 
 # HLL Executable targets
 #IF(win32 or cygwin):perl6 : $(PERL6)
@@ -810,7 +809,7 @@ $(PERL6) : compilers $(PBC_TO_EXE)
 	$(MAKE) languages/perl6 perl6$(EXE)
 	$(CP) languages/perl6/perl6$(EXE) $(PERL6)
 	$(CHMOD) 0755 $(PERL6)
-	$(SHRPENV) $(PERL6) -e"say 'Hello, world.'"
+	$(PERL6) -e"say 'Hello, world.'"
 
 
 # build the real miniparrot
@@ -851,7 +850,7 @@ $(SRC_DIR)/null_config.c : myconfig $(BUILD_TOOLS_DIR)/parrot_config_c.pl
 
 install_config.fpmc : myconfig config_lib.pasm $(PARROT)
 	@echo "Invoking Parrot to generate install_config.fpmc"
-	$(SHRPENV) $(PARROT) config_lib.pasm --install > $@
+	$(PARROT) config_lib.pasm --install > $@
 
 $(SRC_DIR)/parrot_config$(O) : $(SRC_DIR)/parrot_config.c
 
@@ -896,7 +895,7 @@ $(LIBPARROT_STATIC) : $(O_FILES)
 $(LIBPARROT_SHARED) : $(O_FILES)
 	$(MKPATH) @blib_dir@
 	$(LD) $(LD_SHARE_FLAGS) $(LDFLAGS) @ld_out@$@ @libparrot_soname@ \
-#IF(cygwin):		-Wl,--out-implib=blib/lib/libparrot.dll.a \
+#IF(cygwin or msys or mingw):		-Wl,--out-implib=libparrot.dll.a \
 		$(O_FILES) $(C_LIBS) $(ICU_SHARED)
 #IF(win32):	if exist $@.manifest mt.exe -nologo -manifest $@.manifest -outputresource:$@;2
 #IF(libparrot_shared_alias):	( cd @blib_dir@ ; ln -sf @libparrot_shared@ @libparrot_shared_alias@ )
@@ -1027,10 +1026,10 @@ hello: test_prep examples/pasm/hello$(EXE)
 	$(CUR_DIR)/examples/pasm/hello$(EXE) "from your friendly makefile"
 
 examples/pasm/hello.pbc: examples/pasm/hello.pasm
-	$(SHRPENV) $(PARROT) -o examples/pasm/hello.pbc examples/pasm/hello.pasm
+	$(PARROT) -o examples/pasm/hello.pbc examples/pasm/hello.pasm
 
 examples/pasm/hello$(O): examples/pasm/hello.pbc
-	$(SHRPENV) $(PARROT) -o examples/pasm/hello$(O) examples/pasm/hello.pbc
+	$(PARROT) -o examples/pasm/hello$(O) examples/pasm/hello.pbc
 
 examples/pasm/hello$(EXE): examples/pasm/hello$(O)
 	$(MAKE) . EXEC=examples/pasm/hello exec
@@ -1656,7 +1655,8 @@ prog-clean :
     $(SRC_DIR)/string_private_cstring.h \
     "$(SRC_DIR)/*.str" "$(SRC_DIR)/io/*.str" "$(SRC_DIR)/pmc/*.str" \
     "src/pmc/*.c" "src/pmc/pmc_*.h" "src/pmc/*.dump" \
-    vtable.dump "*.def" "*.lib" "*.exp"
+    vtable.dump \
+#IF(win32):    "*.def" "*.lib" "*.exp"
 
 archclean: dynoplibs-clean dynpmc-clean dynext-clean
 	$(RM_F) \
@@ -1671,6 +1671,7 @@ archclean: dynoplibs-clean dynpmc-clean dynext-clean
     $(INSTALLABLEPINFO) \
     $(INSTALLABLEPBCMERGE) \
     $(INSTALLABLEPDB) \
+    $(INSTALLABLECONFIG) \
     $(IMCC_DIR)/main$(O) \
     $(PDUMP) $(SRC_DIR)/pdump$(O) $(SRC_DIR)/packdump$(O) \
     $(SRC_DIR)/pbc_info$(O) $(PINFO) \
@@ -1703,12 +1704,12 @@ dynext-clean :
 	$(RM_F) \
     "$(DYNEXT_DIR)/*$(LOAD_EXT)" \
     "$(DYNEXT_DIR)/*$(SHARE_EXT)" \
-    "$(DYNEXT_DIR)/*.lib" \
-    "*.pdb" "$(DYNEXT_DIR)/*.pdb" \
-    "*.ilk" "$(DYNEXT_DIR)/*.ilk" \
-    "*.exp" "$(DYNEXT_DIR)/*.exp" \
-    "*.def" "$(DYNEXT_DIR)/*.def" \
-    "*.manifest" "$(DYNEXT_DIR)/*.manifest"
+#IF(win32):    "$(DYNEXT_DIR)/*.lib" \
+#IF(win32):    "*.pdb" "$(DYNEXT_DIR)/*.pdb" \
+#IF(win32):    "*.ilk" "$(DYNEXT_DIR)/*.ilk" \
+#IF(win32):    "*.exp" "$(DYNEXT_DIR)/*.exp" \
+#IF(win32):    "*.def" "$(DYNEXT_DIR)/*.def" \
+#IF(win32):    "*.manifest" "$(DYNEXT_DIR)/*.manifest"
 
 # Remove files generated by the test suite
 # XXX Is there a danger of too long command lines in the $(RM_F) commands,

@@ -19,10 +19,10 @@ RM_F          = @rm_f@
 CP            = @cp@
 MKPATH        = @mkpath@
 POD2MAN       = pod2man
-#IF(cygwin):SHRPENV     = env PATH="@build_dir@/blib/lib:$(PATH)"
-#ELSIF(parrot_is_shared and not win32):SHRPENV     = env LD_RUN_PATH="@build_dir@/blib/lib"
-PARROT        = $(SHRPENV) $(BUILD_DIR)/parrot@exe@
-PBC_TO_EXE    = $(SHRPENV) $(BUILD_DIR)/pbc_to_exe@exe@
+
+#IF(parrot_is_shared and !(cygwin|win32)):export LD_RUN_PATH := @blib_dir@:$(LD_RUN_PATH)
+PARROT        = $(BUILD_DIR)/parrot@exe@
+PBC_TO_EXE    = $(BUILD_DIR)/pbc_to_exe@exe@
 CAT           = $(PERL) -MExtUtils::Command -e cat
 BUILD_DYNPMC  = $(PERL) $(BUILD_DIR)/tools/build/dynpmc.pl
 RECONFIGURE   = $(PERL) $(BUILD_DIR)/tools/dev/reconfigure.pl
