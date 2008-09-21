@@ -101,7 +101,7 @@ CLEANUPS = \
   $(BUILD_DIR)/installable_$(HLLNAME)@exe@ \
 
 
-clean: 
+clean:
 	$(RM_F) $(CLEANUPS)
 
 testclean: clean

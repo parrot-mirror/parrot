@@ -1656,7 +1656,8 @@ prog-clean :
     "$(SRC_DIR)/*.str" "$(SRC_DIR)/io/*.str" "$(SRC_DIR)/pmc/*.str" \
     "src/pmc/*.c" "src/pmc/pmc_*.h" "src/pmc/*.dump" \
     vtable.dump \
-#IF(win32):    "*.def" "*.lib" "*.exp"
+#IF(win32):    "*.def" "*.lib" "*.exp" \
+#IF(cygwin):   "*.stackdump" \
 
 archclean: dynoplibs-clean dynpmc-clean dynext-clean
 	$(RM_F) \
@@ -1721,14 +1722,16 @@ test-clean :
     "t/compilers/*/*.pbc" \
     "t/compilers/*/*_pbcexe*" \
     "t/compilers/*/*.pir" \
-    "t/compilers/*/*.stabs.s"
+    "t/compilers/*/*.stabs.s" \
+    "t/compilers/*/*.stackdump"
 	$(RM_F) \
     "t/compilers/*/*/*.out" \
     "t/compilers/*/*/*.pasm" \
     "t/compilers/*/*/*.pbc" \
     "t/compilers/*/*/*_pbcexe*" \
     "t/compilers/*/*/*.pir" \
-    "t/compilers/*/*/*.stabs.s"
+    "t/compilers/*/*/*.stabs.s" \
+    "t/compilers/*/*/*.stackdump"
 	$(RM_F) \
     "t/examples/*.past"
 	$(RM_F) \
@@ -1737,7 +1740,8 @@ test-clean :
     "t/*/*.pasm" \
     "t/*/*_pbcexe*" \
     "t/*/*.pir" \
-    "t/*/*.stabs.s"
+    "t/*/*.stabs.s" \
+    "t/*/*.stackdump"
 	$(RM_F) \
     "t/library/*.pbc" \
     "t/dynoplibs/*.pbc" \
@@ -1749,14 +1753,16 @@ test-clean :
 	$(RM_F) \
     "t/src/*.c" \
     "t/src/*.pdb" \
-    "t/src/*.manifest"
+    "t/src/*.manifest" \
+    "t/src/*.stackdump"
 	$(RM_F) \
      "t/tools/pmc2c.t_*" \
      "t/tools/pmc2c.pmc_t_*" \
      "t/tools/parrot_debugger.t.*"
 	$(RM_F) \
      "test$(EXE)" \
-     "test.*"
+     "test.*" \
+     "*.stackdump"
 	$(RM_F) \
      "parrot_test_run.tar.gz"
 
