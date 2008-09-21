@@ -1,5 +1,5 @@
 #! perl
-# Copyright (C) 2006-2007, The Perl Foundation.
+# Copyright (C) 2006-2008, The Perl Foundation.
 # $Id$
 
 use strict;
@@ -214,6 +214,9 @@ OUTPUT
 
 }    #skip x86_64
 
+SKIP: {
+    skip ('Intermittent failures on Darwin', 1) if $^O =~ /darwin/;
+
 pir_output_is( <<'CODE', <<'OUTPUT', "wait + invalidate outer transcation" );
 .const int N = 50
 .sub waiter
@@ -280,6 +283,8 @@ loop:
 CODE
 okay
 OUTPUT
+
+}    #skip darwin
 
 # Local Variables:
 #   mode: cperl
