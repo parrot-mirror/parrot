@@ -51,14 +51,6 @@ not highest type in table.
 /* HEADERIZER BEGIN: static */
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 
-PARROT_WARN_UNUSED_RESULT
-PARROT_CANNOT_RETURN_NULL
-static PMC* convert_varargs_to_sig_pmc(PARROT_INTERP,
-    ARGIN(const char *sig),
-    va_list args)
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(2);
-
 static INTVAL distance_cmp(SHIM_INTERP, INTVAL a, INTVAL b);
 static void dump_mmd(PARROT_INTERP, INTVAL function)
         __attribute__nonnull__(1);
@@ -433,7 +425,7 @@ Parrot_mmd_ensure_writable(PARROT_INTERP, INTVAL function, ARGIN_NULLOK(const PM
 
 /*
 
-=item C<static PMC* convert_varargs_to_sig_pmc>
+=item C<PMC* Parrot_build_sig_object_from_varargs>
 
 Take a varargs list, and convert it into a CallSignature PMC. The CallSignature
 stores the original short signature string, and an array of integer types to
@@ -443,10 +435,11 @@ pass on to the multiple dispatch search.
 
 */
 
+PARROT_API
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
-static PMC*
-convert_varargs_to_sig_pmc(PARROT_INTERP, ARGIN(const char *sig), va_list args)
+PMC*
+Parrot_build_sig_object_from_varargs(PARROT_INTERP, ARGIN(const char *sig), va_list args)
 {
     INTVAL i;
     INTVAL in_return_sig    = 0;
@@ -578,7 +571,7 @@ Parrot_mmd_multi_dispatch_from_c_args(PARROT_INTERP,
 
     va_list args;
     va_start(args, sig);
-    sig_object = convert_varargs_to_sig_pmc(interp, sig, args);
+    sig_object = Parrot_build_sig_object_from_varargs(interp, sig, args);
     va_end(args);
 
     /* remove leading "__" from old-style MMD name */
@@ -599,6 +592,7 @@ Parrot_mmd_multi_dispatch_from_c_args(PARROT_INTERP,
 #endif
 
     Parrot_pcc_invoke_sub_from_sig_object(interp, sub, sig_object);
+    dod_unregister_pmc(interp, sig_object);
 }
 
 

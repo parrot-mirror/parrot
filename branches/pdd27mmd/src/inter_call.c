@@ -2367,6 +2367,33 @@ Parrot_PCCINVOKE(PARROT_INTERP, ARGIN(PMC* pmc), ARGMOD(STRING *method_name),
 
 /*
 
+=item C<void Parrot_pcc_invoke_sub_from_c_args>
+
+Follows the same conventions as C<Parrot_PCCINVOKE>, but the subroutine object
+to invoke is passed as an argument rather than looked up by name. The signature
+string and call arguments are converted to a CallSignature PMC.
+
+=cut
+
+*/
+
+PARROT_API
+void
+Parrot_pcc_invoke_sub_from_c_args(PARROT_INTERP, ARGIN(PMC *sub_obj),
+        ARGIN(const char *sig), ...)
+{
+    PMC *sig_obj;
+    va_list args;
+    va_start(args, sig);
+    sig_obj = Parrot_build_sig_object_from_varargs(interp, sig, args);
+    va_end(args);
+
+    Parrot_pcc_invoke_sub_from_sig_object(interp, sub_obj, sig_obj);
+    dod_unregister_pmc(interp, sig_obj);
+}
+
+/*
+
 =item C<void Parrot_pcc_invoke_sub_from_sig_object>
 
 Follows the same conventions as C<Parrot_PCCINVOKE>, but the subroutine object
