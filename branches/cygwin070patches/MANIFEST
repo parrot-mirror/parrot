@@ -441,7 +441,9 @@ docs/book/ch04_pir_subroutines.pod                          [main]doc
 docs/book/ch05_pasm.pod                                     [main]doc
 docs/book/ch06_testing.pod                                  [main]doc
 docs/book/ch07_architecture.pod                             [main]doc
-docs/book/ch08_reference.pod                                [main]doc
+docs/book/ch08_pct.pod                                      [main]doc
+docs/book/ch09_hlls.pod                                     [main]doc
+docs/book/ch10_reference.pod                                [main]doc
 docs/book/figs/p6e_0801.png                                 [main]doc
 docs/compiler_faq.pod                                       [devel]doc
 docs/configuration.pod                                      [devel]doc
@@ -694,6 +696,7 @@ examples/nci/win32api.pir                                   [main]doc
 examples/nci/xlibtest.nqp                                   [main]doc
 examples/nci/xlibtest.p6                                    [main]doc
 examples/nci/xlibtest.pir                                   [main]doc
+examples/nci/xlibtest.rb                                    [main]doc
 examples/opengl/shapes.pir                                  [main]doc
 examples/opengl/triangle.pir                                [main]doc
 examples/pasm/cat.pasm                                      [main]doc
@@ -1260,6 +1263,7 @@ languages/cardinal/t/blocks.t                               [cardinal]
 languages/cardinal/t/harness                                [cardinal]
 languages/cardinal/t/hash/hash.t                            [cardinal]
 languages/cardinal/t/nil.t                                  [cardinal]
+languages/cardinal/t/range.t                                [cardinal]
 languages/cardinal/t/splat.t                                [cardinal]
 languages/cardinal/t/string/add.t                           [cardinal]
 languages/cardinal/t/string/block.t                         [cardinal]
@@ -1809,6 +1813,7 @@ languages/lua/src/lib/luaperl.pir                           [lua]
 languages/lua/src/lib/luaregex.pir                          [lua]
 languages/lua/src/lib/luastring.pir                         [lua]
 languages/lua/src/lib/luatable.pir                          [lua]
+languages/lua/src/lib/markdown.pir                          [lua]
 languages/lua/src/lib/md5.pir                               [lua]
 languages/lua/src/lib/random.pir                            [lua]
 languages/lua/src/lib/struct.pir                            [lua]
@@ -2045,9 +2050,11 @@ languages/markdown/config/makefiles/root.in                 [markdown]
 languages/markdown/markdown.pir                             [markdown]
 languages/markdown/src/Compiler.pir                         [markdown]
 languages/markdown/src/Node.pir                             [markdown]
+languages/markdown/src/builtins/length.pir                  [markdown]
 languages/markdown/src/parser/actions.pm                    [markdown]
 languages/markdown/src/parser/grammar.pg                    [markdown]
 languages/markdown/t/00-sanity.t                            [markdown]
+languages/markdown/t/MarkdownTest.t                         [markdown]
 languages/markdown/t/Parrot/Test/Markdown.pm                [markdown]
 languages/markdown/t/harness                                [markdown]
 languages/ook/Changes                                       [ook]
@@ -2518,6 +2525,9 @@ languages/pynie/t/00-parrot/06-stmts.t                      [pynie]
 languages/pynie/t/00-parrot/07-op-cmp.t                     [pynie]
 languages/pynie/t/00-parrot/08-func.t                       [pynie]
 languages/pynie/t/00-parrot/09-list.t                       [pynie]
+languages/pynie/t/00-parrot/10-augop.t                      [pynie]
+languages/pynie/t/00-parrot/11-boolop.t                     [pynie]
+languages/pynie/t/00-parrot/12-try.t                        [pynie]
 languages/pynie/t/harness                                   [pynie]
 languages/regex/01_basic.pir                                [regex]
 languages/regex/02_date.pir                                 [regex]
