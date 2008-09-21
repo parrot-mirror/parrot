@@ -41,20 +41,6 @@ sub runstep {
 
     $parrot_is_shared = 0 unless $conf->data->get('has_dynamic_linking');
 
-    # Parrot can't necessarily handle a pre-existing installed shared
-    # libparrot.so. At this point, we don't know the actual name
-    # of the shared parrot library. However, 'libparrot.so' will catch
-    # at least some of the problems.
-    # RT#52288: the check for old_versions should be improved
-    # The cygwin build with a preexisting libparrot.dll in the PATH
-    # works fine if blib/lib is in the PATH before.
-    my $old_version
-        = File::Spec->catfile($conf->data->get('libdir'), 'libparrot.so');
-    if (-e $old_version) {
-        warn("\nWarning: Building a shared parrot library may conflict " .
-             "with your previously-installed $old_version\n");
-    }
-
     if (
         $conf->options->get('ask')
         &&
@@ -85,18 +71,30 @@ sub runstep {
         : ''
     );
 
+    # Should be overridden by hints to allow RT#39742 installed parrot
+    # conflicts with dev parrot. We do not know the LIBPARROT name yet.
+    # mingw and cygwin can link to the dll directly. Only msvc needs to link
+    # against the importlib.
     unless ( defined( $conf->data->get('libparrot_ldflags') ) ) {
-        $conf->data->set(libparrot_ldflags =>
-        '-L'
-        . $conf->data->get('build_dir')
-        . $conf->data->get('slash')
-        . $conf->data->get('blib_dir')
-        . ' -lparrot'
+        $conf->data->set
+          ( libparrot_ldflags =>
+            defined( $conf->data->get('libparrot_shared') )
+            ? '-L'
+            . $conf->data->get('build_dir')
+            . $conf->data->get('slash')
+            . $conf->data->get('blib_dir')
+            . ' -lparrot'
+            : $conf->data->get('build_dir')
+            . $conf->data->get('slash')
+            . $conf->data->get('blib_dir')
+            . 'libparrot'
+            . $conf->data->get('a')
         );
     }
 
-    # 39742 installed parrot conflicts with dev parrot:
+    # RT#39742 installed parrot conflicts with dev parrot:
     # move -L/usr/lib in ldflags to the back after -lparrot
+    # but better link directly to the file.
     if ($parrot_is_shared and $conf->data->get('ldflags') =~ /(-L\S+)/) {
        my $ldflags = $conf->data->get('ldflags');
        my $lpath = $1;

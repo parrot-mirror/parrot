@@ -27,17 +27,17 @@ sub runstep {
     my $dllsuffix = join("_",@parrot_version);
     $libparrot_shared =~ s/parrot\.dll/parrot$dllsuffix\.dll/;
 
-    # An old note about building shared libraries: Perl5.8 used the
-    # 'ld2' tool, which is installed as part of the perl5 installation.
-    # So far, it appears parrot can get by with simply using gcc -shared,
-    # so we override the perl5 Configure defaults and use 'gcc -shared'
-    # instead of 'ld2'.
-    # If this later causes problems, it might be worth revisiting.
-    # A. Dougherty 9/9/2002
+    # An old note about building shared libraries: Perl5 used the 'ld2' tool until
+    # 5.8.8-4, which is installed as part of the perl5 installation. So far, it
+    # appears parrot can get by with simply using gcc -shared, so we override
+    # the perl5 Configure defaults and use 'gcc -shared' instead of 'ld2'.  If
+    # this later causes problems, it might be worth revisiting.  A. Dougherty
+    # 9/9/2002
     $conf->data->set(
         build_dir           => $build_dir,
-        libparrot_shared    => $libparrot_shared,
-        ld                  => 'gcc',
+        ld                  => $conf->data->get('ld') eq 'ld2'
+                               ? 'gcc' # do not use old perl5 linker helper
+                               : $conf->data->get('ld'), # gcc or g++
         ld_share_flags      => '-shared',
         ld_load_flags       => '-shared',
         libs                => $libs,
@@ -46,7 +46,11 @@ sub runstep {
         parrot_is_shared    => 1,
         sym_export          => '__declspec(dllexport)',
         sym_import          => '__declspec(dllimport)',
-        cygchkdll           => 'tools/build/cygchkdll.sh $(MINIPARROT) $(LIBPARROT)',
+        #cygchkdll           => 'tools/build/cygchkdll.sh $(MINIPARROT) $(LIBPARROT)',
+        libparrot_shared    => $libparrot_shared,
+        blib_dir            => '.',
+        # as with mingw link against the dll directly, not the importlib
+        libparrot_ldflags   => $conf->data->get('build_dir') . '/' . $libparrot_shared,
     );
 
     # inet_aton needs to be defined on Cygwin.
