@@ -1235,10 +1235,11 @@ Default fallback. Performs a multiple dispatch call for 'add_float'.
 */
 
     VTABLE PMC *add_float(FLOATVAL value, PMC *dest) {
-        PMC *result = PMCNULL;
-        Parrot_mmd_multi_dispatch_from_c_args(interp,
-                "add_float", "PNP->P", SELF, value, dest, &result);
-        return result;
+        dest = pmc_new(INTERP, VTABLE_type(INTERP, SELF));
+
+        VTABLE_set_number_native(INTERP, dest,
+                SELF.get_number() + value);
+        return dest;
     }
 
 /*
