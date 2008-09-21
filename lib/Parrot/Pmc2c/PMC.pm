@@ -328,7 +328,7 @@ sub vtable_method_does_multi {
 
     return 1 if ($methodname =~ m/^
                 (?:i_)?
-                (?:add|subtract|multiply|divide|floor_divide|modulus|pow)
+                (?:add|subtract|multiply|divide|floor_divide|modulus)
                 (?:_int|_float)?
               $/x);
 }
