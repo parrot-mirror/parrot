@@ -399,7 +399,8 @@ Invoke the PIR-defined vtable override, or call the default get_integer.
             /* Get the class. */
             PMC * const cur_class = VTABLE_get_pmc_keyed_int(interp, _class->all_parents, i);
 
-            PMC * const meth = Parrot_oo_find_vtable_override_for_class(interp, cur_class, meth_name);
+            PMC * const meth = Parrot_oo_find_vtable_override_for_class(interp,
+                    cur_class, meth_name);
             if (!PMC_IS_NULL(meth)) {
                 INTVAL result;
                 Parrot_pcc_invoke_sub_from_c_args(interp, meth, "P->I", pmc, &result);
