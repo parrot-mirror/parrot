@@ -41,7 +41,7 @@ Still working on fully fixing RT#39742 installed-conflict.
 TODO
 ----
 
-* add make uninstall support to core and languages (no ticket yet)
+* add make uninstall support to core and languages (RT#43384)
 
 STATUS
 -------
