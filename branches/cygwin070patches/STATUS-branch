@@ -41,6 +41,10 @@ Still working on fully fixing RT#39742 installed-conflict.
  
 * msvc needs some more dllexport/dllimport attributes.
 
+TODO
+----
+
+* add make uninstall support to core and languages (no ticket yet)
 
 STATUS
 -------
