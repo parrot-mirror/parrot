@@ -57,25 +57,26 @@ any value type.
     piropsig['isa']      = 'IP~'
     piropsig['isfalse']  = 'IP'
     piropsig['issame']   = 'IPP'
-    piropsig['istrue']   = 'IP'
-    piropsig['n_abs']    = 'PP'
-    piropsig['n_add']    = 'PP+'
-    piropsig['n_band']   = 'PPP'
-    piropsig['n_bnot']   = 'PP'
-    piropsig['n_bor']    = 'PPP'
-    piropsig['n_concat'] = 'PP~'
-    piropsig['n_div']    = 'PP+'
-    piropsig['n_fdiv']   = 'PP+'
-    piropsig['n_mod']    = 'PP+'
-    piropsig['n_mul']    = 'PP+'
-    piropsig['n_neg']    = 'PP'
-    piropsig['n_not']    = 'PP'
-    piropsig['n_shl']    = 'PP+'
-    piropsig['n_shr']    = 'PP+'
-    piropsig['n_sub']    = 'PP+'
-    piropsig['pow']      = 'NN+'
-    piropsig['print']    = 'v*'
-    piropsig['set']      = 'PP'
+    piropsig['istrue']     = 'IP'
+    piropsig['newclosure'] = 'PP'
+    piropsig['n_abs']      = 'PP'
+    piropsig['n_add']      = 'PP+'
+    piropsig['n_band']     = 'PPP'
+    piropsig['n_bnot']     = 'PP'
+    piropsig['n_bor']      = 'PPP'
+    piropsig['n_concat']   = 'PP~'
+    piropsig['n_div']      = 'PP+'
+    piropsig['n_fdiv']     = 'PP+'
+    piropsig['n_mod']      = 'PP+'
+    piropsig['n_mul']      = 'PP+'
+    piropsig['n_neg']      = 'PP'
+    piropsig['n_not']      = 'PP'
+    piropsig['n_shl']      = 'PP+'
+    piropsig['n_shr']      = 'PP+'
+    piropsig['n_sub']      = 'PP+'
+    piropsig['pow']        = 'NN+'
+    piropsig['print']      = 'v*'
+    piropsig['set']        = 'PP'
     set_global '%piropsig', piropsig
 
     ##  %valflags specifies when PAST::Val nodes are allowed to
@@ -612,7 +613,7 @@ Return the POST representation of a C<PAST::Block>.
     unless ctrlpast goto sub_done
     bpost.'push'(ctrllabel)
     bpost.'push_pirop'('.local pmc exception')
-    bpost.'push_pirop'('.get_results (exception, $P11)')
+    bpost.'push_pirop'('.get_results (exception)')
     $I0 = isa ctrlpast, 'PAST::Node'
     if $I0 goto control_past
     if ctrlpast == 'return_pir' goto control_return

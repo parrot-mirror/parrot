@@ -344,6 +344,7 @@ static int check_value(constant * const c, int val);
              pmc_object
              opt_ret_cont
              target
+             param
              symbol
              result_target
              long_result
@@ -397,8 +398,11 @@ static int check_value(constant * const c, int val);
              rel_op
              condition
              augmented_op
+             unique_reg_flag
 
 %type <invo> long_invocation
+             long_invocation_stat
+             short_invocation_stat
              methodcall
              subcall
              simple_invocation
@@ -406,6 +410,9 @@ static int check_value(constant * const c, int val);
              long_return_stat
              short_yield_stat
              short_return_stat
+             invocation
+             short_invocation
+             return_instr
 
 %type <cval> const_tail
              constant
@@ -509,9 +516,13 @@ namespace_slice   : TK_STRINGC
                   ;
 
 sub_def           : sub_head sub_flags "\n"
-                    parameters
+                    parameter_list
                     instructions
-                    ".end"
+                    sub_end
+                  ;
+
+sub_end           : ".end"
+                         { close_sub(lexer); }
                   ;
 
 sub_head          : ".sub" sub_id
@@ -559,15 +570,20 @@ multi_type        : identifier
                   | keylist
                   ;
 
+parameter_list    : parameters
+                         { generate_get_params(lexer); }
+                  ;
+
 parameters        : /* empty */
                   | parameters parameter
                   ;
 
 parameter         : ".param" param param_flags "\n"
+                         { set_param_flag(lexer, $2, $3); }
                   ;
 
 param             : type identifier
-                         { add_param(lexer, $1, $2); }
+                         { $$ = add_param(lexer, $1, $2); }
                   ;
 
 param_flags       : /* empty */
@@ -578,10 +594,15 @@ param_flags       : /* empty */
 
 param_flag        : target_flag
                   | invocant_param
+                  | unique_reg_flag
                   ;
 
 invocant_param    : ":invocant" '(' multi_type ')'
-                         { $$ = TARGET_FLAG_INVOCANT; }
+                         { $$ = TARGET_FLAG_INVOCANT; /* XXX handle multi_type */}
+                  ;
+
+unique_reg_flag   : ":unique_reg"
+                         { $$ = TARGET_FLAG_UNIQUE_REG; }
                   ;
 
 /* Instructions */
@@ -590,14 +611,7 @@ instructions      : /* empty */
                   | instructions instruction
                   ;
 
-/* helper rule to create a new statement node before the instruction is parsed */
-instruction       : { new_statement(lexer); }
-                    instr
-                  ;
-
-instr             : TK_LABEL "\n"
-                         { set_label(lexer, $1); }
-                  | TK_LABEL statement
+instruction       : TK_LABEL statement
                          { set_label(lexer, $1); }
                   | statement
                   ;
@@ -608,13 +622,18 @@ statement         : conditional_stat
                   | lex_decl
                   | const_decl_stat
                   | return_stat
-                  | yield_stat
                   | invocation_stat
                   | assignment_stat
                   | parrot_stat
                   | getresults_stat
                   | null_stat
+                  | empty_stat
                   | error_stat
+                  ;
+
+/* make sure a new instruction node is created; call set_instr() for that. */
+empty_stat        : "\n"
+                        { set_instr(lexer, NULL); }
                   ;
 
 /* "error" is a built-in rule; used for trying to recover. */
@@ -678,15 +697,14 @@ keylist_assignment: keylist '=' expression
                           * an identifier; get the name, and check its type.
                           */
                          char * const instr = get_instr(lexer);
-                         symbol *sym = find_symbol(lexer, instr);
+                         symbol *sym        = find_symbol(lexer, instr);
                          target *obj;
 
                          /* find the symbol for the object being indexed;
                           * it must have been declared
                           */
                          if (sym == NULL) {
-                            yyerror(yyscanner, lexer,
-                                    "indexed object '%s' not declared", instr);
+                            yyerror(yyscanner, lexer, "indexed object '%s' not declared", instr);
                             sym = new_symbol(instr, PMC_TYPE);
                          }
                          else if (sym->type != PMC_TYPE) /* found symbol, now check it's a PMC */
@@ -853,7 +871,7 @@ assignment        : target '=' TK_INTC
                         }
                   | target '=' TK_PREG keylist
                         {
-                          target *preg = reg(lexer, PMC_TYPE, $3);
+                          target *preg = new_reg(lexer, PMC_TYPE, $3);
                           set_target_key(preg, $4);
                           set_instrf(lexer, "set", "%T%T", $1, preg);
                         }
@@ -928,7 +946,7 @@ assignment        : target '=' TK_INTC
                       }
                   | TK_PREG keylist '=' expression
                         {
-                          target *preg = reg(lexer, PMC_TYPE, $1);
+                          target *preg = new_reg(lexer, PMC_TYPE, $1);
                           set_target_key(preg, $2);
                           set_instrf(lexer, "set", "%T%E", preg, $4);
                         }
@@ -1009,8 +1027,10 @@ conditional_instr : if_unless "null" TK_IDENT "goto" identifier
                           int istrue = evaluate_c($2);
                           /* if "unless", invert the true-ness */
                           istrue = $1 ? !istrue : istrue;
-                          if (istrue)
+                          if (istrue) {
                               set_instrf(lexer, "branch", "%I", $4);
+                              set_instr_flag(lexer, INSTR_FLAG_BRANCH);
+                          }
                           else
                               set_instr(lexer, "noop");
                         }
@@ -1043,14 +1063,18 @@ conditional_instr : if_unless "null" TK_IDENT "goto" identifier
                                  invert_instr(lexer);
 
                              push_operand(lexer, expr_from_ident($4));
+
+                             set_instr_flag(lexer, INSTR_FLAG_ISXX);
                           }
                           else { /* evaluation during compile time */
                              /* if the result was false but the instr. was "unless", or,
                               * if the result was true and the instr. was "if",
                               * do an unconditional jump.
                               */
-                             if ( (($2 == 0) && $1) || (($2 == 1) && !$1) )
+                             if ( (($2 == 0) && $1) || (($2 == 1) && !$1) ) {
                                 set_instrf(lexer, "branch", "%I", $4);
+                                set_instr_flag(lexer, INSTR_FLAG_BRANCH);
+                             }
                              else
                                 set_instr(lexer, "noop");
 
@@ -1103,7 +1127,10 @@ then              : "goto" /* PIR mode */
                   ;
 
 goto_stat         : "goto" identifier "\n"
-                        { set_instrf(lexer, "branch", "%I", $2); }
+                        {
+                          set_instrf(lexer, "branch", "%I", $2);
+                          set_instr_flag(lexer, INSTR_FLAG_BRANCH);
+                        }
                   ;
 
 local_decl        : ".local" type local_id_list "\n"
@@ -1152,7 +1179,11 @@ lex_decl          : ".lex" TK_STRINGC ',' pmc_object "\n"
 /* Sub/method invocation */
 
 
-invocation_stat      : long_invocation_stat
+invocation_stat      : invocation
+                           { convert_inv_to_instr(lexer, $1); }
+                     ;
+
+invocation           : long_invocation_stat
                      | short_invocation_stat
                      ;
 
@@ -1164,6 +1195,7 @@ long_invocation_stat : ".begin_call" "\n"
                             { /* $4 contains an invocation object */
                               set_invocation_args($4, $3);
                               set_invocation_results($4, $6);
+                              $$ = $4;
                             }
                      ;
 
@@ -1221,11 +1253,17 @@ short_invocation_stat: short_invocation "\n"
 
 
 short_invocation     : opt_target_list '=' simple_invocation
-                           { set_invocation_results($3, $1); }
+                           { set_invocation_results($3, $1);
+                             $$ = $3;
+                           }
                      | target '=' simple_invocation
-                           { set_invocation_results($3, $1); }
+                           { set_invocation_results($3, $1);
+                             $$ = $3;
+                           }
                      | simple_invocation
-                           { set_invocation_results($1, NULL); }
+                           { set_invocation_results($1, NULL);
+                             $$ = $1;
+                           }
                      ;
 
 simple_invocation    : subcall
@@ -1282,9 +1320,9 @@ method               : identifier
                              $$ = target_from_symbol(sym);
                            }
                      | TK_PREG
-                           { $$ = reg(lexer, PMC_TYPE, $1); }
+                           { $$ = new_reg(lexer, PMC_TYPE, $1); }
                      | TK_SREG
-                           { $$ = reg(lexer, STRING_TYPE, $1); }
+                           { $$ = new_reg(lexer, STRING_TYPE, $1); }
                      | TK_STRINGC
                            { $$ = target_from_string($1); }
                      ;
@@ -1292,7 +1330,7 @@ method               : identifier
 pmc_object           : identifier
                            { $$ = target_from_ident(PMC_TYPE, $1); }
                      | TK_PREG
-                           { $$ = reg(lexer, PMC_TYPE, $1); }
+                           { $$ = new_reg(lexer, PMC_TYPE, $1); }
 
                      ;
 
@@ -1313,7 +1351,7 @@ target_list          : result_target
                      ;
 
 result_target        : target target_flags
-                           { $$ = set_param_flag($1, $2); }
+                           { $$ = set_param_flag(lexer, $1, $2); }
                      ;
 
 target_flags         : /* empty */
@@ -1328,8 +1366,6 @@ target_flag          : ":optional"
                            { $$ = TARGET_FLAG_OPT_FLAG; }
                      | ":slurpy"
                            { $$ = TARGET_FLAG_SLURPY; }
-                     | ":unique_reg"
-                           { $$ = TARGET_FLAG_UNIQUE_REG; }
                      | ":named" opt_paren_string
                            {
                              $$ = TARGET_FLAG_NAMED;
@@ -1340,11 +1376,13 @@ target_flag          : ":optional"
 /* Returning and Yielding */
 
 
-return_stat          : short_return_stat
-                     | long_return_stat
+return_stat          : return_instr
+                           { convert_inv_to_instr(lexer, $1); }
                      ;
 
-yield_stat           : short_yield_stat
+return_instr         : short_return_stat
+                     | long_return_stat
+                     | short_yield_stat
                      | long_yield_stat
                      ;
 
@@ -1354,12 +1392,13 @@ short_return_stat    : ".return" arguments "\n"
                               set_invocation_args($$, $2);
                             }
                      | ".tailcall" simple_invocation "\n"
-                            { /* was the invocation a method call? then it becomes a method tail call,
-                               * otherwise it's just a normal (sub) tail call.
+                            { /* was the invocation a method call? then it becomes a method tail
+                               * call, otherwise it's just a normal (sub) tail call.
                                */
                               set_invocation_type($2, ($2->type == CALL_METHOD)
                                                       ? CALL_METHOD_TAILCALL
                                                       : CALL_TAILCALL);
+                              $$ = $2;
                             }
                      ;
 
@@ -1503,6 +1542,11 @@ const_tail            : "int" identifier '=' TK_INTC
                             { $$ = new_named_const(STRING_TYPE, $2, $4); }
                       | "pmc" identifier '=' TK_STRINGC
                             { $$ = new_named_const(PMC_TYPE, $2, $4); }
+                      /*
+                      | "Sub" identifier '=' TK_STRINGC
+                      | "Coroutine" identifier '=' TK_STRINGC
+                      */
+
                       /* this might be useful, for:
                          .const "Sub" foo = "foo" # make a Sub PMC of subr. "foo"
                          .const "Float" PI = 3.14 # make a Float PMC for 3.14
@@ -1550,10 +1594,10 @@ type        : "int"          { $$ = INT_TYPE; }
 target      : symbol     { set_curtarget(lexer, $1);  }
             ;
 
-symbol      : TK_PREG    { $$ = reg(lexer, PMC_TYPE, $1);    }
-            | TK_NREG    { $$ = reg(lexer, NUM_TYPE, $1);    }
-            | TK_IREG    { $$ = reg(lexer, INT_TYPE, $1);    }
-            | TK_SREG    { $$ = reg(lexer, STRING_TYPE, $1); }
+symbol      : TK_PREG    { $$ = new_reg(lexer, PMC_TYPE, $1);    }
+            | TK_NREG    { $$ = new_reg(lexer, NUM_TYPE, $1);    }
+            | TK_IREG    { $$ = new_reg(lexer, INT_TYPE, $1);    }
+            | TK_SREG    { $$ = new_reg(lexer, STRING_TYPE, $1); }
             | identifier { /* a symbol must have been declared; check that at this point. */
                            symbol *sym = find_symbol(lexer, $1);
                            if (sym == NULL) {
@@ -1572,14 +1616,14 @@ identifier  : TK_IDENT
             | keyword
             ;
 
-keyword     : "if"          { $$ = "if"; }
-            | "unless"      { $$ = "unless"; }
-            | "goto"        { $$ = "goto"; }
-            | "int"         { $$ = "int"; }
-            | "num"         { $$ = "num"; }
-            | "string"      { $$ = "string"; }
-            | "pmc"         { $$ = "pmc"; }
-            | "null"        { $$ = "null"; }
+keyword     : "if"          { $$ = dupstr(lexer, "if"); }
+            | "unless"      { $$ = dupstr(lexer, "unless"); }
+            | "goto"        { $$ = dupstr(lexer, "goto"); }
+            | "int"         { $$ = dupstr(lexer, "int"); }
+            | "num"         { $$ = dupstr(lexer, "num"); }
+            | "string"      { $$ = dupstr(lexer, "string"); }
+            | "pmc"         { $$ = dupstr(lexer, "pmc"); }
+            | "null"        { $$ = dupstr(lexer, "null"); }
             ;
 
 unop        : '-'            { $$ = "neg"; }
@@ -2306,8 +2350,9 @@ create_if_instr(yyscan_t yyscanner, lexer_state * const lexer, int invert, int h
     /* try to find the symbol; if it was declared it will be found; otherwise emit an error. */
     symbol *sym = find_symbol(lexer, name);
     if (sym == NULL) {
-        sym = new_symbol(name, UNKNOWN_TYPE);
         yyerror(yyscanner, lexer, "symbol '%s' not declared'", name);
+        /* create a dummy symbol so we can continue without segfaulting. */
+        sym = new_symbol(name, UNKNOWN_TYPE);
     }
     /* if there was a keyword "null", use the if/unless_null instruction variants. */
     if (hasnull)
@@ -2315,6 +2360,9 @@ create_if_instr(yyscan_t yyscanner, lexer_state * const lexer, int invert, int h
                    label);
     else
         set_instrf(lexer, invert ? "unless" : "if", "%T%I", target_from_symbol(sym), label);
+
+    /* set a flag on this instruction */
+    set_instr_flag(lexer, INSTR_FLAG_IFUNLESS);
 }
 
 /*

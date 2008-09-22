@@ -452,6 +452,17 @@ done:
 .end
 
 #-----------------------------------------------------------------------
+.sub field_count :method
+    .local pmc field_count
+    field_count = get_mysql_function('mysql_field_count', 'ip')
+    .local pmc mysql
+    mysql = getattribute self, 'mysql'
+    .local int fields
+    fields = field_count(mysql)
+    .return(fields)
+.end
+
+#-----------------------------------------------------------------------
 .sub fetch_row :method
 
     .local pmc rowres
@@ -492,7 +503,9 @@ endrow:
     args = new 'Hash'
     args ['data'] = res
     rowres = new ['Mysql';'Row'], args
+    .return(rowres)
 nomore:
+    rowres = new 'Undef'
     .return(rowres)
 .end
 
@@ -533,6 +546,13 @@ nomore:
     $S0 = data [n]
     $P0 = new 'String'
     $P0 = $S0
+    .return($P0)
+.end
+
+.sub get :method
+    .param int n
+
+    $P0 = self[n]
     .return($P0)
 .end
 

@@ -271,9 +271,9 @@ Description of the test.
     print "'\n"
 
   thrown:
-    .local pmc exception, continuation
+    .local pmc exception
     .local string message
-    get_results '0,0', exception, continuation
+    get_results '0', exception
     message = exception
     say message
     # remove /'s

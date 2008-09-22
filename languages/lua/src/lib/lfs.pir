@@ -423,9 +423,9 @@ Returns C<true> in case of success or C<nil> plus an error string.
   _handler:
     .local pmc nil
     .local pmc msg
-    .local pmc e, c
+    .local pmc e
     .local string s
-    .get_results (e, c)
+    .get_results (e)
     s = e
     new nil, 'LuaNil'
     new msg, 'LuaString'
@@ -457,9 +457,9 @@ string.
   _handler:
     .local pmc nil
     .local pmc msg
-    .local pmc e, c
+    .local pmc e
     .local string s
-    .get_results (e, c)
+    .get_results (e)
     s = e
     new nil, 'LuaNil'
     new msg, 'LuaString'
@@ -490,9 +490,9 @@ when there is no more entries. Raises an error if C<path> is not a directory.
     res = newclosure dir_aux
     .return (res)
   _handler:
-    .local pmc e, c
+    .local pmc e
     .local string s
-    .get_results (e, c)
+    .get_results (e)
     s = e
     lua_error("cannot open ", $S0, ": ", s)
 .end
@@ -564,9 +564,9 @@ C<nil> plus an error string.
   _handler:
     .local pmc nil
     .local pmc msg
-    .local pmc e, c
+    .local pmc e
     .local string s
-    .get_results (e, c)
+    .get_results (e)
     s = e
     new nil, 'LuaNil'
     new msg, 'LuaString'
@@ -598,9 +598,9 @@ C<nil> plus an error string.
   _handler:
     .local pmc nil
     .local pmc msg
-    .local pmc e, c
+    .local pmc e
     .local string s
-    .get_results (e, c)
+    .get_results (e)
     s = e
     new nil, 'LuaNil'
     new msg, 'LuaString'

@@ -36,7 +36,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "Test consecutive startCodeGen()" );
    	$P1.startCodeGen()
 	end
 catch:
-    get_results '0,0', $P0, $P2
+    get_results '0,0', $P0
     $S0 = $P0
 	print $S0
 	print "\n"
@@ -54,7 +54,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "Test endCodeGen()" );
     $P1.endCodeGen()
     end
 catch:
-    get_results '0,0', $P0, $P2
+    get_results '0,0', $P0
     $S0 = $P0
     print $S0
     print "\n"
@@ -72,7 +72,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "Test bad call to endCodeGen()" );
     $P1.endCodeGen()
     end
 catch:
-    get_results '0,0', $P0, $P2
+    get_results '0,0', $P0
     $S0 = $P0
     print $S0
     print "\n"
@@ -92,7 +92,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "Test startSub() and endSub()" );
     $P1.endCodeGen()
     end
 catch:
-    get_results '0,0', $P0, $P2
+    get_results '0,0', $P0
     $S0 = $P0
     print $S0
     print "\n"
@@ -111,7 +111,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "Test bad call to startSub()" );
     $P1.endCodeGen()
     end
 catch:
-    get_results '0,0', $P0, $P2
+    get_results '0,0', $P0
     $S0 = $P0
     print $S0
     print "\n"
@@ -128,7 +128,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "Test bad call to startSub()" );
     $P1.startSub("main","main")
     end
 catch:
-    get_results '0,0', $P0, $P2
+    get_results '0,0', $P0
     $S0 = $P0
     print $S0
     print "\n"
@@ -146,7 +146,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "Test bad call to startSub() endSub()" );
     $P1.endSub()
     end
 catch:
-    get_results '0,0', $P0, $P2
+    get_results '0,0', $P0
     $S0 = $P0
     print $S0
     print "\n"
@@ -163,7 +163,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "Test bad call to endSub()" );
     $P1.endSub()
     end
 catch:
-    get_results '0,0', $P0, $P2
+    get_results '0,0', $P0
     $S0 = $P0
     print $S0
     print "\n"
@@ -185,7 +185,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "Test startCall() and endCall()" );
     $P1.endCodeGen()
     end
 catch:
-    get_results '0,0', $P0, $P2
+    get_results '0,0', $P0
     $S0 = $P0
     print $S0
     print "\n"
@@ -205,7 +205,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "Test bad startCall()" );
     $P1.endCodeGen()
     end
 catch:
-    get_results '0,0', $P0, $P2
+    get_results '0,0', $P0
     $S0 = $P0
     print $S0
     print "\n"
@@ -226,7 +226,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "Test bad endCall()" );
     $P1.endCodeGen()
     end
 catch:
-    get_results '0,0', $P0, $P2
+    get_results '0,0', $P0
     $S0 = $P0
     print $S0
     print "\n"
@@ -243,7 +243,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "Test bad endCall()" );
     $P1.endCall()
     end
 catch:
-    get_results '0,0', $P0, $P2
+    get_results '0,0', $P0
     $S0 = $P0
     print $S0
     print "\n"
@@ -260,7 +260,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "Test bad startCall()" );
     $P1.startCall("foo")
     end
 catch:
-    get_results '0,0', $P0, $P2
+    get_results '0,0', $P0
     $S0 = $P0
     print $S0
     print "\n"
@@ -282,7 +282,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "Test startOp() and endOp()" );
     $P1.endCodeGen()
     end
 catch:
-    get_results '0,0', $P0, $P2
+    get_results '0,0', $P0
     $S0 = $P0
     print $S0
     print "\n"
@@ -302,7 +302,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "Test bad startOp()" );
     $P1.endCodeGen()
     end
 catch:
-    get_results '0,0', $P0, $P2
+    get_results '0,0', $P0
     $S0 = $P0
     print $S0
     print "\n"
@@ -323,7 +323,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "Test bad endOp()" );
     $P1.endCodeGen()
     end
 catch:
-    get_results '0,0', $P0, $P2
+    get_results '0,0', $P0
     $S0 = $P0
     print $S0
     print "\n"
@@ -340,7 +340,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "Test bad endOp()" );
     $P1.endOp()
     end
 catch:
-    get_results '0,0', $P0, $P2
+    get_results '0,0', $P0
     $S0 = $P0
     print $S0
     print "\n"
@@ -357,7 +357,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "Test bad startOp()" );
     $P1.startOp("print")
     end
 catch:
-    get_results '0,0', $P0, $P2
+    get_results '0,0', $P0
     $S0 = $P0
     print $S0
     print "\n"
@@ -380,7 +380,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "Test val()" );
     $P1.endCodeGen()
     end
 catch:
-    get_results '0,0', $P0, $P2
+    get_results '0,0', $P0
     $S0 = $P0
     print $S0
     print "\n"
@@ -400,7 +400,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "Test bad val()" );
     $P1.endCodeGen()
     end
 catch:
-    get_results '0,0', $P0, $P2
+    get_results '0,0', $P0
     $S0 = $P0
     print $S0
     print "\n"
@@ -419,7 +419,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "Test bad val()" );
     $P1.endCodeGen()
     end
 catch:
-    get_results '0,0', $P0, $P2
+    get_results '0,0', $P0
     $S0 = $P0
     print $S0
     print "\n"
@@ -436,7 +436,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "Test bad val()" );
     $P1.val("1","int")
     end
 catch:
-    get_results '0,0', $P0, $P2
+    get_results '0,0', $P0
     $S0 = $P0
     print $S0
     print "\n"
@@ -459,7 +459,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "Test var()" );
     $P1.endCodeGen()
     end
 catch:
-    get_results '0,0', $P0, $P2
+    get_results '0,0', $P0
     $S0 = $P0
     print $S0
     print "\n"
@@ -479,7 +479,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "Test bad var()" );
     $P1.endCodeGen()
     end
 catch:
-    get_results '0,0', $P0, $P2
+    get_results '0,0', $P0
     $S0 = $P0
     print $S0
     print "\n"
@@ -498,7 +498,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "Test bad var()" );
     $P1.endCodeGen()
     end
 catch:
-    get_results '0,0', $P0, $P2
+    get_results '0,0', $P0
     $S0 = $P0
     print $S0
     print "\n"
@@ -515,7 +515,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "Test bad var()" );
     $P1.var("P1","pmc")
     end
 catch:
-    get_results '0,0', $P0, $P2
+    get_results '0,0', $P0
     $S0 = $P0
     print $S0
     print "\n"
@@ -536,7 +536,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "Test label()" );
     $P1.endCodeGen()
     end
 catch:
-    get_results '0,0', $P0, $P2
+    get_results '0,0', $P0
     $S0 = $P0
     print $S0
     print "\n"
@@ -554,7 +554,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "Test bad label()" );
     $P1.endCodeGen()
     end
 catch:
-    get_results '0,0', $P0, $P2
+    get_results '0,0', $P0
     $S0 = $P0
     print $S0
     print "\n"
@@ -571,7 +571,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "Test bad label()" );
     $P1.label("wombat")
     end
 catch:
-    get_results '0,0', $P0, $P2
+    get_results '0,0', $P0
     $S0 = $P0
     print $S0
     print "\n"
@@ -599,7 +599,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "Test PASM output 1)" );
     $P1.printPASM()
     end
 catch:
-    get_results '0,0', $P0, $P2
+    get_results '0,0', $P0
     $S0 = $P0
     print $S0
     print "\n"
@@ -634,7 +634,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "Test PASM output 2" );
     $P1.printPASM()
     end
 catch:
-    get_results '0,0', $P0, $P2
+    get_results '0,0', $P0
     $S0 = $P0
     print $S0
     print "\n"
@@ -671,7 +671,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "Test PASM output 3" );
     $P1.printPASM()
     end
 catch:
-    get_results '0,0', $P0, $P2
+    get_results '0,0', $P0
     $S0 = $P0
     print $S0
     print "\n"

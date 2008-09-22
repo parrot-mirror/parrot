@@ -209,10 +209,22 @@ pcc_get_args(PARROT_INTERP, ARGMOD(IMC_Unit *unit), ARGIN(Instruction *ins),
         ARGIN_NULLOK(SymReg * const *args), ARGIN_NULLOK(const int *arg_flags))
 {
     int i, flags;
-    char buf[1024], s[16];
+    char s[16];
     SymReg ** const regs  = mem_allocate_n_zeroed_typed(n + 1, SymReg *);
 
+    /* Notes:
+     * The created string is in the format "\"(0x0010,0x0220,0x0010)\"".
+     * flags always has exactly 4 hex digits.
+     * The hex number at the end of the list has no "," but we can safely
+     * ignore this.  The terminal "0" in strlen should be a "\0", but has to be
+     * non-null to avoid confusing strlen().
+     */
+    unsigned int  bufpos  = 0;
+    unsigned int  bufsize = strlen("\"(") + (strlen("0xffff,") * n) + strlen(")\"0");
+    char         *buf     = mem_allocate_n_typed(bufsize, char);
+
     strcpy(buf, "\"(");
+    bufpos += strlen("\"(");
     for (i = 0; i < n; i++) {
         SymReg *arg = args[i];
 
@@ -247,19 +259,25 @@ pcc_get_args(PARROT_INTERP, ARGMOD(IMC_Unit *unit), ARGIN(Instruction *ins),
             default :                               break;
         }
 
-        snprintf(s, sizeof (s), "0x%x", flags);
 
-        if (i < n - 1)
-            strcat(s, ",");
-        strcat(buf, s);         /* XXX check avail len */
+        snprintf(s, sizeof (s), "0x%.4x,", flags);
+        if (bufpos+strlen("0xffff,") >= bufsize)
+            Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INTERNAL_PANIC,
+                    "arg string is longer than allocated buffer");
+        strncpy(buf+bufpos, s, strlen("0xffff,"));
+        bufpos += strlen("0xffff,");
     }
 
-    strcat(buf, ")\"");
+    /* Backtrack over the ending comma if this is a non-empty list. */
+    if (bufpos != strlen("\"("))
+        bufpos--;
+    strcpy(buf+bufpos, ")\"");
 
     regs[0] = mk_const(interp, buf, 'S');
     ins     = insINS(interp, unit, ins, op_name, regs, n + 1);
 
     mem_sys_free(regs);
+    mem_sys_free(buf);
     return ins;
 }
 

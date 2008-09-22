@@ -46,9 +46,9 @@ Francois Perrad.
     save_pir(gen_pir, filename)
     end
   _handler:
-    .local pmc e, c
+    .local pmc e
     .local string msg
-    .get_results (e, c)
+    .get_results (e)
     msg = e
     print msg
     print "\n"

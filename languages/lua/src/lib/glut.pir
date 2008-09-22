@@ -136,9 +136,9 @@ not LuaGL
     $P0()
     .return ()
   _handler:
-    .local pmc e, c
+    .local pmc e
     .local string s
-    .get_results (e, c)
+    .get_results (e)
     s = e
     printerr "Error running lua script:\n\n  "
     printerr s
@@ -177,9 +177,9 @@ not LuaGL
     $P0()
     .return ()
   _handler:
-    .local pmc e, c
+    .local pmc e
     .local string s
-    .get_results (e, c)
+    .get_results (e)
     s = e
     printerr "Error running lua script:\n\n  "
     printerr s
@@ -274,9 +274,9 @@ not LuaGL
     $P0($P1, $P2, $P3)
     .return ()
   _handler:
-    .local pmc e, c
+    .local pmc e
     .local string s
-    .get_results (e, c)
+    .get_results (e)
     s = e
     printerr "Error running lua script:\n\n  "
     printerr s
@@ -341,9 +341,9 @@ not LuaGL
     $P0($P1, $P2)
     .return ()
   _handler:
-    .local pmc e, c
+    .local pmc e
     .local string s
-    .get_results (e, c)
+    .get_results (e)
     s = e
     printerr "Error running lua script:\n\n  "
     printerr s

@@ -21,6 +21,7 @@ S02-literals/autoref.t
 S02-literals/hash-interpolation.t
 S02-literals/hex_chars.t
 S02-literals/pairs.t
+S02-literals/quoting.t
 S02-literals/radix.t
 S02-literals/underscores.t
 S02-magicals/dollar-underscore.t
@@ -87,12 +88,14 @@ S05-match/blocks.t
 S05-metasyntax/changed.t
 S05-metasyntax/regex.t
 S05-metasyntax/unknown.t
+S05-substitution/match.t
 S05-substitution/subst.t
 S05-transliteration/trans.t
 S06-advanced_subroutine_features/recurse.t
 S06-advanced_subroutine_features/return.t
 S06-multi/syntax.t
 S06-multi/type-based.t
+S06-signature/code.t
 S06-signature/mixed-placeholders.t
 S06-signature/named-parameters.t
 S06-signature/named-placeholders.t
@@ -139,6 +142,7 @@ S29-list/map.t
 S29-list/map_topic.t
 S29-list/minmax.t
 S29-list/mutating_listops.t
+S29-list/pick.t
 S29-list/reduce.t
 S29-list/reverse.t
 S29-list/sort.t
@@ -155,9 +159,11 @@ S29-num/sqrt.t
 S29-str/append.t
 S29-str/capitalize.t
 S29-str/chop.t
+S29-str/comb.t
 S29-str/index.t
 S29-str/lcfirst.t
 S29-str/lc.t
+S29-str/split-simple.t
 S29-str/sprintf.t
 S29-str/substr.t
 S29-str/ucfirst.t

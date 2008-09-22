@@ -36,6 +36,41 @@ the size of that file down and to emphasize their generic,
     .return ($I0)
 .end
 
+=item comb()
+
+Partial implementation for now, returns a list of strings
+(instead of a list of match objects).
+
+=cut
+
+.sub 'comb' :method :multi(_)
+    .param pmc regex
+    .param int count        :optional
+    .param int has_count    :opt_flag
+    .local pmc retv, match
+    .local string s
+
+    retv = new 'List'
+    s = self
+
+  do_match:
+    match = regex.'ACCEPTS'(s)
+    unless match goto done
+    unless has_count goto skip_count
+    dec count
+    if count < 0 goto done
+  skip_count:
+    # shouldn't have to coerce to Str here, but see RT #55962
+    $S0 = match
+    retv.'push'($S0)
+    $I0 = match.'to'()
+    s = substr s, $I0
+    goto do_match
+
+  done:
+    .return(retv)
+.end
+
 =item index()
 
 =cut
@@ -73,6 +108,17 @@ the size of that file down and to emphasize their generic,
   fail:
     $P0 = new 'Failure'
     .return ($P0)
+.end
+
+=item match()
+
+=cut
+
+.sub 'match' :method :multi(_)
+    .param pmc x
+    .local pmc match
+    match = x(self)
+    .return(match)
 .end
 
 =item rindex()
@@ -126,6 +172,91 @@ the size of that file down and to emphasize their generic,
     .return ($P0)
 .end
 
+=item split
+
+ our List multi Str::split ( Str $delimiter ,  Str $input = $+_, Int $limit = inf )
+ our List multi Str::split ( Rule $delimiter = /\s+/,  Str $input = $+_, Int $limit = inf )
+ our List multi Str::split ( Str $input :  Str $delimiter          , Int $limit = inf )
+ our List multi Str::split ( Str $input : Rule $delimiter          , Int $limit = inf )
+
+String delimiters must not be treated as rules but as constants.  The
+default is no longer S<' '> since that would be interpreted as a constant.
+P5's C<< split('S< >') >> will translate to C<.words> or some such.  Null trailing fields
+are no longer trimmed by default.  We might add some kind of :trim flag or
+introduce a trimlist function of some sort.
+
+B<Note:> partial implementation only
+
+=cut
+
+.namespace[]
+.sub 'split' :multi(_,_)
+    .param pmc sep
+    .param pmc target
+    .return target.'split'(sep)
+.end
+
+.namespace['Any']
+.sub 'split' :method :multi('String')
+    .param string delim
+    .local string objst
+    .local pmc pieces
+    .local pmc tmps
+    .local pmc retv
+    .local int len
+    .local int i
+
+    retv = new 'List'
+
+    objst = self
+    split pieces, delim, objst
+
+    len = pieces
+    i = 0
+  loop:
+    if i == len goto done
+
+    tmps = new 'Perl6Str'
+    tmps = pieces[i]
+
+    retv.'push'(tmps)
+
+    inc i
+    goto loop
+  done:
+    .return(retv)
+.end
+
+.sub 'split' :method :multi(_, 'Sub')
+    .param pmc regex
+    .local pmc match
+    .local pmc retv
+    .local int start_pos
+    .local int end_pos
+
+    $S0 = self
+    retv = new 'List'
+    start_pos = 0
+
+    match = regex($S0)
+    if match goto loop
+    retv.'push'($S0)
+    goto done
+
+  loop:
+    match = regex($S0, 'continue' => start_pos)
+    end_pos = match.'from'()
+    end_pos -= start_pos
+    $S1 = substr $S0, start_pos, end_pos
+    retv.'push'($S1)
+    unless match goto done
+    start_pos = match.'to'()
+    goto loop
+
+  done:
+    .return(retv)
+.end
+
 =item substr()
 
 =cut
@@ -148,7 +279,6 @@ the size of that file down and to emphasize their generic,
     $S1 = substr $S0, start, len
     .return ($S1)
 .end
-
 
 =item trans()
 

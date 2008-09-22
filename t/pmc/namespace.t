@@ -1268,7 +1268,7 @@ pir_output_like( <<'CODE', <<'OUTPUT', 'add_namespace() with error' );
 _invalid_ns:
     .local pmc exception
     .local string message
-    .get_results( exception, $P0 )
+    .get_results( exception )
 
     message = exception
     print message
@@ -1376,7 +1376,7 @@ pir_error_output_like( <<'CODE', <<'OUTPUT', 'add_sub() with error', todo => 'ne
 _invalid_sub:
     .local pmc exception
     .local string message
-    .get_results( exception, $P0 )
+    .get_results( exception )
 
     message = exception
     print message
@@ -1540,7 +1540,7 @@ pir_output_like( <<'CODE', <<'OUTPUT', 'del_namespace() with error' );
 _invalid_ns:
     .local pmc exception
     .local string message
-    .get_results( exception, $P0 )
+    .get_results( exception )
 
     message = exception
     print message
@@ -1625,7 +1625,7 @@ pir_output_like( <<'CODE', <<'OUTPUT', 'del_sub() with error' );
 _invalid_sub:
     .local pmc exception
     .local string message
-    .get_results( exception, $P0 )
+    .get_results( exception )
 
     message = exception
     print message

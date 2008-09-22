@@ -26,7 +26,7 @@ typedef struct symbol {
     char          *name;  /* name of this symbol */
     pir_type       type;  /* type of this symbol */
     int            color; /* allocated PASM register for this symbol, -1 if not allocated. */
-    int            flags;
+    target_flag    flags;
 
     struct symbol *next;
 
@@ -52,6 +52,14 @@ typedef struct global_ident {
     struct global_ident *next;
 
 } global_ident;
+
+
+typedef struct label {
+    char         *name;
+    unsigned      offset;
+
+    struct label *next;
+} label;
 
 
 /* symbol constructor */
@@ -83,6 +91,9 @@ constant *find_constant(struct lexer_state * const lexer, char * const name);
 
 /* get a new PASM register of the specified type */
 int next_register(struct lexer_state * const lexer, pir_type type);
+
+void store_label(struct lexer_state * const lexer, char * const label, unsigned offset);
+unsigned find_label(struct lexer_state * const lexer, char * const label);
 
 #endif /* PARROT_PIR_PIRSYMBOL_H_GUARD */
 

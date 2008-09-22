@@ -253,9 +253,9 @@ Column 6, if present, contains a description of what is being tested.
     print "'\n"
 
   thrown:
-    .local pmc exception, continuation
+    .local pmc exception
     .local string message
-    get_results '0,0', exception, continuation
+    get_results '0', exception
     message = exception
     # remove /'s
     # $S0 = substr result, 0, 1

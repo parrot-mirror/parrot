@@ -43,6 +43,7 @@ alignment.
 
 # attributes used for xlib types
 .const string attr_XDisplay = 'x_Display'
+.const string attr_XDrawable = 'x_Drawable'
 .const string attr_XWindow = 'x_Window'
 
 # attributes used for parrot objects
@@ -138,15 +139,46 @@ done:
 .end
 
 #-----------------------------------------------------------------------
+.sub get_Drawable_class
+    .local pmc Drawable
+    Drawable = get_global 'Drawable_class'
+    $I0 = defined Drawable
+    if $I0 goto done
+
+    Drawable = newclass ['Xlib'; 'Drawable']
+    addattribute Drawable, attr_XDisplay
+    addattribute Drawable, attr_XWindow
+    addattribute Drawable, attr_display
+
+    set_global 'Drawable_class', Drawable
+
+# export functions to be used from Drawable methods
+    .local pmc nsmain, ns
+    nsmain = get_namespace
+    ns = get_namespace ['Drawable']
+    .local pmc explist
+    explist = new 'ResizablePMCArray'
+    explist[0] = 'get_xlib_handle'
+    explist[1] = 'get_xlib_function'
+    explist[2] = 'get_Pixmap_class'
+    nsmain.export_to(ns, explist)
+
+done:
+    .return(Drawable)
+.end
+
+#-----------------------------------------------------------------------
 .sub get_Window_class
     .local pmc Window
     Window = get_global 'Window_class'
     $I0 = defined Window
     if $I0 goto done
 
-    Window = newclass ['Xlib'; 'Window']
-    addattribute Window, attr_display
-    addattribute Window, attr_XWindow
+    .local pmc Drawable
+    Drawable = get_Drawable_class()
+    Window = subclass Drawable, ['Xlib'; 'Window']
+#    addattribute Window, attr_display
+#    addattribute Window, attr_XWindow
     set_global 'Window_class', Window
 
 # export functions to be used from Window methods
@@ -161,6 +193,31 @@ done:
 
 done:
     .return(Window)
+.end
+
+#-----------------------------------------------------------------------
+.sub get_Pixmap_class
+    .local pmc Pixmap
+    Pixmap = get_global 'Pixmap_class'
+    $I0 = defined Pixmap
+    if $I0 goto done
+
+    .local pmc Drawable
+    Drawable = get_Drawable_class()
+    Pixmap = subclass Drawable, ['Xlib'; 'Pixmap']
+    set_global 'Pixmap_class', Pixmap
+
+# export functions to be used from Pixmap methods
+    .local pmc ns, nsPixmap
+    ns = get_namespace
+    nsPixmap = get_namespace ['Pixmap']
+    .local pmc explist
+    explist = new 'ResizablePMCArray'
+    explist[0] = 'get_xlib_handle'
+    explist[1] = 'get_xlib_function'
+    ns.export_to(nsPixmap, explist)
+done:
+    .return(Pixmap)
 .end
 
 #-----------------------------------------------------------------------
@@ -273,6 +330,21 @@ getit:
     func = get_xlib_function('XDefaultScreen', 'ip')
     $P0 = getattribute self, attr_XDisplay
     $I0 = func($P0)
+    .return($I0)
+.end
+
+#-----------------------------------------------------------------------
+.sub DefaultDepth :method
+    .param int screen :optional
+    .param int has_screen :opt_flag
+
+    if has_screen goto doit
+    screen = self.DefaultScreen()
+doit:
+    .local pmc func
+    func = get_xlib_function('XDefaultDepth', 'ipi')
+    $P0 = getattribute self, attr_XDisplay
+    $I0 = func($P0, screen)
     .return($I0)
 .end
 
@@ -680,6 +752,109 @@ done:
 
 ########################################################################
 
+.namespace ['Xlib';'Drawable']
+
+#-----------------------------------------------------------------------
+.sub DrawPoint :method
+    .param int x
+    .param int y
+
+    .local pmc disp
+    disp = getattribute self, attr_display
+    .local pmc xdisp
+    xdisp = self.getdisplay()
+    .local pmc gc
+    gc = disp.DefaultGC()
+    .local pmc xwin
+    xwin = getattribute self, attr_XWindow
+
+    .local pmc func
+    func = get_xlib_function('XDrawPoint', 'ipppii')
+    $I0 = func(xdisp, xwin, gc, x, y)
+    .return($I0)
+.end
+
+#-----------------------------------------------------------------------
+.sub DrawLine :method
+    .param int x1
+    .param int y1
+    .param int x2
+    .param int y2
+
+    .local pmc disp
+    disp = getattribute self, attr_display
+    .local pmc xdisp
+    xdisp = self.getdisplay()
+    .local pmc gc
+    gc = disp.DefaultGC()
+    .local pmc xwin
+    xwin = getattribute self, attr_XWindow
+
+    .local pmc func
+    func = get_xlib_function('XDrawLine', 'ipppiiii')
+    $I0 = func(xdisp, xwin, gc, x1, y1, x2, y2)
+    .return($I0)
+.end
+
+#-----------------------------------------------------------------------
+.sub CopyArea :method
+    .param pmc source
+    .param int src_x
+    .param int src_y
+    .param int width
+    .param int height
+    .param int dest_x
+    .param int dest_y
+
+    .local pmc disp, xdisp, src_xdraw, dest_xdraw, gc
+    disp = getattribute self, attr_display
+    gc = disp.DefaultGC()
+    xdisp = self.getdisplay()
+    src_xdraw = getattribute source, attr_XWindow
+    dest_xdraw = getattribute self, attr_XWindow
+
+    .local pmc func
+    func = get_xlib_function('XCopyArea', 'ippppiiiiii')
+    $I0 = func(xdisp, src_xdraw, dest_xdraw, gc, src_x, src_y, width, height, dest_x, dest_y)
+.end
+
+#-----------------------------------------------------------------------
+.sub CreatePixmap :method
+    .param int width
+    .param int height
+    .param int depth :optional
+    .param int has_depth :opt_flag
+
+# Create a pixmap for the screen that contains this drawable
+    .local pmc disp
+    disp = getattribute self, attr_display
+    .local pmc xdisp
+    xdisp = self.getdisplay()
+    .local pmc xwin
+    xwin = getattribute self, attr_XWindow
+
+    if has_depth goto doit
+    depth = disp.DefaultDepth()
+
+doit:
+    .local pmc func
+    func = get_xlib_function('XCreatePixmap', 'pppiii')
+    .local pmc xpixmap
+    xpixmap = func(xdisp, xwin, width, height, depth)
+    .local pmc arg
+    arg = new 'Hash'
+    arg [attr_display] = disp
+    arg [attr_XDisplay] = xdisp
+    arg [attr_XWindow] = xpixmap
+    .local pmc Pixmap
+    Pixmap = get_Pixmap_class()
+    .local pmc pixmap
+    pixmap = new Pixmap, arg
+    .return(pixmap)
+.end
+
+########################################################################
+
 .namespace ['Xlib';'Window']
 
 #-----------------------------------------------------------------------
@@ -771,46 +946,33 @@ done:
     .return($I0)
     .end
 
-#-----------------------------------------------------------------------
-.sub DrawPoint :method
-    .param int x
-    .param int y
+########################################################################
 
+.namespace ['Xlib';'Pixmap']
+
+#-----------------------------------------------------------------------
+.sub getdisplay :method
     .local pmc disp
     disp = getattribute self, attr_display
     .local pmc xdisp
-    xdisp = self.getdisplay()
-    .local pmc gc
-    gc = disp.DefaultGC()
-    .local pmc xwin
-    xwin = getattribute self, attr_XWindow
-
-    .local pmc func
-    func = get_xlib_function('XDrawPoint', 'ipppii')
-    $I0 = func(xdisp, xwin, gc, x, y)
-    .return($I0)
+    xdisp = getattribute disp, attr_XDisplay
+    .return(xdisp)
 .end
 
 #-----------------------------------------------------------------------
-.sub DrawLine :method
-    .param int x1
-    .param int y1
-    .param int x2
-    .param int y2
-
-    .local pmc disp
-    disp = getattribute self, attr_display
+.sub destroy :vtable
+    .local pmc drawable
+    drawable = getattribute self, attr_XWindow
+    $I0 = defined drawable
+    unless $I0 goto done
     .local pmc xdisp
     xdisp = self.getdisplay()
-    .local pmc gc
-    gc = disp.DefaultGC()
-    .local pmc xwin
-    xwin = getattribute self, attr_XWindow
-
     .local pmc func
-    func = get_xlib_function('XDrawLine', 'ipppiiii')
-    $I0 = func(xdisp, xwin, gc, x1, y1, x2, y2)
-    .return($I0)
+    func = get_xlib_function('XFreePixmap', 'ipp')
+    $I0 = func(xdisp, drawable)
+    null drawable
+    setattribute self, attr_XWindow, drawable
+done:
 .end
 
 #-----------------------------------------------------------------------

@@ -39,6 +39,15 @@ It might be worthwhile to investigate the possibility to store all symbols in
 one data structure (for instance, a hashtable), using one C structure to
 describe the properties (possibly an enumeration of symbol types).
 
+Furthermore, instead of lists of objects, it might be worthwhile to use
+Parrot built-in PMCs for storing stuff, such as Hash and Array objects.
+I wouldn't go as far as making target, symbol, expression, constant etc.
+PMCs as well, as this might become expensive (w.r.t. CPU cycles) to
+handle. However, in order to use a ResizablePMCArray, you need to store
+PMC objects as opposed to normal C struct objects. On the other hand, it
+would make memory management extremely easy as we can just let everything
+to the Garbage Collector.
+
 
 =head1 FUNCTIONS
 
@@ -66,6 +75,25 @@ next_register(struct lexer_state * const lexer, pir_type type) {
     return lexer->curregister[type]++;
 }
 
+
+/* experimental code */
+
+#include "parrot/parrot.h"
+
+void
+init_symbol_table(struct lexer_state * const lexer) {
+    PMC *symtable = pmc_new(lexer->interp, enum_class_Hash);
+    PMC *dummy = pmc_new(lexer->interp, enum_class_ResizablePMCArray);
+    symbol *sym = new_symbol("hi", PMC_TYPE);
+    symbol *test;
+    VTABLE_set_pmc_keyed_str(lexer->interp, symtable,
+    string_from_cstring(lexer->interp, "hi", 2), dummy);
+    VTABLE_push_pmc(lexer->interp, dummy, (PMC *)sym);
+    test = (symbol *)VTABLE_pop_pmc(lexer->interp, dummy);
+    printf("name: %s\n", test->name);
+}
+
+/* end experimental code */
 
 /*
 
@@ -112,13 +140,6 @@ declare_local(struct lexer_state * const lexer, pir_type type, symbol *list) {
     /* set the type on each symbol */
     while (iter != NULL) {
         iter->type  = type;
-
-        /* XXX do not allocate a register just yet; wait till the moment that
-         * the symbol is actually used; unused, declared symbols won't be
-         * given a PASM register.
-         */
-        /* iter->color = next_register(lexer, type); XXX test this. XXX*/
-
         iter        = iter->next;
     }
 
@@ -167,9 +188,9 @@ check_unused_symbols(struct lexer_state * const lexer) {
                  * a PASM register if they're actually used (not just declared)
                  */
 
-             /*   fprintf(stderr, "Warning: in sub '%s': symbol '%s' declared but not used\n",
+                fprintf(stderr, "Warning: in sub '%s': symbol '%s' declared but not used\n",
                         subiter->sub_name, iter->name);
-*/
+
             }
             iter = iter->next;
         }
@@ -283,17 +304,12 @@ The function returns the allocated PASM register.
 */
 static int
 use_register(struct lexer_state * const lexer, pir_type type, int regno) {
-    pir_reg *reg, *iter;
+    pir_reg *reg;
 
     /* create a new node representing this PIR register */
     reg = new_pir_reg(type, regno);
     /* get a new PASM register for this PIR register. */
     reg->color = next_register(lexer, type);
-
-    /* insert, as registers only increase, just insert at the beginning.
-     * searching must therefore look from high to low reg. numbers
-     */
-    iter = lexer->subs->registers[type];
 
     /* link this register into the list of "colored" registers; each of
      * them has been assigned a unique PASM register.
@@ -441,6 +457,92 @@ find_constant(struct lexer_state * const lexer, char * const name) {
     }
     return NULL;
 }
+
+static label *
+new_label(char * const name, unsigned offset) {
+    label *l = (label *)malloc(sizeof (label));
+    l->name   = name;
+    l->offset = offset;
+    l->next   = NULL;
+    return l;
+}
+
+/*
+
+=item C<void
+store_label(struct lexer_state * const lexer, char * const labelname, unsigned offset)>
+
+=cut
+
+*/
+void
+store_label(struct lexer_state * const lexer, char * const labelname, unsigned offset) {
+    label *l = new_label(labelname, offset);
+
+    printf("storing label '%s' with offset %u\n", labelname, offset);
+    l->next = lexer->subs->labels;
+    lexer->subs->labels = l;
+}
+
+/*
+
+=item C<unsigned
+find_label(struct lexer_state * const lexer, char * const labelname)>
+
+Find the offset for label C<labelname>. If C<labelname> was not defined as
+a label, an error is emitted, otherwise, the offset of that label is returned.
+
+=cut
+
+*/
+unsigned
+find_label(struct lexer_state * const lexer, char * const labelname) {
+    label *iter = lexer->subs->labels;
+
+    while (iter) {
+        if (strcmp(iter->name, labelname) == 0)
+            return iter->offset;
+        iter = iter->next;
+    }
+
+    /* no label found, emit an error message. */
+    pirerror(lexer, "in sub '%s': cannot find offset for label '%s'",
+             lexer->subs->sub_name, labelname);
+
+    return 0;
+}
+
+
+/*
+
+=item C<void
+free_symbols(symbol *sym)>
+
+Free the list of symbols pointed to by C<sym>.
+
+=cut
+
+*/
+
+void
+free_symbols(symbol *sym) {
+    symbol *iter = sym;
+
+    if (iter == NULL)
+        return;
+
+    do {
+        symbol *temp = iter;
+        iter = iter->next;
+
+        free(temp->name);
+        free(temp);
+    }
+    while (iter);
+
+    sym = NULL;
+}
+
 
 /*
 

@@ -167,7 +167,7 @@ RESUME:
     inc i
     goto CLOOP
 trans_failure_handler:
-    .get_results (e, c)
+    .get_results (e)
     emsg = e
     # Emit trace message.
     unless trace goto NOTRACE

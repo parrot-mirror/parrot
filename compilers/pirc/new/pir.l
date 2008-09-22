@@ -48,8 +48,6 @@ easier to maintain, and preferable.
 #include "piryy.h"
 
 
-/* Windows doesn't have <unistd.h> */
-#define YY_NO_UNISTD_H
 
 /* define the type of the extra field in the yyscan_t object that is passed around;
  * this is the lexer_state structure, defined in "pircompiler.h"
@@ -63,6 +61,10 @@ extern void          yyset_extra(YY_EXTRA_TYPE lexer, yyscan_t scanner);
 
 
 
+/* Windows doesn't have <unistd.h> */
+#ifndef YY_NO_UNISTD_H
+#  define YY_NO_UNISTD_H
+#endif
 
 /* keep MSVC happy */
 #ifndef YY_MAIN
@@ -73,62 +75,6 @@ extern void          yyset_extra(YY_EXTRA_TYPE lexer, yyscan_t scanner);
 #ifndef YY_ALWAYS_INTERACTIVE
 #  define YY_ALWAYS_INTERACTIVE 0
 #endif
-
-
-
-/*
-
-=head1 FUNCTIONS
-
-=over 4
-
-=item C<static char *
-dupstr(char const * const source)>
-
-The C89 standard does not define a strdup() in the C library,
-so define our own strdup. Function names beginning with "str"
-are reserved, so make it dupstr, as that is what it
-does: duplicate a string.
-
-=cut
-
-*/
-static char *
-dupstr(char const * const source) {
-    char *newstring = (char *)calloc(strlen(source) + 1, sizeof (char));
-    assert(newstring);
-    strcpy(newstring, source);
-    return newstring;
-}
-
-/*
-
-=item C<static char *
-dupstrn(char const * const source, size_t num_chars)>
-
-See dupstr, except that this version takes the number of characters to be
-copied. Easy for copying a string except the quotes, for instance.
-
-=cut
-
-*/
-static char *
-dupstrn(char const * const source, size_t num_chars) {
-    char *newstring = (char *)calloc(num_chars + 1, sizeof (char));
-    assert(newstring);
-    /* only copy num_chars characters */
-    strncpy(newstring, source, num_chars);
-    return newstring;
-}
-
-/*
-
-=back
-
-=cut
-
-*/
-
 
 
 %}
@@ -334,7 +280,7 @@ Q_STRING       {SQ_STRING}|{DQ_STRING}
 
 
 {Q_STRING}        { /* copy the string, remove the quotes. */
-                    yylval->sval = dupstrn(yytext + 1, yyleng - 2);
+                    yylval->sval = dupstrn(yyget_extra(yyscanner), yytext + 1, yyleng - 2);
                     return TK_STRINGC;
                   }
 
@@ -344,12 +290,12 @@ Q_STRING       {SQ_STRING}|{DQ_STRING}
 "$I"{DIGIT}+      { yylval->ival = atoi(yytext + 2); return TK_IREG; }
 
 {IDENT}":"        { /* make the label Id available in the parser. remove the ":" first. */
-                    yylval->sval = dupstrn(yytext, yyleng - 1);
+                    yylval->sval = dupstrn(yyget_extra(yyscanner), yytext, yyleng - 1);
                     return TK_LABEL;
                   }
 
 {IDENT}           { /* identifier; can be a global (sub or const), local or parrot op */
-                    yylval->sval = dupstr(yytext);
+                    yylval->sval = dupstr(yyget_extra(yyscanner), yytext);
                     return TK_IDENT;
                   }
 

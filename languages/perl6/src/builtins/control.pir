@@ -105,8 +105,9 @@ the moment -- we'll do more complex handling a bit later.)
   handler:
     .local pmc exception, continuation
     .local string message
-    .get_results(exception,continuation)
+    .get_results(exception)
     message = exception['message']
+    continuation = exception['resume']
     $P0 = exception['payload']
     list.push($P0)
     eh = 0 # work around the workaround
@@ -266,7 +267,7 @@ on error.
     goto done
 
   catch:
-    .get_results (exception, $P1)
+    .get_results (exception)
     goto done
 
   done:

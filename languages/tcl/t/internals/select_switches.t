@@ -32,7 +32,7 @@ builtins.
 
     load_bytecode 'languages/tcl/runtime/tcllib.pir'
 
-    plan(29)
+    plan(30)
     .local string message
 
     # 1
@@ -188,7 +188,7 @@ done_1:
     goto check_23 
 
 eh_23: 
-    get_results '0,0', $P2, $P3
+    get_results '0', $P2
     $S2 = $P2
 check_23:
     is($S2, 'bad switch "-joke": must be -baz, -bob, or -joe', message)
@@ -207,7 +207,7 @@ check_23:
     goto check_24
 
 eh_24: 
-    get_results '0,0', $P2, $P3
+    get_results '0', $P2
     $S2 = $P2
 check_24:
     is($S2, 'bad switch "-joke": must be -baz, -bob, -joe, or --', message)
@@ -226,7 +226,7 @@ check_24:
     goto check_25
 
 eh_25: 
-    get_results '0,0', $P2, $P3
+    get_results '0', $P2
     $S2 = $P2
 check_25:
     is($S2, 'bad frob "-joke": must be -baz, -bob, -joe, or --', message)
@@ -256,6 +256,28 @@ check_25:
     $S0 = argv[0]
     $S1 = message . ' (value of remaining argv)'
     is ($S0, 'what', $S1)
+
+    # 30
+    options = new 'TclList'
+    options[0] = 'good0'
+    options[1] = 'good1'
+
+    argv = new 'TclList'
+    argv[0] = '-fail'
+    argv[1] = 'bag_o_donuts'
+    message='invalid option specified, with choice of 2, w/ exception'
+
+    push_eh eh_30
+      $P1 = select_switches(options, argv, 0, 1)
+    pop_eh
+   
+    $S2= ''   
+    goto check_30 
+
+eh_30: 
+    get_results '0', $P2
+check_30:
+    is($S2, 'bad switch "-fail": must be -good0 or -good1', message)
 
 .end
 

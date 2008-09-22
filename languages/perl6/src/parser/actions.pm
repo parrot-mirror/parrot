@@ -313,6 +313,9 @@ method use_statement($/) {
             :pasttype('call'),
             :node( $/ )
         );
+        my $sub := PAST::Compiler.compile( $past );
+        $sub();
+        $past := PAST::Stmts.new( :node($/) );
     }
     make $past;
 }
@@ -413,7 +416,7 @@ method statement_prefix($/) {
 
         ##  Add a catch node to the try op that captures the
         ##  exception object into $!.
-        my $catchpir := "    .get_results (%r, $P0)\n    store_lex '$!', %r";
+        my $catchpir := "    .get_results (%r)\n    store_lex '$!', %r";
         $past.push( PAST::Op.new( :inline( $catchpir ) ) );
 
         ##  Add an 'else' node to the try op that clears $! if
@@ -428,6 +431,8 @@ method statement_prefix($/) {
         else {
             $past := PAST::Block.new(:blocktype('declaration'), $past)
         }
+        # XXX Workaround for lexicals issue.  rt #58854
+        $past := PAST::Op.new(:pirop('newclosure'), $past);
         $past := PAST::Op.new( $past, :pasttype('call'), :name('gather'), :node($/) );
     }
     else {
@@ -879,6 +884,11 @@ method signature($/) {
             # Register symbol and put parameter PAST into the node.
             $block_past.symbol($parameter.name(), :scope('lexical'));
             $params.push($parameter);
+
+            # If it has & sigil, strip it off.
+            if substr($parameter.name(), 0, 1) eq '&' {
+                $parameter.name(substr($parameter.name(), 1));
+            }
 
             # If it is invocant, modify it to be just a lexical and bind self to it.
             if substr($separator, 0, 1) eq ':' {
@@ -2318,7 +2328,9 @@ method integer($/) {
 
 
 method dec_number($/) {
-    make PAST::Val.new( :value( ~$/ ), :returns('Num'), :node( $/ ) );
+    my $num := ~$/;
+    $num := $num.split('_').join('');
+    make PAST::Val.new( :value( $num ), :returns('Num'), :node( $/ ) );
 }
 
 method radint($/, $key) {
@@ -2504,7 +2516,10 @@ method semilist($/) {
 
 
 method arglist($/) {
-    make $($<EXPR>);
+    my $past := $<EXPR>
+                    ?? $( $<EXPR> )
+                    !! PAST::Op.new( :node($/), :name('infix:,') );
+    make $past;
 }
 
 
@@ -3232,7 +3247,7 @@ sub make_anon_subset($past, $parameter) {
         :pasttype('call'),
         :name('!TYPECHECKPARAM'),
         PAST::Op.new(
-            :inline('    %r = newclosure %0'),
+            :pirop('newclosure'),
             $past
         ),
         PAST::Var.new(
