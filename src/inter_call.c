@@ -190,6 +190,21 @@ static void set_context_sig_returns(PARROT_INTERP,
         __attribute__nonnull__(4)
         __attribute__nonnull__(5);
 
+static const char *set_context_sig_params(PARROT_INTERP,
+    ARGIN(const char *signature),
+    ARGMOD(INTVAL *n_regs_used),
+    ARGMOD(PMC **sigs),
+    ARGMOD(opcode_t **indexes),
+    ARGMOD(parrot_context_t *ctx),
+    ARGMOD(PMC *sig_obj))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3)
+        __attribute__nonnull__(4)
+        __attribute__nonnull__(5)
+        __attribute__nonnull__(6)
+        __attribute__nonnull__(7);
+
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 /* HEADERIZER END: static */
 
@@ -2143,6 +2158,133 @@ set_context_sig_returns(PARROT_INTERP, ARGMOD(parrot_context_t *ctx),
 
 /*
 
+=item C<set_context_sig_params>
+
+Sets the subroutine arguments in the C<ctx> context, according to the
+signature string C<signature>.
+
+=cut
+
+*/
+
+static const char *
+set_context_sig_params(PARROT_INTERP, ARGIN(const char *signature),
+    ARGMOD(INTVAL *n_regs_used), ARGMOD(PMC **sigs),
+    ARGMOD(opcode_t **indexes), ARGMOD(parrot_context_t *ctx),
+    ARGMOD(PMC *sig_obj))
+{
+    /* second loop through signature to build all index and arg_flag
+     * loop also assigns args(up to the ->) to registers */
+    int index      = -1;
+    int seen_arrow =  0;
+    int cur        =  0;
+    const char *ret_x = 0;
+    const char *x;
+
+    for (x = signature; *x != '\0'; x++) {
+        /* detect -> separator */
+        if (*x == '-') {
+
+            /* skip '>' */
+            x++;
+
+            /* allows us to jump directly to the result signature portion
+             * during results assignment */
+            ret_x = x;
+
+            /* save off pointer to results */
+            ret_x++;
+
+            if (index >= 0)
+                commit_last_arg_sig_object(interp, index, cur, n_regs_used,
+                    seen_arrow, sigs, indexes, ctx, sig_obj);
+
+            /* reset parsing state so we can now handle results */
+            seen_arrow =  1;
+            index      = -1;
+
+            /* reset n_regs_used for reuse during result index allocation */
+            n_regs_used[0] = 0;
+            n_regs_used[1] = 0;
+            n_regs_used[2] = 0;
+            n_regs_used[3] = 0;
+        }
+        /* parse arg type */
+        else if (isupper((unsigned char)*x)) {
+            if (index >= 0)
+                commit_last_arg_sig_object(interp, index, cur, n_regs_used, seen_arrow,
+                    sigs, indexes, ctx, sig_obj);
+
+            index++;
+
+            switch (*x) {
+                case 'I': cur = PARROT_ARG_INTVAL;   break;
+                case 'N': cur = PARROT_ARG_FLOATVAL; break;
+                case 'S': cur = PARROT_ARG_STRING;   break;
+                case 'P': cur = PARROT_ARG_PMC;      break;
+                default:
+                  Parrot_ex_throw_from_c_args(interp, NULL,
+                    EXCEPTION_INVALID_OPERATION,
+                    "Parrot_pcc_invoke_sub_from_sig_object: invalid reg type %c!", *x);
+            }
+
+        }
+        /* parse arg adverbs */
+        else if (islower((unsigned char)*x)) {
+            switch (*x) {
+                case 'n': cur |= PARROT_ARG_NAME;         break;
+                case 'f': cur |= PARROT_ARG_FLATTEN;      break;
+                case 's': cur |= PARROT_ARG_SLURPY_ARRAY; break;
+                case 'o': cur |= PARROT_ARG_OPTIONAL;     break;
+                case 'p': cur |= PARROT_ARG_OPT_FLAG;     break;
+                default:
+                    Parrot_ex_throw_from_c_args(interp, NULL,
+                        EXCEPTION_INVALID_OPERATION,
+                        "Parrot_pcc_invoke_sub_from_sig_object: invalid adverb type %c!", *x);
+            }
+        }
+    }
+
+    if (index >= 0)
+        commit_last_arg_sig_object(interp, index, cur, n_regs_used, seen_arrow, sigs,
+            indexes, ctx, sig_obj);
+
+    interp->current_args   = indexes[0];
+    interp->args_signature = sigs[0];
+    ctx->current_results   = indexes[1];
+    ctx->results_signature = sigs[1];
+    return ret_x;
+}
+
+/*
+
+=item C<void Parrot_pcc_invoke_sub_from_c_args>
+
+Follows the same conventions as C<Parrot_PCCINVOKE>, but the subroutine object
+to invoke is passed as an argument rather than looked up by name. The signature
+string and call arguments are converted to a CallSignature PMC.
+
+=cut
+
+*/
+
+PARROT_API
+void
+Parrot_pcc_invoke_sub_from_c_args(PARROT_INTERP, ARGIN(PMC *sub_obj),
+        ARGIN(const char *sig), ...)
+{
+    PMC *sig_obj;
+    va_list args;
+    va_start(args, sig);
+    sig_obj = Parrot_build_sig_object_from_varargs(interp, sig, args);
+    va_end(args);
+
+    Parrot_pcc_invoke_sub_from_sig_object(interp, sub_obj, sig_obj);
+    dod_unregister_pmc(interp, sig_obj);
+}
+
+/*
+
 =item C<void Parrot_PCCINVOKE>
 
 C<pmc> is the invocant.
@@ -2367,33 +2509,6 @@ Parrot_PCCINVOKE(PARROT_INTERP, ARGIN(PMC* pmc), ARGMOD(STRING *method_name),
 
 /*
 
-=item C<void Parrot_pcc_invoke_sub_from_c_args>
-
-Follows the same conventions as C<Parrot_PCCINVOKE>, but the subroutine object
-to invoke is passed as an argument rather than looked up by name. The signature
-string and call arguments are converted to a CallSignature PMC.
-
-=cut
-
-*/
-
-PARROT_API
-void
-Parrot_pcc_invoke_sub_from_c_args(PARROT_INTERP, ARGIN(PMC *sub_obj),
-        ARGIN(const char *sig), ...)
-{
-    PMC *sig_obj;
-    va_list args;
-    va_start(args, sig);
-    sig_obj = Parrot_build_sig_object_from_varargs(interp, sig, args);
-    va_end(args);
-
-    Parrot_pcc_invoke_sub_from_sig_object(interp, sub_obj, sig_obj);
-    dod_unregister_pmc(interp, sig_obj);
-}
-
-/*
-
 =item C<void Parrot_pcc_invoke_sub_from_sig_object>
 
 Follows the same conventions as C<Parrot_PCCINVOKE>, but the subroutine object
@@ -2452,93 +2567,12 @@ Parrot_pcc_invoke_sub_from_sig_object(PARROT_INTERP, ARGIN(PMC *sub_obj),
 
     ctx = count_signature_elements(interp, signature, args_sig, results_sig, 0);
 
-    /* !! Start good subroutine break (setting arguments), not the same as
-     * PCCINVOKE, but will become standard later. !! */
-
-    /* second loop through signature to build all index and arg_flag
-     * loop also assigns args(up to the ->) to registers */
-    index      = -1;
-    seen_arrow =  0;
-
-    for (x = signature; *x != '\0'; x++) {
-        /* detect -> separator */
-        if (*x == '-') {
-
-            /* skip '>' */
-            x++;
-
-            /* allows us to jump directly to the result signature portion
-             * during results assignment */
-            ret_x = x;
-
-            /* save off pointer to results */
-            ret_x++;
-
-            if (index >= 0)
-                commit_last_arg_sig_object(interp, index, cur, n_regs_used, seen_arrow,
-                    sigs, indexes, ctx, sig_obj);
-
-            /* reset parsing state so we can now handle results */
-            seen_arrow =  1;
-            index      = -1;
-
-            /* reset n_regs_used for reuse during result index allocation */
-            n_regs_used[0] = 0;
-            n_regs_used[1] = 0;
-            n_regs_used[2] = 0;
-            n_regs_used[3] = 0;
-        }
-        /* parse arg type */
-        else if (isupper((unsigned char)*x)) {
-            if (index >= 0)
-                commit_last_arg_sig_object(interp, index, cur, n_regs_used, seen_arrow,
-                    sigs, indexes, ctx, sig_obj);
-
-            index++;
-
-            switch (*x) {
-                case 'I': cur = PARROT_ARG_INTVAL;   break;
-                case 'N': cur = PARROT_ARG_FLOATVAL; break;
-                case 'S': cur = PARROT_ARG_STRING;   break;
-                case 'P': cur = PARROT_ARG_PMC;      break;
-                default:
-                  Parrot_ex_throw_from_c_args(interp, NULL,
-                    EXCEPTION_INVALID_OPERATION,
-                    "Parrot_pcc_invoke_sub_from_sig_object: invalid reg type %c!", *x);
-            }
-
-        }
-        /* parse arg adverbs */
-        else if (islower((unsigned char)*x)) {
-            switch (*x) {
-                case 'n': cur |= PARROT_ARG_NAME;         break;
-                case 'f': cur |= PARROT_ARG_FLATTEN;      break;
-                case 's': cur |= PARROT_ARG_SLURPY_ARRAY; break;
-                case 'o': cur |= PARROT_ARG_OPTIONAL;     break;
-                case 'p': cur |= PARROT_ARG_OPT_FLAG;     break;
-                default:
-                    Parrot_ex_throw_from_c_args(interp, NULL,
-                        EXCEPTION_INVALID_OPERATION,
-                        "Parrot_pcc_invoke_sub_from_sig_object: invalid adverb type %c!", *x);
-            }
-        }
-    }
-
-    if (index >= 0)
-        commit_last_arg_sig_object(interp, index, cur, n_regs_used, seen_arrow, sigs,
-            indexes, ctx, sig_obj);
-
     /* code from PCCINVOKE impl in PCCMETHOD.pm */
     save_current_args      = interp->current_args;
     save_args_signature    = interp->args_signature;
     save_current_object    = interp->current_object;
 
-    interp->current_args   = arg_indexes;
-    interp->args_signature = args_sig;
-    ctx->current_results   = result_indexes;
-    ctx->results_signature = results_sig;
-
-    /* !! End good subroutine break (setting arguments). !! */
+    ret_x = set_context_sig_params(interp, signature, n_regs_used, sigs, indexes, ctx, sig_obj);
 
     /* arg_accessors assigned in loop above */
 
