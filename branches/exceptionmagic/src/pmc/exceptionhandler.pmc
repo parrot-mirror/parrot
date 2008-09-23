@@ -25,6 +25,7 @@ exception object's C<_P5> attribute.
 
 pmclass ExceptionHandler extends Continuation need_ext {
 
+    ATTR PMC    *handled_types;
     ATTR INTVAL min_severity;
     ATTR INTVAL max_severity;
 
@@ -47,9 +48,10 @@ Initializes the exception handler.
         PMC_pmc_val(SELF)    = PMCNULL;
 
 
-        PMC_data(SELF)            = core_struct;
-        core_struct->min_severity = 0;
-        core_struct->max_severity = 0;
+        PMC_data(SELF)             = core_struct;
+        core_struct->min_severity  = 0;
+        core_struct->max_severity  = 0;
+        core_struct->handled_types = PMCNULL;
 
 
         /* an exception handler has no separate context; it's only a snapshot
@@ -177,6 +179,21 @@ Report whether the exception handler can handle a particular type of exception.
                     && severity > core_struct->max_severity)
                 RETURN(INTVAL 0);
 
+            if (core_struct->handled_types != PMCNULL) {
+                INTVAL elems = VTABLE_elements(interp, core_struct->handled_types);
+                INTVAL type = VTABLE_get_integer_keyed_str(interp, 
+                        exception,
+                        CONST_STRING(interp,"type"));
+                INTVAL i;
+                for (i = 0; i < elems; i++) {
+                    INTVAL handled_type = VTABLE_get_integer_keyed_int(interp,
+                            core_struct->handled_types,i);
+                    if (handled_type == type)
+                        RETURN(INTVAL 1);
+                }
+                RETURN(INTVAL 0);
+            }
+
             /* The exception handler has already been used before. */
             if (VTABLE_get_integer(INTERP, SELF))
                 RETURN(INTVAL 0);
@@ -223,6 +240,25 @@ Set or get the maximum severity of the exception handler.
             core_struct->max_severity = severity;
         else
             return core_struct->max_severity;
+    }
+
+/*
+
+=item C<METHOD handle_types(PMC *types :slurpy)>
+
+Set the exception types that the ExceptionHandler will handle.
+
+=cut
+
+*/
+
+    METHOD handle_types(PMC *types :slurpy) {
+        Parrot_ExceptionHandler_attributes * const core_struct =
+                    PARROT_EXCEPTIONHANDLER(SELF);
+        core_struct->handled_types = 
+            VTABLE_elements(interp,types) > 0
+                ? types
+                : PMCNULL;
     }
 
 }
