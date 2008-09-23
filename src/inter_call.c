@@ -2057,6 +2057,11 @@ C<l>. If C<flag> is 1, C<l> is treated as a PMC array of return
 parameters. If C<flag> is 0, C<l> is treated instead as a va_list
 of variadic C arguments.
 
+To unify this function, C<Parrot_PCCINVOKE> needs to be changed to
+convert the va_list of input arguments into a signature object, and the
+results list from that object needs to be passed to this function
+instead of the va_list itself.
+
 =cut
 
 */
@@ -2161,7 +2166,11 @@ set_context_sig_returns(PARROT_INTERP, ARGMOD(parrot_context_t *ctx),
 =item C<set_context_sig_params>
 
 Sets the subroutine arguments in the C<ctx> context, according to the
-signature string C<signature>.
+signature string C<signature>. Currently this function is only called
+from C<Parrot_pcc_invoke_sub_from_sig_object>, but eventually when
+things are unified enough it should be called from C<Parrot_PCCINVOKE>
+as well. The only difference currently between the two implementations
+are the calls to C<commit_last_arg_sig_object> and C<commit_last_arg>.
 
 =cut
 
@@ -2533,7 +2542,9 @@ Parrot_pcc_invoke_sub_from_sig_object(PARROT_INTERP, ARGIN(PMC *sub_obj),
     opcode_t arg_indexes[PCC_ARG_MAX];
     opcode_t result_indexes[PCC_ARG_MAX];
 
-    const char *signature = string_to_cstring(interp, VTABLE_get_string(interp, sig_obj));
+    /* create the signature string, and the various PMCs that are needed to
+       store all the parameters and parameter counts. */
+    const char *signature   = string_to_cstring(interp, VTABLE_get_string(interp, sig_obj));
     PMC * const args_sig    = pmc_new(interp, enum_class_FixedIntegerArray);
     PMC * const results_sig = pmc_new(interp, enum_class_FixedIntegerArray);
     PMC * const ret_cont    = new_ret_continuation_pmc(interp, NULL);
@@ -2565,23 +2576,29 @@ Parrot_pcc_invoke_sub_from_sig_object(PARROT_INTERP, ARGIN(PMC *sub_obj),
     sigs[0]    = args_sig;
     sigs[1]    = results_sig;
 
+    /* Count the number of objects of each type that need to be allocated by
+       the caller to perform this function call */
     ctx = count_signature_elements(interp, signature, args_sig, results_sig, 0);
 
     /* code from PCCINVOKE impl in PCCMETHOD.pm */
+    /* Save the current values of the interpreter arguments so that additional
+       child sub calls don't kill our call stack. */
     save_current_args      = interp->current_args;
     save_args_signature    = interp->args_signature;
     save_current_object    = interp->current_object;
 
+    /* Set the function input parameters in the context structure, and return the
+       offset in the signature where the return params start. */
     ret_x = set_context_sig_params(interp, signature, n_regs_used, sigs, indexes, ctx, sig_obj);
 
-    /* arg_accessors assigned in loop above */
-
+    /* Set up the context object for the function invokation */
     interp->current_object       = PMCNULL;
     interp->current_cont         = NEED_CONTINUATION;
     ctx->current_cont            = ret_cont;
     PMC_cont(ret_cont)->from_ctx = ctx;
     ctx->ref_count++;
 
+    /* Invoke the function */
     dest = VTABLE_invoke(interp, sub_obj, NULL);
 
     /* PIR Subs need runops to run their opcodes. */
@@ -2590,6 +2607,9 @@ Parrot_pcc_invoke_sub_from_sig_object(PARROT_INTERP, ARGIN(PMC *sub_obj),
         offset = dest - interp->code->base.data;
         runops(interp, offset);
     }
+
+    /* Set the return values from the subroutine's context into the
+       caller's context */
 
     set_context_sig_returns(interp, ctx, indexes, ret_x, result_list, 1);
     PObj_live_CLEAR(args_sig);
