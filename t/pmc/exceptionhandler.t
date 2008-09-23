@@ -17,11 +17,12 @@ Tests the ExceptionHandler PMC.
 =cut
 
 .include 'include/except_severity.pasm'
+.include 'include/except_types.pasm'
 
 .sub main :main
     .include 'include/test_more.pir'
 
-    plan(3)
+    plan(5)
 
     .local pmc eh
     new eh, 'ExceptionHandler'
@@ -49,7 +50,7 @@ Tests the ExceptionHandler PMC.
     pop_eh
     pop_eh
 
-    exit 0
+    goto more_tests
 
   nonfatal_handler_one:
     .local pmc e, c
@@ -62,6 +63,46 @@ Tests the ExceptionHandler PMC.
     .local pmc e, c
     .get_results (e)
     ok(1, 'Min and Max severity for exception handlers')
+    c = e['resume']
+    eh = 0
+    c()
+
+  more_tests:
+
+    new eh, 'ExceptionHandler'
+    set_addr eh, typed_handler_one
+    eh.handle_types(.CONTROL_OK, .CONTROL_BREAK)
+    push_eh eh
+
+    new eh, 'ExceptionHandler'
+    set_addr eh, typed_handler_two
+    eh.handle_types(.EXCEPTION_SYNTAX_ERROR, .EXCEPTION_UNEXPECTED_NULL)
+    push_eh eh
+
+    $P0 = new 'Exception'
+    $P0['type'] = .CONTROL_OK
+    throw $P0
+
+    $P0 = new 'Exception'
+    $P0['type'] = .CONTROL_BREAK
+    throw $P0
+
+    pop_eh
+    pop_eh
+
+    exit 0
+
+  typed_handler_one:
+    .local pmc e, c
+    .get_results (e)
+    ok(1, 'Exception Handler type checks work')
+    c = e['resume']
+    eh = 0
+    c()
+  typed_handler_two:
+    .local pmc e, c
+    .get_results (e)
+    ok(0, 'Exception Handler type checks work')
     c = e['resume']
     eh = 0
     c()
