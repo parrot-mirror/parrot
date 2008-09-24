@@ -58,7 +58,24 @@ Initializes the exception handler.
          * of an "earlier" context, which is contained in the interpreter's
          * context - the stacks can only be deeper in the interpreter - so no
          * mark of context is needed */
+        PObj_custom_mark_SET(SELF);
         PObj_active_destroy_SET(SELF);
+    }
+/*
+
+=item C<void mark()>
+
+Mark any active exception handler data as live.
+
+=cut
+
+*/
+
+    VTABLE void mark() {
+        Parrot_ExceptionHandler_attributes * const core_struct =
+            PARROT_EXCEPTIONHANDLER(SELF);
+        if (core_struct->handled_types)
+            pobject_lives(interp, (PObj *)core_struct->handled_types);
     }
 
     /*
