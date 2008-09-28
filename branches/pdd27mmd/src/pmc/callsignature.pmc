@@ -47,7 +47,8 @@ Initializes a newly created CallSignature object.
 */
 
     VTABLE void init() {
-        Parrot_CallSignature *sig_struct = mem_allocate_typed(Parrot_CallSignature);
+        Parrot_CallSignature_attributes *sig_struct =
+            mem_allocate_typed(Parrot_CallSignature_attributes);
         PMC_data(SELF)         = sig_struct;
         sig_struct->short_sig  = NULL;
         sig_struct->type_tuple = PMCNULL;
@@ -71,7 +72,7 @@ Sets the short signature for the CallSignature.
 */
 
     VTABLE void set_string_native(STRING *value) {
-        Parrot_CallSignature * const sig_struct = PARROT_CALLSIGNATURE(SELF);
+        Parrot_CallSignature_attributes * const sig_struct = PARROT_CALLSIGNATURE(SELF);
         sig_struct->short_sig = value;
     }
 
@@ -86,7 +87,7 @@ Returns the short signature for the CallSignature.
 */
 
     VTABLE STRING *get_string() {
-        Parrot_CallSignature * const sig_struct = PARROT_CALLSIGNATURE(SELF);
+        Parrot_CallSignature_attributes * const sig_struct = PARROT_CALLSIGNATURE(SELF);
         return sig_struct->short_sig;
     }
 
@@ -101,7 +102,7 @@ Sets a fixed-size array of integer types (a type tuple) for the CallSignature.
 */
 
     VTABLE void set_pmc(PMC *value) {
-        Parrot_CallSignature * const sig_struct = PARROT_CALLSIGNATURE(SELF);
+        Parrot_CallSignature_attributes * const sig_struct = PARROT_CALLSIGNATURE(SELF);
         sig_struct->type_tuple = value;
     }
 
@@ -117,7 +118,7 @@ CallSignature.
 */
 
     VTABLE PMC *get_pmc() {
-        Parrot_CallSignature * const sig_struct = PARROT_CALLSIGNATURE(SELF);
+        Parrot_CallSignature_attributes * const sig_struct = PARROT_CALLSIGNATURE(SELF);
         return sig_struct->type_tuple;
     }
 
@@ -140,7 +141,7 @@ Stores the return signature, an array of PMCs.
 */
 
     VTABLE void set_attr_str(STRING *key, PMC *value) {
-        Parrot_CallSignature * const sig_struct = PARROT_CALLSIGNATURE(SELF);
+        Parrot_CallSignature_attributes * const sig_struct = PARROT_CALLSIGNATURE(SELF);
         sig_struct->returns = value;
     }
 
@@ -163,7 +164,7 @@ Retrieves the return signature, an array of PMCs.
 */
 
     VTABLE PMC *get_attr_str(STRING *key) {
-        Parrot_CallSignature * const sig_struct = PARROT_CALLSIGNATURE(SELF);
+        Parrot_CallSignature_attributes * const sig_struct = PARROT_CALLSIGNATURE(SELF);
         return sig_struct->returns;
     }
 
@@ -178,7 +179,7 @@ Mark any referenced strings and PMCs.
 */
     VTABLE void mark() {
         if (PARROT_CALLSIGNATURE(SELF)) {
-            Parrot_CallSignature * const attrs = PARROT_CALLSIGNATURE(SELF);
+            Parrot_CallSignature_attributes * const attrs = PARROT_CALLSIGNATURE(SELF);
 
             if (attrs->array)
                 pobject_lives(interp, (PObj*)attrs->array);
