@@ -585,7 +585,8 @@ messages and in debug information.
     $P0.'setfenv'(env)
     .return ($P0)
   _handler:
-    .get_results ($P0, $S0)
+    .get_results ($P0)
+    $S0 = $P0
     null $P0
     .return ($P0, $S0)
 .end
@@ -607,7 +608,8 @@ messages and in debug information.
     $P0.'setfenv'(env)
     .return ($P0)
   _handler:
-    .get_results ($P0, $S0)
+    .get_results ($P0)
+    $S0 = $P0
     null $P0
     .return ($P0, $S0)
 .end
@@ -807,6 +809,9 @@ If this argument is absent or is B<nil>, returns C<def>. Otherwise, raises an er
     $S0 = shift names
     unless $S0 goto L3
     $P0 = ns[$S0]
+    unless null $P0 goto L5
+    lua_error("missing method ", $S0)
+  L5:
     $P0.'setfenv'(env)
     set $P1, $S0
     lib[$P1] = $P0
@@ -945,7 +950,8 @@ This function never returns.
   _handler:
     .local pmc ex
     .local string msg
-    .get_results (ex, msg)
+    .get_results (ex)
+    msg = ex
     $P0 = getattribute ex, 'severity'
     if null $P0 goto L1
     $I0 = $P0

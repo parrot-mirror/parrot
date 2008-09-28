@@ -230,7 +230,7 @@ tx:
     print "okay\n"
     .return ()
 retry:
-    # we start a nested transcation here;
+    # we start a nested transaction here;
     # the only we we ill get out of this loop
     # is if stm_wait jumps to 'invalid'.
     stm_start

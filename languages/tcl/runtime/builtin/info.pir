@@ -129,7 +129,8 @@ bad_args:
   .return(1)
 
 nope:
-  get_results '0,0', $P0, $S0
+  get_results '0', $P0
+  $S0 = $P0
   if $S0 == 'missing close-brace'   goto fail
   if $S0 == 'missing close-bracket' goto fail
   if $S0 == 'missing "'             goto fail
@@ -505,10 +506,10 @@ bad_args:
   die 'wrong # args: should be "info globals ?pattern?"'
 .end
 
-# RT#40739: stub
 .sub 'script'
   .param pmc argv
-  .return(0)
+  $P0 = get_root_global ['_tcl'], '$script'
+  .return($P0)
 .end
 
 # RT#40740: stub

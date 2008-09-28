@@ -1,5 +1,5 @@
 #!perl
-# Copyright (C) 2001-2005, The Perl Foundation.
+# Copyright (C) 2001-2008, The Perl Foundation.
 # $Id$
 
 use strict;
@@ -15,7 +15,7 @@ t/op/trans.t - Transcendental Mathematical Ops
 
 =head1 SYNOPSIS
 
-        % prove t/op/trans.t
+    % prove t/op/trans.t
 
 =head1 DESCRIPTION
 
@@ -29,10 +29,8 @@ Tests the transcendental mathematical operations.
 # which will conditionally branch
 # to LABEL if abs(n,n) < epsilon
 
-my $fp_equality_macro = pasm_fp_equality_macro();
-
 pasm_output_is( <<"CODE", <<OUTPUT, "sin" );
-@{[ $fp_equality_macro ]}
+        .include 'include/fp_equality.pasm'
         set     N1, 1.0
         sin     N2, N1
         .fp_eq  (N2, 0.841471, EQ1)
@@ -52,7 +50,7 @@ ok 2
 OUTPUT
 
 pasm_output_is( <<"CODE", <<OUTPUT, "cos" );
-@{[ $fp_equality_macro ]}
+        .include 'include/fp_equality.pasm'
         set     N1, 1.0
         cos     N2, N1
         .fp_eq  (N2, 0.540302, EQ1)
@@ -71,7 +69,7 @@ ok 2
 OUTPUT
 
 pasm_output_is( <<"CODE", <<OUTPUT, "tan" );
-@{[ $fp_equality_macro ]}
+        .include 'include/fp_equality.pasm'
         set     N1, 1.0
         tan     N2, N1
         .fp_eq  (N2, 1.557408, EQ1)
@@ -90,7 +88,7 @@ ok 2
 OUTPUT
 
 pasm_output_is( <<"CODE", <<OUTPUT, "sec" );
-@{[ $fp_equality_macro ]}
+        .include 'include/fp_equality.pasm'
         set N1, 1.0
         sec N2, N1
         .fp_eq  (N2, 1.850816, EQ1)
@@ -109,7 +107,7 @@ ok 2
 OUTPUT
 
 pasm_output_is( <<"CODE", <<OUTPUT, "atan" );
-@{[ $fp_equality_macro ]}
+        .include 'include/fp_equality.pasm'
         set N1, 1.0
         atan N2, N1
         .fp_eq  (N2, 0.785398, EQ1)
@@ -128,7 +126,7 @@ ok 2
 OUTPUT
 
 pasm_output_is( <<"CODE", <<OUTPUT, "asin" );
-@{[ $fp_equality_macro ]}
+        .include 'include/fp_equality.pasm'
         set N1, 1.0
         asin N2, N1
         .fp_eq  (N2, 1.570796, EQ1)
@@ -148,7 +146,7 @@ ok 2
 OUTPUT
 
 pasm_output_is( <<"CODE", <<OUTPUT, "acos" );
-@{[ $fp_equality_macro ]}
+        .include 'include/fp_equality.pasm'
         set N1, 1.0
         acos N2, N1
         .fp_eq  (N2, 0.000000, EQ1)
@@ -168,7 +166,7 @@ ok 2
 OUTPUT
 
 pasm_output_is( <<"CODE", <<OUTPUT, "asec" );
-@{[ $fp_equality_macro ]}
+        .include 'include/fp_equality.pasm'
         set N1, 1.0
         asec N2, N1
         .fp_eq  (N2, 0.000000, EQ1)
@@ -188,7 +186,7 @@ ok 2
 OUTPUT
 
 pasm_output_is( <<"CODE", <<OUTPUT, "cosh" );
-@{[ $fp_equality_macro ]}
+        .include 'include/fp_equality.pasm'
         set N1, 1.0
         cosh N2, N1
         .fp_eq  (N2, 1.543081, EQ1)
@@ -208,7 +206,7 @@ ok 2
 OUTPUT
 
 pasm_output_is( <<"CODE", <<OUTPUT, "sinh" );
-@{[ $fp_equality_macro ]}
+        .include 'include/fp_equality.pasm'
         set N1, 1.0
         sinh N2, N1
         .fp_eq  (N2, 1.175201, EQ1)
@@ -228,7 +226,7 @@ ok 2
 OUTPUT
 
 pasm_output_is( <<"CODE", <<OUTPUT, "tanh" );
-@{[ $fp_equality_macro ]}
+        .include 'include/fp_equality.pasm'
         set N1, 1.0
         tanh N2, N1
         .fp_eq  (N2, 0.761594, EQ1)
@@ -248,7 +246,7 @@ ok 2
 OUTPUT
 
 pasm_output_is( <<"CODE", <<OUTPUT, "sech" );
-@{[ $fp_equality_macro ]}
+        .include 'include/fp_equality.pasm'
         set N1, 1.0
         sech N2, N1
         .fp_eq  (N2, 0.648054, EQ1)
@@ -268,7 +266,7 @@ ok 2
 OUTPUT
 
 pasm_output_is( <<"CODE", <<OUTPUT, "atan2" );
-@{[ $fp_equality_macro]}
+        .include 'include/fp_equality.pasm'
         set N0, 0.0
         set I0, 0
         set N1, 1.0
@@ -381,7 +379,7 @@ TODO: {
 local $TODO = 'fails on netbsd' if $^O =~ /netbsd/;
 
 pasm_output_is( <<"CODE", <<'OUTPUT', 'atan, part 2' );
-@{[ $fp_equality_macro ]}
+        .include 'include/fp_equality.pasm'
         atan N4, -0.0, -0.0
         .fp_eq   (N4, -3.1415926, EQ1)
         print "not "
@@ -395,7 +393,7 @@ OUTPUT
 }
 
 pasm_output_is( <<"CODE", <<OUTPUT, "log2" );
-@{[ $fp_equality_macro ]}
+        .include 'include/fp_equality.pasm'
         set N1, 10.0
         log2 N2, N1
         .fp_eq  (N2, 3.321928, EQ1)
@@ -415,7 +413,7 @@ ok 2
 OUTPUT
 
 pasm_output_is( <<"CODE", <<OUTPUT, "log10" );
-@{[ $fp_equality_macro ]}
+        .include 'include/fp_equality.pasm'
         set N1, 15.0
         log10 N2, N1
         .fp_eq  (N2, 1.176091, EQ1)
@@ -435,7 +433,7 @@ ok 2
 OUTPUT
 
 pasm_output_is( <<"CODE", <<OUTPUT, "ln" );
-@{[ $fp_equality_macro ]}
+        .include 'include/fp_equality.pasm'
         set N1, 10.0
         ln N2, N1
         .fp_eq  (N2, 2.302585, EQ1)
@@ -454,7 +452,7 @@ ok 2
 OUTPUT
 
 pasm_output_is( <<"CODE", <<OUTPUT, "exp" );
-@{[ $fp_equality_macro ]}
+        .include 'include/fp_equality.pasm'
         set N1, 10.0
         exp N2, N1
         .fp_eq  (N2, 22026.465795, EQ1)
@@ -473,7 +471,7 @@ ok 2
 OUTPUT
 
 pasm_output_is( <<"CODE", <<OUTPUT, "pow" );
-@{[ $fp_equality_macro ]}
+        .include 'include/fp_equality.pasm'
         set N1, 3.0
         set I1, 3
         set N2, 5.0
@@ -584,7 +582,7 @@ ok 16
 OUTPUT
 
 pasm_output_is( <<"CODE", <<OUTPUT, "sqrt" );
-@{[ $fp_equality_macro ]}
+       .include 'include/fp_equality.pasm'
        set N1, 9.0
        sqrt N2, N1
        .fp_eq  (N2, 3.0, EQ1)
@@ -644,18 +642,18 @@ pasm_output_is( <<'CODE', <<OUTPUT, "pow_n_n_ic" );
     pow N1, N0, -5
     end
 CODE
-1.000000
-2.000000
-4.000000
-8.000000
-16.000000
-32.000000
-64.000000
-128.000000
-0.500000
-0.250000
-0.125000
-0.062500
+1
+2
+4
+8
+16
+32
+64
+128
+0.5
+0.25
+0.125
+0.0625
 OUTPUT
 
 pasm_output_is( <<'CODE', <<OUTPUT, "pow_n_n_i" );
@@ -714,18 +712,18 @@ pasm_output_is( <<'CODE', <<OUTPUT, "pow_n_n_i" );
     print "\n"
     end
 CODE
-1.000000
-2.000000
-4.000000
-8.000000
-16.000000
-32.000000
-64.000000
-0.500000
-0.250000
-0.125000
-0.062500
-0.031250
+1
+2
+4
+8
+16
+32
+64
+0.5
+0.25
+0.125
+0.0625
+0.03125
 0.015625
 OUTPUT
 

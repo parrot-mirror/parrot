@@ -17,6 +17,8 @@ src/classes/Mapping.pir - Perl 6 hash class and related functions
     p6meta = get_hll_global ['Perl6Object'], '$!P6META'
     mappingproto = p6meta.'new_class'('Mapping', 'parent'=>'Hash Any')
     p6meta.'register'('Hash', 'parent'=>mappingproto, 'protoobject'=>mappingproto)
+    $P0 = get_hll_namespace ['Mapping']
+    '!EXPORT'('keys kv values reverse', $P0)
 .end
 
 
@@ -95,7 +97,7 @@ Returns elements of hash as array of C<Pair(key, value)>
 
 =cut
 
-.sub 'kv' :method
+.sub 'kv' :method :multi('Hash')
     .local pmc iter
     .local pmc rv
     iter = new 'Iterator', self
@@ -104,16 +106,38 @@ Returns elements of hash as array of C<Pair(key, value)>
     unless iter goto end
     $S1 = shift iter
     push rv, $S1
-    $S1 = iter[$S1]
-    push rv, $S1
+    $P1 = iter[$S1]
+    push rv, $P1
+    goto loop
+  end:
+    .return (rv)
+.end
+
+=item pairs (method)
+
+Returns elements of hash as array of C<Pairs>
+
+=cut
+
+.sub 'pairs' :method :multi('Hash')
+    .local pmc iter
+    .local pmc rv
+    iter = new 'Iterator', self
+    rv   = 'list'()
+    $P3 = get_hll_global 'Perl6Pair'
+  loop:
+    unless iter goto end
+    $P1 = shift iter
+    $P2 = iter[$P1]
+    $P4 = $P3.'new'('key' => $P1, 'value' => $P2)
+    push rv, $P4
     goto loop
   end:
     .return (rv)
 .end
 
 
-
-.sub 'keys' :method
+.sub 'keys' :method :multi('Hash')
     .local pmc iter
     .local pmc rv
     iter = new 'Iterator', self
@@ -127,8 +151,26 @@ Returns elements of hash as array of C<Pair(key, value)>
     .return (rv)
 .end
 
+=item reverse
 
-.sub 'values' :method
+=cut
+
+.sub 'reverse' :method :multi('Hash')
+    .local pmc result, iter
+    result = new 'Perl6Hash'
+    iter = new 'Iterator', self
+  iter_loop:
+    unless iter goto iter_end
+    $S0 = shift iter
+    $S1 = self[$S0]
+    result[$S1] = $S0
+    goto iter_loop
+  iter_end:
+    .return (result)
+.end
+
+
+.sub 'values' :method :multi('Hash')
     .local pmc iter
     .local pmc rv
     iter = new 'Iterator', self
@@ -136,8 +178,8 @@ Returns elements of hash as array of C<Pair(key, value)>
   loop:
     unless iter goto end
     $S1 = shift iter
-    $S1 = iter[$S1]
-    push rv, $S1
+    $P1 = iter[$S1]
+    push rv, $P1
     goto loop
   end:
     .return (rv)
@@ -175,20 +217,8 @@ returns the value(s) that were associated to those keys.
 True if invocant has an element whose key matches C<$key>, false
 otherwise.
 
-=item keys
-
-=item kv
-
 =cut
 
-.sub kv :multi(Mapping)
-    .param pmc hash
-
-    .return hash.'kv'()
-.end
-
-
-=item pairs
 
 =item values
 

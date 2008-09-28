@@ -740,7 +740,7 @@ Decrements the integer.
     MULTI PMC *add(Integer value, PMC *dest) {
         dest = pmc_new(INTERP, SELF->vtable->base_type);
 
-        bigint_add_bigint_int(INTERP, SELF, PMC_int_val(value), dest);
+        bigint_add_bigint_int(INTERP, SELF, VTABLE_get_integer(interp, value), dest);
         return dest;
     }
 
@@ -763,7 +763,7 @@ Decrements the integer.
     }
 
     MULTI void i_add(Integer value) {
-        bigint_add_bigint_int(INTERP, SELF, PMC_int_val(value), SELF);
+        bigint_add_bigint_int(INTERP, SELF, VTABLE_get_integer(interp, value), SELF);
     }
 
     MULTI void i_add(DEFAULT value) {
@@ -800,7 +800,7 @@ Decrements the integer.
         else
             dest = pmc_new(INTERP, SELF->vtable->base_type);
 
-        bigint_sub_bigint_int(INTERP, SELF, PMC_int_val(value), dest);
+        bigint_sub_bigint_int(INTERP, SELF, VTABLE_get_integer(interp, value), dest);
         return dest;
     }
 
@@ -826,7 +826,7 @@ Decrements the integer.
     }
 
     MULTI void i_subtract(Integer value) {
-        bigint_sub_bigint_int(INTERP, SELF, PMC_int_val(value), SELF);
+        bigint_sub_bigint_int(INTERP, SELF, VTABLE_get_integer(interp, value), SELF);
     }
 
     MULTI void i_subtract(DEFAULT value) {
@@ -879,7 +879,7 @@ Decrements the integer.
         bigint_mul_bigint(INTERP, SELF, value, SELF);
     }
     MULTI void i_multiply(Integer value) {
-        bigint_mul_bigint_int(INTERP, SELF, PMC_int_val(value), SELF);
+        bigint_mul_bigint_int(INTERP, SELF, VTABLE_get_integer(interp, value), SELF);
     }
     MULTI void i_multiply(DEFAULT value) {
         Parrot_ex_throw_from_c_args(INTERP, NULL,
@@ -938,7 +938,7 @@ Decrements the integer.
         else
             dest = pmc_new(INTERP, SELF->vtable->base_type);
 
-        bigint_div_bigint_int(INTERP, SELF, PMC_int_val(value), dest);
+        bigint_div_bigint_int(INTERP, SELF, VTABLE_get_integer(interp, value), dest);
         return dest;
     }
 
@@ -963,7 +963,7 @@ Decrements the integer.
         bigint_div_bigint(INTERP, SELF, value, SELF);
     }
     MULTI void i_divide(Integer value) {
-        bigint_div_bigint_int(INTERP, SELF, PMC_int_val(value), SELF);
+        bigint_div_bigint_int(INTERP, SELF, VTABLE_get_integer(interp, value), SELF);
     }
     MULTI void i_divide(DEFAULT value) {
          Parrot_ex_throw_from_c_args(INTERP, NULL,
@@ -1012,7 +1012,7 @@ Decrements the integer.
     }
 
     MULTI void i_floor_divide(Integer value) {
-        bigint_fdiv_bigint_int(INTERP, SELF, PMC_int_val(value), SELF);
+        bigint_fdiv_bigint_int(INTERP, SELF, VTABLE_get_integer(interp, value), SELF);
     }
 
     MULTI void i_floor_divide(DEFAULT value) {
@@ -1042,7 +1042,7 @@ Decrements the integer.
         else
             dest = pmc_new(INTERP, SELF->vtable->base_type);
 
-        bigint_mod_bigint_int(INTERP, SELF, PMC_int_val(value), dest);
+        bigint_mod_bigint_int(INTERP, SELF, VTABLE_get_integer(interp, value), dest);
         return dest;
     }
 
@@ -1057,7 +1057,7 @@ Decrements the integer.
         bigint_mod_bigint(INTERP, SELF, value, SELF);
     }
     MULTI void i_modulus(Integer value) {
-        bigint_mod_bigint_int(INTERP, SELF, PMC_int_val(value), SELF);
+        bigint_mod_bigint_int(INTERP, SELF, VTABLE_get_integer(interp, value), SELF);
     }
     MULTI void i_modulus(DEFAULT value) {
         Parrot_ex_throw_from_c_args(INTERP, NULL,
@@ -1179,8 +1179,8 @@ Inplace shift left.
         else
             dest = pmc_new(INTERP, SELF->vtable->base_type);
 
-        bigint_bitwise_shl_bigint_int(INTERP, SELF, PMC_int_val(value),
-                                      dest);
+        bigint_bitwise_shl_bigint_int(INTERP, SELF,
+                VTABLE_get_integer(interp, value), dest);
         return dest;
     }
     MULTI PMC *bitwise_shl(DEFAULT value, PMC *dest) {
@@ -1208,8 +1208,8 @@ Inplace shift left.
     }
 
     MULTI void i_bitwise_shl(Integer value) {
-        bigint_bitwise_shl_bigint_int(INTERP, SELF, PMC_int_val(value),
-                                      SELF);
+        bigint_bitwise_shl_bigint_int(INTERP, SELF,
+                VTABLE_get_integer(interp, value), SELF);
     }
 
     MULTI void i_bitwise_shl(DEFAULT value) {
@@ -1259,8 +1259,8 @@ Inplace shift left.
         else
             dest = pmc_new(INTERP, SELF->vtable->base_type);
 
-        bigint_bitwise_shr_bigint_int(INTERP, SELF, PMC_int_val(value),
-                                      dest);
+        bigint_bitwise_shr_bigint_int(INTERP, SELF,
+                VTABLE_get_integer(interp, value), dest);
         return dest;
     }
 
@@ -1289,8 +1289,8 @@ Inplace shift left.
     }
 
     MULTI void i_bitwise_shr(Integer value) {
-        bigint_bitwise_shr_bigint_int(INTERP, SELF, PMC_int_val(value),
-                                      SELF);
+        bigint_bitwise_shr_bigint_int(INTERP, SELF,
+                VTABLE_get_integer(interp, value), SELF);
     }
 
     MULTI void i_bitwise_shr(DEFAULT value) {
