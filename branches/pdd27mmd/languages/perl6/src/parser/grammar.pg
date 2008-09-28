@@ -163,11 +163,20 @@ rule statementlist {
 ##  isn't present -- e.g., a closing '}' at the end of a line
 ##  for a <block>.
 
-token terminator { <[ ; ) \] } ]> || '!!' || '<==' || '==>' || '-->' }
+token terminator { 
+    |  <[ ; ) \] } ]> 
+    | '!!' 
+    | '-->' 
+    | [ if | unless | while | until | for | given | when ] >> 
+}
+
+token stdstopper {
+    <?terminator>
+}
 
 token eat_terminator {
     || ';'
-    || <?before <terminator>>                    # FIXME: <?terminator>
+    || <?terminator>
     || {{ $P0 = get_global '$!endstmt'
           $P1 = get_global '$!ws'
           $P2 = $P1.'from'()
@@ -272,9 +281,9 @@ rule loop_statement {
     $<sym>=[loop]
     $<eee>=[
         '('
-            <e1=EXPR> ';'
-            <e2=EXPR> ';'
-            <e3=EXPR>
+            <e1=EXPR>? ';'
+            <e2=EXPR>? ';'
+            <e3=EXPR>?
         ')'
     ]?
     <block>
@@ -463,13 +472,14 @@ token special_variable {
 #### Terms ####
 
 token expect_term {
-    | <noun> <postfix>* {*}                      #= noun
+    | <noun> <post>* {*}                         #= noun
     | '*' {*}                                    #= *
 }
 
 
-token postfix {
+token post {
     <!afterws>
+    [ <.unsp> || \\ <?before '.'> ]?
     [
     | <dotty> {*}                                #= dotty
     | <postcircumfix> {*}                        #= postcircumfix
@@ -480,10 +490,16 @@ token postfix {
 token dotty {
     [
     | '.VAR' {*}                                      #= VAR
-    | '.' <methodop> {*}                              #= .
-    | ('.' <[+*?=^:]>) <?unspacey> <methodop> {*}     #= .*
+    | '.' <.unspacey> <dottyop> {*}                   #= .
+    | ('.' <[+*?^:]>) <.unspacey> <dottyop> {*}       #= .*
     | '!' <methodop> {*}                              #= !
     ]
+}
+
+
+token dottyop {
+    | <methodop> {*}                                  #= methodop
+    | <postcircumfix> {*}                             #= postcircumfix
 }
 
 
@@ -550,12 +566,14 @@ token term {
         | :: {*}                                 #= listop noarg
         ]
     | <sigil> \s <arglist> {*}                   #= sigil
+    | '...' {*}                                  #= ...
     ]
 }
 
 ##  XXX: cheat until we get term:pi, term:rand, term:undef, etc.
 token named_0ary {
-    [pi|rand|undef|nothing|time] >>
+    | [pi|rand|undef|nothing|time] >>
+    | ['...'|'???'|'!!!'|'=<>']
 }
 
 rule package_declarator {
@@ -682,6 +700,12 @@ token quote {
     | <.before '<' > <quote_expression: :w :q>
     # | <.before '«' > <quote_expression: :ww :qq>  FIXME: unicode
     | <.before '/'>  <quote_expression: :regex>
+    | m   <.ws>      <quote_expression: :regex>
+    | q 
+        [ q <.ws>      <quote_expression: :qq>
+        | w <.ws>      <quote_expression: :q :w>
+        |   <.ws>      <quote_expression: :q>
+        ]
     ]
     {*}
 }
@@ -709,7 +733,7 @@ token integer {
 }
 
 token escale {
-    <[Ee]> <[+\-]>? \d+
+    <[Ee]> <[+\-]>? \d+[_\d+]*
 }
 
 # careful to distinguish from both integer and 42.method
@@ -801,7 +825,10 @@ rule semilist {
 }
 
 token arglist {
-    <EXPR: 'e='>                                 # EXPR(%list_assignment)
+    [
+    | <?terminator>
+    | <EXPR: 'e='>                                 # EXPR(%list_assignment)
+    ]
     {*}
 }
 

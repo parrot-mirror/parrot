@@ -9,39 +9,115 @@ use vars qw($DIR);
 # the directory to put the tests in
 $DIR = 't_tcl';
 
-use Fatal qw{open};
 use File::Spec;
-use Getopt::Std;
-use Test::Harness;
 
 $| = 1;
 
-our ( $opt_u, $opt_h, $opt_c );
-getopts('uhc');
-
 =head1 NAME
 
-tcl-test.pl
+tcl_test.pl
 
 =head1 DESCRIPTION
 
 Run the tests from the Tcl distribution. This script will download
-the tests from the Tcl CVS repository, change them slightly to use
-our C<Test::More> like suite so we can then use prove to report the
-results.
+the tests from the Tcl CVS repository and then run them individually
+using tcltest.
 
 =head1 BUGS
 
-The need for this script. Eventually use tcltest.tcl
+We should be able to run the tcl test harness instead of running
+each individual C<.test> file.
 
 =head1 SYNOPSIS
 
-  tcl-test.pl [-c] [-u]
-
-  -c Convert the .test files to .t files
-  -u Update the tests from CVS.
+  tcl_test.pl
 
 =cut
+
+# When testing, avoid these files for now.
+my %skipfiles = (
+  'assocd' => 'all skipped',
+  'async'  => 'expected boolean value but got ""',
+  'autoMkindex' => 'unable to open file',
+  'basic' => "can't delete 'run'",
+  'binary' => 'Parrot assertion',
+  'case'   => 'not implemented',
+  'chanio' => 'unable to open file',
+  'clock'  => 'not implemented, memory hog',
+  'cmdAH'  => 'expected boolean value but got ""',
+  'cmdAZ'  =>'bad option "-1"',
+  'cmdInfo' => 'all skipped',
+  'config' => 'all failed',
+  'dcall' => 'all skipped',
+  'dict' => 'maximum recursion depth exceeded',
+  'dstring' => 'expected boolean value but got ""',
+  'encoding' => 'wrong # args: should be "string is class  ...',
+  'expr'   => 'really slow, memory hog',
+  'env' => 'unable to open file',
+  'exec' => 'unable to open file',
+  'fCmd' => 'expected boolean value but got ""',
+  'fileName' => 'expected boolean value but got ""',
+  'fileSystem' => 'unable to open file',
+  'history' => 'expected boolean value but got ""',
+  'http' => 'cannot start http server',
+  'httpold' => 'unable to open file',
+  'indexObj' => 'all skipped',
+  'info' => "can't read variable",
+  'init' => 'all failed',
+  'interp' => 'wrong # args: should be "interp"',
+  'io' => 'unable to open file',
+  'iocmd' => 'unable to open file',
+  'iogt' => 'unable to open file',
+  'link' => 'all skipped',
+  'list' => 'unmatched open quote in list',
+  'lset' => 'all skipped',
+  'macOSXFCmd' => 'expected boolean value but got ""',
+  'macOSXLoad' => 'expected boolean value but got ""',
+  'main' => 'all skipped or failed',
+  'mathop' => 'Null PMC access...',
+  'misc' => 'only passed 1/301',
+  'msgcat' => 'unable to open file',
+  'namespace-old' => 'memory hog',
+  'namespace' => 'wrong # args...',
+  'obj' => 'expected boolean value but got ""',
+  'opt' => "can't read variable",
+  'parse' => 'parsefail',
+  'parseExpr' => 'memory hog',
+  'pid' => 'all skipped or failed',
+  'pkg' => 'no tests?',
+  'pkgMkIndex' => 'unable to open file',
+  'platform' => 'all skipped or failed',
+  'reg' => 'memory hog',
+  'regexp' => 'memory hog',
+  'regexpComp' => 'memory hog',
+  'registry' => 'expected boolean value but got ""',
+  'result' => 'all skipped or failed',
+  'safe' => "can't read variable",
+  'socket' =>  'expected boolean value but got ""',
+  'source' => 'all failed',
+  'stack' =>  'expected boolean value but got ""',
+  'string' => 'Invalid character for UTF-8 encoding',
+  'stringObj' => 'Null PMC access...',
+  'subst' => 'unmatched open brace in list',
+  'tcltest' => 'unable to open file',
+  'thread' =>  'expected boolean value but got ""',
+  'timer' => 'invalid command name "x"',
+  'tm' => 'all failed',
+  'trace' => "can't read variable",
+  'unixFCmd' =>  'expected boolean value but got ""',
+  'unixFile' => "can't read directory",
+  'unixInit' => 'all skipped',
+  'unixNotfy' => 'all skipped',
+  'unload' => 'invalid command name "child"',
+  'util' => 'memory hog',
+  'winConsole' => 'all skipped',
+  'winDde' => 'expected boolean value but got ""',
+  'winFCmd' => 'expected boolean value but got ""',
+  'winFile' => 'expected boolean value but got ""',
+  'winNotify' => 'all skipped',
+  'winPipe' => 'expected boolean value but got ""',
+  'winTime' => 'all skipped',
+);
 
 main();
 
@@ -49,41 +125,10 @@ main();
 ## main()
 ##
 sub main {
-    usage()          and exit            if $opt_h;
-    checkout_tests() and convert_tests() if not -d $DIR;
-    update_tests()   and convert_tests() if $opt_u;
-    convert_tests() if $opt_c;
-    return run_tests( grep { -f $_ } @ARGV );
+    checkout_tests() if not -d $DIR;
+    return run_tests();
 }
 
-##
-## convert_tests()
-##
-## Convert the tests to a usable form.
-##
-sub convert_tests {
-    print "Converting tests\n";
-    my @files = glob( File::Spec->catfile( $DIR, '*.test' ) );
-    for my $file (@files) {
-        my $test = substr $file, 0, -3;
-
-        # parrot's getopt dislikes filenames with - in them.
-        $test =~ s/-/_/g;
-        system("rm $test") if -e $test;
-
-        open my $ffh, '<', $file;
-        my $test_src = extract_tests(
-            do { local $/ = undef; <$ffh> }
-        );
-        close $ffh;
-
-        warn "Extracting tests for $file\n";
-        open my $tfh, '>>', $test;
-        print {$tfh} $test_src;
-        close $tfh;
-    }
-    return;
-}
 ##
 ## checkout_tests()
 ##
@@ -92,7 +137,7 @@ sub convert_tests {
 sub checkout_tests {
     print "Checking out tests from CVS\n";
 
-    my $tag = 'core-8-5-3';    # For the version we're targeting.
+    my $tag = 'core-8-5-4';    # For the version we're targeting.
 
     my $command =
         'cvs -z3 -d :pserver:anonymous:\@tcl.cvs.sourceforge.net:'
@@ -103,154 +148,25 @@ sub checkout_tests {
 }
 
 ##
-## my $var = choose(@vars)
-##
-## Select the first defined variable.
-##
-sub choose {
-    for (@_) {
-        return $_ if defined $_;
-    }
-    return;
-}
-
-##
-## %tests = extract_tests($string)
-##
-## Extract the tests from the .test file.
-##    (test_name => [ $expl, $source, $out ])
-##
-
-sub extract_tests {
-    my ($source) = shift;
-
-    # This is a bit unweildy.
-
-    my @removes = (
-        <<'END_TCL',
-if {[lsearch [namespace children] ::tcltest] == -1} {
-    package require tcltest
-    namespace import -force ::tcltest::*
-}
-END_TCL
-        <<'END_TCL',
-package require tcltest 2
-namespace import -force ::tcltest::*
-END_TCL
-        <<'END_TCL',
-if {[lsearch [namespace children] ::tcltest] == -1} {
-    package require tcltest 2
-    namespace import -force ::tcltest::*
-}
-END_TCL
-        <<'END_TCL',
-if {[catch {package require tcltest 2.1}]} {
-    puts stderr "Skipping tests in [info script]. tcltest 2.1 required."
-    return
-}
-END_TCL
-        <<'END_TCL',
-if {[lsearch [namespace children] ::tcltest] == -1} {
-    package require tcltest 2.1
-    namespace import -force ::tcltest::*
-}
-END_TCL
-        <<'END_TCL',
-::tcltest::cleanupTests
-return
-END_TCL
-        <<'END_TCL',
-cleanupTests
-return
-END_TCL
-        <<'END_TCL',
-::tcltest::cleanupTests
-return
-END_TCL
-        <<'END_TCL',
-::tcltest::cleanupTests
-flush stdout
-return
-END_TCL
-    );
-
-    foreach my $remove (@removes) {
-        $source =~ s/\Q$remove\E//xms;
-    }
-
-    $source = <<'END_SHEBANG' . $source . <<'END_CLEANUP';
-#!perl
-
-# the following lines re-execute this as a tcl script
-# the \ at the end of these lines makes them a comment in tcl \
-use lib qw(languages/tcl/lib tcl/lib lib ../lib ../../lib); # \
-use Tcl::Test; #\
-__DATA__
-
-source lib/test_more.tcl
-
-END_SHEBANG
-plan no_plan
-END_CLEANUP
-
-    return $source;
-}
-
-##
 ## run_tests(@globs)
 ##
-## Run the tests.
+## Run the tests...
 ##
+
 sub run_tests {
-    my (@files) = @_ ? @_ : glob File::Spec->catfile( $DIR, '*.t' );
+    my (@files) = glob File::Spec->catfile( $DIR, '*.test' );
 
-    if (@files) {
-        return runtests(@files);
+    foreach my $file (@files) {
+      $file =~ m{/(\w+).test$};
+      my $basename = $1;
+      if (exists $skipfiles{$basename}) {
+        print "Skipping $file: $skipfiles{$basename}\n";
+        next;
+      }
+      my $cmd = "../../parrot tcl.pbc $file";
+      print "$cmd\n";
+      system $cmd;
     }
-    else {
-        return;
-    }
-}
-
-##
-## my $string = unescape( $original )
-##
-## Unescape backslashes from a Tcl string.
-##
-sub unescape {
-    my ($string) = @_;
-    return if not $string;
-
-    $string =~ s/\\([^abfnrtvoxu])/$1/g;
-
-    return $string;
-}
-
-##
-## update_tests()
-##
-## Run CVS update.
-##
-sub update_tests {
-    print "Updating tests from CVS\n";
-    system "(cd $DIR && cvs -Q up *.test)";
-
-    return;
-}
-
-##
-## usage()
-##
-## Print the usage message.
-##
-sub usage {
-    print <<'END_USAGE';
-Usage: tcl-test.pl [-cu]
-    -c Convert the .test files to .t files
-    -u Update the tests from CVS.
-END_USAGE
-
-    return;
 }
 
 # Local Variables:

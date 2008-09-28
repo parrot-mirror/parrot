@@ -18,10 +18,6 @@ C<function(params, ...)>.
 
 wmlsd, wmls2pir, wmls2pbc
 
-=head1 AUTHOR
-
-Francois Perrad.
-
 =cut
 
 .loadlib 'wmls_ops'
@@ -81,7 +77,8 @@ Francois Perrad.
   _handler:
     .local pmc e
     .local string s
-    .get_results (e, s)
+    .get_results (e)
+    s = e
     print s
     print "\n"
   L1:

@@ -24,10 +24,11 @@ the moment -- we'll do more complex handling a bit later.)
 =cut
 
 .include 'except_types.pasm'
+.include 'except_severity.pasm'
 
 .sub 'return'
-    .param pmc value     :optional
-    .param int has_value :opt_flag
+    .param pmc value           :optional
+    .param int has_value       :opt_flag
 
     if has_value goto have_value
     value = 'list'()
@@ -37,6 +38,95 @@ the moment -- we'll do more complex handling a bit later.)
     setattribute $P0, 'payload', value
     throw $P0
     .return (value)
+.end
+
+
+=item fail
+
+=cut
+
+.sub '!FAIL'
+    .param string value        :optional
+    .param int has_value       :opt_flag
+    if has_value goto have_value
+    value = 'Use of uninitialized value'
+  have_value:
+    $P0 = new 'Exception'
+    $P0['message'] = value
+    $P1 = new 'Failure'
+    setattribute $P1, '$!exception', $P0
+    .return ($P1)
+.end
+
+.sub 'fail'
+    .param pmc value           :optional
+    .param int has_value       :opt_flag
+    .local pmc result
+    if has_value goto have_value
+    result = '!FAIL'()
+    goto done
+  have_value:
+    result = '!FAIL'(value)
+  done:
+    'return'(result)
+    .return(result)
+.end
+
+=item take
+
+=cut
+
+.sub 'take'
+    .param pmc value
+
+    $P0         = new 'Exception'
+    $P0['type'] = .CONTROL_TAKE
+    $P0['severity'] = .EXCEPT_NORMAL
+    setattribute $P0, 'payload', value
+    throw $P0
+    .return (value)
+.end
+
+=item gather
+
+=cut
+
+.sub 'gather'
+    .param pmc block
+    .local pmc list
+    .local pmc eh
+    list = 'list'()
+    eh = new 'ExceptionHandler'
+    eh.handle_types(.CONTROL_TAKE)
+    set_addr eh, handler
+    push_eh eh
+    block()
+    pop_eh
+    .return (list)
+  handler:
+    .local pmc exception, continuation
+    .local string message
+    .get_results(exception)
+    message = exception['message']
+    continuation = exception['resume']
+    $P0 = exception['payload']
+    list.push($P0)
+    continuation()
+.end
+
+
+=item term:...
+
+=cut
+
+.sub '...'
+    .param pmc message        :optional
+    .param int have_message   :opt_flag
+    if have_message goto message_done
+    message = new 'Perl6Str'
+    message = "Attempt to execute stub code (...)"
+  message_done:
+    'fail'(message)
 .end
 
 
@@ -177,7 +267,7 @@ on error.
     goto done
 
   catch:
-    .get_results (exception, $S0)
+    .get_results (exception)
     goto done
 
   done:

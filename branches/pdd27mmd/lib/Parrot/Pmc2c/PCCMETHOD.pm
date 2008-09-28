@@ -282,7 +282,7 @@ sub parse_p_args_string {
         die "invalid PCC arg '$x': did you forget to specify a type?\n"
              unless defined $name;
 
-        if ($name =~ /[\**]?(\"?\w+\"?)/) {
+        if ($name =~ /\**([a-zA-Z_]\w*)/) {
             $name = $1;
         }
 

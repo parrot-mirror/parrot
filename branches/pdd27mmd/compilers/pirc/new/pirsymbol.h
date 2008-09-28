@@ -19,15 +19,13 @@
 #include "pircompiler.h"
 #include "pircompunit.h"
 
-
-
 /* structure to represent a declared local variable or parameter */
 typedef struct symbol {
     char          *name;  /* name of this symbol */
     pir_type       type;  /* type of this symbol */
-    int            color; /* allocated PASM register for this symbol */
-    int            flags;
-    int            used;  /* flag to keep track whether the symbol is actually used */
+    int            color; /* allocated PASM register for this symbol, -1 if not allocated. */
+    target_flag    flags;
+
     struct symbol *next;
 
 } symbol;
@@ -37,28 +35,34 @@ typedef struct symbol {
 typedef struct pir_reg {
     int             regno; /* symbolic (PIR) register number */
     pir_type        type;  /* type of ths register */
-    int             color; /* register assigned by register allocator */
+    int             color; /* register assigned by register allocator, -1 if not allocated. */
 
     struct pir_reg *next;
 
 } pir_reg;
 
 
-/* structure to represent a global identifier (XXX only labels?) */
-typedef struct global_ident {
-    char *name;
-    int   const_nr;
+/* structure to represent a global label */
+typedef struct global_label {
+    char                *name;
+    int                  const_nr;
 
-    struct global_ident *next;
+} global_label;
 
-} global_ident;
+
+typedef struct local_label {
+    char               *name;
+    unsigned            offset;
+
+} local_label;
+
 
 
 /* symbol constructor */
 symbol *new_symbol(char * const name, pir_type type);
 
 /* to enter a symbol in the symbol table */
-void declare_local(struct lexer_state * const lexer, pir_type type, symbol *list);
+void declare_local(struct lexer_state * const lexer, pir_type type, symbol * const list);
 
 /* to find a symbol in the symbol table */
 symbol *find_symbol(struct lexer_state * const lexer, char * const name);
@@ -70,16 +74,24 @@ void check_unused_symbols(struct lexer_state * const lexer);
 int color_reg(struct lexer_state * const lexer, pir_type type, int regno);
 
 /* store a global identifier (label) */
-void store_global_ident(struct lexer_state * const lexer, char * const name);
+void store_global_label(struct lexer_state * const lexer, char * const name);
 
 /* find a global identifier */
-global_ident *find_global_ident(struct lexer_state * const lexer, char * const name);
+global_label *find_global_label(struct lexer_state * const lexer, char * const name);
 
 /* store a global .const symbol */
-void store_global_const(struct lexer_state * const lexer, constant * const c);
+void store_global_constant(struct lexer_state * const lexer, constant * const c);
 
 /* find a global .const symbol */
-constant *find_constant(struct lexer_state * const lexer, char * const name);
+constant *find_global_constant(struct lexer_state * const lexer, char * const name);
+
+/* get a new PASM register of the specified type */
+int next_register(struct lexer_state * const lexer, pir_type type);
+
+void store_local_label(struct lexer_state * const lexer, char * const label, unsigned offset);
+unsigned find_local_label(struct lexer_state * const lexer, char * const label);
+
+unsigned get_hashcode(char * const str, unsigned num_buckets);
 
 #endif /* PARROT_PIR_PIRSYMBOL_H_GUARD */
 

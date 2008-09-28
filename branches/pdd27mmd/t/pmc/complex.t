@@ -24,8 +24,6 @@ Tests the Complex PMC.
 
 =cut
 
-my $fp_equality_macro = pasm_fp_equality_macro();
-
 pasm_output_is( <<'CODE', <<'OUTPUT', "String parsing" );
     new P0, 'Complex'
     new P1, 'String'
@@ -401,7 +399,8 @@ for my $type ( qw( Complex Float Integer ) ) {
     print "fail\\n"
     pop_eh
 OK:
-    get_results '0,0', \$P0, \$S0
+    get_results '0', \$P0
+    \$S0 = \$P0
     print "ok\\n"
     print \$S0
     print "\\n"
@@ -413,7 +412,7 @@ OUTPUT
 }
 
 pasm_output_is( <<"CODE", <<'OUTPUT', "get int/num/bool" );
-@{[ $fp_equality_macro ]}
+        .include 'include/fp_equality.pasm'
         new P0, 'Complex'
         set P0, "2 - 1.5i"
         print P0
@@ -447,7 +446,7 @@ false
 OUTPUT
 
 pasm_output_is( <<"CODE", <<'OUTPUT', "get keyed" );
-@{[ $fp_equality_macro ]}
+        .include 'include/fp_equality.pasm'
         new P0, 'Complex'
         new P1, 'String'
         set P0, "- 3.3 + 1.2i"
@@ -684,7 +683,7 @@ OUTPUT
 }
 
 pasm_output_is( <<"CODE", <<'OUTPUT', "neg" );
-@{[ $fp_equality_macro ]}
+     .include 'include/fp_equality.pasm'
      new P0, 'Complex'
      set P0, "1.3 + 1.7i"
      new P1, 'Integer'
@@ -704,7 +703,7 @@ ok 2
 OUTPUT
 
 pasm_output_is( <<"CODE", <<'OUTPUT', "clone" );
-@{[ $fp_equality_macro ]}
+     .include 'include/fp_equality.pasm'
      new P0, 'Complex'
      set P0, "1 - 3i"
      clone P1, P0

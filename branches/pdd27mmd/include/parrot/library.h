@@ -37,6 +37,18 @@ typedef enum {
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 
 PARROT_API
+void Parrot_add_library_path(PARROT_INTERP,
+    ARGIN(const char *path),
+    enum_lib_paths which)
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+PARROT_API
+PARROT_CANNOT_RETURN_NULL
+STRING * Parrot_get_runtime_path(PARROT_INTERP)
+        __attribute__nonnull__(1);
+
+PARROT_API
 PARROT_MALLOC
 PARROT_CANNOT_RETURN_NULL
 char* Parrot_get_runtime_prefix(PARROT_INTERP)

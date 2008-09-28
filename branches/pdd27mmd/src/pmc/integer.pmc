@@ -423,7 +423,7 @@ MULTI void i_add(Complex value) {
 
 MULTI void i_add(DEFAULT value) {
     VTABLE_set_number_native(INTERP, SELF,
-        PMC_int_val(SELF) + VTABLE_get_number(INTERP, value));
+        SELF.get_integer() + VTABLE_get_number(INTERP, value));
 }
 
 VTABLE void i_add_int(INTVAL b) {

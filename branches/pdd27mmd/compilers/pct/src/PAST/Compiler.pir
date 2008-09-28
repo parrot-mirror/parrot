@@ -54,28 +54,29 @@ any value type.
     ##  %piropsig is a table of common opcode signatures
     .local pmc piropsig
     piropsig = new 'Hash'
-    piropsig['isa']      = 'IP~'
-    piropsig['isfalse']  = 'IP'
-    piropsig['issame']   = 'IPP'
-    piropsig['istrue']   = 'IP'
-    piropsig['n_abs']    = 'PP'
-    piropsig['add']    = 'PP+'
-    piropsig['band']   = 'PPP'
-    piropsig['bnot']   = 'PP'
-    piropsig['bor']    = 'PPP'
-    piropsig['concat'] = 'PP~'
-    piropsig['div']    = 'PP+'
-    piropsig['fdiv']   = 'PP+'
-    piropsig['mod']    = 'PP+'
-    piropsig['mul']    = 'PP+'
-    piropsig['n_neg']    = 'PP'
-    piropsig['not']    = 'PP'
-    piropsig['shl']    = 'PP+'
-    piropsig['shr']    = 'PP+'
-    piropsig['sub']    = 'PP+'
-    piropsig['pow']      = 'NN+'
-    piropsig['print']    = 'v*'
-    piropsig['set']      = 'PP'
+    piropsig['isa']        = 'IP~'
+    piropsig['isfalse']    = 'IP'
+    piropsig['issame']     = 'IPP'
+    piropsig['istrue']     = 'IP'
+    piropsig['newclosure'] = 'PP'
+    piropsig['n_abs']      = 'PP'
+    piropsig['add']        = 'PP+'
+    piropsig['band']       = 'PPP'
+    piropsig['bnot']       = 'PP'
+    piropsig['bor']        = 'PPP'
+    piropsig['concat']     = 'PP~'
+    piropsig['div']        = 'PP+'
+    piropsig['fdiv']       = 'PP+'
+    piropsig['mod']        = 'PP+'
+    piropsig['mul']        = 'PP+'
+    piropsig['n_neg']      = 'PP'
+    piropsig['not']        = 'PP'
+    piropsig['shl']        = 'PP+'
+    piropsig['shr']        = 'PP+'
+    piropsig['sub']        = 'PP+'
+    piropsig['pow']        = 'NN+'
+    piropsig['print']      = 'v*'
+    piropsig['set']        = 'PP'
     set_global '%piropsig', piropsig
 
     ##  %valflags specifies when PAST::Val nodes are allowed to
@@ -593,7 +594,11 @@ Return the POST representation of a C<PAST::Block>.
     ctrllabel = $P0.'new'('result'=>$S0)
     $S0 = concat $S0, '_rethrow'
     rethrowlabel = $P0.'new'('result'=>$S0)
-    bpost.'push_pirop'('push_eh', ctrllabel)
+    $S0 = self.'uniquereg'('P')
+    bpost.'push_pirop'('new', $S0, "'ExceptionHandler'")
+    bpost.'push_pirop'('set_addr', $S0, ctrllabel)
+    bpost.'push_pirop'('callmethod', 'handle_types', $S0, .CONTROL_RETURN)
+    bpost.'push_pirop'('push_eh', $S0)
 
   children_past:
     ##  all children but last are void context, last returns anything
@@ -612,7 +617,7 @@ Return the POST representation of a C<PAST::Block>.
     unless ctrlpast goto sub_done
     bpost.'push'(ctrllabel)
     bpost.'push_pirop'('.local pmc exception')
-    bpost.'push_pirop'('.get_results (exception, $S10)')
+    bpost.'push_pirop'('.get_results (exception)')
     $I0 = isa ctrlpast, 'PAST::Node'
     if $I0 goto control_past
     if ctrlpast == 'return_pir' goto control_return
@@ -620,9 +625,6 @@ Return the POST representation of a C<PAST::Block>.
   control_return:
     ##  handle 'return' exceptions
     $S0 = self.'uniquereg'('P')
-    bpost.'push_pirop'('getattribute', $S0, 'exception', '"type"')
-    bpost.'push_pirop'('if_null', $S0, rethrowlabel)
-    bpost.'push_pirop'('ne', $S0, .CONTROL_RETURN, rethrowlabel)
     bpost.'push_pirop'('getattribute', $S0, 'exception', '"payload"')
     bpost.'push_pirop'('return', $S0)
     bpost.'push'(rethrowlabel)
@@ -646,15 +648,17 @@ Return the POST representation of a C<PAST::Block>.
     ##  generate any loadinit code for the sub
     $I0 = exists node['loadinit']
     unless $I0 goto loadinit_done
+    .local pmc lisub
+    $P0 = get_hll_global ['POST'], 'Sub'
+    lisub = $P0.'new'('outer'=>bpost, 'pirflags'=>':load :init')
+    lisub.'push_pirop'('.local pmc', 'block')
+    lisub.'push_pirop'('interpinfo', '$P20', .INTERPINFO_CURRENT_SUB)
+    lisub.'push_pirop'('callmethod', 'get_outer', '$P20', 'result'=>'block')
     .local pmc lipast, lipost
     lipast = node.'loadinit'()
     lipost = self.'as_post'(lipast, 'rtype'=>'v')
-    $P0 = get_hll_global ['POST'], 'Sub'
-    lipost = $P0.'new'('outer'=>bpost, 'pirflags'=>':load :init')
-    lipost.'push_pirop'('.local pmc', 'block')
-    lipost.'push_pirop'('interpinfo', '$P20', .INTERPINFO_CURRENT_SUB)
-    lipost.'push_pirop'('callmethod', 'get_outer', '$P20', 'result'=>'block')
-    bpost.'push'(lipost)
+    lisub.'push'(lipost)
+    bpost.'unshift'(lisub)
   loadinit_done:
 
     ##  restore previous outer scope and symtable

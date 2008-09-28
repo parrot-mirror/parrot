@@ -158,9 +158,16 @@ N: Chip Salzenberg
 D: Pumpking (0.4.6 - ... ) and demagogue
 E: chip@pobox.com
 
+N: Chris Davaz
+D: Rakudo builtins
+E: cdavaz@gmail.com
+
 N: Chris Dolan
 D: TAP language author, and Parrot Bug fixes
 E: cdolan@cpan.org
+
+N: Chris Fields (cjfields)
+D: Rakudo patches
 
 N: Christoph Otto a.k.a. cotto
 D: Patch for key flags in pdd08
@@ -437,6 +444,10 @@ S: Herrnbaumgarten, Austria
 N: Luke Palmer
 D: Many fixes
 
+N: Marcelo Serra Castilhos
+E: mhelix@terra.com.br
+D: Bug fix
+
 N: Marcus Thiesen
 D: URM language, bugfixes
 
@@ -545,6 +556,10 @@ D: Miscellaneous cleanup and PDD07-conformance
 N: Ovid
 D: Rename 'pbc_to_c' to 'pbc_to_exe'
 
+N: Paco Alguacil
+D: Building on various platorms
+E: paco.linux@gmail.com
+
 N: Pancake
 D: Fixes for pdb, the Parrot debugger
 
@@ -554,7 +569,7 @@ E: pat.eyler@gmail.com
 
 N: Patrick R. Michaud
 D: Parrot Grammar Engine
-D: Perl 6 pumpking
+D: Perl 6 (Rakudo Perl) pumpking
 D: NQP, PCT, PAST, POST
 D: APL
 D: Pynie

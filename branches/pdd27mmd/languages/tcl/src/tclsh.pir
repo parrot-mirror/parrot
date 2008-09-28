@@ -130,6 +130,9 @@ open_file:
 
 file:
   filename = shift argv
+  $P0 = new 'TclString'
+  $P0 = filename
+  set_root_global ['_tcl'], '$script', $P0
   .local string contents
   $P99 = open filename, '<'
   contents = $P99.'slurp'('')
@@ -232,7 +235,8 @@ got_prompt:
   pop_eh
 
   STDOUT.'flush'()
-  .return STDIN.'readline'('')
+  $P0 = STDIN.'readline'('')
+  .return ($P0)
 
 no_prompt:
   # XXX Why does readline() behave differently on prompting depending on
@@ -249,7 +253,8 @@ eof:
   .return($P0)
 
 has_readline:
-  .return STDIN.'readline'(default_prompt)
+  $P0 = STDIN.'readline'(default_prompt)
+  .return ($P0)
 .end
 
 

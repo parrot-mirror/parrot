@@ -111,7 +111,8 @@ helper for CALL_URL* opcodes.
   _handler_1:
     .local pmc e
     .local string msg
-    .get_results (e, msg)
+    .get_results (e)
+    msg = e
     print msg
     print "\n"
     $S0 = "verification failed (can't translate '"
@@ -192,10 +193,6 @@ helper for CALL_URL* opcodes.
 .end
 
 =back
-
-=head1 AUTHORS
-
-Francois Perrad.
 
 =cut
 

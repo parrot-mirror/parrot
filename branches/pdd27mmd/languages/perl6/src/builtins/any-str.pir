@@ -21,7 +21,7 @@ the size of that file down and to emphasize their generic,
 .namespace []
 .sub 'onload' :anon :init :load
     $P0 = get_hll_namespace ['Any']
-    '!EXPORT'('chars index substr', 'from'=>$P0)
+    '!EXPORT'('capitalize chop chars index lc lcfirst rindex ord substr uc ucfirst', 'from'=>$P0)
 .end
 
 
@@ -30,10 +30,122 @@ the size of that file down and to emphasize their generic,
 =cut
 
 .namespace ['Any']
+
+=item capitalize
+
+ our Str multi Str::capitalize ( Str $string )
+
+Has the effect of first doing an C<lc> on the entire string, then performing a
+C<s:g/(\w+)/{ucfirst $1}/> on it.
+
+=cut
+
+.sub 'capitalize' :method :multi(_)
+    .local string tmps
+    .local string fchr
+    .local pmc retv
+    .local int len
+
+    retv = new 'Perl6Str'
+    tmps = self
+
+    len = length tmps
+    if len == 0 goto done
+
+    downcase tmps
+
+    .local int pos, is_ws, is_lc
+    pos = 0
+    goto first_char
+  next_grapheme:
+    if pos == len goto done
+    is_ws = is_cclass .CCLASS_WHITESPACE, tmps, pos
+    if is_ws goto ws
+  advance:
+    pos += 1
+    goto next_grapheme
+  ws:
+    pos += 1
+  first_char:
+    is_lc = is_cclass .CCLASS_LOWERCASE, tmps, pos
+    unless is_lc goto advance
+    $S1 = substr tmps, pos, 1
+    upcase $S1
+    substr tmps, pos, 1, $S1
+    ## the length may have changed after replacement, so measure it again
+    len = length tmps
+    goto advance
+  done:
+    retv = tmps
+    .return (retv)
+.end
+
 .sub 'chars' :method :multi(_)
     $S0 = self
     $I0 = length $S0
     .return ($I0)
+.end
+
+
+=item chop
+
+ our Str method Str::chop ( Str  $string: )
+
+Returns string with one Char removed from the end.
+
+=cut
+
+.sub 'chop' :method :multi(_)
+    .local string tmps
+    .local pmc retv
+    .local int len
+
+    retv = new 'Perl6Str'
+    tmps = self
+
+    len = length tmps
+    if len == 0 goto done
+    dec len
+    substr tmps,tmps, 0, len
+  done:
+    retv = tmps
+    .return(retv)
+.end
+
+
+=item comb()
+
+Partial implementation for now, returns a list of strings
+(instead of a list of match objects).
+
+=cut
+
+.sub 'comb' :method :multi(_)
+    .param pmc regex
+    .param int count        :optional
+    .param int has_count    :opt_flag
+    .local pmc retv, match
+    .local string s
+
+    retv = new 'List'
+    s = self
+
+  do_match:
+    match = regex.'ACCEPTS'(s)
+    unless match goto done
+    unless has_count goto skip_count
+    dec count
+    if count < 0 goto done
+  skip_count:
+    # shouldn't have to coerce to Str here, but see RT #55962
+    $S0 = match
+    retv.'push'($S0)
+    $I0 = match.'to'()
+    s = substr s, $I0
+    goto do_match
+
+  done:
+    .return(retv)
 .end
 
 =item index()
@@ -75,6 +187,241 @@ the size of that file down and to emphasize their generic,
     .return ($P0)
 .end
 
+
+=item lc
+
+ our Str multi Str::lc ( Str $string )
+
+Returns the input string after converting each character to its lowercase
+form, if uppercase.
+
+=cut
+
+.sub 'lc' :method :multi(_)
+    .local string tmps
+    .local pmc retv
+
+    tmps = self
+    downcase tmps
+
+    retv = new 'Perl6Str'
+    retv = tmps
+
+    .return(retv)
+.end
+
+=item lcfirst
+
+ our Str multi Str::lcfirst ( Str $string )
+
+Like C<lc>, but only affects the first character.
+
+=cut
+
+.sub 'lcfirst' :method :multi(_)
+    .local string tmps
+    .local string fchr
+    .local pmc retv
+    .local int len
+
+    retv = new 'Perl6Str'
+    tmps = self
+
+    len = length tmps
+    if len == 0 goto done
+
+    substr fchr, tmps, 0, 1
+    downcase fchr
+
+    concat retv, fchr
+    substr tmps, tmps, 1
+    concat retv, tmps
+
+  done:
+    .return(retv)
+.end
+
+
+
+=item match()
+
+=cut
+
+.sub 'match' :method :multi(_)
+    .param pmc x
+    .local pmc match
+    match = x(self)
+    .return(match)
+.end
+
+=item rindex()
+
+=cut
+
+.namespace ['Any']
+.sub 'rindex' :method :multi(_, _)
+    .param string substring
+    .param int pos             :optional
+    .param int has_pos         :opt_flag
+    .local pmc retv
+
+  check_substring:
+    if substring goto substring_search
+
+    # we do not have substring return pos or length
+
+    .local string s
+    s = self
+    $I0 = length s
+
+    if has_pos goto have_pos
+    pos = $I0
+    goto done
+  have_pos:
+    if pos < $I0 goto done
+    pos = $I0
+    goto done
+
+  substring_search:
+    $I0 = self.'isa'('String')
+    if $I0 goto self_string
+    $P0 = new 'String'
+    $S0 = self
+    $P0 = $S0
+    goto do_search
+  self_string:
+    $P0 = self
+  do_search:
+    pos = $P0.'reverse_index'(substring, pos)
+    if pos < 0 goto fail
+
+  done:
+    $P0 = new 'Int'
+    $P0 = pos
+    .return ($P0)
+
+  fail:
+    $P0 = new 'Failure'
+    .return ($P0)
+.end
+
+=item split
+
+ our List multi Str::split ( Str $delimiter ,  Str $input = $+_, Int $limit = inf )
+ our List multi Str::split ( Rule $delimiter = /\s+/,  Str $input = $+_, Int $limit = inf )
+ our List multi Str::split ( Str $input :  Str $delimiter          , Int $limit = inf )
+ our List multi Str::split ( Str $input : Rule $delimiter          , Int $limit = inf )
+
+String delimiters must not be treated as rules but as constants.  The
+default is no longer S<' '> since that would be interpreted as a constant.
+P5's C<< split('S< >') >> will translate to C<.words> or some such.  Null trailing fields
+are no longer trimmed by default.  We might add some kind of :trim flag or
+introduce a trimlist function of some sort.
+
+B<Note:> partial implementation only
+
+=cut
+
+.namespace[]
+.sub 'split' :multi(_,_)
+    .param pmc sep
+    .param pmc target
+    .return target.'split'(sep)
+.end
+
+.namespace['Any']
+.sub 'split' :method :multi(_, _)
+    .param string delim
+    .param int count        :optional
+    .param int has_count    :opt_flag
+    .local string objst
+    .local pmc pieces
+    .local pmc retv
+    .local int len
+    .local int pos
+    .local int i
+
+    retv = new 'List'
+
+    # per Perl 5's negative LIMIT behavior
+    unless has_count goto positive_count
+    unless count < 1 goto positive_count
+    has_count = 0
+
+  positive_count:
+    objst = self
+    length $I0, delim
+    split pieces, delim, objst
+    len = pieces
+    pos = 0
+    i = 0
+
+  loop:
+    unless has_count goto skip_count
+    dec count
+    unless count < 1 goto skip_count
+    $S0 = substr objst, pos
+    retv.'push'($S0)
+    goto done
+  skip_count:
+    if i == len goto done
+    $S0 = pieces[i]
+    retv.'push'($S0)
+    length $I1, $S0
+    pos += $I0
+    pos += $I1
+    inc i
+    goto loop
+
+  done:
+    .return(retv)
+.end
+
+.sub 'split' :method :multi(_, 'Sub')
+    .param pmc regex
+    .param int count        :optional
+    .param int has_count    :opt_flag
+    .local pmc match
+    .local pmc retv
+    .local int start_pos
+    .local int end_pos
+
+    $S0 = self
+    retv = new 'List'
+    start_pos = 0
+
+    # per Perl 5's negative LIMIT behavior
+    unless has_count goto positive_count
+    unless count < 1 goto positive_count
+    has_count = 0
+
+  positive_count:
+    match = regex($S0)
+    if match goto loop
+    retv.'push'($S0)
+    goto done
+
+  loop:
+    unless has_count goto skip_count
+    dec count
+    unless count < 1 goto skip_count
+    $S1 = substr $S0, start_pos
+    retv.'push'($S1)
+    goto done
+  skip_count:
+    match = regex($S0, 'continue' => start_pos)
+    end_pos = match.'from'()
+    end_pos -= start_pos
+    $S1 = substr $S0, start_pos, end_pos
+    retv.'push'($S1)
+    unless match goto done
+    start_pos = match.'to'()
+    goto loop
+
+  done:
+    .return(retv)
+.end
+
 =item substr()
 
 =cut
@@ -98,7 +445,6 @@ the size of that file down and to emphasize their generic,
     .return ($S1)
 .end
 
-
 =item trans()
 
   Implementation of transliteration
@@ -107,11 +453,12 @@ the size of that file down and to emphasize their generic,
 
 .sub '!transtable' :multi(_)
     .param pmc r
-    .local pmc retval
+    .local pmc retval, tmps
     retval = new 'ResizableStringArray'
+    tmps = clone r
   range_loop:
-    unless r, done
-    $S0 = r.'shift'()
+    unless tmps, done
+    $S0 = tmps.'shift'()
     push retval, $S0
     goto range_loop
   done:
@@ -371,7 +718,7 @@ Partial implementation. The :g modifier on regexps doesn't work, for example.
 
 .sub subst :method :lex :multi(_, 'Sub', _)
     .param pmc regexp
-    .param string replacement
+    .param pmc replacement
     .local int pos
     .local int pos_after
     .local pmc retv
@@ -390,8 +737,23 @@ Partial implementation. The :g modifier on regexps doesn't work, for example.
     $S0 = self
     $S1 = substr $S0, 0, pos
     $S2 = substr $S0, pos_after
+    # pre-match
     concat retv, $S1
+
+    # match
+    $I0 = isa replacement, 'Sub'
+    unless $I0 goto is_string
+
+    $S3 = match.'text'()
+    $S3 = replacement($S3)
+    concat retv, $S3
+    goto repl_done
+
+  is_string:
     concat retv, replacement
+
+  repl_done:
+    # post-match
     concat retv, $S2
 
     goto done
@@ -402,6 +764,73 @@ Partial implementation. The :g modifier on regexps doesn't work, for example.
   done:
     .return(retv)
 .end
+
+=item ord()
+
+=cut
+
+.namespace ['Any']
+.sub 'ord' :method :multi(_)
+    $S0 = self
+    $I0 = ord $S0
+    .return ($I0)
+.end
+
+
+=item uc
+
+ our Str multi Str::uc ( Str $string )
+
+Returns the input string after converting each character to its uppercase
+form, if lowercase. This is not a Unicode "titlecase" operation, but a
+full "uppercase".
+
+=cut
+
+.sub 'uc' :method :multi(_)
+    .local string tmps
+    .local pmc retv
+
+    tmps = self
+    upcase tmps
+
+    retv = new 'Perl6Str'
+    retv = tmps
+
+    .return(retv)
+.end
+
+=item ucfirst
+
+ our Str multi Str::ucfirst ( Str $string )
+
+Performs a Unicode "titlecase" operation on the first character of the string.
+
+=cut
+
+.sub 'ucfirst' :method :multi(_)
+    .local string tmps
+    .local string fchr
+    .local pmc retv
+    .local int len
+
+    retv = new 'Perl6Str'
+    tmps = self
+
+    len = length tmps
+    if len == 0 goto done
+
+    substr fchr, tmps, 0, 1
+    upcase fchr
+
+    concat retv, fchr
+    substr tmps, tmps, 1
+    concat retv, tmps
+
+  done:
+    .return(retv)
+.end
+
 
 # Local Variables:
 #   mode: pir
