@@ -56,6 +56,9 @@ our $PMC2C = "$PERL $PATHQUOTE" . q[@build_dir@@slash@tools@slash@build@slash@pm
 sub compile_cmd {
     my ($target, $source) = @_;
 
+    if ($ENV{DYNPMC_INCLUDE}) {
+	$CFLAGS .= ' -I' . $ENV{DYNPMC_INCLUDE};
+    }
     # XXX Reference to BGC - need long term solution for passing in include paths
     return
         "$CC " .
@@ -93,6 +96,9 @@ sub partial_link_cmd {
         $liblist = join( ' ', map { "-l$_" } keys %$libs );
         my $extraLibs = '@libs@ @icu_shared@';
         $liblist .= ' ' . $extraLibs;
+    }
+    if ($ENV{DYNPMC_LINK}) {
+	$liblist .= ' ' . $ENV{DYNPMC_LINK};
     }
 
     # LDFLAGS, LIBS or ICU_SHARED may contain -L/usr/lib or -L/usr/local/lib
