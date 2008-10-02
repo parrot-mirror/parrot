@@ -1,0 +1,1302 @@
+/*
+Copyright (C) 2008, The Perl Foundation.
+$Id$
+
+=head1 NAME
+
+src/pmc/phparray.pmc - PHP Array
+
+=head1 DESCRIPTION
+
+=head2 VTABLE Functions
+
+=over 4
+
+=cut
+
+*/
+
+#include "php_private.h"
+#include "src/pipp_hash.h"
+
+pmclass PhpArray
+    extends  Hash
+    provides hash
+    provides array
+    dynpmc
+    group    php_group
+    hll      PHP
+    maps     Array
+    maps     Hash {
+
+/*
+
+=item C<void init()>
+
+Intialize this PHPArray.
+
+=cut
+
+*/
+    void init() {
+        PippHashTable *ht;
+
+        PObj_custom_mark_destroy_SETALL(SELF);
+        PMC_struct_val(SELF) = (PippHashTable*)pipp_hash_create(INTERP, 4);
+        ht = (PippHashTable*) PMC_struct_val(SELF);
+    }
+/*
+
+=item C<void init_pmc(PMC *p)>
+
+Initialize this PHPArray with the passed-in PMC C<p>.  If C<p> is a PHPArray,
+its contents are copied directly.  If C<p> is a PMC that provides a hash or
+array interface, its contents are copied via the appropriate VTABLE functions.
+If C<p> provides an integer interface, the new PMC will be empty, but will have
+at least the specified capacity.
+
+=cut
+
+*/
+    void init_pmc(PMC *p) {
+        NOT_IMPLEMENTED_YET();
+    }
+
+/*
+
+=item C<void destroy()>
+
+Non-recursively free all memory used by this PHPArray.
+
+=cut
+
+*/
+    void destroy() {
+        PippHashTable *ht;
+        ht = (PippHashTable*) PMC_struct_val(SELF);
+        pipp_hash_destroy(INTERP, ht);
+    }
+
+/*
+
+=item C<void mark()>
+
+Recursively mark this PHPArray and all its contents as live.
+
+=cut
+
+*/
+    void mark() {
+        PippHashTable *ht;
+        PippBucket    *b;
+
+        ht = (PippHashTable*) PMC_struct_val(SELF);
+        for (b = ht->tableHead; b != NULL; b = b->tableNext) {
+            pobject_lives(INTERP, (PObj*)b->key);
+        }
+    }
+
+/*
+
+=item C<PMC* share_ro()>
+
+Set this PHPArray as shared.
+
+=cut
+
+*/
+    PMC *share_ro() {
+        NOT_IMPLEMENTED_YET();
+    }
+
+/*
+
+=item C<INTVAL elements()>
+
+Return the number of elements in this PHPArray.
+
+=cut
+
+*/
+    INTVAL elements() {
+        PippHashTable *ht;
+        ht = (PippHashTable*) PMC_struct_val(SELF);
+        return ht->elementCount;
+    }
+
+/*
+
+=item C<void set_integer_keyed(PMC *key, INTVAL i_val)>
+
+Store C<i_val> in this PHPArray, indexed by the Key PMC C<key>.
+
+=cut
+
+*/
+    void set_integer_keyed(PMC *key, INTVAL i_val) {
+        PMC    *next_key, *box;
+        STRING *s_key;
+
+        dprintf("calling set_integer_keyed\n");
+        /* peel off the next key */
+        next_key = key_next(INTERP, key);
+        s_key    = VTABLE_get_string(INTERP, key);
+
+        /* if there isn't one (i.e. key is null) */
+        if (next_key == NULL) {
+            /* dispatch to set_integer_keyed_str */
+            SELF.set_integer_keyed_str(s_key, i_val);
+            return;
+        }
+
+        /* get the box where the thing will be stored */
+        box = SELF.get_pmc_keyed_str(s_key);
+        /* autovivify if needed */
+        if (PMC_IS_NULL(box)) {
+            dprintf("autovivifying\n");
+            box = pmc_new(INTERP, PMC_type(SELF));
+            SELF.set_pmc_keyed_str(s_key, box);
+        }
+        else {
+            dprintf("box is non-null\n");
+        }
+
+        /* recurse into that box */
+        VTABLE_set_integer_keyed(INTERP, box, next_key, i_val);
+    }
+
+/*
+
+=item C<void set_integer_keyed_str (STRING *s_key, INTVAL i_val)>
+
+Store C<i_val> in this PHPArray, indexed by the STRING C<s_key>.
+
+=cut
+
+*/
+    void set_integer_keyed_str(STRING *s_key, INTVAL i_val){
+        PMC           *p_val;
+        PippHashTable *ht;
+
+        dprintf("calling set_integer_keyed_str\n");
+        ht = (PippHashTable*)PMC_struct_val(SELF);
+
+        /* convert i_val to a PMC */
+        p_val = pmc_new(INTERP, enum_class_Integer);
+        VTABLE_set_integer_native(INTERP, p_val, i_val);
+        /* store */
+        pipp_hash_put(INTERP, ht, s_key, p_val);
+    }
+
+/*
+
+=item C<void set_integer_keyed_int (INTVAL i_key, INTVAL i_val)>
+
+Store C<i_val> in this PHPArray, indexed by the INTVAL C<i_key>.
+
+=cut
+
+*/
+    void set_string_keyed_int(INTVAL i_key, INTVAL i_val){
+        PMC           *p_val;
+        STRING        *s_key;
+        PippHashTable *ht;
+
+        dprintf("calling set_integer_keyed_int\n");
+        ht = (PippHashTable*)PMC_struct_val(SELF);
+
+        /* convert i_val to a PMC */
+        p_val = pmc_new(INTERP, enum_class_Integer);
+        VTABLE_set_integer_native(INTERP, p_val, i_val);
+        /* convert k to a STRING */
+        s_key = string_from_int(INTERP, i_key);
+        /* store */
+        pipp_hash_put(INTERP, ht, s_key, p_val);
+    }
+
+/*
+
+=item C<void set_pmc_keyed(PMC *key, PMC *p_val)>
+
+Store C<val> in this PHPArray, indexed by the Key PMC C<key>.
+
+=cut
+
+*/
+    void set_pmc_keyed(PMC *key, PMC *p_val) {
+        PMC    *next_key, *box;
+        STRING *s_key;
+
+        dprintf("calling set_pmc_keyed\n");
+        /* peel off the next key */
+        next_key = key_next(INTERP, key);
+        s_key    = VTABLE_get_string(INTERP, key);
+
+        /* if there isn't one (i.e. key is null) */
+        if (next_key == NULL) {
+            /* dispatch to set_pmc_keyed_str */
+            SELF.set_pmc_keyed_str(s_key, p_val);
+            return;
+        }
+
+        /* get the box where the thing will be stored */
+        box = SELF.get_pmc_keyed_str(s_key);
+        /* autovivify if needed */
+        if (PMC_IS_NULL(box)) {
+            box = pmc_new(INTERP, PMC_type(SELF));
+            SELF.set_pmc_keyed_str(s_key, box);
+        }
+
+        /* recurse into that box */
+        VTABLE_set_pmc_keyed(INTERP, box, next_key, p_val);
+    }
+
+/*
+
+=item C<void set_pmc_keyed_str(STRING *s_key, PMC *val)>
+
+Store C<val> in this PHPArray, indexed by the STRING C<s_key>.
+
+=cut
+
+*/
+    void set_pmc_keyed_str(STRING *s_key, PMC *p_val){
+        PippHashTable *ht;
+
+        dprintf("calling set_pmc_keyed_str\n");
+        ht = (PippHashTable*)PMC_struct_val(SELF);
+        pipp_hash_put(INTERP, ht, s_key, p_val);
+    }
+
+/*
+
+=item C<void set_pmc_keyed_int(INTVAL i_key, PMC *val)>
+
+Store C<val> in this PHPArray, indexed by the INTVAL C<i_key>.
+
+=cut
+
+*/
+    void set_pmc_keyed_int(INTVAL i_key, PMC *p_val){
+        STRING        *s_key;
+        PippHashTable *ht;
+
+        dprintf("calling set_pmc_keyed_int\n");
+        ht = (PippHashTable*)PMC_struct_val(SELF);
+        s_key = string_from_int(INTERP, i_key);
+        pipp_hash_put(INTERP, ht, s_key, p_val);
+    }
+
+/*
+
+=item C<void set_string_keyed(PMC *key, STRING *s_val)>
+
+Store C<s_val> in this PHPArray, indexed by the Key PMC C<key>.
+
+=cut
+
+*/
+    void set_string_keyed(PMC *key, STRING *s_val) {
+        PMC    *next_key, *box;
+        STRING *s_key;
+
+        dprintf("calling set_string_keyed\n");
+        /* peel off the next key */
+        next_key = key_next(INTERP, key);
+        s_key    = VTABLE_get_string(INTERP, key);
+
+        /* if there isn't one (i.e. key is null) */
+        if (next_key == NULL) {
+            /* dispatch to set_string_keyed_str */
+            SELF.set_string_keyed_str(s_key, s_val);
+            return;
+        }
+
+        /* get the box where the thing will be stored */
+        box = SELF.get_pmc_keyed_str(s_key);
+        /* autovivify if needed */
+        if (PMC_IS_NULL(box)) {
+            box = pmc_new(INTERP, PMC_type(SELF));
+            SELF.set_pmc_keyed_str(s_key, box);
+        }
+
+        /* recurse into that box */
+        VTABLE_set_string_keyed(INTERP, box, next_key, s_val);
+    }
+
+/*
+
+=item C<void set_string_keyed_str(STRING *s_key, STRING *s_val)>
+
+Store C<s_val> in this PHPArray, indexed by the STRING C<s_key>.
+
+=cut
+
+*/
+    void set_string_keyed_str(STRING *s_key, STRING *s_val){
+        PippHashTable *ht;
+        PMC           *p_val;
+
+        dprintf("calling set_string_keyed_str\n");
+        ht = (PippHashTable*)PMC_struct_val(SELF);
+        p_val = pmc_new(INTERP, enum_class_String);
+        VTABLE_set_string_native(INTERP, p_val, s_val);
+        pipp_hash_put(INTERP, ht, s_key, p_val);
+    }
+
+/*
+
+=item C<void set_string_keyed_int(INTVAL i_key, STRING *s_val)>
+
+Store C<s_val> in this PHPArray, indexed by the INTVAL C<i_key>.
+
+=cut
+
+*/
+    void set_string_keyed_int(INTVAL i_key, STRING *s_val){
+        PippHashTable *ht;
+        STRING        *s_key;
+        PMC           *p_val;
+
+        dprintf("calling set_string_keyed_int\n");
+        ht = (PippHashTable*)PMC_struct_val(SELF);
+        s_key = string_from_int(INTERP, i_key);
+        p_val = pmc_new(INTERP, enum_class_String);
+        VTABLE_set_string_native(INTERP, p_val, s_val);
+        pipp_hash_put(INTERP, ht, s_key, p_val);
+    }
+
+/*
+
+=item C<void set_number_keyed(PMC *key, FLOATVAL f_val)>
+
+Store C<f_val> in this PHPArray, indexed by the Key PMC C<key>.
+
+=cut
+
+*/
+    void set_number_keyed(PMC *key, FLOATVAL f_val) {
+        PMC    *next_key, *box;
+        STRING *s_key;
+
+        dprintf("calling set_pmc_keyed\n");
+        /* peel off the next key */
+        next_key = key_next(INTERP, key);
+        s_key    = VTABLE_get_string(INTERP, key);
+
+        /* if there isn't one (i.e. key is null) */
+        if (next_key == NULL) {
+            /* dispatch to set_number_keyed_str */
+            SELF.set_number_keyed_str(s_key, f_val);
+            return;
+        }
+
+        /* get the box where the thing will be stored */
+        box = SELF.get_pmc_keyed_str(s_key);
+        /* autovivify if needed */
+        if (PMC_IS_NULL(box)){
+            box = pmc_new(INTERP, PMC_type(SELF));
+            SELF.set_pmc_keyed_str(s_key, box);
+        }
+
+        /* recurse into that box */
+        VTABLE_set_number_keyed(INTERP, box, next_key, f_val);
+    }
+
+/*
+
+=item C<void set_number_keyed_str(STRING *s_key, FLOATVAL f_val)>
+
+Store C<f_val> in this PHPArray, indexed by the STRING C<s_key>.
+
+=cut
+
+*/
+    void set_number_keyed_str(STRING *s_key, FLOATVAL f_val){
+        PippHashTable *ht;
+        PMC           *p_val;
+
+        dprintf("calling set_number_keyed_str\n");
+        ht = (PippHashTable*)PMC_struct_val(SELF);
+        p_val = pmc_new(INTERP, enum_class_Float);
+        VTABLE_set_number_native(INTERP, p_val, f_val);
+        pipp_hash_put(INTERP, ht, s_key, p_val);
+    }
+
+/*
+
+=item C<void set_number_keyed_int(INTVAL i_key, FLOATVAL f_val)>
+
+Store C<f_val> in this PHPArray, indexed by the INTVAL C<i_key>.
+
+=cut
+
+*/
+    void set_number_keyed_int(INTVAL i_key, FLOATVAL f_val){
+        PippHashTable *ht;
+        STRING        *s_key;
+        PMC           *p_val;
+
+        dprintf("calling set_number_keyed_int\n");
+        ht = (PippHashTable*)PMC_struct_val(SELF);
+        s_key = string_from_int(INTERP, i_key);
+        p_val = pmc_new(INTERP, enum_class_Float);
+        VTABLE_set_number_native(INTERP, p_val, f_val);
+        pipp_hash_put(INTERP, ht, s_key, p_val);
+    }
+
+/*
+
+=item C<INTVAL get_integer_keyed(PMC *key)>
+
+Retrieve the value from this PHPArray which is associated with the Key PMC
+C<key>.
+
+=cut
+
+*/
+    INTVAL get_integer_keyed(PMC *key) {
+        PMC    *next_key, *box;
+        STRING *s_key;
+
+        dprintf("calling get_integer_keyed\n");
+        /* peel off the next key */
+        next_key = key_next(INTERP, key);
+        s_key    = VTABLE_get_string(INTERP, key);
+
+        /* if there isn't one (i.e. key is null) */
+        if (next_key == NULL) {
+            /* dispatch to get_integer_keyed_str */
+            return SELF.get_integer_keyed_str(s_key);
+        }
+
+        /* get the box where the thing should be stored */
+        box = SELF.get_pmc_keyed_str(s_key);
+        if (PMC_IS_NULL(box))
+            return (INTVAL)0;
+
+        /* recurse into that box */
+        return VTABLE_get_integer_keyed(INTERP, box, next_key);
+    }
+
+/*
+
+=item C<INTVAL get_integer_keyed_str(STRING *s_key)>
+
+Retrieve the value from this PHPArray which is associated with the STRING
+C<s_key>.
+
+=cut
+
+*/
+    INTVAL get_integer_keyed_str(STRING *s_key){
+        PMC           *p_val;
+        PippHashTable *ht;
+
+        dprintf("calling get_integer_keyed_str\n");
+        ht = (PippHashTable*)PMC_struct_val(SELF);
+        p_val = pipp_hash_get(INTERP, ht, s_key);
+        return VTABLE_get_integer(INTERP, p_val);
+    }
+
+/*
+
+=item C<INTVAL get_integer_keyed_int(INTVAL i_key)>
+
+Retrieve the value from this PHPArray which is associated with the INTVAL
+C<i_key>.
+
+=cut
+
+*/
+    INTVAL get_integer_keyed_int(INTVAL i_key){
+        PMC           *p_val;
+        STRING        *s_key;
+        PippHashTable *ht;
+
+        dprintf("calling get_integer_keyed_int\n");
+        ht = (PippHashTable*)PMC_struct_val(SELF);
+        s_key = string_from_int(INTERP, i_key);
+        p_val = pipp_hash_get(INTERP, ht, s_key);
+        return VTABLE_get_integer(INTERP, p_val);
+    }
+
+/*
+
+=item C<PMC *get_pmc_keyed(PMC *key)>
+
+Retrieve the value from this PHPArray which is associated with the Key PMC
+C<key>.
+
+=cut
+
+*/
+    PMC *get_pmc_keyed(PMC *key) {
+        PMC    *next_key, *box;
+        STRING *s_key;
+
+        dprintf("calling get_pmc_keyed\n");
+        /* peel off the next key */
+        next_key = key_next(INTERP, key);
+        s_key    = VTABLE_get_string(INTERP, key);
+
+        /* if there isn't one (i.e. key is null) */
+        if (next_key == NULL) {
+            /* dispatch to get_pmc_keyed_str */
+            return SELF.get_pmc_keyed_str(s_key);
+        }
+
+        /* get the box where the thing should be stored */
+        box = SELF.get_pmc_keyed_str(s_key);
+        if (PMC_IS_NULL(box))
+            return PMCNULL;
+
+        /* recurse into that box */
+        return VTABLE_get_pmc_keyed(INTERP, box, next_key);
+    }
+
+/*
+
+=item C<PMC *get_pmc_keyed_str(STRING *s_key)>
+
+Retrieve the value from this PHPArray which is associated with the STRING
+C<s_key>.
+
+=cut
+
+*/
+    PMC *get_pmc_keyed_str(STRING *s_key){
+        PippHashTable *ht;
+
+        dprintf("calling get_pmc_keyed_str\n");
+        ht = (PippHashTable*)PMC_struct_val(SELF);
+        return pipp_hash_get(INTERP, ht, s_key);
+    }
+
+/*
+
+=item C<PMC *get_pmc_keyed_int(INTVAL i_key)>
+
+Retrieve the value from this PHPArray which is associated with the INTVAL
+C<i_key>.
+
+=cut
+
+*/
+    PMC *get_pmc_keyed_int(INTVAL i_key){
+        STRING        *s_key;
+        PippHashTable *ht;
+
+        dprintf("calling get_pmc_keyed_int\n");
+        ht = (PippHashTable*)PMC_struct_val(SELF);
+        s_key = string_from_int(INTERP, i_key);
+        return pipp_hash_get(INTERP, ht, s_key);
+    }
+
+/*
+
+=item C<STRING *get_string_keyed(PMC *key)>
+
+Retrieve the value from this PHPArray which is associated with the Key PMC
+C<key>.
+
+=cut
+
+*/
+    STRING *get_string_keyed(PMC *key) {
+        PMC    *next_key, *box;
+        STRING *s_key;
+
+        dprintf("calling get_string_keyed\n");
+        /* peel off the next key */
+        next_key = key_next(INTERP, key);
+        s_key    = VTABLE_get_string(INTERP, key);
+
+        /* if there isn't one (i.e. key is null) */
+        if (next_key == NULL) {
+            /* dispatch to get_string_keyed_str */
+            return SELF.get_string_keyed_str(s_key);
+        }
+
+        /* get the box where the thing should be stored */
+        box = SELF.get_pmc_keyed_str(s_key);
+        if (PMC_IS_NULL(box))
+            return (INTVAL)0;
+
+        /* recurse into that box */
+        return VTABLE_get_string_keyed(INTERP, box, next_key);
+    }
+
+/*
+
+=item C<STRING *get_string_keyed_str(STRING *s_key)>
+
+Retrieve the value from this PHPArray which is associated with the STRING
+C<s_key>.
+
+=cut
+
+*/
+    STRING *get_string_keyed_str(STRING *s_key){
+        PMC           *p_val;
+        PippHashTable *ht;
+
+        dprintf("calling get_string_keyed_str\n");
+        ht = (PippHashTable*)PMC_struct_val(SELF);
+        p_val = pipp_hash_get(INTERP, ht, s_key);
+        return VTABLE_get_string(INTERP, p_val);
+    }
+
+/*
+
+=item C<STRING *get_string_keyed_int(INTVAL i_key)>
+
+Retrieve the value from this PHPArray which is associated with the INTVAL
+C<i_key>.
+
+=cut
+
+*/
+    STRING *get_string_keyed_int(INTVAL i_key){
+        PMC           *p_val;
+        STRING        *s_key;
+        PippHashTable *ht;
+
+        dprintf("calling get_string_keyed_int\n");
+        ht = (PippHashTable*)PMC_struct_val(SELF);
+        s_key = string_from_int(INTERP, i_key);
+        p_val = pipp_hash_get(INTERP, ht, s_key);
+        return VTABLE_get_string(INTERP, p_val);
+    }
+
+/*
+
+=item C<FLOATVAL get_number_keyed(PMC *key)>
+
+Retrieve the value from this PHPArray which is associated with the Key PMC
+C<key>.
+
+=cut
+
+*/
+    FLOATVAL get_number_keyed(PMC *key) {
+        PMC    *next_key, *box;
+        STRING *s_key;
+
+        dprintf("calling get_number_keyed\n");
+        /* peel off the next key */
+        next_key = key_next(INTERP, key);
+        s_key    = VTABLE_get_string(INTERP, key);
+
+        /* if there isn't one (i.e. key is null) */
+        if (next_key == NULL) {
+            /* dispatch to get_number_keyed_str */
+            return SELF.get_number_keyed_str(s_key);
+        }
+
+        /* get the box where the thing should be stored */
+        box = SELF.get_pmc_keyed_str(s_key);
+        if (PMC_IS_NULL(box))
+            return (INTVAL)0;
+
+        /* recurse into that box */
+        return VTABLE_get_number_keyed(INTERP, box, next_key);
+    }
+
+/*
+
+=item C<FLOATVAL get_number_keyed_str(STRING *s_key)>
+
+Retrieve the value from this PHPArray which is associated with the STRING
+C<s_key>.
+
+=cut
+
+*/
+    FLOATVAL get_number_keyed_str(STRING *s_key){
+        PMC           *p_val;
+        PippHashTable *ht;
+
+        dprintf("calling get_number_keyed_str\n");
+        ht = (PippHashTable*)PMC_struct_val(SELF);
+        p_val = pipp_hash_get(INTERP, ht, s_key);
+        return VTABLE_get_number(INTERP, p_val);
+    }
+
+/*
+
+=item C<FLOATVAL get_number_keyed_int(INTVAL i_key)>
+
+Retrieve the value from this PHPArray which is associated with the INTVAL
+C<i_key>.
+
+=cut
+
+*/
+    FLOATVAL get_number_keyed_int(INTVAL i_key){
+        PMC           *p_val;
+        STRING        *s_key;
+        PippHashTable *ht;
+
+        dprintf("calling get_number_keyed_int\n");
+        ht = (PippHashTable*)PMC_struct_val(SELF);
+        s_key = string_from_int(INTERP, i_key);
+        p_val = pipp_hash_get(INTERP, ht, s_key);
+        return VTABLE_get_number(INTERP, p_val);
+    }
+
+/*
+
+=item C<INTVAL exists_keyed(PMC *key)>
+
+Return non-zero if an element keyed by C<key> exists.
+
+=cut
+
+*/
+    INTVAL exists_keyed(PMC *key) {
+        PMC    *next_key, *box;
+        STRING *s_key;
+
+        dprintf("calling exists_keyed\n");
+        /* peel off the next key */
+        next_key = key_next(INTERP, key);
+        s_key    = VTABLE_get_string(INTERP, key);
+
+        /* if there isn't one (i.e. key is null) */
+        if (next_key == NULL) {
+            /* dispatch to exists_keyed_str */
+            return SELF.exists_keyed_str(s_key);
+        }
+
+        /* get the box where the thing should be stored */
+        box = SELF.get_pmc_keyed_str(s_key);
+        if (PMC_IS_NULL(box))
+            return (INTVAL)0;
+
+        /* recurse into that box */
+        return VTABLE_exists_keyed(INTERP, box, next_key);
+    }
+
+/*
+
+=item C<INTVAL exists_keyed_str(STRING *s_key)>
+
+Return non-zero if an element keyed by C<s_key> exists.
+
+=cut
+
+*/
+    INTVAL exists_keyed_str(STRING *s_key){
+        PMC           *p_val;
+        PippHashTable *ht;
+
+        dprintf("calling exists_keyed_str\n");
+        ht = (PippHashTable*)PMC_struct_val(SELF);
+        return pipp_hash_find(INTERP, ht, s_key);
+    }
+
+/*
+
+=item C<INTVAL exists_keyed_int(INTVAL i_key)>
+
+Return non-zero if an element keyed by C<i_key> exists.
+
+=cut
+
+*/
+    INTVAL exists_keyed_int(INTVAL i_key){
+        PMC           *p_val;
+        STRING        *s_key;
+        PippHashTable *ht;
+
+        dprintf("calling exists_keyed_int\n");
+        ht = (PippHashTable*)PMC_struct_val(SELF);
+        s_key = string_from_int(INTERP, i_key);
+        return pipp_hash_find(INTERP, ht, s_key);
+    }
+
+/*
+
+=item C<void delete_keyed(PMC *key)>
+
+If an element in this PHPArray is keyed by C<key>, delete it.  Otherwise do
+nothing.
+
+=cut
+
+*/
+    void delete_keyed(PMC *key) {
+        PMC    *next_key, *box;
+        STRING *s_key;
+
+        dprintf("calling delete_keyed\n");
+        /* peel off the next key */
+        next_key = key_next(INTERP, key);
+        s_key    = VTABLE_get_string(INTERP, key);
+
+        /* if there isn't one (i.e. key is null) */
+        if (next_key == NULL) {
+            /* dispatch to delete_keyed_str */
+            SELF.delete_keyed_str(s_key);
+            return;
+        }
+
+        /* get the box where the thing should be stored */
+        box = SELF.get_pmc_keyed_str(s_key);
+        if (PMC_IS_NULL(box))
+            return;
+
+        /* recurse into that box */
+        VTABLE_delete_keyed(INTERP, box, next_key);
+        return;
+    }
+
+/*
+
+=item C<void delete_keyed_str(STRING *s_key)>
+
+If an element in this PHPArray is keyed by C<key>, delete it.  Otherwise do
+nothing.
+
+=cut
+
+*/
+    void delete_keyed_str(STRING *s_key){
+        PMC           *p_val;
+        PippHashTable *ht;
+
+        dprintf("calling delete_keyed_str\n");
+        ht = (PippHashTable*)PMC_struct_val(SELF);
+        pipp_hash_delete(INTERP, ht, s_key);
+    }
+
+/*
+
+=item C<void delete_keyed_int(INTVAL i_key)>
+
+If an element in this PHPArray is keyed by C<key>, delete it.  Otherwise do
+nothing.
+
+=cut
+
+*/
+    void delete_keyed_int(INTVAL i_key){
+        PMC           *p_val;
+        STRING        *s_key;
+        PippHashTable *ht;
+
+        dprintf("calling delete_keyed_int\n");
+        ht = (PippHashTable*)PMC_struct_val(SELF);
+        s_key = string_from_int(INTERP, i_key);
+        pipp_hash_delete(INTERP, ht, s_key);
+        return;
+    }
+
+/*
+
+=item C<void push_integer(INTVAL i)>
+
+Add an integer with the value C<i> to the end of this PHPArray.
+
+=cut
+
+*/
+    void push_integer(INTVAL i_val) {
+        PMC *p_val;
+        PippHashTable *ht = (PippHashTable*)PMC_struct_val(SELF);
+
+        p_val = pmc_new(INTERP, enum_class_Integer);
+        VTABLE_set_integer_native(INTERP, p_val, i_val);
+        pipp_hash_push(INTERP, ht, p_val);
+    }
+
+/*
+
+=item C<void push_pmc(PMC *p_val)>
+
+Add a PMC with the value C<p_val> to the end of this PHPArray.
+
+=cut
+
+*/
+    void push_pmc(PMC *p_val) {
+        PippHashTable *ht = (PippHashTable*)PMC_struct_val(SELF);
+        pipp_hash_push(INTERP, ht, p_val);
+    }
+
+/*
+
+=item C<void push_string(STRING *s_val)>
+
+Add a STRING with the value C<s_val> to the end of this PHPArray.
+
+=cut
+
+*/
+    void push_string(STRING *s_val) {
+        PMC *p_val;
+        PippHashTable *ht = (PippHashTable*)PMC_struct_val(SELF);
+
+        p_val = pmc_new(INTERP, enum_class_String);
+        VTABLE_set_string_native(INTERP, p_val, s_val);
+        pipp_hash_push(INTERP, ht, p_val);
+    }
+
+/*
+
+=item C<void push_float(FLOATVAL f_val)>
+
+Add a FLOATVAL with the value C<f_val> to the end of this PHPArray.
+
+=cut
+
+*/
+    void push_float(FLOATVAL f_val) {
+        PMC *p_val;
+        PippHashTable *ht = (PippHashTable*)PMC_struct_val(SELF);
+
+        p_val = pmc_new(INTERP, enum_class_Float);
+        VTABLE_set_number_native(INTERP, p_val, f_val);
+        pipp_hash_push(INTERP, ht, p_val);
+    }
+
+/*
+
+=item C<INTVAL pop_integer()>
+
+Delete the element at the end of this PHPArray, returning its value as an INTVAL.
+
+=cut
+
+*/
+    INTVAL pop_integer() {
+        PippHashTable *ht;
+        PMC           *p_val;
+
+        ht = (PippHashTable*)PMC_struct_val(SELF);
+        p_val = pipp_hash_pop(INTERP, ht);
+        return VTABLE_get_integer(INTERP, p_val);
+    }
+
+/*
+
+=item C<PMC* pop_pmc()>
+
+Delete the element at the end of this PHPArray, returning its value as a PMC.
+
+=cut
+
+*/
+    PMC *pop_pmc() {
+        PippHashTable *ht;
+
+        ht = (PippHashTable*)PMC_struct_val(SELF);
+        return pipp_hash_pop(INTERP, ht);
+    }
+
+/*
+
+=item C<STRING* pop_string()>
+
+Delete the element at the end of this PHPArray, returning its value as a STRING.
+
+=cut
+
+*/
+    STRING *pop_string() {
+        PippHashTable *ht;
+        PMC           *p_val;
+
+        ht = (PippHashTable*)PMC_struct_val(SELF);
+        p_val = pipp_hash_pop(INTERP, ht);
+        return VTABLE_get_string(INTERP, p_val);
+    }
+
+/*
+
+=item C<FLOATVAL pop_float()>
+
+Delete the element at the end of this PHPArray, returning its value as a FLOATVAL.
+
+=cut
+
+*/
+    FLOATVAL pop_float() {
+        PippHashTable *ht;
+        PMC           *p_val;
+
+        ht = (PippHashTable*)PMC_struct_val(SELF);
+        p_val = pipp_hash_pop(INTERP, ht);
+        return VTABLE_get_number(INTERP, p_val);
+    }
+
+/*
+
+=item C<void unshift_integer(INTVAL i_val)>
+
+Add an integer with the value C<i_val> to the beginning of this PHPArray.
+C<i_val> will be keyed by the INTVAL 0 and all other numerically indexed
+elements will be renumbered according to insertion order.
+
+=cut
+
+*/
+    void unshift_integer(INTVAL i_val) {
+        PMC *p_val;
+        PippHashTable *ht = (PippHashTable*)PMC_struct_val(SELF);
+
+        p_val = pmc_new(INTERP, enum_class_Integer);
+        VTABLE_set_integer_native(INTERP, p_val, i_val);
+        pipp_hash_unshift(INTERP, ht, p_val);
+    }
+
+/*
+
+=item C<void unshift_pmc(PMC *p_val)>
+
+Add a PMC with the value C<p_val> to the beginning of this PHPArray.  C<p_val>
+will be keyed by the INTVAL 0 and all other numerically indexed elements will
+be renumbered according to insertion order.
+
+=cut
+
+*/
+    void unshift_pmc(PMC *p_val) {
+        PippHashTable *ht = (PippHashTable*)PMC_struct_val(SELF);
+        pipp_hash_unshift(INTERP, ht, p_val);
+    }
+
+/*
+
+=item C<void unshift_string(STRING *s_val)>
+
+Add a STRING with the value C<s_val> to the beginning of this PHPArray.
+C<s_val> will be keyed by the INTVAL 0 and all other numerically indexed
+elements will be renumbered according to insertion order.
+
+=cut
+
+*/
+    void unshift_string(STRING *s_val) {
+        PMC *p_val;
+        PippHashTable *ht = (PippHashTable*)PMC_struct_val(SELF);
+
+        p_val = pmc_new(INTERP, enum_class_String);
+        VTABLE_set_string_native(INTERP, p_val, s_val);
+        pipp_hash_unshift(INTERP, ht, p_val);
+    }
+
+/*
+
+=item C<void unshift_float(FLOATVAL f_val)>
+
+Add a FLOATVAL with the value C<f_val> to the beginning of this PHPArray.
+C<f_val> will be keyed by the INTVAL 0 and all other numerically indexed
+elements will be renumbered according to insertion order.
+
+=cut
+
+*/
+    void unshift_float(FLOATVAL f_val) {
+        PMC *p_val;
+        PippHashTable *ht = (PippHashTable*)PMC_struct_val(SELF);
+
+        p_val = pmc_new(INTERP, enum_class_Float);
+        VTABLE_set_number_native(INTERP, p_val, f_val);
+        pipp_hash_unshift(INTERP, ht, p_val);
+    }
+
+/*
+
+=item C<INTVAL shift_integer()>
+
+Delete the element at the beginning of this PHPArray, returning its value as an INTVAL.
+
+=cut
+
+*/
+    INTVAL shift_integer() {
+        PippHashTable *ht;
+        PMC           *p_val;
+
+        ht = (PippHashTable*)PMC_struct_val(SELF);
+        p_val = pipp_hash_shift(INTERP, ht);
+        return VTABLE_get_integer(INTERP, p_val);
+    }
+
+/*
+
+=item C<PMC* shift_pmc()>
+
+Delete the element at the beginning of this PHPArray, returning its value as a PMC.
+
+=cut
+
+*/
+    PMC *shift_pmc() {
+        PippHashTable *ht;
+
+        ht = (PippHashTable*)PMC_struct_val(SELF);
+        return pipp_hash_shift(INTERP, ht);
+    }
+
+/*
+
+=item C<STRING* shift_string()>
+
+Delete the element at the beginning of this PHPArray, returning its value as a STRING.
+
+=cut
+
+*/
+    STRING *shift_string() {
+        PippHashTable *ht;
+        PMC           *p_val;
+
+        ht = (PippHashTable*)PMC_struct_val(SELF);
+        p_val = pipp_hash_shift(INTERP, ht);
+        return VTABLE_get_string(INTERP, p_val);
+    }
+
+/*
+
+=item C<FLOATVAL shift_float()>
+
+Delete the element at the beginning of this PHPArray, returning its value as a FLOATVAL.
+
+=cut
+
+*/
+    FLOATVAL shift_float() {
+        PippHashTable *ht;
+        PMC           *p_val;
+
+        ht = (PippHashTable*)PMC_struct_val(SELF);
+        p_val = pipp_hash_shift(INTERP, ht);
+        return VTABLE_get_number(INTERP, p_val);
+    }
+
+/*
+
+=item C<STRING* name()>
+
+Return the string 'array'.
+
+=cut
+
+*/
+    STRING* name() {
+        return const_string(INTERP, "array");
+    }
+
+/*
+
+=item C<STRING* get_string()>
+
+Return the string 'Array'.
+
+=cut
+
+*/
+    STRING* get_string() {
+        return const_string(INTERP, "Array");
+    }
+
+/*
+
+=item C<INTVAL get_bool()>
+
+Return 1 if this PHPArray has 1 or more elements.
+
+=cut
+
+*/
+    INTVAL get_bool() {
+        PippHashTable *ht;
+        ht = (PippHashTable*) PMC_struct_val(SELF);
+        return ht->elementCount > 0;
+    }
+
+/*
+
+=back
+
+=head2 Methods
+
+=over 4
+
+=item C<PMC* to_number()>
+
+=cut
+
+*/
+    METHOD to_number() {
+        RETURN(PMC *SELF);
+    }
+
+/*
+
+=item C<void sanity_check()>
+
+Check if everything about the PippHashTable looks sane.  If anything looks
+broken, the code will throw an exception.
+
+=cut
+
+*/
+    METHOD sanity_check() {
+        PippHashTable *ht;
+        ht = (PippHashTable*) PMC_struct_val(SELF);
+        pipp_hash_sanity_check(INTERP, ht);
+    }
+
+    /* This is just some trivial code to remind me which test cases need to be
+     * covered.  Once the actual PHPArray tests are closer to usable, I'll make
+     * sure they cover this code and remove this method. */
+    METHOD test_string() {
+        PippIsInt *i;
+
+        i = pipp_hash_get_intval(interp, const_string(INTERP, "00"));
+        dprintf("'00' => (%d)'%d'\n", i->isInt, i->intval);
+        i = pipp_hash_get_intval(interp, const_string(INTERP, "-0"));
+        dprintf("'-0' => (%d)'%d'\n", i->isInt, i->intval);
+        i = pipp_hash_get_intval(interp, const_string(INTERP, "04"));
+        dprintf("'04' => (%d)'%d'\n", i->isInt, i->intval);
+        i = pipp_hash_get_intval(interp, const_string(INTERP, "0"));
+        dprintf("'0' => (%d)'%d'\n", i->isInt, i->intval);
+        i = pipp_hash_get_intval(interp, const_string(INTERP, "-1"));
+        dprintf("'-1' => (%d)'%d'\n", i->isInt, i->intval);
+        i = pipp_hash_get_intval(interp, const_string(INTERP, "99999999999999999999999"));
+        dprintf("'99999999999999999999999' => (%d)'%d'\n", i->isInt, i->intval);
+        i = pipp_hash_get_intval(interp, const_string(INTERP, "-7"));
+        dprintf("'-7' => (%d)'%d'\n", i->isInt, i->intval);
+        i = pipp_hash_get_intval(interp, const_string(INTERP, "7"));
+        dprintf("'7' => (%d)'%d'\n", i->isInt, i->intval);
+        i = pipp_hash_get_intval(interp, const_string(INTERP, "100"));
+        dprintf("'100' => (%d)'%d'\n", i->isInt, i->intval);
+
+    }
+
+}
+
+/*
+
+=back
+
+=head1 AUTHORS
+
+Christoph Otto
+Francois Perrad
+
+=cut
+
+*/
+
+
+/*
+ * Local variables:
+ *   c-file-style: "parrot"
+ * End:
+ * vim: expandtab shiftwidth=4:
+ */
