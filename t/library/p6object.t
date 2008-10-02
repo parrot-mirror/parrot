@@ -328,6 +328,20 @@ t/library/p6object.t -- P6object tests
     $I0 = can $P0, 'elems'
     ok($I0, 'ResizablePMCArray inherits List methods')
 
+    ##  building a class from another hll namespace
+    $P0 = get_root_namespace ['foo';'XYZ';'Bar']
+    .local pmc barproto, barobj
+    barproto = metaproto.'new_class'($P0)
+    $P0 = get_root_global ['foo';'XYZ'], 'Bar'
+    $I0 = issame $P0, barproto
+    ok($I0, 'XYZ::Bar protoobject created in foo HLL namespace')
+    $P0 = get_hll_global ['XYZ'], 'Bar'
+    $I0 = isnull $P0
+    ok($I0, 'XYZ::Bar protoobject not created in parrot HLL namespace')
+    barobj = barproto.'new'()
+    $S0 = barobj.'hello'()
+    is($S0, 'XYZ::Bar::hello', 'method call to XYZ::Bar object works')
+
     .return ()
   load_failed:
     ok(0, "load_bytecode 'P6object.pir' failed -- skipping tests")
@@ -350,3 +364,10 @@ t/library/p6object.t -- P6object tests
 .sub 'elems' :method
     .return ('List::elems')
 .end
+
+.HLL 'foo', ''
+.namespace ['XYZ';'Bar']
+.sub 'hello' :method
+    .return ('XYZ::Bar::hello')
+.end
+
