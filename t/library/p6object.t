@@ -25,7 +25,7 @@ t/library/p6object.t -- P6object tests
     test_namespace.'export_to'(curr_namespace, exports)
 
     ##  set our plan
-    plan(110)
+    plan(114)
 
     ##  make sure we can load the P6object library
     push_eh load_failed
@@ -342,6 +342,13 @@ t/library/p6object.t -- P6object tests
     $S0 = barobj.'hello'()
     is($S0, 'XYZ::Bar::hello', 'method call to XYZ::Bar object works')
 
+    .local pmc wtfproto, dostuff
+    dostuff = get_root_global ['foo'], 'dostuff'
+    wtfproto = dostuff(metaproto)
+    $P0 = get_root_global ['foo';'WTF'], 'Lol'
+    $I0 = issame $P0, wtfproto
+    ok($I0, 'WTF::Lol protoobject created in foo HLL namespace')
+
     .return ()
   load_failed:
     ok(0, "load_bytecode 'P6object.pir' failed -- skipping tests")
@@ -366,6 +373,15 @@ t/library/p6object.t -- P6object tests
 .end
 
 .HLL 'foo', ''
+.sub 'dostuff'
+    .param pmc metaproto
+    .local pmc wtfproto
+    wtfproto = metaproto.'new_class'('WTF::Lol')
+    .return(wtfproto)
+.end
+.namespace ['WTF';'Lol']
+.sub 'q' :anon
+.end
 .namespace ['XYZ';'Bar']
 .sub 'hello' :method
     .return ('XYZ::Bar::hello')

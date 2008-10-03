@@ -396,7 +396,27 @@ of names separated by spaces.
     .param pmc options         :slurpy :named
 
     .local pmc parrotclass
+    $I0 = isa name, 'String'
+    if $I0, parrotclass_string
     parrotclass = newclass name
+    goto have_parrotclass
+  parrotclass_string:
+    $S0 = name
+    parrotclass = split '::', $S0
+    $P0 = getinterp
+    $P0 = $P0['namespace';1]
+    $P0 = $P0.get_name()
+    $P0 = shift $P0
+    unshift parrotclass, $P0
+    parrotclass = get_root_namespace [parrotclass]
+    $I0 = defined parrotclass
+    unless $I0, parrotclass_string_simple
+    parrotclass = newclass parrotclass
+    goto have_parrotclass
+  parrotclass_string_simple:
+    # workaround for making classes without a namespace
+    parrotclass = newclass name
+  have_parrotclass:
 
     .local pmc attrlist, iter
     attrlist = options['attr']
