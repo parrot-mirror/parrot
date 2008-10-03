@@ -59,7 +59,7 @@ typedef struct local_label {
 
 
 /* symbol constructor */
-symbol *new_symbol(char * const name, pir_type type);
+symbol *new_symbol(struct lexer_state * const lexer, char * const name, pir_type type);
 
 /* to enter a symbol in the symbol table */
 void declare_local(struct lexer_state * const lexer, pir_type type, symbol * const list);
@@ -92,6 +92,9 @@ void store_local_label(struct lexer_state * const lexer, char * const label, uns
 unsigned find_local_label(struct lexer_state * const lexer, char * const label);
 
 unsigned get_hashcode(char * const str, unsigned num_buckets);
+
+bucket *get_bucket(hashtable * const table, unsigned long hash);
+
 
 #endif /* PARROT_PIR_PIRSYMBOL_H_GUARD */
 

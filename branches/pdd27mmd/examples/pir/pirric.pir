@@ -25,10 +25,11 @@
 # - ? -> PRINT
 #
 # Expressions:
-# - Operators: + - * / < > = unary-
-# - Predefined functions: COMPLEX, COS, SIN, SQR, LEN, LEFT$, RIGHT$, MID$
+# - Operators: + - * / < > = unary+ unary- MOD
+# - Predefined numeric functions: COMPLEX, SQR, EXP, LN, SIN, COS, TAN, ASIN, ACOS, ATAN, SINH, COSH, TANH
+# - Predefined string functions: CHR$, ASC, LEN, LEFT$, RIGHT$, MID$
 # - Parenthesis
-# - Special functions: NEW "Class name"
+# - Special functions: NEW, ISA
 # - Calls to methods in foreign objects
 # - Calls to functions in foreign namespaces
 
@@ -36,6 +37,7 @@
 
 .include 'iterator.pasm'
 .include 'except_severity.pasm'
+.include 'except_types.pasm'
 .include 'cclass.pasm'
 
 #-----------------------------------------------------------------------
@@ -116,14 +118,22 @@
     .local pmc predefs
     predefs = new 'Hash'
     setpredef(predefs, "NEW", "new")
+    setpredef(predefs, "ISA", "isa")
+    setpredef(predefs, "CHR$", "chr")
+    setpredef(predefs, "ASC", "asc")
     setpredef(predefs, "LEN", "len")
     setpredef(predefs, "LEFT$", "left")
     setpredef(predefs, "RIGHT$", "right")
     setpredef(predefs, "MID$", "mid")
     setpredef(predefs, "COMPLEX", "complex")
+    setpredef(predefs, "EXP", "exp")
+    setpredef(predefs, "LN", "ln")
     setpredef(predefs, "SIN", "sin")
+    setpredef(predefs, "SINH", "sinh")
     setpredef(predefs, "COS", "cos")
+    setpredef(predefs, "COSH", "cosh")
     setpredef(predefs, "TAN", "tan")
+    setpredef(predefs, "TANH", "tanh")
     setpredef(predefs, "ASIN", "asin")
     setpredef(predefs, "ACOS", "acos")
     setpredef(predefs, "ATAN", "atan")
@@ -289,6 +299,30 @@ done:
 .end
 
 #-----------------------------------------------------------------------
+.sub get_numeric_arg :method
+    .param pmc tokenizer
+
+    .local pmc arg
+
+    arg = self.evaluate(tokenizer)
+    $P0 = tokenizer.get()
+    $I0 = defined $P0
+    unless $I0 goto fail
+    ne $P0, ')', fail
+
+    $I0 = isa arg, 'Integer'
+    unless $I0 goto done
+    $I0 = arg
+    $N0 = $I0
+    arg = new 'Float'
+    arg = $N0
+done:
+    .return(arg)
+fail:
+    SyntaxError()
+.end
+
+#-----------------------------------------------------------------------
 .sub get_1_arg :method
     .param pmc tokenizer
 
@@ -373,6 +407,57 @@ fail:
 
     $P2 = new $S1
     .return($P2)
+fail:
+    SyntaxError()
+.end
+
+#-----------------------------------------------------------------------
+.sub predef_isa :method
+    .param pmc tokenizer
+
+    $P1 = tokenizer.get()
+    ne $P1, '(', fail
+    ($P1, $P2) = self.get_2_args(tokenizer)
+    $I0 = isa $P1, $P2
+    $P0 = new 'Integer'
+    $P0 = $I0
+    .return($P0)
+fail:
+    SyntaxError()
+.end
+
+#-----------------------------------------------------------------------
+.sub predef_chr :method
+    .param pmc tokenizer
+
+    $P1 = tokenizer.get()
+    ne $P1, '(', fail
+    $P2 = self.get_1_arg(tokenizer)
+
+    $I0 = $P2
+    $S0 = chr $I0
+    $I1 = find_encoding 'utf8'
+    trans_encoding $S0, $I1
+    $P3 = new 'String'
+    $P3 = $S0
+    .return($P3)
+fail:
+    SyntaxError()
+.end
+
+#-----------------------------------------------------------------------
+.sub predef_asc :method
+    .param pmc tokenizer
+
+    $P1 = tokenizer.get()
+    ne $P1, '(', fail
+    $P2 = self.get_1_arg(tokenizer)
+
+    $S0 = $P2
+    $I0 = ord $S0
+    $P3 = new 'Integer'
+    $P3 = $I0
+    .return($P3)
 fail:
     SyntaxError()
 .end
@@ -484,23 +569,53 @@ fail:
 .end
 
 #-----------------------------------------------------------------------
+.sub predef_exp :method
+    .param pmc tokenizer
+
+    $P1 = tokenizer.get()
+    ne $P1, '(', fail
+    $P2 = self.get_numeric_arg(tokenizer)
+    $P3 = $P2.exp()
+    .return($P3)
+fail:
+    SyntaxError()
+.end
+
+#-----------------------------------------------------------------------
+.sub predef_ln :method
+    .param pmc tokenizer
+
+    $P1 = tokenizer.get()
+    ne $P1, '(', fail
+    $P2 = self.get_numeric_arg(tokenizer)
+    $P3 = $P2.ln()
+    .return($P3)
+fail:
+    SyntaxError()
+.end
+
+#-----------------------------------------------------------------------
 .sub predef_sin :method
     .param pmc tokenizer
 
     $P1 = tokenizer.get()
     ne $P1, '(', fail
-    null $P5
-    $P5 = self.get_1_arg(tokenizer)
-    $I0 = isa $P5, 'Integer'
-    unless $I0 goto do_sin
-    $I0 = $P5
-    null $P5
-    $P5 = new 'Float'
-    $N0 = $I0
-    $P5 = $N0
-do_sin:
-    $P9 = $P5.sin()
-    .return($P9)
+    $P2 = self.get_numeric_arg(tokenizer)
+    $P3 = $P2.sin()
+    .return($P3)
+fail:
+    SyntaxError()
+.end
+
+#-----------------------------------------------------------------------
+.sub predef_sinh :method
+    .param pmc tokenizer
+
+    $P1 = tokenizer.get()
+    ne $P1, '(', fail
+    $P2 = self.get_numeric_arg(tokenizer)
+    $P3 = $P2.sinh()
+    .return($P3)
 fail:
     SyntaxError()
 .end
@@ -511,20 +626,22 @@ fail:
 
     $P1 = tokenizer.get()
     ne $P1, '(', fail
-    null $P5
-    $P5 = self.get_1_arg(tokenizer)
-    $I0 = isa $P5, 'Integer'
-    #print 'Integer: '
-    #say $I0
-    unless $I0 goto do_cos
-    $I0 = $P5
-    null $P5
-    $P5 = new 'Float'
-    $N0 = $I0
-    $P5 = $N0
-do_cos:
-    $P9 = $P5.cos()
-    .return($P9)
+    $P2 = self.get_numeric_arg(tokenizer)
+    $P3 = $P2.cos()
+    .return($P3)
+fail:
+    SyntaxError()
+.end
+
+#-----------------------------------------------------------------------
+.sub predef_cosh :method
+    .param pmc tokenizer
+
+    $P1 = tokenizer.get()
+    ne $P1, '(', fail
+    $P2 = self.get_numeric_arg(tokenizer)
+    $P3 = $P2.cosh()
+    .return($P3)
 fail:
     SyntaxError()
 .end
@@ -535,20 +652,22 @@ fail:
 
     $P1 = tokenizer.get()
     ne $P1, '(', fail
-    null $P5
-    $P5 = self.get_1_arg(tokenizer)
-    $I0 = isa $P5, 'Integer'
-    #print 'Integer: '
-    #say $I0
-    unless $I0 goto do_tan
-    $I0 = $P5
-    null $P5
-    $P5 = new 'Float'
-    $N0 = $I0
-    $P5 = $N0
-do_tan:
-    $P9 = $P5.tan()
-    .return($P9)
+    $P2 = self.get_numeric_arg(tokenizer)
+    $P3 = $P2.tan()
+    .return($P3)
+fail:
+    SyntaxError()
+.end
+
+#-----------------------------------------------------------------------
+.sub predef_tanh :method
+    .param pmc tokenizer
+
+    $P1 = tokenizer.get()
+    ne $P1, '(', fail
+    $P2 = self.get_numeric_arg(tokenizer)
+    $P3 = $P2.tanh()
+    .return($P3)
 fail:
     SyntaxError()
 .end
@@ -559,18 +678,9 @@ fail:
 
     $P1 = tokenizer.get()
     ne $P1, '(', fail
-    null $P5
-    $P5 = self.get_1_arg(tokenizer)
-    $I0 = isa $P5, 'Integer'
-    unless $I0 goto do_asin
-    $I0 = $P5
-    null $P5
-    $P5 = new 'Float'
-    $N0 = $I0
-    $P5 = $N0
-do_asin:
-    $P9 = $P5.asin()
-    .return($P9)
+    $P2 = self.get_numeric_arg(tokenizer)
+    $P3 = $P2.asin()
+    .return($P3)
 fail:
     SyntaxError()
 .end
@@ -581,20 +691,9 @@ fail:
 
     $P1 = tokenizer.get()
     ne $P1, '(', fail
-    null $P5
-    $P5 = self.get_1_arg(tokenizer)
-    $I0 = isa $P5, 'Integer'
-    #print 'Integer: '
-    #say $I0
-    unless $I0 goto do_acos
-    $I0 = $P5
-    null $P5
-    $P5 = new 'Float'
-    $N0 = $I0
-    $P5 = $N0
-do_acos:
-    $P9 = $P5.acos()
-    .return($P9)
+    $P2 = self.get_numeric_arg(tokenizer)
+    $P3 = $P2.acos()
+    .return($P3)
 fail:
     SyntaxError()
 .end
@@ -605,20 +704,9 @@ fail:
 
     $P1 = tokenizer.get()
     ne $P1, '(', fail
-    null $P5
-    $P5 = self.get_1_arg(tokenizer)
-    $I0 = isa $P5, 'Integer'
-    #print 'Integer: '
-    #say $I0
-    unless $I0 goto do_atan
-    $I0 = $P5
-    null $P5
-    $P5 = new 'Float'
-    $N0 = $I0
-    $P5 = $N0
-do_atan:
-    $P9 = $P5.atan()
-    .return($P9)
+    $P2 = self.get_numeric_arg(tokenizer)
+    $P3 = $P2.atan()
+    .return($P3)
 fail:
     SyntaxError()
 .end
@@ -629,23 +717,9 @@ fail:
 
     $P1 = tokenizer.get()
     ne $P1, '(', fail
-    null $P5
-    $P5 = self.evaluate(tokenizer)
-    null $P1
-    $P1 = tokenizer.get()
-    ne $P1, ')', fail
-    #say $P5
-
-    $I0 = isa $P5, 'Integer'
-    unless $I0 goto do_sqr
-    $I0 = $P5
-    null $P5
-    $P5 = new 'Float'
-    $N0 = $I0
-    $P5 = $N0
-do_sqr:
-    $P9 = $P5.sqrt()
-    .return($P9)
+    $P2 = self.get_numeric_arg(tokenizer)
+    $P3 = $P2.sqrt()
+    .return($P3)
 fail:
     SyntaxError()
 .end
@@ -668,7 +742,6 @@ check:
     unless $I0 goto fail
 
     eq token, '(', parenexp
-    eq token, '-', unaryminus
 
     $I0 = isa token, 'Literal'
     if $I0 goto isliteral
@@ -781,13 +854,6 @@ memptyargs:
     $P2 = var.$S2()
     .return($P2)
 
-unaryminus:
-    $P1 = self.eval_base(tokenizer)
-    $P2 = clone $P1
-    $P2 = 0
-    $P2 = $P2 - $P1
-    .return($P2)
-
 parenexp:
     $P1 = self.evaluate(tokenizer)
     token = tokenizer.get()
@@ -799,42 +865,50 @@ fail:
 .end
 
 #-----------------------------------------------------------------------
-.sub eval_comp :method
+.sub eval_mod :method
     .param pmc tokenizer
     .param pmc token :optional
-
     $P0 = self.eval_base(tokenizer, token)
 more:
     $P1 = tokenizer.get()
-    eq $P1, '=', doequal
-    eq $P1, '<', doless
-    eq $P1, '>', dogreat
+    eq $P1, 'MOD', domod
     tokenizer.back()
     .return($P0)
-doequal:
+domod:
     $P2 = self.eval_base(tokenizer)
-    clone $P3, $P0
-    $I0 = iseq $P3, $P2
-    null $P0
-    $P0 = new 'Integer'
-    set $P0, $I0
+    $P3 = clone $P0
+    mod $P3, $P2
+    set $P0, $P3
     goto more
-doless:
-    $P2 = self.eval_base(tokenizer)
-    clone $P3, $P0
-    $I0 = islt $P3, $P2
-    null $P0
-    $P0 = new 'Integer'
-    set $P0, $I0
-    goto more
-dogreat:
-    $P2 = self.eval_base(tokenizer)
-    clone $P3, $P0
-    $I0 = isgt $P3, $P2
-    null $P0
-    $P0 = new 'Integer'
-    set $P0, $I0
-    goto more
+.end
+
+#-----------------------------------------------------------------------
+.sub eval_unary :method
+    .param pmc tokenizer
+    .param pmc token :optional
+
+    $I0 = defined token
+    if $I0 goto check
+    token = tokenizer.get()
+check:
+    $I0 = defined token
+    unless $I0 goto fail
+
+    eq token, '-', unaryminus
+    eq token, '+', unaryplus
+    $P0 = self.eval_mod(tokenizer, token)
+    .return($P0)
+unaryplus:
+    $P0 = self.eval_unary(tokenizer)
+    .return($P0)
+unaryminus:
+    $P0 = self.eval_unary(tokenizer)
+    $P1 = clone $P0
+    $P1 = 0
+    $P1 = $P1 - $P0
+    .return($P1)
+fail:
+    SyntaxError()
 .end
 
 #-----------------------------------------------------------------------
@@ -842,7 +916,7 @@ dogreat:
     .param pmc tokenizer
     .param pmc token :optional
 
-    $P0 = self.eval_comp(tokenizer, token)
+    $P0 = self.eval_unary(tokenizer, token)
 more:
     $P1 = tokenizer.get()
     eq $P1, '*', domul
@@ -850,13 +924,13 @@ more:
     tokenizer.back()
     .return($P0)
 domul:
-    $P2 = self.eval_comp(tokenizer)
+    $P2 = self.eval_unary(tokenizer)
     $P3 = clone $P0
     mul $P3, $P2
     set $P0, $P3
     goto more
 dodiv:
-    $P2 = self.eval_comp(tokenizer)
+    $P2 = self.eval_unary(tokenizer)
     $P3 = clone $P0
     div $P3, $P2
     set $P0, $P3
@@ -866,7 +940,7 @@ dodiv:
 #-----------------------------------------------------------------------
 .sub eval_add :method
     .param pmc tokenizer
-    .param pmc token
+    .param pmc token :optional
 
     $P0 = self.eval_mul(tokenizer, token)
 more:
@@ -905,11 +979,50 @@ dosub:
 .end
 
 #-----------------------------------------------------------------------
-.sub evaluate :method
+.sub eval_comp :method
     .param pmc tokenizer
     .param pmc token :optional
 
     $P0 = self.eval_add(tokenizer, token)
+more:
+    $P1 = tokenizer.get()
+    eq $P1, '=', doequal
+    eq $P1, '<', doless
+    eq $P1, '>', dogreat
+    tokenizer.back()
+    .return($P0)
+doequal:
+    $P2 = self.eval_add(tokenizer)
+    clone $P3, $P0
+    $I0 = iseq $P3, $P2
+    null $P0
+    $P0 = new 'Integer'
+    set $P0, $I0
+    goto more
+doless:
+    $P2 = self.eval_add(tokenizer)
+    clone $P3, $P0
+    $I0 = islt $P3, $P2
+    null $P0
+    $P0 = new 'Integer'
+    set $P0, $I0
+    goto more
+dogreat:
+    $P2 = self.eval_add(tokenizer)
+    clone $P3, $P0
+    $I0 = isgt $P3, $P2
+    null $P0
+    $P0 = new 'Integer'
+    set $P0, $I0
+    goto more
+.end
+
+#-----------------------------------------------------------------------
+.sub evaluate :method
+    .param pmc tokenizer
+    .param pmc token :optional
+
+    $P0 = self.eval_comp(tokenizer, token)
 #    $I0 = isa $P0, 'Integer'
 #    unless $I0 goto done
 #    say '<Integer'
@@ -972,12 +1085,15 @@ endprog:
     goto next
 
 handle_excep:
-    .local pmc excep
+    .local pmc excep, type, severity
+    .local int itype, iseverity
     .get_results(excep)
 
-    $P1 = getattribute excep, 'severity'
-    $I1 = $P1
-    eq $I1, .EXCEPT_EXIT, finish
+    type = getattribute excep, 'type'
+    itype = type
+    severity = getattribute excep, 'severity'
+    iseverity = severity
+    eq iseverity, .EXCEPT_EXIT, finish
 handle_it:
     $P1 = getattribute excep, 'payload'
     $I1 = defined $P1
@@ -1180,12 +1296,20 @@ next:
 #-----------------------------------------------------------------------
 .sub throw_jump
     .param pmc payload
+    .param int type :optional
+    .param int has_type :opt_flag
 
-    .local pmc excep, severity
+    .local pmc excep, ex_severity
     excep = new 'Exception'
-    severity = new 'Integer'
-    severity= .EXCEPT_NORMAL
-    setattribute excep, 'severity', severity
+    ex_severity = new 'Integer'
+    ex_severity= .EXCEPT_NORMAL
+    unless has_type goto setattrs
+    .local pmc ex_type
+    ex_type = new 'Integer'
+    ex_type = type
+    setattribute excep, 'type', ex_type
+setattrs:
+    setattribute excep, 'severity', ex_severity
     setattribute excep, 'payload', payload
     throw excep
 .end
@@ -1513,7 +1637,7 @@ finish:
     $P1 = 2
     setattribute line, 'jumpline', $P0
     setattribute line, 'jumptype', $P1
-    throw_jump(line)
+    throw_jump(line, .CONTROL_RETURN)
 
 fail:
     SyntaxError()

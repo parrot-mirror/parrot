@@ -113,6 +113,14 @@ typedef enum invoke_types {
 #define CLEAR_FLAG(obj,flag)    obj &= ~flag
 #define TEST_FLAG(obj,flag)     (obj & flag)
 
+/* macros to set the i-th bit */
+#define BIT(i)          (1 << (i))
+#define SET_BIT(M,B)    SET_FLAG(M,B)
+#define TEST_BIT(M,B)   TEST_FLAG(M,B)
+#define CLEAR_BIT(M,B)  CLEAR_FLAG(M,B)
+
+#define NOT(X)          !(X)
+
 /* selector for the value union */
 typedef enum value_types {
     INT_VAL,
@@ -133,10 +141,9 @@ typedef union value {
 
 /* literal constants, possibly named */
 typedef struct constant {
-    char    *name;     /* name of the constant, if declared as a constant */
-    pir_type type;     /* type of the constant */
-    value    val;      /* value of the constant */
-
+    char            *name;     /* name of the constant, if declared as a constant */
+    pir_type         type;     /* type of the constant */
+    value            val;      /* value of the constant */
     struct constant *next;
 
 } constant;
@@ -148,7 +155,7 @@ typedef struct constant {
  * or key nodes, such as ["x";42].
  */
 typedef struct expression {
-    union __expression {
+    union __expression_union {
         struct target  *t;
         constant       *c;
         char           *id;
@@ -156,7 +163,7 @@ typedef struct expression {
 
     } expr;
 
-    expr_type type;        /* selector for __expression */
+    expr_type          type;  /* selector for __expression_union */
 
     struct expression *next;
 
@@ -165,7 +172,6 @@ typedef struct expression {
 /* The key node is used to represent a key expression */
 typedef struct key {
     expression *expr;      /* value of this key */
-
     struct key *next;      /* in ["x";"y"], there's 2 key nodes; 1 for "x", 1 for "y",
                               linked by "next" */
 } key;
@@ -226,8 +232,8 @@ typedef struct argument {
  */
 typedef struct invocation {
     invoke_type         type;
-    target             *object;        /* invocant object, if any */
-    target             *sub;           /* invoked sub */
+    expression         *method;        /* method */
+    target             *sub;           /* invoked sub, or the object on which method is invoked */
     target             *retcc;         /* return continuation, if any */
     target             *results;       /* targets that will receive return values */
     argument           *arguments;     /* values passed into the sub, or return values */
@@ -240,11 +246,9 @@ typedef struct instruction {
     char               *label;        /* label of this instruction */
     char               *opname;       /* name of the instruction, such as "print" and "set" */
     expression         *operands;     /* operands like "$I0" and "42" in "set $I0, 42" */
-    int                 flags;
+    int                 flags;        /* XXX used for checking if this op jumps */
     struct op_info_t   *opinfo;       /* pointer to the op_info containing this op's meta data */
-    int                 opcode;       /* the opcode of one of this op's family members, not
-                                         necessarily the right opcode. May indicate "add_i_i"
-                                         while the opname is "add_i_ic". */
+    int                 opcode;       /* the opcode of one of this op */
 
     struct instruction *next;
 } instruction;
@@ -254,7 +258,6 @@ typedef struct instruction {
  * maybe implement a simple algorithm; shouldn't happen too often anyway.
  */
 #define HASHTABLE_SIZE_INIT     113
-
 
 /* a hashtable bucket for storing something */
 typedef struct bucket {
@@ -266,7 +269,7 @@ typedef struct bucket {
         struct constant     *cons;
     } u;
 
-    struct bucket *next;
+    struct bucket *next; /* link to next bucket, in case of hash clash */
 
 } bucket;
 
@@ -338,17 +341,17 @@ argument *set_arg_flag(argument * const arg, arg_flag flag);
 argument *set_arg_alias(struct lexer_state * const lexer, char * const alias);
 
 /* constructors for constant nodes */
-constant *new_named_const(pir_type type, char * const name, ...);
-constant *new_const(pir_type type, ...);
+constant *new_named_const(struct lexer_state * lexer, pir_type type, char * const name, ...);
+constant *new_const(struct lexer_state * lexer, pir_type type, ...);
 
 /* conversion functions, each wrapping its argument in an expression node */
-expression *expr_from_const(constant * const c);
-expression *expr_from_target(target * const t);
-expression *expr_from_ident(char * const name);
-expression *expr_from_key(key * const k);
+expression *expr_from_const(struct lexer_state * const lexer, constant * const c);
+expression *expr_from_target(struct lexer_state * const lexer, target * const t);
+expression *expr_from_ident(struct lexer_state * const lexer, char * const name);
+expression *expr_from_key(struct lexer_state * const lexer, key * const k);
 
 /* functions for argument node creation and storing */
-argument *new_argument(expression * const expr);
+argument *new_argument(struct lexer_state * const lexer, expression * const expr);
 argument *add_arg(argument *arg1, argument * const arg2);
 
 target *add_param(struct lexer_state * const lexer, pir_type type, char * const name);
@@ -361,7 +364,7 @@ argument *set_curarg(struct lexer_state * const lexer, argument * const arg);
 /* target constructors */
 target *add_target(struct lexer_state * const lexer, target *t1, target * const t);
 target *new_reg(struct lexer_state * const lexer, pir_type type, int regno);
-target *new_target(pir_type type, char * const name);
+target *new_target(struct lexer_state * const lexer, pir_type type, char * const name);
 
 /* set a key on a target node */
 void set_target_key(target * const t, key * const k);
@@ -373,13 +376,13 @@ void set_invocation_args(invocation * const inv, argument * const args);
 void set_invocation_results(invocation * const inv, target * const results);
 
 /* conversion functions that wrap their arguments into a target node */
-target *target_from_string(char * const str);
-target *target_from_ident(pir_type type, char * const id);
-target *target_from_symbol(struct symbol * const sym);
+target *target_from_string(struct lexer_state * const lexer, char * const str);
+target *target_from_ident(struct lexer_state * const lexer, pir_type type, char * const id);
+target *target_from_symbol(struct lexer_state * const lexer, struct symbol * const sym);
 
 /* management functions for key nodes */
-key *new_key(expression * const expr);
-key *add_key(key *keylist, expression * const newkey);
+key *new_key(struct lexer_state * const lexer, expression * const expr);
+key *add_key(struct lexer_state * const lexer, key *keylist, expression * const newkey);
 
 void load_library(struct lexer_state * const lexer, char * const library);
 void set_hll(struct lexer_state * const lexer, char * const hll);
@@ -393,9 +396,8 @@ void set_instrf(struct lexer_state * const lxr, char * const op, char const * co
 void unshift_operand(struct lexer_state * const lexer, expression * const operand);
 void push_operand(struct lexer_state * const lexer, expression * const operand);
 
-char *get_instr(struct lexer_state * const lexer);
-void get_operands(struct lexer_state * const lexer, unsigned n, ...);
-expression *get_operand(struct lexer_state * const lexer, unsigned n);
+void get_operands(struct lexer_state * const lexer, int bitmask, ...);
+expression *get_operand(struct lexer_state * const lexer, short n);
 
 unsigned get_operand_count(struct lexer_state * const lexer);
 
@@ -411,7 +413,7 @@ void invert_instr(struct lexer_state * const lexer);
 
 /* local declaration functions */
 struct symbol *add_local(struct symbol * const list, struct symbol * const local);
-struct symbol *new_local(char * const name, int unique);
+struct symbol *new_local(struct lexer_state * const lexer, char * const name, int unique);
 
 /* compare two target nodes */
 int targets_equal(target const * const t1, target const * const t2);
@@ -425,9 +427,7 @@ int is_parrot_op(struct lexer_state * const lexer, char * const name);
 void print_subs(struct lexer_state * const lexer);
 void free_subs(struct lexer_state * const lexer);
 
-bucket *get_bucket(table, hash);
-
-void panic(char * const message);
+void panic(struct lexer_state * lexer, char * const message);
 
 #endif /* PARROT_PIR_PIRCOMPUNIT_H_GUARD */
 
