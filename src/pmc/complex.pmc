@@ -1692,7 +1692,7 @@ x ^ y = exp(y * ln x))
         PMC *l = pmc_new(INTERP, SELF->vtable->base_type);
         PMC *log;
 
-        if (dest)
+        if (!PMC_IS_NULL(dest))
             VTABLE_morph(INTERP, dest, SELF->vtable->base_type);
         else
             dest = pmc_new(INTERP, SELF->vtable->base_type);
@@ -1714,7 +1714,7 @@ x ^ y = exp(y * ln x))
         PMC *l = pmc_new(INTERP, SELF->vtable->base_type);
         PMC *log;
 
-        if (dest)
+        if (!PMC_IS_NULL(dest))
             VTABLE_morph(INTERP, dest, SELF->vtable->base_type);
         else
             dest = pmc_new(INTERP, SELF->vtable->base_type);
