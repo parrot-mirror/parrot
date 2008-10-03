@@ -357,8 +357,12 @@ or 'Object').
     setattribute how, 'shortname', shortname
 
     ##  store the protoobject in appropriate namespace
+    $P0 = parrotclass.'get_namespace'()
+    $P0 = $P0.'get_name'()
+    $P0 = shift $P0
+    unshift ns, $P0
     $S0 = pop ns
-    set_hll_global ns, $S0, protoobject
+    set_root_global ns, $S0, protoobject
     goto have_how
 
     ##  anonymous classes have empty strings for shortname and longname
