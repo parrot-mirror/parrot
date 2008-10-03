@@ -6,8 +6,9 @@
 #   after:      ... ResizablePMCArray
 # The perlarray is a perlarray of perlarrays filled with the
 # ordinal values of the content of the file, 80x25.
-LOAD:
-        restore S0              # Fetch the filename
+.sub 'load'
+	.param String S0
+        #restore S0              # Fetch the filename
         open P0, S0, "<"
         set S1, ""              # S1 = accumulator
 
@@ -65,6 +66,8 @@ LOAD_STORE_EMPTY_LINE:
 # Truncate playfield to 25 rows.
 LOAD_COMPLETE:
         set P1, 25              # Truncate at 25 lines.
-        save P1                 # Return the playfield
-        ret
+#        save P1                 # Return the playfield
+#        ret
+        .return (P1)
+.end
 

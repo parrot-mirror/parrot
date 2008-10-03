@@ -27,9 +27,10 @@ ARGV_DEBUG:
         branch ARGV_NEXT
 ARGV_DONE:
         set S10, P5[I0]
-        save S10
-        bsr LOAD
-        restore P1              # P1 = the playfield
+        #save S10
+        #bsr LOAD
+        P1 = load(S10)
+        #restore P1              # P1 = the playfield
         new P2, .ResizablePMCArray      # P2 = the stack
         set I0, 0               # I0 = x coord of the PC
         set I1, 0               # I1 = y coord of the PC

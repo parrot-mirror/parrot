@@ -2,7 +2,6 @@
 HLLNAME    = tcl
 RM_F       = @rm_f@
 PERL       = @perl@
-CP         = @cp@
 MKPATH     = @mkpath@
 POD2MAN    = pod2man
 
@@ -128,7 +127,7 @@ runtime/tcllib.pbc: runtime/tcllib.pir runtime/builtins.pir $(CLASSES)
 	$(PARROT) --output=$@ runtime/tcllib.pir
 
 $(PARROT_LIB)/tcllib.pbc: runtime/tcllib.pbc
-	$(CP) runtime/tcllib.pbc $(PARROT_LIB)/tcllib.pbc
+	$(COPY) runtime/tcllib.pbc $(PARROT_LIB)/tcllib.pbc
 
 # targets for building a standalone tclsh
 # (We're not quite ready to make this a default target.)
@@ -136,10 +135,9 @@ tclsh@exe@: tcl.pbc
 	$(PBC_TO_EXE) tcl.pbc
 	$(RENAME) tcl@exe@ tclsh@exe@
 
-installable : installable_tclsh@exe@ tcllib.pbc $(HLLNAME).pbc
-	$(CP) installable_tclsh@exe@ $(BUILD_DIR)
-	$(CP) tcl.pbc $(PARROT_LIB)/tcl.pbc
-	$(CP) tcllib.pbc $(PARROT_LIB)/tcllib.pbc
+installable : installable_tclsh@exe@ tcl.pbc $(PARROT_LIB)/tcllib.pbc
+	$(COPY) installable_tclsh@exe@ $(BUILD_DIR)
+	$(COPY) tcl.pbc $(PARROT_LIB)/tcl.pbc
 
 installable_tclsh@exe@: tcl.pbc
 	$(PBC_TO_EXE) tcl.pbc --install
@@ -151,8 +149,8 @@ test-installable : installable
 
 install : installable
 	$(COPY) installable_tclsh@exe@ $(DESTDIR)$(BIN_DIR)/parrot-tclsh@exe@
-	$(CP) $(HLLNAME).pbc $(DESTDIR)$(LIB_DIR)/parrot/library/$(HLLNAME).pbc
-	$(CP) runtime/tcllib.pbc $(DESTDIR)$(LIB_DIR)/parrot/library/tcllib.pbc
+	$(COPY) $(HLLNAME).pbc $(DESTDIR)$(LIB_DIR)/parrot/library/$(HLLNAME).pbc
+	$(COPY) runtime/tcllib.pbc $(DESTDIR)$(LIB_DIR)/parrot/library/tcllib.pbc
 	@cd $(OPSDIR) && $(OPSBUILD) copy "--destination=$(DESTDIR)$(LIB_DIR)/parrot/dynext" tcl
 	@cd $(PMCDIR) && $(PMCBUILD) copy "--destination=$(DESTDIR)$(LIB_DIR)/parrot/dynext" $(PMCS)
 	$(COPY) runtime/tcllib.pbc $(DESTDIR)$(LIB_DIR)/parrot/library

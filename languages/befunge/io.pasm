@@ -16,8 +16,8 @@ IO_PUSH_CHAR:
 #   after:      ... i
 # i = readint()
 IO_INPUT_INT:
-        save S2
-        restore S2
+        push P2, S2
+        pop S2, P2
         length I10, S2
         gt I10, 0, IO_INPUT_INT_PARSE_INPUT
         getstdin P15
@@ -46,8 +46,8 @@ IO_INPUT_INT_NAN:
 #   after:      ... c
 # c = getchar()
 IO_INPUT_CHAR:
-        save S2
-        restore S2
+#        save S2
+#        restore S2
         length I10, S2
         gt I10, 0, IO_INPUT_CHAR_SUBSTR
         getstdin P15
@@ -58,8 +58,8 @@ IO_INPUT_CHAR_SUBSTR:
         substr S2, S2, 1, I10
         ord I10, S10
         push P2, I10
-        save S2
-        restore S2
+#        save S2
+#        restore S2
         branch MOVE_PC
 
 # Output integer.

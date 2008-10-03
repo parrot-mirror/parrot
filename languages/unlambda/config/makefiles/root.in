@@ -84,7 +84,7 @@ test-installable : installable
 install : installable
 	$(CP) installable_$(HLLNAME)@exe@ $(DESTDIR)$(BIN_DIR)/parrot-unlambda@exe@
 	$(CP) $(HLLNAME).pbc $(DESTDIR)$(LIB_DIR)/parrot/library/$(HLLNAME).pbc
-	$(POD2MAN) $(HLLNAME).pir > $(DESTDIR)$(MANDIR)/man1/parrot-unlambda.1
+	$(POD2MAN) unl.pir > $(DESTDIR)$(MANDIR)/man1/parrot-unlambda.1
 	$(MKPATH) $(DESTDIR)$(DOC_DIR)/languages/unlambda
 	$(CP) $(DOCS) $(DESTDIR)$(DOC_DIR)/languages/unlambda
 
