@@ -163,9 +163,11 @@ $(HLLNAME).pbc : js.pbc
 $(HLLNAME)@exe@: $(HLLNAME).pbc
 	$(PBC_TO_EXE) $(HLLNAME).pbc
 
-installable : installable_$(HLLNAME)@exe@ $(PARROT_LIB)/$(HLLNAME).pbc
-	$(CP) installable_$(HLLNAME)@exe@ $(BUILD_DIR)
+$(PARROT_LIB)/$(HLLNAME).pbc: $(HLLNAME).pbc
 	$(CP) $(HLLNAME).pbc $(PARROT_LIB)/$(HLLNAME).pbc
+
+installable : installable_$(HLLNAME)@exe@ $(HLLNAME).pbc $(PARROT_LIB)/$(HLLNAME).pbc
+	$(CP) installable_$(HLLNAME)@exe@ $(BUILD_DIR)
 
 installable_$(HLLNAME)@exe@ : $(HLLNAME).pbc
 	$(PBC_TO_EXE) $(HLLNAME).pbc --install

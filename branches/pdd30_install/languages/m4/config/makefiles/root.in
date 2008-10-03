@@ -26,7 +26,7 @@ RECONFIGURE   = $(PERL) @build_dir@/tools/dev/reconfigure.pl
 #IF(darwin):export MACOSX_DEPLOYMENT_TARGET := @osx_version@
 
 DOCS = BUGS ChangeLog LICENSE MAINTAINER README TODO.pod VERSION \
-       pod/features.pod pod/freezing.pod pod/operation.pod pod/running.pod
+       doc/features.pod doc/freezing.pod doc/operation.pod doc/running.pod
 
 default: build
 
@@ -82,7 +82,7 @@ test-installable : installable
 install : installable
 	$(CP) installable_$(HLLNAME)@exe@ $(DESTDIR)$(BIN_DIR)/parrot-$(HLLNAME)@exe@
 	$(CP) $(HLLNAME).pbc $(DESTDIR)$(LIB_DIR)/parrot/library/$(HLLNAME).pbc
-	$(POD2MAN) pod/running.pod > $(DESTDIR)$(MANDIR)/man1/parrot-$(HLLNAME).1
+	$(POD2MAN) doc/running.pod > $(DESTDIR)$(MANDIR)/man1/parrot-$(HLLNAME).1
 	$(MKPATH) $(DESTDIR)$(DOC_DIR)/languages/$(HLLNAME)
 	$(CP) $(DOCS) $(DESTDIR)$(DOC_DIR)/languages/$(HLLNAME)
 

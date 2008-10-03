@@ -30,12 +30,10 @@ FLOW_GO_WEST:
 
 FLOW_GO_AWAY:
         set I2, 4
-        save I2
+        push P2, I2
         bsr MATHS_RAND
-        restore I10
+        pop I10, P2
         set I2, I10
-        save I2
-        restore I2
         branch MOVE_PC
 
 # East/West if.

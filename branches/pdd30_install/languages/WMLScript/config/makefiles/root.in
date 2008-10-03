@@ -172,7 +172,7 @@ install : installable
 	$(CP) $(PBCS) $(DESTDIR)$(LIB_DIR)/parrot/library/$(HLLNAME)
 	@cd $(PMCDIR) && $(PMCBUILD) copy "--destination=$(DESTDIR)$(LIB_DIR)/parrot/dynext" $(PMCS)
 	@cd $(OPSDIR) && $(OPSBUILD) copy "--destination=$(DESTDIR)$(LIB_DIR)/parrot/dynext" $(OPSLIB)
-	$(POD2MAN) pod/running.pod > $(DESTDIR)$(MANDIR)/man1/parrot-wmls.5
+	$(POD2MAN) doc/running.pod > $(DESTDIR)$(MANDIR)/man1/parrot-wmls.5
 	$(MKPATH) $(DESTDIR)$(DOC_DIR)/languages/$(HLLNAME)
 	$(CP) $(DOCS) $(DESTDIR)$(DOC_DIR)/languages/$(HLLNAME)
 
