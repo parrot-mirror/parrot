@@ -881,7 +881,7 @@ Calculates modulus inplace
 */
 
 MULTI PMC *modulus(BigInt value, PMC *dest) {
-    return overflow_p(INTERP, SELF, value, dest, "mod");
+    return overflow_p(INTERP, SELF, value, dest, "modulus");
 }
 
 MULTI PMC *modulus(DEFAULT value, PMC *dest) {
@@ -923,7 +923,7 @@ VTABLE PMC *modulus_float(FLOATVAL value, PMC *dest) {
 }
 
 MULTI void i_modulus(BigInt value) {
-     overflow_p(INTERP, SELF, value, SELF, "mod");
+     overflow_p(INTERP, SELF, value, SELF, "i_modulus");
 }
 
 MULTI void i_modulus(DEFAULT value) {
