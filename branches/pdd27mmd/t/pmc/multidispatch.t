@@ -935,7 +935,8 @@ OUTPUT
 
 open my $P, '>', "$temp" or die "can't write $temp";
 print $P <<'EOF';
-.sub add :multi(Integer, Integer, _)
+.namespace ["AInt"]
+.sub add :multi(AInt, Integer, PMC)
     .param pmc l
     .param pmc r
     .param pmc d
@@ -952,12 +953,13 @@ close $P;
 pir_output_is( <<'CODE', <<'OUTPUT', "override builtin add" );
 .sub main
     load_bytecode "temp.pir"
-    $P0 = new 'Integer'
+    $P0 = subclass "Integer", "AInt"
+    $P0 = new "AInt"
     $P1 = new 'Integer'
     set $P0, 6
     set $P1, 2
 
-    $P2 = add  $P0, $P1
+    $P2 = add $P0, $P1
     print $P2
     print "\n"
 .end
