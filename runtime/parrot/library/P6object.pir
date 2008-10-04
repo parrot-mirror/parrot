@@ -402,16 +402,17 @@ of names separated by spaces.
     goto have_parrotclass
   parrotclass_string:
     $S0 = name
-    parrotclass = split '::', $S0
+    .local pmc lookup
+    lookup = split '::', $S0
     $P0 = getinterp
     $P0 = $P0['namespace';1]
     $P0 = $P0.get_name()
     $P0 = shift $P0
-    unshift parrotclass, $P0
-    parrotclass = get_root_namespace [parrotclass]
-    $I0 = defined parrotclass
+    unshift lookup, $P0
+    lookup = get_root_namespace lookup
+    $I0 = defined lookup
     unless $I0, parrotclass_string_simple
-    parrotclass = newclass parrotclass
+    parrotclass = newclass lookup
     goto have_parrotclass
   parrotclass_string_simple:
     # workaround for making classes without a namespace
