@@ -230,7 +230,7 @@ Return a true value if the invocant 'can' C<x>.
 .end
 
 
-=item register(parrotclass [, 'name'=>name] [, 'protoobject'=>proto] [, 'parent'=>parentclass])
+=item register(parrotclass [, 'name'=>name] [, 'protoobject'=>proto] [, 'parent'=>parentclass] [, 'hll'=>hll])
 
 Sets objects of type C<parrotclass> to use C<protoobject>,
 and verifies that C<parrotclass> has P6object methods defined
@@ -254,6 +254,18 @@ or 'Object').
     if $I0 goto have_parrotclass
     parrotclass = self.'get_parrotclass'(parrotclass)
   have_parrotclass:
+
+    ## get the hll, either from options or the caller's namespace
+    .local pmc hll
+    hll = options['hll']
+    $I0 = defined $P0
+    if $I0, have_hll
+    $P0 = getinterp
+    $P0 = $P0['namespace';1]
+    $P0 = $P0.get_name()
+    hll = shift $P0
+    options['hll'] = hll
+  have_hll:
 
     ##  add any needed parent classes
     .local pmc parentclass
@@ -357,10 +369,7 @@ or 'Object').
     setattribute how, 'shortname', shortname
 
     ##  store the protoobject in appropriate namespace
-    $P0 = parrotclass.'get_namespace'()
-    $P0 = $P0.'get_name'()
-    $P0 = shift $P0
-    unshift ns, $P0
+    unshift ns, hll
     $S0 = pop ns
     set_root_global ns, $S0, protoobject
     goto have_how
