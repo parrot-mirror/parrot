@@ -381,7 +381,7 @@ or 'Object').
 .end
 
 
-=item new_class(name [, 'parent'=>parentclass] [, 'attr'=>attr])
+=item new_class(name [, 'parent'=>parentclass] [, 'attr'=>attr] [, 'hll'=>hll])
 
 Create a new class called C<name> as a subclass of C<parentclass>.
 If C<parentclass> isn't supplied, defaults to using C<P6object>
@@ -395,7 +395,18 @@ of names separated by spaces.
     .param pmc name
     .param pmc options         :slurpy :named
 
-    .local pmc parrotclass
+    .local pmc parrotclass, hll
+
+    hll = options['hll']
+    $I0 = defined $P0
+    if $I0, have_hll
+    $P0 = getinterp
+    $P0 = $P0['namespace';1]
+    $P0 = $P0.get_name()
+    hll = shift $P0
+    options['hll'] = hll
+  have_hll:
+
     $I0 = isa name, 'String'
     if $I0, parrotclass_string
     parrotclass = newclass name
@@ -404,11 +415,7 @@ of names separated by spaces.
     $S0 = name
     .local pmc class_ns, lookup
     class_ns = split '::', $S0
-    $P0 = getinterp
-    $P0 = $P0['namespace';1]
-    $P0 = $P0.get_name()
-    $P0 = shift $P0
-    unshift class_ns, $P0
+    unshift class_ns, hll
     lookup = get_root_namespace class_ns
     $I0 = defined lookup
     unless $I0, parrotclass_no_namespace
