@@ -11,13 +11,14 @@ parsing tasks using PGE.
 
 =cut
 
-.namespace [ 'PGE::Util' ]
+.namespace [ 'PGE';'Util' ]
 
 .include 'cclass.pasm'
 
 .sub "__onload" :load
-    .local pmc base
-    $P0 = subclass 'PGE::Grammar', 'PGE::Util'
+    .local pmc p6meta
+    p6meta = new 'P6metaclass'
+    p6meta.'new_class'('PGE::Util', 'parent'=>'PGE::Grammar')
     .return ()
 .end
 
