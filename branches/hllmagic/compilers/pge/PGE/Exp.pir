@@ -327,7 +327,7 @@ tree as a PIR code object that can be compiled.
 .end
 
 
-.namespace [ 'PGE::Exp::Literal' ]
+.namespace [ 'PGE';'Exp';'Literal' ]
 
 .sub 'reduce' :method
     .param pmc next
@@ -369,7 +369,7 @@ tree as a PIR code object that can be compiled.
 .end
 
 
-.namespace [ 'PGE::Exp::Concat' ]
+.namespace [ 'PGE';'Exp';'Concat' ]
 
 .sub 'reduce' :method
     .param pmc next
@@ -450,7 +450,7 @@ tree as a PIR code object that can be compiled.
 .end
 
 
-.namespace [ 'PGE::Exp::Quant' ]
+.namespace [ 'PGE';'Exp';'Quant' ]
 
 .sub 'reduce' :method
     .param pmc next
@@ -620,7 +620,7 @@ tree as a PIR code object that can be compiled.
 .end
 
 
-.namespace [ 'PGE::Exp::Group' ]
+.namespace [ 'PGE';'Exp';'Group' ]
 
 .sub 'reduce' :method
     .param pmc next
@@ -683,7 +683,7 @@ tree as a PIR code object that can be compiled.
 .end
 
 
-.namespace [ 'PGE::Exp::CGroup' ]
+.namespace [ 'PGE';'Exp';'CGroup' ]
 
 .sub 'pir' :method
     .param pmc code
@@ -751,7 +751,7 @@ tree as a PIR code object that can be compiled.
 .end
 
 
-.namespace [ 'PGE::Exp::Subrule' ]
+.namespace [ 'PGE';'Exp';'Subrule' ]
 
 .sub 'reduce' :method
     .param pmc next
@@ -893,7 +893,7 @@ tree as a PIR code object that can be compiled.
 .end
 
 
-.namespace [ 'PGE::Exp::Alt' ]
+.namespace [ 'PGE';'Exp';'Alt' ]
 
 .sub 'reduce' :method
     .param pmc next
@@ -932,7 +932,7 @@ tree as a PIR code object that can be compiled.
 .end
 
 
-.namespace [ 'PGE::Exp::Anchor' ]
+.namespace [ 'PGE';'Exp';'Anchor' ]
 
 .sub 'reduce' :method
     .param pmc next
@@ -1046,7 +1046,7 @@ tree as a PIR code object that can be compiled.
 .end
 
 
-.namespace [ 'PGE::Exp::CCShortcut' ]
+.namespace [ 'PGE';'Exp';'CCShortcut' ]
 
 .sub 'reduce' :method
     .param pmc next
@@ -1186,7 +1186,7 @@ tree as a PIR code object that can be compiled.
 
 .end
 
-.namespace [ 'PGE::Exp::Cut' ]
+.namespace [ 'PGE';'Exp';'Cut' ]
 
 .sub 'reduce' :method
     .param pmc next
@@ -1238,7 +1238,7 @@ tree as a PIR code object that can be compiled.
 .end
 
 
-.namespace [ 'PGE::Exp::Scalar' ]
+.namespace [ 'PGE';'Exp';'Scalar' ]
 
 .sub 'reduce' :method
     .param pmc next
@@ -1272,7 +1272,7 @@ tree as a PIR code object that can be compiled.
 .end
 
 
-.namespace [ 'PGE::Exp::EnumCharList' ]
+.namespace [ 'PGE';'Exp';'EnumCharList' ]
 
 .sub 'reduce' :method
     .param pmc next
@@ -1314,7 +1314,7 @@ tree as a PIR code object that can be compiled.
 .end
 
 
-.namespace [ 'PGE::Exp::Newline' ]
+.namespace [ 'PGE';'Exp';'Newline' ]
 
 .sub 'reduce' :method
     .param pmc next
@@ -1339,7 +1339,7 @@ tree as a PIR code object that can be compiled.
 .end
 
 
-.namespace [ 'PGE::Exp::Conj' ]
+.namespace [ 'PGE';'Exp';'Conj' ]
 
 .sub 'reduce' :method
     .param pmc next
@@ -1397,7 +1397,7 @@ tree as a PIR code object that can be compiled.
     .return ()
 .end
 
-.namespace [ "PGE::Exp::Closure" ]
+.namespace [ "PGE';'Exp';'Closure" ]
 
 .sub 'reduce' :method
     .param pmc next
@@ -1443,7 +1443,7 @@ tree as a PIR code object that can be compiled.
     .return ()
 .end
 
-.namespace [ "PGE::Exp::Action" ]
+.namespace [ "PGE';'Exp';'Action" ]
 
 .sub 'reduce' :method
     .param pmc next
