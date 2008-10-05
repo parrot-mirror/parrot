@@ -1368,3 +1368,6 @@ find_multi_p_s_s               1337
 find_multi_p_sc_s              1338
 find_multi_p_s_sc              1339
 find_multi_p_sc_sc             1340
+repeat_p_p                     1341
+repeat_p_i                     1342
+repeat_p_ic                    1343

@@ -150,6 +150,23 @@ inline op repeat(invar PMC, invar PMC, invar PMC) :base_core {
       $1 = VTABLE_repeat(interp, $2, $3, $1);
 }
 
+=item B<repeat>(invar PMC, in INT)
+
+=item B<repeat>(invar PMC, invar PMC)
+
+Repeat string $1 number $2 times and return result in string $1.
+The C<PMC> versions are MMD operations.
+
+=cut
+
+inline op repeat(invar PMC, in INT) :base_core {
+      VTABLE_i_repeat_int(interp, $1, $2);
+}
+
+inline op repeat(invar PMC, invar PMC) :base_core {
+      VTABLE_i_repeat(interp, $1, $2);
+}
+
 
 =item B<length>(out INT, in STR)
 
