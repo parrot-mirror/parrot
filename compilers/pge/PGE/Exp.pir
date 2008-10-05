@@ -1422,7 +1422,7 @@ tree as a PIR code object that can be compiled.
     code.emit(<<"        CODE", label, next, lang, value)
         %0: # closure
           $S1 = %3
-          $P0 = get_hll_global ['PGE::Match'], '%!cache'
+          $P0 = get_hll_global ['PGE';'Match'], '%!cache'
           $P1 = $P0[$S1]
           unless null $P1 goto %0_1
           $P1 = compreg %2

@@ -8,7 +8,7 @@ This file implements match objects returned by the Parrot Grammar Engine.
 
 =cut
 
-.namespace [ 'PGE::Match' ]
+.namespace [ 'PGE';'Match' ]
 
 .sub '__onload' :load
     load_bytecode 'P6object.pbc'
