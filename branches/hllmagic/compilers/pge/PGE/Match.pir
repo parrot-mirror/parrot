@@ -58,7 +58,7 @@ is set or implied.
     ##   set values based on src param
     .local int issrcmatch, pos, iscont
     .local string grammar
-    .local pmc target
+    .local pmc target, grammar_class
     issrcmatch = isa src, 'PGE::Match'
     if issrcmatch goto target_from_src
     .local pmc target
@@ -66,14 +66,14 @@ is set or implied.
     target = src
     pos = 0
     iscont = 1
-    grammar = typeof self
+    grammar_class = typeof self
     goto adverb_pos
   target_from_src:
     target = getattribute src, '$.target'
     $P0 = getattribute src, '$.pos'
     pos = $P0
     iscont = 0
-    grammar = typeof src
+    grammar_class = typeof src
     if pos >= 0 goto adverb_pos
     pos = 0
 
@@ -108,12 +108,14 @@ is set or implied.
     $I0 = exists adverbs['grammar']
     unless $I0 goto with_grammar
     grammar = adverbs['grammar']
+    $P0 = split '::', grammar
+    grammar_class = get_class $P0
   with_grammar:
   with_adverbs:
 
     ##   create the new match object
     .local pmc mob, mfrom, mpos
-    mob = new grammar
+    mob = new grammar_class
     setattribute mob, '$.target', target
     mfrom = new 'Integer'
     mfrom = pos
