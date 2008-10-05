@@ -18,7 +18,7 @@ or the resulting PIR code (target='PIR').
 
 =cut
 
-.namespace [ 'PGE::Perl6Regex' ]
+.namespace [ 'PGE';'Perl6Regex' ]
 
 .sub 'compile_perl6regex'
     .param pmc source
@@ -153,7 +153,7 @@ needed for compiling regexes.
 
 .include 'cclass.pasm'
 
-.namespace [ 'PGE::Perl6Regex' ]
+.namespace [ 'PGE';'Perl6Regex' ]
 
 .sub '__onload' :load
     .local pmc p6meta
@@ -268,13 +268,13 @@ needed for compiling regexes.
 
     # Create and store closure preprocessors in %closure_pp
     $P0 = new 'Hash'
-    set_hll_global ['PGE::Perl6Regex'], '%closure_pp', $P0
-    $P1 = get_hll_global ['PGE::Perl6Regex'], 'PIR_closure'
+    set_hll_global ['PGE';'Perl6Regex'], '%closure_pp', $P0
+    $P1 = get_hll_global ['PGE';'Perl6Regex'], 'PIR_closure'
     $P0["PIR"] = $P1
 
     # Create an array for holding stop tokens
     $P0 = new 'ResizablePMCArray'
-    set_hll_global ['PGE::Perl6Regex'], '@!stopstack', $P0
+    set_hll_global ['PGE';'Perl6Regex'], '@!stopstack', $P0
 
     $P0 = get_global 'compile_perl6regex'
     compreg 'PGE::Perl6Regex', $P0
@@ -302,7 +302,7 @@ Return a failed match if the stoptoken is found.
     lastpos = length target
 
     .local string stop
-    $P0 = get_hll_global ['PGE::Perl6Regex'], '@!stopstack'
+    $P0 = get_hll_global ['PGE';'Perl6Regex'], '@!stopstack'
     stop = $P0[-1]
 
     $I0 = is_cclass .CCLASS_WHITESPACE, target, pos
@@ -1147,7 +1147,7 @@ Parse a modifier.
 
 
 
-.namespace [ 'PGE::Exp' ]
+.namespace [ 'PGE';'Exp' ]
 
 .sub 'perl6exp' :method
     .param pmc pad
@@ -1155,7 +1155,7 @@ Parse a modifier.
 .end
 
 
-.namespace [ 'PGE::Exp::Literal' ]
+.namespace [ 'PGE';'Exp';'Literal' ]
 
 .sub 'perl6exp' :method
     .param pmc pad
@@ -1165,7 +1165,7 @@ Parse a modifier.
 .end
 
 
-.namespace [ 'PGE::Exp::Concat' ]
+.namespace [ 'PGE';'Exp';'Concat' ]
 
 .sub 'perl6exp' :method
     .param pmc pad
@@ -1195,7 +1195,7 @@ Parse a modifier.
 .end
 
 
-.namespace [ 'PGE::Exp::Quant' ]
+.namespace [ 'PGE';'Exp';'Quant' ]
 
 .sub 'perl6exp' :method
     .param pmc pad
@@ -1221,7 +1221,7 @@ Parse a modifier.
 .end
 
 
-.namespace [ 'PGE::Exp::Group' ]
+.namespace [ 'PGE';'Exp';'Group' ]
 
 .sub 'perl6exp' :method
     .param pmc pad
@@ -1243,7 +1243,7 @@ Parse a modifier.
 .end
 
 
-.namespace [ 'PGE::Exp::CGroup' ]
+.namespace [ 'PGE';'Exp';'CGroup' ]
 
 .sub 'perl6exp' :method
     .param pmc pad
@@ -1322,7 +1322,7 @@ Parse a modifier.
 .end
 
 
-.namespace [ 'PGE::Exp::Subrule' ]
+.namespace [ 'PGE';'Exp';'Subrule' ]
 
 .sub 'perl6exp' :method
     .param pmc pad
@@ -1363,7 +1363,7 @@ Parse a modifier.
 .end
 
 
-.namespace [ 'PGE::Exp::WS' ]
+.namespace [ 'PGE';'Exp';'WS' ]
 
 .sub 'perl6exp' :method
     .param pmc pad
@@ -1383,7 +1383,7 @@ Parse a modifier.
 .end
 
 
-.namespace [ 'PGE::Exp::Alt' ]
+.namespace [ 'PGE';'Exp';'Alt' ]
 
 .sub 'perl6exp' :method
     .param pmc pad
@@ -1434,7 +1434,7 @@ Parse a modifier.
 .end
 
 
-.namespace [ 'PGE::Exp::Alias' ]
+.namespace [ 'PGE';'Exp';'Alias' ]
 
 .sub 'perl6exp' :method
     .param pmc pad
@@ -1485,7 +1485,7 @@ Parse a modifier.
 .end
 
 
-.namespace [ 'PGE::Exp::Modifier' ]
+.namespace [ 'PGE';'Exp';'Modifier' ]
 
 .sub 'perl6exp' :method
     .param pmc pad
@@ -1514,7 +1514,7 @@ Parse a modifier.
     .return (exp)
 .end
 
-.namespace [ 'PGE::Exp::Conj' ]
+.namespace [ 'PGE';'Exp';'Conj' ]
 
 .sub 'perl6exp' :method
     .param pmc pad
@@ -1528,7 +1528,7 @@ Parse a modifier.
 .end
 
 
-.namespace [ 'PGE::Exp::Closure' ]
+.namespace [ 'PGE';'Exp';'Closure' ]
 
 .sub 'perl6exp' :method
     .param pmc pad
@@ -1538,7 +1538,7 @@ Parse a modifier.
     lang = pad['lang']
     self['lang'] = lang
     # see if we need to do any pre-processing of the closure
-    closure_pp = get_hll_global ['PGE::Perl6Regex'], '%closure_pp'
+    closure_pp = get_hll_global ['PGE';'Perl6Regex'], '%closure_pp'
     $I0 = defined closure_pp[lang]
     if $I0 == 0 goto end
     closure_fn = closure_pp[lang]
@@ -1564,7 +1564,7 @@ already present.
 =back
 =cut
 
-.namespace [ 'PGE::Perl6Regex' ]
+.namespace [ 'PGE';'Perl6Regex' ]
 
 .sub 'PIR_closure'
     .param string code
@@ -1577,7 +1577,7 @@ already present.
 .end
 
 
-.namespace [ 'PGE::Exp::Action' ]
+.namespace [ 'PGE';'Exp';'Action' ]
 
 .sub 'perl6exp' :method
     .param pmc pad
@@ -1587,7 +1587,7 @@ already present.
 .end
 
 
-.namespace [ 'PGE::Exp::Cut' ]
+.namespace [ 'PGE';'Exp';'Cut' ]
 
 .sub 'perl6exp' :method
     .param pmc pad
