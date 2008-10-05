@@ -4,7 +4,7 @@ PGE::Exp - base class for expressions
 
 =cut
 
-.namespace [ "PGE::Exp" ]
+.namespace [ 'PGE';'Exp' ]
 
 .include "interpinfo.pasm"
 .include "cclass.pasm"
@@ -131,7 +131,7 @@ tree as a PIR code object that can be compiled.
     .local pmc exp
     .local string explabel
     exp = self
-    set_hll_global ['PGE::Exp'], '$!group', exp
+    set_hll_global ['PGE';'Exp'], '$!group', exp
     exp = exp.reduce(self)
 
     ##   we don't need a coroutine if :ratchet is set
@@ -631,9 +631,11 @@ tree as a PIR code object that can be compiled.
     ##   This group is non-backtracking, so concatenate a "cut group"
     ##   node (PGE::Exp::Cut) to its child.
     exp = self[0]
-    $P0 = new 'PGE::Exp::Concat'
+    $P0 = get_hll_global ['PGE';'Exp'], 'Concat'
+    $P0 = $P0.'new'()
     $P0[0] = exp
-    $P1 = new 'PGE::Exp::Cut'
+    $P1 = get_hll_global ['PGE';'Exp'], 'Cut'
+    $P1 = $P1.'new'()
     $P0[1] = $P1
     self[0] = $P0
 
@@ -641,11 +643,11 @@ tree as a PIR code object that can be compiled.
     .local pmc group
     ##   Temporarily store this group as the current group.  Any
     ##   cut nodes we encounter will set a cutmark into this group.
-    group = get_hll_global ['PGE::Exp'], '$!group'
-    set_hll_global ['PGE::Exp'], '$!group', self
+    group = get_hll_global ['PGE';'Exp'], '$!group'
+    set_hll_global ['PGE';'Exp'], '$!group', self
     exp = self[0]
     exp = exp.reduce(next)
-    set_hll_global ['PGE::Exp'], '$!group', group
+    set_hll_global ['PGE';'Exp'], '$!group', group
     $I0 = self['cutmark']
     if $I0 > 0 goto keep_group
     $I0 = self['iscapture']
@@ -1198,7 +1200,7 @@ tree as a PIR code object that can be compiled.
     ##   This node is cutting a group.  We need to
     ##   get the current group's cutmark, or set
     ##   one if it doesn't already have one.
-    group = get_hll_global ['PGE::Exp'], '$!group'
+    group = get_hll_global ['PGE';'Exp'], '$!group'
     cutmark = group['cutmark']
     if cutmark > 0 goto has_cutmark
     $P1 = new 'CodeString'
