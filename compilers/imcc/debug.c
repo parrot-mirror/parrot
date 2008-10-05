@@ -335,8 +335,8 @@ Dumps the list of labels in IMC_Unit C<unit>.
 void
 dump_labels(ARGIN(const IMC_Unit *unit))
 {
-    int i;
     const SymHash * const hsh = &unit->hash;
+    unsigned int          i;
 
     fprintf(stderr, "Labels\n");
     fprintf(stderr, "name\tpos\tlast ref\n"
@@ -348,8 +348,8 @@ dump_labels(ARGIN(const IMC_Unit *unit))
             if (r && (r->type & VTADDRESS))
                 fprintf(stderr, "%s\t%d\t%d\n",
                         r->name,
-                        r->first_ins ? r->first_ins->index : -1,
-                        r->last_ins ? r->last_ins->index : -1);
+                        r->first_ins ? (int)r->first_ins->index : -1,
+                        r->last_ins  ? (int)r->last_ins->index  : -1);
         }
     }
     fprintf(stderr, "\n");
@@ -368,17 +368,19 @@ Dumps a list of the symbolic registers in IMC_Unit C<unit>
 void
 dump_symreg(ARGIN(const IMC_Unit *unit))
 {
-    int i;
-    SymReg** const reglist = unit->reglist;
+    unsigned int i;
+    SymReg ** const reglist = unit->reglist;
 
     if (!reglist)
         return;
+
     fprintf(stderr,
             "\nSymbols:"
             "\n----------------------------------------------\n");
     fprintf(stderr, "name\tfirst\tlast\t1.blk\t-blk\tset col     \t"
             "used\tlhs_use\tregp\tus flgs\n"
             "----------------------------------------------\n");
+
     for (i = 0; i < unit->n_symbols; i++) {
         const SymReg * const r = reglist[i];
         if (!REG_NEEDS_ALLOC(r))
@@ -414,17 +416,18 @@ allocated.
 void
 dump_liveness_status(ARGIN(const IMC_Unit *unit))
 {
-    int i;
-    SymReg** const reglist = unit->reglist;
+    unsigned int i;
+    SymReg ** const reglist = unit->reglist;
 
     fprintf(stderr, "\nSymbols:\n--------------------------------------\n");
+
     for (i = 0; i < unit->n_symbols; i++) {
         const SymReg * const r = reglist[i];
         if (REG_NEEDS_ALLOC(r))
             dump_liveness_status_var(unit, r);
     }
-    fprintf(stderr, "\n");
 
+    fprintf(stderr, "\n");
 }
 
 

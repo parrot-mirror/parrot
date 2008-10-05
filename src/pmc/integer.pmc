@@ -848,6 +848,7 @@ VTABLE void i_floor_divide_int(INTVAL value) {
 
 VTABLE void i_floor_divide_float(FLOATVAL value) {
     FLOATVAL f;
+    INTVAL   self_val;
 
     if (FLOAT_IS_ZERO(value))
         Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_DIV_BY_ZERO,
@@ -1195,7 +1196,7 @@ METHOD get_as_base(INTVAL base) {
             "get_as_base: base out of bounds");
 
         result = int_to_str(interp, buf,
-                (HUGEINTVAL)VTABLE_get_integer(INTERP, SELF), (char)base);
+                (HUGEINTVAL)VTABLE_get_integer(INTERP, SELF), base);
         RETURN(STRING *result);
     }
 
