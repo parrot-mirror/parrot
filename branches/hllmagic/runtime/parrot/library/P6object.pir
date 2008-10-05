@@ -507,6 +507,8 @@ Multimethod helper to return the parrotclass for C<x>.
     parrotclass = getattribute $P0, 'parrotclass'
     .return (parrotclass)
   x_string:
+    $S0 = x
+    x = split '::', $S0
     parrotclass = get_class x
   done:
     .return (parrotclass)
