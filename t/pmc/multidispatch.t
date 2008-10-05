@@ -1006,7 +1006,7 @@ PMC
 nothing
 OUTPUT
 
-pir_output_is( <<'CODE', <<'OUTPUT', "use a core func for an object" );
+pir_output_is( <<'CODE', <<'OUTPUT', "use a core func for an object", todo => 'RT #59628' );
 .sub main :main
     .local pmc d, l, r, cl
     cl = newclass "AInt"
