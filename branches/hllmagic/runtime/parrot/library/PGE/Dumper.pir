@@ -7,7 +7,7 @@ PGE::Dumper - various methods for displaying PGE structures
 .sub __onload
 .end
 
-.namespace [ "PGE::Match" ]
+.namespace [ "PGE";"Match" ]
 
 =head2 C<PGE::Match> Methods
 
@@ -234,7 +234,7 @@ obsoleted in favor of a Data::Dumper method.
 
 =cut
 
-.namespace [ "PGE::Exp" ]
+.namespace [ "PGE";"Exp" ]
 
 .sub "dumpindent" :method
     .param int indent
@@ -253,7 +253,7 @@ obsoleted in favor of a Data::Dumper method.
     .return ()
 .end
 
-.namespace [ "PGE::Exp::Start" ]
+.namespace [ "PGE";"Exp";"Start" ]
 
 .sub dump :method
     .param int indent
@@ -267,7 +267,7 @@ obsoleted in favor of a Data::Dumper method.
     .return ()
 .end
 
-.namespace [ "PGE::Exp::End" ]
+.namespace [ "PGE";"Exp";"End" ]
 
 .sub dump :method
     .param int indent
@@ -276,7 +276,7 @@ obsoleted in favor of a Data::Dumper method.
     .return ()
 .end
 
-.namespace [ "PGE::Exp::Literal" ]
+.namespace [ "PGE";"Exp";"Literal" ]
 
 .sub "dump" :method
     .param int indent
@@ -292,7 +292,7 @@ obsoleted in favor of a Data::Dumper method.
     .return ()
 .end
 
-.namespace [ "PGE::Exp::Scalar" ]
+.namespace [ "PGE";"Exp";"Scalar" ]
 
 .sub "dump" :method
     .param int indent
@@ -308,7 +308,7 @@ obsoleted in favor of a Data::Dumper method.
     .return ()
 .end
 
-.namespace [ "PGE::Exp::Dot" ]
+.namespace [ "PGE";"Exp";"Dot" ]
 
 .sub "dump" :method
     .param int indent
@@ -320,7 +320,7 @@ obsoleted in favor of a Data::Dumper method.
     .return ()
 .end
 
-.namespace [ "PGE::Exp::CharClass" ]
+.namespace [ "PGE";"Exp";"CharClass" ]
 
 .sub dump :method
     .param int indent
@@ -338,7 +338,7 @@ obsoleted in favor of a Data::Dumper method.
     .return ()
 .end
 
-.namespace [ "PGE::Exp::WS" ]
+.namespace [ "PGE";"Exp";"WS" ]
 
 .sub "dump" :method
     .param int indent
@@ -350,7 +350,7 @@ obsoleted in favor of a Data::Dumper method.
     .return ()
 .end
 
-.namespace [ "PGE::Exp::Anchor" ]
+.namespace [ "PGE";"Exp";"Anchor" ]
 
 .sub "dump" :method
     .param int indent
@@ -364,7 +364,7 @@ obsoleted in favor of a Data::Dumper method.
 .end
 
 
-.namespace [ "PGE::Exp::Concat" ]
+.namespace [ "PGE";"Exp";"Concat" ]
 
 .sub "dump" :method
     .param int indent
@@ -375,7 +375,7 @@ obsoleted in favor of a Data::Dumper method.
     .return ()
 .end
 
-.namespace [ "PGE::Exp::Alt" ]
+.namespace [ "PGE";"Exp";"Alt" ]
 
 .sub "dump" :method
     .param int indent
@@ -402,7 +402,7 @@ obsoleted in favor of a Data::Dumper method.
 .end
 
 
-.namespace [ "PGE::Exp::Group" ]
+.namespace [ "PGE";"Exp";"Group" ]
 
 .sub "dump" :method
     .param int indent
@@ -443,7 +443,7 @@ obsoleted in favor of a Data::Dumper method.
     .return ()
 .end
 
-.namespace [ "PGE::OPTable" ]
+.namespace [ "PGE";"OPTable" ]
 
 =head2 C<PGE::OPTable> Methods
 

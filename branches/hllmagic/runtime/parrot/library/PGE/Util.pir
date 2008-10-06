@@ -60,7 +60,7 @@ of the match.
     .local int lines
     .local pmc line_number
     #  FIXME: use 'line_number' method instead?
-    line_number = get_hll_global ['PGE::Util'], 'line_number'
+    line_number = get_hll_global ['PGE';'Util'], 'line_number'
     (lines) = mob.line_number(pos)
     inc lines
     message .= ' at line '
@@ -121,7 +121,7 @@ Emits the list of messages to stderr.
     .local int lines
     .local pmc line_number
     #  FIXME: use 'line_number' method instead?
-    line_number = get_hll_global ['PGE::Util'], 'line_number'
+    line_number = get_hll_global ['PGE';'Util'], 'line_number'
     (lines) = mob.line_number(pos)
     inc lines
     message .= ' at line '
