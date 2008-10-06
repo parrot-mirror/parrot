@@ -396,10 +396,10 @@ tree as a PIR code object that can be compiled.
     inc i
     if i >= n goto concat_lit_end
     exp1 = children[i]
-    $I1 = isa exp1, 'PGE::Exp::Literal'
+    $I1 = isa exp1, ['PGE';'Exp';'Literal']
     if $I1 == 0 goto concat_lit_shift
     exp0 = children[j]
-    $I0 = isa exp0, 'PGE::Exp::Literal'
+    $I0 = isa exp0, ['PGE';'Exp';'Literal']
     if $I0 == 0 goto concat_lit_shift
     $I0 = exp0['ignorecase']
     $I1 = exp1['ignorecase']
