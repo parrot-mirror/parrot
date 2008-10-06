@@ -590,7 +590,7 @@ Adds (or replaces) a syntactic category's defaults.
   end_1b:
     $P0 = $P0[-1]
     if null $P0 goto end_2
-    $I0 = isa $P0, 'PGE::Match'
+    $I0 = isa $P0, ['PGE';'Match']
     if $I0 goto end_1a
   end_2:
     unless rulename goto end_all

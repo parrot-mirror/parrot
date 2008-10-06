@@ -59,7 +59,7 @@ is set or implied.
     .local int issrcmatch, pos, iscont
     .local string grammar
     .local pmc target, grammar_class
-    issrcmatch = isa src, 'PGE::Match'
+    issrcmatch = isa src, ['PGE';'Match']
     if issrcmatch goto target_from_src
     .local pmc target
     target = new 'String'

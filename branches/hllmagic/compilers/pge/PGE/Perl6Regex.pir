@@ -77,11 +77,11 @@ or the resulting PIR code (target='PIR').
 
     ##   If we're passed the results of a previous parse,  use it.
     .local pmc match, exp
-    $I0 = isa source, 'PGE::Match'
+    $I0 = isa source, ['PGE';'Match']
     if $I0 == 0 goto parse
     $P0 = source['expr']
     if null $P0 goto parse
-    $I0 = isa $P0, 'PGE::Exp'
+    $I0 = isa $P0, ['PGE';'Exp']
     if $I0 == 0 goto parse
     match = source
     goto analyze
@@ -1401,7 +1401,7 @@ Parse a modifier.
 
     ##   if lhs is whitespace, then this is a prefix-alt and
     ##   we ignore it (by simply returning its rhs)
-    $I0 = isa exp0, 'PGE::Exp::WS'
+    $I0 = isa exp0, ['PGE';'Exp';'WS']
     if $I0 == 0 goto with_lhs
     .return exp1.'perl6exp'(pad)
   with_lhs:
@@ -1450,14 +1450,14 @@ Parse a modifier.
     ##   Otherwise, we need to create a capture group for this
     ##   alias and return that.
 
-    $I0 = isa exp1, 'PGE::Exp::CGroup'
+    $I0 = isa exp1, ['PGE';'Exp';'CGroup']
     if $I0 == 1 goto make_alias
-    $I0 = isa exp1, 'PGE::Exp::Subrule'
+    $I0 = isa exp1, ['PGE';'Exp';'Subrule']
     if $I0 == 1 goto make_alias
-    $I0 = isa exp1, 'PGE::Exp::Quant'
+    $I0 = isa exp1, ['PGE';'Exp';'Quant']
     if $I0 == 0 goto add_cgroup
     $P0 = exp1[0]
-    $I0 = isa $P0, 'PGE::Exp::CGroup'
+    $I0 = isa $P0, ['PGE';'Exp';'CGroup']
     if $I0 == 0 goto add_cgroup
     $P0['cname'] = cname
     goto end
