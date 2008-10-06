@@ -66,7 +66,8 @@ is set or implied.
     target = src
     pos = 0
     iscont = 1
-    grammar_class = typeof self
+    $P0 = self.'HOW'()
+    grammar_class = getattribute $P0, 'parrotclass'
     goto adverb_pos
   target_from_src:
     target = getattribute src, '$.target'
