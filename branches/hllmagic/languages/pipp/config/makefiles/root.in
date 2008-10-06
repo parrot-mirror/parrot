@@ -221,7 +221,7 @@ pmc: $(HASH_OBJS) $(PHP_GROUP)
 #Recompiling is close enough for now.
 $(HASH_OBJS): $(HASH_SOURCES) $(HASH_H)
 	$(TOUCH) $(PMCDIR)/phparray.pmc
-	$(CC) $(CCFLAGS) -I$(INCLUDE_DIR) $(HASH_SOURCES) -c -o $(HASH_OBJS)
+	$(CC) $(CCFLAGS) -I$(INCLUDE_DIR) $(HASH_SOURCES) -g -c -o $(HASH_OBJS)
 
 export DYNPMC_INCLUDE=$(PIPPDIR)
 export DYNPMC_LINK=$(HASH_OBJS)
@@ -248,8 +248,11 @@ test-antlr3:
 test-pct:
 	- cd .. && $(PERL) -I../lib -I pipp/lib pipp/t/harness --with-pct
 
+# make sure debugging output is disabled while running the tests
+export PMCDEBUG=
+
 test-pmc: pmc
-	@cd ../.. && $(PERL) -I/lib languages/pipp/t/pmc/array.t
+	@ prove -I../../lib t/pmc
 
 # this does not work yet
 test-pcc-testsuite: all t/pcc-testsuite

@@ -21,7 +21,7 @@ the size of that file down and to emphasize their generic,
 .namespace []
 .sub 'onload' :anon :init :load
     $P0 = get_hll_namespace ['Any']
-    '!EXPORT'('capitalize chop chars index lc lcfirst rindex ord substr uc ucfirst', 'from'=>$P0)
+    '!EXPORT'('capitalize chop chomp chars index lc lcfirst rindex ord substr uc ucfirst', 'from'=>$P0)
 .end
 
 
@@ -99,6 +99,31 @@ Returns string with one Char removed from the end.
     .return(retv)
 .end
 
+=item chomp
+
+ our Str method Str::chomp ( Str $string: )
+
+ Returns string with newline removed from the end.  An arbitrary
+ terminator can be removed if the input filehandle has marked the
+ string for where the "newline" begins.  (Presumably this is stored
+ as a property of the string.)  Otherwise a standard newline is removed.
+
+=cut
+
+.sub 'chomp' :method :multi(_)
+    .local string tmps
+    .local string lastchar
+    .local pmc retv
+
+    tmps = self
+    lastchar = substr tmps,-1
+    if lastchar != "\n" goto done
+    chopn tmps, 1
+  done:
+       retv = new 'Perl6Str'
+       retv = tmps
+       .return (retv)
+.end
 
 =item comb()
 
@@ -113,12 +138,15 @@ Partial implementation for now, returns a list of strings
     .param int has_count    :opt_flag
     .local pmc retv, match
     .local string s
+    .local int pos
 
-    retv = new 'List'
+    retv = 'list'()
     s = self
 
+    pos = 0
+
   do_match:
-    match = regex.'ACCEPTS'(s)
+    match = regex(s, 'continue' => pos)
     unless match goto done
     unless has_count goto skip_count
     dec count
@@ -128,9 +156,13 @@ Partial implementation for now, returns a list of strings
     $S0 = match
     retv.'push'($S0)
     $I0 = match.'to'()
-    s = substr s, $I0
+    if pos == $I0 goto zero_width
+    pos = $I0
     goto do_match
 
+  zero_width:
+    inc pos
+    goto do_match
   done:
     .return(retv)
 .end
@@ -402,7 +434,12 @@ B<Note:> partial implementation only
     $S1 = substr $S0, start_pos, end_pos
     retv.'push'($S1)
     unless match goto done
-    start_pos = match.'to'()
+    $I0 = match.'to'()
+    if $I0 == start_pos goto zero_width
+    start_pos = $I0
+    goto loop
+  zero_width:
+    inc start_pos
     goto loop
 
   done:
