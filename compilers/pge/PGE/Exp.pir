@@ -76,7 +76,9 @@ C<target> adverbs.
     .local string grammar
     grammar = adverbs['grammar']
     if grammar == '' goto ns_root
-    code.'emit'(".namespace [ '%0' ]", grammar)
+    $P0 = split '::', grammar
+    $P0 = code.'key'($P0 :flat)
+    code.'emit'(".namespace %0", $P0)
     goto ns_done
   ns_root:
     code.'emit'('.namespace')
