@@ -66,7 +66,7 @@ as the result of the current node.
     if has_value == 1 goto set_value
     value = self['result']
     if null value goto result_null
-    $I0 = isa value, 'POST::Node'
+    $I0 = isa value, ['POST';'Node']
     if $I0 goto result_node
     .return (value)
   result_node:

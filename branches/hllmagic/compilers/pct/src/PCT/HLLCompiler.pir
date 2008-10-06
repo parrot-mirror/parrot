@@ -406,7 +406,7 @@ resulting ast.
     .local pmc ast
     ast = source.'item'()
     pop_eh
-    $I0 = isa ast, 'PAST::Node'
+    $I0 = isa ast, ['PAST';'Node']
     unless $I0 goto err_past
     .return (ast)
 
