@@ -194,9 +194,10 @@ the output to the correct output file.
     $P0 = ns['optable']
     if $P0 == '' goto iter_loop
     initpir.emit("          optable = new ['PGE';'OPTable']")
-    $P1 = split '::', namespace
-    $S1 = join "';'", $P1
-    initpir.emit("          set_hll_global ['%0'], '$optable', optable", $S1)
+    $S0 = namespace
+    $P1 = split '::', $S0
+    $P1 = initpir.'key'($P1 :flat)
+    initpir.emit("          set_hll_global %0, '$optable', optable", $P1)
     initpir .= $P0
     goto iter_loop
   iter_end:
@@ -294,12 +295,15 @@ the output to the correct output file.
   rulepir_optable:
     ##   this is a special rule generated via the 'is optable' trait
     rulepir = new 'CodeString'
-    rulepir.emit(<<'      END', namespace, name)
-      .namespace [ "%0" ]
+    $S0 = namespace
+    $P0 = split '::', $S0
+    $P0 = rulepir.'key'($P0 :flat)
+    rulepir.emit(<<'      END', $P0, name)
+      .namespace %0
       .sub "%1"
         .param pmc mob
         .param pmc adverbs :named :slurpy
-        $P0 = get_hll_global ["%0"], "$optable"
+        $P0 = get_hll_global %0, "$optable"
         .return $P0.'parse'(mob, 'rulename'=>"%1", adverbs :named :flat)
       .end
       END
@@ -374,7 +378,10 @@ the output to the correct output file.
     arg = optable.'escape'(arg)
     goto trait_arg_done
   trait_sub:
-    optable.emit("          $P0 = get_hll_global ['%0'], '%1'", namespace, arg)
+    $S0 = namespace
+    $P0 = split '::', $S0
+    $P0 = optable.'key'($P0 :flat)
+    optable.emit("          $P0 = get_hll_global %0, '%1'", $P0, arg)
     arg = '$P0'
     goto trait_arg_done
   trait_arg_null:
