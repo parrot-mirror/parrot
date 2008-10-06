@@ -74,7 +74,8 @@ is set or implied.
     $P0 = getattribute src, '$.pos'
     pos = $P0
     iscont = 0
-    grammar_class = typeof src
+    $P0 = src.'HOW'()
+    grammar_class = getattribute $P0, 'parrotclass'
     if pos >= 0 goto adverb_pos
     pos = 0
 
