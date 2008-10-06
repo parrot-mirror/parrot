@@ -84,6 +84,7 @@ USAGE
     $P0 .= 'for '
     $S0  = cfg['archname']
     $P0 .= $S0
+    pop_eh
   _handler:
     $P0 .= ".\n\nCopyright 2006-2008, The Perl Foundation.\n"
     setattribute self, '$version', $P0
@@ -97,7 +98,13 @@ USAGE
     $P0 = new 'List'
     set_hll_global ['Perl6';'Grammar';'Actions'], '@?PACKAGE', $P0
 
+    ## create a list for holding the stack of nested modules
+    ## (that may be roles, classes or grammars).
+    $P0 = new 'List'
+    set_hll_global ['Perl6';'Grammar';'Actions'], '@?MODULE', $P0
+
     ## create a list for holding the stack of nested classes
+    ## (that may be classes or grammars).
     $P0 = new 'List'
     set_hll_global ['Perl6';'Grammar';'Actions'], '@?CLASS', $P0
 
