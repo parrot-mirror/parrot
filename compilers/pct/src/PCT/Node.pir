@@ -9,7 +9,7 @@ and opcode syntax tree (POST) nodes in the Parrot Compiler Toolkit.
 
 =cut
 
-.namespace [ 'PCT::Node' ]
+.namespace [ 'PCT';'Node' ]
 
 .sub 'onload' :anon :load :init
     ##   create the PCT::Node base class
@@ -24,7 +24,7 @@ and opcode syntax tree (POST) nodes in the Parrot Compiler Toolkit.
 
     $P0 = new 'Integer'
     $P0 = 10
-    set_hll_global ['PCT::Node'], '$!serno', $P0
+    set_hll_global ['PCT';'Node'], '$!serno', $P0
 
     .return ()
 .end

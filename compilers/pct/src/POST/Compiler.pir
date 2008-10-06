@@ -13,7 +13,7 @@ PIR or an Eval PMC (bytecode).
 
 =cut
 
-.namespace [ 'POST::Compiler' ]
+.namespace [ 'POST';'Compiler' ]
 
 .sub '__onload' :load :init
     .local pmc p6meta, cproto
