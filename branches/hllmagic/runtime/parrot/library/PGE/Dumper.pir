@@ -158,7 +158,7 @@ An alternate dump output for a Match object and all of its subcaptures.
     goto subrules_1
 
   dumper:
-    $I0 = isa $P0, 'PGE::Match'
+    $I0 = isa $P0, ['PGE';'Match']
     unless $I0 goto dumper_0
     $S0 = $P0.'dump_str'(prefix1, b1, b2)
     out .= $S0
@@ -384,7 +384,7 @@ obsoleted in favor of a Data::Dumper method.
 
     exp = self["exp1"]
     $I1 = indent
-    $I0 = isa exp, "PGE::Exp::Alt"
+    $I0 = isa exp, ["PGE";"Exp";"Alt"]
     if $I0 goto print_exp1
     $I1 += 4
   print_exp1:
@@ -393,7 +393,7 @@ obsoleted in favor of a Data::Dumper method.
     print "ALT\n"
     exp = self["exp2"]
     $I1 = indent
-    $I0 = isa exp, "PGE::Exp::Alt"
+    $I0 = isa exp, ["PGE";"Exp";"Alt"]
     if $I0 goto print_exp2
     $I1 += 4
   print_exp2:
