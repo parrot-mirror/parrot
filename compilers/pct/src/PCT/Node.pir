@@ -221,7 +221,7 @@ a C<Match> object and obtains source/position information from that.
 
 .sub 'node' :method
     .param pmc node
-    $I0 = isa node, 'PAST::Node'
+    $I0 = isa node, ['PAST';'Node']
     if $I0 goto clone_past
   clone_pge:
     $S0 = node

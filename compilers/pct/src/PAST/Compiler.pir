@@ -618,7 +618,7 @@ Return the POST representation of a C<PAST::Block>.
     bpost.'push'(ctrllabel)
     bpost.'push_pirop'('.local pmc exception')
     bpost.'push_pirop'('.get_results (exception)')
-    $I0 = isa ctrlpast, 'PAST::Node'
+    $I0 = isa ctrlpast, ['PAST';'Node']
     if $I0 goto control_past
     if ctrlpast == 'return_pir' goto control_return
     self.panic("Unrecognized control handler '", ctrlpast, "'")
@@ -838,7 +838,7 @@ for calling a sub.
     goto children_done
   call_by_name:
     (ops, posargs, namedargs) = self.'post_children'(node, 'signature'=>signature)
-    $I0 = isa name, 'PAST::Node'
+    $I0 = isa name, ['PAST';'Node']
     if $I0 goto call_by_name_past
     $S0 = self.'escape'(name)
     unshift posargs, $S0
@@ -1350,7 +1350,7 @@ $x < $y and $y < $z, but $y only gets evaluated once.
     clist = new 'ResizablePMCArray'
     cpast = node
   chain_loop:
-    $I0 = isa cpast, 'PAST::Op'
+    $I0 = isa cpast, ['PAST';'Op']
     if $I0 == 0 goto chain_end
     .local string pasttype
     pasttype = cpast.'pasttype'()

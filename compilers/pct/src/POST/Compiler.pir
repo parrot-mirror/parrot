@@ -46,7 +46,7 @@ PIR or an Eval PMC (bytecode).
     push subcode, code
 
     ##  if the root node isn't a Sub, wrap it
-    $I0 = isa post, 'POST::Sub'
+    $I0 = isa post, ['POST';'Sub']
     if $I0 goto have_sub
     $P0 = get_hll_global ['POST'], 'Sub'
     post = $P0.'new'(post, 'name'=>'anon')
