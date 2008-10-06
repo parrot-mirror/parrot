@@ -19,7 +19,7 @@ running compilers from a command line.
     $P0.'new_class'('PCT::HLLCompiler', 'attr'=>$S0)
 .end
 
-.namespace [ 'PCT::HLLCompiler' ]
+.namespace [ 'PCT';'HLLCompiler' ]
 
 .include 'cclass.pasm'
 

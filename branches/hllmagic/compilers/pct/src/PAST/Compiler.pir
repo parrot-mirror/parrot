@@ -40,7 +40,7 @@ any value type.
 .include "except_types.pasm"
 .include "interpinfo.pasm"
 
-.namespace [ 'PAST::Compiler' ]
+.namespace [ 'PAST';'Compiler' ]
 
 .sub 'onload' :anon :load :init
     load_bytecode 'PCT/HLLCompiler.pbc'
