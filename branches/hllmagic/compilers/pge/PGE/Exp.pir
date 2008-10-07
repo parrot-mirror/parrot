@@ -798,11 +798,13 @@ tree as a PIR code object that can be compiled.
     rname = substr subname, $I0
     $I0 -= 2
     grammar = substr subname, 0, $I0
-    code.emit(<<"        CODE", grammar, rname, args :flat :named)
+    $P0 = split '::', grammar
+    $P0 = code.'key'($P0)
+    code.emit(<<"        CODE", grammar, rname, $P0, args :flat :named)
         %L: # grammar subrule %0::%1
           captob = captscope.'new'(captscope, 'grammar'=>'%0')
           captob.'to'(pos)
-          $P0 = get_hll_global ['%0'], '%1'
+          $P0 = get_hll_global %2, '%1'
         CODE
     goto subrule_match
 
