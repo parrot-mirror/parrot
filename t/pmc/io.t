@@ -28,6 +28,7 @@ sub file_content_is {
     local $/ = undef;    # slurp mode
     open my $FOO, '<', "temp.file";
 
+    local $Test::Builder::Level = $Test::Builder::Level + 1;
     is( <$FOO>, $content, $name );
 
     close $FOO;
@@ -291,7 +292,7 @@ pasm_output_is( <<'CODE', <<'OUTPUT', "open & print" );
        print S1
        end
 CODE
--122.200000FooBar
+-122.2FooBar
 OUTPUT
 
 open $FOO, '>', "temp.file";    # Clobber previous contents
@@ -496,7 +497,7 @@ pasm_output_is( <<'CODE', <<'OUTPUT', 'printerr' );
        end
 CODE
 10
-1.000000
+1
 foo
 This is a test
 OUTPUT
@@ -873,7 +874,7 @@ EOS
     pio = open	"temp.file", ">"
     print pio, $S0
     close pio
-    cl = getclass 'ParrotIO'
+    cl = new 'ParrotIO'
     $S1 = cl.'slurp'('temp.file')
     if $S0 == $S1 goto ok
     print "not "

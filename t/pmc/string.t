@@ -6,7 +6,7 @@ use strict;
 use warnings;
 use lib qw( . lib ../lib ../../lib );
 use Test::More;
-use Parrot::Test tests => 47;
+use Parrot::Test tests => 48;
 
 =head1 NAME
 
@@ -22,7 +22,6 @@ Tests the C<String> PMC.
 
 =cut
 
-my $fp_equality_macro = pasm_fp_equality_macro();
 
 pasm_output_is( <<CODE, <<OUTPUT, "Set/get strings" );
         new P0, 'String'
@@ -116,7 +115,7 @@ CODE
 OUTPUT
 
 pasm_output_is( <<"CODE", <<OUTPUT, "Setting numbers" );
-@{[ $fp_equality_macro ]}
+        .include 'include/fp_equality.pasm'
         new P0, 'String'
         set P0, "1"
         set N0, P0
@@ -293,32 +292,32 @@ zzz
 
 OUTPUT
 
-pasm_output_is( <<'CODE', <<OUTPUT, "n_repeat" );
+pasm_output_is( <<'CODE', <<OUTPUT, "repeat" );
     new P0, 'String'
     set P0, "x"
     new P1, 'Integer'
     set P1, 12
-    n_repeat P2, P0, P1
+    repeat P2, P0, P1
         print P2
         print "\n"
 
         set P0, "y"
         new P1, 'Float'
         set P1, 6.5
-        n_repeat P3, P0, P1
+        repeat P3, P0, P1
         print P3
         print "\n"
 
         set P0, "z"
         new P1, 'String'
         set P1, "3"
-        n_repeat P4, P0, P1
+        repeat P4, P0, P1
         print P4
         print "\n"
 
         set P0, "a"
         new P1, 'Undef'
-        n_repeat P5, P0, P1
+        repeat P5, P0, P1
         print P5
         print "\n"
 
@@ -349,16 +348,16 @@ xxxxxxxxxxxx
 zazaza
 OUTPUT
 
-pasm_output_is( <<'CODE', <<OUTPUT, "n_repeat_int" );
+pasm_output_is( <<'CODE', <<OUTPUT, "repeat_int" );
     new P0, 'String'
     set P0, "x"
     set I1, 12
-    n_repeat P2, P0, I1
+    repeat P2, P0, I1
         print P2
         print "\n"
 
         set P0, "za"
-        n_repeat P3, P0, 3
+        repeat P3, P0, 3
         print P3
         print "\n"
     end
@@ -459,10 +458,10 @@ bar
 str
 OUTPUT
 
-pasm_output_is( <<'CODE', <<OUTPUT, "n_concat" );
+pasm_output_is( <<'CODE', <<OUTPUT, "concat" );
     new P0, 'String'
     set P0, "foo"
-    n_concat    P1, P0, P0
+    concat    P1, P0, P0
 
     print   P0
     print "\n"
@@ -471,7 +470,7 @@ pasm_output_is( <<'CODE', <<OUTPUT, "n_concat" );
 
     new P0, 'String'
     set P0, "foo"
-    n_concat P2, P0, "bar"
+    concat P2, P0, "bar"
 
     print   P0
     print "\n"
@@ -1167,11 +1166,12 @@ loop:
     s = "atugcsATUGCS"
     .const .Sub tr_00 = 'tr_00_init'
     el = elements tr_00
-    print el
-    print "\n"
-    trans s, tr_00
-    print s
-    print "\n"
+    say el
+   
+    $P0 = new 'String'
+    $P0.'trans'(s, tr_00)
+
+    say s
 .end
 CODE
 256
@@ -1180,12 +1180,10 @@ OUTPUT
 
 pir_output_is( <<'CODE', <<OUTPUT, "reverse P0 - reverse string" );
 .sub main :main
+  $S0 = 'torrap'
   $P0 = new 'String'
-  $P0 = "torrap"
-  reverse $P0
-  print $P0
-  print "\n"
-  end
+  $P0.'reverse'($S0)
+  say $S0
 .end
 CODE
 parrot
@@ -1195,37 +1193,23 @@ pir_output_is( <<'CODE', <<OUTPUT, "is_integer - check integer" );
 .sub main :main
   $P0 = new 'String'
 
-  $P0 = "543"
-  $I0 = is_integer $P0
-  print $I0
-  print "\n"
+  $I0 = $P0.'is_integer'('543')
+  say $I0
 
-  $P0 = "4.3"
-  $I0 = is_integer $P0
-  print $I0
-  print "\n"
+  $I0 = $P0.'is_integer'('4.3')
+  say $I0
 
-  $P0 = "foo"
-  $I0 = is_integer $P0
-  print $I0
-  print "\n"
+  $I0 = $P0.'is_integer'('foo')
+  say $I0
 
-  $P0 = "-1"
-  $I0 = is_integer $P0
-  print $I0
-  print "\n"
+  $I0 = $P0.'is_integer'('-1')
+  say $I0
 
-  $P0 = "+-1"
-  $I0 = is_integer $P0
-  print $I0
-  print "\n"
+  $I0 = $P0.'is_integer'('+-1')
+  say $I0
 
-  $P0 = "+1"
-  $I0 = is_integer $P0
-  print $I0
-  print "\n"
-
-  end
+  $I0 = $P0.'is_integer'('+1')
+  say $I0
 .end
 CODE
 1
@@ -1322,6 +1306,51 @@ pir_output_is( <<'CODE', <<'OUTPUT', "elements gives length of string" );
 CODE
 9
 OUTPUT
+
++pir_output_is( <<'CODE', <<OUTPUT, 'String."reverse_index"' );
+.sub main :main
+  $P0 = new 'String'
+  $I0 = $P0.'reverse_index'('hello', 0)
+  print 'main empty '
+  print $I0
+  say ''
+  
+  $P0 = "Hello world"
+  $I0 = $P0.'reverse_index'('', 0)
+  print 'search empty '
+  print $I0
+  say ''
+  
+  $I0 = $P0.'reverse_index'('o', -1)
+  print 'negative start '
+  print $I0
+  say ''
+
+  $I0 = $P0.'reverse_index'('o', 999)
+  print 'far far away '
+  print $I0
+  say ''
+
+  $I0 = $P0.'reverse_index'('l', 0)
+  print 'search1 '
+  print $I0
+  say ''
+
+  $I0 = $P0.'reverse_index'('l', 8)
+  print 'search2 '
+  print $I0
+  say ''
+
+.end
+CODE
+main empty -1
+search empty -1
+negative start -1
+far far away -1
+search1 9
+search2 3
+OUTPUT
+
 
 # Local Variables:
 #   mode: cperl

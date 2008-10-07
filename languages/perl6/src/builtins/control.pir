@@ -24,10 +24,11 @@ the moment -- we'll do more complex handling a bit later.)
 =cut
 
 .include 'except_types.pasm'
+.include 'except_severity.pasm'
 
 .sub 'return'
-    .param pmc value     :optional
-    .param int has_value :opt_flag
+    .param pmc value           :optional
+    .param int has_value       :opt_flag
 
     if has_value goto have_value
     value = 'list'()
@@ -37,6 +38,106 @@ the moment -- we'll do more complex handling a bit later.)
     setattribute $P0, 'payload', value
     throw $P0
     .return (value)
+.end
+
+
+=item fail
+
+=cut
+
+.sub '!FAIL'
+    .param string value        :optional
+    .param int has_value       :opt_flag
+    if has_value goto have_value
+    value = 'Use of uninitialized value'
+  have_value:
+    $P0 = new 'Exception'
+    $P0['message'] = value
+    $P1 = new 'Failure'
+    setattribute $P1, '$!exception', $P0
+    .return ($P1)
+.end
+
+.sub 'fail'
+    .param pmc value           :optional
+    .param int has_value       :opt_flag
+    .local pmc result
+    if has_value goto have_value
+    result = '!FAIL'()
+    goto done
+  have_value:
+    result = '!FAIL'(value)
+  done:
+    'return'(result)
+    .return(result)
+.end
+
+=item take
+
+=cut
+
+.sub 'take'
+    .param pmc value
+
+    $P0         = new 'Exception'
+    $P0['type'] = .CONTROL_TAKE
+    $P0['severity'] = .EXCEPT_NORMAL
+    setattribute $P0, 'payload', value
+    throw $P0
+    .return (value)
+.end
+
+=item gather
+
+=cut
+
+.sub 'gather'
+    .param pmc block
+    .local pmc list
+    .local pmc eh
+    list = 'list'()
+    eh = new 'ExceptionHandler'
+    eh.handle_types(.CONTROL_TAKE)
+    set_addr eh, handler
+    push_eh eh
+    block()
+    pop_eh
+    .return (list)
+  handler:
+    .local pmc exception, continuation
+    .local string message
+    .get_results(exception)
+    message = exception['message']
+    continuation = exception['resume']
+    $P0 = exception['payload']
+    list.push($P0)
+    continuation()
+.end
+
+=item next
+
+=cut
+
+.sub 'next'
+    .local pmc e
+    e = new 'Exception'
+    e['severity'] = .EXCEPT_NORMAL
+    e['type'] = .CONTROL_LOOP_NEXT
+    throw e
+.end
+
+=item term:...
+
+=cut
+
+.sub '...'
+    .param pmc message        :optional
+    .param int have_message   :opt_flag
+    if have_message goto message_done
+    message = new 'Perl6Str'
+    message = "Attempt to execute stub code (...)"
+  message_done:
+    'fail'(message)
 .end
 
 
@@ -125,6 +226,25 @@ to coordinate with entire async model.  -law]
     .return ($N2)
 .end
 
+
+=item time
+
+ our Time sub Control::Basic::time()
+
+XXX Should be returning a (currently unspec'd, it seems) Time object that
+numifies to a floating point value giving the number of seconds and
+fractional seconds since 2000. At the moment, just handing back what the
+Parrot time opcode does, since that doesn't give something with a consistent
+epoch. Mails sent about both issues, will fix when answers come back.
+
+=cut
+
+.sub 'time'
+    $N0 = time
+    .return ($N0)
+.end
+
+
 =item eval
 
  multi Control::Basic::eval ( Str $code, Grammar :$lang = CALLER::<$?PARSER>)
@@ -158,7 +278,7 @@ on error.
     goto done
 
   catch:
-    .get_results (exception, $S0)
+    .get_results (exception)
     goto done
 
   done:

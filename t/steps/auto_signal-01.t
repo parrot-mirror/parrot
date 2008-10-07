@@ -23,7 +23,7 @@ use IO::CaptureOutput qw| capture |;
 
 ########### --miniparrot ###########
 
-my $args = process_options(
+my ($args, $step_list_ref) = process_options(
     {
         argv => [ q{--miniparrot} ],
         mode => q{configure},
@@ -49,7 +49,7 @@ $conf->replenish($serialized);
 
 ########### _handle__sighandler_t() ###########
 
-$args = process_options( {
+($args, $step_list_ref) = process_options( {
     argv => [ ],
     mode => q{configure},
 } );
@@ -97,7 +97,7 @@ $conf->replenish($serialized);
 
 ########### --verbose; _handle__sighandler_t() ###########
 
-$args = process_options( {
+($args, $step_list_ref) = process_options( {
     argv => [ q{--verbose} ],
     mode => q{configure},
 } );
@@ -148,6 +148,8 @@ my $verbose = 1;
         "Got expected value for has_sig_atomic_t");
     like($stdout, qr/setitimer/s, "Got expected verbose output");
 }
+
+$conf->cc_clean();
 
 pass("Completed all tests in $0");
 

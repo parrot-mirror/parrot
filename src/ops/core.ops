@@ -252,7 +252,7 @@ inline op local_branch(invar PMC, in LABEL) :base_core :check_event :flow {
     goto OFFSET($2);
 }
 
-=item B<local_return>()
+=item B<local_return>(invar PMC)
 
 Pop the location off the top of the call stack and go there.
 
@@ -605,7 +605,7 @@ op set_returns(inconst PMC) :flow {
     ccont = ctx->current_cont;
 
     if (PMC_cont(ccont)->address) {
-        /* else it's from runops_fromc */
+        /* Call is from runops_fromc */
         parrot_context_t * const caller_ctx = PMC_cont(ccont)->to_ctx;
         if (! caller_ctx) {
             /* there is no point calling Parrot_ex_throw_from_c_args here, because
@@ -620,6 +620,11 @@ op set_returns(inconst PMC) :flow {
         interp->current_args = NULL;
 
         parrot_pass_args(interp, ctx, caller_ctx, src_indexes, dest_indexes, PARROT_PASS_RESULTS);
+    }
+    else if (ctx->caller_ctx->results_signature) {
+    /* We have a dynamic result signature, from pcc_invoke */
+        parrot_pass_args(interp, ctx, ctx->caller_ctx, interp->current_returns,
+                ctx->caller_ctx->current_results, PARROT_PASS_RESULTS);
     }
     argc = SIG_ELEMS(signature);
     goto OFFSET(argc + 2);
@@ -815,8 +820,11 @@ inline op pop_eh() {
 }
 
 inline op throw(invar PMC) :flow {
+    opcode_t * dest;
     opcode_t * const ret  = expr NEXT();
-    opcode_t * const dest = Parrot_ex_throw_from_op(interp, $1, ret);
+    PMC * resume = new_ret_continuation_pmc(interp, ret);
+    VTABLE_set_attr_str(interp, $1, const_string(interp, "resume"), resume);
+    dest = Parrot_ex_throw_from_op(interp, $1, resume);
     goto ADDRESS(dest);
 }
 
@@ -836,20 +844,28 @@ inline op count_eh(out INT) {
 }
 
 inline op die(in STR) :flow {
+    opcode_t * dest;
     PMC *exception = Parrot_ex_build_exception(interp, EXCEPT_error,
             CONTROL_ERROR, $1);
     opcode_t * const ret  = expr NEXT();
-    opcode_t * const dest = Parrot_ex_throw_from_op(interp, exception, ret);
+    PMC * resume = new_ret_continuation_pmc(interp, ret);
+    VTABLE_set_attr_str(interp, exception,
+                        const_string(interp, "resume"), resume);
+    dest = Parrot_ex_throw_from_op(interp, exception, resume);
     goto ADDRESS(dest);
 }
 
 inline op die(in PMC) :flow {
+    opcode_t *dest;
     opcode_t * const ret = expr NEXT();
     STRING          *msg = PMC_IS_NULL($1)
                          ? NULL : VTABLE_get_string(interp, $1);
     PMC            *exception =
         Parrot_ex_build_exception(interp, EXCEPT_error, CONTROL_ERROR, msg);
-    opcode_t       *dest = Parrot_ex_throw_from_op(interp, exception, ret);
+    PMC * resume = new_ret_continuation_pmc(interp, ret);
+    VTABLE_set_attr_str(interp, exception,
+                        const_string(interp, "resume"), resume);
+    dest = Parrot_ex_throw_from_op(interp, exception, resume);
     goto ADDRESS(dest);
 }
 
@@ -859,16 +875,21 @@ inline op die(in INT, in INT) :flow {
     else {
         PMC *exception        = Parrot_ex_build_exception(interp, $1, $2, NULL);
         opcode_t * const ret  = expr NEXT();
-        opcode_t * const dest = Parrot_ex_throw_from_op(interp, exception, ret);
+        PMC * resume = new_ret_continuation_pmc(interp, ret);
+        opcode_t * const dest = Parrot_ex_throw_from_op(interp, exception, resume);
         goto ADDRESS(dest);
     }
 }
 
 inline op exit(in INT) :flow {
+    opcode_t * dest;
     PMC      *exception   =
         Parrot_ex_build_exception(interp, EXCEPT_exit, $1, NULL);
     opcode_t * const ret  = expr NEXT();
-    opcode_t * const dest = Parrot_ex_throw_from_op(interp, exception, ret);
+    PMC * resume = new_ret_continuation_pmc(interp, ret);
+    VTABLE_set_attr_str(interp, exception,
+                        const_string(interp, "resume"), resume);
+    dest = Parrot_ex_throw_from_op(interp, exception, resume);
     goto ADDRESS(dest);
 }
 

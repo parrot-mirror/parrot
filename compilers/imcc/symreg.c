@@ -71,6 +71,7 @@ static char * add_ns(PARROT_INTERP, ARGIN(const char *name))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
+static int int_overflows(const SymReg *r);
 PARROT_CANNOT_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
 static SymReg * mk_pmc_const_2(PARROT_INTERP,
@@ -722,11 +723,41 @@ _mk_const(ARGMOD(SymHash *hsh), ARGIN(const char *name), int t)
         r->type |= VT_ENCODED;
     }
 
+    /* autopromote big ints to floats; fallout from RT #53908 */
+    if (t == 'I') {
+        if (int_overflows(r))
+            r->set = 'N';
+    }
+
     r->use_count++;
 
     return r;
 }
 
+static int
+int_overflows(const SymReg *r)
+{
+    INTVAL i;
+    errno = 0;
+
+    if (r->type & VT_CONSTP)
+        r = r->reg;
+
+    if (r->name[0] == '0' && (r->name[1] == 'x' || r->name[1] == 'X')) {
+        i = strtoul(r->name + 2, 0, 16);
+    }
+
+    else if (r->name[0] == '0' && (r->name[1] == 'O' || r->name[1] == 'o'))
+        i = strtoul(r->name + 2, 0, 8);
+
+    else if (r->name[0] == '0' && (r->name[1] == 'b' || r->name[1] == 'B'))
+        i = strtoul(r->name + 2, 0, 2);
+
+    else
+        i = strtol(r->name, 0, 10);
+
+    return errno ? 1 : 0;
+}
 
 /*
 
@@ -1167,11 +1198,11 @@ Resizes a symbol hash table.
 static void
 resize_symhash(ARGMOD(SymHash *hsh))
 {
-    const int new_size = hsh->size << 1; /* new size is twice as large */
-    int       n_next   = 16;
-    SymReg  **next_r   = mem_allocate_n_zeroed_typed(n_next, SymReg *);
-    SymHash   nh;                        /* new symbol table */
-    int       i;
+    const int    new_size = hsh->size << 1; /* new size is twice as large */
+    int          n_next   = 16;
+    SymReg     **next_r   = mem_allocate_n_zeroed_typed(n_next, SymReg *);
+    SymHash      nh;                        /* new symbol table */
+    unsigned int i;
 
     nh.data = mem_allocate_n_zeroed_typed(new_size, SymReg *);
 
@@ -1385,7 +1416,7 @@ Frees all memory of the symbols in the specified hash table.
 void
 clear_sym_hash(ARGMOD(SymHash *hsh))
 {
-    int i;
+    unsigned int i;
 
     if (!hsh->data)
         return;
@@ -1422,7 +1453,7 @@ Prints all identifiers in the specified hash table to stderr.
 void
 debug_dump_sym_hash(ARGIN(const SymHash *hsh))
 {
-    int i;
+    unsigned int i;
 
     for (i = 0; i < hsh->size; i++) {
         const SymReg *p = hsh->data[i];
@@ -1448,10 +1479,11 @@ void
 clear_locals(ARGIN_NULLOK(IMC_Unit *unit))
 {
     SymHash * const hsh = &unit->hash;
-    int i;
+    unsigned int    i;
 
     for (i = 0; i < hsh->size; i++) {
         SymReg *p;
+
         for (p = hsh->data[i]; p;) {
             SymReg * const next = p->next;
 

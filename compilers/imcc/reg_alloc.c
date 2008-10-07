@@ -368,7 +368,8 @@ free_reglist(ARGMOD(IMC_Unit *unit))
     }
 
     if (unit->reglist) {
-        int i;
+        unsigned int i;
+
         for (i = 0; i < unit->n_symbols; i++)
             free_life_info(unit, unit->reglist[i]);
 
@@ -413,7 +414,7 @@ make_stat(ARGMOD(IMC_Unit *unit), ARGMOD_NULLOK(int *sets), ARGMOD_NULLOK(int *c
 {
     /* register usage summary */
     SymHash * const hsh = &unit->hash;
-    int             i;
+    unsigned int    i;
 
     for (i = 0; i < hsh->size; i++) {
         SymReg *r;
@@ -586,10 +587,11 @@ Run through them and allocate all that don't overlap in one bunch.
 static void
 build_reglist(Parrot_Interp interp, ARGMOD(IMC_Unit *unit))
 {
-    int i, count, unused, n_symbols;
     SymHash  const *hsh = &unit->hash;
+    unsigned int    i, count, unused, n_symbols;
 
     IMCC_info(interp, 2, "build_reglist\n");
+
     /* count symbols */
     if (unit->reglist)
         free_reglist(unit);
@@ -647,7 +649,7 @@ significantly
 static void
 rebuild_reglist(ARGMOD(IMC_Unit *unit))
 {
-    int i, count, unused;
+    unsigned int i, count, unused;
     static const char types[] = "INSP";
 
     for (i = count = unused = 0; i < unit->n_symbols; i++) {
@@ -748,7 +750,7 @@ compute_du_chain(ARGMOD(IMC_Unit *unit))
 {
     Instruction *ins        = unit->instructions;
     Instruction *lastbranch = NULL;
-    int i;
+    unsigned int i;
 
     /* Compute last branch in this procedure, update instruction index */
     for (i = 0; ins; ins = ins->next) {
@@ -923,7 +925,7 @@ find available color for register #x in available colors
 static int
 ig_find_color(ARGIN(const IMC_Unit *unit), ARGIN(const char *avail))
 {
-    int c;
+    unsigned int c;
 
     for (c = 0; c < unit->n_symbols; c++)
         if (avail[c])
@@ -950,13 +952,13 @@ If we run out of colors, then we need to spill the top node.
 static int
 try_allocate(PARROT_INTERP, ARGIN(IMC_Unit *unit))
 {
-    int             x;
+    unsigned int    i;
     char           *avail;
     unsigned int   *graph   = unit->interference_graph;
     SymReg ** const reglist = unit->reglist;
 
     /* unit->n_symbols should be an upper limit of needed colors */
-    int n = unit->n_symbols;
+    size_t n = unit->n_symbols;
 
     if (unit->max_color >= n)
         n = unit->max_color + 1;
@@ -966,9 +968,9 @@ try_allocate(PARROT_INTERP, ARGIN(IMC_Unit *unit))
 
     avail = mem_allocate_n_typed(n, char);
 
-    for (x = 0; x < unit->n_symbols; ++x) {
+    for (i = 0; i < unit->n_symbols; ++i) {
         int     already_allocated, color;
-        SymReg *r = reglist[x];
+        SymReg *r = reglist[i];
         int     t = -1;
 
         if (r->color >= 0)
@@ -989,7 +991,7 @@ try_allocate(PARROT_INTERP, ARGIN(IMC_Unit *unit))
 
         /* don't even consider these regs */
         memset(avail, 1, n);
-        map_colors(unit, x, graph, avail, r->set, already_allocated);
+        map_colors(unit, i, graph, avail, r->set, already_allocated);
         color = ig_find_color(unit, avail);
 
         if (color == -1)
@@ -1057,7 +1059,7 @@ first_avail(ARGIN(const IMC_Unit *unit), int reg_set, ARGOUT_NULLOK(Set **avail)
 
     const SymHash * const hsh = &unit->hash;
 
-    int i, first;
+    unsigned int i, first;
 
     /* find allocated registers */
     for (i = 0; i < hsh->size; i++) {
@@ -1094,11 +1096,10 @@ allocate lexicals or non-volatile in ascending order
 static void
 allocate_uniq(PARROT_INTERP, ARGMOD(IMC_Unit *unit), int usage)
 {
-    SymHash *hsh     = &unit->hash;
-    Set     *sets[4] = { NULL, NULL, NULL, NULL };
-    SymReg  *r;
-
-    int i;
+    SymHash     *hsh     = &unit->hash;
+    Set         *sets[4] = { NULL, NULL, NULL, NULL };
+    SymReg      *r;
+    unsigned int i;
 
     for (i = 0; i < hsh->size; i++) {
         for (r = hsh->data[i]; r; r = r->next) {
@@ -1157,11 +1158,12 @@ RT#48260: Not yet documented!!!
 static void
 vanilla_reg_alloc(SHIM_INTERP, ARGMOD(IMC_Unit *unit))
 {
-    int i, j, reg_set, first_reg;
-    char     type[] = "INSP";
-    Set     *avail;
-    SymReg  *r;
-    SymHash *hsh = &unit->hash;
+    char         type[] = "INSP";
+    SymHash     *hsh    = &unit->hash;
+    Set         *avail;
+    SymReg      *r;
+    unsigned int i, j;
+    int          reg_set, first_reg;
 
     /* Clear the pre-assigned colors. */
     for (i = 0; i < hsh->size; i++) {

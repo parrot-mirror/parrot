@@ -41,18 +41,14 @@ This implementation is based on F<runtime/parrot/library/uuid.pir>.
     set $P1, 'uuid'
     _lua__GLOBAL[$P1] = _uuid
 
-    lua_register($P1, _uuid)
+    $P2 = split "\n", <<'LIST'
+isvalid
+new
+time
+LIST
+    lua_register($P1, _uuid, $P2)
 
-    .const .Sub _uuid_isvalid = 'isvalid'
-    _uuid_isvalid.'setfenv'(_lua__GLOBAL)
-    set $P1, 'isvalid'
-    _uuid[$P1] = _uuid_isvalid
-
-    .const .Sub _uuid_new = 'new'
-    _uuid_new.'setfenv'(_lua__GLOBAL)
-    set $P1, 'new'
-    _uuid[$P1] = _uuid_new
-
+    # ???
     .const .Sub _uuid_time = 'time'
     _uuid_time.'setfenv'(_lua__GLOBAL)
     set $P1, 'time'
@@ -86,7 +82,7 @@ This implementation is based on F<runtime/parrot/library/uuid.pir>.
 
 =cut
 
-.sub 'new' :anon
+.sub 'new'
     .param pmc str :optional
     .param pmc extra :slurpy
     .local pmc res
@@ -114,7 +110,7 @@ This implementation is based on F<runtime/parrot/library/uuid.pir>.
 
 =cut
 
-.sub 'isvalid' :anon
+.sub 'isvalid'
     .param pmc str :optional
     .param pmc extra :slurpy
     .local pmc res
@@ -131,7 +127,7 @@ This implementation is based on F<runtime/parrot/library/uuid.pir>.
 
 =cut
 
-.sub 'time' :anon
+.sub 'time'
     .param pmc str :optional
     .param pmc extra :slurpy
     $S1 = lua_checkstring(1, str)

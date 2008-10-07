@@ -121,15 +121,19 @@ to customize the error message slightly.
 .sub select_switches
   .param pmc switches
   .param pmc argv
-  .param int endswitch :optional
+  .param int endswitch :named('endswitch') :optional
   .param int has_ends  :opt_flag
-  .param int catchbad  :optional
+  .param int catchbad  :named('catchbad') :optional
   .param int has_catch :opt_flag
-  .param string name   :optional
+  .param string name   :named('name') :optional
   .param int has_name  :opt_flag
+
+  .local pmc toNumber
+  toNumber = get_root_global [ '_tcl' ], 'toNumber'
 
   if has_ends goto check_catch
   endswitch = 0
+
 
 check_catch:
   if has_catch goto check_name
@@ -171,7 +175,17 @@ loop:
   if pos >= argv_len goto loop_done
   arg = argv[pos]
   $S1 = substr arg, 0, 1, ''
+  # args must start with -
   if $S1 != '-' goto loop_done
+  # and not have any whitespace.
+  $I1 = index arg, ' '
+  if $I1 != -1 goto loop_done
+  # and not be a number
+  push_eh not_num
+    toNumber(arg)
+  pop_eh
+  goto loop_done # was a number
+not_num:
   unless endswitch goto loop_2
   if arg == '-' goto handle_endswitch # already ate one -
 loop_2:
@@ -275,12 +289,15 @@ done:
     $S1 = switches[ii]
     error .= '-'
     error .= $S1
-    if ii == penultimate goto add_or
+    if ii == penultimate goto add_comma_or
     if ii == ultimate goto loop_out_next
     error .= ', '
     goto loop_out_next
+  add_comma_or:
+    if penultimate == 0 goto add_or
+    error .= ','
   add_or:
-    error .= ', or '
+    error .= ' or '
   loop_out_next:
     inc ii
     goto loop_out

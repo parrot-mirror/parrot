@@ -418,7 +418,9 @@ Returns 1 if the value has type boolean, and 0 otherwise.
     if null val goto L1
     res = isa val, 'LuaBoolean'
   L1:
-    .return (res)
+    new $P0, 'LuaBoolean'
+    set $P0, res
+    .return ($P0)
 .end
 
 
@@ -437,7 +439,9 @@ Returns 1 if the value is a function, and 0 otherwise.
     if res goto L1
     res = isa val, 'LuaFunction'
 L1:
-    .return (res)
+    new $P0, 'LuaBoolean'
+    set $P0, res
+    .return ($P0)
 .end
 
 
@@ -454,7 +458,9 @@ Returns 1 if the value is nil, and 0 otherwise.
     if null val goto L1
     res = isa val, 'LuaNil'
   L1:
-    .return (res)
+    new $P0, 'LuaBoolean'
+    set $P0, res
+    .return ($P0)
 .end
 
 
@@ -475,7 +481,9 @@ and 0 otherwise.
     $P0 = val.'tonumber'()
     res = isa $P0, 'LuaNumber'
 L1:
-    .return (res)
+    new $P0, 'LuaBoolean'
+    set $P0, res
+    .return ($P0)
 .end
 
 
@@ -495,7 +503,9 @@ to a string), and 0 otherwise.
     if res goto L1
     res = isa val, 'LuaNumber'
 L1:
-    .return (res)
+    new $P0, 'LuaBoolean'
+    set $P0, res
+    .return ($P0)
 .end
 
 
@@ -512,7 +522,9 @@ Returns 1 if the value is a table, and 0 otherwise.
     if null val goto L1
     res = isa val, 'LuaTable'
   L1:
-    .return (res)
+    new $P0, 'LuaBoolean'
+    set $P0, res
+    .return ($P0)
 .end
 
 
@@ -529,7 +541,9 @@ Returns 1 if the value is a userdata, and 0 otherwise.
     if null val goto L1
     res = isa val, 'LuaUserdata'
   L1:
-    .return (res)
+    new $P0, 'LuaBoolean'
+    set $P0, res
+    .return ($P0)
 .end
 
 
@@ -571,7 +585,8 @@ messages and in debug information.
     $P0.'setfenv'(env)
     .return ($P0)
   _handler:
-    .get_results ($P0, $S0)
+    .get_results ($P0)
+    $S0 = $P0
     null $P0
     .return ($P0, $S0)
 .end
@@ -593,7 +608,8 @@ messages and in debug information.
     $P0.'setfenv'(env)
     .return ($P0)
   _handler:
-    .get_results ($P0, $S0)
+    .get_results ($P0)
+    $S0 = $P0
     null $P0
     .return ($P0, $S0)
 .end
@@ -765,18 +781,42 @@ If this argument is absent or is B<nil>, returns C<def>. Otherwise, raises an er
 .end
 
 
-=item C<lua_register (libname, lib)>
+=item C<lua_register (libname, lib, names, env)>
 
 =cut
 
 .sub 'lua_register'
     .param pmc libname
     .param pmc lib
+    .param pmc names
+    .param pmc env :optional
+    if null libname goto L1
     .const .LuaString _loaded = '_LOADED'
     .local pmc _lua__REGISTRY
     _lua__REGISTRY = get_hll_global '_REGISTRY'
     $P0 = _lua__REGISTRY[_loaded]
     $P0[libname] = lib
+  L1:
+    unless null env goto L2
+    env = get_hll_global '_G'
+  L2:
+    .local pmc interp, ns
+    interp = getinterp
+    ns = interp['namespace'; 1]
+    new $P1, 'LuaString'
+  L3:
+    unless names goto L4
+    $S0 = shift names
+    unless $S0 goto L3
+    $P0 = ns[$S0]
+    unless null $P0 goto L5
+    lua_error("missing method ", $S0)
+  L5:
+    $P0.'setfenv'(env)
+    set $P1, $S0
+    lib[$P1] = $P0
+    goto L3
+  L4:
 .end
 
 
@@ -910,7 +950,8 @@ This function never returns.
   _handler:
     .local pmc ex
     .local string msg
-    .get_results (ex, msg)
+    .get_results (ex)
+    msg = ex
     $P0 = getattribute ex, 'severity'
     if null $P0 goto L1
     $I0 = $P0

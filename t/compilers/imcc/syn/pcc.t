@@ -7,7 +7,7 @@ use warnings;
 use lib qw( . lib ../lib ../../lib );
 use Test::More;
 use Parrot::Config;
-use Parrot::Test tests => 20;
+use Parrot::Test tests => 21;
 
 ##############################
 # Parrot Calling Conventions
@@ -509,6 +509,22 @@ pir_output_is( <<'CODE', <<'OUT', "()=foo() syntax, skip returned value" );
 CODE
 foo
 OUT
+
+#RT #58866 calling a PIR sub with 206 params segfaults parrot
+my $too_many_args = <<'CODE';
+.sub main :main
+    'foo'(_ARGS_)
+    say "didn't segfault"
+.end
+
+.sub foo
+.end
+CODE
+
+my $too_many_args_args = join ',', 1 .. 20_000;
+$too_many_args =~ s/_ARGS_/$too_many_args_args/;
+
+pir_output_is( $too_many_args, "didn't segfault\n", "calling a sub with way too many params" );
 
 # Local Variables:
 #   mode: cperl

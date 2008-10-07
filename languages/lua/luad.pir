@@ -51,7 +51,8 @@ Francois Perrad.
   _handler:
     .local pmc e
     .local string msg
-    .get_results (e, msg)
+    .get_results (e)
+    msg = e
     print msg
     print "\n"
   L1:
@@ -65,7 +66,7 @@ Francois Perrad.
     .param string filename
     .local pmc pio
     .local string content
-    pio = getclass 'ParrotIO'
+    pio = new 'ParrotIO'
     push_eh _handler
     content = pio.'slurp'(filename)
     if content goto L1

@@ -35,6 +35,12 @@ Fudge directives containing the words I<unspecced> or I<unicode> are ignored.
 The latter is because Unicode related tests can succeed on platforms with icu
 installed, and fail on other platforms.
 
+By default some files are skipped (which can be overridden with the
+C<--exclude> option) because certain tests loop (at the time of writing
+C<t/spec/S04-statement-modifiers/while.t>), others because processing them
+simply takes too long; C<t/spec/S05-mass/rx.t> contains more than 250
+fudge lines and thus would take about three hours to autoumatically unfudge.
+
 =cut
 
 use strict;
@@ -48,10 +54,15 @@ use Cwd qw(getcwd);
 use File::Spec;
 use File::Path;
 use Text::Diff;
+use threads;
+use threads::shared;
+use Thread::Queue;
 
 my $impl = 'rakudo';
 our $debug = 0;
 our $out_filename = 'autounfudge.patch';
+my $exclude = '(?:(?:chop|rx|rounders)\.t|modifiers/(while|until).t)$';
+our $threads_num = 1;
 
 GetOptions  'impl=s'        => \$impl,
             'debug'         => \$debug,
@@ -59,6 +70,8 @@ GetOptions  'impl=s'        => \$impl,
             'auto'          => \my $auto,
             'keep-env'      => \my $keep_env,
             'unskip'        => \my $unskip,
+            'exclude'       => \$exclude,
+            'jobs=i'        => \$threads_num,
             or usage();
 
 delete $ENV{PERL6LIB} unless $keep_env;
@@ -74,6 +87,7 @@ else {
     @files = @ARGV or usage();
 }
 
+our $diff_lock :shared = 0;
 open our $diff_fh, '>', $out_filename
     or die "Can't open '$out_filename' for writing: $!";
 {
@@ -84,12 +98,30 @@ open our $diff_fh, '>', $out_filename
 
 our $tmp_dir = tempdir('RAKUDOXXXXXX', CLEANUP => 1);
 
-for (@files){
-    auto_unfudge_file($_);
+if ($threads_num > 1) {
+    my $queue = Thread::Queue->new;
+    for (1..$threads_num) {
+        threads->create(sub {
+                while(my $file_name = $queue->dequeue) {
+                    auto_unfudge_file($file_name);
+                }
+            });
+    }
+
+    $queue->enqueue($_) for @files;
+    $queue->enqueue(undef) for 1..$threads_num;
+    $_->join for threads->list;
 }
+else {
+    for (@files) {
+        auto_unfudge_file($_);
+    }
+}
+
 
 sub auto_unfudge_file {
     my $file_name = shift;
+    return unless defined $file_name;
     open my $f, '<:encoding(UTF-8)', $file_name
         or die "Can't open '$file_name' for reading: $!";
     print "Processing file '$file_name'\n";
@@ -132,6 +164,7 @@ sub auto_unfudge_file {
 
     if (@to_unfudge){
         my $u = unfudge_some($file_name, @to_unfudge);
+        lock($diff_lock);
         print $diff_fh diff($file_name, $u);
         unlink $u;
     }
@@ -159,6 +192,7 @@ Valid options:
     --specfile file     Specification file to read filenames from
     --auto              use t/spectest_regression.data for --specfile
     --keep-env          Keep PERL6LIB environment variable.
+    --exclude regex     Don't run the tests that match regex
 USAGE
 }
 
@@ -193,7 +227,6 @@ sub tests_ok {
     $agg->start();
     $harness->aggregate_tests($agg, $fn);
     $agg->stop();
-#    my $agg = $harness->runtests($fn);
     return !$agg->has_errors;
 }
 
@@ -213,13 +246,14 @@ sub read_specfile {
         next if m/#/;
         next unless m/\S/;
         s/\s+\z//;
+        next if m/$exclude/;
         push @res, "t/spec/$_";
     }
     return @res;
 }
 
 END {
-    close $diff_fh;
+    close $diff_fh if $diff_fh;
     File::Path::rmtree($tmp_dir);
 }
 

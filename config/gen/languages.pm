@@ -34,7 +34,7 @@ use Parrot::Configure::Utils ':gen';
 sub _init {
     my $self = shift;
     my %data;
-    $data{description} = q{Configuring languages};
+    $data{description} = q{Configure languages};
     $data{result} = q{};
     $data{default_languages} = qq{
         APL abc
@@ -45,7 +45,7 @@ sub _init {
         hq9plus
         jako json
         lazy-k lisp lolcode lua
-        m4
+        m4 markdown
         ook
         parrot_compiler perl6 pheme PIR pipp punie pynie
         regex
@@ -76,7 +76,7 @@ sub runstep {
         }
         elsif ( $language eq 'c99' ) {
             $conf->genfile("$langdir/config/makefiles/root.in"     => "$langdir/Makefile");
-            $conf->genfile("$langdir/config/makefiles/cpp.in"      => "$langdir/src/cpp//Makefile");
+            $conf->genfile("$langdir/config/makefiles/cpp.in"      => "$langdir/src/cpp/Makefile");
         }
         elsif ( $language eq 'tcl' ) {
             # tcl has more than one Makefile

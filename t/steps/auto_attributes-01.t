@@ -18,7 +18,7 @@ use Parrot::Configure::Test qw(
 );
 use IO::CaptureOutput qw | capture |;
 
-my $args = process_options( {
+my ($args, $step_list_ref) = process_options( {
     argv            => [ ],
     mode            => q{configure},
 } );
@@ -46,6 +46,7 @@ my $step = test_step_constructor_and_description($conf);
         "'ccflags' excludes bogus attribute as expected"
     );
 }
+$conf->cc_clean();
 
 pass("Completed all tests in $0");
 

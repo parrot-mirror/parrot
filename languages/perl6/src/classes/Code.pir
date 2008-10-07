@@ -31,10 +31,26 @@ for executable objects.
     .param pmc topic
     .local pmc match
     match = self(topic)
+    push_eh not_regex
     $P0 = getinterp
     $P1 = $P0['lexpad';1]
     $P1['$/'] = match
+  not_regex:
     .return (match)
+.end
+
+=item REJECTS(topic)
+
+=cut
+
+.sub 'REJECTS' :method
+    .param pmc topic
+    .local pmc match
+    match = self(topic)
+    $P0 = getinterp
+    $P1 = $P0['lexpad';1]
+    $P1['$/'] = match
+    .return 'prefix:!'(match)
 .end
 
 =item perl()

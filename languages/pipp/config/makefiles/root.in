@@ -8,7 +8,10 @@ EXE           = @exe@
 # Set up directories
 BUILD_DIR     = @build_dir@
 LIBRARY_DIR   = $(BUILD_DIR)/runtime/parrot/library
+INCLUDE_DIR   = $(BUILD_DIR)/include
 PMCDIR        = src/pmc
+PIPPDIR       = $(BUILD_DIR)/languages/pipp
+HASHDIR       = $(PIPPDIR)/src
 PARROT_DYNEXT = @build_dir@/runtime/parrot/dynext
 
 # Set up commands
@@ -20,6 +23,9 @@ PMCBUILD      = $(PERL) @build_dir@/tools/build/dynpmc.pl
 NQP           = $(BUILD_DIR)/compilers/nqp/nqp.pbc
 PCT           = $(BUILD_DIR)/runtime/parrot/library/PCT.pbc
 PBC_TO_EXE    = $(BUILD_DIR)/pbc_to_exe$(EXE)
+CC            = @cc@
+CCFLAGS       = @ccflags@
+TOUCH         = @touch@
 
 PMCS = \
  php \
@@ -40,6 +46,12 @@ PMC_SOURCES = \
  $(PMCDIR)/phpresource.pmc \
  $(PMCDIR)/phpstring.pmc \
  $(PMCDIR)/phpundef.pmc
+
+HASH_SOURCES = $(HASHDIR)/pipp_hash.c
+
+HASH_H = $(HASHDIR)/pipp_hash.h
+
+HASH_OBJS = $(HASHDIR)/pipp_hash$(O)
 
 PHP_GROUP=$(PMCDIR)/php_group$(LOAD_EXT)
 
@@ -203,7 +215,16 @@ pipp.pbc: \
     src/pct/quote_expression.pir
 	$(PARROT) -o pipp.pbc src/common/pipp.pir
 
-pmc: $(PHP_GROUP)
+pmc: $(HASH_OBJS) $(PHP_GROUP)
+
+#Any change to the hash code means phparray needs to be relinked too.
+#Recompiling is close enough for now.
+$(HASH_OBJS): $(HASH_SOURCES) $(HASH_H)
+	$(TOUCH) $(PMCDIR)/phparray.pmc
+	$(CC) $(CCFLAGS) -I$(INCLUDE_DIR) $(HASH_SOURCES) -g -c -o $(HASH_OBJS)
+
+export DYNPMC_INCLUDE=$(PIPPDIR)
+export DYNPMC_LINK=$(HASH_OBJS)
 
 $(PHP_GROUP): $(PARROT) $(PMC_SOURCES)
 	@cd $(PMCDIR) && $(PMCBUILD) generate $(PMCS)
@@ -227,10 +248,21 @@ test-antlr3:
 test-pct:
 	- cd .. && $(PERL) -I../lib -I pipp/lib pipp/t/harness --with-pct
 
-test-pmc: pmc
-	- $(PERL) -I../../lib t/pmc/*t
+# make sure debugging output is disabled while running the tests
+export PMCDEBUG=
 
-clean: clean-common clean-pct clean-antlr3 clean-test
+test-pmc: pmc
+	@ prove -I../../lib t/pmc
+
+# this does not work yet
+test-pcc-testsuite: all t/pcc-testsuite
+	cd t/pcc-testsuite && svn up
+	cd t/pcc-testsuite && php dotest.php -d .
+
+t/pcc-testsuite:
+	svn co http:////code.roadsend.com//svn//pcc//trunk//pcc-testsuite t/pcc-testsuite
+
+clean: clean-common clean-pct clean-antlr3 clean-test clean-hash
 
 clean-common: clean-pmc
 	$(RM_F) \
@@ -263,5 +295,13 @@ clean-test:
   pipp_phc_ast.xml pipp_phc_past.xml pipp_phc_past.nqp pipp_phc_past.pir \
   pipp_antlr_past.nqp  pipp_antlr_past.pir
 
+clean-hash:
+	$(RM_F) "$(HASHDIR)/pipp_hash$(O)"
+
 realclean: clean
 	$(RM_F) Makefile
+
+# Local variables:
+# mode: makefile
+# ex: ft=make
+# End:

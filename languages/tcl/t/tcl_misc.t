@@ -7,7 +7,7 @@ use strict;
 use warnings;
 use lib qw(tcl/lib ./lib ../lib ../../lib ../../../lib);
 
-use Parrot::Test tests => 33;
+use Parrot::Test tests => 34;
 use Test::More;
 
 language_output_is( 'tcl', <<'TCL', <<'OUT', 'multiple foreaches. seems to need puts to trigger.' );
@@ -195,22 +195,14 @@ ok
 OUT
 
 {
-
-    # Note - we need to keep the path around for windows
-    my $path = $ENV{PATH};
-    local undef %ENV;
-    $ENV{PATH}   = $path;
     $ENV{cow}    = 'moo';
     $ENV{pig}    = 'oink';
     $ENV{cowpig} = 'moink';
 
     language_output_is( "tcl", <<'TCL', <<"OUT", "reading environment variables" );
-  parray env
+  puts "$env(cow) $env(pig) $env(cowpig)"
 TCL
-env(PATH)   = $path
-env(cow)    = moo
-env(cowpig) = moink
-env(pig)    = oink
+moo oink moink
 OUT
 }
 
@@ -275,6 +267,15 @@ hello world
 hello world
 OUT
 }
+
+language_output_is('tcl', <<'TCL', <<'OUT', 'failure to find a dynamic command');
+proc Default {{verify {boom}}} {
+    [$verify]
+}
+Default
+TCL
+invalid command name "boom"
+OUT
 
 # Local Variables:
 #   mode: cperl

@@ -24,7 +24,7 @@ use Parrot::Configure::Utils ':gen';
 sub _init {
     my $self = shift;
     my %data;
-    $data{description} = q{Generating Digest PMC files};
+    $data{description} = q{Generate Digest PMC files};
     $data{result}      = q{};
     $data{digest}      = {
         MD2         => {},
@@ -77,10 +77,7 @@ sub runstep {
             ? '#if 0'
             : '#ifndef OPENSSL_NO_' . $md
         );
-        $conf->genfile(
-            $self->{digest_pmc_template} => "src/dynpmc/${file}.pmc",
-            comment_type                      => '/*',
-        );
+        $conf->genfile( $self->{digest_pmc_template} => "src/dynpmc/${file}.pmc" );
     }
 
     return 1;

@@ -158,14 +158,13 @@ STRING * key_set_to_string(PARROT_INTERP, ARGIN_NULLOK(PMC *key))
 
 PARROT_API
 PARROT_WARN_UNUSED_RESULT
+INTVAL key_type(SHIM_INTERP, ARGIN(const PMC *key))
+        __attribute__nonnull__(2);
+
+PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 STRING * key_string(PARROT_INTERP, ARGIN(PMC *key))
         __attribute__nonnull__(1)
-        __attribute__nonnull__(2);
-
-PARROT_API
-PARROT_WARN_UNUSED_RESULT
-INTVAL key_type(SHIM_INTERP, ARGIN(const PMC *key))
         __attribute__nonnull__(2);
 
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */

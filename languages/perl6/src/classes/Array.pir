@@ -132,7 +132,7 @@ Remove the last item from the array and return it.
     x = pop self
     goto done
   empty:
-    x = new 'Failure'
+    x = '!FAIL'('Undefined value popped from empty array')
   done:
     .return (x)
 .end
@@ -165,7 +165,7 @@ Shift the first item off the array and return it.
     x = shift self
     goto done
   empty:
-    x = new 'Failure'
+    x = '!FAIL'('Undefined value shifted from empty array')
   done:
     .return (x)
 .end
@@ -182,6 +182,19 @@ Adds C<args> to the beginning of the Array.
     args.'!flatten'()
     splice self, args, 0, 0
     .return self.'elems'()
+.end
+
+
+=item values()
+
+Return the values of the Array as a List.
+
+=cut
+
+.sub 'values' :method
+    $P0 = new 'List'
+    splice $P0, self, 0, 0
+    .return ($P0)
 .end
 
 

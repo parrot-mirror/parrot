@@ -707,10 +707,11 @@ fixup_globals(PARROT_INTERP)
 
     for (s = globals.cs->first; s; s = s->next) {
         const SymHash * const hsh = &s->fixup;
-        int i;
+        unsigned int          i;
 
         for (i = 0; i < hsh->size; i++) {
             SymReg *fixup;
+
             for (fixup = hsh->data[i]; fixup; fixup = fixup->next) {
                 int pc, pmc_const;
                 int addr = jumppc + fixup->color;
@@ -962,16 +963,17 @@ static PMC*
 create_lexinfo(PARROT_INTERP, ARGMOD(IMC_Unit *unit), ARGIN(PMC *sub),
                int need_lex)
 {
-    int                 i;
 
-    PMC                *lex_info  = NULL;
-    SymHash            *hsh       = &unit->hash;
-    PackFile_Constant **constants = interp->code->const_table->constants;
-    const INTVAL lex_info_id      = Parrot_get_ctx_HLL_type(interp,
+    PMC                *lex_info    = NULL;
+    SymHash            *hsh         = &unit->hash;
+    PackFile_Constant **constants   = interp->code->const_table->constants;
+    const INTVAL        lex_info_id = Parrot_get_ctx_HLL_type(interp,
                                         enum_class_LexInfo);
+    unsigned int        i;
 
     for (i = 0; i < hsh->size; i++) {
         SymReg *r;
+
         for (r = hsh->data[i]; r; r = r->next) {
             if (r->set == 'P' && r->usage & U_LEXICAL) {
                 SymReg *n;
@@ -1604,12 +1606,13 @@ store a constants idx for later reuse
 static void
 constant_folding(PARROT_INTERP, ARGIN(const IMC_Unit *unit))
 {
-    int      i;
     const SymHash *hsh = &IMCC_INFO(interp)->ghash;
+    unsigned int   i;
 
     /* go through all consts of current sub */
     for (i = 0; i < hsh->size; i++) {
         SymReg *r;
+
         /* normally constants are in ghash ... */
         for (r = hsh->data[i]; r; r = r->next) {
             if (r->type & (VTCONST|VT_CONSTP))
@@ -1817,9 +1820,9 @@ e_pbc_emit(PARROT_INTERP, SHIM(void *param), ARGIN(const IMC_Unit *unit),
     if (ins == unit->instructions) {
         int ins_size;
 
-        const int oldsize   = get_old_size(interp, &ins_line);
-        const int code_size = get_codesize(interp, unit, &ins_size);
-        const int bytes     = (oldsize + code_size) * sizeof (opcode_t);
+        const int    oldsize   = get_old_size(interp, &ins_line);
+        const int    code_size = get_codesize(interp, unit, &ins_size);
+        const size_t bytes     = (oldsize + code_size) * sizeof (opcode_t);
 
         IMCC_debug(interp, DEBUG_PBC, "code_size(ops) %d  oldsize %d\n",
                 code_size, oldsize);
@@ -1838,7 +1841,7 @@ e_pbc_emit(PARROT_INTERP, SHIM(void *param), ARGIN(const IMC_Unit *unit),
             mem_sys_realloc(interp->code->base.data, bytes);
 
         interp->code->pic_index->data = (opcode_t *)
-            mem_sys_realloc(interp->code->pic_index->data, bytes/2);
+            mem_sys_realloc(interp->code->pic_index->data, bytes / 2);
 
         interp->code->base.size       = oldsize + code_size;
         interp->code->pic_index->size = (oldsize + code_size) / 2;
