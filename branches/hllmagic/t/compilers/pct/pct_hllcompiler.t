@@ -11,6 +11,15 @@ use Parrot::Test tests => 4;
 
 pir_output_is( <<'CODE', <<'OUT', 'some of the auxiliary methods' );
 
+.namespace ['None';'Module']
+.sub 'q' :anon
+.end
+.namespace ['None';'Parser']
+.sub 'q' :anon
+.end
+.namespace ['None';'Grammar']
+.sub 'q' :anon
+.end
 .sub _main :main
     load_bytecode 'PCT/HLLCompiler.pbc'
     $P0 = new ['PCT';'HLLCompiler']
@@ -23,11 +32,15 @@ pir_output_is( <<'CODE', <<'OUT', 'some of the auxiliary methods' );
     say $S1
 
     $P0.'parsegrammar'('None::Parser')
-    $S1 = $P0.'parsegrammar'()
+    $P1 = $P0.'parsegrammar'()
+    $P1 = $P1.get_name()
+    $S1 = join '::', $P1
     say $S1
 
     $P0.'astgrammar'('None::Grammar')
-    $S1 = $P0.'astgrammar'()
+    $P1 = $P0.'astgrammar'()
+    $P1 = $P1.get_name()
+    $S1 = join '::', $P1
     say $S1
 
     end
@@ -35,8 +48,8 @@ pir_output_is( <<'CODE', <<'OUT', 'some of the auxiliary methods' );
 CODE
 None
 Module
-None::Parser
-None::Grammar
+parrot::None::Parser
+parrot::None::Grammar
 OUT
 
 pir_output_is( <<'CODE', <<'OUT', 'one complete start-to-end compiler' );

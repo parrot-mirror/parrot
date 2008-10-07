@@ -57,7 +57,7 @@ is set or implied.
 
     ##   set values based on src param
     .local int issrcmatch, pos, iscont
-    .local string grammar
+    .local pmc grammar
     .local pmc target, grammar_class
     issrcmatch = isa src, ['PGE';'Match']
     if issrcmatch goto target_from_src
@@ -109,8 +109,14 @@ is set or implied.
     $I0 = exists adverbs['grammar']
     unless $I0 goto with_grammar
     grammar = adverbs['grammar']
-    $P0 = split '::', grammar
+    $S0 = typeof grammar
+    eq $S0, 'NameSpace', grammar_namespace
+    $S0 = grammar
+    $P0 = split '::', $S0
     grammar_class = get_class $P0
+    goto with_grammar
+  grammar_namespace:
+    grammar_class = grammar
   with_grammar:
   with_adverbs:
 
