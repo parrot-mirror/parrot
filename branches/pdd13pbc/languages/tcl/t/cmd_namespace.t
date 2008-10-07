@@ -10,7 +10,7 @@ use Tcl::Test; #\
 __DATA__
 
 source lib/test_more.tcl
-plan 39
+plan 41
 
 eval_is {namespace} \
   {wrong # args: should be "namespace subcommand ?arg ...?"} \
@@ -30,16 +30,16 @@ eval_is {namespace children what?} \
   {namespace children: unknown namespace} \
   {TODO {new behavior in 8.5.1}}
 
-is [namespace children]        {::tcltest ::tcl} {namespace children: no args}
-is [namespace children ::]     {::tcltest ::tcl} {namespace children: ::}
-is [namespace children :: *c*] {::tcltest ::tcl} {namespace children: matched pattern}
+is [namespace children]        {::tcl} {namespace children: no args}
+is [namespace children ::]     {::tcl} {namespace children: ::}
+is [namespace children :: *c*] {::tcl} {namespace children: matched pattern}
 is [namespace children :: a]   {}    {namespace children: unmatched pattern}
 
 namespace eval bob {}
 namespace eval Bob {}
 namespace eval audreyt { namespace eval Matt {} }
 
-is [namespace children ::] {::audreyt ::Bob ::bob ::tcltest ::tcl} \
+is [namespace children ::] {::audreyt ::Bob ::bob ::tcl} \
   {namespace children: ordering}
 is [namespace children ::audreyt] ::audreyt::Matt  {namespace chlidren: nested}
 is [namespace eval ::audreyt {namespace children}] ::audreyt::Matt \
@@ -78,7 +78,7 @@ eval_is {namespace exists a a} \
   {wrong # args: should be "namespace exists name"} \
   {namespace exists: too many args}
 
-is [namespace exists a]  0 {namespace exists: failure}
+eval_is {namespace exists a}  0 {namespace exists: failure} {TODO {broken in r30286}}
 is [namespace exists {}] 1 {namespace exists: global implicit}
 is [namespace exists ::] 1 {namespace exists: global explicit}
 
@@ -108,8 +108,7 @@ alias foo bar
 is [set bar] ok {namespace eval + proc + upvar}
 
 namespace delete foo
-is [namespace exists foo] 0 {namespace delete}
-
+eval_is {namespace exists foo} 0 {namespace delete} {TODO {broken in r30286}}
 
 eval_is {namespace current foo} \
   {wrong # args: should be "namespace current"} \
@@ -127,6 +126,22 @@ is [namespace parent ""]                   {} {namespace parent: ::}
 is [namespace parent foo]                  :: {namespace parent: ::foo (explicit)}
 is [namespace eval foo {namespace parent}] :: {namespace parent: ::foo (implicit)}
 
+namespace eval perl6 {
+  proc passthrough {val} {
+    return $val
+  }
+  proc pi {} {
+    passthrough 3
+  }
+}
+is [perl6::pi] 3 \
+  {do procs in namespace default to that namespace when looking for commands?}
+
+namespace eval perl6 {
+  namespace export pi
+}
+namespace import perl6::pi
+eval_is {pi} 3 {simple import test}
 
 # we can't do this test until all the file commands work
 # ([file delete] in particular)

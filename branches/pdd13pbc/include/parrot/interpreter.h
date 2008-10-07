@@ -144,8 +144,8 @@ typedef Parrot_Run_core_t Run_Cores;
 #include "parrot/op.h"
 #include "parrot/oplib.h"
 
-#include "parrot/debug.h"
-#include "parrot/mmd.h"
+#include "parrot/debugger.h"
+#include "parrot/multidispatch.h"
 
 typedef struct warnings_t {
     Warnings_classes classes;
@@ -495,6 +495,8 @@ PARROT_DATA PMC * PMCNULL;   /* Holds single Null PMC */
 #define PARROT_OS_VERSION_NUMBER     6
 #define CPU_ARCH                     7
 #define CPU_TYPE                     8
+#define PARROT_INTMAX                9
+#define PARROT_INTMIN               10
 
 /* &end_gen */
 

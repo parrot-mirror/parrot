@@ -8,7 +8,7 @@ use lib qw( . lib ../lib ../../lib );
 
 use Test::More;
 use Parrot::Config;
-use Parrot::Test tests => 53;
+use Parrot::Test tests => 54;
 
 =head1 NAME
 
@@ -23,8 +23,6 @@ t/pmc/complex.t - Complex Numbers
 Tests the Complex PMC.
 
 =cut
-
-my $fp_equality_macro = pasm_fp_equality_macro();
 
 pasm_output_is( <<'CODE', <<'OUTPUT', "String parsing" );
     new P0, 'Complex'
@@ -320,6 +318,10 @@ pasm_output_is( << 'CODE', << 'OUTPUT', "multiply" );
     mul P1, P0, P3
     print P1
     print "\n"
+
+    mul P1, P3, P0
+    print P1
+    print "\n"
     end
 CODE
 -5+12i
@@ -330,6 +332,7 @@ CODE
 1-1i
 2-2i
 1-1i
+10+10i
 10+10i
 OUTPUT
 
@@ -401,7 +404,8 @@ for my $type ( qw( Complex Float Integer ) ) {
     print "fail\\n"
     pop_eh
 OK:
-    get_results '0,0', \$P0, \$S0
+    get_results '0', \$P0
+    \$S0 = \$P0
     print "ok\\n"
     print \$S0
     print "\\n"
@@ -413,7 +417,7 @@ OUTPUT
 }
 
 pasm_output_is( <<"CODE", <<'OUTPUT', "get int/num/bool" );
-@{[ $fp_equality_macro ]}
+        .include 'include/fp_equality.pasm'
         new P0, 'Complex'
         set P0, "2 - 1.5i"
         print P0
@@ -447,7 +451,7 @@ false
 OUTPUT
 
 pasm_output_is( <<"CODE", <<'OUTPUT', "get keyed" );
-@{[ $fp_equality_macro ]}
+        .include 'include/fp_equality.pasm'
         new P0, 'Complex'
         new P1, 'String'
         set P0, "- 3.3 + 1.2i"
@@ -684,7 +688,7 @@ OUTPUT
 }
 
 pasm_output_is( <<"CODE", <<'OUTPUT', "neg" );
-@{[ $fp_equality_macro ]}
+     .include 'include/fp_equality.pasm'
      new P0, 'Complex'
      set P0, "1.3 + 1.7i"
      new P1, 'Integer'
@@ -704,7 +708,7 @@ ok 2
 OUTPUT
 
 pasm_output_is( <<"CODE", <<'OUTPUT', "clone" );
-@{[ $fp_equality_macro ]}
+     .include 'include/fp_equality.pasm'
      new P0, 'Complex'
      set P0, "1 - 3i"
      clone P1, P0
@@ -835,7 +839,7 @@ OUTPUT
 pir_output_is( << 'CODE', << 'OUTPUT', "sqrt of complex numbers" );
 .macro DoIt(val)
     c = .val
-    c2 = sqrt c
+    c2 = c.'sqrt'()
     print c2
     print "\n"
 .endm
@@ -1863,6 +1867,34 @@ pir_output_is( << 'CODE', << 'OUTPUT', "csch of complex numbers" );
 CODE
 done
 OUTPUT
+
+pir_output_is( << 'CODE', << 'OUTPUT', "add using subclass of Complex (RT #59630)" );
+.sub main
+    $P0 = subclass 'Complex', 'MyComplex'
+
+    .local pmc a, b, c
+    ##   a = 1 + 0i
+    a = new 'MyComplex'
+    a['real'] = 1
+    a['imag'] = 2
+    say a
+
+    ##   b = 1 + 0i
+    b = new 'MyComplex'
+    b['real'] = 3
+    b['imag'] = 4
+    say b
+
+    ##   c = a - b
+    c = add a, b
+    say c
+.end
+CODE
+1+2i
+3+4i
+4+6i
+OUTPUT
+
 
 # Local Variables:
 #   mode: cperl

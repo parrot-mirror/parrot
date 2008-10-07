@@ -39,53 +39,53 @@
    /* Put the tokens into the symbol table, so that GDB and other debuggers
       know about them.  */
    enum yytokentype {
-     TK_LABEL = 258,
-     TK_NL = 259,
-     TK_HLL = 260,
-     TK_HLL_MAP = 261,
-     TK_N_OPERATORS = 262,
-     TK_PRAGMA = 263,
-     TK_LOADLIB = 264,
-     TK_SUB = 265,
-     TK_END = 266,
-     TK_PARAM = 267,
-     TK_LEX = 268,
-     TK_LOCAL = 269,
-     TK_NAMESPACE = 270,
-     TK_INVOCANT = 271,
-     TK_METH_CALL = 272,
-     TK_GLOBALCONST = 273,
-     TK_CONST = 274,
-     TK_RETURN = 275,
-     TK_YIELD = 276,
-     TK_BEGIN_YIELD = 277,
-     TK_END_YIELD = 278,
-     TK_BEGIN_RETURN = 279,
-     TK_END_RETURN = 280,
-     TK_BEGIN_CALL = 281,
-     TK_END_CALL = 282,
-     TK_GET_RESULTS = 283,
-     TK_CALL = 284,
-     TK_ARG = 285,
-     TK_RESULT = 286,
-     TK_NCI_CALL = 287,
-     TK_IDENT = 288,
-     TK_STRINGC = 289,
-     TK_INTC = 290,
-     TK_NUMC = 291,
-     TK_PREG = 292,
-     TK_NREG = 293,
-     TK_SREG = 294,
-     TK_IREG = 295,
-     TK_PARROT_OP = 296,
-     TK_INT = 297,
-     TK_NUM = 298,
-     TK_PMC = 299,
-     TK_STRING = 300,
-     TK_IF = 301,
-     TK_UNLESS = 302,
-     TK_NULL = 303,
-     TK_GOTO = 304,
+     TK_NL = 258,
+     TK_HLL = 259,
+     TK_HLL_MAP = 260,
+     TK_LOADLIB = 261,
+     TK_SUB = 262,
+     TK_END = 263,
+     TK_PARAM = 264,
+     TK_LEX = 265,
+     TK_LOCAL = 266,
+     TK_NAMESPACE = 267,
+     TK_INVOCANT = 268,
+     TK_METH_CALL = 269,
+     TK_GLOBALCONST = 270,
+     TK_CONST = 271,
+     TK_RETURN = 272,
+     TK_YIELD = 273,
+     TK_SET_YIELD = 274,
+     TK_SET_RETURN = 275,
+     TK_BEGIN_YIELD = 276,
+     TK_END_YIELD = 277,
+     TK_BEGIN_RETURN = 278,
+     TK_END_RETURN = 279,
+     TK_BEGIN_CALL = 280,
+     TK_END_CALL = 281,
+     TK_GET_RESULTS = 282,
+     TK_CALL = 283,
+     TK_SET_ARG = 284,
+     TK_GET_RESULT = 285,
+     TK_NCI_CALL = 286,
+     TK_TAILCALL = 287,
+     TK_LABEL = 288,
+     TK_IDENT = 289,
+     TK_INT = 290,
+     TK_NUM = 291,
+     TK_PMC = 292,
+     TK_STRING = 293,
+     TK_IF = 294,
+     TK_UNLESS = 295,
+     TK_NULL = 296,
+     TK_GOTO = 297,
+     TK_STRINGC = 298,
+     TK_INTC = 299,
+     TK_NUMC = 300,
+     TK_PREG = 301,
+     TK_NREG = 302,
+     TK_SREG = 303,
+     TK_IREG = 304,
      TK_ARROW = 305,
      TK_NE = 306,
      TK_EQ = 307,
@@ -127,63 +127,64 @@
      TK_FLAG_POSTCOMP = 343,
      TK_FLAG_IMMEDIATE = 344,
      TK_FLAG_LEXID = 345,
-     TK_FLAG_UNIQUE_REG = 346,
-     TK_FLAG_NAMED = 347,
-     TK_FLAG_SLURPY = 348,
-     TK_FLAG_FLAT = 349,
-     TK_FLAG_OPTIONAL = 350,
-     TK_FLAG_OPT_FLAG = 351,
-     TK_FLAG_INVOCANT = 352
+     TK_INSTANCEOF = 346,
+     TK_FLAG_UNIQUE_REG = 347,
+     TK_FLAG_NAMED = 348,
+     TK_FLAG_SLURPY = 349,
+     TK_FLAG_FLAT = 350,
+     TK_FLAG_OPTIONAL = 351,
+     TK_FLAG_OPT_FLAG = 352,
+     TK_FLAG_INVOCANT = 353
    };
 #endif
 /* Tokens.  */
-#define TK_LABEL 258
-#define TK_NL 259
-#define TK_HLL 260
-#define TK_HLL_MAP 261
-#define TK_N_OPERATORS 262
-#define TK_PRAGMA 263
-#define TK_LOADLIB 264
-#define TK_SUB 265
-#define TK_END 266
-#define TK_PARAM 267
-#define TK_LEX 268
-#define TK_LOCAL 269
-#define TK_NAMESPACE 270
-#define TK_INVOCANT 271
-#define TK_METH_CALL 272
-#define TK_GLOBALCONST 273
-#define TK_CONST 274
-#define TK_RETURN 275
-#define TK_YIELD 276
-#define TK_BEGIN_YIELD 277
-#define TK_END_YIELD 278
-#define TK_BEGIN_RETURN 279
-#define TK_END_RETURN 280
-#define TK_BEGIN_CALL 281
-#define TK_END_CALL 282
-#define TK_GET_RESULTS 283
-#define TK_CALL 284
-#define TK_ARG 285
-#define TK_RESULT 286
-#define TK_NCI_CALL 287
-#define TK_IDENT 288
-#define TK_STRINGC 289
-#define TK_INTC 290
-#define TK_NUMC 291
-#define TK_PREG 292
-#define TK_NREG 293
-#define TK_SREG 294
-#define TK_IREG 295
-#define TK_PARROT_OP 296
-#define TK_INT 297
-#define TK_NUM 298
-#define TK_PMC 299
-#define TK_STRING 300
-#define TK_IF 301
-#define TK_UNLESS 302
-#define TK_NULL 303
-#define TK_GOTO 304
+#define TK_NL 258
+#define TK_HLL 259
+#define TK_HLL_MAP 260
+#define TK_LOADLIB 261
+#define TK_SUB 262
+#define TK_END 263
+#define TK_PARAM 264
+#define TK_LEX 265
+#define TK_LOCAL 266
+#define TK_NAMESPACE 267
+#define TK_INVOCANT 268
+#define TK_METH_CALL 269
+#define TK_GLOBALCONST 270
+#define TK_CONST 271
+#define TK_RETURN 272
+#define TK_YIELD 273
+#define TK_SET_YIELD 274
+#define TK_SET_RETURN 275
+#define TK_BEGIN_YIELD 276
+#define TK_END_YIELD 277
+#define TK_BEGIN_RETURN 278
+#define TK_END_RETURN 279
+#define TK_BEGIN_CALL 280
+#define TK_END_CALL 281
+#define TK_GET_RESULTS 282
+#define TK_CALL 283
+#define TK_SET_ARG 284
+#define TK_GET_RESULT 285
+#define TK_NCI_CALL 286
+#define TK_TAILCALL 287
+#define TK_LABEL 288
+#define TK_IDENT 289
+#define TK_INT 290
+#define TK_NUM 291
+#define TK_PMC 292
+#define TK_STRING 293
+#define TK_IF 294
+#define TK_UNLESS 295
+#define TK_NULL 296
+#define TK_GOTO 297
+#define TK_STRINGC 298
+#define TK_INTC 299
+#define TK_NUMC 300
+#define TK_PREG 301
+#define TK_NREG 302
+#define TK_SREG 303
+#define TK_IREG 304
 #define TK_ARROW 305
 #define TK_NE 306
 #define TK_EQ 307
@@ -225,35 +226,36 @@
 #define TK_FLAG_POSTCOMP 343
 #define TK_FLAG_IMMEDIATE 344
 #define TK_FLAG_LEXID 345
-#define TK_FLAG_UNIQUE_REG 346
-#define TK_FLAG_NAMED 347
-#define TK_FLAG_SLURPY 348
-#define TK_FLAG_FLAT 349
-#define TK_FLAG_OPTIONAL 350
-#define TK_FLAG_OPT_FLAG 351
-#define TK_FLAG_INVOCANT 352
+#define TK_INSTANCEOF 346
+#define TK_FLAG_UNIQUE_REG 347
+#define TK_FLAG_NAMED 348
+#define TK_FLAG_SLURPY 349
+#define TK_FLAG_FLAT 350
+#define TK_FLAG_OPTIONAL 351
+#define TK_FLAG_OPT_FLAG 352
+#define TK_FLAG_INVOCANT 353
 
 
 
 
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef union YYSTYPE
-#line 94 "pir.y"
+#line 230 "pir.y"
 {
     double              dval;
     int                 ival;
     char               *sval;
-    struct constant    *constval;
+    struct constant    *cval;
     struct instruction *instr;
     struct expression  *expr;
     struct target      *targ;
     struct argument    *argm;
     struct invocation  *invo;
-
-    void               *fixme;
+    struct key         *key;
+    struct symbol      *symb;
 }
 /* Line 1489 of yacc.c.  */
-#line 257 "pirparser.h"
+#line 259 "pirparser.h"
 	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1

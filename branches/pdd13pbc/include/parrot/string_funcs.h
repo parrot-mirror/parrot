@@ -284,7 +284,7 @@ STRING * string_from_num(PARROT_INTERP, FLOATVAL f)
 
 PARROT_API
 PARROT_CANNOT_RETURN_NULL
-STRING * string_grow(PARROT_INTERP, ARGMOD(STRING *s), INTVAL addlen)
+STRING * string_grow(PARROT_INTERP, ARGMOD(STRING *s), UINTVAL addlen)
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         FUNC_MODIFIES(*s);
@@ -355,7 +355,7 @@ STRING * string_make_empty(PARROT_INTERP,
 
 PARROT_API
 PARROT_WARN_UNUSED_RESULT
-INTVAL string_max_bytes(SHIM_INTERP, ARGIN(const STRING *s), INTVAL nchars)
+INTVAL string_max_bytes(SHIM_INTERP, ARGIN(const STRING *s), UINTVAL nchars)
         __attribute__nonnull__(2);
 
 PARROT_API
@@ -445,13 +445,12 @@ PARROT_API
 PARROT_CANNOT_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
 STRING * string_substr(PARROT_INTERP,
-    ARGIN(STRING *src),
+    ARGIN_NULLOK(STRING *src),
     INTVAL offset,
     INTVAL length,
     ARGOUT_NULLOK(STRING **d),
     int replace_dest)
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(2);
+        __attribute__nonnull__(1);
 
 PARROT_API
 PARROT_CANNOT_RETURN_NULL
@@ -469,8 +468,8 @@ void string_titlecase_inplace(PARROT_INTERP, ARGMOD(STRING *s))
 PARROT_API
 PARROT_MALLOC
 PARROT_CANNOT_RETURN_NULL
-char * string_to_cstring(SHIM_INTERP, ARGIN(const STRING *s))
-        __attribute__nonnull__(2);
+char * string_to_cstring(PARROT_INTERP, ARGIN_NULLOK(const STRING *s))
+        __attribute__nonnull__(1);
 
 PARROT_API
 PARROT_WARN_UNUSED_RESULT
@@ -500,15 +499,12 @@ void string_unpin(PARROT_INTERP, ARGMOD(STRING *s))
 PARROT_API
 PARROT_CANNOT_RETURN_NULL
 PARROT_MALLOC
-STRING * string_upcase(PARROT_INTERP, ARGIN(const STRING *s))
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(2);
+STRING * string_upcase(PARROT_INTERP, ARGIN_NULLOK(const STRING *s))
+        __attribute__nonnull__(1);
 
 PARROT_API
-void string_upcase_inplace(PARROT_INTERP, ARGMOD(STRING *s))
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(2)
-        FUNC_MODIFIES(*s);
+void string_upcase_inplace(PARROT_INTERP, ARGMOD_NULLOK(STRING *s))
+        __attribute__nonnull__(1);
 
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL

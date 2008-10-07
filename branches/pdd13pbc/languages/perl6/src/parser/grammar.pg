@@ -112,13 +112,22 @@ token afterws {
 token pod_comment {
     ^^ '=' <.unsp>?
     [
-    | begin \h+ <ident> .*? \n
-      '=' <.unsp>? 'end' \h+ $<ident> >> \N*        {*}         #= tagged
+    | begin \h+ <identifier> .*? \n
+      '=' <.unsp>? 'end' \h+ $<identifier> >> \N*   {*}         #= tagged
     | begin \h* \n .*? \n
       '=' <.unsp>? 'end' >> \N*                     {*}         #= anon
     | \N*                                           {*}         #= misc
     ]
     {*}
+}
+
+
+token apostrophe {
+    <[ ' \- ]>
+}
+
+token identifier {
+    <.ident> [ <.apostrophe> <.ident> ]*
 }
 
 
@@ -163,11 +172,20 @@ rule statementlist {
 ##  isn't present -- e.g., a closing '}' at the end of a line
 ##  for a <block>.
 
-token terminator { <[ ; ) \] } ]> || '!!' || '<==' || '==>' || '-->' }
+token terminator { 
+    |  <[ ; ) \] } ]> 
+    | '!!' 
+    | '-->' 
+    | [ if | unless | while | until | for | given | when ] >> 
+}
+
+token stdstopper {
+    <?terminator>
+}
 
 token eat_terminator {
     || ';'
-    || <?before <terminator>>                    # FIXME: <?terminator>
+    || <?terminator>
     || {{ $P0 = get_global '$!endstmt'
           $P1 = get_global '$!ws'
           $P2 = $P1.'from'()
@@ -272,9 +290,9 @@ rule loop_statement {
     $<sym>=[loop]
     $<eee>=[
         '('
-            <e1=EXPR> ';'
-            <e2=EXPR> ';'
-            <e3=EXPR>
+            <e1=EXPR>? ';'
+            <e2=EXPR>? ';'
+            <e3=EXPR>?
         ')'
     ]?
     <block>
@@ -289,7 +307,6 @@ rule for_statement {
 
 rule use_statement {
     $<sym>=[use] <name>
-    [ '-' <ident> ]?     # e.g. 'v6-alpha'
     <EXPR>?
     {*}
 }
@@ -336,14 +353,14 @@ token routine_declarator {
 }
 
 rule routine_def {
-    <ident>? <multisig>?
+    <identifier>? <multisig>?
     <trait>*
     <block>
     {*}
 }
 
 rule method_def {
-    <ident>? <multisig>?
+    <identifier>? <multisig>?
     <trait>*
     <block>
     {*}
@@ -357,7 +374,7 @@ rule trait {
 rule trait_auxiliary {
     | $<sym>=[is] <name><postcircumfix>?
     | $<sym>=[does] <name>['['<EXPR>']']?
-    | $<sym>=[will] <ident> <block>
+    | $<sym>=[will] <identifier> <block>
 }
 
 rule trait_verb {
@@ -415,8 +432,12 @@ rule type_declarator {
 rule type_constraint {
     [
     | <typename>
-    | where <EXPR> # XXX <EXPR(%chaining)>
+    | where <EXPR: 'm='> # XXX <EXPR(%chaining)>
     ]
+}
+
+rule post_constraint {
+    where <EXPR: 'm='> # XXX <EXPR(%chaining)>
 }
 
 # XXX This rule doesn't appear in STD.pm; we use this to parse things like
@@ -435,6 +456,7 @@ token parameter {
         $<quant>=[ <[ ? ! ]>? ]
     ]
     <trait>*
+    <post_constraint>*
     <default_value>?
     {*}
 }
@@ -444,7 +466,7 @@ rule default_value {
 }
 
 token param_var {
-    <sigil> <twigil>? <ident>
+    <sigil> <twigil>? <identifier>
     {*}
 }
 
@@ -458,13 +480,14 @@ token special_variable {
 #### Terms ####
 
 token expect_term {
-    | <noun> <postfix>* {*}                      #= noun
+    | <noun> <post>* {*}                         #= noun
     | '*' {*}                                    #= *
 }
 
 
-token postfix {
+token post {
     <!afterws>
+    [ <.unsp> || \\ <?before '.'> ]?
     [
     | <dotty> {*}                                #= dotty
     | <postcircumfix> {*}                        #= postcircumfix
@@ -475,10 +498,16 @@ token postfix {
 token dotty {
     [
     | '.VAR' {*}                                      #= VAR
-    | '.' <methodop> {*}                              #= .
-    | ('.' <[+*?=^:]>) <?unspacey> <methodop> {*}     #= .*
+    | '.' <.unspacey> <dottyop> {*}                   #= .
+    | ('.' <[+*?^:]>) <.unspacey> <dottyop> {*}       #= .*
     | '!' <methodop> {*}                              #= !
     ]
+}
+
+
+token dottyop {
+    | <methodop> {*}                                  #= methodop
+    | <postcircumfix> {*}                             #= postcircumfix
 }
 
 
@@ -533,29 +562,31 @@ token term {
     [
     | 'VAR(' <variable> ')' {*}                  #= VAR
     | <typename> {*}                             #= typename
-    | <ident=named_0ary>
+    | <identifier=named_0ary>
         [
         | <.unsp>? '.'? '(' <semilist> ')' {*}   #= func args
         | :: {*}                                 #= listop noarg
         ]
-    | <ident>
+    | <identifier>
         [
         | \s <arglist> {*}                       #= listop args
         | <.unsp>? '.'? '(' <semilist> ')' {*}   #= func args
         | :: {*}                                 #= listop noarg
         ]
     | <sigil> \s <arglist> {*}                   #= sigil
+    | '...' {*}                                  #= ...
     ]
 }
 
 ##  XXX: cheat until we get term:pi, term:rand, term:undef, etc.
 token named_0ary {
-    [pi|rand|undef|nothing] >>
+    | [pi|rand|undef|nothing|time] >>
+    | ['...'|'???'|'!!!'|'=<>']
 }
 
 rule package_declarator {
     [
-    | $<sym>=[module|class|grammar] {*}          #= open
+    | $<sym>=[class|grammar|module|package] {*}  #= open
       <package_def> {*}                          #= package_def
     | $<sym>=[role] {*}                          #= open
       <role_def> {*}                             #= role_def
@@ -660,7 +691,7 @@ token sigil { '$' | '@' | '%' | '&' | '::' }
 token twigil { <[.!^:*+?=]> }
 
 token name {
-    | <ident> [ '::' <ident> ]*
+    | <identifier> [ '::' <identifier> ]*
 }
 
 token value {
@@ -677,6 +708,12 @@ token quote {
     | <.before '<' > <quote_expression: :w :q>
     # | <.before '«' > <quote_expression: :ww :qq>  FIXME: unicode
     | <.before '/'>  <quote_expression: :regex>
+    | m   <.ws>      <quote_expression: :regex>
+    | q 
+        [ q <.ws>      <quote_expression: :qq>
+        | w <.ws>      <quote_expression: :q :w>
+        |   <.ws>      <quote_expression: :q>
+        ]
     ]
     {*}
 }
@@ -704,7 +741,7 @@ token integer {
 }
 
 token escale {
-    <[Ee]> <[+\-]>? \d+
+    <[Ee]> <[+\-]>? \d+[_\d+]*
 }
 
 # careful to distinguish from both integer and 42.method
@@ -757,7 +794,7 @@ token typename {
 }
 
 token name {
-    <ident> [ '::' <ident> ]*
+    <identifier> [ '::' <identifier> ]*
     {*}
 }
 
@@ -771,19 +808,19 @@ rule regex_declarator {
 
 rule regex_declarator_regex {
     $<sym>='regex'
-    <ident>?
+    <identifier>?
     <before '{'> <quote_expression: :regex> {*}
 }
 
 rule regex_declarator_token {
     $<sym>='token'
-    <ident>?
+    <identifier>?
     <before '{'> <quote_expression: :regex :ratchet> {*}
 }
 
 rule regex_declarator_rule {
     $<sym>='rule'
-    <ident>?
+    <identifier>?
     <before '{'> <quote_expression: :regex :ratchet :sigspace> {*}
 }
 
@@ -796,20 +833,23 @@ rule semilist {
 }
 
 token arglist {
-    <EXPR: 'e='>                                 # EXPR(%list_assignment)
+    [
+    | <?terminator>
+    | <EXPR: 'e='>                                 # EXPR(%list_assignment)
+    ]
     {*}
 }
 
 token fatarrow {
-    <key=ident> \h* '=>' <val=EXPR: 'i='>        # EXPR(%item_assignment)
+    <key=identifier> \h* '=>' <val=EXPR: 'i='>     # EXPR(%item_assignment)
     {*}
 }
 
 token colonpair {
     ':'
     [
-    | '!' <ident>                                        {*}    #= false
-    | <ident> $<val>=[ <.unsp>? <postcircumfix> ]?       {*}    #= value
+    | '!' <identifier>                                   {*}    #= false
+    | <identifier> $<val>=[ <.unsp>? <postcircumfix> ]?  {*}    #= value
     | <postcircumfix>                                    {*}    #= structural
     | <sigil> <twigil>? <desigilname>                    {*}    #= varname
     ]

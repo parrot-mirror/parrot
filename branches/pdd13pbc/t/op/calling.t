@@ -1,5 +1,5 @@
 #!perl
-# Copyright (C) 2001-2007, The Perl Foundation.
+# Copyright (C) 2001-2008, The Perl Foundation.
 # $Id$
 
 use strict;
@@ -7,7 +7,7 @@ use warnings;
 use lib qw( . lib ../lib ../../lib );
 
 use Test::More;
-use Parrot::Test tests => 97;
+use Parrot::Test tests => 98;
 
 =head1 NAME
 
@@ -15,7 +15,7 @@ t/op/calling.t - Parrot Calling Conventions
 
 =head1 SYNOPSIS
 
-        % prove t/op/calling.t
+    % prove t/op/calling.t
 
 =head1 DESCRIPTION
 
@@ -180,13 +180,13 @@ pasm_output_is( <<'CODE', <<'OUTPUT', "all together now" );
 CODE
 42
 77
-4.500000
-2.300000
+4.5
+2.3
 ok 1
 ok 2
 101
 88
-5.500000
+5.5
 ok 3
 ok 4
 OUTPUT
@@ -429,7 +429,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "type conversion - fetch" );
     returncc
 .end
 CODE
-hello 42 again 47.110000
+hello 42 again 47.11
 OUTPUT
 
 pir_error_output_like( <<'CODE', <<'OUTPUT', "argc mismatch, too few" );
@@ -515,7 +515,8 @@ pir_output_like( <<'CODE', <<'OUTPUT', "argc mismatch, too many - catch exceptio
     print $P0
     print "never\n"
 arg_handler:
-    get_results "0,0", $P1, $S0
+    get_results "0", $P1
+    $S0 = $P1
     print "caught: "
     print $S0
 #    $S1 = typeof $P1
@@ -833,7 +834,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "type conversion - native" );
 .end
 CODE
 42 42 42
-42.000000 42.000000 42.200000
+42 42 42.2
 42 42 42.2
 OUTPUT
 
@@ -1646,7 +1647,7 @@ L3:
         if arg1 != 3 goto L3
         $P58 = arg1
         $P59 = arg1
-        $P57 = n_mul $P58, $P59
+        $P57 = mul $P58, $P59
         set_args '(0)', $P57
         tailcall $P41
 L3:
@@ -2463,6 +2464,10 @@ pir_output_is( <<'CODE', <<'OUTPUT', "slurpy named after :optional" );
     foo($P0 :flat, 'abc' => 3)
     $P0 = new 'ResizablePMCArray'
     foo($P0 :flat, 'abc' => 4)
+    # Shorter version of RT#53926
+    $P0 = new 'Hash'
+    $P0['abc'] = 5
+    foo($P0 :named :flat)
 .end
 
 .sub foo
@@ -2479,6 +2484,33 @@ ok 1
 ok 2
 ok 3
 ok 4
+ok 5
+OUTPUT
+
+pir_output_is( <<'CODE', <<'OUTPUT', "named optional after :optional" );
+.sub main :main
+    foo()
+    foo(1 :named('y'))
+    $P0 = new 'Integer'
+    $P0 = 2
+    'foo'($P0 :named('y'))
+.end
+
+.sub foo
+    .param pmc x :optional
+    .param int has_x :opt_flag
+    .param pmc y :optional :named('y')
+    .param int has_y :opt_flag
+    if has_y goto have_y
+    y = new 'Integer'
+    y = 0
+have_y:
+    say y
+.end
+CODE
+0
+1
+2
 OUTPUT
 
 pir_error_output_like( <<'CODE', <<'OUTPUT', "arg mismatch with no params", todo=> 'RT #39844' );

@@ -140,8 +140,9 @@ C<name> attribute.
 
 Get/set the PAST::Var node's "scope" (i.e., how the variable
 is accessed or set).  Allowable values include "package", "lexical",
-"parameter", and "keyed", representing HLL global, lexical, block
-parameter, and array/hash variables respectively.
+"parameter", "keyed", "attribute" and "register", representing
+HLL global, lexical, block parameter, array/hash variables, object
+members and (optionally named) Parrot registers respectively.
 
 =cut
 
@@ -439,7 +440,7 @@ generated for the block.
 =item blocktype([STRING type])
 
 Get/set the type of the block.  The currently understood values
-are 'declaration' and 'immediate'.  'Declaration' indicates
+are 'declaration', 'immediate', and 'method'.  'Declaration' indicates
 that a block is simply being defined at this point, while
 'immediate' indicates a block that is to be immediately
 executed when it is evaluated in the AST (e.g., the immediate
@@ -460,7 +461,7 @@ blocks in Perl6 C<if>, C<while>, and other similar statements).
 
 Get/set the control exception handler for this block to C<value>.
 The exception handler can be any PAST tree.  The special (string)
-value "return" generates code to handle C<CONTROL_RETURN> exceptions.
+value "return_pir" generates code to handle C<CONTROL_RETURN> exceptions.
 
 =cut
 
@@ -468,6 +469,35 @@ value "return" generates code to handle C<CONTROL_RETURN> exceptions.
     .param pmc value           :optional
     .param int has_value       :opt_flag
     .return self.'attr'('control', value, has_value)
+.end
+
+
+=item loadinit([past])
+
+Get/set the "load initializer" for this block to C<past>.
+The load initializer is a set of operations to be performed
+as soon as the block is compiled/loaded.  For convenience,
+requests to C<loadinit> autovivify an empty C<PAST::Stmts>
+node if one does not already exist.
+
+Within the load initializer, the C<block> PMC register is
+automatically initialized to refer to the block itself
+(to enable attaching properties, adding the block as a method,
+storing in a symbol table, etc.).
+
+=cut
+
+.sub 'loadinit' :method
+    .param pmc value           :optional
+    .param int has_value       :opt_flag
+    if has_value goto getset_value
+    $I0 = exists self['loadinit']
+    if $I0 goto getset_value
+    $P0 = get_hll_global ['PAST'], 'Stmts'
+    value = $P0.'new'()
+    has_value = 1
+  getset_value:
+    .return self.'attr'('loadinit', value, has_value)
 .end
 
 

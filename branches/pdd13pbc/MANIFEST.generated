@@ -2,11 +2,11 @@
 # See tools/dev/install_files.pl for documentation on the
 # format of this file.
 # Please re-sort this file after *EVERY* modification
-blib/lib/libparrot.0.6.4.dylib                    [main]lib
+blib/lib/libparrot.0.7.1.dylib                    [main]lib
 blib/lib/libparrot.a                              [main]lib
 blib/lib/libparrot.dylib                          [main]lib
 blib/lib/libparrot.so                             [main]lib
-blib/lib/libparrot.so.0.6.4                       [main]lib
+blib/lib/libparrot.so.0.7.1                       [main]lib
 compilers/imcc/imclexer.c                         [main]
 compilers/json/JSON.pbc                           [main]
 compilers/json/JSON/grammar.pbc                   [main]
@@ -62,6 +62,8 @@ installable_disassemble                           [main]bin
 installable_disassemble.exe                       [main]bin
 installable_parrot                                [main]bin
 installable_parrot.exe                            [main]bin
+installable_parrot_config                         [main]bin
+installable_parrot_config.exe                     [main]bin
 installable_parrot_debugger                       [main]bin
 installable_parrot_debugger.exe                   [main]bin
 installable_pbc_info                              [main]bin
@@ -282,6 +284,7 @@ languages/lisp/lisp.pbc                           [main]
 languages/lolcode/lolcode.pbc                     [main]
 languages/lua/lua.pbc                             [main]
 languages/m4/m4.pbc                               [main]
+languages/markdown/markdown.pbc                   [main]
 languages/ook/ook.pbc                             [main]
 languages/perl6/perl6.pbc                         [main]
 languages/pheme/pheme.pbc                         [main]

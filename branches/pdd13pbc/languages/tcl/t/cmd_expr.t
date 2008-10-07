@@ -10,7 +10,7 @@ use Tcl::Test; #\
 __DATA__
 
 source lib/test_more.tcl
-plan 294
+plan 295
 
 # namespace
 namespace eval test { variable x 5 }
@@ -231,7 +231,7 @@ is [expr abs(-1.0)]     1.0
 is [expr acos(0)]       1.5707963267948966 {} $TODO
 is [expr asin(1)]       1.5707963267948966 {} $TODO
 is [expr atan(1)]       0.7853981633974483
-is [expr atan2(4,5)]    0.6747409422235526
+is [expr atan2(4,5)]    0.6747409422235526 {0.6747409422235527 with cygwin}
 is [expr ceil(4.6)]     5.0
 is [expr ceil(-1.6)]   -1.0
 is [expr cos(0)]        1.0
@@ -268,9 +268,9 @@ is [expr abs("-1")]       1
 is [expr acos("0")]       1.5707963267948966 {} $TODO
 is [expr asin("1")]       1.5707963267948966 {} $TODO
 is [expr atan("1")]       0.7853981633974483
-is [expr atan2("4",5)]    0.6747409422235526
-is [expr atan2(4,"5")]    0.6747409422235526
-is [expr atan2("4","5")]  0.6747409422235526
+is [expr atan2("4",5)]    0.6747409422235526 {0.6747409422235527 with cygwin}
+is [expr atan2(4,"5")]    0.6747409422235526 {0.6747409422235527 with cygwin}
+is [expr atan2("4","5")]  0.6747409422235526 {0.6747409422235527 with cygwin}
 is [expr ceil("4.6")]     5.0
 is [expr ceil("-1.6")]   -1.0
 is [expr cos("0")]        1.0
@@ -391,3 +391,7 @@ set TODO {TODO "awaiting real bigint support"}
 eval_is {expr (1<<63)-1} 9223372036854775807 {expr-32.4} $TODO
 eval_is {expr -2147483648} -2147483648 {expr-46.17} $TODO
 eval_is {expr 9223372036854775808} 9223372036854775808 {expr-46.19} $TODO
+
+eval_is {expr {(!
+0)}} 1 {newline in parenthetical expressions ok}
+

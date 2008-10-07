@@ -112,7 +112,7 @@ and C<debug_break> ops in F<ops/debug.ops>.
 #include "../compilers/imcc/imc.h"
 #include "../compilers/imcc/parser.h"
 #include "parrot/embed.h"
-#include "parrot/debug.h"
+#include "parrot/debugger.h"
 
 static void PDB_printwelcome(void);
 static void PDB_run_code(Parrot_Interp interp, int argc, char *argv[]);
@@ -131,20 +131,33 @@ Parrot_debug().
 int
 main(int argc, char *argv[])
 {
-    Parrot_Interp     interp   = Parrot_new(NULL);
+    int nextarg;
+    Parrot_Interp     interp;
+
+    /*
     Parrot_Interp     debugger = Parrot_new(interp);
     PDB_t            *pdb      = mem_allocate_zeroed_typed(PDB_t);
+    */
+    PDB_t *pdb;
+    const char       *scriptname = NULL;
     const char       *filename;
     char             *ext;
     void             *yyscanner;
 
+    Parrot_set_config_hash();
+
+    interp = Parrot_new(NULL);
+
+    Parrot_set_executable_name(interp, string_from_cstring(interp, argv[0], 0));
+
+    Parrot_debugger_init(interp);
+
+    pdb = interp->pdb;
+
     /*Parrot_set_config_hash();  TODO link with cfg */
 
     /* attach pdb structure */
-    debugger->pdb    = pdb;
-    interp->pdb      = pdb;
-    interp->debugger = debugger;
-    pdb->debugee     = interp;
+    interp->debugger = pdb->debugger;
     pdb->state       = PDB_ENTER;
 
     Parrot_block_GC_mark(interp);
@@ -157,7 +170,14 @@ main(int argc, char *argv[])
         Parrot_exit(interp, 1);
     }
 
-    filename = argv[1];
+    nextarg = 1;
+    if (strcmp(argv[nextarg], "--script") == 0)
+    {
+        scriptname = argv [++nextarg];
+        ++nextarg;
+    }
+
+    filename = argv[nextarg];
     ext      = strrchr(filename, '.');
 
     if (ext && STREQ(ext, ".pbc")) {
@@ -167,6 +187,7 @@ main(int argc, char *argv[])
             return 1;
 
         Parrot_loadbc(interp, pf);
+        PackFile_fixup_subs(interp, PBC_MAIN, NULL);
     }
     else {
         Parrot_PackFile pf        = PackFile_new(interp, 0);
@@ -195,15 +216,23 @@ main(int argc, char *argv[])
 
         fclose(imc_yyin_get(yyscanner));
         PackFile_fixup_subs(interp, PBC_POSTCOMP, NULL);
+
+        /* load the source for debugger list */
+        PDB_load_source(interp, filename);
+
+        PackFile_fixup_subs(interp, PBC_MAIN, NULL);
     }
 
     Parrot_unblock_GC_mark(interp);
     Parrot_unblock_GC_sweep(interp);
 
-    PDB_printwelcome();
+    if (scriptname)
+        PDB_script_file(interp, scriptname);
+    else
+        PDB_printwelcome();
 
     interp->run_core = PARROT_DEBUGGER_CORE;
-    PDB_run_code(interp, argc - 1, argv + 1);
+    PDB_run_code(interp, argc - nextarg, argv + nextarg);
 
 
     Parrot_exit(interp, 0);
@@ -227,7 +256,11 @@ PDB_run_code(Parrot_Interp interp, int argc, char *argv[])
         return;
     }
 
-    Parrot_runcode(interp, argc - 1, argv + 1);
+    /* Loop to avoid exiting at program end */
+    do {
+        Parrot_runcode(interp, argc, argv);
+        interp->pdb->state |= PDB_STOPPED;
+    } while (! (interp->pdb->state & PDB_EXIT));
     free_runloop_jump_point(interp);
 }
 

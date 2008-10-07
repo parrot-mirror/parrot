@@ -23,10 +23,9 @@ Tests the Float PMC.
 
 =cut
 
-my $fp_equality_macro = pasm_fp_equality_macro();
 
 pasm_output_is( <<"CODE", <<OUTPUT, "basic assignment" );
-@{[ $fp_equality_macro ]}
+    .include 'include/fp_equality.pasm'
     new P0, 'Float'
 
     set P0, 0.001
@@ -79,7 +78,7 @@ ok 7
 OUTPUT
 
 pasm_output_is( <<"CODE", <<OUTPUT, "add number to self" );
-@{[ $fp_equality_macro ]}
+    .include 'include/fp_equality.pasm'
     new P0, 'Float'
     set P0, 0.001
     add P0, P0, P0
@@ -93,7 +92,7 @@ ok 1
 OUTPUT
 
 pasm_output_is( <<"CODE", <<OUTPUT, "sub number from self" );
-@{[ $fp_equality_macro ]}
+    .include 'include/fp_equality.pasm'
     new P0, 'Float'
     set P0, -1000.2
     sub P0, P0, P0
@@ -107,7 +106,7 @@ ok 1
 OUTPUT
 
 pasm_output_is( <<"CODE", <<OUTPUT, "multiply number by self" );
-@{[ $fp_equality_macro ]}
+    .include 'include/fp_equality.pasm'
     new P0, 'Float'
     set P0, 123.4
     mul P0, P0, P0
@@ -121,7 +120,7 @@ ok 1
 OUTPUT
 
 pasm_output_is( <<"CODE", <<OUTPUT, "divide number by self" );
-@{[ $fp_equality_macro ]}
+    .include 'include/fp_equality.pasm'
     new P0, 'Float'
     set P0, 1829354.988
     div P0, P0, P0
@@ -146,7 +145,8 @@ pir_output_is( <<'CODE', <<OUTPUT, "divide by zero" );
     print "fail\n"
     pop_eh
 OK:
-    get_results '0,0', $P0, $S0
+    get_results '0', $P0
+    $S0 = $P0
     print "ok\n"
     print $S0
     print "\n"
@@ -265,7 +265,7 @@ CODE
 OUTPUT
 
 pasm_output_is( << "CODE", << 'OUTPUT', "Basic integer arithmetic: addition" );
-@{[ $fp_equality_macro ]}
+    .include 'include/fp_equality.pasm'
     new P0, 'Float'
     set P0, 0.001
     add P0, 1
@@ -286,7 +286,7 @@ ok 2
 OUTPUT
 
 pasm_output_is( << "CODE", << 'OUTPUT', "Basic integer arithmetic: subtraction" );
-@{[ $fp_equality_macro ]}
+    .include 'include/fp_equality.pasm'
     new P0, 'Float'
     set P0, 103.45
     sub P0, 77
@@ -307,7 +307,7 @@ ok 2
 OUTPUT
 
 pasm_output_is( << "CODE", << 'OUTPUT', "Basic integer arithmetic: multiplication" );
-@{[ $fp_equality_macro ]}
+    .include 'include/fp_equality.pasm'
     new P0, 'Float'
     set P0, 0.001
     mul P0, 10000
@@ -335,7 +335,7 @@ ok 3
 OUTPUT
 
 pasm_output_is( << "CODE", << 'OUTPUT', "Basic integer arithmetic: division" );
-@{[ $fp_equality_macro ]}
+    .include 'include/fp_equality.pasm'
     new P0, 'Float'
     set P0, 1e8
     div P0, 10000
@@ -356,7 +356,7 @@ ok 2
 OUTPUT
 
 pasm_output_is( << "CODE", << 'OUTPUT', "Basic numeric arithmetic: addition" );
-@{[ $fp_equality_macro ]}
+    .include 'include/fp_equality.pasm'
     new P0, 'Float'
     set P0, 0.001
     add P0, 1.2
@@ -377,7 +377,7 @@ ok 2
 OUTPUT
 
 pasm_output_is( << "CODE", << 'OUTPUT', "Basic numeric arithmetic: subtraction" );
-@{[ $fp_equality_macro ]}
+    .include 'include/fp_equality.pasm'
     new P0, 'Float'
     set P0, 103.45
     sub P0, 3.46
@@ -398,7 +398,7 @@ ok 2
 OUTPUT
 
 pasm_output_is( << "CODE", << 'OUTPUT', "Basic numeric arithmetic: multiplication" );
-@{[ $fp_equality_macro ]}
+    .include 'include/fp_equality.pasm'
     new P0, 'Float'
     set P0, 0.001
     mul P0, 123.5
@@ -426,7 +426,7 @@ ok 3
 OUTPUT
 
 pasm_output_is( << "CODE", << 'OUTPUT', "Basic numeric arithmetic: division" );
-@{[ $fp_equality_macro ]}
+    .include 'include/fp_equality.pasm'
     new P0, 'Float'
     set P0, 1e8
     div P0, 0.5
@@ -447,7 +447,7 @@ ok 2
 OUTPUT
 
 pasm_output_is( << "CODE", << 'OUTPUT', "Increment & decrement" );
-@{[ $fp_equality_macro ]}
+    .include 'include/fp_equality.pasm'
     new P0, 'Float'
     set P0, 0.5
     inc P0
@@ -482,7 +482,7 @@ ok 4
 OUTPUT
 
 pasm_output_is( << "CODE", << 'OUTPUT', "Neg" );
-@{[ $fp_equality_macro ]}
+    .include 'include/fp_equality.pasm'
     new P0, 'Float'
     set P0, 0.5
     neg P0
@@ -597,7 +597,7 @@ CODE
 OUTPUT
 
 pasm_output_is( << "CODE", << 'OUTPUT', "Abs" );
-@{[ $fp_equality_macro ]}
+    .include 'include/fp_equality.pasm'
     new P0, 'Float'
     set P0, 1.0
     abs P0

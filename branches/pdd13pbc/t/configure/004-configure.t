@@ -22,7 +22,7 @@ is( $|, 1, "output autoflush is set" );
 
 my $CC        = "/usr/bin/gcc-3.3";
 my $localargv = [ qq{--cc=$CC}, ];
-my $args      = process_options(
+my ($args, $step_list_ref) = process_options(
     {
         mode => q{configure},
         argv => $localargv,
@@ -91,7 +91,7 @@ REASON
     like(
         $@,
         qr/You cannot use --step until you have completed the full configure process/,
-"Got expected error message when using --step option and slurp() without prior completed configuration"
+"Got expected error message for --step option and slurp() without prior configuration"
     );
 }
 
@@ -109,7 +109,7 @@ REASON
     like(
         $@,
         qr/You cannot use --step until you have completed the full configure process/,
-"Got expected error message when using --step option and slurp_temp() without prior completed configuration"
+"Got expected error message for --step option and slurp_temp() without prior configuration"
     );
 }
 

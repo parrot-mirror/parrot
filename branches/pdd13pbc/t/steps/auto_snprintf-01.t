@@ -24,7 +24,7 @@ use IO::CaptureOutput qw| capture |;
 
 ########## regular ##########
 
-my $args = process_options( {
+my ($args, $step_list_ref) = process_options( {
     argv            => [],
     mode            => q{configure},
 } );
@@ -67,7 +67,7 @@ $conf->replenish($serialized);
 
 ########## _evaluate_snprintf() ##########
 
-$args = process_options( {
+($args, $step_list_ref) = process_options( {
     argv            => [],
     mode            => q{configure},
 } );
@@ -93,7 +93,7 @@ $conf->replenish($serialized);
 
 ########## --verbose; _evaluate_snprintf() ##########
 
-$args = process_options( {
+($args, $step_list_ref) = process_options( {
     argv            => [ q{--verbose} ],
     mode            => q{configure},
 } );
@@ -111,6 +111,9 @@ $step = test_step_constructor_and_description($conf);
     ok($conf->data->get('HAS_SNPRINTF'),
         "Got expected value");
 }
+
+$conf->cc_clean();
+
 pass("Completed all tests in $0");
 
 ################### DOCUMENTATION ###################

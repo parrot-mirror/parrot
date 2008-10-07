@@ -41,7 +41,7 @@ Increment the version number in the following files:
 F<VERSION>, F<parrot.spec>, F<MANIFEST.generated>, F<META.yml>,
 F<README>.
 
-Note: Sourc0 in parrot.spec might have to be adapted as well.
+Note: C<Source0> in parrot.spec might have to be adapted as well.
 
 Also update the version number, date, and your name in the
 the file: F<docs/parrothist.pod>.
@@ -71,7 +71,7 @@ The date of the next release is in L<Appendix 2|"Appendix 2 - Upcoming releases"
 
 =item C<bugday.date>
 
-Enter the date of the saturday before the next release.
+Enter the date of the Saturday before the next release.
 
 =item C<rt.tracking>
 
@@ -106,7 +106,7 @@ what those tests complain about, or fix them so they don't complain.
 
 Run C<perl tools/dev/pbc_header.pl --upd t/native_pbc/*.pbc>
 to update version and fingerprint in the native tests.
-Please check with C<perl t/native_pbc/*.t>.
+Please check with C<prove t/native_pbc/*.t>.
 
 NOTE: Due to frequent PBC changes, these tests are currently skipped.
 
@@ -119,8 +119,8 @@ Make sure everything works:
  $ make world docs html 2>&1 | tee make_world_docs_html.log
  $ make fulltest        2>&1 | tee make_fulltest.log
 
-Note that running 'make fulltest' takes a while and that separate harnesses
-are being run. It is not necessary to quiet all the codingstd tests for a release.
+Note that running "make fulltest" takes a while and that separate
+harnesses are being run.
 
 =back
 
@@ -131,7 +131,8 @@ When all is well, then commit your changes:
  svn diff | more
  svn commit
 
-Write down the revision number from this commit. You will need it later in step 7.
+Write down the revision number from this commit. You will need it later in
+step 7.
 
 =item 4.
 
@@ -188,51 +189,92 @@ See F<docs/project/pause_guide.pod> for more details.
 
 =item 9.
 
-Compose and send out the announcements -- parrot-porters, perl6-language,
-perl6-announce, perl5-porters, use Perl, Perl Monks, etc. Don't forget to
-include the next scheduled release date.
-
-Use F<tools/util/crow.pir> to make this part easier. You can specify the
-format of your announcments like so:
+Compose the release announcement.  Use F<tools/util/crow.pir> to make
+this part easier.  You can specify the format of your announcements like so:
 
   $ ./parrot tools/util/crow.pir --type=text
   $ ./parrot tools/util/crow.pir --type=html
 
-Take the screen output and paste it into the application you need. HTML
-works well for use Perl and PerlMonks, and text for the rest.
+Take the screen output and paste it into the application you need.  HTML
+works well for use Perl and PerlMonks, and text for the rest.  It is not a
+bad idea to add a "highlights" section to draw attention to major new
+features, just be sure to say the same thing in both text and HTML versions.
+
+=item 10.
+
+Update the website. You will need an account on L<http://www.parrot.org>.
 
 =over 4
 
 =item a
 
-Submit the use Perl announcement story to Slashdot, Newsforge, LWN.net, etc.
-Don't forget to set a Reply-To: or Followup-To: header, if your mail
-client lets you.
+Add a new page for the release announcement with "Create content" -> "Story".
+There's some additional stuff needed at the top of the page; use one of the
+old announcements as a guide.
+
+The "<!--break-->" line marks the end of the text that will appear on the
+front page.
 
 =item b
+
+Set the "News" category to "Releases".
+
+Add tags to the page for significant changes in this release (e.g. "rakudo" for
+significant Rakudo language updates, or "gc" for significant garbage collection
+subsystem updates).
+
+=item c
+
+Under "URL path settings" uncheck "Automatic alias" and set the path to
+news/[year]/Parrot-[release number].
+
+=item d
+
+Under "Publishing options" make sure "Published" and "Promoted to front page"
+are checked.
+
+=item e
+
+Send an email to webmaster@parrotcode.org requesting that they update the
+C</.htredirects> file for release/devel to point to the proper CPAN URL. [This
+step will change in the near future.]
+
+=back
+
+Preview the new page, and submit it.
+
+(The old release announcement may be edited to uncheck "Promoted to front page"
+to keep the main page fresh.)
+
+=item 11.
+
+Publicize the release by publishing the announcement through the
+following channels (and any others you can think of):
+
+=over 4
+
+=item a
+
+Send a text email to parrot-porters, perl6-language, perl6-announce,
+perl5-porters, etc.  You should also include LWN.net in this mailing; email to
+C<lwn> at that domain.
+
+=item b
+
+Submit the use Perl announcement story to use Perl, Perl Monks, Slashdot,
+Newsforge, etc.  Don't forget to set a Reply-To: or Followup-To: header, if
+your mail client lets you.
+
+=item c
 
 Modify the topic on #parrot, e.g.:
 
  /topic #parrot Parrot 0.4.8 Released | http://parrotcode.org/
 
-=item c
+=item d
 
 Update the wiki frontpage at L<http://www.perlfoundation.org/parrot/index.cgi?parrot>.
 Update the next planned release date on the wiki at L<http://www.perlfoundation.org/parrot/index.cgi?release_schedule_2008>.
-
-=item d
-
-Update the website. The svn repository for the website is at
-L<https://svn.perl.org/perl.org/docs/live/parrotcode>.
-
-Add a release announcement to news/[year]/Parrot-[release].html.
-Update C</index.html> (The old mini-announcement may be commented out).
-Update C</.htredirects> to point to the proper CPAN URL.
-
-If your name is Allison, Will, or chromatic, you will be able to
-commit these changes yourself; be sure to test locally in combust
-before pushing the update out.  Otherwise, prepare the changes and
-send a patch to one of the anointed.
 
 =item e
 
@@ -240,13 +282,13 @@ Update the Wikipedia entry at L<http://en.wikipedia.org/wiki/Parrot_virtual_mach
 
 =back
 
-=item 10.
+=item 12.
 
 Close any release-related tickets in RT. If they are not yet resolved,
 migrate the critical ones to the next milestone release ticket.
 Non-critical unresolved tickets can be simply unlinked.
 
-=item 11.
+=item 13.
 
 You're done! Help yourself to a beer, cola, or other celebratory drink.
 
@@ -322,10 +364,13 @@ the 3rd Tuesday of each month. Version numbers for each release will be
 determined each month, and will depend on the features actually present in
 that release.
 
- - August 19th, 2008    - Bob Rogers
- - September 16th, 2008 - Patrick R. Michaud
  - October 21st, 2008   - Jerry Gay
  - November 18th, 2008  - chromatic
  - December 16th, 2008  - Andrew Whitworth
 
 =cut
+
+__END__
+Local Variables:
+  fill-column:78
+End:

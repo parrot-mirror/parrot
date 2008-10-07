@@ -3,7 +3,7 @@
 
   triangle.lua - Initialize GLUT and render a simple OpenGL animation
 
-  $ ./parrot languages/lua/lua.pbc languages/lua/demo/triangle.lua
+  $ ./parrot --no-gc languages/lua/lua.pbc languages/lua/demo/triangle.lua
 
 ]]
 
@@ -28,14 +28,14 @@ function Idle ()
     dt = now - prev_time
     prev_time = now
     if rotating and dt ~= 0 then
-        gl.Rotate(10*dt, 0, 1, 0)
-	glut.PostRedisplay()
+        gl.Rotate(360*dt, 0, 1, 0)
+        glut.PostRedisplay()
     end
 end
 
 function Keyboard (key)
     if key == 27 or key == 81 or key == 113 then
-	glut.DestroyWindow(glut_window)
+        glut.DestroyWindow(glut_window)
     end
     rotating = not rotating
 end
@@ -50,4 +50,3 @@ glut.IdleFunc('Idle')
 glut.KeyboardFunc('Keyboard')
 
 glut.MainLoop()
-

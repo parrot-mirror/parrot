@@ -24,7 +24,7 @@ use Parrot::Configure::Utils ':gen';
 sub _init {
     my $self = shift;
     my %data;
-    $data{description} = q{Moving platform files into place};
+    $data{description} = q{Move platform files into place};
     $data{result}      = q{};
     $data{platform_interface} = q{config/gen/platform/platform_interface.h};
     $data{coda} = <<'CODA';
@@ -57,6 +57,8 @@ sub runstep {
     # interface is the same for all platforms
     copy_if_diff( $self->{platform_interface},
         "include/parrot/platform_interface.h" );
+
+    $self->_set_limits($conf, $verbose, $platform);
 
     return 1;
 }
@@ -193,6 +195,17 @@ END_HERE
 
     close $PLATFORM_H;
     return 1;
+}
+
+sub _set_limits {
+    my $self = shift;
+    my ($conf, $verbose, $platform) = @_;
+
+    my $limits = "config/gen/platform/generic/platform_limits.h";
+    if ( -e "config/gen/platform/$platform/platform_limits.h" ) {
+        $limits = "config/gen/platform/$platform/platform_limits.h";
+    }
+    copy_if_diff( $limits, "include/parrot/platform_limits.h" );
 }
 
 sub _set_implementations {

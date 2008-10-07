@@ -21,7 +21,6 @@
 #include "imc.h"
 #include "parrot/dynext.h"
 #include "parrot/embed.h"
-#include "parrot/builtin.h"
 #include "pbc.h"
 #include "parser.h"
 #include "optimizer.h"
@@ -65,35 +64,6 @@ static void * imcc_compile_file(PARROT_INTERP,
         __attribute__nonnull__(2)
         __attribute__nonnull__(3)
         FUNC_MODIFIES(*error_message);
-
-PARROT_WARN_UNUSED_RESULT
-static int is_infix(ARGIN(const char *name), int n, ARGIN(SymReg **r))
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(3);
-
-PARROT_WARN_UNUSED_RESULT
-PARROT_CAN_RETURN_NULL
-static Instruction * maybe_builtin(PARROT_INTERP,
-    ARGIN(const char *name),
-    ARGIN(SymReg * const *r),
-    int n)
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(2)
-        __attribute__nonnull__(3);
-
-PARROT_WARN_UNUSED_RESULT
-PARROT_CANNOT_RETURN_NULL
-static const char * to_infix(PARROT_INTERP,
-    ARGIN(const char *name),
-    ARGMOD(SymReg **r),
-    ARGMOD(int *n),
-    int mmd_op)
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(2)
-        __attribute__nonnull__(3)
-        __attribute__nonnull__(4)
-        FUNC_MODIFIES(*r)
-        FUNC_MODIFIES(*n);
 
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
@@ -292,86 +262,6 @@ check_op(PARROT_INTERP, ARGOUT(char *fullname), ARGIN(const char *name),
 
 /*
 
-=item C<static Instruction * maybe_builtin>
-
-TODO: Needs to be documented!!!
-
-=cut
-
-*/
-
-PARROT_WARN_UNUSED_RESULT
-PARROT_CAN_RETURN_NULL
-static Instruction *
-maybe_builtin(PARROT_INTERP, ARGIN(const char *name),
-        ARGIN(SymReg * const *r), int n)
-{
-    char sig[16];
-    SymReg *sub, *meth, *rr[10];
-    Instruction *ins;
-    int i, bi, is_class_meth, first_arg, is_void;
-
-    PARROT_ASSERT(n < 15);
-
-    for (i = 0; i < n; ++i) {
-        sig[i] = (char)r[i]->set;
-        rr[i]  = r[i];
-    }
-
-    sig[i] = '\0';
-    bi     = Parrot_is_builtin(name, sig);
-
-    if (bi < 0)
-        return NULL;
-
-    /*
-     * create a method see imcc.y target = sub_call
-     * cos Px, Py  => Px = Py.cos()
-     */
-    is_class_meth = Parrot_builtin_is_class_method(bi);
-    is_void       = Parrot_builtin_is_void(bi);
-    meth          = mk_sub_address(interp, name);
-
-    /* ParrotIO.open() */
-    if (is_class_meth) {
-        const char * const ns = Parrot_builtin_get_c_namespace(bi);
-        SymReg * const ns_sym = mk_const(interp, ns, 'S');
-
-        ins                   = IMCC_create_itcall_label(interp);
-        sub                   = ins->symregs[0];
-
-        IMCC_itcall_sub(interp, meth);
-
-        sub->pcc_sub->object  = ns_sym;
-        first_arg             = 1;
-    }
-    /* method y = x."cos"() */
-    else {
-        ins                   = IMCC_create_itcall_label(interp);
-        sub                   = ins->symregs[0];
-
-        IMCC_itcall_sub(interp, meth);
-
-        sub->pcc_sub->object  = rr[is_void ? 0 : 1];
-        first_arg             = 2;
-    }
-
-    sub->pcc_sub->flags |= isNCI;
-
-    if (is_void)
-        first_arg--;
-
-    for (i = first_arg; i < n; ++i)
-        add_pcc_arg(sub, rr[i]);
-
-    if (!is_void)
-        add_pcc_result(sub, rr[0]);
-
-    return ins;
-}
-
-/*
-
 =item C<int is_op>
 
 Is instruction a parrot opcode?
@@ -388,133 +278,7 @@ is_op(PARROT_INTERP, ARGIN(const char *name))
         || interp->op_lib->op_code(name, 1) >= 0
         || ((name[0] == 'n' && name[1] == '_')
                 && (interp->op_lib->op_code(name + 2, 0) >= 0
-                   || interp->op_lib->op_code(name + 2, 1) >= 0))
-        || Parrot_is_builtin(name, NULL) >= 0;
-}
-
-/*
-
-=item C<static const char * to_infix>
-
-sub x, y, z  => infix .MMD_SUBTRACT, x, y, z
-
-=cut
-
-*/
-
-PARROT_WARN_UNUSED_RESULT
-PARROT_CANNOT_RETURN_NULL
-static const char *
-to_infix(PARROT_INTERP, ARGIN(const char *name), ARGMOD(SymReg **r),
-        ARGMOD(int *n), int mmd_op)
-{
-    SymReg *mmd;
-    int is_n;
-
-    PARROT_ASSERT(*n >= 2);
-
-    is_n = (IMCC_INFO(interp)->state->pragmas & PR_N_OPERATORS) ||
-        (name[0] == 'n' && name[1] == '_') ||
-        (mmd_op == MMD_LOR || mmd_op == MMD_LAND || mmd_op == MMD_LXOR);
-
-    if (*n == 3 && r[0] == r[1] && !is_n) {       /* cvt to inplace */
-        char buf[10];
-        snprintf(buf, sizeof (buf), "%d", mmd_op + 1);  /* XXX */
-        mmd = mk_const(interp, buf, 'I');
-    }
-    else {
-        char buf[10];
-        int i;
-        for (i = *n; i > 0; --i)
-            r[i] = r[i - 1];
-
-        snprintf(buf, sizeof (buf), "%d", *n == 2 ? (mmd_op + 1) : mmd_op);  /* XXX */
-        mmd = mk_const(interp, buf, 'I');
-        (*n)++;
-    }
-
-    r[0] = mmd;
-
-    if (is_n && *n == 4)
-        return "n_infix";
-    else
-        return "infix";
-}
-
-/*
-
-=item C<static int is_infix>
-
-TODO: Needs to be documented!!!
-
-=cut
-
-*/
-
-PARROT_WARN_UNUSED_RESULT
-static int
-is_infix(ARGIN(const char *name), int n, ARGIN(SymReg **r))
-{
-    if (n < 2 || r[0]->set != 'P')
-        return -1;
-
-    /* TODO use a generic Parrot interface function,
-     *      which handles user infix extensions too
-     */
-    if (STREQ(name, "add"))
-        return MMD_ADD;
-    if (STREQ(name, "sub"))
-        return MMD_SUBTRACT;
-    if (STREQ(name, "mul"))
-        return MMD_MULTIPLY;
-    if (STREQ(name, "div"))
-        return MMD_DIVIDE;
-    if (STREQ(name, "fdiv"))
-        return MMD_FLOOR_DIVIDE;
-    if (STREQ(name, "mod"))
-        return MMD_MOD;
-    if (STREQ(name, "cmod"))
-        return MMD_CMOD;
-    if (STREQ(name, "pow"))
-        return MMD_POW;
-
-    if (STREQ(name, "bor"))
-        return MMD_BOR;
-    if (STREQ(name, "band"))
-        return MMD_BAND;
-    if (STREQ(name, "bxor"))
-        return MMD_BXOR;
-    if (STREQ(name, "bors"))
-        return MMD_SOR;
-    if (STREQ(name, "bands"))
-        return MMD_SAND;
-    if (STREQ(name, "bxors"))
-        return MMD_SXOR;
-
-    if (STREQ(name, "shl"))
-        return MMD_BSL;
-    if (STREQ(name, "shr"))
-        return MMD_BSR;
-    if (STREQ(name, "lsr"))
-        return MMD_LSR;
-
-    if (STREQ(name, "concat"))
-        return MMD_CONCAT;
-    if (STREQ(name, "repeat"))
-        return MMD_REPEAT;
-
-    if (STREQ(name, "or"))
-        return MMD_LOR;
-    if (STREQ(name, "and"))
-        return MMD_LAND;
-    if (STREQ(name, "xor"))
-        return MMD_LXOR;
-
-    /* now try n_<op> */
-    if (name[0] == 'n' && name[1] == '_')
-        return is_infix(name + 2, n, r);
-
-    return -1;
+                   || interp->op_lib->op_code(name + 2, 1) >= 0));
 }
 
 /*
@@ -597,13 +361,7 @@ INS(PARROT_INTERP, ARGMOD(IMC_Unit *unit), ARGIN(const char *name),
     ||  (STREQ(name, "set_returns")))
         return var_arg_ins(interp, unit, name, r, n, emit);
 
-    op = is_infix(name, n, r);
-
-    if (op >= 0) {
-        /* sub x, y, z  => infix .MMD_SUBTRACT, x, y, z */
-        name = to_infix(interp, name, r, &n, op);
-    }
-    else if ((IMCC_INFO(interp)->state->pragmas & PR_N_OPERATORS)
+    if ((IMCC_INFO(interp)->state->pragmas & PR_N_OPERATORS)
          && ((STREQ(name, "abs"))
          ||  (STREQ(name, "neg"))
          ||  (STREQ(name, "not"))
@@ -661,12 +419,6 @@ INS(PARROT_INTERP, ARGMOD(IMC_Unit *unit), ARGIN(const char *name),
     }
     else
         strcpy(fullname, name);
-
-    if (op < 0 && emit) {
-        ins = maybe_builtin(interp, name, r, n);
-        if (ins)
-            return ins;
-    }
 
     if (op < 0)
         IMCC_fataly(interp, EXCEPTION_SYNTAX_ERROR,
@@ -1606,7 +1358,7 @@ imcc_vfprintf(PARROT_INTERP, ARGMOD(FILE *fd), ARGIN(const char *format), va_lis
     for (;;) {
         const char *cp = fmt;
         int         ch = 0;
-        int         n;
+        size_t      n;
 
         for (n = 0; (ch = *fmt) && ch != '%'; fmt++, n++);
 

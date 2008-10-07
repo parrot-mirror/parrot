@@ -128,6 +128,23 @@ objects, we create a List containing the invocant.
 .end
 
 
+=item defined()
+
+Return true if the object is defined.
+
+=cut
+
+.sub 'defined' :method
+    $P0 = get_hll_global ['Bool'], 'True'
+    .return ($P0)
+.end
+
+.sub '' :method :vtable('defined')
+    $I0 = self.'defined'()
+    .return ($I0)
+.end
+
+
 =item new()
 
 Create a new object having the same class as the invocant.
@@ -171,6 +188,12 @@ Create a new object having the same class as the invocant.
     unless class_iter goto class_iter_loop_end
     .local pmc cur_class
     cur_class = shift class_iter
+
+    # If it's PMCProxy, then skip over it, since it's attribute is the delegate
+    # instance of a parent PMC class, which we should not change to Undef.
+    .local int is_pmc_proxy
+    is_pmc_proxy = isa cur_class, "PMCProxy"
+    if is_pmc_proxy goto class_iter_loop_end
 
     # If this the current class?
     .local pmc init_attribs
@@ -236,9 +259,9 @@ Create a new object having the same class as the invocant.
     if sigil != '$' goto no_scalar
     .local pmc attr_info, type
     attr_info = attribs[$S0]
-    if null attr_info goto no_scalar
+    if null attr_info goto set_attrib
     type = attr_info['type']
-    if null type goto no_scalar
+    if null type goto set_attrib
     if got_init_value goto no_proto_init
     $I0 = isa type, 'P6protoobject'
     unless $I0 goto no_proto_init
@@ -246,11 +269,25 @@ Create a new object having the same class as the invocant.
   no_proto_init:
     $P2 = new 'Perl6Scalar', $P2
     setprop $P2, 'type', type
+    goto set_attrib
   no_scalar:
 
+    # Is it an array? If so, initialize to Perl6Array.
+    if sigil != '@' goto no_array
+    $P2 = new 'Perl6Array'
+    goto set_attrib
+  no_array:
+
+    # Is it a Hash? If so, initialize to Perl6Hash.
+    if sigil != '%' goto no_hash
+    $P2 = new 'Perl6Hash'
+    goto set_attrib
+  no_hash:
+
+  set_attrib:
     push_eh set_attrib_eh
     setattribute $P1, cur_class, $S0, $P2
-set_attrib_eh:
+  set_attrib_eh:
     goto iter_loop
   iter_end:
 
@@ -397,8 +434,7 @@ Create a clone of self, also cloning the attributes given by attrlist.
     # For now we won't worry about signature, just if a method exists.
     $I0 = can self, method_name
     if $I0 goto invoke
-    $P0 = get_hll_global 'Failure'
-    .return ($P0)
+    .return '!FAIL'('Undefined value returned by invocation of undefined method')
 
     # If we do have a method, call it.
   invoke:
@@ -506,6 +542,38 @@ Returns the protoobject's autovivification closure.
   ret_undef:
     whence = new 'Undef'
     .return (whence)
+.end
+
+
+=item defined()
+
+=cut
+
+.sub 'defined' :method
+    $P0 = get_hll_global ['Bool'], 'False'
+    .return ($P0)
+.end
+
+
+=item item()
+
+Returns itself in item context.
+
+=cut
+
+.sub 'item' :method
+    .return (self)
+.end
+
+
+=item list()
+
+Returns a list containing itself in list context.
+
+=cut
+
+.sub 'list' :method
+    .return 'list'(self)
 .end
 
 

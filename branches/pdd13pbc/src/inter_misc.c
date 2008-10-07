@@ -377,16 +377,8 @@ interpinfo_s(PARROT_INTERP, INTVAL what)
             mem_sys_free(fullname_c);
             return basename;
             }
-
         case RUNTIME_PREFIX:
-            {
-            char   * const fullname_c = Parrot_get_runtime_prefix(interp);
-            STRING * const fullname   = string_from_cstring(interp, fullname_c, 0);
-
-            mem_sys_free(fullname_c);
-            return fullname;
-            }
-
+            return Parrot_get_runtime_path(interp);
         default:
             Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_UNIMPLEMENTED,
                 "illegal argument in interpinfo");
@@ -404,6 +396,8 @@ C<info_wanted> is one of:
     PARROT_INTSIZE
     PARROT_FLOATSIZE
     PARROT_POINTERSIZE
+    PARROT_INTMAX
+    PARROT_INTMIN
 
 In unknown info is requested then -1 is returned.
 
@@ -422,6 +416,10 @@ sysinfo_i(SHIM_INTERP, INTVAL info_wanted)
             return sizeof (FLOATVAL);
         case PARROT_POINTERSIZE:
             return sizeof (void *);
+        case PARROT_INTMIN:
+            return PARROT_INTVAL_MIN;
+        case PARROT_INTMAX:
+            return PARROT_INTVAL_MAX;
         default:
             return -1;
     }

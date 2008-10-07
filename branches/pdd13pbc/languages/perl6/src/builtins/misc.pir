@@ -4,6 +4,12 @@
 
 src/builtins/misc.pir - miscellaneous builtins that need reclassification
 
+=head1 BUILTINS
+
+=over
+
+=item prefix:=
+
 =cut
 
 .sub 'prefix:=' :multi(_)
@@ -11,6 +17,18 @@ src/builtins/misc.pir - miscellaneous builtins that need reclassification
     $P0 = iter what
     .return($P0)
 .end
+
+
+=item term:=<>
+
+=cut
+
+.sub '=<>'
+    $P0 = get_hll_global '@ARGS'
+    .return 'prefix:='($P0)
+.end
+
+=back
 
 # Local Variables:
 #   mode: pir

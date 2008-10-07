@@ -88,7 +88,12 @@ typedef enum {
         CONTROL_OK,
         CONTROL_BREAK,
         CONTROL_CONTINUE,
-        CONTROL_ERROR
+        CONTROL_ERROR,
+        CONTROL_TAKE,
+
+        CONTROL_LOOP_NEXT,
+        CONTROL_LOOP_LAST,
+        CONTROL_LOOP_REDO
 } exception_type_enum;
 
 /* &end_gen */
@@ -201,7 +206,6 @@ void do_panic(
     unsigned int line);
 
 void Parrot_print_backtrace(void);
-/* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 /* HEADERIZER END: src/exceptions.c */
 
