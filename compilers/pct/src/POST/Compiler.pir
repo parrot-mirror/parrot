@@ -37,7 +37,7 @@ PIR or an Eval PMC (bytecode).
     .param pmc adverbs         :slurpy :named
 
     .local pmc newself
-    newself = new 'POST::Compiler'
+    newself = new ['POST';'Compiler']
 
     ##  start with empty code
     .local pmc subcode, code
@@ -103,7 +103,7 @@ Return pir for an operation node.
 
 =cut
 
-.sub 'pir' :method :multi(_,['POST::Op'])
+.sub 'pir' :method :multi(_,['POST';'Op'])
     .param pmc node
 
     ##  determine the type of operation
@@ -173,7 +173,7 @@ Generate a label.
 
 =cut
 
-.sub 'pir' :method :multi(_, ['POST::Label'])
+.sub 'pir' :method :multi(_, ['POST';'Label'])
     .param pmc node
     .local string code, value
     value = node.'result'()
@@ -192,7 +192,7 @@ the sub.
 
 =cut
 
-.sub 'pir' :method :multi(_, ['POST::Sub'])
+.sub 'pir' :method :multi(_, ['POST';'Sub'])
     .param pmc node
 
     .local pmc subcode
