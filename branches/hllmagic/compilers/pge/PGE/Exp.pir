@@ -22,7 +22,7 @@ PGE::Exp - base class for expressions
     .local pmc term
 
     .local pmc p6meta, expproto
-    p6meta = new 'P6metaclass'
+    p6meta = get_hll_global 'P6metaclass'
     expproto = p6meta.'new_class'('PGE::Exp', 'parent'=>'PGE::Match')
     p6meta.'new_class'('PGE::Exp::Literal',      'parent'=>expproto)
     p6meta.'new_class'('PGE::Exp::Scalar',       'parent'=>expproto)
@@ -94,7 +94,7 @@ C<target> adverbs.
     $P1 = $P0(code)
   make_grammar:
     push_eh end
-    $P0 = new 'P6metaclass'
+    $P0 = get_hll_global 'P6metaclass'
     $P0.'new_class'(grammar, 'parent'=>'PGE::Grammar')
     pop_eh
   end:
@@ -633,11 +633,9 @@ tree as a PIR code object that can be compiled.
     ##   This group is non-backtracking, so concatenate a "cut group"
     ##   node (PGE::Exp::Cut) to its child.
     exp = self[0]
-    $P0 = get_hll_global ['PGE';'Exp'], 'Concat'
-    $P0 = $P0.'new'()
+    $P0 = new ['PGE';'Exp';'Concat']
     $P0[0] = exp
-    $P1 = get_hll_global ['PGE';'Exp'], 'Cut'
-    $P1 = $P1.'new'()
+    $P1 = new ['PGE';'Exp';'Cut']
     $P0[1] = $P1
     self[0] = $P0
 
@@ -1401,7 +1399,7 @@ tree as a PIR code object that can be compiled.
     .return ()
 .end
 
-.namespace [ "PGE';'Exp';'Closure" ]
+.namespace [ 'PGE';'Exp';'Closure' ]
 
 .sub 'reduce' :method
     .param pmc next
@@ -1447,7 +1445,7 @@ tree as a PIR code object that can be compiled.
     .return ()
 .end
 
-.namespace [ "PGE';'Exp';'Action" ]
+.namespace [ 'PGE';'Exp';'Action' ]
 
 .sub 'reduce' :method
     .param pmc next
