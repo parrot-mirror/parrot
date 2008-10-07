@@ -155,18 +155,54 @@ the compiler is ready for code to be compiled and executed.
 .sub 'parsegrammar' :method
     .param string value        :optional
     .param int has_value       :opt_flag
+    unless has_value, get
+    .local pmc interp, hll, ns
+    interp = getinterp
+    $P0 = interp['namespace';1]
+    $P0 = $P0.get_name()
+    hll = shift $P0
+    $P0 = split '::', value
+    $S0 = hll
+    unshift $P0, $S0
+    $P0 = get_root_namespace $P0
+    .return self.'attr'('$parsegrammar', $P0, has_value)
+  get:
     .return self.'attr'('$parsegrammar', value, has_value)
 .end
 
 .sub 'parseactions' :method
-    .param pmc value           :optional
+    .param string value        :optional
     .param int has_value       :opt_flag
+    unless has_value, get
+    .local pmc interp, hll, ns
+    interp = getinterp
+    $P0 = interp['namespace';1]
+    $P0 = $P0.get_name()
+    hll = shift $P0
+    $P0 = split '::', value
+    $S0 = hll
+    unshift $P0, $S0
+    $P0 = get_root_namespace $P0
+    .return self.'attr'('$parseactions', $P0, has_value)
+  get:
     .return self.'attr'('$parseactions', value, has_value)
 .end
 
 .sub 'astgrammar' :method
     .param string value        :optional
     .param int has_value       :opt_flag
+    unless has_value, get
+    .local pmc interp, hll, ns
+    interp = getinterp
+    $P0 = interp['namespace';1]
+    $P0 = $P0.get_name()
+    hll = shift $P0
+    $P0 = split '::', value
+    $S0 = hll
+    unshift $P0, $S0
+    $P0 = get_root_namespace $P0
+    .return self.'attr'('$astgrammar', $P0, has_value)
+  get:
     .return self.'attr'('$astgrammar', value, has_value)
 .end
 
@@ -319,7 +355,7 @@ to any options and return the resulting parse tree.
 .sub 'parse' :method
     .param pmc source
     .param pmc adverbs         :slurpy :named
-    .local pmc parsegrammar_name, top
+    .local pmc parsegrammar, top
 
     .local string tcode
     tcode = adverbs['transcode']
@@ -336,11 +372,11 @@ to any options and return the resulting parse tree.
     target = adverbs['target']
     target = downcase target
 
-    parsegrammar_name = self.'parsegrammar'()
-    unless parsegrammar_name goto err_no_parsegrammar
-    top = get_hll_global parsegrammar_name, 'TOP'
+    parsegrammar= self.'parsegrammar'()
+    unless parsegrammar goto err_no_parsegrammar
+    top = parsegrammar['TOP']
     unless null top goto have_top
-    self.'panic'('Cannot find TOP regex in ', parsegrammar_name)
+    self.'panic'('Cannot find TOP regex in ', parsegrammar)
   have_top:
     .local pmc parseactions, action
     null action
@@ -367,7 +403,7 @@ to any options and return the resulting parse tree.
     action = new parseactions
   have_action:
     .local pmc match
-    match = top(source, 'grammar' => parsegrammar_name, 'action' => action)
+    match = top(source, 'grammar' => parsegrammar, 'action' => action)
     unless match goto err_failedparse
     .return (match)
 
