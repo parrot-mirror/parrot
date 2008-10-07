@@ -94,10 +94,10 @@ C<target> adverbs.
     $P1 = $P0(code)
   make_grammar:
     if grammar == '' goto end
-    $P0 = get_class grammar
-    unless null $P0 goto end
+    push_eh end
     $P0 = get_hll_global 'P6metaclass'
     $P0.'new_class'(grammar, 'parent'=>'PGE::Grammar')
+    pop_eh
   end:
     .return ($P1)
 
