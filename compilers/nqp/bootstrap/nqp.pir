@@ -81,7 +81,7 @@ to the nqp compiler.
 .end
 
 
-#.namespace [ 'NQP::Grammar::Actions' ]
+#.namespace [ 'NQP';'Grammar';'Actions' ]
 #
 #.sub 'package_declarator_helper'
 #    .param pmc match
