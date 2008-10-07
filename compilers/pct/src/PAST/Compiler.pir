@@ -481,7 +481,7 @@ nodes of type C<PAST::Stmts>.
 
 =cut
 
-.sub 'as_post' :method :multi(_, PAST::Node)
+.sub 'as_post' :method :multi(_, ['PAST';'Node'])
     .param pmc node
     .param pmc options         :slurpy :named
 
