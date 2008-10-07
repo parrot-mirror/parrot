@@ -106,7 +106,7 @@ or the resulting PIR code (target='PIR').
     optable.newtok('infix:', 'looser'=>'term:', 'assoc'=>'list', 'nows'=>1, 'match'=>'PGE::Exp::Concat')
 
     .local pmc p6meta
-    p6meta = new 'P6metaclass'
+    p6meta = get_hll_global 'P6metaclass'
     p6meta.'new_class'('PGE::Glob::Compiler', 'attr'=>'$!compsub')
 
     $P0 = get_global 'compile_glob'
