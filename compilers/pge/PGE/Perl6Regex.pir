@@ -162,8 +162,7 @@ needed for compiling regexes.
     p6meta.'new_class'('PGE::Exp::Alias', 'parent'=>'PGE::Exp')
 
     .local pmc optable
-    $P0 = get_hll_global ['PGE'], 'OPTable'
-    optable = $P0.'new'()
+    optable = new ['PGE';'OPTable']
     set_global '$optable', optable
 
     $P0 = get_global 'parse_term'
