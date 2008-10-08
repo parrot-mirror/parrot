@@ -155,54 +155,18 @@ the compiler is ready for code to be compiled and executed.
 .sub 'parsegrammar' :method
     .param string value        :optional
     .param int has_value       :opt_flag
-    unless has_value, get
-    .local pmc interp, hll, ns
-    interp = getinterp
-    $P0 = interp['namespace';1]
-    $P0 = $P0.get_name()
-    hll = shift $P0
-    $P0 = split '::', value
-    $S0 = hll
-    unshift $P0, $S0
-    $P0 = get_root_namespace $P0
-    .return self.'attr'('$parsegrammar', $P0, has_value)
-  get:
     .return self.'attr'('$parsegrammar', value, has_value)
 .end
 
 .sub 'parseactions' :method
-    .param string value        :optional
+    .param pmc value           :optional
     .param int has_value       :opt_flag
-    unless has_value, get
-    .local pmc interp, hll, ns
-    interp = getinterp
-    $P0 = interp['namespace';1]
-    $P0 = $P0.get_name()
-    hll = shift $P0
-    $P0 = split '::', value
-    $S0 = hll
-    unshift $P0, $S0
-    $P0 = get_root_namespace $P0
-    .return self.'attr'('$parseactions', $P0, has_value)
-  get:
     .return self.'attr'('$parseactions', value, has_value)
 .end
 
 .sub 'astgrammar' :method
     .param string value        :optional
     .param int has_value       :opt_flag
-    unless has_value, get
-    .local pmc interp, hll, ns
-    interp = getinterp
-    $P0 = interp['namespace';1]
-    $P0 = $P0.get_name()
-    hll = shift $P0
-    $P0 = split '::', value
-    $S0 = hll
-    unshift $P0, $S0
-    $P0 = get_root_namespace $P0
-    .return self.'attr'('$astgrammar', $P0, has_value)
-  get:
     .return self.'attr'('$astgrammar', value, has_value)
 .end
 
@@ -372,10 +336,20 @@ to any options and return the resulting parse tree.
     target = adverbs['target']
     target = downcase target
 
-    parsegrammar= self.'parsegrammar'()
-    unless parsegrammar goto err_no_parsegrammar
-    top = parsegrammar['TOP']
-    unless null top goto have_top
+    parsegrammar = self.'parsegrammar'()
+    $I0 = can parsegrammar, 'TOP'
+    unless $I0 goto parsegrammar_string
+    top = find_method parsegrammar, 'TOP'
+    goto have_top
+  parsegrammar_string:
+    $P0 = self.'parse_name'(parsegrammar)
+    $S0 = pop $P0
+    $P1 = get_hll_global $P0, $S0
+    $I0 = can $P1, 'TOP'
+    unless $I0 goto err_notop
+    top = find_method $P1, 'TOP'
+    goto have_top
+  err_notop:
     self.'panic'('Cannot find TOP regex in ', parsegrammar)
   have_top:
     .local pmc parseactions, action
