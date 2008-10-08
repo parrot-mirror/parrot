@@ -2,13 +2,13 @@
 # $Id$
 
 # Setup of some commands
-PERL   = @perl@
-RM_F   = @rm_f@
-MKPATH = @mkpath@
-CHMOD  = @chmod@
-PERLDOC = @perldoc@
+PERL      = @perl@
+RM_F      = @rm_f@
+MKPATH    = @mkpath@
+CHMOD     = @chmod@
+PERLDOC   = @perldoc@
 BUILD_DIR = @build_dir@
-RECONFIGURE   = $(PERL) @build_dir@/tools/dev/reconfigure.pl
+RECONFIGURE = $(PERL) $(BUILD_DIR)/tools/dev/reconfigure.pl
 
 # long list of .pod files
 POD = @pod@
@@ -41,8 +41,8 @@ doc-prep:
 	$(MKPATH) ops
 
 packfile-c.pod: ../src/packfile.c
-#IF(new_perldoc):	perldoc -ud packfile-c.pod ../src/packfile.c
-#ELSE:	perldoc -u ../src/packfile.c > packfile-c.pod
+#IF(new_perldoc):	$(PERLDOC) -ud packfile-c.pod ../src/packfile.c 
+#ELSE:	$(PERLDOC) -u ../src/packfile.c > packfile-c.pod
 
 clean:
 	$(RM_F) packfile-c.pod $(POD)
