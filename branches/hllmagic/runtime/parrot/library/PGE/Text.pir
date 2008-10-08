@@ -16,7 +16,7 @@ also.)
 
 .sub "__onload" :load
     .local pmc p6meta
-    p6meta = new 'P6metaclass'
+    p6meta = get_hll_global 'P6metaclass'
     p6meta.'new_class'('PGE::Text', 'parent'=>'PGE::Grammar')
 .end
 

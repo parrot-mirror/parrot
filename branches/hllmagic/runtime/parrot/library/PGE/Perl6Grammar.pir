@@ -125,7 +125,7 @@ the output to the correct output file.
 
     ##   create the PGE::Perl6Grammar compiler object
     .local pmc pgc, p6meta
-    p6meta = new 'P6metaclass'
+    p6meta = get_hll_global 'P6metaclass'
     p6meta.'new_class'('PGE::Perl6Grammar::Compiler', 'parent'=>'PCT::HLLCompiler')
     pgc = new [ 'PGE';'Perl6Grammar';'Compiler' ]
     pgc.'language'('PGE::Perl6Grammar')

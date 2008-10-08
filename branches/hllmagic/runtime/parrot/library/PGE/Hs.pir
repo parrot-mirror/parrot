@@ -167,7 +167,7 @@ END:
     .local pmc capt, iter, subelm, elm, escape
 
     out = ""
-    escape = find_global ["Data";"Escape"], "String"
+    escape = get_hll_global ["Data::Escape"], "String"
 
   start:
     out .= "PGE_Match "
