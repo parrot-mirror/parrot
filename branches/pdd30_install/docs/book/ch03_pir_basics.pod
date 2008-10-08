@@ -21,10 +21,10 @@ each that are necessary.
 
 X<.pasm files> A file with a F<.pasm> extension is treated as pure PASM
 code by Parrot, as is any file run with the C<-a> command-line option.
-This mode is mainly used for running pure PASM tests. Parrot treats any
-extension other than F<.pasm> as a PIR file in mixed mode.
-X<.pir files> As a convention, files containing pure PIR code generally
-have a F<.pir> extension.
+This mode is mainly used for running pure PASM tests, and is not likely
+to be useful for most developers. Parrot treats any extension other than
+F<.pasm> as a PIR file in mixed mode. X<.pir files> As a convention, files
+containing pure PIR code generally have a F<.pir> extension.
 
 X<PIR (Parrot intermediate representation);documentation>
 PIR is well documented, both in traditional documentation but also in
@@ -34,7 +34,7 @@ sources for information. The test suite in F<imcc/t> shows examples of
 proper working code as it should be. These are all good starting points
 for digging deeper into the PIR syntax and functionality.
 
-=head1 Statements
+=head2 Statements
 
 Z<CHP-10-SECT-1>
 
@@ -45,13 +45,13 @@ PASM opcodes are valid PIR code, so the basic syntax is the same. The
 statement delimiter is a newline C<\n>, so each statement has to be on
 its own line. Statements may also start with a label, for use with jumps
 and branches. Comments are marked by a hash sign (C<#>), and continue
-until the end of the line. PIR also allows POD blocks for multi-line
-documentation.
+until the end of the line. PIR allows POD blocks for multi-line
+documentation, and heredocs for multiline string constants.
 
 Unlike PASM, PIR has some higher-level constructs, including
 symbol operators:
 
-  I1 = 5                       # set I1, 5
+  $I1 = 5                       # set $I1, 5
 
 named variables:
 
@@ -60,11 +60,11 @@ named variables:
 and complex statements built from multiple keywords and symbol
 operators:
 
-  if I1 <= 5 goto LABEL        # le I1, 5, LABEL
+  if $I1 <= 5 goto LABEL        # le $I1, 5, LABEL
 
 We will get into all of these in more detail as we go.
 
-=head1 Variables and Constants
+=head2 Variables and Constants
 
 Z<CHP-10-SECT-2>
 
@@ -75,7 +75,7 @@ Literal constants in PIR are the same as constants in PASM. Integers
 and floating-point numbers are numeric literals and strings are
 enclosed in quotes. PIR strings use the same escape sequences as PASM.
 
-=head2 Parrot Registers
+=head3 Parrot Registers
 
 Z<CHP-10-SECT-2.1>
 
@@ -85,8 +85,8 @@ register names always start with a single character that shows whether
 it is an integer (I), numeric (N), string (S), or PMC (P) register,
 and end with the number of the register:
 
-  S0 = "Hello, Polly.\n"
-  print S0
+  $S0 = "Hello, Polly.\n"
+  print $S0
 
 You can have as many registers of each type as you need, Parrot will
 allocate new registers if you need more.N<Parrot registers are allocated
@@ -99,7 +99,7 @@ the pool of allocated registers too large.> Of course, as with any
 memory management situation, fewer allocations translates directly
 to improved performance.
 
-=head2 Temporary Registers
+=head3 Temporary Registers
 
 Z<CHP-10-SECT-2.2>
 
@@ -198,16 +198,15 @@ to see resulting PASM on I<stdout>.
 You'll find more details on these options and many others in
 A<CHP-11-SECT-4>"Parrot Command-Line Options" in Chapter 11.
 
-=head2 Named Variables
+=head3 Named Variables
 
-Z<CHP-10-SECT-2.3>
+Z<CHP-10-SECT-2>
 
 X<named variables (PIR)>
 X<PIR (Parrot intermediate representation);named variables>
 Named variables can be used anywhere a register or temporary register
-is used. They're declared with the C<.local> statement or the
-equivalent C<.sym> statement, which require a variable type and a
-name:
+is used. They're declared with the C<.local> statement which requires
+a variable type and a name:
 
   .local string hello
   set hello, "Hello, Polly.\n"
@@ -261,7 +260,7 @@ C<new>:
   hello = "Hello, Polly.\n"
   print hello
 
-=head2 Named Constants
+=head3 Named Constants
 
 Z<CHP-10-SECT-2.4>
 
@@ -284,7 +283,7 @@ but have to be declared beforehand:
   .const string mouse = "Mouse"     # string constant
   .const num pi = 3.14159           # floating point constant
 
-=head2 Register Spilling
+=head3 Register Spilling
 
 Z<CHP-10-SECT-2.5>
 
@@ -342,7 +341,7 @@ if two variables have the same score Parrot may assign registers based
 on the hashed value of the variable name. Parrot randomizes the seed
 to the hash function to guarantee you never get a consistent order.
 
-=head1 Symbol Operators
+=head2 Symbol Operators
 
 Z<CHP-10-SECT-3>
 
@@ -389,7 +388,7 @@ A complete list of PIR operators is available in A<CHP-11>Chapter 11.
 We'll discuss the comparison operators in A<CHP-10-SECT-3>"Symbol
 Operators" later in this chapter.
 
-=head1 Labels
+=head2 Labels
 
 Z<CHP-10-SECT-4>
 
@@ -461,7 +460,7 @@ This code prints out "Hello, Polly." but not "Polly want a cracker?":
 The A<CHP-10-SECT-6>"Subroutines" section later in this chapter goes
 into much more detail about compilation units and their uses.
 
-=head1 Flow Control
+=head2 Flow Control
 
 Z<CHP-10-SECT-5>
 
@@ -586,6 +585,93 @@ executes.
 Any high-level flow control construct can be built from conditional
 and unconditional branches.
 
+Fortunately, libraries of macros have been developed that can implement
+more familiar syntax for many of these control structures. We will discuss
+these libraries in more detail in A<CHP-6> "PIR Standard Library".
+
 =cut
 
-# vim: expandtab shiftwidth=2 tw=70:
+##########################################################################
+#                              PSEUDOPOD LEGEND
+#
+#  Interior Sequences
+#  ..................
+#  A<>         link anchor (source)
+#  B<>         bold text
+#  C<>         monospace text
+#  E<>         named character
+#  F<>         file name
+#  G<>         superscript
+#  H<>         subscript
+#  I<>         italicized text
+#  L<>         link to other manpage (see A<>)
+#  M<>         firstterm
+#  N<>         footnote
+#  Q<>         quoted text
+#  R<>         replaceable item
+#  S<>         text with non-breaking spaces
+#  T<>         cited title for book, etc.
+#  U<>         URL
+#  X<>         a single index term of the form:
+#                    primary:sortas;secondary:sortas;tertiary:sortas;;ETC
+#                    where ETC is either (see term) or (see also term)
+#                    only primary term is required
+#  Z<>         link anchor (destination)
+#
+#  Heads
+#  .....
+#  head0                    chapter title
+#  head{1-4}                section title (4 levels)
+#
+#  Command Paragraphs (begin/end Blocks)
+#  .....................................
+#  blockquote               quotation
+#  comment                  ignored text
+#  caution                  admonition
+#  epigraph                 quotation
+#  example                  container
+#  figure CAPTION           figure
+#  important                admonition
+#  note                     admonition
+#  programlisting           literal text
+#  screen                   literal text
+#  sidebar                  container
+#  table html [CAPTION]     table rendered in HTML
+#  table picture [CAPTION]  table rendered in plain text
+#  tip                      admonition
+#  warning                  admonition
+#
+#
+#  Command Paragraphs (for Blocks)
+#  ...............................
+#  This structure will be used only for comments. For example:
+#
+#    =for editor
+#    Check my spelling on this.
+#    =end
+#
+#  This will be rendered as a visible comment in the final output
+#  with a label at the top addressing it to "editor". The exception is
+#  =for ignore which will always be ignored by the parser.
+#
+#  Tables
+#  ......
+#  A 2x2 table with top header row looks like this:
+#  
+#  =begin table An Example Table
+#  =headrow
+#  =row
+#  =cell Header for first column (row 1, col 1)
+#  =cell Header for 2nd column (row 1, col 2)
+#  =bodyrows
+#  =cell Cell for row 2, col 1
+#  =cell Cell for row 2, col 2
+#  =end table
+#
+#  For more information on PSEUDOPOD, write to tools@oreilly.com
+##########################################################################
+
+# Local variables:
+#   c-file-style: "parrot"
+# End:
+# vim: expandtab shiftwidth=4:
