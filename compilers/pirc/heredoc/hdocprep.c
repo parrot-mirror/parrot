@@ -163,7 +163,7 @@ typedef void* yyscan_t;
 #define yycolumn (YY_CURRENT_BUFFER_LVALUE->yy_bs_column)
 #define yy_flex_debug yyg->yy_flex_debug_r
 
-int hd_prelex_init (yyscan_t* scanner);
+int yylex_init (yyscan_t* scanner);
 /* %endif */
 
 /* %if-not-reentrant */
@@ -186,7 +186,7 @@ int hd_prelex_init (yyscan_t* scanner);
 #define YY_STATE_EOF(state) (YY_END_OF_BUFFER + state + 1)
 
 /* Special action meaning "start processing a new file". */
-#define YY_NEW_FILE hd_prerestart(yyin ,yyscanner )
+#define YY_NEW_FILE yyrestart(yyin ,yyscanner )
 
 #define YY_END_OF_BUFFER_CHAR 0
 
@@ -218,7 +218,7 @@ typedef struct yy_buffer_state *YY_BUFFER_STATE;
 
     /* Note: We specifically omit the test for yy_rule_can_match_eol because it requires
      *       access to the local variable yy_act. Since yyless() is a macro, it would break
-     *       existing scanners that call yyless() from OUTSIDE hd_prelex.
+     *       existing scanners that call yyless() from OUTSIDE yylex.
      *       One obvious solution it to make yy_act a global. I tried that, and saw
      *       a 5% performance hit in a non-yylineno scanner, because yy_act is
      *       normally declared as a register variable-- so it is not worth it.
@@ -319,7 +319,7 @@ struct yy_buffer_state
      * possible backing-up.
      *
      * When we actually see the EOF, we change the status to "new"
-     * (via hd_prerestart()), so that the user can continue scanning by
+     * (via yyrestart()), so that the user can continue scanning by
      * just pointing yyin at a new input file.
      */
 #define YY_BUFFER_EOF_PENDING 2
@@ -360,38 +360,38 @@ struct yy_buffer_state
 
 /* %endif */
 
-void hd_prerestart (FILE *input_file ,yyscan_t yyscanner );
-void hd_pre_switch_to_buffer (YY_BUFFER_STATE new_buffer ,yyscan_t yyscanner );
-YY_BUFFER_STATE hd_pre_create_buffer (FILE *file,int size ,yyscan_t yyscanner );
-void hd_pre_delete_buffer (YY_BUFFER_STATE b ,yyscan_t yyscanner );
-void hd_pre_flush_buffer (YY_BUFFER_STATE b ,yyscan_t yyscanner );
-void hd_prepush_buffer_state (YY_BUFFER_STATE new_buffer ,yyscan_t yyscanner );
-void hd_prepop_buffer_state (yyscan_t yyscanner );
+void yyrestart (FILE *input_file ,yyscan_t yyscanner );
+void yy_switch_to_buffer (YY_BUFFER_STATE new_buffer ,yyscan_t yyscanner );
+YY_BUFFER_STATE yy_create_buffer (FILE *file,int size ,yyscan_t yyscanner );
+void yy_delete_buffer (YY_BUFFER_STATE b ,yyscan_t yyscanner );
+void yy_flush_buffer (YY_BUFFER_STATE b ,yyscan_t yyscanner );
+void yypush_buffer_state (YY_BUFFER_STATE new_buffer ,yyscan_t yyscanner );
+void yypop_buffer_state (yyscan_t yyscanner );
 
-static void hd_preensure_buffer_stack (yyscan_t yyscanner );
-static void hd_pre_load_buffer_state (yyscan_t yyscanner );
-static void hd_pre_init_buffer (YY_BUFFER_STATE b,FILE *file ,yyscan_t yyscanner );
+static void yyensure_buffer_stack (yyscan_t yyscanner );
+static void yy_load_buffer_state (yyscan_t yyscanner );
+static void yy_init_buffer (YY_BUFFER_STATE b,FILE *file ,yyscan_t yyscanner );
 
-#define YY_FLUSH_BUFFER hd_pre_flush_buffer(YY_CURRENT_BUFFER ,yyscanner)
+#define YY_FLUSH_BUFFER yy_flush_buffer(YY_CURRENT_BUFFER ,yyscanner)
 
-YY_BUFFER_STATE hd_pre_scan_buffer (char *base,yy_size_t size ,yyscan_t yyscanner );
-YY_BUFFER_STATE hd_pre_scan_string (yyconst char *yy_str ,yyscan_t yyscanner );
-YY_BUFFER_STATE hd_pre_scan_bytes (yyconst char *bytes,int len ,yyscan_t yyscanner );
+YY_BUFFER_STATE yy_scan_buffer (char *base,yy_size_t size ,yyscan_t yyscanner );
+YY_BUFFER_STATE yy_scan_string (yyconst char *yy_str ,yyscan_t yyscanner );
+YY_BUFFER_STATE yy_scan_bytes (yyconst char *bytes,int len ,yyscan_t yyscanner );
 
 /* %endif */
 
-void *hd_prealloc (yy_size_t ,yyscan_t yyscanner );
-void *hd_prerealloc (void *,yy_size_t ,yyscan_t yyscanner );
-void hd_prefree (void * ,yyscan_t yyscanner );
+void *yyalloc (yy_size_t ,yyscan_t yyscanner );
+void *yyrealloc (void *,yy_size_t ,yyscan_t yyscanner );
+void yyfree (void * ,yyscan_t yyscanner );
 
-#define yy_new_buffer hd_pre_create_buffer
+#define yy_new_buffer yy_create_buffer
 
 #define yy_set_interactive(is_interactive) \
     { \
     if ( ! YY_CURRENT_BUFFER ){ \
-        hd_preensure_buffer_stack (yyscanner); \
+        yyensure_buffer_stack (yyscanner); \
         YY_CURRENT_BUFFER_LVALUE =    \
-            hd_pre_create_buffer(yyin,YY_BUF_SIZE ,yyscanner); \
+            yy_create_buffer(yyin,YY_BUF_SIZE ,yyscanner); \
     } \
     YY_CURRENT_BUFFER_LVALUE->yy_is_interactive = is_interactive; \
     }
@@ -399,9 +399,9 @@ void hd_prefree (void * ,yyscan_t yyscanner );
 #define yy_set_bol(at_bol) \
     { \
     if ( ! YY_CURRENT_BUFFER ){\
-        hd_preensure_buffer_stack (yyscanner); \
+        yyensure_buffer_stack (yyscanner); \
         YY_CURRENT_BUFFER_LVALUE =    \
-            hd_pre_create_buffer(yyin,YY_BUF_SIZE ,yyscanner); \
+            yy_create_buffer(yyin,YY_BUF_SIZE ,yyscanner); \
     } \
     YY_CURRENT_BUFFER_LVALUE->yy_at_bol = at_bol; \
     }
@@ -411,7 +411,7 @@ void hd_prefree (void * ,yyscan_t yyscanner );
 /* %% [1.0] yytext/yyin/yyout/yy_state_type/yylineno etc. def's & init go here */
 /* Begin user sect3 */
 
-#define hd_prewrap(n) 1
+#define yywrap(n) 1
 #define YY_SKIP_YYWRAP
 
 #define FLEX_DEBUG
@@ -444,8 +444,8 @@ static void yy_fatal_error (yyconst char msg[] ,yyscan_t yyscanner );
     yyg->yy_c_buf_p = yy_cp;
 
 /* %% [4.0] data tables for the DFA and the user's section 1 definitions go here */
-#define YY_NUM_RULES 16
-#define YY_END_OF_BUFFER 17
+#define YY_NUM_RULES 20
+#define YY_END_OF_BUFFER 21
 /* This struct is not used in this scanner,
    but its presence is necessary. */
 struct yy_trans_info
@@ -453,37 +453,39 @@ struct yy_trans_info
     flex_int32_t yy_verify;
     flex_int32_t yy_nxt;
     };
-static yyconst flex_int16_t yy_accept[105] =
+static yyconst flex_int16_t yy_accept[125] =
     {   0,
         0,    0,    0,    0,   12,   12,    0,    0,    0,    0,
-        0,    0,    0,    0,   17,   15,   13,   15,   15,   15,
-       15,   16,    4,   16,   16,   16,   12,   11,   12,   12,
-       16,   14,   16,   16,   16,    9,   16,   16,   16,   10,
-       16,   16,    6,    5,    6,    6,    6,   13,    0,   13,
-        0,    1,    0,    0,    0,    2,    0,    0,    4,    0,
-        4,    0,    1,    0,    0,   12,   11,   12,   12,   14,
-        0,    9,    0,    9,    0,    1,    0,    0,   10,    0,
-       10,    0,    1,    0,    5,    0,    0,    0,    0,    0,
-        0,    0,    8,    0,    0,    0,    0,    7,    0,    0,
+        0,    0,    0,    0,    0,    0,   21,   14,   13,   14,
+       14,   14,   14,   14,   20,    4,   20,   20,   20,   12,
+       11,   12,   12,   20,   19,   20,   20,   20,    9,   20,
+       20,   20,   10,   20,   20,    6,    5,    6,    6,    6,
+       16,   18,   16,   20,   20,   13,    0,   13,    0,    1,
+        0,    0,    0,    0,    2,    0,    0,    4,    0,    4,
+        0,    1,    0,    0,   12,   11,   12,   12,   19,    0,
+        9,    0,    9,    0,    1,    0,    0,   10,    0,   10,
+        0,    1,    0,    5,    0,   18,    0,   17,    0,    0,
 
-        0,    3,    0,    0
+        0,    0,    0,    0,    0,    0,    0,    0,    8,    0,
+        0,    0,    0,    7,    0,    0,    0,    0,    3,    0,
+        0,    0,   15,    0
     } ;
 
 static yyconst flex_int32_t yy_ec[256] =
     {   0,
-        1,    1,    1,    1,    1,    1,    1,    1,    1,    2,
-        1,    1,    3,    1,    1,    1,    1,    1,    1,    1,
+        1,    1,    1,    1,    1,    1,    1,    1,    2,    3,
+        1,    2,    4,    1,    1,    1,    1,    1,    1,    1,
+        1,    1,    1,    1,    1,    2,    1,    1,    1,    1,
+        1,    2,    1,    5,    6,    1,    1,    1,    7,    1,
+        1,    1,    1,    1,    1,    8,    1,    1,    1,    1,
+        1,    1,    1,    1,    1,    1,    1,    1,    1,    9,
+       10,    1,    1,    1,    1,    1,    1,    1,    1,    1,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
-        1,    1,    1,    4,    5,    1,    1,    1,    6,    1,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
-        1,    1,    1,    1,    1,    1,    1,    1,    1,    7,
-        8,    1,    1,    1,    1,    1,    1,    1,    1,    1,
-        1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
-        1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
-        1,    9,    1,    1,    1,    1,    1,    1,   10,    1,
+        1,   11,    1,    1,    1,    1,    1,    1,   12,   13,
 
-        1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
-        1,    1,    1,    1,    1,   11,   12,    1,    1,    1,
+       14,    1,    1,    1,   15,    1,    1,   16,    1,   17,
+        1,    1,    1,    1,    1,   18,   19,    1,    1,    1,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
@@ -501,115 +503,122 @@ static yyconst flex_int32_t yy_ec[256] =
         1,    1,    1,    1,    1
     } ;
 
-static yyconst flex_int32_t yy_meta[13] =
+static yyconst flex_int32_t yy_meta[20] =
     {   0,
-        1,    2,    1,    1,    1,    1,    1,    1,    1,    1,
-        1,    1
+        1,    1,    2,    1,    1,    1,    1,    1,    1,    1,
+        1,    1,    1,    1,    1,    1,    1,    1,    1
     } ;
 
-static yyconst flex_int16_t yy_base[127] =
+static yyconst flex_int16_t yy_base[149] =
     {   0,
-        0,    6,   13,   17,   24,   28,   32,   36,   40,   44,
-       48,   52,   56,   62,   62,  216,   68,   58,   70,   49,
-       72,   74,  216,   76,   78,   80,    0,  216,   50,   89,
-      216,  216,   46,   91,   93,  216,   95,   97,   99,  216,
-      101,  103,  216,  216,   42,  105,   33,    0,   34,    0,
-      107,  216,  109,  109,  114,  216,  116,   22,  216,   18,
-      216,  118,  216,  120,  114,    0,  216,  125,  127,  216,
-      129,  216,  131,  216,  133,  216,  135,  137,  216,  139,
-      216,  141,  216,  143,  216,  143,  146,   18,  146,  154,
-       17,  160,  216,    0,   15,  168,  168,  216,    0,   11,
+        0,    7,   15,   19,   27,   31,   35,   39,   43,   47,
+       51,   55,   59,   66,   74,    0,  220,  221,   23,  216,
+       63,  203,  208,   70,   79,  221,   81,   83,   85,    0,
+      221,  213,   87,  221,  221,  212,   89,   91,  221,   95,
+       97,   99,  221,  101,  103,  221,  221,  211,  105,  204,
+      221,  221,  174,    9,  169,  107,  172,  109,  111,  221,
+      113,  157,    0,  115,  221,  117,  119,  221,  121,  221,
+      123,  221,  125,  127,    0,  221,  129,  131,  221,  133,
+      221,  135,  221,  137,  221,  139,  141,  221,  144,  221,
+      146,  221,  148,  221,  148,  221,  149,  221,    0,  166,
 
-      176,  216,  178,  216,  181,  183,  185,  187,  189,  191,
-      193,  195,  197,  199,  201,   11,  203,  205,  207,  209,
-      211,    9,    5,    3,    0,  213
+       84,  151,   64,  160,  154,   57,   44,  156,  221,    0,
+       49,  154,  161,  221,    0,   45,   29,  165,  221,  167,
+       31,   26,  221,  221,  178,  180,  182,  184,  186,  188,
+      190,  192,  194,  196,  198,   35,  200,  202,  204,  206,
+      208,   31,   27,   23,   11,    1,    0,  210
     } ;
 
-static yyconst flex_int16_t yy_def[127] =
+static yyconst flex_int16_t yy_def[149] =
     {   0,
-      105,  105,  106,  106,  107,  107,  108,  108,  109,  109,
-      110,  110,  111,  111,  104,  104,  104,  104,  112,  104,
-      113,  114,  104,  114,  115,  114,  116,  104,  116,  117,
-      104,  104,  104,  112,  118,  104,  118,  119,  120,  104,
-      120,  121,  104,  104,  104,  112,  104,   17,  104,   17,
-      112,  104,  112,  104,  113,  104,  113,   26,  104,   26,
-      104,  115,  104,  115,   26,  116,  104,  117,  117,  104,
-      118,  104,  118,  104,  119,  104,  119,  120,  104,  120,
-      104,  121,  104,  121,  104,  104,  122,  123,   26,  124,
-      125,  122,  104,  122,  123,  126,  124,  104,  124,  125,
+      125,  125,  126,  126,  127,  127,  128,  128,  129,  129,
+      130,  130,  131,  131,  128,   15,  124,  124,  124,  124,
+      132,  124,  124,  133,  134,  124,  134,  135,  134,  136,
+      124,  136,  137,  124,  124,  124,  132,  138,  124,  138,
+      139,  140,  124,  140,  141,  124,  124,  124,  132,  124,
+      124,  124,  124,  142,  143,  124,  124,  124,  132,  124,
+      132,  124,  124,  133,  124,  133,  134,  124,  134,  124,
+      135,  124,  135,  134,  136,  124,  137,  137,  124,  138,
+      124,  138,  124,  139,  124,  139,  140,  124,  140,  124,
+      141,  124,  141,  124,  124,  124,  142,  124,  142,  143,
 
-      126,  104,  126,    0,  104,  104,  104,  104,  104,  104,
-      104,  104,  104,  104,  104,  104,  104,  104,  104,  104,
-      104,  104,  104,  104,  104,  104
+      124,  144,  145,  134,  146,  147,  124,  144,  124,  144,
+      145,  148,  146,  124,  146,  147,  124,  148,  124,  148,
+      124,  124,  124,    0,  124,  124,  124,  124,  124,  124,
+      124,  124,  124,  124,  124,  124,  124,  124,  124,  124,
+      124,  124,  124,  124,  124,  124,  124,  124
     } ;
 
-static yyconst flex_int16_t yy_nxt[229] =
+static yyconst flex_int16_t yy_nxt[241] =
     {   0,
-      100,   17,   18,   97,   19,   95,   20,   17,   18,   92,
-       19,   66,   20,   21,   23,   24,   98,   25,   23,   24,
-       93,   25,   98,   93,   26,   28,   29,   58,   30,   28,
-       29,   58,   30,   32,   33,   48,   34,   32,   33,   86,
-       34,   36,   37,   85,   38,   36,   37,   70,   38,   40,
-       41,   67,   42,   40,   41,   54,   42,   44,   45,   50,
-       46,  104,   47,   44,   45,  104,   46,  104,   47,   48,
-       49,   52,   53,   56,   57,   59,   60,   61,   60,   63,
-       64,   59,   60,  104,  104,  104,  104,  104,  104,   65,
-       52,   69,   52,   53,   72,   73,   74,   73,   76,   77,
+      116,  113,   19,   20,  102,   21,  103,   22,   23,   19,
+       20,  111,   21,   98,   22,   23,   24,   26,   27,   99,
+       28,   26,   27,  108,   28,   56,   57,  100,   29,   31,
+       32,   97,   33,   31,   32,   75,   33,   35,   36,  123,
+       37,   35,   36,  122,   37,   39,   40,  121,   41,   39,
+       40,  114,   41,   43,   44,  109,   45,   43,   44,  117,
+       45,   47,   48,  114,   49,   60,   61,   50,   47,   48,
+      109,   49,   65,   66,   50,   51,   52,   53,   54,   37,
+       55,   68,   69,   70,   69,   72,   73,   68,   69,   60,
+       78,   60,   61,   81,   82,  107,   74,   83,   82,   85,
 
-       79,   80,   81,   80,   83,   84,   52,   53,   52,   53,
-       52,   53,   87,  104,   88,   56,   57,   56,   57,   63,
-       64,   63,   64,   58,  104,   89,   52,   69,   52,   69,
-       72,   73,   72,   73,   76,   77,   76,   77,   79,   80,
-       79,   80,   83,   84,   83,   84,   90,  104,   91,   93,
-      104,  104,  104,  104,   94,   58,   96,   98,  104,  104,
-      104,  104,   99,   93,  104,  104,  104,  104,   94,  102,
-      103,   98,  104,  104,  104,  104,   99,  102,  103,  102,
-      103,   16,   16,   22,   22,   27,   27,   31,   31,   35,
-       35,   39,   39,   43,   43,   51,   51,   55,   55,   58,
+       86,   88,   89,   90,   89,   92,   93,   60,   61,   56,
+       57,   56,   57,   60,   61,   60,   61,   65,   66,   65,
+       66,   68,   69,   68,   69,   72,   73,   72,   73,   68,
+       69,   60,   78,   60,   78,   81,   82,   81,   82,   85,
+       86,   85,   86,   88,   89,  104,   88,   89,   92,   93,
+       92,   93,  105,   98,  106,  109,  119,  120,  114,   99,
+      109,  110,   68,   69,  115,  114,  110,  119,  120,  119,
+      120,  115,   98,  101,   56,   98,   96,  112,   18,   18,
+       25,   25,   30,   30,   34,   34,   38,   38,   42,   42,
+       46,   46,   59,   59,   64,   64,   67,   67,   71,   71,
 
-       58,   62,   62,   68,   68,   71,   71,   75,   75,   78,
-       78,   82,   82,  101,  101,   15,  104,  104,  104,  104,
-      104,  104,  104,  104,  104,  104,  104,  104
+       77,   77,   80,   80,   84,   84,   87,   87,   91,   91,
+      118,  118,   95,   94,   79,   76,   63,   62,   58,  124,
+       17,  124,  124,  124,  124,  124,  124,  124,  124,  124,
+      124,  124,  124,  124,  124,  124,  124,  124,  124,  124
     } ;
 
-static yyconst flex_int16_t yy_chk[229] =
+static yyconst flex_int16_t yy_chk[241] =
     {   0,
-      125,    1,    1,  124,    1,  123,    1,    2,    2,  122,
-        2,  116,    2,    2,    3,    3,  100,    3,    4,    4,
-       95,    4,   91,   88,    4,    5,    5,   60,    5,    6,
-        6,   58,    6,    7,    7,   49,    7,    8,    8,   47,
-        8,    9,    9,   45,    9,   10,   10,   33,   10,   11,
-       11,   29,   11,   12,   12,   20,   12,   13,   13,   18,
-       13,   15,   13,   14,   14,    0,   14,    0,   14,   17,
-       17,   19,   19,   21,   21,   22,   22,   24,   24,   25,
-       25,   26,   26,    0,    0,    0,    0,    0,    0,   26,
-       30,   30,   34,   34,   35,   35,   37,   37,   38,   38,
+      147,  146,    1,    1,   63,    1,   63,    1,    1,    2,
+        2,  145,    2,   54,    2,    2,    2,    3,    3,   54,
+        3,    4,    4,  144,    4,   19,   19,  143,    4,    5,
+        5,  142,    5,    6,    6,  136,    6,    7,    7,  122,
+        7,    8,    8,  121,    8,    9,    9,  117,    9,   10,
+       10,  116,   10,   11,   11,  111,   11,   12,   12,  107,
+       12,   13,   13,  106,   13,   21,   21,   13,   14,   14,
+      103,   14,   24,   24,   14,   15,   15,   15,   15,   15,
+       15,   25,   25,   27,   27,   28,   28,   29,   29,   33,
+       33,   37,   37,   38,   38,  101,   29,   40,   40,   41,
 
-       39,   39,   41,   41,   42,   42,   46,   46,   51,   51,
-       53,   53,   54,    0,   54,   55,   55,   57,   57,   62,
-       62,   64,   64,   65,    0,   65,   68,   68,   69,   69,
-       71,   71,   73,   73,   75,   75,   77,   77,   78,   78,
-       80,   80,   82,   82,   84,   84,   86,    0,   86,   87,
-        0,    0,    0,    0,   87,   89,   89,   90,    0,    0,
-        0,    0,   90,   92,    0,    0,    0,    0,   92,   96,
-       96,   97,    0,    0,    0,    0,   97,  101,  101,  103,
-      103,  105,  105,  106,  106,  107,  107,  108,  108,  109,
-      109,  110,  110,  111,  111,  112,  112,  113,  113,  114,
+       41,   42,   42,   44,   44,   45,   45,   49,   49,   56,
+       56,   58,   58,   59,   59,   61,   61,   64,   64,   66,
+       66,   67,   67,   69,   69,   71,   71,   73,   73,   74,
+       74,   77,   77,   78,   78,   80,   80,   82,   82,   84,
+       84,   86,   86,   87,   87,   74,   89,   89,   91,   91,
+       93,   93,   95,   97,   95,  102,  112,  112,  105,   97,
+      108,  102,  104,  104,  105,  113,  108,  118,  118,  120,
+      120,  113,  100,   62,   57,   55,   53,  104,  125,  125,
+      126,  126,  127,  127,  128,  128,  129,  129,  130,  130,
+      131,  131,  132,  132,  133,  133,  134,  134,  135,  135,
 
-      114,  115,  115,  117,  117,  118,  118,  119,  119,  120,
-      120,  121,  121,  126,  126,  104,  104,  104,  104,  104,
-      104,  104,  104,  104,  104,  104,  104,  104
+      137,  137,  138,  138,  139,  139,  140,  140,  141,  141,
+      148,  148,   50,   48,   36,   32,   23,   22,   20,   17,
+      124,  124,  124,  124,  124,  124,  124,  124,  124,  124,
+      124,  124,  124,  124,  124,  124,  124,  124,  124,  124
     } ;
 
 /* Table of booleans, true if rule could match eol. */
-static yyconst flex_int32_t yy_rule_can_match_eol[17] =
+static yyconst flex_int32_t yy_rule_can_match_eol[21] =
     {   0,
-1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 0, 1, 1, 0, 0,     };
+1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 0, 1, 0, 0, 0, 0, 1, 1,
+    0,     };
 
-static yyconst flex_int16_t yy_rule_linenum[16] =
+static yyconst flex_int16_t yy_rule_linenum[20] =
     {   0,
-      278,  280,  283,  287,  294,  296,  319,  329,  339,  359,
-      372,  394,  442,  446,  448
+      317,  319,  322,  326,  333,  335,  357,  372,  389,  401,
+      415,  436,  495,  501,  505,  509,  511,  522,  525
     } ;
 
 /* The intent behind this definition is that it'll catch
@@ -624,7 +633,7 @@ static yyconst flex_int16_t yy_rule_linenum[16] =
 
 /*
  * $Id$
- * Copyright (C) 2007, The Perl Foundation.
+ * Copyright (C) 2007-2008, The Perl Foundation.
  */
 
 /*
@@ -645,42 +654,67 @@ static yyconst flex_int16_t yy_rule_linenum[16] =
 
 #include <stdio.h>
 #include <string.h>
-#include <assert.h>
 #include <stdlib.h>
+#include <stdarg.h>
+#include <assert.h>
+
+#ifdef LINKPARROT
+
+#include "parrot/string_funcs.h"
+#include "parrot/parrot.h"
+
+#else
+
+#define STREQ(x,y)              (0 == strcmp(x,y))
+#define mem_sys_allocate(x)     yyalloc(x,yyscanner)
+#define PARROT_MALLOC
+#define PARROT_WARN_UNUSED_RESULT
+#define PARROT_CANNOT_RETURN_NULL
+#define PARROT_ASSERT(x)        assert(x)
+#define mem_sys_free(x)         yyfree(x,yyscanner)
+
+#endif
 
 /* keep Microsoft Visual Studio compiler happy */
 #define YY_NO_UNISTD_H
 
-/* declare the prototype of hd_prelex */
-#define YY_DECL int hd_prelex(yyscan_t yyscanner)
+/* declare the prototype of yylex */
+#define YY_DECL int yylex(yyscan_t yyscanner)
 
 
-extern char *hd_preget_text(yyscan_t yyscanner);
-extern void  hd_preset_in(FILE *fp,yyscan_t yyscanner);
-extern int   hd_prelex_destroy(yyscan_t yyscanner);
-extern int   hd_prelex(yyscan_t yyscanner);
 
+
+extern char *yyget_text(yyscan_t yyscanner);
+extern void  yyset_in(FILE *fp,yyscan_t yyscanner);
+extern int   yylex_destroy(yyscan_t yyscanner);
+extern int   yylex(yyscan_t yyscanner);
+extern int   yyget_lineno(yyscan_t yyscanner);
 
 /* all globals are collected in this structure which
  * is set in yyscan_t's "extra" field, available through
  * yy{get,set}_extra() function.
  */
 typedef struct global_state {
-    char *heredoc;           /* heredoc string buffer */
-    char *linebuffer;        /* buffer to save the 'rest of the line' before scanning a heredoc */
-    char *delimiter;         /* buffer to save the delimiter of the heredoc string being scanned */
-    char *filename;          /* name of the file being scanned */
-    YY_BUFFER_STATE file_buffer;   /* needed to store the ref. to the file when scanning a string buffer */
+    int             errors;
+    char           *heredoc;       /* heredoc string buffer */
+    char           *linebuffer;    /* buffer to save the 'rest of the line'
+                                      before scanning a heredoc */
+    char           *delimiter;     /* buffer to save the delimiter of the
+                                      heredoc string being scanned */
+    char           *filename;      /* name of the file being scanned */
+    YY_BUFFER_STATE file_buffer;   /* needed to store the ref. to the file
+                                      when scanning a string buffer */
 
 } global_state;
 
 /* accessor methods for setting and getting the lexer_state */
 #define YY_EXTRA_TYPE  struct global_state *
 
-extern YY_EXTRA_TYPE  hd_preget_extra(yyscan_t scanner);
-extern void hd_preset_extra(YY_EXTRA_TYPE lexer ,yyscan_t scanner);
+extern YY_EXTRA_TYPE  yyget_extra(yyscan_t scanner);
+extern void           yyset_extra(YY_EXTRA_TYPE lexer ,yyscan_t scanner);
 
 #define output stdout
+
 /* macro to chop off the last character, typically a newline character,
  * but can also be something else
  */
@@ -693,7 +727,8 @@ extern void hd_preset_extra(YY_EXTRA_TYPE lexer ,yyscan_t scanner);
 
 =over 4
 
-=item C<lex_error>
+=item C<static void
+lex_error(yyscan_t yyscanner, char const * const message, ...)>
 
 Emit an error message.
 
@@ -701,15 +736,27 @@ Emit an error message.
 
 */
 static void
-lex_error(char const * const message, int lineno, global_state *state) {
-    fprintf(stderr, "\nHeredoc pre-processor error in '%s' (line %d): %s\n",
-            state->filename, lineno, message);
+lex_error(yyscan_t yyscanner, char const * const message, ...) {
+    global_state * const state  = yyget_extra(yyscanner);
+    int                  lineno = yyget_lineno(yyscanner);
+    va_list              arg_ptr;
+
+    fprintf(stderr, "\nHeredoc pre-processor error in '%s' (line %d): ", state->filename, lineno);
+
+    va_start(arg_ptr, message);
+    vfprintf(stderr, message, arg_ptr);
+    va_end(arg_ptr);
+
+    puts("");
+
+    ++state->errors;
 }
 
 
 /*
 
-=item C<dupstr>
+=item C<char *
+dupstr(char * const source)>
 
 The C89 standard does not define a dupstr() in the C library,
 so define our own dupstr. Function names beginning with "str"
@@ -719,22 +766,16 @@ does: duplicate a string.
 =cut
 
 */
+PARROT_MALLOC
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
 char *
-dupstr(char * const source) {
-    char *newstring = (char *)calloc(strlen(source) + 1, sizeof (char));
-    assert(newstring != NULL);
+dupstr(char * const source, yyscan_t yyscanner) {
+    char *newstring = (char *)mem_sys_allocate((strlen(source) + 1) * sizeof (char));
     strcpy(newstring, source);
     return newstring;
 }
 
-
-void
-printrules(void) {
-    extern int ctr[];
-    int i;
-    for (i = 0; i < YY_NUM_RULES; i++)
-        fprintf(output, "#rule %d was used %d times\n", i, ctr[i]);
-}
 
 
 /*
@@ -747,15 +788,18 @@ variables that are needed during the scanning.
 =cut
 
 */
+PARROT_MALLOC
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
 static global_state *
-init_global_state(char * const filename) {
-    global_state *state = (global_state *)malloc(sizeof (global_state));
-    assert(state != NULL);
+init_global_state(char * const filename, yyscan_t yyscanner) {
+    global_state *state = (global_state *)mem_sys_allocate(sizeof (global_state));
     state->filename    = filename;
     state->heredoc     = NULL;
-    state->linebuffer  = dupstr("");
+    state->linebuffer  = dupstr("", yyscanner);
     state->delimiter   = NULL;
     state->file_buffer = NULL;
+    state->errors      = 0;
     return state;
 }
 
@@ -769,20 +813,66 @@ free all memory of the global state structure.
 
 */
 static void
-destroy_global_state(global_state *state) {
+destroy_global_state(global_state *state, yyscan_t yyscanner) {
     if (state->linebuffer)
-        free(state->linebuffer);
+        mem_sys_free(state->linebuffer);
     if (state->heredoc)
-        free(state->heredoc);
+        mem_sys_free(state->heredoc);
 
-    free(state);
+    mem_sys_free(state);
     state = NULL;
 }
 
 
 /*
 
-=item C<main>
+=item C<static void
+scanfile(char * const filename)>
+
+=cut
+
+*/
+static void
+scanfile(char * const filename) {
+    yyscan_t      yyscanner;
+    global_state *state = NULL;
+    FILE         *fp;
+
+    /* open the file */
+    fp = fopen(filename, "r");
+
+    if (fp == NULL) {
+        fprintf(stderr, "error opening file '%s'\n", filename);
+        exit(EXIT_FAILURE);
+    }
+
+    /* initialize a yyscan_t object */
+    yylex_init(&yyscanner);
+    /* set the scanner to a string buffer and go parse */
+    yyset_in(fp,yyscanner);
+
+    state = init_global_state(filename, yyscanner);
+
+    yyset_extra(state,yyscanner);
+
+    /* the lexer never returns anything, only call it once. Don't give a YYSTYPE object. */
+    yylex(yyscanner);
+
+    /*
+    destroy_global_state(state, yyscanner);
+    */
+
+    /* clean up after playing */
+    yylex_destroy(yyscanner);
+
+
+
+
+}
+/*
+
+=item C<int
+main(int argc, char *argv[])>
 
 Entry point of the heredoc pre-processor.
 
@@ -791,44 +881,13 @@ Entry point of the heredoc pre-processor.
 */
 int
 main(int argc, char *argv[]) {
-    FILE *fp = NULL;
-    yyscan_t yyscanner;
-    global_state *state = NULL;
-
     /* check for proper usage */
     if (argc < 2) {
         fprintf(stderr, "Usage: %s <file>\n", argv[0]);
         exit(EXIT_FAILURE);
     }
 
-    /* open the file */
-    fp = fopen(argv[1], "r");
-
-    if (fp == NULL) {
-        fprintf(stderr, "error opening file '%s'\n", argv[1]);
-        exit(EXIT_FAILURE);
-    }
-
-    /* initialize a yyscan_t object */
-    hd_prelex_init(&yyscanner);
-    /* set the scanner to a string buffer and go parse */
-    hd_preset_in(fp,yyscanner);
-
-    state = init_global_state(argv[1]);
-
-    hd_preset_extra(state,yyscanner);
-
-    /* the lexer never returns anything, only call it once.
-     * Don't give a YYSTYPE object.
-     */
-    hd_prelex(yyscanner);
-
-
-    printrules();
-
-    /* clean up after playing */
-    hd_prelex_destroy(yyscanner);
-    destroy_global_state(state);
+    scanfile(argv[1]);
 
     return 0;
 }
@@ -843,18 +902,6 @@ main(int argc, char *argv[]) {
 */
 
 
-/*
-
-using this we can check how often each rule is executed.
-XXX this should be removed at some point (globals!)
-
-*/
-
-int ctr[YY_NUM_RULES];
-
-int num_rules = YY_NUM_RULES;
-
-#define YY_USER_ACTION    do { ++ctr[yy_act]; } while (0);
 
 
 
@@ -863,7 +910,8 @@ int num_rules = YY_NUM_RULES;
 
 
 
-#line 867 "hdocprep.c"
+
+#line 915 "hdocprep.c"
 
 #define INITIAL 0
 #define POD 1
@@ -872,6 +920,7 @@ int num_rules = YY_NUM_RULES;
 #define SAVELINE 4
 #define SAVELINE2 5
 #define SCANSTRING 6
+#define INCLUDE 7
 
 #ifndef YY_NO_UNISTD_H
 /* Special case for "unistd.h", since it is non-ANSI. We include it way
@@ -939,31 +988,31 @@ static int yy_init_globals (yyscan_t yyscanner );
 /* Accessor methods to globals.
    These are made visible to non-reentrant scanners for convenience. */
 
-int hd_prelex_destroy (yyscan_t yyscanner );
+int yylex_destroy (yyscan_t yyscanner );
 
-int hd_preget_debug (yyscan_t yyscanner );
+int yyget_debug (yyscan_t yyscanner );
 
-void hd_preset_debug (int debug_flag ,yyscan_t yyscanner );
+void yyset_debug (int debug_flag ,yyscan_t yyscanner );
 
-YY_EXTRA_TYPE hd_preget_extra (yyscan_t yyscanner );
+YY_EXTRA_TYPE yyget_extra (yyscan_t yyscanner );
 
-void hd_preset_extra (YY_EXTRA_TYPE user_defined ,yyscan_t yyscanner );
+void yyset_extra (YY_EXTRA_TYPE user_defined ,yyscan_t yyscanner );
 
-FILE *hd_preget_in (yyscan_t yyscanner );
+FILE *yyget_in (yyscan_t yyscanner );
 
-void hd_preset_in  (FILE * in_str ,yyscan_t yyscanner );
+void yyset_in  (FILE * in_str ,yyscan_t yyscanner );
 
-FILE *hd_preget_out (yyscan_t yyscanner );
+FILE *yyget_out (yyscan_t yyscanner );
 
-void hd_preset_out  (FILE * out_str ,yyscan_t yyscanner );
+void yyset_out  (FILE * out_str ,yyscan_t yyscanner );
 
-int hd_preget_leng (yyscan_t yyscanner );
+int yyget_leng (yyscan_t yyscanner );
 
-char *hd_preget_text (yyscan_t yyscanner );
+char *yyget_text (yyscan_t yyscanner );
 
-int hd_preget_lineno (yyscan_t yyscanner );
+int yyget_lineno (yyscan_t yyscanner );
 
-void hd_preset_lineno (int line_number ,yyscan_t yyscanner );
+void yyset_lineno (int line_number ,yyscan_t yyscanner );
 
 /* %if-bison-bridge */
 /* %endif */
@@ -975,9 +1024,9 @@ void hd_preset_lineno (int line_number ,yyscan_t yyscanner );
 
 #ifndef YY_SKIP_YYWRAP
 #ifdef __cplusplus
-extern "C" int hd_prewrap (yyscan_t yyscanner );
+extern "C" int yywrap (yyscan_t yyscanner );
 #else
-extern int hd_prewrap (yyscan_t yyscanner );
+extern int yywrap (yyscan_t yyscanner );
 #endif
 #endif
 
@@ -1115,9 +1164,9 @@ static int input (yyscan_t yyscanner );
 #define YY_DECL_IS_OURS 1
 /* %if-c-only Standard (non-C++) definition */
 
-extern int hd_prelex (yyscan_t yyscanner);
+extern int yylex (yyscan_t yyscanner);
 
-#define YY_DECL int hd_prelex (yyscan_t yyscanner)
+#define YY_DECL int yylex (yyscan_t yyscanner)
 /* %endif */
 /* %if-c++-only C++ definition */
 /* %endif */
@@ -1154,10 +1203,10 @@ YY_DECL
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
 
 /* %% [7.0] user's declarations go here */
-#line 276 "hdocprep.l"
+#line 315 "hdocprep.l"
 
 
-#line 1161 "hdocprep.c"
+#line 1210 "hdocprep.c"
 
     if ( !yyg->yy_init )
         {
@@ -1185,12 +1234,12 @@ YY_DECL
 /* %endif */
 
         if ( ! YY_CURRENT_BUFFER ) {
-            hd_preensure_buffer_stack (yyscanner);
+            yyensure_buffer_stack (yyscanner);
             YY_CURRENT_BUFFER_LVALUE =
-                hd_pre_create_buffer(yyin,YY_BUF_SIZE ,yyscanner);
+                yy_create_buffer(yyin,YY_BUF_SIZE ,yyscanner);
         }
 
-        hd_pre_load_buffer_state(yyscanner );
+        yy_load_buffer_state(yyscanner );
         }
 
     while ( 1 )     /* loops until end-of-file is reached */
@@ -1221,13 +1270,13 @@ yy_match:
             while ( yy_chk[yy_base[yy_current_state] + yy_c] != yy_current_state )
                 {
                 yy_current_state = (int) yy_def[yy_current_state];
-                if ( yy_current_state >= 105 )
+                if ( yy_current_state >= 125 )
                     yy_c = yy_meta[(unsigned int) yy_c];
                 }
             yy_current_state = yy_nxt[yy_base[yy_current_state] + (unsigned int) yy_c];
             ++yy_cp;
             }
-        while ( yy_current_state != 104 );
+        while ( yy_current_state != 124 );
         yy_cp = yyg->yy_last_accepting_cpos;
         yy_current_state = yyg->yy_last_accepting_state;
 
@@ -1258,13 +1307,13 @@ do_action:  /* This label is used only to access EOF actions. */
             {
             if ( yy_act == 0 )
                 fprintf( stderr, "--scanner backing up\n" );
-            else if ( yy_act < 16 )
+            else if ( yy_act < 20 )
                 fprintf( stderr, "--accepting rule at line %ld (\"%s\")\n",
                          (long)yy_rule_linenum[yy_act], yytext );
-            else if ( yy_act == 16 )
+            else if ( yy_act == 20 )
                 fprintf( stderr, "--accepting default rule (\"%s\")\n",
                          yytext );
-            else if ( yy_act == 17 )
+            else if ( yy_act == 21 )
                 fprintf( stderr, "--(end of buffer or a NUL)\n" );
             else
                 fprintf( stderr, "--EOF (start condition %d)\n", YY_START );
@@ -1283,19 +1332,19 @@ do_action:  /* This label is used only to access EOF actions. */
 case 1:
 /* rule 1 can match eol */
 YY_RULE_SETUP
-#line 278 "hdocprep.l"
+#line 317 "hdocprep.l"
 { /* ignore line comments */ }
     YY_BREAK
 case 2:
 /* rule 2 can match eol */
 YY_RULE_SETUP
-#line 280 "hdocprep.l"
+#line 319 "hdocprep.l"
 { yy_push_state(POD, yyscanner); }
     YY_BREAK
 case 3:
 /* rule 3 can match eol */
 YY_RULE_SETUP
-#line 283 "hdocprep.l"
+#line 322 "hdocprep.l"
 { /* end of POD comment */
                          yy_pop_state(yyscanner);
                        }
@@ -1303,35 +1352,35 @@ YY_RULE_SETUP
 case 4:
 /* rule 4 can match eol */
 YY_RULE_SETUP
-#line 287 "hdocprep.l"
+#line 326 "hdocprep.l"
 { /* ignore pod comments */ }
     YY_BREAK
 case YY_STATE_EOF(POD):
-#line 289 "hdocprep.l"
+#line 328 "hdocprep.l"
 { /* we're scanning a POD comment, but encountered end-of-file. */
-                         lex_error("POD comment not closed!", yylineno, hd_preget_extra(yyscanner));
+                         lex_error(yyscanner, "POD comment not closed!");
                          yyterminate();
                        }
     YY_BREAK
 case 5:
 /* rule 5 can match eol */
 YY_RULE_SETUP
-#line 294 "hdocprep.l"
+#line 333 "hdocprep.l"
 { /* don't do anything */ }
     YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 296 "hdocprep.l"
+#line 335 "hdocprep.l"
 { /* echo everything when scanning the string. */
                          fprintf(output, "%s", yytext);
                        }
     YY_BREAK
 case YY_STATE_EOF(SCANSTRING):
-#line 300 "hdocprep.l"
+#line 339 "hdocprep.l"
 { /* end of saved string */
-                         global_state *state = hd_preget_extra(yyscanner);
-                         assert(state->file_buffer);
-                         hd_pre_switch_to_buffer(state->file_buffer,yyscanner);
+                         global_state *state = yyget_extra(yyscanner);
+                         PARROT_ASSERT(state->file_buffer);
+                         yy_switch_to_buffer(state->file_buffer,yyscanner);
 
                          /* clear the temp. variable; file_buffer is only used to temporarily
                           * store a reference to the current buffer when we switch from file
@@ -1343,55 +1392,58 @@ case YY_STATE_EOF(SCANSTRING):
 
                          BEGIN(INITIAL);
 
-                         fprintf(output, "\n    setline %d\n", yylineno);
                        }
     YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 319 "hdocprep.l"
+#line 357 "hdocprep.l"
 { /* 2nd and later heredoc argument */
-                             global_state *state = hd_preget_extra(yyscanner);
-                             state->delimiter    = (char *)calloc(yyleng - 4 + 1, sizeof (char));
-                             assert(state->delimiter);
-                             strncpy(state->delimiter, yytext + 3, yyleng - 4);
+                             global_state *state = yyget_extra(yyscanner);
+                             /* yyleng - (4 (for << and 2 quotes), + 1 for NULL character = 3) */
+                             state->delimiter = (char *)mem_sys_allocate((yyleng - 4 + 1)
+                                                                         * sizeof (char));
 
-                             state->heredoc = dupstr("");
+                             PARROT_ASSERT(state->delimiter);
+
+                             strncpy(state->delimiter, yytext + 3, yyleng - 4);
+                             state->delimiter[yyleng - 4] = '\0';
+                             state->heredoc = dupstr("", yyscanner);
+
                              BEGIN(SAVELINE2);
                            }
     YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 329 "hdocprep.l"
+#line 372 "hdocprep.l"
 { /* only copy the string after "<<'" and skip the last quote too */
-                         global_state *state = hd_preget_extra(yyscanner);
+                         global_state *state = yyget_extra(yyscanner);
                          /* allocate storage for the delimiter, skip the << and quote characters. */
-                         state->delimiter    = (char *)calloc(yyleng - 4 + 1, sizeof (char));
-                         assert(state->delimiter);
+                         state->delimiter    = (char *)mem_sys_allocate((yyleng - 4 + 1)
+                                                                        * sizeof (char));
+                         PARROT_ASSERT(state->delimiter);
+
                          strncpy(state->delimiter, yytext + 3, yyleng - 4);
-                         state->heredoc = dupstr("");
+                         state->delimiter[yyleng - 4] = '\0';
+
+                         state->heredoc = dupstr("", yyscanner);
+
+
+
                          BEGIN(SAVELINE);
                         }
     YY_BREAK
 case 9:
 /* rule 9 can match eol */
 YY_RULE_SETUP
-#line 339 "hdocprep.l"
+#line 389 "hdocprep.l"
 { /* this state is used when reading the first heredoc delimiter
                           * argument. Save the rest of the line and go scan the heredoc.
                           */
-                         global_state *state = hd_preget_extra(yyscanner);
-                         char *temp;
+                         global_state *state = yyget_extra(yyscanner);
 
+                         PARROT_ASSERT(state->linebuffer != NULL);
 
-                         assert(state->linebuffer != NULL);
-                         free(state->linebuffer);
-
-                         /* somehow, if we don't duplicate the string twice,
-                          * things don't work. Unclear to me why this is.
-                          */
-                         temp = dupstr(yytext);
-                         state->linebuffer = dupstr(temp);
-                         assert(strcmp(temp,state->linebuffer)==0 && strcmp(temp,yytext)==0);
+                         state->linebuffer = dupstr(yytext, yyscanner);
 
                          BEGIN(HEREDOC);
                        }
@@ -1399,91 +1451,102 @@ YY_RULE_SETUP
 case 10:
 /* rule 10 can match eol */
 YY_RULE_SETUP
-#line 359 "hdocprep.l"
+#line 401 "hdocprep.l"
 { /* this state is used when reading the 2nd and later heredoc
                             delimiter arguments. Save the rest of the line and go scan
                             the heredoc string. First, though, switch back to the file,
                             because <SAVELINE2> state is activated when reading a string.
                           */
-                         global_state *state = hd_preget_extra(yyscanner);
+                         global_state *state = yyget_extra(yyscanner);
 
-                         state->linebuffer = dupstr(yytext);
+                         state->linebuffer = dupstr(yytext, yyscanner);
 
-                         hd_pre_switch_to_buffer(state->file_buffer,yyscanner);
+                         yy_switch_to_buffer(state->file_buffer,yyscanner);
+
                          BEGIN(HEREDOC);
                        }
     YY_BREAK
 case 11:
 /* rule 11 can match eol */
 YY_RULE_SETUP
-#line 372 "hdocprep.l"
+#line 415 "hdocprep.l"
 { /* Scan a newline character, append this to the heredoc, but
                             escape it.
                           */
-                         global_state *state = hd_preget_extra(yyscanner);
-                         int len             = strlen(state->heredoc);
-                         char *temp          = (char *)calloc(len + 1 + 2, sizeof (char));
-                         assert(temp != NULL);
-                         strcpy(temp, state->heredoc);
+                         global_state *state = yyget_extra(yyscanner);
 
-                         state->heredoc = temp;
+                         int           len   = strlen(state->heredoc);
 
-                         assert(state->heredoc != NULL);
+                         /* length of heredoc + 1 for NULL character + 2 for escaped '\n' */
+                         char         *temp  = (char *)mem_sys_allocate((len + 3) * sizeof (char));
+
+                         PARROT_ASSERT(state->heredoc != NULL);
+
 
                          /* translate "\n" to a "\" and "n" character */
-                         /*
-                         state->heredoc[len]     = '\\';
-                         state->heredoc[len + 1] = 'n';
-                         state->heredoc[len + 2] = '\0';
-                         */
-                         strcpy(state->heredoc + len, "\\n");
+                         sprintf(temp, "%s\\n", state->heredoc);
+
+
+                         state->heredoc      = temp;
+
                        }
     YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 394 "hdocprep.l"
+#line 436 "hdocprep.l"
 { /* scan heredoc string contents */
 
-                         global_state *state = hd_preget_extra(yyscanner);
+                         global_state *state = yyget_extra(yyscanner);
+
                          /* on windows remove the '\r' character */
                          if (yytext[yyleng - 1] == '\r') {
                             chop_yytext();
                          }
 
-                         if (strcmp(yytext, state->delimiter) == 0) {
+                         if (STREQ(yytext, state->delimiter)) {
 
                             fprintf(output, "\"%s\"", state->heredoc);
-                            /* free the delimiter memory */
-                            free(state->delimiter);
+
+                               /* free the delimiter memory */
+                            mem_sys_free(state->delimiter);
+
                             state->delimiter = NULL;
 
-                            assert(state->heredoc != NULL);
-                            free(state->heredoc);
+                            PARROT_ASSERT(state->heredoc != NULL);
 
-                            state->heredoc = dupstr("");
+                     /*       mem_sys_free(state->heredoc);
+                     */
+
+                            state->heredoc = dupstr("", yyscanner);
 
                             /* save the current buffer, because we go scan the
                              * rest of the string that was saved in <SAVELINE(2)>.
                              */
                             state->file_buffer = YY_CURRENT_BUFFER;
+
                             BEGIN(SCANSTRING);
-                            assert(state->linebuffer != NULL);
-                            hd_pre_scan_string(state->linebuffer,yyscanner);
+
+                            PARROT_ASSERT(state->linebuffer != NULL);
+
+                            yy_scan_string(state->linebuffer,yyscanner);
+
+
                          }
                          else {
                             /* save this heredoc string line */
-                            char *thisline = dupstr(yytext);
+                            char * const thisline = dupstr(yytext, yyscanner);
+
                             state->heredoc = strcat(state->heredoc, thisline);
                          }
                        }
     YY_BREAK
 case YY_STATE_EOF(HEREDOC):
-#line 429 "hdocprep.l"
+#line 482 "hdocprep.l"
 { /* End of file while reading a heredoc string. This is bad. */
-                         global_state *state = hd_preget_extra(yyscanner);
-                         fprintf(stderr,
-                                 "\nError: end of file while reading heredoc string '%s'\n",
-                                 state->delimiter);
+
+                         lex_error(yyscanner, "end of file while reading heredoc string '%s'",
+                                   yyget_extra(yyscanner)->delimiter);
+
                          yyterminate();
                        }
     YY_BREAK
@@ -1491,7 +1554,8 @@ case YY_STATE_EOF(INITIAL):
 case YY_STATE_EOF(HEREDOC2):
 case YY_STATE_EOF(SAVELINE):
 case YY_STATE_EOF(SAVELINE2):
-#line 438 "hdocprep.l"
+case YY_STATE_EOF(INCLUDE):
+#line 491 "hdocprep.l"
 { /* end of file */
                          yyterminate();
                        }
@@ -1499,30 +1563,62 @@ case YY_STATE_EOF(SAVELINE2):
 case 13:
 /* rule 13 can match eol */
 YY_RULE_SETUP
-#line 442 "hdocprep.l"
+#line 495 "hdocprep.l"
 { /* we only want to print a single newline instead of all newlines. */
                          fprintf(output, "\n");
                        }
     YY_BREAK
 case 14:
-/* rule 14 can match eol */
 YY_RULE_SETUP
-#line 446 "hdocprep.l"
-{ /* do nothing. */ }
-    YY_BREAK
-case 15:
-YY_RULE_SETUP
-#line 448 "hdocprep.l"
+#line 501 "hdocprep.l"
 { /* just echo everything else */
                          fprintf(output, "%s", yytext);
                        }
     YY_BREAK
+case 15:
+YY_RULE_SETUP
+#line 505 "hdocprep.l"
+{ /* .include directives must be handled here */
+                         yy_push_state(INCLUDE, yyscanner);
+                       }
+    YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 452 "hdocprep.l"
+#line 509 "hdocprep.l"
+{ /* skip whitespace */ }
+    YY_BREAK
+case 17:
+YY_RULE_SETUP
+#line 511 "hdocprep.l"
+{ /* include this file */
+                         char * filename = dupstr(yytext, yyscanner);
+
+                         filename[strlen(filename) - 1] = '\0';
+                         scanfile(filename + 1);
+
+                         /*mem_sys_free(filename);
+                         */
+
+                       }
+    YY_BREAK
+case 18:
+/* rule 18 can match eol */
+YY_RULE_SETUP
+#line 522 "hdocprep.l"
+{ yy_pop_state(yyscanner); }
+    YY_BREAK
+case 19:
+/* rule 19 can match eol */
+YY_RULE_SETUP
+#line 525 "hdocprep.l"
+{ /* do nothing. */ }
+    YY_BREAK
+case 20:
+YY_RULE_SETUP
+#line 527 "hdocprep.l"
 ECHO;
     YY_BREAK
-#line 1526 "hdocprep.c"
+#line 1622 "hdocprep.c"
 
     case YY_END_OF_BUFFER:
         {
@@ -1538,7 +1634,7 @@ ECHO;
             /* We're scanning a new file or input source.  It's
              * possible that this happened because the user
              * just pointed yyin at a new source and called
-             * hd_prelex().  If so, then we have to assure
+             * yylex().  If so, then we have to assure
              * consistency between YY_CURRENT_BUFFER and our
              * globals.  Here is the right place to do so, because
              * this is the first action (other than possibly a
@@ -1600,7 +1696,7 @@ ECHO;
                 {
                 yyg->yy_did_buffer_switch_on_eof = 0;
 
-                if ( hd_prewrap(yyscanner ) )
+                if ( yywrap(yyscanner ) )
                     {
                     /* Note: because we've taken care in
                      * yy_get_next_buffer() to have set up
@@ -1653,7 +1749,7 @@ ECHO;
             "fatal flex scanner internal error--no action found" );
     } /* end of action switch */
         } /* end of scanning one token */
-} /* end of hd_prelex */
+} /* end of yylex */
 /* %ok-for-header */
 
 /* %if-c++-only */
@@ -1744,7 +1840,7 @@ static int yy_get_next_buffer (yyscan_t yyscanner)
 
                 b->yy_ch_buf = (char *)
                     /* Include room in for 2 EOB chars. */
-                    hd_prerealloc((void *) b->yy_ch_buf,b->yy_buf_size + 2 ,yyscanner );
+                    yyrealloc((void *) b->yy_ch_buf,b->yy_buf_size + 2 ,yyscanner );
                 }
             else
                 /* Can't grow it, we don't own it. */
@@ -1776,7 +1872,7 @@ static int yy_get_next_buffer (yyscan_t yyscanner)
         if ( number_to_move == YY_MORE_ADJ )
             {
             ret_val = EOB_ACT_END_OF_FILE;
-            hd_prerestart(yyin  ,yyscanner);
+            yyrestart(yyin  ,yyscanner);
             }
 
         else
@@ -1829,7 +1925,7 @@ static int yy_get_next_buffer (yyscan_t yyscanner)
         while ( yy_chk[yy_base[yy_current_state] + yy_c] != yy_current_state )
             {
             yy_current_state = (int) yy_def[yy_current_state];
-            if ( yy_current_state >= 105 )
+            if ( yy_current_state >= 125 )
                 yy_c = yy_meta[(unsigned int) yy_c];
             }
         yy_current_state = yy_nxt[yy_base[yy_current_state] + (unsigned int) yy_c];
@@ -1863,11 +1959,11 @@ static int yy_get_next_buffer (yyscan_t yyscanner)
     while ( yy_chk[yy_base[yy_current_state] + yy_c] != yy_current_state )
         {
         yy_current_state = (int) yy_def[yy_current_state];
-        if ( yy_current_state >= 105 )
+        if ( yy_current_state >= 125 )
             yy_c = yy_meta[(unsigned int) yy_c];
         }
     yy_current_state = yy_nxt[yy_base[yy_current_state] + (unsigned int) yy_c];
-    yy_is_jam = (yy_current_state == 104);
+    yy_is_jam = (yy_current_state == 124);
 
     return yy_is_jam ? 0 : yy_current_state;
 }
@@ -1922,13 +2018,13 @@ static int yy_get_next_buffer (yyscan_t yyscanner)
                      */
 
                     /* Reset buffer status. */
-                    hd_prerestart(yyin ,yyscanner);
+                    yyrestart(yyin ,yyscanner);
 
                     /*FALLTHROUGH*/
 
                 case EOB_ACT_END_OF_FILE:
                     {
-                    if ( hd_prewrap(yyscanner ) )
+                    if ( yywrap(yyscanner ) )
                         return EOF;
 
                     if ( ! yyg->yy_did_buffer_switch_on_eof )
@@ -1972,7 +2068,7 @@ static int yy_get_next_buffer (yyscan_t yyscanner)
  * @note This function does not reset the start condition to @c INITIAL .
  */
 /* %if-c-only */
-    void hd_prerestart  (FILE * input_file , yyscan_t yyscanner)
+    void yyrestart  (FILE * input_file , yyscan_t yyscanner)
 /* %endif */
 /* %if-c++-only */
 /* %endif */
@@ -1980,13 +2076,13 @@ static int yy_get_next_buffer (yyscan_t yyscanner)
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
 
     if ( ! YY_CURRENT_BUFFER ){
-        hd_preensure_buffer_stack (yyscanner);
+        yyensure_buffer_stack (yyscanner);
         YY_CURRENT_BUFFER_LVALUE =
-            hd_pre_create_buffer(yyin,YY_BUF_SIZE ,yyscanner);
+            yy_create_buffer(yyin,YY_BUF_SIZE ,yyscanner);
     }
 
-    hd_pre_init_buffer(YY_CURRENT_BUFFER,input_file ,yyscanner);
-    hd_pre_load_buffer_state(yyscanner );
+    yy_init_buffer(YY_CURRENT_BUFFER,input_file ,yyscanner);
+    yy_load_buffer_state(yyscanner );
 }
 
 /** Switch to a different input buffer.
@@ -1994,7 +2090,7 @@ static int yy_get_next_buffer (yyscan_t yyscanner)
  * @param yyscanner The scanner object.
  */
 /* %if-c-only */
-    void hd_pre_switch_to_buffer  (YY_BUFFER_STATE  new_buffer , yyscan_t yyscanner)
+    void yy_switch_to_buffer  (YY_BUFFER_STATE  new_buffer , yyscan_t yyscanner)
 /* %endif */
 /* %if-c++-only */
 /* %endif */
@@ -2003,10 +2099,10 @@ static int yy_get_next_buffer (yyscan_t yyscanner)
 
     /* TODO. We should be able to replace this entire function body
      * with
-     *      hd_prepop_buffer_state();
-     *      hd_prepush_buffer_state(new_buffer);
+     *      yypop_buffer_state();
+     *      yypush_buffer_state(new_buffer);
      */
-    hd_preensure_buffer_stack (yyscanner);
+    yyensure_buffer_stack (yyscanner);
     if ( YY_CURRENT_BUFFER == new_buffer )
         return;
 
@@ -2019,18 +2115,18 @@ static int yy_get_next_buffer (yyscan_t yyscanner)
         }
 
     YY_CURRENT_BUFFER_LVALUE = new_buffer;
-    hd_pre_load_buffer_state(yyscanner );
+    yy_load_buffer_state(yyscanner );
 
     /* We don't actually know whether we did this switch during
-     * EOF (hd_prewrap()) processing, but the only time this flag
-     * is looked at is after hd_prewrap() is called, so it's safe
+     * EOF (yywrap()) processing, but the only time this flag
+     * is looked at is after yywrap() is called, so it's safe
      * to go ahead and always set it.
      */
     yyg->yy_did_buffer_switch_on_eof = 1;
 }
 
 /* %if-c-only */
-static void hd_pre_load_buffer_state  (yyscan_t yyscanner)
+static void yy_load_buffer_state  (yyscan_t yyscanner)
 /* %endif */
 /* %if-c++-only */
 /* %endif */
@@ -2049,39 +2145,39 @@ static void hd_pre_load_buffer_state  (yyscan_t yyscanner)
  * @return the allocated buffer state.
  */
 /* %if-c-only */
-    YY_BUFFER_STATE hd_pre_create_buffer  (FILE * file, int  size , yyscan_t yyscanner)
+    YY_BUFFER_STATE yy_create_buffer  (FILE * file, int  size , yyscan_t yyscanner)
 /* %endif */
 /* %if-c++-only */
 /* %endif */
 {
     YY_BUFFER_STATE b;
 
-    b = (YY_BUFFER_STATE) hd_prealloc(sizeof( struct yy_buffer_state ) ,yyscanner );
+    b = (YY_BUFFER_STATE) yyalloc(sizeof( struct yy_buffer_state ) ,yyscanner );
     if ( ! b )
-        YY_FATAL_ERROR( "out of dynamic memory in hd_pre_create_buffer()" );
+        YY_FATAL_ERROR( "out of dynamic memory in yy_create_buffer()" );
 
     b->yy_buf_size = size;
 
     /* yy_ch_buf has to be 2 characters longer than the size given because
      * we need to put in 2 end-of-buffer characters.
      */
-    b->yy_ch_buf = (char *) hd_prealloc(b->yy_buf_size + 2 ,yyscanner );
+    b->yy_ch_buf = (char *) yyalloc(b->yy_buf_size + 2 ,yyscanner );
     if ( ! b->yy_ch_buf )
-        YY_FATAL_ERROR( "out of dynamic memory in hd_pre_create_buffer()" );
+        YY_FATAL_ERROR( "out of dynamic memory in yy_create_buffer()" );
 
     b->yy_is_our_buffer = 1;
 
-    hd_pre_init_buffer(b,file ,yyscanner);
+    yy_init_buffer(b,file ,yyscanner);
 
     return b;
 }
 
 /** Destroy the buffer.
- * @param b a buffer created with hd_pre_create_buffer()
+ * @param b a buffer created with yy_create_buffer()
  * @param yyscanner The scanner object.
  */
 /* %if-c-only */
-    void hd_pre_delete_buffer (YY_BUFFER_STATE  b , yyscan_t yyscanner)
+    void yy_delete_buffer (YY_BUFFER_STATE  b , yyscan_t yyscanner)
 /* %endif */
 /* %if-c++-only */
 /* %endif */
@@ -2095,9 +2191,9 @@ static void hd_pre_load_buffer_state  (yyscan_t yyscanner)
         YY_CURRENT_BUFFER_LVALUE = (YY_BUFFER_STATE) 0;
 
     if ( b->yy_is_our_buffer )
-        hd_prefree((void *) b->yy_ch_buf ,yyscanner );
+        yyfree((void *) b->yy_ch_buf ,yyscanner );
 
-    hd_prefree((void *) b ,yyscanner );
+    yyfree((void *) b ,yyscanner );
 }
 
 /* %if-c-only */
@@ -2109,10 +2205,10 @@ static void hd_pre_load_buffer_state  (yyscan_t yyscanner)
 
 /* Initializes or reinitializes a buffer.
  * This function is sometimes called more than once on the same buffer,
- * such as during a hd_prerestart() or at EOF.
+ * such as during a yyrestart() or at EOF.
  */
 /* %if-c-only */
-    static void hd_pre_init_buffer  (YY_BUFFER_STATE  b, FILE * file , yyscan_t yyscanner)
+    static void yy_init_buffer  (YY_BUFFER_STATE  b, FILE * file , yyscan_t yyscanner)
 /* %endif */
 /* %if-c++-only */
 /* %endif */
@@ -2121,13 +2217,13 @@ static void hd_pre_load_buffer_state  (yyscan_t yyscanner)
     int oerrno = errno;
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
 
-    hd_pre_flush_buffer(b ,yyscanner);
+    yy_flush_buffer(b ,yyscanner);
 
     b->yy_input_file = file;
     b->yy_fill_buffer = 1;
 
-    /* If b is the current buffer, then hd_pre_init_buffer was _probably_
-     * called from hd_prerestart() or through yy_get_next_buffer.
+    /* If b is the current buffer, then yy_init_buffer was _probably_
+     * called from yyrestart() or through yy_get_next_buffer.
      * In that case, we don't want to reset the lineno or column.
      */
     if (b != YY_CURRENT_BUFFER){
@@ -2150,7 +2246,7 @@ static void hd_pre_load_buffer_state  (yyscan_t yyscanner)
  * @param yyscanner The scanner object.
  */
 /* %if-c-only */
-    void hd_pre_flush_buffer (YY_BUFFER_STATE  b , yyscan_t yyscanner)
+    void yy_flush_buffer (YY_BUFFER_STATE  b , yyscan_t yyscanner)
 /* %endif */
 /* %if-c++-only */
 /* %endif */
@@ -2174,7 +2270,7 @@ static void hd_pre_load_buffer_state  (yyscan_t yyscanner)
     b->yy_buffer_status = YY_BUFFER_NEW;
 
     if ( b == YY_CURRENT_BUFFER )
-        hd_pre_load_buffer_state(yyscanner );
+        yy_load_buffer_state(yyscanner );
 }
 
 /* %if-c-or-c++ */
@@ -2185,7 +2281,7 @@ static void hd_pre_load_buffer_state  (yyscan_t yyscanner)
  *  @param yyscanner The scanner object.
  */
 /* %if-c-only */
-void hd_prepush_buffer_state (YY_BUFFER_STATE new_buffer , yyscan_t yyscanner)
+void yypush_buffer_state (YY_BUFFER_STATE new_buffer , yyscan_t yyscanner)
 /* %endif */
 /* %if-c++-only */
 /* %endif */
@@ -2194,9 +2290,9 @@ void hd_prepush_buffer_state (YY_BUFFER_STATE new_buffer , yyscan_t yyscanner)
     if (new_buffer == NULL)
         return;
 
-    hd_preensure_buffer_stack(yyscanner);
+    yyensure_buffer_stack(yyscanner);
 
-    /* This block is copied from hd_pre_switch_to_buffer. */
+    /* This block is copied from yy_switch_to_buffer. */
     if ( YY_CURRENT_BUFFER )
         {
         /* Flush out information for old buffer. */
@@ -2210,8 +2306,8 @@ void hd_prepush_buffer_state (YY_BUFFER_STATE new_buffer , yyscan_t yyscanner)
         yyg->yy_buffer_stack_top++;
     YY_CURRENT_BUFFER_LVALUE = new_buffer;
 
-    /* copied from hd_pre_switch_to_buffer. */
-    hd_pre_load_buffer_state(yyscanner );
+    /* copied from yy_switch_to_buffer. */
+    yy_load_buffer_state(yyscanner );
     yyg->yy_did_buffer_switch_on_eof = 1;
 }
 /* %endif */
@@ -2222,7 +2318,7 @@ void hd_prepush_buffer_state (YY_BUFFER_STATE new_buffer , yyscan_t yyscanner)
  *  @param yyscanner The scanner object.
  */
 /* %if-c-only */
-void hd_prepop_buffer_state (yyscan_t yyscanner)
+void yypop_buffer_state (yyscan_t yyscanner)
 /* %endif */
 /* %if-c++-only */
 /* %endif */
@@ -2231,13 +2327,13 @@ void hd_prepop_buffer_state (yyscan_t yyscanner)
     if (!YY_CURRENT_BUFFER)
         return;
 
-    hd_pre_delete_buffer(YY_CURRENT_BUFFER ,yyscanner);
+    yy_delete_buffer(YY_CURRENT_BUFFER ,yyscanner);
     YY_CURRENT_BUFFER_LVALUE = NULL;
     if (yyg->yy_buffer_stack_top > 0)
         --yyg->yy_buffer_stack_top;
 
     if (YY_CURRENT_BUFFER) {
-        hd_pre_load_buffer_state(yyscanner );
+        yy_load_buffer_state(yyscanner );
         yyg->yy_did_buffer_switch_on_eof = 1;
     }
 }
@@ -2248,7 +2344,7 @@ void hd_prepop_buffer_state (yyscan_t yyscanner)
  *  Guarantees space for at least one push.
  */
 /* %if-c-only */
-static void hd_preensure_buffer_stack (yyscan_t yyscanner)
+static void yyensure_buffer_stack (yyscan_t yyscanner)
 /* %endif */
 /* %if-c++-only */
 /* %endif */
@@ -2263,7 +2359,7 @@ static void hd_preensure_buffer_stack (yyscan_t yyscanner)
          * immediate realloc on the next call.
          */
         num_to_alloc = 1;
-        yyg->yy_buffer_stack = (struct yy_buffer_state**)hd_prealloc
+        yyg->yy_buffer_stack = (struct yy_buffer_state**)yyalloc
                                 (num_to_alloc * sizeof(struct yy_buffer_state*)
                                 , yyscanner);
 
@@ -2280,7 +2376,7 @@ static void hd_preensure_buffer_stack (yyscan_t yyscanner)
         int grow_size = 8 /* arbitrary grow size */;
 
         num_to_alloc = yyg->yy_buffer_stack_max + grow_size;
-        yyg->yy_buffer_stack = (struct yy_buffer_state**)hd_prerealloc
+        yyg->yy_buffer_stack = (struct yy_buffer_state**)yyrealloc
                                 (yyg->yy_buffer_stack,
                                 num_to_alloc * sizeof(struct yy_buffer_state*)
                                 , yyscanner);
@@ -2299,7 +2395,7 @@ static void hd_preensure_buffer_stack (yyscan_t yyscanner)
  * @param yyscanner The scanner object.
  * @return the newly allocated buffer state object.
  */
-YY_BUFFER_STATE hd_pre_scan_buffer  (char * base, yy_size_t  size , yyscan_t yyscanner)
+YY_BUFFER_STATE yy_scan_buffer  (char * base, yy_size_t  size , yyscan_t yyscanner)
 {
     YY_BUFFER_STATE b;
 
@@ -2309,9 +2405,9 @@ YY_BUFFER_STATE hd_pre_scan_buffer  (char * base, yy_size_t  size , yyscan_t yys
         /* They forgot to leave room for the EOB's. */
         return 0;
 
-    b = (YY_BUFFER_STATE) hd_prealloc(sizeof( struct yy_buffer_state ) ,yyscanner );
+    b = (YY_BUFFER_STATE) yyalloc(sizeof( struct yy_buffer_state ) ,yyscanner );
     if ( ! b )
-        YY_FATAL_ERROR( "out of dynamic memory in hd_pre_scan_buffer()" );
+        YY_FATAL_ERROR( "out of dynamic memory in yy_scan_buffer()" );
 
     b->yy_buf_size = size - 2;  /* "- 2" to take care of EOB's */
     b->yy_buf_pos = b->yy_ch_buf = base;
@@ -2323,37 +2419,37 @@ YY_BUFFER_STATE hd_pre_scan_buffer  (char * base, yy_size_t  size , yyscan_t yys
     b->yy_fill_buffer = 0;
     b->yy_buffer_status = YY_BUFFER_NEW;
 
-    hd_pre_switch_to_buffer(b ,yyscanner );
+    yy_switch_to_buffer(b ,yyscanner );
 
     return b;
 }
 /* %endif */
 
 /* %if-c-only */
-/** Setup the input buffer state to scan a string. The next call to hd_prelex() will
+/** Setup the input buffer state to scan a string. The next call to yylex() will
  * scan from a @e copy of @a str.
  * @param str a NUL-terminated string to scan
  * @param yyscanner The scanner object.
  * @return the newly allocated buffer state object.
  * @note If you want to scan bytes that may contain NUL values, then use
- *       hd_pre_scan_bytes() instead.
+ *       yy_scan_bytes() instead.
  */
-YY_BUFFER_STATE hd_pre_scan_string (yyconst char * yystr , yyscan_t yyscanner)
+YY_BUFFER_STATE yy_scan_string (yyconst char * yystr , yyscan_t yyscanner)
 {
 
-    return hd_pre_scan_bytes(yystr,strlen(yystr) ,yyscanner);
+    return yy_scan_bytes(yystr,strlen(yystr) ,yyscanner);
 }
 /* %endif */
 
 /* %if-c-only */
-/** Setup the input buffer state to scan the given bytes. The next call to hd_prelex() will
+/** Setup the input buffer state to scan the given bytes. The next call to yylex() will
  * scan from a @e copy of @a bytes.
  * @param bytes the byte buffer to scan
  * @param len the number of bytes in the buffer pointed to by @a bytes.
  * @param yyscanner The scanner object.
  * @return the newly allocated buffer state object.
  */
-YY_BUFFER_STATE hd_pre_scan_bytes  (yyconst char * yybytes, int  _yybytes_len , yyscan_t yyscanner)
+YY_BUFFER_STATE yy_scan_bytes  (yyconst char * yybytes, int  _yybytes_len , yyscan_t yyscanner)
 {
     YY_BUFFER_STATE b;
     char *buf;
@@ -2362,18 +2458,18 @@ YY_BUFFER_STATE hd_pre_scan_bytes  (yyconst char * yybytes, int  _yybytes_len , 
 
     /* Get memory for full buffer, including space for trailing EOB's. */
     n = _yybytes_len + 2;
-    buf = (char *) hd_prealloc(n ,yyscanner );
+    buf = (char *) yyalloc(n ,yyscanner );
     if ( ! buf )
-        YY_FATAL_ERROR( "out of dynamic memory in hd_pre_scan_bytes()" );
+        YY_FATAL_ERROR( "out of dynamic memory in yy_scan_bytes()" );
 
     for ( i = 0; i < _yybytes_len; ++i )
         buf[i] = yybytes[i];
 
     buf[_yybytes_len] = buf[_yybytes_len+1] = YY_END_OF_BUFFER_CHAR;
 
-    b = hd_pre_scan_buffer(buf,n ,yyscanner);
+    b = yy_scan_buffer(buf,n ,yyscanner);
     if ( ! b )
-        YY_FATAL_ERROR( "bad buffer in hd_pre_scan_bytes()" );
+        YY_FATAL_ERROR( "bad buffer in yy_scan_bytes()" );
 
     /* It's okay to grow etc. this buffer, and we should throw it
      * away when we're done.
@@ -2399,10 +2495,10 @@ YY_BUFFER_STATE hd_pre_scan_bytes  (yyconst char * yybytes, int  _yybytes_len , 
         new_size = yyg->yy_start_stack_depth * sizeof( int );
 
         if ( ! yyg->yy_start_stack )
-            yyg->yy_start_stack = (int *) hd_prealloc(new_size ,yyscanner );
+            yyg->yy_start_stack = (int *) yyalloc(new_size ,yyscanner );
 
         else
-            yyg->yy_start_stack = (int *) hd_prerealloc((void *) yyg->yy_start_stack,new_size ,yyscanner );
+            yyg->yy_start_stack = (int *) yyrealloc((void *) yyg->yy_start_stack,new_size ,yyscanner );
 
         if ( ! yyg->yy_start_stack )
             YY_FATAL_ERROR(
@@ -2466,7 +2562,7 @@ static void yy_fatal_error (yyconst char* msg , yyscan_t yyscanner)
 /** Get the user-defined data for this scanner.
  * @param yyscanner The scanner object.
  */
-YY_EXTRA_TYPE hd_preget_extra  (yyscan_t yyscanner)
+YY_EXTRA_TYPE yyget_extra  (yyscan_t yyscanner)
 {
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
     return yyextra;
@@ -2477,7 +2573,7 @@ YY_EXTRA_TYPE hd_preget_extra  (yyscan_t yyscanner)
 /** Get the current line number.
  * @param yyscanner The scanner object.
  */
-int hd_preget_lineno  (yyscan_t yyscanner)
+int yyget_lineno  (yyscan_t yyscanner)
 {
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
 
@@ -2490,7 +2586,7 @@ int hd_preget_lineno  (yyscan_t yyscanner)
 /** Get the current column number.
  * @param yyscanner The scanner object.
  */
-int hd_preget_column  (yyscan_t yyscanner)
+int yyget_column  (yyscan_t yyscanner)
 {
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
 
@@ -2503,7 +2599,7 @@ int hd_preget_column  (yyscan_t yyscanner)
 /** Get the input stream.
  * @param yyscanner The scanner object.
  */
-FILE *hd_preget_in  (yyscan_t yyscanner)
+FILE *yyget_in  (yyscan_t yyscanner)
 {
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
     return yyin;
@@ -2512,7 +2608,7 @@ FILE *hd_preget_in  (yyscan_t yyscanner)
 /** Get the output stream.
  * @param yyscanner The scanner object.
  */
-FILE *hd_preget_out  (yyscan_t yyscanner)
+FILE *yyget_out  (yyscan_t yyscanner)
 {
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
     return yyout;
@@ -2521,7 +2617,7 @@ FILE *hd_preget_out  (yyscan_t yyscanner)
 /** Get the length of the current token.
  * @param yyscanner The scanner object.
  */
-int hd_preget_leng  (yyscan_t yyscanner)
+int yyget_leng  (yyscan_t yyscanner)
 {
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
     return yyleng;
@@ -2531,7 +2627,7 @@ int hd_preget_leng  (yyscan_t yyscanner)
  * @param yyscanner The scanner object.
  */
 
-char *hd_preget_text  (yyscan_t yyscanner)
+char *yyget_text  (yyscan_t yyscanner)
 {
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
     return yytext;
@@ -2543,7 +2639,7 @@ char *hd_preget_text  (yyscan_t yyscanner)
  * @param user_defined The data to be associated with this scanner.
  * @param yyscanner The scanner object.
  */
-void hd_preset_extra (YY_EXTRA_TYPE  user_defined , yyscan_t yyscanner)
+void yyset_extra (YY_EXTRA_TYPE  user_defined , yyscan_t yyscanner)
 {
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
     yyextra = user_defined ;
@@ -2555,13 +2651,13 @@ void hd_preset_extra (YY_EXTRA_TYPE  user_defined , yyscan_t yyscanner)
  * @param line_number
  * @param yyscanner The scanner object.
  */
-void hd_preset_lineno (int  line_number , yyscan_t yyscanner)
+void yyset_lineno (int  line_number , yyscan_t yyscanner)
 {
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
 
         /* lineno is only valid if an input buffer exists. */
         if (! YY_CURRENT_BUFFER )
-           yy_fatal_error( "hd_preset_lineno called with no buffer" , yyscanner);
+           yy_fatal_error( "yyset_lineno called with no buffer" , yyscanner);
 
     yylineno = line_number;
 }
@@ -2570,13 +2666,13 @@ void hd_preset_lineno (int  line_number , yyscan_t yyscanner)
  * @param line_number
  * @param yyscanner The scanner object.
  */
-void hd_preset_column (int  column_no , yyscan_t yyscanner)
+void yyset_column (int  column_no , yyscan_t yyscanner)
 {
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
 
         /* column is only valid if an input buffer exists. */
         if (! YY_CURRENT_BUFFER )
-           yy_fatal_error( "hd_preset_column called with no buffer" , yyscanner);
+           yy_fatal_error( "yyset_column called with no buffer" , yyscanner);
 
     yycolumn = column_no;
 }
@@ -2585,27 +2681,27 @@ void hd_preset_column (int  column_no , yyscan_t yyscanner)
  * input buffer.
  * @param in_str A readable stream.
  * @param yyscanner The scanner object.
- * @see hd_pre_switch_to_buffer
+ * @see yy_switch_to_buffer
  */
-void hd_preset_in (FILE *  in_str , yyscan_t yyscanner)
+void yyset_in (FILE *  in_str , yyscan_t yyscanner)
 {
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
     yyin = in_str ;
 }
 
-void hd_preset_out (FILE *  out_str , yyscan_t yyscanner)
+void yyset_out (FILE *  out_str , yyscan_t yyscanner)
 {
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
     yyout = out_str ;
 }
 
-int hd_preget_debug  (yyscan_t yyscanner)
+int yyget_debug  (yyscan_t yyscanner)
 {
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
     return yy_flex_debug;
 }
 
-void hd_preset_debug (int  bdebug , yyscan_t yyscanner)
+void yyset_debug (int  bdebug , yyscan_t yyscanner)
 {
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
     yy_flex_debug = bdebug ;
@@ -2621,12 +2717,12 @@ void hd_preset_debug (int  bdebug , yyscan_t yyscanner)
 
 /* User-visible API */
 
-/* hd_prelex_init is special because it creates the scanner itself, so it is
+/* yylex_init is special because it creates the scanner itself, so it is
  * the ONLY reentrant function that doesn't take the scanner as the last argument.
  * That's why we explicitly handle the declaration, instead of using our macros.
  */
 
-int hd_prelex_init(yyscan_t* ptr_yy_globals)
+int yylex_init(yyscan_t* ptr_yy_globals)
 
 {
     if (ptr_yy_globals == NULL){
@@ -2634,7 +2730,7 @@ int hd_prelex_init(yyscan_t* ptr_yy_globals)
         return 1;
     }
 
-    *ptr_yy_globals = (yyscan_t) hd_prealloc ( sizeof( struct yyguts_t ), NULL );
+    *ptr_yy_globals = (yyscan_t) yyalloc ( sizeof( struct yyguts_t ), NULL );
 
     if (*ptr_yy_globals == NULL){
         errno = ENOMEM;
@@ -2654,7 +2750,7 @@ static int yy_init_globals (yyscan_t yyscanner)
 {
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
     /* Initialization is the same as for the non-reentrant scanner.
-     * This function is called from hd_prelex_destroy(), so don't allocate here.
+     * This function is called from yylex_destroy(), so don't allocate here.
      */
 
     yyg->yy_buffer_stack = 0;
@@ -2678,40 +2774,40 @@ static int yy_init_globals (yyscan_t yyscanner)
 #endif
 
     /* For future reference: Set errno on error, since we are called by
-     * hd_prelex_init()
+     * yylex_init()
      */
     return 0;
 }
 /* %endif */
 
 /* %if-c-only SNIP! this currently causes conflicts with the c++ scanner */
-/* hd_prelex_destroy is for both reentrant and non-reentrant scanners. */
-int hd_prelex_destroy  (yyscan_t yyscanner)
+/* yylex_destroy is for both reentrant and non-reentrant scanners. */
+int yylex_destroy  (yyscan_t yyscanner)
 {
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
 
     /* Pop the buffer stack, destroying each element. */
     while(YY_CURRENT_BUFFER){
-        hd_pre_delete_buffer(YY_CURRENT_BUFFER ,yyscanner );
+        yy_delete_buffer(YY_CURRENT_BUFFER ,yyscanner );
         YY_CURRENT_BUFFER_LVALUE = NULL;
-        hd_prepop_buffer_state(yyscanner);
+        yypop_buffer_state(yyscanner);
     }
 
     /* Destroy the stack itself. */
-    hd_prefree(yyg->yy_buffer_stack ,yyscanner);
+    yyfree(yyg->yy_buffer_stack ,yyscanner);
     yyg->yy_buffer_stack = NULL;
 
     /* Destroy the start condition stack. */
-        hd_prefree(yyg->yy_start_stack ,yyscanner );
+        yyfree(yyg->yy_start_stack ,yyscanner );
         yyg->yy_start_stack = NULL;
 
     /* Reset the globals. This is important in a non-reentrant scanner so the next time
-     * hd_prelex() is called, initialization will occur. */
+     * yylex() is called, initialization will occur. */
     yy_init_globals( yyscanner);
 
 /* %if-reentrant */
     /* Destroy the main struct (reentrant only). */
-    hd_prefree ( yyscanner , yyscanner );
+    yyfree ( yyscanner , yyscanner );
     yyscanner = NULL;
 /* %endif */
     return 0;
@@ -2742,12 +2838,12 @@ static int yy_flex_strlen (yyconst char * s , yyscan_t yyscanner)
 }
 #endif
 
-void *hd_prealloc (yy_size_t  size , yyscan_t yyscanner)
+void *yyalloc (yy_size_t  size , yyscan_t yyscanner)
 {
     return (void *) malloc( size );
 }
 
-void *hd_prerealloc  (void * ptr, yy_size_t  size , yyscan_t yyscanner)
+void *yyrealloc  (void * ptr, yy_size_t  size , yyscan_t yyscanner)
 {
     /* The cast to (char *) in the following accommodates both
      * implementations that use char* generic pointers, and those
@@ -2759,9 +2855,9 @@ void *hd_prerealloc  (void * ptr, yy_size_t  size , yyscan_t yyscanner)
     return (void *) realloc( (char *) ptr, size );
 }
 
-void hd_prefree (void * ptr , yyscan_t yyscanner)
+void yyfree (void * ptr , yyscan_t yyscanner)
 {
-    free( (char *) ptr );   /* see hd_prerealloc() for (char *) cast */
+    free( (char *) ptr );   /* see yyrealloc() for (char *) cast */
 }
 
 /* %if-tables-serialization definitions */
@@ -2771,7 +2867,7 @@ void hd_prefree (void * ptr , yyscan_t yyscanner)
 
 /* %ok-for-header */
 
-#line 452 "hdocprep.l"
+#line 527 "hdocprep.l"
 
 
 

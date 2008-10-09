@@ -9,12 +9,14 @@ New in October 2008 release
   + Markdown : new lightweight markup language
     - start implementation with PCT/NQP
   + partcl (Tcl 8.5.4)
-    - 'make spectest' now uses tcltest.tcl to run *.test files directly
+    - Moved to its own repository: http://code.google.com/p/partcl/
   + Rakudo (Perl 6)
     - split() works with regexes
     - implemented Str.comb
     - ord() and chr() builtins
     - improved parsing of literal numbers
+    - support for hyphens and dashes in identifiers
+    - next() on for-loops
 
 New in 0.7.1
 - Implementation

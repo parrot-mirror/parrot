@@ -51,6 +51,9 @@ method comp_stmt($/,$key) {
         }
         else {
             $?BLOCK := PAST::Block.new( PAST::Stmts.new(), :node($/));
+            my $block := PAST::Var.new(:scope('parameter'), :named('!BLOCK'), :name('!BLOCK'), :viviself('Undef'));
+            $?BLOCK.symbol($block.name(), :scope('lexical'));
+            $?BLOCK[0].push($block);
         }
         @?BLOCK.unshift($?BLOCK);
     }
@@ -348,6 +351,8 @@ method constant_variable($/) {
     if $name eq 'Array' { $name := "CardinalArray"; }
     elsif $name eq 'Hash' { $name := "CardinalHash"; }
     elsif $name eq 'String' { $name := "CardinalString"; }
+    elsif $name eq 'Range' { $name := "CardinalRange"; }
+    elsif $name eq 'Integer' { $name := "CardinalInteger"; }
     my $past := PAST::Var.new( :name($name), :scope('package'), :node($/), :viviself('Undef'), :namespace( @a ) );
     make $past;
 }
@@ -423,6 +428,24 @@ method control_command($/,$key) {
             :pasttype('call'),
             :name(~$/),
         );
+}
+
+method yield($/) {
+    our $?BLOCK;
+    our @?BLOCK;
+    my $blockname;
+    if $?BLOCK.symbol('!BLOCK') {
+        if defined($?BLOCK.symbol('!BLOCK')<name>) {
+            $blockname := $?BLOCK.symbol('!BLOCK')<name>;
+        }
+        else {
+            $blockname := '!BLOCK';
+        }
+    }
+    my $call := $( $<call_args> );
+    $call.unshift( PAST::Var.new(:scope('lexical'), :name(~$blockname)));
+    $call.node($/);
+    make $call;
 }
 
 method module($/) {
@@ -558,6 +581,13 @@ method block_signature($/) {
 
     if $<block_param> {
         my $block := $( $<block_param>[0] );
+        $block.named('!BLOCK');
+        $past.symbol($block.name(), :scope('lexical'));
+        $past.symbol('!BLOCK', :name(~$block.name()));
+        $params.push($block);
+    }
+    else {
+        my $block := PAST::Var.new(:scope('parameter'), :named('!BLOCK'), :name('!BLOCK'), :viviself('Undef'));
         $past.symbol($block.name(), :scope('lexical'));
         $params.push($block);
     }
@@ -635,7 +665,9 @@ method call_args($/) {
         $past := PAST::Op.new( :pasttype('call'), :node($/) );
     }
     if $<do_block> {
-        $past.push( $( $<do_block>[0] ) );
+        my $do := $( $<do_block>[0] );
+        $do.named(PAST::Val.new(:value('!BLOCK')));
+        $past.push($do);
     }
     make $past;
 }
