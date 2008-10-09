@@ -551,7 +551,7 @@ method enum_declarator($/, $key) {
         my $getvals_sub := PAST::Compiler.compile( $block );
         my %values := $getvals_sub();
 
-        # Now we need to emit an role of the name of the enum containing:
+        # Now we need to emit a role of the name of the enum containing:
         #  * One attribute with the same name as the enum
         #  * A method of the same name as the enum
         #  * Methods for each name introduced by the enum that compare the
@@ -1471,34 +1471,41 @@ method package_declarator($/, $key) {
         # role_def.
         my $past := $( $/{$key} );
 
-        # Restore outer package.
+        # Restore outer values in @?<magical> arrays
         if    $<sym> eq 'package' {
-            $?PACKAGE := @?PACKAGE.shift();
+            @?PACKAGE.shift();
         }
         ##  module isa package
         elsif $<sym> eq 'module' {
-            $?MODULE  := @?MODULE.shift();
-            $?PACKAGE := @?PACKAGE.shift();
+            @?MODULE.shift();
+            @?PACKAGE.shift();
         }
         ##  role isa module isa package
         elsif $<sym> eq 'role' {
-            $?ROLE    := @?ROLE.shift();
-            $?MODULE  := @?MODULE.shift();
-            $?PACKAGE := @?PACKAGE.shift();
+            @?ROLE.shift();
+            @?MODULE.shift();
+            @?PACKAGE.shift();
         }
         ##  class isa module isa package
         elsif $<sym> eq 'class' {
-            $?CLASS   := @?CLASS.shift();
-            $?MODULE  := @?MODULE.shift();
-            $?PACKAGE := @?PACKAGE.shift();
+            @?CLASS.shift();
+            @?MODULE.shift();
+            @?PACKAGE.shift();
         }
         ##  grammar isa class isa module isa package
         elsif $<sym> eq 'grammar' {
-            $?GRAMMAR := @?GRAMMAR.shift();
-            $?CLASS   := @?CLASS.shift();
-            $?MODULE  := @?MODULE.shift();
-            $?PACKAGE := @?PACKAGE.shift();
+            @?GRAMMAR.shift();
+            @?CLASS.shift();
+            @?MODULE.shift();
+            @?PACKAGE.shift();
         }
+
+        # make sure @?<magical>[0] is always the same as $?<magical>
+        $?CLASS   := @?CLASS[0];
+        $?GRAMMAR := @?GRAMMAR[0];
+        $?MODULE  := @?MODULE[0];
+        $?PACKAGE := @?PACKAGE[0];
+        $?ROLE    := @?ROLE[0];
 
         make $past;
     }
@@ -2145,7 +2152,7 @@ method variable($/, $key) {
             :viviself('Failure')
         ));
     }
-    else {
+    elsif $key eq '$var' {
         our $?BLOCK;
         # Handle naming.
         my @identifier := $<name><identifier>;
