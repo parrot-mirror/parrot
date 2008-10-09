@@ -43,8 +43,9 @@ pir_output_is( <<'CODE', <<'OUT', 'one complete start-to-end compiler' );
 
 .namespace [ 'NoneParser' ]
 
-.sub 'TOP' :method
+.sub 'TOP'
     .param string source
+    .param pmc options         :slurpy :named
     .return (source)
 .end
 

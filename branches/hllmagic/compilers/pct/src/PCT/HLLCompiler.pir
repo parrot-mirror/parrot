@@ -346,9 +346,13 @@ to any options and return the resulting parse tree.
     $S0 = pop $P0
     $P1 = get_hll_global $P0, $S0
     $I0 = can $P1, 'TOP'
-    unless $I0 goto err_notop
+    unless $I0 goto parsegrammar_ns
     top = find_method $P1, 'TOP'
     goto have_top
+  parsegrammar_ns:
+    $P0 = self.'parse_name'(parsegrammar)
+    top = get_hll_global $P0, 'TOP'
+    unless null top goto have_top
   err_notop:
     self.'panic'('Cannot find TOP regex in ', parsegrammar)
   have_top:
