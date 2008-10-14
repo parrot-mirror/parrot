@@ -154,6 +154,7 @@ static const char * set_context_sig_params(PARROT_INTERP,
     ARGMOD(PMC **sigs),
     ARGMOD(opcode_t **indexes),
     ARGMOD(parrot_context_t *ctx),
+    ARGMOD(PMC* obj),
     ARGMOD(PMC *sig_obj))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
@@ -162,11 +163,13 @@ static const char * set_context_sig_params(PARROT_INTERP,
         __attribute__nonnull__(5)
         __attribute__nonnull__(6)
         __attribute__nonnull__(7)
+        __attribute__nonnull__(8)
         FUNC_MODIFIES(*n_regs_used)
         FUNC_MODIFIES(*sigs)
         FUNC_MODIFIES(*indexes)
         FUNC_MODIFIES(*ctx)
-        FUNC_MODIFIES(*sig_obj);
+        FUNC_MODIFIES(*sig_obj)
+        FUNC_MODIFIES(*obj);
 
 static void set_context_sig_returns(PARROT_INTERP,
     ARGMOD(parrot_context_t *ctx),
@@ -2052,7 +2055,7 @@ commit_last_arg_sig_object(PARROT_INTERP, int index, int cur,
 
     /* If we're calling a method and this is the first parameter, it's the
        object so we can safely return. */
-    if (seen_arrow == 0 && index == 0 && pmc != PMCNULL)
+    if (seen_arrow == 0 && index == 0 && obj != PMCNULL && obj != NULL)
         return;
 
     /* calculate arg's register offset */
@@ -2414,7 +2417,7 @@ void
 Parrot_PCCINVOKE(PARROT_INTERP, ARGIN(PMC* pmc), ARGMOD(STRING *method_name),
         ARGIN(const char *signature), ...)
 {
-
+#if 0
     PMC *sig_obj;
     va_list args;
     va_start(args, signature);
@@ -2424,7 +2427,7 @@ Parrot_PCCINVOKE(PARROT_INTERP, ARGIN(PMC* pmc), ARGMOD(STRING *method_name),
     Parrot_pcc_invoke_helper(interp, pmc, VTABLE_find_method(interp, pmc, method_name), sig_obj);
     dod_unregister_pmc(interp, sig_obj);
 
-#if 0
+#endif
 #define PCC_ARG_MAX 1024
     /* variables from PCCINVOKE impl in PCCMETHOD.pm */
     /* args INSP, returns INSP */
@@ -2587,7 +2590,6 @@ Parrot_PCCINVOKE(PARROT_INTERP, ARGIN(PMC* pmc), ARGMOD(STRING *method_name),
     interp->args_signature = save_args_signature;
     interp->current_object = save_current_object;
     va_end(list);
-#endif
 }
 
 /*
@@ -2662,7 +2664,7 @@ Parrot_pcc_invoke_helper(PARROT_INTERP, ARGIN(PMC* obj), ARGIN(PMC *sub_obj),
     /* Count the number of objects of each type that need to be allocated by
        the caller to perform this function call */
     ctx = count_signature_elements(interp, signature, args_sig, results_sig, 0);
-    if (obj != PMCNULL) {
+    if (obj != PMCNULL && obj != NULL) {
         CTX_REG_PMC(ctx, 0) = obj;
         n_regs_used[REGNO_PMC]++;
     }
