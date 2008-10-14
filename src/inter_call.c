@@ -70,7 +70,7 @@ static void commit_last_arg_sig_object(PARROT_INTERP,
     ARGIN(PMC * const *sigs),
     ARGMOD(opcode_t **indexes),
     ARGMOD(parrot_context_t *ctx),
-    ARGMOD(PMC* obj),
+    ARGIN(PMC* obj),
     ARGIN(PMC *sig_obj))
         __attribute__nonnull__(1)
         __attribute__nonnull__(4)
@@ -81,8 +81,7 @@ static void commit_last_arg_sig_object(PARROT_INTERP,
         __attribute__nonnull__(10)
         FUNC_MODIFIES(*n_regs_used)
         FUNC_MODIFIES(*indexes)
-        FUNC_MODIFIES(*ctx)
-        FUNC_MODIFIES(*obj);
+        FUNC_MODIFIES(*ctx);
 
 static void convert_arg_from_int(PARROT_INTERP, ARGMOD(call_state *st))
         __attribute__nonnull__(1)
@@ -168,8 +167,8 @@ static const char * set_context_sig_params(PARROT_INTERP,
         FUNC_MODIFIES(*sigs)
         FUNC_MODIFIES(*indexes)
         FUNC_MODIFIES(*ctx)
-        FUNC_MODIFIES(*sig_obj)
-        FUNC_MODIFIES(*obj);
+        FUNC_MODIFIES(* obj)
+        FUNC_MODIFIES(*sig_obj);
 
 static void set_context_sig_returns(PARROT_INTERP,
     ARGMOD(parrot_context_t *ctx),
@@ -233,15 +232,6 @@ static void too_many(PARROT_INTERP,
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3);
-
-static void Parrot_pcc_invoke_helper(PARROT_INTERP,
-    ARGIN(PMC* obj),
-    ARGIN(PMC *sub_obj),
-    ARGIN(PMC *sig_obj))
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(2)
-        __attribute__nonnull__(3)
-        __attribute__nonnull__(4);
 
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 /* HEADERIZER END: static */
@@ -1966,8 +1956,7 @@ count_signature_elements(PARROT_INTERP, ARGIN(const char* signature),
     /* # of args, # of results */
     int arg_ret_cnt[2]       = { 0, 0 };
 
-    /* Increment these values if we are not calling from a CallSignature
-       PMC */
+    /* Increment these values if we are invoking a method on an object */
     if (flag) {
         arg_ret_cnt[seen_arrow]++;
         max_regs[REGNO_PMC]++;
@@ -2417,6 +2406,7 @@ void
 Parrot_PCCINVOKE(PARROT_INTERP, ARGIN(PMC* pmc), ARGMOD(STRING *method_name),
         ARGIN(const char *signature), ...)
 {
+/*
     PMC *sig_obj;
     PMC *sub_obj;
     va_list args;
@@ -2431,8 +2421,8 @@ Parrot_PCCINVOKE(PARROT_INTERP, ARGIN(PMC* pmc), ARGMOD(STRING *method_name),
 
     Parrot_pcc_invoke_helper(interp, pmc, sub_obj, sig_obj);
     dod_unregister_pmc(interp, sig_obj);
+*/
 
-#if 0
 #define PCC_ARG_MAX 1024
     /* variables from PCCINVOKE impl in PCCMETHOD.pm */
     /* args INSP, returns INSP */
@@ -2595,7 +2585,7 @@ Parrot_PCCINVOKE(PARROT_INTERP, ARGIN(PMC* pmc), ARGMOD(STRING *method_name),
     interp->args_signature = save_args_signature;
     interp->current_object = save_current_object;
     va_end(list);
-#endif
+
 }
 
 /*
@@ -2678,6 +2668,12 @@ Parrot_pcc_invoke_helper(PARROT_INTERP, ARGIN(PMC* obj), ARGIN(PMC *sub_obj),
     int         index  = -1;
     int         cur    =  0;
 
+    /* Just make sure, we don't want to have to check for both NULL
+       and PMCNULL throughout the entire function, so we will force
+       everything to be PMCNULL */
+    if (obj == NULL)
+        obj = PMCNULL;
+
     indexes[0] = arg_indexes;
     indexes[1] = result_indexes;
     sigs[0]    = args_sig;
@@ -2685,7 +2681,8 @@ Parrot_pcc_invoke_helper(PARROT_INTERP, ARGIN(PMC* obj), ARGIN(PMC *sub_obj),
 
     /* Count the number of objects of each type that need to be allocated by
        the caller to perform this function call */
-    ctx = count_signature_elements(interp, signature, args_sig, results_sig, 0);
+    ctx = count_signature_elements(interp, signature, args_sig, results_sig, 
+        PMC_IS_NULL(obj)?(0):(1));
     if (obj != PMCNULL && obj != NULL) {
         indexes[0][0] = 0;
         VTABLE_set_integer_keyed_int(interp, sigs[0], 0, PARROT_ARG_PMC);
