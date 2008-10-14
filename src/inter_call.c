@@ -2417,17 +2417,22 @@ void
 Parrot_PCCINVOKE(PARROT_INTERP, ARGIN(PMC* pmc), ARGMOD(STRING *method_name),
         ARGIN(const char *signature), ...)
 {
-#if 0
     PMC *sig_obj;
+    PMC *sub_obj;
     va_list args;
     va_start(args, signature);
     sig_obj = Parrot_build_sig_object_from_varargs(interp, signature, args);
     va_end(args);
 
-    Parrot_pcc_invoke_helper(interp, pmc, VTABLE_find_method(interp, pmc, method_name), sig_obj);
+    sub_obj = VTABLE_find_method(interp, pmc, method_name);
+    if (PMC_IS_NULL(sub_obj))
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_METH_NOT_FOUND,
+            "Method '%Ss' not found", method_name);
+
+    Parrot_pcc_invoke_helper(interp, pmc, sub_obj, sig_obj);
     dod_unregister_pmc(interp, sig_obj);
 
-#endif
+#if 0
 #define PCC_ARG_MAX 1024
     /* variables from PCCINVOKE impl in PCCMETHOD.pm */
     /* args INSP, returns INSP */
@@ -2590,6 +2595,7 @@ Parrot_PCCINVOKE(PARROT_INTERP, ARGIN(PMC* pmc), ARGMOD(STRING *method_name),
     interp->args_signature = save_args_signature;
     interp->current_object = save_current_object;
     va_end(list);
+#endif
 }
 
 /*
@@ -2611,6 +2617,22 @@ Parrot_pcc_invoke_sub_from_sig_object(PARROT_INTERP, ARGIN(PMC *sub_obj),
 {
     Parrot_pcc_invoke_helper(interp, PMCNULL, sub_obj, sig_obj);
 }
+
+/*
+
+=item C<Parrot_pcc_invoke_helper>
+
+Handles the actual function call. Takes a PMC object (for method calls, can
+be C<PMCNULL> if this isn't a method call), a sub object, and a sig object
+to make the function call.
+
+Eventually, all calls to Parrot_pcc_invoke_sub_from_sig_object and
+Parrot_PCCINVOKE (and maybe a few others) will all be converted to be
+calls to this function directly.
+
+=cut
+
+*/
 
 
 static
@@ -2665,6 +2687,8 @@ Parrot_pcc_invoke_helper(PARROT_INTERP, ARGIN(PMC* obj), ARGIN(PMC *sub_obj),
        the caller to perform this function call */
     ctx = count_signature_elements(interp, signature, args_sig, results_sig, 0);
     if (obj != PMCNULL && obj != NULL) {
+        indexes[0][0] = 0;
+        VTABLE_set_integer_keyed_int(interp, sigs[0], 0, PARROT_ARG_PMC);
         CTX_REG_PMC(ctx, 0) = obj;
         n_regs_used[REGNO_PMC]++;
     }
