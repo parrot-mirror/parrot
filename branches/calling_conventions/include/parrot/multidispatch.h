@@ -58,15 +58,6 @@ typedef struct _multi_func_list {
 PARROT_API
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
-PMC* Parrot_build_sig_object_from_varargs(PARROT_INTERP,
-    ARGIN(const char *sig),
-    va_list args)
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(2);
-
-PARROT_API
-PARROT_WARN_UNUSED_RESULT
-PARROT_CANNOT_RETURN_NULL
 funcptr_t get_mmd_dispatch_type(PARROT_INTERP,
     INTVAL func_nr,
     INTVAL left_type,
@@ -75,6 +66,15 @@ funcptr_t get_mmd_dispatch_type(PARROT_INTERP,
         __attribute__nonnull__(1)
         __attribute__nonnull__(5)
         FUNC_MODIFIES(*is_pmc);
+
+PARROT_API
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
+PMC* Parrot_build_sig_object_from_varargs(PARROT_INTERP,
+    ARGIN(const char *sig),
+    va_list args)
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
 
 PARROT_API
 void Parrot_mmd_add_by_class(PARROT_INTERP,

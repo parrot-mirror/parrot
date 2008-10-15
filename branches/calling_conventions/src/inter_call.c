@@ -2042,10 +2042,15 @@ commit_last_arg_sig_object(PARROT_INTERP, int index, int cur,
 {
     int reg_offset = 0;
 
+    /* If we're in the args part of the signature, and if we have an invocant,
+       we need to increment our indexes by one to account for the additional
+       parameter */
+    const int has_invocant = (!PMC_IS_NULL(obj) && !seen_arrow)?(1):(0);
+
     /* If we're calling a method and this is the first parameter, it's the
        object so we can safely return. */
-    if (seen_arrow == 0 && index == 0 && obj != PMCNULL && obj != NULL)
-        return;
+    /* if (seen_arrow == 0 && index == 0 && !PMC_IS_NULL(obj))
+        return; */
 
     /* calculate arg's register offset */
     switch (cur & PARROT_ARG_TYPE_MASK) { /* calc reg offset */
@@ -2063,7 +2068,7 @@ commit_last_arg_sig_object(PARROT_INTERP, int index, int cur,
     }
 
     /* set the register offset into the index int[] */
-    indexes[seen_arrow][index] = reg_offset;
+    indexes[seen_arrow][index + has_invocant] = reg_offset;
 
     /* set the PARROT_ARG_FLAGS into the signature FIA */
     VTABLE_set_integer_keyed_int(interp, sigs[seen_arrow], index, cur);
@@ -2406,7 +2411,7 @@ void
 Parrot_PCCINVOKE(PARROT_INTERP, ARGIN(PMC* pmc), ARGMOD(STRING *method_name),
         ARGIN(const char *signature), ...)
 {
-/*
+
     PMC *sig_obj;
     PMC *sub_obj;
     va_list args;
@@ -2421,8 +2426,8 @@ Parrot_PCCINVOKE(PARROT_INTERP, ARGIN(PMC* pmc), ARGMOD(STRING *method_name),
 
     Parrot_pcc_invoke_helper(interp, pmc, sub_obj, sig_obj);
     dod_unregister_pmc(interp, sig_obj);
-*/
 
+#if 0
 #define PCC_ARG_MAX 1024
     /* variables from PCCINVOKE impl in PCCMETHOD.pm */
     /* args INSP, returns INSP */
@@ -2585,7 +2590,7 @@ Parrot_PCCINVOKE(PARROT_INTERP, ARGIN(PMC* pmc), ARGMOD(STRING *method_name),
     interp->args_signature = save_args_signature;
     interp->current_object = save_current_object;
     va_end(list);
-
+#endif
 }
 
 /*
@@ -2680,13 +2685,25 @@ Parrot_pcc_invoke_helper(PARROT_INTERP, ARGIN(PMC* obj), ARGIN(PMC *sub_obj),
     sigs[1]    = results_sig;
 
     /* Count the number of objects of each type that need to be allocated by
-       the caller to perform this function call */
+       the caller to perform this function call. The final argument is a
+       flag to determine whether we're making an ordinary subroutine call
+       or a method call. */
     ctx = count_signature_elements(interp, signature, args_sig, results_sig, 
         PMC_IS_NULL(obj)?(0):(1));
+
+    /* This section here is a little bit of a hack, and I'm not sure it's
+       doing all it should be doing and doing things it shouldn't be */
     if (obj != PMCNULL && obj != NULL) {
-        indexes[0][0] = 0;
+        indexes[0][0] = 0; /* Not sure what this does, exactly */
+
+        /* set the first argument value to a PMC, since we're passing a
+           PMC invocant as the first parameter. */
         VTABLE_set_integer_keyed_int(interp, sigs[0], 0, PARROT_ARG_PMC);
+
+        /* Add the invocant to the context as the first parameter. */
         CTX_REG_PMC(ctx, 0) = obj;
+
+        /* Count the invocant as a register that's used. */
         n_regs_used[REGNO_PMC]++;
     }
 
