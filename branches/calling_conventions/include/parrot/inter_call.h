@@ -260,15 +260,6 @@ STRING* set_retval_s(PARROT_INTERP,
         __attribute__nonnull__(1)
         __attribute__nonnull__(3);
 
-static void Parrot_pcc_invoke_helper(PARROT_INTERP,
-    ARGIN(PMC* obj),
-    ARGIN(PMC *sub_obj),
-    ARGIN(PMC *sig_obj))
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(2)
-        __attribute__nonnull__(3)
-        __attribute__nonnull__(4);
-
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 /* HEADERIZER END: src/inter_call.c */
 
