@@ -2420,7 +2420,13 @@ void
 Parrot_PCCINVOKE(PARROT_INTERP, ARGIN(PMC* pmc), ARGMOD(STRING *method_name),
         ARGIN(const char *signature), ...)
 {
-/*
+
+/* Set this flag to 1 if we are using the "new" unified version of this
+   function. The new version breaks the build and all sorts of tests,
+   so turn it off when you're done with it. */
+#define PARROT_PCCINVOKE_UNIFIED_FLAG 0
+
+#if PARROT_PCCINVOKE_UNIFIED_FLAG
     PMC *sig_obj;
     PMC *sub_obj;
     va_list args;
@@ -2435,9 +2441,10 @@ Parrot_PCCINVOKE(PARROT_INTERP, ARGIN(PMC* pmc), ARGMOD(STRING *method_name),
 
     Parrot_pcc_invoke_helper(interp, pmc, sub_obj, sig_obj);
     dod_unregister_pmc(interp, sig_obj);
-*/
 
-#define PCC_ARG_MAX 1024
+#else
+
+#  define PCC_ARG_MAX 1024
     /* variables from PCCINVOKE impl in PCCMETHOD.pm */
     /* args INSP, returns INSP */
     INTVAL n_regs_used[] = { 0, 0, 0, 0, 0, 0, 0, 0 };
@@ -2599,7 +2606,8 @@ Parrot_PCCINVOKE(PARROT_INTERP, ARGIN(PMC* pmc), ARGMOD(STRING *method_name),
     interp->args_signature = save_args_signature;
     interp->current_object = save_current_object;
     va_end(list);
-
+#endif
+#undef PARROT_PCCINVOKE_UNIFIED_FLAG
 }
 
 /*
