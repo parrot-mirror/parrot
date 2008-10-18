@@ -2703,7 +2703,7 @@ Parrot_pcc_invoke_helper(PARROT_INTERP, ARGIN(PMC* obj), ARGIN(PMC *sub_obj),
        the caller to perform this function call. The final argument is a
        flag to determine whether we're making an ordinary subroutine call
        or a method call. */
-    ctx = count_signature_elements(interp, signature, args_sig, results_sig, 
+    ctx = count_signature_elements(interp, signature, args_sig, results_sig,
         PMC_IS_NULL(obj)?(0):(1));
 
     /* This section here is a little bit of a hack, and I'm not sure it's
