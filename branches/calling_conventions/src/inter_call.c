@@ -147,6 +147,15 @@ static void null_val(int sig, ARGMOD(call_state *st))
         __attribute__nonnull__(2)
         FUNC_MODIFIES(*st);
 
+static void Parrot_pcc_invoke_helper(PARROT_INTERP,
+    ARGIN(PMC* obj),
+    ARGIN(PMC *sub_obj),
+    ARGIN(PMC *sig_obj))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3)
+        __attribute__nonnull__(4);
+
 static const char * set_context_sig_params(PARROT_INTERP,
     ARGIN(const char *signature),
     ARGMOD(INTVAL *n_regs_used),
@@ -232,15 +241,6 @@ static void too_many(PARROT_INTERP,
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3);
-
-static void Parrot_pcc_invoke_helper(PARROT_INTERP,
-    ARGIN(PMC* obj),
-    ARGIN(PMC *sub_obj),
-    ARGIN(PMC *sig_obj))
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(2)
-        __attribute__nonnull__(3)
-        __attribute__nonnull__(4);
 
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 /* HEADERIZER END: static */
@@ -2424,21 +2424,30 @@ Parrot_PCCINVOKE(PARROT_INTERP, ARGIN(PMC* pmc), ARGMOD(STRING *method_name),
 /* Set this flag to 1 if we are using the "new" unified version of this
    function. The new version breaks the build and all sorts of tests,
    so turn it off when you're done with it. */
-#define PARROT_PCCINVOKE_UNIFIED_FLAG 0
+#define PARROT_PCCINVOKE_UNIFIED_FLAG 1
 
 #if PARROT_PCCINVOKE_UNIFIED_FLAG
+
     PMC *sig_obj;
     PMC *sub_obj;
     va_list args;
     va_start(args, signature);
-    sig_obj = Parrot_build_sig_object_from_varargs(interp, signature, args);
+
+    /* Build a CallSignature PMC from the input varargs and the signature
+       string. We should probably verify that the generated CallSignature
+       has the same signature and composition as the input signature
+       string. */
+    sig_obj = Parrot_build_sig_object_from_varargs2(interp, pmc,
+                                                    signature, args);
     va_end(args);
 
+    /* Find the subroutine object as a named method on pmc */
     sub_obj = VTABLE_find_method(interp, pmc, method_name);
     if (PMC_IS_NULL(sub_obj))
         Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_METH_NOT_FOUND,
             "Method '%Ss' not found", method_name);
 
+    /* Invoke the subroutine object with the given CallSignature object */
     Parrot_pcc_invoke_helper(interp, pmc, sub_obj, sig_obj);
     dod_unregister_pmc(interp, sig_obj);
 
@@ -2632,7 +2641,7 @@ Parrot_pcc_invoke_sub_from_sig_object(PARROT_INTERP, ARGIN(PMC *sub_obj),
 
 /*
 
-=item C<Parrot_pcc_invoke_helper>
+=item C<static void Parrot_pcc_invoke_helper>
 
 Handles the actual function call. Takes a PMC object (for method calls, can
 be C<PMCNULL> if this isn't a method call), a sub object, and a sig object
