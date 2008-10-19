@@ -2424,7 +2424,7 @@ Parrot_PCCINVOKE(PARROT_INTERP, ARGIN(PMC* pmc), ARGMOD(STRING *method_name),
 /* Set this flag to 1 if we are using the "new" unified version of this
    function. The new version breaks the build and all sorts of tests,
    so turn it off when you're done with it. */
-#define PARROT_PCCINVOKE_UNIFIED_FLAG 1
+#define PARROT_PCCINVOKE_UNIFIED_FLAG 0
 
 #if PARROT_PCCINVOKE_UNIFIED_FLAG
 

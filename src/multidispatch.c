@@ -592,12 +592,15 @@ Parrot_build_sig_object_from_varargs2(PARROT_INTERP, ARGIN(PMC* obj),
     VTABLE_set_string_native(interp, call_object, string_sig);
 
     /* if we have a valid invocant, push it on here. */
-    if (obj && !PMC_IS_NULL(obj)) {
+    /* With this section in, we get an error that looks like a PMC
+       argument is trying to be converted incorrectly to a string.
+       Without it, we segfault. */
+   /* if (obj && !PMC_IS_NULL(obj)) {
         has_invocant = 1;
         VTABLE_set_integer_keyed_int(interp, type_tuple, 0,
             VTABLE_type(interp, obj));
         VTABLE_push_pmc(interp, call_object, obj);
-    }
+    }*/
 
     for (i = 0; i < sig_len; ++i) {
         INTVAL type = string_index(interp, string_sig, i);
