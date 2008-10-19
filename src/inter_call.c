@@ -2054,7 +2054,7 @@ commit_last_arg_sig_object(PARROT_INTERP, int index, int cur,
     /* If we're in the args part of the signature, and if we have an invocant,
        we need to increment our indexes by one to account for the additional
        parameter */
-    const int has_invocant = (!PMC_IS_NULL(obj) && !seen_arrow)?(1):(0);
+    const int has_invocant = (!seen_arrow && obj && !PMC_IS_NULL(obj) && !seen_arrow)?(1):(0);
 
     /* If we're calling a method and this is the first parameter, it's the
        object so we can safely return. */
@@ -2087,16 +2087,16 @@ commit_last_arg_sig_object(PARROT_INTERP, int index, int cur,
     if (!seen_arrow) {
         switch (cur & PARROT_ARG_TYPE_MASK) {
             case PARROT_ARG_INTVAL:
-                CTX_REG_INT(ctx, reg_offset) = VTABLE_get_integer_keyed_int(interp, sig_obj, index);
+                CTX_REG_INT(ctx, reg_offset) = VTABLE_get_integer_keyed_int(interp, sig_obj, index + has_invocant);
                 break;
             case PARROT_ARG_FLOATVAL:
-                CTX_REG_NUM(ctx, reg_offset) = VTABLE_get_number_keyed_int(interp, sig_obj, index);
+                CTX_REG_NUM(ctx, reg_offset) = VTABLE_get_number_keyed_int(interp, sig_obj, index + has_invocant);
                 break;
             case PARROT_ARG_STRING:
-                CTX_REG_STR(ctx, reg_offset) = VTABLE_get_string_keyed_int(interp, sig_obj, index);
+                CTX_REG_STR(ctx, reg_offset) = VTABLE_get_string_keyed_int(interp, sig_obj, index + has_invocant);
                 break;
             case PARROT_ARG_PMC:
-                CTX_REG_PMC(ctx, reg_offset) = VTABLE_get_pmc_keyed_int(interp, sig_obj, index);
+                CTX_REG_PMC(ctx, reg_offset) = VTABLE_get_pmc_keyed_int(interp, sig_obj, index + has_invocant);
                 break;
             default:
                 Parrot_ex_throw_from_c_args(interp, NULL,
@@ -2424,7 +2424,7 @@ Parrot_PCCINVOKE(PARROT_INTERP, ARGIN(PMC* pmc), ARGMOD(STRING *method_name),
 /* Set this flag to 1 if we are using the "new" unified version of this
    function. The new version breaks the build and all sorts of tests,
    so turn it off when you're done with it. */
-#define PARROT_PCCINVOKE_UNIFIED_FLAG 0
+#define PARROT_PCCINVOKE_UNIFIED_FLAG 1
 
 #if PARROT_PCCINVOKE_UNIFIED_FLAG
 
@@ -2717,7 +2717,8 @@ Parrot_pcc_invoke_helper(PARROT_INTERP, ARGIN(PMC* obj), ARGIN(PMC *sub_obj),
 
     /* This section here is a little bit of a hack, and I'm not sure it's
        doing all it should be doing and doing things it shouldn't be */
-    if (obj != PMCNULL && obj != NULL) {
+    if (obj != PMCNULL) {
+        PARROT_ASSERT(obj == VTABLE_get_pmc_keyed_int(interp, sig_obj, 0));
         indexes[0][0] = 0; /* Not sure what this does, exactly */
 
         /* set the first argument value to a PMC, since we're passing a
