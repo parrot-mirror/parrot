@@ -2054,7 +2054,7 @@ commit_last_arg_sig_object(PARROT_INTERP, int index, int cur,
     /* If we're in the args part of the signature, and if we have an invocant,
        we need to increment our indexes by one to account for the additional
        parameter */
-    const int has_invocant = (!seen_arrow && obj && !PMC_IS_NULL(obj) && !seen_arrow)?(1):(0);
+    const int has_invocant = (!seen_arrow && obj && !PMC_IS_NULL(obj))?(1):(0);
 
     /* If we're calling a method and this is the first parameter, it's the
        object so we can safely return. */
