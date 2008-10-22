@@ -5,7 +5,7 @@ PGE/Util.pir - useful rules for working with PGE grammars
 =head1 DESCRIPTION
 
 This module defines a number of useful rules for various
-parsing tasks using PGE.
+parsing tasks using PGE. You must load PGE before this module.
 
 =head2 Functions
 
