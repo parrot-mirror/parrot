@@ -42,7 +42,7 @@ Initializes the exception handler.
     VTABLE void init() {
         Parrot_ExceptionHandler_attributes * const core_struct =
             mem_allocate_zeroed_typed(Parrot_ExceptionHandler_attributes);
-        Parrot_cont * const cc = new_continuation(INTERP, NULL);
+        Parrot_cont * const cc     = new_continuation(INTERP, NULL);
 
         PMC_struct_val(SELF)       = cc;
         cc->invoked                = 0;
@@ -51,7 +51,6 @@ Initializes the exception handler.
         core_struct->min_severity  = 0;
         core_struct->max_severity  = 0;
         core_struct->handled_types = PMCNULL;
-
 
         /* an exception handler has no separate context; it's only a snapshot
          * of an "earlier" context, which is contained in the interpreter's
@@ -143,8 +142,8 @@ Set up the environment for the exception handler to be invoked.
 
     VTABLE opcode_t *invoke(void *next) {
         Parrot_cont      *cc           = PMC_cont(SELF);
-        parrot_context_t *from_ctx     = CONTEXT(interp);
-        parrot_context_t *to_ctx       = cc->to_ctx;
+        Parrot_Context   *from_ctx     = CONTEXT(interp);
+        Parrot_Context   *to_ctx       = cc->to_ctx;
         opcode_t         *pc           = cc->address;
 
         Parrot_continuation_check(interp, SELF, cc);

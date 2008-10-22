@@ -391,13 +391,20 @@ Parrot_readbc(PARROT_INTERP, ARGIN_NULLOK(const char *fullname))
     else {
         STRING * const fs = string_make(interp, fullname, strlen(fullname),
             NULL, 0);
+
+        /* can't read a file that doesn't exist */
         if (!Parrot_stat_info_intval(interp, fs, STAT_EXISTS)) {
             PIO_eprintf(interp, "Parrot VM: Can't stat %s, code %i.\n",
                     fullname, errno);
             return NULL;
         }
 
-        /* RT #46153 check for regular file */
+        /* we may need to relax this if we want to read bytecode from pipes */
+        if (!Parrot_stat_info_intval(interp, fs, STAT_ISREG)) {
+            PIO_eprintf(interp, "Parrot VM: '%s', is not a regular file %i.\n",
+                    fullname, errno);
+            return NULL;
+        }
 
         program_size = Parrot_stat_info_intval(interp, fs, STAT_FILESIZE);
 
@@ -470,8 +477,8 @@ again:
             return NULL;
         }
 
-        program_code =
-            (char *)mmap(0, program_size, PROT_READ, MAP_SHARED, fd, (off_t)0);
+        program_code = (char *)mmap(0, (size_t)program_size,
+                        PROT_READ, MAP_SHARED, fd, (off_t)0);
 
         if (program_code == (void *)MAP_FAILED) {
             Parrot_warn(interp, PARROT_WARNINGS_IO_FLAG,
@@ -503,7 +510,8 @@ again:
 
     pf = PackFile_new(interp, is_mapped);
 
-    if (!PackFile_unpack(interp, pf, (opcode_t *)program_code, program_size)) {
+    if (!PackFile_unpack(interp, pf, (opcode_t *)program_code,
+            (size_t)program_size)) {
         PIO_eprintf(interp, "Parrot VM: Can't unpack packfile %s.\n",
                 fullname);
         return NULL;

@@ -45,9 +45,9 @@ typedef struct _MMD_table {
 } MMD_table;
 
 typedef struct _multi_func_list {
-        STRING *multi_name;
-        STRING *short_sig;
-        STRING *full_sig;
+        const char *multi_name;
+        const char *short_sig;
+        const char *full_sig;
         funcptr_t func_ptr;
 } multi_func_list;
 
@@ -70,15 +70,6 @@ funcptr_t get_mmd_dispatch_type(PARROT_INTERP,
 PARROT_API
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
-PMC* Parrot_build_sig_object_from_varargs(PARROT_INTERP,
-    ARGIN(const char *sig),
-    va_list args)
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(2);
-
-PARROT_API
-PARROT_WARN_UNUSED_RESULT
-PARROT_CANNOT_RETURN_NULL
 PMC* Parrot_build_sig_object_from_varargs2(PARROT_INTERP,
     ARGIN(PMC* obj),
     ARGIN(const char *sig),
@@ -86,6 +77,15 @@ PMC* Parrot_build_sig_object_from_varargs2(PARROT_INTERP,
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3);
+
+PARROT_API
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
+PMC* Parrot_build_sig_object_from_varargs(PARROT_INTERP,
+    ARGIN(const char *sig),
+    va_list args)
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
 
 PARROT_API
 void Parrot_mmd_add_by_class(PARROT_INTERP,
@@ -105,9 +105,9 @@ void Parrot_mmd_add_function(PARROT_INTERP,
 
 PARROT_API
 void Parrot_mmd_add_multi_from_c_args(PARROT_INTERP,
-    ARGIN(STRING *sub_name),
-    ARGIN(STRING *short_sig),
-    ARGIN(STRING *long_sig),
+    ARGIN(const char *sub_name),
+    ARGIN(const char *short_sig),
+    ARGIN(const char *long_sig),
     ARGIN(funcptr_t multi_func_ptr))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)

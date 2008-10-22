@@ -109,9 +109,9 @@
      RELOP_LTE = 314,
      GLOBAL = 315,
      GLOBALOP = 316,
-     ADDR = 317,
-     RESULT = 318,
-     RETURN = 319,
+     RESULT = 317,
+     RETURN = 318,
+     TAILCALL = 319,
      YIELDT = 320,
      GET_RESULTS = 321,
      POW = 322,
@@ -230,9 +230,9 @@
 #define RELOP_LTE 314
 #define GLOBAL 315
 #define GLOBALOP 316
-#define ADDR 317
-#define RESULT 318
-#define RETURN 319
+#define RESULT 317
+#define RETURN 318
+#define TAILCALL 319
 #define YIELDT 320
 #define GET_RESULTS 321
 #define POW 322
@@ -295,7 +295,7 @@
 
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef union YYSTYPE
-#line 611 "compilers/imcc/imcc.y"
+#line 615 "compilers/imcc/imcc.y"
 {
     IdList * idlist;
     int t;

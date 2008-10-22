@@ -15,10 +15,10 @@ use strict;
 use warnings;
 
 use FindBin;
-use lib "$FindBin::Bin/../../lib";
+use lib "$FindBin::Bin/../../../../lib", "$FindBin::Bin/../../lib";
 
 # core Perl modules
-use Test::More     tests => 3;
+use Test::More     tests => 4;
 
 # Parrot modules
 use Parrot::Test;
@@ -29,7 +29,7 @@ language_output_is( 'Pipp', <<'END_CODE', <<'END_EXPECTED', 'definition of a cla
 class Dings {
     
     function bums() {
-        echo "The function bums() in class dings has been called.\n";
+        echo "The function bums() in class Dings has been called.\n";
     }
 }
 
@@ -40,13 +40,13 @@ END_CODE
 After class definition.
 END_EXPECTED
 
-language_output_is( 'Pipp', <<'END_CODE', <<'END_EXPECTED', 'dummy class' );
+language_output_is( 'Pipp', <<'END_CODE', <<'END_EXPECTED', 'calling a class method' );
 <?php
 
 class Dings {
     
     function bums() {
-        echo "The function bums() in class dings has been called.\n";
+        echo "The function bums() in class Dings has been called.\n";
     }
 }
  
@@ -55,7 +55,26 @@ $dings->bums();
  
 ?>
 END_CODE
-The function bums() in class dings has been called.
+The function bums() in class Dings has been called.
+END_EXPECTED
+
+language_output_is( 'Pipp', <<'END_CODE', <<'END_EXPECTED', 'class with a public member' );
+<?php
+
+class Dings {
+    public $foo_member = 'a member of Foo';
+    
+    function bums() {
+        echo "The function bums() in class Dings has been called.\n";
+    }
+}
+ 
+$dings = new Dings;
+$dings->bums();
+ 
+?>
+END_CODE
+The function bums() in class Dings has been called.
 END_EXPECTED
 
 

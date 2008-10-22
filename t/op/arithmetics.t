@@ -5,8 +5,12 @@
 use strict;
 use warnings;
 use lib qw( . lib ../lib ../../lib );
+
 use Test::More;
 use Parrot::Test tests => 27;
+
+# test for GMP
+use Parrot::Config;
 
 =head1 NAME
 
@@ -840,7 +844,11 @@ ok 3
 ok 4
 OUTPUT
 
-pir_output_is( <<'CODE', <<OUTPUT, "regression test for integer overflow with 'pow'" );
+SKIP: {
+    skip( 'No integer overflow for 32-bit INTVALs without GMP installed', 1 )
+        if $PConfig{intvalsize} == 4 && !$PConfig{gmp};
+
+    pir_output_is( <<'CODE', <<OUTPUT, "integer overflow with 'pow'" );
 .sub main
     .local pmc i1, i2, r
     i1 = new 'Integer'
@@ -901,6 +909,7 @@ CODE
 549755813888
 1099511627776
 OUTPUT
+}
 
 # Local Variables:
 #   mode: cperl

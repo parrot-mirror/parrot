@@ -121,11 +121,6 @@ void Parrot_invalidate_method_cache(PARROT_INTERP,
 
 PARROT_API
 PARROT_PURE_FUNCTION
-INTVAL Parrot_MMD_method_idx(SHIM_INTERP, ARGIN(const char *name))
-        __attribute__nonnull__(2);
-
-PARROT_API
-PARROT_PURE_FUNCTION
 PARROT_CAN_RETURN_NULL
 const char* Parrot_MMD_method_name(SHIM_INTERP, INTVAL idx);
 
@@ -152,13 +147,6 @@ PMC * Parrot_remove_parent(PARROT_INTERP,
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3);
-
-PARROT_API
-PARROT_WARN_UNUSED_RESULT
-PARROT_CANNOT_RETURN_NULL
-STRING* readable_name(PARROT_INTERP, ARGIN(PMC *name))
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(2);
 
 void destroy_object_cache(PARROT_INTERP)
         __attribute__nonnull__(1);

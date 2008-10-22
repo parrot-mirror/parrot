@@ -21,7 +21,7 @@ the size of that file down and to emphasize their generic,
 .namespace []
 .sub 'onload' :anon :init :load
     $P0 = get_hll_namespace ['Any']
-    '!EXPORT'('capitalize chop chomp chars index lc lcfirst rindex ord substr uc ucfirst', 'from'=>$P0)
+    '!EXPORT'('capitalize chop chomp chars :e index lc lcfirst rindex ord substr uc ucfirst', 'from'=>$P0)
 .end
 
 
@@ -165,6 +165,30 @@ Partial implementation for now, returns a list of strings
     goto do_match
   done:
     .return(retv)
+.end
+
+=item ':e'()
+
+ our Bool multi Str::':e' ( Str $filename )
+
+Returns whether the file with the name indicated by the invocant exists.
+
+=cut
+
+.sub ':e' :method :multi(_)
+    .param int arg              :optional
+    .param int has_arg          :opt_flag
+
+    .local string filename
+    filename = self
+
+    $I0 = stat filename, 0
+    if $I0 goto file_exists
+    $P0 = get_hll_global ['Bool'], 'False'
+    .return ($P0)
+  file_exists:
+    $P0 = get_hll_global ['Bool'], 'True'
+    .return ($P0)
 .end
 
 =item index()
@@ -767,13 +791,14 @@ B<Note:> partial implementation only
     klen = 0 # key len
     vlen = 0 # val len
     llm = 0 # orig end marker for longest leftmost match
+    tmps = self # reassig; workaround for [perl #59730]
 
   table_loop:
     unless hit_set, done
     pos = shift hit_set
     if pos < llm goto table_loop
     key = itable[pos;0]
-    k_isa_match = isa key, 'PGE::Match'
+    k_isa_match = isa key, ['PGE';'Match']
     klen = key.'chars'()
     # skip matches between pos and end of llm
     llm = pos + klen

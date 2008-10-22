@@ -250,6 +250,7 @@ SP              [ ]
         yy_push_state(cmt3, yyscanner);
 
         IMCC_INFO(interp)->frames->s.file = str_dup(yytext);
+        IMCC_INFO(interp)->frames->s.file_needs_free = 1;
         IMCC_INFO(interp)->cur_unit->file = str_dup(yytext);
 
         return FILECOMMENT;
@@ -325,6 +326,7 @@ SP              [ ]
 
 <INITIAL,emit>".lex"     return LEXICAL;
 ".arg"                   return ARG;
+".set_arg"               return ARG;
 ".sub"                   return SUB;
 ".end"                   return ESUB;
 ".begin_call"            return PCC_BEGIN;
@@ -358,6 +360,7 @@ SP              [ ]
 ".get_results"             return GET_RESULTS;
 ".yield"                   return YIELDT;
 ".return"                  return RETURN;
+".tailcall"                return TAILCALL;
 <emit,INITIAL>".loadlib"   return LOADLIB;
 
 ":flat"         return ADV_FLAT;
@@ -386,7 +389,6 @@ SP              [ ]
 "int"                         return INTV;
 "num"                         return FLOATV;
 "new"                         return NEW;
-"addr"                        return ADDR;
 "global"                      return GLOBALOP;
 "pmc"                         return PMCV;
 "string"                      return STRINGV;
@@ -782,7 +784,11 @@ new_frame(PARROT_INTERP) {
 
     if (IMCC_INFO(interp)->frames) {
         tmp->s.pasm_file = IMCC_INFO(interp)->frames->s.pasm_file;
-        tmp->s.file      = IMCC_INFO(interp)->frames->s.file;
+        if (IMCC_INFO(interp)->frames->s.file_needs_free)
+            tmp->s.file = str_dup(IMCC_INFO(interp)->frames->s.file);
+        else
+            tmp->s.file = IMCC_INFO(interp)->frames->s.file;
+        tmp->s.file_needs_free = IMCC_INFO(interp)->frames->s.file_needs_free;
         tmp->s.pragmas   = IMCC_INFO(interp)->frames->s.pragmas;
     }
 
@@ -824,6 +830,12 @@ destroy_frame(struct macro_frame_t *frame, void *yyscanner)
         ret = frame->s.line;
 
     /* RT #42383 if frame->s.file was allocated free it */
+    /* Update: This should do it! */
+    if (frame->s.file_needs_free) {
+        DECL_CONST_CAST;
+        mem_sys_free(PARROT_const_cast(char *,frame->s.file));
+        frame->s.file_needs_free = 0;
+    }
     mem_sys_free(frame);
 
     if (buffer != NULL)
@@ -1131,6 +1143,7 @@ expand_macro(PARROT_INTERP, ARGIN(const char *name), void *yyscanner)
         /* remember macro name for error reporting
         RT #42384 check that all the .file text is malloced / freed */
         frame->s.file = str_dup(name);
+        frame->s.file_needs_free = 1;
 
         /* whitespace can be safely ignored */
         do {
@@ -1222,6 +1235,7 @@ include_file(PARROT_INTERP, char *file_name, void *yyscanner)
 
     mem_sys_free(s);
     frame->s.file   = file_name;
+    frame->s.file_needs_free = 0;
     frame->s.handle = file;
     ext             = strrchr(file_name, '.');
 

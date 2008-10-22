@@ -24,7 +24,7 @@ Creates the Perl 6 compiler by subclassing a C<PCT::HLLCompiler> object.
 .loadlib 'perl6_ops'
 .include 'src/gen_builtins.pir'
 
-.namespace [ 'Perl6::Compiler' ]
+.namespace [ 'Perl6';'Compiler' ]
 
 .sub 'onload' :load :init :anon
     load_bytecode 'PCT.pbc'
@@ -121,13 +121,13 @@ USAGE
     set_hll_global ['Perl6'], '@?END_BLOCKS', $P0
 
     ##  tell PAST::Var how to encode Perl6Str and Str values
-    $P0 = get_hll_global ['PAST::Compiler'], '%valflags'
+    $P0 = get_hll_global ['PAST';'Compiler'], '%valflags'
     $P0['Perl6Str'] = 'e'
     $P0['Str'] = 'e'
 .end
 
 
-.namespace ['Perl6::Compiler']
+.namespace ['Perl6';'Compiler']
 
 =item check_syntax(source [, "option" => value, ...])
 
@@ -189,6 +189,37 @@ to the Perl 6 compiler.
     $P0()
     goto iter_loop
   iter_end:
+.end
+
+
+.sub 'parse_name' :method
+    .param string name
+    ##  divide name based on ::
+    .local pmc list
+    list = split '::', name
+    ##  move any leading sigil to the last item
+    .local string sigil
+    $S0 = list[0]
+    sigil = substr $S0, 0, 1
+    $I0 = index '$@%&', $S1
+    if $I0 < 0 goto sigil_done
+    substr $S0, 0, 1, ''
+    list[0] = $S0
+    $S0 = list[-1]
+    $S0 = concat sigil, $S0
+    list[-1] = $S0
+  sigil_done:
+    ##  remove any empty items from the list
+    $P0 = iter list
+    list = new 'ResizablePMCArray'
+  iter_loop:
+    unless $P0 goto iter_done
+    $S0 = shift $P0
+    unless $S0 goto iter_loop
+    push list, $S0
+    goto iter_loop
+  iter_done:
+    .return (list)
 .end
 
 
