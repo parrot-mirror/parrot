@@ -11,8 +11,11 @@
 #include "pirparser.h"
 #include "pircompiler.h"
 #include "piremit.h"
+#include "piryy.h"
+#include "pirlexer.h"
 
-/* use pthreads library to test thread safety.
+
+/* XXX use pthreads library to test thread safety.
    does not work currently on windows.
    The check for _MSC_VER is not correct but works for me.
 */
@@ -26,18 +29,7 @@
 #  define NUM_THREADS 1
 #endif
 
-
-/* before including the lexer's header file, make sure to define this: */
-#ifndef YY_NO_UNISTD_H
-#  define YY_NO_UNISTD_H
-#endif
-
-#include "pirlexer.h"
-/* include this after "pirlexer.h", as C<yyscan_t> structure must be defined first
- * which is done in "pirlexer.h"
- */
-#include "piryy.h"
-
+void * parse_file(void *a);
 
 /*
 
@@ -135,16 +127,18 @@ parse_file(void *a) {
     int          flags     = args->flags;
 
     /* create a yyscan_t object */
-    yylex_init(&yyscanner);
+    yypirlex_init(&yyscanner);
     /* set debug flag */
-    yyset_debug(flexdebug, yyscanner);
+    yypirset_debug(flexdebug, yyscanner);
     /* set the input file */
-    yyset_in(infile, yyscanner);
+    yypirset_in(infile, yyscanner);
     /* set the extra parameter in the yyscan_t structure */
     lexer = new_lexer(filename, flags);
-    yyset_extra(lexer, yyscanner);
+    yypirset_extra(lexer, yyscanner);
+    /* and store the yyscanner in the lexer, so they're close buddies */
+    lexer->yyscanner = yyscanner;
     /* go parse */
-    yyparse(yyscanner, lexer);
+    yypirparse(yyscanner, lexer);
 
     if (lexer->parse_errors == 0) {
         char outfile[20];
@@ -169,10 +163,9 @@ parse_file(void *a) {
     fclose(infile);
 
 
-
     /* clean up after playing */
     release_resources(lexer);
-    yylex_destroy(yyscanner);
+    yypirlex_destroy(yyscanner);
 
     return NULL;
 
@@ -182,7 +175,8 @@ parse_file(void *a) {
 
 /*
 
-=item C<int main(int argc, char *argv[])>
+=item C<int
+main(int argc, char *argv[])>
 
 Main compiler driver.
 
@@ -202,7 +196,7 @@ main(int argc, char *argv[]) {
     argv++;
 
 
-    /* very basic argument handling; I'm too lazy to check out
+    /* XXX very basic argument handling; I'm too lazy to check out
      * the standard funtion for that, right now. This is a TODO. */
     while (argc > 0 && argv[0][0] == '-') {
         switch (argv[0][1]) {
@@ -230,6 +224,9 @@ main(int argc, char *argv[]) {
                     fprintf(stderr, "Missing argument for option '-o'\n");
                     exit(EXIT_FAILURE);
                 }
+                break;
+            case 'p':
+                SET_FLAG(flags, LEXER_FLAG_EMIT_PASM);
                 break;
             case 'W':
                 SET_FLAG(flags, LEXER_FLAG_WARNINGS);
@@ -339,13 +336,14 @@ parser finds a syntax error.
 */
 PARROT_IGNORABLE_RESULT
 int
-yyerror(yyscan_t yyscanner, NOTNULL(lexer_state * const lexer),
+yypirerror(yyscan_t yyscanner, NOTNULL(lexer_state * const lexer),
         NOTNULL(char const * const message), ...)
 {
-    char const * const current_token = yyget_text(yyscanner);
+    char const * const current_token = yypirget_text(yyscanner);
     va_list arg_ptr;
 
-    fprintf(stderr, "\nError in file '%s' (line %d)\n\n", lexer->filename, yyget_lineno(yyscanner));
+    fprintf(stderr, "\nError in file '%s' (line %d)\n\n", lexer->filename,
+            yypirget_lineno(yyscanner));
 
     va_start(arg_ptr, message);
     vfprintf(stderr, message, arg_ptr);

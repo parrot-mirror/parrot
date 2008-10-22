@@ -584,7 +584,7 @@ do_pre_process(PARROT_INTERP)
             case EMIT:          printf(".emit\n"); break;
             case EOM:           printf(".eom\n"); break;
             case LOCAL:         printf(".local "); break;
-            case ARG:           printf(".arg "); break;
+            case ARG:           printf(".set_arg "); break;
             case SUB:           printf(".sub "); break;
             case ESUB:          printf(".end"); break;
             case RESULT:        printf(".result "); break;
@@ -608,7 +608,6 @@ do_pre_process(PARROT_INTERP)
             case STRINGV:       printf("string ");break;
             case PMCV:          printf("pmc ");break;
             case NEW:           printf("new ");break;
-            case ADDR:          printf("addr ");break;
             case GLOBAL:        printf("global ");break;
             case SHIFT_LEFT:    printf(" << ");break;
             case SHIFT_RIGHT:   printf(" >> ");break;

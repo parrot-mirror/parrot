@@ -9,7 +9,7 @@ and opcode syntax tree (POST) nodes in the Parrot Compiler Toolkit.
 
 =cut
 
-.namespace [ 'PCT::Node' ]
+.namespace [ 'PCT';'Node' ]
 
 .sub 'onload' :anon :load :init
     ##   create the PCT::Node base class
@@ -24,7 +24,7 @@ and opcode syntax tree (POST) nodes in the Parrot Compiler Toolkit.
 
     $P0 = new 'Integer'
     $P0 = 10
-    set_hll_global ['PCT::Node'], '$!serno', $P0
+    set_hll_global ['PCT';'Node'], '$!serno', $P0
 
     .return ()
 .end
@@ -112,7 +112,8 @@ Create and returns a clone of a PAST node.
 .sub 'clone' :vtable :method
     .local pmc res
     $S0 = typeof self
-    res = new $S0
+    $P0 = split ';', $S0
+    res = new $P0
     .local pmc iter
     iter = self.'iterator'()
   iter_child_loop:
@@ -187,7 +188,8 @@ array of children.  Returns the newly created node.
     .param string class
     .param pmc children        :slurpy
     .param pmc adverbs         :slurpy :named
-    $P0 = new class
+    $P0 = split '::', class
+    $P0 = new $P0
     $P0.'init'(children :flat, adverbs :flat :named)
     push self, $P0
     .return ($P0)
@@ -221,7 +223,7 @@ a C<Match> object and obtains source/position information from that.
 
 .sub 'node' :method
     .param pmc node
-    $I0 = isa node, 'PAST::Node'
+    $I0 = isa node, ['PAST';'Node']
     if $I0 goto clone_past
   clone_pge:
     $S0 = node

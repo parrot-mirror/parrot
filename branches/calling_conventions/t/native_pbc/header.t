@@ -26,12 +26,12 @@ Tests the layout of the PBC header.
 =cut
 
 # idea stolen from t/pmc/sub.t
-my $tmppasm = File::Temp->new( UNLINK => 1, SUFFIX => '.pasm' );
+my $tmppasm = File::Temp->new( UNLINK => 1, SUFFIX => '.pasm', CLEANUP => 1 );
 print $tmppasm <<END;
 set I0, 0
 END
 $tmppasm->flush;
-my $out_f = File::Temp->new( UNLINK => 1, SUFFIX => '.pbc' );
+my $out_f = File::Temp->new( UNLINK => 1, SUFFIX => '.pbc', CLEANUP => 1 );
 my $path_to_parrot = Parrot::Test::path_to_parrot();
 my $parrot = File::Spec->join( File::Spec->curdir(), 'parrot' . $PConfig{exe} );
 my $args = $ENV{TEST_PROG_ARGS} || '';
@@ -64,7 +64,7 @@ my %h;
 @h{@fields} = unpack "a7CCCCCCCCCCCCC", $pbc;
 
 is( $h{magic}, "\xfe\x50\x42\x43\x0a\x1a\x0a", "magic string 0xfePBC0x0a0x1a0x0a len=7" );
-ok( $h{wordsize} == 2 || $h{wordsize} == 4,  "wordsize: $h{wordsize}" );
+ok( $h{wordsize} == 2 || $h{wordsize} == 4 || $h{wordsize} == 8,  "wordsize: $h{wordsize}" );
 ok( $h{byteorder} < 2, "byteorder: $h{byteorder}" );
 ok( $h{floattype} < 4, "floattype: $h{floattype}" );
 is( $h{major}, $PConfig{MAJOR}, "major version: $h{major} vs $PConfig{MAJOR}" );

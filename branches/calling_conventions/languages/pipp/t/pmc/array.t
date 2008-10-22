@@ -21,18 +21,19 @@ Tests the PhpArray PMC.
 .sub main :main
     .include 'include/test_more.pir'
 
-    plan(73)
+    plan(91)
 
+    cached_string_hashval_workaround()
     basic_get_set()
     stack_and_queue_ops()
     index_increment()
-    int_string_conversions()
+    string_to_int_key_conversion()
     autovivification_tests()
     exists_delete_tests()
     generic_iterator_tests_string_key()
     generic_iterator_tests_pmc_key()
-    #php_iterator_tests()
-    #php_array_func_tests()
+    php_iterator_tests()
+    php_array_func_tests()
     cmp_shallow_native()
     cmp_order_test()
     cmp_deep_native()
@@ -41,9 +42,23 @@ Tests the PhpArray PMC.
     assign_pmc_shallow_native()
     assign_pmc_deep_native()
     add_pmc_shallow_native()
-    #get_repr_deep()
+    #print_r_deep()
     vanilla_freeze_thaw()
-    #goofy_freeze_thaw()
+    goofy_freeze_thaw()
+.end
+
+#workaround for bug addressed in RT #59810.
+.sub cached_string_hashval_workaround
+    .local pmc p
+    p = new 'PhpArray'
+    p.'next'()
+    p.'prev'()
+    p.'current'()
+    p.'end'()
+    p.'key'()
+    p.'current'()
+    p.'each'()
+    p.'sanity_check'()
 .end
 
 .sub basic_get_set
@@ -237,7 +252,7 @@ ii_end:
     ok(is_ok, "automatic index increment")
 .end
 
-.sub int_string_conversions
+.sub string_to_int_key_conversion
     .local pmc p
     .local string s
     .local int is_ok
@@ -254,6 +269,55 @@ ii_end:
     is_ok = s == 'correct'
     ok(is_ok, "string -> int conversion for indicies")
 
+    p = new 'PhpArray'
+    p[0]  = 'x'
+    s = get_repr p
+    is(s, '{0: x}', "output from get_repr looks good")
+
+    p = new 'PhpArray'
+    p['00']  = 'x'
+    s = get_repr p
+    is(s, '{"00": x}', "string->int conversion doesn't convert '00'")
+
+    p = new 'PhpArray'
+    p['-0']  = 'x'
+    s = get_repr p
+    is(s, '{"-0": x}', "string->int conversion doesn't convert '-0'")
+
+    p = new 'PhpArray'
+    p['04']  = 'x'
+    s = get_repr p
+    is(s, '{"04": x}', "string->int conversion doesn't convert '04'")
+
+    p = new 'PhpArray'
+    p['0']  = 'x'
+    s = get_repr p
+    is(s, '{0: x}', "string->int conversion converts '0' to 0")
+
+    p = new 'PhpArray'
+    p['-1']  = 'x'
+    s = get_repr p
+    is(s, '{-1: x}', "string->int conversion converts '-1'")
+
+    p = new 'PhpArray' 
+    p['99999999999999999999999'] = 'x' #check for overflow
+    s = get_repr p
+    is(s, '{"99999999999999999999999": x}', "string->int conversion doesn't convert '99999999999999999999999'")
+
+    p = new 'PhpArray'
+    p['-7']  = 'x'
+    s = get_repr p
+    is(s, '{-7: x}', "string->int conversion converts '-7'")
+
+    p = new 'PhpArray'
+    p['7']   = 'x'
+    s = get_repr p
+    is(s, '{7: x}', "string->int conversion converts '7'")
+
+    p = new 'PhpArray'
+    p['100'] = 'x'
+    s = get_repr p
+    is(s, '{100: x}', "string->int conversion converts '100'")
 .end
 
 
@@ -548,6 +612,7 @@ iter_skip_loop:
     unless it goto iter_skip_done
     p.'next'()
     val_str = shift it
+    val_str = p[val_str]
     concat s, val_str
     goto iter_skip_loop
 iter_skip_done:
@@ -1061,7 +1126,7 @@ add_loop_end:
     ok(is_ok, "add adds elements correctly")
 .end
 
-.sub get_repr_deep
+.sub print_r_deep
     .local pmc p1
     .local string is, should_be
     .local int is_ok

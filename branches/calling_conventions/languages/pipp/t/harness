@@ -39,9 +39,10 @@ use strict;
 use warnings;
 use lib '..';
 
-use Cwd                   ();
-use File::Spec;
-use Test::Harness         ();
+use Cwd           ();
+use File::Spec    ();
+use TAP::Harness  3.0;
+use Parrot::Config;
 
 my $language = 'pipp';
 
@@ -99,7 +100,17 @@ if ( grep { m/^--files$/ } @ARGV ) {
        $ENV{PARROT_PIPP_TEST_MODULE} = 'Parrot::Test::Pipp::PCT';
     }
 
-    Test::Harness::runtests( @files ) if scalar( @files );
+    my $harness = TAP::Harness->new( {
+                      exec => sub {
+                                       my ( $harness, $test_file ) = @_;
+                                       
+                                       # the directory t/pmc contains only PIR test files
+                                       return [ "../parrot$PConfig{exe}", $test_file ] if $test_file =~ m!t/pmc/.*[.]t$!;
+
+                                       return undef;
+                                  }
+                  } ); 
+    $harness->runtests(@files);
 }
 
 =head1 HISTORY

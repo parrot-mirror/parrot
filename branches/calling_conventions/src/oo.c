@@ -403,43 +403,6 @@ Parrot_get_vtable_index(PARROT_INTERP, ARGIN(const STRING *name))
 
 /*
 
-=item C<STRING* readable_name>
-
-Given a String or Key PMC return the STRING* representation
-
-RT #45967 this function, key_set_to_string, and the key PMC get_repr should be
-consolidated
-
-=cut
-
-*/
-
-PARROT_API
-PARROT_WARN_UNUSED_RESULT
-PARROT_CANNOT_RETURN_NULL
-STRING*
-readable_name(PARROT_INTERP, ARGIN(PMC *name))
-{
-    PMC    *array;
-
-    if (name->vtable->base_type == enum_class_String)
-        return VTABLE_get_string(interp, name);
-
-    array   = pmc_new(interp, enum_class_ResizableStringArray);
-
-    PARROT_ASSERT(name->vtable->base_type == enum_class_Key);
-
-    while (name) {
-        VTABLE_push_string(interp, array, VTABLE_get_string(interp, name));
-        name = key_next(interp, name);
-    }
-
-    return string_join(interp, CONST_STRING(interp, ";"), array);
-}
-
-
-/*
-
 =item C<const char* Parrot_MMD_method_name>
 
 Return the method name for the given MMD enum.
@@ -462,36 +425,6 @@ Parrot_MMD_method_name(SHIM_INTERP, INTVAL idx)
         return NULL;
 
     return Parrot_mmd_func_names[idx];
-}
-
-
-/*
-
-=item C<INTVAL Parrot_MMD_method_idx>
-
-Return the MMD function number for method name or -1 on failure.
-
-RT #45973 allow dynamic expansion at runtime.
-
-{{**DEPRECATE**}}
-
-=cut
-
-*/
-
-PARROT_API
-PARROT_PURE_FUNCTION
-INTVAL
-Parrot_MMD_method_idx(SHIM_INTERP, ARGIN(const char *name))
-{
-    INTVAL i;
-
-    for (i = 0; i < MMD_USER_FIRST; ++i) {
-        if (STREQ(Parrot_mmd_func_names[i], name))
-            return i;
-    }
-
-    return -1;
 }
 
 
@@ -580,10 +513,28 @@ fail_if_type_exists(PARROT_INTERP, ARGIN(PMC *name))
     else
         type = VTABLE_get_integer(interp, type_pmc);
 
-    if (type > enum_type_undef)
+    if (type > enum_type_undef) {
+        STRING *classname;
+
+        if (VTABLE_isa(interp, name, CONST_STRING(interp, "ResizableStringArray"))) {
+            PMC * const base_ns = VTABLE_get_pmc_keyed_int(interp,
+                                    interp->HLL_namespace,
+                                    CONTEXT(interp)->current_HLL);
+            PMC             *ns = Parrot_get_namespace_keyed(interp,
+                                    base_ns, name);
+
+            if (!PMC_IS_NULL(ns))
+                classname = VTABLE_get_string(interp, ns);
+            else
+                classname = CONST_STRING(interp, "");
+        }
+        else
+            classname = VTABLE_get_string(interp, name);
+
         Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INVALID_OPERATION,
             "Class %Ss already registered!\n",
-            string_escape_string(interp, VTABLE_get_string(interp, name)));
+            string_escape_string(interp, classname));
+    }
 
     if (type < enum_type_undef)
         Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INVALID_OPERATION,

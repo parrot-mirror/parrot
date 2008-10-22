@@ -8,7 +8,7 @@ autounfudge - automatically write patches for unfudging spec tests
 
 =head1 DESCRIPTION
 
-This tool runs the non-pure tests of the C<spectest_regression> make target,
+This tool runs the non-pure tests of the C<spectest> make target,
 automatically creates files with less fudges, runs them again, and if the
 modified tests succeeds, it adds a patch to C<autounfudge.patch> that, when
 applied as C<< patch -p0 < autunfudge.patch >>, removes the superflous fudge
@@ -21,7 +21,7 @@ pleae run this script without any options or command line parameters.
 
 =head1 WARNINGS
 
-This tool is platform dependant, and not tested on anthing but linux.
+This tool is platform dependent, and not tested on anthing but linux.
 
 It assumes that all fudge directives are orthogonal, which might not be the
 case in real world tests. It is not tested with nested fudges (eg a line
@@ -29,7 +29,7 @@ based fudge inside a fudged block).
 
 Never blindly apply the automatically generated patch.
 
-=head1 MISCELANEA
+=head1 MISCELLANEA
 
 Fudge directives containing the words I<unspecced> or I<unicode> are ignored.
 The latter is because Unicode related tests can succeed on platforms with icu
@@ -45,6 +45,7 @@ fudge lines and thus would take about three hours to autoumatically unfudge.
 
 use strict;
 use warnings;
+
 use Getopt::Long;
 use Fatal qw(close);
 use File::Temp qw(tempfile tempdir);
@@ -78,7 +79,7 @@ delete $ENV{PERL6LIB} unless $keep_env;
 
 my @files;
 
-$specfile = 't/spectest_regression.data' if $auto;
+$specfile = 't/spectest.data' if $auto;
 
 if ($specfile){
     @files = read_specfile($specfile);
@@ -121,6 +122,7 @@ else {
 
 sub auto_unfudge_file {
     my $file_name = shift;
+
     return unless defined $file_name;
     open my $f, '<:encoding(UTF-8)', $file_name
         or die "Can't open '$file_name' for reading: $!";
@@ -173,6 +175,7 @@ sub auto_unfudge_file {
 
 sub fudge {
     my $fn = shift;
+
     open my $p, '-|', 't/spec/fudge', '--keep-exit-code',  $impl, $fn
         or die "Can't launch fudge: $!";
     my $ret_fn = <$p>;
@@ -190,7 +193,7 @@ Valid options:
     --debug             Enable debug output
     --impl impl         Specify a different implementation
     --specfile file     Specification file to read filenames from
-    --auto              use t/spectest_regression.data for --specfile
+    --auto              use t/spectest.data for --specfile
     --keep-env          Keep PERL6LIB environment variable.
     --exclude regex     Don't run the tests that match regex
 USAGE
@@ -198,6 +201,7 @@ USAGE
 
 sub unfudge_some {
     my ($file, @lines) = @_;
+
     my ($fh, $tmp_filename) = tempfile(
             'tempXXXXX',
             SUFFIX => '.t',
@@ -221,6 +225,7 @@ sub unfudge_some {
 
 sub tests_ok {
     my $fn = shift;
+
     $fn =~ s/\s+\z//;
     my $harness = get_harness();
     my $agg = TAP::Parser::Aggregator->new();
@@ -240,6 +245,7 @@ sub get_harness {
 
 sub read_specfile {
     my $fn = shift;
+
     my @res;
     open (my $f, '<', $fn) or die "Can't open file '$fn' for reading: $!";
     while (<$f>){

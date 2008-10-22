@@ -312,14 +312,6 @@ method function_definition($/) {
     make $past;
 }
 
-method member_definition($/) {
-    make PAST::Op.new(
-             $( $<var> ),
-             $( $<literal> ),
-             :pasttype('bind'),
-         );
-}
-
 method method_definition($/) {
 
     # note that $<param_list> creates a new PAST::Block.
@@ -357,22 +349,28 @@ method param_list($/) {
 method class_definition($/) {
     my $past := PAST::Block.new(
                     :node($/),
-                    :blocktype('declaration'),
                     :namespace( $<CLASS_NAME><ident> ),
+                    :blocktype('declaration'),
                     :pirflags( ':init :load' ),
-                    :lexical( 0 ),
                     PAST::Stmts.new(
                         PAST::Op.new(
-                            :inline(   "$P0 = get_hll_global 'P6metaclass'\n $P1 = split '::', '"
-                                     ~ $<CLASS_NAME>
-                                     ~ "'\n push_eh subclass_done\n $P2 = $P0.'new_class'($P1)\n pop_eh\n subclass_done:\n" ),
+                            :inline(   "$P0 = get_hll_global 'P6metaclass'\n"
+                                     ~ "$P2 = $P0.'new_class'('" ~ $<CLASS_NAME> ~ "')\n" ),
                             :pasttype( 'inline' )
                         )
                     )
                 );
-    for $<method_definition> {
-        $past.push( $($_) );
+    my $methods_block
+        := PAST::Block.new(
+                    :blocktype('immediate'),
+           );
+    for $<member_definition> {
+        $methods_block.symbol( ~$_<VAR_NAME><ident>, :scope('attribute') );
     }
+    for $<method_definition> {
+        $methods_block.push( $($_) );
+    }
+    $past.push( $methods_block );
 
     make $past;
 }
@@ -420,7 +418,7 @@ method quote_concat($/) {
         $past := PAST::Op.new(
             $past,
             $( $<quote_term>[$count] ),
-            :pirop('n_concat'),
+            :pirop('concat'),
             :pasttype('pirop')
         );
         $count := $count + 1;

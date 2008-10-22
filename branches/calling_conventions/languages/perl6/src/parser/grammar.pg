@@ -3,7 +3,7 @@
 
 =begin Introduction
 
-This is the rules portion of the grammar for the perl6 compiler,
+This is the rules portion of the grammar for the Rakudo compiler,
 an implementation of Perl 6 on Parrot.  This grammar is modeled
 after the STD.pm grammar that Larry Wall and others are developing,
 available from L<http://svn.pugscode.org/pugs/src/perl6/STD.pm>.
@@ -440,15 +440,8 @@ rule post_constraint {
     where <EXPR: 'm='> # XXX <EXPR(%chaining)>
 }
 
-# XXX This rule doesn't appear in STD.pm; we use this to parse things like
-# sub foo(::T $x) { ... }, since it appears STD.pm doesn't cover that yet.
-rule generic_binder {
-    <?before '::'> <variable>
-}
-
 token parameter {
     <type_constraint>*
-    <generic_binder>?
     [
     |   $<quant>=['*'] <param_var>
     |   $<named>=[':'?]
@@ -562,20 +555,25 @@ token term {
     [
     | 'VAR(' <variable> ')' {*}                  #= VAR
     | <typename> {*}                             #= typename
-    | <identifier=named_0ary>
+    | <name=named_0ary>
         [
         | <.unsp>? '.'? '(' <semilist> ')' {*}   #= func args
-        | :: {*}                                 #= listop noarg
+        | :: {*}                                 #= noarg
         ]
-    | <identifier>
+    | <name>
         [
-        | \s <arglist> {*}                       #= listop args
-        | <.unsp>? '.'? '(' <semilist> ')' {*}   #= func args
-        | :: {*}                                 #= listop noarg
+        | <args> {*}                             #= args
+        | :: {*}                                 #= noarg
         ]
     | <sigil> \s <arglist> {*}                   #= sigil
     | '...' {*}                                  #= ...
     ]
+}
+
+
+token args {
+    | \s <arglist> {*}                           #= listop args
+    | <.unsp>? '.'? '(' <semilist> ')' {*}       #= func args
 }
 
 ##  XXX: cheat until we get term:pi, term:rand, term:undef, etc.
@@ -686,12 +684,21 @@ token variable {
     | <sigil> <?before '<' > <postcircumfix> {*} #= $<>
 }
 
-token sigil { '$' | '@' | '%' | '&' | '::' }
+token sigil { '$' | '@' | '%' | '&' | '@@' }
 
 token twigil { <[.!^:*+?=]> }
 
 token name {
-    | <identifier> [ '::' <identifier> ]*
+    | <identifier> <morename>*
+    | <morename>+
+}
+
+token morename {
+    '::'
+    [ 
+    | <identifier>
+    | '(' <EXPR> ')' 
+    ]
 }
 
 token value {
@@ -789,12 +796,7 @@ rule fulltypename {
 }
 
 token typename {
-    <?before <.upper> > <name>
-    {*}
-}
-
-token name {
-    <identifier> [ '::' <identifier> ]*
+    <?before <.upper> | '::' > <name>
     {*}
 }
 

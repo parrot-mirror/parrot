@@ -224,69 +224,6 @@ stack_entry(PARROT_INTERP, ARGIN(Stack_Chunk_t *stack), INTVAL depth)
 
 /*
 
-=item C<void rotate_entries>
-
-Rotate the top N entries by one.  If C<< N > 0 >>, the rotation is bubble
-up, so the top most element becomes the Nth element.  If C<< N < 0 >>, the
-rotation is bubble down, so that the Nth element becomes the top most
-element.
-
-*/
-
-PARROT_API
-void
-rotate_entries(PARROT_INTERP, ARGMOD(Stack_Chunk_t **stack_p), INTVAL num_entries)
-{
-    Stack_Chunk_t * const stack = *stack_p;
-
-    if (num_entries >= -1 && num_entries <= 1) {
-        return;
-    }
-
-    if (num_entries < 0) {
-        INTVAL i;
-        Stack_Entry_t temp;
-        INTVAL depth;
-
-        num_entries = -num_entries;
-        depth = num_entries - 1;
-
-        if (stack_height(interp, stack) < (size_t)num_entries)
-            Parrot_ex_throw_from_c_args(interp, NULL, ERROR_STACK_SHALLOW,
-                "Stack too shallow!");
-
-        /* XXX Dereferencing stack_entry here is a cavalcade of danger */
-        temp = *stack_entry(interp, stack, depth);
-        for (i = depth; i > 0; i--) {
-            *stack_entry(interp, stack, i) =
-                *stack_entry(interp, stack, i - 1);
-        }
-
-        *stack_entry(interp, stack, 0) = temp;
-    }
-    else {
-        INTVAL i;
-        Stack_Entry_t temp;
-        INTVAL depth = num_entries - 1;
-
-        if (stack_height(interp, stack) < (size_t)num_entries)
-            Parrot_ex_throw_from_c_args(interp, NULL, ERROR_STACK_SHALLOW,
-                "Stack too shallow!");
-
-        /* XXX Dereferencing stack_entry here is a cavalcade of danger */
-        temp = *stack_entry(interp, stack, 0);
-
-        for (i = 0; i < depth; i++) {
-            *stack_entry(interp, stack, i) =
-                *stack_entry(interp, stack, i + 1);
-        }
-
-        *stack_entry(interp, stack, depth) = temp;
-    }
-}
-
-/*
-
 =item C<Stack_Entry_t* stack_prepare_push>
 
 Return a pointer, where new entries go for push.
