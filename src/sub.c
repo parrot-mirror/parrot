@@ -491,6 +491,39 @@ Parrot_find_pad(PARROT_INTERP, ARGIN(STRING *lex_name), ARGIN(const Parrot_Conte
 
 /*
 
+=item C<PMC* Parrot_capture_lex>
+
+Capture the current lexical environment of a sub.
+
+=cut
+
+*/
+
+void
+Parrot_capture_lex(PARROT_INTERP, ARGMOD(PMC *sub_pmc))
+{
+    Parrot_sub * const sub          = PMC_sub(sub_pmc);
+    Parrot_Context * const ctx      = CONTEXT(interp);
+    Parrot_sub * const current_sub  = PMC_sub(ctx->current_sub);
+    Parrot_sub * const outer_sub    = PMC_sub(sub->outer_sub);
+
+    /* the sub_pmc has to have an outer_sub that is the caller */
+    if (PMC_IS_NULL(sub->outer_sub))
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INVALID_OPERATION,
+                "'%Ss' isn't a closure (no :outer)", sub->name);
+
+    /* verify that the current sub is sub_pmc's :outer */
+    if (0 == string_equal(interp, current_sub->lexid, outer_sub->lexid))
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INVALID_OPERATION,
+            "'%Ss' isn't the :outer of '%Ss'", current_sub->name, sub->name);
+
+    /* set the sub's outer context to the current context */
+    sub->outer_ctx = ctx;
+    ctx->ref_count++;
+}
+    
+/*
+
 =item C<PMC* parrot_new_closure>
 
 Used where? XXX
