@@ -4,13 +4,15 @@
 
 =general
 
+verbose
+
 =steps
 
 init::manifest nomanicheck
 init::defaults
 init::install
 init::miniparrot
-init::hints verbose-step fatal-step
+init::hints
 init::headers
 inter::progs
 inter::make
@@ -75,4 +77,5 @@ gen::platform
 gen::config_pm
 
 =cut
+
 

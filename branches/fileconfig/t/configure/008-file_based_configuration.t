@@ -12,29 +12,20 @@ BEGIN {
     our $topdir = realpath($Bin) . "/../..";
     unshift @INC, qq{$topdir/lib};
 }
-use Test::More qw(no_plan); # tests => 70;
+use Test::More qw(no_plan); # tests => 29;
 use Carp;
 use Parrot::Configure::Options qw| process_options |;
-#use Parrot::Configure::Options::Conf::CLI ();
-#use Parrot::Configure::Options::Conf::File ();
-#use Parrot::Configure::Options::Reconf ();
-#use IO::CaptureOutput qw| capture |;
 
 {
     my $configfile = q{xconf/samples/testfoobar};
-    local @ARGV = ( qq{--file=$configfile} );
-    my ($args, $steps_list_ref) = process_options(
-        {
-            mode => (defined $ARGV[0]  and $ARGV[0] =~ /^--file=/)
-                        ? 'file'
-                        : 'configure',
-            argv => [@ARGV],
-        }
-    );
+    my ($args, $steps_list_ref) = _test_good_config_file($configfile);
+
     ok(! defined $args->{maintainer}, 
         "Configuring from testfoobar: 'maintainer' not defined, as expected");
     is($args->{'verbose-step'}, 'init::hints',
         "Configuring from testfoobar: 'init::hints' is verbose step");
+    is($args->{'fatal-step'}, 'init::hints',
+        "Configuring from testfoobar: 'init::hints' is fatal step");
     ok($args->{nomanicheck}, 
         "Configuring from testfoobar: will omit check of MANIFEST");
     is($args->{file}, $configfile,
@@ -50,15 +41,7 @@ use Parrot::Configure::Options qw| process_options |;
 
 {
     my $configfile = q{xconf/samples/yourfoobar};
-    local @ARGV = ( qq{--file=$configfile} );
-    my ($args, $steps_list_ref) = process_options(
-        {
-            mode => (defined $ARGV[0]  and $ARGV[0] =~ /^--file=/)
-                        ? 'file'
-                        : 'configure',
-            argv => [@ARGV],
-        }
-    );
+    my ($args, $steps_list_ref) = _test_good_config_file($configfile);
     
     my $c_compiler = '/usr/bin/gcc';
     my $cplusplus_compiler = '/usr/bin/g++';
@@ -90,7 +73,76 @@ use Parrot::Configure::Options qw| process_options |;
 }
 
 {
-    my $configfile = q{t/configure/testlib/defectivefoobar};
+    my $configfile = q{t/configure/testlib/verbosefoobar};
+    my ($args, $steps_list_ref) = _test_good_config_file($configfile);
+
+    ok(! defined $args->{maintainer}, 
+        "Configuring from verbosefoobar: 'maintainer' not defined as expected");
+    ok($args->{nomanicheck}, 
+        "Configuring from verbosefoobar: will omit check of MANIFEST");
+    is($args->{file}, $configfile,
+        "Configuring from verbosefoobar: config file correctly stored");
+    ok($args->{debugging}, 
+        "Configuring from verbosefoobar: debugging turned on");
+    is($args->{verbose}, 1,
+        "Configuring from verbosefoobar: verbose output is on");
+
+    my %steps_seen = map {$_ => 1} @{ $steps_list_ref };
+
+    ok(exists $steps_seen{'init::manifest'},
+        "Configuring from verbosefoobar: init::manifest is in list even though it will be skipped");
+    ok(! exists $steps_seen{'auto::perldoc'},
+        "Configuring from verbosefoobar: auto::perldoc not in list");
+}
+
+{
+    my $configfile = q{t/configure/testlib/adefectivefoobar};
+    my $error = _test_defective_config_file($configfile);
+    like($error, qr/Configuration file $configfile did not parse correctly/,
+        "Got expected failure message after using defective configuration file");
+}
+
+{
+    my $configfile = q{t/configure/testlib/bdefectivefoobar};
+    my $error = _test_defective_config_file($configfile);
+    like($error, qr/Bad variable substitution in $configfile/,
+        "Got expected failure message after using defective configuration file");
+}
+
+{
+    my $configfile = q{t/configure/testlib/cdefectivefoobar};
+    my $error = _test_defective_config_file($configfile);
+    like($error, qr/Invalid general option foobar in $configfile/,
+        "Got expected failure message after using defective configuration file");
+}
+
+{
+    my $configfile = q{t/configure/testlib/ddefectivefoobar};
+    my $error = _test_defective_config_file($configfile);
+    like($error, qr/Invalid option "foobar"/,
+        "Got expected failure message after using defective configuration file");
+}
+
+pass("Completed all tests in $0");
+
+################### SUBROUTINES ###################
+
+sub _test_good_config_file {
+    my $configfile = shift;
+    local @ARGV = ( qq{--file=$configfile} );
+    my ($args, $steps_list_ref) = process_options(
+        {
+            mode => (defined $ARGV[0]  and $ARGV[0] =~ /^--file=/)
+                        ? 'file'
+                        : 'configure',
+            argv => [@ARGV],
+        }
+    );
+    return ($args, $steps_list_ref);
+}
+
+sub _test_defective_config_file {
+    my $configfile = shift;
     local @ARGV = ( qq{--file=$configfile} );
     eval {
         my ($args, $steps_list_ref) = process_options(
@@ -102,11 +154,10 @@ use Parrot::Configure::Options qw| process_options |;
             }
         );
     };
-    like($@, qr/Configuration file $configfile did not parse correctly/,
-        "Got expected failure message after using defective configuration file");
+    my $error = $@;
+    $@ = undef;
+    return $error;
 }
-
-pass("Completed all tests in $0");
 
 ################### DOCUMENTATION ###################
 

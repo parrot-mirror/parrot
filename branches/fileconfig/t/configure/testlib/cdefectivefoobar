@@ -2,7 +2,16 @@
 
 =variables
 
+CC=/usr/bin/gcc
+CX=/usr/bin/g++
+
 =general
+
+foobar
+cc=$CC
+cxx=$CX
+link=$CX
+ld=/usr/bin/g++
 
 =steps
 
@@ -10,7 +19,7 @@ init::manifest nomanicheck
 init::defaults
 init::install
 init::miniparrot
-init::hints verbose-step fatal-step
+init::hints verbose-step
 init::headers
 inter::progs
 inter::make
@@ -75,4 +84,5 @@ gen::platform
 gen::config_pm
 
 =cut
+
 
