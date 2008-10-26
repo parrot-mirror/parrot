@@ -12,7 +12,7 @@ BEGIN {
     our $topdir = realpath($Bin) . "/../..";
     unshift @INC, qq{$topdir/lib};
 }
-use Test::More tests => 69;
+use Test::More tests => 70;
 use Carp;
 use Parrot::Configure::Options qw| process_options |;
 use Parrot::Configure::Options::Conf::CLI ();
@@ -343,6 +343,24 @@ is_deeply($short_circuits_ref, [ ],
     ok(! exists $steps_seen{'auto::perldoc'},
         "Configuring from yourfoobar: auto::perldoc not in list");
 }
+
+{
+    my $configfile = q{xconf/samples/defectivefoobar};
+    local @ARGV = ( qq{--file=$configfile} );
+    eval {
+        my ($args, $steps_list_ref) = process_options(
+            {
+                mode => (defined $ARGV[0]  and $ARGV[0] =~ /^--file=/)
+                            ? 'file'
+                            : 'configure',
+                argv => [@ARGV],
+            }
+        );
+    };
+    like($@, qr/Configuration file $configfile did not parse correctly/,
+        "Got expected failure message after defective configuration file");
+}
+
 pass("Completed all tests in $0");
 
 ################### DOCUMENTATION ###################
