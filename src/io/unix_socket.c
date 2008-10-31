@@ -4,16 +4,17 @@ $Id$
 
 =head1 NAME
 
-src/io/io_unix.c - UNIX IO layer
+src/io/unix.c - UNIX IO utility functions
 
 =head1 DESCRIPTION
 
-This is the Parrot UNIX IO layer. It implements unbuffered, low-level,
-UNIX-specific functionality.
+This file implements unbuffered, low-level, UNIX-specific functionality.
+"UNIX" is a generalization, it may be necessary to create separate OS-specific
+functions for UNIX flavors.
 
-As "UNIX" is already a generalization, it may be necessary to create
-separate OS-specific layers for UNIX flavors, to avoid
-over-complicating this file.
+These functions are not part of Parrot's API. Don't call them directly, call
+the C<PIO_*> macros instead. Each platform defines the standard set of macros,
+which call the correct functions for that platform.
 
 =head2 References:
 
@@ -32,697 +33,13 @@ APitUE - W. Richard Stevens, AT&T SFIO, Perl 5 (Nick Ing-Simmons)
 
 #ifdef PIO_OS_UNIX
 
-/* Defined at bottom */
-extern const ParrotIOLayerAPI pio_unix_layer_api;
-
-ParrotIOLayer pio_unix_layer = {
-    NULL,
-    "unix",
-    PIO_L_TERMINAL,
-    &pio_unix_layer_api,
-    0, 0
-};
-
-/* HEADERIZER HFILE: none */
+/* HEADERIZER HFILE: include/parrot/io_unix.h */
 
 /* HEADERIZER BEGIN: static */
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 
-PARROT_CONST_FUNCTION
-static INTVAL flags_to_unix(INTVAL flags);
-
-PARROT_WARN_UNUSED_RESULT
-PARROT_CAN_RETURN_NULL
-static ParrotIO * PIO_unix_accept(PARROT_INTERP,
-    SHIM(ParrotIOLayer *layer),
-    ARGMOD(ParrotIO *io))
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(3)
-        FUNC_MODIFIES(*io);
-
-static INTVAL PIO_unix_bind(SHIM_INTERP,
-    SHIM(ParrotIOLayer *layer),
-    ARGMOD(ParrotIO *io),
-    ARGMOD(STRING *l))
-        __attribute__nonnull__(3)
-        __attribute__nonnull__(4)
-        FUNC_MODIFIES(*io)
-        FUNC_MODIFIES(*l);
-
-static INTVAL PIO_unix_close(SHIM_INTERP,
-    SHIM(ParrotIOLayer *layer),
-    ARGMOD(ParrotIO *io))
-        __attribute__nonnull__(3)
-        FUNC_MODIFIES(*io);
-
-static INTVAL PIO_unix_connect(SHIM_INTERP,
-    SHIM(ParrotIOLayer *layer),
-    ARGMOD(ParrotIO *io),
-    ARGIN_NULLOK(STRING *r))
-        __attribute__nonnull__(3)
-        FUNC_MODIFIES(*io);
-
-PARROT_WARN_UNUSED_RESULT
-PARROT_CANNOT_RETURN_NULL
-static ParrotIO * PIO_unix_fdopen(PARROT_INTERP,
-    SHIM(ParrotIOLayer *layer),
-    PIOHANDLE fd,
-    INTVAL flags)
-        __attribute__nonnull__(1);
-
-static INTVAL PIO_unix_flush(SHIM_INTERP,
-    SHIM(ParrotIOLayer *layer),
-    ARGMOD(ParrotIO *io))
-        __attribute__nonnull__(3)
-        FUNC_MODIFIES(*io);
-
-static INTVAL PIO_unix_init(PARROT_INTERP, ARGIN(ParrotIOLayer *layer))
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(2);
-
-static INTVAL PIO_unix_isatty(PIOHANDLE fd);
-static INTVAL PIO_unix_listen(SHIM_INTERP,
-    SHIM(ParrotIOLayer *layer),
-    ARGIN(ParrotIO *io),
-    INTVAL sec)
-        __attribute__nonnull__(3);
-
-PARROT_WARN_UNUSED_RESULT
-PARROT_CAN_RETURN_NULL
-static ParrotIO * PIO_unix_open(PARROT_INTERP,
-    ARGIN(ParrotIOLayer *layer),
-    ARGIN(const char *spath),
-    INTVAL flags)
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(2)
-        __attribute__nonnull__(3);
-
-PARROT_WARN_UNUSED_RESULT
-PARROT_CAN_RETURN_NULL
-static ParrotIO * PIO_unix_pipe(PARROT_INTERP,
-    SHIM(ParrotIOLayer *l),
-    ARGIN(const char *cmd),
-    int flags)
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(3);
-
-static INTVAL PIO_unix_poll(SHIM_INTERP,
-    SHIM(ParrotIOLayer *l),
-    ARGMOD(ParrotIO *io),
-    int which,
-    int sec,
-    int usec)
-        __attribute__nonnull__(3)
-        FUNC_MODIFIES(*io);
-
-static size_t PIO_unix_read(PARROT_INTERP,
-    SHIM(ParrotIOLayer *layer),
-    ARGMOD(ParrotIO *io),
-    ARGIN(STRING **buf))
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(3)
-        __attribute__nonnull__(4)
-        FUNC_MODIFIES(*io);
-
-static INTVAL PIO_unix_recv(PARROT_INTERP,
-    SHIM(ParrotIOLayer *layer),
-    ARGMOD(ParrotIO *io),
-    ARGOUT(STRING **s))
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(3)
-        __attribute__nonnull__(4)
-        FUNC_MODIFIES(*io)
-        FUNC_MODIFIES(*s);
-
-static PIOOFF_T PIO_unix_seek(SHIM_INTERP,
-    SHIM(ParrotIOLayer *layer),
-    ARGMOD(ParrotIO *io),
-    PIOOFF_T offset,
-    INTVAL whence)
-        __attribute__nonnull__(3)
-        FUNC_MODIFIES(*io);
-
-static INTVAL PIO_unix_send(SHIM_INTERP,
-    SHIM(ParrotIOLayer *layer),
-    ARGMOD(ParrotIO *io),
-    ARGMOD(STRING *s))
-        __attribute__nonnull__(3)
-        __attribute__nonnull__(4)
-        FUNC_MODIFIES(*io)
-        FUNC_MODIFIES(*s);
-
-PARROT_WARN_UNUSED_RESULT
-PARROT_CAN_RETURN_NULL
-static ParrotIO * PIO_unix_socket(PARROT_INTERP,
-    SHIM(ParrotIOLayer *layer),
-    int fam,
-    int type,
-    int proto)
-        __attribute__nonnull__(1);
-
-static PIOOFF_T PIO_unix_tell(SHIM_INTERP,
-    SHIM(ParrotIOLayer *layer),
-    ARGMOD(ParrotIO *io))
-        __attribute__nonnull__(3)
-        FUNC_MODIFIES(*io);
-
-static size_t PIO_unix_write(SHIM_INTERP,
-    SHIM(ParrotIOLayer *layer),
-    ARGMOD(ParrotIO *io),
-    ARGMOD(STRING *s))
-        __attribute__nonnull__(3)
-        __attribute__nonnull__(4)
-        FUNC_MODIFIES(*io)
-        FUNC_MODIFIES(*s);
-
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 /* HEADERIZER END: static */
-
-
-/*
-
-=item C<static INTVAL flags_to_unix>
-
-Returns a UNIX-specific interpretation of C<flags> suitable for passing
-to C<open()> and C<fopen()> in C<PIO_unix_open()> and
-C<PIO_unix_fdopen()> respectively.
-
-=cut
-
-*/
-
-PARROT_CONST_FUNCTION
-static INTVAL
-flags_to_unix(INTVAL flags)
-{
-    INTVAL oflags = 0;
-
-    if ((flags & (PIO_F_WRITE | PIO_F_READ)) == (PIO_F_WRITE | PIO_F_READ)) {
-        oflags |= O_RDWR | O_CREAT;
-    }
-    else if (flags & PIO_F_WRITE) {
-        oflags |= O_WRONLY | O_CREAT;
-    }
-    else if (flags & PIO_F_READ) {
-        oflags |= O_RDONLY;
-    }
-
-    if (flags & PIO_F_APPEND) {
-        oflags |= O_APPEND;
-    }
-    else if (flags & PIO_F_TRUNC) {
-        oflags |= O_TRUNC;
-    }
-    return oflags;
-}
-
-/*
-
-=item C<static INTVAL PIO_unix_init>
-
-Sets up the interpreter's standard C<std*> IO handles. Returns C<0> on
-success and C<-1> on error.
-
-=cut
-
-*/
-
-static INTVAL
-PIO_unix_init(PARROT_INTERP, ARGIN(ParrotIOLayer *layer))
-{
-    ParrotIOData * const d = interp->piodata;
-    if (d != NULL && d->table != NULL) {
-        ParrotIO *io;
-
-        io = PIO_unix_fdopen(interp, layer, STDIN_FILENO, PIO_F_READ);
-        if (!io)
-            return -1;
-        _PIO_STDIN(interp) = new_io_pmc(interp, io);
-
-        io = PIO_unix_fdopen(interp, layer, STDOUT_FILENO, PIO_F_WRITE);
-        if (!io)
-            return -1;
-        _PIO_STDOUT(interp) = new_io_pmc(interp, io);
-
-        io = PIO_unix_fdopen(interp, layer, STDERR_FILENO, PIO_F_WRITE);
-        if (!io)
-            return -1;
-        _PIO_STDERR(interp) = new_io_pmc(interp, io);
-
-        return 0;
-    }
-    return -1;
-}
-
-/*
-
-=item C<static ParrotIO * PIO_unix_open>
-
-Opens C<*spath>. C<flags> is a bitwise C<or> combination of C<PIO_F_*>
-values.
-
-=cut
-
-*/
-
-PARROT_WARN_UNUSED_RESULT
-PARROT_CAN_RETURN_NULL
-static ParrotIO *
-PIO_unix_open(PARROT_INTERP, ARGIN(ParrotIOLayer *layer),
-              ARGIN(const char *spath), INTVAL flags)
-{
-    INTVAL oflags;
-    PIOHANDLE fd;
-
-    const INTVAL type = PIO_TYPE_FILE;
-    const INTVAL mode = DEFAULT_OPEN_MODE;
-
-    if (flags & PIO_F_PIPE)
-        return PIO_unix_pipe(interp, layer, spath, flags);
-
-    if ((flags & (PIO_F_WRITE | PIO_F_READ)) == 0)
-        return NULL;
-
-    oflags = flags_to_unix(flags);
-
-    /* Only files for now */
-    flags |= PIO_F_FILE;
-
-    /* Try open with no create first */
-    while ((fd = open(spath, oflags & (O_WRONLY | O_RDWR | O_APPEND), mode))
-           < 0 && errno == EINTR)
-        errno = 0;
-
-    /* File open */
-    if (fd >= 0) {
-        /*
-         * Now check if we specified O_CREAT|O_EXCL or not.
-         * If so, we must return NULL, else either use the
-         * descriptor or create the file.
-         */
-        if ((oflags & (O_CREAT | O_EXCL)) == (O_CREAT | O_EXCL)) {
-            close(fd);
-            return NULL;
-        }
-        /*
-         * Check for truncate?
-         */
-        if (oflags & O_TRUNC) {
-            int tfd;
-            while ((tfd = creat(spath, PIO_DEFAULTMODE)) < 0 && errno == EINTR)
-                errno = 0;
-            close(tfd);
-        }
-    }
-    else if (oflags & O_CREAT) {
-        /* O_CREAT and file doesn't exist. */
-        while ((fd = creat(spath, PIO_DEFAULTMODE)) < 0 && errno == EINTR)
-            errno = 0;
-        if (!(oflags & O_WRONLY)) {
-            close(fd);
-            /*
-             * File created, reopen with read+write
-             */
-            while ((fd = open(spath, oflags & (O_WRONLY | O_RDWR),
-                              mode)) < 0 && errno == EINTR)
-                errno = 0;
-        }
-    }
-    else {
-        /* File doesn't exist and O_CREAT not specified */
-    }
-
-    if (fd >= 0) {
-        struct stat buf;
-        if (fstat(fd, &buf) == -1) {
-            close(fd);
-            return NULL;
-        }
-        if ((buf.st_mode & S_IFMT) == S_IFDIR) {
-            close(fd);
-            errno = EISDIR;
-            return NULL;
-        }
-        /* Set generic flag here if is a terminal then
-         * higher layers can know how to setup buffering.
-         * STDIN, STDOUT, STDERR would be in this case
-         * so we would setup linebuffering.
-         */
-        if (PIO_unix_isatty(fd))
-            flags |= PIO_F_CONSOLE;
-
-        { /* Scope for io */
-            ParrotIO *io = PIO_new(interp, type, flags, mode);
-            io->fd = fd;
-            return io;
-        }
-    }
-    return NULL;
-}
-
-
-#  if PARROT_ASYNC_DEVEL
-
-/*
-
-=item C<INTVAL PIO_unix_async>
-
-Experimental asynchronous IO.
-
-This is available if C<PARROT_ASYNC_DEVEL> is defined.
-
-Only works on Linux at the moment.
-
-Toggles the C<O_ASYNC> flag on the IO file descriptor.
-
-=cut
-
-*/
-
-INTVAL
-PIO_unix_async(PARROT_INTERP, ARGMOD(ParrotIOLayer *layer), ARGMOD(ParrotIO *io), INTVAL b)
-{
-    int rflags;
-#    if defined(linux)
-    if ((rflags = fcntl(io->fd, F_GETFL, 0)) >= 0) {
-        if (b)
-            rflags |= O_ASYNC;
-        else
-            rflags &= ~O_ASYNC;
-        return fcntl(io->fd, F_SETFL, rflags);
-    }
-#    else
-    Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_PIO_NOT_IMPLEMENTED,
-        "Async support not available");
-#    endif
-    return -1;
-}
-
-#  endif
-
-/*
-
-=item C<static ParrotIO * PIO_unix_fdopen>
-
-Returns a new C<ParrotIO> with file descriptor C<fd>.
-
-=cut
-
-*/
-
-PARROT_WARN_UNUSED_RESULT
-PARROT_CANNOT_RETURN_NULL
-static ParrotIO *
-PIO_unix_fdopen(PARROT_INTERP, SHIM(ParrotIOLayer *layer), PIOHANDLE fd, INTVAL flags)
-{
-    ParrotIO *io;
-    const INTVAL mode = 0;
-
-#  if 0
-    /* XXX the fcntl fails (-1, errno=0) with
-     * ./parrot -tf - < foo.pir
-     */
-
-    /* FIXME - Check file handle flags, validity */
-#    ifdef PARROT_HAS_HEADER_FCNTL
-    {
-        INTVAL rflags;
-        /* Get descriptor flags */
-        if ((rflags = fcntl(fd, F_GETFL, 0)) >= 0) {
-            UNUSED(rflags);
-            /*int accmode = rflags & O_ACCMODE; */
-            /* Check other flags (APPEND, ASYNC, etc) */
-        }
-        else {
-            /* Probably invalid descriptor */
-            return NULL;
-        }
-    }
-#    endif
-#  endif
-
-    if (PIO_unix_isatty(fd))
-        flags |= PIO_F_CONSOLE;
-
-    /* fdopened files are always shared */
-    flags |= PIO_F_SHARED;
-
-    io = PIO_new(interp, PIO_F_FILE, flags, mode);
-    io->fd = fd;
-    return io;
-}
-
-/*
-
-=item C<static INTVAL PIO_unix_close>
-
-Closes C<*io>'s file descriptor.
-
-=cut
-
-*/
-
-static INTVAL
-PIO_unix_close(SHIM_INTERP, SHIM(ParrotIOLayer *layer), ARGMOD(ParrotIO *io))
-{
-    /* BSD and Solaris need explicit fsync() */
-    if (io->fd >= 0) {
-        fsync(io->fd);
-        close(io->fd);
-    }
-    io->fd = -1;
-    return 0;
-}
-
-/*
-
-=item C<static INTVAL PIO_unix_isatty>
-
-Returns a boolean value indicating whether C<fd> is a console/tty.
-
-=cut
-
-*/
-
-static INTVAL
-PIO_unix_isatty(PIOHANDLE fd)
-{
-    return isatty(fd);
-}
-
-/*
-
-=item C<INTVAL PIO_unix_getblksize>
-
-Various ways of determining block size.
-
-If passed a file descriptor then C<fstat()> and the C<stat> buffer are
-used if available.
-
-If called without an argument then the C<BLKSIZE> constant is returned
-if it was available at compile time, otherwise C<PIO_BLKSIZE> is returned.
-
-=cut
-
-*/
-
-INTVAL
-PIO_unix_getblksize(PIOHANDLE fd)
-{
-    if (fd >= 0) {
-        /* Try to get the block size of a regular file */
-#  if 0
-        /*
-         * Is it even worth adding non-portable code here
-         * or should we just estimate a nice buffer size?
-         * Some systems have st_blksize, some don't.
-         */
-        {
-            struct stat sbuf;
-            int err;
-            err = fstat(fd, &sbuf);
-            if (err == 0) {
-                return sbuf.st_blksize;
-            }
-        }
-#  endif
-    }
-    /* Try to determine it from general means. */
-#  ifdef BLKSIZE
-    return BLKSIZE;
-#  else
-    return PIO_BLKSIZE;
-#  endif
-}
-
-/*
-
-=item C<static INTVAL PIO_unix_flush>
-
-At lowest layer all we can do for C<flush> is to ask the kernel to
-C<sync()>.
-
-XXX: Is it necessary to C<sync()> here?
-
-=cut
-
-*/
-
-static INTVAL
-PIO_unix_flush(SHIM_INTERP, SHIM(ParrotIOLayer *layer), ARGMOD(ParrotIO *io))
-{
-    return fsync(io->fd);
-}
-
-/*
-
-=item C<static size_t PIO_unix_read>
-
-Calls C<read()> to return up to C<len> bytes in the memory starting at
-C<buffer>.
-
-=cut
-
-*/
-
-static size_t
-PIO_unix_read(PARROT_INTERP, SHIM(ParrotIOLayer *layer), ARGMOD(ParrotIO *io),
-              ARGIN(STRING **buf))
-{
-    STRING * const s = PIO_make_io_string(interp, buf, 2048);
-
-    const size_t len = s->bufused;
-    void * const buffer = s->strstart;
-
-    for (;;) {
-        const int bytes = read(io->fd, buffer, len);
-        if (bytes > 0) {
-            s->bufused = s->strlen = bytes;
-            return bytes;
-        }
-        else if (bytes < 0) {
-            switch (errno) {
-            case EINTR:
-                continue;
-            default:
-                s->bufused = s->strlen = 0;
-                return bytes;
-            }
-        }
-        else {
-            /* Read returned 0, EOF if len requested > 0 */
-            if (len > 0)
-                io->flags |= PIO_F_EOF;
-            s->bufused = s->strlen = 0;
-            return bytes;
-        }
-    }
-}
-
-/*
-
-=item C<static size_t PIO_unix_write>
-
-Calls C<write()> to write C<len> bytes from the memory starting at
-C<buffer> to the file descriptor in C<*io>.
-
-=cut
-
-*/
-
-static size_t
-PIO_unix_write(SHIM_INTERP, SHIM(ParrotIOLayer *layer), ARGMOD(ParrotIO *io), ARGMOD(STRING *s))
-{
-    const char * const buffer = s->strstart;
-    const char * ptr          = buffer;
-
-    size_t to_write = s->bufused;
-    size_t written  = 0;
-
-  write_through:
-    while (to_write > 0) {
-        const int err = write(io->fd, ptr, to_write);
-        if (err >= 0) {
-            ptr += err;
-            to_write -= err;
-            written += err;
-        }
-        else {
-            switch (errno) {
-            case EINTR:
-                goto write_through;
-#  ifdef EAGAIN
-            case EAGAIN:
-                return written;
-#  endif
-            default:
-                return (size_t)-1;
-            }
-        }
-    }
-    return written;
-}
-
-/*
-
-=item C<static PIOOFF_T PIO_unix_seek>
-
-Hard seek.
-
-Calls C<lseek()> to advance the read/write position on C<*io>'s file
-descriptor to C<offset> bytes from the location indicated by C<whence>.
-
-=cut
-
-*/
-
-static PIOOFF_T
-PIO_unix_seek(SHIM_INTERP, SHIM(ParrotIOLayer *layer), ARGMOD(ParrotIO *io),
-              PIOOFF_T offset, INTVAL whence)
-{
-    const PIOOFF_T pos = lseek(io->fd, offset, whence);
-
-    if (pos >= 0) {
-        switch (whence) {
-            case SEEK_SET:
-                io->fsize = offset > io->fsize ? offset : io->fsize;
-                break;
-            case SEEK_CUR:
-                {
-                const PIOOFF_T avail = io->b.next - io->b.startb + offset;
-                io->fsize = (avail > io->fsize) ? avail : io->fsize;
-                }
-                break;
-            case SEEK_END:
-            default:
-                break;
-        }
-
-        io->lpos = io->fpos;
-        io->fpos = pos;
-    }
-    /* Seek clears EOF */
-    io->flags &= ~PIO_F_EOF;
-    return pos;
-}
-
-/*
-
-=item C<static PIOOFF_T PIO_unix_tell>
-
-Returns the current read/write position on C<*io>'s file discriptor.
-
-=cut
-
-*/
-
-static PIOOFF_T
-PIO_unix_tell(SHIM_INTERP, SHIM(ParrotIOLayer *layer), ARGMOD(ParrotIO *io))
-{
-    const PIOOFF_T pos = lseek(io->fd, (PIOOFF_T)0, SEEK_CUR);
-
-    return pos;
-}
 
 /*
 
@@ -739,9 +56,9 @@ Very minimal stubs for now, maybe someone will run with these.
 
 =over 4
 
-=item C<STRING * PIO_sockaddr_in>
+=item C<STRING * Parrot_io_sockaddr_in>
 
-C<PIO_sockaddr_in()> is not part of the layer and so must be C<extern>.
+C<Parrot_io_sockaddr_in()> is not part of the layer and so must be C<extern>.
 
 XXX: We can probably just write our own routines (C<htons()>,
 C<inet_aton()>, etc.) and take this out of platform specific compilation
@@ -753,7 +70,7 @@ C<inet_aton()>, etc.) and take this out of platform specific compilation
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 STRING *
-PIO_sockaddr_in(PARROT_INTERP, unsigned short port, ARGIN(STRING *addr))
+Parrot_io_sockaddr_in(PARROT_INTERP, unsigned short port, ARGIN(STRING *addr))
 {
     struct sockaddr_in sa;
     /* Hard coded to IPv4 for now */
@@ -801,7 +118,7 @@ PIO_sockaddr_in(PARROT_INTERP, unsigned short port, ARGIN(STRING *addr))
 
 /*
 
-=item C<static ParrotIO * PIO_unix_socket>
+=item C<PMC * Parrot_io_socket_unix>
 
 Uses C<socket()> to create a socket with the specified address family,
 socket type and protocol number.
@@ -812,13 +129,13 @@ socket type and protocol number.
 
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
-static ParrotIO *
-PIO_unix_socket(PARROT_INTERP, SHIM(ParrotIOLayer *layer), int fam, int type, int proto)
+PMC *
+Parrot_io_socket_unix(PARROT_INTERP, ARGMOD(PMC *socket), int fam, int type, int proto)
 {
     const int sock = socket(fam, type, proto);
     if (sock >= 0) {
-        ParrotIO * const io = PIO_new(interp, PIO_F_SOCKET, 0, PIO_F_READ|PIO_F_WRITE);
-        io->fd = sock;
+        ParrotIO * const io = Parrot_io_new(interp, PIO_F_SOCKET, 0, PIO_F_READ|PIO_F_WRITE);
+        Parrot_io_set_os_handle(interp, socket, sock);
         memset(&io->local, 0, sizeof (struct sockaddr_in));
         memset(&io->remote, 0, sizeof (struct sockaddr_in));
         io->remote.sin_family = fam;
@@ -829,7 +146,7 @@ PIO_unix_socket(PARROT_INTERP, SHIM(ParrotIOLayer *layer), int fam, int type, in
 
 /*
 
-=item C<static INTVAL PIO_unix_connect>
+=item C<INTVAL Parrot_io_connect_unix>
 
 Connects C<*io>'s socket to address C<*r>.
 
@@ -837,8 +154,8 @@ Connects C<*io>'s socket to address C<*r>.
 
 */
 
-static INTVAL
-PIO_unix_connect(SHIM_INTERP, SHIM(ParrotIOLayer *layer), ARGMOD(ParrotIO *io),
+INTVAL
+Parrot_io_connect_unix(SHIM_INTERP, SHIM(PMC *socket), ARGMOD(ParrotIO *io),
         ARGIN_NULLOK(STRING *r))
 {
     struct sockaddr_in * saddr = &io->remote;
@@ -866,7 +183,7 @@ AGAIN:
 
 /*
 
-=item C<static INTVAL PIO_unix_bind>
+=item C<INTVAL Parrot_io_bind_unix>
 
 Binds C<*io>'s socket to the local address and port specified by C<*l>.
 
@@ -874,8 +191,8 @@ Binds C<*io>'s socket to the local address and port specified by C<*l>.
 
 */
 
-static INTVAL
-PIO_unix_bind(SHIM_INTERP, SHIM(ParrotIOLayer *layer), ARGMOD(ParrotIO *io),
+INTVAL
+Parrot_io_bind_unix(SHIM_INTERP, SHIM(PMC *socket), ARGMOD(ParrotIO *io),
         ARGMOD(STRING *l))
 {
     struct sockaddr_in * saddr = &io->local;
@@ -895,7 +212,7 @@ PIO_unix_bind(SHIM_INTERP, SHIM(ParrotIOLayer *layer), ARGMOD(ParrotIO *io),
 
 /*
 
-=item C<static INTVAL PIO_unix_listen>
+=item C<INTVAL Parrot_io_listen_unix>
 
 Listen for new connections. This is only applicable to C<STREAM> or
 C<SEQ> sockets.
@@ -904,8 +221,8 @@ C<SEQ> sockets.
 
 */
 
-static INTVAL
-PIO_unix_listen(SHIM_INTERP, SHIM(ParrotIOLayer *layer), ARGIN(ParrotIO *io),
+INTVAL
+Parrot_io_listen_unix(SHIM_INTERP, SHIM(PMC *socket), ARGIN(ParrotIO *io),
         INTVAL sec)
 {
     if ((listen(io->fd, sec)) == -1) {
@@ -916,7 +233,7 @@ PIO_unix_listen(SHIM_INTERP, SHIM(ParrotIOLayer *layer), ARGIN(ParrotIO *io),
 
 /*
 
-=item C<static ParrotIO * PIO_unix_accept>
+=item C<ParrotIO * Parrot_io_accept_unix>
 
 Accept a new connection and return a newly created C<ParrotIO> socket.
 
@@ -926,10 +243,10 @@ Accept a new connection and return a newly created C<ParrotIO> socket.
 
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
-static ParrotIO *
-PIO_unix_accept(PARROT_INTERP, SHIM(ParrotIOLayer *layer), ARGMOD(ParrotIO *io))
+PMC *
+Parrot_io_accept_unix(PARROT_INTERP, SHIM(PMC *socket), ARGMOD(ParrotIO *io))
 {
-    ParrotIO * const    newio   = PIO_new(interp, PIO_F_SOCKET, 0,
+    ParrotIO * const    newio   = Parrot_io_new(interp, PIO_F_SOCKET, 0,
                                     PIO_F_READ|PIO_F_WRITE);
     Parrot_Socklen_t    addrlen = sizeof (struct sockaddr_in);
     struct sockaddr_in *saddr   = &newio->remote;
@@ -954,7 +271,7 @@ PIO_unix_accept(PARROT_INTERP, SHIM(ParrotIOLayer *layer), ARGMOD(ParrotIO *io))
 
 /*
 
-=item C<static INTVAL PIO_unix_send>
+=item C<INTVAL Parrot_io_send_unix>
 
 Send the message C<*s> to C<*io>'s connected socket.
 
@@ -962,8 +279,8 @@ Send the message C<*s> to C<*io>'s connected socket.
 
 */
 
-static INTVAL
-PIO_unix_send(SHIM_INTERP, SHIM(ParrotIOLayer *layer), ARGMOD(ParrotIO *io),
+INTVAL
+Parrot_io_send_unix(SHIM_INTERP, SHIM(PMC *socket), ARGMOD(ParrotIO *io),
         ARGMOD(STRING *s))
 {
     int error, bytes, byteswrote;
@@ -1006,7 +323,7 @@ AGAIN:
 
 /*
 
-=item C<static INTVAL PIO_unix_recv>
+=item C<INTVAL Parrot_io_recv_unix>
 
 Receives a message in C<**s> from C<*io>'s connected socket.
 
@@ -1014,8 +331,8 @@ Receives a message in C<**s> from C<*io>'s connected socket.
 
 */
 
-static INTVAL
-PIO_unix_recv(PARROT_INTERP, SHIM(ParrotIOLayer *layer),
+INTVAL
+Parrot_io_recv_unix(PARROT_INTERP, SHIM(PMC *socket),
         ARGMOD(ParrotIO *io), ARGOUT(STRING **s))
 {
     int error;
@@ -1057,7 +374,7 @@ AGAIN:
 
 /*
 
-=item C<static INTVAL PIO_unix_poll>
+=item C<INTVAL Parrot_io_poll_unix>
 
 Utility function for polling a single IO stream with a timeout.
 
@@ -1075,8 +392,8 @@ the read buffer.
 
 */
 
-static INTVAL
-PIO_unix_poll(SHIM_INTERP, SHIM(ParrotIOLayer *l), ARGMOD(ParrotIO *io), int which,
+INTVAL
+Parrot_io_poll_unix(SHIM_INTERP, SHIM(PMC *socket), ARGMOD(ParrotIO *io), int which,
                int sec, int usec)
 {
     int n;
@@ -1108,11 +425,9 @@ AGAIN:
 #  endif
 /*
 
-=item C<static ParrotIO * PIO_unix_pipe>
+=item C<PMC * Parrot_io_pipe_unix>
 
 Very limited C<exec> for now.
-
-XXX: Where does this fit, should it belong in the ParrotIOLayerAPI?
 
 =cut
 
@@ -1120,8 +435,8 @@ XXX: Where does this fit, should it belong in the ParrotIOLayerAPI?
 
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
-static ParrotIO *
-PIO_unix_pipe(PARROT_INTERP, SHIM(ParrotIOLayer *l), ARGIN(const char *cmd), int flags)
+PMC *
+Parrot_io_pipe_unix(PARROT_INTERP, SHIM(PMC *filehandle), ARGIN(const char *cmd), int flags)
 {
     /*
      * pipe(), fork() should be defined, if this header is present
@@ -1138,7 +453,7 @@ PIO_unix_pipe(PARROT_INTERP, SHIM(ParrotIOLayer *l), ARGIN(const char *cmd), int
     /* Parent - return IO stream */
     if ((pid = fork()) > 0) {
         ParrotIO * const io =
-            PIO_new(interp, PIO_F_PIPE, 0, flags & (PIO_F_READ|PIO_F_WRITE));
+            Parrot_io_new(interp, PIO_F_PIPE, 0, flags & (PIO_F_READ|PIO_F_WRITE));
         if (flags & PIO_F_READ) {
             /* close this writer's end of pipe */
             close(fds[1]);
@@ -1208,53 +523,6 @@ PIO_unix_pipe(PARROT_INTERP, SHIM(ParrotIOLayer *l), ARGIN(const char *cmd), int
 }
 
 
-const ParrotIOLayerAPI pio_unix_layer_api = {
-    PIO_unix_init,
-    PIO_base_new_layer,
-    PIO_base_delete_layer,
-    PIO_null_push_layer,
-    PIO_null_pop_layer,
-    PIO_unix_open,
-    PIO_null_open2,
-    PIO_null_open3,
-    PIO_null_open_async,
-    PIO_unix_fdopen,
-    PIO_unix_close,
-    PIO_unix_write,
-    PIO_null_write_async,
-    PIO_unix_read,
-    PIO_null_read_async,
-    PIO_unix_flush,
-    NULL, /* no peek */
-    PIO_unix_seek,
-    PIO_unix_tell,
-    PIO_null_setbuf,
-    PIO_null_setlinebuf,
-    PIO_null_getcount,
-    PIO_null_fill,
-    PIO_null_eof,
-#  if PARROT_NET_DEVEL
-    PIO_unix_poll,
-    PIO_unix_socket,
-    PIO_unix_connect,
-    PIO_unix_send,
-    PIO_unix_recv,
-    PIO_unix_bind,
-    PIO_unix_listen,
-    PIO_unix_accept
-#  else
-    NULL, /* no poll */
-    NULL, /* no socket */
-    NULL, /* no connect */
-    NULL, /* no send */
-    NULL, /* no recv */
-    NULL, /* no bind */
-    NULL, /* no listen */
-    NULL  /* no accept */
-#  endif
-};
-
-
 #endif /* PIO_OS_UNIX */
 
 /*
@@ -1263,17 +531,11 @@ const ParrotIOLayerAPI pio_unix_layer_api = {
 
 =head1 SEE ALSO
 
-F<src/io/io_buf.c>,
-F<src/io/io_passdown.c>,
-F<src/io/io_stdio.c>,
-F<src/io/io_unix.c>,
-F<src/io/io_win32.c>,
-F<src/io/io.c>,
-F<src/io/io_private.h>.
-
-=head1 HISTORY
-
-Initially written by Melvin Smith (mrjoltcola@mindspring.com).
+F<src/io/common.c>,
+F<src/io/win32.c>,
+F<src/io/stdio.c>,
+F<src/io/io_private.h>,
+F<include/parrot/io_unix.h>.
 
 =cut
 
