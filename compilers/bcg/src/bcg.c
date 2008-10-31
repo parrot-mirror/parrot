@@ -16,7 +16,7 @@ for BCG.
 
 =head2 Methods
 
-List of methods imlemented in this file.
+List of methods implemented in this file.
 
 =over 4
 
