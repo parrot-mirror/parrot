@@ -35,7 +35,7 @@ Win32 System Programming, 2nd Edition.
 /* HEADERIZER BEGIN: static */
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 
-static INTVAL flags_to_win32(
+static INTVAL convert_flags_to_win32(
     INTVAL flags,
     ARGOUT(DWORD * fdwAccess),
     ARGOUT(DWORD * fdwShareMode),
@@ -56,7 +56,7 @@ static INTVAL flags_to_win32(
 
 /*
 
-=item C<static INTVAL flags_to_win32>
+=item C<static INTVAL convert_flags_to_win32>
 
 Convert to platform-specific bit open flags.
 
@@ -65,7 +65,7 @@ Convert to platform-specific bit open flags.
 */
 
 static INTVAL
-flags_to_win32(INTVAL flags, ARGOUT(DWORD * fdwAccess),
+convert_flags_to_win32(INTVAL flags, ARGOUT(DWORD * fdwAccess),
                ARGOUT(DWORD * fdwShareMode), ARGOUT(DWORD * fdwCreate))
 {
     static DWORD dwDefaultShareMode;
@@ -208,7 +208,7 @@ Parrot_io_open_win32(PARROT_INTERP, ARGMOD(PMC *filehandle),
 
     /* Set open flags - <, >, >>, +<, +> */
     /* add ? and ! for block/non-block */
-    if (flags_to_win32(flags, &fAcc, &fShare, &fCreat) < 0)
+    if (convert_flags_to_win32(flags, &fAcc, &fShare, &fCreat) < 0)
         return NULL;
 
     /* Only files for now */

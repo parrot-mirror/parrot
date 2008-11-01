@@ -44,7 +44,7 @@ APitUE - W. Richard Stevens, AT&T SFIO, Perl 5 (Nick Ing-Simmons)
 
 /*
 
-=item C<static INTVAL flags_to_unix>
+=item C<static INTVAL convert_flags_to_unix>
 
 Returns a UNIX-specific interpretation of C<flags> suitable for passing
 to C<open()> and C<fopen()> in C<Parrot_io_open_unix()> and
@@ -56,7 +56,7 @@ C<Parrot_io_fdopen_unix()> respectively.
 
 PARROT_CONST_FUNCTION
 static INTVAL
-flags_to_unix(INTVAL flags)
+convert_flags_to_unix(INTVAL flags)
 {
     INTVAL oflags = 0;
 
@@ -145,7 +145,7 @@ Parrot_io_open_unix(PARROT_INTERP, ARGMOD_NULLOK(PMC *filehandle),
         Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INVALID_OPERATION,
                                 "Invalid mode for file open");
 
-    oflags = flags_to_unix(flags);
+    oflags = convert_flags_to_unix(flags);
     spath = string_to_cstring(path);
 
     /* Only files for now */

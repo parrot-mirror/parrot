@@ -32,14 +32,14 @@ of necessity.
 
 PARROT_CONST_FUNCTION
 PARROT_CANNOT_RETURN_NULL
-static const char * flags_to_portable(INTVAL flags);
+static const char * convert_flags_to_stdio(INTVAL flags);
 
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 /* HEADERIZER END: static */
 
 /*
 
-=item C<static const char * flags_to_portable>
+=item C<static const char * convert_flags_to_stdio>
 
 Returns a C string representation of C<flags> suitable for passing to
 C<fopen()> in C<Parrot_io_open_portable()>.
@@ -51,7 +51,7 @@ C<fopen()> in C<Parrot_io_open_portable()>.
 PARROT_CONST_FUNCTION
 PARROT_CANNOT_RETURN_NULL
 static const char *
-flags_to_portable(INTVAL flags)
+convert_flags_to_stdio(INTVAL flags)
 {
     if ((flags & (PIO_F_WRITE | PIO_F_READ | PIO_F_APPEND)) ==
         (PIO_F_WRITE | PIO_F_READ | PIO_F_APPEND)) {
@@ -128,7 +128,7 @@ Parrot_io_open_portable(PARROT_INTERP, ARGMOD(PMC *filehandle),
     if ((flags & (PIO_F_WRITE | PIO_F_READ)) == 0)
         return NULL;
 
-    oflags = flags_to_portable(flags);
+    oflags = convert_flags_to_stdio(flags);
 
     /* Only files for now */
     flags |= PIO_F_FILE;
