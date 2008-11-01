@@ -517,6 +517,13 @@ void PIO_push_layer_str(PARROT_INTERP,
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 /* HEADERIZER END: src/io/io_layers.c */
 
+/* io/common.c - utility functions shared between all platforms */
+/* HEADERIZER BEGIN: src/io/common.c */
+/* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
+
+/* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
+/* HEADERIZER END: src/io/common.c */
+
 /* Put platform specific macros here if you must */
 #ifdef PIO_OS_WIN32
 extern STRING          *PIO_sockaddr_in(PARROT_INTERP, unsigned short, STRING *);
