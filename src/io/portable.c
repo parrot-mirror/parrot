@@ -243,7 +243,7 @@ Parrot_io_isatty_portable(PIOHANDLE fptr)
 
 =item C<size_t Parrot_io_peek_portable>
 
-RT#48260: Not yet documented!!!
+Retrieve the next character in the stream without modifying the stream.
 
 =cut
 
@@ -402,6 +402,27 @@ PIOOFF_T
 Parrot_io_tell_portable(PARROT_INTERP, ARGIN(PMC *filehandle))
 {
     return (ftell((FILE*)Parrot_io_get_os_handle(interp, filehandle)));
+}
+
+/*
+
+=item C<PMC * Parrot_io_open_pipe_portable>
+
+Open a pipe. Not implemented for this platform.
+
+=cut
+
+*/
+
+PARROT_WARN_UNUSED_RESULT
+PARROT_CAN_RETURN_NULL
+PMC *
+Parrot_io_open_pipe_portable(PARROT_INTERP, SHIM(PMC *filehandle),
+        SHIM(STRING *command), int flags)
+{
+    UNUSED(flags);
+    Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_UNIMPLEMENTED,
+        "pipe() not implemented");
 }
 
 /*
