@@ -122,7 +122,7 @@ Parrot_io_init_unix(PARROT_INTERP)
 
 =item C<PMC * Parrot_io_open_unix>
 
-Opens C<*spath>. C<flags> is a bitwise C<or> combination of C<PIO_F_*>
+Opens a string C<path>. C<flags> is a bitwise C<or> combination of C<PIO_F_*>
 flag values.
 
 =cut
@@ -139,7 +139,7 @@ Parrot_io_open_unix(PARROT_INTERP, ARGMOD_NULLOK(PMC *filehandle),
     PIOHANDLE fd;
 
     if (flags & PIO_F_PIPE)
-        return Parrot_io_pipe_unix(interp, filehandle, spath, flags);
+        return Parrot_io_pipe_unix(interp, filehandle, path, flags);
 
     if ((flags & (PIO_F_WRITE | PIO_F_READ)) == 0)
         Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INVALID_OPERATION,
@@ -165,6 +165,7 @@ Parrot_io_open_unix(PARROT_INTERP, ARGMOD_NULLOK(PMC *filehandle),
          */
         if ((oflags & (O_CREAT | O_EXCL)) == (O_CREAT | O_EXCL)) {
             close(fd);
+            string_cstring_free(spath); /* returning before C string freed */
             return NULL;
         }
         /*
@@ -194,6 +195,8 @@ Parrot_io_open_unix(PARROT_INTERP, ARGMOD_NULLOK(PMC *filehandle),
     else {
         /* File doesn't exist and O_CREAT not specified */
     }
+
+    string_cstring_free(spath); /* done with C string */
 
     if (fd >= 0) {
         struct stat buf;
