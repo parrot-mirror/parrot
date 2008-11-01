@@ -4,14 +4,15 @@ $Id$
 
 =head1 NAME
 
-src/io/io_stdio.c - STDIO layer
+src/io/portable.c - Portable I/O utility functions
 
 =head1 DESCRIPTION
 
-This is the Parrot IO STDIO layer. This may provide a subset of full
-functionality, but must compile on any system with the ANSI C standard
-library.  Also note that unlike the other low-level IO layers (UNIX,
-Win32), this is I<buffered> IO, out of necessity.
+This file implements generic, portable I/O functionality using C's STDIO. This
+function set is the default fallback for all platforms. It must compile on any
+system with the ANSI C standard library. Also note that unlike the other
+low-level I/O utility function sets (UNIX, Win32), this is I<buffered> I/O, out
+of necessity.
 
 =head2 Functions
 
@@ -31,103 +32,17 @@ Win32), this is I<buffered> IO, out of necessity.
 
 PARROT_CONST_FUNCTION
 PARROT_CANNOT_RETURN_NULL
-static const char * flags_to_stdio(INTVAL flags);
-
-static INTVAL PIO_stdio_close(SHIM_INTERP,
-    SHIM(ParrotIOLayer *layer),
-    ARGMOD(ParrotIO *io))
-        __attribute__nonnull__(3)
-        FUNC_MODIFIES(*io);
-
-PARROT_WARN_UNUSED_RESULT
-PARROT_CANNOT_RETURN_NULL
-static ParrotIO * PIO_stdio_fdopen(PARROT_INTERP,
-    SHIM(ParrotIOLayer *layer),
-    PIOHANDLE fptr,
-    INTVAL flags)
-        __attribute__nonnull__(1);
-
-static INTVAL PIO_stdio_flush(SHIM_INTERP,
-    SHIM(ParrotIOLayer *layer),
-    ARGIN(ParrotIO *io))
-        __attribute__nonnull__(3);
-
-static INTVAL PIO_stdio_init(PARROT_INTERP, ARGIN(ParrotIOLayer *layer))
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(2);
-
-static INTVAL PIO_stdio_isatty(PIOHANDLE fptr);
-PARROT_WARN_UNUSED_RESULT
-PARROT_CANNOT_RETURN_NULL
-static ParrotIO * PIO_stdio_open(PARROT_INTERP,
-    SHIM(ParrotIOLayer *layer),
-    ARGIN(const char *spath),
-    INTVAL flags)
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(3);
-
-static size_t PIO_stdio_peek(PARROT_INTERP,
-    SHIM(ParrotIOLayer *layer),
-    ARGMOD(ParrotIO *io),
-    ARGIN(STRING **buf))
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(3)
-        __attribute__nonnull__(4)
-        FUNC_MODIFIES(*io);
-
-static size_t PIO_stdio_read(PARROT_INTERP,
-    SHIM(ParrotIOLayer *layer),
-    ARGIN(ParrotIO *io),
-    ARGIN(STRING **buf))
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(3)
-        __attribute__nonnull__(4);
-
-static PIOOFF_T PIO_stdio_seek(SHIM_INTERP,
-    SHIM(ParrotIOLayer *layer),
-    ARGMOD(ParrotIO *io),
-    PIOOFF_T offset,
-    INTVAL whence)
-        __attribute__nonnull__(3)
-        FUNC_MODIFIES(*io);
-
-static PIOOFF_T PIO_stdio_tell(SHIM_INTERP,
-    SHIM(ParrotIOLayer *layer),
-    ARGIN(ParrotIO *io))
-        __attribute__nonnull__(3);
-
-static size_t PIO_stdio_write(SHIM_INTERP,
-    SHIM(ParrotIOLayer *layer),
-    ARGIN(ParrotIO *io),
-    ARGMOD(STRING *s))
-        __attribute__nonnull__(3)
-        __attribute__nonnull__(4)
-        FUNC_MODIFIES(*s);
+static const char * flags_to_portable(INTVAL flags);
 
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 /* HEADERIZER END: static */
 
-/* XXX Use a declaration in a header file */
-extern INTVAL           PIO_stdio_getblksize(PIOHANDLE fd);
-
-/* Defined at bottom */
-extern const ParrotIOLayerAPI pio_stdio_layer_api;
-
-ParrotIOLayer pio_stdio_layer = {
-    NULL,
-    "stdio",
-    PIO_L_TERMINAL,
-    &pio_stdio_layer_api,
-    0, 0
-};
-
-
 /*
 
-=item C<static const char * flags_to_stdio>
+=item C<static const char * flags_to_portable>
 
 Returns a C string representation of C<flags> suitable for passing to
-C<fopen()> in C<PIO_stdio_open()>.
+C<fopen()> in C<Parrot_io_open_portable()>.
 
 =cut
 
@@ -136,7 +51,7 @@ C<fopen()> in C<PIO_stdio_open()>.
 PARROT_CONST_FUNCTION
 PARROT_CANNOT_RETURN_NULL
 static const char *
-flags_to_stdio(INTVAL flags)
+flags_to_portable(INTVAL flags)
 {
     if ((flags & (PIO_F_WRITE | PIO_F_READ | PIO_F_APPEND)) ==
         (PIO_F_WRITE | PIO_F_READ | PIO_F_APPEND)) {
@@ -164,7 +79,7 @@ flags_to_stdio(INTVAL flags)
 
 /*
 
-=item C<static INTVAL PIO_stdio_init>
+=item C<INTVAL Parrot_io_init_portable>
 
 Setup standard streams, etc.
 
@@ -172,35 +87,30 @@ Setup standard streams, etc.
 
 */
 
-static INTVAL
-PIO_stdio_init(PARROT_INTERP, ARGIN(ParrotIOLayer *layer))
+INTVAL
+Parrot_io_init_portable(PARROT_INTERP)
 {
 #ifdef PIO_OS_STDIO
     /* Only set standard handles if stdio is the OS IO */
     PIO_STDIN(interp)
-        = new_io_pmc(interp,
-                     PIO_stdio_fdopen(interp, layer, stdin, PIO_F_READ));
+        = Parrot_io_fdopen_portable(interp, PMCNULL, stdin, PIO_F_READ);
 
     PIO_STDOUT(interp)
-        = new_io_pmc(interp,
-                     PIO_stdio_fdopen(interp, layer, stdout, PIO_F_WRITE));
+        = Parrot_io_fdopen_portable(interp, PMCNULL, stdout, PIO_F_WRITE);
 
     PIO_STDERR(interp)
-        = new_io_pmc(interp,
-                     PIO_stdio_fdopen(interp, layer, stderr, PIO_F_WRITE));
+        = Parrot_io_fdopen_portable(interp, PMCNULL, stderr, PIO_F_WRITE);
 #else  /* PIO_OS_STDIO */
     UNUSED(interp);
-    UNUSED(layer);
 #endif /* PIO_OS_STDIO */
     return 0;
 }
 
 /*
 
-=item C<static ParrotIO * PIO_stdio_open>
+=item C<PMC * Parrot_io_open_portable>
 
-Open modes (read, write, append, etc.) are done in pseudo-Perl style
-using C<< < >>, C<< > >>, etc.
+Open a new FileHandle PMC from a given path and mode.
 
 =cut
 
@@ -208,46 +118,54 @@ using C<< < >>, C<< > >>, etc.
 
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
-static ParrotIO *
-PIO_stdio_open(PARROT_INTERP, SHIM(ParrotIOLayer *layer),
-              ARGIN(const char *spath), INTVAL flags)
+PMC *
+Parrot_io_open_portable(PARROT_INTERP, ARGMOD(PMC *filehandle),
+              ARGIN(STRING *path), INTVAL flags)
 {
-    ParrotIO *io;
     const char *oflags;
-    INTVAL type;
     FILE *fptr;
-    type = PIO_TYPE_FILE;
 
     if ((flags & (PIO_F_WRITE | PIO_F_READ)) == 0)
         return NULL;
 
-    oflags = flags_to_stdio(flags);
+    oflags = flags_to_portable(flags);
 
     /* Only files for now */
     flags |= PIO_F_FILE;
 
-    /* Try opening the file- note that this can't really handle O_EXCL, etc. */
-    fptr = fopen(spath, oflags);
+    { /* scope for temporary C string */
+        const char *spath = string_to_cstring(interp, path);
+        /* Try opening the file- note that this can't really handle O_EXCL, etc. */
+        fptr = fopen(spath, oflags);
 
-    if (fptr == NULL && errno == ENOENT && (flags & PIO_F_WRITE)) {
-        fptr = fopen(spath, "w+b");
+        if (fptr == NULL && errno == ENOENT && (flags & PIO_F_WRITE)) {
+            fptr = fopen(spath, "w+b");
+        }
+        string_cstring_free(spath);
     }
 
     /* File open */
     if (fptr != NULL) {
-        if (PIO_stdio_isatty((PIOHANDLE)fptr))
+        PMC *io;
+        if (Parrot_io_isatty_portable((PIOHANDLE)fptr))
             flags |= PIO_F_CONSOLE;
-        io = PIO_new(interp, type, flags, 0);
-        io->fd = (PIOHANDLE)fptr;
+
+        if (PMC_IS_NULL(filehandle))
+            io = Parrot_io_new_pmc(interp, flags, 0);
+        else
+            io = filehandle;
+
+        Parrot_io_set_os_handle(interp, filehandle, (PIOHANDLE)fptr);
         return io;
     }
+
     return NULL;
 }
 
 
 /*
 
-=item C<static ParrotIO * PIO_stdio_fdopen>
+=item C<PMC * Parrot_io_fdopen_portable>
 
 RT#48260: Not yet documented!!!
 
@@ -257,27 +175,32 @@ RT#48260: Not yet documented!!!
 
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
-static ParrotIO *
-PIO_stdio_fdopen(PARROT_INTERP, SHIM(ParrotIOLayer *layer), PIOHANDLE fptr, INTVAL flags)
+PMC *
+Parrot_io_fdopen_portable(PARROT_INTERP, ARGMOD(PMC *filehandle),
+        PIOHANDLE fptr, INTVAL flags)
 {
-    ParrotIO *io;
+    PMC *io;
     const INTVAL mode = 0;
 
-    if (PIO_stdio_isatty(fptr))
+    if (Parrot_io_isatty_portable(fptr))
         flags |= PIO_F_CONSOLE;
 
     /* fdopened files are always shared */
     flags |= PIO_F_SHARED;
 
-    io = PIO_new(interp, PIO_F_FILE, flags, mode);
-    io->fd = fptr;
+    if (PMC_IS_NULL(filehandle))
+        io = Parrot_io_new_pmc(interp, flags, 0);
+    else
+        io = filehandle;
+
+    Parrot_io_set_os_handle(interp, filehandle, (PIOHANDLE)fptr);
     return io;
 }
 
 
 /*
 
-=item C<static INTVAL PIO_stdio_close>
+=item C<INTVAL Parrot_io_close_portable>
 
 RT#48260: Not yet documented!!!
 
@@ -285,21 +208,21 @@ RT#48260: Not yet documented!!!
 
 */
 
-static INTVAL
-PIO_stdio_close(SHIM_INTERP, SHIM(ParrotIOLayer *layer), ARGMOD(ParrotIO *io))
+INTVAL
+Parrot_io_close_portable(PARROT_INTERP, (PMC *filehandle))
 {
-    FILE * const fptr = (FILE*)io->fd;
+    FILE * const fptr = (FILE*) Parrot_io_get_os_handle(interp, filehandle);
 
     if (fptr != NULL)
         fclose(fptr);
-    io->fd = (PIOHANDLE)NULL;
+    Parrot_io_set_os_handle(interp, filehandle, (PIOHANDLE)NULL);
     return 0;
 }
 
 
 /*
 
-=item C<static INTVAL PIO_stdio_isatty>
+=item C<INTVAL Parrot_io_isatty_portable>
 
 RT#48260: Not yet documented!!!
 
@@ -307,8 +230,8 @@ RT#48260: Not yet documented!!!
 
 */
 
-static INTVAL
-PIO_stdio_isatty(PIOHANDLE fptr)
+INTVAL
+Parrot_io_isatty_portable(PIOHANDLE fptr)
 {
     UNUSED(fptr);
 
@@ -318,7 +241,7 @@ PIO_stdio_isatty(PIOHANDLE fptr)
 
 /*
 
-=item C<static size_t PIO_stdio_peek>
+=item C<size_t Parrot_io_peek_portable>
 
 RT#48260: Not yet documented!!!
 
@@ -326,14 +249,13 @@ RT#48260: Not yet documented!!!
 
 */
 
-static size_t
-PIO_stdio_peek(PARROT_INTERP,
-        SHIM(ParrotIOLayer *layer),
-        ARGMOD(ParrotIO *io),
+size_t
+Parrot_io_peek_portable(PARROT_INTERP,
+        ARGIN(PMC *filehandle),
         ARGIN(STRING **buf))
 {
-    FILE * const fptr = (FILE *)io->fd;
-    STRING * const s = PIO_make_io_string(interp, buf, 1);
+    FILE * const fptr = (FILE *) Parrot_io_get_os_handle(interp, filehandle);
+    STRING * const s = Parrot_io_make_io_string(interp, buf, 1);
 
     /* read the next byte into the buffer */
     const size_t bytes = fread(s->strstart, 1, 1, fptr);
@@ -352,7 +274,7 @@ PIO_stdio_peek(PARROT_INTERP,
 
 /*
 
-=item C<INTVAL PIO_stdio_getblksize>
+=item C<INTVAL Parrot_io_getblksize_portable>
 
 RT#48260: Not yet documented!!!
 
@@ -361,7 +283,7 @@ RT#48260: Not yet documented!!!
 */
 
 INTVAL
-PIO_stdio_getblksize(PIOHANDLE fptr)
+Parrot_io_getblksize_portable(PIOHANDLE fptr)
 {
     UNUSED(fptr);
 
@@ -372,7 +294,7 @@ PIO_stdio_getblksize(PIOHANDLE fptr)
 
 /*
 
-=item C<static INTVAL PIO_stdio_flush>
+=item C<INTVAL Parrot_io_flush_portable>
 
 RT#48260: Not yet documented!!!
 
@@ -380,16 +302,16 @@ RT#48260: Not yet documented!!!
 
 */
 
-static INTVAL
-PIO_stdio_flush(SHIM_INTERP, SHIM(ParrotIOLayer *layer), ARGIN(ParrotIO *io))
+INTVAL
+Parrot_io_flush_portable(SHIM_INTERP, SHIM(PMC *filehandle))
 {
-    return fflush((FILE*)io->fd);
+    return fflush((FILE*)Parrot_io_get_os_handle(interp, filehandle));
 }
 
 
 /*
 
-=item C<static size_t PIO_stdio_read>
+=item C<size_t Parrot_io_read_portable>
 
 RT#48260: Not yet documented!!!
 
@@ -397,12 +319,12 @@ RT#48260: Not yet documented!!!
 
 */
 
-static size_t
-PIO_stdio_read(PARROT_INTERP, SHIM(ParrotIOLayer *layer), ARGIN(ParrotIO *io),
+size_t
+Parrot_io_read_portable(PARROT_INTERP, SHIM(PMC *filehandle),
               ARGIN(STRING **buf))
 {
-    FILE * const fptr = (FILE *)io->fd;
-    STRING * const s = PIO_make_io_string(interp, buf, 2048);
+    FILE * const fptr = (FILE *)Parrot_io_get_os_handle(interp, filehandle);
+    STRING * const s = Parrot_io_make_io_string(interp, buf, 2048);
     const size_t len = s->bufused;
     void * const buffer = s->strstart;
 
@@ -412,7 +334,8 @@ PIO_stdio_read(PARROT_INTERP, SHIM(ParrotIOLayer *layer), ARGIN(ParrotIO *io),
 
     if (bytes != len) {
         if (feof(fptr)) {
-            io->flags |= PIO_F_EOF;
+            Parrot_io_set_flags(interp, filehandle,
+                                (Parrot_io_get_flags(interp, filehandle) | PIO_F_EOF));
         }
     }
 
@@ -422,7 +345,7 @@ PIO_stdio_read(PARROT_INTERP, SHIM(ParrotIOLayer *layer), ARGIN(ParrotIO *io),
 
 /*
 
-=item C<static size_t PIO_stdio_write>
+=item C<size_t Parrot_io_write_portable>
 
 RT#48260: Not yet documented!!!
 
@@ -430,16 +353,17 @@ RT#48260: Not yet documented!!!
 
 */
 
-static size_t
-PIO_stdio_write(SHIM_INTERP, SHIM(ParrotIOLayer *layer), ARGIN(ParrotIO *io), ARGMOD(STRING *s))
+size_t
+Parrot_io_write_portable(PARROT_INTERP, ARGIN(PMC *filehandle), ARGMOD(STRING *s))
 {
     void * const buffer = s->strstart;
-    return fwrite(buffer, 1, s->bufused, (FILE*)io->fd);
+    return fwrite(buffer, 1, s->bufused,
+                  (FILE*)Parrot_io_get_os_handle(interp, filehandle));
 }
 
 /*
 
-=item C<static PIOOFF_T PIO_stdio_seek>
+=item C<PIOOFF_T Parrot_io_seek_portable>
 
 RT#48260: Not yet documented!!!
 
@@ -447,26 +371,26 @@ RT#48260: Not yet documented!!!
 
 */
 
-static PIOOFF_T
-PIO_stdio_seek(SHIM_INTERP, SHIM(ParrotIOLayer *layer), ARGMOD(ParrotIO *io),
+PIOOFF_T
+Parrot_io_seek_portable(PARROT_INTERP, ARGMOD(PMC *filehandle),
               PIOOFF_T offset, INTVAL whence)
 {
     PIOOFF_T pos;
     errno = 0;
 
-    if ((pos = fseek((FILE*)io->fd, (long)offset, whence)) >= 0) {
-        io->lpos = io->fpos;
-        io->fpos = pos;
-    }
+    if ((pos = fseek((FILE*)Parrot_io_get_os_handle(interp, filehandle),
+                    (long)offset, whence)) >= 0)
+        Parrot_io_set_file_position(interp, filehandle, pos);
 
     /* Seek clears EOF */
-    io->flags &= ~PIO_F_EOF;
+    Parrot_io_set_flags(interp, filehandle,
+            (Parrot_io_get_flags(interp, filehandle) & ~PIO_F_EOF));
     return pos;
 }
 
 /*
 
-=item C<static PIOOFF_T PIO_stdio_tell>
+=item C<PIOOFF_T Parrot_io_tell_portable>
 
 RT#48260: Not yet documented!!!
 
@@ -474,46 +398,11 @@ RT#48260: Not yet documented!!!
 
 */
 
-static PIOOFF_T
-PIO_stdio_tell(SHIM_INTERP, SHIM(ParrotIOLayer *layer), ARGIN(ParrotIO *io))
+PIOOFF_T
+Parrot_io_tell_portable(PARROT_INTERP, ARGIN(PMC *filehandle))
 {
-    return (ftell((FILE*)io->fd));
+    return (ftell((FILE*)Parrot_io_get_os_handle(interp, filehandle)));
 }
-
-const ParrotIOLayerAPI pio_stdio_layer_api = {
-    PIO_stdio_init,
-    PIO_base_new_layer,
-    PIO_base_delete_layer,
-    PIO_null_push_layer,
-    PIO_null_pop_layer,
-    PIO_stdio_open,
-    PIO_null_open2,
-    PIO_null_open3,
-    PIO_null_open_async,
-    PIO_stdio_fdopen,
-    PIO_stdio_close,
-    PIO_stdio_write,
-    PIO_null_write_async,
-    PIO_stdio_read,
-    PIO_null_read_async,
-    PIO_stdio_flush,
-    PIO_stdio_peek,
-    PIO_stdio_seek,
-    PIO_stdio_tell,
-    PIO_null_setbuf,
-    PIO_null_setlinebuf,
-    PIO_null_getcount,
-    PIO_null_fill,
-    PIO_null_eof,
-    NULL, /* no poll */
-    NULL, /* no socket */
-    NULL, /* no connect */
-    NULL, /* no send */
-    NULL, /* no recv */
-    NULL, /* no bind */
-    NULL, /* no listen */
-    NULL  /* no accept */
-};
 
 /*
 
@@ -521,16 +410,11 @@ const ParrotIOLayerAPI pio_stdio_layer_api = {
 
 =head1 SEE ALSO
 
-F<src/io/io_buf.c>,
-F<src/io/io_passdown.c>,
-F<src/io/io_unix.c>,
-F<src/io/io_win32.c>,
+F<src/io/unix.c>,
+F<src/io/win32.c>,
 F<src/io/io.c>,
-F<src/io/io_private.h>.
-
-=head1 HISTORY
-
-Adapted from io_unix.c by Josh Wilmes (josh@hitchhiker.org).
+F<src/io/io_private.h>,
+F<include/parrot/io_portable.h>.
 
 =cut
 
