@@ -320,7 +320,7 @@ Closes C<*io>'s file descriptor.
 */
 
 INTVAL
-Parrot_io_close_unix(SHIM_INTERP, ARGMOD(PMC *filehandle))
+Parrot_io_close_unix(PARROT_INTERP, ARGMOD(PMC *filehandle))
 {
     PIOHANDLE file_descriptor = Parrot_io_get_os_handle(interp, filehandle);
     /* BSD and Solaris need explicit fsync() */
@@ -407,7 +407,7 @@ XXX: Is it necessary to C<sync()> here?
 */
 
 INTVAL
-Parrot_io_flush_unix(SHIM_INTERP, ARGMOD(PMC *filehandle), ARGMOD(ParrotIO *io))
+Parrot_io_flush_unix(PARROT_INTERP, ARGMOD(PMC *filehandle))
 {
     PIOHANDLE file_descriptor = Parrot_io_get_os_handle(interp, filehandle);
     return fsync(file_descriptor);
@@ -576,7 +576,7 @@ Parrot_io_tell_unix(SHIM_INTERP, SHIM(PMC *filehandle))
 
 /*
 
-=item C<PMC * Parrot_io_pipe_unix>
+=item C<PMC * Parrot_io_open_pipe_unix>
 
 Very limited C<exec> for now.
 
@@ -587,7 +587,8 @@ Very limited C<exec> for now.
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 PMC *
-Parrot_io_pipe_unix(PARROT_INTERP, SHIM(PMC *filehandle), ARGIN(const char *cmd), int flags)
+Parrot_io_open_pipe_unix(PARROT_INTERP, ARGMOD(PMC *filehandle),
+        ARGIN(STRING *command), int flags)
 {
     /*
      * pipe(), fork() should be defined, if this header is present
@@ -608,6 +609,7 @@ Parrot_io_pipe_unix(PARROT_INTERP, SHIM(PMC *filehandle), ARGIN(const char *cmd)
             io = Parrot_io_new_pipe(interp, PIO_F_PIPE, 0, flags & (PIO_F_READ|PIO_F_WRITE));
         else
             io = filehandle;
+
         if (flags & PIO_F_READ) {
             /* close this writer's end of pipe */
             close(fds[1]);
@@ -623,7 +625,7 @@ Parrot_io_pipe_unix(PARROT_INTERP, SHIM(PMC *filehandle), ARGIN(const char *cmd)
 
     /* Child - exec process */
     if (pid == 0) {
-        char *argv[10], *p, *c;
+        char *argv[10], *p, *c, *cmd;
         int n;
 
         if (flags & PIO_F_WRITE) {
@@ -650,6 +652,7 @@ Parrot_io_pipe_unix(PARROT_INTERP, SHIM(PMC *filehandle), ARGIN(const char *cmd)
          * XXX ugly hack to be able to pass some arguments
          *     split cmd at blanks
          */
+        cmd = string_to_cstring(interp, command);
         c = strdup(cmd);
         for (n = 0, p = strtok(c, " "); n < 9 && p; p = strtok(NULL, " ")) {
             if (n == 0)
@@ -657,6 +660,7 @@ Parrot_io_pipe_unix(PARROT_INTERP, SHIM(PMC *filehandle), ARGIN(const char *cmd)
             argv[n++] = p;
         }
         argv[n] = NULL;
+        string_cstring_free(c); /* done with C string */
         execv(cmd, argv);       /* XXX use execvp ? */
         /* Will never reach this unless exec fails. */
         perror("execvp");
@@ -666,12 +670,32 @@ Parrot_io_pipe_unix(PARROT_INTERP, SHIM(PMC *filehandle), ARGIN(const char *cmd)
     perror("fork");
 #  else
     UNUSED(l);
-    UNUSED(cmd);
+    UNUSED(command);
     UNUSED(flags);
     Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_UNIMPLEMENTED,
         "pipe() unimplemented");
 #  endif
     return NULL;
+}
+
+/*
+
+=item C<size_t Parrot_io_peek_unix>
+
+Retrieve the next character in the stream without modifying the stream. Not
+implemented on this platform.
+
+=cut
+
+*/
+
+size_t
+Parrot_io_peek_unix(PARROT_INTERP,
+        SHIM(PMC *filehandle),
+        SHIM(STRING **buf))
+{
+    Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_UNIMPLEMENTED,
+        "peek() not implemented");
 }
 
 
