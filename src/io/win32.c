@@ -128,22 +128,19 @@ Parrot_io_init_win32(PARROT_INTERP)
 #  endif
 
     if ((h = GetStdHandle(STD_INPUT_HANDLE)) != INVALID_HANDLE_VALUE) {
-        _PIO_STDIN(interp) = new_io_pmc(interp,
-            Parrot_io_fdopen_win32(interp, PMCNULL, h, PIO_F_READ));
+        _PIO_STDIN(interp) = Parrot_io_fdopen_win32(interp, PMCNULL, h, PIO_F_READ);
     }
     else {
         return -1;
     }
     if ((h = GetStdHandle(STD_OUTPUT_HANDLE)) != INVALID_HANDLE_VALUE) {
-        _PIO_STDOUT(interp) = new_io_pmc(interp,
-            Parrot_io_fdopen_win32(interp, PMCNULL, h, PIO_F_WRITE));
+        _PIO_STDOUT(interp) = Parrot_io_fdopen_win32(interp, PMCNULL, h, PIO_F_WRITE);
     }
     else {
         return -2;
     }
     if ((h = GetStdHandle(STD_ERROR_HANDLE)) != INVALID_HANDLE_VALUE) {
-        _PIO_STDERR(interp) = new_io_pmc(interp,
-            Parrot_io_fdopen_win32(interp, PMCNULL, h, PIO_F_WRITE));
+        _PIO_STDERR(interp) = Parrot_io_fdopen_win32(interp, PMCNULL, h, PIO_F_WRITE);
     }
     else {
         return -3;
@@ -486,12 +483,29 @@ Parrot_io_tell_win32(PARROT_INTERP, ARGIN(PMC *filehandle))
 
 /*
 
-=item C<STRING * Parrot_io_sockaddr_in>
+=item C<size_t Parrot_io_peek_win32>
 
-C<Parrot_io_sockaddr_in()> is not part of the layer and so must be C<extern>.
+Retrieve the next character in the stream without modifying the stream. Not
+implemented for this platform.
 
-XXX: We can probably just write our own routines (C<htons()>,
-C<inet_aton()>, etc.) and take this out of platform specific compilation
+=cut
+
+*/
+
+size_t
+Parrot_io_peek_win32(PARROT_INTERP,
+        SHIM(PMC *filehandle),
+        SHIM(STRING **buf))
+{
+    Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_UNIMPLEMENTED,
+        "peek() not implemented");
+}
+
+/*
+
+=item C<PMC * Parrot_io_open_pipe_win32>
+
+Open a pipe. Not implemented for this platform.
 
 =cut
 
@@ -499,32 +513,13 @@ C<inet_aton()>, etc.) and take this out of platform specific compilation
 
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
-STRING *
-Parrot_io_sockaddr_in(PARROT_INTERP, unsigned short port, ARGMOD(STRING *addr))
+PMC *
+Parrot_io_open_pipe_win32(PARROT_INTERP, SHIM(PMC *filehandle),
+        SHIM(STRING *command), int flags)
 {
-    struct sockaddr_in sa;
-    struct hostent *he;
-    char * const s = string_to_cstring(interp, addr);
-    /* Hard coded to IPv4 for now */
-
-    sa.sin_addr.s_addr = inet_addr(s);
-    /* Maybe it is a hostname, try to lookup */
-    /* XXX Check PIO option before doing a name lookup,
-     * it may have been toggled off.
-     */
-    he = gethostbyname(s);
-    string_cstring_free(s);
-
-    /* XXX FIXME - Handle error condition better */
-    if (!he) {
-        fprintf(stderr, "gethostbyname failure [%s]\n", s);
-        return NULL;
-    }
-    memcpy((char*)&sa.sin_addr, he->h_addr, sizeof (sa.sin_addr));
-
-    sa.sin_port = htons(port);
-
-    return string_make(interp, (char *)&sa, sizeof (struct sockaddr), "binary", 0);
+    UNUSED(flags);
+    Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_UNIMPLEMENTED,
+        "pipe() not implemented");
 }
 
 #endif /* PIO_OS_WIN32 */
