@@ -320,6 +320,50 @@ Parrot_io_accept_win32(PARROT_INTERP, SHIM(PMC *socket), ARGMOD(ParrotIO *io))
 
 #  endif
 
+/*
+
+=item C<STRING * Parrot_io_sockaddr_in>
+
+C<Parrot_io_sockaddr_in()> is not part of the layer and so must be C<extern>.
+
+XXX: We can probably just write our own routines (C<htons()>,
+C<inet_aton()>, etc.) and take this out of platform specific compilation
+
+=cut
+
+*/
+
+PARROT_WARN_UNUSED_RESULT
+PARROT_CAN_RETURN_NULL
+STRING *
+Parrot_io_sockaddr_in(PARROT_INTERP, unsigned short port, ARGMOD(STRING *addr))
+{
+    struct sockaddr_in sa;
+    struct hostent *he;
+    char * const s = string_to_cstring(interp, addr);
+    /* Hard coded to IPv4 for now */
+
+    sa.sin_addr.s_addr = inet_addr(s);
+    /* Maybe it is a hostname, try to lookup */
+    /* XXX Check PIO option before doing a name lookup,
+     * it may have been toggled off.
+     */
+    he = gethostbyname(s);
+    string_cstring_free(s);
+
+    /* XXX FIXME - Handle error condition better */
+    if (!he) {
+        fprintf(stderr, "gethostbyname failure [%s]\n", s);
+        return NULL;
+    }
+    memcpy((char*)&sa.sin_addr, he->h_addr, sizeof (sa.sin_addr));
+
+    sa.sin_port = htons(port);
+
+    return string_make(interp, (char *)&sa, sizeof (struct sockaddr), "binary", 0);
+}
+
+
 #endif /* PIO_OS_WIN32 */
 
 /*
