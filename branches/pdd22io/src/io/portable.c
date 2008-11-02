@@ -26,6 +26,8 @@ of necessity.
 #include "parrot/parrot.h"
 #include "io_private.h"
 
+#ifdef PIO_OS_STDIO
+
 /* HEADERIZER HFILE: none */
 /* HEADERIZER BEGIN: static */
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
@@ -34,6 +36,7 @@ PARROT_CONST_FUNCTION
 PARROT_CANNOT_RETURN_NULL
 static const char * convert_flags_to_stdio(INTVAL flags);
 
+static INTVAL io_is_tty_portable(PIOHANDLE fptr);
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 /* HEADERIZER END: static */
 
@@ -147,7 +150,7 @@ Parrot_io_open_portable(PARROT_INTERP, ARGMOD(PMC *filehandle),
     /* File open */
     if (fptr != NULL) {
         PMC *io;
-        if (Parrot_io_isatty_portable((PIOHANDLE)fptr))
+        if (io_is_tty_portable((PIOHANDLE)fptr))
             flags |= PIO_F_CONSOLE;
 
         if (PMC_IS_NULL(filehandle))
@@ -182,7 +185,7 @@ Parrot_io_fdopen_portable(PARROT_INTERP, ARGMOD(PMC *filehandle),
     PMC *io;
     const INTVAL mode = 0;
 
-    if (Parrot_io_isatty_portable(fptr))
+    if (io_is_tty_portable(fptr))
         flags |= PIO_F_CONSOLE;
 
     /* fdopened files are always shared */
@@ -219,10 +222,29 @@ Parrot_io_close_portable(PARROT_INTERP, (PMC *filehandle))
     return 0;
 }
 
+/*
+
+=item C<INTVAL Parrot_io_is_closed_portable>
+
+Test whether the filehandle has been closed.
+
+=cut
+
+*/
+
+INTVAL
+Parrot_io_is_closed_portable(PARROT_INTERP, ARGIN(PMC *filehandle))
+{
+    if (Parrot_io_get_os_handle(interp, filehandle) == (PIOHANDLE)NULL)
+        return 1;
+
+    return 0;
+}
+
 
 /*
 
-=item C<INTVAL Parrot_io_isatty_portable>
+=item C<static INTVAL io_is_tty_portable>
 
 RT#48260: Not yet documented!!!
 
@@ -230,8 +252,8 @@ RT#48260: Not yet documented!!!
 
 */
 
-INTVAL
-Parrot_io_isatty_portable(PIOHANDLE fptr)
+static INTVAL
+io_is_tty_portable(PIOHANDLE fptr)
 {
     UNUSED(fptr);
 
@@ -255,7 +277,7 @@ Parrot_io_peek_portable(PARROT_INTERP,
         ARGIN(STRING **buf))
 {
     FILE * const fptr = (FILE *) Parrot_io_get_os_handle(interp, filehandle);
-    STRING * const s = Parrot_io_make_io_string(interp, buf, 1);
+    STRING * const s = Parrot_io_make_string(interp, buf, 1);
 
     /* read the next byte into the buffer */
     const size_t bytes = fread(s->strstart, 1, 1, fptr);
@@ -324,7 +346,7 @@ Parrot_io_read_portable(PARROT_INTERP, SHIM(PMC *filehandle),
               ARGIN(STRING **buf))
 {
     FILE * const fptr = (FILE *)Parrot_io_get_os_handle(interp, filehandle);
-    STRING * const s = Parrot_io_make_io_string(interp, buf, 2048);
+    STRING * const s = Parrot_io_make_string(interp, buf, 2048);
     const size_t len = s->bufused;
     void * const buffer = s->strstart;
 
@@ -424,6 +446,8 @@ Parrot_io_open_pipe_portable(PARROT_INTERP, SHIM(PMC *filehandle),
     Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_UNIMPLEMENTED,
         "pipe() not implemented");
 }
+
+#endif /* PIO_OS_STDIO */
 
 /*
 

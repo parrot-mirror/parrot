@@ -47,6 +47,9 @@ static INTVAL convert_flags_to_win32(
         FUNC_MODIFIES(* fdwShareMode)
         FUNC_MODIFIES(* fdwCreate);
 
+PARROT_WARN_UNUSED_RESULT
+static INTVAL io_is_tty_win32(PIOHANDLE fd);
+
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 /* HEADERIZER END: static */
 
@@ -257,7 +260,7 @@ Parrot_io_fdopen_win32(PARROT_INTERP, ARGMOD_NULLOK(PMC *filehandle),
     INTVAL mode;
     mode = 0;
 
-    if (Parrot_io_isatty_win32(fd))
+    if (io_is_tty_win32(fd))
         flags |= PIO_F_CONSOLE;
 
     /* fdopened files are always shared */
@@ -295,7 +298,26 @@ Parrot_io_close_win32(PARROT_INTERP, ARGMOD(PMC *filehandle))
 
 /*
 
-=item C<INTVAL Parrot_io_isatty_win32>
+=item C<INTVAL Parrot_io_is_closed_win32>
+
+Test whether the filehandle has been closed.
+
+=cut
+
+*/
+
+INTVAL
+Parrot_io_is_closed_win32(PARROT_INTERP, ARGIN(PMC *filehandle))
+{
+    if (Parrot_io_get_os_handle(interp, filehandle) == INVALID_HANDLE_VALUE)
+        return 1;
+
+    return 0;
+}
+
+/*
+
+=item C<static INTVAL io_is_tty_win32>
 
 Returns whether C<fd> is a console/tty.
 
@@ -304,8 +326,8 @@ Returns whether C<fd> is a console/tty.
 */
 
 PARROT_WARN_UNUSED_RESULT
-INTVAL
-Parrot_io_isatty_win32(PIOHANDLE fd)
+static INTVAL
+io_is_tty_win32(PIOHANDLE fd)
 {
     const DWORD ftype = GetFileType(fd);
     return (ftype == FILE_TYPE_CHAR);
@@ -360,7 +382,7 @@ Parrot_io_read_win32(PARROT_INTERP,
     size_t len;
     STRING *s;
 
-    s = Parrot_io_make_io_string(interp, buf, 2048);
+    s = Parrot_io_make_string(interp, buf, 2048);
     len = s->bufused;
     buffer = s->strstart;
 
