@@ -14,7 +14,11 @@ This file defines a set of utility functions used by all operating systems.
 
 */
 
-#include "src/pmc/pmc_filehandle.h"
+#include "parrot/parrot.h"
+#include "io_private.h"
+#include "pmc_filehandle.h"
+
+/* HEADERIZER HFILE: include/parrot/io.h */
 
 /*
 
@@ -34,16 +38,17 @@ C<a> for append, and C<p> for pipe) and returns the combined generic bit flags.
 PARROT_API
 PARROT_WARN_UNUSED_RESULT
 INTVAL
-Parrot_io_parse_open_flags(ARGIN_NULLOK(STRING *flags))
+Parrot_io_parse_open_flags(PARROT_INTERP, ARGIN_NULLOK(STRING *flagstr))
 {
-    const char *flagstr;
+    const char *flag_cstr;
     const char *s;
     INTVAL flags = 0;
 
-    if (STRING_IS_NULL(flags))
+    flag_cstr = string_to_cstring(interp, flagstr);
+    if (STRING_IS_NULL(flagstr))
         return 0;
 
-    for (s = flagstr; *s != '\0'; s++) {
+    for (s = flag_cstr; *s != '\0'; s++) {
         switch (*s) {
             case 'r':
                 flags |= PIO_F_READ;
@@ -56,39 +61,69 @@ Parrot_io_parse_open_flags(ARGIN_NULLOK(STRING *flags))
             case 'p':
                 flags |= PIO_F_PIPE;
                 break;
+            default:
+                break;
         }
     }
 
+    string_cstring_free(flag_cstr);
     string_cstring_free(s);
-    string_cstring_free(flagstr);
 
     return flags;
 }
 
 /*
 
-=item C<PMC * Parrot_io_new_pmc>
+=item C<STRING * Parrot_io_make_string>
 
-Creates a new I/O filehandle object. The values of C<flags> and C<mode> are set
-in the returned PMC.
+Creates a STRING* suitable for returning results from IO read functions.
+The passed in C<buf> parameter can:
+
+=over 4
+
+=item 1
+
+Point to a NULL STRING
+
+=item 2
+
+Point to a real STRING
+
+=item 3
+
+Point to a fake STRING with (strstart, bufused) holding the *buffer
+information.
+
+=back
+
+In the third case, the buffer or STRING must be able to hold the required
+amount of data. For cases 1 and 2, a NULL C<strstart> tells this function to
+allocate the STRING memory.
 
 =cut
 
 */
 
-PARROT_API
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
-PMC *
-Parrot_io_new_pmc(PARROT_INTERP, INTVAL flags, INTVAL mode)
+STRING *
+Parrot_io_make_string(PARROT_INTERP, ARGMOD(STRING **buf), size_t len)
 {
-    PMC * const new_io = pmc_new(interp, enum_class_FileHandle);
-
-    Parrot_io_set_flags(interp, new_io, flags);
-    Parrot_io_set_mode(interp, new_io, mode);
-
-    return new_io;
+    /*
+     * when we get a NULL string, we read a default len
+     */
+    if (*buf == NULL) {
+        *buf = string_make_empty(interp, enum_stringrep_one, len);
+        return *buf;
+    }
+    else {
+        STRING *s = *buf;
+        if (s->bufused < len)
+            Parrot_allocate_string(interp, s, len);
+        return s;
+    }
 }
+
 
 /*
 
@@ -165,7 +200,7 @@ Parrot_io_set_flags(PARROT_INTERP, ARGIN(PMC *filehandle), INTVAL flags)
 
 /*
 
-=item C<void Parrot_io_get_flags>
+=item C<INTVAL Parrot_io_get_flags>
 
 Set the C<flags> attribute of the FileHandle object, which stores bitwise flags
 marking filehandle characteristics.
@@ -238,7 +273,7 @@ Parrot_io_set_file_size(PARROT_INTERP, ARGIN(PMC *filehandle), PIOOFF_T file_siz
 
 /*
 
-=item C<void Parrot_io_get_file_size>
+=item C<PIOOFF_T Parrot_io_get_file_size>
 
 Get the C<file_size> attribute of the FileHandle object, which stores the
 current file size.
@@ -262,7 +297,7 @@ Parrot_io_get_file_size(PARROT_INTERP, ARGIN(PMC *filehandle))
 
 /*
 
-=item C<unsigned char *Parrot_io_get_buffer_start>
+=item C<unsigned char * Parrot_io_get_buffer_start>
 
 Get the C<buffer_start> attribute of the FileHandle object, which stores
 the position of the start of the buffer.
@@ -277,6 +312,7 @@ it can be cleanly changed later.
 */
 
 PARROT_API
+PARROT_CAN_RETURN_NULL
 unsigned char *
 Parrot_io_get_buffer_start(PARROT_INTERP, ARGIN(PMC *filehandle))
 {
@@ -285,7 +321,7 @@ Parrot_io_get_buffer_start(PARROT_INTERP, ARGIN(PMC *filehandle))
 
 /*
 
-=item C<unsigned char *Parrot_io_get_buffer_next>
+=item C<unsigned char * Parrot_io_get_buffer_next>
 
 Get the C<buffer_next> attribute of the FileHandle object, which stores
 the position of the start of the buffer.
@@ -300,10 +336,60 @@ it can be cleanly changed later.
 */
 
 PARROT_API
+PARROT_CAN_RETURN_NULL
 unsigned char *
 Parrot_io_get_buffer_next(PARROT_INTERP, ARGIN(PMC *filehandle))
 {
     return PARROT_FILEHANDLE(filehandle)->buffer_next;
+}
+
+/*
+
+=item C<INTVAL Parrot_io_get_buffer_flags>
+
+Get the C<buffer_flags> attribute of the FileHandle object, which stores
+a collection of flags specific to the buffer.
+
+Currently, this pokes directly into the C struct of the FileHandle PMC. This
+needs to change to a general interface that can be used by all subclasses and
+polymorphic equivalents of FileHandle. For now, hiding it behind a function, so
+it can be cleanly changed later.
+
+=cut
+
+*/
+
+PARROT_CAN_RETURN_NULL
+INTVAL
+Parrot_io_get_buffer_flags(PARROT_INTERP, ARGIN(PMC *filehandle))
+{
+    return PARROT_FILEHANDLE(filehandle)->buffer_flags;
+}
+
+/*
+
+=item C<void Parrot_io_clear_buffer>
+
+Clear the filehandle buffer and free the associated memory.
+
+Currently, this pokes directly into the C struct of the FileHandle PMC. This
+needs to change to a general interface that can be used by all subclasses and
+polymorphic equivalents of FileHandle. For now, hiding it behind a function, so
+it can be cleanly changed later.
+
+=cut
+
+*/
+
+PARROT_CAN_RETURN_NULL
+void
+Parrot_io_clear_buffer(PARROT_INTERP, ARGIN(PMC *filehandle))
+{
+    Parrot_FileHandle_attributes *io = PARROT_FILEHANDLE(filehandle); 
+    if (io->buffer_start && (io->flags & PIO_BF_MALLOC)) {
+        mem_sys_free(io->buffer_start);
+        io->buffer_start = 0;
+    }
 }
 
 /*
@@ -377,6 +463,7 @@ Parrot_io_set_file_position(PARROT_INTERP, ARGIN(PMC *filehandle), PIOOFF_T file
     handle_struct->last_pos = handle_struct->file_pos;
     handle_struct->file_pos = file_pos;
 }
+
 
 /*
 

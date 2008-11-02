@@ -38,6 +38,10 @@ APitUE - W. Richard Stevens, AT&T SFIO, Perl 5 (Nick Ing-Simmons)
 /* HEADERIZER BEGIN: static */
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 
+PARROT_CONST_FUNCTION
+static INTVAL convert_flags_to_unix(INTVAL flags);
+
+static INTVAL io_is_tty_unix(PIOHANDLE fd);
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 /* HEADERIZER END: static */
 
@@ -81,7 +85,7 @@ convert_flags_to_unix(INTVAL flags)
 
 /*
 
-=item C<static INTVAL Parrot_io_init_unix>
+=item C<INTVAL Parrot_io_init_unix>
 
 Sets up the interpreter's standard C<std*> IO handles. Returns C<0> on
 success and C<-1> on error.
@@ -137,16 +141,17 @@ Parrot_io_open_unix(PARROT_INTERP, ARGMOD_NULLOK(PMC *filehandle),
 {
     INTVAL oflags;
     PIOHANDLE fd;
+    char *spath;
 
     if (flags & PIO_F_PIPE)
-        return Parrot_io_pipe_unix(interp, filehandle, path, flags);
+        return Parrot_io_open_pipe_unix(interp, filehandle, path, flags);
 
     if ((flags & (PIO_F_WRITE | PIO_F_READ)) == 0)
         Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INVALID_OPERATION,
                                 "Invalid mode for file open");
 
     oflags = convert_flags_to_unix(flags);
-    spath = string_to_cstring(path);
+    spath = string_to_cstring(interp, path);
 
     /* Only files for now */
     flags |= PIO_F_FILE;
@@ -166,7 +171,7 @@ Parrot_io_open_unix(PARROT_INTERP, ARGMOD_NULLOK(PMC *filehandle),
         if ((oflags & (O_CREAT | O_EXCL)) == (O_CREAT | O_EXCL)) {
             close(fd);
             string_cstring_free(spath); /* returning before C string freed */
-            return NULL;
+            return PMCNULL;
         }
         /*
          * Check for truncate?
@@ -202,19 +207,19 @@ Parrot_io_open_unix(PARROT_INTERP, ARGMOD_NULLOK(PMC *filehandle),
         struct stat buf;
         if (fstat(fd, &buf) == -1) {
             close(fd);
-            return NULL;
+            return PMCNULL;
         }
         if ((buf.st_mode & S_IFMT) == S_IFDIR) {
             close(fd);
             errno = EISDIR;
-            return NULL;
+            return PMCNULL;
         }
         /* Set generic flag here if is a terminal then
          * FileHandle can know how to setup buffering.
          * STDIN, STDOUT, STDERR would be in this case
          * so we would setup linebuffering.
          */
-        if (Parrot_io_isatty_unix(fd))
+        if (io_is_tty_unix(fd))
             flags |= PIO_F_CONSOLE;
 
         if (PMC_IS_NULL(filehandle)) {
@@ -223,7 +228,8 @@ Parrot_io_open_unix(PARROT_INTERP, ARGMOD_NULLOK(PMC *filehandle),
             return io;
         }
         else {
-            Parrot_io_set_flags_and_mode(interp, filehandle, flags, DEFAULT_OPEN_MODE);
+            Parrot_io_set_flags(interp, filehandle, flags);
+            Parrot_io_set_mode(interp, filehandle, DEFAULT_OPEN_MODE);
             Parrot_io_set_os_handle(interp, filehandle, fd);
             return filehandle;
         }
@@ -285,11 +291,11 @@ Returns a new C<FileHandle> PMC with the file descriptor passed in.
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 PMC *
-Parrot_io_fdopen_unix(PARROT_INTERP, ARGMOD_NULLOK(PMC *filehandle), PIOHANDLE fd, INTVAL flags)
+Parrot_io_fdopen_unix(PARROT_INTERP, ARGMOD(PMC *filehandle), PIOHANDLE fd, INTVAL flags)
 {
     const INTVAL mode = 0;
 
-    if (Parrot_io_isatty_unix(fd))
+    if (io_is_tty_unix(fd))
         flags |= PIO_F_CONSOLE;
 
     /* fdopened files are always shared */
@@ -301,7 +307,8 @@ Parrot_io_fdopen_unix(PARROT_INTERP, ARGMOD_NULLOK(PMC *filehandle), PIOHANDLE f
         return io;
     }
     else {
-        Parrot_io_set_flags_and_mode(interp, filehandle, flags, mode);
+        Parrot_io_set_flags(interp, filehandle, flags);
+        Parrot_io_set_mode(interp, filehandle, mode);
         Parrot_io_set_os_handle(interp, filehandle, fd);
         return filehandle;
     }
@@ -334,7 +341,26 @@ Parrot_io_close_unix(PARROT_INTERP, ARGMOD(PMC *filehandle))
 
 /*
 
-=item C<INTVAL Parrot_io_isatty_unix>
+=item C<INTVAL Parrot_io_is_closed_unix>
+
+Test whether the filehandle has been closed.
+
+=cut
+
+*/
+
+INTVAL
+Parrot_io_is_closed_unix(PARROT_INTERP, ARGIN(PMC *filehandle))
+{
+    if (Parrot_io_get_os_handle(interp, filehandle) == -1)
+        return 1;
+
+    return 0;
+}
+
+/*
+
+=item C<static INTVAL io_is_tty_unix>
 
 Returns a boolean value indicating whether C<fd> is a console/tty.
 
@@ -342,8 +368,8 @@ Returns a boolean value indicating whether C<fd> is a console/tty.
 
 */
 
-INTVAL
-Parrot_io_isatty_unix(PIOHANDLE fd)
+static INTVAL
+io_is_tty_unix(PIOHANDLE fd)
 {
     return isatty(fd);
 }
@@ -430,7 +456,7 @@ Parrot_io_read_unix(PARROT_INTERP, ARGMOD(PMC *filehandle),
 {
     PIOHANDLE file_descriptor = Parrot_io_get_os_handle(interp, filehandle);
     INTVAL file_flags = Parrot_io_get_flags(interp, filehandle);
-    STRING * const s = Parrot_io_make_io_string(interp, buf, 2048);
+    STRING * const s = Parrot_io_make_string(interp, buf, 2048);
 
     const size_t len = s->bufused;
     void * const buffer = s->strstart;
@@ -472,7 +498,7 @@ C<buffer> to the file descriptor in C<*io>.
 */
 
 size_t
-Parrot_io_write_unix(SHIM_INTERP, ARGIN(PMC *filehandle), ARGMOD(STRING *s))
+Parrot_io_write_unix(PARROT_INTERP, ARGIN(PMC *filehandle), ARGMOD(STRING *s))
 {
     PIOHANDLE file_descriptor = Parrot_io_get_os_handle(interp, filehandle);
     const char * const buffer = s->strstart;
@@ -519,7 +545,7 @@ descriptor to C<offset> bytes from the location indicated by C<whence>.
 */
 
 PIOOFF_T
-Parrot_io_seek_unix(SHIM_INTERP, ARGMOD(PMC *filehandle),
+Parrot_io_seek_unix(PARROT_INTERP, ARGMOD(PMC *filehandle),
               PIOOFF_T offset, INTVAL whence)
 {
     PIOHANDLE file_descriptor = Parrot_io_get_os_handle(interp, filehandle);
@@ -547,7 +573,7 @@ Parrot_io_seek_unix(SHIM_INTERP, ARGMOD(PMC *filehandle),
                 break;
         }
 
-        Parrot_set_file_pos(interp, filehandle, pos);
+        Parrot_io_set_file_position(interp, filehandle, pos);
     }
     /* Seek clears EOF */
     Parrot_io_set_flags(interp, filehandle,
@@ -566,7 +592,7 @@ Returns the current read/write position on C<*io>'s file discriptor.
 */
 
 PIOOFF_T
-Parrot_io_tell_unix(SHIM_INTERP, SHIM(PMC *filehandle))
+Parrot_io_tell_unix(PARROT_INTERP, ARGMOD(PMC *filehandle))
 {
     PIOHANDLE file_descriptor = Parrot_io_get_os_handle(interp, filehandle);
     const PIOOFF_T pos = lseek(file_descriptor, (PIOOFF_T)0, SEEK_CUR);
@@ -606,9 +632,12 @@ Parrot_io_open_pipe_unix(PARROT_INTERP, ARGMOD(PMC *filehandle),
     if ((pid = fork()) > 0) {
         PMC *io;
         if (PMC_IS_NULL(filehandle)) 
-            io = Parrot_io_new_pipe(interp, PIO_F_PIPE, 0, flags & (PIO_F_READ|PIO_F_WRITE));
+            io = Parrot_io_new_pmc(interp, 0, flags & (PIO_F_READ|PIO_F_WRITE));
         else
             io = filehandle;
+
+        Parrot_io_set_flags(interp, filehandle,
+                (Parrot_io_get_flags(interp, filehandle) & PIO_F_PIPE));
 
         if (flags & PIO_F_READ) {
             /* close this writer's end of pipe */
