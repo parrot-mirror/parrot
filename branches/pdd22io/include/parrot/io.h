@@ -36,8 +36,16 @@
 #  endif
 #endif
 
+/* Select which platform utility functions to use. Portable is the default. */
+#ifdef PIO_OS_UNIX
+#  include "io_unix.h"
+#endif
 #ifdef PIO_OS_WIN32
 #  include <io.h>
+#  include "io_win32.h"
+#endif
+#ifdef PIO_OS_STDIO
+#  include "io_portable.h"
 #endif
 
 #ifndef STDIN_FILENO
@@ -87,14 +95,14 @@ enum {
 /* This is temporary until subs/code refs are done..*/
 typedef void *DummyCodeRef;
 
-
+/* Hopefully INTVAL_SIZE is enough for PTR_SIZE so that
+ * the FILE* of pio_stdio_layers fit into a PIOHANDLE. */
+/*
 #ifdef PIO_OS_WIN32
 typedef Parrot_WIN32_HANDLE PIOHANDLE;
 typedef Parrot_OFF_T PIOOFF_T;
 #endif
 #ifdef PIO_OS_UNIX
-/* Hopefully INTVAL_SIZE is enough for PTR_SIZE so that
- * the FILE* of pio_stdio_layers fit into a PIOHANDLE. */
 typedef INTVAL PIOHANDLE;
 typedef off_t PIOOFF_T;
 #endif
@@ -102,6 +110,7 @@ typedef off_t PIOOFF_T;
 typedef FILE* PIOHANDLE;
 typedef long PIOOFF_T;
 #endif
+*/
 
 extern PIOOFF_T piooffsetzero;
 
@@ -517,9 +526,304 @@ void PIO_push_layer_str(PARROT_INTERP,
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 /* HEADERIZER END: src/io/io_layers.c */
 
+/* io/api.c - Public API functions */
+/* HEADERIZER BEGIN: src/io/api.c */
+/* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
+
+PARROT_API
+INTVAL Parrot_io_close(PARROT_INTERP, ARGMOD(PMC *pmc))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        FUNC_MODIFIES(*pmc);
+
+PARROT_API
+PARROT_WARN_UNUSED_RESULT
+INTVAL Parrot_io_eof(PARROT_INTERP, ARGMOD(PMC *pmc))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        FUNC_MODIFIES(*pmc);
+
+PARROT_API
+PARROT_IGNORABLE_RESULT
+INTVAL Parrot_io_eprintf(NULLOK(PARROT_INTERP), ARGIN(const char *s), ...)
+        __attribute__nonnull__(2);
+
+PARROT_API
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
+PMC * Parrot_io_fdopen(PARROT_INTERP,
+    ARGIN_NULLOK(PMC *pmc),
+    PIOHANDLE fd,
+    ARGIN(STRING *sflags))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(4);
+
+PARROT_API
+void Parrot_io_flush(PARROT_INTERP, ARGMOD(PMC *pmc))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        FUNC_MODIFIES(*pmc);
+
+PARROT_API
+INTVAL Parrot_io_fprintf(PARROT_INTERP,
+    ARGMOD(PMC *pmc),
+    ARGIN(const char *s),
+    ...)
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3)
+        FUNC_MODIFIES(*pmc);
+
+PARROT_API
+PARROT_WARN_UNUSED_RESULT
+PIOHANDLE Parrot_io_getfd(PARROT_INTERP, ARGMOD(PMC *pmc))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        FUNC_MODIFIES(*pmc);
+
+PARROT_API
+INTVAL Parrot_io_is_closed(PARROT_INTERP, ARGMOD(PMC *pmc))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        FUNC_MODIFIES(*pmc);
+
+PARROT_API
+PARROT_WARN_UNUSED_RESULT
+INTVAL Parrot_io_is_tty(PARROT_INTERP, ARGMOD(PMC *pmc))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        FUNC_MODIFIES(*pmc);
+
+PARROT_API
+PIOOFF_T Parrot_io_make_offset(INTVAL offset);
+
+PARROT_API
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
+PMC * Parrot_io_new_pmc(PARROT_INTERP, INTVAL flags, INTVAL mode)
+        __attribute__nonnull__(1);
+
+PARROT_API
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
+PMC * Parrot_io_open(PARROT_INTERP,
+    ARGIN_NULLOK(PMC *pmc),
+    ARGIN(STRING *path),
+    ARGIN(STRING *flags_str))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(3)
+        __attribute__nonnull__(4);
+
+PARROT_API
+INTVAL Parrot_io_peek(PARROT_INTERP,
+    ARGMOD(PMC *pmc),
+    ARGOUT(STRING **buffer))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3)
+        FUNC_MODIFIES(*pmc)
+        FUNC_MODIFIES(*buffer);
+
+PARROT_API
+INTVAL Parrot_io_printf(PARROT_INTERP, ARGIN(const char *s), ...)
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+PARROT_API
+INTVAL Parrot_io_putps(PARROT_INTERP,
+    ARGMOD(PMC *pmc),
+    ARGMOD_NULLOK(STRING *s))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        FUNC_MODIFIES(*pmc);
+
+PARROT_API
+INTVAL Parrot_io_puts(PARROT_INTERP, ARGMOD(PMC *pmc), ARGIN(const char *s))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3)
+        FUNC_MODIFIES(*pmc);
+
+PARROT_API
+PARROT_WARN_UNUSED_RESULT
+INTVAL Parrot_io_read(PARROT_INTERP,
+    ARGMOD(PMC *pmc),
+    ARGIN(char *buffer),
+    size_t len)
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3)
+        FUNC_MODIFIES(*pmc);
+
+PARROT_API
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
+STRING * Parrot_io_reads(PARROT_INTERP, ARGMOD(PMC *pmc), size_t len)
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        FUNC_MODIFIES(*pmc);
+
+PARROT_API
+PARROT_WARN_UNUSED_RESULT
+PIOOFF_T Parrot_io_seek(PARROT_INTERP,
+    ARGMOD(PMC *pmc),
+    PIOOFF_T offset,
+    INTVAL w)
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        FUNC_MODIFIES(*pmc);
+
+PARROT_API
+PARROT_WARN_UNUSED_RESULT
+PIOOFF_T Parrot_io_tell(PARROT_INTERP, ARGMOD(PMC *pmc))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        FUNC_MODIFIES(*pmc);
+
+PARROT_API
+PARROT_WARN_UNUSED_RESULT
+INTVAL Parrot_io_write(PARROT_INTERP,
+    ARGMOD(PMC *pmc),
+    ARGIN(const void *buffer),
+    size_t len)
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3)
+        FUNC_MODIFIES(*pmc);
+
+PARROT_API
+void Parrot_IOData_mark(PARROT_INTERP, ARGIN(ParrotIOData *piodata))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+PARROT_API
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
+PMC * PIO_STDERR(PARROT_INTERP)
+        __attribute__nonnull__(1);
+
+PARROT_API
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
+PMC * PIO_STDIN(PARROT_INTERP)
+        __attribute__nonnull__(1);
+
+PARROT_API
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
+PMC * PIO_STDOUT(PARROT_INTERP)
+        __attribute__nonnull__(1);
+
+PIOOFF_T Parrot_io_make_offset32(INTVAL hi, INTVAL lo);
+PIOOFF_T Parrot_io_make_offset_pmc(PARROT_INTERP, ARGMOD(PMC *pmc))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        FUNC_MODIFIES(*pmc);
+
+/* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
+/* HEADERIZER END: src/io/api.c */
+
 /* io/common.c - utility functions shared between all platforms */
 /* HEADERIZER BEGIN: src/io/common.c */
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
+
+PARROT_API
+PARROT_CAN_RETURN_NULL
+unsigned char * Parrot_io_get_buffer_next(PARROT_INTERP,
+    ARGIN(PMC *filehandle))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+PARROT_API
+PARROT_CAN_RETURN_NULL
+unsigned char * Parrot_io_get_buffer_start(PARROT_INTERP,
+    ARGIN(PMC *filehandle))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+PARROT_API
+PIOOFF_T Parrot_io_get_file_position(PARROT_INTERP, ARGIN(PMC *filehandle))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+PARROT_API
+PIOOFF_T Parrot_io_get_file_size(PARROT_INTERP, ARGIN(PMC *filehandle))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+PARROT_API
+INTVAL Parrot_io_get_flags(PARROT_INTERP, ARGIN(PMC *filehandle))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+PARROT_API
+PIOOFF_T Parrot_io_get_last_file_position(PARROT_INTERP,
+    ARGIN(PMC *filehandle))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+PARROT_API
+PIOHANDLE Parrot_io_get_os_handle(PARROT_INTERP, ARGIN(PMC *filehandle))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+PARROT_API
+PARROT_WARN_UNUSED_RESULT
+INTVAL Parrot_io_parse_open_flags(PARROT_INTERP,
+    ARGIN_NULLOK(STRING *flagstr))
+        __attribute__nonnull__(1);
+
+PARROT_API
+void Parrot_io_set_file_position(PARROT_INTERP,
+    ARGIN(PMC *filehandle),
+    PIOOFF_T file_pos)
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+PARROT_API
+void Parrot_io_set_file_size(PARROT_INTERP,
+    ARGIN(PMC *filehandle),
+    PIOOFF_T file_size)
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+PARROT_API
+void Parrot_io_set_flags(PARROT_INTERP,
+    ARGIN(PMC *filehandle),
+    INTVAL flags)
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+PARROT_API
+void Parrot_io_set_mode(PARROT_INTERP, ARGIN(PMC *filehandle), INTVAL mode)
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+PARROT_API
+void Parrot_io_set_os_handle(PARROT_INTERP,
+    ARGIN(PMC *filehandle),
+    PIOHANDLE file_descriptor)
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+PARROT_CAN_RETURN_NULL
+void Parrot_io_clear_buffer(PARROT_INTERP, ARGIN(PMC *filehandle))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+PARROT_CAN_RETURN_NULL
+INTVAL Parrot_io_get_buffer_flags(PARROT_INTERP, ARGIN(PMC *filehandle))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
+STRING * Parrot_io_make_string(PARROT_INTERP,
+    ARGMOD(STRING **buf),
+    size_t len)
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        FUNC_MODIFIES(*buf);
 
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 /* HEADERIZER END: src/io/common.c */
