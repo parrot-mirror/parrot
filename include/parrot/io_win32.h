@@ -13,6 +13,9 @@
 #ifndef PARROT_IO_WIN32_H_GUARD
 #define PARROT_IO_WIN32_H_GUARD
 
+typedef Parrot_WIN32_HANDLE PIOHANDLE;
+typedef Parrot_OFF_T PIOOFF_T;
+
 /* HEADERIZER BEGIN: src/io/win32.c */
 /* HEADERIZER END: src/io/win32.c */
 
@@ -24,6 +27,7 @@
 #define PIO_OPEN_PIPE(interp, pmc, file, flags) \
     Parrot_io_open_pipe_win32((interp), (pmc), (file), (flags))
 #define PIO_CLOSE(interp, pmc) Parrot_io_close_win32((interp), (pmc))
+#define PIO_IS_CLOSED(interp, pmc) Parrot_io_is_closed_win32((interp), (pmc))
 #define PIO_READ(interp, pmc, buf) Parrot_io_read_win32((interp), (pmc), (buf))
 #define PIO_WRITE(interp, pmc, str) Parrot_io_write_win32((interp), (pmc), (str))
 #define PIO_SEEK(interp, pmc, offset, start) \
@@ -31,7 +35,6 @@
 #define PIO_TELL(interp, pmc) Parrot_io_tell_win32((interp), (pmc))
 #define PIO_PEEK(interp, pmc, buf) Parrot_io_peek_win32((interp), (pmc), (buf))
 #define PIO_FLUSH(interp, pmc) Parrot_io_flush_win32((interp), (pmc))
-#define PIO_ISATTY(handle) Parrot_io_isatty_win32((handle))
 #define PIO_GETBLKSIZE(handle) Parrot_io_getblksize_win32((handle))
 
 #endif /* PARROT_IO_WIN32_H_GUARD */
