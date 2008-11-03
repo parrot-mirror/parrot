@@ -723,8 +723,8 @@ PIOOFF_T Parrot_io_make_offset_pmc(PARROT_INTERP, ARGMOD(PMC *pmc))
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 /* HEADERIZER END: src/io/api.c */
 
-/* io/common.c - utility functions shared between all platforms */
-/* HEADERIZER BEGIN: src/io/common.c */
+/* io.c - utility functions shared between all platforms */
+/* HEADERIZER BEGIN: src/io.c */
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 
 PARROT_API
@@ -826,7 +826,7 @@ STRING * Parrot_io_make_string(PARROT_INTERP,
         FUNC_MODIFIES(*buf);
 
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
-/* HEADERIZER END: src/io/common.c */
+/* HEADERIZER END: src/io.c */
 
 /* Put platform specific macros here if you must */
 #ifdef PIO_OS_WIN32
