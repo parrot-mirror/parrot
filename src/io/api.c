@@ -90,10 +90,10 @@ PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 PMC *
 Parrot_io_open(PARROT_INTERP, ARGIN_NULLOK(PMC *pmc),
-        ARGIN(STRING *path), ARGIN(STRING *flags_str))
+        ARGIN(STRING *path), ARGIN_NULLOK(STRING *mode_str))
 {
     PMC *new_filehandle;
-    const INTVAL flags = Parrot_io_parse_open_flags(interp, flags_str);
+    const INTVAL flags = Parrot_io_parse_open_flags(interp, mode_str);
 
 
     new_filehandle = PIO_OPEN(interp, pmc, path, flags);
