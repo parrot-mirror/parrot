@@ -39,18 +39,18 @@ C<a> for append, and C<p> for pipe) and returns the combined generic bit flags.
 PARROT_API
 PARROT_WARN_UNUSED_RESULT
 INTVAL
-Parrot_io_parse_open_flags(PARROT_INTERP, ARGIN_NULLOK(STRING *flagstr))
+Parrot_io_parse_open_flags(PARROT_INTERP, ARGIN_NULLOK(STRING *mode_str))
 {
-    char *flag_cstr;
-    char *s;
+    char *mode_cstr;
+    const char *s;
     INTVAL flags = 0;
 
-    if (STRING_IS_NULL(flagstr))
+    if (STRING_IS_NULL(mode_str))
         return PIO_F_READ;
 
-    flag_cstr = string_to_cstring(interp, flagstr);
+    mode_cstr = string_to_cstring(interp, mode_str);
 
-    for (s = flag_cstr; *s != '\0'; s++) {
+    for (s = mode_cstr; *s != '\0'; s++) {
         switch (*s) {
             case 'r':
                 flags |= PIO_F_READ;
@@ -68,8 +68,7 @@ Parrot_io_parse_open_flags(PARROT_INTERP, ARGIN_NULLOK(STRING *flagstr))
         }
     }
 
-    string_cstring_free(flag_cstr);
-    string_cstring_free(s);
+    string_cstring_free(mode_cstr);
 
     return flags;
 }
