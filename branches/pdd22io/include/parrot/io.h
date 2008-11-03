@@ -609,10 +609,9 @@ PARROT_CANNOT_RETURN_NULL
 PMC * Parrot_io_open(PARROT_INTERP,
     ARGIN_NULLOK(PMC *pmc),
     ARGIN(STRING *path),
-    ARGIN(STRING *flags_str))
+    ARGIN_NULLOK(STRING *mode_str))
         __attribute__nonnull__(1)
-        __attribute__nonnull__(3)
-        __attribute__nonnull__(4);
+        __attribute__nonnull__(3);
 
 PARROT_API
 INTVAL Parrot_io_peek(PARROT_INTERP,
@@ -675,6 +674,24 @@ PIOOFF_T Parrot_io_seek(PARROT_INTERP,
 
 PARROT_API
 PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
+PMC * Parrot_io_STDERR(PARROT_INTERP)
+        __attribute__nonnull__(1);
+
+PARROT_API
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
+PMC * Parrot_io_STDIN(PARROT_INTERP)
+        __attribute__nonnull__(1);
+
+PARROT_API
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
+PMC * Parrot_io_STDOUT(PARROT_INTERP)
+        __attribute__nonnull__(1);
+
+PARROT_API
+PARROT_WARN_UNUSED_RESULT
 PIOOFF_T Parrot_io_tell(PARROT_INTERP, ARGMOD(PMC *pmc))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
@@ -690,29 +707,6 @@ INTVAL Parrot_io_write(PARROT_INTERP,
         __attribute__nonnull__(2)
         __attribute__nonnull__(3)
         FUNC_MODIFIES(*pmc);
-
-PARROT_API
-void Parrot_IOData_mark(PARROT_INTERP, ARGIN(ParrotIOData *piodata))
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(2);
-
-PARROT_API
-PARROT_WARN_UNUSED_RESULT
-PARROT_CANNOT_RETURN_NULL
-PMC * PIO_STDERR(PARROT_INTERP)
-        __attribute__nonnull__(1);
-
-PARROT_API
-PARROT_WARN_UNUSED_RESULT
-PARROT_CANNOT_RETURN_NULL
-PMC * PIO_STDIN(PARROT_INTERP)
-        __attribute__nonnull__(1);
-
-PARROT_API
-PARROT_WARN_UNUSED_RESULT
-PARROT_CANNOT_RETURN_NULL
-PMC * PIO_STDOUT(PARROT_INTERP)
-        __attribute__nonnull__(1);
 
 PIOOFF_T Parrot_io_make_offset32(INTVAL hi, INTVAL lo);
 PIOOFF_T Parrot_io_make_offset_pmc(PARROT_INTERP, ARGMOD(PMC *pmc))
