@@ -51,8 +51,7 @@ Initializes a newly created FileHandle object.
         PMC_data(SELF)            = data_struct;
         data_struct->mode         = 0;
         data_struct->flags        = 0;
-        data_struct->os_handle    = 0;
-        data_struct->file_size    = NULL;
+        data_struct->file_size    = 0;
         data_struct->file_pos     = piooffsetzero;
         data_struct->last_pos     = piooffsetzero;
         data_struct->buffer_flags = 0;
@@ -60,6 +59,18 @@ Initializes a newly created FileHandle object.
         data_struct->buffer_start = NULL;
         data_struct->buffer_end   = NULL;
         data_struct->buffer_next  = NULL;
+
+        /* Initialize the os_handle to the platform-specific value for closed. */
+#ifdef PIO_OS_WIN32
+        data_struct->os_handle    = (PIOHANDLE)INVALID_HANDLE_VALUE;
+#endif
+#ifdef PIO_OS_UNIX
+        data_struct->os_handle    = (PIOHANDLE)-1;
+#endif
+#ifdef PIO_OS_STDIO
+        data_struct->os_handle    = (PIOHANDLE)NULL;
+#endif
+
 
         PObj_active_destroy_SET(SELF);
     }
@@ -109,21 +120,45 @@ Free structures.
 
 =over 4
 
-=item C<METHOD open(STRING *file, STRING *mode)>
+=item C<METHOD open(STRING *path, STRING *mode :optional)>
 
-Opens the file with the given mode. The returned filehandle is generally just a
-copy of the invocant.
+Opens the file at the given path with the given mode. The invocant is modified
+and becomes an open filehandle. A copy of the invocant is also returned by the
+method (some subclasses may use this as the primary filehandle, rather than
+modifying the invocant).
 
 =cut
 
 */
 
-    METHOD open(STRING *file, STRING *mode) {
+    METHOD open(STRING *path, STRING *mode :optional, INTVAL got_mode :opt_flag) {
         PMC *filehandle;
 
-/*        filehandle = Parrot_io_open(INTERP, SELF, file, mode); */
+        if (!Parrot_io_is_closed(INTERP, SELF))
+            Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_PIO_ERROR,
+                                "Filehandle is already open");
+
+        if (got_mode)
+            filehandle = Parrot_io_open(INTERP, SELF, path, mode);
+        else
+            filehandle = Parrot_io_open(INTERP, SELF, path, NULL);
 
         RETURN(PMC *filehandle);
+    }
+
+/*
+
+=item C<METHOD close()>
+
+Close the filehandle.
+
+=cut
+
+*/
+
+    METHOD close() {
+
+        Parrot_io_close(INTERP, SELF);
     }
 
 /*
