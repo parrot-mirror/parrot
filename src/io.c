@@ -45,9 +45,10 @@ Parrot_io_parse_open_flags(PARROT_INTERP, ARGIN_NULLOK(STRING *flagstr))
     char *s;
     INTVAL flags = 0;
 
-    flag_cstr = string_to_cstring(interp, flagstr);
     if (STRING_IS_NULL(flagstr))
-        return 0;
+        return PIO_F_READ;
+
+    flag_cstr = string_to_cstring(interp, flagstr);
 
     for (s = flag_cstr; *s != '\0'; s++) {
         switch (*s) {
