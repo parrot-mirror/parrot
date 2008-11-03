@@ -10,32 +10,32 @@ use Parrot::Test tests => 6;
 
 =head1 NAME
 
-t/pmc/parrotio.t - test the ParrotIO PMC
+t/pmc/filehandle.t - test the FileHandle PMC
 
 =head1 SYNOPSIS
 
-    % prove t/pmc/parrotio.t
+    % prove t/pmc/filehandle.t
 
 =head1 DESCRIPTION
 
-Tests the ParrotIO PMC.
+Tests the FileHandle PMC.
 
 =cut
 
 # L<PDD22/I\/O PMC API/=item new>
 pir_output_is( <<'CODE', <<'OUT', 'new' );
 .sub 'test' :main
-    new P0, 'ParrotIO'
-    say "ok 1 - $P0 = new 'ParrotIO'"
+    new P0, 'FileHandle'
+    say "ok 1 - $P0 = new 'FileHandle'"
 .end
 CODE
-ok 1 - $P0 = new 'ParrotIO'
+ok 1 - $P0 = new 'FileHandle'
 OUT
 
 # L<PDD22/I\/O PMC API/=item open.*=item close>
-pir_output_is( <<'CODE', <<'OUT', 'open and close - synchronous', todo => 'not yet implemented' );
+pir_output_is( <<'CODE', <<'OUT', 'open and close - synchronous' );
 .sub 'test' :main
-    $P0 = new 'ParrotIO'
+    $P0 = new 'FileHandle'
     $P0.open('README')
     say 'ok 1 - $P0.open($S1)'
 
@@ -49,24 +49,30 @@ pir_output_is( <<'CODE', <<'OUT', 'open and close - synchronous', todo => 'not y
     $P0.open()
     say 'ok 4 - $P0.open()'
 
+  test_5:
     push_eh eh_bad_file_1
     $P0.open('bad_file')
     pop_eh
 
-  test_5:
+  test_6:
     push_eh eh_bad_file_2
     $P0.open('bad_file', 'r')
     pop_eh
 
-  test_6:
+  test_7:
     $P0.open('new_file', 'w')
     say 'ok 6 - $P0.open($S1, $S2) # new file, write mode succeeds'
 
     goto end
 
-  bad_file_1:
+  eh_bad_file_1:
     say 'ok 5 - $P0.open($S1)      # with bad file'
-    goto test_5
+    goto test_6
+
+  eh_bad_file_2:
+    say "ok 6 - $P0.open('bad_file', 'r') # with bad file"
+    goto test_7
+
   end:
 .end
 CODE
@@ -89,7 +95,7 @@ SKIP: {
     pir_output_is( <<'CODE', <<'OUT', 'open and close - asynchronous' );
 .sub 'test' :main
     $P1 = # RT #46831 create a callback here
-    $P0 = new 'ParrotIO'
+    $P0 = new 'FileHandle'
 
     $P0.open('README')
     say 'ok 1 - $P0.open($S1)'
@@ -123,7 +129,7 @@ pir_output_is(
     .local pmc chomp
                chomp = get_global ['String';'Utils'], 'chomp'
 
-    $P0 = new 'ParrotIO'
+    $P0 = new 'FileHandle'
     $P0.open('README')
 
     $S0 = $P0.read(14) # bytes
@@ -177,7 +183,7 @@ OUT
 # L<PDD22/I\/O PMC API/=item record_separator>
 pir_output_is( <<'CODE', <<'OUT', 'record_separator', todo => 'not yet implemented' );
 .sub 'test' :main
-    $P0 = new 'ParrotIO'
+    $P0 = new 'FileHandle'
 
     $S0 = $P0.record_separator()
     if $S0 == "\n" goto ok_1
@@ -215,7 +221,7 @@ pir_output_is( <<'CODE', <<'OUT', 'buffer_type', todo => 'not yet implemented' )
 .sub 'test' :main
     .include 'io_buffer_types.pasm'
 
-    $P0 = new 'ParrotIO'
+    $P0 = new 'FileHandle'
 
     $P0.buffer_type('unbuffered')
     $I0 = $P0.buffer_type()
