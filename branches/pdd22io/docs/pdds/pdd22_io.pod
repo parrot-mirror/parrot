@@ -124,9 +124,10 @@ object. With no arguments, it can be used to reopen a previously opened
 I/O stream. $S2 is a file path and $S3 is an optional mode for the
 stream (read, write, read/write, etc), using the same format as the
 C<open> opcode: 'r' for read, 'w' for write, 'a' for append, and 'p' for
-pipe. When the mode is set to write or append, a file is created without
-warning if none exists. When the mode is read (without write), a
-nonexistent file is an error.
+pipe. When the optional mode argument is not passed, the default is read mode.
+When the mode is set to write or append, a file is created without warning if
+none exists. When the mode is read (without write), a nonexistent file is an
+error.
 
 The asynchronous version takes a PMC callback as an additional final
 argument. When the open operation is complete, it invokes the callback
