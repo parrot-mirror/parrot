@@ -600,7 +600,7 @@ PIOOFF_T Parrot_io_make_offset(INTVAL offset);
 PARROT_API
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
-PMC * Parrot_io_new_pmc(PARROT_INTERP, INTVAL flags, INTVAL mode)
+PMC * Parrot_io_new_pmc(PARROT_INTERP, INTVAL flags)
         __attribute__nonnull__(1);
 
 PARROT_API
@@ -764,7 +764,7 @@ PIOHANDLE Parrot_io_get_os_handle(PARROT_INTERP, ARGIN(PMC *filehandle))
 PARROT_API
 PARROT_WARN_UNUSED_RESULT
 INTVAL Parrot_io_parse_open_flags(PARROT_INTERP,
-    ARGIN_NULLOK(STRING *flagstr))
+    ARGIN_NULLOK(STRING *mode_str))
         __attribute__nonnull__(1);
 
 PARROT_API
@@ -785,11 +785,6 @@ PARROT_API
 void Parrot_io_set_flags(PARROT_INTERP,
     ARGIN(PMC *filehandle),
     INTVAL flags)
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(2);
-
-PARROT_API
-void Parrot_io_set_mode(PARROT_INTERP, ARGIN(PMC *filehandle), INTVAL mode)
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 

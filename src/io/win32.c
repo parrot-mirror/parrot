@@ -257,8 +257,6 @@ Parrot_io_fdopen_win32(PARROT_INTERP, ARGMOD_NULLOK(PMC *filehandle),
         PIOHANDLE fd, INTVAL flags)
 {
     PMC *io;
-    INTVAL mode;
-    mode = 0;
 
     if (io_is_tty_win32(fd))
         flags |= PIO_F_CONSOLE;
@@ -267,7 +265,7 @@ Parrot_io_fdopen_win32(PARROT_INTERP, ARGMOD_NULLOK(PMC *filehandle),
     flags |= PIO_F_SHARED;
 
     if (PMC_IS_NULL(filehandle))
-        io = Parrot_io_new_pmc(interp, flags, mode);
+        io = Parrot_io_new_pmc(interp, flags);
     else
         io = filehandle;
 

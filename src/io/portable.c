@@ -113,7 +113,7 @@ Parrot_io_init_portable(PARROT_INTERP)
 
 =item C<PMC * Parrot_io_open_portable>
 
-Open a new FileHandle PMC from a given path and mode.
+Open a new FileHandle PMC from a given path.
 
 =cut
 
@@ -183,7 +183,6 @@ Parrot_io_fdopen_portable(PARROT_INTERP, ARGMOD(PMC *filehandle),
         PIOHANDLE fptr, INTVAL flags)
 {
     PMC *io;
-    const INTVAL mode = 0;
 
     if (io_is_tty_portable(fptr))
         flags |= PIO_F_CONSOLE;
@@ -192,7 +191,7 @@ Parrot_io_fdopen_portable(PARROT_INTERP, ARGMOD(PMC *filehandle),
     flags |= PIO_F_SHARED;
 
     if (PMC_IS_NULL(filehandle))
-        io = Parrot_io_new_pmc(interp, flags, 0);
+        io = Parrot_io_new_pmc(interp, flags);
     else
         io = filehandle;
 

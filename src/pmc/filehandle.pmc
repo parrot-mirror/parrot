@@ -22,8 +22,7 @@ The FileHandle PMC performs I/O operations on a source or destination file.
 
 
 pmclass FileHandle need_ext {
-    ATTR INTVAL mode;                 /* Read/Write/etc.            */
-    ATTR INTVAL flags;                /* Additional flags           */
+    ATTR INTVAL flags;                /* Filehandle flags           */
     ATTR PIOHANDLE os_handle;         /* Low level OS descriptor    */
     ATTR PIOOFF_T file_size;          /* Current file size          */
     ATTR PIOOFF_T file_pos;           /* Current real file pointer  */
@@ -49,7 +48,6 @@ Initializes a newly created FileHandle object.
                 mem_allocate_typed(Parrot_FileHandle_attributes);
 
         PMC_data(SELF)            = data_struct;
-        data_struct->mode         = 0;
         data_struct->flags        = 0;
         data_struct->file_size    = 0;
         data_struct->file_pos     = piooffsetzero;
@@ -87,7 +85,7 @@ Create a copy of the filehandle.
 
     VTABLE PMC *clone() {
         Parrot_FileHandle_attributes * const old_struct  = PARROT_FILEHANDLE(SELF);
-        PMC * const copy = Parrot_io_new_pmc(interp, old_struct->flags, old_struct->mode);
+        PMC * const copy = Parrot_io_new_pmc(interp, old_struct->flags);
         Parrot_FileHandle_attributes * const data_struct = PARROT_FILEHANDLE(copy);
 
         data_struct->os_handle    = Parrot_dup(old_struct->os_handle);

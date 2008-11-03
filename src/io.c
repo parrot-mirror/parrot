@@ -226,30 +226,6 @@ Parrot_io_get_flags(PARROT_INTERP, ARGIN(PMC *filehandle))
 
 /*
 
-=item C<void Parrot_io_set_mode>
-
-Set the C<mode> attribute of the FileHandle object, which stores bitwise flags
-marking filehandle characteristics.
-
-Currently, this pokes directly into the C struct of the FileHandle PMC. This
-needs to change to a general interface that can be used by all subclasses and
-polymorphic equivalents of FileHandle. For now, hiding it behind a function, so
-it can be cleanly changed later.
-
-=cut
-
-*/
-
-PARROT_API
-void
-Parrot_io_set_mode(PARROT_INTERP, ARGIN(PMC *filehandle), INTVAL mode)
-{
-    Parrot_FileHandle_attributes *handle_struct = PARROT_FILEHANDLE(filehandle); 
-    handle_struct->mode  = mode;
-}
-
-/*
-
 =item C<void Parrot_io_set_file_size>
 
 Set the C<file_size> attribute of the FileHandle object, which stores the
