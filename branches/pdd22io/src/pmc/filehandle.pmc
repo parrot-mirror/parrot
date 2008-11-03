@@ -1,0 +1,144 @@
+/*
+Copyright (C) 2008, The Perl Foundation.
+$Id: $
+
+=head1 NAME
+
+src/pmc/filehandle.pmc - FileHandle PMC
+
+=head1 DESCRIPTION
+
+The FileHandle PMC performs I/O operations on a source or destination file.
+
+=head2 Vtable Functions
+
+=over 4
+
+=cut
+
+*/
+
+#include "parrot/parrot.h"
+
+
+pmclass FileHandle need_ext {
+    ATTR INTVAL mode;                 /* Read/Write/etc.            */
+    ATTR INTVAL flags;                /* Additional flags           */
+    ATTR PIOHANDLE os_handle;         /* Low level OS descriptor    */
+    ATTR PIOOFF_T file_size;          /* Current file size          */
+    ATTR PIOOFF_T file_pos;           /* Current real file pointer  */
+    ATTR PIOOFF_T last_pos;           /* Last file position         */
+    ATTR size_t buffer_size;          /* Buffer size                */
+    ATTR INTVAL buffer_flags;         /* Buffer flags               */
+    ATTR unsigned char *buffer_start; /* Start of buffer            */
+    ATTR unsigned char *buffer_end;   /* End of buffer              */
+    ATTR unsigned char *buffer_next;  /* Current read/write pointer */
+
+/*
+
+=item C<void init()>
+
+Initializes a newly created FileHandle object.
+
+=cut
+
+*/
+
+    VTABLE void init() {
+        Parrot_FileHandle_attributes *data_struct =
+                mem_allocate_typed(Parrot_FileHandle_attributes);
+
+        PMC_data(SELF)            = data_struct;
+        data_struct->mode         = 0;
+        data_struct->flags        = 0;
+        data_struct->os_handle    = 0;
+        data_struct->file_size    = NULL;
+        data_struct->file_pos     = piooffsetzero;
+        data_struct->last_pos     = piooffsetzero;
+        data_struct->buffer_flags = 0;
+        data_struct->buffer_size  = 0;
+        data_struct->buffer_start = NULL;
+        data_struct->buffer_end   = NULL;
+        data_struct->buffer_next  = NULL;
+
+        PObj_active_destroy_SET(SELF);
+    }
+
+/*
+
+=item C<PMC *clone()>
+
+Create a copy of the filehandle.
+
+=cut
+
+*/
+
+    VTABLE PMC *clone() {
+        Parrot_FileHandle_attributes * const old_struct  = PARROT_FILEHANDLE(SELF);
+        PMC * const copy = Parrot_io_new_pmc(interp, old_struct->flags, old_struct->mode);
+        Parrot_FileHandle_attributes * const data_struct = PARROT_FILEHANDLE(SELF);
+
+        data_struct->os_handle    = Parrot_dup(old_struct->os_handle);
+
+        return copy;
+    }
+
+/*
+
+=item C<void destroy()>
+
+Free structures.
+
+=cut
+
+*/
+    VTABLE void destroy() {
+        if (PARROT_FILEHANDLE(SELF)) {
+            mem_sys_free(PARROT_FILEHANDLE(SELF));
+            PMC_data(SELF) = NULL;
+        }
+    }
+
+
+/*
+
+=back
+
+=head2 Methods
+
+=over 4
+
+=item C<METHOD open(STRING *file, STRING *mode)>
+
+Opens the file with the given mode. The returned filehandle is generally just a
+copy of the invocant.
+
+=cut
+
+*/
+
+    METHOD open(STRING *file, STRING *mode) {
+        PMC *filehandle;
+
+/*        filehandle = Parrot_io_open(INTERP, SELF, file, mode); */
+
+        RETURN(PMC *filehandle);
+    }
+
+/*
+
+=back
+
+=cut
+
+*/
+
+} /* end pmclass */
+
+/*
+ * Local variables:
+ *   c-file-style: "parrot"
+ * End:
+ * vim: expandtab shiftwidth=4:
+ */
