@@ -4,19 +4,20 @@ $Id: $
 
 =head1 NAME
 
-src/io/common.c - Common I/O functions
+src/io.c - Common I/O utility functions
 
 =head1 DESCRIPTION
 
-This file defines a set of utility functions used by all operating systems.
+This file defines a set of utility functions for I/O operations used by all
+operating systems. For the primary public I/O API, see F<src/io/api.c>.
 
 =cut
 
 */
 
 #include "parrot/parrot.h"
-#include "io_private.h"
-#include "pmc_filehandle.h"
+#include "io/io_private.h"
+#include "pmc/pmc_filehandle.h"
 
 /* HEADERIZER HFILE: include/parrot/io.h */
 
@@ -40,8 +41,8 @@ PARROT_WARN_UNUSED_RESULT
 INTVAL
 Parrot_io_parse_open_flags(PARROT_INTERP, ARGIN_NULLOK(STRING *flagstr))
 {
-    const char *flag_cstr;
-    const char *s;
+    char *flag_cstr;
+    char *s;
     INTVAL flags = 0;
 
     flag_cstr = string_to_cstring(interp, flagstr);
