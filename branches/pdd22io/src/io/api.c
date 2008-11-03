@@ -51,7 +51,7 @@ is used in Parrot ops.
 
 =item C<PMC * Parrot_io_new_pmc>
 
-Creates a new I/O filehandle object. The values of C<flags> and C<mode> are set
+Creates a new I/O filehandle object. The value of C<flags> is set
 in the returned PMC.
 
 =cut
@@ -62,12 +62,11 @@ PARROT_API
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 PMC *
-Parrot_io_new_pmc(PARROT_INTERP, INTVAL flags, INTVAL mode)
+Parrot_io_new_pmc(PARROT_INTERP, INTVAL flags)
 {
     PMC * const new_io = pmc_new(interp, enum_class_FileHandle);
 
     Parrot_io_set_flags(interp, new_io, flags);
-    Parrot_io_set_mode(interp, new_io, mode);
 
     return new_io;
 }

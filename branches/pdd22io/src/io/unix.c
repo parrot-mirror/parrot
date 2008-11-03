@@ -223,13 +223,12 @@ Parrot_io_open_unix(PARROT_INTERP, ARGMOD_NULLOK(PMC *filehandle),
             flags |= PIO_F_CONSOLE;
 
         if (PMC_IS_NULL(filehandle)) {
-            PMC *io = Parrot_io_new_pmc(interp, flags, DEFAULT_OPEN_MODE);
+            PMC *io = Parrot_io_new_pmc(interp, flags);
             Parrot_io_set_os_handle(interp, io, fd);
             return io;
         }
         else {
             Parrot_io_set_flags(interp, filehandle, flags);
-            Parrot_io_set_mode(interp, filehandle, DEFAULT_OPEN_MODE);
             Parrot_io_set_os_handle(interp, filehandle, fd);
             return filehandle;
         }
@@ -302,13 +301,12 @@ Parrot_io_fdopen_unix(PARROT_INTERP, ARGMOD(PMC *filehandle), PIOHANDLE fd, INTV
     flags |= PIO_F_SHARED;
 
     if (PMC_IS_NULL(filehandle)) {
-        PMC *io = Parrot_io_new_pmc(interp, flags, mode);
+        PMC *io = Parrot_io_new_pmc(interp, flags);
         Parrot_io_set_os_handle(interp, io, fd);
         return io;
     }
     else {
         Parrot_io_set_flags(interp, filehandle, flags);
-        Parrot_io_set_mode(interp, filehandle, mode);
         Parrot_io_set_os_handle(interp, filehandle, fd);
         return filehandle;
     }
@@ -632,7 +630,7 @@ Parrot_io_open_pipe_unix(PARROT_INTERP, ARGMOD(PMC *filehandle),
     if ((pid = fork()) > 0) {
         PMC *io;
         if (PMC_IS_NULL(filehandle)) 
-            io = Parrot_io_new_pmc(interp, 0, flags & (PIO_F_READ|PIO_F_WRITE));
+            io = Parrot_io_new_pmc(interp, flags & (PIO_F_READ|PIO_F_WRITE));
         else
             io = filehandle;
 
