@@ -88,7 +88,7 @@ Create a copy of the filehandle.
     VTABLE PMC *clone() {
         Parrot_FileHandle_attributes * const old_struct  = PARROT_FILEHANDLE(SELF);
         PMC * const copy = Parrot_io_new_pmc(interp, old_struct->flags, old_struct->mode);
-        Parrot_FileHandle_attributes * const data_struct = PARROT_FILEHANDLE(SELF);
+        Parrot_FileHandle_attributes * const data_struct = PARROT_FILEHANDLE(copy);
 
         data_struct->os_handle    = Parrot_dup(old_struct->os_handle);
 
@@ -106,6 +106,18 @@ Free structures.
 */
     VTABLE void destroy() {
         if (PARROT_FILEHANDLE(SELF)) {
+            Parrot_FileHandle_attributes *data_struct = PARROT_FILEHANDLE(SELF);
+
+            if (!Parrot_io_is_closed(INTERP, SELF))
+                Parrot_io_close(INTERP, SELF);
+
+            if (data_struct->buffer_start)
+                mem_sys_free(data_struct->buffer_start);
+            if (data_struct->buffer_end)
+                mem_sys_free(data_struct->buffer_end);
+            if (data_struct->buffer_next)
+                mem_sys_free(data_struct->buffer_next);
+
             mem_sys_free(PARROT_FILEHANDLE(SELF));
             PMC_data(SELF) = NULL;
         }
