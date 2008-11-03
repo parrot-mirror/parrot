@@ -588,13 +588,13 @@ Parrot_io_is_tty(PARROT_INTERP, ARGMOD(PMC *pmc))
 
 =back
 
-=head2 C<PIO_STD*> Functions
+=head2 C<Parrot_io_STD*> Functions
 
 =over 4
 
-=item C<PMC * PIO_STDIN>
+=item C<PMC * Parrot_io_STDIN>
 
-Returns the C<ParrotIO> PMC for C<stdin>.
+Returns the C<FileHandle> PMC for C<stdin>.
 
 =cut
 
@@ -604,16 +604,16 @@ PARROT_API
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 PMC *
-PIO_STDIN(PARROT_INTERP)
+Parrot_io_STDIN(PARROT_INTERP)
 {
     return _PIO_STDIN(interp);
 }
 
 /*
 
-=item C<PMC * PIO_STDOUT>
+=item C<PMC * Parrot_io_STDOUT>
 
-Returns the C<ParrotIO> PMC for C<stdout>.
+Returns the C<FileHandle> PMC for C<stdout>.
 
 =cut
 
@@ -623,16 +623,16 @@ PARROT_API
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 PMC *
-PIO_STDOUT(PARROT_INTERP)
+Parrot_io_STDOUT(PARROT_INTERP)
 {
     return _PIO_STDOUT(interp);
 }
 
 /*
 
-=item C<PMC * PIO_STDERR>
+=item C<PMC * Parrot_io_STDERR>
 
-Returns the C<ParrotIO> PMC for C<stderr>.
+Returns the C<FileHandle> PMC for C<stderr>.
 
 =cut
 
@@ -642,42 +642,9 @@ PARROT_API
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 PMC *
-PIO_STDERR(PARROT_INTERP)
+Parrot_io_STDERR(PARROT_INTERP)
 {
     return _PIO_STDERR(interp);
-}
-
-/*
-
-=back
-
-=head2 DOD-related Functions
-
-=over 4
-
-=item C<void Parrot_IOData_mark>
-
-Called from C<trace_active_PMCs()> to mark the IO data live.
-
-=cut
-
-*/
-
-PARROT_API
-void
-Parrot_IOData_mark(PARROT_INTERP, ARGIN(ParrotIOData *piodata))
-{
-    INTVAL i;
-    ParrotIOTable table = piodata->table;
-
-    /* this was i < PIO_NR_OPEN, but only standard handles 0..2 need
-     * to be kept alive AFAIK -leo
-     */
-    for (i = 0; i < 3; i++) {
-        if (table[i]) {
-            pobject_lives(interp, (PObj *)table[i]);
-        }
-    }
 }
 
 /*
