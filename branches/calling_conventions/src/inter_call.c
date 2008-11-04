@@ -2699,12 +2699,17 @@ Parrot_pcc_invoke_helper(PARROT_INTERP, ARGIN(PMC* obj), ARGIN(PMC *sub_obj),
 
     const char *x;
     const char *ret_x  = NULL;
+    int         index  = -1;
+    int         cur    = 0;
+    int   has_invocant = 0;
 
     /* Just make sure, we don't want to have to check for both NULL
        and PMCNULL throughout the entire function, so we will force
        everything to be PMCNULL */
     if (obj == NULL)
         obj = PMCNULL;
+    if (!PMC_IS_NULL(obj))
+        has_invocant = 1;
 
     indexes[0] = arg_indexes;
     indexes[1] = result_indexes;
@@ -2716,11 +2721,11 @@ Parrot_pcc_invoke_helper(PARROT_INTERP, ARGIN(PMC* obj), ARGIN(PMC *sub_obj),
        flag to determine whether we're making an ordinary subroutine call
        or a method call. */
     ctx = count_signature_elements(interp, signature, args_sig, results_sig,
-        PMC_IS_NULL(obj)?(0):(1));
+        has_invocant);
 
     /* This section here is a little bit of a hack, and I'm not sure it's
        doing all it should be doing and doing things it shouldn't be */
-    if (obj != PMCNULL) {
+    if (has_invocant) {
         PARROT_ASSERT(obj == VTABLE_get_pmc_keyed_int(interp, sig_obj, 0));
         indexes[0][0] = 0; /* Not sure what this does, exactly */
 
@@ -2758,11 +2763,11 @@ Parrot_pcc_invoke_helper(PARROT_INTERP, ARGIN(PMC* obj), ARGIN(PMC *sub_obj),
     dest = VTABLE_invoke(interp, sub_obj, NULL);
 
     /* PIR Subs need runops to run their opcodes. */
-    if (sub_obj->vtable->base_type == enum_class_Sub) {
+    if (!has_invocant && sub_obj->vtable->base_type == enum_class_Sub) {
         /* can't re-enter the runloop from here with CGP: RT #60048 */
         INTVAL old_core  = interp->run_core;
         opcode_t offset  = dest - interp->code->base.data;
-        if (interp->run_core = PARROT_CGP_CORE)
+        if (interp->run_core == PARROT_CGP_CORE)
             interp->run_core = PARROT_SLOW_CORE;
         runops(interp, offset);
         interp->run_core = old_core;
