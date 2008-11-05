@@ -147,7 +147,7 @@ static void null_val(int sig, ARGMOD(call_state *st))
         __attribute__nonnull__(2)
         FUNC_MODIFIES(*st);
 
-static void Parrot_pcc_invoke_helper(PARROT_INTERP,
+static void Parrot_pcc_invoke_from_sig_object(PARROT_INTERP,
     ARGIN(PMC* obj),
     ARGIN(PMC *sub_obj),
     ARGIN(PMC *sig_obj))
@@ -2362,7 +2362,7 @@ Parrot_pcc_invoke_sub_from_c_args(PARROT_INTERP, ARGIN(PMC *sub_obj),
     sig_obj = Parrot_build_sig_object_from_varargs(interp, sig, args);
     va_end(args);
 
-    Parrot_pcc_invoke_helper(interp, PMCNULL, sub_obj, sig_obj);
+    Parrot_pcc_invoke_from_sig_object(interp, PMCNULL, sub_obj, sig_obj);
     dod_unregister_pmc(interp, sig_obj);
 }
 
@@ -2454,7 +2454,7 @@ Parrot_PCCINVOKE(PARROT_INTERP, ARGIN(PMC* pmc), ARGMOD(STRING *method_name),
             "Method '%Ss' not found", method_name);
 
     /* Invoke the subroutine object with the given CallSignature object */
-    Parrot_pcc_invoke_helper(interp, pmc, sub_obj, sig_obj);
+    Parrot_pcc_invoke_from_sig_object(interp, pmc, sub_obj, sig_obj);
     dod_unregister_pmc(interp, sig_obj);
 
 #else
@@ -2642,12 +2642,12 @@ void
 Parrot_pcc_invoke_sub_from_sig_object(PARROT_INTERP, ARGIN(PMC *sub_obj),
         ARGIN(PMC *sig_obj))
 {
-    Parrot_pcc_invoke_helper(interp, PMCNULL, sub_obj, sig_obj);
+    Parrot_pcc_invoke_from_sig_object(interp, PMCNULL, sub_obj, sig_obj);
 }
 
 /*
 
-=item C<static void Parrot_pcc_invoke_helper>
+=item C<static void Parrot_pcc_invoke_from_sig_object>
 
 Handles the actual function call. Takes a PMC object (for method calls, can
 be C<PMCNULL> if this isn't a method call), a sub object, and a sig object
@@ -2662,7 +2662,7 @@ calls to this function directly.
 */
 
 static void
-Parrot_pcc_invoke_helper(PARROT_INTERP, ARGIN(PMC* obj), ARGIN(PMC *sub_obj),
+Parrot_pcc_invoke_from_sig_object(PARROT_INTERP, ARGIN(PMC* obj), ARGIN(PMC *sub_obj),
         ARGIN(PMC *sig_obj))
 {
 #define PCC_ARG_MAX 1024
