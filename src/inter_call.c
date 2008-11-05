@@ -147,15 +147,6 @@ static void null_val(int sig, ARGMOD(call_state *st))
         __attribute__nonnull__(2)
         FUNC_MODIFIES(*st);
 
-static void Parrot_pcc_invoke_from_sig_object(PARROT_INTERP,
-    ARGIN(PMC* obj),
-    ARGIN(PMC *sub_obj),
-    ARGIN(PMC *sig_obj))
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(2)
-        __attribute__nonnull__(3)
-        __attribute__nonnull__(4);
-
 static const char * set_context_sig_params(PARROT_INTERP,
     ARGIN(const char *signature),
     ARGMOD(INTVAL *n_regs_used),
@@ -2035,8 +2026,8 @@ count_signature_elements(PARROT_INTERP, ARGIN(const char *signature),
 
 =item C<static void commit_last_arg_sig_object>
 
-Called by Parrot_pcc_invoke_sub_from_sig_object when it reaches the end of each arg
-in the arg signature.  See C<Parrot_pcc_invoke_sub_from_sig_object> for signature
+Called by Parrot_pcc_invoke_from_sig_object when it reaches the end of each arg
+in the arg signature.  See C<Parrot_pcc_invoke_from_sig_object> for signature
 syntax.
 
 =cut
@@ -2101,7 +2092,7 @@ commit_last_arg_sig_object(PARROT_INTERP, int index, int cur,
             default:
                 Parrot_ex_throw_from_c_args(interp, NULL,
                     EXCEPTION_INVALID_OPERATION,
-                    "Parrot_pcc_invoke_sub_from_sig_object: invalid reg type");
+                    "Parrot_pcc_invoke_from_sig_object: invalid reg type");
         }
     }
 }
@@ -2159,7 +2150,7 @@ set_context_sig_returns(PARROT_INTERP, ARGMOD(Parrot_Context *ctx),
                 default:
                     Parrot_ex_throw_from_c_args(interp, NULL,
                         EXCEPTION_INVALID_OPERATION,
-                        "Parrot_pcc_invoke_sub_from_sig_object: invalid reg type %c!", *x);
+                        "Parrot_pcc_invoke_from_sig_object: invalid reg type %c!", *x);
             }
 
             /* invalidate the CPointer's pointers so that GC doesn't try to
@@ -2241,7 +2232,7 @@ set_context_sig_returns_varargs(PARROT_INTERP, ARGMOD(Parrot_Context *ctx),
 
 Sets the subroutine arguments in the C<ctx> context, according to the
 signature string C<signature>. Currently this function is only called
-from C<Parrot_pcc_invoke_sub_from_sig_object>, but eventually when
+from C<Parrot_pcc_invoke_from_sig_object>, but eventually when
 things are unified enough it should be called from C<Parrot_PCCINVOKE>
 as well. The only difference currently between the two implementations
 are the calls to C<commit_last_arg_sig_object> and C<commit_last_arg>.
@@ -2308,7 +2299,7 @@ set_context_sig_params(PARROT_INTERP, ARGIN(const char *signature),
                 default:
                   Parrot_ex_throw_from_c_args(interp, NULL,
                     EXCEPTION_INVALID_OPERATION,
-                    "Parrot_pcc_invoke_sub_from_sig_object: invalid reg type %c!", *x);
+                    "Parrot_pcc_invoke_from_sig_object: invalid reg type %c!", *x);
             }
 
         }
@@ -2323,7 +2314,7 @@ set_context_sig_params(PARROT_INTERP, ARGIN(const char *signature),
                 default:
                     Parrot_ex_throw_from_c_args(interp, NULL,
                         EXCEPTION_INVALID_OPERATION,
-                        "Parrot_pcc_invoke_sub_from_sig_object: invalid adverb type %c!", *x);
+                        "Parrot_pcc_invoke_from_sig_object: invalid adverb type %c!", *x);
             }
         }
     }
@@ -2341,7 +2332,7 @@ set_context_sig_params(PARROT_INTERP, ARGIN(const char *signature),
 
 /*
 
-=item C<void Parrot_pcc_invoke_sub_from_c_args>
+=item C<void Parrot_pcc_invoke_from_c_args>
 
 Follows the same conventions as C<Parrot_PCCINVOKE>, but the subroutine object
 to invoke is passed as an argument rather than looked up by name. The signature
@@ -2627,41 +2618,20 @@ Parrot_PCCINVOKE(PARROT_INTERP, ARGIN(PMC* pmc), ARGMOD(STRING *method_name),
 
 /*
 
-=item C<void Parrot_pcc_invoke_sub_from_sig_object>
-
-Follows the same conventions as C<Parrot_PCCINVOKE>, but the subroutine object
-to invoke is passed as an argument rather than looked up by name, and the
-signature string and call arguments are passed in a CallSignature PMC.
-
-=cut
-
-*/
-
-PARROT_API
-void
-Parrot_pcc_invoke_sub_from_sig_object(PARROT_INTERP, ARGIN(PMC *sub_obj),
-        ARGIN(PMC *sig_obj))
-{
-    Parrot_pcc_invoke_from_sig_object(interp, PMCNULL, sub_obj, sig_obj);
-}
-
-/*
-
 =item C<static void Parrot_pcc_invoke_from_sig_object>
 
 Handles the actual function call. Takes a PMC object (for method calls, can
 be C<PMCNULL> if this isn't a method call), a sub object, and a sig object
 to make the function call.
 
-Eventually, all calls to Parrot_pcc_invoke_sub_from_sig_object and
-Parrot_PCCINVOKE (and maybe a few others) will all be converted to be
-calls to this function directly.
+Eventually, all calls to Parrot_PCCINVOKE (and maybe a few others) will
+all be converted to be calls to this function directly.
 
 =cut
 
 */
 
-static void
+void
 Parrot_pcc_invoke_from_sig_object(PARROT_INTERP, ARGIN(PMC* obj), ARGIN(PMC *sub_obj),
         ARGIN(PMC *sig_obj))
 {
