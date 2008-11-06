@@ -39,6 +39,8 @@ src/builtins/inplace.pir - Inplace assignments
     unless ro goto ro_ok
     'die'('Cannot assign to readonly variable.')
   ro_ok:
+    $I0 = defined source
+    unless $I0 goto do_assign
     getprop type, 'type', cont
     if null type goto do_assign
     $I0 = type.'ACCEPTS'(source)
