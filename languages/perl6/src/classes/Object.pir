@@ -49,6 +49,29 @@ Return the scalar as a Hash.
 
 .namespace ['Perl6Object']
 
+=item !VALUE()
+
+Default implementation gives reference type semantics, and returns an object
+reference, unless the thing already is one.
+
+=cut
+
+.sub '!VALUE' :method
+    $I0 = isa self, 'ObjectRef'
+    unless $I0 goto not_ref
+    .return (self)
+  not_ref:
+    $P0 = new 'ObjectRef', self
+    .return ($P0)
+.end
+
+
+=item hash()
+
+Return a hash representation of ourself.
+
+=cut
+
 .sub 'hash' :method
     $P0 = self.'list'()
     .return $P0.'hash'()

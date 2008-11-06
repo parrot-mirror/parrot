@@ -65,7 +65,7 @@ pmclass ObjectRef need_ext dynpmc group perl6_group {
     VTABLE INTVAL isa_pmc(PMC *lookup) {
         PMC * value;
         if (SUPER(lookup)) return 1;
-        /* PMCProxy_does sends us a proxied Mutable with no value */
+        /* PMCProxy_does sends us a proxied ObjectRef with no value */
         if (!PMC_data(SELF)) return 0;
         GET_ATTR_value(INTERP, SELF, value);
         return VTABLE_isa_pmc(INTERP, value, lookup);
@@ -74,7 +74,7 @@ pmclass ObjectRef need_ext dynpmc group perl6_group {
     VTABLE INTVAL isa(STRING *classname) {
         PMC * value;
         if (SUPER(classname)) return 1;
-        /* PMCProxy_does sends us a proxied Mutable with no value */
+        /* PMCProxy_does sends us a proxied ObjectRef with no value */
         if (!PMC_data(SELF)) return 0;
         GET_ATTR_value(INTERP, SELF, value);
         return VTABLE_isa(INTERP, value, classname);
@@ -82,7 +82,7 @@ pmclass ObjectRef need_ext dynpmc group perl6_group {
 
     VTABLE INTVAL does_pmc(PMC *role) {
         PMC * value;
-        /* PMCProxy_does sends us a proxied Mutable with no value */
+        /* PMCProxy_does sends us a proxied ObjectRef with no value */
         if (!PMC_data(SELF)) return 0;
         GET_ATTR_value(INTERP, SELF, value);
         return VTABLE_does_pmc(INTERP, value, role);
@@ -90,7 +90,7 @@ pmclass ObjectRef need_ext dynpmc group perl6_group {
 
     VTABLE INTVAL does(STRING *role) {
         PMC * value;
-        /* PMCProxy_does sends us a proxied Mutable with no value */
+        /* PMCProxy_does sends us a proxied ObjectRef with no value */
         if (!PMC_data(SELF)) return 0;
         GET_ATTR_value(INTERP, SELF, value);
         return VTABLE_does(INTERP, value, role);
