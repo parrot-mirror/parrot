@@ -25,8 +25,7 @@ src/classes/Array.pir - Perl 6 Array class and related functions
     $I0 = elements values
     splice $P0, values, 0, $I0
     $P0.'!flatten'()
-    $P1 = new 'Perl6Scalar'
-    assign $P1, $P0
+    $P1 = new 'ObjectRef', $P0
     .return ($P1)
 .end
 
