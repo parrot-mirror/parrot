@@ -137,8 +137,7 @@ pmclass ObjectRef need_ext dynpmc group perl6_group {
     }
 
     VTABLE void morph(INTVAL type) {
-        Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
-            "Cannot morph a Perl6Scalar.");
+        /* XXX For now silently do nothing - so copy op on us works. */
     }
 
     /* We don't want any of these to be touched */

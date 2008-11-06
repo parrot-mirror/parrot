@@ -40,12 +40,6 @@ src/classes/Hash.pir - Perl 6 Hash class and related functions
     .return self.'contains'(topic)
 .end
 
-.sub 'infix:=' :method
-    .param pmc source
-    $P0 = source.'hash'()
-    copy self, $P0
-    .return (self)
-.end
 
 .sub 'delete' :method
     .param pmc keys :slurpy

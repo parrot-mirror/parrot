@@ -18,17 +18,6 @@ src/classes/Array.pir - Perl 6 Array class and related functions
 .end
 
 
-.namespace ['Perl6Array']
-.sub 'infix:=' :method
-    .param pmc source
-    $P0 = get_hll_global 'list'
-    $P0 = $P0(source)
-    $I0 = elements self
-    splice self, $P0, 0, $I0
-    .return (self)
-.end
-
-
 .namespace []
 .sub 'circumfix:[ ]'
     .param pmc values          :slurpy
