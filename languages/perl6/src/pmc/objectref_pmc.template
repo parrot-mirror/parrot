@@ -56,46 +56,6 @@ pmclass ObjectRef need_ext dynpmc group perl6_group {
         PMC_data(SELF) = NULL;
     }
 
-    VTABLE void assign_pmc(PMC *value) {
-        STRING *s_mutable = string_from_literal(INTERP, "ObjectRef");
-        STRING *s_ro = string_from_literal(INTERP, "readonly");
-        PMC *type_obj;
-        PMC *ro;
-
-        /* Check that the read-only property isn't set. */
-        ro = VTABLE_getprop(INTERP, SELF, s_ro);
-        if (!PMC_IS_NULL(ro) && VTABLE_get_bool(INTERP, ro))
-            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
-                "Cannot assign to readonly variable");
-
-        /* Chase down the mutable chain until we get a value. */
-        while (VTABLE_isa(INTERP, value, s_mutable))
-            GET_ATTR_value(INTERP, value, value);
-
-        /* Do we need to do any type-check? */
-        GET_ATTR_cached_type(INTERP, SELF, type_obj);
-        if (PMC_IS_NULL(type_obj)) {
-            STRING *s_type = string_from_literal(INTERP, "type");
-            type_obj = VTABLE_getprop(INTERP, SELF, s_type);
-            if (!PMC_IS_NULL(type_obj))
-                SET_ATTR_cached_type(INTERP, SELF, type_obj);
-        }
-
-        if (!PMC_IS_NULL(type_obj)) {
-            STRING *checker_name = string_from_literal(INTERP, "!DOTYPECHECK");
-            PMC *checker = Parrot_find_global_n(interp,
-                Parrot_get_ctx_HLL_namespace(interp), checker_name);
-            PMC *result = pmc_new(INTERP, enum_class_Integer);
-            Parrot_runops_fromc_args(INTERP, checker, "vPPP", type_obj, value, result);
-            if (!VTABLE_get_bool(INTERP, result))
-                Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
-                    "Type check failed");
-        }
-
-        /* Stash the value. */
-        SET_ATTR_value(INTERP, SELF, value);
-    }
-
     VTABLE PMC * get_pmc() {
         PMC * value;
         GET_ATTR_value(INTERP, SELF, value);
