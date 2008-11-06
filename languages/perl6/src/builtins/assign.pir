@@ -33,7 +33,12 @@ src/builtins/inplace.pir - Inplace assignments
     unless $I0 goto have_source
     source = source.'item'()
   have_source:
-    .local pmc type
+    .local pmc ro, type
+    getprop ro, 'readonly', cont
+    if null ro goto ro_ok
+    unless ro goto ro_ok
+    'die'('Cannot assign to readonly variable.')
+  ro_ok:
     getprop type, 'type', cont
     if null type goto do_assign
     $I0 = type.'ACCEPTS'(source)
