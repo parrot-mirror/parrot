@@ -100,6 +100,14 @@ pmclass ObjectRef need_ext dynpmc group perl6_group {
         /* XXX For now silently do nothing - so copy op on us works. */
     }
 
+    VTABLE PMC * clone() {
+        PMC * value;
+        PMC * copy;
+        GET_ATTR_value(INTERP, SELF, value);
+        copy = pmc_new_init(INTERP, SELF->vtable->base_type, value);
+        return copy;
+    }
+
     /* We don't want any of these to be touched */
     /* VTABLE PMC * getprop() */
     /* VTABLE PMC * setprop() */
