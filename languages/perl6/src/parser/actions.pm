@@ -1172,7 +1172,7 @@ method signature($/) {
                     PAST::Op.new(
                         :inline(
                             '    %r = new "Perl6Scalar"',
-                            '    %r."infix:="(%0)'
+                            '    "infix:="(%r, %0)'
                         ),
                         PAST::Var.new(
                             :name($parameter.name()),
@@ -2732,7 +2732,7 @@ method EXPR($/, $key) {
 
         # and assign result to target
         my $past := PAST::Op.new(
-            :inline("    %r = %1.'infix:='(%0)"),
+            :inline("    %r = 'infix:='(%1, %0)"),
             :node($/),
             $call,
             $target

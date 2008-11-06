@@ -17,6 +17,48 @@ src/builtins/inplace.pir - Inplace assignments
 ##   -- these will likely be handled by compiler translation --Pm
 
 
+.sub 'infix:='
+    .param pmc cont
+    .param pmc source
+
+    $I0 = isa cont, 'ObjectRef'
+    if $I0 goto object_ref
+    $I0 = isa cont, 'Perl6Array'
+    if $I0 goto array
+    $I0 = isa cont, 'Perl6Hash'
+    if $I0 goto hash
+
+  object_ref:
+    $I0 = can source, 'item'
+    unless $I0 goto have_source
+    source = source.'item'()
+  have_source:
+    .local pmc type
+    getprop type, 'type', cont
+    if null type goto do_assign
+    $I0 = type.'ACCEPTS'(source)
+    if $I0 goto do_assign
+    'die'("Type mismatch in assignment.")
+  do_assign:
+    eq_addr cont, source, skip_copy
+    copy cont, source
+  skip_copy:
+    .return (cont)
+
+  array:
+    $P0 = get_hll_global 'list'
+    $P0 = $P0(source)
+    $I0 = elements cont
+    splice cont, $P0, 0, $I0
+    .return (cont)
+
+  hash:
+    $P0 = source.'hash'()
+    copy cont, $P0
+    .return (cont)
+.end
+
+
 .sub 'infix:~='
     .param pmc a
     .param pmc b
@@ -78,7 +120,7 @@ src/builtins/inplace.pir - Inplace assignments
     .param pmc a
     .param pmc b
     pow $P0, a, b
-    a.'infix:='($P0)
+    'infix:='(a, $P0)
     .return (a)
 .end
 
