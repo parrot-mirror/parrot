@@ -22,16 +22,18 @@ The FileHandle PMC performs I/O operations on a source or destination file.
 
 
 pmclass FileHandle need_ext {
-    ATTR INTVAL flags;                /* Filehandle flags           */
-    ATTR PIOHANDLE os_handle;         /* Low level OS descriptor    */
-    ATTR PIOOFF_T file_size;          /* Current file size          */
-    ATTR PIOOFF_T file_pos;           /* Current real file pointer  */
-    ATTR PIOOFF_T last_pos;           /* Last file position         */
-    ATTR size_t buffer_size;          /* Buffer size                */
-    ATTR INTVAL buffer_flags;         /* Buffer flags               */
-    ATTR unsigned char *buffer_start; /* Start of buffer            */
-    ATTR unsigned char *buffer_end;   /* End of buffer              */
-    ATTR unsigned char *buffer_next;  /* Current read/write pointer */
+    ATTR INTVAL flags;                /* Filehandle flags             */
+    ATTR STRING *filename;            /* The opened path and filename */
+    ATTR STRING *mode;                /* The mode string used in open */
+    ATTR PIOHANDLE os_handle;         /* Low level OS descriptor      */
+    ATTR PIOOFF_T file_size;          /* Current file size            */
+    ATTR PIOOFF_T file_pos;           /* Current real file pointer    */
+    ATTR PIOOFF_T last_pos;           /* Last file position           */
+    ATTR size_t buffer_size;          /* Buffer size                  */
+    ATTR INTVAL buffer_flags;         /* Buffer flags                 */
+    ATTR unsigned char *buffer_start; /* Start of buffer              */
+    ATTR unsigned char *buffer_end;   /* End of buffer                */
+    ATTR unsigned char *buffer_next;  /* Current read/write pointer   */
 
 /*
 
@@ -49,6 +51,8 @@ Initializes a newly created FileHandle object.
 
         PMC_data(SELF)            = data_struct;
         data_struct->flags        = 0;
+        data_struct->mode         = NULL;
+        data_struct->filename     = NULL;
         data_struct->file_size    = 0;
         data_struct->file_pos     = piooffsetzero;
         data_struct->last_pos     = piooffsetzero;
@@ -69,7 +73,7 @@ Initializes a newly created FileHandle object.
         data_struct->os_handle    = (PIOHANDLE)NULL;
 #endif
 
-
+        PObj_custom_mark_SET(SELF);
         PObj_active_destroy_SET(SELF);
     }
 
@@ -91,6 +95,24 @@ Create a copy of the filehandle.
         data_struct->os_handle    = Parrot_dup(old_struct->os_handle);
 
         return copy;
+    }
+
+/*
+
+=item C<void mark()>
+
+Mark active filehandle data as live.
+
+=cut
+
+*/
+
+    VTABLE void mark() {
+        Parrot_FileHandle_attributes * const data_struct = PARROT_FILEHANDLE(SELF);
+        if (data_struct->mode)
+            pobject_lives(interp, (PObj *)data_struct->mode);
+        if (data_struct->filename)
+            pobject_lives(interp, (PObj *)data_struct->filename);
     }
 
 /*
@@ -130,28 +152,45 @@ Free structures.
 
 =over 4
 
-=item C<METHOD open(STRING *path, STRING *mode :optional)>
+=item C<METHOD open(STRING *filename :optional, STRING *mode :optional)>
 
-Opens the file at the given path with the given mode. The invocant is modified
-and becomes an open filehandle. A copy of the invocant is also returned by the
-method (some subclasses may use this as the primary filehandle, rather than
-modifying the invocant).
+Opens the file at the given filename (including path) with the given mode. The
+invocant is modified and becomes an open filehandle. A copy of the invocant is
+also returned by the method (some subclasses may create this as the primary
+filehandle, rather than modifying the invocant).
 
 =cut
 
 */
 
-    METHOD open(STRING *path, STRING *mode :optional, INTVAL got_mode :opt_flag) {
+    METHOD open(STRING *filename :optional, INTVAL got_filename :opt_flag,
+                STRING *mode :optional, INTVAL got_mode :opt_flag) {
         PMC *filehandle;
 
         if (!Parrot_io_is_closed(INTERP, SELF))
             Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_PIO_ERROR,
-                                "Filehandle is already open");
+                                "Cannot reopen already open filehandle");
 
-        if (got_mode)
-            filehandle = Parrot_io_open(INTERP, SELF, path, mode);
-        else
-            filehandle = Parrot_io_open(INTERP, SELF, path, NULL);
+        if (got_filename && got_mode) {
+            SET_ATTR_filename(INTERP, SELF, string_copy(INTERP, filename));
+            SET_ATTR_mode(INTERP, SELF, string_copy(INTERP, mode));
+            filehandle = Parrot_io_open(INTERP, SELF, filename, mode);
+        }
+        else if (got_filename) {
+            SET_ATTR_filename(INTERP, SELF, string_copy(INTERP, filename));
+            filehandle = Parrot_io_open(INTERP, SELF, filename, NULL);
+        }
+        else {
+            /* When no options are passed, reopen the same file as before */
+            STRING *reopen_filename, *reopen_mode;
+            GET_ATTR_filename(INTERP, SELF, reopen_filename);
+            GET_ATTR_mode(INTERP, SELF, reopen_mode);
+
+            if (STRING_IS_NULL(reopen_filename))
+                Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_PIO_ERROR,
+                                "Cannot reopen filehandle, no filename stored");
+            filehandle = Parrot_io_open(INTERP, SELF, reopen_filename, reopen_mode);
+        }
 
         RETURN(PMC *filehandle);
     }
@@ -169,6 +208,63 @@ Close the filehandle.
     METHOD close() {
 
         Parrot_io_close(INTERP, SELF);
+    }
+
+/*
+
+=item C<METHOD read(INTVAL bytes)>
+
+Read the given number of bytes from the filehandle and return them in a string.
+
+=cut
+
+*/
+
+    METHOD read(INTVAL bytes) {
+        STRING *string_result = Parrot_io_reads(INTERP, SELF, bytes);
+        RETURN(STRING *string_result);
+    }
+
+/*
+
+=item C<METHOD print([INTVAL|FLOATVAL|STRING *|PMC*] value)>
+
+Print the passed in integer, number, string, or PMC to the filehandle.
+
+=cut
+
+*/
+
+    METHOD print(INTVAL    int_val :optional, INTVAL got_int :opt_flag,
+                 FLOATVAL  num_val :optional, INTVAL got_num :opt_flag,
+                 STRING   *str_val :optional, INTVAL got_str :opt_flag,
+                 PMC      *pmc_val :optional, INTVAL got_pmc :opt_flag) {
+        STRING *string_to_print;
+
+        if (got_int && !(got_num || got_str || got_pmc)) {
+            string_to_print = Parrot_sprintf_c(interp, INTVAL_FMT, int_val);
+        }
+        else if (got_num && !(got_str || got_pmc)) {
+            string_to_print = Parrot_sprintf_c(interp, FLOATVAL_FMT, num_val);
+        }
+        else if (got_str && !(got_pmc)) {
+            string_to_print = str_val;
+        }
+        else if (got_pmc) {
+            string_to_print = VTABLE_get_string(INTERP, pmc_val);
+        }
+        else if ( !got_int && !got_num && !got_str && !got_pmc ) {
+            Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_PIO_ERROR,
+                    "Not enough arguments passed to 'print', must pass either an ",
+                    "integer, number, string, or PMC");
+        }
+        else {
+            Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_PIO_ERROR,
+                    "Too many arguments passed to 'print', must pass either an ",
+                    "integer, number, string, or PMC");
+        }
+
+        Parrot_io_putps(interp, SELF, string_to_print);
     }
 
 /*
