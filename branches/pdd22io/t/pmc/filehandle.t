@@ -6,7 +6,7 @@ use strict;
 use warnings;
 use lib qw( . lib ../lib ../../lib );
 use Test::More;
-use Parrot::Test tests => 6;
+use Parrot::Test tests => 8;
 
 =head1 NAME
 
@@ -35,53 +35,59 @@ OUT
 # L<PDD22/I\/O PMC API/=item open.*=item close>
 pir_output_is( <<'CODE', <<'OUT', 'open and close - synchronous' );
 .sub 'test' :main
-    $P0 = new 'FileHandle'
-    $P0.open('README')
-    say 'ok 1 - $P0.open($S1)'
+    $P1 = new 'FileHandle'
+    $P1.open('README')
+    say 'ok 1 - $P1.open($S1)'
 
-    $P0.close()
-    say 'ok 2 - $P0.close()'
+    $P1.close()
+    say 'ok 2 - $P1.close()'
 
-    $P0.open('README', 'rw')
-    say 'ok 3 - $P0.open($S1, $S2) # rw mode'
+    $P3 = new 'FileHandle'
+    $P3.open('README', 'rw')
+    say 'ok 3 - $P3.open($S1, $S2) # rw mode'
+    $P3.close()
 
-    $P0.close()
-    $P0.open()
-    say 'ok 4 - $P0.open()'
+    $P3.open()
+    say 'ok 4 - $P3.open()         # reopening'
+    $P3.close()
 
   test_5:
+    $P5 = new 'FileHandle'
     push_eh eh_bad_file_1
-    $P0.open('bad_file')
+    $P5.open('bad_file')
     pop_eh
 
   test_6:
+    $P6 = new 'FileHandle'
     push_eh eh_bad_file_2
-    $P0.open('bad_file', 'r')
+    $P6.open('bad_file', 'r')
     pop_eh
 
   test_7:
-    $P0.open('new_file', 'w')
-    say 'ok 6 - $P0.open($S1, $S2) # new file, write mode succeeds'
+    $P7 = new 'FileHandle'
+    $P7.open('new_file', 'w')
+    say 'ok 7 - $P7.open($S1, $S2) # new file, write mode succeeds'
 
     goto end
 
   eh_bad_file_1:
-    say 'ok 5 - $P0.open($S1)      # with bad file'
+    say 'ok 5 - $P5.open($S1)      # with bad file'
     goto test_6
 
   eh_bad_file_2:
-    say "ok 6 - $P0.open('bad_file', 'r') # with bad file"
+    say "ok 6 - $P6.open($S1, $S2) # with bad file"
     goto test_7
 
   end:
 .end
 CODE
-ok 1 - $P0.open($S1)
-ok 2 - $P0.close()
-ok 3 - $P0.open($S1, $S2) # rw mode
-ok 4 - $P0.open()
-ok 5 - $P0.open($S1)      # with bad file
-ok 6 - $P0.open($S1, $S2) # new file, write mode succeeds
+ok 1 - $P1.open($S1)
+ok 2 - $P1.close()
+ok 3 - $P3.open($S1, $S2) # rw mode
+ok 4 - $P3.open()         # reopening
+ok 5 - $P5.open($S1)      # with bad file
+ok 6 - $P6.open($S1, $S2) # with bad file
+ok 7 - $P7.open($S1, $S2) # new file, write mode succeeds
 OUT
 
 # should be in the PIR code
@@ -120,6 +126,77 @@ ok 3 - $P0.open($S1, $S2)
 ok 4 - $P0.open()
 OUT
 }
+
+# L<PDD22/I\/O PMC API/=item read>
+pir_output_is(
+    <<'CODE', <<'OUT', 'read - synchronous' );
+.sub 'test' :main
+    $P0 = new 'FileHandle'
+    $P0.open('README')
+
+    $S0 = $P0.read(14) # bytes
+    if $S0 == 'This is Parrot' goto ok_1
+    print 'not '
+  ok_1:
+    say 'ok 1 - $S0 = $P1.read($I2)'
+
+    $S0 = $P0.read(9)  # bytes
+    if $S0 == ', version' goto ok_2
+    print 'not '
+  ok_2:
+    say 'ok 2 - $S0 = $P1.read($I2) # again on same stream'
+.end
+CODE
+ok 1 - $S0 = $P1.read($I2)
+ok 2 - $S0 = $P1.read($I2) # again on same stream
+OUT
+
+# L<PDD22/I\/O PMC API/=item print>
+pir_output_is( <<'CODE', <<'OUT', 'print - synchronous' );
+.sub 'test' :main
+
+    $P0 = new 'FileHandle'
+    $P0.open('temp', 'w')
+
+    $P0.print(123)
+    say 'ok 1 - $P0.print($I1)'
+    $P0.print(456.789)
+    say 'ok 2 - $P0.print($N1)'
+    $P0.print("squawk\n")
+    say 'ok 3 - $P0.print($S1)'
+    $P1 = new 'Integer'
+    $P1 = 42
+    $P0.print($P1)
+    say 'ok 4 - $P0.print($P1)'
+
+    $P0.close()
+
+    $P1 = new 'FileHandle'
+    $P1.open('temp', 'r')
+
+    $S0 = $P1.read(3) # bytes
+    if $S0 == "123" goto ok_5
+    print 'not '
+  ok_5:
+    say 'ok 5 - read string back from file'
+
+    $S0 = $P1.read(16) # bytes
+    if $S0 == "456.789squawk\n42" goto ok_6
+    print $S0
+    print "\n"
+    print 'not '
+  ok_6:
+    say 'ok 6 - read string back from file'
+
+    $P1.close()
+.end
+CODE
+ok 1 - $P0.print($I1)
+ok 2 - $P0.print($N1)
+ok 3 - $P0.print($S1)
+ok 4 - $P0.print($P1)
+ok 5 - read string back from file
+OUT
 
 # L<PDD22/I\/O PMC API/=item print.*=item readline>
 pir_output_is(
