@@ -29,6 +29,17 @@ symbols for C<Bool::True> and C<Bool::False>.
 .end
 
 
+=item !VALUE
+
+This is a value type, so just returns itself.
+
+=cut
+
+.sub '!VALUE' :method
+    .return (self)
+.end
+
+
 .sub 'ACCEPTS' :method
     .param pmc topic
     .return (self)

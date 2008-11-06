@@ -21,6 +21,17 @@ src/classes/Range.pir - methods for the Range class
 .end
 
 
+=item !VALUE
+
+This is a value type, so just returns itself.
+
+=cut
+
+.sub '!VALUE' :method
+    .return (self)
+.end
+
+
 =item VTABLE_get integer (vtable method)
 
 =item VTABLE_get_number (vtable method)

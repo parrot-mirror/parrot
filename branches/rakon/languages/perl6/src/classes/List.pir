@@ -20,6 +20,34 @@ src/classes/List.pir - Perl 6 List class and related functions
     '!EXPORT'('first grep keys kv map pairs reduce values', $P0)
 .end
 
+
+=item !VALUE
+
+When we're going to be stored as an item, become an Array and then return
+ourself in a ObjectRef.
+
+=cut
+
+.sub '!VALUE' :method
+    # Create an array with our values.
+    .local pmc array, it
+    array = get_hll_global "Array"
+    array = array.'new'()
+    it = iter self
+  it_loop:
+    unless it goto it_loop_end
+    $P0 = shift it
+    push array, $P0
+    goto it_loop
+  it_loop_end:
+
+    # Wrap it up in an object ref and return it.
+    .local pmc ref
+    ref = new 'ObjectRef', array
+    .return (ref)
+.end
+
+
 =item clone()    (vtable method)
 
 Return a clone of this list.  (Clones its elements also.)

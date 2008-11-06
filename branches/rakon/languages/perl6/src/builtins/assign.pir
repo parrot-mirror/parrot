@@ -29,9 +29,9 @@ src/builtins/inplace.pir - Inplace assignments
     if $I0 goto hash
 
   object_ref:
-    $I0 = can source, 'item'
+    $I0 = can source, '!VALUE'
     unless $I0 goto have_source
-    source = source.'item'()
+    source = source.'!VALUE'()
   have_source:
     .local pmc ro, type
     getprop ro, 'readonly', cont

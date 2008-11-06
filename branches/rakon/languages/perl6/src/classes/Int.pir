@@ -25,6 +25,17 @@ Int - Perl 6 integers
 .end
 
 
+=item !VALUE
+
+This is a value type, so just returns itself.
+
+=cut
+
+.sub '!VALUE' :method
+    .return (self)
+.end
+
+
 =item ACCEPTS()
 
 =cut
