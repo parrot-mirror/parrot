@@ -47,7 +47,7 @@ and Mappings to be converted into Array(ref) and Hash(ref).
     source = source.'item'()
   have_source:
 
-    $I0 = isa self, 'Mutable'
+    $I0 = isa self, 'ObjectRef'
     unless $I0 goto copy
     assign self, source
     goto end
