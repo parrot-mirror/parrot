@@ -35,22 +35,14 @@ src/classes/Array.pir - Perl 6 Array class and related functions
 
 =over 4
 
-=item delete(indices :slurpy)
-
-Delete the elements specified by C<indices> from the array
-(i.e., replace them with null).  We also shorten the array
-to the length of the last non-null (existing) element.
-
-=cut
-
-.namespace ['Perl6Array']
-
 =item !VALUE()
 
 Returns an ObjectRef referencing itself, unless it already is one in which
 case just returns as is.
 
 =cut
+
+.namespace ['Perl6Array']
 
 .sub '!VALUE' :method
     $I0 = isa self, 'ObjectRef'

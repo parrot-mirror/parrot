@@ -28,25 +28,14 @@ ourself in a ObjectRef.
 
 =cut
 
+.namespace ['List']
 .sub '!VALUE' :method
-    # Create an array with our values.
-    .local pmc array, it
-    array = get_hll_global "Array"
-    array = array.'new'()
-    it = iter self
-  it_loop:
-    unless it goto it_loop_end
-    $P0 = shift it
-    push array, $P0
-    goto it_loop
-  it_loop_end:
-
-    # Wrap it up in an object ref and return it.
-    .local pmc ref
-    ref = new 'ObjectRef', array
-    .return (ref)
+    # promote the list to an Array
+    $P0 = new 'Perl6Array'
+    splice $P0, self, 0, 0
+    # and return its !VALUE
+    .tailcall $P0.'!VALUE'()
 .end
-
 
 =item clone()    (vtable method)
 
@@ -136,12 +125,6 @@ Return the List invocant in scalar context (i.e., an Array).
 
 =cut
 
-.sub 'item' :method
-    $P0 = new 'Perl6Array'
-    splice $P0, self, 0, 0
-    .return ($P0)
-.end
-
 
 =item list()
 
@@ -224,7 +207,7 @@ layer.  It will likely change substantially when we have lazy lists.
     elem = self[i]
     $I0 = defined elem
     unless $I0 goto flat_next
-    $I0 = isa elem, 'Perl6Scalar'
+    $I0 = isa elem, 'ObjectRef'
     if $I0 goto flat_next
     $I0 = isa elem, 'Range'
     unless $I0 goto not_range
