@@ -35,14 +35,14 @@ src/classes/Hash.pir - Perl 6 Hash class and related functions
 
 .namespace ['Perl6Hash']
 
-=item !VALUE()
+=item Scalar()
 
 Returns an ObjectRef referencing itself, unless it already is one in which
 case just returns as is.
 
 =cut
 
-.sub '!VALUE' :method
+.sub 'Scalar' :method
     $I0 = isa self, 'ObjectRef'
     unless $I0 goto not_ref
     .return (self)
