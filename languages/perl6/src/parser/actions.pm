@@ -2601,13 +2601,14 @@ method quote_term($/, $key) {
         );
     }
     elsif ($key eq 'variable') {
-        $past := $( $<variable> );
+        $past := PAST::Op.new( $( $<variable> ), :name('prefix:~'), :pasttype('call') );
     }
     elsif ($key eq 'circumfix') {
         $past := $( $<circumfix> );
         if $past.isa(PAST::Block) {
             $past.blocktype('immediate');
         }
+        $past := PAST::Op.new( $past, :name('prefix:~'), :pasttype('call') );
     }
     make $past;
 }
