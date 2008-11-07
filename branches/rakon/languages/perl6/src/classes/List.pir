@@ -21,7 +21,7 @@ src/classes/List.pir - Perl 6 List class and related functions
 .end
 
 
-=item !VALUE
+=item Scalar
 
 When we're going to be stored as an item, become an Array and then return
 ourself in a ObjectRef.
@@ -29,10 +29,10 @@ ourself in a ObjectRef.
 =cut
 
 .namespace ['List']
-.sub '!VALUE' :method
+.sub 'Scalar' :method
     # promote the list to an Array and return its VALUE
     $P0 = self.'item'()
-    .tailcall $P0.'!VALUE'()
+    .tailcall $P0.'Scalar'()
 .end
 
 

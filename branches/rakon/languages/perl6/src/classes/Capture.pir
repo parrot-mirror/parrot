@@ -20,13 +20,13 @@ This file sets up the Perl 6 C<Capture> class.
 .end
 
 
-=item !VALUE
+=item Scalar
 
 This is a value type, so just returns itself.
 
 =cut
 
-.sub '!VALUE' :method
+.sub 'Scalar' :method
     .return (self)
 .end
 

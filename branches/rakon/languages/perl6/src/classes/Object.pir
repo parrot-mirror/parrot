@@ -49,14 +49,14 @@ Return the scalar as a Hash.
 
 .namespace ['Perl6Object']
 
-=item !VALUE()
+=item Scalar()
 
 Default implementation gives reference type semantics, and returns an object
 reference, unless the thing already is one.
 
 =cut
 
-.sub '!VALUE' :method
+.sub 'Scalar' :method
     $I0 = isa self, 'ObjectRef'
     unless $I0 goto not_ref
     .return (self)

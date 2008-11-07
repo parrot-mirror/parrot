@@ -181,13 +181,13 @@ more:
 .end
 
 
-=item !VALUE
+=item Scalar
 
 Return the value inside this container in item context.
 
 =cut
 
-.sub '!VALUE' :method
+.sub 'Scalar' :method
     .tailcall self.'item'()
 .end
 

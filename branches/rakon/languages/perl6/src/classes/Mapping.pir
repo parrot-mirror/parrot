@@ -22,14 +22,14 @@ src/classes/Mapping.pir - Perl 6 hash class and related functions
 .end
 
 
-=item !VALUE
+=item Scalar
 
 When we're going to be stored as an item, become a Hash and then return
 ourself in a ObjectRef.
 
 =cut
 
-.sub '!VALUE' :method
+.sub 'Scalar' :method
     # Create a hash with our values.
     .local pmc hash, it
     hash = get_hll_global "Hash"

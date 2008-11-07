@@ -29,13 +29,13 @@ symbols for C<Bool::True> and C<Bool::False>.
 .end
 
 
-=item !VALUE
+=item Scalar
 
 This is a value type, so just returns itself.
 
 =cut
 
-.sub '!VALUE' :method
+.sub 'Scalar' :method
     .return (self)
 .end
 
