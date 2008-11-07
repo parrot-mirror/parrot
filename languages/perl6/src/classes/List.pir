@@ -30,12 +30,11 @@ ourself in a ObjectRef.
 
 .namespace ['List']
 .sub '!VALUE' :method
-    # promote the list to an Array
-    $P0 = new 'Perl6Array'
-    splice $P0, self, 0, 0
-    # and return its !VALUE
+    # promote the list to an Array and return its VALUE
+    $P0 = self.'item'()
     .tailcall $P0.'!VALUE'()
 .end
+
 
 =item clone()    (vtable method)
 
@@ -124,6 +123,13 @@ Return the List invocant as a Hash.
 Return the List invocant in scalar context (i.e., an Array).
 
 =cut
+
+.namespace ['List']
+.sub 'item' :method
+    $P0 = new 'Perl6Array'
+    splice $P0, self, 0, 0
+    .return ($P0)
+.end
 
 
 =item list()
