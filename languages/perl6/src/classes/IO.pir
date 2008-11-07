@@ -180,6 +180,13 @@ more:
     .return(1)
 .end
 
+
+=item !VALUE
+
+Return the value inside this container in item context.
+
+=cut
+
 .sub '!VALUE' :method
     .tailcall self.'item'()
 .end
