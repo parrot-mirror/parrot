@@ -180,6 +180,10 @@ more:
     .return(1)
 .end
 
+.sub '!VALUE' :method
+    .tailcall self.'item'()
+.end
+
 .sub 'item' :method :vtable('shift_pmc')
     .local pmc pio
     $P0 = getattribute self, "$!IO"
