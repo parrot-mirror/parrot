@@ -449,6 +449,7 @@ Parrot_build_sig_object_from_varargs(PARROT_INTERP, ARGIN(const char *sig), va_l
     STRING *string_sig      = const_string(interp, sig);
     const INTVAL sig_len    = string_length(interp, string_sig);
 
+
     /* Protect call signature object from collection. */
     dod_register_pmc(interp, call_object);
 
@@ -573,8 +574,9 @@ Parrot_build_sig_object_from_varargs2(PARROT_INTERP, ARGIN(PMC* obj),
     PMC   *returns          = PMCNULL;
     PMC   *call_object      = pmc_new(interp, enum_class_CallSignature);
     PMC * const type_tuple  = pmc_new(interp, enum_class_FixedIntegerArray);
-    STRING *string_sig      = const_string(interp, sig);
-    const INTVAL sig_len    = string_length(interp, string_sig);
+    INTVAL sig_len          = strlen(sig);
+    STRING *s_sig           = string_from_cstring(interp, sig, sig_len);
+    STRING *string_sig      = NULL;
     INTVAL has_invocant     = 0;
 
     /* Protect call signature object from collection. */
@@ -582,6 +584,15 @@ Parrot_build_sig_object_from_varargs2(PARROT_INTERP, ARGIN(PMC* obj),
 
     if (!sig_len)
         return call_object;
+
+    if (PMC_IS_NULL(obj))
+        string_sig = s_sig;
+    else {
+        STRING *invocant_sig = CONST_STRING(interp, "Pi");
+        string_sig = string_concat(interp, invocant_sig, s_sig, 0);
+        sig_len = sig_len + 2;
+        has_invocant = 1;
+    }
 
     /* Create an extra item on the array, in case we need to store the
        invocant. I don't know if the length of this array is going
@@ -592,8 +603,7 @@ Parrot_build_sig_object_from_varargs2(PARROT_INTERP, ARGIN(PMC* obj),
     VTABLE_set_string_native(interp, call_object, string_sig);
 
     /* if we have a valid invocant, push it on here. */
-    if (obj && !PMC_IS_NULL(obj)) {
-        has_invocant = 1; /* We have an invocant */
+    if (has_invocant) {
         VTABLE_set_integer_keyed_int(interp, type_tuple, 0,
             VTABLE_type(interp, obj));
         VTABLE_push_pmc(interp, call_object, obj);
