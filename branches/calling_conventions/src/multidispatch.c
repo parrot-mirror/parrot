@@ -588,9 +588,9 @@ Parrot_build_sig_object_from_varargs2(PARROT_INTERP, ARGIN(PMC* obj),
     if (PMC_IS_NULL(obj))
         string_sig = s_sig;
     else {
-        STRING *invocant_sig = CONST_STRING(interp, "Pi");
+        STRING *invocant_sig = CONST_STRING(interp, "P");
         string_sig = string_concat(interp, invocant_sig, s_sig, 0);
-        sig_len = sig_len + 2;
+        sig_len = sig_len + 1;
         has_invocant = 1;
     }
 
