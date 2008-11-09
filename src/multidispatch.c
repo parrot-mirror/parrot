@@ -570,14 +570,14 @@ Parrot_build_sig_object_from_varargs2(PARROT_INTERP, ARGIN(PMC* obj),
     ARGIN(const char *sig), va_list args)
 {
     INTVAL i;
-    INTVAL in_return_sig    = 0;
-    PMC   *returns          = PMCNULL;
-    PMC   *call_object      = pmc_new(interp, enum_class_CallSignature);
-    PMC * const type_tuple  = pmc_new(interp, enum_class_FixedIntegerArray);
-    INTVAL sig_len          = strlen(sig);
-    STRING *s_sig           = string_from_cstring(interp, sig, sig_len);
-    STRING *string_sig      = NULL;
-    INTVAL has_invocant     = 0;
+    INTVAL in_return_sig     = 0;
+    PMC    *returns          = PMCNULL;
+    PMC    *call_object      = pmc_new(interp, enum_class_CallSignature);
+    PMC    *const type_tuple = pmc_new(interp, enum_class_FixedIntegerArray);
+    INTVAL  sig_len          = strlen(sig);
+    STRING *s_sig            = string_from_cstring(interp, sig, sig_len);
+    STRING *string_sig       = NULL;
+    INTVAL  has_invocant     = 0;
 
     /* Protect call signature object from collection. */
     dod_register_pmc(interp, call_object);
@@ -588,9 +588,9 @@ Parrot_build_sig_object_from_varargs2(PARROT_INTERP, ARGIN(PMC* obj),
     if (PMC_IS_NULL(obj))
         string_sig = s_sig;
     else {
-        STRING *invocant_sig = CONST_STRING(interp, "P");
+        STRING *invocant_sig = CONST_STRING(interp, "Pi");
         string_sig = string_concat(interp, invocant_sig, s_sig, 0);
-        sig_len = sig_len + 1;
+        sig_len = sig_len + 2;
         has_invocant = 1;
     }
 
@@ -681,6 +681,14 @@ Parrot_build_sig_object_from_varargs2(PARROT_INTERP, ARGIN(PMC* obj),
                     VTABLE_push_pmc(interp, call_object, pmc_arg);
                     break;
                 }
+                case 'i':
+                    if (i != 1)
+                        Parrot_ex_throw_from_c_args(interp, NULL,
+                            EXCEPTION_INVALID_OPERATION,
+                            "Multiple Dispatch: 'i' adverb modifier may only be used on the invocant");
+                    /* I don't think we need to do any additional
+                       processing here. */
+                    break;
                 case '-':
                     i++; /* skip '>' */
                     in_return_sig = 1;
