@@ -4,11 +4,11 @@ $Id$
 
 =head1 NAME
 
-src/io/io_buf.c - IO buffer layer
+src/io/buffer.c - I/O buffering 
 
 =head1 DESCRIPTION
 
-The "buf" layer of Parrot IO. Buffering and all the fun stuff.
+This file implements a collection of utility functions for I/O buffering.
 
 =head2 Functions
 
@@ -25,136 +25,8 @@ The "buf" layer of Parrot IO. Buffering and all the fun stuff.
 /* HEADERIZER BEGIN: static */
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 
-static INTVAL PIO_buf_close(PARROT_INTERP,
-    ARGIN_NULLOK(ParrotIOLayer *layer),
-    ARGMOD(ParrotIO *io))
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(3)
-        FUNC_MODIFIES(*io);
-
-PARROT_CAN_RETURN_NULL
-PARROT_WARN_UNUSED_RESULT
-static ParrotIO * PIO_buf_fdopen(PARROT_INTERP,
-    ARGIN_NULLOK(ParrotIOLayer *layer),
-    PIOHANDLE fd,
-    INTVAL flags)
-        __attribute__nonnull__(1);
-
-static size_t PIO_buf_fill_readbuf(PARROT_INTERP,
-    ARGIN_NULLOK(ParrotIOLayer *layer),
-    ARGMOD(ParrotIO *io),
-    ARGMOD(ParrotIOBuf *b))
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(3)
-        __attribute__nonnull__(4)
-        FUNC_MODIFIES(*io)
-        FUNC_MODIFIES(*b);
-
-static INTVAL PIO_buf_flush(PARROT_INTERP,
-    ARGIN_NULLOK(ParrotIOLayer *layer),
-    ARGMOD(ParrotIO *io))
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(3)
-        FUNC_MODIFIES(*io);
-
-static INTVAL PIO_buf_init(PARROT_INTERP, ARGMOD(ParrotIOLayer *layer))
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(2)
-        FUNC_MODIFIES(*layer);
-
-PARROT_CAN_RETURN_NULL
-static ParrotIO * PIO_buf_open(PARROT_INTERP,
-    ARGMOD(ParrotIOLayer *layer),
-    ARGIN(const char *path),
-    INTVAL flags)
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(2)
-        __attribute__nonnull__(3)
-        FUNC_MODIFIES(*layer);
-
-static size_t PIO_buf_peek(PARROT_INTERP,
-    ARGIN_NULLOK(ParrotIOLayer *layer),
-    ARGMOD(ParrotIO *io),
-    ARGOUT(STRING **buf))
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(3)
-        __attribute__nonnull__(4)
-        FUNC_MODIFIES(*io)
-        FUNC_MODIFIES(*buf);
-
-static size_t PIO_buf_read(PARROT_INTERP,
-    ARGIN_NULLOK(ParrotIOLayer *layer),
-    ARGMOD(ParrotIO *io),
-    ARGOUT(STRING **buf))
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(3)
-        __attribute__nonnull__(4)
-        FUNC_MODIFIES(*io)
-        FUNC_MODIFIES(*buf);
-
-static size_t PIO_buf_readline(PARROT_INTERP,
-    ARGIN_NULLOK(ParrotIOLayer *layer),
-    ARGMOD(ParrotIO *io),
-    ARGOUT(STRING **buf))
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(3)
-        __attribute__nonnull__(4)
-        FUNC_MODIFIES(*io)
-        FUNC_MODIFIES(*buf);
-
-static PIOOFF_T PIO_buf_seek(PARROT_INTERP,
-    ARGIN_NULLOK(ParrotIOLayer *l),
-    ARGMOD(ParrotIO *io),
-    PIOOFF_T offset,
-    INTVAL whence)
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(3)
-        FUNC_MODIFIES(*io);
-
-static INTVAL PIO_buf_setbuf(PARROT_INTERP,
-    ARGIN_NULLOK(ParrotIOLayer *layer),
-    ARGMOD(ParrotIO *io),
-    size_t bufsize)
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(3)
-        FUNC_MODIFIES(*io);
-
-static INTVAL PIO_buf_setlinebuf(PARROT_INTERP,
-    ARGIN_NULLOK(ParrotIOLayer *layer),
-    ARGMOD(ParrotIO *io))
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(3)
-        FUNC_MODIFIES(*io);
-
-static PIOOFF_T PIO_buf_tell(SHIM_INTERP,
-    SHIM(ParrotIOLayer *layer),
-    ARGIN(ParrotIO *io))
-        __attribute__nonnull__(3);
-
-static size_t PIO_buf_write(PARROT_INTERP,
-    ARGMOD(ParrotIOLayer *layer),
-    ARGMOD(ParrotIO *io),
-    ARGIN(STRING *s))
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(2)
-        __attribute__nonnull__(3)
-        __attribute__nonnull__(4)
-        FUNC_MODIFIES(*layer)
-        FUNC_MODIFIES(*io);
-
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 /* HEADERIZER END: static */
-
-/* Defined at bottom */
-extern const ParrotIOLayerAPI pio_buf_layer_api;
-
-ParrotIOLayer pio_buf_layer = {
-    NULL,
-    "buf",
-    PIO_L_TERMINAL,
-    &pio_buf_layer_api,
-    0, 0
-};
 
 
 /* XXX: This is not portable */
@@ -167,149 +39,117 @@ ParrotIOLayer pio_buf_layer = {
 
 /*
 
-=item C<static INTVAL PIO_buf_init>
+=item C<INTVAL Parrot_io_init_buffer>
 
-The buffer layer's C<Init> function. Initializes buffering.
+Initialize buffering on STDOUT and STDIN.
 
 =cut
 
 */
 
-static INTVAL
-PIO_buf_init(PARROT_INTERP, ARGMOD(ParrotIOLayer *layer))
+INTVAL
+Parrot_io_init_buffer(PARROT_INTERP)
 {
-    if (PIO_STDOUT(interp))
-        PIO_buf_setlinebuf(interp, layer,
-                           PMC_data_typed(PIO_STDOUT(interp), ParrotIO *));
+    if (Parrot_io_STDOUT(interp))
+        Parrot_io_setlinebuf(interp, Parrot_io_STDOUT(interp));
 
-    if (PIO_STDIN(interp))
-        PIO_buf_setbuf(interp, layer,
-            PMC_data_typed(PIO_STDIN(interp), ParrotIO *), PIO_UNBOUND);
+    if (Parrot_io_STDIN(interp))
+        Parrot_io_setbuf(interp, Parrot_io_STDIN(interp), PIO_UNBOUND);
 
     return 0;
 }
 
 /*
 
-=item C<static ParrotIO * PIO_buf_open>
+=item C<INTVAL Parrot_io_setbuf>
 
-The buffer layer's C<Open> function.
-
-=cut
-
-*/
-
-PARROT_CAN_RETURN_NULL
-static ParrotIO *
-PIO_buf_open(PARROT_INTERP, ARGMOD(ParrotIOLayer *layer),
-        ARGIN(const char *path), INTVAL flags)
-{
-    ParrotIOLayer * const l = PIO_DOWNLAYER(layer);
-    ParrotIO * const io = PIO_open_down(interp, l, path, flags);
-    if (!io) {
-        /* error creating IO stream */
-        return NULL;
-    }
-    /*
-     * We have an IO stream. Now setup stuff
-     * for our layer before returning it.
-     * XXX: Make default behaviour linebuffered?
-     */
-    /*PIO_buf_setlinebuf(interp, l, io);*/
-    PIO_buf_setbuf(interp, l, io, PIO_UNBOUND);
-    return io;
-}
-
-/*
-
-=item C<static INTVAL PIO_buf_setbuf>
-
-The buffer layer's C<SetBuf> function.
-
-Don't pass C<SetBuf> calls down the stack, top layer wins. This doesn't
-mean other layers can't buffer, I just need to think about the mechanism
-for buffer control or if it even makes sense this way. Most layers will
-not implement C<SetBuf>.
+Set the buffering mode for the filehandle.
 
 =cut
 
 */
 
-static INTVAL
-PIO_buf_setbuf(PARROT_INTERP, ARGIN_NULLOK(ParrotIOLayer *layer),
-        ARGMOD(ParrotIO *io), size_t bufsize)
+void
+Parrot_io_setbuf(PARROT_INTERP, ARGMOD(PMC *filehandle), size_t bufsize)
 {
-    ParrotIOLayer * const l = layer ? layer : io->stack;
-    ParrotIOBuf   * const b = &io->b;
+    INTVAL filehandle_flags = Parrot_io_get_flags(interp, filehandle);
+    INTVAL         buffer_flags = Parrot_io_get_buffer_flags(interp, filehandle);
+    unsigned char *buffer_start = Parrot_io_get_buffer_start(interp, filehandle);
+    unsigned char *buffer_next  = Parrot_io_get_buffer_next(interp, filehandle);
 
-    /* If there is a buffer, make sure we flush before
-     * dinking around with the buffer.
-     */
-    if (b->startb)
-        PIO_buf_flush(interp, l, io);
+    /* If there is already a buffer, make sure we flush before modifying it. */
+    if (buffer_start)
+        Parrot_io_buf_flush(interp, filehandle);
 
     /* Choose an appropriate buffer size for caller */
     switch (bufsize) {
         case 0:
-            b->size = 0;
+            Parrot_io_set_buffer_size(interp, filehandle, 0);
             break;
         case PIO_UNBOUND:
-            b->size = PIO_getblksize(io->fd);
+            Parrot_io_set_buffer_size(interp, filehandle,
+                    PIO_GETBLKSIZE(Parrot_io_get_os_handle(interp, filehandle)));
             break;
         default:
-            b->size = (bufsize >= PIO_GRAIN ? bufsize : PIO_GRAIN);
+            Parrot_io_set_buffer_size(interp, filehandle,
+                    (bufsize >= PIO_GRAIN ? bufsize : PIO_GRAIN));
             break;
     }
 
-    if (b->startb && (b->flags & PIO_BF_MALLOC)) {
-        mem_sys_free(b->startb);
-        b->startb = b->next = NULL;
+    if (buffer_start && (buffer_flags & PIO_BF_MALLOC)) {
+        mem_sys_free(buffer_start);
+        Parrot_io_set_buffer_start(interp, filehandle, NULL);
+        Parrot_io_set_buffer_next(interp, filehandle, NULL);
+        buffer_start = buffer_next = NULL;
     }
 
-    if (b->size > 0) {
-        b->startb = b->next = (unsigned char *)mem_sys_allocate(b->size);
-        b->flags |= PIO_BF_MALLOC;
-    }
-    else
-        b->flags &= ~PIO_BF_MALLOC;
-
-    if (b->size != 0) {
-        io->flags &= ~PIO_F_LINEBUF;
-        io->flags |= PIO_F_BLKBUF;
+    if (buffer_size > 0) {
+        buffer_start = buffer_next = (unsigned char *)mem_sys_allocate(buffer_size);
+        buffer_flags |= PIO_BF_MALLOC;
     }
     else
-        io->flags &= ~(PIO_F_BLKBUF | PIO_F_LINEBUF);
+        buffer_flags &= ~PIO_BF_MALLOC;
 
-    return 0;
+    Parrot_io_set_buffer_flags(interp, filehandle, buffer_flags);
+
+    if (buffer_size != 0) {
+        filehandle_flags &= ~PIO_F_LINEBUF;
+        filehandle_flags |= PIO_F_BLKBUF;
+    }
+    else
+        filehandle_flags &= ~(PIO_F_BLKBUF | PIO_F_LINEBUF);
+
+    Parrot_io_set_flags(interp, filehandle, filehandle_flags);
+
 }
 
 /*
 
-=item C<static INTVAL PIO_buf_setlinebuf>
+=item C<INTVAL Parrot_io_setlinebuf>
 
-The buffer layer's C<SetLineBuf> function.
+Set the file handle to line buffering mode.
 
 =cut
 
 */
 
-static INTVAL
-PIO_buf_setlinebuf(PARROT_INTERP, ARGIN_NULLOK(ParrotIOLayer *layer),
-        ARGMOD(ParrotIO *io))
+INTVAL
+Parrot_io_setlinebuf(PARROT_INTERP, ARGMOD(PMC *filehandle))
 {
     int err;
-    ParrotIOLayer * const l = layer ? layer : io->stack;
+    INTVAL filehandle_flags = Parrot_io_get_flags(interp, filehandle);
 
     /* already linebuffering */
-    if (io->flags & PIO_F_LINEBUF)
+    if (filehandle_flags & PIO_F_LINEBUF)
         return 0;
 
     /* Reuse setbuf call */
-    if ((err = PIO_buf_setbuf(interp, l, io, PIO_LINEBUFSIZE)) >= 0) {
+    if ((err = Parrot_io_setbuf(interp, filehandle, PIO_LINEBUFSIZE)) >= 0) {
         /* Then switch to linebuf */
-        io->flags &= ~PIO_F_BLKBUF;
-        io->flags |= PIO_F_LINEBUF;
-        io->recsep = DEFAULT_RECSEP;
+        filehandle_flags &= ~PIO_F_BLKBUF;
+        filehandle_flags |= PIO_F_LINEBUF;
+        Parrot_io_set_flags(interp, filehandle, filehandle_flags);
+        Parrot_io_set_record_separator(interp, filehandle, DEFAULT_RECSEP);
         return 0;
     }
     return err;
@@ -317,108 +157,66 @@ PIO_buf_setlinebuf(PARROT_INTERP, ARGIN_NULLOK(ParrotIOLayer *layer),
 
 /*
 
-=item C<static ParrotIO * PIO_buf_fdopen>
+=item C<INTVAL Parrot_io_flush_buffer>
 
-The buffer layer's C<FDOpen> function.
-
-=cut
-
-*/
-
-PARROT_CAN_RETURN_NULL
-PARROT_WARN_UNUSED_RESULT
-static ParrotIO *
-PIO_buf_fdopen(PARROT_INTERP, ARGIN_NULLOK(ParrotIOLayer *layer), PIOHANDLE fd, INTVAL flags)
-{
-    ParrotIOLayer * const l = PIO_DOWNLAYER(layer);
-    ParrotIO * const io = PIO_fdopen_down(interp, l, fd, flags);
-
-    if (io) {
-        if (io->flags & PIO_F_CONSOLE)
-            PIO_buf_setlinebuf(interp, l, io);
-        else
-            PIO_buf_setbuf(interp, l, io, PIO_UNBOUND);
-    }
-
-    return io;
-}
-
-/*
-
-=item C<static INTVAL PIO_buf_close>
-
-The buffer layer's C<Close> function.
+Flush the I/O buffer for a given filehandle object.
 
 =cut
 
 */
 
-static INTVAL
-PIO_buf_close(PARROT_INTERP, ARGIN_NULLOK(ParrotIOLayer *layer), ARGMOD(ParrotIO *io))
-{
-    ParrotIOLayer * const l = PIO_DOWNLAYER(layer);
-    PIO_buf_flush(interp, layer, io);
-
-    return PIO_close_down(interp, l, io);
-}
-
-/*
-
-=item C<static INTVAL PIO_buf_flush>
-
-The buffer layer's C<Flush> function.
-
-=cut
-
-*/
-
-static INTVAL
-PIO_buf_flush(PARROT_INTERP, ARGIN_NULLOK(ParrotIOLayer *layer), ARGMOD(ParrotIO *io))
+INTVAL
+Parrot_io_flush_buffer(PARROT_INTERP, ARGMOD(PMC *filehandle))
 {
     long wrote;
     size_t to_write;
     STRING fake;
+    unsigned char *buffer_start = Parrot_io_get_buffer_start(interp, filehandle);
+    unsigned char *buffer_next  = Parrot_io_get_buffer_next(interp, filehandle);
+    INTVAL         buffer_flags = Parrot_io_get_buffer_flags(interp, filehandle);
+
     /*
      * Either buffering is null, disabled, or empty.
      */
-    if (!io->b.startb
-        || (io->flags & (PIO_F_BLKBUF | PIO_F_LINEBUF)) == 0
-        || (io->b.flags & (PIO_BF_WRITEBUF | PIO_BF_READBUF)) == 0)
+    if (!buffer_start
+        || (Parrot_io_get_flags(interp, filehandle) & (PIO_F_BLKBUF | PIO_F_LINEBUF)) == 0
+        || (buffer_flags & (PIO_BF_WRITEBUF | PIO_BF_READBUF)) == 0)
         return 0;
     /*
      * Write flush
      */
-    if (io->b.flags & PIO_BF_WRITEBUF) {
-        ParrotIOLayer * const l = layer;
-        to_write = io->b.next - io->b.startb;
+    if (buffer_flags & PIO_BF_WRITEBUF) {
+        to_write = buffer_next - buffer_start;
 
         /* Flush to next layer */
-        fake.strstart = (char *)io->b.startb;
+        fake.strstart = (char *)buffer_start;
         fake.bufused = to_write;
-        wrote = PIO_write_down(interp, PIO_DOWNLAYER(l), io, &fake);
+        wrote = PIO_WRITE(interp, filehandle, &fake);
         if (wrote == (long)to_write) {
-            io->b.next = io->b.startb;
+            Parrot_io_set_buffer_next(interp, filehandle, buffer_start);
             /* Release buffer */
-            io->b.flags &= ~PIO_BF_WRITEBUF;
+            Parrot_io_set_buffer_flags(interp, filehandle, (buffer_flags & ~PIO_BF_WRITEBUF));
             return 0;
         }
         else {
-            /* FIXME: I/O Error */
+            Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_PIO_ERROR,
+                    "Attempt to flush invalid write buffer");
         }
     }
     /*
      * Read flush
      */
-    else if (io->b.flags & PIO_BF_READBUF) {
-        io->b.flags &= ~PIO_BF_READBUF;
-        io->b.next = io->b.startb;
+    else if (buffer_flags & PIO_BF_READBUF) {
+        Parrot_io_set_buffer_next(interp, filehandle, buffer_start);
+        /* Release buffer */
+        Parrot_io_set_buffer_flags(interp, filehandle, (buffer_flags & ~PIO_BF_READBUF));
     }
     return -1;
 }
 
 /*
 
-=item C<static size_t PIO_buf_fill_readbuf>
+=item C<size_t Parrot_io_fill_readbuf>
 
 The buffer layer's C<Fill> function.
 
@@ -426,37 +224,38 @@ The buffer layer's C<Fill> function.
 
 */
 
-static size_t
-PIO_buf_fill_readbuf(PARROT_INTERP, ARGIN_NULLOK(ParrotIOLayer *layer),
-        ARGMOD(ParrotIO *io), ARGMOD(ParrotIOBuf *b))
+size_t
+Parrot_io_fill_readbuf(PARROT_INTERP, ARGMOD(PMC *filehandle))
 {
     size_t got;
-    PIOOFF_T pos = io->fpos;
+    PIOOFF_T pos = Parrot_io_get_file_position(interp, filehandle);
     STRING fake, *s;
-    fake.strstart = (char *)b->startb;
-    fake.bufused  = b->size;
+    fake.strstart = (char *)Parrot_io_get_buffer_start(interp, filehandle);
+    fake.bufused  = Parrot_io_get_buffer_size(interp, filehandle);
     s = &fake;
 
-    got = PIO_read_down(interp, PIO_DOWNLAYER(layer),
-                        io, &s);
+    got = PIO_READ(interp, filehandle, &s);
     /* buffer-filling does not change fileposition */
-    io->fpos = pos;
+    Parrot_io_set_file_position(interp, filehandle, pos);
 
     /* nothing to get */
     if (got == 0)
         return 0;
 
-    b->endb = b->startb + got;
-    b->next = b->startb;
+    Parrot_io_set_buffer_end(interp, filehandle,
+            (got + Parrot_io_get_buffer_start(interp, filehandle)));
+    Parrot_io_set_buffer_next(interp, filehandle,
+            Parrot_io_get_buffer_start(interp, filehandle));
 
-    b->flags |= PIO_BF_READBUF;
+    Parrot_io_set_buffer_flags(interp, filehandle,
+            (Parrot_io_set_buffer_flags(interp, filehandle) | PIO_BF_READBUF));
 
     return got;
 }
 
 /*
 
-=item C<static size_t PIO_buf_read>
+=item C<size_t Parrot_io_read_buffer>
 
 The buffer layer's C<Read> function.
 
@@ -464,27 +263,28 @@ The buffer layer's C<Read> function.
 
 */
 
-static size_t
-PIO_buf_read(PARROT_INTERP, ARGIN_NULLOK(ParrotIOLayer *layer),
-        ARGMOD(ParrotIO *io), ARGOUT(STRING **buf))
+size_t
+Parrot_io_read_buffer(PARROT_INTERP, ARGMOD(PMC *filehandle),
+              ARGIN(STRING **buf))
 {
     ParrotIOLayer *l = layer;
-    ParrotIOBuf *b;
     unsigned char *out_buf;
     STRING *s;
     size_t len;
     size_t current = 0;
+    INTVAL buffer_flags = Parrot_io_get_buffer_flags(interp, filehandle);
+    unsigned char *buffer_start = Parrot_io_get_buffer_start(interp, filehandle);
+    unsigned char *buffer_next  = Parrot_io_get_buffer_next(interp, filehandle);
+    unsigned char *buffer_end   = Parrot_io_get_buffer_end(interp, filehandle);
 
     /* write buffer flush */
-    if (io->b.flags & PIO_BF_WRITEBUF) {
-        PIO_buf_flush(interp, layer, io);
+    if (buffer_flags & PIO_BF_WRITEBUF) {
+        Parrot_io_flush_buffer(interp, filehandle);
     }
 
-    b = &io->b;
-
     /* line buffered read */
-    if (io->flags & PIO_F_LINEBUF) {
-        return PIO_buf_readline(interp, layer, io, buf);
+    if (Parrot_io_get_flags(interp, filehandle) & PIO_F_LINEBUF) {
+        return Parrot_io_readline_buffer(interp, filehandle);
     }
 
     if (*buf == NULL) {
@@ -498,20 +298,23 @@ PIO_buf_read(PARROT_INTERP, ARGIN_NULLOK(ParrotIOLayer *layer),
     }
     out_buf = (unsigned char *)s->strstart;
     /* read Data from buffer */
-    if (b->flags & PIO_BF_READBUF) {
-        const size_t avail = b->endb - b->next;
+    if (buffer_flags & PIO_BF_READBUF) {
+        const size_t avail = buffer_end - buffer_next;
 
         current = avail < len ? avail : len;
-        memcpy(out_buf, b->next, current);
-        b->next += current;
-        io->fpos += current;
+        memcpy(out_buf, buffer_next, current);
+        buffer_next += current;
+        Parrot_io_set_buffer_next(interp, filehandle, buffer_next);
+        Parrot_io_set_file_position(interp, filehandle, (current +
+                Parrot_io_get_file_position(interp, filehandle)));
 
         /* buffer completed */
         if (current == avail) {
-            io->b.flags &= ~PIO_BF_READBUF;
-            /* XXX: Is the reset of next and endb really necessary ? */
-            io->b.endb = NULL;
-            io->b.next = io->b.startb;
+            Parrot_io_set_buffer_flags(interp, filehandle,
+                    (buffer_flags & ~PIO_BF_READBUF));
+            /* Reset next and end */
+            Parrot_io_set_buffer_end(interp, filehandle, NULL);
+            Parrot_io_set_buffer_next(interp, filehandle, buffer_start);
         }
 
         if (len == current) {
@@ -526,44 +329,48 @@ PIO_buf_read(PARROT_INTERP, ARGIN_NULLOK(ParrotIOLayer *layer),
     }
 
     /* (re)fill the readbuffer */
-    if (!(b->flags & PIO_BF_READBUF)) {
+    if (!(buffer_flags & PIO_BF_READBUF)) {
         size_t got;
-        if (len >= io->b.size) {
+        if (len >= Parrot_io_get_buffer_size(interp, filehandle)) {
             STRING fake;
             STRING *sf = &fake;
 
             fake.strstart = (char *)out_buf;
             fake.bufused  = len;
-            got = PIO_read_down(interp, PIO_DOWNLAYER(l), io, &sf);
+            got = PIO_READ(interp, filehandle, &sf);
             s->strlen = s->bufused = current + got;
-            io->fpos += got;
+            Parrot_io_set_file_position(interp, filehandle, (got +
+                    Parrot_io_get_file_position(interp, filehandle)));
             return current + got;
         }
 
-        got = PIO_buf_fill_readbuf(interp, l, io, b);
+        got = Parrot_io_fill_readbuf(interp, filehandle);
 
         len = len < got ? len : got;
     }
 
     /* read from the read_buffer */
-    memcpy(out_buf, io->b.next, len);
+    memcpy(out_buf, buffer_next, len);
     s->strlen = s->bufused = current + len;
-    io->b.next += len;
-    io->fpos += len;
+    buffer_next += len;
+    Parrot_io_set_buffer_next(interp, filehandle, buffer_next);
+    Parrot_io_set_file_position(interp, filehandle, (len +
+            Parrot_io_get_file_position(interp, filehandle)));
 
     /* is the buffer is completely empty ? */
-    if (io->b.next == io->b.endb) {
-        io->b.flags &= ~PIO_BF_READBUF;
-        /* XXX: Is the reset of next and encb really necessary ? */
-        io->b.endb = NULL;
-        io->b.next = io->b.startb;
+    if (buffer_next == buffer_end) {
+        Parrot_io_set_buffer_flags(interp, filehandle,
+                (buffer_flags & ~PIO_BF_READBUF));
+        /* Reset next and end */
+        Parrot_io_set_buffer_end(interp, filehandle, NULL);
+        Parrot_io_set_buffer_next(interp, filehandle, buffer_start);
     }
     return current + len;
 }
 
 /*
 
-=item C<static size_t PIO_buf_peek>
+=item C<size_t Parrot_io_peek_buffer>
 
 RT#48260: Not yet documented!!!
 
@@ -571,46 +378,46 @@ RT#48260: Not yet documented!!!
 
 */
 
-static size_t
-PIO_buf_peek(PARROT_INTERP, ARGIN_NULLOK(ParrotIOLayer *layer),
-        ARGMOD(ParrotIO *io), ARGOUT(STRING **buf))
+size_t
+Parrot_io_peek_buffer(PARROT_INTERP, ARGMOD(PMC *filehandle),
+        ARGOUT(STRING **buf))
 {
-    ParrotIOLayer *l = layer;
-    ParrotIOBuf *b;
     size_t len = 1;
     size_t avail = 0;
 
-    STRING * const s = PIO_make_io_string(interp, buf, 1);
+    INTVAL         buffer_flags = Parrot_io_get_buffer_flags(interp, filehandle);
+    unsigned char *buffer_next  = Parrot_io_get_buffer_next(interp, filehandle);
+    unsigned char *buffer_end   = Parrot_io_get_buffer_end(interp, filehandle);
+
+    STRING * const s = Parrot_io_make_string(interp, buf, 1);
 
     /* write buffer flush */
-    if (io->b.flags & PIO_BF_WRITEBUF) {
-        PIO_buf_flush(interp, layer, io);
+    if (buffer_flags & PIO_BF_WRITEBUF) {
+        Parrot_io_flush_buffer(interp, filehandle);
     }
 
-    b = &io->b;
-
     /* read Data from buffer */
-    if (b->flags & PIO_BF_READBUF) {
-        avail = b->endb - b->next;
+    if (buffer_flags & PIO_BF_READBUF) {
+        avail = buffer_end - buffer_next;
 
         /* if we have data available, copy out the next byte */
         if (avail) {
 ret_string:
-            memcpy(s->strstart, b->next, len);
+            memcpy(s->strstart, buffer_next, len);
             s->bufused = s->strlen = len;
             return len;
         }
     }
 
     /* (re)fill the buffer */
-    if (! (b->flags & PIO_BF_READBUF)) {
+    if (! (buffer_flags & PIO_BF_READBUF)) {
         size_t got;
         /* exception if we're unbuffered */
-        if (io->b.size == 0)
+        if (buffer_size == 0)
             Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_PIO_ERROR,
-                "Can't peek at unbuffered PIO");
+                "Can't peek at unbuffered I/O");
 
-        got = PIO_buf_fill_readbuf(interp, l, io, b);
+        got = Parrot_io_fill_readbuf(interp, filehandle, b);
         len = (len < got) ? len : got;
     }
 
@@ -620,23 +427,24 @@ ret_string:
 
 /*
 
-=item C<static size_t PIO_buf_readline>
+=item C<size_t Parrot_io_readline_buffer>
 
-This is called from C<PIO_buf_read()> to do line buffered reading if
+This is called from C<Parrot_io_read_buffer()> to do line buffered reading if
 that is what is required.
 
 =cut
 
 */
 
-static size_t
-PIO_buf_readline(PARROT_INTERP, ARGIN_NULLOK(ParrotIOLayer *layer),
-        ARGMOD(ParrotIO *io), ARGOUT(STRING **buf))
+size_t
+Parrot_io_readline_buffer(PARROT_INTERP, ARGMOD(PMC *filehandle), ARGOUT(STRING **buf))
 {
     size_t l;
     unsigned char *out_buf;
     unsigned char *buf_start;
-    ParrotIOBuf * const b = &io->b;
+    INTVAL         buffer_flags = Parrot_io_get_buffer_flags(interp, filehandle);
+    unsigned char *buffer_next  = Parrot_io_get_buffer_next(interp, filehandle);
+    unsigned char *buffer_end   = Parrot_io_get_buffer_end(interp, filehandle);
     size_t len;
     STRING *s;
 
@@ -647,15 +455,15 @@ PIO_buf_readline(PARROT_INTERP, ARGIN_NULLOK(ParrotIOLayer *layer),
     s->strlen = 0;
 
     /* fill empty buffer */
-    if (!(b->flags & PIO_BF_READBUF)) {
-        if (PIO_buf_fill_readbuf(interp, layer, io, b) == 0)
+    if (!(buffer_flags & PIO_BF_READBUF)) {
+        if (Parrot_io_fill_readbuf(interp, filehandle, b) == 0)
             return 0;
     }
 
-    buf_start = b->next;
-    for (l = 0; b->next < b->endb;) {
+    buf_start = buffer_next;
+    for (l = 0; buffer_next < buffer_end;) {
         l++;
-        if (IS_EOL(io, b->next++)) {
+        if (IS_EOL(io, buffer_next++)) {
             break;
         }
         /* if there is a buffer, readline is called by the read opcode
@@ -664,8 +472,8 @@ PIO_buf_readline(PARROT_INTERP, ARGIN_NULLOK(ParrotIOLayer *layer),
         if (s->bufused && l == s->bufused)
             break;
         /* buffer completed; copy out and refill */
-        if (b->next == b->endb) {
-            len = b->endb - buf_start;
+        if (buffer_next == buffer_end) {
+            len = buffer_end - buf_start;
             if (s->bufused < l) {
                 if (s->strstart) {
                     Parrot_reallocate_string(interp, s, l);
@@ -677,9 +485,9 @@ PIO_buf_readline(PARROT_INTERP, ARGIN_NULLOK(ParrotIOLayer *layer),
             out_buf = (unsigned char*)s->strstart + s->strlen;
             memcpy(out_buf, buf_start, len);
             s->strlen = s->bufused = l;
-            if (PIO_buf_fill_readbuf(interp, layer, io, b) == 0)
+            if (Parrot_io_fill_readbuf(interp, filehandle, b) == 0)
                 return l;
-            buf_start = b->startb;
+            buf_start = Parrot_io_get_buffer_start(interp, filehandle);;
         }
     }
     if (s->bufused < l) {
@@ -691,15 +499,17 @@ PIO_buf_readline(PARROT_INTERP, ARGIN_NULLOK(ParrotIOLayer *layer),
         }
     }
     out_buf = (unsigned char*)s->strstart + s->strlen;
-    len = b->next - buf_start;
+    len = buffer_next - buf_start;
     memcpy(out_buf, buf_start, len);
     s->strlen = s->bufused = l;
 
     /* check if buffer is finished */
-    if (b->next == b->endb) {
-        b->next = b->startb;
-        b->endb = NULL;
-        b->flags &= ~PIO_BF_READBUF;
+    if (buffer_next == buffer_end) {
+        Parrot_io_set_buffer_flags(interp, filehandle,
+                (buffer_flags & ~PIO_BF_READBUF));
+        Parrot_io_set_buffer_next(interp, filehandle,
+                Parrot_io_get_buffer_start(interp, filehandle));
+        Parrot_io_set_buffer_end(interp, filehandle, NULL);
     }
 
     return l;
@@ -707,7 +517,7 @@ PIO_buf_readline(PARROT_INTERP, ARGIN_NULLOK(ParrotIOLayer *layer),
 
 /*
 
-=item C<static size_t PIO_buf_write>
+=item C<size_t Parrot_io_write_buffer>
 
 The buffer layer's C<Write> function.
 
@@ -715,33 +525,38 @@ The buffer layer's C<Write> function.
 
 */
 
-static size_t
-PIO_buf_write(PARROT_INTERP, ARGMOD(ParrotIOLayer *layer),
-        ARGMOD(ParrotIO *io), ARGIN(STRING *s))
+size_t
+Parrot_io_write_buffer(PARROT_INTERP, ARGMOD(PMC *filehandle), ARGIN(STRING *s))
 {
     size_t avail;
     void * const buffer = s->strstart;
     size_t len = s->bufused;
     int need_flush;
 
+    INTVAL         buffer_flags = Parrot_io_get_buffer_flags(interp, filehandle);
+    unsigned char *buffer_start = Parrot_io_get_buffer_start(interp, filehandle);
+    unsigned char *buffer_next  = Parrot_io_get_buffer_next(interp, filehandle);
+    size_t         buffer_size  = Parrot_io_get_buffer_size(interp, filehandle);
+
     if (len <= 0)
         return 0;
-    if (io->b.flags & PIO_BF_WRITEBUF) {
-        avail = io->b.size - (io->b.next - io->b.startb);
+    if (buffer_flags & PIO_BF_WRITEBUF) {
+        avail = buffer_size - (buffer_next - buffer_start);
     }
-    else if (io->b.flags & PIO_BF_READBUF) {
-        io->b.flags &= ~PIO_BF_READBUF;
-        io->b.next = io->b.startb;
-        avail = io->b.size;
+    else if (buffer_flags & PIO_BF_READBUF) {
+        buffer_flags &= ~PIO_BF_READBUF;
+        Parrot_io_set_buffer_flags(interp, filehandle, buffer_flags);
+        Parrot_io_set_buffer_next(interp, filehandle, buffer_start);
+        avail = buffer_size;
     }
     else {
-        avail = io->b.size;
+        avail = buffersize;
     }
     /* If we are line buffered, check for newlines.
      * If any, we should flush
      */
     need_flush = 0;
-    if (io->flags & PIO_F_LINEBUF) {
+    if (Parrot_io_get_flags(interp, filehandle) & PIO_F_LINEBUF) {
         /* scan from end, it's likely that EOL is at end of string */
         const char *p = (char*)buffer + len - 1;
         size_t i;
@@ -758,13 +573,14 @@ PIO_buf_write(PARROT_INTERP, ARGMOD(ParrotIOLayer *layer),
      * just doing extra memcpys.
      * FIXME: This is badly optimized, will fixup later.
      */
-    if (need_flush || len >= io->b.size) {
+    if (need_flush || len >= buffer_size) {
         long wrote;
         /* Write through, skip buffer. */
-        PIO_buf_flush(interp, layer, io);
-        wrote = PIO_write_down(interp, PIO_DOWNLAYER(layer), io, s);
+        Parrot_io_flush_buffer(interp, filehandle);
+        wrote = PIO_WRITE(interp, filehandle, s);
         if (wrote == (long)len) {
-            io->fpos += wrote;
+            Parrot_io_set_file_position(interp, filehandle, (wrote +
+                        Parrot_io_get_file_position(interp, filehandle)));
             return wrote;
         }
         else {
@@ -772,31 +588,36 @@ PIO_buf_write(PARROT_INTERP, ARGMOD(ParrotIOLayer *layer),
         }
     }
     else if (avail > len) {
-        io->b.flags |= PIO_BF_WRITEBUF;
-        memcpy(io->b.next, buffer, len);
-        io->b.next += len;
-        io->fpos += len;
+        buffer_flags |= PIO_BF_WRITEBUF;
+        Parrot_io_set_buffer_flags(interp, filehandle, buffer_flags);
+        memcpy(buffer_next, buffer, len);
+        buffer_next += len;
+        Parrot_io_set_file_position(interp, filehandle, (len +
+                    Parrot_io_get_file_position(interp, filehandle)));
         return len;
     }
     else {
         const unsigned int diff = (int)(len - avail);
 
-        io->b.flags |= PIO_BF_WRITEBUF;
+        buffer_flags |= PIO_BF_WRITEBUF;
+        Parrot_io_set_buffer_flags(interp, filehandle, buffer_flags);
         /* Fill remainder, flush, then try to buffer more */
-        memcpy(io->b.next, buffer, avail);
-        io->b.next += avail;
-        io->fpos += avail;
-        PIO_buf_flush(interp, layer, io);
-        memcpy(io->b.startb, ((const char *)buffer + avail), diff);
-        io->b.next += diff;
-        io->fpos += diff;
+        memcpy(buffer_next, buffer, avail);
+        buffer_next += avail;
+        Parrot_io_set_file_position(interp, filehandle, (avail +
+                    Parrot_io_get_file_position(interp, filehandle)));
+        Parrot_io_flush_buffer(interp, filehandle);
+        memcpy(buffer_start, ((const char *)buffer + avail), diff);
+        buffer_next += diff;
+        Parrot_io_set_file_position(interp, filehandle, (diff +
+                    Parrot_io_get_file_position(interp, filehandle)));
         return len;
     }
 }
 
 /*
 
-=item C<static PIOOFF_T PIO_buf_seek>
+=item C<PIOOFF_T Parrot_io_seek_buffer>
 
 The buffer layer's C<Seek> function.
 
@@ -804,21 +625,25 @@ The buffer layer's C<Seek> function.
 
 */
 
-static PIOOFF_T
-PIO_buf_seek(PARROT_INTERP, ARGIN_NULLOK(ParrotIOLayer *l),
-        ARGMOD(ParrotIO *io), PIOOFF_T offset, INTVAL whence)
+PIOOFF_T
+Parrot_io_seek_buffer(PARROT_INTERP, ARGMOD(PMC *filehandle),
+        PIOOFF_T offset, INTVAL whence)
 {
     PIOOFF_T newpos;
+    PIOOFF_T file_pos = Parrot_io_get_file_position(interp, filehandle);
+    unsigned char *buffer_start = Parrot_io_get_buffer_start(interp, filehandle);
+    unsigned char *buffer_next  = Parrot_io_get_buffer_next(interp, filehandle);
+    unsigned char *buffer_end   = Parrot_io_get_buffer_end(interp, filehandle);
 
     switch (whence) {
     case SEEK_SET:
         newpos = offset;
         break;
     case SEEK_CUR:
-        newpos = io->fpos + offset;
+        newpos = file_pos + offset;
         break;
     case SEEK_END:
-        newpos = PIO_seek_down(interp, PIO_DOWNLAYER(l), io, offset,
+        newpos = PIO_SEEK(interp, filehandle, offset,
                                whence);
         if (newpos == -1)
             return -1;
@@ -829,71 +654,21 @@ PIO_buf_seek(PARROT_INTERP, ARGIN_NULLOK(ParrotIOLayer *l),
         return -1;
     }
 
-    if ((newpos < io->fpos - (io->b.next - io->b.startb))
-        || (newpos >= io->fpos + (io->b.endb - io->b.next))) {
-        PIO_buf_flush(interp, l, io);
-        newpos = PIO_seek_down(interp, PIO_DOWNLAYER(l), io, newpos, SEEK_SET);
+    if ((newpos < file_pos - (buffer_next - buffer_start))
+        || (newpos >= file_pos + (buffer_end - buffer_next))) {
+        Parrot_io_flush_buffer(interp, filehandle);
+        newpos = PIO_SEEK(interp, filehandle, newpos, SEEK_SET);
     }
     else {
-        io->b.next += newpos - io->fpos;
+        buffer_next += newpos - file_pos;
+        Parrot_io_set_buffer_next(interp, filehandle, buffer_next);
     }
 
-    io->lpos = io->fpos;
-    io->fpos = newpos;
+    Parrot_io_set_file_position(interp, filehandle, newpos);
 
-    return io->fpos;
+    return newpos;
 }
 
-/*
-
-=item C<static PIOOFF_T PIO_buf_tell>
-
-The buffer layer's C<Tell> function.
-
-=cut
-
-*/
-
-static PIOOFF_T
-PIO_buf_tell(SHIM_INTERP, SHIM(ParrotIOLayer *layer), ARGIN(ParrotIO *io))
-{
-    return io->fpos;
-}
-
-const ParrotIOLayerAPI pio_buf_layer_api = {
-    PIO_buf_init,
-    PIO_base_new_layer,
-    PIO_base_delete_layer,
-    PIO_null_push_layer,
-    PIO_null_pop_layer,
-    PIO_buf_open,
-    PIO_null_open2,
-    PIO_null_open3,
-    PIO_null_open_async,
-    PIO_buf_fdopen,
-    PIO_buf_close,
-    PIO_buf_write,
-    PIO_null_write_async,
-    PIO_buf_read,
-    PIO_null_read_async,
-    PIO_buf_flush,
-    PIO_buf_peek,
-    PIO_buf_seek,
-    PIO_buf_tell,
-    PIO_buf_setbuf,
-    PIO_buf_setlinebuf,
-    PIO_null_getcount,
-    PIO_null_fill,
-    PIO_null_eof,
-    0, /* no poll */
-    0, /* no socket */
-    0, /* no connect */
-    0, /* no send */
-    0, /* no recv */
-    0, /* no bind */
-    0, /* no listen */
-    0  /* no accept */
-};
 
 /*
 
@@ -901,18 +676,12 @@ const ParrotIOLayerAPI pio_buf_layer_api = {
 
 =head1 SEE ALSO
 
-F<src/io/io_passdown.c>,
-F<src/io/io_stdio.c>,
-F<src/io/io_unix.c>,
-F<src/io/io_win32.c>,
-F<src/io/io.c>,
+F<src/io/api.c>,
+F<src/io/unix.c>,
+F<src/io/win32.c>,
+F<src/io/portable.c>,
+F<src/io.c>,
 F<src/io/io_private.h>.
-
-=head1 HISTORY
-
-Initially written by Melvin Smith.
-
-Some ideas from AT&T SFIO.
 
 =cut
 
