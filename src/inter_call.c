@@ -2311,6 +2311,7 @@ set_context_sig_params(PARROT_INTERP, ARGIN(const char *signature),
                 case 's': cur |= PARROT_ARG_SLURPY_ARRAY; break;
                 case 'o': cur |= PARROT_ARG_OPTIONAL;     break;
                 case 'p': cur |= PARROT_ARG_OPT_FLAG;     break;
+                case 'i': cur |= PARROT_ARG_INVOCANT;     break;
                 default:
                     Parrot_ex_throw_from_c_args(interp, NULL,
                         EXCEPTION_INVALID_OPERATION,
@@ -2387,6 +2388,7 @@ Signatures:
   s slurpy
   o optional
   p opt flag
+  i invocant on a method
 
   -> is the separator between args and results, similar to type theory
   notation.
@@ -2421,7 +2423,7 @@ Parrot_PCCINVOKE(PARROT_INTERP, ARGIN(PMC* pmc), ARGMOD(STRING *method_name),
 /* Set this flag to 1 if we are using the "new" unified version of this
    function. The new version breaks the build and all sorts of tests,
    so turn it off when you're done with it. */
-#define PARROT_PCCINVOKE_UNIFIED_FLAG 0
+#define PARROT_PCCINVOKE_UNIFIED_FLAG 1
 
 #if PARROT_PCCINVOKE_UNIFIED_FLAG
 
