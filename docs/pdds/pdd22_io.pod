@@ -253,10 +253,10 @@ The buffer size can be set no matter what buffering mode is in use, but
 it's only relevant when in line buffering or full buffering mode (and
 line buffering mode will rarely reach the maximum buffer size).
 
-It is recommended to only change the buffer size before starting IO
-operations, or after flushing the buffer. If the new size is larger than
-the existing data in the buffer, a size change is non-disruptive, but if
-the new size is smaller, it will truncate the buffer with a warning.
+The buffer is automatically flushed when the buffer size is changed. If
+the new size was larger than the existing data in the buffer, a size
+change would be non-disruptive, but if the new size was smaller,
+resizing it without flushing would truncate the buffer.
 
 =item C<get_fd> [RT #48312]
 
