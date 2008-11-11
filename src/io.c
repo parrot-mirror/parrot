@@ -274,6 +274,29 @@ Parrot_io_get_file_size(PARROT_INTERP, ARGIN(PMC *filehandle))
 
 /*
 
+=item C<void Parrot_io_set_buffer_start>
+
+Set the C<buffer_start> attribute of the FileHandle object, which stores
+the position of the start of the buffer.
+
+Currently, this pokes directly into the C struct of the FileHandle PMC. This
+needs to change to a general interface that can be used by all subclasses and
+polymorphic equivalents of FileHandle. For now, hiding it behind a function, so
+it can be cleanly changed later.
+
+=cut
+
+*/
+
+void
+Parrot_io_set_buffer_start(PARROT_INTERP, ARGIN(PMC *filehandle),
+        ARGIN_NULLOK(unsigned char *new_start))
+{
+    PARROT_FILEHANDLE(filehandle)->buffer_start = new_start;
+}
+
+/*
+
 =item C<unsigned char * Parrot_io_get_buffer_start>
 
 Get the C<buffer_start> attribute of the FileHandle object, which stores
@@ -301,7 +324,7 @@ Parrot_io_get_buffer_start(PARROT_INTERP, ARGIN(PMC *filehandle))
 =item C<unsigned char * Parrot_io_get_buffer_next>
 
 Get the C<buffer_next> attribute of the FileHandle object, which stores
-the position of the start of the buffer.
+the current position within the buffer.
 
 Currently, this pokes directly into the C struct of the FileHandle PMC. This
 needs to change to a general interface that can be used by all subclasses and
@@ -318,6 +341,76 @@ unsigned char *
 Parrot_io_get_buffer_next(PARROT_INTERP, ARGIN(PMC *filehandle))
 {
     return PARROT_FILEHANDLE(filehandle)->buffer_next;
+}
+
+/*
+
+=item C<void Parrot_io_set_buffer_next>
+
+Set the C<buffer_next> attribute of the FileHandle object, which stores
+the current position within the buffer.
+
+Currently, this pokes directly into the C struct of the FileHandle PMC. This
+needs to change to a general interface that can be used by all subclasses and
+polymorphic equivalents of FileHandle. For now, hiding it behind a function, so
+it can be cleanly changed later.
+
+=cut
+
+*/
+
+void
+Parrot_io_set_buffer_next(PARROT_INTERP, ARGIN(PMC *filehandle),
+        ARGIN_NULLOK(unsigned char *new_next))
+{
+    PARROT_FILEHANDLE(filehandle)->buffer_next = new_next;
+}
+
+/*
+
+=item C<unsigned char * Parrot_io_get_buffer_end>
+
+Get the C<buffer_end> attribute of the FileHandle object, which stores
+the position of the end of the buffer.
+
+Currently, this pokes directly into the C struct of the FileHandle PMC. This
+needs to change to a general interface that can be used by all subclasses and
+polymorphic equivalents of FileHandle. For now, hiding it behind a function, so
+it can be cleanly changed later.
+
+=cut
+
+*/
+
+PARROT_API
+PARROT_CAN_RETURN_NULL
+unsigned char *
+Parrot_io_get_buffer_end(PARROT_INTERP, ARGIN_NULLOK(PMC *filehandle))
+{
+    return PARROT_FILEHANDLE(filehandle)->buffer_end;
+}
+
+/*
+
+=item C<void Parrot_io_set_buffer_end>
+
+Set the C<buffer_end> attribute of the FileHandle object, which stores
+the position of the end of the buffer.
+
+Currently, this pokes directly into the C struct of the FileHandle PMC. This
+needs to change to a general interface that can be used by all subclasses and
+polymorphic equivalents of FileHandle. For now, hiding it behind a function, so
+it can be cleanly changed later.
+
+=cut
+
+*/
+
+void
+Parrot_io_set_buffer_end(PARROT_INTERP, ARGIN(PMC *filehandle),
+        ARGIN_NULLOK(unsigned char *new_end))
+{
+    PARROT_FILEHANDLE(filehandle)->buffer_end = new_end;
 }
 
 /*
@@ -345,6 +438,73 @@ Parrot_io_get_buffer_flags(PARROT_INTERP, ARGIN(PMC *filehandle))
 
 /*
 
+=item C<void Parrot_io_set_buffer_flags>
+
+Set the C<buffer_flags> attribute of the FileHandle object, which stores
+a collection of flags specific to the buffer.
+
+Currently, this pokes directly into the C struct of the FileHandle PMC. This
+needs to change to a general interface that can be used by all subclasses and
+polymorphic equivalents of FileHandle. For now, hiding it behind a function, so
+it can be cleanly changed later.
+
+=cut
+
+*/
+
+void
+Parrot_io_set_buffer_flags(PARROT_INTERP, ARGIN(PMC *filehandle), INTVAL new_flags)
+{
+    PARROT_FILEHANDLE(filehandle)->buffer_flags = new_flags;
+}
+
+/*
+
+=item C<size_t Parrot_io_get_buffer_size>
+
+Get the C<buffer_size> attribute of the FileHandle object, which stores
+the size of the buffer (in bytes).
+
+Currently, this pokes directly into the C struct of the FileHandle PMC. This
+needs to change to a general interface that can be used by all subclasses and
+polymorphic equivalents of FileHandle. For now, hiding it behind a function, so
+it can be cleanly changed later.
+
+=cut
+
+*/
+
+PARROT_CAN_RETURN_NULL
+size_t
+Parrot_io_get_buffer_size(PARROT_INTERP, ARGIN(PMC *filehandle))
+{
+    return PARROT_FILEHANDLE(filehandle)->buffer_size;
+}
+
+/*
+
+=item C<void Parrot_io_set_buffer_size>
+
+Set the C<buffer_size> attribute of the FileHandle object, which stores
+the size of the buffer (in bytes).
+
+Currently, this pokes directly into the C struct of the FileHandle PMC. This
+needs to change to a general interface that can be used by all subclasses and
+polymorphic equivalents of FileHandle. For now, hiding it behind a function, so
+it can be cleanly changed later.
+
+=cut
+
+*/
+
+void
+Parrot_io_set_buffer_size(PARROT_INTERP, ARGIN(PMC *filehandle), size_t new_size)
+{
+    PARROT_FILEHANDLE(filehandle)->buffer_size = new_size;
+}
+
+/*
+
 =item C<void Parrot_io_clear_buffer>
 
 Clear the filehandle buffer and free the associated memory.
@@ -365,7 +525,7 @@ Parrot_io_clear_buffer(PARROT_INTERP, ARGIN(PMC *filehandle))
     Parrot_FileHandle_attributes *io = PARROT_FILEHANDLE(filehandle); 
     if (io->buffer_start && (io->flags & PIO_BF_MALLOC)) {
         mem_sys_free(io->buffer_start);
-        io->buffer_start = 0;
+        io->buffer_start = NULL;
     }
 }
 
