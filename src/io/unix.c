@@ -292,8 +292,6 @@ PARROT_CANNOT_RETURN_NULL
 PMC *
 Parrot_io_fdopen_unix(PARROT_INTERP, ARGMOD(PMC *filehandle), PIOHANDLE fd, INTVAL flags)
 {
-    const INTVAL mode = 0;
-
     if (io_is_tty_unix(fd))
         flags |= PIO_F_CONSOLE;
 
