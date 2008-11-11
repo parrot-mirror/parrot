@@ -717,9 +717,89 @@ PIOOFF_T Parrot_io_make_offset_pmc(PARROT_INTERP, ARGMOD(PMC *pmc))
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 /* HEADERIZER END: src/io/api.c */
 
+/* io/buffer.c - Buffering functions */
+/* HEADERIZER BEGIN: src/io/buffer.c */
+/* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
+
+size_t Parrot_io_fill_readbuf(PARROT_INTERP, ARGMOD(PMC *filehandle))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        FUNC_MODIFIES(*filehandle);
+
+INTVAL Parrot_io_flush_buffer(PARROT_INTERP, ARGMOD(PMC *filehandle))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        FUNC_MODIFIES(*filehandle);
+
+INTVAL Parrot_io_init_buffer(PARROT_INTERP)
+        __attribute__nonnull__(1);
+
+size_t Parrot_io_peek_buffer(PARROT_INTERP,
+    ARGMOD(PMC *filehandle),
+    ARGOUT(STRING **buf))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3)
+        FUNC_MODIFIES(*filehandle)
+        FUNC_MODIFIES(*buf);
+
+size_t Parrot_io_read_buffer(PARROT_INTERP,
+    ARGMOD(PMC *filehandle),
+    ARGIN(STRING **buf))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3)
+        FUNC_MODIFIES(*filehandle);
+
+size_t Parrot_io_readline_buffer(PARROT_INTERP,
+    ARGMOD(PMC *filehandle),
+    ARGOUT(STRING **buf))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3)
+        FUNC_MODIFIES(*filehandle)
+        FUNC_MODIFIES(*buf);
+
+PIOOFF_T Parrot_io_seek_buffer(PARROT_INTERP,
+    ARGMOD(PMC *filehandle),
+    PIOOFF_T offset,
+    INTVAL whence)
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        FUNC_MODIFIES(*filehandle);
+
+void Parrot_io_setbuf(PARROT_INTERP,
+    ARGMOD(PMC *filehandle),
+    size_t bufsize)
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        FUNC_MODIFIES(*filehandle);
+
+INTVAL Parrot_io_setlinebuf(PARROT_INTERP, ARGMOD(PMC *filehandle))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        FUNC_MODIFIES(*filehandle);
+
+size_t Parrot_io_write_buffer(PARROT_INTERP,
+    ARGMOD(PMC *filehandle),
+    ARGIN(STRING *s))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3)
+        FUNC_MODIFIES(*filehandle);
+
+/* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
+/* HEADERIZER END: src/io/buffer.c */
+
 /* io.c - utility functions shared between all platforms */
 /* HEADERIZER BEGIN: src/io.c */
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
+
+PARROT_API
+PARROT_CAN_RETURN_NULL
+unsigned char * Parrot_io_get_buffer_end(PARROT_INTERP,
+    ARGIN_NULLOK(PMC *filehandle))
+        __attribute__nonnull__(1);
 
 PARROT_API
 PARROT_CAN_RETURN_NULL
@@ -805,6 +885,11 @@ INTVAL Parrot_io_get_buffer_flags(PARROT_INTERP, ARGIN(PMC *filehandle))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
+PARROT_CAN_RETURN_NULL
+size_t Parrot_io_get_buffer_size(PARROT_INTERP, ARGIN(PMC *filehandle))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 STRING * Parrot_io_make_string(PARROT_INTERP,
@@ -813,6 +898,36 @@ STRING * Parrot_io_make_string(PARROT_INTERP,
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         FUNC_MODIFIES(*buf);
+
+void Parrot_io_set_buffer_end(PARROT_INTERP,
+    ARGIN(PMC *filehandle),
+    ARGIN_NULLOK(unsigned char *new_end))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+void Parrot_io_set_buffer_flags(PARROT_INTERP,
+    ARGIN(PMC *filehandle),
+    INTVAL new_flags)
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+void Parrot_io_set_buffer_next(PARROT_INTERP,
+    ARGIN(PMC *filehandle),
+    ARGIN_NULLOK(unsigned char *new_next))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+void Parrot_io_set_buffer_size(PARROT_INTERP,
+    ARGIN(PMC *filehandle),
+    size_t new_size)
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+void Parrot_io_set_buffer_start(PARROT_INTERP,
+    ARGIN(PMC *filehandle),
+    ARGIN_NULLOK(unsigned char *new_start))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
 
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 /* HEADERIZER END: src/io.c */
