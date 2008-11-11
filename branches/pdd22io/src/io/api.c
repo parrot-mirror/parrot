@@ -101,6 +101,7 @@ Parrot_io_open(PARROT_INTERP, ARGIN_NULLOK(PMC *pmc),
         Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_PIO_ERROR,
             "Unable to open filehandle");
 
+    Parrot_io_setbuf(interp, new_filehandle, PIO_UNBOUND);
     return new_filehandle;
 }
 
@@ -137,6 +138,11 @@ Parrot_io_fdopen(PARROT_INTERP, ARGIN_NULLOK(PMC *pmc), PIOHANDLE fd,
     if (PMC_IS_NULL(new_filehandle))
         Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_PIO_ERROR,
             "Unable to open filehandle");
+
+    if (Parrot_io_get_flags(interp, new_filehandle) & PIO_F_CONSOLE)
+        Parrot_io_setlinebuf(interp, new_filehandle);
+    else
+        Parrot_io_setbuf(interp, new_filehandle, PIO_UNBOUND);
 
     return new_filehandle;
 }
@@ -202,6 +208,7 @@ Parrot_io_flush(PARROT_INTERP, ARGMOD(PMC *pmc))
     if (Parrot_io_is_closed(interp, pmc))
         return;
 
+    Parrot_io_flush_buffer(interp, pmc);
     ignored = PIO_FLUSH(interp, pmc);
     UNUSED(ignored);
 }
@@ -345,7 +352,8 @@ Parrot_io_tell(PARROT_INTERP, ARGMOD(PMC *pmc))
     if (Parrot_io_is_closed(interp, pmc))
         return -1;
 
-    return PIO_TELL(interp, pmc);
+    return Parrot_io_get_file_position(interp, pmc);
+    /* return PIO_TELL(interp, pmc); */
 }
 
 /*
@@ -436,14 +444,16 @@ Parrot_io_putps(PARROT_INTERP, ARGMOD(PMC *pmc), ARGMOD_NULLOK(STRING *s))
         Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_PIO_ERROR,
             "Cannot put to a closed I/O handle");
 
-    if (!s)
+    if (STRING_IS_NULL(s))
         return 0;
+
 #if ! DISABLE_GC_DEBUG
     /* trigger GC for debug - but not during tests */
     if (0 && GC_DEBUG(interp))
         Parrot_do_dod_run(interp, GC_trace_stack_FLAG);
 #endif
-    return PIO_WRITE(interp, pmc, s);
+
+    return Parrot_io_write_buffer(interp, pmc, s);
 }
 
 /*
