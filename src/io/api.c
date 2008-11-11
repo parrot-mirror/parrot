@@ -247,7 +247,7 @@ Parrot_io_reads(PARROT_INTERP, ARGMOD(PMC *pmc), size_t len)
     }
 
     res->bufused = len;
-    ignored      = PIO_READ(interp, pmc, &res);
+    ignored      = Parrot_io_read_buffer(interp, pmc, &res);
     UNUSED(ignored);
 
     return res;
@@ -275,7 +275,7 @@ Parrot_io_read(PARROT_INTERP, ARGMOD(PMC *pmc), ARGIN(char *buffer), size_t len)
 
     res->strstart = buffer;
     res->bufused = len;
-    return PIO_READ(interp, pmc, &res);
+    return Parrot_io_read_buffer(interp, pmc, &res);
 }
 
 /*
@@ -305,7 +305,7 @@ Parrot_io_write(PARROT_INTERP, ARGMOD(PMC *pmc), ARGIN(const void *buffer), size
         fake.strlen = fake.bufused = len;
         fake.charset = Parrot_default_charset_ptr;
         fake.encoding = Parrot_default_encoding_ptr;
-        return PIO_WRITE(interp, pmc, &fake);
+        return Parrot_io_write_buffer(interp, pmc, &fake);
     }
     else
         return 0;
@@ -331,7 +331,7 @@ Parrot_io_seek(PARROT_INTERP, ARGMOD(PMC *pmc), PIOOFF_T offset, INTVAL w)
     if (Parrot_io_is_closed(interp, pmc))
         return -1;
 
-    return PIO_SEEK(interp, pmc, offset, w);
+    return Parrot_io_seek_buffer(interp, pmc, offset, w);
 }
 
 /*
@@ -374,7 +374,7 @@ Parrot_io_peek(PARROT_INTERP, ARGMOD(PMC *pmc), ARGOUT(STRING **buffer))
     if (Parrot_io_is_closed(interp, pmc))
         return -1;
 
-    return PIO_PEEK(interp, pmc, buffer);
+    return Parrot_io_peek_buffer(interp, pmc, buffer);
 }
 
 /*
