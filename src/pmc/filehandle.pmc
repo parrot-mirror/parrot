@@ -133,10 +133,6 @@ Free structures.
 
             if (data_struct->buffer_start)
                 mem_sys_free(data_struct->buffer_start);
-            if (data_struct->buffer_end)
-                mem_sys_free(data_struct->buffer_end);
-            if (data_struct->buffer_next)
-                mem_sys_free(data_struct->buffer_next);
 
             mem_sys_free(PARROT_FILEHANDLE(SELF));
             PMC_data(SELF) = NULL;
