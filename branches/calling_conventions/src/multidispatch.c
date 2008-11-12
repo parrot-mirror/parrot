@@ -577,7 +577,6 @@ Parrot_build_sig_object_from_varargs2(PARROT_INTERP, ARGIN(PMC* obj),
     INTVAL  sig_len          = strlen(sig);
     STRING *s_sig            = string_from_cstring(interp, sig, sig_len);
     STRING *string_sig       = NULL;
-    INTVAL  has_invocant     = 0;
 
     /* Protect call signature object from collection. */
     dod_register_pmc(interp, call_object);
@@ -591,23 +590,12 @@ Parrot_build_sig_object_from_varargs2(PARROT_INTERP, ARGIN(PMC* obj),
         STRING *invocant_sig = CONST_STRING(interp, "Pi");
         string_sig = string_concat(interp, invocant_sig, s_sig, 0);
         sig_len = sig_len + 2;
-        has_invocant = 1;
     }
 
-    /* Create an extra item on the array, in case we need to store the
-       invocant. I don't know if the length of this array is going
-       to be some kind of factor later or not. */
-    VTABLE_set_integer_native(interp, type_tuple, sig_len + 1);
+    VTABLE_set_integer_native(interp, type_tuple, sig_len);
     VTABLE_set_pmc(interp, call_object, type_tuple);
 
     VTABLE_set_string_native(interp, call_object, string_sig);
-
-    /* if we have a valid invocant, push it on here. */
-    if (has_invocant) {
-        VTABLE_set_integer_keyed_int(interp, type_tuple, 0,
-            VTABLE_type(interp, obj));
-        VTABLE_push_pmc(interp, call_object, obj);
-    }
 
     for (i = 0; i < sig_len; ++i) {
         INTVAL type = string_index(interp, string_sig, i);
@@ -659,36 +647,41 @@ Parrot_build_sig_object_from_varargs2(PARROT_INTERP, ARGIN(PMC* obj),
                 case 'I':
                     VTABLE_push_integer(interp, call_object, va_arg(args, INTVAL));
                     VTABLE_set_integer_keyed_int(interp, type_tuple,
-                            i + has_invocant, enum_type_INTVAL);
+                            i, enum_type_INTVAL);
                     break;
                 case 'N':
                     VTABLE_push_float(interp, call_object, va_arg(args, FLOATVAL));
                     VTABLE_set_integer_keyed_int(interp, type_tuple,
-                            i + has_invocant, enum_type_FLOATVAL);
+                            i, enum_type_FLOATVAL);
                     break;
                 case 'S':
                     VTABLE_push_string(interp, call_object, va_arg(args, STRING *));
                     VTABLE_set_integer_keyed_int(interp, type_tuple,
-                            i + has_invocant, enum_type_STRING);
+                            i, enum_type_STRING);
                     break;
                 case 'P':
                 {
-                    PMC *pmc_arg = va_arg(args, PMC *);
-                    if (!PMC_IS_NULL(pmc_arg))
-                        VTABLE_set_integer_keyed_int(interp, type_tuple,
-                            i + has_invocant, VTABLE_type(interp, pmc_arg));
+                    INTVAL type_lookahead = string_index(interp, string_sig, (i + 1));
+                    if (type_lookahead == 'i') {
+                        if (i != 0)
+                            Parrot_ex_throw_from_c_args(interp, NULL,
+                                EXCEPTION_INVALID_OPERATION,
+                                "Multiple Dispatch: 'i' adverb modifier may only be used on the invocant");
+                        VTABLE_set_integer_keyed_int(interp, type_tuple, 0,
+                                VTABLE_type(interp, obj));
+                        VTABLE_push_pmc(interp, call_object, obj);
+                        i++; /* skip the 'i' modifier */
+                    }
+                    else {
+                        PMC *pmc_arg = va_arg(args, PMC *);
+                        if (!PMC_IS_NULL(pmc_arg))
+                            VTABLE_set_integer_keyed_int(interp, type_tuple,
+                                i, VTABLE_type(interp, pmc_arg));
 
-                    VTABLE_push_pmc(interp, call_object, pmc_arg);
+                        VTABLE_push_pmc(interp, call_object, pmc_arg);
+                    }
                     break;
                 }
-                case 'i':
-                    if (i != 1)
-                        Parrot_ex_throw_from_c_args(interp, NULL,
-                            EXCEPTION_INVALID_OPERATION,
-                            "Multiple Dispatch: 'i' adverb modifier may only be used on the invocant");
-                    /* I don't think we need to do any additional
-                       processing here. */
-                    break;
                 case '-':
                     i++; /* skip '>' */
                     in_return_sig = 1;
@@ -746,7 +739,7 @@ Parrot_mmd_multi_dispatch_from_c_args(PARROT_INTERP,
             string_to_cstring(interp, VTABLE_name(interp, sub)));
 #endif
 
-    Parrot_pcc_invoke_from_sig_object(interp, PMCNULL, sub, sig_object);
+    Parrot_pcc_invoke_from_sig_object(interp, sub, sig_object);
     dod_unregister_pmc(interp, sig_object);
 }
 
