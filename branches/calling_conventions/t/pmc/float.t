@@ -504,7 +504,7 @@ ok 2
 OUTPUT
 
 SKIP: {
-    skip 'failling on win32' => 1 if $^O =~ m/win32/i;
+    skip 'failing on win32' => 1 if $^O =~ m/win32/i;
 
 pasm_output_like( << 'CODE', << 'OUTPUT', "neg 0" );
     new P0, 'Float'
@@ -1102,7 +1102,7 @@ OUTPUT
 
 pir_output_is( <<'CODE', <<OUTPUT, "new_from_string" );
 .sub main :main
-    .const .Float pi = "3.1"
+    .const 'Float' pi = "3.1"
     print pi
     print "\n"
 .end

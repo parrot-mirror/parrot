@@ -18,6 +18,18 @@ src/classes/Pair.pir - methods for the Pair class
     p6meta.'new_class'('Perl6Pair', 'parent'=>'Any', 'attr'=>'$!key $!value', 'name'=>'Pair')
 .end
 
+
+=item Scalar
+
+This is a value type, so just returns itself.
+
+=cut
+
+.sub 'Scalar' :method
+    .return (self)
+.end
+
+
 =item ACCEPTS()
 
 Called from smartmatches '$_ ~~ X'.
@@ -33,7 +45,7 @@ Delegates on to a method call '.:Xkey(Xval)'.
 
     $P0 = self.value()
 
-    .return topic.$S0($P0)
+    .tailcall topic.$S0($P0)
 .end
 
 =item key
@@ -75,6 +87,29 @@ Stringify the Pair.
 .end
 
 
+=item fmt
+
+ our Str multi Pair::fmt ( Str $format )
+
+Returns the invocant pair formatted by an implicit call to C<sprintf> on
+the key and value.
+
+=cut
+
+.sub 'fmt' :method
+    .param pmc format
+
+    .local pmc retv
+    .local pmc key
+    .local pmc value
+
+    key = self.'key'()
+    value = self.'value'()
+    retv = 'sprintf'(format, key, value)
+
+    .return(retv)
+.end
+
 =item perl
 
 Returns a Perl code representation of the pair.
@@ -108,7 +143,7 @@ Returns a Perl code representation of the pair.
     key = key.'item'()
     value = value.'item'()
     $P0 = get_hll_global 'Pair'
-    .return $P0.'new'('key'=>key, 'value'=>value)
+    .tailcall $P0.'new'('key'=>key, 'value'=>value)
 .end
 
 

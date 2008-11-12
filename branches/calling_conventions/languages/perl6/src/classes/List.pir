@@ -20,6 +20,22 @@ src/classes/List.pir - Perl 6 List class and related functions
     '!EXPORT'('first grep keys kv map pairs reduce values', $P0)
 .end
 
+
+=item Scalar
+
+When we're going to be stored as an item, become an Array and then return
+ourself in a ObjectRef.
+
+=cut
+
+.namespace ['List']
+.sub 'Scalar' :method
+    # promote the list to an Array and return its VALUE
+    $P0 = self.'item'()
+    .tailcall $P0.'Scalar'()
+.end
+
+
 =item clone()    (vtable method)
 
 Return a clone of this list.  (Clones its elements also.)
@@ -108,6 +124,7 @@ Return the List invocant in scalar context (i.e., an Array).
 
 =cut
 
+.namespace ['List']
 .sub 'item' :method
     $P0 = new 'Perl6Array'
     splice $P0, self, 0, 0
@@ -196,7 +213,7 @@ layer.  It will likely change substantially when we have lazy lists.
     elem = self[i]
     $I0 = defined elem
     unless $I0 goto flat_next
-    $I0 = isa elem, 'Perl6Scalar'
+    $I0 = isa elem, 'ObjectRef'
     if $I0 goto flat_next
     $I0 = isa elem, 'Range'
     unless $I0 goto not_range
@@ -267,9 +284,47 @@ Return the number of elements in the list.
     .param pmc test
     .param pmc values :slurpy
 
-    .return values.'first'(test)
+    .tailcall values.'first'(test)
 .end
 
+=item fmt
+
+ our Str multi List::fmt ( Str $format, $separator = ' ' )
+
+Returns the invocant list formatted by an implicit call to C<sprintf> on each
+of the elements, then joined with spaces or an explicitly given separator.
+
+=cut
+
+.sub 'fmt' :method :multi('ResizablePMCArray')
+    .param pmc format
+    .param string sep          :optional
+    .param int has_sep         :opt_flag
+
+    .local pmc res
+    .local pmc iter
+    .local pmc retv
+    .local pmc elem
+    .local pmc elemres
+
+    if has_sep goto have_sep
+    sep = ' '
+  have_sep:
+    res = new 'List'
+    iter = self.'iterator'()
+  elem_loop:
+    unless iter goto done
+
+  invoke:
+    elem = shift iter
+    elemres = 'sprintf'(format, elem)
+    push res, elemres
+    goto elem_loop
+
+  done:
+    retv = 'join'(sep, res)
+    .return(retv)
+.end
 
 =item grep(...)
 
@@ -300,7 +355,7 @@ Return the number of elements in the list.
 .sub 'grep' :multi('Sub')
     .param pmc test
     .param pmc values          :slurpy
-    .return values.'grep'(test)
+    .tailcall values.'grep'(test)
 .end
 
 
@@ -327,12 +382,12 @@ Returns a List containing the keys of the invocant.
     $I0 = self.'elems'()
     dec $I0
     $P0 = 'infix:..'(0, $I0)
-    .return $P0.'list'()
+    .tailcall $P0.'list'()
 .end
 
 .sub 'keys' :multi()
     .param pmc values          :slurpy
-    .return values.'keys'()
+    .tailcall values.'keys'()
 .end
 
 
@@ -362,7 +417,7 @@ Return items in invocant as 2-element (index, value) lists.
 
 .sub 'kv' :multi()
     .param pmc values          :slurpy
-    .return values.'kv'()
+    .tailcall values.'kv'()
 .end
 
 
@@ -418,7 +473,7 @@ Map.
 .sub 'map' :multi('Sub')
     .param pmc expression
     .param pmc values          :slurpy
-    .return values.'map'(expression)
+    .tailcall values.'map'(expression)
 .end
 
 
@@ -448,7 +503,7 @@ Return a list of Pair(index, value) elements for the invocant.
 
 .sub 'pairs' :multi()
     .param pmc values          :slurpy
-    .return values.'pairs'()
+    .tailcall values.'pairs'()
 .end
 
 
@@ -510,7 +565,7 @@ Return a list of Pair(index, value) elements for the invocant.
 .sub 'reduce' :multi('Sub')
     .param pmc expression
     .param pmc values          :slurpy
-    .return values.'reduce'(expression)
+    .tailcall values.'reduce'(expression)
 .end
 
 
@@ -521,48 +576,59 @@ Return a list of Pair(index, value) elements for the invocant.
 # TODO Rewrite it. It's too naive.
 
 .namespace ['List']
-.sub uniq :method
+.sub 'uniq' :method
+    .param pmc comparer :optional
+    .param int has_comparer :opt_flag
+
+    if has_comparer goto have_comparer
+    comparer = get_hll_global 'infix:eq'
+  have_comparer:
+
     .local pmc ulist
-    .local pmc key
+    $P0 = get_hll_global 'List'
+    ulist = $P0.'new'()
+
+    .local int lelems, uelems, l, u
+    lelems = self.'elems'()
+    uelems = 0
+    l = 0
+  outer_loop:
+    unless l < lelems goto outer_done
     .local pmc val
-    .local pmc uval
-    .local int len
-    .local int i
-    .local int ulen
-    .local int ui
-
-    ulist = new 'List'
-    len = self.'elems'()
-    i = 0
-
-  loop:
-    if i == len goto done
-
-    val = self[i]
-
-    ui = 0
-    ulen = ulist.'elems'()
-    inner_loop:
-        if ui == ulen goto inner_loop_done
-
-        uval = ulist[ui]
-        if uval == val goto found
-
-        inc ui
-        goto inner_loop
-    inner_loop_done:
-
+    val = self[l]
+    u = 0
+  inner_loop:
+    unless u < uelems goto inner_done
+    $P0 = ulist[u]
+    $P0 = comparer(val, $P0)
+    if $P0 goto outer_next
+    inc u
+    goto inner_loop
+  inner_done:
     ulist.'push'(val)
-
-    found:
-
-    inc i
-    goto loop
-
-  done:
-    .return(ulist)
+    inc uelems
+  outer_next:
+    inc l
+    goto outer_loop
+  outer_done:
+    .return (ulist)
 .end
 
+
+.namespace []
+.sub 'uniq' :multi(Sub)
+    .param pmc comparer
+    .param pmc values :slurpy
+    .tailcall values.'uniq'(comparer)
+.end
+
+.sub 'uniq' :multi()
+    .param pmc values :slurpy
+    .tailcall values.'uniq'()
+.end
+
+
+.namespace ['List']
 
 =item values()
 
@@ -577,7 +643,7 @@ Returns a List containing the values of the invocant.
 
 .sub 'values' :multi()
     .param pmc values          :slurpy
-    .return values.'!flatten'()
+    .tailcall values.'!flatten'()
 .end
 
 
@@ -596,7 +662,7 @@ Build a List from its arguments.
 .namespace []
 .sub 'list'
     .param pmc values          :slurpy
-    .return values.'!flatten'()
+    .tailcall values.'!flatten'()
 .end
 
 =item C<infix:,(...)>
@@ -607,7 +673,7 @@ Operator form for building a list from its arguments.
 
 .sub 'infix:,'
     .param pmc args            :slurpy
-    .return args.'!flatten'()
+    .tailcall args.'!flatten'()
 .end
 
 

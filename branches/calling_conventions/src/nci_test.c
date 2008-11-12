@@ -35,6 +35,7 @@ The name of a test function is usually 'nci_<signature>'. E.g. the function
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <parrot/config.h>
 
 #ifdef __cplusplus
@@ -104,7 +105,8 @@ PARROT_API void   nci_vpii(Outer *, int, int);
 PARROT_API void   nci_vv(void);
 PARROT_API void   nci_vVi(Opaque**, int);
 PARROT_API void   nci_vp(Opaque*);
-
+PARROT_API char * nci_ttt(char *, char *);
+PARROT_API void   nci_vfff(float, float, float);
 
 /* Declarations for callback tests */
 
@@ -1100,6 +1102,55 @@ nci_vp(Opaque *inOpaque)
     else
         printf("got null");
 }
+
+/*
+
+=item C<PARROT_API char *
+nci_ttt(void *p)>
+
+Prints "s2, s1, s1d"
+
+=cut
+
+*/
+
+PARROT_API char *
+nci_ttt(char *s1, char *s2)
+{
+    char* s = (char*) malloc(strlen(s2) + (2 * strlen(s1)) + 5);
+    sprintf(s, "%s, %s, %s", s2, s2, s1);
+    printf("%s\n", s);
+    return s;
+}
+
+
+static void validate_float(float f, double checkval) {
+    int valid;
+    double error_ratio;
+    error_ratio = (((double)f) - checkval) / checkval;
+    valid = error_ratio <= 0.01 && error_ratio >= -0.01;
+    printf("%i\n", valid);
+}
+
+/*
+
+=item C<PARROT_API float
+nci_fff(float l1, float l2)>
+
+Returns the result of C<l1> / C<l2>.
+
+=cut
+
+*/
+
+PARROT_API void
+nci_vfff(float l1, float l2, float l3)
+{
+  validate_float(l1, 3456.54);
+  validate_float(l2, 10.1999);
+  validate_float(l3, 14245.567);
+}
+
 
 
 #ifdef TEST

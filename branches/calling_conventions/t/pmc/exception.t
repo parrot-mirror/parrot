@@ -129,9 +129,9 @@ pasm_output_is( <<'CODE', <<'OUTPUT', "exception attributes" );
     setattribute P1, 'payload', P4
     new P5, 'Array'
     set P5, 2
-    set P5[0], 'stacktrace line 1'
-    set P5[1], 'stacktrace line 2'
-    setattribute P1, 'stacktrace', P5
+    set P5[0], 'backtrace line 1'
+    set P5[1], 'backtrace line 2'
+    setattribute P1, 'backtrace', P5
 
     throw P1
     print "not reached\n"
@@ -149,7 +149,7 @@ handler:
     getattribute P18, P0, 'payload'
     print P18
     print "\n"
-    getattribute P19, P0, 'stacktrace'
+    getattribute P19, P0, 'backtrace'
     set P20, P19[0]
     print P20
     print "\n"
@@ -165,8 +165,8 @@ caught it
 just pining
 5
 additional payload
-stacktrace line 1
-stacktrace line 2
+backtrace line 1
+backtrace line 2
 OUTPUT
 
 pasm_output_is( <<'CODE', <<'OUTPUT', "get_results - be sure registers are ok" );
@@ -485,7 +485,7 @@ OUTPUT
 pir_error_output_like( <<'CODE', <<'OUTPUT', "pushaction - throw in main" );
 .sub main :main
     print "main\n"
-    .const .Sub at_exit = "exit_handler"
+    .const 'Sub' at_exit = "exit_handler"
     pushaction at_exit
     $P0 = new 'Exception'
     throw $P0
@@ -509,7 +509,7 @@ pir_output_like(
 .sub main :main
     push_eh h
     print "main\n"
-    .const .Sub at_exit = "exit_handler"
+    .const 'Sub' at_exit = "exit_handler"
     pushaction at_exit
     $P1 = new 'Exception'
     throw $P1
@@ -664,7 +664,8 @@ pir_error_output_like( <<'CODE', <<'OUTPUT', "throw - no handler" );
     exit 0
   try:
     .get_results($P0)
-    $S1 = $P0['stacktrace']
+    pop_eh
+    $S1 = $P0['backtrace']
     $S1 .= "\n"
     say $S1
 .end

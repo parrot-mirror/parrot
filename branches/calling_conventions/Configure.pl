@@ -7,7 +7,6 @@ use 5.008;
 use strict;
 use warnings;
 use lib 'lib';
-use Data::Dumper;$Data::Dumper::Indent = 1;
 
 use Parrot::Configure;
 use Parrot::Configure::Options qw( process_options );
@@ -42,7 +41,6 @@ my ($args, $steps_list_ref) = process_options(
         argv => [@ARGV],
     }
 );
-#print STDERR Dumper ($args, $steps_list_ref);
 exit(1) unless defined $args;
 
 my $opttest = Parrot::Configure::Options::Test->new($args);
@@ -649,7 +647,7 @@ or
 
 =head1 SEE ALSO
 
-F<config/init/data.pl>, F<lib/Parrot/Configure.pm>,
+F<lib/Parrot/Configure.pm>,
 F<lib/Parrot/Configure/Step.pm>, F<docs/configuration.pod>
 
 =cut

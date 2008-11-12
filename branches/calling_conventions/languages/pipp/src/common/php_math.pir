@@ -92,8 +92,8 @@ Return the absolute value of the number
     $I0 = abs $I1
     .RETURN_LONG($I0)
   L3:
-    $I0 = isa $P1, 'array'
-    unless $I0 goto L4
+    $S0 = typeof $P1
+    unless $S0 == 'array' goto L4
     .RETURN_FALSE()
   L4:
     $N1 = $P1
@@ -647,7 +647,7 @@ Formats a number with grouped thousands
     unless argc == 1 goto L1
     $P1 = shift args
     $N1 = $P1
-    .return _number_format($N1, 0, dec_point, thousand_sep)
+    .tailcall _number_format($N1, 0, dec_point, thousand_sep)
   L1:
     unless argc == 2 goto L2
     $P1 = shift args
@@ -655,7 +655,7 @@ Formats a number with grouped thousands
     $N1 = $P1
     $P2 = shift args
     $I2 = $P2
-    .return _number_format($N1, $I2, dec_point, thousand_sep)
+    .tailcall _number_format($N1, $I2, dec_point, thousand_sep)
   L2:
     unless argc == 4 goto L3
     $P1 = shift args
@@ -679,7 +679,7 @@ Formats a number with grouped thousands
     unless $I4 goto L5
     thousand_sep =substr thousand_sep, 0, 1
   L5:
-    .return _number_format($N1, $I2, dec_point, thousand_sep)
+    .tailcall _number_format($N1, $I2, dec_point, thousand_sep)
   L3:
     wrong_param_count()
     .RETURN_NULL()

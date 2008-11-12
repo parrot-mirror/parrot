@@ -27,6 +27,7 @@ PIR or an Eval PMC (bytecode).
     set_global '@!subcode', $P0
 
     $P0 = new 'String'
+    $P0 = '[]'
     set_global '$?NAMESPACE', $P0
     .return ()
 .end
@@ -93,7 +94,7 @@ the generated pir of C<node>'s children.
 
 .sub 'pir' :method :multi(_,_)
     .param pmc node
-    .return self.'pir_children'(node)
+    .tailcall self.'pir_children'(node)
 .end
 
 
@@ -151,7 +152,7 @@ Return pir for an operation node.
 
   pirop_tailcall:
     name = shift arglist
-    fmt = '    .return %n(%,)'
+    fmt = '    .tailcall %n(%,)'
     goto pirop_emit
 
   pirop_inline:
@@ -305,9 +306,9 @@ the sub.
     compiler = compreg $S0
     $I0 = isa compiler, 'Sub'
     if $I0 goto compiler_sub
-    .return compiler.'compile'(source, options :flat :named)
+    .tailcall compiler.'compile'(source, options :flat :named)
   compiler_sub:
-    .return compiler(source, options :flat :named)
+    .tailcall compiler(source, options :flat :named)
 .end
 
 =back

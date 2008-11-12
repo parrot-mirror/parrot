@@ -167,10 +167,6 @@ void Parrot_mmd_multi_dispatch_from_c_args(PARROT_INTERP,
         __attribute__nonnull__(3);
 
 PARROT_API
-void Parrot_mmd_rebuild_table(PARROT_INTERP, INTVAL type, INTVAL func_nr)
-        __attribute__nonnull__(1);
-
-PARROT_API
 void Parrot_mmd_register(PARROT_INTERP,
     INTVAL func_nr,
     INTVAL left_type,
