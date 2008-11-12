@@ -9,29 +9,46 @@ grammar Pipp::Grammar is PCT::Grammar;
 token TOP                   { ^ <sea_or_code>+                                       {*} }
 
 # whitespace and comments
-token ws                    { [ \h
-                              | \v
+token ws                    { <!ww> <ws_all>+ | <ws_all>* }
+token ws_all                { [ <.ws_char>
                               | <singlelinecomment>
                               | <multilinecomment>
-                              ]*
+                              ]
                             }
+token ws_char               { [ \h | \v ] }
 token singlelinecomment     { '#'  \N*
                             | '//' \N*
                             }
 token multilinecomment      { '/*' .*? '*/' }
 
-# embedding code into a sea of HTML
-token sea_or_code           { <code_tp1> {*}               #= code_tp1
-                            | <code_tp2> {*}               #= code_tp2
-                            | <SEA> {*}                    #= SEA
+# embedding code into a sea of text
+token sea_or_code           { <code_echo_tag>   {*}    #= code_echo_tag
+                            | <code_short_tag>  {*}    #= code_short_tag
+                            | <code_script_tag> {*}    #= code_script_tag
+                            | <SEA> {*}                #= SEA
                             }
-regex SEA                   { '<'? .+? ( <before '<'> | $ )                          {*} } 
-rule  code_tp1              { <.CODE_START_TP1> <statement>* <.CODE_END_TP1>?        {*} }
-rule  code_tp2              { <.CODE_START_TP2> <statement>* <.CODE_END_TP2>?        {*} }
-token CODE_START_TP1        { '<?php'                                                    }
-token CODE_START_TP2        { '<script language="php">'                                  }
-token CODE_END_TP1          { '?>' \n?                                                   }
-token CODE_END_TP2          { '</script>' \n?                                            }
+regex SEA                   { '<'? .+? ( <before '<'> | $ )                                 {*} } 
+rule  code_echo_tag         { <.CODE_START_ECHO_TAG>   
+                              <arguments> <.statement_delimiter> 
+                              <statement>* 
+                              <.CODE_END_SHORT_TAG>?                                        {*} 
+                            }
+rule  code_script_tag       { <.CODE_START_SCRIPT_TAG> <statement>* <.CODE_END_SCRIPT_TAG>? {*} }
+rule  code_short_tag        { <.CODE_START_SHORT_TAG>  <statement>* <.CODE_END_SHORT_TAG>?  {*} }
+
+regex CODE_START_SCRIPT_TAG { '<script'          <ws_char>+: 
+                              'language'         <ws_char>*: 
+                              '='                <ws_char>*: 
+                              <quoted_lang_name> <ws_char>*: 
+                              '>' 
+                            }
+regex CODE_END_SCRIPT_TAG   { '</script' <ws_char>*: '>'                                        }
+token quoted_lang_name      { [ '"php"' | '\'php\'' ]                                           }
+
+token CODE_START_ECHO_TAG  { '<?='                                                              }
+
+token CODE_START_SHORT_TAG  { '<?' 'php'?                                                       }
+token CODE_END_SHORT_TAG    { '?>' \n?                                                          }
 
 # block and statements
 rule  block                 { '{' <statement>* '}'                                   {*} }
@@ -40,8 +57,8 @@ rule  statement             { <echo_statement> {*}         #= echo_statement
                             | <if_statement> {*}           #= if_statement
                             | <while_statement> {*}        #= while_statement
                             | <for_statement> {*}          #= for_statement
-                            | <inline_sea_tp1> {*}         #= inline_sea_tp1
-                            | <inline_sea_tp2> {*}         #= inline_sea_tp2
+                            | <inline_sea_short_tag> {*}   #= inline_sea_short_tag
+                            | <inline_sea_script_tag> {*}  #= inline_sea_script_tag
                             | <var_assign> {*}             #= var_assign
                             | <function_definition> {*}    #= function_definition
                             | <class_definition> {*}       #= class_definition
@@ -64,13 +81,14 @@ rule  for_statement         { 'for'
                                   <expression>
                                ')' <block>                                           {*}
                             }
-token inline_sea_tp1        { <.CODE_END_TP1> <SEA_empty_allowed> <.CODE_START_TP1>  {*} }
-token inline_sea_tp2        { <.CODE_END_TP2> <SEA_empty_allowed> <.CODE_START_TP2>  {*} }
+token inline_sea_short_tag  { <.CODE_END_SHORT_TAG>  <SEA_empty_allowed> <.CODE_START_SHORT_TAG>  {*} }
+token inline_sea_script_tag { <.CODE_END_SCRIPT_TAG> <SEA_empty_allowed> <.CODE_START_SCRIPT_TAG> {*} }
 regex SEA_empty_allowed     { <-[<]>*? <before '<'>                                      }
 rule  var_assign            { <var>        '=' <expression> <.statement_delimiter>   {*} }
 
 # identifiers
 token FUNCTION_NAME         { <ident>                                                    }
+token MEMBER_NAME           { <ident>                                                    }
 token METHOD_NAME           { <ident>                                                    }
 token CONSTANT_NAME         { <ident>                                                    }
 token CLASS_NAME            { <ident>                                                    }
@@ -92,6 +110,7 @@ token quote                 { [ <.before '"' > <quote_expression: :qq>
                             }
 rule  constant              { <CONSTANT_NAME>                                        {*} }
 rule  this                  { '$this'                                                {*} } 
+rule  member                { <this> '->' <MEMBER_NAME>                              {*} } 
 rule  array_elem            { <VAR_NAME> '[' <expression> ']'                        {*} }
 token var                   { <this> {*}                   #= this
                             | <array_elem> {*}             #= array_elem
@@ -110,6 +129,7 @@ rule  term                  { <method_call> {*}            #= method_call
                             | '(' <expression> {*} ')'     #= expression
                             | <literal> {*}                #= literal
                             | <constant> {*}               #= constant
+                            | <member> {*}                 #= member
                             | <var> {*}                    #= var
                             }
 

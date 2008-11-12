@@ -11,8 +11,12 @@
 #include "pircompiler.h"
 #include "parrot/parrot.h"
 #include "piryy.h"
+#include "pirmacro.h"
+#include "pirregalloc.h"
 
-/* XXX count memory, so we can check out mem. savings of string reuse */
+/* XXX count memory, so we can check out mem. savings of string reuse
+ * Only temporarily used, so no need to "fix" this.
+ */
 static int totalmem = 0;
 
 
@@ -78,6 +82,8 @@ through Parrot's allocation functions, but the pointer to the allocated memory
 is stored in a data structure; this way, freeing all memory can be done by just
 iterating over these pointers and freeing them.
 
+Memory allocated through this function is all set to zero.
+
 =cut
 
 */
@@ -93,6 +99,32 @@ pir_mem_allocate_zeroed(NOTNULL(lexer_state * const lexer), size_t numbytes) {
     register_ptr(lexer, ptr);
     return ptr;
 }
+
+/*
+
+=item C<void *
+pir_mem_allocate(NOTNULL(lexer_state * const lexer), size_t numbytes)>
+
+See C<pir_mem_allocate_zeroed()>. Memory is C<not> guaranteed to be zeroed.
+(It might, it might not, depending on what your system finds appropriate.
+Don't count on it anyway.)
+
+=cut
+
+*/
+PARROT_MALLOC
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
+void *
+pir_mem_allocate(NOTNULL(lexer_state * const lexer), size_t numbytes) {
+    void *ptr = mem_sys_allocate(numbytes);
+
+    totalmem += numbytes;
+
+    register_ptr(lexer, ptr);
+    return ptr;
+}
+
 
 /*
 
@@ -116,7 +148,7 @@ init_hashtable(NOTNULL(lexer_state * const lexer), NOTNULL(hashtable * const tab
 /*
 
 =item C<lexer_state *
-new_lexer(char * const filename)>
+new_lexer(char * const filename, int flags)>
 
 Constructor for a lexer structure. Initializes all fields, creates
 a Parrot interpreter structure.
@@ -145,7 +177,12 @@ new_lexer(NULLOK(char * const filename), int flags) {
     /* create a hashtable for storing .const declarations */
     init_hashtable(lexer, &lexer->constants, HASHTABLE_SIZE_INIT);
 
+    /* create a new symbol table for macros XXX why not a hashtable? XXX */
+    lexer->macros     = new_macro_table(NULL);
+    lexer->macro_size = INIT_MACRO_SIZE;
 
+    /* create a new linear scan register allocator */
+    lexer->lsr        = new_linear_scan_register_allocator();
 
     return lexer;
 }
@@ -154,8 +191,8 @@ new_lexer(NULLOK(char * const filename), int flags) {
 
 /*
 
-=item C<static bucket *
-new_bucket(void)>
+=item C<bucket *
+new_bucket(lexer_state * const lexer)>
 
 Constructor for a bucket object.
 
@@ -172,7 +209,7 @@ new_bucket(NOTNULL(lexer_state * const lexer)) {
 /*
 
 =item C<static void
-store_string(lexer_state * const lexer, char * const str)>
+store_string(lexer_state * const lexer, char const * const str)>
 
 Store the string C<str> in a hashtable; whenever this string is needed, a pointer
 to the same physical string is returned, preventing allocating different buffers
@@ -194,7 +231,7 @@ store_string(NOTNULL(lexer_state * const lexer), NOTNULL(char const * const str)
 /*
 
 =item C<static char const *
-find_string(lexer_state * const lexer, char * const str)>
+find_string(lexer_state * const lexer, char const * const str)>
 
 Find the string C<str> in the lexer's string hashtable. If the string was found,
 then a pointer to that buffer is returned. So, whenever for instance the string
@@ -232,6 +269,7 @@ See dupstr, except that this version takes the number of characters to be
 copied. Easy for copying a string except the quotes, for instance.
 
 XXX maybe make this a runtime (commandline) option? Might be slightly slower.
+XXX Otherwise maybe a build option using #defines.
 
 =cut
 
@@ -284,7 +322,7 @@ release_resources(lexer_state *lexer)>
 
 Release all resources pointed to by C<lexer>.
 Free all memory that was allocated through C<pir_mem_allocate_zeroed()>.
-Call the destructor on the Parrot Interpreter, and free C<lexer> itself.
+Free C<lexer> itself.
 
 =cut
 
@@ -296,7 +334,6 @@ release_resources(NOTNULL(lexer_state *lexer)) {
     if (TEST_FLAG(lexer->flags, LEXER_FLAG_VERBOSE))
         fprintf(stderr, "Total nr of bytes allocated: %d\n", totalmem);
 
-    Parrot_destroy(lexer->interp);
 
     iter = lexer->mem_allocations;
 
@@ -320,7 +357,29 @@ release_resources(NOTNULL(lexer_state *lexer)) {
 }
 
 
+/*
 
+=item C<void
+pirwarning(lexer_state * const lexer, int lineno, char const * const message, ...)>
+
+Emit a warning message to C<stderr>. The line number (passed in C<lineno>) is reported,
+together with the message. The message can be formatted, meaning it can contain
+C<printf>'s placeholders. C<message> and all variable arguments are passed to
+C<vfprintf()>.
+
+=cut
+
+*/
+void
+pirwarning(lexer_state * const lexer, int lineno, char const * const message, ...) {
+    va_list arg_ptr;
+    fprintf(stderr, "warning (line %d): ", lineno);
+    va_start(arg_ptr, message);
+    vfprintf(stderr, message, arg_ptr);
+    va_end(arg_ptr);
+    fprintf(stderr, "\n");
+
+}
 
 
 

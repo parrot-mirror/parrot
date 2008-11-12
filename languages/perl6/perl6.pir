@@ -84,8 +84,8 @@ USAGE
     $P0 .= 'for '
     $S0  = cfg['archname']
     $P0 .= $S0
-    pop_eh
   _handler:
+    pop_eh
     $P0 .= ".\n\nCopyright 2006-2008, The Perl Foundation.\n"
     setattribute self, '$version', $P0
 
@@ -160,23 +160,20 @@ to the Perl 6 compiler.
 .sub 'main' :main
     .param pmc args_str
 
-    ##  create @ARGS global.  We could possibly use the args pmc
-    ##  coming directly from Parrot, but currently Parrot provides
-    ##  it as a ResizableStringArray and we need Undefs for
-    ##  non-existent elements (RSA gives empty strings).
-    .local pmc args, iter
-    args = new 'List'
-    iter = new 'Iterator', args_str
-  args_loop:
-    unless iter goto args_end
-    $P0 = shift iter
-    push args, $P0
-    goto args_loop
-  args_end:
-    set_hll_global '@ARGS', args
+    ## Set up @*ARGS.
+    .local pmc args
+    args = '!SETUP_ARGS'(args_str, 0)
 
     $P0 = compreg 'Perl6'
     $P1 = $P0.'command_line'(args, 'encoding'=>'utf8', 'transcode'=>'iso-8859-1')
+
+    ## Now execute any MAIN sub.
+    .local pmc main_sub, args
+    main_sub = get_hll_global 'MAIN'
+    if null main_sub goto no_main
+    args = get_hll_global '@ARGS'
+    main_sub(args :flat)
+  no_main:
 
     .include 'iterator.pasm'
     .local pmc iter
@@ -227,6 +224,7 @@ to the Perl 6 compiler.
 .include 'src/parser/expression.pir'
 .include 'src/parser/quote_expression.pir'
 .include 'src/gen_actions.pir'
+.include 'src/gen_junction.pir'
 
 
 =back

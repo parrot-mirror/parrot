@@ -19,6 +19,39 @@ Num - Perl 6 numbers
     p6meta = get_hll_global ['Perl6Object'], '$!P6META'
     numproto = p6meta.'new_class'('Num', 'parent'=>'Float Any')
     p6meta.'register'('Float', 'parent'=>numproto, 'protoobject'=>numproto)
+
+    # Override the proto's ACCEPT method so we also accept Ints.
+    .const 'Sub' $P0 = "Num::ACCEPTS"
+    $P1 = typeof numproto
+    $P1.'add_method'('ACCEPTS', $P0)
+.end
+
+
+.sub 'Num::ACCEPTS' :anon :method
+    .param pmc topic
+
+    ##  first, try our superclass .ACCEPTS
+    $P0 = get_hll_global 'Any'
+    $P1 = find_method $P0, 'ACCEPTS'
+    $I0 = self.$P1(topic)
+    unless $I0 goto try_int
+    .return ($I0)
+
+  try_int:
+    $P0 = get_hll_global 'Int'
+    $I0 = $P0.'ACCEPTS'(topic)
+    .return ($I0)
+.end
+
+
+=item Scalar
+
+This is a value type, so just returns itself.
+
+=cut
+
+.sub 'Scalar' :method
+    .return (self)
 .end
 
 
@@ -28,7 +61,7 @@ Num - Perl 6 numbers
 
 .sub 'ACCEPTS' :method
     .param num topic
-    .return 'infix:=='(topic, self)
+    .tailcall 'infix:=='(topic, self)
 .end
 
 
@@ -66,7 +99,7 @@ Overridden for Num.
 .sub 'infix:===' :multi(Float,Float)
     .param num a
     .param num b
-    .return 'infix:=='(a, b)
+    .tailcall 'infix:=='(a, b)
 .end
 
 

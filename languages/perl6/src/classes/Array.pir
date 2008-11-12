@@ -18,17 +18,6 @@ src/classes/Array.pir - Perl 6 Array class and related functions
 .end
 
 
-.namespace ['Perl6Array']
-.sub 'infix:=' :method
-    .param pmc source
-    $P0 = get_hll_global 'list'
-    $P0 = $P0(source)
-    $I0 = elements self
-    splice self, $P0, 0, $I0
-    .return (self)
-.end
-
-
 .namespace []
 .sub 'circumfix:[ ]'
     .param pmc values          :slurpy
@@ -36,8 +25,7 @@ src/classes/Array.pir - Perl 6 Array class and related functions
     $I0 = elements values
     splice $P0, values, 0, $I0
     $P0.'!flatten'()
-    $P1 = new 'Perl6Scalar'
-    assign $P1, $P0
+    $P1 = new 'ObjectRef', $P0
     .return ($P1)
 .end
 
@@ -46,15 +34,24 @@ src/classes/Array.pir - Perl 6 Array class and related functions
 
 =over 4
 
-=item delete(indices :slurpy)
+=item Scalar()
 
-Delete the elements specified by C<indices> from the array
-(i.e., replace them with null).  We also shorten the array
-to the length of the last non-null (existing) element.
+Returns an ObjectRef referencing itself, unless it already is one in which
+case just returns as is.
 
 =cut
 
 .namespace ['Perl6Array']
+
+.sub 'Scalar' :method
+    $I0 = isa self, 'ObjectRef'
+    unless $I0 goto not_ref
+    .return (self)
+  not_ref:
+    $P0 = new 'ObjectRef', self
+    .return ($P0)
+.end
+
 
 .sub 'delete' :method :multi(Perl6Array)
     .param pmc indices :slurpy
@@ -105,7 +102,7 @@ Return true if the elements at C<indices> have been assigned to.
     test = exists self[$I0]
     if test goto indices_loop
   indices_end:
-    .return 'prefix:?'(test)
+    .tailcall 'prefix:?'(test)
 .end
 
 
@@ -149,7 +146,7 @@ Add C<args> to the end of the Array.
     args.'!flatten'()
     $I0 = elements self
     splice self, args, $I0, 0
-    .return self.'elems'()
+    .tailcall self.'elems'()
 .end
 
 
@@ -181,7 +178,7 @@ Adds C<args> to the beginning of the Array.
     .param pmc args :slurpy
     args.'!flatten'()
     splice self, args, 0, 0
-    .return self.'elems'()
+    .tailcall self.'elems'()
 .end
 
 

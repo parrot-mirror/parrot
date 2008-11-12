@@ -100,14 +100,11 @@ called as object methods.
 .end
 
 
+.include 'sysinfo.pasm'
+
 .sub '_get_osname'
-    .local pmc config
-    .local pmc osname
-
-    config= '_config'()
-    osname= config['osname']
-
-    .return( osname )
+    $S0 = sysinfo .SYSINFO_PARROT_OS
+    .return ( $S0 )
 .end
 
 
@@ -157,11 +154,11 @@ found_module:
     module= '_get_module'( osname )
 
     .local pmc platform
-    platform= new String
+    platform= new 'String'
     platform= module
 
     .local pmc class
-    class= new String
+    class= new 'String'
     class= name
 
     concat class, class, '::'

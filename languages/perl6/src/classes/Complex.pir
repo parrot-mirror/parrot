@@ -29,6 +29,18 @@ Implementation is a bit different from other basic objects (Int...) because
     '!EXPORT'('log polar', 'from'=>$P0)
 .end
 
+
+=item Scalar
+
+This is a value type, so just returns itself.
+
+=cut
+
+.sub 'Scalar' :method
+    .return (self)
+.end
+
+
 =item perl()
 
 Returns a Perl representation of the Complex.
@@ -82,7 +94,7 @@ Returns a Perl representation of the Complex.
     $N2 = $N0 + $N1
     magnitude = sqrt $N2
     angle = atan imag, real
-    .return 'list'(magnitude, angle)
+    .tailcall 'list'(magnitude, angle)
 .end
 
 =item sqrt

@@ -130,7 +130,8 @@ GOT_NO_F_OPTION:
         source_fn = rest
         goto GOT_PHP_SOURCE_FN
 GOT_NO_FILE_ON_COMMAND_LINE:
-    printerr 'Got no PHP file.'
+        #XXX: should do REPL or read from stdin
+        printerr "No input file specified.\n"
     exit -1
 
 GOT_PHP_SOURCE_FN:
@@ -195,7 +196,7 @@ VARIANT_PCT:
     .local pmc pipp_compiler
     pipp_compiler = compreg 'Pipp'
 
-    .return pipp_compiler.'evalfiles'( source_fn, 'target' => target )
+    .tailcall pipp_compiler.'evalfiles'( source_fn, 'target' => target )
 
 VARIANT_PHC:
     .local string phc_src_dir
@@ -223,7 +224,7 @@ VARIANT_PHC:
     ret = spawnw cmd
     if ret goto ERROR
 
-    .return run_nqp( 'pipp_phc_past.nqp', target )
+    .tailcall run_nqp( 'pipp_phc_past.nqp', target )
 
 
 VARIANT_ANTLR3:
@@ -235,10 +236,10 @@ VARIANT_ANTLR3:
     ret = spawnw cmd
     if ret goto ERROR
 
-    .return run_nqp( 'pipp_antlr_past.nqp', target )
+    .tailcall run_nqp( 'pipp_antlr_past.nqp', target )
 
 RUN_NQP:
-    .return run_nqp( source_fn, target )
+    .tailcall run_nqp( source_fn, target )
 
 
 ERROR:

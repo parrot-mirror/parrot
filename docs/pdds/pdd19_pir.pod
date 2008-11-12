@@ -316,9 +316,6 @@ You can specify the root namespace by using empty brackets, such as:
 
 The brackets are not optional, although the key inside them is.
 
-{{ NOTE: currently the brackets *are* optional, so this is an
-implementation change. See RT #48549}}
-
 =item .loadlib 'lib_name'
 
 Load the given library at compile time, that is, as soon that line is
@@ -395,19 +392,6 @@ such that have nested scopes, can use this directive.
 =item .endnamespace <identifier> [deprecated: RT #48737]
 
 Closes the scope block that was opened with .namespace <identifier>.
-
-=item .pragma n_operators [deprecated: RT #57438]
-
-Convert arithmethic infix operators to n_infix operations. The unary opcodes
-C<abs>, C<not>, C<bnot>, C<bnots>, and C<neg> are also changed to use a C<n_>
-prefix.
-
- .pragma n_operators 1
- .sub foo
-   ...
-   $P0 = $P1 + $P2           # n_add $P0, $P1, $P2
-   $P2 = abs $P0             # n_abs $P2, $P0
-
 
 =back
 

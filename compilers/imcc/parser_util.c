@@ -354,17 +354,6 @@ INS(PARROT_INTERP, ARGMOD(IMC_Unit *unit), ARGIN(const char *name),
     ||  (STREQ(name, "set_returns")))
         return var_arg_ins(interp, unit, name, r, n, emit);
 
-    if ((IMCC_INFO(interp)->state->pragmas & PR_N_OPERATORS)
-         && ((STREQ(name, "abs"))
-         ||  (STREQ(name, "neg"))
-         ||  (STREQ(name, "not"))
-         ||  (STREQ(name, "bnot"))
-         ||  (STREQ(name, "bnots")))) {
-        strcpy(buf, "n_");
-        strcat(buf, name);
-        name = buf;
-    }
-
 #if 0
     ins = multi_keyed(interp, unit, name, r, n, keyvec, emit);
     if (ins)
@@ -665,19 +654,12 @@ imcc_compile(PARROT_INTERP, ARGIN(const char *s), int pasm_file,
     if (!IMCC_INFO(interp)->error_code) {
         Parrot_sub *sub_data;
 
-        sub = pmc_new(interp, enum_class_Eval);
-
-        PackFile_fixup_subs(interp, PBC_MAIN, sub);
-
-        /* restore old byte_code, */
-        if (old_cs)
-            (void)Parrot_switch_to_cs(interp, old_cs, 0);
-
         /*
          * create sub PMC
          *
          * TODO if a sub was denoted :main return that instead
          */
+        sub                  = pmc_new(interp, enum_class_Eval);
         sub_data             = PMC_sub(sub);
         sub_data->seg        = new_cs;
         sub_data->start_offs = 0;
@@ -705,6 +687,13 @@ imcc_compile(PARROT_INTERP, ARGIN(const char *s), int pasm_file,
     Parrot_unblock_GC_mark(interp);
 
     yylex_destroy(yyscanner);
+
+    /* Now run any :load/:init subs. */
+    PackFile_fixup_subs(interp, PBC_MAIN, sub);
+
+    /* restore old byte_code, */
+    if (old_cs)
+        (void)Parrot_switch_to_cs(interp, old_cs, 0);
 
     return sub;
 }
@@ -944,6 +933,9 @@ imcc_compile_file(PARROT_INTERP, ARGIN(const char *fullname),
 
     if (imc_info) {
         IMCC_INFO(interp) = imc_info->prev;
+        if (imc_info->globals)
+            mem_sys_free(imc_info->globals);
+
         mem_sys_free(imc_info);
     }
 

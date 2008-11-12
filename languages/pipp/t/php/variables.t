@@ -1,3 +1,4 @@
+# Copyright (C) 2008, The Perl Foundation.
 # $Id$
 
 =head1 NAME
@@ -21,6 +22,13 @@ use Parrot::Config ();
 use Parrot::Test;
 use Test::More     tests => 6;
 
+
+=for perl6
+
+my $hello = "Hallo\n";
+print $hello;
+
+=cut
 
 language_output_is( 'Pipp', <<'END_CODE', <<'END_OUT', 'string assignment' );
 <?php

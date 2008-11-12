@@ -107,8 +107,7 @@ Tests the Class PMC.
     new class, 'Class'
     result = class.'new'()
 
-    #isa_ok(result, 'Object')
-    todo(0, 'Object - is isa_ok broken?')
+    isa_ok(result, 'Object')
 
     $I0 = 1
     push_eh t_non_attribute_key
@@ -246,7 +245,7 @@ Tests the Class PMC.
     attribs = class.'attributes'()
     attribs['foo'] = 'bar'
 
-    .const .Sub meth_to_add = 'foo'
+    .const 'Sub' meth_to_add = 'foo'
 
     class.'add_method'( 'foo', meth_to_add )
     attribs = class.'methods'()

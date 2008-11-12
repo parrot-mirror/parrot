@@ -32,41 +32,8 @@ Perform initializations and create the base classes.
     set_hll_global ['Perl6Object'], '$!P6META', p6meta
 .end
 
-=item infix:=(source)  (assignment method)
-
-Assigns C<source> to C<target>.  We use the 'item' method to allow Lists
-and Mappings to be converted into Array(ref) and Hash(ref).
-
-=cut
 
 .namespace ['Perl6Object']
-.sub 'infix:=' :method
-    .param pmc source
-    $I0 = can source, 'item'
-    unless $I0 goto have_source
-    source = source.'item'()
-  have_source:
-
-    $I0 = isa self, 'Mutable'
-    unless $I0 goto copy
-    assign self, source
-    goto end
-
-  copy:
-    .local pmc type
-    getprop type, 'type', self
-    if null type goto do_assign
-    $I0 = type.'ACCEPTS'(source)
-    if $I0 goto do_assign
-    die "Type mismatch in assignment."
-
-  do_assign:
-    eq_addr self, source, end
-    copy self, source
-  end:
-    .return (self)
-.end
-
 
 =back
 
@@ -82,9 +49,32 @@ Return the scalar as a Hash.
 
 .namespace ['Perl6Object']
 
+=item Scalar()
+
+Default implementation gives reference type semantics, and returns an object
+reference, unless the thing already is one.
+
+=cut
+
+.sub 'Scalar' :method
+    $I0 = isa self, 'ObjectRef'
+    unless $I0 goto not_ref
+    .return (self)
+  not_ref:
+    $P0 = new 'ObjectRef', self
+    .return ($P0)
+.end
+
+
+=item hash()
+
+Return a hash representation of ourself.
+
+=cut
+
 .sub 'hash' :method
     $P0 = self.'list'()
-    .return $P0.'hash'()
+    .tailcall $P0.'hash'()
 .end
 
 =item item()
@@ -142,6 +132,53 @@ Return true if the object is defined.
 .sub '' :method :vtable('defined')
     $I0 = self.'defined'()
     .return ($I0)
+.end
+
+
+=item Str()
+
+Return a string representation of the object
+
+=cut
+
+.sub 'Str' :method
+    $P0 = new 'ResizableStringArray'
+    $P1 = self.'WHAT'()
+    push $P0, $P1
+    $I0 = get_addr self
+    push $P0, $I0
+    $S0 = sprintf "%s<0x%x>", $P0
+    .return ($S0)
+.end
+
+.sub '' :method :vtable('get_string')
+    $S0 = self.'Str'()
+    .return ($S0)
+.end
+
+
+=item increment
+
+Override increment in Objects to use 'succ' method.
+
+=cut
+
+.sub '' :method :vtable('increment')
+    $P0 = self.'succ'()
+    'infix:='(self, $P0)
+    .return(self)
+.end
+
+=item decrement
+
+Override decrement in Objects to use 'pred' method.
+
+=cut
+
+.sub '' :method :vtable('decrement')
+    $P0 = self.'pred'()
+    'infix:='(self, $P0)
+    .return(self)
 .end
 
 
@@ -288,6 +325,7 @@ Create a new object having the same class as the invocant.
     push_eh set_attrib_eh
     setattribute $P1, cur_class, $S0, $P2
   set_attrib_eh:
+    pop_eh
     goto iter_loop
   iter_end:
 
@@ -338,7 +376,7 @@ Defines the .true method on all objects via C<prefix:?>.
 =cut
 
 .sub 'true' :method
- .return 'prefix:?'(self)
+ .tailcall 'prefix:?'(self)
 .end
 
 =item get_bool (vtable)
@@ -362,12 +400,12 @@ Print the object
 
 .sub 'print' :method
     $P0 = get_hll_global 'print'
-    .return $P0(self)
+    .tailcall $P0(self)
 .end
 
 .sub 'say' :method
     $P0 = get_hll_global 'say'
-    .return $P0(self)
+    .tailcall $P0(self)
 .end
 
 =item WHERE
@@ -389,7 +427,7 @@ Gets the object's identity value
 
 .sub 'WHICH' :method
     # For normal objects, this can just be the memory address.
-    .return self.'WHERE'()
+    .tailcall self.'WHERE'()
 .end
 
 =back
@@ -434,11 +472,11 @@ Create a clone of self, also cloning the attributes given by attrlist.
     # For now we won't worry about signature, just if a method exists.
     $I0 = can self, method_name
     if $I0 goto invoke
-    .return '!FAIL'('Undefined value returned by invocation of undefined method')
+    .tailcall '!FAIL'('Undefined value returned by invocation of undefined method')
 
     # If we do have a method, call it.
   invoke:
-    .return self.method_name(pos_args :flat, named_args :named :flat)
+    .tailcall self.method_name(pos_args :flat, named_args :named :flat)
 .end
 
 
@@ -450,12 +488,12 @@ Create a clone of self, also cloning the attributes given by attrlist.
     # Return an empty list if no methods exist at all.
     $I0 = can self, method_name
     if $I0 goto invoke
-    .return 'list'()
+    .tailcall 'list'()
 
     # Now find all methods and call them - since we know there are methods,
     # we just pass on to infix:.+.
   invoke:
-    .return self.'!.+'(method_name, pos_args :flat, named_args :named :flat)
+    .tailcall self.'!.+'(method_name, pos_args :flat, named_args :named :flat)
 .end
 
 
@@ -514,7 +552,7 @@ Create a clone of self, also cloning the attributes given by attrlist.
     # Get the HOW or the object and do the call on that.
     .local pmc how
     how = self.'HOW'()
-    .return how.method_name(self, pos_args :flat, named_args :flat :named)
+    .tailcall how.method_name(self, pos_args :flat, named_args :flat :named)
 .end
 
 
@@ -573,7 +611,8 @@ Returns a list containing itself in list context.
 =cut
 
 .sub 'list' :method
-    .return 'list'(self)
+    $P0 = get_hll_global 'list'
+    .tailcall $P0(self)
 .end
 
 

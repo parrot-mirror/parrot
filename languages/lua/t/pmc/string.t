@@ -20,7 +20,7 @@ Tests C<LuaString> PMC
 use strict;
 use warnings;
 
-use Parrot::Test tests => 13;
+use Parrot::Test tests => 14;
 use Test::More;
 
 pir_output_is( << 'CODE', << 'OUTPUT', 'check inheritance' );
@@ -180,7 +180,7 @@ OUTPUT
 pir_output_is( << 'CODE', << 'OUTPUT', 'check HLL & .const' );
 .HLL 'Lua', 'lua_group'
 .sub _main
-    .const .LuaString cst1 = "simple string"
+    .const 'LuaString' cst1 = "simple string"
     print cst1
     print "\n"
     .local int bool1
@@ -193,10 +193,10 @@ simple string
 1
 OUTPUT
 
-    pir_output_is( << 'CODE', << 'OUTPUT', '.const & empty string' );
+pir_output_is( << 'CODE', << 'OUTPUT', '.const & empty string' );
 .HLL 'Lua', 'lua_group'
 .sub _main
-    .const .LuaString cst1 = ''
+    .const 'LuaString' cst1 = ''
     print cst1
     print "\n"
     .local int bool1
@@ -206,6 +206,21 @@ OUTPUT
 .end
 CODE
 
+1
+OUTPUT
+
+pir_output_is( << 'CODE', << 'OUTPUT', 'check is_equal (RT #60292)' );
+.HLL 'Lua', 'lua_group'
+.sub _main
+    new $P1, 'LuaString'
+    set $P1, 'str'
+    new $P2, 'LuaString'
+    set $P2, 'str'
+    $I0 = iseq $P1, $P2
+    print $I0
+    print "\n"
+.end
+CODE
 1
 OUTPUT
 

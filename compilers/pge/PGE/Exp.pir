@@ -97,7 +97,6 @@ C<target> adverbs.
     push_eh end
     $P0 = get_hll_global 'P6metaclass'
     $P0.'new_class'(grammar, 'parent'=>'PGE::Grammar')
-    pop_eh
   end:
     .return ($P1)
 
@@ -156,7 +155,7 @@ tree as a PIR code object that can be compiled.
       .sub %0 :method
           .param pmc adverbs   :slurpy :named
           .local pmc mob
-          .const .Sub corou = %1
+          .const 'Sub' corou = %1
           $P0 = corou
           $P0 = clone $P0
           mob = $P0(self, adverbs)
