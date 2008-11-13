@@ -178,7 +178,7 @@ pir_output_is( <<'CODE', <<'OUT', 'print - synchronous' );
     if $S0 == "123" goto ok_5
     print 'not '
   ok_5:
-    say 'ok 5 - read string back from file'
+    say 'ok 5 - read integer back from file'
 
     $S0 = $P1.read(16) # bytes
     if $S0 == "456.789squawk\n42" goto ok_6
@@ -195,7 +195,8 @@ ok 1 - $P0.print($I1)
 ok 2 - $P0.print($N1)
 ok 3 - $P0.print($S1)
 ok 4 - $P0.print($P1)
-ok 5 - read string back from file
+ok 5 - read integer back from file
+ok 6 - read string back from file
 OUT
 
 # L<PDD22/I\/O PMC API/=item print.*=item readline>
