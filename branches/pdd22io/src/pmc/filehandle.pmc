@@ -226,39 +226,14 @@ Read the given number of bytes from the filehandle and return them in a string.
 =item C<METHOD print([INTVAL|FLOATVAL|STRING *|PMC*] value)>
 
 Print the passed in integer, number, string, or PMC to the filehandle.
+(Integers, numbers, and strings are auto-boxed as PMCs.)
 
 =cut
 
 */
 
-    METHOD print(INTVAL    int_val :optional, INTVAL got_int :opt_flag,
-                 FLOATVAL  num_val :optional, INTVAL got_num :opt_flag,
-                 STRING   *str_val :optional, INTVAL got_str :opt_flag,
-                 PMC      *pmc_val :optional, INTVAL got_pmc :opt_flag) {
-        STRING *string_to_print;
-
-        if (got_int && !(got_num || got_str || got_pmc)) {
-            string_to_print = Parrot_sprintf_c(interp, INTVAL_FMT, int_val);
-        }
-        else if (got_num && !(got_str || got_pmc)) {
-            string_to_print = Parrot_sprintf_c(interp, FLOATVAL_FMT, num_val);
-        }
-        else if (got_str && !(got_pmc)) {
-            string_to_print = str_val;
-        }
-        else if (got_pmc) {
-            string_to_print = VTABLE_get_string(INTERP, pmc_val);
-        }
-        else if ( !got_int && !got_num && !got_str && !got_pmc ) {
-            Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_PIO_ERROR,
-                    "Not enough arguments passed to 'print', must pass either an ",
-                    "integer, number, string, or PMC");
-        }
-        else {
-            Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_PIO_ERROR,
-                    "Too many arguments passed to 'print', must pass either an ",
-                    "integer, number, string, or PMC");
-        }
+    METHOD print(PMC *to_print) {
+        STRING *string_to_print = VTABLE_get_string(INTERP, to_print);
 
         Parrot_io_putps(interp, SELF, string_to_print);
     }
