@@ -42,26 +42,6 @@ static void clone_key_arg(PARROT_INTERP, ARGMOD(call_state *st))
         __attribute__nonnull__(2)
         FUNC_MODIFIES(*st);
 
-static void commit_last_arg(PARROT_INTERP,
-    int index,
-    int cur,
-    ARGMOD(opcode_t *n_regs_used),
-    int seen_arrow,
-    ARGIN(PMC * const *sigs),
-    ARGMOD(opcode_t **indexes),
-    ARGMOD(Parrot_Context *ctx),
-    ARGIN_NULLOK(PMC *pmc),
-    ARGIN(va_list *list))
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(4)
-        __attribute__nonnull__(6)
-        __attribute__nonnull__(7)
-        __attribute__nonnull__(8)
-        __attribute__nonnull__(10)
-        FUNC_MODIFIES(*n_regs_used)
-        FUNC_MODIFIES(*indexes)
-        FUNC_MODIFIES(*ctx);
-
 static void commit_last_arg_sig_object(PARROT_INTERP,
     int index,
     int cur,
@@ -105,8 +85,7 @@ PARROT_CANNOT_RETURN_NULL
 static Parrot_Context * count_signature_elements(PARROT_INTERP,
     ARGIN(const char *signature),
     ARGMOD(PMC *args_sig),
-    ARGMOD(PMC *results_sig),
-    int old_pcc_invoke_flag)
+    ARGMOD(PMC *results_sig))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3)
@@ -180,20 +159,6 @@ static void set_context_sig_returns(PARROT_INTERP,
         FUNC_MODIFIES(*ctx)
         FUNC_MODIFIES(*indexes)
         FUNC_MODIFIES(*result_list);
-
-static void set_context_sig_returns_varargs(PARROT_INTERP,
-    ARGMOD(Parrot_Context *ctx),
-    ARGMOD(opcode_t **indexes),
-    ARGIN(const char *ret_x),
-    ARGMOD(va_list returns))
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(2)
-        __attribute__nonnull__(3)
-        __attribute__nonnull__(4)
-        __attribute__nonnull__(5)
-        FUNC_MODIFIES(*ctx)
-        FUNC_MODIFIES(*indexes)
-        FUNC_MODIFIES(returns);
 
 static int set_retval_util(PARROT_INTERP,
     ARGIN(const char *sig),
@@ -1865,71 +1830,6 @@ set_retval_p(PARROT_INTERP, int sig_ret, ARGIN(Parrot_Context *ctx))
     return NULL;
 }
 
-
-/*
-
-=item C<static void commit_last_arg>
-
-Called by C<Parrot_PCCINVOKE> when it reaches the end of each arg in the arg
-signature.  See C<Parrot_PCCINVOKE> for signature syntax.
-
-=cut
-
-*/
-
-static void
-commit_last_arg(PARROT_INTERP, int index, int cur,
-    ARGMOD(opcode_t *n_regs_used), int seen_arrow, ARGIN(PMC * const *sigs),
-    ARGMOD(opcode_t **indexes), ARGMOD(Parrot_Context *ctx),
-    ARGIN_NULLOK(PMC *pmc), ARGIN(va_list *list))
-{
-    int reg_offset = 0;
-
-    /* invocant already commited, just return */
-    if (seen_arrow == 0 && index == 0 && pmc)
-        return;
-
-    /* calculate arg's register offset */
-    switch (cur & PARROT_ARG_TYPE_MASK) { /* calc reg offset */
-        case PARROT_ARG_INTVAL:
-            reg_offset = n_regs_used[seen_arrow * 4 + REGNO_INT]++; break;
-        case PARROT_ARG_FLOATVAL:
-            reg_offset = n_regs_used[seen_arrow * 4 + REGNO_NUM]++; break;
-        case PARROT_ARG_STRING:
-            reg_offset = n_regs_used[seen_arrow * 4 + REGNO_STR]++; break;
-        case PARROT_ARG_PMC :
-            reg_offset = n_regs_used[seen_arrow * 4 + REGNO_PMC]++; break;
-        default:
-            Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INVALID_OPERATION,
-                "Parrot_PCCINVOKE: invalid reg type");
-    }
-
-    /* set the register offset into the index int[] */
-    indexes[seen_arrow][index] = reg_offset;
-
-    /* set the PARROT_ARG_FLAGS into the signature FIA */
-    VTABLE_set_integer_keyed_int(interp, sigs[seen_arrow], index, cur);
-
-    /* perform the arg accessor function, assigning the arg to its
-     * corresponding register */
-    if (!seen_arrow) {
-        switch (cur & PARROT_ARG_TYPE_MASK) {
-            case PARROT_ARG_INTVAL:
-                CTX_REG_INT(ctx, reg_offset) = va_arg(*list, INTVAL);   break;
-            case PARROT_ARG_FLOATVAL:
-                CTX_REG_NUM(ctx, reg_offset) = va_arg(*list, FLOATVAL); break;
-            case PARROT_ARG_STRING:
-                CTX_REG_STR(ctx, reg_offset) = va_arg(*list, STRING *); break;
-            case PARROT_ARG_PMC:
-                CTX_REG_PMC(ctx, reg_offset) = va_arg(*list, PMC *);    break;
-            default:
-                Parrot_ex_throw_from_c_args(interp, NULL,
-                    EXCEPTION_INVALID_OPERATION,
-                    "Parrot_PCCINVOKE: invalid reg type");
-        }
-    }
-}
-
 /*
 
 =item C<static Parrot_Context * count_signature_elements>
@@ -1946,7 +1846,7 @@ Adds the necessary registers to a new context and returns the context.
 PARROT_CANNOT_RETURN_NULL
 static Parrot_Context *
 count_signature_elements(PARROT_INTERP, ARGIN(const char *signature),
-    ARGMOD(PMC *args_sig), ARGMOD(PMC *results_sig), int old_pcc_invoke_flag)
+    ARGMOD(PMC *args_sig), ARGMOD(PMC *results_sig))
 {
     const char  *x;
     unsigned int seen_arrow  = 0;
@@ -1960,15 +1860,6 @@ count_signature_elements(PARROT_INTERP, ARGIN(const char *signature),
 
     /* # of args, # of results */
     int arg_ret_cnt[2]       = { 0, 0 };
-
-    /* Increment these values if we are invoking a method on an object. Delete
-     * this check and the corresponding parameter when the old Parrot_PCCINVOKE
-     * goes away. */
-    if (old_pcc_invoke_flag) {
-        arg_ret_cnt[seen_arrow]++;
-        max_regs[REGNO_PMC]++;
-    }
-
 
     /* Loop through the signature string to count the number of each
        type of object required. We need to know so we can allocate
@@ -2015,6 +1906,7 @@ count_signature_elements(PARROT_INTERP, ARGIN(const char *signature),
             case 's':
             case 'o':
             case 'p':
+            case 'i':
                 break;
             default:
                 Parrot_ex_throw_from_c_args(interp, NULL,
@@ -2186,69 +2078,6 @@ set_context_sig_returns(PARROT_INTERP, ARGMOD(Parrot_Context *ctx),
         }
     }
 
-    Parrot_pop_context(interp);
-}
-
-/*
-
-=item C<static void set_context_sig_returns_varargs>
-
-Sets the subroutine return arguments in the context C<ctx>. Takes a C string
-for the return signature C<ret_x> and a varargs list of return parameters C<returns>.
-
-To unify this function with C<set_context_sig_returns>, C<Parrot_PCCINVOKE>
-needs to be changed to convert the va_list of input arguments into a signature
-object, and the results list from that object needs to be passed to this
-function instead of the va_list itself.
-
-=cut
-
-*/
-
-static void
-set_context_sig_returns_varargs(PARROT_INTERP, ARGMOD(Parrot_Context *ctx),
-    ARGMOD(opcode_t **indexes), ARGIN(const char *ret_x), ARGMOD(va_list returns))
-{
-    unsigned int index = 0;
-    unsigned int seen_arrow = 1;
-    const char *x;
-
-    /* result_accessors perform the arg accessor function,
-     * assigning the corresponding registers to the result variables */
-    for (x = ret_x; x && *x; x++) {
-        if (isupper((unsigned char)*x)) {
-            switch (*x) {
-                case 'I':
-                    {
-                    INTVAL * const tmpINTVAL = va_arg(returns, INTVAL*);
-                    *tmpINTVAL = CTX_REG_INT(ctx, indexes[seen_arrow][index]);
-                    }
-                    break;
-                case 'N':
-                    {
-                    FLOATVAL * const tmpFLOATVAL = va_arg(returns, FLOATVAL*);
-                    *tmpFLOATVAL = CTX_REG_NUM(ctx, indexes[seen_arrow][index]);
-                    }
-                    break;
-                case 'S':
-                    {
-                    STRING ** const tmpSTRING = va_arg(returns, STRING**);
-                    *tmpSTRING = CTX_REG_STR(ctx, indexes[seen_arrow][index]);
-                    }
-                    break;
-                case 'P':
-                    {
-                    PMC ** const tmpPMC = va_arg(returns, PMC**);
-                    *tmpPMC = CTX_REG_PMC(ctx, indexes[seen_arrow][index]);
-                    }
-                    break;
-                default:
-                    Parrot_ex_throw_from_c_args(interp, NULL,
-                        EXCEPTION_INVALID_OPERATION,
-                        "Parrot_PCCINVOKE: invalid reg type %c!", *x);
-            }
-        }
-    }
     Parrot_pop_context(interp);
 }
 
@@ -2446,13 +2275,6 @@ void
 Parrot_PCCINVOKE(PARROT_INTERP, ARGIN(PMC* pmc), ARGMOD(STRING *method_name),
         ARGIN(const char *signature), ...)
 {
-/* Set this flag to 1 if we are using the "new" unified version of this
-   function. The new version breaks the build and all sorts of tests,
-   so turn it off when you're done with it. */
-#define PARROT_PCCINVOKE_UNIFIED_FLAG 0
-
-#if PARROT_PCCINVOKE_UNIFIED_FLAG
-
     PMC *sig_obj;
     PMC *sub_obj;
     va_list args;
@@ -2475,173 +2297,6 @@ Parrot_PCCINVOKE(PARROT_INTERP, ARGIN(PMC* pmc), ARGMOD(STRING *method_name),
     /* Invoke the subroutine object with the given CallSignature object */
     Parrot_pcc_invoke_from_sig_object(interp, sub_obj, sig_obj);
     dod_unregister_pmc(interp, sig_obj);
-
-#else
-
-#  define PCC_ARG_MAX 1024
-    /* variables from PCCINVOKE impl in PCCMETHOD.pm */
-    /* args INSP, returns INSP */
-    INTVAL n_regs_used[] = { 0, 0, 0, 0, 0, 0, 0, 0 };
-
-    /* Each of these is 8K. Do we want 16K on the stack? */
-    opcode_t arg_indexes[PCC_ARG_MAX];
-    opcode_t result_indexes[PCC_ARG_MAX];
-
-    PMC * const args_sig    = pmc_new(interp, enum_class_FixedIntegerArray);
-    PMC * const results_sig = pmc_new(interp, enum_class_FixedIntegerArray);
-    PMC * const ret_cont    = new_ret_continuation_pmc(interp, NULL);
-
-    Parrot_Context *ctx;              /* The newly created context */
-    PMC              *pccinvoke_meth;
-
-    opcode_t         *save_current_args;
-    PMC              *save_args_signature;
-    PMC              *save_current_object;
-
-    /* temporary state vars for building PCC index and PCC signature arrays. */
-
-    /* arg_indexes, result_indexes */
-    opcode_t   *indexes[2];
-
-    /* args_sig, results_sig */
-    PMC        *sigs[2];
-
-    int         seen_arrow = 0;
-
-    const char *x;
-    const char *ret_x = NULL;
-    int         index = -1;
-    int         cur   =  0;
-
-    va_list list;
-    va_start(list, signature);
-
-    indexes[0] = arg_indexes;
-    indexes[1] = result_indexes;
-    sigs[0]    = args_sig;
-    sigs[1]    = results_sig;
-
-    /* account for passing invocant in-band */
-    if (!pmc)
-        Parrot_ex_throw_from_c_args(interp, NULL, 1,
-            "NULL PMC passed into Parrot_PCCINVOKE");
-
-    ctx = count_signature_elements(interp, signature, args_sig, results_sig, 1);
-
-    /* second loop through signature to build all index and arg_flag
-     * loop also assigns args(up to the ->) to registers */
-
-    /* account for passing invocant in-band */
-    indexes[0][0] = 0;
-
-    VTABLE_set_integer_keyed_int(interp, sigs[0], 0, PARROT_ARG_PMC);
-    CTX_REG_PMC(ctx, 0) = pmc;
-
-    n_regs_used[REGNO_PMC]++;
-    index = 0;
-
-    for (x = signature; *x != '\0'; x++) {
-        /* detect -> separator */
-        if (*x == '-') {
-
-            /* skip '>' */
-            x++;
-
-            /* allows us to jump directly to the result signature portion
-             * during results assignment */
-            ret_x = x;
-
-            /* save off pointer to results */
-            ret_x++;
-
-            if (index >= 0)
-                commit_last_arg(interp, index, cur, n_regs_used, seen_arrow,
-                    sigs, indexes, ctx, pmc, &list);
-
-            /* reset parsing state so we can now handle results */
-            seen_arrow =  1;
-            index      = -1;
-
-            /* reset n_regs_used for reuse during result index allocation */
-            n_regs_used[0] = 0;
-            n_regs_used[1] = 0;
-            n_regs_used[2] = 0;
-            n_regs_used[3] = 0;
-        }
-        /* parse arg type */
-        else if (isupper((unsigned char)*x)) {
-            if (index >= 0)
-                commit_last_arg(interp, index, cur, n_regs_used, seen_arrow,
-                    sigs, indexes, ctx, pmc, &list);
-
-            index++;
-
-            switch (*x) {
-                case 'I': cur = PARROT_ARG_INTVAL;   break;
-                case 'N': cur = PARROT_ARG_FLOATVAL; break;
-                case 'S': cur = PARROT_ARG_STRING;   break;
-                case 'P': cur = PARROT_ARG_PMC;      break;
-                default:
-                  Parrot_ex_throw_from_c_args(interp, NULL,
-                    EXCEPTION_INVALID_OPERATION,
-                    "Parrot_PCCINVOKE: invalid reg type %c!", *x);
-            }
-
-        }
-        /* parse arg adverbs */
-        else if (islower((unsigned char)*x)) {
-            switch (*x) {
-                case 'n': cur |= PARROT_ARG_NAME;         break;
-                case 'f': cur |= PARROT_ARG_FLATTEN;      break;
-                case 's': cur |= PARROT_ARG_SLURPY_ARRAY; break;
-                case 'o': cur |= PARROT_ARG_OPTIONAL;     break;
-                case 'p': cur |= PARROT_ARG_OPT_FLAG;     break;
-                default:
-                    Parrot_ex_throw_from_c_args(interp, NULL,
-                        EXCEPTION_INVALID_OPERATION,
-                        "Parrot_PCCINVOKE: invalid adverb type %c!", *x);
-            }
-        }
-    }
-
-    if (index >= 0)
-        commit_last_arg(interp, index, cur, n_regs_used, seen_arrow, sigs,
-            indexes, ctx, pmc, &list);
-
-    /* code from PCCINVOKE impl in PCCMETHOD.pm */
-    save_current_args      = interp->current_args;
-    save_args_signature    = interp->args_signature;
-    save_current_object    = interp->current_object;
-
-    interp->current_args   = arg_indexes;
-    interp->args_signature = args_sig;
-    ctx->current_results   = result_indexes;
-    ctx->results_signature = results_sig;
-
-    /* arg_accessors assigned in loop above */
-
-    interp->current_object       = pmc;
-    interp->current_cont         = NEED_CONTINUATION;
-    ctx->current_cont            = ret_cont;
-    PMC_cont(ret_cont)->from_ctx = ctx;
-    ctx->ref_count++;
-    pccinvoke_meth               = VTABLE_find_method(interp, pmc, method_name);
-
-    if (PMC_IS_NULL(pccinvoke_meth))
-        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_METH_NOT_FOUND,
-            "Method '%Ss' not found", method_name);
-    else
-        VTABLE_invoke(interp, pccinvoke_meth, NULL);
-
-    set_context_sig_returns_varargs(interp, ctx, indexes, ret_x, list);
-    PObj_live_CLEAR(args_sig);
-    PObj_live_CLEAR(results_sig);
-    interp->current_args   = save_current_args;
-    interp->args_signature = save_args_signature;
-    interp->current_object = save_current_object;
-    va_end(list);
-#endif
-#undef PARROT_PCCINVOKE_UNIFIED_FLAG
 }
 
 /*
@@ -2703,7 +2358,7 @@ Parrot_pcc_invoke_from_sig_object(PARROT_INTERP, ARGIN(PMC *sub_obj),
 
     /* Count the number of objects of each type that need to be allocated by
        the caller to perform this function call. */
-    ctx = count_signature_elements(interp, signature, args_sig, results_sig, 0);
+    ctx = count_signature_elements(interp, signature, args_sig, results_sig);
 
 
     /* code from PCCINVOKE impl in PCCMETHOD.pm */
