@@ -441,8 +441,8 @@ Parrot_io_readline_buffer(PARROT_INTERP, ARGMOD(PMC *filehandle), ARGOUT(STRING 
     unsigned char *out_buf;
     unsigned char *buf_start;
     INTVAL         buffer_flags = Parrot_io_get_buffer_flags(interp, filehandle);
-    unsigned char *buffer_next  = Parrot_io_get_buffer_next(interp, filehandle);
-    unsigned char *buffer_end   = Parrot_io_get_buffer_end(interp, filehandle);
+    unsigned char *buffer_next;
+    unsigned char *buffer_end;
     size_t len;
     STRING *s;
 
@@ -458,12 +458,21 @@ Parrot_io_readline_buffer(PARROT_INTERP, ARGMOD(PMC *filehandle), ARGOUT(STRING 
             return 0;
     }
 
+    /* Retrieve filled buffer */
+    buffer_next = Parrot_io_get_buffer_next(interp, filehandle);
+    buffer_end  = Parrot_io_get_buffer_end(interp, filehandle);
+
     buf_start = buffer_next;
+
     for (l = 0; buffer_next < buffer_end;) {
         l++;
-        if (io_is_end_of_line((char *)buffer_next++)) {
+        if (io_is_end_of_line((char *)buffer_next)) {
+            Parrot_io_set_buffer_next(interp, filehandle, ++buffer_next);
             break;
         }
+
+        Parrot_io_set_buffer_next(interp, filehandle, ++buffer_next);
+
         /* if there is a buffer, readline is called by the read opcode
          * - return just that part
          */
@@ -485,7 +494,7 @@ Parrot_io_readline_buffer(PARROT_INTERP, ARGMOD(PMC *filehandle), ARGOUT(STRING 
             s->strlen = s->bufused = l;
             if (Parrot_io_fill_readbuf(interp, filehandle) == 0)
                 return l;
-            buf_start = Parrot_io_get_buffer_start(interp, filehandle);;
+            buf_start = Parrot_io_get_buffer_start(interp, filehandle);
         }
     }
     if (s->bufused < l) {
