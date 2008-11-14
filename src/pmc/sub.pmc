@@ -202,6 +202,7 @@ Invokes the subroutine.
         Parrot_sub     * const sub = PMC_sub(SELF);
         Parrot_Context        *caller_ctx;
         Parrot_Context        *context;
+        Parrot_Context        *c;
         PMC                   *ccont;
         opcode_t              *pc;
 
@@ -291,6 +292,33 @@ Invokes the subroutine.
                     Parrot_get_ctx_HLL_type(interp, enum_class_LexPad),
                     sub->lex_info);
             VTABLE_set_pointer(INTERP, context->lex_pad, context);
+        }
+
+        /* set outer context */
+        context->outer_ctx = sub->outer_ctx;
+        /* autoclose */
+        for (c = context; !c->outer_ctx; c = c->outer_ctx) {
+            PMC            *outer_pmc = PMC_sub(c->current_sub)->outer_sub;
+            Parrot_sub     *outer_sub;
+            if (PMC_IS_NULL(outer_pmc)) break;
+            outer_sub = PMC_sub(outer_pmc);
+            if (!outer_sub->ctx) {
+                Parrot_Context *dummy = Parrot_alloc_context(INTERP, 
+                                            outer_sub->n_regs_used);
+                /* preserve interp context */
+                CONTEXT(interp) = context;
+                dummy->current_sub    = outer_pmc;
+                dummy->ref_count++;
+                if (!PMC_IS_NULL(outer_sub->lex_info)) {
+                    dummy->lex_pad = pmc_new_init(INTERP,
+                           Parrot_get_ctx_HLL_type(interp, enum_class_LexPad),
+                           outer_sub->lex_info);
+                    VTABLE_set_pointer(INTERP, dummy->lex_pad, dummy);
+                }
+                dummy->outer_ctx = outer_sub->outer_ctx;
+                outer_sub->ctx = dummy;
+            }
+            c->outer_ctx = outer_sub->ctx;
         }
 
         /* switch code segment if needed */
