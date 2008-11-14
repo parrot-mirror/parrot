@@ -19,6 +19,7 @@ The FileHandle PMC performs I/O operations on a source or destination file.
 */
 
 #include "parrot/parrot.h"
+#include "../src/io/io_private.h"
 
 
 pmclass FileHandle need_ext {
@@ -218,6 +219,26 @@ Read the given number of bytes from the filehandle and return them in a string.
 
     METHOD read(INTVAL bytes) {
         STRING *string_result = Parrot_io_reads(INTERP, SELF, bytes);
+        RETURN(STRING *string_result);
+    }
+
+/*
+
+=item C<METHOD readline()>
+
+Read a line from the filehandle and return it in a string.
+
+=cut
+
+*/
+
+    METHOD readline() {
+        STRING *string_result;
+        if (!(PARROT_FILEHANDLE(SELF)->flags & PIO_F_LINEBUF))
+            Parrot_io_setlinebuf(INTERP, SELF);
+
+        string_result = Parrot_io_reads(INTERP, SELF, 0);
+
         RETURN(STRING *string_result);
     }
 
