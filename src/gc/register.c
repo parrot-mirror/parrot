@@ -189,7 +189,7 @@ create_initial_context(PARROT_INTERP)
 
     /* For now create context with 32 regs each. Some src tests (and maybe
      * other extenders) assume the presence of these registers */
-    ignored = Parrot_alloc_context(interp, num_regs);
+    ignored = Parrot_set_new_context(interp, num_regs);
     UNUSED(ignored);
 }
 
@@ -381,7 +381,7 @@ Parrot_Context *
 Parrot_push_context(PARROT_INTERP, ARGMOD(INTVAL *n_regs_used))
 {
     Parrot_Context * const old = CONTEXT(interp);
-    Parrot_Context * const ctx = Parrot_alloc_context(interp, n_regs_used);
+    Parrot_Context * const ctx = Parrot_set_new_context(interp, n_regs_used);
 
     ctx->caller_ctx  = old;
 
@@ -422,7 +422,7 @@ Parrot_pop_context(PARROT_INTERP)
 
 /*
 
-=item C<Parrot_Context * Parrot_alloc_context>
+=item C<Parrot_Context * Parrot_set_new_context>
 
 Allocates and returns a new context as the current context.  Note that the
 register usage C<n_regs_used> is copied.
@@ -434,7 +434,7 @@ register usage C<n_regs_used> is copied.
 PARROT_CANNOT_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
 Parrot_Context *
-Parrot_alloc_context(PARROT_INTERP, ARGMOD(INTVAL *number_regs_used))
+Parrot_set_new_context(PARROT_INTERP, ARGMOD(INTVAL *number_regs_used))
 {
     Parrot_Context *old, *ctx;
     void *ptr, *p;
@@ -445,8 +445,8 @@ Parrot_alloc_context(PARROT_INTERP, ARGMOD(INTVAL *number_regs_used))
      */
     const size_t size_i = sizeof (INTVAL)   * number_regs_used[REGNO_INT];
     const size_t size_n = sizeof (FLOATVAL) * number_regs_used[REGNO_NUM];
-    const size_t size_s = sizeof (STRING*)  * number_regs_used[REGNO_STR];
-    const size_t size_p = sizeof (PMC*)     * number_regs_used[REGNO_PMC];
+    const size_t size_s = sizeof (STRING *) * number_regs_used[REGNO_STR];
+    const size_t size_p = sizeof (PMC *)    * number_regs_used[REGNO_PMC];
 
     const size_t size_nip      = size_n + size_i + size_p;
     const size_t all_regs_size = size_n + size_i + size_p + size_s;
@@ -468,7 +468,7 @@ Parrot_alloc_context(PARROT_INTERP, ARGMOD(INTVAL *number_regs_used))
         const int extend_size = slot + 1;
         int i;
 
-        mem_realloc_n_typed(interp->ctx_mem.free_list, extend_size, void*);
+        mem_realloc_n_typed(interp->ctx_mem.free_list, extend_size, void *);
         for (i = interp->ctx_mem.n_free_slots; i < extend_size; ++i)
             interp->ctx_mem.free_list[i] = NULL;
         interp->ctx_mem.n_free_slots = extend_size;
