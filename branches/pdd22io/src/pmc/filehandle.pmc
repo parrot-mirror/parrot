@@ -259,6 +259,27 @@ Print the passed in integer, number, string, or PMC to the filehandle.
         Parrot_io_putps(interp, SELF, string_to_print);
     }
 
+#ifdef PIO_OS_UNIX
+
+/*
+
+=item C<METHOD get_fd()>
+
+Retrieve the integer file descriptor for the FileHandle (only available on
+Unix-based platforms that use integer file descriptors).
+
+=cut
+
+*/
+
+    METHOD get_fd() {
+        INTVAL os_handle;
+        GET_ATTR_os_handle(INTERP, SELF, os_handle);
+        RETURN(INTVAL os_handle);
+    }
+
+#endif /*PIO_OS_UNIX*/
+
 /*
 
 =back
