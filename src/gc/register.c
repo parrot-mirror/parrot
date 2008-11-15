@@ -243,8 +243,6 @@ clear_regs(PARROT_INTERP, ARGMOD(Parrot_Context *ctx))
      *
      * if the architecture has 0x := NULL and 0.0 we could memset too
      */
-    ctx->bp.regs_i    = interp->ctx.bp.regs_i;
-    ctx->bp_ps.regs_s = interp->ctx.bp_ps.regs_s;
 
     for (i = 0; i < ctx->n_regs_used[REGNO_PMC]; i++) {
         CTX_REG_PMC(ctx, i) = PMCNULL;
@@ -440,6 +438,7 @@ Parrot_alloc_context(PARROT_INTERP, ARGMOD(INTVAL *number_regs_used),
     ARGIN_NULLOK(int init))
 {
     Parrot_Context *ctx;
+    void *p;
 
     /*
      * RT #46185 (OPT) if we allocate a new context due to a self-recursive call
@@ -507,6 +506,15 @@ Parrot_alloc_context(PARROT_INTERP, ARGMOD(INTVAL *number_regs_used),
     ctx->regs_mem_size   = reg_alloc;
     ctx->n_regs_used     = n_regs_used;
 
+    /* regs start past the context */
+    p   = (void *) ((char *)ctx + ALIGNED_CTX_SIZE);
+
+    /* ctx.bp points to I0, which has Nx on the left */
+    ctx->bp.regs_i = (INTVAL *)((char *)p + size_n);
+
+    /* ctx.bp_ps points to S0, which has Px on the left */
+    ctx->bp_ps.regs_s = (STRING **)((char *)p + size_nip);
+
     if (init)
         init_context(interp, ctx, NULL);
 
@@ -530,25 +538,12 @@ PARROT_WARN_UNUSED_RESULT
 Parrot_Context *
 Parrot_set_new_context(PARROT_INTERP, ARGMOD(INTVAL *number_regs_used))
 {
-    const size_t size_i   = sizeof (INTVAL)   * number_regs_used[REGNO_INT];
-    const size_t size_n   = sizeof (FLOATVAL) * number_regs_used[REGNO_NUM];
-    const size_t size_s   = sizeof (STRING *) * number_regs_used[REGNO_STR];
-    const size_t size_p   = sizeof (PMC *)    * number_regs_used[REGNO_PMC];
-    const size_t size_nip = size_n + size_i + size_p;
-
     Parrot_Context *old = CONTEXT(interp);
     Parrot_Context *ctx = Parrot_alloc_context(interp, number_regs_used, 0);
 
-    /* regs start past the context */
-    void           *p   = (void *) ((char *)ctx + ALIGNED_CTX_SIZE);
-
-    /* ctx.bp points to I0, which has Nx on the left */
-    interp->ctx.bp.regs_i = (INTVAL *)((char *)p + size_n);
-
-    /* ctx.bp_ps points to S0, which has Px on the left */
-    interp->ctx.bp_ps.regs_s = (STRING **)((char *)p + size_nip);
-
-    CONTEXT(interp)     = ctx;
+    CONTEXT(interp)          = ctx;
+    interp->ctx.bp.regs_i    = ctx->bp.regs_i;
+    interp->ctx.bp_ps.regs_s = ctx->bp_ps.regs_s;
 
     init_context(interp, ctx, old);
     return ctx;
