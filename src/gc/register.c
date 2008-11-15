@@ -422,10 +422,12 @@ Parrot_pop_context(PARROT_INTERP)
 
 /*
 
-=item C<Parrot_Context * Parrot_set_new_context>
+=item C<Parrot_Context * Parrot_alloc_context>
 
-Allocates and returns a new context as the current context.  Note that the
-register usage C<n_regs_used> is copied.
+Allocates and returns a new context.  Does not set this new context as the
+current context. Note that the register usage C<n_regs_used> is copied.  Use
+the init flag to indicate whether you want to initialize the new context
+(setting its default values and clearing its registers).
 
 =cut
 
@@ -434,10 +436,10 @@ register usage C<n_regs_used> is copied.
 PARROT_CANNOT_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
 Parrot_Context *
-Parrot_set_new_context(PARROT_INTERP, ARGMOD(INTVAL *number_regs_used))
+Parrot_alloc_context(PARROT_INTERP, ARGMOD(INTVAL *number_regs_used),
+    ARGIN_NULLOK(int init))
 {
-    Parrot_Context *old, *ctx;
-    void *ptr, *p;
+    Parrot_Context *ctx;
 
     /*
      * RT #46185 (OPT) if we allocate a new context due to a self-recursive call
@@ -479,48 +481,76 @@ Parrot_set_new_context(PARROT_INTERP, ARGMOD(INTVAL *number_regs_used))
      * index). Pop off an available context of the desired size from free_list.
      * If no contexts of the desired size are available, allocate a new one.
      */
-    ptr = interp->ctx_mem.free_list[slot];
-    old = CONTEXT(interp);
+    ctx = (Parrot_Context *)interp->ctx_mem.free_list[slot];
 
-    if (ptr) {
+    if (ctx) {
         /*
          * Store the next pointer from the linked list for this size (slot
-         * index) in free_list. On "*(void **) ptr", C won't dereference a void
-         * * pointer (untyped), so type cast ptr to void** (a dereference-able
-         * type) then dereference it to get a void*. Store the dereferenced
+         * index) in free_list. On "*(void **) ctx", C won't dereference a void
+         * * pointer (untyped), so type cast ctx to void ** (a dereference-able
+         * type) then dereference it to get a void *. Store the dereferenced
          * value (the next pointer in the linked list) in free_list.
          */
-        interp->ctx_mem.free_list[slot] = *(void **) ptr;
+        interp->ctx_mem.free_list[slot] = *(void **)ctx;
     }
     else {
         const size_t to_alloc = reg_alloc + ALIGNED_CTX_SIZE;
-        if (old)
-            ptr = mem_sys_allocate(to_alloc);
-        else
-            ptr = mem_sys_allocate_zeroed(to_alloc);
+        ctx                   = (Parrot_Context *)mem_sys_allocate_zeroed(to_alloc);
     }
 
 #if CTX_LEAK_DEBUG
     if (Interp_debug_TEST(interp, PARROT_CTX_DESTROY_DEBUG_FLAG)) {
-        fprintf(stderr, "[alloc ctx %p]\n", ptr);
+        fprintf(stderr, "[alloc ctx %p]\n", ctx);
     }
 #endif
-
-    CONTEXT(interp)      = ctx = (Parrot_Context *)ptr;
 
     ctx->regs_mem_size   = reg_alloc;
     ctx->n_regs_used     = n_regs_used;
 
+    if (init)
+        init_context(interp, ctx, NULL);
+
+    return ctx;
+}
+
+
+/*
+
+=item C<Parrot_Context * Parrot_set_new_context>
+
+Allocates and returns a new context as the current context.  Note that the
+register usage C<n_regs_used> is copied.
+
+=cut
+
+*/
+
+PARROT_CANNOT_RETURN_NULL
+PARROT_WARN_UNUSED_RESULT
+Parrot_Context *
+Parrot_set_new_context(PARROT_INTERP, ARGMOD(INTVAL *number_regs_used))
+{
+    const size_t size_i   = sizeof (INTVAL)   * number_regs_used[REGNO_INT];
+    const size_t size_n   = sizeof (FLOATVAL) * number_regs_used[REGNO_NUM];
+    const size_t size_s   = sizeof (STRING *) * number_regs_used[REGNO_STR];
+    const size_t size_p   = sizeof (PMC *)    * number_regs_used[REGNO_PMC];
+    const size_t size_nip = size_n + size_i + size_p;
+
+    Parrot_Context *old = CONTEXT(interp);
+    Parrot_Context *ctx = Parrot_alloc_context(interp, number_regs_used, 0);
+
     /* regs start past the context */
-    p = (void *) ((char *)ptr + ALIGNED_CTX_SIZE);
+    void           *p   = (void *) ((char *)ctx + ALIGNED_CTX_SIZE);
 
     /* ctx.bp points to I0, which has Nx on the left */
-    interp->ctx.bp.regs_i = (INTVAL*)((char*)p + size_n);
+    interp->ctx.bp.regs_i = (INTVAL *)((char *)p + size_n);
 
     /* ctx.bp_ps points to S0, which has Px on the left */
-    interp->ctx.bp_ps.regs_s = (STRING**)((char*)p + size_nip);
-    init_context(interp, ctx, old);
+    interp->ctx.bp_ps.regs_s = (STRING **)((char *)p + size_nip);
 
+    CONTEXT(interp)     = ctx;
+
+    init_context(interp, ctx, old);
     return ctx;
 }
 
