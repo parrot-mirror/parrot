@@ -1935,9 +1935,9 @@ count_signature_elements(PARROT_INTERP, ARGIN(const char *signature),
 
 =item C<static void commit_last_arg_sig_object>
 
-Called by Parrot_pcc_invoke_from_sig_object when it reaches the end of each arg
-in the arg signature.  See C<Parrot_pcc_invoke_from_sig_object> for signature
-syntax.
+Called by C<Parrot_pcc_invoke_from_sig_object> when it reaches the
+end of each arg in the arg signature.
+See C<Parrot_pcc_invoke_from_sig_object> for signature syntax.
 
 =cut
 
@@ -2019,8 +2019,9 @@ commit_last_arg_sig_object(PARROT_INTERP, int index, int cur,
 
 =item C<static void set_context_sig_returns>
 
-Sets the subroutine return arguments in the context C<ctx>. Takes a C string
-for the return signature C<ret_x> and a list of return parameters C<result_list>.
+Sets the subroutine return arguments in the context C<ctx>. Takes a
+C string for the return signature C<ret_x> and a list of return
+parameters C<result_list>.
 
 =cut
 
@@ -2086,11 +2087,7 @@ set_context_sig_returns(PARROT_INTERP, ARGMOD(Parrot_Context *ctx),
 =item C<static const char * set_context_sig_params>
 
 Sets the subroutine arguments in the C<ctx> context, according to the
-signature string C<signature>. Currently this function is only called
-from C<Parrot_pcc_invoke_from_sig_object>, but eventually when
-things are unified enough it should be called from C<Parrot_PCCINVOKE>
-as well. The only difference currently between the two implementations
-are the calls to C<commit_last_arg_sig_object> and C<commit_last_arg>.
+signature string C<signature>.
 
 =cut
 
@@ -2218,15 +2215,15 @@ Parrot_pcc_invoke_sub_from_c_args(PARROT_INTERP, ARGIN(PMC *sub_obj),
 
 =item C<void Parrot_PCCINVOKE>
 
-C<pmc> is the invocant.
-
+Makes a function or method call given the name of the function/method
+and the arguments as a C variadic argument list. C<pmc> is the invocant,
 C<method_name> is the same C<method_name> used in the C<find_method>
-VTABLE call
+VTABLE call, C<signature> is a C string describing the Parrot calling
+conventions for Parrot_PCCINVOKE.  The variadic argument list contains
+the input arguments followed by the output results in the same order
+that they appear in the function signature. You must pass the
+address_of(&) the OUT results, of course.
 
-C<signature> is a C string describing the Parrot calling conventions for
-Parrot_PCCINVOKE.  ... variable args contains the IN arguments followed
-by the OUT results variables.  You must pass the address_of(&) the OUT
-results, of course.
 
 Signatures:
   uppercase letters repesent each arg and denote its types
@@ -2264,8 +2261,6 @@ Example signature:
     a FLOATVAL: N
     a slurpy PMC: Ps
 
-invokes a PMC method
-
 =cut
 
 */
@@ -2275,17 +2270,12 @@ void
 Parrot_PCCINVOKE(PARROT_INTERP, ARGIN(PMC* pmc), ARGMOD(STRING *method_name),
         ARGIN(const char *signature), ...)
 {
+    /* TODO: This function should be renamed Parrot_pcc_invoke_meth_from_c_args */
     PMC *sig_obj;
     PMC *sub_obj;
     va_list args;
     va_start(args, signature);
-
-    /* Build a CallSignature PMC from the input varargs and the signature
-       string. We should probably verify that the generated CallSignature
-       has the same signature and composition as the input signature
-       string. */
-    sig_obj = Parrot_build_sig_object_from_varargs(interp, pmc,
-                                                   signature, args);
+    sig_obj = Parrot_build_sig_object_from_varargs(interp, pmc, signature, args);
     va_end(args);
 
     /* Find the subroutine object as a named method on pmc */
@@ -2357,7 +2347,8 @@ Parrot_pcc_invoke_from_sig_object(PARROT_INTERP, ARGIN(PMC *sub_obj),
     sigs[1]    = results_sig;
 
     /* Count the number of objects of each type that need to be allocated by
-       the caller to perform this function call. */
+       the caller to perform this function call. Allocate a context
+       structure to hold all the parameters we need. */
     ctx = count_signature_elements(interp, signature, args_sig, results_sig);
 
 

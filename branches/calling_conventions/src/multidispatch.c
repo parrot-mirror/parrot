@@ -396,11 +396,9 @@ Parrot_mmd_ensure_writable(PARROT_INTERP, INTVAL function, ARGIN_NULLOK(const PM
 
 =item C<PMC* Parrot_build_sig_object_from_varargs>
 
-Take a varargs list, and convert it into a CallSignature PMC. The CallSignature
-stores the original short signature string, and an array of integer types to
-pass on to the multiple dispatch search.
-
-This function is intended to replace Parrot_build_sig_objuect_from_varargs
+Take a varargs list, and convert it into a CallSignature PMC. The
+CallSignature stores the original short signature string, and an array of
+integer types to pass on to the multiple dispatch search.
 
 =cut
 
@@ -432,6 +430,9 @@ Parrot_build_sig_object_from_varargs(PARROT_INTERP, ARGIN_NULLOK(PMC* obj),
     if (PMC_IS_NULL(obj))
         string_sig = s_sig;
     else {
+        /* Should verify here that the signature doesn't already have
+           "Pi" at the beginning, some callers might have added this
+           already. */
         STRING *invocant_sig = CONST_STRING(interp, "Pi");
         string_sig = string_concat(interp, invocant_sig, s_sig, 0);
         sig_len = sig_len + 2;
