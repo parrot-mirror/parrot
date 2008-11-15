@@ -400,131 +400,6 @@ Take a varargs list, and convert it into a CallSignature PMC. The CallSignature
 stores the original short signature string, and an array of integer types to
 pass on to the multiple dispatch search.
 
-=cut
-
-*/
-
-PARROT_API
-PARROT_WARN_UNUSED_RESULT
-PARROT_CANNOT_RETURN_NULL
-PMC*
-Parrot_build_sig_object_from_varargs(PARROT_INTERP, ARGIN(const char *sig), va_list args)
-{
-    INTVAL i;
-    INTVAL in_return_sig    = 0;
-    PMC   *returns          = PMCNULL;
-    PMC   *call_object      = pmc_new(interp, enum_class_CallSignature);
-    PMC * const type_tuple  = pmc_new(interp, enum_class_FixedIntegerArray);
-    STRING *string_sig      = const_string(interp, sig);
-    const INTVAL sig_len    = string_length(interp, string_sig);
-
-
-    /* Protect call signature object from collection. */
-    dod_register_pmc(interp, call_object);
-
-    if (!sig_len)
-        return call_object;
-
-    VTABLE_set_integer_native(interp, type_tuple, sig_len);
-    VTABLE_set_pmc(interp, call_object, type_tuple);
-
-    VTABLE_set_string_native(interp, call_object, string_sig);
-
-    for (i = 0; i < sig_len; ++i) {
-        INTVAL type = string_index(interp, string_sig, i);
-
-        /* Only create the returns array if it's needed */
-        if (in_return_sig && PMC_IS_NULL(returns)) {
-            returns = pmc_new(interp, enum_class_ResizablePMCArray);
-            VTABLE_set_attr_str(interp, call_object,
-                    CONST_STRING(interp, "results"), returns);
-        }
-
-        if (in_return_sig) {
-            STRING *signature = CONST_STRING(interp, "signature");
-            /* Returns store the original passed-in pointer, so they can pass
-             * the result back to the caller. */
-            PMC *val_pointer = pmc_new(interp, enum_class_CPointer);
-            VTABLE_push_pmc(interp, returns, val_pointer);
-
-            switch (type) {
-                case 'I':
-                    VTABLE_set_pointer(interp, val_pointer, (void *) va_arg(args, INTVAL*));
-                    VTABLE_set_string_keyed_str(interp, val_pointer,
-                        signature, CONST_STRING(interp, "I"));
-                    break;
-                case 'N':
-                    VTABLE_set_pointer(interp, val_pointer, (void *) va_arg(args, FLOATVAL*));
-                    VTABLE_set_string_keyed_str(interp, val_pointer,
-                        signature, CONST_STRING(interp, "N"));
-                    break;
-                case 'S':
-                    VTABLE_set_pointer(interp, val_pointer, (void *) va_arg(args, STRING**));
-                    VTABLE_set_string_keyed_str(interp, val_pointer,
-                        signature, CONST_STRING(interp, "S"));
-                    break;
-                case 'P':
-                    VTABLE_set_pointer(interp, val_pointer, (void *) va_arg(args, PMC**));
-                    VTABLE_set_string_keyed_str(interp, val_pointer,
-                        signature, CONST_STRING(interp, "P"));
-                    break;
-                default:
-                    Parrot_ex_throw_from_c_args(interp, NULL,
-                        EXCEPTION_INVALID_OPERATION,
-                        "Multiple Dispatch: invalid argument type %c!", type);
-             }
-        }
-        else {
-            /* Regular arguments just set the value */
-            switch (type) {
-                case 'I':
-                    VTABLE_push_integer(interp, call_object, va_arg(args, INTVAL));
-                    VTABLE_set_integer_keyed_int(interp, type_tuple,
-                            i, enum_type_INTVAL);
-                    break;
-                case 'N':
-                    VTABLE_push_float(interp, call_object, va_arg(args, FLOATVAL));
-                    VTABLE_set_integer_keyed_int(interp, type_tuple,
-                            i, enum_type_FLOATVAL);
-                    break;
-                case 'S':
-                    VTABLE_push_string(interp, call_object, va_arg(args, STRING *));
-                    VTABLE_set_integer_keyed_int(interp, type_tuple,
-                            i, enum_type_STRING);
-                    break;
-                case 'P':
-                {
-                    PMC *pmc_arg = va_arg(args, PMC *);
-                    if (!PMC_IS_NULL(pmc_arg))
-                        VTABLE_set_integer_keyed_int(interp, type_tuple, i,
-                                VTABLE_type(interp, pmc_arg));
-
-                    VTABLE_push_pmc(interp, call_object, pmc_arg);
-                    break;
-                }
-                case '-':
-                    i++; /* skip '>' */
-                    in_return_sig = 1;
-                    break;
-                default:
-                    Parrot_ex_throw_from_c_args(interp, NULL,
-                        EXCEPTION_INVALID_OPERATION,
-                        "Multiple Dispatch: invalid argument type %c!", type);
-            }
-        }
-    }
-
-    return call_object;
-}
-
-/*
-
-=item C<PMC* Parrot_build_sig_object_from_varargs2>
-
-Take a varargs list, and convert it into a CallSignature PMC. The CallSignature
-stores the original short signature string, and an array of integer types to
-pass on to the multiple dispatch search.
-
 This function is intended to replace Parrot_build_sig_objuect_from_varargs
 
 =cut
@@ -535,7 +410,7 @@ PARROT_API
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 PMC*
-Parrot_build_sig_object_from_varargs2(PARROT_INTERP, ARGIN(PMC* obj),
+Parrot_build_sig_object_from_varargs(PARROT_INTERP, ARGIN_NULLOK(PMC* obj),
     ARGIN(const char *sig), va_list args)
 {
     INTVAL i;
@@ -553,6 +428,7 @@ Parrot_build_sig_object_from_varargs2(PARROT_INTERP, ARGIN(PMC* obj),
     if (!sig_len)
         return call_object;
 
+    /* Check if we have an object invocant */
     if (PMC_IS_NULL(obj))
         string_sig = s_sig;
     else {
@@ -692,7 +568,7 @@ Parrot_mmd_multi_dispatch_from_c_args(PARROT_INTERP,
 
     va_list args;
     va_start(args, sig);
-    sig_object = Parrot_build_sig_object_from_varargs(interp, sig, args);
+    sig_object = Parrot_build_sig_object_from_varargs(interp, PMCNULL, sig, args);
     va_end(args);
 
     sub = Parrot_mmd_find_multi_from_sig_obj(interp, const_string(interp, name), sig_object);

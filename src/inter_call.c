@@ -2207,7 +2207,7 @@ Parrot_pcc_invoke_sub_from_c_args(PARROT_INTERP, ARGIN(PMC *sub_obj),
     PMC *sig_obj;
     va_list args;
     va_start(args, sig);
-    sig_obj = Parrot_build_sig_object_from_varargs(interp, sig, args);
+    sig_obj = Parrot_build_sig_object_from_varargs(interp, PMCNULL, sig, args);
     va_end(args);
 
     Parrot_pcc_invoke_from_sig_object(interp, sub_obj, sig_obj);
@@ -2284,8 +2284,8 @@ Parrot_PCCINVOKE(PARROT_INTERP, ARGIN(PMC* pmc), ARGMOD(STRING *method_name),
        string. We should probably verify that the generated CallSignature
        has the same signature and composition as the input signature
        string. */
-    sig_obj = Parrot_build_sig_object_from_varargs2(interp, pmc,
-                                                    signature, args);
+    sig_obj = Parrot_build_sig_object_from_varargs(interp, pmc,
+                                                   signature, args);
     va_end(args);
 
     /* Find the subroutine object as a named method on pmc */
