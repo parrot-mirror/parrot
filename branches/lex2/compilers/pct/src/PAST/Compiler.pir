@@ -674,22 +674,23 @@ Return the POST representation of a C<PAST::Block>.
     ns = $P0.'key'(ns)
   have_ns_key:
 
-    .local string rtype, result
+    .local string rtype, result, captblock, captstr
     rtype = options['rtype']
+    
+    captblock = self.'uniquereg'('P')
+    captstr = concat ".const 'Sub' ", captblock
+    concat captstr, ' = '
+    concat captstr, name
 
     if blocktype == 'immediate' goto block_immediate
     if rtype == 'v' goto block_done
-    result = self.'uniquereg'('P')
     $P0 = get_hll_global ['POST'], 'Ops'
-    bpost = $P0.'new'(bpost, 'node'=>node, 'result'=>result)
+    bpost = $P0.'new'(bpost, 'node'=>node, 'result'=>captblock)
     if ns goto block_decl_ns
-    concat $S0, ".const 'Sub' ", result
-    concat $S0, ' = '
-    concat $S0, name
-    bpost.'push_pirop'($S0)
+    bpost.'push_pirop'(captstr)
     goto block_done
   block_decl_ns:
-    bpost.'push_pirop'('get_hll_global', result, ns, name)
+    bpost.'push_pirop'('get_hll_global', captblock, ns, name)
     goto block_done
 
   block_immediate:
@@ -702,12 +703,13 @@ Return the POST representation of a C<PAST::Block>.
     $P0 = get_hll_global ['POST'], 'Ops'
     bpost = $P0.'new'(bpost, 'node'=>node, 'result'=>result)
     if ns goto block_immediate_ns
-    bpost.'push_pirop'('call', name, arglist :flat, 'result'=>result)
+    bpost.'push_pirop'(captstr)
+    bpost.'push_pirop'('capture_lex', captblock)
+    bpost.'push_pirop'('call', captblock, arglist :flat, 'result'=>result)
     goto block_done
   block_immediate_ns:
-    $S0 = '$P10'
-    bpost.'push_pirop'('get_hll_global', $S0, ns, name, 'result'=>$S0)
-    bpost.'push_pirop'('call', $S0, arglist :flat, 'result'=>result)
+    bpost.'push_pirop'('get_hll_global', captblock, ns, name, 'result'=>captblock)
+    bpost.'push_pirop'('call', captblock, arglist :flat, 'result'=>result)
 
   block_done:
     ##  remove current block from @?BLOCK
