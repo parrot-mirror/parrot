@@ -1911,7 +1911,7 @@ count_signature_elements(PARROT_INTERP, ARGIN(const char *signature),
             default:
                 Parrot_ex_throw_from_c_args(interp, NULL,
                     EXCEPTION_INVALID_OPERATION,
-                    "Parrot_PCCINVOKE: invalid reg type %c!", *x);
+                    "Parrot_pcc_invoke_method_from_c_args: invalid reg type %c!", *x);
         }
     }
 
@@ -1979,7 +1979,7 @@ commit_last_arg_sig_object(PARROT_INTERP, int index, int cur,
             break;
         default:
             Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INVALID_OPERATION,
-                "Parrot_PCCINVOKE: invalid reg type");
+                "Parrot_pcc_invoke_method_from_c_args: invalid reg type");
     }
 
     /* set the register offset into the index int[] */
@@ -2188,7 +2188,7 @@ set_context_sig_params(PARROT_INTERP, ARGIN(const char *signature),
 
 =item C<void Parrot_pcc_invoke_from_c_args>
 
-Follows the same conventions as C<Parrot_PCCINVOKE>, but the subroutine object
+Follows the same conventions as C<Parrot_pcc_invoke_method_from_c_args>, but the subroutine object
 to invoke is passed as an argument rather than looked up by name. The signature
 string and call arguments are converted to a CallSignature PMC.
 
@@ -2213,13 +2213,13 @@ Parrot_pcc_invoke_sub_from_c_args(PARROT_INTERP, ARGIN(PMC *sub_obj),
 
 /*
 
-=item C<void Parrot_PCCINVOKE>
+=item C<void Parrot_pcc_invoke_method_from_c_args>
 
 Makes a function or method call given the name of the function/method
 and the arguments as a C variadic argument list. C<pmc> is the invocant,
 C<method_name> is the same C<method_name> used in the C<find_method>
 VTABLE call, C<signature> is a C string describing the Parrot calling
-conventions for Parrot_PCCINVOKE.  The variadic argument list contains
+conventions for Parrot_pcc_invoke_method_from_c_args.  The variadic argument list contains
 the input arguments followed by the output results in the same order
 that they appear in the function signature. You must pass the
 address_of(&) the OUT results, of course.
@@ -2267,10 +2267,10 @@ Example signature:
 
 PARROT_API
 void
-Parrot_PCCINVOKE(PARROT_INTERP, ARGIN(PMC* pmc), ARGMOD(STRING *method_name),
+Parrot_pcc_invoke_method_from_c_args(PARROT_INTERP, ARGIN(PMC* pmc), ARGMOD(STRING *method_name),
         ARGIN(const char *signature), ...)
 {
-    /* TODO: This function should be renamed Parrot_pcc_invoke_meth_from_c_args */
+    /* TODO: This function should be renamed Parrot_pcc_invoke_method_from_c_args */
     PMC *sig_obj;
     PMC *sub_obj;
     va_list args;

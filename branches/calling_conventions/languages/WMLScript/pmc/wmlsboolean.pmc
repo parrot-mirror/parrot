@@ -339,7 +339,7 @@ Return the string "true" or "false".
 
     MULTI PMC* subtract(WmlsString value, PMC* dest) {
         PMC *trans;
-        Parrot_PCCINVOKE(interp, value, const_string(interp, "parseInt"),
+        Parrot_pcc_invoke_method_from_c_args(interp, value, const_string(interp, "parseInt"),
                 "->P", &trans);
 
         if (trans->vtable->base_type == dynpmc_WmlsInteger) {
@@ -379,7 +379,7 @@ Return the string "true" or "false".
 
     MULTI void i_subtract(WmlsString value) {
         PMC *trans;
-        Parrot_PCCINVOKE(interp, value, const_string(interp, "parseInt"),
+        Parrot_pcc_invoke_method_from_c_args(interp, value, const_string(interp, "parseInt"),
                 "->P", &trans);
 
         if (trans->vtable->base_type == dynpmc_WmlsInteger) {
@@ -432,7 +432,7 @@ Return the string "true" or "false".
 
     MULTI PMC* multiply(WmlsString value, PMC* dest) {
         PMC *trans;
-        Parrot_PCCINVOKE(interp, value, const_string(interp, "parseInt"),
+        Parrot_pcc_invoke_method_from_c_args(interp, value, const_string(interp, "parseInt"),
                 "->P", &trans);
 
         if (trans->vtable->base_type == dynpmc_WmlsInteger) {
@@ -472,7 +472,7 @@ Return the string "true" or "false".
 
     MULTI void i_multiply(WmlsString value) {
         PMC *trans;
-        Parrot_PCCINVOKE(interp, value, const_string(interp, "parseInt"),
+        Parrot_pcc_invoke_method_from_c_args(interp, value, const_string(interp, "parseInt"),
                 "->P", &trans);
 
         if (trans->vtable->base_type == dynpmc_WmlsInteger) {
@@ -534,7 +534,7 @@ Return the string "true" or "false".
 
     MULTI PMC* divide(WmlsString value, PMC* dest) {
         PMC *trans;
-        Parrot_PCCINVOKE(interp, value, const_string(interp, "parseInt"),
+        Parrot_pcc_invoke_method_from_c_args(interp, value, const_string(interp, "parseInt"),
                 "->P", &trans);
 
         if (trans->vtable->base_type == dynpmc_WmlsInteger) {
@@ -591,7 +591,7 @@ Return the string "true" or "false".
 
     MULTI void i_divide(WmlsString value) {
         PMC *trans;
-        Parrot_PCCINVOKE(interp, value, const_string(interp, "parseInt"),
+        Parrot_pcc_invoke_method_from_c_args(interp, value, const_string(interp, "parseInt"),
                 "->P", &trans);
 
         if (trans->vtable->base_type == dynpmc_WmlsInteger) {
@@ -647,7 +647,7 @@ Return the string "true" or "false".
 
     MULTI PMC* floor_divide(WmlsString value, PMC* dest) {
         PMC *trans;
-        Parrot_PCCINVOKE(interp, value, const_string(interp, "parseInt"),
+        Parrot_pcc_invoke_method_from_c_args(interp, value, const_string(interp, "parseInt"),
                 "->P", &trans);
 
         if (trans->vtable->base_type == dynpmc_WmlsInteger) {
@@ -692,7 +692,7 @@ Return the string "true" or "false".
 
     MULTI void i_floor_divide(WmlsString value) {
         PMC *trans;
-        Parrot_PCCINVOKE(interp, value, const_string(interp, "parseInt"),
+        Parrot_pcc_invoke_method_from_c_args(interp, value, const_string(interp, "parseInt"),
                 "->P", &trans);
 
         if (trans->vtable->base_type == dynpmc_WmlsInteger) {
@@ -748,7 +748,7 @@ Return the string "true" or "false".
 
     MULTI PMC* modulus(WmlsString value, PMC* dest) {
         PMC *trans;
-        Parrot_PCCINVOKE(interp, value, const_string(interp, "parseInt"),
+        Parrot_pcc_invoke_method_from_c_args(interp, value, const_string(interp, "parseInt"),
                 "->P", &trans);
 
         if (trans->vtable->base_type == dynpmc_WmlsInteger) {
@@ -793,7 +793,7 @@ Return the string "true" or "false".
 
     MULTI void i_modulus(WmlsString value) {
         PMC *trans;
-        Parrot_PCCINVOKE(interp, value, const_string(interp, "parseInt"),
+        Parrot_pcc_invoke_method_from_c_args(interp, value, const_string(interp, "parseInt"),
                 "->P", &trans);
 
         if (trans->vtable->base_type == dynpmc_WmlsInteger) {
@@ -827,7 +827,7 @@ Return the string "true" or "false".
 */
     VTABLE PMC* bitwise_or(PMC* value, PMC* dest) {
         if (value->vtable->base_type == dynpmc_WmlsString) {
-            Parrot_PCCINVOKE(interp, value, const_string(interp, "parseInt"),
+            Parrot_pcc_invoke_method_from_c_args(interp, value, const_string(interp, "parseInt"),
                     "->P", &value);
         }
         if (value->vtable->base_type == dynpmc_WmlsInteger
@@ -845,7 +845,7 @@ Return the string "true" or "false".
 
     VTABLE void i_bitwise_or(PMC* value) {
         if (value->vtable->base_type == dynpmc_WmlsString) {
-            Parrot_PCCINVOKE(interp, value, const_string(interp, "parseInt"),
+            Parrot_pcc_invoke_method_from_c_args(interp, value, const_string(interp, "parseInt"),
                     "->P", &value);
         }
         if (value->vtable->base_type == dynpmc_WmlsInteger
@@ -871,7 +871,7 @@ Return the string "true" or "false".
 */
     VTABLE PMC* bitwise_and(PMC* value, PMC* dest) {
         if (value->vtable->base_type == dynpmc_WmlsString) {
-            Parrot_PCCINVOKE(interp, value, const_string(interp, "parseInt"),
+            Parrot_pcc_invoke_method_from_c_args(interp, value, const_string(interp, "parseInt"),
                     "->P", &value);
         }
         if (value->vtable->base_type == dynpmc_WmlsInteger
@@ -889,7 +889,7 @@ Return the string "true" or "false".
 
     VTABLE void i_bitwise_and(PMC* value) {
         if (value->vtable->base_type == dynpmc_WmlsString) {
-            Parrot_PCCINVOKE(interp, value, const_string(interp, "parseInt"),
+            Parrot_pcc_invoke_method_from_c_args(interp, value, const_string(interp, "parseInt"),
                     "->P", &value);
         }
         if (value->vtable->base_type == dynpmc_WmlsInteger
@@ -915,7 +915,7 @@ Return the string "true" or "false".
 */
     VTABLE PMC* bitwise_xor(PMC* value, PMC* dest) {
         if (value->vtable->base_type == dynpmc_WmlsString) {
-            Parrot_PCCINVOKE(interp, value, const_string(interp, "parseInt"),
+            Parrot_pcc_invoke_method_from_c_args(interp, value, const_string(interp, "parseInt"),
                     "->P", &value);
         }
         if (value->vtable->base_type == dynpmc_WmlsInteger
@@ -933,7 +933,7 @@ Return the string "true" or "false".
 
     VTABLE void i_bitwise_xor(PMC* value) {
         if (value->vtable->base_type == dynpmc_WmlsString) {
-            Parrot_PCCINVOKE(interp, value, const_string(interp, "parseInt"),
+            Parrot_pcc_invoke_method_from_c_args(interp, value, const_string(interp, "parseInt"),
                     "->P", &value);
         }
         if (value->vtable->base_type == dynpmc_WmlsInteger
@@ -959,7 +959,7 @@ Return the string "true" or "false".
 */
     VTABLE PMC* bitwise_shr(PMC* value, PMC* dest) {
         if (value->vtable->base_type == dynpmc_WmlsString) {
-            Parrot_PCCINVOKE(interp, value, const_string(interp, "parseInt"),
+            Parrot_pcc_invoke_method_from_c_args(interp, value, const_string(interp, "parseInt"),
                     "->P", &value);
         }
         if (value->vtable->base_type == dynpmc_WmlsInteger
@@ -977,7 +977,7 @@ Return the string "true" or "false".
 
     VTABLE void i_bitwise_shr(PMC* value) {
         if (value->vtable->base_type == dynpmc_WmlsString) {
-            Parrot_PCCINVOKE(interp, value, const_string(interp, "parseInt"),
+            Parrot_pcc_invoke_method_from_c_args(interp, value, const_string(interp, "parseInt"),
                     "->P", &value);
         }
         if (value->vtable->base_type == dynpmc_WmlsInteger
@@ -1003,7 +1003,7 @@ Return the string "true" or "false".
 */
     VTABLE PMC* bitwise_lsr(PMC* value, PMC* dest) {
         if (value->vtable->base_type == dynpmc_WmlsString) {
-            Parrot_PCCINVOKE(interp, value, const_string(interp, "parseInt"),
+            Parrot_pcc_invoke_method_from_c_args(interp, value, const_string(interp, "parseInt"),
                     "->P", &value);
         }
         if (value->vtable->base_type == dynpmc_WmlsInteger
@@ -1021,7 +1021,7 @@ Return the string "true" or "false".
 
     VTABLE void i_bitwise_lsr(PMC* value) {
         if (value->vtable->base_type == dynpmc_WmlsString) {
-            Parrot_PCCINVOKE(interp, value, const_string(interp, "parseInt"),
+            Parrot_pcc_invoke_method_from_c_args(interp, value, const_string(interp, "parseInt"),
                     "->P", &value);
         }
         if (value->vtable->base_type == dynpmc_WmlsInteger
@@ -1047,7 +1047,7 @@ Return the string "true" or "false".
 */
     VTABLE PMC* bitwise_shl(PMC* value, PMC* dest) {
         if (value->vtable->base_type == dynpmc_WmlsString) {
-            Parrot_PCCINVOKE(interp, value, const_string(interp, "parseInt"),
+            Parrot_pcc_invoke_method_from_c_args(interp, value, const_string(interp, "parseInt"),
                     "->P", &value);
         }
         if (value->vtable->base_type == dynpmc_WmlsInteger
@@ -1065,7 +1065,7 @@ Return the string "true" or "false".
 
     VTABLE void i_bitwise_shl(PMC* value) {
         if (value->vtable->base_type == dynpmc_WmlsString) {
-            Parrot_PCCINVOKE(interp, value, const_string(interp, "parseInt"),
+            Parrot_pcc_invoke_method_from_c_args(interp, value, const_string(interp, "parseInt"),
                     "->P", &value);
         }
         if (value->vtable->base_type == dynpmc_WmlsInteger

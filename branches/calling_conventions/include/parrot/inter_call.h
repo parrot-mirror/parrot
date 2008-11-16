@@ -184,7 +184,7 @@ void Parrot_pcc_invoke_sub_from_c_args(PARROT_INTERP,
         __attribute__nonnull__(3);
 
 PARROT_API
-void Parrot_PCCINVOKE(PARROT_INTERP,
+void Parrot_pcc_invoke_method_from_c_args(PARROT_INTERP,
     ARGIN(PMC* pmc),
     ARGMOD(STRING *method_name),
     ARGIN(const char *signature),
