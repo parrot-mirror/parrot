@@ -599,6 +599,7 @@ Parrot_io_write_buffer(PARROT_INTERP, ARGMOD(PMC *filehandle), ARGIN(STRING *s))
         Parrot_io_set_buffer_flags(interp, filehandle, buffer_flags);
         memcpy(buffer_next, buffer, len);
         buffer_next += len;
+        Parrot_io_set_buffer_next(interp, filehandle, buffer_next);
         Parrot_io_set_file_position(interp, filehandle, (len +
                     Parrot_io_get_file_position(interp, filehandle)));
         return len;
@@ -610,6 +611,7 @@ Parrot_io_write_buffer(PARROT_INTERP, ARGMOD(PMC *filehandle), ARGIN(STRING *s))
         Parrot_io_set_buffer_flags(interp, filehandle, buffer_flags);
         /* Fill remainder, flush, then try to buffer more */
         memcpy(buffer_next, buffer, avail);
+        Parrot_io_set_buffer_next(interp, filehandle, buffer_next);
         buffer_next += avail;
         Parrot_io_set_file_position(interp, filehandle, (avail +
                     Parrot_io_get_file_position(interp, filehandle)));
