@@ -548,8 +548,7 @@ Parrot_capture_lex(PARROT_INTERP, ARGMOD(PMC *sub_pmc))
 
     /* the sub_pmc has to have an outer_sub that is the caller */
     if (PMC_IS_NULL(sub->outer_sub))
-        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INVALID_OPERATION,
-                "'%Ss' isn't a closure (no :outer)", sub->name);
+        return;
 
     /* verify that the current sub is sub_pmc's :outer */
     if (0 != string_equal(interp, current_sub->lexid, 
