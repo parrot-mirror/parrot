@@ -201,55 +201,32 @@ OUT
 
 # L<PDD22/I\/O PMC API/=item print.*=item readline>
 pir_output_is(
-    <<'CODE', <<'OUT', 'print, read, and readline - synchronous', todo => 'not yet implemented' );
+    <<'CODE', <<'OUT', 'readline - synchronous' );
 .sub 'test' :main
     load_bytecode 'String/Utils.pbc'
     .local pmc chomp
                chomp = get_global ['String';'Utils'], 'chomp'
 
     $P0 = new 'FileHandle'
-    $P0.open('README')
+    $P0.open('temp')
 
-    $S0 = $P0.read(14) # bytes
-    if $S0 == 'This is Parrot' goto ok_1
+    $S0 = $P0.readline()
+    $S0 = chomp( $S0 )
+    if $S0 == '123456.789squawk' goto ok_1
     print 'not '
   ok_1:
-    say 'ok 1 - $S0 = $P1.read($I2)'
+    say 'ok 1 - $S0 = $P1.readline()'
 
-    $S0 = $P0.read(9)  # bytes
-    if $S0 == ', version' goto ok_2
+    $S0 = $P0.readline()
+    $S0 = chomp( $S0 )
+    if $S0 == '42' goto ok_2
     print 'not '
   ok_2:
-    say 'ok 2 - $S0 = $P1.read($I2)     # again on same stream'
-
-    $P0.print(123)
-    $P0.print(456.789)
-    $P0.print("squawk\n")
-    $P1 = new 'Integer'
-    $P1 = 42
-    $P0.print($P1)
-    say 'ok 3 - $P0.print(${I,N,S,P}1)'
-
-    $S0 = $P0.readline()
-    $S0 = chomp( $S0 )
-    if $S0 == '123456.789000squawk' goto ok_4
-    print 'not '
-  ok_4:
-    say 'ok 4 - $S0 = $P1.readline($I2)'
-
-    $S0 = $P0.readline()
-    $S0 = chomp( $S0 )
-    if $S0 == '42' goto ok_5
-    print 'not '
-  ok_5:
-    say 'ok 5 - $S0 = $P1.readline($I2) # again on same stream'
+    say 'ok 2 - $S0 = $P1.readline() # again on same stream'
 .end
 CODE
-ok 1 - $S0 = $P1.read($I2)
-ok 2 - $S0 = $P1.read($I2)     # again on same stream
-ok 3 - $P0.print(${I,N,S,P}1)
-ok 4 - $S0 = $P1.readline($I2)
-ok 5 - $S0 = $P1.readline($I2) # again on same stream
+ok 1 - $S0 = $P1.readline()
+ok 2 - $S0 = $P1.readline() # again on same stream
 OUT
 
 # RT #46833 test reading/writing code points once supported
