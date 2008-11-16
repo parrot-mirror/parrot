@@ -382,6 +382,7 @@ Parrot_push_context(PARROT_INTERP, ARGMOD(INTVAL *n_regs_used))
     Parrot_Context * const ctx = Parrot_set_new_context(interp, n_regs_used);
 
     ctx->caller_ctx  = old;
+    old->ref_count++;
 
     /* doesn't change */
     ctx->current_sub = old->current_sub;
@@ -409,7 +410,7 @@ Parrot_pop_context(PARROT_INTERP)
     Parrot_Context * const ctx = CONTEXT(interp);
     Parrot_Context * const old = ctx->caller_ctx;
 
-    Parrot_free_context(interp, ctx, 1);
+    Parrot_free_context(interp, ctx, 0);
 
     /* restore old, set cached interpreter base pointers */
     CONTEXT(interp)      = old;
