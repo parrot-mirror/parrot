@@ -64,6 +64,9 @@ mark_context(PARROT_INTERP, ARGMOD(Parrot_Context* ctx))
     if (ctx->caller_ctx)
         mark_context(interp, ctx->caller_ctx);
 
+    if (ctx->outer_ctx && ctx->outer_ctx != ctx->caller_ctx)
+        mark_context(interp, ctx->outer_ctx);
+
     obj = (PObj *)ctx->current_namespace;
     if (obj)
         pobject_lives(interp, obj);

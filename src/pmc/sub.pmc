@@ -434,6 +434,8 @@ Marks the sub as live.
             pobject_lives(INTERP, (PObj *) sub->lexid);
         if (sub->ctx)
             mark_context(interp, sub->ctx);
+        if (sub->outer_ctx && sub->outer_ctx != sub->ctx->outer_ctx)
+            mark_context(interp, sub->outer_ctx);
     }
 
 /*
