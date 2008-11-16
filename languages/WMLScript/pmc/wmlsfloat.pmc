@@ -281,7 +281,7 @@ Returns a Parrot string representation of the number.
 
     MULTI PMC* subtract(WmlsString value, PMC* dest) {
         PMC *trans;
-        Parrot_PCCINVOKE(interp, value, const_string(interp, "parseFloat"),
+        Parrot_pcc_invoke_method_from_c_args(interp, value, const_string(interp, "parseFloat"),
             "->P", &trans);
 
         if (trans->vtable->base_type == dynpmc_WmlsFloat) {
@@ -318,7 +318,7 @@ Returns a Parrot string representation of the number.
 
     MULTI void i_subtract(WmlsString value) {
         PMC *trans;
-        Parrot_PCCINVOKE(interp, value, const_string(interp, "parseFloat"),
+        Parrot_pcc_invoke_method_from_c_args(interp, value, const_string(interp, "parseFloat"),
             "->P", &trans);
 
         if (trans->vtable->base_type == dynpmc_WmlsFloat) {
@@ -370,7 +370,7 @@ Returns a Parrot string representation of the number.
 
     MULTI PMC* multiply(WmlsString value, PMC* dest) {
         PMC *trans;
-        Parrot_PCCINVOKE(interp, value, const_string(interp, "parseFloat"),
+        Parrot_pcc_invoke_method_from_c_args(interp, value, const_string(interp, "parseFloat"),
             "->P", &trans);
 
         if (trans->vtable->base_type == dynpmc_WmlsFloat) {
@@ -407,7 +407,7 @@ Returns a Parrot string representation of the number.
 
     MULTI void i_multiply(WmlsString value) {
         PMC *trans;
-        Parrot_PCCINVOKE(interp, value, const_string(interp, "parseFloat"),
+        Parrot_pcc_invoke_method_from_c_args(interp, value, const_string(interp, "parseFloat"),
             "->P", &trans);
 
         if (trans->vtable->base_type == dynpmc_WmlsFloat) {
@@ -468,7 +468,7 @@ Returns a Parrot string representation of the number.
 
     MULTI PMC* divide(WmlsString value, PMC* dest) {
         PMC *trans;
-        Parrot_PCCINVOKE(interp, value, const_string(interp, "parseFloat"),
+        Parrot_pcc_invoke_method_from_c_args(interp, value, const_string(interp, "parseFloat"),
             "->P", &trans);
 
         if (trans->vtable->base_type == dynpmc_WmlsFloat) {
@@ -522,7 +522,7 @@ Returns a Parrot string representation of the number.
 
     MULTI void i_divide(WmlsString value) {
         PMC *trans;
-        Parrot_PCCINVOKE(interp, value, const_string(interp, "parseFloat"),
+        Parrot_pcc_invoke_method_from_c_args(interp, value, const_string(interp, "parseFloat"),
             "->P", &trans);
 
         if (trans->vtable->base_type == dynpmc_WmlsFloat) {

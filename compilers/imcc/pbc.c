@@ -980,7 +980,7 @@ create_lexinfo(PARROT_INTERP, ARGMOD(IMC_Unit *unit), ARGIN(PMC *sub),
                             "add lexical '%s' to sub name '%s'\n",
                             n->name, (char*)PMC_sub(sub)->name->strstart);
 
-                    Parrot_PCCINVOKE(interp, lex_info,
+                    Parrot_pcc_invoke_method_from_c_args(interp, lex_info,
                             string_from_literal(interp, "declare_lex_preg"),
                             "SI->", lex_name, r->color);
 

@@ -548,7 +548,7 @@ sub rewrite_pccinvoke {
         $vars .= $out_vars;
 
         my $e = Parrot::Pmc2c::Emitter->new( $pmc->filename );
-        $e->emit(qq|Parrot_PCCINVOKE($fixed_params, "$signature", $vars);\n|);
+        $e->emit(qq|Parrot_pcc_invoke_method_from_c_args($fixed_params, "$signature", $vars);\n|);
 
         $matched->replace( $match, $e );
     }
