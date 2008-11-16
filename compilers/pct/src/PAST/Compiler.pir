@@ -707,6 +707,7 @@ Return the POST representation of a C<PAST::Block>.
     $P0 = get_hll_global ['POST'], 'Ops'
     bpost = $P0.'new'( bpost, 'node'=>node, 'result'=>blockreg)
     bpost.'push_pirop'( blockref, 'result'=>blockreg )
+    bpost.'push_pirop'('capture_lex', blockreg)
     goto block_done
 
   block_immediate:
