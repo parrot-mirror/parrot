@@ -540,7 +540,7 @@ Parrot_io_eprintf(NULLOK(PARROT_INTERP), ARGIN(const char *s), ...)
     if (interp) {
         STRING * const str = Parrot_vsprintf_c(interp, s, args);
 
-        ret = Parrot_io_putps(interp, _PIO_STDERR(interp), str);
+        ret = PIO_putps(interp, _PIO_STDERR(interp), str);
     }
     else {
         /* Be nice about this...
