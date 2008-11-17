@@ -215,26 +215,13 @@ platform).
 
 =item C<buffer_type>
 
-  $I0 = $P1.buffer_type()
   $S0 = $P1.buffer_type()
-  $P0.buffer_type($I1)
   $P0.buffer_type($S1)
 
 Accessor (get and set) for the I/O stream's buffer type attribute. The
-attribute is returned as an integer value of one of the following
-constants, or a string value of 'unbuffered', 'line-buffered', or
-'full-buffered'.
-
-  0    PIO_NONBUF
-           Unbuffered I/O. Bytes are sent as soon as possible.
-  1    PIO_LINEBUF
-           Line buffered I/O. Bytes are sent when a record separator is
-           encountered.
-  2    PIO_FULLBUF
-           Fully buffered I/O. Bytes are sent when the buffer is full.
-           [Note, the constant was called "BLKBUF" because bytes are
-           sent as a block, but line buffering also sends them as a
-           block, so changed to "FULLBUF".]
+attribute is set or returned as a string value of 'unbuffered' (bytes sent as
+soon as possible), 'line-buffered' (bytes sent when record separator is
+encountered), or 'full-buffered' (bytes sent when the buffer is full).
 
 =item C<buffer_size>
 
