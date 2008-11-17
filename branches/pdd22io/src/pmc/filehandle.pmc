@@ -259,6 +259,57 @@ Print the passed in integer, number, string, or PMC to the filehandle.
         Parrot_io_putps(interp, SELF, string_to_print);
     }
 
+/*
+
+=item C<METHOD buffer_type(STRING *new_type :optional, INTVAL got_type :opt_flag)>
+
+Set or retrieve the buffering behavior for the filehandle. The argument and
+return value are one of the following:
+
+=over 
+
+=item C<unbuffered>
+
+Buffering disabled, bytes are sent as soon as possible.
+
+=item C<line-buffered>
+
+Line buffering, bytes are sent when a record separator is encountered.
+
+=item C<full-buffered>
+
+Full buffering, bytes are sent when the buffer is full.
+
+=cut
+
+*/
+
+    METHOD buffer_type(STRING *new_type :optional, INTVAL got_type :opt_flag) {
+        INTVAL flags;
+        STRING *nobuffer_string   = CONST_STRING(INTERP, "unbuffered");
+        STRING *linebuffer_string = CONST_STRING(INTERP, "line-buffered");
+        STRING *fullbuffer_string = CONST_STRING(INTERP, "full-buffered");
+
+        if (got_type) {
+            if (string_equal(INTERP, new_type, nobuffer_string) == 0)
+                Parrot_io_setbuf(INTERP, SELF, PIOCTL_NONBUF);
+            else if (string_equal(INTERP, new_type, linebuffer_string) == 0)
+                Parrot_io_setlinebuf(INTERP, SELF);
+            else if (string_equal(INTERP, new_type, fullbuffer_string) == 0)
+                Parrot_io_setbuf(INTERP, SELF, PIO_UNBOUND);
+        }
+
+        GET_ATTR_flags(INTERP, SELF, flags);
+
+        if (flags & PIO_F_LINEBUF)
+            RETURN(STRING *linebuffer_string);
+        else if (flags & PIO_F_BLKBUF)
+            RETURN(STRING *fullbuffer_string);
+
+        RETURN(STRING *nobuffer_string);
+
+    }
+
 #ifdef PIO_OS_UNIX
 
 /*
