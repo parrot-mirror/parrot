@@ -272,61 +272,36 @@ ok 3 - $P0.record_separator() # .readline works as expected
 OUT
 
 # L<PDD22/I\/O PMC API/=item buffer_type>
-pir_output_is( <<'CODE', <<'OUT', 'buffer_type', todo => 'not yet implemented' );
+pir_output_is( <<'CODE', <<'OUT', 'buffer_type' );
 .sub 'test' :main
-    .include 'io_buffer_types.pasm'
-
     $P0 = new 'FileHandle'
 
     $P0.buffer_type('unbuffered')
-    $I0 = $P0.buffer_type()
-    if $I0 == PIO_NONBUF goto ok_1
+    $S0 = $P0.buffer_type()
+    if $S0 == 'unbuffered' goto ok_1
     print 'not '
   ok_1:
-    say 'ok 1 - $I0 = $P1.buffer_type() # PIO_NONBUF'
-
-    $P0.buffer_type(PIO_NONBUF)
-    $S0 = $P0.buffer_type()
-    if $S0 == 'unbuffered' goto ok_2
-    print 'not '
-  ok_2:
-    say 'ok 2 - $S0 = $P1.buffer_type() # PIO_NONBUF'
+    say 'ok 1 - $S0 = $P1.buffer_type() # unbuffered'
 
     $P0.buffer_type('line-buffered')
-    $I0 = $P0.buffer_type()
-    if $I0 == PIO_LINEBUF goto ok_3
-    print 'not '
-  ok_3:
-    say 'ok 3 - $I0 = $P1.buffer_type() # PIO_LINEBUF'
-
-    $P0.buffer_type(PIO_LINEBUF)
     $S0 = $P0.buffer_type()
-    if $S0 == 'line-buffered' goto ok_4
+    if $S0 == 'line-buffered' goto ok_2
     print 'not '
-  ok_4:
-    say 'ok 4 - $S0 = $P1.buffer_type() # PIO_LINEBUF'
+  ok_2:
+    say 'ok 2 - $S0 = $P1.buffer_type() # line-buffered'
 
     $P0.buffer_type('full-buffered')
-    $I0 = $P0.buffer_type()
-    if $I0 == PIO_FULLBUF goto ok_5
-    print 'not '
-  ok_5:
-    say 'ok 5 - $I0 = $P1.buffer_type() # PIO_FULLBUF'
-
-    $P0.buffer_type(PIO_FULLBUF)
     $S0 = $P0.buffer_type()
-    if $S0 == 'full-buffered' goto ok_6
+    if $S0 == 'full-buffered' goto ok_3
     print 'not '
-  ok_6:
-    say 'ok 6 - $S0 = $P1.buffer_type() # PIO_FULLBUF'
+  ok_3:
+    say 'ok 3 - $S0 = $P1.buffer_type() # full-buffered'
+
 .end
 CODE
-ok 1 - $I0 = $P1.buffer_type() # PIO_NONBUF
-ok 2 - $S0 = $P1.buffer_type() # PIO_NONBUF
-ok 3 - $I0 = $P1.buffer_type() # PIO_LINEBUF
-ok 4 - $S0 = $P1.buffer_type() # PIO_LINEBUF
-ok 5 - $I0 = $P1.buffer_type() # PIO_FULLBUF
-ok 6 - $S0 = $P1.buffer_type() # PIO_FULLBUF
+ok 1 - $S0 = $P1.buffer_type() # unbuffered
+ok 2 - $S0 = $P1.buffer_type() # line-buffered
+ok 3 - $S0 = $P1.buffer_type() # full-buffered
 OUT
 
 # RT #46839 test effects of buffer_type, not just set/get
