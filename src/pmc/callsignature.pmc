@@ -11,6 +11,49 @@ src/pmc/callsignature.pmc - CallSignature PMC
 The CallSignature PMC is used to store the argument list and argument meta
 information for a multiple dispatch call.
 
+=head2 Signatures
+
+Callsignatures are used throughout Parrot to invoke functions, pass arguments,
+and search for MMD variants. Parrot call signatures are always 8-bit ASCII
+strings, although they sometimes appear as null-terminated C strings, and
+sometimes as Parrot strings.
+
+uppercase letters repesent each arg and denote its types
+
+  I INTVAL
+  N FLOATVAL
+  S STRING *
+  P PMC *
+
+lowercase letters are adverb modifiers to the preceeding uppercase arg
+identifier
+
+  f flatten
+  n named
+  s slurpy
+  o optional
+  p opt flag
+  i invocant on a method
+
+C<< -> >> is the separator between args and results, similar to type theory
+notation.
+
+Named args require two arg slots. The first is the name, the second the arg.
+
+=head3 Example signatures
+
+  "SnIPf->INPs"
+
+  The args to the method invocation are
+    a named INTVAL:  SnI
+    a flattened PMC:  Pf
+
+  The results of the method invocation are
+    a INTVAL: I
+    a FLOATVAL: N
+    a slurpy PMC: Ps
+
+
 =head2 Functions
 
 =over 4

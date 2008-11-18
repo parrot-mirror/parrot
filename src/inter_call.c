@@ -2224,42 +2224,8 @@ the input arguments followed by the output results in the same order
 that they appear in the function signature. You must pass the
 address_of(&) the OUT results, of course.
 
-
-Signatures:
-  uppercase letters repesent each arg and denote its types
-
-  I INTVAL
-  N FLOATVAL
-  S STRING *
-  P PMC *
-
-  lowercase letters are adverb modifiers to the preceeding uppercase arg
-  identifier
-
-  f flatten
-  n named
-  s slurpy
-  o optional
-  p opt flag
-  i invocant on a method
-
-  -> is the separator between args and results, similar to type theory
-  notation.
-
-  Named args require two arg slots. The first is the name, the second the arg.
-
-Example signature:
-
-  "SnIPf->INPs"
-
-  The args to the method invocation are
-    a named INTVAL:  SnI
-    a flattened PMC:  Pf
-
-  The results of the method invocation are
-    a INTVAL: I
-    a FLOATVAL: N
-    a slurpy PMC: Ps
+More information about call signature strings is located in the
+file-level documentation of F<src/pmc/callsignature.pmc>.
 
 =cut
 
