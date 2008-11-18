@@ -63,7 +63,7 @@ Constructs a new exception object from the passed in arguments.
 =cut
 
 */
-PARROT_API
+PARROT_EXPORT
 PARROT_CAN_RETURN_NULL
 PMC *
 Parrot_ex_build_exception(PARROT_INTERP, INTVAL severity,
@@ -163,7 +163,7 @@ the handler code.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 void
 Parrot_ex_add_c_handler(PARROT_INTERP, ARGIN(Parrot_runloop *jp))
 {
@@ -184,7 +184,7 @@ Runs the exception handler.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 PARROT_CAN_RETURN_NULL
 opcode_t *
 Parrot_ex_throw_from_op(PARROT_INTERP, ARGIN(PMC *exception), ARGIN_NULLOK(void *dest))
@@ -263,7 +263,7 @@ the exception can be stored in the exception's payload.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 PARROT_DOES_NOT_RETURN
 void
 Parrot_ex_throw_from_c(PARROT_INTERP, ARGIN(PMC *exception))
@@ -323,7 +323,7 @@ C<exit_fatal()>.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 PARROT_CAN_RETURN_NULL
 opcode_t *
 Parrot_ex_throw_from_op_args(PARROT_INTERP, ARGIN_NULLOK(void *dest),
@@ -355,7 +355,7 @@ C<exit_fatal()>.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 PARROT_DOES_NOT_RETURN
 void
 Parrot_ex_throw_from_c_args(PARROT_INTERP, ARGIN_NULLOK(void *ret_addr),
@@ -381,7 +381,7 @@ Rethrow the exception.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 opcode_t *
@@ -406,7 +406,7 @@ that this is called from within a handler setup with C<new_c_exception>.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 PARROT_DOES_NOT_RETURN
 void
 Parrot_ex_rethrow_from_c(PARROT_INTERP, ARGIN(PMC *exception))
@@ -426,7 +426,7 @@ Mark an exception as unhandled, as part of rethrowing it.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 void
 Parrot_ex_mark_unhandled(PARROT_INTERP, ARGIN(PMC *exception))
 {
@@ -446,7 +446,7 @@ the runloop.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 size_t
 Parrot_ex_calc_handler_offset(PARROT_INTERP)
 {
@@ -479,7 +479,7 @@ A better version of assert() that gives a backtrace.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 PARROT_DOES_NOT_RETURN_WHEN_FALSE
 void
 Parrot_assert(INTVAL condition, ARGIN(const char *condition_string),
@@ -499,7 +499,7 @@ Prints a backtrace and message for a failed assertion.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 PARROT_DOES_NOT_RETURN
 void
 Parrot_confess(ARGIN(const char *cond), ARGIN(const char *file), unsigned int line)
@@ -584,7 +584,7 @@ require an interpreter).
 
 */
 
-PARROT_API
+PARROT_EXPORT
 PARROT_DOES_NOT_RETURN
 void
 exit_fatal(int exitcode, ARGIN(const char *format), ...)
