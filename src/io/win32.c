@@ -31,7 +31,7 @@ Win32 System Programming, 2nd Edition.
 
 #ifdef PIO_OS_WIN32
 
-/* HEADERIZER HFILE: none */
+/* HEADERIZER HFILE: include/parrot/io_win32.h */
 /* HEADERIZER BEGIN: static */
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 
@@ -223,7 +223,7 @@ Parrot_io_open_win32(PARROT_INTERP, ARGMOD(PMC *filehandle),
     if (fd != INVALID_HANDLE_VALUE) {
         PMC *io;
         if (PMC_IS_NULL(filehandle))
-            io = Parrot_io_new_pmc(interp, flags, 0);
+            io = Parrot_io_new_pmc(interp, flags);
         else
             io = filehandle;
 
@@ -474,7 +474,7 @@ Parrot_io_seek_win32(PARROT_INTERP, ARGMOD(PMC *filehandle),
         return -1;
     }
     Parrot_io_set_file_position(interp, filehandle, offset.QuadPart);
-    return offset.QuadPart
+    return offset.QuadPart;
 }
 
 /*
