@@ -2610,8 +2610,7 @@ Parrot_pcc_invoke_sub_from_sig_object(PARROT_INTERP, ARGIN(PMC *sub_obj),
     PMC * const args_sig    = pmc_new(interp, enum_class_FixedIntegerArray);
     PMC * const results_sig = pmc_new(interp, enum_class_FixedIntegerArray);
     PMC * const ret_cont    = new_ret_continuation_pmc(interp, NULL);
-    PMC * const result_list = VTABLE_get_attr_str(interp, sig_obj,
-            CONST_STRING(interp, "returns"));
+    PMC * const result_list = VTABLE_get_attr_str(interp, sig_obj, CONST_STRING(interp, "returns"));
 
     Parrot_Context *ctx;
     opcode_t         *dest;
@@ -2663,11 +2662,14 @@ Parrot_pcc_invoke_sub_from_sig_object(PARROT_INTERP, ARGIN(PMC *sub_obj),
 
     /* PIR Subs need runops to run their opcodes. */
     if (sub_obj->vtable->base_type == enum_class_Sub) {
-        /* can't re-enter the runloop from here with CGP: RT #60048 */
         INTVAL old_core  = interp->run_core;
         opcode_t offset  = dest - interp->code->base.data;
-        if (interp->run_core == PARROT_CGP_CORE)
+
+        /* can't re-enter the runloop from here with PIC cores: RT #60048 */
+        if (interp->run_core == PARROT_CGP_CORE
+        ||  interp->run_core == PARROT_SWITCH_CORE)
             interp->run_core = PARROT_SLOW_CORE;
+
         runops(interp, offset);
         interp->run_core = old_core;
     }
