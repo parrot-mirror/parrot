@@ -17,6 +17,85 @@ typedef FILE* PIOHANDLE;
 typedef long PIOOFF_T;
 
 /* HEADERIZER BEGIN: src/io/portable.c */
+/* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
+
+INTVAL Parrot_io_close_portable(PARROT_INTERP, ARGMOD(PMC *filehandle))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        FUNC_MODIFIES(*filehandle);
+
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
+PMC * Parrot_io_fdopen_portable(PARROT_INTERP,
+    ARGMOD(PMC *filehandle),
+    PIOHANDLE fptr,
+    INTVAL flags)
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        FUNC_MODIFIES(*filehandle);
+
+INTVAL Parrot_io_flush_portable(SHIM_INTERP, SHIM(PMC *filehandle));
+INTVAL Parrot_io_getblksize_portable(PIOHANDLE fptr);
+INTVAL Parrot_io_init_portable(PARROT_INTERP)
+        __attribute__nonnull__(1);
+
+INTVAL Parrot_io_is_closed_portable(PARROT_INTERP, ARGIN(PMC *filehandle))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+PARROT_WARN_UNUSED_RESULT
+PARROT_CAN_RETURN_NULL
+PMC * Parrot_io_open_pipe_portable(PARROT_INTERP,
+    SHIM(PMC *filehandle),
+    SHIM(STRING *command),
+    int flags)
+        __attribute__nonnull__(1);
+
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
+PMC * Parrot_io_open_portable(PARROT_INTERP,
+    ARGMOD(PMC *filehandle),
+    ARGIN(STRING *path),
+    INTVAL flags)
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3)
+        FUNC_MODIFIES(*filehandle);
+
+size_t Parrot_io_peek_portable(PARROT_INTERP,
+    ARGIN(PMC *filehandle),
+    ARGIN(STRING **buf))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3);
+
+size_t Parrot_io_read_portable(PARROT_INTERP,
+    SHIM(PMC *filehandle),
+    ARGIN(STRING **buf))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(3);
+
+PIOOFF_T Parrot_io_seek_portable(PARROT_INTERP,
+    ARGMOD(PMC *filehandle),
+    PIOOFF_T offset,
+    INTVAL whence)
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        FUNC_MODIFIES(*filehandle);
+
+PIOOFF_T Parrot_io_tell_portable(PARROT_INTERP, ARGIN(PMC *filehandle))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+size_t Parrot_io_write_portable(PARROT_INTERP,
+    ARGIN(PMC *filehandle),
+    ARGMOD(STRING *s))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3)
+        FUNC_MODIFIES(*s);
+
+/* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 /* HEADERIZER END: src/io/portable.c */
 
 #define PIO_INIT(interp) Parrot_io_init_portable((interp))
