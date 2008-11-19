@@ -58,7 +58,7 @@ in the returned PMC.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 PMC *
@@ -84,7 +84,7 @@ Creates and returns a C<FileHandle> PMC for a given string path and flags.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 PMC *
@@ -119,7 +119,7 @@ OS IO handles (0, 1, 2).
 
 */
 
-PARROT_API
+PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 PMC *
@@ -157,7 +157,7 @@ Flushes, closes, and destroys the C<ParrotIO> PMC C<*pmc>.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 INTVAL
 Parrot_io_close(PARROT_INTERP, ARGMOD(PMC *pmc))
 {
@@ -182,7 +182,7 @@ Test whether a filehandle is closed.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 INTVAL
 Parrot_io_is_closed(PARROT_INTERP, ARGMOD(PMC *pmc))
 {
@@ -199,7 +199,7 @@ Flushes the C<ParrotIO> PMC C<*pmc>.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 void
 Parrot_io_flush(PARROT_INTERP, ARGMOD(PMC *pmc))
 {
@@ -224,7 +224,7 @@ Return a new C<STRING*> holding up to C<len> bytes.
 */
 
 
-PARROT_API
+PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 STRING *
@@ -263,7 +263,7 @@ Reads up to C<len> bytes from C<*pmc> and copies them into C<*buffer>.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
 INTVAL
 Parrot_io_read(PARROT_INTERP, ARGMOD(PMC *pmc), ARGIN(char *buffer), size_t len)
@@ -288,7 +288,7 @@ Writes C<len> bytes from C<*buffer> to C<*pmc>.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
 INTVAL
 Parrot_io_write(PARROT_INTERP, ARGMOD(PMC *pmc), ARGIN(const void *buffer), size_t len)
@@ -323,7 +323,7 @@ the file, C<1> for the current position, and C<2> for the end.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
 PIOOFF_T
 Parrot_io_seek(PARROT_INTERP, ARGMOD(PMC *pmc), PIOOFF_T offset, INTVAL w)
@@ -344,7 +344,7 @@ Returns the current read/write position of C<*pmc>.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
 PIOOFF_T
 Parrot_io_tell(PARROT_INTERP, ARGMOD(PMC *pmc))
@@ -367,7 +367,7 @@ the platform-specific implementation of 'peek'.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 INTVAL
 Parrot_io_peek(PARROT_INTERP, ARGMOD(PMC *pmc), ARGOUT(STRING **buffer))
 {
@@ -388,7 +388,7 @@ position is C<EOF>.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
 INTVAL
 Parrot_io_eof(PARROT_INTERP, ARGMOD(PMC *pmc))
@@ -413,7 +413,7 @@ Writes C<*s> tp C<*pmc>. C string version.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 INTVAL
 Parrot_io_puts(PARROT_INTERP, ARGMOD(PMC *pmc), ARGIN(const char *s))
 {
@@ -430,7 +430,7 @@ Writes C<*s> to C<*pmc>. Parrot string version.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 INTVAL
 Parrot_io_putps(PARROT_INTERP, ARGMOD(PMC *pmc), ARGMOD_NULLOK(STRING *s))
 {
@@ -466,7 +466,7 @@ Writes a C string format with varargs to C<*pmc>.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 INTVAL
 Parrot_io_fprintf(PARROT_INTERP, ARGMOD(PMC *pmc), ARGIN(const char *s), ...)
 {
@@ -492,7 +492,7 @@ Writes a C string format with varargs to C<stdout>.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 INTVAL
 Parrot_io_printf(PARROT_INTERP, ARGIN(const char *s), ...)
 {
@@ -527,7 +527,7 @@ Writes a C string format with varargs to C<stderr>.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 PARROT_IGNORABLE_RESULT
 INTVAL
 Parrot_io_eprintf(NULLOK(PARROT_INTERP), ARGIN(const char *s), ...)
@@ -564,7 +564,7 @@ Returns C<*pmc>'s file descriptor, or C<0> if it is not defined.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
 PIOHANDLE
 Parrot_io_getfd(PARROT_INTERP, ARGMOD(PMC *pmc))
@@ -582,7 +582,7 @@ Returns a boolean value indicating whether C<*pmc> is a console/tty.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
 INTVAL
 Parrot_io_is_tty(PARROT_INTERP, ARGMOD(PMC *pmc))
@@ -609,7 +609,7 @@ Returns the C<FileHandle> PMC for C<stdin>.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 PMC *
@@ -628,7 +628,7 @@ Returns the C<FileHandle> PMC for C<stdout>.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 PMC *
@@ -647,7 +647,7 @@ Returns the C<FileHandle> PMC for C<stderr>.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 PMC *
@@ -674,7 +674,7 @@ Returns C<offset>.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 PIOOFF_T
 Parrot_io_make_offset(INTVAL offset)
 {
