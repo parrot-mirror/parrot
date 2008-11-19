@@ -54,18 +54,18 @@ pir_output_is( <<'CODE', <<'OUT', 'open and close - synchronous' );
   test_5:
     $P5 = new 'FileHandle'
     push_eh eh_bad_file_1
-    $P5.open('bad_file')
+    $P5.open('bad.file')
     pop_eh
 
   test_6:
     $P6 = new 'FileHandle'
     push_eh eh_bad_file_2
-    $P6.open('bad_file', 'r')
+    $P6.open('bad.file', 'r')
     pop_eh
 
   test_7:
     $P7 = new 'FileHandle'
-    $P7.open('new_file', 'w')
+    $P7.open('temp.file', 'w')
     say 'ok 7 - $P7.open($S1, $S2) # new file, write mode succeeds'
 
     goto end
@@ -91,7 +91,7 @@ ok 7 - $P7.open($S1, $S2) # new file, write mode succeeds
 OUT
 
 # should be in the PIR code
-unlink 'new_file';
+unlink ('temp.file');
 
 # RT #46827 test open file, close file, delete file, reopen previously opened stream
 
@@ -156,7 +156,7 @@ pir_output_is( <<'CODE', <<'OUT', 'print - synchronous' );
 .sub 'test' :main
 
     $P0 = new 'FileHandle'
-    $P0.open('temp', 'w')
+    $P0.open('temp.file', 'w')
 
     $P0.print(123)
     say 'ok 1 - $P0.print($I1)'
@@ -172,7 +172,7 @@ pir_output_is( <<'CODE', <<'OUT', 'print - synchronous' );
     $P0.close()
 
     $P1 = new 'FileHandle'
-    $P1.open('temp', 'r')
+    $P1.open('temp.file', 'r')
 
     $S0 = $P1.read(3) # bytes
     if $S0 == "123" goto ok_5
@@ -208,7 +208,7 @@ pir_output_is(
                chomp = get_global ['String';'Utils'], 'chomp'
 
     $P0 = new 'FileHandle'
-    $P0.open('temp')
+    $P0.open('temp.file')
 
     $S0 = $P0.readline()
     $S0 = chomp( $S0 )
@@ -228,6 +228,9 @@ CODE
 ok 1 - $S0 = $P1.readline()
 ok 2 - $S0 = $P1.readline() # again on same stream
 OUT
+
+unlink ('temp.file');
+
 
 # RT #46833 test reading/writing code points once supported
 
@@ -318,35 +321,38 @@ pir_output_is( <<'CODE', <<'OUT', 'buffer_size' );
     $P0 = new 'FileHandle'
 
     $P0.buffer_type('full-buffered')
-    $P0.buffer_size(5)
-    say 'ok 1 - $P0.buffer_size(5)      # set buffer size'
+    $P0.buffer_size(42)
+    say 'ok 1 - $P0.buffer_size(42)     # set buffer size'
 
     $I0 = $P0.buffer_size()
 
-    if $I0 == 5 goto ok_2
+    if $I0 == 42 goto ok_2
     print 'not '
   ok_2:
     say 'ok 2 - $I0 = $P0.buffer_size() # get buffer size'
 
-    $P0.open('temp', 'w')
+    $P0.open('temp.file', 'w')
 
     $P0.print(1234567890)
+    $P0.close()
 
     $P1 = new 'FileHandle'
-    $P1.open('temp')
+    $P1.open('temp.file')
 
     $S0 = $P1.readline()
 
-    if $S0 == '12345' goto ok_3
+    if $S0 == '1234567890' goto ok_3
     print 'not '
   ok_3:
-    say 'ok 3 - $S0 = $P0.readline()    # buffer flushed when full'
+    say 'ok 3 - $S0 = $P0.readline()    # buffer flushed'
+
+    $P1.close()
 
 .end
 CODE
-ok 1 - $P0.buffer_size(5)      # set buffer size
+ok 1 - $P0.buffer_size(42)     # set buffer size
 ok 2 - $I0 = $P0.buffer_size() # get buffer size
-ok 3 - $S0 = $P0.readline()    # buffer flushed when full
+ok 3 - $S0 = $P0.readline()    # buffer flushed
 OUT
 
 # L<PDD22/I\/O PMC API/=item mode>
@@ -369,6 +375,8 @@ pir_output_is( <<'CODE', <<'OUT', 'mode' );
 CODE
 ok 1 - $S0 = $P0.mode() # get read mode
 OUT
+
+unlink("temp.file");
 
 # RT #46843
 # L<PDD22/I\/O PMC API/=item get_fd>
