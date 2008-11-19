@@ -326,7 +326,10 @@ pir_output_is( <<'CODE', <<'OUT', 'buffer_size' );
 
     $I0 = $P0.buffer_size()
 
-    if $I0 == 42 goto ok_2
+    # The set buffer size is a minimum, the I/O subsystem may scale it upward
+    # to a round block, so test that the buffer size is equal or greater than
+    # the set size.
+    if $I0 >= 42 goto ok_2
     print 'not '
   ok_2:
     say 'ok 2 - $I0 = $P0.buffer_size() # get buffer size'
