@@ -202,6 +202,7 @@ Invokes the subroutine.
         Parrot_sub     * const sub = PMC_sub(SELF);
         Parrot_Context        *caller_ctx;
         Parrot_Context        *context;
+        Parrot_Context        *c;
         PMC                   *ccont;
         opcode_t              *pc;
 
@@ -244,13 +245,13 @@ Invokes the subroutine.
          * plain subroutine call
          * create new context, place it in interpreter
          */
-#define PREMATURE_OPT
+/* #define PREMATURE_OPT */
 #ifdef PREMATURE_OPT
         if (caller_ctx->current_sub == SELF)
             context = Parrot_dup_context(INTERP, caller_ctx);
         else
 #endif
-        context               = Parrot_alloc_context(INTERP, sub->n_regs_used);
+        context               = Parrot_set_new_context(INTERP, sub->n_regs_used);
         context->current_sub  = SELF;
         context->caller_ctx   = caller_ctx;
         context->current_pc   = pc;
@@ -293,14 +294,46 @@ Invokes the subroutine.
             VTABLE_set_pointer(INTERP, context->lex_pad, context);
         }
 
+        /* set outer context */
+        context->outer_ctx = sub->outer_ctx;
+        /* autoclose */
+        for (c = context; !c->outer_ctx; c = c->outer_ctx) {
+            PMC            *outer_pmc = PMC_sub(c->current_sub)->outer_sub;
+            Parrot_sub     *outer_sub;
+
+            if (PMC_IS_NULL(outer_pmc))
+                break;
+
+            outer_sub = PMC_sub(outer_pmc);
+
+            if (!outer_sub->ctx) {
+                Parrot_Context *dummy = Parrot_alloc_context(INTERP,
+                                            outer_sub->n_regs_used, 1);
+                dummy->current_sub    = outer_pmc;
+                dummy->ref_count++;
+
+                if (!PMC_IS_NULL(outer_sub->lex_info)) {
+                    dummy->lex_pad = pmc_new_init(INTERP,
+                           Parrot_get_ctx_HLL_type(interp, enum_class_LexPad),
+                           outer_sub->lex_info);
+                    VTABLE_set_pointer(INTERP, dummy->lex_pad, dummy);
+                }
+
+                dummy->outer_ctx = outer_sub->outer_ctx;
+                outer_sub->ctx   = dummy;
+            }
+
+            c->outer_ctx = outer_sub->ctx;
+        }
+
         /* switch code segment if needed */
         if (INTERP->code != sub->seg)
             Parrot_switch_to_cs(INTERP, sub->seg, 1);
 
         if (PObj_get_FLAGS(ccont) & SUB_FLAG_TAILCALL) {
-            if (!(*pc == PARROT_OP_get_params_pc ||
-                        (*pc == PARROT_OP_push_eh_ic &&
-                         pc[2] == PARROT_OP_get_params_pc))) {
+            if (!(*pc    == PARROT_OP_get_params_pc
+            ||   (*pc    == PARROT_OP_push_eh_ic
+            &&     pc[2] == PARROT_OP_get_params_pc))) {
 
                 /* TODO keep it or resize it */
                 --context->recursion_depth;
@@ -401,6 +434,8 @@ Marks the sub as live.
             pobject_lives(INTERP, (PObj *) sub->lexid);
         if (sub->ctx)
             mark_context(interp, sub->ctx);
+        if (sub->outer_ctx && sub->outer_ctx != sub->ctx->outer_ctx)
+            mark_context(interp, sub->outer_ctx);
     }
 
 /*
