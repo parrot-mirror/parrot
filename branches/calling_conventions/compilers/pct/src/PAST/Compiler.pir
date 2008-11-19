@@ -186,7 +186,7 @@ is one of the signature flags described above.
   reg_void:
     .return ('')
   err_nortype:
-    self.panic('rtype not set')
+    self.'panic'('rtype not set')
 .end
 
 =item coerce(post, rtype)
@@ -310,7 +310,7 @@ forced into that register (with conversions as needed).
     .return (post)
 
   err_nortype:
-    self.panic('rtype not set')
+    self.'panic'('rtype not set')
 .end
 
 
@@ -434,11 +434,11 @@ nodes make it into the tree.
     .param pmc node
     .param pmc options         :slurpy :named
     unless null node goto not_null_node
-    self.panic("PAST::Compiler can't compile a null node")
+    self.'panic'("PAST::Compiler can't compile a null node")
     not_null_node:
 
     $S0 = typeof node
-    self.panic("PAST::Compiler can't compile node of type ", $S0)
+    self.'panic'("PAST::Compiler can't compile node of type ", $S0)
 .end
 
 =item as_post(Undef)
@@ -600,7 +600,7 @@ Return the POST representation of a C<PAST::Block>.
     $S0 = self.'uniquereg'('P')
     bpost.'push_pirop'('new', $S0, "'ExceptionHandler'")
     bpost.'push_pirop'('set_addr', $S0, ctrllabel)
-    bpost.'push_pirop'('callmethod', 'handle_types', $S0, .CONTROL_RETURN)
+    bpost.'push_pirop'('callmethod', '"handle_types"', $S0, .CONTROL_RETURN)
     bpost.'push_pirop'('push_eh', $S0)
 
   children_past:
@@ -624,7 +624,7 @@ Return the POST representation of a C<PAST::Block>.
     $I0 = isa ctrlpast, ['PAST';'Node']
     if $I0 goto control_past
     if ctrlpast == 'return_pir' goto control_return
-    self.panic("Unrecognized control handler '", ctrlpast, "'")
+    self.'panic'("Unrecognized control handler '", ctrlpast, "'")
   control_return:
     ##  handle 'return' exceptions
     $S0 = self.'uniquereg'('P')
@@ -655,7 +655,7 @@ Return the POST representation of a C<PAST::Block>.
     lisub = $P0.'new'('outer'=>bpost, 'pirflags'=>':load :init')
     lisub.'push_pirop'('.local pmc', 'block')
     lisub.'push_pirop'('interpinfo', '$P20', .INTERPINFO_CURRENT_SUB)
-    lisub.'push_pirop'('callmethod', 'get_outer', '$P20', 'result'=>'block')
+    lisub.'push_pirop'('callmethod', '"get_outer"', '$P20', 'result'=>'block')
     .local pmc lipast, lipost
     lipast = node.'loadinit'()
     lipost = self.'as_post'(lipast, 'rtype'=>'v')
@@ -1171,7 +1171,7 @@ by C<node>.
     next_handler = self.'uniquereg'('P')
     ops.'push_pirop'('new', next_handler, "'ExceptionHandler'")
     ops.'push_pirop'('set_addr', next_handler, nextlabel)
-    ops.'push_pirop'('callmethod', 'handle_types', next_handler, .CONTROL_LOOP_NEXT)
+    ops.'push_pirop'('callmethod', '"handle_types"', next_handler, .CONTROL_LOOP_NEXT)
     ops.'push_pirop'('push_eh', next_handler)
     ops.'push_pirop'('iter', iter, collpost)
     ops.'push'(looplabel)
@@ -1538,7 +1538,7 @@ node with a 'pasttype' of bind.
     rpost = self.'coerce'(rpost, 'P')
     ops.'push'(rpost)
 
-    lpast.lvalue(1)
+    lpast.'lvalue'(1)
     lpost = self.'as_post'(lpast, 'bindpost'=>rpost)
     ops.'push'(lpost)
     ops.'result'(lpost)
@@ -1872,7 +1872,7 @@ attribute.
     #  if the keyed node is an lvalue, its base is an lvalue also
     $I0 = node.'lvalue'()
     unless $I0 goto have_lvalue
-    basepast.lvalue($I0)
+    basepast.'lvalue'($I0)
   have_lvalue:
 
     basepost = self.'as_post'(basepast, 'rtype'=>'P')
@@ -2008,7 +2008,8 @@ to have a PMC generated containing the constant value.
     ops = $P0.'new'('node'=>node)
 
     .local pmc value, returns
-    value = node.'value'()
+    value = node['value']
+    if null value goto err_novalue
     returns = node.'returns'()
     if returns goto have_returns
     $S0 = typeof value
@@ -2039,6 +2040,9 @@ to have a PMC generated containing the constant value.
     ops.'push_pirop'('assign', result, value)
     ops.'result'(result)
     .return (ops)
+
+  err_novalue:
+    self.'panic'('PAST::Val node missing :value attribute')
 .end
 
 

@@ -13,20 +13,10 @@ src/classes/Pair.pir - methods for the Pair class
 .namespace ['Perl6Pair']
 
 .sub 'onload' :anon :load :init
-    .local pmc p6meta
+    .local pmc p6meta, pairproto
     p6meta = get_hll_global ['Perl6Object'], '$!P6META'
-    p6meta.'new_class'('Perl6Pair', 'parent'=>'Any', 'attr'=>'$!key $!value', 'name'=>'Pair')
-.end
-
-
-=item Scalar
-
-This is a value type, so just returns itself.
-
-=cut
-
-.sub 'Scalar' :method
-    .return (self)
+    pairproto = p6meta.'new_class'('Perl6Pair', 'parent'=>'Any', 'attr'=>'$!key $!value', 'name'=>'Pair')
+    pairproto.'!IMMUTABLE'()
 .end
 
 
@@ -40,10 +30,10 @@ Delegates on to a method call '.:Xkey(Xval)'.
 .sub 'ACCEPTS' :method
     .param pmc topic
 
-    $S0 = self.key()
+    $S0 = self.'key'()
     $S0 = concat ':', $S0
 
-    $P0 = self.value()
+    $P0 = self.'value'()
 
     .tailcall topic.$S0($P0)
 .end

@@ -179,9 +179,8 @@ D: Pipp
 E: christoph@mksig.org
 
 N: chromatic
-D: SDL library and examples; PIR Test::*; test suite cleanup
-D: Parrot::Embed; Pheme
-D: lead philosopher -- "Why doesn't this work?"
+D: SDL library and examples; PIR Test::*; test suite cleanup; Parrot::Embed
+D: freaky bugs; cool features; Pheme
 E: chromatic@wgz.org
 W: http://wgz.org/chromatic/
 
@@ -450,6 +449,11 @@ N: Leopold Toetsch
 D: Patchmonster & pumpking emeritus (0.0.13 - 0.4.5)
 E: lt@toetsch.at
 S: Herrnbaumgarten, Austria
+
+N: Luca Barbato
+D: fix to make installable
+E: lu_zero@gentoo.org
+
 
 N: Luke Palmer
 D: Many fixes

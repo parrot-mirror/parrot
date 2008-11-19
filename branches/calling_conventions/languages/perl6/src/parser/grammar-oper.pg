@@ -23,6 +23,7 @@ proto prefix:<+^> is equiv(prefix:<+>)
 proto prefix:<=> is equiv(prefix:<+>) { ... }
 proto prefix:<^> is equiv(prefix:<+>) { ... }
 proto prefix:<\> is equiv(prefix:<+>) { ... }
+proto prefix:<|> is equiv(prefix:<+>) { ... }
 
 ## multiplicative operators
 proto infix:<*> is precedence('u=') { ... }
@@ -135,7 +136,7 @@ proto infix:<max> is equiv(infix:<||>)
     { ... }
 
 ## conditional
-proto ternary:<?? !!> is precedence('j=') is pasttype('if') { ... }
+proto ternary:<?? !!> is precedence('j=') is pasttype('if') is assoc('right') { ... }
 
 ## item assignment
 proto infix:<:=> is precedence('i=') is pasttype('bind') { ... }

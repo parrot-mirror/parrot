@@ -33,21 +33,11 @@ Perform initializations and create the base classes.
 .end
 
 
-.namespace ['Perl6Object']
-
 =back
 
 =head2 Object methods
 
 =over 4
-
-=item hash()
-
-Return the scalar as a Hash.
-
-=cut
-
-.namespace ['Perl6Object']
 
 =item Scalar()
 
@@ -56,6 +46,7 @@ reference, unless the thing already is one.
 
 =cut
 
+.namespace ['Perl6Object']
 .sub 'Scalar' :method
     $I0 = isa self, 'ObjectRef'
     unless $I0 goto not_ref
@@ -195,7 +186,7 @@ Create a new object having the same class as the invocant.
     # Instantiate.
     .local pmc p6meta
     p6meta = get_hll_global ['Perl6Object'], '$!P6META'
-    $P0 = p6meta.get_parrotclass(self)
+    $P0 = p6meta.'get_parrotclass'(self)
     $P1 = new $P0
 
     # If this proto object has a WHENCE auto-vivification, we should use
@@ -258,7 +249,7 @@ Create a new object having the same class as the invocant.
 
     # We found some parent init data, potentially.
   found_parent_init:
-    init_attribs = cur_ip.WHENCE()
+    init_attribs = cur_ip.'WHENCE'()
     $I0 = 'defined'(init_attribs)
     if $I0 goto parent_init_search_done
     init_attribs = new 'Hash'
@@ -311,13 +302,27 @@ Create a new object having the same class as the invocant.
 
     # Is it an array? If so, initialize to Perl6Array.
     if sigil != '@' goto no_array
-    $P2 = new 'Perl6Array'
+    $P3 = new 'Perl6Array'
+    $I0 = defined $P2
+    if $I0 goto have_array_value
+    set $P2, $P3
+    goto set_attrib
+  have_array_value:
+    'infix:='($P3, $P2)
+    set $P2, $P3
     goto set_attrib
   no_array:
 
     # Is it a Hash? If so, initialize to Perl6Hash.
     if sigil != '%' goto no_hash
-    $P2 = new 'Perl6Hash'
+    $P3 = new 'Perl6Hash'
+    $I0 = defined $P2
+    if $I0 goto have_hash_value
+    set $P2, $P3
+    goto set_attrib
+  have_hash_value:
+    'infix:='($P3, $P2)
+    set $P2, $P3
     goto set_attrib
   no_hash:
 
@@ -430,6 +435,29 @@ Gets the object's identity value
     .tailcall self.'WHERE'()
 .end
 
+=item 'PARROT'
+
+Report the object's true nature.
+
+=cut
+
+.sub 'PARROT' :method
+    .local pmc obj
+    .local string result
+    obj = self
+    result = ''
+    $I0 = isa obj, 'ObjectRef'
+    unless $I0 goto have_obj
+    result = 'ObjectRef->'
+    obj = deref obj
+  have_obj:
+    $P0 = typeof obj
+    $S0 = $P0
+    result .= $S0
+    .return (result)
+.end
+
+
 =back
 
 =head2 Private methods
@@ -507,7 +535,7 @@ Create a clone of self, also cloning the attributes given by attrlist.
     result_list = 'list'()
     p6meta = get_hll_global ['Perl6Object'], '$!P6META'
     class = self.'HOW'()
-    class = p6meta.get_parrotclass(class)
+    class = p6meta.'get_parrotclass'(class)
     mro = inspect class, 'all_parents'
     it = iter mro
     cap_class = get_hll_global 'Capture'
@@ -537,7 +565,7 @@ Create a clone of self, also cloning the attributes given by attrlist.
     $S0 = "Could not invoke method '"
     concat $S0, method_name
     concat $S0, "' on invocant of type '"
-    $S1 = self.WHAT()
+    $S1 = self.'WHAT'()
     concat $S0, $S1
     concat $S0, "'"
     'die'($S0)
@@ -669,6 +697,26 @@ Returns a proto-object with an autovivification closure attached to it.
     setattribute res, '%!properties', props
 
     .return (res)
+.end
+
+=item !IMMUTABLE()
+
+=item !MUTABLE()
+
+Indicate that objects in the class are mutable or immutable.
+
+=cut
+
+.sub '!IMMUTABLE' :method
+    $P0 = get_hll_global ['Int'], 'Scalar'
+    $P1 = self.'HOW'()
+    $P1.'add_method'('Scalar', $P0, 'to'=>self)
+.end
+
+.sub '!MUTABLE' :method
+    $P0 = get_hll_global ['Perl6Object'], 'Scalar'
+    $P1 = self.'HOW'()
+    $P1.'add_method'('Scalar', $P0, 'to'=>self)
 .end
 
 =back

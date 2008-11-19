@@ -256,7 +256,7 @@ RT #48260: Not yet documented!!!
 
 */
 
-PARROT_API
+PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 funcptr_t
@@ -346,7 +346,7 @@ Currently this only looks in the global "MULTI" namespace.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 PMC*
@@ -404,7 +404,7 @@ integer types to pass on to the multiple dispatch search.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 PMC*
@@ -449,8 +449,7 @@ Parrot_build_sig_object_from_varargs(PARROT_INTERP, ARGIN_NULLOK(PMC* obj),
         /* Only create the returns array if it's needed */
         if (in_return_sig && PMC_IS_NULL(returns)) {
             returns = pmc_new(interp, enum_class_ResizablePMCArray);
-            VTABLE_set_attr_str(interp, call_object,
-                    CONST_STRING(interp, "results"), returns);
+            VTABLE_set_attr_str(interp, call_object, CONST_STRING(interp, "results"), returns);
         }
 
         if (in_return_sig) {
@@ -463,23 +462,19 @@ Parrot_build_sig_object_from_varargs(PARROT_INTERP, ARGIN_NULLOK(PMC* obj),
             switch (type) {
                 case 'I':
                     VTABLE_set_pointer(interp, val_pointer, (void *) va_arg(args, INTVAL*));
-                    VTABLE_set_string_keyed_str(interp, val_pointer,
-                        signature, CONST_STRING(interp, "I"));
+                    VTABLE_set_string_keyed_str(interp, val_pointer, signature, CONST_STRING(interp, "I"));
                     break;
                 case 'N':
                     VTABLE_set_pointer(interp, val_pointer, (void *) va_arg(args, FLOATVAL*));
-                    VTABLE_set_string_keyed_str(interp, val_pointer,
-                        signature, CONST_STRING(interp, "N"));
+                    VTABLE_set_string_keyed_str(interp, val_pointer, signature, CONST_STRING(interp, "N"));
                     break;
                 case 'S':
                     VTABLE_set_pointer(interp, val_pointer, (void *) va_arg(args, STRING**));
-                    VTABLE_set_string_keyed_str(interp, val_pointer,
-                        signature, CONST_STRING(interp, "S"));
+                    VTABLE_set_string_keyed_str(interp, val_pointer, signature, CONST_STRING(interp, "S"));
                     break;
                 case 'P':
                     VTABLE_set_pointer(interp, val_pointer, (void *) va_arg(args, PMC**));
-                    VTABLE_set_string_keyed_str(interp, val_pointer,
-                        signature, CONST_STRING(interp, "P"));
+                    VTABLE_set_string_keyed_str(interp, val_pointer, signature, CONST_STRING(interp, "P"));
                     break;
                 default:
                     Parrot_ex_throw_from_c_args(interp, NULL,
@@ -559,7 +554,7 @@ integer, so the result can be set.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 PARROT_CAN_RETURN_NULL
 void
 Parrot_mmd_multi_dispatch_from_c_args(PARROT_INTERP,
@@ -605,7 +600,7 @@ RT #45941 change this to a MMD register interface that takes a function *name*.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 void
 Parrot_mmd_add_function(PARROT_INTERP, INTVAL func_nr, SHIM(funcptr_t function))
 {
@@ -753,7 +748,7 @@ future.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 void
 Parrot_mmd_register(PARROT_INTERP, INTVAL func_nr, INTVAL left_type, INTVAL right_type,
              NULLOK(funcptr_t funcptr))
@@ -797,7 +792,7 @@ RT #48260: Not yet documented!!!
 
 */
 
-PARROT_API
+PARROT_EXPORT
 void
 Parrot_mmd_register_sub(PARROT_INTERP, INTVAL func_nr,
              INTVAL left_type, INTVAL right_type, ARGIN(const PMC *sub))
@@ -825,7 +820,7 @@ Frees all the memory allocated used the MMD subsystem.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 void
 Parrot_mmd_destroy(PARROT_INTERP)
 {
@@ -856,7 +851,7 @@ Currently only searches the global MULTI namespace.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 PARROT_CANNOT_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
 PMC *
@@ -897,7 +892,7 @@ RT #48260: Not yet documented!!!
 
 */
 
-PARROT_API
+PARROT_EXPORT
 PARROT_CANNOT_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
 PMC *
@@ -925,7 +920,7 @@ candidates by their manhattan distance to the signature args.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 PARROT_CAN_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
 PMC *
@@ -962,7 +957,7 @@ manhatten distance to the current args.
 =cut
 
 */
-PARROT_API
+PARROT_EXPORT
 PARROT_CAN_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
 PMC *
@@ -1825,7 +1820,7 @@ stored in the global MULTI namespace.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 void
 Parrot_mmd_add_multi_from_long_sig(PARROT_INTERP,
         ARGIN(STRING *sub_name), ARGIN(STRING *long_sig),
@@ -1860,7 +1855,7 @@ stored in the specified namespace.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 void
 Parrot_mmd_add_multi_from_c_args(PARROT_INTERP,
         ARGIN(const char *sub_name),
@@ -1905,7 +1900,7 @@ declared in a PMC from the PMC's class initialization function.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 void
 Parrot_mmd_add_multi_list_from_c_args(PARROT_INTERP,
         ARGIN(const multi_func_list *mmd_info), INTVAL elements)

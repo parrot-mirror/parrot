@@ -79,8 +79,6 @@ The following are PIR keywords, and cannot be used as identifiers:
    can be used as identifiers.
 }}
 
-{{ NOTE: The use of C<::> in identifiers is deprecated. [See RT #48735] }}
-
 =head3 Labels
 
 A label declaration consists of a label name followed by a colon. A label name
@@ -241,12 +239,12 @@ situations:
 
 =over 4
 
-=item* When a subroutine has a small fixed number of registers
+=item * When a subroutine has a small fixed number of registers
 
-=item* When a named variable or named register is used throughout the entire
+=item * When a named variable or named register is used throughout the entire
 subroutine
 
-=item* When a reference needs to be made to a register
+=item * When a reference needs to be made to a register
 
 =back
 
@@ -324,7 +322,7 @@ parsed.  See also the C<loadlib> opcode, which does the same at run time.
 A library loaded this way is also available at runtime, as if it has been
 loaded again in C<:load>, so there is no need to call C<loadlib> at runtime.
 
-=item .HLL <hll_name> [unimplemented: RT #57426]
+=item .HLL <hll_name>
 
 Define the HLL for the current file. Takes one string constant, the name
 of the HLL.
@@ -335,8 +333,6 @@ An old form of the .HLL directive that also loaded a shared lib for the
 HLL. Use C<.loadlib> instead.
 
 =item .HLL_map <core_type> = <user_type> [unimplemented: RT #57430]
-
-=item .HLL_map <core_type>, <user_type> [deprecated: RT # 57432]
 
 Whenever Parrot has to create PMCs inside C code on behalf of the running
 user program, it consults the current type mapping for the executing HLL
@@ -520,6 +516,10 @@ I<subname>.
 
 =item :lexid( <string_constant> )
 
+Deprecated; see RT#60592. C<:lexid> will be renamed to C<:subid>.
+
+=item :subid( <string_constant> )
+
 Specifies a unique string identifier for the subroutine. This is useful for
 referring to a particular subroutine with C<:outer>, even though several
 subroutines in the file may have the same name (because they are multi, or in
@@ -531,6 +531,13 @@ The C<:instanceof> pragma is an experimental pragma that creates a sub as a
 PMC type other than 'Sub'.  However, as currently implemented it doesn't
 work well with C<:outer> or existing PMC types such as C<Closure>,
 C<Coroutine>, etc.
+
+=item :nsentry( <string_constant> )
+
+Specify the name by which the subroutine is stored in the namespace. The
+default name by which a subroutine is stored in the namespace (if this flag
+is missing), is the subroutine's name as given after the C<.sub> directive.
+This flag allows to override this.
 
 =back
 
@@ -803,10 +810,10 @@ parameter. [this restriction unimplemented: RT #36283]
 This is short for:
 
   .begin_call
-  .arg <arg1> <flag2>
+  .set_arg <arg1> <flag2>
   ...
   .call <var2>
-  .result <var1> <flag1>
+  .get_result <var1> <flag1>
   ...
   .end_call
 
@@ -822,10 +829,6 @@ Function or method call. These notations are shorthand for a longer PCC
 function call. I<var> can denote a global subroutine, a local I<identifier> or
 a I<reg>.
 
-{{ DEPRECATION NOTE: bare word method names (e.g. C<foo.bar()> where
-C<bar> is not a local variable name) are deprecated. Use a quoted string
-instead. See #45859. }}
-
 =item .return ([<var> [:<flag> ...], ...])
 
 Return from the current subroutine with zero or more values.
@@ -838,18 +841,6 @@ deprecated.
 {{ Since .return is deprecated in .begin_/end_return, do we still need and/or
    want the parentheses?
 }}
-
-=item .return <var>(args)
-
-{{ Deprecated. Use .tailcall instead. See RT#58236. }}
-
-=item .return <var>.'somemethod'(args)
-
-{{ Deprecated. Use .tailcall instead. See RT#58236. }}
-
-=item .return <var>.<var>(args)
-
-{{ Deprecated. Use .tailcall instead. See RT#58236. }}
 
 =item .tailcall <var>(args)
 

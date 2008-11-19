@@ -6,7 +6,7 @@ use strict;
 use warnings;
 use lib qw( . lib ../lib ../../lib );
 use Test::More;
-use Parrot::Test tests => 30;
+use Parrot::Test tests => 31;
 
 =head1 NAME
 
@@ -423,7 +423,11 @@ CODE
 No exception handler/
 OUTPUT
 
-pir_output_is( <<'CODE', <<'OUTPUT', "exit_handler via exit exception" );
+$ENV{TEST_PROG_ARGS} ||= '';
+my @todo = $ENV{TEST_PROG_ARGS} =~ /-r/
+    ? ( todo => '.tailcall and lexical maps not thawed from PBC, RT #60650' )
+    : ();
+pir_output_is( <<'CODE', <<'OUTPUT', "exit_handler via exit exception", @todo );
 .sub main :main
     .local pmc a
     .lex 'a', a
@@ -432,7 +436,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "exit_handler via exit exception" );
     push_eh handler
     exit 0
 handler:
-    .return exit_handler()
+    .tailcall exit_handler()
 .end
 
 .sub exit_handler :outer(main)
@@ -641,6 +645,37 @@ In the exception handler
 After throwing
 OUTPUT
 
+pir_output_is( <<'CODE', <<'OUTPUT', "Resumable exceptions from a different context", todo => "Pending Tene's 'stop disabling exception handlers' patch." );
+.sub main :main
+    push_eh catcher
+    'foo'()
+    pop_eh
+    say 'ok 4'
+    .return ()
+  catcher:
+    .get_results ($P0)
+    $P1 = $P0['resume']
+    say 'in the handler'
+    $P1()
+.end
+
+.sub 'foo'
+    say 'ok 1'
+    $P0 = new 'Exception'
+    throw $P0
+    say 'ok 2'
+    $P0 = new 'Exception'
+    throw $P0
+    say 'ok 3'
+.end
+CODE
+ok 1
+in the handler
+ok 2
+in the handler
+ok 3
+ok 4
+OUTPUT
 # Local Variables:
 #   mode: cperl
 #   cperl-indent-level: 4

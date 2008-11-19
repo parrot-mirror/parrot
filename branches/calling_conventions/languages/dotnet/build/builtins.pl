@@ -27,7 +27,7 @@ my @methods = parse($input);
 my $output = <<'PIR_OUT';
 # THIS IS A GENERATED FILE! DO NOT EDIT!
 
-.HLL '_dotnet', ''
+.HLL '_dotnet'
 
 .sub internal_method_body
     .param pmc class
@@ -35,7 +35,7 @@ my $output = <<'PIR_OUT';
     .local string class_name, method_name, body
 
     # Get class and method names.
-    class_name = class.get_fullname()
+    class_name = class.'get_fullname'()
     method_name = meth
 PIR_OUT
 

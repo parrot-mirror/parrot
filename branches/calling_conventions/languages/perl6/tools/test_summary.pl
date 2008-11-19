@@ -23,7 +23,7 @@ my $testlist = $ARGV[0] || 't/spectest.data';
 my $fh;
 open($fh, '<', $testlist) || die "Can't read $testlist: $!";
 
-my @tfiles;
+my (@tfiles, %tname);
 while (<$fh>) {
     /^ *#/ && next;
     my ($specfile) = split ' ', $_;
@@ -42,12 +42,16 @@ close($fh);
 my $max = 0;
 for my $tfile (@tfiles) {
     my $tname = $tfile; $tname =~ s!^t/spec/!!;
+    $tname = substr($tname, 0, 49);
     if (length($tname) > $max) { $max = length($tname); }
+    $tname{$tfile} = $tname;
 }
 
 $| = 1;
 printf "%s  plan test pass fail todo skip\n", ' ' x $max;
 my %sum;
+my %syn;
+my @fail;
 for my $tfile (@tfiles) {
     my $th;
     open($th, '<', $tfile) || die "Can't read $tfile: $!\n";
@@ -56,14 +60,16 @@ for my $tfile (@tfiles) {
        if (/^\s*plan\D*(\d+)/) { $plan = $1; last; }
     }
     close($th);
-    my $tname = $tfile; $tname =~ s!^t/spec/!!;
+    my $tname = $tname{$tfile};
+    my $syn = substr($tname, 0, 3); $syn{$syn}++;
     printf "%s%s..%4d", $tname, '.' x ($max - length($tname)), $plan;
     my $cmd = "../../parrot perl6.pbc $tfile";
     my @results = split "\n", `$cmd`;
     my ($test, $pass, $fail, $todo, $skip) = (0,0,0,0,0);
     my (%skip, %todopass, %todofail);
     for (@results) {
-        next unless /^(not )?ok +\d+/;
+        if    (/^1\.\.(\d+)/) { $plan = $1 if $1 > 0; next; }
+        next unless /^(not )?ok +(\d+)/;
         $test++;
         if    (/#\s*SKIP\s*(.*)/i) { $skip++; $skip{$1}++; }
         elsif (/#\s*TODO\s*(.*)/i) {
@@ -72,18 +78,25 @@ for my $tfile (@tfiles) {
             if (/^ok /) { $todopass{$reason}++ }
             else        { $todofail{$reason}++ }
         }
-        elsif (/^not ok +\d+/)     { $fail++; }
+        elsif (/^not ok +(.*)/) {
+            $fail++;
+            push @fail, "$tname $1";
+        }
         elsif (/^ok +\d+/)         { $pass++; }
     }
     my $abort = $plan - $test;
-    if ($abort > 0) { $fail += $abort; $test += $abort; }
+    if ($abort > 0) {
+        $fail += $abort;
+        push @fail, "$tname aborted $abort test(s)";
+        $test += $abort;
+    }
     printf " %4d %4d %4d %4d %4d\n", $test, $pass, $fail, $todo, $skip;
-    $sum{'plan'} += $plan;
-    $sum{'test'} += $test;
-    $sum{'pass'} += $pass;
-    $sum{'fail'} += $fail;
-    $sum{'todo'} += $todo;
-    $sum{'skip'} += $skip;
+    $sum{'plan'} += $plan;  $sum{"$syn-plan"} += $plan;
+    $sum{'test'} += $test;  $sum{"$syn-test"} += $test;
+    $sum{'pass'} += $pass;  $sum{"$syn-pass"} += $pass;
+    $sum{'fail'} += $fail;  $sum{"$syn-fail"} += $fail;
+    $sum{'todo'} += $todo;  $sum{"$syn-todo"} += $todo;
+    $sum{'skip'} += $skip;  $sum{"$syn-skip"} += $skip;
     for (keys %skip) {
         printf "    %2d skipped: %s\n", $skip{$_}, $_;
     }
@@ -95,7 +108,26 @@ for my $tfile (@tfiles) {
     }
 }
 
-my $total = "  ".scalar(@tfiles)." test files";
+print "----------------\n";
+print "Synopsis summary:\n";
+printf "%s  plan test pass fail todo skip\n", ' ' x $max;
+for my $syn (sort keys %syn) {
+    printf "%s%s..%4d %4d %4d %4d %4d %4d\n", 
+        $syn, '.' x ($max - length($syn)), 
+        $sum{"$syn-plan"},
+        $sum{"$syn-test"},
+        $sum{"$syn-pass"},
+        $sum{"$syn-fail"},
+        $sum{"$syn-todo"},
+        $sum{"$syn-skip"};
+}
+
+print "----------------\n";
+if (@fail) {
+    print "Failure summary:\n";
+    foreach (@fail) { print "    $_\n"; }
+}
+my $total = scalar(@tfiles)." test files";
 $total .= ' ' x ($max-length($total));
 printf "%s  %4d %4d %4d %4d %4d %4d\n",
     $total, $sum{'plan'}, $sum{'test'}, $sum{'pass'},

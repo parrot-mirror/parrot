@@ -2841,6 +2841,12 @@ method EXPR($/, $key) {
         }
         make $past;
     }
+    elsif ~$type eq 'prefix:|' {
+        # Need to make it flatten the argument.
+        my $past := $( $/[0] );
+        $past.flat(1);
+        make $past;
+    }
     else {
         my $past := PAST::Op.new(
             :node($/),
@@ -3547,19 +3553,11 @@ sub have_trait($name, $verb, $traits) {
 
 # Returns the code to set $?PACKAGE to the current package.
 sub set_package_magical() {
-    return PAST::Op.new(
-        :pasttype('bind'),
-        PAST::Var.new(
+    return PAST::Var.new(
             :name('$?PACKAGE'),
             :scope('lexical'),
-            :isdecl(1)
-        ),
-        PAST::Op.new(
-            :inline(
-                '$P0 = interpinfo .INTERPINFO_CURRENT_SUB',
-                '%r = $P0."get_namespace"()'
-            )
-        )
+            :isdecl(1),
+            :viviself(PAST::Op.new(:pirop('get_namespace P')))
     );
 }
 

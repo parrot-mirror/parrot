@@ -6,7 +6,7 @@ use strict;
 use warnings;
 use lib qw( . lib ../lib ../../lib );
 use Test::More;
-use Parrot::Test tests => 29;
+use Parrot::Test tests => 30;
 
 =head1 NAME
 
@@ -534,7 +534,11 @@ at_exit, flag = 1
 No exception handler/
 OUTPUT
 
-pir_output_is( <<'CODE', <<'OUTPUT', "exit_handler via exit exception" );
+$ENV{TEST_PROG_ARGS} ||= '';
+my @todo = $ENV{TEST_PROG_ARGS} =~ /-r/
+    ? ( todo => '.tailcall and lexical maps not thawed from PBC, RT #60650' )
+    : ();
+pir_output_is( <<'CODE', <<'OUTPUT', "exit_handler via exit exception", @todo );
 .sub main :main
     .local pmc a
     .lex 'a', a
@@ -543,7 +547,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "exit_handler via exit exception" );
     push_eh handler
     exit 0
 handler:
-    .return exit_handler()
+    .tailcall exit_handler()
 .end
 
 .sub exit_handler :outer(main)
@@ -675,6 +679,43 @@ pir_error_output_like( <<'CODE', <<'OUTPUT', "throw - no handler" );
 .end
 CODE
 /No such string attribute/
+OUTPUT
+
+#RT #60556
+pir_output_is( <<'CODE', <<'OUTPUT', "catch ex from C-level MULTI function", todo => "broken" );
+.sub main :main
+
+.local pmc p, q
+
+    p = new 'Integer'
+    set p, "0"
+
+    push_eh handler
+    #throw an exception from a C-level MULTI function
+    q = p / p
+    goto end
+    pop_eh
+    goto end
+
+handler:
+    .local pmc exception
+    .local string message
+    .get_results (exception)
+
+    message = exception['message']
+    say_something(message)
+end:
+.end
+
+.sub say_something
+    .param string message
+    #Calling this sub is enough to trigger the bug.  If execution reached this
+    #point, the bug is fixed.
+    say "no segfault"
+end:
+.end
+CODE
+no segfault
 OUTPUT
 
 # Local Variables:

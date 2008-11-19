@@ -181,7 +181,7 @@ set_sub_vtable(lexer_state * const lexer, char const *vtablename) {
 /*
 
 =item C<void
-set_sub_lexid(lexer_state * const lexer, char * const lexid)>
+set_sub_subid(lexer_state * const lexer, char * const subid)>
 
 Set the lexical identifier on the current sub.
 
@@ -189,9 +189,30 @@ Set the lexical identifier on the current sub.
 
 */
 void
-set_sub_lexid(lexer_state * const lexer, char const * const lexid) {
-    CURRENT_SUB(lexer)->lex_id = lexid;
-    SET_FLAG(lexer->subs->flags, SUB_FLAG_LEXID);
+set_sub_subid(lexer_state * const lexer, char const * const subid) {
+    CURRENT_SUB(lexer)->subid = subid;
+    SET_FLAG(lexer->subs->flags, SUB_FLAG_SUBID);
+}
+
+/*
+
+=item C<void
+set_sub_methodname(lexer_state * const lexer, char * const methodname)>
+
+Set the :method flag on a sub; if C<methodname> is not NULL, then it contains
+the name by which the sub is stored as a method.
+
+=cut
+
+*/
+void
+set_sub_methodname(lexer_state * const lexer, char const * const methodname) {
+    if (methodname)
+        CURRENT_SUB(lexer)->methodname = methodname;
+    else
+        CURRENT_SUB(lexer)->methodname = CURRENT_SUB(lexer)->sub_name;
+
+    SET_FLAG(lexer->subs->flags, SUB_FLAG_METHOD);
 }
 
 /*
@@ -208,6 +229,22 @@ is experimental, and not actually used at this point.
 void
 set_sub_instanceof(lexer_state * const lexer, char const * const classname) {
     CURRENT_SUB(lexer)->instanceof = classname;
+}
+
+/*
+
+=item C<void
+set_sub_nsentry(lexer_state * const lexer, char const * const nsentry)>
+
+Set the value of the C<:nsentry> flag on a sub. The value of C<nsentry> is the name
+by which the sub is stored in the namespace.
+
+=cut
+
+*/
+void
+set_sub_nsentry(lexer_state * const lexer, char const * const nsentry) {
+    CURRENT_SUB(lexer)->nsentry = nsentry;
 }
 
 /*
@@ -251,7 +288,7 @@ new_subr(lexer_state * const lexer, char const * const subname) {
     newsub->sub_name   = subname;
 
     /* set default lexid */
-    newsub->lex_id     = subname;
+    newsub->subid      = subname;
 
     /* take namespace of this sub of the lexer, which keeps track of that */
     newsub->name_space = lexer->current_ns;
@@ -1219,6 +1256,27 @@ new_named_const(lexer_state * const lexer, pir_type type, char const * const nam
     c = create_const(lexer, type, name, arg_ptr);
     va_end(arg_ptr);
     return c;
+}
+
+/*
+
+=item C<constant *
+new_pmc_const(char const * const type, char const * const name, constant * const value)>
+
+Create a new PMC constant of type C<type>, name C<name> and having a value C<value>.
+The type must be a string indicating a valid type name (e.g. "Sub"). The name will be the name
+of the constant, and the value of the constant is passed as C<value>.
+
+XXX if type is "Sub", value must be looked up, as it is the name of a subroutine.
+
+=cut
+
+*/
+constant *
+new_pmc_const(char const * const type, char const * const name, constant * const value) {
+    value->name = name;
+    /* XXX implement this. Not sure yet how to. */
+    return value;
 }
 
 /*

@@ -1,5 +1,5 @@
 #! perl
-# Copyright (C) 2001-2007, The Perl Foundation.
+# Copyright (C) 2001-2008, The Perl Foundation.
 # $Id$
 
 =head1 NAME
@@ -94,10 +94,10 @@ my ( $desc, $err, $line );
 $desc = 'pasm_output_is: success';
 test_out("ok 1 - $desc");
 pasm_output_is( <<'CODE', <<'OUTPUT', $desc );
-    print "ok\n"
+    print "foo\n"
     end
 CODE
-ok
+foo
 OUTPUT
 test_test($desc);
 
@@ -105,58 +105,62 @@ $desc = 'pasm_output_is: failure';
 test_out("not ok 1 - $desc");
 test_fail(+9);
 $err = <<"ERR";
-#          got: 'ok
+#          got: 'foo
 # '
-#     expected: 'not ok
+#     expected: 'bar
 # '
 ERR
 chomp $err;
 test_err($err);
 pasm_output_is( <<'CODE', <<"OUTPUT", $desc );
-    print "ok\n"
+    print "foo\n"
     end
 CODE
-not ok
+bar
 OUTPUT
 test_test($desc);
 
 $desc = 'pasm_output_isnt: success';
 test_out("ok 1 - $desc");
 pasm_output_isnt( <<'CODE', <<"OUTPUT", $desc );
-    print "ok\n"
+    print "foo\n"
     end
 CODE
-not ok
+bar
 OUTPUT
 test_test($desc);
 
+
+# The exact error output for pasm_output_isnt() depends on the version of Test::Builder.
+# So, in order to avoid version dependent failures, be content with checking the
+# standard output.
 $desc = 'pasm_output_isnt: failure';
 test_out("not ok 1 - $desc");
 test_fail(+10);
 $err = <<"ERR";
-#     'ok
+#     'foo
 # '
 #         ne
-#     'ok
+#     'foo
 # '
 ERR
 chomp $err;
-test_err $err;
+test_err( $err );
 pasm_output_isnt( <<'CODE', <<'OUTPUT', $desc );
-    print "ok\n"
+    print "foo\n"
     end
 CODE
-ok
+foo
 OUTPUT
-test_test($desc);
+test_test(title => $desc, skip_err => 1);
 
 $desc = 'pasm_output_like: success';
 test_out("ok 1 - $desc");
 pasm_output_like( <<'CODE', <<'OUTPUT', $desc );
-    print "ok\n"
+    print "foo\n"
     end
 CODE
-/ok/
+/foo/
 OUTPUT
 test_test($desc);
 
@@ -164,18 +168,18 @@ $desc = 'pasm_output_like: failure';
 test_out("not ok 1 - $desc");
 test_fail(+9);
 $err = <<"ERR";
-#                   'ok
+#                   'foo
 # '
-#     doesn't match '/not ok/
+#     doesn't match '/bar/
 # '
 ERR
 chomp $err;
 test_err($err);
 pasm_output_like( <<'CODE', <<"OUTPUT", $desc );
-    print "ok\n"
+    print "foo\n"
     end
 CODE
-/not ok/
+/bar/
 OUTPUT
 test_test($desc);
 
@@ -184,10 +188,10 @@ $desc = 'pir_output_is: success';
 test_out("ok 1 - $desc");
 pir_output_is( <<'CODE', <<'OUTPUT', $desc );
 .sub 'test' :main
-    print "ok\n"
+    print "foo\n"
 .end
 CODE
-ok
+foo
 OUTPUT
 test_test($desc);
 
@@ -195,19 +199,19 @@ $desc = 'pir_output_is: failure';
 test_out("not ok 1 - $desc");
 test_fail(+9);
 $err = <<"ERR";
-#          got: 'ok
+#          got: 'foo
 # '
-#     expected: 'not ok
+#     expected: 'bar
 # '
 ERR
 chomp $err;
 test_err($err);
 pir_output_is( <<'CODE', <<"OUTPUT", $desc );
 .sub 'test' :main
-    print "ok\n"
+    print "foo\n"
 .end
 CODE
-not ok
+bar
 OUTPUT
 test_test($desc);
 
@@ -215,42 +219,45 @@ $desc = 'pir_output_isnt: success';
 test_out("ok 1 - $desc");
 pir_output_isnt( <<'CODE', <<"OUTPUT", $desc );
 .sub 'test' :main
-    print "ok\n"
+    print "foo\n"
 .end
 CODE
-not ok
+bar
 OUTPUT
 test_test($desc);
 
+# The exact error output for pir_output_isnt() depends on the version of Test::Builder.
+# So, in order to avoid version dependent failures, be content with checking the
+# standard output.
 $desc = 'pir_output_isnt: failure';
 test_out("not ok 1 - $desc");
 test_fail(+10);
 $err = <<"ERR";
-#     'ok
+#     'foo
 # '
 #         ne
-#     'ok
+#     'foo
 # '
 ERR
 chomp $err;
 test_err($err);
 pir_output_isnt( <<'CODE', <<'OUTPUT', $desc );
 .sub 'test' :main
-    print "ok\n"
+    print "foo\n"
 .end
 CODE
-ok
+foo
 OUTPUT
-test_test($desc);
+test_test(title => $desc, skip_err => 1);
 
 $desc = 'pir_output_like: success';
 test_out("ok 1 - $desc");
 pir_output_like( <<'CODE', <<'OUTPUT', $desc );
 .sub 'test' :main
-    print "ok\n"
+    print "foo\n"
 .end
 CODE
-/ok/
+/foo/
 OUTPUT
 test_test($desc);
 
@@ -258,19 +265,19 @@ $desc = 'pir_output_like: failure';
 test_out("not ok 1 - $desc");
 test_fail(+9);
 $err = <<"ERR";
-#                   'ok
+#                   'foo
 # '
-#     doesn't match '/not ok/
+#     doesn't match '/bar/
 # '
 ERR
 chomp $err;
 test_err($err);
 pir_output_like( <<'CODE', <<"OUTPUT", $desc );
 .sub 'test' :main
-    print "ok\n"
+    print "foo\n"
 .end
 CODE
-/not ok/
+/bar/
 OUTPUT
 test_test($desc);
 
@@ -288,22 +295,26 @@ $err = <<"ERR";
 #   $location.
 # Expected error but exited cleanly
 # Received:
-# ok
+# foo
 # 
 # Expected:
-# /not ok/
+# /bar/
 # 
 ERR
 chomp $err;
 test_err($err);
 pir_error_output_like( <<'CODE', <<"OUTPUT", $desc, todo => 'foo' );
 .sub 'test' :main
-    print "ok\n"
+    print "foo\n"
 .end
 CODE
-/not ok/
+/bar/
 OUTPUT
-test_test($desc);
+if($Test::Builder::VERSION == 0.84) {
+    test_test(title => $desc, skip_err => 1);
+} else {
+    test_test($desc);
+}
 
 # Local Variables:
 #   mode: cperl
