@@ -116,6 +116,15 @@ void destroy_context(PARROT_INTERP)
 PARROT_CANNOT_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
 Parrot_Context * Parrot_alloc_context(PARROT_INTERP,
+    ARGMOD(INTVAL *number_regs_used),
+    ARGIN_NULLOK(int init))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        FUNC_MODIFIES(*number_regs_used);
+
+PARROT_CANNOT_RETURN_NULL
+PARROT_WARN_UNUSED_RESULT
+Parrot_Context * Parrot_set_new_context(PARROT_INTERP,
     ARGMOD(INTVAL *number_regs_used))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
