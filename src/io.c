@@ -36,7 +36,7 @@ C<a> for append, and C<p> for pipe) and returns the combined generic bit flags.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
 INTVAL
 Parrot_io_parse_open_flags(PARROT_INTERP, ARGIN_NULLOK(STRING *mode_str))
@@ -146,7 +146,7 @@ buffer and file positions) to their default values.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 void
 Parrot_io_set_os_handle(PARROT_INTERP, ARGIN(PMC *filehandle), PIOHANDLE file_descriptor)
 {
@@ -169,7 +169,7 @@ it can be cleanly changed later.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 PIOHANDLE
 Parrot_io_get_os_handle(PARROT_INTERP, ARGIN(PMC *filehandle))
 {
@@ -192,7 +192,7 @@ it can be cleanly changed later.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 void
 Parrot_io_set_flags(PARROT_INTERP, ARGIN(PMC *filehandle), INTVAL flags)
 {
@@ -216,7 +216,7 @@ it can be cleanly changed later.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 INTVAL
 Parrot_io_get_flags(PARROT_INTERP, ARGIN(PMC *filehandle))
 {
@@ -241,7 +241,7 @@ it can be cleanly changed later.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 void
 Parrot_io_set_file_size(PARROT_INTERP, ARGIN(PMC *filehandle), PIOOFF_T file_size)
 {
@@ -266,7 +266,7 @@ it can be cleanly changed later.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 PIOOFF_T
 Parrot_io_get_file_size(PARROT_INTERP, ARGIN(PMC *filehandle))
 {
@@ -312,7 +312,7 @@ it can be cleanly changed later.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 PARROT_CAN_RETURN_NULL
 unsigned char *
 Parrot_io_get_buffer_start(PARROT_INTERP, ARGIN(PMC *filehandle))
@@ -336,7 +336,7 @@ it can be cleanly changed later.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 PARROT_CAN_RETURN_NULL
 unsigned char *
 Parrot_io_get_buffer_next(PARROT_INTERP, ARGIN(PMC *filehandle))
@@ -383,7 +383,7 @@ it can be cleanly changed later.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 PARROT_CAN_RETURN_NULL
 unsigned char *
 Parrot_io_get_buffer_end(PARROT_INTERP, ARGIN_NULLOK(PMC *filehandle))
@@ -546,7 +546,7 @@ it can be cleanly changed later.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 PIOOFF_T
 Parrot_io_get_file_position(PARROT_INTERP, ARGIN(PMC *filehandle))
 {
@@ -569,7 +569,7 @@ it can be cleanly changed later.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 PIOOFF_T
 Parrot_io_get_last_file_position(PARROT_INTERP, ARGIN(PMC *filehandle))
 {
@@ -593,7 +593,7 @@ it can be cleanly changed later.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 void
 Parrot_io_set_file_position(PARROT_INTERP, ARGIN(PMC *filehandle), PIOOFF_T file_pos)
 {
