@@ -13,10 +13,12 @@ src/classes/Pair.pir - methods for the Pair class
 .namespace ['Perl6Pair']
 
 .sub 'onload' :anon :load :init
-    .local pmc p6meta
+    .local pmc p6meta, pairproto
     p6meta = get_hll_global ['Perl6Object'], '$!P6META'
-    p6meta.'new_class'('Perl6Pair', 'parent'=>'Any', 'attr'=>'$!key $!value', 'name'=>'Pair')
+    pairproto = p6meta.'new_class'('Perl6Pair', 'parent'=>'Any', 'attr'=>'$!key $!value', 'name'=>'Pair')
+    pairproto.'!IMMUTABLE'()
 .end
+
 
 =item ACCEPTS()
 
@@ -28,12 +30,12 @@ Delegates on to a method call '.:Xkey(Xval)'.
 .sub 'ACCEPTS' :method
     .param pmc topic
 
-    $S0 = self.key()
+    $S0 = self.'key'()
     $S0 = concat ':', $S0
 
-    $P0 = self.value()
+    $P0 = self.'value'()
 
-    .return topic.$S0($P0)
+    .tailcall topic.$S0($P0)
 .end
 
 =item key
@@ -75,6 +77,29 @@ Stringify the Pair.
 .end
 
 
+=item fmt
+
+ our Str multi Pair::fmt ( Str $format )
+
+Returns the invocant pair formatted by an implicit call to C<sprintf> on
+the key and value.
+
+=cut
+
+.sub 'fmt' :method
+    .param pmc format
+
+    .local pmc retv
+    .local pmc key
+    .local pmc value
+
+    key = self.'key'()
+    value = self.'value'()
+    retv = 'sprintf'(format, key, value)
+
+    .return(retv)
+.end
+
 =item perl
 
 Returns a Perl code representation of the pair.
@@ -108,7 +133,7 @@ Returns a Perl code representation of the pair.
     key = key.'item'()
     value = value.'item'()
     $P0 = get_hll_global 'Pair'
-    .return $P0.'new'('key'=>key, 'value'=>value)
+    .tailcall $P0.'new'('key'=>key, 'value'=>value)
 .end
 
 

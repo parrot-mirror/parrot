@@ -155,7 +155,7 @@ Checks the type of a parameter.
     .lex "$/", $P0
   no_match_to_copy:
 
-    $I0 = type.ACCEPTS(value)
+    $I0 = type.'ACCEPTS'(value)
     if $I0 goto ok
     'die'('Parameter type check failed')
 ok:
@@ -251,6 +251,34 @@ first). So for now we just transform multis in user code like this.
 .end
 
 
+=item !SETUP_ARGS
+
+Sets up the @*ARGS global. We could possibly use the args pmc coming directly
+from Parrot, but currently Parrot provides it as a ResizableStringArray and we
+need Undefs for non-existent elements (RSA gives empty strings).
+
+=cut
+
+.sub '!SETUP_ARGS'
+    .param pmc args_str
+    .param int strip_program_name
+    .local pmc args, iter
+    args = new 'List'
+    iter = new 'Iterator', args_str
+  args_loop:
+    unless iter goto args_end
+    $P0 = shift iter
+    push args, $P0
+    goto args_loop
+  args_end:
+    unless strip_program_name goto done
+    $P0 = shift args
+  done:
+    set_hll_global '@ARGS', args
+    .return (args)
+.end
+
+
 =item !keyword_class(name)
 
 Internal helper method to create a class.
@@ -281,7 +309,7 @@ Internal helper method to create a class.
     push resolve_list, $P0
     goto resolve_loop
   resolve_loop_end:
-    class.resolve_method(resolve_list)
+    class.'resolve_method'(resolve_list)
 
     .return(class)
 .end
@@ -355,7 +383,7 @@ Internal helper method to create an enum class.
     # Register it.
     .local pmc p6meta
     p6meta = get_hll_global ['Perl6Object'], '$!P6META'
-    p6meta.register(class, 'parent'=>'Any')
+    p6meta.'register'(class, 'parent'=>'Any')
 
     .return(class)
 .end
@@ -369,6 +397,12 @@ Internal helper method to implement the functionality of the does keyword.
 .sub '!keyword_does'
     .param pmc class
     .param pmc role
+
+    # Ensure that role really is a role.
+    $I0 = isa role, 'Role'
+    if $I0 goto role_ok
+    'die'('does keyword can only be used with roles.')
+  role_ok:
 
     # Get Parrot to compose the role for us (handles the methods).
     addrole class, role
@@ -444,6 +478,9 @@ Constructs a Mapping, based upon the values list.
 
 .sub '!anon_enum'
     .param pmc values
+
+    # Put the values into list context, so case of a single valued enum works.
+    values = values.'list'()
 
     # For now, we assume integer type, unless we have a first pair that says
     # otherwise.

@@ -24,7 +24,7 @@ Stolen from Rakudo
     .local pmc cardinalmeta, strproto
     cardinalmeta = get_hll_global ['CardinalObject'], '!CARDINALMETA'
     strproto = cardinalmeta.'new_class'('CardinalString', 'parent'=>'String CardinalObject')
-    cardinalmeta.'register'('CardinalString', 'parent'=>'CardinalObject', 'protoobject'=>strproto)
+    cardinalmeta.'register'('String', 'parent'=>'CardinalObject', 'protoobject'=>strproto)
 .end
 
 .sub 'new' :method :multi(_)
@@ -41,7 +41,7 @@ Stolen from Rakudo
 
 .sub 'ACCEPTS' :method
     .param string topic
-    .return 'infix:eq'(topic, self)
+    .tailcall 'infix:eq'(topic, self)
 .end
 
 =item chars()
@@ -99,7 +99,6 @@ Returns a new CardinalString with the characters of C<self> in reverse order.
 .sub 'reverse' :method
     .local pmc res
     .local int i
-    .local string str
 
     res = new 'CardinalString'
 
@@ -187,7 +186,7 @@ Returns a copy of C<self> with all upper case letters converted to lower case
     .local pmc s
     s = new 'CardinalString'
     s = self
-    .return s.'lc'()
+    .tailcall s.'lc'()
 .end
 
 =item upcase()
@@ -200,7 +199,7 @@ Returns a copy of C<self> with all lower case letters converted to upper case
     .local pmc s
     s = new 'CardinalString'
     s = self
-    .return s.'uc'()
+    .tailcall s.'uc'()
 .end
 
 .sub uc :method
@@ -536,7 +535,7 @@ form, if uppercase.
     .local pmc s
     s = new 'CardinalString'
     s = a
-    .return s.'lc'()
+    .tailcall s.'lc'()
 .end
 
 
@@ -553,7 +552,7 @@ Like C<lc>, but only affects the first character.
     .local pmc s
     s = new 'CardinalString'
     s = a
-    .return s.'lcfirst'()
+    .tailcall s.'lcfirst'()
 .end
 
 
@@ -572,7 +571,7 @@ full "uppercase".
     .local pmc s
     s = new 'CardinalString'
     s = a
-    .return s.'uc'()
+    .tailcall s.'uc'()
 .end
 
 
@@ -589,7 +588,7 @@ Performs a Unicode "titlecase" operation on the first character of the string.
     .local pmc s
     s = new 'CardinalString'
     s = a
-    .return s.'ucfirst'()
+    .tailcall s.'ucfirst'()
 .end
 
 
@@ -607,7 +606,7 @@ C<s:g/(\w+)/{ucfirst $1}/> on it.
     .local pmc s
     s = new 'CardinalString'
     s = a
-    .return s.'capitalize'()
+    .tailcall s.'capitalize'()
 .end
 
 
@@ -639,7 +638,7 @@ B<Note:> partial implementation only
     a = target
     b = sep
 
-    .return a.'split'(b)
+    .tailcall a.'split'(b)
 .end
 
 =item join
@@ -719,7 +718,7 @@ Returns string with one Char removed from the end.
     .local pmc s
     s = new 'CardinalString'
     s = a
-    .return s.'chop'()
+    .tailcall s.'chop'()
 .end
 
 =back

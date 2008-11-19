@@ -25,26 +25,6 @@ of the parsed PIR code. Through the symbol management, which is done
 in F<pirsymbol.c>, a vanilla register allocator is implemented.
 
 
-=head1 OPTIMIZATION
-
-Although at this point not as important as bytecode generation,
-PIRC might need an optimizing register allocator. For this to work,
-the following is needed:
-
-=over 4
-
-=item * create a datastructure that stores basic blocks; a basic block
-is a block of instructions that will always be executed consecutively;
-no jumps to or from within this block will be done, except of course
-to the first instruction in the block, and from the last instruction
-in the block. Registers within such a block can safely be reorganized.
-
-=item * once we know what the basic blocks are, a linear scan register
-allocation implementation can be implemented. This is more efficient than
-a graph coloring algorithm. (See C<Linear Scan Register Allocation> by
-Poletto and Sarkar).
-
-=back
 
 =head1 TODO
 
@@ -201,7 +181,7 @@ set_sub_vtable(lexer_state * const lexer, char const *vtablename) {
 /*
 
 =item C<void
-set_sub_lexid(lexer_state * const lexer, char * const lexid)>
+set_sub_subid(lexer_state * const lexer, char * const subid)>
 
 Set the lexical identifier on the current sub.
 
@@ -209,9 +189,30 @@ Set the lexical identifier on the current sub.
 
 */
 void
-set_sub_lexid(lexer_state * const lexer, char const * const lexid) {
-    CURRENT_SUB(lexer)->lex_id = lexid;
-    SET_FLAG(lexer->subs->flags, SUB_FLAG_LEXID);
+set_sub_subid(lexer_state * const lexer, char const * const subid) {
+    CURRENT_SUB(lexer)->subid = subid;
+    SET_FLAG(lexer->subs->flags, SUB_FLAG_SUBID);
+}
+
+/*
+
+=item C<void
+set_sub_methodname(lexer_state * const lexer, char * const methodname)>
+
+Set the :method flag on a sub; if C<methodname> is not NULL, then it contains
+the name by which the sub is stored as a method.
+
+=cut
+
+*/
+void
+set_sub_methodname(lexer_state * const lexer, char const * const methodname) {
+    if (methodname)
+        CURRENT_SUB(lexer)->methodname = methodname;
+    else
+        CURRENT_SUB(lexer)->methodname = CURRENT_SUB(lexer)->sub_name;
+
+    SET_FLAG(lexer->subs->flags, SUB_FLAG_METHOD);
 }
 
 /*
@@ -219,12 +220,31 @@ set_sub_lexid(lexer_state * const lexer, char const * const lexid) {
 =item C<void
 set_sub_instanceof(lexer_state * const lexer, char * const classname)>
 
+Set the value of the C<:instanceof> flag on a sub. Note that this flag
+is experimental, and not actually used at this point.
+
 =cut
 
 */
 void
 set_sub_instanceof(lexer_state * const lexer, char const * const classname) {
     CURRENT_SUB(lexer)->instanceof = classname;
+}
+
+/*
+
+=item C<void
+set_sub_nsentry(lexer_state * const lexer, char const * const nsentry)>
+
+Set the value of the C<:nsentry> flag on a sub. The value of C<nsentry> is the name
+by which the sub is stored in the namespace.
+
+=cut
+
+*/
+void
+set_sub_nsentry(lexer_state * const lexer, char const * const nsentry) {
+    CURRENT_SUB(lexer)->nsentry = nsentry;
 }
 
 /*
@@ -268,7 +288,7 @@ new_subr(lexer_state * const lexer, char const * const subname) {
     newsub->sub_name   = subname;
 
     /* set default lexid */
-    newsub->lex_id     = subname;
+    newsub->subid      = subname;
 
     /* take namespace of this sub of the lexer, which keeps track of that */
     newsub->name_space = lexer->current_ns;
@@ -306,6 +326,20 @@ new_subr(lexer_state * const lexer, char const * const subname) {
 
 }
 
+/*
+
+=item C<void
+set_sub_name(struct lexer_state * const lexer, char const * const subname)>
+
+Set the current subroutine's name to C<subname>.
+
+=cut
+
+*/
+void
+set_sub_name(struct lexer_state * const lexer, char const * const subname) {
+    CURRENT_SUB(lexer)->sub_name = subname;
+}
 
 
 /*
@@ -424,9 +458,9 @@ targets_equal(target const * const left, target const * const right) {
 
     if (TEST_FLAG(left->flags, TARGET_FLAG_IS_REG)) {      /* if left is a reg */
         if (TEST_FLAG(right->flags, TARGET_FLAG_IS_REG)) { /* then right must be a reg */
-            if ((left->type == right->type)                /* types must match */
-            &&  (target_regno(left) == target_regno(right) /* PIR regno must match */
-            &&  (left->color == right->color)))            /* PASM regno must match */
+            if ((left->s.reg->type == right->s.reg->type)        /* types must match */
+            &&  (left->s.reg->regno == right->s.reg->regno           /* PIR regno must match */
+            &&  (left->s.reg->color == right->s.reg->color)))    /* PASM regno must match */
                 return TRUE;
         }
         else /* left is a reg, right is not */
@@ -436,8 +470,8 @@ targets_equal(target const * const left, target const * const right) {
     else { /* left is not a reg */
 
         if (!TEST_FLAG(right->flags, TARGET_FLAG_IS_REG)  /* right must not be a reg */
-        && (target_name(left) && target_name(right)       /* both must have a name */
-        && STREQ(target_name(left), target_name(right)))) /* and they must be equal */
+        && (left->s.sym->name && right->s.sym->name       /* both must have a name */
+        && STREQ(left->s.sym->name, right->s.sym->name))) /* and they must be equal */
             return TRUE;
     }
 
@@ -447,7 +481,7 @@ targets_equal(target const * const left, target const * const right) {
 /*
 
 =item C<target *
-new_target(pir_type type, char * const name)>
+new_target(lexer_state * const lexer)>
 
 Create a new target node. The node's next pointer is initialized to itself.
 
@@ -457,21 +491,11 @@ Create a new target node. The node's next pointer is initialized to itself.
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 target *
-new_target(lexer_state * const lexer, pir_type type, char const * const name) {
+new_target(lexer_state * const lexer) {
     target *t       = pir_mem_allocate_zeroed_typed(lexer, target);
-    t->type         = type;
-    t->key          = NULL;
-    t->color        = -1;         /* -1 means no PASM register assigned yet */
-    t->next         = t; /* circly linked list */
 
-    /* only set the name if there was one. Note that target-name and target-regno
-     * are stored in a union (saving a few bytes on each target object), so that
-     * it's very important not to assign to both.
-     */
-    if (name)
-        target_name(t)  = name;
-    else
-        target_regno(t) = -1;
+    t->key          = NULL;
+    t->next         = t; /* circly linked list */
 
     return t;
 }
@@ -495,7 +519,8 @@ set_target_key(target * const t, key * const k) {
 =item C<target *
 target_from_symbol(lexer_state * const lexer, symbol * const sym)>
 
-Convert a symbol node into a target node.
+Convert symbol C<sym> into a target node. The resulting target has
+a pointer to C<sym>.
 
 =cut
 
@@ -504,9 +529,10 @@ PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 target *
 target_from_symbol(lexer_state * const lexer, symbol * const sym) {
-    target *t = new_target(lexer, sym->type, sym->name);
-    t->color  = sym->color; /* copy the allocaled register */
-    t->flags  = sym->flags; /* copy the flags */
+    target *t  = new_target(lexer);
+    t->s.sym   = sym; /* set a pointer from target to symbol */
+    t->flags   = sym->flags; /* copy the flags */
+
     return t;
 }
 
@@ -552,7 +578,7 @@ PARROT_IGNORABLE_RESULT
 PARROT_CANNOT_RETURN_NULL
 target *
 add_param(lexer_state * const lexer, pir_type type, char const * const name) {
-    target *targ = new_target(lexer, type, name);
+    target *targ = new_target(lexer);
     symbol *sym  = new_symbol(lexer, name, type);
 
     PARROT_ASSERT(CURRENT_SUB(lexer));
@@ -574,12 +600,12 @@ add_param(lexer_state * const lexer, pir_type type, char const * const name) {
     declare_local(lexer, type, sym);
     /* parameters must always get a PASM register, even if they're not
      * "used"; in the generated PASM instructions, they're always used
-     * (to store the incoming values). Therefore, allocate a new register
-     * at this point, not in symbol.c::find_symbol(). Make sure that the
-     * allocated register is stored in both the symbol and the target node.
-     *
+     * (to store the incoming values).
      */
-    sym->color = targ->color = next_register(lexer, type);
+    assign_vanilla_register(lexer, sym);
+
+    targ->s.sym = sym;
+
 
     return targ;
 
@@ -626,13 +652,17 @@ target *
 set_param_flag(lexer_state * const lexer, target * const param, target_flag flag) {
     SET_FLAG(param->flags, flag);
 
-    if (TEST_FLAG(flag, TARGET_FLAG_SLURPY) && param->type != PMC_TYPE)
+    /* note that param is always an identifier; registers are not allowed as parameters.
+     * Therefore it's safe to reference param->s.sym, without checking for not
+     * being a register.
+     */
+    if (TEST_FLAG(flag, TARGET_FLAG_SLURPY) && param->s.sym->type != PMC_TYPE)
         yypirerror(lexer->yyscanner, lexer,
-                   "cannot set :slurpy flag on non-pmc %s", target_name(param));
+                   "cannot set :slurpy flag on non-pmc %s", param->s.sym->name);
 
-    if (TEST_FLAG(flag, TARGET_FLAG_OPT_FLAG) && param->type != INT_TYPE)
+    if (TEST_FLAG(flag, TARGET_FLAG_OPT_FLAG) && param->s.sym->type != INT_TYPE)
         yypirerror(lexer->yyscanner, lexer,
-                   "cannot set :opt_flag flag on non-int %s", target_name(param));
+                   "cannot set :opt_flag flag on non-int %s", param->s.sym->name);
 
     return param;
 }
@@ -935,6 +965,11 @@ set_instrf(lexer_state * const lexer, char const * const opname, char const * co
 =item C<void
 add_operands(lexer_state * const lexer, char const * const format, ...)>
 
+Add operands to the current instruction. This is a variable argument function;
+C<format> contains placeholders, see the macro C<get_instr_var_arg> above
+for which placeholders. The number of placeholders should match the number
+of operands passed to this function.
+
 =cut
 
 */
@@ -977,9 +1012,9 @@ encode different flags.
 
 */
 void
-set_instr_flag(lexer_state * const lexer, instr_flag flag) {
+set_op_labelflag(lexer_state * const lexer, int flag) {
     PARROT_ASSERT(CURRENT_INSTRUCTION(lexer));
-    SET_FLAG(CURRENT_INSTRUCTION(lexer)->flags, flag);
+    SET_FLAG(CURRENT_INSTRUCTION(lexer)->oplabelbits, flag);
 }
 
 /*
@@ -1226,6 +1261,27 @@ new_named_const(lexer_state * const lexer, pir_type type, char const * const nam
 /*
 
 =item C<constant *
+new_pmc_const(char const * const type, char const * const name, constant * const value)>
+
+Create a new PMC constant of type C<type>, name C<name> and having a value C<value>.
+The type must be a string indicating a valid type name (e.g. "Sub"). The name will be the name
+of the constant, and the value of the constant is passed as C<value>.
+
+XXX if type is "Sub", value must be looked up, as it is the name of a subroutine.
+
+=cut
+
+*/
+constant *
+new_pmc_const(char const * const type, char const * const name, constant * const value) {
+    value->name = name;
+    /* XXX implement this. Not sure yet how to. */
+    return value;
+}
+
+/*
+
+=item C<constant *
 new_const(lexer_state * const lexer, pir_type type, ...)>
 
 Creates a new constant node of the given type.
@@ -1315,9 +1371,13 @@ PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 target *
 new_reg(lexer_state * const lexer, pir_type type, int regno) {
-    target *t       = new_target(lexer, type, NULL); /* no identifier */
-    target_regno(t) = regno;
-    t->color        = color_reg(lexer, type, regno);
+    target *t       = new_target(lexer);
+    pir_reg *reg;
+
+    color_reg(lexer, type, regno);
+    reg = find_register(lexer, type, regno);
+    t->s.reg = reg;
+
     /* set a flag on this target node saying it's a register */
     SET_FLAG(t->flags, TARGET_FLAG_IS_REG);
     return t;
@@ -1478,40 +1538,6 @@ invoke(lexer_state * const lexer, invoke_type type, ...) {
 
 
 
-/*
-
-=item C<target *
-target_from_string(char * const str)>
-
-Create a target node from the string C<str>.
-
-=cut
-
-*/
-PARROT_WARN_UNUSED_RESULT
-PARROT_CANNOT_RETURN_NULL
-target *
-target_from_string(lexer_state * const lexer, char const * const str) {
-    return new_target(lexer, STRING_TYPE, str);
-}
-
-/*
-
-=item C<target *
-target_from_ident(pir_type type, char * const id)>
-
-Wrap the identifier C<id> of type C<type> in a target node.
-
-=cut
-
-*/
-PARROT_WARN_UNUSED_RESULT
-PARROT_CANNOT_RETURN_NULL
-target *
-target_from_ident(lexer_state * const lexer, pir_type type, char const * const id) {
-    return new_target(lexer, type, id);
-}
-
 
 /*
 
@@ -1624,17 +1650,6 @@ Add an operand at the end of the list of operands of the current instruction.
 void
 push_operand(lexer_state * const lexer, NOTNULL(expression * const operand)) {
     PARROT_ASSERT(lexer->subs->statements);
-
-    /*
-    if (CURRENT_INSTRUCTION(lexer)->operands == NULL) {
-        CURRENT_INSTRUCTION(lexer)->operands = operand;
-    }
-    else {
-        operand->next = CURRENT_INSTRUCTION(lexer)->operands->next;
-        CURRENT_INSTRUCTION(lexer)->operands->next = operand;
-        CURRENT_INSTRUCTION(lexer)->operands       = operand;
-    }
-    */
 
     if (CURRENT_INSTRUCTION(lexer)->operands) {
         operand->next = CURRENT_INSTRUCTION(lexer)->operands->next;
@@ -1993,7 +2008,7 @@ convert_inv_to_instr(lexer_state * const lexer, invocation * const inv) {
 
             /* if the target is a register, invoke that. */
             if (TEST_FLAG(inv->sub->flags, TARGET_FLAG_IS_REG)) {
-                target *sub = new_reg(lexer, PMC_TYPE, inv->sub->color);
+                target *sub = new_reg(lexer, PMC_TYPE, inv->sub->s.reg->color);
                 if (inv->retcc) { /* return continuation present? */
                     new_sub_instr(lexer, PARROT_OP_invoke_p_p, "invoke_p_p");
                     add_operands(lexer, "%T%T", inv->sub, inv->retcc);
@@ -2005,7 +2020,7 @@ convert_inv_to_instr(lexer_state * const lexer, invocation * const inv) {
             }
             else { /* find the global label in the current file, or find it during runtime */
                 target *sub        = generate_unique_pir_reg(lexer, PMC_TYPE);
-                global_label *glob = find_global_label(lexer, target_name(inv->sub));
+                global_label *glob = find_global_label(lexer, inv->sub->s.sym->name);
 
                 if (glob) {
                     /* XXX fix pmc const stuff */
@@ -2016,7 +2031,7 @@ convert_inv_to_instr(lexer_state * const lexer, invocation * const inv) {
                     new_sub_instr(lexer, PARROT_OP_find_sub_not_null_p_sc,
                                   "find_sub_not_null_p_sc");
 
-                    add_operands(lexer, "%T%s", sub, target_name(inv->sub));
+                    add_operands(lexer, "%T%s", sub, inv->sub->s.sym->name);
 
                     /* save the current instruction in a list; entries in this list will be
                      * fixed up, if possible, after the parsing phase.
@@ -2033,7 +2048,7 @@ convert_inv_to_instr(lexer_state * const lexer, invocation * const inv) {
                      *   find_sub_not_null_p_sc
                      *
                      */
-                    save_global_reference(lexer, CURRENT_INSTRUCTION(lexer), target_name(inv->sub));
+                    save_global_reference(lexer, CURRENT_INSTRUCTION(lexer), inv->sub->s.sym->name);
                 }
 
                 new_sub_instr(lexer, PARROT_OP_invokecc_p, "invokecc_p");
@@ -2097,6 +2112,25 @@ convert_inv_to_instr(lexer_state * const lexer, invocation * const inv) {
 
 /*
 
+=item C<static label *
+new_label(lexer_state * const lexer, char const * const labelid, int offset)>
+
+Constructor for a label operand.
+
+=cut
+
+*/
+PARROT_MALLOC
+static label *
+new_label(lexer_state * const lexer, char const * const labelid, int offset) {
+    label *l  = pir_mem_allocate_zeroed_typed(lexer, label);
+    l->name   = labelid;
+    l->offset = offset;
+    return l;
+}
+
+/*
+
 =item C<static void
 fixup_local_labels(subroutine * const sub)>
 
@@ -2105,14 +2139,6 @@ identifiers in an expression node (the C<id> field in the C<expr> union);
 the label's offset is subtracted from the current instruction's offset,
 and the operand of the branch instruction is changed into this numeric
 representation of the label.
-
-XXX TODO: figure out how we can set a INSTR_FLAG_BRANCH or whatever on /all/
-branching ops; can we figure out through the interp's op_lib thing?
-Surely, the ops are defined with a :flow flag or whatever. Use this!
-
-(Currently, this flag is set manually in the parser. That must be fixed,
- but we don't want a list of string comparisons for 'branch', 'if', 'jump',
- etc.; that's lame.)
 
 =cut
 
@@ -2133,37 +2159,52 @@ fixup_local_labels(lexer_state * const lexer) {
         /* depending on what kind of branching instruction, get the right operand
          * that contains the label.
          */
-        switch (iter->flags) {
-            case INSTR_FLAG_BRANCH: /* goto A */
-                /* first operand is a label */
-                label = iter->operands; /* there's only one, but its next is itself,
-                                                                     so don't bother */
-                break;
-            case INSTR_FLAG_IFUNLESS: /* if A, B */
-                /* second operand is a label */
-                label = iter->operands->next->next;
-                break;
-            case INSTR_FLAG_ISXX: /* isle A, B, C */
-                /* third operand is a label */
-                label = iter->operands->next->next->next;
-                break;
-            default:
-                break;
+        if (iter->oplabelbits) { /* this is a quick global check if any label bits have been set
+                                  * if no label at all, skip this whole block.
+                                  */
 
-        }
+            /* now check for each operand */
+            expression *operand = iter->operands;
 
-        if (iter->flags) {
-            unsigned offset     = find_local_label(lexer, label->expr.id);
-            unsigned curr_instr = iter->offset;
+            /* iter->operands is a circular linked list, point to the *last* operand. */
 
-            /* a label is stored as an identifier in an expression node.
-             * make sure this is the case (otherwise it's a bug).
+            /* Note that since oplabelbits has at least 1 bit set (otherwise it wouldn't
+             * have been evaluated as "true" in the if statement above), we can be
+             * sure there's at least one operand. Don't do silly tests here anymore.
              */
-            PARROT_ASSERT(label->type == EXPR_IDENT);
-            /* change the operand into a constant; adjust the expression type. */
-            label->expr.c = new_const(lexer, INT_TYPE, offset - curr_instr);
-            label->type   = EXPR_CONSTANT;
+            int flag = 0;
+
+            do {
+
+                operand = operand->next;
+
+                if (TEST_FLAG(iter->oplabelbits, BIT(flag))) {
+                    /* the current operand is a label; fix it up. No, not a date. */
+                    char const * labelid = operand->expr.id;
+                    unsigned     offset  = find_local_label(lexer, labelid);
+
+                    /* fprintf(stderr, "operand %d is a label\n", BIT(flag)); */
+
+                    if (offset) { /* label was found */
+                        unsigned curr_instr = iter->offset;
+
+                        /* convert the label identifier into a real label object */
+                        operand->expr.l = new_label(lexer, labelid, offset - curr_instr);
+                        operand->type   = EXPR_LABEL;
+                    }
+                    else {
+                        yypirerror(lexer->yyscanner, lexer,
+                                   "cannot fix up reference to label '%s'", labelid);
+                    }
+                }
+
+                ++flag;
+
+            }
+            while (operand != iter->operands);
+
         }
+
 
     }
     while (iter != lexer->subs->statements); /* iterate over all instructions */
@@ -2250,10 +2291,6 @@ close_sub(lexer_state * const lexer) {
     /* fix up all local branch labels */
     fixup_local_labels(lexer);
 }
-
-
-
-
 
 
 /*

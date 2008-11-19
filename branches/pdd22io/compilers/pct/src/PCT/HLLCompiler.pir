@@ -56,6 +56,7 @@ running compilers from a command line.
     $P0  = _config()    # currently works in the build tree, but not in the install tree
     $S0  = $P0['revision']
   _handler:
+    pop_eh
     $P2 = new 'String'
     $P2  = 'This compiler is built with the Parrot Compiler Toolkit, parrot revision '
     $P2 .= $S0
@@ -149,37 +150,37 @@ the compiler is ready for code to be compiled and executed.
 .sub 'stages' :method
     .param pmc value           :optional
     .param int has_value       :opt_flag
-    .return self.'attr'('@stages', value, has_value)
+    .tailcall self.'attr'('@stages', value, has_value)
 .end
 
 .sub 'parsegrammar' :method
     .param string value        :optional
     .param int has_value       :opt_flag
-    .return self.'attr'('$parsegrammar', value, has_value)
+    .tailcall self.'attr'('$parsegrammar', value, has_value)
 .end
 
 .sub 'parseactions' :method
     .param pmc value           :optional
     .param int has_value       :opt_flag
-    .return self.'attr'('$parseactions', value, has_value)
+    .tailcall self.'attr'('$parseactions', value, has_value)
 .end
 
 .sub 'astgrammar' :method
     .param string value        :optional
     .param int has_value       :opt_flag
-    .return self.'attr'('$astgrammar', value, has_value)
+    .tailcall self.'attr'('$astgrammar', value, has_value)
 .end
 
 .sub 'commandline_banner' :method
     .param string value        :optional
     .param int has_value       :opt_flag
-    .return self.'attr'('$commandline_banner', value, has_value)
+    .tailcall self.'attr'('$commandline_banner', value, has_value)
 .end
 
 .sub 'commandline_prompt' :method
     .param string value        :optional
     .param int has_value       :opt_flag
-    .return self.'attr'('$commandline_prompt', value, has_value)
+    .tailcall self.'attr'('$commandline_prompt', value, has_value)
 .end
 
 =item removestage(string stagename)
@@ -324,11 +325,12 @@ to any options and return the resulting parse tree.
     .local string tcode
     tcode = adverbs['transcode']
     unless tcode goto transcode_done
-    push_eh transcode_done
+    push_eh transcode_skip
     $I0 = find_charset tcode
     $S0 = source
     $S0 = trans_charset $S0, $I0
     assign source, $S0
+  transcode_skip:
     pop_eh
   transcode_done:
 
@@ -377,6 +379,10 @@ to any options and return the resulting parse tree.
     unless null $P0 goto action_make
     $S0 = parseactions
     parseactions = split '::', $S0
+    push_eh err_bad_parseactions
+    $P0 = get_class parseactions
+    if null $P0 goto err_bad_parseactions
+    pop_eh
   action_make:
     action = new parseactions
   have_action:
@@ -390,6 +396,11 @@ to any options and return the resulting parse tree.
     .return ()
   err_failedparse:
     self.'panic'('Failed to parse source')
+    .return ()
+  err_bad_parseactions:
+    pop_eh
+    $P0 = self.'parseactions'()
+    self.'panic'('Unable to find action grammar ', $P0)
     .return ()
 .end
 
@@ -417,7 +428,7 @@ resulting ast.
     unless astgrammar_namelist goto err_past
     astgrammar = new astgrammar_namelist
     astbuilder = astgrammar.'apply'(source)
-    .return astbuilder.'get'('past')
+    .tailcall astbuilder.'get'('past')
 
   compile_match:
     push_eh err_past
@@ -429,8 +440,9 @@ resulting ast.
     .return (ast)
 
   err_past:
+    pop_eh
     $S0 = typeof source
-    .return self.'panic'('Unable to obtain PAST from ', $S0)
+    .tailcall self.'panic'('Unable to obtain PAST from ', $S0)
 .end
 
 
@@ -444,7 +456,7 @@ Transform PAST C<source> into POST.
     .param pmc source
     .param pmc adverbs         :slurpy :named
     $P0 = compreg 'PAST'
-    .return $P0.'to_post'(source, adverbs :flat :named)
+    .tailcall $P0.'to_post'(source, adverbs :flat :named)
 .end
 
 
@@ -453,7 +465,7 @@ Transform PAST C<source> into POST.
     .param pmc adverbs         :slurpy :named
 
     $P0 = compreg 'POST'
-    .return $P0.'to_pir'(source, adverbs :flat :named)
+    .tailcall $P0.'to_pir'(source, adverbs :flat :named)
 .end
 
 
@@ -561,6 +573,7 @@ specifies the encoding to use for the input (e.g., "utf8").
     goto interactive_loop
   interactive_trap:
     get_results '0', $P0
+    pop_eh
     $S0 = $P0
     if $S0 == '' goto have_newline
     $S1 = substr $S0, -1, 1
@@ -574,6 +587,42 @@ specifies the encoding to use for the input (e.g., "utf8").
     .return ()
 .end
 
+
+=item EXPORTALL(source, destination)
+
+Export all namespace entries from the default export namespace for source
+(source::EXPORT::ALL) to the destination namespace.
+
+=cut
+
+.sub 'EXPORTALL' :method
+    .param pmc source
+    .param pmc dest
+    .local pmc ns_iter, item, export_list
+
+    source = source['EXPORT']
+    unless source, no_namespace_error
+    source = source['ALL']
+    unless source, no_namespace_error
+
+    ns_iter = iter source
+    export_list = new 'ResizablePMCArray'
+  export_loop:
+    unless ns_iter, export_loop_end
+    item = shift ns_iter
+    push export_list, item
+    goto export_loop
+  export_loop_end:
+
+    source.'export_to'(dest,export_list)
+    .return ()
+
+  no_namespace_error:
+    $P0 = new 'Exception'
+    $P0 = 'Missing EXPORT::ALL NameSpace'
+    throw $P0
+    .return ()
+.end
 
 =item evalfiles(files [, args] [, "encoding" => encoding] [, "option" => value, ...])
 
@@ -632,7 +681,7 @@ options are passed to the evaluator.
     .return ($P0)
 
   err_infile:
-    .return self.'panic'('Error: file cannot be read: ', iname)
+    .tailcall self.'panic'('Error: file cannot be read: ', iname)
 .end
 
 
@@ -661,7 +710,7 @@ Performs option processing of command-line args
     push getopts, $S0
     goto getopts_loop
   getopts_end:
-    .return getopts.'get_options'(args)
+    .tailcall getopts.'get_options'(args)
 .end
 
 
@@ -746,7 +795,7 @@ Generic method for compilers invoked from a shell command line.
     .return ()
 
   err_output:
-    .return self.'panic'('Error: file cannot be written: ', output)
+    .tailcall self.'panic'('Error: file cannot be written: ', output)
   usage:
     self.'usage'(arg0)
     goto end

@@ -32,41 +32,6 @@ Perform initializations and create the base classes.
     set_hll_global ['Perl6Object'], '$!P6META', p6meta
 .end
 
-=item infix:=(source)  (assignment method)
-
-Assigns C<source> to C<target>.  We use the 'item' method to allow Lists
-and Mappings to be converted into Array(ref) and Hash(ref).
-
-=cut
-
-.namespace ['Perl6Object']
-.sub 'infix:=' :method
-    .param pmc source
-    $I0 = can source, 'item'
-    unless $I0 goto have_source
-    source = source.'item'()
-  have_source:
-
-    $I0 = isa self, 'Mutable'
-    unless $I0 goto copy
-    assign self, source
-    goto end
-
-  copy:
-    .local pmc type
-    getprop type, 'type', self
-    if null type goto do_assign
-    $I0 = type.'ACCEPTS'(source)
-    if $I0 goto do_assign
-    die "Type mismatch in assignment."
-
-  do_assign:
-    eq_addr self, source, end
-    copy self, source
-  end:
-    .return (self)
-.end
-
 
 =back
 
@@ -74,17 +39,33 @@ and Mappings to be converted into Array(ref) and Hash(ref).
 
 =over 4
 
-=item hash()
+=item Scalar()
 
-Return the scalar as a Hash.
+Default implementation gives reference type semantics, and returns an object
+reference, unless the thing already is one.
 
 =cut
 
 .namespace ['Perl6Object']
+.sub 'Scalar' :method
+    $I0 = isa self, 'ObjectRef'
+    unless $I0 goto not_ref
+    .return (self)
+  not_ref:
+    $P0 = new 'ObjectRef', self
+    .return ($P0)
+.end
+
+
+=item hash()
+
+Return a hash representation of ourself.
+
+=cut
 
 .sub 'hash' :method
     $P0 = self.'list'()
-    .return $P0.'hash'()
+    .tailcall $P0.'hash'()
 .end
 
 =item item()
@@ -145,6 +126,53 @@ Return true if the object is defined.
 .end
 
 
+=item Str()
+
+Return a string representation of the object
+
+=cut
+
+.sub 'Str' :method
+    $P0 = new 'ResizableStringArray'
+    $P1 = self.'WHAT'()
+    push $P0, $P1
+    $I0 = get_addr self
+    push $P0, $I0
+    $S0 = sprintf "%s<0x%x>", $P0
+    .return ($S0)
+.end
+
+.sub '' :method :vtable('get_string')
+    $S0 = self.'Str'()
+    .return ($S0)
+.end
+
+
+=item increment
+
+Override increment in Objects to use 'succ' method.
+
+=cut
+
+.sub '' :method :vtable('increment')
+    $P0 = self.'succ'()
+    'infix:='(self, $P0)
+    .return(self)
+.end
+
+=item decrement
+
+Override decrement in Objects to use 'pred' method.
+
+=cut
+
+.sub '' :method :vtable('decrement')
+    $P0 = self.'pred'()
+    'infix:='(self, $P0)
+    .return(self)
+.end
+
+
 =item new()
 
 Create a new object having the same class as the invocant.
@@ -158,7 +186,7 @@ Create a new object having the same class as the invocant.
     # Instantiate.
     .local pmc p6meta
     p6meta = get_hll_global ['Perl6Object'], '$!P6META'
-    $P0 = p6meta.get_parrotclass(self)
+    $P0 = p6meta.'get_parrotclass'(self)
     $P1 = new $P0
 
     # If this proto object has a WHENCE auto-vivification, we should use
@@ -221,7 +249,7 @@ Create a new object having the same class as the invocant.
 
     # We found some parent init data, potentially.
   found_parent_init:
-    init_attribs = cur_ip.WHENCE()
+    init_attribs = cur_ip.'WHENCE'()
     $I0 = 'defined'(init_attribs)
     if $I0 goto parent_init_search_done
     init_attribs = new 'Hash'
@@ -274,13 +302,27 @@ Create a new object having the same class as the invocant.
 
     # Is it an array? If so, initialize to Perl6Array.
     if sigil != '@' goto no_array
-    $P2 = new 'Perl6Array'
+    $P3 = new 'Perl6Array'
+    $I0 = defined $P2
+    if $I0 goto have_array_value
+    set $P2, $P3
+    goto set_attrib
+  have_array_value:
+    'infix:='($P3, $P2)
+    set $P2, $P3
     goto set_attrib
   no_array:
 
     # Is it a Hash? If so, initialize to Perl6Hash.
     if sigil != '%' goto no_hash
-    $P2 = new 'Perl6Hash'
+    $P3 = new 'Perl6Hash'
+    $I0 = defined $P2
+    if $I0 goto have_hash_value
+    set $P2, $P3
+    goto set_attrib
+  have_hash_value:
+    'infix:='($P3, $P2)
+    set $P2, $P3
     goto set_attrib
   no_hash:
 
@@ -288,6 +330,7 @@ Create a new object having the same class as the invocant.
     push_eh set_attrib_eh
     setattribute $P1, cur_class, $S0, $P2
   set_attrib_eh:
+    pop_eh
     goto iter_loop
   iter_end:
 
@@ -338,7 +381,7 @@ Defines the .true method on all objects via C<prefix:?>.
 =cut
 
 .sub 'true' :method
- .return 'prefix:?'(self)
+ .tailcall 'prefix:?'(self)
 .end
 
 =item get_bool (vtable)
@@ -362,12 +405,12 @@ Print the object
 
 .sub 'print' :method
     $P0 = get_hll_global 'print'
-    .return $P0(self)
+    .tailcall $P0(self)
 .end
 
 .sub 'say' :method
     $P0 = get_hll_global 'say'
-    .return $P0(self)
+    .tailcall $P0(self)
 .end
 
 =item WHERE
@@ -389,8 +432,31 @@ Gets the object's identity value
 
 .sub 'WHICH' :method
     # For normal objects, this can just be the memory address.
-    .return self.'WHERE'()
+    .tailcall self.'WHERE'()
 .end
+
+=item 'PARROT'
+
+Report the object's true nature.
+
+=cut
+
+.sub 'PARROT' :method
+    .local pmc obj
+    .local string result
+    obj = self
+    result = ''
+    $I0 = isa obj, 'ObjectRef'
+    unless $I0 goto have_obj
+    result = 'ObjectRef->'
+    obj = deref obj
+  have_obj:
+    $P0 = typeof obj
+    $S0 = $P0
+    result .= $S0
+    .return (result)
+.end
+
 
 =back
 
@@ -434,11 +500,11 @@ Create a clone of self, also cloning the attributes given by attrlist.
     # For now we won't worry about signature, just if a method exists.
     $I0 = can self, method_name
     if $I0 goto invoke
-    .return '!FAIL'('Undefined value returned by invocation of undefined method')
+    .tailcall '!FAIL'('Undefined value returned by invocation of undefined method')
 
     # If we do have a method, call it.
   invoke:
-    .return self.method_name(pos_args :flat, named_args :named :flat)
+    .tailcall self.method_name(pos_args :flat, named_args :named :flat)
 .end
 
 
@@ -450,12 +516,12 @@ Create a clone of self, also cloning the attributes given by attrlist.
     # Return an empty list if no methods exist at all.
     $I0 = can self, method_name
     if $I0 goto invoke
-    .return 'list'()
+    .tailcall 'list'()
 
     # Now find all methods and call them - since we know there are methods,
     # we just pass on to infix:.+.
   invoke:
-    .return self.'!.+'(method_name, pos_args :flat, named_args :named :flat)
+    .tailcall self.'!.+'(method_name, pos_args :flat, named_args :named :flat)
 .end
 
 
@@ -469,7 +535,7 @@ Create a clone of self, also cloning the attributes given by attrlist.
     result_list = 'list'()
     p6meta = get_hll_global ['Perl6Object'], '$!P6META'
     class = self.'HOW'()
-    class = p6meta.get_parrotclass(class)
+    class = p6meta.'get_parrotclass'(class)
     mro = inspect class, 'all_parents'
     it = iter mro
     cap_class = get_hll_global 'Capture'
@@ -499,7 +565,7 @@ Create a clone of self, also cloning the attributes given by attrlist.
     $S0 = "Could not invoke method '"
     concat $S0, method_name
     concat $S0, "' on invocant of type '"
-    $S1 = self.WHAT()
+    $S1 = self.'WHAT'()
     concat $S0, $S1
     concat $S0, "'"
     'die'($S0)
@@ -514,7 +580,7 @@ Create a clone of self, also cloning the attributes given by attrlist.
     # Get the HOW or the object and do the call on that.
     .local pmc how
     how = self.'HOW'()
-    .return how.method_name(self, pos_args :flat, named_args :flat :named)
+    .tailcall how.method_name(self, pos_args :flat, named_args :flat :named)
 .end
 
 
@@ -573,7 +639,8 @@ Returns a list containing itself in list context.
 =cut
 
 .sub 'list' :method
-    .return 'list'(self)
+    $P0 = get_hll_global 'list'
+    .tailcall $P0(self)
 .end
 
 
@@ -630,6 +697,26 @@ Returns a proto-object with an autovivification closure attached to it.
     setattribute res, '%!properties', props
 
     .return (res)
+.end
+
+=item !IMMUTABLE()
+
+=item !MUTABLE()
+
+Indicate that objects in the class are mutable or immutable.
+
+=cut
+
+.sub '!IMMUTABLE' :method
+    $P0 = get_hll_global ['Int'], 'Scalar'
+    $P1 = self.'HOW'()
+    $P1.'add_method'('Scalar', $P0, 'to'=>self)
+.end
+
+.sub '!MUTABLE' :method
+    $P0 = get_hll_global ['Perl6Object'], 'Scalar'
+    $P1 = self.'HOW'()
+    $P1.'add_method'('Scalar', $P0, 'to'=>self)
 .end
 
 =back

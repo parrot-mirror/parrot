@@ -63,7 +63,7 @@ Constructs a new exception object from the passed in arguments.
 =cut
 
 */
-PARROT_API
+PARROT_EXPORT
 PARROT_CAN_RETURN_NULL
 PMC *
 Parrot_ex_build_exception(PARROT_INTERP, INTVAL severity,
@@ -71,10 +71,8 @@ Parrot_ex_build_exception(PARROT_INTERP, INTVAL severity,
 {
     PMC *exception = pmc_new(interp, enum_class_Exception);
 
-    VTABLE_set_integer_keyed_str(interp, exception,
-            CONST_STRING(interp, "severity"), severity);
-    VTABLE_set_integer_keyed_str(interp, exception,
-            CONST_STRING(interp, "type"), error);
+    VTABLE_set_integer_keyed_str(interp, exception, CONST_STRING(interp, "severity"), severity);
+    VTABLE_set_integer_keyed_str(interp, exception, CONST_STRING(interp, "type"), error);
     if (msg)
         VTABLE_set_string_native(interp, exception, msg);
 
@@ -103,8 +101,7 @@ find_exception_handler(PARROT_INTERP, ARGIN(PMC *exception))
     else {
         STRING * const message = VTABLE_get_string(interp, exception);
         INTVAL exit_status = 1;
-        const INTVAL severity = VTABLE_get_integer_keyed_str(interp,
-                exception, CONST_STRING(interp, "severity"));
+        const INTVAL severity = VTABLE_get_integer_keyed_str(interp, exception, CONST_STRING(interp, "severity"));
 
         /* flush interpreter output to get things printed in order */
         PIO_flush(interp, PIO_STDOUT(interp));
@@ -122,8 +119,7 @@ find_exception_handler(PARROT_INTERP, ARGIN(PMC *exception))
         }
         else if (severity == EXCEPT_exit) {
             /* TODO: get exit status based on type */
-            exit_status = VTABLE_get_integer_keyed_str(interp,
-                    exception, CONST_STRING(interp, "exit_code"));
+            exit_status = VTABLE_get_integer_keyed_str(interp, exception, CONST_STRING(interp, "exit_code"));
         }
         else {
                 PIO_eprintf(interp, "No exception handler and no message\n");
@@ -138,9 +134,9 @@ find_exception_handler(PARROT_INTERP, ARGIN(PMC *exception))
          * RT #45917 this check should better be in Parrot_exit
          */
 
-        /* we should probably detach the thread here */
+        /* no exception handler, but this is not the main thread */
         if (interp->thread_data && interp->thread_data->tid)
-            return NULL;
+            pt_thread_detach(interp->thread_data->tid);
 
         /*
          * only main should run the destroy functions - exit handler chain
@@ -163,7 +159,7 @@ the handler code.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 void
 Parrot_ex_add_c_handler(PARROT_INTERP, ARGIN(Parrot_runloop *jp))
 {
@@ -184,7 +180,7 @@ Runs the exception handler.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 PARROT_CAN_RETURN_NULL
 opcode_t *
 Parrot_ex_throw_from_op(PARROT_INTERP, ARGIN(PMC *exception), ARGIN_NULLOK(void *dest))
@@ -227,6 +223,19 @@ pass_exception_args(PARROT_INTERP, ARGIN(const char *sig),
     return next;
 }
 
+PARROT_CANNOT_RETURN_NULL
+static PMC *
+build_exception_from_args(PARROT_INTERP, int ex_type,
+        ARGIN(const char *format), va_list arglist)
+{
+    /* Make and set exception message. */
+    STRING *msg = strchr(format, '%') ?
+        Parrot_vsprintf_c(interp, format, arglist) :
+        string_make(interp, format, strlen(format), NULL, 0);
+
+    return Parrot_ex_build_exception(interp, EXCEPT_error, ex_type, msg);
+}
+
 /*
 
 =item C<void Parrot_ex_throw_from_c>
@@ -250,7 +259,7 @@ the exception can be stored in the exception's payload.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 PARROT_DOES_NOT_RETURN
 void
 Parrot_ex_throw_from_c(PARROT_INTERP, ARGIN(PMC *exception))
@@ -271,8 +280,7 @@ Parrot_ex_throw_from_c(PARROT_INTERP, ARGIN(PMC *exception))
     }
 
     if (Interp_debug_TEST(interp, PARROT_BACKTRACE_DEBUG_FLAG)) {
-        int exitcode = VTABLE_get_integer_keyed_str(interp, exception,
-                CONST_STRING(interp, "exit_code"));
+        int exitcode = VTABLE_get_integer_keyed_str(interp, exception, CONST_STRING(interp, "exit_code"));
         STRING *msg = VTABLE_get_string(interp, exception);
         PIO_eprintf(interp,
             "Parrot_ex_throw_from_c (severity:%d error:%d): %Ss\n",
@@ -298,6 +306,36 @@ Parrot_ex_throw_from_c(PARROT_INTERP, ARGIN(PMC *exception))
 
 /*
 
+=item C<opcode_t * Parrot_ex_throw_from_op_args>
+
+Throws an exception from an opcode, with an error message constructed
+from a format string and arguments.
+
+See also C<Parrot_ex_throw_from_c>, C<Parrot_ex_throw_from_op>, and
+C<exit_fatal()>.
+
+=cut
+
+*/
+
+PARROT_EXPORT
+PARROT_CAN_RETURN_NULL
+opcode_t *
+Parrot_ex_throw_from_op_args(PARROT_INTERP, ARGIN_NULLOK(void *dest),
+        int ex_type, ARGIN(const char *format), ...)
+{
+    PMC *exception;
+
+    va_list arglist;
+    va_start(arglist, format);
+    exception = build_exception_from_args(interp, ex_type, format, arglist);
+    va_end(arglist);
+
+    return Parrot_ex_throw_from_op(interp, exception, dest);
+}
+
+/*
+
 =item C<void Parrot_ex_throw_from_c_args>
 
 Throws an exception, with an error message constructed from a format string and
@@ -312,28 +350,18 @@ C<exit_fatal()>.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 PARROT_DOES_NOT_RETURN
 void
 Parrot_ex_throw_from_c_args(PARROT_INTERP, ARGIN_NULLOK(void *ret_addr),
         int exitcode, ARGIN(const char *format), ...)
 {
-    STRING *msg = NULL;
     PMC *exception;
 
-    /* Make and set exception message. */
-    if (strchr(format, '%')) {
-        va_list arglist;
-        va_start(arglist, format);
-        msg = Parrot_vsprintf_c(interp, format, arglist);
-        va_end(arglist);
-    }
-    else
-        msg = string_make(interp, format, strlen(format),
-                NULL, PObj_external_FLAG);
-
-    exception = Parrot_ex_build_exception(interp,
-            EXCEPT_error, exitcode, msg);
+    va_list arglist;
+    va_start(arglist, format);
+    exception = build_exception_from_args(interp, exitcode, format, arglist);
+    va_end(arglist);
 
     Parrot_ex_throw_from_c(interp, exception);
 }
@@ -348,7 +376,7 @@ Rethrow the exception.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 opcode_t *
@@ -373,7 +401,7 @@ that this is called from within a handler setup with C<new_c_exception>.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 PARROT_DOES_NOT_RETURN
 void
 Parrot_ex_rethrow_from_c(PARROT_INTERP, ARGIN(PMC *exception))
@@ -393,12 +421,11 @@ Mark an exception as unhandled, as part of rethrowing it.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 void
 Parrot_ex_mark_unhandled(PARROT_INTERP, ARGIN(PMC *exception))
 {
-    VTABLE_set_integer_keyed_str(interp, exception,
-            CONST_STRING(interp, "handled"), -1);
+    VTABLE_set_integer_keyed_str(interp, exception, CONST_STRING(interp, "handled"), -1);
 }
 
 /*
@@ -413,7 +440,7 @@ the runloop.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 size_t
 Parrot_ex_calc_handler_offset(PARROT_INTERP)
 {
@@ -446,7 +473,7 @@ A better version of assert() that gives a backtrace.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 PARROT_DOES_NOT_RETURN_WHEN_FALSE
 void
 Parrot_assert(INTVAL condition, ARGIN(const char *condition_string),
@@ -466,7 +493,7 @@ Prints a backtrace and message for a failed assertion.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 PARROT_DOES_NOT_RETURN
 void
 Parrot_confess(ARGIN(const char *cond), ARGIN(const char *file), unsigned int line)
@@ -551,7 +578,7 @@ require an interpreter).
 
 */
 
-PARROT_API
+PARROT_EXPORT
 PARROT_DOES_NOT_RETURN
 void
 exit_fatal(int exitcode, ARGIN(const char *format), ...)

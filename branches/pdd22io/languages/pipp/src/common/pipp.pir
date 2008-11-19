@@ -130,7 +130,8 @@ GOT_NO_F_OPTION:
         source_fn = rest
         goto GOT_PHP_SOURCE_FN
 GOT_NO_FILE_ON_COMMAND_LINE:
-    printerr 'Got no PHP file.'
+        #XXX: should do REPL or read from stdin
+        printerr "No input file specified.\n"
     exit -1
 
 GOT_PHP_SOURCE_FN:
@@ -151,6 +152,10 @@ GOT_PHP_SOURCE_FN:
     # target of compilation
     .local string target
     target = opt['target']
+
+    # output file
+    .local string output
+    output = opt['output']
 
     # look at commandline and decide what to do
     .local string cmd, err_msg, variant
@@ -195,7 +200,7 @@ VARIANT_PCT:
     .local pmc pipp_compiler
     pipp_compiler = compreg 'Pipp'
 
-    .return pipp_compiler.'evalfiles'( source_fn, 'target' => target )
+    .tailcall pipp_compiler.'evalfiles'( source_fn, 'target' => target, 'output' => output )
 
 VARIANT_PHC:
     .local string phc_src_dir
@@ -223,7 +228,7 @@ VARIANT_PHC:
     ret = spawnw cmd
     if ret goto ERROR
 
-    .return run_nqp( 'pipp_phc_past.nqp', target )
+    .tailcall run_nqp( 'pipp_phc_past.nqp', target )
 
 
 VARIANT_ANTLR3:
@@ -235,10 +240,10 @@ VARIANT_ANTLR3:
     ret = spawnw cmd
     if ret goto ERROR
 
-    .return run_nqp( 'pipp_antlr_past.nqp', target )
+    .tailcall run_nqp( 'pipp_antlr_past.nqp', target )
 
 RUN_NQP:
-    .return run_nqp( source_fn, target )
+    .tailcall run_nqp( source_fn, target )
 
 
 ERROR:
@@ -317,6 +322,7 @@ ERROR:
     push getopts, 'variant=s'          # switch between variants
     push getopts, 'target=s'           # compilation target, used during development
     push getopts, 'run-nqp'            # run PAST set up in NQP
+    push getopts, 'output|o=s'
 
     # standard PHP options
     push getopts, 'version'

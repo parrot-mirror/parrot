@@ -17,7 +17,9 @@ This file sets up the Perl 6 C<Capture> class.
     .local pmc p6meta, captureproto
     p6meta = get_hll_global ['Perl6Object'], '$!P6META'
     captureproto = p6meta.'new_class'('Perl6Capture', 'parent'=>'Capture_PIR Any', 'name'=>'Capture')
+    captureproto.'!IMMUTABLE'()
 .end
+
 
 =head2 Methods
 

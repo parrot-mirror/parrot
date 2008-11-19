@@ -9,7 +9,7 @@ use lib qw( . lib ../lib ../../lib );
 use Test::More;
 use Parrot::Test::Util 'create_tempfile';
 
-use Parrot::Test tests => 45;
+use Parrot::Test tests => 48;
 
 =head1 NAME
 
@@ -25,21 +25,16 @@ Tests the multi-method dispatch.
 
 =cut
 
-pir_output_is( <<'CODE', <<'OUTPUT', "Integer_divide_PerlInt  10 / 3 = 1003", todo => 'RT #41374' );
+pir_output_is( <<'CODE', <<'OUTPUT', 'Integer_divide_Integer  10 / 3 = 1003' );
 
 .sub 'test' :main
-    .local  pmc lib_perl_group
-    lib_perl_group    = loadlib 'perl_group'
-    .local int type_perl_int
-    type_perl_int = find_type 'PerlInt'
-
     .local pmc divide
-    divide = global "Integer_divide_PerlInt"
-    add_multi "divide", "Integer,PerlInt", divide
+    divide = global "Integer_divide_Integer"
+    add_multi "divide", "Integer,Integer", divide
 
-    $P0 = new 'PerlInt'
+    $P0 = new 'Integer'
     $P1 = new 'Integer'
-    $P2 = new 'PerlInt'
+    $P2 = new 'Integer'
     $P1 = 10
     $P2 = 3
     $P0 = $P1 / $P2
@@ -47,13 +42,13 @@ pir_output_is( <<'CODE', <<'OUTPUT', "Integer_divide_PerlInt  10 / 3 = 1003", to
     print "\n"
 .end
 
-.sub Integer_divide_PerlInt
+.sub Integer_divide_Integer
     .param pmc left
     .param pmc right
     .param pmc lhs
     $I0 = left
     $I1 = right
-    $I2 = $I0/$I1     # don't call divide Integer/PerlInt here
+    $I2 = $I0/$I1     # don't call divide Integer/Integer here
     lhs = $I2         # '
     lhs += 1000  # prove that this function has been called
     .return(lhs)
@@ -448,7 +443,7 @@ ok 2
 ok 2
 OUT
 
-pir_output_is( <<'CODE', <<'OUT', "MMD on mative types" );
+pir_output_is( <<'CODE', <<'OUT', "MMD on native types" );
 .sub main :main
     p("ok 1\n")
     p(42)
@@ -469,25 +464,32 @@ ok 1
 42
 OUT
 
-pir_output_is( <<'CODE', <<'OUT', 'MMD on PMC types', todo => 'RT #41374' );
+pir_output_is( <<'CODE', <<'OUT', 'MMD on PMC types' );
 .sub 'test' :main
-    .local  pmc  lib_perl_group
-    lib_perl_group    = loadlib 'perl_group'
-
     $P0 = new 'String'
     $P0 = "ok 1\n"
-    $P1 = new 'PerlInt'
-    $P1 = "ok 2\n"
     p($P0)
+
+    .local pmc pstring
+    pstring = subclass 'String', 'PString'
+    $P1 = new 'PString'
+    $P1 = "ok 2\n"
     p($P1)
-    $P0 = subclass "PerlString", "Xstring"
+
+    $P0 = subclass 'PString', "Xstring"
     $P0 = new "Xstring"
     $P0 = "ok 3\n"
-    $P1 = subclass "String", "Ystring"
+    $P1 = subclass 'String', "Ystring"
     $P1 = new "Ystring"
     $P1 = "ok 4\n"
     p($P0)
     p($P1)
+.end
+
+.sub p :multi(PString)
+    .param pmc p
+    print "PSt "
+    print p
 .end
 
 .sub p :multi(String)
@@ -495,31 +497,26 @@ pir_output_is( <<'CODE', <<'OUT', 'MMD on PMC types', todo => 'RT #41374' );
     print "String "
     print p
 .end
-
-.sub p :multi(PerlString)
-    .param pmc p
-    print "PerlSt "
-    print p
-.end
 CODE
 String ok 1
-PerlSt ok 2
-PerlSt ok 3
+PSt ok 2
+PSt ok 3
 String ok 4
 OUT
 
-pir_output_is( <<'CODE', <<'OUT', "MMD on PMC types quoted", todo => 'RT #41374' );
+pir_output_is( <<'CODE', <<'OUT', 'MMD on PMC types quoted' );
 .sub main :main
-    .local  pmc  lib_perl_group
-    lib_perl_group    = loadlib 'perl_group'
-
     $P0 = new 'String'
     $P0 = "ok 1\n"
-    $P1 = new 'PerlInt'
-    $P1 = "ok 2\n"
     p($P0)
+
+    .local pmc pstring
+    pstring = subclass 'String', 'PString'
+    $P1 = new 'PString'
+    $P1 = "ok 2\n"
     p($P1)
-    $P0 = subclass "PerlString", "Xstring"
+
+    $P0 = subclass "PString", "Xstring"
     $P0 = new "Xstring"
     $P0 = "ok 3\n"
     $P1 = subclass "String", "Ystring"
@@ -535,30 +532,30 @@ pir_output_is( <<'CODE', <<'OUT', "MMD on PMC types quoted", todo => 'RT #41374'
     print p
 .end
 
-.sub p :multi("PerlString")
+.sub p :multi("PString")
     .param pmc p
-    print "PerlSt "
+    print "PSt "
     print p
 .end
 CODE
 String ok 1
-PerlSt ok 2
-PerlSt ok 3
+PSt ok 2
+PSt ok 3
 String ok 4
 OUT
 
-pir_output_like( <<'CODE', <<'OUT', "MMD on PMC types, invalid", todo => 'RT #41374' );
+pir_error_output_like( <<'CODE', <<'OUT', 'MMD on PMC types, invalid' );
 .sub main :main
-    .local  pmc  lib_perl_group
-    lib_perl_group    = loadlib 'perl_group'
-
     $P0 = new 'String'
     $P0 = "ok 1\n"
-    $P1 = new 'PerlInt'
-    $P1 = "ok 2\n"
     p($P0)
+
+    .local pmc pstring
+    pstring = subclass 'String', 'PString'
+    $P1 = new 'PString'
+    $P1 = "ok 2\n"
     p($P1)
-    $P0 = subclass "PerlString", "Xstring"
+    $P0 = subclass "PString", "Xstring"
     $P0 = new "Xstring"
     $P0 = "ok 3\n"
     $P1 = subclass "String", "Ystring"
@@ -576,31 +573,32 @@ pir_output_like( <<'CODE', <<'OUT', "MMD on PMC types, invalid", todo => 'RT #41
     print p
 .end
 
-.sub p :multi(PerlString)
+.sub p :multi(PString)
     .param pmc p
-    print "PerlSt "
+    print "PSt "
     print p
 .end
 CODE
 /String ok 1
-PerlSt ok 2
-PerlSt ok 3
+PSt ok 2
+PSt ok 3
 String ok 4
 No applicable methods/
 OUT
 
-pir_output_is( <<'CODE', <<'OUT', "MMD on PMC types 3", todo => 'RT #41374' );
+pir_output_is( <<'CODE', <<'OUT', 'MMD on PMC types 3' );
 .sub main :main
-    .local  pmc  lib_perl_group
-    lib_perl_group    = loadlib 'perl_group'
-
     $P0 = new 'String'
     $P0 = "ok 1\n"
-    $P1 = new 'PerlInt'
-    $P1 = "ok 2\n"
     p($P0)
+
+    .local pmc pstring
+    pstring = subclass 'String', 'PString'
+    $P1 = new 'PString'
+    $P1 = "ok 2\n"
     p($P1)
-    $P0 = subclass "PerlString", "Xstring"
+
+    $P0 = subclass "PString", "Xstring"
     $P0 = new "Xstring"
     $P0 = "ok 3\n"
     $P1 = subclass "String", "Ystring"
@@ -608,7 +606,10 @@ pir_output_is( <<'CODE', <<'OUT', "MMD on PMC types 3", todo => 'RT #41374' );
     $P1 = "ok 4\n"
     p($P0)
     p($P1)
-    $P0 = new 'PerlInt'
+
+    .local pmc pint
+    pint = subclass 'Integer', 'PInt'
+    $P0 = new 'PInt'
     $P0 = 42
     p($P0)
 .end
@@ -619,9 +620,9 @@ pir_output_is( <<'CODE', <<'OUT', "MMD on PMC types 3", todo => 'RT #41374' );
     print p
 .end
 
-.sub p :multi(PerlString)
+.sub p :multi(PString)
     .param pmc p
-    print "PerlSt "
+    print "PSt "
     print p
 .end
 
@@ -634,24 +635,25 @@ pir_output_is( <<'CODE', <<'OUT', "MMD on PMC types 3", todo => 'RT #41374' );
 
 CODE
 String ok 1
-PerlSt ok 2
-PerlSt ok 3
+PSt ok 2
+PSt ok 3
 String ok 4
 Intege 42
 OUT
 
-pir_output_is( <<'CODE', <<'OUT', "MMD on PMC types, global namespace", todo => 'RT #41374' );
+pir_output_is( <<'CODE', <<'OUT', 'MMD on PMC types, global namespace' );
 .sub main :main
-    .local  pmc  lib_perl_group
-    lib_perl_group    = loadlib 'perl_group'
-
     $P0 = new 'String'
     $P0 = "ok 1\n"
-    $P1 = new 'PerlInt'
-    $P1 = "ok 2\n"
     p($P0)
+
+    .local pmc pstring
+    pstring = subclass 'String', 'PString'
+    $P1 = new 'PString'
+    $P1 = "ok 2\n"
     p($P1)
-    $P0 = subclass "PerlString", "Xstring"
+
+    $P0 = subclass "PString", "Xstring"
     $P0 = new "Xstring"
     $P0 = "ok 3\n"
     $P1 = subclass "String", "Ystring"
@@ -667,33 +669,33 @@ pir_output_is( <<'CODE', <<'OUT', "MMD on PMC types, global namespace", todo => 
     print p
 .end
 
-.sub p :multi(PerlString)
+.sub p :multi(PString)
     .param pmc p
-    print "PerlSt "
+    print "PSt "
     print p
 .end
 CODE
 String ok 1
-PerlSt ok 2
-PerlSt ok 3
+PSt ok 2
+PSt ok 3
 String ok 4
 OUT
 
-pir_output_is( <<'CODE', <<'OUT', "MMD on PMC types, package namespace", todo => 'RT #41374' );
-
+pir_output_is( <<'CODE', <<'OUT', 'MMD on PMC types, package namespace' );
 .namespace ["Some"]
 
 .sub main :main
-    .local  pmc  lib_perl_group
-    lib_perl_group    = loadlib 'perl_group'
-
     $P0 = new 'String'
     $P0 = "ok 1\n"
-    $P1 = new 'PerlInt'
-    $P1 = "ok 2\n"
     p($P0)
+
+    .local pmc pstring
+    pstring = subclass 'String', 'PString'
+    $P1 = new 'PString'
+    $P1 = "ok 2\n"
     p($P1)
-    $P0 = subclass "PerlString", "Xstring"
+
+    $P0 = subclass "PString", "Xstring"
     $P0 = new "Xstring"
     $P0 = "ok 3\n"
     $P1 = subclass "String", "Ystring"
@@ -709,24 +711,21 @@ pir_output_is( <<'CODE', <<'OUT', "MMD on PMC types, package namespace", todo =>
     print p
 .end
 
-.sub p :multi(PerlString)
+.sub p :multi(PString)
     .param pmc p
-    print "PerlSt "
+    print "PSt "
     print p
 .end
 CODE
 String ok 1
-PerlSt ok 2
-PerlSt ok 3
+PSt ok 2
+PSt ok 3
 String ok 4
 OUT
 
 pir_output_is( <<'CODE', <<'OUT', "MMD on PMC types - Any", todo => 'RT #41374' );
 
 .sub main :main
-    .local  pmc  lib_perl_group
-    lib_perl_group    = loadlib 'perl_group'
-
     $P0 = new 'String'
     $P0 = "ok 1\n"
     $P1 = new 'PerlInt'
@@ -749,9 +748,9 @@ pir_output_is( <<'CODE', <<'OUT', "MMD on PMC types - Any", todo => 'RT #41374' 
     print p
 .end
 
-.sub p :multi(PerlString)
+.sub p :multi(PString)
     .param pmc p
-    print "PerlSt "
+    print "PSt "
     print p
 .end
 
@@ -771,7 +770,7 @@ pir_output_is( <<'CODE', <<'OUT', "MMD on PMC types - Any", todo => 'RT #41374' 
 
 CODE
 String ok 1
-PerlSt ok 2
+PSt ok 2
 Any    42
 Any    43
 OUT
@@ -812,12 +811,11 @@ OUTPUT
 
 pir_output_is( <<'CODE', <<'OUTPUT', "add as method - inherited", todo => 'RT #41374' );
 .sub main :main
-    .local  pmc  lib_perl_group
-    lib_perl_group    = loadlib 'perl_group'
-
     .local pmc d, l, r
-    l = new 'PerlInt'
-    r = new 'PerlInt'
+    .local pmc pint
+    pint = subclass 'Integer', 'PInt'
+    l = new 'PInt'
+    r = new 'PInt'
     l = 3
     r = 39
     d = l."add"(r, d)
@@ -1124,7 +1122,7 @@ foo(ResizablePMCArray,_)
 OUTPUT
 
 pir_output_is( <<'CODE', <<'OUTPUT', "multisub w/ .HLL, rt #39161" );
-.HLL 'Perl6', ''
+.HLL 'Perl6'
 .sub main :main
     $P0 = new 'Integer'
     $P0 = 3
@@ -1420,6 +1418,161 @@ pir_output_is( <<'CODE', <<'OUTPUT', "multi-dispatch on PMCNULL" );
 .end
 CODE
 any
+OUTPUT
+
+pir_output_is( <<'CODE', <<'OUTPUT', "multi-dispatch with :optional" );
+
+.sub 'main' :main
+    foo('Hello')
+    foo('Goodbye', 2)
+    foo(1)
+    foo(100, 200)
+.end
+
+.sub foo :multi(string)
+    .param string s
+    .param int    i      :optional
+    .param int    have_i :opt_flag
+
+    say s
+    unless have_i goto done
+    say i
+  done:
+.end
+
+.sub foo :multi(int)
+    .param int x
+    .param int i      :optional
+    .param int have_i :opt_flag
+
+    say x
+    unless have_i goto done
+    say i
+  done:
+.end
+CODE
+Hello
+Goodbye
+2
+1
+100
+200
+OUTPUT
+
+pir_output_is( <<'CODE', <<'OUTPUT', '.autoboxed MMD with :optional' );
+
+.sub 'main' :main
+    foo('Hello')
+    foo('Goodbye', 2)
+    foo(1)
+    foo(100, 200)
+    foo(77.7)
+    foo(77.7, 88.8)
+.end
+
+.sub foo :multi(String)
+    .param pmc s
+    .param pmc i      :optional
+    .param int have_i :opt_flag
+
+    say s
+    unless have_i goto done
+    say i
+  done:
+.end
+
+.sub foo :multi(Integer)
+    .param pmc x
+    .param pmc i      :optional
+    .param int have_i :opt_flag
+
+    say x
+    unless have_i goto done
+    say i
+  done:
+.end
+
+.sub foo :multi(Float)
+    .param pmc x
+    .param pmc i      :optional
+    .param int have_i :opt_flag
+
+    say x
+    unless have_i goto done
+    say i
+  done:
+.end
+CODE
+Hello
+Goodbye
+2
+1
+100
+200
+77.7
+77.7
+88.8
+OUTPUT
+
+pir_output_is( <<'CODE', <<'OUTPUT', 'more .autoboxed MMD with :optional' );
+
+.sub 'main' :main
+    foo('Hello', 'Hi')
+    foo('Goodbye', 'Ta ta', 2)
+    foo(1, 2)
+    foo(100, 200, 400)
+    foo(77.7, 88.8)
+    foo(77.7, 88.8, 99.9)
+.end
+
+.sub foo :multi(String, String)
+    .param pmc x
+    .param pmc y
+    .param pmc i      :optional
+    .param int have_i :opt_flag
+
+    print x
+    print y
+    unless have_i goto done
+    print i
+  done:
+    say ''
+.end
+
+.sub foo :multi(Integer, Integer)
+    .param pmc x
+    .param pmc y
+    .param pmc i      :optional
+    .param int have_i :opt_flag
+
+    print x
+    print y
+    unless have_i goto done
+    print i
+  done:
+    say ''
+.end
+
+.sub foo :multi(Float, Float)
+    .param pmc x
+    .param pmc y
+    .param pmc i      :optional
+    .param int have_i :opt_flag
+
+    print x
+    print y
+    unless have_i goto done
+    print i
+  done:
+    say ''
+.end
+CODE
+HelloHi
+GoodbyeTa ta2
+12
+100200400
+77.788.8
+77.788.899.9
 OUTPUT
 
 # Local Variables:

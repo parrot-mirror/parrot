@@ -95,6 +95,7 @@ function, and so have no direct access to local variables.
   L3:
     push_eh _handler
     $P0()
+    pop_eh
     goto L1
   _handler:
     .local pmc e
@@ -117,7 +118,7 @@ Returns the environment of object C<o>.
 .sub 'getfenv'
     .param pmc o :optional
     .param pmc extra :slurpy
-    .return lua_getfenv(o)
+    .tailcall lua_getfenv(o)
 .end
 
 

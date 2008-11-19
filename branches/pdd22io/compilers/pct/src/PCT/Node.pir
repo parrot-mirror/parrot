@@ -249,7 +249,7 @@ Accessor method -- sets/returns the C<name> attribute of the invocant.
 .sub 'name' :method
     .param pmc value           :optional
     .param int has_value       :opt_flag
-    .return self.'attr'('name', value, has_value)
+    .tailcall self.'attr'('name', value, has_value)
 .end
 
 
@@ -302,6 +302,21 @@ unique number.
     $S0 = concat fmt, $S0
     inc $P0
     .return ($S0)
+.end
+
+
+=item isa([type])
+
+Ask the current object's metaclass if C<self> is a C<type>, through its C<isa>
+method. If so, return 1, else return 0.
+
+=cut
+
+.sub 'isa' :method
+    .param pmc type
+    $P0 = self.'HOW'()
+    $I0 = $P0.'isa'(self, type)
+    .return ($I0)
 .end
 
 

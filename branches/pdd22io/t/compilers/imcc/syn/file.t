@@ -12,7 +12,6 @@ use File::Spec;
 use Test::More;
 
 use Parrot::Test::Util 'create_tempfile';
-
 use Parrot::Config;
 use Parrot::Test tests => 14;
 
@@ -452,7 +451,7 @@ SKIP:
         push @temp_files, File::Spec->catfile( $temp_dir, "${file}.pir" );
 
         open( my $out_fh, '>', $temp_files[-1] )
-            or skip( "Cannot write temporary file to $temp_files[-1]", 2 );
+            or skip( "Cannot write temporary file to $temp_files[-1]", 1 );
 
         print {$out_fh} <<"TEMP_PIR";
 .sub $file
@@ -491,7 +490,7 @@ with_slash() called!
 without_slash() called!
 OUT
 }
-
+unlink(@temp_files);
 $ended_ok = 1;
 
 exit;

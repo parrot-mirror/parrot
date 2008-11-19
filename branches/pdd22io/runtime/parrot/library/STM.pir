@@ -126,7 +126,7 @@ do_return:
     the_cont = interpinfo .INTERPINFO_CURRENT_CONT
     ends = global 'ends'
     push ends, the_cont
-    .return closure(args :flat)
+    .tailcall closure(args :flat)
 .end
 
 .sub _end_tx
@@ -198,7 +198,7 @@ choice_part:
 .sub choice
     .param pmc choices :slurpy
 
-    .const .Sub _choice_internal = "_choice_internal"
+    .const 'Sub' _choice_internal = "_choice_internal"
 
     .local pmc result
     result = transaction(_choice_internal, choices)

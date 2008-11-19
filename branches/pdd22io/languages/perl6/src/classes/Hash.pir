@@ -16,8 +16,12 @@ src/classes/Hash.pir - Perl 6 Hash class and related functions
     .local pmc p6meta, hashproto
     p6meta = get_hll_global ['Perl6Object'], '$!P6META'
     hashproto = p6meta.'new_class'('Perl6Hash', 'parent'=>'Mapping', 'name'=>'Hash')
+    hashproto.'!MUTABLE'()
 .end
 
+=item ACCEPTS()
+
+=cut
 
 .sub 'hash'
     .param pmc args            :slurpy
@@ -26,18 +30,17 @@ src/classes/Hash.pir - Perl 6 Hash class and related functions
     unless hash goto hash_done
     unshift args, hash
   hash_done:
-    .return args.'hash'()
+    .tailcall args.'hash'()
 .end
 
 
 .namespace ['Perl6Hash']
 
-.sub 'infix:=' :method
-    .param pmc source
-    $P0 = source.'hash'()
-    copy self, $P0
-    .return (self)
+.sub 'ACCEPTS' :method
+    .param pmc topic
+    .tailcall self.'contains'(topic)
 .end
+
 
 .sub 'delete' :method
     .param pmc keys :slurpy
@@ -64,6 +67,13 @@ src/classes/Hash.pir - Perl 6 Hash class and related functions
 .end
 
 .sub 'exists' :method
+    .param pmc key
+
+    $I0 = exists self[key]
+    .return( $I0 )
+.end
+
+.sub 'contains' :method
     .param pmc key
 
     $I0 = exists self[key]

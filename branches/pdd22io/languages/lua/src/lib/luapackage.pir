@@ -49,24 +49,24 @@ LIST
     _package[$P1] = _loaders
     new $P2, 'LuaNumber'
 
-    .const .Sub loader_preload = 'loader_preload'
+    .const 'Sub' loader_preload = 'loader_preload'
     set $P2, 1
     _loaders[$P2] = loader_preload
 
-    .const .Sub loader_Lua = 'loader_Lua'
+    .const 'Sub' loader_Lua = 'loader_Lua'
     inc $P2
     _loaders[$P2] = loader_Lua
 
-    .const .Sub loader_PBC = 'loader_PBC'
+    .const 'Sub' loader_PBC = 'loader_PBC'
     inc $P2
     _loaders[$P2] = loader_PBC
 
-    .const .Sub loader_PBCroot = 'loader_PBCroot'
+    .const 'Sub' loader_PBCroot = 'loader_PBCroot'
     inc $P2
     _loaders[$P2] = loader_PBCroot
 
     setpath(_package, 'path', 'LUA_PATH', './?.lua;languages/lua/src/lib/?.lua')
-    setpath(_package, 'pbcpath', 'LUA_PBCPATH', './?.pbc;./?.pir;languages/lua/src/lib/?.pbc')
+    setpath(_package, 'pbcpath', 'LUA_PBCPATH', './?.pbc;./?.pir;languages/lua/?.pbc')
 
     .local pmc _lua__REGISTRY
     _lua__REGISTRY = get_hll_global '_REGISTRY'

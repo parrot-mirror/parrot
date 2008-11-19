@@ -77,6 +77,7 @@ any value type.
     piropsig['pow']        = 'NN+'
     piropsig['print']      = 'v*'
     piropsig['set']        = 'PP'
+    piropsig['isnull']     = 'IP'
     set_global '%piropsig', piropsig
 
     ##  %valflags specifies when PAST::Val nodes are allowed to
@@ -125,7 +126,7 @@ Compile the abstract syntax tree given by C<past> into POST.
   have_blockpast:
     null $P0
     set_global '$?SUB', $P0                                # see RT#49758
-    .return self.'as_post'(past, 'rtype'=>'v')
+    .tailcall self.'as_post'(past, 'rtype'=>'v')
 .end
 
 =item escape(str)
@@ -181,11 +182,11 @@ is one of the signature flags described above.
     reg = substr 'SSSNNNII', $I0, 1
   reg_psin:
     reg = concat '$', reg
-    .return self.'unique'(reg)
+    .tailcall self.'unique'(reg)
   reg_void:
     .return ('')
   err_nortype:
-    self.panic('rtype not set')
+    self.'panic'('rtype not set')
 .end
 
 =item coerce(post, rtype)
@@ -309,7 +310,7 @@ forced into that register (with conversions as needed).
     .return (post)
 
   err_nortype:
-    self.panic('rtype not set')
+    self.'panic'('rtype not set')
 .end
 
 
@@ -433,11 +434,11 @@ nodes make it into the tree.
     .param pmc node
     .param pmc options         :slurpy :named
     unless null node goto not_null_node
-    self.panic("PAST::Compiler can't compile a null node")
+    self.'panic'("PAST::Compiler can't compile a null node")
     not_null_node:
 
     $S0 = typeof node
-    self.panic("PAST::Compiler can't compile node of type ", $S0)
+    self.'panic'("PAST::Compiler can't compile node of type ", $S0)
 .end
 
 =item as_post(Undef)
@@ -452,7 +453,7 @@ Return an empty POST node that can be used to hold a (PMC) result.
     .local string result
     $P0 = get_hll_global ['POST'], 'Ops'
     result = self.'uniquereg'('P')
-    .return $P0.'new'('result'=>result)
+    .tailcall $P0.'new'('result'=>result)
 .end
 
 =item as_post(String class)
@@ -471,7 +472,7 @@ is typically invoked by the various vivification methods below
     $P0 = get_hll_global ['POST'], 'Op'
     result = self.'uniquereg'('P')
     $S0 = self.'escape'(node)
-    .return $P0.'new'(result, $S0, 'pirop'=>'new', 'result'=>result)
+    .tailcall $P0.'new'(result, $S0, 'pirop'=>'new', 'result'=>result)
 .end
 
 =item as_post(PAST::Node node)
@@ -590,18 +591,16 @@ Return the POST representation of a C<PAST::Block>.
     if compiler goto children_compiler
 
     ##  control exception handler
-    .local pmc ctrlpast, ctrllabel, rethrowlabel
+    .local pmc ctrlpast, ctrllabel
     ctrlpast = node.'control'()
     unless ctrlpast goto children_past
     $P0 = get_hll_global ['POST'], 'Label'
     $S0 = self.'unique'('control_')
     ctrllabel = $P0.'new'('result'=>$S0)
-    $S0 = concat $S0, '_rethrow'
-    rethrowlabel = $P0.'new'('result'=>$S0)
     $S0 = self.'uniquereg'('P')
     bpost.'push_pirop'('new', $S0, "'ExceptionHandler'")
     bpost.'push_pirop'('set_addr', $S0, ctrllabel)
-    bpost.'push_pirop'('callmethod', 'handle_types', $S0, .CONTROL_RETURN)
+    bpost.'push_pirop'('callmethod', '"handle_types"', $S0, .CONTROL_RETURN)
     bpost.'push_pirop'('push_eh', $S0)
 
   children_past:
@@ -625,13 +624,12 @@ Return the POST representation of a C<PAST::Block>.
     $I0 = isa ctrlpast, ['PAST';'Node']
     if $I0 goto control_past
     if ctrlpast == 'return_pir' goto control_return
-    self.panic("Unrecognized control handler '", ctrlpast, "'")
+    self.'panic'("Unrecognized control handler '", ctrlpast, "'")
   control_return:
     ##  handle 'return' exceptions
     $S0 = self.'uniquereg'('P')
     bpost.'push_pirop'('getattribute', $S0, 'exception', '"payload"')
     bpost.'push_pirop'('return', $S0)
-    bpost.'push'(rethrowlabel)
     bpost.'push_pirop'('rethrow', 'exception')
     goto sub_done
   control_past:
@@ -657,7 +655,7 @@ Return the POST representation of a C<PAST::Block>.
     lisub = $P0.'new'('outer'=>bpost, 'pirflags'=>':load :init')
     lisub.'push_pirop'('.local pmc', 'block')
     lisub.'push_pirop'('interpinfo', '$P20', .INTERPINFO_CURRENT_SUB)
-    lisub.'push_pirop'('callmethod', 'get_outer', '$P20', 'result'=>'block')
+    lisub.'push_pirop'('callmethod', '"get_outer"', '$P20', 'result'=>'block')
     .local pmc lipast, lipost
     lipast = node.'loadinit'()
     lipost = self.'as_post'(lipast, 'rtype'=>'v')
@@ -671,8 +669,7 @@ Return the POST representation of a C<PAST::Block>.
 
     ##  determine name and namespace
     name = self.'escape'(name)
-    $I0 = defined ns
-    unless $I0 goto have_ns_key
+    unless ns goto have_ns_key
     $P0 = get_global '%!codestring'
     ns = $P0.'key'(ns)
   have_ns_key:
@@ -686,7 +683,7 @@ Return the POST representation of a C<PAST::Block>.
     $P0 = get_hll_global ['POST'], 'Ops'
     bpost = $P0.'new'(bpost, 'node'=>node, 'result'=>result)
     if ns goto block_decl_ns
-    concat $S0, '.const .Sub ', result
+    concat $S0, ".const 'Sub' ", result
     concat $S0, ' = '
     concat $S0, name
     bpost.'push_pirop'($S0)
@@ -696,16 +693,21 @@ Return the POST representation of a C<PAST::Block>.
     goto block_done
 
   block_immediate:
+    .local pmc arglist
+    arglist = options['arglist']
+    unless null arglist goto have_arglist
+    arglist = new 'ResizablePMCArray'
+  have_arglist:
     result = self.'uniquereg'(rtype)
     $P0 = get_hll_global ['POST'], 'Ops'
     bpost = $P0.'new'(bpost, 'node'=>node, 'result'=>result)
     if ns goto block_immediate_ns
-    bpost.'push_pirop'('call', name, 'result'=>result)
+    bpost.'push_pirop'('call', name, arglist :flat, 'result'=>result)
     goto block_done
   block_immediate_ns:
     $S0 = '$P10'
     bpost.'push_pirop'('get_hll_global', $S0, ns, name, 'result'=>$S0)
-    bpost.'push_pirop'('call', $S0, 'result'=>result)
+    bpost.'push_pirop'('call', $S0, arglist :flat, 'result'=>result)
 
   block_done:
     ##  remove current block from @?BLOCK
@@ -744,22 +746,22 @@ the node's "pasttype" attribute.
     pasttype = node.'pasttype'()
     unless pasttype goto post_pirop
     $P0 = find_method self, pasttype
-    .return self.$P0(node, options :flat :named)
+    .tailcall self.$P0(node, options :flat :named)
 
   post_pirop:
     .local pmc pirop
     pirop = node.'pirop'()
     unless pirop goto post_inline
-    .return self.'pirop'(node, options :flat :named)
+    .tailcall self.'pirop'(node, options :flat :named)
 
   post_inline:
     .local pmc inline
     inline = node.'inline'()
     unless inline goto post_call
-    .return self.'inline'(node, options :flat :named)
+    .tailcall self.'inline'(node, options :flat :named)
 
   post_call:
-    .return self.'call'(node, options :flat :named)
+    .tailcall self.'call'(node, options :flat :named)
 .end
 
 
@@ -875,7 +877,7 @@ to invoke a method on a PMC.
 .sub 'callmethod' :method :multi(_, ['PAST';'Op'])
     .param pmc node
     .param pmc options         :slurpy :named
-    .return self.'call'(node, options :flat :named)
+    .tailcall self.'call'(node, options :flat :named)
 .end
 
 
@@ -970,7 +972,13 @@ a 'pasttype' of if/unless.
     null childpost
     $I0 = defined childpast
     unless $I0 goto no_childpast
-    childpost = self.'as_post'(childpast, 'rtype'=>childrtype)
+    .local pmc arglist
+    arglist = new 'ResizablePMCArray'
+    $I0 = childpast.'arity'()
+    unless $I0 > 0 goto have_arglist
+    push arglist, exprpost
+  have_arglist:
+    childpost = self.'as_post'(childpast, 'rtype'=>childrtype, 'arglist'=>arglist)
     goto childpost_coerce
   no_childpast:
     if rtype == 'v' goto ret_childpost
@@ -985,7 +993,7 @@ a 'pasttype' of if/unless.
 .sub 'unless' :method :multi(_, ['PAST';'Op'])
     .param pmc node
     .param pmc options         :slurpy :named
-    .return self.'if'(node, options :flat :named)
+    .tailcall self.'if'(node, options :flat :named)
 .end
 
 
@@ -1036,11 +1044,19 @@ Return the POST representation of a C<while> or C<until> loop.
     exprrtype = '*'
   have_exprrtype:
 
-    ops.'push'(looplabel)
     exprpost = self.'as_post'(exprpast, 'rtype'=>exprrtype)
+
+    .local pmc arglist
+    arglist = new 'ResizablePMCArray'
+    $I0 = bodypast.'arity'()
+    unless $I0 goto have_arglist
+    push arglist, exprpost
+  have_arglist:
+
+    ops.'push'(looplabel)
     ops.'push'(exprpost)
     ops.'push_pirop'(iftype, exprpost, endlabel)
-    bodypost = self.'as_post'(bodypast, 'rtype'=>'v')
+    bodypost = self.'as_post'(bodypast, 'rtype'=>'v', 'arglist'=>arglist)
     ops.'push'(bodypost)
     ops.'push_pirop'('goto', looplabel)
     ops.'push'(endlabel)
@@ -1051,7 +1067,7 @@ Return the POST representation of a C<while> or C<until> loop.
 .sub 'until' :method :multi(_, ['PAST';'Op'])
     .param pmc node
     .param pmc options         :slurpy :named
-    .return self.'while'(node, options :flat :named)
+    .tailcall self.'while'(node, options :flat :named)
 .end
 
 =item repeat_while(PAST::Op node)
@@ -1111,7 +1127,7 @@ Return the POST representation of a C<repeat_while> or C<repeat_until> loop.
 .sub 'repeat_until' :method :multi(_, ['PAST';'Op'])
     .param pmc node
     .param pmc options         :slurpy :named
-    .return self.'repeat_while'(node, options :flat :named)
+    .tailcall self.'repeat_while'(node, options :flat :named)
 .end
 
 
@@ -1155,12 +1171,11 @@ by C<node>.
     next_handler = self.'uniquereg'('P')
     ops.'push_pirop'('new', next_handler, "'ExceptionHandler'")
     ops.'push_pirop'('set_addr', next_handler, nextlabel)
-    ops.'push_pirop'('callmethod', 'handle_types', next_handler, .CONTROL_LOOP_NEXT)
+    ops.'push_pirop'('callmethod', '"handle_types"', next_handler, .CONTROL_LOOP_NEXT)
     ops.'push_pirop'('push_eh', next_handler)
     ops.'push_pirop'('iter', iter, collpost)
     ops.'push'(looplabel)
     ops.'push_pirop'('unless', iter, endlabel)
-
 
     .local pmc subpast
     subpast = node[1]
@@ -1193,9 +1208,9 @@ by C<node>.
   arity_end:
 
     .local pmc subpost
-    subpost = self.'as_post'(subpast, 'rtype'=>'P')
+    subpast.'blocktype'('immediate')                       # FIXME
+    subpost = self.'as_post'(subpast, 'rtype'=>'P', 'arglist'=>arglist)
     ops.'push'(subpost)
-    ops.'push_pirop'('call', subpost, arglist :flat)
     ops.'push_pirop'('goto', looplabel)
     ops.'push'(nextlabel)
     ops.'push_pirop'('.local pmc exception')
@@ -1327,6 +1342,7 @@ handler.
     if null catchpast goto catch_done
     catchpost = self.'as_post'(catchpast, 'rtype'=>'v')
     ops.'push'(catchpost)
+    ops.'push_pirop'('pop_eh')         # FIXME: should be before catchpost
   catch_done:
     ops.'push'(endlabel)
     ops.'result'(trypost)
@@ -1522,7 +1538,7 @@ node with a 'pasttype' of bind.
     rpost = self.'coerce'(rpost, 'P')
     ops.'push'(rpost)
 
-    lpast.lvalue(1)
+    lpast.'lvalue'(1)
     lpost = self.'as_post'(lpast, 'bindpost'=>rpost)
     ops.'push'(lpost)
     ops.'result'(lpost)
@@ -1646,16 +1662,17 @@ attribute.
     scope = $P0['scope']
     unless scope goto scope_error
   have_scope:
-    push_eh scope_error
+    push_eh scope_error_ex
     $P0 = find_method self, scope
+    .tailcall self.$P0(node, bindpost)
+  scope_error_ex:
     pop_eh
-    .return self.$P0(node, bindpost)
   scope_error:
     unless scope goto scope_error_1
     scope = concat " '", scope
     scope = concat scope, "'"
   scope_error_1:
-    .return self.'panic'("Scope", scope, " not found for PAST::Var '", name, "'")
+    .tailcall self.'panic'("Scope", scope, " not found for PAST::Var '", name, "'")
 .end
 
 
@@ -1751,18 +1768,18 @@ attribute.
     if bindpost goto package_bind
     fetchop = $P0.'new'(ops, name, 'pirop'=>'get_global')
     storeop = $P0.'new'(name, ops, 'pirop'=>'set_global')
-    .return self.'vivify'(node, ops, fetchop, storeop)
+    .tailcall self.'vivify'(node, ops, fetchop, storeop)
   package_bind:
-    .return $P0.'new'(name, bindpost, 'pirop'=>'set_global', 'result'=>bindpost)
+    .tailcall $P0.'new'(name, bindpost, 'pirop'=>'set_global', 'result'=>bindpost)
 
   package_hll:
     if ns goto package_ns
     if bindpost goto package_hll_bind
     fetchop = $P0.'new'(ops, name, 'pirop'=>'get_hll_global')
     storeop = $P0.'new'(name, ops, 'pirop'=>'set_hll_global')
-    .return self.'vivify'(node, ops, fetchop, storeop)
+    .tailcall self.'vivify'(node, ops, fetchop, storeop)
   package_hll_bind:
-    .return $P0.'new'(name, bindpost, 'pirop'=>'set_hll_global', 'result'=>bindpost)
+    .tailcall $P0.'new'(name, bindpost, 'pirop'=>'set_hll_global', 'result'=>bindpost)
 
   package_ns:
     $P1 = new 'CodeString'
@@ -1770,9 +1787,9 @@ attribute.
     if bindpost goto package_ns_bind
     fetchop = $P0.'new'(ops, ns, name, 'pirop'=>'get_hll_global')
     storeop = $P0.'new'(ns, name, ops, 'pirop'=>'set_hll_global')
-    .return self.'vivify'(node, ops, fetchop, storeop)
+    .tailcall self.'vivify'(node, ops, fetchop, storeop)
   package_ns_bind:
-    .return $P0.'new'(ns, name, bindpost, 'pirop'=>'set_hll_global', 'result'=>bindpost)
+    .tailcall $P0.'new'(ns, name, bindpost, 'pirop'=>'set_hll_global', 'result'=>bindpost)
 .end
 
 
@@ -1797,7 +1814,7 @@ attribute.
     $P0 = get_hll_global ['POST'], 'Op'
     fetchop = $P0.'new'(ops, name, 'pirop'=>'find_lex')
     storeop = $P0.'new'(name, ops, 'pirop'=>'store_lex')
-    .return self.'vivify'(node, ops, fetchop, storeop)
+    .tailcall self.'vivify'(node, ops, fetchop, storeop)
 
   lexical_decl:
     ops = $P0.'new'('node'=>node)
@@ -1812,9 +1829,9 @@ attribute.
   lexical_bind:
     $P0 = get_hll_global ['POST'], 'Op'
     if isdecl goto lexical_bind_decl
-    .return $P0.'new'(name, bindpost, 'pirop'=>'store_lex', 'result'=>bindpost)
+    .tailcall $P0.'new'(name, bindpost, 'pirop'=>'store_lex', 'result'=>bindpost)
   lexical_bind_decl:
-    .return $P0.'new'(name, bindpost, 'pirop'=>'.lex', 'result'=>bindpost)
+    .tailcall $P0.'new'(name, bindpost, 'pirop'=>'.lex', 'result'=>bindpost)
 .end
 
 
@@ -1855,7 +1872,7 @@ attribute.
     #  if the keyed node is an lvalue, its base is an lvalue also
     $I0 = node.'lvalue'()
     unless $I0 goto have_lvalue
-    basepast.lvalue($I0)
+    basepast.'lvalue'($I0)
   have_lvalue:
 
     basepost = self.'as_post'(basepast, 'rtype'=>'P')
@@ -1871,7 +1888,7 @@ attribute.
     if bindpost goto keyed_bind
     fetchop = $P0.'new'(ops, name, 'pirop'=>'set')
     storeop = $P0.'new'(name, ops, 'pirop'=>'set')
-    .return self.'vivify'(node, ops, fetchop, storeop)
+    .tailcall self.'vivify'(node, ops, fetchop, storeop)
   keyed_bind:
     ops.'result'(bindpost)
     ops.'push_pirop'('set', name, ops)
@@ -1882,7 +1899,7 @@ attribute.
 .sub 'keyed_int' :method :multi(_, ['PAST';'Var'])
     .param pmc node
     .param pmc bindpost
-    .return self.'keyed'(node, bindpost, 'i')
+    .tailcall self.'keyed'(node, bindpost, 'i')
 .end
 
 
@@ -1918,17 +1935,17 @@ attribute.
     $P0 = get_hll_global ['POST'], 'Op'
     fetchop = $P0.'new'(ops, call_on, name, 'pirop'=>'getattribute')
     storeop = $P0.'new'(call_on, name, ops, 'pirop'=>'setattribute')
-    .return self.'vivify'(node, ops, fetchop, storeop)
+    .tailcall self.'vivify'(node, ops, fetchop, storeop)
 
   attribute_decl:
-    .return $P0.'new'('node'=>node)
+    .tailcall $P0.'new'('node'=>node)
 
   attribute_bind:
     $P0 = get_hll_global ['POST'], 'Op'
     if isdecl goto attribute_bind_decl
-    .return $P0.'new'(call_on, name, bindpost, 'pirop'=>'setattribute', 'result'=>bindpost)
+    .tailcall $P0.'new'(call_on, name, bindpost, 'pirop'=>'setattribute', 'result'=>bindpost)
   attribute_bind_decl:
-    .return $P0.'new'(call_on, name, bindpost, 'pirop'=>'setattribute', 'result'=>bindpost)
+    .tailcall $P0.'new'(call_on, name, bindpost, 'pirop'=>'setattribute', 'result'=>bindpost)
 .end
 
 
@@ -1991,7 +2008,8 @@ to have a PMC generated containing the constant value.
     ops = $P0.'new'('node'=>node)
 
     .local pmc value, returns
-    value = node.'value'()
+    value = node['value']
+    if null value goto err_novalue
     returns = node.'returns'()
     if returns goto have_returns
     $S0 = typeof value
@@ -2022,6 +2040,9 @@ to have a PMC generated containing the constant value.
     ops.'push_pirop'('assign', result, value)
     ops.'result'(result)
     .return (ops)
+
+  err_novalue:
+    self.'panic'('PAST::Val node missing :value attribute')
 .end
 
 

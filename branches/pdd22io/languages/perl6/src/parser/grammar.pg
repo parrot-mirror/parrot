@@ -146,6 +146,8 @@ token lambda { '->' | '<->' }
 
 token pblock { [ <lambda> <.ws> <signature> ]? <.ws> <block> {*} }
 
+token xblock { <EXPR> <.ws> <pblock> {*} }
+
 
 ##  Blocks can also have an implied statement end if the
 ##  closing brace is the last non-ws thing on the line.
@@ -154,10 +156,13 @@ token block {
     '{'
     <statement_block>
     [ '}' || <panic: Missing '}'> ]
-    [ \h* <.unv>? \n <.MARK_STATEMENT_END> ]?
+    <.BLOCK_STATEMENT_END>?
     {*}
 }
 
+token BLOCK_STATEMENT_END {
+    [ \h* <.unv>? \n <.MARK_STATEMENT_END> ]
+}
 
 rule statementlist {
     [<statement><.eat_terminator> ]*
@@ -210,15 +215,13 @@ token MARK_STATEMENT_END {
 ##  or an expression.  Any statement termination is handled by
 ##  the calling rule.
 rule statement {
-    | <statement_control> {*}                    #= statement_control
+    | <statement_control> {*}                    #= control
     | <expr=EXPR>
         [
-        || <statement_mod_loop> {*}              #= statement_mod_loop
+        || <statement_mod_loop> {*}              #= mod_loop
         || <statement_mod_cond>
-            [
-                <sml=statement_mod_loop>
-            ]?
-            {*}                                  #= statement_mod_cond
+           <statement_mod_loop>?
+           {*}                                   #= mod_cond
         || {*}                                   #= expr
         ]
     | <?before ';'> {*}                          #= null
@@ -241,16 +244,14 @@ rule statement_control {
 
 rule if_statement {
     $<sym>=[if]
-    <EXPR> <block>
-    [ 'elsif' <EXPR> <block> ]*
-    [ 'else' <else=block> ]?
+    <xblock>
+    [ 'elsif' <xblock> ]*
+    [ 'else' <pblock> ]?
     {*}
 }
 
 rule unless_statement {
-    $<sym>=[unless]
-    <EXPR> <block>
-    {*}
+    $<sym>=[unless] <xblock> {*}
 }
 
 rule repeat_statement {
@@ -263,14 +264,13 @@ rule repeat_statement {
 
 rule while_statement {
     $<sym>=[while|until]
-    <EXPR> <block>
+    <xblock>
     {*}
 }
 
 rule given_statement {
     $<sym>=[given]
-    <EXPR>
-    <pblock>
+    <xblock>
     {*}
 }
 
@@ -301,7 +301,7 @@ rule loop_statement {
 
 rule for_statement {
     $<sym>=[for]
-    <EXPR> <pblock>
+    <xblock>
     {*}
 }
 
@@ -811,19 +811,22 @@ rule regex_declarator {
 rule regex_declarator_regex {
     $<sym>='regex'
     <identifier>?
-    <before '{'> <quote_expression: :regex> {*}
+    <before '{'> <quote_expression: :regex><.BLOCK_STATEMENT_END>?
+    {*}
 }
 
 rule regex_declarator_token {
     $<sym>='token'
     <identifier>?
-    <before '{'> <quote_expression: :regex :ratchet> {*}
+    <before '{'> <quote_expression: :regex :ratchet><.BLOCK_STATEMENT_END>?
+    {*}
 }
 
 rule regex_declarator_rule {
     $<sym>='rule'
     <identifier>?
-    <before '{'> <quote_expression: :regex :ratchet :sigspace> {*}
+    <before '{'> <quote_expression: :regex :ratchet :sigspace><.BLOCK_STATEMENT_END>?
+    {*}
 }
 
 ##  S05 shows semilist as being a list of statements, in order

@@ -22,6 +22,34 @@ src/classes/Mapping.pir - Perl 6 hash class and related functions
 .end
 
 
+=item Scalar
+
+When we're going to be stored as an item, become a Hash and then return
+ourself in a ObjectRef.
+
+=cut
+
+.sub 'Scalar' :method
+    # Create a hash with our values.
+    .local pmc hash, it
+    hash = get_hll_global "Hash"
+    hash = hash.'new'()
+    it = iter self
+  it_loop:
+    unless it goto it_loop_end
+    $P0 = shift it
+    $P1 = self[$P0]
+    hash[$P0] = $P1
+    goto it_loop
+  it_loop_end:
+
+    # Wrap it up in an object ref and return it.
+    .local pmc ref
+    ref = new 'ObjectRef', hash
+    .return (ref)
+.end
+
+
 .sub 'get_string' :method :vtable
     $S0 = ''
     .local pmc iter
@@ -134,6 +162,50 @@ Returns elements of hash as array of C<Pairs>
     goto loop
   end:
     .return (rv)
+.end
+
+
+=item fmt
+
+ our Str multi Mapping::fmt ( Str $format, $separator = "\n" )
+
+Returns the invocant mapping formatted by an implicit call to C<.fmt> on
+every pair, joined by newlines or an explicitly given separator.
+
+=cut
+
+.sub 'fmt' :method :multi('Hash')
+    .param pmc format
+    .param string sep          :optional
+    .param int has_sep         :opt_flag
+
+    .local pmc pairs
+    .local pmc res
+    .local pmc iter
+    .local pmc retv
+    .local pmc elem
+    .local pmc key
+    .local pmc value
+    .local pmc elemres
+
+    if has_sep goto have_sep
+    sep = "\n"
+  have_sep:
+    pairs = self.'pairs'()
+    res = new 'List'
+    iter = pairs.'iterator'()
+  elem_loop:
+    unless iter goto done
+
+  invoke:
+    elem = shift iter
+    elemres = elem.'fmt'(format)
+    push res, elemres
+    goto elem_loop
+
+  done:
+    retv = 'join'(sep, res)
+    .return(retv)
 .end
 
 

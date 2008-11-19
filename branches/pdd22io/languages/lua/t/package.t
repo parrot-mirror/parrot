@@ -209,7 +209,7 @@ print {$X} <<'PIR';
 
 .sub '__onload' :anon :load
 #    print "__onload mod_foo\n"
-    .const .Sub entry = 'luaopen_mod_foo'
+    .const 'Sub' entry = 'luaopen_mod_foo'
     set_root_global 'luaopen_mod_foo', entry
 .end
 
@@ -222,7 +222,7 @@ print {$X} <<'PIR';
     new _mod_foo, 'LuaTable'
     set $P1, 'mod_foo'
     _lua__GLOBAL[$P1] = _mod_foo
-    .const .Sub _mod_foo_bar = '_mod_foo_bar'
+    .const 'Sub' _mod_foo_bar = '_mod_foo_bar'
     set $P1, 'bar'
     _mod_foo[$P1] = _mod_foo_bar
     .return (_mod_foo)
@@ -289,7 +289,7 @@ print(type(package.pbcpath))
 print(package.pbcpath)
 CODE
 string
-./?.pbc;./?.pir;languages/lua/src/lib/?.pbc
+./?.pbc;./?.pir;languages/lua/?.pbc
 OUTPUT
 
 $ENV{LUA_PBCPATH} = "?.pbc";
@@ -303,7 +303,7 @@ $ENV{LUA_PBCPATH} = ";;languages/lua/?.pbc";
 language_output_is( 'lua', << 'CODE', << 'OUTPUT', 'table package.pbcpath' );
 print(package.pbcpath)
 CODE
-;./?.pbc;./?.pir;languages/lua/src/lib/?.pbc;languages/lua/?.pbc
+;./?.pbc;./?.pir;languages/lua/?.pbc;languages/lua/?.pbc
 OUTPUT
 
 delete $ENV{LUA_PBCPATH};

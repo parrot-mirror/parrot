@@ -33,7 +33,8 @@ typedef enum expr_types {
     EXPR_TARGET,
     EXPR_CONSTANT,
     EXPR_IDENT,
-    EXPR_KEY
+    EXPR_KEY,
+    EXPR_LABEL
 
 } expr_type;
 
@@ -65,13 +66,6 @@ typedef enum arg_flags {
 
 } arg_flag;
 
-/* instruction flags */
-typedef enum instr_flags {
-    INSTR_FLAG_BRANCH   = 1 << 0,  /* unconditional branch instruction */
-    INSTR_FLAG_IFUNLESS = 1 << 1,  /* conditional branch instruction */
-    INSTR_FLAG_ISXX     = 1 << 2   /* isXX variant of conditional branch instruction */
-
-} instr_flag;
 
 /* sub flags */
 typedef enum sub_flags {
@@ -87,7 +81,7 @@ typedef enum sub_flags {
     SUB_FLAG_VTABLE     = 1 << 8,  /* this sub overrides a vtable method */
     SUB_FLAG_LEX        = 1 << 9,  /* this sub needs a LexPad */
     SUB_FLAG_MULTI      = 1 << 10, /* this sub is a multi method/sub */
-    SUB_FLAG_LEXID      = 1 << 11, /* this sub has a namespace-unaware identifier
+    SUB_FLAG_SUBID      = 1 << 11, /* this sub has a namespace-unaware identifier
                                       XXX this flag needed? XXX */
     SUB_FLAG_INSTANCEOF = 1 << 12  /* this sub has an :instanceof flag. XXX document this XXX */
 
@@ -149,13 +143,21 @@ typedef struct constant {
 
 } constant;
 
+/* for representing a label operand */
+typedef struct label {
+    int         offset;
+    char const *name;
+
+} label;
+
+
 #define CONST_INTVAL(c) c->val.ival
 #define CONST_NUMVAL(c) c->val.nval
 #define CONST_PMCVAL(c) c->val.pval
 #define CONST_STRVAL(c) c->val.sval
 
 /* The expression node is used as a wrapper to represent target nodes (like .param, .local
- * and registers), constant nodes (either named or anonymous), XXX identifiers?? XXX,
+ * and registers), constant nodes (either named or anonymous), label identifiers,
  * or key nodes, such as ["x";42].
  */
 typedef struct expression {
@@ -164,6 +166,7 @@ typedef struct expression {
         constant       *c;
         char const     *id;
         struct key     *k;
+        struct label   *l;
 
     } expr;
 
@@ -184,23 +187,19 @@ typedef struct key {
 } key;
 
 
-/* accessor macros for target name and (PIR) register number */
-#define target_name(t)  t->u.name
-#define target_regno(t) t->u.regno
+
 
 /* The target node represents a .local, .param or register that can receive a value,
  * hence the name "target". When receiving arguments, it's a parameter, when receiving
  * return values, it's a local variable (or register).
  */
 typedef struct target {
-    pir_type       type;           /* type of this target. */
 
-    union { /* target is either a .local/.param or a PIR register; no need to store both */
-        char const *name;           /* if this is a declared local */
-        int         regno;          /* if this is a register */
-    } u;
+    union sym_union {
+        struct symbol  *sym;
+        struct pir_reg *reg;
+    } s;
 
-    int            color;          /* for register allocation; -1 means no reg. allocated. */
     target_flag    flags;          /* flags like :slurpy etc. */
     char const    *alias;          /* if this is a named parameter, this is the alias */
     char const    *lex_name;       /* if this is a lexical, this field contains the name */
@@ -253,7 +252,7 @@ typedef struct instruction {
     char         const *label;        /* label of this instruction */
     char         const *opname;       /* name of the instruction, such as "print" and "set" */
     expression         *operands;     /* operands like "$I0" and "42" in "set $I0, 42" */
-    int                 flags;        /* XXX used for checking if this op jumps */
+    int                 oplabelbits;
     struct op_info_t   *opinfo;       /* pointer to the op_info containing this op's meta data */
     int                 opcode;       /* the opcode of one of this op */
 
@@ -304,9 +303,11 @@ typedef struct subroutine {
     key                *name_space;    /* this sub's namespace */
     char const         *sub_name;      /* this sub's name */
     char const         *outer_sub;     /* this sub's outer subroutine, if any */
-    char const         *lex_id;        /* this sub's lex_id, if any */
+    char const         *subid;         /* this sub's subid, if any */
     char const         *vtable_method; /* name of vtable method that this sub's overriding if any */
     char const         *instanceof;    /* XXX document this XXX */
+    char const         *nsentry;       /* name by which the sub is stored in the namespace */
+    char const         *methodname;    /* name of this sub by which it's stored as a method */
     int                 flags;         /* this sub's flags */
 
     /* XXX the whole multi stuff must be implemented */
@@ -338,11 +339,15 @@ void set_namespace(struct lexer_state * const lexer, key * const ns);
 /* various set functions to set the value of a subroutine flag */
 void set_sub_outer(struct lexer_state * const lexer, char const * const outersub);
 void set_sub_vtable(struct lexer_state * const lexer, char const * vtablename);
-void set_sub_lexid(struct lexer_state * const lexer, char const * const lexid);
+void set_sub_subid(struct lexer_state * const lexer, char const * const subid);
 void set_sub_instanceof(struct lexer_state * const lexer, char const * const classname);
+void set_sub_nsentry(struct lexer_state * const lexer, char const * const nsentry);
+void set_sub_methodname(struct lexer_state * const lexer, char const * const methodname);
 
 /* install a new subroutine node */
 void new_subr(struct lexer_state * const lexer, char const * const subname);
+
+void set_sub_name(struct lexer_state * const lexer, char const * const subname);
 
 /* functions for setting argument flags or argument alias */
 argument *set_arg_flag(argument * const arg, arg_flag flag);
@@ -353,6 +358,8 @@ constant *new_named_const(struct lexer_state * const lexer, pir_type type,
                           char const * const name, ...);
 
 constant *new_const(struct lexer_state * const lexer, pir_type type, ...);
+
+constant *new_pmc_const(char const * const type, char const * const name, constant * const value);
 
 /* conversion functions, each wrapping its argument in an expression node */
 expression *expr_from_const(struct lexer_state * const lexer, constant * const c);
@@ -374,7 +381,7 @@ argument *set_curarg(struct lexer_state * const lexer, argument * const arg);
 /* target constructors */
 target *add_target(struct lexer_state * const lexer, target *t1, target * const t);
 target *new_reg(struct lexer_state * const lexer, pir_type type, int regno);
-target *new_target(struct lexer_state * const lexer, pir_type type, char const * const name);
+target *new_target(struct lexer_state * const lexer);
 
 /* set a key on a target node */
 void set_target_key(target * const t, key * const k);
@@ -386,8 +393,6 @@ void set_invocation_args(invocation * const inv, argument * const args);
 void set_invocation_results(invocation * const inv, target * const results);
 
 /* conversion functions that wrap their arguments into a target node */
-target *target_from_string(struct lexer_state * const lexer, char const * const str);
-target *target_from_ident(struct lexer_state * const lexer, pir_type type, char const * const id);
 target *target_from_symbol(struct lexer_state * const lexer, struct symbol * const sym);
 
 /* management functions for key nodes */
@@ -439,7 +444,7 @@ int is_parrot_op(struct lexer_state * const lexer, char const * const name);
 
 void close_sub(struct lexer_state * const lexer);
 void fixup_global_labels(struct lexer_state * const lexer);
-void set_instr_flag(struct lexer_state * const lexer, instr_flag flag);
+void set_op_labelflag(struct lexer_state * const lexer, int flag);
 void convert_inv_to_instr(struct lexer_state * const lexer, invocation * const inv);
 
 void generate_get_params(struct lexer_state * const lexer);

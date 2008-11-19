@@ -3,7 +3,7 @@
 
 .include 'cclass.pasm'
 
-.namespace ['cardinal::Grammar']
+.namespace ['cardinal';'Grammar']
 
 .sub 'peek_brackets' :method
     .param string target
@@ -89,7 +89,7 @@
     $I0 = options['regex']
     unless $I0 goto word_start
   regex_start:
-    p6regex = get_root_global ['parrot';'PGE::Perl6Regex'], 'regex'
+    p6regex = get_root_global ['parrot';'PGE';'Perl6Regex'], 'regex'
     mob.'to'(pos)
     quote_regex = p6regex(mob, options :flat :named)
     unless quote_regex goto fail
@@ -440,7 +440,7 @@
     mob.'to'(pos)
     .return (mob)
   fail_backchar_digit:
-    self.panic('\123 form deprecated, use \o123 instead')
+    self.'panic'('\123 form deprecated, use \o123 instead')
   fail:
     mob.'to'(-1)
     .return (mob)

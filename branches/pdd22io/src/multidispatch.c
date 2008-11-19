@@ -73,14 +73,6 @@ static void mmd_add_multi_to_namespace(PARROT_INTERP,
 
 PARROT_CANNOT_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
-static PMC* mmd_arg_tuple_inline(PARROT_INTERP,
-    ARGIN(STRING *signature),
-    va_list args)
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(2);
-
-PARROT_CANNOT_RETURN_NULL
-PARROT_WARN_UNUSED_RESULT
 static PMC* mmd_build_type_tuple_from_long_sig(PARROT_INTERP,
     ARGIN(STRING *long_sig))
         __attribute__nonnull__(1)
@@ -140,15 +132,16 @@ PARROT_CANNOT_RETURN_NULL
 static PMC* Parrot_mmd_arg_tuple_func(PARROT_INTERP)
         __attribute__nonnull__(1);
 
-PARROT_CANNOT_RETURN_NULL
-static PMC * Parrot_mmd_deref(PARROT_INTERP, ARGIN(PMC *value))
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(2);
-
 static void Parrot_mmd_ensure_writable(PARROT_INTERP,
     INTVAL function,
     ARGIN_NULLOK(const PMC *pmc))
         __attribute__nonnull__(1);
+
+PARROT_CANNOT_RETURN_NULL
+PARROT_WARN_UNUSED_RESULT
+static PMC* Parrot_mmd_get_cached_multi_sig(PARROT_INTERP, ARGIN(PMC *sub))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
 
 static int Parrot_mmd_maybe_candidate(PARROT_INTERP,
     ARGIN(PMC *pmc),
@@ -263,7 +256,7 @@ RT #48260: Not yet documented!!!
 
 */
 
-PARROT_API
+PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 funcptr_t
@@ -353,7 +346,7 @@ Currently this only looks in the global "MULTI" namespace.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 PMC*
@@ -376,30 +369,6 @@ Parrot_mmd_find_multi_from_sig_obj(PARROT_INTERP, ARGIN(STRING *name), ARGIN(PMC
 
     return VTABLE_get_pmc_keyed_int(interp, candidate_list, 0);
 
-}
-
-/*
-
-=item C<static PMC * Parrot_mmd_deref>
-
-If C<value> is a reference-like PMC, dereference it so we can make an MMD
-call on the 'real' value.
-
-{{**DEPRECATE**}}
-
-=cut
-
-*/
-
-PARROT_CANNOT_RETURN_NULL
-static PMC *
-Parrot_mmd_deref(PARROT_INTERP, ARGIN(PMC *value))
-{
-    if (!PObj_is_object_TEST(value)
-    &&  VTABLE_type(interp, value) != value->vtable->base_type)
-        return VTABLE_get_pmc(interp, value);
-    else
-        return value;
 }
 
 
@@ -435,7 +404,7 @@ pass on to the multiple dispatch search.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 PMC*
@@ -466,8 +435,7 @@ Parrot_build_sig_object_from_varargs(PARROT_INTERP, ARGIN(const char *sig), va_l
         /* Only create the returns array if it's needed */
         if (in_return_sig && PMC_IS_NULL(returns)) {
             returns = pmc_new(interp, enum_class_ResizablePMCArray);
-            VTABLE_set_attr_str(interp, call_object,
-                    CONST_STRING(interp, "results"), returns);
+            VTABLE_set_attr_str(interp, call_object, CONST_STRING(interp, "results"), returns);
         }
 
         if (in_return_sig) {
@@ -480,23 +448,19 @@ Parrot_build_sig_object_from_varargs(PARROT_INTERP, ARGIN(const char *sig), va_l
             switch (type) {
                 case 'I':
                     VTABLE_set_pointer(interp, val_pointer, (void *) va_arg(args, INTVAL*));
-                    VTABLE_set_string_keyed_str(interp, val_pointer,
-                        signature, CONST_STRING(interp, "I"));
+                    VTABLE_set_string_keyed_str(interp, val_pointer, signature, CONST_STRING(interp, "I"));
                     break;
                 case 'N':
                     VTABLE_set_pointer(interp, val_pointer, (void *) va_arg(args, FLOATVAL*));
-                    VTABLE_set_string_keyed_str(interp, val_pointer,
-                        signature, CONST_STRING(interp, "N"));
+                    VTABLE_set_string_keyed_str(interp, val_pointer, signature, CONST_STRING(interp, "N"));
                     break;
                 case 'S':
                     VTABLE_set_pointer(interp, val_pointer, (void *) va_arg(args, STRING**));
-                    VTABLE_set_string_keyed_str(interp, val_pointer,
-                        signature, CONST_STRING(interp, "S"));
+                    VTABLE_set_string_keyed_str(interp, val_pointer, signature, CONST_STRING(interp, "S"));
                     break;
                 case 'P':
                     VTABLE_set_pointer(interp, val_pointer, (void *) va_arg(args, PMC**));
-                    VTABLE_set_string_keyed_str(interp, val_pointer,
-                        signature, CONST_STRING(interp, "P"));
+                    VTABLE_set_string_keyed_str(interp, val_pointer, signature, CONST_STRING(interp, "P"));
                     break;
                 default:
                     Parrot_ex_throw_from_c_args(interp, NULL,
@@ -562,7 +526,7 @@ integer, so the result can be set.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 PARROT_CAN_RETURN_NULL
 void
 Parrot_mmd_multi_dispatch_from_c_args(PARROT_INTERP,
@@ -608,7 +572,7 @@ RT #45941 change this to a MMD register interface that takes a function *name*.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 void
 Parrot_mmd_add_function(PARROT_INTERP, INTVAL func_nr, SHIM(funcptr_t function))
 {
@@ -728,57 +692,6 @@ mmd_expand_y(PARROT_INTERP, INTVAL func_nr, INTVAL new_y)
 
 /*
 
-=item C<void mmd_add_by_class>
-
-Add a function to the MMD table by class name, rather than class number.
-Handles the case where the named class isn't loaded yet.
-
-Adds a new MMD function C<funcptr> to the C<func_num> function table
-that will be invoked when the left parameter is of class C<left_class>
-and the right parameter is of class C<right_class>. Both classes are
-C<STRING *>s that hold the PMC class names for the left and right sides.
-If either class isn't yet loaded, Parrot will cache the information such
-that the function will be installed if at some point in the future both
-classes are available.
-
-Currently this is done by just assigning class numbers to the classes,
-which the classes will pick up and use if they're later loaded, but we
-may later put the functions into a deferred table that we scan when PMC
-classes are loaded. Either way, the function will be guaranteed to be
-installed when it's needed.
-
-The function table must exist, but if it is too small, it will
-automatically be expanded.
-
-{{**DEPRECATE**}}
-
-=cut
-
-*/
-
-PARROT_API
-void
-Parrot_mmd_add_by_class(PARROT_INTERP,
-             INTVAL functype,
-             ARGIN(STRING *left_class), ARGIN(STRING *right_class),
-             NULLOK(funcptr_t funcptr))
-{
-    INTVAL left_type  = pmc_type(interp, left_class);
-    INTVAL right_type = pmc_type(interp, right_class);
-
-    if (left_type == enum_type_undef)
-        left_type = pmc_register(interp, left_class);
-
-    if (right_type == enum_type_undef)
-        right_type = pmc_register(interp, right_class);
-
-    Parrot_mmd_register(interp, functype, left_type, right_type, funcptr);
-
-}
-
-
-/*
-
 =item C<void Parrot_mmd_register>
 
 Register a function C<funcptr> for MMD function table C<func_num> for classes
@@ -807,7 +720,7 @@ future.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 void
 Parrot_mmd_register(PARROT_INTERP, INTVAL func_nr, INTVAL left_type, INTVAL right_type,
              NULLOK(funcptr_t funcptr))
@@ -851,7 +764,7 @@ RT #48260: Not yet documented!!!
 
 */
 
-PARROT_API
+PARROT_EXPORT
 void
 Parrot_mmd_register_sub(PARROT_INTERP, INTVAL func_nr,
              INTVAL left_type, INTVAL right_type, ARGIN(const PMC *sub))
@@ -879,7 +792,7 @@ Frees all the memory allocated used the MMD subsystem.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 void
 Parrot_mmd_destroy(PARROT_INTERP)
 {
@@ -910,7 +823,7 @@ Currently only searches the global MULTI namespace.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 PARROT_CANNOT_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
 PMC *
@@ -951,7 +864,7 @@ RT #48260: Not yet documented!!!
 
 */
 
-PARROT_API
+PARROT_EXPORT
 PARROT_CANNOT_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
 PMC *
@@ -979,7 +892,7 @@ candidates by their manhattan distance to the signature args.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 PARROT_CAN_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
 PMC *
@@ -1016,7 +929,7 @@ manhatten distance to the current args.
 =cut
 
 */
-PARROT_API
+PARROT_EXPORT
 PARROT_CAN_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
 PMC *
@@ -1041,66 +954,6 @@ Parrot_mmd_sort_manhattan(PARROT_INTERP, ARGIN(PMC *candidates))
         return PMCNULL;
 
     return candidates;
-}
-
-
-/*
-
-=item C<static PMC* mmd_arg_tuple_inline>
-
-Return a list of argument types. PMC arguments are specified as function
-arguments.
-
-{{**DEPRECATE** Not actually called anywhere.}}
-
-=cut
-*/
-
-PARROT_CANNOT_RETURN_NULL
-PARROT_WARN_UNUSED_RESULT
-static PMC*
-mmd_arg_tuple_inline(PARROT_INTERP, ARGIN(STRING *signature), va_list args)
-{
-    INTVAL       i;
-    PMC * const  arg_tuple = pmc_new(interp, enum_class_FixedIntegerArray);
-    const INTVAL sig_len   = string_length(interp, signature);
-
-    if (!sig_len)
-        return arg_tuple;
-
-    VTABLE_set_integer_native(interp, arg_tuple, sig_len);
-
-    for (i = 0; i < sig_len; ++i) {
-        INTVAL type = string_index(interp, signature, i);
-        switch (type) {
-            case 'I':
-                VTABLE_set_integer_keyed_int(interp, arg_tuple,
-                        i, enum_type_INTVAL);
-                break;
-            case 'N':
-                VTABLE_set_integer_keyed_int(interp, arg_tuple,
-                        i, enum_type_FLOATVAL);
-                break;
-            case 'S':
-                VTABLE_set_integer_keyed_int(interp, arg_tuple,
-                        i, enum_type_STRING);
-                break;
-            case 'O':
-            case 'P':
-            {
-                PMC *arg = va_arg(args, PMC *);
-                type     = VTABLE_type(interp, arg);
-                VTABLE_set_integer_keyed_int(interp, arg_tuple, i, type);
-                break;
-            }
-            default:
-                Parrot_ex_throw_from_c_args(interp, NULL, 1,
-                    "Unknown signature type %d in mmd_arg_tuple", type);
-                break;
-        }
-
-    }
-    return arg_tuple;
 }
 
 
@@ -1425,7 +1278,15 @@ mmd_build_type_tuple_from_long_sig(PARROT_INTERP, ARGIN(STRING *long_sig))
 
 =item C<static PMC* mmd_cvt_to_types>
 
-RT #48260: Not yet documented!!!
+Given a ResizablePMCArray PMC containing some form of type identifier (either
+the string name of a class or a PMC representing the type), resolves all type
+references to type IDs, if possible.  If that's not possible, returns PMCNULL.
+In that case you can't dispatch to the multi variant with this type signature,
+as Parrot doesn't yet know about the respective types requested -- you have to
+register them first.
+
+Otherwise, returns a ResizableIntegerArray PMC full of type IDs representing
+the signature of a multi variant to which you may be able to dispatch.
 
 {{**DEPRECATE**}}
 
@@ -1438,11 +1299,9 @@ PARROT_WARN_UNUSED_RESULT
 static PMC*
 mmd_cvt_to_types(PARROT_INTERP, ARGIN(PMC *multi_sig))
 {
-    PMC * const ar = pmc_new(interp, enum_class_FixedIntegerArray);
+    PMC        *ar = PMCNULL;
     const INTVAL n = VTABLE_elements(interp, multi_sig);
     INTVAL       i;
-
-    VTABLE_set_integer_native(interp, ar, n);
 
     for (i = 0; i < n; ++i) {
         PMC * const sig_elem = VTABLE_get_pmc_keyed_int(interp, multi_sig, i);
@@ -1450,20 +1309,59 @@ mmd_cvt_to_types(PARROT_INTERP, ARGIN(PMC *multi_sig))
 
         if (sig_elem->vtable->base_type == enum_class_String) {
             STRING * const sig = VTABLE_get_string(interp, sig_elem);
+
+            /* yes, this is horrible and ugly */
             if (memcmp(sig->strstart, "__VOID", 6) == 0) {
+                if (PMC_IS_NULL(ar)) {
+                    ar = pmc_new(interp, enum_class_FixedIntegerArray);
+                    VTABLE_set_integer_native(interp, ar, n);
+                }
                 PMC_int_val(ar)--;  /* RT #45951 */
                 break;
             }
+
+            if (!sig)
+                return PMCNULL;
+
             type = pmc_type(interp, sig);
+
+            if (type == enum_type_undef)
+                return PMCNULL;
         }
-        else {
+        else
             type = pmc_type_p(interp, sig_elem);
+
+        /* create destination PMC only as necessary */
+        if (PMC_IS_NULL(ar)) {
+            ar = pmc_new(interp, enum_class_FixedIntegerArray);
+            VTABLE_set_integer_native(interp, ar, n);
         }
 
         VTABLE_set_integer_keyed_int(interp, ar, i, type);
     }
 
     return ar;
+}
+
+static PMC *
+Parrot_mmd_get_cached_multi_sig(PARROT_INTERP, ARGIN(PMC *sub))
+{
+    if (VTABLE_isa(interp, sub, CONST_STRING(interp, "Sub"))) {
+        PMC *multi_sig = PMC_sub(sub)->multi_signature;
+
+        if (multi_sig->vtable->base_type == enum_class_FixedPMCArray) {
+            PMC *converted_sig = mmd_cvt_to_types(interp, multi_sig);
+
+            if (PMC_IS_NULL(converted_sig))
+                return PMCNULL;
+
+            multi_sig = PMC_sub(sub)->multi_signature = converted_sig;
+        }
+
+        return multi_sig;
+    }
+
+    return PMCNULL;
 }
 
 
@@ -1487,24 +1385,19 @@ mmd_distance(PARROT_INTERP, ARGIN(PMC *pmc), ARGIN(PMC *arg_tuple))
     INTVAL i, n, args, dist, j, m;
 
     /* has to be a builtin multi method */
-    if (pmc->vtable->base_type == enum_class_NCI) {
+    if (pmc->vtable->base_type == enum_class_NCI)
         multi_sig = PMC_pmc_val(pmc);
-    }
-    else if (VTABLE_isa(interp, pmc, CONST_STRING(interp, "Sub"))
-         ||  VTABLE_isa(interp, pmc, CONST_STRING(interp, "Closure"))) {
-        multi_sig = PMC_sub(pmc)->multi_signature;
-
-        /* some method */
-        if (!multi_sig)
+    else {
+        /* not a multi; no distance */
+        if (!PMC_sub(pmc)->multi_signature)
             return 0;
 
-        if (multi_sig->vtable->base_type == enum_class_FixedPMCArray) {
-            multi_sig = PMC_sub(pmc)->multi_signature =
-                mmd_cvt_to_types(interp, multi_sig);
-        }
+        multi_sig = Parrot_mmd_get_cached_multi_sig(interp, pmc);
     }
-    else
+
+    if (PMC_IS_NULL(multi_sig))
         return MMD_BIG_DISTANCE;
+
     n    = VTABLE_elements(interp, multi_sig);
     args = VTABLE_elements(interp, arg_tuple);
 
@@ -1526,6 +1419,22 @@ mmd_distance(PARROT_INTERP, ARGIN(PMC *pmc), ARGIN(PMC *arg_tuple))
         const INTVAL type_call = VTABLE_get_integer_keyed_int(interp, arg_tuple, i);
         if (type_sig == type_call)
             continue;
+
+        /* promote primitives to their PMC equivalents, as PCC will autobox
+         * the distance penalty makes primitive variants look cheaper */
+        switch (type_call) {
+            case enum_type_INTVAL:
+                if (type_sig == enum_class_Integer) { dist++; continue; }
+                break;
+            case enum_type_FLOATVAL:
+                if (type_sig == enum_class_Float)   { dist++; continue; }
+                break;
+            case enum_type_STRING:
+                if (type_sig == enum_class_String)  { dist++; continue; }
+                break;
+            default:
+                break;
+        }
 
         /*
          * different native types are very different, except a PMC
@@ -1883,7 +1792,7 @@ stored in the global MULTI namespace.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 void
 Parrot_mmd_add_multi_from_long_sig(PARROT_INTERP,
         ARGIN(STRING *sub_name), ARGIN(STRING *long_sig),
@@ -1918,7 +1827,7 @@ stored in the specified namespace.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 void
 Parrot_mmd_add_multi_from_c_args(PARROT_INTERP,
         ARGIN(const char *sub_name),
@@ -1926,20 +1835,21 @@ Parrot_mmd_add_multi_from_c_args(PARROT_INTERP,
         ARGIN(const char *long_sig),
         ARGIN(funcptr_t multi_func_ptr))
 {
-        PMC *multi_sig;
+        STRING *comma          = CONST_STRING(interp, ",");
         STRING *sub_name_str   = string_from_cstring(interp, sub_name, 0);
-        STRING *long_sig_str    = string_from_cstring(interp, long_sig, 0);
+        STRING *long_sig_str   = string_from_cstring(interp, long_sig, 0);
         STRING *short_sig_str  = string_from_cstring(interp, short_sig, 0);
-        PMC *type_list = string_split(interp, CONST_STRING(interp, ","), long_sig_str);
+        PMC    *type_list      = string_split(interp, comma, long_sig_str);
         STRING *namespace_name = VTABLE_get_string_keyed_int(interp, type_list, 0);
-
         /* Create an NCI sub for the C function */
-        PMC *sub_obj = constant_pmc_new(interp, enum_class_NCI);
-        VTABLE_set_pointer_keyed_str(interp, sub_obj,
-                short_sig_str, F2DPTR(multi_func_ptr));
+        PMC    *sub_obj        = constant_pmc_new(interp, enum_class_NCI);
+        PMC    *multi_sig      = mmd_build_type_tuple_from_long_sig(interp,
+                                    long_sig_str);
+
+        VTABLE_set_pointer_keyed_str(interp, sub_obj, short_sig_str,
+                                        F2DPTR(multi_func_ptr));
 
         /* Attach a type tuple array to the NCI sub for multi dispatch */
-        multi_sig = mmd_build_type_tuple_from_long_sig(interp, long_sig_str);
         PMC_pmc_val(sub_obj) = multi_sig;
 
         mmd_add_multi_to_namespace(interp, namespace_name, sub_name_str, sub_obj);
@@ -1962,7 +1872,7 @@ declared in a PMC from the PMC's class initialization function.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 void
 Parrot_mmd_add_multi_list_from_c_args(PARROT_INTERP,
         ARGIN(const multi_func_list *mmd_info), INTVAL elements)
@@ -1978,46 +1888,6 @@ Parrot_mmd_add_multi_list_from_c_args(PARROT_INTERP,
                 mmd_info[i].full_sig,
                 mmd_info[i].func_ptr);
     }
-}
-
-
-/*
-
-=item C<void Parrot_mmd_rebuild_table>
-
-Rebuild the static MMD_table for the given class type and MMD function
-number. If C<type> is negative all classes are rebuilt. If C<func_nr> is
-negative all MMD functions are rebuilt.
-
-{{**DEPRECATE**}}
-
-=cut
-
-*/
-
-PARROT_API
-void
-Parrot_mmd_rebuild_table(PARROT_INTERP, INTVAL type, INTVAL func_nr)
-{
-    MMD_table *table;
-    UINTVAL    i;
-
-    UNUSED(type);
-
-    if (!interp->binop_mmd_funcs)
-        return;
-
-    table = interp->binop_mmd_funcs + func_nr;
-
-    if (!table)
-        return;
-
-    /* RT #45963 specific parts of table
-     * the type and it's mro and
-     * all classes that inherit from type
-     */
-    for (i = 0; i < table->x * table->y; ++i)
-        table->mmd_funcs[i] = NULL;
 }
 
 

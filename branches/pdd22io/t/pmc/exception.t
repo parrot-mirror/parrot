@@ -6,7 +6,7 @@ use strict;
 use warnings;
 use lib qw( . lib ../lib ../../lib );
 use Test::More;
-use Parrot::Test tests => 29;
+use Parrot::Test tests => 30;
 
 =head1 NAME
 
@@ -129,9 +129,9 @@ pasm_output_is( <<'CODE', <<'OUTPUT', "exception attributes" );
     setattribute P1, 'payload', P4
     new P5, 'Array'
     set P5, 2
-    set P5[0], 'stacktrace line 1'
-    set P5[1], 'stacktrace line 2'
-    setattribute P1, 'stacktrace', P5
+    set P5[0], 'backtrace line 1'
+    set P5[1], 'backtrace line 2'
+    setattribute P1, 'backtrace', P5
 
     throw P1
     print "not reached\n"
@@ -149,7 +149,7 @@ handler:
     getattribute P18, P0, 'payload'
     print P18
     print "\n"
-    getattribute P19, P0, 'stacktrace'
+    getattribute P19, P0, 'backtrace'
     set P20, P19[0]
     print P20
     print "\n"
@@ -165,8 +165,8 @@ caught it
 just pining
 5
 additional payload
-stacktrace line 1
-stacktrace line 2
+backtrace line 1
+backtrace line 2
 OUTPUT
 
 pasm_output_is( <<'CODE', <<'OUTPUT', "get_results - be sure registers are ok" );
@@ -485,7 +485,7 @@ OUTPUT
 pir_error_output_like( <<'CODE', <<'OUTPUT', "pushaction - throw in main" );
 .sub main :main
     print "main\n"
-    .const .Sub at_exit = "exit_handler"
+    .const 'Sub' at_exit = "exit_handler"
     pushaction at_exit
     $P0 = new 'Exception'
     throw $P0
@@ -509,7 +509,7 @@ pir_output_like(
 .sub main :main
     push_eh h
     print "main\n"
-    .const .Sub at_exit = "exit_handler"
+    .const 'Sub' at_exit = "exit_handler"
     pushaction at_exit
     $P1 = new 'Exception'
     throw $P1
@@ -534,7 +534,11 @@ at_exit, flag = 1
 No exception handler/
 OUTPUT
 
-pir_output_is( <<'CODE', <<'OUTPUT', "exit_handler via exit exception" );
+$ENV{TEST_PROG_ARGS} ||= '';
+my @todo = $ENV{TEST_PROG_ARGS} =~ /-r/
+    ? ( todo => '.tailcall and lexical maps not thawed from PBC, RT #60650' )
+    : ();
+pir_output_is( <<'CODE', <<'OUTPUT', "exit_handler via exit exception", @todo );
 .sub main :main
     .local pmc a
     .lex 'a', a
@@ -543,7 +547,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "exit_handler via exit exception" );
     push_eh handler
     exit 0
 handler:
-    .return exit_handler()
+    .tailcall exit_handler()
 .end
 
 .sub exit_handler :outer(main)
@@ -664,7 +668,8 @@ pir_error_output_like( <<'CODE', <<'OUTPUT', "throw - no handler" );
     exit 0
   try:
     .get_results($P0)
-    $S1 = $P0['stacktrace']
+    pop_eh
+    $S1 = $P0['backtrace']
     $S1 .= "\n"
     say $S1
 .end
@@ -674,6 +679,43 @@ pir_error_output_like( <<'CODE', <<'OUTPUT', "throw - no handler" );
 .end
 CODE
 /No such string attribute/
+OUTPUT
+
+#RT #60556
+pir_output_is( <<'CODE', <<'OUTPUT', "catch ex from C-level MULTI function", todo => "broken" );
+.sub main :main
+
+.local pmc p, q
+
+    p = new 'Integer'
+    set p, "0"
+
+    push_eh handler
+    #throw an exception from a C-level MULTI function
+    q = p / p
+    goto end
+    pop_eh
+    goto end
+
+handler:
+    .local pmc exception
+    .local string message
+    .get_results (exception)
+
+    message = exception['message']
+    say_something(message)
+end:
+.end
+
+.sub say_something
+    .param string message
+    #Calling this sub is enough to trigger the bug.  If execution reached this
+    #point, the bug is fixed.
+    say "no segfault"
+end:
+.end
+CODE
+no segfault
 OUTPUT
 
 # Local Variables:

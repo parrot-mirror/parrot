@@ -42,6 +42,7 @@ SOURCES = perl6.pir \
   src/gen_grammar.pir \
   src/gen_actions.pir \
   src/gen_builtins.pir \
+  src/gen_junction.pir \
   src/parser/expression.pir \
   src/parser/quote_expression.pir \
   $(PERL6_GROUP) \
@@ -50,7 +51,6 @@ SOURCES = perl6.pir \
 BUILTINS_PIR = \
   src/classes/Object.pir \
   src/classes/Any.pir \
-  src/classes/Scalar.pir \
   src/classes/Bool.pir \
   src/classes/Str.pir \
   src/classes/Num.pir \
@@ -74,6 +74,7 @@ BUILTINS_PIR = \
   src/classes/Pair.pir \
   src/classes/Whatever.pir \
   src/classes/Capture.pir \
+  src/classes/Match.pir \
   src/classes/Signature.pir \
   src/classes/Subset.pir \
   src/classes/Grammar.pir \
@@ -98,12 +99,12 @@ BUILTINS_PIR = \
   src/builtins/system.pir \
   src/builtins/traits.pir \
 
-$(PMC_DIR)/mutable.pmc : $(PMC_DIR)/mutable_pmc.template build/gen_mutable_pmc.pl
-	$(PERL) build/gen_mutable_pmc.pl $(PMC_DIR)/mutable_pmc.template \
-		$(PMC_DIR)/mutable.pmc
+$(PMC_DIR)/objectref.pmc : $(PMC_DIR)/objectref_pmc.template build/gen_objectref_pmc.pl
+	$(PERL) build/gen_objectref_pmc.pl $(PMC_DIR)/objectref_pmc.template \
+		$(PMC_DIR)/objectref.pmc
 
-PMCS        = perl6str mutable perl6scalar mutablevar perl6multisub
-PMC_SOURCES = $(PMC_DIR)/perl6str.pmc $(PMC_DIR)/mutable.pmc $(PMC_DIR)/perl6scalar.pmc \
+PMCS        = perl6str objectref perl6scalar mutablevar perl6multisub
+PMC_SOURCES = $(PMC_DIR)/perl6str.pmc $(PMC_DIR)/objectref.pmc $(PMC_DIR)/perl6scalar.pmc \
               $(PMC_DIR)/mutablevar.pmc $(PMC_DIR)/perl6multisub.pmc
 PERL6_GROUP = $(PMC_DIR)/perl6_group$(LOAD_EXT)
 
@@ -133,6 +134,9 @@ src/gen_actions.pir: $(NQP) $(PCT) src/parser/actions.pm
 
 src/gen_builtins.pir: $(BUILTINS_PIR)
 	$(CAT) $(BUILTINS_PIR) >src/gen_builtins.pir
+
+src/gen_junction.pir: build/gen_junction_pir.pl
+	$(PERL) build/gen_junction_pir.pl src/gen_junction.pir
 
 $(PERL6_GROUP): $(PARROT) $(PMC_SOURCES)
 	cd $(PMC_DIR) && $(BUILD_DYNPMC) generate $(PMCS)
@@ -253,7 +257,7 @@ CLEANUPS = \
   $(PMC_DIR)/*.manifest \
   $(PMC_DIR)/*.pdb \
   $(PMC_DIR)/*.lib \
-  $(PMC_DIR)/mutable.pmc \
+  $(PMC_DIR)/objectref.pmc \
   $(OPSDIR)/*.h \
   $(OPSDIR)/*.c \
   $(OPSDIR)/*$(O) \
