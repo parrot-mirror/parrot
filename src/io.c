@@ -57,6 +57,7 @@ Parrot_io_parse_open_flags(PARROT_INTERP, ARGIN_NULLOK(STRING *mode_str))
                 break;
             case 'w':
                 flags |= PIO_F_WRITE;
+                break;
             case 'a':
                 flags |= PIO_F_APPEND;
                 break;
