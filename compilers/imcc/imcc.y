@@ -815,6 +815,8 @@ pragma:
    ;
 
 hll_def:
+
+     /* This HLL variant is deprecated */
      HLL STRINGC COMMA STRINGC
          {
             STRING * const hll_name = string_unescape_cstring(interp, $2 + 1, '"', NULL);
@@ -833,7 +835,16 @@ hll_def:
             IMCC_INFO(interp)->cur_namespace = NULL;
             $$ = 0;
          }
-   | HLL_MAP STRINGC comma_will_be_equals STRINGC
+   | HLL STRINGC
+         {
+            STRING * const hll_name = string_unescape_cstring(interp, $2 + 1, '"', NULL);
+            CONTEXT(interp)->current_HLL =
+                Parrot_register_HLL(interp, hll_name);
+
+            IMCC_INFO(interp)->cur_namespace = NULL;
+            $$ = 0;
+         }
+   | HLL_MAP STRINGC '=' STRINGC
          {
             Parrot_Context *ctx           = CONTEXT(interp);
             STRING * const  built_in_name =
@@ -848,13 +859,6 @@ hll_def:
                 built_in_type, language_type);
             $$ = 0;
          }
-   ;
-
-/* this rule is temporary for deprecation of the .HLL_map variant using
-   a comma; the comma will be replaced by a '=' character. */
-comma_will_be_equals:
-     COMMA
-   | '='
    ;
 
 constdef:
@@ -1525,14 +1529,6 @@ labeled_inst:
            IMCC_INFO(interp)->cur_call->pcc_sub->flags |= isTAIL_CALL;
            IMCC_INFO(interp)->cur_call = NULL;
          }
-   /* This style is deprecated as per RT#58974. Use ".tailcall" for
-      tailcalls instead of ".return". */
-   | RETURN  sub_call
-         {
-           $$ = NULL;
-           IMCC_INFO(interp)->cur_call->pcc_sub->flags |= isTAIL_CALL;
-           IMCC_INFO(interp)->cur_call = NULL;
-         }
    | GOTO label_op { $$ = MK_I(interp, IMCC_INFO(interp)->cur_unit, "branch", 1, $2); }
    | PARROT_OP vars
          {
@@ -1729,11 +1725,23 @@ the_sub:
            if ($1->set != 'P')
                IMCC_fataly(interp, EXCEPTION_SYNTAX_ERROR, "Sub isn't a PMC");
          }
-   | target DOT sub_label_op   { IMCC_INFO(interp)->cur_obj = $1; $$ = $3; }
+   | target DOT sub_label_op
+        {
+            /* disallow bareword method names; SREG name constants are fine */
+            char *name = $3->name;
+            if (!($3->type & VTREG) && (*name != '\'' || *name != '\"')) {
+                IMCC_fataly(interp, EXCEPTION_SYNTAX_ERROR,
+                    "Bareword method name '%s' not allowed in PIR", $3->name);
+            }
+
+            IMCC_INFO(interp)->cur_obj = $1;
+            $$                         = $3;
+        }
    | target DOT STRINGC
          {
-           IMCC_INFO(interp)->cur_obj = $1; $$ = mk_const(interp, $3, 'S');
-           mem_sys_free($3);
+            IMCC_INFO(interp)->cur_obj = $1;
+            $$                         = mk_const(interp, $3, 'S');
+            mem_sys_free($3);
          }
    | target DOT target         { IMCC_INFO(interp)->cur_obj = $1; $$ = $3; }
    ;

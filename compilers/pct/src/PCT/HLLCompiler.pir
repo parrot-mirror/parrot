@@ -379,6 +379,10 @@ to any options and return the resulting parse tree.
     unless null $P0 goto action_make
     $S0 = parseactions
     parseactions = split '::', $S0
+    push_eh err_bad_parseactions
+    $P0 = get_class parseactions
+    if null $P0 goto err_bad_parseactions
+    pop_eh
   action_make:
     action = new parseactions
   have_action:
@@ -392,6 +396,11 @@ to any options and return the resulting parse tree.
     .return ()
   err_failedparse:
     self.'panic'('Failed to parse source')
+    .return ()
+  err_bad_parseactions:
+    pop_eh
+    $P0 = self.'parseactions'()
+    self.'panic'('Unable to find action grammar ', $P0)
     .return ()
 .end
 
@@ -578,6 +587,42 @@ specifies the encoding to use for the input (e.g., "utf8").
     .return ()
 .end
 
+
+=item EXPORTALL(source, destination)
+
+Export all namespace entries from the default export namespace for source
+(source::EXPORT::ALL) to the destination namespace.
+
+=cut
+
+.sub 'EXPORTALL' :method
+    .param pmc source
+    .param pmc dest
+    .local pmc ns_iter, item, export_list
+
+    source = source['EXPORT']
+    unless source, no_namespace_error
+    source = source['ALL']
+    unless source, no_namespace_error
+
+    ns_iter = iter source
+    export_list = new 'ResizablePMCArray'
+  export_loop:
+    unless ns_iter, export_loop_end
+    item = shift ns_iter
+    push export_list, item
+    goto export_loop
+  export_loop_end:
+
+    source.'export_to'(dest,export_list)
+    .return ()
+
+  no_namespace_error:
+    $P0 = new 'Exception'
+    $P0 = 'Missing EXPORT::ALL NameSpace'
+    throw $P0
+    .return ()
+.end
 
 =item evalfiles(files [, args] [, "encoding" => encoding] [, "option" => value, ...])
 

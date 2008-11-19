@@ -231,6 +231,27 @@ Return a true value if the invocant 'can' C<x>.
 .end
 
 
+=item add_method(name, method, [, 'to'=>parrotclass])
+
+Add C<method> with C<name> to C<parrotclass>.
+
+=cut
+
+.sub 'add_method' :method
+    .param string name
+    .param pmc method
+    .param pmc options         :slurpy :named
+
+    $P0 = options['to']
+    unless null $P0 goto have_to
+    $P0 = self
+  have_to:
+    .local pmc parrotclass
+    parrotclass = self.'get_parrotclass'($P0)
+    parrotclass.'add_method'(name, method)
+.end
+
+
 =item register(parrotclass [, 'name'=>name] [, 'protoobject'=>proto] [, 'parent'=>parentclass] [, 'hll'=>hll])
 
 Sets objects of type C<parrotclass> to use C<protoobject>,
@@ -263,7 +284,7 @@ or 'Object').
     if $I0, have_hll
     $P0 = getinterp
     $P0 = $P0['namespace';1]
-    $P0 = $P0.get_name()
+    $P0 = $P0.'get_name'()
     hll = shift $P0
     options['hll'] = hll
   have_hll:
@@ -373,6 +394,10 @@ or 'Object').
     unshift ns, hll
     $S0 = pop ns
     set_root_global ns, $S0, protoobject
+    ##  store the protoobject in the default export namespace
+    push ns, 'EXPORT'
+    push ns, 'ALL'
+    set_root_global ns, $S0, protoobject
     goto have_how
 
     ##  anonymous classes have empty strings for shortname and longname
@@ -409,11 +434,11 @@ of names separated by spaces.
     .local pmc parrotclass, hll
 
     hll = options['hll']
-    $I0 = defined $P0
+    $I0 = defined hll
     if $I0, have_hll
     $P0 = getinterp
     $P0 = $P0['namespace';1]
-    $P0 = $P0.get_name()
+    $P0 = $P0.'get_name'()
     hll = shift $P0
     options['hll'] = hll
   have_hll:
@@ -433,34 +458,11 @@ of names separated by spaces.
     parrotclass = newclass lookup
     goto have_parrotclass
   parrotclass_no_namespace:
-    # make the namespace for classes without a namespace
-    .local pmc base_ns, extra_ns
-    base_ns = class_ns
-    extra_ns = new 'ResizablePMCArray'
-    $P0 = pop base_ns
-    unshift extra_ns, $P0
-  base_ns_loop:
-    $P0 = get_root_namespace base_ns
-    $I0 = defined $P0
-    if $I0, base_ns_loop_end
-    $P0 = pop base_ns
-    unshift extra_ns, $P0
-    goto base_ns_loop
-  base_ns_loop_end:
-    .local pmc iter, ns_item, ns
-    .local string ns_item
-    iter = new 'Iterator', extra_ns
-  create_ns_loop:
-    unless iter, create_ns_loop_end
-    ns_item = shift iter
-    $S0 = ns_item
-    $P0 = new 'NameSpace'
-    ns = get_root_namespace base_ns
-    ns.add_namespace($S0, $P0)
-    push base_ns, ns_item
-    goto create_ns_loop
-  create_ns_loop_end:
-    ns = get_root_namespace base_ns
+    # The namespace doesn't exist, so we need to create it
+    .local pmc ns
+    ns = new 'NameSpace'
+    set_root_global class_ns, '', ns
+    ns = get_root_namespace class_ns
     parrotclass = newclass ns
   have_parrotclass:
 

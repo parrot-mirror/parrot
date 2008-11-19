@@ -39,7 +39,11 @@ typedef enum {
     /* [temporary expedient.  -- rgr, 13-Jul-08.] */
     SUB_FLAG_NEWCLOSURE   = SUB_FLAG_PF_IMMEDIATE,
 
-    SUB_FLAG_PF_MASK      = 0xfa   /* anon ... postcomp, is_outer*/
+    SUB_FLAG_PF_MASK      = SUB_FLAG_PF_ANON
+                          | SUB_FLAG_PF_MAIN
+                          | SUB_FLAG_PF_LOAD
+                          | SUB_FLAG_PF_IMMEDIATE
+                          | SUB_FLAG_PF_POSTCOMP,
 } sub_flags_enum;
 
 #define SUB_FLAG_get_FLAGS(o) (PObj_get_FLAGS(o))
@@ -232,14 +236,14 @@ typedef struct Parrot_Context_info {
 /* HEADERIZER BEGIN: src/sub.c */
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 
-PARROT_API
+PARROT_EXPORT
 PARROT_MALLOC
 PARROT_CANNOT_RETURN_NULL
 PMC * new_ret_continuation_pmc(PARROT_INTERP,
     ARGIN_NULLOK(opcode_t *address))
         __attribute__nonnull__(1);
 
-PARROT_API
+PARROT_EXPORT
 int Parrot_Context_get_info(PARROT_INTERP,
     ARGIN(const Parrot_Context *ctx),
     ARGOUT(Parrot_Context_info *info))
@@ -248,7 +252,7 @@ int Parrot_Context_get_info(PARROT_INTERP,
         __attribute__nonnull__(3)
         FUNC_MODIFIES(*info);
 
-PARROT_API
+PARROT_EXPORT
 PARROT_CAN_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
 STRING* Parrot_Context_infostr(PARROT_INTERP,
@@ -256,13 +260,13 @@ STRING* Parrot_Context_infostr(PARROT_INTERP,
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
-PARROT_API
+PARROT_EXPORT
 PARROT_CAN_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
 STRING* Parrot_full_sub_name(PARROT_INTERP, ARGIN_NULLOK(PMC* sub))
         __attribute__nonnull__(1);
 
-PARROT_API
+PARROT_EXPORT
 PARROT_CANNOT_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
 PMC* parrot_new_closure(PARROT_INTERP, ARGIN(PMC *sub_pmc))

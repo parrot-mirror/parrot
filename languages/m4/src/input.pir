@@ -104,7 +104,7 @@ TODO: open these files and complain when they don't or pass filehandles
   .local int    is_defined
 
   pio = new 'ParrotIO'
-  input_string = pio.slurp( filename )
+  input_string = pio.'slurp'( filename )
 
   # state['stack';'input'] has been created in input_init
   # TODO: seperate input blocks for every file
@@ -197,7 +197,7 @@ Uses regular expressions for finding tokens.
   # TODO: is there a method for extraction the matched string?
   .local int token_from, token_to
   .local pmc captures
-  ( captures ) = match."get_array"()
+  ( captures ) = match.'list'()
   token_from = match.'from'()
   token_to = match.'to'()
   token_data = captures[0]

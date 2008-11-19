@@ -166,92 +166,92 @@ needed for compiling regexes.
     set_global '$optable', optable
 
     $P0 = get_global 'parse_term'
-    optable.newtok('term:',    'precedence'=>'=', 'nows'=>1, 'parsed'=>$P0)
+    optable.'newtok'('term:',    'precedence'=>'=', 'nows'=>1, 'parsed'=>$P0)
 
     $P0 = get_global 'parse_term_ws'
-    optable.newtok('term:#',   'equiv'=>'term:', 'nows'=>1, 'parsed'=>$P0)
+    optable.'newtok'('term:#',   'equiv'=>'term:', 'nows'=>1, 'parsed'=>$P0)
 
     $P0 = get_global 'parse_term_backslash'
-    optable.newtok("term:\\",  'equiv'=>'term:', 'nows'=>1, 'parsed'=>$P0)
+    optable.'newtok'("term:\\",  'equiv'=>'term:', 'nows'=>1, 'parsed'=>$P0)
 
-    optable.newtok('term:^',   'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::Anchor')
-    optable.newtok('term:^^',  'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::Anchor')
-    optable.newtok('term:$$',  'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::Anchor')
-    optable.newtok('term:\b',  'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::Anchor')
-    optable.newtok('term:\B',  'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::Anchor')
-    optable.newtok('term:<<',  'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::Anchor')
-    optable.newtok('term:>>',  'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::Anchor')
-    optable.newtok(unicode:"term:\xab", 'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::Anchor')
-    optable.newtok(unicode:"term:\xbb", 'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::Anchor')
+    optable.'newtok'('term:^',   'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::Anchor')
+    optable.'newtok'('term:^^',  'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::Anchor')
+    optable.'newtok'('term:$$',  'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::Anchor')
+    optable.'newtok'('term:\b',  'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::Anchor')
+    optable.'newtok'('term:\B',  'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::Anchor')
+    optable.'newtok'('term:<<',  'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::Anchor')
+    optable.'newtok'('term:>>',  'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::Anchor')
+    optable.'newtok'(unicode:"term:\xab", 'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::Anchor')
+    optable.'newtok'(unicode:"term:\xbb", 'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::Anchor')
 
-    optable.newtok('term:.',   'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::CCShortcut')
-    optable.newtok('term:\d',  'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::CCShortcut')
-    optable.newtok('term:\D',  'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::CCShortcut')
-    optable.newtok('term:\s',  'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::CCShortcut')
-    optable.newtok('term:\S',  'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::CCShortcut')
-    optable.newtok('term:\w',  'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::CCShortcut')
-    optable.newtok('term:\W',  'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::CCShortcut')
-    optable.newtok('term:\N',  'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::CCShortcut')
-    optable.newtok('term:\n',  'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::Newline')
+    optable.'newtok'('term:.',   'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::CCShortcut')
+    optable.'newtok'('term:\d',  'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::CCShortcut')
+    optable.'newtok'('term:\D',  'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::CCShortcut')
+    optable.'newtok'('term:\s',  'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::CCShortcut')
+    optable.'newtok'('term:\S',  'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::CCShortcut')
+    optable.'newtok'('term:\w',  'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::CCShortcut')
+    optable.'newtok'('term:\W',  'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::CCShortcut')
+    optable.'newtok'('term:\N',  'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::CCShortcut')
+    optable.'newtok'('term:\n',  'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::Newline')
 
     $P0 = get_global 'parse_dollar'
-    optable.newtok('term:$',   'equiv'=>'term:', 'nows'=>1, 'parsed'=>$P0)
+    optable.'newtok'('term:$',   'equiv'=>'term:', 'nows'=>1, 'parsed'=>$P0)
 
     $P0 = get_global 'parse_subrule'
-    optable.newtok('term:<',   'equiv'=>'term:', 'nows'=>1, 'parsed'=>$P0)
-    optable.newtok('term:<?',  'equiv'=>'term:', 'nows'=>1, 'parsed'=>$P0)
-    optable.newtok('term:<!',  'equiv'=>'term:', 'nows'=>1, 'parsed'=>$P0)
-    optable.newtok('term:<.',  'equiv'=>'term:', 'nows'=>1, 'parsed'=>$P0)
+    optable.'newtok'('term:<',   'equiv'=>'term:', 'nows'=>1, 'parsed'=>$P0)
+    optable.'newtok'('term:<?',  'equiv'=>'term:', 'nows'=>1, 'parsed'=>$P0)
+    optable.'newtok'('term:<!',  'equiv'=>'term:', 'nows'=>1, 'parsed'=>$P0)
+    optable.'newtok'('term:<.',  'equiv'=>'term:', 'nows'=>1, 'parsed'=>$P0)
 
     $P0 = get_global 'parse_enumcharclass'
-    optable.newtok('term:<[',  'equiv'=>'term:', 'nows'=>1, 'parsed'=>$P0)
-    optable.newtok('term:<+', 'equiv'=>'term:', 'nows'=>1, 'parsed'=>$P0)
-    optable.newtok('term:<-', 'equiv'=>'term:', 'nows'=>1, 'parsed'=>$P0)
-    optable.newtok('term:<![', 'equiv'=>'term:', 'nows'=>1, 'parsed'=>$P0)
+    optable.'newtok'('term:<[',  'equiv'=>'term:', 'nows'=>1, 'parsed'=>$P0)
+    optable.'newtok'('term:<+', 'equiv'=>'term:', 'nows'=>1, 'parsed'=>$P0)
+    optable.'newtok'('term:<-', 'equiv'=>'term:', 'nows'=>1, 'parsed'=>$P0)
+    optable.'newtok'('term:<![', 'equiv'=>'term:', 'nows'=>1, 'parsed'=>$P0)
 
     $P0 = get_global 'parse_quoted_literal'
-    optable.newtok("term:'",  'equiv'=>'term:', 'nows'=>1, 'parsed'=>$P0)
+    optable.'newtok'("term:'",  'equiv'=>'term:', 'nows'=>1, 'parsed'=>$P0)
 
-    optable.newtok('term:::',  'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::Cut')
-    optable.newtok('term::::', 'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::Cut')
-    optable.newtok('term:<cut>',    'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::Cut')
-    optable.newtok('term:<commit>', 'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::Cut')
+    optable.'newtok'('term:::',  'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::Cut')
+    optable.'newtok'('term::::', 'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::Cut')
+    optable.'newtok'('term:<cut>',    'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::Cut')
+    optable.'newtok'('term:<commit>', 'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::Cut')
 
     $P0 = get_global 'parse_closure'
-    optable.newtok("term:{{",       'equiv'=>'term:', 'nows'=>1, 'parsed'=>$P0)
+    optable.'newtok'("term:{{",       'equiv'=>'term:', 'nows'=>1, 'parsed'=>$P0)
 
     $P0 = get_global 'parse_action'
-    optable.newtok("term:{*}",      'equiv'=>'term:', 'nows'=>1, 'parsed'=>$P0)
+    optable.'newtok'("term:{*}",      'equiv'=>'term:', 'nows'=>1, 'parsed'=>$P0)
 
 
-    optable.newtok('circumfix:[ ]', 'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::Group')
-    optable.newtok('circumfix:( )', 'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::CGroup')
+    optable.'newtok'('circumfix:[ ]', 'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::Group')
+    optable.'newtok'('circumfix:( )', 'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::CGroup')
 
     $P0 = get_global 'parse_quant'
-    optable.newtok('postfix:*',  'looser'=>'term:', 'parsed'=>$P0)
-    optable.newtok('postfix:+',  'equiv'=>'postfix:*', 'parsed'=>$P0)
-    optable.newtok('postfix:?',  'equiv'=>'postfix:*', 'parsed'=>$P0)
-    optable.newtok('postfix::',  'equiv'=>'postfix:*', 'parsed'=>$P0)
-    optable.newtok('postfix:**', 'equiv'=>'postfix:*', 'parsed'=>$P0)
+    optable.'newtok'('postfix:*',  'looser'=>'term:', 'parsed'=>$P0)
+    optable.'newtok'('postfix:+',  'equiv'=>'postfix:*', 'parsed'=>$P0)
+    optable.'newtok'('postfix:?',  'equiv'=>'postfix:*', 'parsed'=>$P0)
+    optable.'newtok'('postfix::',  'equiv'=>'postfix:*', 'parsed'=>$P0)
+    optable.'newtok'('postfix:**', 'equiv'=>'postfix:*', 'parsed'=>$P0)
     $P0 = get_global 'parse_quant_error'
-    optable.newtok('term:*', 'equiv'=>'term:', 'parsed'=>$P0)
-    optable.newtok('term:+', 'equiv'=>'term:', 'parsed'=>$P0)
-    optable.newtok('term:?', 'equiv'=>'term:', 'parsed'=>$P0)
+    optable.'newtok'('term:*', 'equiv'=>'term:', 'parsed'=>$P0)
+    optable.'newtok'('term:+', 'equiv'=>'term:', 'parsed'=>$P0)
+    optable.'newtok'('term:?', 'equiv'=>'term:', 'parsed'=>$P0)
 
-    optable.newtok('infix:',   'looser'=>'postfix:*', 'assoc'=>'list', 'nows'=>1, 'match'=>'PGE::Exp::Concat')
-    optable.newtok('infix:&',  'looser'=>'infix:', 'nows'=>1, 'match'=>'PGE::Exp::Conj')
-    optable.newtok('infix:|',  'looser'=>'infix:&', 'nows'=>1, 'match'=>'PGE::Exp::Alt')
-    optable.newtok('prefix:|', 'equiv'=>'infix:|', 'nows'=>1, 'match'=>'PGE::Exp::Alt')
-    optable.newtok('infix:||', 'equiv'=>'infix:|', 'nows'=>1, 'match'=>'PGE::Exp::Alt')
-    optable.newtok('prefix:||', 'equiv'=>'infix:|', 'nows'=>1, 'match'=>'PGE::Exp::Alt')
+    optable.'newtok'('infix:',   'looser'=>'postfix:*', 'assoc'=>'list', 'nows'=>1, 'match'=>'PGE::Exp::Concat')
+    optable.'newtok'('infix:&',  'looser'=>'infix:', 'nows'=>1, 'match'=>'PGE::Exp::Conj')
+    optable.'newtok'('infix:|',  'looser'=>'infix:&', 'nows'=>1, 'match'=>'PGE::Exp::Alt')
+    optable.'newtok'('prefix:|', 'equiv'=>'infix:|', 'nows'=>1, 'match'=>'PGE::Exp::Alt')
+    optable.'newtok'('infix:||', 'equiv'=>'infix:|', 'nows'=>1, 'match'=>'PGE::Exp::Alt')
+    optable.'newtok'('prefix:||', 'equiv'=>'infix:|', 'nows'=>1, 'match'=>'PGE::Exp::Alt')
 
-    optable.newtok('infix::=', 'tighter'=>'infix:', 'assoc'=>'right', 'match'=>'PGE::Exp::Alias')
-    optable.newtok('infix:=', 'tighter'=>'infix:', 'assoc'=>'right', 'match'=>'PGE::Exp::Alias')
+    optable.'newtok'('infix::=', 'tighter'=>'infix:', 'assoc'=>'right', 'match'=>'PGE::Exp::Alias')
+    optable.'newtok'('infix:=', 'tighter'=>'infix:', 'assoc'=>'right', 'match'=>'PGE::Exp::Alias')
 
     $P0 = get_global 'parse_modifier'
-    optable.newtok('prefix::', 'looser'=>'infix:|', 'nows'=>1, 'parsed'=>$P0)
+    optable.'newtok'('prefix::', 'looser'=>'infix:|', 'nows'=>1, 'parsed'=>$P0)
 
-    optable.newtok('close:}',  'precedence'=>'<', 'nows'=>1)
+    optable.'newtok'('close:}',  'precedence'=>'<', 'nows'=>1)
 
     .local pmc esclist
     esclist = new 'Hash'
@@ -593,7 +593,7 @@ combinations.
     .return (mob)
 
   err_closure:
-    parse_error(mob, pos, "Error in closure quantifier")
+    'parse_error'(mob, pos, "Error in closure quantifier")
 .end
 
 
@@ -607,7 +607,7 @@ Throw an exception for quantifiers in term position.
     .param pmc mob
     .local int pos
     pos = mob.'to'()
-    parse_error(mob, pos, "Quantifier follows nothing in regex")
+    'parse_error'(mob, pos, "Quantifier follows nothing in regex")
 .end
 
 
@@ -840,7 +840,7 @@ Extract an enumerated character list.
 
     $P0 = getattribute mob, '$.target'
     target = $P0
-    pos = mob.to()
+    pos = mob.'to'()
     lastpos = length target
     op = mob['KEY']
 
@@ -1054,6 +1054,7 @@ Parse a modifier.
   name:
     pos = find_not_cclass .CCLASS_WORD, target, pos, lastpos
     $I1 = pos - $I0
+    if $I1 == 0 goto err_null_cut
     $S0 = substr target, $I0, $I1
     mob['key'] = $S0
     mob.'result_object'(value)
@@ -1068,6 +1069,9 @@ Parse a modifier.
   end:
     ### XXX pos = find_not_cclass .CCLASS_WHITESPACE, target, pos, lastpos
     mob.'to'(pos)
+    .return (mob)
+  err_null_cut:
+    'parse_quant_error'(mob)
     .return (mob)
 .end
 
@@ -1212,10 +1216,16 @@ Parse a modifier.
     isarray = pad['isarray']
     pad['isarray'] = 1
     exp0 = self[0]
+    $I0 = isa exp0, ['PGE';'Exp';'WS']
+    if $I0 goto err_parse_quant
     exp0['isquant'] = 1
     exp0 = exp0.'perl6exp'(pad)
     self[0] = exp0
     pad['isarray'] = isarray
+    .return (self)
+  err_parse_quant:
+    $P0 = get_hll_global ['PGE';'Perl6Regex'], 'parse_quant_error'
+    $P0(self)
     .return (self)
 .end
 
@@ -1441,6 +1451,9 @@ Parse a modifier.
     .local pmc exp0, exp1
 
     exp0 = self[0]
+    $I0 = isa exp0, ['PGE';'Exp';'Scalar']
+    unless $I0 goto err_no_lvalue
+
     cname = exp0['cname']
     exp1 = self[1]
 
@@ -1464,9 +1477,9 @@ Parse a modifier.
   add_cgroup:
     .local pmc cexp
     cexp = self.'new'(self, 'grammar'=>'PGE::Exp::CGroup')
-    $I0 = self.from()
+    $I0 = self.'from'()
     cexp.'from'($I0)
-    $I0 = self.to()
+    $I0 = self.'to'()
     cexp.'to'($I0)
     cexp[0] = exp1
     cexp['isscope'] = 0
@@ -1481,6 +1494,11 @@ Parse a modifier.
   end:
     exp1 = exp1.'perl6exp'(pad)
     .return (exp1)
+
+  err_no_lvalue:
+    $P0 = get_hll_global ['PGE';'Perl6Regex'], 'parse_error'
+    $I0 = self.'from'()
+    $P0(self, $I0, 'LHS of alias must be lvalue')
 .end
 
 

@@ -224,7 +224,7 @@ signature.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 void
 Parrot_init_arg_nci(PARROT_INTERP, ARGOUT(call_state *st),
     ARGIN(const char *sig))
@@ -253,7 +253,7 @@ signature.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 void
 Parrot_init_ret_nci(PARROT_INTERP, ARGOUT(call_state *st), ARGIN(const char *sig))
 {
@@ -295,7 +295,7 @@ These functions return 0 if no arguments are present, or 1 on success.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 int
 Parrot_init_arg_indexes_and_sig_pmc(SHIM_INTERP, ARGIN(Parrot_Context *ctx),
         ARGIN_NULLOK(opcode_t *indexes), ARGIN_NULLOK(PMC* sig_pmc),
@@ -342,7 +342,7 @@ of a C<get_*> or C<set_*> argument opcode.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 int
 Parrot_init_arg_op(PARROT_INTERP, ARGIN(Parrot_Context *ctx),
     ARGIN_NULLOK(opcode_t *pc), ARGIN(call_state_item *sti))
@@ -371,7 +371,7 @@ const_table), registers, function signature, and arguments.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 int
 Parrot_init_arg_sig(SHIM_INTERP, ARGIN(Parrot_Context *ctx),
     ARGIN(const char *sig), ARGIN_NULLOK(void *ap),
@@ -627,7 +627,7 @@ name and the value.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 int
 Parrot_fetch_arg(PARROT_INTERP, ARGMOD(call_state *st))
 {
@@ -706,7 +706,7 @@ PMC which is then set as the PMC value of the call_state object.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 int
 Parrot_fetch_arg_nci(PARROT_INTERP, ARGMOD(call_state *st))
 {
@@ -1113,7 +1113,7 @@ to store more values then there are in the signature. Returns 1 otherwise.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 int
 Parrot_store_arg(SHIM_INTERP, ARGIN(const call_state *st))
 {
@@ -1334,7 +1334,7 @@ slurpy parameters, and finally the named parameters.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 void
 Parrot_process_args(PARROT_INTERP, ARGMOD(call_state *st), arg_pass_t param_or_result)
 {
@@ -1541,7 +1541,7 @@ Converts a source argument to the expected destination type.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 void
 Parrot_convert_arg(PARROT_INTERP, ARGMOD(call_state *st))
 {
@@ -1584,7 +1584,7 @@ latter handles return values and yields.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 void
 parrot_pass_args(PARROT_INTERP,
         ARGMOD(Parrot_Context *src_ctx), ARGMOD(Parrot_Context *dest_ctx),
@@ -2196,7 +2196,7 @@ string and call arguments are converted to a CallSignature PMC.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 void
 Parrot_pcc_invoke_sub_from_c_args(PARROT_INTERP, ARGIN(PMC *sub_obj),
         ARGIN(const char *sig), ...)
@@ -2231,7 +2231,7 @@ file-level documentation of F<src/pmc/callsignature.pmc>.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 void
 Parrot_pcc_invoke_method_from_c_args(PARROT_INTERP, ARGIN(PMC* pmc), ARGMOD(STRING *method_name),
         ARGIN(const char *signature), ...)
@@ -2266,6 +2266,7 @@ to make the function call.
 
 */
 
+PARROT_EXPORT
 void
 Parrot_pcc_invoke_from_sig_object(PARROT_INTERP, ARGIN(PMC *sub_obj),
         ARGIN(PMC *sig_obj))
@@ -2285,8 +2286,7 @@ Parrot_pcc_invoke_from_sig_object(PARROT_INTERP, ARGIN(PMC *sub_obj),
     PMC * const args_sig    = pmc_new(interp, enum_class_FixedIntegerArray);
     PMC * const results_sig = pmc_new(interp, enum_class_FixedIntegerArray);
     PMC * const ret_cont    = new_ret_continuation_pmc(interp, NULL);
-    PMC * const result_list = VTABLE_get_attr_str(interp, sig_obj,
-            CONST_STRING(interp, "returns"));
+    PMC * const result_list = VTABLE_get_attr_str(interp, sig_obj, CONST_STRING(interp, "returns"));
 
     Parrot_Context *ctx;
     opcode_t         *dest;
@@ -2346,11 +2346,14 @@ Parrot_pcc_invoke_from_sig_object(PARROT_INTERP, ARGIN(PMC *sub_obj),
     /* PIR Subs not invoked as methods  need runops to run their opcodes. */
     if (sub_obj->vtable->base_type == enum_class_Sub
             && PMC_IS_NULL(interp->current_object)) {
-        /* can't re-enter the runloop from here with CGP: RT #60048 */
         INTVAL old_core  = interp->run_core;
         opcode_t offset  = dest - interp->code->base.data;
-        if (interp->run_core == PARROT_CGP_CORE)
+
+        /* can't re-enter the runloop from here with PIC cores: RT #60048 */
+        if (interp->run_core == PARROT_CGP_CORE
+        ||  interp->run_core == PARROT_SWITCH_CORE)
             interp->run_core = PARROT_SLOW_CORE;
+
         runops(interp, offset);
         interp->run_core = old_core;
     }

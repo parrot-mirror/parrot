@@ -86,6 +86,13 @@ src/builtins/op.pir - Cardinal ops
     .return ($P0)
 .end
 
+.sub 'infix:-=' :multi(_,_)
+    .param pmc a
+    .param pmc b
+    a -= b
+    .return (a)
+.end
+
 .sub 'infix:+=' :multi(_,_)
     .param pmc a
     .param pmc b
@@ -121,7 +128,7 @@ src/builtins/op.pir - Cardinal ops
     item = shift it
     $I0 = b.'include?'(item)
     unless $I0, loop
-    intersection.push(item)
+    intersection.'push'(item)
     goto loop
   loop_end:
     .return (intersection)

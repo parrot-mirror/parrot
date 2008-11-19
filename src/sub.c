@@ -237,7 +237,7 @@ if possible; otherwise, creates a new one.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 PARROT_MALLOC
 PARROT_CANNOT_RETURN_NULL
 PMC *
@@ -290,7 +290,7 @@ Return namespace, name, and location of subroutine.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 PARROT_CAN_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
 STRING*
@@ -326,12 +326,12 @@ Parrot_full_sub_name(PARROT_INTERP, ARGIN_NULLOK(PMC* sub))
             ns_array = Parrot_ns_get_name(interp, s->namespace_stash);
 
             /* Restore stuff that might have got overwritten */
-            interp->current_cont = saved_ccont;
-            interp->current_args = current_args;
-            interp->current_params = current_params;
-            interp->current_returns = current_returns;
-            interp->args_signature = args_signature;
-            interp->params_signature = params_signature;
+            interp->current_cont      = saved_ccont;
+            interp->current_args      = current_args;
+            interp->current_params    = current_params;
+            interp->current_returns   = current_returns;
+            interp->args_signature    = args_signature;
+            interp->params_signature  = params_signature;
             interp->returns_signature = returns_signature;
 
             if (s->name)
@@ -357,7 +357,7 @@ Used by Parrot_Context_infostr.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 int
 Parrot_Context_get_info(PARROT_INTERP, ARGIN(const Parrot_Context *ctx),
                     ARGOUT(Parrot_Context_info *info))
@@ -447,7 +447,7 @@ returns a pointer to the text.  Used in debug.c and warnings.c
 
 */
 
-PARROT_API
+PARROT_EXPORT
 PARROT_CAN_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
 STRING*
@@ -529,7 +529,7 @@ Returns a pointer to the closure, (or throws exceptions if invalid).
 
 */
 
-PARROT_API
+PARROT_EXPORT
 PARROT_CANNOT_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
 PMC*

@@ -9,7 +9,7 @@ use lib qw( . lib ../lib ../../lib );
 use Test::More;
 use Parrot::Test::Util 'create_tempfile';
 
-use Parrot::Test tests => 65;
+use Parrot::Test tests => 64;
 use Parrot::Config;
 
 =head1 NAME
@@ -158,25 +158,6 @@ CODE
 ok 1
 in sub
 in next sub
-back
-OUTPUT
-
-pasm_output_is( <<'CODE', <<'OUTPUT', "pcc sub perl::syn::tax" );
-    get_global P0, "_the::sub::some::where"
-    defined I0, P0
-    if I0, ok
-    print "not "
-ok:
-    print "ok 1\n"
-    invokecc P0
-    say "back"
-    end
-.pcc_sub _the::sub::some::where:
-    print "in sub\n"
-    returncc
-CODE
-ok 1
-in sub
 back
 OUTPUT
 
@@ -679,7 +660,7 @@ CODE
 /too few arguments passed \(1\) - 2 params expected/
 OUTPUT
 
-($TEMP, $temp_pasm) = create_tempfile();
+($TEMP, $temp_pasm) = create_tempfile(UNLINK => 1);
 print $TEMP <<'EOF';
 .sub _sub1 :load
   say "in sub1"
@@ -700,7 +681,7 @@ in sub1
 back
 OUTPUT
 
-($TEMP, $temp_pasm) = create_tempfile();
+($TEMP, $temp_pasm) = create_tempfile(UNLINK => 1);
 print $TEMP <<'EOF';
 .sub _foo
   print "error\n"
@@ -1379,31 +1360,31 @@ OUTPUT
 pir_output_is( <<'CODE', <<'OUTPUT', 'arity()' );
 .sub main :main
     $P0 = get_global 'none'
-    $I0 = $P0.arity()
+    $I0 = $P0.'arity'()
     say $I0
 
     $P0 = get_global 'one'
-    $I0 = $P0.arity()
+    $I0 = $P0.'arity'()
     say $I0
 
     $P0 = get_global 'four'
-    $I0 = $P0.arity()
+    $I0 = $P0.'arity'()
     say $I0
 
     $P0 = get_global 'all_slurpy'
-    $I0 = $P0.arity()
+    $I0 = $P0.'arity'()
     say $I0
 
     $P0 = get_global 'some_optional'
-    $I0 = $P0.arity()
+    $I0 = $P0.'arity'()
     say $I0
 
     $P0 = get_global 'some_named'
-    $I0 = $P0.arity()
+    $I0 = $P0.'arity'()
     say $I0
 
     $P0 = get_global 'allsorts'
-    $I0 = $P0.arity()
+    $I0 = $P0.'arity'()
     say $I0
 .end
 
@@ -1459,7 +1440,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', 'set_outer' );
 .sub main :main
     $P0 = get_hll_global "example_outer"
     $P1 = get_hll_global "example_inner"
-    $P1.set_outer($P0)
+    $P1.'set_outer'($P0)
     $P0()
     $P1()
 .end

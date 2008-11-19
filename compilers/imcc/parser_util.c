@@ -346,7 +346,7 @@ INS(PARROT_INTERP, ARGMOD(IMC_Unit *unit), ARGIN(const char *name),
     int dirs = 0;
     Instruction *ins;
     op_info_t   *op_info;
-    char fullname[64], format[128], buf[10];
+    char fullname[64], format[128];
 
     if ((STREQ(name, "set_args"))
     ||  (STREQ(name, "get_results"))
@@ -545,7 +545,7 @@ TODO: Needs to be documented!!!
 
 */
 
-PARROT_API
+PARROT_EXPORT
 int
 do_yylex_init(PARROT_INTERP, ARGOUT(yyscan_t* yyscanner))
 {
@@ -1353,7 +1353,7 @@ imcc_vfprintf(PARROT_INTERP, ARGMOD(FILE *fd), ARGIN(const char *format), va_lis
         int         ch = 0;
         size_t      n;
 
-        for (n = 0; (ch = *fmt) && ch != '%'; fmt++, n++);
+        for (n = 0; (ch = *fmt) && ch != '%'; fmt++, n++) {/*Empty body*/};
 
         /* print prev string */
         if (n) {
@@ -1456,7 +1456,7 @@ TODO: Needs to be documented!!!
 
 */
 
-PARROT_API
+PARROT_EXPORT
 void
 imcc_init(PARROT_INTERP)
 {
@@ -1477,7 +1477,7 @@ TODO: Needs to be documented!!!
 
 */
 
-PARROT_API
+PARROT_EXPORT
 void
 imcc_destroy(PARROT_INTERP)
 {
@@ -1485,6 +1485,9 @@ imcc_destroy(PARROT_INTERP)
 
     if (macros)
         parrot_chash_destroy(interp, macros);
+
+    if (IMCC_INFO(interp)->globals)
+        mem_sys_free(IMCC_INFO(interp)->globals);
 
     mem_sys_free(IMCC_INFO(interp));
     IMCC_INFO(interp) = NULL;
