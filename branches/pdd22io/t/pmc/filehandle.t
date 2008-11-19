@@ -6,7 +6,7 @@ use strict;
 use warnings;
 use lib qw( . lib ../lib ../../lib );
 use Test::More;
-use Parrot::Test tests => 9;
+use Parrot::Test tests => 10;
 
 =head1 NAME
 
@@ -347,6 +347,27 @@ CODE
 ok 1 - $P0.buffer_size(5)      # set buffer size
 ok 2 - $I0 = $P0.buffer_size() # get buffer size
 ok 3 - $S0 = $P0.readline()    # buffer flushed when full
+OUT
+
+# L<PDD22/I\/O PMC API/=item mode>
+
+pir_output_is( <<'CODE', <<'OUT', 'mode' );
+.sub 'test' :main
+    $P0 = new 'FileHandle'
+
+    $P0.open('README')
+    $S0 = $P0.mode()
+
+    if $S0 == 'r' goto ok_1
+    print 'not '
+  ok_1:
+    say 'ok 1 - $S0 = $P0.mode() # get read mode'
+
+    $P0.close()
+
+.end
+CODE
+ok 1 - $S0 = $P0.mode() # get read mode
 OUT
 
 # RT #46843
