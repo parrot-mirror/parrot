@@ -6,7 +6,7 @@ use strict;
 use warnings;
 use lib qw( . lib ../lib ../../lib );
 use Test::More;
-use Parrot::Test tests => 8;
+use Parrot::Test tests => 9;
 
 =head1 NAME
 
@@ -312,6 +312,42 @@ OUT
 # perform print and read ops
 # change buffer size while it contains data
 # try with all 'buffer_type' modes
+
+pir_output_is( <<'CODE', <<'OUT', 'buffer_size' );
+.sub 'test' :main
+    $P0 = new 'FileHandle'
+
+    $P0.buffer_type('full-buffered')
+    $P0.buffer_size(5)
+    say 'ok 1 - $P0.buffer_size(5)      # set buffer size'
+
+    $I0 = $P0.buffer_size()
+
+    if $I0 == 5 goto ok_2
+    print 'not '
+  ok_2:
+    say 'ok 2 - $I0 = $P0.buffer_size() # get buffer size'
+
+    $P0.open('temp', 'w')
+
+    $P0.print(1234567890)
+
+    $P1 = new 'FileHandle'
+    $P1.open('temp')
+
+    $S0 = $P1.readline()
+
+    if $S0 == '12345' goto ok_3
+    print 'not '
+  ok_3:
+    say 'ok 3 - $S0 = $P0.readline()    # buffer flushed when full'
+
+.end
+CODE
+ok 1 - $P0.buffer_size(5)      # set buffer size
+ok 2 - $I0 = $P0.buffer_size() # get buffer size
+ok 3 - $S0 = $P0.readline()    # buffer flushed when full
+OUT
 
 # RT #46843
 # L<PDD22/I\/O PMC API/=item get_fd>
