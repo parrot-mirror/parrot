@@ -107,6 +107,16 @@ Parrot_Context * Parrot_push_context(PARROT_INTERP,
 PARROT_EXPORT
 void Parrot_set_context_threshold(SHIM_INTERP, SHIM(Parrot_Context *ctxp));
 
+PARROT_EXPORT
+void Parrot_trace_context(PARROT_INTERP,
+    ARGIN(const char *action),
+    ARGIN(Parrot_Context *ctx),
+    ARGIN_NULLOK(const char *from),
+    ARGIN_NULLOK(void *fromp))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3);
+
 void create_initial_context(PARROT_INTERP)
         __attribute__nonnull__(1);
 
@@ -116,7 +126,8 @@ void destroy_context(PARROT_INTERP)
 PARROT_CANNOT_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
 Parrot_Context * Parrot_alloc_context(PARROT_INTERP,
-    ARGMOD(INTVAL *number_regs_used))
+    ARGMOD(INTVAL *number_regs_used),
+    ARGIN_NULLOK(int init))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         FUNC_MODIFIES(*number_regs_used);
@@ -127,6 +138,14 @@ Parrot_Context * Parrot_dup_context(PARROT_INTERP,
     ARGIN(const Parrot_Context *old))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
+
+PARROT_CANNOT_RETURN_NULL
+PARROT_WARN_UNUSED_RESULT
+Parrot_Context * Parrot_set_new_context(PARROT_INTERP,
+    ARGMOD(INTVAL *number_regs_used))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        FUNC_MODIFIES(*number_regs_used);
 
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 /* HEADERIZER END: src/gc/register.c */

@@ -26,12 +26,12 @@ src/pmc.c - The base vtable calling functions
 
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
-static PMC* create_class_pmc(PARROT_INTERP, INTVAL type)
+static PMC * create_class_pmc(PARROT_INTERP, INTVAL type)
         __attribute__nonnull__(1);
 
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
-static PMC* get_new_pmc_header(PARROT_INTERP,
+static PMC * get_new_pmc_header(PARROT_INTERP,
     INTVAL base_type,
     UINTVAL flags)
         __attribute__nonnull__(1);
@@ -192,7 +192,7 @@ pmc_reuse(PARROT_INTERP, ARGIN(PMC *pmc), INTVAL new_type,
 
 /*
 
-=item C<static PMC* get_new_pmc_header>
+=item C<static PMC * get_new_pmc_header>
 
 Gets a new PMC header.
 
@@ -404,7 +404,7 @@ constant_pmc_new_init(PARROT_INTERP, INTVAL base_type, ARGIN_NULLOK(PMC *init))
 
 /*
 
-=item C<PMC * temporary_pmc_new(PARROT_INTERP, INTVAL base_type)>
+=item C<PMC * temporary_pmc_new>
 
 Creates a new temporary PMC of type C<base_type>, the call C<init>.  B<You> are
 responsible for freeing this PMC when it goes out of scope with
