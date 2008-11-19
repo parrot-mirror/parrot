@@ -36,36 +36,36 @@ OUT
 pir_output_is( <<'CODE', <<'OUT', 'open and close - synchronous' );
 .sub 'test' :main
     $P1 = new 'FileHandle'
-    $P1.open('README')
+    $P1.'open'('README')
     say 'ok 1 - $P1.open($S1)'
 
-    $P1.close()
+    $P1.'close'()
     say 'ok 2 - $P1.close()'
 
     $P3 = new 'FileHandle'
-    $P3.open('README', 'rw')
+    $P3.'open'('README', 'rw')
     say 'ok 3 - $P3.open($S1, $S2) # rw mode'
-    $P3.close()
+    $P3.'close'()
 
-    $P3.open()
+    $P3.'open'()
     say 'ok 4 - $P3.open()         # reopening'
-    $P3.close()
+    $P3.'close'()
 
   test_5:
     $P5 = new 'FileHandle'
     push_eh eh_bad_file_1
-    $P5.open('bad.file')
+    $P5.'open'('bad.file')
     pop_eh
 
   test_6:
     $P6 = new 'FileHandle'
     push_eh eh_bad_file_2
-    $P6.open('bad.file', 'r')
+    $P6.'open'('bad.file', 'r')
     pop_eh
 
   test_7:
     $P7 = new 'FileHandle'
-    $P7.open('temp.file', 'w')
+    $P7.'open'('temp.file', 'w')
     say 'ok 7 - $P7.open($S1, $S2) # new file, write mode succeeds'
 
     goto end
@@ -103,21 +103,21 @@ SKIP: {
     $P1 = # RT #46831 create a callback here
     $P0 = new 'FileHandle'
 
-    $P0.open('README')
+    $P0.'open'('README')
     say 'ok 1 - $P0.open($S1)'
 
-    $P0.close()
+    $P0.'close'()
     say 'ok 2 - $P0.close($P1)'
 
-    $P0.open('README', 'rw')
+    $P0.'open'('README', 'rw')
     say 'ok 3 - $P0.open($S1, $S2)'
 
-    $P0.close()
-    $P0.open()
+    $P0.'close'()
+    $P0.'open'()
     say 'ok 4 - $P0.open()'
 
   cleanup:
-    $P0.close()
+    $P0.'close'()
 .end
 CODE
 ok 1 - $P0.open($S1)
@@ -132,15 +132,15 @@ pir_output_is(
     <<'CODE', <<'OUT', 'read - synchronous' );
 .sub 'test' :main
     $P0 = new 'FileHandle'
-    $P0.open('README')
+    $P0.'open'('README')
 
-    $S0 = $P0.read(14) # bytes
+    $S0 = $P0.'read'(14) # bytes
     if $S0 == 'This is Parrot' goto ok_1
     print 'not '
   ok_1:
     say 'ok 1 - $S0 = $P1.read($I2)'
 
-    $S0 = $P0.read(9)  # bytes
+    $S0 = $P0.'read'(9)  # bytes
     if $S0 == ', version' goto ok_2
     print 'not '
   ok_2:
@@ -156,31 +156,31 @@ pir_output_is( <<'CODE', <<'OUT', 'print - synchronous' );
 .sub 'test' :main
 
     $P0 = new 'FileHandle'
-    $P0.open('temp.file', 'w')
+    $P0.'open'('temp.file', 'w')
 
-    $P0.print(123)
+    $P0.'print'(123)
     say 'ok 1 - $P0.print($I1)'
-    $P0.print(456.789)
+    $P0.'print'(456.789)
     say 'ok 2 - $P0.print($N1)'
-    $P0.print("squawk\n")
+    $P0.'print'("squawk\n")
     say 'ok 3 - $P0.print($S1)'
     $P1 = new 'Integer'
     $P1 = 42
-    $P0.print($P1)
+    $P0.'print'($P1)
     say 'ok 4 - $P0.print($P1)'
 
-    $P0.close()
+    $P0.'close'()
 
     $P1 = new 'FileHandle'
-    $P1.open('temp.file', 'r')
+    $P1.'open'('temp.file', 'r')
 
-    $S0 = $P1.read(3) # bytes
+    $S0 = $P1.'read'(3) # bytes
     if $S0 == "123" goto ok_5
     print 'not '
   ok_5:
     say 'ok 5 - read integer back from file'
 
-    $S0 = $P1.read(16) # bytes
+    $S0 = $P1.'read'(16) # bytes
     if $S0 == "456.789squawk\n42" goto ok_6
     print $S0
     print "\n"
@@ -188,7 +188,7 @@ pir_output_is( <<'CODE', <<'OUT', 'print - synchronous' );
   ok_6:
     say 'ok 6 - read string back from file'
 
-    $P1.close()
+    $P1.'close'()
 .end
 CODE
 ok 1 - $P0.print($I1)
@@ -199,6 +199,8 @@ ok 5 - read integer back from file
 ok 6 - read string back from file
 OUT
 
+unlink ('temp.file');
+
 # L<PDD22/I\/O PMC API/=item print.*=item readline>
 pir_output_is(
     <<'CODE', <<'OUT', 'readline - synchronous' );
@@ -208,21 +210,28 @@ pir_output_is(
                chomp = get_global ['String';'Utils'], 'chomp'
 
     $P0 = new 'FileHandle'
-    $P0.open('temp.file')
+    $P0.'open'('temp.file', 'w')
+    $P0.'print'("foobarbaz\n42")
+    $P0.'close'()
 
-    $S0 = $P0.readline()
+    $P1 = new 'FileHandle'
+    $P1.'open'('temp.file')
+
+    $S0 = $P1.'readline'()
     $S0 = chomp( $S0 )
-    if $S0 == '123456.789squawk' goto ok_1
+    if $S0 == 'foobarbaz' goto ok_1
     print 'not '
   ok_1:
     say 'ok 1 - $S0 = $P1.readline()'
 
-    $S0 = $P0.readline()
+    $S0 = $P1.'readline'()
     $S0 = chomp( $S0 )
     if $S0 == '42' goto ok_2
     print 'not '
   ok_2:
     say 'ok 2 - $S0 = $P1.readline() # again on same stream'
+
+    $P1.'close'()
 .end
 CODE
 ok 1 - $S0 = $P1.readline()
@@ -243,26 +252,26 @@ pir_output_is( <<'CODE', <<'OUT', 'record_separator', todo => 'not yet implement
 .sub 'test' :main
     $P0 = new 'FileHandle'
 
-    $S0 = $P0.record_separator()
+    $S0 = $P0.'record_separator'()
     if $S0 == "\n" goto ok_1
     print 'not '
   ok_1:
     say 'ok 1 - $S0 = $P1.record_separator() # default'
 
     $S99 = 'abc'
-    $P0.record_separator($S99)
-    $S0 = $P0.record_separator()
+    $P0.'record_separator'($S99)
+    $S0 = $P0.'record_separator'()
     if $S0 == $S99 goto ok_2
     print 'not '
   ok_2:
     say 'ok 2 - $P0.record_separator($S1)'
 
-    $P0.print(123)
-    $S0 = $P0.record_separator()
-    $P0.print($S0)
-    $P0.print(456)
+    $P0.'print'(123)
+    $S0 = $P0.'record_separator'()
+    $P0.'print'($S0)
+    $P0.'print'(456)
 
-    $S0 = $P0.readline()
+    $S0 = $P0.'readline'()
     if $S0 == '123abc' goto ok_3
     print 'not '
   ok_3:
@@ -279,22 +288,22 @@ pir_output_is( <<'CODE', <<'OUT', 'buffer_type' );
 .sub 'test' :main
     $P0 = new 'FileHandle'
 
-    $P0.buffer_type('unbuffered')
-    $S0 = $P0.buffer_type()
+    $P0.'buffer_type'('unbuffered')
+    $S0 = $P0.'buffer_type'()
     if $S0 == 'unbuffered' goto ok_1
     print 'not '
   ok_1:
     say 'ok 1 - $S0 = $P1.buffer_type() # unbuffered'
 
-    $P0.buffer_type('line-buffered')
-    $S0 = $P0.buffer_type()
+    $P0.'buffer_type'('line-buffered')
+    $S0 = $P0.'buffer_type'()
     if $S0 == 'line-buffered' goto ok_2
     print 'not '
   ok_2:
     say 'ok 2 - $S0 = $P1.buffer_type() # line-buffered'
 
-    $P0.buffer_type('full-buffered')
-    $S0 = $P0.buffer_type()
+    $P0.'buffer_type'('full-buffered')
+    $S0 = $P0.'buffer_type'()
     if $S0 == 'full-buffered' goto ok_3
     print 'not '
   ok_3:
@@ -320,11 +329,11 @@ pir_output_is( <<'CODE', <<'OUT', 'buffer_size' );
 .sub 'test' :main
     $P0 = new 'FileHandle'
 
-    $P0.buffer_type('full-buffered')
-    $P0.buffer_size(42)
+    $P0.'buffer_type'('full-buffered')
+    $P0.'buffer_size'(42)
     say 'ok 1 - $P0.buffer_size(42)     # set buffer size'
 
-    $I0 = $P0.buffer_size()
+    $I0 = $P0.'buffer_size'()
 
     # The set buffer size is a minimum, the I/O subsystem may scale it upward
     # to a round block, so test that the buffer size is equal or greater than
@@ -334,22 +343,22 @@ pir_output_is( <<'CODE', <<'OUT', 'buffer_size' );
   ok_2:
     say 'ok 2 - $I0 = $P0.buffer_size() # get buffer size'
 
-    $P0.open('temp.file', 'w')
+    $P0.'open'('temp.file', 'w')
 
-    $P0.print(1234567890)
-    $P0.close()
+    $P0.'print'(1234567890)
+    $P0.'close'()
 
     $P1 = new 'FileHandle'
-    $P1.open('temp.file')
+    $P1.'open'('temp.file')
 
-    $S0 = $P1.readline()
+    $S0 = $P1.'readline'()
 
     if $S0 == '1234567890' goto ok_3
     print 'not '
   ok_3:
     say 'ok 3 - $S0 = $P0.readline()    # buffer flushed'
 
-    $P1.close()
+    $P1.'close'()
 
 .end
 CODE
@@ -364,15 +373,15 @@ pir_output_is( <<'CODE', <<'OUT', 'mode' );
 .sub 'test' :main
     $P0 = new 'FileHandle'
 
-    $P0.open('README')
-    $S0 = $P0.mode()
+    $P0.'open'('README')
+    $S0 = $P0.'mode'()
 
     if $S0 == 'r' goto ok_1
     print 'not '
   ok_1:
     say 'ok 1 - $S0 = $P0.mode() # get read mode'
 
-    $P0.close()
+    $P0.'close'()
 
 .end
 CODE
