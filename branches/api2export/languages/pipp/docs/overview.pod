@@ -7,19 +7,20 @@ Pipp - Introduction
 =head1 What is Pipp?
 
 Pipp aims to be a complete implementation of PHP on Parrot.
+In short, Pipp in Parrot's PHP.
 
 =head1 Goals
 
 Implement PHP.
+Support well behaving PHP extensions.
 
-Provide a side by side comparison of different parsing and tree transformation
-techniques. 
-
-Currently there are three variants of Pipp:
+A secondary goal is to provide a side by side comparison
+of different parsing and tree transformation techniques. 
+Therefore there are currently three variants of Pipp:
 
 =over
 
-=item pct       - Parrot compiler toolkit
+=item pct       - Parrot compiler toolkit, this is the default
 
 =item phc       - take XML output from phc and munge it with XSLT
 
@@ -29,7 +30,7 @@ Currently there are three variants of Pipp:
 
 =head1 Status
 
-21 out of 1322 tests in the PHP 5.3.0 test suite pass for the PCT variant.
+No current status available.
 
 =head1 Dependencies
 

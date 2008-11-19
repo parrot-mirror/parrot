@@ -72,7 +72,8 @@ Parrot_cx_init_scheduler(PARROT_INTERP)
         /* Add the very first interpreter to the list of interps. */
         pt_add_to_interpreters(interp, NULL);
 
-        scheduler = pmc_new(interp, enum_class_Scheduler);
+        /* create as constant to avoid order-of-destruction errors, RT #60622 */
+        scheduler = constant_pmc_new(interp, enum_class_Scheduler);
         scheduler = VTABLE_share_ro(interp, scheduler);
 
         interp->scheduler = scheduler;
@@ -745,10 +746,8 @@ Parrot_cx_find_handler_local(PARROT_INTERP, ARGIN(PMC *task))
     /* Exceptions store the handler iterator for rethrow, other kinds of
      * tasks don't (though they could). */
     if (task->vtable->base_type == enum_class_Exception &&
-            VTABLE_get_integer_keyed_str(interp, task,
-                CONST_STRING(interp, "handled")) == -1) {
-        iter    = VTABLE_get_attr_str(interp, task,
-                CONST_STRING(interp, "handler_iter"));
+            VTABLE_get_integer_keyed_str(interp, task, CONST_STRING(interp, "handled")) == -1) {
+        iter    = VTABLE_get_attr_str(interp, task, CONST_STRING(interp, "handler_iter"));
         context = (Parrot_Context *)VTABLE_get_pointer(interp, task);
     }
     else {
@@ -770,8 +769,7 @@ Parrot_cx_find_handler_local(PARROT_INTERP, ARGIN(PMC *task))
                 if (valid_handler) {
                     if (task->vtable->base_type == enum_class_Exception) {
                         /* Store iterator and context for a later rethrow. */
-                        VTABLE_set_attr_str(interp, task,
-                                CONST_STRING(interp, "handler_iter"), iter);
+                        VTABLE_set_attr_str(interp, task, CONST_STRING(interp, "handler_iter"), iter);
                         VTABLE_set_pointer(interp, task, context);
 
                         /* Mark that this handler has been used before. */

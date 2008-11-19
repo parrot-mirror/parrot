@@ -197,7 +197,9 @@ static void check_first_arg_direction(yyscan_t yyscanner, char const * const opn
 static int check_op_args_for_symbols(yyscan_t yyscanner);
 static int get_opinfo(yyscan_t yyscanner);
 
-/* names of the Parrot types */
+/* names of the Parrot types. Note that pir_type_namwes is global,
+ * but it's read-only, so that's fine.
+ */
 static char const * const pir_type_names[] = { "int", "num", "string", "pmc" };
 
 
@@ -284,7 +286,8 @@ static char const * const pir_type_names[] = { "int", "num", "string", "pmc" };
 
 %token <sval> TK_LABEL      "label"
        <sval> TK_IDENT      "identifier"
-       <sval> TK_INT        "int"
+
+%token <sval> TK_INT        "int"
        <sval> TK_NUM        "num"
        <sval> TK_PMC        "pmc"
        <sval> TK_STRING     "string"
@@ -293,7 +296,7 @@ static char const * const pir_type_names[] = { "int", "num", "string", "pmc" };
        <sval> TK_NULL       "null"
        <sval> TK_GOTO       "goto"
 
-       <sval> TK_STRINGC    "string constant"
+%token <sval> TK_STRINGC    "string constant"
        <ival> TK_INTC       "integer constant"
        <dval> TK_NUMC       "number constant"
        <ival> TK_PREG       "PMC register"
@@ -379,9 +382,9 @@ static char const * const pir_type_names[] = { "int", "num", "string", "pmc" };
 
 /* for PASM */
 
-%token TK_PASM_MARKER_START        "<pasm-marker>"
-%token TK_PIR_MARKER_START         "<pir-marker>"
-%token TK_PCC_SUB                  ".pcc_sub"
+%token        TK_PASM_MARKER_START "<pasm-input>"
+%token        TK_PIR_MARKER_START  "<pir-input>"
+%token        TK_PCC_SUB           ".pcc_sub"
 %token <sval> TK_PARROT_OP         "parrot-op"
 
 /* normal rules and types */
@@ -531,8 +534,8 @@ static char const * const pir_type_names[] = { "int", "num", "string", "pmc" };
 
 
 /* the */
-TOP               : "<pir-marker>"  pir_contents
-                  | "<pasm-marker>" pasm_contents
+TOP               : "<pir-input>"  pir_contents
+                  | "<pasm-input>" pasm_contents
                   ;
 
 /* PIR grammar */
@@ -771,7 +774,13 @@ unique_reg_flag   : ":unique_reg"
 
 instructions      : /* empty */
                   | instructions instruction
-                        { ++lexer->stmt_counter; }
+                        {
+                         ++lexer->stmt_counter;
+                         /* increment the logical statement counter; a statement can be
+                          * multiple lines, but each statement has its own ID for the
+                          * linear scan register allocator.
+                          */
+                        }
                   ;
 
 instruction       : TK_LABEL statement
@@ -1433,7 +1442,7 @@ condition         : target rel_op expression
                           /* NOTE: a reference is made here to $<ival>0. This is the <ival> of
                            * $0, which refers to the (non)terminal /before/ the use of
                            * the "condition" rule, in this case "if_unless". If the value
-                           * of that non-terminal is in face "NEED_INVERT_OPNAME", then
+                           * of that non-terminal is in fact "NEED_INVERT_OPNAME", then
                            * we shouldn't do it here, as the inversion of "le" or "lt" is
                            * again "ge" or "gt", and these instructions don't exist.
                            *
@@ -1938,24 +1947,8 @@ const_tail            : "int" identifier '=' TK_INTC
                             { $$ = new_named_const(lexer, NUM_TYPE, $2, $4); }
                       | "string" identifier '=' TK_STRINGC
                             { $$ = new_named_const(lexer, STRING_TYPE, $2, $4); }
-                      /*
-                      | "pmc" identifier '=' TK_STRINGC
-                            { $$ = new_named_const(lexer, PMC_TYPE, $2, $4); }
-                      */
-                      /*
-                      | "Sub" identifier '=' TK_STRINGC
-                      | "Coroutine" identifier '=' TK_STRINGC
-                      */
-
-                      /* this might be useful, for:
-                         .const "Sub" foo = "foo" # make a Sub PMC of subr. "foo"
-                         .const "Float" PI = 3.14 # make a Float PMC for 3.14
-
-                        Is: .const pmc x = 'foo' any useful? Type of x is not clear.
-
                       | TK_STRINGC identifier '=' constant
                             { $$ = new_pmc_const($1, $2, $4); }
-                      */
                       ;
 
 
@@ -2077,7 +2070,13 @@ augmented_op: "*="         { $$ = OP_MUL; }
             ;
 
 
-/* PASM grammar */
+/* PASM grammar
+ *
+ * The PASM grammar uses a number of rules in PIR, but in PASM mode, a different set
+ * of tokens is recognized by the lexer. Therefore, a number of alternatives in the
+ * PIR grammar rules can never be matched, as the particular tokens will never be
+ * returned by the lexer. Neat, huh.
+ */
 
 pasm_contents             : pasm_init pasm_lines
                           ;
@@ -2097,7 +2096,7 @@ pasm_lines                : pasm_line
 
 pasm_line                 : pasm_statement
                           | namespace_decl "\n"
-                          | lex_decl                  /* lex_decl rule has already a "\n" token */
+                          | lex_decl                /* lex_decl rule has already a "\n" token */
                           | location_directive "\n"
                           ;
 
@@ -2116,17 +2115,17 @@ pasm_sub_directive        : pasm_sub_head sub_flags TK_LABEL
                           ;
 
 pasm_sub_head             : ".pcc_sub"
-                                { new_subr(lexer, NULL); } /* don't know the sub's name yet */
+                                { new_subr(lexer, NULL); } /* don't know the sub's name yet,
+                                                              hence NULL */
                           ;
 
 pasm_instruction          : parrot_op op_args "\n"
                                 {
-                                  if (!is_parrot_op(lexer, $1)) {
-                                      yypirerror(yyscanner, lexer, "'%s' is not a parrot op", $1);
-                                  }
-                                  else {
+                                  if (is_parrot_op(lexer, $1))
                                       get_opinfo(yyscanner);
-                                  }
+                                  else /* not a parrot op */
+                                      yypirerror(yyscanner, lexer, "'%s' is not a parrot op", $1);
+
                                 }
                           ;
 
@@ -2490,7 +2489,6 @@ fold_n_n(yyscan_t yyscanner, double a, pir_math_operator op, double b) {
             result = (a != b);
             break;
 
-        /* OP_INC and OP_DEC are here only to keep the C compiler happy */
         default:
             break;
     }
