@@ -90,7 +90,7 @@ share no variables with the calling code other than the status object.
 [See L<http://en.wikipedia.org/wiki/Asynchronous_I/O>, for a relatively
 comprehensive list of asynchronous I/O implementation options.]
 
-=head2 I/O PMC API
+=head2 FileHandle PMC API
 
 Methods
 
@@ -108,7 +108,7 @@ bare minimum.]
 
 =item C<new>
 
-  $P0 = new ParrotIO
+  $P0 = new 'FileHandle'
 
 Creates a new I/O stream object. [Note that this is usually performed
 via the C<open> opcode.]
@@ -244,6 +244,13 @@ The buffer is automatically flushed when the buffer size is changed. If
 the new size was larger than the existing data in the buffer, a size
 change would be non-disruptive, but if the new size was smaller,
 resizing it without flushing would truncate the buffer.
+
+=item C<mode>
+
+  $S0 = $P1.mode()
+
+Accessor (get only) for the I/O stream's read mode. This returns the mode
+string used to open the I/O stream.
 
 =item C<get_fd> [RT #48312]
 

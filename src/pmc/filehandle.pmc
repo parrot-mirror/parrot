@@ -175,6 +175,7 @@ filehandle, rather than modifying the invocant).
         }
         else if (got_filename) {
             SET_ATTR_filename(INTERP, SELF, string_copy(INTERP, filename));
+            SET_ATTR_mode(INTERP, SELF, CONST_STRING(INTERP, "r"));
             filehandle = Parrot_io_open(INTERP, SELF, filename, NULL);
         }
         else {
@@ -330,6 +331,26 @@ Set or retrieve the buffer size for the filehandle.
         buffer_size = (INTVAL) Parrot_io_get_buffer_size(INTERP, SELF);
 
         RETURN(INTVAL buffer_size);
+
+    }
+
+/*
+
+=item C<METHOD mode()>
+
+Retrieve the read mode string for the filehandle.
+
+=cut
+
+*/
+
+    METHOD mode() {
+        STRING *mode, *mode_copy;
+
+        GET_ATTR_mode(INTERP, SELF, mode);
+        mode_copy = string_copy(INTERP, mode);
+
+        RETURN(STRING *mode_copy);
 
     }
 
