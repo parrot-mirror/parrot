@@ -28,7 +28,7 @@ of necessity.
 
 #ifdef PIO_OS_STDIO
 
-/* HEADERIZER HFILE: none */
+/* HEADERIZER HFILE: include/parrot/io_portable.h */
 /* HEADERIZER BEGIN: static */
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 
@@ -211,7 +211,7 @@ RT#48260: Not yet documented!!!
 */
 
 INTVAL
-Parrot_io_close_portable(PARROT_INTERP, (PMC *filehandle))
+Parrot_io_close_portable(PARROT_INTERP, ARGMOD(PMC *filehandle))
 {
     FILE * const fptr = (FILE*) Parrot_io_get_os_handle(interp, filehandle);
 
