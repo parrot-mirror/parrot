@@ -519,7 +519,7 @@ Parrot_find_pad(PARROT_INTERP, ARGIN(STRING *lex_name), ARGIN(const Parrot_Conte
 
 /*
 
-=item C<PMC* Parrot_capture_lex>
+=item C<void Parrot_capture_lex>
 
 Capture the current lexical environment of a sub.
 
