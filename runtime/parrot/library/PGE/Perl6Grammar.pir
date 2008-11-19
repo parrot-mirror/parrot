@@ -180,24 +180,24 @@ the output to the correct output file.
     if namespace == '' goto ns_optable
     .local string inherit
     inherit = ns['inherit']
-    $S0 = initpir.unique('onload_')
-    initpir.emit(<<'        CODE', namespace, inherit, $S0)
+    $S0 = initpir.'unique'('onload_')
+    initpir.'emit'(<<'        CODE', namespace, inherit, $S0)
           ## namespace %0
           push_eh %2
           .local pmc p6meta
           p6meta = get_hll_global 'P6metaclass'
           p6meta.'new_class'('%0', 'parent'=>'%1')
-          pop_eh
         %2:
+          pop_eh
         CODE
   ns_optable:
     $P0 = ns['optable']
     if $P0 == '' goto iter_loop
-    initpir.emit("          optable = new ['PGE';'OPTable']")
+    initpir.'emit'("          optable = new ['PGE';'OPTable']")
     $S0 = namespace
     $P1 = split '::', $S0
     $P1 = initpir.'key'($P1 :flat)
-    initpir.emit("          set_hll_global %0, '$optable', optable", $P1)
+    initpir.'emit'("          set_hll_global %0, '$optable', optable", $P1)
     initpir .= $P0
     goto iter_loop
   iter_end:
@@ -205,11 +205,11 @@ the output to the correct output file.
     .local pmc out
     out = new 'CodeString'
     if initpir == '' goto out_rule
-    out.emit("      .sub '__onload' :load :init")
-    out.emit("          .local pmc optable")
+    out.'emit'("      .sub '__onload' :load :init")
+    out.'emit'("          .local pmc optable")
     out .= initpir
-    out.emit("          .return ()")
-    out.emit("      .end")
+    out.'emit'("          .return ()")
+    out.'emit'("      .end")
   out_rule:
     out .= rulepir
 
@@ -221,7 +221,7 @@ the output to the correct output file.
 
   compile_pir:
     $P0 = compreg 'PIR'
-    .return $P0(out)
+    .tailcall $P0(out)
 .end
 
 
@@ -298,13 +298,13 @@ the output to the correct output file.
     $S0 = namespace
     $P0 = split '::', $S0
     $P0 = rulepir.'key'($P0 :flat)
-    rulepir.emit(<<'      END', $P0, name)
+    rulepir.'emit'(<<'      END', $P0, name)
       .namespace %0
       .sub "%1"
         .param pmc mob
         .param pmc adverbs :named :slurpy
         $P0 = get_hll_global %0, "$optable"
-        .return $P0.'parse'(mob, 'rulename'=>"%1", adverbs :named :flat)
+        .tailcall $P0.'parse'(mob, 'rulename'=>"%1", adverbs :named :flat)
       .end
       END
   with_rulepir:
@@ -313,7 +313,7 @@ the output to the correct output file.
     .local pmc code
     $P0 = nstable[namespace]
     code = $P0['rule']
-    code.emit("\n## <%0::%1>\n", namespace, name)
+    code.'emit'("\n## <%0::%1>\n", namespace, name)
     code .= rulepir
     .return ()
 .end
@@ -322,14 +322,14 @@ the output to the correct output file.
     .param pmc stmt
     .param pmc namespace
     .param pmc nstable
-    .return 'regex_stmt'(stmt, namespace, nstable)
+    .tailcall 'regex_stmt'(stmt, namespace, nstable)
 .end
 
 .sub 'rule_stmt'
     .param pmc stmt
     .param pmc namespace
     .param pmc nstable
-    .return 'regex_stmt'(stmt, namespace, nstable)
+    .tailcall 'regex_stmt'(stmt, namespace, nstable)
 .end
 
 
@@ -381,7 +381,7 @@ the output to the correct output file.
     $S0 = namespace
     $P0 = split '::', $S0
     $P0 = optable.'key'($P0 :flat)
-    optable.emit("          $P0 = get_hll_global %0, '%1'", $P0, arg)
+    optable.'emit'("          $P0 = get_hll_global %0, '%1'", $P0, arg)
     arg = '$P0'
     goto trait_arg_done
   trait_arg_null:
@@ -394,7 +394,7 @@ the output to the correct output file.
     goto trait_loop
   trait_end:
     name = optable.'escape'(name)
-    optable.emit("          optable.newtok(%0%1)", name, traitlist)
+    optable.'emit'("          optable.'newtok'(%0%1)", name, traitlist)
   .return ()
 .end
 

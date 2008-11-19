@@ -15,6 +15,8 @@ value of the comment is passed as the second argument to the method.
 
 =end comments
 
+=cut
+
 class Pipp::Grammar::Actions;
 
 method TOP($/) {
@@ -42,7 +44,7 @@ method SEA($/) {
          );
 }
 
-method code_tp1($/) {
+method code_short_tag($/) {
     my $past := PAST::Stmts.new( :node($/) );
     for $<statement> {
         $past.push( $($_) );
@@ -51,7 +53,21 @@ method code_tp1($/) {
     make $past;
 }
 
-method code_tp2($/) {
+method code_echo_tag($/) {
+    my $past := PAST::Stmts.new( :node($/) );
+
+    my $echo := $( $<arguments> );
+    $echo.name( 'echo' );
+    $past.push( $echo );
+
+    for $<statement> {
+        $past.push( $($_) );
+    }
+
+    make $past;
+}
+
+method code_script_tag($/) {
     my $past := PAST::Stmts.new( :node($/) );
     for $<statement> {
         $past.push( $($_) );
@@ -73,7 +89,7 @@ method statement($/,$key) {
     make $( $/{$key} );
 }
 
-method inline_sea_tp1($/) {
+method inline_sea_short_tag($/) {
    make PAST::Op.new(
             PAST::Val.new(
                 :value(~$<SEA_empty_allowed>),
@@ -189,15 +205,22 @@ method var($/,$key) {
 }
 
 method VAR_NAME($/) {
+    our $?PIPP_CURRENT_SCOPE;
     make PAST::Var.new(
-             :scope('package'),
+             :scope( $?PIPP_CURRENT_SCOPE ?? $?PIPP_CURRENT_SCOPE !! 'package' ),
              :name(~$/),
              :viviself('Undef'),
-             :lvalue(1)
+             :lvalue(1),
          );
 }
 
 method this($/) {
+    make PAST::Op.new(
+             :inline( "%r = self" )
+         );
+}
+
+method member($/) {
     make PAST::Op.new(
              :inline( "%r = self" )
          );
@@ -302,6 +325,9 @@ method NUMBER($/) {
 
 method function_definition($/) {
 
+    # PHP has two scopes: local to functions and global
+    our $?PIPP_CURRENT_SCOPE := 'lexical';
+
     # note that $<param_list> creates a new PAST::Block.
     my $past := $( $<param_list> );
 
@@ -309,7 +335,19 @@ method function_definition($/) {
     $past.control('return_pir');
     $past.push( $( $<block> ) );
 
+    $?PIPP_CURRENT_SCOPE := '';
+
     make $past;
+}
+
+# nested functions are not supported yet
+method ENTER_FUNCTION_DEF($/) {
+    our $?PIPP_CURRENT_SCOPE;
+    $?PIPP_CURRENT_SCOPE := 'lexical';
+}
+method EXIT_FUNCTION_DEF($/) {
+    our $?PIPP_CURRENT_SCOPE;
+    $?PIPP_CURRENT_SCOPE := 'package';
 }
 
 method method_definition($/) {
@@ -331,6 +369,7 @@ method param_list($/) {
                     :blocktype('declaration'),
                     :node($/)
                 );
+    my $arity := 0;
     for $<VAR_NAME> {
         my $param := $( $_ );
         $param.scope('parameter');
@@ -341,7 +380,9 @@ method param_list($/) {
              :scope('lexical'),
              $param.name()
         );
+        $arity++;
     }
+    $past.arity( $arity );
 
     make $past;
 }

@@ -53,9 +53,9 @@ This is an initial version, be careful and not expect too much.
     .local pmc ns, nsresult, nsstmt
     ns = get_namespace
     nsresult = get_namespace ['Result']
-    ns.export_to(nsresult, explist)
+    ns.'export_to'(nsresult, explist)
     nsstmt = get_namespace ['Statement']
-    ns.export_to(nsstmt, explist)
+    ns.'export_to'(nsstmt, explist)
 .end
 
 #-----------------------------------------------------------------------
@@ -151,7 +151,7 @@ done:
     .param string database
 
     .local pmc mysql_real_connect
-    mysql_real_connect = get_mysql_function('mysql_real_connect', 'ppttttiti')
+    mysql_real_connect = get_mysql_function('mysql_real_connect', 'ppttttitl')
     .local pmc mysql
     mysql = getattribute self, 'mysql'
     .local pmc result
@@ -160,7 +160,7 @@ done:
     $I0 = defined result
     if $I0 goto good
     print 'Connection failed: '
-    $S0 = self.error()
+    $S0 = self.'error'()
     say $S0
     exit 0
 good:
@@ -300,7 +300,7 @@ step8:
     mysql = getattribute self, 'mysql'
     mysql_query(mysql, stmt)
 
-    $S0 = self.error()
+    $S0 = self.'error'()
     unless $S0 goto done
     say $S0
     exit 1
@@ -434,7 +434,7 @@ nextcol:
 
 #-----------------------------------------------------------------------
 .sub destroy :vtable
-    self.free()
+    self.'free'()
 .end
 
 #-----------------------------------------------------------------------

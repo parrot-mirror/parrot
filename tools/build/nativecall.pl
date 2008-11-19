@@ -305,7 +305,7 @@ sub print_head {
 #if defined(HAS_JIT) && defined(I386)
 #  include "parrot/exec.h"
 #  include "jit.h"
-/*#  define CAN_BUILD_CALL_FRAMES*/
+#  define CAN_BUILD_CALL_FRAMES
 #endif
 
 /*
@@ -515,9 +515,11 @@ sub make_arg {
         return "PObj_bufstart(t_$temp_num)";
     };
     /B/ && do {
-        push @{$temps_ref},          "STRING *t_$temp_num;";
-        push @{$extra_preamble_ref}, "t_$temp_num = GET_NCI_S($reg_num);";
-        return "&PObj_bufstart(t_$temp_num)";
+        push @{$temps_ref}, "char *s_$temp_num;\n    char *t_$temp_num;\n    void** v_$temp_num = (void **) &t_$temp_num;";
+        push @{$extra_preamble_ref},
+            "{STRING * s= GET_NCI_S($reg_num); t_$temp_num = s ? string_to_cstring(interp, s) : (char *) NULL; s_$temp_num = t_$temp_num;}";
+        push @{$extra_postamble_ref}, "do { if (s_$temp_num) string_cstring_free(s_$temp_num); } while (0);";
+        return "v_$temp_num";
     };
     /J/ && do {
         return "interp";
@@ -704,16 +706,16 @@ $put_pointer
     jit_key_name = string_append(interp, jit_key_name, signature);
     b = VTABLE_get_pmc_keyed_str(interp, HashPointer, jit_key_name);
 
-    if (b && b->vtable->base_type == enum_class_UnManagedStruct) {
+    if (b && b->vtable->base_type == enum_class_ManagedStruct) {
         *jitted = 1;
-        return F2DPTR(PMC_data(b));
+        return F2DPTR(VTABLE_get_pointer(interp, b));
     }
     else {
         void * const result = Parrot_jit_build_call_func(interp, pmc_nci, signature);
         if (result) {
             *jitted = 1;
-            temp_pmc = pmc_new(interp, enum_class_UnManagedStruct);
-            PMC_data(temp_pmc) = (void*)result;
+            temp_pmc = pmc_new(interp, enum_class_ManagedStruct);
+            VTABLE_set_pointer(interp, temp_pmc, (void *)result);
             VTABLE_set_pmc_keyed_str(interp, HashPointer, jit_key_name, temp_pmc);
             return result;
         }

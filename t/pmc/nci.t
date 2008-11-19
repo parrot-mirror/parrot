@@ -6,7 +6,7 @@ use strict;
 use warnings;
 use lib qw( . lib ../lib ../../lib );
 use Test::More;
-use Parrot::Test tests => 66;
+use Parrot::Test tests => 68;
 use Parrot::Config qw(%PConfig);
 
 =head1 NAME
@@ -1381,7 +1381,7 @@ OUTPUT
   new P10, 'Integer'
   set_global "cb_done", P10
   # first attempt - create cb manually (this step will be hidden later)
-  .const .Sub P6 = "_call_back"
+  .const 'Sub' P6 = "_call_back"
   # prepare user data
   new P7, 'Integer'
   set P7, 42
@@ -1451,7 +1451,7 @@ OUTPUT
 
     # A Sub that can be given to the library
     # this callback function will eventually by called by the library
-    .const .Sub cb = "_call_back"
+    .const 'Sub' cb = "_call_back"
     .local pmc cb_wrapped
     cb_wrapped = new_callback cb, user_data, "vtU"	# Z in pdd16
     print "created a callback sub\n"
@@ -1513,7 +1513,7 @@ OUTPUT
   new P10, 'Integer'
   set_global "cb_done", P10
   # first attempt - create cb manually (this step will be hidden later)
-  .const .Sub P6 = "_call_back"
+  .const 'Sub' P6 = "_call_back"
   # prepare user data
   new P7, 'Integer'
   set P7, 42
@@ -1587,7 +1587,7 @@ OUTPUT
 
     # A Sub that can be given to the library
     # this callback function will eventually by called by the library
-    .const .Sub cb = "_call_back"
+    .const 'Sub' cb = "_call_back"
     .local pmc cb_wrapped
     cb_wrapped = new_callback cb, user_data, "vpU"	# Z in pdd16
     print "created a callback sub\n"
@@ -1660,7 +1660,7 @@ OUTPUT
   new P10, 'Integer'
   set_global "cb_done", P10
   # first attempt - create cb manually (this step will be hidden later)
-  .const .Sub P6 = "_call_back"
+  .const 'Sub' P6 = "_call_back"
   # prepare user data
   new P7, 'Integer'
   set P7, 42
@@ -1718,7 +1718,7 @@ OUTPUT
   new P10, 'Integer'
   set_global "cb_done", P10
   # first attempt - create cb manually (this step will be hidden later)
-  .const .Sub P6 = "_call_back"
+  .const 'Sub' P6 = "_call_back"
   # prepare user data
   new P7, 'Integer'
   set P7, 42
@@ -1789,7 +1789,7 @@ OUTPUT
 
     # A Sub that can be given to the library
     # this callback function will eventually by called by the library
-    .const .Sub cb = "_call_back"
+    .const 'Sub' cb = "_call_back"
     .local pmc cb_wrapped
     cb_wrapped = new_callback cb, user_data, "vUi"	# Z in pdd16
     print "created a callback sub\n"
@@ -1866,7 +1866,7 @@ OUTPUT
 
     # A Sub that can be given to the library
     # this callback function will eventually by called by the library
-    .const .Sub cb = "_call_back"
+    .const 'Sub' cb = "_call_back"
     .local pmc cb_wrapped
     cb_wrapped = new_callback cb, user_data, "vUp"	# Z in pdd16
     print "created a callback sub\n"
@@ -1965,7 +1965,7 @@ OUTPUT
 
     # A Sub that can be given to the library
     # this callback function will eventually by called by the library
-    .const .Sub cb = "_call_back"
+    .const 'Sub' cb = "_call_back"
     .local pmc cb_wrapped
     cb_wrapped = new_callback cb, user_data, "vUp"	# Z in pdd16
     print "created a callback sub\n"
@@ -2626,17 +2626,17 @@ pir_output_is( << 'CODE', << 'OUTPUT', "arity" );
 
     .local pmc nci_c
     nci_c = dlfunc libnci_test, "nci_c", "c"
-    $I0 = nci_c.arity()
+    $I0 = nci_c.'arity'()
     say $I0
 
     .local pmc multiply
     multiply = dlfunc libnci_test, "nci_pii", "pii"
-    $I0 = multiply.arity()
+    $I0 = multiply.'arity'()
     say $I0
 
     .local pmc nci_iiii
     nci_iiii = dlfunc libnci_test, "nci_iiii", "iiii"
-    $I0 = nci_iiii.arity()
+    $I0 = nci_iiii.'arity'()
     say $I0
 .end
 CODE
@@ -2666,6 +2666,42 @@ pir_output_is( << 'CODE', << 'OUTPUT', "nci_vVi - void** out parameter" );
 .end
 CODE
 got 10
+OUTPUT
+
+pir_output_is( << 'CODE', << 'OUTPUT', "nci_ttt - t_tt parameter" );
+.sub test :main
+    .local string library_name
+    library_name = 'libnci_test'
+    .local pmc libnci_test
+    libnci_test = loadlib  library_name
+
+    .local pmc nci_ttt
+    nci_ttt = dlfunc libnci_test, "nci_ttt", "ttt"
+
+    $S0 = nci_ttt("Hello", "Waldo")
+    say $S0
+.end
+CODE
+Waldo, Waldo, Hello
+Waldo, Waldo, Hello
+OUTPUT
+
+pir_output_is( << 'CODE', << 'OUTPUT', "nci_vfff - v_fff parameter" );
+.sub test :main
+    .local string library_name
+    library_name = 'libnci_test'
+    .local pmc libnci_test
+    libnci_test = loadlib  library_name
+
+    .local pmc nci_vfff
+    nci_vfff = dlfunc libnci_test, "nci_vfff", "vfff"
+
+    nci_vfff(3456.54, 10.1999, 14245.567)
+.end
+CODE
+1
+1
+1
 OUTPUT
 
 # Local Variables:

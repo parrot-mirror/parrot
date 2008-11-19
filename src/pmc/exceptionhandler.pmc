@@ -78,7 +78,7 @@ Mark any active exception handler data as live.
 
     /*
      * can't reuse Continuation's destroy yet -
-     * RT#46703 fix ref_count handling for exception_handlers first
+     * RT #46703 fix ref_count handling for exception_handlers first
      *
      * An ExceptionHandler is kind of a limited Continuation
      * (can only call 'up the stack').  Therefore we probably don't
@@ -86,11 +86,18 @@ Mark any active exception handler data as live.
      */
 
     VTABLE void destroy() {
-        Parrot_cont * const cc = PMC_cont(SELF);
+        Parrot_cont                        * const cc          = PMC_cont(SELF);
+        Parrot_ExceptionHandler_attributes * const core_struct =
+            PARROT_EXCEPTIONHANDLER(SELF);
 
         if (cc) {
             mem_sys_free(cc);
             PMC_struct_val(SELF) = NULL;
+        }
+
+        if (core_struct) {
+            mem_sys_free(core_struct);
+            PMC_data(SELF) = NULL;
         }
     }
 
@@ -186,28 +193,32 @@ Report whether the exception handler can handle a particular type of exception.
             VTABLE_get_integer_keyed_str(interp, exception, CONST_STRING(interp, "severity"));
 
         if (exception->vtable->base_type == enum_class_Exception
-                || VTABLE_isa(INTERP, exception, CONST_STRING(INTERP, "Exception"))) {
+        ||  VTABLE_isa(INTERP, exception, CONST_STRING(INTERP, "Exception"))) {
 
             if (severity < core_struct->min_severity) {
                 RETURN(INTVAL 0);
             }
             else if (core_struct->max_severity > 0
-                    && severity > core_struct->max_severity) {
+                 &&  severity                  > core_struct->max_severity) {
                 RETURN(INTVAL 0);
             }
             else if (core_struct->handled_types != PMCNULL) {
                 INTVAL elems = VTABLE_elements(interp, core_struct->handled_types);
-                INTVAL type = VTABLE_get_integer_keyed_str(interp,
-                        exception,
-                        CONST_STRING(interp, "type"));
+                INTVAL type  = VTABLE_get_integer_keyed_str(interp, exception, CONST_STRING(interp, "type"));
                 INTVAL i;
+
                 for (i = 0; i < elems; i++) {
                     INTVAL handled_type = VTABLE_get_integer_keyed_int(interp,
                             core_struct->handled_types, i);
                     if (handled_type == type)
                         RETURN(INTVAL 1);
                 }
+
                 RETURN(INTVAL 0);
+            }
+            else if (core_struct->max_severity > 0 ||
+                    core_struct->min_severity > 0) {
+                RETURN(INTVAL 1);
             }
 
             /* The exception handler has already been used before. */
@@ -235,6 +246,7 @@ Set or get the minimum severity of the exception handler.
     METHOD min_severity(INTVAL severity :optional, INTVAL have_severity :opt_flag) {
         Parrot_ExceptionHandler_attributes * const core_struct =
                     PARROT_EXCEPTIONHANDLER(SELF);
+
         if (have_severity)
             core_struct->min_severity = severity;
         else
@@ -256,6 +268,7 @@ Set or get the maximum severity of the exception handler.
     METHOD max_severity(INTVAL severity :optional, INTVAL have_severity :opt_flag) {
         Parrot_ExceptionHandler_attributes * const core_struct =
                     PARROT_EXCEPTIONHANDLER(SELF);
+
         if (have_severity)
             core_struct->max_severity = severity;
         else

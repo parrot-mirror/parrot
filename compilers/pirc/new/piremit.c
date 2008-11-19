@@ -37,6 +37,8 @@ PBC-generating functions.
  */
 static char const pir_register_types[5] = {'I', 'N', 'S', 'P', '?'};
 
+static void emit_pir_statement(lexer_state * const lexer, subroutine * const sub);
+static void emit_pir_instruction(lexer_state * const lexer, instruction * const instr);
 
 
 /* prototype declaration */
@@ -94,7 +96,15 @@ printed as well. Examples:
 */
 void
 print_target(lexer_state *lexer, target * const t) {
-    fprintf(out, "%c%d", pir_register_types[t->type], t->color);
+
+    if (TEST_FLAG(t->flags, TARGET_FLAG_IS_REG)) {
+        if (t->s.reg == NULL)
+            fprintf(stderr, "reg target has no pir_reg ptr!\n");
+
+        fprintf(out, "%c%d", pir_register_types[t->s.reg->type], t->s.reg->color);
+    }
+    else
+        fprintf(out, "%c%d", pir_register_types[t->s.sym->type], t->s.sym->color);
 
     /* if the target has a key, print that too */
     if (t->key)
@@ -157,6 +167,9 @@ print_expr(lexer_state * const lexer, expression * const expr) {
         case EXPR_KEY:
             print_key(lexer, expr->expr.k);
             break;
+        case EXPR_LABEL:
+            fprintf(out, "%d", expr->expr.l->offset);
+            break;
         default:
             break;
     }
@@ -192,8 +205,12 @@ void
 print_instruction(lexer_state * const lexer, instruction *ins) {
     PARROT_ASSERT(ins != NULL);
 
-    if (ins->label)
-        fprintf(out, "%u %s:\n", ins->offset, ins->label);
+    if (ins->label) {
+        if (TEST_FLAG(lexer->flags, LEXER_FLAG_EMIT_PASM))
+            fprintf(out, "%s:\n", ins->label);
+        else
+            fprintf(out, "%u %s:\n", ins->offset, ins->label);
+    }
 
     if (ins->opname) {
 
@@ -229,7 +246,7 @@ print_statement(lexer_state * const lexer, subroutine * const sub) {
 
 }
 
-/*
+
 static char const * const subflag_names[] = {
     "method",
     "init",
@@ -244,7 +261,7 @@ static char const * const subflag_names[] = {
     "multi",
     "lexid"
 };
-*/
+
 
 
 
@@ -264,18 +281,21 @@ print_subs(struct lexer_state * const lexer) {
 
         do {
 
+            /*
             fprintf(out, "# subroutine '%s' register usage\n", subiter->sub_name);
             fprintf(out, "#   int   : %d\n", subiter->regs_used[INT_TYPE]);
             fprintf(out, "#   num   : %d\n", subiter->regs_used[NUM_TYPE]);
             fprintf(out, "#   string: %d\n", subiter->regs_used[STRING_TYPE]);
             fprintf(out, "#   pmc   : %d\n", subiter->regs_used[PMC_TYPE]);
-
+            */
             fprintf(out, ".namespace ");
             print_key(lexer, subiter->name_space);
             fprintf(out, "\n");
 
             if (subiter->flags) {
-                fprintf(out, "\n.pcc_sub ");
+
+
+                fprintf(out, ".pcc_sub ");
 
                 if (TEST_FLAG(subiter->flags, SUB_FLAG_MAIN))
                     fprintf(out, ":main ");
@@ -293,6 +313,135 @@ print_subs(struct lexer_state * const lexer) {
     }
 }
 
+
+static void
+emit_pir_instruction(lexer_state * const lexer, instruction * const instr) {
+
+    if (instr->label)
+        fprintf(out, "  %s:\n", instr->label);
+    if (instr->opinfo) {
+        fprintf(out, "    %-10s\t", instr->opinfo->name);   /* set_p_pc became 'chopn'... XXX!!! */
+
+        print_expressions(lexer, instr->operands);
+
+        fprintf(out, "\n");
+    }
+}
+
+static void
+emit_pir_statement(lexer_state * const lexer, subroutine * const sub) {
+    if (sub->statements != NULL) {
+        instruction *statiter = sub->statements->next;
+
+        do {
+            emit_pir_instruction(lexer, statiter);
+            statiter = statiter->next;
+        }
+        while (statiter != sub->statements->next);
+    }
+}
+
+
+
+void
+emit_pir_subs(lexer_state * const lexer) {
+    if (lexer->subs != NULL) {
+        /* set iterator to first item */
+        subroutine *subiter = lexer->subs->next;
+
+        do {
+
+            int i;
+            fprintf(out, "\n.namespace ");
+            print_key(lexer, subiter->name_space);
+
+            fprintf(out, "\n.sub %s", subiter->sub_name);
+
+            for (i = 0; i < BIT(i); i++) {
+                if (TEST_FLAG(subiter->flags, BIT(i))) {
+                    fprintf(out, " :%s", subflag_names[i]);
+                }
+            }
+
+            fprintf(out, "\n");
+            emit_pir_statement(lexer, subiter);
+            fprintf(out, ".end\n");
+
+            subiter = subiter->next;
+        }
+        while (subiter != lexer->subs->next);
+    }
+}
+
+static void
+emit_pbc_instr(lexer_state * const lexer, instruction * const instr) {
+    int i;
+
+    /* emit the opcode */
+
+
+    /* emit the arguments */
+
+    /* note that opinfo->op_count counts all operands plus the op itself;
+     * so substract 1 for the op itself.
+     */
+    for (i = 0; i < instr->opinfo->op_count - 1; ++i) {
+        /*
+        switch () {
+
+        }
+        */
+
+    }
+
+}
+
+static void
+emit_pbc_instructions(lexer_state * const lexer, subroutine * const sub) {
+    instruction *iter;
+    if (sub->statements == NULL)
+        return;
+
+    iter = sub->statements;
+
+    do {
+        emit_pbc_instr(lexer, iter);
+        iter = iter->next;
+    }
+    while (iter != sub->statements->next);
+}
+
+/*
+
+=item C<void
+emit_pbc(lexer_state * const lexer)>
+
+Generate Parrot Byte Code from the abstract syntax tree. This is the top-level
+function; it initializes the data structures (code segment), and then starts
+emitting byte code (by means of helper functions).
+
+=cut
+
+*/
+void
+emit_pbc(lexer_state * const lexer) {
+    subroutine *subiter;
+
+    if (lexer->subs == NULL)
+        return;
+
+    subiter = lexer->subs->next;
+
+    /* initialize data structures in which PBC is going to be emitted. */
+
+
+    /* iterate over all instructions and emit them */
+    do {
+        emit_pbc_instructions(lexer, subiter);
+        subiter = subiter->next;
+    }
+    while (subiter != lexer->subs->next);
+}
 
 /*
 

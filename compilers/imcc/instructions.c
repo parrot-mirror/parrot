@@ -35,14 +35,6 @@ These functions operate over this array and its contents.
 
 */
 
-/* Global variables , forward def */
-
-#if 0
-static Instruction * last_ins;
-
-int n_comp_units;
-#endif
-
 /* HEADERIZER HFILE: compilers/imcc/instructions.h */
 
 /* HEADERIZER BEGIN: static */
@@ -79,8 +71,6 @@ static const Emitter emitters[] = {
      e_pbc_end_sub,
      e_pbc_close},
 };
-
-static int emitter;     /* XXX */
 
 /*
 
@@ -843,15 +833,15 @@ the C<param> to the open function.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 int
 emit_open(PARROT_INTERP, int type, ARGIN_NULLOK(void *param))
 {
-    emitter                          = type;
+    IMCC_INFO(interp)->emitter       = type;
     IMCC_INFO(interp)->has_compile   = 0;
     IMCC_INFO(interp)->dont_optimize = 0;
 
-    return (emitters[emitter]).open(interp, param);
+    return (emitters[IMCC_INFO(interp)->emitter]).open(interp, param);
 }
 
 /*
@@ -865,11 +855,12 @@ IMC_Unit C<unit>.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 int
 emit_flush(PARROT_INTERP, ARGIN_NULLOK(void *param), ARGIN(IMC_Unit *unit))
 {
-    Instruction * ins;
+    Instruction *ins;
+    int          emitter = IMCC_INFO(interp)->emitter;
 
     if (emitters[emitter].new_sub)
         (emitters[emitter]).new_sub(interp, param, unit);
@@ -895,11 +886,11 @@ Closes the given emitter.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 int
 emit_close(PARROT_INTERP, ARGIN_NULLOK(void *param))
 {
-    return (emitters[emitter]).close(interp, param);
+    return (emitters[IMCC_INFO(interp)->emitter]).close(interp, param);
 }
 
 /*

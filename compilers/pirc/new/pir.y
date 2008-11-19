@@ -63,6 +63,7 @@ TODO:
 #include "pircompunit.h"
 #include "pirsymbol.h"
 #include "piryy.h"
+#include "pirmacro.h"
 
 /* #defines to prevent declarations of malloc() and free() in pirparser.h */
 #define YYMALLOC
@@ -88,6 +89,7 @@ int yypirlex(YYSTYPE *yylval, yyscan_t yyscanner);
 
 #endif
 
+char *expand_macro(yyscan_t yyscanner, macro_def * const macro, macro_param * args);
 
 /* Enumeration of mathematical operator types; these are used to index the opnames array. */
 typedef enum pir_math_operators {
@@ -195,6 +197,10 @@ static void check_first_arg_direction(yyscan_t yyscanner, char const * const opn
 static int check_op_args_for_symbols(yyscan_t yyscanner);
 static int get_opinfo(yyscan_t yyscanner);
 
+/* names of the Parrot types. Note that pir_type_namwes is global,
+ * but it's read-only, so that's fine.
+ */
+static char const * const pir_type_names[] = { "int", "num", "string", "pmc" };
 
 
 /* enable debugging of generated parser */
@@ -238,10 +244,10 @@ static int get_opinfo(yyscan_t yyscanner);
     struct invocation  *invo;
     struct key         *key;
     struct symbol      *symb;
+    struct macro_def   *mval;
+    struct macro_param *pval;
 }
 
-
-%token TK_NL                "\n"
 
 %token TK_HLL               ".HLL"
        TK_HLL_MAP           ".HLL_map"
@@ -276,9 +282,12 @@ static int get_opinfo(yyscan_t yyscanner);
        TK_NCI_CALL          ".nci_call"
        TK_TAILCALL          ".tailcall"
 
+%token <sval> TK_NL         "\n"
+
 %token <sval> TK_LABEL      "label"
        <sval> TK_IDENT      "identifier"
-       <sval> TK_INT        "int"
+
+%token <sval> TK_INT        "int"
        <sval> TK_NUM        "num"
        <sval> TK_PMC        "pmc"
        <sval> TK_STRING     "string"
@@ -287,7 +296,7 @@ static int get_opinfo(yyscan_t yyscanner);
        <sval> TK_NULL       "null"
        <sval> TK_GOTO       "goto"
 
-       <sval> TK_STRINGC    "string constant"
+%token <sval> TK_STRINGC    "string constant"
        <ival> TK_INTC       "integer constant"
        <dval> TK_NUMC       "number constant"
        <ival> TK_PREG       "PMC register"
@@ -338,8 +347,9 @@ static int get_opinfo(yyscan_t yyscanner);
        TK_FLAG_MULTI        ":multi"
        TK_FLAG_POSTCOMP     ":postcomp"
        TK_FLAG_IMMEDIATE    ":immediate"
-       TK_FLAG_LEXID        ":lexid"
-       TK_INSTANCEOF        ":instanceof"
+       TK_FLAG_SUBID        ":subid"
+       TK_FLAG_INSTANCEOF   ":instanceof"
+       TK_FLAG_NSENTRY      ":nsentry"
 
 %token TK_FLAG_UNIQUE_REG   ":unique_reg"
        TK_FLAG_NAMED        ":named"
@@ -349,14 +359,47 @@ static int get_opinfo(yyscan_t yyscanner);
        TK_FLAG_OPT_FLAG     ":opt_flag"
        TK_FLAG_INVOCANT     ":invocant"
 
+/* tokens and types for macro layer */
+
+%token TK_MACRO                    ".macro"
+       TK_ENDM                     ".endm"
+       TK_MACRO_LOCAL              ".macro_local"
+       TK_MACRO_LABEL              ".macro_label"
+       TK_MACRO_CONST              ".macro_const"
+
+%token <sval> TK_MACRO_LABEL_ID    "macro-label"
+       <sval> TK_MACRO_LOCAL_ID    "macro-local"
+       <mval> TK_MACRO_IDENT       "macro-identifier"
+       <sval> TK_MACRO_ARG_IDENT   "macro-id-argument"
+       <sval> TK_MACRO_ARG_OTHER   "macro-argument"
+       <sval> TK_MACRO_CONST_VAL   "macro-constant"
+
+%type <pval> opt_macro_args
+             macro_args
+             macro_arg_list
+
+%type <sval> macro_arg
+
+/* for PASM */
+
+%token        TK_PASM_MARKER_START "<pasm-input>"
+%token        TK_PIR_MARKER_START  "<pir-input>"
+%token        TK_PCC_SUB           ".pcc_sub"
+%token <sval> TK_PARROT_OP         "parrot-op"
+
+/* normal rules and types */
+
 %type <sval> unop
              identifier
              sub_id
              opt_paren_string
              paren_string
-             local_var_name
              keyword
              parrot_op
+             macro_expansion
+             braced_contents
+             braced_arg
+             braced_item
 
 %type <targ> sub
              pmc_object
@@ -420,6 +463,7 @@ static int get_opinfo(yyscan_t yyscanner);
              condition
              augmented_op
              unique_reg_flag
+             int_or_num
 
 %type <invo> long_invocation
              long_invocation_stat
@@ -438,8 +482,13 @@ static int get_opinfo(yyscan_t yyscanner);
 %type <cval> const_tail
              constant
 
+/* all exported functions start with "yypir", instead of default "yy". */
 %name-prefix="yypir"
 
+%debug
+
+/* generate a header file with all token definitions for the lexer */
+%defines
 
 /* needed for reentrancy */
 %pure-parser
@@ -483,7 +532,15 @@ static int get_opinfo(yyscan_t yyscanner);
 
 /* Top-level rules */
 
-TOP               : opt_nl
+
+/* the */
+TOP               : "<pir-input>"  pir_contents
+                  | "<pasm-input>" pasm_contents
+                  ;
+
+/* PIR grammar */
+
+pir_contents      : opt_nl
                     pir_chunks
                     opt_nl
                         { fixup_global_labels(lexer); }
@@ -504,46 +561,114 @@ pir_chunk         : sub_def
                   | hll_mapping
                   | loadlib
                   | location_directive
+                  | macro_definition
                   ;
 
+
+/* implementation of macro layer: macro definition */
+
+
+macro_definition  : macro_const
+                  | macro
+                  ;
+
+macro_const       : ".macro_const" TK_IDENT TK_MACRO_CONST_VAL
+                        { new_macro_const(lexer->macros, $2, $3, yypirget_lineno(yyscanner)); }
+                  ;
+
+macro             : macro_header '(' macro_parameters ')' "\n"
+                    macro_body
+                    ".endm"
+                        { /* fprintf(stderr, "macro body: [%s]\n", CURRENT_MACRO(lexer)->body);*/ }
+                  ;
+
+macro_header      : ".macro" identifier
+                        {
+                          new_macro(lexer->macros, $2, yypirget_lineno(yyscanner), TRUE,
+                                    lexer->macro_size);
+                        }
+                  ;
+
+macro_parameters  : /* empty */
+                  | macro_params
+                  ;
+
+macro_params      : macro_param
+                  | macro_params ',' macro_param
+                  ;
+
+macro_param       : identifier
+                        { add_macro_param(CURRENT_MACRO(lexer), $1); }
+                  ;
+
+macro_body        : /* empty */
+                  | macro_statements
+                  ;
+
+macro_statements  : macro_statement
+                  | macro_statements macro_statement
+                  ;
+
+macro_statement   : macro_instr "\n"
+                  ;
+
+macro_instr       : macro_label_decl
+                  | macro_local_decl
+                  ;
+
+macro_label_decl  : ".macro_label" TK_MACRO_LABEL_ID
+                        { store_macro_string(CURRENT_MACRO(lexer), "%s\n", $2); }
+                  ;
+
+macro_local_decl  : ".macro_local" type TK_MACRO_LOCAL_ID
+                        {
+                          store_macro_string(CURRENT_MACRO(lexer), ".local %s %s\n",
+                                             pir_type_names[$2], $3);
+                        }
+                  ;
+
+/* end of macro layer: definition */
+
+
+
 loadlib           : ".loadlib" TK_STRINGC
-                            { load_library(lexer, $2); }
+                        { load_library(lexer, $2); }
                   ;
 
 location_directive: ".line" TK_INTC
-                            { yypirset_lineno ($2, yyscanner); }
+                        { yypirset_lineno ($2, yyscanner); }
                   | ".file" TK_STRINGC
-                            { lexer->filename = $2; }
+                        { lexer->filename = $2; }
                   ;
 
 /* HLL stuff      */
 
 hll_specifier     : ".HLL" TK_STRINGC
-                            { set_hll(lexer, $2); }
+                        { set_hll(lexer, $2); }
                   ;
 
 hll_mapping       : ".HLL_map" TK_STRINGC '=' TK_STRINGC
-                            { set_hll_map(lexer, $2, $4); }
+                        { set_hll_map(lexer, $2, $4); }
                   ;
 
 namespace_decl    : ".namespace" '[' opt_namespace ']'
-                            { set_namespace(lexer, $3); }
+                        { set_namespace(lexer, $3); }
                   ;
 
 opt_namespace     : /* empty */
-                            { $$ = NULL; }
+                        { $$ = NULL; }
                   | namespace
-                            { $$ = $1; }
+                        { $$ = $1; }
                   ;
 
 namespace         : namespace_slice
-                            { $$ = new_key(lexer, $1); }
+                        { $$ = new_key(lexer, $1); }
                   | namespace ';' namespace_slice
-                            { $$ = add_key(lexer, $1, $3); }
+                        { $$ = add_key(lexer, $1, $3); }
                   ;
 
 namespace_slice   : TK_STRINGC
-                            { $$ = expr_from_const(lexer, new_const(lexer, STRING_TYPE, $1)); }
+                        { $$ = expr_from_const(lexer, new_const(lexer, STRING_TYPE, $1)); }
                   ;
 
 sub_def           : sub_head sub_flags "\n"
@@ -576,8 +701,6 @@ sub_flag          : ":anon"
                          { set_sub_flag(lexer, SUB_FLAG_LOAD); }
                   | ":main"
                          { set_sub_flag(lexer, SUB_FLAG_MAIN); }
-                  | ":method"
-                         { set_sub_flag(lexer, SUB_FLAG_METHOD); }
                   | ":lex"
                          { set_sub_flag(lexer, SUB_FLAG_LEX); }
                   | ":postcomp"
@@ -588,12 +711,16 @@ sub_flag          : ":anon"
                          { set_sub_flag(lexer, SUB_FLAG_MULTI); }
                   | ":outer" '(' sub_id ')'
                          { set_sub_outer(lexer, $3); }
+                  | ":method" opt_paren_string
+                         { set_sub_methodname(lexer, $2); }
                   | ":vtable" opt_paren_string
                          { set_sub_vtable(lexer, $2); }
-                  | ":lexid" paren_string
-                         { set_sub_lexid(lexer, $2); }
+                  | ":subid" paren_string
+                         { set_sub_subid(lexer, $2); }
                   | ":instanceof" paren_string
                          { set_sub_instanceof(lexer, $2); }
+                  | ":nsentry" paren_string
+                         { set_sub_nsentry(lexer, $2); }
                   ;
 
 multi_type        : identifier
@@ -647,10 +774,17 @@ unique_reg_flag   : ":unique_reg"
 
 instructions      : /* empty */
                   | instructions instruction
+                        {
+                         ++lexer->stmt_counter;
+                         /* increment the logical statement counter; a statement can be
+                          * multiple lines, but each statement has its own ID for the
+                          * linear scan register allocator.
+                          */
+                        }
                   ;
 
 instruction       : TK_LABEL statement
-                         { set_label(lexer, $1); }
+                        { set_label(lexer, $1); }
                   | statement
                   ;
 
@@ -667,8 +801,79 @@ statement         : parrot_stat
                   | null_stat
                   | empty_stat
                   | location_stat
+                  | expansion_stat
                   | error_stat
                   ;
+
+
+/* grammar rules for macro expansion; .macro_const expansions are done in the lexer. */
+
+expansion_stat    : macro_expansion
+                  ;
+
+macro_expansion   : TK_MACRO_IDENT opt_macro_args "\n"
+                        { $$ = expand_macro(yyscanner, $1, $2); }
+                  ;
+
+opt_macro_args    : /* empty */
+                        { $$ = NULL; }
+                  | '(' macro_args ')'
+                        { $$ = $2; }
+                  ;
+
+macro_args        : /* empty */
+                        { $$ = NULL; }
+                  | macro_arg_list
+                  ;
+
+macro_arg_list    : macro_arg
+                        { $$ = new_macro_param($1); }
+                  | macro_arg_list ',' macro_arg
+                        {
+                          macro_param *param = new_macro_param($3);
+                          param->next = $1;
+                          $$ = param;
+                        }
+                  ;
+
+macro_arg         : TK_MACRO_ARG_IDENT  /* identifiers are handled separately to check them */
+                        {
+                          symbol *sym = find_symbol(lexer, $1);
+                          if (sym == NULL) {
+                              yypirerror(yyscanner, lexer, "macro argument '%s' is not a "
+                                                           "declared identifier", $1);
+                          }
+                        }
+                  | TK_MACRO_ARG_OTHER  /* all other macro argument options */
+                  | TK_MACRO_IDENT opt_macro_args
+                        { $$ = expand_macro(yyscanner, $1, $2); }
+                  | braced_arg
+                  ;
+
+braced_arg        : '{' braced_contents '}'
+                        { $$ = $2; }
+                  ;
+
+
+braced_contents   : /* empty */ { $$ = ""; }
+                  | braced_contents braced_item
+                        { /* XXX cleanup memory stuff */
+                          char *newbuff = (char *)mem_sys_allocate((strlen($1) + strlen($2) + 2)
+                                                                   * sizeof (char));
+                          sprintf(newbuff, "%s %s", $1, $2);
+                          $$ = newbuff;
+                        }
+                  ;
+
+braced_item       : "\n"
+                  | TK_MACRO_ARG_OTHER
+                  | TK_MACRO_ARG_IDENT
+                  | TK_MACRO_IDENT opt_macro_args
+                        { $$ = expand_macro(yyscanner, $1, $2); }
+                  ;
+
+/* end of macro expansion */
+
 
 /* make sure a new instruction node is created; call set_instr() for that. */
 empty_stat        : "\n"
@@ -742,8 +947,8 @@ keylist_assignment: keylist '=' expression
                           * an identifier; get the name, and check its type.
                           */
                          char const * const instr = CURRENT_INSTRUCTION(lexer)->opname;
-                         symbol *sym        = find_symbol(lexer, instr);
-                         target *obj;
+                         symbol     *       sym   = find_symbol(lexer, instr);
+                         target     *       obj;
 
                          /* find the symbol for the object being indexed;
                           * it must have been declared.
@@ -752,7 +957,8 @@ keylist_assignment: keylist '=' expression
                             yypirerror(yyscanner, lexer, "indexed object '%s' not declared", instr);
                             sym = new_symbol(lexer, instr, PMC_TYPE);
                          }
-                         else if (sym->type != PMC_TYPE) /* found symbol, now check it's a PMC */
+                         else if (sym->type != PMC_TYPE)
+                            /* found symbol, now check it's a PMC */
                             yypirerror(yyscanner, lexer,
                                     "indexed object '%s' must be of type 'pmc'", instr);
 
@@ -785,7 +991,7 @@ op_arg_expr       : constant
                   | identifier
                          { /* this is either a LABEL or a symbol; in the latter case, the type
                             * will be filled in later. */
-                           $$ = expr_from_target(lexer, new_target(lexer, UNKNOWN_TYPE, $1));
+                           $$ = expr_from_ident(lexer, $1);
                          }
                   | reg
                          { $$ = expr_from_target(lexer, $1); }
@@ -799,23 +1005,16 @@ keyaccess         : pmc_object keylist
                            if (TEST_FLAG($1->flags, TARGET_FLAG_IS_REG))
                                $$ = $1;
                            else { /* it's not a register, so it must be a declared symbol */
-                               symbol *sym = find_symbol(lexer, target_name($1));
-                               if (sym == NULL) {
-                                   yypirerror(yyscanner, lexer,
-                                           "indexed object '%s' not declared", target_name($1));
-                                   /* make sure sym is a valid pointer */
-                                   sym = new_symbol(lexer, target_name($1), PMC_TYPE);
-                               }
-                               else if (sym->type != PMC_TYPE)
+                               if ($1->s.sym->type != PMC_TYPE)
                                    yypirerror(yyscanner, lexer,
                                            "indexed object '%s' is not of type 'pmc'",
-                                           target_name($1));
+                                           $1->s.sym->name);
 
                                /* create a target node based on the symbol node;
                                 * sym already has a PASM register, so through
                                 * this the target will get that too.
                                 */
-                               $$ = target_from_symbol(lexer, sym);
+                               $$ = $1;
                            }
 
                            /* in both cases (register or symbol), set the key on this target */
@@ -867,11 +1066,11 @@ parrot_op_assign  : target '=' parrot_op op_arg_expr ',' parrot_op_args
                           unshift_operand(lexer, expr_from_target(lexer, $1));
                           if (check_op_args_for_symbols(yyscanner))
                               check_first_arg_direction(yyscanner, $3);
+                              /* no strength reduction here */
                         }
                   ;
 
 assignment_stat   : assignment "\n"
-                        { get_opinfo(yyscanner); }
                   ;
 
 assignment        : target '=' TK_INTC
@@ -880,6 +1079,8 @@ assignment        : target '=' TK_INTC
                               set_instrf(lexer, "null", "%T", $1);
                           else
                               set_instrf(lexer, "set", "%T%i", $1, $3);
+
+                          get_opinfo(yyscanner);
                         }
                   | target '=' TK_NUMC
                         {
@@ -887,20 +1088,29 @@ assignment        : target '=' TK_INTC
                               set_instrf(lexer, "null", "%T", $1);
                           else
                               set_instrf(lexer, "set", "%T%n", $1, $3);
+
+                          get_opinfo(yyscanner);
                         }
                   | target '=' TK_STRINGC
-                        { set_instrf(lexer, "set", "%T%s", $1, $3); }
+                        {
+                          set_instrf(lexer, "set", "%T%s", $1, $3);
+                          get_opinfo(yyscanner);
+                        }
                   | target '=' binary_expr
-                        { unshift_operand(lexer, expr_from_target(lexer, $1)); }
+                        {
+                          unshift_operand(lexer, expr_from_target(lexer, $1));
+                          get_opinfo(yyscanner);
+                        }
                   | target '=' parrot_op
                         {
                           symbol *sym = find_symbol(lexer, $3);
                           if (sym == NULL) {
                               if (!is_parrot_op(lexer, $3))
                                   yypirerror(yyscanner, lexer, "'%s' is neither a declared symbol "
-                                                            "nor a parrot opcode", $3);
+                                                               "nor a parrot opcode", $3);
                               else { /* handle it as an op */
                                   unshift_operand(lexer, expr_from_target(lexer, $1));
+                                  get_opinfo(yyscanner);
                                   check_first_arg_direction(yyscanner, $3);
                               }
                           }
@@ -909,6 +1119,7 @@ assignment        : target '=' TK_INTC
                               unshift_operand(lexer, expr_from_target(lexer,
                                                      target_from_symbol(lexer, sym)));
                               unshift_operand(lexer, expr_from_target(lexer, $1));
+                              get_opinfo(yyscanner);
                           }
                         }
                   | target '=' parrot_op keylist
@@ -927,8 +1138,10 @@ assignment        : target '=' TK_INTC
                           symbol *sym = find_symbol(lexer, $3);
                           target *t;
                           if (sym == NULL) {
-                              if (is_parrot_op(lexer, $3))
+                              if (is_parrot_op(lexer, $3)) {
                                   set_instrf(lexer, $3, "%T%E", $1, expr_from_key(lexer, $4));
+                                  get_opinfo(yyscanner);
+                              }
                               else
                                   yypirerror(yyscanner, lexer, "indexed object '%s' not declared", $3);
 
@@ -946,6 +1159,7 @@ assignment        : target '=' TK_INTC
                               update_instr(lexer, "set");
                               unshift_operand(lexer, expr_from_target(lexer, t));
                               unshift_operand(lexer, expr_from_target(lexer, $1));
+                              get_opinfo(yyscanner);
                           }
                         }
                   | target '=' keyword keylist
@@ -964,15 +1178,20 @@ assignment        : target '=' TK_INTC
                           t = target_from_symbol(lexer, sym);
                           set_target_key(t, $4);
                           set_instrf(lexer, "set", "%T%T", $1, t);
+                          get_opinfo(yyscanner);
                         }
                   | target '=' TK_PREG keylist
                         {
                           target *preg = new_reg(lexer, PMC_TYPE, $3);
                           set_target_key(preg, $4);
                           set_instrf(lexer, "set", "%T%T", $1, preg);
+                          get_opinfo(yyscanner);
                         }
                   | target augmented_op expression
-                        { set_instrf(lexer, opnames[$2], "%T%E", $1, $3); }
+                        {
+                          set_instrf(lexer, opnames[$2], "%T%E", $1, $3);
+                          get_opinfo(yyscanner);
+                        }
                   | target "+=" TK_INTC
                         {
                           if ($3 == 1)
@@ -981,6 +1200,8 @@ assignment        : target '=' TK_INTC
                               set_instr(lexer, "noop");
                           else
                               set_instrf(lexer, "add", "%T%i", $1, $3);
+
+                          get_opinfo(yyscanner);
                         }
                   | target "+=" TK_NUMC
                         {
@@ -990,6 +1211,8 @@ assignment        : target '=' TK_INTC
                               set_instr(lexer, "noop");
                           else
                               set_instrf(lexer, "add", "%T%n", $1, $3);
+
+                          get_opinfo(yyscanner);
                         }
                   | target "-=" TK_INTC
                         {
@@ -999,6 +1222,8 @@ assignment        : target '=' TK_INTC
                               set_instr(lexer, "noop");
                           else
                               set_instrf(lexer, "sub", "%T%i", $1, $3);
+
+                          get_opinfo(yyscanner);
                         }
                   | target "-=" TK_NUMC
                         {
@@ -1008,19 +1233,32 @@ assignment        : target '=' TK_INTC
                               set_instr(lexer, "noop");
                           else
                               set_instrf(lexer, "sub", "%T%n", $1, $3);
+
+                          get_opinfo(yyscanner);
                         }
                   | target "+=" target
-                        { set_instrf(lexer, "add", "%T%T", $1, $3); }
+                        {
+                          set_instrf(lexer, "add", "%T%T", $1, $3);
+                          get_opinfo(yyscanner);
+                        }
                   | target "-=" target
-                        { set_instrf(lexer, "sub", "%T%T", $1, $3); }
+                        {
+                          set_instrf(lexer, "sub", "%T%T", $1, $3);
+                          get_opinfo(yyscanner);
+                        }
                   | target '=' unop expression
-                        { set_instrf(lexer, $3, "%T%E", $1, $4); }
+                        {
+                          set_instrf(lexer, $3, "%T%E", $1, $4);
+                          get_opinfo(yyscanner);
+                        }
                   | target '=' target binop target
                         {
                           if (targets_equal($1, $3)) /* $P0 = $P0 + $P1 ==> $P0 += $P1 */
                               set_instrf(lexer, opnames[$4], "%T%T", $1, $5);
                           else
                               set_instrf(lexer, opnames[$4], "%T%T%T", $1, $3, $5);
+
+                          get_opinfo(yyscanner);
                         }
                   | keyword keylist '=' expression
                         {
@@ -1039,12 +1277,14 @@ assignment        : target '=' TK_INTC
                           t = target_from_symbol(lexer, sym);
                           set_target_key(t, $2);
                           set_instrf(lexer, "set", "%T%E", t, $4);
+                          get_opinfo(yyscanner);
                       }
                   | TK_PREG keylist '=' expression
                         {
                           target *preg = new_reg(lexer, PMC_TYPE, $1);
                           set_target_key(preg, $2);
                           set_instrf(lexer, "set", "%T%E", preg, $4);
+                          get_opinfo(yyscanner);
                         }
                   ;
 
@@ -1126,7 +1366,7 @@ conditional_instr : if_unless "null" TK_IDENT "goto" identifier
                           istrue = $1 ? !istrue : istrue;
                           if (istrue) {
                               set_instrf(lexer, "branch", "%I", $4);
-                              set_instr_flag(lexer, INSTR_FLAG_BRANCH);
+                              set_op_labelflag(lexer, BIT(1));
                           }
                           else
                               set_instr(lexer, "noop");
@@ -1168,7 +1408,7 @@ conditional_instr : if_unless "null" TK_IDENT "goto" identifier
 
                              push_operand(lexer, expr_from_ident(lexer, $4));
 
-                             set_instr_flag(lexer, INSTR_FLAG_ISXX);
+                             set_op_labelflag(lexer, BIT(2));
                           }
                           else { /* evaluation during compile time */
                              /* if the result was false but the instr. was "unless", or,
@@ -1178,7 +1418,7 @@ conditional_instr : if_unless "null" TK_IDENT "goto" identifier
                              if (($2 == FALSE && $1 == NEED_INVERT_OPNAME)/* unless false -> jump */
                              ||  ($2 == TRUE  && $1 == DONT_INVERT_OPNAME)) {  /* if true -> jump */
                                 set_instrf(lexer, "branch", "%I", $4);
-                                set_instr_flag(lexer, INSTR_FLAG_BRANCH);
+                                set_op_labelflag(lexer, BIT(0));
                              }
                              else                       /* if false, unless true --> do nothing */
                                 set_instr(lexer, "noop");
@@ -1198,7 +1438,19 @@ condition         : target rel_op expression
                            * "le" are 1 position after "gt" and "ge" respectively in the
                            * opnames array; hence the [$2 + 1] index.
                            */
-                          if ($2 == OP_GE || $2 == OP_GT)
+
+                          /* NOTE: a reference is made here to $<ival>0. This is the <ival> of
+                           * $0, which refers to the (non)terminal /before/ the use of
+                           * the "condition" rule, in this case "if_unless". If the value
+                           * of that non-terminal is in fact "NEED_INVERT_OPNAME", then
+                           * we shouldn't do it here, as the inversion of "le" or "lt" is
+                           * again "ge" or "gt", and these instructions don't exist.
+                           *
+                           * Note that this usage is Perfectly Safe, as long as we are sure
+                           * that $0 has in fact a <ival>. As "condition" is only used in
+                           * exactly one place in the whole grammer, we can be sure of this.
+                           */
+                          if (($<ival>0 != NEED_INVERT_OPNAME) && ($2 == OP_GE || $2 == OP_GT))
                               set_instrf(lexer, opnames[$2 + 1], "%E%T", $3, $1);
                           else
                               set_instrf(lexer, opnames[$2], "%T%E", $1, $3);
@@ -1207,7 +1459,7 @@ condition         : target rel_op expression
                         }
                   | TK_INTC rel_op target
                         {
-                          if ($2 == OP_GE || $2 == OP_GT)
+                          if (($<ival>0 != NEED_INVERT_OPNAME) && ($2 == OP_GE || $2 == OP_GT))
                               set_instrf(lexer, opnames[$2 + 1], "%T%i", $3, $1);
                           else
                               set_instrf(lexer, opnames[$2], "%i%T", $1, $3);
@@ -1215,7 +1467,7 @@ condition         : target rel_op expression
                         }
                   | TK_NUMC rel_op target
                         {
-                          if ($2 == OP_GE || $2 == OP_GT)
+                          if (($<ival>0 != NEED_INVERT_OPNAME) && ($2 == OP_GE || $2 == OP_GT))
                               set_instrf(lexer, opnames[$2 + 1], "%T%n", $3, $1);
                           else
                               set_instrf(lexer, opnames[$2], "%n%T", $1, $3);
@@ -1224,7 +1476,7 @@ condition         : target rel_op expression
                         }
                   | TK_STRINGC rel_op target
                         {
-                          if ($2 == OP_GE || $2 == OP_GT)
+                          if (($<ival>0 != NEED_INVERT_OPNAME) && ($2 == OP_GE || $2 == OP_GT))
                               set_instrf(lexer, opnames[$2], "%T%s", $3, $1);
                           else
                               set_instrf(lexer, opnames[$2], "%s%T", $1, $3);
@@ -1241,6 +1493,22 @@ condition         : target rel_op expression
                         { $$ = evaluate_n_n($1, $2, $3); }
                   | TK_STRINGC rel_op TK_STRINGC
                         { $$ = evaluate_s_s($1, $2, $3); }
+
+                  /* if not catching these cases, error message is obscure */
+                  | TK_STRINGC rel_op int_or_num
+                        {
+                          yypirerror(yyscanner, lexer, "cannot compare string to %s",
+                                     $3 == INT_TYPE ? "integer" : "number");
+                        }
+                  | TK_INTC rel_op TK_STRINGC
+                        { yypirerror(yyscanner, lexer, "cannot compare integer to string"); }
+                  | TK_NUMC rel_op TK_STRINGC
+                        { yypirerror(yyscanner, lexer, "cannot compare number to string"); }
+                  ;
+
+/* helper rule to for error catching; this rule is needed to prevent shift/reduce conflicts. */
+int_or_num        : TK_INTC    { $$ = INT_TYPE; }
+                  | TK_NUMC    { $$ = NUM_TYPE; }
                   ;
 
 if_unless         : "if"       { $$ = DONT_INVERT_OPNAME; /* no need to invert */ }
@@ -1254,7 +1522,7 @@ then              : "goto" /* PIR mode */
 goto_stat         : "goto" identifier "\n"
                         {
                           set_instrf(lexer, "branch", "%I", $2);
-                          set_instr_flag(lexer, INSTR_FLAG_BRANCH);
+                          set_op_labelflag(lexer, BIT(0)); /* bit 0 means: "1 << 0" */
                           get_opinfo(yyscanner);
                         }
                   ;
@@ -1269,17 +1537,8 @@ local_id_list     : local_id
                         { $$ = add_local($1, $3); }
                   ;
 
-local_id          : local_var_name has_unique_reg
+local_id          : identifier has_unique_reg
                         { $$ = new_local(lexer, $1, $2); }
-                  ;
-
-local_var_name    : identifier
-                        { /* try to find symbol for this id; if found, it was already declared */
-                          symbol *sym = find_symbol(lexer, $1);
-                          if (sym)
-                              yypirerror(yyscanner, lexer, "symbol '%s' is already declared", $1);
-                          $$ = $1;
-                        }
                   ;
 
 has_unique_reg    : /* empty */     { $$ = 0; }
@@ -1289,14 +1548,10 @@ has_unique_reg    : /* empty */     { $$ = 0; }
 lex_decl          : ".lex" TK_STRINGC ',' pmc_object "\n"
                         { /* if $4 is not a register, it must be a declared symbol */
                           if (!TEST_FLAG($4->flags, TARGET_FLAG_IS_REG)) {
-                              symbol *sym = find_symbol(lexer, target_name($4));
 
-                              if (sym == NULL) /* check declaration */
-                                  yypirerror(yyscanner, lexer, "lexical '%s' is not declared",
-                                          target_name($4));
-                              else if (sym->type != PMC_TYPE) /* a .lex must be a PMC */
+                              if ($4->s.sym->type != PMC_TYPE) /* a .lex must be a PMC */
                                   yypirerror(yyscanner, lexer, "lexical '%s' must be of type 'pmc'",
-                                          target_name($4));
+                                             $4->s.sym->name);
                           }
                           set_lex_flag($4, $2);
                         }
@@ -1365,7 +1620,12 @@ opt_long_results     : /* empty */
 long_results         : long_result
                            { $$ = $1; }
                      | long_results long_result
-                           { $$ = add_target(lexer, $1, $2); }
+                           {
+                               if ($2)
+                                   $$ = add_target(lexer, $1, $2);
+                               else
+                                   $$ = $1
+                           }
                      ;
 
 long_result          : ".get_result" result_target "\n"
@@ -1405,18 +1665,18 @@ methodcall           : pmc_object '.' method arguments
                                 invocant = $1;
                              }
                              else { /* is not a register but a symbol */
-                                 symbol *sym = find_symbol(lexer, target_name($1));
-                                 if (sym == NULL)
-                                     yypirerror(yyscanner, lexer, "object '%s' not declared",
-                                             target_name($1));
 
-                                 else if (sym->type != PMC_TYPE)
+                                 symbol *sym = find_symbol(lexer, $1->s.sym->name);
+                                 if (sym == NULL)
+                                     yypirerror(yyscanner, lexer,
+                                             "symbol '%s' was not declared", $1->s.sym->name);
+                                 else if ($1->s.sym->type != PMC_TYPE)
                                      yypirerror(yyscanner, lexer,
                                              "cannot invoke method: '%s' is not of type 'pmc'",
-                                             target_name($1));
+                                             $1->s.sym->name);
 
                                  /* get a target based on the symbol, it contains a register */
-                                 invocant = target_from_symbol(lexer, sym);
+                                 invocant = $1;
                              }
 
                              $$ = invoke(lexer, CALL_METHOD, invocant, $3);
@@ -1434,7 +1694,12 @@ subcall              : sub arguments
 sub                  : pmc_object
                            { $$ = $1; }
                      | TK_STRINGC
-                           { $$ = target_from_string(lexer, $1); }
+                           {
+                               symbol *sym = find_symbol(lexer, $1);
+                               if (sym == NULL)
+                                   sym = new_symbol(lexer, $1, PMC_TYPE);
+
+                               $$ = target_from_symbol(lexer, sym); }
                      ;
 
 method               : identifier
@@ -1447,7 +1712,8 @@ method               : identifier
                                 /* make sure sym is not NULL */
                                 sym = new_symbol(lexer, $1, PMC_TYPE);
                              }
-                             else if (sym->type != PMC_TYPE && sym->type != STRING_TYPE)
+                             else if (sym->type != PMC_TYPE
+                                  &&  sym->type != STRING_TYPE)
                                  yypirerror(yyscanner, lexer,
                                          "method '%s' must be of type 'pmc' or 'string'", $1);
 
@@ -1462,7 +1728,14 @@ method               : identifier
                      ;
 
 pmc_object           : identifier
-                           { $$ = target_from_ident(lexer, PMC_TYPE, $1); }
+                           {
+                             symbol *sym = find_symbol(lexer, $1);
+                             if (sym == NULL)
+                                 sym = new_symbol(lexer, $1, PMC_TYPE);
+
+                             $$ = target_from_symbol(lexer, sym);
+
+                           }
                      | TK_PREG
                            { $$ = new_reg(lexer, PMC_TYPE, $1); }
 
@@ -1525,8 +1798,7 @@ short_return_stat    : ".return" arguments "\n"
                               $$ = invoke(lexer, CALL_RETURN);
                               set_invocation_args($$, $2);
                             }
-                     /* XXX replace this .return with .tailcall; for testing, keep it .return. */
-                     | ".return" simple_invocation "\n"
+                     | ".tailcall" simple_invocation "\n"
                             { /* was the invocation a method call? then it becomes a method tail
                                * call, otherwise it's just a normal (sub) tail call.
                                */
@@ -1675,22 +1947,8 @@ const_tail            : "int" identifier '=' TK_INTC
                             { $$ = new_named_const(lexer, NUM_TYPE, $2, $4); }
                       | "string" identifier '=' TK_STRINGC
                             { $$ = new_named_const(lexer, STRING_TYPE, $2, $4); }
-                      | "pmc" identifier '=' TK_STRINGC
-                            { $$ = new_named_const(lexer, PMC_TYPE, $2, $4); }
-                      /*
-                      | "Sub" identifier '=' TK_STRINGC
-                      | "Coroutine" identifier '=' TK_STRINGC
-                      */
-
-                      /* this might be useful, for:
-                         .const "Sub" foo = "foo" # make a Sub PMC of subr. "foo"
-                         .const "Float" PI = 3.14 # make a Float PMC for 3.14
-
-                        Is: .const pmc x = 'foo' any useful? Type of x is not clear.
-
                       | TK_STRINGC identifier '=' constant
                             { $$ = new_pmc_const($1, $2, $4); }
-                      */
                       ;
 
 
@@ -1811,6 +2069,68 @@ augmented_op: "*="         { $$ = OP_MUL; }
             | ">>>="       { $$ = OP_LSR; }
             ;
 
+
+/* PASM grammar
+ *
+ * The PASM grammar uses a number of rules in PIR, but in PASM mode, a different set
+ * of tokens is recognized by the lexer. Therefore, a number of alternatives in the
+ * PIR grammar rules can never be matched, as the particular tokens will never be
+ * returned by the lexer. Neat, huh.
+ */
+
+pasm_contents             : pasm_init pasm_lines
+                          ;
+
+/* helper rule to install the first subroutine; any parsed instruction must go into
+ * a subroutine, but PASM allows you start writing ops immediately, without declaring
+ * a subroutine first. Give the subroutine a funny name containing characters normally
+ * not allowed, so we don't have any name collisions.
+ */
+pasm_init                 : opt_nl
+                                { new_subr(lexer, "@start"); }
+                          ;
+
+pasm_lines                : pasm_line
+                          | pasm_lines pasm_line
+                          ;
+
+pasm_line                 : pasm_statement
+                          | namespace_decl "\n"
+                          | lex_decl                /* lex_decl rule has already a "\n" token */
+                          | location_directive "\n"
+                          ;
+
+pasm_statement            : TK_LABEL opt_pasm_instruction
+                                { set_label(lexer, $1); }
+                          | pasm_sub_directive opt_pasm_instruction
+                          | pasm_instruction
+                          ;
+
+opt_pasm_instruction      : empty_stat
+                          | pasm_instruction
+                          ;
+
+pasm_sub_directive        : pasm_sub_head sub_flags TK_LABEL
+                                { set_sub_name(lexer, $3); } /* now update the sub's name */
+                          ;
+
+pasm_sub_head             : ".pcc_sub"
+                                { new_subr(lexer, NULL); } /* don't know the sub's name yet,
+                                                              hence NULL */
+                          ;
+
+pasm_instruction          : parrot_op op_args "\n"
+                                {
+                                  if (is_parrot_op(lexer, $1))
+                                      get_opinfo(yyscanner);
+                                  else /* not a parrot op */
+                                      yypirerror(yyscanner, lexer, "'%s' is not a parrot op", $1);
+
+                                }
+                          ;
+
+
+
 %%
 
 
@@ -1919,7 +2239,7 @@ fold_i_i(yyscan_t yyscanner, int a, pir_math_operator op, int b) {
                   "detected 'inc' or 'dec' in fold_i_i()");
             break;
     }
-    return new_const(yypirget_extra(yyscanner), INT_TYPE, result);
+    return new_const((lexer_state * const)yypirget_extra(yyscanner), INT_TYPE, result);
 }
 
 /*
@@ -2169,7 +2489,6 @@ fold_n_n(yyscan_t yyscanner, double a, pir_math_operator op, double b) {
             result = (a != b);
             break;
 
-        /* OP_INC and OP_DEC are here only to keep the C compiler happy */
         default:
             break;
     }
@@ -2478,7 +2797,7 @@ create_if_instr(yyscan_t yyscanner, NOTNULL(lexer_state * const lexer), int inve
         set_instrf(lexer, invert ? "unless" : "if", "%T%I", target_from_symbol(lexer, sym), label);
 
     /* set a flag on this instruction */
-    set_instr_flag(lexer, INSTR_FLAG_IFUNLESS);
+    set_op_labelflag(lexer, BIT(2));
 }
 
 /*
@@ -2851,15 +3170,20 @@ check_first_arg_direction(yyscan_t yyscanner, NOTNULL(char const * const opname)
     lexer_state * lexer = (lexer_state *)yypirget_extra(yyscanner);
 
 
-    PARROT_ASSERT(CURRENT_INSTRUCTION(lexer));
-
-    PARROT_ASSERT(CURRENT_INSTRUCTION(lexer)->opinfo);
-
     /* op_count also counts the instruction itself, so must be at least 2 */
-    PARROT_ASSERT(CURRENT_INSTRUCTION(lexer)->opinfo->op_count >= 2);
+    assert(CURRENT_INSTRUCTION(lexer)->opinfo->op_count >= 2);
 
     /* get the direction of the first argument */
-    dir_first_arg = CURRENT_INSTRUCTION(lexer)->opinfo->dirs[0];
+    if (!CURRENT_INSTRUCTION(lexer)->opinfo->dirs)
+        fprintf(stderr, "no opinfo->dirs!\n");
+    else {
+        op_info_t *opinfo =     CURRENT_INSTRUCTION(lexer)->opinfo;
+        if (opinfo)
+
+            dir_first_arg = CURRENT_INSTRUCTION(lexer)->opinfo->dirs[0];
+        else
+            fprintf(stderr, " no opinfo!\n");
+    }
 
     /* direction cannot be IN or INOUT */
     if (dir_first_arg == PARROT_ARGDIR_IN)
@@ -2943,20 +3267,43 @@ static char *
 write_signature(NOTNULL(expression * const iter), NOTNULL(char *instr_writer)) {
     switch (iter->type) {
         case EXPR_TARGET:
-            *instr_writer++ = type_codes[iter->expr.t->type];
+            if (TEST_FLAG(iter->expr.t->flags, TARGET_FLAG_IS_REG))
+                *instr_writer++ = type_codes[iter->expr.t->s.reg->type];
+            else
+                *instr_writer++ = type_codes[iter->expr.t->s.sym->type];
 
             if (iter->expr.t->key) {
                 *instr_writer++ = '_';
                 *instr_writer++ = 'k';
+                /* XXX fix this mess. */
                 if ((iter->expr.t->key->expr->type == EXPR_TARGET)
-                    && (iter->expr.t->key->expr->expr.t->type == PMC_TYPE)) {
+                    &&
+                    (  (iter->expr.t->key->expr->expr.t->flags & TARGET_FLAG_IS_REG)
+                     ?
+                       (iter->expr.t->key->expr->expr.t->s.reg->type == PMC_TYPE)
+                     :
+                       (iter->expr.t->key->expr->expr.t->s.sym->type == PMC_TYPE)
+                    )
+                   ) {
                     /* the key is a target, and its type is a PMC. In that case, do not
                      * print the signature; 'kp' is not valid.
                      */
                 }
                 else {
-                    if ((iter->expr.t->key->expr->type == EXPR_TARGET)
-                       & (iter->expr.t->key->expr->expr.t->type == INT_TYPE)) /* $I register */
+                    if (
+                       (iter->expr.t->key->expr->type == EXPR_TARGET)
+                       &&
+
+
+                       (
+                       (iter->expr.t->key->expr->expr.t->flags & TARGET_FLAG_IS_REG)
+                       ?
+                       (iter->expr.t->key->expr->expr.t->s.reg->type == INT_TYPE)
+                       :
+                       (iter->expr.t->key->expr->expr.t->s.sym->type == INT_TYPE)
+                       )
+                       )
+
                     {
                        *instr_writer++ = 'i';
                     }
@@ -3083,151 +3430,6 @@ get_signatured_opname(NOTNULL(lexer_state * const lexer), NOTNULL(instruction * 
     return fullname;
 }
 
-/*
-
-XXX temp. solution.
-
-*/
-PARROT_WARN_UNUSED_RESULT
-static double
-get_constant_value(constant * const c) {
-    PARROT_ASSERT(c->type == INT_TYPE || c->type == NUM_TYPE);
-
-    switch (c->type) {
-        case INT_TYPE:
-            return c->val.ival;
-        case NUM_TYPE:
-            return c->val.nval;
-        default:
-            return 0;
-    }
-}
-
-
-/*
-
-XXX is this really needed? why not just disallow lt 10, 20, L ?
-
-*/
-static void
-flow_op_const_fold(yyscan_t yyscanner, int flow_op) {
-    lexer_state * const lexer = (lexer_state * const)yypirget_extra(yyscanner);
-    expression *arg1, *arg2, *arg3;
-    int result;
-    instruction * instr = CURRENT_INSTRUCTION(lexer);
-    double arg1val, arg2val;
-
-    PARROT_ASSERT(instr);
-
-    get_operands(lexer, BIT(0) | BIT(1) | BIT(2), &arg1, &arg2, &arg3);
-    /*
-    arg1 = get_operand(lexer, 1);
-    arg2 = get_operand(lexer, 2);
-    arg3 = get_operand(lexer, 3);
-    */
-
-    PARROT_ASSERT(arg1);
-    PARROT_ASSERT(arg2);
-
-    arg1val = get_constant_value(arg1->expr.c);
-    arg2val = get_constant_value(arg2->expr.c);
-
-    result = evaluate_n_n(arg1val, flow_op, arg2val);
-
-    PARROT_ASSERT(result == TRUE || result == FALSE);
-
-    if (result == FALSE) {
-        update_op(lexer, instr, PARROT_OP_noop); /* XXX maybe delete/clear such instructions. */
-    }
-    else { /* true */
-        update_op(lexer, instr, PARROT_OP_branch_ic);
-        instr->operands = NULL;
-        push_operand(lexer, arg3);
-        arg3->next = arg3;
-    }
-
-
-
-
-}
-
-/*
-
-=item C<static void
-math_op_const_fold(yyscan_t yyscanner, int folding_op, int new_op)>
-
-Do constant folding for the math operator C<folding_op>; this can be
-OP_ADD, OP_SUB, or OP_MUL. This function takes the 2nd and 3rd operands
-and computes the result based on C<folding_op>. The 2nd and 3rd operands
-are removed from the instruction, and the computed result is added as a new
-2nd operand.
-
-XXX really needed? Why not just disallow add $I0, 10, 20 ??
-
-=cut
-
-*/
-static void
-math_op_const_fold(yyscan_t yyscanner, int folding_op, int new_op) {
-    expression  * arg1,
-                * arg2,
-                * arg3;
-    lexer_state * const lexer = (lexer_state * const)yypirget_extra(yyscanner);
-    instruction * const instr = CURRENT_INSTRUCTION(lexer);
-    constant    *       result;
-    double              arg1val,
-                        arg2val;
-    pir_type type1, type2;
-
-    update_op(lexer, instr, new_op);
-
-    /* now do constant-folding on the 2nd and 3rd arguments. */
-
-    get_operands(lexer, BIT(0) | BIT(1) | BIT(2), &arg1, &arg2, &arg3);
-
-
-    /* based on the constant types, retrieve the values from the right union fields;
-     * note that fold_i_i must be called only when both types are INT_TYPE; adding
-     * int + float will result in float anyway.
-     * This code is not very nice, but it's straightforward, and unfortunately necessary.
-     */
-    type1 = arg2->expr.c->type;
-    type2 = arg3->expr.c->type;
-
-    if (type1 == NUM_TYPE || type2 == NUM_TYPE) {
-        double val1;
-        double val2;
-
-        if (type1 == NUM_TYPE)
-            val1 = arg2->expr.c->val.nval;
-        else
-            val1 = arg2->expr.c->val.ival;
-
-        if (type2 == NUM_TYPE)
-            val2 = arg3->expr.c->val.nval;
-        else
-            val2 = arg3->expr.c->val.ival;
-
-        result = fold_n_n(yyscanner, val1, folding_op, val2);
-    }
-    else { /* both are not NUM_TYPE */
-        result = fold_i_i(yyscanner, arg2->expr.c->val.ival, folding_op, arg3->expr.c->val.ival);
-    }
-
-
-
-    /* remove all operands on the current instruction */
-    CURRENT_INSTRUCTION(lexer)->operands = NULL;
-    /* operands are circular linked lists; arg1 is the only operand to be kept, so update
-     * its next pointer; otherwise, the old operands are still there through this link.
-     */
-    arg1->next = arg1;
-
-    /* add the first operand, and the result for the "set" op. */
-    push_operand(lexer, arg1);
-    push_operand(lexer, expr_from_const(lexer, result));
-
-}
 
 /*
 
@@ -3250,57 +3452,13 @@ get_opinfo(yyscan_t yyscanner) {
     lexer_state * const lexer = (lexer_state * const)yypirget_extra(yyscanner);
     instruction * const instr = CURRENT_INSTRUCTION(lexer);
 
-    char * const fullopname = get_signatured_opname(lexer, instr);
-    int          opcode;
-
+    char * const fullopname   = get_signatured_opname(lexer, instr);
     /* find the numeric opcode for the signatured op. */
-    opcode = lexer->interp->op_lib->op_code(fullopname, 1);
+    int          opcode       = lexer->interp->op_lib->op_code(fullopname, 1);
 
-    /* if the op does not exist, it might be one of the math. ops that need
-     * constant folding.
-     */
     if (opcode < 0) {
-
-        /* XXX REMOVE THESE; THESE OPS SHOULD BE REAL OPS; DON"T FAKE THEM */
-        /* do these tests only if opcode was not found; this way, the checks are not done
-         * for all instructions, but only if the instruction was not found.
-         */
-        if (STREQ(fullopname, "add_i_ic_ic")) {
-            math_op_const_fold(yyscanner, OP_ADD, PARROT_OP_set_i_ic);
-            return TRUE;
-        }
-        else if (STREQ(fullopname, "add_n_ic_ic")) {
-            math_op_const_fold(yyscanner, OP_ADD, PARROT_OP_set_n_ic);
-            return TRUE;
-        }
-        else if (STREQ(fullopname, "add_n_nc_nc")) {
-            math_op_const_fold(yyscanner, OP_ADD, PARROT_OP_set_n_nc);
-            return TRUE;
-        }
-        else if (STREQ(fullopname, "sub_i_ic_ic")) {
-            math_op_const_fold(yyscanner, OP_SUB, PARROT_OP_set_i_ic);
-            return TRUE;
-        }
-        else if (STREQ(fullopname, "sub_n_nc_nc")) {
-            math_op_const_fold(yyscanner, OP_SUB, PARROT_OP_set_n_nc);
-            return TRUE;
-        }
-        else if (STREQ(fullopname, "sub_n_ic_ic")) {
-            math_op_const_fold(yyscanner, OP_SUB, PARROT_OP_set_n_ic);
-            return TRUE;
-        }
-        else if (STREQ(fullopname, "mul_i_ic_ic")) {
-            math_op_const_fold(yyscanner, OP_MUL, PARROT_OP_set_i_ic);
-            return TRUE;
-        }
-        else if (STREQ(fullopname, "lt_ic_ic_ic")) {
-            flow_op_const_fold(yyscanner, OP_LT);
-            return TRUE;
-        }
-        else {
-            yypirerror(yyscanner, lexer, "'%s' is not a parrot op", fullopname);
-            return FALSE;
-        }
+        yypirerror(yyscanner, lexer, "'%s' is not a parrot op", fullopname);
+        return FALSE;
     }
     else {
         update_op(lexer, instr, opcode);
@@ -3346,31 +3504,21 @@ check_op_args_for_symbols(yyscan_t yyscanner) {
     num_operands = get_operand_count(lexer);
     for (i = 0; i < num_operands; i++) {
         expression *operand = get_operand(lexer, i + 1); /* get_operand counts from 1 */
-        if (operand->type == EXPR_TARGET) { /* if it is a target... */
 
-            if (!TEST_FLAG(operand->expr.t->flags, TARGET_FLAG_IS_REG)) { /* not a register */
-                symbol *sym = find_symbol(lexer, target_name(operand->expr.t));
+        if (operand->type == EXPR_IDENT) { /* op_arg ::= identifier */
+            /* the operand is an identifier, check now whether it was a symbol. If so,
+             * then a new target node is created which receives a pointer to the symbol.
+             * Then, convert the operand to an EXPR_TARGET.
+             */
+            symbol *sym = find_symbol(lexer, operand->expr.id);
 
-                if (sym) { /* copy the type and PASM register from the symbol */
-                    operand->expr.t->type  = sym->type;
-                    operand->expr.t->color = sym->color;
-                }
-                else { /* it's not a declared symbol; for now assume it's a label */
-                    if (operand->type == EXPR_TARGET) {
-                        /* if it's not a register (otherwise, no need to check) */
-                        if (!TEST_FLAG(operand->expr.t->flags, TARGET_FLAG_IS_REG)) {
-                            /* convert the target to an identifier */
-                            operand->expr.id = target_name(operand->expr.t);
-                            operand->type    = EXPR_IDENT;
-
-                            /* set a bit in the bitmask indicating it is assumed to be a label;
-                             * this prevents us doing a symbol lookup in the second loop; a
-                             * bitmask is faster.
-                             */
-                            SET_BIT(label_bitmask, BIT(i));
-                        }
-                    }
-                }
+            if (sym) {
+                operand->expr.t        = new_target(lexer);
+                operand->expr.t->s.sym = sym;  /* target's pointer set to symbol */
+                operand->type          = EXPR_TARGET; /* convert operand node into EXPR_TARGET */
+            }
+            else { /* it must be a label */
+                SET_BIT(label_bitmask, BIT(i));
             }
         }
     }
@@ -3397,11 +3545,14 @@ check_op_args_for_symbols(yyscan_t yyscanner) {
         if (iter == NULL)
             return TRUE;
 
-        iter = iter->next; /* go to first */
-
-
         /* iterate over all operands */
-        while (iter != CURRENT_INSTRUCTION(lexer)->operands->next) {
+        do {
+            iter = iter->next;
+
+            /* fprintf(stderr, "operand %d is %s supposed to be a label\n", i,
+               opinfo->labels[i]? "":"not");
+             */
+
             if (opinfo->labels[i] == 0) {
                 /* test the bitmask; if we expected this operand was a label, but now we found out
                  * through opinfo that it's not supposed to be a label at this position, so emit
@@ -3412,10 +3563,24 @@ check_op_args_for_symbols(yyscan_t yyscanner) {
                     return FALSE;
                 }
             }
+            else { /* operand i is a label. */
+                /* set the i'th flag, indicating that the i'th operand is actually a
+                 * label. Then later, when we're going to fixup the labels, we know
+                 * which one to fix.
+                 */
 
-            iter = iter->next;
+                /*
+                fprintf(stderr, "setting %dth label flag on instruction %s\n", BIT(i),
+                        CURRENT_INSTRUCTION(lexer)->opname);
+                 */
+
+                SET_FLAG(CURRENT_INSTRUCTION(lexer)->oplabelbits, BIT(i));
+
+            }
+
             ++i;
         }
+        while (iter != CURRENT_INSTRUCTION(lexer)->operands);
     }
     return TRUE;
 }

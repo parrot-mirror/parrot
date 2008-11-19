@@ -66,7 +66,7 @@ or the resulting PIR code (target='PIR').
     $P0.'result_object'('$')
     exp[$I0] = $P0
 
-    .return exp.'compile'(adverbs :flat :named)
+    .tailcall exp.'compile'(adverbs :flat :named)
 .end
 
 
@@ -77,7 +77,7 @@ or the resulting PIR code (target='PIR').
     load_bytecode 'PGE/Dumper.pbc'
 
     $P0 = compreg 'PGE::Glob'
-    .return $P0.'command_line'(args)
+    .tailcall $P0.'command_line'(args)
 .end
 
 
@@ -89,21 +89,21 @@ or the resulting PIR code (target='PIR').
     store_global '$optable', optable
 
     $P0 = find_global 'glob_literal'
-    optable.newtok('term:', 'precedence'=>'=', 'nows'=>1, 'parsed'=>$P0)
+    optable.'newtok'('term:', 'precedence'=>'=', 'nows'=>1, 'parsed'=>$P0)
 
     $P0 = find_global 'glob_quest'
-    optable.newtok('term:?', 'equiv'=>'term:', 'nows'=>1, 'parsed'=>$P0)
+    optable.'newtok'('term:?', 'equiv'=>'term:', 'nows'=>1, 'parsed'=>$P0)
 
     $P0 = find_global 'glob_star'
-    optable.newtok('term:*', 'equiv'=>'term:', 'nows'=>1, 'parsed'=>$P0)
+    optable.'newtok'('term:*', 'equiv'=>'term:', 'nows'=>1, 'parsed'=>$P0)
 
     $P0 = find_global 'glob_enum'
-    optable.newtok('term:[', 'equiv'=>'term:', 'nows'=>1, 'parsed'=>$P0)
+    optable.'newtok'('term:[', 'equiv'=>'term:', 'nows'=>1, 'parsed'=>$P0)
 
     $P0 = find_global 'glob_alt'
-    optable.newtok('term:{', 'equiv'=>'term:', 'nows'=>1, 'parsed'=>$P0)
+    optable.'newtok'('term:{', 'equiv'=>'term:', 'nows'=>1, 'parsed'=>$P0)
 
-    optable.newtok('infix:', 'looser'=>'term:', 'assoc'=>'list', 'nows'=>1, 'match'=>'PGE::Exp::Concat')
+    optable.'newtok'('infix:', 'looser'=>'term:', 'assoc'=>'list', 'nows'=>1, 'match'=>'PGE::Exp::Concat')
 
     .local pmc p6meta
     p6meta = get_hll_global 'P6metaclass'
@@ -371,7 +371,7 @@ Compile C<source> (possibly modified by any provided options).
     #   $!compsub is deprecated
     compsub = getattribute self, '$!compsub'
 
-    .return compsub(source, adverbs :flat :named)
+    .tailcall compsub(source, adverbs :flat :named)
 .end
 
 =back

@@ -66,7 +66,7 @@ or the resulting PIR code (target='PIR').
     $P0.'result_object'('$')
     exp[$I0] = $P0
 
-    .return exp.'compile'(adverbs :flat :named)
+    .tailcall exp.'compile'(adverbs :flat :named)
 .end
 
 
@@ -76,7 +76,7 @@ or the resulting PIR code (target='PIR').
     load_bytecode 'PGE.pbc'
 
     $P0 = compreg 'Tcl::Glob'
-    .return $P0.'command_line'(args)
+    .tailcall $P0.'command_line'(args)
 .end
 
 
@@ -89,18 +89,18 @@ or the resulting PIR code (target='PIR').
     store_global '$optable', optable
 
     $P0 = find_global 'glob_literal'
-    optable.newtok('term:', 'precedence'=>'=', 'nows'=>1, 'parsed'=>$P0)
+    optable.'newtok'('term:', 'precedence'=>'=', 'nows'=>1, 'parsed'=>$P0)
 
     $P0 = find_global 'glob_quest'
-    optable.newtok('term:?', 'equiv'=>'term:', 'nows'=>1, 'parsed'=>$P0)
+    optable.'newtok'('term:?', 'equiv'=>'term:', 'nows'=>1, 'parsed'=>$P0)
 
     $P0 = find_global 'glob_star'
-    optable.newtok('term:*', 'equiv'=>'term:', 'nows'=>1, 'parsed'=>$P0)
+    optable.'newtok'('term:*', 'equiv'=>'term:', 'nows'=>1, 'parsed'=>$P0)
 
     $P0 = find_global 'glob_enum'
-    optable.newtok('term:[', 'equiv'=>'term:', 'nows'=>1, 'parsed'=>$P0)
+    optable.'newtok'('term:[', 'equiv'=>'term:', 'nows'=>1, 'parsed'=>$P0)
 
-    optable.newtok('infix:', 'looser'=>'term:', 'assoc'=>'list', 'nows'=>1, 'match'=>'PGE::Exp::Concat')
+    optable.'newtok'('infix:', 'looser'=>'term:', 'assoc'=>'list', 'nows'=>1, 'match'=>'PGE::Exp::Concat')
 
     $P2 = newclass [ 'Tcl';'Glob';'Compiler' ]
     addattribute $P2, '$!compsub'
@@ -325,7 +325,7 @@ Parse an enumerated character list, such as [abcd],
     .return (mob)
 
   err_noclose:
-    mob.to(-1)
+    mob.'to'(-1)
     .return (mob)
 .end
 
@@ -363,7 +363,7 @@ Compile C<source> (possibly modified by any provided options).
     #   $!compsub is deprecated
     compsub = getattribute self, '$!compsub'
 
-    .return compsub(source, adverbs :flat :named)
+    .tailcall compsub(source, adverbs :flat :named)
 .end
 
 =back

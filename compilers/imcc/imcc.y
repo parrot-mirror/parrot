@@ -188,6 +188,21 @@ static Instruction* mk_pmc_const(PARROT_INTERP,
         FUNC_MODIFIES(*unit)
         FUNC_MODIFIES(*left);
 
+PARROT_WARN_UNUSED_RESULT
+PARROT_CAN_RETURN_NULL
+static Instruction* mk_pmc_const_named(PARROT_INTERP,
+    ARGMOD(IMC_Unit *unit),
+    ARGIN(const char *name),
+    ARGMOD(SymReg *left),
+    ARGIN(const char *constant))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3)
+        __attribute__nonnull__(4)
+        __attribute__nonnull__(5)
+        FUNC_MODIFIES(*unit)
+        FUNC_MODIFIES(*left);
+
 PARROT_CANNOT_RETURN_NULL
 static SymReg * mk_sub_address_fromc(PARROT_INTERP, ARGIN(const char *name))
         __attribute__nonnull__(1)
@@ -321,6 +336,63 @@ mk_pmc_const(PARROT_INTERP, ARGMOD(IMC_Unit *unit), ARGIN(const char *type),
     rhs->pmc_type = type_enum;
 
     mem_sys_free(name);
+
+    return INS(interp, unit, "set_p_pc", "", r, 2, 0, 1);
+}
+
+PARROT_WARN_UNUSED_RESULT
+PARROT_CAN_RETURN_NULL
+static Instruction*
+mk_pmc_const_named(PARROT_INTERP, ARGMOD(IMC_Unit *unit),
+    ARGIN(const char *name), ARGMOD(SymReg *left), ARGIN(const char *constant))
+{
+    SymReg *rhs;
+    SymReg *r[2];
+    char   *const_name;
+    const int ascii       = (*constant == '\'' || *constant == '"');
+    char   *unquoted_name = str_dup(name + 1);
+    size_t  name_length   = strlen(unquoted_name) - 1;
+
+    unquoted_name[name_length] = '\0';
+
+    if (left->type == VTADDRESS) {      /* IDENTIFIER */
+        if (IMCC_INFO(interp)->state->pasm_file) {
+            IMCC_fataly(interp, EXCEPTION_SYNTAX_ERROR,
+                        "Ident as PMC constant",
+                        " %s\n", left->name);
+        }
+        left->type = VTIDENTIFIER;
+        left->set = 'P';
+    }
+    r[0] = left;
+    if (ascii) {
+        /* strip delimiters */
+        const_name                         = str_dup(constant + 1);
+        const_name[strlen(const_name) - 1] = '\0';
+    }
+    else {
+        const_name = str_dup(constant);
+    }
+
+    if ((strncmp(unquoted_name, "Sub",       name_length) == 0)
+    ||  (strncmp(unquoted_name, "Coroutine", name_length) == 0)) {
+        rhs = mk_const(interp, const_name, 'p');
+
+        if (!ascii)
+            rhs->type |= VT_ENCODED;
+
+        rhs->usage    = U_FIXUP;
+    }
+    else {
+        rhs = mk_const(interp, const_name, 'P');
+    }
+
+    r[1]          = rhs;
+    rhs->pmc_type = pmc_type(interp,
+        string_from_cstring(interp, unquoted_name, name_length));
+
+    mem_sys_free(unquoted_name);
+    mem_sys_free(const_name);
 
     return INS(interp, unit, "set_p_pc", "", r, 2, 0, 1);
 }
@@ -625,7 +697,7 @@ do_loadlib(PARROT_INTERP, ARGIN(const char *lib))
 %nonassoc '\n'
 %nonassoc <t> PARAM
 
-%token <t> PRAGMA N_OPERATORS HLL HLL_MAP
+%token <t> HLL HLL_MAP
 %token <t> GOTO ARG IF UNLESS PNULL
 %token <t> ADV_FLAT ADV_SLURPY ADV_OPTIONAL ADV_OPT_FLAG ADV_NAMED ADV_ARROW
 %token <t> NEW ADV_INVOCANT
@@ -637,7 +709,7 @@ do_loadlib(PARROT_INTERP, ARGIN(const char *lib))
 %token <t> SHR_ASSIGN SHL_ASSIGN SHR_U_ASSIGN
 %token <t> SHIFT_LEFT SHIFT_RIGHT INTV FLOATV STRINGV PMCV LOG_XOR
 %token <t> RELOP_EQ RELOP_NE RELOP_GT RELOP_GTE RELOP_LT RELOP_LTE
-%token <t> GLOBAL GLOBALOP RESULT RETURN TAILCALL YIELDT GET_RESULTS
+%token <t> GLOBALOP RESULT RETURN TAILCALL YIELDT GET_RESULTS
 %token <t> POW SHIFT_RIGHT_U LOG_AND LOG_OR
 %token <t> COMMA ESUB DOTDOT
 %token <t> PCC_BEGIN PCC_END PCC_CALL PCC_SUB PCC_BEGIN_RETURN PCC_END_RETURN
@@ -650,7 +722,7 @@ do_loadlib(PARROT_INTERP, ARGIN(const char *lib))
 %token <s> IREG NREG SREG PREG IDENTIFIER REG MACRO ENDM
 %token <s> STRINGC INTC FLOATC USTRINGC
 %token <s> PARROT_OP
-%type <t> type pragma_1 hll_def return_or_yield comma_or_goto opt_unique_reg
+%type <t> type hll_def return_or_yield comma_or_goto opt_unique_reg
 %type <i> program
 %type <i> class_namespace
 %type <i> constdef sub emit pcc_ret pcc_yield
@@ -733,8 +805,7 @@ compilation_unit:
    ;
 
 pragma:
-     PRAGMA pragma_1 '\n'      { $$ = 0; }
-   | hll_def         '\n'      { $$ = 0; }
+     hll_def         '\n'      { $$ = 0; }
    | LOADLIB STRINGC '\n'
          {
            $$ = 0;
@@ -743,17 +814,9 @@ pragma:
          }
    ;
 
-pragma_1:
-     N_OPERATORS INTC
-         {
-           if ($2)
-               IMCC_INFO(interp)->state->pragmas |= PR_N_OPERATORS;
-           else
-               IMCC_INFO(interp)->state->pragmas &= ~PR_N_OPERATORS;
-         }
-   ;
-
 hll_def:
+
+     /* This HLL variant is deprecated */
      HLL STRINGC COMMA STRINGC
          {
             STRING * const hll_name = string_unescape_cstring(interp, $2 + 1, '"', NULL);
@@ -772,7 +835,16 @@ hll_def:
             IMCC_INFO(interp)->cur_namespace = NULL;
             $$ = 0;
          }
-   | HLL_MAP STRINGC comma_will_be_equals STRINGC
+   | HLL STRINGC
+         {
+            STRING * const hll_name = string_unescape_cstring(interp, $2 + 1, '"', NULL);
+            CONTEXT(interp)->current_HLL =
+                Parrot_register_HLL(interp, hll_name);
+
+            IMCC_INFO(interp)->cur_namespace = NULL;
+            $$ = 0;
+         }
+   | HLL_MAP STRINGC '=' STRINGC
          {
             Parrot_Context *ctx           = CONTEXT(interp);
             STRING * const  built_in_name =
@@ -789,13 +861,6 @@ hll_def:
          }
    ;
 
-/* this rule is temporary for deprecation of the .HLL_map variant using
-   a comma; the comma will be replaced by a '=' character. */
-comma_will_be_equals:
-     COMMA
-   | '='
-   ;
-
 constdef:
      CONST { is_def = 1; } type IDENTIFIER '=' const
          {
@@ -809,6 +874,12 @@ pmc_const:
      CONST { is_def=1; } INTC var_or_i '=' any_string
          {
            $$ = mk_pmc_const(interp, IMCC_INFO(interp)->cur_unit, $3, $4, $6);
+           is_def = 0;
+         }
+
+     | CONST { is_def=1; } STRINGC var_or_i '=' any_string
+         {
+           $$ = mk_pmc_const_named(interp, IMCC_INFO(interp)->cur_unit, $3, $4, $6);
            is_def = 0;
          }
    ;
@@ -914,7 +985,6 @@ maybe_ns:
             $$ = $2;
         }
    | '[' ']'                   { $$ = NULL; }
-   |                           { $$ = NULL; }
    ;
 
 sub:
@@ -1459,14 +1529,6 @@ labeled_inst:
            IMCC_INFO(interp)->cur_call->pcc_sub->flags |= isTAIL_CALL;
            IMCC_INFO(interp)->cur_call = NULL;
          }
-   /* This style is deprecated as per RT#58974. Use ".tailcall" for
-      tailcalls instead of ".return". */
-   | RETURN  sub_call
-         {
-           $$ = NULL;
-           IMCC_INFO(interp)->cur_call->pcc_sub->flags |= isTAIL_CALL;
-           IMCC_INFO(interp)->cur_call = NULL;
-         }
    | GOTO label_op { $$ = MK_I(interp, IMCC_INFO(interp)->cur_unit, "branch", 1, $2); }
    | PARROT_OP vars
          {
@@ -1663,11 +1725,23 @@ the_sub:
            if ($1->set != 'P')
                IMCC_fataly(interp, EXCEPTION_SYNTAX_ERROR, "Sub isn't a PMC");
          }
-   | target DOT sub_label_op   { IMCC_INFO(interp)->cur_obj = $1; $$ = $3; }
+   | target DOT sub_label_op
+        {
+            /* disallow bareword method names; SREG name constants are fine */
+            char *name = $3->name;
+            if (!($3->type & VTREG) && (*name != '\'' || *name != '\"')) {
+                IMCC_fataly(interp, EXCEPTION_SYNTAX_ERROR,
+                    "Bareword method name '%s' not allowed in PIR", $3->name);
+            }
+
+            IMCC_INFO(interp)->cur_obj = $1;
+            $$                         = $3;
+        }
    | target DOT STRINGC
          {
-           IMCC_INFO(interp)->cur_obj = $1; $$ = mk_const(interp, $3, 'S');
-           mem_sys_free($3);
+            IMCC_INFO(interp)->cur_obj = $1;
+            $$                         = mk_const(interp, $3, 'S');
+            mem_sys_free($3);
          }
    | target DOT target         { IMCC_INFO(interp)->cur_obj = $1; $$ = $3; }
    ;

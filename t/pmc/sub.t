@@ -9,7 +9,7 @@ use lib qw( . lib ../lib ../../lib );
 use Test::More;
 use Parrot::Test::Util 'create_tempfile';
 
-use Parrot::Test tests => 65;
+use Parrot::Test tests => 64;
 use Parrot::Config;
 
 =head1 NAME
@@ -28,7 +28,7 @@ C<Continuation> PMCs.
 =cut
 
 pasm_output_is( <<'CODE', <<'OUTPUT', "PASM subs - invokecc" );
-    .const .Sub P0 = "func"
+    .const 'Sub' P0 = "func"
 
     set I5, 3
     set_args "0", I5
@@ -158,25 +158,6 @@ CODE
 ok 1
 in sub
 in next sub
-back
-OUTPUT
-
-pasm_output_is( <<'CODE', <<'OUTPUT', "pcc sub perl::syn::tax" );
-    get_global P0, "_the::sub::some::where"
-    defined I0, P0
-    if I0, ok
-    print "not "
-ok:
-    print "ok 1\n"
-    invokecc P0
-    say "back"
-    end
-.pcc_sub _the::sub::some::where:
-    print "in sub\n"
-    returncc
-CODE
-ok 1
-in sub
 back
 OUTPUT
 
@@ -350,14 +331,14 @@ OUTPUT
 
 pasm_output_is( <<'CODE', <<'OUTPUT', "equality of closures" );
 .pcc_sub main:
-      .const .Sub P3 = "f1"
+      .const 'Sub' P3 = "f1"
       newclosure P0, P3
       clone P1, P0
       eq P0, P1, OK1
       print "not "
 OK1:  print "ok 1\n"
 
-      .const .Sub P4 = "f2"
+      .const 'Sub' P4 = "f2"
       newclosure P2, P4
       eq P0, P2, BAD2
       branch OK2
@@ -378,13 +359,13 @@ ok 2
 OUTPUT
 
 pasm_output_is( <<'CODE', <<'OUTPUT', "equality of subs" );
-      .const .Sub P0 = "f1"
+      .const 'Sub' P0 = "f1"
       clone P1, P0
       eq P0, P1, OK1
       print "not "
 OK1:  print "ok 1\n"
 
-      .const .Sub P2 = "f2"
+      .const 'Sub' P2 = "f2"
       clone P1, P0
       eq P0, P2, BAD2
       branch OK2
@@ -679,7 +660,7 @@ CODE
 /too few arguments passed \(1\) - 2 params expected/
 OUTPUT
 
-($TEMP, $temp_pasm) = create_tempfile();
+($TEMP, $temp_pasm) = create_tempfile(UNLINK => 1);
 print $TEMP <<'EOF';
 .sub _sub1 :load
   say "in sub1"
@@ -700,7 +681,7 @@ in sub1
 back
 OUTPUT
 
-($TEMP, $temp_pasm) = create_tempfile();
+($TEMP, $temp_pasm) = create_tempfile(UNLINK => 1);
 print $TEMP <<'EOF';
 .sub _foo
   print "error\n"
@@ -1038,7 +1019,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "immediate code as const" );
 .end
 
 .sub main :main
-    .const .Sub pi = "make_pi"
+    .const 'Sub' pi = "make_pi"
     print pi
     print "\n"
 .end
@@ -1059,7 +1040,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "immediate code as const - obj" );
 .end
 
 .sub main :main
-    .const .Sub o = "make_obj"
+    .const 'Sub' o = "make_obj"
     $P0 = getattribute o, 'x'
     print $P0
 .end
@@ -1247,7 +1228,7 @@ OUTPUT
 
 pir_output_is( <<'CODE', <<'OUTPUT', 'unicode sub constant' );
 .sub main :main
-    .const .Sub s = unicode:"\u7777"
+    .const 'Sub' s = unicode:"\u7777"
     s()
 .end
 
@@ -1379,31 +1360,31 @@ OUTPUT
 pir_output_is( <<'CODE', <<'OUTPUT', 'arity()' );
 .sub main :main
     $P0 = get_global 'none'
-    $I0 = $P0.arity()
+    $I0 = $P0.'arity'()
     say $I0
 
     $P0 = get_global 'one'
-    $I0 = $P0.arity()
+    $I0 = $P0.'arity'()
     say $I0
 
     $P0 = get_global 'four'
-    $I0 = $P0.arity()
+    $I0 = $P0.'arity'()
     say $I0
 
     $P0 = get_global 'all_slurpy'
-    $I0 = $P0.arity()
+    $I0 = $P0.'arity'()
     say $I0
 
     $P0 = get_global 'some_optional'
-    $I0 = $P0.arity()
+    $I0 = $P0.'arity'()
     say $I0
 
     $P0 = get_global 'some_named'
-    $I0 = $P0.arity()
+    $I0 = $P0.'arity'()
     say $I0
 
     $P0 = get_global 'allsorts'
-    $I0 = $P0.arity()
+    $I0 = $P0.'arity'()
     say $I0
 .end
 
@@ -1457,9 +1438,9 @@ OUTPUT
 
 pir_output_is( <<'CODE', <<'OUTPUT', 'set_outer' );
 .sub main :main
-    $P0 = find_global "example_outer"
-    $P1 = find_global "example_inner"
-    $P1.set_outer($P0)
+    $P0 = get_hll_global "example_outer"
+    $P1 = get_hll_global "example_inner"
+    $P1.'set_outer'($P0)
     $P0()
     $P1()
 .end

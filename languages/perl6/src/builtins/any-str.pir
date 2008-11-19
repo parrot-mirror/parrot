@@ -191,6 +191,23 @@ Returns whether the file with the name indicated by the invocant exists.
     .return ($P0)
 .end
 
+=item fmt
+
+ our Str multi Any::fmt ( Str $format )
+
+Returns the invocant formatted by an implicit call to C<sprintf>.
+
+=cut
+
+.sub 'fmt' :method :multi(_)
+    .param string format
+    .local pmc retv
+
+    retv = 'sprintf'(format, self)
+
+    .return(retv)
+.end
+
 =item index()
 
 =cut
@@ -369,7 +386,7 @@ B<Note:> partial implementation only
 .sub 'split' :multi(_,_)
     .param pmc sep
     .param pmc target
-    .return target.'split'(sep)
+    .tailcall target.'split'(sep)
 .end
 
 .namespace['Any']
@@ -428,6 +445,7 @@ B<Note:> partial implementation only
     .local pmc retv
     .local int start_pos
     .local int end_pos
+    .local int zwm_start
 
     $S0 = self
     retv = new 'List'
@@ -450,10 +468,23 @@ B<Note:> partial implementation only
     $S1 = substr $S0, start_pos
     retv.'push'($S1)
     goto done
+  next_zwm:
+    zwm_start = start_pos
+  inc_zwm:
+    inc start_pos
+    match = regex($S0, 'continue' => start_pos)
+    end_pos = match.'from'()
+    unless start_pos == end_pos goto inc_zwm
+    start_pos = zwm_start
+    end_pos -= start_pos
+    goto add_str
   skip_count:
     match = regex($S0, 'continue' => start_pos)
     end_pos = match.'from'()
+    $I99 = match.'to'()
+    if $I99 == end_pos goto next_zwm
     end_pos -= start_pos
+  add_str:
     $S1 = substr $S0, start_pos, end_pos
     retv.'push'($S1)
     unless match goto done
@@ -488,8 +519,14 @@ B<Note:> partial implementation only
     len -= start
   len_done:
     $S0 = self
+    push_eh fail
     $S1 = substr $S0, start, len
+    pop_eh
     .return ($S1)
+  fail:
+    .get_results($P0)
+    pop_eh
+    .tailcall '!FAIL'($P0)
 .end
 
 =item trans()

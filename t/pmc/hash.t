@@ -19,9 +19,10 @@ well.
 =cut
 
 .sub main :main
-    .include 'include/test_more.pir'
+    .include 'test_more.pir'
+    .include 'except_types.pasm'
 
-    plan(148)
+    plan(143)
 
     initial_hash_tests()
     more_than_one_hash()
@@ -52,7 +53,6 @@ well.
     delete_hash_key()
     cloning_keys()
     cloning_pmc_vals()
-    entry_types_type_keyed()
     delete_and_free_list()
     exists_with_constant_string_key()
     hash_in_pir()
@@ -120,13 +120,22 @@ well.
     new $P0, 'Hash'
     $P0['yum'] = 5
     null $S0
-    push_eh catched
     $I0 = 0
+
+    $P2 = new 'ExceptionHandler'
+    $P2.'handle_types'(.EXCEPTION_UNEXPECTED_NULL)
+    set_addr $P2, null_ex_eh
+    push_eh $P2
+
     $P1 = $P0[$S0]
+
     goto check
-catched:
+
+null_ex_eh:
     $I0 = 1
+
 check:
+    pop_eh
     is( $I0, 1, 'using null string as key throws' )
 .end
 
@@ -800,35 +809,6 @@ DONE:
     is( $P0, 42, 'cloned hash contained pre-clone set int' )
     set $P0, $P2["str"]
     is( $P0, 'value', 'cloned hash contains pre-clone set str' )
-.end
-
-.sub entry_types_type_keyed
-    ## XXX is there any concern that including this will impact other tests?
-    .include "pmctypes.pasm"
-    new $P1, 'Hash'
-
-    new $P2, 'Integer'
-    set $P1["Integer"], $P2
-    typeof $I0, $P1["Integer"]
-    is( $I0, .Integer, 'entry type is Integer' )
-
-    new $P3, 'Integer'
-    set $P1["Integer"], $P3
-    typeof $I0, $P1["Integer"]
-    is( $I0, .Integer, 'entry type is Integer' )
-
-    set $P1["native int"], -123456
-    typeof $I0, $P1["native int"]
-    is( $I0, .Integer, 'entry type is Integer' )
-
-    set $P1["native float"], -123.456
-    typeof $I0, $P1["native float"]
-    is( $I0, .Float, 'entry type is Float' )
-
-    set $P1["native string"], "hello world\n"
-    typeof $I0, $P1["native string"]
-    is( $I0, .String, 'entry type is String' )
-
 .end
 
 .sub delete_and_free_list

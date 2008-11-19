@@ -23,6 +23,7 @@ as the Perl 6 C<Str> class.
     .local pmc p6meta, strproto
     p6meta = get_hll_global ['Perl6Object'], '$!P6META'
     strproto = p6meta.'new_class'('Str', 'parent'=>'Perl6Str Any')
+    strproto.'!IMMUTABLE'()
     p6meta.'register'('Perl6Str', 'parent'=>strproto, 'protoobject'=>strproto)
     p6meta.'register'('String', 'parent'=>strproto, 'protoobject'=>strproto)
 
@@ -31,17 +32,29 @@ as the Perl 6 C<Str> class.
 .end
 
 
+## special method to cast Parrot String into Rakudo Str.
+.namespace ['String']
+.sub 'Scalar' :method
+    $P0 = new 'Str'
+    assign $P0, self
+    copy self, $P0
+    .return (self)
+.end
+
+
+.namespace ['Str']
 .sub 'ACCEPTS' :method
     .param string topic
-    .return 'infix:eq'(topic, self)
+    .tailcall 'infix:eq'(topic, self)
 .end
+
 
 .sub 'reverse' :method :multi('String')
     .local pmc retv
 
     retv = self.'split'('')
     retv = retv.'reverse'()
-    retv = retv.join('')
+    retv = retv.'join'('')
 
     .return(retv)
 .end
@@ -136,7 +149,7 @@ Overridden for Str.
 .sub 'infix:===' :multi(String,String)
     .param string a
     .param string b
-    .return 'infix:eq'(a, b)
+    .tailcall 'infix:eq'(a, b)
 .end
 
 

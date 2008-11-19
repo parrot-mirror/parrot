@@ -68,19 +68,19 @@ Returns true if the object is defined, false otherwise
 .sub 'print' :method
     .param pmc args     :slurpy
     $P0 = get_hll_global 'print'
-    .return $P0(self)
+    .tailcall $P0(self)
 .end
 
 .sub 'puts' :method
     .param pmc args     :slurpy
     $P0 = get_hll_global 'puts'
-    .return $P0(args :flat)
+    .tailcall $P0(args :flat)
 .end
 
 .sub 'readline' :method
     .param pmc args     :slurpy
     $P0 = get_hll_global 'readline'
-    .return $P0(args)
+    .tailcall $P0(args)
 .end
 
 .sub 'printf' :method
@@ -89,7 +89,7 @@ Returns true if the object is defined, false otherwise
     $P0 = get_hll_global 'print'
     $P99 = get_hll_global ['Kernel'], '!CARDINALMETA'
     $P1 = $P99.'sprintf'(fmt, args :flat)
-    .return $P0($P1)
+    .tailcall $P0($P1)
 .end
 
 .sub 'sprintf' :method
@@ -106,7 +106,6 @@ Call the OS with C<cmd>, return the ouput.
 .sub '`' :method
    .param string cmd
    .local pmc pipe
-   print "cmd="
    pipe = open cmd, "-|"
    .local string buffer
    .local pmc output
@@ -143,6 +142,17 @@ Call the OS, return C<true> if successful, otherwise  C<false>
 .sub 'exit!' :method
     .param int return
     exit return
+.end
+
+.sub callcc :method
+        .param pmc block :named('!BLOCK')
+        .local pmc cont
+        cont = new 'CardinalContinuation'
+        set_addr cont, done
+        block(cont)
+        goto done
+
+        done:
 .end
 
 =back

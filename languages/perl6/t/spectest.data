@@ -3,6 +3,7 @@
 # empty lines and those beginning with a # are ignored
 
 integration/lexical-array-in-inner-block.t
+integration/real-strings.t
 S02-builtin_data_types/anon_block.t
 S02-builtin_data_types/array_extending.t
 S02-builtin_data_types/array_ref.t
@@ -36,6 +37,7 @@ S02-literals/string-interpolation.t
 S02-literals/underscores.t
 S02-magicals/dollar_bang.t
 S02-magicals/dollar-underscore.t
+S02-names_and_variables/fmt.t
 S02-names_and_variables/varnames.t
 S02-polymorphic_types/subset-code.t
 S02-polymorphic_types/subset-range.t
@@ -48,6 +50,7 @@ S03-operators/arith.t
 S03-operators/assign-is-not-binding.t
 S03-operators/assign.t
 S03-operators/autoincrement.t
+S03-operators/autovivification.t
 S03-operators/binding-arrays.t
 S03-operators/binding-hashes.t
 S03-operators/binding-scalars.t
@@ -100,8 +103,10 @@ S04-statements/try.t
 S04-statements/unless.t
 S04-statements/until.t
 S04-statements/while.t
+S05-grammar/namespace.t
 S05-mass/rx.t
 S05-mass/stdrules.t
+S05-match/arrayhash.t
 S05-match/blocks.t
 S05-match/non-capturing.t
 S05-metachars/newline.t
@@ -125,6 +130,8 @@ S06-signature/named-parameters.t
 S06-signature/named-placeholders.t
 S06-signature/positional-placeholders.t
 S06-signature/slurpy-placeholders.t
+S06-signature/sub-ref.t
+S06-signature/type-capture.t
 S06-traits/is-copy.t
 S06-traits/is-rw.t
 S06-traits/misc.t
@@ -133,20 +140,27 @@ S12-attributes/class.t
 S12-attributes/delegation.t
 S12-class/anonymous.t
 S12-class/attributes.t
+S12-class/basic.t
+S12-class/declaration-order.t
 S12-class/inheritance-class-methods.t
 S12-class/inheritance.t
 S12-class/instantiate.t
+S12-class/is_also_instead.t
+S12-class/namespaced.t
 S12-class/parent_attributes.t
-S12-enums/basic.t
+S12-enums/anonymous.t
 S12-enums/as-role.t
+S12-enums/basic.t
 S12-introspection/can.t
 S12-methods/calling_syntax.t
+S12-methods/indirect_notation.t
 S12-methods/instance.t
 S12-methods/topic.t
 S12-methods/what.t
 S12-role/attributes.t
 S12-role/composition.t
 S12-role/mixin.t
+S12-subset/multi-dispatch.t
 S16-filehandles/io_in_while_loops.t
 S16-io/basic-open.t
 S16-io/say.t

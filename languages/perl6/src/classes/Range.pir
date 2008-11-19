@@ -15,9 +15,10 @@ src/classes/Range.pir - methods for the Range class
 .namespace ['Range']
 
 .sub 'onload' :anon :load :init
-    .local pmc p6meta
+    .local pmc p6meta, rangeproto
     p6meta = get_hll_global ['Perl6Object'], '$!P6META'
-    p6meta.'new_class'('Range', 'parent'=>'Any', 'attr'=>'$!from $!to $!from_exclusive $!to_exclusive')
+    rangeproto = p6meta.'new_class'('Range', 'parent'=>'Any', 'attr'=>'$!from $!to $!from_exclusive $!to_exclusive')
+    rangeproto.'!IMMUTABLE'()
 .end
 
 
@@ -165,18 +166,18 @@ just return a clone of the Range.
 .namespace ['Range']
 
 .sub 'min' :method
-    .return self.'from'()
+    .tailcall self.'from'()
 .end
 
 .sub 'minmax' :method
     $P0 = self.'from'()
     $P1 = self.'to'()
     $P2 = get_hll_global 'list'
-    .return $P2($P0, $P1)
+    .tailcall $P2($P0, $P1)
 .end
 
 .sub 'max' :method
-    .return self.'to'()
+    .tailcall self.'to'()
 .end
 
 
@@ -293,7 +294,7 @@ Construct a range from the endpoints.
     .param pmc to
     .local pmc proto
     proto = get_hll_global 'Range'
-    .return proto.'new'('from'=>from, 'to'=>to)
+    .tailcall proto.'new'('from'=>from, 'to'=>to)
 .end
 
 .sub 'infix:^..'
@@ -302,7 +303,7 @@ Construct a range from the endpoints.
     .local pmc proto, true
     proto = get_hll_global 'Range'
     true = get_hll_global ['Bool'], 'True'
-    .return proto.'new'('from'=>from, 'to'=>to, 'from_exclusive'=>true)
+    .tailcall proto.'new'('from'=>from, 'to'=>to, 'from_exclusive'=>true)
 .end
 
 .sub 'infix:..^'
@@ -311,7 +312,7 @@ Construct a range from the endpoints.
     .local pmc proto, true
     proto = get_hll_global 'Range'
     true = get_hll_global ['Bool'], 'True'
-    .return proto.'new'('from'=>from, 'to'=>to, 'to_exclusive'=>true)
+    .tailcall proto.'new'('from'=>from, 'to'=>to, 'to_exclusive'=>true)
 .end
 
 .sub 'infix:^..^'
@@ -320,7 +321,7 @@ Construct a range from the endpoints.
     .local pmc proto, true
     proto = get_hll_global 'Range'
     true = get_hll_global ['Bool'], 'True'
-    .return proto.'new'('from'=>from, 'to'=>to, 'from_exclusive'=>true, 'to_exclusive'=>true)
+    .tailcall proto.'new'('from'=>from, 'to'=>to, 'from_exclusive'=>true, 'to_exclusive'=>true)
 .end
 
 =item prefix:<^>(Any $to)
@@ -332,7 +333,7 @@ Construct a Range from C< 0 ..^ $to >.
 .namespace[]
 .sub 'prefix:^' :multi(_)
     .param pmc to
-    .return 'infix:..^'(0, to)
+    .tailcall 'infix:..^'(0, to)
 .end
 
 =item prefix:<^>(Type $x)
@@ -343,7 +344,7 @@ Return $x.HOW.
 
 .sub 'prefix:^' :multi('P6Protoobject')
     .param pmc proto
-    .return proto.'HOW'()
+    .tailcall proto.'HOW'()
 .end
 
 =item prefix:<^>(List @a)
@@ -366,7 +367,7 @@ Return $x.HOW.
   iter_loop_end:
 
     # Now just use cross operator to make all the permutations.
-    .return 'infix:X'(ranges)
+    .tailcall 'infix:X'(ranges)
 .end
 
 =back

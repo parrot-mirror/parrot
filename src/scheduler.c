@@ -72,7 +72,8 @@ Parrot_cx_init_scheduler(PARROT_INTERP)
         /* Add the very first interpreter to the list of interps. */
         pt_add_to_interpreters(interp, NULL);
 
-        scheduler = pmc_new(interp, enum_class_Scheduler);
+        /* create as constant to avoid order-of-destruction errors, RT #60622 */
+        scheduler = constant_pmc_new(interp, enum_class_Scheduler);
         scheduler = VTABLE_share_ro(interp, scheduler);
 
         interp->scheduler = scheduler;
@@ -109,7 +110,7 @@ continue the runloop.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 void
 Parrot_cx_handle_tasks(PARROT_INTERP, ARGMOD(PMC *scheduler))
 {
@@ -206,7 +207,7 @@ Schedule an event to terminate the scheduler runloop.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 void
 Parrot_cx_runloop_end(PARROT_INTERP)
 {
@@ -225,7 +226,7 @@ interpreters/threads, must be called from within the interpreter's runloop.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 void
 Parrot_cx_schedule_task(PARROT_INTERP, ARGIN(PMC *task))
 {
@@ -247,7 +248,7 @@ from the list.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 PARROT_CAN_RETURN_NULL
 PMC *
 Parrot_cx_peek_task(PARROT_INTERP)
@@ -270,7 +271,7 @@ and running the passed C<sub>.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 void
 Parrot_cx_schedule_timer(PARROT_INTERP,
         ARGIN_NULLOK(STRING *type), FLOATVAL duration, FLOATVAL interval,
@@ -304,7 +305,7 @@ Add a repeat task to scheduler's task list.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 void
 Parrot_cx_schedule_repeat(PARROT_INTERP, ARGIN(PMC *task))
 {
@@ -334,7 +335,7 @@ Create a new callback event, with an argument for the call.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 void
 Parrot_cx_schedule_callback(PARROT_INTERP,
         ARGIN(PMC *user_data), ARGIN(char *ext_data))
@@ -359,7 +360,7 @@ Tell the scheduler to suspend for GC at the next safe pause.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 void
 Parrot_cx_request_suspend_for_gc(PARROT_INTERP)
 {
@@ -379,7 +380,7 @@ Remove a task from the scheduler's task list.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 void
 Parrot_cx_delete_task(PARROT_INTERP, ARGIN(PMC *task))
 {
@@ -404,7 +405,7 @@ backward compatibility in the threads implementation.)
 
 */
 
-PARROT_API
+PARROT_EXPORT
 PARROT_CAN_RETURN_NULL
 PMC *
 Parrot_cx_delete_suspend_for_gc(PARROT_INTERP)
@@ -456,7 +457,7 @@ Add a handler to the current context's list of handlers.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 void
 Parrot_cx_add_handler_local(PARROT_INTERP, ARGIN(PMC *handler))
 {
@@ -478,12 +479,11 @@ handlers.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 void
 Parrot_cx_delete_handler_local(PARROT_INTERP, ARGIN(STRING *handler_type))
 {
     PMC *handlers  = CONTEXT(interp)->handlers;
-    INTVAL elements, index;
 
     if (PMC_IS_NULL(handlers))
         Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INVALID_OPERATION,
@@ -491,27 +491,46 @@ Parrot_cx_delete_handler_local(PARROT_INTERP, ARGIN(STRING *handler_type))
 
     if (STRING_IS_NULL(handler_type) || STRING_IS_EMPTY(handler_type))
         VTABLE_shift_pmc(interp, handlers);
+    else {
+        /* Loop from newest handler to oldest handler. */
+        INTVAL index;
+        const INTVAL elements = VTABLE_elements(interp, handlers);
+        typedef enum { Hunknown,  Hexception, Hevent } Htype;
+        const Htype htype =
+            (string_equal(interp, handler_type, CONST_STRING(interp, "exception")) == 0) ?
+            Hexception :
+            (string_equal(interp, handler_type, CONST_STRING(interp, "event")) == 0) ?
+                Hevent :
+                Hunknown;
+        STRING * const handler_name = (htype == Hexception) ?
+            CONST_STRING(interp, "ExceptionHandler") :
+            (STRING *) NULL;
 
-    /* Loop from newest handler to oldest handler. */
-    elements = VTABLE_elements(interp, handlers);
-    for (index = 0; index < elements; ++index) {
-        PMC *handler = VTABLE_get_pmc_keyed_int(interp, handlers, index);
-        if (!PMC_IS_NULL(handler)) {
-            if (string_equal(interp, handler_type, CONST_STRING(interp, "exception")) == 0
-                        && VTABLE_isa(interp, handler, CONST_STRING(interp, "ExceptionHandler"))) {
-                VTABLE_set_pmc_keyed_int(interp, handlers, index, PMCNULL);
-                return;
+        for (index = 0; index < elements; ++index) {
+            PMC *handler = VTABLE_get_pmc_keyed_int(interp, handlers, index);
+            if (!PMC_IS_NULL(handler)) {
+                switch (htype) {
+                    case Hexception:
+                        if (VTABLE_isa(interp, handler, handler_name)) {
+                            VTABLE_set_pmc_keyed_int(interp, handlers, index, PMCNULL);
+                            return;
+                        }
+                        break;
+                    case Hevent:
+                        if (handler->vtable->base_type == enum_class_EventHandler) {
+                            VTABLE_set_pmc_keyed_int(interp, handlers, index, PMCNULL);
+                            return;
+                        }
+                        break;
+                    default:
+                        break;
+                }
             }
-            else if (string_equal(interp, handler_type, CONST_STRING(interp, "event")) == 0
-                        && handler->vtable->base_type == enum_class_EventHandler) {
-                VTABLE_set_pmc_keyed_int(interp, handlers, index, PMCNULL);
-                return;
-           }
         }
-    }
 
-    Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INVALID_OPERATION,
-        "No handler to delete.");
+        Parrot_ex_throw_from_c_args(interp, NULL,
+            EXCEPTION_INVALID_OPERATION, "No handler to delete.");
+    }
 }
 
 
@@ -525,7 +544,7 @@ Add a task handler to scheduler's list of handlers.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 void
 Parrot_cx_add_handler(PARROT_INTERP, ARGIN(PMC *handler))
 {
@@ -548,7 +567,7 @@ handlers.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 void
 Parrot_cx_delete_handler_typed(PARROT_INTERP, ARGIN(STRING *handler_type))
 {
@@ -571,7 +590,7 @@ the concurrency scheduler.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 INTVAL
 Parrot_cx_count_handlers_typed(PARROT_INTERP, ARGIN(STRING *handler_type))
 {
@@ -606,7 +625,7 @@ Send a message to a scheduler in a different interpreter/thread.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 void
 Parrot_cx_send_message(PARROT_INTERP, ARGIN(STRING *messagetype), ARGIN_NULLOK(PMC *payload))
 {
@@ -646,7 +665,7 @@ one.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 void
 Parrot_cx_broadcast_message(PARROT_INTERP, ARGIN(STRING *messagetype), ARGIN_NULLOK(PMC *data))
 {
@@ -681,7 +700,7 @@ appropriate handler, returns PMCNULL.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 PARROT_CAN_RETURN_NULL
 PMC *
 Parrot_cx_find_handler_for_task(PARROT_INTERP, ARGIN(PMC *task))
@@ -716,7 +735,7 @@ context has no appropriate handler, returns PMCNULL.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 PARROT_CAN_RETURN_NULL
 PMC *
 Parrot_cx_find_handler_local(PARROT_INTERP, ARGIN(PMC *task))
@@ -727,10 +746,8 @@ Parrot_cx_find_handler_local(PARROT_INTERP, ARGIN(PMC *task))
     /* Exceptions store the handler iterator for rethrow, other kinds of
      * tasks don't (though they could). */
     if (task->vtable->base_type == enum_class_Exception &&
-            VTABLE_get_integer_keyed_str(interp, task,
-                CONST_STRING(interp, "handled")) == -1) {
-        iter    = VTABLE_get_attr_str(interp, task,
-                CONST_STRING(interp, "handler_iter"));
+            VTABLE_get_integer_keyed_str(interp, task, CONST_STRING(interp, "handled")) == -1) {
+        iter    = VTABLE_get_attr_str(interp, task, CONST_STRING(interp, "handler_iter"));
         context = (Parrot_Context *)VTABLE_get_pointer(interp, task);
     }
     else {
@@ -752,8 +769,7 @@ Parrot_cx_find_handler_local(PARROT_INTERP, ARGIN(PMC *task))
                 if (valid_handler) {
                     if (task->vtable->base_type == enum_class_Exception) {
                         /* Store iterator and context for a later rethrow. */
-                        VTABLE_set_attr_str(interp, task,
-                                CONST_STRING(interp, "handler_iter"), iter);
+                        VTABLE_set_attr_str(interp, task, CONST_STRING(interp, "handler_iter"), iter);
                         VTABLE_set_pointer(interp, task, context);
 
                         /* Mark that this handler has been used before. */
@@ -843,7 +859,7 @@ opcode.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 opcode_t *

@@ -129,6 +129,9 @@ N: Bob Wilkinson
 D: Numerous document typos.
 E: bob@fourtheye.org
 
+N: Brad Bowman
+D: pod fixes
+
 N: Brad Gilbert
 D: Add test for sysinfo op.
 E: b2gills@gmail.com
@@ -163,7 +166,7 @@ D: Rakudo builtins
 E: cdavaz@gmail.com
 
 N: Chris Dolan
-D: TAP language author, and Parrot Bug fixes
+D: TAP language author, Parrot Bug fixes and Rakudo patches
 E: cdolan@cpan.org
 
 N: Chris Fields (cjfields)
@@ -176,9 +179,8 @@ D: Pipp
 E: christoph@mksig.org
 
 N: chromatic
-D: SDL library and examples; PIR Test::*; test suite cleanup
-D: Parrot::Embed; Pheme
-D: lead philosopher -- "Why doesn't this work?"
+D: SDL library and examples; PIR Test::*; test suite cleanup; Parrot::Embed
+D: freaky bugs; cool features; Pheme
 E: chromatic@wgz.org
 W: http://wgz.org/chromatic/
 
@@ -358,6 +360,10 @@ E: Jerry.Gay@gmail.com
 D: test suite, compiler tools, perl6, TAP language, entropy reduction, ECMAScript
 S: Seattle, WA
 
+N: Jimmy Zhuo
+E: zhuomingliang@yahoo.com.cn
+D: Various patches for Pipp.
+
 N: John J. Trammell
 E: trammell@el-swifto.com
 D: coding standard tests
@@ -443,6 +449,11 @@ N: Leopold Toetsch
 D: Patchmonster & pumpking emeritus (0.0.13 - 0.4.5)
 E: lt@toetsch.at
 S: Herrnbaumgarten, Austria
+
+N: Luca Barbato
+D: fix to make installable
+E: lu_zero@gentoo.org
+
 
 N: Luke Palmer
 D: Many fixes

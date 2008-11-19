@@ -1,4 +1,4 @@
-# Copyright (C) 2004-2007, The Perl Foundation.
+# Copyright (C) 2004-2008, The Perl Foundation.
 # $Id$
 
 =head1 NAME
@@ -214,8 +214,8 @@ Run the given $command in a cross-platform manner.
 
 %options include...
 
-    STDOUT    filehandle to redirect STDOUT to
-    STDERR    filehandle to redirect STDERR to
+    STDOUT    name of file to redirect STDOUT to
+    STDERR    name of file to redirect STDERR to
     CD        directory to run the command in
 
 For example:
@@ -233,7 +233,7 @@ Convert Win32 style line endins with Unix style line endings.
 
 =item C<path_to_parrot()>
 
-Construct a relative path from the current dir to the parrot root dir.
+Construct an absolute path to the parrot root dir.
 
 =item C<per_test( $ext, $test_no )>
 
@@ -331,8 +331,9 @@ sub run_command {
         }
     }
 
+    ##  File::Temp overloads 'eq' here, so we need the quotes. RT #58840
     if ( $out and $err and "$out" eq "$err" ) {
-        $err = "&STDOUT";
+        $err = '&STDOUT';
     }
 
     local *OLDOUT if $out;    ## no critic Variables::ProhibitConditionalDeclarations
@@ -448,9 +449,8 @@ sub path_to_parrot {
 
     my $path = $INC{'Parrot/Config.pm'};
     $path =~ s{ /lib/Parrot/Config.pm \z}{}xms;
-    return $path eq q{}
-        ? File::Spec->curdir()
-        : $path;
+
+    return Cwd::realpath( $path );
 }
 
 sub generate_languages_functions {
@@ -692,6 +692,8 @@ sub _generate_test_functions {
     my $package        = 'Parrot::Test';
     my $path_to_parrot = path_to_parrot();
     my $parrot         = File::Spec->join( File::Spec->curdir(), 'parrot' . $PConfig{exe} );
+    my $pirc           = File::Spec->join( File::Spec->curdir(),
+                            qw( compilers pirc ), "pirc$PConfig{exe}" );
 
     my %parrot_test_map = map {
         $_ . '_output_is'           => 'is_eq',
@@ -756,10 +758,15 @@ sub _generate_test_functions {
     }
 
     my %pir_2_pasm_test_map = (
-        pir_2_pasm_is     => 'is_eq',
-        pir_2_pasm_isnt   => 'isnt_eq',
-        pir_2_pasm_like   => 'like',
-        pir_2_pasm_unlike => 'unlike',
+        pir_2_pasm_is      => 'is_eq',
+        pir_2_pasm_isnt    => 'isnt_eq',
+        pir_2_pasm_like    => 'like',
+        pir_2_pasm_unlike  => 'unlike',
+
+        pirc_2_pasm_is     => 'is_eq',
+        pirc_2_pasm_isnt   => 'isnt_eq',
+        pirc_2_pasm_like   => 'like',
+        pirc_2_pasm_unlike => 'unlike',
     );
 
     foreach my $func ( keys %pir_2_pasm_test_map ) {
@@ -789,14 +796,20 @@ sub _generate_test_functions {
             # output file
             my $out_f = per_test( '.pasm', $test_no );
 
-            my $opt = $code_basef =~ m!opt(.)! ? "-O$1" : "-O1";
-            my $args = $ENV{TEST_PROG_ARGS} || '';
-            $args .= " $opt --output=$out_f";
-            $args =~ s/--run-exec//;
+            my $cmd;
+
+            if ($func =~ /^pir_/) {
+                my $opt  = $code_basef =~ m!opt(.)! ? "-O$1" : "-O1";
+                my $args = $ENV{TEST_PROG_ARGS} || '';
+                $args   .= " $opt --output=$out_f";
+                $args    =~ s/--run-exec//;
+                $cmd       = qq{$parrot $args "$code_f"};
+            } elsif ($func =~ /^pirc_/) {
+                $cmd       = qq{$pirc -p "$code_f"};
+            }
 
             write_code_to_file( $code, $code_f );
 
-            my $cmd       = qq{$parrot $args "$code_f"};
             my $exit_code = run_command(
                 $cmd,
                 CD     => $path_to_parrot,

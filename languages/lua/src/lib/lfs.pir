@@ -26,7 +26,7 @@ See original on L<http://luaforge.net/projects/luafilesystem/>
 
 .sub '__onload' :anon :load
 #    print "__onload lfs\n"
-    .const .Sub entry = 'luaopen_lfs'
+    .const 'Sub' entry = 'luaopen_lfs'
     set_hll_global 'luaopen_lfs', entry
 .end
 
@@ -167,31 +167,31 @@ optimal file system I/O blocksize; (Unix only)
     $S1 = lua_checkstring(1, .filepath)
     $S0 = $S1
     new members, 'Hash'
-    .const .Sub st_mode = 'st_mode'
+    .const 'Sub' st_mode = 'st_mode'
     members['mode'] = st_mode
-    .const .Sub st_dev = 'st_dev'
+    .const 'Sub' st_dev = 'st_dev'
     members['dev'] = st_dev
-    .const .Sub st_ino = 'st_ino'
+    .const 'Sub' st_ino = 'st_ino'
     members['ino'] = st_ino
-    .const .Sub st_nlink = 'st_nlink'
+    .const 'Sub' st_nlink = 'st_nlink'
     members['nlink'] = st_nlink
-    .const .Sub st_uid = 'st_uid'
+    .const 'Sub' st_uid = 'st_uid'
     members['uid'] = st_uid
-    .const .Sub st_gid = 'st_gid'
+    .const 'Sub' st_gid = 'st_gid'
     members['gid'] = st_gid
-    .const .Sub st_rdev = 'st_rdev'
+    .const 'Sub' st_rdev = 'st_rdev'
     members['rdev'] = st_rdev
-    .const .Sub st_atime = 'st_atime'
+    .const 'Sub' st_atime = 'st_atime'
     members['access'] = st_atime
-    .const .Sub st_mtime = 'st_mtime'
+    .const 'Sub' st_mtime = 'st_mtime'
     members['modification'] = st_mtime
-    .const .Sub st_ctime = 'st_ctime'
+    .const 'Sub' st_ctime = 'st_ctime'
     members['change'] = st_ctime
-    .const .Sub st_size = 'st_size'
+    .const 'Sub' st_size = 'st_size'
     members['size'] = st_size
-    .const .Sub st_blocks = 'st_blocks'
+    .const 'Sub' st_blocks = 'st_blocks'
     members['blocks'] = st_blocks
-    .const .Sub st_blksize = 'st_blksize'
+    .const 'Sub' st_blksize = 'st_blksize'
     members['blksize'] = st_blksize
     new $P0, 'OS'
     push_eh _handler
@@ -417,6 +417,7 @@ Returns C<true> in case of success or C<nil> plus an error string.
     new $P0, 'OS'
     push_eh _handler
     $P0.'chdir'($S1)
+    pop_eh
     new res, 'LuaBoolean'
     set res, 1
     .return (res)
@@ -451,6 +452,7 @@ string.
     new $P0, 'OS'
     push_eh _handler
     $S0 = $P0.'cwd'()
+    pop_eh
     new res, 'LuaString'
     set res, $S0
     .return (res)
@@ -485,8 +487,9 @@ when there is no more entries. Raises an error if C<path> is not a directory.
     new $P0, 'OS'
     push_eh _handler
     $P1 = $P0.'readdir'($S1)
+    pop_eh
     .lex 'upvar_dir', $P1
-    .const .Sub dir_aux = 'dir_aux'
+    .const 'Sub' dir_aux = 'dir_aux'
     res = newclosure dir_aux
     .return (res)
   _handler:
@@ -558,6 +561,7 @@ C<nil> plus an error string.
     push_eh _handler
     $I1 = 0o775
     $P0.'mkdir'($S1, $I1)
+    pop_eh
     new res, 'LuaBoolean'
     set res, 1
     .return (res)
@@ -592,6 +596,7 @@ C<nil> plus an error string.
     new $P0, 'OS'
     push_eh _handler
     $P0.'rm'($S1)
+    pop_eh
     new res, 'LuaBoolean'
     set res, 1
     .return (res)

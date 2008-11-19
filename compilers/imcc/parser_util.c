@@ -346,24 +346,13 @@ INS(PARROT_INTERP, ARGMOD(IMC_Unit *unit), ARGIN(const char *name),
     int dirs = 0;
     Instruction *ins;
     op_info_t   *op_info;
-    char fullname[64], format[128], buf[10];
+    char fullname[64], format[128];
 
     if ((STREQ(name, "set_args"))
     ||  (STREQ(name, "get_results"))
     ||  (STREQ(name, "get_params"))
     ||  (STREQ(name, "set_returns")))
         return var_arg_ins(interp, unit, name, r, n, emit);
-
-    if ((IMCC_INFO(interp)->state->pragmas & PR_N_OPERATORS)
-         && ((STREQ(name, "abs"))
-         ||  (STREQ(name, "neg"))
-         ||  (STREQ(name, "not"))
-         ||  (STREQ(name, "bnot"))
-         ||  (STREQ(name, "bnots")))) {
-        strcpy(buf, "n_");
-        strcat(buf, name);
-        name = buf;
-    }
 
 #if 0
     ins = multi_keyed(interp, unit, name, r, n, keyvec, emit);
@@ -556,7 +545,7 @@ TODO: Needs to be documented!!!
 
 */
 
-PARROT_API
+PARROT_EXPORT
 int
 do_yylex_init(PARROT_INTERP, ARGOUT(yyscan_t* yyscanner))
 {
@@ -665,19 +654,12 @@ imcc_compile(PARROT_INTERP, ARGIN(const char *s), int pasm_file,
     if (!IMCC_INFO(interp)->error_code) {
         Parrot_sub *sub_data;
 
-        sub = pmc_new(interp, enum_class_Eval);
-
-        PackFile_fixup_subs(interp, PBC_MAIN, sub);
-
-        /* restore old byte_code, */
-        if (old_cs)
-            (void)Parrot_switch_to_cs(interp, old_cs, 0);
-
         /*
          * create sub PMC
          *
          * TODO if a sub was denoted :main return that instead
          */
+        sub                  = pmc_new(interp, enum_class_Eval);
         sub_data             = PMC_sub(sub);
         sub_data->seg        = new_cs;
         sub_data->start_offs = 0;
@@ -705,6 +687,13 @@ imcc_compile(PARROT_INTERP, ARGIN(const char *s), int pasm_file,
     Parrot_unblock_GC_mark(interp);
 
     yylex_destroy(yyscanner);
+
+    /* Now run any :load/:init subs. */
+    PackFile_fixup_subs(interp, PBC_MAIN, sub);
+
+    /* restore old byte_code, */
+    if (old_cs)
+        (void)Parrot_switch_to_cs(interp, old_cs, 0);
 
     return sub;
 }
@@ -944,6 +933,9 @@ imcc_compile_file(PARROT_INTERP, ARGIN(const char *fullname),
 
     if (imc_info) {
         IMCC_INFO(interp) = imc_info->prev;
+        if (imc_info->globals)
+            mem_sys_free(imc_info->globals);
+
         mem_sys_free(imc_info);
     }
 
@@ -1361,7 +1353,7 @@ imcc_vfprintf(PARROT_INTERP, ARGMOD(FILE *fd), ARGIN(const char *format), va_lis
         int         ch = 0;
         size_t      n;
 
-        for (n = 0; (ch = *fmt) && ch != '%'; fmt++, n++);
+        for (n = 0; (ch = *fmt) && ch != '%'; fmt++, n++) {/*Empty body*/};
 
         /* print prev string */
         if (n) {
@@ -1464,7 +1456,7 @@ TODO: Needs to be documented!!!
 
 */
 
-PARROT_API
+PARROT_EXPORT
 void
 imcc_init(PARROT_INTERP)
 {
@@ -1485,7 +1477,7 @@ TODO: Needs to be documented!!!
 
 */
 
-PARROT_API
+PARROT_EXPORT
 void
 imcc_destroy(PARROT_INTERP)
 {
@@ -1493,6 +1485,9 @@ imcc_destroy(PARROT_INTERP)
 
     if (macros)
         parrot_chash_destroy(interp, macros);
+
+    if (IMCC_INFO(interp)->globals)
+        mem_sys_free(IMCC_INFO(interp)->globals);
 
     mem_sys_free(IMCC_INFO(interp));
     IMCC_INFO(interp) = NULL;

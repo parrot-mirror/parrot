@@ -1,5 +1,5 @@
 #! perl
-# Copyright (C) 2001-2005, The Perl Foundation.
+# Copyright (C) 2001-2008, The Perl Foundation.
 # $Id$
 
 use strict;
@@ -159,7 +159,7 @@ OUTPUT
 }
 
 SKIP: {
-    skip 'failling on win32' => 1 if $^O =~ m/win32/i;
+    skip 'failing on win32' => 1 if $^O =~ m/win32/i;
 
 pir_output_is( <<'CODE', <<'OUTPUT', "thread type 2" );
 .sub main :main
@@ -207,7 +207,7 @@ OUTPUT
 }
 
 SKIP: {
-    skip 'failling on win32' => 1 if $^O =~ m/win32/i;
+    skip 'failing on win32' => 1 if $^O =~ m/win32/i;
 
 pir_output_is( <<'CODE', <<'OUTPUT', 'thread - kill' );
 .sub main :main
@@ -527,17 +527,17 @@ okay:
 .end
 
 .sub thread_test_func
-    $P0 = find_global 'Bar', 'alpha'
+    $P0 = get_hll_global [ 'Bar' ], 'alpha'
     'is'($P0, 1, 'Bar::alpha == 1', 'alpha')
     $P0 = 43
-    sleep 0.1 # give enough time that the main thread might modify
-              # any shared Foo::beta dn cause phantom errors
-    $P0 = find_global 'beta'
+    sleep 0.2 # give enough time that the main thread might modify
+              # any shared Foo::beta can cause phantom errors
+    $P0 = get_global 'beta'
     'is'($P0, 2, 'Foo::beta == 2 [accessed locally]', 'beta1')
     $P0 = 5
-    $P0 = find_global 'beta'
+    $P0 = get_global 'beta'
     'is'($P0, 5, 'Foo::beta == 5 [accessed locally after assignment]', 'beta2')
-    $P0 = find_global 'Foo', 'beta'
+    $P0 = get_hll_global [ 'Foo' ], 'beta'
     'is'($P0, 5, 'Foo::beta == 5 [after assign; absolute]', 'beta3')
 .end
 
@@ -546,10 +546,10 @@ okay:
 .sub test_setup
     $P0 = new 'Integer'
     $P0 = 1
-    store_global 'Bar', 'alpha', $P0
+    set_hll_global [ 'Bar' ], 'alpha', $P0
     $P0 = new 'Integer'
     $P0 = 2
-    store_global 'Foo', 'beta', $P0
+    set_hll_global [ 'Foo' ], 'beta', $P0
 .end
 
 .include 'cloneflags.pasm'
@@ -559,12 +559,12 @@ okay:
     .local pmc thread
     thread = new 'ParrotThread'
     .local pmc _thread_func
-    _thread_func = find_global 'Foo', 'thread_test_func'
+    _thread_func = get_hll_global [ 'Foo' ], 'thread_test_func'
     $I0 = .PARROT_CLONE_CODE
     bor $I0, $I0, .PARROT_CLONE_GLOBALS
     print "in thread:\n"
     thread.'run'($I0, _thread_func)
-    $P0 = find_global 'Foo', 'beta'
+    $P0 = get_hll_global [ 'Foo' ], 'beta'
     $P0 = 42
     thread.'join'()
     print "in main:\n"
@@ -758,7 +758,7 @@ Bar? 1
 OUTPUT
 
 pir_output_is( <<'CODE', <<'OUTPUT', "CLONE_CODE | CLONE_GLOBALS| CLONE_HLL" );
-.HLL 'Test', ''
+.HLL 'Test'
 .sub setup
     $P0 = new 'Integer'
     $P0 = 42
@@ -782,7 +782,7 @@ okay2:
     print "ok 2\n"
 .end
 
-.HLL '', ''
+.HLL ''
 
 .include 'cloneflags.pasm'
 
@@ -867,7 +867,7 @@ okay:
 
 .sub _check_sanity
     $P0 = global 'foo'
-    $P1 = find_global 'Foo', 'foo'
+    $P1 = get_hll_global [ 'Foo' ], 'foo'
     is($P0, $P1)
 .end
 
@@ -881,7 +881,7 @@ okay:
     _check_sanity()
     $P0 = global '_check_sanity'
     $P0()
-    $P0 = find_global 'Foo', '_check_sanity'
+    $P0 = get_hll_global [ 'Foo' ], '_check_sanity'
     $P0()
 .end
 
@@ -896,24 +896,24 @@ okay:
     _check_value(value)
     $P0 = global '_check_value'
     $P0(value)
-    $P0 = find_global 'Foo', '_check_value'
+    $P0 = get_hll_global [ 'Foo' ], '_check_value'
     $P0(value)
 .end
 
 .sub full_check
-    .const .Sub c_setup = 'setup'
-    .const .Sub c_sanity = 'check_sanity'
-    .const .Sub c_mutate = 'mutate'
-    .const .Sub c_value = 'check_value'
+    .const 'Sub' c_setup = 'setup'
+    .const 'Sub' c_sanity = 'check_sanity'
+    .const 'Sub' c_mutate = 'mutate'
+    .const 'Sub' c_value = 'check_value'
 
     .local pmc g_setup
-    g_setup = find_global 'Foo', 'setup'
+    g_setup = get_hll_global [ 'Foo' ], 'setup'
     .local pmc g_sanity
-    g_sanity = find_global 'Foo', 'check_sanity'
+    g_sanity = get_hll_global [ 'Foo' ], 'check_sanity'
     .local pmc g_mutate
-    g_mutate = find_global 'Foo', 'mutate'
+    g_mutate = get_hll_global [ 'Foo' ], 'mutate'
     .local pmc g_value
-    g_value = find_global 'Foo', 'check_value'
+    g_value = get_hll_global [  'Foo' ], 'check_value'
 
     c_setup()
     c_sanity()
@@ -945,7 +945,7 @@ okay:
     $P0 = 1
     store_global 'test_num', $P0
 
-    .const .Sub _check = 'full_check'
+    .const 'Sub' _check = 'full_check'
     _check()
 
     $P0 = new 'ParrotThread'

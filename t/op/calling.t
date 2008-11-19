@@ -606,14 +606,14 @@ OUTPUT
 
 pir_output_is( <<'CODE', <<'OUTPUT', "tailcall 1" );
 .sub main :main
-    .const .Sub f = "foo"
+    .const 'Sub' f = "foo"
     print "main\n"
     get_results "0", $S0
     invokecc f
     print $S0
 .end
 .sub foo
-    .const .Sub b = "bar"
+    .const 'Sub' b = "bar"
     print "foo\n"
     tailcall b
 .end
@@ -631,14 +631,14 @@ OUTPUT
 
 pir_output_is( <<'CODE', <<'OUTPUT', "tailcall 2 - pass arg" );
 .sub main :main
-    .const .Sub f = "foo"
+    .const 'Sub' f = "foo"
     print "main\n"
     get_results "0", $S0
     invokecc f
     print $S0
 .end
 .sub foo
-    .const .Sub b = "bar"
+    .const 'Sub' b = "bar"
     print "foo\n"
     set_args "0", "from_foo\n"
     tailcall b
@@ -660,14 +660,14 @@ OUTPUT
 
 pir_output_is( <<'CODE', <<'OUTPUT', "tailcall 3 - pass arg" );
 .sub main :main
-    .const .Sub f = "foo"
+    .const 'Sub' f = "foo"
     print "main\n"
     get_results "0", $S0
     invokecc f
     print $S0
 .end
 .sub foo
-    .const .Sub b = "bar"
+    .const 'Sub' b = "bar"
     print "foo\n"
     set_args "0", "from_foo\n"
     tailcall b
@@ -775,15 +775,15 @@ OUTPUT
 
 pir_output_is( <<'CODE', <<'OUTPUT', "tailcall 4 - pir calls" );
 .sub main :main
-    .const .Sub f = "foo"
+    .const 'Sub' f = "foo"
     print "main\n"
     $S0 = f()
     print $S0
 .end
 .sub foo
-    .const .Sub b = "bar"
+    .const 'Sub' b = "bar"
     print "foo\n"
-    .return b("from_foo\n")
+    .tailcall b("from_foo\n")
 .end
 .sub bar
     .param string s
@@ -964,7 +964,7 @@ ok2:
     .param pmc b
     $P0 = new 'Integer'
     $P0 = 3
-    .return bar($P0, a, b)
+    .tailcall bar($P0, a, b)
 .end
 
 .sub bar
@@ -1082,7 +1082,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "bug - :slurpy promotes to :flatten" );
 .end
 .sub foo
     .param pmc p :slurpy
-    .return bar(p)
+    .tailcall bar(p)
 .end
 .sub bar
     .param pmc p
@@ -1278,7 +1278,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "tailcall to NCI - 2" );
     code = ".sub main :main :anon\n" . code
     code = code . "\n.end\n"
     $P0 = compreg "PIR"
-    .return $P0(code)
+    .tailcall $P0(code)
 .end
 CODE
 Foo!
@@ -1330,7 +1330,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "tailcall - overlapping Ix" );
     print "\n"
 .end
 .sub foo
-    .const .Sub b = "bar"
+    .const 'Sub' b = "bar"
     I0 = 10
     I1 = 20
     set_args "0,0", I1, I0
@@ -1350,8 +1350,8 @@ pir_output_is( <<'CODE', <<'OUTPUT', "tailcall - optional not set" );
     print "ok\n"
 .end
 .sub foo
-    .const .Sub b = "bar"
-    .return b(10, 20)
+    .const 'Sub' b = "bar"
+    .tailcall b(10, 20)
 .end
 .sub bar
     .param int a
@@ -1381,8 +1381,8 @@ pir_output_is( <<'CODE', <<'OUTPUT', "tailcall - optional set" );
     print "ok\n"
 .end
 .sub foo
-    .const .Sub b = "bar"
-    .return b(10, 20, 30)
+    .const 'Sub' b = "bar"
+    .tailcall b(10, 20, 30)
 .end
 .sub bar
     .param int a
@@ -1607,7 +1607,7 @@ cont_dest:
     .param pmc cc
     .param string s
     print s
-    .return cc()
+    .tailcall cc()
 .end
 CODE
 ok 1
@@ -1634,9 +1634,9 @@ L2:
         print ".\n"
         .return ()
 L3:
-        .const .Sub $P49 = "___internal_main_test_"
+        .const 'Sub' $P49 = "___internal_main_test_"
         newclosure $P48, $P49
-        .return _try_it($I42, $P48)
+        .tailcall _try_it($I42, $P48)
 .end
 
 .sub ___internal_main_test_ :outer('_main')
@@ -2429,7 +2429,7 @@ pir_output_is(
     P1 = newclosure P2
     # There is a closure depending on our current context, so this shouldn't
     # free it.
-    .return P1()
+    .tailcall P1()
 .end
 
 .sub myclosure :outer(create_closure_and_run_it)

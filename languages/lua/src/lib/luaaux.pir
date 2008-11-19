@@ -567,9 +567,9 @@ messages and in debug information.
   L1:
     $S0 = substr data, 0, 4
     unless $S0 == "\033Lua" goto L2
-    .return undump(data, chunkname)
+    .tailcall undump(data, chunkname)
   L2:
-    .return parser(data, chunkname)
+    .tailcall parser(data, chunkname)
 .end
 
 .sub 'parser' :anon
@@ -583,6 +583,7 @@ messages and in debug information.
     .local pmc env
     env = get_hll_global '_G'
     $P0.'setfenv'(env)
+    pop_eh
     .return ($P0)
   _handler:
     .get_results ($P0)
@@ -606,6 +607,7 @@ messages and in debug information.
     .local pmc env
     env = get_hll_global '_G'
     $P0.'setfenv'(env)
+    pop_eh
     .return ($P0)
   _handler:
     .get_results ($P0)
@@ -626,7 +628,7 @@ C<name> is the chunk name, used for debug information and error messages.
 .sub 'lua_loadbuffer'
     .param string buff
     .param string chunkname
-    .return lua_load(buff, chunkname)
+    .tailcall lua_load(buff, chunkname)
 .end
 
 
@@ -657,7 +659,7 @@ This function only loads the chunk; it does not run it.
     if filename == '' goto L4
     close f
   L4:
-    .return lua_load($S0, chunkname)
+    .tailcall lua_load($S0, chunkname)
   L3:
     $S0 = 'cannot open '
     $S0 .= filename
@@ -761,6 +763,25 @@ If this argument is absent or is B<nil>, returns C<def>. Otherwise, raises an er
 .end
 
 
+=item C<lua_optnumber (narg, arg, def)>
+
+If the function argument C<narg> is a number, returns this number.
+If this argument is absent or is B<nil>, returns C<def>. Otherwise, raises an error.
+
+=cut
+
+.sub 'lua_optnumber'
+    .param int narg
+    .param pmc arg
+    .param num default
+    if null arg goto L1
+    unless arg goto L1
+    .tailcall lua_checknumber(narg, arg)
+  L1:
+    .return (default)
+.end
+
+
 =item C<lua_optstring (narg, arg, def)>
 
 If the function argument C<narg> is a string, returns this string.
@@ -791,7 +812,7 @@ If this argument is absent or is B<nil>, returns C<def>. Otherwise, raises an er
     .param pmc names
     .param pmc env :optional
     if null libname goto L1
-    .const .LuaString _loaded = '_LOADED'
+    .const 'LuaString' _loaded = '_LOADED'
     .local pmc _lua__REGISTRY
     _lua__REGISTRY = get_hll_global '_REGISTRY'
     $P0 = _lua__REGISTRY[_loaded]
@@ -901,7 +922,7 @@ This function never returns.
     inc i
     goto L4
   L5:
-    .const .LuaString k_arg = 'arg'
+    .const 'LuaString' k_arg = 'arg'
     env.'rawset'(k_arg, $P0)
   L3:
     .return (res)
@@ -946,6 +967,7 @@ This function never returns.
     .param pmc vararg :slurpy
     push_eh _handler
     ($P0 :slurpy) = f(vararg :flat)
+    pop_eh
     .return (0, $P0)
   _handler:
     .local pmc ex
