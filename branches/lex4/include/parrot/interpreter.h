@@ -865,7 +865,24 @@ void Parrot_setup_event_func_ptrs(Parrot_Interp interp);
 
 PARROT_EXPORT void disable_event_checking(PARROT_INTERP);
 PARROT_EXPORT void enable_event_checking(PARROT_INTERP);
-#else
+
+#ifdef CTX_LEAK_DEBUG
+#define Parrot_context_ref(a,b) \
+    __Parrot_context_ref((a),(b))
+static Parrot_Context *__Parrot_context_ref(Parrot_Interp interp,
+                                              Parrot_Context *ctx) {
+    if (Interp_debug_TEST(interp, PARROT_CTX_DESTROY_DEBUG_FLAG)) {
+        fprintf(stderr, "[reference to context %p taken]\n", ctx);
+    }
+#else /* !CTX_LEAK_DEBUG */
+static inline Parrot_Context *Parrot_context_ref(Parrot_Interp interp,
+                                                   Parrot_Context *ctx) {
+#endif /* CTX_LEAK_DEBUG */
+    ctx->ref_count++;
+    return ctx;
+}
+
+#else /* !PARROT_IN_CORE */
 
 struct Parrot_Interp_;
 typedef struct Parrot_Interp_ *Parrot_Interp;

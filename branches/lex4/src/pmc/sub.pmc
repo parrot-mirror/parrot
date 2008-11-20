@@ -261,14 +261,12 @@ Invokes the subroutine.
                     "maximum recursion depth exceeded");
 
         /* and copy set context variables */
-        PMC_cont(ccont)->from_ctx = context;
-        context->ref_count++;
+        PMC_cont(ccont)->from_ctx = Parrot_context_ref(interp, context);
 
         /* set next context of the sub */
         if (sub->ctx)
             Parrot_free_context(interp, sub->ctx, 1);
-        sub->ctx = context;
-        context->ref_count++;
+        sub->ctx = Parrot_context_ref(interp, context);
 
         /* don't destroy context */
         /* if (PObj_get_FLAGS(SELF) & SUB_FLAG_IS_OUTER)
@@ -296,8 +294,7 @@ Invokes the subroutine.
 
         if (sub->outer_ctx) {
             /* set outer context */
-            context->outer_ctx = sub->outer_ctx;
-            sub->outer_ctx->ref_count++;
+            context->outer_ctx = Parrot_context_ref(interp, sub->outer_ctx);
         }
         else {
             /* autoclose */
@@ -323,15 +320,12 @@ Invokes the subroutine.
                     }
 
                     if (outer_sub->outer_ctx) {
-                        dummy->outer_ctx = outer_sub->outer_ctx;
-                        outer_sub->outer_ctx->ref_count++;
+                        dummy->outer_ctx = Parrot_context_ref(interp, outer_sub->outer_ctx);
                     }
-                    outer_sub->ctx   = dummy;
-                    dummy->ref_count++;
+                    outer_sub->ctx = Parrot_context_ref(interp, dummy);
                 }
 
-                c->outer_ctx = outer_sub->ctx;
-                outer_sub->ctx->ref_count++;
+                c->outer_ctx = Parrot_context_ref(interp, outer_sub->ctx);
             }
         }
 
@@ -380,9 +374,9 @@ Creates and returns a clone of the subroutine.
         memcpy(sub, PMC_sub(SELF), sizeof (Parrot_sub));
         sub->name           = string_copy(INTERP, sub->name);
         if (sub->ctx)
-            sub->ctx->ref_count++;
+            Parrot_context_ref(interp, sub->ctx);
         if (sub->outer_ctx)
-            sub->outer_ctx->ref_count++;
+            Parrot_context_ref(interp, sub->outer_ctx);
 
         return ret;
     }

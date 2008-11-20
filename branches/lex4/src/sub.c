@@ -281,7 +281,7 @@ invalidate_retc_context(PARROT_INTERP, ARGMOD(PMC *cont))
         if (cont->vtable != interp->vtables[enum_class_RetContinuation])
             break;
         cont->vtable = interp->vtables[enum_class_Continuation];
-        ctx->ref_count++;
+        Parrot_context_ref(interp, ctx);
         cont = ctx->current_cont;
         ctx  = PMC_cont(cont)->from_ctx;
     }
@@ -538,6 +538,7 @@ Parrot_capture_lex(PARROT_INTERP, ARGMOD(PMC *sub_pmc))
     Parrot_Context * const ctx      = CONTEXT(interp);
     Parrot_sub * const current_sub  = PMC_sub(ctx->current_sub);
     Parrot_sub * const sub          = PMC_sub(sub_pmc);
+    Parrot_Context *old;
 
     /* MultiSub gets special treatment */
     if (VTABLE_isa(interp, sub_pmc, CONST_STRING(interp, "MultiSub"))) {
@@ -548,10 +549,10 @@ Parrot_capture_lex(PARROT_INTERP, ARGMOD(PMC *sub_pmc))
             if (!PMC_IS_NULL(child_sub->outer_sub)) 
                 if (0 == string_equal(interp, current_sub->lexid, 
                                       PMC_sub(child_sub->outer_sub)->lexid)) {
-                ctx->ref_count++;
-                if (child_sub->outer_ctx)
-                    Parrot_free_context(interp, child_sub->outer_ctx, 1);
-                child_sub->outer_ctx = ctx;
+                old = child_sub->outer_ctx;
+                child_sub->outer_ctx = Parrot_context_ref(interp, ctx);
+                if (old)
+                    Parrot_free_context(interp, old, 1);
             }
         }
         return;
@@ -568,10 +569,10 @@ Parrot_capture_lex(PARROT_INTERP, ARGMOD(PMC *sub_pmc))
             "'%Ss' isn't the :outer of '%Ss'", current_sub->name, sub->name);
 
     /* set the sub's outer context to the current context */
-    ctx->ref_count++;
-    if (sub->outer_ctx)
-        Parrot_free_context(interp, sub->outer_ctx, 1);
-    sub->outer_ctx = ctx;
+    old = sub->outer_ctx;
+    sub->outer_ctx = Parrot_context_ref(interp, ctx);
+    if (old)
+        Parrot_free_context(interp, old, 1);
 }
     
 /*

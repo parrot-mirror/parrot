@@ -525,7 +525,14 @@ Parrot_free_context(PARROT_INTERP, ARGMOD(Parrot_Context *ctxp), int deref)
      * and (c) execute "debug 0x80" in a (preferably small) test case.
      *
      */
-    if (deref) ctxp->ref_count--;
+    if (deref) {
+#ifdef CTX_LEAK_DEBUG
+        if (Interp_debug_TEST(interp, PARROT_CTX_DESTROY_DEBUG_FLAG)) {
+            fprintf(stderr, "[reference to context %p released]\n", (void*)ctxp);
+        }
+#endif
+        ctxp->ref_count--;
+    }
     if (ctxp->ref_count <= 0) {
         void *ptr;
         int slot;
