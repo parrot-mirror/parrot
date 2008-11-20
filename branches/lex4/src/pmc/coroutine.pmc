@@ -91,6 +91,7 @@ Destroys the coroutine.
 
         if (sub->ctx)
             Parrot_free_context(interp, sub->ctx, 0);
+        sub->ctx = 0;
 
         SUPER();
     }

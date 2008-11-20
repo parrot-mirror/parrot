@@ -111,6 +111,7 @@ Destroys the continuation.
 #endif
             if (cc->from_ctx)
                 Parrot_free_context(interp, cc->from_ctx, 0);
+            cc->from_ctx = NULL;
 
             mem_sys_free(cc);
             PMC_struct_val(SELF) = NULL;
