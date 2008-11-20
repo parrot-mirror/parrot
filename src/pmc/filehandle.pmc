@@ -267,7 +267,7 @@ Print the passed in integer, number, string, or PMC to the filehandle.
 Set or retrieve the buffering behavior for the filehandle. The argument and
 return value are one of the following:
 
-=over 
+=over
 
 =item C<unbuffered>
 

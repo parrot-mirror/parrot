@@ -400,7 +400,7 @@ Parrot_io_eof(PARROT_INTERP, ARGMOD(PMC *pmc))
             return 1;
 
     return (Parrot_io_get_flags(interp, pmc) & (PIO_F_EOF)) ? 1 : 0;
-    
+
 }
 
 /*
