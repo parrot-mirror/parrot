@@ -93,7 +93,7 @@ Setup standard streams, etc.
 INTVAL
 Parrot_io_init_portable(PARROT_INTERP)
 {
-#ifdef PIO_OS_STDIO
+#  ifdef PIO_OS_STDIO
     /* Only set standard handles if stdio is the OS IO */
     PIO_STDIN(interp)
         = Parrot_io_fdopen_portable(interp, PMCNULL, stdin, PIO_F_READ);
@@ -103,9 +103,9 @@ Parrot_io_init_portable(PARROT_INTERP)
 
     PIO_STDERR(interp)
         = Parrot_io_fdopen_portable(interp, PMCNULL, stderr, PIO_F_WRITE);
-#else  /* PIO_OS_STDIO */
+#  else  /* PIO_OS_STDIO */
     UNUSED(interp);
-#endif /* PIO_OS_STDIO */
+#  endif /* PIO_OS_STDIO */
     return 0;
 }
 
