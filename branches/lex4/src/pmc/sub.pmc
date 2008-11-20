@@ -264,13 +264,14 @@ Invokes the subroutine.
 
         /* and copy set context variables */
         PMC_cont(ccont)->from_ctx = context;
+        context->ref_count++;
 
-        /* set context of the sub */
+        /* set next context of the sub */
         sub->ctx = context;
 
         /* don't destroy context */
-        if (PObj_get_FLAGS(SELF) & SUB_FLAG_IS_OUTER)
-            ccont->vtable = interp->vtables[enum_class_Continuation];
+        /* if (PObj_get_FLAGS(SELF) & SUB_FLAG_IS_OUTER)
+            ccont->vtable = interp->vtables[enum_class_Continuation]; */
 
         /* reference counting should work */
         context->ref_count++;
@@ -310,7 +311,6 @@ Invokes the subroutine.
                 Parrot_Context *dummy = Parrot_alloc_context(INTERP,
                                             outer_sub->n_regs_used, 1);
                 dummy->current_sub    = outer_pmc;
-                dummy->ref_count++;
 
                 if (!PMC_IS_NULL(outer_sub->lex_info)) {
                     dummy->lex_pad = pmc_new_init(INTERP,
@@ -321,9 +321,11 @@ Invokes the subroutine.
 
                 dummy->outer_ctx = outer_sub->outer_ctx;
                 outer_sub->ctx   = dummy;
+                dummy->ref_count++;
             }
 
             c->outer_ctx = outer_sub->ctx;
+            outer_sub->ctx->ref_count++;
         }
 
         /* switch code segment if needed */
@@ -370,6 +372,10 @@ Creates and returns a clone of the subroutine.
         PMC_pmc_val(ret)    = NULL;
         memcpy(sub, PMC_sub(SELF), sizeof (Parrot_sub));
         sub->name           = string_copy(INTERP, sub->name);
+        if (sub->ctx)
+            sub->ctx->ref_count++;
+        if (sub->outer_ctx)
+            sub->outer_ctx->ref_count++;
 
         return ret;
     }
@@ -434,7 +440,7 @@ Marks the sub as live.
             pobject_lives(INTERP, (PObj *) sub->lexid);
         if (sub->ctx)
             mark_context(interp, sub->ctx);
-        if (sub->outer_ctx && sub->outer_ctx != sub->ctx->outer_ctx)
+        if (sub->outer_ctx)
             mark_context(interp, sub->outer_ctx);
     }
 
@@ -846,10 +852,6 @@ slurpy arguments).
                                            enum_class_LexInfo);
             sub->lex_info = pmc_new_init(interp, lex_info_id, SELF);
         }
-
-        /* Finally, this sub needs to become a closure. Safe since
-         * they both use the same underlying structure. */
-        SELF->vtable = interp->vtables[enum_class_Closure];
     }
 
     METHOD get_multisig() {
