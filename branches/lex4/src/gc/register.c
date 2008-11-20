@@ -363,7 +363,6 @@ Parrot_pop_context(PARROT_INTERP)
     Parrot_Context * const ctx = CONTEXT(interp);
     Parrot_Context * const old = ctx->caller_ctx;
 
-    ctx->ref_count = 0;
     Parrot_free_context(interp, ctx, 0);
 
     /* restore old, set cached interpreter base pointers */
