@@ -4,7 +4,7 @@ $Id$
 
 =head1 NAME
 
-src/io/buffer.c - I/O buffering 
+src/io/buffer.c - I/O buffering
 
 =head1 DESCRIPTION
 
@@ -678,7 +678,7 @@ Parrot_io_seek_buffer(PARROT_INTERP, ARGMOD(PMC *filehandle),
     return newpos;
 }
 
-/* 
+/*
 
 =item C<static INTVAL io_is_end_of_line>
 

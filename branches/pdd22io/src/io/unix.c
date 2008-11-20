@@ -627,7 +627,7 @@ Parrot_io_open_pipe_unix(PARROT_INTERP, ARGMOD(PMC *filehandle),
     /* Parent - return IO stream */
     if ((pid = fork()) > 0) {
         PMC *io;
-        if (PMC_IS_NULL(filehandle)) 
+        if (PMC_IS_NULL(filehandle))
             io = Parrot_io_new_pmc(interp, flags & (PIO_F_READ|PIO_F_WRITE));
         else
             io = filehandle;

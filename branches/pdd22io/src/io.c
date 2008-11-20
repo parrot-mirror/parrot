@@ -196,7 +196,7 @@ PARROT_EXPORT
 void
 Parrot_io_set_flags(PARROT_INTERP, ARGIN(PMC *filehandle), INTVAL flags)
 {
-    Parrot_FileHandle_attributes *handle_struct = PARROT_FILEHANDLE(filehandle); 
+    Parrot_FileHandle_attributes *handle_struct = PARROT_FILEHANDLE(filehandle);
     handle_struct->flags = flags;
 }
 
@@ -220,7 +220,7 @@ PARROT_EXPORT
 INTVAL
 Parrot_io_get_flags(PARROT_INTERP, ARGIN(PMC *filehandle))
 {
-    Parrot_FileHandle_attributes *handle_struct = PARROT_FILEHANDLE(filehandle); 
+    Parrot_FileHandle_attributes *handle_struct = PARROT_FILEHANDLE(filehandle);
     INTVAL flags = handle_struct->flags;
     return flags;
 }
@@ -523,7 +523,7 @@ PARROT_CAN_RETURN_NULL
 void
 Parrot_io_clear_buffer(PARROT_INTERP, ARGIN(PMC *filehandle))
 {
-    Parrot_FileHandle_attributes *io = PARROT_FILEHANDLE(filehandle); 
+    Parrot_FileHandle_attributes *io = PARROT_FILEHANDLE(filehandle);
     if (io->buffer_start && (io->flags & PIO_BF_MALLOC)) {
         mem_sys_free(io->buffer_start);
         io->buffer_start = NULL;
@@ -597,7 +597,7 @@ PARROT_EXPORT
 void
 Parrot_io_set_file_position(PARROT_INTERP, ARGIN(PMC *filehandle), PIOOFF_T file_pos)
 {
-    Parrot_FileHandle_attributes *handle_struct = PARROT_FILEHANDLE(filehandle); 
+    Parrot_FileHandle_attributes *handle_struct = PARROT_FILEHANDLE(filehandle);
     handle_struct->last_pos = handle_struct->file_pos;
     handle_struct->file_pos = file_pos;
 }
