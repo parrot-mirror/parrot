@@ -73,7 +73,7 @@ PARROT_DATA ENCODING *Parrot_default_encoding_ptr;
 
 typedef INTVAL (*encoding_converter_t)(PARROT_INTERP, ENCODING *lhs, ENCODING *rhs);
 
-/* HEADERIZER BEGIN: src/encoding.c */
+/* HEADERIZER BEGIN: src/strings/encoding.c */
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 
 PARROT_EXPORT
@@ -153,7 +153,7 @@ INTVAL Parrot_register_encoding(PARROT_INTERP,
 void parrot_deinit_encodings(void);
 void parrot_init_encodings_2(void);
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
-/* HEADERIZER END: src/encoding.c */
+/* HEADERIZER END: src/strings/encoding.c */
 
 #define ENCODING_MAX_BYTES_PER_CODEPOINT(i, src) \
     ((src)->encoding)->max_bytes_per_codepoint

@@ -15,7 +15,7 @@
 
 #ifdef PARROT_IN_CORE
 
-/* HEADERIZER BEGIN: src/string_primitives.c */
+/* HEADERIZER BEGIN: src/strings/string_primitives.c */
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 
 PARROT_EXPORT
@@ -44,7 +44,7 @@ Parrot_UInt4 string_unescape_one(PARROT_INTERP,
         FUNC_MODIFIES(*string);
 
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
-/* HEADERIZER END: src/string_primitives.c */
+/* HEADERIZER END: src/strings/string_primitives.c */
 
 #endif /* PARROT_IN_CORE */
 #endif /* PARROT_STRING_PRIMITIVES_H_GUARD */

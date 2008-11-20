@@ -372,21 +372,21 @@ IO_O_FILES = \
     $(IO_DIR)/io_passdown$(O)
 
 INTERP_O_FILES = \
-    $(SRC_DIR)/string$(O) \
+    $(SRC_DIR)/strings/string$(O) \
     \
     $(OPS_DIR)/core_ops$(O) \
     $(OPS_DIR)/core_ops_switch$(O) \
     \
 #CONDITIONED_LINE(i386_has_gcc_cmpxchg):    $(SRC_DIR)/atomic/gcc_x86$(O) \
     $(SRC_DIR)/byteorder$(O) \
-    $(SRC_DIR)/charset$(O) \
+    $(SRC_DIR)/strings/charset$(O) \
     $(SRC_DIR)/core_pmcs$(O) \
     $(SRC_DIR)/cpu_dep$(O) \
     $(SRC_DIR)/datatypes$(O) \
     $(SRC_DIR)/debug$(O) \
     $(SRC_DIR)/dynext$(O) \
     $(SRC_DIR)/embed$(O) \
-    $(SRC_DIR)/encoding$(O) \
+    $(SRC_DIR)/strings/encodings$(O) \
     $(SRC_DIR)/events$(O) \
     $(SRC_DIR)/exceptions$(O) \
     $(SRC_DIR)/exit$(O) \
@@ -432,7 +432,7 @@ INTERP_O_FILES = \
     $(SRC_DIR)/stacks$(O) \
     $(SRC_DIR)/stm/backend$(O) \
     $(SRC_DIR)/stm/waitlist$(O) \
-    $(SRC_DIR)/string_primitives$(O) \
+    $(SRC_DIR)/strings/string_primitives$(O) \
     $(SRC_DIR)/sub$(O) \
     $(SRC_DIR)/thread$(O) \
     $(SRC_DIR)/trace$(O) \
@@ -608,7 +608,7 @@ STR_FILES = \
     \
     $(CLASS_STR_FILES)
 
-$(SRC_DIR)/string_private_cstring.h : $(STR_FILES) $(BUILD_TOOLS_DIR)/c2str.pl
+$(SRC_DIR)/strings/string_private_cstring.h : $(STR_FILES) $(BUILD_TOOLS_DIR)/c2str.pl
 	$(PERL) $(BUILD_TOOLS_DIR)/c2str.pl --all
 
 # classes PMC build utils and rules
@@ -1111,9 +1111,9 @@ $(SRC_DIR)/debug$(O) : $(GENERAL_H_FILES) $(INC_DIR)/debugger.h \
 
 $(SRC_DIR)/sub$(O) : $(GENERAL_H_FILES) $(SRC_DIR)/sub.str
 
-$(SRC_DIR)/string$(O) : $(GENERAL_H_FILES) $(SRC_DIR)/string_private_cstring.h
+$(SRC_DIR)/strings/string$(O) : $(GENERAL_H_FILES) $(SRC_DIR)/strings/string_private_cstring.h
 
-$(SRC_DIR)/string_primitives$(O) : $(GENERAL_H_FILES)
+$(SRC_DIR)/strings/string_primitives$(O) : $(GENERAL_H_FILES)
 
 $(SRC_DIR)/longopt$(O) : $(GENERAL_H_FILES)
 
@@ -1213,9 +1213,9 @@ $(SRC_DIR)/spf_render$(O) : $(GENERAL_H_FILES) $(SRC_DIR)/spf_render.str
 
 $(SRC_DIR)/spf_vtable$(O) : $(GENERAL_H_FILES) $(SRC_DIR)/spf_vtable.str
 
-$(SRC_DIR)/encoding$(O) : $(SRC_DIR)/encoding.c $(GENERAL_H_FILES)
+$(SRC_DIR)/strings/encodings$(O) : $(SRC_DIR)/strings/encodings.c $(GENERAL_H_FILES)
 
-$(SRC_DIR)/charset$(O) : $(SRC_DIR)/charset.c $(GENERAL_H_FILES)
+$(SRC_DIR)/strings/charset$(O) : $(SRC_DIR)/strings/charset.c $(GENERAL_H_FILES)
 
 $(SRC_DIR)/pbc_merge$(O) : $(SRC_DIR)/pbc_merge.c $(GENERAL_H_FILES)
 
@@ -1655,7 +1655,7 @@ prog-clean :
     install_config.fpmc
 	$(PERL) $(BUILD_TOOLS_DIR)/c2str.pl --init
 	$(RM_F) \
-    $(SRC_DIR)/string_private_cstring.h \
+    $(SRC_DIR)/strings/string_private_cstring.h \
     "$(SRC_DIR)/*.str" "$(SRC_DIR)/io/*.str" "$(SRC_DIR)/pmc/*.str" \
     "src/pmc/*.c" "src/pmc/pmc_*.h" "src/pmc/*.dump" \
     vtable.dump "*.def" "*.lib" "*.exp"
@@ -2060,10 +2060,10 @@ splint-andy :
 COVER_FLAGS = -fprofile-arcs -ftest-coverage
 COVER_DIRS = \
     $(SRC_DIR) \
-    $(SRC_DIR)/charset \
+    $(SRC_DIR)/strings/charset \
     $(SRC_DIR)/dynoplibs \
     $(SRC_DIR)/dynpmc \
-    $(SRC_DIR)/encodings \
+    $(SRC_DIR)/strings/encodings \
     $(SRC_DIR)/gc \
     $(SRC_DIR)/ops \
     $(SRC_DIR)/packfile \

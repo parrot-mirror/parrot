@@ -34,7 +34,7 @@ sub _init {
 my @charsets_defaults =
     defined( $ENV{TEST_CHARSET} )
     ? $ENV{TEST_CHARSET}
-    : sort map { basename($_) } glob "./src/charset/*.c";
+    : sort map { basename($_) } glob "./src/strings/charset/*.c";
 
 sub runstep {
     my ( $self, $conf ) = @_;
@@ -68,7 +68,7 @@ E_NOTE
     foreach my $charset ( split( /\s+/, $charset_list ) ) {
         $charset =~ s/\.c$//;
         $TEMP_charset_build .= <<END
-src/charset/$charset\$(O): src/charset/$charset.h src/charset/ascii.h src/charset/$charset.c \$(NONGEN_HEADERS)
+src/strings/charset/$charset\$(O): src/strings/charset/$charset.h src/strings/charset/ascii.h src/strings/charset/$charset.c \$(NONGEN_HEADERS)
 
 
 END
@@ -76,7 +76,7 @@ END
 
     # build list of libraries for link line in Makefile
     my $slash = $conf->data->get('slash');
-    $TEMP_charset_o =~ s/^| / src${slash}charset${slash}/g;
+    $TEMP_charset_o =~ s/^| / src${slash}strings${slash}charset${slash}/g;
 
     $conf->data->set(
         charset            => $charset_list,
