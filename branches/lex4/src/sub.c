@@ -559,8 +559,12 @@ Parrot_capture_lex(PARROT_INTERP, ARGMOD(PMC *sub_pmc))
         Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INVALID_OPERATION,
             "'%Ss' isn't the :outer of '%Ss'", current_sub->name, sub->name);
 
+#if CTX_LEAK_DEBUG
+    Parrot_trace_context(interp, "capt", ctx, "sub", sub_pmc);
+#endif
     /* set the sub's outer context to the current context */
     sub->outer_ctx = ctx;
+    ctx->ref_count++;
 }
     
 /*
