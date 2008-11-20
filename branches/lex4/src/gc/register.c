@@ -363,7 +363,8 @@ Parrot_pop_context(PARROT_INTERP)
     Parrot_Context * const ctx = CONTEXT(interp);
     Parrot_Context * const old = ctx->caller_ctx;
 
-    Parrot_free_context(interp, ctx, 1);
+    ctx->ref_count = 0;
+    Parrot_free_context(interp, ctx, 0);
 
     /* restore old, set cached interpreter base pointers */
     CONTEXT(interp)      = old;
@@ -502,8 +503,9 @@ Parrot_set_new_context(PARROT_INTERP, ARGMOD(INTVAL *number_regs_used))
 
 =item C<void Parrot_free_context>
 
-Frees the context. If C<re_use> is true, this function is called by a return
-continuation invoke, else from the destructor of a continuation.
+Frees the context if its reference count is zero.  If C<deref>
+is true, then reduce the reference count prior to determining
+if the context should be freed.
 
 =cut
 
@@ -511,18 +513,21 @@ continuation invoke, else from the destructor of a continuation.
 
 PARROT_EXPORT
 void
-Parrot_free_context(PARROT_INTERP, ARGMOD(Parrot_Context *ctxp), int re_use)
+Parrot_free_context(PARROT_INTERP, ARGMOD(Parrot_Context *ctxp), int deref)
 {
     /*
-     * The context structure has a reference count, initially 0.  This field is
-     * incremented when a continuation that points to it is created -- either
-     * directly, or when a continuation is cloned, or when a retcontinuation is
-     * converted to a full continuation in invalidate_retc.  To check for leaks,
-     * (a) disable NDEBUG, (b) enable CTX_LEAK_DEBUG in interpreter.h, and (c)
-     * excecute "debug 0x80" in a (preferably small) test case.
+     * The context structure has a reference count, initially 0.
+     * This field is incremented when something outside of the normal
+     * calling chain (such as a continuation or outer scope) wants to
+     * preserve the context.  The field is decremented when
+     * Parrot_free_context is called with the C<deref> flag set true.
+     * To trace context handling and check for leaks,
+     * (a) disable NDEBUG, (b) enable CTX_LEAK_DEBUG in interpreter.h,
+     * and (c) execute "debug 0x80" in a (preferably small) test case.
      *
      */
-    if (re_use || --ctxp->ref_count <= 0) {
+    if (deref) ctxp->ref_count--;
+    if (ctxp->ref_count <= 0) {
         void *ptr;
         int slot;
 
@@ -559,7 +564,10 @@ Parrot_free_context(PARROT_INTERP, ARGMOD(Parrot_Context *ctxp), int re_use)
         if (ctxp->ref_count < 0)
             return;
 
-        ctxp->ref_count = 0;
+        /* force the reference count negative to indicate a dead context
+         * so mark_context (src/sub.c) can report it */
+        ctxp->ref_count--;
+
         ptr             = ctxp;
         slot            = CALCULATE_SLOT_NUM(ctxp->regs_mem_size);
 
