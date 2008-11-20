@@ -317,52 +317,6 @@ init_context(PARROT_INTERP, ARGMOD(Parrot_Context *ctx),
 
 /*
 
-=item C<Parrot_Context * Parrot_dup_context>
-
-Duplicates the passed context, making the result the current context.
-
-=cut
-
-*/
-
-PARROT_WARN_UNUSED_RESULT
-PARROT_CANNOT_RETURN_NULL
-Parrot_Context *
-Parrot_dup_context(PARROT_INTERP, ARGIN(const Parrot_Context *old))
-{
-    Parrot_Context *ctx;
-
-    const size_t reg_alloc = old->regs_mem_size;
-    const int    slot      = CALCULATE_SLOT_NUM(reg_alloc);
-    void        *ptr       = interp->ctx_mem.free_list[slot];
-    size_t       diff;
-
-    if (ptr)
-        interp->ctx_mem.free_list[slot] = *(void **) ptr;
-    else
-        ptr = (void *)mem_sys_allocate(reg_alloc + ALIGNED_CTX_SIZE);
-
-    ctx                         = (Parrot_Context *)ptr;
-    CONTEXT(interp)             = ctx;
-
-    ctx->regs_mem_size          = reg_alloc;
-    ctx->n_regs_used            = mem_allocate_n_zeroed_typed(4, INTVAL);
-    ctx->n_regs_used[REGNO_INT] = old->n_regs_used[REGNO_INT];
-    ctx->n_regs_used[REGNO_NUM] = old->n_regs_used[REGNO_NUM];
-    ctx->n_regs_used[REGNO_STR] = old->n_regs_used[REGNO_STR];
-    ctx->n_regs_used[REGNO_PMC] = old->n_regs_used[REGNO_PMC];
-    diff                        = (const long *)ctx - (const long *)old;
-
-    interp->ctx.bp.regs_i    += diff;
-    interp->ctx.bp_ps.regs_s += diff;
-    init_context(interp, ctx, old);
-
-    return ctx;
-}
-
-
-/*
-
 =item C<Parrot_Context * Parrot_push_context>
 
 Creates and sets the current context to a new context, remembering the old
