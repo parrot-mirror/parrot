@@ -602,6 +602,10 @@ Parrot_free_context(PARROT_INTERP, ARGMOD(Parrot_Context *ctxp), int re_use)
             ctxp->n_regs_used = NULL;
         }
 
+        /* free any outer context referenced from this one */
+        if (ctxp->outer_ctx)
+            Parrot_free_context(interp, ctxp->outer_ctx, 1);
+
         /* don't put the same context on the free list multiple times; we don't
          * have the re-use versus multiple ref count semantics right yet */
         if (ctxp->ref_count < 0)
