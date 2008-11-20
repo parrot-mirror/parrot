@@ -574,16 +574,29 @@ Parrot_free_context(PARROT_INTERP, ARGMOD(Parrot_Context *ctxp), int re_use)
      * excecute "debug 0x80" in a (preferably small) test case.
      *
      */
-
-#if CTX_LEAK_DEBUG
-    if (ctxp->ref_count <= 1)
-        Parrot_trace_context(interp, "free", ctxp, NULL, NULL);
-#endif
-
     if (re_use || --ctxp->ref_count <= 0) {
         void *ptr;
         int slot;
 
+#ifndef NDEBUG
+        if (Interp_debug_TEST(interp, PARROT_CTX_DESTROY_DEBUG_FLAG)
+            && ctxp->current_sub) {
+            /* can't probably PIO_eprintf here */
+            const Parrot_sub * const doomed = PMC_sub(ctxp->current_sub);
+
+            if (doomed) {
+                fprintf(stderr, "[free  ctx %p of sub '%s']\n",
+                        (void *)ctxp,
+                        (doomed->name == (void*)0xdeadbeef
+                        ? "???"
+                        : (char*)doomed->name->strstart));
+            }
+            else {
+                Parrot_ex_throw_from_c_args(interp, NULL, 1,
+                        "NULL doomed sub detected in Parrot_free_context");
+            }
+        }
+#endif
         if (ctxp->n_regs_used) {
             mem_sys_free(ctxp->n_regs_used);
             ctxp->n_regs_used = NULL;
@@ -601,41 +614,6 @@ Parrot_free_context(PARROT_INTERP, ARGMOD(Parrot_Context *ctxp), int re_use)
         PARROT_ASSERT(slot < interp->ctx_mem.n_free_slots);
         *(void **)ptr                   = interp->ctx_mem.free_list[slot];
         interp->ctx_mem.free_list[slot] = ptr;
-    }
-}
-
-
-/*
-
-=item C<void Parrot_trace_context>
-
-If debugging is set with 0x80, then outputs context tracking information
-to stderr.  Otherwise does nothing.
-
-=cut
-
-*/
-
-PARROT_EXPORT
-void
-Parrot_trace_context(PARROT_INTERP, 
-        ARGIN(const char *action), 
-        ARGIN(Parrot_Context *ctx),
-        ARGIN_NULLOK(const char *from),
-        ARGIN_NULLOK(void *fromp))
-{
-    char frombuf[80];
-    frombuf[0] = 0;
-    if (from) {
-        sprintf(frombuf, " %s %p ->", from, fromp);
-    }
-    if (Interp_debug_TEST(interp, PARROT_CTX_DESTROY_DEBUG_FLAG)) {
-        const char * subname = "???";
-        if (ctx->current_sub) {
-            subname = (char *)PMC_sub(ctx->current_sub)->name->strstart;
-        }
-        fprintf(stderr, "[%s%s ctx %p (refs %d, sub '%s')]\n", 
-            action, frombuf, ctx, ctx->ref_count, subname);
     }
 }
 
