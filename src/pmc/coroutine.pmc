@@ -151,6 +151,7 @@ Swaps the "context".
             ctx        = Parrot_set_new_context(INTERP, co->n_regs_used);
 
             co->ctx                   = ctx;
+            ctx->ref_count++;
             co->dynamic_state         = interp->dynamic_env;
 
             ctx->caller_ctx           = caller_ctx;
