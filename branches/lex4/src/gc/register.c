@@ -389,15 +389,11 @@ PARROT_CANNOT_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
 Parrot_Context *
 Parrot_alloc_context(PARROT_INTERP, ARGMOD(INTVAL *number_regs_used),
-    ARGIN_NULLOK(int init))
+    ARGIN_NULLOK(Parrot_Context *old))
 {
     Parrot_Context *ctx;
     void *p;
 
-    /*
-     * RT #46185 (OPT) if we allocate a new context due to a self-recursive call
-     *      create a specialized version that just uses caller's size
-     */
     const size_t size_i = sizeof (INTVAL)   * number_regs_used[REGNO_INT];
     const size_t size_n = sizeof (FLOATVAL) * number_regs_used[REGNO_NUM];
     const size_t size_s = sizeof (STRING *) * number_regs_used[REGNO_STR];
@@ -469,8 +465,7 @@ Parrot_alloc_context(PARROT_INTERP, ARGMOD(INTVAL *number_regs_used),
     /* ctx.bp_ps points to S0, which has Px on the left */
     ctx->bp_ps.regs_s = (STRING **)((char *)p + size_nip);
 
-    if (init)
-        init_context(interp, ctx, NULL);
+    init_context(interp, ctx, old);
 
     return ctx;
 }
@@ -493,13 +488,12 @@ Parrot_Context *
 Parrot_set_new_context(PARROT_INTERP, ARGMOD(INTVAL *number_regs_used))
 {
     Parrot_Context *old = CONTEXT(interp);
-    Parrot_Context *ctx = Parrot_alloc_context(interp, number_regs_used, 0);
+    Parrot_Context *ctx = Parrot_alloc_context(interp, number_regs_used, old);
 
     CONTEXT(interp)          = ctx;
     interp->ctx.bp.regs_i    = ctx->bp.regs_i;
     interp->ctx.bp_ps.regs_s = ctx->bp_ps.regs_s;
 
-    init_context(interp, ctx, old);
     return ctx;
 }
 
