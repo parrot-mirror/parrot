@@ -40,6 +40,11 @@ mark_context(PARROT_INTERP, ARGMOD(Parrot_Context* ctx))
     PObj *obj;
     int   i;
 
+    if (ctx->ref_count < 0) {
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INVALID_OPERATION,
+            "Bug: Attempting to mark dead context %p", ctx);
+    }
+
     obj = (PObj *)ctx->current_sub;
     if (obj)
         pobject_lives(interp, obj);
@@ -543,6 +548,9 @@ Parrot_capture_lex(PARROT_INTERP, ARGMOD(PMC *sub_pmc))
             if (!PMC_IS_NULL(child_sub->outer_sub)) 
                 if (0 == string_equal(interp, current_sub->lexid, 
                                       PMC_sub(child_sub->outer_sub)->lexid)) {
+                ctx->ref_count++;
+                if (child_sub->outer_ctx)
+                    Parrot_free_context(interp, child_sub->outer_ctx, 1);
                 child_sub->outer_ctx = ctx;
             }
         }
@@ -560,8 +568,10 @@ Parrot_capture_lex(PARROT_INTERP, ARGMOD(PMC *sub_pmc))
             "'%Ss' isn't the :outer of '%Ss'", current_sub->name, sub->name);
 
     /* set the sub's outer context to the current context */
-    sub->outer_ctx = ctx;
     ctx->ref_count++;
+    if (sub->outer_ctx)
+        Parrot_free_context(interp, sub->outer_ctx, 1);
+    sub->outer_ctx = ctx;
 }
     
 /*
