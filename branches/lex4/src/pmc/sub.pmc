@@ -91,6 +91,10 @@ Destroys the subroutine.
             return;
         if (sub->arg_info)
             mem_sys_free(sub->arg_info);
+        if (sub->ctx) {
+            Parrot_free_context(INTERP, sub->ctx, 1);
+            sub->ctx = NULL;
+        }
 
         mem_sys_free(sub);
         PMC_struct_val(SELF) = NULL;
@@ -258,7 +262,6 @@ Invokes the subroutine.
 
         /* and copy set context variables */
         PMC_cont(ccont)->from_ctx = context;
-        context->ref_count++;
 
         /* set next context of the sub */
         if (sub->ctx)
