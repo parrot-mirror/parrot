@@ -262,6 +262,7 @@ Invokes the subroutine.
 
         /* and copy set context variables */
         PMC_cont(ccont)->from_ctx = context;
+        context->ref_count++;
 
         /* set next context of the sub */
         if (sub->ctx)
