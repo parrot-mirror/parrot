@@ -735,7 +735,7 @@ do_loadlib(PARROT_INTERP, ARGIN(const char *lib))
 %type <t> argtype_list argtype paramtype_list paramtype
 %type <t> pcc_return_many
 %type <t> proto sub_proto sub_proto_list multi multi_types outer
-%type <t> vtable instanceof lexid
+%type <t> vtable instanceof subid
 %type <i> instruction assignment conditional_statement labeled_inst opt_label op_assign
 %type <i> if_statement unless_statement
 %type <i> func_assign get_results
@@ -816,26 +816,7 @@ pragma:
 
 hll_def:
 
-     /* This HLL variant is deprecated */
-     HLL STRINGC COMMA STRINGC
-         {
-            STRING * const hll_name = string_unescape_cstring(interp, $2 + 1, '"', NULL);
-            CONTEXT(interp)->current_HLL =
-                Parrot_register_HLL(interp, hll_name);
-
-            /* don't bother loading the library for an empty string */
-            if (strlen($4) > 2) {
-                STRING * const hll_lib =
-                    string_unescape_cstring(interp, $4 + 1, '"', NULL);
-                PMC    *ignored        = Parrot_load_lib(interp, hll_lib, NULL);
-                UNUSED(ignored);
-                Parrot_register_HLL_lib(interp, hll_lib);
-            }
-
-            IMCC_INFO(interp)->cur_namespace = NULL;
-            $$ = 0;
-         }
-   | HLL STRINGC
+     HLL STRINGC
          {
             STRING * const hll_name = string_unescape_cstring(interp, $2 + 1, '"', NULL);
             CONTEXT(interp)->current_HLL =
@@ -1088,11 +1069,11 @@ instanceof:
          }
    ;
 
-lexid:
+subid:
      SUB_LEXID '(' STRINGC ')'
          {
            $$ = 0;
-           IMCC_INFO(interp)->cur_unit->lexid = mk_const(interp, $3, 'S');
+           IMCC_INFO(interp)->cur_unit->subid = mk_const(interp, $3, 'S');
            mem_sys_free($3);
          }
    ;
@@ -1215,7 +1196,7 @@ proto:
    | outer
    | vtable
    | instanceof
-   | lexid
+   | subid
    ;
 
 pcc_call:

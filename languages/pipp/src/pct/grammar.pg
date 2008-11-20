@@ -6,36 +6,28 @@
 grammar Pipp::Grammar is PCT::Grammar;
 
 # the starting rule
-token TOP {
-    ^ <sea_or_code>+
-    {*}
-}
+token TOP { ^ <sea_or_code>+ {*} }
 
-# whitespace and comments
+# whitespace rule used implicity by rules
 token ws {
       <!ww> <ws_all>+
     | <ws_all>*
 }
 
 token ws_all {
-    [ <.ws_char>
+      <.ws_char>
     | <singlelinecomment>
     | <multilinecomment>
-    ]
 }
 
-token ws_char {
-    [ \h | \v ]
-}
+token ws_char { \h | \v }
 
 token singlelinecomment {
       '#'  \N*
     | '//' \N*
 }
 
-token multilinecomment {
-    '/*' .*? '*/'
-}
+token multilinecomment { '/*' .*?  '*/' }
 
 # embedding code into a sea of text
 token sea_or_code {
@@ -51,61 +43,49 @@ regex SEA {
 }
 
 rule code_echo_tag {
-    <.CODE_START_ECHO_TAG>
-        <arguments> <.statement_delimiter>
+    <.CODE_START_ECHO_TAG> <arguments> <.statement_delimiter>
         <statement>*
     <.CODE_END_SHORT_TAG>?
     {*}
 }
 
 rule code_script_tag {
-    <.CODE_START_SCRIPT_TAG> <statement>* <.CODE_END_SCRIPT_TAG>?
+    <.CODE_START_SCRIPT_TAG>
+        <statement>*
+    <.CODE_END_SCRIPT_TAG>?
     {*}
 }
 
 rule code_short_tag {
-    <.CODE_START_SHORT_TAG>  <statement>* <.CODE_END_SHORT_TAG>?
+    <.CODE_START_SHORT_TAG>
+        <statement>*
+    <.CODE_END_SHORT_TAG>?
     {*}
 }
 
 regex CODE_START_SCRIPT_TAG {
-    '<script' <ws_char>+:
-    'language'         <ws_char>*:
-    '='                <ws_char>*:
-    <quoted_lang_name> <ws_char>*:
-    '>'
+    '<script' <ws_char>+: 'language' <ws_char>*: '=' <ws_char>*: <quoted_lang_name> <ws_char>*: '>'
 }
 
-regex CODE_END_SCRIPT_TAG {
-    '</script' <ws_char>*: '>'
-}
+regex CODE_END_SCRIPT_TAG { '</script' <ws_char>*: '>' }
 
-token quoted_lang_name {
-    [ '"php"' | '\'php\'' ]
-}
+token quoted_lang_name { '"php"' | '\'php\'' }
 
-token CODE_START_ECHO_TAG {
-    '<?='
-}
+token CODE_START_ECHO_TAG { '<?=' }
 
-token CODE_START_SHORT_TAG {
-    '<?' 'php'?
-}
+token CODE_START_SHORT_TAG { '<?' 'php'?  }
 
-token CODE_END_SHORT_TAG {
-    '?>' \n?
-}
+token CODE_END_SHORT_TAG { '?>' \n?  }
 
 # block and statements
 rule block {
-    '{'
-        <statement>*
-    '}'
+    '{' <statement>* '}'
     {*}
 }
 
 rule statement {
-      <echo_statement>        {*}  #= echo_statement
+      <namespace_statement>   {*}  #= namespace_statement
+    | <echo_statement>        {*}  #= echo_statement
     | <expression_statement>  {*}  #= expression_statement
     | <if_statement>          {*}  #= if_statement
     | <while_statement>       {*}  #= while_statement
@@ -121,6 +101,11 @@ rule statement_delimiter {
       ';'
     | <before '?'>
     | $
+}
+
+rule namespace_statement {
+    'namespace' <NAMESPACE_NAME> ';'
+    {*}
 }
 
 token echo_statement {
@@ -188,25 +173,24 @@ rule var_assign {
 
 
 # identifiers
-token FUNCTION_NAME {
-    <ident>
-}
+#
+token CLASS_NAME      { <ident> }
 
-token MEMBER_NAME {
-    <ident>
-}
+token CONSTANT_NAME   { <ident> }
 
-token METHOD_NAME {
-    <ident>
-}
+token FUNCTION_NAME   { <ident> }
 
-token CONSTANT_NAME {
-    <ident>
-}
+token INTERFACE_NAME  { <ident> }
 
-token CLASS_NAME {
-    <ident>
-}
+token MEMBER_NAME     { <ident> }
+
+token METHOD_NAME     { <ident> }
+
+# namespace support
+
+token NAMESPACE_SEPARATOR { '\\' }
+
+token NAMESPACE_NAME { <ident>? [ <.NAMESPACE_SEPARATOR> <ident> ]* }
 
 token VAR_NAME {
     '$' <ident>
@@ -324,13 +308,31 @@ token EXIT_FUNCTION_DEF {
     {*}
 }
 
-rule method_definition {
-    'function' <METHOD_NAME> <param_list> <block>
+rule param_list {
+    '(' [ <VAR_NAME> [',' <VAR_NAME>]* ]? ')'
     {*}
 }
 
-rule param_list {
-    '(' [ <VAR_NAME> [',' <VAR_NAME>]* ]? ')'
+# OO
+
+rule interface_definition {
+    'interface' <INTERFACE_NAME> [ 'implements' <INTERFACE_NAME> ]? '{'
+        <method_declaration>*
+    '}'
+    {*}
+}
+
+
+rule class_definition {
+    'class' <CLASS_NAME> [ 'implements' <INTERFACE_NAME> ]? '{'
+        <member_definition>*
+        <method_definition>*
+    '}'
+    {*}
+}
+
+rule method_declaration {
+    'function' <METHOD_NAME> <param_list> ';'
     {*}
 }
 
@@ -339,19 +341,15 @@ rule member_definition {
     {*}
 }
 
-rule class_definition {
-    'class' <CLASS_NAME> '{'
-        <member_definition>*
-        <method_definition>*
-    '}'
+rule method_definition {
+    'function' <METHOD_NAME> <param_list> <block>
     {*}
 }
 
 
+
 token curly_interpolation {
-    '{'
-        <var>
-    '}'
+    '{' <var> '}'
     {*}
 }
 

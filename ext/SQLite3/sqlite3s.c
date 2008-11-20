@@ -1,4 +1,19 @@
+/* $Id$ */
 /* Wrappers around the SQLite interface to avoid the use of out-arguments */
+/*
+Copyright (C) 2008, The Perl Foundation.
+$Id$
+
+=head1 NAME
+
+ext/SQLite3/sqlite3s.c - SQLite wrappers
+
+=head1 SYNOPSIS
+
+Wrappers around the SQLite interface to avoid the use of out-arguments
+
+*/
+
 #include <stddef.h>
 #include <stdio.h>
 #include <string.h>
@@ -31,3 +46,9 @@ sqlite3_stmt* sqlite3s_prepare(sqlite3* db, char* sql) {
     return in;
 }
 
+/*
+ * Local variables:
+ *   c-file-style: "parrot"
+ * End:
+ * vim: expandtab shiftwidth=4:
+ */
