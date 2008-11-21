@@ -281,9 +281,6 @@ Invokes the subroutine.
             Parrot_context_ref(interp, context);
         }
 
-        /* XXX: Why is this reference needed...? */
-        Parrot_context_ref(interp, context);
-
         if (!PMC_IS_NULL(INTERP->current_object)) {
             context->current_object = INTERP->current_object;
             INTERP->current_object  = NULL;
