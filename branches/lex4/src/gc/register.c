@@ -526,7 +526,7 @@ Parrot_free_context(PARROT_INTERP, ARGMOD(Parrot_Context *ctxp), int deref)
      *
      */
     if (deref) {
-#ifdef CTX_LEAK_DEBUG
+#if CTX_LEAK_DEBUG
         if (Interp_debug_TEST(interp, PARROT_CTX_DESTROY_DEBUG_FLAG)) {
             fprintf(stderr, "[reference to context %p released]\n", (void*)ctxp);
         }
@@ -581,6 +581,31 @@ Parrot_free_context(PARROT_INTERP, ARGMOD(Parrot_Context *ctxp), int deref)
         *(void **)ptr                   = interp->ctx_mem.free_list[slot];
         interp->ctx_mem.free_list[slot] = ptr;
     }
+}
+
+
+/*
+
+=item C<Parrot_Context * Parrot_context_ref_trace>
+
+Helper function to trace references when CTX_LEAK_DEBUG is set.
+
+=cut
+
+*/
+
+PARROT_EXPORT
+Parrot_Context *
+Parrot_context_ref_trace(PARROT_INTERP, 
+        ARGMOD(Parrot_Context *ctx),
+        ARGIN(const char *file), int line)
+{
+    if (Interp_debug_TEST(interp, PARROT_CTX_DESTROY_DEBUG_FLAG)) {
+        fprintf(stderr, "[reference to context %p taken at %s:%d]\n",
+                (void *)ctx, file, line);
+    }
+    ctx->ref_count++;
+    return ctx;
 }
 
 

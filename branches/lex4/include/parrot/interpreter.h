@@ -868,16 +868,7 @@ PARROT_EXPORT void enable_event_checking(PARROT_INTERP);
 
 #ifdef CTX_LEAK_DEBUG
 #define Parrot_context_ref(a,b) \
-    __Parrot_context_ref((a),(b))
-
-static Parrot_Context *__Parrot_context_ref(Parrot_Interp interp,
-                                              Parrot_Context *ctx) {
-    if (Interp_debug_TEST(interp, PARROT_CTX_DESTROY_DEBUG_FLAG)) {
-        fprintf(stderr, "[reference to context %p taken]\n", ctx);
-    }
-    ctx->ref_count++;
-    return ctx;
-}
+    Parrot_context_ref_trace(a,b,__FILE__,__LINE__)
 #else /* !CTX_LEAK_DEBUG */
 #define Parrot_context_ref(a,b) (((b)->ref_count++) , (b))
 #endif /* CTX_LEAK_DEBUG */
