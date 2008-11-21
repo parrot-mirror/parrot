@@ -418,7 +418,7 @@ $set_params
     }
 
     _ctx->current_cont            = _ret_cont;
-    PMC_cont(_ret_cont)->from_ctx = _ctx;
+    PMC_cont(_ret_cont)->from_ctx = Parrot_context_ref(interp, _ctx);
 
     _current_args                 = interp->current_args;
     interp->current_args         = NULL;
