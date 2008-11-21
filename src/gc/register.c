@@ -363,6 +363,13 @@ Parrot_pop_context(PARROT_INTERP)
     Parrot_Context * const ctx = CONTEXT(interp);
     Parrot_Context * const old = ctx->caller_ctx;
 
+#if CTX_LEAK_DEBUG
+    if (Interp_debug_TEST(interp, PARROT_CTX_DESTROY_DEBUG_FLAG)) {
+        fprintf(stderr, "[force recycle of context %p (%d refs)]\n", 
+            (void *)ctx, ctx->ref_count);
+    }
+#endif
+    ctx->ref_count = 0;
     Parrot_free_context(interp, ctx, 0);
 
     /* restore old, set cached interpreter base pointers */
@@ -565,8 +572,7 @@ Parrot_free_context(PARROT_INTERP, ARGMOD(Parrot_Context *ctxp), int deref)
         if (ctxp->outer_ctx)
             Parrot_free_context(interp, ctxp->outer_ctx, 1);
 
-        mem_sys_free(ctxp);
-        return;
+        /* mem_sys_free(ctxp); return; */
 
         /* don't put the same context on the free list multiple times; we don't
          * have the re-use versus multiple ref count semantics right yet */
