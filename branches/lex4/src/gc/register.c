@@ -565,6 +565,9 @@ Parrot_free_context(PARROT_INTERP, ARGMOD(Parrot_Context *ctxp), int deref)
         if (ctxp->outer_ctx)
             Parrot_free_context(interp, ctxp->outer_ctx, 1);
 
+        mem_sys_free(ctxp);
+        return;
+
         /* don't put the same context on the free list multiple times; we don't
          * have the re-use versus multiple ref count semantics right yet */
         if (ctxp->ref_count < 0)
