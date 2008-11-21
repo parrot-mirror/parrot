@@ -519,7 +519,7 @@ if the context should be freed.
 
 PARROT_EXPORT
 void
-Parrot_free_context(PARROT_INTERP, ARGMOD(Parrot_Context *ctxp), int deref)
+Parrot_free_context(PARROT_INTERP, ARGMOD(Parrot_Context *ctx), int deref)
 {
     /*
      * The context structure has a reference count, initially 0.
@@ -535,24 +535,24 @@ Parrot_free_context(PARROT_INTERP, ARGMOD(Parrot_Context *ctxp), int deref)
     if (deref) {
 #if CTX_LEAK_DEBUG
         if (Interp_debug_TEST(interp, PARROT_CTX_DESTROY_DEBUG_FLAG)) {
-            fprintf(stderr, "[reference to context %p released]\n", (void*)ctxp);
+            fprintf(stderr, "[reference to context %p released]\n", (void*)ctx);
         }
 #endif
-        ctxp->ref_count--;
+        ctx->ref_count--;
     }
-    if (ctxp->ref_count <= 0) {
+    if (ctx->ref_count <= 0) {
         void *ptr;
         int slot;
 
 #ifndef NDEBUG
         if (Interp_debug_TEST(interp, PARROT_CTX_DESTROY_DEBUG_FLAG)
-            && ctxp->current_sub) {
+            && ctx->current_sub) {
             /* can't probably PIO_eprintf here */
-            const Parrot_sub * const doomed = PMC_sub(ctxp->current_sub);
+            const Parrot_sub * const doomed = PMC_sub(ctx->current_sub);
 
             if (doomed) {
                 fprintf(stderr, "[free  ctx %p of sub '%s']\n",
-                        (void *)ctxp,
+                        (void *)ctx,
                         (doomed->name == (void*)0xdeadbeef
                         ? "???"
                         : (char*)doomed->name->strstart));
@@ -563,26 +563,46 @@ Parrot_free_context(PARROT_INTERP, ARGMOD(Parrot_Context *ctxp), int deref)
             }
         }
 #endif
-        if (ctxp->n_regs_used) {
-            mem_sys_free(ctxp->n_regs_used);
-            ctxp->n_regs_used = NULL;
+        if (ctx->n_regs_used) {
+            mem_sys_free(ctx->n_regs_used);
+            ctx->n_regs_used = NULL;
         }
 
         /* free any outer context referenced from this one */
-        if (ctxp->outer_ctx)
-            Parrot_free_context(interp, ctxp->outer_ctx, 1);
+        if (ctx->outer_ctx)
+            Parrot_free_context(interp, ctx->outer_ctx, 1);
+
+#if CTX_LEAK_DEBUG
+        /* for debugging, poison the freed context in case anything
+         * tries to use it later. */
+        /*
+        ctx->current_results   = (opcode_t *)0xbeefcafe;
+        ctx->results_signature = (PMC *)0xbeefcafe;
+        ctx->lex_pad           = (PMC *)0xbeefcafe;
+        ctx->outer_ctx         = (Parrot_Context *)0xbeefcafe;
+        ctx->current_cont      = (PMC *)0xbeefcafe;
+        ctx->current_object    = (PMC *)0xbeefcafe;
+        ctx->current_HLL       = -1;
+        ctx->handlers          = (PMC *)0xbeefcafe;
+        ctx->constants         = (struct PackFile_Constant **)0xbeefcafe;
+        ctx->current_namespace = (PMC *)0xbeefcafe;
+        */
+#endif
 
         /* don't put the same context on the free list multiple times; we don't
          * have the re-use versus multiple ref count semantics right yet */
-        if (ctxp->ref_count < 0)
+        if (ctx->ref_count < 0)
             return;
 
         /* force the reference count negative to indicate a dead context
          * so mark_context (src/sub.c) can report it */
-        ctxp->ref_count--;
+        ctx->ref_count--;
 
-        ptr             = ctxp;
-        slot            = CALCULATE_SLOT_NUM(ctxp->regs_mem_size);
+        ptr             = ctx;
+        slot            = CALCULATE_SLOT_NUM(ctx->regs_mem_size);
+
+        /* uncomment the following line to prevent recycling of contexts */
+        /* slot = 0; */
 
         PARROT_ASSERT(slot < interp->ctx_mem.n_free_slots);
         *(void **)ptr                   = interp->ctx_mem.free_list[slot];
@@ -628,7 +648,7 @@ Marks the context as possible threshold.
 
 PARROT_EXPORT
 void
-Parrot_set_context_threshold(SHIM_INTERP, SHIM(Parrot_Context *ctxp))
+Parrot_set_context_threshold(SHIM_INTERP, SHIM(Parrot_Context *ctx))
 {
     /* nothing to do */
 }
