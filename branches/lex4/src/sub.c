@@ -167,7 +167,7 @@ new_continuation(PARROT_INTERP, ARGIN_NULLOK(const Parrot_cont *to))
     cc->from_ctx      = CONTEXT(interp);
     cc->dynamic_state = NULL;
     cc->runloop_id    = 0;
-    CONTEXT(interp)->ref_count++;
+    Parrot_context_ref(interp, CONTEXT(interp));
     if (to) {
         cc->seg       = to->seg;
         cc->address   = to->address;
