@@ -575,7 +575,6 @@ Parrot_free_context(PARROT_INTERP, ARGMOD(Parrot_Context *ctx), int deref)
 #if CTX_LEAK_DEBUG
         /* for debugging, poison the freed context in case anything
          * tries to use it later. */
-        /*
         ctx->current_results   = (opcode_t *)0xbeefcafe;
         ctx->results_signature = (PMC *)0xbeefcafe;
         ctx->lex_pad           = (PMC *)0xbeefcafe;
@@ -586,7 +585,6 @@ Parrot_free_context(PARROT_INTERP, ARGMOD(Parrot_Context *ctx), int deref)
         ctx->handlers          = (PMC *)0xbeefcafe;
         ctx->constants         = (struct PackFile_Constant **)0xbeefcafe;
         ctx->current_namespace = (PMC *)0xbeefcafe;
-        */
 #endif
 
         /* don't put the same context on the free list multiple times; we don't
