@@ -8,7 +8,7 @@ src/pmc/coroutine.pmc - Co-Routine PMC
 
 =head1 DESCRIPTION
 
-C<Coroutine> extends C<Continuation> to provide a subroutine that can
+C<Coroutine> extends C<Sub> to provide a subroutine that can
 stop in the middle, and start back up later at the point at which it
 stopped. See the L<Glossary|docs/glossary.pod> for more information.
 
@@ -89,10 +89,6 @@ Destroys the coroutine.
     VTABLE void destroy() {
         Parrot_coro * const sub = PMC_coro(SELF);
 
-        if (sub->ctx)
-            Parrot_free_context(interp, sub->ctx, 0);
-        sub->ctx = NULL;
-
         SUPER();
     }
 
@@ -108,6 +104,9 @@ Destroys the coroutine.
         memcpy(sub, PMC_sub(SELF), sizeof (Parrot_coro));
 
         sub->name           = string_copy(INTERP, sub->name);
+
+        if (sub->ctx)
+            sub->ctx = Parrot_context_ref(INTERP, sub->ctx);
 
         return ret;
     }
