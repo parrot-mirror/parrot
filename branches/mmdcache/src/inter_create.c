@@ -176,6 +176,9 @@ make_interpreter(ARGIN_NULLOK(Interp *parent), INTVAL flags)
     /* Go and init the MMD tables */
     Parrot_mmd_add_function(interp, MMD_USER_FIRST - 1, (funcptr_t)NULL);
 
+    /* MMD cache for builtins. */
+    interp->op_mmd_cache = Parrot_mmd_cache_create(interp);
+
     /* create caches structure */
     init_object_cache(interp);
 
