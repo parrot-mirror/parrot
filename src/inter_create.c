@@ -406,6 +406,9 @@ Parrot_really_destroy(PARROT_INTERP, SHIM(int exit_code), SHIM(void *arg))
     if (interp->arena_base->finalize_gc_system)
         interp->arena_base->finalize_gc_system(interp);
 
+    /* MMD cache */
+    Parrot_mmd_cache_destroy(interp, interp->op_mmd_cache);
+
     /* copies of constant tables */
     Parrot_destroy_constants(interp);
 
