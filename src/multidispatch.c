@@ -182,6 +182,34 @@ static void Parrot_mmd_sort_candidates(PARROT_INTERP,
         __attribute__nonnull__(2)
         __attribute__nonnull__(3);
 
+PARROT_EXPORT
+MMD_Cache *
+Parrot_mmd_cache_create(PARROT_INTERP);
+
+PARROT_EXPORT
+PMC *
+Parrot_mmd_cache_lookup_by_values(PARROT_INTERP, MMD_Cache *cache, char *name, PMC *values);
+
+PARROT_EXPORT
+void
+Parrot_mmd_cache_store_by_values(PARROT_INTERP, MMD_Cache *cache, char *name, PMC *values, PMC *chosen);
+
+PARROT_EXPORT
+PMC *
+Parrot_mmd_cache_lookup_by_types(PARROT_INTERP, MMD_Cache *cache, char *name, PMC *types);
+
+PARROT_EXPORT
+void
+Parrot_mmd_cache_store_by_types(PARROT_INTERP, MMD_Cache *cache, char *name, PMC *types, PMC *chosen);
+
+PARROT_EXPORT
+void
+Parrot_mmd_cache_mark(PARROT_INTERP, MMD_Cache *cache);
+
+PARROT_EXPORT
+void
+Parrot_mmd_cache_destroy(PARROT_INTERP, MMD_Cache *cache);
+
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 /* HEADERIZER END: static */
 
@@ -539,7 +567,15 @@ Parrot_mmd_multi_dispatch_from_c_args(PARROT_INTERP,
     sig_object = Parrot_build_sig_object_from_varargs(interp, sig, args);
     va_end(args);
 
-    sub = Parrot_mmd_find_multi_from_sig_obj(interp, const_string(interp, name), sig_object);
+    /* Check the cache. */
+    sub = Parrot_mmd_cache_lookup_by_types(interp, interp->op_mmd_cache, name,
+            VTABLE_get_pmc(interp, sig_object));
+    if (PMC_IS_NULL(sub)) {
+        sub = Parrot_mmd_find_multi_from_sig_obj(interp, const_string(interp, name), sig_object);
+        if (!PMC_IS_NULL(sub))
+            Parrot_mmd_cache_store_by_types(interp, interp->op_mmd_cache, name,
+                    VTABLE_get_pmc(interp, sig_object), sub);
+    }
 
     if (PMC_IS_NULL(sub))
         Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_METH_NOT_FOUND,
@@ -1890,6 +1926,212 @@ Parrot_mmd_add_multi_list_from_c_args(PARROT_INTERP,
                 mmd_info[i].full_sig,
                 mmd_info[i].func_ptr);
     }
+}
+
+
+/*
+
+=item C<MMD_Cache* Parrot_mmd_cache_create>
+
+Creates and returns a new MMD cache.
+
+=cut
+
+*/
+
+PARROT_EXPORT
+MMD_Cache *
+Parrot_mmd_cache_create(PARROT_INTERP) {
+    /* String hash. */
+    Hash* cache;
+    parrot_new_hash(interp, &cache);
+    return cache;
+}
+
+
+/*
+
+=item C<static STRING * mmd_cache_key_from_values>
+
+Generates an MMD cache key from an array of values.
+
+=cut
+
+*/
+
+static
+STRING *
+mmd_cache_key_from_values(PARROT_INTERP, char *name, PMC *values) {
+    /* Build array of type IDs, which we'll then use as a string to key into
+     * the hash. */
+    INTVAL i;
+    INTVAL num_values = VTABLE_elements(interp, values);
+    INTVAL name_len = name ? strlen(name) + 1: 0;
+    INTVAL *type_ids  = mem_sys_allocate(num_values * sizeof(INTVAL) + name_len);
+    STRING *key;
+    for (i = 0; i < num_values; i++) {
+        INTVAL id = VTABLE_type(interp, VTABLE_get_pmc_keyed_int(interp, values, i));
+        if (id == 0)
+            return NULL;
+        type_ids[i] = id;
+    }
+    if (name)
+        strcpy((char*)(type_ids + num_values), name);
+    key = string_from_cstring(interp, (char*)type_ids, num_values * sizeof(INTVAL) + name_len);
+    mem_sys_free(type_ids);
+    return key;
+}
+
+
+/*
+
+=item C<PMC * Parrot_mmd_cache_lookup_by_values>
+
+Takes an array of values for the call and does a lookup in the MMD cache.
+
+=cut
+
+*/
+
+PARROT_EXPORT
+PMC *
+Parrot_mmd_cache_lookup_by_values(PARROT_INTERP, MMD_Cache *cache, char *name, PMC *values) {
+    STRING *key = mmd_cache_key_from_values(interp, name, values);
+    if (key == NULL)
+        return PMCNULL;
+    return (PMC*)parrot_hash_get(interp, cache, key);
+}
+
+
+/*
+
+=item C<void Parrot_mmd_cache_store_by_values>
+
+Takes an array of values for the call along with a chosen candidate and puts
+it into the cache.
+
+=cut
+
+*/
+
+PARROT_EXPORT
+void
+Parrot_mmd_cache_store_by_values(PARROT_INTERP, MMD_Cache *cache, char *name, PMC *values, PMC *chosen) {
+    STRING *key = mmd_cache_key_from_values(interp, name, values);
+    if (key != NULL)
+        parrot_hash_put(interp, cache, key, chosen);
+}
+
+
+/*
+
+=item C<static STRING * mmd_cache_key_from_values>
+
+Generates an MMD cache key from an array of values.
+
+=cut
+
+*/
+
+static
+STRING *
+mmd_cache_key_from_types(PARROT_INTERP, char *name, PMC *types) {
+    /* Build array of type IDs, which we'll then use as a string to key into
+     * the hash. */
+    INTVAL i;
+    INTVAL num_types = VTABLE_elements(interp, types);
+    INTVAL name_len = name ? strlen(name) + 1: 0;
+    INTVAL *type_ids  = mem_sys_allocate(num_types * sizeof(INTVAL) + name_len);
+    STRING *key;
+    for (i = 0; i < num_types; i++) {
+        INTVAL id = VTABLE_get_integer_keyed_int(interp, types, i);
+        if (id == 0)
+            return NULL;
+        type_ids[i] = id;
+    }
+    if (name)
+        strcpy((char*)(type_ids + num_types), name);
+    key = string_from_cstring(interp, (char*)type_ids, num_types * sizeof(INTVAL) + name_len);
+    mem_sys_free(type_ids);
+    return key;
+}
+
+
+/*
+
+=item C<PMC * Parrot_mmd_cache_lookup_by_types>
+
+Takes an array of types for the call and does a lookup in the MMD cache.
+
+=cut
+
+*/
+
+PARROT_EXPORT
+PMC *
+Parrot_mmd_cache_lookup_by_types(PARROT_INTERP, MMD_Cache *cache, char *name, PMC *types) {
+    STRING *key = mmd_cache_key_from_types(interp, name, types);
+    if (key == NULL)
+        return PMCNULL;
+    return (PMC*)parrot_hash_get(interp, cache, key);
+}
+
+
+/*
+
+=item C<void Parrot_mmd_cache_store_by_types>
+
+Takes an array of types for the call along with a chosen candidate and puts
+it into the cache. The name parameter is optional, and if the cache is already
+tied to an individual multi can be null.
+
+=cut
+
+*/
+
+PARROT_EXPORT
+void
+Parrot_mmd_cache_store_by_types(PARROT_INTERP, MMD_Cache *cache, char *name, PMC *types, PMC *chosen) {
+    STRING *key = mmd_cache_key_from_types(interp, name, types);
+    if (key != NULL)
+        parrot_hash_put(interp, cache, key, chosen);
+}
+
+
+/*
+
+=item C<void Parrot_mmd_cache_mark>
+
+GC-marks an MMD cache.
+
+=cut
+
+*/
+
+PARROT_EXPORT
+void
+Parrot_mmd_cache_mark(PARROT_INTERP, MMD_Cache *cache) {
+    /* As a small future optimization, note that we only *really* need to mark keys -
+     * the candidates will be referenced outside the cache, provided it's invalidated
+     * properly. */
+    parrot_mark_hash(interp, cache);
+}
+
+
+/*
+
+=item C<void Parrot_mmd_cache_destroy>
+
+Destroys an MMD cache.
+
+=cut
+
+*/
+
+PARROT_EXPORT
+void
+Parrot_mmd_cache_destroy(PARROT_INTERP, MMD_Cache *cache) {
+    parrot_hash_destroy(interp, cache);
 }
 
 
