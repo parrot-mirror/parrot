@@ -443,6 +443,7 @@ Parrot_build_sig_object_from_varargs(PARROT_INTERP, ARGIN(const char *sig), va_l
     PMC   *returns          = PMCNULL;
     PMC   *call_object      = pmc_new(interp, enum_class_CallSignature);
     PMC * const type_tuple  = pmc_new(interp, enum_class_FixedIntegerArray);
+    INTVAL num_types        = 0;
     STRING *string_sig      = const_string(interp, sig);
     const INTVAL sig_len    = string_length(interp, string_sig);
 
@@ -503,16 +504,19 @@ Parrot_build_sig_object_from_varargs(PARROT_INTERP, ARGIN(const char *sig), va_l
                     VTABLE_push_integer(interp, call_object, va_arg(args, INTVAL));
                     VTABLE_set_integer_keyed_int(interp, type_tuple,
                             i, enum_type_INTVAL);
+                    num_types++;
                     break;
                 case 'N':
                     VTABLE_push_float(interp, call_object, va_arg(args, FLOATVAL));
                     VTABLE_set_integer_keyed_int(interp, type_tuple,
                             i, enum_type_FLOATVAL);
+                    num_types++;
                     break;
                 case 'S':
                     VTABLE_push_string(interp, call_object, va_arg(args, STRING *));
                     VTABLE_set_integer_keyed_int(interp, type_tuple,
                             i, enum_type_STRING);
+                    num_types++;
                     break;
                 case 'P':
                 {
@@ -520,6 +524,7 @@ Parrot_build_sig_object_from_varargs(PARROT_INTERP, ARGIN(const char *sig), va_l
                     if (!PMC_IS_NULL(pmc_arg))
                         VTABLE_set_integer_keyed_int(interp, type_tuple, i,
                                 VTABLE_type(interp, pmc_arg));
+                    num_types++;
 
                     VTABLE_push_pmc(interp, call_object, pmc_arg);
                     break;
@@ -535,6 +540,8 @@ Parrot_build_sig_object_from_varargs(PARROT_INTERP, ARGIN(const char *sig), va_l
             }
         }
     }
+
+    PMC_int_val(type_tuple) = num_types;
 
     return call_object;
 }
