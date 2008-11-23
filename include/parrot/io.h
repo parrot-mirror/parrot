@@ -610,13 +610,6 @@ INTVAL Parrot_io_is_tty(PARROT_INTERP, ARGMOD(PMC *pmc))
         FUNC_MODIFIES(*pmc);
 
 PARROT_EXPORT
-PARROT_WARN_UNUSED_RESULT
-INTVAL Parrot_is_encoding(PARROT_INTERP, ARGIN(PMC *pmc), ARGIN(STRING *value))
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(2)
-        __attribute__nonnull__(3);
-
-PARROT_EXPORT
 PIOOFF_T Parrot_io_make_offset(INTVAL offset);
 
 PARROT_EXPORT
@@ -885,6 +878,15 @@ PARROT_EXPORT
 PIOHANDLE Parrot_io_get_os_handle(PARROT_INTERP, ARGIN(PMC *filehandle))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
+
+PARROT_EXPORT
+PARROT_WARN_UNUSED_RESULT
+INTVAL Parrot_io_is_encoding(PARROT_INTERP,
+    ARGIN(PMC *filehandle),
+    ARGIN(STRING *value))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3);
 
 PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
