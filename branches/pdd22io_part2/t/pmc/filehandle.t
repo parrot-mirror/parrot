@@ -7,7 +7,7 @@ use warnings;
 use lib qw( . lib ../lib ../../lib );
 
 use Test::More;
-use Parrot::Test tests => 13;
+use Parrot::Test tests => 14;
 use Parrot::Test::Util 'create_tempfile';
 
 =head1 NAME
@@ -383,8 +383,51 @@ CODE
 ok 1 - $S0 = $P1.encoding() # utf8
 OUT
 
-# L<PDD22/I\/O PMC API/=item mode>
+(undef, $temp_file) = create_tempfile( UNLINK => 1 );
 
+pir_output_is( <<"CODE", <<'OUT', 'encoding - read/write' );
+.sub 'test' :main
+    \$P0 = new 'FileHandle'
+    \$P0.'encoding'('utf8')
+
+    \$P0.'open'('$temp_file', 'w')
+
+    \$P0.'print'(1234567890)
+    \$P0.'print'("\\n")
+    \$S0 = iso-8859-1:"TÖTSCH" 
+    \$P0.'print'(\$S0)
+    \$P0.'close'()
+
+    \$P1 = new 'FileHandle'
+    \$P1.'encoding'('utf8')
+
+    \$P1.'open'('$temp_file')
+
+    \$S1 = \$P1.'readline'()
+    if \$S1 == "1234567890\\n" goto ok_1
+print \$S1
+    print 'not '
+  ok_1:
+    say 'ok 1 - \$S1 = \$P1.readline() # read with utf8 encoding on'
+
+    \$S2 = \$P1.'readline'()
+    if \$S2 == \$S0 goto ok_2
+print \$S2
+    print 'not '
+  ok_2:
+    say 'ok 2 - \$S2 = \$P1.readline() # read iso-8859-1 string'
+
+    \$P1.'close'()
+
+.end
+CODE
+ok 1 - $S1 = $P1.readline() # read with utf8 encoding on
+ok 2 - $S2 = $P1.readline() # read iso-8859-1 string
+OUT
+
+(undef, $temp_file) = create_tempfile( UNLINK => 1 );
+
+# L<PDD22/I\/O PMC API/=item mode>
 pir_output_is( <<'CODE', <<'OUT', 'mode' );
 .sub 'test' :main
     $P0 = new 'FileHandle'
