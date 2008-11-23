@@ -4,8 +4,7 @@
 
 This is a list of currently deprecated features of Parrot.  Every deprecation
 has an associated RT ticket.  Each item indicates the last release it's
-guaranteed to appear in.  Items marked with a release of ??? are still
-deprecated, but a firm deadline for their removal has not yet been established.
+guaranteed to appear in.
 
 When deprecated items are removed, all usage of the feature in the
 repository should be updated or removed; including documentation.
@@ -19,7 +18,8 @@ warnings selectively with:
 
 And then receive runtime warnings if they are using any deprecated opcodes.
 The C<-w> command line option for parrot can also be used to enable all
-warnings.
+warnings. You can use C<make warnings_tests> to run the standard test suite
+with this option.
 
 =head1 vtable entries
 
@@ -102,19 +102,11 @@ See RT #48737.
 
 See RT #46715.
 
-=item * C<.HLL> <string> ',' <string> [post 0.8.1]
-
-This will be replaced by C<.HLL> <string>; the second string (and
-comma to separate them) will no longer be accepted. Use C<.loadlib>
-for specifying the library name.
-
-See RT #57428.
-
 =item * vtable name .constants and __vtable overrides [post 0.5.2]
 
 See RT #48877.
 
-=item * Assignment syntax with opcodes [post ???]
+=item * Assignment syntax with opcodes [post 0.8.2]
 
 See RT #36283.  When the first argument of an opcode is C<OUT>, then
 the assignment syntax will be allowed, as it is today.
@@ -151,10 +143,6 @@ In a C<.begin_call> sequence, the C<.result> direcive will be replaced by
 the more descriptive C<.get_result>.
 
 See RT #58978.
-
-=item * C<:lexid> will become C<:subid> [post 0.8.1]
-
-C<:lexid> will be renamed to C<:subid>.
 
 See RT #60592.
 
