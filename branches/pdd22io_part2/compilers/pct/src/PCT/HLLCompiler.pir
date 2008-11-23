@@ -539,7 +539,7 @@ specifies the encoding to use for the input (e.g., "utf8").
     encoding = adverbs['encoding']
     if encoding == 'fixed_8' goto interactive_loop
     unless encoding goto interactive_loop
-    push stdin, encoding
+    stdin.'encoding'(encoding)
   interactive_loop:
     .local pmc code
     unless stdin goto interactive_end
@@ -666,7 +666,7 @@ options are passed to the evaluator.
     unless ifh goto err_infile
     if encoding == 'fixed_8' goto iter_loop_1
     unless encoding goto iter_loop_1
-    push ifh, encoding
+    ifh.'encoding'(encoding)
   iter_loop_1:
     $S0 = ifh.'readall'()
     code .= $S0
