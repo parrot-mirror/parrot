@@ -7,7 +7,7 @@ use warnings;
 use lib qw( . lib ../lib ../../lib );
 
 use Test::More;
-use Parrot::Test tests => 10;
+use Parrot::Test tests => 12;
 use Parrot::Test::Util 'create_tempfile';
 
 =head1 NAME
@@ -386,6 +386,54 @@ pir_output_is( <<'CODE', <<'OUT', 'mode' );
 CODE
 ok 1 - $S0 = $P0.mode() # get read mode
 OUT
+
+pir_output_is( <<"CODE", <<"OUTPUT", "readall - closed filehandle" );
+.sub main :main
+    \$S0 = <<"EOS"
+line 1
+line 2
+line 3
+EOS
+    .local pmc pio, pio2
+    pio = new 'FileHandle'
+    pio.'open'("$temp_file", "w")
+    pio.'print'(\$S0)
+    pio.'close'()
+    pio2 = new 'FileHandle'
+    \$S1 = pio2.'readall'('$temp_file')
+    if \$S0 == \$S1 goto ok
+    print "not "
+ok:
+    say "ok"
+.end
+CODE
+ok
+OUTPUT
+
+pir_output_is( <<"CODE", <<"OUTPUT", "readall() - opened filehandle" );
+.sub main :main
+    \$S0 = <<"EOS"
+line 1
+line 2
+line 3
+EOS
+    .local pmc pio, pio2
+    pio = new 'FileHandle'
+    pio.'open'("$temp_file", "w")
+    pio.'print'(\$S0)
+    pio.'close'()
+
+    pio2 = new 'FileHandle'
+    pio2.'open'("$temp_file", "r")
+    \$S1 = pio2.'readall'()
+    if \$S0 == \$S1 goto ok
+    print "not "
+ok:
+    say "ok"
+.end
+CODE
+ok
+OUTPUT
 
 # RT #46843
 # L<PDD22/I\/O PMC API/=item get_fd>
