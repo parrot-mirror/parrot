@@ -34,7 +34,7 @@ interpreter.
 
 /*
 
-=item C<void PIO_init>
+=item C<void Parrot_io_init>
 
 Sets up the interpreter's I/O storage and creates the C<STD*> handles.
 
@@ -56,7 +56,7 @@ Parrot_io_init(PARROT_INTERP)
 
 
         if (Interp_debug_TEST(interp, PARROT_START_DEBUG_FLAG)) {
-            Parrot_io_eprintf(NULL, "PIO: IO system initialized.\n");
+            Parrot_io_eprintf(NULL, "I/O system initialized.\n");
         }
 
         return;
@@ -78,7 +78,7 @@ Parrot_io_init(PARROT_INTERP)
 
 /*
 
-=item C<void PIO_finish>
+=item C<void Parrot_io_finish>
 
 Closes the interpreter's IO resourses.  Called during its interpreter
 destruction.
