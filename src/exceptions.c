@@ -104,12 +104,12 @@ find_exception_handler(PARROT_INTERP, ARGIN(PMC *exception))
         const INTVAL severity = VTABLE_get_integer_keyed_str(interp, exception, CONST_STRING(interp, "severity"));
 
         /* flush interpreter output to get things printed in order */
-        PIO_flush(interp, PIO_STDOUT(interp));
-        PIO_flush(interp, PIO_STDERR(interp));
+        Parrot_io_flush(interp, Parrot_io_STDOUT(interp));
+        Parrot_io_flush(interp, Parrot_io_STDERR(interp));
 
         if (interp->debugger) {
-            PIO_flush(interp->debugger, PIO_STDOUT(interp->debugger));
-            PIO_flush(interp->debugger, PIO_STDERR(interp->debugger));
+            Parrot_io_flush(interp->debugger, Parrot_io_STDOUT(interp->debugger));
+            Parrot_io_flush(interp->debugger, Parrot_io_STDERR(interp->debugger));
         }
 
         if (string_equal(interp, message, CONST_STRING(interp, "")) == 1) {
@@ -122,7 +122,7 @@ find_exception_handler(PARROT_INTERP, ARGIN(PMC *exception))
             exit_status = VTABLE_get_integer_keyed_str(interp, exception, CONST_STRING(interp, "exit_code"));
         }
         else {
-                PIO_eprintf(interp, "No exception handler and no message\n");
+                Parrot_io_eprintf(interp, "No exception handler and no message\n");
                 fflush(stderr); /* caution against output swap (with PDB_backtrace) */
                 PDB_backtrace(interp);
         }
@@ -282,7 +282,7 @@ Parrot_ex_throw_from_c(PARROT_INTERP, ARGIN(PMC *exception))
     if (Interp_debug_TEST(interp, PARROT_BACKTRACE_DEBUG_FLAG)) {
         int exitcode = VTABLE_get_integer_keyed_str(interp, exception, CONST_STRING(interp, "exit_code"));
         STRING *msg = VTABLE_get_string(interp, exception);
-        PIO_eprintf(interp,
+        Parrot_io_eprintf(interp,
             "Parrot_ex_throw_from_c (severity:%d error:%d): %Ss\n",
             EXCEPT_error, exitcode, msg);
         PDB_backtrace(interp);
