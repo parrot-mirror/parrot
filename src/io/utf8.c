@@ -28,29 +28,6 @@ representation.
 /* HEADERIZER BEGIN: static */
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 
-static size_t PIO_utf8_read(PARROT_INTERP,
-    ARGMOD(ParrotIOLayer *layer),
-    ARGMOD(ParrotIO *io),
-    ARGOUT(STRING **buf))
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(2)
-        __attribute__nonnull__(3)
-        __attribute__nonnull__(4)
-        FUNC_MODIFIES(*layer)
-        FUNC_MODIFIES(*io)
-        FUNC_MODIFIES(*buf);
-
-static size_t PIO_utf8_write(PARROT_INTERP,
-    ARGIN(ParrotIOLayer *l),
-    ARGMOD(ParrotIO *io),
-    ARGMOD(STRING *s))
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(2)
-        __attribute__nonnull__(3)
-        __attribute__nonnull__(4)
-        FUNC_MODIFIES(*io)
-        FUNC_MODIFIES(*s);
-
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 /* HEADERIZER END: static */
 
