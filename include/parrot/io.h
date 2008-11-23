@@ -530,6 +530,14 @@ void PIO_push_layer_str(PARROT_INTERP,
 /* HEADERIZER BEGIN: src/io/core.c */
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 
+PARROT_EXPORT
+void Parrot_io_finish(PARROT_INTERP)
+        __attribute__nonnull__(1);
+
+PARROT_EXPORT
+void Parrot_io_init(PARROT_INTERP)
+        __attribute__nonnull__(1);
+
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 /* HEADERIZER END: src/io/core.c */
 
