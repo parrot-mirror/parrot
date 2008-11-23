@@ -672,8 +672,8 @@ Frees the memory associated with this PMC's underlying storage.
         }
 
         /* Free the cache. */
-        SETATTR_Perl6MultiSub_cache(interp, SELF, cache)
-        mem_sys_free(cache);
+        GETATTR_Perl6MultiSub_cache(interp, SELF, cache)
+        Parrot_mmd_cache_destroy(interp, cache);
 
         /* Free memory associated with this PMC's underlying struct. */
         mem_sys_free(PMC_data(SELF));
