@@ -32,20 +32,10 @@ is used in Parrot ops.
 /* HEADERIZER HFILE: include/parrot/io.h */
 
 /*
-        The standard streams are:
-
-                interp->piodata->table[PIO_STD*_FILENO].
-*/
-
-
-/* PIOOFF_T piooffsetzero; */
-
-
-/*
 
 =back
 
-=head2 Generic top-level I/O interface
+=head2 Generic I/O interface
 
 =over 4
 
