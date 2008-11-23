@@ -41,17 +41,17 @@ PARROT_WARN_UNUSED_RESULT
 INTVAL
 Parrot_io_parse_open_flags(PARROT_INTERP, ARGIN_NULLOK(STRING *mode_str))
 {
-    char *mode_cstr;
-    const char *s;
+    INTVAL i, mode_len;
     INTVAL flags = 0;
 
     if (STRING_IS_NULL(mode_str))
         return PIO_F_READ;
 
-    mode_cstr = string_to_cstring(interp, mode_str);
+    mode_len = string_length(interp, mode_str);
 
-    for (s = mode_cstr; *s != '\0'; s++) {
-        switch (*s) {
+    for (i = 0; i < mode_len; ++i) {
+        INTVAL s = string_index(interp, mode_str, i);
+        switch (s) {
             case 'r':
                 flags |= PIO_F_READ;
                 break;
@@ -68,8 +68,6 @@ Parrot_io_parse_open_flags(PARROT_INTERP, ARGIN_NULLOK(STRING *mode_str))
                 break;
         }
     }
-
-    string_cstring_free(mode_cstr);
 
     return flags;
 }
@@ -600,6 +598,37 @@ Parrot_io_set_file_position(PARROT_INTERP, ARGIN(PMC *filehandle), PIOOFF_T file
     Parrot_FileHandle_attributes *handle_struct = PARROT_FILEHANDLE(filehandle);
     handle_struct->last_pos = handle_struct->file_pos;
     handle_struct->file_pos = file_pos;
+}
+
+/*
+
+=item C<void Parrot_io_is_encoding>
+
+Check whether the encoding attribute of the filehandle matches a passed in
+string.
+
+Currently, this pokes directly into the C struct of the FileHandle PMC. This
+needs to change to a general interface that can be used by all subclasses and
+polymorphic equivalents of FileHandle. For now, hiding it behind a function, so
+it can be cleanly changed later.
+
+=cut
+
+*/
+
+PARROT_EXPORT
+PARROT_WARN_UNUSED_RESULT
+INTVAL
+Parrot_io_is_encoding(PARROT_INTERP, ARGIN(PMC *filehandle), ARGIN(STRING *value))
+{
+    Parrot_FileHandle_attributes *handle_struct = PARROT_FILEHANDLE(filehandle);
+    if (STRING_IS_NULL(handle_struct->encoding))
+        return 0;
+
+    if (string_equal(interp, value, handle_struct->encoding) == 0)
+        return 1;
+
+    return 0;
 }
 
 
