@@ -187,26 +187,6 @@ MMD_Cache *
 Parrot_mmd_cache_create(PARROT_INTERP);
 
 PARROT_EXPORT
-PMC *
-Parrot_mmd_cache_lookup_by_values(PARROT_INTERP, MMD_Cache *cache, char *name, PMC *values);
-
-PARROT_EXPORT
-void
-Parrot_mmd_cache_store_by_values(PARROT_INTERP, MMD_Cache *cache, char *name, PMC *values, PMC *chosen);
-
-PARROT_EXPORT
-PMC *
-Parrot_mmd_cache_lookup_by_types(PARROT_INTERP, MMD_Cache *cache, char *name, PMC *types);
-
-PARROT_EXPORT
-void
-Parrot_mmd_cache_store_by_types(PARROT_INTERP, MMD_Cache *cache, char *name, PMC *types, PMC *chosen);
-
-PARROT_EXPORT
-void
-Parrot_mmd_cache_mark(PARROT_INTERP, MMD_Cache *cache);
-
-PARROT_EXPORT
 void
 Parrot_mmd_cache_destroy(PARROT_INTERP, MMD_Cache *cache);
 
@@ -1968,24 +1948,30 @@ Generates an MMD cache key from an array of values.
 
 static
 STRING *
-mmd_cache_key_from_values(PARROT_INTERP, char *name, PMC *values) {
+mmd_cache_key_from_values(PARROT_INTERP, const char *name, PMC *values) {
     /* Build array of type IDs, which we'll then use as a string to key into
      * the hash. */
     INTVAL i;
     INTVAL num_values = VTABLE_elements(interp, values);
-    INTVAL name_len = name ? strlen(name) + 1: 0;
-    INTVAL *type_ids  = mem_sys_allocate(num_values * sizeof(INTVAL) + name_len);
+    INTVAL name_len   = name ? strlen(name) + 1: 0;
+    INTVAL *type_ids  = (INTVAL *)mem_sys_allocate(num_values
+                            * sizeof(INTVAL) + name_len);
     STRING *key;
+
     for (i = 0; i < num_values; i++) {
         INTVAL id = VTABLE_type(interp, VTABLE_get_pmc_keyed_int(interp, values, i));
         if (id == 0)
             return NULL;
         type_ids[i] = id;
     }
+
     if (name)
-        strcpy((char*)(type_ids + num_values), name);
-    key = string_from_cstring(interp, (char*)type_ids, num_values * sizeof(INTVAL) + name_len);
+        strcpy((char *)(type_ids + num_values), name);
+
+    key = string_from_cstring(interp, (char *)type_ids,
+                             num_values * sizeof(INTVAL) + name_len);
     mem_sys_free(type_ids);
+
     return key;
 }
 
@@ -2002,11 +1988,13 @@ Takes an array of values for the call and does a lookup in the MMD cache.
 
 PARROT_EXPORT
 PMC *
-Parrot_mmd_cache_lookup_by_values(PARROT_INTERP, MMD_Cache *cache, char *name, PMC *values) {
+Parrot_mmd_cache_lookup_by_values(PARROT_INTERP, MMD_Cache *cache, const char *name, PMC *values) {
     STRING *key = mmd_cache_key_from_values(interp, name, values);
-    if (key == NULL)
-        return PMCNULL;
-    return (PMC*)parrot_hash_get(interp, cache, key);
+
+    if (key)
+        return (PMC *)parrot_hash_get(interp, cache, key);
+
+    return PMCNULL;
 }
 
 
@@ -2023,9 +2011,10 @@ it into the cache.
 
 PARROT_EXPORT
 void
-Parrot_mmd_cache_store_by_values(PARROT_INTERP, MMD_Cache *cache, char *name, PMC *values, PMC *chosen) {
+Parrot_mmd_cache_store_by_values(PARROT_INTERP, MMD_Cache *cache, const char *name, PMC *values, PMC *chosen) {
     STRING *key = mmd_cache_key_from_values(interp, name, values);
-    if (key != NULL)
+
+    if (key)
         parrot_hash_put(interp, cache, key, chosen);
 }
 
@@ -2042,18 +2031,22 @@ Generates an MMD cache key from an array of values.
 
 static
 STRING *
-mmd_cache_key_from_types(PARROT_INTERP, char *name, PMC *types) {
+mmd_cache_key_from_types(PARROT_INTERP, const char *name, PMC *types) {
     /* Build array of type IDs, which we'll then use as a string to key into
      * the hash. */
-    INTVAL i;
-    INTVAL num_types = VTABLE_elements(interp, types);
-    INTVAL name_len = name ? strlen(name) + 1: 0;
-    INTVAL *type_ids  = mem_sys_allocate(num_types * sizeof(INTVAL) + name_len);
     STRING *key;
+    INTVAL  num_types = VTABLE_elements(interp, types);
+    INTVAL  name_len  = name ? strlen(name) + 1: 0;
+    INTVAL *type_ids  = (INTVAL *)mem_sys_allocate(num_types
+                                                   * sizeof(INTVAL) + name_len);
+    INTVAL  i;
+
     for (i = 0; i < num_types; i++) {
-        INTVAL id = VTABLE_get_integer_keyed_int(interp, types, i);
+        INTVAL id   = VTABLE_get_integer_keyed_int(interp, types, i);
+
         if (id == 0)
             return NULL;
+
         type_ids[i] = id;
     }
     if (name)
@@ -2076,11 +2069,14 @@ Takes an array of types for the call and does a lookup in the MMD cache.
 
 PARROT_EXPORT
 PMC *
-Parrot_mmd_cache_lookup_by_types(PARROT_INTERP, MMD_Cache *cache, char *name, PMC *types) {
+Parrot_mmd_cache_lookup_by_types(PARROT_INTERP, MMD_Cache *cache,
+    const char *name, PMC *types) {
     STRING *key = mmd_cache_key_from_types(interp, name, types);
-    if (key == NULL)
-        return PMCNULL;
-    return (PMC*)parrot_hash_get(interp, cache, key);
+
+    if (key)
+        return (PMC *)parrot_hash_get(interp, cache, key);
+
+    return PMCNULL;
 }
 
 
@@ -2098,7 +2094,7 @@ tied to an individual multi can be null.
 
 PARROT_EXPORT
 void
-Parrot_mmd_cache_store_by_types(PARROT_INTERP, MMD_Cache *cache, char *name, PMC *types, PMC *chosen) {
+Parrot_mmd_cache_store_by_types(PARROT_INTERP, MMD_Cache *cache, const char *name, PMC *types, PMC *chosen) {
     STRING *key = mmd_cache_key_from_types(interp, name, types);
     if (key != NULL)
         parrot_hash_put(interp, cache, key, chosen);

@@ -196,19 +196,19 @@ Parrot_mmd_cache_create(PARROT_INTERP);
 
 PARROT_EXPORT
 PMC *
-Parrot_mmd_cache_lookup_by_values(PARROT_INTERP, MMD_Cache *cache, char *name, PMC *values);
+Parrot_mmd_cache_lookup_by_values(PARROT_INTERP, MMD_Cache *cache, const char *name, PMC *values);
 
 PARROT_EXPORT
 void
-Parrot_mmd_cache_store_by_values(PARROT_INTERP, MMD_Cache *cache, char *name, PMC *values, PMC *chosen);
+Parrot_mmd_cache_store_by_values(PARROT_INTERP, MMD_Cache *cache, const char *name, PMC *values, PMC *chosen);
 
 PARROT_EXPORT
 PMC *
-Parrot_mmd_cache_lookup_by_types(PARROT_INTERP, MMD_Cache *cache, char *name, PMC *types);
+Parrot_mmd_cache_lookup_by_types(PARROT_INTERP, MMD_Cache *cache, const char *name, PMC *types);
 
 PARROT_EXPORT
 void
-Parrot_mmd_cache_store_by_types(PARROT_INTERP, MMD_Cache *cache, char *name, PMC *types, PMC *chosen);
+Parrot_mmd_cache_store_by_types(PARROT_INTERP, MMD_Cache *cache, const char *name, PMC *types, PMC *chosen);
 
 PARROT_EXPORT
 void
