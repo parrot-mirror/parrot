@@ -237,7 +237,11 @@ Parrot_io_reads(PARROT_INTERP, ARGMOD(PMC *pmc), size_t len)
     }
 
     res->bufused = len;
-    ignored      = Parrot_io_read_buffer(interp, pmc, &res);
+
+    if (Parrot_io_is_encoding(interp, pmc, CONST_STRING(interp, "utf8")))
+        ignored = Parrot_io_read_utf8(interp, pmc, &res);
+    else
+        ignored = Parrot_io_read_buffer(interp, pmc, &res);
     UNUSED(ignored);
 
     return res;
@@ -265,6 +269,10 @@ Parrot_io_read(PARROT_INTERP, ARGMOD(PMC *pmc), ARGIN(char *buffer), size_t len)
 
     res->strstart = buffer;
     res->bufused = len;
+
+    if (Parrot_io_is_encoding(interp, pmc, CONST_STRING(interp, "utf8")))
+        return Parrot_io_read_utf8(interp, pmc, &res);
+
     return Parrot_io_read_buffer(interp, pmc, &res);
 }
 
@@ -295,6 +303,10 @@ Parrot_io_write(PARROT_INTERP, ARGMOD(PMC *pmc), ARGIN(const void *buffer), size
         fake.strlen = fake.bufused = len;
         fake.charset = Parrot_default_charset_ptr;
         fake.encoding = Parrot_default_encoding_ptr;
+
+        if (Parrot_io_is_encoding(interp, pmc, CONST_STRING(interp, "utf8")))
+            return Parrot_io_write_utf8(interp, pmc, &fake);
+
         return Parrot_io_write_buffer(interp, pmc, &fake);
     }
     else
@@ -442,6 +454,9 @@ Parrot_io_putps(PARROT_INTERP, ARGMOD(PMC *pmc), ARGMOD_NULLOK(STRING *s))
     if (0 && GC_DEBUG(interp))
         Parrot_do_dod_run(interp, GC_trace_stack_FLAG);
 #endif
+
+    if (Parrot_io_is_encoding(interp, pmc, CONST_STRING(interp, "utf8")))
+        return Parrot_io_write_utf8(interp, pmc, s);
 
     return Parrot_io_write_buffer(interp, pmc, s);
 }
