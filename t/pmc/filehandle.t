@@ -7,7 +7,7 @@ use warnings;
 use lib qw( . lib ../lib ../../lib );
 
 use Test::More;
-use Parrot::Test tests => 12;
+use Parrot::Test tests => 13;
 use Parrot::Test::Util 'create_tempfile';
 
 =head1 NAME
@@ -364,6 +364,23 @@ CODE
 ok 1 - $P0.buffer_size(42)     # set buffer size
 ok 2 - $I0 = $P0.buffer_size() # get buffer size
 ok 3 - $S0 = $P0.readline()    # buffer flushed
+OUT
+
+# L<PDD22/I\/O PMC API/=item encoding>
+pir_output_is( <<'CODE', <<'OUT', 'encoding' );
+.sub 'test' :main
+    $P0 = new 'FileHandle'
+
+    $P0.'encoding'('utf8')
+    $S0 = $P0.'encoding'()
+    if $S0 == 'utf8' goto ok_1
+    print 'not '
+  ok_1:
+    say 'ok 1 - $S0 = $P1.encoding() # utf8'
+
+.end
+CODE
+ok 1 - $S0 = $P1.encoding() # utf8
 OUT
 
 # L<PDD22/I\/O PMC API/=item mode>
