@@ -1557,7 +1557,7 @@ mmd_distance(PARROT_INTERP, ARGIN(PMC *pmc), ARGIN(PMC *arg_tuple))
             else {
                 s2 = interp->vtables[type_call]->whoami;
             }
-            PIO_eprintf(interp, "arg %d: dist %d sig %Ss arg %Ss\n",
+            Parrot_io_eprintf(interp, "arg %d: dist %d sig %Ss arg %Ss\n",
                 i, dist, s1, s2);
         }
 #endif
