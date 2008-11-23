@@ -602,7 +602,7 @@ Parrot_io_set_file_position(PARROT_INTERP, ARGIN(PMC *filehandle), PIOOFF_T file
 
 /*
 
-=item C<void Parrot_io_is_encoding>
+=item C<INTVAL Parrot_io_is_encoding>
 
 Check whether the encoding attribute of the filehandle matches a passed in
 string.
