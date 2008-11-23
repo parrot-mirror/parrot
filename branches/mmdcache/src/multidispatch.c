@@ -175,7 +175,7 @@ static PMC* Parrot_mmd_search_scopes(PARROT_INTERP, ARGIN(STRING *meth))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
-static void Parrot_mmd_sort_candidates(PARROT_INTERP,
+static PMC * Parrot_mmd_sort_candidates(PARROT_INTERP,
     ARGIN(PMC *arg_tuple),
     ARGIN(PMC *cl))
         __attribute__nonnull__(1)
@@ -365,7 +365,7 @@ Parrot_mmd_find_multi_from_sig_obj(PARROT_INTERP, ARGIN(STRING *name), ARGIN(PMC
     mmd_search_by_sig_obj(interp, name, invoke_sig, candidate_list);
     mmd_search_global(interp, name, candidate_list);
 
-    candidate_list = Parrot_mmd_sort_manhattan_by_sig_pmc(interp, candidate_list, invoke_sig);
+    return Parrot_mmd_sort_manhattan_by_sig_pmc(interp, candidate_list, invoke_sig);
 
     if (PMC_IS_NULL(candidate_list))
         return PMCNULL;
@@ -522,7 +522,6 @@ Parrot_build_sig_object_from_varargs(PARROT_INTERP, ARGIN(const char *sig), va_l
     }
 
     PMC_int_val(type_tuple) = num_types;
-
     return call_object;
 }
 
@@ -866,12 +865,7 @@ Parrot_mmd_find_multi_from_long_sig(PARROT_INTERP, ARGIN(STRING *name),
 
     candidate_list = VTABLE_clone(interp, multi_sub);
 
-    Parrot_mmd_sort_candidates(interp, type_tuple, candidate_list);
-
-    if (PMC_IS_NULL(candidate_list))
-        return PMCNULL;
-
-    return VTABLE_get_pmc_keyed_int(interp, candidate_list, 0);
+    return Parrot_mmd_sort_candidates(interp, type_tuple, candidate_list);
 }
 
 
@@ -908,8 +902,9 @@ Parrot_MMD_search_default_infix(PARROT_INTERP, ARGIN(STRING *meth),
 
 =item C<PMC * Parrot_mmd_sort_manhattan_by_sig_pmc>
 
-Given an array PMC (usually a MultiSub) and a CallSignature PMC sort the mmd
-candidates by their manhattan distance to the signature args.
+Given an array PMC (usually a MultiSub) and a CallSignature PMC, sorts the mmd
+candidates by their manhattan distance to the signature args and returns the
+best one.
 
 =cut
 
@@ -922,32 +917,21 @@ PMC *
 Parrot_mmd_sort_manhattan_by_sig_pmc(PARROT_INTERP, ARGIN(PMC *candidates),
         ARGIN(PMC* invoke_sig))
 {
+    INTVAL n         = VTABLE_elements(interp, candidates);
     PMC   *arg_tuple = VTABLE_get_pmc(interp, invoke_sig);
-    INTVAL n = VTABLE_elements(interp, candidates);
 
     if (!n)
         return PMCNULL;
 
-    candidates = VTABLE_clone(interp, candidates);
-
-    Parrot_mmd_sort_candidates(interp, arg_tuple, candidates);
-
-    /* if there aren't any variants that match the current args, we could end
-       up with an empty list */
-    n = VTABLE_elements(interp, candidates);
-
-    if (!n)
-        return PMCNULL;
-
-    return candidates;
+    return Parrot_mmd_sort_candidates(interp, arg_tuple, candidates);
 }
 
 /*
 
 =item C<PMC * Parrot_mmd_sort_manhattan>
 
-Given an array PMC (usually a MultiSub) sort the mmd candidates by their
-manhatten distance to the current args.
+Given an array PMC (usually a MultiSub) sorts the mmd candidates by their
+manhattan distance to the current args and returns the best one.
 
 =cut
 
@@ -967,16 +951,7 @@ Parrot_mmd_sort_manhattan(PARROT_INTERP, ARGIN(PMC *candidates))
     arg_tuple  = Parrot_mmd_arg_tuple_func(interp);
     candidates = VTABLE_clone(interp, candidates);
 
-    Parrot_mmd_sort_candidates(interp, arg_tuple, candidates);
-
-    /* if there aren't any variants that match the current args, we could end
-       up with an empty list */
-    n = VTABLE_elements(interp, candidates);
-
-    if (!n)
-        return PMCNULL;
-
-    return candidates;
+    return Parrot_mmd_sort_candidates(interp, arg_tuple, candidates);
 }
 
 
@@ -1136,14 +1111,8 @@ Parrot_mmd_search_default(PARROT_INTERP, ARGIN(STRING *meth), ARGIN(PMC *arg_tup
     /* 5) sort the list */
 
     if (n > 1)
-        Parrot_mmd_sort_candidates(interp, arg_tuple, candidate_list);
+        return Parrot_mmd_sort_candidates(interp, arg_tuple, candidate_list);
 
-    n = VTABLE_elements(interp, candidate_list);
-
-    if (!n)
-        return NULL;
-
-    /* 6) Uff, return first one */
     return VTABLE_get_pmc_keyed_int(interp, candidate_list, 0);
 }
 
@@ -1526,72 +1495,33 @@ mmd_distance(PARROT_INTERP, ARGIN(PMC *pmc), ARGIN(PMC *arg_tuple))
 
 /*
 
-=item C<static void Parrot_mmd_sort_candidates>
+=item C<static PMC * Parrot_mmd_sort_candidates>
 
-Sort the candidate list C<cl> by Manhattan Distance
+Sort the candidate list C<cl> by Manhattan Distance, returning the best
+candidate.
 
 =cut
 
 */
 
-static void
+static PMC *
 Parrot_mmd_sort_candidates(PARROT_INTERP, ARGIN(PMC *arg_tuple), ARGIN(PMC *cl))
 {
-    INTVAL  i;
-    PMC    *nci;
-    INTVAL *helper;
-    PMC   **data;
-
-    const INTVAL n    = VTABLE_elements(interp, cl);
-    PMC * const  sort = temporary_pmc_new(interp, enum_class_FixedIntegerArray);
-
-    /*
-     * create a helper structure:
-     * bits 0..15  = distance
-     * bits 16..31 = idx in candidate list
-     *
-     * RT #45955 use half of available INTVAL bits
-     */
-
-    VTABLE_set_integer_native(interp, sort, n);
-    helper = (INTVAL *)PMC_data(sort);
+    INTVAL       i;
+    const INTVAL n              = VTABLE_elements(interp, cl);
+    INTVAL       best_distance  = MMD_BIG_DISTANCE;
+    PMC         *best_candidate = PMCNULL;
 
     for (i = 0; i < n; ++i) {
         PMC * const  pmc = VTABLE_get_pmc_keyed_int(interp, cl, i);
         const INTVAL d   = mmd_distance(interp, pmc, arg_tuple);
-        helper[i]        = i << 16 | (d & 0xffff);
-    }
-
-    /* need an NCI function pointer */
-    nci                 = temporary_pmc_new(interp, enum_class_NCI);
-    PMC_struct_val(nci) = F2DPTR(distance_cmp);
-
-    /* sort it */
-    Parrot_quicksort(interp, (void **)helper, n, nci);
-
-    /*
-     * now helper has a sorted list of indices in the upper 16 bits
-     * fill helper with sorted candidates
-     */
-    data = (PMC **)PMC_data(cl);
-
-    for (i = 0; i < n; ++i) {
-        const INTVAL idx = helper[i] >> 16;
-
-        /* if the distance is big stop */
-        if ((helper[i] & 0xffff) == MMD_BIG_DISTANCE) {
-            PMC_int_val(cl) = i;
-            break;
+        if (d < best_distance) {
+            best_candidate = pmc;
+            best_distance  = d;
         }
-
-        helper[i] = (INTVAL)data[idx];
     }
 
-    /* use helper structure */
-    PMC_data(cl)   = helper;
-    PMC_data(sort) = data;
-    temporary_pmc_free(interp, sort);
-    temporary_pmc_free(interp, nci);
+    return best_candidate;
 }
 
 
