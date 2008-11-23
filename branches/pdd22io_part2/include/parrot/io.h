@@ -526,6 +526,13 @@ void PIO_push_layer_str(PARROT_INTERP,
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 /* HEADERIZER END: src/io/io_layers.c */
 
+/* io/core.c - interpreter initialization/destruction functions */
+/* HEADERIZER BEGIN: src/io/core.c */
+/* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
+
+/* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
+/* HEADERIZER END: src/io/core.c */
+
 /* io/api.c - Public API functions */
 /* HEADERIZER BEGIN: src/io/api.c */
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
