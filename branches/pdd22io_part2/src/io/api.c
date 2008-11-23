@@ -530,7 +530,7 @@ Parrot_io_eprintf(NULLOK(PARROT_INTERP), ARGIN(const char *s), ...)
     if (interp) {
         STRING * const str = Parrot_vsprintf_c(interp, s, args);
 
-        ret = PIO_putps(interp, _PIO_STDERR(interp), str);
+        ret = Parrot_io_putps(interp, _PIO_STDERR(interp), str);
     }
     else {
         /* Be nice about this...
@@ -564,7 +564,7 @@ Parrot_io_getfd(PARROT_INTERP, ARGMOD(PMC *pmc))
 
 /*
 
-=item C<INTVAL Parrot_io_isatty>
+=item C<INTVAL Parrot_io_is_tty>
 
 Returns a boolean value indicating whether C<*pmc> is a console/tty.
 
