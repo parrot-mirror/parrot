@@ -361,6 +361,7 @@ IO_O_FILES = \
     $(IO_DIR)/unix$(O) \
     $(IO_DIR)/win32$(O) \
     $(IO_DIR)/portable$(O) \
+    $(IO_DIR)/utf8$(O) \
     $(SRC_DIR)/io$(O) \
     $(IO_DIR)/io_buf$(O) \
     $(IO_DIR)/io_layers$(O) \
