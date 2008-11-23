@@ -610,6 +610,13 @@ INTVAL Parrot_io_is_tty(PARROT_INTERP, ARGMOD(PMC *pmc))
         FUNC_MODIFIES(*pmc);
 
 PARROT_EXPORT
+PARROT_WARN_UNUSED_RESULT
+INTVAL Parrot_is_encoding(PARROT_INTERP, ARGIN(PMC *pmc), ARGIN(STRING *value))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3);
+
+PARROT_EXPORT
 PIOOFF_T Parrot_io_make_offset(INTVAL offset);
 
 PARROT_EXPORT
@@ -805,6 +812,29 @@ size_t Parrot_io_write_buffer(PARROT_INTERP,
 
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 /* HEADERIZER END: src/io/buffer.c */
+
+/* io/utf8.c - UTF-8 functions */
+/* HEADERIZER BEGIN: src/io/utf8.c */
+/* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
+
+size_t Parrot_io_read_utf8(PARROT_INTERP,
+    ARGMOD(PMC *filehandle),
+    ARGIN(STRING **buf))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3)
+        FUNC_MODIFIES(*filehandle);
+
+size_t Parrot_io_write_utf8(PARROT_INTERP,
+    ARGMOD(PMC *filehandle),
+    ARGIN(STRING *s))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3)
+        FUNC_MODIFIES(*filehandle);
+
+/* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
+/* HEADERIZER END: src/io/utf8.c */
 
 /* io.c - utility functions shared between all platforms */
 /* HEADERIZER BEGIN: src/io.c */
