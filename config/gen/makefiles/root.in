@@ -355,6 +355,7 @@ ENCODING_O_FILES  = @TEMP_encoding_o@
 
 IO_O_FILES = \
     $(IO_DIR)/io$(O) \
+    $(IO_DIR)/core$(O) \
     $(IO_DIR)/api$(O) \
     $(IO_DIR)/buffer$(O) \
     $(IO_DIR)/unix$(O) \
