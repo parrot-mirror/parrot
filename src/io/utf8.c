@@ -4,14 +4,14 @@ $Id$
 
 =head1 NAME
 
-src/io/io_utf8.c - IO Layer for UTF8
+src/io/utf8.c - UTF8 I/O utility functions
 
 =head1 DESCRIPTION
 
 Convert output to utf8. Convert input to Parrot's internal string
 representation.
 
-=head2 utf8 layer functions
+=head2 Utility functions
 
 =over 4
 
@@ -23,7 +23,7 @@ representation.
 #include "io_private.h"
 #include "../unicode.h"
 
-/* HEADERIZER HFILE: none */
+/* HEADERIZER HFILE: include/parrot/io.h */
 
 /* HEADERIZER BEGIN: static */
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
@@ -54,85 +54,25 @@ static size_t PIO_utf8_write(PARROT_INTERP,
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 /* HEADERIZER END: static */
 
-static const ParrotIOLayerAPI pio_utf8_layer_api = {
-    PIO_null_init,
-    PIO_base_new_layer,
-    PIO_base_delete_layer,
-    PIO_null_push_layer,
-    PIO_null_pop_layer,
-    PIO_null_open,
-    PIO_null_open2,
-    PIO_null_open3,
-    PIO_null_open_async,
-    PIO_null_fdopen,
-    PIO_null_close,
-    PIO_utf8_write,
-    PIO_null_write_async,
-    PIO_utf8_read,
-    PIO_null_read_async,
-    PIO_null_flush,
-    PIO_null_peek,
-    PIO_null_seek,
-    PIO_null_tell,
-    PIO_null_setbuf,
-    PIO_null_setlinebuf,
-    PIO_null_getcount,
-    PIO_null_fill,
-    PIO_null_eof,
-    NULL, /* no poll */
-    NULL, /* no socket */
-    NULL, /* no connect */
-    NULL, /* no send */
-    NULL, /* no recv */
-    NULL, /* no bind */
-    NULL, /* no listen */
-    NULL  /* no accept */
-};
-
-ParrotIOLayer pio_utf8_layer = {
-    NULL,
-    "utf8",
-    0,
-    &pio_utf8_layer_api,
-    NULL, NULL
-};
-
 /*
 
-=item C<ParrotIOLayer * PIO_utf8_register_layer>
+=item C<size_t Parrot_io_read_utf8>
 
-RT#48260: Not yet documented!!!
+Read a string from a filehandle in UTF-8 format and convert it to a Parrot
+string.
 
 =cut
 
 */
 
-PARROT_WARN_UNUSED_RESULT
-PARROT_CANNOT_RETURN_NULL
-ParrotIOLayer *
-PIO_utf8_register_layer(void)
-{
-    return &pio_utf8_layer;
-}
-
-/*
-
-=item C<static size_t PIO_utf8_read>
-
-RT#48260: Not yet documented!!!
-
-=cut
-
-*/
-
-static size_t
-PIO_utf8_read(PARROT_INTERP, ARGMOD(ParrotIOLayer *layer),
-        ARGMOD(ParrotIO *io), ARGOUT(STRING **buf))
+size_t
+Parrot_io_read_utf8(PARROT_INTERP, ARGMOD(PMC *filehandle),
+        ARGMOD(STRING **buf))
 {
     STRING *s, *s2;
     String_iter iter;
 
-    size_t len  = PIO_read_down(interp, layer->down, io, buf);
+    size_t len  = Parrot_io_read_buffer(interp, filehandle, buf);
     s           = *buf;
     s->charset  = Parrot_unicode_charset_ptr;
     s->encoding = Parrot_utf8_encoding_ptr;
@@ -156,13 +96,13 @@ PIO_utf8_read(PARROT_INTERP, ARGMOD(ParrotIOLayer *layer),
                 /* need len - 1 more chars */
                 len2--;
                 s2           = NULL;
-                s2           = PIO_make_io_string(interp, &s2, len2);
+                s2           = Parrot_io_make_string(interp, &s2, len2);
                 s2->bufused  = len2;
                 s2->charset  = Parrot_unicode_charset_ptr;
                 s2->encoding = Parrot_utf8_encoding_ptr;
 
                 /* RT#46413 need to check the amount read here? */
-                read         = PIO_read_down(interp, layer->down, io, &s2);
+                read         = Parrot_io_read_buffer(interp, filehandle, &s2);
                 UNUSED(read);
 
                 s->strlen    = iter.charpos;
@@ -181,25 +121,26 @@ ok:
 
 /*
 
-=item C<static size_t PIO_utf8_write>
+=item C<size_t Parrot_io_write_utf8>
 
-RT#48260: Not yet documented!!!
+Write a Parrot string to a filehandle in UTF-8 format.
 
 =cut
 
 */
 
-static size_t
-PIO_utf8_write(PARROT_INTERP, ARGIN(ParrotIOLayer *l), ARGMOD(ParrotIO *io), ARGMOD(STRING *s))
+size_t
+Parrot_io_write_utf8(PARROT_INTERP, ARGMOD(PMC *filehandle),
+        ARGMOD(STRING *s))
 {
     STRING *dest;
 
     if (s->encoding == Parrot_utf8_encoding_ptr)
-        return PIO_write_down(interp, l->down, io, s);
+        return Parrot_io_write_buffer(interp, filehandle, s);
 
     dest = Parrot_utf8_encoding_ptr->to_encoding(interp, s,
             new_string_header(interp, 0));
-    return PIO_write_down(interp, l->down, io, dest);
+    return Parrot_io_write_buffer(interp, filehandle, dest);
 }
 
 /*
