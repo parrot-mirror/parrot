@@ -62,8 +62,10 @@ mark_context(PARROT_INTERP, ARGMOD(Parrot_Context* ctx))
     if (obj && !PObj_live_TEST(obj))
         pobject_lives(interp, obj);
 
-    if (ctx->caller_ctx)
-        mark_context(interp, ctx->caller_ctx);
+    /* if (ctx->caller_ctx)
+     *   mark_context(interp, ctx->caller_ctx); */
+    if (ctx->outer_ctx)
+        mark_context(interp, ctx->outer_ctx);
 
     obj = (PObj *)ctx->current_namespace;
     if (obj)
@@ -555,11 +557,16 @@ Parrot_capture_lex(PARROT_INTERP, ARGMOD(PMC *sub_pmc))
     if (PMC_IS_NULL(sub->outer_sub))
         return;
 
+#if 0
     /* verify that the current sub is sub_pmc's :outer */
     if (0 != string_equal(interp, current_sub->subid,
-                          PMC_sub(sub->outer_sub)->subid))
-        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INVALID_OPERATION,
-            "'%Ss' isn't the :outer of '%Ss'", current_sub->name, sub->name);
+                         PMC_sub(sub->outer_sub)->subid)) {
+        Parrot_ex_throw_from_c_args(interp, NULL, 
+            EXCEPTION_INVALID_OPERATION, "'%Ss' isn't the :outer of '%Ss'", 
+            current_sub->name, sub->name);
+        return;
+    }
+#endif
 
     /* set the sub's outer context to the current context */
     old = sub->outer_ctx;
