@@ -774,6 +774,7 @@ Adds a new candidate to the candidate list.
 */
     VTABLE void push_pmc(PMC *sub) {
         PMC *candidates;
+        MMD_Cache *cache;
 
         /* Make sure it's invokable. */
         if (!check_invokable(interp, sub))
@@ -786,6 +787,12 @@ Adds a new candidate to the candidate list.
 
         /* Invalidate the sorted list - we'll need to re-build it. */
         SETATTR_Perl6MultiSub_candidates_sorted(interp, SELF, NULL);
+
+        /* Invalidate the cache. */
+        GETATTR_Perl6MultiSub_cache(interp, SELF, cache)
+        Parrot_mmd_cache_destroy(interp, cache);
+        cache = Parrot_mmd_cache_create(interp);
+        SETATTR_Perl6MultiSub_cache(interp, SELF, cache)
     }
 
 /*
