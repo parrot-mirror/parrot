@@ -346,6 +346,20 @@ Print the passed in integer, number, string, or PMC to the filehandle.
 
 /*
 
+=item C<METHOD puts(STRING *value)>
+
+Print the string to the filehandle.
+
+=cut
+
+*/
+
+    METHOD puts(STRING *to_print) {
+        Parrot_io_putps(interp, SELF, to_print);
+    }
+
+/*
+
 =item C<METHOD buffer_type(STRING *new_type :optional)>
 
 Set or retrieve the buffering behavior for the filehandle. The argument and
