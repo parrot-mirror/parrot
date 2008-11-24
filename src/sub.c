@@ -40,6 +40,16 @@ mark_context(PARROT_INTERP, ARGMOD(Parrot_Context* ctx))
     PObj *obj;
     int   i;
 
+    /* don't mark the context if it's actually dead */
+    if (ctx->ref_count < 0) {
+        /* report it, though */
+        if (Interp_debug_TEST(interp, PARROT_CTX_DESTROY_DEBUG_FLAG)) {
+            fprintf(stderr, "[attempt to mark dead context %p]\n",
+                (void *)ctx);
+        }
+        return;
+    }
+
     obj = (PObj *)ctx->current_sub;
     if (obj)
         pobject_lives(interp, obj);
@@ -63,6 +73,11 @@ mark_context(PARROT_INTERP, ARGMOD(Parrot_Context* ctx))
 
     if (ctx->caller_ctx)
         mark_context(interp, ctx->caller_ctx);
+
+    /* outer_ctx is often == caller_ctx, so we avoid marking
+     * it twice if that's the case. */
+    if (ctx->outer_ctx && ctx->outer_ctx != ctx->caller_ctx)
+        mark_context(interp, ctx->outer_ctx);
 
     obj = (PObj *)ctx->current_namespace;
     if (obj)
