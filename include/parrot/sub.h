@@ -266,6 +266,11 @@ PARROT_WARN_UNUSED_RESULT
 STRING* Parrot_full_sub_name(PARROT_INTERP, ARGIN_NULLOK(PMC* sub))
         __attribute__nonnull__(1);
 
+void Parrot_capture_lex(PARROT_INTERP, ARGMOD(PMC *sub_pmc))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        FUNC_MODIFIES(*sub_pmc);
+
 PARROT_EXPORT
 PARROT_CANNOT_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT

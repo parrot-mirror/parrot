@@ -513,6 +513,61 @@ Parrot_find_pad(PARROT_INTERP, ARGIN(STRING *lex_name), ARGIN(const Parrot_Conte
     }
 }
 
+
+/*
+
+=item C<void Parrot_capture_lex>
+
+Capture the current lexical environment of a sub.
+
+=cut
+
+*/
+
+void
+Parrot_capture_lex(PARROT_INTERP, ARGMOD(PMC *sub_pmc))
+{
+    Parrot_Context * const ctx      = CONTEXT(interp);
+    Parrot_sub * const current_sub  = PMC_sub(ctx->current_sub);
+    Parrot_sub * const sub          = PMC_sub(sub_pmc);
+    Parrot_Context *old;
+
+    /* MultiSub gets special treatment */
+    if (VTABLE_isa(interp, sub_pmc, CONST_STRING(interp, "MultiSub"))) {
+        PMC * const iter = VTABLE_get_iter(interp, sub_pmc);
+        while (VTABLE_get_bool(interp, iter)) {
+            PMC * const child_pmc        = VTABLE_shift_pmc(interp, iter);
+            Parrot_sub * const child_sub = PMC_sub(child_pmc);
+            if (!PMC_IS_NULL(child_sub->outer_sub))
+                if (0 == string_equal(interp, current_sub->subid,
+                                      PMC_sub(child_sub->outer_sub)->subid)) {
+                old = child_sub->outer_ctx;
+                child_sub->outer_ctx = Parrot_context_ref(interp, ctx);
+                if (old)
+                    Parrot_free_context(interp, old, 1);
+            }
+        }
+        return;
+    }
+
+    /* the sub_pmc has to have an outer_sub that is the caller */
+    if (PMC_IS_NULL(sub->outer_sub))
+        return;
+
+    /* verify that the current sub is sub_pmc's :outer */
+    if (0 != string_equal(interp, current_sub->subid,
+                          PMC_sub(sub->outer_sub)->subid))
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INVALID_OPERATION,
+            "'%Ss' isn't the :outer of '%Ss'", current_sub->name, sub->name);
+
+    /* set the sub's outer context to the current context */
+    old = sub->outer_ctx;
+    sub->outer_ctx = Parrot_context_ref(interp, ctx);
+    if (old)
+        Parrot_free_context(interp, old, 1);
+}
+
+
 /*
 
 =item C<PMC* parrot_new_closure>
@@ -534,43 +589,8 @@ PARROT_WARN_UNUSED_RESULT
 PMC*
 parrot_new_closure(PARROT_INTERP, ARGIN(PMC *sub_pmc))
 {
-    PMC *cont;
-
     PMC        * const clos_pmc = VTABLE_clone(interp, sub_pmc);
-    Parrot_sub * const sub      = PMC_sub(sub_pmc);
-    Parrot_sub * const clos     = PMC_sub(clos_pmc);
-
-    /* the given sub_pmc has to have an :outer(sub) that is this subroutine */
-    Parrot_Context * const ctx  = CONTEXT(interp);
-
-    if (PMC_IS_NULL(sub->outer_sub))
-        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INVALID_OPERATION,
-                "'%Ss' isn't a closure (no :outer)", sub->name);
-
-    /* if (sub->outer_sub != ctx->current_sub) - fails if outer
-     * is a closure too e.g. test 'closure 4' */
-    if (0 == string_equal(interp, (PMC_sub(ctx->current_sub))->name, sub->name))
-        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INVALID_OPERATION,
-            "'%Ss' isn't the :outer of '%Ss')",
-            (PMC_sub(ctx->current_sub))->name, sub->name);
-
-    cont            = ctx->current_cont;
-
-    /* mark clos_pmc as having been created by newclosure. */
-    SUB_FLAG_flag_SET(NEWCLOSURE, clos_pmc);
-
-    /* preserve this frame by converting the continuation */
-    cont->vtable    = interp->vtables[enum_class_Continuation];
-
-    /* remember this (the :outer) ctx in the closure */
-    clos->outer_ctx = Parrot_context_ref(interp, ctx);
-
-#if CTX_LEAK_DEBUG
-    if (Interp_debug_TEST(interp, PARROT_CTX_DESTROY_DEBUG_FLAG))
-        fprintf(stderr, "[alloc closure  %p, outer_ctx %p, ref_count=%d]\n",
-                (void *)clos_pmc, (void *)ctx, (int) ctx->ref_count);
-#endif
-
+    Parrot_capture_lex(interp, clos_pmc);
     return clos_pmc;
 }
 
