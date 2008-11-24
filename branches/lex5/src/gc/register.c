@@ -611,7 +611,7 @@ Parrot_free_context(PARROT_INTERP, ARGMOD(Parrot_Context *ctx), int deref)
         ptr             = ctx;
         slot            = CALCULATE_SLOT_NUM(ctx->regs_mem_size);
 
-#if CTX_DEBUG_LEAK_FULL
+#if CTX_LEAK_DEBUG_FULL
         slot = 0;
 #endif
 
@@ -639,7 +639,7 @@ Parrot_context_ref_trace(PARROT_INTERP,
         ARGIN(const char *file), int line)
 {
     if (Interp_debug_TEST(interp, PARROT_CTX_DESTROY_DEBUG_FLAG)) {
-        char *name = "unknown";
+        const char *name = "unknown";
         if (ctx->current_sub) 
             name = (char *)(PMC_sub(ctx->current_sub)->name->strstart);
         fprintf(stderr, "[reference to context %p ('%s') taken at %s:%d]\n",
