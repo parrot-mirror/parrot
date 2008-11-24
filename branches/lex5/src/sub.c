@@ -58,26 +58,12 @@ mark_context(PARROT_INTERP, ARGMOD(Parrot_Context* ctx))
     if (obj)
         pobject_lives(interp, obj);
 
-    /* the current continuation in the interpreter has
-     * to be marked too in the call sequence currently
-     * as e.g. a MMD search could need resources
-     * and GC the continuation
-     */
-    obj = (PObj *)interp->current_cont;
-    if (obj && obj != (PObj *)NEED_CONTINUATION)
-        pobject_lives(interp, obj);
-
     obj = (PObj *)ctx->current_cont;
     if (obj && !PObj_live_TEST(obj))
         pobject_lives(interp, obj);
 
     if (ctx->caller_ctx)
         mark_context(interp, ctx->caller_ctx);
-
-    /* outer_ctx is often == caller_ctx, so we avoid marking
-     * it twice if that's the case. */
-    if (ctx->outer_ctx && ctx->outer_ctx != ctx->caller_ctx)
-        mark_context(interp, ctx->outer_ctx);
 
     obj = (PObj *)ctx->current_namespace;
     if (obj)
