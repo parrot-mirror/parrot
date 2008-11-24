@@ -468,6 +468,24 @@ scheme) for the filehandle.
 
     }
 
+/*
+
+=item C<METHOD eof()>
+
+Returns true if the filehandle is at end-of-file, returns false otherwise.
+
+=cut
+
+*/
+
+    METHOD eof() {
+        if (Parrot_io_eof(INTERP, SELF))
+            RETURN(INTVAL 1);
+
+        RETURN(INTVAL 0);
+    }
+
+
 #ifdef PIO_OS_UNIX
 
 /*
