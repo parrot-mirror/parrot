@@ -575,6 +575,10 @@ Parrot_free_context(PARROT_INTERP, ARGMOD(Parrot_Context *ctx), int deref)
             }
         }
 #endif
+
+        if (ctx->outer_ctx)
+            Parrot_free_context(interp, ctx->outer_ctx, 1);
+
         if (ctx->n_regs_used) {
             mem_sys_free(ctx->n_regs_used);
             ctx->n_regs_used = NULL;
