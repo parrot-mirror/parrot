@@ -662,13 +662,11 @@ options are passed to the evaluator.
     .local string iname
     .local pmc ifh
     iname = shift iter
-    ifh = open iname, 'r'
-    unless ifh goto err_infile
-    if encoding == 'fixed_8' goto iter_loop_1
-    unless encoding goto iter_loop_1
+    ifh = new 'FileHandle'
+    unless encoding == 'utf8' goto iter_loop_1
     ifh.'encoding'(encoding)
   iter_loop_1:
-    $S0 = ifh.'readall'()
+    $S0 = ifh.'readall'(iname)
     code .= $S0
     close ifh
     goto iter_loop
