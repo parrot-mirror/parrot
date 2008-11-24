@@ -47,7 +47,7 @@ pir_output_is( <<"CODE", <<'OUT', 'open and close - synchronous' );
     say 'ok 2 - \$P1.close()'
 
     \$P3 = new 'FileHandle'
-    \$P3.'open'('README', 'rw')
+    \$P3.'open'('$temp_file', 'rw')
     say 'ok 3 - \$P3.open(\$S1, \$S2) # rw mode'
     \$P3.'close'()
 
