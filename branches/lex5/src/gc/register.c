@@ -639,8 +639,11 @@ Parrot_context_ref_trace(PARROT_INTERP,
         ARGIN(const char *file), int line)
 {
     if (Interp_debug_TEST(interp, PARROT_CTX_DESTROY_DEBUG_FLAG)) {
-        fprintf(stderr, "[reference to context %p taken at %s:%d]\n",
-                (void *)ctx, file, line);
+        char *name = "unknown";
+        if (ctx->current_sub) 
+            name = (char *)(PMC_sub(ctx->current_sub)->name->strstart);
+        fprintf(stderr, "[reference to context %p ('%s') taken at %s:%d]\n",
+                (void *)ctx, name, file, line);
     }
     ctx->ref_count++;
     return ctx;
