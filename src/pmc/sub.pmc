@@ -387,6 +387,11 @@ Creates and returns a clone of the subroutine.
         memcpy(sub, PMC_sub(SELF), sizeof (Parrot_sub));
         sub->name           = string_copy(INTERP, sub->name);
 
+        if (sub->ctx)
+            Parrot_context_ref(INTERP, sub->ctx);
+        if (sub->outer_ctx)
+            Parrot_context_ref(INTERP, sub->outer_ctx);
+
         return ret;
     }
 
