@@ -24,6 +24,26 @@ Subroutines, continuations, co-routines and other fun stuff...
 
 /* HEADERIZER HFILE: include/parrot/sub.h */
 
+
+/*
+
+=item C<void  mark_context_start>
+
+Indicate that a new round of context marking is about to take place.
+
+=cut
+
+*/
+
+static int context_gc_mark = 0;
+
+void 
+mark_context_start(void)
+{
+    if (++context_gc_mark == 0) context_gc_mark = 1;
+}
+
+
 /*
 
 =item C<void mark_context>
@@ -39,6 +59,9 @@ mark_context(PARROT_INTERP, ARGMOD(Parrot_Context* ctx))
 {
     PObj *obj;
     int   i;
+
+    if (ctx->gc_mark == context_gc_mark) return;
+    ctx->gc_mark = context_gc_mark;
 
     /* don't mark the context if it's actually dead */
     if (ctx->ref_count < 0) {
@@ -62,8 +85,9 @@ mark_context(PARROT_INTERP, ARGMOD(Parrot_Context* ctx))
     if (obj && !PObj_live_TEST(obj))
         pobject_lives(interp, obj);
 
-    /* if (ctx->caller_ctx)
-     *   mark_context(interp, ctx->caller_ctx); */
+    if (ctx->caller_ctx)
+        mark_context(interp, ctx->caller_ctx);
+
     if (ctx->outer_ctx)
         mark_context(interp, ctx->outer_ctx);
 
