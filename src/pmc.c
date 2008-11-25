@@ -36,6 +36,14 @@ static PMC * get_new_pmc_header(PARROT_INTERP,
     UINTVAL flags)
         __attribute__nonnull__(1);
 
+static void pmc_free(PARROT_INTERP, PMC *pmc)
+        __attribute__nonnull__(1);
+
+static void pmc_free_to_pool(PARROT_INTERP,
+    PMC *pmc,
+    Small_Object_Pool *pool)
+        __attribute__nonnull__(1);
+
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 /* HEADERIZER END: static */
 
@@ -449,12 +457,9 @@ tempted to use this.
 
 */
 
-void
-temporary_pmc_free(PARROT_INTERP, PMC *pmc)
+static void
+pmc_free_to_pool(PARROT_INTERP, PMC *pmc, Small_Object_Pool *pool)
 {
-    Arenas            *arena_base = interp->arena_base;
-    Small_Object_Pool *pool       = arena_base->constant_pmc_pool;
-
     if (PObj_active_destroy_TEST(pmc))
         VTABLE_destroy(interp, pmc);
 
@@ -464,6 +469,21 @@ temporary_pmc_free(PARROT_INTERP, PMC *pmc)
     PObj_flags_SETTO((PObj *)pmc, PObj_on_free_list_FLAG);
     pool->add_free_object(interp, pool, (PObj *)pmc);
     pool->num_free_objects++;
+}
+
+void
+temporary_pmc_free(PARROT_INTERP, PMC *pmc)
+{
+    Small_Object_Pool *pool = interp->arena_base->constant_pmc_pool;
+    pmc_free_to_pool(interp, pmc, pool);
+}
+
+static void
+pmc_free(PARROT_INTERP, PMC *pmc)
+{
+    Small_Object_Pool *pool = interp->arena_base->pmc_pool;
+    pmc_free_to_pool(interp, pmc, pool);
+
 }
 
 
@@ -637,9 +657,11 @@ Parrot_create_mro(PARROT_INTERP, INTVAL type)
     PMC    *mro_list = vtable->mro;
     INTVAL  i, count;
 
+    /* this should never be PMCNULL */
+    PARROT_ASSERT(!PMC_IS_NULL(mro_list));
+
     /* multithreaded: has already mro */
-    if (mro_list
-    &&  mro_list->vtable->base_type != enum_class_ResizableStringArray)
+    if (mro_list->vtable->base_type != enum_class_ResizableStringArray)
         return;
 
     mro         = pmc_new(interp, enum_class_ResizablePMCArray);

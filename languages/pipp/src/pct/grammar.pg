@@ -8,11 +8,13 @@ grammar Pipp::Grammar is PCT::Grammar;
 # the starting rule
 token TOP { ^ <sea_or_code>+ {*} }
 
-# whitespace rule used implicity by rules
-token ws {
-      <!ww> <ws_all>+
-    | <ws_all>*
-}
+# Whitespace and comments
+
+token ws_char           { \h | \v }
+
+token singlelinecomment { [ '#' || '//' ] \N* }    # end of line comment like Unix shell and C++
+
+token multilinecomment  { '/*' .*?  '*/' }         # C-like multiline comment
 
 token ws_all {
       <.ws_char>
@@ -20,16 +22,13 @@ token ws_all {
     | <multilinecomment>
 }
 
-token ws_char { \h | \v }
-
-token singlelinecomment {
-      '#'  \N*
-    | '//' \N*
+# whitespace rule used implicity by rules
+token ws {
+      <!ww> <ws_all>+
+    | <ws_all>*
 }
 
-token multilinecomment { '/*' .*?  '*/' }
-
-# embedding code into a sea of text
+# text or PHP-code
 token sea_or_code {
       <code_echo_tag>   {*}    #= code_echo_tag
     | <code_short_tag>  {*}    #= code_short_tag
@@ -37,6 +36,8 @@ token sea_or_code {
     | <SEA>             {*}    #= SEA
 }
 
+# text, in most cases broken HTML,
+# when an '<' is encountered check whether this is the start of PHP-code 
 regex SEA {
     '<'? .+? ( <before '<'> | $ )
     {*}
@@ -45,37 +46,71 @@ regex SEA {
 rule code_echo_tag {
     <.CODE_START_ECHO_TAG> <arguments> <.statement_delimiter>
         <statement>*
-    <.CODE_END_SHORT_TAG>?
+    <.close_short_tag>?
     {*}
 }
 
 rule code_script_tag {
-    <.CODE_START_SCRIPT_TAG>
+    <.open_script_tag>
         <statement>*
-    <.CODE_END_SCRIPT_TAG>?
+    <.close_script_tag>?
     {*}
 }
 
 rule code_short_tag {
-    <.CODE_START_SHORT_TAG>
+    <.open_short_tag>
         <statement>*
-    <.CODE_END_SHORT_TAG>?
+    <.close_short_tag>?
     {*}
 }
 
-regex CODE_START_SCRIPT_TAG {
+regex open_script_tag {
     '<script' <ws_char>+: 'language' <ws_char>*: '=' <ws_char>*: <quoted_lang_name> <ws_char>*: '>'
+    {{ $P0 = new 'String'
+       $P0 = "script"
+        set_global "tag_type", $P0
+    }}
 }
 
-regex CODE_END_SCRIPT_TAG { '</script' <ws_char>*: '>' }
+regex close_script_tag { 
+    '</script' <ws_char>*: '>'
+    {{  $S0 = "script"
+        $P0 = get_global "tag_type"
+        $S1 = $P0
+        if $S0 != $S1 goto fail
+        .return(1)
+    fail:
+    }} <.fail>
+}
 
 token quoted_lang_name { '"php"' | '\'php\'' }
 
-token CODE_START_ECHO_TAG { '<?=' }
+token CODE_START_ECHO_TAG {     
+    '<?=' 
+    {{ $P0 = new 'String'
+       $P0 = "short"
+        set_global "tag_type", $P0
+    }}
+}
 
-token CODE_START_SHORT_TAG { '<?' 'php'?  }
+token open_short_tag { 
+    '<?' 'php'?  
+    {{ $P0 = new 'String'
+       $P0 = "short"
+        set_global "tag_type", $P0
+    }}
+}
 
-token CODE_END_SHORT_TAG { '?>' \n?  }
+token close_short_tag { 
+    '?>' \n?  
+    {{  $S0 = "short"
+        $P0 = get_global "tag_type"
+        $S1 = $P0
+        if $S0 != $S1 goto fail
+        .return(1)
+    fail:
+    }} <.fail>
+}
 
 # block and statements
 rule block {
@@ -149,16 +184,16 @@ rule for_statement {
 }
 
 token inline_sea_short_tag {
-    <.CODE_END_SHORT_TAG>
+    <.close_short_tag>
         <SEA_empty_allowed>
-    <.CODE_START_SHORT_TAG>
+    <.open_short_tag>
     {*}
 }
 
 token inline_sea_script_tag {
-    <.CODE_END_SCRIPT_TAG>
+    <.close_script_tag>
         <SEA_empty_allowed>
-    <.CODE_START_SCRIPT_TAG>
+    <.open_script_tag>
     {*}
 }
 
@@ -174,17 +209,21 @@ rule var_assign {
 
 # identifiers
 #
-token CLASS_NAME      { <ident> }
+token CLASS_NAME               { <ident> }
 
-token CONSTANT_NAME   { <ident> }
+token CONSTANT_NAME            { <ident> }
 
-token FUNCTION_NAME   { <ident> }
+token CLASS_CONSTANT_ACCESSOR  { '::' }
 
-token INTERFACE_NAME  { <ident> }
+token STATIC_METHOD_ACCESSOR   { '::' }
 
-token MEMBER_NAME     { <ident> }
+token FUNCTION_NAME            { <ident> }
 
-token METHOD_NAME     { <ident> }
+token INTERFACE_NAME           { <ident> }
+
+token MEMBER_NAME              { <ident> }
+
+token METHOD_NAME              { <ident> }
 
 # namespace support
 
@@ -245,8 +284,13 @@ token quote {
     {*}
 }
 
-rule constant {
+token constant {
     <CONSTANT_NAME>
+    {*}
+}
+
+token class_constant {
+    <.CLASS_NAME> <.CLASS_CONSTANT_ACCESSOR> <.CONSTANT_NAME>
     {*}
 }
 
@@ -286,6 +330,7 @@ rule term {
     | <constructor_call>       {*}   #= constructor_call
     | '(' <expression> {*} ')'       #= expression
     | <literal>                {*}   #= literal
+    | <class_constant>         {*}   #= class_constant
     | <constant>               {*}   #= constant
     | <member>                 {*}   #= member
     | <var>                    {*}   #= var
@@ -322,26 +367,30 @@ rule interface_definition {
     {*}
 }
 
-
-rule class_definition {
-    'class' <CLASS_NAME> [ 'implements' <INTERFACE_NAME> ]? '{'
-        <member_definition>*
-        <method_definition>*
-    '}'
-    {*}
-}
-
 rule method_declaration {
     'function' <METHOD_NAME> <param_list> ';'
     {*}
 }
 
-rule member_definition {
-    'public' <VAR_NAME> '=' <literal> <.statement_delimiter>
+rule class_definition {
+    'class' <CLASS_NAME> [ 'implements' <INTERFACE_NAME> ]? '{'
+        <class_constant_definition>*
+        <class_member_definition>*
+        <class_method_definition>*
+    '}'
     {*}
 }
 
-rule method_definition {
+rule class_constant_definition {
+    'const' <CONSTANT_NAME> '=' <literal> <.statement_delimiter>
+    {*}
+}
+
+rule class_member_definition {
+    'public' <VAR_NAME> '=' <literal> <.statement_delimiter>
+}
+
+rule class_method_definition {
     'function' <METHOD_NAME> <param_list> <block>
     {*}
 }

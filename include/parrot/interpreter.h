@@ -214,6 +214,7 @@ struct Parrot_Context {
     INTVAL *n_regs_used;                /* INSP in PBC points to Sub */
     size_t regs_mem_size;               /* memory occupied by registers */
     int ref_count;                      /* how often refered to */
+    int gc_mark;                        /* marked in gc run */
 
     PMC      *lex_pad;                  /* LexPad PMC */
     struct Parrot_Context *outer_ctx;   /* outer context, if a closure */
@@ -398,6 +399,7 @@ struct parrot_interp_t {
 
     MMD_table *binop_mmd_funcs;               /* Table of MMD functions */
     UINTVAL    n_binop_mmd_funcs;             /* MMD function count */
+    MMD_Cache *op_mmd_cache;                  /* MMD cache for builtins. */
 
     struct _Caches * caches;                  /* see caches.h */
 
@@ -865,7 +867,14 @@ void Parrot_setup_event_func_ptrs(Parrot_Interp interp);
 
 PARROT_EXPORT void disable_event_checking(PARROT_INTERP);
 PARROT_EXPORT void enable_event_checking(PARROT_INTERP);
-#else
+
+#if CTX_LEAK_DEBUG
+#  define Parrot_context_ref(a, b) Parrot_context_ref_trace((a), (b), __FILE__, __LINE__)
+#else /* !CTX_LEAK_DEBUG */
+#  define Parrot_context_ref(a, b) (((b)->ref_count++), (b))
+#endif /* CTX_LEAK_DEBUG */
+
+#else /* !PARROT_IN_CORE */
 
 struct Parrot_Interp_;
 typedef struct Parrot_Interp_ *Parrot_Interp;

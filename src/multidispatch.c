@@ -85,6 +85,16 @@ static PMC* mmd_build_type_tuple_from_type_list(PARROT_INTERP,
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
+static STRING * mmd_cache_key_from_types(PARROT_INTERP,
+    const char *name,
+    PMC *types)
+        __attribute__nonnull__(1);
+
+static STRING * mmd_cache_key_from_values(PARROT_INTERP,
+    const char *name,
+    PMC *values)
+        __attribute__nonnull__(1);
+
 PARROT_CANNOT_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
 static PMC* mmd_cvt_to_types(PARROT_INTERP, ARGIN(PMC *multi_sig))
@@ -137,9 +147,7 @@ static void Parrot_mmd_ensure_writable(PARROT_INTERP,
     ARGIN_NULLOK(const PMC *pmc))
         __attribute__nonnull__(1);
 
-PARROT_CANNOT_RETURN_NULL
-PARROT_WARN_UNUSED_RESULT
-static PMC* Parrot_mmd_get_cached_multi_sig(PARROT_INTERP, ARGIN(PMC *sub))
+static PMC * Parrot_mmd_get_cached_multi_sig(PARROT_INTERP, ARGIN(PMC *sub))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
@@ -175,7 +183,7 @@ static PMC* Parrot_mmd_search_scopes(PARROT_INTERP, ARGIN(STRING *meth))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
-static void Parrot_mmd_sort_candidates(PARROT_INTERP,
+static PMC * Parrot_mmd_sort_candidates(PARROT_INTERP,
     ARGIN(PMC *arg_tuple),
     ARGIN(PMC *cl))
         __attribute__nonnull__(1)
@@ -357,7 +365,7 @@ Parrot_mmd_find_multi_from_sig_obj(PARROT_INTERP, ARGIN(STRING *name), ARGIN(PMC
     mmd_search_by_sig_obj(interp, name, invoke_sig, candidate_list);
     mmd_search_global(interp, name, candidate_list);
 
-    candidate_list = Parrot_mmd_sort_manhattan_by_sig_pmc(interp, candidate_list, invoke_sig);
+    return Parrot_mmd_sort_manhattan_by_sig_pmc(interp, candidate_list, invoke_sig);
 
     if (PMC_IS_NULL(candidate_list))
         return PMCNULL;
@@ -415,7 +423,7 @@ Parrot_build_sig_object_from_varargs(PARROT_INTERP, ARGIN_NULLOK(PMC* obj),
     INTVAL in_return_sig     = 0;
     PMC    *returns          = PMCNULL;
     PMC    *call_object      = pmc_new(interp, enum_class_CallSignature);
-    PMC    *const type_tuple = pmc_new(interp, enum_class_FixedIntegerArray);
+    PMC    *type_tuple =  PMCNULL; // = pmc_new(interp, enum_class_FixedIntegerArray);
     INTVAL  sig_len          = strlen(sig);
     STRING *s_sig            = string_from_cstring(interp, sig, sig_len);
     STRING *string_sig       = NULL;
@@ -438,8 +446,8 @@ Parrot_build_sig_object_from_varargs(PARROT_INTERP, ARGIN_NULLOK(PMC* obj),
         sig_len = sig_len + 2;
     }
 
-    VTABLE_set_integer_native(interp, type_tuple, sig_len);
-    VTABLE_set_pmc(interp, call_object, type_tuple);
+    //VTABLE_set_integer_native(interp, type_tuple, sig_len);
+    //VTABLE_set_pmc(interp, call_object, type_tuple);
 
     VTABLE_set_string_native(interp, call_object, string_sig);
 
@@ -487,18 +495,12 @@ Parrot_build_sig_object_from_varargs(PARROT_INTERP, ARGIN_NULLOK(PMC* obj),
             switch (type) {
                 case 'I':
                     VTABLE_push_integer(interp, call_object, va_arg(args, INTVAL));
-                    VTABLE_set_integer_keyed_int(interp, type_tuple,
-                            i, enum_type_INTVAL);
                     break;
                 case 'N':
                     VTABLE_push_float(interp, call_object, va_arg(args, FLOATVAL));
-                    VTABLE_set_integer_keyed_int(interp, type_tuple,
-                            i, enum_type_FLOATVAL);
                     break;
                 case 'S':
                     VTABLE_push_string(interp, call_object, va_arg(args, STRING *));
-                    VTABLE_set_integer_keyed_int(interp, type_tuple,
-                            i, enum_type_STRING);
                     break;
                 case 'P':
                 {
@@ -508,16 +510,16 @@ Parrot_build_sig_object_from_varargs(PARROT_INTERP, ARGIN_NULLOK(PMC* obj),
                             Parrot_ex_throw_from_c_args(interp, NULL,
                                 EXCEPTION_INVALID_OPERATION,
                                 "Multiple Dispatch: 'i' adverb modifier may only be used on the invocant");
-                        VTABLE_set_integer_keyed_int(interp, type_tuple, 0,
-                                VTABLE_type(interp, obj));
+                        //VTABLE_set_integer_keyed_int(interp, type_tuple, 0,
+                        //        VTABLE_type(interp, obj));
                         VTABLE_push_pmc(interp, call_object, obj);
                         i++; /* skip the 'i' modifier */
                     }
                     else {
                         PMC *pmc_arg = va_arg(args, PMC *);
-                        if (!PMC_IS_NULL(pmc_arg))
-                            VTABLE_set_integer_keyed_int(interp, type_tuple,
-                                i, VTABLE_type(interp, pmc_arg));
+                        //if (!PMC_IS_NULL(pmc_arg))
+                        //    VTABLE_set_integer_keyed_int(interp, type_tuple,
+                        //        i, VTABLE_type(interp, pmc_arg));
 
                         VTABLE_push_pmc(interp, call_object, pmc_arg);
                     }
@@ -535,6 +537,8 @@ Parrot_build_sig_object_from_varargs(PARROT_INTERP, ARGIN_NULLOK(PMC* obj),
         }
     }
 
+    type_tuple = Parrot_mmd_build_type_tuple_from_sig_obj(interp, call_object);
+    VTABLE_set_pmc(interp, call_object, type_tuple);
     return call_object;
 }
 
@@ -567,7 +571,15 @@ Parrot_mmd_multi_dispatch_from_c_args(PARROT_INTERP,
     sig_object = Parrot_build_sig_object_from_varargs(interp, PMCNULL, sig, args);
     va_end(args);
 
-    sub = Parrot_mmd_find_multi_from_sig_obj(interp, const_string(interp, name), sig_object);
+    /* Check the cache. */
+    sub = Parrot_mmd_cache_lookup_by_types(interp, interp->op_mmd_cache, name,
+            VTABLE_get_pmc(interp, sig_object));
+    if (PMC_IS_NULL(sub)) {
+        sub = Parrot_mmd_find_multi_from_sig_obj(interp, const_string(interp, name), sig_object);
+        if (!PMC_IS_NULL(sub))
+            Parrot_mmd_cache_store_by_types(interp, interp->op_mmd_cache, name,
+                    VTABLE_get_pmc(interp, sig_object), sub);
+    }
 
     if (PMC_IS_NULL(sub))
         Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_METH_NOT_FOUND,
@@ -871,12 +883,7 @@ Parrot_mmd_find_multi_from_long_sig(PARROT_INTERP, ARGIN(STRING *name),
 
     candidate_list = VTABLE_clone(interp, multi_sub);
 
-    Parrot_mmd_sort_candidates(interp, type_tuple, candidate_list);
-
-    if (PMC_IS_NULL(candidate_list))
-        return PMCNULL;
-
-    return VTABLE_get_pmc_keyed_int(interp, candidate_list, 0);
+    return Parrot_mmd_sort_candidates(interp, type_tuple, candidate_list);
 }
 
 
@@ -913,8 +920,9 @@ Parrot_MMD_search_default_infix(PARROT_INTERP, ARGIN(STRING *meth),
 
 =item C<PMC * Parrot_mmd_sort_manhattan_by_sig_pmc>
 
-Given an array PMC (usually a MultiSub) and a CallSignature PMC sort the mmd
-candidates by their manhattan distance to the signature args.
+Given an array PMC (usually a MultiSub) and a CallSignature PMC, sorts the mmd
+candidates by their manhattan distance to the signature args and returns the
+best one.
 
 =cut
 
@@ -927,32 +935,21 @@ PMC *
 Parrot_mmd_sort_manhattan_by_sig_pmc(PARROT_INTERP, ARGIN(PMC *candidates),
         ARGIN(PMC* invoke_sig))
 {
+    INTVAL n         = VTABLE_elements(interp, candidates);
     PMC   *arg_tuple = VTABLE_get_pmc(interp, invoke_sig);
-    INTVAL n = VTABLE_elements(interp, candidates);
 
     if (!n)
         return PMCNULL;
 
-    candidates = VTABLE_clone(interp, candidates);
-
-    Parrot_mmd_sort_candidates(interp, arg_tuple, candidates);
-
-    /* if there aren't any variants that match the current args, we could end
-       up with an empty list */
-    n = VTABLE_elements(interp, candidates);
-
-    if (!n)
-        return PMCNULL;
-
-    return candidates;
+    return Parrot_mmd_sort_candidates(interp, arg_tuple, candidates);
 }
 
 /*
 
 =item C<PMC * Parrot_mmd_sort_manhattan>
 
-Given an array PMC (usually a MultiSub) sort the mmd candidates by their
-manhatten distance to the current args.
+Given an array PMC (usually a MultiSub) sorts the mmd candidates by their
+manhattan distance to the current args and returns the best one.
 
 =cut
 
@@ -972,16 +969,7 @@ Parrot_mmd_sort_manhattan(PARROT_INTERP, ARGIN(PMC *candidates))
     arg_tuple  = Parrot_mmd_arg_tuple_func(interp);
     candidates = VTABLE_clone(interp, candidates);
 
-    Parrot_mmd_sort_candidates(interp, arg_tuple, candidates);
-
-    /* if there aren't any variants that match the current args, we could end
-       up with an empty list */
-    n = VTABLE_elements(interp, candidates);
-
-    if (!n)
-        return PMCNULL;
-
-    return candidates;
+    return Parrot_mmd_sort_candidates(interp, arg_tuple, candidates);
 }
 
 
@@ -1141,14 +1129,8 @@ Parrot_mmd_search_default(PARROT_INTERP, ARGIN(STRING *meth), ARGIN(PMC *arg_tup
     /* 5) sort the list */
 
     if (n > 1)
-        Parrot_mmd_sort_candidates(interp, arg_tuple, candidate_list);
+        return Parrot_mmd_sort_candidates(interp, arg_tuple, candidate_list);
 
-    n = VTABLE_elements(interp, candidate_list);
-
-    if (!n)
-        return NULL;
-
-    /* 6) Uff, return first one */
     return VTABLE_get_pmc_keyed_int(interp, candidate_list, 0);
 }
 
@@ -1304,6 +1286,94 @@ mmd_build_type_tuple_from_long_sig(PARROT_INTERP, ARGIN(STRING *long_sig))
 
 /*
 
+=item C<PMC* Parrot_mmd_build_type_tuple_from_sig_obj>
+
+Construct a FixedIntegerArray of type numbers from the arguments of a Call
+Signature object. Used for multiple dispatch.
+
+=cut
+
+*/
+
+PARROT_EXPORT
+PARROT_CANNOT_RETURN_NULL
+PARROT_WARN_UNUSED_RESULT
+PMC*
+Parrot_mmd_build_type_tuple_from_sig_obj(PARROT_INTERP, ARGIN(PMC *sig_obj))
+{
+    PMC * const type_tuple = pmc_new(interp, enum_class_FixedIntegerArray);
+    INTVAL i;
+    INTVAL tuple_size = 0;
+    INTVAL args_ended = 0;
+    STRING *string_sig = VTABLE_get_string(interp, sig_obj);
+    const INTVAL sig_len = string_length(interp, string_sig);
+
+    /* First calculate the number of arguments participating in MMD */
+    for (i = 0; i < sig_len; ++i) {
+        INTVAL type = string_index(interp, string_sig, i);
+        if (type == '-')
+            break;
+
+        tuple_size++;
+    }
+
+    VTABLE_set_integer_native(interp, type_tuple, tuple_size);
+
+    for (i = 0; i < sig_len; ++i) {
+        INTVAL type = string_index(interp, string_sig, i);
+        if (args_ended)
+            break;
+
+        /* Regular arguments just set the value */
+        switch (type) {
+            case 'I':
+                VTABLE_set_integer_keyed_int(interp, type_tuple,
+                        i, enum_type_INTVAL);
+                break;
+            case 'N':
+                VTABLE_set_integer_keyed_int(interp, type_tuple,
+                        i, enum_type_FLOATVAL);
+                break;
+            case 'S':
+                VTABLE_set_integer_keyed_int(interp, type_tuple,
+                        i, enum_type_STRING);
+                break;
+            case 'P':
+            {
+                INTVAL type_lookahead = string_index(interp, string_sig, (i + 1));
+                if (type_lookahead == 'i') {
+                    if (i != 0)
+                        Parrot_ex_throw_from_c_args(interp, NULL,
+                            EXCEPTION_INVALID_OPERATION,
+                            "Multiple Dispatch: 'i' adverb modifier may only be used on the invocant");
+                }
+                else {
+                    PMC *pmc_arg = VTABLE_get_pmc_keyed_int(interp, sig_obj, i);
+                    if (PMC_IS_NULL(pmc_arg))
+                        VTABLE_set_integer_keyed_int(interp, type_tuple,
+                                i, enum_type_PMC);
+                    else
+                        VTABLE_set_integer_keyed_int(interp, type_tuple, i,
+                                VTABLE_type(interp, pmc_arg));
+
+                    break;
+                }
+            }
+            case '-':
+                args_ended = 1;
+                break;
+            default:
+                Parrot_ex_throw_from_c_args(interp, NULL,
+                    EXCEPTION_INVALID_OPERATION,
+                    "Multiple Dispatch: invalid argument type %c!", type);
+        }
+    }
+
+    return type_tuple;
+}
+
+/*
+
 =item C<static PMC* mmd_cvt_to_types>
 
 Given a ResizablePMCArray PMC containing some form of type identifier (either
@@ -1338,6 +1408,9 @@ mmd_cvt_to_types(PARROT_INTERP, ARGIN(PMC *multi_sig))
         if (sig_elem->vtable->base_type == enum_class_String) {
             STRING * const sig = VTABLE_get_string(interp, sig_elem);
 
+            if (!sig)
+                return PMCNULL;
+
             /* yes, this is horrible and ugly */
             if (memcmp(sig->strstart, "__VOID", 6) == 0) {
                 if (PMC_IS_NULL(ar)) {
@@ -1347,9 +1420,6 @@ mmd_cvt_to_types(PARROT_INTERP, ARGIN(PMC *multi_sig))
                 PMC_int_val(ar)--;  /* RT #45951 */
                 break;
             }
-
-            if (!sig)
-                return PMCNULL;
 
             type = pmc_type(interp, sig);
 
@@ -1531,70 +1601,33 @@ mmd_distance(PARROT_INTERP, ARGIN(PMC *pmc), ARGIN(PMC *arg_tuple))
 
 /*
 
-=item C<static void Parrot_mmd_sort_candidates>
+=item C<static PMC * Parrot_mmd_sort_candidates>
 
-Sort the candidate list C<cl> by Manhattan Distance
+Sort the candidate list C<cl> by Manhattan Distance, returning the best
+candidate.
 
 =cut
 
 */
 
-static void
+static PMC *
 Parrot_mmd_sort_candidates(PARROT_INTERP, ARGIN(PMC *arg_tuple), ARGIN(PMC *cl))
 {
-    INTVAL  i;
-    PMC    *nci;
-    INTVAL *helper;
-    PMC   **data;
-
-    const INTVAL n    = VTABLE_elements(interp, cl);
-    PMC * const  sort = pmc_new(interp, enum_class_FixedIntegerArray);
-
-    /*
-     * create a helper structure:
-     * bits 0..15  = distance
-     * bits 16..31 = idx in candidate list
-     *
-     * RT #45955 use half of available INTVAL bits
-     */
-
-    VTABLE_set_integer_native(interp, sort, n);
-    helper = (INTVAL *)PMC_data(sort);
+    INTVAL       i;
+    const INTVAL n              = VTABLE_elements(interp, cl);
+    INTVAL       best_distance  = MMD_BIG_DISTANCE;
+    PMC         *best_candidate = PMCNULL;
 
     for (i = 0; i < n; ++i) {
         PMC * const  pmc = VTABLE_get_pmc_keyed_int(interp, cl, i);
         const INTVAL d   = mmd_distance(interp, pmc, arg_tuple);
-        helper[i]        = i << 16 | (d & 0xffff);
-    }
-
-    /* need an NCI function pointer */
-    nci                 = pmc_new(interp, enum_class_NCI);
-    PMC_struct_val(nci) = F2DPTR(distance_cmp);
-
-    /* sort it */
-    Parrot_quicksort(interp, (void **)helper, n, nci);
-
-    /*
-     * now helper has a sorted list of indices in the upper 16 bits
-     * fill helper with sorted candidates
-     */
-    data = (PMC **)PMC_data(cl);
-
-    for (i = 0; i < n; ++i) {
-        const INTVAL idx = helper[i] >> 16;
-
-        /* if the distance is big stop */
-        if ((helper[i] & 0xffff) == MMD_BIG_DISTANCE) {
-            PMC_int_val(cl) = i;
-            break;
+        if (d < best_distance) {
+            best_candidate = pmc;
+            best_distance  = d;
         }
-
-        helper[i] = (INTVAL)data[idx];
     }
 
-    /* use helper structure */
-    PMC_data(cl)   = helper;
-    PMC_data(sort) = data;
+    return best_candidate;
 }
 
 
@@ -1916,6 +1949,236 @@ Parrot_mmd_add_multi_list_from_c_args(PARROT_INTERP,
                 mmd_info[i].full_sig,
                 mmd_info[i].func_ptr);
     }
+}
+
+
+/*
+
+=item C<MMD_Cache * Parrot_mmd_cache_create>
+
+Creates and returns a new MMD cache.
+
+=cut
+
+*/
+
+PARROT_EXPORT
+MMD_Cache *
+Parrot_mmd_cache_create(PARROT_INTERP) {
+    /* String hash. */
+    Hash* cache;
+    parrot_new_hash(interp, &cache);
+    return cache;
+}
+
+
+/*
+
+=item C<static STRING * mmd_cache_key_from_values>
+
+Generates an MMD cache key from an array of values.
+
+=cut
+
+*/
+
+static STRING *
+mmd_cache_key_from_values(PARROT_INTERP, const char *name, PMC *values)
+{
+    /* Build array of type IDs, which we'll then use as a string to key into
+     * the hash. */
+    INTVAL i;
+    INTVAL num_values = VTABLE_elements(interp, values);
+    INTVAL name_len   = name ? strlen(name) + 1: 0;
+    INTVAL *type_ids  = (INTVAL *)mem_sys_allocate(num_values
+                            * sizeof (INTVAL) + name_len);
+    STRING *key;
+
+    for (i = 0; i < num_values; i++) {
+        INTVAL id = VTABLE_type(interp, VTABLE_get_pmc_keyed_int(interp, values, i));
+        if (id == 0)
+            return NULL;
+        type_ids[i] = id;
+    }
+
+    if (name)
+        strcpy((char *)(type_ids + num_values), name);
+
+    key = string_from_cstring(interp, (char *)type_ids,
+                             num_values * sizeof (INTVAL) + name_len);
+    mem_sys_free(type_ids);
+
+    return key;
+}
+
+
+/*
+
+=item C<PMC * Parrot_mmd_cache_lookup_by_values>
+
+Takes an array of values for the call and does a lookup in the MMD cache.
+
+=cut
+
+*/
+
+PARROT_EXPORT
+PMC *
+Parrot_mmd_cache_lookup_by_values(PARROT_INTERP, MMD_Cache *cache, const char *name, PMC *values)
+{
+    STRING *key = mmd_cache_key_from_values(interp, name, values);
+
+    if (key)
+        return (PMC *)parrot_hash_get(interp, cache, key);
+
+    return PMCNULL;
+}
+
+
+/*
+
+=item C<void Parrot_mmd_cache_store_by_values>
+
+Takes an array of values for the call along with a chosen candidate and puts
+it into the cache.
+
+=cut
+
+*/
+
+PARROT_EXPORT
+void
+Parrot_mmd_cache_store_by_values(PARROT_INTERP,
+    MMD_Cache *cache, const char *name, PMC *values, PMC *chosen)
+{
+    STRING *key = mmd_cache_key_from_values(interp, name, values);
+
+    if (key)
+        parrot_hash_put(interp, cache, key, chosen);
+}
+
+
+/*
+
+=item C<static STRING * mmd_cache_key_from_values>
+
+Generates an MMD cache key from an array of values.
+
+=cut
+
+*/
+
+static STRING *
+mmd_cache_key_from_types(PARROT_INTERP, const char *name, PMC *types)
+{
+    /* Build array of type IDs, which we'll then use as a string to key into
+     * the hash. */
+    STRING *key;
+    INTVAL  num_types = VTABLE_elements(interp, types);
+    INTVAL  name_len  = name ? strlen(name) + 1: 0;
+    INTVAL *type_ids  = (INTVAL *)mem_sys_allocate(num_types
+                                                   * sizeof (INTVAL) + name_len);
+    INTVAL  i;
+
+    for (i = 0; i < num_types; i++) {
+        INTVAL id   = VTABLE_get_integer_keyed_int(interp, types, i);
+
+        if (id == 0)
+            return NULL;
+
+        type_ids[i] = id;
+    }
+    if (name)
+        strcpy((char*)(type_ids + num_types), name);
+    key = string_from_cstring(interp, (char*)type_ids, num_types * sizeof (INTVAL) + name_len);
+    mem_sys_free(type_ids);
+    return key;
+}
+
+
+/*
+
+=item C<PMC * Parrot_mmd_cache_lookup_by_types>
+
+Takes an array of types for the call and does a lookup in the MMD cache.
+
+=cut
+
+*/
+
+PARROT_EXPORT
+PMC *
+Parrot_mmd_cache_lookup_by_types(PARROT_INTERP, MMD_Cache *cache,
+    const char *name, PMC *types)
+{
+    STRING *key = mmd_cache_key_from_types(interp, name, types);
+
+    if (key)
+        return (PMC *)parrot_hash_get(interp, cache, key);
+
+    return PMCNULL;
+}
+
+
+/*
+
+=item C<void Parrot_mmd_cache_store_by_types>
+
+Takes an array of types for the call along with a chosen candidate and puts
+it into the cache. The name parameter is optional, and if the cache is already
+tied to an individual multi can be null.
+
+=cut
+
+*/
+
+PARROT_EXPORT
+void
+Parrot_mmd_cache_store_by_types(PARROT_INTERP,
+    MMD_Cache *cache, const char *name, PMC *types, PMC *chosen)
+{
+    STRING *key = mmd_cache_key_from_types(interp, name, types);
+    if (key != NULL)
+        parrot_hash_put(interp, cache, key, chosen);
+}
+
+
+/*
+
+=item C<void Parrot_mmd_cache_mark>
+
+GC-marks an MMD cache.
+
+=cut
+
+*/
+
+PARROT_EXPORT
+void
+Parrot_mmd_cache_mark(PARROT_INTERP, MMD_Cache *cache)
+{
+    /* As a small future optimization, note that we only *really* need to mark keys -
+     * the candidates will be referenced outside the cache, provided it's invalidated
+     * properly. */
+    parrot_mark_hash(interp, cache);
+}
+
+
+/*
+
+=item C<void Parrot_mmd_cache_destroy>
+
+Destroys an MMD cache.
+
+=cut
+
+*/
+
+PARROT_EXPORT
+void
+Parrot_mmd_cache_destroy(PARROT_INTERP, MMD_Cache *cache)
+{
+    parrot_hash_destroy(interp, cache);
 }
 
 
