@@ -25,7 +25,7 @@ use Test::More;
 
 pir_output_is( << 'CODE', << 'OUTPUT', 'check inheritance' );
 .sub _main
-    loadlib P1, 'lua_group'
+    loadlib $P1, 'lua_group'
     .local pmc pmc1
     pmc1 = new 'LuaNumber'
     .local int bool1
@@ -44,7 +44,7 @@ OUTPUT
 
 pir_output_is( << 'CODE', << 'OUTPUT', 'check interface' );
 .sub _main
-    loadlib P1, 'lua_group'
+    loadlib $P1, 'lua_group'
     .local pmc pmc1
     pmc1 = new 'LuaNumber'
     .local int bool1
@@ -67,7 +67,7 @@ OUTPUT
 
 pir_output_is( << 'CODE', << 'OUTPUT', 'check name' );
 .sub _main
-    loadlib P1, 'lua_group'
+    loadlib $P1, 'lua_group'
     .local pmc pmc1
     pmc1 = new 'LuaNumber'
     .local string str1
@@ -82,7 +82,7 @@ OUTPUT
 
 pir_output_is( << 'CODE', << 'OUTPUT', 'check set_integer_native' );
 .sub _main
-    loadlib P1, 'lua_group'
+    loadlib $P1, 'lua_group'
     .local pmc pmc1
     .local string str1
     pmc1 = new 'LuaNumber'
@@ -109,7 +109,7 @@ OUTPUT
 
 pir_output_is( << 'CODE', << 'OUTPUT', 'check get_bool' );
 .sub _main
-    loadlib P1, 'lua_group'
+    loadlib $P1, 'lua_group'
     .local pmc pmc1
     pmc1 = new 'LuaNumber'
     pmc1 = 3.14
@@ -130,7 +130,7 @@ OUTPUT
 
 pir_output_is( << 'CODE', << 'OUTPUT', 'check logical_not' );
 .sub _main
-    loadlib P1, 'lua_group'
+    loadlib $P1, 'lua_group'
     .local pmc pmc1
     pmc1 = new 'LuaNumber'
     pmc1 = 3.14
@@ -151,7 +151,8 @@ boolean
 OUTPUT
 
 pir_output_is( << 'CODE', << 'OUTPUT', 'check HLL' );
-.HLL 'Lua', 'lua_group'
+.HLL 'Lua'
+.loadlib 'lua_group'
 .sub _main
     .local pmc pmc1
     pmc1 = new 'LuaNumber'
@@ -170,7 +171,8 @@ CODE
 OUTPUT
 
 pir_output_is( << 'CODE', << 'OUTPUT', 'check HLL (autoboxing)' );
-.HLL 'Lua', 'lua_group'
+.HLL 'Lua'
+.loadlib 'lua_group'
 .sub _main
     .local pmc pmc1
     pmc1 = test()
@@ -190,7 +192,8 @@ CODE
 OUTPUT
 
 pir_output_is( << 'CODE', << 'OUTPUT', 'check HLL & .const' );
-.HLL 'Lua', 'lua_group'
+.HLL 'Lua'
+.loadlib 'lua_group'
 .sub _main
     .const 'LuaNumber' cst1 = '3.14'
     print cst1
@@ -206,7 +209,8 @@ CODE
 OUTPUT
 
 pir_output_is( << 'CODE', << 'OUTPUT', 'check tostring' );
-.HLL 'Lua', 'lua_group'
+.HLL 'Lua'
+.loadlib 'lua_group'
 .sub _main
     .const 'LuaNumber' cst1 = '3.14'
     print cst1
@@ -225,7 +229,8 @@ string
 OUTPUT
 
 pir_output_is( << 'CODE', << 'OUTPUT', 'check tonumber' );
-.HLL 'Lua', 'lua_group'
+.HLL 'Lua'
+.loadlib 'lua_group'
 .sub _main
     .const 'LuaNumber' cst1 = '3.14'
     print cst1

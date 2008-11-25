@@ -51,6 +51,7 @@ typedef struct _multi_func_list {
         funcptr_t func_ptr;
 } multi_func_list;
 
+#define MMD_Cache Hash
 
 /* HEADERIZER BEGIN: src/multidispatch.c */
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
@@ -112,6 +113,56 @@ void Parrot_mmd_add_multi_list_from_c_args(PARROT_INTERP,
     INTVAL elements)
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
+
+PARROT_EXPORT
+PARROT_CANNOT_RETURN_NULL
+PARROT_WARN_UNUSED_RESULT
+PMC* Parrot_mmd_build_type_tuple_from_sig_obj(PARROT_INTERP,
+    ARGIN(PMC *sig_obj))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+PARROT_EXPORT
+MMD_Cache * Parrot_mmd_cache_create(PARROT_INTERP)
+        __attribute__nonnull__(1);
+
+PARROT_EXPORT
+void Parrot_mmd_cache_destroy(PARROT_INTERP, MMD_Cache *cache)
+        __attribute__nonnull__(1);
+
+PARROT_EXPORT
+PMC * Parrot_mmd_cache_lookup_by_types(PARROT_INTERP,
+    MMD_Cache *cache,
+    const char *name,
+    PMC *types)
+        __attribute__nonnull__(1);
+
+PARROT_EXPORT
+PMC * Parrot_mmd_cache_lookup_by_values(PARROT_INTERP,
+    MMD_Cache *cache,
+    const char *name,
+    PMC *values)
+        __attribute__nonnull__(1);
+
+PARROT_EXPORT
+void Parrot_mmd_cache_mark(PARROT_INTERP, MMD_Cache *cache)
+        __attribute__nonnull__(1);
+
+PARROT_EXPORT
+void Parrot_mmd_cache_store_by_types(PARROT_INTERP,
+    MMD_Cache *cache,
+    const char *name,
+    PMC *types,
+    PMC *chosen)
+        __attribute__nonnull__(1);
+
+PARROT_EXPORT
+void Parrot_mmd_cache_store_by_values(PARROT_INTERP,
+    MMD_Cache *cache,
+    const char *name,
+    PMC *values,
+    PMC *chosen)
+        __attribute__nonnull__(1);
 
 PARROT_EXPORT
 void Parrot_mmd_destroy(PARROT_INTERP)

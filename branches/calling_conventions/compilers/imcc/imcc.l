@@ -304,10 +304,7 @@ SP              [ ]
     }
 
 
-<*>[ISNP]{DIGIT}{DIGIT}? {
-        valp->s = str_dup(yytext);
-        return REG;
-    }
+
 
 <INITIAL,emit,macro>^"=" {
         IMCC_INFO(interp)->in_pod = 1;
@@ -324,6 +321,7 @@ SP              [ ]
 
 <pod>{EOL}      { IMCC_INFO(interp)->line++; }
 
+<*>".line"               return TK_LINE;
 <INITIAL,emit>".lex"     return LEXICAL;
 ".arg"                   return ARG;
 ".set_arg"               return ARG;
@@ -529,33 +527,7 @@ SP              [ ]
         }
     }
 
-<emit,INITIAL>{ID} {
-        if (!is_def) {
-            SymReg *r = find_sym(interp, yytext);
 
-            if (r && (r->type & (VTIDENTIFIER|VT_CONSTP))) {
-                valp->sr = r;
-                return VAR;
-            }
-
-            if (IMCC_INFO(interp)->cur_unit
-            &&  IMCC_INFO(interp)->cur_unit->instructions
-            && (r = IMCC_INFO(interp)->cur_unit->instructions->symregs[0])
-            &&  r->pcc_sub)
-            {
-                if (((r->pcc_sub->pragma & P_METHOD)
-                ||   (IMCC_INFO(interp)->cur_unit->is_vtable_method))
-                &&   !strcmp(yytext, "self")) {
-                    valp->sr = mk_ident(interp, "self", 'P');
-                    IMCC_INFO(interp)->cur_unit->type |= IMC_HAS_SELF;
-                    return VAR;
-                }
-            }
-        }
-
-        valp->s = str_dup(yytext);
-        return (!is_def && is_op(interp, valp->s) ? PARROT_OP : IDENTIFIER);
-    }
 
 <*>{FLOATNUM}         DUP_AND_RET(valp, FLOATC);
 <*>{SIGN}?{DIGIT}+    DUP_AND_RET(valp, INTC);
@@ -653,6 +625,45 @@ SP              [ ]
             "'%s' is not a valid register name", yytext);
     }
 
+<emit,INITIAL>[ISNP]{DIGIT}{DIGIT}? {
+        if (IMCC_INFO(interp)->state->pasm_file == 0)
+            IMCC_fataly(interp, EXCEPTION_SYNTAX_ERROR,
+            "'%s' is only a valid register name in PASM mode", yytext);
+
+        if (valp)
+            valp->s = str_dup(yytext);
+
+        return REG;
+    }
+
+<emit,INITIAL>{ID} {
+        if (!is_def) {
+            SymReg *r = find_sym(interp, yytext);
+
+            if (r && (r->type & (VTIDENTIFIER|VT_CONSTP))) {
+                valp->sr = r;
+                return VAR;
+            }
+
+            if (IMCC_INFO(interp)->cur_unit
+            &&  IMCC_INFO(interp)->cur_unit->instructions
+            && (r = IMCC_INFO(interp)->cur_unit->instructions->symregs[0])
+            &&  r->pcc_sub)
+            {
+                if (((r->pcc_sub->pragma & P_METHOD)
+                ||   (IMCC_INFO(interp)->cur_unit->is_vtable_method))
+                &&   !strcmp(yytext, "self")) {
+                    valp->sr = mk_ident(interp, "self", 'P');
+                    IMCC_INFO(interp)->cur_unit->type |= IMC_HAS_SELF;
+                    return VAR;
+                }
+            }
+        }
+
+        valp->s = str_dup(yytext);
+        return (!is_def && is_op(interp, valp->s) ? PARROT_OP : IDENTIFIER);
+    }
+
 
 <emit,INITIAL>{WS}+ /* skip */;
 
@@ -722,6 +733,8 @@ SP              [ ]
 
 <macro>^{WS}+                       /* skip leading ws */;
 <macro>{WS}+                        DUP_AND_RET(valp, ' ');
+<macro>[SNIP]{DIGITS}               DUP_AND_RET(valp, REG);
+<macro>"$"[SNIP]{DIGITS}            DUP_AND_RET(valp, REG);
 <macro>{ID}                         DUP_AND_RET(valp, IDENTIFIER);
 <macro>{DOT}{ID}                    DUP_AND_RET(valp, MACRO);
 <macro>.                            DUP_AND_RET(valp, yytext[0]);
@@ -1374,6 +1387,33 @@ IMCC_print_inc(PARROT_INTERP)
 
         old = f->s.file;
     }
+}
+
+/*
+
+void
+set_filename(PARROT_INTERP, char * const filename)
+
+Function to set the C<filename> as specified using the C<.line> directive.
+The parser needs to call back into the lexer (this file), because the
+parser does not have access to the lexer's private bits.
+
+*/
+void
+set_filename(PARROT_INTERP, char * const filename)
+{
+    IMCC_INFO(interp)->frames->s.file = filename;
+    IMCC_INFO(interp)->frames->s.file_needs_free = 1;
+
+    /* in case .line is used outside a .sub, then this
+     * can't be done; hence the check.
+     * The str_dup() is done, as the original #line implementation
+     * duplicated the string twice as well; one for the
+     * frames->s.file and one for cur_unit->file.
+     * During the parse, the STRINGC is already str_dup()ed once.
+     */
+    if (IMCC_INFO(interp)->cur_unit)
+        IMCC_INFO(interp)->cur_unit->file = str_dup(filename);
 }
 
 /* Functions to set and get yyin, as we can't decorate it for export

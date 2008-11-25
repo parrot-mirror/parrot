@@ -49,8 +49,8 @@ pir.l - implementation of the lexical analyzer of the PIR assembly language.
 =head1 DESCRIPTION
 
 This file implements the lexical analyzer of the PIR assembly language.
-The macro layer is implemented here as well. Heredocs are processed by
-a different preprocessor.
+The macro layer is implemented here as well. Heredocs and C<.include>
+are processed by a different preprocessor; see F<hdocprep.l>.
 
 =cut
 
@@ -134,10 +134,13 @@ REGISTER       "$"[SNIP]{DIGITS}
 /* define output file */
 %option outfile="pirlexer.c"
 
+/* name of header file */
 %option header-file="pirlexer.h"
 
+/* prefix on exported functions. */
 %option prefix="yypir"
 
+/* we don't use unput, so don't generate it */
 %option nounput
 
 /* use flex' built-in capability for line counting */
@@ -158,27 +161,51 @@ REGISTER       "$"[SNIP]{DIGITS}
 /* create a scanner in debug mode; XXX remove this in production build. */
 %option debug
 
+/* we're pushing and popping lexer states, so we need a stack */
 %option stack
 
-/* override memory allocation function with Parrot's memory functions */
+/* override memory allocation function with Parrot's memory functions;
+ * don't generate built-ins.
+ */
 %option noyyalloc
 %option noyyrealloc
 %option noyyfree
 
 /* XXX document, and possibly rename, these states, when are they used? */
+
+
 %x MACROHEAD
+
 %x MACROBODY
+
+/* The MACROLOCAL state is used ONLY when parsing ".macro_local <type> <ident>". */
 %x MACROLOCAL
+
+/* The MACROLABEL state is used ONLY when parsing ".macro_label <ident>". */
 %x MACROLABEL
+
+/* The MACROEXPAND state is entered when we find a dot-identifier (e.g. ".foo"); */
 %x MACROEXPAND
+
 %x MACROCONST
+
 /* note that SCANSTR is an inclusive state, purely to override default action for <<EOF>> */
 %s SCANSTR
+
 %s SCANMACRO
 
 %x STRINGEXPAND
 
+/* The SPECIALSTART state is only used when the parsing starts, and only to
+ * read a single character; we're not interested in the character, but we want
+ * a way for the lexer to check the PASM flag (indicating a PASM file), and this
+ * check must only be done once (it's a waste to do it for each token). The
+ * read character will be pushed back into the input stream immediately, and
+ * a token will be returned, indicating it's a PASM or PIR file.
+ */
 %x SPECIALSTART
+
+/* The PASM state is an exclusive state, recognizing ONLY PASM tokens. */
 %x PASM
 
 
@@ -193,15 +220,15 @@ REGISTER       "$"[SNIP]{DIGITS}
                          * above. However, that code would be executed on every call to the
                          * lexer, which is a bit of a waste.
                          */
-                        yyless(0); /* put everything back. It's only 1 character anyway */
-                        yy_pop_state(yyscanner); /* SPECIALSTART was pushed on state stack*/
+                        yyless(0); /* put everything back. It's only 1 character anyway. */
+                        yy_pop_state(yyscanner); /* SPECIALSTART was pushed on state stack. */
 
                         if (TEST_FLAG(yypirget_extra(yyscanner)->flags, LEXER_FLAG_PASMFILE)) {
                             BEGIN(PASM);
                             return TK_PASM_MARKER_START;
                         }
                         else {
-                            BEGIN(INITIAL); /* this is the normal case; PASM is glued on later */
+                            BEGIN(INITIAL); /* this is the normal case. */
                             return TK_PIR_MARKER_START;
                         }
 
@@ -358,6 +385,18 @@ REGISTER       "$"[SNIP]{DIGITS}
                     return TK_LABEL;
                   }
 
+[SNIP]{DIGIT}+    { /* give a warning when using PASM registers as PIR identifiers */
+                    lexer_state * const lexer = yyget_extra(yyscanner);
+
+                    if (TEST_FLAG(lexer->flags, LEXER_FLAG_WARNINGS))
+                        pirwarning(lexer, yypirget_lineno(yyscanner),
+                                   "Use of PASM register identifier ('%s') "
+                                   "is not encouraged for readable code", yytext);
+
+                    yylval->sval = dupstr(yyget_extra(yyscanner), yytext);
+                    return TK_IDENT;
+                  }
+
 {IDENT}           { /* identifier; can be a global (sub or const), local or parrot op */
                     yylval->sval = dupstr(yyget_extra(yyscanner), yytext);
                     return TK_IDENT;
@@ -494,6 +533,7 @@ REGISTER       "$"[SNIP]{DIGITS}
                                return TK_MACRO;
                              }
 
+<MACROHEAD>{WS}              { /* ignore whitespace */ }
 <MACROHEAD>{IDENT}           {
                                yylval->sval = dupstr(yyget_extra(yyscanner), yytext);
                                return TK_IDENT;
@@ -544,7 +584,7 @@ REGISTER       "$"[SNIP]{DIGITS}
                                    return '.';
 
                                }
-                               else {
+                               else { /* it's a macro */
                                    /* fprintf(stderr, "found .ident: %s\n", yytext + 1); */
 
                                    /* store current buffer at this point, because we'll be
@@ -632,6 +672,8 @@ REGISTER       "$"[SNIP]{DIGITS}
 
 <MACROEXPAND>"{"             { return '{'; }
 <MACROEXPAND>"}"             { return '}'; }
+
+<MACROEXPAND>{EOL}[\t\r\n ]* { yylval->sval = "\n"; return TK_NL; }
 
 <MACROEXPAND>.               { yypirerror(yyscanner, yyget_extra(yyscanner),
                                           "unknown character in macro expansion: %c", yytext[0]);
@@ -868,7 +910,7 @@ REGISTER       "$"[SNIP]{DIGITS}
 
 /* PASM tokens.
  *
- * do not mix with other tokens, using <state1, state2> notation.
+ * do not mix with other tokens, using <state1,state2> notation.
  * This becomes unmanageable
  */
 %}
@@ -887,19 +929,54 @@ REGISTER       "$"[SNIP]{DIGITS}
 <PASM>".pcc_sub"        { return TK_PCC_SUB; }
 <PASM>".lex"            { return TK_LEX; }
 <PASM>".namespace"      { return TK_NAMESPACE; }
-<PASM>".macro"          { yypirerror(yyscanner, yypirget_extra(yyscanner),
-                                     "macros are not supported in PASM mode");
+
+<PASM>".macro"          {
+                          yy_push_state(MACROHEAD, yyscanner);
+                          return TK_MACRO;
                         }
-<PASM>".macro_const"    { yypirerror(yyscanner, yypirget_extra(yyscanner),
-                                     "macro constants are not supported in PASM mode");
+
+<PASM>".macro_const"    {
+                          yy_push_state(MACROCONST, yyscanner);
+                          return TK_MACRO_CONST;
                         }
 
 <PASM>".line"           { return TK_LINE; }
 <PASM>".file"           { return TK_FILE; }
 
-<PASM>"."{IDENT}        { yypirerror(yyscanner, yypirget_extra(yyscanner),
-                                     "macro expansion or directive '%s' not supported in PASM mode",
-                                     yytext);
+
+<PASM>"."{IDENT}        { /* macro expansion in PASM mode. */
+                          lexer_state * const lexer = yyget_extra(yyscanner);
+                          macro_def   * const macro = find_macro(lexer->macros, yytext + 1);
+
+                          if (macro == NULL) { /* it's not a macro */
+                              yypirerror(yyscanner, lexer, "cannot find macro '%s'",
+                                         yytext + 1);
+                          }
+                          else { /* it's a macro */
+                              /* store current buffer at this point, because we'll be
+                               * scanning a string buffer later on. Saving must be done
+                               * in the lexer specification, otherwise YY_CURRENT_BUFFER
+                               * cannot be used (it's a macro).
+                               */
+                              lexer->buffer = YY_CURRENT_BUFFER;
+
+                              /* if it's a .macro, (not .macro_const), then go into
+                               * MACROEXPAND state, to correctly parse the arguments.
+                               * For .macro_const, we don't want this, because a .macro_const
+                               * is expanded here, hidden from the parser.
+                               */
+                              if (macro->takes_args) {
+                                  yylval->mval = macro;
+                                  yy_push_state(MACROEXPAND, yyscanner);
+                                  return TK_MACRO_IDENT;
+                              }
+                              else { /* expand the .macro_const here; no need for
+                                      * adding this to the grammar. */
+                                  /* goto SCANSTR state, and scan macro->body */
+                                  yy_push_state(SCANSTR, yyscanner);
+                                  yy_scan_string(macro->body, yyscanner);
+                              }
+                          }
                         }
 
 <PASM>{IDENT}":"        { /* a label in PASM */
@@ -964,7 +1041,9 @@ so keep them local to this file.
 init_scanner_state(yyscan_t yyscanner)>
 
 Initializes C<yyscanner> to the SPECIALSTART state, which can then decide
-whether to scan PASM or PIR tokens.
+whether to scan PASM or PIR tokens. State identifiers (e.g. SPECIALSTART)
+are not exported (private to the generated lexer), so this function wraps
+the call to yy_push_state().
 
 =cut
 
