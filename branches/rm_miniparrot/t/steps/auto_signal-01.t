@@ -1,11 +1,11 @@
 #! perl
-# Copyright (C) 2007, The Perl Foundation.
+# Copyright (C) 2007-2008, The Perl Foundation.
 # $Id$
 # auto_signal-01.t
 
 use strict;
 use warnings;
-use Test::More tests =>  43;
+use Test::More tests => 34;
 use Carp;
 use Cwd;
 use File::Temp qw(tempdir);
@@ -21,42 +21,22 @@ use Parrot::Configure::Test qw(
 );
 use IO::CaptureOutput qw| capture |;
 
-########### --miniparrot ###########
-
-my ($args, $step_list_ref) = process_options(
-    {
-        argv => [ q{--miniparrot} ],
-        mode => q{configure},
-    }
-);
-
-my $conf = Parrot::Configure->new;
-
-my $serialized = $conf->pcfreeze();
-
-test_step_thru_runstep( $conf, q{init::defaults}, $args );
-
-my $pkg = q{auto::signal};
-
-$conf->add_steps($pkg);
-$conf->options->set( %{$args} );
-my $step = test_step_constructor_and_description($conf);
-my $ret = $step->runstep($conf);
-ok( $ret, "runstep() returned true value" );
-is($step->result(), q{skipped}, "Expected result was set");
-
-$conf->replenish($serialized);
-
 ########### _handle__sighandler_t() ###########
 
-($args, $step_list_ref) = process_options( {
+my ($args, $step_list_ref) = process_options( {
     argv => [ ],
     mode => q{configure},
 } );
+
+my $conf = Parrot::Configure->new;
+my $serialized = $conf->pcfreeze();
+
+my $pkg = q{auto::signal};
+
 rerun_defaults_for_testing($conf, $args );
 $conf->add_steps($pkg);
 $conf->options->set( %{$args} );
-$step = test_step_constructor_and_description($conf);
+my $step = test_step_constructor_and_description($conf);
 
 ok(auto::signal::_handle__sighandler_t($conf),
     "_handle__sighandler_t() returned true value");
