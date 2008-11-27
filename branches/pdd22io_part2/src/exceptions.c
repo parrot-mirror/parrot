@@ -32,6 +32,14 @@ Define the the core subsystem for exceptions.
 /* HEADERIZER BEGIN: static */
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 
+PARROT_CANNOT_RETURN_NULL
+static PMC * build_exception_from_args(PARROT_INTERP,
+    int ex_type,
+    ARGIN(const char *format),
+    va_list arglist)
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(3);
+
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 static PMC * find_exception_handler(PARROT_INTERP, ARGIN(PMC *exception))
@@ -99,9 +107,9 @@ find_exception_handler(PARROT_INTERP, ARGIN(PMC *exception))
         return handler;
     }
     else {
-        STRING * const message = VTABLE_get_string(interp, exception);
-        INTVAL exit_status = 1;
-        const INTVAL severity = VTABLE_get_integer_keyed_str(interp, exception, CONST_STRING(interp, "severity"));
+        STRING * const message     = VTABLE_get_string(interp, exception);
+        INTVAL         exit_status = 1;
+        const INTVAL   severity    = VTABLE_get_integer_keyed_str(interp, exception, CONST_STRING(interp, "severity"));
 
         /* flush interpreter output to get things printed in order */
         Parrot_io_flush(interp, Parrot_io_STDOUT(interp));
@@ -113,18 +121,21 @@ find_exception_handler(PARROT_INTERP, ARGIN(PMC *exception))
         }
 
         if (string_equal(interp, message, CONST_STRING(interp, "")) == 1) {
-                fprintf(stderr, "%s\n", string_to_cstring(interp, message));
-                fflush(stderr); /* caution against output swap (with PDB_backtrace) */
-                PDB_backtrace(interp);
+            PIO_eprintf(interp, "%S\n", message);
+
+            /* caution against output swap (with PDB_backtrace) */
+            fflush(stderr);
+            PDB_backtrace(interp);
         }
         else if (severity == EXCEPT_exit) {
             /* TODO: get exit status based on type */
             exit_status = VTABLE_get_integer_keyed_str(interp, exception, CONST_STRING(interp, "exit_code"));
         }
         else {
-                Parrot_io_eprintf(interp, "No exception handler and no message\n");
-                fflush(stderr); /* caution against output swap (with PDB_backtrace) */
-                PDB_backtrace(interp);
+            Parrot_io_eprintf(interp, "No exception handler and no message\n");
+            /* caution against output swap (with PDB_backtrace) */
+            fflush(stderr);
+            PDB_backtrace(interp);
         }
 
         /*

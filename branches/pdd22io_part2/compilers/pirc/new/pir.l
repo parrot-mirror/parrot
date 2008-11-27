@@ -385,6 +385,18 @@ REGISTER       "$"[SNIP]{DIGITS}
                     return TK_LABEL;
                   }
 
+[SNIP]{DIGIT}+    { /* give a warning when using PASM registers as PIR identifiers */
+                    lexer_state * const lexer = yyget_extra(yyscanner);
+
+                    if (TEST_FLAG(lexer->flags, LEXER_FLAG_WARNINGS))
+                        pirwarning(lexer, yypirget_lineno(yyscanner),
+                                   "Use of PASM register identifier ('%s') "
+                                   "is not encouraged for readable code", yytext);
+
+                    yylval->sval = dupstr(yyget_extra(yyscanner), yytext);
+                    return TK_IDENT;
+                  }
+
 {IDENT}           { /* identifier; can be a global (sub or const), local or parrot op */
                     yylval->sval = dupstr(yyget_extra(yyscanner), yytext);
                     return TK_IDENT;
@@ -898,7 +910,7 @@ REGISTER       "$"[SNIP]{DIGITS}
 
 /* PASM tokens.
  *
- * do not mix with other tokens, using <state1, state2> notation.
+ * do not mix with other tokens, using <state1,state2> notation.
  * This becomes unmanageable
  */
 %}
@@ -917,19 +929,54 @@ REGISTER       "$"[SNIP]{DIGITS}
 <PASM>".pcc_sub"        { return TK_PCC_SUB; }
 <PASM>".lex"            { return TK_LEX; }
 <PASM>".namespace"      { return TK_NAMESPACE; }
-<PASM>".macro"          { yypirerror(yyscanner, yypirget_extra(yyscanner),
-                                     "macros are not supported in PASM mode");
+
+<PASM>".macro"          {
+                          yy_push_state(MACROHEAD, yyscanner);
+                          return TK_MACRO;
                         }
-<PASM>".macro_const"    { yypirerror(yyscanner, yypirget_extra(yyscanner),
-                                     "macro constants are not supported in PASM mode");
+
+<PASM>".macro_const"    {
+                          yy_push_state(MACROCONST, yyscanner);
+                          return TK_MACRO_CONST;
                         }
 
 <PASM>".line"           { return TK_LINE; }
 <PASM>".file"           { return TK_FILE; }
 
-<PASM>"."{IDENT}        { yypirerror(yyscanner, yypirget_extra(yyscanner),
-                                     "macro expansion or directive '%s' not supported in PASM mode",
-                                     yytext);
+
+<PASM>"."{IDENT}        { /* macro expansion in PASM mode. */
+                          lexer_state * const lexer = yyget_extra(yyscanner);
+                          macro_def   * const macro = find_macro(lexer->macros, yytext + 1);
+
+                          if (macro == NULL) { /* it's not a macro */
+                              yypirerror(yyscanner, lexer, "cannot find macro '%s'",
+                                         yytext + 1);
+                          }
+                          else { /* it's a macro */
+                              /* store current buffer at this point, because we'll be
+                               * scanning a string buffer later on. Saving must be done
+                               * in the lexer specification, otherwise YY_CURRENT_BUFFER
+                               * cannot be used (it's a macro).
+                               */
+                              lexer->buffer = YY_CURRENT_BUFFER;
+
+                              /* if it's a .macro, (not .macro_const), then go into
+                               * MACROEXPAND state, to correctly parse the arguments.
+                               * For .macro_const, we don't want this, because a .macro_const
+                               * is expanded here, hidden from the parser.
+                               */
+                              if (macro->takes_args) {
+                                  yylval->mval = macro;
+                                  yy_push_state(MACROEXPAND, yyscanner);
+                                  return TK_MACRO_IDENT;
+                              }
+                              else { /* expand the .macro_const here; no need for
+                                      * adding this to the grammar. */
+                                  /* goto SCANSTR state, and scan macro->body */
+                                  yy_push_state(SCANSTR, yyscanner);
+                                  yy_scan_string(macro->body, yyscanner);
+                              }
+                          }
                         }
 
 <PASM>{IDENT}":"        { /* a label in PASM */

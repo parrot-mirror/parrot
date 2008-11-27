@@ -123,6 +123,24 @@ Helper function for implementing the VAR and .VAR macros.
 .end
 
 
+=item !COPYPARAM
+
+Copies a param for the is copy trait, taking account of any ObjectRef and
+dereferencing it so we really do copy the underlying value.
+
+=cut
+
+.sub '!COPYPARAM'
+    .param pmc target
+    .param pmc source
+    $I0 = isa source, 'ObjectRef'
+    unless $I0 goto no_deref
+    source = deref source
+  no_deref:
+    .tailcall 'infix:='(target, source)
+.end
+
+
 =item !DOTYPECHECK
 
 Checks that the value and the assignee are type-compatible and does the
@@ -157,7 +175,13 @@ Checks the type of a parameter.
 
     $I0 = type.'ACCEPTS'(value)
     if $I0 goto ok
-    'die'('Parameter type check failed')
+    $P0 = getinterp
+    $P0 = $P0['sub' ; 1]
+    $S0 = $P0
+    if $S0 goto have_name
+    $S0 = '<anon>'
+  have_name:
+    'die'('Parameter type check failed in call to ', $S0)
 ok:
 .end
 
@@ -312,6 +336,15 @@ first). So for now we just transform multis in user code like this.
     goto iter_loop
   iter_loop_end:
     namespace[name] = p6multi
+
+    # If the namespace is associated with a class, need to update the method
+    # entry in that too.
+    .local pmc class
+    class = get_class namespace
+    if null class goto no_class
+    class.'remove_method'(name)
+    class.'add_method'(name, p6multi)
+  no_class:
     .return()
 
   error:
@@ -392,20 +425,22 @@ Internal helper method to create a role.
     .param string name
     .local pmc info, role
 
-    # Need to make sure it ends up attached to the right
-    # namespace.
+    # Need to make sure it ends up attached to the right namespace.
+    .local pmc ns
+    ns = split '::', name
+    name = ns[-1]
     info = new 'Hash'
     info['name'] = name
-    $P0 = new 'ResizablePMCArray'
-    $P0[0] = name
-    info['namespace'] = $P0
+    info['namespace'] = ns
 
     # Create role.
     role = new 'Role', info
 
     # Stash in namespace.
-    $P0 = new 'ResizableStringArray'
-    set_hll_global $P0, name, role
+    $I0 = elements ns
+    dec $I0
+    ns = $I0
+    set_hll_global ns, name, role
 
     .return(role)
 .end

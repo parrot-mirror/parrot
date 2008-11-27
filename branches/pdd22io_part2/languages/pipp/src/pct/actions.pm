@@ -29,7 +29,7 @@ method TOP($/) {
     # subrules may have added stuff to $?INIT
     # execute it first
     our $?INIT;
-    if defined( $?INIT ) {
+    if pipp_defined( $?INIT ) {
         $?INIT.blocktype('declaration');
         $?INIT.pirflags(':init :load');
         $past.unshift( $?INIT );
@@ -126,6 +126,17 @@ method namespace_statement($/) {
     make $past;
 }
 
+method require_once_statement($/) {
+    my $past := PAST::Op.new(
+                   :name('require'),
+                   :pasttype('call'),
+                   :node( $/ ),
+                   $( $/<quote> )
+               );
+
+    make $past;
+}
+
 method echo_statement($/) {
     my $past := $( $<arguments> );
     $past.name( 'echo' );
@@ -192,7 +203,7 @@ method class_constant($/) {
 # class constants could probably also be set in a class init block
 method class_constant_definition($/) {
     our $?INIT;
-    unless defined( $?INIT ) {
+    unless pipp_defined( $?INIT ) {
         $?INIT := PAST::Block.new();
     }
     $?INIT.push( 

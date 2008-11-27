@@ -457,15 +457,12 @@ method statement_prefix($/) {
         $past.push( PAST::Op.new( :inline( $elsepir ) ) );
     }
     elsif $sym eq 'gather' {
-        if $past.isa(PAST::Block) {
-            $past.blocktype('declaration');
+        if !$past.isa(PAST::Block) {
+            $past := PAST::Block.new($past)
         }
-        else {
-            $past := PAST::Block.new(:blocktype('declaration'), $past)
-        }
-        # XXX Workaround for lexicals issue.  rt #58854
-        $past := PAST::Op.new(:pirop('newclosure'), $past);
-        $past := PAST::Op.new( $past, :pasttype('call'), :name('gather'), :node($/) );
+        $past.blocktype('declaration');
+        $past := PAST::Op.new( $past, :pasttype('call'),
+                               :name('gather'), :node($/) );
     }
     else {
         $/.panic( $sym ~ ' not implemented');
@@ -540,13 +537,41 @@ method routine_declarator($/, $key) {
         # Set up the block details.
         $past.blocktype('method');
         set_block_proto($past, 'Method');
+        my $signature;
         if $<method_def><multisig> {
-            set_block_sig($past, $( $<method_def><multisig>[0]<signature> ));
+            $signature := $( $<method_def><multisig>[0]<signature> );
+            set_block_sig($past, $signature);
         }
         else {
-            set_block_sig($past, empty_signature());
+            $signature := empty_signature();
+            set_block_sig($past, $signature);
         }
         $past := add_method_to_class($past);
+
+        # If the signature doesn't include an explicity invocant, add one to
+        # the signature.
+        my $found_invocant := 0;
+        if $signature[1].isa(PAST::Stmts) && $signature[1][1].isa(PAST::Stmts) {
+            for @($signature[1][1]) {
+                if $_[0].value() eq 'invocant' {
+                    $found_invocant := 1;
+                }
+            }
+        }
+        if !$found_invocant {
+            # Add anonymous parameter taking invocant.
+            my $descriptor := sig_descriptor_create();
+            sig_descriptor_set($descriptor, 'name', PAST::Val.new( :value('$') ));
+            sig_descriptor_set($descriptor, 'invocant', PAST::Val.new( :value(1) ));
+            sig_descriptor_set($descriptor, 'constraints',
+                PAST::Op.new(
+                    :pasttype('call'),
+                    :name('list')
+                ));
+            my $obj := $signature.shift();
+            $signature.unshift($descriptor);
+            $signature.unshift($obj);
+        }
     }
     $past.node($/);
     if (+@($past[1])) {
@@ -692,7 +717,7 @@ method enum_declarator($/, $key) {
         # can get data from it..
         $class_past.push(PAST::Op.new(
             :pasttype('callmethod'),
-            :name('add_method'),
+            :name('add_vtable_override'),
             PAST::Var.new(
                 :scope('lexical'),
                 :name('$def')
@@ -705,15 +730,11 @@ method enum_declarator($/, $key) {
                     :name("$!" ~ $name),
                     :scope('attribute')
                 )
-            ),
-            PAST::Val.new(
-                :value(1),
-                :named( PAST::Val.new( :value('vtable') ) )
             )
         ));
         $class_past.push(PAST::Op.new(
             :pasttype('callmethod'),
-            :name('add_method'),
+            :name('add_vtable_override'),
             PAST::Var.new(
                 :scope('lexical'),
                 :name('$def')
@@ -730,15 +751,11 @@ method enum_declarator($/, $key) {
                         :scope('attribute')
                     )
                 )
-            ),
-            PAST::Val.new(
-                :value(1),
-                :named( PAST::Val.new( :value('vtable') ) )
             )
         ));
         $class_past.push(PAST::Op.new(
             :pasttype('callmethod'),
-            :name('add_method'),
+            :name('add_vtable_override'),
             PAST::Var.new(
                 :scope('lexical'),
                 :name('$def')
@@ -755,15 +772,11 @@ method enum_declarator($/, $key) {
                         :scope('attribute')
                     )
                 )
-            ),
-            PAST::Val.new(
-                :value(1),
-                :named( PAST::Val.new( :value('vtable') ) )
             )
         ));
         $class_past.push(PAST::Op.new(
             :pasttype('callmethod'),
-            :name('add_method'),
+            :name('add_vtable_override'),
             PAST::Var.new(
                 :scope('lexical'),
                 :name('$def')
@@ -780,10 +793,6 @@ method enum_declarator($/, $key) {
                         :scope('attribute')
                     )
                 )
-            ),
-            PAST::Val.new(
-                :value(1),
-                :named( PAST::Val.new( :value('vtable') ) )
             )
         ));
 
@@ -1014,8 +1023,6 @@ method signature($/) {
     # * $?BLOCK_SIGNATURED ends up containing the PAST tree for a block that
     #   takes and binds the parameters. This is used for generating subs,
     #   methods and so forth.
-    # * $?PARAM_TYPE_CHECK is used to export details of the types from here
-    #   so that the multi plurality declarator can make use of them.
 
     # Initialize PAST for the signatured block, if we're going to have it.
     our $?SIG_BLOCK_NOT_NEEDED;
@@ -1040,23 +1047,27 @@ method signature($/) {
     );
 
     # Go through the parameters.
+    my $is_multi_invocant := 1;
     for $/[0] {
         my $parameter := $($_<parameter>);
         my $separator := $_[0];
+        my $is_invocant := 0;
 
         # Add parameter declaration to the block, if we're producing one.
         unless $?SIG_BLOCK_NOT_NEEDED {
-            # Register symbol and put parameter PAST into the node.
-            $block_past.symbol($parameter.name(), :scope('lexical'));
-            $params.push($parameter);
-
             # If it has & sigil, strip it off.
             if substr($parameter.name(), 0, 1) eq '&' {
                 $parameter.name(substr($parameter.name(), 1));
             }
 
+            # Register symbol and put parameter PAST into the node.
+            $block_past.symbol($parameter.name(), :scope('lexical'));
+            $params.push($parameter);
+
             # If it is invocant, modify it to be just a lexical and bind self to it.
             if substr($separator, 0, 1) eq ':' {
+                $is_invocant := 1;
+
                 # Make sure it's first parameter.
                 if +@($params) != 1 {
                     $/.panic("There can only be one invocant and it must be the first parameter");
@@ -1092,6 +1103,12 @@ method signature($/) {
         }
         if $parameter.slurpy() {
             sig_descriptor_set($descriptor, 'slurpy', PAST::Val.new( :value(1) ));
+        }
+        if $is_invocant {
+            sig_descriptor_set($descriptor, 'invocant', PAST::Val.new( :value(1) ));
+        }
+        if $is_multi_invocant {
+            sig_descriptor_set($descriptor, 'multi_invocant', PAST::Val.new( :value(1) ));
         }
 
         # See if we have any traits. For now, we just handle ro, rw and copy.
@@ -1247,7 +1264,7 @@ method signature($/) {
                     PAST::Op.new(
                         :inline(
                             '    %r = new "Perl6Scalar"',
-                            '    "infix:="(%r, %0)'
+                            '    "!COPYPARAM"(%r, %0)'
                         ),
                         PAST::Var.new(
                             :name($parameter.name()),
@@ -1257,13 +1274,18 @@ method signature($/) {
                 ));
             }
         }
+
+        # If the separator is a ;; then parameters beyond this are not multi
+        # invocants.
+        if substr($separator, 0, 2) eq ';;' {
+            $is_multi_invocant := 0;
+        }
     }
 
     # Finish setting up the signatured block, if we're making one.
     unless $?SIG_BLOCK_NOT_NEEDED {
         $block_past.arity( +$/[0] );
         our $?BLOCK_SIGNATURED := $block_past;
-        our $?PARAM_TYPE_CHECK := $type_check;
         $params.push($type_check);
     }
 
@@ -1556,6 +1578,13 @@ sub apply_package_traits($package, $traits) {
         }
         elsif $aux<sym> eq 'does' {
             # Role.
+            my @identifier := Perl6::Compiler.parse_name(~$aux<name>);
+            my $name := @identifier.pop();
+            my $role_name := PAST::Var.new(
+                                 :name($name),
+                                 :namespace(@identifier),
+                                 :scope('package'),
+                             );
             $package.push(
                 PAST::Op.new(
                     :pasttype('call'),
@@ -1564,10 +1593,7 @@ sub apply_package_traits($package, $traits) {
                         :name('$def'),
                         :scope('lexical')
                     ),
-                    PAST::Var.new(
-                        :name(~$aux<name>),
-                        :scope('package')
-                    )
+                    $role_name
                 )
             );
         }
@@ -2267,7 +2293,8 @@ method scope_declarator($/) {
                     );
                 }
 
-                # Add block entry.
+                # Add block entry and set scope.
+                $past.scope($scope);
                 $?BLOCK.symbol($name, :scope($scope));
             }
         }
@@ -2846,26 +2873,32 @@ method EXPR($/, $key) {
 
         # Check that we have a sub call.
         if !$call.isa(PAST::Op) || $call.pasttype() ne 'call' {
-            $/.panic('.= must have a call on the right hand side');
+            $/[0].panic('.= must have a call on the right hand side');
         }
 
-        # Make a duplicate of the target node to receive result
-        my $target := PAST::Var.new(
-            :name($invocant.name()),
-            :scope($invocant.scope()),
-            :lvalue(1)
-        );
-
-        # Change call node to a callmethod and add the invocant
+        # Change call node to a callmethod.
         $call.pasttype('callmethod');
-        $call.unshift($invocant);
 
-        # and assign result to target
+        # We only want to evaluate invocant once; stash it in a register.
+        $call.unshift(PAST::Op.new(
+            :pasttype('bind'),
+            PAST::Var.new(
+                :name('detemp'),
+                :scope('register'),
+                :isdecl(1)
+            ),
+            $invocant
+        ));
+
+        # Do call, then assignment to target container.
         my $past := PAST::Op.new(
             :inline("    %r = 'infix:='(%1, %0)"),
             :node($/),
             $call,
-            $target
+            PAST::Var.new(
+                :name('detemp'),
+                :scope('register')
+            )
         );
 
         make $past;
@@ -2881,7 +2914,7 @@ method EXPR($/, $key) {
         if $rhs.isa(PAST::Op) && $rhs.pasttype() eq 'call' {
             # Make sure we only have one initialization value.
             if +@($rhs) > 2 {
-                $/.panic("Role initialization can only supply a value for one attribute");
+                $/[0].panic("Role initialization can only supply a value for one attribute");
             }
             # Push role name and argument onto infix:does or infix:but.
             $past.push($rhs[0]);
