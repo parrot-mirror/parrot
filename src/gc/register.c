@@ -299,6 +299,7 @@ init_context(PARROT_INTERP, ARGMOD(Parrot_Context *ctx),
         ARGIN_NULLOK(const Parrot_Context *old))
 {
     ctx->ref_count         = 0;    /* RT #46191 1 - Exceptions !!! */
+    ctx->gc_mark           = 0;
     ctx->current_results   = NULL;
     ctx->results_signature = NULL;
     ctx->lex_pad           = PMCNULL;
@@ -375,8 +376,9 @@ Parrot_pop_context(PARROT_INTERP)
     Parrot_Context * const old = ctx->caller_ctx;
 
 #if CTX_LEAK_DEBUG
-    if (Interp_debug_TEST(interp, PARROT_CTX_DESTROY_DEBUG_FLAG)) {
-        fprintf(stderr, "[force recycle of context %p (%d refs)]\n", 
+    if (ctx->ref_count > 0 &&
+            Interp_debug_TEST(interp, PARROT_CTX_DESTROY_DEBUG_FLAG)) {
+        fprintf(stderr, "[force recycle of context %p (%d refs)]\n",
             (void *)ctx, ctx->ref_count);
     }
 #endif
@@ -574,6 +576,10 @@ Parrot_free_context(PARROT_INTERP, ARGMOD(Parrot_Context *ctx), int deref)
             }
         }
 #endif
+
+        if (ctx->outer_ctx)
+            Parrot_free_context(interp, ctx->outer_ctx, 1);
+
         if (ctx->n_regs_used) {
             mem_sys_free(ctx->n_regs_used);
             ctx->n_regs_used = NULL;
@@ -606,7 +612,7 @@ Parrot_free_context(PARROT_INTERP, ARGMOD(Parrot_Context *ctx), int deref)
         ptr             = ctx;
         slot            = CALCULATE_SLOT_NUM(ctx->regs_mem_size);
 
-#if CTX_DEBUG_LEAK_FULL
+#if CTX_LEAK_DEBUG_FULL
         slot = 0;
 #endif
 
@@ -629,13 +635,16 @@ Helper function to trace references when CTX_LEAK_DEBUG is set.
 
 PARROT_EXPORT
 Parrot_Context *
-Parrot_context_ref_trace(PARROT_INTERP, 
+Parrot_context_ref_trace(PARROT_INTERP,
         ARGMOD(Parrot_Context *ctx),
         ARGIN(const char *file), int line)
 {
     if (Interp_debug_TEST(interp, PARROT_CTX_DESTROY_DEBUG_FLAG)) {
-        fprintf(stderr, "[reference to context %p taken at %s:%d]\n",
-                (void *)ctx, file, line);
+        const char *name = "unknown";
+        if (ctx->current_sub)
+            name = (char *)(PMC_sub(ctx->current_sub)->name->strstart);
+        fprintf(stderr, "[reference to context %p ('%s') taken at %s:%d]\n",
+                (void *)ctx, name, file, line);
     }
     ctx->ref_count++;
     return ctx;

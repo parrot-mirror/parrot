@@ -4,6 +4,7 @@
 
 integration/lexical-array-in-inner-block.t
 integration/lexicals-and-attributes.t
+integration/man-or-boy.t
 integration/real-strings.t
 S02-builtin_data_types/anon_block.t
 S02-builtin_data_types/array_extending.t
@@ -22,7 +23,6 @@ S02-builtin_data_types/nested_pairs.t
 S02-builtin_data_types/num.t
 S02-builtin_data_types/range.t
 S02-builtin_data_types/subscripts_and_context.t
-S02-builtin_data_types/subtypes.t
 S02-builtin_data_types/type.t
 S02-literals/array-interpolation.t
 S02-literals/autoref.t
@@ -41,8 +41,7 @@ S02-magicals/dollar_bang.t
 S02-magicals/dollar-underscore.t
 S02-names_and_variables/fmt.t
 S02-names_and_variables/varnames.t
-S02-polymorphic_types/subset-code.t
-S02-polymorphic_types/subset-range.t
+S02-polymorphic_types/subset.t
 S02-whitespace_and_comments/minimal-whitespace.t
 S02-whitespace_and_comments/one-pass-parsing.t
 S02-whitespace_and_comments/pod-in-multi-line-exprs.t
@@ -130,7 +129,9 @@ S06-signature/code.t
 S06-signature/mixed-placeholders.t
 S06-signature/named-parameters.t
 S06-signature/named-placeholders.t
+S06-signature/passing-arrays.t
 S06-signature/positional-placeholders.t
+S06-signature/slurpy-params.t
 S06-signature/slurpy-placeholders.t
 S06-signature/sub-ref.t
 S06-signature/type-capture.t
@@ -149,20 +150,25 @@ S12-class/inheritance.t
 S12-class/instantiate.t
 S12-class/is_also_instead.t
 S12-class/namespaced.t
+S12-class/open.t
 S12-class/parent_attributes.t
 S12-enums/anonymous.t
 S12-enums/as-role.t
 S12-enums/basic.t
 S12-introspection/can.t
 S12-methods/calling_syntax.t
+S12-methods/default-trait.t
 S12-methods/indirect_notation.t
+S12-methods/multi.t
 S12-methods/instance.t
 S12-methods/topic.t
 S12-methods/what.t
 S12-role/attributes.t
 S12-role/composition.t
 S12-role/mixin.t
+S12-role/namespaced.t
 S12-subset/multi-dispatch.t
+S12-subset/subtypes.t
 S16-filehandles/io_in_while_loops.t
 S16-io/say.t
 S29-any/cmp.t

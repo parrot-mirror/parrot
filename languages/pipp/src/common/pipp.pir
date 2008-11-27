@@ -55,11 +55,13 @@ Bernhard Schmalhofer - L<Bernhard.Schmalhofer@gmx.de>
 .namespace [ 'PAST';'Compiler' ]
 
 .sub '__onload' :anon :load :init
+
+    # Pipp uses the Parrot Compiler Toolkit
     load_bytecode 'PCT.pbc'
 
-    ##  %valflags specifies when PAST::Val nodes are allowed to
-    ##  be used as a constant.  The 'e' flag indicates that the
-    ##  value must be quoted+escaped in PIR code.
+    #  %valflags specifies when PAST::Val nodes are allowed to
+    #  be used as a constant.  The 'e' flag indicates that the
+    #  value must be quoted+escaped in PIR code.
     .local pmc valflags
     valflags = get_global '%valflags'
     valflags['PhpString']   = 's~*e'
@@ -103,6 +105,7 @@ Bernhard Schmalhofer - L<Bernhard.Schmalhofer@gmx.de>
     # import PGE::Util::die into Pipp::Grammar
     $P0 = get_hll_global ['PGE';'Util'], 'die'
     set_hll_global ['Pipp';'Grammar'], 'die', $P0
+    set_hll_global ['Pipp'], 'die', $P0
 
     # register and set up the the HLLCompiler
     $P1 = new [ 'PCT';'HLLCompiler' ]
@@ -115,9 +118,9 @@ Bernhard Schmalhofer - L<Bernhard.Schmalhofer@gmx.de>
 .sub pipp :main
     .param pmc argv
 
-    .local string rest
+    .local string prog, rest
     .local pmc    opt
-    ( opt, rest ) = parse_options(argv)
+    (prog, opt, rest) = parse_options(argv)
 
     # Find the name of the input file
     .local string source_fn
@@ -200,7 +203,12 @@ VARIANT_PCT:
     .local pmc pipp_compiler
     pipp_compiler = compreg 'Pipp'
 
-    .tailcall pipp_compiler.'evalfiles'( source_fn, 'target' => target, 'output' => output )
+    .local pmc args
+    args = new 'ResizableStringArray'
+    push args, prog
+    push args, rest
+
+    .tailcall pipp_compiler.'command_line'( args, 'target' => target, 'output' => output )
 
 VARIANT_PHC:
     .local string phc_src_dir
@@ -364,7 +372,7 @@ n_help:
     rest = argv[argc]
 NO_REST:
 
-    .return (opt, rest )
+    .return (prog, opt, rest)
 .end
 
 # keep arguments from the command line and from ini-file
@@ -374,12 +382,26 @@ NO_REST:
     set_hll_global 'pipp_ini', pipp_ini
 .end
 
-# there is a distinction between predifined vars and superglobals
+# there is a distinction between predefined variables and superglobals
 .sub set_predefined_variables
+
     .local pmc php_errormsg
     php_errormsg = new 'PhpString'
     php_errormsg = ''
     set_hll_global '$php_errormsg', php_errormsg
+
+    .local pmc included_files
+    included_files = new 'PhpArray'
+    set_hll_global '$INC', included_files
+
+    .local pmc include_path, include_dir
+    include_path = new 'PhpArray'
+    include_dir = new 'PhpString'
+    include_dir = '.'
+    push include_path, include_dir
+    set_hll_global '$INCLUDE_PATH', include_path
+
+
 .end
 
 # Most of the superglobals are not initialized yet

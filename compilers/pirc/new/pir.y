@@ -197,6 +197,9 @@ static void check_first_arg_direction(yyscan_t yyscanner, char const * const opn
 static int check_op_args_for_symbols(yyscan_t yyscanner);
 static int get_opinfo(yyscan_t yyscanner);
 
+static void undeclared_symbol(yyscan_t yyscanner, lexer_state * const lexer,
+                              char const * const symbol);
+
 /* names of the Parrot types. Note that pir_type_namwes is global,
  * but it's read-only, so that's fine.
  */
@@ -1998,9 +2001,9 @@ symbol      : reg
             | identifier { /* a symbol must have been declared; check that at this point. */
                            symbol *sym = find_symbol(lexer, $1);
                            if (sym == NULL) {
-                               yypirerror(yyscanner, lexer, "symbol '%s' not declared", $1);
+                               undeclared_symbol(yyscanner, lexer, $1);
 
-                                   /* make sure sym is not NULL */
+                               /* make sure sym is not NULL */
                                sym = new_symbol(lexer, $1, UNKNOWN_TYPE);
                            }
                            $$ = target_from_symbol(lexer, sym);
@@ -2105,6 +2108,8 @@ pasm_line                 : pasm_statement
                           | namespace_decl "\n"
                           | lex_decl                /* lex_decl rule has already a "\n" token */
                           | location_directive "\n"
+                          | macro_definition "\n"
+                          | macro_expansion
                           ;
 
 pasm_statement            : TK_LABEL opt_pasm_instruction
@@ -3566,7 +3571,7 @@ check_op_args_for_symbols(yyscan_t yyscanner) {
                  * an error.
                  */
                 if (TEST_BIT(label_bitmask, BIT(i))) {
-                    yypirerror(yyscanner, lexer, "symbol '%s' is not declared", iter->expr.id);
+                    undeclared_symbol(yyscanner, lexer, iter->expr.id);
                     return FALSE;
                 }
             }
@@ -3590,6 +3595,35 @@ check_op_args_for_symbols(yyscan_t yyscanner) {
         while (iter != CURRENT_INSTRUCTION(lexer)->operands);
     }
     return TRUE;
+}
+
+/*
+
+=item C<static void
+undeclared_symbol(yyscan_t yyscanner, lexer_state * const lexer, char * const symbol)>
+
+Report an error message saying that C<symbol> was not declared. Then test
+whether the symbol is perhaps a PASM register identifier. The user may have
+mistakenly tried to use a PASM register in PIR mode.
+
+=cut
+
+*/
+static void
+undeclared_symbol(yyscan_t yyscanner, lexer_state * const lexer, char const * const symbol) {
+    yypirerror(yyscanner, lexer, "symbol '%s' not declared", symbol);
+
+    /* maybe user tried to use PASM register? */
+    if (symbol[0] == 'S' || symbol[0] == 'N' || symbol[0] == 'I' || symbol[0] == 'P') {
+        /* if all subsequent characters are digits, then it was
+         * the format of a PASM register.
+         */
+        if ((strlen(symbol) > 1) /* make sure string is longer than 1 char */
+        &&  (strspn(symbol + 1, "0123456789") == strlen(symbol + 1)))
+            fprintf(stderr,
+                "PASM registers ('%s') are not allowed in PIR code\n", symbol);
+
+    }
 }
 
 /*
