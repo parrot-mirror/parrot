@@ -133,8 +133,12 @@ Free structures.
         if (PARROT_FILEHANDLE(SELF)) {
             Parrot_FileHandle_attributes *data_struct = PARROT_FILEHANDLE(SELF);
 
-            if (!Parrot_io_is_closed(INTERP, SELF))
-                Parrot_io_close(INTERP, SELF);
+            if (!Parrot_io_is_closed(INTERP, SELF)) {
+                if (data_struct->flags & PIO_F_SHARED)
+                    Parrot_io_flush(INTERP, SELF);
+                else
+                    Parrot_io_close(INTERP, SELF);
+            }
 
             if (data_struct->buffer_start)
                 mem_sys_free(data_struct->buffer_start);
