@@ -197,15 +197,15 @@ struct PackFile_ByteCode {
     PackFile_FixupTable   *fixups;
 };
 
-typedef struct PackFile_DebugMapping {
+typedef struct PackFile_DebugFilenameMapping {
     opcode_t offset;
     opcode_t filename;
-} PackFile_DebugMapping;
+} PackFile_DebugFilenameMapping;
 
 typedef struct PackFile_Debug {
     PackFile_Segment        base;
     opcode_t                num_mappings;
-    PackFile_DebugMapping **mappings;
+    PackFile_DebugFilenameMapping **mappings;
     PackFile_ByteCode      *code;   /* where this segment belongs to */
 } PackFile_Debug;
 

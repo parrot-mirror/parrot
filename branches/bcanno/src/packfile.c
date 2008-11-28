@@ -2244,7 +2244,7 @@ pf_debug_new(SHIM_INTERP, SHIM(PackFile *pf), SHIM(const char *name), SHIM(int a
 {
     PackFile_Debug * const debug = mem_allocate_zeroed_typed(PackFile_Debug);
 
-    debug->mappings              = mem_allocate_typed(PackFile_DebugMapping *);
+    debug->mappings              = mem_allocate_typed(PackFile_DebugFilenameMapping *);
     debug->mappings[0]           = NULL;
 
     return (PackFile_Segment *)debug;
@@ -2342,12 +2342,12 @@ pf_debug_unpack(PARROT_INTERP, ARGOUT(PackFile_Segment *self), ARGIN(const opcod
     debug->num_mappings = PF_fetch_opcode(self->pf, &cursor);
 
     /* Allocate space for mappings vector. */
-    mem_realloc_n_typed(debug->mappings, debug->num_mappings+1, PackFile_DebugMapping *);
+    mem_realloc_n_typed(debug->mappings, debug->num_mappings+1, PackFile_DebugFilenameMapping *);
 
     /* Read in each mapping. */
     for (i = 0; i < debug->num_mappings; i++) {
         /* Allocate struct and get offset and filename type. */
-        debug->mappings[i] = mem_allocate_typed(PackFile_DebugMapping);
+        debug->mappings[i] = mem_allocate_typed(PackFile_DebugFilenameMapping);
         debug->mappings[i]->offset = PF_fetch_opcode(self->pf, &cursor);
         debug->mappings[i]->filename = PF_fetch_opcode(self->pf, &cursor);
     }
@@ -2483,13 +2483,13 @@ void
 Parrot_debug_add_mapping(PARROT_INTERP, ARGMOD(PackFile_Debug *debug),
                          opcode_t offset, ARGIN(const char *filename))
 {
-    PackFile_DebugMapping *mapping;
+    PackFile_DebugFilenameMapping *mapping;
     PackFile_ConstTable * const ct = debug->code->const_table;
     int insert_pos = 0;
     PackFile_Constant *fnconst;
 
     /* Allocate space for the extra entry. */
-    mem_realloc_n_typed(debug->mappings, debug->num_mappings+1, PackFile_DebugMapping *);
+    mem_realloc_n_typed(debug->mappings, debug->num_mappings+1, PackFile_DebugFilenameMapping *);
 
     /* Can it just go on the end? */
     if (debug->num_mappings == 0 ||
@@ -2521,7 +2521,7 @@ Parrot_debug_add_mapping(PARROT_INTERP, ARGMOD(PackFile_Debug *debug),
     ct->constants[ct->const_count - 1] = fnconst;
 
     /* Set up new entry and insert it. */
-    mapping               = mem_allocate_typed(PackFile_DebugMapping);
+    mapping               = mem_allocate_typed(PackFile_DebugFilenameMapping);
     mapping->offset       = offset;
     mapping->filename     = ct->const_count - 1;
 
