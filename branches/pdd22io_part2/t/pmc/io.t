@@ -742,7 +742,7 @@ pir_output_is( <<"CODE", <<"OUTPUT", "utf8 read enabled" );
     f = '$temp_file'
     len = stat f, .STAT_FILESIZE
     pio = open f, "<"
-    pio.'encoding("utf8")
+    pio.'encoding'("utf8")
     \$S0 = read pio, len
     close pio
     \$I1 = charset \$S0
