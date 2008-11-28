@@ -317,6 +317,31 @@ static int sub_pragma(PARROT_INTERP,
         __attribute__nonnull__(1)
         __attribute__nonnull__(3);
 
+PackFile_Segment *
+PackFile_Annotations_new(PARROT_INTERP,
+    struct PackFile *pf,
+    const char *name,
+    int add);
+
+void
+PackFile_Annotations_destroy(PARROT_INTERP,
+    struct PackFile_Segment *seg);
+
+size_t
+PackFile_Annotations_packed_size(PARROT_INTERP,
+    struct PackFile_Segment *seg);
+
+opcode_t *PackFile_Annotations_pack(PARROT_INTERP,
+    struct PackFile_Segment *seg,
+    opcode_t *cursor);
+
+opcode_t *PackFile_Annotations_unpack(PARROT_INTERP,
+    PackFile_Segment *seg,
+    opcode_t *cursor);
+
+void PackFile_Annotations_dump(PARROT_INTERP,
+    struct PackFile_Segment *seg);
+
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 /* HEADERIZER END: static */
 
@@ -1384,12 +1409,23 @@ pf_register_standard_funcs(PARROT_INTERP, ARGMOD(PackFile *pf))
         pf_debug_unpack,
         pf_debug_dump
     };
-    PackFile_funcs_register(interp, pf, PF_DIR_SEG,     dirf);
-    PackFile_funcs_register(interp, pf, PF_UNKNOWN_SEG, defaultf);
-    PackFile_funcs_register(interp, pf, PF_FIXUP_SEG,   fixupf);
-    PackFile_funcs_register(interp, pf, PF_CONST_SEG,   constf);
-    PackFile_funcs_register(interp, pf, PF_BYTEC_SEG,   bytef);
-    PackFile_funcs_register(interp, pf, PF_DEBUG_SEG,   debugf);
+
+    const PackFile_funcs annotationf = {
+        PackFile_Annotations_new,
+        PackFile_Annotations_destroy,
+        PackFile_Annotations_packed_size,
+        PackFile_Annotations_pack,
+        PackFile_Annotations_unpack,
+        PackFile_Annotations_dump
+    };
+
+    PackFile_funcs_register(interp, pf, PF_DIR_SEG,         dirf);
+    PackFile_funcs_register(interp, pf, PF_UNKNOWN_SEG,     defaultf);
+    PackFile_funcs_register(interp, pf, PF_FIXUP_SEG,       fixupf);
+    PackFile_funcs_register(interp, pf, PF_CONST_SEG,       constf);
+    PackFile_funcs_register(interp, pf, PF_BYTEC_SEG,       bytef);
+    PackFile_funcs_register(interp, pf, PF_DEBUG_SEG,       debugf);
+    PackFile_funcs_register(interp, pf, PF_ANNOTATIONS_SEG, annotationf);
 
     return;
 }
@@ -3611,6 +3647,178 @@ PackFile_Constant_unpack_key(PARROT_INTERP, ARGIN(PackFile_ConstTable *constt),
 
     return cursor;
 }
+
+
+/*
+
+=item C<PackFile_Segment * PackFile_Annotations_new>
+
+Creates a new annotations segment structure. Ignores the parameters C<name>
+and C<add>.
+
+*/
+
+PackFile_Segment *
+PackFile_Annotations_new(PARROT_INTERP, struct PackFile *pf, const char *name,
+        int add) {
+    /* Allocate annotations structure; create it all zeroed, and we will
+     * allocate memory for each of the arrays on demand. */
+    PackFile_Annotations *seg = mem_allocate_typed(PackFile_Annotations);
+    return (PackFile_Segment *) seg;
+}
+
+
+/*
+
+=item C<void PackFile_Annotations_destroy>
+
+Frees all memory associated with an annotations segment.
+
+*/
+
+void
+PackFile_Annotations_destroy(PARROT_INTERP, struct PackFile_Segment *seg) {
+    PackFile_Annotations *self = (PackFile_Annotations *)seg;
+    INTVAL i;
+
+    /* Free any keys. */
+    if (self->keys) {
+        for (i = 0; i < self->num_keys; i++)
+            mem_sys_free(self->keys[i]);
+        mem_sys_free(self->keys);
+    }
+
+    /* Free any groups. */
+    if (self->groups) {
+        for (i = 0; i < self->num_groups; i++)
+            mem_sys_free(self->groups[i]);
+        mem_sys_free(self->groups);
+    }
+
+    /* Free any entries. */
+    if (self->entries) {
+        for (i = 0; i < self->num_entries; i++)
+            mem_sys_free(self->entries[i]);
+        mem_sys_free(self->entries);
+    }
+}
+
+
+/*
+
+=item C<size_t PackFile_Annotations_packed_size>
+
+Computes the number of opcode_ts we'll need to store the passed annotations
+segment.
+
+*/
+
+size_t
+PackFile_Annotations_packed_size(PARROT_INTERP, struct PackFile_Segment *seg) {
+    PackFile_Annotations *self = (PackFile_Annotations *)seg;
+    return 3                      /* Counts. */
+         + self->num_keys    * 2  /* Keys. */
+         + self->num_groups  * 2  /* Groups. */
+         + self->num_entries * 3; /* Entries. */
+}
+
+
+/*
+
+=item C<opcode_t * PackFile_Annotations_pack>
+
+Packs this segment into bytecode.
+
+*/
+
+opcode_t *PackFile_Annotations_pack(PARROT_INTERP, struct PackFile_Segment *seg,
+        opcode_t *cursor) {
+    PackFile_Annotations *self = (PackFile_Annotations *)seg;
+    INTVAL i;
+
+    /* Write key count and any keys. */
+    *cursor++ = self->num_keys;
+    for (i = 0; i < self->num_keys; i++) {
+        *cursor++ = self->keys[i]->name;
+        *cursor++ = self->keys[i]->type;
+    }
+
+    /* Write group count and any groups. */
+    *cursor++ = self->num_groups;
+    for (i = 0; i < self->num_groups; i++) {
+        *cursor++ = self->groups[i]->bytecode_offset;
+        *cursor++ = self->groups[i]->entries_offset;
+    }
+
+    /* Write entry count and any entries. */
+    *cursor++ = self->num_entries;
+    for (i = 0; i < self->num_entries; i++) {
+        *cursor++ = self->entries[i]->bytecode_offset;
+        *cursor++ = self->entries[i]->key;
+        *cursor++ = self->entries[i]->value.integer;
+    }
+
+    return cursor;
+}
+
+
+/*
+
+=item C<opcode_t * PackFile_Annotations_unpack>
+
+Unpacks this segment from the bytecode.
+
+*/
+
+opcode_t *PackFile_Annotations_unpack(PARROT_INTERP, PackFile_Segment *seg,
+        opcode_t *cursor) {
+    PackFile_Annotations *self = (PackFile_Annotations *)seg;
+    INTVAL i;
+
+    /* Unpack keys. */
+    self->num_keys = PF_fetch_opcode(seg->pf, &cursor);
+    self->keys     = mem_allocate_n_typed(self->num_keys, PackFile_Annotations_Key *);
+    for (i = 0; i < self->num_keys; i++) {
+        self->keys[i]       = mem_allocate_typed(PackFile_Annotations_Key);
+        self->keys[i]->name = PF_fetch_opcode(seg->pf, &cursor);
+        self->keys[i]->type = PF_fetch_opcode(seg->pf, &cursor);
+    }
+
+    /* Unpack groups. */
+    self->num_groups = PF_fetch_opcode(seg->pf, &cursor);
+    self->groups     = mem_allocate_n_typed(self->num_groups, PackFile_Annotations_Group *);
+    for (i = 0; i < self->num_groups; i++) {
+        self->groups[i]                  = mem_allocate_typed(PackFile_Annotations_Group);
+        self->groups[i]->bytecode_offset = PF_fetch_opcode(seg->pf, &cursor);
+        self->groups[i]->entries_offset  = PF_fetch_opcode(seg->pf, &cursor);
+    }
+
+    /* Unpack entries. */
+    self->num_entries = PF_fetch_opcode(seg->pf, &cursor);
+    self->entries     = mem_allocate_n_typed(self->num_entries, PackFile_Annotations_Entry *);
+    for (i = 0; i < self->num_entries; i++) {
+        self->entries[i]                  = mem_allocate_typed(PackFile_Annotations_Entry);
+        self->entries[i]->bytecode_offset = PF_fetch_opcode(seg->pf, &cursor);
+        self->entries[i]->key             = PF_fetch_opcode(seg->pf, &cursor);
+        self->entries[i]->value.integer   = PF_fetch_opcode(seg->pf, &cursor);
+    }
+
+    return cursor;
+}
+
+
+/*
+
+=item C<void PackFile_Annotations_dump>
+
+Produces a dump of the annotations segment.
+
+*/
+
+void PackFile_Annotations_dump(PARROT_INTERP, struct PackFile_Segment *seg) {
+    /* TODO */
+}
+
 
 /*
 
