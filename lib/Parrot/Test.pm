@@ -303,37 +303,11 @@ sub import {
 sub run_command {
     my ( $command, %options ) = @_;
 
-    # To run the command in a different directory.
-    my $chdir = delete $options{CD};
+    my ( $out, $err, $chdir ) = _handle_test_options( \%options );;
 
-    while ( my ( $key, $value ) = each %options ) {
-        $key =~ m/^STD(OUT|ERR)$/
-            or die "I don't know how to redirect '$key' yet!";
-        my $strvalue = "$value";        # filehandle `eq' string will fail
-        $value = File::Spec->devnull()  # on older perls, so stringify it
-            if $strvalue eq '/dev/null';
-    }
-
-    my $out = $options{'STDOUT'} || '';
-    my $err = $options{'STDERR'} || '';
-
-    local $ENV;
+#    local $ENV;
     if ($PConfig{parrot_is_shared}) {
-        my $blib_path = File::Spec->catfile( $PConfig{build_dir}, 'blib', 'lib' );
-        if ($^O eq 'cygwin') {
-            $ENV{PATH} = $blib_path . ':' . $ENV{PATH};
-        }
-        elsif ($^O eq 'MSWin32') {
-            $ENV{PATH} = $blib_path . ';' . $ENV{PATH};
-        }
-        else {
-            $ENV{LD_RUN_PATH} = $blib_path;
-        }
-    }
-
-    ##  File::Temp overloads 'eq' here, so we need the quotes. RT #58840
-    if ( $out and $err and "$out" eq "$err" ) {
-        $err = '&STDOUT';
+        _handle_blib_path();
     }
 
     local *OLDOUT if $out;    ## no critic Variables::ProhibitConditionalDeclarations
@@ -357,11 +331,7 @@ sub run_command {
     # If $command isn't already an arrayref (because of a multi-command
     # test), make it so now so the code below can treat everybody the
     # same.
-    $command = [$command] unless ( ref $command );
-
-    if ( defined $ENV{VALGRIND} ) {
-        $_ = "$ENV{VALGRIND} $_" for (@$command);
-    }
+    $command = _handle_command( $command );
 
     my $orig_dir;
     if ($chdir) {
@@ -382,7 +352,7 @@ sub run_command {
         chdir $orig_dir;
     }
 
-    my $exit_code = $?;
+    my $exit_message = _prepare_exit_message();
 
     close STDOUT or die "Can't close    stdout" if $out;
     close STDERR or die "Can't close    stderr" if $err;
@@ -390,11 +360,7 @@ sub run_command {
     open STDOUT, ">&", \*OLDOUT or die "Can't restore  stdout" if $out;
     open STDERR, ">&", \*OLDERR or die "Can't restore  stderr" if $err;
 
-    return (
-          ( $exit_code < 0 )    ? $exit_code
-        : ( $exit_code & 0xFF ) ? "[SIGNAL $exit_code]"
-        : ( $? >> 8 )
-    );
+    return $exit_message;
 }
 
 sub per_test {
@@ -687,11 +653,67 @@ sub _report_odd_hash {
     }
 }
 
+sub _handle_test_options {
+    my $options = shift;
+    # To run the command in a different directory.
+    my $chdir = delete $options->{CD} || '';
+
+    while ( my ( $key, $value ) = each %{ $options } ) {
+        $key =~ m/^STD(OUT|ERR)$/
+            or die "I don't know how to redirect '$key' yet!";
+        my $strvalue = "$value";        # filehandle `eq' string will fail
+        $value = File::Spec->devnull()  # on older perls, so stringify it
+            if $strvalue eq '/dev/null';
+    }
+
+    my $out = $options->{'STDOUT'} || '';
+    my $err = $options->{'STDERR'} || '';
+    ##  File::Temp overloads 'eq' here, so we need the quotes. RT #58840
+    if ( $out and $err and "$out" eq "$err" ) {
+        $err = '&STDOUT';
+    }
+    return ( $out, $err, $chdir );
+}
+
+sub _handle_blib_path {
+    my $blib_path =
+        File::Spec->catfile( $PConfig{build_dir}, 'blib', 'lib' );
+    if ($^O eq 'cygwin') {
+        $ENV{PATH} = $blib_path . ':' . $ENV{PATH};
+    }
+    elsif ($^O eq 'MSWin32') {
+        $ENV{PATH} = $blib_path . ';' . $ENV{PATH};
+    }
+    else {
+        $ENV{LD_RUN_PATH} = $blib_path;
+    }
+}
+
+sub _handle_command {
+    my $command = shift;
+    $command = [$command] unless ( ref $command );
+
+    if ( defined $ENV{VALGRIND} ) {
+        $_ = "$ENV{VALGRIND} $_" for (@$command);
+    }
+    return $command;
+}
+
+sub _prepare_exit_message {
+    my $exit_code = $?;
+    return (
+          ( $exit_code < 0 )    ? $exit_code
+        : ( $exit_code & 0xFF ) ? "[SIGNAL $exit_code]"
+        : ( $? >> 8 )
+    );
+}
+
 sub _generate_test_functions {
 
     my $package        = 'Parrot::Test';
     my $path_to_parrot = path_to_parrot();
-    my $parrot         = File::Spec->join( File::Spec->curdir(), 'parrot' . $PConfig{exe} );
+    my $parrot         = File::Spec->join( File::Spec->curdir(),
+                            'parrot' . $PConfig{exe} );
     my $pirc           = File::Spec->join( File::Spec->curdir(),
                             qw( compilers pirc ), "pirc$PConfig{exe}" );
 
