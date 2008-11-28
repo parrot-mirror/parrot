@@ -504,8 +504,6 @@ Returns true if the filehandle is at end-of-file, returns false otherwise.
     }
 
 
-#ifdef PIO_OS_UNIX
-
 /*
 
 =item C<METHOD get_fd()>
@@ -518,12 +516,16 @@ Unix-based platforms that use integer file descriptors).
 */
 
     METHOD get_fd() {
+#ifdef PIO_OS_UNIX
         INTVAL os_handle;
         GET_ATTR_os_handle(INTERP, SELF, os_handle);
         RETURN(INTVAL os_handle);
+#endif /*PIO_OS_UNIX*/
+
+        RETURN(INTVAL -1);
+
     }
 
-#endif /*PIO_OS_UNIX*/
 
 /*
 
