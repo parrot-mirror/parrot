@@ -441,11 +441,15 @@ Parrot_io_putps(PARROT_INTERP, ARGMOD(PMC *pmc), ARGMOD_NULLOK(STRING *s))
     if (PMC_IS_NULL(pmc)
     || !VTABLE_isa(interp, pmc, CONST_STRING(interp, "FileHandle")))
         Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_PIO_ERROR,
-            "Cannot put to non-IO PMC");
+            "Cannot write to non-IO PMC");
 
     if (Parrot_io_is_closed(interp, pmc))
         Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_PIO_ERROR,
-            "Cannot put to a closed I/O handle");
+            "Cannot write to a closed filehandle");
+
+    if (!(Parrot_io_get_flags(interp, pmc) & PIO_F_WRITE))
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_PIO_ERROR,
+            "Cannot write to a filehandle not opened for write");
 
     if (STRING_IS_NULL(s))
         return 0;
