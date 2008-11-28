@@ -630,8 +630,17 @@ order.
   |        |        | annotations for the given instruction start.           |
   +--------+--------+--------------------------------------------------------+
 
-The rest of the segment is made up of a sequence of instructions to key and
-value mappings, taking the following format:
+The rest of the segment is made up of a sequence of bytecode offset to key and
+value mappings. First comes the number of them that follow:
+
+  +--------+--------+--------------------------------------------------------+
+  | Offset | Length | Description                                            |
+  +--------+--------+--------------------------------------------------------+
+  | 1      | 1      | Number of bytecode to keypair mappings that follow.    |
+  |        |        |    n                                                   |
+  +--------+--------+--------------------------------------------------------+
+
+Then there are n entries of the following format:
 
   +--------+--------+--------------------------------------------------------+
   | Offset | Length | Description                                            |
