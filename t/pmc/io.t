@@ -348,7 +348,7 @@ Foobar
 OUTPUT
 
 pasm_output_is( <<"CODE", <<'OUTPUT', 'open and close' );
-   open P1, "$temp_file"
+   open P1, "$temp_file", "w"
    print P1, "Hello, World!\\n"
    close P1
    say "done"
@@ -384,7 +384,7 @@ file_content_is( $temp_file, <<'OUTPUT', 'file contents' );
 Parrot overwrites
 OUTPUT
 
-pasm_output_is( <<"CODE", '', "PIO_flush on buffer full" );
+pasm_output_is( <<"CODE", '', "Parrot_io_flush on buffer full" );
    set I0, 0
    set I1, 10000
 
