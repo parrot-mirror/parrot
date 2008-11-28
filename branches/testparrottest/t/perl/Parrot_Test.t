@@ -19,6 +19,10 @@ These tests cover the basic functionality of C<Parrot::Test>.
 use strict;
 use warnings;
 use Test::More;
+use File::Spec;
+use lib qw( lib );
+use Parrot::Config;
+use IO::CaptureOutput qw| capture |;
 
 BEGIN {
     eval "use Test::Builder::Tester;";
@@ -26,7 +30,7 @@ BEGIN {
         plan( skip_all => "Test::Builder::Tester not installed\n" );
         exit 0;
     }
-    plan( tests => 66 );
+    plan( tests => 94 );
 }
 
 use lib qw( . lib ../lib ../../lib );
@@ -314,6 +318,149 @@ if($Test::Builder::VERSION == 0.84) {
     test_test(title => $desc, skip_err => 1);
 } else {
     test_test($desc);
+}
+
+##### Tests for Parrot::Test internal subroutines #####
+
+# _handle_test_options()
+my ( $out, $chdir );
+( $out, $err, $chdir ) = Parrot::Test::_handle_test_options( {
+    STDOUT  => '/tmp/captureSTDOUT',
+    STDERR  => '/tmp/captureSTDERR',
+    CD      => '/tmp',
+} );
+is($out, '/tmp/captureSTDOUT', "Got expected value for STDOUT");
+is($err, '/tmp/captureSTDERR', "Got expected value for STDERR");
+is($chdir, '/tmp', "Got expected value for working directory");
+
+( $out, $err, $chdir ) = Parrot::Test::_handle_test_options( {
+    STDOUT  => '/tmp/captureSTDOUT',
+    STDERR  => '',
+    CD      => '/tmp',
+} );
+is($out, '/tmp/captureSTDOUT', "Got expected value for STDOUT");
+is($err, '', "Got expected value for STDERR");
+is($chdir, '/tmp', "Got expected value for working directory");
+
+( $out, $err, $chdir ) = Parrot::Test::_handle_test_options( {
+    STDOUT  => '',
+    STDERR  => '',
+    CD      => '',
+} );
+is($out, '', "Got expected value for STDOUT");
+is($err, '', "Got expected value for STDERR");
+is($chdir, '', "Got expected value for working directory");
+
+eval {
+    ( $out, $err, $chdir ) = Parrot::Test::_handle_test_options( {
+        STDJ    => '',
+        STDERR  => '',
+        CD      => '',
+    } );
+};
+like($@, qr/I don't know how to redirect 'STDJ' yet!/,
+    "Got expected error message for bad option");
+
+my $dn = File::Spec->devnull();
+( $out, $err, $chdir ) = Parrot::Test::_handle_test_options( {
+    STDOUT  => '',
+    STDERR  => '/dev/null',
+    CD      => '',
+} );
+is($out, '', "Got expected value for STDOUT");
+is($err, $dn, "Got expected value for STDERR using /dev/null");
+is($chdir, '', "Got expected value for working directory");
+
+( $out, $err, $chdir ) = Parrot::Test::_handle_test_options( {
+    STDOUT  => '/tmp/foobar',
+    STDERR  => '/tmp/foobar',
+    CD      => '',
+} );
+is($out, '/tmp/foobar', "Got expected value for STDOUT");
+is($err, '&STDOUT', "Got expected value for STDERR when same as STDOUT");
+is($chdir, '', "Got expected value for working directory");
+
+{
+    my $oldpath = $ENV{PATH};
+    my $oldldrunpath = $ENV{LD_RUN_PATH};
+    local $PConfig{build_dir} = 'foobar';
+    my $blib_path = File::Spec->catfile( $PConfig{build_dir}, 'blib', 'lib' );
+    {
+        local $^O = 'cygwin';
+        Parrot::Test::_handle_blib_path();
+        is( $ENV{PATH}, $blib_path . ':' . $oldpath,
+            "\$ENV{PATH} reset as expected for $^O");
+        $ENV{PATH} = $oldpath;
+    }
+    {
+        local $^O = 'MSWin32';
+        Parrot::Test::_handle_blib_path();
+        is( $ENV{PATH}, $blib_path . ';' . $oldpath,
+            "\$ENV{PATH} reset as expected for $^O");
+        $ENV{PATH} = $oldpath;
+    }
+    {
+        local $^O = 'not_cygwin_not_MSWin32';
+        Parrot::Test::_handle_blib_path();
+        is( $ENV{LD_RUN_PATH}, $blib_path,
+            "\$ENV{LD_RUN_PATH} reset as expected for $^O");
+        $ENV{LD_RUN_PATH} = $oldldrunpath;
+    }
+}
+
+my $command_orig;
+$command_orig = 'ls';
+is_deeply( Parrot::Test::_handle_command($command_orig), [ qw( ls ) ],
+    "Scalar command transformed into array ref as expected");
+$command_orig = [ qw( ls -l ) ];
+is( Parrot::Test::_handle_command($command_orig), $command_orig,
+    "Array ref holding multiple commands unchanged as expected");
+
+{
+    my $oldvalgrind = $ENV{VALGRIND};
+    $command_orig = 'ls';
+    my $foo = 'foobar';
+    local $ENV{VALGRIND} = $foo;
+    my $ret = Parrot::Test::_handle_command($command_orig);
+    is( $ret->[0], "$foo $command_orig",
+        "Got expected value in Valgrind environment");
+    $ENV{VALGRIND} = $oldvalgrind;
+}
+
+{
+    local $? = -1;
+    my $exit_message = Parrot::Test::_prepare_exit_message();
+    is( $exit_message, -1, "Got expected exit message" );
+}
+
+{
+    local $? = 0;
+    my $exit_message = Parrot::Test::_prepare_exit_message();
+    is( $exit_message, 0, "Got expected exit message" );
+}
+
+{
+    local $? = 1;
+    my $exit_message = Parrot::Test::_prepare_exit_message();
+    is( $exit_message, q{[SIGNAL 1]}, "Got expected exit message" );
+}
+
+{
+    local $? = 255;
+    my $exit_message = Parrot::Test::_prepare_exit_message();
+    is( $exit_message, q{[SIGNAL 255]}, "Got expected exit message" );
+}
+
+{
+    local $? = 256;
+    my $exit_message = Parrot::Test::_prepare_exit_message();
+    is( $exit_message, 1, "Got expected exit message" );
+}
+
+{
+    local $? = 512;
+    my $exit_message = Parrot::Test::_prepare_exit_message();
+    is( $exit_message, 2, "Got expected exit message" );
 }
 
 # Local Variables:
