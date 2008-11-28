@@ -224,7 +224,8 @@ Parrot_io_reads(PARROT_INTERP, ARGMOD(PMC *pmc), size_t len)
     INTVAL                ignored;
 
     if (Parrot_io_is_closed(interp, pmc))
-        return new_string_header(interp, 0);
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_PIO_ERROR,
+            "Cannot read from a closed filehandle");
 
     if (Parrot_io_get_buffer_flags(interp, pmc) & PIO_BF_MMAP) {
         res           = new_string_header(interp, 0);
