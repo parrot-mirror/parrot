@@ -115,6 +115,7 @@ typedef enum {
     PF_CONST_SEG,
     PF_BYTEC_SEG,
     PF_DEBUG_SEG,
+    PF_ANNOTATIONS_SEG,
 
     PF_MAX_SEG
 } pack_file_types;
@@ -208,6 +209,42 @@ typedef struct PackFile_Debug {
     PackFile_DebugFilenameMapping **mappings;
     PackFile_ByteCode      *code;   /* where this segment belongs to */
 } PackFile_Debug;
+
+
+/* Key types for annotation segment. */
+#define PF_ANNOTATION_KEY_TYPE_INT 0
+#define PF_ANNOTATION_KEY_TYPE_STR 1
+#define PF_ANNOTATION_KEY_TYPE_NUM 2
+#define PF_ANNOTATION_KEY_TYPE_PMC 3
+
+typedef struct PackFile_Annotations_Key {
+    opcode_t name;
+    opcode_t type;
+} PackFile_Annotations_Key;
+
+typedef struct PackFile_Annotations_Group {
+    opcode_t bytecode_offset;
+    opcode_t entries_offset;
+} PackFile_Annotations_Group;
+
+typedef struct PackFile_Annotations_Entry {
+    opcode_t bytecode_offset;
+    opcode_t key;
+    union {
+        opcode_t integer;
+        opcode_t constant;
+    } value;
+} PackFile_Annotations_Entry;
+
+typedef struct PackFile_Annotations {
+    PackFile_Segment            base;
+    opcode_t                    num_keys;
+    PackFile_Annotations_Key    **keys;
+    opcode_t                    num_groups;
+    PackFile_Annotations_Group  **groups;
+    opcode_t                    num_entries;
+    PackFile_Annotations_Entry  **entries;
+} PackFile_Annotations;
 
 typedef struct PackFile_Directory {
     PackFile_Segment   base;
