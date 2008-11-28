@@ -319,19 +319,32 @@ close $FOO;
 
 # write to file opened for reading
 pasm_output_is( <<"CODE", <<'OUTPUT', "3-arg open" );
-   open P1, "$temp_file", "<"
+   open P1, "$temp_file", ">"
    print P1, "Foobar\\n"
    close P1
+
+   push_eh _print_to_read_only
+
+   open P2, "$temp_file", "<"
+   print P2, "baz\\n"
+   say "skipped"
+
+_print_to_read_only:
+   say "caught writing to file opened for reading"
+   pop_eh
+
+   close P2
 
    open P3, "$temp_file", "<"
    readline S1, P3
    close P3
-
    print S1
-   say "writing to file opened for reading"
+
+
    end
 CODE
-writing to file opened for reading
+caught writing to file opened for reading
+Foobar
 OUTPUT
 
 pasm_output_is( <<"CODE", <<'OUTPUT', 'open and close' );
