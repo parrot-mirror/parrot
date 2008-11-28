@@ -405,21 +405,26 @@ file_content_is( $temp_file, <<'OUTPUT' x 10000, 'buffered file contents' );
 words
 OUTPUT
 
-pasm_output_is( <<"CODE", '0', "turn off buffering" );
-   open P0, "$temp_file", ">"
+pir_output_is( <<"CODE", <<'OUTPUT', "turn off buffering" );
+.sub main :main
+   open \$P0, "$temp_file", ">"
 
-#  PIOCTL_CMDSETBUFTYPE, PIOCTL_NONBUF
-   pioctl I0, P0, 3, 0
+#  set buffer type
+   \$P0.'buffer_type'('unbuffered')
 
-#  PIOCTL_CMDGETBUFTYPE, <dummy value>
-   pioctl I0, P0, 4, 0
-   print I0
+#  get buffer type
+   \$S0 = \$P0.'buffer_type'()
+   print \$S0
+   print "\\n"
 
-   print P0, "Howdy World\\n"
+   print \$P0, "Howdy World\\n"
 
-   close P0
+   close \$P0
    end
+.end
 CODE
+unbuffered
+OUTPUT
 
 file_content_is( $temp_file, <<'OUTPUT', 'unbuffered file contents' );
 Howdy World
