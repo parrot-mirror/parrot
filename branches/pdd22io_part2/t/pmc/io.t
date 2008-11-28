@@ -297,7 +297,7 @@ pasm_output_is( <<"CODE", <<'OUTPUT', "open & print" );
    new P0, 'String'
    set P0, "Bar\\n"
 
-   open P1, "$temp_file"
+   open P1, "$temp_file", "w"
    print P1, I0
    print P1, N0
    print P1, S0
