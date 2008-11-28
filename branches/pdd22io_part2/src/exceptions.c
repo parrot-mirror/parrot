@@ -121,7 +121,7 @@ find_exception_handler(PARROT_INTERP, ARGIN(PMC *exception))
         }
 
         if (string_equal(interp, message, CONST_STRING(interp, "")) == 1) {
-            PIO_eprintf(interp, "%S\n", message);
+            Parrot_io_eprintf(interp, "%S\n", message);
 
             /* caution against output swap (with PDB_backtrace) */
             fflush(stderr);
