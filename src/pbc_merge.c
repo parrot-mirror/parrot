@@ -578,8 +578,7 @@ pbc_merge_debugs(PARROT_INTERP, ARGMOD(pbc_merge_input **inputs),
                 PackFile_DebugMapping);
             STRUCT_COPY(mapping, in_seg->mappings[j]);
             mapping->offset += num_lines;
-            if (mapping->mapping_type == PF_DEBUGMAPPINGTYPE_FILENAME)
-                mapping->u.filename += inputs[i]->const_start;
+            mapping->filename += inputs[i]->const_start;
             mappings[num_mappings + j] = mapping;
         }
 

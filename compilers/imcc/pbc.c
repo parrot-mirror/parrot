@@ -1876,8 +1876,7 @@ e_pbc_emit(PARROT_INTERP, SHIM(void *param), ARGIN(const IMC_Unit *unit),
                 (size_t)IMCC_INFO(interp)->ins_line + ins_size + 1);
 
             Parrot_debug_add_mapping(interp, IMCC_INFO(interp)->debug_seg,
-                IMCC_INFO(interp)->ins_line,
-                PF_DEBUGMAPPINGTYPE_FILENAME, sourcefile, 0);
+                IMCC_INFO(interp)->ins_line, sourcefile);
         }
         else
             IMCC_INFO(interp)->debug_seg = NULL;

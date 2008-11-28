@@ -75,15 +75,6 @@ typedef struct PackFile_Constant {
     } u;
 } PackFile_Constant;
 
-typedef struct PackFile_DebugMapping {
-    opcode_t offset;
-    opcode_t mapping_type;
-    union {
-        opcode_t filename;
-        opcode_t source_seg; /* XXX Source segments currently unimplemented. */
-    } u;
-} PackFile_DebugMapping;
-
 /*
 ** PackFile Segment:
 *    The base type of every section
@@ -206,11 +197,10 @@ struct PackFile_ByteCode {
     PackFile_FixupTable   *fixups;
 };
 
-enum PF_DEBUGMAPPINGTYPE {
-    PF_DEBUGMAPPINGTYPE_NONE = 0,
-    PF_DEBUGMAPPINGTYPE_FILENAME,
-    PF_DEBUGMAPPINGTYPE_SOURCESEG
-};
+typedef struct PackFile_DebugMapping {
+    opcode_t offset;
+    opcode_t filename;
+} PackFile_DebugMapping;
 
 typedef struct PackFile_Debug {
     PackFile_Segment        base;
@@ -574,12 +564,10 @@ PARROT_EXPORT
 void Parrot_debug_add_mapping(PARROT_INTERP,
     ARGMOD(PackFile_Debug *debug),
     opcode_t offset,
-    int mapping_type,
-    ARGIN(const char *filename),
-    int source_seg)
+    ARGIN(const char *filename))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
-        __attribute__nonnull__(5)
+        __attribute__nonnull__(4)
         FUNC_MODIFIES(*debug);
 
 PARROT_EXPORT

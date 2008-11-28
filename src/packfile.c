@@ -2273,19 +2273,8 @@ pf_debug_packed_size(SHIM_INTERP, ARGIN(PackFile_Segment *self))
 
     /* Size of entries in mappings list. */
     for (i = 0; i < debug->num_mappings; i++) {
-        /* Bytecode offset and mapping type */
+        /* Bytecode offset and filename */
         size += 2;
-
-        /* Mapping specific stuff. */
-        switch (debug->mappings[i]->mapping_type) {
-            case PF_DEBUGMAPPINGTYPE_FILENAME:
-            case PF_DEBUGMAPPINGTYPE_SOURCESEG:
-                size += 1;
-                break;
-            case PF_DEBUGMAPPINGTYPE_NONE:
-            default:
-                break;
-        }
     }
 
     return size;
@@ -2315,22 +2304,9 @@ pf_debug_pack(SHIM_INTERP, ARGMOD(PackFile_Segment *self), ARGOUT(opcode_t *curs
 
     /* Now store each mapping. */
     for (i = 0; i < n; i++) {
-        /* Bytecode offset and mapping type */
+        /* Bytecode offset and filename. */
         *cursor++ = debug->mappings[i]->offset;
-        *cursor++ = debug->mappings[i]->mapping_type;
-
-        /* Mapping specific stuff. */
-        switch (debug->mappings[i]->mapping_type) {
-            case PF_DEBUGMAPPINGTYPE_FILENAME:
-                *cursor++ = debug->mappings[i]->u.filename;
-                break;
-            case PF_DEBUGMAPPINGTYPE_SOURCESEG:
-                *cursor++ = debug->mappings[i]->u.source_seg;
-                break;
-            case PF_DEBUGMAPPINGTYPE_NONE:
-            default:
-                break;
-        }
+        *cursor++ = debug->mappings[i]->filename;
     }
 
     return cursor;
@@ -2370,25 +2346,10 @@ pf_debug_unpack(PARROT_INTERP, ARGOUT(PackFile_Segment *self), ARGIN(const opcod
 
     /* Read in each mapping. */
     for (i = 0; i < debug->num_mappings; i++) {
-        /* Allocate struct and get offset and mapping type. */
+        /* Allocate struct and get offset and filename type. */
         debug->mappings[i] = mem_allocate_typed(PackFile_DebugMapping);
         debug->mappings[i]->offset = PF_fetch_opcode(self->pf, &cursor);
-        debug->mappings[i]->mapping_type = PF_fetch_opcode(self->pf, &cursor);
-
-        /* Read mapping specific stuff. */
-        switch (debug->mappings[i]->mapping_type) {
-            case PF_DEBUGMAPPINGTYPE_FILENAME:
-                debug->mappings[i]->u.filename =
-                    PF_fetch_opcode(self->pf, &cursor);
-                break;
-            case PF_DEBUGMAPPINGTYPE_SOURCESEG:
-                debug->mappings[i]->u.source_seg =
-                    PF_fetch_opcode(self->pf, &cursor);
-                break;
-            case PF_DEBUGMAPPINGTYPE_NONE:
-            default:
-                break;
-        }
+        debug->mappings[i]->filename = PF_fetch_opcode(self->pf, &cursor);
     }
 
     /*
@@ -2435,32 +2396,13 @@ pf_debug_dump(PARROT_INTERP, ARGIN(const PackFile_Segment *self))
 
     PIO_printf(interp, "\n  mappings => [\n");
     for (i = 0; i < debug->num_mappings; i++) {
+        char *filename = string_to_cstring(interp, PF_CONST(debug->code,
+                   debug->mappings[i]->filename)->u.string);;
         PIO_printf(interp, "    #%d\n    [\n", i);
         PIO_printf(interp, "        OFFSET => %d,\n",
                    debug->mappings[i]->offset);
-        switch (debug->mappings[i]->mapping_type) {
-            case PF_DEBUGMAPPINGTYPE_NONE:
-                PIO_printf(interp, "        MAPPINGTYPE => NONE\n");
-                break;
-            case PF_DEBUGMAPPINGTYPE_FILENAME:
-                {
-                char *filename;
-
-                PIO_printf(interp, "        MAPPINGTYPE => FILENAME,\n");
-                filename = string_to_cstring(interp, PF_CONST(debug->code,
-                           debug->mappings[i]->u.filename)->u.string);
-                PIO_printf(interp, "        FILENAME => %s\n", filename);
-                string_cstring_free(filename);
-                }
-                break;
-            case PF_DEBUGMAPPINGTYPE_SOURCESEG:
-                PIO_printf(interp, "        MAPPINGTYPE => SOURCESEG,\n");
-                PIO_printf(interp, "        SOURCESEG => %d\n",
-                           debug->mappings[i]->u.source_seg);
-                break;
-            default:
-                break;
-        }
+        PIO_printf(interp, "        FILENAME => %s\n", filename);
+        string_cstring_free(filename);
         PIO_printf(interp, "    ],\n");
     }
 
@@ -2530,11 +2472,7 @@ Parrot_new_debug_seg(PARROT_INTERP, ARGMOD(PackFile_ByteCode *cs), size_t size)
 
 =item C<void Parrot_debug_add_mapping>
 
-Add a bytecode offset to filename/source segment mapping. mapping_type may be
-one of PF_DEBUGMAPPINGTYPE_NONE (in which case the last two parameters are
-ignored), PF_DEBUGMAPPINGTYPE_FILENAME (in which case filename must be given)
-or PF_DEBUGMAPPINGTYPE_SOURCESEG (in which case source_seg should contains the
-number of the source segment in question).
+Add a bytecode offset to filename mapping.
 
 =cut
 
@@ -2543,12 +2481,12 @@ number of the source segment in question).
 PARROT_EXPORT
 void
 Parrot_debug_add_mapping(PARROT_INTERP, ARGMOD(PackFile_Debug *debug),
-                         opcode_t offset, int mapping_type,
-                         ARGIN(const char *filename), int source_seg)
+                         opcode_t offset, ARGIN(const char *filename))
 {
     PackFile_DebugMapping *mapping;
     PackFile_ConstTable * const ct = debug->code->const_table;
     int insert_pos = 0;
+    PackFile_Constant *fnconst;
 
     /* Allocate space for the extra entry. */
     mem_realloc_n_typed(debug->mappings, debug->num_mappings+1, PackFile_DebugMapping *);
@@ -2572,35 +2510,20 @@ Parrot_debug_add_mapping(PARROT_INTERP, ARGMOD(PackFile_Debug *debug),
         }
     }
 
+    /* Need to put filename in constants table. */
+    ct->const_count = ct->const_count + 1;
+    mem_realloc_n_typed(ct->constants, ct->const_count, PackFile_Constant *);
+    fnconst = PackFile_Constant_new(interp);
+    fnconst->type = PFC_STRING;
+    fnconst->u.string = string_make_direct(interp, filename,
+        strlen(filename), PARROT_DEFAULT_ENCODING,
+        PARROT_DEFAULT_CHARSET, PObj_constant_FLAG);
+    ct->constants[ct->const_count - 1] = fnconst;
+
     /* Set up new entry and insert it. */
     mapping               = mem_allocate_typed(PackFile_DebugMapping);
     mapping->offset       = offset;
-    mapping->mapping_type = mapping_type;
-
-    switch (mapping_type) {
-        case PF_DEBUGMAPPINGTYPE_FILENAME:
-            {
-            PackFile_Constant *fnconst;
-
-            /* Need to put filename in constants table. */
-            ct->const_count = ct->const_count + 1;
-            mem_realloc_n_typed(ct->constants, ct->const_count, PackFile_Constant *);
-            fnconst = PackFile_Constant_new(interp);
-            fnconst->type = PFC_STRING;
-            fnconst->u.string = string_make_direct(interp, filename,
-                strlen(filename), PARROT_DEFAULT_ENCODING,
-                PARROT_DEFAULT_CHARSET, PObj_constant_FLAG);
-            ct->constants[ct->const_count - 1] = fnconst;
-            mapping->u.filename = ct->const_count - 1;
-            }
-            break;
-        case PF_DEBUGMAPPINGTYPE_SOURCESEG:
-            mapping->u.source_seg = source_seg;
-            break;
-        case PF_DEBUGMAPPINGTYPE_NONE:
-        default:
-            break;
-    }
+    mapping->filename     = ct->const_count - 1;
 
     debug->mappings[insert_pos] = mapping;
     debug->num_mappings         = debug->num_mappings + 1;
@@ -2633,17 +2556,8 @@ Parrot_debug_pc_to_filename(PARROT_INTERP, ARGIN(const PackFile_Debug *debug), o
             (debug->mappings[i]->offset <= pc &&
              debug->mappings[i+1]->offset > pc))
         {
-            switch (debug->mappings[i]->mapping_type) {
-                case PF_DEBUGMAPPINGTYPE_NONE:
-                    return string_from_literal(interp, "(unknown file)");
-                case PF_DEBUGMAPPINGTYPE_FILENAME:
-                    return PF_CONST(debug->code,
-                        debug->mappings[i]->u.filename)->u.string;
-                case PF_DEBUGMAPPINGTYPE_SOURCESEG:
-                    return string_from_literal(interp, "(unknown file)");
-                default:
-                    continue;
-            }
+            return PF_CONST(debug->code,
+                    debug->mappings[i]->filename)->u.string;
         }
     }
 
