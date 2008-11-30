@@ -2263,7 +2263,7 @@ set_context_sig_params(PARROT_INTERP, ARGIN(const char *signature),
     ARGMOD(opcode_t **indexes), ARGMOD(Parrot_Context *ctx),
     ARGMOD(PMC *sig_obj))
 {
-    /* second loop through signature to build all index and arg_flag
+        /* second loop through signature to build all index and arg_flag
      * loop also assigns args(up to the ->) to registers */
     int index      = -1;
     int seen_arrow =  0;
@@ -2327,6 +2327,7 @@ set_context_sig_params(PARROT_INTERP, ARGIN(const char *signature),
                 case 's': cur |= PARROT_ARG_SLURPY_ARRAY; break;
                 case 'o': cur |= PARROT_ARG_OPTIONAL;     break;
                 case 'p': cur |= PARROT_ARG_OPT_FLAG;     break;
+                case 'i': cur |= PARROT_ARG_INVOCANT;     break;
                 default:
                     Parrot_ex_throw_from_c_args(interp, NULL,
                         EXCEPTION_INVALID_OPERATION,
