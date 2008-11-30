@@ -460,6 +460,12 @@ Parrot_really_destroy(PARROT_INTERP, SHIM(int exit_code), SHIM(void *arg))
         parrot_free_vtables(interp);
         Parrot_mmd_destroy(interp);
 
+        /* dynop libs */
+        if (interp->n_libs > 0) {
+            mem_sys_free(interp->op_info_table);
+            mem_sys_free(interp->op_func_table);
+        }
+
         MUTEX_DESTROY(interpreter_array_mutex);
         mem_sys_free(interp);
         /*

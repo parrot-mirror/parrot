@@ -411,26 +411,42 @@ pass on to the multiple dispatch search.
 =cut
 
 */
-
 PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 PMC*
-Parrot_build_sig_object_from_varargs(PARROT_INTERP, ARGIN(const char *sig), va_list args)
+Parrot_build_sig_object_from_varargs(PARROT_INTERP, ARGIN_NULLOK(PMC* obj),
+    ARGIN(const char *sig), va_list args)
 {
-    PMC         *type_tuple    = PMCNULL;
-    PMC         *returns       = PMCNULL;
-    PMC         *call_object   = pmc_new(interp, enum_class_CallSignature);
-    STRING      *string_sig    = const_string(interp, sig);
-    const INTVAL sig_len       = string_length(interp, string_sig);
-    INTVAL       in_return_sig = 0;
-    INTVAL       i;
+    INTVAL i;
+    INTVAL in_return_sig     = 0;
+    PMC    *returns          = PMCNULL;
+    PMC    *call_object      = pmc_new(interp, enum_class_CallSignature);
+    PMC    *type_tuple =  PMCNULL; // = pmc_new(interp, enum_class_FixedIntegerArray);
+    INTVAL  sig_len          = strlen(sig);
+    STRING *s_sig            = string_from_cstring(interp, sig, sig_len);
+    STRING *string_sig       = NULL;
 
     /* Protect call signature object from collection. */
     dod_register_pmc(interp, call_object);
 
     if (!sig_len)
         return call_object;
+
+    /* Check if we have an object invocant */
+    if (PMC_IS_NULL(obj))
+        string_sig = s_sig;
+    else {
+        /* Should verify here that the signature doesn't already have
+           "Pi" at the beginning, some callers might have added this
+           already. */
+        STRING *invocant_sig = CONST_STRING(interp, "Pi");
+        string_sig = string_concat(interp, invocant_sig, s_sig, 0);
+        sig_len = sig_len + 2;
+    }
+
+    //VTABLE_set_integer_native(interp, type_tuple, sig_len);
+    //VTABLE_set_pmc(interp, call_object, type_tuple);
 
     VTABLE_set_string_native(interp, call_object, string_sig);
 
@@ -487,8 +503,25 @@ Parrot_build_sig_object_from_varargs(PARROT_INTERP, ARGIN(const char *sig), va_l
                     break;
                 case 'P':
                 {
-                    PMC *pmc_arg = va_arg(args, PMC *);
-                    VTABLE_push_pmc(interp, call_object, pmc_arg);
+                    INTVAL type_lookahead = string_index(interp, string_sig, (i + 1));
+                    if (type_lookahead == 'i') {
+                        if (i != 0)
+                            Parrot_ex_throw_from_c_args(interp, NULL,
+                                EXCEPTION_INVALID_OPERATION,
+                                "Multiple Dispatch: 'i' adverb modifier may only be used on the invocant");
+                        //VTABLE_set_integer_keyed_int(interp, type_tuple, 0,
+                        //        VTABLE_type(interp, obj));
+                        VTABLE_push_pmc(interp, call_object, obj);
+                        i++; /* skip the 'i' modifier */
+                    }
+                    else {
+                        PMC *pmc_arg = va_arg(args, PMC *);
+                        //if (!PMC_IS_NULL(pmc_arg))
+                        //    VTABLE_set_integer_keyed_int(interp, type_tuple,
+                        //        i, VTABLE_type(interp, pmc_arg));
+
+                        VTABLE_push_pmc(interp, call_object, pmc_arg);
+                    }
                     break;
                 }
                 case '-':
@@ -533,7 +566,7 @@ Parrot_mmd_multi_dispatch_from_c_args(PARROT_INTERP,
 
     va_list args;
     va_start(args, sig);
-    sig_object = Parrot_build_sig_object_from_varargs(interp, sig, args);
+    sig_object = Parrot_build_sig_object_from_varargs(interp, PMCNULL, sig, args);
     va_end(args);
 
     /* Check the cache. */

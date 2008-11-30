@@ -72,10 +72,11 @@ PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 PMC* Parrot_build_sig_object_from_varargs(PARROT_INTERP,
+    ARGIN_NULLOK(PMC *obj),
     ARGIN(const char *sig),
     va_list args)
         __attribute__nonnull__(1)
-        __attribute__nonnull__(2);
+        __attribute__nonnull__(3);
 
 PARROT_EXPORT
 void Parrot_mmd_add_function(PARROT_INTERP,
