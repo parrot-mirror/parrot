@@ -2057,10 +2057,26 @@ commit_last_arg_sig_object(PARROT_INTERP, int index, int cur,
         case PARROT_ARG_STRING:
             reg_offset = n_regs_used[seen_arrow * 4 + REGNO_STR]++; break;
         case PARROT_ARG_PMC :
-            reg_offset = n_regs_used[seen_arrow * 4 + REGNO_PMC]++; break;
+            {
+                if (cur & PARROT_ARG_INVOCANT) {
+                    if (seen_arrow == 0 && index == 0) {
+                        n_regs_used[REGNO_PMC]++;
+                        reg_offset = 0;
+                    }
+                    else {
+                        Parrot_ex_throw_from_c_args(interp, NULL,
+                                EXCEPTION_INVALID_OPERATION,
+                                "Parrot_pcc_invoke: Only the first parameter can be an invocant %d, %d", seen_arrow, index);
+                    }
+                }
+                else {
+                    reg_offset = n_regs_used[seen_arrow * 4 + REGNO_PMC]++;
+                }
+            }
+            break;
         default:
             Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INVALID_OPERATION,
-                "Parrot_PCCINVOKE: invalid reg type");
+                "Parrot_pcc_invoke_method_from_c_args: invalid reg type");
     }
 
     /* set the register offset into the index int[] */
@@ -2084,6 +2100,9 @@ commit_last_arg_sig_object(PARROT_INTERP, int index, int cur,
                 break;
             case PARROT_ARG_PMC:
                 CTX_REG_PMC(ctx, reg_offset) = VTABLE_get_pmc_keyed_int(interp, sig_obj, index);
+                if (cur & PARROT_ARG_INVOCANT) {
+                    interp->current_object = CTX_REG_PMC(ctx, reg_offset);
+                }
                 break;
             default:
                 Parrot_ex_throw_from_c_args(interp, NULL,
