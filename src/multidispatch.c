@@ -590,7 +590,7 @@ Parrot_mmd_multi_dispatch_from_c_args(PARROT_INTERP,
             string_to_cstring(interp, VTABLE_name(interp, sub)));
 #endif
 
-    Parrot_pcc_invoke_sub_from_sig_object(interp, sub, sig_object);
+    Parrot_pcc_invoke_from_sig_object(interp, sub, sig_object);
     dod_unregister_pmc(interp, sig_object);
 }
 
