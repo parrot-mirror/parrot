@@ -1997,13 +1997,23 @@ count_signature_elements(PARROT_INTERP, ARGIN(const char *signature),
                 break;
             case 'P':
                 arg_ret_cnt[seen_arrow]++;
-                max_regs[seen_arrow * 4 + REGNO_PMC]++;
+                {
+                    /* Lookahead to see if PMC is marked as invocant */
+                    if (*(++x) == 'i') {
+                        max_regs[REGNO_PMC]++;
+                    }
+                    else {
+                        x--; /* Undo lookahead */
+                        max_regs[seen_arrow * 4 + REGNO_PMC]++;
+                    }
+                }
                 break;
             case 'f':
             case 'n':
             case 's':
             case 'o':
             case 'p':
+            case 'i':
                 break;
             default:
                 Parrot_ex_throw_from_c_args(interp, NULL,
