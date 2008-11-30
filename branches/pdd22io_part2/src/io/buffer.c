@@ -75,7 +75,7 @@ Parrot_io_setbuf(PARROT_INTERP, ARGMOD(PMC *filehandle), size_t bufsize)
 
     /* If there is already a buffer, make sure we flush before modifying it. */
     if (buffer_start)
-        Parrot_io_flush_buffer(interp, filehandle);
+        Parrot_io_flush(interp, filehandle);
 
     /* Choose an appropriate buffer size for caller */
     switch (bufsize) {
@@ -279,7 +279,7 @@ Parrot_io_read_buffer(PARROT_INTERP, ARGMOD(PMC *filehandle),
 
     /* write buffer flush */
     if (buffer_flags & PIO_BF_WRITEBUF) {
-        Parrot_io_flush_buffer(interp, filehandle);
+        Parrot_io_flush(interp, filehandle);
     }
 
     /* line buffered read */
@@ -397,7 +397,7 @@ Parrot_io_peek_buffer(PARROT_INTERP, ARGMOD(PMC *filehandle),
 
     /* write buffer flush */
     if (buffer_flags & PIO_BF_WRITEBUF) {
-        Parrot_io_flush_buffer(interp, filehandle);
+        Parrot_io_flush(interp, filehandle);
     }
 
     /* read Data from buffer */
@@ -592,7 +592,7 @@ Parrot_io_write_buffer(PARROT_INTERP, ARGMOD(PMC *filehandle), ARGIN(STRING *s))
     if (need_flush || len >= buffer_size) {
         long wrote;
         /* Write through, skip buffer. */
-        Parrot_io_flush_buffer(interp, filehandle);
+        Parrot_io_flush(interp, filehandle);
         wrote = PIO_WRITE(interp, filehandle, s);
         if (wrote == (long)len) {
             Parrot_io_set_file_position(interp, filehandle, (wrote +
@@ -624,7 +624,7 @@ Parrot_io_write_buffer(PARROT_INTERP, ARGMOD(PMC *filehandle), ARGIN(STRING *s))
         buffer_next += avail;
         Parrot_io_set_file_position(interp, filehandle, (avail +
                     Parrot_io_get_file_position(interp, filehandle)));
-        Parrot_io_flush_buffer(interp, filehandle);
+        Parrot_io_flush(interp, filehandle);
         memcpy(buffer_start, ((const char *)buffer + avail), diff);
         buffer_next += diff;
         Parrot_io_set_file_position(interp, filehandle, (diff +
@@ -674,7 +674,7 @@ Parrot_io_seek_buffer(PARROT_INTERP, ARGMOD(PMC *filehandle),
 
     if ((newpos < file_pos - (buffer_next - buffer_start))
         || (newpos >= file_pos + (buffer_end - buffer_next))) {
-        Parrot_io_flush_buffer(interp, filehandle);
+        Parrot_io_flush(interp, filehandle);
         newpos = PIO_SEEK(interp, filehandle, newpos, SEEK_SET);
     }
     else {
