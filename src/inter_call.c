@@ -2444,7 +2444,26 @@ void
 Parrot_PCCINVOKE(PARROT_INTERP, ARGIN(PMC* pmc), ARGMOD(STRING *method_name),
         ARGIN(const char *signature), ...)
 {
-#define PCC_ARG_MAX 1024
+#define PARROT_PCCINVOKE_UNIFY_FLAG 0
+#if PARROT_PCCINVOKE_UNIFY_FLAG
+    PMC *sig_obj;
+    PMC *sub_obj;
+    va_list args;
+    va_start(args, signature);
+    sig_obj = Parrot_build_sig_object_from_varargs(interp, pmc, signature, args);
+    va_end(args);
+
+    /* Find the subroutine object as a named method on pmc */
+    sub_obj = VTABLE_find_method(interp, pmc, method_name);
+    if (PMC_IS_NULL(sub_obj))
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_METH_NOT_FOUND,
+            "Method '%Ss' not found", method_name);
+
+    /* Invoke the subroutine object with the given CallSignature object */
+    Parrot_pcc_invoke_from_sig_object(interp, sub_obj, sig_obj);
+    dod_unregister_pmc(interp, sig_obj);
+#else
+#  define PCC_ARG_MAX 1024
     /* variables from PCCINVOKE impl in PCCMETHOD.pm */
     /* args INSP, returns INSP */
     INTVAL n_regs_used[] = { 0, 0, 0, 0, 0, 0, 0, 0 };
@@ -2605,6 +2624,8 @@ Parrot_PCCINVOKE(PARROT_INTERP, ARGIN(PMC* pmc), ARGMOD(STRING *method_name),
     interp->args_signature = save_args_signature;
     interp->current_object = save_current_object;
     va_end(list);
+#endif
+#undef PARROT_PCCINVOKE_UNIFY_FLAG
 }
 
 /*
@@ -2657,6 +2678,8 @@ Parrot_pcc_invoke_from_sig_object(PARROT_INTERP, ARGIN(PMC *sub_obj),
 
     const char *x;
     const char *ret_x  = NULL;
+    int         index  = -1;
+    int         cur    = 0;
 
     indexes[0] = arg_indexes;
     indexes[1] = result_indexes;
@@ -2664,8 +2687,10 @@ Parrot_pcc_invoke_from_sig_object(PARROT_INTERP, ARGIN(PMC *sub_obj),
     sigs[1]    = results_sig;
 
     /* Count the number of objects of each type that need to be allocated by
-       the caller to perform this function call */
+       the caller to perform this function call. Allocate a context
+       structure to hold all the parameters we need. */
     ctx = count_signature_elements(interp, signature, args_sig, results_sig, 0);
+
 
     /* code from PCCINVOKE impl in PCCMETHOD.pm */
     /* Save the current values of the interpreter arguments so that additional
@@ -2674,13 +2699,16 @@ Parrot_pcc_invoke_from_sig_object(PARROT_INTERP, ARGIN(PMC *sub_obj),
     save_args_signature    = interp->args_signature;
     save_current_object    = interp->current_object;
 
-    /* Set the function input parameters in the context structure, and return
-     * the offset in the signature where the return params start. */
-    ret_x = set_context_sig_params(interp, signature, n_regs_used,
-                                   sigs, indexes, ctx, sig_obj);
+    /* Method calls will reset this to the invocant inside
+     * 'set_context_sig_params'. */
+    interp->current_object = PMCNULL;
 
-    /* Set up the context object for the function invokation */
-    interp->current_object       = PMCNULL;
+    /* Set the function input parameters in the context structure, and return the
+       offset in the signature where the return params start. */
+    ret_x = set_context_sig_params(interp, signature, n_regs_used, sigs,
+        indexes, ctx, sig_obj);
+
+    /* Set up the context object for the function invocation */
     interp->current_cont         = NEED_CONTINUATION;
     ctx->current_cont            = ret_cont;
     PMC_cont(ret_cont)->from_ctx = Parrot_context_ref(interp, ctx);
@@ -2688,8 +2716,9 @@ Parrot_pcc_invoke_from_sig_object(PARROT_INTERP, ARGIN(PMC *sub_obj),
     /* Invoke the function */
     dest = VTABLE_invoke(interp, sub_obj, NULL);
 
-    /* PIR Subs need runops to run their opcodes. */
-    if (sub_obj->vtable->base_type == enum_class_Sub) {
+    /* PIR Subs not invoked as methods  need runops to run their opcodes. */
+    if (sub_obj->vtable->base_type == enum_class_Sub
+            && PMC_IS_NULL(interp->current_object)) {
         INTVAL old_core  = interp->run_core;
         opcode_t offset  = dest - interp->code->base.data;
 
