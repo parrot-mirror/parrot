@@ -404,13 +404,14 @@ Parrot_mmd_ensure_writable(PARROT_INTERP, INTVAL function, ARGIN_NULLOK(const PM
 
 =item C<PMC* Parrot_build_sig_object_from_varargs>
 
-Take a varargs list, and convert it into a CallSignature PMC. The CallSignature
-stores the original short signature string, and an array of integer types to
-pass on to the multiple dispatch search.
+Take a varargs list, and convert it into a CallSignature PMC. The
+CallSignature stores the original short signature string, and an array of
+integer types to pass on to the multiple dispatch search.
 
 =cut
 
 */
+
 PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
@@ -422,7 +423,6 @@ Parrot_build_sig_object_from_varargs(PARROT_INTERP, ARGIN_NULLOK(PMC* obj),
     INTVAL in_return_sig     = 0;
     PMC    *returns          = PMCNULL;
     PMC    *call_object      = pmc_new(interp, enum_class_CallSignature);
-    PMC    *type_tuple =  PMCNULL; // = pmc_new(interp, enum_class_FixedIntegerArray);
     INTVAL  sig_len          = strlen(sig);
     STRING *s_sig            = string_from_cstring(interp, sig, sig_len);
     STRING *string_sig       = NULL;
@@ -437,16 +437,10 @@ Parrot_build_sig_object_from_varargs(PARROT_INTERP, ARGIN_NULLOK(PMC* obj),
     if (PMC_IS_NULL(obj))
         string_sig = s_sig;
     else {
-        /* Should verify here that the signature doesn't already have
-           "Pi" at the beginning, some callers might have added this
-           already. */
         STRING *invocant_sig = CONST_STRING(interp, "Pi");
         string_sig = string_concat(interp, invocant_sig, s_sig, 0);
         sig_len = sig_len + 2;
     }
-
-    //VTABLE_set_integer_native(interp, type_tuple, sig_len);
-    //VTABLE_set_pmc(interp, call_object, type_tuple);
 
     VTABLE_set_string_native(interp, call_object, string_sig);
 
@@ -535,11 +529,14 @@ Parrot_build_sig_object_from_varargs(PARROT_INTERP, ARGIN_NULLOK(PMC* obj),
             }
         }
     }
-
-    type_tuple = Parrot_mmd_build_type_tuple_from_sig_obj(interp, call_object);
-    VTABLE_set_pmc(interp, call_object, type_tuple);
+    {
+        PMC *type_tuple = PMCNULL;
+        type_tuple = Parrot_mmd_build_type_tuple_from_sig_obj(interp, call_object);
+        VTABLE_set_pmc(interp, call_object, type_tuple);
+    }
     return call_object;
 }
+
 
 /*
 
