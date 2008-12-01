@@ -69,7 +69,7 @@ Parrot_io_init(PARROT_INTERP)
             "PIO alloc piodata failure.");
     interp->piodata->default_stack = NULL;
     interp->piodata->table         =
-        (PMC **)mem_sys_allocate_zeroed(PIO_NR_OPEN * sizeof (ParrotIO *));
+        (PMC **)mem_sys_allocate_zeroed(PIO_NR_OPEN * sizeof (PMC *));
 
     if (!interp->piodata->table)
         Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_PIO_ERROR,
