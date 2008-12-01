@@ -474,7 +474,7 @@ Parrot_io_read_unix(PARROT_INTERP, ARGMOD(PMC *filehandle),
         }
         else {
             /* Read returned 0, EOF if len requested > 0 */
-            if (len > 0)
+            if (len > 0 || (file_flags & PIO_F_LINEBUF))
                 Parrot_io_set_flags(interp, filehandle, (file_flags | PIO_F_EOF));
             s->bufused = s->strlen = 0;
             return bytes;
