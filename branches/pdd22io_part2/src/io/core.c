@@ -30,7 +30,7 @@ interpreter.
                 interp->piodata->table[PIO_STD*_FILENO].
 */
 
-/* PIOOFF_T piooffsetzero; */
+PIOOFF_T piooffsetzero;
 
 /*
 
@@ -99,6 +99,34 @@ Parrot_io_finish(PARROT_INTERP)
     mem_sys_free(interp->piodata);
     interp->piodata = NULL;
 
+}
+
+
+/*
+
+=item C<void Parrot_IOData_mark>
+
+Called from C<trace_active_PMCs()> to mark the IO data live.
+
+=cut
+
+*/
+
+PARROT_EXPORT
+void
+Parrot_IOData_mark(PARROT_INTERP, ARGIN(ParrotIOData *piodata))
+{
+    INTVAL i;
+    ParrotIOTable table = piodata->table;
+
+    /* this was i < PIO_NR_OPEN, but only standard handles 0..2 need
+     * to be kept alive AFAIK -leo
+     */
+    for (i = 0; i < 3; i++) {
+        if (table[i]) {
+            pobject_lives(interp, (PObj *)table[i]);
+        }
+    }
 }
 
 
