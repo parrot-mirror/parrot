@@ -823,29 +823,25 @@ utf8
 T\xf6tsch
 OUTPUT
 
-pir_output_is( <<'CODE', <<"OUTPUT", "string read/write handle" );
+pir_output_is( <<'CODE', <<"OUTPUT", "string read/write handle", todo => "no stringhandle yet" );
 .sub main :main
     .local pmc    pio
     .local string greeting
     .local string layer
 
-    pio = getstdout
-    push pio, "string"
-    print "Hello"
-    print ", "
-    print "world!"
-    print "\n"
+    pio = new 'StringHandle'
+    print pio, "Hello"
+    print pio, ", "
+    print pio, "world!"
+    print pio, "\n"
 
     greeting = read pio, 1024
-    pop layer, pio
 
     print greeting
-    print layer
     print "\n"
 .end
 CODE
 Hello, world!
-string
 OUTPUT
 
 pir_output_is( <<"CODE", <<"OUTPUT", "PIO.readall() - classmeth" );
