@@ -468,68 +468,6 @@ op tell(out INT, out INT, invar PMC) :base_io {
 
 ########################################
 
-=item B<socket>(out PMC, in INT, in INT, in INT)
-
-=item B<sockaddr>(out STR, in INT, in STR)
-
-=item B<connect>(out INT, invar PMC, in STR)
-
-=item B<recv>(out INT, invar PMC, out STR)
-
-=item B<send>(out INT, invar PMC, in STR)
-
-=item B<poll>(out INT, invar PMC, in INT, in INT, in INT)
-
-=item B<bind>(out INT, invar PMC, in STR)
-
-=item B<listen>(out INT, invar PMC, in INT)
-
-=item B<accept>(out PMC, invar PMC)
-
-=cut
-
-op socket(out PMC, in INT, in INT, in INT) :base_network {
-  $1 = PIO_socket(interp, $2, $3, $4);
-  if (!$1)
-    $1 = pmc_new(interp, enum_class_Undef);
-}
-
-op sockaddr(out STR, in INT, in STR) :base_network {
-    $1 = PIO_sockaddr_in(interp, (unsigned short)$2, $3);
-}
-
-op connect(out INT, invar PMC, in STR) :base_network {
-    $1 = (INTVAL)PIO_connect(interp, $2, $3);
-}
-
-op recv(out INT, invar PMC, out STR) :base_network {
-    STRING *dest = $3;
-    $1 = (INTVAL)PIO_recv(interp, $2, &dest);
-    $3 = dest;
-}
-
-op send(out INT, invar PMC, in STR) :base_network {
-    $1 = (INTVAL)PIO_send(interp, $2, $3);
-}
-
-op poll(out INT, invar PMC, in INT, in INT, in INT) :base_network {
-    $1 = (INTVAL)PIO_poll(interp, $2, $3, $4, $5);
-}
-
-op bind(out INT, invar PMC, in STR) :base_network {
-    $1 = (INTVAL)PIO_bind(interp, $2, $3);
-}
-
-op listen(out INT, invar PMC, in INT) :base_network {
-    $1 = (INTVAL)PIO_listen(interp, $2, $3);
-}
-
-op accept(out PMC, invar PMC) :base_network {
-    $1 = PIO_accept(interp, $2);
-}
-
-########################################
-
 =back
 
 =cut
