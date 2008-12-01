@@ -538,6 +538,11 @@ PARROT_EXPORT
 void Parrot_io_init(PARROT_INTERP)
         __attribute__nonnull__(1);
 
+PARROT_EXPORT
+void Parrot_IOData_mark(PARROT_INTERP, ARGIN(ParrotIOData *piodata))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 /* HEADERIZER END: src/io/core.c */
 
@@ -812,19 +817,21 @@ size_t Parrot_io_write_buffer(PARROT_INTERP,
 
 size_t Parrot_io_read_utf8(PARROT_INTERP,
     ARGMOD(PMC *filehandle),
-    ARGIN(STRING **buf))
+    ARGMOD(STRING **buf))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3)
-        FUNC_MODIFIES(*filehandle);
+        FUNC_MODIFIES(*filehandle)
+        FUNC_MODIFIES(*buf);
 
 size_t Parrot_io_write_utf8(PARROT_INTERP,
     ARGMOD(PMC *filehandle),
-    ARGIN(STRING *s))
+    ARGMOD(STRING *s))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3)
-        FUNC_MODIFIES(*filehandle);
+        FUNC_MODIFIES(*filehandle)
+        FUNC_MODIFIES(*s);
 
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 /* HEADERIZER END: src/io/utf8.c */
