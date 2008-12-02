@@ -305,7 +305,6 @@ sub run_command {
 
     my ( $out, $err, $chdir ) = _handle_test_options( \%options );;
 
-#    local $ENV;
     if ($PConfig{parrot_is_shared}) {
         _handle_blib_path();
     }

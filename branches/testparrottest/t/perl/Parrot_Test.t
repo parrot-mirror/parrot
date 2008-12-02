@@ -30,7 +30,7 @@ BEGIN {
         plan( skip_all => "Test::Builder::Tester not installed\n" );
         exit 0;
     }
-    plan( tests => 94 );
+    plan( tests => 96 );
 }
 
 use lib qw( . lib ../lib ../../lib );
@@ -461,6 +461,24 @@ is( Parrot::Test::_handle_command($command_orig), $command_orig,
     local $? = 512;
     my $exit_message = Parrot::Test::_prepare_exit_message();
     is( $exit_message, 2, "Got expected exit message" );
+}
+
+{
+    my $text = q{Hello, world};
+    my $cmd = "$^X -e 'print qq{$text\n};'";
+    my $exit_message;
+    my ($stdout, $stderr);
+    capture(
+        sub {
+            $exit_message = run_command(
+            $cmd,
+            'CD' => '',
+        ); },
+        \$stdout,
+        \$stderr,
+    );
+    like($stdout, qr/$text/, "Captured STDOUT");
+    is($exit_message, 0, "Got 0 as exit message");
 }
 
 # Local Variables:
