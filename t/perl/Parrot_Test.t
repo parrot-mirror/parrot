@@ -80,8 +80,6 @@ can_ok( 'Parrot::Test', $_ ) for qw/
     write_code_to_file
     /;
 
-# RT#46891 test run_command()
-
 # per_test
 is( Parrot::Test::per_test(), undef, 'per_test() no args' );
 is( Parrot::Test::per_test( undef, 0 ),     undef, 'per_test() invalid first arg' );
@@ -135,9 +133,10 @@ OUTPUT
 test_test($desc);
 
 
-# The exact error output for pasm_output_isnt() depends on the version of Test::Builder.
-# So, in order to avoid version dependent failures, be content with checking the
-# standard output.
+# The exact error output for pasm_output_isnt() depends on the version of
+# Test::Builder.  So, in order to avoid version dependent failures, be content
+# with checking the standard output.
+
 $desc = 'pasm_output_isnt: failure';
 test_out("not ok 1 - $desc");
 test_fail(+10);
@@ -480,6 +479,15 @@ is( Parrot::Test::_handle_command($command_orig), $command_orig,
     like($stdout, qr/$text/, "Captured STDOUT");
     is($exit_message, 0, "Got 0 as exit message");
 }
+
+#$desc = '';
+#pasm_output_is( <<'CODE', <<'OUTPUT', $desc );
+#    print "foo\n"
+#    end
+#CODE
+#foo
+#OUTPUT
+##test_test($desc);
 
 # Local Variables:
 #   mode: cperl
