@@ -3816,7 +3816,114 @@ Produces a dump of the annotations segment.
 */
 
 void PackFile_Annotations_dump(PARROT_INTERP, struct PackFile_Segment *seg) {
-    /* TODO */
+    PackFile_Annotations *self = (PackFile_Annotations *)seg;
+    INTVAL i;
+
+    /* Dump keys. */
+    PIO_printf(interp, "\n  keys => [\n");
+    for (i = 0; i < self->num_keys; i++) {
+        char *key_name = string_to_cstring(interp, PF_CONST(self->code,
+               self->keys[i]->name)->u.string);
+        PIO_printf(interp, "    #%d\n    [\n", i);
+        PIO_printf(interp, "        NAME => %s\n", key_name);
+        PIO_printf(interp, "        TYPE => %s\n",
+                self->keys[i]->type == PF_ANNOTATION_KEY_TYPE_INT ? "integer" :
+                self->keys[i]->type == PF_ANNOTATION_KEY_TYPE_STR ? "string" :
+                self->keys[i]->type == PF_ANNOTATION_KEY_TYPE_NUM ? "number" :
+                "PMC");
+        PIO_printf(interp, "    ],\n");
+        string_cstring_free(key_name);
+    }
+    PIO_printf(interp, "  ],\n");
+
+    /* Dump groups. */
+    PIO_printf(interp, "\n  groups => [\n");
+    for (i = 0; i < self->num_groups; i++) {
+        PIO_printf(interp, "    #%d\n    [\n", i);
+        PIO_printf(interp, "        BYTECODE_OFFSET => %d\n",
+                self->groups[i]->bytecode_offset);
+        PIO_printf(interp, "        ENTRIES_OFFSET => %d\n",
+                self->groups[i]->entries_offset);
+        PIO_printf(interp, "    ],\n");
+    }
+    PIO_printf(interp, "  ],\n");
+
+    /* Dump entries. */
+    PIO_printf(interp, "\n  entries => [\n");
+    for (i = 0; i < self->num_entries; i++) {
+        PIO_printf(interp, "    #%d\n    [\n", i);
+        PIO_printf(interp, "        BYTECODE_OFFSET => %d\n",
+                self->entries[i]->bytecode_offset);
+        PIO_printf(interp, "        KEY => %d\n",
+                self->entries[i]->key);
+        PIO_printf(interp, "        VALUE => %d\n",
+                self->entries[i]->value);
+        PIO_printf(interp, "    ],\n");
+    }
+    PIO_printf(interp, "  ],\n");
+}
+
+
+/*
+
+=item C<void PackFile_Annotations_add_group>
+
+Starts a new bytecode annotation group. Takes the offset in the bytecode where
+the new annotations group starts.
+
+*/
+
+void PackFile_Annotations_add_group(PARROT_INTERP, struct PackFile_Annotations *self,
+        opcode_t offset) {
+    /* Allocate extra space for the group in the groups array. */
+    if (self->groups)
+        self->groups = mem_sys_realloc(self->groups, (1 + self->num_groups) *
+                sizeof(PackFile_Annotations_Group *));
+    else
+        self->groups = mem_allocate_n_typed(self->num_groups + 1, PackFile_Annotations_Group *);
+    
+    /* Store details. */
+    self->groups[self->num_groups] = mem_allocate_typed(PackFile_Annotations_Group);
+    self->groups[self->num_groups]->bytecode_offset = offset;
+    self->groups[self->num_groups]->entries_offset = self->num_entries;
+
+    /* Increment group count. */
+    self->num_groups++;
+}
+
+
+/*
+
+=item C<void PackFile_Annotations_add_entry>
+
+Adds a new bytecode annotation entry. Takes the annotations segment to add the
+entry to, the current bytecode offset (assumed to be the greatest one so far
+in the currently active group), the annotation key, the annotation value type
+(one of PF_ANNOTATION_KEY_TYPE_INT, PF_ANNOTATION_KEY_TYPE_STR or
+PF_ANNOTATION_KEY_TYPE_NUM) and the value (set the appropriate of the last
+three parameters; those mapping to types other than the specified annotaiton
+value type will be ignored).
+
+*/
+
+void PackFile_Annotations_add_entry(PARROT_INTERP, struct PackFile_Annotations *self,
+        opcode_t offset, STRING *key, INTVAL type, INTVAL integer_value,
+        FLOATVAL number_value, STRING *string_value) {
+    INTVAL i;
+    opcode_t key_id = 0;
+
+    /* See if we already have this key. */
+    for (i = 0; i < self->num_keys; i++) {
+        STRING *test_key = PF_CONST(self->code, self->keys[i]->name)->u.string;
+        if (string_equal(interp, test_key, key) == 0) {
+            key_id = 0;
+            break;
+        }
+    }
+    if (key_id == 0) {
+        /* We do nee have it. Add. */
+
+    }
 }
 
 

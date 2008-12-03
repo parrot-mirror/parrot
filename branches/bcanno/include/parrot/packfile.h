@@ -196,6 +196,7 @@ struct PackFile_ByteCode {
     struct PackFile_Debug *debugs;
     PackFile_ConstTable   *const_table;
     PackFile_FixupTable   *fixups;
+    struct PackFile_Annotations *annotations;
 };
 
 typedef struct PackFile_DebugFilenameMapping {
@@ -215,7 +216,6 @@ typedef struct PackFile_Debug {
 #define PF_ANNOTATION_KEY_TYPE_INT 0
 #define PF_ANNOTATION_KEY_TYPE_STR 1
 #define PF_ANNOTATION_KEY_TYPE_NUM 2
-#define PF_ANNOTATION_KEY_TYPE_PMC 3
 
 typedef struct PackFile_Annotations_Key {
     opcode_t name;
@@ -244,6 +244,7 @@ typedef struct PackFile_Annotations {
     PackFile_Annotations_Group  **groups;
     opcode_t                    num_entries;
     PackFile_Annotations_Entry  **entries;
+    PackFile_ByteCode           *code;
 } PackFile_Annotations;
 
 typedef struct PackFile_Directory {
