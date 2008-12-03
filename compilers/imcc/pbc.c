@@ -1910,7 +1910,15 @@ e_pbc_emit(PARROT_INTERP, SHIM(void *param), ARGIN(const IMC_Unit *unit),
             IMCC_INFO(interp)->npc);
     }
 
-    if (ins->opname && *ins->opname) {
+    if (ins->opname && strcmp(ins->opname, ".annotate") == 0) {
+        /* It's an annotation. Add annotations seg if we're missing one. */
+        if (!interp->code->annotations) {
+        }
+
+        /* Add annotation. */
+        
+    }
+    else if (ins->opname && *ins->opname) {
         SymReg  *addr, *r;
         opcode_t last_label = 1;
 

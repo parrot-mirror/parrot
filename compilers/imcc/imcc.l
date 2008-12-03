@@ -322,6 +322,7 @@ SP              [ ]
 <pod>{EOL}      { IMCC_INFO(interp)->line++; }
 
 <*>".line"               return TK_LINE;
+<INITIAL,emit>".annotate" return ANNOTATE;
 <INITIAL,emit>".lex"     return LEXICAL;
 ".arg"                   return ARG;
 ".set_arg"               return ARG;
