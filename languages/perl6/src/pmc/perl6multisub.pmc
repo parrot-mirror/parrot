@@ -460,8 +460,8 @@ static PMC* do_dispatch(PARROT_INTERP, candidate_info **candidates, PMC *args,
      * dispatch. Note that we could also store the current candidate set and
      * re-enter the dispatch algorithm below, making it cheaper to get to that
      * point. */
-    /*if (possibles_count == 1)
-        Parrot_mmd_cache_store_by_values(interp, cache, NULL, args, possibles[0]->sub);*/
+    if (possibles_count == 1)
+        Parrot_mmd_cache_store_by_values(interp, cache, NULL, args, possibles[0]->sub);
 
     /* If we have multiple candidates left, tie-break on any constraints. */
     if (possibles_count > 1) {
@@ -559,9 +559,24 @@ static PMC* do_dispatch(PARROT_INTERP, candidate_info **candidates, PMC *args,
                     VTABLE_get_string(interp, candidates[0]->sub));
         }
         else {
+            /* Get signatures of ambiguous candidates. */
+            STRING *sig_name = CONST_STRING(interp, "signature");
+            STRING *perl_name = CONST_STRING(interp, "perl");
+            STRING *newline = CONST_STRING(interp, "\n");
+            STRING *signatures = string_from_cstring(interp, "", 0);
+            for (i = 0; i < possibles_count; i++) {
+                PMC    *sig_meth  = VTABLE_find_method(interp, possibles[i]->sub, sig_name);
+                PMC    *sig_obj   = (PMC *)Parrot_run_meth_fromc_args(interp, sig_meth,
+                        possibles[i]->sub, sig_name, "P");
+                PMC    *perl_meth = VTABLE_find_method(interp, sig_obj, perl_name);
+                STRING *sig_perl  = (STRING *)Parrot_run_meth_fromc_args(interp, perl_meth,
+                        sig_obj, perl_name, "S");
+                signatures = string_append(interp, signatures, sig_perl);
+                signatures = string_append(interp, signatures, newline);
+            }
             Parrot_ex_throw_from_c_args(interp, next, 1,
-                "Ambiguous dispatch to multi '%Ss'",
-                    VTABLE_get_string(interp, candidates[0]->sub));
+                "Ambiguous dispatch to multi '%Ss'. Ambiguous candidates had signatures:\n%Ss",
+                    VTABLE_get_string(interp, candidates[0]->sub), signatures);
         }
     }
     else {
@@ -716,8 +731,8 @@ the Perl 6 MMD algorithm.
 
         /* See if we have a cache entry. */
         GETATTR_Perl6MultiSub_cache(interp, SELF, cache);
-        /*found = Parrot_mmd_cache_lookup_by_values(interp, cache, NULL, args);
-        if (PMC_IS_NULL(found)) {*/
+        found = Parrot_mmd_cache_lookup_by_values(interp, cache, NULL, args);
+        if (PMC_IS_NULL(found)) {
             /* Make sure that we have a candidate list built. */
             GETATTR_Perl6MultiSub_candidates_sorted(interp, SELF, candidates);
             GETATTR_Perl6MultiSub_candidates(interp, SELF, unsorted);
@@ -735,7 +750,7 @@ the Perl 6 MMD algorithm.
              * if it can't find anything, it will throw the required exception. */
             found = do_dispatch(interp, candidates, args, 0,
                     VTABLE_elements(interp, unsorted), (opcode_t *)next, cache);
-        /*}*/
+        }
 
         /* Restore stuff that might have got overwriten by calls during the
          * dispatch algorithm. */
@@ -816,10 +831,64 @@ Gets the number of candidate on the candidate list.
         return VTABLE_elements(interp, candidates);
     }
 
+/*
+
+=item VTABLE PMC * get_iter()
+
+Get an iterator over the candidates.
+
+=cut
+
+*/
     VTABLE PMC * get_iter() {
         PMC *candidates;
         GETATTR_Perl6MultiSub_candidates(interp, SELF, candidates);
         return VTABLE_get_iter(interp, candidates);
+    }
+
+/*
+
+=item VTABLE PMC * get_pmc_keyed_int()
+
+Gets the candidate at index C<i>.
+
+=cut
+
+*/
+    VTABLE PMC * get_pmc_keyed_int(INTVAL i) {
+        PMC *candidates;
+        GETATTR_Perl6MultiSub_candidates(interp, SELF, candidates);
+        return VTABLE_get_pmc_keyed_int(interp, candidates, i);
+    }
+
+/*
+
+=item VTABLE PMC * get_pmc_keyed_str()
+
+Converts C<s> to an integer and gets the key at that index.
+
+=cut
+
+*/
+    VTABLE PMC * get_pmc_keyed_str(STRING *s) {
+        PMC *candidates;
+        GETATTR_Perl6MultiSub_candidates(interp, SELF, candidates);
+        return VTABLE_get_pmc_keyed_str(interp, candidates, s);
+    }
+
+/*
+
+=item VTABLE PMC * get_pmc_keyed()
+
+Converts C<p> to an integer and gets the key at that index.
+
+=cut
+
+*/
+    VTABLE PMC * get_pmc_keyed(PMC *p) {
+        PMC *candidates;
+        GETATTR_Perl6MultiSub_candidates(interp, SELF, candidates);
+        return VTABLE_get_pmc_keyed(interp, candidates, p);
     }
 }
 
