@@ -319,6 +319,56 @@ if($Test::Builder::VERSION == 0.84) {
     test_test($desc);
 }
 
+##### C-output test functions #####
+
+my $c_code = <<'ENDOFCODE';
+    #include <stdio.h>
+    #include <stdlib.h>
+
+    int
+    main(int argc, char* argv[])
+    {
+        printf("Hello, World!\n");
+        exit(0);
+    }
+ENDOFCODE
+
+$desc = 'C:  hello world';
+test_out("ok 1 - $desc");
+c_output_is( <<CODE, <<'OUTPUT', $desc );
+$c_code
+CODE
+Hello, World!
+OUTPUT
+test_test($desc);
+
+$desc = 'C:  isnt hello world';
+test_out("ok 1 - $desc");
+c_output_isnt( <<CODE, <<'OUTPUT', $desc );
+$c_code
+CODE
+Is Not Hello, World!
+OUTPUT
+test_test($desc);
+
+$desc = 'C:  like hello world';
+test_out("ok 1 - $desc");
+c_output_like( <<CODE, <<'OUTPUT', $desc );
+$c_code
+CODE
+/Hello, World/
+OUTPUT
+test_test($desc);
+
+$desc = 'C:  unlike hello world';
+test_out("ok 1 - $desc");
+c_output_unlike( <<CODE, <<'OUTPUT', $desc );
+$c_code
+CODE
+/foobar/
+OUTPUT
+test_test($desc);
+
 ##### Tests for Parrot::Test internal subroutines #####
 
 # _handle_test_options()
@@ -497,74 +547,6 @@ foo
 OUTPUT
 test_test($desc);
 }
-
-$desc = 'C:  hello world';
-test_out("ok 1 - $desc");
-c_output_is( <<'CODE', <<'OUTPUT', $desc );
-    #include <stdio.h>
-    #include <stdlib.h>
-
-    int
-    main(int argc, char* argv[])
-    {
-        printf("Hello, World!\n");
-        exit(0);
-    }
-CODE
-Hello, World!
-OUTPUT
-test_test($desc);
-
-$desc = 'C:  isnt hello world';
-test_out("ok 1 - $desc");
-c_output_isnt( <<'CODE', <<'OUTPUT', $desc );
-    #include <stdio.h>
-    #include <stdlib.h>
-
-    int
-    main(int argc, char* argv[])
-    {
-        printf("Hello, World!\n");
-        exit(0);
-    }
-CODE
-Is Not Hello, World!
-OUTPUT
-test_test($desc);
-
-$desc = 'C:  like hello world';
-test_out("ok 1 - $desc");
-c_output_like( <<'CODE', <<'OUTPUT', $desc );
-    #include <stdio.h>
-    #include <stdlib.h>
-
-    int
-    main(int argc, char* argv[])
-    {
-        printf("Hello, World!\n");
-        exit(0);
-    }
-CODE
-/Hello, World/
-OUTPUT
-test_test($desc);
-
-$desc = 'C:  unlike hello world';
-test_out("ok 1 - $desc");
-c_output_unlike( <<'CODE', <<'OUTPUT', $desc );
-    #include <stdio.h>
-    #include <stdlib.h>
-
-    int
-    main(int argc, char* argv[])
-    {
-        printf("Hello, World!\n");
-        exit(0);
-    }
-CODE
-/foobar/
-OUTPUT
-test_test($desc);
 
 # Local Variables:
 #   mode: cperl
