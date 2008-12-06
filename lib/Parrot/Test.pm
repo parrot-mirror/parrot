@@ -869,22 +869,6 @@ sub generate_languages_functions {
     }
 }
 
-=head1 SEE ALSO
-
-=over 4
-
-=item F<t/harness>
-
-=item F<docs/tests.pod>
-
-=item L<Test/More>
-
-=item L<Test/Builder>
-
-=back
-
-=cut
-
 package DB;
 
 sub uplevel_args {
@@ -1145,6 +1129,20 @@ Parrot::Test::<lang> modules.
 See RT#43266.
 This implementation is experimental and currently only works
 for languages/pipp.
+
+=back
+
+=head1 SEE ALSO
+
+=over 4
+
+=item F<t/harness>
+
+=item F<docs/tests.pod>
+
+=item L<Test/More>
+
+=item L<Test/Builder>
 
 =back
 
