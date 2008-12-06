@@ -181,13 +181,13 @@ sub _handle_error_output {
 sub _run_test_file {
     local $SIG{__WARN__} = \&_report_odd_hash;
     my ( $func, $code, $expected, $desc, %extra ) = @_;
-my $incoming_desc_status;
-if ($desc) {
-    $incoming_desc_status++;
-    print STDERR "desc:  $desc\n";
-} else {
-    print STDERR "desc is Perl-false\n";
-}
+#my $incoming_desc_status;
+#if ($desc) {
+#    $incoming_desc_status++;
+#    print STDERR "desc:  $desc\n";
+#} else {
+#    print STDERR "desc is Perl-false\n";
+#}
 
     my $path_to_parrot = path_to_parrot();
     my $parrot = File::Spec->join( File::Spec->curdir(), 'parrot' . $PConfig{exe} );
@@ -200,13 +200,13 @@ if ($desc) {
         ( undef, my $file, my $line ) = caller();
         $desc = "($file line $line)";
     }
-unless ($incoming_desc_status) {
-    if ($desc) {
-        print STDERR "desc is now:  $desc\n";
-    } else {
-        print STDERR "desc is still Perl-false\n";
-    }
-}
+#unless ($incoming_desc_status) {
+#    if ($desc) {
+#        print STDERR "desc is now:  $desc\n";
+#    } else {
+#        print STDERR "desc is still Perl-false\n";
+#    }
+#}
 
     # $test_no will be part of temporary file
     my $test_no = $builder->current_test() + 1;
@@ -390,6 +390,7 @@ sub _generate_test_functions {
     my $pirc           = File::Spec->join( File::Spec->curdir(),
                             qw( compilers pirc ), "pirc$PConfig{exe}" );
 
+    ##### A: Parrot test map #####
     my %parrot_test_map = map {
         $_ . '_output_is'           => 'is_eq',
         $_ . '_error_output_is'     => 'is_eq',
@@ -440,7 +441,7 @@ sub _generate_test_functions {
                 return 0;
             }
 
-print STDERR 'just before $pass:  ', "$desc\n";
+#print STDERR 'just before $pass:  ', "$desc\n";
             my $pass = $builder->$meth( $real_output, $expected, $desc );
             $builder->diag("'$cmd' failed with exit code $exit_code")
                 if not $pass and $exit_code;
@@ -453,6 +454,7 @@ print STDERR 'just before $pass:  ', "$desc\n";
         *{ $package . '::' . $func } = $test_sub;
     }
 
+    ##### B: PIR-to-PASM test map #####
     my %pir_2_pasm_test_map = (
         pir_2_pasm_is      => 'is_eq',
         pir_2_pasm_isnt    => 'isnt_eq',
@@ -548,6 +550,7 @@ print STDERR 'just before $pass:  ', "$desc\n";
         *{ $package . '::' . $func } = $test_sub;
     }
 
+    ##### C: Language test map #####
     my %builtin_language_prefix = (
         PIR_IMCC  => 'pir',
         PASM_IMCC => 'pasm',
@@ -613,6 +616,7 @@ print STDERR 'just before $pass:  ', "$desc\n";
         *{ $package . '::' . $func } = $test_sub;
     }
 
+    ##### D:  Example test map #####
     my %example_test_map = (
         example_output_is   => 'language_output_is',
         example_output_like => 'language_output_like',
@@ -656,6 +660,7 @@ print STDERR 'just before $pass:  ', "$desc\n";
         *{ $package . '::' . $func } = $test_sub;
     }
 
+    ##### E: C test map #####
     my %c_test_map = (
         c_output_is   => 'is_eq',
         c_output_isnt => 'isnt_eq',
