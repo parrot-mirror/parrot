@@ -162,92 +162,8 @@ sub path_to_parrot {
     return Cwd::realpath( $path );
 }
 
-sub generate_languages_functions {
-
-    my %test_map = (
-        output_is         => 'is_eq',
-        error_output_is   => 'is_eq',
-        output_like       => 'like',
-        error_output_like => 'like',
-        output_isnt       => 'isnt_eq',
-        error_output_isnt => 'isnt_eq',
-    );
-
-    foreach my $func ( keys %test_map ) {
-
-        my $test_sub = sub {
-            local *__ANON__ = $func;
-            my $self        = shift;
-            my ( $code, $expected, $desc, %options ) = @_;
-
-            # set a todo-item for Test::Builder to find
-            my $call_pkg = $self->{builder}->exported_to() || '';
-
-            no strict 'refs';
-
-            local *{ $call_pkg . '::TODO' } = ## no critic Variables::ProhibitConditionalDeclarations
-                \$options{todo}
-                if defined $options{todo};
-
-            my $count = $self->{builder}->current_test() + 1;
-
-            # These are the thing that depend on the actual language implementation
-            my $out_f     = $self->get_out_fn( $count,    \%options );
-            my $lang_f    = $self->get_lang_fn( $count,   \%options );
-            my $cd        = $self->get_cd( \%options );
-            my @test_prog = $self->get_test_prog( $count, \%options );
-
-            Parrot::Test::write_code_to_file( $code, $lang_f );
-
-            # set a todo-item for Test::Builder to find
-            my $skip_why = $self->skip_why( \%options );
-            if ($skip_why) {
-                $self->{builder}->skip($skip_why);
-            }
-            else {
-
-                # STDERR is written into same output file
-                my $exit_code = Parrot::Test::run_command(
-                    \@test_prog,
-                    CD     => $cd,
-                    STDOUT => $out_f,
-                    STDERR => $out_f
-                );
-                my $real_output = slurp_file($out_f);
-
-                if ( $func =~ m/^ error_/xms ) {
-                    return _handle_error_output( $self->{builder}, $real_output, $expected, $desc )
-                        unless $exit_code;
-                }
-                elsif ($exit_code) {
-                    $self->{builder}->ok( 0, $desc );
-
-                    my $test_prog = join ' && ', @test_prog;
-                    $self->{builder}->diag("'$test_prog' failed with exit code $exit_code.");
-
-                    return 0;
-                }
-
-                my $meth = $test_map{$func};
-                $self->{builder}->$meth( $real_output, $expected, $desc );
-            }
-
-            # The generated files are left in the t/* directories.
-            # Let 'make clean' and 'svn:ignore' take care of them.
-
-            return;
-        };
-
-        my ($package) = caller();
-
-        no strict 'refs';
-
-        *{ $package . '::' . $func } = $test_sub;
-    }
-}
-
-# The following methods are private.
-# They should not be used by modules inheriting from Parrot::Test.
+# The following methods --up until generate_languages_functions() -- are
+# private.  They should not be used by modules inheriting from Parrot::Test.
 
 sub _handle_error_output {
     my ( $builder, $real_output, $expected, $desc ) = @_;
@@ -265,6 +181,13 @@ sub _handle_error_output {
 sub _run_test_file {
     local $SIG{__WARN__} = \&_report_odd_hash;
     my ( $func, $code, $expected, $desc, %extra ) = @_;
+my $incoming_desc_status;
+if ($desc) {
+    $incoming_desc_status++;
+    print STDERR "desc:  $desc\n";
+} else {
+    print STDERR "desc is Perl-false\n";
+}
 
     my $path_to_parrot = path_to_parrot();
     my $parrot = File::Spec->join( File::Spec->curdir(), 'parrot' . $PConfig{exe} );
@@ -277,6 +200,11 @@ sub _run_test_file {
         ( undef, my $file, my $line ) = caller();
         $desc = "($file line $line)";
     }
+if ($desc) {
+    print STDERR "desc:  $desc\n";
+} else {
+    print STDERR "desc is still Perl-false\n";
+}
 
     # $test_no will be part of temporary file
     my $test_no = $builder->current_test() + 1;
@@ -852,6 +780,90 @@ sub _generate_test_functions {
     }
 
     return;
+}
+
+sub generate_languages_functions {
+
+    my %test_map = (
+        output_is         => 'is_eq',
+        error_output_is   => 'is_eq',
+        output_like       => 'like',
+        error_output_like => 'like',
+        output_isnt       => 'isnt_eq',
+        error_output_isnt => 'isnt_eq',
+    );
+
+    foreach my $func ( keys %test_map ) {
+
+        my $test_sub = sub {
+            local *__ANON__ = $func;
+            my $self        = shift;
+            my ( $code, $expected, $desc, %options ) = @_;
+
+            # set a todo-item for Test::Builder to find
+            my $call_pkg = $self->{builder}->exported_to() || '';
+
+            no strict 'refs';
+
+            local *{ $call_pkg . '::TODO' } = ## no critic Variables::ProhibitConditionalDeclarations
+                \$options{todo}
+                if defined $options{todo};
+
+            my $count = $self->{builder}->current_test() + 1;
+
+            # These are the thing that depend on the actual language implementation
+            my $out_f     = $self->get_out_fn( $count,    \%options );
+            my $lang_f    = $self->get_lang_fn( $count,   \%options );
+            my $cd        = $self->get_cd( \%options );
+            my @test_prog = $self->get_test_prog( $count, \%options );
+
+            Parrot::Test::write_code_to_file( $code, $lang_f );
+
+            # set a todo-item for Test::Builder to find
+            my $skip_why = $self->skip_why( \%options );
+            if ($skip_why) {
+                $self->{builder}->skip($skip_why);
+            }
+            else {
+
+                # STDERR is written into same output file
+                my $exit_code = Parrot::Test::run_command(
+                    \@test_prog,
+                    CD     => $cd,
+                    STDOUT => $out_f,
+                    STDERR => $out_f
+                );
+                my $real_output = slurp_file($out_f);
+
+                if ( $func =~ m/^ error_/xms ) {
+                    return _handle_error_output( $self->{builder}, $real_output, $expected, $desc )
+                        unless $exit_code;
+                }
+                elsif ($exit_code) {
+                    $self->{builder}->ok( 0, $desc );
+
+                    my $test_prog = join ' && ', @test_prog;
+                    $self->{builder}->diag("'$test_prog' failed with exit code $exit_code.");
+
+                    return 0;
+                }
+
+                my $meth = $test_map{$func};
+                $self->{builder}->$meth( $real_output, $expected, $desc );
+            }
+
+            # The generated files are left in the t/* directories.
+            # Let 'make clean' and 'svn:ignore' take care of them.
+
+            return;
+        };
+
+        my ($package) = caller();
+
+        no strict 'refs';
+
+        *{ $package . '::' . $func } = $test_sub;
+    }
 }
 
 =head1 SEE ALSO
