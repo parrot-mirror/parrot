@@ -30,7 +30,7 @@ BEGIN {
         plan( skip_all => "Test::Builder::Tester not installed\n" );
         exit 0;
     }
-    plan( tests => 97 );
+    plan( tests => 100 );
 }
 
 use lib qw( . lib ../lib ../../lib );
@@ -229,9 +229,9 @@ bar
 OUTPUT
 test_test($desc);
 
-# The exact error output for pir_output_isnt() depends on the version of Test::Builder.
-# So, in order to avoid version dependent failures, be content with checking the
-# standard output.
+# The exact error output for pir_output_isnt() depends on the version of
+# Test::Builder.  So, in order to avoid version dependent failures, be content
+# with checking the standard output.
 $desc = 'pir_output_isnt: failure';
 test_out("not ok 1 - $desc");
 test_fail(+10);
@@ -484,6 +484,9 @@ undef $err;
 undef $chdir;
 
 
+SKIP: {
+    skip 'feature not DWIMming even though test passes',
+    1;
 $desc = '';
 test_out("ok 1 - $desc");
 pasm_output_is( <<'CODE', <<'OUTPUT', $desc );
@@ -491,6 +494,58 @@ pasm_output_is( <<'CODE', <<'OUTPUT', $desc );
     end
 CODE
 foo
+OUTPUT
+test_test($desc);
+}
+
+$desc = 'C:  hello world';
+test_out("ok 1 - $desc");
+c_output_is( <<'CODE', <<'OUTPUT', $desc );
+    #include <stdio.h>
+    #include <stdlib.h>
+
+    int
+    main(int argc, char* argv[])
+    {
+        printf("Hello, World!\n");
+        exit(0);
+    }
+CODE
+Hello, World!
+OUTPUT
+test_test($desc);
+
+$desc = 'C:  isnt hello world';
+test_out("ok 1 - $desc");
+c_output_isnt( <<'CODE', <<'OUTPUT', $desc );
+    #include <stdio.h>
+    #include <stdlib.h>
+
+    int
+    main(int argc, char* argv[])
+    {
+        printf("Hello, World!\n");
+        exit(0);
+    }
+CODE
+Is Not Hello, World!
+OUTPUT
+test_test($desc);
+
+$desc = 'C:  like hello world';
+test_out("ok 1 - $desc");
+c_output_like( <<'CODE', <<'OUTPUT', $desc );
+    #include <stdio.h>
+    #include <stdlib.h>
+
+    int
+    main(int argc, char* argv[])
+    {
+        printf("Hello, World!\n");
+        exit(0);
+    }
+CODE
+/Hello, World/
 OUTPUT
 test_test($desc);
 
