@@ -6,9 +6,7 @@ class Perl6::Grammar::Actions ;
 method TOP($/) {
     my $past := $( $<statement_block> );
     $past.blocktype('declaration');
-    declare_implicit_var($past, '$_', 'new');
-    declare_implicit_var($past, '$!', 'new');
-    declare_implicit_var($past, '$/', 'new');
+    declare_implicit_routine_vars($past);
 
     # Attach any initialization code.
     our $?INIT;
@@ -70,7 +68,7 @@ method TOP($/) {
                  :name('args_str'),
                  :scope('parameter')
                 ),
-                PAST::Val.new( :value(1) )
+                1
             ),
             PAST::Op.new(
                 :inline(
@@ -208,12 +206,12 @@ method statement_control($/, $key) {
 method if_statement($/) {
     my $count := +$<xblock> - 1;
     my $past  := $( $<xblock>[$count] );
-    declare_implicit_immediate_vars( $past[1] );
+    declare_implicit_block_vars($past[1], 0);
     ## add any 'else' clause
     if $<pblock> {
         my $else := $( $<pblock>[0] );
         $else.blocktype('immediate');
-        declare_implicit_immediate_vars($else);
+        declare_implicit_block_vars($else, 0);
         $past.push( $else );
     }
     ## build if/then/elsif structure
@@ -221,7 +219,7 @@ method if_statement($/) {
         $count--;
         my $else := $past;
         $past := $( $<xblock>[$count] );
-        declare_implicit_immediate_vars( $past[1] );
+        declare_implicit_block_vars($past[1], 0);
         $past.push($else);
     }
     make $past;
@@ -230,14 +228,14 @@ method if_statement($/) {
 method unless_statement($/) {
     my $past := $( $<xblock> );
     $past.pasttype('unless');
-    declare_implicit_immediate_vars( $past[1] );
+    declare_implicit_block_vars($past[1], 0);
     make $past;
 }
 
 method while_statement($/) {
     my $past := $( $<xblock> );
     $past.pasttype(~$<sym>);
-    declare_implicit_immediate_vars( $past[1] );
+    declare_implicit_block_vars($past[1], 0);
     make $past;
 }
 
@@ -294,7 +292,7 @@ method default_statement($/) {
 method loop_statement($/) {
     my $block := $( $<block> );
     $block.blocktype('immediate');
-    my $cond  := $<e2> ?? $( $<e2>[0] ) !! PAST::Val.new( :value( 1 ) );
+    my $cond  := $<e2> ?? $( $<e2>[0] ) !! 1;
     if $<e3> {
         $block := PAST::Stmts.new( $block, $( $<e3>[0] ) );
     }
@@ -365,6 +363,7 @@ method use_statement($/) {
 method begin_statement($/) {
     my $past := $( $<block> );
     $past.blocktype('declaration');
+    declare_implicit_routine_vars($past);                  # FIXME
     my $sub := PAST::Compiler.compile( $past );
     $sub();
     # XXX - should emit BEGIN side-effects, and do a proper return()
@@ -374,6 +373,7 @@ method begin_statement($/) {
 method end_statement($/) {
     my $past := $( $<block> );
     $past.blocktype('declaration');
+    declare_implicit_routine_vars($past);                  # FIXME
     my $sub := PAST::Compiler.compile( $past );
     PIR q<  $P0 = get_hll_global ['Perl6'], '@?END_BLOCKS' >;
     PIR q<  $P1 = find_lex '$sub' >;
@@ -457,15 +457,12 @@ method statement_prefix($/) {
         $past.push( PAST::Op.new( :inline( $elsepir ) ) );
     }
     elsif $sym eq 'gather' {
-        if $past.isa(PAST::Block) {
-            $past.blocktype('declaration');
+        if !$past.isa(PAST::Block) {
+            $past := PAST::Block.new($past)
         }
-        else {
-            $past := PAST::Block.new(:blocktype('declaration'), $past)
-        }
-        # XXX Workaround for lexicals issue.  rt #58854
-        $past := PAST::Op.new(:pirop('newclosure'), $past);
-        $past := PAST::Op.new( $past, :pasttype('call'), :name('gather'), :node($/) );
+        $past.blocktype('declaration');
+        $past := PAST::Op.new( $past, :pasttype('call'),
+                               :name('gather'), :node($/) );
     }
     else {
         $/.panic( $sym ~ ' not implemented');
@@ -482,8 +479,8 @@ method multi_declarator($/, $key) {
         create_sub($/, $past);
     }
 
-    # If it was multi, then emit a :multi and a type list.
-    if $<sym> eq 'multi' {
+    # If it was multi or a proto, then emit a :multi.
+    if $<sym> eq 'multi' || $<sym> eq 'proto' {
         # For now, if this is a multi we need to add code to transform the sub's
         # multi container to a Perl6MultiSub.
         $past.loadinit().push(
@@ -503,6 +500,21 @@ method multi_declarator($/, $key) {
         unless $pirflags { $pirflags := '' }
         $past.pirflags($pirflags  ~ ' :multi()');
     }
+
+    # Protos also need the proto property setting on them.
+    if $<sym> eq 'proto' {
+        $past.loadinit().push(
+            PAST::Op.new(
+                :inline('    setprop %0, "proto", %1'),
+                PAST::Var.new(
+                    :name('block'),
+                    :scope('register')
+                ),
+                1
+            )
+        );
+    }
+
     make $past;
 }
 
@@ -540,19 +552,45 @@ method routine_declarator($/, $key) {
         # Set up the block details.
         $past.blocktype('method');
         set_block_proto($past, 'Method');
+        my $signature;
         if $<method_def><multisig> {
-            set_block_sig($past, $( $<method_def><multisig>[0]<signature> ));
+            $signature := $( $<method_def><multisig>[0]<signature> );
+            set_block_sig($past, $signature);
         }
         else {
-            set_block_sig($past, empty_signature());
+            $signature := empty_signature();
+            set_block_sig($past, $signature);
         }
         $past := add_method_to_class($past);
+
+        # If the signature doesn't include an explicity invocant, add one to
+        # the signature.
+        my $found_invocant := 0;
+        if $signature[1].isa(PAST::Stmts) && $signature[1][1].isa(PAST::Stmts) {
+            for @($signature[1][1]) {
+                if $_[0].value() eq 'invocant' {
+                    $found_invocant := 1;
+                }
+            }
+        }
+        if !$found_invocant {
+            # Add anonymous parameter taking invocant.
+            my $descriptor := sig_descriptor_create();
+            sig_descriptor_set($descriptor, 'name', PAST::Val.new( :value('$') ));
+            sig_descriptor_set($descriptor, 'invocant', 1);
+            sig_descriptor_set($descriptor, 'constraints',
+                PAST::Op.new(
+                    :pasttype('call'),
+                    :name('list')
+                ));
+            my $obj := $signature.shift();
+            $signature.unshift($descriptor);
+            $signature.unshift($obj);
+        }
     }
     $past.node($/);
     if (+@($past[1])) {
-        declare_implicit_var($past, '$_', 'new');
-        declare_implicit_var($past, '$!', 'new');
-        declare_implicit_var($past, '$/', 'new');
+        declare_implicit_routine_vars($past);
     }
     else {
         $past[1].push( PAST::Op.new( :name('list') ) );
@@ -692,12 +730,12 @@ method enum_declarator($/, $key) {
         # can get data from it..
         $class_past.push(PAST::Op.new(
             :pasttype('callmethod'),
-            :name('add_method'),
+            :name('add_vtable_override'),
             PAST::Var.new(
                 :scope('lexical'),
                 :name('$def')
             ),
-            PAST::Val.new( :value('invoke') ),
+            'invoke',
             PAST::Block.new(
                 :blocktype('declaration'),
                 :pirflags(":method"),
@@ -705,20 +743,16 @@ method enum_declarator($/, $key) {
                     :name("$!" ~ $name),
                     :scope('attribute')
                 )
-            ),
-            PAST::Val.new(
-                :value(1),
-                :named( PAST::Val.new( :value('vtable') ) )
             )
         ));
         $class_past.push(PAST::Op.new(
             :pasttype('callmethod'),
-            :name('add_method'),
+            :name('add_vtable_override'),
             PAST::Var.new(
                 :scope('lexical'),
                 :name('$def')
             ),
-            PAST::Val.new( :value('get_string') ),
+            'get_string',
             PAST::Block.new(
                 :blocktype('declaration'),
                 :pirflags(":method"),
@@ -730,20 +764,16 @@ method enum_declarator($/, $key) {
                         :scope('attribute')
                     )
                 )
-            ),
-            PAST::Val.new(
-                :value(1),
-                :named( PAST::Val.new( :value('vtable') ) )
             )
         ));
         $class_past.push(PAST::Op.new(
             :pasttype('callmethod'),
-            :name('add_method'),
+            :name('add_vtable_override'),
             PAST::Var.new(
                 :scope('lexical'),
                 :name('$def')
             ),
-            PAST::Val.new( :value('get_integer') ),
+            'get_integer',
             PAST::Block.new(
                 :blocktype('declaration'),
                 :pirflags(":method"),
@@ -755,20 +785,16 @@ method enum_declarator($/, $key) {
                         :scope('attribute')
                     )
                 )
-            ),
-            PAST::Val.new(
-                :value(1),
-                :named( PAST::Val.new( :value('vtable') ) )
             )
         ));
         $class_past.push(PAST::Op.new(
             :pasttype('callmethod'),
-            :name('add_method'),
+            :name('add_vtable_override'),
             PAST::Var.new(
                 :scope('lexical'),
                 :name('$def')
             ),
-            PAST::Val.new( :value('get_number') ),
+            'get_number',
             PAST::Block.new(
                 :blocktype('declaration'),
                 :pirflags(":method"),
@@ -780,10 +806,6 @@ method enum_declarator($/, $key) {
                         :scope('attribute')
                     )
                 )
-            ),
-            PAST::Val.new(
-                :value(1),
-                :named( PAST::Val.new( :value('vtable') ) )
             )
         ));
 
@@ -1046,14 +1068,14 @@ method signature($/) {
 
         # Add parameter declaration to the block, if we're producing one.
         unless $?SIG_BLOCK_NOT_NEEDED {
-            # Register symbol and put parameter PAST into the node.
-            $block_past.symbol($parameter.name(), :scope('lexical'));
-            $params.push($parameter);
-
             # If it has & sigil, strip it off.
             if substr($parameter.name(), 0, 1) eq '&' {
                 $parameter.name(substr($parameter.name(), 1));
             }
+
+            # Register symbol and put parameter PAST into the node.
+            $block_past.symbol($parameter.name(), :scope('lexical'));
+            $params.push($parameter);
 
             # If it is invocant, modify it to be just a lexical and bind self to it.
             if substr($separator, 0, 1) eq ':' {
@@ -1090,16 +1112,16 @@ method signature($/) {
                 PAST::Val.new( :value(~$parameter.named()) ));
         }
         if $parameter.viviself() {
-            sig_descriptor_set($descriptor, 'optional', PAST::Val.new( :value(1) ));
+            sig_descriptor_set($descriptor, 'optional', 1);
         }
         if $parameter.slurpy() {
-            sig_descriptor_set($descriptor, 'slurpy', PAST::Val.new( :value(1) ));
+            sig_descriptor_set($descriptor, 'slurpy', 1);
         }
         if $is_invocant {
-            sig_descriptor_set($descriptor, 'invocant', PAST::Val.new( :value(1) ));
+            sig_descriptor_set($descriptor, 'invocant', 1);
         }
         if $is_multi_invocant {
-            sig_descriptor_set($descriptor, 'multi_invocant', PAST::Val.new( :value(1) ));
+            sig_descriptor_set($descriptor, 'multi_invocant', 1);
         }
 
         # See if we have any traits. For now, we just handle ro, rw and copy.
@@ -1255,7 +1277,7 @@ method signature($/) {
                     PAST::Op.new(
                         :inline(
                             '    %r = new "Perl6Scalar"',
-                            '    "infix:="(%r, %0)'
+                            '    "!COPYPARAM"(%r, %0)'
                         ),
                         PAST::Var.new(
                             :name($parameter.name()),
@@ -1569,6 +1591,13 @@ sub apply_package_traits($package, $traits) {
         }
         elsif $aux<sym> eq 'does' {
             # Role.
+            my @identifier := Perl6::Compiler.parse_name(~$aux<name>);
+            my $name := @identifier.pop();
+            my $role_name := PAST::Var.new(
+                                 :name($name),
+                                 :namespace(@identifier),
+                                 :scope('package'),
+                             );
             $package.push(
                 PAST::Op.new(
                     :pasttype('call'),
@@ -1577,10 +1606,7 @@ sub apply_package_traits($package, $traits) {
                         :name('$def'),
                         :scope('lexical')
                     ),
-                    PAST::Var.new(
-                        :name(~$aux<name>),
-                        :scope('package')
-                    )
+                    $role_name
                 )
             );
         }
@@ -2280,7 +2306,8 @@ method scope_declarator($/) {
                     );
                 }
 
-                # Add block entry.
+                # Add block entry and set scope.
+                $past.scope($scope);
                 $?BLOCK.symbol($name, :scope($scope));
             }
         }
@@ -2469,6 +2496,7 @@ method variable($/, $key) {
                         if defined( $sym_table )
                                 && $sym_table<scope> eq 'attribute' {
                             $name := '!' ~ $name;
+                            $twigil := '!';
                         }
                     }
                 }
@@ -2620,12 +2648,12 @@ method number($/, $key) {
 
 
 ##  for a variety of reasons, this is easier in PIR than NQP for now.
-##  NQP doesn't have assign yet, and Perl6Str is lighter-weight than Str.
+##  NQP doesn't have assign yet, and Str is lighter-weight than Str.
 method integer($/) {
     my $str;
     PIR q<  $P0 = find_lex '$/'   >;
     PIR q<  $S0 = $P0             >;
-    PIR q<  $P1 = new 'Perl6Str'  >;
+    PIR q<  $P1 = new 'Str'  >;
     PIR q<  assign $P1, $S0       >;
     PIR q<  store_lex '$str', $P1 >;
     make PAST::Val.new(
@@ -2640,7 +2668,7 @@ method dec_number($/) {
     my $str;
     PIR q<  $P0 = find_lex '$/'   >;
     PIR q<  $S0 = $P0             >;
-    PIR q<  $P1 = new 'Perl6Str'  >;
+    PIR q<  $P1 = new 'Str'  >;
     PIR q<  assign $P1, $S0       >;
     PIR q<  store_lex '$str', $P1 >;
     make PAST::Val.new(
@@ -2687,17 +2715,7 @@ method quote($/) {
 
 method quote_expression($/, $key) {
     my $past;
-    if $key eq 'quote_regex' {
-        our $?NS;
-        $past := PAST::Block.new(
-            $<quote_regex>,
-            :compiler('PGE::Perl6Regex'),
-            :namespace(Perl6::Compiler.parse_name( $?NS )),
-            :blocktype('declaration'),
-            :node( $/ )
-        );
-    }
-    elsif $key eq 'quote_concat' {
+    if $key eq 'quote_concat' {
         if +$<quote_concat> == 1 {
             $past := $( $<quote_concat>[0] );
         }
@@ -2711,6 +2729,19 @@ method quote_expression($/, $key) {
                 $past.push( $($_) );
             }
         }
+    }
+    elsif $key eq 'quote_regex' {
+        our $?NS;
+        $past := PAST::Block.new(
+            $<quote_regex>,
+            :compiler('PGE::Perl6Regex'),
+            :namespace(Perl6::Compiler.parse_name( $?NS )),
+            :blocktype('declaration'),
+            :node( $/ )
+        );
+    }
+    elsif $key eq 'quote_pir' {
+        $past := PAST::Op.new( :inline( $<quote_pir> ), :node($/) );
     }
     make $past;
 }
@@ -2739,7 +2770,7 @@ method quote_term($/, $key) {
     if ($key eq 'literal') {
         $past := PAST::Val.new(
             :value( ~$<quote_literal> ),
-            :returns('Perl6Str'), :node($/)
+            :returns('Str'), :node($/)
         );
     }
     elsif ($key eq 'variable') {
@@ -2859,26 +2890,32 @@ method EXPR($/, $key) {
 
         # Check that we have a sub call.
         if !$call.isa(PAST::Op) || $call.pasttype() ne 'call' {
-            $/.panic('.= must have a call on the right hand side');
+            $/[0].panic('.= must have a call on the right hand side');
         }
 
-        # Make a duplicate of the target node to receive result
-        my $target := PAST::Var.new(
-            :name($invocant.name()),
-            :scope($invocant.scope()),
-            :lvalue(1)
-        );
-
-        # Change call node to a callmethod and add the invocant
+        # Change call node to a callmethod.
         $call.pasttype('callmethod');
-        $call.unshift($invocant);
 
-        # and assign result to target
+        # We only want to evaluate invocant once; stash it in a register.
+        $call.unshift(PAST::Op.new(
+            :pasttype('bind'),
+            PAST::Var.new(
+                :name('detemp'),
+                :scope('register'),
+                :isdecl(1)
+            ),
+            $invocant
+        ));
+
+        # Do call, then assignment to target container.
         my $past := PAST::Op.new(
             :inline("    %r = 'infix:='(%1, %0)"),
             :node($/),
             $call,
-            $target
+            PAST::Var.new(
+                :name('detemp'),
+                :scope('register')
+            )
         );
 
         make $past;
@@ -2894,7 +2931,7 @@ method EXPR($/, $key) {
         if $rhs.isa(PAST::Op) && $rhs.pasttype() eq 'call' {
             # Make sure we only have one initialization value.
             if +@($rhs) > 2 {
-                $/.panic("Role initialization can only supply a value for one attribute");
+                $/[0].panic("Role initialization can only supply a value for one attribute");
             }
             # Push role name and argument onto infix:does or infix:but.
             $past.push($rhs[0]);
@@ -2958,7 +2995,7 @@ method regex_declarator_rule($/) {
 method type_declarator($/) {
     # We need a block containing the constraint condition.
     my $past := $( $<EXPR> );
-    if !$past.isa(PAST::Block) {
+    if (!$past.isa(PAST::Block) || $past.compiler() eq 'PGE::Perl6Regex') {
         # Make block with a smart match of the the expression as its contents.
         $past := PAST::Block.new(
             PAST::Stmts.new(
@@ -3142,40 +3179,43 @@ sub build_call($args) {
 }
 
 
-sub declare_implicit_var($block, $name, $type) {
-    unless $block.symbol($name) {
-        my $var := PAST::Var.new( :name($name), :isdecl(1) );
-        $var.scope($type eq 'parameter' ?? 'parameter' !! 'lexical');
-        if $type eq 'new' {
-            $var.viviself( 'Perl6Scalar' );
+sub declare_implicit_routine_vars($block) {
+    for ('$_', '$/', '$!') {
+        unless $block.symbol($_) {
+            $block[0].push( PAST::Var.new( :name($_),
+                                           :scope('lexical'),
+                                           :isdecl(1),
+                                           :viviself('Perl6Scalar') ) );
+            $block.symbol($_, :scope('lexical') );
         }
-        else {
-            my $opast := PAST::Op.new(
-                :name('!OUTER'),
-                PAST::Val.new( :value($name) )
-            );
-            $var.viviself($opast);
-        }
-        $block[0].push($var);
-        $block.symbol($name, :scope('lexical') );
     }
 }
 
 
+sub declare_implicit_block_vars($block, $tparam) {
+    $block[0].push( PAST::Op.new(
+                        :inline('    .local pmc outerlex',
+                                '    getinterp $P0',
+                                '    set outerlex, $P0["outer";"lexpad";1]')));
+    for ('$_', '$/', '$!') {
+        unless $block.symbol($_) {
+            my $lex := PAST::Op.new(:inline('    set %r, outerlex["'~$_~'"]'));
+            my $scope := ($tparam && $_ eq '$_') ?? 'parameter' !! 'lexical';
+            $block[0].push(
+                PAST::Var.new( :name($_),
+                               :scope($scope),
+                               :isdecl(1),
+                               :viviself($lex)
+                )
+            );
+            $block.symbol($_, :scope('lexical') );
+        }
+    }
+}
+
 sub declare_implicit_function_vars($block) {
-    declare_implicit_var($block, '$_',
-        defined($block.arity()) ?? 'outer' !! 'parameter');
-    declare_implicit_var($block, '$!', 'outer');
-    declare_implicit_var($block, '$/', 'outer');
+    declare_implicit_block_vars($block, !defined($block.arity()));
 }
-
-
-sub declare_implicit_immediate_vars($block) {
-    declare_implicit_var($block, '$_', 'outer');
-    declare_implicit_var($block, '$!', 'outer');
-    declare_implicit_var($block, '$/', 'outer');
-}
-
 
 sub contextualizer_name($/, $sigil) {
     ##  Contextualizing is calling .item, .list, .hash, etc.
@@ -3203,7 +3243,7 @@ sub process_handles($/, $expr, $attr_name) {
     my $past := PAST::Stmts.new();
 
     # What type of expression do we have?
-    if $expr.isa(PAST::Val) && $expr.returns() eq 'Perl6Str' {
+    if $expr.isa(PAST::Val) && $expr.returns() eq 'Str' {
         # Just a single string mapping.
         my $name := ~$expr.value();
         my $method := make_handles_method($/, $name, $name, $attr_name);
@@ -3218,7 +3258,7 @@ sub process_handles($/, $expr, $attr_name) {
           $expr.name() eq 'list' {
         # List of something, but what is it?
         for @($expr) {
-            if $_.isa(PAST::Val) && $_.returns() eq 'Perl6Str' {
+            if $_.isa(PAST::Val) && $_.returns() eq 'Str' {
                 # String value.
                 my $name := ~$_.value();
                 my $method := make_handles_method($/, $name, $name, $attr_name);
@@ -3239,7 +3279,7 @@ sub process_handles($/, $expr, $attr_name) {
     elsif $expr.isa(PAST::Stmts) && $expr[0].name() eq 'infix:,' {
         # Also a list, but constructed differently.
         for @($expr[0]) {
-            if $_.isa(PAST::Val) && $_.returns() eq 'Perl6Str' {
+            if $_.isa(PAST::Val) && $_.returns() eq 'Str' {
                 # String value.
                 my $name := ~$_.value();
                 my $method := make_handles_method($/, $name, $name, $attr_name);
@@ -3299,7 +3339,7 @@ sub make_handles_method($/, $from_name, $to_name, $attr_name) {
                 :name('%h'),
                 :scope('lexical'),
                 :flat(1),
-                :named(PAST::Val.new( :value(1) ))
+                :named(1)
             )
         )
     )

@@ -3,6 +3,7 @@
 # empty lines and those beginning with a # are ignored
 
 integration/lexical-array-in-inner-block.t
+integration/man-or-boy.t
 integration/real-strings.t
 S02-builtin_data_types/anon_block.t
 S02-builtin_data_types/array_extending.t
@@ -21,7 +22,6 @@ S02-builtin_data_types/nested_pairs.t
 S02-builtin_data_types/num.t
 S02-builtin_data_types/range.t
 S02-builtin_data_types/subscripts_and_context.t
-S02-builtin_data_types/subtypes.t
 S02-builtin_data_types/type.t
 S02-literals/array-interpolation.t
 S02-literals/autoref.t
@@ -40,8 +40,7 @@ S02-magicals/dollar_bang.t
 S02-magicals/dollar-underscore.t
 S02-names_and_variables/fmt.t
 S02-names_and_variables/varnames.t
-S02-polymorphic_types/subset-code.t
-S02-polymorphic_types/subset-range.t
+S02-polymorphic_types/subset.t
 S02-whitespace_and_comments/minimal-whitespace.t
 S02-whitespace_and_comments/one-pass-parsing.t
 S02-whitespace_and_comments/pod-in-multi-line-exprs.t
@@ -123,6 +122,7 @@ S05-transliteration/trans.t
 S05-transliteration/with-closure.t
 S06-advanced_subroutine_features/recurse.t
 S06-advanced_subroutine_features/return.t
+S06-multi/proto.t
 S06-multi/syntax.t
 S06-multi/type-based.t
 S06-signature/code.t
@@ -159,13 +159,16 @@ S12-introspection/can.t
 S12-methods/calling_syntax.t
 S12-methods/default-trait.t
 S12-methods/indirect_notation.t
+S12-methods/multi.t
 S12-methods/instance.t
 S12-methods/topic.t
 S12-methods/what.t
 S12-role/attributes.t
 S12-role/composition.t
 S12-role/mixin.t
+S12-role/namespaced.t
 S12-subset/multi-dispatch.t
+S12-subset/subtypes.t
 S16-filehandles/io_in_while_loops.t
 S16-io/say.t
 S29-any/cmp.t

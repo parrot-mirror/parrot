@@ -56,6 +56,7 @@ in F<pirsymbol.c>, a vanilla register allocator is implemented.
 #include "parrot/string_funcs.h"
 #include "parrot/dynext.h"
 
+#include <assert.h>
 
 static unsigned const prime_numbers[] = {113 /* XXX think of more primes */ };
 
@@ -146,7 +147,7 @@ set_sub_outer(lexer_state * const lexer, char const * const outersub) {
 /*
 
 =item C<void
-set_sub_vtable(lexer_state * const lexer, char *vtablename)>
+set_sub_vtable(lexer_state * const lexer, char const *vtablename)>
 
 Set the :vtable() flag argument to the current subroutine. If C<vtablename>
 is NULL, the name of the current sub is taken to be the vtable method name.
@@ -157,7 +158,7 @@ in fact not a vtable method, an error message is emitted.
 
 */
 void
-set_sub_vtable(lexer_state * const lexer, char const *vtablename) {
+set_sub_vtable(lexer_state * const lexer, char const * vtablename) {
     int vtable_index;
 
     if (vtablename == NULL)  /* the sub's name I<is> the vtablename */
@@ -172,10 +173,10 @@ set_sub_vtable(lexer_state * const lexer, char const *vtablename) {
     if (vtable_index == -1)
         yypirerror(lexer->yyscanner, lexer,
                    "'%s' is not a vtable method but was used with :vtable flag", vtablename);
-
-
-    CURRENT_SUB(lexer)->vtable_method = vtablename;
-    SET_FLAG(lexer->subs->flags, SUB_FLAG_VTABLE);
+    else {
+        CURRENT_SUB(lexer)->vtable_index = vtable_index;
+        SET_FLAG(lexer->subs->flags, SUB_FLAG_VTABLE);
+    }
 }
 
 /*
@@ -183,7 +184,7 @@ set_sub_vtable(lexer_state * const lexer, char const *vtablename) {
 =item C<void
 set_sub_subid(lexer_state * const lexer, char * const subid)>
 
-Set the lexical identifier on the current sub.
+Set the name specified in the :subid flag on the sub.
 
 =cut
 
@@ -207,9 +208,9 @@ the name by which the sub is stored as a method.
 */
 void
 set_sub_methodname(lexer_state * const lexer, char const * const methodname) {
-    if (methodname)
+    if (methodname) /* :method("foo") */
         CURRENT_SUB(lexer)->methodname = methodname;
-    else
+    else /* :method without a value defaults to the subname. */
         CURRENT_SUB(lexer)->methodname = CURRENT_SUB(lexer)->sub_name;
 
     SET_FLAG(lexer->subs->flags, SUB_FLAG_METHOD);
@@ -281,21 +282,23 @@ their thing.
 */
 void
 new_subr(lexer_state * const lexer, char const * const subname) {
-    subroutine *newsub = pir_mem_allocate_zeroed_typed(lexer, subroutine);
+    subroutine *newsub  = pir_mem_allocate_zeroed_typed(lexer, subroutine);
     int index;
 
     /* set the sub fields */
-    newsub->sub_name   = subname;
+    newsub->sub_name    = subname;
 
     /* set default lexid */
-    newsub->subid      = subname;
+    newsub->subid       = subname;
 
     /* take namespace of this sub of the lexer, which keeps track of that */
-    newsub->name_space = lexer->current_ns;
+    newsub->name_space  = lexer->current_ns;
 
-    newsub->parameters = NULL;
-    newsub->statements = NULL;
-    newsub->flags      = 0;
+    newsub->parameters  = NULL;
+    newsub->statements  = NULL;
+    newsub->flags       = 0;
+    newsub->codesize    = 0;
+    newsub->startoffset = lexer->codesize; /* start offset in bytecode */
 
     init_hashtable(lexer, &newsub->symbols, HASHTABLE_SIZE_INIT);
     init_hashtable(lexer, &newsub->labels, HASHTABLE_SIZE_INIT);
@@ -377,10 +380,24 @@ static void
 new_statement(lexer_state * const lexer, char const * const opname) {
     instruction *instr = new_instruction(lexer, opname);
 
-    /* within a subroutine, each instruction has a sequence number to be able to
+    /* Each instruction has a sequence number to be able to
      * calculate offsets for label branches.
      */
-    instr->offset = lexer->instr_counter++;
+
+    /* the codesize so far will be the offset of this instruction. */
+    instr->offset = lexer->codesize;
+
+
+    /* XXX instr_counter still needed? Think so, for lin.scan.reg.alloc.
+       can instr->offset be used for that? or is it already used?
+       instr->offset is now just incremented in bigger steps...
+     */
+    lexer->instr_counter++;
+    /*instr->offset = lexer->instr_counter++;*/
+
+    /*
+    fprintf(stderr, "offset of %s is: %d\n", opname, instr->offset);
+    */
 
     if (CURRENT_INSTRUCTION(lexer) == NULL)
         instr->next = instr;
@@ -493,10 +510,8 @@ PARROT_CANNOT_RETURN_NULL
 target *
 new_target(lexer_state * const lexer) {
     target *t       = pir_mem_allocate_zeroed_typed(lexer, target);
-
     t->key          = NULL;
     t->next         = t; /* circly linked list */
-
     return t;
 }
 
@@ -504,7 +519,11 @@ new_target(lexer_state * const lexer) {
 =item C<void
 set_target_key(target * const t, key * const k)>
 
-Set the key C<k> on target C<t>.
+Set the key C<k> on target C<t>. For instance:
+
+ $P0[$P1]
+
+[$P1] is the key of $P0.
 
 =cut
 
@@ -543,7 +562,7 @@ add_target(lexer_state * const lexer, target *last, target * const t)>
 
 Add a new target to the list pointed to by C<list>. C<list> points to
 the last element, C<<last->next>> points to the first. The list is
-circular linked.
+circular linked. The newly added target C<t> is returned.
 
 =cut
 
@@ -604,11 +623,10 @@ add_param(lexer_state * const lexer, pir_type type, char const * const name) {
      */
     assign_vanilla_register(lexer, sym);
 
+    /* set a pointer from the target to the symbol object */
     targ->s.sym = sym;
 
-
     return targ;
-
 }
 
 /*
@@ -656,10 +674,13 @@ set_param_flag(lexer_state * const lexer, target * const param, target_flag flag
      * Therefore it's safe to reference param->s.sym, without checking for not
      * being a register.
      */
+
+    /* :slurpy can only be set on a PMC parameter */
     if (TEST_FLAG(flag, TARGET_FLAG_SLURPY) && param->s.sym->type != PMC_TYPE)
         yypirerror(lexer->yyscanner, lexer,
                    "cannot set :slurpy flag on non-pmc %s", param->s.sym->name);
 
+    /* :opt_flag can only be set on a int parameter */
     if (TEST_FLAG(flag, TARGET_FLAG_OPT_FLAG) && param->s.sym->type != INT_TYPE)
         yypirerror(lexer->yyscanner, lexer,
                    "cannot set :opt_flag flag on non-int %s", param->s.sym->name);
@@ -1904,21 +1925,6 @@ generate_unique_pir_reg(lexer_state * const lexer, pir_type type) {
 }
 
 
-/*
-
-=item C<void
-generate_get_params(lexer_state * const lexer)>
-
-Generate an instruction to retrieve parameters. This function can be called
-after parsing the parameters.
-
-=cut
-
-*/
-void
-generate_get_params(lexer_state * const lexer) {
-    set_instr(lexer, "get_params_pc");
-}
 
 /*
 
@@ -1939,6 +1945,9 @@ new_sub_instr(lexer_state * const lexer, int opcode, char const * const opname, 
     new_statement(lexer, opname);
     CURRENT_INSTRUCTION(lexer)->opinfo = &lexer->interp->op_info_table[opcode];
     CURRENT_INSTRUCTION(lexer)->opcode = opcode;
+
+    /* count number of ints needed to store this instruction in bytecode */
+    lexer->codesize += CURRENT_INSTRUCTION(lexer)->opinfo->op_count;
 }
 
 /*
@@ -1954,9 +1963,24 @@ The C<opinfo>, C<opname> and C<opcode> fields of C<instr> are updated.
 */
 void
 update_op(NOTNULL(lexer_state * const lexer), NOTNULL(instruction * const instr), int newop) {
+    /* Deduct number of ints needed for the old instruction, if there is one.
+     * This is necessary during strength reduction and other optimizations, once
+     * the opinfo is retrieved, we also update the codesize field in the lexer.
+     */
+    if (instr->opinfo)
+        lexer->codesize -= instr->opinfo->op_count;
+    /*
+    else
+        fprintf(stderr, "instr (%s)had no opinfo yet...\n", instr->opname);
+    */
+
+    /* now get the */
     instr->opinfo = &lexer->interp->op_info_table[newop];
     instr->opname = instr->opinfo->full_name;
     instr->opcode = newop;
+
+    /* add codesize needed for the new instruction. */
+    lexer->codesize += instr->opinfo->op_count;
 }
 
 
@@ -1997,7 +2021,6 @@ Convert an C<invocation> structure into a series of instructions.
 */
 void
 convert_inv_to_instr(lexer_state * const lexer, invocation * const inv) {
-
     switch (inv->type) {
         case CALL_PCC:
             new_sub_instr(lexer, PARROT_OP_set_args_pc, "set_args_pc");
@@ -2152,7 +2175,9 @@ fixup_local_labels(lexer_state * const lexer) {
         return;
 
     do {
+/*
         expression *label = NULL;
+*/
 
         iter = iter->next; /* init pointer to first instruction */
 
@@ -2180,22 +2205,14 @@ fixup_local_labels(lexer_state * const lexer) {
 
                 if (TEST_FLAG(iter->oplabelbits, BIT(flag))) {
                     /* the current operand is a label; fix it up. No, not a date. */
-                    char const * labelid = operand->expr.id;
-                    unsigned     offset  = find_local_label(lexer, labelid);
+                    char const * labelid    = operand->expr.id;
+                    unsigned     offset     = find_local_label(lexer, labelid);
+                    unsigned     curr_instr = iter->offset;
 
                     /* fprintf(stderr, "operand %d is a label\n", BIT(flag)); */
-
-                    if (offset) { /* label was found */
-                        unsigned curr_instr = iter->offset;
-
-                        /* convert the label identifier into a real label object */
-                        operand->expr.l = new_label(lexer, labelid, offset - curr_instr);
-                        operand->type   = EXPR_LABEL;
-                    }
-                    else {
-                        yypirerror(lexer->yyscanner, lexer,
-                                   "cannot fix up reference to label '%s'", labelid);
-                    }
+                    /* convert the label identifier into a real label object */
+                    operand->expr.l = new_label(lexer, labelid, offset - curr_instr);
+                    operand->type   = EXPR_LABEL;
                 }
 
                 ++flag;
@@ -2290,6 +2307,9 @@ close_sub(lexer_state * const lexer) {
 
     /* fix up all local branch labels */
     fixup_local_labels(lexer);
+
+    /* store end offset in bytecode of this subroutine */
+    CURRENT_SUB(lexer)->endoffset = lexer->codesize;
 }
 
 

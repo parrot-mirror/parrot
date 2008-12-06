@@ -36,7 +36,7 @@ PMCS = \
  phpinteger \
  phpresource \
  phpstring \
- phpundef
+ phpnull
 
 PMC_SOURCES = \
  $(PMCDIR)/php.pmc \
@@ -46,7 +46,7 @@ PMC_SOURCES = \
  $(PMCDIR)/phpinteger.pmc \
  $(PMCDIR)/phpresource.pmc \
  $(PMCDIR)/phpstring.pmc \
- $(PMCDIR)/phpundef.pmc
+ $(PMCDIR)/phpnull.pmc
 
 HASH_SOURCES = $(HASHDIR)/pipp_hash.c
 
@@ -176,7 +176,8 @@ build:           build-pct
 
 build-all:       build-pct build-phc build-antlr3
 
-build-common:    pmc src/common/pipplib.pbc pipp.pbc $(PHP_EXT) Test.pir
+#build-common:    pmc src/common/pipplib.pbc pipp.pbc $(PHP_EXT) Test.pir
+build-common:    pmc src/common/pipplib.pbc pipp.pbc $(PHP_EXT)
 
 build-pct:       build-common
 
@@ -190,7 +191,7 @@ build-antlr3:    build-common
 pipp$(EXE): build-common
 	$(PBC_TO_EXE) pipp.pbc
 
-src/common/pipplib.pbc: src/common/builtins.pir src/common/php_standard.pir $(PHP_SRC_STD_EXT) src/common/php_API.pir src/common/php_MACRO.pir
+src/common/pipplib.pbc: src/common/builtins.pir src/common/guts.pir src/common/eval.pir src/common/php_standard.pir $(PHP_SRC_STD_EXT) src/common/php_API.pir src/common/php_MACRO.pir
 	$(PARROT) -o src/common/pipplib.pbc src/common/builtins.pir
 
 src/common/php_ctype.pbc: src/common/php_ctype.pir src/common/php_MACRO.pir
@@ -304,7 +305,7 @@ clean-common: clean-pmc
   src/common/pipplib.pbc \
   src/common/*.pbc \
   pipp.pbc \
-  pipp.c pipp.o pipp
+  pipp.c pipp.o pipp$(EXE)
 
 clean-pmc:
 	$(RM_F) "$(PMCDIR)/*dump" "$(PMCDIR)/*.c" "$(PMCDIR)/pmc_*h" "$(PMCDIR)/php_group.h" "$(PMCDIR)/*$(O)" "$(PMCDIR)/*$(LOAD_EXT)"

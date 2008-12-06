@@ -134,7 +134,7 @@ the moment -- we'll do more complex handling a bit later.)
     .param pmc message        :optional
     .param int have_message   :opt_flag
     if have_message goto message_done
-    message = new 'Perl6Str'
+    message = new 'Str'
     message = "Attempt to execute stub code (...)"
   message_done:
     'fail'(message)
@@ -261,6 +261,9 @@ on error.
     .param pmc code
     .param pmc lang            :named('lang') :optional
     .param int have_lang       :opt_flag
+
+    $P0 = get_hll_global 'Str'
+    '!TYPECHECKPARAM'($P0, code)
 
     unless have_lang goto no_lang
     'die'('Lanuage parameter to eval unimplemented.')

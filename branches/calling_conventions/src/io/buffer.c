@@ -226,14 +226,16 @@ The buffer layer's C<Fill> function.
 size_t
 Parrot_io_fill_readbuf(PARROT_INTERP, ARGMOD(PMC *filehandle))
 {
-    size_t got;
-    PIOOFF_T pos = Parrot_io_get_file_position(interp, filehandle);
-    STRING fake, *s;
+    size_t   got;
+    STRING   fake;
+    STRING  *s    = &fake;
+    PIOOFF_T pos  = Parrot_io_get_file_position(interp, filehandle);
+
     fake.strstart = (char *)Parrot_io_get_buffer_start(interp, filehandle);
     fake.bufused  = Parrot_io_get_buffer_size(interp, filehandle);
-    s = &fake;
 
-    got = PIO_READ(interp, filehandle, &s);
+    got           = PIO_READ(interp, filehandle, &s);
+
     /* buffer-filling does not change fileposition */
     Parrot_io_set_file_position(interp, filehandle, pos);
 
@@ -329,31 +331,34 @@ Parrot_io_read_buffer(PARROT_INTERP, ARGMOD(PMC *filehandle),
     /* (re)fill the readbuffer */
     if (!(buffer_flags & PIO_BF_READBUF)) {
         size_t got;
+
         if (len >= Parrot_io_get_buffer_size(interp, filehandle)) {
-            STRING fake;
+            STRING  fake;
             STRING *sf = &fake;
 
             fake.strstart = (char *)out_buf;
             fake.bufused  = len;
-            got = PIO_READ(interp, filehandle, &sf);
-            s->strlen = s->bufused = current + got;
-            Parrot_io_set_file_position(interp, filehandle, (got +
-                    Parrot_io_get_file_position(interp, filehandle)));
+            got           = PIO_READ(interp, filehandle, &sf);
+            s->strlen     = s->bufused = current + got;
+
+            Parrot_io_set_file_position(interp, filehandle,
+                    (got + Parrot_io_get_file_position(interp, filehandle)));
             return current + got;
         }
 
         got = Parrot_io_fill_readbuf(interp, filehandle);
-
         len = len < got ? len : got;
     }
 
     /* read from the read_buffer */
+
     memcpy(out_buf, buffer_next, len);
-    s->strlen = s->bufused = current + len;
+    s->strlen    = s->bufused = current + len;
     buffer_next += len;
+
     Parrot_io_set_buffer_next(interp, filehandle, buffer_next);
-    Parrot_io_set_file_position(interp, filehandle, (len +
-            Parrot_io_get_file_position(interp, filehandle)));
+    Parrot_io_set_file_position(interp, filehandle,
+            (len + Parrot_io_get_file_position(interp, filehandle)));
 
     /* is the buffer is completely empty ? */
     if (buffer_next == buffer_end) {
@@ -363,6 +368,7 @@ Parrot_io_read_buffer(PARROT_INTERP, ARGMOD(PMC *filehandle),
         Parrot_io_set_buffer_end(interp, filehandle, NULL);
         Parrot_io_set_buffer_next(interp, filehandle, buffer_start);
     }
+
     return current + len;
 }
 
@@ -380,8 +386,8 @@ size_t
 Parrot_io_peek_buffer(PARROT_INTERP, ARGMOD(PMC *filehandle),
         ARGOUT(STRING **buf))
 {
-    size_t len = 1;
-    size_t avail = 0;
+    UINTVAL len   = 1;
+    size_t  avail = 0;
 
     INTVAL         buffer_flags = Parrot_io_get_buffer_flags(interp, filehandle);
     unsigned char *buffer_next  = Parrot_io_get_buffer_next(interp, filehandle);
@@ -415,8 +421,16 @@ ret_string:
             Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_PIO_ERROR,
                 "Can't peek at unbuffered I/O");
 
+        /* Parrot_io_fill_readbuf() can return -1, but len should be positive */
         got = Parrot_io_fill_readbuf(interp, filehandle);
-        len = (len < got) ? len : got;
+
+        /* avoid signedness problems between size_t got and UINTVAL len */
+        if (len > got) {
+            if (got > 0)
+                len = (UINTVAL)got;
+            else
+                len = 0;
+        }
     }
 
     /* if we got any data, then copy out the next byte */
