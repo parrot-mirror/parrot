@@ -662,9 +662,10 @@ sub _generate_test_functions {
 
     ##### E: C test map #####
     my %c_test_map = (
-        c_output_is   => 'is_eq',
-        c_output_isnt => 'isnt_eq',
-        c_output_like => 'like'
+        c_output_is     => 'is_eq',
+        c_output_isnt   => 'isnt_eq',
+        c_output_like   => 'like',
+        c_output_unlike => 'unlike',
     );
 
     foreach my $func ( keys %c_test_map ) {
