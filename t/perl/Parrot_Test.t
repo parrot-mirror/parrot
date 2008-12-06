@@ -30,7 +30,7 @@ BEGIN {
         plan( skip_all => "Test::Builder::Tester not installed\n" );
         exit 0;
     }
-    plan( tests => 96 );
+    plan( tests => 97 );
 }
 
 use lib qw( . lib ../lib ../../lib );
@@ -479,15 +479,20 @@ is( Parrot::Test::_handle_command($command_orig), $command_orig,
     like($stdout, qr/$text/, "Captured STDOUT");
     is($exit_message, 0, "Got 0 as exit message");
 }
+undef $out;
+undef $err;
+undef $chdir;
 
-#$desc = '';
-#pasm_output_is( <<'CODE', <<'OUTPUT', $desc );
-#    print "foo\n"
-#    end
-#CODE
-#foo
-#OUTPUT
-##test_test($desc);
+
+$desc = '';
+test_out("ok 1 - $desc");
+pasm_output_is( <<'CODE', <<'OUTPUT', $desc );
+    print "foo\n"
+    end
+CODE
+foo
+OUTPUT
+test_test($desc);
 
 # Local Variables:
 #   mode: cperl
