@@ -30,7 +30,7 @@ BEGIN {
         plan( skip_all => "Test::Builder::Tester not installed\n" );
         exit 0;
     }
-    plan( tests => 101 );
+    plan( tests => 102 );
 }
 
 use lib qw( . lib ../lib ../../lib );
@@ -50,7 +50,7 @@ BEGIN {
 
 can_ok( 'Parrot::Test', $_ ) for qw/
     c_output_is                     c_output_isnt
-    c_output_like
+    c_output_like                   c_output_unlike
     example_output_is               example_output_isnt
     example_output_like
     language_error_output_is        language_error_output_isnt
