@@ -30,7 +30,7 @@ BEGIN {
         plan( skip_all => "Test::Builder::Tester not installed\n" );
         exit 0;
     }
-    plan( tests => 100 );
+    plan( tests => 101 );
 }
 
 use lib qw( . lib ../lib ../../lib );
@@ -546,6 +546,23 @@ c_output_like( <<'CODE', <<'OUTPUT', $desc );
     }
 CODE
 /Hello, World/
+OUTPUT
+test_test($desc);
+
+$desc = 'C:  unlike hello world';
+test_out("ok 1 - $desc");
+c_output_unlike( <<'CODE', <<'OUTPUT', $desc );
+    #include <stdio.h>
+    #include <stdlib.h>
+
+    int
+    main(int argc, char* argv[])
+    {
+        printf("Hello, World!\n");
+        exit(0);
+    }
+CODE
+/foobar/
 OUTPUT
 test_test($desc);
 
