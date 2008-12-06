@@ -200,10 +200,12 @@ if ($desc) {
         ( undef, my $file, my $line ) = caller();
         $desc = "($file line $line)";
     }
-if ($desc) {
-    print STDERR "desc:  $desc\n";
-} else {
-    print STDERR "desc is still Perl-false\n";
+unless ($incoming_desc_status) {
+    if ($desc) {
+        print STDERR "desc:  $desc\n";
+    } else {
+        print STDERR "desc is still Perl-false\n";
+    }
 }
 
     # $test_no will be part of temporary file
