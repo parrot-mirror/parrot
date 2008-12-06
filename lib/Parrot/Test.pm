@@ -440,6 +440,7 @@ sub _generate_test_functions {
                 return 0;
             }
 
+print STDERR 'just before $pass:  ', "$desc\n";
             my $pass = $builder->$meth( $real_output, $expected, $desc );
             $builder->diag("'$cmd' failed with exit code $exit_code")
                 if not $pass and $exit_code;
@@ -531,7 +532,6 @@ sub _generate_test_functions {
                 \$extra{todo}
                 if defined $extra{todo};
 
-print STDERR 'just before $pass:  ', "$desc\n";
             my $pass = $builder->$meth( $real_output, $expected, $desc );
             $builder->diag("'$cmd' failed with exit code $exit_code")
                 if $exit_code and not $pass;
