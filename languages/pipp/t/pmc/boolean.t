@@ -8,7 +8,7 @@ t/pmc/boolean.t - Boolean PMC
 
 =head1 SYNOPSIS
 
-    % prove t/pmc/boolean.t
+    % perl t/harness t/pmc/boolean.t
 
 =head1 DESCRIPTION
 

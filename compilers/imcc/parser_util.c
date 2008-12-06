@@ -88,6 +88,10 @@ static Instruction * var_arg_ins(PARROT_INTERP,
         FUNC_MODIFIES(*unit)
         FUNC_MODIFIES(*r);
 
+static void imcc_destroy_macro_values(ARGIN(void *value))
+        __attribute__nonnull__(1)
+        FUNC_MODIFIES(*value);
+
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 /* HEADERIZER END: static */
 
@@ -665,6 +669,8 @@ imcc_compile(PARROT_INTERP, ARGIN(const char *s), int pasm_file,
         sub_data->start_offs = 0;
         sub_data->end_offs   = new_cs->base.size;
         sub_data->name       = string_from_cstring(interp, name, 0);
+
+        *error_message = NULL;
     }
     else {
         *error_message = IMCC_INFO(interp)->error_message;
@@ -689,7 +695,8 @@ imcc_compile(PARROT_INTERP, ARGIN(const char *s), int pasm_file,
     yylex_destroy(yyscanner);
 
     /* Now run any :load/:init subs. */
-    PackFile_fixup_subs(interp, PBC_MAIN, sub);
+    if (!*error_message)
+        PackFile_fixup_subs(interp, PBC_MAIN, sub);
 
     /* restore old byte_code, */
     if (old_cs)
@@ -1469,6 +1476,33 @@ imcc_init(PARROT_INTERP)
 
 /*
 
+=imcc C<void imcc_destroy_macro_values(void *)>
+
+A callback for parrot_chash_destroy_values() to free all macro-allocated memory.
+
+=cut
+
+*/
+
+static void
+imcc_destroy_macro_values(void *value)
+{
+    macro_t *m = (macro_t *)value;
+    int      i;
+
+    for (i = 0; i < m->params.num_param; ++i) {
+        char *name = m->params.name[i];
+        if (name)
+            mem_sys_free(name);
+    }
+
+    mem_sys_free(m->expansion);
+    mem_sys_free(m);
+}
+
+
+/*
+
 =item C<void imcc_destroy>
 
 TODO: Needs to be documented!!!
@@ -1484,7 +1518,7 @@ imcc_destroy(PARROT_INTERP)
     Hash * const macros = IMCC_INFO(interp)->macros;
 
     if (macros)
-        parrot_chash_destroy(interp, macros);
+        parrot_chash_destroy_values(interp, macros, imcc_destroy_macro_values);
 
     if (IMCC_INFO(interp)->globals)
         mem_sys_free(IMCC_INFO(interp)->globals);

@@ -21,6 +21,16 @@
   bracket_valid:
     inc $I0
     stop = substr brackets, $I0, 1
+    .local int len
+    len = 0
+  bracket_loop:
+    inc pos
+    inc len
+    $S0 = substr target, pos, 1
+    if $S0 == start goto bracket_loop
+    if len == 1 goto end
+    start = repeat start, len
+    stop  = repeat stop, len
   end:
     .return (start, stop)
 .end
@@ -84,11 +94,15 @@
     lastpos -= stoplen
     options['stop'] = stop
 
-    ##  handle :regex parsing
     .local pmc p6regex, quote_regex
     $I0 = options['regex']
-    unless $I0 goto word_start
+    if $I0 goto regex_start
+    $I0 = options['PIR']
+    if $I0 goto pir_start
+    goto word_start
+
   regex_start:
+    ##  handle :regex parsing
     p6regex = get_root_global ['parrot';'PGE';'Perl6Regex'], 'regex'
     mob.'to'(pos)
     quote_regex = p6regex(mob, options :flat :named)
@@ -97,6 +111,18 @@
     .local string key
     key = 'quote_regex'
     mob[key] = quote_regex
+    goto succeed
+
+  pir_start:
+    ##  scan to closing brackets
+    $I0 = index target, stop, pos
+    if $I0 < 0 goto fail
+    .local string pir
+    $I1 = $I0 - pos
+    pir = substr target, pos, $I1
+    pos = $I0
+    key = 'quote_pir'
+    mob[key] = pir
     goto succeed
 
     ##  handle word parsing

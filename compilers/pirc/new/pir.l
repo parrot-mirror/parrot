@@ -30,6 +30,9 @@
 #  define YY_ALWAYS_INTERACTIVE 0
 #endif
 
+#include <stdlib.h> /* for size_t */
+typedef size_t yy_size_t;
+#define YY_TYPEDEF_YY_SIZE_T
 
 }
 
@@ -304,6 +307,7 @@ REGISTER       "$"[SNIP]{DIGITS}
 "pmc"             { return TK_PMC; }
 "string"          { return TK_STRING; }
 
+".annotate"       { return TK_ANNOTATE; }
 ".set_arg"        { return TK_SET_ARG; }
 ".const"          { return TK_CONST; }
 ".end"            { return TK_END; }
@@ -753,6 +757,11 @@ REGISTER       "$"[SNIP]{DIGITS}
                                   char *unquoted = (char *)mem_sys_allocate_zeroed(
                                                                         (len - 1) * sizeof (char));
                                   /* remove the quotes */
+                                  if (param->body[0] != '"')
+                                      yypirerror(yyscanner, lexer,
+                                         "value of macro argument '%s' must be a quoted string",
+                                         yytext);
+
                                   strncpy(unquoted, param->body + 1, len - 2);
                                   yylval->sval = munge_id(unquoted, lexer);
 
@@ -854,10 +863,12 @@ REGISTER       "$"[SNIP]{DIGITS}
                                  unsigned len   = strlen(param->body);
                                  char *unquoted = (char *)mem_sys_allocate_zeroed(
                                                                        (len - 1) * sizeof (char));
-                                 /* unquote the string; which reminds me: XXX we need to make
-                                  * sure that macro arguments used as label or local ids are
-                                  * in fact quoted strings.
-                                  */
+                                 /* unquote the string */
+                                 if (param->body[0] != '"')
+                                     yypirerror(yyscanner, lexer,
+                                         "value of macro argument '%s' must be a quoted string",
+                                         yytext);
+
                                  strncpy(unquoted, param->body + 1, len - 2);
                                  yylval->sval = munge_id(unquoted, lexer);
                                  mem_sys_free(unquoted);
@@ -949,8 +960,7 @@ REGISTER       "$"[SNIP]{DIGITS}
                           macro_def   * const macro = find_macro(lexer->macros, yytext + 1);
 
                           if (macro == NULL) { /* it's not a macro */
-                              yypirerror(yyscanner, lexer, "cannot find macro '%s'",
-                                         yytext + 1);
+                              yypirerror(yyscanner, lexer, "cannot find macro '%s'", yytext + 1);
                           }
                           else { /* it's a macro */
                               /* store current buffer at this point, because we'll be
@@ -1281,7 +1291,7 @@ expand_macro(yyscan_t yyscanner, macro_def * const macro, macro_param * args) {
 /*
 
 =item C<void *
-yyalloc(size_t bytes, yyscan_t yyscanner)>
+yyalloc(yy_size_t bytes, yyscan_t yyscanner)>
 
 Allocate C<bytes> of memory; the C<yyscanner> argument is not used.
 
@@ -1290,14 +1300,14 @@ Allocate C<bytes> of memory; the C<yyscanner> argument is not used.
 */
 PARROT_MALLOC
 void *
-yyalloc(size_t bytes, yyscan_t yyscanner) {
+yyalloc(yy_size_t bytes, yyscan_t yyscanner) {
     return mem_sys_allocate(bytes);
 }
 
 /*
 
 =item C<void *
-yyrealloc(void * ptr, size_t bytes, yyscan_t yyscanner)>
+yyrealloc(void * ptr, yy_size_t bytes, yyscan_t yyscanner)>
 
 Reallocate memory pointed to by C<ptr>. The new memory region is C<bytes> in size;
 the C<yyscanner> argument is not used.
@@ -1306,7 +1316,7 @@ the C<yyscanner> argument is not used.
 
 */
 void *
-yyrealloc(void * ptr, size_t bytes, yyscan_t yyscanner) {
+yyrealloc(void * ptr, yy_size_t bytes, yyscan_t yyscanner) {
     return mem_sys_realloc(ptr, bytes);
 }
 

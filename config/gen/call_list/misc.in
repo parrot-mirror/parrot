@@ -382,3 +382,9 @@ v    fff
 
 # Testing Pointer PMC use
 v    V
+
+# Testing SQLite
+i    tV
+i    ptiVp
+i    pid
+i    pitii

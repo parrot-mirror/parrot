@@ -484,7 +484,9 @@ Create a clone of self, also cloning the attributes given by attrlist.
     $S0 = shift attr_it
     unless $S0 goto attr_loop
     $P1 = getattribute self, $S0
+    if null $P1 goto null_attr
     $P1 = clone $P1
+  null_attr:
     setattribute result, $S0, $P1
     goto attr_loop
   attr_end:
@@ -717,6 +719,17 @@ Indicate that objects in the class are mutable or immutable.
     $P0 = get_hll_global ['Perl6Object'], 'Scalar'
     $P1 = self.'HOW'()
     $P1.'add_method'('Scalar', $P0, 'to'=>self)
+.end
+
+=item perl()
+
+Returns a Perl representation of itself.
+
+=cut
+
+.sub 'perl' :method
+    $S0 = self
+    .return ($S0)
 .end
 
 =back

@@ -45,7 +45,7 @@ C<s:g/(\w+)/{ucfirst $1}/> on it.
     .local pmc retv
     .local int len
 
-    retv = new 'Perl6Str'
+    retv = new 'Str'
     tmps = self
 
     len = length tmps
@@ -94,7 +94,7 @@ Returns string with one Char removed from the end.
 
     tmps = self
     chopn tmps, 1
-    retv = new 'Perl6Str'
+    retv = new 'Str'
     retv = tmps
     .return(retv)
 .end
@@ -120,7 +120,7 @@ Returns string with one Char removed from the end.
     if lastchar != "\n" goto done
     chopn tmps, 1
   done:
-       retv = new 'Perl6Str'
+       retv = new 'Str'
        retv = tmps
        .return (retv)
 .end
@@ -264,7 +264,7 @@ form, if uppercase.
     tmps = self
     downcase tmps
 
-    retv = new 'Perl6Str'
+    retv = new 'Str'
     retv = tmps
 
     .return(retv)
@@ -284,7 +284,7 @@ Like C<lc>, but only affects the first character.
     .local pmc retv
     .local int len
 
-    retv = new 'Perl6Str'
+    retv = new 'Str'
     tmps = self
 
     len = length tmps
@@ -559,7 +559,7 @@ B<Note:> partial implementation only
     .return(retval)
 .end
 
-# TODO: Note the multisub type here should be 'Perl6Str' or 'Str', but mapping
+# TODO: Note the multisub type here should be 'Str' or 'Str', but mapping
 # issues currently prevent this from working correctly unless 'String' is used
 
 .sub '!transtable' :multi('String')
@@ -597,7 +597,7 @@ B<Note:> partial implementation only
   process_pstring:
     unless prior, start_range
     $S2 = shift prior
-    next_str = new 'Perl6Str'
+    next_str = new 'Str'
     next_str = $S2
     push retval, next_str
     goto process_pstring
@@ -609,7 +609,7 @@ B<Note:> partial implementation only
     # If needed we can switch this over to use a true string Range
     if $I0 > $I1 goto next_loop
     $S2 = chr $I0
-    next_str = new 'Perl6Str'
+    next_str = new 'Str'
     next_str = $S2
     push retval, next_str
     inc $I0
@@ -631,7 +631,7 @@ B<Note:> partial implementation only
   process_lstring:
     unless prior, check_rval
     $S0 = shift prior
-    next_str = new 'Perl6Str'
+    next_str = new 'Str'
     next_str = $S0
     push retval, next_str
     goto process_lstring
@@ -665,7 +665,7 @@ B<Note:> partial implementation only
     by = get_hll_global 'infix:<=>'
     # itable maps matching positions to key, value array
     itable = new 'Perl6Hash'
-    retv = new 'Perl6Str'
+    retv = new 'Str'
 
   init_pair_loop:
     .local pmc pair, pkey, pval, pairlist
@@ -723,7 +723,7 @@ B<Note:> partial implementation only
     val = lastval
     goto init_index_loop
   get_prev2:
-    val = new 'Perl6Str'
+    val = new 'Str'
     val = ''
   init_index_loop:
     nhits = 0
@@ -819,7 +819,7 @@ B<Note:> partial implementation only
   st_trans:
     .local int k_isa_match, v_isa_closure, pass_match
     .local pmc lastmatch, v
-    lastmatch = new 'Perl6Str'
+    lastmatch = new 'Str'
     lastmatch = ''
     pos = 0 # original unadjusted position
     pr_pos = 0 # prior unadjusted position
@@ -892,86 +892,105 @@ Partial implementation. The :g modifier on regexps doesn't work, for example.
 
 =cut
 
-.sub subst :method :multi(_, _, _)
+.sub 'subst' :method :multi(_, _, _)
     .param string substring
     .param string replacement
-    .local int pos
-    .local int pos_after
-    .local pmc retv
+    .param pmc options         :slurpy :named
 
-    retv = new 'Perl6Str'
+    .local pmc global_flag
+    global_flag = options['global']
+    unless null global_flag goto have_global
+    global_flag = options['g']
+    unless null global_flag goto have_global
+    global_flag = get_hll_global ['Bool'], 'False'
+  have_global:
 
-    $S0 = self
-    pos = index $S0, substring
-    if pos < 0 goto no_match
+    .local string result
+    result = self
+    result = clone result
 
-    pos_after = pos
-    $I0 = length substring
-    add pos_after, $I0
-
-    $S1 = substr $S0, 0, pos
-    $S2 = substr $S0, pos_after
-    concat retv, $S1
-    concat retv, replacement
-    concat retv, $S2
-
-    goto done
-
-  no_match:
-    retv = self
-
-  done:
-    .return(retv)
+    .local int pos, substringlen, replacelen
+    pos = 0
+    substringlen = length substring
+    replacelen = length replacement
+  subst_loop:
+    pos = index result, substring, pos
+    if pos < 0 goto subst_done
+    substr result, pos, substringlen, replacement
+    pos += replacelen
+    if global_flag goto subst_loop
+  subst_done:
+    .return (result)
 .end
 
-.sub subst :method :lex :multi(_, 'Sub', _)
-    .param pmc regexp
+
+.sub 'subst' :method :multi(_, 'Sub', _)
+    .param pmc regex
     .param pmc replacement
-    .local int pos
-    .local int pos_after
-    .local pmc retv
-    .local pmc match
+    .param pmc options         :slurpy :named
 
-    retv = new 'Perl6Str'
+    .local pmc global_flag
+    global_flag = options['global']
+    unless null global_flag goto have_global
+    global_flag = options['g']
+    unless null global_flag goto have_global
+    global_flag = get_hll_global ['Bool'], 'False'
+  have_global:
 
-    new $P14, "Perl6Scalar"
-    .lex "$/", $P14
+    # build a list of matches
+    .local pmc matchlist, match
+    .local string result
+    matchlist = new 'ResizablePMCArray'
+    result = self
+    match = regex(result)
+    unless match goto matchlist_done
+    push matchlist, match
+    unless global_flag goto matchlist_done
+  matchlist_loop:
+    $I0 = match.'to'()
+    match = regex(match, 'continue'=>$I0)
+    unless match goto matchlist_done
+    push matchlist, match
+    goto matchlist_loop
+  matchlist_done:
 
-    match = regexp.'ACCEPTS'(self)
-    unless match goto no_match
-    pos = match.'from'()
-    pos_after = match.'to'()
+    # get caller's lexpad
+    .local pmc lexpad
+    $P0 = getinterp
+    lexpad = $P0['lexpad';1]
 
-    $S0 = self
-    $S1 = substr $S0, 0, pos
-    $S2 = substr $S0, pos_after
-    # pre-match
-    concat retv, $S1
-
-    # match
+    # now, perform substitutions on matchlist until done
+    .local int offset
+    offset = 0
+    result = clone result
+  subst_loop:
+    unless matchlist goto subst_done
+    match = shift matchlist
+    lexpad['$/'] = match
+    # get substitution string
+    .local string replacestr
     $I0 = isa replacement, 'Sub'
-    unless $I0 goto is_string
-
-    $S3 = match.'text'()
-    $S3 = replacement($S3)
-    concat retv, $S3
-    goto repl_done
-
-  is_string:
-    concat retv, replacement
-
-  repl_done:
-    # post-match
-    concat retv, $S2
-
-    goto done
-
-  no_match:
-    retv = self
-
-  done:
-    .return(retv)
+    if $I0 goto replacement_sub
+    replacestr = replacement
+    goto have_replacestr
+  replacement_sub:
+    $S0 = match
+    replacestr = replacement($S0)
+  have_replacestr:
+    # perform the replacement
+    $I0 = match.'from'()
+    $I1 = match.'to'()
+    $I2 = $I1 - $I0
+    $I0 += offset
+    substr result, $I0, $I2, replacestr
+    $I3 = length replacestr
+    $I3 -= $I2
+    offset += $I3
+    goto subst_loop
+  subst_done:
+    .return (result)
 .end
+
 
 =item ord()
 
@@ -1002,7 +1021,7 @@ full "uppercase".
     tmps = self
     upcase tmps
 
-    retv = new 'Perl6Str'
+    retv = new 'Str'
     retv = tmps
 
     .return(retv)
@@ -1022,7 +1041,7 @@ Performs a Unicode "titlecase" operation on the first character of the string.
     .local pmc retv
     .local int len
 
-    retv = new 'Perl6Str'
+    retv = new 'Str'
     tmps = self
 
     len = length tmps
