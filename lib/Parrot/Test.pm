@@ -202,7 +202,7 @@ if ($desc) {
     }
 unless ($incoming_desc_status) {
     if ($desc) {
-        print STDERR "desc:  $desc\n";
+        print STDERR "desc is now:  $desc\n";
     } else {
         print STDERR "desc is still Perl-false\n";
     }
@@ -531,6 +531,7 @@ sub _generate_test_functions {
                 \$extra{todo}
                 if defined $extra{todo};
 
+print STDERR 'just before $pass:  ', "$desc\n";
             my $pass = $builder->$meth( $real_output, $expected, $desc );
             $builder->diag("'$cmd' failed with exit code $exit_code")
                 if $exit_code and not $pass;
