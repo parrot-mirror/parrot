@@ -213,9 +213,8 @@ sub _generate_test_functions {
                 \$extra{todo}
                 if defined $extra{todo};
 
-            if ( $func =~ /_error_/ ) {
-                return _handle_error_output( $builder, $real_output, $expected, $desc )
-                    unless $exit_code;
+            if ( $func =~ /_error_/ and not $exit_code ) {
+                return _handle_error_output( $builder, $real_output, $expected, $desc );
             }
             elsif ($exit_code) {
                 $builder->ok( 0, $desc );
