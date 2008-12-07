@@ -7,7 +7,7 @@ use warnings;
 use lib qw( . lib ../lib ../../lib );
 
 use Test::More;
-use Parrot::Test tests => 14;
+use Parrot::Test tests => 15;
 use Parrot::Test::Util 'create_tempfile';
 
 =head1 NAME
@@ -238,6 +238,52 @@ ok 1 - $S0 = $P1.readline()
 ok 2 - $S0 = $P1.readline() # again on same stream
 OUT
 
+my $LINES;
+($LINES, $temp_file) = create_tempfile( UNLINK => 1 );
+
+for my $counter (1 .. 10000) {
+    print $LINES $counter, "\n";
+}
+close $LINES;
+
+pir_output_is( <<"CODE", <<'OUT', 'readline 10,000 lines' );
+.sub 'test' :main
+    load_bytecode 'String/Utils.pbc'
+    .local pmc chomp
+               chomp = get_global ['String';'Utils'], 'chomp'
+    .local string test_line
+    .local pmc filehandle
+    .local int counter
+    filehandle = new 'FileHandle'
+    filehandle.'open'('$temp_file')
+
+    counter = 0
+  read_loop:
+    inc counter 
+    # read in the file one line at a time...
+    \$I0 = filehandle.'eof'()
+    if \$I0 goto end_read_loop
+
+    test_line = readline filehandle
+    test_line = chomp( test_line )
+    \$I1 = test_line
+    if \$I1 == counter goto read_loop
+      print "not "
+#      print counter
+#      print " = "
+#      print \$I1
+#      print "\\n"
+#      goto read_loop
+
+  end_read_loop:
+    say 'ok 1 - read 10,000 lines'
+    filehandle.'close'()
+.end
+CODE
+ok 1 - read 10,000 lines
+OUT
+
+
 # RT #46833 test reading/writing code points once supported
 
 # RT #46835 test reading long chunks, eof, and across newlines
@@ -424,6 +470,7 @@ CODE
 ok 1 - $S1 = $P1.readline() # read with utf8 encoding on
 ok 2 - $S2 = $P1.readline() # read iso-8859-1 string
 OUT
+
 
 (undef, $temp_file) = create_tempfile( UNLINK => 1 );
 
