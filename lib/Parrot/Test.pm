@@ -422,7 +422,7 @@ sub _generate_test_functions {
             my ($extension) = $example_f =~ m{ [.]                    # introducing extension
                                                ( pasm | pir )         # match and capture the extension
                                                \z                     # at end of string
-                                             }ixms or Usage();
+                                             }ixms;
             if ( defined $extension ) {
                 my $code = slurp_file($example_f);
                 my $test_func = join( '::', $package, $example_test_map{$func} );
