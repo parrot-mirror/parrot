@@ -1,16 +1,5 @@
 # $Id$
 
-=head1 NAME
-
-hello.pasm - Hello World
-
-=head1 DESCRIPTION
-
-This is also used in the top Makefile,
-for showing how to create an executable from PASM.
-
-=cut
-
     # Get @ARGV as a ResizableStringArray
     get_params "0", P0
 
