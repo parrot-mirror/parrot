@@ -405,6 +405,9 @@ sub _generate_test_functions {
         example_output_is   => 'language_output_is',
         example_output_like => 'language_output_like',
         example_output_isnt => 'language_output_isnt',
+        example_error_output_is     => 'language_error_output_is',
+        example_error_output_isnt   => 'language_error_output_is',
+        example_error_output_like   => 'language_error_output_like',
     );
 
     foreach my $func ( keys %example_test_map ) {
@@ -435,7 +438,7 @@ sub _generate_test_functions {
                 );
             }
             else {
-                fail( defined $extension, "no extension recognized for $example_f" );
+                $builder->diag("no extension recognized for $example_f");
             }
         };
 

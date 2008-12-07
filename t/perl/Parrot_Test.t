@@ -30,7 +30,7 @@ BEGIN {
         plan( skip_all => "Test::Builder::Tester not installed\n" );
         exit 0;
     }
-    plan( tests => 112 );
+    plan( tests => 115 );
 }
 
 use lib qw( . lib ../lib ../../lib );
@@ -53,6 +53,8 @@ can_ok( 'Parrot::Test', $_ ) for qw/
     c_output_like                   c_output_unlike
     example_output_is               example_output_isnt
     example_output_like
+    example_error_output_is         example_error_output_isnt
+    example_error_output_like
     language_error_output_is        language_error_output_isnt
     language_error_output_like
     language_output_is              language_output_isnt
@@ -385,6 +387,16 @@ example_output_isnt( $file, $expected );
 
 $expected = qr/answer.*42.*Parrot!/s;
 example_output_like( $file, $expected );
+
+$file = q{t/perl/testlib/hello};
+$expected = qq{no extension recognized for $file};
+example_error_output_is( $file, $expected );
+
+$expected = qq{some extension recognized for $file};
+example_error_output_isnt( $file, $expected );
+
+$expected = qr{no extension recognized for $file};
+example_error_output_like( $file, $expected );
 
 ##### C-output test functions #####
 
