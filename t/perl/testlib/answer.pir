@@ -5,7 +5,7 @@
     add $I0, 20, 23
     dec $I0
     print $I0
-    print "\nsay's Parrot!\n"
+    print "\nsays Parrot!\n"
     end
 .end
 
