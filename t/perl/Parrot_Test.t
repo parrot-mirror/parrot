@@ -30,7 +30,7 @@ BEGIN {
         plan( skip_all => "Test::Builder::Tester not installed\n" );
         exit 0;
     }
-    plan( tests => 102 );
+    plan( tests => 106 );
 }
 
 use lib qw( . lib ../lib ../../lib );
@@ -318,6 +318,45 @@ if($Test::Builder::VERSION == 0.84) {
 } else {
     test_test($desc);
 }
+
+##### PIR-to-PASM output test functions #####
+
+my $pir_2_pasm_code = <<'ENDOFCODE';
+.sub _test
+   noop
+   end
+.end
+ENDOFCODE
+
+pir_2_pasm_is( <<CODE, <<'OUT', "pir_2_pasm:  added return - end" );
+$pir_2_pasm_code
+CODE
+# IMCC does produce b0rken PASM files
+# see http://guest@rt.perl.org/rt3/Ticket/Display.html?id=32392
+_test:
+  noop
+  end
+OUT
+
+pir_2_pasm_isnt( <<CODE, <<'OUT', "pir_2_pasm:  added return - end" );
+$pir_2_pasm_code
+CODE
+_test:
+  noop
+  bend
+OUT
+
+pir_2_pasm_like( <<CODE, <<'OUT', "pir_2_pasm:  added return - end" );
+$pir_2_pasm_code
+CODE
+/noop\s+end/s
+OUT
+
+pir_2_pasm_unlike( <<CODE, <<'OUT', "pir_2_pasm:  added return - end" );
+$pir_2_pasm_code
+CODE
+/noop\s+bend/s
+OUT
 
 ##### C-output test functions #####
 
