@@ -30,7 +30,7 @@ BEGIN {
         plan( skip_all => "Test::Builder::Tester not installed\n" );
         exit 0;
     }
-    plan( tests => 106 );
+    plan( tests => 112 );
 }
 
 use lib qw( . lib ../lib ../../lib );
@@ -357,6 +357,34 @@ $pir_2_pasm_code
 CODE
 /noop\s+bend/s
 OUT
+
+my $file = q{t/perl/testlib/hello.pasm};
+my $expected = qq{Hello World\n};
+example_output_is( $file, $expected );
+
+$expected = qq{Goodbye World\n};
+example_output_isnt( $file, $expected );
+
+$expected = qr{Hello World};
+example_output_like( $file, $expected );
+
+$file = q{t/perl/testlib/answer.pir};
+$expected = <<EXPECTED;
+The answer is
+42
+says Parrot!
+EXPECTED
+example_output_is( $file, $expected );
+
+$expected = <<EXPECTED;
+The answer is
+769
+says Parrot!
+EXPECTED
+example_output_isnt( $file, $expected );
+
+$expected = qr/answer.*42.*Parrot!/s;
+example_output_like( $file, $expected );
 
 ##### C-output test functions #####
 
