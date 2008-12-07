@@ -265,6 +265,7 @@ pir_output_is( <<"CODE", <<'OUT', 'readline 10,000 lines' );
     if \$I0 goto end_read_loop
 
     test_line = readline filehandle
+    if test_line == "" goto end_read_loop
     test_line = chomp( test_line )
     \$I1 = test_line
     if \$I1 == counter goto read_loop
