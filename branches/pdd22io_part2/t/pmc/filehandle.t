@@ -270,10 +270,13 @@ pir_output_is( <<"CODE", <<'OUT', 'readline 10,000 lines' );
     \$I1 = test_line
     if \$I1 == counter goto read_loop
       print "not "
+## the following lines provide more extensive debugging
+## output on a readline failure
 #      print counter
 #      print " = "
 #      print \$I1
 #      print "\\n"
+#      counter = \$I1
 #      goto read_loop
 
   end_read_loop:
