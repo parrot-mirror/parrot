@@ -165,222 +165,6 @@ sub path_to_parrot {
 # The following methods --up until generate_languages_functions() -- are
 # private.  They should not be used by modules inheriting from Parrot::Test.
 
-sub _handle_error_output {
-    my ( $builder, $real_output, $expected, $desc ) = @_;
-
-    my $level = $builder->level();
-    $builder->level( $level + 1 );
-    $builder->ok( 0, $desc );
-    $builder->diag(
-        "Expected error but exited cleanly\n" . "Received:\n$real_output\nExpected:\n$expected\n" );
-    $builder->level($level);
-
-    return 0;
-}
-
-sub _run_test_file {
-    local $SIG{__WARN__} = \&_report_odd_hash;
-    my ( $func, $code, $expected, $desc, %extra ) = @_;
-#my $incoming_desc_status;
-#if ($desc) {
-#    $incoming_desc_status++;
-#    print STDERR "desc:  $desc\n";
-#} else {
-#    print STDERR "desc is Perl-false\n";
-#}
-
-    my $path_to_parrot = path_to_parrot();
-    my $parrot = File::Spec->join( File::Spec->curdir(), 'parrot' . $PConfig{exe} );
-
-    # Strange Win line endings
-    convert_line_endings($expected);
-
-    # set up default description
-    unless ($desc) {
-        ( undef, my $file, my $line ) = caller();
-        $desc = "($file line $line)";
-    }
-#unless ($incoming_desc_status) {
-#    if ($desc) {
-#        print STDERR "desc is now:  $desc\n";
-#    } else {
-#        print STDERR "desc is still Perl-false\n";
-#    }
-#}
-
-    # $test_no will be part of temporary file
-    my $test_no = $builder->current_test() + 1;
-
-    # Name of the file where output is written.
-    # Switch to a different extension when we are generating code.
-    my $out_f = per_test( '.out', $test_no );
-
-    # Name of the file with test code.
-    # This depends on which kind of code we are testing.
-    my $code_f;
-    if ( $func =~ m/^pir_.*?output/ ) {
-        $code_f = per_test( '.pir', $test_no );
-    }
-    elsif ( $func =~ m/^pasm_.*?output_/ ) {
-        $code_f = per_test( '.pasm', $test_no );
-    }
-    elsif ( $func =~ m/^pbc_.*?output_/ ) {
-        $code_f = per_test( '.pbc', $test_no );
-    }
-    else {
-        die "Unknown test function: $func";
-    }
-    $code_f = File::Spec->rel2abs($code_f);
-    my $code_basef = basename($code_f);
-
-    # native tests are just run, others need to write code first
-    if ( $code_f !~ /\.pbc$/ ) {
-        write_code_to_file( $code, $code_f );
-    }
-
-    # honor opt* filename to actually run code with -Ox
-    my $args = $ENV{TEST_PROG_ARGS} || '';
-    my $opt = $code_basef =~ m!opt(.)! ? "-O$1" : "";
-    $args .= " $opt";
-
-    my $run_exec = 0;
-    if ( $args =~ s/--run-exec// ) {
-        $run_exec = 1;
-        my $pbc_f = per_test( '.pbc', $test_no );
-        my $o_f = per_test( '_pbcexe' . $PConfig{o}, $test_no );
-        my $exe_f =
-            per_test( '_pbcexe' . $PConfig{exe}, $test_no )
-            ;    # Make cleanup and svn:ignore more simple
-        my $exec_f = per_test( '_pbcexe', $test_no );    # Make cleanup and svn:ignore more simple
-        $exe_f =~ s@[\\/:]@$PConfig{slash}@g;
-
-        # RT#43751 put this into sub generate_pbc()
-        run_command(
-            qq{$parrot $args -o $pbc_f "$code_f"},
-            CD     => $path_to_parrot,
-            STDOUT => $out_f,
-            STDERR => $out_f
-        );
-        if ( -e $pbc_f ) {
-            run_command(
-                qq{$parrot $args -o $o_f "$pbc_f"},
-                CD     => $path_to_parrot,
-                STDOUT => $out_f,
-                STDERR => $out_f
-            );
-            if ( -e $o_f ) {
-                run_command(
-                    qq{$PConfig{make} EXEC=$exec_f exec},
-                    CD     => $path_to_parrot,
-                    STDOUT => $out_f,
-                    STDERR => $out_f
-                );
-                if ( -e $exe_f ) {
-                    run_command(
-                        $exe_f,
-                        CD     => $path_to_parrot,
-                        STDOUT => $out_f,
-                        STDERR => $out_f
-                    );
-                }
-            }
-        }
-    }
-
-    my ( $exit_code, $cmd );
-    unless ($run_exec) {
-        if ( $args =~ s/--run-pbc// || $args =~ s/-r // ) {
-            my $pbc_f = per_test( '.pbc', $test_no );
-            $args = qq{$args -o "$pbc_f"};
-
-            # In this case, we need to execute more than one command. Instead
-            # of a single scalar, build an array of commands.
-            $cmd = [ qq{$parrot $args "$code_f"}, qq{$parrot "$pbc_f"}, ];
-        }
-        else {
-            $cmd = qq{$parrot $args "$code_f"};
-        }
-        $exit_code = run_command(
-            $cmd,
-            CD     => $path_to_parrot,
-            STDOUT => $out_f,
-            STDERR => $out_f
-        );
-    }
-
-    return ( $out_f, $cmd, $exit_code );
-}
-
-sub _report_odd_hash {
-    my $warning = shift;
-    if ( $warning =~ m/Odd number of elements in hash assignment/ ) {
-        require Carp;
-        my @args = DB::uplevel_args();
-        shift @args;
-        my $func = ( caller() )[2];
-
-        Carp::carp("Odd $func invocation; probably missing description for TODO test");
-    }
-    else {
-        warn $warning;
-    }
-}
-
-sub _handle_test_options {
-    my $options = shift;
-    # To run the command in a different directory.
-    my $chdir = delete $options->{CD} || '';
-
-    while ( my ( $key, $value ) = each %{ $options } ) {
-        $key =~ m/^STD(OUT|ERR)$/
-            or die "I don't know how to redirect '$key' yet!";
-        my $strvalue = "$value";        # filehandle `eq' string will fail
-        $value = File::Spec->devnull()  # on older perls, so stringify it
-            if $strvalue eq '/dev/null';
-    }
-
-    my $out = $options->{'STDOUT'} || '';
-    my $err = $options->{'STDERR'} || '';
-    ##  File::Temp overloads 'eq' here, so we need the quotes. RT #58840
-    if ( $out and $err and "$out" eq "$err" ) {
-        $err = '&STDOUT';
-    }
-    return ( $out, $err, $chdir );
-}
-
-sub _handle_blib_path {
-    my $blib_path =
-        File::Spec->catfile( $PConfig{build_dir}, 'blib', 'lib' );
-    if ($^O eq 'cygwin') {
-        $ENV{PATH} = $blib_path . ':' . $ENV{PATH};
-    }
-    elsif ($^O eq 'MSWin32') {
-        $ENV{PATH} = $blib_path . ';' . $ENV{PATH};
-    }
-    else {
-        $ENV{LD_RUN_PATH} = $blib_path;
-    }
-}
-
-sub _handle_command {
-    my $command = shift;
-    $command = [$command] unless ( ref $command );
-
-    if ( defined $ENV{VALGRIND} ) {
-        $_ = "$ENV{VALGRIND} $_" for (@$command);
-    }
-    return $command;
-}
-
-sub _prepare_exit_message {
-    my $exit_code = $?;
-    return (
-          ( $exit_code < 0 )    ? $exit_code
-        : ( $exit_code & 0xFF ) ? "[SIGNAL $exit_code]"
-        : ( $? >> 8 )
-    );
-}
-
 sub _generate_test_functions {
 
     my $package        = 'Parrot::Test';
@@ -791,6 +575,222 @@ sub _generate_test_functions {
     return;
 }
 
+sub _handle_error_output {
+    my ( $builder, $real_output, $expected, $desc ) = @_;
+
+    my $level = $builder->level();
+    $builder->level( $level + 1 );
+    $builder->ok( 0, $desc );
+    $builder->diag(
+        "Expected error but exited cleanly\n" . "Received:\n$real_output\nExpected:\n$expected\n" );
+    $builder->level($level);
+
+    return 0;
+}
+
+sub _run_test_file {
+    local $SIG{__WARN__} = \&_report_odd_hash;
+    my ( $func, $code, $expected, $desc, %extra ) = @_;
+#my $incoming_desc_status;
+#if ($desc) {
+#    $incoming_desc_status++;
+#    print STDERR "desc:  $desc\n";
+#} else {
+#    print STDERR "desc is Perl-false\n";
+#}
+
+    my $path_to_parrot = path_to_parrot();
+    my $parrot = File::Spec->join( File::Spec->curdir(), 'parrot' . $PConfig{exe} );
+
+    # Strange Win line endings
+    convert_line_endings($expected);
+
+    # set up default description
+    unless ($desc) {
+        ( undef, my $file, my $line ) = caller();
+        $desc = "($file line $line)";
+    }
+#unless ($incoming_desc_status) {
+#    if ($desc) {
+#        print STDERR "desc is now:  $desc\n";
+#    } else {
+#        print STDERR "desc is still Perl-false\n";
+#    }
+#}
+
+    # $test_no will be part of temporary file
+    my $test_no = $builder->current_test() + 1;
+
+    # Name of the file where output is written.
+    # Switch to a different extension when we are generating code.
+    my $out_f = per_test( '.out', $test_no );
+
+    # Name of the file with test code.
+    # This depends on which kind of code we are testing.
+    my $code_f;
+    if ( $func =~ m/^pir_.*?output/ ) {
+        $code_f = per_test( '.pir', $test_no );
+    }
+    elsif ( $func =~ m/^pasm_.*?output_/ ) {
+        $code_f = per_test( '.pasm', $test_no );
+    }
+    elsif ( $func =~ m/^pbc_.*?output_/ ) {
+        $code_f = per_test( '.pbc', $test_no );
+    }
+    else {
+        die "Unknown test function: $func";
+    }
+    $code_f = File::Spec->rel2abs($code_f);
+    my $code_basef = basename($code_f);
+
+    # native tests are just run, others need to write code first
+    if ( $code_f !~ /\.pbc$/ ) {
+        write_code_to_file( $code, $code_f );
+    }
+
+    # honor opt* filename to actually run code with -Ox
+    my $args = $ENV{TEST_PROG_ARGS} || '';
+    my $opt = $code_basef =~ m!opt(.)! ? "-O$1" : "";
+    $args .= " $opt";
+
+    my $run_exec = 0;
+    if ( $args =~ s/--run-exec// ) {
+        $run_exec = 1;
+        my $pbc_f = per_test( '.pbc', $test_no );
+        my $o_f = per_test( '_pbcexe' . $PConfig{o}, $test_no );
+        my $exe_f =
+            per_test( '_pbcexe' . $PConfig{exe}, $test_no )
+            ;    # Make cleanup and svn:ignore more simple
+        my $exec_f = per_test( '_pbcexe', $test_no );    # Make cleanup and svn:ignore more simple
+        $exe_f =~ s@[\\/:]@$PConfig{slash}@g;
+
+        # RT#43751 put this into sub generate_pbc()
+        run_command(
+            qq{$parrot $args -o $pbc_f "$code_f"},
+            CD     => $path_to_parrot,
+            STDOUT => $out_f,
+            STDERR => $out_f
+        );
+        if ( -e $pbc_f ) {
+            run_command(
+                qq{$parrot $args -o $o_f "$pbc_f"},
+                CD     => $path_to_parrot,
+                STDOUT => $out_f,
+                STDERR => $out_f
+            );
+            if ( -e $o_f ) {
+                run_command(
+                    qq{$PConfig{make} EXEC=$exec_f exec},
+                    CD     => $path_to_parrot,
+                    STDOUT => $out_f,
+                    STDERR => $out_f
+                );
+                if ( -e $exe_f ) {
+                    run_command(
+                        $exe_f,
+                        CD     => $path_to_parrot,
+                        STDOUT => $out_f,
+                        STDERR => $out_f
+                    );
+                }
+            }
+        }
+    }
+
+    my ( $exit_code, $cmd );
+    unless ($run_exec) {
+        if ( $args =~ s/--run-pbc// || $args =~ s/-r // ) {
+            my $pbc_f = per_test( '.pbc', $test_no );
+            $args = qq{$args -o "$pbc_f"};
+
+            # In this case, we need to execute more than one command. Instead
+            # of a single scalar, build an array of commands.
+            $cmd = [ qq{$parrot $args "$code_f"}, qq{$parrot "$pbc_f"}, ];
+        }
+        else {
+            $cmd = qq{$parrot $args "$code_f"};
+        }
+        $exit_code = run_command(
+            $cmd,
+            CD     => $path_to_parrot,
+            STDOUT => $out_f,
+            STDERR => $out_f
+        );
+    }
+
+    return ( $out_f, $cmd, $exit_code );
+}
+
+sub _report_odd_hash {
+    my $warning = shift;
+    if ( $warning =~ m/Odd number of elements in hash assignment/ ) {
+        require Carp;
+        my @args = DB::uplevel_args();
+        shift @args;
+        my $func = ( caller() )[2];
+
+        Carp::carp("Odd $func invocation; probably missing description for TODO test");
+    }
+    else {
+        warn $warning;
+    }
+}
+
+sub _handle_test_options {
+    my $options = shift;
+    # To run the command in a different directory.
+    my $chdir = delete $options->{CD} || '';
+
+    while ( my ( $key, $value ) = each %{ $options } ) {
+        $key =~ m/^STD(OUT|ERR)$/
+            or die "I don't know how to redirect '$key' yet!";
+        my $strvalue = "$value";        # filehandle `eq' string will fail
+        $value = File::Spec->devnull()  # on older perls, so stringify it
+            if $strvalue eq '/dev/null';
+    }
+
+    my $out = $options->{'STDOUT'} || '';
+    my $err = $options->{'STDERR'} || '';
+    ##  File::Temp overloads 'eq' here, so we need the quotes. RT #58840
+    if ( $out and $err and "$out" eq "$err" ) {
+        $err = '&STDOUT';
+    }
+    return ( $out, $err, $chdir );
+}
+
+sub _handle_blib_path {
+    my $blib_path =
+        File::Spec->catfile( $PConfig{build_dir}, 'blib', 'lib' );
+    if ($^O eq 'cygwin') {
+        $ENV{PATH} = $blib_path . ':' . $ENV{PATH};
+    }
+    elsif ($^O eq 'MSWin32') {
+        $ENV{PATH} = $blib_path . ';' . $ENV{PATH};
+    }
+    else {
+        $ENV{LD_RUN_PATH} = $blib_path;
+    }
+}
+
+sub _handle_command {
+    my $command = shift;
+    $command = [$command] unless ( ref $command );
+
+    if ( defined $ENV{VALGRIND} ) {
+        $_ = "$ENV{VALGRIND} $_" for (@$command);
+    }
+    return $command;
+}
+
+sub _prepare_exit_message {
+    my $exit_code = $?;
+    return (
+          ( $exit_code < 0 )    ? $exit_code
+        : ( $exit_code & 0xFF ) ? "[SIGNAL $exit_code]"
+        : ( $? >> 8 )
+    );
+}
+
 sub generate_languages_functions {
 
     my %test_map = (
@@ -1084,7 +1084,7 @@ mark a TODO test.
 =item C<example_output_isnt( $example_f, $expected, @todo )>
 
 Determines the language, PIR or PASM, from the extension of C<$example_f> and runs
-the appropriate C<^language_output_(is|kike|isnt)> sub.
+the appropriate C<^language_output_(is|like|isnt)> sub.
 C<$example_f> is used as a description, so don't pass one.
 
 =item C<skip($why, $how_many)>
