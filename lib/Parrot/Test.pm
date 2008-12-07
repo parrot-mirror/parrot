@@ -213,19 +213,19 @@ sub _generate_test_functions {
                 \$extra{todo}
                 if defined $extra{todo};
 
-            if ($exit_code) {
+            if ( $func =~ /_error_/ ) {
+                return _handle_error_output( $builder, $real_output, $expected, $desc )
+                    unless $exit_code;
+            }
+            elsif ($exit_code) {
                 $builder->ok( 0, $desc );
                 $builder->diag( "Exited with error code: $exit_code\n"
                         . "Received:\n$real_output\nExpected:\n$expected\n" );
                 return 0;
             }
-            if ( $func =~ /_error_/ ) {
-                return _handle_error_output( $builder, $real_output, $expected, $desc );
-            }
             my $pass = $builder->$meth( $real_output, $expected, $desc );
             $builder->diag("'$cmd' failed with exit code $exit_code")
                 if not $pass and $exit_code;
-
             return $pass;
         };
 
