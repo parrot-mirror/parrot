@@ -310,19 +310,20 @@ Parrot_io_read_buffer(PARROT_INTERP, ARGMOD(PMC *filehandle),
 
         /* buffer completed */
         if (current == avail) {
-            Parrot_io_set_buffer_flags(interp, filehandle,
-                    (buffer_flags & ~PIO_BF_READBUF));
+            buffer_flags &= ~PIO_BF_READBUF;
+            Parrot_io_set_buffer_flags(interp, filehandle, buffer_flags);
             /* Reset next and end */
             Parrot_io_set_buffer_end(interp, filehandle, NULL);
             Parrot_io_set_buffer_next(interp, filehandle, buffer_start);
         }
 
+        /* requested length satisfied */
         if (len == current) {
             s->strlen = s->bufused = len;
             return current;
         }
         else {
-            /* more data needed from downlayer */
+            /* more data needed */
             out_buf += current;
             len -= current;
         }
@@ -347,7 +348,9 @@ Parrot_io_read_buffer(PARROT_INTERP, ARGMOD(PMC *filehandle),
         }
 
         got = Parrot_io_fill_readbuf(interp, filehandle);
-        len = len < got ? len : got;
+        len = (len < got)
+            ? len
+            : (got > 0) ? got : 0;
     }
 
     /* read from the read_buffer */
