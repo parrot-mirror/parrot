@@ -1,3 +1,4 @@
+# Copyright (C) 2001-2008, The Perl Foundation.
 # $Id$
 
     # Get @ARGV as a ResizableStringArray
