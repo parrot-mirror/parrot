@@ -351,6 +351,9 @@ Parrot_io_read_buffer(PARROT_INTERP, ARGMOD(PMC *filehandle),
     }
 
     /* read from the read_buffer */
+    buffer_start = Parrot_io_get_buffer_start(interp, filehandle);
+    buffer_next  = Parrot_io_get_buffer_next(interp, filehandle);
+    buffer_end   = Parrot_io_get_buffer_end(interp, filehandle);
 
     memcpy(out_buf, buffer_next, len);
     s->strlen    = s->bufused = current + len;
@@ -503,6 +506,9 @@ Parrot_io_readline_buffer(PARROT_INTERP, ARGMOD(PMC *filehandle), ARGOUT(STRING 
             s->strlen = s->bufused = l;
             if (Parrot_io_fill_readbuf(interp, filehandle) == 0)
                 return l;
+
+            buffer_next = Parrot_io_get_buffer_next(interp, filehandle);
+            buffer_end  = Parrot_io_get_buffer_end(interp, filehandle);
             buf_start = Parrot_io_get_buffer_start(interp, filehandle);
         }
     }
