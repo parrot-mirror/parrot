@@ -14,9 +14,6 @@ struct bytecode;
 
 typedef struct bytecode bytecode;
 
-struct bc_const;
-
-
 bytecode *new_bytecode(Interp *interp, char const * const filename, int bytes, int codesize);
 
 /* call this to write the PBC file */
@@ -43,10 +40,13 @@ void emit_num_arg(bytecode * const bc, int num_const_index);
 void emit_string_arg(bytecode * const bc, int string_const_index);
 */
 
-struct bc_const * add_key_const(bytecode * const bc, PMC *key);
-struct bc_const * add_num_const(bytecode * const bc, FLOATVAL f);
-struct bc_const * add_string_const(bytecode * const bc, char const * const str);
-struct bc_const * add_pmc_const(bytecode * const bc, PMC * pmc) ;
+int add_key_const(bytecode * const bc, PMC *key);
+
+int add_num_const(bytecode * const bc, double f);
+
+int add_string_const(bytecode * const bc, char const * const str);
+
+int add_pmc_const(bytecode * const bc, PMC * pmc) ;
 
 /* for adding constants */
 
@@ -61,25 +61,16 @@ int add_num_const(bytecode * const bc, FLOATVAL f);
 int add_int_const(bytecode * const bc, INTVAL i);
   */
 
-/* some functions to update constants */
-
-void update_pmc_const(bytecode * const bc, int pmc_const_index
-/* what kind of value arg? */);
-
-void update_string_const(bytecode * const bc, int str_const_index, STRING *s);
-/* XXX and other types... */
 
 /* XXX todo: define some API functions for finding values, etc. like this: */
 int get_string_const_index(bytecode * const bc, STRING *s);
 /* retrieves the index of s in the constant table */
 
-/* for sake of completeness.. */
-void remove_const(bytecode * const bc, int const_index);
-/* removes constant in slot C<const_index> from constant table */
+
 
 void add_sub_pmc(bytecode * const bc,
             char const * const subname, char const * const nsentry, char const * const subid,
-            int vtable_index, int regs_used[]);
+            int vtable_index, unsigned regs_used[], int startoffset, int endoffset);
 
 
 #endif /* PARROT_BCGEN_H_GUARD */

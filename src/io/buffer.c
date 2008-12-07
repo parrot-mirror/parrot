@@ -423,9 +423,14 @@ ret_string:
 
         /* Parrot_io_fill_readbuf() can return -1, but len should be positive */
         got = Parrot_io_fill_readbuf(interp, filehandle);
-        len = (len < got)
-            ? len
-            : (got > 0) ? got : 0;
+
+        /* avoid signedness problems between size_t got and UINTVAL len */
+        if (len > got) {
+            if (got > 0)
+                len = (UINTVAL)got;
+            else
+                len = 0;
+        }
     }
 
     /* if we got any data, then copy out the next byte */
@@ -697,6 +702,8 @@ Note that this is not a portable solution, but it is what the old architecture
 was doing, once you boil away the useless macros. This will need to change to
 support the Strings PDD, but is left as-is for now, for a smooth transition to
 the new architecture.
+
+=cut
 
 */
 

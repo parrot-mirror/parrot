@@ -81,11 +81,13 @@ static int add_const_str(PARROT_INTERP, ARGIN(const SymReg *r))
 static int add_const_table(PARROT_INTERP)
         __attribute__nonnull__(1);
 
-static int add_const_table_key(PARROT_INTERP, PMC *key)
-        __attribute__nonnull__(1);
+static int add_const_table_key(PARROT_INTERP, ARGIN(PMC *key))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
 
-static int add_const_table_pmc(PARROT_INTERP, PMC *pmc)
-        __attribute__nonnull__(1);
+static int add_const_table_pmc(PARROT_INTERP, ARGIN(PMC *pmc))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
 
 static opcode_t build_key(PARROT_INTERP, ARGIN(SymReg *key_reg))
         __attribute__nonnull__(1)
@@ -284,7 +286,7 @@ Adds a PMC to the const table, returning its position.
 */
 
 static int
-add_const_table_pmc(PARROT_INTERP, PMC *pmc)
+add_const_table_pmc(PARROT_INTERP, ARGIN(PMC *pmc))
 {
     int newitem = add_const_table(interp);
 
@@ -306,7 +308,7 @@ Adds a key to the const table, returning its position.
 */
 
 static int
-add_const_table_key(PARROT_INTERP, PMC *key)
+add_const_table_key(PARROT_INTERP, ARGIN(PMC *key))
 {
     int newitem = add_const_table(interp);
 
@@ -664,7 +666,7 @@ find_global_label(PARROT_INTERP, ARGIN(const char *name),
         SymReg * const r = s->unit->instructions->symregs[0];
 
         /* if names and namespaces are matching - ok */
-        if (r && ((r->subid && (strcmp(r->subid, name) == 0)) 
+        if (r && ((r->subid && (strcmp(r->subid, name) == 0))
                     || (r->name && (strcmp(r->name, name) == 0)))
               && ((sym->unit->_namespace && s->unit->_namespace
                         && (strcmp(sym->unit->_namespace->name, s->unit->_namespace->name) == 0))
@@ -828,6 +830,46 @@ IMCC_string_from_reg(PARROT_INTERP, ARGIN(const SymReg *r))
 
     /* unquoted bare name - ASCII only don't unescape it */
     return string_make(interp, buf, strlen(buf), "ascii", PObj_constant_FLAG);
+}
+
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
+STRING *
+IMCC_string_from__STRINGC(PARROT_INTERP, ARGIN(const char *buf))
+{
+    const int ascii = (*buf == '\'' || *buf == '"');
+    if (!ascii) {
+        /*
+         * the lexer parses:   foo:"string"
+         * get first part as charset, rest as string
+         */
+        STRING     *s;
+        const char *charset;
+        char * const p = strchr(buf, '"');
+        PARROT_ASSERT(p && p[-1] == ':');
+
+        p[-1]   = 0;
+        charset = buf;
+
+        /* past delim */
+        buf     = p + 1;
+        s       = string_unescape_cstring(interp, buf, '"', charset);
+
+        /* restore colon, as we may reuse this string */
+        p[-1] = ':';
+        return s;
+    }
+    else if (*buf == '"') {
+        buf++;
+        return string_unescape_cstring(interp, buf, '"', NULL);
+    }
+    else if (*buf == '\'') {
+        buf++;
+        return string_make(interp, buf, strlen(buf) - 1, "ascii", PObj_constant_FLAG);
+    }
+    else {
+        IMCC_fataly(interp, EXCEPTION_SYNTAX_ERROR, "Unknown STRING format: '%s'\n", buf);
+    }
 }
 
 
@@ -1081,6 +1123,12 @@ end positions.
 
 */
 
+#define UNIT_FREE_CHAR(x) \
+  do { \
+    mem_sys_free((x)); \
+    (x) = NULL; \
+  } while (0);
+
 static int
 add_const_pmc_sub(PARROT_INTERP, ARGMOD(SymReg *r), size_t offs, size_t end)
 {
@@ -1168,6 +1216,17 @@ add_const_pmc_sub(PARROT_INTERP, ARGMOD(SymReg *r), size_t offs, size_t end)
     }
 
     sub->subid = ct->constants[unit->subid->color]->u.string;
+
+#if 0
+    if (unit->subid) {
+        sub->subid = IMCC_string_from__STRINGC(interp, unit->subid);
+        UNIT_FREE_CHAR(unit->subid);
+        }
+    /* If the unit has no subid, set the subid to match the name. */
+    else
+        sub->subid = sub->name;
+#endif
+
     ns_pmc     = NULL;
 
     if (ns_const >= 0 && ns_const < ct->const_count) {
@@ -1208,9 +1267,11 @@ add_const_pmc_sub(PARROT_INTERP, ARGMOD(SymReg *r), size_t offs, size_t end)
         INTVAL  vtable_index;
 
         /* Work out the name of the vtable method. */
-        if (unit->vtable_name)
+        if (unit->vtable_name) {
             vtable_name = string_from_cstring(interp, unit->vtable_name + 1,
-                 strlen(unit->vtable_name) - 2);
+                    strlen(unit->vtable_name) - 2);
+            UNIT_FREE_CHAR(unit->method_name);
+        }
         else
             vtable_name = sub->name;
 
@@ -1229,21 +1290,23 @@ add_const_pmc_sub(PARROT_INTERP, ARGMOD(SymReg *r), size_t offs, size_t end)
 
     if (unit->is_method == 1) {
         /* Work out the name of the method. */
-        if (unit->method_name)
-            sub->method_name = string_from_cstring(interp, unit->method_name + 1,
-                 strlen(unit->method_name) - 2);
+        if (unit->method_name) {
+            sub->method_name = IMCC_string_from__STRINGC(interp, unit->method_name);
+            UNIT_FREE_CHAR(unit->method_name);
+        }
         else
             sub->method_name = sub->name;
     }
     else
-      sub->method_name = string_from_cstring(interp, "", 0);
+        sub->method_name = string_from_cstring(interp, "", 0);
 
 
     if (unit->has_ns_entry_name == 1) {
         /* Work out the name of the ns entry. */
-        if (unit->ns_entry_name)
-            sub->ns_entry_name = string_from_cstring(interp, unit->ns_entry_name +1,
-                 strlen(unit->ns_entry_name) - 2);
+        if (unit->ns_entry_name) {
+            sub->ns_entry_name = IMCC_string_from__STRINGC(interp, unit->ns_entry_name);
+            UNIT_FREE_CHAR(unit->ns_entry_name);
+        }
         else
             sub->ns_entry_name = sub->name;
     }

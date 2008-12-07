@@ -200,10 +200,10 @@ static int get_opinfo(yyscan_t yyscanner);
 static void undeclared_symbol(yyscan_t yyscanner, lexer_state * const lexer,
                               char const * const symbol);
 
-/* names of the Parrot types. Note that pir_type_namwes is global,
+/* names of the Parrot types. Note that pir_type_names is (file-)global,
  * but it's read-only, so that's fine.
  */
-static char const * const pir_type_names[] = { "int", "num", "string", "pmc" };
+static char const * const pir_type_names[] = { "int", "string", "pmc", "num" };
 
 
 /* enable debugging of generated parser */
@@ -468,6 +468,7 @@ static char const * const pir_type_names[] = { "int", "num", "string", "pmc" };
              augmented_op
              unique_reg_flag
              int_or_num
+             parameters
 
 %type <invo> long_invocation
              long_invocation_stat
@@ -740,18 +741,26 @@ multi_type        : identifier
 
 parameter_list    : parameters
                          { /* XXX */
-                           /* generate_get_params(lexer); */
-                           set_instr(lexer, "get_params");
-                           /* don't infer the signatured opname from arguments, it's always same:
-                            * get_params_pc (this is one of the special 4 instructions for
-                            * sub invocation).
-                            */
-                           update_op(lexer, CURRENT_INSTRUCTION(lexer), PARROT_OP_get_params_pc);
+                           /* if there are parameters, then emit a get_params instruction. */
+                           if ($1 > 0) {
+
+                               set_instr(lexer, "get_params");
+                               /* don't infer the signatured opname from arguments,
+                                * it's always same: get_params_pc
+                                * (this is one of the special 4 instructions for sub invocation).
+                                */
+
+                               update_op(lexer, CURRENT_INSTRUCTION(lexer),
+                                         PARROT_OP_get_params_pc);
+                           }
+
                          }
                   ;
 
 parameters        : /* empty */
+                        { $$ = 0; }
                   | parameters parameter
+                        { ++$$; /* count number of parameters */ }
                   ;
 
 parameter         : ".param" param param_flags "\n"
@@ -1266,12 +1275,15 @@ assignment        : target '=' TK_INTC
                           set_instrf(lexer, $3, "%T%E", $1, $4);
                           get_opinfo(yyscanner);
                         }
-                  | target '=' target binop target
+                  | target '=' target binop expression
                         {
                           if (targets_equal($1, $3)) /* $P0 = $P0 + $P1 ==> $P0 += $P1 */
-                              set_instrf(lexer, opnames[$4], "%T%T", $1, $5);
+                              set_instrf(lexer, opnames[$4], "%T%E", $1, $5);
                           else
-                              set_instrf(lexer, opnames[$4], "%T%T%T", $1, $3, $5);
+                              set_instrf(lexer, opnames[$4], "%T%T%E", $1, $3, $5);
+
+                          /* XXX this do_strength_reduction() doesn't work properly yet. */
+                          do_strength_reduction(yyscanner);
 
                           get_opinfo(yyscanner);
                         }
@@ -2149,6 +2161,13 @@ pasm_instruction          : parrot_op op_args "\n"
 
 
 %%
+
+
+
+/* the order of these letters match with the pir_type enumeration.
+ * These are used for generating the full opname (set I0, 10 -> set_i_ic).
+ */
+static char const type_codes[5] = {'i', 's', 'p', 'n', '?'};
 
 
 /*
@@ -3256,10 +3275,6 @@ get_signature_length(NOTNULL(expression * const e)) {
 }
 
 
-/* the order of these letters match with the pir_type enumeration.
- * These are used for generating the full opname (set I0, 10 -> set_i_ic).
- */
-static char const type_codes[5] = {'i', 'n', 's', 'p', '?'};
 
 
 /*

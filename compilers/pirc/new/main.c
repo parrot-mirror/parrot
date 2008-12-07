@@ -212,9 +212,14 @@ parse_file(int flexdebug, FILE *infile, char * const filename, int flags, int th
     fclose(infile);
 
 
+    /* XXX just want to make sure pirc doesn't segfault when doing bytecode stuff. */
+    if (TEST_FLAG(lexer->flags, LEXER_FLAG_OUTPUTPBC))
+        fprintf(stderr, "pirc ok\n");
+
     /* clean up after playing */
     release_resources(lexer);
     yypirlex_destroy(yyscanner);
+
 }
 
 /*

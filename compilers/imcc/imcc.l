@@ -331,7 +331,7 @@ SP              [ ]
 <emit,INITIAL>":nsentry"   return NS_ENTRY;
 ":unique_reg"              return UNIQUE_REG;
 ":instanceof"              return SUB_INSTANCE_OF;
-":subid"                   return SUB_LEXID;
+":subid"                   return SUBID;
 
 ".get_result"                  return RESULT;
 ".get_results"             return GET_RESULTS;
@@ -365,7 +365,6 @@ SP              [ ]
 "int"                         return INTV;
 "num"                         return FLOATV;
 "new"                         return NEW;
-"global"                      return GLOBALOP;
 "pmc"                         return PMCV;
 "string"                      return STRINGV;
 "<<"                          return SHIFT_LEFT;

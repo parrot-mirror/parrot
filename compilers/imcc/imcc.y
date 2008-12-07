@@ -709,13 +709,13 @@ do_loadlib(PARROT_INTERP, ARGIN(const char *lib))
 %token <t> SHR_ASSIGN SHL_ASSIGN SHR_U_ASSIGN
 %token <t> SHIFT_LEFT SHIFT_RIGHT INTV FLOATV STRINGV PMCV LOG_XOR
 %token <t> RELOP_EQ RELOP_NE RELOP_GT RELOP_GTE RELOP_LT RELOP_LTE
-%token <t> GLOBALOP RESULT RETURN TAILCALL YIELDT GET_RESULTS
+%token <t> RESULT RETURN TAILCALL YIELDT GET_RESULTS
 %token <t> POW SHIFT_RIGHT_U LOG_AND LOG_OR
 %token <t> COMMA ESUB DOTDOT
 %token <t> PCC_BEGIN PCC_END PCC_CALL PCC_SUB PCC_BEGIN_RETURN PCC_END_RETURN
 %token <t> PCC_BEGIN_YIELD PCC_END_YIELD NCI_CALL METH_CALL INVOCANT
 %token <t> MAIN LOAD INIT IMMEDIATE POSTCOMP METHOD ANON OUTER NEED_LEX
-%token <t> MULTI VTABLE_METHOD LOADLIB SUB_INSTANCE_OF SUB_LEXID
+%token <t> MULTI VTABLE_METHOD LOADLIB SUB_INSTANCE_OF SUBID
 %token <t> NS_ENTRY
 %token <t> UNIQUE_REG
 %token <s> LABEL
@@ -1022,18 +1022,6 @@ sub_param_type_def:
            $$->type |= $3;
            mem_sys_free($2);
           }
-
-   /* don't free $2 here; adv_named_set uses the pointer directly */
-   | type STRINGC ADV_ARROW IDENTIFIER paramtype_list
-          {
-            if ($5 & VT_UNIQUE_REG)
-                $$ = mk_ident_ur(interp, $4, $1);
-            else
-                $$ = mk_ident(interp, $4, $1);
-            $$->type |= $5;
-            adv_named_set(interp, $2);
-            mem_sys_free($4);
-          }
    ;
 
 
@@ -1079,7 +1067,7 @@ method:
            IMCC_INFO(interp)->cur_unit->method_name = NULL;
            IMCC_INFO(interp)->cur_unit->is_method = 1;
          }
-   | METHOD '(' STRINGC ')'
+   | METHOD '(' any_string ')'
          {
            $$ = P_METHOD;
            IMCC_INFO(interp)->cur_unit->method_name = $3;
@@ -1094,7 +1082,7 @@ ns_entry_name:
            IMCC_INFO(interp)->cur_unit->ns_entry_name = NULL;
            IMCC_INFO(interp)->cur_unit->has_ns_entry_name = 1;
          }
-   | NS_ENTRY '(' STRINGC ')'
+   | NS_ENTRY '(' any_string ')'
          {
            $$ = 0;
            IMCC_INFO(interp)->cur_unit->ns_entry_name = $3;
@@ -1111,9 +1099,19 @@ instanceof:
    ;
 
 subid:
-     SUB_LEXID '(' STRINGC ')'
+     SUBID
          {
            $$ = 0;
+           IMCC_INFO(interp)->cur_unit->subid = NULL;
+           /*
+           IMCC_INFO(interp)->cur_unit->instructions->symregs[0]->subid = str_dup_remove_quotes($3);
+           mem_sys_free($3);
+           */
+         }
+   | SUBID '(' any_string ')'
+         {
+           $$ = 0;
+           /* IMCC_INFO(interp)->cur_unit->subid = $3; */
            IMCC_INFO(interp)->cur_unit->subid = mk_const(interp, $3, 'S');
            IMCC_INFO(interp)->cur_unit->instructions->symregs[0]->subid = str_dup_remove_quotes($3);
            mem_sys_free($3);
@@ -1634,10 +1632,6 @@ assignment:
             { $$ = MK_I(interp, IMCC_INFO(interp)->cur_unit, "new", 3, $1, $4, $6); }
    | target '=' NEW var '[' keylist ']'
             { $$ = MK_I(interp, IMCC_INFO(interp)->cur_unit, "new", 3, $1, $4, $6); }
-   | target '=' GLOBALOP string
-            { $$ = MK_I(interp, IMCC_INFO(interp)->cur_unit, "find_global", 2, $1, $4);}
-   | GLOBALOP string '=' var
-            { $$ = MK_I(interp, IMCC_INFO(interp)->cur_unit, "store_global", 2, $2, $4); }
        /* NEW is here because it is both PIR and PASM keywords so we
         * have to handle the token here (or badly hack the lexer). */
    | NEW target COMMA var

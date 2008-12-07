@@ -479,8 +479,8 @@ method multi_declarator($/, $key) {
         create_sub($/, $past);
     }
 
-    # If it was multi, then emit a :multi and a type list.
-    if $<sym> eq 'multi' {
+    # If it was multi or a proto, then emit a :multi.
+    if $<sym> eq 'multi' || $<sym> eq 'proto' {
         # For now, if this is a multi we need to add code to transform the sub's
         # multi container to a Perl6MultiSub.
         $past.loadinit().push(
@@ -500,6 +500,21 @@ method multi_declarator($/, $key) {
         unless $pirflags { $pirflags := '' }
         $past.pirflags($pirflags  ~ ' :multi()');
     }
+
+    # Protos also need the proto property setting on them.
+    if $<sym> eq 'proto' {
+        $past.loadinit().push(
+            PAST::Op.new(
+                :inline('    setprop %0, "proto", %1'),
+                PAST::Var.new(
+                    :name('block'),
+                    :scope('register')
+                ),
+                1
+            )
+        );
+    }
+
     make $past;
 }
 
@@ -905,8 +920,8 @@ method routine_def($/) {
                         ##  get the names of the tagsets, if any, from the ast
                         my $tagsets := $( $aux<postcircumfix>[0] );
                         if $tagsets {
-                            my $tagsets_past := $( $tagsets );
-                            if         $tagsets_past.isa(PAST::Op)
+                            my $tagsets_past := $tagsets;
+                            if  $tagsets_past.isa(PAST::Op)
                                     && $tagsets_past.pasttype() eq 'call' {
                                 for @( $tagsets_past ) {
                                     unless $_.isa(PAST::Val)
@@ -2481,6 +2496,7 @@ method variable($/, $key) {
                         if defined( $sym_table )
                                 && $sym_table<scope> eq 'attribute' {
                             $name := '!' ~ $name;
+                            $twigil := '!';
                         }
                     }
                 }
@@ -2632,12 +2648,12 @@ method number($/, $key) {
 
 
 ##  for a variety of reasons, this is easier in PIR than NQP for now.
-##  NQP doesn't have assign yet, and Perl6Str is lighter-weight than Str.
+##  NQP doesn't have assign yet, and Str is lighter-weight than Str.
 method integer($/) {
     my $str;
     PIR q<  $P0 = find_lex '$/'   >;
     PIR q<  $S0 = $P0             >;
-    PIR q<  $P1 = new 'Perl6Str'  >;
+    PIR q<  $P1 = new 'Str'  >;
     PIR q<  assign $P1, $S0       >;
     PIR q<  store_lex '$str', $P1 >;
     make PAST::Val.new(
@@ -2652,7 +2668,7 @@ method dec_number($/) {
     my $str;
     PIR q<  $P0 = find_lex '$/'   >;
     PIR q<  $S0 = $P0             >;
-    PIR q<  $P1 = new 'Perl6Str'  >;
+    PIR q<  $P1 = new 'Str'  >;
     PIR q<  assign $P1, $S0       >;
     PIR q<  store_lex '$str', $P1 >;
     make PAST::Val.new(
@@ -2699,17 +2715,7 @@ method quote($/) {
 
 method quote_expression($/, $key) {
     my $past;
-    if $key eq 'quote_regex' {
-        our $?NS;
-        $past := PAST::Block.new(
-            $<quote_regex>,
-            :compiler('PGE::Perl6Regex'),
-            :namespace(Perl6::Compiler.parse_name( $?NS )),
-            :blocktype('declaration'),
-            :node( $/ )
-        );
-    }
-    elsif $key eq 'quote_concat' {
+    if $key eq 'quote_concat' {
         if +$<quote_concat> == 1 {
             $past := $( $<quote_concat>[0] );
         }
@@ -2723,6 +2729,19 @@ method quote_expression($/, $key) {
                 $past.push( $($_) );
             }
         }
+    }
+    elsif $key eq 'quote_regex' {
+        our $?NS;
+        $past := PAST::Block.new(
+            $<quote_regex>,
+            :compiler('PGE::Perl6Regex'),
+            :namespace(Perl6::Compiler.parse_name( $?NS )),
+            :blocktype('declaration'),
+            :node( $/ )
+        );
+    }
+    elsif $key eq 'quote_pir' {
+        $past := PAST::Op.new( :inline( $<quote_pir> ), :node($/) );
     }
     make $past;
 }
@@ -2751,7 +2770,7 @@ method quote_term($/, $key) {
     if ($key eq 'literal') {
         $past := PAST::Val.new(
             :value( ~$<quote_literal> ),
-            :returns('Perl6Str'), :node($/)
+            :returns('Str'), :node($/)
         );
     }
     elsif ($key eq 'variable') {
@@ -3224,7 +3243,7 @@ sub process_handles($/, $expr, $attr_name) {
     my $past := PAST::Stmts.new();
 
     # What type of expression do we have?
-    if $expr.isa(PAST::Val) && $expr.returns() eq 'Perl6Str' {
+    if $expr.isa(PAST::Val) && $expr.returns() eq 'Str' {
         # Just a single string mapping.
         my $name := ~$expr.value();
         my $method := make_handles_method($/, $name, $name, $attr_name);
@@ -3239,7 +3258,7 @@ sub process_handles($/, $expr, $attr_name) {
           $expr.name() eq 'list' {
         # List of something, but what is it?
         for @($expr) {
-            if $_.isa(PAST::Val) && $_.returns() eq 'Perl6Str' {
+            if $_.isa(PAST::Val) && $_.returns() eq 'Str' {
                 # String value.
                 my $name := ~$_.value();
                 my $method := make_handles_method($/, $name, $name, $attr_name);
@@ -3260,7 +3279,7 @@ sub process_handles($/, $expr, $attr_name) {
     elsif $expr.isa(PAST::Stmts) && $expr[0].name() eq 'infix:,' {
         # Also a list, but constructed differently.
         for @($expr[0]) {
-            if $_.isa(PAST::Val) && $_.returns() eq 'Perl6Str' {
+            if $_.isa(PAST::Val) && $_.returns() eq 'Str' {
                 # String value.
                 my $name := ~$_.value();
                 my $method := make_handles_method($/, $name, $name, $attr_name);

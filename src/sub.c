@@ -27,7 +27,7 @@ Subroutines, continuations, co-routines and other fun stuff...
 
 /*
 
-=item C<void  mark_context_start>
+=item C<void mark_context_start>
 
 Indicate that a new round of context marking is about to take place.
 
@@ -634,6 +634,8 @@ parrot_new_closure(PARROT_INTERP, ARGIN(PMC *sub_pmc))
 
 Verifies that the provided continuation is sane.
 
+=cut
+
 */
 
 void
@@ -660,6 +662,8 @@ Parrot_continuation_check(PARROT_INTERP, ARGIN(PMC *pmc),
 =item C<void Parrot_continuation_rewind_environment>
 
 Restores the appropriate context for the continuation.
+
+=cut
 
 */
 
