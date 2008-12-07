@@ -47,7 +47,7 @@ sub import {
 sub run_command {
     my ( $command, %options ) = @_;
 
-    my ( $out, $err, $chdir ) = _handle_test_options( \%options );;
+    my ( $out, $err, $chdir ) = _handle_test_options( \%options );
 
     if ($PConfig{parrot_is_shared}) {
         _handle_blib_path();
@@ -174,7 +174,7 @@ sub _generate_test_functions {
     my $pirc           = File::Spec->join( File::Spec->curdir(),
                             qw( compilers pirc ), "pirc$PConfig{exe}" );
 
-    ##### A: Parrot test map #####
+    ##### 1: Parrot test map #####
     my %parrot_test_map = map {
         $_ . '_output_is'           => 'is_eq',
         $_ . '_error_output_is'     => 'is_eq',
@@ -224,8 +224,6 @@ sub _generate_test_functions {
 
                 return 0;
             }
-
-#print STDERR 'just before $pass:  ', "$desc\n";
             my $pass = $builder->$meth( $real_output, $expected, $desc );
             $builder->diag("'$cmd' failed with exit code $exit_code")
                 if not $pass and $exit_code;
@@ -238,7 +236,7 @@ sub _generate_test_functions {
         *{ $package . '::' . $func } = $test_sub;
     }
 
-    ##### B: PIR-to-PASM test map #####
+    ##### 2: PIR-to-PASM test map #####
     my %pir_2_pasm_test_map = (
         pir_2_pasm_is      => 'is_eq',
         pir_2_pasm_isnt    => 'isnt_eq',
@@ -322,9 +320,7 @@ sub _generate_test_functions {
             $builder->diag("'$cmd' failed with exit code $exit_code")
                 if $exit_code and not $pass;
 
-            if ( !$ENV{POSTMORTEM} ) {
-                unlink $out_f;
-            }
+            unlink $out_f unless $ENV{POSTMORTEM};
 
             return $pass;
         };
@@ -334,7 +330,7 @@ sub _generate_test_functions {
         *{ $package . '::' . $func } = $test_sub;
     }
 
-    ##### C: Language test map #####
+    ##### 3: Language test map #####
     my %builtin_language_prefix = (
         PIR_IMCC  => 'pir',
         PASM_IMCC => 'pasm',
@@ -400,7 +396,7 @@ sub _generate_test_functions {
         *{ $package . '::' . $func } = $test_sub;
     }
 
-    ##### D:  Example test map #####
+    ##### 4:  Example test map #####
     my %example_test_map = (
         example_output_is   => 'language_output_is',
         example_output_like => 'language_output_like',
@@ -447,7 +443,7 @@ sub _generate_test_functions {
         *{ $package . '::' . $func } = $test_sub;
     }
 
-    ##### E: C test map #####
+    ##### 5: C test map #####
     my %c_test_map = (
         c_output_is     => 'is_eq',
         c_output_isnt   => 'isnt_eq',
