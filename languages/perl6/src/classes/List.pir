@@ -67,6 +67,25 @@ A list in Scalar context becomes an Array ObjectRef.
     $S0 = join ' ', self
     .return ($S0)
 .end
+
+=item ResizablePMCArray.list
+
+This version of list morphs a ResizablePMCArray into a List.
+
+=cut
+
+.namespace ['ResizablePMCArray']
+.sub 'list' :method
+    ##  this code morphs a ResizablePMCArray into a List
+    ##  without causing a clone of any of the elements
+    $P0 = new 'ResizablePMCArray'
+    splice $P0, self, 0, 0
+    $P1 = new 'List'
+    copy self, $P1
+    splice self, $P0, 0, 0
+    .return (self)
+.end
+
     
 =item hash()
 
@@ -74,6 +93,7 @@ Return the List invocant as a Hash.
 
 =cut
 
+.namespace ['List']
 .sub 'hash' :method
     .local pmc result, iter
     result = new 'Perl6Hash'
@@ -115,24 +135,23 @@ Return the List invocant as a Hash.
 .end
 
 
-=item list()
+=back
 
-Return the List as a list.
+=head2 Methods
+
+=over
+
+=item elems()
+
+Return the number of elements in the list.
 
 =cut
 
-.namespace ['ResizablePMCArray']
-.sub 'list' :method
-    ##  this code morphs a ResizablePMCArray into a List
-    ##  without causing a clone of any of the elements
-    $P0 = new 'ResizablePMCArray'
-    splice $P0, self, 0, 0
-    $P1 = new 'List'
-    copy self, $P1
-    splice self, $P0, 0, 0
-    .return (self)
+.sub 'elems' :method :multi('ResizablePMCArray') :vtable('get_number')
+    self.'!flatten'()
+    $I0 = elements self
+    .return ($I0)
 .end
-
 
 =item perl()
 
@@ -159,10 +178,54 @@ Returns a Perl representation of a List.
     .return (result)
 .end
 
+=back
+
+=head2 Operator methods
+
+=over
+
+=item postcircumfix:<[ ]>
+
+Returns a list element or slice.
+
+=cut
+
+.sub 'postcircumfix:[ ]' :method
+    .param pmc args            :slurpy
+    .param pmc options         :slurpy :named
+    .local pmc result
+    args.'!flatten'()
+    $I0 = args.'elems'()
+    if $I0 != 1 goto slice
+    $I0 = args[0]
+    result = self[$I0]
+    unless null result goto end
+    $P0 = get_hll_global 'Object'
+    result = new 'Failure'
+    self[$I0] = result
+    goto end
+  slice:
+    result = new 'List'
+  slice_loop:
+    unless args goto slice_done
+    $I0 = shift args
+    .local pmc elem
+    elem = self[$I0]
+    unless null elem goto slice_elem
+    elem = new 'Failure'
+    self[$I0] = elem
+  slice_elem:
+    push result, elem
+    goto slice_loop
+  slice_done:
+  end:
+    .return (result)
+.end
+
 
 =back
 
-=head2 List methods
+=head2 Private methods
 
 =over 4
 
@@ -217,18 +280,6 @@ layer.  It will likely change substantially when we have lazy lists.
     .return (self)
 .end
 
-
-=item elems()
-
-Return the number of elements in the list.
-
-=cut
-
-.sub 'elems' :method :multi('ResizablePMCArray') :vtable('get_number')
-    self.'!flatten'()
-    $I0 = elements self
-    .return ($I0)
-.end
 
 
 =item first(...)
