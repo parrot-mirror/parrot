@@ -588,14 +588,6 @@ sub _handle_error_output {
 sub _run_test_file {
     local $SIG{__WARN__} = \&_report_odd_hash;
     my ( $func, $code, $expected, $desc, %extra ) = @_;
-#my $incoming_desc_status;
-#if ($desc) {
-#    $incoming_desc_status++;
-#    print STDERR "desc:  $desc\n";
-#} else {
-#    print STDERR "desc is Perl-false\n";
-#}
-
     my $path_to_parrot = path_to_parrot();
     my $parrot = File::Spec->join( File::Spec->curdir(), 'parrot' . $PConfig{exe} );
 
@@ -607,13 +599,6 @@ sub _run_test_file {
         ( undef, my $file, my $line ) = caller();
         $desc = "($file line $line)";
     }
-#unless ($incoming_desc_status) {
-#    if ($desc) {
-#        print STDERR "desc is now:  $desc\n";
-#    } else {
-#        print STDERR "desc is still Perl-false\n";
-#    }
-#}
 
     # $test_no will be part of temporary file
     my $test_no = $builder->current_test() + 1;
