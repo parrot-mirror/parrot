@@ -17,7 +17,7 @@ src/classes/List.pir - Perl 6 List class and related functions
 #    '!EXPORT'('first grep keys kv map pairs reduce values', $P0)
 .end
 
-=head2 Context methods
+=head2 Methods
 
 =over
 
@@ -32,6 +32,12 @@ A List in list context returns itself.
     .return (self)
 .end
 
+.namespace []
+.sub 'list'
+    .param pmc values          :slurpy
+    .tailcall values.'!flatten'()
+.end
+
 =back
 
 =head2 Coercion methods
@@ -42,6 +48,7 @@ A List in list context returns itself.
 
 =cut
 
+.namespace ['List']
 .sub 'Iterator' :method
     self.'!flatten'()
     $P0 = new 'Iterator', self
@@ -686,24 +693,13 @@ Returns a List containing the values of the invocant.
 
 =over 4
 
-=item C<list(...)>
-
-Build a flattened List from its arguments.
-
-=cut
-
-.namespace []
-.sub 'list'
-    .param pmc values          :slurpy
-    .tailcall values.'!flatten'()
-.end
-
 =item C<infix:,(...)>
 
 Operator form for building a list from its arguments.
 
 =cut
 
+.namespace []
 .sub 'infix:,'
     .param pmc args            :slurpy
     .tailcall args.'list'()

@@ -12,14 +12,6 @@ object model and the Perl 6 model means we have to do a little
 name and method trickery here and there, and this file takes
 care of much of that.
 
-=head2 Initializers
-
-=over
-
-=item onload()
-
-Perform initializations and create the base classes.
-
 =cut
 
 .namespace []
@@ -32,11 +24,34 @@ Perform initializations and create the base classes.
     set_hll_global ['Perl6Object'], '$!P6META', p6meta
 .end
 
-=back
-
-=head2 Context methods
+=head2 Methods
 
 =over 4
+
+=item defined()
+
+Return true if the object is defined.
+
+=cut
+
+.namespace ['Perl6Object']
+.sub 'defined' :method
+    $P0 = get_hll_global ['Bool'], 'True'
+    .return ($P0)
+.end
+
+
+=item hash
+
+Return invocant in hash context.  Default is to build a Hash from C<.list>.
+
+=cut
+
+.namespace ['Perl6Object']
+.sub 'hash' :method
+    $P0 = self.'list'()
+    .tailcall $P0.'hash'()
+.end
 
 =item item
 
@@ -55,22 +70,46 @@ Return invocant in list context.  Default is to return a List containing self.
 
 =cut
 
+.namespace ['Perl6Object']
 .sub 'list' :method
     $P0 = new 'List'
     push $P0, self
     .return ($P0)
 .end
 
-=item hash
+=item print()
 
-Return invocant in hash context.  Default is to build a Hash from C<.list>.
+Print the object.
 
 =cut
 
 .namespace ['Perl6Object']
-.sub 'hash' :method
-    $P0 = self.'list'()
-    .tailcall $P0.'hash'()
+.sub 'print' :method
+    $P0 = get_hll_global 'print'
+    .tailcall $P0(self)
+.end
+
+=item say()
+
+Print the object, followed by a newline.
+
+=cut
+
+.namespace ['Perl6Object']
+.sub 'say' :method
+    $P0 = get_hll_global 'say'
+    .tailcall $P0(self)
+.end
+
+=item true()
+
+Boolean value of object -- defaults to C<.defined> (S02).
+
+=cut
+
+.namespace ['Perl6Object']
+.sub 'true' :method
+    .tailcall self.'defined'()
 .end
 
 =back
@@ -83,6 +122,7 @@ Return invocant in hash context.  Default is to build a Hash from C<.list>.
 
 =cut
 
+.namespace ['Perl6Object']
 .sub 'Array' :method
     $P0 = new 'Perl6Array'
     'infix:='($P0, self)
@@ -133,54 +173,9 @@ the object's type and address.
 
 =back
 
-=head2 Methods
+=head2 Special methods
 
 =over 4
-
-=item defined()
-
-Return true if the object is defined.
-
-=cut
-
-.sub 'defined' :method
-    $P0 = get_hll_global ['Bool'], 'True'
-    .return ($P0)
-.end
-
-=item print()
-
-Print the object.
-
-=cut
-
-.sub 'print' :method
-    $P0 = get_hll_global 'print'
-    .tailcall $P0(self)
-.end
-
-=item say()
-
-Print the object, followed by a newline.
-
-=cut
-
-.sub 'say' :method
-    $P0 = get_hll_global 'say'
-    .tailcall $P0(self)
-.end
-
-=item true()
-
-Boolean value of object -- defaults to C<.defined> (S02).
-
-=cut
-
-.sub 'true' :method
-    .tailcall self.'defined'()
-.end
-
-=item Special methods
 
 =item new()
 
@@ -188,6 +183,7 @@ Create a new object having the same class as the invocant.
 
 =cut
 
+.namespace ['Perl6Object']
 .sub 'new' :method
     .param pmc init_parents :slurpy
     .param pmc init_this    :named :slurpy
@@ -443,6 +439,7 @@ Create a clone of self, also cloning the attributes given by attrlist.
 
 =cut
 
+.namespace ['Perl6Object']
 .sub '!cloneattr' :method
     .param string attrlist
     .local pmc p6meta, result
@@ -574,6 +571,7 @@ Create a clone of self, also cloning the attributes given by attrlist.
 
 =cut
 
+.namespace ['Perl6Object']
 .sub '' :vtable('decrement') :method
     $P0 = self.'pred'()
     'infix:='(self, $P0)
