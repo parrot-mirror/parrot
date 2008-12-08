@@ -7,7 +7,7 @@ use warnings;
 use lib qw( . lib ../lib ../../lib );
 
 use Test::More;
-use Parrot::Test tests => 15;
+use Parrot::Test tests => 17;
 use Parrot::Test::Util 'create_tempfile';
 
 =head1 NAME
@@ -544,6 +544,41 @@ ok:
 .end
 CODE
 ok
+OUTPUT
+
+pir_output_is( <<"CODE", <<"OUTPUT", "readall() - utf8 on closed filehandle" );
+.sub 'main'
+    .local pmc ifh
+    ifh = new 'FileHandle'
+    ifh.'encoding'('utf8')
+   
+    \$S0 = ifh.'readall'('$temp_file')
+
+    \$I0 = encoding \$S0
+    \$S1 = encodingname \$I0
+
+    say \$S1
+.end
+CODE
+utf8
+OUTPUT
+
+pir_output_is( <<"CODE", <<"OUTPUT", "readall() - utf8 on opened filehandle" );
+.sub 'main'
+    .local pmc ifh
+    ifh = new 'FileHandle'
+    ifh.'encoding'('utf8')
+    ifh.'open'('$temp_file')
+
+    \$S0 = ifh.'readall'()
+
+    \$I0 = encoding \$S0
+    \$S1 = encodingname \$I0
+
+    say \$S1
+.end
+CODE
+utf8
 OUTPUT
 
 # RT #46843
