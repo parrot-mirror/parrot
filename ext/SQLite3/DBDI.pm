@@ -1,3 +1,7 @@
+# Basic Perl 6 database layer
+# $Id$
+# Copyright (C) 2008 The Perl Foundation
+
 class DBDI::DriverManager {
     method getConnection($url, $login, $password) {
         my $c1 = $url.index(":");
@@ -8,7 +12,7 @@ class DBDI::DriverManager {
 
         my $c2 = $rurl.index(":");
         my $driver = "DBDI::Driver::"~substr($rurl, 0, $c2);
-        eval "use "~$driver; 
+        eval "use "~$driver;
         if ($!) { die "Couldn't load "~$driver~": "~$!; }
 
         my $r = substr($rurl, $c2+1);
