@@ -296,8 +296,8 @@ filehandle when finished.
             /* called as class method - open, slurp, close file */
             PMC *filehandle;
             STRING *encoding;
-            GET_ATTR_encoding(INTERP, SELF, encoding);
             size_t size;
+            GET_ATTR_encoding(INTERP, SELF, encoding);
             if (!Parrot_io_is_closed(INTERP, SELF)) {
                 Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_PIO_ERROR,
                                 "Cannot readall on a new file from an already open filehandle");
