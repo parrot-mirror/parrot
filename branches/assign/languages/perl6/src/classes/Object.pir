@@ -12,7 +12,7 @@ object model and the Perl 6 model means we have to do a little
 name and method trickery here and there, and this file takes
 care of much of that.
 
-=head2 Functions
+=head2 Initializers
 
 =over
 
@@ -23,7 +23,7 @@ Perform initializations and create the base classes.
 =cut
 
 .namespace []
-.sub 'onload' :anon :init :load
+.sub '' :anon :init :load
     .local pmc p6meta
     load_bytecode 'PCT.pbc'
     $P0 = get_root_global ['parrot'], 'P6metaclass'
@@ -32,73 +32,26 @@ Perform initializations and create the base classes.
     set_hll_global ['Perl6Object'], '$!P6META', p6meta
 .end
 
-
 =back
 
-=head2 Object methods
+=head2 Context methods
 
 =over 4
 
-=item Scalar()
+=item item
 
-Default implementation gives reference type semantics, and returns an object
-reference, unless the thing already is one.
-
-=cut
-
-.namespace ['Perl6Object']
-.sub 'Scalar' :method
-    $I0 = isa self, 'ObjectRef'
-    unless $I0 goto not_ref
-    .return (self)
-  not_ref:
-    $P0 = new 'ObjectRef', self
-    .return ($P0)
-.end
-
-
-=item hash()
-
-Return a hash representation of ourself.
+Return invocant in item context.  Default is to return self.
 
 =cut
-
-.sub 'hash' :method
-    $P0 = self.'list'()
-    .tailcall $P0.'hash'()
-.end
-
-=item item()
-
-Return the scalar component of the invocant.  For most objects,
-this is simply the invocant itself.
-
-=cut
-
-.namespace []
-.sub 'item'
-    .param pmc x               :slurpy
-    $I0 = elements x
-    unless $I0 == 1 goto have_x
-    x = shift x
-  have_x:
-    $I0 = can x, 'item'
-    unless $I0 goto have_item
-    x = x.'item'()
-  have_item:
-    .return (x)
-.end
 
 .namespace ['Perl6Object']
 .sub 'item' :method
     .return (self)
 .end
 
+=item list
 
-=item list()
-
-Return the list component of the invocant.  For most (Scalar)
-objects, we create a List containing the invocant.
+Return invocant in list context.  Default is to return a List containing self.
 
 =cut
 
@@ -108,27 +61,63 @@ objects, we create a List containing the invocant.
     .return ($P0)
 .end
 
+=item hash
 
-=item defined()
-
-Return true if the object is defined.
+Return invocant in hash context.  Default is to build a Hash from C<.list>.
 
 =cut
 
-.sub 'defined' :method
-    $P0 = get_hll_global ['Bool'], 'True'
+.namespace ['Perl6Object']
+.sub 'hash' :method
+    $P0 = self.'list'()
+    .tailcall $P0.'hash'()
+.end
+
+=back
+
+=head2 Coercion methods
+
+=over 4
+
+=item Array()
+
+=cut
+
+.sub 'Array' :method
+    $P0 = new 'Perl6Array'
+    'infix:='($P0, self)
     .return ($P0)
 .end
 
-.sub '' :method :vtable('defined')
-    $I0 = self.'defined'()
-    .return ($I0)
+=item Iterator()
+
+=cut
+
+.sub 'Iterator' :method
+    $P0 = self.'list'()
+    .tailcall $P0.'Iterator'()
 .end
 
+=item Scalar()
+
+Default Scalar() gives reference type semantics, returning
+an object reference (unless the invocant already is one).
+
+=cut
+
+.sub 'Scalar' :method
+    $I0 = isa self, 'ObjectRef'
+    unless $I0 goto not_ref
+    .return (self)
+  not_ref:
+    $P0 = new 'ObjectRef', self
+    .return ($P0)
+.end
 
 =item Str()
 
-Return a string representation of the object
+Return a string representation of the invocant.  Default is
+the object's type and address.
 
 =cut
 
@@ -142,36 +131,56 @@ Return a string representation of the object
     .return ($S0)
 .end
 
-.sub '' :method :vtable('get_string')
-    $S0 = self.'Str'()
-    .return ($S0)
-.end
+=back
 
+=head2 Methods
 
-=item increment
+=over 4
 
-Override increment in Objects to use 'succ' method.
+=item defined()
 
-=cut
-
-.sub '' :method :vtable('increment')
-    $P0 = self.'succ'()
-    'infix:='(self, $P0)
-    .return(self)
-.end
-
-=item decrement
-
-Override decrement in Objects to use 'pred' method.
+Return true if the object is defined.
 
 =cut
 
-.sub '' :method :vtable('decrement')
-    $P0 = self.'pred'()
-    'infix:='(self, $P0)
-    .return(self)
+.sub 'defined' :method
+    $P0 = get_hll_global ['Bool'], 'True'
+    .return ($P0)
 .end
 
+=item print()
+
+Print the object.
+
+=cut
+
+.sub 'print' :method
+    $P0 = get_hll_global 'print'
+    .tailcall $P0(self)
+.end
+
+=item say()
+
+Print the object, followed by a newline.
+
+=cut
+
+.sub 'say' :method
+    $P0 = get_hll_global 'say'
+    .tailcall $P0(self)
+.end
+
+=item true()
+
+Boolean value of object -- defaults to C<.defined> (S02).
+
+=cut
+
+.sub 'true' :method
+    .tailcall self.'defined'()
+.end
+
+=item Special methods
 
 =item new()
 
@@ -347,94 +356,6 @@ Create a new object having the same class as the invocant.
     .return ($P1)
 .end
 
-=item WHENCE()
-
-Return the invocant's auto-vivification closure.
-
-=cut
-
-.sub 'WHENCE' :method
-    $P0 = self.'WHAT'()
-    $P1 = $P0.'WHENCE'()
-    .return ($P1)
-.end
-
-=item REJECTS(topic)
-
-Define REJECTS methods for objects (this would normally
-be part of the Pattern role, but we put it here for now
-until we get roles).
-
-=cut
-
-.sub 'REJECTS' :method
-    .param pmc topic
-    $P0 = self.'ACCEPTS'(topic)
-    n_not $P0, $P0
-    .return ($P0)
-.end
-
-=item true()
-
-Defines the .true method on all objects via C<prefix:?>.
-
-=cut
-
-.sub 'true' :method
- .tailcall 'prefix:?'(self)
-.end
-
-=item get_bool (vtable)
-
-Returns true if the object is defined, false otherwise.
-
-=cut
-
-.sub '' :vtable('get_bool')
-    $I0 = 'defined'(self)
-    .return ($I0)
-.end
-
-=item print()
-
-=item say()
-
-Print the object
-
-=cut
-
-.sub 'print' :method
-    $P0 = get_hll_global 'print'
-    .tailcall $P0(self)
-.end
-
-.sub 'say' :method
-    $P0 = get_hll_global 'say'
-    .tailcall $P0(self)
-.end
-
-=item WHERE
-
-Gets the memory address of the object.
-
-=cut
-
-.sub 'WHERE' :method
-    $I0 = get_addr self
-    .return ($I0)
-.end
-
-=item WHICH
-
-Gets the object's identity value
-
-=cut
-
-.sub 'WHICH' :method
-    # For normal objects, this can just be the memory address.
-    .tailcall self.'WHERE'()
-.end
-
 =item 'PARROT'
 
 Report the object's true nature.
@@ -457,6 +378,58 @@ Report the object's true nature.
     .return (result)
 .end
 
+
+=item REJECTS(topic)
+
+Define REJECTS methods for objects (this would normally
+be part of the Pattern role, but we put it here for now
+until we get roles).
+
+=cut
+
+.sub 'REJECTS' :method
+    .param pmc topic
+    $P0 = self.'ACCEPTS'(topic)
+    n_not $P0, $P0
+    .return ($P0)
+.end
+
+
+=item WHENCE()
+
+Return the invocant's auto-vivification closure.
+
+=cut
+
+.sub 'WHENCE' :method
+    $P0 = self.'WHAT'()
+    $P1 = $P0.'WHENCE'()
+    .return ($P1)
+.end
+
+
+=item WHERE
+
+Gets the memory address of the object.
+
+=cut
+
+.sub 'WHERE' :method
+    $I0 = get_addr self
+    .return ($I0)
+.end
+
+
+=item WHICH
+
+Gets the object's identity value
+
+=cut
+
+.sub 'WHICH' :method
+    # For normal objects, this can just be the memory address.
+    .tailcall self.'WHERE'()
+.end
 
 =back
 
@@ -493,6 +466,13 @@ Create a clone of self, also cloning the attributes given by attrlist.
     .return (result)
 .end
 
+=item !.?  Invoke one method if it exists
+
+=item !.*  Invoke any methods that exist
+
+=item !.+  Invoke all methods that exist (at least one)
+
+=cut
 
 .sub '!.?' :method
     .param string method_name
@@ -573,6 +553,9 @@ Create a clone of self, also cloning the attributes given by attrlist.
     'die'($S0)
 .end
 
+=item !.^  Invoke a method on invocant's metaclass
+
+=cut
 
 .sub '!.^' :method
     .param string method_name
@@ -585,156 +568,42 @@ Create a clone of self, also cloning the attributes given by attrlist.
     .tailcall how.method_name(self, pos_args :flat, named_args :flat :named)
 .end
 
-
-.namespace ['P6protoobject']
-
 =back
 
-=head2 Methods on P6protoobject
-
-=over
-
-=item WHENCE()
-
-Returns the protoobject's autovivification closure.
+=head2 Vtable functions
 
 =cut
 
-.sub 'WHENCE' :method
-    .local pmc props, whence
-    props = getattribute self, '%!properties'
-    if null props goto ret_undef
-    whence = props['WHENCE']
-    if null whence goto ret_undef
-    .return (whence)
-  ret_undef:
-    whence = new 'Undef'
-    .return (whence)
+.sub '' :vtable('decrement') :method
+    $P0 = self.'pred'()
+    'infix:='(self, $P0)
+    .return(self)
 .end
 
-
-=item defined()
-
-=cut
-
-.sub 'defined' :method
-    $P0 = get_hll_global ['Bool'], 'False'
-    .return ($P0)
+.sub '' :vtable('defined') :method
+    $I0 = self.'defined'()
+    .return ($I0)
 .end
 
-
-=item item()
-
-Returns itself in item context.
-
-=cut
-
-.sub 'item' :method
-    .return (self)
+.sub '' :vtable('get_bool') :method
+    $I0 = self.'true'()
+    .return ($I0)
 .end
 
-
-=item list()
-
-Returns a list containing itself in list context.
-
-=cut
-
-.sub 'list' :method
-    $P0 = get_hll_global 'list'
-    .tailcall $P0(self)
+.sub '' :vtable('get_iter') :method
+    .tailcall self.'Iterator'()
 .end
 
-
-=item get_pmc_keyed(key)    (vtable method)
-
-Returns a proto-object with an autovivification closure attached to it.
-
-=cut
-
-.sub get_pmc_keyed :vtable :method
-    .param pmc what
-
-    # We'll build auto-vivification hash of values.
-    .local pmc WHENCE, key, val
-    WHENCE = new 'Hash'
-
-    # What is it?
-    $S0 = what.'WHAT'()
-    if $S0 == 'Pair' goto from_pair
-    if $S0 == 'List' goto from_list
-    'die'("Auto-vivification closure did not contain a Pair")
-
-  from_pair:
-    # Just a pair.
-    key = what.'key'()
-    val = what.'value'()
-    WHENCE[key] = val
-    goto done_whence
-
-  from_list:
-    # List.
-    .local pmc list_iter, cur_pair
-    list_iter = new 'Iterator', what
-  list_iter_loop:
-    unless list_iter goto done_whence
-    cur_pair = shift list_iter
-    key = cur_pair.'key'()
-    val = cur_pair.'value'()
-    WHENCE[key] = val
-    goto list_iter_loop
-  done_whence:
-
-    # Now create a clone of the protoobject.
-    .local pmc protoclass, res, props, tmp
-    protoclass = class self
-    res = new protoclass
-
-    # Attach the WHENCE property.
-    props = getattribute self, '%!properties'
-    unless null props goto have_props
-    props = new 'Hash'
-  have_props:
-    props['WHENCE'] = WHENCE
-    setattribute res, '%!properties', props
-
-    .return (res)
-.end
-
-=item !IMMUTABLE()
-
-=item !MUTABLE()
-
-Indicate that objects in the class are mutable or immutable.
-
-=cut
-
-.sub '!IMMUTABLE' :method
-    $P0 = get_hll_global ['Int'], 'Scalar'
-    $P1 = self.'HOW'()
-    $P1.'add_method'('Scalar', $P0, 'to'=>self)
-.end
-
-.sub '!MUTABLE' :method
-    $P0 = get_hll_global ['Perl6Object'], 'Scalar'
-    $P1 = self.'HOW'()
-    $P1.'add_method'('Scalar', $P0, 'to'=>self)
-.end
-
-=item perl()
-
-Returns a Perl representation of itself.
-
-=cut
-
-.sub 'perl' :method
-    $S0 = self
+.sub '' :vtable('get_string') :method
+    $S0 = self.'Str'()
     .return ($S0)
 .end
 
-=back
-
-=cut
+.sub '' :vtable('increment') :method
+    $P0 = self.'succ'()
+    'infix:='(self, $P0)
+    .return(self)
+.end
 
 # Local Variables:
 #   mode: pir
