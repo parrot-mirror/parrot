@@ -4,73 +4,70 @@
 
 src/classes/List.pir - Perl 6 List class and related functions
 
-=head2 Object Methods
-
-=over 4
-
 =cut
 
-.sub 'onload' :anon :load :init
+.namespace []
+.sub '' :anon :load :init
     .local pmc p6meta, listproto
     p6meta = get_hll_global ['Perl6Object'], '$!P6META'
     listproto = p6meta.'new_class'('List', 'parent'=>'ResizablePMCArray Any')
     p6meta.'register'('ResizablePMCArray', 'parent'=>listproto, 'protoobject'=>listproto)
 
     $P0 = get_hll_namespace ['List']
-    '!EXPORT'('first grep keys kv map pairs reduce values', $P0)
+#    '!EXPORT'('first grep keys kv map pairs reduce values', $P0)
+.end
+
+=head2 Context methods
+
+=over
+
+=item list
+
+A List in list context returns itself.
+
+=cut
+
+.namespace ['List']
+.sub 'list' :method
+    .return (self)
+.end
+
+=back
+
+=head2 Coercion methods
+
+=over
+
+=item Iterator
+
+=cut
+
+.sub 'Iterator' :method
+    self.'!flatten'()
+    $P0 = new 'Iterator', self
+    .return ($P0)
 .end
 
 
 =item Scalar
 
-When we're going to be stored as an item, become an Array and then return
-ourself in a ObjectRef.
+A list in Scalar context becomes an Array ObjectRef.
 
 =cut
 
-.namespace ['List']
 .sub 'Scalar' :method
-    # promote the list to an Array and return its VALUE
-    $P0 = self.'item'()
-    .tailcall $P0.'Scalar'()
+    $P0 = self.'Array'()
+    $P0 = new 'ObjectRef', $P0
+    .return ($P0)
 .end
 
-
-=item clone()    (vtable method)
-
-Return a clone of this list.  (Clones its elements also.)
-
-=cut
-
-.namespace ['List']
-.sub 'clone' :vtable :method
-    .local pmc p6meta, result, iter
-    $P0 = typeof self
-    result = new $P0
-    iter = self.'iterator'()
-  iter_loop:
-    unless iter goto iter_end
-    $P0 = shift iter
-    $P0 = clone $P0
-    push result, $P0
-    goto iter_loop
-  iter_end:
-    .return (result)
-.end
-
-
-=item get_string()    (vtable method)
-
-Return the elements of the list joined by spaces.
-
-=cut
-
-.sub 'get_string' :vtable :method
+# FIXME:  :vtable('get_string') is wrong here.
+.sub 'Str' :method :vtable('get_string')
+    self.'!flatten'()
     $S0 = join ' ', self
     .return ($S0)
 .end
-
-
+    
 =item hash()
 
 Return the List invocant as a Hash.
@@ -118,20 +115,6 @@ Return the List invocant as a Hash.
 .end
 
 
-=item item()
-
-Return the List invocant in scalar context (i.e., an Array).
-
-=cut
-
-.namespace ['List']
-.sub 'item' :method
-    $P0 = new 'Perl6Array'
-    splice $P0, self, 0, 0
-    .return ($P0)
-.end
-
-
 =item list()
 
 Return the List as a list.
@@ -147,11 +130,6 @@ Return the List as a list.
     $P1 = new 'List'
     copy self, $P1
     splice self, $P0, 0, 0
-    .return (self)
-.end
-
-.namespace ['List']
-.sub 'list' :method
     .return (self)
 .end
 

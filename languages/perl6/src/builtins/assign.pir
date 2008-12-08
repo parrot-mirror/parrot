@@ -10,25 +10,12 @@ src/builtins/inplace.pir - Inplace assignments
 
 =cut
 
+
 .namespace []
-
-## assignment
-## TODO: infix::= infix:::= infix:.=
-##   -- these will likely be handled by compiler translation --Pm
-
-
-.sub 'infix:='
+.sub 'infix:=' :multi(_,_)
     .param pmc cont
     .param pmc source
 
-    $I0 = isa cont, 'ObjectRef'
-    if $I0 goto cont_scalar
-    $I0 = isa cont, 'Perl6Array'
-    if $I0 goto cont_array
-    $I0 = isa cont, 'Perl6Hash'
-    if $I0 goto cont_hash
-
-  cont_scalar:
     $I0 = isa source, 'ObjectRef'
     if $I0 goto have_source
     $I0 = can source, 'Scalar'
@@ -59,13 +46,46 @@ src/builtins/inplace.pir - Inplace assignments
     copy cont, source
   skip_copy:
     .return (cont)
+.end
+
+.sub 'infix:=' :multi(['Perl6Array'], _)
+    .param pmc cont
+    .param pmc source
+    $I0 = isa cont, 'ObjectRef'
+    unless $I0 goto cont_array
+    # FIXME: use a :subid to directly lookup and call infix:=(_,_) above
+    $P0 = get_hll_global 'Object'
+    setref cont, $P0
+    .tailcall 'infix:='(cont, source)
 
   cont_array:
-    $P0 = get_hll_global 'list'
-    $P0 = $P0(source)
-    $I0 = elements cont
-    splice cont, $P0, 0, $I0
+    .local pmc list, it
+    ## empty the array
+    assign cont, 0
+    source = source.'list'()
+    source.'!flatten'()
+    it = iter source
+  array_loop:
+    unless it goto array_done
+    $P0 = shift it
+    $P0 = $P0.'Scalar'()
+    $P0 = clone $P0
+    push cont, $P0
+    goto array_loop
+  array_done:
     .return (cont)
+.end
+
+
+.sub 'infix:=' :multi(['Perl6Hash'], _)
+    .param pmc cont
+    .param pmc source
+    $I0 = isa cont, 'ObjectRef'
+    unless $I0 goto cont_hash
+    # FIXME: use a :subid to directly lookup and call infix:=(_,_) above
+    $P0 = get_hll_global 'Object'
+    setref cont, $P0
+    .tailcall 'infix:='(cont, source)
 
   cont_hash:
     $P0 = source.'hash'()
