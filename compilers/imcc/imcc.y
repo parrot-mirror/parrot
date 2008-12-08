@@ -698,7 +698,7 @@ do_loadlib(PARROT_INTERP, ARGIN(const char *lib))
 %nonassoc <t> PARAM
 
 %token <t> HLL HLL_MAP TK_LINE
-%token <t> GOTO ARG IF UNLESS PNULL
+%token <t> GOTO ARG IF UNLESS PNULL SET_RETURN SET_YIELD
 %token <t> ADV_FLAT ADV_SLURPY ADV_OPTIONAL ADV_OPT_FLAG ADV_NAMED ADV_ARROW
 %token <t> NEW ADV_INVOCANT
 %token <t> NAMESPACE ENDNAMESPACE DOT_METHOD
@@ -709,13 +709,14 @@ do_loadlib(PARROT_INTERP, ARGIN(const char *lib))
 %token <t> SHR_ASSIGN SHL_ASSIGN SHR_U_ASSIGN
 %token <t> SHIFT_LEFT SHIFT_RIGHT INTV FLOATV STRINGV PMCV LOG_XOR
 %token <t> RELOP_EQ RELOP_NE RELOP_GT RELOP_GTE RELOP_LT RELOP_LTE
-%token <t> GLOBALOP RESULT RETURN TAILCALL YIELDT GET_RESULTS
+%token <t> RESULT RETURN TAILCALL YIELDT GET_RESULTS
 %token <t> POW SHIFT_RIGHT_U LOG_AND LOG_OR
 %token <t> COMMA ESUB DOTDOT
 %token <t> PCC_BEGIN PCC_END PCC_CALL PCC_SUB PCC_BEGIN_RETURN PCC_END_RETURN
 %token <t> PCC_BEGIN_YIELD PCC_END_YIELD NCI_CALL METH_CALL INVOCANT
 %token <t> MAIN LOAD INIT IMMEDIATE POSTCOMP METHOD ANON OUTER NEED_LEX
-%token <t> MULTI VTABLE_METHOD LOADLIB SUB_INSTANCE_OF SUB_LEXID
+%token <t> MULTI VTABLE_METHOD LOADLIB SUB_INSTANCE_OF SUBID
+%token <t> NS_ENTRY
 %token <t> UNIQUE_REG
 %token <s> LABEL
 %token <t> EMIT EOM
@@ -731,16 +732,17 @@ do_loadlib(PARROT_INTERP, ARGIN(const char *lib))
 %type <i> labels _labels label  statement sub_call
 %type <i> pcc_sub_call
 %type <sr> sub_param sub_params pcc_arg pcc_result pcc_args pcc_results sub_param_type_def
-%type <sr> pcc_returns pcc_return pcc_call arg arglist the_sub multi_type
+%type <sr> pcc_returns pcc_yields pcc_return pcc_call arg arglist the_sub multi_type
 %type <t> argtype_list argtype paramtype_list paramtype
 %type <t> pcc_return_many
 %type <t> proto sub_proto sub_proto_list multi multi_types outer
 %type <t> vtable instanceof subid
+%type <t> method ns_entry_name
 %type <i> instruction assignment conditional_statement labeled_inst opt_label op_assign
 %type <i> if_statement unless_statement
 %type <i> func_assign get_results
 %type <i> opt_invocant
-%type <sr> target targetlist reg const var string result
+%type <sr> target targetlist reg const var string result pcc_set_yield
 %type <sr> keylist keylist_force _keylist key maybe_ns
 %type <sr> vars _vars var_or_i _var_or_i label_op sub_label_op sub_label_op_c
 %type <i> pasmcode pasmline pasm_inst
@@ -1020,18 +1022,6 @@ sub_param_type_def:
            $$->type |= $3;
            mem_sys_free($2);
           }
-
-   /* don't free $2 here; adv_named_set uses the pointer directly */
-   | type STRINGC ADV_ARROW IDENTIFIER paramtype_list
-          {
-            if ($5 & VT_UNIQUE_REG)
-                $$ = mk_ident_ur(interp, $4, $1);
-            else
-                $$ = mk_ident(interp, $4, $1);
-            $$->type |= $5;
-            adv_named_set(interp, $2);
-            mem_sys_free($4);
-          }
    ;
 
 
@@ -1070,6 +1060,36 @@ vtable:
          }
    ;
 
+method:
+     METHOD
+         {
+           $$ = P_METHOD;
+           IMCC_INFO(interp)->cur_unit->method_name = NULL;
+           IMCC_INFO(interp)->cur_unit->is_method = 1;
+         }
+   | METHOD '(' any_string ')'
+         {
+           $$ = P_METHOD;
+           IMCC_INFO(interp)->cur_unit->method_name = $3;
+           IMCC_INFO(interp)->cur_unit->is_method = 1;
+         }
+   ;
+
+ns_entry_name:
+    NS_ENTRY
+         {
+           $$ = 0;
+           IMCC_INFO(interp)->cur_unit->ns_entry_name = NULL;
+           IMCC_INFO(interp)->cur_unit->has_ns_entry_name = 1;
+         }
+   | NS_ENTRY '(' any_string ')'
+         {
+           $$ = 0;
+           IMCC_INFO(interp)->cur_unit->ns_entry_name = $3;
+           IMCC_INFO(interp)->cur_unit->has_ns_entry_name = 1;
+         }
+   ;
+
 instanceof:
      SUB_INSTANCE_OF '(' STRINGC ')'
          {
@@ -1079,10 +1099,21 @@ instanceof:
    ;
 
 subid:
-     SUB_LEXID '(' STRINGC ')'
+     SUBID
          {
            $$ = 0;
+           IMCC_INFO(interp)->cur_unit->subid = NULL;
+           /*
+           IMCC_INFO(interp)->cur_unit->instructions->symregs[0]->subid = str_dup_remove_quotes($3);
+           mem_sys_free($3);
+           */
+         }
+   | SUBID '(' any_string ')'
+         {
+           $$ = 0;
+           /* IMCC_INFO(interp)->cur_unit->subid = $3; */
            IMCC_INFO(interp)->cur_unit->subid = mk_const(interp, $3, 'S');
+           IMCC_INFO(interp)->cur_unit->instructions->symregs[0]->subid = str_dup_remove_quotes($3);
            mem_sys_free($3);
          }
    ;
@@ -1199,11 +1230,12 @@ proto:
    | IMMEDIATE                 { $$ = P_IMMEDIATE; }
    | POSTCOMP                  { $$ = P_POSTCOMP; }
    | ANON                      { $$ = P_ANON; }
-   | METHOD                    { $$ = P_METHOD; }
    | NEED_LEX                  { $$ = P_NEED_LEX; }
    | multi
    | outer
    | vtable
+   | method
+   | ns_entry_name
    | instanceof
    | subid
    ;
@@ -1295,15 +1327,9 @@ paramtype:
 
 
 pcc_ret:
-     PCC_BEGIN_RETURN '\n'
-         {
-           begin_return_or_yield(interp, 0);
-         }
-     pcc_returns PCC_END_RETURN
-         {
-           $$ = 0;
-           IMCC_INFO(interp)->asm_state = AsmDefault;
-         }
+     PCC_BEGIN_RETURN '\n'     { begin_return_or_yield(interp, 0); }
+     pcc_returns
+     PCC_END_RETURN            { $$ = 0; IMCC_INFO(interp)->asm_state = AsmDefault; }
    | pcc_return_many
          {
            IMCC_INFO(interp)->asm_state = AsmDefault;
@@ -1313,7 +1339,7 @@ pcc_ret:
 
 pcc_yield:
      PCC_BEGIN_YIELD '\n'      { begin_return_or_yield(interp, 1); }
-     pcc_returns
+     pcc_yields
      PCC_END_YIELD             { $$ = 0; IMCC_INFO(interp)->asm_state = AsmDefault; }
    ;
 
@@ -1331,8 +1357,26 @@ pcc_returns:
          }
    ;
 
+pcc_yields:
+     /* empty */                { $$ = 0; }
+   | pcc_yields '\n'
+         {
+           if ($1)
+               add_pcc_result(IMCC_INFO(interp)->sr_return, $1);
+         }
+   | pcc_yields pcc_set_yield '\n'
+         {
+           if ($2)
+               add_pcc_result(IMCC_INFO(interp)->sr_return, $2);
+         }
+   ;
+
 pcc_return:
-     RETURN var argtype_list   { $$ = $2; $$->type |= $3; }
+     SET_RETURN var argtype_list   { $$ = $2; $$->type |= $3; }
+   ;
+
+pcc_set_yield:
+     SET_YIELD var argtype_list    { $$ = $2; $$->type |= $3; }
    ;
 
 pcc_return_many:
@@ -1588,10 +1632,6 @@ assignment:
             { $$ = MK_I(interp, IMCC_INFO(interp)->cur_unit, "new", 3, $1, $4, $6); }
    | target '=' NEW var '[' keylist ']'
             { $$ = MK_I(interp, IMCC_INFO(interp)->cur_unit, "new", 3, $1, $4, $6); }
-   | target '=' GLOBALOP string
-            { $$ = MK_I(interp, IMCC_INFO(interp)->cur_unit, "find_global", 2, $1, $4);}
-   | GLOBALOP string '=' var
-            { $$ = MK_I(interp, IMCC_INFO(interp)->cur_unit, "store_global", 2, $2, $4); }
        /* NEW is here because it is both PIR and PASM keywords so we
         * have to handle the token here (or badly hack the lexer). */
    | NEW target COMMA var

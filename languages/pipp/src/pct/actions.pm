@@ -26,17 +26,6 @@ method TOP($/) {
         $past.push( $($_) );
     }
 
-    # subrules may have added stuff to $?INIT
-    # execute it first
-    our $?INIT;
-    if pipp_defined( $?INIT ) {
-        $?INIT.blocktype('declaration');
-        $?INIT.pirflags(':init :load');
-        $past.unshift( $?INIT );
-        $?INIT := PAST::Block.new(); # For the next eval.
-    }
-    $past.unshift( PAST::Block.new( :name( 'INIT should have been added' ) ) );
-
     make $past;
 }
 
@@ -126,6 +115,17 @@ method namespace_statement($/) {
     make $past;
 }
 
+method return_statement($/) {
+    my $past := PAST::Op.new(
+                   :name('return'),
+                   :pasttype('call'),
+                   :node( $/ ),
+                   $( $/<expression> )
+               );
+
+    make $past;
+}
+
 method require_once_statement($/) {
     my $past := PAST::Op.new(
                    :name('require'),
@@ -202,24 +202,22 @@ method class_constant($/) {
 
 # class constants could probably also be set in a class init block
 method class_constant_definition($/) {
-    our $?INIT;
-    unless pipp_defined( $?INIT ) {
-        $?INIT := PAST::Block.new();
-    }
-    $?INIT.push( 
-        PAST::Op.new(
-            :pasttype('call'),
-            :name('define'),
-            :node( $/ ),
-            PAST::Val.new(
-                :value( 'Foo::' ~ ~$<CONSTANT_NAME> ),
-                :returns('PhpString'),
-            ),
-            $( $<literal> ),
-        )
+    my $past := PAST::Block.new( :name( 'class_constant_definition' ) );
+    my $loadinit := $past.loadinit();
+    $loadinit.unshift(
+       PAST::Op.new(
+           :pasttype('call'),
+           :name('define'),
+           :node( $/ ),
+           PAST::Val.new(
+               :value( 'Foo::' ~ ~$<CONSTANT_NAME> ),
+               :returns('PhpString'),
+           ),
+           $( $<literal> ),
+       )
     );
 
-    make PAST::Block.new( :name( 'class_constant_definition' ) );
+    make $past;
 }
 
 method arguments($/) {
@@ -265,7 +263,7 @@ method array_elem($/) {
              $past_var_name,
              $( $<expression> ),
              :scope('keyed'),
-             :viviself('Undef'),
+             :viviself('PhpNull'),
              :lvalue(1)
          );
 }
@@ -276,10 +274,11 @@ method var($/,$key) {
 
 method VAR_NAME($/) {
     our $?PIPP_CURRENT_SCOPE;
+
     make PAST::Var.new(
              :scope( $?PIPP_CURRENT_SCOPE ?? $?PIPP_CURRENT_SCOPE !! 'package' ),
              :name(~$/),
-             :viviself('Undef'),
+             :viviself('PhpNull'),
              :lvalue(1),
          );
 }
@@ -473,7 +472,7 @@ method class_definition($/) {
                 );
 
     # nothing to do for $<const_definition,
-    # setup of class constants is done in $?INIT
+    # setup of class constants is done in the 'loadinit' node
     for $<class_constant_definition> {
        $past.push($($_));
     }

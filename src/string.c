@@ -222,7 +222,6 @@ string_set(PARROT_INTERP, ARGIN_NULLOK(STRING *dest), ARGMOD(STRING *src))
         return dest;
     if (dest) { /* && dest != src */
         /* they are different, dest is not an external string */
-    /* TODO create string_free API for reusing string headers */
 #ifdef GC_IS_MALLOC
         if (!PObj_is_cowed_TESTALL(dest) && PObj_bufstart(dest)) {
             mem_sys_free(PObj_bufallocstart(dest));
@@ -233,6 +232,29 @@ string_set(PARROT_INTERP, ARGIN_NULLOK(STRING *dest), ARGMOD(STRING *src))
     else
         dest = Parrot_make_COW_reference(interp, src);
     return dest;
+}
+
+
+/*
+
+=item C<void string_free>
+
+Frees the given STRING's header, accounting for reference counts for the
+STRING's buffer &c.  Use this only if you I<know> that nothing else has stored
+the STRING elsewhere.
+
+=cut
+
+*/
+
+PARROT_INLINE
+void
+string_free(PARROT_INTERP, ARGIN(STRING *s))
+{
+    if (!PObj_constant_TEST(s)) {
+        Small_Object_Pool *pool = interp->arena_base->string_header_pool;
+        pool->add_free_object(interp, pool, s);
+    }
 }
 
 /*
@@ -2110,6 +2132,7 @@ string_to_cstring(PARROT_INTERP, ARGIN_NULLOK(const STRING *s))
       return string_to_cstring_nullable(interp, s);
 }
 
+
 /*
 
 =item C<char * string_to_cstring_nullable>
@@ -2124,12 +2147,12 @@ a memory leak.
 
 PARROT_EXPORT
 PARROT_MALLOC
+PARROT_CAN_RETURN_NULL
 char *
 string_to_cstring_nullable(PARROT_INTERP, ARGIN_NULLOK(const STRING *s))
 {
-    if (! s) {
+    if (!s)
       return NULL;
-    }
     else {
         char *p = (char *)mem_sys_allocate(s->bufused + 1);
         memcpy(p, s->strstart, s->bufused);

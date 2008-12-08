@@ -27,7 +27,7 @@ Subroutines, continuations, co-routines and other fun stuff...
 
 /*
 
-=item C<void  mark_context_start>
+=item C<void mark_context_start>
 
 Indicate that a new round of context marking is about to take place.
 
@@ -288,6 +288,7 @@ void
 invalidate_retc_context(PARROT_INTERP, ARGMOD(PMC *cont))
 {
     Parrot_Context *ctx = PMC_cont(cont)->from_ctx;
+    cont = ctx->current_cont;
 
     Parrot_set_context_threshold(interp, ctx);
     while (1) {
@@ -296,12 +297,12 @@ invalidate_retc_context(PARROT_INTERP, ARGMOD(PMC *cont))
          * if one were created, everything up the chain would have been
          * invalidated earlier.
          */
-        if (cont->vtable != interp->vtables[enum_class_RetContinuation])
+        if (!cont || cont->vtable != interp->vtables[enum_class_RetContinuation])
             break;
         cont->vtable = interp->vtables[enum_class_Continuation];
         Parrot_context_ref(interp, ctx);
+        ctx  = ctx->caller_ctx;
         cont = ctx->current_cont;
-        ctx  = PMC_cont(cont)->from_ctx;
     }
 
 }
@@ -633,6 +634,8 @@ parrot_new_closure(PARROT_INTERP, ARGIN(PMC *sub_pmc))
 
 Verifies that the provided continuation is sane.
 
+=cut
+
 */
 
 void
@@ -659,6 +662,8 @@ Parrot_continuation_check(PARROT_INTERP, ARGIN(PMC *pmc),
 =item C<void Parrot_continuation_rewind_environment>
 
 Restores the appropriate context for the continuation.
+
+=cut
 
 */
 

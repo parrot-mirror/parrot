@@ -25,7 +25,7 @@ Perform initializations and create the base classes.
 .namespace []
 .sub 'onload' :anon :init :load
     .local pmc p6meta
-    load_bytecode 'P6object.pbc'
+    load_bytecode 'PCT.pbc'
     $P0 = get_root_global ['parrot'], 'P6metaclass'
     $P0.'new_class'('Perl6Object', 'name'=>'Object')
     p6meta = $P0.'HOW'()
@@ -719,6 +719,17 @@ Indicate that objects in the class are mutable or immutable.
     $P0 = get_hll_global ['Perl6Object'], 'Scalar'
     $P1 = self.'HOW'()
     $P1.'add_method'('Scalar', $P0, 'to'=>self)
+.end
+
+=item perl()
+
+Returns a Perl representation of itself.
+
+=cut
+
+.sub 'perl' :method
+    $S0 = self
+    .return ($S0)
 .end
 
 =back
