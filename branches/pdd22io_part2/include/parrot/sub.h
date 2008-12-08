@@ -153,6 +153,8 @@ typedef struct Parrot_sub {
                                   */
     PMC      *namespace_stash;   /* the actual hash, HLL::namespace */
     STRING   *name;              /* name of the sub */
+    STRING   *method_name;       /* method name of the sub */
+    STRING   *ns_entry_name;     /* ns entry name of the sub */
     STRING   *subid;             /* The ID of the sub. */
     INTVAL   vtable_index;       /* index in Parrot_vtable_slot_names */
     PMC      *multi_signature;   /* list of types for MMD */
@@ -186,6 +188,8 @@ typedef struct Parrot_coro {
                                   */
     PMC      *namespace_stash;   /* the actual hash, HLL::namespace */
     STRING   *name;              /* name of the sub */
+    STRING   *method_name;       /* method name of the sub */
+    STRING   *ns_entry_name;     /* ns entry name of the sub */
     STRING   *subid;             /* The ID of the sub. */
     INTVAL   vtable_index;       /* index in Parrot_vtable_slot_names */
     PMC      *multi_signature;   /* list of types for MMD */
@@ -283,7 +287,7 @@ void mark_context(PARROT_INTERP, ARGMOD(Parrot_Context* ctx))
         __attribute__nonnull__(2)
         FUNC_MODIFIES(* ctx);
 
-void  mark_context_start(void);
+void mark_context_start(void);
 PARROT_MALLOC
 PARROT_CANNOT_RETURN_NULL
 Parrot_sub * new_closure(PARROT_INTERP)

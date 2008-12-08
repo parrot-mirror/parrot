@@ -461,7 +461,7 @@ color_reg(NOTNULL(lexer_state * const lexer), pir_type type, int regno) {
      */
     if (reg) {
         /* update end point of interval */
-        reg->interval->endpoint = lexer->instr_counter;
+        reg->interval->endpoint = lexer->stmt_counter;
         return reg->color;
     }
 
@@ -663,8 +663,12 @@ find_local_label(NOTNULL(lexer_state * const lexer), NOTNULL(char const * const 
     bucket *b              = get_bucket(table, hashcode);
 
     while (b) {
-        if (STREQ(bucket_local(b)->name, labelname))
+        if (STREQ(bucket_local(b)->name, labelname)) {
+            /*
+            fprintf(stderr, "found offset for label %s (%d)\n", labelname, bucket_local(b)->offset);
+            */
             return bucket_local(b)->offset;
+        }
         b = b->next;
     }
 

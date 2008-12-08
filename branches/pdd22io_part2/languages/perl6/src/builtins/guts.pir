@@ -58,54 +58,6 @@ it understands how to properly merge C<MultiSub> PMCs.
 .end
 
 
-=item !OUTER(name [,'max'=>max])
-
-Helper function to obtain the lexical C<name> from the
-caller's outer scope.  (Note that it never finds a lexical
-in the caller's lexpad -- use C<find_lex> for that.)  The
-C<max> parameter specifies the maximum outer to search --
-the default value of 1 will search the caller's immediate
-outer scope and no farther.  If the requested lexical is
-not found, C<!OUTER> returns null.
-
-=cut
-
-.sub '!OUTER'
-    .param string name
-    .param int max             :named('max') :optional
-    .param int has_max         :opt_flag
-
-    if has_max goto have_max
-    max = 1
-  have_max:
-
-    .local int min
-    min = 1
-
-    ##  the depth we use here is one more than the minimum,
-    ##  because we want min/max to be relative to the caller's
-    ##  context, not !OUTER itself.
-    .local int depth
-    depth = min + 1
-    .local pmc lexpad, value
-    $P0 = getinterp
-    null value
-  loop:
-    lexpad = $P0['lexpad', depth]
-    if null lexpad goto next
-    value = lexpad[name]
-    unless null value goto done
-  next:
-    # depth goes from min + 1 to max + 1
-    if depth > max goto done
-    inc depth
-    goto loop
-  done:
-  outer_err:
-    .return (value)
-.end
-
-
 =item !VAR
 
 Helper function for implementing the VAR and .VAR macros.
@@ -322,9 +274,7 @@ first). So for now we just transform multis in user code like this.
     $S0 = typeof current_thing
     if $S0 == 'MultiSub' goto not_perl6_multisub
     .return()
-
-    # It's not a Perl6MultiSub, create one, shift contents and install in
-    # the namespace.
+    # It's not a Perl6MultiSub, create one and put contents into it.
   not_perl6_multisub:
     .local pmc p6multi, sub_iter
     p6multi = new 'Perl6MultiSub'
@@ -335,16 +285,18 @@ first). So for now we just transform multis in user code like this.
     push p6multi, $P0
     goto iter_loop
   iter_loop_end:
-    namespace[name] = p6multi
 
-    # If the namespace is associated with a class, need to update the method
-    # entry in that too.
+    # If the namespace is associated with a class, need to remove the method
+    # entry in that; inserting the new multi into the namespace will then
+    # also add it back to the class.
     .local pmc class
     class = get_class namespace
     if null class goto no_class
     class.'remove_method'(name)
-    class.'add_method'(name, p6multi)
   no_class:
+
+    # Make new namespace entry.
+    namespace[name] = p6multi
     .return()
 
   error:
