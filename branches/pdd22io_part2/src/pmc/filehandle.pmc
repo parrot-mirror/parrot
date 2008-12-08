@@ -295,12 +295,15 @@ filehandle when finished.
         if (got_name) {
             /* called as class method - open, slurp, close file */
             PMC *filehandle;
+            STRING *encoding;
+            GET_ATTR_encoding(INTERP, SELF, encoding);
             size_t size;
             if (!Parrot_io_is_closed(INTERP, SELF)) {
                 Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_PIO_ERROR,
                                 "Cannot readall on a new file from an already open filehandle");
             }
             filehandle  = Parrot_io_open(INTERP, PMCNULL, name, NULL);
+            SET_ATTR_encoding(INTERP, filehandle, encoding);
             size = (size_t)(Parrot_stat_info_intval(INTERP, name, STAT_FILESIZE));
 
             result = Parrot_io_reads(INTERP, filehandle, size);
