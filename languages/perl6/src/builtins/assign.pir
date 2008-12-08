@@ -94,6 +94,70 @@ src/builtins/inplace.pir - Inplace assignments
 .end
 
 
+.sub 'infix:=' :multi(['List'], _)
+    .param pmc list
+    .param pmc source
+
+    ##  get the list of containers and sources
+    source = source.'list'()
+    source.'!flatten'()
+
+    ##  first, temporarily mark each container with a property
+    ##  so we can clone it in source if needed
+    .local pmc it, true
+    it = iter list
+    true = box 1
+  mark_loop:
+    unless it goto mark_done
+    $P0 = shift it
+    setprop $P0, 'target', true
+    goto mark_loop
+  mark_done:
+
+    ## now build our 'real' source list, cloning any targets we encounter
+    .local pmc slist
+    slist = new 'List'
+    it = iter source
+  source_loop:
+    unless it goto source_done
+    $P0 = shift it
+    $P1 = getprop 'target', $P0
+    if null $P1 goto source_next
+    $P0 = clone $P0
+  source_next:
+    push slist, $P0
+    goto source_loop
+  source_done:
+
+    ## now perform the assignments, clearing targets as we go
+    .local pmc pmcnull
+    null pmcnull
+    it = iter list
+  assign_loop:
+    unless it goto assign_done
+    .local pmc cont
+    cont = shift it
+    setprop cont, 'target', pmcnull
+    $I0 = isa cont, 'ObjectRef'
+    if $I0 goto assign_scalar
+    $I0 = isa cont, 'Perl6Array'
+    if $I0 goto assign_array
+    $I0 = isa cont, 'Perl6Hash'
+    if $I0 goto assign_hash
+  assign_scalar:
+    $P0 = shift slist
+    'infix:='(cont, $P0)
+    goto assign_loop
+  assign_array:
+  assign_hash:
+    'infix:='(cont, slist)
+    slist = new 'Nil'
+    goto assign_loop
+  assign_done:
+    .return (list)
+.end
+
+
 .sub '!REDUCEMETAOP'
     .param string opname
     .param pmc identity

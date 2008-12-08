@@ -695,7 +695,7 @@ Build a List from its arguments.
 .namespace []
 .sub 'list'
     .param pmc values          :slurpy
-    .tailcall values.'!flatten'()
+    .tailcall values.'list'()
 .end
 
 =item C<infix:,(...)>
@@ -706,7 +706,7 @@ Operator form for building a list from its arguments.
 
 .sub 'infix:,'
     .param pmc args            :slurpy
-    .tailcall args.'!flatten'()
+    .tailcall args.'list'()
 .end
 
 
