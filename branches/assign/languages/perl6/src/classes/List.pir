@@ -688,14 +688,14 @@ Returns a List containing the values of the invocant.
 
 =item C<list(...)>
 
-Build a List from its arguments.
+Build a flattened List from its arguments.
 
 =cut
 
 .namespace []
 .sub 'list'
     .param pmc values          :slurpy
-    .tailcall values.'list'()
+    .tailcall values.'!flatten'()
 .end
 
 =item C<infix:,(...)>
