@@ -52,7 +52,6 @@ not highest type in table.
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 
 static INTVAL distance_cmp(SHIM_INTERP, INTVAL a, INTVAL b);
-
 static void mmd_add_multi_global(PARROT_INTERP,
     ARGIN(STRING *sub_name),
     ARGIN(PMC *sub_obj))
