@@ -23,7 +23,7 @@ src/classes/Array.pir - Perl 6 Array class and related functions
 
 =item delete
 
-Remove items from an array. 
+Remove items from an array.
 
 =cut
 

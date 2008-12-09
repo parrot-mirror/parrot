@@ -46,8 +46,8 @@ src/classes/Nil.pir - Nil objects
 .end
 
 =back
- 
-=head2 Methods 
+
+=head2 Methods
 
 =item 'shift'
 
