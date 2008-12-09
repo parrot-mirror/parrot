@@ -59,9 +59,9 @@ src/builtins/inplace.pir - Inplace assignments
     .tailcall 'infix:='(cont, source)
 
   cont_array:
-    .local pmc list, it
+    .local pmc list, it, array
     ## empty the array
-    assign cont, 0
+    array = new 'ResizablePMCArray'
     source = 'list'(source)
     it = iter source
   array_loop:
@@ -69,9 +69,11 @@ src/builtins/inplace.pir - Inplace assignments
     $P0 = shift it
     $P0 = $P0.'Scalar'()
     $P0 = clone $P0
-    push cont, $P0
+    push array, $P0
     goto array_loop
   array_done:
+    $I0 = elements cont
+    splice cont, array, 0, $I0
     .return (cont)
 .end
 
