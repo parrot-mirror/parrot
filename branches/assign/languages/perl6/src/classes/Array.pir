@@ -93,6 +93,18 @@ Return Array in item context (i.e., self)
 .end
 
 
+=item list
+
+Return invocant as a List.
+
+=cut
+
+.namespace ['Perl6Array']
+.sub 'list' :method
+    .tailcall self.'values'()
+.end
+
+
 =item pop()
 
 Remove the last item from the array and return it.
@@ -155,6 +167,19 @@ Adds C<args> to the beginning of the Array.
     args.'!flatten'()
     splice self, args, 0, 0
     .tailcall self.'elems'()
+.end
+
+=item values()
+
+Return Array as a List of its values.
+
+=cut
+
+.namespace ['Perl6Array']
+.sub 'values' :method
+    $P0 = new 'List'
+    splice $P0, self, 0, 0
+    .return ($P0)
 .end
 
 =back

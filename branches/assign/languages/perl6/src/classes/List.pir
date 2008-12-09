@@ -23,6 +23,17 @@ src/classes/List.pir - Perl 6 List class and related functions
 
 =over
 
+=item item
+
+A List in item context becomes an Array.
+
+=cut
+
+.namespace ['List']
+.sub 'item' :method
+    .tailcall self.'Array'()
+.end
+
 =item list
 
 A List in list context returns itself.
