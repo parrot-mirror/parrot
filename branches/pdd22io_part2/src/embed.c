@@ -1059,10 +1059,12 @@ Parrot_disassemble(PARROT_INTERP)
             }
         }
 
-        Parrot_io_printf(interp, "%012i-%012i", op_code_seq_num, line->opcode - interp->code->base.data);
+        Parrot_io_printf(interp, "%012i-%012i",
+                op_code_seq_num, line->opcode - interp->code->base.data);
 
         if (debugs)
-            Parrot_io_printf(interp, " %06i: ", interp->code->debugs->base.data[op_code_seq_num]);
+            Parrot_io_printf(interp, " %06i: ",
+                    interp->code->debugs->base.data[op_code_seq_num]);
 
         /* If it has a label print it */
         if (line->label)
