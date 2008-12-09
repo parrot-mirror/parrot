@@ -225,13 +225,15 @@ op_fullname(ARGOUT(char *dest), ARGIN(const char *name),
 
         if (args[i]->type & (VTCONST|VT_CONSTP)) {
 #if IMC_TRACE_HIGH
-            Parrot_io_eprintf(NULL, " (%cc)%s", tolower((unsigned char)args[i]->set), args[i]->name);
+            Parrot_io_eprintf(NULL, " (%cc)%s",
+                    tolower((unsigned char)args[i]->set), args[i]->name);
 #endif
             *dest++ = 'c';
         }
 #if IMC_TRACE_HIGH
         else
-            Parrot_io_eprintf(NULL, " (%c)%s", tolower((unsigned char)args[i]->set), args[i]->name);
+            Parrot_io_eprintf(NULL, " (%c)%s",
+                    tolower((unsigned char)args[i]->set), args[i]->name);
 #endif
     }
     *dest = '\0';
