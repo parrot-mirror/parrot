@@ -220,6 +220,7 @@ opcode_t * parrot_pass_args_fromc(PARROT_INTERP,
         __attribute__nonnull__(4)
         FUNC_MODIFIES(*dest);
 
+PARROT_EXPORT
 void Parrot_pcc_invoke_from_sig_object(PARROT_INTERP,
     ARGIN(PMC *sub_obj),
     ARGIN(PMC *sig_obj))
