@@ -11,6 +11,8 @@ src/classes/List.pir - Perl 6 List class and related functions
     .local pmc p6meta, listproto
     p6meta = get_hll_global ['Perl6Object'], '$!P6META'
     listproto = p6meta.'new_class'('List', 'parent'=>'ResizablePMCArray Any')
+    $P0 = get_hll_global 'Positional'
+    p6meta.'add_role'($P0, 'to'=>listproto)
     p6meta.'register'('ResizablePMCArray', 'parent'=>listproto, 'protoobject'=>listproto)
 
     $P0 = get_hll_namespace ['List']
@@ -182,50 +184,6 @@ Returns a Perl representation of a List.
     goto iter_loop
   iter_done:
     result .= ']'
-    .return (result)
-.end
-
-=back
-
-=head2 Operator methods
-
-=over
-
-=item postcircumfix:<[ ]>
-
-Returns a list element or slice.
-
-=cut
-
-.sub 'postcircumfix:[ ]' :method
-    .param pmc args            :slurpy
-    .param pmc options         :slurpy :named
-    .local pmc result
-    args.'!flatten'()
-    $I0 = args.'elems'()
-    if $I0 != 1 goto slice
-    $I0 = args[0]
-    result = self[$I0]
-    unless null result goto end
-    $P0 = get_hll_global 'Object'
-    result = new 'Failure'
-    self[$I0] = result
-    goto end
-  slice:
-    result = new 'List'
-  slice_loop:
-    unless args goto slice_done
-    $I0 = shift args
-    .local pmc elem
-    elem = self[$I0]
-    unless null elem goto slice_elem
-    elem = new 'Failure'
-    self[$I0] = elem
-  slice_elem:
-    push result, elem
-    goto slice_loop
-  slice_done:
-  end:
     .return (result)
 .end
 
