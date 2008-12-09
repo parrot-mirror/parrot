@@ -55,7 +55,7 @@ Returns the protoobject's autovivification closure.
 
 =head2  Private methods
 
-=over 
+=over
 
 =item !IMMUTABLE()
 

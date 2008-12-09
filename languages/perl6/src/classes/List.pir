@@ -106,7 +106,7 @@ This version of list morphs a ResizablePMCArray into a List.
     .return (self)
 .end
 
-    
+
 =item hash()
 
 Return the List invocant as a Hash.
