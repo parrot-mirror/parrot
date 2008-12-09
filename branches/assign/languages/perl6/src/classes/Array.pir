@@ -14,12 +14,72 @@ src/classes/Array.pir - Perl 6 Array class and related functions
     arrayproto.'!MUTABLE'()
 
     $P0 = get_hll_namespace ['Perl6Array']
-    '!EXPORT'('pop push shift unshift', 'from'=>$P0)
+    '!EXPORT'('delete exists pop push shift unshift', 'from'=>$P0)
 .end
 
-=head2 Context methods
+=head2 Methods
 
 =over
+
+=item delete
+
+Remove items from an array. 
+
+=cut
+
+.namespace ['Perl6Array']
+.sub 'delete' :method :multi(Perl6Array)
+    .param pmc indices :slurpy
+    .local pmc result
+    result = new 'List'
+    null $P99
+
+    indices.'!flatten'()
+  indices_loop:
+    unless indices goto indices_end
+    $I0 = shift indices
+    $P0 = self[$I0]
+    push result, $P0
+    self[$I0] = $P99
+
+  shorten:
+    $I0 = self.'elems'()
+    dec $I0
+  shorten_loop:
+    if $I0 < 0 goto shorten_end
+    $P0 = self[$I0]
+    unless null $P0 goto shorten_end
+    delete self[$I0]
+    dec $I0
+    goto shorten_loop
+  shorten_end:
+    goto indices_loop
+
+  indices_end:
+    .return (result)
+.end
+
+
+=item exists(indices :slurpy)
+
+Return true if the elements at C<indices> have been assigned to.
+
+=cut
+
+.sub 'exists' :method :multi(Perl6Array)
+    .param pmc indices :slurpy
+    .local int test
+
+    test = 0
+  indices_loop:
+    unless indices goto indices_end
+    $I0 = shift indices
+    test = exists self[$I0]
+    if test goto indices_loop
+  indices_end:
+    .tailcall 'prefix:?'(test)
+.end
+
 
 =item item()
 
@@ -32,21 +92,6 @@ Return Array in item context (i.e., self)
     .return (self)
 .end
 
-=back
-
-=head2 Coercion methods
-
-=over
-
-=item Array
-
-.sub 'Array' :method
-    .return (self)
-.end
-
-=back
-
-=head2 Methods
 
 =item pop()
 
@@ -127,8 +172,26 @@ Create an array.
 .namespace []
 .sub 'circumfix:[ ]'
     .param pmc values          :slurpy
-    .tailcall values.'Array'()
+    .tailcall values.'Scalar'()
 .end
+
+=back
+
+=head2 Coercion methods
+
+=over
+
+=item Array
+
+=cut
+
+.sub 'Array' :method
+    .return (self)
+.end
+
+=back
+
+=cut
 
 # Local Variables:
 #   mode: pir

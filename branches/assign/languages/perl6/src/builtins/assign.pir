@@ -62,8 +62,7 @@ src/builtins/inplace.pir - Inplace assignments
     .local pmc list, it
     ## empty the array
     assign cont, 0
-    source = source.'list'()
-    source.'!flatten'()
+    source = 'list'(source)
     it = iter source
   array_loop:
     unless it goto array_done
