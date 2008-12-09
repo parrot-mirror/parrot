@@ -64,6 +64,21 @@ Return invocant in item context.  Default is to return self.
     .return (self)
 .end
 
+.namespace []
+.sub 'item'
+    .param pmc x               :slurpy
+    $I0 = elements x
+    unless $I0 == 1 goto have_x
+    x = shift x
+  have_x:
+    $I0 = can x, 'item'
+    unless $I0 goto have_item
+    x = x.'item'()
+  have_item:
+    .return (x)
+.end
+
+
 =item list
 
 Return invocant in list context.  Default is to return a List containing self.
