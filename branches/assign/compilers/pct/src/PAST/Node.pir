@@ -141,6 +141,22 @@ Get/set the constant value for this node.
     .tailcall self.'attr'('value', value, has_value)
 .end
 
+=item lvalue([value])
+
+Throw an exception if we try to make a PAST::Val into an lvalue.
+
+=cut
+
+.sub 'lvalue' :method
+    .param pmc value           :optional
+    .param int has_value       :opt_flag
+    unless has_value goto normal
+    unless value goto normal
+    die "Unable to set lvalue on PAST::Val node"
+  normal:
+    .tailcall self.'attr'('value', value, has_value)
+.end
+
 =back
 
 =head2 PAST::Var
