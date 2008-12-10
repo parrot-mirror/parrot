@@ -5,6 +5,7 @@
 integration/lexical-array-in-inner-block.t
 integration/man-or-boy.t
 integration/real-strings.t
+integration/substr-after-match-in-gather-in-for.t
 S02-builtin_data_types/anon_block.t
 S02-builtin_data_types/array_extending.t
 S02-builtin_data_types/array_ref.t
@@ -51,7 +52,6 @@ S03-operators/assign-is-not-binding.t
 S03-operators/assign.t
 S03-operators/autoincrement.t
 S03-operators/autovivification.t
-S03-operators/binding-arrays.t
 S03-operators/binding-closure.t
 S03-operators/binding-hashes.t
 S03-operators/binding-scalars.t
@@ -62,12 +62,14 @@ S03-operators/context-forcers.t
 S03-operators/context.t
 S03-operators/cross-metaop.t
 S03-operators/equality.t
+S03-operators/hyper.t
 S03-operators/increment.t
 S03-operators/misc.t
 S03-operators/not.t
 S03-operators/numeric-context.t
 S03-operators/precedence.t
 S03-operators/range.t
+S03-operators/reduce-metaop.t
 S03-operators/relational.t
 S03-operators/repeat.t
 S03-operators/short-circuit.t
@@ -160,6 +162,7 @@ S12-enums/anonymous.t
 S12-enums/as-role.t
 S12-enums/basic.t
 S12-introspection/can.t
+S12-methods/calling_sets.t
 S12-methods/calling_syntax.t
 S12-methods/default-trait.t
 S12-methods/indirect_notation.t
@@ -174,7 +177,7 @@ S12-role/mixin.t
 S12-role/namespaced.t
 S12-subset/multi-dispatch.t
 S12-subset/subtypes.t
-S16-filehandles/io_in_while_loops.t
+S16-io/basic-open.t
 S16-io/say.t
 S29-any/cmp.t
 S29-array/delete.t

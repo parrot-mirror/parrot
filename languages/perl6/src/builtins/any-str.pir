@@ -21,7 +21,7 @@ the size of that file down and to emphasize their generic,
 .namespace []
 .sub 'onload' :anon :init :load
     $P0 = get_hll_namespace ['Any']
-    '!EXPORT'('capitalize chop chomp chars :e index lc lcfirst rindex ord substr uc ucfirst', 'from'=>$P0)
+    '!EXPORT'('capitalize,chop,chomp,chars,:e,index,lc,lcfirst,rindex,ord,substr,uc,ucfirst', 'from'=>$P0)
 .end
 
 
@@ -118,6 +118,9 @@ Returns string with one Char removed from the end.
     tmps = self
     lastchar = substr tmps,-1
     if lastchar != "\n" goto done
+    chopn tmps, 1
+    lastchar = substr tmps,-1
+    if lastchar != "\r" goto done
     chopn tmps, 1
   done:
        retv = new 'Str'
