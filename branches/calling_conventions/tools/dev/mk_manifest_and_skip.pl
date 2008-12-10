@@ -6,8 +6,12 @@ use strict;
 use warnings;
 use lib (qw| lib |);
 use Parrot::Manifest;
+use Parrot::Config qw| %PConfig |;
 
 my $script = $0;
+$script =~ s|\\|/|g
+    if $^O eq 'MSWin32';
+$script =~ s|^$PConfig{build_dir}/||;
 
 my $mani = Parrot::Manifest->new( { script => $script, } );
 
