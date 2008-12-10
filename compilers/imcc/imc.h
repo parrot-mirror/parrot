@@ -129,9 +129,9 @@ typedef void* yyscan_t;
 
 
 /* HEADERIZER BEGIN: compilers/imcc/imcparser.c */
+/* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 
-PARROT_WARN_UNUSED_RESULT
-PARROT_CAN_RETURN_NULL
+PARROT_CANNOT_RETURN_NULL
 Instruction * IMCC_create_itcall_label(PARROT_INTERP)
         __attribute__nonnull__(1);
 
@@ -139,15 +139,16 @@ void IMCC_itcall_sub(PARROT_INTERP, ARGIN(SymReg *sub))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
-PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 Instruction * INS_LABEL(PARROT_INTERP,
     ARGMOD_NULLOK(IMC_Unit *unit),
-    ARGIN(SymReg *r0),
+    ARGMOD(SymReg *r0),
     int emit)
         __attribute__nonnull__(1)
-        __attribute__nonnull__(3);
+        __attribute__nonnull__(3)
+        FUNC_MODIFIES(*r0);
 
+/* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 /* HEADERIZER END: compilers/imcc/imcparser.c */
 
 /* HEADERIZER BEGIN: compilers/imcc/parser_util.c */

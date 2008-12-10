@@ -175,10 +175,9 @@ void parrot_pass_args(PARROT_INTERP,
         FUNC_MODIFIES(*dest_indexes);
 
 PARROT_EXPORT
-void Parrot_pcc_invoke_sub_from_c_args(PARROT_INTERP,
+void Parrot_pcc_invoke_from_sig_object(PARROT_INTERP,
     ARGIN(PMC *sub_obj),
-    ARGIN(const char *sig),
-    ...)
+    ARGIN(PMC *sig_obj))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3);
@@ -194,6 +193,15 @@ void Parrot_pcc_invoke_method_from_c_args(PARROT_INTERP,
         __attribute__nonnull__(3)
         __attribute__nonnull__(4)
         FUNC_MODIFIES(*method_name);
+
+PARROT_EXPORT
+void Parrot_pcc_invoke_sub_from_c_args(PARROT_INTERP,
+    ARGIN(PMC *sub_obj),
+    ARGIN(const char *sig),
+    ...)
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3);
 
 PARROT_EXPORT
 void Parrot_process_args(PARROT_INTERP,
@@ -219,14 +227,6 @@ opcode_t * parrot_pass_args_fromc(PARROT_INTERP,
         __attribute__nonnull__(3)
         __attribute__nonnull__(4)
         FUNC_MODIFIES(*dest);
-
-PARROT_EXPORT
-void Parrot_pcc_invoke_from_sig_object(PARROT_INTERP,
-    ARGIN(PMC *sub_obj),
-    ARGIN(PMC *sig_obj))
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(2)
-        __attribute__nonnull__(3);
 
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
