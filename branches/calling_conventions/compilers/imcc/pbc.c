@@ -114,14 +114,14 @@ static subs_t * find_global_label(PARROT_INTERP,
     ARGIN(const char *name),
     ARGIN(const subs_t *sym),
     ARGOUT(int *pc),
-    ARGOUT(int *sub_id))
+    ARGOUT(int *subid_matched))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3)
         __attribute__nonnull__(4)
         __attribute__nonnull__(5)
         FUNC_MODIFIES(*pc)
-        FUNC_MODIFIES(*sub_id);
+        FUNC_MODIFIES(*subid_matched);
 
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
