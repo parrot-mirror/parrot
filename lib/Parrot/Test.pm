@@ -193,6 +193,10 @@ sub _generate_test_functions {
             my ( $code, $expected, $desc, %extra ) = @_;
             my $args                               = $ENV{TEST_PROG_ARGS} || '';
 
+            # Due to ongoing changes in PBC format, all tests in
+            # t/native_pbc/*.t are currently being SKIPped.  This means we
+            # have no tests on which to model tests of the following block.
+            # Hence, test coverage will be lacking.
             if ( $func =~ /^pbc_output_/ && $args =~ /-r / ) {
                 # native tests with --run-pbc don't make sense
                 return $builder->skip("no native tests with -r");
@@ -203,7 +207,7 @@ sub _generate_test_functions {
             my $meth        = $parrot_test_map{$func};
             my $real_output = slurp_file($out_f);
 
-            unlink $out_f unless $ENV{POSTMORTEM};
+            _unlink_or_retain( $out_f );
 
             # set a todo-item for Test::Builder to find
             my $call_pkg = $builder->exported_to() || '';
@@ -318,7 +322,7 @@ sub _generate_test_functions {
             $builder->diag("'$cmd' failed with exit code $exit_code")
                 if $exit_code and not $pass;
 
-            unlink $out_f unless $ENV{POSTMORTEM};
+            _unlink_or_retain( $out_f );
 
             return $pass;
         };
@@ -555,11 +559,11 @@ sub _generate_test_functions {
                 }
             }
 
-            unless ( $ENV{POSTMORTEM} ) {
-                unlink $out_f, $build_f, $exe_f, $obj_f;
-                unlink per_test( '.ilk', $test_no );
-                unlink per_test( '.pdb', $test_no );
-            }
+            _unlink_or_retain(
+                $out_f, $build_f, $exe_f, $obj_f,
+                per_test( '.ilk', $test_no ),
+                per_test( '.pdb', $test_no ),
+            );
 
             return $pass;
         };
@@ -771,6 +775,15 @@ sub _prepare_exit_message {
         : ( $exit_code & 0xFF ) ? "[SIGNAL $exit_code]"
         : ( $? >> 8 )
     );
+}
+
+sub _unlink_or_retain {
+    my @deletables = @_;
+    my $deleted = 0;
+    unless ( $ENV{POSTMORTEM} ) {
+        $deleted = unlink @deletables;
+    }
+    return $deleted;
 }
 
 sub generate_languages_functions {
