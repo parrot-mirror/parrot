@@ -19,6 +19,9 @@ These tests cover the basic functionality of C<Parrot::Test>.
 use strict;
 use warnings;
 use Test::More;
+#use Test::More qw( no_plan );;
+use Carp;
+use Data::Dumper;$Data::Dumper::Indent=1;
 use File::Spec;
 use lib qw( lib );
 use Parrot::Config;
@@ -123,6 +126,7 @@ CODE
 bar
 OUTPUT
 test_test($desc);
+
 
 $desc = 'pasm_output_isnt: success';
 test_out("ok 1 - $desc");
@@ -625,6 +629,20 @@ CODE
 foo
 OUTPUT
 test_test($desc);
+}
+
+# Cleanup t/perl/
+
+unless ( $ENV{POSTMORTEM} ) {
+    my $tdir = q{t/perl};
+    opendir my $DIRH, $tdir or croak "Unable to open $tdir for reading: $!";
+    my @need_cleanup =
+        grep { m/Parrot_Test_\d+\.(?:pir|pasm|out|c|o|build)$/ }
+        readdir $DIRH;
+    closedir $DIRH or croak "Unable to close $tdir after reading: $!";
+    for my $f (@need_cleanup) {
+        unlink qq{$tdir/$f} or croak "Unable to remove $f: $!";
+    }
 }
 
 # Local Variables:
