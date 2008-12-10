@@ -533,11 +533,10 @@ specifies the encoding to use for the input (e.g., "utf8").
     .local pmc stdin
     .local int has_readline
     stdin = getstdin
-    has_readline = stdin.'set_readline_interactive'(1)
     encoding = adverbs['encoding']
     if encoding == 'fixed_8' goto interactive_loop
     unless encoding goto interactive_loop
-    push stdin, encoding
+    stdin.'encoding'(encoding)
   interactive_loop:
     .local pmc code
     unless stdin goto interactive_end
@@ -551,10 +550,8 @@ specifies the encoding to use for the input (e.g., "utf8").
   have_prompt:
 
     ##  display a prompt ourselves if readline isn't present
-    if has_readline != -1 goto interactive_read
-    printerr prompt
   interactive_read:
-    code = stdin.'readline'(prompt)
+    code = stdin.'readline_interactive'(prompt)
     if null code goto interactive_end
     unless code goto interactive_loop
     concat code, "\n"
@@ -660,13 +657,11 @@ options are passed to the evaluator.
     .local string iname
     .local pmc ifh
     iname = shift iter
-    ifh = open iname, '<'
-    unless ifh goto err_infile
-    if encoding == 'fixed_8' goto iter_loop_1
-    unless encoding goto iter_loop_1
-    push ifh, encoding
+    ifh = new 'FileHandle'
+    unless encoding == 'utf8' goto iter_loop_1
+    ifh.'encoding'(encoding)
   iter_loop_1:
-    $S0 = ifh.'slurp'('')
+    $S0 = ifh.'readall'(iname)
     code .= $S0
     close ifh
     goto iter_loop
@@ -783,7 +778,7 @@ Generic method for compilers invoked from a shell command line.
     output = adverbs['output']
     if output == '' goto save_output_1
     if output == '-' goto save_output_1
-    ofh = open output, '>'
+    ofh = open output, 'w'
     unless ofh goto err_output
   save_output_1:
     print ofh, result

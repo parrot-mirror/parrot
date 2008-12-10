@@ -21,7 +21,37 @@ This file implements the IO file handle class.
     p6meta = get_hll_global ['Perl6Object'], '$!P6META'
     p6meta.'new_class'('IO', 'parent'=>'Any', 'attr'=>'$!PIO')
     p6meta.'new_class'('IOIterator', 'parent'=>'Perl6Object', 'attr'=>'$!IO')
+
+    $P0 = get_hll_namespace ['IO']
+    '!EXPORT'('lines', 'from'=>$P0)
 .end
+
+
+=item lines
+
+our List multi method lines (IO $handle:) is export;
+
+Returns all the lines of a file as a (lazy) List regardless of context. See also slurp.
+
+=cut
+
+.sub 'lines' :method :multi('IO')
+    .local pmc PIO, res, chomper
+    PIO = getattribute self, "$!PIO"
+    res = new 'List'
+    chomper = get_hll_global 'chomp'
+
+  loop:
+    $S0 = PIO.'readline'()
+    unless $S0 goto done
+    $S0 = chomper($S0)
+    res.'push'($S0)
+    goto loop
+
+  done:
+    .return (res)
+.end
+
 
 =item print
 
@@ -85,10 +115,11 @@ Reads a line from the file handle.
 =cut
 
 .sub 'readline' :method
-    .local pmc PIO
+    .local pmc PIO, chomper
     PIO = getattribute self, "$!PIO"
-    $P0 = PIO.'readline'('')
-    .return ($P0)
+    $P0 = PIO.'readline'()
+    chomper = get_hll_global 'chomp'
+    .tailcall chomper($P0)
 .end
 
 
@@ -101,7 +132,7 @@ Slurp a file into a string.
 .sub 'slurp' :method
     .local pmc PIO
     PIO = getattribute self, "$!PIO"
-    $S0 = PIO.'slurp'('')
+    $S0 = PIO.'readall'()
     .return($S0)
 .end
 
@@ -194,11 +225,30 @@ Return the value inside this container in item context.
 .end
 
 .sub 'item' :method :vtable('shift_pmc')
-    .local pmc pio
+    .local pmc pio, chomper
     $P0 = getattribute self, "$!IO"
     pio = getattribute $P0, "$!PIO"
-    $P0 = pio.'readline'("")
-    .return($P0)
+    $P0 = pio.'readline'()
+    chomper = get_hll_global 'chomp'
+    .tailcall chomper($P0)
+.end
+
+.sub 'list' :method
+    .local pmc pio, res, chomper
+    $P0 = getattribute self, "$!IO"
+    pio = getattribute $P0, "$!PIO"
+    res = new 'List'
+    chomper = get_hll_global 'chomp'
+
+  loop:
+    $S0 = pio.'readline'()
+    if $S0 == '' goto done
+    $S0 = chomper($S0)
+    res.'push'($S0)
+    goto loop
+
+  done:
+    .return (res)
 .end
 
 .sub 'get_string' :vtable
