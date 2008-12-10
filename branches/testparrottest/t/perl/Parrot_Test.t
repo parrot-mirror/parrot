@@ -33,7 +33,7 @@ BEGIN {
         plan( skip_all => "Test::Builder::Tester not installed\n" );
         exit 0;
     }
-    plan( tests => 115 );
+    plan( tests => 116 );
 }
 
 use lib qw( . lib ../lib ../../lib );
@@ -382,6 +382,7 @@ says Parrot!
 EXPECTED
 example_output_is( $file, $expected );
 
+# next is dying at _unlink_or_retain
 $expected = <<EXPECTED;
 The answer is
 769
@@ -630,6 +631,22 @@ foo
 OUTPUT
 test_test($desc);
 }
+
+{
+    local $ENV{POSTMORTEM} = 1;
+    $desc = 'pir_output_is: success';
+    test_out("ok 1 - $desc");
+    pir_output_is( <<'CODE', <<'OUTPUT', $desc );
+.sub 'test' :main
+    print "foo\n"
+.end
+CODE
+foo
+OUTPUT
+    test_test($desc);
+    
+}
+
 
 # Cleanup t/perl/
 
