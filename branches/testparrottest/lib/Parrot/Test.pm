@@ -590,7 +590,6 @@ sub _handle_error_output {
 }
 
 sub _run_test_file {
-    local $SIG{__WARN__} = \&_report_odd_hash;
     my ( $func, $code, $expected, $desc, %extra ) = @_;
     my $path_to_parrot = path_to_parrot();
     my $parrot = File::Spec->join( File::Spec->curdir(), 'parrot' . $PConfig{exe} );
@@ -705,21 +704,6 @@ sub _run_test_file {
     }
 
     return ( $out_f, $cmd, $exit_code );
-}
-
-sub _report_odd_hash {
-    my $warning = shift;
-    if ( $warning =~ m/Odd number of elements in hash assignment/ ) {
-        require Carp;
-        my @args = DB::uplevel_args();
-        shift @args;
-        my $func = ( caller() )[2];
-
-        Carp::carp("Odd $func invocation; probably missing description for TODO test");
-    }
-    else {
-        warn $warning;
-    }
 }
 
 sub _handle_test_options {
