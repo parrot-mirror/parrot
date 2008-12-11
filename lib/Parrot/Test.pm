@@ -597,12 +597,6 @@ sub _run_test_file {
     # Strange Win line endings
     convert_line_endings($expected);
 
-    # set up default description
-    unless ($desc) {
-        ( undef, my $file, my $line ) = caller();
-        $desc = "($file line $line)";
-    }
-
     # $test_no will be part of temporary file
     my $test_no = $builder->current_test() + 1;
 
