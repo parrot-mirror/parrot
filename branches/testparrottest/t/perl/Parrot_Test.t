@@ -33,7 +33,7 @@ BEGIN {
         plan( skip_all => "Test::Builder::Tester not installed\n" );
         exit 0;
     }
-    plan( tests => 116 );
+    plan( tests => 120 );
 }
 
 use lib qw( . lib ../lib ../../lib );
@@ -632,7 +632,9 @@ OUTPUT
 test_test($desc);
 }
 
+my $outfile = File::Spec->catfile( qw| t perl Parrot_Test_1.out | );
 {
+    unlink $outfile;
     local $ENV{POSTMORTEM} = 1;
     $desc = 'pir_output_is: success';
     test_out("ok 1 - $desc");
@@ -644,7 +646,28 @@ CODE
 foo
 OUTPUT
     test_test($desc);
-    
+    ok( -f $outfile,
+        "file created during test preserved due to \$ENV{POSTMORTEM}");
+    unlink $outfile;
+    ok( ! -f $outfile,
+        "file created during test has been deleted");
+}
+
+{
+    unlink $outfile;
+    local $ENV{POSTMORTEM} = 0;
+    $desc = 'pir_output_is: success';
+    test_out("ok 1 - $desc");
+    pir_output_is( <<'CODE', <<'OUTPUT', $desc );
+.sub 'test' :main
+    print "foo\n"
+.end
+CODE
+foo
+OUTPUT
+    test_test($desc);
+    ok( ! -f $outfile,
+        "file created during test was not retained");
 }
 
 
