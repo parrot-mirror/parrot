@@ -417,7 +417,7 @@ my $c_code = <<'ENDOFCODE';
     }
 ENDOFCODE
 
-$desc = 'C:  hello world';
+$desc = 'C:  is hello world';
 test_out("ok 1 - $desc");
 c_output_is( <<CODE, <<'OUTPUT', $desc );
 $c_code
