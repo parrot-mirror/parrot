@@ -504,6 +504,130 @@ sub generate_languages_functions {
 # The following methods are private.  They should not be used by modules
 # inheriting from Parrot::Test.
 
+sub _handle_error_output {
+    my ( $builder, $real_output, $expected, $desc ) = @_;
+
+    my $level = $builder->level();
+    $builder->level( $level + 1 );
+    $builder->ok( 0, $desc );
+    $builder->diag(
+        "Expected error but exited cleanly\n" . "Received:\n$real_output\nExpected:\n$expected\n" );
+    $builder->level($level);
+
+    return 0;
+}
+
+sub _run_test_file {
+    my ( $func, $code, $expected, $desc, %extra ) = @_;
+    my $path_to_parrot = path_to_parrot();
+    my $parrot = File::Spec->join( File::Spec->curdir(), 'parrot' . $PConfig{exe} );
+
+    # Strange Win line endings
+    convert_line_endings($expected);
+
+    # $test_no will be part of temporary file
+    my $test_no = $builder->current_test() + 1;
+
+    # Name of the file where output is written.
+    # Switch to a different extension when we are generating code.
+    my $out_f = per_test( '.out', $test_no );
+
+    # Name of the file with test code.
+    # This depends on which kind of code we are testing.
+    my $code_f;
+    if ( $func =~ m/^pir_.*?output/ ) {
+        $code_f = per_test( '.pir', $test_no );
+    }
+    elsif ( $func =~ m/^pasm_.*?output_/ ) {
+        $code_f = per_test( '.pasm', $test_no );
+    }
+    elsif ( $func =~ m/^pbc_.*?output_/ ) {
+        $code_f = per_test( '.pbc', $test_no );
+    }
+    else {
+        die "Unknown test function: $func";
+    }
+    $code_f = File::Spec->rel2abs($code_f);
+    my $code_basef = basename($code_f);
+
+    # native tests are just run, others need to write code first
+    if ( $code_f !~ /\.pbc$/ ) {
+        write_code_to_file( $code, $code_f );
+    }
+
+    # honor opt* filename to actually run code with -Ox
+    my $args = $ENV{TEST_PROG_ARGS} || '';
+    my $opt = $code_basef =~ m!opt(.)! ? "-O$1" : "";
+    $args .= " $opt";
+
+    my $run_exec = 0;
+    if ( $args =~ s/--run-exec// ) {
+        $run_exec = 1;
+        my $pbc_f = per_test( '.pbc', $test_no );
+        my $o_f = per_test( '_pbcexe' . $PConfig{o}, $test_no );
+        my $exe_f =
+            per_test( '_pbcexe' . $PConfig{exe}, $test_no )
+            ;    # Make cleanup and svn:ignore more simple
+        my $exec_f = per_test( '_pbcexe', $test_no );    # Make cleanup and svn:ignore more simple
+        $exe_f =~ s@[\\/:]@$PConfig{slash}@g;
+
+        # RT#43751 put this into sub generate_pbc()
+        run_command(
+            qq{$parrot $args -o $pbc_f "$code_f"},
+            CD     => $path_to_parrot,
+            STDOUT => $out_f,
+            STDERR => $out_f
+        );
+        if ( -e $pbc_f ) {
+            run_command(
+                qq{$parrot $args -o $o_f "$pbc_f"},
+                CD     => $path_to_parrot,
+                STDOUT => $out_f,
+                STDERR => $out_f
+            );
+            if ( -e $o_f ) {
+                run_command(
+                    qq{$PConfig{make} EXEC=$exec_f exec},
+                    CD     => $path_to_parrot,
+                    STDOUT => $out_f,
+                    STDERR => $out_f
+                );
+                if ( -e $exe_f ) {
+                    run_command(
+                        $exe_f,
+                        CD     => $path_to_parrot,
+                        STDOUT => $out_f,
+                        STDERR => $out_f
+                    );
+                }
+            }
+        }
+    }
+
+    my ( $exit_code, $cmd );
+    unless ($run_exec) {
+        if ( $args =~ s/--run-pbc// || $args =~ s/-r // ) {
+            my $pbc_f = per_test( '.pbc', $test_no );
+            $args = qq{$args -o "$pbc_f"};
+
+            # In this case, we need to execute more than one command. Instead
+            # of a single scalar, build an array of commands.
+            $cmd = [ qq{$parrot $args "$code_f"}, qq{$parrot "$pbc_f"}, ];
+        }
+        else {
+            $cmd = qq{$parrot $args "$code_f"};
+        }
+        $exit_code = run_command(
+            $cmd,
+            CD     => $path_to_parrot,
+            STDOUT => $out_f,
+            STDERR => $out_f
+        );
+    }
+
+    return ( $out_f, $cmd, $exit_code );
+}
+
 sub _generate_test_functions {
 
     my $package        = 'Parrot::Test';
@@ -913,130 +1037,6 @@ sub _generate_test_functions {
     }
 
     return;
-}
-
-sub _handle_error_output {
-    my ( $builder, $real_output, $expected, $desc ) = @_;
-
-    my $level = $builder->level();
-    $builder->level( $level + 1 );
-    $builder->ok( 0, $desc );
-    $builder->diag(
-        "Expected error but exited cleanly\n" . "Received:\n$real_output\nExpected:\n$expected\n" );
-    $builder->level($level);
-
-    return 0;
-}
-
-sub _run_test_file {
-    my ( $func, $code, $expected, $desc, %extra ) = @_;
-    my $path_to_parrot = path_to_parrot();
-    my $parrot = File::Spec->join( File::Spec->curdir(), 'parrot' . $PConfig{exe} );
-
-    # Strange Win line endings
-    convert_line_endings($expected);
-
-    # $test_no will be part of temporary file
-    my $test_no = $builder->current_test() + 1;
-
-    # Name of the file where output is written.
-    # Switch to a different extension when we are generating code.
-    my $out_f = per_test( '.out', $test_no );
-
-    # Name of the file with test code.
-    # This depends on which kind of code we are testing.
-    my $code_f;
-    if ( $func =~ m/^pir_.*?output/ ) {
-        $code_f = per_test( '.pir', $test_no );
-    }
-    elsif ( $func =~ m/^pasm_.*?output_/ ) {
-        $code_f = per_test( '.pasm', $test_no );
-    }
-    elsif ( $func =~ m/^pbc_.*?output_/ ) {
-        $code_f = per_test( '.pbc', $test_no );
-    }
-    else {
-        die "Unknown test function: $func";
-    }
-    $code_f = File::Spec->rel2abs($code_f);
-    my $code_basef = basename($code_f);
-
-    # native tests are just run, others need to write code first
-    if ( $code_f !~ /\.pbc$/ ) {
-        write_code_to_file( $code, $code_f );
-    }
-
-    # honor opt* filename to actually run code with -Ox
-    my $args = $ENV{TEST_PROG_ARGS} || '';
-    my $opt = $code_basef =~ m!opt(.)! ? "-O$1" : "";
-    $args .= " $opt";
-
-    my $run_exec = 0;
-    if ( $args =~ s/--run-exec// ) {
-        $run_exec = 1;
-        my $pbc_f = per_test( '.pbc', $test_no );
-        my $o_f = per_test( '_pbcexe' . $PConfig{o}, $test_no );
-        my $exe_f =
-            per_test( '_pbcexe' . $PConfig{exe}, $test_no )
-            ;    # Make cleanup and svn:ignore more simple
-        my $exec_f = per_test( '_pbcexe', $test_no );    # Make cleanup and svn:ignore more simple
-        $exe_f =~ s@[\\/:]@$PConfig{slash}@g;
-
-        # RT#43751 put this into sub generate_pbc()
-        run_command(
-            qq{$parrot $args -o $pbc_f "$code_f"},
-            CD     => $path_to_parrot,
-            STDOUT => $out_f,
-            STDERR => $out_f
-        );
-        if ( -e $pbc_f ) {
-            run_command(
-                qq{$parrot $args -o $o_f "$pbc_f"},
-                CD     => $path_to_parrot,
-                STDOUT => $out_f,
-                STDERR => $out_f
-            );
-            if ( -e $o_f ) {
-                run_command(
-                    qq{$PConfig{make} EXEC=$exec_f exec},
-                    CD     => $path_to_parrot,
-                    STDOUT => $out_f,
-                    STDERR => $out_f
-                );
-                if ( -e $exe_f ) {
-                    run_command(
-                        $exe_f,
-                        CD     => $path_to_parrot,
-                        STDOUT => $out_f,
-                        STDERR => $out_f
-                    );
-                }
-            }
-        }
-    }
-
-    my ( $exit_code, $cmd );
-    unless ($run_exec) {
-        if ( $args =~ s/--run-pbc// || $args =~ s/-r // ) {
-            my $pbc_f = per_test( '.pbc', $test_no );
-            $args = qq{$args -o "$pbc_f"};
-
-            # In this case, we need to execute more than one command. Instead
-            # of a single scalar, build an array of commands.
-            $cmd = [ qq{$parrot $args "$code_f"}, qq{$parrot "$pbc_f"}, ];
-        }
-        else {
-            $cmd = qq{$parrot $args "$code_f"};
-        }
-        $exit_code = run_command(
-            $cmd,
-            CD     => $path_to_parrot,
-            STDOUT => $out_f,
-            STDERR => $out_f
-        );
-    }
-
-    return ( $out_f, $cmd, $exit_code );
 }
 
 sub _handle_test_options {
