@@ -1,5 +1,261 @@
 # Copyright (C) 2004-2008, The Perl Foundation.
 # $Id$
+
+=head1 NAME
+
+Parrot::Test - testing routines for Parrot and language implementations
+
+=head1 SYNOPSIS
+
+Set the number of tests to be run like this:
+
+    use Parrot::Test tests => 8;
+
+Write individual tests like this:
+
+    pasm_output_is(<<'CODE', <<'OUTPUT', "description of test");
+    print "this is ok\n"
+    end
+    CODE
+    this is ok
+    OUTPUT
+
+=head1 DESCRIPTION
+
+This module provides various Parrot-specific test functions.
+
+=head2 Functions
+
+The parameter C<$language> is the language of the code.
+The parameter C<$code> is the code that should be executed or transformed.
+The parameter C<$expected> is the expected result.
+The parameter C<$unexpected> is the unexpected result.
+The parameter C<$description> should describe the test.
+
+Any optional parameters can follow.  For example, to mark a test as a TODO test
+(where you know the implementation does not yet work), pass:
+
+    todo => 'reason to consider this TODO'
+
+at the end of the argument list.  Valid reasons include C<bug>,
+C<unimplemented>, and so on.
+
+B<Note:> you I<must> use a C<$description> with TODO tests.
+
+=over 4
+
+=item C<language_output_is( $language, $code, $expected, $description)>
+
+=item C<language_error_output_is( $language, $code, $expected, $description)>
+
+Runs a language test and passes the test if a string comparison
+of the output with the expected result it true.
+For C<language_error_output_is()> the exit code also has to be non-zero.
+
+=item C<language_output_like( $language, $code, $expected, $description)>
+
+=item C<language_error_output_like( $language, $code, $expected, $description)>
+
+Runs a language test and passes the test if the output matches the expected
+result.
+For C<language_error_output_like()> the exit code also has to be non-zero.
+
+=item C<language_output_isnt( $language, $code, $expected, $description)>
+
+=item C<language_error_output_isnt( $language, $code, $expected, $description)>
+
+Runs a language test and passes the test if a string comparison
+if a string comparison of the output with the unexpected result is false.
+For C<language_error_output_isnt()> the exit code also has to be non-zero.
+
+=item C<pasm_output_is($code, $expected, $description)>
+
+Runs the Parrot Assembler code and passes the test if a string comparison of
+the output with the expected result it true.
+
+=item C<pasm_error_output_is($code, $expected, $description)>
+
+Runs the Parrot Assembler code and passes the test if a string comparison of
+the output with the expected result it true I<and> if Parrot exits with a
+non-zero exit code.
+
+=item C<pasm_output_like($code, $expected, $description)>
+
+Runs the Parrot Assembler code and passes the test if the output matches
+C<$expected>.
+
+=item C<pasm_error_output_like($code, $expected, $description)>
+
+Runs the Parrot Assembler code and passes the test if the output matches
+C<$expected> I<and> if Parrot exits with a non-zero exit code.
+
+=item C<pasm_output_isnt($code, $unexpected, $description)>
+
+Runs the Parrot Assembler code and passes the test if a string comparison of
+the output with the unexpected result is false.
+
+=item C<pasm_error_output_isnt($code, $unexpected, $description)>
+
+Runs the Parrot Assembler code and passes the test if a string comparison of
+the output with the unexpected result is false I<and> if Parrot exits with a
+non-zero exit code.
+
+=item C<pir_output_is($code, $expected, $description)>
+
+Runs the PIR code and passes the test if a string comparison of output with the
+expected result is true.
+
+=item C<pir_error_output_is($code, $expected, $description)>
+
+Runs the PIR code and passes the test if a string comparison of output with the
+expected result is true I<and> if Parrot exits with a non-zero exit code.
+
+=item C<pir_output_like($code, $expected, $description)>
+
+Runs the PIR code and passes the test if output matches the expected result.
+
+=item C<pir_error_output_like($code, $expected, $description)>
+
+Runs the PIR code and passes the test if output matches the expected result
+I<and> if Parrot exits with a non-zero exit code.
+
+=item C<pir_output_isnt($code, $unexpected, $description)>
+
+Runs the PIR code and passes the test if a string comparison of the output with
+the unexpected result is false.
+
+=item C<pir_error_output_isnt($code, $unexpected, $description)>
+
+Runs the PIR code and passes the test if a string comparison of the output with
+the unexpected result is false I<and> if Parrot exits with a non-zero exit
+code.
+
+=item C<pbc_output_is($code, $expected, $description)>
+
+Runs the Parrot Bytecode and passes the test if a string comparison of output
+with the expected result is true.
+
+=item C<pbc_error_output_is($code, $expected, $description)>
+
+Runs the Parrot Bytecode and passes the test if a string comparison of the output
+with the expected result is true I<and> if Parrot exits with a non-zero exit code.
+
+=item C<pbc_output_like($code, $expected, $description)>
+
+Runs the Parrot Bytecode and passes the test if output matches the expected
+result.
+
+=item C<pbc_error_output_like($code, $expected, $description)>
+
+Runs the Parrot Bytecode and passes the test if output matches the expected
+result I<and> if Parrot exits with a non-zero exit code.
+
+=item C<pbc_output_isnt($code, $unexpected, $description)>
+
+Runs the Parrot Bytecode and passes the test if a string comparison of output
+with the unexpected result is false.
+
+=item C<pbc_error_output_isnt($code, $unexpected, $description)>
+
+Runs the Parrot Bytecode and passes the test if a string comparison of output
+with the unexpected result is false I<and> if Parrot exits with a non-zero exit
+code.
+
+=item C<pir_2_pasm_is($code, $expected, $description)>
+
+Compile the Parrot Intermediate Representation and generate Parrot Assembler Code.
+Pass if the generated PASM is $expected.
+
+=item C<pir_2_pasm_like($code, $expected, $description)>
+
+Compile the Parrot Intermediate Representation and generate Parrot Assembler Code.
+Pass if the generated PASM matches $expected.
+
+=item C<pir_2_pasm_isnt($code, $unexpected, $description)>
+
+Compile the Parrot Intermediate Representation and generate Parrot Assembler
+Code.  Pass unless the generated PASM is $expected.
+
+=item C<c_output_is($code, $expected, $description, %options)>
+
+Compiles and runs the C code, passing the test if a string comparison of output
+with the expected result it true.  Valid options are 'todo' => 'reason' to mark
+a TODO test.
+
+=item C<c_output_like($code, $expected, $description, %options)>
+
+Compiles and runs the C code, passing the test if output matches the expected
+result.  Valid options are 'todo' => 'reason' to mark a TODO test.
+
+=item C<c_output_isnt($code, $unexpected, $description, %options)>
+
+Compiles and runs the C code, passing the test if a string comparison of output
+with the unexpected result is false.  Valid options are 'todo' => 'reason' to
+mark a TODO test.
+
+=item C<example_output_is( $example_f, $expected, @todo )>
+
+=item C<example_output_like( $example_f, $expected, @todo )>
+
+=item C<example_output_isnt( $example_f, $expected, @todo )>
+
+Determines the language, PIR or PASM, from the extension of C<$example_f> and runs
+the appropriate C<^language_output_(is|like|isnt)> sub.
+C<$example_f> is used as a description, so don't pass one.
+
+=item C<skip($why, $how_many)>
+
+Use within a C<SKIP: { ... }> block to indicate why and how many tests to skip,
+just like in Test::More.
+
+=item C<run_command($command, %options)>
+
+Run the given $command in a cross-platform manner.
+
+%options include...
+
+    STDOUT    name of file to redirect STDOUT to
+    STDERR    name of file to redirect STDERR to
+    CD        directory to run the command in
+
+For example:
+
+    # equivalent to "cd some_dir && make test"
+    run_command("make test", CD => "some_dir");
+
+=item C<slurp_file($file_name)>
+
+Read the whole file $file_name and return the content as a string.
+
+=item C<convert_line_endings($text)>
+
+Convert Win32 style line endins with Unix style line endings.
+
+=item C<path_to_parrot()>
+
+Construct an absolute path to the parrot root dir.
+
+=item C<per_test( $ext, $test_no )>
+
+Construct a path for a temporary files.
+Takes C<$0> into account.
+
+=item C<write_code_to_file($code, $code_f)>
+
+Writes C<$code> into the file C<$code_f>.
+
+=item C<generate_languages_functions>
+
+Generate functions that are only used by a couple of
+Parrot::Test::<lang> modules.
+See RT#43266.
+This implementation is experimental and currently only works
+for languages/pipp.
+
+=back
+
+=cut
+
 package Parrot::Test;
 
 use strict;
@@ -117,7 +373,6 @@ sub per_test {
     return $t;
 }
 
-
 sub write_code_to_file {
     my ( $code, $code_f ) = @_;
 
@@ -160,6 +415,90 @@ sub path_to_parrot {
     $path =~ s{ /lib/Parrot/Config.pm \z}{}xms;
 
     return Cwd::realpath( $path );
+}
+
+sub generate_languages_functions {
+
+    my %test_map = (
+        output_is         => 'is_eq',
+        error_output_is   => 'is_eq',
+        output_like       => 'like',
+        error_output_like => 'like',
+        output_isnt       => 'isnt_eq',
+        error_output_isnt => 'isnt_eq',
+    );
+
+    foreach my $func ( keys %test_map ) {
+
+        my $test_sub = sub {
+            local *__ANON__ = $func;
+            my $self        = shift;
+            my ( $code, $expected, $desc, %options ) = @_;
+
+            # set a todo-item for Test::Builder to find
+            my $call_pkg = $self->{builder}->exported_to() || '';
+
+            no strict 'refs';
+
+            local *{ $call_pkg . '::TODO' } = ## no critic Variables::ProhibitConditionalDeclarations
+                \$options{todo}
+                if defined $options{todo};
+
+            my $count = $self->{builder}->current_test() + 1;
+
+            # These are the thing that depend on the actual language implementation
+            my $out_f     = $self->get_out_fn( $count,    \%options );
+            my $lang_f    = $self->get_lang_fn( $count,   \%options );
+            my $cd        = $self->get_cd( \%options );
+            my @test_prog = $self->get_test_prog( $count, \%options );
+
+            Parrot::Test::write_code_to_file( $code, $lang_f );
+
+            # set a todo-item for Test::Builder to find
+            my $skip_why = $self->skip_why( \%options );
+            if ($skip_why) {
+                $self->{builder}->skip($skip_why);
+            }
+            else {
+
+                # STDERR is written into same output file
+                my $exit_code = Parrot::Test::run_command(
+                    \@test_prog,
+                    CD     => $cd,
+                    STDOUT => $out_f,
+                    STDERR => $out_f
+                );
+                my $real_output = slurp_file($out_f);
+
+                if ( $func =~ m/^ error_/xms ) {
+                    return _handle_error_output( $self->{builder}, $real_output, $expected, $desc )
+                        unless $exit_code;
+                }
+                elsif ($exit_code) {
+                    $self->{builder}->ok( 0, $desc );
+
+                    my $test_prog = join ' && ', @test_prog;
+                    $self->{builder}->diag("'$test_prog' failed with exit code $exit_code.");
+
+                    return 0;
+                }
+
+                my $meth = $test_map{$func};
+                $self->{builder}->$meth( $real_output, $expected, $desc );
+            }
+
+            # The generated files are left in the t/* directories.
+            # Let 'make clean' and 'svn:ignore' take care of them.
+
+            return;
+        };
+
+        my ($package) = caller();
+
+        no strict 'refs';
+
+        *{ $package . '::' . $func } = $test_sub;
+    }
 }
 
 # The following methods --up until generate_languages_functions() -- are
@@ -764,90 +1103,6 @@ sub _unlink_or_retain {
     return $deleted;
 }
 
-sub generate_languages_functions {
-
-    my %test_map = (
-        output_is         => 'is_eq',
-        error_output_is   => 'is_eq',
-        output_like       => 'like',
-        error_output_like => 'like',
-        output_isnt       => 'isnt_eq',
-        error_output_isnt => 'isnt_eq',
-    );
-
-    foreach my $func ( keys %test_map ) {
-
-        my $test_sub = sub {
-            local *__ANON__ = $func;
-            my $self        = shift;
-            my ( $code, $expected, $desc, %options ) = @_;
-
-            # set a todo-item for Test::Builder to find
-            my $call_pkg = $self->{builder}->exported_to() || '';
-
-            no strict 'refs';
-
-            local *{ $call_pkg . '::TODO' } = ## no critic Variables::ProhibitConditionalDeclarations
-                \$options{todo}
-                if defined $options{todo};
-
-            my $count = $self->{builder}->current_test() + 1;
-
-            # These are the thing that depend on the actual language implementation
-            my $out_f     = $self->get_out_fn( $count,    \%options );
-            my $lang_f    = $self->get_lang_fn( $count,   \%options );
-            my $cd        = $self->get_cd( \%options );
-            my @test_prog = $self->get_test_prog( $count, \%options );
-
-            Parrot::Test::write_code_to_file( $code, $lang_f );
-
-            # set a todo-item for Test::Builder to find
-            my $skip_why = $self->skip_why( \%options );
-            if ($skip_why) {
-                $self->{builder}->skip($skip_why);
-            }
-            else {
-
-                # STDERR is written into same output file
-                my $exit_code = Parrot::Test::run_command(
-                    \@test_prog,
-                    CD     => $cd,
-                    STDOUT => $out_f,
-                    STDERR => $out_f
-                );
-                my $real_output = slurp_file($out_f);
-
-                if ( $func =~ m/^ error_/xms ) {
-                    return _handle_error_output( $self->{builder}, $real_output, $expected, $desc )
-                        unless $exit_code;
-                }
-                elsif ($exit_code) {
-                    $self->{builder}->ok( 0, $desc );
-
-                    my $test_prog = join ' && ', @test_prog;
-                    $self->{builder}->diag("'$test_prog' failed with exit code $exit_code.");
-
-                    return 0;
-                }
-
-                my $meth = $test_map{$func};
-                $self->{builder}->$meth( $real_output, $expected, $desc );
-            }
-
-            # The generated files are left in the t/* directories.
-            # Let 'make clean' and 'svn:ignore' take care of them.
-
-            return;
-        };
-
-        my ($package) = caller();
-
-        no strict 'refs';
-
-        *{ $package . '::' . $func } = $test_sub;
-    }
-}
-
 package DB;
 
 sub uplevel_args {
@@ -857,259 +1112,6 @@ sub uplevel_args {
 }
 
 1;
-
-=head1 NAME
-
-Parrot::Test - testing routines for Parrot and language implementations
-
-=head1 SYNOPSIS
-
-Set the number of tests to be run like this:
-
-    use Parrot::Test tests => 8;
-
-Write individual tests like this:
-
-    pasm_output_is(<<'CODE', <<'OUTPUT', "description of test");
-    print "this is ok\n"
-    end
-    CODE
-    this is ok
-    OUTPUT
-
-=head1 DESCRIPTION
-
-This module provides various Parrot-specific test functions.
-
-=head2 Functions
-
-The parameter C<$language> is the language of the code.
-The parameter C<$code> is the code that should be executed or transformed.
-The parameter C<$expected> is the expected result.
-The parameter C<$unexpected> is the unexpected result.
-The parameter C<$description> should describe the test.
-
-Any optional parameters can follow.  For example, to mark a test as a TODO test
-(where you know the implementation does not yet work), pass:
-
-    todo => 'reason to consider this TODO'
-
-at the end of the argument list.  Valid reasons include C<bug>,
-C<unimplemented>, and so on.
-
-B<Note:> you I<must> use a C<$description> with TODO tests.
-
-=over 4
-
-=item C<language_output_is( $language, $code, $expected, $description)>
-
-=item C<language_error_output_is( $language, $code, $expected, $description)>
-
-Runs a language test and passes the test if a string comparison
-of the output with the expected result it true.
-For C<language_error_output_is()> the exit code also has to be non-zero.
-
-=item C<language_output_like( $language, $code, $expected, $description)>
-
-=item C<language_error_output_like( $language, $code, $expected, $description)>
-
-Runs a language test and passes the test if the output matches the expected
-result.
-For C<language_error_output_like()> the exit code also has to be non-zero.
-
-=item C<language_output_isnt( $language, $code, $expected, $description)>
-
-=item C<language_error_output_isnt( $language, $code, $expected, $description)>
-
-Runs a language test and passes the test if a string comparison
-if a string comparison of the output with the unexpected result is false.
-For C<language_error_output_isnt()> the exit code also has to be non-zero.
-
-=item C<pasm_output_is($code, $expected, $description)>
-
-Runs the Parrot Assembler code and passes the test if a string comparison of
-the output with the expected result it true.
-
-=item C<pasm_error_output_is($code, $expected, $description)>
-
-Runs the Parrot Assembler code and passes the test if a string comparison of
-the output with the expected result it true I<and> if Parrot exits with a
-non-zero exit code.
-
-=item C<pasm_output_like($code, $expected, $description)>
-
-Runs the Parrot Assembler code and passes the test if the output matches
-C<$expected>.
-
-=item C<pasm_error_output_like($code, $expected, $description)>
-
-Runs the Parrot Assembler code and passes the test if the output matches
-C<$expected> I<and> if Parrot exits with a non-zero exit code.
-
-=item C<pasm_output_isnt($code, $unexpected, $description)>
-
-Runs the Parrot Assembler code and passes the test if a string comparison of
-the output with the unexpected result is false.
-
-=item C<pasm_error_output_isnt($code, $unexpected, $description)>
-
-Runs the Parrot Assembler code and passes the test if a string comparison of
-the output with the unexpected result is false I<and> if Parrot exits with a
-non-zero exit code.
-
-=item C<pir_output_is($code, $expected, $description)>
-
-Runs the PIR code and passes the test if a string comparison of output with the
-expected result is true.
-
-=item C<pir_error_output_is($code, $expected, $description)>
-
-Runs the PIR code and passes the test if a string comparison of output with the
-expected result is true I<and> if Parrot exits with a non-zero exit code.
-
-=item C<pir_output_like($code, $expected, $description)>
-
-Runs the PIR code and passes the test if output matches the expected result.
-
-=item C<pir_error_output_like($code, $expected, $description)>
-
-Runs the PIR code and passes the test if output matches the expected result
-I<and> if Parrot exits with a non-zero exit code.
-
-=item C<pir_output_isnt($code, $unexpected, $description)>
-
-Runs the PIR code and passes the test if a string comparison of the output with
-the unexpected result is false.
-
-=item C<pir_error_output_isnt($code, $unexpected, $description)>
-
-Runs the PIR code and passes the test if a string comparison of the output with
-the unexpected result is false I<and> if Parrot exits with a non-zero exit
-code.
-
-=item C<pbc_output_is($code, $expected, $description)>
-
-Runs the Parrot Bytecode and passes the test if a string comparison of output
-with the expected result is true.
-
-=item C<pbc_error_output_is($code, $expected, $description)>
-
-Runs the Parrot Bytecode and passes the test if a string comparison of the output
-with the expected result is true I<and> if Parrot exits with a non-zero exit code.
-
-=item C<pbc_output_like($code, $expected, $description)>
-
-Runs the Parrot Bytecode and passes the test if output matches the expected
-result.
-
-=item C<pbc_error_output_like($code, $expected, $description)>
-
-Runs the Parrot Bytecode and passes the test if output matches the expected
-result I<and> if Parrot exits with a non-zero exit code.
-
-=item C<pbc_output_isnt($code, $unexpected, $description)>
-
-Runs the Parrot Bytecode and passes the test if a string comparison of output
-with the unexpected result is false.
-
-=item C<pbc_error_output_isnt($code, $unexpected, $description)>
-
-Runs the Parrot Bytecode and passes the test if a string comparison of output
-with the unexpected result is false I<and> if Parrot exits with a non-zero exit
-code.
-
-=item C<pir_2_pasm_is($code, $expected, $description)>
-
-Compile the Parrot Intermediate Representation and generate Parrot Assembler Code.
-Pass if the generated PASM is $expected.
-
-=item C<pir_2_pasm_like($code, $expected, $description)>
-
-Compile the Parrot Intermediate Representation and generate Parrot Assembler Code.
-Pass if the generated PASM matches $expected.
-
-=item C<pir_2_pasm_isnt($code, $unexpected, $description)>
-
-Compile the Parrot Intermediate Representation and generate Parrot Assembler
-Code.  Pass unless the generated PASM is $expected.
-
-=item C<c_output_is($code, $expected, $description, %options)>
-
-Compiles and runs the C code, passing the test if a string comparison of output
-with the expected result it true.  Valid options are 'todo' => 'reason' to mark
-a TODO test.
-
-=item C<c_output_like($code, $expected, $description, %options)>
-
-Compiles and runs the C code, passing the test if output matches the expected
-result.  Valid options are 'todo' => 'reason' to mark a TODO test.
-
-=item C<c_output_isnt($code, $unexpected, $description, %options)>
-
-Compiles and runs the C code, passing the test if a string comparison of output
-with the unexpected result is false.  Valid options are 'todo' => 'reason' to
-mark a TODO test.
-
-=item C<example_output_is( $example_f, $expected, @todo )>
-
-=item C<example_output_like( $example_f, $expected, @todo )>
-
-=item C<example_output_isnt( $example_f, $expected, @todo )>
-
-Determines the language, PIR or PASM, from the extension of C<$example_f> and runs
-the appropriate C<^language_output_(is|like|isnt)> sub.
-C<$example_f> is used as a description, so don't pass one.
-
-=item C<skip($why, $how_many)>
-
-Use within a C<SKIP: { ... }> block to indicate why and how many tests to skip,
-just like in Test::More.
-
-=item C<run_command($command, %options)>
-
-Run the given $command in a cross-platform manner.
-
-%options include...
-
-    STDOUT    name of file to redirect STDOUT to
-    STDERR    name of file to redirect STDERR to
-    CD        directory to run the command in
-
-For example:
-
-    # equivalent to "cd some_dir && make test"
-    run_command("make test", CD => "some_dir");
-
-=item C<slurp_file($file_name)>
-
-Read the whole file $file_name and return the content as a string.
-
-=item C<convert_line_endings($text)>
-
-Convert Win32 style line endins with Unix style line endings.
-
-=item C<path_to_parrot()>
-
-Construct an absolute path to the parrot root dir.
-
-=item C<per_test( $ext, $test_no )>
-
-Construct a path for a temporary files.
-Takes C<$0> into account.
-
-=item C<write_code_to_file($code, $code_f)>
-
-Writes C<$code> into the file C<$code_f>.
-
-=item C<generate_languages_functions>
-
-Generate functions that are only used by a couple of
-Parrot::Test::<lang> modules.
-See RT#43266.
-This implementation is experimental and currently only works
-for languages/pipp.
-
-=back
 
 =head1 SEE ALSO
 
