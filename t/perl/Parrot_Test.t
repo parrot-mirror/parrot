@@ -19,9 +19,7 @@ These tests cover the basic functionality of C<Parrot::Test>.
 use strict;
 use warnings;
 use Test::More;
-#use Test::More qw( no_plan );;
 use Carp;
-use Data::Dumper;$Data::Dumper::Indent=1;
 use File::Spec;
 use lib qw( lib );
 use Parrot::Config;

@@ -501,8 +501,8 @@ sub generate_languages_functions {
     }
 }
 
-# The following methods --up until generate_languages_functions() -- are
-# private.  They should not be used by modules inheriting from Parrot::Test.
+# The following methods are private.  They should not be used by modules
+# inheriting from Parrot::Test.
 
 sub _generate_test_functions {
 
