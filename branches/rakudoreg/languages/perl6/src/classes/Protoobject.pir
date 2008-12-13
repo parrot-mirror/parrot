@@ -13,7 +13,6 @@ Protoobject - methods on Protoobjects
 =item defined()
 
 =cut
-
 .namespace ['P6protoobject']
 .sub 'defined' :method
     $P0 = get_hll_global ['Bool'], 'False'

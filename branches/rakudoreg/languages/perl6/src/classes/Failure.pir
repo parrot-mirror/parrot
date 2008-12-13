@@ -12,6 +12,15 @@
 
     $P0 = box 1
     set_hll_global '$WARNINGS', $P0
+
+    # There are a few other types that we don't have yet, but we will fake
+    # up by sticking a Failure in the namespace for them.
+    set_hll_global 'Class', failureproto
+    set_hll_global 'Void', failureproto
+    set_hll_global 'Inf', failureproto
+    set_hll_global 'NaN', failureproto
+    set_hll_global 'Regex', failureproto
+    set_hll_global 'StrPos', failureproto
 .end
 
 

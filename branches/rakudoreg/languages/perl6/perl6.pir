@@ -118,6 +118,12 @@ USAGE
     $P0 = new 'List'
     set_hll_global ['Perl6'], '@?END_BLOCKS', $P0
 
+    ##  create a list of "UnderConstruction" objects we need to remove from
+    ##  the namespace once we reach the point of having finished compiling
+    ##  them
+    $P0 = new 'List'
+    set_hll_global ['Perl6';'Grammar';'Actions'], '@?UNDER_CONSTRUCTION', $P0
+
     ##  tell PAST::Var how to encode Perl6Str and Str values
     $P0 = get_hll_global ['PAST';'Compiler'], '%valflags'
     $P0['Perl6Str'] = 'e'

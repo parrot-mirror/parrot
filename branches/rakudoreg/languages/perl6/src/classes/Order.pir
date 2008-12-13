@@ -33,6 +33,9 @@ disappear and the definition moved into a prelude.
     $P0 = -1
     set_hll_global ['Order'], 'Increase', $P0
 
+    $P0 = class $P0
+    $P1 = box 1
+    setprop $P0, 'enum', $P1
 .end
 
 
