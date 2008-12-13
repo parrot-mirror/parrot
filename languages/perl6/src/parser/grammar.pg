@@ -806,8 +806,43 @@ rule fulltypename {
 }
 
 token typename {
-    <?before <.upper> | '::' > <name>
+    $<name>=<registered_typename>
     {*}
+}
+
+# XXX This goes away once we have assertions.
+token registered_typename {
+    <name>
+    {{
+        .local pmc compiler_obj, check_ns, check_symbol
+        .local string full_name
+        full_name = match['name']
+        $S0 = substr full_name, 0, 2
+        if $S0 == '::' goto type_ok
+        compiler_obj = get_hll_global [ 'Perl6' ], 'Compiler'
+        check_ns = compiler_obj.'parse_name'(full_name)
+        $S0 = pop check_ns
+        check_symbol = get_hll_global check_ns, $S0
+        if null check_symbol goto fail_it
+        $I0 = does check_symbol, 'Abstraction'
+        if $I0 goto type_ok
+        # XXX The following should be covered by a check for does Abstraction
+        $I0 = isa check_symbol, 'P6protoobject'
+        if $I0 goto type_ok
+        $I0 = isa check_symbol, 'Role'
+        if $I0 goto type_ok
+        $P0 = class check_symbol
+        $P0 = getprop 'enum', $P0
+        if null $P0 goto not_enum
+        if $P0 goto type_ok
+      not_enum:
+        goto fail_it
+      type_ok:
+        $P0 = match['name']
+        .return ($P0)
+      fail_it:
+    }}
+    <fail>
 }
 
 # These regex rules are some way off STD.pm at the moment, but we'll work them

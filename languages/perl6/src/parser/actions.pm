@@ -115,6 +115,12 @@ method TOP($/) {
         )
     );
 
+    # Finally, clear up any temporary entries we made in the namespace.
+    our @?UNDER_CONSTRUCTION;
+    while @?UNDER_CONSTRUCTION.elems() > 0 {
+        @?UNDER_CONSTRUCTION.pop().cleanup();
+    }
+
     make $past;
 }
 
@@ -653,6 +659,15 @@ method enum_declarator($/, $key) {
         my $getvals_sub := PAST::Compiler.compile( $block );
         my %values := $getvals_sub();
 
+        # Register the enum itself in the namespace.
+        our @?UNDER_CONSTRUCTION;
+        my @namespace := Perl6::Compiler.parse_name($<name>[0]);
+        my $short_name := @namespace ?? @namespace.pop() !! undef;
+        @?UNDER_CONSTRUCTION.push(
+            Perl6::Compiler::UnderConstructionProto.create(@namespace, $short_name)
+        );
+        @namespace.push($short_name); # Restore for putting stuff inside the namespace.
+
         # Now we need to emit a role of the name of the enum containing:
         #  * One attribute with the same name as the enum
         #  * A method of the same name as the enum
@@ -842,7 +857,7 @@ method enum_declarator($/, $key) {
 
         # Now we need to create instances of each of these and install them
         # in a package starting with the enum's name, plus an alias to them
-        # in the current package.
+        # in the current package. Also register them in the namespace.
         for %values.keys() {
             # Instantiate with value.
             $class_past.push(PAST::Op.new(
@@ -880,6 +895,14 @@ method enum_declarator($/, $key) {
                     :scope('package')
                 )
             ));
+
+            # Register both.
+            @?UNDER_CONSTRUCTION.push(
+                Perl6::Compiler::UnderConstructionProto.create(@namespace, $_)
+            );
+            @?UNDER_CONSTRUCTION.push(
+                Perl6::Compiler::UnderConstructionProto.create(list(), $_)
+            );
         }
 
         # Assemble all that we build into a statement list and then place it
@@ -1196,7 +1219,7 @@ method signature($/) {
         if $_<parameter><type_constraint> {
             for $_<parameter><type_constraint> {
                 # Just a type name?
-                if $_<typename><name><identifier> {
+                if $_<typename><name> && substr($_<typename><name>, 0, 2) ne '::' {
                     # Get type; we may have to fix up the scope if it's
                     # been captured within the signature.
                     my $type := $( $_<typename> );
@@ -1218,7 +1241,7 @@ method signature($/) {
                     $cur_param_types.push($type_obj);
                 }
                 # is it a ::Foo type binding?
-                elsif $_<typename> {
+                elsif substr($_<typename>, 0, 2) eq '::' {
                     my $tvname := ~$_<typename><name><morename>[0]<identifier>;
                     $params.push(PAST::Op.new(
                         :pasttype('bind'),
@@ -1773,6 +1796,10 @@ method package_def($/, $key) {
     my $name := $<name>;
 
     if $key eq 'open' {
+        our @?UNDER_CONSTRUCTION;
+        my @namespace := Perl6::Compiler.parse_name($<name>[0]);
+        my $short_name := @namespace ?? @namespace.pop() !! undef;
+
         # Start of package definition. Handle class and grammar specially.
         if $?PACKAGE =:= $?GRAMMAR {
             # Anonymous grammars not supported.
@@ -1795,6 +1822,11 @@ method package_def($/, $key) {
                     )
                 )
             );
+
+            # Register type in the namespace.
+            @?UNDER_CONSTRUCTION.push(
+                Perl6::Compiler::UnderConstructionProto.create(@namespace, $short_name)
+            );
         }
         elsif $?PACKAGE =:= $?CLASS {
             my $class_def;
@@ -1814,19 +1846,20 @@ method package_def($/, $key) {
                     )
                 );
 
-                # Add a name, if we have one.
-                if $name {
+                # Add a name, if we have one, and register in the namespace.
+                if $<name> {
                     $class_def[1].push( PAST::Val.new( :value(~$name[0]) ) );
+                    @?UNDER_CONSTRUCTION.push(
+                        Perl6::Compiler::UnderConstructionProto.create(@namespace, $short_name)
+                    );
                 }
             }
             else {
                 # We're adding to an existing class. Look up class by name and put
                 # it in $def.
-                unless $<name> {
+                unless $name {
                     $/.panic("Can only use is also trait on a named class.");
                 }
-                my @namespace := Perl6::Compiler.parse_name($<name>[0]);
-                my $short_name := @namespace.pop();
                 $class_def := PAST::Op.new(
                     :node($/),
                     :pasttype('bind'),
@@ -2015,6 +2048,14 @@ method role_def($/, $key) {
 
         # Also store the current namespace.
         $?NS := $name;
+
+        # Register type in the namespace.
+        our @?UNDER_CONSTRUCTION;
+        my @namespace := Perl6::Compiler.parse_name($name);
+        my $short_name := @namespace ?? @namespace.pop() !! undef;
+        @?UNDER_CONSTRUCTION.push(
+            Perl6::Compiler::UnderConstructionProto.create(@namespace, $short_name)
+        );
     }
     else {
         # Declare the namespace and that the result block holds things that we
@@ -3128,13 +3169,14 @@ method type_declarator($/) {
     }
 
     # Create subset type.
-    my @name := Perl6::Compiler.parse_name($<name>);
+    my @namespace := Perl6::Compiler.parse_name($<name>);
+    my $short_name := @namespace.pop();
     $past := PAST::Op.new(
         :node($/),
         :pasttype('bind'),
         PAST::Var.new(
-            :name(@name.pop()),
-            :namespace(@name),
+            :name($short_name),
+            :namespace(@namespace),
             :scope('package')
         ),
         PAST::Op.new(
@@ -3149,6 +3191,12 @@ method type_declarator($/) {
                 ),
             $past
         )
+    );
+
+    # Register in the namespace.
+    our @?UNDER_CONSTRUCTION;
+    @?UNDER_CONSTRUCTION.push(
+        Perl6::Compiler::UnderConstructionProto.create(@namespace, $short_name)
     );
 
     # Put this code in $?INIT, so the type is created early enough, then this

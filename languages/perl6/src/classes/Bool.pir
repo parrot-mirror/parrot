@@ -31,6 +31,10 @@ symbols for C<Bool::True> and C<Bool::False>.
     $P0 = boolproto.'new'()
     $P0 = 1
     set_hll_global ['Bool'], 'True', $P0
+
+    $P0 = class $P0
+    $P1 = box 1
+    setprop $P0, 'enum', $P1
 .end
 
 
