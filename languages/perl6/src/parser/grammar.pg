@@ -240,6 +240,7 @@ rule statement_control {
     | <use_statement> {*}                        #= use_statement
     | <begin_statement> {*}                      #= begin_statement
     | <end_statement> {*}                        #= end_statement
+    | <catch_statement> {*}                      #= catch_statement
 }
 
 rule if_statement {
@@ -323,6 +324,12 @@ rule end_statement {
     {*}
 }
 
+rule catch_statement {
+    $<sym>=[CATCH]
+    <block>
+    {*}
+}
+
 rule statement_mod_loop {
     $<sym>=[while|until|for|given] <EXPR> {*}
 }
@@ -350,6 +357,7 @@ rule multi_declarator {
 token routine_declarator {
     | $<sym>='sub' <routine_def> {*}             #= sub
     | $<sym>='method' <method_def> {*}           #= method
+    | $<sym>='submethod' <method_def> {*}        #= submethod
 }
 
 rule routine_def {

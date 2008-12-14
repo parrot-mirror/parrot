@@ -429,8 +429,20 @@ STILL INCOMPLETE (see parse_arg_impl).
     .param string mode
     .param int options
     .param pmc context :optional
-    $P0 = open path, mode
+
+    # for now ignore failures
+    push_eh catch
+
+    $P0 = new 'FileHandle'
+    $P0.'open'( path, mode )
+
+    pop_eh
+
     .return ($P0)
+
+catch:
+    .RETURN_FALSE()
+
 .end
 
 =item C<stream_passthru>

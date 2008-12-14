@@ -566,7 +566,7 @@ nodes of type C<PAST::Stmts>.
     ops = self.'post_children'(node, 'signature'=>$S0)
     $P0 = ops[-1]
     ops.'result'($P0)
-    .local pmc eh, iter
+    .local pmc eh
     eh = node.'handlers'()
     unless eh, no_eh
     ops = self.'wrap_handlers'(ops,eh,'rtype'=>rtype)
@@ -732,22 +732,23 @@ Return the POST representation of a C<PAST::Block>.
 
     ##  pir-encode name and namespace
     .local string blockreg, blockref
-    name = self.'escape'(name)
     blockreg = self.'uniquereg'('P')
     if ns goto block_ns
     blockref = concat ".const 'Sub' ", blockreg
     concat blockref, ' = '
-    concat blockref, name
+    $P0 = bpost.'subid'()
+    $S0 = self.'escape'($P0)
+    concat blockref, $S0
     goto have_blockref
   block_ns:
     $P0 = get_global '%!codestring'
-    ns = $P0.'key'(ns)
     blockref = concat 'get_hll_global ', blockreg
+    $S0 = $P0.'key'(ns)
     concat blockref, ', '
-    $S0 = ns
     concat blockref, $S0
+    $S0 = self.'escape'(name)
     concat blockref, ', '
-    concat blockref, name
+    concat blockref, $S0
   have_blockref:
 
     ##  determine the outer POST::Sub for the new one
@@ -825,12 +826,22 @@ Return the POST representation of a C<PAST::Block>.
     $S0 = repeat 'v', $I0
     concat $S0, '*'
     ##  convert children to post
-    .local pmc ops
+    .local pmc ops, retval
     ops = self.'post_children'(node, 'signature'=>$S0)
-    bpost.'push'(ops)
+    ##  wrap the child with appropriate exception handlers, if any
+    .local pmc eh
+    eh = node.'handlers'()
+    unless eh, no_eh
+    $S0 = options['rtype']
+    retval = ops[-1]
+    ops = self.'wrap_handlers'(ops,eh,'rtype'=>$S0)
+    goto had_eh
+  no_eh:
     ##  result of last child is return from block
-    $P0 = ops[-1]
-    bpost.'push_pirop'('return', $P0)
+    retval = ops[-1]
+  had_eh:
+    bpost.'push'(ops)
+    bpost.'push_pirop'('return', retval)
 
     unless ctrlpast goto sub_done
     bpost.'push'(ctrllabel)
@@ -868,9 +879,9 @@ Return the POST representation of a C<PAST::Block>.
     .local pmc lisub
     $P0 = get_hll_global ['POST'], 'Sub'
     lisub = $P0.'new'('outer'=>bpost, 'pirflags'=>':load :init')
+    lisub.'push_pirop'(blockref)
     lisub.'push_pirop'('.local pmc', 'block')
-    lisub.'push_pirop'('interpinfo', '$P20', .INTERPINFO_CURRENT_SUB)
-    lisub.'push_pirop'('callmethod', '"get_outer"', '$P20', 'result'=>'block')
+    lisub.'push_pirop'('set', 'block', blockreg)
     .local pmc lipast, lipost
     lipast = node.'loadinit'()
     lipost = self.'as_post'(lipast, 'rtype'=>'v')

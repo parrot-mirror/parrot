@@ -381,6 +381,28 @@ method end_statement($/) {
     make $past;
 }
 
+method catch_statement($/) {
+    my $past := $( $<block> );
+    $past.blocktype('immediate');
+    $past := PAST::Stmts.new(
+        PAST::Op.new(
+            :pasttype('bind'),
+            PAST::Var.new( :name('$_'), :scope('lexical') ),
+            PAST::Var.new( :name('exception'), :scope('register') )
+        ),
+        $past
+    );
+    our $?BLOCK;
+    my $eh := PAST::Control.new( $past );
+    my @handlers;
+    if $?BLOCK.handlers() {
+        @handlers := $?BLOCK.handlers();
+    }
+    @handlers.unshift($eh);
+    $?BLOCK.handlers(@handlers);
+    make PAST::Stmts.new();
+}
+
 method statement_mod_loop($/) {
     my $expr := $( $<EXPR> );
     my $sym := ~$<sym>;
@@ -477,6 +499,11 @@ method multi_declarator($/, $key) {
     # If we just got a routine_def, make it a sub.
     if $key eq 'routine_def' {
         create_sub($/, $past);
+    }
+
+    # If we have an only, proto or multi, we must have a name.
+    if $<sym> ne "" && $past.name() eq "" {
+        $/.panic("'" ~ $<sym> ~ "' can only be used on named routines");
     }
 
     # If it was multi or a proto, then emit a :multi.
@@ -578,6 +605,7 @@ method routine_declarator($/, $key) {
             my $descriptor := sig_descriptor_create();
             sig_descriptor_set($descriptor, 'name', PAST::Val.new( :value('$') ));
             sig_descriptor_set($descriptor, 'invocant', 1);
+            sig_descriptor_set($descriptor, 'multi_invocant', 1);
             sig_descriptor_set($descriptor, 'constraints',
                 PAST::Op.new(
                     :pasttype('call'),
@@ -587,6 +615,9 @@ method routine_declarator($/, $key) {
             $signature.unshift($descriptor);
             $signature.unshift($obj);
         }
+    }
+    elsif $key eq 'submethod' {
+        $/.panic('submethod declarations not yet implemented');
     }
     $past.node($/);
     if (+@($past[1])) {
@@ -2330,7 +2361,7 @@ method scope_declarator($/) {
         # the declaration evaluate to the signature object, thus allowing an
         # assignment to it.
         my @declare := sig_extract_declarables($/, $past);
-        $past := PAST::Stmts.new($past);
+        $past := PAST::Op.new(:name('list'), :node($/) );
         for @declare {
             # Work out sigil and twigil.
             my $sigil := substr($_, 0, 1);
@@ -2354,7 +2385,7 @@ method scope_declarator($/) {
                 else {
                     $scope := 'package';
                 }
-                $past.unshift(PAST::Var.new(
+                $past.push(PAST::Var.new(
                     :name($_),
                     :isdecl(1),
                     :scope($scope),
@@ -3236,7 +3267,7 @@ sub declare_implicit_routine_vars($block) {
             $block[0].push( PAST::Var.new( :name($_),
                                            :scope('lexical'),
                                            :isdecl(1),
-                                           :viviself('Perl6Scalar') ) );
+                                           :viviself('Failure') ) );
             $block.symbol($_, :scope('lexical') );
         }
     }

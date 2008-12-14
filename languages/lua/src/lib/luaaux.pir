@@ -27,15 +27,24 @@ the call stack:
 
 This function never returns.
 
+CAUTION: don't used it in an exception handler, but lua_x_argerror & rethrow.
+
 =cut
 
 .sub 'lua_argerror'
     .param int narg
     .param pmc extramsg :slurpy
+    $S0 = lua_x_argerror(narg, extramsg :flat)
+    lua_error($S0)
+.end
+
+.sub 'lua_x_argerror'
+    .param int narg
+    .param pmc extramsg :slurpy
     $S1 = narg
     new $P0, 'Lua'
     $S0 = $P0.'caller'()
-    lua_error("bad argument #", $S1, " to '", $S0, "' (", extramsg :flat, ")")
+    .tailcall lua_x_error("bad argument #", $S1, " to '", $S0, "' (", extramsg :flat, ")")
 .end
 
 
@@ -199,14 +208,21 @@ Raises an error.
 
 This function never returns.
 
+CAUTION: don't used it in an exception handler, but lua_x_error & rethrow.
+
 =cut
 
 .sub 'lua_error'
     .param pmc message :slurpy
-    $S0 = join '', message
+    $S0 = lua_x_error(message :flat)
     die $S0
 .end
 
+.sub 'lua_x_error'
+    .param pmc message :slurpy
+    $S0 = join '', message
+    .return ($S0)
+.end
 
 =item C<lua_findtable (t, fname)>
 
@@ -651,21 +667,22 @@ This function only loads the chunk; it does not run it.
     goto L2
   L1:
     chunkname = filename
-    f = open filename, '<'
-    unless f goto L3
+    f = new 'FileHandle'
+    push_eh _handler
+    f.'open'(filename, 'r')
+    pop_eh
   L2:
     $S0 = f.'readall'()
     if filename == '' goto L4
-    close f
+    f.'close'()
   L4:
     .tailcall lua_load($S0, chunkname)
-  L3:
+  _handler:
     $S0 = 'cannot open '
     $S0 .= filename
     $S0 .= ': '
     $S1 = err
     $S0 .= $S1
-  L5:
     null $P0
     .return ($P0, $S0)
 .end
@@ -970,14 +987,14 @@ This function never returns.
     .return (0, $P0)
   _handler:
     .local pmc ex
-    .local string msg
     .get_results (ex)
-    msg = ex
     $P0 = getattribute ex, 'severity'
     if null $P0 goto L1
     $I0 = $P0
     if $I0 == .EXCEPT_EXIT goto L2
   L1:
+    .local string msg
+    msg = ex
     .local int lineno
     .local string traceback, where
     (traceback, where) = 'traceback'()
@@ -992,6 +1009,9 @@ This function never returns.
 .end
 
 .sub 'traceback'
+    # dummy implementation
+    .return ("stack traceback:\n\tdummy\n", "_._:0:")
+    # previous one that segfaults (see RT #60206)
     .local pmc obj
     .local string traceback, where
     new obj, 'Lua'

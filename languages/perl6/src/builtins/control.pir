@@ -145,27 +145,26 @@ the moment -- we'll do more complex handling a bit later.)
 
 =cut
 
-.sub 'die'
-    .param pmc list            :slurpy
-    .local pmc iter
-    .local string message
+.sub 'die' :multi('Exception')
+    .param pmc ex
+    set_global '$!', ex
+    throw ex
+    .return ()
+.end
 
-    message = ''
-    iter = new 'Iterator', list
-  iter_loop:
-    unless iter goto iter_end
-    $P0 = shift iter
-    $S0 = $P0
-    message .= $S0
-    goto iter_loop
-  iter_end:
+.sub 'die' :multi(_)
+    .param pmc list            :slurpy
+    .local string message
+    .local pmc ex
+
+    message = list.'join'('')
     if message > '' goto have_message
     message = "Died\n"
   have_message:
-    $P0 = new 'Exception'
-    $P0 = message
-    set_global '$!', $P0
-    throw $P0
+    ex = new 'Exception'
+    ex = message
+    set_global '$!', ex
+    throw ex
     .return ()
 .end
 
@@ -292,6 +291,23 @@ on error.
     .return (res)
 .end
 
+=item warn
+
+=cut
+
+.sub 'warn'
+    .param pmc list            :slurpy
+    .local pmc it
+    .local string message
+
+    message = list.'join'('')
+    if message > '' goto have_message
+    message = "Warning!  Something's wrong\n"
+  have_message:
+    printerr message
+    .return ()
+.end
+
 
 =back
 
@@ -310,6 +326,12 @@ support.
 =item fail
 
 B<TODO>: Research the exception handling system.
+
+=item warn
+
+B<TODO>: Throw a resumable exception when Rakudo supports top-level exception
+handlers.  Note that the default exception handler should print the message of
+this exception to standard error.
 
 
 =back

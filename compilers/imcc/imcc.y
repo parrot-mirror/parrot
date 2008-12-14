@@ -295,7 +295,7 @@ mk_pmc_const(PARROT_INTERP, ARGMOD(IMC_Unit *unit), ARGIN(const char *type),
     const int type_enum = atoi(type);
     const int ascii = (*constant == '\'' || *constant == '"');
     SymReg *rhs;
-    SymReg *r[2];
+    SymReg *r[3];
     char   *name;
 
     if (left->type == VTADDRESS) {      /* IDENTIFIER */
@@ -325,7 +325,7 @@ mk_pmc_const(PARROT_INTERP, ARGMOD(IMC_Unit *unit), ARGIN(const char *type),
             if (!ascii)
                 rhs->type |= VT_ENCODED;
 
-            rhs->usage    = U_FIXUP;
+            rhs->usage    = U_FIXUP | U_SUBID_LOOKUP;;
             break;
         default:
             rhs = mk_const(interp, name, 'P');
@@ -347,7 +347,7 @@ mk_pmc_const_named(PARROT_INTERP, ARGMOD(IMC_Unit *unit),
     ARGIN(const char *name), ARGMOD(SymReg *left), ARGIN(const char *constant))
 {
     SymReg *rhs;
-    SymReg *r[2];
+    SymReg *r[3];
     char   *const_name;
     const int ascii       = (*constant == '\'' || *constant == '"');
     char   *unquoted_name = str_dup(name + 1);
@@ -381,7 +381,7 @@ mk_pmc_const_named(PARROT_INTERP, ARGMOD(IMC_Unit *unit),
         if (!ascii)
             rhs->type |= VT_ENCODED;
 
-        rhs->usage    = U_FIXUP;
+        rhs->usage    = U_FIXUP | U_SUBID_LOOKUP;
     }
     else {
         rhs = mk_const(interp, const_name, 'P');
@@ -701,7 +701,7 @@ do_loadlib(PARROT_INTERP, ARGIN(const char *lib))
 %token <t> GOTO ARG IF UNLESS PNULL SET_RETURN SET_YIELD
 %token <t> ADV_FLAT ADV_SLURPY ADV_OPTIONAL ADV_OPT_FLAG ADV_NAMED ADV_ARROW
 %token <t> NEW ADV_INVOCANT
-%token <t> NAMESPACE ENDNAMESPACE DOT_METHOD
+%token <t> NAMESPACE DOT_METHOD
 %token <t> SUB SYM LOCAL LEXICAL CONST
 %token <t> INC DEC GLOBAL_CONST
 %token <t> PLUS_ASSIGN MINUS_ASSIGN MUL_ASSIGN DIV_ASSIGN CONCAT_ASSIGN
@@ -742,7 +742,7 @@ do_loadlib(PARROT_INTERP, ARGIN(const char *lib))
 %type <i> if_statement unless_statement
 %type <i> func_assign get_results
 %type <i> opt_invocant
-%type <sr> target targetlist reg const var string result pcc_set_yield
+%type <sr> target targetlist reg const var result pcc_set_yield
 %type <sr> keylist keylist_force _keylist key maybe_ns
 %type <sr> vars _vars var_or_i _var_or_i label_op sub_label_op sub_label_op_c
 %type <i> pasmcode pasmline pasm_inst
@@ -992,7 +992,14 @@ sub:
          {
            iSUBROUTINE(interp, IMCC_INFO(interp)->cur_unit, $3);
          }
-     sub_proto '\n'            { IMCC_INFO(interp)->cur_call->pcc_sub->pragma = $5; }
+     sub_proto '\n'
+        {
+          IMCC_INFO(interp)->cur_call->pcc_sub->pragma = $5;
+          if (!IMCC_INFO(interp)->cur_unit->instructions->symregs[0]->subid) {
+            IMCC_INFO(interp)->cur_unit->instructions->symregs[0]->subid = str_dup(
+            IMCC_INFO(interp)->cur_unit->instructions->symregs[0]->name);
+          }
+        }
      sub_params
      sub_body  ESUB            { $$ = 0; IMCC_INFO(interp)->cur_call = NULL; }
    ;
@@ -1107,15 +1114,10 @@ subid:
          {
            $$ = 0;
            IMCC_INFO(interp)->cur_unit->subid = NULL;
-           /*
-           IMCC_INFO(interp)->cur_unit->instructions->symregs[0]->subid = str_dup_remove_quotes($3);
-           mem_sys_free($3);
-           */
          }
    | SUBID '(' any_string ')'
          {
            $$ = 0;
-           /* IMCC_INFO(interp)->cur_unit->subid = $3; */
            IMCC_INFO(interp)->cur_unit->subid = mk_const(interp, $3, 'S');
            IMCC_INFO(interp)->cur_unit->instructions->symregs[0]->subid = str_dup_remove_quotes($3);
            mem_sys_free($3);
@@ -1457,7 +1459,7 @@ statement:
    | MACRO '\n'                { $$ = 0; }
    | FILECOMMENT               { $$ = 0; }
    | LINECOMMENT               { $$ = 0; }
-   | location_directive            { $$ = 0; }
+   | location_directive        { $$ = 0; }
    ;
 
 labels:
@@ -1526,8 +1528,6 @@ opt_unique_reg:
 labeled_inst:
      assignment
    | conditional_statement
-   | NAMESPACE IDENTIFIER      { push_namespace(interp, $2); mem_sys_free($2); }
-   | ENDNAMESPACE IDENTIFIER   { pop_namespace(interp, $2); mem_sys_free($2); }
    | LOCAL { is_def=1; } type id_list
          {
            IdList *l = $4;
@@ -2061,10 +2061,6 @@ const:
    | USTRINGC                  { $$ = mk_const(interp, $1, 'U'); mem_sys_free($1); }
    ;
 
-string:
-     SREG                      { $$ = mk_symreg(interp, $1, 'S'); mem_sys_free($1); }
-   | STRINGC                   { $$ = mk_const(interp, $1, 'S');  mem_sys_free($1); }
-   ;
 
 
 /* The End */
