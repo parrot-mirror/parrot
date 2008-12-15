@@ -13,9 +13,6 @@ src/classes/Associative.pir - Associative Role
 .sub '' :anon :load :init
     .local pmc positional
     positional = '!keyword_role'('Associative')
-
-    $P0 = get_hll_namespace ['Associative']
-    '!EXPORT'('postcircumfix:{ }', $P0)
 .end
 
 =head2 Operators
@@ -29,7 +26,7 @@ Returns a list element or slice.
 =cut
 
 .namespace ['Associative']
-.sub 'postcircumfix:{ }' :method :multi(_, _)
+.sub 'postcircumfix:{ }' :method
     .param pmc args            :slurpy
     .param pmc options         :slurpy :named
     .local pmc result
@@ -62,6 +59,19 @@ Returns a list element or slice.
   slice_done:
   end:
     .return (result)
+.end
+
+.namespace []
+.sub 'postcircumfix:{ }'
+    .param pmc invocant
+    .param pmc args    :slurpy
+    .param pmc options :slurpy :named
+    $I0 = can invocant, 'postcircumfix:{ }'
+    unless $I0 goto foreign
+    .tailcall invocant.'postcircumfix:{ }'(args :flat, options :flat :named)
+  foreign:
+    $P0 = get_hll_global ['Associative'], 'postcircumfix:{ }'
+    .tailcall $P0(invocant, args :flat, options :flat :named)
 .end
 
 =back
