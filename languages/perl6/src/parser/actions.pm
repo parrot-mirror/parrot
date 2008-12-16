@@ -1312,7 +1312,6 @@ method signature($/) {
                             )
                         )
                     ));
-                    $block_past.symbol($tvname, :scope('lexical'), :does_abstraction(1));
                 }
                 else {
                     my $type_obj := make_anon_subset($( $_<EXPR> ), $parameter);
@@ -1449,6 +1448,18 @@ method parameter($/) {
         }
         $past.viviself( $( $<default_value>[0]<EXPR> ) );
     }
+
+    # If it's a type variable, we should register it in the block now as we
+    # may see it again later in the signature.
+    if $/<type_constraint> {
+        for $/<type_constraint> {
+            if substr($_<typename><name>, 0, 2) eq '::' {
+                our $?BLOCK;
+                $?BLOCK.symbol(substr($_<typename><name>, 2), :scope('lexical'), :does_abstraction(1));
+            }
+        }
+    }
+
     make $past;
 }
 
