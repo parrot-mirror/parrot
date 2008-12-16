@@ -2961,16 +2961,53 @@ method typename($/) {
 
 method term($/, $key) {
     my $past;
+
+    my @ns;
+    my $short_name;
+    if $<name> {
+        @ns := Perl6::Compiler.parse_name(~$<name>);
+        $short_name := @ns.pop();
+    }
+
     if $key eq 'noarg' {
-        $past := PAST::Op.new( :name( ~$<name> ), :pasttype('call') );
+        if @ns {
+            $past := PAST::Op.new(
+                PAST::Var.new(
+                    :name($short_name),
+                    :namespace(@ns),
+                    :scope('package')
+                ),
+                :pasttype('call')
+            );
+        }
+        else {
+            $past := PAST::Op.new( :name( $short_name ), :pasttype('call') );
+        }
     }
     elsif $key eq 'args' {
         $past := $($<args>);
-        $past.name( ~$<name> );
+        if @ns {
+            $past.unshift(PAST::Var.new(
+                :name($short_name),
+                :namespace(@ns),
+                :scope('package')
+            ));
+        } else {
+            $past.name( $short_name );
+        }
     }
     elsif $key eq 'func args' {
         $past := build_call( $( $<semilist> ) );
-        $past.name( ~$<name> );
+        if @ns {
+            $past.unshift(PAST::Var.new(
+                :name($short_name),
+                :namespace(@ns),
+                :scope('package')
+            ));
+        }
+        else {
+            $past.name( $short_name );
+        }
     }
     elsif $key eq 'VAR' {
         $past := PAST::Op.new(
