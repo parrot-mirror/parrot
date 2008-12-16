@@ -100,7 +100,7 @@ Return invocant as a List.
 =cut
 
 .namespace ['Perl6Array']
-.sub 'list' :method
+.sub '' :method('list')
     .tailcall self.'values'()
 .end
 
@@ -200,6 +200,7 @@ Create an array.
     .tailcall values.'Scalar'()
 .end
 
+
 =back
 
 =head2 Coercion methods
@@ -213,6 +214,53 @@ Create an array.
 .sub 'Array' :method
     .return (self)
 .end
+
+
+=back
+
+=head2 Private Methods
+
+=over
+
+=item !flatten()
+
+Return self, as Arrays are already flattened.
+
+=cut
+
+.namespace ['Perl6Array']
+.sub '!flatten' :method
+    .return (self)
+.end
+
+=item !STORE()
+
+Store things into an Array (e.g., upon assignment)
+
+=cut
+
+.namespace ['Perl6Array']
+.sub '!STORE' :method
+    .param pmc source
+    .local pmc array, it
+    ## we create a new array here instead of emptying self in case
+    ## the source argument contains self or elements of self.
+    array = new 'ResizablePMCArray'
+    source = 'list'(source)
+    it = iter source
+  array_loop:
+    unless it goto array_done
+    $P0 = shift it
+    $P0 = 'Scalar'($P0)
+    $P0 = clone $P0
+    push array, $P0
+    goto array_loop
+  array_done:
+    $I0 = elements self
+    splice self, array, 0, $I0
+    .return (self)
+.end
+
 
 =back
 

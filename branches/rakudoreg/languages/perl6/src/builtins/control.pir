@@ -31,7 +31,7 @@ the moment -- we'll do more complex handling a bit later.)
     .param int has_value       :opt_flag
 
     if has_value goto have_value
-    value = 'list'()
+    value = new 'Nil'
   have_value:
     $P0         = new 'Exception'
     $P0['type'] = .CONTROL_RETURN
@@ -123,6 +123,27 @@ the moment -- we'll do more complex handling a bit later.)
     e = new 'Exception'
     e['severity'] = .EXCEPT_NORMAL
     e['type'] = .CONTROL_LOOP_NEXT
+    throw e
+.end
+
+.sub 'continue'
+    .local pmc e
+    e = new 'Exception'
+    e['severity'] = .EXCEPT_NORMAL
+    e['type'] = .CONTROL_CONTINUE
+    throw e
+.end
+
+.sub 'break'
+    .param pmc arg :optional
+    .param int has_arg :opt_flag
+    .local pmc e
+    e = new 'Exception'
+    e['severity'] = .EXCEPT_NORMAL
+    e['type'] = .CONTROL_BREAK
+    unless has_arg, no_arg
+    e['payload'] = arg
+  no_arg:
     throw e
 .end
 
@@ -297,13 +318,22 @@ on error.
 
 .sub 'warn'
     .param pmc list            :slurpy
-    .local pmc it
+    .local pmc ex
     .local string message
 
     message = list.'join'('')
     if message > '' goto have_message
     message = "Warning!  Something's wrong\n"
   have_message:
+    ## count_eh is broken
+    # $I0 = count_eh
+    # eq $I0, 0, no_eh
+    ex = new 'Exception'
+    ex['severity'] = .EXCEPT_WARNING
+    ex['message'] = message
+    throw ex
+    .return ()
+  no_eh:
     printerr message
     .return ()
 .end

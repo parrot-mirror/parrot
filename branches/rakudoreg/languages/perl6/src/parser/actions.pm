@@ -267,8 +267,9 @@ method when_statement($/) {
     my $block := $( $<block> );
     $block.blocktype('immediate');
 
-    # XXX TODO: push a control exception throw onto the end of the block so we
-    # exit the innermost block in which $_ was set.
+    # Push a handler onto the innermost block so that we can exit if we
+    # successfully match
+    when_handler_helper($block);
 
     # Invoke smartmatch of the expression.
     my $match_past := PAST::Op.new(
@@ -290,9 +291,65 @@ method when_statement($/) {
 
 method default_statement($/) {
     # Always executed if reached, so just produce the block.
-    my $past := $( $<block> );
-    $past.blocktype('immediate');
-    make $past;
+    my $block := $( $<block> );
+    $block.blocktype('immediate');
+
+    # Push a handler onto the innermost block so that we can exit if we
+    # successfully match
+    when_handler_helper($block);
+
+    make $block;
+}
+
+sub when_handler_helper($block) {
+    our $?BLOCK;
+    # XXX TODO: This isn't quite the right way to check this...
+    unless $?BLOCK.handlers() {
+        my @handlers;
+        @handlers.push(
+            PAST::Control.new(
+                PAST::Op.new(
+                    :pasttype('pirop'),
+                    :pirop('return'),
+                    PAST::Var.new(
+                        :scope('keyed'),
+                        PAST::Var.new( :name('exception'), :scope('register') ),
+                        'payload',
+                    ),
+                ),
+                :handle_types('BREAK')
+            )
+        );
+        $?BLOCK.handlers(@handlers);
+    }
+
+    # push a control exception throw onto the end of the block so we
+    # exit the innermost block in which $_ was set.
+    my $last := $block.pop();
+    $block.push(
+        PAST::Op.new(
+            :pasttype('call'),
+            :name('break'),
+            $last
+        )
+    );
+
+    # Push a handler onto the block to handle CONTINUE exceptions so we can
+    # skip throwing the BREAK exception
+    my @handlers;
+    if $block.handlers() {
+        @handlers := $block.handlers();
+    }
+    @handlers.push(
+        PAST::Control.new(
+            PAST::Op.new(
+                :pasttype('pirop'),
+                :pirop('return'),
+            ),
+            :handle_types('CONTINUE')
+        )
+    );
+    $block.handlers(@handlers);
 }
 
 method loop_statement($/) {
@@ -1552,29 +1609,20 @@ method postcircumfix($/, $key) {
         $past := build_call( $( $<semilist> ) );
         $past.node($/);
         $past.name('postcircumfix:[ ]');
-        $past.pasttype('call');
     }
     elsif $key eq '( )' {
         $past := build_call( $( $<semilist> ) );
         $past.node($/);
     }
     elsif $key eq '{ }' {
-        $past := PAST::Var.new(
-            $( $<semilist> ),
-            :scope('keyed'),
-            :vivibase('Perl6Hash'),
-            :viviself('Failure'),
-            :node( $/ )
-        );
+        $past := build_call( $( $<semilist> ) );
+        $past.node($/);
+        $past.name('postcircumfix:{ }');
     }
     elsif $key eq '< >' {
-        $past := PAST::Var.new(
-            $( $<quote_expression> ),
-            :scope('keyed'),
-            :vivibase('Perl6Hash'),
-            :viviself('Failure'),
-            :node( $/ )
-        );
+        $past := build_call( $( $<quote_expression> ) );
+        $past.node($/);
+        $past.name('postcircumfix:{ }');
     }
     else {
         $/.panic("postcircumfix " ~ $key ~ " not yet implemented");
@@ -2689,7 +2737,7 @@ method circumfix($/, $key) {
             my @children := @($past[1]);
             $past := PAST::Op.new(
                 :pasttype('call'),
-                :name('hash'),
+                :name('circumfix:{ }'),
                 :node($/)
             );
             for @children {
@@ -3315,7 +3363,7 @@ sub declare_implicit_routine_vars($block) {
             $block[0].push( PAST::Var.new( :name($_),
                                            :scope('lexical'),
                                            :isdecl(1),
-                                           :viviself('Perl6Scalar') ) );
+                                           :viviself('Failure') ) );
             $block.symbol($_, :scope('lexical') );
         }
     }
