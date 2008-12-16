@@ -811,14 +811,41 @@ token typename {
     <name>
     <?{{
         .local pmc compiler_obj, check_ns, check_symbol
-        .local string full_name
+        .local string full_name, short_name
         full_name = match['name']
+
+        # If it starts with ::, it's a declaration and will be handled in the
+        # actions.
         $S0 = substr full_name, 0, 2
         if $S0 == '::' goto type_ok
+
+        # Parse name; if we have a namespace part, can't be lexical, so jump
+        # to namespace check.
         compiler_obj = get_hll_global [ 'Perl6' ], 'Compiler'
         check_ns = compiler_obj.'parse_name'(full_name)
-        $S0 = pop check_ns
-        check_symbol = get_hll_global check_ns, $S0
+        short_name = pop check_ns
+        $I0 = elements check_ns
+        if $I0 goto find_in_ns
+
+        # Look in @?BLOCK first - it may be a lexical type var.
+        .local pmc blocks, block_it, block, sym_info
+        blocks = get_hll_global [ 'Perl6' ; 'Grammar' ; 'Actions' ], '@?BLOCK'
+        block_it = iter blocks
+      block_it_loop:
+        unless block_it goto block_it_loop_end
+        block = shift block_it
+        sym_info = block.'symbol'(short_name)
+        if null sym_info goto block_it_loop
+        $P0 = sym_info['does_abstraction']
+        if null $P0 goto block_it_loop
+        unless $P0 goto block_it_loop
+        goto type_ok
+      block_it_loop_end:
+
+        # Parse name and look for the symbol in the namespace, then check if
+        # it's a type.
+      find_in_ns:
+        check_symbol = get_hll_global check_ns, short_name
         if null check_symbol goto fail_it
         $I0 = does check_symbol, 'Abstraction'
         if $I0 goto type_ok
@@ -833,8 +860,8 @@ token typename {
         if $P0 goto type_ok
       not_enum:
         goto fail_it
+
       type_ok:
-        $P0 = match['name']
         .return (1)
       fail_it:
         .return (0)
