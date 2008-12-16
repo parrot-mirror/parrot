@@ -404,15 +404,13 @@ method use_statement($/) {
             :node( $/ )
         );
 
-        # What we'd really like to do now is something like:
-        # my $sub := PAST::Compiler.compile( $past );
-        # $sub();
-        # Which would include it at compile time. But for now, that breaks
-        # pre-compiled PIR modules (we'd also need to emit something to load
-        # modules from the pre-compiled PIR, somehow). But we can't just emit
-        # a call straight into the output code, because then we load the
-        # module too late to inherit from any classes in it. So for now we
-        # stick the use call into $?INIT.
+        # Compile the module.
+        my $sub := PAST::Compiler.compile( $past );
+        $sub();
+        
+        # Code to use the module needs to be emitted to, so this works for
+        # pre-compiled modules (it will check %*INC and not reload it) in the
+        # case we're doing a compile-and-run-directly invocation.
         our $?INIT;
         unless defined($?INIT) {
             $?INIT := PAST::Block.new();
