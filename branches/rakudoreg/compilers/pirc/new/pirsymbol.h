@@ -26,19 +26,18 @@ typedef struct syminfo {
     pir_type       type;
     live_interval *interval;
 
+    union sym_id {  /* identification of this symbol/reg */
+        char const *name;
+        int         regno;
+    } id;
+
 } syminfo;
 
 
 /* structure to represent a declared local variable or parameter */
 typedef struct symbol {
     syminfo        info;
-    int            color;
-    pir_type       type;
-    live_interval *interval;
-
-    char const    *name;  /* name of this symbol */
     target_flag    flags;
-
     struct symbol *next;
 
 } symbol;
@@ -47,12 +46,6 @@ typedef struct symbol {
 /* structure to represent a PIR register. */
 typedef struct pir_reg {
     syminfo         info;
-    int             color;
-    pir_type        type;
-    live_interval  *interval;
-
-    int             regno; /* symbolic (PIR) register number */
-
     struct pir_reg *next;
 
 } pir_reg;

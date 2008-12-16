@@ -35,10 +35,6 @@ See RT #47011.
 
 =over 4
 
-=item * C<pioctl> [post 0.5.1]
-
-See RT #48589.
-
 =item * C<store_global> [post 0.5.0]
 
 See RT #48016. Replace usage with set_[hll,root]_global variants.
@@ -64,6 +60,17 @@ The C<open> opcode will change from Perl-style mode-strings to 'r' for read,
 
 These opcodes were only used by the old MMD system. See TT #7.
 
+=item * C<slice> [post 0.8.2]
+
+The C<slice> opcode's implementation is experimental. Its use cases and
+implementation should be reconsidered. The current implementation will
+be removed.
+
+=item * C<add_io_event> [post 0.8.2]
+
+The C<add_io_event> opcode is experimental and non-functional. The current
+implementation will be removed.
+
 =back
 
 =head1 Class Features
@@ -74,7 +81,7 @@ These opcodes were only used by the old MMD system. See TT #7.
 
 See RT #48014. This will be removed once all core PMCs have been updated.
 
-=item :anon and :vtable named parameters to add_method [post 0.8.2]
+=item * :anon and :vtable named parameters to add_method [post 0.8.2]
 
 If you want to override a vtable method/function when building a Class, then
 use the method C<add_vtable_override> instead of calling C<add_method> with
@@ -85,6 +92,14 @@ one or both of these flags.
 =head1 PIR syntax
 
 =over 4
+
+=item * String indexing [post 0.8.2]
+
+String indexing sugar is deprecated. This means you can no longer write
+
+  $S0[1]
+
+to mean substr, $S0, 1, 1. Use the C<substr> op instead.
 
 =item * C<.namespace [ "a" .. "b" ]> [post 0.5.0]
 
