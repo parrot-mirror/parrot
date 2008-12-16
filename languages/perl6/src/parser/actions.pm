@@ -1298,7 +1298,7 @@ method signature($/) {
                     $cur_param_types.push($type_obj);
                 }
                 # is it a ::Foo type binding?
-                elsif substr($_<typename>, 0, 2) eq '::' {
+                elsif substr($_<typename><name>, 0, 2) eq '::' {
                     my $tvname := ~$_<typename><name><morename>[0]<identifier>;
                     $params.push(PAST::Op.new(
                         :pasttype('bind'),
@@ -1312,7 +1312,7 @@ method signature($/) {
                             )
                         )
                     ));
-                    $block_past.symbol($tvname, :scope('lexical'));
+                    $block_past.symbol($tvname, :scope('lexical'), :does_abstraction(1));
                 }
                 else {
                     my $type_obj := make_anon_subset($( $_<EXPR> ), $parameter);
