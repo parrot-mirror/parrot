@@ -62,6 +62,15 @@ Gets the value of the pair.
 .end
 
 
+=item pairs
+
+=cut
+
+.sub 'pairs' :method
+    .tailcall self.'list'()
+.end
+
+
 =item get_string()  (vtable method)
 
 Stringify the Pair.
@@ -134,6 +143,22 @@ Returns a Perl code representation of the pair.
     value = value.'item'()
     $P0 = get_hll_global 'Pair'
     .tailcall $P0.'new'('key'=>key, 'value'=>value)
+.end
+
+
+.sub 'infix:cmp' :multi(['Perl6Pair'], ['Perl6Pair'])
+    .param pmc a
+    .param pmc b
+    $P0 = a.'key'()
+    $P1 = b.'key'()
+    $I0 = 'infix:cmp'($P0, $P1)
+    unless $I0 == 0 goto done
+    $P0 = a.'value'()
+    $P1 = b.'value'()
+    $I0 = 'infix:cmp'($P0, $P1)
+  done:
+    $P0 = 'infix:<=>'($I0, 0)
+    .return ($P0)
 .end
 
 
