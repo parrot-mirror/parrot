@@ -96,10 +96,41 @@ any value type.
     ##  type of exception handler we support
     .local pmc controltypes
     controltypes = new 'Hash'
-    $P0 = split ' ', '.CONTROL_RETURN .CONTROL_OK .CONTROL_BREAK .CONTROL_CONTINUE .CONTROL_ERROR .CONTROL_TAKE .CONTROL_LOOP_NEXT .CONTROL_LOOP_LAST .CONTROL_LOOP_REDO'
+    $P0 = new 'ResizablePMCArray'
+    $P0.'push'(.CONTROL_RETURN)
+    $P0.'push'(.CONTROL_OK)
+    $P0.'push'(.CONTROL_BREAK)
+    $P0.'push'(.CONTROL_CONTINUE)
+    $P0.'push'(.CONTROL_ERROR)
+    $P0.'push'(.CONTROL_TAKE)
+    $P0.'push'(.CONTROL_LOOP_NEXT)
+    $P0.'push'(.CONTROL_LOOP_LAST)
+    $P0.'push'(.CONTROL_LOOP_REDO)
     controltypes['CONTROL']   = $P0
-    $P0 = split ' ', '.CONTROL_TAKE'
+    $P0 = new 'ResizablePMCArray'
+    $P0.'push'(.CONTROL_TAKE)
     controltypes['GATHER']   = $P0
+    $P0 = new 'ResizablePMCArray'
+    $P0.'push'(.CONTROL_OK)
+    controltypes['OK'] = $P0
+    $P0 = new 'ResizablePMCArray'
+    $P0.'push'(.CONTROL_BREAK)
+    controltypes['BREAK'] = $P0
+    $P0 = new 'ResizablePMCArray'
+    $P0.'push'(.CONTROL_CONTINUE)
+    controltypes['CONTINUE'] = $P0
+    $P0 = new 'ResizablePMCArray'
+    $P0.'push'(.CONTROL_ERROR)
+    controltypes['ERROR'] = $P0
+    $P0 = new 'ResizablePMCArray'
+    $P0.'push'(.CONTROL_LOOP_NEXT)
+    controltypes['NEXT'] = $P0
+    $P0 = new 'ResizablePMCArray'
+    $P0.'push'(.CONTROL_LOOP_LAST)
+    controltypes['LAST'] = $P0
+    $P0 = new 'ResizablePMCArray'
+    $P0.'push'(.CONTROL_LOOP_REDO)
+    controltypes['REDO'] = $P0
     set_global '%!controltypes', controltypes
 
     $P0 = new 'CodeString'
@@ -732,22 +763,23 @@ Return the POST representation of a C<PAST::Block>.
 
     ##  pir-encode name and namespace
     .local string blockreg, blockref
-    name = self.'escape'(name)
     blockreg = self.'uniquereg'('P')
     if ns goto block_ns
     blockref = concat ".const 'Sub' ", blockreg
     concat blockref, ' = '
-    concat blockref, name
+    $P0 = bpost.'subid'()
+    $S0 = self.'escape'($P0)
+    concat blockref, $S0
     goto have_blockref
   block_ns:
     $P0 = get_global '%!codestring'
-    ns = $P0.'key'(ns)
     blockref = concat 'get_hll_global ', blockreg
+    $S0 = $P0.'key'(ns)
     concat blockref, ', '
-    $S0 = ns
     concat blockref, $S0
+    $S0 = self.'escape'(name)
     concat blockref, ', '
-    concat blockref, name
+    concat blockref, $S0
   have_blockref:
 
     ##  determine the outer POST::Sub for the new one
@@ -878,9 +910,9 @@ Return the POST representation of a C<PAST::Block>.
     .local pmc lisub
     $P0 = get_hll_global ['POST'], 'Sub'
     lisub = $P0.'new'('outer'=>bpost, 'pirflags'=>':load :init')
+    lisub.'push_pirop'(blockref)
     lisub.'push_pirop'('.local pmc', 'block')
-    lisub.'push_pirop'('interpinfo', '$P20', .INTERPINFO_CURRENT_SUB)
-    lisub.'push_pirop'('callmethod', '"get_outer"', '$P20', 'result'=>'block')
+    lisub.'push_pirop'('set', 'block', blockreg)
     .local pmc lipast, lipost
     lipast = node.'loadinit'()
     lipost = self.'as_post'(lipast, 'rtype'=>'v')
