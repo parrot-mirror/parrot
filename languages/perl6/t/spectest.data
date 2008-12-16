@@ -1,11 +1,18 @@
 # this is a list of all spec tests that are supposed to pass
 # on current rakudo.
 # empty lines and those beginning with a # are ignored
+#
+# we don't add some files here, although all tests might pass right now
+#
+# S03-operators/overflow.t - passes only if bignum lib is available
+# S03-operators/binding-arrays.t - regressed to allow slices
+# S03-operators/binding-hashes.t - regressed to allow slices
 
 integration/lexical-array-in-inner-block.t
 integration/lexicals-and-attributes.t
 integration/man-or-boy.t
 integration/real-strings.t
+integration/say-crash.t
 integration/substr-after-match-in-gather-in-for.t
 S02-builtin_data_types/anon_block.t
 S02-builtin_data_types/array_extending.t
@@ -56,7 +63,6 @@ S03-operators/assign.t
 S03-operators/autoincrement.t
 S03-operators/autovivification.t
 S03-operators/binding-closure.t
-S03-operators/binding-hashes.t
 S03-operators/binding-scalars.t
 S03-operators/bit.t
 S03-operators/chained-declarators.t
@@ -81,6 +87,7 @@ S03-operators/spaceship-and-containers.t
 S03-operators/ternary.t
 S03-operators/true.t
 S03-operators/value_equivalence.t
+S04-blocks-and-statements/pointy-rw.t
 S04-declarations/implicit-parameter.t
 S04-declarations/multiple.t
 S04-declarations/my.t
@@ -110,11 +117,13 @@ S04-statements/unless.t
 S04-statements/until.t
 S04-statements/while.t
 S05-grammar/namespace.t
+S05-grammar/ws.t
 S05-mass/rx.t
 S05-mass/stdrules.t
 S05-match/arrayhash.t
 S05-match/blocks.t
 S05-match/non-capturing.t
+S05-metachars/line-anchors.t
 S05-metachars/newline.t
 S05-metasyntax/changed.t
 S05-metasyntax/charset.t
@@ -128,6 +137,7 @@ S05-transliteration/trans.t
 S05-transliteration/with-closure.t
 S06-advanced_subroutine_features/recurse.t
 S06-advanced_subroutine_features/return.t
+S06-currying/named.t
 S06-multi/proto.t
 S06-multi/syntax.t
 S06-multi/type-based.t
@@ -148,7 +158,9 @@ S06-traits/is-copy.t
 S06-traits/is-rw.t
 S06-traits/misc.t
 S09-subscript_slice/slice.t
+S10-packages/import.t
 S11-modules/export.t
+S12-attributes/class2.t
 S12-attributes/class.t
 S12-attributes/delegation.t
 S12-attributes/instance.t
@@ -181,9 +193,10 @@ S12-role/mixin.t
 S12-role/namespaced.t
 S12-subset/multi-dispatch.t
 S12-subset/subtypes.t
-S16-io/basic-open.t
 S16-filehandles/io_in_while_loops.t
+S16-io/basic-open.t
 S16-io/say.t
+S16-unfiled/slurp.t
 S29-any/cmp.t
 S29-array/delete.t
 S29-array/elems.t
@@ -200,6 +213,7 @@ S29-conversions/ord_and_chr.t
 S29-hash/exists.t
 S29-hash/keys_values.t
 S29-hash/pairs.t
+S29-list/end.t
 S29-list/first.t
 S29-list/grep.t
 S29-list/join.t
@@ -214,6 +228,7 @@ S29-list/pick.t
 S29-list/reduce.t
 S29-list/reverse.t
 S29-list/sort.t
+S29-list/uniq.t
 S29-num/abs.t
 S29-num/complex.t
 S29-num/exp.t

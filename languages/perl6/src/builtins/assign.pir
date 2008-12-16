@@ -16,18 +16,7 @@ src/builtins/inplace.pir - Inplace assignments
     .param pmc cont
     .param pmc source
 
-    $I0 = isa source, 'ObjectRef'
-    if $I0 goto have_source
-    $I0 = can source, 'Scalar'
-    if $I0 goto can_scalar
-    ##  source comes from outside Rakudo's type system
-    $I0 = does source, 'scalar'
-    if $I0 goto have_source
-    source = new 'ObjectRef', source
-    goto have_source
-  can_scalar:
-    source = source.'Scalar'()
-  have_source:
+    source = 'Scalar'(source)
     .local pmc ro, type
     getprop ro, 'readonly', cont
     if null ro goto ro_ok
@@ -48,6 +37,7 @@ src/builtins/inplace.pir - Inplace assignments
     .return (cont)
 .end
 
+
 .sub 'infix:=' :multi(['Perl6Array'], _)
     .param pmc cont
     .param pmc source
@@ -59,22 +49,7 @@ src/builtins/inplace.pir - Inplace assignments
     .tailcall 'infix:='(cont, source)
 
   cont_array:
-    .local pmc list, it, array
-    ## empty the array
-    array = new 'ResizablePMCArray'
-    source = 'list'(source)
-    it = iter source
-  array_loop:
-    unless it goto array_done
-    $P0 = shift it
-    $P0 = $P0.'Scalar'()
-    $P0 = clone $P0
-    push array, $P0
-    goto array_loop
-  array_done:
-    $I0 = elements cont
-    splice cont, array, 0, $I0
-    .return (cont)
+    .tailcall cont.'!STORE'(source)
 .end
 
 
@@ -89,9 +64,7 @@ src/builtins/inplace.pir - Inplace assignments
     .tailcall 'infix:='(cont, source)
 
   cont_hash:
-    $P0 = source.'hash'()
-    copy cont, $P0
-    .return (cont)
+    .tailcall cont.'!STORE'(source)
 .end
 
 
@@ -146,12 +119,15 @@ src/builtins/inplace.pir - Inplace assignments
     $I0 = isa cont, 'Perl6Hash'
     if $I0 goto assign_hash
   assign_scalar:
+    if slist goto have_slist
+    slist = new 'Nil'
+  have_slist:
     $P0 = shift slist
     'infix:='(cont, $P0)
     goto assign_loop
   assign_array:
   assign_hash:
-    'infix:='(cont, slist)
+    cont.'!STORE'(slist)
     slist = new 'Nil'
     goto assign_loop
   assign_done:
