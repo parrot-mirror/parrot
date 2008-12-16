@@ -808,14 +808,8 @@ rule fulltypename {
 }
 
 token typename {
-    $<name>=<registered_typename>
-    {*}
-}
-
-# XXX This goes away once we have assertions.
-token registered_typename {
     <name>
-    {{
+    <?{{
         .local pmc compiler_obj, check_ns, check_symbol
         .local string full_name
         full_name = match['name']
@@ -841,10 +835,11 @@ token registered_typename {
         goto fail_it
       type_ok:
         $P0 = match['name']
-        .return ($P0)
+        .return (1)
       fail_it:
-    }}
-    <fail>
+        .return (0)
+    }}>
+    {*}
 }
 
 # These regex rules are some way off STD.pm at the moment, but we'll work them
