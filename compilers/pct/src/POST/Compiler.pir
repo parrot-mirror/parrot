@@ -211,8 +211,7 @@ the sub.
     $I0 = index pirflags, ':subid('
     if $I0 >= 0 goto pirflags_subid_done
     .local string subid
-    subid = code.'unique'()
-    node.'subid'(subid)
+    subid = node.'subid'()
     pirflags = concat pirflags, ' :subid("'
     pirflags .= subid
     pirflags .= '")'
@@ -299,6 +298,8 @@ the sub.
 
     options['target'] = 'pir'
     options['grammar'] = ''
+    $P0 = node.'subid'()
+    options['subid'] = $P0
     .local pmc source, compiler, pir
     source = node[0]
     $S0 = node.'compiler'()

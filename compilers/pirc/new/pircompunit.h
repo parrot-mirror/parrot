@@ -25,6 +25,8 @@ typedef enum pir_types {
 
 } pir_type;
 
+/* Parrot has 4 types */
+#define NUM_PARROT_TYPES    4
 
 
 /* selector values for the expression value union */
@@ -308,9 +310,6 @@ typedef struct subroutine {
     char const         *nsentry;       /* name by which the sub is stored in the namespace */
     char const         *methodname;    /* name of this sub by which it's stored as a method */
     int                 flags;         /* this sub's flags */
-    unsigned            codesize;      /* total number of integers to store for this sub:
-                                          1 for each op and 1 for each operand.
-                                        */
     int                 startoffset;   /* start offset in bytecode where this sub starts */
     int                 endoffset;     /* end offset in bytecode where this sub ends */
 
@@ -450,6 +449,9 @@ void close_sub(struct lexer_state * const lexer);
 void fixup_global_labels(struct lexer_state * const lexer);
 void set_op_labelflag(struct lexer_state * const lexer, int flag);
 void convert_inv_to_instr(struct lexer_state * const lexer, invocation * const inv);
+
+void update_sub_register_usage(struct lexer_state * const lexer,
+                               unsigned reg_usage[NUM_PARROT_TYPES]);
 
 void panic(struct lexer_state * lexer, char const * const message);
 

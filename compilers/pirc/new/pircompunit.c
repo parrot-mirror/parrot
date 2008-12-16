@@ -19,25 +19,6 @@ get to the I<first> item on the list, you select C<<node->next>>.
 Due to this organization, adding an element to a list can be done in
 O(c) (constant) time.
 
-Currently, no Parrot Byte Code is generated; instead, the generated
-data structure can be printed, which results in a PASM representation
-of the parsed PIR code. Through the symbol management, which is done
-in F<pirsymbol.c>, a vanilla register allocator is implemented.
-
-
-
-=head1 TODO
-
-=over 4
-
-=item * calculate offsets for global (sub) labels.
-
-=item * fix local label offset calculation: make this work for all :flow (PARROT_JUMP_RELATIVE) ops.
-
-=item * generate PackFiles (PBC).
-
-=back
-
 =cut
 
 */
@@ -74,9 +55,6 @@ Function to emit a final last cry that something's wrong and exit.
 
 =cut
 
-*/
-/*
-PARROT_DOES_NOT_RETURN
 */
 void
 panic(lexer_state * lexer, char const * const message) {
@@ -297,13 +275,12 @@ new_subr(lexer_state * const lexer, char const * const subname) {
     newsub->parameters  = NULL;
     newsub->statements  = NULL;
     newsub->flags       = 0;
-    newsub->codesize    = 0;
     newsub->startoffset = lexer->codesize; /* start offset in bytecode */
 
     init_hashtable(lexer, &newsub->symbols, HASHTABLE_SIZE_INIT);
     init_hashtable(lexer, &newsub->labels, HASHTABLE_SIZE_INIT);
 
-    for (index = 0; index < 4; index++) { /* 4 is the number of Parrot types. */
+    for (index = 0; index < NUM_PARROT_TYPES; ++index) {
         newsub->registers[index] = NULL; /* set all "register" tables to NULL */
         newsub->regs_used[index] = 0;    /* set all register counts to 0 */
     }
@@ -1671,7 +1648,10 @@ push_operand(lexer_state * const lexer, NOTNULL(expression * const operand)) {
 =item C<void
 remove_all_operands(lexer_state * const lexer)>
 
-Remove all operands of the current instruction.
+Remove all operands of the current instruction. This is done
+by simply setting the pointer to the operands to NULL; all
+memory for the operands is allocated through PIRC memory
+functions, which is automatically freed after compilation.
 
 =cut
 
@@ -1688,6 +1668,7 @@ remove_all_operands(NOTNULL(lexer_state * const lexer)) {
 expr_from_key(key * const k)>
 
 Wraps the key C<k> in an C<expression> node and returns that.
+The returned expression node has type EXPR_KEY.
 
 =cut
 
@@ -1863,7 +1844,7 @@ arguments_to_operands(lexer_state * const lexer, argument * const args) {
         return;
     }
     else {
-        int numargs = 0;
+
         argiter = args;
         do {
             int flag = 0;
@@ -2348,40 +2329,66 @@ fixup_global_labels(lexer_state * const lexer) {
 
 /*
 
-=item C<void
-close_sub(lexer_state * const lexer)>
+=item C<static void
+emit_sub_leaving_instructions(lexer_state * const lexer)>
 
-Finalize the subroutine. Generate the final instructions in the current
-subroutine; if the C<:main> flag was set on the subroutine, this is the
-C<end> instruction; otherwise, a I<normal> C<return> sequence is generated.
-
-Then, all local labels are fixed up; i.e., all label identifiers are converted
-into their offsets.
+Emit final instructions for the current subroutine. In case
+this is a C<:main> sub, the "end" instruction is emitted,
+otherwise it's a standard return sequence.
 
 =cut
 
 */
-void
-close_sub(lexer_state * const lexer) {
-    int opcode;
-
+static void
+emit_sub_leaving_instructions(lexer_state * const lexer) {
     /* a :main-marked sub ends with the "end" instruction;
      * otherwise it's this pair:
      *
      *    set_returns_pc
      *    returncc
      */
-
-
-    if (TEST_FLAG(lexer->subs->flags, SUB_FLAG_MAIN)) {
+    if (TEST_FLAG(lexer->subs->flags, SUB_FLAG_MAIN))
         new_sub_instr(lexer, PARROT_OP_end, "end");
-    }
     else {
-        /* XXX if there was already a return sequence explicitly, we shouldn't do this. */
-
         new_sub_instr(lexer, PARROT_OP_set_returns_pc, "set_returns_pc");
         new_sub_instr(lexer, PARROT_OP_returncc, "returncc");
     }
+}
+
+/*
+
+=item C<void
+close_sub(lexer_state * const lexer)>
+
+Finalize the subroutine. Generate the final instructions in the current
+subroutine, if needed. Then, all local labels are fixed up; i.e., all
+label identifiers are converted into their offsets. The endoffset of this
+subroutine is stored.
+If register optimization was requested, this is invoked here.
+
+=cut
+
+*/
+void
+close_sub(lexer_state * const lexer) {
+    int need_leaving_instr = 1;
+
+    /* don't generate leaving instructions if the last instruction was already
+     * leaving the sub.
+     */
+    if (CURRENT_INSTRUCTION(lexer)) {
+        switch (CURRENT_INSTRUCTION(lexer)->opcode) {
+            case PARROT_OP_end:
+            case PARROT_OP_returncc:
+                need_leaving_instr = 0;
+                break;
+            default:
+                break;
+        }
+    }
+
+    if (need_leaving_instr)
+        emit_sub_leaving_instructions(lexer);
 
     /* fix up all local branch labels */
     fixup_local_labels(lexer);
@@ -2392,6 +2399,24 @@ close_sub(lexer_state * const lexer) {
      /* if register allocation was requested, do that now */
     if (TEST_FLAG(lexer->flags, LEXER_FLAG_REGALLOC))
         linear_scan_register_allocation(lexer->lsr);
+}
+
+/*
+
+=item C<void
+update_sub_register_usage(lexer_state * const lexer, unsigned reg_usage[NUM_PARROT_TYPES])>
+
+Update register usage for the current subroutine with the register usage
+information in C<reg_usage>.
+
+=cut
+
+*/
+void
+update_sub_register_usage(lexer_state * const lexer, unsigned reg_usage[NUM_PARROT_TYPES]) {
+    int i;
+    for (i = 0; i < NUM_PARROT_TYPES; ++i)
+        CURRENT_SUB(lexer)->regs_used[i] = reg_usage[i];
 }
 
 
