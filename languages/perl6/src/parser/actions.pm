@@ -404,9 +404,14 @@ method use_statement($/) {
             :node( $/ )
         );
 
-        # Compile the module.
+        # Compile the module (need to preserve our cleanup stack and give the compiler
+        # a fresh one).
+        our @?UNDER_CONSTRUCTION;
+        my @preserve := @?UNDER_CONSTRUCTION;
+        @?UNDER_CONSTRUCTION := list();
         my $sub := PAST::Compiler.compile( $past );
         $sub();
+        @?UNDER_CONSTRUCTION := @preserve;
         
         # Code to use the module needs to be emitted to, so this works for
         # pre-compiled modules (it will check %*INC and not reload it) in the
