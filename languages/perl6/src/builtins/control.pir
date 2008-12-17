@@ -297,12 +297,13 @@ on error.
 
     res = invokable()
     pop_eh
-    exception = new 'Failure'
+    exception = 'undef'()
     goto done
 
   catch:
     .get_results (exception)
-    goto done
+    pop_eh
+    res = '!FAIL'('Exception caught in eval')
 
   done:
     # Propagate exception to caller
