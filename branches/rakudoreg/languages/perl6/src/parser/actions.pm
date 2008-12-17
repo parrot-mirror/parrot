@@ -1215,13 +1215,15 @@ method signature($/) {
         my $separator := $_[0];
         my $is_invocant := 0;
 
+        # If it has & sigil, strip it off, but record it was a sub.
+        my $is_callable := 0;
+        if substr($parameter.name(), 0, 1) eq '&' {
+            $parameter.name(substr($parameter.name(), 1));
+            $is_callable := 1;
+        }
+
         # Add parameter declaration to the block, if we're producing one.
         unless $?SIG_BLOCK_NOT_NEEDED {
-            # If it has & sigil, strip it off.
-            if substr($parameter.name(), 0, 1) eq '&' {
-                $parameter.name(substr($parameter.name(), 1));
-            }
-
             # Register symbol and put parameter PAST into the node.
             $block_past.symbol($parameter.name(), :scope('lexical'));
             $params.push($parameter);
@@ -1362,6 +1364,19 @@ method signature($/) {
         for $_<parameter><post_constraint> {
             my $type_obj := make_anon_subset($( $_<EXPR> ), $parameter);
             $cur_param_types.push($type_obj);
+        }
+
+        # Also any constraint from the sigil.
+        if $is_callable {
+            $cur_param_types.push(PAST::Op.new(
+                :pasttype('call'),
+                :name('!TYPECHECKPARAM'),
+                PAST::Var.new( :name('Callable'), :scope('package') ),
+                PAST::Var.new(
+                    :name($parameter.name()),
+                    :scope('lexical')
+                )
+            ));
         }
 
         # For blocks, we just collect the check into the list of all checks.
@@ -1585,11 +1600,13 @@ method dotty($/, $key) {
             $past.name('!' ~ $past.name());
         }
         elsif $methodop<quote> {
-            $past[0] := PAST::Op.new(
-                :pasttype('call'),
-                :name('infix:~'),
-                PAST::Val.new( :value('!') ),
-                $past[0]
+            $past.name(
+                PAST::Op.new(
+                    :pasttype('call'),
+                    :name('infix:~'),
+                    '!',
+                    $past.name()
+                )
             );
         }
     }
@@ -2389,9 +2406,13 @@ sub declare_attribute($/, $sym, $variable_sigil, $variable_twigil, $variable_nam
         }
     }
 
+    # Generate private accessor.
+    my $accessor := make_accessor($/, '!' ~ ~$variable_name, $name, 1, 'attribute');
+    $class_def.push(add_method_to_class($accessor));
+
     # Twigil handling.
     if $variable_twigil eq '.' {
-        # We have a . twigil, so we need to generate an accessor.
+        # We have a . twigil, so we need to generate a public accessor.
         my $accessor := make_accessor($/, ~$variable_name, $name, $rw, 'attribute');
         $class_def.push(add_method_to_class($accessor));
     }
