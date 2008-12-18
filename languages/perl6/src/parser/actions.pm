@@ -754,8 +754,9 @@ method enum_declarator($/, $key) {
             PAST::Op.new(
                 :pasttype('bind'),
                 PAST::Var.new(
-                    :name('$def'),
-                    :scope('lexical')
+                    :name('def'),
+                    :scope('register'),
+                    :isdecl(1)
                 ),
                 PAST::Op.new(
                     :pasttype('call'),
@@ -767,8 +768,8 @@ method enum_declarator($/, $key) {
                 :pasttype('call'),
                 :name('!keyword_has'),
                 PAST::Var.new(
-                    :name('$def'),
-                    :scope('lexical')
+                    :name('def'),
+                    :scope('register')
                 ),
                 PAST::Val.new( :value("$!" ~ $name) ),
                 # XXX Set declared type here, when we parse that.
@@ -781,8 +782,8 @@ method enum_declarator($/, $key) {
                 :pasttype('callmethod'),
                 :name('add_method'),
                 PAST::Var.new(
-                    :name('$def'),
-                    :scope('lexical')
+                    :name('def'),
+                    :scope('register')
                 ),
                 PAST::Val.new( :value($name) ),
                 make_accessor($/, undef, "$!" ~ $name, 1, 'attribute')
@@ -794,8 +795,8 @@ method enum_declarator($/, $key) {
                 :pasttype('callmethod'),
                 :name('add_method'),
                 PAST::Var.new(
-                    :name('$def'),
-                    :scope('lexical')
+                    :name('def'),
+                    :scope('register')
                 ),
                 PAST::Val.new( :value($_) ),
                 PAST::Block.new(
@@ -823,23 +824,24 @@ method enum_declarator($/, $key) {
             PAST::Op.new(
                 :pasttype('bind'),
                 PAST::Var.new(
-                    :name('$def'),
-                    :scope('lexical')
+                    :name('def'),
+                    :scope('register'),
+                    :isdecl(1)
                 ),
                 PAST::Op.new(
                     :pasttype('call'),
                     :name('!keyword_enum'),
                     PAST::Var.new(
-                        :name('$def'),
-                        :scope('lexical')
+                        :name('def'),
+                        :scope('register')
                     )
                 )
             ),
             PAST::Op.new(
                 :inline('    setprop %0, "enum", %1'),
                 PAST::Var.new(
-                    :name('$def'),
-                    :scope('lexical')
+                    :name('def'),
+                    :scope('register')
                 ),
                 PAST::Val.new(
                     :value(1),
@@ -855,8 +857,8 @@ method enum_declarator($/, $key) {
             :pasttype('callmethod'),
             :name('add_vtable_override'),
             PAST::Var.new(
-                :scope('lexical'),
-                :name('$def')
+                :scope('register'),
+                :name('def')
             ),
             'invoke',
             PAST::Block.new(
@@ -872,8 +874,8 @@ method enum_declarator($/, $key) {
             :pasttype('callmethod'),
             :name('add_vtable_override'),
             PAST::Var.new(
-                :scope('lexical'),
-                :name('$def')
+                :scope('register'),
+                :name('def')
             ),
             'get_string',
             PAST::Block.new(
@@ -893,8 +895,8 @@ method enum_declarator($/, $key) {
             :pasttype('callmethod'),
             :name('add_vtable_override'),
             PAST::Var.new(
-                :scope('lexical'),
-                :name('$def')
+                :scope('register'),
+                :name('def')
             ),
             'get_integer',
             PAST::Block.new(
@@ -914,8 +916,8 @@ method enum_declarator($/, $key) {
             :pasttype('callmethod'),
             :name('add_vtable_override'),
             PAST::Var.new(
-                :scope('lexical'),
-                :name('$def')
+                :scope('register'),
+                :name('def')
             ),
             'get_number',
             PAST::Block.new(
@@ -948,8 +950,8 @@ method enum_declarator($/, $key) {
                     :pasttype('callmethod'),
                     :name('new'),
                     PAST::Var.new(
-                        :name('$def'),
-                        :scope('lexical')
+                        :name('def'),
+                        :scope('register')
                     ),
                     PAST::Val.new(
                         :value(%values{$_}),
@@ -1710,8 +1712,8 @@ sub apply_package_traits($package, $traits) {
                         :name('trait_auxiliary:is'),
                         $superclass,
                         PAST::Var.new(
-                            :name('$def'),
-                            :scope('lexical')
+                            :name('def'),
+                            :scope('register')
                         )
                     )
                 );
@@ -1731,8 +1733,8 @@ sub apply_package_traits($package, $traits) {
                     :pasttype('call'),
                     :name('!keyword_does'),
                     PAST::Var.new(
-                        :name('$def'),
-                        :scope('lexical')
+                        :name('def'),
+                        :scope('register')
                     ),
                     $role_name
                 )
@@ -1885,8 +1887,9 @@ method package_def($/, $key) {
                 PAST::Op.new(
                     :pasttype('bind'),
                     PAST::Var.new(
-                        :name('$def'),
-                        :scope('lexical')
+                        :name('def'),
+                        :scope('register'),
+                        :isdecl(1)
                     ),
                     PAST::Op.new(
                         :pasttype('call'),
@@ -1905,8 +1908,9 @@ method package_def($/, $key) {
                 $class_def := PAST::Op.new(
                     :pasttype('bind'),
                     PAST::Var.new(
-                        :name('$def'),
-                        :scope('lexical')
+                        :name('def'),
+                        :scope('register'),
+                        :isdecl(1)
                     ),
                     PAST::Op.new(
                         :pasttype('call'),
@@ -1931,8 +1935,9 @@ method package_def($/, $key) {
                     :node($/),
                     :pasttype('bind'),
                     PAST::Var.new(
-                        :name('$def'),
-                        :scope('lexical')
+                        :name('def'),
+                        :scope('register'),
+                        :isdecl(1)
                     ),
                     PAST::Op.new(
                         :pasttype('callmethod'),
@@ -2001,8 +2006,8 @@ method package_def($/, $key) {
                             :namespace('Perl6Object')
                         ),
                         PAST::Var.new(
-                            :scope('lexical'),
-                            :name('$def')
+                            :scope('register'),
+                            :name('def')
                         ),
                         PAST::Val.new(
                             :value('Grammar'),
@@ -2042,8 +2047,8 @@ method package_def($/, $key) {
                                 :namespace('Perl6Object')
                             ),
                             PAST::Var.new(
-                                :scope('lexical'),
-                                :name('$def')
+                                :scope('register'),
+                                :name('def')
                             ),
                             PAST::Val.new(
                                 :value('Any'),
@@ -2060,8 +2065,8 @@ method package_def($/, $key) {
                     $past.pirflags('');
                     $past.blocktype('immediate');
                     $past[0].push(PAST::Var.new(
-                        :name('$def'),
-                        :scope('lexical'),
+                        :name('def'),
+                        :scope('register'),
                         :isdecl(1)
                     ));
                 }
@@ -2102,8 +2107,9 @@ method role_def($/, $key) {
             PAST::Op.new(
                 :pasttype('bind'),
                 PAST::Var.new(
-                    :name('$def'),
-                    :scope('lexical')
+                    :name('def'),
+                    :scope('register'),
+                    :isdecl(1)
                 ),
                 PAST::Op.new(
                     :pasttype('call'),
@@ -2298,8 +2304,8 @@ sub declare_attribute($/, $sym, $variable_sigil, $variable_twigil, $variable_nam
                 :pasttype('call'),
                 :name('!keyword_has'),
                 PAST::Var.new(
-                    :name('$def'),
-                    :scope('lexical')
+                    :name('def'),
+                    :scope('register')
                 ),
                 PAST::Val.new( :value($name) ),
                 build_type($/<scoped><fulltypename>)
@@ -2312,8 +2318,8 @@ sub declare_attribute($/, $sym, $variable_sigil, $variable_twigil, $variable_nam
                 :pasttype('call'),
                 :name('!keyword_has'),
                 PAST::Var.new(
-                    :name('$def'),
-                    :scope('lexical')
+                    :name('def'),
+                    :scope('register')
                 ),
                 PAST::Val.new( :value($name) )
             )
@@ -3046,8 +3052,8 @@ method EXPR($/, $key) {
                     :pasttype('call'),
                     :name('!ADD_TO_WHENCE'),
                     PAST::Var.new(
-                        :name('$def'),
-                        :scope('lexical')
+                        :name('def'),
+                        :scope('register')
                     ),
                     $lhs.name(),
                     $rhs
@@ -3749,8 +3755,8 @@ sub add_method_to_class($method) {
             :pasttype('callmethod'),
             :name('add_method'),
             PAST::Var.new(
-                :name('$def'),
-                :scope('lexical')
+                :name('def'),
+                :scope('register')
             ),
             PAST::Val.new( :value($method.name()) ),
             $new_method
