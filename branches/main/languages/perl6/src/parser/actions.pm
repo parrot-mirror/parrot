@@ -8,15 +8,6 @@ method TOP($/) {
     $past.blocktype('declaration');
     declare_implicit_routine_vars($past);
 
-    # Attach any initialization code.
-    our $?INIT;
-    if defined( $?INIT ) {
-        $?INIT.blocktype('declaration');
-        $?INIT.pirflags(':init :load');
-        $past.unshift( $?INIT );
-        $?INIT := PAST::Block.new(); # For the next eval.
-    }
-
     #  Make sure we have the interpinfo constants.
     $past.unshift( PAST::Op.new( :inline('.include "interpinfo.pasm"') ) );
 
@@ -400,11 +391,8 @@ method use_statement($/) {
         # a call straight into the output code, because then we load the
         # module too late to inherit from any classes in it. So for now we
         # stick the use call into $?INIT.
-        our $?INIT;
-        unless defined($?INIT) {
-            $?INIT := PAST::Block.new();
-        }
-        $?INIT.push($past);
+        our $?BLOCK;
+        $?BLOCK.loadinit().push($past);
         $past := PAST::Stmts.new( :node($/) );
     }
     make $past;
