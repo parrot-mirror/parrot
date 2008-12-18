@@ -31,7 +31,7 @@ method TOP($/) {
    # want it to be treated as the module's return value.
    $main.push(
        PAST::Op.new( :pirop('tailcall'),
-           :name('!UNIT_START'),
+           PAST::Op.new( :pirop('find_name'), '!UNIT_START' ),
            $past,
            PAST::Var.new( :scope('parameter'), :name('@_'), :slurpy(1) )
        )
