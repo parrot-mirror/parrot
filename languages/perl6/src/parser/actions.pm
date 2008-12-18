@@ -7,16 +7,17 @@ method TOP($/) {
     my $past := $( $<statement_block> );
     $past.blocktype('declaration');
     declare_implicit_routine_vars($past);
+    $past.lexical(0);
 
     #  Make sure we have the interpinfo constants.
     $past.unshift( PAST::Op.new( :inline('.include "interpinfo.pasm"') ) );
 
-    # Set package.
+    # Set package for unit mainline
     $past.unshift(set_package_magical());
 
-    #  Add code to load perl6.pbc if it's not already present
-    my $loadinit := $past.loadinit();
-    $loadinit.unshift(
+    # Create the unit's startup block.
+    my $main := PAST::Block.new( :pirflags(':main') );
+    $main.loadinit().push(
         PAST::Op.new( :inline('$P0 = compreg "Perl6"',
                               'unless null $P0 goto have_perl6',
                               'load_bytecode "perl6.pbc"',
@@ -24,82 +25,33 @@ method TOP($/) {
         )
     );
 
-    #  convert the last operation of the block into a .return op
-    #  so that :load block below isn't used as return value
-    $past.push( PAST::Op.new( $past.pop(), :pirop('return') ) );
-    #  automatically invoke mainline on :load (but not :init)
-    $past.push(
-        PAST::Block.new(
-            PAST::Op.new(
-                :inline(
-                    '$P0 = interpinfo .INTERPINFO_CURRENT_SUB',
-                    '$P0 = $P0."get_outer"()',
-                    '$P0()'
-                )
-            ),
-            :pirflags(':load')
-        )
+   # call the unit mainline, passing any arguments, and return
+   # the result.  We force a tailcall here because we need a
+   # :load sub (below) to occur last in the generated output, but don't 
+   # want it to be treated as the module's return value.
+   $main.push(
+       PAST::Op.new( :pirop('tailcall'),
+           :name('!UNIT_START'),
+           $past,
+           PAST::Var.new( :scope('parameter'), :name('@_'), :slurpy(1) )
+       )
     );
 
-    #  emit a :main block that acts as the entry point in pre-compiled scripts
-    $past.push(
-        PAST::Block.new(
-            :pirflags(':main'),
+    # generate a :load sub that invokes this one, but does so _last_
+    # (e.g., at the end of a load_bytecode operation)
+    $main.push(
+        PAST::Block.new( :pirflags(':load'), :blocktype('declaration'),
             PAST::Op.new(
-                :pasttype('call'),
-                :name('!SETUP_ARGS'),
-                PAST::Var.new(
-                 :name('args_str'),
-                 :scope('parameter')
-                ),
-                1
-            ),
-            PAST::Op.new(
-                :inline(
-                    '$P0 = interpinfo .INTERPINFO_CURRENT_SUB',
-                    '$P0 = $P0."get_outer"()',
-                    '$P0()'
-                )
-            ),
-            PAST::Op.new(
-                :pasttype('bind'),
-                PAST::Var.new(
-                    :name('main_sub'),
-                    :scope('register'),
-                    :isdecl(1)
-                ),
-                PAST::Var.new(
-                    :name('MAIN'),
-                    :scope('package')
-                )
-            ),
-            PAST::Op.new(
-                :pasttype('unless'),
-                PAST::Op.new(
-                    :pirop('isnull'),
-                    PAST::Var.new(
-                        :name('main_sub'),
-                        :scope('register')
-                    )
-                ),
-                PAST::Op.new(
-                    :pasttype('call'),
-                    PAST::Var.new(
-                        :name('main_sub'),
-                        :scope('register')
-                    ),
-                    PAST::Var.new(
-                        :name('@ARGS'),
-                        :scope('package'),
-                        :namespace(''),
-                        :flat(1)
-                    )
+                :inline( '.include "interpinfo.pasm"',
+                         '$P0 = interpinfo .INTERPINFO_CURRENT_SUB',
+                         '$P0 = $P0."get_outer"()',
+                         '.tailcall $P0()'
                 )
             )
         )
     );
 
-    make $past;
+    make $main;
 }
 
 
