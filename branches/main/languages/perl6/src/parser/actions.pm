@@ -325,6 +325,8 @@ method use_statement($/) {
     my $name := ~$<name>;
     my $past;
     if $name ne 'v6' && $name ne 'lib' {
+        ##  Create a loadinit node so the use module is loaded
+        ##  when this module is loaded...
         our $?BLOCK;
         $?BLOCK.loadinit().push(
             PAST::Op.new(
@@ -334,6 +336,8 @@ method use_statement($/) {
                 :node( $/ )
             )
         );
+        ##  ...and load it immediately to get its BEGIN semantics
+        ##  and symbols for the current compilation.
         use($name);
     }
     $past := PAST::Stmts.new( :node($/) );
