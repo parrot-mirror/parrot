@@ -11,13 +11,6 @@ method TOP($/) {
     # Attach any initialization code.
     our $?INIT;
     if defined( $?INIT ) {
-        $?INIT.unshift(
-            PAST::Var.new(
-                :name('$def'),
-                :scope('lexical'),
-                :isdecl(1)
-            )
-        );
         $?INIT.blocktype('declaration');
         $?INIT.pirflags(':init :load');
         $past.unshift( $?INIT );
@@ -978,14 +971,10 @@ method enum_declarator($/, $key) {
 
         # Assemble all that we build into a statement list and then place it
         # into the init code.
-        our $?INIT;
-        unless defined( $?INIT ) {
-            $?INIT := PAST::Block.new();
-        }
-        $?INIT.push(PAST::Stmts.new(
-            $role_past,
-            $class_past
-        ));
+        our $?BLOCK;
+        my $loadinit := $?BLOCK.loadinit();
+        $loadinit.push($role_past);
+        $loadinit.push($class_past);
 
         # Finally, since it's a decl, we don't have anything to emit at this
         # point; just hand back empty statements block.
@@ -1871,7 +1860,6 @@ method package_def($/, $key) {
     our $?MODULE;
     our $?NS;
     our $?PACKAGE;
-    our $?INIT;
     my $name := $<name>;
 
     if $key eq 'open' {
@@ -2018,10 +2006,8 @@ method package_def($/, $key) {
             );
 
             # Attatch grammar declaration to the init code.
-            unless defined( $?INIT ) {
-                $?INIT := PAST::Block.new();
-            }
-            $?INIT.push( $?GRAMMAR );
+            our $?BLOCK;
+            $?BLOCK.loadinit().push( $?GRAMMAR );
 
             # Clear namespace.
             $?NS := '';
@@ -2077,15 +2063,13 @@ method package_def($/, $key) {
             # we want to put under this block so they get the correct
             # namespace. If it's an anonymous class, everything goes into
             # this block.
-            unless defined( $?INIT ) {
-                $?INIT := PAST::Block.new();
-            }
             for @( $?CLASS ) {
                 if $_.isa(PAST::Block) || !$name {
                     $past[0].push( $_ );
                 }
                 else {
-                    $?INIT.push( $_ );
+                    our $?BLOCK;
+                    $?BLOCK.loadinit().push( $_ );
                 }
             }
         }
@@ -2098,7 +2082,6 @@ method package_def($/, $key) {
 method role_def($/, $key) {
     our $?ROLE;
     our $?NS;
-    our $?INIT;
     my $name := ~$<name>;
 
     if $key eq 'open' {
@@ -2135,15 +2118,13 @@ method role_def($/, $key) {
 
         # Attatch role declaration to the init code, skipping blocks since
         # those are accessors.
-        unless defined( $?INIT ) {
-            $?INIT := PAST::Block.new();
-        }
         for @( $?ROLE ) {
             if $_.isa(PAST::Block) {
                 $past.push( $_ );
             }
             else {
-                $?INIT.push( $_ );
+                our $?BLOCK;
+                $?BLOCK.loadinit().push( $_ );
             }
         }
 
@@ -3261,13 +3242,11 @@ method type_declarator($/) {
         )
     );
 
-    # Put this code in $?INIT, so the type is created early enough, then this
-    # node results in an empty statement node.
-    our $?INIT;
-    unless defined($?INIT) {
-        $?INIT := PAST::Block.new();
-    }
-    $?INIT.push($past);
+    # Put this code in loadinit, so the type is created early enough, 
+    # then this node results in an empty statement node.
+    our $?BLOCK;
+    $?BLOCK.loadinit().push($past);
+
     make PAST::Stmts.new();
 }
 
