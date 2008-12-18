@@ -45,11 +45,12 @@ method TOP($/) {
                 :inline( '.include "interpinfo.pasm"',
                          '$P0 = interpinfo .INTERPINFO_CURRENT_SUB',
                          '$P0 = $P0."get_outer"()',
-                         '.tailcall $P0()'
+                         '$P0()'
                 )
             )
         )
     );
+    $main.push( PAST::Stmts.new() );
 
     make $main;
 }
