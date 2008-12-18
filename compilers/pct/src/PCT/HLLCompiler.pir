@@ -666,7 +666,7 @@ options are passed to the evaluator.
     close ifh
     goto iter_loop
   iter_end:
-    $P0 = self.'eval'(code, adverbs :flat :named)
+    $P0 = self.'eval'(code, args :flat, adverbs :flat :named)
     if target == '' goto end
     if target == 'pir' goto end
     '_dumper'($P0, target)
