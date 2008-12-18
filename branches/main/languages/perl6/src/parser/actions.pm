@@ -324,30 +324,19 @@ method xblock($/) {
 method use_statement($/) {
     my $name := ~$<name>;
     my $past;
-    if $name eq 'v6' || $name eq 'lib' {
-        $past := PAST::Stmts.new( :node($/) );
-    }
-    else {
-        $past := PAST::Op.new(
-            PAST::Val.new( :value($name) ),
-            :name('use'),
-            :pasttype('call'),
-            :node( $/ )
-        );
-
-        # What we'd really like to do now is something like:
-        # my $sub := PAST::Compiler.compile( $past );
-        # $sub();
-        # Which would include it at compile time. But for now, that breaks
-        # pre-compiled PIR modules (we'd also need to emit something to load
-        # modules from the pre-compiled PIR, somehow). But we can't just emit
-        # a call straight into the output code, because then we load the
-        # module too late to inherit from any classes in it. So for now we
-        # stick the use call into $?INIT.
+    if $name ne 'v6' && $name ne 'lib' {
         our $?BLOCK;
-        $?BLOCK.loadinit().push($past);
-        $past := PAST::Stmts.new( :node($/) );
+        $?BLOCK.loadinit().push(
+            PAST::Op.new(
+                PAST::Val.new( :value($name) ),
+                :name('use'),
+                :pasttype('call'),
+                :node( $/ )
+            )
+        );
+        use($name);
     }
+    $past := PAST::Stmts.new( :node($/) );
     make $past;
 }
 
