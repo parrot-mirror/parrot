@@ -755,7 +755,7 @@ Generic method for compilers invoked from a shell command line.
     unless args goto interactive
     $I0 = adverbs['combine']
     if $I0 goto combine
-    $S0 = shift args
+    $S0 = args[0]
     result = self.'evalfiles'($S0, args :flat, adverbs :flat :named)
     goto save_output
   combine:
