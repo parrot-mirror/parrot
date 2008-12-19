@@ -94,24 +94,10 @@ void Parrot_dod_free_sysmem(SHIM_INTERP,
         __attribute__nonnull__(3)
         FUNC_MODIFIES(*b);
 
-void Parrot_dod_ms_run(PARROT_INTERP, UINTVAL flags)
-        __attribute__nonnull__(1);
-
-void Parrot_dod_ms_run_init(PARROT_INTERP)
-        __attribute__nonnull__(1);
-
 void Parrot_dod_profile_end(PARROT_INTERP, int what)
         __attribute__nonnull__(1);
 
 void Parrot_dod_profile_start(PARROT_INTERP)
-        __attribute__nonnull__(1);
-
-void Parrot_dod_sweep(PARROT_INTERP, ARGMOD(Small_Object_Pool *pool))
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(2)
-        FUNC_MODIFIES(*pool);
-
-int Parrot_dod_trace_children(PARROT_INTERP, size_t how_many)
         __attribute__nonnull__(1);
 
 void Parrot_dod_trace_pmc_data(PARROT_INTERP, ARGIN(PMC *p))

@@ -304,20 +304,6 @@ int is_op(PARROT_INTERP, ARGIN(const char *name))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
-PARROT_CAN_RETURN_NULL
-Instruction * multi_keyed(PARROT_INTERP,
-    ARGMOD(IMC_Unit *unit),
-    ARGIN(const char *name),
-    ARGIN(SymReg **r),
-    int nr,
-    int keyvec,
-    int emit)
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(2)
-        __attribute__nonnull__(3)
-        __attribute__nonnull__(4)
-        FUNC_MODIFIES(*unit);
-
 void op_fullname(
     ARGOUT(char *dest),
     ARGIN(const char *name),
