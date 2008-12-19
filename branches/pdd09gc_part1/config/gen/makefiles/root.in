@@ -386,6 +386,7 @@ INTERP_O_FILES = \
     $(SRC_DIR)/gc/dod$(O) \
     $(SRC_DIR)/gc/gc_gms$(O) \
     $(SRC_DIR)/gc/gc_ims$(O) \
+    $(SRC_DIR)/gc/marksweep$(O) \
     $(SRC_DIR)/gc/memory$(O) \
     $(SRC_DIR)/gc/register$(O) \
     $(SRC_DIR)/gc/smallobject$(O) \
