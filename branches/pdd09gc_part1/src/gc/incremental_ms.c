@@ -779,6 +779,10 @@ gc_it_mark_PObj_children_grey(PARROT_INTERP, ARGMOD(Gc_it_hdr *hdr))
         /* XXX: It's a string or a const-string, or whatever. Deal
                 with that here. */
     }
+    else {
+        /* I don't even know what it would be here, but it definitely
+           isn't a PMC or anything with children */
+    }
 
     /* if the PMC is an array of other PMCs, we cycle through those. I'm
        surprised if this isn't covered by VTABLE_mark, but I won't question it
@@ -828,7 +832,6 @@ Parrot_gc_it_deinit(PARROT_INTERP)
     arena_base->finalize_gc_system = NULL;
     arena_base->init_pool          = NULL;
 }
-
 
 /*
 

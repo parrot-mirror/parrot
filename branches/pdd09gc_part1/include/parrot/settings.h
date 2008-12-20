@@ -39,6 +39,7 @@
  * 0 ... MS  stop-the-world mark & sweep
  * 1 ... IMS incremental mark & sweep
  * 2 ... GMS generational mark & sweep
+ * 3 ... IT  incremental tricolor
  *
  * Please note that only '0' is tested.
  */
