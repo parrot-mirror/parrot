@@ -281,28 +281,10 @@ Parrot_gc_it_run(PARROT_INTERP, int flags)
         case GC_IT_RESUME_MARK:
             if (Parrot_is_blocked_GC_mark(interp))
                 break;
-#  if GC_IT_INCREMENT_MODE
-            /* scan a single tree. Check to ensure we've hit a minimum number
-               of items. If not, scan another tree. */
-            /*do {
-                gc_it_enqueue_next_root(interp);
-                gc_it_trace(interp);
-            } while (gc_priv_data->item_count < GC_IT_ITEMS_MARKED_MIN
-            &&      gc_priv_data->root_queue);*/
-            /* We've either scanned the necessary number of items, or we've
-               run out of new root items to scan. Check to see if the mark
-               is complete, and if so move to the next state. Otherwise,
-               stay at the same state so we can come back. */
-            if (!gc_priv_data->queue
-            &&  !gc_priv_data->root_queue)
-                gc_priv_data->state = GC_IT_END_MARK;
-            else
-                break;
-#  elif GC_IT_BATCH_MODE
-            /* in batch mode, enqueue all roots, and scan the entire pile */
-            gc_it_enqueue_all_roots(interp);
+            gc_it_enqueue_next_root(interp);
             gc_it_trace(interp);
-#  endif
+            if (gc_priv_data->root_queue) break;
+            gc_priv_data->state = GC_IT_END_MARK;
             GC_IT_BREAK_AFTER_3;
 
         case GC_IT_END_MARK:
@@ -313,7 +295,7 @@ Parrot_gc_it_run(PARROT_INTERP, int flags)
         case GC_IT_SWEEP_PMCS:
             if (Parrot_is_blocked_GC_sweep(interp))
                 break;
-            //gc_it_sweep_pmc_pools(interp);
+            gc_it_sweep_pmc_pools(interp);
             gc_priv_data->state = GC_IT_SWEEP_BUFFERS;
             GC_IT_BREAK_AFTER_5;
 
@@ -415,7 +397,6 @@ gc_it_sweep_pmc_pools(PARROT_INTERP)
         gc_it_trace(interp);
     gc_it_sweep_PMC_arenas(interp, gc_priv_data, arena_base->pmc_pool);
 }
-
 
 /*
 
@@ -531,7 +512,6 @@ gc_it_sweep_sized_pools(PARROT_INTERP)
 
 }
 
-
 /*
 
 =item C<static void gc_it_sweep_PMC_arenas>
@@ -593,7 +573,6 @@ gc_it_sweep_PMC_arenas(PARROT_INTERP, ARGMOD(Gc_it_data *gc_priv_data),
     }
 }
 
-
 /*
 
 =item C<static void gc_it_sweep_header_arenas>
@@ -642,49 +621,6 @@ gc_it_sweep_header_arenas(PARROT_INTERP, ARGMOD(Gc_it_data *gc_priv_data),
 
 /*
 
-=item C<static void gc_it_enqueue_all_roots>
-
-"batch mode" is a mode where the GC performs a complete stop-the-world
-mark phase, instead of the incremental behaviour which is the default.
-
-Moves all items from the root queue into the ordinary queue. If the queue
-is not empty, we run a trace first to mark all items on the queue already.
-
-=cut
-
-*/
-
-#  if GC_IT_BATCH_MODE
-PARROT_INLINE
-static void
-gc_it_enqueue_all_roots(PARROT_INTERP)
-{
-    Gc_it_data * const gc_priv_data =
-        (Gc_it_data *)interp->arena_base->gc_private;
-
-    /* If the queue is not currently empty, trace through it real quick so
-       we don't lose anything. This is probably not the right way to go, but
-       it should work. */
-    if (gc_priv_data->queue) {
-#  if GC_IT_DEBUG
-        fprintf(stderr, "Objects on queue before root queue. Tracing.\n");
-#  endif
-        gc_it_trace_normal(interp);
-    }
-
-    PARROT_ASSERT(!gc_priv_data->queue);
-    /* Move the entire root queue to the queue */
-    gc_priv_data->queue       = gc_priv_data->root_queue;
-    gc_priv_data->root_queue  = NULL;
-#  if GC_IT_DEBUG
-    fprintf(stderr, "Root queue added to queue\n");
-#  endif
-}
-#  endif
-
-#  if GC_IT_INCREMENT_MODE
-/*
-
 =item C<static void gc_it_enqueue_next_root>
 
 In normal incremental mode, we add a single item from the root queue onto
@@ -714,7 +650,6 @@ gc_it_enqueue_next_root(PARROT_INTERP)
     gc_priv_data->queue = hdr;
 }
 #  endif
-
 
 /*
 
