@@ -185,7 +185,7 @@ and when a run has completed. Do not reclaim, for instance, any white
 objects after a run has completed and all black objects have been turned
 back to white (which would free all objects, alive or dead).
 
-Flags and other issues:
+Flags and other issues, as I understand them:
 GC_trace_normal = run a trace, or a partial trace, but not a sweep.
     set the macro CHECK_IF_WE_BREAK_BEFORE_SWEEP, however we do that,
     to break off the function after the trace phase.
@@ -228,8 +228,7 @@ Parrot_gc_it_run(PARROT_INTERP, int flags)
     const UINTVAL gc_force    = gc_lazy && interp->arena_base->num_early_DOD_PMCs;
 
     /* on a lazy run, we only sweep if there are PMCs needing early destruction.
-       However, we must also sweep from the very beginning, to ensure the timely
-       objects get destroyed. */
+       We don't really cover that now, so we ignore and return. */
     if (gc_lazy && !gc_force)
         return;
     if (gc_finish) {
@@ -350,7 +349,6 @@ it's children.
 
 */
 
-#  if GC_IT_SERIAL_MODE
 void
 gc_it_trace_normal(PARROT_INTERP)
 {
@@ -369,16 +367,14 @@ gc_it_trace_normal(PARROT_INTERP)
 
     for (hdr = gc_priv_data->queue; hdr; hdr = gc_priv_data->queue) {
         /* for each item, add all chidren to the queue, and then mark the item
-           black. Once black, the item can be removed from the queue and
-           discarded */
+           black. Once black, the item can be removed from the queue */
         PARROT_ASSERT(hdr);
         gc_it_mark_PObj_children_grey(interp, hdr);
         gc_it_set_card_mark(hdr, GC_IT_CARD_BLACK);
         gc_priv_data->queue = hdr->next;
 
-        /* Items that have been marked are not left to just float like they
-           were. They are instead put into a "marked" list to keep them from
-           being marked twice in the same mark phase. */
+        /* Items that have been marked are put into a "marked" list to keep
+           them from being marked twice in the same mark phase. */
         hdr->next = gc_priv_data->marked;
         gc_priv_data->marked = hdr->next;
 
@@ -414,6 +410,7 @@ gc_it_sweep_pmc_pools(PARROT_INTERP)
     const Arenas * const arena_base   = interp->arena_base;
     Gc_it_data   * const gc_priv_data = (Gc_it_data *)arena_base->gc_private;
 
+    /* If the queue has stuff on it, trace that first */
     if (gc_priv_data->queue)
         gc_it_trace(interp);
     gc_it_sweep_PMC_arenas(interp, gc_priv_data, arena_base->pmc_pool);
@@ -437,9 +434,9 @@ gc_it_finalize_all_pmc(PARROT_INTERP)
     const Arenas * const arena_base   = interp->arena_base;
     Gc_it_data   * const gc_priv_data = (Gc_it_data *)arena_base->gc_private;
     register UINTVAL i;
+
     /* PMCs need to be handled differently from other types of pools.  Set
        up lists of our pools here, and handle different types differently. */
-
     gc_it_finalize_PMC_arenas(interp, gc_priv_data, arena_base->pmc_pool);
 }
 
@@ -473,10 +470,11 @@ gc_it_finalize_PMC_arenas(PARROT_INTERP, ARGMOD(Gc_it_data *gc_priv_data),
 
 =item C<static void gc_it_finalize_arena>
 
-Finalizes one arena, assume the objects in it are PMCs.
+Finalizes one arena, assuming the objects in it are PMCs.
 Loops through the arena and adds all objects in it to a linked list in
 reverse order. Then, traverse through this linked list and finalize any
-items that are still alive.
+items that are still alive. This isn't perfect, and may create order-
+of-destruction bugs when a parent is destroyed before it's children.
 
 =cut
 
@@ -568,8 +566,7 @@ gc_it_sweep_PMC_arenas(PARROT_INTERP, ARGMOD(Gc_it_data *gc_priv_data),
         while (i > 0) {
             /* this is a heavily stripped-down version of what it should be.
                Eventually, this is all going to get more efficient:
-               1) going to re-unroll the loop like I have in the sized header
-                  sweep loop.
+               1) need to unroll the loop a little bit
                2) Going to handle the cards directly, instead of making all
                   these function calls.
             */
@@ -642,55 +639,6 @@ gc_it_sweep_header_arenas(PARROT_INTERP, ARGMOD(Gc_it_data *gc_priv_data),
         }
     }
 }
-#  endif
-
-
-/*
-
-=item C<void gc_it_trace_threaded>
-
-If the GC is running in multithreaded mode, we do whatever we need to do
-in that situation. This is not implemented. Here are some ideas of what we
-could do:
-
-1) We have a GC thread which is persistent. In that case, this function will
-do nothing, and that thread will run continuously in the background doing it's
-thing.
-2) We launch child threads every time this function is called. For each child
-thread, we enqueue a single root (probably as a thread function parameter)
-and run the thread to completion. The GC thread will trace through it's queue
-entirely, and will terminate when it's queue has become empty. When all child
-threads have terminated, and when all root queue items have been scanned, we
-move on to the sweep phase.
-3) Same as #2, but instead of blindly launching a child thread every time this
-function is called, we only launch up to a finite number of threads. If we
-have too many threads running already, we do not launch another one here.
-
-=cut
-
-*/
-
-#  if GC_IT_PARALLEL_MODE
-void
-gc_it_trace_threaded(SHIM_INTERP) {}
-
-
-/*
-
-=item C<void gc_it_mark_threaded>
-
-Run one thread's worth of the trace algorithm, as discussed in the function
-documentation of C<gc_it_trace_threaded>
-
-=cut
-
-*/
-
-void
-gc_it_mark_threaded(SHIM_INTERP) {}
-
-#  endif
-
 
 /*
 
@@ -828,7 +776,8 @@ gc_it_mark_PObj_children_grey(PARROT_INTERP, ARGMOD(Gc_it_hdr *hdr))
             pobject_lives(interp, (PObj *)(pmc->real_self));
     }
     else if (PObj_is_string_TEST(obj)) {
-        /* It's a string or a const-string, or whatever. Deal with that here. */
+        /* XXX: It's a string or a const-string, or whatever. Deal
+                with that here. */
     }
 
     /* if the PMC is an array of other PMCs, we cycle through those. I'm
@@ -1048,6 +997,7 @@ gc_it_get_free_object(PARROT_INTERP, ARGMOD(struct Small_Object_Pool *pool))
             pool->name, pool, hdr, pool->num_free_objects);
 #  endif
 */
+
     /* return pointer to the object from the header */
     return (void *)IT_HDR_to_PObj(hdr);
 }
@@ -1247,12 +1197,12 @@ UINTVAL
 gc_it_get_card_mark(ARGMOD(Gc_it_hdr *hdr))
 {
 #  ifdef GC_IT_USE_POBJ_FLAGS
-    /* Add the stuff here to check the PObj flags in the object, if it's an
-       aggregate. Get the data from the hdr->data.flag, and compare values
-       to make sure we have a sensical result (PARROR_ASSERT it). Return
-       the value if it's good. */
-#  endif
+    /* if defined, GC_IT_USE_POBJ_FLAGS says that we should use the ->flags
+       field of the PObj structure to hold the white/grey/black state of
+       the object, instead of using the ->data.flag field of the header. */
+#  else
     return hdr->data.flag;
+#  endif
 }
 
 /*
@@ -1331,7 +1281,11 @@ gc_it_post_sweep_cleanup(PARROT_INTERP)
 
 =item C<void gc_it_ptr_set_aggregate>
 
-Sets whether the given object is a PObj or not
+Sets whether the given object is a PObj or not. "aggregates" are mostly
+PMCs which need to get marked themselves and may also contain pointers
+to other data structures which also need to be marked.
+
+This function should be called on all PMC objects when they are allocated.
 
 =item C<UINTVAL gc_it_ptr_get_aggregate>
 
@@ -1371,9 +1325,9 @@ Determines whether a given PMC has been prematurely swept.
 UINTVAL
 gc_it_pmc_dead(ARGIN(PMC * p))
 {
-    return(p->pmc_ext    == (PMC_EXT *)0xdeadbeef ||
-        p->vtable        == (void *)0xdeadbeef ||
-        PMC_pmc_val(p)   == (PMC *)0xdeadbeef);
+    return(p->pmc_ext     == (PMC_EXT *)0xdeadbeef ||
+           p->vtable      == (void *)0xdeadbeef ||
+           PMC_pmc_val(p) == (PMC *)0xdeadbeef);
 }
 
 #  endif
