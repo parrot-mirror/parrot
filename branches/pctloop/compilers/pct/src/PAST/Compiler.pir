@@ -1257,29 +1257,29 @@ Return the POST representation of a C<while> or C<until> loop.
     .local string pasttype
     pasttype = node.'pasttype'()
 
-    .local pmc ops
-    $P0 = get_hll_global ['POST'], 'Ops'
-    ops = $P0.'new'('node'=>node)
+    .local pmc post_ops
+    post_ops = get_hll_global ['POST'], 'Ops'
 
     .local pmc exprpast, exprpost
     .local pmc bodypast, bodypost
     exprpast = node[0]
     bodypast = node[1]
+    .local pmc start, body
+    start = post_ops.'new'('node'=>bodypast)
+    body = post_ops.'new'('node'=>bodypast)
 
-    .local pmc looplabel, endlabel
+    .local pmc exprlabel
     $P0 = get_hll_global ['POST'], 'Label'
     $S0 = concat pasttype, '_'
     $S0 = self.'unique'($S0)
-    looplabel = $P0.'new'('result'=>$S0)
-    $S0 = concat $S0, '_end'
-    endlabel = $P0.'new'('result'=>$S0)
+    exprlabel = $P0.'new'('result'=>$S0)
 
     ##  determine if we need an 'if' or an 'unless'
-    ##  on the conditional (while => if, until => unless)
+    ##  on the conditional (while => unless, until => if)
     .local string iftype
-    iftype = 'if'
-    if pasttype == 'until' goto have_iftype
     iftype = 'unless'
+    if pasttype == 'until' goto have_iftype
+    iftype = 'if'
   have_iftype:
 
     .local string rtype, exprrtype
@@ -1298,14 +1298,16 @@ Return the POST representation of a C<while> or C<until> loop.
     push arglist, exprpost
   have_arglist:
 
-    ops.'push'(looplabel)
-    ops.'push'(exprpost)
-    ops.'push_pirop'(iftype, exprpost, endlabel)
+    start.'push'(exprpost)
+    start.'push_pirop'(iftype, exprpost, exprlabel)
+    self.'push_throw_typed'(start, .CONTROL_LOOP_LAST)
+    start.'push'(exprlabel)
     bodypost = self.'as_post'(bodypast, 'rtype'=>'v', 'arglist'=>arglist)
-    ops.'push'(bodypost)
-    ops.'push_pirop'('goto', looplabel)
-    ops.'push'(endlabel)
-    ops.'result'(exprpost)
+    body.'push'(bodypost)
+
+    .local pmc ops
+    ops = self.'loop_helper'('start'=>start, 'body'=>body)
+    ops.'node'(node)
     .return (ops)
 .end
 
@@ -1376,6 +1378,63 @@ Return the POST representation of a C<repeat_while> or C<repeat_until> loop.
 .end
 
 
+=item loop(PAST::Op node)
+
+Return the POST representation of a C<loop>.
+
+=cut
+
+.sub 'loop' :method :multi(_, ['PAST';'Op'])
+    .param pmc node
+    .param pmc options         :slurpy :named
+
+    .local pmc post_ops
+    post_ops = get_hll_global ['POST'], 'Ops'
+
+    .local pmc prepast, prepost
+    .local pmc exprpast, exprpost
+    .local pmc eachpast, eachpost
+    .local pmc bodypast, bodypost
+    prepast = node[0]
+    exprpast = node[1]
+    eachpast = node[2]
+    bodypast = node[3]
+    .local pmc pre, start, body
+    pre = post_ops.'new'('node'=>prepast)
+    start = post_ops.'new'('node'=>exprpast)
+    body = post_ops.'new'('node'=>bodypast)
+
+    prepost = self.'as_post'(prepast, 'rtype'=>'v')
+    pre.'push'(prepost)
+
+    .local pmc exprlabel
+    $P0 = get_hll_global ['POST'], 'Label'
+    $S0 = self.'unique'('loop_')
+    exprlabel = $P0.'new'('result'=>$S0)
+
+    .local string rtype, exprrtype
+    rtype = options['rtype']
+    exprrtype = 'r'
+    if rtype != 'v' goto have_exprrtype
+    exprrtype = '*'
+  have_exprrtype:
+
+    exprpost = self.'as_post'(exprpast, 'rtype'=>exprrtype)
+    eachpost = self.'as_post'(eachpast, 'rtype'=>'v')
+
+    start.'push'(exprpost)
+    start.'push_pirop'('if', exprpost, exprlabel)
+    self.'push_throw_typed'(start, .CONTROL_LOOP_LAST)
+    start.'push'(exprlabel)
+    start.'push'(eachpost)
+    bodypost = self.'as_post'(bodypast, 'rtype'=>'v')
+    body.'push'(bodypost)
+
+    .local pmc ops
+    ops = self.'loop_helper'('pre'=>pre, 'start'=>start, 'body'=>body)
+    ops.'node'(node)
+    .return (ops)
+.end
 =item for(PAST::Op node)
 
 Return the POST representation of the C<for> loop given
@@ -1464,7 +1523,8 @@ by C<node>.
 .end
 
 .sub 'loop_helper' :method
-    .param pmc pre :named('pre')
+    .param pmc pre :named('pre') :optional
+    .param int has_pre :opt_flag
     .param pmc start :named('start')
     .param pmc body :named('body')
 
@@ -1500,7 +1560,9 @@ by C<node>.
     ops.'push_pirop'('callmethod', '"handle_types"', last_handler, .CONTROL_LOOP_LAST)
     ops.'push_pirop'('push_eh', last_handler)
 
+    unless has_pre, no_pre
     ops.'push'(pre)
+  no_pre:
     ops.'push'(looplabel)
     ops.'push'(start)
     ops.'push'(startlabel)
