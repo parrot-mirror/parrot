@@ -38,6 +38,7 @@ any value type.
 
 .include "cclass.pasm"
 .include "except_types.pasm"
+.include "except_severity.pasm"
 .include "interpinfo.pasm"
 
 .namespace [ 'PAST';'Compiler' ]
@@ -1386,43 +1387,41 @@ by C<node>.
     .param pmc node
     .param pmc options         :slurpy :named
 
-    .local pmc ops
-    $P0 = get_hll_global ['POST'], 'Ops'
-    ops = $P0.'new'('node'=>node)
+    .local pmc post_ops
+    .local pmc pre, start, body
+    post_ops = get_hll_global ['POST'], 'Ops'
 
-    .local pmc looplabel, nextlabel, endlabel, undeflabel
-    $P0 = get_hll_global ['POST'], 'Label'
+    .local pmc post_label, coll_label, iter_label
+    post_label = get_hll_global ['POST'], 'Label'
     $S0 = self.'unique'('for_')
-    looplabel = $P0.'new'('result'=>$S0)
-    $S1 = concat $S0, '_next'
-    nextlabel = $P0.'new'('result'=>$S1)
-    $S2 = concat $S0, '_end'
-    endlabel = $P0.'new'('result'=>$S2)
-    $S3 = concat $S0, '_undef_iter'
-    undeflabel = $P0.'new'('result'=>$S3)
+    $S1 = concat $S0, '_collection_present'
+    coll_label = post_label.'new'('result'=>$S1)
+    $S1 = concat $S0, '_iter_true'
+    iter_label = post_label.'new'('result'=>$S1)
 
     .local pmc collpast, collpost
     collpast = node[0]
     collpost = self.'as_post'(collpast, 'rtype'=>'P')
-    ops.'push'(collpost)
+    pre = post_ops.'new'('node'=>collpast)
+    pre.'push'(collpost)
 
-    .local string iter, next_handler
+    .local string iter
     iter = self.'uniquereg'('P')
-    ops.'result'(iter)
+    pre.'result'(iter)
     $S0 = self.'uniquereg'('I')
-    ops.'push_pirop'('defined', $S0, collpost)
-    ops.'push_pirop'('unless', $S0, undeflabel)
-    next_handler = self.'uniquereg'('P')
-    ops.'push_pirop'('new', next_handler, "'ExceptionHandler'")
-    ops.'push_pirop'('set_addr', next_handler, nextlabel)
-    ops.'push_pirop'('callmethod', '"handle_types"', next_handler, .CONTROL_LOOP_NEXT)
-    ops.'push_pirop'('push_eh', next_handler)
-    ops.'push_pirop'('iter', iter, collpost)
-    ops.'push'(looplabel)
-    ops.'push_pirop'('unless', iter, endlabel)
+    pre.'push_pirop'('defined', $S0, collpost)
+    pre.'push_pirop'('if', $S0, coll_label)
+    self.'push_throw_typed'(pre, .CONTROL_LOOP_LAST)
+    pre.'push'(coll_label)
+    pre.'push_pirop'('iter', iter, collpost)
 
     .local pmc subpast
     subpast = node[1]
+
+    start = post_ops.'new'('node'=>subpast)
+    start.'push_pirop'('if', iter, iter_label)
+    self.'push_throw_typed'(start, .CONTROL_LOOP_LAST)
+    start.'push'(iter_label)
 
     ##  determine the number of elements to take at each iteration
     .local int arity
@@ -1444,29 +1443,96 @@ by C<node>.
   arity_loop:
     .local string nextval
     nextval = self.'uniquereg'('P')
-    ops.'push_pirop'('shift', nextval, iter)
+    start.'push_pirop'('shift', nextval, iter)
     if arity < 1 goto arity_end
     push arglist, nextval
     dec arity
     if arity > 0 goto arity_loop
   arity_end:
 
+    body = post_ops.'new'('node'=>subpast)
     .local pmc subpost
     subpast.'blocktype'('immediate')                       # FIXME
     subpost = self.'as_post'(subpast, 'rtype'=>'P', 'arglist'=>arglist)
-    ops.'push'(subpost)
-    ops.'push_pirop'('goto', looplabel)
-    ops.'push'(nextlabel)
-    ops.'push_pirop'('.local pmc exception')
-    ops.'push_pirop'('.get_results (exception)')
-    ops.'push_pirop'('set', next_handler, 0)
-    ops.'push_pirop'('goto', looplabel)
-    ops.'push'(endlabel)
-    ops.'push_pirop'('pop_eh')
-    ops.'push'(undeflabel)
+    body.'push'(subpost)
+    self.'push_throw_typed'(body, .CONTROL_LOOP_NEXT)
+
+    .local pmc ops
+    ops = self.'loop_helper'('pre'=>pre, 'start'=>start, 'body'=>body)
+    ops.'node'(node)
     .return (ops)
 .end
 
+.sub 'loop_helper' :method
+    .param pmc pre :named('pre')
+    .param pmc start :named('start')
+    .param pmc body :named('body')
+
+    .local pmc post_ops, post_label
+    post_ops = get_hll_global ['POST'], 'Ops'
+    post_label = get_hll_global ['POST'], 'Label'
+
+    .local pmc ops
+    ops = post_ops.'new'()
+
+    .local pmc looplabel, startlabel, nextlabel, lastlabel, endlabel
+    $S0 = self.'unique'('loop_')
+    looplabel = post_label.'new'('result'=>$S0)
+    $S1 = concat $S0, '_start'
+    startlabel = post_label.'new'('result'=>$S1)
+    $S1 = concat $S0, '_next'
+    nextlabel = post_label.'new'('result'=>$S1)
+    $S1 = concat $S0, '_last'
+    lastlabel = post_label.'new'('result'=>$S1)
+    $S1 = concat $S0, '_end'
+    endlabel = post_label.'new'('result'=>$S1)
+
+    .local string next_handler, last_handler
+    next_handler = self.'uniquereg'('P')
+    ops.'push_pirop'('new', next_handler, "'ExceptionHandler'")
+    ops.'push_pirop'('set_addr', next_handler, nextlabel)
+    ops.'push_pirop'('callmethod', '"handle_types"', next_handler, .CONTROL_LOOP_NEXT)
+    ops.'push_pirop'('push_eh', next_handler)
+
+    last_handler = self.'uniquereg'('P')
+    ops.'push_pirop'('new', last_handler, "'ExceptionHandler'")
+    ops.'push_pirop'('set_addr', last_handler, lastlabel)
+    ops.'push_pirop'('callmethod', '"handle_types"', last_handler, .CONTROL_LOOP_LAST)
+    ops.'push_pirop'('push_eh', last_handler)
+
+    ops.'push'(pre)
+    ops.'push'(looplabel)
+    ops.'push'(start)
+    ops.'push'(startlabel)
+    ops.'push'(body)
+    self.'push_throw_typed'(ops, .CONTROL_LOOP_NEXT)
+
+    ops.'push'(nextlabel)
+    ops.'push_pirop'('.local pmc exception')
+    ops.'push_pirop'('.get_results (exception)')
+    ops.'push_pirop'('goto', looplabel)
+    ops.'push'(lastlabel)
+    ops.'push_pirop'('.local pmc exception')
+    ops.'push_pirop'('.get_results (exception)')
+    ops.'push_pirop'('goto', endlabel)
+    ops.'push'(endlabel)
+    ops.'push_pirop'('pop_eh')
+
+    .return (ops)
+.end
+
+.sub 'push_throw_typed' :method
+    .param pmc ops
+    .param pmc type
+    .local string ex
+    ex = self.'uniquereg'('P')
+    ops.'push_pirop'('new', ex, "'Exception'")
+    $S0 = concat ex, '["type"]'
+    ops.'push_pirop'('set', $S0, type)
+    $S0 = concat ex, '["severity"]'
+    ops.'push_pirop'('set', $S0, .EXCEPT_NORMAL)
+    ops.'push_pirop'('throw', ex)
+.end
 
 =item list(PAST::Op node)
 
