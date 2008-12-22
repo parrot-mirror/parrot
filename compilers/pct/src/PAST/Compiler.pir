@@ -1535,24 +1535,32 @@ by C<node>.
     .local pmc ops
     ops = post_ops.'new'()
 
-    .local pmc looplabel, startlabel, nextlabel, lastlabel, endlabel
+    .local pmc looplabel, startlabel, nextlabel, redolabel, lastlabel, endlabel
     $S0 = self.'unique'('loop_')
     looplabel = post_label.'new'('result'=>$S0)
     $S1 = concat $S0, '_start'
     startlabel = post_label.'new'('result'=>$S1)
     $S1 = concat $S0, '_next'
     nextlabel = post_label.'new'('result'=>$S1)
+    $S1 = concat $S0, '_redo'
+    redolabel = post_label.'new'('result'=>$S1)
     $S1 = concat $S0, '_last'
     lastlabel = post_label.'new'('result'=>$S1)
     $S1 = concat $S0, '_end'
     endlabel = post_label.'new'('result'=>$S1)
 
-    .local string next_handler, last_handler
+    .local string next_handler, redo_handler, last_handler
     next_handler = self.'uniquereg'('P')
     ops.'push_pirop'('new', next_handler, "'ExceptionHandler'")
     ops.'push_pirop'('set_addr', next_handler, nextlabel)
     ops.'push_pirop'('callmethod', '"handle_types"', next_handler, .CONTROL_LOOP_NEXT)
     ops.'push_pirop'('push_eh', next_handler)
+
+    redo_handler = self.'uniquereg'('P')
+    ops.'push_pirop'('new', redo_handler, "'ExceptionHandler'")
+    ops.'push_pirop'('set_addr', redo_handler, redolabel)
+    ops.'push_pirop'('callmethod', '"handle_types"', redo_handler, .CONTROL_LOOP_REDO)
+    ops.'push_pirop'('push_eh', redo_handler)
 
     last_handler = self.'uniquereg'('P')
     ops.'push_pirop'('new', last_handler, "'ExceptionHandler'")
@@ -1569,6 +1577,10 @@ by C<node>.
     ops.'push'(body)
     self.'push_throw_typed'(ops, .CONTROL_LOOP_NEXT)
 
+    ops.'push'(redolabel)
+    ops.'push_pirop'('.local pmc exception')
+    ops.'push_pirop'('.get_results (exception)')
+    ops.'push_pirop'('goto', startlabel)
     ops.'push'(nextlabel)
     ops.'push_pirop'('.local pmc exception')
     ops.'push_pirop'('.get_results (exception)')

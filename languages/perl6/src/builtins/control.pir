@@ -126,6 +126,30 @@ the moment -- we'll do more complex handling a bit later.)
     throw e
 .end
 
+=item redo
+
+=cut
+
+.sub 'redo'
+    .local pmc e
+    e = new 'Exception'
+    e['severity'] = .EXCEPT_NORMAL
+    e['type'] = .CONTROL_LOOP_REDO
+    throw e
+.end
+
+=item last
+
+=cut
+
+.sub 'last'
+    .local pmc e
+    e = new 'Exception'
+    e['severity'] = .EXCEPT_NORMAL
+    e['type'] = .CONTROL_LOOP_LAST
+    throw e
+.end
+
 .sub 'continue'
     .local pmc e
     e = new 'Exception'
