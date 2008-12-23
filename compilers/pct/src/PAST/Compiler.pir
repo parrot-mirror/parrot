@@ -1242,6 +1242,58 @@ a 'pasttype' of if/unless.
 .end
 
 
+=item loop_gen(...)
+
+Generate a standard loop with NEXT/LAST/REDO exception handling.
+
+=cut
+
+.sub 'loop_gen' :method
+    .param pmc options         :slurpy :named
+
+    .local pmc testlabel, prelabel, redolabel, nextlabel, donelabel, handlabel
+    $P0 = get_hll_global ['POST'], 'Label'
+    .local string loopname
+    loopname = self.'unique'('loop')
+    $S0 = concat loopname, '_test'
+    testlabel = $P0.'new'('result'=>$S0)
+    $S0 = concat loopname, '_redo'
+    redolabel = $P0.'new'('result'=>$S0)
+    $S0 = concat loopname, '_next'
+    nextlabel = $P0.'new'('result'=>$S0)
+    $S0 = concat loopname, '_done'
+    donelabel = $P0.'new'('result'=>$S0)
+    $S0 = concat loopname, '_handler'
+    handlabel = $P0.'new'('result'=>$S0)
+
+    .local pmc testpost, prepost, bodypost
+    testpost = options['test']
+    prepost  = options['pre']
+    bodypost = options['body']
+
+    .local pmc ops
+    $P0 = get_hll_global ['POST'], 'Ops'
+    ops = $P0.'new'()
+
+    ops.'push'(testlabel)
+    if null testpost goto test_done
+    ops.'push'(testpost)
+    ops.'push_pirop'('if', testpost, donelabel)
+  test_done:
+    if null prepost goto pre_done
+    ops.'push'(prepost)
+  pre_done:
+    ops.'push'(redolabel)
+    if null bodypost goto body_done
+    ops.'push'(bodypost)
+  body_done:
+    ops.'push'(nextlabel)
+    ops.'push_pirop'('goto', testlabel)
+    ops.'push'(donelabel)
+    .return (ops)
+.end
+  
+
 =item while(PAST::Op node)
 
 =item until(PAST::Op node)
@@ -1312,7 +1364,26 @@ Return the POST representation of a C<while> or C<until> loop.
 .sub 'until' :method :multi(_, ['PAST';'Op'])
     .param pmc node
     .param pmc options         :slurpy :named
-    .tailcall self.'while'(node, options :flat :named)
+    .local pmc exprpast, bodypast
+    exprpast = node[0]
+    bodypast = node[1]
+
+    .local pmc exprpost, bodypost   
+    exprpost = self.'as_post'(exprpast, 'rtype'=>'r') 
+
+    .local pmc arglist
+    arglist = new 'ResizablePMCArray'
+    $I0 = bodypast.'arity'()
+    if $I0 < 1 goto have_arglist
+    push arglist, exprpost
+  have_arglist:
+    bodypost = self.'as_post'(bodypast, 'rtype'=>'v', 'arglist'=>arglist)
+
+    .local pmc ops
+    ops = self.'loop_gen'('test'=>exprpost, 'body'=>bodypost)
+    ops.'result'(exprpost)
+    ops.'node'(node)
+    .return (ops)
 .end
 
 =item repeat_while(PAST::Op node)
