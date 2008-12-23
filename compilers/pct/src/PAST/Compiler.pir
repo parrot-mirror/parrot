@@ -1377,45 +1377,33 @@ by C<node>.
     .param pmc node
     .param pmc options         :slurpy :named
 
-    .local pmc ops
+    .local pmc ops, prepost, testpost
     $P0 = get_hll_global ['POST'], 'Ops'
-    ops = $P0.'new'('node'=>node)
+    ops      = $P0.'new'('node'=>node)
+    prepost  = $P0.'new'()
+    $S0      = self.'uniquereg'('P')
+    testpost = $P0.'new'('result'=>$S0)
 
-    .local pmc looplabel, nextlabel, endlabel, undeflabel
-    $P0 = get_hll_global ['POST'], 'Label'
-    $S0 = self.'unique'('for_')
-    looplabel = $P0.'new'('result'=>$S0)
-    $S1 = concat $S0, '_next'
-    nextlabel = $P0.'new'('result'=>$S1)
-    $S2 = concat $S0, '_end'
-    endlabel = $P0.'new'('result'=>$S2)
-    $S3 = concat $S0, '_undef_iter'
-    undeflabel = $P0.'new'('result'=>$S3)
-
-    .local pmc collpast, collpost
+    .local pmc collpast, bodypast
     collpast = node[0]
+    bodypast = node[1]
+
+    .local pmc collpost, testpost
     collpost = self.'as_post'(collpast, 'rtype'=>'P')
     ops.'push'(collpost)
 
-    .local string iter, next_handler
-    iter = self.'uniquereg'('P')
-    ops.'result'(iter)
+    ##  don't try to iterate undefined values
+    .local pmc undeflabel
+    $P0 = get_hll_global ['POST'], 'Label'
+    undeflabel = $P0.'new'('name'=>'for_undef_')
     $S0 = self.'uniquereg'('I')
     ops.'push_pirop'('defined', $S0, collpost)
     ops.'push_pirop'('unless', $S0, undeflabel)
-    next_handler = self.'uniquereg'('P')
-    ops.'push_pirop'('new', next_handler, "'ExceptionHandler'")
-    ops.'push_pirop'('set_addr', next_handler, nextlabel)
-    ops.'push_pirop'('callmethod', '"handle_types"', next_handler, .CONTROL_LOOP_NEXT)
-    ops.'push_pirop'('push_eh', next_handler)
-    ops.'push_pirop'('iter', iter, collpost)
-    ops.'push'(looplabel)
-    ops.'push_pirop'('unless', iter, endlabel)
 
-    .local pmc subpast
-    subpast = node[1]
+    ops.'push_pirop'('iter', testpost, collpost)
 
-    ##  determine the number of elements to take at each iteration
+    ##  determine the arity of the loop.  We check arity of the 'for'
+    ##  node itself, and if not set we use the arity of the body.
     .local int arity
     arity = 1
     $P0 = node.'arity'()
@@ -1424,37 +1412,34 @@ by C<node>.
     arity = $P0
     goto have_arity
   arity_child:
-    $P0 = subpast.'arity'()
+    $P0 = bodypast.'arity'()
     $I0 = defined $P0
     unless $I0 goto have_arity
     arity = $P0
   have_arity:
 
+    ##  build the argument list to pass to the body
     .local pmc arglist
     arglist = new 'ResizablePMCArray'
   arity_loop:
-    .local string nextval
-    nextval = self.'uniquereg'('P')
-    ops.'push_pirop'('shift', nextval, iter)
+    .local string nextarg
+    nextarg = self.'uniquereg'('P')
+    prepost.'push_pirop'('shift', nextarg, testpost)
     if arity < 1 goto arity_end
-    push arglist, nextval
+    push arglist, nextarg
     dec arity
     if arity > 0 goto arity_loop
   arity_end:
 
-    .local pmc subpost
-    subpast.'blocktype'('immediate')                       # FIXME
-    subpost = self.'as_post'(subpast, 'rtype'=>'P', 'arglist'=>arglist)
-    ops.'push'(subpost)
-    ops.'push_pirop'('goto', looplabel)
-    ops.'push'(nextlabel)
-    ops.'push_pirop'('.local pmc exception')
-    ops.'push_pirop'('.get_results (exception)')
-    ops.'push_pirop'('set', next_handler, 0)
-    ops.'push_pirop'('goto', looplabel)
-    ops.'push'(endlabel)
-    ops.'push_pirop'('pop_eh')
+    ##  now build the body itself
+    .local pmc bodypost
+    bodypost = self.'as_post'(bodypast, 'rtype'=>'v', 'arglist'=>arglist)
+
+    ##  generate the loop and return
+    $P0 = self.'loop_gen'('test'=>testpost, 'pre'=>prepost, 'body'=>bodypost)
+    ops.'push'($P0)
     ops.'push'(undeflabel)
+    ops.'result'(testpost)
     .return (ops)
 .end
 
