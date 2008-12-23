@@ -1268,10 +1268,12 @@ Generate a standard loop with NEXT/LAST/REDO exception handling.
 
     .local pmc testpost, prepost, bodypost
     .local string testop
+    .local int bodyfirst
     testop = options['testop']
     testpost = options['test']
     prepost  = options['pre']
     bodypost = options['body']
+    bodyfirst = options['bodyfirst']
 
     if testop goto have_testop
     testop = 'unless'
@@ -1281,6 +1283,9 @@ Generate a standard loop with NEXT/LAST/REDO exception handling.
     $P0 = get_hll_global ['POST'], 'Ops'
     ops = $P0.'new'()
 
+    unless bodyfirst goto bodyfirst_done
+    ops.'push_pirop'('goto', redolabel)
+  bodyfirst_done:
     ops.'push'(testlabel)
     if null testpost goto test_done
     ops.'push'(testpost)
@@ -1328,9 +1333,11 @@ Return the POST representation of a C<while> or C<until> loop.
 
     .local string testop
     testop = options['testop']
+    .local int bodyfirst
+    bodyfirst = options['bodyfirst']
 
     .local pmc ops
-    ops = self.'loop_gen'('testop'=>testop, 'test'=>exprpost, 'body'=>bodypost)
+    ops = self.'loop_gen'('testop'=>testop, 'test'=>exprpost, 'body'=>bodypost, 'bodyfirst'=>bodyfirst)
     ops.'result'(exprpost)
     ops.'node'(node)
     .return (ops)
@@ -1340,6 +1347,12 @@ Return the POST representation of a C<while> or C<until> loop.
     .param pmc node
     .param pmc options         :slurpy :named
     .tailcall self.'while'(node, options :flat :named, 'testop'=>'if')
+.end
+
+.sub 'repeat_until' :method :multi(_, ['PAST';'Op'])
+    .param pmc node
+    .param pmc options         :slurpy :named
+    .tailcall self.'while'(node, options :flat :named, 'testop'=>'if', 'bodyfirst'=>1)
 .end
 
 
@@ -1395,12 +1408,6 @@ Return the POST representation of a C<repeat_while> or C<repeat_until> loop.
     ops.'push_pirop'(iftype, exprpost, looplabel)
     ops.'result'(exprpost)
     .return (ops)
-.end
-
-.sub 'repeat_until' :method :multi(_, ['PAST';'Op'])
-    .param pmc node
-    .param pmc options         :slurpy :named
-    .tailcall self.'repeat_while'(node, options :flat :named)
 .end
 
 
