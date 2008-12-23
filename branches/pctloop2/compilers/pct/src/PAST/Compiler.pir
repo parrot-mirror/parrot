@@ -1309,6 +1309,10 @@ Generate a standard loop with NEXT/LAST/REDO exception handling.
 
 =item until(PAST::Op node)
 
+=item repeat_while(PAST::Op node)
+
+=item repeat_until(PAST::Op node)
+
 Return the POST representation of a C<while> or C<until> loop.
 
 =cut
@@ -1349,65 +1353,16 @@ Return the POST representation of a C<while> or C<until> loop.
     .tailcall self.'while'(node, options :flat :named, 'testop'=>'if')
 .end
 
+.sub 'repeat_while' :method :multi(_, ['PAST';'Op'])
+    .param pmc node
+    .param pmc options         :slurpy :named
+    .tailcall self.'while'(node, options :flat :named, 'bodyfirst'=>1)
+.end
+
 .sub 'repeat_until' :method :multi(_, ['PAST';'Op'])
     .param pmc node
     .param pmc options         :slurpy :named
     .tailcall self.'while'(node, options :flat :named, 'testop'=>'if', 'bodyfirst'=>1)
-.end
-
-
-=item repeat_while(PAST::Op node)
-
-=item repeat_until(PAST::Op node)
-
-Return the POST representation of a C<repeat_while> or C<repeat_until> loop.
-
-=cut
-
-.sub 'repeat_while' :method :multi(_, ['PAST';'Op'])
-    .param pmc node
-    .param pmc options         :slurpy :named
-
-    .local string pasttype
-    pasttype = node.'pasttype'()
-
-    .local pmc ops
-    $P0 = get_hll_global ['POST'], 'Ops'
-    ops = $P0.'new'('node'=>node)
-
-    .local pmc exprpast, exprpost
-    .local pmc bodypast, bodypost
-    exprpast = node[0]
-    bodypast = node[1]
-
-    .local pmc looplabel
-    $P0 = get_hll_global ['POST'], 'Label'
-    $S0 = concat pasttype, '_'
-    looplabel = $P0.'new'('name'=>$S0)
-
-    ##  determine if we need an 'if' or an 'unless'
-    ##  on the conditional (repeat_while => if, repeat_until => unless)
-    .local string iftype
-    iftype = 'if'
-    if pasttype != 'repeat_until' goto have_iftype
-    iftype = 'unless'
-  have_iftype:
-
-    .local string rtype, exprrtype
-    rtype = options['rtype']
-    exprrtype = 'r'
-    if rtype != 'v' goto have_exprrtype
-    exprrtype = '*'
-  have_exprrtype:
-
-    ops.'push'(looplabel)
-    bodypost = self.'as_post'(bodypast, 'rtype'=>'v')
-    ops.'push'(bodypost)
-    exprpost = self.'as_post'(exprpast, 'rtype'=>exprrtype)
-    ops.'push'(exprpost)
-    ops.'push_pirop'(iftype, exprpost, looplabel)
-    ops.'result'(exprpost)
-    .return (ops)
 .end
 
 
