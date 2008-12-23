@@ -386,6 +386,7 @@ INTERP_O_FILES = \
     $(SRC_DIR)/gc/dod$(O) \
     $(SRC_DIR)/gc/gc_gms$(O) \
     $(SRC_DIR)/gc/gc_ims$(O) \
+    $(SRC_DIR)/gc/incremental_ms$(O)
     $(SRC_DIR)/gc/marksweep$(O) \
     $(SRC_DIR)/gc/memory$(O) \
     $(SRC_DIR)/gc/register$(O) \
@@ -1073,6 +1074,8 @@ $(SRC_DIR)/exec_save$(O) : $(GENERAL_H_FILES) @TEMP_exec_h@
 $(SRC_DIR)/key$(O) : $(GENERAL_H_FILES) $(SRC_DIR)/key.str
 
 $(SRC_DIR)/gc/smallobject$(O) : $(GENERAL_H_FILES)
+
+$(SRC_DIR)/gc/incremental_ms$(O) : $(GENERAL_H_FILES)
 
 $(SRC_DIR)/gc/dod$(O) : $(GENERAL_H_FILES)
 
