@@ -36,6 +36,100 @@ typedef void * (*get_free_object_fn_type)(PARROT_INTERP, struct Small_Object_Poo
 typedef void (*alloc_objects_fn_type)(PARROT_INTERP, struct Small_Object_Pool *);
 typedef void (*dod_object_fn_type)(PARROT_INTERP, struct Small_Object_Pool *, PObj *);
 
+#if PARROT_GC_IT /* Incremental Tricolor Garbage Collector, PDD09 */
+
+/* Switches and modes */
+
+#  define GC_IT_DEBUG             0
+
+#  define GC_IT_INCREMENT_MODE    0
+#  define GC_IT_BATCH_MODE        1
+#  define GC_IT_SERIAL_MODE       1
+#  define GC_IT_PARALLEL_MODE     0
+
+#  ifdef GC_IT_PARALLEL_MODE
+#    define GC_IT_THREAD_MAX 4
+#  endif
+
+/* minimum number of items to scan in a single increment. If we haven't reached
+   this minimum, go back and do another increment. */
+#  define GC_IT_ITEMS_MARKED_MIN  20
+
+/* behavior macros to determine where the incremental mode breaks. Each
+   increment runs from the current state until the next "break", or until
+   the end if there are no more breaks. Some states might require several
+   increments before completion and moving to the next state. */
+#  define GC_IT_BREAK_AFTER_0
+#  define GC_IT_BREAK_AFTER_1
+#  define GC_IT_BREAK_AFTER_2
+#  define GC_IT_BREAK_AFTER_3
+#  define GC_IT_BREAK_AFTER_4
+#  define GC_IT_BREAK_AFTER_5
+#  define GC_IT_BREAK_AFTER_6
+
+/* Macros that are useful outside src/gc/gc_it.c */
+
+#  define GC_IT_MAX_IN_ARENA 65535
+
+/*
+ * GC_IT Header, a linked list.
+ * Contains a link to the pool/arena (don't know which) that contains this item
+ * Contains a link to the next header, to form linked lists.
+ * Contains the number of the card and the flag that represents this item in
+ * the arena.
+ */
+
+typedef struct Gc_it_hdr {
+    struct Gc_it_hdr           *next;
+    struct {
+        unsigned short flag;
+        unsigned short agg;
+    }                           data;
+} Gc_it_hdr;
+
+#  define GC_IT_CARD_WHITE  0x00     /* Item is dead */
+#  define GC_IT_CARD_UNUSED 0x01
+#  define GC_IT_CARD_BLACK  0x03     /* Item is completely alive */
+#  define GC_IT_CARD_FREE   0x02     /* items which are newly created and should
+                                       not be scanned until the next mark */
+
+#  define PObj_to_IT_HDR(o) (((Gc_it_hdr*)(o))-1)
+#  define IT_HDR_to_PObj(p) ((PObj*)(((Gc_it_hdr*)(p))+1))
+#  define cPObj_to_IT_HDR(o) (((const Gc_it_hdr*)(o))-1)
+
+/*
+ * GC States
+ * Determines which phase of the run is currently being performed.
+ */
+
+typedef enum Gc_it_state {
+    GC_IT_READY = 0,
+    GC_IT_START_MARK,    /* starting a mark, initialize everything */
+    GC_IT_MARK_ROOTS,    /* finding root objects */
+    GC_IT_RESUME_MARK,   /* iterating over queue items, tree-at-a-time */
+    GC_IT_END_MARK,      /* The mark is over, do cleanup, if any */
+    GC_IT_SWEEP_PMCS,    /* sweep pmc pools */
+    GC_IT_SWEEP_BUFFERS, /* sweep through all buffers, after everything else */
+    GC_IT_FINAL_CLEANUP  /* do any necessary cleanup after the GC run is over */
+} Gc_it_state;
+
+/* A private datastructure for the GC. All the global data that we need to
+   operate will be stored here. */
+
+typedef struct Gc_it_data {
+    UINTVAL item_count;       /* number of items scanned in current run */
+    UINTVAL total_count;      /* number of items scanned since beginning of mark phase */
+    UINTVAL num_generations;  /* number of generations */
+    Gc_it_state state;        /* status of the current run */
+    UINTVAL num_threads;      /* number of currently active threads */
+    Gc_it_hdr *root_queue;    /* queue for temporary storage of root items */
+    Gc_it_hdr *queue;         /* list of grey items, to mark */
+    Gc_it_hdr *marked;        /* List of items already marked this phase. */
+} Gc_it_data;
+
+#endif /* PARROT_GC_IT */
+
+
 #if PARROT_GC_GMS
 /*
  * all objects have this header in front of the actual
@@ -140,6 +234,10 @@ typedef struct Small_Object_Pool {
 #  define GC_HEADER_SIZE (sizeof (Gc_gms_hdr))
 #  define PObj_to_ARENA(o) PObj_to_GMSH(o)
 #  define ARENA_to_PObj(p) GMSH_to_PObj((Gc_gms_hdr*)(p))
+#elif PARROT_GC_IT
+#  define GC_HEADER_SIZE (sizeof (Gc_it_hdr))
+#  define PObj_to_ARENA(o) PObj_to_IT_HDR(o)
+#  define ARENA_to_PObj(p) IT_HDR_to_PObj(p)
 #else
 #  define GC_HEADER_SIZE 0
 #  define PObj_to_ARENA(o) (o)
@@ -204,6 +302,9 @@ void Parrot_add_to_free_list(PARROT_INTERP,
         __attribute__nonnull__(3)
         FUNC_MODIFIES(*pool)
         FUNC_MODIFIES(*arena);
+
+void Parrot_dod_clear_live_bits(PARROT_INTERP)
+        __attribute__nonnull__(1);
 
 void Parrot_dod_ms_run(PARROT_INTERP, UINTVAL flags)
         __attribute__nonnull__(1);

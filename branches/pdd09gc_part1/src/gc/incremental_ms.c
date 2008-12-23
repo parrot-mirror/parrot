@@ -1,10 +1,10 @@
 /*
 Copyright (C) 2001-2008, The Perl Foundation.
-$Id: gc_it.c 34092 2008-12-19 01:35:50Z Whiteknight $
+$Id: incremental_ms.c 34092 2008-12-19 01:35:50Z Whiteknight $
 
 =head1 NAME
 
-src/gc/gc_it.c - Incremental Tricolor Garbage Collector
+src/gc/incremental_ms.c - Incremental Tricolor Garbage Collector
 
 =head1 DESCRIPTION
 
@@ -40,10 +40,6 @@ static void gc_it_add_arena_to_free_list(PARROT_INTERP,
         __attribute__nonnull__(3)
         FUNC_MODIFIES(*pool)
         FUNC_MODIFIES(*new_arena);
-
-PARROT_INLINE
-static void gc_it_enqueue_all_roots(PARROT_INTERP)
-        __attribute__nonnull__(1);
 
 static void gc_it_enqueue_next_root(PARROT_INTERP)
         __attribute__nonnull__(1);
@@ -700,7 +696,6 @@ gc_it_mark_PObj_children_grey(PARROT_INTERP, ARGMOD(Gc_it_hdr *hdr))
     if (PObj_is_PMC_TEST(obj)) {
         if (pmc->pmc_ext) {
             const PMC * next_for_gc = PMC_next_for_GC(pmc);
-            object_lives(interp, (PObj *)(pmc->pmc_ext));
             if (PMC_metadata(pmc))
                 pobject_lives(interp, (PObj *)PMC_metadata(pmc));
             if (next_for_gc != pmc && next_for_gc != NULL)
@@ -1250,7 +1245,7 @@ gc_it_ptr_get_aggregate(ARGIN(void * const ptr))
 
 /*
 
-=item C<gc_it_pmc_dead>
+=item C<UINTVAL gc_it_pmc_dead>
 
 Determines whether a given PMC has been prematurely swept.
 
@@ -1269,8 +1264,6 @@ gc_it_pmc_dead(ARGIN(PMC * p))
 }
 
 #  endif
-
-#endif  /* PARROT_GC_IT */
 
 /*
 
