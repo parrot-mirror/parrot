@@ -10,7 +10,6 @@
 static void clear_live_bits(ARGIN(const Small_Object_Pool *pool))
         __attribute__nonnull__(1);
 
-
 static void gc_ms_add_free_object(SHIM_INTERP,
     ARGMOD(Small_Object_Pool *pool),
     ARGIN(void *to_add))

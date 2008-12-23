@@ -64,9 +64,6 @@ void clear_cow(PARROT_INTERP, ARGMOD(Small_Object_Pool *pool), int cleanup)
 void Parrot_do_dod_run(PARROT_INTERP, UINTVAL flags)
         __attribute__nonnull__(1);
 
-void Parrot_dod_clear_live_bits(PARROT_INTERP)
-        __attribute__nonnull__(1);
-
 void Parrot_dod_free_buffer(SHIM_INTERP,
     ARGMOD(Small_Object_Pool *pool),
     ARGMOD(PObj *b))
@@ -241,6 +238,153 @@ void Parrot_gc_ims_init(PARROT_INTERP)
 } while (0)
 
 #endif
+
+#if PARROT_GC_IT
+
+/* HEADERIZER BEGIN: src/gc/incremental_ms.c */
+/* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
+
+PARROT_EXPORT
+void gc_it_add_free_object(PARROT_INTERP,
+    ARGMOD(struct Small_Object_Pool *pool),
+    ARGMOD(void *to_add))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3)
+        FUNC_MODIFIES(*pool)
+        FUNC_MODIFIES(*to_add);
+
+PARROT_EXPORT
+void gc_it_alloc_objects(PARROT_INTERP,
+    ARGMOD(struct Small_Object_Pool *pool))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        FUNC_MODIFIES(*pool);
+
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
+PARROT_EXPORT
+void * gc_it_get_free_object(PARROT_INTERP,
+    ARGMOD(struct Small_Object_Pool *pool))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        FUNC_MODIFIES(*pool);
+
+PARROT_EXPORT
+void gc_it_more_objects(PARROT_INTERP, ARGMOD(Small_Object_Pool *pool))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        FUNC_MODIFIES(*pool);
+
+PARROT_EXPORT
+void Parrot_gc_it_deinit(PARROT_INTERP)
+        __attribute__nonnull__(1);
+
+PARROT_EXPORT
+void Parrot_gc_it_init(PARROT_INTERP)
+        __attribute__nonnull__(1);
+
+PARROT_EXPORT
+void Parrot_gc_it_pool_init(PARROT_INTERP, ARGMOD(Small_Object_Pool *pool))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        FUNC_MODIFIES(*pool);
+
+PARROT_EXPORT
+void Parrot_gc_it_run(PARROT_INTERP, int flags)
+        __attribute__nonnull__(1);
+
+PARROT_INLINE
+void gc_it_add_free_header(SHIM_INTERP,
+    ARGMOD(struct Small_Object_Pool * pool),
+    ARGMOD(Gc_it_hdr * hdr))
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3)
+        FUNC_MODIFIES(* pool)
+        FUNC_MODIFIES(* hdr);
+
+PARROT_WARN_UNUSED_RESULT
+PARROT_INLINE
+UINTVAL gc_it_get_card_mark(ARGMOD(Gc_it_hdr *hdr))
+        __attribute__nonnull__(1)
+        FUNC_MODIFIES(*hdr);
+
+UINTVAL gc_it_pmc_dead(ARGIN(PMC * p))
+        __attribute__nonnull__(1);
+
+UINTVAL gc_it_ptr_get_aggregate(ARGIN(void * const ptr))
+        __attribute__nonnull__(1);
+
+void gc_it_ptr_set_aggregate(ARGMOD(void *ptr), unsigned char flag)
+        __attribute__nonnull__(1)
+        FUNC_MODIFIES(*ptr);
+
+PARROT_INLINE
+void gc_it_set_card_mark(ARGMOD(Gc_it_hdr *hdr), UINTVAL flag)
+        __attribute__nonnull__(1)
+        FUNC_MODIFIES(*hdr);
+
+void gc_it_trace_normal(PARROT_INTERP)
+        __attribute__nonnull__(1);
+
+/* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
+/* HEADERIZER END: src/gc/incremental_ms.c */
+
+    /* The aggregate is obviously being used somewhere, so make sure it's
+       marked. pobject_lives will short circuit if it's already been marked.
+       mark the new item too. */
+#  define GC_WRITE_BARRIER(interp, agg, old, _new) do { \
+    if ((agg)) \
+        pobject_lives((interp), (PObj*)(agg)); \
+    if ((_new)) \
+        pobject_lives((interp), (PObj*)(_new)); \
+} while (0)
+    /* Mark the aggregate, the new object and the new_key, they are all
+       apparently being used and I want to make sure they don't get lost */
+#  define GC_WRITE_BARRIER_KEY(interp, agg, old, old_key, _new, new_key) do {\
+    if ((agg)) \
+        pobject_lives((interp), (PObj*)(agg)); \
+    if ((_new)) \
+        pobject_lives((interp), (PObj*)(_new)); \
+    if ((new_key)) \
+        pobject_lives((interp), (PObj*)(new_key)); \
+} while (0)
+#endif
+
+/* Macros for doing common things with the GC_IT */
+
+#define GC_IT_MARK_NODE_GREY(gc_data, hdr) do { \
+    (hdr)->next = (gc_data)->queue; \
+    (gc_data)->queue = (hdr); \
+} while (0)
+
+#define GC_IT_ADD_TO_QUEUE(gc_data, hdr) do {\
+    (hdr)->next = (gc_data)->queue; \
+    (gc_data)->queue = (hdr); \
+} while (0)
+
+#define GC_IT_ADD_TO_ROOT_QUEUE(gc_data, hdr) do {\
+    (hdr)->next = (gc_data)->root_queue; \
+    (gc_data)->root_queue = (hdr); \
+} while (0)
+
+#define GC_IT_ADD_TO_FREE_LIST(pool, hdr) do { \
+    (hdr)->next       = (Gc_it_hdr *)((pool)->free_list); \
+    (pool)->free_list = (void *)(hdr); \
+} while (0)
+
+#define GC_IT_POP_HDR_FROM_LIST(list, hdr, type) do {\
+    (hdr)       = (Gc_it_hdr *)(list); \
+    (list)      = (type)((hdr)->next); \
+    (hdr)->next = NULL; \
+} while (0)
+
+#define GC_IT_HDR_FROM_INDEX(p, a, i) \
+    (Gc_it_hdr*)(((char*)((a)->start_objects))+((p)->object_size*(i)))
+
+#define GC_IT_HDR_HAS_PARENT_POOL(hdr, pool) \
+    ((hdr)->parent_arena->parent_pool == (pool))
+
 
 #endif /* PARROT_DOD_H_GUARD */
 
