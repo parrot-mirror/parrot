@@ -1267,9 +1267,15 @@ Generate a standard loop with NEXT/LAST/REDO exception handling.
     handlabel = $P0.'new'('result'=>$S0)
 
     .local pmc testpost, prepost, bodypost
+    .local string testop
+    testop = options['testop']
     testpost = options['test']
     prepost  = options['pre']
     bodypost = options['body']
+
+    if testop goto have_testop
+    testop = 'unless'
+  have_testop:
 
     .local pmc ops
     $P0 = get_hll_global ['POST'], 'Ops'
@@ -1278,7 +1284,7 @@ Generate a standard loop with NEXT/LAST/REDO exception handling.
     ops.'push'(testlabel)
     if null testpost goto test_done
     ops.'push'(testpost)
-    ops.'push_pirop'('if', testpost, donelabel)
+    ops.'push_pirop'(testop, testpost, donelabel)
   test_done:
     if null prepost goto pre_done
     ops.'push'(prepost)
@@ -1305,65 +1311,6 @@ Return the POST representation of a C<while> or C<until> loop.
 .sub 'while' :method :multi(_, ['PAST';'Op'])
     .param pmc node
     .param pmc options         :slurpy :named
-
-    .local string pasttype
-    pasttype = node.'pasttype'()
-
-    .local pmc ops
-    $P0 = get_hll_global ['POST'], 'Ops'
-    ops = $P0.'new'('node'=>node)
-
-    .local pmc exprpast, exprpost
-    .local pmc bodypast, bodypost
-    exprpast = node[0]
-    bodypast = node[1]
-
-    .local pmc looplabel, endlabel
-    $P0 = get_hll_global ['POST'], 'Label'
-    $S0 = concat pasttype, '_'
-    $S0 = self.'unique'($S0)
-    looplabel = $P0.'new'('result'=>$S0)
-    $S0 = concat $S0, '_end'
-    endlabel = $P0.'new'('result'=>$S0)
-
-    ##  determine if we need an 'if' or an 'unless'
-    ##  on the conditional (while => if, until => unless)
-    .local string iftype
-    iftype = 'if'
-    if pasttype == 'until' goto have_iftype
-    iftype = 'unless'
-  have_iftype:
-
-    .local string rtype, exprrtype
-    rtype = options['rtype']
-    exprrtype = 'r'
-    if rtype != 'v' goto have_exprrtype
-    exprrtype = '*'
-  have_exprrtype:
-
-    exprpost = self.'as_post'(exprpast, 'rtype'=>exprrtype)
-
-    .local pmc arglist
-    arglist = new 'ResizablePMCArray'
-    $I0 = bodypast.'arity'()
-    unless $I0 goto have_arglist
-    push arglist, exprpost
-  have_arglist:
-
-    ops.'push'(looplabel)
-    ops.'push'(exprpost)
-    ops.'push_pirop'(iftype, exprpost, endlabel)
-    bodypost = self.'as_post'(bodypast, 'rtype'=>'v', 'arglist'=>arglist)
-    ops.'push'(bodypost)
-    ops.'push_pirop'('goto', looplabel)
-    ops.'push'(endlabel)
-    ops.'result'(exprpost)
-    .return (ops)
-.end
-
-.sub 'until' :method :multi(_, ['PAST';'Op'])
-    .param pmc node
-    .param pmc options         :slurpy :named
     .local pmc exprpast, bodypast
     exprpast = node[0]
     bodypast = node[1]
@@ -1379,12 +1326,22 @@ Return the POST representation of a C<while> or C<until> loop.
   have_arglist:
     bodypost = self.'as_post'(bodypast, 'rtype'=>'v', 'arglist'=>arglist)
 
+    .local string testop
+    testop = options['testop']
+
     .local pmc ops
-    ops = self.'loop_gen'('test'=>exprpost, 'body'=>bodypost)
+    ops = self.'loop_gen'('testop'=>testop, 'test'=>exprpost, 'body'=>bodypost)
     ops.'result'(exprpost)
     ops.'node'(node)
     .return (ops)
 .end
+
+.sub 'until' :method :multi(_, ['PAST';'Op'])
+    .param pmc node
+    .param pmc options         :slurpy :named
+    .tailcall self.'while'(node, options :flat :named, 'testop'=>'if')
+.end
+
 
 =item repeat_while(PAST::Op node)
 
