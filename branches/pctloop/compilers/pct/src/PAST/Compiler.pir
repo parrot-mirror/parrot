@@ -1575,7 +1575,7 @@ by C<node>.
     ops.'push'(start)
     ops.'push'(startlabel)
     ops.'push'(body)
-    self.'push_throw_typed'(ops, .CONTROL_LOOP_NEXT)
+    ops.'push_pirop'('goto', looplabel)
 
     ops.'push'(redolabel)
     ops.'push_pirop'('.local pmc exception')
