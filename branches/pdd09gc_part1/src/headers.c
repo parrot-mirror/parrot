@@ -706,6 +706,8 @@ Parrot_initialize_header_pools(PARROT_INTERP)
      * Use GS MS pool functions
      */
     gc_pmc_ext_pool_init(arena_base->pmc_ext_pool);
+#elif PARROT_GC_IT
+    gc_pmc_ext_pool_init(arena_base->pmc_ext_pool);
 #else
     /* rational, consistant behavior (as yet unwritten) */
 #endif

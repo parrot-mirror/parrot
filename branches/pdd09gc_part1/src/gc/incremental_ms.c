@@ -830,7 +830,7 @@ gc_it_add_free_object(PARROT_INTERP, ARGMOD(struct Small_Object_Pool *pool),
     PObj * p = (PObj*)to_add;
     Gc_it_hdr * const hdr = PObj_to_IT_HDR(p);
     PARROT_ASSERT(IT_HDR_to_PObj(hdr) == p);
-    PARROT_ASSERT(contained_in_pool(pool, p));
+    //PARROT_ASSERT(contained_in_pool(pool, p));
     gc_it_add_free_header(interp, pool, hdr);
 }
 
