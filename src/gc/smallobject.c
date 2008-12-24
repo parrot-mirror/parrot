@@ -54,7 +54,11 @@ contained_in_pool(ARGIN(const Small_Object_Pool *pool), ARGIN(const void *ptr))
             (ptrdiff_t)ptr - (ptrdiff_t)arena->start_objects;
 
         if (0 <= ptr_diff
+#if PARROT_GC_IT
+                && ptr_diff < (ptrdiff_t)(arena->total_objects * pool->object_size)
+#else
                 && ptr_diff < (ptrdiff_t)(arena->used * pool->object_size)
+#endif
                 && ptr_diff % pool->object_size == 0)
             return 1;
     }
