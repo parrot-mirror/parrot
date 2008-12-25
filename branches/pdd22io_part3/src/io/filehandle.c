@@ -4,11 +4,11 @@ $Id$
 
 =head1 NAME
 
-src/io.c - Common I/O utility functions
+src/io/filehandle.c - FileHandle utility functions
 
 =head1 DESCRIPTION
 
-This file defines a set of utility functions for I/O operations used by all
+This file defines a set of utility functions for the FileHandle PMC used by all
 operating systems. For the primary public I/O API, see F<src/io/api.c>.
 
 =cut
@@ -16,8 +16,8 @@ operating systems. For the primary public I/O API, see F<src/io/api.c>.
 */
 
 #include "parrot/parrot.h"
-#include "io/io_private.h"
-#include "pmc/pmc_filehandle.h"
+#include "io_private.h"
+#include "../pmc/pmc_filehandle.h"
 
 /* HEADERIZER HFILE: include/parrot/io.h */
 
