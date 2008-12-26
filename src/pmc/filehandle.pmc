@@ -196,32 +196,42 @@ filehandle, rather than modifying the invocant).
     METHOD open(STRING *filename :optional, INTVAL got_filename :opt_flag,
                 STRING *mode :optional, INTVAL got_mode :opt_flag) {
         PMC *filehandle;
+        STRING *open_filename, *open_mode;
+        INTVAL flags = Parrot_io_parse_open_flags(interp, mode);
 
         if (!Parrot_io_is_closed(INTERP, SELF))
             Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_PIO_ERROR,
                                 "Cannot reopen already open filehandle");
 
-        if (got_filename && got_mode) {
-            SET_ATTR_filename(INTERP, SELF, string_copy(INTERP, filename));
+        if (got_mode && !STRING_IS_NULL(mode))
             SET_ATTR_mode(INTERP, SELF, string_copy(INTERP, mode));
-            filehandle = Parrot_io_open(INTERP, SELF, filename, mode);
-        }
-        else if (got_filename) {
-            SET_ATTR_filename(INTERP, SELF, string_copy(INTERP, filename));
-            SET_ATTR_mode(INTERP, SELF, CONST_STRING(INTERP, "r"));
-            filehandle = Parrot_io_open(INTERP, SELF, filename, NULL);
-        }
-        else {
-            /* When no options are passed, reopen the same file as before */
-            STRING *reopen_filename, *reopen_mode;
-            GET_ATTR_filename(INTERP, SELF, reopen_filename);
-            GET_ATTR_mode(INTERP, SELF, reopen_mode);
 
-            if (STRING_IS_NULL(reopen_filename))
-                Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_PIO_ERROR,
-                                "Cannot reopen filehandle, no filename stored");
-            filehandle = Parrot_io_open(INTERP, SELF, reopen_filename, reopen_mode);
+        if (got_filename && !STRING_IS_NULL(filename))
+            SET_ATTR_filename(INTERP, SELF, string_copy(INTERP, filename));
+
+        /* Open the file. When no options are passed, reopen the same file as
+         * before */
+        GET_ATTR_filename(INTERP, SELF, open_filename);
+        GET_ATTR_mode(INTERP, SELF, open_mode);
+
+
+        if (STRING_IS_NULL(open_filename))
+            Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_PIO_ERROR,
+                            "Cannot open filehandle, no filename");
+
+        if (STRING_IS_NULL(open_mode)) {
+            open_mode = CONST_STRING(INTERP, "r");
+            SET_ATTR_mode(INTERP, SELF, open_mode);
         }
+
+        flags = Parrot_io_parse_open_flags(interp, open_mode);
+        filehandle = PIO_OPEN(INTERP, SELF, open_filename, flags);
+
+        if (PMC_IS_NULL(filehandle))
+            Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_PIO_ERROR,
+                "Unable to open filehandle");
+
+        Parrot_io_setbuf(interp, filehandle, PIO_UNBOUND);
 
         RETURN(PMC *filehandle);
     }

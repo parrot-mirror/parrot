@@ -66,7 +66,9 @@ Parrot_io_new_pmc(PARROT_INTERP, INTVAL flags)
 
 =item C<PMC * Parrot_io_open>
 
-Creates and returns a C<FileHandle> PMC for a given string path and flags.
+Return an open filehandle for a given string path and flags. Defaults to
+creating a new FileHandle PMC. If a PMC object is passed in, it uses that
+object instead of creating a new FileHandle.
 
 =cut
 
@@ -77,19 +79,18 @@ PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 PMC *
 Parrot_io_open(PARROT_INTERP, ARGIN_NULLOK(PMC *pmc),
-        ARGIN(STRING *path), ARGIN_NULLOK(STRING *mode_str))
+        ARGIN(STRING *path), ARGIN_NULLOK(STRING *mode))
 {
     PMC *new_filehandle;
-    const INTVAL flags = Parrot_io_parse_open_flags(interp, mode_str);
 
+    if (PMC_IS_NULL(pmc))
+        new_filehandle = pmc_new(interp, enum_class_FileHandle);
+    else
+        new_filehandle = pmc;
 
-    new_filehandle = PIO_OPEN(interp, pmc, path, flags);
+    Parrot_PCCINVOKE(interp, new_filehandle, CONST_STRING(interp, "open"), "SS->P",
+            path, mode, &new_filehandle);
 
-    if (PMC_IS_NULL(new_filehandle))
-        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_PIO_ERROR,
-            "Unable to open filehandle");
-
-    Parrot_io_setbuf(interp, new_filehandle, PIO_UNBOUND);
     return new_filehandle;
 }
 
