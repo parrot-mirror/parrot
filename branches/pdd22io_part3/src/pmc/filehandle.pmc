@@ -146,7 +146,7 @@ Free structures.
 
             if (!Parrot_io_is_closed_filehandle(INTERP, SELF)) {
                 if (data_struct->flags & PIO_F_SHARED)
-                    Parrot_io_flush(INTERP, SELF);
+                    Parrot_io_flush_filehandle(INTERP, SELF);
                 else
                     Parrot_io_close_filehandle(INTERP, SELF);
             }
@@ -447,7 +447,7 @@ Flushes the filehandle.
 */
 
     METHOD flush() {
-        Parrot_io_flush(interp, SELF);
+        Parrot_io_flush_filehandle(interp, SELF);
     }
 
 /*
