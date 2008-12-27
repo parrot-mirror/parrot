@@ -296,13 +296,15 @@ get_path(PARROT_INTERP, ARGMOD(STRING *lib), ARGOUT(void **handle),
 
 =item C<PMC * Parrot_init_lib>
 
-RT#48260: Not yet documented!!!
+Initializes a new library. First, calls C<load_func> to load the library
+(if C<load_func> is provided) and then calls C<init_func>. Returns a
+ParrotLibrary PMC object that represents the initialized library.
 
 =cut
 
 */
 
-PARROT_API
+PARROT_EXPORT
 PARROT_CANNOT_RETURN_NULL
 PMC *
 Parrot_init_lib(PARROT_INTERP,
@@ -329,7 +331,9 @@ Parrot_init_lib(PARROT_INTERP,
 
 =item C<static PMC * run_init_lib>
 
-RT#48260: Not yet documented!!!
+Loads and Initializes a new library and returns a ParrotLibrary PMC.
+Takes the name of a library C<libname>, that is loaded with handle C<handle>.
+Calls the necessary initialization routines, if any.
 
 =cut
 
@@ -354,13 +358,13 @@ run_init_lib(PARROT_INTERP, ARGIN(void *handle),
 
     /* get load_func */
     if (lib_name) {
-        STRING * const load_func_name = Parrot_sprintf_c(interp,
+        STRING * const load_name  = Parrot_sprintf_c(interp,
                                         "Parrot_lib_%Ss_load", lib_name);
-        char * const cload_func_name = string_to_cstring(interp, load_func_name);
+        char   * const cload_func_name = string_to_cstring(interp, load_name);
         STRING *init_func_name;
 
         load_func    = (PMC * (*)(PARROT_INTERP))
-            (Parrot_dlsym(handle, cload_func_name));
+            D2FPTR(Parrot_dlsym(handle, cload_func_name));
 
         string_cstring_free(cload_func_name);
 
@@ -368,8 +372,8 @@ run_init_lib(PARROT_INTERP, ARGIN(void *handle),
         init_func_name  = Parrot_sprintf_c(interp, "Parrot_lib_%Ss_init",
                                           lib_name);
         cinit_func_name = string_to_cstring(interp, init_func_name);
-        init_func      = (void (*)(PARROT_INTERP, PMC *))(Parrot_dlsym(handle,
-                    cinit_func_name));
+        init_func       = (void (*)(PARROT_INTERP, PMC *))
+            D2FPTR(Parrot_dlsym(handle, cinit_func_name));
         string_cstring_free(cinit_func_name);
     }
     else {
@@ -405,7 +409,9 @@ run_init_lib(PARROT_INTERP, ARGIN(void *handle),
 
 =item C<static STRING * clone_string_into>
 
-RT#48260: Not yet documented!!!
+Extracts a STRING value from PMC C<value> in interpreter C<s>. Copies that
+string into the pool of interpreter C<d> using the default encoding
+and charset.
 
 =cut
 
@@ -430,7 +436,7 @@ clone_string_into(ARGMOD(Interp *d), ARGIN(Interp *s), ARGIN(PMC *value))
 
 =item C<static PMC * make_string_pmc>
 
-RT#48260: Not yet documented!!!
+Converts a STRING C<string> into a String PMC.
 
 =cut
 
@@ -451,26 +457,31 @@ make_string_pmc(PARROT_INTERP, ARGIN(STRING *string))
 
 =item C<PMC * Parrot_clone_lib_into>
 
-RT#48260: Not yet documented!!!
+Clones a ParrotLibrary PMC C<lib_pmc> from interpreter C<s> into interpreter
+C<d>.
 
 =cut
 
 */
 
-PARROT_API
+PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 PMC *
 Parrot_clone_lib_into(ARGMOD(Interp *d), ARGMOD(Interp *s), ARGIN(PMC *lib_pmc))
 {
+    STRING * const filename = CONST_STRING(s, "_filename");
+    STRING * const libname  = CONST_STRING(s, "_lib_name");
+    STRING * const type_str = CONST_STRING(s, "_type");
+    STRING * const ops      = CONST_STRING(s, "Ops");
+
     STRING * const wo_ext = clone_string_into(d, s,
-        VTABLE_getprop(s, lib_pmc, CONST_STRING(s, "_filename")));
+        VTABLE_getprop(s, lib_pmc, filename));
     STRING * const lib_name = clone_string_into(d, s,
-        VTABLE_getprop(s, lib_pmc, CONST_STRING(s, "_lib_name")));
+        VTABLE_getprop(s, lib_pmc, libname));
     void * const handle = PMC_data(lib_pmc);
     STRING * const type =
-        VTABLE_get_string(s, VTABLE_getprop(s, lib_pmc, CONST_STRING(s, "_type")));
-    STRING * const ops  = CONST_STRING(s, "Ops");
+        VTABLE_get_string(s, VTABLE_getprop(s, lib_pmc, type_str));
 
     if (!string_equal(s, type, ops)) {
         /* we can't clone oplibs in the normal way, since they're actually
@@ -532,7 +543,7 @@ TODO: fetch Parrot_lib load/init handler exceptions
 
 */
 
-PARROT_API
+PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 PMC *
@@ -567,7 +578,7 @@ Parrot_load_lib(PARROT_INTERP, ARGIN_NULLOK(STRING *lib), SHIM(PMC *initializer)
     path = get_path(interp, lib, &handle, wo_ext, ext);
     if (!path || !handle) {
         /*
-         * XXX real_exception? return PMCNULL?
+         * XXX Parrot_ex_throw_from_c_args? return PMCNULL?
          * PMC Undef seems convenient, because it can be queried with get_bool()
          */
         return pmc_new(interp, enum_class_Undef);

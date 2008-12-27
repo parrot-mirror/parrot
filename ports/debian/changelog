@@ -1,3 +1,19 @@
+parrot (0.7.0-1) unstable; urgency=low
+
+  * New upstream release
+
+ -- Nuno Carvalho <mestre.smash@gmail.com>  Tue, 02 Sep 2008 13:05:31 +0100
+
+parrot (0.6.4-1) unstable; urgency=low
+
+  * New upstream release
+  * debian/copyright:
+    - Added license link.
+    - Updated copyright years.
+    - Removed copyright info for files no longer in distribution.
+
+ -- Nuno Carvalho <mestre.smash@gmail.com>  Sat, 16 Aug 2008 14:15:14 +0200
+
 parrot (0.5.1-1) unstable; urgency=low
 
   * New upstream release (Closes: #444707).

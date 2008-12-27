@@ -55,7 +55,7 @@ pmclass DotNetBytecode dynpmc group dotnet {
 
         /* Handle cases where we've an invalid PMC. */
         if (!bc)
-            real_exception(INTERP, NULL, E_StandardError,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                "Invalid DotNetBytecode PMC");
 
         result = (INTVAL)bc->locals_signature;
@@ -71,7 +71,7 @@ pmclass DotNetBytecode dynpmc group dotnet {
 
         /* Handle cases where we've an invalid PMC. */
         if (!bc)
-            real_exception(INTERP, NULL, E_StandardError,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                "Invalid DotNetBytecode PMC");
 
         result = bc->init_locals_flag;
@@ -87,7 +87,7 @@ pmclass DotNetBytecode dynpmc group dotnet {
 
         /* Handle cases where we've an invalid PMC. */
         if (!bc)
-            real_exception(INTERP, NULL, E_StandardError,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                "Invalid DotNetBytecode PMC");
 
         result = bc->body_size;
@@ -103,7 +103,7 @@ pmclass DotNetBytecode dynpmc group dotnet {
 
         /* Handle cases where we've an invalid PMC. */
         if (!bc)
-            real_exception(INTERP, NULL, E_StandardError,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                "Invalid DotNetBytecode PMC");
 
         result = bc->cur_pos;
@@ -118,10 +118,10 @@ pmclass DotNetBytecode dynpmc group dotnet {
 
         /* Handle cases where we've an invalid PMC. */
         if (!bc)
-            real_exception(INTERP, NULL, E_StandardError,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                "Invalid DotNetBytecode PMC");
-        else
-            bc->cur_pos = pos;
+
+        bc->cur_pos = pos;
     }
 
 
@@ -133,7 +133,7 @@ pmclass DotNetBytecode dynpmc group dotnet {
 
         /* Handle cases where we've an invalid PMC. */
         if (!bc)
-            real_exception(INTERP, NULL, E_StandardError,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                "Invalid DotNetBytecode PMC");
 
         result = bc->eh;
@@ -145,16 +145,16 @@ pmclass DotNetBytecode dynpmc group dotnet {
     METHOD INTVAL read_int8()
     {
         dotnet_bytecode *bc = (dotnet_bytecode *)PMC_struct_val(SELF);
-        INTVAL           result;
+        INTVAL           result = 0;
 
         /* Handle cases where we've an invalid PMC. */
         if (!bc)
-            real_exception(INTERP, NULL, E_StandardError,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                "Invalid DotNetBytecode PMC");
 
         /* Ensure we won't read past the end. */
         if (bc->cur_pos >= bc->body_size)
-            real_exception(INTERP, NULL, E_StandardError,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                "Read past end of bytecode");
 
         /* Otherwise read the value. */
@@ -168,20 +168,20 @@ pmclass DotNetBytecode dynpmc group dotnet {
     METHOD INTVAL read_uint8()
     {
         dotnet_bytecode *bc = (dotnet_bytecode *)PMC_struct_val(SELF);
-        INTVAL           result;
+        INTVAL           result = 0;
 
         /* Handle cases where we've an invalid PMC. */
         if (!bc)
-            real_exception(INTERP, NULL, E_StandardError,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                "Invalid DotNetBytecode PMC");
 
         /* Ensure we won't read past the end. */
         if (bc->cur_pos >= bc->body_size)
-            real_exception(INTERP, NULL, E_StandardError,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                "Read past end of bytecode");
 
         /* Otherwise read the value. */
-        result = (INTVAL)bc->body[bc->cur_pos];
+        result = (INTVAL)((unsigned char)bc->body[bc->cur_pos]);
         bc->cur_pos++;
         RETURN(INTVAL result);
     }
@@ -190,18 +190,18 @@ pmclass DotNetBytecode dynpmc group dotnet {
     /* Read a signed 16-bit integer. */
     METHOD INTVAL read_int16()
     {
-        INTVAL           result;
+        INTVAL           result  = 0;
         dotnet_bytecode *bc      = (dotnet_bytecode *)PMC_struct_val(SELF);
         char            *val_ptr = (char *)&result;
 
         /* Handle cases where we've an invalid PMC. */
         if (!bc)
-            real_exception(INTERP, NULL, E_StandardError,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                "Invalid DotNetBytecode PMC");
 
         /* Ensure we won't read past the end. */
         if (bc->cur_pos + 1 >= bc->body_size)
-            real_exception(INTERP, NULL, E_StandardError,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                "Read past end of bytecode");
 
         /* Otherwise read the value. */
@@ -223,18 +223,18 @@ pmclass DotNetBytecode dynpmc group dotnet {
     /* Read an unsigned 16-bit integer. */
     METHOD INTVAL read_uint16()
     {
-        INTVAL           result;
+        INTVAL           result  = 0;
         dotnet_bytecode *bc      = (dotnet_bytecode *)PMC_struct_val(SELF);
         char            *val_ptr = (char *)&result;
 
         /* Handle cases where we've an invalid PMC. */
         if (!bc)
-            real_exception(INTERP, NULL, E_StandardError,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                "Invalid DotNetBytecode PMC");
 
         /* Ensure we won't read past the end. */
         if (bc->cur_pos + 1 >= bc->body_size)
-            real_exception(INTERP, NULL, E_StandardError,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                "Read past end of bytecode");
 
         /* Otherwise read the value. */
@@ -256,18 +256,18 @@ pmclass DotNetBytecode dynpmc group dotnet {
     /* Read a signed 32-bit integer. */
     METHOD INTVAL read_int32()
     {
-        INTVAL           result;
+        INTVAL           result  = 0;
         dotnet_bytecode *bc      = (dotnet_bytecode *)PMC_struct_val(SELF);
         char            *val_ptr = (char *)&result;
 
         /* Handle cases where we've an invalid PMC. */
         if (!bc)
-            real_exception(INTERP, NULL, E_StandardError,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                "Invalid DotNetBytecode PMC");
 
         /* Ensure we won't read past the end. */
         if (bc->cur_pos + 3 >= bc->body_size)
-            real_exception(INTERP, NULL, E_StandardError,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                "Read past end of bytecode");
 
         /* Otherwise read the value. */
@@ -293,18 +293,18 @@ pmclass DotNetBytecode dynpmc group dotnet {
     /* Read an unsigned 32-bit integer. */
     METHOD INTVAL read_uint32()
     {
-        INTVAL           result;
+        INTVAL           result  = 0;
         dotnet_bytecode *bc      = (dotnet_bytecode *)PMC_struct_val(SELF);
         char            *val_ptr = (char *)&result;
 
         /* Handle cases where we've an invalid PMC. */
         if (!bc)
-            real_exception(INTERP, NULL, E_StandardError,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                "Invalid DotNetBytecode PMC");
 
         /* Ensure we won't read past the end. */
         if (bc->cur_pos + 3 >= bc->body_size)
-            real_exception(INTERP, NULL, E_StandardError,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                "Read past end of bytecode");
 
         /* Otherwise read the value. */
@@ -330,18 +330,18 @@ pmclass DotNetBytecode dynpmc group dotnet {
     /* Read a 32-bit (single precision) floating pointer number. */
     METHOD FLOATVAL read_float32()
     {
-        FLOATVAL         result;
+        FLOATVAL         result  = 0;
         dotnet_bytecode *bc      = (dotnet_bytecode *)PMC_struct_val(SELF);
         char            *val_ptr = (char *)&result;
 
         /* Handle cases where we've an invalid PMC. */
         if (!bc)
-            real_exception(INTERP, NULL, E_StandardError,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                "Invalid DotNetBytecode PMC");
 
         /* Ensure we won't read past the end. */
         if (bc->cur_pos + 3 >= bc->body_size)
-            real_exception(INTERP, NULL, E_StandardError,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                "Read past end of bytecode");
 
         /* Otherwise read the value. */
@@ -368,18 +368,18 @@ pmclass DotNetBytecode dynpmc group dotnet {
     METHOD FLOATVAL read_float64()
     {
         int              i;
-        FLOATVAL         result;
+        FLOATVAL         result  = 0;
         dotnet_bytecode *bc      = (dotnet_bytecode *)PMC_struct_val(SELF);
         char            *val_ptr = (char *)&result;
 
         /* Handle cases where we've an invalid PMC. */
         if (!bc)
-            real_exception(INTERP, NULL, E_StandardError,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                "Invalid DotNetBytecode PMC");
 
         /* Ensure we won't read past the end. */
         if (bc->cur_pos + 7 >= bc->body_size)
-            real_exception(INTERP, NULL, E_StandardError,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                "Read past end of bytecode");
 
         /* Otherwise read the value. */
@@ -407,18 +407,18 @@ pmclass DotNetBytecode dynpmc group dotnet {
     /* Read a field token (32 bits, unsigned). */
     METHOD INTVAL read_tfield()
     {
-        INTVAL           result;
+        INTVAL           result  = 0;
         dotnet_bytecode *bc      = (dotnet_bytecode *)PMC_struct_val(SELF);
         char            *val_ptr = (char *)&result;
 
         /* Handle cases where we've an invalid PMC. */
         if (!bc)
-            real_exception(INTERP, NULL, E_StandardError,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                "Invalid DotNetBytecode PMC");
 
         /* Ensure we won't read past the end. */
         if (bc->cur_pos + 3 >= bc->body_size)
-            real_exception(INTERP, NULL, E_StandardError,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                "Read past end of bytecode");
 
         /* Otherwise read the value. */
@@ -444,18 +444,18 @@ pmclass DotNetBytecode dynpmc group dotnet {
     /* Read a method token (32 bits, unsigned). */
     METHOD INTVAL read_tmethod()
     {
-        INTVAL           result;
+        INTVAL           result  = 0;
         dotnet_bytecode *bc      = (dotnet_bytecode *)PMC_struct_val(SELF);
         char            *val_ptr = (char *)&result;
 
         /* Handle cases where we've an invalid PMC. */
         if (!bc)
-            real_exception(INTERP, NULL, E_StandardError,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                "Invalid DotNetBytecode PMC");
 
         /* Ensure we won't read past the end. */
         if (bc->cur_pos + 3 >= bc->body_size)
-            real_exception(INTERP, NULL, E_StandardError,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                "Read past end of bytecode");
 
         /* Otherwise read the value. */
@@ -481,18 +481,18 @@ pmclass DotNetBytecode dynpmc group dotnet {
     /* Read a type token (32 bits, unsigned). */
     METHOD INTVAL read_ttype()
     {
-        INTVAL           result;
+        INTVAL           result  = 0;
         dotnet_bytecode *bc      = (dotnet_bytecode *)PMC_struct_val(SELF);
         char            *val_ptr = (char *)&result;
 
         /* Handle cases where we've an invalid PMC. */
         if (!bc)
-            real_exception(INTERP, NULL, E_StandardError,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                "Invalid DotNetBytecode PMC");
 
         /* Ensure we won't read past the end. */
         if (bc->cur_pos + 3 >= bc->body_size)
-            real_exception(INTERP, NULL, E_StandardError,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                "Read past end of bytecode");
 
         /* Otherwise read the value. */
@@ -519,18 +519,18 @@ pmclass DotNetBytecode dynpmc group dotnet {
     /* Read a string token (32 bits, unsigned). */
     METHOD INTVAL read_tstring()
     {
-        INTVAL           result;
+        INTVAL           result  = 0;
         dotnet_bytecode *bc      = (dotnet_bytecode *)PMC_struct_val(SELF);
         char            *val_ptr = (char *)&result;
 
         /* Handle cases where we've an invalid PMC. */
         if (!bc)
-            real_exception(INTERP, NULL, E_StandardError,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                "Invalid DotNetBytecode PMC");
 
         /* Ensure we won't read past the end. */
         if (bc->cur_pos + 3 >= bc->body_size)
-            real_exception(INTERP, NULL, E_StandardError,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                "Read past end of bytecode");
 
         /* Otherwise read the value. */

@@ -67,30 +67,85 @@ NOT IMPLEMENTED.
 
 Define a new constant
 
-NOT IMPLEMENTED.
+STILL INCOMPLETE.
 
 =cut
 
 .sub 'define'
-    .param pmc symb
-    .param pmc val
- 
+    .param pmc args :slurpy
+
+    .local int argc
+    argc = args
+    .local int case_sensitive
+    case_sensitive = 1 # not used
+    unless argc == 2 goto L1
+    $P1 = shift args
+    $P2 = shift args
+    goto L2
+  L1:
+    unless argc == 3 goto L3
+    $P1 = shift args
+    $P2 = shift args
+    $P3 = shift args
+    case_sensitive = $P3
+    goto L2
+  L3:
+    wrong_param_count()
+    .RETURN_NULL()
+  L2:
+    $I0 = isa $P2, 'PhpInteger'
+    if $I0 goto L4
+    $I0 = isa $P2, 'PhpFloat'
+    if $I0 goto L4
+    $I0 = isa $P2, 'PhpString'
+    if $I0 goto L4
+    $I0 = isa $P2, 'PhpBoolean'
+    if $I0 goto L4
+    $I0 = isa $P2, 'PhpResource'
+    if $I0 goto L4
+    $I0 = isa $P2, 'PhpNull'
+    if $I0 goto L4
+    $I0 = isa $P2, 'PhpObject'
+    unless $I0 goto L5
+    #
+  L5:
+    error(E_WARNING,"Constants may only evaluate to scalar values")
+    .RETURN_FALSE()
+  L4:
+    $S1 = $P1
     .local pmc cst
     .GET_CONSTANTS(cst)
-    cst[symb] = val
+    $I0 = exists cst[$S1]
+    if $I0 goto L6
+    cst[$S1] = $P2
+    .RETURN_TRUE()
+  L6:
+    .RETURN_FALSE()
 .end
 
 =item C<bool defined(string constant_name)>
 
 Check whether a constant exists
 
-NOT IMPLEMENTED.
-
 =cut
 
 .sub 'defined'
-    not_implemented()
+    .param pmc args :slurpy
+
+    .local int argc
+    argc = args
+    unless argc != 1 goto L1
+    wrong_param_count()
+    .RETURN_NULL()
+  L1:
+    $P1 = shift args
+    $S1 = $P1
+    .local pmc cst
+    .GET_CONSTANTS(cst)
+    $I0 = exists cst[$S1]
+    .RETURN_BOOL($I0)
 .end
+
 
 =item C<array each(array arr)>
 
@@ -113,19 +168,26 @@ DUMMY IMPLEMENTATION.
 =cut
 
 .sub 'error_reporting'
-    .RETURN_LONG(0)
+    .param pmc level       :optional
+    .param int has_level   :opt_flag
+
+    unless has_level goto L1
+       set_hll_global 'php_errorreporting', level
+    L1:
+    get_hll_global $P0, 'php_errorreporting'
+
+    .return($P0)
 .end
 
 =item C<bool extension_loaded(string extension_name)>
 
-Returns true if the named extension is loaded
-
-NOT IMPLEMENTED.
+Returns true if the named extension is loaded.
+As currently no extensions are supported, this function always returns false.
 
 =cut
 
 .sub 'extension_loaded'
-    not_implemented()
+    .RETURN_BOOL(0)
 .end
 
 =item C<mixed func_get_arg(int arg_num)>
@@ -336,12 +398,26 @@ NOT IMPLEMENTED.
 
 Get the resource type name for a given resource
 
-NOT IMPLEMENTED.
-
 =cut
 
 .sub 'get_resource_type'
-    not_implemented()
+    .param pmc args :slurpy
+
+    .local int argc
+    argc = args
+    unless argc != 1 goto L1
+    wrong_param_count()
+    .RETURN_NULL()
+  L1:
+    $P1 = shift args
+    $I0 = isa $P1, 'PhpResource'
+    if $I0 goto L2
+    error(E_WARNING, "Supplied argument is not a valid resource handle")
+    .RETURN_FALSE()
+  L2:
+    $P0 = deref $P1
+    $S0 = typeof $P0
+    .RETURN_STRING($S0)
 .end
 
 =item C<bool interface_exists(string classname [, bool autoload])>
@@ -484,6 +560,7 @@ Binary safe string comparison
 
 .sub 'strcmp'
     .param pmc args :slurpy
+
     .local int argc
     argc = args
     unless argc != 2 goto L1
@@ -506,6 +583,7 @@ Get string length
 
 .sub 'strlen'
     .param pmc args :slurpy
+
     .local int argc
     argc = args
     unless argc != 1 goto L1

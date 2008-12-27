@@ -93,7 +93,8 @@ Returns the current working directory.
         }
         else {
             const char * const errmsg = strerror(errno);
-            real_exception(interp, NULL, E_SystemError, errmsg);
+            Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_EXTERNAL_ERROR,
+                errmsg);
         }
     }
 
@@ -118,7 +119,8 @@ Changes the current working directory to the one specified by C<path>.
         string_cstring_free(cpath);
         if (error) {
             char *errmsg = strerror(errno);
-            real_exception(interp, NULL, E_SystemError, errmsg);
+            Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_EXTERNAL_ERROR,
+                errmsg);
         }
     }
 
@@ -141,7 +143,8 @@ C<path>.
         if (error) {
             const char * const errmsg = strerror(errno);
             string_cstring_free(cpath);
-            real_exception(interp, NULL, E_SystemError, errmsg);
+            Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_EXTERNAL_ERROR,
+                errmsg);
         }
 
         if (S_ISDIR(info.st_mode)) {
@@ -153,7 +156,8 @@ C<path>.
             string_cstring_free(cpath);
             if (error) {
                 const char * const errmsg = strerror(errno);
-                real_exception(interp, NULL, E_SystemError, errmsg);
+                Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_EXTERNAL_ERROR,
+                    errmsg);
             }
         }
         else {
@@ -161,7 +165,8 @@ C<path>.
             string_cstring_free(cpath);
             if (error) {
                 const char * const errmsg = strerror(errno);
-                real_exception(interp, NULL, E_SystemError, errmsg);
+                Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_EXTERNAL_ERROR,
+                    errmsg);
             }
         }
     }
@@ -177,18 +182,18 @@ Creates a directory specified by C<path> with mode C<mode>.
 */
 
     METHOD mkdir(STRING *path, INTVAL mode) {
-        int   error;
         char * const cpath = string_to_cstring(interp, path);
         /* should we validate mode? */
 #ifdef WIN32
-        error = _mkdir(cpath);
+        int error = _mkdir(cpath);
 #else
-        error = mkdir(cpath, mode);
+        int error = mkdir(cpath, (mode_t)mode);
 #endif
         string_cstring_free(cpath);
         if (error) {
             const char * const errmsg = strerror(errno);
-            real_exception(interp, NULL, E_SystemError, errmsg);
+            Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_EXTERNAL_ERROR,
+                errmsg);
         }
     }
 
@@ -219,33 +224,48 @@ Stats a file, and returns a 13 position array as in Perl:
 */
 
     METHOD stat(STRING *path) {
-        struct stat info;
+        struct stat   info;
         char  * const cpath = string_to_cstring(interp, path);
         const int     error = stat(cpath, &info);
+
         string_cstring_free(cpath);
 
         if (error) {
             const char * const errmsg = strerror(errno);
-            real_exception(interp, NULL, E_SystemError, errmsg);
+            Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_EXTERNAL_ERROR,
+                errmsg);
         }
         else {
             PMC * const array = pmc_new(interp, enum_class_FixedPMCArray);
             VTABLE_set_integer_native(interp, array, 13);
 
-            VTABLE_set_integer_keyed_int(interp, array, 0, info.st_dev);
-            VTABLE_set_integer_keyed_int(interp, array, 1, info.st_ino);
-            VTABLE_set_integer_keyed_int(interp, array, 2, info.st_mode);
-            VTABLE_set_integer_keyed_int(interp, array, 3, info.st_nlink);
-            VTABLE_set_integer_keyed_int(interp, array, 4, info.st_uid);
-            VTABLE_set_integer_keyed_int(interp, array, 5, info.st_gid);
-            VTABLE_set_integer_keyed_int(interp, array, 6, info.st_rdev);
-            VTABLE_set_integer_keyed_int(interp, array, 7, info.st_size);
-            VTABLE_set_integer_keyed_int(interp, array, 8, info.st_atime);
-            VTABLE_set_integer_keyed_int(interp, array, 9, info.st_mtime);
-            VTABLE_set_integer_keyed_int(interp, array, 10, info.st_ctime);
+            VTABLE_set_integer_keyed_int(interp, array,  0,
+                    (INTVAL)info.st_dev);
+            VTABLE_set_integer_keyed_int(interp, array,  1,
+                    (INTVAL)info.st_ino);
+            VTABLE_set_integer_keyed_int(interp, array,  2,
+                    (INTVAL)info.st_mode);
+            VTABLE_set_integer_keyed_int(interp, array,  3,
+                    (INTVAL)info.st_nlink);
+            VTABLE_set_integer_keyed_int(interp, array,  4,
+                    (INTVAL)info.st_uid);
+            VTABLE_set_integer_keyed_int(interp, array,  5,
+                    (INTVAL)info.st_gid);
+            VTABLE_set_integer_keyed_int(interp, array,  6,
+                    (INTVAL)info.st_rdev);
+            VTABLE_set_integer_keyed_int(interp, array,  7,
+                    (INTVAL)info.st_size);
+            VTABLE_set_integer_keyed_int(interp, array,  8,
+                    (INTVAL)info.st_atime);
+            VTABLE_set_integer_keyed_int(interp, array,  9,
+                    (INTVAL)info.st_mtime);
+            VTABLE_set_integer_keyed_int(interp, array, 10,
+                    (INTVAL)info.st_ctime);
 #ifndef WIN32
-            VTABLE_set_integer_keyed_int(interp, array, 11, info.st_blksize);
-            VTABLE_set_integer_keyed_int(interp, array, 12, info.st_blocks);
+            VTABLE_set_integer_keyed_int(interp, array, 11,
+                    (INTVAL)info.st_blksize);
+            VTABLE_set_integer_keyed_int(interp, array, 12,
+                    (INTVAL)info.st_blocks);
 #endif
             RETURN(PMC *array);
         }
@@ -290,26 +310,40 @@ Stats a file, and returns a 13 position array as in Perl:
 
         if (error) {
             const char * const errmsg = strerror(errno);
-            real_exception(interp, NULL, E_SystemError, errmsg);
+            Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_EXTERNAL_ERROR,
+                errmsg);
         }
         else {
             PMC * const array = pmc_new(interp, enum_class_FixedPMCArray);
             VTABLE_set_integer_native(interp, array, 13);
 
-            VTABLE_set_integer_keyed_int(interp, array, 0, info.st_dev);
-            VTABLE_set_integer_keyed_int(interp, array, 1, info.st_ino);
-            VTABLE_set_integer_keyed_int(interp, array, 2, info.st_mode);
-            VTABLE_set_integer_keyed_int(interp, array, 3, info.st_nlink);
-            VTABLE_set_integer_keyed_int(interp, array, 4, info.st_uid);
-            VTABLE_set_integer_keyed_int(interp, array, 5, info.st_gid);
-            VTABLE_set_integer_keyed_int(interp, array, 6, info.st_rdev);
-            VTABLE_set_integer_keyed_int(interp, array, 7, info.st_size);
-            VTABLE_set_integer_keyed_int(interp, array, 8, info.st_atime);
-            VTABLE_set_integer_keyed_int(interp, array, 9, info.st_mtime);
-            VTABLE_set_integer_keyed_int(interp, array, 10, info.st_ctime);
+            VTABLE_set_integer_keyed_int(interp, array,  0,
+                    (INTVAL)info.st_dev);
+            VTABLE_set_integer_keyed_int(interp, array,  1,
+                    (INTVAL)info.st_ino);
+            VTABLE_set_integer_keyed_int(interp, array,  2,
+                    (INTVAL)info.st_mode);
+            VTABLE_set_integer_keyed_int(interp, array,  3,
+                    (INTVAL)info.st_nlink);
+            VTABLE_set_integer_keyed_int(interp, array,  4,
+                    (INTVAL)info.st_uid);
+            VTABLE_set_integer_keyed_int(interp, array,  5,
+                    (INTVAL)info.st_gid);
+            VTABLE_set_integer_keyed_int(interp, array,  6,
+                    (INTVAL)info.st_rdev);
+            VTABLE_set_integer_keyed_int(interp, array,  7,
+                    (INTVAL)info.st_size);
+            VTABLE_set_integer_keyed_int(interp, array,  8,
+                    (INTVAL)info.st_atime);
+            VTABLE_set_integer_keyed_int(interp, array,  9,
+                    (INTVAL)info.st_mtime);
+            VTABLE_set_integer_keyed_int(interp, array, 10,
+                    (INTVAL)info.st_ctime);
 #ifndef WIN32
-            VTABLE_set_integer_keyed_int(interp, array, 11, info.st_blksize);
-            VTABLE_set_integer_keyed_int(interp, array, 12, info.st_blocks);
+            VTABLE_set_integer_keyed_int(interp, array, 11,
+                    (INTVAL)info.st_blksize);
+            VTABLE_set_integer_keyed_int(interp, array, 12,
+                    (INTVAL)info.st_blocks);
 #endif
             RETURN(PMC *array);
         }
@@ -336,10 +370,11 @@ Creates a symlink, where available
 
         if (error) {
             const char * const errmsg = strerror(errno);
-            real_exception(interp, NULL, E_SystemError, errmsg);
+            Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_EXTERNAL_ERROR,
+                errmsg);
         }
 #else
-        real_exception(interp, NULL, E_NotImplementedError,
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_UNIMPLEMENTED,
                 "Win32 does not support symlinks!");
 #endif
     }
@@ -365,10 +400,11 @@ Creates a hard link, where available(?)
 
         if (error) {
             const char * const errmsg = strerror(errno);
-            real_exception(interp, NULL, E_SystemError, errmsg);
+            Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_EXTERNAL_ERROR,
+                errmsg);
         }
 #else
-        real_exception(interp, NULL, E_NotImplementedError,
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INTERNAL_NOT_IMPLEMENTED,
                 "Win32 is not POSIX. Need win32 developer!");
 #endif
     }
@@ -386,11 +422,12 @@ previous one).
 
     METHOD umask(INTVAL mask) {
 #ifndef _MSC_VER
-        const INTVAL old = umask(mask);
+        const INTVAL old = umask((mode_t)mask);
         RETURN(INTVAL old);
 #else
-        real_exception(interp, NULL, E_NotImplementedError,
-                "Win32 is not POSIX. Need win32 developer!");
+        Parrot_ex_throw_from_c_args(interp, NULL,
+            EXCEPTION_UNIMPLEMENTED,
+            "Win32 is not POSIX. Need Win32 developer!");
 #endif
     }
 
@@ -417,11 +454,12 @@ idea to do the same with parrot.
 
         if (error) {
             const char * const errmsg = strerror(errno);
-            real_exception(interp, NULL, E_SystemError, errmsg);
+            Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_EXTERNAL_ERROR,
+                errmsg);
         }
 #else
-        real_exception(interp, NULL, E_NotImplementedError,
-                "Win32 is not POSIX. Need win32 developer!");
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INTERNAL_NOT_IMPLEMENTED,
+                "Win32 is not POSIX. Need Win32 developer!");
 #endif
     }
 
@@ -447,7 +485,8 @@ reads entries from a directory.
 
         if (!dir) {
             const char * const errmsg = strerror(errno);
-            real_exception(interp, NULL, E_SystemError, errmsg);
+            Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_EXTERNAL_ERROR,
+                errmsg);
         }
 
         array = pmc_new(interp, enum_class_ResizableStringArray);
@@ -461,7 +500,7 @@ reads entries from a directory.
 
         RETURN(PMC *array);
 #else
-        real_exception(interp, NULL, E_NotImplementedError,
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INTERNAL_NOT_IMPLEMENTED,
                 "Win32 is not POSIX. Need Win32 developer!");
 #endif
     }
@@ -483,7 +522,8 @@ thrown.
 
         if (ret < 0) {
             const char * const errmsg = strerror(errno) ;
-            real_exception(interp, NULL, E_SystemError, "%s", errmsg);
+            Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_EXTERNAL_ERROR,
+                "%s", errmsg);
         }
     }
 

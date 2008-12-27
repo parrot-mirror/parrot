@@ -4,12 +4,10 @@
 
 This is the grammar for cardinal written as a sequence of Perl 6 rules.
 
-Currently taken (partly) from:
+Originally taken (partly) from:
 http://www.math.hokudai.ac.jp/~gotoken/ruby/man/yacc.html
 
 and parse.y from the ruby source
-
-But adapted here and there; it's not entirely correct, it seems.
 
 =end overview
 
@@ -28,7 +26,7 @@ token comp_stmt {
 }
 
 rule stmts {
-    <.term>?[ <stmt> [<.term>+ | <.before <end_block>> | $] ]* {*}
+    <.term>?[ <stmt> [<.term>+ | <.before <end_block>> | $ | <panic: unterminated statement>] ]* {*}
 }
 
 token term { \n | ';' }
@@ -45,6 +43,7 @@ token basic_stmt {
     | <module> {*}          #= module
     | <begin_end> {*}       #= begin_end
     | <indexed_assignment> {*}      #= indexed_assignment
+    | <member_assignment> {*}      #= member_assignment
     | <assignment> {*}      #= assignment
     | <return_stmt> {*}     #= return_stmt
     | <expr> {*}            #= expr
@@ -72,7 +71,7 @@ token stmt_mod {
 }
 
 rule expr {
-    $<not>=['not']? <arg> [$<op>=['and'|'or'] <expr>]?
+    [$<not>=['!'|'not']]? <arg> [$<op>=['and'|'or'] <expr>]?
     {*}
 }
 
@@ -88,6 +87,11 @@ rule end {
 
 token indexed_assignment {
     <basic_primary> '[' <key=arg> ']' <.ws> '=' <.ws> <rhs=arg>
+    {*}
+}
+
+token member_assignment {
+    <basic_primary> '.' <key=identifier> <.ws> '=' <.ws> <rhs=arg>
     {*}
 }
 
@@ -116,14 +120,14 @@ token member_variable {
 }
 
 token methodcall {
-    $<dot>=['.'|'::']
+    $<dot>='.'
     <operation> <call_args>? <do_block>?
     {*}
 }
 
 rule do_block {
-    | 'do' <do_args> <.term>? <comp_stmt> 'end' {*}
-    | '{' <do_args> <.term>? <comp_stmt> '}' {*}
+    | 'do' <do_args>? <.term>? <.before <stmt>><comp_stmt> 'end' {*}
+    | '{' <do_args>? <.term>? <.before <stmt>><comp_stmt> '}' {*}
 }
 
 rule super_call {
@@ -132,17 +136,37 @@ rule super_call {
 }
 
 token operation {
+    'class'|
+    'nil?' |
+    'next' |
+    'begin'|
+    'end'  |
+    '`'    |
     <.identifier> ('!'|'?')?
 }
 
+#XXX UGLY!  Refactor into <args> maybe?
 token call_args {
-    | '()' {*}
-    | <args> {*}
-    | '(' <.ws> <args> <.ws> ')' {*}
+    | '()' [<.ws> <do_block>]? {*}
+    | [ <.after \s|\)> | <.before \s> ] <args> [<.ws> <do_block>]? {*}
+    | '(' <.ws> <args> <.ws> ')' [<.ws> <do_block>]? {*}
 }
 
 rule do_args {
-    '|' [ <identifier> [',' <identifier>]*]?'|' {*}
+    '|' <block_signature> '|'
+}
+
+rule sig_identifier {
+                      #XXX Should this be basic_primary or expr or what?
+    <identifier>[ '=' <default=basic_primary>]? {*}
+}
+
+rule block_signature {
+    [
+    | <sig_identifier> [',' <sig_identifier>]* [',' <slurpy_param>]? [',' <block_param>]?
+    | <slurpy_param> [',' <block_param>]?
+    | <block_param>?
+    ] {*}
 }
 
 token variable {
@@ -154,10 +178,15 @@ token variable {
 token varname {
     <!reserved_word>
     [ <global> {*}             #= global
+    | <class_variable> {*}     #= class_variable
     | <instance_variable> {*}  #= instance_variable
     | <local_variable> {*}     #= local_variable
-    | <constant_variable> {*}     #= constant_variable
+    | <constant_variable> {*}  #= constant_variable
     ]
+}
+
+token funcall {
+    <!reserved_word> <local_variable> <.before \s|'('> <.before <call_args>> {*}
 }
 
 token mrhs {
@@ -177,11 +206,17 @@ proto 'infix:=' is precedence('1') is pasttype('copy') is lvalue(1)     { ... }
 
 token basic_primary {
     | <literal> {*}                         #= literal
+    | <funcall> {*}                         #= funcall
     | <variable> {*}                        #= variable
-    | <array> {*}                           #= array
     | <ahash> {*}                           #= ahash
+    | <regex> {*}                           #= regex
+    | <do_block> {*}                        #= do_block
+    | <quote_string> {*}                    #= quote_string
+    | <warray> {*}                          #= warray
+    | <array> {*}                           #= array
     | <pcomp_stmt> {*}                      #= pcomp_stmt
-    | <scope_identifier> {*}                #= scope_identifier
+    | <yield> {*}                           #= yield
+    | <control_command> {*}                 #= control_command
 }
 
 token primary {
@@ -193,13 +228,7 @@ token post_primary_expr {
     | <indexed> {*}            #= indexed
     | <call_args> {*}          #= call_args
     | <methodcall> {*}         #= methodcall
-    | <scope_identifier> {*}   #= scope_identifier
     | '[' <args>? ']' {*}      #= args
-}
-
-token scope_identifier {
-    '::' <identifier>
-    {*}
 }
 
 token pcomp_stmt {
@@ -210,11 +239,12 @@ token pcomp_stmt {
 
 rule if_stmt {
     'if' <expr> <.then>
-    <comp_stmt>
+    [<comp_stmt>
     ['elsif' <expr> <.then>
     <comp_stmt>]*
     <else>?
     'end'
+    |<panic: syntax error in if statement>]
     {*}
 }
 
@@ -259,6 +289,16 @@ rule rescue {
     {*}
 }
 
+token control_command {
+    | 'next'  {*}                   #= next
+    | 'break' {*}                   #= break
+    | 'redo'  {*}                   #= redo
+}
+
+token yield {
+    'yield' <call_args> {*}
+}
+
 rule module {
     'module' <module_identifier>
     <comp_stmt>
@@ -288,12 +328,8 @@ rule bodystmt {
 
 rule argdecl {
     ['('
-    [ <identifier> [',' <identifier>]* [',' <slurpy_param>]? [',' <block_param>]?
-    | <slurpy_param> [',' <block_param>]?
-    | <block_param>?
-    ]
+    <block_signature>
     ')']?
-    {*}
 }
 
 token slurpy_param {
@@ -317,7 +353,17 @@ rule begin_end {
 }
 
 token fname {
-    <.identifier>
+    <.identifier> <[=!?]>?
+}
+
+token quote_string {
+    ['%q'|'%Q'] <.before <[<[_|({]>> <quote_expression: :qq>
+    {*}
+}
+
+token warray {
+    '%w' <.before <[<[({]>> <quote_expression: :w :q>
+    {*}
 }
 
 rule array {
@@ -326,7 +372,7 @@ rule array {
 }
 
 rule ahash {
-    '{' [ [ <args> | <assocs> ] [',']? ]? '}'
+    '{' [ <assocs> [',']? ]? '}'
     {*}
 }
 
@@ -365,12 +411,12 @@ token class_variable {
 }
 
 token local_variable {
-    <before <[a..z_]>> <ident>
+    [<ns=ident> '::']* [ <before <[a..z_]>> | <after '::'> ] <ident>
     {*}
 }
 
 token constant_variable {
-    <before <[A..Z]>> <ident>
+    <.before <[A..Z]>> <.ident>
     {*}
 }
 
@@ -381,17 +427,23 @@ token literal {
 }
 
 token float {
-    \d* '.' \d+
+    '-'? \d* '.' \d+
     {*}
 }
 
 token integer {
-    \d+
+    '-'? \d+
     {*}
 }
 
 token string {
     [ \' <string_literal: "'"> \' | \" <string_literal: '"'> \" ]
+    {*}
+}
+
+token regex {
+    <.before '/'> [<quote_expression: :regex> $<modifiers>=[<alpha>]*
+                  |<panic: problem parsing regex>]
     {*}
 }
 
@@ -408,7 +460,7 @@ token reserved_word {
 token ws {
     | '\\' \n                      ## a backslash at end of line
     | <after [','|'='|'+']> \n     ## a newline after a comma or operator is ignored
-    | \h* ['#' \N* \n*]?
+    | \h* ['#' \N* \n* <ws>]?
 }
 
 
@@ -417,10 +469,10 @@ proto 'infix:=' is precedence('1') is pasttype('copy') is lvalue(1)     { ... }
 proto 'prefix:defined?' is looser('infix:=') { ... }
 
 proto 'infix:+=' is equiv('infix:=')
-                 is pirop('add')        { ... }
+                 { ... }
 
 proto 'infix:-=' is equiv('infix:=')
-                 is pirop('sub')        { ... }
+                 { ... }
 
 proto 'infix:/=' is equiv('infix:=')
                  is pirop('div')        { ... }
@@ -452,16 +504,17 @@ proto 'infix:**=' is equiv('infix:=')
 proto 'ternary:? :' is tighter('infix:=')
                     is pirop('if')      { ... }
 
-proto 'infix:..' is tighter('ternary:? :')
-                 is pirop('n_add')      { ... }
+proto 'infix:..' is tighter('ternary:? :') { ... }
+                #is parsed(&primary)     { ... }
+                 #is pirop('add')      { ... }
 
-proto 'infix:...' is equiv('infix:...') { ... }
+proto 'infix:...' is equiv('infix:..') { ... }
 
 proto 'infix:||' is tighter('infix:..')
-                 is past('unless')      { ... }
+                 is pasttype('unless')      { ... }
 
 proto 'infix:&&' is tighter('infix:||')
-                 is past('if')          { ... }
+                 is pasttype('if')          { ... }
 
 
 proto 'infix:=='      is tighter('infix:&&') { ... }
@@ -472,12 +525,12 @@ proto 'infix:==='     is equiv('infix:==') { ... }
 proto infix:«<=>» is equiv('infix:==') { ... }
 
 
-proto 'infix:«<=»' is tighter('infix:===') { ... }
-proto infix:«=>» is tighter('infix:===') { ... }
 proto infix:«>»  is tighter('infix:===') { ... }
 proto infix:«<»  is tighter('infix:===') { ... }
+proto infix:«<=»  is tighter('infix:===') { ... }
+proto infix:«>=» is tighter('infix:===') { ... }
 
-proto 'infix:|' is tighter('infix:«<=»')  { ... }
+proto 'infix:|' is tighter('infix:<=')  { ... }
 proto 'infix:^' is equiv('infix:|')  { ... }
 
 proto 'infix:&' is tighter('infix:|')  { ... }
@@ -485,21 +538,26 @@ proto 'infix:&' is tighter('infix:|')  { ... }
 proto infix:«<<»  is tighter('infix:&') { ... }
 proto infix:«>>»  is equiv(infix:«<<») { ... }
 
-proto 'infix:+' is tighter(infix:«<<»)
-                is pirop('n_add')       { ... }
+proto 'infix:+' is tighter(infix:«<<»)  { ... }
 
-proto 'infix:-' is equiv('infix:+')
-                is pirop('n_sub')       { ... }
+proto 'infix:-' is equiv('infix:+') { ... }
+                #is pirop('sub')       { ... }
 
-proto 'infix:*' is tighter('infix:+')
-                is pirop('n_mul')       { ... }
+proto 'infix:*' is tighter('infix:+') { ... }
+                #is pirop('mul')       { ... }
 
-proto 'infix:/' is equiv('infix:*')
-                is pirop('n_div')       { ... }
+proto 'infix:/' is equiv('infix:*')  { ... }
+                #is pirop('div')       { ... }
 
 proto 'infix:%' is equiv('infix:*')
-                is pirop('n_mod')       { ... }
+                is pirop('mod')       { ... }
 
+proto 'postfix:++' is tighter('infix:*')
+		is pirop('n_add')  { ... }
+
+proto 'postfix:--' is tighter('infix:*')
+		is pirop('n_sub')  { ... }
+#
 #proto 'prefix:+' is tighter('infix:*')  { ... }
 #proto 'prefix:-' is equiv('prefix:+')  { ... }
 #proto 'prefix:!' is equiv('prefix:+')  { ... }

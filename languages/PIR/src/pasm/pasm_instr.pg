@@ -137,8 +137,8 @@ token pasm_instruction {
 | n_abs             
 | mul               
 | mod               
-| mmdvtregister     
-| mmdvtfind         
+| add_multi     
+| find_multi         
 | lt_str            
 | lt_num            
 | lt_addr           
@@ -194,7 +194,6 @@ token pasm_instruction {
 | getline           
 | getinterp         
 | getfile           
-| getfd                         
 | get_class          
 | getattribute      
 | get_root_namespace

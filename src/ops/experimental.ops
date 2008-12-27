@@ -177,17 +177,11 @@ inline op iter(out PMC, invar PMC) :base_core {
 
 ########################################
 
-=item B<morph>(invar PMC, in INT)
-
 =item B<morph>(invar PMC, in STR)
 
 Have $1 turn itself into a PMC of type $2.
 
 =cut
-
-inline op morph(invar PMC, in INT) {
-  VTABLE_morph(interp, $1, $2);
-}
 
 inline op morph(invar PMC, in STR) {
   INTVAL type = pmc_type(interp, $2);
@@ -218,13 +212,13 @@ a Key PMC that you can use with "new", for example.
 op classname(out PMC, invar PMC) :object_base {
     PMC *ns = Parrot_ns_get_name(interp,
                                     VTABLE_get_namespace(interp, $2));
-    if (PMC_IS_NULL(ns) || VTABLE_elements(interp, ns) < 2)
-    {
-        real_exception(interp, NULL, NO_CLASS,
+    if (PMC_IS_NULL(ns) || VTABLE_elements(interp, ns) < 2) {
+        opcode_t *handler = Parrot_ex_throw_from_op_args(interp, expr NEXT(),
+             EXCEPTION_NO_CLASS,
             "Attempt to get class name of a non-class.");
+        goto ADDRESS(handler);
     }
-    else
-    {
+    else {
         PMC *key_tail, *key;
         STRING *tmp;
         int i, max;
@@ -301,38 +295,7 @@ inline op pow(out NUM, in NUM, in INT) :base_core {
     $1 = res;
 }
 
-=item B<new>(out PMC, in INT, in STR)
-
-Create a new PMC of the type $2 according to the PMCs string representation
-in $3.
-
-BUT SINCE INSTANTIATE WILL PROBABLY DIE, DON'T USE THIS;
-OR IF YOU NEED THIS (OR INSTANTIATE), TELL CHIP
-
-=cut
-
-op new(out PMC, in INT, in STR) {
-  PMC *_class;
-  if ($2 <= 0 || $2 >= interp->n_vtable_max) {
-    real_exception(interp, 0, NO_CLASS,
-                   "Illegal PMC enum (%d) in new", (int)$2);
-  }
-  _class = interp->vtables[$2]->pmc_class;
-  $1 = VTABLE_new_from_string(interp, _class, $3, 0);
-}
-
 ########################################
-
-=item B<add_io_event>(invar PMC, invar PMC, invar PMC, inconst INT)
-
-Call the sub $2 for PIO $1 with user data $3 on ready state of $4.
-RT#42376 The only handled $4 = IO_THR_MSG_ADD_SELECT_RD aka 2 for now.
-
-=cut
-
-op add_io_event(invar PMC, invar PMC, invar PMC, inconst INT) {
-    Parrot_event_add_io_event(interp, $1, $2, $3, $4);
-}
 
 =item B<need_finalize>(invar PMC)
 
@@ -415,11 +378,15 @@ inline op substr_r(out STR, in STR, in INT, in INT) :base_core {
 =item C<find_sub_not_null>(out PMC, in STR)
 
 inline op find_sub_not_null(out PMC, in STR) :base_core {
-    PMC *sub = Parrot_find_name_op(interp, $2, expr NEXT());
+    opcode_t *dest = expr NEXT();
+    PMC *sub = Parrot_find_name_op(interp, $2, dest);
 
-    if (PMC_IS_NULL(sub))
-        real_exception(interp, NULL, GLOBAL_NOT_FOUND,
+    if (PMC_IS_NULL(sub)) {
+        opcode_t *handler = Parrot_ex_throw_from_op_args(interp, dest,
+                       EXCEPTION_GLOBAL_NOT_FOUND,
                        "Could not find non-existent sub %Ss", $2);
+        goto ADDRESS(handler);
+    }
 
     $1 = sub;
 }

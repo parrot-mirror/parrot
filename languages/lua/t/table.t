@@ -8,7 +8,7 @@ t/table.t - Lua Table Library
 
 =head1 SYNOPSIS
 
-    % perl -I../lib -Ilua/t lua/t/table.t
+    % perl t/table.t
 
 =head1 DESCRIPTION
 
@@ -25,7 +25,7 @@ See "Programming in Lua", section 19 "The Table Library".
 use strict;
 use warnings;
 use FindBin;
-use lib "$FindBin::Bin";
+use lib "$FindBin::Bin/../../../lib", "$FindBin::Bin";
 
 use Parrot::Test tests => 18;
 use Test::More;
@@ -59,14 +59,14 @@ language_output_like( 'lua', << 'CODE', << 'OUTPUT', 'function concat (out of ra
 t = {"a","b","c","d","e"}
 print(table.concat(t,",",2,7))
 CODE
-/^[^:]+: [^:]+:\d+: bad argument #1 to 'concat' \(table contains non-strings\)\nstack traceback:\n/
+/^[^:]+: [^:]+:\d+: invalid value \(nil\) at index 6 in table for 'concat'\nstack traceback:\n/
 OUTPUT
 
 language_output_like( 'lua', << 'CODE', << 'OUTPUT', 'function concat (non-string)' );
 t = {"a","b",true,"d","e"}
 print(table.concat(t,","))
 CODE
-/^[^:]+: [^:]+:\d+: bad argument #1 to 'concat' \(table contains non-strings\)\nstack traceback:\n/
+/^[^:]+: [^:]+:\d+: invalid value \(boolean\) at index 3 in table for 'concat'\nstack traceback:\n/
 OUTPUT
 
 language_output_is( 'lua', << 'CODE', << 'OUTPUT', 'function foreach (array)' );

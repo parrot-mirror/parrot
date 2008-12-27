@@ -26,8 +26,9 @@ sub get_test_prog {
     my ( $count, $options ) = @_;
 
     my $lang_fn = Parrot::Test::per_test( '.php', $count );
+    $lang_fn =~ s!^pipp/!!; # fix for unified languages testing
 
-    return "./parrot languages/pipp/pipp.pbc --variant=pct languages/${lang_fn}";
+    return "$self->{relpath}/parrot $self->{relpath}/languages/pipp/pipp.pbc ${lang_fn}";
 }
 
 # never skip the reference implementation

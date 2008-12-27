@@ -89,7 +89,7 @@ Creates a copy of the string.
     VTABLE PMC *clone() {
         PMC * const dest = pmc_new_noinit(INTERP, SELF->vtable->base_type);
         PObj_custom_mark_SET(dest);
-        PMC_str_val(dest) = string_copy(INTERP, VTABLE_get_string(INTERP, SELF));
+        PMC_str_val(dest) = string_copy(INTERP, SELF.get_string());
         return dest;
     }
 
@@ -104,7 +104,7 @@ Returns the integer representation of the string.
 */
 
     VTABLE INTVAL get_integer() {
-        STRING * const s = (STRING *)VTABLE_get_string(INTERP, SELF);
+        STRING * const s = SELF.get_string();
         return string_to_int(INTERP, s);
     }
 
@@ -119,7 +119,7 @@ Returns the floating-point representation of the string.
 */
 
     VTABLE FLOATVAL get_number() {
-        STRING * const s = (STRING*) VTABLE_get_string(INTERP, SELF);
+        STRING * const s = SELF.get_string();
         return string_to_num(INTERP, s);
     }
 
@@ -134,7 +134,7 @@ Returns the big numbers representation of the string.
 */
 
     VTABLE PMC *get_bignum() {
-        STRING * const s   = VTABLE_get_string(INTERP, SELF);
+        STRING * const s   = SELF.get_string();
         PMC           *ret = pmc_new(INTERP, enum_class_BigInt);
         VTABLE_set_string_native(INTERP, ret, s);
         return ret;
@@ -166,7 +166,7 @@ Returns the boolean value of the string.
 */
 
     VTABLE INTVAL get_bool() {
-        STRING * const s = VTABLE_get_string(INTERP, SELF);
+        STRING * const s = SELF.get_string();
         return string_bool(INTERP, s);
     }
 
@@ -251,7 +251,7 @@ the specified C<String> PMC.
 
     VTABLE void set_string_same(PMC *value) {
         PMC_str_val(SELF) =
-            string_set(INTERP, PMC_str_val(SELF), PMC_str_val(value));
+            string_set(INTERP, SELF.get_string(), VTABLE_get_string(INTERP, value));
     }
 
 /*
@@ -497,9 +497,18 @@ class and their strings are aliases of the same internal string.
 
 */
     VTABLE INTVAL is_same(PMC *value) {
-        const STRING * const s = VTABLE_get_string(INTERP, SELF);
-        const STRING * const v = VTABLE_get_string(INTERP, value);
-        return (INTVAL)(value->vtable == SELF->vtable && s == v);
+        if (PMC_IS_NULL(value)) {
+            return 0;
+        }
+        else {
+            if (value->vtable == SELF->vtable) {
+                const STRING * const s = VTABLE_get_string(INTERP, SELF);
+                const STRING * const v = VTABLE_get_string(INTERP, value);
+                return (INTVAL)(s == v);
+            }
+            else
+                return 0;
+        }
     }
 
 /*
@@ -632,26 +641,28 @@ Replace the string at C<key> with the chr of C<value>.
 */
 
     VTABLE STRING *get_string_keyed(PMC *key) {
-        STRING * const s = PMC_str_val(SELF);
+        STRING * const s = SELF.get_string();
         const INTVAL   k = key_integer(INTERP, key);
         return string_substr(INTERP, s, k, 1, NULL, 0);
     }
 
     VTABLE INTVAL get_integer_keyed(PMC *key) {
-        STRING * const s = PMC_str_val(SELF);
+        STRING * const s = SELF.get_string();
         return string_ord(INTERP, s, key_integer(INTERP, key));
     }
 
     void set_string_keyed(PMC *key, STRING * const value) {
-        STRING * const s   = PMC_str_val(SELF);
+        STRING * const s   = SELF.get_string();
         const INTVAL   len = string_length(INTERP, value);
         string_replace(INTERP, s, key_integer(INTERP, key), len, value, NULL);
+        VTABLE_set_string_native(INTERP, SELF, s);
     }
 
     VTABLE void set_integer_keyed(PMC *key, INTVAL value) {
-        STRING * const s = PMC_str_val(SELF);
+        STRING * const s = SELF.get_string();
         STRING * const c = string_chr(INTERP, (UINTVAL) value);
         string_replace(INTERP, s, key_integer(INTERP, key), 1, c, NULL);
+        VTABLE_set_string_native(INTERP, SELF, s);
     }
 /*
 
@@ -704,7 +715,7 @@ TODO Currently overflow to BigInt is B<not> handled nor detected.
         UINTVAL              i   = 0;
 
         if (base < 2 || base > 36)
-            real_exception(INTERP, NULL, E_ValueError,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                     "invalid conversion to int - bad base %d", base);
 
         while (start < end) {
@@ -728,10 +739,11 @@ TODO Currently overflow to BigInt is B<not> handled nor detected.
         }
 
         if (start < end)
-            real_exception(INTERP, NULL, E_ValueError,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                     "invalid conversion to int - bad char %c", *start);
 
-        VTABLE_set_integer_native(INTERP, result, i);
+        /* TODO: autopromote to BigInt instead of casting away the high bit */
+        VTABLE_set_integer_native(INTERP, result, (INTVAL)i);
         RETURN(PMC *result);
     }
 /*
@@ -767,18 +779,22 @@ Return length of the string.
 
     VTABLE PMC *slice(PMC *key, INTVAL f) {
         if (f == 0) {
+            STRING     *name = CONST_STRING(interp, "set_key");
             PMC * const iter = pmc_new_init(INTERP, enum_class_Iterator, SELF);
-            PMC_struct_val(iter) = key;
+            Parrot_PCCINVOKE(interp, iter, name, "P->", key);
             return iter;
         }
 
-        real_exception(INTERP, NULL, E_ValueError, "String: Unknown slice type");
+        Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
+                "String: Unknown slice type");
     }
 
     VTABLE PMC *get_iter() {
+        STRING     *name     = CONST_STRING(interp, "set_key");
         PMC * const iter     = pmc_new_init(INTERP, enum_class_Iterator, SELF);
-        PMC * const key      =  pmc_new(INTERP, enum_class_Key);
-        PMC_struct_val(iter) = key;
+        PMC * const key      = pmc_new(INTERP, enum_class_Key);
+
+        Parrot_PCCINVOKE(interp, iter, name, "P->", key);
         PObj_get_FLAGS(key) |= KEY_integer_FLAG;
         PMC_int_val(key)     = 0;
 
@@ -868,7 +884,7 @@ Translate ascii string C<src> with entries from C<trans_table>.
             RETURN(void);
 
         if (src->charset != Parrot_ascii_charset_ptr)
-            real_exception(interp, NULL, INVALID_ENCODING,
+            Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INVALID_ENCODING,
                 "Can't translate non-ascii");
 
         p = (unsigned char *)src->strstart;
@@ -902,7 +918,7 @@ Reverse the ascii STRING C<src> in place.
             RETURN(void);
 
         if (src->charset != Parrot_ascii_charset_ptr)
-            real_exception(interp, NULL, INVALID_ENCODING,
+            Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INVALID_ENCODING,
                 "Can't reverse non-ascii");
 
         p = (unsigned char *)src->strstart;
@@ -934,7 +950,7 @@ Checks if the ascii STRING C<str> is just an integer.
             RETURN(INTVAL 0);
 
         if (src->charset != Parrot_ascii_charset_ptr)
-            real_exception(interp, NULL, INVALID_ENCODING,
+            Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INVALID_ENCODING,
                 "Can't is_integer non-ascii");
 
         i = 0;
@@ -958,6 +974,43 @@ Checks if the ascii STRING C<str> is just an integer.
         /* prevent wrong garbage collection */
         PObj_is_shared_SET(PMC_str_val(SELF));
         return ret;
+    }
+
+    VTABLE STRING* get_repr() {
+        return key_set_to_string(INTERP, SELF);
+    }
+
+/*
+
+=item C<INTEGER reverse_index(STRING *substring, INTVAL start)>
+
+Find last occurence of C<substring>, but not after the C<start> position.
+
+=cut
+
+*/
+
+    METHOD reverse_index(STRING *substring, INTVAL start) {
+        STRING * const src = VTABLE_get_string(INTERP, SELF);
+        INTVAL         res = -1;
+        UINTVAL        len;
+
+        if (start < 0)
+            RETURN(INTVAL res);
+
+        len = string_length(interp, src);
+
+        if (!len)
+            RETURN(INTVAL res);
+
+        if (start >= (INTVAL)len)
+            RETURN(INTVAL res);
+
+        if (!string_length(interp, substring))
+            RETURN(INTVAL res);
+
+        res = CHARSET_RINDEX(INTERP, src, substring, (UINTVAL)start);
+        RETURN(INTVAL res);
     }
 }
 

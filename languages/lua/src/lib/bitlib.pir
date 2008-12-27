@@ -20,12 +20,13 @@ that can be used in bitwise operations, and the following functions:
 
 =cut
 
-.HLL 'Lua', 'lua_group'
-.namespace [ 'Lua::bitlib'; 'Lua' ]
+.HLL 'lua'
+.loadlib 'lua_group'
+.namespace [ 'bitlib' ]
 
 .sub '__onload' :anon :load
 #    print "__onload bitlib\n"
-    .const .Sub entry = 'luaopen_bitlib'
+    .const 'Sub' entry = 'luaopen_bitlib'
     set_hll_global 'luaopen_bitlib', entry
 .end
 
@@ -45,53 +46,23 @@ that can be used in bitwise operations, and the following functions:
     set $P1, MYNAME
     _lua__GLOBAL[$P1] = _bitlib
 
-    lua_register($P1, _bitlib)
+    $P2 = split "\n", <<'LIST'
+cast
+bnot
+band
+bor
+bxor
+lshift
+rshift
+arshift
+LIST
+    lua_register($P1, _bitlib, $P2)
 
     new $P2, 'LuaNumber'
     $I0 = _get_bits()
     set $P2, $I0
     set $P1, 'bits'
     _bitlib[$P1] = $P2
-
-    .const .Sub _bitlib_cast = 'cast'
-    _bitlib_cast.'setfenv'(_lua__GLOBAL)
-    set $P1, 'cast'
-    _bitlib[$P1] = _bitlib_cast
-
-    .const .Sub _bitlib_bnot = 'bnot'
-    _bitlib_bnot.'setfenv'(_lua__GLOBAL)
-    set $P1, 'bnot'
-    _bitlib[$P1] = _bitlib_bnot
-
-    .const .Sub _bitlib_band = 'band'
-    _bitlib_band.'setfenv'(_lua__GLOBAL)
-    set $P1, 'band'
-    _bitlib[$P1] = _bitlib_band
-
-    .const .Sub _bitlib_bor = 'bor'
-    _bitlib_bor.'setfenv'(_lua__GLOBAL)
-    set $P1, 'bor'
-    _bitlib[$P1] = _bitlib_bor
-
-    .const .Sub _bitlib_bxor = 'bxor'
-    _bitlib_bxor.'setfenv'(_lua__GLOBAL)
-    set $P1, 'bxor'
-    _bitlib[$P1] = _bitlib_bxor
-
-    .const .Sub _bitlib_lshift = 'lshift'
-    _bitlib_lshift.'setfenv'(_lua__GLOBAL)
-    set $P1, 'lshift'
-    _bitlib[$P1] = _bitlib_lshift
-
-    .const .Sub _bitlib_rshift = 'rshift'
-    _bitlib_rshift.'setfenv'(_lua__GLOBAL)
-    set $P1, 'rshift'
-    _bitlib[$P1] = _bitlib_rshift
-
-    .const .Sub _bitlib_arshift = 'arshift'
-    _bitlib_arshift.'setfenv'(_lua__GLOBAL)
-    set $P1, 'arshift'
-    _bitlib[$P1] = _bitlib_arshift
 
     .return (_bitlib)
 .end
@@ -112,14 +83,14 @@ that can be used in bitwise operations, and the following functions:
   L1:
     new $P0, 'Integer'
     set $P0, max
-    set_hll_global ['Lua::bit'], 'BIT_MAX', $P0
+    set_hll_global ['bit'], 'BIT_MAX', $P0
     .return (bits)
 .end
 
 .macro MONADIC(op, a)
     .local pmc res
     .local int BIT_MAX
-    $P0 = get_hll_global ['Lua::bit'], 'BIT_MAX'
+    $P0 = get_hll_global ['bit'], 'BIT_MAX'
     BIT_MAX = $P0
     $I1 = lua_checknumber(1, .a)
     .op $I0, $I1
@@ -132,7 +103,7 @@ that can be used in bitwise operations, and the following functions:
 .macro VARIADIC(op, a, vararg)
     .local pmc res
     .local int BIT_MAX
-    $P0 = get_hll_global ['Lua::bit'], 'BIT_MAX'
+    $P0 = get_hll_global ['bit'], 'BIT_MAX'
     BIT_MAX = $P0
     $I1 = lua_checknumber(1, .a)
     .local int i
@@ -154,7 +125,7 @@ that can be used in bitwise operations, and the following functions:
 .macro LOGICAL_SHIFT(op, a, b)
     .local pmc res
     .local int BIT_MAX
-    $P0 = get_hll_global ['Lua::bit'], 'BIT_MAX'
+    $P0 = get_hll_global ['bit'], 'BIT_MAX'
     BIT_MAX = $P0
     $I1 = lua_checknumber(1, .a)
     band $I1, BIT_MAX
@@ -169,7 +140,7 @@ that can be used in bitwise operations, and the following functions:
 .macro ARITHMETIC_SHIFT(op, a, b)
     .local pmc res
     .local int BIT_MAX
-    $P0 = get_hll_global ['Lua::bit'], 'BIT_MAX'
+    $P0 = get_hll_global ['bit'], 'BIT_MAX'
     BIT_MAX = $P0
     $I1 = lua_checknumber(1, .a)
     $I2 = lua_checknumber(2, .b)
@@ -187,7 +158,7 @@ cast C<a> to the internally-used integer type
 
 =cut
 
-.sub 'cast' :anon
+.sub 'cast'
     .param pmc a :optional
     .param pmc extra :slurpy
     .MONADIC(set, a)
@@ -200,7 +171,7 @@ returns the one's complement of C<a>
 
 =cut
 
-.sub 'bnot' :anon
+.sub 'bnot'
     .param pmc a :optional
     .param pmc extra :slurpy
      .MONADIC(bnot, a)
@@ -213,7 +184,7 @@ returns the bitwise and of the w's
 
 =cut
 
-.sub 'band' :anon
+.sub 'band'
     .param pmc a :optional
     .param pmc vararg :slurpy
     .VARIADIC(band, a, vararg)
@@ -226,7 +197,7 @@ returns the bitwise or of the w's
 
 =cut
 
-.sub 'bor' :anon
+.sub 'bor'
     .param pmc a :optional
     .param pmc vararg :slurpy
     .VARIADIC(bor, a, vararg)
@@ -239,7 +210,7 @@ returns the bitwise exclusive or of the w's
 
 =cut
 
-.sub 'bxor' :anon
+.sub 'bxor'
     .param pmc a :optional
     .param pmc vararg :slurpy
     .VARIADIC(bxor, a, vararg)
@@ -252,7 +223,7 @@ returns C<a> shifted left C<b> places
 
 =cut
 
-.sub 'lshift' :anon
+.sub 'lshift'
     .param pmc a :optional
     .param pmc b :optional
     .param pmc extra :slurpy
@@ -266,7 +237,7 @@ returns C<a> shifted right C<b> places
 
 =cut
 
-.sub 'rshift' :anon
+.sub 'rshift'
     .param pmc a :optional
     .param pmc b :optional
     .param pmc extra :slurpy
@@ -280,7 +251,7 @@ returns C<a> shifted arithmetically right C<b> places
 
 =cut
 
-.sub 'arshift' :anon
+.sub 'arshift'
     .param pmc a :optional
     .param pmc b :optional
     .param pmc extra :slurpy

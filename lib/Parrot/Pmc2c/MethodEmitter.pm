@@ -1,4 +1,4 @@
-# Copyright (C) 2004-2007, The Perl Foundation.
+# Copyright (C) 2004-2008, The Perl Foundation.
 
 # $Id$
 
@@ -23,10 +23,10 @@ C<Parrot::Pmc2c> is used by F<tools/build/pmc2c.pl> to generate C code from PMC 
 package Parrot::Pmc2c::Method;
 use strict;
 use warnings;
-use Parrot::Pmc2c::Emitter;
+use Parrot::Pmc2c::Emitter ();
 use Parrot::Pmc2c::UtilFunctions
     qw( gen_ret dont_edit count_newlines dynext_load_code c_code_coda );
-use Parrot::Pmc2c::PCCMETHOD;
+use Parrot::Pmc2c::PCCMETHOD ();
 
 =item C<generate_body($pmc)>
 
@@ -49,7 +49,7 @@ sub generate_body {
         $self->rewrite_nci_method($pmc);
     }
 
-    $emit->( ( $pmc->is_dynamic ? 'PARROT_DYNEXT_EXPORT ' : 'PARROT_API ') . $self->decl( $pmc, 'CFILE' ) );
+    $emit->( ( $pmc->is_dynamic ? 'PARROT_DYNEXT_EXPORT ' : 'PARROT_EXPORT ') . $self->decl( $pmc, 'CFILE' ) );
     $emit->("{\n");
     $emit->($body);
     $emit->("}\n");
@@ -65,9 +65,8 @@ sub generate_body {
 
 sub generate_headers {
     my ( $self, $pmc ) = @_;
-    my $hout = "";
 
-    $hout .= $self->decl( $pmc, 'HEADER' );
+    my $hout = $self->decl( $pmc, 'HEADER' );
 
     if ( $self->mmds ) {
         for my $mmd ( @{ $self->mmds } ) {
@@ -92,7 +91,6 @@ sub decl {
     my $ret     = $self->return_type;
     my $meth    = $self->name;
     my $args    = $self->parameters;
-    my $ro      = $pmc->flag('is_ro') ? '' : '';
     my $decs    = $self->decorators;
 
     # convert 'type*' to 'type *' per PDD07
@@ -105,23 +103,23 @@ sub decl {
     my ( $decorators, $export, $extern, $newl, $semi, $interp, $pmcvar );
     $decorators = join($/, @$decs, '');
     if ( $for_header eq 'HEADER' ) {
-        $export = $pmc->is_dynamic ? 'PARROT_DYNEXT_EXPORT ' : 'PARROT_API ';
-        $extern = "";
-        $newl   = " ";
-        $semi   = ";";
-        $interp = $pmcvar = "";
+        $export = $pmc->is_dynamic ? 'PARROT_DYNEXT_EXPORT ' : 'PARROT_EXPORT ';
+        $extern = '';
+        $newl   = ' ';
+        $semi   = ';';
+        $interp = $pmcvar = '';
     }
     else {
-        $export = "";
-        $extern = "";
+        $export = '';
+        $extern = '';
         $newl   = "\n";
-        $semi   = "";
+        $semi   = '';
         $interp = 'interp';
         $pmcvar = 'pmc';
     }
 
     return <<"EOC";
-$decorators$export$extern$ret${newl}Parrot_${pmcname}${ro}_$meth(PARROT_INTERP, PMC *$pmcvar$args)$semi
+$decorators$export$extern$ret${newl}Parrot_${pmcname}_$meth(PARROT_INTERP, PMC *$pmcvar$args)$semi
 EOC
 }
 
@@ -133,32 +131,32 @@ Determines the prototype (argument signature) for a method body
 =cut
 
 my %calltype = (
-    "char"     => "c",
-    "short"    => "s",
-    "char"     => "c",
-    "short"    => "s",
-    "int"      => "i",
-    "INTVAL"   => "I",
-    "float"    => "f",
-    "FLOATVAL" => "N",
-    "double"   => "d",
-    "STRING*"  => "S",
-    "STRING *" => "S",
-    "char*"    => "t",
-    "char *"   => "t",
-    "PMC*"     => "P",
-    "PMC *"    => "P",
-    "short*"   => "2",
-    "short *"  => "2",
-    "int*"     => "3",
-    "int *"    => "3",
-    "long*"    => "4",
-    "long *"   => "4",
-    "void"     => "v",
-    "void*"    => "b",
-    "void *"   => "b",
-    "void**"   => "B",
-    "void **"  => "B",
+    'char'     => 'c',
+    'short'    => 's',
+    'char'     => 'c',
+    'short'    => 's',
+    'int'      => 'i',
+    'INTVAL'   => 'I',
+    'float'    => 'f',
+    'FLOATVAL' => 'N',
+    'double'   => 'd',
+    'STRING*'  => 'S',
+    'STRING *' => 'S',
+    'char*'    => 't',
+    'char *'   => 't',
+    'PMC*'     => 'P',
+    'PMC *'    => 'P',
+    'short*'   => '2',
+    'short *'  => '2',
+    'int*'     => '3',
+    'int *'    => '3',
+    'long*'    => '4',
+    'long *'   => '4',
+    'void'     => 'v',
+    'void*'    => 'b',
+    'void *'   => 'b',
+    'void**'   => 'B',
+    'void **'  => 'B',
 
     #"BIGNUM*" => "???" # RT#43731
     #"BIGNUM *"=> "???" # RT#43731
@@ -195,16 +193,6 @@ sub rewrite_nci_method {
     my ( $self, $pmc ) = @_;
     my $pmcname = $pmc->name;
     my $body    = $self->body;
-
-    # Rewrite SELF.other_method(args...)
-    $body->subst(
-        qr{
-    \bSELF\b         # Macro: SELF
-      \.(\w+)        # other_method
-      \(\s*(.*?)\)   # capture argument list
-      }x,
-        sub { "pmc->real_self->vtable->$1(" . full_arguments( $2, 'pmc->real_self' ) . ')' }
-    );
 
     # Rewrite SELF.other_method(args...)
     $body->subst(

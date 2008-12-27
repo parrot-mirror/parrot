@@ -6,8 +6,8 @@ use warnings;
 use lib ("lib/");
 use Parrot::OpLib::core;
 use Parrot::OpsFile;
-use File::Spec;
-use IO::File;
+use File::Spec ();
+use IO::File ();
 
 =head1 NAME
 
@@ -133,7 +133,7 @@ sub new {
     my $sym_export =
         $flagref->{dynamic}
         ? 'PARROT_DYNEXT_EXPORT'
-        : 'PARROT_API';
+        : 'PARROT_EXPORT';
 
     my $ops;
     if ( $flagref->{core} ) {
@@ -162,22 +162,14 @@ sub new {
     );
     my $num_ops     = scalar $ops->ops;
     my $num_entries = $num_ops + 1;       # For trailing NULL
-
-    if ( !$flagref->{dynamic} && !-d $incdir ) {
-        mkdir( $incdir, 0755 )
-            or die "ops2c.pl: Could not mkdir $incdir $!!\n";
-    }
-
-    my $preamble = _compose_preamble( $file, $argsref->{script} );
-
-    my $init_func = join q{_},
-        ( q{Parrot}, q{DynOp}, $base . $suffix, @versions{qw(major minor patch)}, );
+    my $preamble    = _compose_preamble( $file, $argsref->{script} );
+    my $init_func   = join '_',
+        ( 'Parrot', 'DynOp', $base . $suffix, @versions{qw(major minor patch)}, );
 
     ##### Populate the object #####
-    $argsref->{argv}   = \@argv;
-    $argsref->{trans}  = $trans;
-    $argsref->{suffix} = $suffix;
-
+    $argsref->{argv}       = \@argv;
+    $argsref->{trans}      = $trans;
+    $argsref->{suffix}     = $suffix;
     $argsref->{file}       = $file;
     $argsref->{base}       = $base;
     $argsref->{incdir}     = $incdir;
@@ -543,6 +535,7 @@ sub _print_coda {
 /*
  * Local variables:
  *   c-file-style: "parrot"
+ *   buffer-read-only: t
  * End:
  * vim: expandtab shiftwidth=4:
  */
@@ -952,7 +945,7 @@ static int get_op(const char * name, int full) {
 }
 static void hop_init(void) {
     size_t i;
-    op_info_t * info = $self->{bs}op_lib.op_info_table;
+    op_info_t * const info = $self->{bs}op_lib.op_info_table;
     /* store full names */
     for (i = 0; i < $self->{bs}op_lib.op_count; i++)
         store_op(info + i, 1);

@@ -8,8 +8,7 @@ config/gen/languages.pm - Build files for language implementations
 =head1 DESCRIPTION
 
 Config step for languages.  Builds C<languages/Makefile> and loops over
-list of languages.  Special support for C<languages/tcl> and
-C<languages/dotnet>.
+list of languages.  Special support for C<languages/dotnet>.
 
 A space separated list of languages can be passed in with the option
 'languages'.  An empty list of languages is OK. This means that only
@@ -33,20 +32,10 @@ use Parrot::Configure::Utils ':gen';
 
 sub _init {
     my $self = shift;
-
-    return
-        { description => q{Configuring languages},
-          result      => q{},
-        };
-}
-
-sub runstep {
-    my ( $self, $conf ) = @_;
-
-    $conf->genfile('config/gen/makefiles/languages.in' => 'languages/Makefile' );
-
-    my $languages = $conf->options->get('languages');
-    $languages = qq{
+    my %data;
+    $data{description} = q{Configure languages};
+    $data{result} = q{};
+    $data{default_languages} = qq{
         APL abc
         befunge bf
         cardinal chitchat cola c99
@@ -55,16 +44,26 @@ sub runstep {
         hq9plus
         jako json
         lazy-k lisp lolcode lua
-        m4
+        m4 markdown
         ook
-        parrot_compiler perl6 pheme PIR pipp pugs punie pynie
+        parrot_compiler perl6 pheme PIR pipp punie pynie
         regex
         scheme squaak
-        tcl
         unlambda urm
         WMLScript
         Zcode
-    } unless defined $languages;
+    };
+    $data{languages_source} = q{config/gen/makefiles/languages.in};
+    return \%data;
+}
+
+sub runstep {
+    my ( $self, $conf ) = @_;
+
+    $conf->genfile( $self->{languages_source} => 'languages/Makefile' );
+
+    my $languages = $conf->options->get('languages');
+    $languages = $self->{default_languages} unless defined $languages;
 
     foreach my $language ( split ' ', $languages ) {        # split ' ' splits on all whitespace
         my $langdir = "languages/$language";
@@ -75,16 +74,7 @@ sub runstep {
         }
         elsif ( $language eq 'c99' ) {
             $conf->genfile("$langdir/config/makefiles/root.in"     => "$langdir/Makefile");
-            $conf->genfile("$langdir/config/makefiles/cpp.in"      => "$langdir/src/cpp//Makefile");
-        }
-        elsif ( $language eq 'tcl' ) {
-            # tcl has more than one Makefile
-            # currently this is handled as a special case
-            $conf->genfile("$langdir/config/makefiles/examples.in" => "$langdir/examples/Makefile"
-            );
-            $conf->genfile("$langdir/config/makefiles/root.in"     => "$langdir/Makefile",
-                expand_gmake_syntax                                => 1,
-            );
+            $conf->genfile("$langdir/config/makefiles/cpp.in"      => "$langdir/src/cpp/Makefile");
         }
         elsif ( $language eq 'perl6' ) {
             $conf->genfile("$langdir/config/makefiles/root.in"     => "$langdir/Makefile");

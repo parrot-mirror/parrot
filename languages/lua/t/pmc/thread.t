@@ -8,7 +8,7 @@ t/pmc/thread.t - Lua thread
 
 =head1 SYNOPSIS
 
-    % perl -I../../lib t/pmc/thread.t
+    % perl t/pmc/thread.t
 
 =head1 DESCRIPTION
 
@@ -19,6 +19,8 @@ Tests Lua C<thread> type
 
 use strict;
 use warnings;
+use FindBin;
+use lib "$FindBin::Bin/../../../../lib";
 
 use Parrot::Test tests => 9;
 use Test::More;
@@ -30,7 +32,7 @@ pir_output_is( << 'CODE', << 'OUTPUT', 'check inheritance' );
     _main()
 .end
 .sub '_main'
-    .const .Sub F1 = 'f1'
+    .const 'Sub' F1 = 'f1'
     .local pmc pmc1
     pmc1 = new 'LuaThread', F1
     .local int bool1
@@ -62,7 +64,7 @@ pir_output_is( << 'CODE', << 'OUTPUT', 'check name' );
     _main()
 .end
 .sub '_main'
-    .const .Sub F1 = 'f1'
+    .const 'Sub' F1 = 'f1'
     .local pmc pmc1
     pmc1 = new 'LuaThread', F1
     .local string str1
@@ -86,7 +88,7 @@ pir_output_like( << 'CODE', << 'OUTPUT', 'check get_string' );
     _main()
 .end
 .sub '_main'
-    .const .Sub F1 = 'f1'
+    .const 'Sub' F1 = 'f1'
     .local pmc pmc1
     pmc1 = new 'LuaThread', F1
     print pmc1
@@ -108,7 +110,7 @@ pir_output_is( << 'CODE', << 'OUTPUT', 'check get_bool' );
     _main()
 .end
 .sub '_main'
-    .const .Sub F1 = 'f1'
+    .const 'Sub' F1 = 'f1'
     .local pmc pmc1
     pmc1 = new 'LuaThread', F1
     .local int bool1
@@ -126,7 +128,8 @@ CODE
 OUTPUT
 
 pir_output_is( << 'CODE', << 'OUTPUT', 'check logical_not' );
-.HLL 'Lua', 'lua_group'
+.HLL 'lua'
+.loadlib 'lua_group'
 
 .sub '__start' :main
     loadlib $P0, 'lua_group'
@@ -134,7 +137,7 @@ pir_output_is( << 'CODE', << 'OUTPUT', 'check logical_not' );
     _main()
 .end
 .sub '_main'
-    .const .Sub F1 = 'f1'
+    .const 'Sub' F1 = 'f1'
     .local pmc pmc1
     pmc1 = new 'LuaThread', F1
     .local pmc pmc2
@@ -158,13 +161,14 @@ boolean
 OUTPUT
 
 pir_output_is( << 'CODE', << 'OUTPUT', 'check HLL' );
-.HLL 'Lua', 'lua_group'
+.HLL 'lua'
+.loadlib 'lua_group'
 .sub '__start' :main
     load_bytecode 'Parrot/Coroutine.pbc'
     _main()
 .end
 .sub _main
-    .const .Sub F1 = 'f1'
+    .const 'Sub' F1 = 'f1'
     .local pmc pmc1
     pmc1 = new 'LuaThread', F1
     .local int bool1
@@ -182,13 +186,14 @@ CODE
 OUTPUT
 
 pir_output_like( << 'CODE', << 'OUTPUT', 'check tostring' );
-.HLL 'Lua', 'lua_group'
+.HLL 'lua'
+.loadlib 'lua_group'
 .sub '__start' :main
     load_bytecode 'Parrot/Coroutine.pbc'
     _main()
 .end
 .sub '_main'
-    .const .Sub F1 = 'f1'
+    .const 'Sub' F1 = 'f1'
     .local pmc pmc1
     pmc1 = new 'LuaThread', F1
     print pmc1
@@ -214,13 +219,14 @@ string\n
 OUTPUT
 
 pir_output_is( << 'CODE', << 'OUTPUT', 'check tonumber' );
-.HLL 'Lua', 'lua_group'
+.HLL 'lua'
+.loadlib 'lua_group'
 .sub '__start' :main
     load_bytecode 'Parrot/Coroutine.pbc'
     _main()
 .end
 .sub '_main'
-    .const .Sub F1 = 'f1'
+    .const 'Sub' F1 = 'f1'
     .local pmc pmc1
     pmc1 = new 'LuaThread', F1
     $P0 = pmc1.'tonumber'()
@@ -241,14 +247,15 @@ nil
 OUTPUT
 
 pir_error_output_like( << 'CODE', << 'OUTPUT', 'check __add' );
-.HLL 'Lua', 'lua_group'
+.HLL 'lua'
+.loadlib 'lua_group'
 .sub '__start' :main
     load_bytecode 'Parrot/Coroutine.pbc'
     _main()
 .end
 .sub '_main'
-    .const .LuaNumber cst1 = '3.14'
-    .const .Sub F1 = 'f1'
+    .const 'LuaNumber' cst1 = '3.14'
+    .const 'Sub' F1 = 'f1'
     .local pmc pmc1
     pmc1 = new 'LuaThread', F1
     $P0 = add pmc1, cst1

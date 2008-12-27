@@ -26,11 +26,11 @@ enum INSTYPE {    /*instruction type can be   */
 typedef struct _Instruction {
     char        *opname;   /* opstring w/o params */
     char        *format;   /* printf style format string for params   */
+    int          keys;     /* bitmask of keys used in this instruction */
     unsigned int flags;    /* how the instruction affects each of the values */
     unsigned int type;     /* 16 bit register branches, + ITxxx */
-    int          keys;     /* bitmask of keys used in this instruction */
-    int          index;    /* index on instructions[] */
-    int          bbindex;  /* number of basic block containing instruction */
+    unsigned int index;    /* index on instructions[] */
+    unsigned int bbindex;  /* number of basic block containing instruction */
 
     struct _Instruction *prev;
     struct _Instruction *next;
@@ -96,26 +96,24 @@ enum Emitter_type { EMIT_FILE, EMIT_PBC };
 /* HEADERIZER BEGIN: compilers/imcc/instructions.c */
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 
-PARROT_API
+PARROT_EXPORT
 int emit_close(PARROT_INTERP, ARGIN_NULLOK(void *param))
         __attribute__nonnull__(1);
 
-PARROT_API
+PARROT_EXPORT
 int emit_flush(PARROT_INTERP,
     ARGIN_NULLOK(void *param),
-    ARGIN(struct _IMC_Unit *unit))
+    ARGIN(IMC_Unit *unit))
         __attribute__nonnull__(1)
         __attribute__nonnull__(3);
 
-PARROT_API
+PARROT_EXPORT
 int emit_open(PARROT_INTERP, int type, ARGIN_NULLOK(void *param))
         __attribute__nonnull__(1);
 
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
-Instruction * _delete_ins(
-    ARGMOD(struct _IMC_Unit *unit),
-    ARGIN(Instruction *ins))
+Instruction * _delete_ins(ARGMOD(IMC_Unit *unit), ARGIN(Instruction *ins))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         FUNC_MODIFIES(*unit);
@@ -134,9 +132,7 @@ Instruction * _mk_instruction(
 
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
-Instruction * delete_ins(
-    ARGMOD(struct _IMC_Unit *unit),
-    ARGMOD(Instruction *ins))
+Instruction * delete_ins(ARGMOD(IMC_Unit *unit), ARGMOD(Instruction *ins))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         FUNC_MODIFIES(*unit)
@@ -144,7 +140,7 @@ Instruction * delete_ins(
 
 PARROT_CAN_RETURN_NULL
 Instruction * emitb(PARROT_INTERP,
-    ARGMOD_NULLOK(struct _IMC_Unit *unit),
+    ARGMOD_NULLOK(IMC_Unit *unit),
     ARGIN_NULLOK(Instruction *i))
         __attribute__nonnull__(1);
 
@@ -163,19 +159,16 @@ int get_branch_regno(ARGIN(const Instruction *ins))
 void imcc_init_tables(PARROT_INTERP)
         __attribute__nonnull__(1);
 
-int ins_print(PARROT_INTERP,
-    ARGMOD(FILE *fd),
-    ARGIN(const Instruction *ins))
+int ins_print(PARROT_INTERP, ARGIN(PMC *io), ARGIN(const Instruction *ins))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
-        __attribute__nonnull__(3)
-        FUNC_MODIFIES(*fd);
+        __attribute__nonnull__(3);
 
 int ins_writes2(ARGIN(const Instruction *ins), int t)
         __attribute__nonnull__(1);
 
 void insert_ins(
-    ARGMOD(struct _IMC_Unit *unit),
+    ARGMOD(IMC_Unit *unit),
     ARGMOD_NULLOK(Instruction *ins),
     ARGMOD(Instruction *tmp))
         __attribute__nonnull__(1)
@@ -195,7 +188,7 @@ int instruction_writes(
 
 PARROT_CAN_RETURN_NULL
 Instruction * move_ins(
-    ARGMOD(struct _IMC_Unit *unit),
+    ARGMOD(IMC_Unit *unit),
     ARGMOD(Instruction *ins),
     ARGMOD(Instruction *to))
         __attribute__nonnull__(1)
@@ -206,7 +199,7 @@ Instruction * move_ins(
         FUNC_MODIFIES(*to);
 
 void prepend_ins(
-    ARGMOD(struct _IMC_Unit *unit),
+    ARGMOD(IMC_Unit *unit),
     ARGMOD_NULLOK(Instruction *ins),
     ARGMOD(Instruction *tmp))
         __attribute__nonnull__(1)
@@ -215,7 +208,7 @@ void prepend_ins(
         FUNC_MODIFIES(*tmp);
 
 void subst_ins(
-    ARGMOD(struct _IMC_Unit *unit),
+    ARGMOD(IMC_Unit *unit),
     ARGMOD(Instruction *ins),
     ARGMOD(Instruction *tmp),
     int needs_freeing)

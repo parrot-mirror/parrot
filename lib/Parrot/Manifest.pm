@@ -82,6 +82,13 @@ sub determine_need_for_manifest {
     }
 }
 
+my $text_file_coda = <<'CODA';
+# Local variables:
+#   mode: text
+#   buffer-read-only: t
+# End:
+CODA
+
 sub print_manifest {
     my $self               = shift;
     my $manifest_lines_ref = shift;
@@ -100,6 +107,7 @@ END_HEADER
     for my $k ( sort keys %{$manifest_lines_ref} ) {
         $print_str .= sprintf "%- 59s %s\n", ( $k, $manifest_lines_ref->{$k} );
     }
+    $print_str .= $text_file_coda;
     open my $MANIFEST, '>', $self->{file}
         or croak "Unable to open $self->{file} for writing";
     print $MANIFEST $print_str;
@@ -143,7 +151,6 @@ sub _get_special {
         RESPONSIBLE_PARTIES                             [main]doc
         TODO                                            [main]doc
         parrot-config                                   [main]bin
-        docs/ROADMAP.pod                                [devel]doc
         docs/compiler_faq.pod                           [devel]doc
         docs/configuration.pod                          [devel]doc
         docs/debug.pod                                  [devel]doc
@@ -242,6 +249,7 @@ sub print_manifest_skip {
     my $print_str = shift;
     open my $MANIFEST_SKIP, '>', $self->{skip}
         or die "Unable to open $self->{skip} for writing";
+    $print_str .= $text_file_coda;
     print $MANIFEST_SKIP $print_str;
     close $MANIFEST_SKIP
         or die "Unable to close $self->{skip} after writing";

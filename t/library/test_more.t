@@ -16,13 +16,14 @@
     curr_namespace = get_namespace
     test_namespace = get_namespace [ 'Test'; 'More' ]
     exports = split " ", "ok is diag like skip todo is_deeply isa_ok isnt"
-    test_namespace.export_to(curr_namespace, exports)
+    test_namespace.'export_to'(curr_namespace, exports)
 
     test_namespace = get_namespace [ 'Test'; 'Builder'; 'Tester' ]
     exports = split " ", "plan test_out test_diag test_fail test_pass test_test"
-    test_namespace.export_to(curr_namespace, exports)
+    test_namespace.'export_to'(curr_namespace, exports)
 
     plan( 74 )
+
     test_skip()
     test_todo()
     test_ok()
@@ -60,8 +61,8 @@
     test_test( 'passing test is() for ints')
 
     test_fail()
-    test_diag( 'Received: -100' )
-    test_diag( 'Expected: 200' )
+    test_diag( 'Have: -100' )
+    test_diag( 'Want: 200' )
     is( -100, 200 )
     test_test( 'failing test is() for ints')
 
@@ -71,8 +72,8 @@
 
     test_fail( 'comparing two integers' )
     is( -512, 5120, 'comparing two integers' )
-    test_diag( 'Received: -512' )
-    test_diag( 'Expected: 5120' )
+    test_diag( 'Have: -512' )
+    test_diag( 'Want: 5120' )
     test_test( 'failing test is() for ints with description')
 
     test_pass()
@@ -81,8 +82,8 @@
 
     test_fail()
     is( 1.235, 5.321 )
-    test_diag( 'Received: 1.235' )
-    test_diag( 'Expected: 5.321' )
+    test_diag( 'Have: 1.235' )
+    test_diag( 'Want: 5.321' )
     test_test( 'failing test is() for floats')
 
     test_pass( 'comparing two floats' )
@@ -91,8 +92,8 @@
 
     test_fail( 'comparing two floats' )
     is( 777.1, 888.8, 'comparing two floats' )
-    test_diag( 'Received: 777.1' )
-    test_diag( 'Expected: 888.8' )
+    test_diag( 'Have: 777.1' )
+    test_diag( 'Want: 888.8' )
     test_test( 'failing test is() for floats with description')
 
     test_pass()
@@ -101,8 +102,8 @@
 
     test_fail()
     is( 'larry', 'bob' )
-    test_diag( 'Received: larry' )
-    test_diag( 'Expected: bob' )
+    test_diag( 'Have: larry' )
+    test_diag( 'Want: bob' )
     test_test( 'failing test is() for strings')
 
     test_pass( 'comparing two strings' )
@@ -111,8 +112,8 @@
 
     test_fail( 'comparing two strings' )
     is( 'zeke', 'zelda', 'comparing two strings' )
-    test_diag( 'Received: zeke' )
-    test_diag( 'Expected: zelda' )
+    test_diag( 'Have: zeke' )
+    test_diag( 'Want: zelda' )
     test_test( 'failing test is() for strings with description')
 
     .local pmc left
@@ -127,14 +128,14 @@
     test_test( 'passing test is() for pmcs')
 
     right = new 'Integer'
-    right = 0
-    test_fail()
-    test_diag( 'Received: zero' )
-    test_diag( 'Expected: 0' )
-    is( left, right )
+    right = 1
+    test_fail( 'zero versus 1' )
+    test_diag( 'Have: zero' )
+    test_diag( 'Want: 1' )
+    is( left, right, 'zero versus 1' )
     test_test( 'failing test is() for pmcs')
 
-    left = '0'
+    left = '1'
     test_pass( 'comparing two pmcs' )
     is( left, right, 'comparing two pmcs' )
     test_test( 'passing test is() for pmcs with description')
@@ -143,12 +144,12 @@
 
     .local string expected
     .local string hash_string
-    expected     = 'Expected: '
+    expected     = 'Want: '
     hash_string  = right
     expected    .= hash_string
 
     test_fail( 'comparing two pmcs' )
-    test_diag( 'Received: 0' )
+    test_diag( 'Have: 1' )
     test_diag( expected )
     is( left, right, 'comparing two pmcs' )
     test_test( 'failing test is() for pmcs with description')
@@ -160,10 +161,10 @@
     test_test( 'passing test isnt() for ints')
 
     test_fail()
-    test_diag( 'Received: -100' )
-    test_diag( 'Expected: not -100' )
+    test_diag( 'Have: -100' )
+    test_diag( 'Want: not -100' )
     isnt( -100, -100 )
-    test_test( 'failing test is() for ints')
+    test_test( 'failing test isnt() for ints')
 
     test_pass( 'comparing two unidentical integers' )
     isnt( 512, 215, 'comparing two unidentical integers' )
@@ -171,8 +172,8 @@
 
     test_fail( 'comparing two integers' )
     isnt( -512, -512, 'comparing two integers' )
-    test_diag( 'Received: -512' )
-    test_diag( 'Expected: not -512' )
+    test_diag( 'Have: -512' )
+    test_diag( 'Want: not -512' )
     test_test( 'failing test isnt() for ints with description')
 
     test_pass()
@@ -181,8 +182,8 @@
 
     test_fail()
     isnt( 1.235, 1.235 )
-    test_diag( 'Received: 1.235' )
-    test_diag( 'Expected: not 1.235' )
+    test_diag( 'Have: 1.235' )
+    test_diag( 'Want: not 1.235' )
     test_test( 'failing test isnt() for floats')
 
     test_pass( 'comparing two floats' )
@@ -191,8 +192,8 @@
 
     test_fail( 'comparing two floats' )
     isnt( 80.8, 80.8, 'comparing two floats' )
-    test_diag( 'Received: 80.8' )
-    test_diag( 'Expected: not 80.8' )
+    test_diag( 'Have: 80.8' )
+    test_diag( 'Want: not 80.8' )
     test_test( 'failing test isnt() for floats with description')
 
     test_pass()
@@ -201,8 +202,8 @@
 
     test_fail()
     isnt( 'larry', 'larry' )
-    test_diag( 'Received: larry' )
-    test_diag( 'Expected: not larry' )
+    test_diag( 'Have: larry' )
+    test_diag( 'Want: not larry' )
     test_test( 'failing test isnt() for strings')
 
     test_pass( 'comparing two strings' )
@@ -211,8 +212,8 @@
 
     test_fail( 'comparing two strings' )
     isnt( 'larry', 'larry', 'comparing two strings' )
-    test_diag( 'Received: larry' )
-    test_diag( 'Expected: not larry' )
+    test_diag( 'Have: larry' )
+    test_diag( 'Want: not larry' )
     test_test( 'failing test isnt() for strings with description')
 
     .local pmc left
@@ -229,8 +230,8 @@
     right = new 'String'
     right = 'zero'
     test_fail()
-    test_diag( 'Received: zero' )
-    test_diag( 'Expected: not zero' )
+    test_diag( 'Have: zero' )
+    test_diag( 'Want: not zero' )
     isnt( left, right )
     test_test( 'failing test isnt() for pmcs')
 
@@ -243,7 +244,7 @@
 
     .local string expected
     .local string hash_string
-    expected     = 'Expected: '
+    expected     = 'Want: '
     hash_string  = right
     expected    .= hash_string
 

@@ -60,6 +60,7 @@ Marks the OrderedHash as live.
         if (!h)
             return;
 
+        /* RT #53890 - keys can be NULL on purpose; move to src/hash.c ? */
         for (i = h->mask; i >= 0; --i) {
             HashBucket *b = h->bi[i];
 
@@ -97,16 +98,16 @@ Marks the OrderedHash as live.
             idx += n;
 
         if (idx < 0 || idx >= n)
-            real_exception(INTERP, NULL, KEY_NOT_FOUND,
-                    "OrderedHash: index out of bounds!");
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_KEY_NOT_FOUND,
+                "OrderedHash: index out of bounds!");
 
         b = h->bs + idx;
 
         if (b->key)
             return (PMC *)b->value;
 
-        real_exception(INTERP, NULL, KEY_NOT_FOUND,
-                "OrderedHash: No such key");
+        Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_KEY_NOT_FOUND,
+            "OrderedHash: No such key");
     }
 
     VTABLE PMC *get_pmc_keyed(PMC *key) {
@@ -145,16 +146,16 @@ Marks the OrderedHash as live.
             idx += n;
 
         if (idx < 0 || idx >= n)
-            real_exception(INTERP, NULL, KEY_NOT_FOUND,
-                    "OrderedHash: index out of bounds!");
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_KEY_NOT_FOUND,
+                "OrderedHash: index out of bounds!");
 
         b = h->bs + idx;
 
         if (b->key)
             return VTABLE_get_string(INTERP, (PMC *)b->value);
 
-        real_exception(INTERP, NULL, KEY_NOT_FOUND,
-                "OrderedHash: No such key");
+        Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_KEY_NOT_FOUND,
+            "OrderedHash: No such key");
     }
 
     VTABLE STRING *get_string_keyed(PMC *key) {
@@ -193,16 +194,16 @@ Returns the integer value associated with C<key>.
             idx += n;
 
         if (idx < 0 || idx >= n)
-            real_exception(INTERP, NULL, OUT_OF_BOUNDS,
-                    "OrderedHash: index out of bounds!");
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_OUT_OF_BOUNDS,
+                "OrderedHash: index out of bounds!");
 
         b = h->bs + idx;
 
         if (b->key)
             return VTABLE_get_integer(INTERP, (PMC *)b->value);
 
-        real_exception(INTERP, NULL, KEY_NOT_FOUND,
-                "OrderedHash: No such key");
+        Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_KEY_NOT_FOUND,
+            "OrderedHash: No such key");
     }
 
     VTABLE INTVAL get_integer_keyed(PMC *key) {
@@ -243,16 +244,16 @@ Returns the floating-point value for the element at C<key>.
             idx += n;
 
         if (idx < 0 || idx >= n)
-            real_exception(INTERP, NULL, OUT_OF_BOUNDS,
-                    "OrderedHash: index out of bounds!");
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_OUT_OF_BOUNDS,
+                "OrderedHash: index out of bounds!");
 
         b = h->bs + idx;
 
         if (b->key)
             return VTABLE_get_number(INTERP, (PMC *)b->value);
 
-        real_exception(INTERP, NULL, KEY_NOT_FOUND,
-                "OrderedHash: No such key");
+        Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_KEY_NOT_FOUND,
+            "OrderedHash: No such key");
     }
 
     VTABLE FLOATVAL get_number_keyed(PMC *key) {
@@ -307,7 +308,7 @@ The created key = "\1idx".
             if (!b->key)
                 b->key = Parrot_sprintf_s(INTERP, fmt, idx);
 
-            b->value = val;
+            b->value     = val;
         }
     }
 
@@ -400,9 +401,9 @@ The created key = "\1idx".
         if (PObj_get_FLAGS(key) & KEY_integer_FLAG) {
             PMC        *item, *next;
             HashBucket *b;
-            Hash       * const h = (Hash *)PMC_struct_val(SELF);
-            INTVAL      idx = key_integer(INTERP, key);
-            const INTVAL n  = h->entries;
+            Hash       * const h   = (Hash *)PMC_struct_val(SELF);
+            INTVAL             idx = key_integer(INTERP, key);
+            const INTVAL       n   = h->entries;
 
             if (idx < 0)
                 idx += n;
@@ -458,7 +459,7 @@ The created key = "\1idx".
             if (idx < 0)
                 idx += n;
 
-            /* XXX non-existant is undefined - is this correct */
+            /* XXX non-existent is undefined - is this correct */
             if (idx < 0 || idx >= n)
                 return 0;
 
@@ -482,7 +483,7 @@ The created key = "\1idx".
     VTABLE INTVAL defined_keyed_int(INTVAL idx) {
         Hash * const h = (Hash *)PMC_struct_val(SELF);
         const INTVAL n = h->entries;
-        HashBucket *b;
+        HashBucket  *b;
 
         if (idx < 0)
             idx += n;
@@ -526,11 +527,11 @@ Deletes the key C<*key> from the hash.
         }
         else {
             if (next) {
-                PMC * const item = SELF.get_pmc_keyed_str(key_string(INTERP, key));
+                PMC * const item = SELF.get_pmc_keyed_str(VTABLE_get_string(INTERP, key));
                 VTABLE_delete_keyed(INTERP, item, next);
                 return;
             }
-            SELF.delete_keyed_str(key_string(INTERP, key));
+            SELF.delete_keyed_str(VTABLE_get_string(INTERP, key));
         }
     }
 
@@ -550,8 +551,8 @@ Deletes the key C<*key> from the hash.
         if (!b)
             return;
 
-        b->key   = NULL;
-        b->value = NULL;
+        b->key       = NULL;
+        b->value     = NULL;
     }
 
     VTABLE void delete_keyed_str(STRING *key) {
@@ -561,8 +562,8 @@ Deletes the key C<*key> from the hash.
         if (!b)
             return;
 
-        b->key   = NULL;
-        b->value = NULL;
+        b->key       = NULL;
+        b->value     = NULL;
     }
 
 /*
@@ -582,7 +583,7 @@ the clone via integers has different indices, if items were deleted.
         Hash * const h_dest = (Hash *)PMC_struct_val(dest);
         UINTVAL     i;
 
-        for (i = 0; i <= hash->mask; i++) {
+        for (i = 0; i <= N_BUCKETS(hash->mask-1); i++) {
             HashBucket * const b      = hash->bs + i;
             void       * const key    = b->key;
 
@@ -644,8 +645,9 @@ preserve key/value order.
                 }
                 break;
             default:
-                real_exception(interp, NULL, E_Exception,
-                        "unhandled visit action (%d)", info->what);
+                Parrot_ex_throw_from_c_args(interp, NULL,
+                    EXCEPTION_INVALID_OPERATION,
+                    "unhandled visit action (%d)", info->what);
         }
     }
 }

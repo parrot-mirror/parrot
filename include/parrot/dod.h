@@ -45,14 +45,12 @@
 #define GC_trace_normal        (UINTVAL)(1 << 0)   /* the same */
 #define GC_lazy_FLAG           (UINTVAL)(1 << 1)   /* timely destruction run */
 #define GC_finish_FLAG         (UINTVAL)(1 << 2)   /* on Parrot exit: mark (almost) all PMCs dead and */
-                                                    /* garbage collect. */
-#define GC_no_trace_volatile_roots (UINTVAL)(1 << 3)
-            /* trace all but volatile root set, i.e. registers */
+                                                   /* garbage collect. */
 
 /* HEADERIZER BEGIN: src/gc/dod.c */
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 
-PARROT_API
+PARROT_EXPORT
 void pobject_lives(PARROT_INTERP, ARGMOD(PObj *obj))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
@@ -96,7 +94,7 @@ void Parrot_dod_free_sysmem(SHIM_INTERP,
         __attribute__nonnull__(3)
         FUNC_MODIFIES(*b);
 
-void Parrot_dod_ms_run(PARROT_INTERP, int flags)
+void Parrot_dod_ms_run(PARROT_INTERP, UINTVAL flags)
         __attribute__nonnull__(1);
 
 void Parrot_dod_ms_run_init(PARROT_INTERP)
@@ -160,11 +158,11 @@ extern int CONSERVATIVE_POINTER_CHASING;
 /* HEADERIZER BEGIN: src/gc/gc_gms.c */
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 
-PARROT_API
+PARROT_EXPORT
 void Parrot_gc_gms_init(PARROT_INTERP)
         __attribute__nonnull__(1);
 
-PARROT_API
+PARROT_EXPORT
 void parrot_gc_gms_pobject_lives(PARROT_INTERP, ARGMOD(PObj *obj))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
@@ -221,12 +219,12 @@ void Parrot_gc_ims_init(PARROT_INTERP)
                 PObj_live_TEST(agg) && \
                 (PObj_get_FLAGS(agg) & PObj_custom_GC_FLAG) && \
                 !PObj_live_TEST(_new)) { \
-            Parrot_dod_ims_wb(interp, agg, _new); \
+            Parrot_dod_ims_wb((interp), (agg), (_new)); \
         } \
     } while (0)
 
 #  define GC_WRITE_BARRIER_KEY(interp, agg, old, old_key, _new, new_key) \
-          GC_WRITE_BARRIER(interp, agg, old, _new)
+          GC_WRITE_BARRIER((interp), (agg), (old), (_new))
 #endif
 
 #if PARROT_GC_MS
@@ -242,7 +240,7 @@ void Parrot_gc_ims_init(PARROT_INTERP)
     gen_agg = PObj_to_GMSH(agg)->gen->gen_no; \
     gen_new = PObj_to_GMSH(_new)->gen->gen_no; \
     if (gen_agg < gen_new) \
-        parrot_gc_gms_wb(interp, agg, old, _new); \
+        parrot_gc_gms_wb((interp), (agg), (old), (_new)); \
 } while (0)
 
 #  define GC_WRITE_BARRIER_KEY(interp, agg, old, old_key, _new, new_key) do { \
@@ -253,7 +251,7 @@ void Parrot_gc_ims_init(PARROT_INTERP)
     gen_new = PObj_to_GMSH(_new)->gen->gen_no; \
     gen_key = PObj_to_GMSH(new_key)->gen->gen_no; \
     if (gen_agg < gen_new || gen_agg < gen_key) \
-        parrot_gc_gms_wb_key(interp, agg, old, old_key, _new, new_key); \
+        parrot_gc_gms_wb_key((interp), (agg), (old), (old_key), (_new), (new_key)); \
 } while (0)
 
 #endif

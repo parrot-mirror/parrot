@@ -8,7 +8,7 @@ t/pmc/nil.t - LuaNil
 
 =head1 SYNOPSIS
 
-    % perl -I../../lib t/pmc/nil.t
+    % perl t/pmc/nil.t
 
 =head1 DESCRIPTION
 
@@ -19,13 +19,15 @@ Tests C<LuaNil> PMC
 
 use strict;
 use warnings;
+use FindBin;
+use lib "$FindBin::Bin/../../../../lib";
 
 use Parrot::Test tests => 10;
 use Test::More;
 
 pir_output_is( << 'CODE', << 'OUTPUT', 'check inheritance' );
 .sub _main
-    loadlib P1, 'lua_group'
+    loadlib $P1, 'lua_group'
     .local pmc pmc1
     pmc1 = new 'LuaNil'
     .local int bool1
@@ -44,7 +46,7 @@ OUTPUT
 
 pir_output_is( << 'CODE', << 'OUTPUT', 'check interface' );
 .sub _main
-    loadlib P1, 'lua_group'
+    loadlib $P1, 'lua_group'
     .local pmc pmc1
     pmc1 = new 'LuaNil'
     .local int bool1
@@ -63,7 +65,7 @@ OUTPUT
 
 pir_output_is( << 'CODE', << 'OUTPUT', 'check name' );
 .sub _main
-    loadlib P1, 'lua_group'
+    loadlib $P1, 'lua_group'
     .local pmc pmc1
     pmc1 = new 'LuaNil'
     .local string str1
@@ -78,7 +80,7 @@ OUTPUT
 
 pir_output_is( << 'CODE', << 'OUTPUT', 'check get_string' );
 .sub _main
-    loadlib P1, 'lua_group'
+    loadlib $P1, 'lua_group'
     .local pmc pmc1
     pmc1 = new 'LuaNil'
     print pmc1
@@ -91,7 +93,7 @@ OUTPUT
 
 pir_output_is( << 'CODE', << 'OUTPUT', 'check get_bool' );
 .sub _main
-    loadlib P1, 'lua_group'
+    loadlib $P1, 'lua_group'
     .local pmc pmc1
     pmc1 = new 'LuaNil'
     .local int bool1
@@ -106,7 +108,7 @@ OUTPUT
 
 pir_output_is( << 'CODE', << 'OUTPUT', 'check logical_not' );
 .sub _main
-    loadlib P1, 'lua_group'
+    loadlib $P1, 'lua_group'
     .local pmc pmc1
     pmc1 = new 'LuaNil'
     .local pmc pmc2
@@ -126,7 +128,8 @@ boolean
 OUTPUT
 
 pir_output_is( << 'CODE', << 'OUTPUT', 'check HLL' );
-.HLL 'Lua', 'lua_group'
+.HLL 'lua'
+.loadlib 'lua_group'
 .sub _main
     .local pmc pmc1
     pmc1 = new 'LuaNil'
@@ -144,9 +147,10 @@ nil
 OUTPUT
 
 pir_output_is( << 'CODE', << 'OUTPUT', 'check HLL & .const' );
-.HLL 'Lua', 'lua_group'
+.HLL 'lua'
+.loadlib 'lua_group'
 .sub _main
-    .const .LuaNil cst1 = 'dummy'
+    .const 'LuaNil' cst1 = 'dummy'
     print cst1
     print "\n"
     .local int bool1
@@ -160,7 +164,8 @@ nil
 OUTPUT
 
 pir_output_is( << 'CODE', << 'OUTPUT', 'check tostring' );
-.HLL 'Lua', 'lua_group'
+.HLL 'lua'
+.loadlib 'lua_group'
 .sub _main
     .local pmc pmc1
     pmc1 = new 'LuaNil'
@@ -180,7 +185,8 @@ string
 OUTPUT
 
 pir_output_is( << 'CODE', << 'OUTPUT', 'check tonumber' );
-.HLL 'Lua', 'lua_group'
+.HLL 'lua'
+.loadlib 'lua_group'
 .sub _main
     .local pmc pmc1
     pmc1 = new 'LuaNil'

@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2004-2007, The Perl Foundation.
+Copyright (C) 2004-2008, The Perl Foundation.
 $Id$
 
 =head1 NAME
@@ -114,13 +114,15 @@ static UINTVAL validate(SHIM_INTERP, SHIM(STRING *source_string));
 #endif
 
 #define EXCEPTION(err, str) \
-    real_exception(interp, NULL, err, str)
+    Parrot_ex_throw_from_c_args(interp, NULL, (err), (str))
 
 /*
 
 =item C<static void set_graphemes>
 
-RT#48260: Not yet documented!!!
+Sets the graphemes for STRING C<source_string>, starting at offset
+C<offset>. Replaces C<replace_count> graphemes from STRING
+C<insert_string>.
 
 =cut
 
@@ -138,7 +140,8 @@ set_graphemes(PARROT_INTERP, ARGIN(STRING *source_string),
 
 =item C<static STRING* to_charset>
 
-RT#48260: Not yet documented!!!
+Converts the STRING C<src> to STRING C<dest> in binary mode. Throws
+an exception if a suitable conversion function is not found.
 
 =cut
 
@@ -153,14 +156,16 @@ to_charset(PARROT_INTERP, ARGIN(STRING *src), ARGIN_NULLOK(STRING *dest))
 
     if (conversion_func)
          return conversion_func(interp, src, dest);
-    real_exception(interp, NULL, UNIMPLEMENTED, "to_charset for binary not implemented");
+
+    Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_UNIMPLEMENTED,
+        "to_charset for binary not implemented");
 }
 
 /*
 
 =item C<static STRING* compose>
 
-RT#48260: Not yet documented!!!
+Throws an exception because we cannot compose a binary string.
 
 =cut
 
@@ -171,14 +176,14 @@ PARROT_CANNOT_RETURN_NULL
 static STRING*
 compose(PARROT_INTERP, SHIM(STRING *source_string))
 {
-    EXCEPTION(INVALID_CHARTYPE, "Can't compose binary data");
+    EXCEPTION(EXCEPTION_INVALID_CHARTYPE, "Can't compose binary data");
 }
 
 /*
 
 =item C<static STRING* decompose>
 
-RT#48260: Not yet documented!!!
+Throws an exception because we cannot decompose a binary string.
 
 =cut
 
@@ -189,14 +194,15 @@ PARROT_CANNOT_RETURN_NULL
 static STRING*
 decompose(PARROT_INTERP, SHIM(STRING *source_string))
 {
-    EXCEPTION(INVALID_CHARTYPE, "Can't decompose binary data");
+    EXCEPTION(EXCEPTION_INVALID_CHARTYPE, "Can't decompose binary data");
 }
 
 /*
 
 =item C<static void upcase>
 
-RT#48260: Not yet documented!!!
+Throws an exception because we cannot convert a binary string to
+upper case.
 
 =cut
 
@@ -205,14 +211,15 @@ RT#48260: Not yet documented!!!
 static void
 upcase(PARROT_INTERP, SHIM(STRING *source_string))
 {
-    EXCEPTION(INVALID_CHARTYPE, "Can't upcase binary data");
+    EXCEPTION(EXCEPTION_INVALID_CHARTYPE, "Can't upcase binary data");
 }
 
 /*
 
 =item C<static void downcase>
 
-RT#48260: Not yet documented!!!
+Throws an exception because we cannot convert a binary string to
+lower-case.
 
 =cut
 
@@ -221,14 +228,15 @@ RT#48260: Not yet documented!!!
 static void
 downcase(PARROT_INTERP, SHIM(STRING *source_string))
 {
-    EXCEPTION(INVALID_CHARTYPE, "Can't downcase binary data");
+    EXCEPTION(EXCEPTION_INVALID_CHARTYPE, "Can't downcase binary data");
 }
 
 /*
 
 =item C<static void titlecase>
 
-RT#48260: Not yet documented!!!
+Throws an exception because we cannot convert a binary string to
+title case.
 
 =cut
 
@@ -237,14 +245,15 @@ RT#48260: Not yet documented!!!
 static void
 titlecase(PARROT_INTERP, SHIM(STRING *source_string))
 {
-    EXCEPTION(INVALID_CHARTYPE, "Can't titlecase binary data");
+    EXCEPTION(EXCEPTION_INVALID_CHARTYPE, "Can't titlecase binary data");
 }
 
 /*
 
 =item C<static void upcase_first>
 
-RT#48260: Not yet documented!!!
+Throws an exception because we cannot set the first "character" of the
+binary string to uppercase.
 
 =cut
 
@@ -253,14 +262,15 @@ RT#48260: Not yet documented!!!
 static void
 upcase_first(PARROT_INTERP, SHIM(STRING *source_string))
 {
-    EXCEPTION(INVALID_CHARTYPE, "Can't upcase binary data");
+    EXCEPTION(EXCEPTION_INVALID_CHARTYPE, "Can't upcase binary data");
 }
 
 /*
 
 =item C<static void downcase_first>
 
-RT#48260: Not yet documented!!!
+Throws an exception because we cannot set the first "character"
+of the binary string to lowercase.
 
 =cut
 
@@ -269,14 +279,15 @@ RT#48260: Not yet documented!!!
 static void
 downcase_first(PARROT_INTERP, SHIM(STRING *source_string))
 {
-    EXCEPTION(INVALID_CHARTYPE, "Can't downcase binary data");
+    EXCEPTION(EXCEPTION_INVALID_CHARTYPE, "Can't downcase binary data");
 }
 
 /*
 
 =item C<static void titlecase_first>
 
-RT#48260: Not yet documented!!!
+Throws an exception because we can't convert the first "character"
+of binary data to title case.
 
 =cut
 
@@ -285,14 +296,14 @@ RT#48260: Not yet documented!!!
 static void
 titlecase_first(PARROT_INTERP, SHIM(STRING *source_string))
 {
-    EXCEPTION(INVALID_CHARTYPE, "Can't titlecase binary data");
+    EXCEPTION(EXCEPTION_INVALID_CHARTYPE, "Can't titlecase binary data");
 }
 
 /*
 
 =item C<static INTVAL compare>
 
-RT#48260: Not yet documented!!!
+Returns 0. We can't directly compare two binary buffers (yet).
 
 =cut
 
@@ -308,7 +319,8 @@ compare(SHIM_INTERP, SHIM(const STRING *lhs), SHIM(const STRING *rhs))
 
 =item C<static INTVAL cs_index>
 
-RT#48260: Not yet documented!!!
+Returns -1. It makes no sense to try and search for a substring in
+raw binary data.
 
 =cut
 
@@ -325,7 +337,8 @@ cs_index(SHIM_INTERP, SHIM(STRING *source_string),
 
 =item C<static INTVAL cs_rindex>
 
-RT#48260: Not yet documented!!!
+Returns -1. It makes no sense to search for the last substring match
+in raw binary data.
 
 =cut
 
@@ -342,7 +355,7 @@ cs_rindex(SHIM_INTERP, SHIM(STRING *source_string),
 
 =item C<static UINTVAL validate>
 
-RT#48260: Not yet documented!!!
+Returns 1. All sequential data is valid binary data.
 
 =cut
 
@@ -431,7 +444,8 @@ string_from_codepoint(PARROT_INTERP, UINTVAL codepoint)
 
 =item C<const CHARSET * Parrot_charset_binary_init>
 
-RT#48260: Not yet documented!!!
+Initialize the binary charset, including function pointers and
+settings.
 
 =cut
 

@@ -27,22 +27,32 @@ processed date.
 
 use strict;
 use warnings;
+use GD;
 use GD::Graph::bars;
 use Text::CSV_XS;
 use List::Util qw(max sum);
-use POSIX qw(log10);
+use POSIX qw(log10 ceil);
+use Getopt::Long;
 
 # column names
 use constant DATE       => 0;
 use constant REVISION   => 1;
-use constant FILES      => 2;
-use constant TESTS      => 3;
-use constant PASS       => 4;
-use constant FAIL       => 5;
-use constant TODO       => 6;
-use constant SKIP       => 7;
+use constant PASS       => 2;
+use constant FAIL       => 3;
+use constant TODO       => 4;
+use constant SKIP       => 5;
+use constant REGR       => 6;
+use constant SPEC       => 7;
+use constant FILES      => 8;
+use constant SPECSKIP   => 9;
 
-use constant MAX_COL    => 7;
+use constant MAX_COL    => 9;
+
+my $size = '800x500';
+
+GetOptions
+    'size=s'    => \$size,
+    or usage();
 
 my $fn = $ARGV[0] || 'docs/spectest-progress.csv';
 open my $f, '<', $fn or die "Can't open file '$fn' for reading: $!";
@@ -54,7 +64,8 @@ my $csv = Text::CSV_XS->new({
     });
 
 my $max = 0;
-my @columns_to_plot = (PASS, FAIL, TODO, SKIP);
+my @columns_to_plot = (PASS, FAIL, TODO, SKIP, SPECSKIP);
+my $rows = 0;
 
 while (<$f>) {
     next if m/^"[a-z]+"/i; # skip header line
@@ -62,28 +73,33 @@ while (<$f>) {
     $csv->parse($_);
     my @cols = $csv->fields();
     push @{$data[0]}, substr $cols[0], 0, 10;
+    $cols[SPECSKIP] = $cols[SPEC] - sum @cols[PASS, FAIL, TODO, SKIP];
     for (1..MAX_COL){
         push @{$data[$_]}, $cols[$_];
     }
     $max = max $max, sum @cols[@columns_to_plot];
+    $rows++;
 }
 
 my $last_date = $data[DATE][-1];
 
-my $p = GD::Graph::bars->new(600, 400);
+print scalar(@data), $/;
+my $p = GD::Graph::bars->new(split m/x/, $size, 2);
 no warnings 'qw';
 $p->set(
         x_label             => 'Date',
         y_label             => 'Tests',
-        title               => 'Passing Rakudo Spectests',
-        x_label_skip        => 2,
+        title               => 'Rakudo Spectest Progress',
+        x_label_skip        => 7,
         x_labels_vertical   => 1,
         cumulate            => 1,
         borderclrs          => [undef],
-        dclrs               => [qw(#00FF00 #FF0000 #0000FF #FFFF00)]
+        dclrs               => [qw(#00FF00 #FF0000 #0000FF #FFFF00 #DDDDDD)]
     ) or die $p->error;
 
-$p->set_legend('Pass', 'Fail', 'Todo', 'Skip');
+$p->set_legend('Pass', 'Fail', 'Todo', 'Regr', 'Spec');
+$p->set_x_axis_font(gdSmallFont);
+$p->set_y_axis_font(gdSmallFont);
 
 # determine a better y_max_value - GD::Graph wastes much space by default
 my $round_to = 10 ** int(log10 $max) / 5;
@@ -99,3 +115,19 @@ print $o $g->png;
 close $o;
 print "Image written to file '$out_file'\n";
 
+sub usage {
+    print <<USAGE;
+Usage:
+    $0 [--size XXXxYYY] [data_file [output_file]]
+Options
+    --size  Size of the output image, default is 600x400
+USAGE
+    exit 1;
+}
+
+# Local Variables:
+#   mode: cperl
+#   cperl-indent-level: 4
+#   fill-column: 100
+# End:
+# vim: expandtab shiftwidth=4:

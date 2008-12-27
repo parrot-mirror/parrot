@@ -35,6 +35,7 @@ sub new {
         fatal
         fatal-step
         help
+        script
         silent
         verbose
         verbose-step
@@ -85,6 +86,7 @@ sub run_configure_tests {
     my $self = shift;
     my @preconfiguration_tests = @_;
     if ( $self->get_run('run_configure_tests') ) {
+        my $start = time();
         print "As you requested, we'll start with some tests of the configuration tools.\n\n";
 
         runtests(@preconfiguration_tests) or die
@@ -95,6 +97,10 @@ I just ran some tests to demonstrate that
 Parrot's configuration tools will work as intended.
 
 TEST
+        my $end =time();
+        print scalar(@preconfiguration_tests),
+            " t/configure and t/step tests took ",
+            ($end - $start), " seconds.\n";
     }
     return 1;
 }

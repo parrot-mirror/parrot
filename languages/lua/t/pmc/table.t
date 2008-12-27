@@ -8,7 +8,7 @@ t/pmc/table.t - Lua Table
 
 =head1 SYNOPSIS
 
-    % perl -I../../lib t/pmc/table.t
+    % perl t/pmc/table.t
 
 =head1 DESCRIPTION
 
@@ -19,6 +19,8 @@ Tests C<table> type
 
 use strict;
 use warnings;
+use FindBin;
+use lib "$FindBin::Bin/../../../../lib";
 
 use Parrot::Test tests => 14;
 use Test::More;
@@ -220,7 +222,8 @@ CODE
 OUTPUT
 
 pir_output_is( << 'CODE', << 'OUTPUT', 'check HLL' );
-.HLL 'Lua', 'lua_group'
+.HLL 'lua'
+.loadlib 'lua_group'
 .sub _main
     .local pmc pmc1
     pmc1 = new 'LuaTable'
@@ -235,7 +238,8 @@ CODE
 OUTPUT
 
 pir_output_is( << 'CODE', << 'OUTPUT', 'check len' );
-.HLL 'Lua', 'lua_group'
+.HLL 'lua'
+.loadlib 'lua_group'
 .sub _main
     .local pmc pmc1
     pmc1 = new 'LuaTable'
@@ -279,7 +283,8 @@ CODE
 OUTPUT
 
 pir_output_is( << 'CODE', << 'OUTPUT', 'check next' );
-.HLL 'Lua', 'lua_group'
+.HLL 'lua'
+.loadlib 'lua_group'
 .sub _main
     .local pmc pmc1
     pmc1 = new 'LuaTable'
@@ -331,7 +336,8 @@ nil
 OUTPUT
 
 pir_output_like( << 'CODE', << 'OUTPUT', 'check tostring' );
-.HLL 'Lua', 'lua_group'
+.HLL 'lua'
+.loadlib 'lua_group'
 .sub _main
     .local pmc pmc1
     pmc1 = new 'LuaTable'
@@ -353,7 +359,8 @@ string\n
 OUTPUT
 
 pir_output_is( << 'CODE', << 'OUTPUT', 'check tonumber' );
-.HLL 'Lua', 'lua_group'
+.HLL 'lua'
+.loadlib 'lua_group'
 .sub _main
     .local pmc pmc1
     pmc1 = new 'LuaTable'

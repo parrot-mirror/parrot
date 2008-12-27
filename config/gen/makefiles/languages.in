@@ -20,12 +20,11 @@ LANGUAGES = \
     hq9plus \
     jako json \
     lazy-k lisp lolcode lua \
-    m4 \
+    m4 markdown \
     ook \
     parrot_compiler perl6 pheme PIR pipp punie pynie \
     regex \
     scheme squaak \
-    tcl \
     unlambda urm \
     WMLScript \
     Zcode
@@ -50,12 +49,6 @@ help:
 	@echo "  clean:         Clean up a lot of languages."
 	@echo ""
 	@echo "  help:          Print this help message."
-	@echo ""
-	@echo "  smoke:         Run the unified test suite and send smoke.html to "
-	@echo "                 http://smoke.parrotcode.org/"
-	@echo ""
-	@echo "  smoke-clean:   clean up smoke.html"
-	@echo ""
 	@echo ""
 	@echo "Following languages are available:"
 	@echo "  $(LANGUAGES)"
@@ -90,21 +83,12 @@ test-separate: all \
     lazy-k.test lisp.test lolcode.test lua.test \
     m4.test \
     ook.test \
-    parrot_compiler.test perl6.test pheme.test PIR.test pipp.test pugs.test punie.test pynie.test \
+    parrot_compiler.test perl6.test pheme.test PIR.test pipp.test punie.test pynie.test \
     regex.test \
     scheme.test squaak.test \
-    tcl.test \
     urm.test unlambda.test \
     WMLScript.test \
     Zcode.test
-
-
-smoke:  all
-	$(PERL) t/harness --html
-	$(PERL) ../tools/util/smokeserv-client.pl languages_smoke.html
-
-smoke-clean :
-	$(RM_F) languages_smoke.html
 
 clean: \
     abc.clean APL.clean \
@@ -117,16 +101,14 @@ clean: \
     jako.clean json.clean \
     lisp.clean \
     lolcode.clean lua.clean \
-    m4.clean \
+    m4.clean markdown.clean \
     ook.clean \
     parrot_compiler.clean perl6.clean pheme.clean PIR.clean pipp.clean punie.clean pynie.clean \
     regex.clean \
     scheme.clean squaak.clean \
-    tcl.clean \
     urm.clean \
     WMLScript.clean \
-    Zcode.clean \
-    smoke-clean
+    Zcode.clean
 
 realclean: \
     abc.realclean APL.realclean \
@@ -138,12 +120,11 @@ realclean: \
     hq9plus.realclean \
     jako.realclean json.realclean \
     lazy-k.realclean lisp.realclean lolcode.realclean lua.realclean \
-    m4.realclean \
+    m4.realclean markdown.realclean \
     ook.realclean \
-    parrot_compiler.realclean perl6.realclean pheme.realclean PIR.realclean pipp.realclean pugs.realclean punie.realclean pynie.realclean \
+    parrot_compiler.realclean perl6.realclean pheme.realclean PIR.realclean pipp.realclean punie.realclean pynie.realclean \
     regex.realclean \
     scheme.realclean squaak.realclean \
-    tcl.realclean \
     urm.realclean unlambda.realclean \
     WMLScript.realclean \
     Zcode.realclean
@@ -364,6 +345,16 @@ m4.clean:
 m4.realclean:
 	- $(MAKE) m4 realclean
 
+markdown: markdown.dummy
+markdown.dummy:
+	- $(MAKE) markdown
+markdown.test:
+	- $(MAKE) markdown test
+markdown.clean:
+	- $(MAKE) markdown clean
+markdown.realclean:
+	- $(MAKE) markdown realclean
+
 ook : ook.dummy
 ook.dummy:
 	- $(MAKE) ook
@@ -424,16 +415,6 @@ PIR.clean:
 PIR.realclean:
 	- $(MAKE) PIR realclean
 
-pugs : pugs.dummy
-pugs.dummy:
-	- $(MAKE) pugs
-pugs.test:
-	- $(MAKE) pugs test
-pugs.clean:
-	- $(MAKE) pugs clean
-pugs.realclean:
-	- $(MAKE) pugs realclean
-
 punie : punie.dummy
 punie.dummy:
 	- $(MAKE) punie
@@ -483,16 +464,6 @@ squaak.clean:
 	- $(MAKE) squaak clean
 squaak.realclean:
 	- $(MAKE) squaak realclean
-
-tcl: tcl.dummy
-tcl.dummy:
-	- $(MAKE) tcl
-tcl.test:
-	- $(MAKE) tcl test
-tcl.clean:
-	- $(MAKE) tcl clean
-tcl.realclean:
-	- $(MAKE) tcl realclean
 
 unlambda: unlambda.dummy
 unlambda.dummy:

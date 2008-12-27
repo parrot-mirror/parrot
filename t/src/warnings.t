@@ -8,7 +8,7 @@ use lib qw( . lib ../lib ../../lib );
 use Test::More;
 use Parrot::Test;
 
-plan tests => 3;
+plan tests => 2;
 
 =head1 NAME
 
@@ -71,26 +71,26 @@ main(int argc, char* argv[])
     PARROT_WARNINGS_on(interp, PARROT_WARNINGS_ALL_FLAG);
 
     error_val = Parrot_warn(interp, PARROT_WARNINGS_ALL_FLAG, "all");
-    PIO_eprintf(interp, "%d\n", error_val);
+    Parrot_io_eprintf(interp, "%d\n", error_val);
 
     /* warnings are on, this should return an error */
     error_val = Parrot_warn(interp, PARROT_WARNINGS_NONE_FLAG, "none");
-    PIO_eprintf(interp, "%d\n", error_val);
+    Parrot_io_eprintf(interp, "%d\n", error_val);
 
     error_val = Parrot_warn(interp, PARROT_WARNINGS_UNDEF_FLAG, "undef");
-    PIO_eprintf(interp, "%d\n", error_val);
+    Parrot_io_eprintf(interp, "%d\n", error_val);
 
     error_val = Parrot_warn(interp, PARROT_WARNINGS_IO_FLAG, "io");
-    PIO_eprintf(interp, "%d\n", error_val);
+    Parrot_io_eprintf(interp, "%d\n", error_val);
 
     error_val = Parrot_warn(interp, PARROT_WARNINGS_PLATFORM_FLAG, "platform");
-    PIO_eprintf(interp, "%d\n", error_val);
+    Parrot_io_eprintf(interp, "%d\n", error_val);
 
     error_val = Parrot_warn(interp, PARROT_WARNINGS_DYNEXT_FLAG, "dynext");
-    PIO_eprintf(interp, "%d\n", error_val);
+    Parrot_io_eprintf(interp, "%d\n", error_val);
 
     error_val = Parrot_warn(interp, 0, "eek"); /* should return error */
-    PIO_eprintf(interp, "%d\n", error_val);
+    Parrot_io_eprintf(interp, "%d\n", error_val);
 
     Parrot_exit(interp, 0);
     return 0;
@@ -112,84 +112,6 @@ platform
 dynext
 (null)
 1
-2
-OUTPUT
-
-c_output_is( <<'CODE', <<'OUTPUT', "Parrot_warn_s" );
-
-#include <parrot/parrot.h>
-#include <parrot/embed.h>
-
-int
-main(int argc, char* argv[])
-{
-    Interp *interp;
-    int error_val;
-    STRING *S;
-
-    interp = Parrot_new(NULL);
-    if (!interp) {
-        return 1;
-    }
-    PARROT_WARNINGS_on(interp, PARROT_WARNINGS_ALL_FLAG);
-
-    S = Parrot_sprintf_c(interp, "eek");
-    error_val = Parrot_warn_s(interp, PARROT_WARNINGS_ALL_FLAG, S);
-    PIO_eprintf(interp, "%d\n", error_val);
-
-    /* warnings are on, this should return an error */
-    error_val = Parrot_warn_s(interp, PARROT_WARNINGS_NONE_FLAG, S);
-    PIO_eprintf(interp, "%d\n", error_val);
-
-    error_val = Parrot_warn_s(interp, PARROT_WARNINGS_UNDEF_FLAG, S);
-    PIO_eprintf(interp, "%d\n", error_val);
-
-    error_val = Parrot_warn_s(interp, PARROT_WARNINGS_IO_FLAG, S);
-    PIO_eprintf(interp, "%d\n", error_val);
-
-    error_val = Parrot_warn_s(interp, PARROT_WARNINGS_PLATFORM_FLAG, S);
-    PIO_eprintf(interp, "%d\n", error_val);
-
-    error_val = Parrot_warn_s(interp, PARROT_WARNINGS_DYNEXT_FLAG, S);
-    PIO_eprintf(interp, "%d\n", error_val);
-
-    #ifndef __cplusplus
-    error_val = Parrot_warn_s(interp, 0, "eek"); /* should return error */
-    #else
-    /* Fake the result to avoid rewrite the test */
-    error_val = 2;
-    #endif
-    PIO_eprintf(interp, "%d\n", error_val);
-
-    #ifndef __cplusplus
-    error_val = Parrot_warn_s(NULL, 0, "eek"); /* should return error */
-    #else
-    /* Fake the result to avoid rewrite the test */
-    error_val = 2;
-    #endif
-    PIO_eprintf(interp, "%d\n", error_val);
-
-    Parrot_exit(interp, 0);
-    return 0;
-}
-CODE
-eek
-(null)
-1
-2
-eek
-(null)
-1
-eek
-(null)
-1
-eek
-(null)
-1
-eek
-(null)
-1
-2
 2
 OUTPUT
 

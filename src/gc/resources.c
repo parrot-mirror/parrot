@@ -262,7 +262,10 @@ mem_allocate(PARROT_INTERP, size_t size, ARGMOD(Memory_Pool *pool))
 
 =item C<static const char* buffer_location>
 
-RT#48260: Not yet documented!!!
+Recturns a constant string representing the location of the given
+PObj C<b> in one of the PMC registers. If the PMC is not located
+in one of the PMC registers of the current context, returns the
+string C<"???">.
 
 =cut
 
@@ -277,7 +280,7 @@ buffer_location(PARROT_INTERP, ARGIN(const PObj *b))
     int i;
     static char reg[10];
 
-    parrot_context_t* const ctx = CONTEXT(interp);
+    Parrot_Context* const ctx = CONTEXT(interp);
 
     for (i = 0; i < ctx->n_regs_used[REGNO_STR]; ++i) {
         PObj * const obj = (PObj *) CTX_REG_STR(interp, ctx, i);
@@ -294,8 +297,7 @@ buffer_location(PARROT_INTERP, ARGIN(const PObj *b))
 
 =item C<static void debug_print_buf>
 
-RT#48260: Not yet documented!!!
-
+Prints a debug statement with information about the given PObj C<b>.
 =cut
 
 */
@@ -336,7 +338,6 @@ compact_pool(PARROT_INTERP, ARGMOD(Memory_Pool *pool))
     char         *cur_spot;      /* Where we're currently copying to */
 
     Small_Object_Arena *cur_buffer_arena;
-    INTVAL             *ref_count  = NULL;
     Arenas * const      arena_base = interp->arena_base;
 
     /* Bail if we're blocked */
@@ -419,6 +420,8 @@ compact_pool(PARROT_INTERP, ARGMOD(Memory_Pool *pool))
             UINTVAL i;
 
             for (i = cur_buffer_arena->used; i; --i) {
+                INTVAL *ref_count = NULL;
+
                 /* ! (on_free_list | constant | external | sysmem) */
                 if (PObj_buflen(b) && PObj_is_movable_TESTALL(b)) {
                     ptrdiff_t offset = 0;
@@ -486,13 +489,17 @@ compact_pool(PARROT_INTERP, ARGMOD(Memory_Pool *pool))
                             /* Finally, let the tail know that we've moved, so
                              * that any other references can know to look for
                              * us and not re-copy */
-                            *ref_count |= Buffer_moved_FLAG;
+                            if (ref_count)
+                                *ref_count |= Buffer_moved_FLAG;
                         }
+
                         PObj_bufstart(b) = cur_spot;
+
                         if (PObj_is_string_TEST(b)) {
                             ((STRING *)b)->strstart = (char *)PObj_bufstart(b) +
                                     offset;
                         }
+
                         cur_spot += PObj_buflen(b);
                     }
                 }
@@ -568,7 +575,9 @@ Parrot_go_collect(PARROT_INTERP)
 
 =item C<static size_t aligned_size>
 
-RT#48260: Not yet documented!!!
+Determines the size of Buffer C<buffer> which has nominal length C<len>.
+The actual size in RAM of the Buffer might be different because of
+alignment issues.
 
 =cut
 
@@ -592,7 +601,9 @@ aligned_size(ARGIN(const Buffer *buffer), size_t len)
 
 =item C<static char * aligned_mem>
 
-RT#48260: Not yet documented!!!
+Returns a pointer to the aligned allocated storage for Buffer C<buffer>,
+which might not be the same as the pointer to C<buffeR> because of
+memory alignment.
 
 =cut
 
@@ -618,7 +629,8 @@ aligned_mem(ARGIN(const Buffer *buffer), ARGIN(char *mem))
 
 =item C<static size_t aligned_string_size>
 
-RT#48260: Not yet documented!!!
+Determines the size of a string of length C<len> in RAM, accounting for
+alignment.
 
 =cut
 

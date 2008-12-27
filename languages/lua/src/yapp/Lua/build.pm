@@ -470,8 +470,14 @@ sub BuildAssigns {
             push @{ $expr->[1] }, $callop;
         }
         push @opcodes2, @{ $expr->[1] };
+        my $val = new_tmp( $parser, 'pmc' );
+        push @opcodes2, new CloneOp(
+            $parser,
+            'arg1'   => $expr->[0],
+            'result' => $val,
+        );
         my $assign = $var->[2];
-        $assign->configure( 'arg2' => $expr->[0] );
+        $assign->configure( 'arg2' => $val );
         push @opcodes3, $assign;
     }
     push @opcodes1, @opcodes2, @opcodes3;
@@ -890,8 +896,10 @@ sub BuildForNum {
     push @opcodes, @{ $e_start->[1] };
     push @opcodes, @{ $e_limit->[1] };
     push @opcodes, @{ $e_step->[1] };
-    my $_var = $var->[0];
+    my $_loc_v = $var->[0];
     push @opcodes, @{ $var->[1] };
+    my $_var = new_tmp( $parser, 'pmc', 'number' );
+    push @opcodes, new LocalDir( $parser, 'result' => $_var, );
     my $_limit = new_tmp( $parser, 'pmc', 'number' );
     push @opcodes, new LocalDir( $parser, 'result' => $_limit, );
     my $_step = new_tmp( $parser, 'pmc', 'number' );
@@ -934,7 +942,11 @@ sub BuildForNum {
         'result' => $lbl_end,
     );
     push @opcodes, new LabelOp( $parser, 'arg1' => $lbl_blk, );
-
+    push @opcodes, new CloneOp(
+        $parser,
+        'arg1'   => $_var,
+        'result' => $_loc_v,
+    );
     foreach my $op ( @{$block} ) {
         if ( $op and $op->isa('BranchOp') ) {
             if ( $op->{result} eq 'break' ) {

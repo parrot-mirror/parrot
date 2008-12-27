@@ -61,7 +61,7 @@ VALID_MIME: {
         image/gif
         image/png
     ];
-    push @expected, 'text/plain; charset=UTF-8'; # used by pugs, primarily
+    push @expected, 'text/plain; charset=UTF-8';
 
     my $expected    = join '|', @expected, "";
     my $expected_re = qr{^(${expected})$};
@@ -89,15 +89,16 @@ TEST_MIME: {
     my $test        = 'svn:mime-type';
     my $expected    = 'text/plain';
     my @failed      = verify_attributes( $test, $expected, 0, $mime_types, \@test_files );
+    my $test_name   = "$test for .t files";
 
     if (@failed) {
         my $failure = join q{}, "Set $test with:\n",
             map { " $cmd ps $test '$expected' $_\n" } @failed;
         $failure = "git svn metadata $test incorrect for @failed" if -d '.git';
-        is( $failure, '', $test );
+        is( $failure, '', $test_name );
     }
     else {
-        pass($test);
+        pass($test_name);
     }
 }    # TEST_MIME
 
@@ -321,7 +322,7 @@ sub verify_attributes {
     my $results   = shift;    # the results hash ref: file -> value
     my $files     = shift;    # an arrayref of files we care about. (undef->all)
     my $allow_empty = shift;  # should we allow blank values? (default: no)
-   
+
     $allow_empty = 0 unless defined $allow_empty;
 
     my @files;

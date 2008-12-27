@@ -24,7 +24,7 @@ use Parrot::Configure::Utils ':auto';
 sub _init {
     my $self = shift;
     my %data;
-    $data{description} = q{Determining if your C compiler is actually Visual C++};
+    $data{description} = q{Is your C compiler actually Visual C++};
     $data{result}      = q{};
     return \%data;
 }
@@ -104,8 +104,7 @@ sub _compose_msvcversion {
     my $self = shift;
     my ($major, $minor, $verbose) = @_;
     my $msvcversion = "$major.$minor";
-    print " (yep: $msvcversion )" if $verbose;
-    $self->set_result('yes');
+    $self->set_result("yes, $msvcversion");
     return $msvcversion;
 }
 

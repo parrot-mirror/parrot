@@ -12,17 +12,17 @@ src/builtins/match.pir - Perl6 builtins for smart matching
 
 .namespace []
 
-.sub 'infix:~~'
+.sub 'infix:~~' :multi()
     .param pmc topic
     .param pmc x
-    .return x.ACCEPTS(topic)
+    .tailcall x.'ACCEPTS'(topic)
 .end
 
 
 .sub 'infix:!~~'
     .param pmc topic
     .param pmc x
-    .return x.REJECTS(topic)
+    .tailcall x.'REJECTS'(topic)
 .end
 
 =back

@@ -8,7 +8,7 @@ t/io.t - Lua Input/Output Library
 
 =head1 SYNOPSIS
 
-    % perl -I../lib -Ilua/t lua/t/io.t
+    % perl t/io.t
 
 =head1 DESCRIPTION
 
@@ -25,7 +25,7 @@ See "Programming in Lua", section 21 "The I/O Library".
 use strict;
 use warnings;
 use FindBin;
-use lib "$FindBin::Bin";
+use lib "$FindBin::Bin/../../../lib", "$FindBin::Bin";
 
 use Parrot::Test tests => 41;
 use Test::More;
@@ -73,7 +73,7 @@ CODE
 true
 OUTPUT
 
-unlink('../file.no') if ( -f '../file.no' );
+unlink("$FindBin::Bin/../../../file.no") if ( -f "$FindBin::Bin/../../../file.no" );
 
 language_output_is( 'lua', << 'CODE', << 'OUTPUT', 'io.open' );
 f, msg = io.open("file.no")
@@ -82,8 +82,8 @@ CODE
 nil	file.no: No such file or directory
 OUTPUT
 
-unlink('../file.txt') if ( -f '../file.txt' );
-open my $X, '>', '../file.txt';
+unlink("$FindBin::Bin/../../../file.txt") if ( -f "$FindBin::Bin/../../../file.txt" );
+open my $X, '>', "$FindBin::Bin/../../../file.txt";
 binmode $X, ':raw';
 print {$X} "file with text\n";
 close $X;
@@ -149,7 +149,7 @@ assert(f == io.output(f))
 CODE
 /^file \((0[Xx])?[0-9A-Fa-f]+\)/
 OUTPUT
-unlink('../output.new') if ( -f '../output.new' );
+unlink("$FindBin::Bin/../../../output.new") if ( -f "$FindBin::Bin/../../../output.new" );
 
 TODO: {
     local $TODO = 'pipe not yet implemented';
@@ -175,8 +175,8 @@ nil
 file
 OUTPUT
 
-unlink('../number.txt') if ( -f '../number.txt' );
-open my $Y, '>', '../number.txt';
+unlink("$FindBin::Bin/../../../number.txt") if ( -f "$FindBin::Bin/../../../number.txt" );
+open my $Y, '>', "$FindBin::Bin/../../../number.txt";
 binmode $Y, ':raw';
 print {$Y} << 'DATA';
 6.0     -3.23   15e12
@@ -195,7 +195,7 @@ CODE
 1000001
 OUTPUT
 # clean up number.txt
-unlink('../number.txt') if ( -f '../number.txt' );
+unlink("$FindBin::Bin/../../../number.txt") if ( -f "$FindBin::Bin/../../../number.txt" );
 
 language_output_is( 'lua', << 'CODE', << 'OUTPUT', 'io.lines filename' );
 for line in io.lines("file.txt") do
@@ -363,10 +363,6 @@ CODE
 15
 OUTPUT
 
-TODO:
-{
-    local $TODO = 'buffer_type & buffer_size are not implemented';
-
 language_output_is( 'lua', << 'CODE', << 'OUTPUT', 'file:setvbuf "no"' );
 f = io.open("file.txt")
 print(f:setvbuf("no"))
@@ -390,9 +386,9 @@ f:close()
 CODE
 true
 OUTPUT
-}
+
 # clean up file.txt
-unlink('../file.txt') if ( -f '../file.txt' );
+unlink("$FindBin::Bin/../../../file.txt") if ( -f "$FindBin::Bin/../../../file.txt" );
 
 language_output_like( 'lua', << 'CODE', << 'OUTPUT', 'file:write closed' );
 f = io.open("file.out", "w")
@@ -411,7 +407,7 @@ true
 OUTPUT
 
 # clean up file.out
-unlink('../file.out') if ( -f '../file.out' );
+unlink("$FindBin::Bin/../../../file.out") if ( -f "$FindBin::Bin/../../../file.out" );
 
 # Local Variables:
 #   mode: cperl

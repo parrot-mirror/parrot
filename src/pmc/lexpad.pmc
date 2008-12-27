@@ -24,15 +24,15 @@ These are the vtable functions for the lexpad PMC.
  * LexPad provides a Hash interface for lexical fetch/store
  * needed
  *
- * struct_val ... parrot_context_t *ctx
+ * struct_val ... Parrot_Context *ctx
  * pmc_val    ... LexInfo
  */
 
 pmclass LexPad provides hash no_ro {
 
     VTABLE void init() {
-        real_exception(INTERP, NULL, INVALID_OPERATION,
-                "Cannot create a LexPad PMC without an initializer");
+        Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
+            "Cannot create a LexPad PMC without an initializer");
     }
 
 /*
@@ -97,14 +97,14 @@ Return the LexInfo PMC, if any or a Null PMC.
     }
 
     VTABLE INTVAL exists_keyed(PMC *name) {
-        STRING * const s = key_string(INTERP, name);
+        STRING * const s = VTABLE_get_string(INTERP, name);
         return SELF.exists_keyed_str(s);
     }
 
     VTABLE PMC *get_pmc_keyed_str(STRING *name) {
         PMC              * const info = PMC_pmc_val(SELF);
         Hash             * const hash = (Hash *)PMC_struct_val(info);
-        parrot_context_t * const ctx  = (parrot_context_t *)PMC_struct_val(SELF);
+        Parrot_Context   * const ctx  = (Parrot_Context *)PMC_struct_val(SELF);
         HashBucket       * const b    = parrot_hash_get_bucket(INTERP, hash, name);
         INTVAL            regno;
 
@@ -117,27 +117,27 @@ Return the LexInfo PMC, if any or a Null PMC.
     }
 
     VTABLE PMC *get_pmc_keyed(PMC *name) {
-        STRING * const s = key_string(INTERP, name);
+        STRING * const s = VTABLE_get_string(INTERP, name);
         return SELF.get_pmc_keyed_str(s);
     }
 
     VTABLE void set_pmc_keyed_str(STRING *name, PMC *value) {
         PMC              * const info  = PMC_pmc_val(SELF);
         Hash             * const hash  = (Hash *)PMC_struct_val(info);
-        parrot_context_t * const ctx   = (parrot_context_t *)PMC_struct_val(SELF);
+        Parrot_Context   * const ctx   = (Parrot_Context *)PMC_struct_val(SELF);
         HashBucket       * const b     = parrot_hash_get_bucket(INTERP, hash, name);
         INTVAL            regno;
 
         if (!b)
-            real_exception(interp, NULL, LEX_NOT_FOUND,
-                    "Lexical '%Ss' not found", name);
+            Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_LEX_NOT_FOUND,
+                "Lexical '%Ss' not found", name);
 
         regno                   = (INTVAL) b->value;
         CTX_REG_PMC(ctx, regno) = value;
     }
 
     VTABLE void set_pmc_keyed(PMC *name, PMC *value) {
-        STRING * const s = key_string(INTERP, name);
+        STRING * const s = VTABLE_get_string(INTERP, name);
         SELF.set_pmc_keyed_str(s, value);
     }
 

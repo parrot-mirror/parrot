@@ -79,7 +79,7 @@ sub new {
     #
 
     if ( defined $sym and $sym->block eq $block ) {
-        $self->SYNTAX_ERROR(
+        $self->EXCEPTION_SYNTAX_ERROR(
 "Redeclaration of identifier '%s' in the same block. Previous declaration on line %d of file '%s'.",
             $self->name, $sym->line, $sym->file );
     }
@@ -144,7 +144,7 @@ sub compile {
         my $reg = $compiler->temp_pmc();
 
         $compiler->emit("  $reg = new '$pmc_type'");
-        $compiler->emit("  global \"$name\" = $reg");
+        $compiler->emit("  set_global \"$name\", $reg");
     }
     else {
         $compiler->emit("  .local $type $name");

@@ -24,38 +24,13 @@ use Parrot::Configure::Utils ':auto';
 sub _init {
     my $self = shift;
     my %data;
-    $data{description} = q{Determining some sizes};
+    $data{description} = q{Determine some sizes};
     $data{result}      = q{};
     return \%data;
 }
 
 sub runstep {
     my ( $self, $conf ) = @_;
-
-    if ( defined $conf->options->get('miniparrot') ) {
-        $conf->data->set(
-            doublesize       => 8,
-            numvalsize       => 8,
-            nvsize           => 8,
-            floatsize        => 4,
-            opcode_t_size    => 4,
-            ptrsize          => 4,
-            intvalsize       => 4,
-            intsize          => 4,
-            longsize         => 4,
-            shortsize        => 2,
-            hugeintval       => 'long',
-            hugeintvalsize   => 4,
-            hugefloatval     => 'double',
-            hugefloatvalsize => 8,
-            int2_t           => 'int',
-            int4_t           => 'int',
-            float4_t         => 'double',
-            float8_t         => 'double',
-        );
-        $self->set_result('using miniparrot defaults');
-        return 1;
-    }
 
     $conf->cc_gen('config/auto/sizes/test_c.in');
     $conf->cc_build();
@@ -105,55 +80,27 @@ sub runstep {
             last;
         }
     }
-    if ( !defined( $hugeintval{hugeintvalsize} )
-        || $hugeintval{hugeintvalsize} == $intvalsize )
-    {
-
-        # Could not find anything bigger than intval.
-        $conf->data->set(
-            hugeintval     => $intval,
-            hugeintvalsize => $intvalsize,
-        );
-    }
+    _handle_hugeintvalsize(
+        $conf,
+        {
+            hugeintval      => \%hugeintval,
+            intval          => $intval,
+            intvalsize      => $intvalsize,
+        },
+    );
 
     $conf->cc_clean();
 
     #get HUGEFLOATVAL
-    if (
-        my $size = eval {
-            open( my $TEST, ">", "test.c" ) or die "Can't open test.c: $!";
-            print {$TEST} <<'END';
-#include <stdio.h>
-
-int main() {
-    long double foo;
-    printf("%u", sizeof(foo));
-    return 0;
-}
-END
-            close $TEST;
-
-            $conf->cc_build();
-            $conf->cc_run();
-        }
-        )
-    {
-        $conf->data->set(
-            hugefloatval     => 'long double',
-            hugefloatvalsize => $size
-        );
-    }
-    else {
-        $conf->data->set(
-            hugefloatval     => 'double',
-            hugefloatvalsize => $conf->data->get('doublesize')
-        );
-    }
+    my $size = _probe_for_hugefloatval( $conf );
+    _set_hugefloatval( $conf, $size );
 
     $conf->cc_clean();
 
     return 1;
 }
+
+#################### INTERNAL SUBROUTINES ####################
 
 sub _handle_intval_ptrsize_discrepancy {
     my $resultsref = shift;
@@ -229,6 +176,47 @@ sub _set_float8 {
 Can't find a float type with size 8, conversion ops might fail!
 
 END
+    }
+}
+
+sub _handle_hugeintvalsize {
+    my $conf = shift;
+    my $arg = shift;
+    if ( ! defined( $arg->{hugeintval}{hugeintvalsize} )
+        || $arg->{hugeintval}{hugeintvalsize} == $arg->{intvalsize} )
+    {
+
+        # Could not find anything bigger than intval.
+        $conf->data->set(
+            hugeintval     => $arg->{intval},
+            hugeintvalsize => $arg->{intvalsize},
+        );
+    }
+}
+
+sub _probe_for_hugefloatval {
+    my $conf = shift;
+    my $size;
+    $conf->cc_gen('config/auto/sizes/test3_c.in');
+    $conf->cc_build();
+    $size = eval $conf->cc_run();
+    $conf->cc_clean();
+    return $size;
+}
+
+sub _set_hugefloatval {
+    my ( $conf, $size ) = @_;
+    if ( $size ) {
+        $conf->data->set(
+            hugefloatval     => 'long double',
+            hugefloatvalsize => $size
+        );
+    }
+    else {
+        $conf->data->set(
+            hugefloatval     => 'double',
+            hugefloatvalsize => $conf->data->get('doublesize')
+        );
     }
 }
 

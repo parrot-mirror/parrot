@@ -25,18 +25,13 @@ use Carp;
 sub _init {
     my $self = shift;
     my %data;
-    $data{description} = q{Generating CPU specific stuff};
+    $data{description} = q{Generate CPU specific stuff};
     $data{result}      = q{};
     return \%data;
 }
 
 sub runstep {
     my ( $self, $conf ) = @_;
-
-    if ( $conf->options->get('miniparrot') ) {
-        $self->set_result('skipped');
-        return 1;
-    }
 
     my $verbose = $conf->options->get('verbose');
 

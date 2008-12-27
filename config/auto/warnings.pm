@@ -31,15 +31,15 @@ use Parrot::BuildUtil;
 sub _init {
     my $self = shift;
     my %data;
-    $data{description} = q{Detecting supported compiler warnings (-Wxxx)};
+    $data{description} = q{Detect supported compiler warnings};
     $data{result}      = q{};
 
-    # potential addition? -fvisibility=hidden
     # Please keep these sorted by flag name, such that "-Wno-foo" is
     # sorted as "-Wfoo", so we can turn off/on as needed.
     my @potential_warnings = qw(
         -falign-functions=16
         -fvisibility=hidden
+        -funit-at-a-time
         -maccumulate-outgoing-args
         -W
         -Wall
@@ -89,6 +89,7 @@ sub _init {
         -Wbad-function-cast
         -Wc++-compat
         -Wdeclaration-after-statement
+        -Werror=declaration-after-statement
         -Wimplicit-function-declaration
         -Wimplicit-int
         -Wmain
@@ -102,24 +103,18 @@ sub _init {
 
     my @cage_warnings = qw(
         -std=c89
-        -Wconversion
         -Werror-implicit-function-declaration
         -Wformat=2
         -Wlarger-than-4096
         -Wlong-long
         -Wmissing-format-attribute
-        -Wmissing-noreturn
-        -Wno-deprecated-declarations
-        -Wno-div-by-zero
+        -Wdeprecated-declarations
+        -Wdiv-by-zero
         -Wno-format-extra-args
         -Wno-import
         -Wno-multichar
         -Wno-pointer-sign
         -Wold-style-definition
-        -Wpadded
-        -Wredundant-decls
-        -Wswitch-enum
-        -Wsystem-headers
         -Wunreachable-code
         -Wunused-function
         -Wunused-label
@@ -128,9 +123,18 @@ sub _init {
         -Wunused-variable
     );
 
+    my @may_not_even_be_interesting = qw(
+        -Wpadded
+        -Wredundant-decls
+        -Wswitch-enum
+        -Wsystem-headers
+    );
+
     my @nice_to_have_but_too_noisy_for_now = qw(
         -pedantic
+        -Wconversion
         -Wint-to-pointer-cast
+        -Wmissing-noreturn
         -Wshadow
         -Wunused-macros
     );
@@ -227,9 +231,15 @@ sub try_warning {
     );
     _set_warning($conf, $warning, $exit_code, $verbose);
 
-    return if $exit_code;
+    $conf->cc_clean();
+
+    if ($exit_code) {
+        unlink $output_file or die "Unable to unlink $output_file: $!";
+        return;
+    }
 
     my $output = Parrot::BuildUtil::slurp_file($output_file);
+    unlink $output_file or die "Unable to unlink $output_file: $!";
     return _set_ccflags($conf, $output, $tryflags, $verbose);
 }
 

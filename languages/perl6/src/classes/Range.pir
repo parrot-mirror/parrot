@@ -6,61 +6,52 @@ src/classes/Range.pir - methods for the Range class
 
 =head1 DESCRIPTION
 
-=head2 Methods
-
-=over 4
-
 =cut
 
 .namespace ['Range']
 
-.sub 'onload' :anon :load :init
-    .local pmc p6meta
+.sub '' :anon :load :init
+    .local pmc p6meta, rangeproto
     p6meta = get_hll_global ['Perl6Object'], '$!P6META'
-    p6meta.'new_class'('Range', 'parent'=>'Any', 'attr'=>'$!from $!to $!from_exclusive $!to_exclusive')
+    rangeproto = p6meta.'new_class'('Range', 'parent'=>'Any', 'attr'=>'$!from $!to $!from_exclusive $!to_exclusive')
+    rangeproto.'!IMMUTABLE'()
 .end
 
+=head2 Methods
 
-=item VTABLE_get integer (vtable method)
-
-=item VTABLE_get_number (vtable method)
-
-=item VTABLE_get_string (vtable method)
-
-=cut
-
-.sub 'VTABLE_get_integer' :method :vtable('get_integer')
-    $P0 = self.'list'()
-    $I0 = $P0
-    .return ($I0)
-.end
-
-.sub 'VTABLE_get_number' :method :vtable('get_number')
-    $P0 = self.'list'()
-    $N0 = $P0
-    .return ($N0)
-.end
-
-.sub 'VTABLE_get_string' :method :vtable('get_string')
-    $P0 = self.'list'()
-    $S0 = $P0
-    .return ($S0)
-.end
-
+=over 4
 
 =item ACCEPTS(topic)
 
-Determines if topic is within the range.
+Determines if topic is within the range or equal to the range.
 
 =cut
 
 .sub 'ACCEPTS' :method
     .param pmc topic
 
+    $I0 = isa topic, 'Range'
+    unless $I0 goto value_in_range_check
+    $I0 = self.'from'()
+    $I1 = topic.'from'()
+    if $I0 != $I1 goto false
+    $I0 = self.'to'()
+    $I1 = topic.'to'()
+    if $I0 != $I1 goto false
+    $P0 = getattribute self, "$!from_exclusive"
+    $P1 = getattribute topic, "$!from_exclusive"
+    if $P0 != $P1 goto false
+    $P0 = getattribute self, "$!to_exclusive"
+    $P1 = getattribute topic, "$!to_exclusive"
+    if $P0 != $P1 goto false
+    goto true
+
+  value_in_range_check:
     $I0 = self.'!from_test'(topic)
     unless $I0 goto false
     $I0 = self.'!to_test'(topic)
     unless $I0 goto false
+
   true:
     $P0 = get_hll_global ['Bool'], 'True'
     .return ($P0)
@@ -101,7 +92,7 @@ Gets the beginning or end of the range.
 .end
 
 
-=item iterator()  (vtable method)
+=item iterator()  (vtable function)
 
 Return an iterator for the Range.  Since Ranges are already
 iterators, we can just return a clone.
@@ -136,44 +127,29 @@ just return a clone of the Range.
 .end
 
 
-=item shift()   (vtable_method)
+=item max()
 
-Generate the next element at the front of the Range.
+=item min()
+
+=item minmax()
 
 =cut
 
-.sub 'shift' :method :vtable('shift_pmc')
-    .local pmc from, fromexc, value
-    from = getattribute self, '$!from'
-    fromexc = getattribute self, '$!from_exclusive'
-    value = 'postfix:++'(from)
-    unless fromexc goto have_value
-    value = clone from
-  have_value:
-    $I0 = self.'!to_test'(value)
-    if $I0 goto success
-    value = new 'Failure'
-  success:
-    .return (value)
+.namespace ['Range']
+
+.sub 'max' :method
+    .tailcall self.'to'()
 .end
 
+.sub 'min' :method
+    .tailcall self.'from'()
+.end
 
-=item true()
-
-Return true if there are any more values to iterate over.
-
-=cut
-
-.sub 'true' :method :vtable('get_bool')
-    .local pmc from, fromexc
-    from = getattribute self, '$!from'
-    fromexc = getattribute self, '$!from_exclusive'
-    unless fromexc goto have_value
-    from = clone from
-    'postfix:++'(from)
-  have_value:
-    $I0 = self.'!to_test'(from)
-    .return ($I0)
+.sub 'minmax' :method
+    $P0 = self.'from'()
+    $P1 = self.'to'()
+    $P2 = get_hll_global 'list'
+    .tailcall $P2($P0, $P1)
 .end
 
 
@@ -203,6 +179,85 @@ Returns a Perl representation of the Range.
     .return (result)
 .end
 
+
+=item pop()  (vtable_method)
+
+Generate the next element at the end of the Range.
+
+=cut
+
+.sub 'pop' :method :vtable('pop_pmc')
+    .local pmc to, toexc, value
+    to = getattribute self, '$!to'
+    toexc = getattribute self, '$!to_exclusive'
+    value = 'postfix:--'(to)
+    unless toexc goto have_value
+    value = clone to
+  have_value:
+    $I0 = self.'!from_test'(value)
+    if $I0 goto success
+    value = '!FAIL'('Undefined value popped from empty range')
+  success:
+    .return (value)
+.end
+
+
+=item reverse()
+
+Generate the range in reverse sequence.  (This is wrong for now--
+really what should happen is that we invert .from and .to and
+switch the :by argument.)
+
+=cut
+
+.namespace ['Range']
+.sub 'reverse' :method
+    $P0 = self.'list'()
+    .tailcall $P0.'reverse'()
+.end
+
+
+=item shift()   (vtable_method)
+
+Generate the next element at the front of the Range.
+
+=cut
+
+.sub 'shift' :method :vtable('shift_pmc')
+    .local pmc from, fromexc, value
+    from = getattribute self, '$!from'
+    fromexc = getattribute self, '$!from_exclusive'
+    value = 'postfix:++'(from)
+    unless fromexc goto have_value
+    value = clone from
+  have_value:
+    $I0 = self.'!to_test'(value)
+    if $I0 goto success
+    value = '!FAIL'('Undefined value shifted from empty range')
+  success:
+    .return (value)
+.end
+
+
+=item true()
+
+Return true if there are any more values to iterate over.
+
+=cut
+
+.sub 'true' :method :vtable('get_bool')
+    .local pmc from, fromexc
+    from = getattribute self, '$!from'
+    fromexc = getattribute self, '$!from_exclusive'
+    unless fromexc goto have_value
+    from = clone from
+    'postfix:++'(from)
+  have_value:
+    $I0 = self.'!to_test'(from)
+    .return ($I0)
+.end
+
+
 =back
 
 =head2 Operators
@@ -227,7 +282,7 @@ Construct a range from the endpoints.
     .param pmc to
     .local pmc proto
     proto = get_hll_global 'Range'
-    .return proto.'new'('from'=>from, 'to'=>to)
+    .tailcall proto.'new'('from'=>from, 'to'=>to)
 .end
 
 .sub 'infix:^..'
@@ -236,7 +291,7 @@ Construct a range from the endpoints.
     .local pmc proto, true
     proto = get_hll_global 'Range'
     true = get_hll_global ['Bool'], 'True'
-    .return proto.'new'('from'=>from, 'to'=>to, 'from_exclusive'=>true)
+    .tailcall proto.'new'('from'=>from, 'to'=>to, 'from_exclusive'=>true)
 .end
 
 .sub 'infix:..^'
@@ -245,7 +300,7 @@ Construct a range from the endpoints.
     .local pmc proto, true
     proto = get_hll_global 'Range'
     true = get_hll_global ['Bool'], 'True'
-    .return proto.'new'('from'=>from, 'to'=>to, 'to_exclusive'=>true)
+    .tailcall proto.'new'('from'=>from, 'to'=>to, 'to_exclusive'=>true)
 .end
 
 .sub 'infix:^..^'
@@ -254,7 +309,7 @@ Construct a range from the endpoints.
     .local pmc proto, true
     proto = get_hll_global 'Range'
     true = get_hll_global ['Bool'], 'True'
-    .return proto.'new'('from'=>from, 'to'=>to, 'from_exclusive'=>true, 'to_exclusive'=>true)
+    .tailcall proto.'new'('from'=>from, 'to'=>to, 'from_exclusive'=>true, 'to_exclusive'=>true)
 .end
 
 =item prefix:<^>(Any $to)
@@ -265,8 +320,8 @@ Construct a Range from C< 0 ..^ $to >.
 
 .namespace[]
 .sub 'prefix:^' :multi(_)
-    .param pmc to
-    .return 'infix:..^'(0, to)
+    .param num to
+    .tailcall 'infix:..^'(0, to)
 .end
 
 =item prefix:<^>(Type $x)
@@ -277,30 +332,7 @@ Return $x.HOW.
 
 .sub 'prefix:^' :multi('P6Protoobject')
     .param pmc proto
-    .return proto.'HOW'()
-.end
-
-=item prefix:<^>(List @a)
-
-=cut
-
-.sub 'prefix:^' :multi('ResizablePMCArray')
-    .param pmc list
-
-    # Iterate over the list and and create a list of Ranges
-    .local pmc ranges, it
-    ranges = 'list'()
-    it = list.'iterator'()
-  iter_loop:
-    unless it goto iter_loop_end
-    $P0 = shift it
-    $P0 = 'infix:..^'(0, $P0)
-    push ranges, $P0
-    goto iter_loop
-  iter_loop_end:
-
-    # Now just use cross operator to make all the permutations.
-    .return 'infix:X'(ranges)
+    .tailcall proto.'HOW'()
 .end
 
 =back
@@ -308,6 +340,15 @@ Return $x.HOW.
 =head2 Private methods
 
 =over 4
+
+=item !flatten()
+
+=cut
+
+.namespace ['Range']
+.sub '!flatten' :method
+    .tailcall self.'list'()
+.end
 
 =item !from_test(topic)
 
@@ -353,6 +394,38 @@ honoring exclusive flags.
   exclusive_test:
     $I0 = islt topic, to
     .return ($I0)
+.end
+
+=back
+
+=head2 Vtable functions
+
+=over
+
+=item VTABLE_get integer (vtable method)
+
+=item VTABLE_get_number (vtable method)
+
+=item VTABLE_get_string (vtable method)
+
+=cut
+
+.sub 'VTABLE_get_integer' :method :vtable('get_integer')
+    $P0 = self.'list'()
+    $I0 = $P0
+    .return ($I0)
+.end
+
+.sub 'VTABLE_get_number' :method :vtable('get_number')
+    $P0 = self.'list'()
+    $N0 = $P0
+    .return ($N0)
+.end
+
+.sub 'VTABLE_get_string' :method :vtable('get_string')
+    $P0 = self.'list'()
+    $S0 = $P0
+    .return ($S0)
 .end
 
 =back

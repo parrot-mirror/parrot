@@ -1,4 +1,4 @@
-# Copyright (C) 2001-2007, The Perl Foundation.
+# Copyright (C) 2001-2008, The Perl Foundation.
 # $Id$
 
 =head1 NAME
@@ -34,19 +34,38 @@ use Parrot::Configure::Utils qw(
     move_if_diff
 );
 
+our %file_types_info = (
+    makefile => {
+        comment_type    => '#',
+        vim_ft          => 'make',
+    },
+    c => {
+        comment_type    => '/*',
+        vim_ft          => 'c',
+    },
+    pmc => {
+        comment_type    => '/*',
+        vim_ft          => 'pmc',
+    },
+    perl => {
+        comment_type    => '#',
+        vim_ft          => 'perl',
+    },
+);
+
 =item C<cc_gen()>
 
     $conf->cc_gen($source)
 
-Generates F<test.c> from the specified source file.
+Generates F<test_$$.c> from the specified source file.
 
 =cut
 
 sub cc_gen {
-    my $conf = shift;
+    my $conf   = shift;
     my $source = shift;
 
-    $conf->genfile( $source, "test.c" );
+    $conf->genfile( $source, "test_$$.c", file_type => 'none' );
 }
 
 =item C<cc_build()>
@@ -57,7 +76,7 @@ These items are used from current config settings:
 
   $cc, $ccflags, $ldout, $o, $link, $linkflags, $cc_exe_out, $exe, $libs
 
-Calls the compiler and linker on F<test.c>.
+Calls the compiler and linker on F<test_$$.c>.
 
 =cut
 
@@ -73,17 +92,20 @@ sub cc_build {
     my ( $cc, $ccflags, $ldout, $o, $link, $linkflags, $cc_exe_out, $exe, $libs ) =
         $conf->data->get(qw(cc ccflags ld_out o link linkflags cc_exe_out exe libs));
 
+    # unique test file name for parallel builds
+    my $test            = 'test_' . $$;
     my $compile_command = _build_compile_command( $cc, $ccflags, $cc_args );
-    my $compile_result = _run_command( $compile_command, 'test.cco', 'test.cco', $verbose )
-        and confess "C compiler failed (see test.cco)";
+    my $compile_result  = _run_command( $compile_command, "$test.cco", "$test.cco", $verbose );
+
     if ($compile_result) {
+        confess "C compiler failed (see $test.cco)";
         return $compile_result;
     }
 
     my $link_result =
-        _run_command( "$link $linkflags test$o $link_args ${cc_exe_out}test$exe  $libs",
-        'test.ldo', 'test.ldo', $verbose )
-        and confess "Linker failed (see test.ldo)";
+        _run_command( "$link $linkflags $test$o $link_args ${cc_exe_out}${test}${exe}  $libs",
+        "$test.ldo", "$test.ldo", $verbose )
+        and confess "Linker failed (see $test.ldo)";
     if ($link_result) {
         return $link_result;
     }
@@ -103,18 +125,19 @@ sub cc_run {
     my $exe      = $conf->data->get('exe');
     my $slash    = $conf->data->get('slash');
     my $verbose  = $conf->options->get('verbose');
-    my $test_exe = ".${slash}test${exe}";
+    my $test     = 'test_' . $$;
+    my $test_exe = ".${slash}${test}${exe}";
 
     my $run_error;
     if ( defined( $_[0] ) && length( $_[0] ) ) {
         local $" = ' ';
-        $run_error = _run_command( "$test_exe @_", './test.out', undef, $verbose );
+        $run_error = _run_command( "$test_exe @_", "./$test.out", undef, $verbose );
     }
     else {
-        $run_error = _run_command( "$test_exe", './test.out', undef, $verbose );
+        $run_error = _run_command( $test_exe, "./$test.out", undef, $verbose );
     }
 
-    my $output = _slurp('./test.out');
+    my $output = _slurp("./$test.out");
 
     return $output;
 }
@@ -133,16 +156,17 @@ sub cc_run_capture {
     my $exe     = $conf->data->get('exe');
     my $slash   = $conf->data->get('slash');
     my $verbose = $conf->options->get('verbose');
+    my $test    = 'test_' . $$;
 
     if ( defined( $_[0] ) && length( $_[0] ) ) {
         local $" = ' ';
-        _run_command( ".${slash}test${exe} @_", './test.out', './test.out', $verbose );
+        _run_command( ".${slash}$test${exe} @_", "./$test.out", "./$test.out", $verbose );
     }
     else {
-        _run_command( ".${slash}test${exe}", './test.out', './test.out', $verbose );
+        _run_command( ".${slash}$test${exe}", "./$test.out", "./$test.out", $verbose );
     }
 
-    my $output = _slurp('./test.out');
+    my $output = _slurp("./$test.out");
 
     return $output;
 }
@@ -157,7 +181,10 @@ Cleans up all files in the root folder that match the glob F<test.*>.
 
 sub cc_clean {    ## no critic Subroutines::RequireFinalReturn
     my $conf = shift;
-    unlink map "test$_", qw( .c .cco .ldo .out), $conf->data->get(qw( o exe ));
+    unlink map "test_${$}$_", qw( .c .cco .ldo .out ),
+        $conf->data->get(qw( o exe )),
+        # MSVC
+        qw( .exe.manifest .ilk .pdb );
 }
 
 =item C<genfile()>
@@ -173,20 +200,22 @@ replacement syntax assumes the source text is on a single line.)
 
 =over 4
 
-=item makefile
+=item file_type
 
-If set to a true value, this flag sets (unless overriden) C<comment_type>
-to '#', C<replace_slashes> to enabled, and C<conditioned_lines> to enabled.
+If set to a C<makefile>, C<c> or C<perl> value, C<comment_type> will be set
+to corresponding value.
+Moreover, when set to a C<makefile> value, it will set C<replace_slashes> to
+enabled, and C<conditioned_lines> to enabled.
 
-If the name of the file being generated ends in C<Makefile>, this option
-defaults to true.
+Its value will be detected automatically by target file name unless you set
+it to a special value C<none>.
 
 =item conditioned_lines
 
-If conditioned_lines is true, then lines in the file that begin with:
-C<#CONDITIONED_LINE(var):> are skipped if the var condition is false. Lines
+If C<conditioned_lines> is true, then lines in the file that begin with:
+C<#CONDITIONED_LINE(var):> are skipped if the C<var> condition is false. Lines
 that begin with C<#INVERSE_CONDITIONED_LINE(var):> are skipped if
-the var condition is true.  For instance:
+the C<var> condition is true.  For instance:
 
   #CONDITIONED_LINE(win32): $(SRC_DIR)/atomic/gcc_x86$(O)
 
@@ -219,21 +248,21 @@ a very helpful option when writing Makefiles.
 
 =item expand_gmake_syntax
 
-If set to a true value, then certain types of gmake syntax will be expanded
+If set to a true value, then certain types of I<gmake> syntax will be expanded
 into their full equivalents. For example:
 
  $(wildcard PATTERN)
 
-Will be replaced I<at config time> with the list of files that match this
+Will be replaced B<at config time> with the list of files that match this
 pattern. Note! Be very careful when determining whether or not to disable
-this expansion during config time and letting gmake evaluate these: the
+this expansion during config time and letting I<gmake> evaluate these: the
 config system itself may change state of the filesystem, causing the
 directives to expand differently depending on when they're run. Another
 potential issue to consider there is that most makefiles, while generated
-from the root directory, are I<run> from a subdirectory. So relative path names
+from the root directory, are B<run> from a subdirectory. So relative path names
 become an issue.
 
-The gmake replacements are done repeatedly on a single line, so nested
+The I<gmake> replacements are done repeatedly on a single line, so nested
 syntax works ok.
 
 =over 4
@@ -266,18 +295,49 @@ sub genfile {
     open my $in,  '<', $source       or die "Can't open $source: $!";
     open my $out, '>', "$target.tmp" or die "Can't open $target.tmp: $!";
 
-    if ( !exists $options{makefile} && $target =~ m/makefile$/i ) {
-        $options{makefile} = 1;
+    if ( !exists $options{file_type}) {
+        if ( $target =~ m/makefile$/i ) {
+            $options{file_type} = 'makefile';
+        }
+        elsif ($target =~ m/\.pl$/i ) {
+            $options{file_type} = 'perl';
+        }
+        elsif ($target =~ m/\.[hc]$/ ) {
+            $options{file_type} = 'c';
+        }
+        elsif ($target =~ m/\.pmc$/ ) {
+            $options{file_type} = 'pmc';
+        }
+    } elsif ( $options{file_type} eq 'none' ) {
+        delete $options{file_type};
     }
 
-    if ( $options{makefile} ) {
-        exists $options{comment_type}      or $options{comment_type}      = '#';
-        exists $options{replace_slashes}   or $options{replace_slashes}   = 1;
-        exists $options{conditioned_lines} or $options{conditioned_lines} = 1;
+    if ( $options{file_type} ) {
+        unless ( exists $file_types_info{$options{file_type}} ) {
+            die "Unknown file_type '$options{file_type}'";
+        }
+        unless ( exists $options{comment_type} ) {
+            $options{comment_type} =
+                $file_types_info{$options{file_type}}{comment_type};
+        }
+        if ( $options{file_type} eq 'makefile' ) {
+            $options{replace_slashes}   = 1;
+            $options{conditioned_lines} = 1;
+        }
     }
 
     if ( $options{comment_type} ) {
-        my @comment = ( "DO NOT EDIT THIS FILE", "Generated by " . __PACKAGE__ . " from $source" );
+        my @comment = ( 'ex: set ro',
+            'DO NOT EDIT THIS FILE',
+            'Generated by ' . __PACKAGE__ . " from $source" );
+
+        if ($options{file_type}) {
+            $comment[0] .=
+                ' ft=' . $file_types_info{$options{file_type}}{vim_ft} . ':';
+        }
+        else {
+            $comment[0] .= ':';
+        }
 
         if ( $options{comment_type} eq '#' ) {
             foreach my $line (@comment) {
@@ -294,8 +354,7 @@ sub genfile {
         else {
             die "Unknown comment type '$options{comment_type}'";
         }
-        foreach my $line (@comment) { print $out $line; }
-        print $out "\n";                    # extra newline after header
+        print {$out} @comment, "\n"; # extra newline after header
     }
 
     # this loop can not be implemented as a foreach loop as the body
@@ -406,6 +465,7 @@ sub genfile {
             if ( $line =~ m{/$} ) {
                 die "$source:$.: line ends in a slash\n";
             }
+
             $line =~ s{(/+)}{
                 my $len = length $1;
                 my $slash = $conf->data->get('slash');

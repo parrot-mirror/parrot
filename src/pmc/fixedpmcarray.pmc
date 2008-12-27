@@ -175,7 +175,7 @@ Returns the number of elements in the array as a Parrot string. (??? -leo)
 =item C<STRING *get_repr()>
 
 Returns a string representation of the array contents.
-RT#46673 implement freeze/thaw and use that instead.
+RT #46673 implement freeze/thaw and use that instead.
 
 =cut
 
@@ -278,12 +278,12 @@ Returns the Parrot string value of the element at index C<key>.
 */
 
     VTABLE STRING *get_string_keyed_int(INTVAL key) {
-        PMC * const tempPMC = SELF.get_pmc_keyed_int(key);
+        PMC * const retval = SELF.get_pmc_keyed_int(key);
 
-        if (PMC_IS_NULL(tempPMC))
-            return CONST_STRING(interp, "");
+        if (PMC_IS_NULL(retval))
+            return string_from_literal(interp, "");
 
-        return VTABLE_get_string(INTERP, tempPMC);
+        return VTABLE_get_string(INTERP, retval);
     }
 
 /*
@@ -315,7 +315,7 @@ Returns the PMC value of the element at index C<key>.
         PMC **data;
 
         if (key < 0 || key >= PMC_int_val(SELF))
-            real_exception(INTERP, NULL, E_IndexError,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_OUT_OF_BOUNDS,
                 _("FixedPMCArray: index out of bounds!"));
 
         data = (PMC **)PMC_data(SELF);
@@ -364,7 +364,7 @@ array.
         PMC **data;
 
         if (PMC_int_val(SELF) && size)
-            real_exception(INTERP, NULL, E_IndexError,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_OUT_OF_BOUNDS,
                     _("FixedPMCArray: Can't resize!"));
         if (!size)
             return;
@@ -386,7 +386,7 @@ array.
             return;
 
         if (!VTABLE_does(interp, value, CONST_STRING(interp, "array")))
-            real_exception(INTERP, NULL, E_TypeError,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_OUT_OF_BOUNDS,
                     _("Can't set self from this type"));
 
         if (PMC_data(SELF))
@@ -492,7 +492,7 @@ C<value>.
         else {
             PMC *box = SELF.get_pmc_keyed_int(k);
 
-            /* RT#46675: autovivify an Array and insert it in SELF */
+            /* RT #46675: autovivify an Array and insert it in SELF */
             if (!box)
                 box = pmc_new(INTERP, SELF.type());
 
@@ -553,7 +553,7 @@ Sets the PMC value of the element at index C<key> to C<*src>.
         PMC **data;
 
         if (key < 0 || key >= PMC_int_val(SELF))
-            real_exception(INTERP, NULL, E_IndexError,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_OUT_OF_BOUNDS,
                 _("FixedPMCArray: index out of bounds!"));
 
         data      = (PMC**)PMC_data(SELF);
@@ -581,7 +581,7 @@ Sets the PMC at index C<key> to C<value>.
         else {
             PMC *box = SELF.get_pmc_keyed_int(k);
 
-            /* RT#46675: autovivify an Array and insert it in SELF */
+            /* RT #46675: autovivify an Array and insert it in SELF */
             if (!box)
                 box = pmc_new(INTERP, SELF.type());
 
@@ -617,7 +617,11 @@ The C<==> operation. Compares two array to hold equal elements.
             if (item1 == item2)
                 continue;
 
-            if (!mmd_dispatch_i_pp(INTERP, item1, item2, MMD_EQ))
+            if (item1->vtable->base_type == enum_class_Null
+            ||  item2->vtable->base_type == enum_class_Null)
+                return 0;
+
+            if (!VTABLE_is_equal(interp, item1, item2))
                 return 0;
         }
 
@@ -642,18 +646,22 @@ Return a new iterator for SELF.
 
     VTABLE PMC *slice(PMC *key, INTVAL f) {
         if (f == 0) {
+            STRING     *name = CONST_STRING(interp, "set_key");
             PMC * const iter = pmc_new_init(INTERP, enum_class_Iterator, SELF);
-            PMC_struct_val(iter) = key;
+            Parrot_PCCINVOKE(interp, iter, name, "P->", key);
             return iter;
         }
 
-        real_exception(INTERP, NULL, E_IndexError, _("Array: Unknown slice type"));
+        Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_OUT_OF_BOUNDS,
+                _("Array: Unknown slice type"));
     }
 
     VTABLE PMC *get_iter() {
+        STRING     *name     = CONST_STRING(interp, "set_key");
         PMC * const iter     = pmc_new_init(INTERP, enum_class_Iterator, SELF);
         PMC * const key      = pmc_new(INTERP, enum_class_Key);
-        PMC_struct_val(iter) = key;
+
+        Parrot_PCCINVOKE(interp, iter, name, "P->", key);
         PObj_get_FLAGS(key) |= KEY_integer_FLAG;
         PMC_int_val(key)     = 0;
 
@@ -677,7 +685,7 @@ Returns TRUE is the element at C<key> exists; otherwise returns false.
     VTABLE INTVAL exists_keyed_int(INTVAL key) {
         PMC **data;
         if (key < 0 || key >= PMC_int_val(SELF))
-            real_exception(INTERP, NULL, E_IndexError,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_OUT_OF_BOUNDS,
                 _("FixedPMCArray: index out of bounds!"));
 
         data = (PMC**)PMC_data(SELF);
@@ -701,11 +709,13 @@ C<offset>.
 This throws an exception if any of the spliced in values are out of the range
 of this array.
 
+=cut
+
 */
 
     void splice(PMC *value, INTVAL offset, INTVAL count) {
         if (count + offset > PMC_int_val(SELF))
-            real_exception(INTERP, NULL, E_IndexError,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
                 _("FixedPMCArray: index out of bounds!"));
 
         for (count--; count >= 0; --count) {

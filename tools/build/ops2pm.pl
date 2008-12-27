@@ -6,7 +6,7 @@ use strict;
 use warnings;
 
 use lib 'lib';
-use Parrot::Ops2pm::Utils;
+use Parrot::Ops2pm;
 use Parrot::Ops2pm::Auxiliary qw( Usage getoptions );
 
 my $flagref = getoptions();
@@ -16,7 +16,7 @@ if ( $flagref->{help} or !@ARGV ) {
     exit;
 }
 
-my $self = Parrot::Ops2pm::Utils->new(
+my $self = Parrot::Ops2pm->new(
     {
         argv    => [@ARGV],
         nolines => $flagref->{nolines},
@@ -30,12 +30,6 @@ my $self = Parrot::Ops2pm::Utils->new(
 );
 
 $self->prepare_ops();
-
-if ( $flagref->{renum} ) {
-    $self->renum_op_map_file();
-    exit 0;
-}
-
 $self->load_op_map_files();
 $self->sort_ops();
 $self->prepare_real_ops();
@@ -88,7 +82,7 @@ Most of the functionality in this program is now held in Parrot::Ops2pm::Util
 methods and a small number of Parrot::Ops2pm::Auxiliary subroutines.
 See those modules' documentation for discussion of those functions.
 Revisions to the functionality should be made in those packages and tested
-against tests found in F<t/tools/ops2pmutils/>.
+against tests found in F<t/tools/ops2pm/>.
 
 =head1 WARNING
 
@@ -125,7 +119,7 @@ modified so that it doesn't need to concatenate separate ops files.
 
 =item F<tools/build/ops2c.pl>.
 
-=item F<lib/Parrot/Ops2pm/Utils.pm>.
+=item F<lib/Parrot/Ops2pm.pm>.
 
 =item F<lib/Parrot/Ops2pm/Auxiliary.pm>.
 

@@ -14,13 +14,16 @@ src/builtins/io.pir - Perl6 builtins for I/O
 
 .sub 'print'
     .param pmc args            :slurpy
-    .local pmc iter
+    .local pmc it
     args.'!flatten'()
-    iter = new 'Iterator', args
+    it = iter args
   iter_loop:
-    unless iter goto iter_end
-    $S0 = shift iter
-    print $S0
+    unless it goto iter_end
+    $P0 = shift it
+    unless null $P0 goto iter_nonull
+    $P0 = new 'Failure'
+  iter_nonull:
+    print $P0
     goto iter_loop
   iter_end:
     .return (1)
@@ -35,46 +38,19 @@ src/builtins/io.pir - Perl6 builtins for I/O
 .end
 
 
-.sub 'use'
-    .param pmc module
-    .param pmc args :slurpy
+=item printf
 
-    .local string module_string
-    module_string = module
+Parses a format string and prints formatted output according to it.
 
-    .local pmc path
-    path     = split '::', module_string
+=cut
 
-    .local string file_string
-    file_string = join '/', path
-
-    .local pmc filename
-    $P0 = get_hll_global 'Str'
-    filename  = $P0.'new'()
-    filename  = file_string
-    filename .= '.pm'
-
-    require(filename)
-
-    .local pmc import
-    import = find_global module_string, 'import'
-
-    .local int have_import
-    have_import = defined import
-    unless have_import goto import_finished
-    import(args :flat)
-
-  import_finished:
-
+.sub 'printf'
+    .param pmc args            :slurpy
+    $S0 = 'sprintf'(args :flat)
+    print $S0
+    .return (1)
 .end
 
-.sub 'require'
-    .param pmc filename
-
-    .local pmc p6compiler
-    p6compiler = compreg 'Perl6'
-    p6compiler.'evalfiles'(filename)
-.end
 
 .sub 'open'
     .param string filename
@@ -126,6 +102,51 @@ opened_ok:
     'close'($P0)
     .return(contents)
 .end
+
+
+=item unlink LIST
+
+Deletes a list of files.  Returns the number of files successfully
+deleted.
+
+    $cnt = unlink 'a', 'b', 'c';
+
+Be warned that unlinking a directory can inflict damage on your filesystem.
+Finally, using C<unlink> on directories is not supported on many operating
+systems.  Use C<rmdir> instead.
+
+It is an error to use bare C<unlink> without arguments.
+
+=cut
+
+.sub 'unlink'
+    .param pmc to_delete :slurpy
+    .local pmc it, os
+    .local int success_count
+
+    # Error with no arguments.
+    $I0 = elements to_delete
+    if $I0 goto ok
+    'die'("Cannot call unlink without any arguments")
+  ok:
+
+    os = new 'OS'
+    success_count = 0
+    it = iter to_delete
+  it_loop:
+    unless it goto it_loop_end
+    $S0 = shift it
+    push_eh unlink_skip
+    os.'rm'($S0)
+    inc success_count
+  unlink_skip:
+    pop_eh
+    goto it_loop
+  it_loop_end:
+
+  .return (success_count)
+.end
+
 
 =back
 

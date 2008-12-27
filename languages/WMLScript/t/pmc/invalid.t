@@ -8,7 +8,7 @@ t/pmc/invalid.t - WmlsInvalid
 
 =head1 SYNOPSIS
 
-    % perl -I../../lib t/pmc/invalid.t
+    % perl t/pmc/invalid.t
 
 =head1 DESCRIPTION
 
@@ -19,12 +19,15 @@ Tests C<WmlsInvalid> PMC
 
 use strict;
 use warnings;
+use FindBin;
+use lib "$FindBin::Bin/../../../../lib";
+
 use Parrot::Test tests => 9;
 use Test::More;
 
 pir_output_is( << 'CODE', << 'OUTPUT', 'check inheritance' );
 .sub _main
-    loadlib P1, "wmls_group"
+    loadlib $P1, "wmls_group"
     .local pmc pmc1
     pmc1 = new "WmlsInvalid"
     .local int bool1
@@ -43,7 +46,7 @@ OUTPUT
 
 pir_output_is( << 'CODE', << 'OUTPUT', 'check interface' );
 .sub _main
-    loadlib P1, "wmls_group"
+    loadlib $P1, "wmls_group"
     .local pmc pmc1
     pmc1 = new "WmlsInvalid"
     .local int bool1
@@ -62,7 +65,7 @@ OUTPUT
 
 pir_output_is( << 'CODE', << 'OUTPUT', 'check name' );
 .sub _main
-    loadlib P1, "wmls_group"
+    loadlib $P1, "wmls_group"
     .local pmc pmc1
     pmc1 = new "WmlsInvalid"
     .local string str1
@@ -77,7 +80,7 @@ OUTPUT
 
 pir_output_is( << 'CODE', << 'OUTPUT', 'check get_string' );
 .sub _main
-    loadlib P1, "wmls_group"
+    loadlib $P1, "wmls_group"
     .local pmc pmc1
     pmc1 = new "WmlsInvalid"
     print pmc1
@@ -90,7 +93,7 @@ OUTPUT
 
 pir_output_is( << 'CODE', << 'OUTPUT', 'check clone' );
 .sub _main
-    loadlib P1, "wmls_group"
+    loadlib $P1, "wmls_group"
     .local pmc pmc1
     pmc1 = new "WmlsInvalid"
     .local pmc pmc2
@@ -111,7 +114,8 @@ invalid
 OUTPUT
 
 pir_output_is( << 'CODE', << 'OUTPUT', 'check HLL' );
-.HLL "WMLScript", "wmls_group"
+.HLL "wmlscript"
+.loadlib "wmls_group"
 .sub _main
     .local pmc pmc1
     pmc1 = new "WmlsInvalid"
@@ -130,7 +134,8 @@ OUTPUT
 
 pir_output_is( << 'CODE', << 'OUTPUT', 'check istrue' );
 .loadlib "wmls_ops"
-.HLL "WMLScript", "wmls_group"
+.HLL "wmlscript"
+.loadlib "wmls_group"
 .sub _main
     .local pmc cst1
     cst1 = new "WmlsInvalid"
@@ -151,7 +156,8 @@ OUTPUT
 
 pir_output_is( << 'CODE', << 'OUTPUT', 'check typeof' );
 .loadlib "wmls_ops"
-.HLL "WMLScript", "wmls_group"
+.HLL "wmlscript"
+.loadlib "wmls_group"
 .sub _main
     .local pmc cst1
     cst1 = new "WmlsInvalid"
@@ -172,7 +178,8 @@ OUTPUT
 
 pir_output_is( << 'CODE', << 'OUTPUT', 'check defined' );
 .loadlib "wmls_ops"
-.HLL "WMLScript", "wmls_group"
+.HLL "wmlscript"
+.loadlib "wmls_group"
 .sub _main
     .local pmc cst1
     cst1 = new "WmlsInvalid"

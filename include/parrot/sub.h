@@ -36,7 +36,14 @@ typedef enum {
     SUB_FLAG_PF_IMMEDIATE = PObj_private6_FLAG,
     SUB_FLAG_PF_POSTCOMP  = PObj_private7_FLAG,
 
-    SUB_FLAG_PF_MASK      = 0xfa   /* anon ... postcomp, is_outer*/
+    /* [temporary expedient.  -- rgr, 13-Jul-08.] */
+    SUB_FLAG_NEWCLOSURE   = SUB_FLAG_PF_IMMEDIATE,
+
+    SUB_FLAG_PF_MASK      = SUB_FLAG_PF_ANON
+                          | SUB_FLAG_PF_MAIN
+                          | SUB_FLAG_PF_LOAD
+                          | SUB_FLAG_PF_IMMEDIATE
+                          | SUB_FLAG_PF_POSTCOMP
 } sub_flags_enum;
 
 #define SUB_FLAG_get_FLAGS(o) (PObj_get_FLAGS(o))
@@ -98,7 +105,7 @@ typedef enum {
 #define Sub_comp_flag_CLEAR(flag, o) (Sub_comp_get_FLAGS(o) &= ~(UINTVAL)(SUB_COMP_FLAG_ ## flag))
 
 #define Sub_comp_flags_SETTO(o, f) Sub_comp_get_FLAGS(o) = (f)
-#define Sub_comp_flags_CLEARALL(o) Sub_comp_flags_SETTO(o, 0)
+#define Sub_comp_flags_CLEARALL(o) Sub_comp_flags_SETTO((o), 0)
 
 #define Sub_comp_INIT_TEST(o) Sub_comp_flag_TEST(PF_INIT, o)
 #define Sub_comp_INIT_SET(o) Sub_comp_flag_SET(PF_INIT, o)
@@ -135,7 +142,7 @@ typedef struct Parrot_sub_arginfo {
  * Closures have additionally an 'outer_ctx'
  */
 typedef struct Parrot_sub {
-    struct PackFile_ByteCode *seg;      /* bytecode segment */
+    PackFile_ByteCode *seg;     /* bytecode segment */
     size_t   start_offs;        /* sub entry in ops from seg->base.data */
     size_t   end_offs;
 
@@ -146,7 +153,9 @@ typedef struct Parrot_sub {
                                   */
     PMC      *namespace_stash;   /* the actual hash, HLL::namespace */
     STRING   *name;              /* name of the sub */
-    STRING   *lexid;             /* The lexical ID of the sub. */
+    STRING   *method_name;       /* method name of the sub */
+    STRING   *ns_entry_name;     /* ns entry name of the sub */
+    STRING   *subid;             /* The ID of the sub. */
     INTVAL   vtable_index;       /* index in Parrot_vtable_slot_names */
     PMC      *multi_signature;   /* list of types for MMD */
     INTVAL   n_regs_used[4];     /* INSP in PBC */
@@ -154,7 +163,7 @@ typedef struct Parrot_sub {
     PMC      *lex_info;          /* LexInfo PMC */
     PMC      *outer_sub;         /* :outer for closures */
     PMC      *eval_pmc;          /* eval container / NULL */
-    parrot_context_t *ctx;       /* the context this sub is in */
+    Parrot_Context *ctx;         /* the context this sub is in */
     UINTVAL  comp_flags;         /* compile time and additional flags */
     Parrot_sub_arginfo *arg_info;/* Argument counts and flags. */
 
@@ -168,7 +177,7 @@ typedef struct Parrot_sub {
  * these two to the other type
  */
 typedef struct Parrot_coro {
-    struct PackFile_ByteCode *seg;      /* bytecode segment */
+    PackFile_ByteCode *seg;      /* bytecode segment */
     size_t   start_offs;         /* sub entry in ops from seg->base.data */
     size_t   end_offs;
 
@@ -179,7 +188,9 @@ typedef struct Parrot_coro {
                                   */
     PMC      *namespace_stash;   /* the actual hash, HLL::namespace */
     STRING   *name;              /* name of the sub */
-    STRING   *lexid;             /* The lexical ID of the sub. */
+    STRING   *method_name;       /* method name of the sub */
+    STRING   *ns_entry_name;     /* ns entry name of the sub */
+    STRING   *subid;             /* The ID of the sub. */
     INTVAL   vtable_index;       /* index in Parrot_vtable_slot_names */
     PMC      *multi_signature;   /* list of types for MMD */
     INTVAL   n_regs_used[4];     /* INSP in PBC */
@@ -193,7 +204,7 @@ typedef struct Parrot_coro {
 
     /* - end common */
 
-    struct PackFile_ByteCode *caller_seg;  /* bytecode segment */
+    PackFile_ByteCode *caller_seg;  /* bytecode segment */
     opcode_t *address;           /* next address to run - toggled each time */
     struct Stack_Chunk *dynamic_state; /* next dynamic state */
 } Parrot_coro;
@@ -202,7 +213,7 @@ typedef struct Parrot_coro {
 
 typedef struct Parrot_cont {
     /* continuation destination */
-    struct PackFile_ByteCode *seg;   /* bytecode segment */
+    PackFile_ByteCode *seg;          /* bytecode segment */
     opcode_t *address;               /* start of bytecode, addr to continue */
     struct Parrot_Context *to_ctx;   /* pointer to dest context */
     struct Stack_Chunk *dynamic_state; /* dest dynamic state */
@@ -211,6 +222,7 @@ typedef struct Parrot_cont {
     opcode_t *current_results;       /* ptr into code with get_results opcode
                                         full continuation only */
     int runloop_id;                  /* id of the creating runloop. */
+    int invoked;                     /* flag when a handler has been invoked. */
 } Parrot_cont;
 
 #define PMC_cont(pmc) ((Parrot_cont *)PMC_struct_val(pmc))
@@ -228,37 +240,37 @@ typedef struct Parrot_Context_info {
 /* HEADERIZER BEGIN: src/sub.c */
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 
-PARROT_API
+PARROT_EXPORT
 PARROT_MALLOC
 PARROT_CANNOT_RETURN_NULL
 PMC * new_ret_continuation_pmc(PARROT_INTERP,
     ARGIN_NULLOK(opcode_t *address))
         __attribute__nonnull__(1);
 
-PARROT_API
+PARROT_EXPORT
 int Parrot_Context_get_info(PARROT_INTERP,
-    ARGIN(const parrot_context_t *ctx),
+    ARGIN(const Parrot_Context *ctx),
     ARGOUT(Parrot_Context_info *info))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3)
         FUNC_MODIFIES(*info);
 
-PARROT_API
+PARROT_EXPORT
 PARROT_CAN_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
 STRING* Parrot_Context_infostr(PARROT_INTERP,
-    ARGIN(const parrot_context_t *ctx))
+    ARGIN(const Parrot_Context *ctx))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
-PARROT_API
+PARROT_EXPORT
 PARROT_CAN_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
 STRING* Parrot_full_sub_name(PARROT_INTERP, ARGIN_NULLOK(PMC* sub))
         __attribute__nonnull__(1);
 
-PARROT_API
+PARROT_EXPORT
 PARROT_CANNOT_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
 PMC* parrot_new_closure(PARROT_INTERP, ARGIN(PMC *sub_pmc))
@@ -270,11 +282,12 @@ void invalidate_retc_context(PARROT_INTERP, ARGMOD(PMC *cont))
         __attribute__nonnull__(2)
         FUNC_MODIFIES(*cont);
 
-void mark_context(PARROT_INTERP, ARGMOD(parrot_context_t* ctx))
+void mark_context(PARROT_INTERP, ARGMOD(Parrot_Context* ctx))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         FUNC_MODIFIES(* ctx);
 
+void mark_context_start(void);
 PARROT_MALLOC
 PARROT_CANNOT_RETURN_NULL
 Parrot_sub * new_closure(PARROT_INTERP)
@@ -301,6 +314,11 @@ PARROT_CANNOT_RETURN_NULL
 Parrot_sub * new_sub(PARROT_INTERP)
         __attribute__nonnull__(1);
 
+void Parrot_capture_lex(PARROT_INTERP, ARGMOD(PMC *sub_pmc))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        FUNC_MODIFIES(*sub_pmc);
+
 void Parrot_continuation_check(PARROT_INTERP,
     ARGIN(PMC *pmc),
     ARGIN(Parrot_cont *cc))
@@ -315,18 +333,11 @@ void Parrot_continuation_rewind_environment(PARROT_INTERP,
         __attribute__nonnull__(2)
         __attribute__nonnull__(3);
 
-void Parrot_continuation_runloop_check(PARROT_INTERP,
-    ARGIN(PMC *pmc),
-    ARGIN(Parrot_cont *cc))
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(2)
-        __attribute__nonnull__(3);
-
 PARROT_CAN_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
 PMC* Parrot_find_pad(PARROT_INTERP,
     ARGIN(STRING *lex_name),
-    ARGIN(const parrot_context_t *ctx))
+    ARGIN(const Parrot_Context *ctx))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3);

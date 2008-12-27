@@ -183,16 +183,6 @@ typedef struct parrot_interp_t Interp;
 #  define LVALUE_CAST(type, val) (*((type *)&(val)))
 #endif /* __GCC__ */
 
-/*
- * assign to a void* in a way that produces compile-time warnings
- * if the type isn't what was expected.
- */
-#define VOIDPTR_ASSIGN(type, p, val) \
-    do { \
-        type _typed_ptr = (val); \
-        (p) = (val); \
-    } while (0)
-
 /* some SGI compilers have an offsetof()
  * definition that doesn't work for us. */
 #if defined(__sgi) && defined(_COMPILER_VERSION) && (_COMPILER_VERSION >= 400)
@@ -203,6 +193,8 @@ typedef struct parrot_interp_t Interp;
 /* work around warning:
  * cast discards qualifiers from pointer target type
  * for usage grep e.g. in string.c
+ * The casted to type must differ only in constness,
+ * to allow a stricter compiler check in C++ builds.
  */
 
 #ifndef __cplusplus
@@ -275,6 +267,7 @@ typedef void (*funcptr_t)(void);
 #define LOCALEDIR  "."
 
 typedef struct _hash Hash;
+typedef struct PackFile_ByteCode PackFile_ByteCode;
 
 #include "parrot/settings.h"
 #include "parrot/enums.h"
@@ -310,7 +303,6 @@ typedef struct _hash Hash;
 #include "parrot/resources.h"
 #include "parrot/string_funcs.h"
 #include "parrot/misc.h"
-#include "parrot/debug.h"
 #include "parrot/sub.h"
 #include "parrot/inter_call.h"
 #include "parrot/key.h"
@@ -322,9 +314,8 @@ typedef struct _hash Hash;
 #include "parrot/longopt.h"
 #include "parrot/oo.h"
 #include "parrot/vtables.h"
-#include "parrot/mmd.h"
+#include "parrot/multidispatch.h"
 #include "parrot/library.h"
-#include "parrot/builtin.h"
 #include "parrot/global.h"
 #include "parrot/stat.h"
 #include "parrot/slice.h"

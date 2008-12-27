@@ -1,5 +1,5 @@
 #! perl
-# Copyright (C) 2006-2007, The Perl Foundation.
+# Copyright (C) 2006-2008, The Perl Foundation.
 # $Id$
 
 =head1 NAME
@@ -8,7 +8,7 @@ t/pmc/float.t - WmlsFloat
 
 =head1 SYNOPSIS
 
-    % perl -I../../lib t/pmc/float.t
+    % perl t/pmc/float.t
 
 =head1 DESCRIPTION
 
@@ -19,12 +19,15 @@ Tests C<WmlsFloat> PMC
 
 use strict;
 use warnings;
-use Parrot::Test tests => 10;
+use FindBin;
+use lib "$FindBin::Bin/../../../../lib";
+
+use Parrot::Test tests => 11;
 use Test::More;
 
 pir_output_is( << 'CODE', << 'OUTPUT', 'check inheritance' );
 .sub _main
-    loadlib P1, "wmls_group"
+    loadlib $P1, "wmls_group"
     .local pmc pmc1
     pmc1 = new "WmlsFloat"
     .local int bool1
@@ -43,7 +46,7 @@ OUTPUT
 
 pir_output_is( << 'CODE', << 'OUTPUT', 'check interface' );
 .sub _main
-    loadlib P1, "wmls_group"
+    loadlib $P1, "wmls_group"
     .local pmc pmc1
     pmc1 = new "WmlsFloat"
     .local int bool1
@@ -66,7 +69,7 @@ OUTPUT
 
 pir_output_is( << 'CODE', << 'OUTPUT', 'check name' );
 .sub _main
-    loadlib P1, "wmls_group"
+    loadlib $P1, "wmls_group"
     .local pmc pmc1
     pmc1 = new "WmlsFloat"
     .local string str1
@@ -81,7 +84,7 @@ OUTPUT
 
 pir_output_is( << 'CODE', << 'OUTPUT', 'check clone' );
 .sub _main
-    loadlib P1, "wmls_group"
+    loadlib $P1, "wmls_group"
     .local pmc pmc1
     pmc1 = new "WmlsFloat"
     pmc1 = 3.14
@@ -109,7 +112,7 @@ OUTPUT
 
 pir_output_is( << 'CODE', << 'OUTPUT', 'check get_bool' );
 .sub _main
-    loadlib P1, "wmls_group"
+    loadlib $P1, "wmls_group"
     .local pmc pmc1
     pmc1 = new "WmlsFloat"
     pmc1 = 3.14
@@ -129,7 +132,8 @@ CODE
 OUTPUT
 
 pir_output_is( << 'CODE', << 'OUTPUT', 'check HLL' );
-.HLL "WMLScript", "wmls_group"
+.HLL "wmlscript"
+.loadlib "wmls_group"
 .sub _main
     .local pmc pmc1
     pmc1 = new "WmlsFloat"
@@ -148,9 +152,10 @@ CODE
 OUTPUT
 
 pir_output_is( << 'CODE', << 'OUTPUT', 'check HLL & .const' );
-.HLL "WMLScript", "wmls_group"
+.HLL "wmlscript"
+.loadlib "wmls_group"
 .sub _main
-    .const .WmlsFloat cst1 = "3.14"
+    .const "WmlsFloat" cst1 = "3.14"
     print cst1
     print "\n"
     .local int bool1
@@ -164,10 +169,11 @@ CODE
 OUTPUT
 
 pir_output_is( << 'CODE', << 'OUTPUT', 'check istrue' );
+.HLL "wmlscript"
+.loadlib "wmls_group"
 .loadlib "wmls_ops"
-.HLL "WMLScript", "wmls_group"
 .sub _main
-    .const .WmlsFloat cst1 = "3.14"
+    .const "WmlsFloat" cst1 = "3.14"
     print cst1
     print "\n"
     $P0 = istrue cst1
@@ -184,10 +190,11 @@ WmlsBoolean
 OUTPUT
 
 pir_output_is( << 'CODE', << 'OUTPUT', 'check typeof' );
+.HLL "wmlscript"
+.loadlib "wmls_group"
 .loadlib "wmls_ops"
-.HLL "WMLScript", "wmls_group"
 .sub _main
-    .const .WmlsFloat cst1 = "3.14"
+    .const "WmlsFloat" cst1 = "3.14"
     print cst1
     print "\n"
     $P0 = typeof cst1
@@ -204,10 +211,11 @@ WmlsInteger
 OUTPUT
 
 pir_output_is( << 'CODE', << 'OUTPUT', 'check defined' );
+.HLL "wmlscript"
+.loadlib "wmls_group"
 .loadlib "wmls_ops"
-.HLL "WMLScript", "wmls_group"
 .sub _main
-    .const .WmlsFloat cst1 = "3.14"
+    .const "WmlsFloat" cst1 = "3.14"
     print cst1
     print "\n"
     $P0 = defined cst1
@@ -221,6 +229,23 @@ CODE
 3.14
 true
 WmlsBoolean
+OUTPUT
+
+pir_output_is( << 'CODE', << 'OUTPUT', 'check box' );
+.HLL "wmlscript"
+.loadlib "wmls_group"
+.loadlib "wmls_ops"
+.sub _main
+    $P0 = box 3.14
+    print $P0
+    print "\n"
+    $S0 = typeof $P0
+    print $S0
+    print "\n"
+.end
+CODE
+3.14
+WmlsFloat
 OUTPUT
 
 # Local Variables:

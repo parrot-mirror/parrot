@@ -13,6 +13,8 @@ php_pcre.pir - PHP pcre  Library
 
 =cut
 
+.HLL 'pipp'
+
 .include 'languages/pipp/src/common/php_MACRO.pir'
 .include 'cclass.pasm'
 
@@ -95,9 +97,9 @@ php_pcre.pir - PHP pcre  Library
     .REGISTER_LONG_CONSTANT(cst, 'PREG_BACKTRACK_LIMIT_ERROR', PHP_PCRE_BACKTRACK_LIMIT_ERROR)
     .REGISTER_LONG_CONSTANT(cst, 'PREG_RECURSION_LIMIT_ERROR', PHP_PCRE_RECURSION_LIMIT_ERROR)
     .REGISTER_LONG_CONSTANT(cst, 'PREG_BAD_UTF8_ERROR', PHP_PCRE_BAD_UTF8_ERROR)
-#    $P0 = get_global ['PCRE'], 'version'
-#    $S0= $P0()
-#    .REGISTER_STRING_CONSTANT(cst, 'PCRE_VERSION', $S0)
+    $P0 = get_global ['PCRE'], 'version'
+    $S0= $P0()
+    .REGISTER_STRING_CONSTANT(cst, 'PCRE_VERSION', $S0)
 .end
 
 
@@ -278,7 +280,7 @@ NOT IMPLEMENTED.
     unless null pce goto L2
     .RETURN_FALSE()
   L2:
-    .return preg_grep_impl(pce, input, flags)
+    .tailcall preg_grep_impl(pce, input, flags)
 .end
 
 .sub 'preg_grep_impl' :anon
@@ -336,7 +338,7 @@ STILL INCOMPLETE (see pcre_match_impl).
     unless $I0 >= 4 goto L3
     use_flags = 1
   L3:
-    .return pcre_match_impl(pce, subject, subpats, 0, use_flags, flags, start_offset)
+    .tailcall pcre_match_impl(pce, subject, subpats, 0, use_flags, flags, start_offset)
 .end
 
 .sub 'pcre_match_impl' :anon
@@ -389,7 +391,7 @@ STILL INCOMPLETE (see pcre_match_impl).
     unless $I0 >= 4 goto L3
     use_flags = 1
   L3:
-    .return pcre_match_impl(pce, subject, subpats, 1, use_flags, flags, start_offset)
+    .tailcall pcre_match_impl(pce, subject, subpats, 1, use_flags, flags, start_offset)
 .end
 
 =item C<string preg_quote(string str [, string delim_char])>
@@ -486,7 +488,7 @@ NOT IMPLEMENTED.
     unless null pce goto L2
     .RETURN_FALSE()
   L2:
-    .return pcre_split_impl(pce, subject, limit, flags)
+    .tailcall pcre_split_impl(pce, subject, limit, flags)
 .end
 
 .sub 'pcre_split_impl' :anon

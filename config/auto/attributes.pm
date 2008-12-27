@@ -25,7 +25,7 @@ use Parrot::BuildUtil;
 sub _init {
     my $self = shift;
     my %data;
-    $data{description} = q{Detecting compiler attributes (-DHASATTRIBUTE_xxx)};
+    $data{description} = q{Detect compiler attributes};
     $data{result}      = q{};
     return \%data;
 }
@@ -83,9 +83,11 @@ sub try_attr {
         Parrot::Configure::Utils::_run_command( $command_line, $output_file, $output_file );
     $verbose and print "  exit code: $exit_code\n";
 
+    $conf->cc_clean();
     $conf->data->set( $attr => !$exit_code | 0 );
 
     if ($exit_code) {
+        unlink $output_file or die "Unable to unlink $output_file: $!";
         $verbose and print "Rejecting bogus attribute:  $attr\n";
         return;
     }
@@ -98,6 +100,7 @@ sub try_attr {
         my $ccflags = $conf->data->get("ccflags");
         $verbose and print "  ccflags: $ccflags\n";
     }
+    unlink $output_file or die "Unable to unlink $output_file: $!";
 
     return;
 }

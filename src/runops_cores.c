@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2001-2006, The Perl Foundation.
+Copyright (C) 2001-2008, The Perl Foundation.
 $Id$
 
 =head1 NAME
@@ -90,7 +90,7 @@ runops_cgoto_core(PARROT_INTERP, ARGIN(opcode_t *pc))
     return pc;
 #else
     UNUSED(pc);
-    PIO_eprintf(interp,
+    Parrot_io_eprintf(interp,
             "Computed goto unavailable in this configuration.\n");
     Parrot_exit(interp, 1);
 #endif
@@ -126,7 +126,6 @@ runops_trace_core(PARROT_INTERP, ARGIN(opcode_t *pc))
     static size_t dod, gc;
     Arenas * const arena_base = interp->arena_base;
     Interp *debugger;
-    PMC* pio;
 
     dod = arena_base->dod_runs;
     gc = arena_base->collect_runs;
@@ -147,14 +146,14 @@ runops_trace_core(PARROT_INTERP, ARGIN(opcode_t *pc))
          * see trace_system_areas() in src/cpu_dep.c */
         debugger->lo_var_ptr = interp->lo_var_ptr;
 
-        pio = PIO_STDERR(debugger);
+        pio = Parrot_io_STDERR(debugger);
 
-        if (PIO_isatty(debugger, pio))
-            PIO_setlinebuf(debugger, pio);
+        if (Parrot_io_is_tty(debugger, pio))
+            Parrot_io_setlinebuf(debugger, pio);
         else {
             /* this is essential (100 x faster!)  and should probably
              * be in init/open code */
-            PIO_setbuf(debugger, pio, 8192);
+            Parrot_io_setbuf(debugger, pio, 8192);
         }
     }
     else
@@ -163,8 +162,8 @@ runops_trace_core(PARROT_INTERP, ARGIN(opcode_t *pc))
     trace_op(interp, code_start, code_end, pc);
     while (pc) {
         if (pc < code_start || pc >= code_end)
-            real_exception(interp, NULL, 1,
-                    "attempt to access code outside of current code segment");
+            Parrot_ex_throw_from_c_args(interp, NULL, 1,
+                "attempt to access code outside of current code segment");
 
         CONTEXT(interp)->current_pc = pc;
 
@@ -173,16 +172,16 @@ runops_trace_core(PARROT_INTERP, ARGIN(opcode_t *pc))
 
         if (dod != arena_base->dod_runs) {
             dod = arena_base->dod_runs;
-            PIO_eprintf(debugger, "       DOD\n");
+            Parrot_io_eprintf(debugger, "       DOD\n");
         }
 
         if (gc != arena_base->collect_runs) {
             gc = arena_base->collect_runs;
-            PIO_eprintf(debugger, "       GC\n");
+            Parrot_io_eprintf(debugger, "       GC\n");
         }
     }
 
-    PIO_flush(debugger, PIO_STDERR(debugger));
+    Parrot_io_flush(debugger, Parrot_io_STDERR(debugger));
 
     return pc;
 }
@@ -207,14 +206,15 @@ runops_slow_core(PARROT_INTERP, ARGIN(opcode_t *pc))
 
     if (Interp_trace_TEST(interp, PARROT_TRACE_OPS_FLAG))
         return runops_trace_core(interp, pc);
-
+#if 0
     if (interp->debugger && interp->debugger->pdb)
-        return Parrot_debug(interp->debugger, pc);
+        return Parrot_debug(interp, interp->debugger, pc);
+#endif
 
     while (pc) {
         if (pc < code_start || pc >= code_end)
-            real_exception(interp, NULL, 1,
-                    "attempt to access code outside of current code segment");
+            Parrot_ex_throw_from_c_args(interp, NULL, 1,
+                "attempt to access code outside of current code segment");
 
         CONTEXT(interp)->current_pc = pc;
 
@@ -244,8 +244,8 @@ runops_gc_debug_core(PARROT_INTERP, ARGIN(opcode_t *pc))
 {
     while (pc) {
         if (pc < code_start || pc >= code_end)
-            real_exception(interp, NULL, 1,
-                    "attempt to access code outside of current code segment");
+            Parrot_ex_throw_from_c_args(interp, NULL, 1,
+                "attempt to access code outside of current code segment");
 
         Parrot_do_dod_run(interp, 0);
         CONTEXT(interp)->current_pc = pc;
@@ -303,6 +303,69 @@ runops_profile_core(PARROT_INTERP, ARGIN(opcode_t *pc))
         /* old opcode continues */
         profile->starttime = Parrot_floatval_time();
         profile->cur_op    = old_op;
+    }
+
+    return pc;
+}
+
+/*
+
+=item C<opcode_t * runops_debugger_core>
+
+Used by the debugger, under construction
+
+=cut
+
+*/
+
+PARROT_WARN_UNUSED_RESULT
+PARROT_CAN_RETURN_NULL
+opcode_t *
+runops_debugger_core(PARROT_INTERP, ARGIN(opcode_t *pc))
+{
+    /*fprintf(stderr, "Enter runops_debugger_core\n");*/
+
+    PARROT_ASSERT(interp->pdb);
+
+    if (interp->pdb->state & PDB_ENTER) {
+        Parrot_debugger_start(interp, pc);
+    }
+
+    while (pc) {
+        if (pc < interp->code->base.data || pc >= interp->code->base.data + interp->code->base.size)
+            Parrot_ex_throw_from_c_args(interp, NULL, 1,
+                    "attempt to access code outside of current code segment");
+
+        if (interp->pdb->state & PDB_GCDEBUG)
+            Parrot_do_dod_run(interp, 0);
+
+        if (interp->pdb->state & PDB_TRACING) {
+            trace_op(interp,
+                    interp->code->base.data,
+                    interp->code->base.data +
+                    interp->code->base.size,
+                    interp->pdb->cur_opcode);
+        }
+
+        CONTEXT(interp)->current_pc = pc;
+        DO_OP(pc, interp);
+
+        if (interp->pdb->state & PDB_STOPPED) {
+            Parrot_debugger_start(interp, pc);
+        }
+        else
+        {
+            if (PDB_break(interp)) {
+                Parrot_debugger_start(interp, pc);
+                continue;
+            }
+
+            if (interp->pdb->tracing) {
+                if (--interp->pdb->tracing == 0) {
+                    Parrot_debugger_start(interp, pc);
+                }
+            }
+        }
     }
 
     return pc;

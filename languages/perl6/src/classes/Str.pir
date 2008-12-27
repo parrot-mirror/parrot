@@ -23,252 +23,43 @@ as the Perl 6 C<Str> class.
     .local pmc p6meta, strproto
     p6meta = get_hll_global ['Perl6Object'], '$!P6META'
     strproto = p6meta.'new_class'('Str', 'parent'=>'Perl6Str Any')
+    strproto.'!IMMUTABLE'()
     p6meta.'register'('Perl6Str', 'parent'=>strproto, 'protoobject'=>strproto)
     p6meta.'register'('String', 'parent'=>strproto, 'protoobject'=>strproto)
 
     $P0 = get_hll_namespace ['Str']
-    '!EXPORT'('index sprintf', 'from'=>$P0)
+    '!EXPORT'('sprintf,reverse', 'from'=>$P0)
 .end
 
 
+## special method to cast Parrot String into Rakudo Str.
+.namespace ['String']
+.sub 'Scalar' :method
+    $P0 = new 'Str'
+    assign $P0, self
+    copy self, $P0
+    .return (self)
+.end
+
+
+.namespace ['Str']
 .sub 'ACCEPTS' :method
     .param string topic
-    .return 'infix:eq'(topic, self)
+    .tailcall 'infix:eq'(topic, self)
 .end
 
-.sub 'chars' :method
-    .local pmc retv
 
-    retv = new 'Integer'
-    $S0  = self
-    $I0  = length $S0
-    retv = $I0
-
-    .return (retv)
-.end
-
-.sub 'reverse' :method
+.sub 'reverse' :method :multi('String')
     .local pmc retv
 
     retv = self.'split'('')
     retv = retv.'reverse'()
-    retv = retv.join('')
+    retv = retv.'join'('')
 
     .return(retv)
 .end
 
-.sub split :method :multi('Perl6Str')
-    .param string delim
-    .local string objst
-    .local pmc pieces
-    .local pmc tmps
-    .local pmc retv
-    .local int len
-    .local int i
 
-    retv = new 'List'
-
-    objst = self
-    split pieces, delim, objst
-
-    len = pieces
-    i = 0
-  loop:
-    if i == len goto done
-
-    tmps = new 'Perl6Str'
-    tmps = pieces[i]
-
-    retv.'push'(tmps)
-
-    inc i
-    goto loop
-  done:
-    .return(retv)
-.end
-
-.sub lc :method
-    .local string tmps
-    .local pmc retv
-
-    tmps = self
-    downcase tmps
-
-    retv = new 'Perl6Str'
-    retv = tmps
-
-    .return(retv)
-.end
-
-.sub uc :method
-    .local string tmps
-    .local pmc retv
-
-    tmps = self
-    upcase tmps
-
-    retv = new 'Perl6Str'
-    retv = tmps
-
-    .return(retv)
-.end
-
-.sub lcfirst :method
-    .local string tmps
-    .local string fchr
-    .local pmc retv
-    .local int len
-
-    retv = new 'Perl6Str'
-    tmps = self
-
-    len = length tmps
-    if len == 0 goto done
-
-    substr fchr, tmps, 0, 1
-    downcase fchr
-
-    concat retv, fchr
-    substr tmps, tmps, 1
-    concat retv, tmps
-
-  done:
-    .return(retv)
-.end
-
-.sub ucfirst :method
-    .local string tmps
-    .local string fchr
-    .local pmc retv
-    .local int len
-
-    retv = new 'Perl6Str'
-    tmps = self
-
-    len = length tmps
-    if len == 0 goto done
-
-    substr fchr, tmps, 0, 1
-    upcase fchr
-
-    concat retv, fchr
-    substr tmps, tmps, 1
-    concat retv, tmps
-
-  done:
-    .return(retv)
-.end
-
-.sub capitalize :method
-    .local string tmps
-    .local string fchr
-    .local pmc retv
-    .local int len
-
-    retv = new 'Perl6Str'
-    tmps = self
-
-    len = length tmps
-    if len == 0 goto done
-
-    downcase tmps
-
-    .local int pos, is_ws, is_lc
-    pos = 0
-    goto first_char
-  next_grapheme:
-    if pos == len goto done
-    is_ws = is_cclass .CCLASS_WHITESPACE, tmps, pos
-    if is_ws goto ws
-  advance:
-    pos += 1
-    goto next_grapheme
-  ws:
-    pos += 1
-  first_char:
-    is_lc = is_cclass .CCLASS_LOWERCASE, tmps, pos
-    unless is_lc goto advance
-    $S1 = substr tmps, pos, 1
-    upcase $S1
-    substr tmps, pos, 1, $S1
-    ## the length may have changed after replacement, so measure it again
-    len = length tmps
-    goto advance
-  done:
-    retv = tmps
-    .return (retv)
-.end
-
-.sub 'chop' :method
-    .local string tmps
-    .local pmc retv
-    .local int len
-
-    retv = new 'Perl6Str'
-    tmps = self
-
-    len = length tmps
-    if len == 0 goto done
-    dec len
-    substr tmps,tmps, 0, len
-  done:
-    retv = tmps
-    .return(retv)
-.end
-
-=item index
-
- our StrPos multi method index( Str $string: Str $substring, StrPos $pos = StrPos(0) ) is export
-
-C<index> searches for the first occurrence of C<$substring> in C<$string>,
-starting at C<$pos>.
-
-The value returned is always a StrPos object. If the substring is found, then
-the StrPos represents the position of the first character of the substring. If
-the substring is not found, a bare StrPos containing no position is returned.
-This prototype StrPos evaluates to false because it's really a kind of undef.
-Do not evaluate as a number, because instead of returning -1 it will return 0
-and issue a warning.
-
-=cut
-
-.sub 'index' :method
-    .param string substring
-    .param int pos     :optional
-    .param int has_pos :opt_flag
-    .local pmc retv
-    .local string s
-
-    s = self
-
-    # This check is redundant (at least with current parrot).
-    # 'int pos' initialised to 0 if it was omited in invokation.
-    if has_pos goto check_substring
-    pos = 0
-
-  check_substring:
-    unless substring goto check_length
-    pos = index s, substring, pos
-    goto check_res
-  check_length:
-    $I0 = length s
-    if $I0 > pos goto done
-    pos = $I0
-
-  check_res:
-    # According to spec we should return StrPos wich yield false in boolean context.
-    # parrot return's -1 from index
-    if pos >= 0 goto done
-
-    # It should be bare StrPos.
-    retv = new 'Failure'
-    .return (retv)
-
-  done:
-    retv = new 'Int'
-    retv  = pos
-    .return (retv)
-.end
 
 =item perl()
 
@@ -277,13 +68,38 @@ Returns a Perl representation of the Str.
 =cut
 
 .sub 'perl' :method
-    $S0 = "\""
-    $S1 = self
-    $S1 = escape $S1
-    concat $S0, $S1
-    concat $S0, "\""
-    .return ($S0)
+    .local string str, result
+    str = self
+    result = '"'
+    .local int pos
+    pos = 0
+    .local pmc arr
+    arr = new 'ResizablePMCArray'
+  loop:
+    .local string ch
+    ch = substr str, pos, 1
+    if ch == '' goto done
+    if ch == ' ' goto loop_ch
+    ##  check for special escapes
+    $I0 = index  "$ @ % & { \b \n \r \t \\ \"", ch
+    if $I0 < 0 goto loop_nonprint
+    ch = substr  "\\$\\@\\%\\&\\{\\b\\n\\r\\t\\\\\\\"", $I0, 2
+    goto loop_ch
+  loop_nonprint:
+    $I0 = is_cclass .CCLASS_PRINTING, ch, 0
+    if $I0 goto loop_ch
+    $I0 = ord ch
+    arr[0] = $I0
+    ch = sprintf '\x[%x]', arr
+  loop_ch:
+    result .= ch
+    inc pos
+    goto loop
+  done:
+    result .= '"'
+    .return (result)
 .end
+
 
 =item sprintf( *@args )
 
@@ -297,32 +113,36 @@ Returns a Perl representation of the Str.
     .return ($P0)
 .end
 
+=item succ and pred
 
-=item substr()
+Increment and Decrement Methods
 
 =cut
 
-.sub 'substr' :method
-    .param int start
-    .param int len     :optional
-    .param int has_len :opt_flag
-    .local pmc s
-
-    if has_len goto check_len
-    len = self.'chars'()
-
-  check_len:
-    if len > 0 goto end
-    $I0 = self.'chars'()
-    len = $I0 + len
-    len = len - start
-
-  end:
-    $S0 = substr self, start, len
-    s = new 'Str'
-    s = $S0
-    .return (s)
+.sub 'pred' :method
+    $P0 = clone self
+    dec $P0
+    .return ($P0)
 .end
+
+.sub 'succ' :method
+    $P0 = clone self
+    inc $P0
+    .return ($P0)
+.end
+
+
+=item WHICH()
+
+Returns the identify value.
+
+=cut
+
+.sub 'WHICH' :method
+    $S0 = self
+    .return ($S0)
+.end
+
 
 =back
 
@@ -337,163 +157,19 @@ Returns a Perl representation of the Str.
 .include 'cclass.pasm'
 
 
-=item lc
+=item infix:===
 
- our Str multi Str::lc ( Str $string )
-
-Returns the input string after converting each character to its lowercase
-form, if uppercase.
+Overridden for Str.
 
 =cut
 
-.sub 'lc'
+.namespace []
+.sub 'infix:===' :multi(String,String)
     .param string a
-    .local pmc s
-    s = new 'Perl6Str'
-    s = a
-    .return s.'lc'()
+    .param string b
+    .tailcall 'infix:eq'(a, b)
 .end
 
-
-=item lcfirst
-
- our Str multi Str::lcfirst ( Str $string )
-
-Like C<lc>, but only affects the first character.
-
-=cut
-
-.sub 'lcfirst'
-    .param string a
-    .local pmc s
-    s = new 'Perl6Str'
-    s = a
-    .return s.'lcfirst'()
-.end
-
-
-=item uc
-
- our Str multi Str::uc ( Str $string )
-
-Returns the input string after converting each character to its uppercase
-form, if lowercase. This is not a Unicode "titlecase" operation, but a
-full "uppercase".
-
-=cut
-
-.sub 'uc'
-    .param string a
-    .local pmc s
-    s = new 'Perl6Str'
-    s = a
-    .return s.'uc'()
-.end
-
-
-=item ucfirst
-
- our Str multi Str::ucfirst ( Str $string )
-
-Performs a Unicode "titlecase" operation on the first character of the string.
-
-=cut
-
-.sub 'ucfirst'
-    .param string a
-    .local pmc s
-    s = new 'Perl6Str'
-    s = a
-    .return s.'ucfirst'()
-.end
-
-
-=item capitalize
-
- our Str multi Str::capitalize ( Str $string )
-
-Has the effect of first doing an C<lc> on the entire string, then performing a
-C<s:g/(\w+)/{ucfirst $1}/> on it.
-
-=cut
-
-.sub 'capitalize'
-    .param string a
-    .local pmc s
-    s = new 'Perl6Str'
-    s = a
-    .return s.'capitalize'()
-.end
-
-
-=item split
-
- our List multi Str::split ( Str $delimiter ,  Str $input = $+_, Int $limit = inf )
- our List multi Str::split ( Rule $delimiter = /\s+/,  Str $input = $+_, Int $limit = inf )
- our List multi Str::split ( Str $input :  Str $delimiter          , Int $limit = inf )
- our List multi Str::split ( Str $input : Rule $delimiter          , Int $limit = inf )
-
-String delimiters must not be treated as rules but as constants.  The
-default is no longer S<' '> since that would be interpreted as a constant.
-P5's C<< split('S< >') >> will translate to C<.words> or some such.  Null trailing fields
-are no longer trimmed by default.  We might add some kind of :trim flag or
-introduce a trimlist function of some sort.
-
-B<Note:> partial implementation only
-
-=cut
-
-.sub 'split'
-    .param string sep
-    .param string target
-    .local pmc a, b
-
-    a = new 'Perl6Str'
-    b = new 'Perl6Str'
-
-    a = target
-    b = sep
-
-    .return a.'split'(b)
-.end
-
-
-=item substr
-
- multi substr (Str $s, StrPos $start  : StrPos $end,      $replace)
- multi substr (Str $s, StrPos $start,   StrLen $length  : $replace)
- multi substr (Str $s, StrLen $offset : StrLen $length,   $replace)
-
-B<Note:> partial implementation only
-
-=cut
-
-.sub 'substr'
-    .param string x
-    .param int start
-    .param int len     :optional
-    .local pmc s
-
-    s = new 'Perl6Str'
-    s = x
-    .return s.'substr'(start, len)
-.end
-
-=item chop
-
- our Str method Str::chop ( Str  $string: )
-
-Returns string with one Char removed from the end.
-
-=cut
-
-.sub 'chop'
-    .param string a
-    .local pmc s
-    s = new 'Perl6Str'
-    s = a
-    .return s.'chop'()
-.end
 
 =back
 

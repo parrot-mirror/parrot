@@ -23,6 +23,7 @@ dispatches these to one or all interpreters.
 
 #include "parrot/parrot.h"
 #include "parrot/events.h"
+#include "events.str"
 
 typedef struct pending_io_events {
     parrot_event **events;
@@ -293,7 +294,7 @@ Only SIGHUP handled at the moment.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 void
 Parrot_init_signals(void)
 {
@@ -349,7 +350,7 @@ init_events_first(PARROT_INTERP)
      * s. p6i: "event.c - of signals and pipes"
      */
     if (pipe(pipe_fds))
-        real_exception(interp, NULL, 1, "Couldn't create message pipe");
+        Parrot_ex_throw_from_c_args(interp, NULL, 1, "Couldn't create message pipe");
 #endif
     /*
      * now set some sig handlers before any thread is started, so
@@ -399,7 +400,7 @@ Initialize the event system.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 void
 Parrot_init_events(PARROT_INTERP)
 {
@@ -427,7 +428,7 @@ Create queue entry and insert event into task queue.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 void
 Parrot_schedule_event(PARROT_INTERP, ARGMOD(parrot_event* ev))
 {
@@ -492,7 +493,7 @@ and running the passed C<sub>.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 void
 Parrot_new_timer_event(PARROT_INTERP, ARGIN_NULLOK(PMC *timer), FLOATVAL diff,
         FLOATVAL interval, int repeat, ARGIN_NULLOK(PMC *sub), parrot_event_type_enum typ)
@@ -524,7 +525,7 @@ Prepare and schedule a callback event.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 void
 Parrot_new_cb_event(PARROT_INTERP, ARGIN(PMC *cbi), ARGIN(char *ext))
 {
@@ -550,7 +551,7 @@ Deactivate the timer identified by C<timer>.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 void
 Parrot_del_timer_event(PARROT_INTERP, ARGIN(const PMC *timer))
 {
@@ -585,7 +586,7 @@ event arrives.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 void
 Parrot_new_terminate_event(PARROT_INTERP)
 {
@@ -605,7 +606,7 @@ variable for GC to finish when the event arrives.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 void
 Parrot_new_suspend_for_gc_event(PARROT_INTERP)
 {
@@ -632,7 +633,7 @@ Schedule event-loop terminate event. This shuts down the event thread.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 void
 Parrot_kill_event_loop(PARROT_INTERP)
 {
@@ -652,7 +653,7 @@ checking for the interpreter.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 void
 Parrot_schedule_interp_qentry(PARROT_INTERP, ARGIN(struct QUEUE_ENTRY *entry))
 {
@@ -741,7 +742,7 @@ Parrot_schedule_broadcast_qentry(ARGIN(struct QUEUE_ENTRY *entry))
         default:
             mem_sys_free(entry);
             mem_sys_free(event);
-            internal_exception(1, "Unknown event to broadcast");
+            exit_fatal(1, "Unknown event to broadcast");
             break;
     }
 }
@@ -804,7 +805,7 @@ io_thread_ready_rd(ARGMOD(pending_io_events *ios), int ready_rd)
     for (i = 0; i < ios->n; ++i) {
         parrot_event * const ev  = ios->events[i];
         PMC          * const pio = ev->u.io_event.pio;
-        const int            fd  = PIO_getfd(NULL, pio);
+        const int            fd  = Parrot_io_getfd(ev->interp, pio);
 
         if (fd == ready_rd) {
             /* remove from event list */
@@ -899,7 +900,7 @@ io_thread(SHIM(void *data))
                              */
                             edebug((stderr, "msg arrived\n"));
                             if (read(PIPE_READ_FD, &buf, sizeof (buf)) != sizeof (buf))
-                                internal_exception(1,
+                                exit_fatal(1,
                                         "read error from msg pipe");
                             switch (buf.command) {
                                 case IO_THR_MSG_TERMINATE:
@@ -908,7 +909,7 @@ io_thread(SHIM(void *data))
                                 case IO_THR_MSG_ADD_SELECT_RD:
                                     {
                                         PMC * const pio = buf.ev->u.io_event.pio;
-                                        const int fd = PIO_getfd(NULL, pio);
+                                        const int fd = Parrot_io_getfd(buf.ev->interp, pio);
                                         if (FD_ISSET(fd, &act_rfds)) {
                                             mem_sys_free(buf.ev);
                                             break;
@@ -921,7 +922,7 @@ io_thread(SHIM(void *data))
                                     break;
                                     /* TODO */
                                 default:
-                                    internal_exception(1,
+                                    exit_fatal(1,
                                             "unhandled msg in pipe");
                                     break;
                             }
@@ -971,7 +972,7 @@ stop_io_thread(void)
     memset(&buf, 0, sizeof (buf));
     buf.command = IO_THR_MSG_TERMINATE;
     if (write(PIPE_WRITE_FD, &buf, sizeof (buf)) != sizeof (buf))
-        internal_exception(1, "msg pipe write failed");
+        exit_fatal(1, "msg pipe write failed");
 #endif
 }
 
@@ -985,7 +986,7 @@ Create new i/o event.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 void
 Parrot_event_add_io_event(PARROT_INTERP,
         ARGIN_NULLOK(PMC *pio), ARGIN_NULLOK(PMC *sub), ARGIN_NULLOK(PMC *data), INTVAL which)
@@ -1009,7 +1010,7 @@ Parrot_event_add_io_event(PARROT_INTERP,
     /* XXX Why isn't this entire function inside an ifndef WIN32? */
 #ifndef WIN32
     if (write(PIPE_WRITE_FD, &buf, sizeof (buf)) != sizeof (buf))
-        real_exception(interp, NULL, 1, "msg pipe write failed");
+        Parrot_ex_throw_from_c_args(interp, NULL, 1, "msg pipe write failed");
 #endif
 }
 
@@ -1123,7 +1124,7 @@ process_events(ARGMOD(QUEUE *event_q))
                 }
                 break;
             default:
-                internal_exception(1, "Unknown queue entry");
+                exit_fatal(1, "Unknown queue entry");
         }
         PARROT_ASSERT(event);
         if (event->type == EVENT_TYPE_NONE) {
@@ -1196,7 +1197,7 @@ event_thread(ARGMOD(void *data))
         else {
             /* we shouldn't get here probably
              */
-            internal_exception(1, "Spurious event");
+            exit_fatal(1, "Spurious event");
 
         }
         /*
@@ -1279,7 +1280,7 @@ Go to sleep. This is called from the C<sleep> opcode.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 opcode_t *
@@ -1293,8 +1294,8 @@ Parrot_sleep_on_event(PARROT_INTERP, FLOATVAL t, ARGIN_NULLOK(opcode_t *next))
      * place the opcode_t* next arg in the event data, so that
      * we can identify this event in wakeup
      */
-    Parrot_new_timer_event(interp, (PMC *) next, t,
-            0, 0, NULL, EVENT_TYPE_SLEEP);
+    Parrot_new_timer_event(interp, (PMC *) next, t, 0.0, 0,
+        NULL, EVENT_TYPE_SLEEP);
     next = wait_for_wakeup(interp, next);
 #else
     /*
@@ -1321,7 +1322,7 @@ Explicitly C<sync> called by the check_event opcode from run loops.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 opcode_t *
@@ -1355,10 +1356,17 @@ event_to_exception(PARROT_INTERP, ARGIN(const parrot_event* event))
              * SIGINT is silent, if no exception handler is
              * installed: set severity to EXCEPT_exit
              */
-            do_exception(interp, EXCEPT_exit, exit_code);
+            {
+                STRING * const message = CONST_STRING(interp, "Caught signal.");
+                PMC           *exception = Parrot_ex_build_exception(interp,
+                                        EXCEPT_exit, exit_code, message);
+
+                Parrot_ex_throw_from_c(interp, exception);
+            }
             break;
         default:
-            do_exception(interp, EXCEPT_error, exit_code);
+            Parrot_ex_throw_from_c_args(interp, NULL, exit_code,
+                    "Caught signal.");
             break;
     }
 }
@@ -1436,7 +1444,7 @@ C<op_func_table>.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 opcode_t *

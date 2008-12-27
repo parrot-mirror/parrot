@@ -23,7 +23,7 @@
     .return (opts)
 
   help:
-    .return 'help'(prog)
+    .tailcall 'help'(prog)
 .end
 
 
@@ -98,7 +98,7 @@ END_HELP
     $P0 = new 'Exception'
     $S0 = concat "error: can't find news on version ", version
     $S0 .= " in 'NEWS'\n"
-    $P0['_message'] = $S0
+    $P0 = $S0
     throw $P0
 .end
 

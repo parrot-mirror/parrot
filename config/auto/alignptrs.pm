@@ -23,18 +23,13 @@ use Parrot::Configure::Utils ':auto';
 sub _init {
     my $self = shift;
     my %data;
-    $data{description} = q{Determining your minimum pointer alignment};
+    $data{description} = q{Determine your minimum pointer alignment};
     $data{result}      = q{};
     return \%data;
 }
 
 sub runstep {
     my ( $self, $conf ) = ( shift, shift );
-
-    if ( $conf->options->get('miniparrot') ) {
-        $self->set_result('skipped');
-        return 1;
-    }
 
     my $result_str = '';
     my $align;

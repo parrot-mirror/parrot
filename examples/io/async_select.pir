@@ -31,13 +31,14 @@ available.
     $S0 = pop pio   # unbuffer
     data = new 'Integer'
     data = 42
-    .const .Sub handler = "io_handler"
+    .const 'Sub' handler = "io_handler"
     pio_out = getstdout
     idles = '|/-\'
     i = 0
 spin:
+    # XXX: this opcode is long gone
     # the IO event is inactive, after it fired, just reattach always
-    add_io_event pio, handler, data, .IO_THR_MSG_ADD_SELECT_RD
+    # add_io_event pio, handler, data, .IO_THR_MSG_ADD_SELECT_RD
     sleep 0.2
     $S0 = idles[i]
     inc i

@@ -104,7 +104,7 @@ An empty ResizablePMCArray PMC is allocated during initialization.
 static void
 build_attrib_index(PARROT_INTERP, PMC *self)
 {
-    Parrot_Class * const _class      = PARROT_CLASS(self);
+    Parrot_Class_attributes * const _class      = PARROT_CLASS(self);
     int                  cur_index   = 0;
     PMC * const          table       = pmc_new(interp, enum_class_Hash);
     PMC * const          cache       = pmc_new(interp, enum_class_Hash);
@@ -122,7 +122,7 @@ build_attrib_index(PARROT_INTERP, PMC *self)
 
         if (PObj_is_class_TEST(cur_class)) {
             /* The attribute metadata hash. */
-            Parrot_Class * const class_info = PARROT_CLASS(cur_class);
+            Parrot_Class_attributes * const class_info = PARROT_CLASS(cur_class);
             PMC          * const attribs    = class_info->attrib_metadata;
             PMC          * const iter       = VTABLE_get_iter(interp, attribs);
 
@@ -162,7 +162,7 @@ build_attrib_index(PARROT_INTERP, PMC *self)
 static void
 init_class_from_hash(PARROT_INTERP, PMC *self, PMC *info)
 {
-    Parrot_Class * const _class      = PARROT_CLASS(self);
+    Parrot_Class_attributes * const _class      = PARROT_CLASS(self);
     STRING       * const name_str    = CONST_STRING(interp, "name");
     STRING       * const parents_str = CONST_STRING(interp, "parents");
     STRING       * const methods_str = CONST_STRING(interp, "methods");
@@ -191,6 +191,7 @@ init_class_from_hash(PARROT_INTERP, PMC *self, PMC *info)
         if (name_arg->vtable->base_type == enum_class_NameSpace) {
             new_namespace = name_arg;
             name_arg      = Parrot_ns_get_name(interp, new_namespace);
+            VTABLE_shift_string(interp, name_arg);
         }
         else {
             PMC * const hll_ns = VTABLE_get_pmc_keyed_int(interp,
@@ -199,16 +200,15 @@ init_class_from_hash(PARROT_INTERP, PMC *self, PMC *info)
         }
 
         if (PMC_IS_NULL(new_namespace))
-            real_exception(interp, NULL, INVALID_OPERATION,
+            Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INVALID_OPERATION,
                 "Failed to set namespace for class.");
 
         /* Set the name of the class to the name of the innermost namespace
-         * associated with the class.
-         */
+         * associated with the class.  */
         new_name = VTABLE_get_string(interp, new_namespace);
 
         if (STRING_IS_NULL(new_name) || STRING_IS_EMPTY(new_name))
-              real_exception(interp, NULL, INVALID_OPERATION,
+              Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INVALID_OPERATION,
                 "Failed to set name for class.");
 
         _class->_namespace = new_namespace;
@@ -377,7 +377,7 @@ initialize_parents_pmc(PARROT_INTERP, PMC *object, PMC *all_parents, PMC *init)
 static STRING *
 make_class_name(PARROT_INTERP, PMC *SELF)
 {
-    Parrot_Class * const  _class    = PARROT_CLASS(SELF);
+    Parrot_Class_attributes * const  _class    = PARROT_CLASS(SELF);
     PMC          * const _namespace = _class->_namespace;
 
     if (!PMC_IS_NULL(_namespace)) {
@@ -452,7 +452,7 @@ arguments.  The class is attatched to the current HLL namespace.
 */
 
     VTABLE void init() {
-        Parrot_Class * const _class = mem_allocate_zeroed_typed(Parrot_Class);
+        Parrot_Class_attributes * const _class = mem_allocate_zeroed_typed(Parrot_Class_attributes);
 
         /* Set flags for custom DOD mark and destroy. */
         PObj_custom_mark_SET(SELF);
@@ -486,7 +486,7 @@ arguments.  The class is attatched to the current HLL namespace.
     }
 
     VTABLE void init_pmc(PMC *init_data) {
-        PMC           *arg;
+        PMC           *arg, *ns_name;
         const INTVAL   arg_type = VTABLE_type(interp, init_data);
         STRING * const name_str = CONST_STRING(interp, "name");
 
@@ -497,8 +497,8 @@ arguments.  The class is attatched to the current HLL namespace.
         switch (arg_type) {
             case enum_class_String:
             case enum_class_Key:
-            case enum_class_NameSpace:
             case enum_class_ResizableStringArray:
+            case enum_class_NameSpace:
                 arg = pmc_new(interp, enum_class_Hash);
                 VTABLE_set_pmc_keyed_str(interp, arg, name_str, init_data);
                 break;
@@ -519,7 +519,8 @@ arguments.  The class is attatched to the current HLL namespace.
                 if (VTABLE_isa(interp, init_data, CONST_STRING(interp, "Hash")))
                     arg = init_data;
                 else
-                    real_exception(INTERP, NULL, E_NameError,
+                    Parrot_ex_throw_from_c_args(INTERP, NULL,
+                        EXCEPTION_INVALID_OPERATION,
                             "Invalid class name key in init_pmc for Class");
                 break;
         }
@@ -597,7 +598,7 @@ Marks any referenced strings and PMCs in the structure as live.
 */
 
     VTABLE void mark() {
-        Parrot_Class * const _class = PARROT_CLASS(SELF);
+        Parrot_Class_attributes * const _class = PARROT_CLASS(SELF);
         if (_class->name)
             pobject_lives(interp, (PObj *)_class->name);
         if (_class->fullname)
@@ -641,17 +642,17 @@ Returns an error if an attribute of C<name> already exists.
 */
 
     VTABLE void add_attribute(STRING *name, PMC *type) {
-        Parrot_Class * const _class        = PARROT_CLASS(SELF);
+        Parrot_Class_attributes * const _class        = PARROT_CLASS(SELF);
         PMC          * const new_attribute = pmc_new(interp, enum_class_Hash);
 
         /* If we've been instantiated already, not allowed. */
         if (_class->instantiated)
-            real_exception(interp, NULL, INVALID_OPERATION,
+            Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INVALID_OPERATION,
                 "Modifications to classes are not allowed after instantiation.");
 
         /* If we already have an attribute of this name, it's an error. */
         if (VTABLE_exists_keyed_str(interp, _class->attrib_metadata, name))
-            real_exception(interp, NULL, INVALID_OPERATION,
+            Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INVALID_OPERATION,
                 "Attribute '%Ss' already exists in '%Ss'.", name,
                 VTABLE_get_string(INTERP, SELF));
 
@@ -676,18 +677,37 @@ Adds the given sub PMC as a method with the given name.
 
 */
     VTABLE void add_method(STRING *name, PMC *sub) {
-        Parrot_Class * const _class = PARROT_CLASS(SELF);
+        Parrot_Class_attributes * const _class = PARROT_CLASS(SELF);
 
         /* If we have already added a method with this name... */
         if (VTABLE_exists_keyed_str(interp, _class->methods, name))
             /* RT #46095 Need to handle multi methods here. */
-            real_exception(interp, NULL, INVALID_OPERATION,
+            Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INVALID_OPERATION,
                 "A method named '%S' already exists in class '%S'. "
                 "It may have been supplied by a role.",
                 name, VTABLE_get_string(interp, SELF));
 
         /* Enter it into the table. */
         VTABLE_set_pmc_keyed_str(interp, _class->methods, name, sub);
+    }
+
+/*
+
+=item C<void remove_method(STRING *name, PMC *sub)>
+
+Removes the method with the given name.
+
+=cut
+
+*/
+    VTABLE void remove_method(STRING *name) {
+        Parrot_Class_attributes * const _class = PARROT_CLASS(SELF);
+        if (VTABLE_exists_keyed_str(interp, _class->methods, name))
+            VTABLE_delete_keyed_str(interp, _class->methods, name);
+        else
+            Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INVALID_OPERATION,
+                "No method named '%S' to remove in class '%S'.",
+                name, VTABLE_get_string(interp, SELF));
     }
 
 /*
@@ -700,18 +720,18 @@ Adds the given sub PMC as a vtable override with the given name.
 
 */
     VTABLE void add_vtable_override(STRING *name, PMC *sub) {
-        Parrot_Class * const _class = PARROT_CLASS(SELF);
+        Parrot_Class_attributes * const _class = PARROT_CLASS(SELF);
 
         /* If we have already added a vtable override with this name... */
         if (VTABLE_exists_keyed_str(interp, _class->vtable_overrides, name))
-            real_exception(interp, NULL, INVALID_OPERATION,
+            Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INVALID_OPERATION,
                 "A vtable override named '%S' already exists in class '%S'. "
                 "It may have been supplied by a role.",
                 name, VTABLE_get_string(interp, SELF));
 
         /* Check that the name is actually valid as a vtable override */
         if (Parrot_get_vtable_index(interp, name) == -1)
-            real_exception(interp, NULL, METH_NOT_FOUND,
+            Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_METH_NOT_FOUND,
                 "'%S' is not a valid vtable function name.", name);
 
         /* Add it to vtable methods list. */
@@ -728,28 +748,28 @@ Adds the supplied PMC to the list of parents for the class.
 
 */
     VTABLE void add_parent(PMC *parent) {
-        Parrot_Class * const _class = PARROT_CLASS(SELF);
+        Parrot_Class_attributes * const _class = PARROT_CLASS(SELF);
 
         /* get name of the parent being added */
         STRING * const parent_name  = VTABLE_get_string(interp, parent);
 
         /* get number of direct parents */
-        const int parent_count      = VTABLE_elements(interp, _class->parents);
+        int parent_count      = VTABLE_elements(interp, _class->parents);
 
         int index; /* loop iterator */
 
         /* If we've been instantiated already, not allowed. */
         if (_class->instantiated)
-            real_exception(interp, NULL, INVALID_OPERATION,
+            Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INVALID_OPERATION,
                 "Modifications to classes are not allowed after instantiation.");
 
         /* Ensure it really is a class. */
         if (!PObj_is_class_TEST(parent))
-            real_exception(interp, NULL, E_TypeError, "Parent isn't a Class.");
+            Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INVALID_OPERATION,
+                    "Parent isn't a Class.");
 
         /* iterate over all direct parents, check whether this class already has
-         * the parent being added.
-         */
+         * the parent being added. */
         for (index = 0; index < parent_count; index++) {
             /* get the next parent */
             PMC * const current_parent = VTABLE_get_pmc_keyed_int(interp,
@@ -760,12 +780,31 @@ Adds the supplied PMC to the list of parents for the class.
 
             /* throw an exception if we already have this parent */
             if (string_equal(interp, current_name, parent_name) == 0)
-                real_exception(interp, NULL, INVALID_OPERATION,
+                Parrot_ex_throw_from_c_args(interp, NULL,
+                    EXCEPTION_INVALID_OPERATION,
                     "The class '%S' already has a parent class '%S'. "
                     "It may have been supplied by a role.",
                     VTABLE_get_string(interp, SELF), parent_name);
         }
+        /* Check is not self */
+        if (parent == SELF)
+            Parrot_ex_throw_from_c_args(interp, NULL,
+                    EXCEPTION_INVALID_OPERATION, "Can't be own parent");
 
+        /* Check that none of the parents is self */
+        parent_count = VTABLE_elements(interp,
+            PARROT_CLASS(parent)->all_parents);
+        for (index = 0; index < parent_count; index++) {
+            /* get the next parent */
+            PMC * const current_parent = VTABLE_get_pmc_keyed_int(interp,
+                PARROT_CLASS(parent)->all_parents, index);
+            if (current_parent == SELF)
+                Parrot_ex_throw_from_c_args(interp, NULL,
+                    EXCEPTION_INVALID_OPERATION,
+                    "Loop in class hierarchy: '%S' is an ancestor of '%S'.",
+                    VTABLE_get_string(interp, SELF),
+                    VTABLE_get_string(interp, parent));
+        }
 
         /* Add to the lists of our immediate parents and all parents. */
         VTABLE_push_pmc(interp, _class->parents, parent);
@@ -787,7 +826,7 @@ no conflicts.
 
 */
     VTABLE void add_role(PMC *role) {
-        Parrot_Class * const _class = PARROT_CLASS(SELF);
+        Parrot_Class_attributes * const _class = PARROT_CLASS(SELF);
 
         /* Do the composition. */
         Parrot_ComposeRole(interp, role,
@@ -836,7 +875,7 @@ Array of Class PMCs representing the direct parents of this class.
 
 */
     VTABLE PMC *inspect_str(STRING *what) {
-        Parrot_Class * const _class = PARROT_CLASS(SELF);
+        Parrot_Class_attributes * const _class = PARROT_CLASS(SELF);
 
         /* What should we return? */
         PMC *found;
@@ -876,10 +915,11 @@ Array of Class PMCs representing the direct parents of this class.
         }
         else if (string_equal(interp, what, CONST_STRING(interp, "flags")) == 0) {
             found = pmc_new(interp, enum_class_Integer);
-            VTABLE_set_integer_native(interp, found, PObj_get_FLAGS(SELF));
+            VTABLE_set_integer_native(interp, found,
+                (INTVAL)PObj_get_FLAGS(SELF));
         }
         else
-            real_exception(interp, NULL, INVALID_OPERATION,
+            Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INVALID_OPERATION,
                 "Unknown introspection value '%S'", what);
 
         /* Clone and return. */
@@ -944,7 +984,7 @@ namespace). Unsets the instantiated flag, allowing modifications.
 */
 
     VTABLE PMC *clone() {
-        Parrot_Class * const _class    = PARROT_CLASS(SELF);
+        Parrot_Class_attributes * const _class    = PARROT_CLASS(SELF);
 
         /* Create the new class PMC, of the same type of this one (we may
          * have been subclassed). */
@@ -954,7 +994,7 @@ namespace). Unsets the instantiated flag, allowing modifications.
          * not copy name/namespace related stuff (need anonymous clone) or
          * stuff that gets computed on the first instantiation. */
 
-        Parrot_Class * const new_class = PARROT_CLASS(copy);
+        Parrot_Class_attributes * const new_class = PARROT_CLASS(copy);
 
         new_class->name                = CONST_STRING(interp, "");
         new_class->_namespace          = PMCNULL;
@@ -1007,26 +1047,30 @@ Creates a new PMC object of the type of the class and calls init().
 */
 
     VTABLE PMC *instantiate(PMC *init) {
-        Parrot_Class  * const _class    = PARROT_CLASS(SELF);
+        Parrot_Class_attributes  * const _class    = PARROT_CLASS(SELF);
         STRING        * const class_str = CONST_STRING(interp, "Class");
 
-        Parrot_Object *obj_guts;
+        Parrot_Object_attributes *obj_guts;
         PMC           *object;
 
         /* If we've not been instantiated before... */
         if (!_class->instantiated) {
             /* Check that we have all methods listed in resolve list. */
             const int resolve_count = VTABLE_elements(interp, _class->resolve_method);
-            INTVAL mro_length;
-            int i;
+            INTVAL    cur_hll       = CONTEXT(interp)->current_HLL;
+            INTVAL    mro_length;
+            int       i;
+
+            /* don't use HLL mappings for internal-only data */
+            CONTEXT(interp)->current_HLL = 0;
 
             for (i = 0; i < resolve_count; i++) {
                 STRING * const check_meth =
                     VTABLE_get_string_keyed_int(interp, _class->resolve_method, i);
                 if (!VTABLE_exists_keyed_str(interp, _class->methods, check_meth))
-                    real_exception(interp, NULL, METH_NOT_FOUND,
-                        "The method '%S' was named in the resolve list, but not supplied",
-                        check_meth);
+                    Parrot_ex_throw_from_c_args(interp, NULL,
+                        EXCEPTION_METH_NOT_FOUND, "The method '%S' was named "
+                        "in the resolve list, but not supplied", check_meth);
             }
 
             /* Build full parents list.
@@ -1054,6 +1098,8 @@ Creates a new PMC object of the type of the class and calls init().
                     break;
                 }
             }
+
+            CONTEXT(interp)->current_HLL = cur_hll;
         }
 
         /* Set instantiated flag. */
@@ -1071,7 +1117,7 @@ Creates a new PMC object of the type of the class and calls init().
 
         /* Initialize the object's underlying structure, pointing it to this
          * class. */
-        obj_guts               = mem_allocate_zeroed_typed(Parrot_Object);
+        obj_guts               = mem_allocate_zeroed_typed(Parrot_Object_attributes);
         obj_guts->_class       = SELF;
         PMC_data(object)       = obj_guts;
         obj_guts->attrib_store = pmc_new(interp, enum_class_ResizablePMCArray);
@@ -1088,30 +1134,6 @@ Creates a new PMC object of the type of the class and calls init().
 
                 /* Set the attribute. */
                 VTABLE_set_attr_str(interp, object, attr_name, attr_value);
-            }
-        }
-
-        /* If we have parents that are out of this class universe, find them
-         * in the MRO and create instances of them. */
-        if (CLASS_has_alien_parents_TEST(SELF)) {
-            const INTVAL mro_length = VTABLE_elements(interp, _class->all_parents);
-            int i;
-
-            for (i = 0; i < mro_length; i++) {
-                PMC * const class_check = VTABLE_get_pmc_keyed_int(interp,
-                    _class->all_parents, i);
-
-                if (!VTABLE_isa(interp, class_check, class_str)) {
-                    /* From another universe. Create instance... */
-                    PMC * const parent_ins = VTABLE_instantiate(interp, class_check, PMCNULL);
-
-                    /* Associate it with this class as the real self. */
-                    parent_ins->real_self = object;
-
-                    /* ...and tack on end of the attribute store (after all the
-                     * slots for attributes). */
-                    VTABLE_push_pmc(interp, obj_guts->attrib_store, parent_ins);
-                }
             }
         }
 
@@ -1137,10 +1159,9 @@ Returns whether the class is or inherits from C<*class>.
 */
 
     VTABLE INTVAL isa_pmc(PMC *lookup) {
-        Parrot_Class * const _class    = PARROT_CLASS(SELF);
-        INTVAL        i, num_classes;
-        STRING       *classname;
+        Parrot_Class_attributes * const _class    = PARROT_CLASS(SELF);
         PMC          *classobj;
+        INTVAL        i, num_classes;
 
         if (PMC_IS_NULL(lookup))
             return 0;
@@ -1156,16 +1177,26 @@ Returns whether the class is or inherits from C<*class>.
         /* Check if the class object is the same as self's class object */
         if (VTABLE_is_same(interp, SELF, classobj))
             return 1;
+        else {
+            STRING *classname = VTABLE_get_string(interp, classobj);
+            INTVAL  is_proxy  = SELF->vtable->base_type == enum_class_PMCProxy
+                               ? 1 : 0;
 
-        classname = VTABLE_get_string(interp, classobj);
+            /* avoid the expensive string copy, if possible */
+            STRING *self_name = is_proxy
+                               ? VTABLE_get_string(interp, SELF)
+                               : make_class_name(interp, SELF);
 
-        /* Check if the passed name is the same as the stored short name. */
-        if (string_equal(interp, classname, _class->name) == 0)
-            return 1;
+            /* Check if the passed name is the same as the stored short name. */
+            INTVAL name_match = string_equal(interp, classname, self_name) == 0;
 
-        /* Check if the passed name is the same as the fully qualified name. */
-        if (string_equal(interp, classname, VTABLE_get_string(interp, SELF)) == 0)
-            return 1;
+            string_free(interp, classname);
+            if (is_proxy)
+                string_free(interp, self_name);
+
+            if (name_match)
+                return 1;
+        }
 
         /* Iterate over all the parents and check if they respond true
          * for 'isa' on the original comparison. */
@@ -1193,36 +1224,22 @@ Returns whether the class is or inherits from C<*classname>.
 */
 
     VTABLE INTVAL isa(STRING *classname) {
-        Parrot_Class * const _class = PARROT_CLASS(SELF);
-        STRING              *self_name;
-
-        INTVAL i, num_parents;
+        Parrot_Class_attributes * const _class = PARROT_CLASS(SELF);
+        PMC                            *want_class;
 
         /* hard-code this one exception right away */
         if (string_equal(interp, classname, CONST_STRING(interp, "Class")) == 0)
             return 1;
 
-        /* avoid the expensive string copy, if possible */
-        self_name = SELF->vtable->base_type != enum_class_PMCProxy
-            ? make_class_name(interp, SELF)
-            : VTABLE_get_string(interp, SELF);
+        want_class = Parrot_oo_get_class_str(interp, classname);
 
-        /* check the fully-qualified name */
-        if (string_equal(interp, classname, self_name) == 0)
+        if (PMC_IS_NULL(want_class))
+            return 0;
+
+        if (SELF == want_class)
             return 1;
 
-        /* loop through parents */
-        num_parents = VTABLE_elements(interp, _class->parents);
-
-        for (i = 0; i < num_parents; i++) {
-            PMC * const cur_class = VTABLE_get_pmc_keyed_int(interp,
-                    _class->parents, i);
-
-            if (VTABLE_isa(interp, cur_class, classname))
-                return 1;
-        }
-
-        return 0;
+        return VTABLE_isa_pmc(interp, SELF, want_class);
     }
 
 /*
@@ -1235,7 +1252,7 @@ Returns whether the class does the role with the given C<*role_name>.
 
 */
     INTVAL does(STRING *role_name) {
-        Parrot_Class * const _class    = PARROT_CLASS(SELF);
+        Parrot_Class_attributes * const _class    = PARROT_CLASS(SELF);
         PMC          * const role_list = _class->roles;
         INTVAL i, count;
 
@@ -1276,7 +1293,7 @@ Returns whether the class does the given C<*role>.
 
 */
     INTVAL does_pmc(PMC *role) {
-        Parrot_Class * const _class    = PARROT_CLASS(SELF);
+        Parrot_Class_attributes * const _class    = PARROT_CLASS(SELF);
         PMC * const role_list          = _class->roles;
         INTVAL i, role_count, count;
 
@@ -1321,7 +1338,7 @@ Returns the integer type of the class.
 */
 
     VTABLE INTVAL type() {
-        Parrot_Class * const _class = PARROT_CLASS(SELF);
+        Parrot_Class_attributes * const _class = PARROT_CLASS(SELF);
         return _class->id;
     }
 
@@ -1338,7 +1355,7 @@ C<*info> is the visit info, (see F<include/parrot/pmc_freeze.h>).
 */
 
     VTABLE void visit(visit_info *info) {
-        Parrot_Class * const class_data = PARROT_CLASS(SELF);
+        Parrot_Class_attributes * const class_data = PARROT_CLASS(SELF);
         PMC **pos;
 
         /* 1) visit the attribute description hash */
@@ -1384,7 +1401,7 @@ Used to archive the class.
 
     VTABLE void freeze(visit_info *info) {
         IMAGE_IO     * const io         = info->image_io;
-        Parrot_Class * const class_data = PARROT_CLASS(SELF);
+        Parrot_Class_attributes * const class_data = PARROT_CLASS(SELF);
         STRING       *serial_namespace  = CONST_STRING(interp, "");
 
         /* 1) freeze class id */
@@ -1471,7 +1488,7 @@ Called after the class has been thawed.
 */
 
     void thawfinish(visit_info *info) {
-        Parrot_Class * const _class = PARROT_CLASS(SELF);
+        Parrot_Class_attributes * const _class = PARROT_CLASS(SELF);
 
         /* Recalculate full MRO from thawed parents */
         _class->all_parents         = Parrot_ComputeMRO_C3(interp, SELF);
@@ -1497,7 +1514,7 @@ Sets the name of the class, and updates the namespace accoringly.
 
 */
     METHOD name(STRING *name :optional, int has_name :opt_flag) {
-        Parrot_Class * const _class = PARROT_CLASS(SELF);
+        Parrot_Class_attributes * const _class = PARROT_CLASS(SELF);
         STRING *ret_name;
 
         if (has_name) {
@@ -1524,7 +1541,7 @@ Gets the namespace that this class is attached to.
 
 */
     METHOD get_namespace(PMC *_namespace :optional, int has_name :opt_flag) {
-        Parrot_Class * const _class        = PARROT_CLASS(SELF);
+        Parrot_Class_attributes * const _class        = PARROT_CLASS(SELF);
         PMC          * const ret_namespace = _class->_namespace;
         UNUSED(_namespace);
         UNUSED(has_name);
@@ -1542,7 +1559,7 @@ methods from roles. When called with no parameter, returns the list.
 
 */
     METHOD resolve_method(PMC *resolve_list :optional, int has_list :opt_flag) {
-        Parrot_Class * const _class   = PARROT_CLASS(SELF);
+        Parrot_Class_attributes * const _class   = PARROT_CLASS(SELF);
         PMC *ret_list;
 
         /* Store list. */
@@ -1648,6 +1665,34 @@ C<add_method> vtable method.
 
 /*
 
+=item C<void add_vtable_override(STRING *name, PMC *sub)>
+
+Adds the given sub PMC as a vtable override with the given name. Delegates to
+the C<add_vtable_override> vtable method.
+
+=cut
+
+*/
+    METHOD add_vtable_override(STRING *name, PMC *sub) {
+        VTABLE_add_vtable_override(interp, SELF, name, sub);
+    }
+
+/*
+
+=item C<void remove_method(STRING *name)>
+
+Removes the method with the given name.
+
+=cut
+
+*/
+    METHOD remove_method(STRING *name)
+    {
+        VTABLE_remove_method(interp, SELF, name);
+    }
+
+/*
+
 =item C<PMC *find_method(STRING *name)>
 
 Walks the MRO of the class and finds the method with the given name.
@@ -1657,7 +1702,7 @@ Walks the MRO of the class and finds the method with the given name.
 */
 
     METHOD find_method(STRING *name) {
-        Parrot_Class * const  _class    = PARROT_CLASS(SELF);
+        Parrot_Class_attributes * const  _class    = PARROT_CLASS(SELF);
         int i;
 
         /* Walk and search. One day, we'll use the cache first. */
@@ -1667,7 +1712,7 @@ Walks the MRO of the class and finds the method with the given name.
             /* Get the class and see if it has the method. */
             PMC * const cur_class =
                 VTABLE_get_pmc_keyed_int(interp, _class->all_parents, i);
-            const Parrot_Class * const class_info = PARROT_CLASS(cur_class);
+            const Parrot_Class_attributes * const class_info = PARROT_CLASS(cur_class);
 
             /* Found it! */
             if (VTABLE_exists_keyed_str(interp, class_info->methods, name)) {
@@ -1738,7 +1783,7 @@ Composes a role into a class with the given exclusions and aliases.
             PMC *alias_method       :optional :named("alias_method"),
             int has_alias_method    :opt_flag) {
 
-        Parrot_Class * const _class = PARROT_CLASS(SELF);
+        Parrot_Class_attributes * const _class = PARROT_CLASS(SELF);
 
         /* Add everything on the resolve list to the exclude list; if we have
          * no exclude list, pass along the resolve list in its place if it has

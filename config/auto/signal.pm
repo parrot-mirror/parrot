@@ -24,7 +24,7 @@ use Parrot::Configure::Utils ':auto';
 sub _init {
     my $self = shift;
     my %data;
-    $data{description} = q{Determining some signal stuff};
+    $data{description} = q{Determine some signal stuff};
     $data{result}      = q{};
     return \%data;
 }
@@ -38,10 +38,6 @@ sub runstep {
         has_sigaction      => undef,
         has_setitimer      => undef
     );
-    if ( defined $conf->options->get('miniparrot') ) {
-        $self->set_result('skipped');
-        return 1;
-    }
 
     my $verbose = $conf->options->get('verbose');
 

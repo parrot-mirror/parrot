@@ -13,16 +13,35 @@ This file implements the Whatever class.
 .namespace ['Whatever']
 
 .sub 'onload' :anon :init :load
-    .local pmc p6meta
+    .local pmc p6meta, whateverproto
     p6meta = get_hll_global ['Perl6Object'], '$!P6META'
-    p6meta.'new_class'('Whatever', 'parent'=>'Perl6Object')
+    whateverproto = p6meta.'new_class'('Whatever', 'parent'=>'Perl6Object')
+    whateverproto.'!IMMUTABLE'()
 .end
+
 
 .sub 'ACCEPTS' :method
     .param pmc topic
     $P0 = get_hll_global ['Bool'], 'True'
     .return ($P0)
 .end
+
+.sub 'perl' :method
+    .return ('*')
+.end
+
+.sub '' :vtable('get_integer') :method
+    $P0 = get_global '$!slice'
+    $I0 = $P0
+    .return ($I0)
+.end
+
+.sub '' :vtable('get_number') :method
+    $P0 = get_global '$!slice'
+    $N0 = $P0
+    .return ($N0)
+.end
+
 
 # Local Variables:
 #   mode: pir

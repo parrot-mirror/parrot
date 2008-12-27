@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2001-2003, The Perl Foundation.
+Copyright (C) 2001-2008, The Perl Foundation.
 $Id$
 
 =head1 NAME
@@ -59,7 +59,7 @@ Create a callback function according to pdd16.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 PARROT_CANNOT_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
 PMC*
@@ -85,10 +85,9 @@ Parrot_make_cb(PARROT_INTERP, ARGMOD(PMC* sub), ARGIN(PMC* user_data),
     /* only ASCII signatures are supported */
     sig_str = cb_signature->strstart;
 
-    if (strlen(sig_str) != 3) {
-        real_exception(interp, NULL, 1, "unhandled signature '%s' in make_cb",
-              cb_signature->strstart);
-    }
+    if (strlen(sig_str) != 3)
+        Parrot_ex_throw_from_c_args(interp, NULL, 1,
+            "unhandled signature '%s' in make_cb", cb_signature->strstart);
 
     ++sig_str;     /* Skip callback return type */
 
@@ -101,8 +100,8 @@ Parrot_make_cb(PARROT_INTERP, ARGMOD(PMC* sub), ARGIN(PMC* user_data),
             type = 'C';
         }
         else {
-            real_exception(interp, NULL, 1, "unhandled signature '%s' in make_cb",
-                    cb_signature->strstart);
+            Parrot_ex_throw_from_c_args(interp, NULL, 1,
+                "unhandled signature '%s' in make_cb", cb_signature->strstart);
         }
     }
 
@@ -272,7 +271,7 @@ necessary items in its properties.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 void
 Parrot_run_callback(PARROT_INTERP,
         ARGMOD(PMC* user_data), ARGIN(char* external_data))
@@ -349,8 +348,8 @@ case_I:
             param = string_from_cstring(interp, external_data, 0);
             break;
         default:
-            real_exception(interp, NULL, 1, "unhandled signature char '%c' in run_cb",
-                               *p);
+            Parrot_ex_throw_from_c_args(interp, NULL, 1,
+                "unhandled signature char '%c' in run_cb", *p);
     }
     pasm_sig[3] = '\0';
     Parrot_runops_fromc_args_event(interp, sub, pasm_sig,
@@ -368,14 +367,14 @@ NCI callback functions. See pdd16.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 void
 Parrot_callback_C(ARGIN(char *external_data), ARGMOD(PMC *user_data))
 {
     verify_CD(external_data, user_data);
 }
 
-PARROT_API
+PARROT_EXPORT
 void
 Parrot_callback_D(ARGMOD(PMC *user_data), ARGIN(char *external_data))
 {

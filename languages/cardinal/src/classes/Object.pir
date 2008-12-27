@@ -59,7 +59,7 @@ resolve_loop:
     push resolve_list, $P0
     goto resolve_loop
 resolve_loop_end:
-    class.resolve_method(resolve_list)
+    class.'resolve_method'(resolve_list)
 
     .return(class)
 .end
@@ -132,14 +132,20 @@ Create a new object having the same class as the invocant.
 
 .sub 'new' :method
     .param pmc args :slurpy
-    .param pmc named_args    :named :slurpy
-
+    .param pmc named_args :named :slurpy
     # Instantiate.
     .local pmc cardinalmeta
     cardinalmeta = get_hll_global ['CardinalObject'], '!CARDINALMETA'
-    $P0 = cardinalmeta.get_parrotclass(self)
+    $P0 = cardinalmeta.'get_parrotclass'(self)
     $P1 = $P0.'new'()
+#print 'constructing a new object w/ id'
+#$P98 = $P1.'object_id'()
+#say $P98
+    $P2 = $P1.'HOW'()
+    $I0 = $P2.'can'(self,'initialize')
+    unless $I0, no_initialize
     $P2 = $P1.'initialize'(args :flat, named_args :named :flat)
+  no_initialize:
 
     .return ($P1)
 .end
@@ -178,7 +184,23 @@ Defines the .true method on all objects via C<prefix:?>.
 =cut
 
 .sub 'true' :method
- .return 'prefix:?'(self)
+        .tailcall 'prefix:?'(self)
+.end
+
+.sub 'object_id' :method
+        get_addr $I0, self
+        .return ($I0)
+.end
+
+=item get_bool(vtable)
+
+Returns true if he object is defined, false otherwise
+
+=cut
+
+.sub '' :vtable('get_bool')
+   $I0 = 'defined'(self)
+   .return ($I0)
 .end
 
 =item print()
@@ -191,12 +213,12 @@ Print the object
 
 .sub 'print' :method
     $P0 = get_hll_global 'print'
-    .return $P0(self)
+    .tailcall $P0(self)
 .end
 
 .sub 'puts' :method
     $P0 = get_hll_global 'puts'
-    .return $P0(self)
+    .tailcall $P0(self)
 .end
 
 =item to_s()
@@ -211,9 +233,53 @@ Return a CardinalString representation of the object.
     .return ($P0)
 .end
 
+=item inspect()
+
+This is the same a to_s by default unless overriden
+
+=cut
+
+.sub 'inspect' :method
+    $P0 = self.'to_s'()
+.end
+
 .sub 'puts' :method
     $P0 = get_hll_global 'puts'
-    .return $P0(self)
+    .tailcall $P0(self)
+.end
+
+=item !cloneattr(attrlist)
+
+Create a clone of self, also cloning the attributes given by attrlist.
+
+=cut
+
+.sub '!cloneattr' :method
+    .param string attrlist
+    .local pmc result
+    .local pmc cardinalmeta
+    cardinalmeta = get_hll_global ['CardinalObject'], '!CARDINALMETA'
+    $P0 = cardinalmeta.'get_parrotclass'(self)
+    result = new $P0
+
+    .local pmc attr_it
+    attr_it = split ' ', attrlist
+  attr_loop:
+    unless attr_it goto attr_end
+    $S0 = shift attr_it
+    unless $S0 goto attr_loop
+    $P1 = getattribute self, $S0
+    unless $P1 goto set_default
+    $P1 = clone $P1
+    setattribute result, $S0, $P1
+    goto attr_loop
+  set_default:
+    $P2 = new 'CardinalInteger'
+    $P2 = 0
+    setattribute result, $S0, $P2
+    goto attr_loop
+  attr_end:
+    .return (result)
 .end
 
 =item methods()
@@ -225,7 +291,7 @@ Get a list of all methods in the object.
 .include 'library/dumper.pir'
 .sub 'methods' :method
     $P0 = class self
-    $P1 = $P0.methods()
+    $P1 = $P0.'methods'()
     .local pmc meth_iter
     meth_iter = new 'Iterator', $P1
     .local pmc method_list
@@ -233,10 +299,66 @@ Get a list of all methods in the object.
   methods_loop:
     unless meth_iter goto methods_loop_end
     $P0 = shift meth_iter
-    method_list.push($P0)
+    method_list.'push'($P0)
     goto methods_loop
   methods_loop_end:
     .return(method_list)
+.end
+
+.sub 'class' :method
+        $P0 = new 'CardinalString'
+        $S0 = self.'WHAT'()
+        $P0.'concat'($S0)
+        .return ($P0)
+.end
+
+.sub 'defined' :method
+       $P0 = get_hll_global ['Bool'], 'False'
+       .return ($P0)
+.end
+
+.sub 'nil?' :method
+    $P0 = get_hll_global 'nil'
+    if self == $P0 goto yes
+    goto no
+    yes:
+      $P0 = get_hll_global ['Bool'], 'True'
+      .return ($P0)
+    no:
+      $P0 = get_hll_global ['Bool'], 'False'
+      .return ($P0)
+.end
+
+.sub 'freeze' :method
+   #Parrots freeze seems to mean the same as Javas serialize
+   #Rubys freeze means to set the object as readonly. I think Perl6 gives their objects a role of Mutable, then checks for that role in infix:=
+   #freeze $S0, self
+   #.return (self)
+   #self = $S0
+   #.return ($S0)
+   #share_ro $P0, self
+   .return (self)
+.end
+
+.sub 'is_a?' :method
+        .param pmc test
+        .local pmc metaclass
+        .local int result
+        metaclass = self.'HOW'()
+        result = metaclass.'isa'(test)
+        if result goto yes
+        goto no
+        yes:
+          $P0 = get_hll_global ['Bool'], 'True'
+          .return ($P0)
+        no:
+          $P0 = get_hll_global ['Bool'], 'False'
+.end
+
+.sub 'kind_of?' :method
+        .param pmc test
+        $P0 = self.'is_a?'(test)
+        .return ($P0)
 .end
 
 =back

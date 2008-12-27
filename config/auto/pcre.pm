@@ -15,7 +15,6 @@ package auto::pcre;
 
 use strict;
 use warnings;
-use File::Spec;
 
 use base qw(Parrot::Configure::Step);
 
@@ -24,7 +23,7 @@ use Parrot::Configure::Utils ':auto';
 sub _init {
     my $self = shift;
     my %data;
-    $data{description} = q{Determining if your platform supports pcre};
+    $data{description} = q{Does your platform support pcre};
     $data{result}      = q{};
     return \%data;
 }
@@ -40,7 +39,7 @@ sub runstep {
     );
 
     if ($without) {
-        $conf->data->set( has_pcre => 0 );
+        $conf->data->set( HAS_PCRE => 0 );
         $self->set_result('no');
         return 1;
     }

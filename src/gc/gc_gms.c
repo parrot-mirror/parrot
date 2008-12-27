@@ -288,7 +288,7 @@ static int init_mark_cb(PARROT_INTERP,
 static void parrot_gc_gms_deinit(PARROT_INTERP)
         __attribute__nonnull__(1);
 
-static void parrot_gc_gms_run(PARROT_INTERP, int flags)
+static void parrot_gc_gms_run(PARROT_INTERP, UINTVAL flags)
         __attribute__nonnull__(1);
 
 PARROT_WARN_UNUSED_RESULT
@@ -456,7 +456,7 @@ creation of memory pools.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 void
 Parrot_gc_gms_init(PARROT_INTERP)
 {
@@ -493,7 +493,7 @@ static void
 gc_gms_add_free_object(PARROT_INTERP, SHIM(Small_Object_Pool *pool),
         SHIM(PObj *to_add))
 {
-    real_exception(interp, NULL, 1, "gms abuse");
+    Parrot_ex_throw_from_c_args(interp, NULL, 1, "gms abuse");
 }
 
 
@@ -791,8 +791,8 @@ gc_gms_find_gen(PARROT_INTERP, ARGIN(const Gc_gms_hdr *h), UINTVAL gen_no)
      *
      * TODO insert generation
      */
-    real_exception(interp, NULL, 1, "generation %d not found for hdr %p",
-            gen_no, h);
+    Parrot_ex_throw_from_c_args(interp, NULL, 1,
+        "generation %d not found for hdr %p", gen_no, h);
 }
 
 /*
@@ -1344,7 +1344,7 @@ Set the object live - called by the pobject_lives macro
 
 */
 
-PARROT_API
+PARROT_EXPORT
 void
 parrot_gc_gms_pobject_lives(PARROT_INTERP, ARGMOD(PObj *obj))
 {
@@ -1721,7 +1721,7 @@ Interface to C<Parrot_do_dod_run>. C<flags> is one of:
 */
 
 static void
-parrot_gc_gms_run(PARROT_INTERP, int flags)
+parrot_gc_gms_run(PARROT_INTERP, UINTVAL flags)
 {
     Arenas * const arena_base = interp->arena_base;
     Gc_gms_private *g_gms;

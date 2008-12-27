@@ -18,16 +18,16 @@
 /* They protect against things like passing null to mem__sys_realloc, */
 /* which is not portable. */
 #define mem_internal_allocate(x) mem__internal_allocate((x), __FILE__, __LINE__)
-#define mem_internal_allocate_typed(t) \
-    (t *)mem__internal_allocate(sizeof (t), __FILE__, __LINE__)
-#define mem_internal_allocate_zeroed(x) mem__internal_allocate_zeroed(x, \
+#define mem_internal_allocate_typed(type) \
+    (type *)mem__internal_allocate(sizeof (type), __FILE__, __LINE__)
+#define mem_internal_allocate_zeroed(x) mem__internal_allocate_zeroed((x), \
     __FILE__, __LINE__)
-#define mem_internal_allocate_zeroed_typed(t) \
-    (t *)mem__internal_allocate_zeroed(sizeof (t), __FILE__, __LINE__)
+#define mem_internal_allocate_zeroed_typed(type) \
+    (type *)mem__internal_allocate_zeroed(sizeof (type), __FILE__, __LINE__)
 
-#define mem_internal_realloc(x, y) mem__internal_realloc(x, y, __FILE__, __LINE__)
-#define mem_internal_realloc_zeroed(p, x, y) mem__internal_realloc_zeroed(p, x, y, __FILE__, __LINE__)
-#define mem_internal_free(x) mem__internal_free(x, __FILE__, __LINE__)
+#define mem_internal_realloc(x, y) mem__internal_realloc((x), (y), __FILE__, __LINE__)
+#define mem_internal_realloc_zeroed(p, x, y) mem__internal_realloc_zeroed((p), (x), (y), __FILE__, __LINE__)
+#define mem_internal_free(x) mem__internal_free((x), __FILE__, __LINE__)
 
 #define mem_allocate_new_stash() NULL
 #define mem_allocate_new_stack() NULL
@@ -44,25 +44,25 @@
 /* HEADERIZER BEGIN: src/gc/memory.c */
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 
-PARROT_API
+PARROT_EXPORT
 PARROT_MALLOC
 PARROT_CANNOT_RETURN_NULL
 void * mem_sys_allocate(size_t size);
 
-PARROT_API
+PARROT_EXPORT
 PARROT_MALLOC
 PARROT_CANNOT_RETURN_NULL
 void * mem_sys_allocate_zeroed(size_t size);
 
-PARROT_API
+PARROT_EXPORT
 void mem_sys_free(ARGFREE(void *from));
 
-PARROT_API
+PARROT_EXPORT
 PARROT_MALLOC
 PARROT_CANNOT_RETURN_NULL
 void * mem_sys_realloc(ARGFREE(void *from), size_t size);
 
-PARROT_API
+PARROT_EXPORT
 PARROT_MALLOC
 PARROT_CANNOT_RETURN_NULL
 void * mem_sys_realloc_zeroed(

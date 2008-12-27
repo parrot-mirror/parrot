@@ -81,7 +81,7 @@ The flags are of two types:
 =item 1 class
 
 The classification of ops is intended to facilitate the selection of
-suitable ops for a Parrot safe mode, or for inclusion in miniparrot.
+suitable ops for a Parrot safe mode.
 
 =item 2 behavior
 
@@ -586,10 +586,10 @@ END_CODE
         $op->body( $nolines ? $body : qq{#line $line "$file_escaped"\n$body} );
 
         # Constants here are defined in include/parrot/op.h
-        or_flag( \$jumps, "PARROT_JUMP_RELATIVE" ) if ($branch);
-        or_flag( \$jumps, "PARROT_JUMP_ADDRESS" )  if ($absolute);
-        or_flag( \$jumps, "PARROT_JUMP_POP" )      if ($pop);
-        or_flag( \$jumps, "PARROT_JUMP_ENEXT" )    if ($next);
+        or_flag( \$jumps, "PARROT_JUMP_RELATIVE" ) if $branch;
+        or_flag( \$jumps, "PARROT_JUMP_ADDRESS"  ) if $absolute;
+        or_flag( \$jumps, "PARROT_JUMP_POP"      ) if $pop;
+        or_flag( \$jumps, "PARROT_JUMP_ENEXT"    ) if $next;
 
         # I'm assuming the op branches to the value in the last argument.
         or_flag( \$jumps, "PARROT_JUMP_GNEXT" )

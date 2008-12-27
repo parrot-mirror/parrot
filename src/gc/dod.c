@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2001-2007, The Perl Foundation.
+Copyright (C) 2001-2008, The Perl Foundation.
 $Id$
 
 =head1 NAME
@@ -177,7 +177,7 @@ the particular garbage collector in use.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 void
 pobject_lives(PARROT_INTERP, ARGMOD(PObj *obj))
 {
@@ -254,10 +254,11 @@ int
 Parrot_dod_trace_root(PARROT_INTERP, int trace_stack)
 {
     Arenas           * const arena_base = interp->arena_base;
-    parrot_context_t *ctx;
+    Parrot_Context   *ctx;
+    PObj             *obj;
 
     /* note: adding locals here did cause increased DOD runs */
-    unsigned int i = 0;
+    mark_context_start();
 
     if (trace_stack == 2) {
         trace_system_areas(interp);
@@ -277,6 +278,11 @@ Parrot_dod_trace_root(PARROT_INTERP, int trace_stack)
     /* mark it as used  */
     pobject_lives(interp, (PObj *)interp->iglobals);
 
+    /* mark the current continuation */
+    obj = (PObj *)interp->current_cont;
+    if (obj && obj != (PObj *)NEED_CONTINUATION)
+        pobject_lives(interp, obj);
+
     /* mark the current context. */
     ctx = CONTEXT(interp);
     mark_context(interp, ctx);
@@ -295,10 +301,6 @@ Parrot_dod_trace_root(PARROT_INTERP, int trace_stack)
      */
     mark_vtables(interp);
 
-    /* mark exception list */
-    for (i = 0; i <= E_LAST_PYTHON_E; ++i)
-        pobject_lives(interp, (PObj*)interp->exception_list[i]);
-
     /* mark the root_namespace */
     pobject_lives(interp, (PObj *)interp->root_namespace);
 
@@ -315,21 +317,25 @@ Parrot_dod_trace_root(PARROT_INTERP, int trace_stack)
     /* Now mark the class hash */
     pobject_lives(interp, (PObj *)interp->class_hash);
 
-    /* Mark the registry if any */
-    if (interp->DOD_registry)
-        pobject_lives(interp, (PObj *)interp->DOD_registry);
+    /* Mark the registry */
+    PARROT_ASSERT(interp->DOD_registry);
+    pobject_lives(interp, (PObj *)interp->DOD_registry);
 
     /* Mark the transaction log */
     /* XXX do this more generically? */
     if (interp->thread_data && interp->thread_data->stm_log)
         Parrot_STM_mark_transaction(interp);
 
+    /* Mark the MMD cache. */
+    if (interp->op_mmd_cache)
+        Parrot_mmd_cache_mark(interp, interp->op_mmd_cache);
+
     /* Walk the iodata */
     Parrot_IOData_mark(interp, interp->piodata);
 
     /* quick check if we can already bail out */
-    if (arena_base->lazy_dod && arena_base->num_early_PMCs_seen >=
-            arena_base->num_early_DOD_PMCs)
+    if (arena_base->lazy_dod
+    &&  arena_base->num_early_PMCs_seen >= arena_base->num_early_DOD_PMCs)
         return 0;
 
     /* Find important stuff on the system stack */
@@ -592,13 +598,13 @@ Parrot_dod_sweep(PARROT_INTERP, ARGMOD(Small_Object_Pool *pool))
 #if GC_VERBOSE
     if (Interp_trace_TEST(interp, 1)) {
         Interp * const tracer = interp->debugger;
-        PMC *pio       = PIO_STDERR(interp);
+        PMC *pio       = Parrot_io_STDERR(interp);
 
-        PIO_flush(interp, pio);
+        Parrot_io_flush(interp, pio);
 
         if (tracer) {
-            pio = PIO_STDERR(tracer);
-            PIO_flush(tracer, pio);
+            pio = Parrot_io_STDERR(tracer);
+            Parrot_io_flush(tracer, pio);
         }
     }
 #endif
@@ -849,7 +855,7 @@ find_common_mask(PARROT_INTERP, size_t val1, size_t val2)
         return 0;
     }
 
-    real_exception(interp, NULL, INTERP_ERROR,
+    Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INTERP_ERROR,
             "Unexpected condition in find_common_mask()!\n");
 }
 
@@ -1095,7 +1101,7 @@ Runs the stop-the-world mark & sweep (MS) collector.
 */
 
 void
-Parrot_dod_ms_run(PARROT_INTERP, int flags)
+Parrot_dod_ms_run(PARROT_INTERP, UINTVAL flags)
 {
     Arenas * const arena_base = interp->arena_base;
 
@@ -1124,6 +1130,15 @@ Parrot_dod_ms_run(PARROT_INTERP, int flags)
         clear_live_bits(interp->arena_base->pmc_pool);
         clear_live_bits(interp->arena_base->constant_pmc_pool);
 
+        /* keep the scheduler and its kids alive for Task-like PMCs to destroy
+         * themselves; run a sweep to collect them */
+        if (interp->scheduler) {
+            pobject_lives(interp, (PObj *)interp->scheduler);
+            VTABLE_mark(interp, interp->scheduler);
+            Parrot_dod_sweep(interp, interp->arena_base->pmc_pool);
+        }
+
+        /* now sweep everything that's left */
         Parrot_dod_sweep(interp, interp->arena_base->pmc_pool);
         Parrot_dod_sweep(interp, interp->arena_base->constant_pmc_pool);
 
@@ -1141,7 +1156,7 @@ Parrot_dod_ms_run(PARROT_INTERP, int flags)
     Parrot_go_collect(interp);
 
     /* Now go trace the PMCs */
-    if (trace_active_PMCs(interp, flags & GC_trace_stack_FLAG)) {
+    if (trace_active_PMCs(interp, (int)(flags & GC_trace_stack_FLAG))) {
         int ignored;
 
         arena_base->dod_trace_ptr = NULL;

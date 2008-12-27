@@ -5,7 +5,7 @@
 use strict;
 use warnings;
 use lib qw(lib . ../lib ../../lib);
-use Parrot::Test tests => 18;
+use Parrot::Test tests => 21;
 use Test::More;
 
 =head1 NAME
@@ -22,8 +22,6 @@ Tests C<FixedPMCArray> PMC. Checks size, sets various elements, including
 out-of-bounds test. Checks INT and PMC keys.
 
 =cut
-
-my $fp_equality_macro = pasm_fp_equality_macro();
 
 pasm_output_is( <<'CODE', <<'OUTPUT', "Setting array size" );
     new P0,'FixedPMCArray'
@@ -149,33 +147,73 @@ ok 2
 ok 3
 OUTPUT
 
-# RT#46823: Rewrite these properly when we have exceptions
+pasm_output_is( <<'CODE', <<'OUTPUT', "Setting negatively indexed elements" );
+    new P0, 'FixedPMCArray'
+    set P0, 1
 
-pasm_error_output_like( <<'CODE', <<'OUTPUT', "Setting out-of-bounds elements" );
-        new P0, 'FixedPMCArray'
-        set P0, 1
-
-    set P0[1], -7
-
+    push_eh caught
+    set P0[-1], -7
+    pop_eh
+    say "no exception"
+    end
+caught:
+    say "caught an exception"
     end
 CODE
-/FixedPMCArray: index out of bounds!
-current instr\.:/
+caught an exception
 OUTPUT
 
-pasm_error_output_like( <<'CODE', <<'OUTPUT', "Getting out-of-bounds elements" );
-        new P0, 'FixedPMCArray'
-        set P0, 1
+pasm_output_is( <<'CODE', <<'OUTPUT', "Getting negatively indexed elements" );
+    new P0, 'FixedPMCArray'
+    set P0, 1
 
-    set I0, P0[1]
+    push_eh caught
+    set I0, P0[-1]
+    pop_eh
+    say "no exception"
+    end
+caught:
+    say "caught an exception"
     end
 CODE
-/FixedPMCArray: index out of bounds!
-current instr\.:/
+caught an exception
+OUTPUT
+
+
+pasm_output_is( <<'CODE', <<'OUTPUT', "Setting out-of-bounds elements" );
+    new P0, 'FixedPMCArray'
+    set P0, 1
+
+    push_eh caught
+    set P0[1], -7
+    pop_eh
+    say "no exception"
+    end
+caught:
+    say "caught an exception"
+    end
+CODE
+caught an exception
+OUTPUT
+
+pasm_output_is( <<'CODE', <<'OUTPUT', "Getting out-of-bounds elements" );
+    new P0, 'FixedPMCArray'
+    set P0, 1
+
+    push_eh caught
+    set I0, P0[1]
+    pop_eh
+    say "no exception"
+    end
+caught:
+    say "caught an exception"
+    end
+CODE
+caught an exception
 OUTPUT
 
 pasm_output_is( <<"CODE", <<'OUTPUT', "Set via PMC keys, access via INTs" );
-@{[ $fp_equality_macro ]}
+     .include 'include/fp_equality.pasm'
      new P0, 'FixedPMCArray'
      set P0, 3
      new P1, 'Key'
@@ -195,7 +233,7 @@ pasm_output_is( <<"CODE", <<'OUTPUT', "Set via PMC keys, access via INTs" );
 OK1: print "ok 1\\n"
 
      set N0, P0[1]
-     .fp_eq(N0, 2.5, OK2)
+     .fp_eq_pasm(N0, 2.5, OK2)
      print "not "
 OK2: print "ok 2\\n"
 
@@ -212,7 +250,7 @@ ok 3
 OUTPUT
 
 pasm_output_is( <<"CODE", <<'OUTPUT', "Set via INTs, access via PMC Keys" );
-@{[ $fp_equality_macro ]}
+     .include 'include/fp_equality.pasm'
      new P0, 'FixedPMCArray'
      set P0, 1024
 
@@ -232,7 +270,7 @@ OK1: print "ok 1\\n"
 
      set P2, 128
      set N0, P0[P2]
-     .fp_eq(N0, 10.2, OK2)
+     .fp_eq_pasm(N0, 10.2, OK2)
      print "not "
 OK2: print "ok 2\\n"
 
@@ -262,19 +300,19 @@ pir_output_like(
 
 .sub main :main
      .local pmc compares, cmp_fun
-     # RT#46855 doesnt work wit prederef of JIT
+     # RT #46855 doesnt work wit prederef of JIT
      bounds 1
      compares = new 'Integer'
      compares = 0
-     global "compares" = compares
-    cmp_fun = global "cmp_fun"
+     store_global "compares", compares
+    cmp_fun = find_global "cmp_fun"
      sort_ar()
      sort_ar(cmp_fun)
 .end
 .sub sort_ar
     .param pmc cmp_fun :optional
     .local pmc compares
-    compares = global "compares"
+    compares = find_global "compares"
     compares = 0
     .local pmc ar
     new ar, 'FixedPMCArray'
@@ -307,10 +345,10 @@ done:
     .param pmc b
     $I0 = cmp a, b
     .local pmc compares
-    compares = global "compares"
+    compares = find_global "compares"
     inc compares
     .begin_return
-    .return $I0
+    .set_return $I0
     .end_return
 .end
 CODE
@@ -463,19 +501,80 @@ pir_output_is( << 'CODE', << 'OUTPUT', "Multi keys" );
 CODE
 set_integer_keyed, get_integer_keyed: 128
 set_integer_keyed, get_pmc_keyed: 128
-set_integer_keyed, get_number_keyed: 128.000000
+set_integer_keyed, get_number_keyed: 128
 set_integer_keyed, get_string_keyed: 128
 set_number_keyed, get_pmc_keyed: 128.128
-set_number_keyed, get_number_keyed: 128.128000
+set_number_keyed, get_number_keyed: 128.128
 set_number_keyed, get_string_keyed: 128.128
 set_pmc_keyed, get_integer_keyed: 256
 set_pmc_keyed, get_pmc_keyed: 256
-set_pmc_keyed, get_number_keyed: 256.000000
+set_pmc_keyed, get_number_keyed: 256
 set_pmc_keyed, get_string_keyed: 256
 set_integer_keyed, get_integer_keyed: 128
 set_integer_keyed, get_pmc_keyed: 128
-set_integer_keyed, get_number_keyed: 128.000000
+set_integer_keyed, get_number_keyed: 128
 set_integer_keyed, get_string_keyed: 128
+OUTPUT
+
+pir_output_is( <<'CODE', <<'OUTPUT', "equality" );
+.sub main :main
+    .local pmc fpa1, fpa2, p1, p2
+    .local int i
+    fpa1 = new 'FixedPMCArray'
+    fpa2 = new 'FixedPMCArray'
+
+    print "1:"
+    if fpa1 == fpa2 goto L1
+    print "not "
+L1: say "equal"
+
+    fpa1 = 3
+    print "2:"
+    if fpa1 == fpa2 goto L2
+    print "not "
+L2: say "equal"
+
+    fpa2 = 3
+
+    p1 = new 'String'
+    p1 = "foobarx"
+    p2 = new 'String'
+    p2 = "foobarx"
+
+    fpa1[0] = p1
+    fpa2[0] = p2
+
+    print "3:"
+    if fpa1 == fpa2 goto L3
+    print "not "
+L3: say "equal"
+
+    p1 = new 'String'
+    p2 = new 'String'
+    p1 = ''
+    p2 = ''
+
+    fpa1[1] = p1
+
+    print "4:"
+    if fpa1 == fpa2 goto L4
+    print "not "
+L4: say "equal"
+
+    fpa2[1] = p2
+
+    print "5:"
+    if fpa1 == fpa2 goto L5
+    print "not "
+L5: say "equal"
+
+.end
+CODE
+1:equal
+2:not equal
+3:equal
+4:not equal
+5:equal
 OUTPUT
 
 pir_output_is( <<'CODE', <<'OUTPUT', "defined" );

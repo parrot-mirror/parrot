@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2001-2007, The Perl Foundation.
+Copyright (C) 2001-2008, The Perl Foundation.
 $Id$
 
 =head1 NAME
@@ -310,6 +310,7 @@ Parrot_sprintf_format(PARROT_INTERP,
     INTVAL len     = 0;
     INTVAL old     = 0;
     INTVAL pat_len = (INTVAL)string_length(interp, pat);
+    HUGEINTVAL num;
 
     /* start with a buffer; double the pattern length to avoid realloc #1 */
     STRING *targ = string_make_empty(interp, enum_stringrep_one, pat_len << 1);
@@ -492,9 +493,15 @@ Parrot_sprintf_format(PARROT_INTERP,
 
                         case '*':
                             info.flags |= FLAG_WIDTH;
-                            info.width = (UINTVAL)obj->getint(interp,
-                                                      SIZE_XVAL, obj);
-                            /* fall through */
+                            num = obj->getint(interp, SIZE_XVAL, obj);
+                            if (num < 0) {
+                                info.flags |= FLAG_MINUS;
+                                info.width = -num;
+                            }
+                            else {
+                                info.width = num;
+                            }
+                            continue;
 
                         case '.':
                             info.phase = PHASE_PREC;
@@ -700,7 +707,7 @@ Parrot_sprintf_format(PARROT_INTERP,
                             const void * const ptr =
                                 obj->getptr(interp, info.type, obj);
                             STRING * const ts = uint_to_str(interp, tc,
-                                       (HUGEINTVAL) (size_t) ptr, 16, 0);
+                                       (UHUGEINTVAL) (size_t) ptr, 16, 0);
 
                             targ = str_append_w_flags(interp, targ, &info,
                                     ts, prefix);
@@ -824,9 +831,9 @@ Parrot_sprintf_format(PARROT_INTERP,
                                  * no?  */
                             }
                             else {
-                                real_exception(interp, NULL, INVALID_CHARACTER,
-                                                   "'%c' is not a valid "
-                                                   "sprintf format", ch);
+                                Parrot_ex_throw_from_c_args(interp, NULL,
+                                    EXCEPTION_INVALID_CHARACTER,
+                                    "'%c' is not a valid sprintf format", ch);
                             }
                         }
 

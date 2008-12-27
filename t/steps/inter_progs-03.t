@@ -6,7 +6,7 @@
 use strict;
 use warnings;
 
-use Test::More tests =>  23;
+use Test::More tests => 24;
 use Carp;
 use lib qw( lib t/configure/testlib );
 use_ok('config::init::defaults');
@@ -15,47 +15,45 @@ use_ok('config::init::hints');
 use_ok('config::inter::progs');
 use Parrot::Configure;
 use Parrot::Configure::Options qw( process_options );
-use Parrot::Configure::Test qw( test_step_thru_runstep);
+use Parrot::Configure::Test qw(
+    test_step_thru_runstep
+    test_step_constructor_and_description
+);
 use Tie::Filehandle::Preempt::Stdin;
 use IO::CaptureOutput qw| capture |;
 
 =for hints_for_testing Testing and refactoring of inter::progs should
 entail understanding of issues discussed in the following RT tickets:
-http://rt.perl.org/rt3/Ticket/Display.html?id=43174;
-http://rt.perl.org/rt3/Ticket/Display.html?id=43173; and
-http://rt.perl.org/rt3/Ticket/Display.html?id=41168.  You will have to
-determine a way to test a user response to a prompt.
+http://rt.perl.org/rt3/Ticket/Display.html?id=43174; and
+http://rt.perl.org/rt3/Ticket/Display.html?id=41168.
 
 =cut
 
-my $args = process_options(
+########### ask ##########
+
+my ($args, $step_list_ref) = process_options(
     {
         argv => [q{--ask}],
         mode => q{configure},
     }
 );
-
 my $conf = Parrot::Configure->new;
 
 test_step_thru_runstep( $conf, q{init::defaults}, $args );
 test_step_thru_runstep( $conf, q{init::install},  $args );
 test_step_thru_runstep( $conf, q{init::hints},    $args );
 
-my ( $task, $step_name, $step, $ret );
 my $pkg = q{inter::progs};
 
 $conf->add_steps($pkg);
+
 $conf->options->set( %{$args} );
-
-$task        = $conf->steps->[3];
-$step_name   = $task->step;
-
-$step = $step_name->new();
-ok( defined $step, "$step_name constructor returned defined value" );
-isa_ok( $step, $step_name );
-
+my $step = test_step_constructor_and_description($conf);
 
 my @prompts;
+my $object;
+my ($stdout, $debug, $debug_validity);
+
 foreach my $p (
     qw|
         cc
@@ -73,11 +71,10 @@ foreach my $p (
 }
 push @prompts, q{n};
 
-my $object = tie *STDIN, 'Tie::Filehandle::Preempt::Stdin', @prompts;
+$object = tie *STDIN, 'Tie::Filehandle::Preempt::Stdin', @prompts;
 can_ok( 'Tie::Filehandle::Preempt::Stdin', ('READLINE') );
 isa_ok( $object, 'Tie::Filehandle::Preempt::Stdin' );
 
-my ($stdout, $debug, $debug_validity);
 capture( sub {
     my $verbose = inter::progs::_get_verbose($conf);
     my $ask = inter::progs::_prepare_for_interactivity($conf);
@@ -91,10 +88,11 @@ ok( defined $debug_validity, "'debug_validity' set as expected" );
 capture( sub {
     $conf = inter::progs::_set_debug_and_warn($conf, $debug);
 }, \$stdout);
-ok( defined $conf, "Components of $step_name runstep() tested okay" );
+ok( defined $conf, "Components of runstep() tested okay" );
 
 $object = undef;
 untie *STDIN;
+
 
 pass("Completed all tests in $0");
 
@@ -102,7 +100,7 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-inter_progs-03.t - test config::inter::progs
+inter_progs-03.t - test inter::progs
 
 =head1 SYNOPSIS
 
@@ -112,7 +110,7 @@ inter_progs-03.t - test config::inter::progs
 
 The files in this directory test functionality used by F<Configure.pl>.
 
-The tests in this file test subroutines exported by config::inter::progs.
+The tests in this file test inter::progs.
 
 =head1 AUTHOR
 

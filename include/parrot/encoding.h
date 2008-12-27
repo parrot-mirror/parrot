@@ -76,41 +76,42 @@ typedef INTVAL (*encoding_converter_t)(PARROT_INTERP, ENCODING *lhs, ENCODING *r
 /* HEADERIZER BEGIN: src/encoding.c */
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 
-PARROT_API
+PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 const ENCODING * Parrot_default_encoding(SHIM_INTERP);
 
-PARROT_API
+PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 const char * Parrot_encoding_c_name(SHIM_INTERP, INTVAL number_of_encoding);
 
-PARROT_API
+PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 STRING* Parrot_encoding_name(SHIM_INTERP, INTVAL number_of_encoding);
 
-PARROT_API
+PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
 INTVAL Parrot_encoding_number(PARROT_INTERP,
     ARGIN(const STRING *encodingname))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
-PARROT_API
+PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
 INTVAL Parrot_encoding_number_of_str(SHIM_INTERP, ARGIN(const STRING *src))
         __attribute__nonnull__(2);
 
-PARROT_API
+PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 const ENCODING * Parrot_find_encoding(SHIM_INTERP,
     ARGIN(const char *encodingname))
         __attribute__nonnull__(2);
 
-PARROT_API
+PARROT_EXPORT
+PARROT_DOES_NOT_RETURN
 encoding_converter_t Parrot_find_encoding_converter(PARROT_INTERP,
     ARGIN(ENCODING *lhs),
     ARGIN(ENCODING *rhs))
@@ -118,31 +119,31 @@ encoding_converter_t Parrot_find_encoding_converter(PARROT_INTERP,
         __attribute__nonnull__(2)
         __attribute__nonnull__(3);
 
-PARROT_API
+PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 const ENCODING* Parrot_get_encoding(SHIM_INTERP, INTVAL number_of_encoding);
 
-PARROT_API
-PARROT_WARN_UNUSED_RESULT
+PARROT_EXPORT
+PARROT_DOES_NOT_RETURN
 PARROT_CANNOT_RETURN_NULL
 const ENCODING * Parrot_load_encoding(PARROT_INTERP,
     ARGIN(const char *encodingname))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
-PARROT_API
+PARROT_EXPORT
 INTVAL Parrot_make_default_encoding(SHIM_INTERP,
     SHIM(const char *encodingname),
     ARGIN(ENCODING *encoding))
         __attribute__nonnull__(3);
 
-PARROT_API
+PARROT_EXPORT
 PARROT_MALLOC
 PARROT_CANNOT_RETURN_NULL
 ENCODING * Parrot_new_encoding(SHIM_INTERP);
 
-PARROT_API
+PARROT_EXPORT
 INTVAL Parrot_register_encoding(PARROT_INTERP,
     ARGIN(const char *encodingname),
     ARGIN(ENCODING *encoding))
@@ -158,33 +159,33 @@ void parrot_init_encodings_2(void);
 #define ENCODING_MAX_BYTES_PER_CODEPOINT(i, src) \
     ((src)->encoding)->max_bytes_per_codepoint
 #define ENCODING_GET_CODEPOINT(i, src, offset) \
-    ((src)->encoding)->get_codepoint(i, src, offset)
+    ((src)->encoding)->get_codepoint((i), (src), (offset))
 #define ENCODING_SET_CODEPOINT(i, src, offset, codepoint) \
-    ((src)->encoding)->set_codepoint(i, src, offset, codepoint)
+    ((src)->encoding)->set_codepoint((i), (src), (offset), (codepoint))
 #define ENCODING_GET_BYTE(i, src, offset) \
-    ((src)->encoding)->get_byte(i, src, offset)
+    ((src)->encoding)->get_byte((i), (src), (offset))
 #define ENCODING_SET_BYTE(i, src, offset, value) \
-    ((src)->encoding)->set_byte(i, src, offset, value)
+    ((src)->encoding)->set_byte((i), (src), (offset), (value))
 #define ENCODING_GET_CODEPOINTS(i, src, offset, count) \
-    ((src)->encoding)->get_codepoints(i, src, offset, count)
+    ((src)->encoding)->get_codepoints((i), (src), (offset), (count))
 #define ENCODING_GET_CODEPOINTS_INPLACE(i, src, offset, count, dest) \
-    ((src)->encoding)->get_codepoints_inplace(i, src, offset, count, dest)
+    ((src)->encoding)->get_codepoints_inplace((i), (src), (offset), (count), (dest))
 #define ENCODING_GET_BYTES(i, src, offset, count) \
-    ((src)->encoding)->get_bytes(i, src, offset, count)
+    ((src)->encoding)->get_bytes((i), (src), (offset), (count))
 #define ENCODING_GET_BYTES_INPLACE(i, src, offset, count, dest) \
-    ((src)->encoding)->get_bytes_inplace(i, src, offset, count, dest)
+    ((src)->encoding)->get_bytes_inplace((i), (src), (offset), (count), (dest))
 #define ENCODING_SET_CODEPOINTS(i, src, offset, count, newdata) \
-    ((src)->encoding)->set_codepoints(i, src, offset, count, newdata)
+    ((src)->encoding)->set_codepoints((i), (src), (offset), (count), (newdata))
 #define ENCODING_SET_BYTES(i, src, offset, count, newdata) \
-    ((src)->encoding)->set_bytes(i, src, offset, count, newdata)
+    ((src)->encoding)->set_bytes((i), (src), (offset), (count), (newdata))
 #define ENCODING_BECOME_ENCODING(i, src) \
-    ((src)->encoding)->become_encoding(i, src)
+    ((src)->encoding)->become_encoding((i), (src))
 #define ENCODING_CODEPOINTS(i, src) \
-    ((src)->encoding)->codepoints(i, src)
+    ((src)->encoding)->codepoints((i), (src))
 #define ENCODING_BYTES(i, src) \
-    ((src)->encoding)->bytes(i, src)
+    ((src)->encoding)->bytes((i), (src))
 #define ENCODING_ITER_INIT(i, src, iter) \
-    ((src)->encoding)->iter_init(i, src, iter)
+    ((src)->encoding)->iter_init((i), (src), (iter))
 
 #endif /* PARROT_ENCODING_H_GUARD */
 

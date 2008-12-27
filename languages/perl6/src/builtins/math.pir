@@ -16,27 +16,6 @@ src/builtins/math.pir - Perl6 math functions
 ## .namespace [ 'Math::Basic' ]
 
 
-=item abs
-
- our Num multi Num::abs ( Num $x )
- our Num multi Math::Basic::abs ( Num $x )
-
-Absolute Value.
-
-=cut
-
-.sub 'abs' :multi(_)
-    .param num a
-    $N0 = abs a
-    .return ($N0)
-.end
-
-.sub 'abs' :multi('Integer')
-    .param pmc a
-    $P0 = n_abs a
-    .return ($P0)
-.end
-
 =item floor
 
  our Int multi Num::floor ( Num $x )
@@ -46,9 +25,10 @@ Returns the highest integer not greater than $x.
 =cut
 
 .sub 'floor'
-    .param num a
-    floor a
-    .return (a)
+    .param num n
+    .local int i
+    floor i, n
+    .return (i)
 .end
 
 
@@ -62,9 +42,10 @@ Returns the lowest integer not less than $x.
 =cut
 
 .sub 'ceiling'
-    .param num a
-    ceil a
-    .return (a)
+    .param num n
+    .local int i
+    ceil i, n
+    .return (i)
 .end
 
 
@@ -79,10 +60,11 @@ Returns the nearest integer to $x.  The algorithm is floor($x + 0.5).
 =cut
 
 .sub 'round'
-    .param num a
-    a += 0.5
-    $N0 = floor a
-    .return (a)
+    .param num n
+    .local int i
+    n += 0.5
+    floor i, n
+    .return (i)
 .end
 
 
@@ -112,56 +94,6 @@ or more succinctly:
 .end
 
 
-=item sqrt
-
- our Num     multi Num::sqrt ( Num  $x )
- our Complex multi Complex::sqrt ( Num  $x )
- our Complex multi Complex::sqrt ( Complex  $x )
- our Num     multi Math::Basic::sqrt ( Num $x )
-
-C<$x ** 0.5>
-
-=cut
-
-.sub 'sqrt' :multi(_)
-    .param num a
-    a = sqrt a
-    .return (a)
-.end
-
-
-=item truncate
-
- our Int multi Num::truncate ( Num $x )
- our &Num::int ::= &Num::truncate;
-
-Returns the closest integer to $x whose absolute value is not greater
-than the absolute value of $x.  (In other words, just chuck any
-fractional part.)  This is the default rounding function used by an
-C<int()> cast, for historic reasons.  But see Int constructor above
-for a rounded version.
-
-=cut
-
-.sub 'truncate'
-    .param num a
-    eq a, 0, return
-    lt a, 0, under
-    floor a
-    goto return
-  under:
-    ceil a
-  return:
-    $I0 = a
-    .return ($I0)
-.end
-
-.sub 'int'
-    .param num a
-    .return 'truncate'(a)
-.end
-
-
 =item exp
 
  our Num multi Num::exp         ( Num $exponent: Num :$base = Num::e )
@@ -176,23 +108,6 @@ constant I<e>.
     .param num a
     a = exp a
     .return (a)
-.end
-
-
-=item log
-
- our Num multi Num::log         ( Num $x: Num :$base )
- our Num multi Math::Basic::log ( Num $x, Num :$base )
-
-Logarithm of base C<$base>, default Natural. Calling with C<$x == 0> is an
-error.
-
-=cut
-
-.sub 'log'
-    .param num a
-    $N0 = ln a
-    .return ($N0)
 .end
 
 
@@ -220,6 +135,20 @@ error.
     .return ($N0)
 .end
 
+=item Inf / NaN
+
+=cut
+
+.sub 'Inf'
+    $N0 = 'Inf'
+    .return ($N0)
+.end
+
+.sub 'NaN'
+    $N0 = 'NaN'
+    .return ($N0)
+.end
+
 
 =item pi
 
@@ -244,8 +173,6 @@ error.
 
 =cut
 
-.include 'library/dumper.pir' # XXX
-
 .sub 'radcalc'
     .param int radix
     .param string intpart
@@ -256,7 +183,7 @@ error.
     .param num    exp          :optional
     .param int    has_exp      :opt_flag
     .local num    result, fracdivisor, magnitude
-    .local pmc     iter
+    .local pmc    it
 
     if radix <= 1 goto err_range
     if radix > 36 goto err_range
@@ -265,11 +192,11 @@ error.
     fracdivisor = 1.0
 
     $P0 = split '', intpart
-    iter = new 'Iterator', $P0
+    it = iter $P0
 
   lp1: # Accumulate over decimal part
-    unless iter goto ex1
-    $S0 = shift iter
+    unless it goto ex1
+    $S0 = shift it
     $S0 = downcase $S0
     if $S0 == "_" goto lp1
     $I0 = index "0123456789abcdefghijklmnopqrstuvwxyz", $S0
@@ -287,8 +214,8 @@ error.
     $P99 = shift $P0                             # remove the radix point
 
   lp2: # Accumulate over fractional part, keep length
-    unless iter goto ex2
-    $S0 = shift iter
+    unless it goto ex2
+    $S0 = shift it
     $S0 = downcase $S0
     if $S0 == "_" goto lp2
     $I0 = index "0123456789abcdefghijklmnopqrstuvwxyz", $S0
@@ -373,7 +300,7 @@ sin, cos, tan, asin, acos, atan, sec, cosec, cotan, asec, acosec,
 acotan, sinh, cosh, tanh, asinh, acosh, atanh, sech, cosech, cotanh,
 asech, acosech, acotanh.
 
-Performs the various trigonmetric functions.
+Performs the various trigonometric functions.
 
 Option C<:$base> is used to declare how you measure your angles.
 Given the value of an arc representing a single full revolution.
@@ -446,7 +373,7 @@ The other alternative would be to remove the default. --law]
     $S1 = "sin: unrecognized base '"
     $S1 .= $S0
     $S1 .= "'"
-    .return 'die'($S1)
+    .tailcall 'die'($S1)
 .end
 
 
@@ -487,9 +414,13 @@ The other alternative would be to remove the default. --law]
 
 .sub 'atan2'
     .param num a
-    .param num b
+    .param num b               :optional
+    .param int has_b           :opt_flag
+    if has_b goto have_b
+    b = 1
+  have_b:
     $N0 = atan a, b
-    .return (N0)
+    .return ($N0)
 .end
 
 

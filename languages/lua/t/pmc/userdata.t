@@ -8,7 +8,7 @@ t/pmc/userdata.t - Lua Userdata
 
 =head1 SYNOPSIS
 
-    % perl -I../../lib t/pmc/userdata.t
+    % perl t/pmc/userdata.t
 
 =head1 DESCRIPTION
 
@@ -19,6 +19,8 @@ Tests C<userdata> type
 
 use strict;
 use warnings;
+use FindBin;
+use lib "$FindBin::Bin/../../../../lib";
 
 use Parrot::Test tests => 9;
 use Test::More;
@@ -138,7 +140,8 @@ boolean
 OUTPUT
 
 pir_output_is( << 'CODE', << 'OUTPUT', 'check HLL' );
-.HLL 'Lua', 'lua_group'
+.HLL 'lua'
+.loadlib 'lua_group'
 .sub _main
     .local pmc val1
     val1 = new 'Array'
@@ -156,7 +159,8 @@ CODE
 OUTPUT
 
 pir_output_like( << 'CODE', << 'OUTPUT', 'check tostring' );
-.HLL 'Lua', 'lua_group'
+.HLL 'lua'
+.loadlib 'lua_group'
 .sub _main
     .local pmc val1
     val1 = new 'Array'
@@ -181,7 +185,8 @@ string\n
 OUTPUT
 
 pir_output_is( << 'CODE', << 'OUTPUT', 'check tonumber' );
-.HLL 'Lua', 'lua_group'
+.HLL 'lua'
+.loadlib 'lua_group'
 .sub _main
     .local pmc val1
     val1 = new 'Array'

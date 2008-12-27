@@ -8,7 +8,7 @@ t/os.t - Lua Operating System Library
 
 =head1 SYNOPSIS
 
-    % perl -I../lib -Ilua/t lua/t/os.t
+    % perl t/os.t
 
 =head1 DESCRIPTION
 
@@ -25,10 +25,11 @@ See "Programming in Lua", section 22 "The Operating System Library".
 use strict;
 use warnings;
 use FindBin;
-use lib "$FindBin::Bin";
+use lib "$FindBin::Bin/../../../lib", "$FindBin::Bin";
 
-use Parrot::Test tests => 25;
+use Parrot::Test tests => 26;
 use Test::More;
+use Parrot::Config;
 
 language_output_is( 'lua', << 'CODE', << 'OUTPUT', 'function os.clock' );
 clk = os.clock()
@@ -104,7 +105,7 @@ CODE
 GETENV_PARROT
 OUTPUT
 
-open my $X, '>', '../file.rm';
+open my $X, '>', "$FindBin::Bin/../../../file.rm";
 print {$X} 'file to remove';
 close $X;
 
@@ -115,8 +116,8 @@ CODE
 true
 OUTPUT
 
-ok( !-e '../file.rm', 'Test that the file is removed' );
-unlink('../file.rm') if ( -e '../file.rm' );
+ok( !-e "$FindBin::Bin/../../../file.rm", 'Test that the file is removed' );
+unlink("$FindBin::Bin/../../../file.rm") if ( -e "$FindBin::Bin/../../../file.rm" );
 
 language_output_is( 'lua', << 'CODE', << 'OUTPUT', 'function os.remove' );
 r, msg = os.remove("file.rm")
@@ -127,7 +128,7 @@ nil
 file.rm: No such file or directory
 OUTPUT
 
-open $X, '>', '../file.old';
+open $X, '>', "$FindBin::Bin/../../../file.old";
 print {$X} 'file to rename';
 close $X;
 
@@ -138,10 +139,10 @@ CODE
 true
 OUTPUT
 
-ok( !-e '../file.old', 'Test that old file is missing' );
-ok( -e '../file.new', 'Test that new file is here' );
-unlink('../file.old') if ( -e '../file.old' );
-unlink('../file.new') if ( -e '../file.new' );
+ok( !-e "$FindBin::Bin/../../../file.old", 'Test that old file is missing' );
+ok( -e "$FindBin::Bin/../../../file.new", 'Test that new file is here' );
+unlink("$FindBin::Bin/../../../file.old") if ( -e "$FindBin::Bin/../../../file.old" );
+unlink("$FindBin::Bin/../../../file.new") if ( -e "$FindBin::Bin/../../../file.new" );
 
 language_output_is( 'lua', << 'CODE', << 'OUTPUT', 'function os.rename' );
 r, msg = os.rename("file.old", "file.new")
@@ -175,13 +176,13 @@ OUTPUT
 language_output_like( 'lua', << 'CODE', << 'OUTPUT', 'function os.time' );
 print(os.time())
 CODE
-/^\d+/
+/^\d+(\.\d+)?$/
 OUTPUT
 
 language_output_like( 'lua', << 'CODE', << 'OUTPUT', 'function os.time' );
 print(os.time(nil))
 CODE
-/^\d+/
+/^\d+(\.\d+)?$/
 OUTPUT
 
 language_output_like( 'lua', << 'CODE', << 'OUTPUT', 'function os.time' );
@@ -194,8 +195,16 @@ print(os.time({
     year = 2000,
     isdst = 0,
 }))
+CODE
+/^946\d+$/
+OUTPUT
 
--- os.time returns nil when C mktime returns -1
+SKIP:
+{
+    skip "skipped on 64bit platforms" => 1 if ( $PConfig{intvalsize} == 8 );
+
+language_output_like( 'lua', << 'CODE', << 'OUTPUT', 'function os.time -> nil' );
+-- os.time returns nil when C mktime returns < 0
 -- this test needs a out of range value on any platform
 print(os.time({
     sec = 0,
@@ -207,11 +216,9 @@ print(os.time({
     isdst = 0,
 }))
 CODE
-/^
-946\d+\n
-nil\n
-$/x
+/^nil$/
 OUTPUT
+}
 
 language_output_like( 'lua', << 'CODE', << 'OUTPUT', 'function os.time (missing field)' );
 print(os.time({}))

@@ -26,15 +26,29 @@ src/pmc.c - The base vtable calling functions
 
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
-static PMC* create_class_pmc(PARROT_INTERP, INTVAL type)
+static PMC * create_class_pmc(PARROT_INTERP, INTVAL type)
         __attribute__nonnull__(1);
 
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
-static PMC* get_new_pmc_header(PARROT_INTERP,
+static PMC * get_new_pmc_header(PARROT_INTERP,
     INTVAL base_type,
     UINTVAL flags)
         __attribute__nonnull__(1);
+
+static void pmc_free(PARROT_INTERP, ARGMOD(PMC *pmc))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        FUNC_MODIFIES(*pmc);
+
+static void pmc_free_to_pool(PARROT_INTERP,
+    ARGMOD(PMC *pmc),
+    ARGMOD(Small_Object_Pool *pool))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3)
+        FUNC_MODIFIES(*pmc)
+        FUNC_MODIFIES(*pool);
 
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 /* HEADERIZER END: static */
@@ -43,6 +57,27 @@ static PMC* get_new_pmc_header(PARROT_INTERP,
 #if PARROT_CATCH_NULL
 PMC * PMCNULL;
 #endif
+
+/*
+
+=item C<INTVAL PMC_is_null>
+
+Tests if the given pmc is null.
+
+=cut
+
+*/
+
+PARROT_EXPORT
+INTVAL
+PMC_is_null(SHIM_INTERP, ARGIN_NULLOK(const PMC *pmc))
+{
+#if PARROT_CATCH_NULL
+    return pmc == PMCNULL || pmc == NULL;
+#else
+    return pmc == NULL;
+#endif
+}
 
 /*
 
@@ -57,26 +92,29 @@ method to perform any other necessary initialization.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 PARROT_CANNOT_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
 PMC *
 pmc_new(PARROT_INTERP, INTVAL base_type)
 {
-    PMC *const classobj = interp->vtables[base_type]->pmc_class;
+    PARROT_ASSERT(interp->vtables[base_type]);
+    {
+        PMC *const classobj = interp->vtables[base_type]->pmc_class;
 
-    if (!PMC_IS_NULL(classobj) && PObj_is_class_TEST(classobj))
-        return VTABLE_instantiate(interp, classobj, PMCNULL);
-    else {
-        PMC * const pmc = get_new_pmc_header(interp, base_type, 0);
-        VTABLE_init(interp, pmc);
-        return pmc;
+        if (!PMC_IS_NULL(classobj) && PObj_is_class_TEST(classobj))
+            return VTABLE_instantiate(interp, classobj, PMCNULL);
+        else {
+            PMC * const pmc = get_new_pmc_header(interp, base_type, 0);
+            VTABLE_init(interp, pmc);
+            return pmc;
+        }
     }
 }
 
 /*
 
-=item C<PMC* pmc_reuse>
+=item C<PMC * pmc_reuse>
 
 Reuse an existing PMC, turning it into an empty PMC of the new type. Any
 required internal structure will be put in place (such as the extension area)
@@ -88,14 +126,14 @@ turned into a PMC of a singleton type.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 PARROT_CANNOT_RETURN_NULL
-PMC*
+PMC *
 pmc_reuse(PARROT_INTERP, ARGIN(PMC *pmc), INTVAL new_type,
           SHIM(UINTVAL flags))
 {
-    INTVAL has_ext, new_flags;
     VTABLE *new_vtable;
+    INTVAL  has_ext, new_flags;
 
     if (pmc->vtable->base_type == new_type)
         return pmc;
@@ -104,28 +142,32 @@ pmc_reuse(PARROT_INTERP, ARGIN(PMC *pmc), INTVAL new_type,
 
     /* Singleton/const PMCs/types are not eligible */
 
-    if ((pmc->vtable->flags | new_vtable->flags)
-        & (VTABLE_PMC_IS_SINGLETON | VTABLE_IS_CONST_FLAG))
+    if ((pmc->vtable->flags      | new_vtable->flags)
+    &   (VTABLE_PMC_IS_SINGLETON | VTABLE_IS_CONST_FLAG))
     {
         /* First, is the destination a singleton? No joy for us there */
         if (new_vtable->flags & VTABLE_PMC_IS_SINGLETON)
-            real_exception(interp, NULL, ALLOCATION_ERROR,
-                               "Parrot VM: Can't turn to a singleton type!\n");
+            Parrot_ex_throw_from_c_args(interp, NULL,
+                EXCEPTION_ALLOCATION_ERROR,
+                "Parrot VM: Can't turn to a singleton type!\n");
 
         /* First, is the destination a constant? No joy for us there */
         if (new_vtable->flags & VTABLE_IS_CONST_FLAG)
-            real_exception(interp, NULL, ALLOCATION_ERROR,
-                               "Parrot VM: Can't turn to a constant type!\n");
+            Parrot_ex_throw_from_c_args(interp, NULL,
+                EXCEPTION_ALLOCATION_ERROR,
+                "Parrot VM: Can't turn to a constant type!\n");
 
         /* Is the source a singleton? */
         if (pmc->vtable->flags & VTABLE_PMC_IS_SINGLETON)
-            real_exception(interp, NULL, ALLOCATION_ERROR,
-                               "Parrot VM: Can't modify a singleton\n");
+            Parrot_ex_throw_from_c_args(interp, NULL,
+                EXCEPTION_ALLOCATION_ERROR,
+                "Parrot VM: Can't modify a singleton\n");
 
         /* Is the source constant? */
         if (pmc->vtable->flags & VTABLE_IS_CONST_FLAG)
-            real_exception(interp, NULL, ALLOCATION_ERROR,
-                               "Parrot VM: Can't modify a constant\n");
+            Parrot_ex_throw_from_c_args(interp, NULL,
+                EXCEPTION_ALLOCATION_ERROR,
+                "Parrot VM: Can't modify a constant\n");
     }
 
     /* Do we have an extension area? */
@@ -133,10 +175,10 @@ pmc_reuse(PARROT_INTERP, ARGIN(PMC *pmc), INTVAL new_type,
 
     /* Do we need one? */
     if (new_vtable->flags & VTABLE_PMC_NEEDS_EXT) {
-        if (!has_ext) {
-            /* If we need an ext area, go allocate one */
+        /* If we need an ext area, go allocate one */
+        if (!has_ext)
             add_pmc_ext(interp, pmc);
-        }
+
         new_flags = PObj_is_PMC_EXT_FLAG;
     }
     else {
@@ -161,9 +203,10 @@ pmc_reuse(PARROT_INTERP, ARGIN(PMC *pmc), INTVAL new_type,
     return pmc;
 }
 
+
 /*
 
-=item C<static PMC* get_new_pmc_header>
+=item C<static PMC * get_new_pmc_header>
 
 Gets a new PMC header.
 
@@ -173,7 +216,7 @@ Gets a new PMC header.
 
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
-static PMC*
+static PMC *
 get_new_pmc_header(PARROT_INTERP, INTVAL base_type, UINTVAL flags)
 {
     PMC    *pmc;
@@ -192,8 +235,8 @@ get_new_pmc_header(PARROT_INTERP, INTVAL base_type, UINTVAL flags)
     /* we only have one global Env object, living in the interp */
     if (vtable_flags & VTABLE_PMC_IS_SINGLETON) {
         /*
-         * singletons (monadic objects) exist only once, the interface
-         * with the class is:
+         * singletons (monadic objects) exist only once
+         * the interface * with the class is:
          * - get_pointer: return NULL or a pointer to the single instance
          * - set_pointer: set the only instance once
          *
@@ -214,9 +257,8 @@ get_new_pmc_header(PARROT_INTERP, INTVAL base_type, UINTVAL flags)
         return pmc;
     }
 
-    if (vtable_flags & VTABLE_IS_CONST_PMC_FLAG) {
+    if (vtable_flags & VTABLE_IS_CONST_PMC_FLAG)
         flags |= PObj_constant_FLAG;
-    }
     else if (vtable_flags & VTABLE_IS_CONST_FLAG) {
         /* put the normal vtable in, so that the pmc can be initialized first
          * parrot or user code has to set the _ro property then,
@@ -271,7 +313,7 @@ allocation and initialization for continuations.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 PARROT_CANNOT_RETURN_NULL
 PMC *
 pmc_new_noinit(PARROT_INTERP, INTVAL base_type)
@@ -284,6 +326,7 @@ pmc_new_noinit(PARROT_INTERP, INTVAL base_type)
     return get_new_pmc_header(interp, base_type, 0);
 }
 
+
 /*
 
 =item C<PMC * constant_pmc_new_noinit>
@@ -294,7 +337,7 @@ Creates a new constant PMC of type C<base_type>.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 PARROT_CANNOT_RETURN_NULL
 PMC *
 constant_pmc_new_noinit(PARROT_INTERP, INTVAL base_type)
@@ -302,38 +345,39 @@ constant_pmc_new_noinit(PARROT_INTERP, INTVAL base_type)
     return get_new_pmc_header(interp, base_type, PObj_constant_FLAG);
 }
 
+
 /*
 
 =item C<PMC * constant_pmc_new>
 
-Creates a new constant PMC of type C<base_type>, the call C<init>.
+Creates a new constant PMC of type C<base_type>, then calls its C<init>.
 
 =cut
 
 */
 
-PARROT_API
+PARROT_EXPORT
 PARROT_CANNOT_RETURN_NULL
 PMC *
 constant_pmc_new(PARROT_INTERP, INTVAL base_type)
 {
-    PMC * const pmc = get_new_pmc_header(interp, base_type,
-            PObj_constant_FLAG);
+    PMC * const pmc = get_new_pmc_header(interp, base_type, PObj_constant_FLAG);
     VTABLE_init(interp, pmc);
     return pmc;
 }
+
 
 /*
 
 =item C<PMC * pmc_new_init>
 
-As C<pmc_new()>, but passes C<init> to the PMC's C<init_pmc()> method.
+As C<pmc_new()>, but passes C<init> to the PMC's C<init_pmc()> vtable entry.
 
 =cut
 
 */
 
-PARROT_API
+PARROT_EXPORT
 PARROT_CANNOT_RETURN_NULL
 PMC *
 pmc_new_init(PARROT_INTERP, INTVAL base_type, ARGOUT(PMC *init))
@@ -349,17 +393,19 @@ pmc_new_init(PARROT_INTERP, INTVAL base_type, ARGOUT(PMC *init))
     }
 }
 
+
 /*
 
 =item C<PMC * constant_pmc_new_init>
 
-As C<constant_pmc_new>, but passes C<init> to the PMC's C<init_pmc> method.
+As C<constant_pmc_new>, but passes C<init> to the PMC's C<init_pmc> vtable
+entry.
 
 =cut
 
 */
 
-PARROT_API
+PARROT_EXPORT
 PARROT_CANNOT_RETURN_NULL
 PMC *
 constant_pmc_new_init(PARROT_INTERP, INTVAL base_type, ARGIN_NULLOK(PMC *init))
@@ -369,17 +415,98 @@ constant_pmc_new_init(PARROT_INTERP, INTVAL base_type, ARGIN_NULLOK(PMC *init))
     return pmc;
 }
 
+
 /*
 
-=item C<INTVAL pmc_register>
+=item C<PMC * temporary_pmc_new>
 
-This segment handles PMC registration and such.
+Creates a new temporary PMC of type C<base_type>, the call C<init>.  B<You> are
+responsible for freeing this PMC when it goes out of scope with
+C<free_temporary_pmc()>.  B<Do not> store this PMC in any other PMCs, or allow
+it to be stored.  B<Do not> store any regular PMC in this PMC, or allow the
+storage of any regular PMC in this PMC.
+
+If you don't know what this means means, or you can't tell if either case will
+happen as the result of any call you make on or with this PMC, B<DO NOT> use
+this function, lest you cause weird crashes and memory errors.  Use
+C<pmc_new()> instead.
+
+(Why do these functions even exist?  Used judiciously, they can reduce GC
+pressure in hotspots tremendously.  If you haven't audited the code carefully
+-- including profiling and benchmarking -- then use C<pmc_new()> instead, and
+never B<ever> add C<PARROT_EXPORT> to either function.)
 
 =cut
 
 */
 
-PARROT_API
+PARROT_CANNOT_RETURN_NULL
+PMC *
+temporary_pmc_new(PARROT_INTERP, INTVAL base_type)
+{
+    PMC * const pmc = get_new_pmc_header(interp, base_type, PObj_constant_FLAG);
+    VTABLE_init(interp, pmc);
+    return pmc;
+}
+
+
+/*
+
+=item C<void temporary_pmc_free>
+
+Frees a new temporary PMC created by C<temporary_pmc_new()>.  Do not call this
+with any other type of PMC.  Do not forget to call this (or you'll leak PMCs).
+Read and I<understand> the warnings for C<temporary_pmc_new()> before you're
+tempted to use this.
+
+=cut
+
+*/
+
+static void
+pmc_free_to_pool(PARROT_INTERP, ARGMOD(PMC *pmc),
+    ARGMOD(Small_Object_Pool *pool))
+{
+    if (PObj_active_destroy_TEST(pmc))
+        VTABLE_destroy(interp, pmc);
+
+    if (PObj_is_PMC_EXT_TEST(pmc))
+        Parrot_free_pmc_ext(interp, pmc);
+
+    PObj_flags_SETTO((PObj *)pmc, PObj_on_free_list_FLAG);
+    pool->add_free_object(interp, pool, (PObj *)pmc);
+    pool->num_free_objects++;
+}
+
+
+void
+temporary_pmc_free(PARROT_INTERP, ARGMOD(PMC *pmc))
+{
+    Small_Object_Pool *pool = interp->arena_base->constant_pmc_pool;
+    pmc_free_to_pool(interp, pmc, pool);
+}
+
+static void
+pmc_free(PARROT_INTERP, ARGMOD(PMC *pmc))
+{
+    Small_Object_Pool *pool = interp->arena_base->pmc_pool;
+    pmc_free_to_pool(interp, pmc, pool);
+
+}
+
+
+/*
+
+=item C<INTVAL pmc_register>
+
+Registers the name of a new PMC type with Parrot, returning the INTVAL
+representing that type.
+
+=cut
+
+*/
+
+PARROT_EXPORT
 INTVAL
 pmc_register(PARROT_INTERP, ARGIN(STRING *name))
 {
@@ -393,7 +520,7 @@ pmc_register(PARROT_INTERP, ARGIN(STRING *name))
         return type;
 
     if (type < enum_type_undef)
-        real_exception(interp, NULL, 1,
+        Parrot_ex_throw_from_c_args(interp, NULL, 1,
             "undefined type already exists - can't register PMC");
 
     classname_hash = interp->class_hash;
@@ -409,6 +536,7 @@ pmc_register(PARROT_INTERP, ARGIN(STRING *name))
     return type;
 }
 
+
 /*
 
 =item C<INTVAL pmc_type>
@@ -419,7 +547,7 @@ Returns the PMC type for C<name>.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
 INTVAL
 pmc_type(PARROT_INTERP, ARGIN_NULLOK(STRING *name))
@@ -442,6 +570,7 @@ pmc_type(PARROT_INTERP, ARGIN_NULLOK(STRING *name))
     }
 }
 
+
 /*
 
 =item C<INTVAL pmc_type_p>
@@ -452,7 +581,7 @@ Returns the PMC type for C<name>.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 INTVAL
 pmc_type_p(PARROT_INTERP, ARGIN(PMC *name))
 {
@@ -466,12 +595,13 @@ pmc_type_p(PARROT_INTERP, ARGIN(PMC *name))
     return 0;
 }
 
+
 /*
 
-=item C<static PMC* create_class_pmc>
+=item C<static PMC * create_class_pmc>
 
-Create a class object for this interpreter.  Takes an interpreter
-name and type as arguments.  Returns a pointer to the class object.
+Create a class object for this interpreter.  Takes an interpreter name and type
+as arguments.  Returns a pointer to the class object.
 
 =cut
 
@@ -479,7 +609,7 @@ name and type as arguments.  Returns a pointer to the class object.
 
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
-static PMC*
+static PMC *
 create_class_pmc(PARROT_INTERP, INTVAL type)
 {
     /*
@@ -493,10 +623,9 @@ create_class_pmc(PARROT_INTERP, INTVAL type)
 
     /* If we are a second thread, we may get the same object as the
      * original because we have a singleton. Just set the singleton to
-     * be our class object, but don't mess with its vtable.
-     */
+     * be our class object, but don't mess with its vtable.  */
     if ((interp->vtables[type]->flags & VTABLE_PMC_IS_SINGLETON)
-        && (_class == _class->vtable->pmc_class)) {
+    &&  (_class == _class->vtable->pmc_class)) {
         interp->vtables[type]->pmc_class = _class;
     }
     else {
@@ -516,6 +645,7 @@ create_class_pmc(PARROT_INTERP, INTVAL type)
     return _class;
 }
 
+
 /*
 
 =item C<void Parrot_create_mro>
@@ -526,18 +656,20 @@ Create the MRO (method resolution order) array for this type.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 void
 Parrot_create_mro(PARROT_INTERP, INTVAL type)
 {
     PMC    *_class, *mro;
-    INTVAL i, count;
-
     VTABLE *vtable   = interp->vtables[type];
     PMC    *mro_list = vtable->mro;
+    INTVAL  i, count;
+
+    /* this should never be PMCNULL */
+    PARROT_ASSERT(!PMC_IS_NULL(mro_list));
 
     /* multithreaded: has already mro */
-    if (mro_list && mro_list->vtable->base_type != enum_class_ResizableStringArray)
+    if (mro_list->vtable->base_type != enum_class_ResizableStringArray)
         return;
 
     mro         = pmc_new(interp, enum_class_ResizablePMCArray);
@@ -560,7 +692,7 @@ Parrot_create_mro(PARROT_INTERP, INTVAL type)
 
         if (!vtable->_namespace) {
             /* need a namespace Hash, anchor at parent, name it */
-            PMC * const ns = pmc_new(interp,
+            PMC * const ns     = pmc_new(interp,
                     Parrot_get_ctx_HLL_type(interp, enum_class_NameSpace));
             vtable->_namespace = ns;
 
@@ -577,6 +709,7 @@ Parrot_create_mro(PARROT_INTERP, INTVAL type)
     }
 }
 
+
 /*
 
 =back
@@ -587,25 +720,25 @@ Parrot_create_mro(PARROT_INTERP, INTVAL type)
 
 =item C<void dod_register_pmc>
 
-Registers the PMC with the interpreter's DOD registery.
+Registers the PMC with the interpreter's DOD registry.
 
 =cut
 
 */
 
-PARROT_API
+PARROT_EXPORT
 void
-dod_register_pmc(PARROT_INTERP, ARGIN(PMC* pmc))
+dod_register_pmc(PARROT_INTERP, ARGIN(PMC *pmc))
 {
     /* Better not trigger a DOD run with a potentially unanchored PMC */
     Parrot_block_GC_mark(interp);
 
-    if (!interp->DOD_registry)
-        interp->DOD_registry = pmc_new(interp, enum_class_AddrRegistry);
+    PARROT_ASSERT(interp->DOD_registry);
 
     VTABLE_set_pmc_keyed(interp, interp->DOD_registry, pmc, PMCNULL);
     Parrot_unblock_GC_mark(interp);
 }
+
 
 /*
 
@@ -618,15 +751,12 @@ Unregisters the PMC from the interpreter's DOD registry.
 */
 
 void
-dod_unregister_pmc(PARROT_INTERP, ARGIN(PMC* pmc))
+dod_unregister_pmc(PARROT_INTERP, ARGIN(PMC *pmc))
 {
-    /* XXX or signal exception? */
-    if (!interp->DOD_registry)
-        return;
+    PARROT_ASSERT(interp->DOD_registry);
 
     VTABLE_delete_keyed(interp, interp->DOD_registry, pmc);
 }
-
 
 
 /*

@@ -19,6 +19,7 @@ class lolcode::Grammar::Actions;
 
 method TOP($/) {
     my $block := $( $<block> );
+    $block.symbol('IT', :scope('lexical'));
     my $it := PAST::Var.new( :name( 'IT' ), :scope('lexical'), :viviself('Undef'), :isdecl(1));
     $block.unshift($it);
     make $block;
@@ -41,7 +42,6 @@ method statement ($/, $key) {
 
 method declare($/) {
     our $?BLOCK;
-    our @?BLOCK;
 
     my $name := ~$<variable><identifier>;
 
@@ -83,40 +83,42 @@ method assign($/) {
     make $past;
 }
 
-method function($/) {
-    my $block := $( $<block> );
-    $block.blocktype('declaration');
+method function($/,$key) {
+    our $?BLOCK;
+    if $key eq 'params' {
+        our $?BLOCK_SIGNATURE;
+        my $arglist;
+        $arglist := PAST::Stmts.new();
+        # if there are any parameters, get the PAST for each of them and
+        # adjust the scope to parameter.
+        for $<parameters> {
+            my $param := PAST::Var.new(:name(~$_<identifier>), :scope('parameter'), :node($($_)));
+            $param.isdecl(1);
+            $arglist.push($param);
+        }
+        $?BLOCK_SIGNATURE := $arglist;
+    }
+    elsif $key eq 'block' {
+        my $block := $( $<block> );
+        $block.blocktype('declaration');
+        $?BLOCK.symbol(~$<variable><identifier>, :arity($block.arity()));
 
-    my $arglist;
-    $arglist := PAST::Stmts.new();
-    # if there are any parameters, get the PAST for each of them and
-    # adjust the scope to parameter.
-    $block.arity(0);
-    for $<parameters> {
-        #my $param := $($_);
-        #$param.scope('parameter');
-        my $param := PAST::Var.new(:name(~$_<identifier>), :scope('parameter'), :node($($_)));
-        $param.isdecl(1);
-        $arglist.push($param);
-        $block.arity($block.arity() + 1);
+        my $it := PAST::Var.new( :name( 'IT' ), :scope('lexical'), :viviself('Undef'), :isdecl(1));
+        $block[1].unshift($it);
+
+        $it := PAST::Var.new( :name( 'IT' ), :scope('lexical'));
+        $block[1].push($it);
+        $block.name(~$<variable><identifier>);
+        make $block;
+        #my $past := PAST::Op.new( :pasttype('bind'), :node( $/ ) );
+        #$($<variable>).isdecl(1);
+        #$past.push( $( $<variable> ) );
+        #$past.push( $block );
+        #make $past;
     }
 
 
-    my $it := PAST::Var.new( :name( 'IT' ), :scope('lexical'), :viviself('Undef'), :isdecl(1));
-    $block[1].unshift($it);
 
-    $it := PAST::Var.new( :name( 'IT' ), :scope('lexical'));
-    $block[1].push($it);
-
-    if $<parameters> { $block.unshift($arglist); }
-
-    $block.name(~$<variable><identifier>);
-    make $block;
-    #my $past := PAST::Op.new( :pasttype('bind'), :node( $/ ) );
-    #$($<variable>).isdecl(1);
-    #$past.push( $( $<variable> ) );
-    #$past.push( $block );
-    #make $past;
 }
 
 method ifthen($/) {
@@ -153,12 +155,57 @@ method ifthen($/) {
     make $past;
 }
 
+method switch($/) {
+    my $count := +$<value> - 1;
+    my $val  := $( $<value>[$count] );
+    my $then  := $( $<block>[$count] );
+    my $it := PAST::Var.new( :name( 'IT' ), :scope('lexical'), :viviself('Undef'));
+    my $expr := PAST::Op.new(:pasttype('call'), :name('BOTH SAEM'), $it, $val);
+    $then.blocktype('immediate');
+    my $past := PAST::Op.new( $expr, $then,
+                              :pasttype('if'),
+                              :node( $/ )
+                            );
+    if ( $<else> ) {
+        my $else := $( $<else>[0] );
+        $else.blocktype('immediate');
+        $past.push( $else );
+    }
+    while ($count != 0) {
+        $count := $count - 1;
+        $val  := $( $<value>[$count] );
+        $expr := PAST::Op.new(:pasttype('call'), :name('BOTH SAEM'), $it, $val);
+        $then  := $( $<block>[$count] );
+        $then.blocktype('immediate');
+        $past  := PAST::Op.new( $expr, $then, $past,
+                               :pasttype('if'),
+                               :node( $/ )
+                             );
+    }
+    #$expr := $past.shift();
+    #my $it := PAST::Var.new( :name( 'IT' ), :scope('lexical'), :viviself('Undef'));
+    #my $bind := PAST::Op.new( :pasttype('bind'), :node( $/ ) );
+    #$bind.push( $it );
+    #$bind.push( $expr );
+    #$past.unshift( $it );
+    my $past := PAST::Stmts.new( $past, :node( $/ ) );
+    make $past;
+}
+
 method block($/,$key) {
     our $?BLOCK;
     our @?BLOCK;
     if $key eq 'open' {
-        $?BLOCK := PAST::Block.new( PAST::Stmts.new(), :node($/) );
+        our $?BLOCK_SIGNATURE;
+        $?BLOCK := PAST::Block.new( PAST::Stmts.new(), :node($/), :lexical(1) );
         @?BLOCK.unshift($?BLOCK);
+        my $iter := $?BLOCK_SIGNATURE.iterator();
+        $?BLOCK.arity(0);
+        for $iter {
+            $?BLOCK.arity($?BLOCK.arity() + 1);
+            $?BLOCK[0].push($_);
+            $?BLOCK.symbol($_.name(), :scope('lexical'));
+        }
     }
     elsif $key eq 'close' {
         #my $past := PAST::Block.new( :blocktype('declaration'), :node( $/ ) );
@@ -181,22 +228,105 @@ method bang($/) {
     make PAST::Val.new( :value( ~$/ ), :returns('String'), :node($/) );
 }
 
-method expression($/) {
-    my $past := PAST::Op.new( :name('expr_parse'), :pasttype('call'), :node( $/ ) );
-    for $<tokens> {
-        if($_<identifier>) {
-            my $inline := '%r = find_name "' ~ $_<identifier> ~ '"';
-            $past.push(PAST::Op.new( :inline($inline) ));
-        }
-        elsif($_ eq "MKAY"){
-            my $inline := '%r = find_name "MKAY"';
-            $past.push(PAST::Op.new( :inline($inline) ));
+sub find_in_blocks($name) {
+    our $?BLOCK;
+    our @?BLOCK;
+    if $?BLOCK.symbol(~$name) {
+        return $?BLOCK.symbol($name);
+    }
+    for @?BLOCK {
+        if $_.symbol(~$name) { return $_.symbol($name); }
+    }
+    return 0;
+}
+
+sub is_sub($name) {
+    my $sym := find_in_blocks($name);
+    if $sym && defined($sym<arity>) { return 1; }
+    my $lex := lookup($name);
+    if lookup_class($lex) eq 'Sub' { return 1; }
+    return 0;
+}
+
+sub get_item($name) {
+    if is_sub($name) {
+        return PAST::Op.new( :name($name), :pasttype('call') );
+    }
+    else {
+        my $var := PAST::Var.new(:name($name));
+        my $sym := find_in_blocks($name);
+        if $sym && defined($sym<scope>) { $var<scope> := $sym<scope> }
+        return $var;
+    }
+}
+
+sub get_arity($name) {
+    my $sym := find_in_blocks($name);
+    if $sym {
+        return $sym<arity>;
+    }
+    else {
+        my $lex := lookup($name);
+        my $ii := get_inspect_info($lex);
+        if $ii<pos_slurpy> {
+            return -1;
         }
         else {
-            $past.push( $( $_ ) );
+            return $lex.arity();
         }
     }
-    make $past;
+}
+
+method expression($/) {
+    my @subs;
+    my @vals;
+    my @arity;
+    my $mkay := 'mkay';
+
+    for $<tokens> {
+        if($_<identifier>) {
+            my $name := ~$_<identifier>;
+            my $item := get_item($name);
+            if is_sub($name) {
+                my $arity := get_arity($name);
+                $item<arity> := $arity;
+                @subs.push($item);
+                @arity.unshift($arity + 0);
+                if @arity[0] == -1 { @vals.push($mkay) }
+            }
+            else {
+                @vals.push($item);
+                if defined(@arity[0]) {@arity[0]--};
+            }
+        }
+        else {
+            my $item := $( $_ );
+            @vals.push($item);
+            if defined(@arity[0]) {@arity[0]--};
+        }
+
+        while defined(@arity[0]) && @arity[0] == 0 {
+            my $sub := @subs.pop();
+            @arity.shift();
+            my $arity := $sub<arity> + 0;
+            while $arity > 0 {
+                $sub.unshift(@vals.pop());
+                $arity--;
+            }
+            @vals.push($sub);
+            if defined(@arity[0]) {@arity[0]--};
+        }
+    }
+
+    if @vals[0] eq $mkay {
+        @vals.shift();
+        my $sub := @subs.pop();
+        while +@vals {
+            $sub.unshift(@vals.pop());
+        }
+        @vals.push($sub);
+    }
+    make @vals[0];
 }
 
 method integer($/) {
@@ -227,7 +357,6 @@ method variable ($/) {
     }
     else {
         our $?BLOCK;
-        our @?BLOCK;
 
         my $var := PAST::Var.new( :name( $<identifier> ),
                             :scope('lexical'),

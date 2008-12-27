@@ -325,14 +325,15 @@ runnloop.
 .sub '_select_active' :method
     .local pmc active, conn, sock
     .local int i, n
-    .const .Sub req_handler = "req_handler"
+    .const 'Sub' req_handler = "req_handler"
     active = getattribute self, 'active'
     n = elements active
     i = 0
 add_lp:
     conn = active[i]
     sock = conn.'socket'()
-    add_io_event sock, req_handler, conn, .IO_THR_MSG_ADD_SELECT_RD
+    # XXX: this opcode is long gone; need something else
+    # add_io_event sock, req_handler, conn, .IO_THR_MSG_ADD_SELECT_RD
     ## self.'debug'('**select ', i, "\n")
     inc i
     if i < n goto add_lp
@@ -470,7 +471,7 @@ yes:
     srv = conn.'server'()
     $I0 = srv.'exists_conn'(conn)
     if $I0 goto do_read
-    .return srv.'accept_conn'()
+    .tailcall srv.'accept_conn'()
 
 do_read:
     req = conn.'get_request'()
@@ -821,7 +822,7 @@ END:
 
 .sub hex_to_int
     .param pmc hex
-    .return hex.'to_int'(16)
+    .tailcall hex.'to_int'(16)
 .end
 
 # if file is *.pir or *.pbc run it as CGI

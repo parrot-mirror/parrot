@@ -143,7 +143,7 @@ NO_HELP_FLAG:
   # TODO: In near future we probably should use objects here
   # For now let's just just use a hash with all state information
   .local pmc state
-  state = new .Hash
+  state = new 'Hash'
 
   # Artificial limit for macro expansion in macro.pir
   # default setting of 'nesting_limit' max be overridden by
@@ -174,75 +174,75 @@ NO_PREFIX_BUILTINS_FLAG:
 
   unimplemented_option = "traditional"
   is_defined = defined opt[unimplemented_option]
-  if is_defined goto UNIMPLEMENTED_OPTION
+  if is_defined goto EXCEPTION_UNIMPLEMENTED_OPTION
 
   unimplemented_option = "fatal-warnings"
   is_defined = defined opt[unimplemented_option]
-  if is_defined goto UNIMPLEMENTED_OPTION
+  if is_defined goto EXCEPTION_UNIMPLEMENTED_OPTION
 
   unimplemented_option = "debug"
   is_defined = defined opt[unimplemented_option]
-  if is_defined goto UNIMPLEMENTED_OPTION
+  if is_defined goto EXCEPTION_UNIMPLEMENTED_OPTION
 
   unimplemented_option = "arglength"
   is_defined = defined opt[unimplemented_option]
-  if is_defined goto UNIMPLEMENTED_OPTION
+  if is_defined goto EXCEPTION_UNIMPLEMENTED_OPTION
 
   unimplemented_option = "error-output"
   is_defined = defined opt[unimplemented_option]
-  if is_defined goto UNIMPLEMENTED_OPTION
+  if is_defined goto EXCEPTION_UNIMPLEMENTED_OPTION
 
   unimplemented_option = "include"
   is_defined = defined opt[unimplemented_option]
-  if is_defined goto UNIMPLEMENTED_OPTION
+  if is_defined goto EXCEPTION_UNIMPLEMENTED_OPTION
 
   unimplemented_option = "interactive"
   is_defined = defined opt[unimplemented_option]
-  if is_defined goto UNIMPLEMENTED_OPTION
+  if is_defined goto EXCEPTION_UNIMPLEMENTED_OPTION
 
   unimplemented_option = "synclines"
   is_defined = defined opt[unimplemented_option]
-  if is_defined goto UNIMPLEMENTED_OPTION
+  if is_defined goto EXCEPTION_UNIMPLEMENTED_OPTION
 
   unimplemented_option = "word-regexp"
   is_defined = defined opt[unimplemented_option]
-  if is_defined goto UNIMPLEMENTED_OPTION
+  if is_defined goto EXCEPTION_UNIMPLEMENTED_OPTION
 
   unimplemented_option = "hash-size"
   is_defined = defined opt[unimplemented_option]
-  if is_defined goto UNIMPLEMENTED_OPTION
+  if is_defined goto EXCEPTION_UNIMPLEMENTED_OPTION
 
   unimplemented_option = "quiet"
   is_defined = defined opt[unimplemented_option]
-  if is_defined goto UNIMPLEMENTED_OPTION
+  if is_defined goto EXCEPTION_UNIMPLEMENTED_OPTION
 
   unimplemented_option = "silent"
   is_defined = defined opt[unimplemented_option]
-  if is_defined goto UNIMPLEMENTED_OPTION
+  if is_defined goto EXCEPTION_UNIMPLEMENTED_OPTION
 
   unimplemented_option = "diversions"
   is_defined = defined opt[unimplemented_option]
-  if is_defined goto UNIMPLEMENTED_OPTION
+  if is_defined goto EXCEPTION_UNIMPLEMENTED_OPTION
 
   unimplemented_option = "define"
   is_defined = defined opt[unimplemented_option]
-  if is_defined goto UNIMPLEMENTED_OPTION
+  if is_defined goto EXCEPTION_UNIMPLEMENTED_OPTION
 
   unimplemented_option = "undefine"
   is_defined = defined opt[unimplemented_option]
-  if is_defined goto UNIMPLEMENTED_OPTION
+  if is_defined goto EXCEPTION_UNIMPLEMENTED_OPTION
 
   unimplemented_option = "trace"
   is_defined = defined opt[unimplemented_option]
-  if is_defined goto UNIMPLEMENTED_OPTION
+  if is_defined goto EXCEPTION_UNIMPLEMENTED_OPTION
 
-  goto NO_UNIMPLEMENTED_OPTION
-UNIMPLEMENTED_OPTION:
+  goto NO_EXCEPTION_UNIMPLEMENTED_OPTION
+EXCEPTION_UNIMPLEMENTED_OPTION:
     printerr "Sorry, the option '--"
     printerr unimplemented_option
     printerr "' is not implemented yet.\n"
     end
-NO_UNIMPLEMENTED_OPTION:
+NO_EXCEPTION_UNIMPLEMENTED_OPTION:
 
   # init of input structures, creates state['stack';'input']
   input_init( state )
@@ -251,8 +251,8 @@ NO_UNIMPLEMENTED_OPTION:
 
   # First we set up a table of all symbols, that is macros
   .local pmc symtab
-  symtab = new .Hash
-  # symtab = new .OrderedHash
+  symtab = new 'Hash'
+  # symtab = new 'OrderedHash'
   state['symtab'] = symtab
 
   # TODO: read M4PATH with env.pmc
@@ -277,7 +277,7 @@ ARGC_IS_OK:
 
   # We need the builtin_tab, whether '--reload_state' was passed or not
   .local pmc builtin_tab
-  builtin_tab = new .OrderedHash
+  builtin_tab = new 'OrderedHash'
   state['builtin_tab'] = builtin_tab
 
   builtin_tab_init( state )

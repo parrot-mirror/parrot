@@ -24,19 +24,13 @@ use Parrot::Configure::Utils ':auto';
 sub _init {
     my $self = shift;
     my %data;
-    $data{description} = q{Determining if your C library supports memalign};
+    $data{description} = q{Does your C library support memalign};
     $data{result}      = q{};
     return \%data;
 }
 
 sub runstep {
     my ( $self, $conf ) = @_;
-
-    if ( $conf->options->get('miniparrot') ) {
-        $conf->data->set( memalign => '' );
-        $self->set_result('skipped');
-        return 1;
-    }
 
     if ( defined $conf->data->get('memalign') ) {
 

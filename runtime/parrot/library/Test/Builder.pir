@@ -336,11 +336,12 @@ recording it with the optional test description in C<description>.
 =cut
 
 .sub 'ok' :method
-    .param int    passed
-    .param string description     :optional
-    .param int    has_description :opt_flag
+    .param pmc passed
+    .param pmc description     :optional
+    .param int has_description :opt_flag
 
     if has_description goto OK
+    description = new 'String'
     description = ''
 
   OK:
@@ -470,7 +471,7 @@ plan.  This calls C<exit>; there's little point in continuing.
 
     .local pmc plan_exception
     plan_exception = new 'Exception'
-    plan_exception['_message'] = 'Cannot skip_all() with a plan!'
+    plan_exception = 'Cannot skip_all() with a plan!'
     throw plan_exception
 
   SKIP_ALL:

@@ -17,8 +17,9 @@ L<http://www.lua.org/manual/5.1/manual.html#5.3>.
 
 =cut
 
-.HLL 'Lua', 'lua_group'
-.namespace [ 'Lua::package' ]
+.HLL 'lua'
+.loadlib 'lua_group'
+.namespace [ 'package' ]
 
 .sub 'luaopen_package'
 #    print "init Lua Package\n"
@@ -27,35 +28,21 @@ L<http://www.lua.org/manual/5.1/manual.html#5.3>.
     _lua__GLOBAL = get_hll_global '_G'
     new $P1, 'LuaString'
 
-    .const .Sub _lua_module = 'module'
-    _lua_module.'setfenv'(_lua__GLOBAL)
-    set $P1, 'module'
-    _lua__GLOBAL[$P1] = _lua_module
-
-    .const .Sub _lua_require = 'require'
-    _lua_require.'setfenv'(_lua__GLOBAL)
-    set $P1, 'require'
-    _lua__GLOBAL[$P1] = _lua_require
-
     .local pmc _package
     new _package, 'LuaTable'
     set $P1, 'package'
     _lua__GLOBAL[$P1] = _package
 
-    lua_register($P1, _package)
-
-    .const .Sub _package_loadlib = 'loadlib'
-    _package_loadlib.'setfenv'(_lua__GLOBAL)
-    set $P1, 'loadlib'
-    _package[$P1] = _package_loadlib
+    $P2 = split "\n", <<'LIST'
+loadlib
+seeall
+LIST
+    lua_register($P1, _package, $P2)
 
     # LUA_COMPAT_LOADLIB
-    _lua__GLOBAL[$P1] = _package_loadlib
-
-    .const .Sub _package_seeall = 'seeall'
-    _package_seeall.'setfenv'(_lua__GLOBAL)
-    set $P1, 'seeall'
-    _package[$P1] = _package_seeall
+    set $P1, 'loadlib'
+    $P0 = _package[$P1]
+    _lua__GLOBAL[$P1] = $P0
 
     .local pmc _loaders
     new _loaders, 'LuaTable'
@@ -63,24 +50,24 @@ L<http://www.lua.org/manual/5.1/manual.html#5.3>.
     _package[$P1] = _loaders
     new $P2, 'LuaNumber'
 
-    .const .Sub loader_preload = 'loader_preload'
+    .const 'Sub' loader_preload = 'loader_preload'
     set $P2, 1
     _loaders[$P2] = loader_preload
 
-    .const .Sub loader_Lua = 'loader_Lua'
+    .const 'Sub' loader_Lua = 'loader_Lua'
     inc $P2
     _loaders[$P2] = loader_Lua
 
-    .const .Sub loader_PBC = 'loader_PBC'
+    .const 'Sub' loader_PBC = 'loader_PBC'
     inc $P2
     _loaders[$P2] = loader_PBC
 
-    .const .Sub loader_PBCroot = 'loader_PBCroot'
+    .const 'Sub' loader_PBCroot = 'loader_PBCroot'
     inc $P2
     _loaders[$P2] = loader_PBCroot
 
-    setpath(_package, 'path', 'LUA_PATH', './?.lua')
-    setpath(_package, 'pbcpath', 'LUA_PBCPATH', './?.pbc;./?.pir;languages/lua/src/lib/?.pbc')
+    setpath(_package, 'path', 'LUA_PATH', './?.lua;languages/lua/src/lib/?.lua')
+    setpath(_package, 'pbcpath', 'LUA_PBCPATH', './?.pbc;./?.pir;languages/lua/?.pbc')
 
     .local pmc _lua__REGISTRY
     _lua__REGISTRY = get_hll_global '_REGISTRY'
@@ -92,6 +79,13 @@ L<http://www.lua.org/manual/5.1/manual.html#5.3>.
     new $P0, 'LuaTable'
     set $P1, 'preload'
     _package[$P1] = $P0
+
+    $P2 = split "\n", <<'LIST'
+module
+require
+LIST
+    null $P0
+    lua_register($P0, _lua__GLOBAL, $P2)
 
 .end
 
@@ -321,7 +315,7 @@ each option is a function to be applied over the module.
 
 =cut
 
-.sub 'module' :anon
+.sub 'module'
     .param pmc name :optional
     .param pmc options :slurpy
     .local pmc m
@@ -403,7 +397,7 @@ any loader for the module, then C<require> signals an error.
 
 =cut
 
-.sub 'require' :anon
+.sub 'require'
     .param pmc modname :optional
     .param pmc extra :slurpy
     .local pmc res
@@ -445,8 +439,6 @@ any loader for the module, then C<require> signals an error.
   L4:
     new $P1, 'LuaNil'
     $P1 = $P0(modname)  # call it
-    $I0 = isa $P1 , 'LuaClosure'
-    if $I0 goto L5
     $I0 = isa $P1 , 'LuaFunction'
     if $I0 goto L5
     $I0 = isa $P1 , 'LuaString'
@@ -505,7 +497,7 @@ NOT YET IMPLEMENTED.
 
 =cut
 
-.sub 'loadlib' :anon
+.sub 'loadlib'
     not_implemented()
 .end
 
@@ -550,7 +542,7 @@ environment. To be used as an option to function C<module>.
 
 =cut
 
-.sub 'seeall' :anon
+.sub 'seeall'
     .param pmc module :optional
     .param pmc extra :slurpy
     .local pmc mt

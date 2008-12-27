@@ -8,7 +8,7 @@ t/regex.t - Lua Regex Compiler
 
 =head1 SYNOPSIS
 
-    % perl -I../lib -Ilua/t lua/t/regex.t
+    % perl t/regex.t
 
 =head1 DESCRIPTION
 
@@ -45,7 +45,7 @@ Description of the test.
 use strict;
 use warnings;
 use FindBin;
-use lib "$FindBin::Bin";
+use lib "$FindBin::Bin/../../../lib", "$FindBin::Bin";
 
 use Parrot::Test tests => 150;
 use Test::More;
@@ -63,7 +63,7 @@ my %todo_info = (
 my $test_number = 0;
 
 foreach (@test_files) {
-    my $filename = File::Spec->catfile( 'lua', 't', $_ );
+    my $filename = "$FindBin::Bin/$_" ;
     open my $FH, '<', $filename
             or die "can't open $filename ($!)\n";
     while (<$FH>) {

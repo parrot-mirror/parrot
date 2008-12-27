@@ -2,130 +2,479 @@
 # $Id$
 
 # PHP grammar for Pipp PCT
-
 grammar Pipp::Grammar is PCT::Grammar;
 
-token TOP                     { ^ <sea_or_code>+ {*} }
-token ws                      { [ \h | \v ]*
-                                <singlelinecomment>?
-                                <multilinecomment>?
-                              }
-token singlelinecomment       { '#'  \N*
-                              | '//' \N*
-                              }
-token multilinecomment        { '/*' .*? '*/' }
+# the starting rule
+token TOP {
+    {*}                                     #= open
+    <sea_or_code>*
+    [ $ || <.panic: 'Syntax error'> ]
+    {*}                                     #= close
+}
 
-token sea_or_code             { <SEA>    {*}   #= SEA
-                              | <code_tp1>   {*}   #= code_tp1
-                              | <code_tp2>   {*}   #= code_tp2
-                              }
-regex SEA                     { <-[<]>+? ( <before \<> | $ ) {*} } 
-rule  code_tp1                { <.CODE_START_TP1> <statements>  <.CODE_END_TP1>? {*} }
-rule  code_tp2                { <.CODE_START_TP2> <statements>  <.CODE_END_TP2>? {*} }
-token CODE_START_TP1          { '<?php'  }
-token CODE_START_TP2          { '<script language="php">'  }
-token CODE_END_TP1            { '?>' \n? }
-token CODE_END_TP2            { '</script>' \n? }
+# Whitespace and comments
 
-rule  statements              { <statement>*           {*} }
-rule  statement               { <echo_statement>       {*} <statement_delimiter>  #= echo_statement
-                              | <expression>           {*} <statement_delimiter>  #= expression
-                              | <if_statement>         {*}                        #= if_statement
-                              | <inline_sea_tp1>       {*}                        #= inline_sea_tp1
-                              | <inline_sea_tp2>       {*}                        #= inline_sea_tp2
-                              | <scalar_assign>        {*} <statement_delimiter>  #= scalar_assign
-                              | <array_assign>         {*} <statement_delimiter>  #= array_assign
-                              | <function_definition>  {*}                        #= function_definition
-                              }
-rule  statement_delimiter     { ';' | <before \? > | $ }
-rule  echo_statement          { <ECHO> <arguments> {*} }
-rule  function_call           { <FUNCTION_NAME> <.PAREN_OPEN> <arguments> <.PAREN_CLOSE>  {*} }
-rule  arguments               {  [ <expression> [',' <expression>]* ]?                    {*} }
-rule  if_statement            { <IF> <.PAREN_OPEN> <relational_expression> <.PAREN_CLOSE>
-                                \{ <statements> \}
-                                <else_clause>?
-                                {*}
-                              }
-token inline_sea_tp1          { <.CODE_END_TP1> <SEA_empty_allowed> <.CODE_START_TP1>     {*} }
-token inline_sea_tp2          { <.CODE_END_TP2> <SEA_empty_allowed> <.CODE_START_TP2>     {*} }
-rule  scalar_assign           { <var> <ASSIGN_OP> <expression>                            {*} }
-rule  array_assign            { <array_elem> <ASSIGN_OP> <expression> {*} }
+token ws_char           { \h | \v }
 
-token ECHO                    { 'echo' }
-token FUNCTION_NAME           { <IDENT> }
-token PAREN_OPEN              { \( }
-token PAREN_CLOSE             { \) }
+token singlelinecomment { [ '#' || '//' ] \N* }    # end of line comment like Unix shell and C++
 
-token IDENT                   { <[a..zA..Z_]>+ <[a..zA..Z_0..9]>* }
-token VAR_NAME                {  '$' <IDENT> {*} }
+token multilinecomment  { '/*' .*?  '*/' }         # C-like multiline comment
 
-token TRUE                    { 'TRUE'                         {*} }
-token FALSE                   { 'FALSE'                        {*} }
-token NULL                    { 'NULL'                         {*} }
-token DOUBLEQUOTE_STRING      { '"' <string_literal: '"'> '"'  {*} }
-token SINGLEQUOTE_STRING      { \'  <string_literal: '\''> \'  {*} }
-token INTEGER                 { \d+                            {*} }
-token NUMBER                  { ( \d+ )? '.' \d+               {*} }
+token ws_all {
+      <.ws_char>
+    | <singlelinecomment>
+    | <multilinecomment>
+}
 
-token UNARY_MINUS             { \- }
-token UNARY_PLUS              { \+ }
-token CONCAT_OP               { \. }
-token ADD_OP                  { \+ | \- }
-token MUL_OP                  { '*' | '/' | '%' }
-token BITWISE_OP              { '|' | '&' | '^' }
-token ASSIGN_OP               { '=' }
-token REL_OP                  { '==' | '<=' | '>=' | '!=' | '<'  | '>' }
+# whitespace rule used implicity by rules
+token ws {
+      <!ww> <ws_all>+
+    | <ws_all>*
+}
 
-token IF                      { 'if' }
-token ELSE                    { 'else' }
+# text or PHP-code
+token sea_or_code {
+    | <code_echo_tag>   {*}    #= code_echo_tag
+    | <code_short_tag>  {*}    #= code_short_tag
+    | <code_script_tag> {*}    #= code_script_tag
+    | <SEA>             {*}    #= SEA
+}
 
-rule  relational_expression   { <expression> <rel_op_clause>? {*} }
+# text, in most cases broken HTML,
+# when an '<' is encountered check whether this is the start of PHP-code 
+regex SEA {
+    '<'? .+? ( <before '<'> | $ )
+    {*}
+}
 
-rule  else_clause             { <.ELSE> \{ <statements> \} {*} }
-rule  rel_op_clause           { <REL_OP> <expression> }
-regex SEA_empty_allowed       { <-[<]>*? <before \<> }  # everthing till the next '<'
+rule code_echo_tag {
+    <.CODE_START_ECHO_TAG> <arguments> <.statement_delimiter>
+        <statement>*
+    <.close_short_tag>?
+    {*}
+}
 
-token expression              { 
-                              | <concat_expression>       {*}  #= concat_expression
-                              | <bitwise_expression>      {*}  #= bitwise_expression
-                              | <function_call>           {*}  #= function_call
-                              }
+rule code_script_tag {
+    <.open_script_tag>
+        <statement>*
+    <.close_script_tag>?
+    {*}
+}
 
-rule  array_elem              { <VAR_NAME> '[' <array_key> ']' {*} }
-rule  array_key               { <expression> {*} }
-rule  var                     { <VAR_NAME> {*} }
-rule  concat_expression       { <string> <concat_tail>* {*} }
-rule  string                  { <DOUBLEQUOTE_STRING> {*}   #= DOUBLEQUOTE_STRING
-                              | <SINGLEQUOTE_STRING> {*}   #= SINGLEQUOTE_STRING
-                              }
-rule  concat_tail             { <CONCAT_OP> <string> }
+rule code_short_tag {
+    <.open_short_tag>
+        <statement>*
+    <.close_short_tag>?
+    {*}
+}
 
-rule  bitwise_expression      { <adding_expression> <bitwise_tail>? {*} }
+regex open_script_tag {
+    '<script' <ws_char>+: 'language' <ws_char>*: '=' <ws_char>*: <quoted_lang_name> <ws_char>*: '>'
+    {{ $P0 = new 'String'
+       $P0 = "script"
+        set_global "tag_type", $P0
+    }}
+}
 
-rule  bitwise_tail            { <BITWISE_OP> <adding_expression> }
+regex close_script_tag { 
+    '</script' <ws_char>*: '>'
+    {{  $S0 = "script"
+        $P0 = get_global "tag_type"
+        $S1 = $P0
+        if $S0 != $S1 goto fail
+        .return(1)
+    fail:
+    }} <.fail>
+}
 
-# BUG: this gets precedence  wrong
-rule  adding_expression       { <multiplying_expression> <adding_tail>* {*} }
+token quoted_lang_name { '"php"' | '\'php\'' }
 
-rule  adding_tail             { <ADD_OP> <multiplying_expression> }
+token CODE_START_ECHO_TAG {     
+    '<?=' 
+    {{ $P0 = new 'String'
+       $P0 = "short"
+        set_global "tag_type", $P0
+    }}
+}
 
-# TODO: this gets precedence wrong, see adding_expression
-rule  multiplying_expression  { <unary_expression> <multiplicand>? {*} }
+token open_short_tag { 
+    '<?' 'php'?  
+    {{ $P0 = new 'String'
+       $P0 = "short"
+        set_global "tag_type", $P0
+    }}
+}
 
-rule  multiplicand            { <MUL_OP> <multiplying_expression> }
+token close_short_tag { 
+    '?>' \n?  
+    {{  $S0 = "short"
+        $P0 = get_global "tag_type"
+        $S1 = $P0
+        if $S0 != $S1 goto fail
+        .return(1)
+    fail:
+    }} <.fail>
+}
 
-rule  unary_expression        { <UNARY_MINUS>? <postfix_expression> {*} }
+# block and statements
+rule block {
+    '{' <statement>* '}'
+    {*}
+}
 
-rule  postfix_expression      { <TRUE>                                     {*}    #= TRUE
-                              | <FALSE>                                    {*}    #= FALSE
-                              | <NULL>                                     {*}    #= NULL
-                              | <NUMBER>                                   {*}    #= NUMBER
-                              | <INTEGER>                                  {*}    #= INTEGER
-                              | <.PAREN_OPEN> <expression> <.PAREN_CLOSE>  {*}    #= expression
-                              | <array_elem>                               {*}    #= array_elem
-                              | <var>                                      {*}    #= var
-                              }
+rule statement {
+      <namespace_statement>     {*}  #= namespace_statement
+    | <return_statement>        {*}  #= return_statement
+    | <require_once_statement>  {*}  #= require_once_statement
+    | <echo_statement>          {*}  #= echo_statement
+    | <expression_statement>    {*}  #= expression_statement
+    | <if_statement>            {*}  #= if_statement
+    | <while_statement>         {*}  #= while_statement
+    | <do_while_statement>      {*}  #= do_while_statement
+    | <for_statement>           {*}  #= for_statement
+    | <inline_sea_short_tag>    {*}  #= inline_sea_short_tag
+    | <inline_sea_script_tag>   {*}  #= inline_sea_script_tag
+    | <var_assign>              {*}  #= var_assign
+    | <function_definition>     {*}  #= function_definition
+    | <class_definition>        {*}  #= class_definition
+}
 
-rule  function_definition     { 'function' <FUNCTION_NAME> <.PAREN_OPEN> <parameters> <.PAREN_CLOSE> '{' <statement>* '}' {*} }
-rule  parameters              {  [ <VAR_NAME> [',' <VAR_NAME>]* ]?                    {*} }
+rule statement_delimiter {
+      ';'
+    | <before '?'>
+    | $
+}
 
+rule namespace_statement {
+    'namespace' <NAMESPACE_NAME> ';'
+    {*}
+}
+
+# return can appear inside and outside functions
+token return_statement {
+    'return' <.ws_char> <expression> <.statement_delimiter>
+    {*}
+}
+
+token require_once_statement {
+    'require_once' <.ws_char> <quote> <ws> <.statement_delimiter>
+    {*}
+}
+
+token echo_statement {
+    'echo' <.ws_char> <arguments> <ws> <.statement_delimiter>
+    {*}
+}
+
+rule expression_statement {
+    <expression> <.statement_delimiter>
+    {*}
+}
+
+rule arguments {
+    [ <expression> [',' <expression>]* ]?
+    {*}
+}
+
+rule conditional_expression {
+    '(' <expression> ')' <block>
+    {*}
+}
+
+rule if_statement {
+    'if' <conditional_expression>
+    [<elseif_clause>]*
+    [<else_clause>]?
+    {*}
+}
+
+rule else_clause {
+    'else' <block>
+    {*}
+}
+
+rule elseif_clause {
+    'elseif' <conditional_expression>
+    {*}
+}
+
+rule while_statement {
+    'while' <conditional_expression>
+    {*}
+}
+
+rule do_while_statement {
+    'do' <block> 'while' '(' <expression> ')' <.statement_delimiter>
+    {*}
+}
+
+rule for_statement {
+    'for' '(' <var_assign> <expression> ';' <expression> ')' <block>
+    {*}
+}
+
+token inline_sea_short_tag {
+    <.close_short_tag>
+        <SEA_empty_allowed>
+    <.open_short_tag>
+    {*}
+}
+
+token inline_sea_script_tag {
+    <.close_script_tag>
+        <SEA_empty_allowed>
+    <.open_script_tag>
+    {*}
+}
+
+regex SEA_empty_allowed {
+    <-[<]>*? <before '<'>
+}
+
+rule var_assign {
+    <var> '=' <expression> <.statement_delimiter>
+    {*}
+}
+
+
+# identifiers
+#
+token CLASS_NAME               { <ident> }
+
+token CONSTANT_NAME            { <ident> }
+
+token CLASS_CONSTANT_ACCESSOR  { '::' }
+
+token STATIC_METHOD_ACCESSOR   { '::' }
+
+token FUNCTION_NAME            { <ident> }
+
+token INTERFACE_NAME           { <ident> }
+
+token MEMBER_NAME              { <ident> }
+
+token METHOD_NAME              { <ident> }
+
+# namespace support
+
+token NAMESPACE_SEPARATOR      { '\\' }
+
+token NAMESPACE_NAME           { <ident>? [ <.NAMESPACE_SEPARATOR> <ident> ]* }
+
+token VAR_NAME                 { '$' <ident> }
+
+# terms
+rule method_call {
+    <var> '->' <METHOD_NAME> '(' <arguments> ')'
+    {*}
+}
+
+rule function_call {
+    <FUNCTION_NAME> '(' <arguments> ')'
+    {*}
+}
+
+rule instantiate_array {
+    'array' '(' [ <array_arguments> [  [',' <array_arguments> ]* [',' <array_arguments> ]?  ]? ','?  ]?  ')'
+    {*}
+}
+
+rule array_arguments {
+    | <key_value_pair>  {*}    #= key_value_pair
+    | <expression>      {*}    #= expression
+}
+
+rule key_value_pair {
+    <key=expression> '=>' <value=expression>
+    {*}
+}
+
+rule constructor_call {
+    'new' <CLASS_NAME>
+    {*}
+}
+
+token TRUE {
+    [:i 'TRUE' ]
+    {*}
+}
+
+token FALSE {
+    [:i 'FALSE']
+    {*}
+}
+
+token NULL {
+    'NULL'
+    {*}
+}
+
+token NUMBER {
+    ( \d+ )? '.' \d+
+    {*}
+}
+
+token INTEGER {
+    \d+
+    {*}
+}
+
+token quote {
+    [ <.before '"' > <quote_expression: :qq>
+    | <.before \'  > <quote_expression: :q>
+    ]
+    {*}
+}
+
+token constant {
+    <CONSTANT_NAME>
+    {*}
+}
+
+token class_constant {
+    <.CLASS_NAME> <.CLASS_CONSTANT_ACCESSOR> <.CONSTANT_NAME>
+    {*}
+}
+
+rule this {
+    '$this'
+    {*}
+}
+
+rule member {
+    <this> '->' <MEMBER_NAME>
+    {*}
+}
+
+rule array_elem {
+    <VAR_NAME> '[' <expression> ']'
+    {*}
+}
+
+token simple_var {
+    <VAR_NAME>
+    {*}
+}
+
+token var {
+      <this>        {*}   #= this
+    | <array_elem>  {*}   #= array_elem
+    | <simple_var>  {*}   #= simple_var
+}
+
+rule literal {
+      <TRUE>    {*}    #= TRUE
+    | <FALSE>   {*}    #= FALSE
+    | <NULL>    {*}    #= NULL
+    | <NUMBER>  {*}    #= NUMBER
+    | <INTEGER> {*}    #= INTEGER
+    | <quote>   {*}    #= quote
+}
+
+rule term {
+      <method_call>            {*}   #= method_call
+    | <function_call>          {*}   #= function_call
+    | <instantiate_array>      {*}   #= instantiate_array
+    | <constructor_call>       {*}   #= constructor_call
+    | '(' <expression> {*} ')'       #= expression
+    | <literal>                {*}   #= literal
+    | <class_constant>         {*}   #= class_constant
+    | <constant>               {*}   #= constant
+    | <member>                 {*}   #= member
+    | <var>                    {*}   #= var
+}
+
+
+# declarations
+rule function_definition {
+    'function' <FUNCTION_NAME> <param_list>
+    {*}                                     #= open
+    <block>
+    {*}                                     #= close
+}
+
+rule param_list {
+    '(' [ '&'? <VAR_NAME> [',' '&'? <VAR_NAME>]* ]? ')'
+    {*}
+}
+
+# OO
+
+rule interface_definition {
+    'interface' <INTERFACE_NAME> [ 'implements' <INTERFACE_NAME> ]? '{'
+        <method_declaration>*
+    '}'
+    {*}
+}
+
+rule method_declaration {
+    'function' <METHOD_NAME> <param_list> ';'
+    {*}
+}
+
+rule class_definition {
+    'class' <CLASS_NAME> [ 'implements' <INTERFACE_NAME> ]? '{'
+    {*}                                     #= open
+        <class_constant_definition>*
+        <class_member_definition>*
+        <class_method_definition>*
+    '}'
+    {*}                                     #= close
+}
+
+rule class_constant_definition {
+    'const' <CONSTANT_NAME> '=' <literal> <.statement_delimiter>
+    {*}
+}
+
+rule class_member_definition {
+    'public' <VAR_NAME> '=' <literal> <.statement_delimiter>
+}
+
+rule class_method_definition {
+    'function' <METHOD_NAME> <param_list>
+    {*}                                     #= open
+    <block>
+    {*}                                     #= close
+}
+
+
+
+token curly_interpolation {
+    '{' <var> '}'
+    {*}
+}
+
+
+# operator precedence table
+rule expression is optable                                    { ... }
+
+proto postfix:'++' is precedence('1')                         { ... }
+proto postfix:'--' is equiv(postfix:<++>)                     { ... }
+proto prefix:'++'  is equiv(postfix:<++>)                     { ... }
+proto prefix:'--'  is equiv(postfix:<++>)                     { ... }
+
+proto infix:'|'    is looser('postfix:++')                    { ... }
+proto infix:'&'    is equiv('infix:|')                        { ... }
+proto infix:'^'    is equiv('infix:|')                        { ... }
+
+proto infix:'<'    is tighter('infix:|')                      { ... }
+proto infix:'<='   is equiv('infix:<')                        { ... }
+proto infix:'>'    is equiv('infix:<')                        { ... }
+proto infix:'>='   is equiv('infix:<')                        { ... }
+proto infix:'=='   is equiv('infix:<')                        { ... }
+proto infix:'!='   is equiv('infix:<')                        { ... }
+
+proto infix:'+'    is tighter('infix:<')                      { ... }
+proto infix:'-'    is equiv('infix:+')                        { ... }
+proto infix:'.'    is equiv('infix:+')    is pirop('concat')  { ... }
+
+proto infix:'*'    is tighter('infix:+')                      { ... }
+proto infix:'%'    is equiv('infix:*')                        { ... }
+proto infix:'/'    is equiv('infix:*')                        { ... }
+
+proto prefix:'-'   is tighter('infix:*')                      { ... }
+proto prefix:'+'   is equiv('prefix:-')                       { ... }
+proto prefix:'!'   is equiv('prefix:-')                       { ... }
+
+proto term:''      is tighter('prefix:-') is parsed(&term)    { ... }

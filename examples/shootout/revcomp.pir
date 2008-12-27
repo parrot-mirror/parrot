@@ -35,7 +35,7 @@ loop:
 	stdin = getstdin
 	stdout = getstdout
 	# stdout is linebuffered per default - make it block buffered
-	stdout.'setbuf'(8192)
+	stdout.'buffer_size'(8192)
 
 	seq = ''
 
@@ -66,10 +66,11 @@ done:
 	.local int i, linelen, ch
 	linelen = length line
 
-	reverse line
+        $P0 = new 'String'
+        $P0.'reverse'(line)
 
-	.const .Sub tr_00 = 'tr_00_init'
-	trans line, tr_00
+	.const 'Sub' tr_00 = 'tr_00_init'
+	$P0.'trans'(line, tr_00)
 
 	i = 0
 	$S0 = 'x'

@@ -282,7 +282,7 @@ sub parse_p_args_string {
         die "invalid PCC arg '$x': did you forget to specify a type?\n"
              unless defined $name;
 
-        if ($name =~ /[\**]?(\"?\w+\"?)/) {
+        if ($name =~ /\**([a-zA-Z_]\w*)/) {
             $name = $1;
         }
 
@@ -393,16 +393,16 @@ sub rewrite_pccmethod {
     my $set_params  = make_arg_pmc($params_flags, '_param_sig');
 
     $e->emit( <<"END", __FILE__, __LINE__ + 1 );
-    INTVAL   _n_regs_used[]       = { $n_regs_used };
+    const INTVAL _n_regs_used[]   = { $n_regs_used };
     opcode_t _param_indexes[]     = { $params_indexes };
     opcode_t *_return_indexes;
     opcode_t *_current_args;
-    PMC      *_param_sig          = pmc_new(interp, enum_class_FixedIntegerArray);
+    PMC      * const _param_sig   = pmc_new(interp, enum_class_FixedIntegerArray);
     PMC      *_return_sig         = PMCNULL;
 
-    parrot_context_t *_caller_ctx = CONTEXT(interp);
-    PMC *_ret_cont                = new_ret_continuation_pmc(interp, NULL);
-    parrot_context_t *_ctx        = Parrot_push_context(interp, _n_regs_used);
+    Parrot_Context *_caller_ctx   = CONTEXT(interp);
+    PMC * const _ret_cont         = new_ret_continuation_pmc(interp, NULL);
+    Parrot_Context *_ctx          = Parrot_push_context(interp, _n_regs_used);
     PMC *_ccont                   = PMCNULL;
 
 $set_params
@@ -412,9 +412,9 @@ $set_params
         _ccont = _caller_ctx->current_cont;
     }
     else {
-        /* there is no point calling real_exception here, because
+        /* there is no point calling Parrot_ex_throw_from_c_args here, because
            PDB_backtrace can't deal with a missing to_ctx either. */
-        internal_exception(1, "No caller_ctx for continuation \%p.", _ccont);
+        exit_fatal(1, "No caller_ctx for continuation \%p.", _ccont);
     }
 
     _ctx->current_cont            = _ret_cont;
@@ -437,7 +437,7 @@ END
         PObj_get_FLAGS(_ccont) &= ~SUB_FLAG_TAILCALL;
         --_ctx->recursion_depth;
         _ctx->caller_ctx      = _caller_ctx->caller_ctx;
-        Parrot_free_context(interp, _caller_ctx, 0);
+        Parrot_free_context(interp, _caller_ctx, 1);
         interp->current_args = NULL;
     }
     /* BEGIN PARMS SCOPE */
@@ -465,9 +465,9 @@ END
 $method_returns
 
     if (! _caller_ctx) {
-        /* there is no point calling real_exception here, because
+        /* there is no point calling Parrot_ex_throw_from_c_args here, because
            PDB_backtrace can't deal with a missing to_ctx either. */
-        internal_exception(1, "No caller_ctx for continuation \%p.", _ccont);
+        exit_fatal(1, "No caller_ctx for continuation \%p.", _ccont);
     }
 
     interp->returns_signature = _return_sig;

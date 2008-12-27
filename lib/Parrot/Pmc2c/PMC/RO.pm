@@ -25,14 +25,12 @@ use strict;
 use warnings;
 use base qw( Parrot::Pmc2c::PMC );
 
-use Parrot::Pmc2c::Emitter;
-use Parrot::Pmc2c::PMCEmitter;
-use Parrot::Pmc2c::Method;
-use Parrot::Pmc2c::MethodEmitter;
+use Parrot::Pmc2c::Emitter ();
+use Parrot::Pmc2c::PMCEmitter ();
+use Parrot::Pmc2c::Method ();
 use Parrot::Pmc2c::UtilFunctions
     qw( gen_ret dont_edit count_newlines dynext_load_code c_code_coda );
 use Text::Balanced 'extract_bracketed';
-use Parrot::Pmc2c::PCCMETHOD;
 
 =item C<make_RO($type)>
 
@@ -99,23 +97,26 @@ EOC
             $self->add_method($ro_method);
         }
         elsif ( $parent->vtable_method_does_write($vt_method_name) ) {
+            my @parameters = split( /\s*,\s*/, $vt_method->parameters );
+            @parameters = map { "SHIM($_)" } @parameters;
+
             my $ro_method = Parrot::Pmc2c::Method->new(
                 {
                     name        => $vt_method_name,
                     parent_name => $parent->name,
                     return_type => $vt_method->return_type,
-                    parameters  => $vt_method->parameters,
+                    parameters  => join( ', ', @parameters ),
                     type        => Parrot::Pmc2c::Method::VTABLE,
                 }
             );
             my $pmcname = $parent->name;
             my $ret     = gen_ret($ro_method);
             my $body    = <<EOC;
-    real_exception(interp, NULL, WRITE_TO_CONSTCLASS,
+    Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_WRITE_TO_CONSTCLASS,
             "$vt_method_name() in read-only instance of $pmcname");
 EOC
 
-            # don't return after a real_exception
+            # don't return after a Parrot_ex_throw_from_c_args
             #      $body .= "    $ret\n" if $ret;
             $ro_method->body( Parrot::Pmc2c::Emitter->text($body) );
             $self->add_method($ro_method);

@@ -57,7 +57,7 @@ sub generate_start {
     $h->emit(<<"EOH");
 
 /* $name PMC's underlying struct. */
-typedef struct Parrot_${name} {
+typedef struct Parrot_${name}_attributes {
 EOH
 
     return 1;
@@ -76,10 +76,10 @@ sub generate_end {
     my $ucname         = uc($name);
 
     $h->emit(<<"EOH");
-} Parrot_${name};
+} Parrot_${name}_attributes;
 
 /* Macro to access underlying structure of a $name PMC. */
-#define PARROT_${ucname}(o) ((Parrot_${name} *) PMC_data(o))
+#define PARROT_${ucname}(o) ((Parrot_${name}_attributes *) PMC_data(o))
 
 EOH
 
@@ -137,16 +137,16 @@ EOA
 
     else {
         $decl .= <<"EOA";
-            real_exception(interp, NULL, INVALID_OPERATION, \\
-                            "Attributes of type '$attrtype' cannot be " \\
-                            "subclassed from a high-level PMC."); \\
+            Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INVALID_OPERATION, \\
+                "Attributes of type '$attrtype' cannot be " \\
+                "subclassed from a high-level PMC."); \\
 EOA
     }
 
     $decl .= <<"EOA";
         } \\
         else \\
-            (dest) = ((Parrot_${pmcname} *)PMC_data(pmc))->$attrname; \\
+            (dest) = ((Parrot_${pmcname}_attributes *)PMC_data(pmc))->$attrname; \\
         }
 
 #define SETATTR_${pmcname}_${attrname}(interp, pmc, value) \\
@@ -156,23 +156,23 @@ EOA
 
     if ($attrtype eq "INTVAL") {
         $decl .= <<"EOA";
-            PMC *attr_value = new_pmc(interp, enum_class_Integer); \\
-            VTABLE_set_integer(interp, attr_value, value); \\
+            PMC *attr_value = pmc_new(interp, enum_class_Integer); \\
+            VTABLE_set_integer_native(interp, attr_value, value); \\
             VTABLE_set_attr_str(interp, pmc, \\
                               const_string(interp, "$attrname"), attr_value); \\
 EOA
     }
     elsif ($attrtype eq "FLOATVAL") {
         $decl .= <<"EOA";
-            PMC *attr_value = new_pmc(interp, enum_class_Float); \\
-            VTABLE_set_number(interp, attr_value, value); \\
+            PMC *attr_value = pmc_new(interp, enum_class_Float); \\
+            VTABLE_set_number_native(interp, attr_value, value); \\
             VTABLE_set_attr_str(interp, pmc, \\
                               const_string(interp, "$attrname"), attr_value); \\
 EOA
     }
     elsif ($attrtype =~ "STRING") {
         $decl .= <<"EOA";
-            PMC *attr_value = new_pmc(interp, enum_class_String); \\
+            PMC *attr_value = pmc_new(interp, enum_class_String); \\
             VTABLE_set_string_native(interp, attr_value, value); \\
             VTABLE_set_attr_str(interp, pmc, \\
                               const_string(interp, "$attrname"), attr_value); \\
@@ -187,16 +187,16 @@ EOA
 
     else {
         $decl .= <<"EOA";
-            real_exception(interp, NULL, INVALID_OPERATION, \\
-                            "Attributes of type '$attrtype' cannot be " \\
-                            "subclassed from a high-level PMC."); \\
+            Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INVALID_OPERATION, \\
+                "Attributes of type '$attrtype' cannot be " \\
+                "subclassed from a high-level PMC."); \\
 EOA
     }
 
     $decl .= <<"EOA";
         } \\
         else \\
-            ((Parrot_${pmcname} *)PMC_data(pmc))->$attrname = (value); \\
+            ((Parrot_${pmcname}_attributes *)PMC_data(pmc))->$attrname = (value); \\
     }
 
 EOA

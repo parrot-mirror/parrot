@@ -13,116 +13,61 @@ This file sets up the Perl 6 C<Capture> class.
 .namespace ['Perl6Capture']
 
 .sub 'onload' :anon :init :load
-    .local pmc p6meta
+    .local pmc p6meta, captureproto
     p6meta = get_hll_global ['Perl6Object'], '$!P6META'
-    p6meta.'new_class'('Perl6Capture', 'parent'=>'Any', 'attr'=>'$!scalar @!array %!hash', 'name'=>'Capture')
+    captureproto = p6meta.'new_class'('Perl6Capture', 'parent'=>'Capture Any', 'name'=>'Capture')
+    captureproto.'!IMMUTABLE'()
 .end
 
 
-=head1 METHODS
+=head2 Methods
 
-=over
+=over 4
 
-=item !create
-
-Creates a capture.
+=item get_string()   (vtable)
 
 =cut
 
-.sub '!create' :method
-    .param pmc invocant
-    .param pmc array :slurpy
-    .param pmc hash :named :slurpy
-
-    # Create capture and set parts of it.
-    .local pmc capt
-    capt = self.'new'()
-    setattribute capt, '$!scalar', invocant
-    setattribute capt, '@!array', array
-    setattribute capt, '%!hash', hash
-
-    # Done.
-    .return(capt)
+.sub '' :vtable('get_string') :method
+    $S0 = self.'item'()
+    .return ($S0)
 .end
 
-
-=item get_pmc_keyed (vtable method)
-
-Gets the given item from the capture.
-
-XXX Contains workaround until we get keyed_int in place in PCT.
-
-=cut
-
-.sub 'get_pmc_keyed' :vtable :method
-    .param pmc key
-    $I0 = isa key, 'Integer'
-    if $I0 goto int_key
-
-  hash_key:
-    $P0 = getattribute self, '%!hash'
-    $P0 = $P0[key]
-    .return ($P0)
-
-  int_key:
-    $P0 = getattribute self, '@!array'
-    $P0 = $P0[key]
-    .return ($P0)
+.sub '' :vtable('get_number') :method
+    $N0 = self.'item'()
+    .return ($N0)
 .end
-
-
-=item item (method)
-
-Gets the invocant part of the capture.
-
-=cut
 
 .sub 'item' :method
-    $P0 = getattribute self, '$!scalar'
-    .return ($P0)
-.end
-
-
-=item list (method)
-
-Gets the positional part of the capture.
-
-=cut
-
-.sub 'list' :method
-    $P0 = getattribute self, '@!array'
-    .return ($P0)
-.end
-
-
-=item hash (method)
-
-Gets the named part of the capture.
-
-=cut
-
-.sub 'hash' :method
-    $P0 = getattribute self, '%!hash'
+    $P0 = self[0]
+    unless null $P0 goto end
+    $P0 = 'undef'()
+  end:
     .return ($P0)
 .end
 
 
 =back
 
+=head2 Operators
+
+=over 4
+
+=item prefix:<\\>
+
+Build a capture from its argument(s).
+
 =cut
 
-
 .namespace []
-
-.sub "infix:\\( )"
-    .param pmc inv
-    .param pmc array           :slurpy
-    .param pmc hash            :slurpy :named
-    $P0 = get_hll_global 'Capture'
-    .return $P0."!create"(inv, array :flat, hash :flat :named)
+.sub "prefix:\\"
+    .param pmc arg
+    $I0 = isa arg, 'ObjectRef'
+    if $I0 goto have_ref
+    arg = new 'ObjectRef', arg
+  have_ref:
+    .return (arg)
 .end
-
-
 
 # Local Variables:
 #   mode: pir

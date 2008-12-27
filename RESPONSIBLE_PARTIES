@@ -21,6 +21,7 @@ Release Manager                 Bob Rogers
                                 Jerry Gay
                                 chromatic
                                 Will Coleda
+                                Andrew Whitworth
 
 Metacommitter                   Allison Randal
                                 Jerry Gay
@@ -40,17 +41,21 @@ Core Developer                  Jonathan Worthington
                                 chromatic
                                 Chip Salzenberg
                                 Allison Randal
+                                Andrew Whitworth
 
 Compiler Developer              Vishal Soni (BCG, IMCC)
                                 Patrick Michaud (PGE, PCT)
                                 Allison Randal (TGE)
+                                Klaas-Jan Stol (PIRC)
 
 High Level Language Developer   Patrick Michaud (Perl 6, NQP)
                                 Matt Diephouse (Tcl)
                                 Will Coleda (Tcl)
+                                Stephen Weeks (Cardinal (Ruby), Lolcode)
                                 Francois Perrad (Lua, Pipp (PHP))
                                 Bernhard Schmalhofer (Pipp (PHP), Eclectus (Scheme))
                                 Kevin Tew (Cardinal (Ruby))
+                                Christoh Otto (Pipp (PHP))
 
 Build Manager                   Joshua Hoblitt
 
@@ -59,6 +64,7 @@ Lead Tester                     Jerry Gay
 Platform Porter                 Allison Randal (Debian)
                                 Aldo Calpini (PocketPC)
                                 Francois Perrad (MinGW32)
+                                Reini Urban (cygwin)
 
 Patch Monster                   chromatic
                                 Jonathan Worthington

@@ -1,5 +1,5 @@
 #! perl
-# Copyright (C) 2007, The Perl Foundation.
+# Copyright (C) 2007-2008, The Perl Foundation.
 # $Id$
 
 =head1 NAME
@@ -8,7 +8,7 @@ t/test_lex.t - Lua lexicography test
 
 =head1 SYNOPSIS
 
-    % perl -I../lib -Ilua/t lua/t/test_lex.t
+    % perl t/test_lex.t
 
 =head1 DESCRIPTION
 
@@ -23,10 +23,19 @@ L<http://www.lua.org/manual/5.1/manual.html#2.1>.
 use strict;
 use warnings;
 use FindBin;
-use lib "$FindBin::Bin";
+use lib "$FindBin::Bin/../../../lib", "$FindBin::Bin";
 
-use Parrot::Test tests => 23;
+use Parrot::Test;
 use Test::More;
+use Parrot::Test::Lua;
+
+my $test_prog = Parrot::Test::Lua::get_test_prog();
+if ( $test_prog eq 'lua' || $test_prog eq 'luac.pl' ) {
+    plan skip_all => "parrot only";
+}
+else {
+    plan tests => 23;
+}
 
 language_output_is( 'Lua_lex', <<'CODE', <<'OUT', 'hello' );
 print("hello")

@@ -23,11 +23,34 @@ use Parrot::Configure::Utils ':gen';
 
 sub _init {
     my $self = shift;
-
-    return {
-        description  => q{Generating runtime/parrot/include},
-        result       => q{},
-    }
+    my %data;
+    $data{description} = q{Generate runtime/parrot/include};
+    $data{result} = q{};
+    $data{source_files} = [ qw(
+        include/parrot/cclass.h
+        include/parrot/datatypes.h
+        include/parrot/enums.h
+        include/parrot/events.h
+        include/parrot/scheduler.h
+        include/parrot/exceptions.h
+        include/parrot/interpreter.h
+        include/parrot/io.h
+        include/parrot/longopt.h
+        include/parrot/multidispatch.h
+        include/parrot/resources.h
+        include/parrot/stat.h
+        include/parrot/string.h
+        include/parrot/pmc.h
+        include/parrot/warnings.h
+        src/pmc/timer.pmc
+        src/utils.c
+    ) ];
+    $data{generated_files} = [ qw(
+        include/parrot/vtable.h
+        include/parrot/core_pmcs.h
+    ) ];
+    $data{destdir} = 'runtime/parrot/include';
+    return \%data;
 }
 
 sub const_to_parrot {
@@ -156,47 +179,25 @@ sub parse_file {
     return @d;
 }
 
-my @files = qw(
-    include/parrot/cclass.h
-    include/parrot/core_pmcs.h
-    include/parrot/datatypes.h
-    include/parrot/enums.h
-    include/parrot/events.h
-    include/parrot/scheduler.h
-    include/parrot/exceptions.h
-    include/parrot/interpreter.h
-    include/parrot/io.h
-    include/parrot/longopt.h
-    include/parrot/mmd.h
-    include/parrot/resources.h
-    include/parrot/stat.h
-    include/parrot/string.h
-    include/parrot/pmc.h
-    include/parrot/vtable.h
-    include/parrot/warnings.h
-    src/pmc/timer.pmc
-    src/utils.c
-);
-my $destdir = 'runtime/parrot/include';
-
 sub runstep {
     my ( $self, $conf ) = @_;
+    my $verbose = $conf->options->get('verbose');
 
     # need vtable.h now
     system( $^X, "tools/build/vtable_h.pl" );
 
     my @generated;
-    for my $file (@files) {
+    for my $file ( @{ $self->{source_files} }, @{ $self->{generated_files} } ) {
         open my $fh, '<', $file or die "Can't open $file: $!\n";
         my @directives = parse_file $file, $fh;
         close $fh;
         for my $d (@directives) {
             my @defs = perform_directive $d;
             for my $target ( @{ $d->{files} } ) {
-                $conf->options->get('verbose') and print "$target ";
+                $verbose and print "$target ";
                 my $gen = join "\n",
                     ( $target =~ /\.pl$/ ? \&const_to_perl : \&const_to_parrot )->(@defs);
-                $conf->append_configure_log(qq{$destdir/$target});
+                $conf->append_configure_log(qq{$self->{destdir}/$target});
                 my $target_tmp = "$target.tmp";
                 open my $out, '>', $target_tmp or die "Can't open $target_tmp: $!\n";
 
@@ -213,7 +214,7 @@ sub runstep {
 $gen
 EOF
                 close $out or die "Can't write $target_tmp: $!\n";
-                $target =~ m[/] or $target = "$destdir/$target";
+                $target =~ m[/] or $target = "$self->{destdir}/$target";
                 move_if_diff( $target_tmp, $target );
                 push @generated, $target;
             }

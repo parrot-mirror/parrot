@@ -42,15 +42,15 @@ and is additionally stored as global 'PCRE', 'lib'.
 
 =cut
 
+.include "sysinfo.pasm"
+
 .sub init
     .local pmc libpcre
     .local pmc pcre_function
-    .local pmc config
     .local string osname
     .local int loaded
 
-    config = _config()
-    osname = config['osname']
+    osname = sysinfo .SYSINFO_PARROT_OS
 
     if 'MSWin32' == osname goto LIB_WIN32
     if 'cygwin'  == osname goto LIB_CYGWIN
@@ -100,13 +100,15 @@ LIB_LOADED:
     #        int buffersize);
     dlfunc pcre_function, libpcre, 'pcre_copy_substring', 'itpiibi'
     store_global 'PCRE::NCI', 'PCRE_copy_substring', pcre_function
-	branch LIB_RETURN
+
+    # const char *pcre_version(void);
+    dlfunc pcre_function, libpcre, 'pcre_version', 't'
+    store_global 'PCRE::NCI', 'PCRE_version', pcre_function
+
+    .return( libpcre )
 
 LIB_FAILED:
     die "Failed to load libpcre"
-
-LIB_RETURN:
-    .return( libpcre )
 .end
 
 
@@ -185,7 +187,21 @@ Returns the match.
 .end
 
 
-.include "library/config.pir"
+=item sub (string)= version()
+
+=cut
+
+.sub version
+    .local pmc pcre_function
+
+    pcre_function= find_global 'PCRE::NCI', 'PCRE_version'
+
+    .local string ver
+
+    ver = pcre_function()
+
+    .return( ver )
+.end
 
 =back
 

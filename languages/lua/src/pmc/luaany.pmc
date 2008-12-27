@@ -15,7 +15,6 @@ C<LuaAny> provides an abstract base class for some Lua types.
  Class                  Parents
  -----------------------------------------------
  LuaBoolean             LuaAny, Default
- LuaClosure             Closure, LuaAny, Default
  LuaFunction            Sub, LuaAny, Default
  LuaNil                 LuaAny, Default
  LuaNumber              LuaAny, Default
@@ -32,7 +31,6 @@ C<LuaAny> provides an abstract base class for some Lua types.
      default value      nil             nil             NULL
  ------------------------------------------------------------------
  LuaBoolean             nil             -               -
- LuaClosure             nil             yes             -
  LuaFunction            nil             yes             -
  LuaNil                 nil             -               -
  LuaNumber              nil             -               -
@@ -61,11 +59,11 @@ find_meth(PARROT_INTERP, PMC *obj, const char *name) {
 
     if (dynpmc_LuaString == type) {
         meta = Parrot_find_global_s(interp,
-                                    const_string(interp, "Lua::string"),
+                                    const_string(interp, "string"),
                                     const_string(interp, "mt_string"));
     }
 
-    if (dynpmc_LuaClosure != type && dynpmc_LuaFunction != type) {
+    if (dynpmc_LuaFunction != type) {
         if (obj->pmc_ext)
             meta = PMC_metadata(obj);
 
@@ -92,7 +90,7 @@ pmclass LuaAny
     abstract
     dynpmc
     group lua_group
-    hll Lua {
+    hll lua {
 /*
 
 =item C<void morph(INTVAL type)>
@@ -102,7 +100,7 @@ Changes the PMC to a PMC of a new type
 =cut
 
 */
-    void morph(INTVAL type) {
+    VTABLE void morph(INTVAL type) {
         if (PMC_type(SELF) == type)
             return;
         pmc_reuse(INTERP, SELF, type, 0);
@@ -117,7 +115,7 @@ Returns C<true>.
 =cut
 
 */
-    INTVAL get_bool() {
+    VTABLE INTVAL get_bool() {
         return (INTVAL)1;
     }
 
@@ -130,7 +128,7 @@ Returns the address of the PMC.
 =cut
 
 */
-    void* get_pointer() {
+    VTABLE void* get_pointer() {
         return SELF;
     }
 
@@ -141,7 +139,7 @@ Returns the address of the PMC.
 =cut
 
 */
-    void assign_pmc(PMC *value) {
+    VTABLE void assign_pmc(PMC *value) {
         VTABLE_morph(INTERP, SELF, PMC_type(value));
         if (PMC_type(value) != dynpmc_LuaNil)
             SELF.set_pmc(value);
@@ -156,12 +154,11 @@ Throws an exception.
 =cut
 
 */
-    PMC* get_pmc_keyed(PMC *key) {
+    VTABLE PMC* get_pmc_keyed(PMC *key) {
         PMC *meth = find_meth(INTERP, SELF, "__index");
 
         if (meth) {
-            if (dynpmc_LuaClosure  == PMC_type(meth)
-            ||  dynpmc_LuaFunction == PMC_type(meth)) {
+            if (dynpmc_LuaFunction == PMC_type(meth)) {
                 PMC *retval = Parrot_runops_fromc_args(INTERP, meth, "PPP",
                                                        SELF, key);
                 if (retval)
@@ -172,8 +169,9 @@ Throws an exception.
             else
                 return VTABLE_get_pmc_keyed(INTERP, meth, key);
         }
-        real_exception(INTERP, NULL, ILL_INHERIT,
-                "attempt to index a %Ss value", SELF.name());
+
+        Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_ILL_INHERIT,
+            "attempt to index a %Ss value", SELF.name());
     }
 
 /*
@@ -185,15 +183,14 @@ Throws an exception.
 =cut
 
 */
-    void set_pmc_keyed(PMC *key, PMC *value) {
+    VTABLE void set_pmc_keyed(PMC *key, PMC *value) {
         PMC *meth = find_meth(INTERP, SELF, "__newindex");
 
         if (!meth)
-            real_exception(INTERP, NULL, ILL_INHERIT,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_ILL_INHERIT,
                 "attempt to index a %Ss value", SELF.name());
 
-        if (dynpmc_LuaClosure  == PMC_type(meth)
-        ||  dynpmc_LuaFunction == PMC_type(meth)) {
+        if (dynpmc_LuaFunction == PMC_type(meth)) {
             Parrot_runops_fromc_args(INTERP, meth, "vPPP",
                                      SELF, key, value);
         }
@@ -212,11 +209,11 @@ Throws an exception.
 =cut
 
 */
-    PMC* neg(PMC *dest) {
+    VTABLE PMC* neg(PMC *dest) {
         PMC *meth = find_meth(INTERP, SELF, "__unm");
 
         if (!meth)
-            real_exception(INTERP, NULL, ILL_INHERIT,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_ILL_INHERIT,
                 "attempt to perform arithmetic on a %Ss value", SELF.name());
 
         dest = Parrot_runops_fromc_args(INTERP, meth, "PP", SELF);
@@ -227,11 +224,11 @@ Throws an exception.
         return dest;
     }
 
-    void i_neg() {
+    VTABLE void i_neg() {
         PMC *meth = find_meth(INTERP, SELF, "__unm");
 
         if (!meth)
-            real_exception(INTERP, NULL, ILL_INHERIT,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_ILL_INHERIT,
                 "attempt to perform arithmetic on a %Ss value", SELF.name());
 
         SELF = Parrot_runops_fromc_args(INTERP, meth, "PP", SELF);
@@ -249,7 +246,7 @@ Common implementation
 =cut
 
 */
-    PMC* logical_not(PMC *dest) {
+    VTABLE PMC* logical_not(PMC *dest) {
         dest = pmc_new(INTERP, dynpmc_LuaBoolean);
         VTABLE_set_bool(INTERP, dest, ! SELF.get_bool());
         return dest;
@@ -264,7 +261,7 @@ Always returns true.
 =cut
 
 */
-    INTVAL defined() {
+    VTABLE INTVAL defined() {
         return (INTVAL)1;
     }
 
@@ -277,12 +274,12 @@ Throws an exception.
 =cut
 
 */
-    opcode_t* invoke(void *next) {
+    VTABLE opcode_t* invoke(void *next) {
         PMC *meth = find_meth(INTERP, SELF, "__call");
         PMC *retval;
 
         if (!meth)
-            real_exception(INTERP, NULL, ILL_INHERIT,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_ILL_INHERIT,
                 "attempt to call a %Ss value", SELF.name());
 
             /* fix me */
@@ -337,10 +334,10 @@ Throws an exception.
 =cut
 
 */
-    PMC* add(PMC *value, PMC *dest) {
+    MULTI PMC* add(DEFAULT value, PMC *dest) {
         PMC *meth = find_meth(INTERP, SELF, "__add");
         if (!meth)
-            real_exception(INTERP, NULL, ILL_INHERIT,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_ILL_INHERIT,
                 "attempt to perform arithmetic on a %Ss value", SELF.name());
 
         dest = Parrot_runops_fromc_args(INTERP, meth, "PPP", SELF, value);
@@ -351,11 +348,11 @@ Throws an exception.
         return dest;
     }
 
-    void i_add(PMC *value) {
+    MULTI void i_add(DEFAULT value) {
         PMC *meth = find_meth(INTERP, SELF, "__add");
 
         if (!meth)
-            real_exception(INTERP, NULL, ILL_INHERIT,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_ILL_INHERIT,
                 "attempt to perform arithmetic on a %Ss value", SELF.name());
 
         SELF = Parrot_runops_fromc_args(INTERP, meth, "PPP", SELF, value);
@@ -363,10 +360,10 @@ Throws an exception.
             SELF = pmc_new(INTERP, dynpmc_LuaNil);
     }
 
-    PMC* subtract(PMC *value, PMC *dest) {
+    MULTI PMC* subtract(DEFAULT value, PMC *dest) {
         PMC *meth = find_meth(INTERP, SELF, "__sub");
         if (!meth)
-            real_exception(INTERP, NULL, ILL_INHERIT,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_ILL_INHERIT,
                 "attempt to perform arithmetic on a %Ss value", SELF.name());
 
         dest = Parrot_runops_fromc_args(INTERP, meth, "PPP", SELF, value);
@@ -377,10 +374,10 @@ Throws an exception.
         return dest;
     }
 
-    void i_subtract(PMC *value) {
+    MULTI void i_subtract(DEFAULT value) {
         PMC *meth = find_meth(INTERP, SELF, "__sub");
         if (!meth)
-            real_exception(INTERP, NULL, ILL_INHERIT,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_ILL_INHERIT,
                 "attempt to perform arithmetic on a %Ss value", SELF.name());
 
         SELF = Parrot_runops_fromc_args(INTERP, meth, "PPP", SELF, value);
@@ -389,11 +386,11 @@ Throws an exception.
             SELF = pmc_new(INTERP, dynpmc_LuaNil);
     }
 
-    PMC* multiply(PMC *value, PMC *dest) {
+    MULTI PMC* multiply(DEFAULT value, PMC *dest) {
         PMC *meth = find_meth(INTERP, SELF, "__mul");
 
         if (!meth)
-            real_exception(INTERP, NULL, ILL_INHERIT,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_ILL_INHERIT,
                 "attempt to perform arithmetic on a %Ss value", SELF.name());
 
         dest = Parrot_runops_fromc_args(INTERP, meth, "PPP", SELF, value);
@@ -404,11 +401,11 @@ Throws an exception.
         return dest;
     }
 
-    void i_multiply(PMC *value) {
+    MULTI void i_multiply(DEFAULT value) {
         PMC *meth = find_meth(INTERP, SELF, "__mul");
 
         if (!meth)
-            real_exception(INTERP, NULL, ILL_INHERIT,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_ILL_INHERIT,
                 "attempt to perform arithmetic on a %Ss value", SELF.name());
 
         SELF = Parrot_runops_fromc_args(INTERP, meth, "PPP", SELF, value);
@@ -417,11 +414,11 @@ Throws an exception.
             SELF = pmc_new(INTERP, dynpmc_LuaNil);
     }
 
-    PMC* divide(PMC *value, PMC *dest) {
+    MULTI PMC* divide(DEFAULT value, PMC *dest) {
         PMC *meth = find_meth(INTERP, SELF, "__div");
 
         if (!meth)
-            real_exception(INTERP, NULL, ILL_INHERIT,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_ILL_INHERIT,
                 "attempt to perform arithmetic on a %Ss value", SELF.name());
 
         dest = Parrot_runops_fromc_args(INTERP, meth, "PPP", SELF, value);
@@ -432,11 +429,11 @@ Throws an exception.
         return dest;
     }
 
-    void i_divide(PMC *value) {
+    MULTI void i_divide(DEFAULT value) {
         PMC *meth = find_meth(INTERP, SELF, "__div");
 
         if (!meth)
-            real_exception(INTERP, NULL, ILL_INHERIT,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_ILL_INHERIT,
                 "attempt to perform arithmetic on a %Ss value", SELF.name());
 
         SELF = Parrot_runops_fromc_args(INTERP, meth, "PPP", SELF, value);
@@ -445,11 +442,11 @@ Throws an exception.
             SELF = pmc_new(INTERP, dynpmc_LuaNil);
     }
 
-    PMC* modulus(PMC *value, PMC *dest) {
+    MULTI PMC* modulus(DEFAULT value, PMC *dest) {
         PMC *meth = find_meth(INTERP, SELF, "__mod");
 
         if (!meth)
-            real_exception(INTERP, NULL, ILL_INHERIT,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_ILL_INHERIT,
                 "attempt to perform arithmetic on a %Ss value", SELF.name());
 
         dest = Parrot_runops_fromc_args(INTERP, meth, "PPP", SELF, value);
@@ -460,11 +457,11 @@ Throws an exception.
         return dest;
     }
 
-    void i_modulus(PMC *value) {
+    MULTI void i_modulus(DEFAULT value) {
         PMC *meth = find_meth(INTERP, SELF, "__mod");
 
         if (!meth)
-            real_exception(INTERP, NULL, ILL_INHERIT,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_ILL_INHERIT,
                 "attempt to perform arithmetic on a %Ss value", SELF.name());
 
         SELF = Parrot_runops_fromc_args(INTERP, meth, "PPP", SELF, value);
@@ -473,11 +470,11 @@ Throws an exception.
             SELF = pmc_new(INTERP, dynpmc_LuaNil);
     }
 
-    PMC* pow(PMC *value, PMC *dest) {
+    MULTI PMC* pow(DEFAULT value, PMC *dest) {
         PMC *meth = find_meth(INTERP, SELF, "__pow");
 
         if (!meth)
-            real_exception(INTERP, NULL, ILL_INHERIT,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_ILL_INHERIT,
                 "attempt to perform arithmetic on a %Ss value", SELF.name());
 
         dest = Parrot_runops_fromc_args(INTERP, meth, "PPP", SELF, value);
@@ -488,11 +485,11 @@ Throws an exception.
         return dest;
     }
 
-    void i_pow(PMC *value) {
+    MULTI void i_pow(DEFAULT value) {
         PMC *meth = find_meth(INTERP, SELF, "__pow");
 
         if (!meth)
-            real_exception(INTERP, NULL, ILL_INHERIT,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_ILL_INHERIT,
                 "attempt to perform arithmetic on a %Ss value", SELF.name());
 
         SELF = Parrot_runops_fromc_args(INTERP, meth, "PPP", SELF, value);
@@ -501,11 +498,11 @@ Throws an exception.
             SELF = pmc_new(INTERP, dynpmc_LuaNil);
     }
 
-    PMC* concatenate(PMC *value, PMC *dest) {
+    MULTI PMC* concatenate(DEFAULT value, PMC *dest) {
         PMC *meth = find_meth(INTERP, SELF, "__concat");
 
         if (!meth)
-            real_exception(INTERP, NULL, ILL_INHERIT,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_ILL_INHERIT,
                 "attempt to concatenate a %Ss value", SELF.name());
 
         dest = Parrot_runops_fromc_args(INTERP, meth, "PPP", SELF, value);
@@ -516,10 +513,10 @@ Throws an exception.
         return dest;
     }
 
-    void i_concatenate(PMC *value) {
+    MULTI void i_concatenate(DEFAULT value) {
         PMC *meth = find_meth(INTERP, SELF, "__concat");
         if (!meth)
-            real_exception(INTERP, NULL, ILL_INHERIT,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_ILL_INHERIT,
                 "attempt to concatenate a %Ss value", SELF.name());
 
         SELF = Parrot_runops_fromc_args(INTERP, meth, "PPP", SELF, value);
@@ -535,7 +532,7 @@ Throws an exception.
 =cut
 
 */
-    INTVAL is_equal(PMC *value) {
+    MULTI INTVAL is_equal(DEFAULT value) {
         return (INTVAL)0;
     }
 
@@ -543,19 +540,29 @@ Throws an exception.
 
 =item C<INTVAL cmp(PMC *value)>
 
+Performs a multiple dispatch call for 'cmp'.
+Without shortcut like in Default PMC.
+
 =cut
 
 */
-    INTVAL cmp(PMC *value) {
+    VTABLE INTVAL cmp(PMC *value) {
+        INTVAL retval;
+        Parrot_mmd_multi_dispatch_from_c_args(interp,
+                "cmp", "PP->I", SELF, value, &retval);
+        return retval;
+    }
+
+    MULTI INTVAL cmp(DEFAULT value) {
         STRING *self_name = SELF.name();
         STRING *val_name  = VTABLE_name(INTERP, value);
 
         if (string_compare(INTERP, self_name, val_name) != 0)
-            real_exception(INTERP, NULL, ILL_INHERIT,
-                    "attempt to compare %Ss with %Ss", self_name, val_name);
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_ILL_INHERIT,
+                "attempt to compare %Ss with %Ss", self_name, val_name);
         else
-            real_exception(INTERP, NULL, ILL_INHERIT,
-                    "attempt to compare two %Ss values", self_name);
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_ILL_INHERIT,
+                "attempt to compare two %Ss values", self_name);
     }
 
 /*
@@ -589,7 +596,7 @@ Throws an exception.
         PMC *retval;
 
         if (!meth)
-            real_exception(INTERP, NULL, ILL_INHERIT,
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_ILL_INHERIT,
                 "attempt to get length of a %Ss value", SELF.name());
 
         retval = Parrot_runops_fromc_args(INTERP, meth, "PP", SELF);

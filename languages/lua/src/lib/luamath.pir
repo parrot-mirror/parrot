@@ -47,8 +47,9 @@ L<http://www.lua.org/manual/5.1/manual.html#5.6>.
 
 =cut
 
-.HLL 'Lua', 'lua_group'
-.namespace [ 'Lua::math' ]
+.HLL 'lua'
+.loadlib 'lua_group'
+.namespace [ 'math' ]
 
 .sub 'luaopen_math'
 #    print "init Lua Math\n"
@@ -62,140 +63,44 @@ L<http://www.lua.org/manual/5.1/manual.html#5.6>.
     set $P1, 'math'
     _lua__GLOBAL[$P1] = _math
 
-    lua_register($P1, _math)
-
-    .const .Sub _math_abs = 'abs'
-    _math_abs.'setfenv'(_lua__GLOBAL)
-    set $P1, 'abs'
-    _math[$P1] = _math_abs
-
-    .const .Sub _math_acos = 'acos'
-    _math_acos.'setfenv'(_lua__GLOBAL)
-    set $P1, 'acos'
-    _math[$P1] = _math_acos
-
-    .const .Sub _math_asin = 'asin'
-    _math_asin.'setfenv'(_lua__GLOBAL)
-    set $P1, 'asin'
-    _math[$P1] = _math_asin
-
-    .const .Sub _math_atan = 'atan'
-    _math_atan.'setfenv'(_lua__GLOBAL)
-    set $P1, 'atan'
-    _math[$P1] = _math_atan
-
-    .const .Sub _math_atan2 = 'atan2'
-    _math_atan2.'setfenv'(_lua__GLOBAL)
-    set $P1, 'atan2'
-    _math[$P1] = _math_atan2
-
-    .const .Sub _math_ceil = 'ceil'
-    _math_ceil.'setfenv'(_lua__GLOBAL)
-    set $P1, 'ceil'
-    _math[$P1] = _math_ceil
-
-    .const .Sub _math_cos = 'cos'
-    _math_cos.'setfenv'(_lua__GLOBAL)
-    set $P1, 'cos'
-    _math[$P1] = _math_cos
-
-    .const .Sub _math_deg = 'deg'
-    _math_deg.'setfenv'(_lua__GLOBAL)
-    set $P1, 'deg'
-    _math[$P1] = _math_deg
-
-    .const .Sub _math_exp = 'exp'
-    _math_exp.'setfenv'(_lua__GLOBAL)
-    set $P1, 'exp'
-    _math[$P1] = _math_exp
-
-    .const .Sub _math_floor = 'floor'
-    _math_floor.'setfenv'(_lua__GLOBAL)
-    set $P1, 'floor'
-    _math[$P1] = _math_floor
-
-    .const .Sub _math_fmod = 'fmod'
-    _math_fmod.'setfenv'(_lua__GLOBAL)
-    set $P1, 'fmod'
-    _math[$P1] = _math_fmod
+    $P2 = split "\n", <<'LIST'
+abs
+acos
+asin
+atan
+atan2
+ceil
+cos
+deg
+exp
+floor
+fmod
+frexp
+ldexp
+log
+log10
+max
+min
+modf
+pow
+rad
+random
+randomseed
+sin
+sqrt
+tan
+LIST
+    lua_register($P1, _math, $P2)
 
     # LUA_COMPAT_MOD
+    set $P1, 'fmod'
+    $P0 = _math[$P1]
     set $P1, 'mod'
-    _math[$P1] = _math_fmod
-
-    .const .Sub _math_frexp = 'frexp'
-    _math_frexp.'setfenv'(_lua__GLOBAL)
-    set $P1, 'frexp'
-    _math[$P1] = _math_frexp
-
-    .const .Sub _math_ldexp = 'ldexp'
-    _math_ldexp.'setfenv'(_lua__GLOBAL)
-    set $P1, 'ldexp'
-    _math[$P1] = _math_ldexp
-
-    .const .Sub _math_log = 'log'
-    _math_log.'setfenv'(_lua__GLOBAL)
-    set $P1, 'log'
-    _math[$P1] = _math_log
-
-    .const .Sub _math_log10 = 'log10'
-    _math_log10.'setfenv'(_lua__GLOBAL)
-    set $P1, 'log10'
-    _math[$P1] = _math_log10
-
-    .const .Sub _math_max = 'max'
-    _math_max.'setfenv'(_lua__GLOBAL)
-    set $P1, 'max'
-    _math[$P1] = _math_max
-
-    .const .Sub _math_min = 'min'
-    _math_min.'setfenv'(_lua__GLOBAL)
-    set $P1, 'min'
-    _math[$P1] = _math_min
-
-    .const .Sub _math_modf = 'modf'
-    _math_modf.'setfenv'(_lua__GLOBAL)
-    set $P1, 'modf'
-    _math[$P1] = _math_modf
-
-    .const .Sub _math_pow = 'pow'
-    _math_pow.'setfenv'(_lua__GLOBAL)
-    set $P1, 'pow'
-    _math[$P1] = _math_pow
-
-    .const .Sub _math_rad = 'rad'
-    _math_rad.'setfenv'(_lua__GLOBAL)
-    set $P1, 'rad'
-    _math[$P1] = _math_rad
-
-    .const .Sub _math_random = 'random'
-    _math_random.'setfenv'(_lua__GLOBAL)
-    set $P1, 'random'
-    _math[$P1] = _math_random
-
-    .const .Sub _math_randomseed = 'randomseed'
-    _math_randomseed.'setfenv'(_lua__GLOBAL)
-    set $P1, 'randomseed'
-    _math[$P1] = _math_randomseed
-
-    .const .Sub _math_sin = 'sin'
-    _math_sin.'setfenv'(_lua__GLOBAL)
-    set $P1, 'sin'
-    _math[$P1] = _math_sin
-
-    .const .Sub _math_sqrt = 'sqrt'
-    _math_sqrt.'setfenv'(_lua__GLOBAL)
-    set $P1, 'sqrt'
-    _math[$P1] = _math_sqrt
-
-    .const .Sub _math_tan = 'tan'
-    _math_tan.'setfenv'(_lua__GLOBAL)
-    set $P1, 'tan'
-    _math[$P1] = _math_tan
+    _math[$P1] = $P0
 
     new $P0, 'LuaNumber'
     set $P0, 3.14159265358979323846
-    $P1 = 'pi'
+    set $P1, 'pi'
     _math[$P1] = $P0
 
     new $P0, 'LuaNumber'
@@ -203,13 +108,13 @@ L<http://www.lua.org/manual/5.1/manual.html#5.6>.
     new $P2, 'LuaNumber'
     set $P2, 0.0
     div $P0, $P2
-    $P1 = 'huge'
+    set $P1, 'huge'
     _math[$P1] = $P0
 
 .end
 
 
-.sub 'abs' :anon
+.sub 'abs'
     .param pmc x :optional
     .param pmc extra :slurpy
     .local pmc res
@@ -221,7 +126,7 @@ L<http://www.lua.org/manual/5.1/manual.html#5.6>.
 .end
 
 
-.sub 'acos' :anon
+.sub 'acos'
     .param pmc x :optional
     .param pmc extra :slurpy
     .local pmc res
@@ -233,7 +138,7 @@ L<http://www.lua.org/manual/5.1/manual.html#5.6>.
 .end
 
 
-.sub 'asin' :anon
+.sub 'asin'
     .param pmc x :optional
     .param pmc extra :slurpy
     .local pmc res
@@ -245,7 +150,7 @@ L<http://www.lua.org/manual/5.1/manual.html#5.6>.
 .end
 
 
-.sub 'atan' :anon
+.sub 'atan'
     .param pmc x :optional
     .param pmc extra :slurpy
     .local pmc res
@@ -257,7 +162,7 @@ L<http://www.lua.org/manual/5.1/manual.html#5.6>.
 .end
 
 
-.sub 'atan2' :anon
+.sub 'atan2'
     .param pmc y :optional
     .param pmc x :optional
     .param pmc extra :slurpy
@@ -271,7 +176,7 @@ L<http://www.lua.org/manual/5.1/manual.html#5.6>.
 .end
 
 
-.sub 'ceil' :anon
+.sub 'ceil'
     .param pmc x :optional
     .param pmc extra :slurpy
     .local pmc res
@@ -283,7 +188,7 @@ L<http://www.lua.org/manual/5.1/manual.html#5.6>.
 .end
 
 
-.sub 'cos' :anon
+.sub 'cos'
     .param pmc x :optional
     .param pmc extra :slurpy
     .local pmc res
@@ -295,7 +200,7 @@ L<http://www.lua.org/manual/5.1/manual.html#5.6>.
 .end
 
 
-.sub 'deg' :anon
+.sub 'deg'
     .param pmc x :optional
     .param pmc extra :slurpy
     .local pmc res
@@ -308,7 +213,7 @@ L<http://www.lua.org/manual/5.1/manual.html#5.6>.
 .end
 
 
-.sub 'exp' :anon
+.sub 'exp'
     .param pmc x :optional
     .param pmc extra :slurpy
     .local pmc res
@@ -320,7 +225,7 @@ L<http://www.lua.org/manual/5.1/manual.html#5.6>.
 .end
 
 
-.sub 'floor' :anon
+.sub 'floor'
     .param pmc x :optional
     .param pmc extra :slurpy
     .local pmc res
@@ -332,7 +237,7 @@ L<http://www.lua.org/manual/5.1/manual.html#5.6>.
 .end
 
 
-.sub 'fmod' :anon
+.sub 'fmod'
     .param pmc x :optional
     .param pmc y :optional
     .param pmc extra :slurpy
@@ -346,31 +251,29 @@ L<http://www.lua.org/manual/5.1/manual.html#5.6>.
 .end
 
 
-.sub 'frexp' :anon
+.sub 'frexp'
     .param pmc x :optional
     .param pmc extra :slurpy
     .local pmc res
     lua_checknumber(1, x)
-    new $P0, 'Lua'
-    res = $P0.'frexp'(x)
+    res = x.'frexp'()
     .return (res :flat)
 .end
 
 
-.sub 'ldexp' :anon
+.sub 'ldexp'
     .param pmc x :optional
     .param pmc nexp :optional
     .param pmc extra :slurpy
     .local pmc res
     lua_checknumber(1, x)
     lua_checknumber(2, nexp)
-    new $P0, 'Lua'
-    res = $P0.'ldexp'(x, nexp)
+    res = x.'ldexp'(nexp)
     .return (res)
 .end
 
 
-.sub 'log' :anon
+.sub 'log'
     .param pmc x :optional
     .param pmc extra :slurpy
     .local pmc res
@@ -382,7 +285,7 @@ L<http://www.lua.org/manual/5.1/manual.html#5.6>.
 .end
 
 
-.sub 'log10' :anon
+.sub 'log10'
     .param pmc x :optional
     .param pmc extra :slurpy
     .local pmc res
@@ -394,7 +297,7 @@ L<http://www.lua.org/manual/5.1/manual.html#5.6>.
 .end
 
 
-.sub 'max' :anon
+.sub 'max'
     .param pmc argv :slurpy
     .local int argc
     .local int i
@@ -420,7 +323,7 @@ L<http://www.lua.org/manual/5.1/manual.html#5.6>.
 .end
 
 
-.sub 'min' :anon
+.sub 'min'
     .param pmc argv :slurpy
     .local int argc
     .local int i
@@ -446,18 +349,17 @@ L<http://www.lua.org/manual/5.1/manual.html#5.6>.
 .end
 
 
-.sub 'modf' :anon
+.sub 'modf'
     .param pmc x :optional
     .param pmc extra :slurpy
     .local pmc res
     lua_checknumber(1, x)
-    new $P0, 'Lua'
-    res = $P0.'modf'(x)
+    res = x.'modf'()
     .return (res :flat)
 .end
 
 
-.sub 'pow' :anon
+.sub 'pow'
     .param pmc x :optional
     .param pmc y :optional
     .param pmc extra :slurpy
@@ -471,7 +373,7 @@ L<http://www.lua.org/manual/5.1/manual.html#5.6>.
 .end
 
 
-.sub 'rad' :anon
+.sub 'rad'
     .param pmc x :optional
     .param pmc extra :slurpy
     .local pmc res
@@ -484,7 +386,7 @@ L<http://www.lua.org/manual/5.1/manual.html#5.6>.
 .end
 
 
-.sub 'random' :anon
+.sub 'random'
     .param pmc arg1 :optional
     .param pmc arg2 :optional
     .param pmc extra :slurpy
@@ -527,7 +429,7 @@ L<http://www.lua.org/manual/5.1/manual.html#5.6>.
 .end
 
 
-.sub 'randomseed' :anon
+.sub 'randomseed'
     .param pmc seed :optional
     .param pmc extra :slurpy
     $I1 = lua_checknumber(1, seed)
@@ -536,7 +438,7 @@ L<http://www.lua.org/manual/5.1/manual.html#5.6>.
 .end
 
 
-.sub 'sin' :anon
+.sub 'sin'
     .param pmc x :optional
     .param pmc extra :slurpy
     .local pmc res
@@ -548,7 +450,7 @@ L<http://www.lua.org/manual/5.1/manual.html#5.6>.
 .end
 
 
-.sub 'sqrt' :anon
+.sub 'sqrt'
     .param pmc x :optional
     .param pmc extra :slurpy
     .local pmc res
@@ -560,7 +462,7 @@ L<http://www.lua.org/manual/5.1/manual.html#5.6>.
 .end
 
 
-.sub 'tan' :anon
+.sub 'tan'
     .param pmc x :optional
     .param pmc extra :slurpy
     .local pmc res

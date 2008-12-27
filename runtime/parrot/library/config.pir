@@ -64,21 +64,24 @@ undefined values) is undefined, and may be rather funky.
 
 ok1:
     .local string image
+    .local pmc one
     # If it gets above 64k, we've got bigger problems.
     read image, CONF, 60000
     close CONF
     .local pmc conf_hash
     thaw conf_hash, image
-    # XXX hash should probably be marked read-only...
-    .begin_return
-    .return conf_hash
-    .end_return
+
+    one = new 'Integer'
+    one = 1
+    setprop conf_hash, '_ro', one
+
+    .return( conf_hash )
 .end
 
 =head1 AUTHOR
 
 Brent Royal-Gordon E<lt>brent@brentdax.comE<gt> is the author and maintainer.
-Please send patches and suggestions to the Perl 6 Internals mailing list.
+Please send patches and suggestions to the Parrot porters mailing list.
 
 =head1 COPYRIGHT
 

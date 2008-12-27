@@ -2,7 +2,11 @@
 
 =head1 NAME
 
-pipp/t/arithmetics.t - tests for Pipp
+t/php/arithmetics.t - tests for Pipp
+
+=head1 SYNOPSIS
+
+    perl t/harness t/php/arithmetics.t
 
 =head1 DESCRIPTION
 
@@ -10,17 +14,11 @@ Hello World test.
 
 =cut
 
-# pragmata
 use strict;
 use warnings;
-
 use FindBin;
-use lib "$FindBin::Bin/../../lib";
+use lib "$FindBin::Bin/../../../../lib", "$FindBin::Bin/../../lib";
 
-# core Perl modules
-use Test::More;
-
-# Parrot modules
 use Parrot::Test;
 
 # A little helper to do data driven testing
@@ -31,12 +29,12 @@ sub run_tests {
         die 'invalid test' unless ref( $_ ) eq 'ARRAY';
         die 'invalid test' unless scalar(@{$_}) >= 2 || scalar(@{$_}) <= 5;
         my ( $php_code, $expected, $desc, %options ) = @{$_};
-        $php_code = <<"END_CODE";
+        $php_code = <<"CODE";
 <?php
 echo $php_code;
 echo "\\n";
 ?>
-END_CODE
+CODE
 
         # expected input can be set up as array reference
         if ( ref $expected ) {
@@ -57,6 +55,8 @@ my @tests = (
     [ '22', [ 22 ], 'positive 22', ],
     [ '333', [ 333 ], 'positive 333', ],
     [ '12345678', [ 12345678 ], 'large positive int',  ],
+    [ '+4444', [ 4444 ], 'unary plus, no whitespace',  ],
+    [ '+  55555', [ 55555 ], 'unary plus, with whitespace',  ],
     [ '-1', [ -1 ], 'negative 1', ],
     [ '-22', [ -22 ], 'negative 22', ],
     [ '-333', [ -333 ], 'negative 333', ],
@@ -112,13 +112,17 @@ my @tests = (
     [ '2 / 2 + .1', '1.1', ],
     [ '2 * 2 + .4', '4.4', ],
     [ '.1 - 6 / 2', '-2.9', ],
-    # TODO [ '-1.0000001', '-1.0000001', 'probably limited precission of Float PMC', ],
-    # TODO [ '1 & 3', '1', 'bitwise and', ],
-    # TODO [ '2 & 2 + 8', '2', 'bitwise and, less precedence than +', ],
-    # TODO [ '1 | 2', '3', 'bitwise or', ],
-    # TODO [ '6 ^ 5', '3', 'bitwise xor', ],
-    # TODO [ '010', 8, 'octal' ],
-    # TODO [ '0x10', 16, 'hex' ],
+    [ '-1.0000001', '-1.0000001', 'float with 8 significant digits' ],
+    [ '-1.00000001', '-1.00000001', 'float with 9 significant digits' ],
+    [ '-1.000000001', '-1.000000001', 'float with 10 significant digits' ],
+    [ '-1.0000000001', '-1.0000000001', 'float with 11 significant digits' ],
+    [ '-1.00000000001', '-1.00000000001', 'float with 12 significant digits' ],
+    [ '1 & 3', '1', 'bitwise and' ],
+    [ '2 & 2 + 8', '2', 'bitwise and, less precedence than +' ],
+    [ '1 | 2', '3', 'bitwise or' ],
+    [ '6 ^ 5', '3', 'bitwise xor' ],
+    [ '010', 8, 'octal', todo => 'broken' ],
+    [ '0x10', 16, 'hex', todo => 'broken' ],
 );
 
 plan( tests => scalar(@tests) );

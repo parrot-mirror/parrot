@@ -32,7 +32,7 @@ use Test::More;
 use Parrot::Config;
 use ExtUtils::Manifest qw(maniread);
 
-use vars qw(@failed);
+use vars qw(@failed_syntax @empty_description);
 
 BEGIN {
     eval 'use Pod::Find';
@@ -47,9 +47,9 @@ BEGIN {
     }
 }
 
-plan tests => 1;
+plan tests => 2;
 
-# RT#44437 this should really be using src_dir instead of build_dir but it
+# RT #44437 this should really be using src_dir instead of build_dir but it
 # does not exist (yet)
 my $build_dir    = $PConfig{build_dir};
 my $manifest     = maniread("$build_dir/MANIFEST");
@@ -68,14 +68,13 @@ else {
 foreach my $file (@files) {
     $file = "$build_dir/$file";
 
-    # skip missing MANIFEST.generated files
-    next unless -e $file;
+    # skip missing MANIFEST.generated files ( -e )
+    # skip binary files (including .pbc files) ( -B )
+    # skip files that pass the -e test because they resolve the .exe variant
+    next unless -T $file;
 
     # Skip the book, because it uses extended O'Reilly-specific POD
     next if $file =~ m{docs/book/};
-
-    # skip binary files (including .pbc files)
-    next if -B $file;
 
     # skip files without POD
     next unless Pod::Find::contains_pod( $file, 0 );
@@ -87,15 +86,35 @@ foreach my $file (@files) {
     next if $file =~ m{t/tools/dev/searchops/samples\.pm};
 
     # skip files with valid POD
-    next if file_pod_ok($file);
-    push @failed, $file;
+    if (file_pod_ok($file)) {
+
+        #check DESCRIPTION section on valid POD files
+        push @empty_description, $file if empty_description($file);
+
+    }
+    else {
+
+        # report whatever is not skipped
+        push @failed_syntax, $file;
+    }
 }
 
-my $bad_files = join( "\n", @failed );
-is( $bad_files, q{}, 'Pod syntax correct' );    # only ok if everything passed
+my $bad_syntax_files = join( "\n", @failed_syntax );
+my $empty_description_files = join( "\n", @empty_description);
+my $nempty_description = scalar( @empty_description );
+
+is( $bad_syntax_files, q{}, 'Pod syntax correct' );    # only ok if everything passed
+
+TODO: {
+    local $TODO = "not quite done yet";
+    is( $empty_description_files, q{}, 'All Pod files have non-empty DESCRIPTION sections' );
+}
 
 diag("You should use podchecker to check the failed files.\n")
-    if $bad_files;
+    if $bad_syntax_files;
+
+diag("Found $nempty_description files without DESCRIPTION sections.\n")
+    if $nempty_description;
 
 # Pulled from Test::Pod
 sub file_pod_ok {
@@ -106,6 +125,21 @@ sub file_pod_ok {
     $checker->parse_file($file);
 
     return !$checker->any_errata_seen;
+}
+
+sub empty_description {
+    my $file = shift;
+
+    use Pod::Simple::PullParser;
+    my $parser = Pod::Simple::PullParser->new;
+    $parser->set_source( $file );
+    my $description = $parser->get_description;
+
+    if ( $description =~ m{^\s*$}m ) {
+        return 1;
+    }
+
+    return 0;
 }
 
 # Local Variables:

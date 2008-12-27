@@ -35,7 +35,7 @@ also included.
 
 =cut
 
-.namespace [ 'PCT::Grammar' ]
+.namespace [ 'PCT';'Grammar' ]
 
 .sub 'onload' :anon :init :load
     load_bytecode 'PGE.pbc'
@@ -43,8 +43,9 @@ also included.
     .local pmc p6meta
     p6meta = new 'P6metaclass'
     p6meta.'new_class'('PCT::Grammar', 'parent'=>'PGE::Grammar')
-    $P0 = get_class 'PCT::Grammar'
-    $P1 = get_hll_global ['PGE::Util'], 'die'
+    $P0 = split '::', 'PCT::Grammar'
+    $P0 = get_class $P0
+    $P1 = get_hll_global ['PGE';'Util'], 'die'
     $P0.'add_method'('panic', $P1)
     .return ()
 .end
@@ -183,13 +184,6 @@ to enforce whitespace between lexical words.
     goto literal_xdo_char_loop
   literal_xdo_char_end:
     $S1 = chr codepoint
-    ##  FIXME: RT#50092 -- codepoints 128-255 default to iso-8859-1
-    ##  encoding, we explicitly convert them into a unicode encoding
-    ##  before concatenating.  Needed for systems w/o ICU (RT#39930).
-    if codepoint < 128 goto literal_xdo_char_end_1
-    $I0 = find_charset 'unicode'
-    trans_charset $S1, $I0
-  literal_xdo_char_end_1:
     concat literal, $S1
     unless isbracketed goto literal_xdo_end
     if $S0 == ']' goto literal_xdo_end

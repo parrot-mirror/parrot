@@ -21,12 +21,13 @@ See original on L<http://luaforge.net/projects/luafilesystem/>
 
 =cut
 
-.HLL 'Lua', 'lua_group'
-.namespace [ 'Lua::lfs'; 'Lua' ]
+.HLL 'lua'
+.loadlib 'lua_group'
+.namespace [ 'lfs' ]
 
 .sub '__onload' :anon :load
 #    print "__onload lfs\n"
-    .const .Sub entry = 'luaopen_lfs'
+    .const 'Sub' entry = 'luaopen_lfs'
     set_hll_global 'luaopen_lfs', entry
 .end
 
@@ -44,58 +45,19 @@ See original on L<http://luaforge.net/projects/luafilesystem/>
     set $P1, 'lfs'
     _lua__GLOBAL[$P1] = _lfs
 
-    lua_register($P1, _lfs)
-
-    .const .Sub _lfs_attributes = 'attributes'
-    _lfs_attributes.'setfenv'(_lua__GLOBAL)
-    set $P1, 'attributes'
-    _lfs[$P1] = _lfs_attributes
-
-    .const .Sub _lfs_chdir = 'chdir'
-    _lfs_chdir.'setfenv'(_lua__GLOBAL)
-    set $P1, 'chdir'
-    _lfs[$P1] = _lfs_chdir
-
-    .const .Sub _lfs_currentdir = 'currentdir'
-    _lfs_currentdir.'setfenv'(_lua__GLOBAL)
-    set $P1, 'currentdir'
-    _lfs[$P1] = _lfs_currentdir
-
-    .const .Sub _lfs_dir = 'dir'
-    _lfs_dir.'setfenv'(_lua__GLOBAL)
-    set $P1, 'dir'
-    _lfs[$P1] = _lfs_dir
-
-    .const .Sub _lfs_lock = 'lock'
-    _lfs_lock.'setfenv'(_lua__GLOBAL)
-    set $P1, 'lock'
-    _lfs[$P1] = _lfs_lock
-
-    .const .Sub _lfs_mkdir = 'mkdir'
-    _lfs_mkdir.'setfenv'(_lua__GLOBAL)
-    set $P1, 'mkdir'
-    _lfs[$P1] = _lfs_mkdir
-
-    .const .Sub _lfs_rmdir = 'rmdir'
-    _lfs_rmdir.'setfenv'(_lua__GLOBAL)
-    set $P1, 'rmdir'
-    _lfs[$P1] = _lfs_rmdir
-
-    .const .Sub _lfs_symlinkattributes = 'symlinkattributes'
-    _lfs_symlinkattributes.'setfenv'(_lua__GLOBAL)
-    set $P1, 'symlinkattributes'
-    _lfs[$P1] = _lfs_symlinkattributes
-
-    .const .Sub _lfs_touch = 'touch'
-    _lfs_touch.'setfenv'(_lua__GLOBAL)
-    set $P1, 'touch'
-    _lfs[$P1] = _lfs_touch
-
-    .const .Sub _lfs_unlock = 'unlock'
-    _lfs_unlock.'setfenv'(_lua__GLOBAL)
-    set $P1, 'unlock'
-    _lfs[$P1] = _lfs_unlock
-
+    $P2 = split "\n", <<'LIST'
+attributes
+chdir
+currentdir
+dir
+lock
+mkdir
+rmdir
+symlinkattributes
+touch
+unlock
+LIST
+    lua_register($P1, _lfs, $P2)
 
     new $P2, 'LuaString'
 
@@ -119,7 +81,7 @@ See original on L<http://luaforge.net/projects/luafilesystem/>
     .param pmc fh
     .param string funcname
     .local pmc res
-    res = lua_checkudata(narg, fh, 'ParrotIO')
+    res = lua_checkudata(narg, fh, 'FileHandle')
     unless null res goto L1
     lua_error(funcname, ": closed file")
   L1:
@@ -206,31 +168,31 @@ optimal file system I/O blocksize; (Unix only)
     $S1 = lua_checkstring(1, .filepath)
     $S0 = $S1
     new members, 'Hash'
-    .const .Sub st_mode = 'st_mode'
+    .const 'Sub' st_mode = 'st_mode'
     members['mode'] = st_mode
-    .const .Sub st_dev = 'st_dev'
+    .const 'Sub' st_dev = 'st_dev'
     members['dev'] = st_dev
-    .const .Sub st_ino = 'st_ino'
+    .const 'Sub' st_ino = 'st_ino'
     members['ino'] = st_ino
-    .const .Sub st_nlink = 'st_nlink'
+    .const 'Sub' st_nlink = 'st_nlink'
     members['nlink'] = st_nlink
-    .const .Sub st_uid = 'st_uid'
+    .const 'Sub' st_uid = 'st_uid'
     members['uid'] = st_uid
-    .const .Sub st_gid = 'st_gid'
+    .const 'Sub' st_gid = 'st_gid'
     members['gid'] = st_gid
-    .const .Sub st_rdev = 'st_rdev'
+    .const 'Sub' st_rdev = 'st_rdev'
     members['rdev'] = st_rdev
-    .const .Sub st_atime = 'st_atime'
+    .const 'Sub' st_atime = 'st_atime'
     members['access'] = st_atime
-    .const .Sub st_mtime = 'st_mtime'
+    .const 'Sub' st_mtime = 'st_mtime'
     members['modification'] = st_mtime
-    .const .Sub st_ctime = 'st_ctime'
+    .const 'Sub' st_ctime = 'st_ctime'
     members['change'] = st_ctime
-    .const .Sub st_size = 'st_size'
+    .const 'Sub' st_size = 'st_size'
     members['size'] = st_size
-    .const .Sub st_blocks = 'st_blocks'
+    .const 'Sub' st_blocks = 'st_blocks'
     members['blocks'] = st_blocks
-    .const .Sub st_blksize = 'st_blksize'
+    .const 'Sub' st_blksize = 'st_blksize'
     members['blksize'] = st_blksize
     new $P0, 'OS'
     push_eh _handler
@@ -278,7 +240,7 @@ optimal file system I/O blocksize; (Unix only)
     .return (nil, msg)
 .endm
 
-.sub 'attributes' :anon
+.sub 'attributes'
     .param pmc filepath :optional
     .param pmc aname :optional
     .param pmc extra :slurpy
@@ -447,7 +409,7 @@ Returns C<true> in case of success or C<nil> plus an error string.
 
 =cut
 
-.sub 'chdir' :anon
+.sub 'chdir'
     .param pmc path :optional
     .param pmc extra :slurpy
     .local pmc res
@@ -456,6 +418,7 @@ Returns C<true> in case of success or C<nil> plus an error string.
     new $P0, 'OS'
     push_eh _handler
     $P0.'chdir'($S1)
+    pop_eh
     new res, 'LuaBoolean'
     set res, 1
     .return (res)
@@ -464,7 +427,8 @@ Returns C<true> in case of success or C<nil> plus an error string.
     .local pmc msg
     .local pmc e
     .local string s
-    .get_results (e, s)
+    .get_results (e)
+    s = e
     new nil, 'LuaNil'
     new msg, 'LuaString'
     $S0 = concat "Unable to change working directory to '", $S0
@@ -483,12 +447,13 @@ string.
 
 =cut
 
-.sub 'currentdir' :anon
+.sub 'currentdir'
     .param pmc extra :slurpy
     .local pmc res
     new $P0, 'OS'
     push_eh _handler
     $S0 = $P0.'cwd'()
+    pop_eh
     new res, 'LuaString'
     set res, $S0
     .return (res)
@@ -497,7 +462,8 @@ string.
     .local pmc msg
     .local pmc e
     .local string s
-    .get_results (e, s)
+    .get_results (e)
+    s = e
     new nil, 'LuaNil'
     new msg, 'LuaString'
     set msg, s
@@ -513,7 +479,7 @@ when there is no more entries. Raises an error if C<path> is not a directory.
 
 =cut
 
-.sub 'dir' :anon
+.sub 'dir'
     .param pmc path :optional
     .param pmc extra :slurpy
     .local pmc res
@@ -522,15 +488,19 @@ when there is no more entries. Raises an error if C<path> is not a directory.
     new $P0, 'OS'
     push_eh _handler
     $P1 = $P0.'readdir'($S1)
+    pop_eh
     .lex 'upvar_dir', $P1
-    .const .Sub dir_aux = 'dir_aux'
+    .const 'Sub' dir_aux = 'dir_aux'
     res = newclosure dir_aux
     .return (res)
   _handler:
     .local pmc e
-    .local string s
-    .get_results (e, s)
-    lua_error("cannot open ", $S0, ": ", s)
+    .local string msg
+    .get_results (e)
+    msg = e
+    $S0 = lua_x_error("cannot open ", $S0, ": ", msg)
+    e = $S0
+    rethrow e
 .end
 
 .sub 'dir_aux' :anon :lex :outer(dir)
@@ -562,7 +532,7 @@ NOT YET IMPLEMENTED.
 
 =cut
 
-.sub 'lock' :anon
+.sub 'lock'
     .param pmc filehandle :optional
     .param pmc mode :optional
     .param pmc start :optional
@@ -585,7 +555,7 @@ C<nil> plus an error string.
 
 =cut
 
-.sub 'mkdir' :anon
+.sub 'mkdir'
     .param pmc dirname :optional
     .param pmc extra :slurpy
     .local pmc res
@@ -594,6 +564,7 @@ C<nil> plus an error string.
     push_eh _handler
     $I1 = 0o775
     $P0.'mkdir'($S1, $I1)
+    pop_eh
     new res, 'LuaBoolean'
     set res, 1
     .return (res)
@@ -602,7 +573,8 @@ C<nil> plus an error string.
     .local pmc msg
     .local pmc e
     .local string s
-    .get_results (e, s)
+    .get_results (e)
+    s = e
     new nil, 'LuaNil'
     new msg, 'LuaString'
     set msg, s
@@ -619,7 +591,7 @@ C<nil> plus an error string.
 
 =cut
 
-.sub 'rmdir' :anon
+.sub 'rmdir'
     .param pmc dirname :optional
     .param pmc extra :slurpy
     .local pmc res
@@ -627,6 +599,7 @@ C<nil> plus an error string.
     new $P0, 'OS'
     push_eh _handler
     $P0.'rm'($S1)
+    pop_eh
     new res, 'LuaBoolean'
     set res, 1
     .return (res)
@@ -635,7 +608,8 @@ C<nil> plus an error string.
     .local pmc msg
     .local pmc e
     .local string s
-    .get_results (e, s)
+    .get_results (e)
+    s = e
     new nil, 'LuaNil'
     new msg, 'LuaString'
     set msg, s
@@ -650,7 +624,7 @@ the link itself (not the file it refers to).
 
 =cut
 
-.sub 'symlinkattributes' :anon
+.sub 'symlinkattributes'
     .param pmc filepath :optional
     .param pmc aname :optional
     .param pmc extra :slurpy
@@ -675,7 +649,7 @@ NOT YET IMPLEMENTED.
 
 =cut
 
-.sub 'touch' :anon
+.sub 'touch'
     .param pmc filepath :optional
     .param pmc atime :optional
     .param pmc mtime :optional
@@ -699,7 +673,7 @@ NOT YET IMPLEMENTED.
 
 =cut
 
-.sub 'unlock' :anon
+.sub 'unlock'
     .param pmc filehandle :optional
     .param pmc start :optional
     .param pmc length_ :optional

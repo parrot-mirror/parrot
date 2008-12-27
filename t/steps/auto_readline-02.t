@@ -5,18 +5,20 @@
 
 use strict;
 use warnings;
-use Test::More tests =>  29;
+use Test::More tests =>  31;
 use Carp;
 use Cwd;
 use lib qw( lib );
-use_ok('config::init::defaults');
 use_ok('config::auto::readline');
 use Parrot::Configure;
 use Parrot::Configure::Options qw( process_options );
-use Parrot::Configure::Test qw( test_step_thru_runstep);
+use Parrot::Configure::Test qw(
+    test_step_thru_runstep
+    test_step_constructor_and_description
+);
 use IO::CaptureOutput qw| capture |;
 
-my $args = process_options(
+my ($args, $step_list_ref) = process_options(
     {
         argv => [ ],
         mode => q{configure},
@@ -25,21 +27,13 @@ my $args = process_options(
 
 my $conf = Parrot::Configure->new;
 
-test_step_thru_runstep( $conf, q{init::defaults}, $args );
-
 my $pkg = q{auto::readline};
 
 $conf->add_steps($pkg);
 $conf->options->set( %{$args} );
+my $step = test_step_constructor_and_description($conf);
 
-my ( $task, $step_name, $step);
-$task        = $conf->steps->[-1];
-$step_name   = $task->step;
-
-$step = $step_name->new();
-ok( defined $step, "$step_name constructor returned defined value" );
-isa_ok( $step, $step_name );
-
+########## _evaluate_cc_run() ##########
 
 my ($has_readline, $verbose);
 
@@ -64,6 +58,8 @@ $step->set_result(undef);
     $step->set_result(undef);
 }
 
+########## _handle_readline() ##########
+
 $has_readline = 0;
 ok(auto::readline::_handle_readline($conf, $has_readline),
     "_handle_readline() returned true value");
@@ -86,7 +82,56 @@ is($conf->data->get('HAS_READLINE'), 1,
 $conf->data->set( readline => undef );
 $conf->data->set( HAS_READLINE => undef );
 
-my ($libs, $ccflags, $linkflags);
+########## _handle_ncurses_need() ##########
+
+my ($osname, $cc);
+my ($libs, $newlibs);
+
+$libs = q{-lalpha};
+$osname = q{mswin32};
+$cc = q{gcc};
+$conf->data->set( libs => $libs );
+ok(auto::readline::_handle_ncurses_need($conf, $osname, $cc),
+    "_handle_ncurses_need() returned true value");
+$newlibs = $conf->data->get( 'libs' );
+like(
+    $newlibs,
+    qr/\s+-lncurses/,
+    "Value expected for $osname, $cc added to 'libs'"
+);
+$conf->data->set( libs => undef );
+
+$libs = q{-lalpha};
+$osname = q{mswin32};
+$cc = q{cc};
+$conf->data->set( libs => $libs );
+ok(auto::readline::_handle_ncurses_need($conf, $osname, $cc),
+    "_handle_ncurses_need() returned true value");
+$newlibs = $conf->data->get( 'libs' );
+like(
+    $newlibs,
+    qr/\s+ncurses\.lib/,
+    "Value expected for $osname, $cc added to 'libs'"
+);
+$conf->data->set( libs => undef );
+
+$libs = q{-lalpha};
+$osname = q{linux};
+$cc = q{gcc};
+$conf->data->set( libs => $libs );
+ok(auto::readline::_handle_ncurses_need($conf, $osname, $cc),
+    "_handle_ncurses_need() returned true value");
+$newlibs = $conf->data->get( 'libs' );
+like(
+    $newlibs,
+    qr/\s+-lncurses/,
+    "Value expected for $osname, $cc added to 'libs'"
+);
+$conf->data->set( libs => undef );
+
+########## _recheck_settings() ##########
+
+my ($ccflags, $linkflags);
 
 $libs = q{-lalpha};
 $ccflags = q{-Ibeta};
@@ -128,7 +173,7 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-auto_readline-02.t - test config::auto::readline
+auto_readline-02.t - test auto::readline
 
 =head1 SYNOPSIS
 
@@ -138,7 +183,7 @@ auto_readline-02.t - test config::auto::readline
 
 The files in this directory test functionality used by F<Configure.pl>.
 
-The tests in this file test subroutines exported by config::auto::readline.
+The tests in this file test auto::readline.
 
 =head1 AUTHOR
 

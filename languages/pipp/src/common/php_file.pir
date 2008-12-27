@@ -13,6 +13,77 @@ php_file.pir - PHP file Standard Library
 
 =cut
 
+.const string STREAM_PMC = 'FileHandle'
+
+.const int SEEK_SET = 0
+.const int SEEK_CUR = 1
+.const int SEEK_END = 2
+
+.sub '__init' :anon :load :init
+    .local pmc cst
+    .GET_CONSTANTS(cst)
+    .REGISTER_LONG_CONSTANT(cst, 'SEEK_SET', SEEK_SET)
+    .REGISTER_LONG_CONSTANT(cst, 'SEEK_CUR', SEEK_CUR)
+    .REGISTER_LONG_CONSTANT(cst, 'SEEK_END', SEEK_END)
+.end
+
+=item C<string basename(string path [, string suffix])>
+
+Returns the filename component of the path
+
+=cut
+
+.include 'sysinfo.pasm'
+
+.sub 'basename'
+    .param pmc args :slurpy
+    .local string path
+    .local string suffix
+    .local string separator
+
+    ($I0, path, suffix) = parse_parameters('s|s', args :flat)
+    if $I0 goto L1
+    .RETURN_NULL()
+  L1:
+    $S0 = sysinfo .SYSINFO_PARROT_OS
+    if $S0 == 'MSWin32' goto L2
+    if $S0 == 'netware' goto L2
+    separator = '/'
+    goto L3
+  L2:
+    separator = '/\'
+  L3:
+    $I1 = 0
+    $P0 = split '', path
+  L4:
+    unless $P0 goto L5
+    $S1 = pop $P0
+    $I0 = index separator, $S1
+    inc $I1
+    if $I0 == -1 goto L4
+    dec $I1
+  L5:
+    .local int len_path
+    .local int len_suffix
+    .local int pos1
+    .local int pos2
+
+    len_path = length path
+    len_suffix = length suffix
+
+    pos1 = len_path - $I1
+    pos2 = len_path - len_suffix
+    $S3  = substr path, pos2
+    unless $S3 == suffix goto L6
+
+    $I2  = pos2 - pos1
+    $S4 = substr path, pos1, $I2
+    .RETURN_STRING($S4)
+  L6:
+    $S2 = substr path, pos1
+    .RETURN_STRING($S2)
+.end
+
 =item C<bool copy(string source_file, string destination_file)>
 
 Copy a file
@@ -25,16 +96,42 @@ NOT IMPLEMENTED.
     not_implemented()
 .end
 
-=item C<bool fclose(resource fp)>
+=item C<string dirname(string path)>
 
-Close an open file pointer
+Returns the directory name component of the path
 
 NOT IMPLEMENTED.
 
 =cut
 
-.sub 'fclose'
+.sub 'dirname'
     not_implemented()
+.end
+
+=item C<bool fclose(resource fp)>
+
+Close an open file pointer
+
+=cut
+
+.sub 'fclose'
+    .param pmc args :slurpy
+    .local int argc
+    argc = args
+    unless argc != 1 goto L1
+    wrong_param_count()
+    .RETURN_NULL()
+  L1:
+    $P1 = shift args
+    .local pmc stream
+    push_eh L3
+    stream = fetch_resource($P1, STREAM_PMC)
+    pop_eh
+  L2:
+    close stream
+    .RETURN_TRUE()
+  L3:
+    .RETURN_FALSE()
 .end
 
 =item C<bool feof(resource fp)>
@@ -125,12 +222,51 @@ NOT IMPLEMENTED.
 
 Read the entire file into a string
 
-NOT IMPLEMENTED.
+STILL INCOMPLETE.
 
 =cut
 
 .sub 'file_get_contents'
-    not_implemented()
+    .param pmc args :slurpy
+
+    .local string filename
+    .local int use_include_path
+    .local pmc context
+    .local int offset
+    .local int maxlen
+    use_include_path = 0
+    offset = -1
+    maxlen = PHP_STREAM_COPY_ALL
+    ($I0, filename, use_include_path, context, offset, maxlen) = parse_parameters('s|br!ll', args :flat)
+    if $I0 goto L1
+    .RETURN_NULL()
+  L1:
+    $I0 = args
+    unless $I0 == 5 goto L2
+    unless maxlen < 0 goto L2
+    error(E_WARNING, "length must be greater than or equal to zero")
+    .RETURN_FALSE()
+  L2:
+    .local pmc stream
+    $I0 = ENFORCE_SAFE_MODE | REPORT_ERRORS
+    unless use_include_path goto L3
+    $I0 |= USE_PATH
+  L3:
+    stream = stream_open(filename, 'r', $I0, context)
+  L4:
+    # for now ignore failures
+    push_eh catch
+
+    $S0 = stream.'readall'()
+    close stream
+
+    pop_eh
+
+    .RETURN_STRING($S0)
+
+catch:
+    .RETURN_FALSE()
+
 .end
 
 =item C<int file_put_contents(string file, mixed data [, int flags [, resource context]])>
@@ -173,24 +309,90 @@ NOT IMPLEMENTED.
 
 Open a file or a URL and return a file pointer
 
-NOT IMPLEMENTED.
+STILL INCOMPLETE (see _getmode)
 
 =cut
 
 .sub 'fopen'
-    not_implemented()
+    .param pmc args :slurpy
+    .local string filename
+    .local string mode
+    .local int use_include_path
+    .local pmc context
+    use_include_path = 0
+    ($I0, filename, mode, use_include_path, context) = parse_parameters('ss|br', args :flat)
+    if $I0 goto L1
+    .RETURN_NULL()
+  L1:
+    .local pmc stream
+    $I0 = ENFORCE_SAFE_MODE | REPORT_ERRORS
+    unless use_include_path goto L2
+    $I0 |= USE_PATH
+  L2:
+    $S0 = _getmode(mode)
+    push_eh L4
+    stream = stream_open(filename, $S0, $I0, context)
+    pop_eh
+  L3:
+    .RETURN_RESOURCE(stream)
+  L4:
+    .RETURN_FALSE()
+.end
+
+.sub '_getmode' :anon
+    .param string mode
+    .local string res
+    unless mode == 'r' goto L1
+    res = '<'
+    goto L9
+  L1:
+    unless mode == 'w' goto L2
+    res = '>'
+    goto L9
+  L2:
+    unless mode == 'a' goto L3
+    res = '>>'
+    goto L9
+  L3:
+    unless mode == 'r+' goto L4
+    res = '+<'
+    goto L9
+  L4:
+    unless mode == 'w+' goto L5
+    res = '+>'
+    goto L9
+  L5:
+    unless mode == 'a+' goto L6
+    res = '+>>'
+    goto L9
+  L6:
+    res = ''
+  L9:
+    .return (res)
 .end
 
 =item C<int fpassthru(resource fp)>
 
 Output all remaining data from a file pointer
 
-NOT IMPLEMENTED.
-
 =cut
 
 .sub 'fpassthru'
-    not_implemented()
+    .param pmc args :slurpy
+    .local int argc
+    argc = args
+    unless argc != 1 goto L1
+    wrong_param_count()
+    .RETURN_NULL()
+  L1:
+    $P1 = shift args
+    .local pmc stream
+    stream = fetch_resource($P1, STREAM_PMC)
+    unless null stream goto L2
+    .RETURN_FALSE()
+  L2:
+    $I0 = stream_passthru(stream)
+    .RETURN_LONG($I0)
 .end
 
 =item C<int fputcsv(resource fp, array fields [, string delimiter [, string enclosure]])>
@@ -313,6 +515,18 @@ NOT IMPLEMENTED.
     not_implemented()
 .end
 
+=item C<array pathinfo(string path[, int options])>
+
+Returns information about a certain string
+
+NOT IMPLEMENTED.
+
+=cut
+
+.sub 'pathinfo'
+    not_implemented()
+.end
+
 =item C<int pclose(resource fp)>
 
 Close a file pointer opened by popen()
@@ -341,12 +555,32 @@ NOT IMPLEMENTED.
 
 Output a file or a URL
 
-NOT IMPLEMENTED.
+STILL INCOMPLETE (see stream_open)
 
 =cut
 
 .sub 'readfile'
-    not_implemented()
+    .param pmc args :slurpy
+    .local string filename
+    .local int use_include_path
+    .local pmc context
+    use_include_path = 0
+    ($I0, filename, use_include_path, context) = parse_parameters('s|br!', args :flat)
+    if $I0 goto L1
+    .RETURN_NULL()
+  L1:
+    .local pmc stream
+    $I0 = ENFORCE_SAFE_MODE | REPORT_ERRORS
+    unless use_include_path goto L2
+    $I0 |= USE_PATH
+  L2:
+    stream = stream_open(filename, '<', $I0, context)
+    unless stream goto L3
+    $I0 = stream_passthru(stream)
+    close stream
+    .RETURN_LONG($I0)
+  L3:
+    .RETURN_FALSE()
 .end
 
 =item C<string realpath(string path)>

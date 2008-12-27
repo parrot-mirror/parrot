@@ -71,7 +71,8 @@ typedef enum {
     PARROT_CGP_JIT_CORE     = 0x16,         /* JCP                */
     PARROT_SWITCH_JIT_CORE  = 0x12,         /* J P                */
     PARROT_EXEC_CORE        = 0x20,         /* TODO Parrot_exec_run variants */
-    PARROT_GC_DEBUG_CORE    = 0x40          /* run GC before each op */
+    PARROT_GC_DEBUG_CORE    = 0x40,         /* run GC before each op */
+    PARROT_DEBUGGER_CORE    = 0x80          /* used by parrot debugger */
 } Parrot_Run_core_t;
 /* &end_gen */
 
@@ -143,8 +144,8 @@ typedef Parrot_Run_core_t Run_Cores;
 #include "parrot/op.h"
 #include "parrot/oplib.h"
 
-#include "parrot/debug.h"
-#include "parrot/mmd.h"
+#include "parrot/debugger.h"
+#include "parrot/multidispatch.h"
 
 typedef struct warnings_t {
     Warnings_classes classes;
@@ -204,7 +205,7 @@ typedef union {
  */
 #define CTX_LEAK_DEBUG 1
 
-typedef struct Parrot_Context {
+struct Parrot_Context {
     /* common header with Interp_Context */
     struct Parrot_Context *caller_ctx;  /* caller context */
     Regs_ni                bp;          /* pointers to FLOATVAL & INTVAL */
@@ -213,6 +214,7 @@ typedef struct Parrot_Context {
     INTVAL *n_regs_used;                /* INSP in PBC points to Sub */
     size_t regs_mem_size;               /* memory occupied by registers */
     int ref_count;                      /* how often refered to */
+    int gc_mark;                        /* marked in gc run */
 
     PMC      *lex_pad;                  /* LexPad PMC */
     struct Parrot_Context *outer_ctx;   /* outer context, if a closure */
@@ -235,15 +237,14 @@ typedef struct Parrot_Context {
     INTVAL current_HLL;         /* see also src/hll.c */
     opcode_t *current_results;  /* ptr into code with get_results opcode */
     PMC *results_signature;     /* results signature pmc if it is non-const */
+    PMC *handlers;              /* local handlers for the context */
     /* deref the constants - we need it all the time */
     struct PackFile_Constant ** constants;
     /* code->prederefed.code - code->base.data in opcodes
      * to simplify conversio between code ptrs in e.g. invoke
      */
     size_t pred_offset;
-} parrot_context_t;
-
-typedef parrot_context_t Parrot_Context;
+};
 
 struct _Thread_data;    /* in thread.h */
 struct _Caches;         /* caches .h */
@@ -292,6 +293,20 @@ typedef struct _context_mem {
 #endif
 
 } context_mem;
+
+/* Wrap the jump buffer in a struct, to make it a linked list. Jump buffers are
+ * used to resume execution at a point in the runloop where an exception
+ * handler can be run. Ultimately this information should be part of
+ * Parrot_Context, but at this point a new context isn't created for every
+ * runloop ID, so it still needs to be a separate stack for a while longer.*/
+
+typedef struct parrot_runloop_t {
+    Parrot_jump_buff resume;     /* jmp_buf */
+    struct parrot_runloop_t *prev; /* interpreter's runloop jump buffer stack */
+} parrot_runloop_t;
+
+typedef parrot_runloop_t Parrot_runloop;
+
 
 struct _handler_node_t; /* forward def - exit.h */
 
@@ -342,7 +357,7 @@ struct parrot_interp_t {
     INTVAL resume_flag;
     size_t resume_offset;
 
-    struct PackFile_ByteCode *code;           /* The code we are executing */
+    PackFile_ByteCode *code;                  /* The code we are executing */
     struct PackFile          *initial_pf;     /* first created PF  */
 
     struct _imc_info_t *imc_info;             /* imcc data */
@@ -361,6 +376,8 @@ struct parrot_interp_t {
 
     /* per interpreter global vars */
     INTVAL world_inited;                      /* world_init_once() is done */
+
+    UINTVAL hash_seed;                        /* STRING hash seed */
 
     PMC *iglobals;                            /* SArray of PMCs, containing: */
     /* 0:   PMC *Parrot_base_classname_hash; hash containing name->base_type */
@@ -384,6 +401,7 @@ struct parrot_interp_t {
 
     MMD_table *binop_mmd_funcs;               /* Table of MMD functions */
     UINTVAL    n_binop_mmd_funcs;             /* MMD function count */
+    MMD_Cache *op_mmd_cache;                  /* MMD cache for builtins. */
 
     struct _Caches * caches;                  /* see caches.h */
 
@@ -394,9 +412,8 @@ struct parrot_interp_t {
     struct _handler_node_t *exit_handler_list;/* exit.c */
     int sleeping;                             /* used during sleep in events */
 
-    struct parrot_exception_t *exceptions;    /* internal exception stack */
-    struct parrot_exception_t *exc_free_list; /* and free list */
-    PMC                      **exception_list;/* precreated exception objects */
+    struct parrot_runloop_t *current_runloop;   /* internal runloop jump point stack */
+    struct parrot_runloop_t *runloop_jmp_free_list; /* and free list */
 
     int current_runloop_level;                /* for reentering run loop */
     int current_runloop_id;
@@ -456,12 +473,16 @@ typedef enum {
 
 #if PARROT_CATCH_NULL
 PARROT_DATA PMC * PMCNULL;   /* Holds single Null PMC */
-#  define PMC_IS_NULL(p)  ((p) == PMCNULL || (p) == NULL)
 #else
 #  define PMCNULL         ((PMC *)NULL)
-#  define PMC_IS_NULL(p)  ((p) == PMCNULL)
 #endif /* PARROT_CATCH_NULL */
 
+/* Maybe PMC_IS_NULL(interp, pmc) ? */
+#if PARROT_CATCH_NULL
+#  define PMC_IS_NULL(pmc) ((pmc) == PMCNULL || (pmc) == NULL)
+#else
+#  define PMC_IS_NULL(pmc) (pmc) == NULL
+#endif
 
 #define STRING_IS_NULL(s) ((s) == NULL)
 #define STRING_IS_EMPTY(s) !(int)(s)->strlen
@@ -476,6 +497,8 @@ PARROT_DATA PMC * PMCNULL;   /* Holds single Null PMC */
 #define PARROT_OS_VERSION_NUMBER     6
 #define CPU_ARCH                     7
 #define CPU_TYPE                     8
+#define PARROT_INTMAX                9
+#define PARROT_INTMIN               10
 
 /* &end_gen */
 
@@ -491,11 +514,11 @@ typedef PMC *(*Parrot_compiler_func_t)(Parrot_Interp interp,
 /* HEADERIZER BEGIN: src/inter_create.c */
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 
-PARROT_API
+PARROT_EXPORT
 PARROT_CANNOT_RETURN_NULL
 Parrot_Interp make_interpreter(ARGIN_NULLOK(Interp *parent), INTVAL flags);
 
-PARROT_API
+PARROT_EXPORT
 void Parrot_destroy(PARROT_INTERP)
         __attribute__nonnull__(1);
 
@@ -510,7 +533,15 @@ void Parrot_really_destroy(PARROT_INTERP,
 /* HEADERIZER BEGIN: src/inter_run.c */
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 
-PARROT_API
+PARROT_EXPORT
+void free_runloop_jump_point(PARROT_INTERP)
+        __attribute__nonnull__(1);
+
+PARROT_EXPORT
+void new_runloop_jump_point(PARROT_INTERP)
+        __attribute__nonnull__(1);
+
+PARROT_EXPORT
 PARROT_IGNORABLE_RESULT
 PARROT_CAN_RETURN_NULL
 void * Parrot_run_meth_fromc(PARROT_INTERP,
@@ -520,7 +551,7 @@ void * Parrot_run_meth_fromc(PARROT_INTERP,
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
-PARROT_API
+PARROT_EXPORT
 PARROT_IGNORABLE_RESULT
 PARROT_CAN_RETURN_NULL
 void* Parrot_run_meth_fromc_arglist(PARROT_INTERP,
@@ -534,7 +565,7 @@ void* Parrot_run_meth_fromc_arglist(PARROT_INTERP,
         __attribute__nonnull__(4)
         __attribute__nonnull__(5);
 
-PARROT_API
+PARROT_EXPORT
 PARROT_IGNORABLE_RESULT
 FLOATVAL Parrot_run_meth_fromc_arglist_retf(PARROT_INTERP,
     ARGIN(PMC *sub),
@@ -547,7 +578,7 @@ FLOATVAL Parrot_run_meth_fromc_arglist_retf(PARROT_INTERP,
         __attribute__nonnull__(4)
         __attribute__nonnull__(5);
 
-PARROT_API
+PARROT_EXPORT
 PARROT_IGNORABLE_RESULT
 PARROT_CAN_RETURN_NULL
 INTVAL Parrot_run_meth_fromc_arglist_reti(PARROT_INTERP,
@@ -561,7 +592,7 @@ INTVAL Parrot_run_meth_fromc_arglist_reti(PARROT_INTERP,
         __attribute__nonnull__(4)
         __attribute__nonnull__(5);
 
-PARROT_API
+PARROT_EXPORT
 PARROT_IGNORABLE_RESULT
 PARROT_CAN_RETURN_NULL
 void* Parrot_run_meth_fromc_args(PARROT_INTERP,
@@ -575,7 +606,7 @@ void* Parrot_run_meth_fromc_args(PARROT_INTERP,
         __attribute__nonnull__(4)
         __attribute__nonnull__(5);
 
-PARROT_API
+PARROT_EXPORT
 PARROT_IGNORABLE_RESULT
 FLOATVAL Parrot_run_meth_fromc_args_retf(PARROT_INTERP,
     ARGIN(PMC *sub),
@@ -588,7 +619,7 @@ FLOATVAL Parrot_run_meth_fromc_args_retf(PARROT_INTERP,
         __attribute__nonnull__(4)
         __attribute__nonnull__(5);
 
-PARROT_API
+PARROT_EXPORT
 PARROT_IGNORABLE_RESULT
 INTVAL Parrot_run_meth_fromc_args_reti(PARROT_INTERP,
     ARGIN(PMC *sub),
@@ -601,14 +632,14 @@ INTVAL Parrot_run_meth_fromc_args_reti(PARROT_INTERP,
         __attribute__nonnull__(4)
         __attribute__nonnull__(5);
 
-PARROT_API
+PARROT_EXPORT
 PARROT_IGNORABLE_RESULT
 PARROT_CANNOT_RETURN_NULL
-parrot_context_t * Parrot_runops_fromc(PARROT_INTERP, ARGIN(PMC *sub))
+Parrot_Context * Parrot_runops_fromc(PARROT_INTERP, ARGIN(PMC *sub))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
-PARROT_API
+PARROT_EXPORT
 PARROT_IGNORABLE_RESULT
 PARROT_CAN_RETURN_NULL
 void * Parrot_runops_fromc_arglist(PARROT_INTERP,
@@ -619,7 +650,7 @@ void * Parrot_runops_fromc_arglist(PARROT_INTERP,
         __attribute__nonnull__(2)
         __attribute__nonnull__(3);
 
-PARROT_API
+PARROT_EXPORT
 PARROT_IGNORABLE_RESULT
 FLOATVAL Parrot_runops_fromc_arglist_retf(PARROT_INTERP,
     ARGIN(PMC *sub),
@@ -629,7 +660,7 @@ FLOATVAL Parrot_runops_fromc_arglist_retf(PARROT_INTERP,
         __attribute__nonnull__(2)
         __attribute__nonnull__(3);
 
-PARROT_API
+PARROT_EXPORT
 PARROT_IGNORABLE_RESULT
 INTVAL Parrot_runops_fromc_arglist_reti(PARROT_INTERP,
     ARGIN(PMC *sub),
@@ -639,7 +670,7 @@ INTVAL Parrot_runops_fromc_arglist_reti(PARROT_INTERP,
         __attribute__nonnull__(2)
         __attribute__nonnull__(3);
 
-PARROT_API
+PARROT_EXPORT
 PARROT_IGNORABLE_RESULT
 PARROT_CAN_RETURN_NULL
 PMC * Parrot_runops_fromc_args(PARROT_INTERP,
@@ -650,7 +681,7 @@ PMC * Parrot_runops_fromc_args(PARROT_INTERP,
         __attribute__nonnull__(2)
         __attribute__nonnull__(3);
 
-PARROT_API
+PARROT_EXPORT
 PARROT_IGNORABLE_RESULT
 PARROT_CAN_RETURN_NULL
 void * Parrot_runops_fromc_args_event(PARROT_INTERP,
@@ -661,7 +692,7 @@ void * Parrot_runops_fromc_args_event(PARROT_INTERP,
         __attribute__nonnull__(2)
         __attribute__nonnull__(3);
 
-PARROT_API
+PARROT_EXPORT
 PARROT_IGNORABLE_RESULT
 FLOATVAL Parrot_runops_fromc_args_retf(PARROT_INTERP,
     ARGIN(PMC *sub),
@@ -671,7 +702,7 @@ FLOATVAL Parrot_runops_fromc_args_retf(PARROT_INTERP,
         __attribute__nonnull__(2)
         __attribute__nonnull__(3);
 
-PARROT_API
+PARROT_EXPORT
 PARROT_IGNORABLE_RESULT
 INTVAL Parrot_runops_fromc_args_reti(PARROT_INTERP,
     ARGIN(PMC *sub),
@@ -680,6 +711,12 @@ INTVAL Parrot_runops_fromc_args_reti(PARROT_INTERP,
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3);
+
+void destroy_runloop_jump_points(PARROT_INTERP)
+        __attribute__nonnull__(1);
+
+void really_destroy_runloop_jump_points(
+    ARGIN_NULLOK(Parrot_runloop *jump_point));
 
 void runops(PARROT_INTERP, size_t offs)
         __attribute__nonnull__(1);
@@ -690,19 +727,19 @@ void runops(PARROT_INTERP, size_t offs)
 /* HEADERIZER BEGIN: src/inter_cb.c */
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 
-PARROT_API
+PARROT_EXPORT
 void Parrot_callback_C(ARGIN(char *external_data), ARGMOD(PMC *user_data))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         FUNC_MODIFIES(*user_data);
 
-PARROT_API
+PARROT_EXPORT
 void Parrot_callback_D(ARGMOD(PMC *user_data), ARGIN(char *external_data))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         FUNC_MODIFIES(*user_data);
 
-PARROT_API
+PARROT_EXPORT
 PARROT_CANNOT_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
 PMC* Parrot_make_cb(PARROT_INTERP,
@@ -715,7 +752,7 @@ PMC* Parrot_make_cb(PARROT_INTERP,
         __attribute__nonnull__(4)
         FUNC_MODIFIES(* sub);
 
-PARROT_API
+PARROT_EXPORT
 void Parrot_run_callback(PARROT_INTERP,
     ARGMOD(PMC* user_data),
     ARGIN(char* external_data))
@@ -730,23 +767,23 @@ void Parrot_run_callback(PARROT_INTERP,
 /* HEADERIZER BEGIN: src/inter_misc.c */
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 
-PARROT_API
+PARROT_EXPORT
 INTVAL interpinfo(PARROT_INTERP, INTVAL what)
         __attribute__nonnull__(1);
 
-PARROT_API
+PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 PMC* interpinfo_p(PARROT_INTERP, INTVAL what)
         __attribute__nonnull__(1);
 
-PARROT_API
+PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 STRING* interpinfo_s(PARROT_INTERP, INTVAL what)
         __attribute__nonnull__(1);
 
-PARROT_API
+PARROT_EXPORT
 PARROT_CANNOT_RETURN_NULL
 void * Parrot_compile_file(PARROT_INTERP,
     ARGIN(const char *fullname),
@@ -756,7 +793,7 @@ void * Parrot_compile_file(PARROT_INTERP,
         __attribute__nonnull__(3)
         FUNC_MODIFIES(*error);
 
-PARROT_API
+PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 PMC * Parrot_compile_string(PARROT_INTERP,
@@ -769,7 +806,7 @@ PMC * Parrot_compile_string(PARROT_INTERP,
         __attribute__nonnull__(4)
         FUNC_MODIFIES(*error);
 
-PARROT_API
+PARROT_EXPORT
 void Parrot_compreg(PARROT_INTERP,
     ARGIN(STRING *type),
     NOTNULL(Parrot_compiler_func_t func))
@@ -777,14 +814,14 @@ void Parrot_compreg(PARROT_INTERP,
         __attribute__nonnull__(2)
         __attribute__nonnull__(3);
 
-PARROT_API
+PARROT_EXPORT
 void Parrot_mark_method_writes(PARROT_INTERP,
     int type,
     ARGIN(const char *name))
         __attribute__nonnull__(1)
         __attribute__nonnull__(3);
 
-PARROT_API
+PARROT_EXPORT
 void register_nci_method(PARROT_INTERP,
     const int type,
     ARGIN(void *func),
@@ -795,7 +832,7 @@ void register_nci_method(PARROT_INTERP,
         __attribute__nonnull__(4)
         __attribute__nonnull__(5);
 
-PARROT_API
+PARROT_EXPORT
 void register_raw_nci_method_in_ns(PARROT_INTERP,
     const int type,
     ARGIN(void *func),
@@ -822,7 +859,7 @@ void exec_init_prederef(PARROT_INTERP,
     void *prederef_arena);
 void prepare_for_run(PARROT_INTERP);
 void *init_jit(PARROT_INTERP, opcode_t *pc);
-PARROT_API void dynop_register(PARROT_INTERP, PMC* op_lib);
+PARROT_EXPORT void dynop_register(PARROT_INTERP, PMC* op_lib);
 void do_prederef(void **pc_prederef, PARROT_INTERP, int type);
 
 /* interpreter.pmc */
@@ -830,9 +867,16 @@ void clone_interpreter(Parrot_Interp dest, Parrot_Interp self, INTVAL flags);
 
 void Parrot_setup_event_func_ptrs(Parrot_Interp interp);
 
-PARROT_API void disable_event_checking(PARROT_INTERP);
-PARROT_API void enable_event_checking(PARROT_INTERP);
-#else
+PARROT_EXPORT void disable_event_checking(PARROT_INTERP);
+PARROT_EXPORT void enable_event_checking(PARROT_INTERP);
+
+#if CTX_LEAK_DEBUG
+#  define Parrot_context_ref(a, b) Parrot_context_ref_trace((a), (b), __FILE__, __LINE__)
+#else /* !CTX_LEAK_DEBUG */
+#  define Parrot_context_ref(a, b) (((b)->ref_count++), (b))
+#endif /* CTX_LEAK_DEBUG */
+
+#else /* !PARROT_IN_CORE */
 
 struct Parrot_Interp_;
 typedef struct Parrot_Interp_ *Parrot_Interp;
@@ -842,6 +886,11 @@ typedef void * *(*native_func_t)(Parrot_Interp interp,
                                  void *start_code);
 
 #endif   /* PARROT_IN_CORE */
+
+#ifndef PMC_IS_NULL
+#  define PMC_IS_NULL(pmc) PMC_is_null(NULL, (pmc))
+#endif
+
 #endif   /* PARROT_INTERPRETER_H_GUARD */
 
 /*

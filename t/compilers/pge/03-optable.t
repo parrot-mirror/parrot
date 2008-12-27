@@ -7,7 +7,7 @@ use strict;
 use warnings;
 use lib qw( t . lib ../lib ../../lib ../../../lib );
 use Test::More;
-use Parrot::Test tests => 35;
+use Parrot::Test tests => 37;
 
 optable_output_is( 'a',     'term:a',                                   'Simple term' );
 optable_output_is( 'a+b',   'infix:+(term:a, term:b)',                  'Simple infix' );
@@ -41,6 +41,9 @@ optable_output_is( 'a++', 'postfix:++(term:a)', 'postfix' );
 optable_output_is( 'a--', 'postfix:--(term:a)', 'postfix' );
 optable_output_is( '++a', 'prefix:++(term:a)',  'prefix' );
 optable_output_is( '--a', 'prefix:--(term:a)',  'prefix' );
+
+optable_output_is( '-a',  'prefix:-(term:a)',   'prefix ltm');
+optable_output_is( '->a', 'term:->a',           'prefix ltm');
 
 optable_output_is(
     'a*(b+c)',
@@ -92,40 +95,47 @@ sub optable_output_is {
     load_bytecode 'PGE/Dumper.pir'
 
     .local pmc optable
-    optable = new 'PGE::OPTable'
+    $P0 = get_hll_global ['PGE'], 'OPTable'
+    optable = $P0.'new'()
 
-    optable.newtok('infix:+', 'precedence'=>'=')
-    optable.newtok('infix:-', 'equiv'=>'infix:+')
-    optable.newtok('infix:*', 'tighter'=>'infix:+')
-    optable.newtok('infix:/', 'equiv'=>'infix:*')
-    optable.newtok('infix:**', 'tighter'=>'infix:*')
-    optable.newtok('infix:==', 'looser'=>'infix:+')
-    optable.newtok('infix:=', 'looser'=>'infix:==', 'assoc'=>'right')
-    optable.newtok('infix:,', 'tighter'=>'infix:=', 'assoc'=>'list')
-    optable.newtok('infix:;', 'looser'=>'infix:=', 'assoc'=>'list')
+    optable.'newtok'('infix:+', 'precedence'=>'=')
+    optable.'newtok'('infix:-', 'equiv'=>'infix:+')
+    optable.'newtok'('infix:*', 'tighter'=>'infix:+')
+    optable.'newtok'('infix:/', 'equiv'=>'infix:*')
+    optable.'newtok'('infix:**', 'tighter'=>'infix:*')
+    optable.'newtok'('infix:==', 'looser'=>'infix:+')
+    optable.'newtok'('infix:=', 'looser'=>'infix:==', 'assoc'=>'right')
+    optable.'newtok'('infix:,', 'tighter'=>'infix:=', 'assoc'=>'list')
+    optable.'newtok'('infix:;', 'looser'=>'infix:=', 'assoc'=>'list')
 
-    optable.newtok('prefix:++', 'tighter'=>'infix:**')
-    optable.newtok('prefix:--', 'equiv'=>'prefix:++')
-    optable.newtok('postfix:++', 'equiv'=>'prefix:++')
-    optable.newtok('postfix:--', 'equiv'=>'prefix:++')
+    optable.'newtok'('prefix:++', 'tighter'=>'infix:**')
+    optable.'newtok'('prefix:--', 'equiv'=>'prefix:++')
+    optable.'newtok'('postfix:++', 'equiv'=>'prefix:++')
+    optable.'newtok'('postfix:--', 'equiv'=>'prefix:++')
+    optable.'newtok'('prefix:-', 'equiv'=>'prefix:++')
 
     .local pmc ident
-    ident = get_global ['PGE::Match'], 'ident'
-    optable.newtok('term:', 'tighter'=>'prefix:++', 'parsed'=>ident)
-    optable.newtok('circumfix:( )', 'equiv'=>'term:')
-    optable.newtok('circumfix:[ ]', 'equiv'=>'term:')
-    optable.newtok('postcircumfix:( )', 'looser'=>'term:', 'nows'=>1, 'nullterm'=>1)
-    optable.newtok('postcircumfix:[ ]', 'equiv'=>'postcircumfix:( )', 'nows'=>1)
+    ident = get_global ['PGE';'Match'], 'ident'
+    optable.'newtok'('term:', 'tighter'=>'prefix:++', 'parsed'=>ident)
+    optable.'newtok'('circumfix:( )', 'equiv'=>'term:')
+    optable.'newtok'('circumfix:[ ]', 'equiv'=>'term:')
+    optable.'newtok'('postcircumfix:( )', 'looser'=>'term:', 'nows'=>1, 'nullterm'=>1)
+    optable.'newtok'('postcircumfix:[ ]', 'equiv'=>'postcircumfix:( )', 'nows'=>1)
+
+    .local pmc arrow
+    $P0 = compreg 'PGE::Perl6Regex'
+    arrow = $P0("'->' <ident>")
+    optable.'newtok'('term:->', 'equiv'=>'term:', 'parsed'=>arrow, 'skipkey'=>0)
 
     .local string test
     test = "<<test>>"
 
     .local pmc match
-    match = optable.parse(test, 'stop'=>' ;')
+    match = optable.'parse'(test, 'stop'=>' ;')
     unless match goto fail
     $P0 = match['expr']
     tree($P0)
-    $I0 = match.to()
+    $I0 = match.'to'()
     $I1 = length test
     if $I0 == $I1 goto succeed
     print " (pos="
@@ -147,6 +157,7 @@ sub optable_output_is {
     type = match['type']
     print type
     if type == 'term:' goto print_term
+    if type == 'term:->' goto print_term_arrow
     print '('
     .local pmc iter
     $P0 = match.'list'()
@@ -170,6 +181,10 @@ sub optable_output_is {
     goto end
   print_term:
     print match
+    goto end
+  print_term_arrow:
+    $S0 = match['ident']
+    print $S0
   end:
     .return ()
 .end

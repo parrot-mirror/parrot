@@ -86,21 +86,21 @@ op eq(in STR, in STR, inconst LABEL) :base_core {
 }
 
 op eq(invar PMC, invar PMC, inconst LABEL) :base_core {
-  if (mmd_dispatch_i_pp(interp, $1, $2, MMD_EQ)) {
+  if (VTABLE_is_equal(interp, $1, $2)) {
     goto OFFSET($3);
   }
 }
 
 op eq(invar PMC, in INT, inconst LABEL) :base_core {
-  /*
-   * see also #34949
-   * the temp is necessary, *if* $1 isa BigInt
-   */
-  PMC *temp = pmc_new(interp, enum_class_Integer);
-  PMC_int_val(temp) = $2;
-  if (mmd_dispatch_i_pp(interp, $1, temp, MMD_EQ)) {
+  PMC *temp = temporary_pmc_new(interp, enum_class_Integer);
+  VTABLE_set_integer_native(interp, temp, $2);
+
+  if (VTABLE_is_equal(interp, $1, temp)) {
+    temporary_pmc_free(interp, temp);
     goto OFFSET($3);
   }
+
+  temporary_pmc_free(interp, temp);
 }
 
 op eq(invar PMC, in NUM, inconst LABEL) :base_core {
@@ -123,13 +123,13 @@ op eq(invar PMC, in STR, inconst LABEL) :base_core {
 }
 
 op eq_str(invar PMC, invar PMC, inconst LABEL) :base_core {
-  if (mmd_dispatch_i_pp(interp, $1, $2, MMD_STREQ)) {
+  if (VTABLE_is_equal_string(interp, $1, $2)) {
     goto OFFSET($3);
   }
 }
 
 op eq_num(invar PMC, invar PMC, inconst LABEL) :base_core {
-  if (mmd_dispatch_i_pp(interp, $1, $2, MMD_NUMEQ)) {
+  if (VTABLE_is_equal_num(interp, $1, $2)) {
     goto OFFSET($3);
   }
 }
@@ -193,17 +193,21 @@ op ne(in STR, in STR, inconst LABEL) :base_core {
 }
 
 op ne(invar PMC, invar PMC, inconst LABEL) :base_core {
-  if (! mmd_dispatch_i_pp(interp, $1, $2, MMD_EQ)) {
+  if (!VTABLE_is_equal(interp, $1, $2)) {
     goto OFFSET($3);
   }
 }
 
 op ne(invar PMC, in INT, inconst LABEL) :base_core {
-  PMC *temp = pmc_new(interp, enum_class_Integer);
-  PMC_int_val(temp) = $2;
-  if (! mmd_dispatch_i_pp(interp, $1, temp, MMD_EQ)) {
+  PMC *temp = temporary_pmc_new(interp, enum_class_Integer);
+  VTABLE_set_integer_native(interp, temp, $2);
+
+  if (!VTABLE_is_equal(interp, $1, temp)) {
+    temporary_pmc_free(interp, temp);
     goto OFFSET($3);
   }
+
+  temporary_pmc_free(interp, temp);
 }
 
 op ne(invar PMC, in NUM, inconst LABEL) :base_core {
@@ -220,13 +224,13 @@ op ne(invar PMC, in STR, inconst LABEL) :base_core {
 }
 
 op ne_str(invar PMC, invar PMC, inconst LABEL) :base_core {
-  if (mmd_dispatch_i_pp(interp, $1, $2, MMD_STRCMP) != 0) {
+  if (VTABLE_cmp_string(interp, $1, $2) != 0) {
     goto OFFSET($3);
   }
 }
 
 op ne_num(invar PMC, invar PMC, inconst LABEL) :base_core {
-  if (mmd_dispatch_i_pp(interp, $1, $2, MMD_NUMCMP) != 0) {
+  if (VTABLE_cmp_num(interp, $1, $2) != 0) {
     goto OFFSET($3);
   }
 }
@@ -286,17 +290,21 @@ op lt(in STR, in STR, inconst LABEL) :base_core {
 }
 
 op lt(invar PMC, invar PMC, inconst LABEL) :base_core {
-  if (mmd_dispatch_i_pp(interp, $1, $2, MMD_CMP) < 0) {
+  if (VTABLE_cmp(interp, $1, $2) < 0) {
     goto OFFSET($3);
   }
 }
 
 op lt(invar PMC, in INT, inconst LABEL) :base_core {
-  PMC *temp = pmc_new(interp, enum_class_Integer);
+  PMC *temp         = temporary_pmc_new(interp, enum_class_Integer);
   PMC_int_val(temp) = $2;
-  if (mmd_dispatch_i_pp(interp, $1, temp, MMD_CMP) < 0) {
+
+  if (VTABLE_cmp(interp, $1, temp) < 0) {
+    temporary_pmc_free(interp, temp);
     goto OFFSET($3);
   }
+
+  temporary_pmc_free(interp, temp);
 }
 
 op lt(invar PMC, in NUM, inconst LABEL) :base_core {
@@ -313,13 +321,13 @@ op lt(invar PMC, in STR, inconst LABEL) :base_core {
 }
 
 op lt_str(invar PMC, invar PMC, inconst LABEL) :base_core {
-  if (mmd_dispatch_i_pp(interp, $1, $2, MMD_STRCMP) < 0) {
+  if (VTABLE_cmp_string(interp, $1, $2) < 0) {
     goto OFFSET($3);
   }
 }
 
 op lt_num(invar PMC, invar PMC, inconst LABEL) :base_core {
-  if (mmd_dispatch_i_pp(interp, $1, $2, MMD_NUMCMP) < 0) {
+  if (VTABLE_cmp_num(interp, $1, $2) < 0) {
     goto OFFSET($3);
   }
 }
@@ -367,17 +375,21 @@ op le(in STR, in STR, inconst LABEL) :base_core {
 }
 
 op le(invar PMC, invar PMC, inconst LABEL) :base_core {
-  if (mmd_dispatch_i_pp(interp, $1, $2, MMD_CMP) <= 0) {
+  if (VTABLE_cmp(interp, $1, $2) <= 0) {
     goto OFFSET($3);
   }
 }
 
 op le(invar PMC, in INT, inconst LABEL) :base_core {
-  PMC *temp = pmc_new(interp, enum_class_Integer);
+  PMC *temp         = temporary_pmc_new(interp, enum_class_Integer);
   PMC_int_val(temp) = $2;
-  if (mmd_dispatch_i_pp(interp, $1, temp, MMD_CMP) <= 0) {
+
+  if (VTABLE_cmp(interp, $1, temp) <= 0) {
+    temporary_pmc_free(interp, temp);
     goto OFFSET($3);
   }
+
+  temporary_pmc_free(interp, temp);
 }
 
 op le(invar PMC, in NUM, inconst LABEL) :base_core {
@@ -394,13 +406,13 @@ op le(invar PMC, in STR, inconst LABEL) :base_core {
 }
 
 op le_str(invar PMC, invar PMC, inconst LABEL) :base_core {
-  if (mmd_dispatch_i_pp(interp, $1, $2, MMD_STRCMP) <= 0) {
+  if (VTABLE_cmp_string(interp, $1, $2) <= 0) {
     goto OFFSET($3);
   }
 }
 
 op le_num(invar PMC, invar PMC, inconst LABEL) :base_core {
-  if (mmd_dispatch_i_pp(interp, $1, $2, MMD_NUMCMP) <= 0) {
+  if (VTABLE_cmp_num(interp, $1, $2) <= 0) {
     goto OFFSET($3);
   }
 }
@@ -424,17 +436,21 @@ Branch if $1 is greater than $2.
 =cut
 
 op gt(invar PMC, invar PMC, inconst LABEL) :base_core {
-  if (mmd_dispatch_i_pp(interp, $1, $2, MMD_CMP) > 0) {
+  if (VTABLE_cmp(interp, $1, $2) > 0) {
     goto OFFSET($3);
   }
 }
 
 op gt(invar PMC, in INT, inconst LABEL) :base_core {
-  PMC *temp = pmc_new(interp, enum_class_Integer);
+  PMC *temp         = temporary_pmc_new(interp, enum_class_Integer);
   PMC_int_val(temp) = $2;
-  if (mmd_dispatch_i_pp(interp, $1, temp, MMD_CMP) > 0) {
+
+  if (VTABLE_cmp(interp, $1, temp) > 0) {
+    temporary_pmc_free(interp, temp);
     goto OFFSET($3);
   }
+
+  temporary_pmc_free(interp, temp);
 }
 
 op gt(invar PMC, in NUM, inconst LABEL) :base_core {
@@ -451,13 +467,13 @@ op gt(invar PMC, in STR, inconst LABEL) :base_core {
 }
 
 op gt_str(invar PMC, invar PMC, inconst LABEL) :base_core {
-  if (mmd_dispatch_i_pp(interp, $1, $2, MMD_STRCMP) > 0) {
+  if (VTABLE_cmp_string(interp, $1, $2) > 0) {
     goto OFFSET($3);
   }
 }
 
 op gt_num(invar PMC, invar PMC, inconst LABEL) :base_core {
-  if (mmd_dispatch_i_pp(interp, $1, $2, MMD_NUMCMP) > 0) {
+  if (VTABLE_cmp_num(interp, $1, $2) > 0) {
     goto OFFSET($3);
   }
 }
@@ -481,17 +497,21 @@ Branch if $1 is greater than or equal to $2.
 =cut
 
 op ge(invar PMC, invar PMC, inconst LABEL) :base_core {
-  if (mmd_dispatch_i_pp(interp, $1, $2, MMD_CMP) >= 0) {
+  if (VTABLE_cmp(interp, $1, $2) >= 0) {
     goto OFFSET($3);
   }
 }
 
 op ge(invar PMC, in INT, inconst LABEL) :base_core {
-  PMC *temp = pmc_new(interp, enum_class_Integer);
+  PMC *temp         = temporary_pmc_new(interp, enum_class_Integer);
   PMC_int_val(temp) = $2;
-  if (mmd_dispatch_i_pp(interp, $1, temp, MMD_CMP) >= 0) {
+
+  if (VTABLE_cmp(interp, $1, temp) >= 0) {
+    temporary_pmc_free(interp, temp);
     goto OFFSET($3);
   }
+
+  temporary_pmc_free(interp, temp);
 }
 
 op ge(invar PMC, in NUM, inconst LABEL) :base_core {
@@ -507,13 +527,13 @@ op ge(invar PMC, in STR, inconst LABEL) :base_core {
 }
 
 op ge_str(invar PMC, invar PMC, inconst LABEL) :base_core {
-  if (mmd_dispatch_i_pp(interp, $1, $2, MMD_STRCMP) >= 0) {
+  if (VTABLE_cmp_string(interp, $1, $2) >= 0) {
     goto OFFSET($3);
   }
 }
 
 op ge_num(invar PMC, invar PMC, inconst LABEL) :base_core {
-  if (mmd_dispatch_i_pp(interp, $1, $2, MMD_NUMCMP) >= 0) {
+  if (VTABLE_cmp_num(interp, $1, $2) >= 0) {
     goto OFFSET($3);
   }
 }
@@ -619,7 +639,7 @@ inline op cmp(out INT, in STR, in STR) :base_core {
 }
 
 inline op cmp(out INT, invar PMC, invar PMC) :base_core {
-  $1 = mmd_dispatch_i_pp(interp, $2, $3, MMD_CMP);
+  $1 = VTABLE_cmp(interp, $2, $3);
 }
 
 inline op cmp(out INT, invar PMC, in INT) :base_core {
@@ -642,11 +662,11 @@ inline op cmp(out INT, invar PMC, in STR) :base_core {
 }
 
 inline op cmp_str(out INT, invar PMC, invar PMC) :base_core {
-  $1 = mmd_dispatch_i_pp(interp, $2, $3, MMD_STRCMP);
+  $1 = VTABLE_cmp_string(interp, $2, $3);
 }
 
 inline op cmp_num(out INT, invar PMC, invar PMC) :base_core {
-  $1 = mmd_dispatch_i_pp(interp, $2, $3, MMD_NUMCMP);
+  $1 = VTABLE_cmp_num(interp, $2, $3);
 }
 
 ########################################
@@ -727,7 +747,7 @@ Sets $1 to 1 if $2 is greater than $3.
 =cut
 
 inline op isgt(out INT, invar PMC, invar PMC) {
-  $1 = (mmd_dispatch_i_pp(interp, $2, $3, MMD_CMP) > 0);
+  $1 = (VTABLE_cmp(interp, $2, $3) > 0);
 }
 
 =item B<isge>(out INT, in INT, in INT)
@@ -745,7 +765,7 @@ Sets $1 to 1 if $2 is greater than or equal to $3.
 =cut
 
 inline op isge(out INT, invar PMC, invar PMC) {
-  $1 = (mmd_dispatch_i_pp(interp, $2, $3, MMD_CMP) >= 0);
+  $1 = (VTABLE_cmp(interp, $2, $3) >= 0);
 }
 
 =item B<isle>(out INT, in INT, in INT)
@@ -773,7 +793,7 @@ inline op isle(out INT, in STR, in STR) {
 }
 
 inline op isle(out INT, invar PMC, invar PMC) {
-  $1 = (mmd_dispatch_i_pp(interp, $2, $3, MMD_CMP) <= 0);
+  $1 = (VTABLE_cmp(interp, $2, $3) <= 0);
 }
 
 =item B<islt>(out INT, in INT, in INT)
@@ -801,7 +821,7 @@ inline op islt(out INT, in STR, in STR) {
 }
 
 inline op islt(out INT, invar PMC, invar PMC) {
-  $1 = (mmd_dispatch_i_pp(interp, $2, $3, MMD_CMP) < 0);
+  $1 = (VTABLE_cmp(interp, $2, $3) < 0);
 }
 
 =item B<iseq>(out INT, in INT, in INT)
@@ -832,7 +852,7 @@ inline op iseq(out INT, invar PMC, invar PMC) {
   if (&$2 == &$3)
     $1 = 1;
   else
-    $1 = mmd_dispatch_i_pp(interp, $2, $3, MMD_EQ);
+    $1 = VTABLE_is_equal(interp, $2, $3);
 }
 
 =item B<isne>(out INT, in INT, in INT)
@@ -863,7 +883,7 @@ inline op isne(out INT, invar PMC, invar PMC) {
   if (&$2 == &$3)
     $1 = 0;
   else
-    $1 = !mmd_dispatch_i_pp(interp, $2, $3, MMD_EQ);
+    $1 = !VTABLE_is_equal(interp, $2, $3);
 }
 
 =back
@@ -885,12 +905,18 @@ These operations apply logical functions to their arguments.
 
 =item B<and>(out INT, in INT, in INT)
 
+=item B<and>(invar PMC, invar PMC, invar PMC)
+
 Short-circuiting logical and.  Returns $2 if it's false, else returns $3.
 
 =cut
 
 inline op and(out INT, in INT, in INT) :base_core {
   $1 = $2 ? $3 : $2;
+}
+
+inline op and(invar PMC, invar PMC, invar PMC) :base_core {
+  $1 = VTABLE_logical_and(interp, $2, $3, $1);
 }
 
 ########################################
@@ -935,6 +961,8 @@ inline op n_not(out PMC, invar PMC) :base_core {
 
 =item B<or>(out INT, in INT, in INT)
 
+=item B<or>(invar PMC, invar PMC, invar PMC)
+
 Short-circuiting logical or.  Returns $2 if it's true, else returns $3.
 
 =cut
@@ -943,9 +971,15 @@ inline op or(out INT, in INT, in INT) :base_core {
   $1 = $2 ? $2 : $3;
 }
 
+inline op or(invar PMC, invar PMC, invar PMC) :base_core {
+      $1 = VTABLE_logical_or(interp, $2, $3, $1);
+}
+
 ########################################
 
 =item B<xor>(out INT, in INT, in INT)
+
+=item B<xor>(invar PMC, invar PMC, invar PMC)
 
 Logical xor.  Returns $2 if it's true and $3 isn't,
 returns $3 if it's true and $2 isn't, else returns false.
@@ -954,6 +988,10 @@ returns $3 if it's true and $2 isn't, else returns false.
 
 inline op xor(out INT, in INT, in INT) :base_core {
   $1 = ($2 && ! $3) ? $2 : ($3 && ! $2) ? $3 : 0;
+}
+
+inline op xor(invar PMC, invar PMC, invar PMC) :base_core {
+      $1 = VTABLE_logical_xor(interp, $2, $3, $1);
 }
 
 =back

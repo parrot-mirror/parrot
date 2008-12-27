@@ -287,7 +287,8 @@ pt_shared_fixup(PARROT_INTERP, ARGMOD(PMC *pmc))
 
     if (type_num == enum_type_undef) {
         UNLOCK_INTERPRETER(master);
-        real_exception(interp, NULL, 1, "pt_shared_fixup: unsharable type");
+        Parrot_ex_throw_from_c_args(interp, NULL, 1,
+            "pt_shared_fixup: unsharable type");
     }
 
     pmc->vtable = master->vtables[type_num];
@@ -436,7 +437,7 @@ PARROT_CAN_RETURN_NULL
 static void*
 thread_func(ARGIN_NULLOK(void *arg))
 {
-    Parrot_exception exp;
+    Parrot_runloop   jump_point;
     int              lo_var_ptr;
     UINTVAL          tid;
     PMC             *sub;
@@ -453,22 +454,23 @@ thread_func(ARGIN_NULLOK(void *arg))
     sub                = (PMC *)PMC_struct_val(self);
     sub_arg            = PMC_pmc_val(self);
 
-    if (setjmp(exp.destination)) {
-        const Parrot_exception * const except = interp->exceptions;
+    if (setjmp(jump_point.resume)) {
         /* caught exception */
         /* XXX what should we really do here */
-        PIO_eprintf(interp,
+        /* PMC *exception = Parrot_cx_peek_task(interp);
+        Parrot_io_eprintf(interp,
                     "Unhandled exception in thread with tid %d "
                     "(message=%Ss, number=%d)\n",
                     interp->thread_data->tid,
-                    except->msg,
-                    except->error);
+                    VTABLE_get_string(interp, exception),
+                    VTABLE_get_integer_keyed_str(interp, exception,
+                        const_string(interp, "type"))); */
 
         ret_val = PMCNULL;
     }
     else {
         /* run normally */
-        push_new_c_exception_handler(interp, &exp);
+        Parrot_ex_add_c_handler(interp, &jump_point);
         Parrot_unblock_GC_mark(interp);
         Parrot_unblock_GC_sweep(interp);
         ret_val = Parrot_runops_fromc_args(interp, sub, "PF", sub_arg);
@@ -641,7 +643,7 @@ PMC *
 pt_transfer_sub(ARGOUT(Parrot_Interp d), ARGIN(Parrot_Interp s), ARGIN(PMC *sub))
 {
 #if defined THREAD_DEBUG && THREAD_DEBUG
-    PIO_eprintf(s, "copying over subroutine [%Ss]\n",
+    Parrot_io_eprintf(s, "copying over subroutine [%Ss]\n",
         Parrot_full_sub_name(s, sub));
 #endif
     return make_local_copy(d, s, sub);
@@ -819,15 +821,15 @@ pt_check_tid(UINTVAL tid, ARGIN(const char *from))
 {
     if (tid >= n_interpreters) {
         UNLOCK(interpreter_array_mutex);
-        internal_exception(1, "%s: illegal thread tid %d", from, tid);
+        exit_fatal(1, "%s: illegal thread tid %d", from, tid);
     }
     if (tid == 0) {
         UNLOCK(interpreter_array_mutex);
-        internal_exception(1, "%s: illegal thread tid %d (main)", from, tid);
+        exit_fatal(1, "%s: illegal thread tid %d (main)", from, tid);
     }
     if (!interpreter_array[tid]) {
         UNLOCK(interpreter_array_mutex);
-        internal_exception(1, "%s: illegal thread tid %d - empty", from, tid);
+        exit_fatal(1, "%s: illegal thread tid %d - empty", from, tid);
     }
     return interpreter_array[tid];
 }
@@ -1178,7 +1180,7 @@ pt_suspend_self_for_gc(PARROT_INTERP)
 
     if (interp->thread_data->state & THREAD_STATE_SUSPEND_GC_REQUESTED) {
         DEBUG_ONLY(fprintf(stderr, "remove queued request\n"));
-        while (!PMC_IS_NULL(Parrot_cx_delete_suspend_for_gc(interp)));
+        while (!PMC_IS_NULL(Parrot_cx_delete_suspend_for_gc(interp))) {/*Empty body*/};
         DEBUG_ONLY(fprintf(stderr, "removed all queued requests\n"));
         interp->thread_data->state &= ~THREAD_STATE_SUSPEND_GC_REQUESTED;
     }
@@ -1304,8 +1306,8 @@ pt_thread_join(NOTNULL(Parrot_Interp parent), UINTVAL tid)
      */
     state = interp->thread_data->state;
     UNLOCK(interpreter_array_mutex);
-    real_exception(interp, NULL, 1, "join: illegal thread state %d tid %d",
-            state, tid);
+    Parrot_ex_throw_from_c_args(interp, NULL, 1,
+        "join: illegal thread state %d tid %d", state, tid);
 }
 
 /*
@@ -1573,7 +1575,7 @@ pt_DOD_start_mark(PARROT_INTERP)
     }
     else if (interp->thread_data->state &
                THREAD_STATE_SUSPEND_GC_REQUESTED) {
-        while (!PMC_IS_NULL(Parrot_cx_delete_suspend_for_gc(interp)));
+        while (!PMC_IS_NULL(Parrot_cx_delete_suspend_for_gc(interp))) {/*Empty body*/};
 
         interp->thread_data->state &= ~THREAD_STATE_SUSPEND_GC_REQUESTED;
         interp->thread_data->state |= THREAD_STATE_SUSPENDED_GC;
@@ -1605,7 +1607,7 @@ pt_DOD_start_mark(PARROT_INTERP)
 
 =item C<void pt_DOD_mark_root_finished>
 
-Records that DOD has finished for the root set.  UNIMPLEMENTED
+Records that DOD has finished for the root set.  EXCEPTION_UNIMPLEMENTED
 
 =cut
 
@@ -1676,7 +1678,7 @@ Blocks stop-the-world DOD runs.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 void
 Parrot_shared_DOD_block(PARROT_INTERP)
 {
@@ -1699,7 +1701,7 @@ Unblocks stop-the-world DOD runs.
 
 */
 
-PARROT_API
+PARROT_EXPORT
 void
 Parrot_shared_DOD_unblock(PARROT_INTERP)
 {

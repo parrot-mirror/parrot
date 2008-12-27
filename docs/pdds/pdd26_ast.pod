@@ -203,7 +203,21 @@ variables have an optional child, representing the object to which
 the attribute belongs. If this child is not present, the attribute
 is assumed to belong to the current invocant, indicated by the
 special variable C<self> (which is implicitly passed to all subs
-that are flagged as a C<:method>.
+that are flagged as a C<:method> or C<:vtable>).
+
+=item "register"
+
+Register variables are limited in scope to the C<PAST::Block> node
+in which they are declared. This is different from the C<lexical>
+scope, which I<includes> any nested C<PAST::Block> nodes. If the
+node's C<isdecl> attribute is true, then this node defines a new
+register variable within the current block. Register variables
+are mapped to Parrot registers, and are useful for handling the
+PIR pseudo-variable C<self> and storing intermediate results.
+Names given to the C<name> attribute must conform to rules for
+PIR identifiers. If no C<name> atribute is set, Parrot registers
+are used. In this case, setting the C<isdecl> does not have any
+effect.
 
 
 =back
@@ -272,6 +286,15 @@ to be performed, the operands are typically given as the
 children of the node.  Defined values of C<pasttype> are:
 
 =over 4
+
+=item chain
+
+A short-circuiting chain of operations.  In a sequence of nodes
+with pasttype 'chain', the right operand of a node serves as
+the left operand of its parent.  Each node is evaluated only
+once, and the first false result short-circuits the chain.
+In other words,  C<<  $x < $y < $z >>  is true only if
+$x < $y and $y < $z, but $y only gets evaluated once.
 
 =item copy
 
@@ -376,6 +399,11 @@ Execute the sequence of PIR statements given by the
 node's C<inline> attribute (a string).  See the C<inline>
 method below for details.
 
+=item return
+
+Generate a return exception, using the first child (if any) as
+a return value.
+
 =item try
 
 Evaluates the first child, if any exceptions occur then they
@@ -469,6 +497,11 @@ blocks that do not explicitly provide a namespace).  C<Value>
 may either be a simple string or an array of strings representing
 a nested namespace.
 
+=item hll([value])
+
+Get/set the HLL namespace for this block (and any nested blocks
+that do not explicitly provide a C<hll>).
+
 =item symbol(name, [attr1 => val1, attr2 => val2, ...])
 
 Each PAST::Block node can use the C<symbol> method to maintain
@@ -494,9 +527,9 @@ syntax tree can use this method on a top-level C<PAST::Block>
 to specify the C<scope> attribute to be used for all
 variable nodes that don't otherwise provide one.
 
-=item pir_pragma([value])
+=item pirflags([value])
 
-Get/set any PIR pragmas to be used when generating the block.
+Get/set any PIR flags to be used when generating the block.
 
 =item compiler([compiler_name])
 
@@ -532,8 +565,8 @@ Copyright (C) 2007, The Perl Foundation.
 
 =cut
 
-# Local Variables:
-#   mode: pir
-#   fill-column: 100
-# End:
-# vim: expandtab shiftwidth=4:
+__END__
+Local Variables:
+  fill-column:78
+End:
+vim: expandtab shiftwidth=4:

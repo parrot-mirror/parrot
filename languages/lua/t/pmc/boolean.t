@@ -8,7 +8,7 @@ t/pmc/boolean.t - LuaBoolean
 
 =head1 SYNOPSIS
 
-    % perl -I../../lib t/pmc/boolean.t
+    % perl t/pmc/boolean.t
 
 =head1 DESCRIPTION
 
@@ -19,13 +19,15 @@ Tests C<LuaBoolean> PMC
 
 use strict;
 use warnings;
+use FindBin;
+use lib "$FindBin::Bin/../../../../lib";
 
 use Parrot::Test tests => 8;
 use Test::More;
 
 pir_output_is( << 'CODE', << 'OUTPUT', 'check inheritance' );
 .sub _main
-    loadlib P1, 'lua_group'
+    loadlib $P1, 'lua_group'
     .local pmc pmc1
     pmc1 = new 'LuaBoolean'
     .local int bool1
@@ -44,7 +46,7 @@ OUTPUT
 
 pir_output_is( << 'CODE', << 'OUTPUT', 'check interface' );
 .sub _main
-    loadlib P1, 'lua_group'
+    loadlib $P1, 'lua_group'
     .local pmc pmc1
     pmc1 = new 'LuaBoolean'
     .local int bool1
@@ -71,7 +73,7 @@ OUTPUT
 
 pir_output_is( << 'CODE', << 'OUTPUT', 'check name' );
 .sub _main
-    loadlib P1, 'lua_group'
+    loadlib $P1, 'lua_group'
     .local pmc pmc1
     pmc1 = new 'LuaBoolean'
     .local string str1
@@ -86,7 +88,7 @@ OUTPUT
 
 pir_output_is( << 'CODE', << 'OUTPUT', 'check get_string' );
 .sub _main
-    loadlib P1, 'lua_group'
+    loadlib $P1, 'lua_group'
     .local pmc pmc1
     pmc1 = new 'LuaBoolean'
     pmc1 = 0
@@ -103,7 +105,8 @@ true
 OUTPUT
 
 pir_output_is( << 'CODE', << 'OUTPUT', 'check HLL' );
-.HLL 'Lua', 'lua_group'
+.HLL 'lua'
+.loadlib 'lua_group'
 .sub _main
     .local pmc pmc1
     pmc1 = new 'LuaBoolean'
@@ -122,9 +125,10 @@ true
 OUTPUT
 
 pir_output_is( << 'CODE', << 'OUTPUT', 'check HLL & .const' );
-.HLL 'Lua', 'lua_group'
+.HLL 'lua'
+.loadlib 'lua_group'
 .sub _main
-    .const .LuaBoolean cst1 = "1"
+    .const 'LuaBoolean' cst1 = "1"
     print cst1
     print "\n"
     .local int bool1
@@ -138,7 +142,8 @@ true
 OUTPUT
 
 pir_output_is( << 'CODE', << 'OUTPUT', 'check tostring' );
-.HLL 'Lua', 'lua_group'
+.HLL 'lua'
+.loadlib 'lua_group'
 .sub _main
     .local pmc pmc1
     pmc1 = new 'LuaBoolean'
@@ -159,7 +164,8 @@ string
 OUTPUT
 
 pir_output_is( << 'CODE', << 'OUTPUT', 'check tonumber' );
-.HLL 'Lua', 'lua_group'
+.HLL 'lua'
+.loadlib 'lua_group'
 .sub _main
     .local pmc pmc1
     pmc1 = new 'LuaBoolean'

@@ -1,5 +1,5 @@
 #! perl
-# Copyright (C) 2005-2007, The Perl Foundation.
+# Copyright (C) 2005-2008, The Perl Foundation.
 # $Id$
 
 =head1 NAME
@@ -8,7 +8,7 @@ t/expr.t - Lua expression
 
 =head1 SYNOPSIS
 
-    % perl -I../lib -Ilua/t lua/t/expr.t
+    % perl t/expr.t
 
 =head1 DESCRIPTION
 
@@ -22,9 +22,9 @@ See "Programming in Lua", section 3 "Expressions".
 use strict;
 use warnings;
 use FindBin;
-use lib "$FindBin::Bin";
+use lib "$FindBin::Bin/../../../lib", "$FindBin::Bin";
 
-use Parrot::Test tests => 12;
+use Parrot::Test tests => 13;
 use Test::More;
 
 language_output_is( 'lua', <<'CODE', <<'OUT', 'modulo' );
@@ -173,6 +173,22 @@ CODE
 26
 34
 37
+OUT
+
+language_output_is( 'lua', <<'CODE', <<'OUT', 'mix access to globals and logical and op' );
+some_global="global"
+
+-- access a global like print
+print("test")
+-- use "and" or "or" logical operation
+-- access a global in the second operand.
+-- make sure the second operand is not evaluated at runtime.
+out=false and some_global
+-- access another global like print
+print(out)
+CODE
+test
+false
 OUT
 
 # Local Variables:

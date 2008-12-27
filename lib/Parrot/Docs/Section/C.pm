@@ -189,7 +189,7 @@ sub new {
                 'sources' => [ 'spf_render', 'spf_vtable', 'utils' ]
             ),
         ),
-        $self->new_group( 'Multi-methods', '', $self->c_pair_item( '', 'mmd' ), ),
+        $self->new_group( 'Multi-methods', '', $self->c_pair_item( '', 'multidispatch' ), ),
         $self->new_group( 'Extensions',    '', $self->c_pair_item( '', 'extend' ), ),
         $self->new_group(
             'JIT', '',
@@ -249,9 +249,9 @@ sub new {
             $self->c_item(
                 '',
                 'pairs'   => ['debug'],
-                'sources' => ['pdb']
+                'sources' => ['parrot_debugger']
             ),
-            $self->c_source_item( '', 'disassemble' ),
+            $self->c_source_item( '', 'pbc_disassemble' ),
             $self->c_pair_item( '', 'trace' ),
             $self->c_source_item( '', 'test_main' ),
         ),

@@ -383,6 +383,8 @@ This is to exclude automatically generated C-language files Parrot might have.
             compilers/pirc/new/pirparser.h
             compilers/pirc/new/pircompunit.c
             compilers/pirc/new/pircompunit.h
+            compilers/pirc/new/hdocprep.l
+            compilers/pirc/new/hdocprep.c
             compilers/pirc/macro/lexer.h
             compilers/pirc/macro/macro.h
             compilers/pirc/macro/macro.l
@@ -391,8 +393,6 @@ This is to exclude automatically generated C-language files Parrot might have.
             compilers/pirc/macro/macrolexer.h
             compilers/pirc/macro/macroparser.c
             compilers/pirc/macro/macroparser.h
-            compilers/pirc/heredoc/hdocprep.l
-            compilers/pirc/heredoc/hdocprep.c
             languages/cola/lexer.c
             languages/cola/parser.c
             languages/cola/parser.h
@@ -471,12 +471,14 @@ sub get_perl_exemption_regexp {
     my $parrot_dir = $self->path();
     my @paths = map { File::Spec->catdir( $parrot_dir, File::Spec->canonpath($_) ) } qw{
         languages/regex/lib/Regex/Grammar.pm
+        languages/pipp/src/pct/actions.pm
+        languages/hq9plus/src/parser/actions.pm
         compilers/nqp/
+        compilers/ncigen/src/parser/actions.pm
         lib/Digest/Perl/
         lib/File/
         lib/IO/
         lib/Pod/
-        lib/SmartLink.pm
         examples/sdl/
     };
 
@@ -623,7 +625,6 @@ sub perl_script_file_directories {
             python
             regex
             scheme scheme/Scheme
-            tcl/tools
             urm
             > ),
         map( "tools/$_" => qw<build dev docs util> ),;
@@ -680,10 +681,8 @@ sub perl_module_file_directories {
             parrot_compiler/lib/Parrot/Test
             perl6/t/01-sanity
             pipp/lib/Parrot/Test pipp/lib/Parrot/Test/Pipp
-            pugs/t
             regex/lib
             scheme scheme/Scheme
-            tcl/lib/Parrot/Test
             urm/lib/URM
             > ),
         map( "languages/jako/lib/Jako/Construct/$_" => qw<
@@ -698,7 +697,7 @@ sub perl_module_file_directories {
             > ),
         map( "lib/Parrot/$_" => qw<
             Config Configure Configure/Step Docs Docs/Section IO
-            OpLib OpTrans PIR Pmc2c Test
+            OpTrans PIR Pmc2c Test
             > ),
         ;
 }
