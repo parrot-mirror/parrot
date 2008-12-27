@@ -140,7 +140,7 @@ Parrot_io_fdopen(PARROT_INTERP, ARGIN_NULLOK(PMC *pmc), PIOHANDLE fd,
 
 =item C<INTVAL Parrot_io_close>
 
-Flushes, closes, and destroys the C<ParrotIO> PMC C<*pmc>.
+Closes the filehandle object.
 
 =cut
 
@@ -150,15 +150,14 @@ PARROT_EXPORT
 INTVAL
 Parrot_io_close(PARROT_INTERP, ARGMOD(PMC *pmc))
 {
-    INTVAL res;
+    INTVAL result;
 
-    if (Parrot_io_is_closed(interp, pmc))
+    if (PMC_IS_NULL(pmc))
         return -1;
 
-    Parrot_io_flush(interp, pmc);
-    res =  PIO_CLOSE(interp, pmc);
-    Parrot_io_clear_buffer(interp, pmc);
-    return res;
+    Parrot_PCCINVOKE(interp, pmc, CONST_STRING(interp, "close"), "->I", &result);
+
+    return result;
 }
 
 /*
@@ -175,7 +174,13 @@ PARROT_EXPORT
 INTVAL
 Parrot_io_is_closed(PARROT_INTERP, ARGMOD(PMC *pmc))
 {
-    return PIO_IS_CLOSED(interp, pmc);
+    INTVAL result;
+
+    if (PMC_IS_NULL(pmc))
+        return 1;
+
+    Parrot_PCCINVOKE(interp, pmc, CONST_STRING(interp, "is_closed"), "->I", &result);
+    return result;
 }
 
 /*
@@ -436,33 +441,16 @@ PARROT_EXPORT
 INTVAL
 Parrot_io_putps(PARROT_INTERP, ARGMOD(PMC *pmc), ARGMOD_NULLOK(STRING *s))
 {
+    INTVAL result;
 
-    if (PMC_IS_NULL(pmc)
-    || !VTABLE_isa(interp, pmc, CONST_STRING(interp, "FileHandle")))
+    if (PMC_IS_NULL(pmc))
         Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_PIO_ERROR,
-            "Cannot write to non-IO PMC");
+            "Cannot write to null PMC");
 
-    if (Parrot_io_is_closed(interp, pmc))
-        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_PIO_ERROR,
-            "Cannot write to a closed filehandle");
+    Parrot_PCCINVOKE(interp, pmc, CONST_STRING(interp, "puts"), "S->I",
+            s, &result);
+    return result;
 
-    if (!(Parrot_io_get_flags(interp, pmc) & PIO_F_WRITE))
-        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_PIO_ERROR,
-            "Cannot write to a filehandle not opened for write");
-
-    if (STRING_IS_NULL(s))
-        return 0;
-
-#if ! DISABLE_GC_DEBUG
-    /* trigger GC for debug - but not during tests */
-    if (0 && GC_DEBUG(interp))
-        Parrot_do_dod_run(interp, GC_trace_stack_FLAG);
-#endif
-
-    if (Parrot_io_is_encoding(interp, pmc, CONST_STRING(interp, "utf8")))
-        return Parrot_io_write_utf8(interp, pmc, s);
-
-    return Parrot_io_write_buffer(interp, pmc, s);
 }
 
 /*
