@@ -218,63 +218,12 @@ PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 STRING *
-Parrot_io_reads(PARROT_INTERP, ARGMOD(PMC *pmc), size_t len)
+Parrot_io_reads(PARROT_INTERP, ARGMOD(PMC *pmc), size_t length)
 {
-    STRING               *res;
-    INTVAL                ignored;
-
-    if (Parrot_io_is_closed(interp, pmc))
-        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_PIO_ERROR,
-            "Cannot read from a closed filehandle");
-
-    if (Parrot_io_get_buffer_flags(interp, pmc) & PIO_BF_MMAP) {
-        res           = new_string_header(interp, 0);
-        res->charset  = Parrot_iso_8859_1_charset_ptr;   /* XXX binary */
-        res->encoding = Parrot_fixed_8_encoding_ptr;
-    }
-    else {
-        res = NULL;
-        res = Parrot_io_make_string(interp, &res, len);
-    }
-
-    res->bufused = len;
-
-    if (Parrot_io_is_encoding(interp, pmc, CONST_STRING(interp, "utf8")))
-        ignored = Parrot_io_read_utf8(interp, pmc, &res);
-    else
-        ignored = Parrot_io_read_buffer(interp, pmc, &res);
-    UNUSED(ignored);
-
-    return res;
-}
-
-/*
-
-=item C<INTVAL Parrot_io_read>
-
-Reads up to C<len> bytes from C<*pmc> and copies them into C<*buffer>.
-
-=cut
-
-*/
-
-PARROT_EXPORT
-PARROT_WARN_UNUSED_RESULT
-INTVAL
-Parrot_io_read(PARROT_INTERP, ARGMOD(PMC *pmc), ARGIN(char *buffer), size_t len)
-{
-    STRING *res = new_string_header(interp, 0);
-
-    if (Parrot_io_is_closed(interp, pmc))
-        return -1;
-
-    res->strstart = buffer;
-    res->bufused = len;
-
-    if (Parrot_io_is_encoding(interp, pmc, CONST_STRING(interp, "utf8")))
-        return Parrot_io_read_utf8(interp, pmc, &res);
-
-    return Parrot_io_read_buffer(interp, pmc, &res);
+    STRING *result;
+    Parrot_PCCINVOKE(interp, pmc, CONST_STRING(interp, "read"), "I->S",
+            length, &result);
+    return result;
 }
 
 /*

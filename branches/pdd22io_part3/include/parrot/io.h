@@ -253,17 +253,6 @@ INTVAL Parrot_io_puts(PARROT_INTERP, ARGMOD(PMC *pmc), ARGIN(const char *s))
 
 PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
-INTVAL Parrot_io_read(PARROT_INTERP,
-    ARGMOD(PMC *pmc),
-    ARGIN(char *buffer),
-    size_t len)
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(2)
-        __attribute__nonnull__(3)
-        FUNC_MODIFIES(*pmc);
-
-PARROT_EXPORT
-PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 STRING * Parrot_io_reads(PARROT_INTERP, ARGMOD(PMC *pmc), size_t len)
         __attribute__nonnull__(1)
