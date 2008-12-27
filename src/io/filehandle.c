@@ -726,6 +726,26 @@ Parrot_io_is_closed_filehandle(PARROT_INTERP, ARGMOD(PMC *pmc))
     return PIO_IS_CLOSED(interp, pmc);
 }
 
+/*
+
+=item C<void Parrot_io_flush_filehandle>
+
+Flushes the C<FileHandle> PMC C<*pmc>.
+
+=cut
+
+*/
+
+PARROT_EXPORT
+void
+Parrot_io_flush_filehandle(PARROT_INTERP, ARGMOD(PMC *pmc))
+{
+    if (Parrot_io_is_closed(interp, pmc))
+        return;
+
+    Parrot_io_flush_buffer(interp, pmc);
+    PIO_FLUSH(interp, pmc);
+}
 
 /*
 

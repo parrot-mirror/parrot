@@ -435,6 +435,12 @@ INTVAL Parrot_io_close_filehandle(PARROT_INTERP, ARGMOD(PMC *pmc))
         FUNC_MODIFIES(*pmc);
 
 PARROT_EXPORT
+void Parrot_io_flush_filehandle(PARROT_INTERP, ARGMOD(PMC *pmc))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        FUNC_MODIFIES(*pmc);
+
+PARROT_EXPORT
 PARROT_CAN_RETURN_NULL
 unsigned char * Parrot_io_get_buffer_end(SHIM_INTERP,
     ARGIN_NULLOK(PMC *filehandle));

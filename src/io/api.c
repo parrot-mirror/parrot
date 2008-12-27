@@ -197,14 +197,10 @@ PARROT_EXPORT
 void
 Parrot_io_flush(PARROT_INTERP, ARGMOD(PMC *pmc))
 {
-    INTVAL ignored;
-
-    if (Parrot_io_is_closed(interp, pmc))
+    if (PMC_IS_NULL(pmc))
         return;
 
-    Parrot_io_flush_buffer(interp, pmc);
-    ignored = PIO_FLUSH(interp, pmc);
-    UNUSED(ignored);
+    Parrot_PCCINVOKE(interp, pmc, CONST_STRING(interp, "flush"), "->");
 }
 
 /*
