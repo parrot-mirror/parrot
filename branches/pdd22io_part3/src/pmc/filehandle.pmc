@@ -144,11 +144,11 @@ Free structures.
         if (PARROT_FILEHANDLE(SELF)) {
             Parrot_FileHandle_attributes *data_struct = PARROT_FILEHANDLE(SELF);
 
-            if (!Parrot_io_is_closed(INTERP, SELF)) {
+            if (!Parrot_io_is_closed_filehandle(INTERP, SELF)) {
                 if (data_struct->flags & PIO_F_SHARED)
                     Parrot_io_flush(INTERP, SELF);
                 else
-                    Parrot_io_close(INTERP, SELF);
+                    Parrot_io_close_filehandle(INTERP, SELF);
             }
 
             if (data_struct->buffer_start)
@@ -199,7 +199,7 @@ filehandle, rather than modifying the invocant).
         STRING *open_filename, *open_mode;
         INTVAL flags = Parrot_io_parse_open_flags(interp, mode);
 
-        if (!Parrot_io_is_closed(INTERP, SELF))
+        if (!Parrot_io_is_closed_filehandle(INTERP, SELF))
             Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_PIO_ERROR,
                                 "Cannot reopen already open filehandle");
 
@@ -259,8 +259,25 @@ Close the filehandle.
 */
 
     METHOD close() {
+        INTVAL status;
+        status = Parrot_io_close_filehandle(interp, pmc);
+        RETURN(INTVAL status);
+    }
 
-        Parrot_io_close(INTERP, SELF);
+/*
+
+=item C<METHOD is_closed()>
+
+Test if the filehandle is closed.
+
+=cut
+
+*/
+
+    METHOD is_closed() {
+        INTVAL status;
+        status = Parrot_io_is_closed_filehandle(interp, pmc);
+        RETURN(INTVAL status);
     }
 
 /*
@@ -383,7 +400,7 @@ filehandle when finished.
             STRING *encoding;
             size_t size;
             GET_ATTR_encoding(INTERP, SELF, encoding);
-            if (!Parrot_io_is_closed(INTERP, SELF)) {
+            if (!Parrot_io_is_closed_filehandle(INTERP, SELF)) {
                 Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_PIO_ERROR,
                                 "Cannot readall on a new file from an already open filehandle");
             }
@@ -397,7 +414,7 @@ filehandle when finished.
         }
         else {
             /* slurp open file */
-            if (Parrot_io_is_closed(INTERP, SELF)) {
+            if (Parrot_io_is_closed_filehandle(INTERP, SELF)) {
                 Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_PIO_ERROR,
                                 "Cannot readall without a file name or open filehandle");
             }
@@ -461,7 +478,31 @@ Print the string to the filehandle.
 */
 
     METHOD puts(STRING *to_print) {
-        Parrot_io_putps(interp, SELF, to_print);
+        INTVAL flags, status;
+        if (Parrot_io_is_closed_filehandle(interp, pmc))
+            Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_PIO_ERROR,
+                "Cannot write to a closed filehandle");
+
+        GET_ATTR_flags(INTERP, SELF, flags);
+        if (!(flags & PIO_F_WRITE))
+            Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_PIO_ERROR,
+                "Cannot write to a filehandle not opened for write");
+
+        if (STRING_IS_NULL(to_print))
+            RETURN(INTVAL 0);
+
+#if ! DISABLE_GC_DEBUG
+        /* trigger GC for debug - but not during tests */
+        if (0 && GC_DEBUG(interp))
+            Parrot_do_dod_run(interp, GC_trace_stack_FLAG);
+#endif
+
+        if (Parrot_io_is_encoding(interp, pmc, CONST_STRING(interp, "utf8")))
+            status = Parrot_io_write_utf8(interp, pmc, to_print);
+        else
+            status = Parrot_io_write_buffer(interp, pmc, to_print);
+
+        RETURN(INTVAL status);
     }
 
 /*
