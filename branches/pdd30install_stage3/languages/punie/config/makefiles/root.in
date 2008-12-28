@@ -1,24 +1,38 @@
 # $Id$
 
 # Setup some commands
-LN_S     = @lns@
-PERL     = @perl@
-RM_F     = @rm_f@
-PARROT   = ../../parrot@exe@
+HLLNAME          = punie
+LN_S          = @lns@
+PERL          = @perl@
+RM_F          = @rm_f@
+CP            = @cp@
+MKPATH        = @mkpath@
+POD2MAN       = @pod2man@
 BUILD_DIR     = @build_dir@
+BIN_DIR       = @bin_dir@
+LIB_DIR       = @lib_dir@
+DOC_DIR       = @doc_dir@
+MANDIR	      = @mandir@
 RECONFIGURE   = $(PERL) @build_dir@/tools/dev/reconfigure.pl
 PGE_DIR       = ../../compilers/pge
 NQP_DIR       = ../../compilers/nqp
-CP       = @cp@
 #CONDITIONED_LINE(darwin):
 #CONDITIONED_LINE(darwin):# MACOSX_DEPLOYMENT_TARGET must be defined for OS X compilation/linking
 #CONDITIONED_LINE(darwin):export MACOSX_DEPLOYMENT_TARGET := @osx_version@
+#CONDITIONED_LINE(cygchkdll):SHRPENV  = env PATH="@build_dir@/blib/lib:$(PATH)"
+#INVERSE_CONDITIONED_LINE(cygchkdll):SHRPENV  = env LD_RUN_PATH="@build_dir@/blib/lib"
+PARROT        = $(SHRPENV) ../../parrot@exe@
+PBC_TO_EXE    = $(SHRPENV) ../../pbc_to_exe@exe@
 
 PARROT_LIBRARY = ../../runtime/parrot/library
 PGE_LIBRARY   = ../../runtime/parrot/library/PGE
 
+DOCS = MAINTAINER README overview.pod
+
 # the default target
 all: punie.pbc
+
+all: punie.pbc punie@exe@ installable_punie@exe@
 
 SOURCES = punie.pir \
   src/parser/grammar.pg \
@@ -26,7 +40,7 @@ SOURCES = punie.pir \
   src/builtins/builtins.pir \
 
 # the default target
-punie.pbc: $(PARROT) $(NQP_DIR)/nqp.pbc $(PGE_LIBRARY)/Perl6Grammar.pir $(SOURCES)
+punie.pbc:  $(NQP_DIR)/nqp.pbc $(PGE_LIBRARY)/Perl6Grammar.pir $(SOURCES)
 	$(PARROT) $(PGE_LIBRARY)/Perl6Grammar.pir --output=src/gen_punie.pir src/parser/grammar.pg
 	$(PARROT) $(NQP_DIR)/nqp.pbc --target=pir --output=src/gen_punie-actions.pir src/parser/actions.pm
 	$(PARROT) -o punie.pbc punie.pir
@@ -36,8 +50,12 @@ help:
 	@echo ""
 	@echo "Following targets are available for the user:"
 	@echo ""
-	@echo "  all:               punie.pbc"
+	@echo "  build:             punie.pbc"
 	@echo "                     This is the default."
+	@echo "  all:               punie.pbc punie@exe@"
+	@echo "  installable:       Create self-hosting bins and libs."
+	@echo "  install:           Install the installable targets and docs."
+	@echo ""
 	@echo "Testing:"
 	@echo "  test:              Run the test suite."
 	@echo "  testclean:         Clean up test results."
@@ -56,7 +74,26 @@ test: all
 
 # regenerate the Makefile
 Makefile: config/makefiles/root.in
-	cd $(BUILD_DIR) && $(RECONFIGURE) --step=gen::languages --languages=punie
+	cd $(BUILD_DIR) && $(RECONFIGURE) --step=gen::languages --languages=$(HLLNAME)
+
+# TODO: rename build_dir. basic run for missing libs
+test-installable : installable
+	./installable_$(HLLNAME)@exe@ demo.p1
+
+install : installable
+	$(CP) installable_$(HLLNAME)@exe@ $(DESTDIR)$(BIN_DIR)/parrot-$(HLLNAME)@exe@
+	$(POD2MAN) punie.pir > $(DESTDIR)$(MANDIR)/man1/parrot-$(HLLNAME).1
+	$(MKPATH) $(DESTDIR)$(DOC_DIR)/languages/$(HLLNAME)
+	$(CP) $(DOCS) $(DESTDIR)$(DOC_DIR)/languages/$(HLLNAME)
+
+$(HLLNAME)@exe@: $(HLLNAME).pbc
+	$(PBC_TO_EXE) $(HLLNAME).pbc
+
+installable : installable_$(HLLNAME)@exe@
+	$(CP) installable_$(HLLNAME)@exe@ $(BUILD_DIR)
+
+installable_$(HLLNAME)@exe@ : $(HLLNAME).pbc
+	$(PBC_TO_EXE) $(HLLNAME).pbc --install
 
 testclean:
 	$(RM_F) "t/*.p1" "t/*.out" "t/*.pir"
@@ -73,3 +110,9 @@ realclean: clean
 	$(RM_F) Makefile
 
 distclean: realclean
+
+#
+# Local variables:
+# mode: makefile
+# ex: ft=make
+# End:

@@ -6,7 +6,9 @@ PERL   = @perl@
 RM_F   = @rm_f@
 MKPATH = @mkpath@
 CHMOD  = @chmod@
-PERLDOC = @perldoc@
+PERLDOC   = @perldoc@
+BUILD_DIR = @build_dir@
+RECONFIGURE = $(PERL) tools/dev/reconfigure.pl
 
 # long list of .pod files
 POD = @pod@
@@ -16,7 +18,11 @@ POD = @pod@
 #
 
 # The default target
-all: doc-prep packfile-c.pod $(POD)
+all: doc-prep packfile-c.pod $(POD) Makefile
+
+# regenerate the Makefile
+Makefile: $(BUILD_DIR)/config/gen/makefiles/docs.in
+	cd $(BUILD_DIR) && $(RECONFIGURE) --step=gen::makefiles --target=docs/Makefile
 
 # This is a listing of all targets, that are meant to be called by users
 # Most of them are proxied in the root makefile parrot/Makefile

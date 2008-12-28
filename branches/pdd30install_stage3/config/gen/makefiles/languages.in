@@ -46,6 +46,12 @@ help:
 	@echo ""
 	@echo "  test-separate: Run 'make test' in the individual lang dirs."
 	@echo ""
+	@echo "  installable:   Create self-hosting bins and libs."
+	@echo ""
+	@echo "  test-installable: Test self-hosting bins and libs."
+	@echo ""
+	@echo "  install:       Copy installable and more to DESTDIR."
+	@echo ""
 	@echo "  clean:         Clean up a lot of languages."
 	@echo ""
 	@echo "  help:          Print this help message."
@@ -59,13 +65,16 @@ help:
 	@echo "Following languages are available:"
 	@echo "  $(LANGUAGES)"
 	@echo ""
-	@echo "A particular language <lang> can be built, tested and cleand up"
+	@echo "A particular language <lang> can be built, tested and cleaned up"
 	@echo "  make <lang>"
 	@echo "  make <lang>.test"
+	@echo "  make <lang>.installable"
+	@echo "  make <lang>.test-installable"
+	@echo "  make <lang>.install"
 	@echo "  make <lang>.clean"
 	@echo "  make <lang>.realclean"
 	@echo ""
-	@echo "For the status of individual languages see LANGUAGES.STATUS.pod"
+	@echo "For the status of individual languages see LANGUAGES_STATUS.pod"
 	@echo ""
 
 # regenerate the Makefile
@@ -144,6 +153,62 @@ realclean: \
     WMLScript.realclean \
     Zcode.realclean
 
+installable : all \
+    abc.installable APL.installable \
+    befunge.installable bf.installable \
+    c99.installable cardinal.installable chitchat.installable cola.installable \
+    dotnet.installable \
+    eclectus.installable ecmascript.installable \
+    forth.installable \
+    hq9plus.installable \
+    jako.installable json.installable \
+    lazy-k.installable lisp.installable lolcode.installable lua.installable \
+    m4.installable \
+    ook.installable \
+    parrot_compiler.installable perl6.installable pheme.installable PIR.installable pipp.installable punie.installable pynie.installable \
+    regex.installable \
+    scheme.installable squaak.installable \
+    urm.installable unlambda.installable \
+    WMLScript.installable \
+    Zcode.installable
+
+test-installable : all \
+    abc.test-installable APL.test-installable \
+    befunge.test-installable bf.test-installable \
+    c99.test-installable cardinal.test-installable chitchat.test-installable cola.test-installable \
+    dotnet.test-installable \
+    eclectus.test-installable ecmascript.test-installable \
+    forth.test-installable \
+    hq9plus.test-installable \
+    jako.test-installable json.test-installable \
+    lazy-k.test-installable lisp.test-installable lolcode.test-installable lua.test-installable \
+    m4.test-installable \
+    ook.test-installable \
+    parrot_compiler.test-installable perl6.test-installable pheme.test-installable PIR.test-installable pipp.test-installable punie.test-installable pynie.test-installable \
+    regex.test-installable \
+    scheme.test-installable squaak.test-installable \
+    urm.test-installable unlambda.test-installable \
+    WMLScript.test-installable \
+    Zcode.test-installable
+
+install : all \
+    abc.install APL.install \
+    befunge.install bf.install \
+    c99.install cardinal.install chitchat.install cola.install \
+    dotnet.install \
+    eclectus.install ecmascript.install \
+    forth.install \
+    hq9plus.install \
+    jako.install json.install \
+    lazy-k.install lisp.install lolcode.install lua.install \
+    m4.install \
+    ook.install \
+    parrot_compiler.install perl6.install pheme.install PIR.install pipp.install punie.install pynie.install \
+    regex.install \
+    scheme.install squaak.install \
+    urm.install unlambda.install \
+    WMLScript.install \
+    Zcode.install
 
 #
 # Language specific targets
@@ -156,6 +221,12 @@ abc.dummy:
 	- $(MAKE) abc
 abc.test:
 	- $(MAKE) abc test
+abc.installable:
+	- $(MAKE) abc installable
+abc.test-installable:
+	- $(MAKE) abc test-installable
+abc.install:
+	- $(MAKE) abc install
 abc.clean:
 	- $(MAKE) abc clean
 abc.realclean:
@@ -166,6 +237,12 @@ APL.dummy:
 	- $(MAKE) APL
 APL.test:
 	- $(MAKE) APL test
+APL.installable:
+	- $(MAKE) APL installable
+APL.test-installable:
+	- $(MAKE) APL test-installable
+APL.install:
+	- $(MAKE) APL install
 APL.clean:
 	- $(MAKE) APL clean
 APL.realclean:
@@ -176,6 +253,12 @@ BASIC.dummy:
 # don't know how to build BASIC
 BASIC.test:
 # Don't know how to test BASIC
+BASIC.installable:
+# Missing for BASIC
+BASIC.test-installable:
+# Missing for BASIC
+BASIC.install:
+# Missing for BASIC
 BASIC.clean:
 # Don't know how to clean BASIC
 
@@ -184,6 +267,12 @@ befunge.dummy:
 	- $(MAKE) befunge
 befunge.test:
 	- $(MAKE) befunge test
+befunge.installable:
+	- $(MAKE) befunge installable
+befunge.test-installable:
+	- $(MAKE) befunge test-installable
+befunge.install:
+	- $(MAKE) befunge install
 befunge.clean:
 	- $(MAKE) befunge clean
 befunge.realclean:
@@ -194,6 +283,12 @@ bf.dummy:
 	- $(MAKE) bf
 bf.test:
 	- $(MAKE) bf test
+bf.installable:
+	- $(MAKE) bf installable
+bf.test-installable:
+	- $(MAKE) bf test-installable
+bf.install:
+	- $(MAKE) bf install
 bf.clean:
 	- $(MAKE) bf clean
 bf.realclean:
@@ -204,6 +299,12 @@ c99.dummy:
 	- $(MAKE) c99
 c99.test:
 	- $(MAKE) c99 test
+c99.installable:
+	- $(MAKE) c99 installable
+c99.test-installable:
+	- $(MAKE) c99 test-installable
+c99.install:
+	- $(MAKE) c99 install
 c99.clean:
 	- $(MAKE) c99 clean
 c99.realclean:
@@ -214,6 +315,12 @@ cardinal.dummy:
 	- $(MAKE) cardinal
 cardinal.test:
 	- $(MAKE) cardinal test
+cardinal.installable:
+	- $(MAKE) cardinal installable
+cardinal.test-installable:
+	- $(MAKE) cardinal test-installable
+cardinal.install:
+	- $(MAKE) cardinal install
 cardinal.clean:
 	- $(MAKE) cardinal clean
 cardinal.realclean:
@@ -224,6 +331,12 @@ chitchat.dummy:
 	- $(MAKE) chitchat
 chitchat.test:
 	- $(MAKE) chitchat test
+chitchat.installable:
+	- $(MAKE) chitchat installable
+chitchat.test-installable:
+	- $(MAKE) chitchat test-installable
+chitchat.install:
+	- $(MAKE) chitchat install
 chitchat.clean:
 	- $(MAKE) chitchat clean
 chitchat.realclean:
@@ -234,6 +347,12 @@ cola.dummy:
 	- $(MAKE) cola
 cola.test:
 	- $(MAKE) cola test
+cola.installable:
+	- $(MAKE) cola installable
+cola.test-installable:
+	- $(MAKE) cola test-installable
+cola.install:
+	- $(MAKE) cola install
 cola.clean:
 	- $(MAKE) cola clean
 cola.realclean:
@@ -245,6 +364,12 @@ dotnet.dummy:
 	- $(MAKE) dotnet
 dotnet.test:
 	- $(MAKE) dotnet test
+dotnet.installable:
+	- $(MAKE) dotnet installable
+dotnet.test-installable:
+	- $(MAKE) dotnet test-installable
+dotnet.install:
+	- $(MAKE) dotnet install
 dotnet.clean:
 	- $(MAKE) dotnet clean
 dotnet.realclean:
@@ -255,6 +380,12 @@ eclectus.dummy:
 	- $(MAKE) eclectus
 eclectus.test :
 	- $(MAKE) eclectus test
+eclectus.installable:
+	- $(MAKE) eclectus installable
+eclectus.test-installable:
+	- $(MAKE) eclectus test-installable
+eclectus.install:
+	- $(MAKE) eclectus install
 eclectus.clean :
 	- $(MAKE) eclectus clean
 eclectus.realclean :
@@ -265,6 +396,12 @@ ecmascript.dummy:
 	- $(MAKE) ecmascript
 ecmascript.test:
 	- $(MAKE) ecmascript test
+ecmascript.installable:
+	- $(MAKE) ecmascript installable
+ecmascript.test-installable:
+	- $(MAKE) ecmascript test-installable
+ecmascript.install:
+	- $(MAKE) ecmascript install
 ecmascript.clean:
 	- $(MAKE) ecmascript clean
 ecmascript.realclean:
@@ -275,6 +412,12 @@ forth.dummy:
 	- $(MAKE) forth
 forth.test:
 	- $(MAKE) forth test
+forth.installable:
+	- $(MAKE) forth installable
+forth.test-installable:
+	- $(MAKE) forth test-installable
+forth.install:
+	- $(MAKE) forth install
 forth.clean:
 	- $(MAKE) forth clean
 forth.realclean:
@@ -285,6 +428,12 @@ hq9plus.dummy:
 	- $(MAKE) hq9plus
 hq9plus.test:
 	- $(MAKE) hq9plus test
+hq9plus.installable:
+	- $(MAKE) hq9plus installable
+hq9plus.test-installable:
+	- $(MAKE) hq9plus test-installable
+hq9plus.install:
+	- $(MAKE) hq9plus install
 hq9plus.clean:
 	- $(MAKE) hq9plus clean
 hq9plus.realclean:
@@ -295,6 +444,12 @@ jako.dummy:
 	- $(MAKE) jako
 jako.test:
 	- $(MAKE) jako test
+jako.installable:
+	- $(MAKE) jako installable
+jako.test-installable:
+	- $(MAKE) jako test-installable
+jako.install:
+	- $(MAKE) jako install
 jako.clean:
 	- $(MAKE) jako clean
 jako.realclean:
@@ -305,6 +460,12 @@ json.dummy:
 	- $(MAKE) json
 json.test:
 	- $(MAKE) json test
+json.installable:
+	- $(MAKE) json installable
+json.test-installable:
+	- $(MAKE) json test-installable
+json.install:
+	- $(MAKE) json install
 json.clean:
 	- $(MAKE) json clean
 json.realclean:
@@ -315,6 +476,12 @@ lazy-k.dummy:
 	- $(MAKE) lazy-k
 lazy-k.test:
 	- $(MAKE) lazy-k test
+lazy-k.installable:
+	- $(MAKE) lazy-k installable
+lazy-k.test-installable:
+	- $(MAKE) lazy-k test-installable
+lazy-k.install:
+	- $(MAKE) lazy-k install
 lazy-k.clean:
 	- $(MAKE) lazy-k clean
 lazy-k.realclean:
@@ -325,6 +492,12 @@ lisp.dummy:
 	- $(MAKE) lisp
 lisp.test:
 	- $(MAKE) lisp test
+lisp.installable:
+	- $(MAKE) lisp installable
+lisp.test-installable:
+	- $(MAKE) lisp test-installable
+lisp.install:
+	- $(MAKE) lisp install
 lisp.clean:
 	- $(MAKE) lisp clean
 lisp.realclean:
@@ -335,6 +508,12 @@ lolcode.dummy:
 	- $(MAKE) lolcode
 lolcode.test:
 	- $(MAKE) lolcode test
+lolcode.installable:
+	- $(MAKE) lolcode installable
+lolcode.test-installable:
+	- $(MAKE) lolcode test-installable
+lolcode.install:
+	- $(MAKE) lolcode install
 lolcode.clean:
 	- $(MAKE) lolcode clean
 lolcode.realclean:
@@ -345,6 +524,12 @@ lua.dummy:
 	- $(MAKE) lua
 lua.test:
 	- $(MAKE) lua test
+lua.installable:
+	- $(MAKE) lua installable
+lua.test-installable:
+	- $(MAKE) lua test-installable
+lua.install:
+	- $(MAKE) lua install
 lua.clean:
 	- $(MAKE) lua clean
 lua.realclean:
@@ -355,6 +540,12 @@ m4.dummy:
 	- $(MAKE) m4
 m4.test:
 	- $(MAKE) m4 test
+m4.installable:
+	- $(MAKE) m4 installable
+m4.test-installable:
+	- $(MAKE) m4 test-installable
+m4.install:
+	- $(MAKE) m4 install
 m4.clean:
 	- $(MAKE) m4 clean
 m4.realclean:
@@ -375,6 +566,12 @@ ook.dummy:
 	- $(MAKE) ook
 ook.test:
 	- $(MAKE) ook test
+ook.installable:
+	- $(MAKE) ook installable
+ook.test-installable:
+	- $(MAKE) ook test-installable
+ook.install:
+	- $(MAKE) ook install
 ook.clean:
 	- $(MAKE) ook clean
 ook.realclean:
@@ -385,6 +582,12 @@ parrot_compiler.dummy:
 	- $(MAKE) parrot_compiler
 parrot_compiler.test:
 	- $(MAKE) parrot_compiler test
+parrot_compiler.installable:
+	- $(MAKE) ook installable
+parrot_compiler.test-installable:
+	- $(MAKE) ook test-installable
+parrot_compiler.install:
+	- $(MAKE) ook install
 parrot_compiler.clean:
 	- $(MAKE) parrot_compiler clean
 parrot_compiler.realclean:
@@ -395,6 +598,12 @@ perl6.dummy:
 	- $(MAKE) perl6
 perl6.test:
 	- $(MAKE) perl6 test
+perl6.installable:
+	- $(MAKE) perl6 installable
+perl6.test-installable:
+	- $(MAKE) perl6 test-installable
+perl6.install:
+	- $(MAKE) perl6 install
 perl6.clean:
 	- $(MAKE) perl6 clean
 perl6.realclean:
@@ -405,6 +614,12 @@ pheme.dummy:
 	- $(MAKE) pheme
 pheme.test:
 	- $(MAKE) pheme test
+pheme.installable:
+	- $(MAKE) pheme installable
+pheme.test-installable:
+	- $(MAKE) pheme test-installable
+pheme.install:
+	- $(MAKE) pheme install
 pheme.clean:
 	- $(MAKE) pheme clean
 pheme.realclean:
@@ -415,6 +630,12 @@ pipp.dummy:
 	- $(MAKE) pipp
 pipp.test:
 	- $(MAKE) pipp test
+pipp.installable:
+	- $(MAKE) pipp installable
+pipp.test-installable:
+	- $(MAKE) pipp test-installable
+pipp.install:
+	- $(MAKE) pipp install
 pipp.clean:
 	- $(MAKE) pipp clean
 pipp.realclean:
@@ -425,6 +646,12 @@ PIR.dummy:
 	- $(MAKE) PIR
 PIR.test:
 	- $(MAKE) PIR test
+PIR.installable:
+	- $(MAKE) PIR installable
+PIR.test-installable:
+	- $(MAKE) PIR test-installable
+PIR.install:
+	- $(MAKE) PIR install
 PIR.clean:
 	- $(MAKE) PIR clean
 PIR.realclean:
@@ -435,6 +662,12 @@ punie.dummy:
 	- $(MAKE) punie
 punie.test:
 	- $(MAKE) punie test
+punie.installable:
+	- $(MAKE) punie installable
+punie.test-installable:
+	- $(MAKE) punie test-installable
+punie.install:
+	- $(MAKE) punie install
 punie.clean:
 	- $(MAKE) punie clean
 punie.realclean:
@@ -445,6 +678,12 @@ pynie.dummy:
 	- $(MAKE) pynie
 pynie.test:
 	- $(MAKE) pynie test
+pynie.installable:
+	- $(MAKE) pynie installable
+pynie.test-installable:
+	- $(MAKE) pynie test-installable
+pynie.install:
+	- $(MAKE) pynie install
 pynie.clean:
 	- $(MAKE) pynie clean
 pynie.realclean:
@@ -455,6 +694,12 @@ regex.dummy:
 	- $(MAKE) regex
 regex.test :
 	- $(MAKE) regex test
+regex.installable:
+	- $(MAKE) regex installable
+regex.test-installable:
+	- $(MAKE) regex test-installable
+regex.install:
+	- $(MAKE) regex install
 regex.clean :
 	- $(MAKE) regex clean
 regex.realclean :
@@ -465,6 +710,12 @@ scheme.dummy:
 	@echo "SKIPPED: scheme: (nothing to make, but should not default to make test)"
 scheme.test :
 	- $(MAKE) scheme test
+scheme.installable:
+	- $(MAKE) scheme installable
+scheme.test-installable:
+	- $(MAKE) scheme test-installable
+scheme.install:
+	- $(MAKE) scheme install
 scheme.clean :
 	- $(MAKE) scheme clean
 scheme.realclean :
@@ -475,6 +726,12 @@ squaak.dummy:
 	- $(MAKE) squaak
 squaak.test:
 	- $(MAKE) squaak test
+squaak.installable:
+	- $(MAKE) squaak installable
+squaak.test-installable:
+	- $(MAKE) squaak test-installable
+squaak.install:
+	- $(MAKE) squaak install
 squaak.clean:
 	- $(MAKE) squaak clean
 squaak.realclean:
@@ -485,6 +742,12 @@ unlambda.dummy:
 	- $(MAKE) unlambda
 unlambda.test :
 	- $(MAKE) unlambda test
+unlambda.installable:
+	- $(MAKE) unlambda installable
+unlambda.test-installable:
+	- $(MAKE) unlambda test-installable
+unlambda.install:
+	- $(MAKE) unlambda install
 unlambda.clean :
 	- $(MAKE) unlambda clean
 unlambda.realclean :
@@ -495,6 +758,12 @@ urm.dummy:
 	- $(MAKE) urm
 urm.test:
 	- $(MAKE) urm test
+urm.installable:
+	- $(MAKE) urm installable
+urm.test-installable:
+	- $(MAKE) urm test-installable
+urm.install:
+	- $(MAKE) urm install
 urm.clean:
 	- $(MAKE) urm clean
 urm.realclean:
@@ -505,6 +774,12 @@ WMLScript.dummy:
 	- $(MAKE) WMLScript
 WMLScript.test:
 	- $(MAKE) WMLScript test
+WMLScript.installable:
+	- $(MAKE) WMLScript installable
+WMLScript.test-installable:
+	- $(MAKE) WMLScript test-installable
+WMLScript.install:
+	- $(MAKE) WMLScript install
 WMLScript.clean:
 	- $(MAKE) WMLScript clean
 WMLScript.realclean:
@@ -515,7 +790,19 @@ Zcode.dummy:
 # Do nothing. make Zcode requires an Inform compiler
 Zcode.test:
 	- $(MAKE) Zcode test
+Zcode.installable:
+# Do nothing. make Zcode requires an Inform compiler
+Zcode.test-installable:
+# Do nothing. make Zcode requires an Inform compiler
+Zcode.install:
+# Do nothing. make Zcode requires an Inform compiler
 Zcode.clean:
 	- $(MAKE) Zcode clean
 Zcode.realclean:
 	- $(MAKE) Zcode realclean
+
+#
+# Local variables:
+# mode: makefile
+# ex: ft=make
+# End:

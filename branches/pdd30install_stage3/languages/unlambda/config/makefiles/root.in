@@ -4,7 +4,14 @@
 # Makefile for languages/unlambda
 
 # configuration settings
-BUILD_DIR       = @build_dir@
+HLLNAME	      = unlambda
+BUILD_DIR     = @build_dir@
+LOAD_EXT      = @load_ext@
+O             = @o@
+BIN_DIR       = @bin_dir@
+LIB_DIR       = @lib_dir@
+DOC_DIR       = @doc_dir@
+MANDIR	      = @mandir@
 
 # Set up commands
 PERL            = @perl@
@@ -51,3 +58,9 @@ realclean: clean
 # testing
 test: build
 	$(PERL) t/harness
+
+#
+# Local variables:
+# mode: makefile
+# ex: ft=make
+# End:

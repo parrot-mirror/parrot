@@ -13,12 +13,15 @@
 # #########################
 PERL     = ${perl}
 RM_F     = ${rm_f}
-PARROT   = ${trans_parrot_path}${slash}parrot${exe}
 MONOLIB  = ${trans_mono_lib_path}
-PBCMERGE = ${trans_parrot_path}${slash}pbc_merge${exe}
+#CONDITIONED_LINE(cygchkdll):SHRPENV  = env PATH="@build_dir@/blib/lib:$(PATH)"
+#INVERSE_CONDITIONED_LINE(cygchkdll):SHRPENV  = env LD_RUN_PATH="@build_dir@/blib/lib"
+PARROT     = $(SHRPENV) ${trans_parrot_path}${slash}parrot${exe}
+PBCMERGE   = $(SHRPENV) ${trans_parrot_path}${slash}pbc_merge${exe}
+PBC_TO_EXE = $(SHRPENV) ${trans_parrot_path}${slash}pbc_to_exe.exe
 PMCBUILD = $(PERL) ${build_dir}${slash}tools${slash}build${slash}dynpmc.pl
 OPSBUILD = $(PERL) ${build_dir}${slash}tools${slash}build${slash}dynoplibs.pl
-DESTDIR  = ${build_dir}${slash}runtime${slash}parrot${slash}dynext
+PARROT_DYNEXT  = ${build_dir}${slash}runtime${slash}parrot${slash}dynext
 #CONDITIONED_LINE(darwin):
 #CONDITIONED_LINE(darwin):# MACOSX_DEPLOYMENT_TARGET must be defined for OS X compilation/linking
 #CONDITIONED_LINE(darwin):export MACOSX_DEPLOYMENT_TARGET := @osx_version@
@@ -33,6 +36,10 @@ A        = ${a}
 
 # DIRECTORIES AND FILES
 # #####################
+BIN_DIR   = @bin_dir@
+LIB_DIR   = @lib_dir@
+DOC_DIR   = @doc_dir@
+MANDIR	  = @mandir@
 PMCDIR    = pmc
 PMCS      = dotnetassembly dotnetclassmetadata dotnetmethodmetadata \
             dotnetfieldmetadata dotnetparammetadata dotnetsignature \
@@ -60,17 +67,19 @@ TRAN_PBC  = src/translator.pbc src/method.pbc src/signature.pbc src/typeinfo.pbc
 all : pmc/dotnet$(LOAD_EXT) ops/dotnet_ops$(LOAD_EXT) src/it.pbc \
       src/builtins.pbc src/translib.pbc net2pbc.pbc
 
+installable : net2pbc.pbc installable_net2pbc$exe
+
 pmc/dotnet$(LOAD_EXT) : $(PMC_FILES) pmc/structures.h pmc/tableinfo.h
 	@cd $(PMCDIR) && $(PMCBUILD) generate $(PMCS)
 	@cd $(PMCDIR) && $(PMCBUILD) compile $(PMCS)
 	@cd $(PMCDIR) && $(PMCBUILD) linklibs $(PMCS)
-	@cd $(PMCDIR) && $(PMCBUILD) copy "--destination=$(DESTDIR)" $(PMCS)
+	@cd $(PMCDIR) && $(PMCBUILD) copy "--destination=$(PARROT_DYNEXT)" $(PMCS)
 
 ops/dotnet_ops$(LOAD_EXT) : $(OPS_FILES)
 	@cd $(OPSDIR) && $(OPSBUILD) generate $(OPSLIB)
 	@cd $(OPSDIR) && $(OPSBUILD) compile $(OPSLIB)
 	@cd $(OPSDIR) && $(OPSBUILD) linklibs $(OPSLIB)
-	@cd $(OPSDIR) && $(OPSBUILD) copy "--destination=$(DESTDIR)" $(OPSLIB)
+	@cd $(OPSDIR) && $(OPSBUILD) copy "--destination=$(PARROT_DYNEXT)" $(OPSLIB)
 
 src/it.pbc : src/translation.rules build/translator.pl build/SRM/Stack.pm \
              build/SRM/Register.pm build/SRM/OptRegister.pm
@@ -91,7 +100,17 @@ net2pbc.pbc : pmc/dotnet$(LOAD_EXT) src/translib.pbc src/net2pbc.pbc
 	$(PBCMERGE) -o net2pbc.pbc src/net2pbc.pbc src/translib.pbc
 
 class-library : net2pbc.pbc
-${trans_class_library}
+	${trans_class_library}
+
+# regenerate the Makefile
+Makefile: config/Makefile.in
+	$(PERL) Configure.pl
+
+net2pbc$exe : net2pbc.pbc
+	$(PBC_TO_EXE) net2pbc.pbc
+
+installable_net2pbc$exe : net2pbc.pbc
+	$(PBC_TO_EXE) net2pbc.pbc --install
 
 
 # PER FILE RULES AND DEPENDENCIES
@@ -133,6 +152,20 @@ src/build/SRM/Stack.pm :
 test : all
 	$(PERL) -It t/harness
 
+# TODO: rename build_dir. basic run for missing libs
+installable_test : installable
+	./installable_net2pbc$exe
+
+install : all installable
+	cp installable_net2pbc$exe $(DESTDIR)$(BIN_DIR)/parrot-net2pbc@exe@
+	@cd $(PMCDIR) && $(PMCBUILD) copy "--destination=$(DESTDIR)$(LIB_DIR)/parrot/dynext" $(OPLIBS)
+	@cd $(PMCDIR) && $(PMCBUILD) copy "--destination=$(DESTDIR)$(LIB_DIR)/parrot/dynext" $(PMCS)
+	pod2man doc/running.pod > $(DESTDIR)$(MANDIR)/man1/parrot-net2pbc.1
+	mkdir $(DESTDIR)$(DOC_DIR)/languages/$(LANG)
+	cp $(DOCS) $(DESTDIR)$(DOC_DIR)/languages/$(LANG)
+	cp doc/*.pod $(DESTDIR)$(DOC_DIR)/languages/$(LANG)
+	mkdir $(DESTDIR)$(DOC_DIR)/languages/$(LANG)/constructs
+	cp doc/constructs/.pod $(DESTDIR)$(DOC_DIR)/languages/$(LANG)/constructs
 
 # CLEANUP TARGETS
 # ###############

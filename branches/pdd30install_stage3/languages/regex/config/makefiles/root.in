@@ -2,25 +2,33 @@
 # $Id$
 
 # Makefile for languages/regex
+HLLNAME       = regex
 
 # Set up commands
-PARROT        = ../../parrot@exe@
 PERL          = @perl@
 RM_F          = @rm_f@
 YAPP          = yapp
-PMC_DIR       = pmc
 BUILD_DYNPMC  = $(PERL) @build_dir@/tools/build/dynpmc.pl
-PARROT_DYNEXT = @build_dir@/runtime/parrot/dynext
 RECONFIGURE   = $(PERL) @build_dir@/tools/dev/reconfigure.pl
 #CONDITIONED_LINE(darwin):
 #CONDITIONED_LINE(darwin):# MACOSX_DEPLOYMENT_TARGET must be defined for OS X compilation/linking
 #CONDITIONED_LINE(darwin):export MACOSX_DEPLOYMENT_TARGET := @osx_version@
+#CONDITIONED_LINE(cygchkdll):SHRPENV  = env PATH="@build_dir@/blib/lib:$(PATH)"
+#INVERSE_CONDITIONED_LINE(cygchkdll):SHRPENV  = env LD_RUN_PATH="@build_dir@/blib/lib"
+PARROT        = $(SHRPENV) ../../parrot@exe@
+PBC_TO_EXE    = $(SHRPENV) ../../pbc_to_exe@exe@
 
 # Set up directories
-LOAD_EXT      = @load_ext@
 BUILD_DIR     = @build_dir@
+PMC_DIR       = pmc
+PARROT_DYNEXT = @build_dir@/runtime/parrot/dynext
+BIN_DIR       = @bin_dir@
+LIB_DIR       = @lib_dir@
+DOC_DIR       = @doc_dir@
+MANDIR	      = @mandir@
 
 # set up extensions
+LOAD_EXT      = @load_ext@
 O             = @o@
 
 PMCS = match matchrange
@@ -39,7 +47,7 @@ lib/Regex/Grammar.pm : lib/Regex/Grammar.yp
 regex-compiler.pbc : regex-compiler.pir
 	$(PARROT) -o regex-compiler.pbc regex-compiler.pir
 
-$(PMC_DIR)/match_group$(LOAD_EXT): $(PARROT) $(PMC_SOURCES)
+$(PMC_DIR)/match_group$(LOAD_EXT):  $(PMC_SOURCES)
 	cd $(PMC_DIR) && $(BUILD_DYNPMC) generate $(PMCS)
 	cd $(PMC_DIR) && $(BUILD_DYNPMC) compile $(PMCS)
 	cd $(PMC_DIR) && $(BUILD_DYNPMC) linklibs $(PMCS)
@@ -80,3 +88,8 @@ realclean: clean
 
 distclean: realclean
 
+#
+# Local variables:
+# mode: makefile
+# ex: ft=make
+# End:

@@ -63,8 +63,12 @@ help:
 	@echo ""
 	@echo "Following targets are available for the user:"
 	@echo ""
-	@echo "  all:               pynie.pbc"
+	@echo "  build:             pynie.pbc"
 	@echo "                     This is the default."
+	@echo "  all:               pynie.pbc pynie@exe@ installable"
+	@echo "  installable:       Create self-hosting bins and libs."
+	@echo "  install:           Install the installable targets and docs."
+	@echo ""
 	@echo "Testing:"
 	@echo "  test:              Run the test suite."
 	@echo "  testclean:         Clean up test results."
@@ -84,6 +88,25 @@ test: all
 # this target has nothing to do
 testclean:
 
+# TODO: rename build_dir. basic run for missing libs
+test-installable : installable
+	./installable_$(HLLNAME)@exe@ t/00-parrot/03-op-logic.t
+
+install : installable
+	$(CP) installable_$(HLLNAME)@exe@ $(DESTDIR)$(BIN_DIR)/parrot-$(HLLNAME)@exe@
+	$(POD2MAN) pynie.pir > $(DESTDIR)$(MANDIR)/man1/parrot-$(HLLNAME).1
+	$(MKPATH) $(DESTDIR)$(DOC_DIR)/languages/$(HLLNAME)
+	$(CP) $(DOCS) $(DESTDIR)$(DOC_DIR)/languages/$(HLLNAME)
+
+$(HLLNAME)@exe@: $(HLLNAME).pbc
+	$(PBC_TO_EXE) $(HLLNAME).pbc
+
+installable : installable_$(HLLNAME)@exe@
+	$(CP) installable_$(HLLNAME)@exe@ $(BUILD_DIR)
+
+installable_$(HLLNAME)@exe@ : $(HLLNAME).pbc
+	$(PBC_TO_EXE) $(HLLNAME).pbc --install
+
 CLEANUPS = \
   pynie.pbc \
   src/gen_grammar.pir \
@@ -96,3 +119,9 @@ realclean: clean
 	$(RM_RF) Makefile
 
 distclean: realclean
+
+#
+# Local variables:
+# mode: makefile
+# ex: ft=make
+# End:

@@ -2,28 +2,36 @@
 # $Id$
 
 ## configuration settings
-O        = @o@
-LOAD_EXT = @load_ext@
+HLLNAME     = lua
+O           = @o@
+LOAD_EXT    = @load_ext@
 
 ## Setup some commands
-MAKE    = @make_c@
-RM_F    = @rm_f@
-PERL    = @perl@
-PARROT  = ../../parrot@exe@
-PBC_MERGE = ../../pbc_merge@exe@
-PGE      = $(PARROT) ../../runtime/parrot/library/PGE/Perl6Grammar.pir
-TGE      = $(PARROT) ../../compilers/tge/tgc.pir
-PBC_TO_EXE = ../../pbc_to_exe@exe@
+MAKE        = @make_c@
+RM_F        = @rm_f@
+PERL        = @perl@
+PGE         = $(PARROT) ../../runtime/parrot/library/PGE/Perl6Grammar.pir
+TGE         = $(PARROT) ../../compilers/tge/tgc.pir
 RECONFIGURE = $(PERL) @build_dir@/tools/dev/reconfigure.pl
-PMCBUILD = $(PERL) @build_dir@/tools/build/dynpmc.pl
+PMCBUILD    = $(PERL) @build_dir@/tools/build/dynpmc.pl
 #CONDITIONED_LINE(darwin):
 #CONDITIONED_LINE(darwin):# MACOSX_DEPLOYMENT_TARGET must be defined for OS X compilation/linking
 #CONDITIONED_LINE(darwin):export MACOSX_DEPLOYMENT_TARGET := @osx_version@
+#CONDITIONED_LINE(cygchkdll):SHRPENV  = env PATH="@build_dir@/blib/lib:$(PATH)"
+#INVERSE_CONDITIONED_LINE(cygchkdll):SHRPENV  = env LD_RUN_PATH="@build_dir@/blib/lib"
+PARROT      = $(SHRPENV) ../../parrot@exe@
+PBC_TO_EXE  = $(SHRPENV) ../../pbc_to_exe@exe@
+PBC_MERGE   = $(SHRPENV) ../../pbc_merge@exe@
 
 ## places to look for things
-LIBPATH  = src/lib
-PMCDIR   = src/pmc
+LIBPATH       = src/lib
+PMCDIR        = src/pmc
 PARROT_DYNEXT = @build_dir@/runtime/parrot/dynext
+BUILD_DIR     = @build_dir@
+BIN_DIR       = @bin_dir@
+LIB_DIR       = @lib_dir@
+DOC_DIR       = @doc_dir@
+MANDIR	      = @mandir@
 
 PMCS = \
  lua \
@@ -94,6 +102,8 @@ GEN_PIR = \
 GEN_PBC = \
  lua.pbc
 
+DOCS = MAINTAINER doc/running.pod doc/status.pod
+
 all: \
  $(PMCDIR)/lua_group$(LOAD_EXT) \
  $(LIB_PBCS) \
@@ -120,6 +130,16 @@ all: \
  $(GEN_PBC) \
  src/yapp/Lua/parser.pm
 
+# TODO: rename build_dir. basic run for missing libs
+test-installable : installable
+	echo "a=1" | ./installable_$(HLLNAME)@exe@
+
+install : installable
+	$(CP) installable_$(HLLNAME)@exe@ $(DESTDIR)$(BIN_DIR)/parrot-$(HLLNAME)@exe@
+	@cd $(PMCDIR) && $(PMCBUILD) copy "--destination=$(DESTDIR)$(LIB_DIR)/parrot/dynext" $(PMCS)
+	$(POD2MAN) doc/running.pod > $(DESTDIR)$(MANDIR)/man1/parrot-$(HLLNAME).1
+	$(MKPATH) $(DESTDIR)$(DOC_DIR)/languages/$(HLLNAME)
+	$(CP) $(DOCS) $(DESTDIR)$(DOC_DIR)/languages/$(HLLNAME)
 
 src/lua51_testlex_gen.pir: src/lua51_testlex.pg
 	$(PGE) --output=src/lua51_testlex_gen.pir src/lua51_testlex.pg
@@ -138,10 +158,16 @@ src/POSTGrammar_gen.pir: src/POSTGrammar.tg
 	$(PERL) -i.bak -pe "s|'PAST::|'PAST;|" src/POSTGrammar_gen.pir
 
 lua.pbc: lua.pir src/lua51.pir src/grammar51.pir src/lua51_gen.pir src/PASTGrammar_gen.pir src/POSTGrammar_gen.pir $(LIB_SRCS)
-	$(PARROT) -o lua.pbc --output-pbc lua.pir
+	$(PARROT) -o lua_i.pbc --output-pbc lua.pir
+	$(PBC_MERGE) -o lua.pbc lua_i.pbc ../../compilers/tge/TGE/Rule.pbc
 
 lua@exe@: lua.pbc
 	$(PBC_TO_EXE) lua.pbc
+
+installable_lua@exe@: lua.pbc
+	$(PBC_TO_EXE) lua.pbc --install
+
+installable: installable_lua@exe@ $(PMCDIR)/lua_group$(LOAD_EXT)
 
 $(LIBPATH)/lualibs.pbc: $(LIB_PBCS)
 	$(PBC_MERGE) -o $(LIBPATH)/lualibs.pbc $(LIB_PBCS)
@@ -260,7 +286,7 @@ src/yapp/Lua/parser.pm: src/yapp/Lua/lua51.yp
 
 # regenerate the Makefile
 Makefile: config/makefiles/root.in
-	cd ../.. && $(RECONFIGURE) --step=gen::languages --languages=lua
+	cd ../.. && $(RECONFIGURE) --step=gen::languages --languages=$(HLLNAME)
 
 help:
 	@echo ""
@@ -298,6 +324,7 @@ testclean:
 
 BUILD_CLEANERS = \
  lua@exe@ \
+ installable_lua@exe@ \
  lua$(O) \
  lua.c \
  "*.pbc" \
@@ -308,7 +335,8 @@ BUILD_CLEANERS = \
  "$(PMCDIR)/*_group.h" \
  "$(PMCDIR)/*$(LOAD_EXT)" \
  "$(PMCDIR)/*$(O)" \
- "$(LIBPATH)/*.pbc"
+ "$(LIBPATH)/*.pbc" \
+ installable_$(HLLNAME)@exe@ \
 
 clean:
 	$(RM_F) $(BUILD_CLEANERS) $(TEST_CLEANERS)
@@ -317,3 +345,9 @@ realclean: clean
 	$(RM_F) Makefile
 
 distclean: realclean
+
+#
+# Local variables:
+# mode: makefile
+# ex: ft=make
+# End:

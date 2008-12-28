@@ -4,16 +4,26 @@
 PARROT_ARGS =
 
 ## configuration settings
+HLLNAME	      = APL
 BUILD_DIR     = @build_dir@
 LOAD_EXT      = @load_ext@
 O             = @o@
+BIN_DIR       = @bin_dir@
+LIB_DIR       = @lib_dir@
+DOC_DIR       = @doc_dir@
+MANDIR	      = @mandir@
 
 ## Setup some commands
 LN_S          = @lns@
 PERL          = @perl@
 RM_F          = @rm_f@
 CP            = @cp@
-PARROT        = ../../parrot@exe@
+MKPATH        = @mkpath@
+POD2MAN       = @pod2man@
+#CONDITIONED_LINE(cygchkdll):SHRPENV  = env PATH="@build_dir@/blib/lib:$(PATH)"
+#INVERSE_CONDITIONED_LINE(cygchkdll):SHRPENV  = env LD_RUN_PATH="@build_dir@/blib/lib"
+PARROT        = $(SHRPENV) ../../parrot@exe@
+PBC_TO_EXE    = $(SHRPENV) ../../pbc_to_exe@exe@
 CAT           = $(PERL) -MExtUtils::Command -e cat
 BUILD_DYNPMC  = $(PERL) $(BUILD_DIR)/tools/build/dynpmc.pl
 RECONFIGURE   = $(PERL) $(BUILD_DIR)/tools/dev/reconfigure.pl
@@ -42,10 +52,14 @@ SOURCES = APL.pir \
 
 PMCS = aplvector
 PMC_SOURCES = $(PMC_DIR)/aplvector.pmc
+DOCS = MAINTAINER README STATUS
 
 # the default target
-APL.pbc: $(PARROT) $(SOURCES) $(APL_GROUP)
+APL.pbc:  $(SOURCES) $(APL_GROUP)
 	$(PARROT) $(PARROT_ARGS) -o APL.pbc APL.pir
+
+$(HLLNAME)@exe@: $(HLLNAME).pbc
+	$(PBC_TO_EXE) $(HLLNAME).pbc
 
 src/gen_grammar.pir: $(PERL6GRAMMAR) src/parser/grammar.pg
 	$(PARROT) $(PARROT_ARGS) $(PERL6GRAMMAR) \
@@ -60,15 +74,22 @@ src/gen_actions.pir: $(NQP) $(PCT) src/parser/actions.pm
 src/gen_builtins.pir: tools/gen_operator_defs.pl
 	$(PERL) tools/gen_operator_defs.pl >src/gen_builtins.pir
 
-$(APL_GROUP): $(PARROT) $(PMC_SOURCES)
+$(APL_GROUP):  $(PMC_SOURCES)
 	cd $(PMC_DIR) && $(BUILD_DYNPMC) generate $(PMCS)
 	cd $(PMC_DIR) && $(BUILD_DYNPMC) compile $(PMCS)
 	cd $(PMC_DIR) && $(BUILD_DYNPMC) linklibs $(PMCS)
 	cd $(PMC_DIR) && $(BUILD_DYNPMC) copy --destination=$(PARROT_DYNEXT) $(PMCS)
 
+installable : installable_$(HLLNAME)@exe@ $(ABC_GROUP)
+	$(CP) installable_$(HLLNAME)@exe@ $(BUILD_DIR)
+	cd $(PMC_DIR) && $(BUILD_DYNPMC) copy --destination=$(PARROT_DYNEXT) $(PMCS)
+
+installable_$(HLLNAME)@exe@: $(HLLNAME).pbc
+	$(PBC_TO_EXE) $(HLLNAME).pbc --install
+
 # regenerate the Makefile
 Makefile: config/makefiles/root.in
-	cd $(BUILD_DIR) && $(RECONFIGURE) --step=gen::languages --languages=APL
+	cd $(BUILD_DIR) && $(RECONFIGURE) --step=gen::languages --languages=$(HLLNAME)
 
 # This is a listing of all targets, that are meant to be called by users
 help:
@@ -77,8 +98,11 @@ help:
 	@echo ""
 	@echo "  all:               APL.pbc"
 	@echo "                     This is the default."
+	@echo "  install:           install the installable targets and docs."
+	@echo ""
 	@echo "Testing:"
 	@echo "  test:              Run the test suite."
+	@echo "  test-installable:  Test self-hosting targets."
 	@echo "  testclean:         Clean up test results."
 	@echo ""
 	@echo "Cleaning:"
@@ -92,6 +116,17 @@ help:
 
 test: all
 	$(PERL) t/harness
+
+# TODO: test for installed libs, rename build_dir. basic run for missing libs
+test-installable : installable
+	./installable_$(HLLNAME)@exe@ demo.apl
+
+install : installable
+	$(CP) installable_$(HLLNAME)@exe@ $(DESTDIR)$(BIN_DIR)/parrot-$(HLLNAME)@exe@
+	cd $(PMC_DIR) && $(BUILD_DYNPMC) copy "--destination=$(DESTDIR)$(LIB_DIR)/parrot/dynext" $(PMCS)
+	$(POD2MAN) $(HLLNAME).pir > $(DESTDIR)$(MANDIR)/man1/parrot-$(HLLNAME).1
+	$(MKPATH) $(DESTDIR)$(DOC_DIR)/languages/$(HLLNAME)
+	$(CP) $(DOCS) $(DESTDIR)$(DOC_DIR)/languages/$(HLLNAME)
 
 testclean:
 	$(RM_F) t/*.pir
@@ -111,6 +146,8 @@ CLEANUPS = \
   $(PMC_DIR)/*.manifest \
   $(PMC_DIR)/*.pdb \
   $(PMC_DIR)/*.lib \
+  $(HLLNAME)@exe@ \
+  installable_$(HLLNAME)@exe@ \
 
 
 clean: testclean
@@ -121,4 +158,8 @@ realclean: clean
 
 distclean: realclean
 
-
+#
+# Local variables:
+# mode: makefile
+# ex: ft=make
+# End:

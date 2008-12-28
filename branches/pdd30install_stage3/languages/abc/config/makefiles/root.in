@@ -4,16 +4,26 @@
 PARROT_ARGS =
 
 ## configuration settings
+HLLNAME       = abc
 BUILD_DIR     = @build_dir@
 LOAD_EXT      = @load_ext@
 O             = @o@
+BIN_DIR       = @bin_dir@
+LIB_DIR       = @lib_dir@
+DOC_DIR       = @doc_dir@
+MANDIR	      = @mandir@
 
 ## Setup some commands
 LN_S          = @lns@
 PERL          = @perl@
 RM_RF         = @rm_rf@
 CP            = @cp@
-PARROT        = ../../parrot@exe@
+MKPATH        = @mkpath@
+POD2MAN       = @pod2man@
+#CONDITIONED_LINE(cygchkdll):SHRPENV  = env PATH="@build_dir@/blib/lib:$(PATH)"
+#INVERSE_CONDITIONED_LINE(cygchkdll):SHRPENV  = env LD_RUN_PATH="@build_dir@/blib/lib"
+PARROT        = $(SHRPENV) ../../parrot@exe@
+PBC_TO_EXE    = $(SHRPENV) ../../pbc_to_exe@exe@
 CAT           = $(PERL) -MExtUtils::Command -e cat
 BUILD_DYNPMC  = $(PERL) $(BUILD_DIR)/tools/build/dynpmc.pl
 RECONFIGURE   = $(PERL) $(BUILD_DIR)/tools/dev/reconfigure.pl
@@ -28,27 +38,24 @@ PERL6GRAMMAR  = $(PGE_LIBRARY)/Perl6Grammar.pbc
 NQP           = $(BUILD_DIR)/compilers/nqp/nqp.pbc
 PCT           = $(BUILD_DIR)/runtime/parrot/library/PCT.pbc
 
-PMC_DIR       = src/pmc
-
 all: abc.pbc
-
-ABC_GROUP = $(PMC_DIR)/abc_group$(LOAD_EXT)
 
 SOURCES = abc.pir \
   src/gen_grammar.pir \
   src/gen_actions.pir \
   src/gen_builtins.pir \
-#  $(ABC_GROUP)
 
 BUILTINS_PIR = \
   src/builtins/all.pir \
 
-# PMCS = abc
-# PMC_SOURCES = $(PMC_DIR)/abc.pmc
+DOCS = MAINTAINER README TODO
 
 # the default target
-abc.pbc: $(PARROT) $(SOURCES)
+abc.pbc:  $(SOURCES)
 	$(PARROT) $(PARROT_ARGS) -o abc.pbc abc.pir
+
+$(HLLNAME)@exe@: $(HLLNAME).pbc
+	$(PBC_TO_EXE) $(HLLNAME).pbc
 
 src/gen_grammar.pir: $(PERL6GRAMMAR) src/parser/grammar.pg src/parser/grammar-oper.pg
 	$(PARROT) $(PARROT_ARGS) $(PERL6GRAMMAR) \
@@ -95,6 +102,16 @@ help:
 
 test: all
 	prove -r t
+
+# TODO: rename build_dir. basic run for missing libs
+test-installable : installable
+	echo "2-1" | ./installable_$(HLLNAME)@exe@
+
+install : installable
+	$(CP) installable_$(HLLNAME)@exe@ $(DESTDIR)$(BIN_DIR)/parrot-$(HLLNAME)@exe@
+	$(POD2MAN) $(HLLNAME).pir > $(DESTDIR)$(MANDIR)/man1/parrot-$(HLLNAME).1
+	$(MKPATH) $(DESTDIR)$(DOC_DIR)/languages/$(HLLNAME)
+	$(CP) $(DOCS) $(DESTDIR)$(DOC_DIR)/languages/$(HLLNAME)
 
 testclean:
 	$(RM_RF) "t/*.pir" "t/*.out"

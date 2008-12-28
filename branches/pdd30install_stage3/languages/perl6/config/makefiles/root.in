@@ -14,8 +14,13 @@ PMC_DIR       = src/pmc
 OPSDIR        = src/ops
 OPSLIB        = perl6
 OPS_FILE      = src/ops/perl6.ops
+BIN_DIR       = @bin_dir@
+LIB_DIR       = @lib_dir@
+DOC_DIR       = @doc_dir@
+MANDIR	      = @mandir@
 
 # Set up extensions
+HLLNAME       = perl6
 LOAD_EXT      = @load_ext@
 O             = @o@
 EXE           = @exe@
@@ -106,6 +111,7 @@ PMCS        = perl6str objectref perl6scalar mutablevar perl6multisub
 PMC_SOURCES = $(PMC_DIR)/perl6str.pmc $(PMC_DIR)/objectref.pmc $(PMC_DIR)/perl6scalar.pmc \
               $(PMC_DIR)/mutablevar.pmc $(PMC_DIR)/perl6multisub.pmc
 PERL6_GROUP = $(PMC_DIR)/perl6_group$(LOAD_EXT)
+DOCS = README MAINTAINER ROADMAP docs/compiler_overview.pod docs/glossary.pod docs/STATUS
 
 # targets for building a standalone perl6.
 # (We're not quite ready to make this a default target.)
@@ -122,6 +128,9 @@ installable_perl6$(EXE): perl6.pbc
 Test.pir: Test.pm perl6.pbc
 	$(PARROT) $(PARROT_ARGS) perl6.pbc --target=pir --output=Test.pir Test.pm
 
+$(PERL6GRAMMAR): $(PGE_LIBRARY)/Perl6Grammar.pir
+	cd $(BUILD_DIR) && $(PARROT) $(PARROT_ARGS) -o $(PERL6GRAMMAR) $(PGE_LIBRARY)/Perl6Grammar.pir
+
 src/gen_grammar.pir: $(PERL6GRAMMAR) src/parser/grammar.pg src/parser/grammar-oper.pg
 	$(PARROT) $(PARROT_ARGS) $(PERL6GRAMMAR) \
 	    --output=src/gen_grammar.pir \
@@ -137,7 +146,7 @@ src/gen_builtins.pir: $(BUILTINS_PIR)
 src/gen_junction.pir: build/gen_junction_pir.pl
 	$(PERL) build/gen_junction_pir.pl src/gen_junction.pir
 
-$(PERL6_GROUP): $(PARROT) $(PMC_SOURCES)
+$(PERL6_GROUP):  $(PMC_SOURCES)
 	cd $(PMC_DIR) && $(BUILD_DYNPMC) generate $(PMCS)
 	cd $(PMC_DIR) && $(BUILD_DYNPMC) compile $(PMCS)
 	cd $(PMC_DIR) && $(BUILD_DYNPMC) linklibs $(PMCS)
@@ -162,6 +171,8 @@ help:
 	@echo "                     This is the default."
 	@echo "  perl6$(EXE):       Some want a pony, others are satisfied with an executable."
 	@echo "  xmas:              Christmas is when Perl 6 is released. Alias of perl6$(EXE)."
+	@echo "  installable:       Create self-hosting binaries."
+	@echo "  install:           Install the installable targets and docs."
 	@echo ""
 	@echo "Testing:"
 	@echo "  test:              Run coretest and codetest."
@@ -172,6 +183,7 @@ help:
 	@echo "  spectest_full:     Run all tests of the official test suite"
 	@echo "  localtest:         Run the official tests given in t/localtest.data."
 	@echo "  fulltest:          Run coretest, spectest_regression, and codetest."
+	@echo "  test-installable:  Test self-hosting targets."
 	@echo ""
 	@echo "Cleaning:"
 	@echo "  clean:             Basic cleaning up."
@@ -234,6 +246,23 @@ t/localtest.data:
 t/spec:
 	svn co http:////svn.pugscode.org//pugs//t//spec t/spec
 
+# TODO: rename build_dir. basic run for missing libs
+test-installable : installable
+	./installable_$(HLLNAME)@exe@ -e'say 1'
+
+install : installable
+	$(CP) installable_$(HLLNAME)@exe@ $(DESTDIR)$(BIN_DIR)/perl6@exe@
+	@cd $(PMC_DIR) && $(BUILD_DYNPMC) copy "--destination=$(DESTDIR)$(LIB_DIR)/parrot/dynext" $(PMCS)
+	@cd $(OPSDIR)  && $(BUILD_DYNOPS) copy "--destination=$(DESTDIR)$(LIB_DIR)/parrot/dynext" $(OPSLIB)
+	$(POD2MAN) doc/running.pod > $(DESTDIR)$(MANDIR)/man1/perl6.1
+	$(MKPATH) $(DESTDIR)$(DOC_DIR)/languages/$(HLLNAME)
+	$(CP) $(DOCS) $(DESTDIR)$(DOC_DIR)/languages/$(HLLNAME)
+
+installable : installable_$(HLLNAME)@exe@ $(PERL6_GROUP)
+	$(CP) installable_$(HLLNAME)@exe@ $(BUILD_DIR)
+	@cd $(PMC_DIR) && $(BUILD_DYNPMC) copy "--destination=$(PARROT_DYNEXT)" $(PMCS)
+	@cd $(OPSDIR)  && $(BUILD_DYNOPS) copy "--destination=$(PARROT_DYNEXT)" $(OPSLIB)
+
 CLEANUPS = \
   perl6.pbc \
   perl6.c \
@@ -269,3 +298,9 @@ realclean: clean
 	$(RM_F) src/utils/Makefile Makefile
 
 distclean: realclean
+
+#
+# Local variables:
+# mode: makefile
+# ex: ft=make
+# End:
