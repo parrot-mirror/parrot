@@ -111,7 +111,7 @@ src/gen_actions.pir: $(NQP) $(PCT) src/parser/actions.pm
 
 # regenerate the Makefile
 Makefile: config/makefiles/root.in
-	cd $(BUILD_DIR) && $(RECONFIGURE) --step=gen::languages --languages=$(HLLNAME)
+	cd $(BUILD_DIR) && $(RECONFIGURE) --step=gen::languages --languages=ecmascript
 
 # This is a listing of all targets, that are meant to be called by users
 help:
