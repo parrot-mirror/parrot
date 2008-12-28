@@ -2015,7 +2015,10 @@ method scope_declarator($/) {
         my $symbol := $?BLOCK.symbol( $past.name() );
         $symbol<scope> := $scope;
         $past.viviself( $symbol<viviself> );
-        $past := PAST::Op.new( :pirop('setprop'), $past, 'type', $symbol<type>[0] );
+        if $symbol<type> {
+            $past := PAST::Op.new( :pirop('setprop'), 
+                                   $past, 'type', $symbol<type>[0] );
+        }
     }
     make $past;
 }
