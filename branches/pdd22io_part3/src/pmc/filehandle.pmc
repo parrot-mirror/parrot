@@ -197,7 +197,7 @@ filehandle, rather than modifying the invocant).
                 STRING *mode :optional, INTVAL got_mode :opt_flag) {
         PMC *filehandle;
         STRING *open_filename, *open_mode;
-        INTVAL flags = Parrot_io_parse_open_flags(interp, mode);
+        INTVAL flags;
 
         if (!Parrot_io_is_closed_filehandle(INTERP, SELF))
             Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_PIO_ERROR,
