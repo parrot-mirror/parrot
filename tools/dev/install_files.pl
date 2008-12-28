@@ -126,7 +126,7 @@ my %options = (
     bindir      => '/usr/bin',
     libdir      => '/usr/lib',
     includedir  => '/usr/include',
-    docdir      => '/usr/share/doc',
+    docdir      => '/usr/share/doc/parrot',
     'dry-run'   => 0,
 );
 
@@ -189,6 +189,7 @@ while (<>) {
     }
     elsif ( $meta{include} ) {
         $dest =~ s/^include//;
+        $dest =~ s/^src/parrot/;
         $dest = File::Spec->catdir( $options{includedir}, $dest );
     }
     elsif ( $meta{doc} ) {
@@ -197,14 +198,19 @@ while (<>) {
     elsif ( $meta{pkgconfig} ) {
 
         # For the time being this is hardcoded as being installed under libdir
-        # as it is typically donw with automake installed packages.  If there
+        # as it is typically done with automake installed packages.  If there
         # is a use case to make this configurable we'll add a seperate
         # --pkgconfigdir option.
         $dest = File::Spec->catdir( $options{libdir}, 'pkgconfig', $dest );
     }
     else {
-        $dest =~ s/^runtime/lib/ if /\[library]/;
-        $dest = File::Spec->catdir( $options{prefix}, $dest );
+        $dest =~ s|^src/|lib/parrot/src/|;
+        next if $dest =~ /^compilers|config|language|tools/;
+        if (/^runtime/) {
+            $dest =~ s/^runtime/$options{libdir}/;
+        } else {
+            $dest = File::Spec->catdir( $options{prefix}, $dest );
+        }
     }
 
     $dest = File::Spec->catdir( $options{buildprefix}, $dest )
@@ -243,6 +249,7 @@ foreach ( @files, @installable_exe ) {
     }
     else {
         next unless -e $src;
+        next if $^O eq 'cygwin' and -e "$src.exe"; # cygwin stat works, but copy not
         copy( $src, $dest ) or die "copy $src to $dest: $!\n";
         print "$dest\n";
     }
