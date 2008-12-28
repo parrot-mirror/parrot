@@ -19,6 +19,7 @@
 DEVEL           = @DEVEL@
 VERSION         = @VERSION@$(DEVEL)
 SOVERSION       = @VERSION@
+CONFIG_ARGS     = @config_args@
 
 # Override at least PREFIX with the install location if you're going
 # to be using this outside of your build area.
@@ -1007,6 +1008,20 @@ $(INC_DIR)/oplib/ops.h lib/Parrot/OpLib/core.pm : $(OPS_FILES) $(BUILD_TOOLS_DIR
     lib/Parrot/OpsFile.pm lib/Parrot/Op.pm $(OPS_DIR)/ops.num $(OPS_DIR)/ops.skip
 	$(PERL) $(BUILD_TOOLS_DIR)/ops2pm.pl $(OPS_FILES)
 
+# FIXME: This creates a cycle sometimes
+#lib/Parrot/Config/Generated.pm \
+#    $(SRC_DIR)/platform.c \
+##CONDITIONED_LINE(platform_asm):    $(SRC_DIR)/platform_asm.s \
+##CONDITIONED_LINE(has_opengl):    config/gen/call_list/opengl.in \
+##CONDITIONED_LINE(has_glut):    $(SRC_DIR)/glut_callbacks.c \
+#    config_lib.pasm \
+#    $(BUILD_TOOLS_DIR)/dynpmc.pl \
+#    $(BUILD_TOOLS_DIR)/dynoplibs.pl \
+# : Configure.pl lib/Parrot/Configure.pm \
+#   lib/Parrot/Configure/Step/List.pm lib/Parrot/Configure/Step/Methods.pm
+#	@echo "  Makefile out-of-date: reconfigure"
+#	$(PERL) Configure.pl $(CONFIG_ARGS)
+
 ###############################################################################
 #
 # Examples (Assembly):
@@ -1787,7 +1802,7 @@ svnclobber : .svn
 	$(PERL) tools/dev/svnclobber.pl
 
 reconfig : clean
-	$(PERL) Configure.pl
+	$(PERL) Configure.pl $(CONFIG_ARGS)
 
 manitest :
 	$(PERL) tools/dev/manicheck.pl
