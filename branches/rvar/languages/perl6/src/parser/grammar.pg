@@ -451,6 +451,7 @@ rule type_constraint {
     | <fulltypename>
     | where <EXPR: 'm='>               # XXX <EXPR(item %chaining)>
     ]
+    {*}
 }
 
 rule post_constraint {
