@@ -812,6 +812,10 @@ method routine_declarator($/, $key) {
     else {
         $past[1].push( PAST::Op.new( :name('list') ) );
     }
+    ##  Add a call to !SIGNATURE_BIND to fixup params and do typechecks.
+    $past[0].push(
+        PAST::Op.new( :pasttype('call'), :name('!SIGNATURE_BIND') )
+    );
     make $past;
 }
 
@@ -886,16 +890,32 @@ method signature($/, $key) {
         @?BLOCK.unshift($?SIGNATURE_BLOCK);
     }
     else {
-        my $i := 0;
-        my $n := +@($<parameter>);
+        my $loadinit := $?SIGNATURE_BLOCK.loadinit();
+        my $sigobj   := PAST::Var.new( :scope('register') );
+        $loadinit.push(
+            PAST::Op.new( :inline('    %0 = new "Signature"'), $sigobj)
+        );
+
+        my $i   := 0;
+        my $n   := $<parameter> ?? +@($<parameter>) !! 0;
         while $i < $n {
             my $param_past := $( $<parameter>[$i] );
             my $name       := $param_past.name();
             my $symbol     := $?SIGNATURE_BLOCK.symbol($name);
             $param_past.viviself( $symbol<viviself> );
             $?SIGNATURE.push( $param_past );
+
+            my $sigparam := PAST::Op.new( :pasttype('callmethod'), 
+                                :name('!add_param'), $sigobj, $name );
+            $loadinit.push($sigparam);
             $i++;
         }
+        $loadinit.push( 
+            PAST::Op.new( 
+                :inline('    setprop block, "$!signature", %0'),
+                $sigobj 
+            )
+        );
         @?BLOCK.shift();
         ##  return signature ast node
         make $?SIGNATURE;

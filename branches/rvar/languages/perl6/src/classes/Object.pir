@@ -200,6 +200,20 @@ Boolean value of object -- defaults to C<.defined> (S02).
     .return ($P0)
 .end
 
+.namespace []
+.sub 'Array'
+    .param pmc source
+    $I0 = isa source, 'ObjectRef'
+    if $I0 goto make_array
+    $I0 = can source, 'Array'
+    unless $I0 goto make_array
+    .tailcall source.'Array'()
+  make_array:
+    $P0 = new 'Perl6Array'
+    $P0.'!STORE'(source)
+    .return ($P0)
+.end
+
 =item Hash()
 
 =cut

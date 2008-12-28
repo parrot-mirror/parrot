@@ -43,78 +43,25 @@ Again, this probably isn't definitive either, but it'll get us going.
 
 =over 4
 
-=item !create
+=item !add_param( $varname, *%attr )
 
-Used to create a new signature object with the given paramter descriptors. The
-constraints entry that we actually get passed in here contains both class, role
-and subset types; we separate them out in here. At some point in the future, we
-should be smart enough to do this at compile time.
+Add the attributes given by C<%attr> as the entry for C<$var> in
+the Signature.
 
 =cut
 
-.sub '!create' :method
-    .param pmc parameters :slurpy
+.sub '!add_param' :method
+    .param string varname
+    .param pmc attr            :slurpy :named
 
-    # Iterate over parameters.
-    .local pmc param_iter, cur_param
-    param_iter = iter parameters
-  param_loop:
-    unless param_iter goto param_loop_end
-    cur_param = shift param_iter
-
-    # Get constraints list, which may have class and role types as well as
-    # subset types. If we have no unique role or class type, they all become
-    # constraints; otherwise, we find the unique type. Finally, we turn the
-    # list of constraints into a junction.
-    .local pmc cur_list, cur_list_iter, constraints, type, test_item
-    constraints = 'list'()
-    type = null
-    cur_list = cur_param["constraints"]
-    cur_list_iter = iter cur_list
-
-  cur_list_loop:
-    unless cur_list_iter goto cur_list_loop_end
-    test_item = shift cur_list_iter
-    $I0 = isa test_item, "Role"
-    if $I0 goto is_type
-    $P0 = getprop "subtype_realtype", test_item
-    if null $P0 goto not_refinement
-    unless null type goto all_constraints
-    type = $P0
-    push constraints, test_item
-    goto cur_list_loop
-  not_refinement:
-    $I0 = isa test_item, "P6protoobject"
-    if $I0 goto is_type
-    push constraints, test_item
-    goto cur_list_loop
-  is_type:
-    unless null type goto all_constraints
-    type = test_item
-    goto cur_list_loop
-  all_constraints:
-    type = null
-    constraints = cur_list
-  cur_list_loop_end:
-    unless null type goto have_type
-    type = get_hll_global 'Any'
-  have_type:
-    cur_param["type"] = type
-    $I0 = elements constraints
-    if $I0 == 0 goto no_constraints
-    constraints = 'all'(constraints)
-    goto set_constraints
-  no_constraints:
-    constraints = null
-  set_constraints:
-    cur_param["constraints"] = constraints
-
-    goto param_loop
-  param_loop_end:
-
-    $P0 = self.'new'()
-    setattribute $P0, '@!params', parameters
-    .return ($P0)
+    attr['name'] = varname
+    .local pmc params
+    params = getattribute self, '@!params'
+    unless null params goto have_params
+    params = new 'List'
+    setattribute self, '@!params', params
+  have_params:
+    push params, attr
 .end
 
 =item params
@@ -223,9 +170,53 @@ Gets a perl representation of the signature.
     .return (s)
 .end
 
+=item !BIND_SIGNATURE
+
+Analyze the signature of the caller, (re)binding the caller's
+lexicals as needed and performing type checks.
+
+=cut
+
+.namespace []
+.sub '!SIGNATURE_BIND'
+    .include 'interpinfo.pasm'
+    .local pmc callersub, callerlex, callersig
+    $P0 = getinterp
+    callersub = $P0['sub';1]
+    callerlex = $P0['lexpad';1]
+    getprop callersig, '$!signature', callersub
+    if null callersig goto end
+    .local pmc it
+    $P0 = callersig.'params'()
+    if null $P0 goto end
+    it = iter $P0
+  param_loop:
+    unless it goto param_done
+    .local pmc param
+    param = shift it
+    .local string name, sigil
+    name = param['name']
+    sigil = substr name, 0, 1
+    .local pmc var
+    var = callerlex[name]
+    if sigil == '@' goto param_array
+    var = 'Scalar'(var)
+    callerlex[name] = var
+    goto param_loop
+  param_array:
+    var = 'Array'(var)
+    callerlex[name] = var
+    goto param_loop
+  param_done:
+  end:
+.end
+
+
 =back
 
 =cut
+
+
 
 # Local Variables:
 #   mode: pir
