@@ -48,12 +48,27 @@ undefined values) is undefined, and may be rather funky.
 .sub _config
     .local pmc CONF
     .local string conf_file
+
+    # We should check if a linked frozen hash already exists
+    # and return that instead. See RT #57418
+    #$P0 = find_global '', '_config'
+    #unless $P0 goto runtime
+    #$P0 = _config()
+    #.return( $P0 )
+
+runtime:
+    conf_file = interpinfo .INTERPINFO_RUNTIME_PREFIX
+    conf_file .= "/lib/parrot/include/config.fpmc"
+    stat $I0, conf_file, 0
+    if $I0 goto conf
+
     conf_file = interpinfo .INTERPINFO_RUNTIME_PREFIX
     conf_file .= "/runtime/parrot/include/config.fpmc"
-
+conf:
     open CONF, conf_file, "<"
     $I0 = defined CONF
     if $I0 goto ok1
+
     printerr "Can't read '"
     printerr conf_file
     printerr "': "

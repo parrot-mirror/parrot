@@ -121,63 +121,110 @@ if will be called as a function with this prototype:
 Platform code may add, delete, or replace search path entries as needed. See
 also F<include/parrot/library.h> for C<enum_lib_paths>.
 
+#ifdef ENABLE_PARROT_LIBRARY_INSTALLED
+then the config hash is checked for the path prefix. This still crashes.
+
 =cut
 
 */
+
+#undef ENABLE_PARROT_LIBRARY_INSTALLED
 
 void
 parrot_init_library_paths(PARROT_INTERP)
 {
     PMC *paths;
     STRING *entry;
+    INTVAL installed = 0;
 
     PMC * const iglobals = interp->iglobals;
     /* create the lib_paths array */
     PMC * const lib_paths = pmc_new(interp, enum_class_FixedPMCArray);
+#ifdef ENABLE_PARROT_LIBRARY_INSTALLED
+    PMC * const config_hash = VTABLE_get_pmc_keyed_int(interp, iglobals, IGLOBALS_CONFIG_HASH);
+    STRING * const key = CONST_STRING(interp, "installed");
+#endif
 
     VTABLE_set_integer_native(interp, lib_paths, PARROT_LIB_PATH_SIZE);
     VTABLE_set_pmc_keyed_int(interp, iglobals,
             IGLOBALS_LIB_PATHS, lib_paths);
+#ifdef ENABLE_PARROT_LIBRARY_INSTALLED
+    if (VTABLE_elements(interp, config_hash) &&
+        VTABLE_exists_keyed_str(interp, config_hash, key))) {
+        installed = VTABLE_get_integer_keyed_str(interp, config_hash, key);
+    }
+#endif
+
     /* each is an array of strings */
     /* define include paths */
     paths = pmc_new(interp, enum_class_ResizableStringArray);
     VTABLE_set_pmc_keyed_int(interp, lib_paths,
             PARROT_LIB_PATH_INCLUDE, paths);
-    entry = CONST_STRING(interp, "runtime/parrot/include/");
-    VTABLE_push_string(interp, paths, entry);
-    entry = CONST_STRING(interp, "runtime/parrot/");
-    VTABLE_push_string(interp, paths, entry);
+#ifdef ENABLE_PARROT_LIBRARY_INSTALLED
+    if (installed) {
+#endif
+        entry = CONST_STRING(interp, "lib/parrot/include/");
+        VTABLE_push_string(interp, paths, entry);
+        entry = CONST_STRING(interp, "lib/parrot/");
+        VTABLE_push_string(interp, paths, entry);
+#ifdef ENABLE_PARROT_LIBRARY_INSTALLED
+    }
+    else {
+#endif
+        entry = CONST_STRING(interp, "runtime/parrot/include/");
+        VTABLE_push_string(interp, paths, entry);
+        entry = CONST_STRING(interp, "runtime/parrot/");
+        VTABLE_push_string(interp, paths, entry);
+#ifdef ENABLE_PARROT_LIBRARY_INSTALLED
+    }
+#endif
     entry = CONST_STRING(interp, "./");
-    VTABLE_push_string(interp, paths, entry);
-    entry = CONST_STRING(interp, "lib/parrot/include/");
-    VTABLE_push_string(interp, paths, entry);
-    entry = CONST_STRING(interp, "lib/parrot/");
     VTABLE_push_string(interp, paths, entry);
 
     /* define library paths */
     paths = pmc_new(interp, enum_class_ResizableStringArray);
     VTABLE_set_pmc_keyed_int(interp, lib_paths,
             PARROT_LIB_PATH_LIBRARY, paths);
-    entry = CONST_STRING(interp, "runtime/parrot/library/");
-    VTABLE_push_string(interp, paths, entry);
-    entry = CONST_STRING(interp, "runtime/parrot/");
-    VTABLE_push_string(interp, paths, entry);
+#ifdef ENABLE_PARROT_LIBRARY_INSTALLED
+    if (installed) {
+#endif
+        entry = CONST_STRING(interp, "lib/parrot/library/");
+        VTABLE_push_string(interp, paths, entry);
+        entry = CONST_STRING(interp, "lib/parrot/");
+        VTABLE_push_string(interp, paths, entry);
+#ifdef ENABLE_PARROT_LIBRARY_INSTALLED
+    }
+    else {
+#endif
+        entry = CONST_STRING(interp, "runtime/parrot/library/");
+        VTABLE_push_string(interp, paths, entry);
+        entry = CONST_STRING(interp, "runtime/parrot/");
+        VTABLE_push_string(interp, paths, entry);
+#ifdef ENABLE_PARROT_LIBRARY_INSTALLED
+    }
+#endif
     entry = CONST_STRING(interp, "./");
-    VTABLE_push_string(interp, paths, entry);
-    entry = CONST_STRING(interp, "lib/parrot/library/");
-    VTABLE_push_string(interp, paths, entry);
-    entry = CONST_STRING(interp, "lib/parrot/");
     VTABLE_push_string(interp, paths, entry);
 
     /* define dynext paths */
     paths = pmc_new(interp, enum_class_ResizableStringArray);
     VTABLE_set_pmc_keyed_int(interp, lib_paths,
             PARROT_LIB_PATH_DYNEXT, paths);
-    entry = CONST_STRING(interp, "runtime/parrot/dynext/");
-    VTABLE_push_string(interp, paths, entry);
+#ifdef ENABLE_PARROT_LIBRARY_INSTALLED
+    if (installed) {
+#endif
+        entry = CONST_STRING(interp, "lib/parrot/dynext/");
+        VTABLE_push_string(interp, paths, entry);
+#ifdef ENABLE_PARROT_LIBRARY_INSTALLED
+    }
+    else {
+#endif
+        entry = CONST_STRING(interp, "runtime/parrot/dynext/");
+        VTABLE_push_string(interp, paths, entry);
+#ifdef ENABLE_PARROT_LIBRARY_INSTALLED
+    }
+#endif
     entry = CONST_STRING(interp, "");
-    VTABLE_push_string(interp, paths, entry);
-    entry = CONST_STRING(interp, "lib/parrot/dynext/");
     VTABLE_push_string(interp, paths, entry);
 
     /* shared exts */
