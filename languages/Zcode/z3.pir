@@ -41,7 +41,7 @@ Compile z3 to PIR and run it.
   .local pmc opt
   opt = getopts."get_options"(argv)
 
-  load_bytecode "z3main.pir"
+  load_bytecode "z3main"
   ini = global "zm_init"
   zc = ini()
   file = argv[0]

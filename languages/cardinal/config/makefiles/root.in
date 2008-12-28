@@ -25,14 +25,17 @@ PBC_TO_EXE    = $(BUILD_DIR)/pbc_to_exe$(EXE)
 
 ## places to look for things
 PARROT_DYNEXT = $(BUILD_DIR)/runtime/parrot/dynext
-PGE_LIBRARY   = $(BUILD_DIR)/runtime/parrot/library/PGE
+PARROT_LIB    = $(BUILD_DIR)/runtime/parrot/library
+PCT           = $(PARROT_LIB)/PCT.pbc
+PGE_LIBRARY   = $(PARROT_LIB)/PGE
 PERL6GRAMMAR  = $(PGE_LIBRARY)/Perl6Grammar.pbc
 NQP           = $(BUILD_DIR)/compilers/nqp/nqp.pbc
-PCT           = $(BUILD_DIR)/runtime/parrot/library/PCT.pbc
 
 PMC_DIR       = src/pmc
 
-all: cardinal.pbc test.pir
+build: cardinal.pbc
+
+all: build Makefile cardinal$(EXE) installable
 
 CARDINAL_GROUP = $(PMC_DIR)/cardinal_group$(LOAD_EXT)
 
@@ -70,6 +73,7 @@ BUILTINS_PIR = \
   src/builtins/eval.pir \
   src/classes/Continuation.pir \
 
+DOCS = README
 # PMCS = cardinal
 # PMC_SOURCES = $(PMC_DIR)/cardinal.pmc
 
@@ -104,16 +108,14 @@ src/gen_builtins.pir: $(BUILTINS_PIR)
 Makefile: config/makefiles/root.in
 	cd $(BUILD_DIR) && $(RECONFIGURE) --step=gen::languages --languages=$(HLLNAME)
 
-installable : installable_$(HLLNAME)@exe@
-	$(CP) installable_$(HLLNAME)@exe@ $(BUILD_DIR)
-
 # This is a listing of all targets, that are meant to be called by users
 help:
 	@echo ""
 	@echo "Following targets are available for the user:"
 	@echo ""
-	@echo "  all:               cardinal.pbc"
+	@echo "  build:             cardinal.pbc"
 	@echo "                     This is the default."
+	@echo "  all:               cardinal.pbc cardinal@exe@ installable"
 	@echo "  installable:       Create self-hosting bins and libs."
 	@echo "  install:           Install the installable targets and docs."
 	@echo ""
@@ -140,6 +142,22 @@ arraytest: all
 hashtest: all
 	$(PERL) t/harness --tests-from-dir=hash
 
+# TODO: rename build_dir. basic run for missing libs
+test-installable : installable
+	./installable_$(HLLNAME)@exe@ t/00-sanity.t
+
+installable : installable_$(HLLNAME)@exe@ $(HLLNAME).pbc
+	$(CP) installable_$(HLLNAME)@exe@ $(BUILD_DIR)
+	$(CP) $(HLLNAME).pbc $(PARROT_LIB)/$(HLLNAME).pbc
+
+install : installable
+	$(CP) installable_$(HLLNAME)@exe@ $(DESTDIR)$(BIN_DIR)/parrot-$(HLLNAME)@exe@
+	$(CP) $(HLLNAME).pbc $(DESTDIR)$(LIB_DIR)/parrot/library/$(HLLNAME).pbc
+#IF(has_pod2man):	$(POD2MAN) $(HLLNAME).pir > $(DESTDIR)$(MANDIR)/man1/parrot-$(HLLNAME).1
+	$(MKPATH) $(DESTDIR)$(DOC_DIR)/languages/$(HLLNAME)
+	$(CP) $(DOCS) $(DESTDIR)$(DOC_DIR)/languages/$(HLLNAME)
+
+
 # this target has nothing to do
 testclean:
 
@@ -151,6 +169,8 @@ CLEANUPS = \
   cardinal$(O) \
   cardinal$(EXE) \
   installable_cardinal$(EXE) \
+  $(PARROT_LIB)/$(HLLNAME).pbc \
+  $(BUILD_DIR)/installable_cardinal@exe@ \
   src/gen_grammar.pir \
   src/gen_actions.pir \
   src/gen_builtins.pir \

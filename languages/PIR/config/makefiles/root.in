@@ -1,7 +1,8 @@
 # $Id$
 
 ## arguments we want to run parrot with
-PARROT_ARGS =
+PARROT_ARGS   =
+HLLNAME       = pirc
 
 ## configuration settings
 BUILD_DIR     = @build_dir@
@@ -14,30 +15,32 @@ PERL          = @perl@
 RM_RF         = @rm_rf@
 CP            = @cp@
 MKPATH        = @mkpath@
-POD2MAN       = @pod2man@
+#IF(has_pod2man):POD2MAN       = @pod2man@
+
+#IF(parrot_is_shared and !(cygwin|win32)):export LD_RUN_PATH := @blib_dir@:$(LD_RUN_PATH)
+#IF(darwin):export DYLD_LIBRARY_PATH := @blib_dir@:$(DYLD_LIBRARY_PATH)
+PARROT        = ../../parrot@exe@
+PBC_TO_EXE    = ../../pbc_to_exe@exe@
 CAT           = $(PERL) -MExtUtils::Command -e cat
 BUILD_DYNPMC  = $(PERL) $(BUILD_DIR)/tools/build/dynpmc.pl
 RECONFIGURE   = $(PERL) $(BUILD_DIR)/tools/dev/reconfigure.pl
-#CONDITIONED_LINE(darwin):
-#CONDITIONED_LINE(darwin):# MACOSX_DEPLOYMENT_TARGET must be defined for OS X compilation/linking
-#CONDITIONED_LINE(darwin):export MACOSX_DEPLOYMENT_TARGET := @osx_version@
-#CONDITIONED_LINE(cygchkdll):SHRPENV  = env PATH="@build_dir@/blib/lib:$(PATH)"
-#INVERSE_CONDITIONED_LINE(cygchkdll):SHRPENV  = env LD_RUN_PATH="@build_dir@/blib/lib"
-PARROT        = $(SHRPENV) ../../parrot@exe@
-PBC_TO_EXE    = $(SHRPENV) ../../pbc_to_exe@exe@
+#IF(darwin):
+#IF(darwin):# MACOSX_DEPLOYMENT_TARGET must be defined for OS X compilation/linking
+#IF(darwin):export MACOSX_DEPLOYMENT_TARGET := @osx_version@
 
 ## places to look for things
 PARROT_DYNEXT = $(BUILD_DIR)/runtime/parrot/dynext
-PGE_LIBRARY   = $(BUILD_DIR)/runtime/parrot/library/PGE
+PARROT_LIB    = $(BUILD_DIR)/runtime/parrot/library
+PCT           = $(PARROT_LIB)/PCT.pbc
+PGE_LIBRARY   = $(PARROT_LIB)/PGE
 PERL6GRAMMAR  = $(PGE_LIBRARY)/Perl6Grammar.pbc
 NQP           = $(BUILD_DIR)/compilers/nqp/nqp.pbc
-PCT           = $(BUILD_DIR)/runtime/parrot/library/PCT.pbc
 
 PMC_DIR       = src/pmc
 
-all: pirc.pbc 
+build: pirc.pbc 
 
-#PERL6_GROUP = $(PMC_DIR)/perl6_group$(LOAD_EXT)
+all: build Makefile $(HLLNAME)@exe@ installable
 
 SOURCES = pirc.pir \
   src/gen_grammar.pir \
@@ -57,8 +60,18 @@ PASMGRAMMAR = src/pasm/gen_pasm.pbc \
   src/pasm/gen_pasm_core.pbc
 
 # the default target
-pirc.pbc:  $(SOURCES) $(PASMGRAMMAR)
+pirc.pbc: $(SOURCES) $(PASMGRAMMAR)
 	$(PARROT) $(PARROT_ARGS) -o pirc.pbc pirc.pir
+
+$(HLLNAME)@exe@: $(HLLNAME).pbc
+	$(PBC_TO_EXE) $(HLLNAME).pbc
+
+installable : installable_$(HLLNAME)@exe@ $(HLLNAME).pbc
+	$(CP) installable_$(HLLNAME)@exe@ $(BUILD_DIR)
+	$(CP) $(HLLNAME).pbc $(PARROT_LIB)/$(HLLNAME).pbc
+
+installable_$(HLLNAME)@exe@ : $(HLLNAME).pbc
+	$(PBC_TO_EXE) $(HLLNAME).pbc --install
 
 src/gen_grammar.pir: $(PERL6GRAMMAR) src/pir.pg
 	$(PARROT) $(PARROT_ARGS) $(PERL6GRAMMAR) \
@@ -126,8 +139,10 @@ help:
 	@echo ""
 	@echo "Following targets are available for the user:"
 	@echo ""
-	@echo "  all:               perl6.pbc"
+	@echo "  build:             pirc.pbc"
 	@echo "                     This is the default."
+	@echo "  all:               pirc.pbc pirc@exe@ installable"
+	@echo ""
 	@echo "Testing:"
 	@echo "  test:              Run the test suite."
 	@echo "  testclean:         Clean up test results."

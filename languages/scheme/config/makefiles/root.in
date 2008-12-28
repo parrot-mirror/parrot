@@ -2,19 +2,15 @@
 # $Id$
 
 # Makefile for languages/scheme
-HLLNAME          = scheme
+HLLNAME       = scheme
 
 # Set up commands
 PERL          = @perl@
 RM_F          = @rm_f@
 RECONFIGURE   = $(PERL) @build_dir@/tools/dev/reconfigure.pl
-#CONDITIONED_LINE(darwin):
-#CONDITIONED_LINE(darwin):# MACOSX_DEPLOYMENT_TARGET must be defined for OS X compilation/linking
-#CONDITIONED_LINE(darwin):export MACOSX_DEPLOYMENT_TARGET := @osx_version@
-#CONDITIONED_LINE(cygchkdll):SHRPENV  = env PATH="@build_dir@/blib/lib:$(PATH)"
-#INVERSE_CONDITIONED_LINE(cygchkdll):SHRPENV  = env LD_RUN_PATH="@build_dir@/blib/lib"
-PARROT        = $(SHRPENV) ../../parrot@exe@
-PBC_TO_EXE    = $(SHRPENV) ../../pbc_to_exe@exe@
+#IF(darwin):
+#IF(darwin):# MACOSX_DEPLOYMENT_TARGET must be defined for OS X compilation/linking
+#IF(darwin):export MACOSX_DEPLOYMENT_TARGET := @osx_version@
 
 # Set up directories
 BUILD_DIR     = @build_dir@

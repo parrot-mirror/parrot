@@ -12,14 +12,12 @@ BIN_DIR       = @bin_dir@
 LIB_DIR       = @lib_dir@
 DOC_DIR       = @doc_dir@
 MANDIR        = @mandir@
-LIBRARY_DIR   = $(BUILD_DIR)/runtime/parrot/library
 INCLUDE_DIR   = $(BUILD_DIR)/include
 PMCDIR        = src/pmc
 PARROT_DYNEXT = $(BUILD_DIR)/runtime/parrot/dynext
 PARROT_LIB    = $(BUILD_DIR)/runtime/parrot/library
 PIPPDIR       = $(BUILD_DIR)/languages/pipp
 HASHDIR       = $(PIPPDIR)/src
-PARROT_DYNEXT = @build_dir@/runtime/parrot/dynext
 
 # Set up commands
 #IF(parrot_is_shared and !(cygwin|win32)):export LD_RUN_PATH := @blib_dir@:$(LD_RUN_PATH)
@@ -35,7 +33,7 @@ MKPATH        = @mkpath@
 RECONFIGURE   = $(PERL) $(BUILD_DIR)/tools/dev/reconfigure.pl
 PMCBUILD      = $(PERL) @build_dir@/tools/build/dynpmc.pl
 NQP           = $(BUILD_DIR)/compilers/nqp/nqp.pbc
-PCT           = $(BUILD_DIR)/runtime/parrot/library/PCT.pbc
+PCT           = $(PARROT_LIB)/PCT.pbc
 CC            = @cc@
 #copy/pasta from CFLAGS in config/gen/makefiles/dynpmc_pl.in
 CFLAGS        = @ccflags@ @cc_shared@ @cc_debug@ @ccwarn@ @cc_hasjit@ @cg_flag@ @gc_flag@

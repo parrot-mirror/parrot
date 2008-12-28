@@ -15,16 +15,19 @@ MANDIR	      = @mandir@
 
 PERL          = @perl@
 RM_F          = @rm_f@
+CP            = @cp@
+MKPATH        = @mkpath@
+#IF(has_pod2man):POD2MAN       = pod2man
 JAKOC         = $(PERL) -I lib jakoc
-#CONDITIONED_LINE(cygchkdll):SHRPENV  = env PATH="@build_dir@/blib/lib:$(PATH)"
-#INVERSE_CONDITIONED_LINE(cygchkdll):SHRPENV  = env LD_RUN_PATH="@build_dir@/blib/lib"
-INTERP        = $(SHRPENV) ../../@test_prog@
-PBC_TO_EXE    = $(SHRPENV) ../../pbc_to_exe@exe@
-BUILD_DIR     = @build_dir@
+
+#IF(parrot_is_shared and !(cygwin|win32)):export LD_RUN_PATH := @blib_dir@:$(LD_RUN_PATH)
+#IF(darwin):export DYLD_LIBRARY_PATH := @blib_dir@:$(DYLD_LIBRARY_PATH)
+INTERP        = ../../@test_prog@
+PBC_TO_EXE    = ../../pbc_to_exe@exe@
 RECONFIGURE   = $(PERL) @build_dir@/tools/dev/reconfigure.pl
-#CONDITIONED_LINE(darwin):
-#CONDITIONED_LINE(darwin):# MACOSX_DEPLOYMENT_TARGET must be defined for OS X compilation/linking
-#CONDITIONED_LINE(darwin):export MACOSX_DEPLOYMENT_TARGET := @osx_version@
+#IF(darwin):
+#IF(darwin):# MACOSX_DEPLOYMENT_TARGET must be defined for OS X compilation/linking
+#IF(darwin):export MACOSX_DEPLOYMENT_TARGET := @osx_version@
 
 DOCS = README MAINTAINER
 
@@ -137,7 +140,7 @@ install : installable
 	$(CP) jako $(DESTDIR)$(BIN_DIR)/parrot-jako
 	$(CP) jakoc $(DESTDIR)$(BIN_DIR)/parrot-jakoc
 	$(CP) -R lib/Jako $(DESTDIR)$(PERLLIB_DIR)
-	$(POD2MAN) docs/jako.pod > $(DESTDIR)$(MANDIR)/man1/parrot-$(HLLNAME).1
+#IF(has_pod2man):	$(POD2MAN) docs/jako.pod > $(DESTDIR)$(MANDIR)/man1/parrot-$(HLLNAME).1
 	$(MKPATH) $(DESTDIR)$(DOC_DIR)/languages/$(HLLNAME)
 	$(MKPATH) $(DESTDIR)$(DOC_DIR)/languages/$(HLLNAME)/examples
 	$(CP) $(DOCS) $(DESTDIR)$(DOC_DIR)/languages/$(HLLNAME)

@@ -10,28 +10,34 @@ LOAD_EXT    = @load_ext@
 MAKE        = @make_c@
 RM_F        = @rm_f@
 PERL        = @perl@
+CP          = @cp@
+MKPATH      = @mkpath@
+#IF(has_pod2man):POD2MAN       = @pod2man@
+
+#IF(parrot_is_shared and !(cygwin|win32)):export LD_RUN_PATH := @blib_dir@:$(LD_RUN_PATH)
+#IF(darwin):export DYLD_LIBRARY_PATH := @blib_dir@:$(DYLD_LIBRARY_PATH)
+PARROT      = ../../parrot@exe@
+PBC_TO_EXE  = ../../pbc_to_exe@exe@
+PBC_MERGE   = ../../pbc_merge@exe@
 PGE         = $(PARROT) ../../runtime/parrot/library/PGE/Perl6Grammar.pir
 TGE         = $(PARROT) ../../compilers/tge/tgc.pir
 RECONFIGURE = $(PERL) @build_dir@/tools/dev/reconfigure.pl
 PMCBUILD    = $(PERL) @build_dir@/tools/build/dynpmc.pl
-#CONDITIONED_LINE(darwin):
-#CONDITIONED_LINE(darwin):# MACOSX_DEPLOYMENT_TARGET must be defined for OS X compilation/linking
-#CONDITIONED_LINE(darwin):export MACOSX_DEPLOYMENT_TARGET := @osx_version@
-#CONDITIONED_LINE(cygchkdll):SHRPENV  = env PATH="@build_dir@/blib/lib:$(PATH)"
-#INVERSE_CONDITIONED_LINE(cygchkdll):SHRPENV  = env LD_RUN_PATH="@build_dir@/blib/lib"
-PARROT      = $(SHRPENV) ../../parrot@exe@
-PBC_TO_EXE  = $(SHRPENV) ../../pbc_to_exe@exe@
-PBC_MERGE   = $(SHRPENV) ../../pbc_merge@exe@
+#IF(darwin):
+#IF(darwin):# MACOSX_DEPLOYMENT_TARGET must be defined for OS X compilation/linking
+#IF(darwin):export MACOSX_DEPLOYMENT_TARGET := @osx_version@
 
 ## places to look for things
 LIBPATH       = src/lib
 PMCDIR        = src/pmc
 PARROT_DYNEXT = @build_dir@/runtime/parrot/dynext
+PARROT_LIB    = @build_dir@/runtime/parrot/library
 BUILD_DIR     = @build_dir@
 BIN_DIR       = @bin_dir@
 LIB_DIR       = @lib_dir@
 DOC_DIR       = @doc_dir@
 MANDIR	      = @mandir@
+
 
 PMCS = \
  lua \
@@ -136,8 +142,10 @@ test-installable : installable
 
 install : installable
 	$(CP) installable_$(HLLNAME)@exe@ $(DESTDIR)$(BIN_DIR)/parrot-$(HLLNAME)@exe@
+	$(CP) $(HLLNAME).pbc $(DESTDIR)$(LIB_DIR)/parrot/library/$(HLLNAME).pbc
+	$(CP) lualibs.pbc $(DESTDIR)$(LIB_DIR)/parrot/library/lualibs.pbc
 	@cd $(PMCDIR) && $(PMCBUILD) copy "--destination=$(DESTDIR)$(LIB_DIR)/parrot/dynext" $(PMCS)
-	$(POD2MAN) doc/running.pod > $(DESTDIR)$(MANDIR)/man1/parrot-$(HLLNAME).1
+#IF(has_pod2man):	$(POD2MAN) doc/running.pod > $(DESTDIR)$(MANDIR)/man1/parrot-$(HLLNAME).1
 	$(MKPATH) $(DESTDIR)$(DOC_DIR)/languages/$(HLLNAME)
 	$(CP) $(DOCS) $(DESTDIR)$(DOC_DIR)/languages/$(HLLNAME)
 
@@ -158,8 +166,8 @@ src/POSTGrammar_gen.pir: src/POSTGrammar.tg
 	$(PERL) -i.bak -pe "s|'PAST::|'PAST;|" src/POSTGrammar_gen.pir
 
 lua.pbc: lua.pir src/lua51.pir src/grammar51.pir src/lua51_gen.pir src/PASTGrammar_gen.pir src/POSTGrammar_gen.pir $(LIB_SRCS)
-	$(PARROT) -o lua_i.pbc --output-pbc lua.pir
-	$(PBC_MERGE) -o lua.pbc lua_i.pbc ../../compilers/tge/TGE/Rule.pbc
+	$(PARROT) -o lua.pbc --output-pbc lua.pir
+# $(PBC_MERGE) -o lua.pbc lua_i.pbc ../../compilers/tge/TGE/Rule.pbc
 
 lua@exe@: lua.pbc
 	$(PBC_TO_EXE) lua.pbc
@@ -167,7 +175,16 @@ lua@exe@: lua.pbc
 installable_lua@exe@: lua.pbc
 	$(PBC_TO_EXE) lua.pbc --install
 
-installable: installable_lua@exe@ $(PMCDIR)/lua_group$(LOAD_EXT)
+$(PARROT_LIB)/$(HLLNAME).pbc: $(HLLNAME).pbc
+	$(CP) $(HLLNAME).pbc $(PARROT_LIB)/$(HLLNAME).pbc
+
+$(PARROT_LIB)/lualibs.pbc: $(LIBPATH)/lualibs.pbc
+	$(CP) $(LIBPATH)/lualibs.pbc $(PARROT_LIB)/lualibs.pbc
+
+installable: installable_lua@exe@ $(PMCDIR)/lua_group$(LOAD_EXT) \
+  $(PARROT_LIB)/$(HLLNAME).pbc \
+  $(PARROT_LIB)/lualibs.pbc
+	$(CP) installable_$(HLLNAME)@exe@ $(BUILD_DIR)
 
 $(LIBPATH)/lualibs.pbc: $(LIB_PBCS)
 	$(PBC_MERGE) -o $(LIBPATH)/lualibs.pbc $(LIB_PBCS)
@@ -336,7 +353,8 @@ BUILD_CLEANERS = \
  "$(PMCDIR)/*$(LOAD_EXT)" \
  "$(PMCDIR)/*$(O)" \
  "$(LIBPATH)/*.pbc" \
- installable_$(HLLNAME)@exe@ \
+ $(PARROT_LIB)/$(HLLNAME).pbc \
+ $(PARROT_LIB)/lualibs.pbc
 
 clean:
 	$(RM_F) $(BUILD_CLEANERS) $(TEST_CLEANERS)
