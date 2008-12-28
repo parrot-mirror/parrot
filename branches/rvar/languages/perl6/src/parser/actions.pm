@@ -512,55 +512,12 @@ method statement_prefix($/) {
 }
 
 
-method multi_declarator($/, $key) {
-    my $past := $( $/{$key} );
-
-    # If we just got a routine_def, make it a sub.
-    if $key eq 'routine_def' {
-        create_sub($/, $past);
+method multi_declarator($/) {
+    my $sym := ~$<sym>;
+    my $past;
+    if $( $<declarator> ) {
+        $past := $( $<declarator> );
     }
-
-    # If we have an only, proto or multi, we must have a name.
-    if $<sym> ne "" && $past.name() eq "" {
-        $/.panic("'" ~ $<sym> ~ "' can only be used on named routines");
-    }
-
-    # If it was multi or a proto, then emit a :multi.
-    if $<sym> eq 'multi' || $<sym> eq 'proto' {
-        # For now, if this is a multi we need to add code to transform the sub's
-        # multi container to a Perl6MultiSub.
-        $past.loadinit().push(
-            PAST::Op.new(
-                :pasttype('call'),
-                :name('!TOPERL6MULTISUB'),
-                PAST::Var.new(
-                    :name('block'),
-                    :scope('register')
-                )
-            )
-        );
-
-        # Flag the sub as multi, but it will get the signature from the
-        # signature object, so don't worry about that here.
-        my $pirflags := $past.pirflags();
-        unless $pirflags { $pirflags := '' }
-        $past.pirflags($pirflags  ~ ' :multi()');
-    }
-
-    # Protos also need the proto property setting on them.
-    if $<sym> eq 'proto' {
-        $past.loadinit().push(
-            PAST::Op.new(
-                :inline('    setprop %0, "proto", %1'),
-                PAST::Var.new(
-                    :name('block'),
-                    :scope('register')
-                ),
-                1
-            )
-        );
-    }
-
     make $past;
 }
 
@@ -2055,14 +2012,34 @@ method scope_declarator($/) {
     if $past.isa(PAST::Var) {
         my $scope := $sym eq 'my' ?? 'lexical' !! 'package';
         our $?BLOCK;
-        $?BLOCK.symbol( $past.name() , :scope($scope) );
+        my $symbol := $?BLOCK.symbol( $past.name() );
+        $symbol<scope> := $scope;
+        $past.viviself( $symbol<viviself> );
+        $past := PAST::Op.new( :pirop('setprop'), $past, 'type', $symbol<type>[0] );
     }
     make $past;
 }
 
 
 method scoped($/) {
-    my $past := $( $<declarator> );
+    my $past;
+    if $<declarator> {
+        $past := $( $<declarator> );
+    }
+    elsif $<multi_declarator> {
+        $past := $( $<multi_declarator> );
+        if $past.isa(PAST::Var) {
+            our $?BLOCK;
+            my $symbol := $?BLOCK.symbol( $past.name() );
+            my $type := $symbol<type>;
+            for @($<fulltypename>) {
+                $type.push( $( $_ ) );
+            }
+            $symbol<viviself> := PAST::Op.new( :pirop('new PsP'), 
+                                     'ObjectRef', 
+                                     $( $<fulltypename>[0] ) );
+        }
+    }
     make $past;
 }
 
@@ -2079,11 +2056,11 @@ method declarator($/) {
 method variable_declarator($/) {
     my $past := $( $<variable> );
     $past.isdecl(1);
-    $past.viviself(
-        PAST::Op.new( :pirop('new Ps'),
-                      container_type($<variable><sigil>)
-        )
-    );
+    my $name     := $past.name();
+    my $type     := List.new();
+    my $viviself := container_type($<variable><sigil>);
+    our $?BLOCK;
+    $?BLOCK.symbol($name, :type($type), :viviself($viviself) );
     make $past;
 }
 
@@ -2193,6 +2170,40 @@ method circumfix($/, $key) {
 
 method value($/, $key) {
     make $( $/{$key} );
+}
+
+
+method typename($/) {
+    # Extract shortname part of identifier, if there is one.
+    my $ns := Perl6::Compiler.parse_name($<name>);
+    my $shortname := $ns.pop();
+
+    # determine type's scope
+    my $scope := '';
+    our @?BLOCK;
+    if +$ns == 0 && @?BLOCK {
+        for @?BLOCK {
+            if defined($_) && !$scope {
+                my $sym := $_.symbol($shortname);
+                if defined($sym) && $sym<scope> { $scope := $sym<scope>; }
+            }
+        }
+    }
+
+    # Create default PAST node for package lookup of type.
+    my $past := PAST::Var.new(
+        :name($shortname),
+        :namespace($ns),
+        :node($/),
+        :scope($scope ?? $scope !! 'package'),
+    );
+
+    make $past;
+}
+
+
+method fulltypename($/) {
+    make $( $<typename> );
 }
 
 
@@ -2337,36 +2348,6 @@ method quote_term($/, $key) {
         }
         $past := PAST::Op.new( $past, :name('prefix:~'), :pasttype('call') );
     }
-    make $past;
-}
-
-
-method typename($/) {
-    # Extract shortname part of identifier, if there is one.
-    my $ns := Perl6::Compiler.parse_name($<name>);
-    my $shortname := $ns.pop();
-
-    # determine type's scope
-    my $scope := '';
-    our @?BLOCK;
-    if +$ns == 0 && @?BLOCK {
-        for @?BLOCK {
-            if defined($_) && !$scope {
-                my $sym := $_.symbol($shortname);
-                if defined($sym) && $sym<scope> { $scope := $sym<scope>; }
-            }
-        }
-    }
-
-    # Create default PAST node for package lookup of type.
-    my $past := PAST::Var.new(
-        :name($shortname),
-        :namespace($ns),
-        :node($/),
-        :scope($scope ?? $scope !! 'package'),
-        :viviself('Failure')
-    );
-
     make $past;
 }
 
@@ -2955,41 +2936,6 @@ sub make_handles_method_from_pair($/, $pair, $attr_name) {
     }
 
     $meth
-}
-
-
-# This takes an array of match objects of type constraints and builds a type
-# representation out of them.
-sub build_type($cons_pt) {
-    # Build the type constraints list for the variable.
-    my $num_types := 0;
-    my $type_cons := PAST::Op.new();
-    for $cons_pt {
-        $type_cons.push( $( $_<typename> ) );
-        $num_types := $num_types + 1;
-    }
-
-    # If there were none, it's Object.
-    if $num_types == 0 {
-        $type_cons.push(PAST::Var.new(
-            :name('Object'),
-            :scope('package')
-        ));
-        $num_types := 1;
-    }
-
-    # Now need to apply the type constraints. How many are there?
-    if $num_types == 1 {
-        # Just the first one.
-        $type_cons := $type_cons[0];
-    }
-    else {
-        # Many; make an and junction of types.
-        $type_cons.pasttype('call');
-        $type_cons.name('all');
-    }
-
-    $type_cons
 }
 
 
