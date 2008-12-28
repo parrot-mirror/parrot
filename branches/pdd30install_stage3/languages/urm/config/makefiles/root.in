@@ -5,14 +5,19 @@
 # Setup of some commands
 RM_F          = @rm_f@
 PERL          = @perl@
+CP            = @cp@
 BUILD_DIR     = @build_dir@
+BIN_DIR       = @bin_dir@
+DOC_DIR       = @doc_dir@
+MANDIR	      = @mandir@
+
+#IF(parrot_is_shared and !(cygwin|win32)):export LD_RUN_PATH := @blib_dir@:$(LD_RUN_PATH)
+#IF(darwin):export DYLD_LIBRARY_PATH := @blib_dir@:$(DYLD_LIBRARY_PATH)
+PARROT        = ../../parrot@exe@
 RECONFIGURE   = $(PERL) @build_dir@/tools/dev/reconfigure.pl
-#CONDITIONED_LINE(darwin):
-#CONDITIONED_LINE(darwin):# MACOSX_DEPLOYMENT_TARGET must be defined for OS X compilation/linking
-#CONDITIONED_LINE(darwin):export MACOSX_DEPLOYMENT_TARGET := @osx_version@
-#CONDITIONED_LINE(cygchkdll):SHRPENV  = env PATH="@build_dir@/blib/lib:$(PATH)"
-#INVERSE_CONDITIONED_LINE(cygchkdll):SHRPENV  = env LD_RUN_PATH="@build_dir@/blib/lib"
-PARROT        = $(SHRPENV) ../../parrot@exe@
+#IF(darwin):
+#IF(darwin):# MACOSX_DEPLOYMENT_TARGET must be defined for OS X compilation/linking
+#IF(darwin):export MACOSX_DEPLOYMENT_TARGET := @osx_version@
 
 default: all
 
@@ -63,6 +68,10 @@ test-installable : test
 
 install : build
 	$(CP) urmc $(DESTDIR)$(BIN_DIR)/parrot-urmc
+#IF(has_pod2man):	$(MKPATH) $(DESTDIR)$(MANDIR)/man1
+#IF(has_pod2man):	$(POD2MAN) urmc > $(DESTDIR)$(MANDIR)/man1/parrot-urmc.1
+	$(MKPATH) $(DESTDIR)$(DOC_DIR)/languages/unlambda
+	$(CP) $(DOCS) $(DESTDIR)$(DOC_DIR)/languages/unlambda
 
 installable: build
 

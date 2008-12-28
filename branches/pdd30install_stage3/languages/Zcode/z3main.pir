@@ -79,8 +79,8 @@ done:
   .param pmc opts
 
   .local pmc instance
-  $I0 = typeof self
-  instance = new $I0
+  $P0 = typeof self
+  instance = new $P0
   instance."load"(file)
   instance."set_opts"(opts)
   .return (instance)
@@ -172,8 +172,8 @@ vers_ok:
   addattribute $P0, "ops"
   addattribute $P0, "code"
   addattribute $P0, "temp"
-  $I0 = typeof $P0
-  comp = new $I0
+  $P1 = typeof $P0
+  comp = new $P1
   # ref instance vars
   im = getattribute self, "Zmachine\0image"
   setattribute comp, "Zmachine\0image", im

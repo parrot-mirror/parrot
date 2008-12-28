@@ -19,30 +19,33 @@ PERL          = @perl@
 RM_RF         = @rm_rf@
 CP            = @cp@
 MKPATH        = @mkpath@
-POD2MAN       = @pod2man@
+#IF(has_pod2man):POD2MAN       = @pod2man@
+
+#IF(parrot_is_shared and !(cygwin|win32)):export LD_RUN_PATH := @blib_dir@:$(LD_RUN_PATH)
+#IF(darwin):export DYLD_LIBRARY_PATH := @blib_dir@:$(DYLD_LIBRARY_PATH)
+PARROT        = $(BUILD_DIR)/parrot@exe@
+PBC_TO_EXE    = $(BUILD_DIR)/pbc_to_exe@exe@
 CAT           = $(PERL) -MExtUtils::Command -e cat
 BUILD_DYNPMC  = $(PERL) $(BUILD_DIR)/tools/build/dynpmc.pl
 RECONFIGURE   = $(PERL) $(BUILD_DIR)/tools/dev/reconfigure.pl
-POD2MAN       = @pod2man@
-#CONDITIONED_LINE(darwin):
-#CONDITIONED_LINE(darwin):# MACOSX_DEPLOYMENT_TARGET must be defined for OS X compilation/linking
-#CONDITIONED_LINE(darwin):export MACOSX_DEPLOYMENT_TARGET := @osx_version@
-#CONDITIONED_LINE(cygchkdll):SHRPENV  = env PATH="@build_dir@/blib/lib:$(PATH)"
-#INVERSE_CONDITIONED_LINE(cygchkdll):SHRPENV  = env LD_RUN_PATH="@build_dir@/blib/lib"
-PARROT        = $(SHRPENV) $(BUILD_DIR)/parrot@exe@
-PBC_TO_EXE    = $(SHRPENV) $(BUILD_DIR)/pbc_to_exe@exe@
+#IF(darwin):
+#IF(darwin):# MACOSX_DEPLOYMENT_TARGET must be defined for OS X compilation/linking
+#IF(darwin):export MACOSX_DEPLOYMENT_TARGET := @osx_version@
 
 ## places to look for things
 PARROT_DYNEXT = $(BUILD_DIR)/runtime/parrot/dynext
-PGE_LIBRARY   = $(BUILD_DIR)/runtime/parrot/library/PGE
+PARROT_LIB    = $(BUILD_DIR)/runtime/parrot/library
+PCT           = $(PARROT_LIB)/PCT.pbc
+PGE_LIBRARY   = $(PARROT_LIB)/PGE
 PERL6GRAMMAR  = $(PGE_LIBRARY)/Perl6Grammar.pbc
 NQP           = $(BUILD_DIR)/compilers/nqp/nqp.pbc
-PCT           = $(BUILD_DIR)/runtime/parrot/library/PCT.pbc
 
 PMC_DIR       = src/pmc
 DOCS = MAINTAINER
 
-all: c99.pbc src/cpp/cpp.pbc
+build: c99.pbc src/cpp/cpp.pbc
+
+all: build Makefile $(HLLNAME)@exe@ installable
 
 C_GROUP = $(PMC_DIR)/c_group$(LOAD_EXT)
 
@@ -55,23 +58,21 @@ BUILTINS_PIR = \
   src/builtins/say.pir \
 
 # the default target
-c99.pbc:  $(SOURCES)
+c99.pbc: $(PARROT) $(SOURCES)
 	$(PARROT) $(PARROT_ARGS) -o c99.pbc c99.pir
 	cd src/cpp; $(MAKE)
 
 c99@exe@: c99.pbc
 	$(PBC_TO_EXE) c99.pbc
 
-installable : installable_c99@exe@ installable_cpp@exe@
-	$(CP) installable_c99@exe@ $(BUILD_DIR)
-	$(CP) installable_cpp@exe@ $(BUILD_DIR)
-
 installable_c99@exe@ : c99.pbc
 	$(PBC_TO_EXE) c99.pbc --install
 
+src/cpp/cpp.pbc: src/cpp/cpp.pir
+	cd src/cpp && $(MAKE) installable_cpp@exe@
+
 installable_cpp@exe@ : src/cpp/cpp.pbc
-	make installable_cpp@exe@ -C src/cpp
-	mv src/cpp/installable_cpp@exe@ installable_cpp@exe@
+	$(CP) src/cpp/installable_cpp@exe@ installable_cpp@exe@
 
 src/gen_grammar.pir: $(PERL6GRAMMAR) src/parser/grammar.pg
 	$(PARROT) $(PARROT_ARGS) $(PERL6GRAMMAR) \
@@ -86,7 +87,7 @@ src/gen_builtins.pir: $(BUILTINS_PIR)
 	$(CAT) $(BUILTINS_PIR) >src/gen_builtins.pir
 
 # regenerate the Makefile
-Makefile: config/makefiles/root.in
+Makefile: config/makefiles/root.in config/makefiles/cpp.in
 	cd $(BUILD_DIR) && $(RECONFIGURE) --step=gen::languages --languages=c99
 
 # This is a listing of all targets, that are meant to be called by users
@@ -94,7 +95,7 @@ help:
 	@echo ""
 	@echo "Following targets are available for the user:"
 	@echo ""
-	@echo "  all:               c.pbc"
+	@echo "  build:             c99.pbc"
 	@echo "                     This is the default."
 	@echo "  installable:       Create self-hosting bins and libs."
 	@echo "  install:           Install the installable targets and docs."
@@ -123,10 +124,18 @@ test-installable : installable
 install : installable
 	$(CP) installable_$(HLLNAME)@exe@ $(DESTDIR)$(BIN_DIR)/parrot-$(HLLNAME)@exe@
 	$(CP) installable_cpp@exe@ $(DESTDIR)$(BIN_DIR)/parrot-cpp@exe@
-	$(POD2MAN) $(HLLNAME).pir > $(DESTDIR)$(MANDIR)/man1/parrot-$(HLLNAME).1
-	$(POD2MAN) src/cpp/cpp.pir > $(DESTDIR)$(MANDIR)/man1/parrot-cpp.1
+	$(CP) $(HLLNAME).pbc $(DESTDIR)$(LIB_DIR)/parrot/library/$(HLLNAME).pbc
+	$(CP) src/cpp/cpp.pbc $(DESTDIR)$(LIB_DIR)/parrot/library/cpp.pbc
+#IF(has_pod2man):	$(POD2MAN) $(HLLNAME).pir > $(DESTDIR)$(MANDIR)/man1/parrot-$(HLLNAME).1
+#IF(has_pod2man):	$(POD2MAN) src/cpp/cpp.pir > $(DESTDIR)$(MANDIR)/man1/parrot-cpp.1
 	$(MKPATH) $(DESTDIR)$(DOC_DIR)/languages/$(HLLNAME)
 	$(CP) $(DOCS) $(DESTDIR)$(DOC_DIR)/languages/$(HLLNAME)
+
+installable : installable_c99@exe@ installable_cpp@exe@ $(HLLNAME).pbc src/cpp/cpp.pbc
+	$(CP) installable_c99@exe@ $(BUILD_DIR)
+	$(CP) installable_cpp@exe@ $(BUILD_DIR)
+	$(CP) $(HLLNAME).pbc $(PARROT_LIB)/$(HLLNAME).pbc
+	$(CP) src/cpp/cpp.pbc $(PARROT_LIB)/cpp.pbc
 
 # this target has nothing to do
 testclean:
@@ -140,6 +149,7 @@ CLEANUPS = \
   src/cpp/src/gen_actions.pir \
   src/cpp/src/gen_grammar.pir \
   src/cpp/src/gen_builtins.pir \
+  c99@exe@ \
   installable_*@exe@
 
 clean:

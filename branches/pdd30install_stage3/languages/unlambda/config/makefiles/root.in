@@ -14,30 +14,52 @@ DOC_DIR       = @doc_dir@
 MANDIR	      = @mandir@
 
 # Set up commands
-PERL            = @perl@
-RM_F            = @rm_f@
-RECONFIGURE     = $(PERL) @build_dir@/tools/dev/reconfigure.pl
-#CONDITIONED_LINE(darwin):
-#CONDITIONED_LINE(darwin):# MACOSX_DEPLOYMENT_TARGET must be defined for OS X compilation/linking
-#CONDITIONED_LINE(darwin):export MACOSX_DEPLOYMENT_TARGET := @osx_version@
+PERL          = @perl@
+RM_F          = @rm_f@
+CP            = @cp@
+MKPATH        = @mkpath@
+#IF(has_pod2man):POD2MAN       = pod2man
+
+#IF(parrot_is_shared and !(cygwin|win32)):export LD_RUN_PATH := @blib_dir@:$(LD_RUN_PATH)
+#IF(darwin):export DYLD_LIBRARY_PATH := @blib_dir@:$(DYLD_LIBRARY_PATH)
+PARROT        = ../../parrot@exe@
+PBC_TO_EXE    = ../../pbc_to_exe@exe@
+RECONFIGURE   = $(PERL) $(BUILD_DIR)/tools/dev/reconfigure.pl
+#IF(darwin):
+#IF(darwin):# MACOSX_DEPLOYMENT_TARGET must be defined for OS X compilation/linking
+#IF(darwin):export MACOSX_DEPLOYMENT_TARGET := @osx_version@
+
+## places to look for things
+PARROT_LIB    = $(BUILD_DIR)/runtime/parrot/library
+
+DOCS = MAINTAINER README
 
 # The default target
-default: build
+build : $(HLLNAME).pbc
+
+all : $(HLLNAME).pbc $(HLLNAME)@exe@ Makefile installable
 
 help :
 	@echo ""
 	@echo "Following targets are available for the user:"
 	@echo ""
-	@echo "  build:             does nothing."
+	@echo "  build:             unlambda.pbc"
 	@echo "                     This is the default target."
+	@echo "  all:               unlambda.pbc unlambda@exe@ installable"
+	@echo "  installable:       Create self-hosting bins and libs."
+	@echo "  install:           Install the installable targets and docs."
 	@echo ""
+	@echo "Testing:"
 	@echo "  test:              Run the test suite."
+	@echo "  testclean:         Clean up test results."
 	@echo ""
+	@echo "Cleaning:"
 	@echo "  clean:             Clean up temporary files."
-	@echo ""
 	@echo "  realclean:         Clean up generated files."
 	@echo ""
+	@echo "Misc:"
 	@echo "  help:              Print this help message."
+	@echo ""
 
 # regenerate the Makefile
 Makefile: config/makefiles/root.in
@@ -47,17 +69,48 @@ Makefile: config/makefiles/root.in
 build:
 	@echo "nothing to do"
 
-# cleaning up
+$(HLLNAME).pbc: unl.pir
+	$(PARROT) $(PARROT_ARGS) -o $@ unl.pir
 
-clean: 
-	@echo "nothing to do"
+$(HLLNAME)@exe@ : $(HLLNAME).pbc
+	$(PBC_TO_EXE) $(HLLNAME).pbc
 
-realclean: clean
-	$(RM_F) Makefile
+installable : installable_$(HLLNAME)@exe@ $(HLLNAME).pbc
+	$(CP) installable_$(HLLNAME)@exe@ $(BUILD_DIR)
+	$(CP) $(HLLNAME).pbc $(PARROT_LIB)/$(HLLNAME).pbc
+
+installable_unlambda@exe@: $(HLLNAME).pbc
+	$(PBC_TO_EXE) $(HLLNAME).pbc --install
+
+# TODO: test for installed libs, rename build_dir. basic run for missing libs
+test-installable : installable
+	./installable_$(HLLNAME)@exe@ examples/h.unl
+
+install : installable
+	$(CP) installable_$(HLLNAME)@exe@ $(DESTDIR)$(BIN_DIR)/parrot-unlambda@exe@
+	$(CP) $(HLLNAME).pbc $(DESTDIR)$(LIB_DIR)/parrot/library/$(HLLNAME).pbc
+#IF(has_pod2man):	$(POD2MAN) $(HLLNAME).pir > $(DESTDIR)$(MANDIR)/man1/parrot-unlambda.1
+	$(MKPATH) $(DESTDIR)$(DOC_DIR)/languages/unlambda
+	$(CP) $(DOCS) $(DESTDIR)$(DOC_DIR)/languages/unlambda
 
 # testing
 test: build
 	$(PERL) t/harness
+
+# cleaning up
+CLEANUPS = \
+  $(HLLNAME).pbc \
+  $(HLLNAME)@exe@ \
+  installable_$(HLLNAME)@exe@ \
+  $(PARROT_LIB)/$(HLLNAME).pbc
+
+clean:
+	$(RM_F) $(CLEANUPS)
+
+testclean: clean
+
+realclean: clean
+	$(RM_F) Makefile
 
 #
 # Local variables:

@@ -23,10 +23,10 @@ DEBUG         = @cc_debug@
 YACC          = @yacc@
 LEX           = @lex@
 RECONFIGURE   = $(PERL) @build_dir@/tools/dev/reconfigure.pl
-POD2MAN	      = @
-#CONDITIONED_LINE(darwin):
-#CONDITIONED_LINE(darwin):# MACOSX_DEPLOYMENT_TARGET must be defined for OS X compilation/linking
-#CONDITIONED_LINE(darwin):export MACOSX_DEPLOYMENT_TARGET := @osx_version@
+#IF(has_pod2man):POD2MAN       = @pod2man@
+#IF(darwin):
+#IF(darwin):# MACOSX_DEPLOYMENT_TARGET must be defined for OS X compilation/linking
+#IF(darwin):export MACOSX_DEPLOYMENT_TARGET := @osx_version@
 
 # Libraries:  Ordinarily, no special libraries are needed
 # for cola, but one of the following settings might be helpful

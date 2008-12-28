@@ -1,36 +1,38 @@
 # $Id$
 
 # Setup some commands
-HLLNAME          = punie
+HLLNAME       = punie
 LN_S          = @lns@
 PERL          = @perl@
 RM_F          = @rm_f@
 CP            = @cp@
 MKPATH        = @mkpath@
-POD2MAN       = @pod2man@
+#IF(has_pod2man):POD2MAN       = @pod2man@
 BUILD_DIR     = @build_dir@
 BIN_DIR       = @bin_dir@
 LIB_DIR       = @lib_dir@
 DOC_DIR       = @doc_dir@
 MANDIR	      = @mandir@
-RECONFIGURE   = $(PERL) @build_dir@/tools/dev/reconfigure.pl
-PGE_DIR       = ../../compilers/pge
-NQP_DIR       = ../../compilers/nqp
-#CONDITIONED_LINE(darwin):
-#CONDITIONED_LINE(darwin):# MACOSX_DEPLOYMENT_TARGET must be defined for OS X compilation/linking
-#CONDITIONED_LINE(darwin):export MACOSX_DEPLOYMENT_TARGET := @osx_version@
-#CONDITIONED_LINE(cygchkdll):SHRPENV  = env PATH="@build_dir@/blib/lib:$(PATH)"
-#INVERSE_CONDITIONED_LINE(cygchkdll):SHRPENV  = env LD_RUN_PATH="@build_dir@/blib/lib"
-PARROT        = $(SHRPENV) ../../parrot@exe@
-PBC_TO_EXE    = $(SHRPENV) ../../pbc_to_exe@exe@
+#IF(parrot_is_shared and !(cygwin|win32)):export LD_RUN_PATH := @blib_dir@:$(LD_RUN_PATH)
+#IF(darwin):export DYLD_LIBRARY_PATH := @blib_dir@:$(DYLD_LIBRARY_PATH)
+PARROT        = ../../parrot@exe@
+PBC_TO_EXE    = ../../pbc_to_exe@exe@
+CAT           = $(PERL) -MExtUtils::Command -e cat
+BUILD_DYNPMC  = $(PERL) $(BUILD_DIR)/tools/build/dynpmc.pl
+RECONFIGURE   = $(PERL) $(BUILD_DIR)/tools/dev/reconfigure.pl
+#IF(darwin):
+#IF(darwin):# MACOSX_DEPLOYMENT_TARGET must be defined for OS X compilation/linking
+#IF(darwin):export MACOSX_DEPLOYMENT_TARGET := @osx_version@
 
-PARROT_LIBRARY = ../../runtime/parrot/library
-PGE_LIBRARY   = ../../runtime/parrot/library/PGE
+PARROT_LIB    = $(BUILD_DIR)/runtime/parrot/library
+PGE_LIBRARY   = $(BUILD_DIR)/runtime/parrot/library/PGE
+PGE_DIR       = $(BUILD_DIR)/compilers/pge
+NQP_DIR       = $(BUILD_DIR)/compilers/nqp
 
 DOCS = MAINTAINER README overview.pod
 
 # the default target
-all: punie.pbc
+build: punie.pbc
 
 all: punie.pbc punie@exe@ installable_punie@exe@
 
@@ -40,7 +42,7 @@ SOURCES = punie.pir \
   src/builtins/builtins.pir \
 
 # the default target
-punie.pbc:  $(NQP_DIR)/nqp.pbc $(PGE_LIBRARY)/Perl6Grammar.pir $(SOURCES)
+punie.pbc: $(PARROT) $(NQP_DIR)/nqp.pbc $(PGE_LIBRARY)/Perl6Grammar.pir $(SOURCES)
 	$(PARROT) $(PGE_LIBRARY)/Perl6Grammar.pir --output=src/gen_punie.pir src/parser/grammar.pg
 	$(PARROT) $(NQP_DIR)/nqp.pbc --target=pir --output=src/gen_punie-actions.pir src/parser/actions.pm
 	$(PARROT) -o punie.pbc punie.pir
@@ -82,15 +84,17 @@ test-installable : installable
 
 install : installable
 	$(CP) installable_$(HLLNAME)@exe@ $(DESTDIR)$(BIN_DIR)/parrot-$(HLLNAME)@exe@
-	$(POD2MAN) punie.pir > $(DESTDIR)$(MANDIR)/man1/parrot-$(HLLNAME).1
-	$(MKPATH) $(DESTDIR)$(DOC_DIR)/languages/$(HLLNAME)
+	$(CP) $(HLLNAME).pbc $(DESTDIR)$(LIB_DIR)/parrot/library/$(HLLNAME).pbc
+#IF(has_pod2man):	$(POD2MAN) $(HLLNAME).pir > $(DESTDIR)$(MANDIR)/man1/parrot-$(HLLNAME).1
+	-$(MKPATH) $(DESTDIR)$(DOC_DIR)/languages/$(HLLNAME)
 	$(CP) $(DOCS) $(DESTDIR)$(DOC_DIR)/languages/$(HLLNAME)
 
 $(HLLNAME)@exe@: $(HLLNAME).pbc
 	$(PBC_TO_EXE) $(HLLNAME).pbc
 
-installable : installable_$(HLLNAME)@exe@
+installable : installable_$(HLLNAME)@exe@ $(HLLNAME).pbc
 	$(CP) installable_$(HLLNAME)@exe@ $(BUILD_DIR)
+	$(CP) $(HLLNAME).pbc $(PARROT_LIB)/$(HLLNAME).pbc
 
 installable_$(HLLNAME)@exe@ : $(HLLNAME).pbc
 	$(PBC_TO_EXE) $(HLLNAME).pbc --install
@@ -102,6 +106,7 @@ CLEANUPS = \
   punie.pbc \
   src/gen_punie.pir \
   src/gen_punie-actions.pir \
+  $(PARROT_LIB)/$(HLLNAME).pbc punie@exe@ installable_*
 
 clean: testclean
 	$(RM_F) $(CLEANUPS)

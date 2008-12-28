@@ -2,10 +2,10 @@
 # $Id$
 
 # Setup of some commands
-PERL   = @perl@
-RM_F   = @rm_f@
-MKPATH = @mkpath@
-CHMOD  = @chmod@
+PERL      = @perl@
+RM_F      = @rm_f@
+MKPATH    = @mkpath@
+CHMOD     = @chmod@
 PERLDOC   = @perldoc@
 BUILD_DIR = @build_dir@
 RECONFIGURE = $(PERL) tools/dev/reconfigure.pl
@@ -41,8 +41,8 @@ doc-prep:
 	$(MKPATH) ops
 
 packfile-c.pod: ../src/packfile.c
-#CONDITIONED_LINE(new_perldoc):	$(PERLDOC) -ud packfile-c.pod ../src/packfile.c 
-#INVERSE_CONDITIONED_LINE(new_perldoc):	$(PERLDOC) -u ../src/packfile.c > packfile-c.pod
+#IF(new_perldoc):	$(PERLDOC) -ud packfile-c.pod ../src/packfile.c
+#ELSE:	$(PERLDOC) -u ../src/packfile.c > packfile-c.pod
 
 clean:
 	$(RM_F) packfile-c.pod $(POD)
@@ -53,3 +53,8 @@ html:
 html-clean:
 	$(PERL) -I../lib -MParrot::Distribution -e "Parrot::Distribution->new()->delete_html_docs()"
 
+#
+# Local variables:
+# mode: makefile
+# ex: ft=make
+# End:

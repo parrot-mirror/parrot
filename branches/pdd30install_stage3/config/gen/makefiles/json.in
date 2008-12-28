@@ -3,13 +3,21 @@
 PERL     = @perl@
 RM_F     = @rm_f@
 PARROT   = ../../parrot@exe@
+RECONFIGURE   = $(PERL) @build_dir@/tools/dev/reconfigure.pl
+#IF(parrot_is_shared and !(cygwin|win32)):export LD_RUN_PATH := @blib_dir@:$(LD_RUN_PATH)
 
 TOOL_DIR = ../..
 PGE_DIR  = ../../compilers/pge
 TGE_DIR  = ../../compilers/tge
 
 # the default target
-all: JSON.pbc
+build: JSON.pbc
+
+all: JSON.pbc Makefile
+
+# regenerate the Makefile
+Makefile: @build_dir@/config/gen/makefiles/json.in
+	cd @build_dir@ && $(RECONFIGURE) --step=gen::makefiles --target=compilers/json/Makefile
 
 # This is a listing of all targets, that are meant to be called by users
 help:
@@ -52,3 +60,9 @@ JSON/pge2pir.pir : JSON/pge2pir.tg
 
 clean : testclean
 	@rm_f@ "JSON/*.pbc" "JSON/*.pir" JSON.pbc
+
+#
+# Local variables:
+# mode: makefile
+# ex: ft=make
+# End:

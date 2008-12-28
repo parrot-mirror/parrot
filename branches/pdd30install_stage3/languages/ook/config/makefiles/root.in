@@ -8,15 +8,17 @@ PERL          = @perl@
 RM_F          = @rm_f@
 CP            = @cp@
 MKPATH        = @mkpath@
-POD2MAN       = @pod2man@
-RECONFIGURE   = $(PERL) @build_dir@/tools/dev/reconfigure.pl
-#CONDITIONED_LINE(darwin):
-#CONDITIONED_LINE(darwin):# MACOSX_DEPLOYMENT_TARGET must be defined for OS X compilation/linking
-#CONDITIONED_LINE(darwin):export MACOSX_DEPLOYMENT_TARGET := @osx_version@
-#CONDITIONED_LINE(cygchkdll):SHRPENV  = env PATH="@build_dir@/blib/lib:$(PATH)"
-#INVERSE_CONDITIONED_LINE(cygchkdll):SHRPENV  = env LD_RUN_PATH="@build_dir@/blib/lib"
-PARROT        = $(SHRPENV) ../../parrot@exe@
-PBC_TO_EXE    = $(SHRPENV) ../../pbc_to_exe@exe@
+#IF(has_pod2man):POD2MAN       = @pod2man@
+
+#IF(parrot_is_shared and !(cygwin|win32)):export LD_RUN_PATH := @blib_dir@:$(LD_RUN_PATH)
+#IF(darwin):export DYLD_LIBRARY_PATH := @blib_dir@:$(DYLD_LIBRARY_PATH)
+PARROT        = ../../parrot@exe@
+PBC_TO_EXE    = ../../pbc_to_exe@exe@
+CAT           = $(PERL) -MExtUtils::Command -e cat
+RECONFIGURE   = $(PERL) $(BUILD_DIR)/tools/dev/reconfigure.pl
+#IF(darwin):
+#IF(darwin):# MACOSX_DEPLOYMENT_TARGET must be defined for OS X compilation/linking
+#IF(darwin):export MACOSX_DEPLOYMENT_TARGET := @osx_version@
 
 # Set up directories
 BUILD_DIR     = @build_dir@
@@ -24,10 +26,11 @@ BIN_DIR       = @bin_dir@
 LIB_DIR       = @lib_dir@
 DOC_DIR       = @doc_dir@
 MANDIR	      = @mandir@
+PARROT_LIB    = $(BUILD_DIR)/runtime/parrot/library
 
 DOCS = Changes MAINTAINER README
 
-default: all
+build: ook.pbc
 
 help :
 	@echo ""
@@ -48,7 +51,7 @@ help :
 Makefile: config/makefiles/root.in
 	cd $(BUILD_DIR) && $(RECONFIGURE) --step=gen::languages --languages=$(HLLNAME)
 
-all: build
+all: ook.pbc Makefile ook@exe@ installable
 
 build: ook.pbc
 
@@ -64,7 +67,9 @@ ook@exe@: ook.pbc
 installable_ook@exe@: ook.pbc
 	$(PBC_TO_EXE) ook.pbc --install
 
-installable: installable_ook@exe@
+installable: installable_$(HLLNAME)@exe@ $(HLLNAME).pbc
+	$(CP) installable_$(HLLNAME)@exe@ $(BUILD_DIR)
+	$(CP) $(HLLNAME).pbc $(PARROT_LIB)/$(HLLNAME).pbc
 
 # TODO: rename build_dir. basic run for missing libs
 test-installable : installable
@@ -72,7 +77,8 @@ test-installable : installable
 
 install : installable
 	$(CP) installable_$(HLLNAME)@exe@ $(DESTDIR)$(BIN_DIR)/parrot-$(HLLNAME)@exe@
-	$(MKPATH) $(DESTDIR)$(DOC_DIR)/languages/$(HLLNAME)
+	$(CP) $(HLLNAME).pbc $(DESTDIR)$(LIB_DIR)/parrot/library/$(HLLNAME).pbc
+	-$(MKPATH) $(DESTDIR)$(DOC_DIR)/languages/$(HLLNAME)
 	$(CP) $(DOCS) $(DESTDIR)$(DOC_DIR)/languages/$(HLLNAME)
 
 clean:
@@ -80,7 +86,10 @@ clean:
     "*.pbc" \
     "*~" \
     "hello.out" \
-    "foo.p*"
+    "foo.p*" \
+    $(HLLNAME)@exe@ \
+    installable_* \
+    $(PARROT_LIB)/$(HLLNAME).pbc
 
 realclean: clean
 	$(RM_F) Makefile

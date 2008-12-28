@@ -4,7 +4,7 @@
 PARROT_ARGS =
 
 ## configuration settings
-HLLNAME          = squaak
+HLLNAME       = squaak
 BUILD_DIR     = @build_dir@
 LOAD_EXT      = @load_ext@
 O             = @o@
@@ -19,24 +19,26 @@ PERL          = @perl@
 RM_RF         = @rm_rf@
 CP            = @cp@
 MKPATH        = @mkpath@
-POD2MAN       = @pod2man@
+#IF(has_pod2man):POD2MAN       = @pod2man@
+
+#IF(parrot_is_shared and !(cygwin|win32)):export LD_RUN_PATH := @blib_dir@:$(LD_RUN_PATH)
+#IF(darwin):export DYLD_LIBRARY_PATH := @blib_dir@:$(DYLD_LIBRARY_PATH)
+PARROT        = ../../parrot@exe@
+PBC_TO_EXE    = ../../pbc_to_exe@exe@
 CAT           = $(PERL) -MExtUtils::Command -e cat
 BUILD_DYNPMC  = $(PERL) $(BUILD_DIR)/tools/build/dynpmc.pl
 RECONFIGURE   = $(PERL) $(BUILD_DIR)/tools/dev/reconfigure.pl
-#CONDITIONED_LINE(darwin):
-#CONDITIONED_LINE(darwin):# MACOSX_DEPLOYMENT_TARGET must be defined for OS X compilation/linking
-#CONDITIONED_LINE(darwin):export MACOSX_DEPLOYMENT_TARGET := @osx_version@
+#IF(darwin):
+#IF(darwin):# MACOSX_DEPLOYMENT_TARGET must be defined for OS X compilation/linking
+#IF(darwin):export MACOSX_DEPLOYMENT_TARGET := @osx_version@
 
 ## places to look for things
 PARROT_DYNEXT = $(BUILD_DIR)/runtime/parrot/dynext
-PGE_LIBRARY   = $(BUILD_DIR)/runtime/parrot/library/PGE
+PARROT_LIB    = $(BUILD_DIR)/runtime/parrot/library
+PGE_LIBRARY   = $(PARROT_LIB)/PGE
+PCT           = $(PARROT_LIB)/PCT.pbc
 PERL6GRAMMAR  = $(PGE_LIBRARY)/Perl6Grammar.pbc
 NQP           = $(BUILD_DIR)/compilers/nqp/nqp.pbc
-PCT           = $(BUILD_DIR)/runtime/parrot/library/PCT.pbc
-#CONDITIONED_LINE(cygchkdll):SHRPENV  = env PATH="@build_dir@/blib/lib:$(PATH)"
-#INVERSE_CONDITIONED_LINE(cygchkdll):SHRPENV  = env LD_RUN_PATH="@build_dir@/blib/lib"
-PARROT        = $(SHRPENV) ../../parrot@exe@
-PBC_TO_EXE    = $(SHRPENV) ../../pbc_to_exe@exe@
 
 build: squaak.pbc
 
@@ -45,7 +47,7 @@ all: build squaak@exe@ installable
 SOURCES = squaak.pir \
   src/gen_grammar.pir \
   src/gen_actions.pir \
-  src/gen_builtins.pir \
+  src/gen_builtins.pir
 
 BUILTINS_PIR = \
   src/builtins/say.pir \
@@ -62,7 +64,7 @@ DOCS = MAINTAINER README \
   pod/tutorial_episode_9.pod
 
 # the default target
-squaak.pbc:  $(SOURCES)
+squaak.pbc: $(PARROT) $(SOURCES)
 	$(PARROT) $(PARROT_ARGS) -o squaak.pbc squaak.pir
 
 squaak@exe@: $(HLLNAME).pbc
@@ -86,12 +88,14 @@ test-installable : installable
 
 install : installable
 	$(CP) installable_$(HLLNAME)@exe@ $(DESTDIR)$(BIN_DIR)/parrot-$(HLLNAME)@exe@
-	$(POD2MAN) squaak.pir > $(DESTDIR)$(MANDIR)/man1/parrot-$(HLLNAME).1
+	$(CP) $(HLLNAME).pbc $(DESTDIR)$(LIB_DIR)/parrot/library/$(HLLNAME).pbc
+#IF(has_pod2man):	$(POD2MAN) squaak.pir > $(DESTDIR)$(MANDIR)/man1/parrot-$(HLLNAME).1
 	$(MKPATH) $(DESTDIR)$(DOC_DIR)/languages/$(HLLNAME)
 	$(CP) $(DOCS) $(DESTDIR)$(DOC_DIR)/languages/$(HLLNAME)
 
-installable : installable_$(HLLNAME)@exe@
+installable : installable_$(HLLNAME)@exe@ $(HLLNAME).pbc
 	$(CP) installable_$(HLLNAME)@exe@ $(BUILD_DIR)
+	$(CP) $(HLLNAME).pbc $(PARROT_LIB)/$(HLLNAME).pbc
 
 installable_$(HLLNAME)@exe@ : $(HLLNAME).pbc
 	$(PBC_TO_EXE) $(HLLNAME).pbc --install
@@ -134,7 +138,8 @@ CLEANUPS = \
   squaak.pbc \
   src/gen_grammar.pir \
   src/gen_actions.pir \
-  src/gen_builtins.pir
+  src/gen_builtins.pir \
+  $(PARROT_LIB)/$(HLLNAME).pbc $(HLLNAME)@exe@ installable_*
 
 clean:
 	$(RM_RF) $(CLEANUPS)

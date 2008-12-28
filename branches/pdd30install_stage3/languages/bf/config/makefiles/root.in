@@ -4,23 +4,29 @@ BIN_DIR       = @bin_dir@
 LIB_DIR       = @lib_dir@
 DOC_DIR       = @doc_dir@
 MANDIR        = @mandir@
+PARROT_LIB    = $(BUILD_DIR)/runtime/parrot/library
 
 RM_F          = @rm_f@
 PERL          = @perl@
 CP            = @cp@
 MKPATH        = @mkpath@
-POD2MAN       = @pod2man@
-#CONDITIONED_LINE(darwin):
-#CONDITIONED_LINE(darwin):# MACOSX_DEPLOYMENT_TARGET must be defined for OS X compilation/linking
-#CONDITIONED_LINE(darwin):export MACOSX_DEPLOYMENT_TARGET := @osx_version@
-#CONDITIONED_LINE(cygchkdll):SHRPENV  = env PATH="@build_dir@/blib/lib:$(PATH)"
-#INVERSE_CONDITIONED_LINE(cygchkdll):SHRPENV  = env LD_RUN_PATH="@build_dir@/blib/lib"
-PARROT        = $(SHRPENV) ../../parrot@exe@
-PBC_TO_EXE    = $(SHRPENV) ../../pbc_to_exe@exe@
+#IF(has_pod2man):POD2MAN       = @pod2man@
+
+#IF(parrot_is_shared and !(cygwin|win32)):export LD_RUN_PATH := @blib_dir@:$(LD_RUN_PATH)
+#IF(darwin):export DYLD_LIBRARY_PATH := @blib_dir@:$(DYLD_LIBRARY_PATH)
+PARROT        = ../../parrot@exe@
+PBC_TO_EXE    = ../../pbc_to_exe@exe@
+CAT           = $(PERL) -MExtUtils::Command -e cat
+RECONFIGURE   = $(PERL) $(BUILD_DIR)/tools/dev/reconfigure.pl
+#IF(darwin):
+#IF(darwin):# MACOSX_DEPLOYMENT_TARGET must be defined for OS X compilation/linking
+#IF(darwin):export MACOSX_DEPLOYMENT_TARGET := @osx_version@
 
 DOCS = MAINTAINER README
 
-all : build
+build: $(HLLNAME).pbc
+
+all: $(HLLNAME).pbc Makefile $(HLLNAME)@exe@ installable
 
 help :
 	@echo ""
@@ -48,9 +54,15 @@ help :
 test : build
 	$(PERL) -Ilib -I../../lib t/harness
 
-build: bf.pbc bfc.pbc bfco.pbc
+build: $(PBCS)
 
-installable: installable_bf@exe@ installable_bfc@exe@ installable_bfco@exe@
+installable: $(EXES) $(PBCS)
+	$(CP) installable_bf@exe@   $(BUILD_DIR)
+	$(CP) installable_bfc@exe@  $(BUILD_DIR)
+	$(CP) installable_bfco@exe@ $(BUILD_DIR)
+	$(CP) bf.pbc   $(PARROT_LIB)/bf.pbc
+	$(CP) bfc.pbc  $(PARROT_LIB)/bfco.pbc
+	$(CP) bfco.pbc $(PARROT_LIB)/bfco.pbc
 
 bf@exe@: bf.pbc
 	$(PBC_TO_EXE) bf.pbc
@@ -81,19 +93,22 @@ bfco.pbc: bfco.pir
 
 # TODO: rename build_dir. basic run for missing libs
 test-installable : installable
-	./installable_bf@exe@ test.bf
-	./installable_bfc@exe@ test.bf
+	./installable_bf@exe@   test.bf
+	./installable_bfc@exe@  test.bf
 	./installable_bfco@exe@ test.bf
 
 install : installable
-	$(CP) installable_$(HLLNAME)@exe@ $(DESTDIR)$(BIN_DIR)/parrot-$(HLLNAME)@exe@
-	$(CP) installable_bfc@exe@ $(DESTDIR)$(BIN_DIR)/parrot-bfc@exe@
+	$(CP) installable_bf@exe@   $(DESTDIR)$(BIN_DIR)/parrot-bf@exe@
+	$(CP) installable_bfc@exe@  $(DESTDIR)$(BIN_DIR)/parrot-bfc@exe@
 	$(CP) installable_bfco@exe@ $(DESTDIR)$(BIN_DIR)/parrot-bfco@exe@
+	$(CP) bf.pbc   $(DESTDIR)$(LIB_DIR)/parrot/library/bf.pbc
+	$(CP) bfc.pbc  $(DESTDIR)$(LIB_DIR)/parrot/library/bfc.pbc
+	$(CP) bfco.pbc $(DESTDIR)$(LIB_DIR)/parrot/library/bfco.pbc
 	$(MKPATH) $(DESTDIR)$(DOC_DIR)/languages/$(HLLNAME)
 	$(CP) $(DOCS) $(DESTDIR)$(DOC_DIR)/languages/$(HLLNAME)
 
 clean:
-	$(RM_F) core "*.pbc" "*~"
+	$(RM_F) core "*.pbc" "*~" "installable_bf*@exe@" "$(PARROT_LIB)/bf*.pbc"
 
 realclean: clean
 	$(RM_F) Makefile

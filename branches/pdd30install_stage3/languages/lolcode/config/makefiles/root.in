@@ -4,6 +4,7 @@
 PARROT_ARGS =
 
 ## configuration settings
+HLLNAME       = lolcode
 BUILD_DIR     = @build_dir@
 LOAD_EXT      = @load_ext@
 O             = @o@
@@ -14,25 +15,30 @@ LN_S          = @lns@
 PERL          = @perl@
 RM_RF         = @rm_rf@
 CP            = @cp@
-PARROT        = ../../parrot$(EXE)
+#IF(has_pod2man):POD2MAN       = @pod2man@
+
+#IF(parrot_is_shared and !(cygwin|win32)):export LD_RUN_PATH := @blib_dir@:$(LD_RUN_PATH)
+#IF(darwin):export DYLD_LIBRARY_PATH := @blib_dir@:$(DYLD_LIBRARY_PATH)
+PARROT        = ../../parrot@exe@
+PBC_TO_EXE    = ../../pbc_to_exe@exe@
 CAT           = $(PERL) -MExtUtils::Command -e cat
 BUILD_DYNPMC  = $(PERL) $(BUILD_DIR)/tools/build/dynpmc.pl
 RECONFIGURE   = $(PERL) $(BUILD_DIR)/tools/dev/reconfigure.pl
-#CONDITIONED_LINE(darwin):
-#CONDITIONED_LINE(darwin):# MACOSX_DEPLOYMENT_TARGET must be defined for OS X compilation/linking
-#CONDITIONED_LINE(darwin):export MACOSX_DEPLOYMENT_TARGET := @osx_version@
+#IF(darwin):
+#IF(darwin):# MACOSX_DEPLOYMENT_TARGET must be defined for OS X compilation/linking
+#IF(darwin):export MACOSX_DEPLOYMENT_TARGET := @osx_version@
 
 ## places to look for things
 PARROT_DYNEXT = $(BUILD_DIR)/runtime/parrot/dynext
-PGE_LIBRARY   = $(BUILD_DIR)/runtime/parrot/library/PGE
+PARROT_LIB    = $(BUILD_DIR)/runtime/parrot/library
+PCT           = $(PARROT_LIB)/PCT.pbc
+PGE_LIBRARY   = $(PARROT_LIB)/PGE
 PERL6GRAMMAR  = $(PGE_LIBRARY)/Perl6Grammar.pbc
 NQP           = $(BUILD_DIR)/compilers/nqp/nqp.pbc
-PCT           = $(BUILD_DIR)/runtime/parrot/library/PCT.pbc
-PBC_TO_EXE    = $(BUILD_DIR)/pbc_to_exe$(EXE)
 
 PMC_DIR       = src/pmc
 
-all: lolcode.pbc
+build: lolcode.pbc
 
 SOURCES = lolcode.pir \
   src/gen_grammar.pir \
@@ -48,6 +54,8 @@ BUILTINS_PIR = \
 
 # PMCS = lolcode
 # PMC_SOURCES = $(PMC_DIR)/lolcode.pmc
+
+all: lolcode.pbc lolcode@exe@ Makefile installable
 
 lolcode$(EXE): lolcode.pbc
 	$(PBC_TO_EXE) lolcode.pbc
@@ -80,7 +88,7 @@ help:
 	@echo ""
 	@echo "Following targets are available for the user:"
 	@echo ""
-	@echo "  all:               lolcode.pbc"
+	@echo "  build:             lolcode.pbc"
 	@echo "                     This is the default."
 	@echo "  installable:       Create self-hosting bins and libs."
 	@echo "  install:           Install the installable targets and docs."
@@ -108,13 +116,12 @@ test-installable : installable
 
 install : installable
 	$(CP) installable_$(HLLNAME)@exe@ $(DESTDIR)$(BIN_DIR)/parrot-$(HLLNAME)@exe@
-	$(POD2MAN) $(HLLNAME).pir > $(DESTDIR)$(MANDIR)/man1/parrot-$(HLLNAME).1
+	$(CP) $(HLLNAME).pbc $(DESTDIR)$(LIB_DIR)/parrot/library/$(HLLNAME).pbc
+#IF(has_pod2man):	$(POD2MAN) $(HLLNAME).pir > $(DESTDIR)$(MANDIR)/man1/parrot-$(HLLNAME).1
 
-installable : installable_$(HLLNAME)@exe@
+installable : installable_$(HLLNAME)@exe@ $(HLLNAME).pbc
 	$(CP) installable_$(HLLNAME)@exe@ $(BUILD_DIR)
-
-installable_$(HLLNAME)@exe@ : $(HLLNAME).pbc
-	$(PBC_TO_EXE) $(HLLNAME).pbc --install
+	$(CP) $(HLLNAME).pbc $(PARROT_LIB)/$(HLLNAME).pbc
 
 # this target has nothing to do
 testclean:
@@ -122,9 +129,9 @@ testclean:
 CLEANUPS = \
   lolcode.pbc \
   lolcode.c \
-  lolcode.ilk \
-  *.manifest \
-  *.pdb \
+#IF(win32):  lolcode.ilk \
+#IF(win32):  *.manifest \
+#IF(win32):  *.pdb \
   lolcode$(O) \
   lolcode$(EXE) \
   installable_lolcode$(EXE) \
