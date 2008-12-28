@@ -80,7 +80,7 @@ any value type.
     piropsig['pow']        = 'NN+'
     piropsig['print']      = 'v*'
     piropsig['set']        = 'PP'
-    piropsig['setprop']    = 'vP~P'
+    piropsig['setprop']    = '0P~P'
     set_global '%piropsig', piropsig
 
     ##  %valflags specifies when PAST::Val nodes are allowed to
@@ -1045,6 +1045,11 @@ a 'pasttype' of 'pirop'.
 
     $S0 = substr signature, 0, 1
     if $S0 == 'v' goto pirop_void
+    $I0 = index '0123456789', $S0
+    if $I0 < 0 goto pirop_reg
+    $S0 = arglist[$I0]
+    ops.'result'($S0)
+    goto pirop_void
   pirop_reg:
     .local string result
     result = self.'uniquereg'($S0)
