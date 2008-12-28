@@ -93,6 +93,16 @@ sub runstep {
         );
     }
 
+    # RT#39742 installed parrot conflicts with dev parrot:
+    # move -L/usr/lib in ldflags to the back after -lparrot
+    if ($parrot_is_shared and $conf->data->get('ldflags') =~ /(-L\S+)/) {
+       my $ldflags = $conf->data->get('ldflags');
+       my $lpath = $1;
+       $ldflags =~ s|$1||;
+       $conf->data->set('libs' => $lpath . " " . $conf->data->get('libs'));
+       $conf->data->set('ldflags' => $ldflags);
+    }
+
     $self->set_result( $parrot_is_shared ? 'yes' : 'no' );
 
     return 1;
