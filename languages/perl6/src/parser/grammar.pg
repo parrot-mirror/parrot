@@ -355,10 +355,11 @@ rule statement_prefix {
 #### Subroutine and method definitions ####
 
 rule multi_declarator {
-    $<sym>=[multi|proto|only] 
-    [ <routine_declarator> {*}                   #= routine_declarator
-    | <routine_def> {*}                          #= routine_def
+    [
+    | $<sym>=[multi|proto|only] [ <declarator> || <routine_def> ]
+    | <declarator>
     ]
+    {*}
 }
 
 token routine_declarator {
@@ -367,9 +368,13 @@ token routine_declarator {
     | $<sym>='submethod' <method_def> {*}        #= submethod
 }
 
+rule multisig {
+    ':'?'(' ~ ')' <signature>
+    {*}
+}
+
 rule routine_def {
-    <identifier>? <multisig>?
-    <trait>*
+    [ <deflongname> ]? [ <multisig> | <trait> ]*
     <block>
     {*}
 }
@@ -407,28 +412,25 @@ rule capture {
     {*}
 }
 
-rule multisig {
-    '(' <signature> ')'
+token sigterm {
+    ':(' ~ ')' <signature> {*}
 }
+
+rule param_sep { [','|':'|';'|';;'] }
 
 token signature {
-    ( <parameter> <.ws> ( ',' <.ws> | ':' <.ws> | ';;' <.ws> | <?before ')' | '{'> ) )* <.ws>
-    {*}
-}
-
-token sigterm {
-    ':(' 
-    {{
-        $P0 = new 'Integer'
-        $P0 = 1
-        set_global [ 'Perl6' ; 'Grammar' ; 'Actions' ], '$?SIG_BLOCK_NOT_NEEDED', $P0
-    }}
-    ~ ')' <signature>
-    {{
-        $P0 = new 'Integer'
-        $P0 = 0
-        set_global [ 'Perl6' ; 'Grammar' ; 'Actions' ], '$?SIG_BLOCK_NOT_NEEDED', $P0
-    }}
+    <.ws>
+    [
+    | <?before '-->' | ')' | ']' | '{' | ':'<!before ':' > >
+    | <parameter>
+    ]
+    [ <param_sep>
+        [
+        | <?before '-->' | ')' | ']' | '{' | ':'<!before ':' > >
+        | <parameter>
+        ]
+    ]*
+    <.ws>
     {*}
 }
 
@@ -445,13 +447,18 @@ rule type_declarator {
 # commented out.
 rule type_constraint {
     [
-    | <typename>
+    | <fulltypename>
     | where <EXPR: 'm='> # XXX <EXPR(%chaining)>
     ]
 }
 
 rule post_constraint {
     where <EXPR: 'm='> # XXX <EXPR(%chaining)>
+}
+
+token param_var {
+    <sigil> <twigil>? <identifier>
+    {*}
 }
 
 token parameter {
@@ -472,17 +479,6 @@ rule default_value {
     '=' <EXPR: 'i='>
 }
 
-token param_var {
-    <sigil> <twigil>? <identifier>
-    {*}
-}
-
-
-#### Special variables ####
-
-token special_variable {
-    $<sym>=[ '$/' | '$!' | '$¢' ] <!before \w> {*}
-}
 
 #### Terms ####
 
@@ -545,6 +541,7 @@ token postcircumfix {
 # XXX Note that 'self' here should be a term.
 token noun {
     | <fatarrow> {*}                             #= fatarrow
+    | <variable> {*}                             #= variable
     | <package_declarator> {*}                   #= package_declarator
     | <scope_declarator> {*}                     #= scope_declarator
     | <multi_declarator> {*}                     #= multi_declarator
@@ -553,7 +550,6 @@ token noun {
     | <type_declarator> {*}                      #= type_declarator
     | <enum_declarator> {*}                      #= enum_declarator
     | <circumfix> {*}                            #= circumfix
-    | <variable> {*}                             #= variable
     | <statement_prefix> {*}                     #= statement_prefix
     | <dotty> {*}                                #= dotty
     | <value> {*}                                #= value
@@ -633,8 +629,6 @@ rule enum_declarator {
     ]
 }
 
-
-
 rule scope_declarator {
     $<sym>=[my|our|state|constant|has]
     <scoped>
@@ -690,6 +684,10 @@ token desigilname {
     ]
 }
 
+token special_variable {
+    $<sym>=[ '$/' | '$!' | '$¢' ] <!before \w> {*}
+}
+
 token circumfix {
     | '(' <statementlist> ')' {*}                #= ( )
     | '[' <statementlist> ']' {*}                #= [ ]
@@ -714,6 +712,18 @@ token value {
     | <quote> {*}                                #= quote
     | <number> {*}                               #= number
 }
+
+token typename {
+    <?before <.upper> | '::' > <name>
+    {*}
+}
+
+rule fulltypename {
+    <typename>
+#   [ of <fulltypename> ]?
+    {*}
+}
+
 
 ##  Quoting is tricky -- the <quote_concat> subrule is in
 ##  F<src/parser/quote_expression.pir> .
@@ -797,17 +807,6 @@ token rad_number {
     || <?before '['> <postcircumfix>
     || <?before '('> <postcircumfix>
     ]
-    {*}
-}
-
-rule fulltypename {
-    <typename>
-#   [ of <fulltypename> ]?
-    {*}
-}
-
-token typename {
-    <?before <.upper> | '::' > <name>
     {*}
 }
 
