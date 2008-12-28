@@ -5,10 +5,25 @@
 .include 'languages/forth/words.pir'
 
 .sub ' init' :load
+
+    # determine location of libs from the Parrot config
+    .local pmc cfg
+    cfg  = _config()
+    .local string installed, lib_dir, pbc_fn
+    lib_dir = 'forth_'
+    installed = cfg['installed']
+    if installed goto inst
+
+    lib_dir = cfg['build_dir']
+    lib_dir .= 'languages/forth/'
+inst:
     # load the libraries we depend on
-    load_bytecode 'languages/forth/tokenstream.pbc'
-    load_bytecode 'languages/forth/variablestack.pbc'
-    load_bytecode 'languages/forth/virtualstack.pbc'
+    pbc_fn = concat lib_dir, 'tokenstream.pbc'
+    load_bytecode pbc_fn
+    pbc_fn = concat lib_dir, 'variablestack.pbc'
+    load_bytecode pbc_fn
+    pbc_fn = concat lib_dir, 'virtualstack.pbc'
+    load_bytecode pbc_fn
 
     # initialize the rstack
     .local pmc stack

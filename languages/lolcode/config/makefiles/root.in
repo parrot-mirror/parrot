@@ -34,14 +34,11 @@ PMC_DIR       = src/pmc
 
 all: lolcode.pbc
 
-LOLCODE_GROUP = $(PMC_DIR)/lolcode_group$(LOAD_EXT)
-
 SOURCES = lolcode.pir \
   src/gen_grammar.pir \
   src/gen_actions.pir \
   src/gen_builtins.pir \
-  src/parser/yarn_literal.pir \
-#  $(LOLCODE_GROUP)
+  src/parser/yarn_literal.pir
 
 BUILTINS_PIR = \
   src/builtins/say.pir \
@@ -74,12 +71,6 @@ src/gen_actions.pir: $(NQP) $(PCT) src/parser/actions.pm
 src/gen_builtins.pir: $(BUILTINS_PIR)
 	$(CAT) $(BUILTINS_PIR) >src/gen_builtins.pir
 
-$(LOLCODE_GROUP): $(PARROT) $(PMC_SOURCES)
-	cd $(PMC_DIR) && $(BUILD_DYNPMC) generate $(PMCS)
-	cd $(PMC_DIR) && $(BUILD_DYNPMC) compile $(PMCS)
-	cd $(PMC_DIR) && $(BUILD_DYNPMC) linklibs $(PMCS)
-	cd $(PMC_DIR) && $(BUILD_DYNPMC) copy --destination=$(PARROT_DYNEXT) $(PMCS)
-
 # regenerate the Makefile
 Makefile: config/makefiles/root.in
 	cd $(BUILD_DIR) && $(RECONFIGURE) --step=gen::languages --languages=lolcode
@@ -91,8 +82,12 @@ help:
 	@echo ""
 	@echo "  all:               lolcode.pbc"
 	@echo "                     This is the default."
+	@echo "  installable:       Create self-hosting bins and libs."
+	@echo "  install:           Install the installable targets and docs."
+	@echo ""
 	@echo "Testing:"
 	@echo "  test:              Run the test suite."
+	@echo "  test-installable:  Test self-hosting targets."
 	@echo "  testclean:         Clean up test results."
 	@echo ""
 	@echo "Cleaning:"
@@ -106,6 +101,20 @@ help:
 
 test: all
 	$(PERL) t/harness
+
+# TODO: rename build_dir. basic run for missing libs
+test-installable : installable
+	./installable_$(HLLNAME)@exe@ t/00-sanity.t
+
+install : installable
+	$(CP) installable_$(HLLNAME)@exe@ $(DESTDIR)$(BIN_DIR)/parrot-$(HLLNAME)@exe@
+	$(POD2MAN) $(HLLNAME).pir > $(DESTDIR)$(MANDIR)/man1/parrot-$(HLLNAME).1
+
+installable : installable_$(HLLNAME)@exe@
+	$(CP) installable_$(HLLNAME)@exe@ $(BUILD_DIR)
+
+installable_$(HLLNAME)@exe@ : $(HLLNAME).pbc
+	$(PBC_TO_EXE) $(HLLNAME).pbc --install
 
 # this target has nothing to do
 testclean:
@@ -121,18 +130,7 @@ CLEANUPS = \
   installable_lolcode$(EXE) \
   src/gen_grammar.pir \
   src/gen_actions.pir \
-  src/gen_builtins.pir \
-  $(PMC_DIR)/*.h \
-  $(PMC_DIR)/*.c \
-  $(PMC_DIR)/*.dump \
-  $(PMC_DIR)/*$(O) \
-  $(PMC_DIR)/*$(LOAD_EXT) \
-  $(PMC_DIR)/*.exp \
-  $(PMC_DIR)/*.ilk \
-  $(PMC_DIR)/*.manifest \
-  $(PMC_DIR)/*.pdb \
-  $(PMC_DIR)/*.lib \
-
+  src/gen_builtins.pir
 
 clean:
 	$(RM_RF) $(CLEANUPS)
@@ -140,6 +138,10 @@ clean:
 realclean: clean
 	$(RM_RF) Makefile
 
-distclean: realclean
+distclean: clean realclean
 
-
+#
+# Local variables:
+# mode: makefile
+# ex: ft=make
+# End:

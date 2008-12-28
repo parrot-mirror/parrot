@@ -1,20 +1,31 @@
 # $Id$
 
 ## arguments we want to run parrot with
+HLLNAME        = perl6doc
 PARROT_ARGS =
 
 ## configuration settings
 BUILD_DIR     = @build_dir@
 LOAD_EXT      = @load_ext@
 O             = @o@
+BIN_DIR       = @bin_dir@
+LIB_DIR       = @lib_dir@
+DOC_DIR       = @doc_dir@
+MANDIR	      = @mandir@
 
 ## Setup some commands
 LN_S          = @lns@
 PERL          = @perl@
 RM_RF         = @rm_rf@
 CP            = @cp@
+MKPATH        = @mkpath@
+#IF(has_pod2man):POD2MAN       = @pod2man@
 MAKE          = @make_c@
-PARROT        = ../../../../parrot@exe@
+
+#IF(parrot_is_shared and !(cygwin|win32)):export LD_RUN_PATH := @blib_dir@:$(LD_RUN_PATH)
+#IF(darwin):export DYLD_LIBRARY_PATH := @blib_dir@:$(DYLD_LIBRARY_PATH)
+PARROT        = $(BUILD_DIR)/parrot@exe@
+PBC_TO_EXE    = $(BUILD_DIR)/pbc_to_exe@exe@
 CAT           = $(PERL) -MExtUtils::Command -e cat
 BUILD_DYNPMC  = $(PERL) $(BUILD_DIR)/tools/build/dynpmc.pl
 RECONFIGURE   = $(PERL) $(BUILD_DIR)/tools/dev/reconfigure.pl
@@ -39,7 +50,7 @@ PERL6DOC_SOURCES = \
 perl6doc@exe@: perl6doc.pbc
 	$(PBC_TO_EXE) perl6doc.pbc
 
-perl6doc.pbc: $(PARROT) $(PERL6DOC_SOURCES)
+perl6doc.pbc: $(PERL6DOC_SOURCES)
 	$(PARROT) $(PARROT_ARGS) -o perl6doc.pbc perl6doc.pir
 
 perl6doc/gen_grammar.pir: $(PERL6GRAMMAR) perl6doc/grammar.pg
@@ -63,6 +74,9 @@ help:
 	@echo ""
 	@echo "  all:               perl6doc.pbc"
 	@echo "                     This is the default."
+	@echo "  installable:       Create self-hosting binaries."
+	@echo "  install:           Install the installable targets and docs."
+	@echo ""
 	@echo "Testing:"
 	@echo "  test:              Run the test suite."
 	@echo "  testclean:         Clean up test results."
@@ -75,6 +89,20 @@ help:
 	@echo "Misc:"
 	@echo "  help:              Print this help message."
 	@echo ""
+
+installable_perl6doc@exe@: perl6doc.pbc
+	$(PBC_TO_EXE) perl6doc.pbc --install
+
+install : installable
+	$(CP) installable_$(HLLNAME)@exe@ $(DESTDIR)$(BIN_DIR)/$(HLLNAME)@exe@
+
+installable : installable_$(HLLNAME)@exe@
+	$(CP) installable_$(HLLNAME)@exe@ $(BUILD_DIR)
+
+# TODO: rename build_dir. basic run for missing libs
+test-installable : installable
+	./installable_$(HLLNAME)@exe@ -f 'test'
+
 
 test: all
 	$(PERL) t/harness t/01-sanity
@@ -97,3 +125,9 @@ realclean: clean
 	$(RM_RF) Makefile
 
 distclean: realclean
+
+#
+# Local variables:
+# mode: makefile
+# ex: ft=make
+# End:

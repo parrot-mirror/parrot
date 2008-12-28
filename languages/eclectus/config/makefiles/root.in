@@ -4,19 +4,31 @@
 # Makefile for languages/eclectus
 
 # configuration settings
-BUILD_DIR       = @build_dir@
-LOAD_EXT        = @load_ext@
-O               = @o@
+HLLNAME          = eclectus
+BUILD_DIR     = @build_dir@
+LOAD_EXT      = @load_ext@
+O             = @o@
+BIN_DIR       = @bin_dir@
+LIB_DIR       = @lib_dir@
+DOC_DIR       = @doc_dir@
+MANDIR	      = @mandir@
 
 # Set up commands
-PARROT          = ../../parrot@exe@
-PERL            = @perl@
-RM_F            = @rm_f@
-RECONFIGURE     = $(PERL) @build_dir@/tools/dev/reconfigure.pl
-BUILD_DYNPMC    = $(PERL) @build_dir@/tools/build/dynpmc.pl
+PERL          = @perl@
+RM_F          = @rm_f@
+RENAME        = @mv@
+CP            = @cp@
+MKPATH        = @mkpath@
+POD2MAN       = @pod2man@
+RECONFIGURE   = $(PERL) @build_dir@/tools/dev/reconfigure.pl
+BUILD_DYNPMC  = $(PERL) @build_dir@/tools/build/dynpmc.pl
 #CONDITIONED_LINE(darwin):
 #CONDITIONED_LINE(darwin):# MACOSX_DEPLOYMENT_TARGET must be defined for OS X compilation/linking
 #CONDITIONED_LINE(darwin):export MACOSX_DEPLOYMENT_TARGET := @osx_version@
+#CONDITIONED_LINE(cygchkdll):SHRPENV  = env PATH="@build_dir@/blib/lib:$(PATH)"
+#INVERSE_CONDITIONED_LINE(cygchkdll):SHRPENV  = env LD_RUN_PATH="@build_dir@/blib/lib"
+PARROT        = $(SHRPENV) ../../parrot@exe@
+PBC_TO_EXE    = $(SHRPENV) ../../pbc_to_exe@exe@
 
 # Set up directories
 PARROT_DYNEXT   = @build_dir@/runtime/parrot/dynext
@@ -39,34 +51,42 @@ PMC_SOURCES     = \
     $(PMC_DIR)/eclectuspair.pmc \
     $(PMC_DIR)/eclectusstring.pmc \
     $(PMC_DIR)/eclectusvector.pmc
-
+DOCS = MAINTAINER README docs/eclectus.pod
 
 # The default target
-default: build
+all: build
 
 help :
 	@echo ""
 	@echo "Following targets are available for the user:"
 	@echo ""
-	@echo "  build:             Builds the dynamic PMCSs needed by Eclectus."
+	@echo "  all:               Builds the dynamic PMCSs needed by Eclectus."
 	@echo "                     This is the default target."
+	@echo "  installable:       Create self-hosting bins and libs."
+	@echo "  install:           Install the installable targets and docs."
 	@echo ""
+	@echo "Testing:"
 	@echo "  test:              Run the test suite."
+	@echo "  test-installable:  Test self-hosting targets."
+	@echo "  testclean:         Clean up test results."
 	@echo ""
+	@echo "Cleaning:"
 	@echo "  clean:             Clean up temporary files."
-	@echo ""
 	@echo "  realclean:         Clean up generated files."
+	@echo "  distclean:         Removes also anything built, in theory"
 	@echo ""
+	@echo "Misc:"
 	@echo "  help:              Print this help message."
+	@echo ""
 
 # regenerate the Makefile
 Makefile: config/makefiles/root.in
-	cd $(BUILD_DIR) && $(RECONFIGURE) --step=gen::languages --languages=eclectus
+	cd $(BUILD_DIR) && $(RECONFIGURE) --step=gen::languages --languages=$(HLLNAME)
 
 # Compilation:
 build: $(ECLECTUS_GROUP) driver_nqp.pbc
 
-$(ECLECTUS_GROUP): $(PARROT) $(PMC_SOURCES)
+$(ECLECTUS_GROUP):  $(PMC_SOURCES)
 	cd $(PMC_DIR) && $(BUILD_DYNPMC) generate $(PMCS)
 	cd $(PMC_DIR) && $(BUILD_DYNPMC) compile $(PMCS)
 	cd $(PMC_DIR) && $(BUILD_DYNPMC) linklibs $(PMCS)
@@ -77,6 +97,29 @@ driver_nqp.pbc: src/builtins/all.pbc driver_nqp.pir
 
 src/builtins/all.pbc: src/builtins/all.pir
 	$(PARROT) -o src/builtins/all.pbc src/builtins/all.pir
+
+# TODO: rename build_dir. basic run for missing libs
+test-installable : installable
+	./installable_$(HLLNAME)@exe@ tests-driver.scm
+
+install : installable
+	$(CP) installable_$(HLLNAME)@exe@ $(DESTDIR)$(BIN_DIR)/parrot-$(HLLNAME)@exe@
+	cd $(PMC_DIR) && $(BUILD_DYNPMC) copy "--destination=$(DESTDIR)$(LIB_DIR)/parrot/dynext" $(PMCS)
+	$(POD2MAN) docs/eclectus.pod > $(DESTDIR)$(MANDIR)/man1/parrot-$(HLLNAME).1
+	$(MKPATH) $(DESTDIR)$(DOC_DIR)/languages/$(HLLNAME)
+	$(CP) $(DOCS) $(DESTDIR)$(DOC_DIR)/languages/$(HLLNAME)
+
+$(HLLNAME)@exe@: driver_nqp.pbc
+	$(PBC_TO_EXE) driver_nqp.pbc
+	$(RENAME) driver_nqp@exe@ $(HLLNAME)@exe@
+
+installable : installable_$(HLLNAME)@exe@ $(ECLECTUS_GROUP)
+	$(CP) installable_$(HLLNAME)@exe@ $(BUILD_DIR)
+
+installable_$(HLLNAME)@exe@ : driver_nqp.pbc
+	$(PBC_TO_EXE) driver_nqp.pbc --install
+	$(RENAME) driver_nqp@exe@ installable_$(HLLNAME)@exe@
+
 
 # cleaning up
 
@@ -97,8 +140,9 @@ dynext-clean:
   $(PMC_DIR)/*.ilk \
   $(PMC_DIR)/*.manifest \
   $(PMC_DIR)/*.pdb \
-  $(PMC_DIR)/*.lib
-
+  $(PMC_DIR)/*.lib \
+  installable_$(HLLNAME)@exe@ \
+  $(HLLNAME)@exe@ \
 
 realclean: clean
 	$(RM_F) Makefile
@@ -110,3 +154,11 @@ test: build
 test-clean:
 	$(RM_F) t/*.nqp
 	$(RM_F) t/*.pir
+
+distclean: realclean
+
+#
+# Local variables:
+# mode: makefile
+# ex: ft=make
+# End:

@@ -1,18 +1,31 @@
 # $Id$
 
 # Makefile for languages/ook
+HLLNAME       = ook
 
 # Set up of commands
-PARROT        = ../../parrot
 PERL          = @perl@
 RM_F          = @rm_f@
+CP            = @cp@
+MKPATH        = @mkpath@
+POD2MAN       = @pod2man@
 RECONFIGURE   = $(PERL) @build_dir@/tools/dev/reconfigure.pl
 #CONDITIONED_LINE(darwin):
 #CONDITIONED_LINE(darwin):# MACOSX_DEPLOYMENT_TARGET must be defined for OS X compilation/linking
 #CONDITIONED_LINE(darwin):export MACOSX_DEPLOYMENT_TARGET := @osx_version@
+#CONDITIONED_LINE(cygchkdll):SHRPENV  = env PATH="@build_dir@/blib/lib:$(PATH)"
+#INVERSE_CONDITIONED_LINE(cygchkdll):SHRPENV  = env LD_RUN_PATH="@build_dir@/blib/lib"
+PARROT        = $(SHRPENV) ../../parrot@exe@
+PBC_TO_EXE    = $(SHRPENV) ../../pbc_to_exe@exe@
 
 # Set up directories
 BUILD_DIR     = @build_dir@
+BIN_DIR       = @bin_dir@
+LIB_DIR       = @lib_dir@
+DOC_DIR       = @doc_dir@
+MANDIR	      = @mandir@
+
+DOCS = Changes MAINTAINER README
 
 default: all
 
@@ -33,15 +46,34 @@ help :
 
 # regenerate the Makefile
 Makefile: config/makefiles/root.in
-	cd $(BUILD_DIR) && $(RECONFIGURE) --step=gen::languages --languages=ook
+	cd $(BUILD_DIR) && $(RECONFIGURE) --step=gen::languages --languages=$(HLLNAME)
 
 all: build
+
+build: ook.pbc
+
+ook.pbc: ook.pasm
+	$(PARROT) -o ook.pbc ook.pasm
 
 test: build
 	$(PERL) -I../../lib t/harness
 
-build: ook.pasm
-	$(PARROT) -o ook.pbc ook.pasm
+ook@exe@: ook.pbc
+	$(PBC_TO_EXE) ook.pbc
+
+installable_ook@exe@: ook.pbc
+	$(PBC_TO_EXE) ook.pbc --install
+
+installable: installable_ook@exe@
+
+# TODO: rename build_dir. basic run for missing libs
+test-installable : installable
+	./installable_$(HLLNAME)@exe@ hello.ook
+
+install : installable
+	$(CP) installable_$(HLLNAME)@exe@ $(DESTDIR)$(BIN_DIR)/parrot-$(HLLNAME)@exe@
+	$(MKPATH) $(DESTDIR)$(DOC_DIR)/languages/$(HLLNAME)
+	$(CP) $(DOCS) $(DESTDIR)$(DOC_DIR)/languages/$(HLLNAME)
 
 clean:
 	$(RM_F) core \
@@ -52,3 +84,9 @@ clean:
 
 realclean: clean
 	$(RM_F) Makefile
+
+#
+# Local variables:
+# mode: makefile
+# ex: ft=make
+# End:

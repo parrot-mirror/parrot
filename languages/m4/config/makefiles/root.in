@@ -1,27 +1,48 @@
 # $Id$
 
 # Makefile for languages/m4
+HLLNAME       = m4
 
 # Setup of some commands
-PARROT        = ../../parrot@exe@
 PERL          = @perl@
 RM_RF         = @rm_rf@
 TOUCH         = $(PERL) -MExtUtils::Command -e touch
+CP            = @cp@
+MKPATH        = @mkpath@
+POD2MAN       = @pod2man@
 BUILD_DIR     = @build_dir@
+BIN_DIR       = @bin_dir@
+LIB_DIR       = @lib_dir@
+DOC_DIR       = @doc_dir@
+MANDIR	      = @mandir@
 RECONFIGURE   = $(PERL) @build_dir@/tools/dev/reconfigure.pl
 #CONDITIONED_LINE(darwin):
 #CONDITIONED_LINE(darwin):# MACOSX_DEPLOYMENT_TARGET must be defined for OS X compilation/linking
 #CONDITIONED_LINE(darwin):export MACOSX_DEPLOYMENT_TARGET := @osx_version@
+#CONDITIONED_LINE(cygchkdll):SHRPENV  = env PATH="@build_dir@/blib/lib:$(PATH)"
+#INVERSE_CONDITIONED_LINE(cygchkdll):SHRPENV  = env LD_RUN_PATH="@build_dir@/blib/lib"
+PARROT        = $(SHRPENV) ../../parrot@exe@
+PBC_TO_EXE    = $(SHRPENV) ../../pbc_to_exe@exe@
 
-default: all
-all: build 
+DOCS = BUGS ChangeLog LICENSE MAINTAINER README TODO.pod VERSION \
+       pod/features.pod pod/freezing.pod pod/operation.pod pod/running.pod
+
+default: build
+
+all: build m4@exe@ installable_m4@exe@
+
+build: m4.pbc
 
 help:
 	@echo ""
 	@echo "Following targets are available for the user:"
 	@echo ""
-	@echo "  all:               m4.pbc"
+	@echo "  all:               m4.pbc m4.exe"
+	@echo "  build:             m4.pbc"
 	@echo "                     This is the default."
+	@echo "  installable:       Create self-hosting bins and libs."
+	@echo "  install:           Install the installable targets and docs."
+	@echo ""
 	@echo "Testing:"
 	@echo "  test:              Run the test suite."
 	@echo "  test-gnu-m4:       Run the test suite on the installed GNU m4."
@@ -47,21 +68,38 @@ test: build
 test-gnu-m4: build
 	PARROT_M4_TEST_PROG='m4' $(PERL) -Ilib -I../../lib t/harness
 
-build: m4.pbc 
-
 m4.pbc: src/m4.pir
-	$(PARROT) -o m4.pbc src/m4.pir 
+	$(PARROT) -o m4.pbc src/m4.pir
 
-src/m4.pir: src/builtin.pir src/freeze.pir src/input.pir src/macro.pir src/output.pir 
-	$(TOUCH) $@ 
+src/m4.pir: src/builtin.pir src/freeze.pir src/input.pir src/macro.pir src/output.pir
+	$(TOUCH) $@
 
-html: 
-	mkdir docs/html 
+# TODO: rename build_dir. basic run for missing libs
+test-installable : installable
+	./installable_$(HLLNAME)@exe@
+
+install : installable
+	$(CP) installable_$(HLLNAME)@exe@ $(DESTDIR)$(BIN_DIR)/parrot-$(HLLNAME)@exe@
+	$(POD2MAN) pod/running.pod > $(DESTDIR)$(MANDIR)/man1/parrot-$(HLLNAME).1
+	$(MKPATH) $(DESTDIR)$(DOC_DIR)/languages/$(HLLNAME)
+	$(CP) $(DOCS) $(DESTDIR)$(DOC_DIR)/languages/$(HLLNAME)
+
+m4@exe@: $(HLLNAME).pbc
+	$(PBC_TO_EXE) $(HLLNAME).pbc
+
+installable : installable_$(HLLNAME)@exe@
+	$(CP) installable_$(HLLNAME)@exe@ $(BUILD_DIR)
+
+installable_$(HLLNAME)@exe@ : $(HLLNAME).pbc
+	$(PBC_TO_EXE) $(HLLNAME).pbc --install
+
+html:
+	$(MKPATH) docs/html
 	pod2html docs/*.pod -o docs/html
- 
+
 perlcritic:
 	$(PERL) tools/scrutinize.pl
- 
+
 clean:
 	$(RM_RF) \
 m4.pbc \
@@ -78,3 +116,9 @@ realclean: clean
 	$(RM_RF) Makefile
 
 distclean: realclean
+
+#
+# Local variables:
+# mode: makefile
+# ex: ft=make
+# End:

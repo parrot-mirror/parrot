@@ -1,12 +1,20 @@
 # $Id$
 
 # configuration settings
+HLLNAME       = pheme
 BUILD_DIR     = @build_dir@
+BIN_DIR       = @bin_dir@
+LIB_DIR       = @lib_dir@
+DOC_DIR       = @doc_dir@
+MANDIR	      = @mandir@
 
 # Setup some commands
 PERL          = @perl@
 RM_F          = @rm_f@
-PARROT        = ../../parrot@exe@
+CP            = @cp@
+MKPATH        = @mkpath@
+POD2MAN	      = @
+EXE           = @exe@
 TGE_DIR       = ../../compilers/tge
 PGE_LIBRARY   = $(BUILD_DIR)/runtime/parrot/library/PGE
 PERL6GRAMMAR  = $(PGE_LIBRARY)/Perl6Grammar.pbc
@@ -14,9 +22,17 @@ RECONFIGURE   = $(PERL) $(BUILD_DIR)/tools/dev/reconfigure.pl
 #CONDITIONED_LINE(darwin):
 #CONDITIONED_LINE(darwin):# MACOSX_DEPLOYMENT_TARGET must be defined for OS X compilation/linking
 #CONDITIONED_LINE(darwin):export MACOSX_DEPLOYMENT_TARGET := @osx_version@
+#CONDITIONED_LINE(cygchkdll):SHRPENV  = env PATH="@build_dir@/blib/lib:$(PATH)"
+#INVERSE_CONDITIONED_LINE(cygchkdll):SHRPENV  = env LD_RUN_PATH="@build_dir@/blib/lib"
+PARROT        = $(SHRPENV) ../../parrot@exe@
+PBC_TO_EXE    = $(SHRPENV) ../../pbc_to_exe@exe@
 
-# the default target
-all: pheme.pbc
+DOCS = MAINTAINER MANIFEST README TODO
+
+# the default targets
+build: pheme.pbc Makefile
+
+all: pheme.pbc Makefile pheme$(EXE) installable
 
 lib/pheme_grammar_gen.pir: lib/pheme.g
 	$(PARROT) $(PERL6GRAMMAR) \
@@ -27,6 +43,12 @@ lib/ASTGrammar.pir: lib/pge2past.tg
 
 pheme.pbc: pheme.pir lib/PhemeSymbols.pir lib/PhemeObjects.pir lib/ASTGrammar.pir lib/pheme_grammar_gen.pir
 	$(PARROT) -o pheme.pbc pheme.pir
+
+pheme$(EXE): pheme.pbc
+	$(PBC_TO_EXE) pheme.pbc
+
+installable_pheme$(EXE): pheme.pbc
+	$(PBC_TO_EXE) pheme.pbc --install
 
 # regenerate the Makefile
 Makefile: config/makefiles/root.in
@@ -39,6 +61,9 @@ help:
 	@echo ""
 	@echo "  all:               pheme.pbc"
 	@echo "                     This is the default."
+	@echo "  installable:       Create self-hosting bins and libs."
+	@echo "  install:           Install the installable targets and docs."
+	@echo ""
 	@echo "Testing:"
 	@echo "  test:              Run the test suite."
 	@echo "  testclean:         Clean up test results."
@@ -58,6 +83,20 @@ test: all
 testclean:
 	$(RM_F) "t/*.out"
 
+
+# TODO: rename build_dir. basic run for missing libs
+test-installable : installable
+	./installable_$(HLLNAME)@exe@ -e'say 1'
+
+install : installable
+	$(CP) installable_$(HLLNAME)@exe@ $(DESTDIR)$(BIN_DIR)/parrot-$(HLLNAME)@exe@
+	$(POD2MAN) $(HLLNAME).pir > $(DESTDIR)$(MANDIR)/man1/parrot-$(HLLNAME).1
+	$(MKPATH) $(DESTDIR)$(DOC_DIR)/languages/$(HLLNAME)
+	$(CP) $(DOCS) $(DESTDIR)$(DOC_DIR)/languages/$(HLLNAME)
+
+installable : installable_$(HLLNAME)@exe@
+	$(CP) installable_$(HLLNAME)@exe@ $(BUILD_DIR)
+
 clean: testclean
 	$(RM_F) pheme.pbc
 	$(RM_F) lib/pheme_grammar_gen.pir
@@ -68,3 +107,9 @@ realclean: clean
 	$(RM_F) Makefile
 
 distclean: realclean
+
+#
+# Local variables:
+# mode: makefile
+# ex: ft=make
+# End:

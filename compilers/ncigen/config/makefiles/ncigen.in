@@ -14,6 +14,7 @@ PERL          = @perl@
 RM_RF         = @rm_rf@
 CP            = @cp@
 PARROT        = ../../parrot@exe@
+PBC_TO_EXE    = ../../pbc_to_exe@exe@
 CAT           = $(PERL) -MExtUtils::Command -e cat
 BUILD_DYNPMC  = $(PERL) $(BUILD_DIR)/tools/build/dynpmc.pl
 RECONFIGURE   = $(PERL) $(BUILD_DIR)/tools/dev/reconfigure.pl
@@ -97,18 +98,7 @@ CLEANUPS = \
   ncigen.pbc \
   src/gen_grammar.pir \
   src/gen_actions.pir \
-  src/gen_builtins.pir \
-  $(PMC_DIR)/*.h \
-  $(PMC_DIR)/*.c \
-  $(PMC_DIR)/*.dump \
-  $(PMC_DIR)/*$(O) \
-  $(PMC_DIR)/*$(LOAD_EXT) \
-  $(PMC_DIR)/*.exp \
-  $(PMC_DIR)/*.ilk \
-  $(PMC_DIR)/*.manifest \
-  $(PMC_DIR)/*.pdb \
-  $(PMC_DIR)/*.lib \
-
+  src/gen_builtins.pir
 
 clean:
 	$(RM_RF) $(CLEANUPS)
@@ -118,4 +108,8 @@ realclean: clean
 
 distclean: realclean
 
-
+#
+# Local variables:
+# mode: makefile
+# ex: ft=make
+# End:

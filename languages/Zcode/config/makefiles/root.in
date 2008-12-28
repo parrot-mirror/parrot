@@ -1,14 +1,19 @@
 # $Id$
 
 # Makefile for languages/Zcode
+HLLNAME	      = Zcode
 
 # Setup of some commands
-PARROT     = ../../parrot@exe@
+BUILD_DIR  = @build_dir@
 PERL       = @perl@
 RM_F       = @rm_f@
+RECONFIGURE   = $(PERL) $(BUILD_DIR)/tools/dev/reconfigure.pl
 #CONDITIONED_LINE(darwin):
 #CONDITIONED_LINE(darwin):# MACOSX_DEPLOYMENT_TARGET must be defined for OS X compilation/linking
 #CONDITIONED_LINE(darwin):export MACOSX_DEPLOYMENT_TARGET := @osx_version@
+#CONDITIONED_LINE(cygchkdll):SHRPENV  = env PATH="@build_dir@/blib/lib:$(PATH)"
+#INVERSE_CONDITIONED_LINE(cygchkdll):SHRPENV  = env LD_RUN_PATH="@build_dir@/blib/lib"
+PARROT        = $(SHRPENV) ../../parrot@exe@
 
 EXAMPLES = examples/small.z3 examples/hello.z3
 
@@ -27,9 +32,7 @@ help :
 	@echo "                     Requires an Inform compiler!"
 	@echo ""
 	@echo "  clean:             clean up temporary files (none presently)"
-	@echo ""
 	@echo "  realclean:         clean up generated files"
-	@echo ""
 	@echo "  maintclean:        clean up Z-code files"
 	@echo ""
 	@echo "  help:              print this help message"
@@ -54,6 +57,10 @@ examples: $(EXAMPLES)
 .inf.z3:
 	inform $< $@
 
+# regenerate the Makefile
+Makefile: config/makefiles/root.in
+	cd $(BUILD_DIR) && $(RECONFIGURE) --step=gen::languages --languages=$(HLLNAME)
+
 clean:
 	@echo "No temp files to clean"
 
@@ -64,3 +71,9 @@ realclean: clean
 
 maintclean: realclean
 	$(RM_F) $(EXAMPLES) $(TEST_ZFILES)
+
+#
+# Local variables:
+# mode: makefile
+# ex: ft=make
+# End:

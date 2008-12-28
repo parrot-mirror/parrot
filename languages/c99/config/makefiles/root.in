@@ -4,22 +4,33 @@
 PARROT_ARGS =
 
 ## configuration settings
+HLLNAME	      = c99
 BUILD_DIR     = @build_dir@
 LOAD_EXT      = @load_ext@
 O             = @o@
+BIN_DIR       = @bin_dir@
+LIB_DIR       = @lib_dir@
+DOC_DIR       = @doc_dir@
+MANDIR	      = @mandir@
 
 ## Setup some commands
 LN_S          = @lns@
 PERL          = @perl@
 RM_RF         = @rm_rf@
 CP            = @cp@
-PARROT        = ../../parrot@exe@
+MKPATH        = @mkpath@
+POD2MAN       = @pod2man@
 CAT           = $(PERL) -MExtUtils::Command -e cat
 BUILD_DYNPMC  = $(PERL) $(BUILD_DIR)/tools/build/dynpmc.pl
 RECONFIGURE   = $(PERL) $(BUILD_DIR)/tools/dev/reconfigure.pl
+POD2MAN       = @pod2man@
 #CONDITIONED_LINE(darwin):
 #CONDITIONED_LINE(darwin):# MACOSX_DEPLOYMENT_TARGET must be defined for OS X compilation/linking
 #CONDITIONED_LINE(darwin):export MACOSX_DEPLOYMENT_TARGET := @osx_version@
+#CONDITIONED_LINE(cygchkdll):SHRPENV  = env PATH="@build_dir@/blib/lib:$(PATH)"
+#INVERSE_CONDITIONED_LINE(cygchkdll):SHRPENV  = env LD_RUN_PATH="@build_dir@/blib/lib"
+PARROT        = $(SHRPENV) $(BUILD_DIR)/parrot@exe@
+PBC_TO_EXE    = $(SHRPENV) $(BUILD_DIR)/pbc_to_exe@exe@
 
 ## places to look for things
 PARROT_DYNEXT = $(BUILD_DIR)/runtime/parrot/dynext
@@ -29,27 +40,38 @@ NQP           = $(BUILD_DIR)/compilers/nqp/nqp.pbc
 PCT           = $(BUILD_DIR)/runtime/parrot/library/PCT.pbc
 
 PMC_DIR       = src/pmc
+DOCS = MAINTAINER
 
-all: c99.pbc
+all: c99.pbc src/cpp/cpp.pbc
 
 C_GROUP = $(PMC_DIR)/c_group$(LOAD_EXT)
 
 SOURCES = c99.pir \
   src/gen_grammar.pir \
   src/gen_actions.pir \
-  src/gen_builtins.pir \
-#  $(C_GROUP)
+  src/gen_builtins.pir
 
 BUILTINS_PIR = \
   src/builtins/say.pir \
 
-# PMCS = c
-# PMC_SOURCES = $(PMC_DIR)/c.pmc
-
 # the default target
-c99.pbc: $(PARROT) $(SOURCES)
+c99.pbc:  $(SOURCES)
 	$(PARROT) $(PARROT_ARGS) -o c99.pbc c99.pir
 	cd src/cpp; $(MAKE)
+
+c99@exe@: c99.pbc
+	$(PBC_TO_EXE) c99.pbc
+
+installable : installable_c99@exe@ installable_cpp@exe@
+	$(CP) installable_c99@exe@ $(BUILD_DIR)
+	$(CP) installable_cpp@exe@ $(BUILD_DIR)
+
+installable_c99@exe@ : c99.pbc
+	$(PBC_TO_EXE) c99.pbc --install
+
+installable_cpp@exe@ : src/cpp/cpp.pbc
+	make installable_cpp@exe@ -C src/cpp
+	mv src/cpp/installable_cpp@exe@ installable_cpp@exe@
 
 src/gen_grammar.pir: $(PERL6GRAMMAR) src/parser/grammar.pg
 	$(PARROT) $(PARROT_ARGS) $(PERL6GRAMMAR) \
@@ -63,15 +85,9 @@ src/gen_actions.pir: $(NQP) $(PCT) src/parser/actions.pm
 src/gen_builtins.pir: $(BUILTINS_PIR)
 	$(CAT) $(BUILTINS_PIR) >src/gen_builtins.pir
 
-$(C_GROUP): $(PARROT) $(PMC_SOURCES)
-	cd $(PMC_DIR) && $(BUILD_DYNPMC) generate $(PMCS)
-	cd $(PMC_DIR) && $(BUILD_DYNPMC) compile $(PMCS)
-	cd $(PMC_DIR) && $(BUILD_DYNPMC) linklibs $(PMCS)
-	cd $(PMC_DIR) && $(BUILD_DYNPMC) copy --destination=$(PARROT_DYNEXT) $(PMCS)
-
 # regenerate the Makefile
 Makefile: config/makefiles/root.in
-	cd $(BUILD_DIR) && $(RECONFIGURE) --step=gen::languages --languages=c
+	cd $(BUILD_DIR) && $(RECONFIGURE) --step=gen::languages --languages=c99
 
 # This is a listing of all targets, that are meant to be called by users
 help:
@@ -80,6 +96,9 @@ help:
 	@echo ""
 	@echo "  all:               c.pbc"
 	@echo "                     This is the default."
+	@echo "  installable:       Create self-hosting bins and libs."
+	@echo "  install:           Install the installable targets and docs."
+	@echo ""
 	@echo "Testing:"
 	@echo "  test:              Run the test suite."
 	@echo "  testclean:         Clean up test results."
@@ -96,6 +115,19 @@ help:
 test: all
 	$(PERL) t/harness
 
+# TODO: rename build_dir. basic run for missing libs
+test-installable : installable
+	./installable_$(HLLNAME)@exe@ t/spi.t
+	./installable_cpp@exe@ t/spi.t
+
+install : installable
+	$(CP) installable_$(HLLNAME)@exe@ $(DESTDIR)$(BIN_DIR)/parrot-$(HLLNAME)@exe@
+	$(CP) installable_cpp@exe@ $(DESTDIR)$(BIN_DIR)/parrot-cpp@exe@
+	$(POD2MAN) $(HLLNAME).pir > $(DESTDIR)$(MANDIR)/man1/parrot-$(HLLNAME).1
+	$(POD2MAN) src/cpp/cpp.pir > $(DESTDIR)$(MANDIR)/man1/parrot-cpp.1
+	$(MKPATH) $(DESTDIR)$(DOC_DIR)/languages/$(HLLNAME)
+	$(CP) $(DOCS) $(DESTDIR)$(DOC_DIR)/languages/$(HLLNAME)
+
 # this target has nothing to do
 testclean:
 
@@ -104,21 +136,11 @@ CLEANUPS = \
   src/gen_grammar.pir \
   src/gen_actions.pir \
   src/gen_builtins.pir \
-  $(PMC_DIR)/*.h \
-  $(PMC_DIR)/*.c \
-  $(PMC_DIR)/*.dump \
-  $(PMC_DIR)/*$(O) \
-  $(PMC_DIR)/*$(LOAD_EXT) \
-  $(PMC_DIR)/*.exp \
-  $(PMC_DIR)/*.ilk \
-  $(PMC_DIR)/*.manifest \
-  $(PMC_DIR)/*.pdb \
-  $(PMC_DIR)/*.lib \
   src/cpp/cpp.pbc \
   src/cpp/src/gen_actions.pir \
   src/cpp/src/gen_grammar.pir \
-  src/cpp/src/gen_builtins.pir
-
+  src/cpp/src/gen_builtins.pir \
+  installable_*@exe@
 
 clean:
 	$(RM_RF) $(CLEANUPS)
@@ -128,4 +150,8 @@ realclean: clean
 
 distclean: realclean
 
-
+#
+# Local variables:
+# mode: makefile
+# ex: ft=make
+# End:

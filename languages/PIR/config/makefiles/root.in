@@ -13,13 +13,18 @@ LN_S          = @lns@
 PERL          = @perl@
 RM_RF         = @rm_rf@
 CP            = @cp@
-PARROT        = ../../parrot@exe@
+MKPATH        = @mkpath@
+POD2MAN       = @pod2man@
 CAT           = $(PERL) -MExtUtils::Command -e cat
 BUILD_DYNPMC  = $(PERL) $(BUILD_DIR)/tools/build/dynpmc.pl
 RECONFIGURE   = $(PERL) $(BUILD_DIR)/tools/dev/reconfigure.pl
 #CONDITIONED_LINE(darwin):
 #CONDITIONED_LINE(darwin):# MACOSX_DEPLOYMENT_TARGET must be defined for OS X compilation/linking
 #CONDITIONED_LINE(darwin):export MACOSX_DEPLOYMENT_TARGET := @osx_version@
+#CONDITIONED_LINE(cygchkdll):SHRPENV  = env PATH="@build_dir@/blib/lib:$(PATH)"
+#INVERSE_CONDITIONED_LINE(cygchkdll):SHRPENV  = env LD_RUN_PATH="@build_dir@/blib/lib"
+PARROT        = $(SHRPENV) ../../parrot@exe@
+PBC_TO_EXE    = $(SHRPENV) ../../pbc_to_exe@exe@
 
 ## places to look for things
 PARROT_DYNEXT = $(BUILD_DIR)/runtime/parrot/dynext
@@ -52,7 +57,7 @@ PASMGRAMMAR = src/pasm/gen_pasm.pbc \
   src/pasm/gen_pasm_core.pbc
 
 # the default target
-pirc.pbc: $(PARROT) $(SOURCES) $(PASMGRAMMAR)
+pirc.pbc:  $(SOURCES) $(PASMGRAMMAR)
 	$(PARROT) $(PARROT_ARGS) -o pirc.pbc pirc.pir
 
 src/gen_grammar.pir: $(PERL6GRAMMAR) src/pir.pg
@@ -102,7 +107,7 @@ src/pasm/gen_pasm_instr.pbc: src/pasm/gen_pasm_instr.pir
 
 src/pasm/gen_pasm_args.pbc: src/pasm/gen_pasm_args.pir
 	$(PARROT) --output-pbc -o src/pasm/gen_pasm_args.pbc src/pasm/gen_pasm_args.pir
-	
+
 src/pasm/gen_pasm_io.pbc: src/pasm/gen_pasm_io.pir
 	$(PARROT) --output-pbc -o src/pasm/gen_pasm_io.pbc src/pasm/gen_pasm_io.pir
 
@@ -111,7 +116,7 @@ src/pasm/gen_pasm_pmc.pbc: src/pasm/gen_pasm_pmc.pir
 
 src/pasm/gen_pasm_core.pbc: src/pasm/gen_pasm_core.pir
 	$(PARROT) --output-pbc -o src/pasm/gen_pasm_core.pbc src/pasm/gen_pasm_core.pir
-	
+
 # regenerate the Makefile
 Makefile: config/makefiles/root.in
 	cd $(BUILD_DIR) && $(RECONFIGURE) --step=gen::languages --languages=PIR
@@ -177,3 +182,9 @@ realclean: clean
 	$(RM_RF) Makefile
 
 distclean: realclean
+
+#
+# Local variables:
+# mode: makefile
+# ex: ft=make
+# End:
