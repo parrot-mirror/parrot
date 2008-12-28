@@ -2093,7 +2093,21 @@ method variable_declarator($/) {
 }
 
 method variable($/, $key) {
-    my $past := PAST::Var.new( :name(~$/), :node($/) );
+    my $past;
+    if $key eq 'desigilname' {
+        my $sigil      := ~$<sigil>;
+        my $twigil     := ~$<twigil>[0];
+        my @identifier := Perl6::Compiler.parse_name( $<desigilname> );
+        my $name       := $sigil ~ @identifier.pop();
+        $past := PAST::Var.new( :name($name), :node($/) );
+
+        ##  if namespace qualified or has a '*' twigil, it's a package var
+        if @identifier || $twigil eq '*' {
+            $past.namespace(@identifier);
+            $past.scope('package');
+            $past.viviself( container_type($sigil) );
+        }
+    }
     make $past;
 }
 
