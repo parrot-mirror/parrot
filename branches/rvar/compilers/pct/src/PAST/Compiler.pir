@@ -2219,6 +2219,10 @@ attribute.
 
     .local string name
     name = node.'name'()
+    if name goto have_name
+    name = self.'uniquereg'('P')
+    node.'name'(name)
+  have_name:
 
     .local pmc ops
     $P0 = get_hll_global ['POST'], 'Ops'
