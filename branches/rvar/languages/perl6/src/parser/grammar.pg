@@ -363,8 +363,8 @@ rule multi_declarator {
 }
 
 token routine_declarator {
-    | $<sym>='sub' <routine_def> {*}             #= sub
-    | $<sym>='method' <method_def> {*}           #= method
+    | $<sym>='sub'       <routine_def> {*}       #= sub
+    | $<sym>='method'    <method_def> {*}        #= method
     | $<sym>='submethod' <method_def> {*}        #= submethod
 }
 
@@ -374,7 +374,7 @@ rule multisig {
 }
 
 rule routine_def {
-    [ <deflongname> ]? [ <multisig> | <trait> ]*
+    [ <deflongname=identifier> ]? [ <multisig> | <trait> ]*
     <block>
     {*}
 }
@@ -419,19 +419,20 @@ token sigterm {
 rule param_sep { [','|':'|';'|';;'] }
 
 token signature {
+    {*} #= open
     <.ws>
     [
-    | <?before '-->' | ')' | ']' | '{' | ':'<!before ':' > >
     | <parameter>
-    ]
+    | <?before '-->' | ')' | ']' | '{' | ':'<!before ':' > >
+    ] ** 1 ## PGE bug
     [ <param_sep>
         [
-        | <?before '-->' | ')' | ']' | '{' | ':'<!before ':' > >
         | <parameter>
+        | <?before '-->' | ')' | ']' | '{' | ':'<!before ':' > >
         ]
     ]*
     <.ws>
-    {*}
+    {*} #= close
 }
 
 rule type_declarator {
@@ -448,12 +449,12 @@ rule type_declarator {
 rule type_constraint {
     [
     | <fulltypename>
-    | where <EXPR: 'm='> # XXX <EXPR(%chaining)>
+    | where <EXPR: 'm='>               # XXX <EXPR(item %chaining)>
     ]
 }
 
 rule post_constraint {
-    where <EXPR: 'm='> # XXX <EXPR(%chaining)>
+    where <EXPR: 'm='>                 # XXX <EXPR(item %chaining)>
 }
 
 token param_var {
@@ -544,8 +545,8 @@ token noun {
     | <variable> {*}                             #= variable
     | <package_declarator> {*}                   #= package_declarator
     | <scope_declarator> {*}                     #= scope_declarator
-    | <multi_declarator> {*}                     #= multi_declarator
     | <routine_declarator> {*}                   #= routine_declarator
+    | <?before multi|proto|only> <multi_declarator> {*}  #= multi_declarator
     | <regex_declarator> {*}                     #= regex_declarator
     | <type_declarator> {*}                      #= type_declarator
     | <enum_declarator> {*}                      #= enum_declarator
