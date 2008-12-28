@@ -179,7 +179,6 @@ lexicals as needed and performing type checks.
 
 .namespace []
 .sub '!SIGNATURE_BIND'
-    .include 'interpinfo.pasm'
     .local pmc callersub, callerlex, callersig
     $P0 = getinterp
     callersub = $P0['sub';1]
@@ -197,25 +196,41 @@ lexicals as needed and performing type checks.
     .local string name, sigil
     name = param['name']
     sigil = substr name, 0, 1
-    .local pmc var
+    .local pmc type, var
+    type = param['type']
     var = callerlex[name]
     if sigil == '@' goto param_array
     var = 'Scalar'(var)
-    callerlex[name] = var
-    goto param_loop
+    ##  typecheck the argument
+    if null type goto param_val_done
+    .lex '$/', $P99
+    $P0 = type.'ACCEPTS'(var)
+    unless $P0 goto err_param_type
+    goto param_val_done
   param_array:
     var = 'Array'(var)
+    goto param_val_done
+  param_val_done:
+    ## place the updated variable back into lex
     callerlex[name] = var
+    ## set any type properties
+    setprop var, 'type', type
     goto param_loop
   param_done:
   end:
+    .return ()
+  err_param_type:
+    $S0 = callersub
+    if $S0 goto have_callersub_name
+    $S0 = '<anon>'
+  have_callersub_name:
+    'die'('Parameter type check failed in call to ', $S0)
 .end
 
 
 =back
 
 =cut
-
 
 
 # Local Variables:

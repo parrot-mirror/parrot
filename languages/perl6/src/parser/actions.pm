@@ -892,36 +892,56 @@ method signature($/, $key) {
     else {
         my $loadinit := $?SIGNATURE_BLOCK.loadinit();
         my $sigobj   := PAST::Var.new( :scope('register') );
+
+        ##  create a Signature object and attach to the block
         $loadinit.push(
-            PAST::Op.new( :inline('    %0 = new "Signature"'), $sigobj)
+            PAST::Op.new( :inline('    %0 = new "Signature"',
+                                  '    setprop block, "$!signature", %0'), 
+                           $sigobj)
         );
 
+        ##  loop through parameters of signature
         my $i   := 0;
         my $n   := $<parameter> ?? +@($<parameter>) !! 0;
         while $i < $n {
             my $param_past := $( $<parameter>[$i] );
             my $name       := $param_past.name();
             my $symbol     := $?SIGNATURE_BLOCK.symbol($name);
+
+            ##  set the default value of the param and add var node to block
             $param_past.viviself( $symbol<viviself> );
             $?SIGNATURE.push( $param_past );
 
+            ##  add parameter to the signature object
             my $sigparam := PAST::Op.new( :pasttype('callmethod'), 
                                 :name('!add_param'), $sigobj, $name );
+
+            ##  add any typechecks
+            if +$symbol<type> == 1 {
+                my $type := $symbol<type>[0];
+                $type.named('type');
+                $sigparam.push($type);
+            }
+
             $loadinit.push($sigparam);
             $i++;
         }
-        $loadinit.push( 
-            PAST::Op.new( 
-                :inline('    setprop block, "$!signature", %0'),
-                $sigobj 
-            )
-        );
+
+        ##  restore block stack and return signature ast
         @?BLOCK.shift();
-        ##  return signature ast node
         make $?SIGNATURE;
     }
 
     $?BLOCK := @?BLOCK[0];
+}
+
+
+method type_constraint($/) {
+    my $past;
+    if $<fulltypename> {
+        $past := $( $<fulltypename> );
+    }
+    make $past;
 }
 
 
@@ -956,6 +976,12 @@ method parameter($/) {
             $/.panic("Can't put a default on a slurpy parameter");
         }
         $symbol<viviself> := $( $<default_value>[0]<EXPR> );
+    }
+
+    my $type := List.new();
+    $symbol<type> := $type;
+    if $<type_constraint> {
+        for @($<type_constraint>) { $type.push( $( $_ ) ); }
     }
 
     make $past;
