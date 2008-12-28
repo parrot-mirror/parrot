@@ -339,13 +339,18 @@ PARROT_WARN_UNUSED_RESULT
 INTVAL
 Parrot_io_eof(PARROT_INTERP, ARGMOD(PMC *pmc))
 {
+    INTVAL result;
+
     /* io could be null here, but rather than return a negative error
      * we just fake EOF since eof test is usually in a boolean context.
      */
-    if (PMC_IS_NULL(pmc) || Parrot_io_is_closed(interp, pmc))
+    if (PMC_IS_NULL(pmc))
             return 1;
 
-    return (Parrot_io_get_flags(interp, pmc) & (PIO_F_EOF)) ? 1 : 0;
+    Parrot_PCCINVOKE(interp, pmc, CONST_STRING(interp, "eof"), "->I",
+            &result);
+
+    return result;
 
 }
 

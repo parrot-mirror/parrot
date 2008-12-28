@@ -654,7 +654,12 @@ Returns true if the filehandle is at end-of-file, returns false otherwise.
 */
 
     METHOD eof() {
-        if (Parrot_io_eof(INTERP, SELF))
+        INTVAL flags;
+        if (Parrot_io_is_closed_filehandle(interp, SELF))
+            RETURN(INTVAL 1);
+
+        GET_ATTR_flags(INTERP, SELF, flags);
+        if (flags & PIO_F_EOF)
             RETURN(INTVAL 1);
 
         RETURN(INTVAL 0);
