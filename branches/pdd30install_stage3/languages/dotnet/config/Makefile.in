@@ -13,18 +13,21 @@
 # #########################
 PERL     = ${perl}
 RM_F     = ${rm_f}
+CP       = ${cp}
+MKPATH   = ${mkpath}
 MONOLIB  = ${trans_mono_lib_path}
-#CONDITIONED_LINE(cygchkdll):SHRPENV  = env PATH="@build_dir@/blib/lib:$(PATH)"
-#INVERSE_CONDITIONED_LINE(cygchkdll):SHRPENV  = env LD_RUN_PATH="@build_dir@/blib/lib"
-PARROT     = $(SHRPENV) ${trans_parrot_path}${slash}parrot${exe}
-PBCMERGE   = $(SHRPENV) ${trans_parrot_path}${slash}pbc_merge${exe}
-PBC_TO_EXE = $(SHRPENV) ${trans_parrot_path}${slash}pbc_to_exe.exe
+#IF(has_pod2man):POD2MAN   = ${pod2man}
+#IF(parrot_is_shared and !(cygwin|win32)):export LD_RUN_PATH := @blib_dir@:$(LD_RUN_PATH)
+#IF(darwin):export DYLD_LIBRARY_PATH := @blib_dir@:$(DYLD_LIBRARY_PATH)
+PARROT     = ${trans_parrot_path}${slash}parrot${exe}
+PBC_MERGE  = ${trans_parrot_path}${slash}pbc_merge${exe}
+PBC_TO_EXE = ${trans_parrot_path}${slash}pbc_to_exe.exe
 PMCBUILD = $(PERL) ${build_dir}${slash}tools${slash}build${slash}dynpmc.pl
 OPSBUILD = $(PERL) ${build_dir}${slash}tools${slash}build${slash}dynoplibs.pl
 PARROT_DYNEXT  = ${build_dir}${slash}runtime${slash}parrot${slash}dynext
-#CONDITIONED_LINE(darwin):
-#CONDITIONED_LINE(darwin):# MACOSX_DEPLOYMENT_TARGET must be defined for OS X compilation/linking
-#CONDITIONED_LINE(darwin):export MACOSX_DEPLOYMENT_TARGET := @osx_version@
+#IF(darwin):
+#IF(darwin):# MACOSX_DEPLOYMENT_TARGET must be defined for OS X compilation/linking
+#IF(darwin):export MACOSX_DEPLOYMENT_TARGET := @osx_version@
 
 
 # FILE EXTENSIONS
@@ -94,10 +97,10 @@ src/builtins.pir : src/internal.methods build/builtins.pl
 	$(PERL) build/builtins.pl src/internal.methods --output src/builtins.pir
 
 src/translib.pbc : src/it.pbc src/builtins.pbc $(TRAN_PBC)
-	$(PBCMERGE) -o src/translib.pbc $(TRAN_PBC) src/it.pbc src/builtins.pbc
+	$(PBC_MERGE) -o src/translib.pbc $(TRAN_PBC) src/it.pbc src/builtins.pbc
 
 net2pbc.pbc : pmc/dotnet$(LOAD_EXT) src/translib.pbc src/net2pbc.pbc
-	$(PBCMERGE) -o net2pbc.pbc src/net2pbc.pbc src/translib.pbc
+	$(PBC_MERGE) -o net2pbc.pbc src/net2pbc.pbc src/translib.pbc
 
 class-library : net2pbc.pbc
 	${trans_class_library}
@@ -157,15 +160,15 @@ installable_test : installable
 	./installable_net2pbc$exe
 
 install : all installable
-	cp installable_net2pbc$exe $(DESTDIR)$(BIN_DIR)/parrot-net2pbc@exe@
+	$(CP) installable_net2pbc$exe $(DESTDIR)$(BIN_DIR)/parrot-net2pbc@exe@
 	@cd $(PMCDIR) && $(PMCBUILD) copy "--destination=$(DESTDIR)$(LIB_DIR)/parrot/dynext" $(OPLIBS)
 	@cd $(PMCDIR) && $(PMCBUILD) copy "--destination=$(DESTDIR)$(LIB_DIR)/parrot/dynext" $(PMCS)
-	pod2man doc/running.pod > $(DESTDIR)$(MANDIR)/man1/parrot-net2pbc.1
-	mkdir $(DESTDIR)$(DOC_DIR)/languages/$(LANG)
-	cp $(DOCS) $(DESTDIR)$(DOC_DIR)/languages/$(LANG)
-	cp doc/*.pod $(DESTDIR)$(DOC_DIR)/languages/$(LANG)
-	mkdir $(DESTDIR)$(DOC_DIR)/languages/$(LANG)/constructs
-	cp doc/constructs/.pod $(DESTDIR)$(DOC_DIR)/languages/$(LANG)/constructs
+#IF(has_pod2man):	$(POD2MAN) doc/running.pod > $(DESTDIR)$(MANDIR)/man1/parrot-net2pbc.1
+	$(MKPATH) $(DESTDIR)$(DOC_DIR)/languages/$(LANG)
+	$(CP) $(DOCS) $(DESTDIR)$(DOC_DIR)/languages/$(LANG)
+	$(CP) doc/*.pod $(DESTDIR)$(DOC_DIR)/languages/$(LANG)
+	$(MKPATH) $(DESTDIR)$(DOC_DIR)/languages/$(LANG)/constructs
+	$(CP) doc/constructs/.pod $(DESTDIR)$(DOC_DIR)/languages/$(LANG)/constructs
 
 # CLEANUP TARGETS
 # ###############
@@ -178,21 +181,21 @@ CLEANERS = \
  "$(PMCDIR)/*.dump" \
  "$(PMCDIR)/*.c" \
  "$(PMCDIR)/*$(O)" \
- "$(PMCDIR)/*.def" \
- "$(PMCDIR)/*.exp" \
- "$(PMCDIR)/*.pdb" \
- "$(PMCDIR)/*.ilk" \
- "$(PMCDIR)/*.lib" \
+#IF(win32): "$(PMCDIR)/*.def" \
+#IF(win32): "$(PMCDIR)/*.exp" \
+#IF(win32): "$(PMCDIR)/*.pdb" \
+#IF(win32): "$(PMCDIR)/*.ilk" \
+#IF(win32): "$(PMCDIR)/*.lib" \
  "$(OPSDIR)/*.c" \
  "$(OPSDIR)/*.h" \
  "$(OPSDIR)/*$(O)" \
  "$(OPSDIR)/*$(LOAD_EXT)" \
- "$(OPSDIR)/*.exp" \
- "$(OPSDIR)/*.pdb" \
- "$(OPSDIR)/*.ilk" \
- "$(OPSDIR)/*.lib" \
+#IF(win32): "$(OPSDIR)/*.exp" \
+#IF(win32): "$(OPSDIR)/*.pdb" \
+#IF(win32): "$(OPSDIR)/*.ilk" \
+#IF(win32): "$(OPSDIR)/*.lib" \
  "*.pbc" \
- "*.dll" \
+#IF(win32): "*.dll" \
  "src/*.pbc" \
  src/it.pir \
  src/builtins.pir
