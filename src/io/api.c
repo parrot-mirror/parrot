@@ -239,28 +239,22 @@ Writes C<len> bytes from C<*buffer> to C<*pmc>.
 PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
 INTVAL
-Parrot_io_write(PARROT_INTERP, ARGMOD(PMC *pmc), ARGIN(const void *buffer), size_t len)
+Parrot_io_write(PARROT_INTERP, ARGMOD(PMC *pmc), ARGIN(const void *buffer), size_t length)
 {
     DECL_CONST_CAST;
+    INTVAL result;
+    STRING fake;
 
-    if (Parrot_io_is_closed(interp, pmc))
+    if (PMC_IS_NULL(pmc))
         return -1;
 
-    if (Parrot_io_get_flags(interp, pmc) & PIO_F_WRITE) {
-        STRING fake;
-        /* TODO skip utf8 translation layers if any */
-        fake.strstart = (char *) PARROT_const_cast(void *, buffer);
-        fake.strlen = fake.bufused = len;
-        fake.charset = Parrot_default_charset_ptr;
-        fake.encoding = Parrot_default_encoding_ptr;
+    fake.strstart = (char *) PARROT_const_cast(void *, buffer);
+    fake.strlen = fake.bufused = length;
+    fake.charset = Parrot_default_charset_ptr;
+    fake.encoding = Parrot_default_encoding_ptr;
 
-        if (Parrot_io_is_encoding(interp, pmc, CONST_STRING(interp, "utf8")))
-            return Parrot_io_write_utf8(interp, pmc, &fake);
-
-        return Parrot_io_write_buffer(interp, pmc, &fake);
-    }
-    else
-        return 0;
+    result = Parrot_io_putps(interp, pmc, &fake);
+    return result;
 }
 
 /*
