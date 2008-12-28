@@ -1418,11 +1418,6 @@ method param_var($/) {
 }
 
 
-method special_variable($/) {
-    make PAST::Var.new( :node($/), :name(~$/), :scope('lexical') );
-}
-
-
 method expect_term($/, $key) {
     my $past;
     if $key eq '*' {
@@ -2108,8 +2103,17 @@ method variable($/, $key) {
             $past.viviself( container_type($sigil) );
         }
     }
+    elsif $key eq 'special_variable' {
+        $past := $( $<special_variable> );
+    }
     make $past;
 }
+
+
+method special_variable($/) {
+    make PAST::Var.new( :node($/), :name(~$/), :scope('lexical') );
+}
+
 
 method circumfix($/, $key) {
     my $past;
