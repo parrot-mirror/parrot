@@ -584,7 +584,7 @@ nodes of type C<PAST::Stmts>.
 
 =cut
 
-.sub 'as_post' :method :multi(_, ['PAST';'Node'])
+.sub 'as_post' :method :multi(_, ['PAST';'Node']) :subid('Node.as_post')
     .param pmc node
     .param pmc options         :slurpy :named
 
@@ -1507,6 +1507,22 @@ to C<ResizablePMCArray> if not set.
     goto iter_loop
   iter_end:
     .return (ops)
+.end
+
+
+=item stmts(PAST::Op node)
+
+Treat the node like a PAST::Stmts node -- i.e., invoke all the
+children and return the value of the last one.
+
+=cut
+
+.sub 'stmts' :method :multi(_, ['PAST';'Op'])
+    .param pmc node
+    .param pmc options         :slurpy :named
+
+    .const 'Sub' $P0 = 'Node.as_post'
+    .tailcall self.$P0(node, options :flat :named)
 .end
 
 
