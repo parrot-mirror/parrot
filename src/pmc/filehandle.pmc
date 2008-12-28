@@ -260,7 +260,7 @@ Close the filehandle.
 
     METHOD close() {
         INTVAL status;
-        status = Parrot_io_close_filehandle(interp, pmc);
+        status = Parrot_io_close_filehandle(interp, SELF);
         RETURN(INTVAL status);
     }
 
@@ -276,7 +276,7 @@ Test if the filehandle is closed.
 
     METHOD is_closed() {
         INTVAL status;
-        status = Parrot_io_is_closed_filehandle(interp, pmc);
+        status = Parrot_io_is_closed_filehandle(interp, SELF);
         RETURN(INTVAL status);
     }
 
@@ -294,17 +294,17 @@ Read the given number of bytes from the filehandle and return them in a string.
         STRING *string_result = NULL;
         INTVAL  ignored;
 
-        if (Parrot_io_is_closed_filehandle(interp, pmc))
+        if (Parrot_io_is_closed_filehandle(interp, SELF))
             Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_PIO_ERROR,
                 "Cannot read from a closed filehandle");
 
         string_result = Parrot_io_make_string(interp, &string_result, length);
         string_result->bufused = length;
 
-        if (Parrot_io_is_encoding(interp, pmc, CONST_STRING(interp, "utf8")))
-            ignored = Parrot_io_read_utf8(interp, pmc, &string_result);
+        if (Parrot_io_is_encoding(interp, SELF, CONST_STRING(interp, "utf8")))
+            ignored = Parrot_io_read_utf8(interp, SELF, &string_result);
         else
-            ignored = Parrot_io_read_buffer(interp, pmc, &string_result);
+            ignored = Parrot_io_read_buffer(interp, SELF, &string_result);
 
         RETURN(STRING *string_result);
     }
@@ -493,7 +493,7 @@ Print the string to the filehandle.
 
     METHOD puts(STRING *to_print) {
         INTVAL flags, status;
-        if (Parrot_io_is_closed_filehandle(interp, pmc))
+        if (Parrot_io_is_closed_filehandle(interp, SELF))
             Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_PIO_ERROR,
                 "Cannot write to a closed filehandle");
 
@@ -511,10 +511,10 @@ Print the string to the filehandle.
             Parrot_do_dod_run(interp, GC_trace_stack_FLAG);
 #endif
 
-        if (Parrot_io_is_encoding(interp, pmc, CONST_STRING(interp, "utf8")))
-            status = Parrot_io_write_utf8(interp, pmc, to_print);
+        if (Parrot_io_is_encoding(interp, SELF, CONST_STRING(interp, "utf8")))
+            status = Parrot_io_write_utf8(interp, SELF, to_print);
         else
-            status = Parrot_io_write_buffer(interp, pmc, to_print);
+            status = Parrot_io_write_buffer(interp, SELF, to_print);
 
         RETURN(INTVAL status);
     }
