@@ -24,14 +24,13 @@ parrotlib's interface functions.
     .local pmc includes
     .local string root
 
-
-    # XXX todo: get root from config
     $P0 = new 'Env'
     root = $P0["PARROT_RUNTIME_ROOT"]
     length $I0, root
     if $I0 == 0 goto DEFAULT
     branch OKAY
 DEFAULT:
+    # lib/parrot on installed, or runtime
     root = "runtime/parrot"
 OKAY:
 
@@ -138,13 +137,22 @@ Returns the location of a dynamic extension.
     stat $I0, name, 0
     if $I0 goto END
 
-    name = "runtime/parrot/dynext/"
+    .include "interpinfo.pasm"
+    name = interpinfo .INTERPINFO_RUNTIME_PREFIX
+    concat name, "lib/parrot/dynext/"
     concat name, request
+    stat $I0, name, 0
+    if $I0 goto END
+
+    concat name, ext
     stat $I0, name, 0
     if $I0 goto END
 
     name = "runtime/parrot/dynext/"
     concat name, request
+    stat $I0, name, 0
+    if $I0 goto END
+
     concat name, ext
     stat $I0, name, 0
     if $I0 goto END
