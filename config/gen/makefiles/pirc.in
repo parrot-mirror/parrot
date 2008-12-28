@@ -85,6 +85,9 @@ test: all
 Makefile: $(BUILD_DIR)/config/gen/makefiles/pirc.in
 	cd $(BUILD_DIR) && $(RECONFIGURE) --step=gen::makefiles --target=compilers/pirc/Makefile
 
+# regenerate the Makefile
+Makefile: $(BUILD_DIR)/config/gen/makefiles/pirc.in
+	cd $(BUILD_DIR) && $(RECONFIGURE) --step=gen::makefiles --target=compilers/pirc/Makefile
 
 clean:
 	$(RM_F) *$(O)
