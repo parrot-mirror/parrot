@@ -551,7 +551,7 @@ Get/set the C<hll> for this block.
 .end
 
 
-=item symbol(name, [attr1 => val1, attr2 => val2, ...])
+=item symbol(name [, attr1 => val1, attr2 => val2, ...])
 
 If called with named arguments, sets the symbol hash corresponding
 to C<name> in the current block.  The HLL is free to select
@@ -573,14 +573,24 @@ attribute hash for symbol C<name>.
     symtable = new 'Hash'
     self['symtable'] = symtable
   have_symtable:
-    if attr goto set_symbol
-  get_symbol:
-    $P0 = symtable[name]
-    if null $P0 goto end
-    .return ($P0)
-  set_symbol:
+    .local pmc symbol
+    symbol = symtable[name]
+    if null symbol goto symbol_empty
+    unless attr goto attr_done
+    .local pmc it
+    it = iter attr
+  attr_loop:
+    unless it goto attr_done
+    $S0 = shift it
+    $P0 = attr[$S0]
+    symbol[$S0] = $P0
+    goto attr_loop
+  attr_done:
+    .return (symbol)
+  symbol_empty:
+    unless attr goto symbol_done
     symtable[name] = attr
-  end:
+  symbol_done:
     .return (attr)
 .end
 
