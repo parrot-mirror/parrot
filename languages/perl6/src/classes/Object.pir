@@ -200,20 +200,6 @@ Boolean value of object -- defaults to C<.defined> (S02).
     .return ($P0)
 .end
 
-.namespace []
-.sub 'Array'
-    .param pmc source
-    $I0 = isa source, 'ObjectRef'
-    if $I0 goto make_array
-    $I0 = can source, 'Array'
-    unless $I0 goto make_array
-    .tailcall source.'Array'()
-  make_array:
-    $P0 = new 'Perl6Array'
-    $P0.'!STORE'(source)
-    .return ($P0)
-.end
-
 =item Hash()
 
 =cut
@@ -222,20 +208,6 @@ Boolean value of object -- defaults to C<.defined> (S02).
 .sub 'Hash' :method
     $P0 = new 'Perl6Hash'
     $P0.'!STORE'(self)
-    .return ($P0)
-.end
-
-.namespace []
-.sub 'Hash'
-    .param pmc source
-    $I0 = isa source, 'ObjectRef'
-    if $I0 goto make_hash
-    $I0 = can source, 'Hash'
-    unless $I0 goto make_hash
-    .tailcall source.'Hash'()
-  make_hash:
-    $P0 = new 'Perl6Hash'
-    $P0.'!STORE'(source)
     .return ($P0)
 .end
 
@@ -263,21 +235,6 @@ an object reference (unless the invocant already is one).
   not_ref:
     $P0 = new 'ObjectRef', self
     .return ($P0)
-.end
-
-.namespace []
-.sub 'Scalar'
-    .param pmc source
-    $I0 = isa source, 'ObjectRef'
-    if $I0 goto done
-    $I0 = can source, 'Scalar'
-    if $I0 goto can_scalar
-    $I0 = does source, 'scalar'
-    source = new 'ObjectRef', source
-  done:
-    .return (source)
-  can_scalar:
-    .tailcall source.'Scalar'()
 .end
 
 =item Str()

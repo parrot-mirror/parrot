@@ -16,7 +16,7 @@ src/builtins/inplace.pir - Inplace assignments
     .param pmc cont
     .param pmc source
 
-    source = 'Scalar'(source)
+    source = '!CALLMETHOD'('Scalar', source)
     .local pmc ro, type
     getprop ro, 'readonly', cont
     if null ro goto ro_ok

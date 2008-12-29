@@ -201,7 +201,7 @@ lexicals as needed and performing type checks.
     orig = callerlex[name]
     if sigil == '@' goto param_array
     if sigil == '%' goto param_hash
-    var = 'Scalar'(orig)
+    var = '!CALLMETHOD'('Scalar', orig)
     ##  typecheck the argument
     if null type goto param_val_done
     .lex '$/', $P99
@@ -209,10 +209,10 @@ lexicals as needed and performing type checks.
     unless $P0 goto err_param_type
     goto param_val_done
   param_array:
-    var = 'Array'(orig)
+    var = '!CALLMETHOD'('Array', orig)
     goto param_val_done
   param_hash:
-    var = 'Hash'(orig)
+    var = '!CALLMETHOD'('Hash', orig)
   param_val_done:
     ## handle readonly/copy traits
     $S0 = param['readtype']
