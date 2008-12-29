@@ -45,10 +45,10 @@ OKAY:
 
     # create includes array
     includes = new 'ResizablePMCArray'
-    store_global "_parrotlib", "include_paths", includes
+    set_root_global ['_parrotlib'], 'include_paths', includes
 
     # get the directory handler
-    $P0 = find_global "_parrotlib", "handle_directory"
+    $P0 = get_root_global ['_parrotlib'], 'handle_directory'
 
     # fill the includes array
 LOOP:
@@ -73,9 +73,9 @@ LOOP:
 
     $P1 = new 'String'
     $P1 = sig
-    find_global $P0, "_parrotlib", name
+    get_root_global $P0, ['_parrotlib'], name
     setprop $P0, "signature", $P1
-    store_global "_parrotlib", name, $P0
+    set_root_global ['_parrotlib'], name, $P0
 .end
 
 =item STRING = include_file_location( STRING )
@@ -90,7 +90,7 @@ This function returns the absolute filename of the requested file.
 .sub include_file_location
     .param string name
 
-    find_global $P0, "_parrotlib", "include_paths"
+    get_root_global $P0, ['_parrotlib'], 'include_paths'
     $S0 = find_file_path( name, $P0 )
 
     .begin_return
@@ -110,7 +110,7 @@ This function returns the absolute filename of the requested file.
 .sub imcc_compile_file_location
     .param string name
 
-    find_global $P0, "_parrotlib", "include_paths"
+    get_root_global $P1, ['_parrotlib'], 'include_paths'
     $S0 = find_file_path( name, $P0 )
 
     .begin_return

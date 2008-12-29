@@ -131,7 +131,7 @@ plain:
 
   $S0 = thing
   .local pmc escaper
-  escaper = find_global "Data::Escape", "String"
+  escaper = get_root_global ['Data::Escape'], 'String'
   $S0 = escaper($S0,'"')
 
   result = '"' . $S0
@@ -274,7 +274,7 @@ iter_loop:
   goto iter_loop
 
 done_iter:
-  $P0 = find_global 'Data::Sort', 'simple'
+  $P0 = get_root_global ['Data::Sort'], 'simple'
   $P0( keys )
 
   .local string result,separator
