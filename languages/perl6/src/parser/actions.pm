@@ -1727,7 +1727,11 @@ method scope_declarator($/) {
     my $sym  := ~$<sym>;
     my $past := $( $<scoped> );
     if $past.isa(PAST::Var) {
-        my $scope := $sym eq 'my' ?? 'lexical' !! 'package';
+        my $scope := 'lexical';
+        if $sym eq 'our' {
+            $scope := 'package';
+            $past.lvalue(1);
+        }
         our $?BLOCK;
         my $symbol := $?BLOCK.symbol( $past.name() );
         $symbol<scope> := $scope;
