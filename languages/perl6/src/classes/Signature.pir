@@ -200,6 +200,7 @@ lexicals as needed and performing type checks.
     type = param['type']
     orig = callerlex[name]
     if sigil == '@' goto param_array
+    if sigil == '%' goto param_hash
     var = 'Scalar'(orig)
     ##  typecheck the argument
     if null type goto param_val_done
@@ -210,6 +211,8 @@ lexicals as needed and performing type checks.
   param_array:
     var = 'Array'(orig)
     goto param_val_done
+  param_hash:
+    var = 'Hash'(orig)
   param_val_done:
     ## handle readonly/copy traits
     $S0 = param['readtype']
