@@ -1754,12 +1754,17 @@ method declarator($/) {
 
 
 method variable_declarator($/) {
-    my $past := $( $<variable> );
+    our $?BLOCK;
+    my $past   := $( $<variable> );
+    my $name   := $past.name();
+    my $symbol := $?BLOCK.symbol( $name );
+    if $symbol<scope> eq 'lexical' {
+        $/.panic("Redeclaration of variable " ~ $name);
+    }
+    
     $past.isdecl(1);
-    my $name     := $past.name();
     my $type     := List.new();
     my $viviself := container_type($<variable><sigil>);
-    our $?BLOCK;
     $?BLOCK.symbol($name, :type($type), :viviself($viviself) );
     make $past;
 }
