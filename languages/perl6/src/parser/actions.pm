@@ -512,11 +512,23 @@ method statement_prefix($/) {
 
 
 method multi_declarator($/) {
-    my $sym := ~$<sym>;
-    my $past;
-    if $( $<declarator> ) {
-        $past := $( $<declarator> );
+    my $sym  := ~$<sym>;
+    my $past :=  $<declarator> ?? $( $<declarator> ) !! $( $<routine_def> );
+
+    if $past.isa(PAST::Block) {
+        # If we're declaring a multi or a proto, flag the sub as :multi,
+        # and transform the sub's container to a Perl6MultiSub.
+        if $sym eq 'multi' || $sym eq 'proto' {
+            my $pirflags := ~$past.pirflags();
+            $past.pirflags( $pirflags ~ ' :multi()' );
+            $past.loadinit().push( 
+                PAST::Op.new( :name('!TOPERL6MULTISUB'), :pasttype('call'),
+                    PAST::Var.new( :name('block'), :scope('register') )
+                )
+            );
+        }
     }
+
     make $past;
 }
 
@@ -1733,6 +1745,9 @@ method declarator($/) {
     my $past;
     if $<variable_declarator> {
         $past := $( $<variable_declarator> );
+    }
+    elsif $<routine_declarator> {
+        $past := $( $<routine_declarator> );
     }
     make $past;
 }
