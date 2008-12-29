@@ -225,6 +225,20 @@ Boolean value of object -- defaults to C<.defined> (S02).
     .return ($P0)
 .end
 
+.namespace []
+.sub 'Hash'
+    .param pmc source
+    $I0 = isa source, 'ObjectRef'
+    if $I0 goto make_hash
+    $I0 = can source, 'Hash'
+    unless $I0 goto make_hash
+    .tailcall source.'Hash'()
+  make_hash:
+    $P0 = new 'Perl6Hash'
+    $P0.'!STORE'(source)
+    .return ($P0)
+.end
+
 =item Iterator()
 
 =cut
