@@ -945,6 +945,10 @@ method signature($/, $key) {
             $param_past.viviself( $symbol<viviself> );
             $?SIGNATURE.push( $param_past );
 
+            if $symbol<type_binding> {
+                $?SIGNATURE.push( $symbol<type_binding> );
+            }
+
             ##  add parameter to the signature object
             my $sigparam := PAST::Op.new( :pasttype('callmethod'), 
                                 :name('!add_param'), $sigobj, $name );
@@ -1025,10 +1029,27 @@ method parameter($/) {
     }
 
     ##  keep track of any type constraints
-    my $type := PAST::Op.new( :name('and'), :pasttype('call') );
-    $symbol<type> := $type;
+    my $typelist := PAST::Op.new( :name('and'), :pasttype('call') );
+    $symbol<type> := $typelist;
     if $<type_constraint> {
-        for @($<type_constraint>) { $type.push( $( $_ ) ); }
+        for @($<type_constraint>) { 
+            my $type_past := $( $_ );
+            if substr( $_.text() , 0, 2 ) eq '::' {
+                # it's a type binding
+                $type_past.scope('lexical');
+                $type_past.isdecl(1);
+                $type_past.viviself( 
+                    PAST::Op.new( :pasttype('callmethod'), :name('WHAT'),
+                        PAST::Var.new( :name($past.name()) )
+                    )
+                );
+                $symbol<type_binding> := $type_past;
+                $?SIGNATURE_BLOCK.symbol( $type_past.name(), :scope('lexical') );
+            }
+            else {
+                $typelist.push( $type_past );
+            }
+        }
     }
 
     my $readtype := '';
@@ -1900,7 +1921,7 @@ method typename($/) {
         :name($shortname),
         :namespace($ns),
         :node($/),
-        :scope($scope ?? $scope !! 'package'),
+        :scope($scope || 'package'),
     );
 
     make $past;
