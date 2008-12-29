@@ -1020,15 +1020,17 @@ method parameter($/) {
     }
 
     my $readtype := '';
-    for @($<trait>) {
-        my $traitpast := $( $_ );
-        my $name := $traitpast[1];
-        if $name eq 'readonly' || $name eq 'rw' || $name eq 'copy' {
-            $readtype && 
-                $/.panic("Can only use one of readonly, rw, and copy");
-            $readtype := $name;
+    if $<trait> {
+        for @($<trait>) {
+            my $traitpast := $( $_ );
+            my $name := $traitpast[1];
+            if $name eq 'readonly' || $name eq 'rw' || $name eq 'copy' {
+                $readtype && 
+                    $/.panic("Can only use one of readonly, rw, and copy");
+                $readtype := $name;
+            }
+            # else $traitlist.push( $traitpast );  ## when we do other traits
         }
-        # else $traitlist.push( $traitpast );  ## when we do other traits
     }
     $symbol<readtype> := PAST::Val.new( :value($readtype || 'readonly') );
 
