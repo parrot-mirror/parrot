@@ -387,14 +387,20 @@ rule method_def {
 }
 
 rule trait {
+    [
     | <trait_auxiliary>
     | <trait_verb>
+    ]
+    {*}
 }
 
 rule trait_auxiliary {
+    [
     | $<sym>=[is] <name><postcircumfix>?
     | $<sym>=[does] <name>['['<EXPR>']']?
     | $<sym>=[will] <identifier> <block>
+    ]
+    {*}
 }
 
 rule trait_verb {

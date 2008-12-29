@@ -878,6 +878,27 @@ method method_def($/) {
 }
 
 
+method trait($/) {
+    my $past;
+    if $<trait_auxiliary> {
+        $past := $( $<trait_auxiliary> );
+    }
+    elsif $<trait_verb> {
+        $past := $( $<trait_verb> );
+    }
+    make $past;
+}
+
+method trait_auxiliary($/) {
+    my $sym := ~$<sym>;
+    my $trait;
+    if $sym eq 'is' {
+        $trait := ~$<name>;
+    }
+    make PAST::Op.new( :name('list'), 'trait_auxiliary:' ~ $sym, $trait );
+}
+    
+
 method signature($/, $key) {
     our $?SIGNATURE;
     our $?SIGNATURE_BLOCK;
@@ -999,16 +1020,16 @@ method parameter($/) {
     }
 
     my $readtype := '';
-    #for @($<trait>) {
-    #    my $traitpast := $( $_ );
-    #    my $name := $traitpast[1];
-    #    if $name eq 'readonly' || $name eq 'rw' || $name eq 'copy' {
-    #        $readtype && 
-    #            $/.panic("Can only use one of readonly, rw, and copy");
-    #        $readtype := $name;
-    #    }
-    #    # else $traitlist.push( $traitpast );  ## when we do other traits
-    #}
+    for @($<trait>) {
+        my $traitpast := $( $_ );
+        my $name := $traitpast[1];
+        if $name eq 'readonly' || $name eq 'rw' || $name eq 'copy' {
+            $readtype && 
+                $/.panic("Can only use one of readonly, rw, and copy");
+            $readtype := $name;
+        }
+        # else $traitlist.push( $traitpast );  ## when we do other traits
+    }
     $symbol<readtype> := PAST::Val.new( :value($readtype || 'readonly') );
 
     make $past;

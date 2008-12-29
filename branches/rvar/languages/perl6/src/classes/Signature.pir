@@ -214,8 +214,7 @@ lexicals as needed and performing type checks.
     ## handle readonly/copy traits
     $S0 = param['readtype']
     if $S0 == 'rw' goto param_readtype_done
-    $I0 = isntsame orig, var
-    if $I0 goto param_readtype_var
+    ne_addr orig, var, param_readtype_var
     var = new 'ObjectRef', var
   param_readtype_var:
     if $S0 == 'copy' goto param_readtype_done
