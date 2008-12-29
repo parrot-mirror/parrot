@@ -920,7 +920,7 @@ method signature($/, $key) {
         $?SIGNATURE := PAST::Op.new( :pasttype('stmts'), :node($/) );
         $?SIGNATURE_BLOCK := PAST::Block.new( $?SIGNATURE,
                                               :blocktype('declaration') );
-        $?SIGNATURE_BLOCK.symbol( '!signature', :defined(1) );
+        $?SIGNATURE_BLOCK.symbol( '!signature', :force(1) );
         @?BLOCK.unshift($?SIGNATURE_BLOCK);
     }
     else {
@@ -1000,7 +1000,7 @@ method type_constraint($/) {
 method parameter($/) {
     our $?SIGNATURE_BLOCK;
     my $past   := $( $<param_var> );
-    my $symbol := $?SIGNATURE_BLOCK.symbol( $past.name() );
+    my $symbol := $?SIGNATURE_BLOCK.symbol($past.name(), :force(1));
     my $sigil  := $<param_var><sigil>;
     my $quant  := $<quant>;
 
@@ -1088,7 +1088,7 @@ method param_var($/) {
     ##  Declare symbol as lexical in current (signature) block.
     ##  This is needed in case any post_constraints try to reference
     ##  this new param_var.
-    $?SIGNATURE_BLOCK.symbol( $name , :scope('lexical') );
+    $?SIGNATURE_BLOCK.symbol( $name, :scope('lexical') );
 }
 
 
@@ -1733,8 +1733,7 @@ method scope_declarator($/) {
             $past.lvalue(1);
         }
         our $?BLOCK;
-        my $symbol := $?BLOCK.symbol( $past.name() );
-        $symbol<scope> := $scope;
+        my $symbol := $?BLOCK.symbol( $past.name(), :scope($scope) );
         $past.viviself( $symbol<viviself> );
         if $symbol<type> {
             $past := PAST::Op.new( :pirop('setprop'), 
@@ -1754,7 +1753,7 @@ method scoped($/) {
         $past := $( $<multi_declarator> );
         if $past.isa(PAST::Var) {
             our $?BLOCK;
-            my $symbol := $?BLOCK.symbol( $past.name() );
+            my $symbol := $?BLOCK.symbol($past.name(), :force(1));
             my $type := $symbol<type>;
             for @($<fulltypename>) {
                 $type.push( $( $_ ) );
