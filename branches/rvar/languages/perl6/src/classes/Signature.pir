@@ -56,11 +56,7 @@ the Signature.
 
     attr['name'] = varname
     .local pmc params
-    params = getattribute self, '@!params'
-    unless null params goto have_params
-    params = new 'List'
-    setattribute self, '@!params', params
-  have_params:
+    params = self.'params'()
     push params, attr
 .end
 
@@ -72,6 +68,10 @@ Get the array of parameter describing hashes.
 
 .sub 'params' :method
     $P0 = getattribute self, "@!params"
+    unless null $P0 goto done
+    $P0 = 'list'()
+    setattribute self, "@!params", $P0
+  done:
     .return ($P0)
 .end
 
