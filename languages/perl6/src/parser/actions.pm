@@ -917,11 +917,24 @@ method signature($/, $key) {
                                 :name('!add_param'), $sigobj, $name );
 
             ##  add any typechecks
-            if +$symbol<type> == 1 {
-                my $type := $symbol<type>[0];
+            my $type := $symbol<type>;
+            if +@($type) > 0 {
+                ##  don't need the 'and' junction for only one type
+                if +@($type) == 1 { $type := $type[0] }
                 $type.named('type');
                 $sigparam.push($type);
             }
+
+            ##  add traits (we're not using this yet.)
+            my $trait := $symbol<trait>;
+            if $trait {
+                $trait.named('trait');
+                $sigparam.push($trait);
+            }
+
+            my $readtype := $symbol<readtype>;
+            $readtype.named('readtype');
+            $sigparam.push($readtype);
 
             $loadinit.push($sigparam);
             $i++;
@@ -978,11 +991,25 @@ method parameter($/) {
         $symbol<viviself> := $( $<default_value>[0]<EXPR> );
     }
 
-    my $type := List.new();
+    ##  keep track of any type constraints
+    my $type := PAST::Op.new( :name('and'), :pasttype('call') );
     $symbol<type> := $type;
     if $<type_constraint> {
         for @($<type_constraint>) { $type.push( $( $_ ) ); }
     }
+
+    my $readtype := '';
+    #for @($<trait>) {
+    #    my $traitpast := $( $_ );
+    #    my $name := $traitpast[1];
+    #    if $name eq 'readonly' || $name eq 'rw' || $name eq 'copy' {
+    #        $readtype && 
+    #            $/.panic("Can only use one of readonly, rw, and copy");
+    #        $readtype := $name;
+    #    }
+    #    # else $traitlist.push( $traitpast );  ## when we do other traits
+    #}
+    $symbol<readtype> := PAST::Val.new( :value($readtype || 'readonly') );
 
     make $past;
 }

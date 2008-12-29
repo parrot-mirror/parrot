@@ -196,11 +196,11 @@ lexicals as needed and performing type checks.
     .local string name, sigil
     name = param['name']
     sigil = substr name, 0, 1
-    .local pmc type, var
+    .local pmc type, orig, var
     type = param['type']
-    var = callerlex[name]
+    orig = callerlex[name]
     if sigil == '@' goto param_array
-    var = 'Scalar'(var)
+    var = 'Scalar'(orig)
     ##  typecheck the argument
     if null type goto param_val_done
     .lex '$/', $P99
@@ -208,14 +208,25 @@ lexicals as needed and performing type checks.
     unless $P0 goto err_param_type
     goto param_val_done
   param_array:
-    var = 'Array'(var)
+    var = 'Array'(orig)
     goto param_val_done
   param_val_done:
-    ## place the updated variable back into lex
-    callerlex[name] = var
+    ## handle readonly/copy traits
+    $S0 = param['readtype']
+    if $S0 == 'rw' goto param_readtype_done
+    $I0 = isntsame orig, var
+    if $I0 goto param_readtype_var
+    var = new 'ObjectRef', var
+  param_readtype_var:
+    if $S0 == 'copy' goto param_readtype_done
+    $P0 = get_hll_global ['Bool'], 'True'
+    setprop var, 'readonly', $P0
+  param_readtype_done:
     ## set any type properties
     setprop var, 'type', type
-    goto param_loop
+    ## place the updated variable back into lex
+    callerlex[name] = var
+    goto param_loop 
   param_done:
   end:
     .return ()
