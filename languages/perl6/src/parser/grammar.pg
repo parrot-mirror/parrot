@@ -680,7 +680,7 @@ token variable {
     | <sigil> <twigil>? <desigilname> {*}                #= desigilname
     | <special_variable> {*}                             #= special_variable
     | <sigil> $<matchidx>=[\d+] {*}                      #= $0
-    | <sigil> <?before '<' | '(' > <postcircumfix> {*}   #= $<>
+    | <sigil> <?before '<'> <postcircumfix> {*}          #= $<>
     ]
 }
 
