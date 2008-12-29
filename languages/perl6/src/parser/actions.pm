@@ -920,6 +920,7 @@ method signature($/, $key) {
         $?SIGNATURE := PAST::Op.new( :pasttype('stmts'), :node($/) );
         $?SIGNATURE_BLOCK := PAST::Block.new( $?SIGNATURE,
                                               :blocktype('declaration') );
+        $?SIGNATURE_BLOCK.symbol( '!signature', :defined(1) );
         @?BLOCK.unshift($?SIGNATURE_BLOCK);
     }
     else {
@@ -1792,12 +1793,34 @@ method variable_declarator($/) {
 
 method variable($/, $key) {
     my $past;
+    our $?BLOCK;
     if $key eq 'desigilname' {
         my $sigil      := ~$<sigil>;
         my $twigil     := ~$<twigil>[0];
         my @identifier := Perl6::Compiler.parse_name( $<desigilname> );
-        my $name       := $sigil ~ @identifier.pop();
-        $past := PAST::Var.new( :name($name), :node($/) );
+        my $name       := ~@identifier.pop();
+        my $varname    := $sigil ~ $name;
+        $past := PAST::Var.new( :name($varname), :node($/) );
+
+        ##  if twigil is ^ or :, it's a placeholder var
+        if $twigil eq '^' || $twigil eq ':' {
+            if $?BLOCK.symbol('!signature') {
+                $/.panic("Cannot use placeholder var in block with signature.");
+            }
+            unless $?BLOCK.symbol($varname) {
+                $?BLOCK.symbol( $varname, :scope('lexical') );
+                $?BLOCK.arity( +$?BLOCK.arity() + 1 );
+                my $var := PAST::Var.new(:name($varname), :scope('parameter'));
+                if $twigil eq ':' { $var.named( $name ); }
+                my $block := $?BLOCK[0];
+                my $i := +@($block);
+                while $i > 0 && $block[$i-1]<name> gt $varname {
+                    $block[$i] := $block[$i-1];
+                    $i--;
+                }
+                $block[$i] := $var;
+            }
+        }
 
         ##  if namespace qualified or has a '*' twigil, it's a package var
         if @identifier || $twigil eq '*' {
