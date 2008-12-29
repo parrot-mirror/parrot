@@ -1806,6 +1806,14 @@ method variable($/, $key) {
         my $varname    := $sigil ~ $name;
         $past := PAST::Var.new( :name($varname), :node($/) );
 
+        if $sigil eq '&' {
+            $varname := $name;
+            $past.name($varname);
+            $past.scope('package');
+            my $sym := outer_symbol($varname);
+            if $sym && $sym<scope> { $past.scope( $sym<scope> ); }
+        }
+
         ##  if twigil is ^ or :, it's a placeholder var
         if $twigil eq '^' || $twigil eq ':' {
             if $?BLOCK.symbol('!signature') {
@@ -2482,6 +2490,18 @@ method capture($/) {
 method sigterm($/) {
     my $past := $( $/<signature> );
     make $past;
+}
+
+
+# search through outer blocks for a symbol table entry
+sub outer_symbol($name) {
+    our @?BLOCK;
+    my $symbol;
+    for @?BLOCK {
+        $symbol := $_.symbol($name);
+        if $symbol { return $symbol; }
+    }
+    return $symbol;
 }
 
 
