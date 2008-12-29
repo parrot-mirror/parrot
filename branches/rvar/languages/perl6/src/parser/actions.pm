@@ -935,9 +935,10 @@ method signature($/, $key) {
         );
 
         ##  loop through parameters of signature
-        my $i   := 0;
-        my $n   := $<parameter> ?? +@($<parameter>) !! 0;
-        while $i < $n {
+        my $arity := $<parameter> ?? +@($<parameter>) !! 0;
+        $?SIGNATURE_BLOCK.arity($arity);
+        my $i     := 0;
+        while $i < $arity {
             my $param_past := $( $<parameter>[$i] );
             my $name       := $param_past.name();
             my $symbol     := $?SIGNATURE_BLOCK.symbol($name);
