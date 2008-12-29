@@ -909,6 +909,12 @@ method trait_auxiliary($/) {
     }
     make PAST::Op.new( :name('list'), 'trait_auxiliary:' ~ $sym, $trait );
 }
+
+
+method trait_verb($/) {
+    my $sym := ~$<sym>;
+    make PAST::Op.new( :name('list'), 'trait_verb:' ~ $sym, 'XXX' );
+}
     
 
 method signature($/, $key) {

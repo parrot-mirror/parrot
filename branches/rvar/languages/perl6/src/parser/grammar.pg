@@ -404,8 +404,11 @@ rule trait_auxiliary {
 }
 
 rule trait_verb {
+    [
     | $<sym>=[of|returns] <typename>
     | $<sym>=[handles] <EXPR>
+    ]
+    {*}
 }
 
 token capterm {
