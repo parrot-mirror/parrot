@@ -411,14 +411,42 @@ Print the string to the stringhandle.
 
 =item C<METHOD buffer_type(STRING *new_type :optional)>
 
-StringHandles are always unbuffered.
+Set or retrieve the buffering attribute for the stringhandle. This attribute is
+ignored, but stored for mocking.
 
 =cut
 
 */
 
     METHOD buffer_type(STRING *new_type :optional, INTVAL got_type :opt_flag) {
-        STRING *nobuffer_string = const_string(INTERP, "unbuffered");
+        INTVAL flags;
+        STRING *nobuffer_string   = CONST_STRING(INTERP, "unbuffered");
+        STRING *linebuffer_string = CONST_STRING(INTERP, "line-buffered");
+        STRING *fullbuffer_string = CONST_STRING(INTERP, "full-buffered");
+
+        GET_ATTR_flags(INTERP, SELF, flags);
+
+        if (got_type) {
+            if (string_equal(INTERP, new_type, nobuffer_string) == 0) {
+                flags &= ~ PIO_F_LINEBUF;
+                flags &= ~ PIO_F_BLKBUF;
+            }
+            else if (string_equal(INTERP, new_type, linebuffer_string) == 0) {
+                flags |=   PIO_F_LINEBUF;
+                flags &= ~ PIO_F_BLKBUF;
+            }
+            else if (string_equal(INTERP, new_type, fullbuffer_string) == 0) {
+                flags &= ~ PIO_F_LINEBUF;
+                flags |=   PIO_F_BLKBUF;
+            }
+
+            SET_ATTR_flags(INTERP, SELF, flags);
+        }
+
+        if (flags & PIO_F_LINEBUF)
+            RETURN(STRING *linebuffer_string);
+        else if (flags & PIO_F_BLKBUF)
+            RETURN(STRING *fullbuffer_string);
         RETURN(STRING *nobuffer_string);
     }
 
