@@ -228,7 +228,7 @@ an object reference (unless the invocant already is one).
 =cut
 
 .namespace ['Perl6Object']
-.sub '' :method('Scalar') :anon
+.sub 'Scalar' :method
     $I0 = isa self, 'ObjectRef'
     unless $I0 goto not_ref
     .return (self)
