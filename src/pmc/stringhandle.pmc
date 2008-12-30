@@ -500,14 +500,22 @@ scheme) for the stringhandle.
 
 =item C<METHOD eof()>
 
-StringHandles are never at the end-of-file, they always read the entire string
-from the beginning. Returns false.
+Check if the StringHandle is at end-of-file (if it has read to the end of the
+string data).
 
 =cut
 
 */
 
     METHOD eof() {
+        STRING *stringhandle;
+        INTVAL offset;
+        GET_ATTR_stringhandle(INTERP, SELF, stringhandle);
+        GET_ATTR_read_offset(INTERP, SELF, offset);
+
+        if (offset >= string_length(INTERP, stringhandle))
+            RETURN(INTVAL 1);
+
         RETURN(INTVAL 0);
     }
 
