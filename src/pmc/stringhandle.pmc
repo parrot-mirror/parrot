@@ -156,6 +156,7 @@ stored for mocking.
     METHOD open(STRING *filename :optional, INTVAL got_filename :opt_flag,
                 STRING *mode :optional, INTVAL got_mode :opt_flag) {
         STRING *open_mode, *old_string, *new_string, *encoding;
+        INTVAL flags;
 
         GET_ATTR_stringhandle(INTERP, SELF, old_string);
         if (!STRING_IS_NULL(old_string))
@@ -185,6 +186,9 @@ stored for mocking.
             open_mode = const_string(INTERP, "r");
             SET_ATTR_mode(INTERP, SELF, open_mode);
         }
+
+        flags = Parrot_io_parse_open_flags(interp, open_mode);
+        SET_ATTR_flags(INTERP, SELF, flags);
 
         RETURN(PMC *SELF);
     }
