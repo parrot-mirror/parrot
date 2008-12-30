@@ -1802,6 +1802,8 @@ method declarator($/) {
     }
     elsif $<signature> {
         $past := $( $<signature> );
+        our $?SIGNATURE_BLOCK;
+        $?SIGNATURE_BLOCK := 0;
     }
     elsif $<routine_declarator> {
         $past := $( $<routine_declarator> );
