@@ -14,6 +14,8 @@ Protoobject - methods on Protoobjects
 
 =cut
 
+.HLL 'parrot'
+
 .namespace ['P6protoobject']
 .sub 'defined' :method
     $P0 = get_hll_global ['Bool'], 'False'
@@ -38,7 +40,6 @@ Returns the protoobject's autovivification closure.
 
 =cut
 
-.namespace ['P6protoobject']
 .sub 'WHENCE' :method
     .local pmc whence
     whence = getprop '%!WHENCE', self
@@ -60,7 +61,6 @@ Return a clone of the protoobject with a new WHENCE property set.
 
 =cut
 
-.namespace ['P6protoobject']
 .sub 'postcircumfix:{ }' :method
     .param pmc WHENCE :slurpy :named
     .local pmc protoclass, proto
@@ -112,6 +112,7 @@ Indicate that objects in the class are mutable or immutable.
 
 =cut
 
+.HLL 'perl6'
 # Local Variables:
 #   mode: pir
 #   fill-column: 100

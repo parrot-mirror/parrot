@@ -21,12 +21,19 @@ object.
 
 =cut
 
+.HLL 'lolcode'
+
 .namespace [ 'lolcode';'Compiler' ]
 
 .loadlib 'lolcode_group'
 
 .sub 'onload' :anon :load :init
     load_bytecode 'PCT.pbc'
+    .local pmc parrotns, lolns, exports
+    parrotns = get_root_namespace ['parrot']
+    lolns = get_hll_namespace
+    exports = split ' ', 'PAST PCT'
+    parrotns.'export_to'(lolns, exports)
 
     $P0 = new 'ResizablePMCArray'
     set_hll_global ['lolcode';'Grammar';'Actions'], '@?BLOCK', $P0

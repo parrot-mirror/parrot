@@ -25,7 +25,7 @@ This file implements the Grammar class.
     load_bytecode "PGE.pbc"
     .local pmc p6meta
     p6meta = get_hll_global ['Perl6Object'], '$!P6META'
-    p6meta.'new_class'('Grammar', 'parent'=>'PGE::Grammar')
+    p6meta.'new_class'('Grammar', 'parent'=>'parrot;PGE::Grammar')
 .end
 
 =item PROTOOVERRIDES()
