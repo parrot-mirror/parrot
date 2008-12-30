@@ -194,28 +194,27 @@ pir_output_is( <<"CODE", <<'OUT', 'readline - synchronous' );
     \$P0.'print'("foobarbaz\\n42")
     \$P0.'close'()
 
-    \$P1 = new 'StringHandle'
-    \$P1.'open'('temp_file')
+    \$P0.'open'('temp_file')
 
-    \$S0 = \$P1.'readline'()
+    \$S0 = \$P0.'readline'()
     \$S0 = chomp( \$S0 )
     if \$S0 == 'foobarbaz' goto ok_1
     print 'not '
   ok_1:
-    say 'ok 1 - \$S0 = \$P1.readline()'
+    say 'ok 1 - \$S0 = \$P0.readline()'
 
-    \$S0 = \$P1.'readline'()
+    \$S0 = \$P0.'readline'()
     \$S0 = chomp( \$S0 )
     if \$S0 == '42' goto ok_2
     print 'not '
   ok_2:
-    say 'ok 2 - \$S0 = \$P1.readline() # again on same stream'
+    say 'ok 2 - \$S0 = \$P0.readline() # again on same stream'
 
-    \$P1.'close'()
+    \$P0.'close'()
 .end
 CODE
-ok 1 - $S0 = $P1.readline()
-ok 2 - $S0 = $P1.readline() # again on same stream
+ok 1 - $S0 = $P0.readline()
+ok 2 - $S0 = $P0.readline() # again on same stream
 OUT
 
 my $LINES;
