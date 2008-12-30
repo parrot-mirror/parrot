@@ -1,4 +1,4 @@
-# Copyright (C) 2004-2006, The Perl Foundation.
+# Copyright (C) 2004-2008, The Perl Foundation.
 # $Id$
 #
 
@@ -27,7 +27,6 @@ use base qw( Exporter );
 our @EXPORT_OK = qw();
 use Storable ();
 use Parrot::PMC;
-use Parrot::Pmc2c::UtilFunctions qw(spew);
 use Parrot::Pmc2c::Method;
 
 sub create {
@@ -170,6 +169,12 @@ sub is_dynamic {
     return 0 if exists $dynpmc_list->{$pmcname};
     return 0 if exists $Parrot::PMC::pmc_types{$pmcname};
     return 1;
+}
+
+sub export {
+    my ( $self ) = @_;
+
+    return $self->is_dynamic ? 'PARROT_DYNEXT_EXPORT' : 'PARROT_EXPORT';
 }
 
 sub implements_vtable {

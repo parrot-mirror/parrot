@@ -24,8 +24,6 @@ package Parrot::Pmc2c::Method;
 use strict;
 use warnings;
 use Parrot::Pmc2c::Emitter ();
-use Parrot::Pmc2c::UtilFunctions
-    qw( gen_ret dont_edit count_newlines dynext_load_code c_code_coda );
 use Parrot::Pmc2c::PCCMETHOD ();
 
 =item C<generate_body($pmc)>
@@ -49,7 +47,7 @@ sub generate_body {
         $self->rewrite_nci_method($pmc);
     }
 
-    $emit->( ( $pmc->is_dynamic ? 'PARROT_DYNEXT_EXPORT ' : 'PARROT_EXPORT ') . $self->decl( $pmc, 'CFILE' ) );
+    $emit->( $pmc->export . ' ' . $self->decl( $pmc, 'CFILE' ) );
     $emit->("{\n");
     $emit->($body);
     $emit->("}\n");
@@ -91,7 +89,6 @@ sub decl {
     my $ret     = $self->return_type;
     my $meth    = $self->name;
     my $args    = $self->parameters;
-    my $ro      = $pmc->flag('is_ro') ? '' : '';
     my $decs    = $self->decorators;
 
     # convert 'type*' to 'type *' per PDD07
@@ -104,11 +101,12 @@ sub decl {
     my ( $decorators, $export, $extern, $newl, $semi, $interp, $pmcvar );
     $decorators = join($/, @$decs, '');
     if ( $for_header eq 'HEADER' ) {
-        $export = $pmc->is_dynamic ? 'PARROT_DYNEXT_EXPORT ' : 'PARROT_EXPORT ';
+        $export = $pmc->export;
         $extern = '';
         $newl   = ' ';
         $semi   = ';';
-        $interp = $pmcvar = '';
+        $interp = '';
+        $pmcvar = '';
     }
     else {
         $export = '';
@@ -120,7 +118,7 @@ sub decl {
     }
 
     return <<"EOC";
-$decorators$export$extern$ret${newl}Parrot_${pmcname}${ro}_$meth(PARROT_INTERP, PMC *$pmcvar$args)$semi
+$decorators$export $extern$ret${newl}Parrot_${pmcname}_$meth(PARROT_INTERP, PMC *$pmcvar$args)$semi
 EOC
 }
 

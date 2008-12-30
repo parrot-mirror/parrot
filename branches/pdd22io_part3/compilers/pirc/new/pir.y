@@ -232,6 +232,7 @@ static char const * const pir_type_names[] = { "int", "string", "pmc", "num" };
 %union {
     double              dval;
     int                 ival;
+    unsigned            uval;
     char   const       *sval;
     struct constant    *cval;
     struct instruction *instr;
@@ -301,6 +302,7 @@ static char const * const pir_type_names[] = { "int", "string", "pmc", "num" };
        <ival> TK_NREG       "number register"
        <ival> TK_SREG       "string register"
        <ival> TK_IREG       "integer register"
+       <cval> TK_CONST_VALUE "constant-value"
 
 %token TK_ARROW             "=>"
        TK_NE                "!="
@@ -441,6 +443,9 @@ static char const * const pir_type_names[] = { "int", "string", "pmc", "num" };
              namespace_slice
              method
              op_arg_expr
+             multi_type
+             opt_multi_types
+             multi_types
 
 %type <key>  keys
              keylist
@@ -463,7 +468,8 @@ static char const * const pir_type_names[] = { "int", "string", "pmc", "num" };
              augmented_op
              unique_reg_flag
              int_or_num
-             parameters
+
+%type <uval> parameters
 
 %type <invo> long_invocation
              long_invocation_stat
@@ -700,21 +706,21 @@ sub_flags         : /* empty */
                   ;
 
 sub_flag          : ":anon"
-                         { set_sub_flag(lexer, SUB_FLAG_ANON);}
+                         { set_sub_flag(lexer, PIRC_SUB_FLAG_ANON);}
                   | ":init"
-                         { set_sub_flag(lexer, SUB_FLAG_INIT); }
+                         { set_sub_flag(lexer, PIRC_SUB_FLAG_INIT); }
                   | ":load"
-                         { set_sub_flag(lexer, SUB_FLAG_LOAD); }
+                         { set_sub_flag(lexer, PIRC_SUB_FLAG_LOAD); }
                   | ":main"
-                         { set_sub_flag(lexer, SUB_FLAG_MAIN); }
+                         { set_sub_flag(lexer, PIRC_SUB_FLAG_MAIN); }
                   | ":lex"
-                         { set_sub_flag(lexer, SUB_FLAG_LEX); }
+                         { set_sub_flag(lexer, PIRC_SUB_FLAG_LEX); }
                   | ":postcomp"
-                         { set_sub_flag(lexer, SUB_FLAG_POSTCOMP); }
+                         { set_sub_flag(lexer, PIRC_SUB_FLAG_POSTCOMP); }
                   | ":immediate"
-                         { set_sub_flag(lexer, SUB_FLAG_IMMEDIATE); }
-                  | ":multi"
-                         { set_sub_flag(lexer, SUB_FLAG_MULTI); }
+                         { set_sub_flag(lexer, PIRC_SUB_FLAG_IMMEDIATE); }
+                  | ":multi" multi_type_list
+                         { set_sub_flag(lexer, PIRC_SUB_FLAG_MULTI); }
                   | ":outer" '(' sub_id ')'
                          { set_sub_outer(lexer, $3); }
                   | ":method" opt_paren_string
@@ -729,25 +735,52 @@ sub_flag          : ":anon"
                          { set_sub_nsentry(lexer, $2); }
                   ;
 
+multi_type_list   : '(' opt_multi_types ')'
+                        { set_sub_multi_types(lexer, $2); }
+                  ;
+
+opt_multi_types   : /* empty */
+                        {
+                          CURRENT_SUB(lexer)->info.num_multi_types = 1;
+                          /* n=1 means :multi() -- without any types. */
+                        }
+                  | multi_types
+                        { $$ = $1; }
+                  ;
+
+multi_types       : multi_type
+                        {
+                          CURRENT_SUB(lexer)->info.num_multi_types = 2;
+                          /* start counting multi types; always 1 higher than actual number
+                           * so that n=0 means no :multi, n=1 means :multi(), n=2 means
+                           * :multi(Type1), n=3 means :multi(Type1,Type2), etc.
+                           */
+                           $$ = $1;
+                        }
+                  | multi_types ',' multi_type
+                        {
+                          ++CURRENT_SUB(lexer)->info.num_multi_types;
+                          /* link the multi types in reverse other. That's fine,
+                           * as long as you remember that it's reversed.
+                           */
+                          $3->next = $1;
+                          $$ = $3;
+                        }
+                  ;
+
 multi_type        : identifier
+                        { $$ = expr_from_ident(lexer, $1); }
                   | TK_STRINGC
+                        { $$ = expr_from_string(lexer, $1); }
                   | keylist
+                        { $$ = expr_from_key(lexer, $1); }
                   ;
 
 parameter_list    : parameters
                          {
                            /* if there are parameters, then emit a get_params instruction. */
-                           if ($1 > 0) {
-
-                               set_instr(lexer, "get_params");
-                               /* don't infer the signatured opname from arguments,
-                                * it's always same: get_params_pc
-                                * (this is one of the special 4 instructions for sub invocation).
-                                */
-
-                               update_op(lexer, CURRENT_INSTRUCTION(lexer),
-                                         PARROT_OP_get_params_pc);
-                           }
+                           if ($1 > 0)
+                               generate_parameters_instr(lexer, $1);
                          }
                   ;
 
@@ -1170,7 +1203,8 @@ assignment        : target '=' TK_INTC
                                   get_opinfo(yyscanner);
                               }
                               else
-                                  yypirerror(yyscanner, lexer, "indexed object '%s' not declared", $3);
+                                  yypirerror(yyscanner, lexer,
+                                             "indexed object '%s' not declared", $3);
 
                               /* create a symbol node anyway, so we can continue with instr. gen. */
                               sym = new_symbol(lexer, $3, PMC_TYPE);
@@ -1581,7 +1615,7 @@ lex_decl          : ".lex" TK_STRINGC ',' pmc_object "\n"
                                   yypirerror(yyscanner, lexer, "lexical '%s' must be of type 'pmc'",
                                              $4->info->id.name);
                           }
-                          set_lex_flag($4, $2);
+                          set_lex_flag(lexer, $4, $2);
                         }
                   ;
 
@@ -1623,7 +1657,7 @@ long_argument        : ".set_arg" short_arg "\n"
                             { $$ = $2; }
                      ;
 
-long_invocation      : ".call" pmc_object opt_ret_cont
+long_invocation      : ".call" sub opt_ret_cont
                            { $$ = invoke(lexer, CALL_PCC, $2, $3); }
                      | ".nci_call" pmc_object
                            { $$ = invoke(lexer, CALL_NCI, $2); }
@@ -1977,6 +2011,7 @@ expression  : target         { $$ = expr_from_target(lexer, $1); }
 constant    : TK_STRINGC     { $$ = new_const(lexer, STRING_TYPE, $1); }
             | TK_INTC        { $$ = new_const(lexer, INT_TYPE, $1); }
             | TK_NUMC        { $$ = new_const(lexer, NUM_TYPE, $1); }
+            | TK_CONST_VALUE { $$ = $1; }
             ;
 
 rel_op      : "!="           { $$ = OP_NE; }
@@ -2003,10 +2038,9 @@ target      : symbol     { set_curtarget(lexer, $1);  }
 
 symbol      : reg
             | identifier { /* a symbol must have been declared; check that at this point. */
-                           symbol *sym = find_symbol(lexer, $1);
+                           symbol * sym = find_symbol(lexer, $1);
                            if (sym == NULL) {
                                undeclared_symbol(yyscanner, lexer, $1);
-
                                /* make sure sym is not NULL */
                                sym = new_symbol(lexer, $1, UNKNOWN_TYPE);
                            }
@@ -3294,11 +3328,37 @@ write_signature(NOTNULL(expression * const iter), NOTNULL(char *instr_writer)) {
                 *instr_writer++ = '_';
                 *instr_writer++ = 'k';
 
+                /* XXX this switch replaces the messy code below. double-check before delete. */
+                switch (iter->expr.t->key->expr->type) {
+                    case EXPR_TARGET:
+                        switch (iter->expr.t->key->expr->expr.t->info->type) {
+                            case PMC_TYPE:
+                                /* the key is a target, and its type is a PMC. In that
+                                 * case, do not print the signature; 'kp' is not valid.
+                                 */
+                                break;
+                            case INT_TYPE:
+                                *instr_writer++ = 'i';
+                                break;
+                            default:
+                                break;
+                        }
+                        break;
+                    case EXPR_CONSTANT:
+                        *instr_writer++ = 'c';
+                        break;
+                    default:
+                        /* XXX does this ever happen? */
+                        fprintf(stderr, "write_signature: non-constant key\n");
+                        instr_writer = write_signature(iter->expr.t->key->expr, instr_writer);
+                        break;
+                }
+
+
+                /*
                 if ((iter->expr.t->key->expr->type == EXPR_TARGET)
                 &&  (iter->expr.t->key->expr->expr.t->info->type == PMC_TYPE)) {
-                    /* the key is a target, and its type is a PMC. In that case, do not
-                     * print the signature; 'kp' is not valid.
-                     */
+
                 }
                 else {
                     if ((iter->expr.t->key->expr->type == EXPR_TARGET)
@@ -3307,9 +3367,7 @@ write_signature(NOTNULL(expression * const iter), NOTNULL(char *instr_writer)) {
                        *instr_writer++ = 'i';
                     }
                     else
-                    /*
-                    instr_writer = write_signature(iter->expr.t->key->expr, instr_writer);
-                    */
+
                     switch (iter->expr.t->key->expr->type) {
                         case EXPR_CONSTANT:
                             *instr_writer++ = 'c';
@@ -3319,7 +3377,8 @@ write_signature(NOTNULL(expression * const iter), NOTNULL(char *instr_writer)) {
                             instr_writer = write_signature(iter->expr.t->key->expr, instr_writer);
                             break;
                     }
-                }
+                }*/
+
             }
             break;
         case EXPR_CONSTANT:
@@ -3535,7 +3594,6 @@ check_op_args_for_symbols(yyscan_t yyscanner) {
         expression *iter = CURRENT_INSTRUCTION(lexer)->operands;
         opinfo           = CURRENT_INSTRUCTION(lexer)->opinfo;
 
-
         PARROT_ASSERT(opinfo);
 
         opcount = opinfo->op_count - 1; /* according to op.h, opcount also counts the op itself. */
@@ -3569,13 +3627,10 @@ check_op_args_for_symbols(yyscan_t yyscanner) {
                  * which one to fix.
                  */
 
-                /*
-                fprintf(stderr, "setting %dth label flag on instruction %s\n", BIT(i),
-                        CURRENT_INSTRUCTION(lexer)->opname);
-                 */
+                /* fprintf(stderr, "setting %dth label flag on instruction %s\n", BIT(i),
+                        CURRENT_INSTRUCTION(lexer)->opname); */
 
                 SET_FLAG(CURRENT_INSTRUCTION(lexer)->oplabelbits, BIT(i));
-
             }
 
             ++i;

@@ -29,6 +29,15 @@ for doing syntax analysis on c99 programs.
     .return ()
 .end
 
+.sub 'clone' :method
+    $P0 = clone self
+    .return ($P0)
+.end
+
+.sub 'item' :method
+    .return (self)
+.end
+
 =head1 NCIGENAST Node types
 
 =head2 NCIGENAST::Node

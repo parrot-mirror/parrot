@@ -87,7 +87,7 @@ PIRCODE
   L4:
     .local pmc start
     $P0 = get_hll_global ['Lua'; 'POST'], 'Sub'
-    start = $P0.'new'('name'=>'&start', 'pirflags'=>':anon :main')
+    start = $P0.'new'('name'=>'&start', 'pirflags'=>':anon :main', 'hll'=>'lua')
     $S0 = post.'subid'()
     start.'push_pirop'('inline', $S0, 'inline'=><<'PIRCODE')
     .param pmc args :optional
@@ -111,7 +111,6 @@ PIRCODE
     $P0 = get_hll_global ['Lua'; 'POST'], 'Chunk'
     .tailcall $P0.'new'(start, 'node'=>node, 'prologue'=><<'PIRCODE')
 .include "interpinfo.pasm"
-.HLL "lua"
 .loadlib "lua_group"
 PIRCODE
 }
@@ -977,6 +976,9 @@ transform lexical (PAST::Var) :language('PIR') {
     ops.'push_pirop'('.local pmc', pname)
     ops.'push_pirop'('.lex', lname, pname, 'result'=>pname)
     storage_lex[name] = pname
+    ops.'push_pirop'('set', pname, 'node'=>node)
+    ops.'result'(pname)
+    .return (ops)
   L3:
     ops.'push_pirop'('store_lex', lname, 'node'=>node)
     ops.'result'(lname)
@@ -1060,11 +1062,4 @@ PIRCODE
 transform keyed (PAST::Var) :language('PIR') {
     .tailcall tree.'get'('package', node)
 }
-
-
-=head1 AUTHORS
-
-Francois Perrad
-
-=cut
 

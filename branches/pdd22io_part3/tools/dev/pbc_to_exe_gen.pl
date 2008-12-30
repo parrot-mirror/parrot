@@ -11,6 +11,9 @@ print do { local $/; <DATA> };
 __END__
 #! parrot
 
+# DO NOT EDIT; your changes will be lost.
+# This file was generated automatically by tools/dev/pbc_to_exe_gen.pl
+
 =head1 TITLE
 
 pbc_to_exe
@@ -44,7 +47,7 @@ Warning! With -install there must be no directory prefix in the first arg yet.
 
   open_outfile:
     .local pmc outfh
-    outfh = open cfile, '>'
+    outfh = open cfile, 'w'
     if outfh goto args_handled
     die "infile not specified"
 
@@ -139,7 +142,7 @@ proper_args:
     .param string infile
 
     .local pmc infh
-               infh = open infile, '<'
+               infh = open infile, 'r'
 
     if infh goto file_open
     die "cannot open infile"

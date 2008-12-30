@@ -74,8 +74,7 @@ print_help(char const * const program_name)
     "  -H        heredoc preprocessing only\n"
     "  -m <size> specify initial macro buffer size; default is 4096 bytes\n"
     "  -n        no output, only print 'ok' if successful\n"
-    "  -o <file> write output to the specified file. "
-    "Currently only works in combination with '-E' option\n"
+    "  -o <file> write output to the specified file.\n"
     "  -p        pasm output\n"
     "  -r        activate the register allocator for improved register usage\n"
     "  -S        do not perform strength reduction\n"
@@ -136,7 +135,8 @@ typedef struct parser_args {
 
 This will be the proper declaration after testing for thread-safety:
 
-void parse_file(int flexdebug, FILE *infile, char * const filename, int flags)
+void parse_file(int flexdebug, FILE *infile, char * const filename, int flags,
+                char * const outputfile)
 
 */
 
@@ -144,7 +144,7 @@ void init_scanner_state(yyscan_t yyscanner);
 
 void
 parse_file(int flexdebug, FILE *infile, char * const filename, int flags, int thr_id,
-           unsigned macro_size)
+           unsigned macro_size, char * const outputfile)
 {
     yyscan_t     yyscanner;
     lexer_state *lexer     = NULL;
@@ -184,7 +184,7 @@ parse_file(int flexdebug, FILE *infile, char * const filename, int flags, int th
         if (TEST_FLAG(lexer->flags, LEXER_FLAG_NOOUTPUT)) /* handy for testing the compiler */
             fprintf(stdout, "ok\n");
         else if (TEST_FLAG(lexer->flags, LEXER_FLAG_PREPROCESS))
-            emit_pir_subs(lexer);
+            emit_pir_subs(lexer, outputfile);
         else if (TEST_FLAG(lexer->flags, LEXER_FLAG_OUTPUTPBC))
             emit_pbc(lexer);
         else
@@ -220,6 +220,70 @@ parse_file(int flexdebug, FILE *infile, char * const filename, int flags, int th
 
 /*
 
+Parse a PIR string.
+
+*/
+void
+parse_string(char *pirstring, int flags, int pasminput, unsigned macro_size) {
+    yyscan_t yyscanner;
+    lexer_state *lexer = NULL;
+
+
+    /* create a yyscan_t object */
+    yypirlex_init(&yyscanner);
+
+    yypirset_debug(0, yyscanner);
+
+
+    /* set the extra parameter in the yyscan_t structure */
+    lexer = new_lexer("<pir string>", flags);
+    lexer->macro_size = macro_size;
+    yypirset_extra(lexer, yyscanner);
+    lexer->yyscanner = yyscanner;
+
+    /* initialize the scanner state */
+    init_scanner_state(yyscanner);
+
+    /* set the scanner to a string buffer and go parse */
+    yypir_scan_string(pirstring, yyscanner);
+
+    if (pasminput) { /* PASM mode */
+        SET_FLAG(lexer->flags, LEXER_FLAG_PASMFILE);
+    }
+
+
+    yypirparse(yyscanner, lexer);
+
+    if (lexer->parse_errors == 0) {
+
+        print_subs(lexer);
+
+        if (TEST_FLAG(lexer->flags, LEXER_FLAG_WARNINGS))
+            check_unused_symbols(lexer);
+    }
+
+    /* there may have been errors during the instruction generation, check again here. */
+    if (lexer->parse_errors > 0)
+        fprintf(stderr, "There were %d errors\n", lexer->parse_errors);
+
+    /* XXX just want to make sure pirc doesn't segfault when doing bytecode stuff. */
+    if (TEST_FLAG(lexer->flags, LEXER_FLAG_OUTPUTPBC)) {
+        emit_pbc(lexer);
+    }
+
+
+    fprintf(stderr, "ok\n");
+    /* clean up after playing */
+    release_resources(lexer);
+
+       /* clean up after playing */
+    yypirlex_destroy(yyscanner);
+
+
+}
+
+/*
+
 temporary function for the thread-testing code.
 Unpack the arguments and invoke parse_file().
 
@@ -236,7 +300,7 @@ process_file(void *a) {
     int          thr_id    = args->thr_id;
     int          flags     = args->flags;
 
-    parse_file(flexdebug, infile, filename, flags, thr_id, INIT_MACRO_SIZE);
+    parse_file(flexdebug, infile, filename, flags, thr_id, INIT_MACRO_SIZE, NULL);
 
     return NULL;
 }
@@ -261,6 +325,7 @@ main(int argc, char *argv[]) {
     int                flags        = 0;
     char              *filename     = NULL;
     char              *outputfile   = NULL;
+    char              *hdocoutfile  = NULL;
     unsigned           macrosize    = INIT_MACRO_SIZE;
 
 
@@ -268,6 +333,12 @@ main(int argc, char *argv[]) {
     argc--;
     argv++;
 
+
+    /* XXX test the parse_string() function. */
+    /*
+    parse_string(".sub main :main\nprint 42\n.end\n", LEXER_FLAG_OUTPUTPBC, 0, INIT_MACRO_SIZE);
+    return 0;
+    */
 
 
     /* XXX very basic argument handling; I'm too lazy to check out
@@ -399,17 +470,26 @@ main(int argc, char *argv[]) {
         exit(EXIT_FAILURE);
     }
 
-    /* if user requested only to process heredocs, send output to stdout and return. */
-    if (TEST_FLAG(flags, LEXER_FLAG_HEREDOCONLY)) {
+    if (outputfile != NULL && TEST_FLAG(flags, LEXER_FLAG_HEREDOCONLY)) {
+        file = open_file(outputfile, "w");
+        process_heredocs(argv[0], file);
+        fclose(file);
+        return 0;
+    }
+    else if (TEST_FLAG(flags, LEXER_FLAG_HEREDOCONLY)) {
         process_heredocs(argv[0], stdout);
         return 0;
     }
+    else {
+        hdocoutfile = _tempnam(NULL, "hdoc");
+        file = open_file(hdocoutfile, "w");
+        process_heredocs(argv[0], file);
+        fclose(file);
+    }
 
-    file = fopen("heredoc.out", "w");
-    process_heredocs(argv[0], file);
-    fclose(file);
+
     /* done handling arguments, open the file */
-    file     = open_file("heredoc.out", "r");
+    file     = open_file(hdocoutfile, "r");
     filename = argv[0];
 
     if (file == NULL) {
@@ -417,8 +497,8 @@ main(int argc, char *argv[]) {
         exit(EXIT_FAILURE);
     }
 
-    parse_file(flexdebug, file, filename, flags, 0, macrosize);
-
+    parse_file(flexdebug, file, filename, flags, 0, macrosize, outputfile);
+    fprintf(stderr, "done\n");
 }
 #endif
 
@@ -453,13 +533,13 @@ yypirerror(yyscan_t yyscanner, NOTNULL(lexer_state * const lexer),
     vfprintf(stderr, message, arg_ptr);
     va_end(arg_ptr);
 
-    ++lexer->parse_errors;
-
     /* print current token if it doesn't contain a newline token. */
     if (!strstr(current_token, "\n"))
         fprintf(stderr, "\n\tcurrent token: '%s'", current_token);
 
     fprintf(stderr, "\n\n");
+
+    ++lexer->parse_errors;
 
     return 0;
 }
