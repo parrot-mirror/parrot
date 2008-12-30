@@ -368,32 +368,30 @@ pir_output_is( <<"CODE", <<'OUT', 'buffer_size' );
     \$P0.'buffer_size'(42)
     say 'ok 1 - \$P0.buffer_size(42)     # set buffer size'
 
+    \$P0.'open'('temp_file', 'w')
+    \$P0.'print'(1234567890)
+
     \$I0 = \$P0.'buffer_size'()
 
     # The set buffer size is a minimum, the I/O subsystem may scale it upward
     # to a round block, so test that the buffer size is equal or greater than
     # the set size.
-    if \$I0 >= 42 goto ok_2
+    if \$I0 == 10 goto ok_2
     print 'not '
   ok_2:
     say 'ok 2 - \$I0 = \$P0.buffer_size() # get buffer size'
 
-    \$P0.'open'('temp_file', 'w')
-
-    \$P0.'print'(1234567890)
     \$P0.'close'()
 
-    \$P1 = new 'StringHandle'
-    \$P1.'open'('temp_file')
-
-    \$S0 = \$P1.'readline'()
+    \$P0.'open'('temp_file')
+    \$S0 = \$P0.'readline'()
 
     if \$S0 == '1234567890' goto ok_3
     print 'not '
   ok_3:
     say 'ok 3 - \$S0 = \$P0.readline()    # buffer flushed'
 
-    \$P1.'close'()
+    \$P0.'close'()
 
 .end
 CODE
