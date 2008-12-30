@@ -20,6 +20,8 @@ Creates the Perl 6 compiler by subclassing a C<PCT::HLLCompiler> object.
 
 =cut
 
+.HLL 'perl6'
+
 .loadlib 'perl6_group'
 .loadlib 'perl6_ops'
 .include 'src/gen_builtins.pir'
