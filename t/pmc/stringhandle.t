@@ -430,31 +430,28 @@ pir_output_is( <<"CODE", <<'OUT', 'encoding - read/write' );
     \$P0.'print'(\$S0)
     \$P0.'close'()
 
-    \$P1 = new 'StringHandle'
-    \$P1.'encoding'('utf8')
+    \$P0.'open'('temp_file')
 
-    \$P1.'open'('temp_file')
-
-    \$S1 = \$P1.'readline'()
+    \$S1 = \$P0.'readline'()
     if \$S1 == "1234567890\\n" goto ok_1
 print \$S1
     print 'not '
   ok_1:
-    say 'ok 1 - \$S1 = \$P1.readline() # read with utf8 encoding on'
+    say 'ok 1 - \$S1 = \$P0.readline() # read with utf8 encoding on'
 
-    \$S2 = \$P1.'readline'()
+    \$S2 = \$P0.'readline'()
     if \$S2 == \$S0 goto ok_2
 print \$S2
     print 'not '
   ok_2:
-    say 'ok 2 - \$S2 = \$P1.readline() # read iso-8859-1 string'
+    say 'ok 2 - \$S2 = \$P0.readline() # read iso-8859-1 string'
 
-    \$P1.'close'()
+    \$P0.'close'()
 
 .end
 CODE
-ok 1 - $S1 = $P1.readline() # read with utf8 encoding on
-ok 2 - $S2 = $P1.readline() # read iso-8859-1 string
+ok 1 - $S1 = $P0.readline() # read with utf8 encoding on
+ok 2 - $S2 = $P0.readline() # read iso-8859-1 string
 OUT
 
 
