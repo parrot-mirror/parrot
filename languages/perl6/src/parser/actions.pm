@@ -945,15 +945,14 @@ method signature($/, $key) {
         $?SIGNATURE_BLOCK.arity($arity);
         my $i     := 0;
         while $i < $arity {
-            my $param_past := $( $<parameter>[$i] );
-            my $name       := $param_past.name();
-            my $symbol     := $?SIGNATURE_BLOCK.symbol($name);
+            my $var    := $( $<parameter>[$i] );
+            my $name   := $var.name();
 
             ##  add var node to block
-            $?SIGNATURE.push( $param_past );
+            $?SIGNATURE.push( $var );
 
-            if $symbol<type_binding> {
-                $?SIGNATURE.push( $symbol<type_binding> );
+            if $var<type_binding> {
+                $?SIGNATURE.push( $var<type_binding> );
             }
 
             ##  add parameter to the signature object
@@ -961,7 +960,7 @@ method signature($/, $key) {
                                 :name('!add_param'), $sigobj, $name );
 
             ##  add any typechecks
-            my $type := $symbol<type>;
+            my $type := $var<type>;
             if +@($type) > 0 {
                 ##  don't need the 'and' junction for only one type
                 if +@($type) == 1 { $type := $type[0] }
@@ -970,13 +969,13 @@ method signature($/, $key) {
             }
 
             ##  add traits (we're not using this yet.)
-            my $trait := $symbol<trait>;
+            my $trait := $var<trait>;
             if $trait {
                 $trait.named('trait');
                 $sigparam.push($trait);
             }
 
-            my $readtype := $symbol<readtype>;
+            my $readtype := $var<readtype>;
             $readtype.named('readtype');
             $sigparam.push($readtype);
 
@@ -1003,25 +1002,23 @@ method type_constraint($/) {
 
 
 method parameter($/) {
-    our $?SIGNATURE_BLOCK;
-    my $past   := $( $<param_var> );
-    my $symbol := $?SIGNATURE_BLOCK.symbol($past.name(), :force(1));
-    my $sigil  := $<param_var><sigil>;
-    my $quant  := $<quant>;
+    my $var   := $( $<param_var> );
+    my $sigil := $<param_var><sigil>;
+    my $quant := $<quant>;
 
     ##  handle slurpy and optional flags
     if $quant eq '*' {
-        $past.slurpy( $sigil eq '@' || $sigil eq '%' );
-        $past.named( $sigil eq '%' );
+        $var.slurpy( $sigil eq '@' || $sigil eq '%' );
+        $var.named( $sigil eq '%' );
     }
     elsif $<named> eq ':' {          # named
-        $past.named(~$<param_var><identifier>);
+        $var.named(~$<param_var><identifier>);
         if $quant ne '!' {      #  required (optional is default)
-            $past.viviself('Nil');
+            $var.viviself('Nil');
         }
     }
     elsif $quant eq '?' {           # positional optional
-        $past.viviself('Nil');
+        $var.viviself('Nil');
     }
 
     ##  handle any default value
@@ -1032,12 +1029,12 @@ method parameter($/) {
         if $quant eq '*' {
             $/.panic("Can't put a default on a slurpy parameter");
         }
-        $past.viviself( $( $<default_value>[0]<EXPR> ) );
+        $var.viviself( $( $<default_value>[0]<EXPR> ) );
     }
 
     ##  keep track of any type constraints
     my $typelist := PAST::Op.new( :name('and'), :pasttype('call') );
-    $symbol<type> := $typelist;
+    $var<type> := $typelist;
     if $<type_constraint> {
         for @($<type_constraint>) { 
             my $type_past := $( $_ );
@@ -1047,10 +1044,11 @@ method parameter($/) {
                 $type_past.isdecl(1);
                 $type_past.viviself( 
                     PAST::Op.new( :pasttype('callmethod'), :name('WHAT'),
-                        PAST::Var.new( :name($past.name()) )
+                        PAST::Var.new( :name($var.name()) )
                     )
                 );
-                $symbol<type_binding> := $type_past;
+                $var<type_binding> := $type_past;
+                our $?SIGNATURE_BLOCK;
                 $?SIGNATURE_BLOCK.symbol( $type_past.name(), :scope('lexical') );
             }
             else {
@@ -1072,30 +1070,31 @@ method parameter($/) {
             # else $traitlist.push( $traitpast );  ## when we do other traits
         }
     }
-    $symbol<readtype> := PAST::Val.new( :value($readtype || 'readonly') );
+    $var<readtype> := PAST::Val.new( :value($readtype || 'readonly') );
 
-    make $past;
+    make $var;
 }
 
 
 method param_var($/) {
-    our $?SIGNATURE_BLOCK;
     my $name := ~$/;
     my $twigil := ~$<twigil>[0];
     if $twigil && $twigil ne '.' && $twigil ne '!' {
         $/.panic('Invalid twigil used in signature parameter.');
     }
-    make PAST::Var.new(
+    my $var := PAST::Var.new(
         :name($name),
         :scope('parameter'),
         :node($/)
     );
-    ##  Declare symbol as lexical in current (signature) block.
-    ##  This is needed in case any post_constraints try to reference
-    ##  this new param_var.
-    $?SIGNATURE_BLOCK.symbol( $name, :scope('lexical'),
-        :itype( container_itype( $<sigil> ) ) 
-    );
+    $var<itype> := container_itype( $<sigil> );
+    # Declare symbol as lexical in current (signature) block.
+    # This is needed in case any post_constraints try to reference
+    # this new param_var.
+    our $?SIGNATURE_BLOCK;
+    $?SIGNATURE_BLOCK.symbol( $name, :scope('lexical') );
+
+    make $var;
 }
 
 
