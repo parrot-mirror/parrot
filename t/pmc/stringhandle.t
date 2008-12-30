@@ -487,8 +487,8 @@ EOS
     pio.'open'("temp_file", "w")
     pio.'print'(\$S0)
     pio.'close'()
-    pio2 = new 'StringHandle'
-    \$S1 = pio2.'readall'('temp_file')
+    pio.'open'("temp_file")
+    \$S1 = pio.'readall'('temp_file')
     if \$S0 == \$S1 goto ok
     print "not "
 ok:
@@ -511,9 +511,8 @@ EOS
     pio.'print'(\$S0)
     pio.'close'()
 
-    pio2 = new 'StringHandle'
-    pio2.'open'("temp_file", "r")
-    \$S1 = pio2.'readall'()
+    pio.'open'("temp_file", "r")
+    \$S1 = pio.'readall'()
     if \$S0 == \$S1 goto ok
     print "not "
 ok:
