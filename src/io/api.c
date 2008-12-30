@@ -228,6 +228,29 @@ Parrot_io_reads(PARROT_INTERP, ARGMOD(PMC *pmc), size_t length)
 
 /*
 
+=item C<STRING * Parrot_io_readline>
+
+Return a new C<STRING*> holding the next line read from the file.
+
+=cut
+
+*/
+
+
+PARROT_EXPORT
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
+STRING *
+Parrot_io_readline(PARROT_INTERP, ARGMOD(PMC *pmc))
+{
+    STRING *result;
+    Parrot_PCCINVOKE(interp, pmc, CONST_STRING(interp, "readline"), "->S",
+            &result);
+    return result;
+}
+
+/*
+
 =item C<INTVAL Parrot_io_write>
 
 Writes C<len> bytes from C<*buffer> to C<*pmc>.
