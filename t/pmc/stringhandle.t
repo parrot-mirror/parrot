@@ -155,16 +155,15 @@ pir_output_is( <<"CODE", <<'OUT', 'print - synchronous' );
 
     \$P0.'close'()
 
-    \$P1 = new 'StringHandle'
-    \$P1.'open'('temp_file', 'r')
+    \$P0.'open'('temp_file', 'r')
 
-    \$S0 = \$P1.'read'(3) # bytes
+    \$S0 = \$P0.'read'(3) # bytes
     if \$S0 == "123" goto ok_5
     print 'not '
   ok_5:
     say 'ok 5 - read integer back from file'
 
-    \$S0 = \$P1.'read'(16) # bytes
+    \$S0 = \$P0.'read'(16) # bytes
     if \$S0 == "456.789squawk\\n42" goto ok_6
     say \$S0
 
@@ -172,7 +171,7 @@ pir_output_is( <<"CODE", <<'OUT', 'print - synchronous' );
   ok_6:
     say 'ok 6 - read string back from file'
 
-    \$P1.'close'()
+    \$P0.'close'()
 .end
 CODE
 ok 1 - $P0.print($I1)
