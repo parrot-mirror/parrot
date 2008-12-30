@@ -1733,34 +1733,44 @@ method scope_declarator($/) {
     my $past := $( $<scoped> );
 
     if $past.isa(PAST::Var) {
-        my $var := $past;
-        my $scope := 'lexical';
-        if $sym eq 'our' {
-            $scope := 'package';
-            $var.lvalue(1);
-        }
-
-        # This is a variable declaration, so we set the scope in
-        # the block.  The symbol entry also tells us the
-        # implementation type of the variable (itype), any
-        # initial value for the variable (viviself), and
-        # any type constraints (type).
-        our $?BLOCK;
-        $?BLOCK.symbol( $var.name(), :scope($scope) );
-        $var.scope($scope);
-        $var.isdecl(1);
-       
-        my $init_value := $var.viviself(); 
-        my $viviself   := PAST::Op.new( :pirop('new PsP'), $var<itype> );
-        if $init_value { $viviself.push( $init_value ); }
-        $var.viviself( $viviself );
-
-        if $var<type> {
-            $var := PAST::Op.new( :pirop('setprop'), 
-                                  $var, 'type', $var<type>[0] );
-        }
-        $past := $var;
+        $past := PAST::Op.new( $past );
     }
+
+    my $i := 0;
+    for @($past) {
+        if $_.isa(PAST::Var) {
+            my $var := $_;
+            my $scope := 'lexical';
+            if $sym eq 'our' {
+                $scope := 'package';
+                $var.lvalue(1);
+            }
+    
+            # This is a variable declaration, so we set the scope in
+            # the block.  The symbol entry also tells us the
+            # implementation type of the variable (itype), any
+            # initial value for the variable (viviself), and
+            # any type constraints (type).
+            our $?BLOCK;
+            $?BLOCK.symbol( $var.name(), :scope($scope) );
+            $var.scope($scope);
+            $var.isdecl(1);
+           
+            my $init_value := $var.viviself(); 
+            my $viviself   := PAST::Op.new( :pirop('new PsP'), $var<itype> );
+            if $init_value { $viviself.push( $init_value ); }
+            $var.viviself( $viviself );
+
+            if +@($var<type>) {
+                $var := PAST::Op.new( :pirop('setprop'), 
+                                      $var, 'type', $var<type>[0] );
+            }
+            $past[$i] := $var;
+        }
+        $i++;
+    }
+    if +@($past) == 1 { $past := $past[0]; }
+    else { $past.name('infix:,'); $past.pasttype('call'); }
     make $past;
 }
 
@@ -1790,6 +1800,9 @@ method declarator($/) {
     if $<variable_declarator> {
         $past := $( $<variable_declarator> );
     }
+    elsif $<signature> {
+        $past := $( $<signature> );
+    }
     elsif $<routine_declarator> {
         $past := $( $<routine_declarator> );
     }
@@ -1807,7 +1820,7 @@ method variable_declarator($/) {
     }
     
     $var.isdecl(1);
-    $var<type>  := List.new();
+    $var<type>  := PAST::Op.new( :name('and'), :pasttype('call') );
     $var<itype> := container_itype($<variable><sigil>);
     make $var;
 }
