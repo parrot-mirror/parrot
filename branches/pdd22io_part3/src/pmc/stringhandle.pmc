@@ -172,7 +172,7 @@ stored for mocking.
         if (STRING_IS_NULL(old_string)) {
             GET_ATTR_encoding(INTERP, SELF, encoding);
             if (!STRING_IS_NULL(encoding) &&
-                    string_equal(INTERP, encoding, const_string(INTERP, "utf8")))
+                    string_equal(INTERP, encoding, const_string(INTERP, "utf8")) == 0)
                 new_string = string_make(INTERP, "", 0, "unicode", 0);
             else
                 new_string = string_from_cstring(INTERP, "", 0);
@@ -336,8 +336,15 @@ StringHandle object that isn't opened yet, returns an empty string.
         STRING *string_result;
 
         GET_ATTR_stringhandle(INTERP, SELF, string_result);
-        if (STRING_IS_NULL(string_result))
-            string_result = const_string(INTERP, "");
+        if (STRING_IS_NULL(string_result)) {
+            STRING *encoding;
+            GET_ATTR_encoding(INTERP, SELF, encoding);
+            if (!STRING_IS_NULL(encoding) &&
+                    string_equal(INTERP, encoding, const_string(INTERP, "utf8")) == 0)
+                string_result = string_make(INTERP, "", 0, "unicode", 0);
+            else
+                string_result = const_string(INTERP, "");
+        }
         else
             string_result = string_copy(INTERP, string_result);
 
