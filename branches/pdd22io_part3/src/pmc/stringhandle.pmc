@@ -427,9 +427,9 @@ ignored, but stored for mocking.
 
     METHOD buffer_type(STRING *new_type :optional, INTVAL got_type :opt_flag) {
         INTVAL flags;
-        STRING *nobuffer_string   = CONST_STRING(INTERP, "unbuffered");
-        STRING *linebuffer_string = CONST_STRING(INTERP, "line-buffered");
-        STRING *fullbuffer_string = CONST_STRING(INTERP, "full-buffered");
+        STRING *nobuffer_string   = const_string(INTERP, "unbuffered");
+        STRING *linebuffer_string = const_string(INTERP, "line-buffered");
+        STRING *fullbuffer_string = const_string(INTERP, "full-buffered");
 
         GET_ATTR_flags(INTERP, SELF, flags);
 
