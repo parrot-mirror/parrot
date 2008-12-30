@@ -7,9 +7,7 @@ use warnings;
 use lib qw( . lib ../lib ../../lib );
 
 use Test::More;
-use Parrot::Test tests => 17;
-use Parrot::Test::Util 'create_tempfile';
-use Parrot::Test::Util 'create_tempfile';
+use Parrot::Test tests => 18;
 
 =head1 NAME
 
@@ -133,6 +131,34 @@ pir_output_is(
 CODE
 ok 1 - $S0 = $P1.read($I2)
 ok 2 - $S0 = $P1.read($I2) # again on same stream
+OUT
+
+pir_output_is(
+    <<'CODE', <<'OUT', 'read opcode' );
+.sub 'test' :main
+    $P0 = new 'StringHandle'
+    $P0.'open'('README', 'w')
+
+    print $P0, "This is Parrot, version"
+    close $P0
+
+    $P0.'open'('README')
+
+    $S0 = read $P0, 14 # bytes
+    if $S0 == 'This is Parrot' goto ok_1
+    print 'not '
+  ok_1:
+    say 'ok 1 - $S0 = read $P1, $I2'
+
+    $S0 = read $P0, 9  # bytes
+    if $S0 == ', version' goto ok_2
+    print 'not '
+  ok_2:
+    say 'ok 2 - $S0 = read $P1, $I2 # again on same stream'
+.end
+CODE
+ok 1 - $S0 = read $P1, $I2
+ok 2 - $S0 = read $P1, $I2 # again on same stream
 OUT
 
 # L<PDD22/I\/O PMC API/=item print>
