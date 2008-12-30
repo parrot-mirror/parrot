@@ -1731,11 +1731,13 @@ method package_block($/, $key) {
 method scope_declarator($/) {
     my $sym  := ~$<sym>;
     my $past := $( $<scoped> );
+
     if $past.isa(PAST::Var) {
+        my $var := $past;
         my $scope := 'lexical';
         if $sym eq 'our' {
             $scope := 'package';
-            $past.lvalue(1);
+            $var.lvalue(1);
         }
 
         # This is a variable declaration, so we set the scope in
@@ -1744,16 +1746,20 @@ method scope_declarator($/) {
         # initial value for the variable (viviself), and
         # any type constraints (type).
         our $?BLOCK;
-        my $symbol := $?BLOCK.symbol( $past.name(), :scope($scope) );
-        my $viviself := PAST::Op.new( :pirop('new PsP'), $symbol<itype> );
-        if $symbol<viviself> {
-            $viviself.push( $symbol<viviself> );
+        $?BLOCK.symbol( $var.name(), :scope($scope) );
+        $var.scope($scope);
+        $var.isdecl(1);
+       
+        my $init_value := $var.viviself(); 
+        my $viviself   := PAST::Op.new( :pirop('new PsP'), $var<itype> );
+        if $init_value { $viviself.push( $init_value ); }
+        $var.viviself( $viviself );
+
+        if $var<type> {
+            $var := PAST::Op.new( :pirop('setprop'), 
+                                  $var, 'type', $var<type>[0] );
         }
-        $past.viviself( $viviself );
-        if $symbol<type> {
-            $past := PAST::Op.new( :pirop('setprop'), 
-                                   $past, 'type', $symbol<type>[0] );
-        }
+        $past := $var;
     }
     make $past;
 }
@@ -1767,14 +1773,12 @@ method scoped($/) {
     elsif $<multi_declarator> {
         $past := $( $<multi_declarator> );
         if $past.isa(PAST::Var) {
-            our $?BLOCK;
-            my $symbol := $?BLOCK.symbol($past.name(), :force(1));
-            my $type := $symbol<type>;
+            my $type := $past<type>;
             for @($<fulltypename>) {
                 $type.push( $( $_ ) );
             }
             ## XXX: might need to revisit this, puts node in tree twice
-            $symbol<viviself> := $( $<fulltypename>[0] );
+            $past.viviself( $( $<fulltypename>[0] ) );
         }
     }
     make $past;
@@ -1795,18 +1799,17 @@ method declarator($/) {
 
 method variable_declarator($/) {
     our $?BLOCK;
-    my $past   := $( $<variable> );
-    my $name   := $past.name();
+    my $var    := $( $<variable> );
+    my $name   := $var.name();
     my $symbol := $?BLOCK.symbol( $name );
     if $symbol<scope> eq 'lexical' {
         $/.panic("Redeclaration of variable " ~ $name);
     }
     
-    $past.isdecl(1);
-    my $type  := List.new();
-    my $itype := container_itype($<variable><sigil>);
-    $?BLOCK.symbol($name, :type($type), :itype($itype) );
-    make $past;
+    $var.isdecl(1);
+    $var<type>  := List.new();
+    $var<itype> := container_itype($<variable><sigil>);
+    make $var;
 }
 
 method variable($/, $key) {
