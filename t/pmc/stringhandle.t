@@ -35,8 +35,6 @@ CODE
 ok 1 - $P0 = new 'StringHandle'
 OUT
 
-my (undef, $temp_file) = create_tempfile( UNLINK => 1 );
-
 # L<PDD22/I\/O PMC API/=item open.*=item close>
 pir_output_is( <<"CODE", <<'OUT', 'open and close - synchronous' );
 .sub 'test' :main
@@ -48,7 +46,7 @@ pir_output_is( <<"CODE", <<'OUT', 'open and close - synchronous' );
     say 'ok 2 - \$P1.close()'
 
     \$P3 = new 'StringHandle'
-    \$P3.'open'('$temp_file', 'rw')
+    \$P3.'open'('temp_file', 'rw')
     say 'ok 3 - \$P3.open(\$S1, \$S2) # rw mode'
     \$P3.'close'()
 
@@ -58,7 +56,7 @@ pir_output_is( <<"CODE", <<'OUT', 'open and close - synchronous' );
 
   test_7:
     \$P7 = new 'StringHandle'
-    \$P7.'open'('$temp_file', 'w')
+    \$P7.'open'('temp_file', 'w')
     say 'ok 7 - \$P7.open(\$S1, \$S2) # new file, write mode succeeds'
 
     goto end
@@ -112,6 +110,12 @@ pir_output_is(
     <<'CODE', <<'OUT', 'read - synchronous' );
 .sub 'test' :main
     $P0 = new 'StringHandle'
+    $P0.'open'('README', 'w')
+
+    $P0.'print'("This is Parrot, version")
+
+    $P0.'close'()
+
     $P0.'open'('README')
 
     $S0 = $P0.'read'(14) # bytes
@@ -136,7 +140,7 @@ pir_output_is( <<"CODE", <<'OUT', 'print - synchronous' );
 .sub 'test' :main
 
     \$P0 = new 'StringHandle'
-    \$P0.'open'('$temp_file', 'w')
+    \$P0.'open'('temp_file', 'w')
 
     \$P0.'print'(123)
     say 'ok 1 - \$P0.print(\$I1)'
@@ -152,7 +156,7 @@ pir_output_is( <<"CODE", <<'OUT', 'print - synchronous' );
     \$P0.'close'()
 
     \$P1 = new 'StringHandle'
-    \$P1.'open'('$temp_file', 'r')
+    \$P1.'open'('temp_file', 'r')
 
     \$S0 = \$P1.'read'(3) # bytes
     if \$S0 == "123" goto ok_5
@@ -179,8 +183,6 @@ ok 5 - read integer back from file
 ok 6 - read string back from file
 OUT
 
-(undef, $temp_file) = create_tempfile( UNLINK => 1 );
-
 # L<PDD22/I\/O PMC API/=item print.*=item readline>
 pir_output_is( <<"CODE", <<'OUT', 'readline - synchronous' );
 .sub 'test' :main
@@ -189,12 +191,12 @@ pir_output_is( <<"CODE", <<'OUT', 'readline - synchronous' );
                chomp = get_global ['String';'Utils'], 'chomp'
 
     \$P0 = new 'StringHandle'
-    \$P0.'open'('$temp_file', 'w')
+    \$P0.'open'('temp_file', 'w')
     \$P0.'print'("foobarbaz\\n42")
     \$P0.'close'()
 
     \$P1 = new 'StringHandle'
-    \$P1.'open'('$temp_file')
+    \$P1.'open'('temp_file')
 
     \$S0 = \$P1.'readline'()
     \$S0 = chomp( \$S0 )
@@ -218,6 +220,7 @@ ok 2 - $S0 = $P1.readline() # again on same stream
 OUT
 
 my $LINES;
+my $temp_file;
 ($LINES, $temp_file) = create_tempfile( UNLINK => 1 );
 
 for my $counter (1 .. 10000) {
@@ -234,7 +237,7 @@ pir_output_is( <<"CODE", <<'OUT', 'readline 10,000 lines' );
     .local pmc stringhandle
     .local int counter
     stringhandle = new 'StringHandle'
-    stringhandle.'open'('$temp_file')
+    stringhandle.'open'('temp_file')
 
     counter = 0
   read_loop:
