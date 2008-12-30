@@ -23,11 +23,12 @@ than an external file. Commonly used as a mock FileHandle for testing.
 #include "../src/io/io_private.h"
 
 pmclass StringHandle need_ext {
-    ATTR INTVAL flags;                /* Filehandle flags             */
+    ATTR INTVAL  flags;               /* Filehandle flags             */
     ATTR STRING *stringhandle;        /* The string data              */
     ATTR STRING *mode;                /* The mode string used in open */
     ATTR STRING *encoding;            /* The encoding for read/write  */
     ATTR STRING *filename;            /* A mock path and filename     */
+    ATTR INTVAL  read_offset;         /* Position, for reading bytes  */
 
 /*
 
@@ -49,6 +50,7 @@ Initializes a newly created StringHandle object.
         data_struct->mode         = NULL;
         data_struct->encoding     = NULL;
         data_struct->filename     = NULL;
+        data_struct->read_offset  = 0;
 
         PObj_custom_mark_SET(SELF);
         PObj_active_destroy_SET(SELF);
@@ -158,27 +160,25 @@ stored for mocking.
         STRING *open_mode, *old_string, *new_string, *encoding;
         INTVAL flags;
 
-        GET_ATTR_stringhandle(INTERP, SELF, old_string);
-        if (!STRING_IS_NULL(old_string))
-            Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_PIO_ERROR,
-                                "Cannot reopen already open filehandle");
-
         if (got_mode && !STRING_IS_NULL(mode))
             SET_ATTR_mode(INTERP, SELF, string_copy(INTERP, mode));
 
         if (got_filename && !STRING_IS_NULL(filename))
             SET_ATTR_filename(INTERP, SELF, string_copy(INTERP, filename));
 
-        /* Open the StringHandle by creating a new string. */
-        GET_ATTR_encoding(INTERP, SELF, encoding);
 
-        if (!STRING_IS_NULL(encoding) &&
-                string_equal(INTERP, encoding, const_string(INTERP, "utf8")))
-            new_string = string_make(INTERP, "", 0, "unicode", 0);
-        else
-            new_string = string_from_cstring(INTERP, "", 0);
+        /* If StringHandle hasn't already been initialized, create a new string. */
+        GET_ATTR_stringhandle(INTERP, SELF, old_string);
+        if (STRING_IS_NULL(old_string)) {
+            GET_ATTR_encoding(INTERP, SELF, encoding);
+            if (!STRING_IS_NULL(encoding) &&
+                    string_equal(INTERP, encoding, const_string(INTERP, "utf8")))
+                new_string = string_make(INTERP, "", 0, "unicode", 0);
+            else
+                new_string = string_from_cstring(INTERP, "", 0);
 
-        SET_ATTR_stringhandle(INTERP, SELF, new_string);
+            SET_ATTR_stringhandle(INTERP, SELF, new_string);
+        }
 
         /* Set a default mode of read-only. */
         GET_ATTR_mode(INTERP, SELF, open_mode);
@@ -210,14 +210,15 @@ StringHandles are never tty's, returns false.
 
 =item C<METHOD close()>
 
-Close the StringHandle by resetting the string to a null value.
+Reset some core data for the StringHandle, but don't delete the string data, as
+it may be wanted later (for capturing the results).
 
 =cut
 
 */
 
     METHOD close() {
-        SET_ATTR_stringhandle(INTERP, SELF, NULL);
+        SET_ATTR_read_offset(INTERP, SELF, 0);
         RETURN(INTVAL 0);
     }
 
@@ -253,14 +254,31 @@ C<bytes> argument is currently ignored.
 */
 
     METHOD read(INTVAL length) {
-        STRING *string_result;
+        STRING *string_result, *string_orig;
+        INTVAL offset;
 
-        GET_ATTR_stringhandle(INTERP, SELF, string_result);
-        if (STRING_IS_NULL(string_result))
+        GET_ATTR_stringhandle(INTERP, SELF, string_orig);
+        if (STRING_IS_NULL(string_orig))
             Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_PIO_ERROR,
                 "Cannot read from a closed filehandle");
 
-        string_result = string_copy(INTERP, string_result);
+        if (length == 0)
+            string_result = string_copy(INTERP, string_orig);
+        else {
+            INTVAL orig_length, read_length;
+            read_length = length;
+            orig_length = string_length(INTERP, string_orig);
+
+            GET_ATTR_read_offset(INTERP, SELF, offset);
+
+            /* Only read to the end of the string data. */
+            if (offset + read_length > orig_length)
+                read_length = orig_length - offset;
+
+            string_result = string_substr(INTERP, string_orig, offset,
+                    read_length, NULL, 0);
+            SET_ATTR_read_offset(INTERP, SELF, offset + read_length);
+        }
 
         RETURN(STRING *string_result);
     }
@@ -315,14 +333,14 @@ StringHandle object that isn't opened yet, returns an empty string.
 
 =item C<METHOD flush()>
 
-Does nothing.
+Clear the StringHandle by resetting it to a null value.
 
 =cut
 
 */
 
     METHOD flush() {
-        /* Does nothing. */
+        SET_ATTR_stringhandle(INTERP, SELF, NULL);
     }
 
 /*
