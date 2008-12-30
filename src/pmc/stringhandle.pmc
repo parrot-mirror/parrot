@@ -287,7 +287,8 @@ C<bytes> argument is currently ignored.
 
 =item C<METHOD readline()>
 
-Read the entire contents of the stringhandle and return it in a string.
+Read a line from the stringhandle and return it in a string. (Currently only
+responds to "\n" newlines.)
 
 =cut
 
@@ -295,13 +296,27 @@ Read the entire contents of the stringhandle and return it in a string.
 
     METHOD readline() {
         STRING *string_result;
+        INTVAL offset, newline_pos, read_length, orig_length;
 
         GET_ATTR_stringhandle(INTERP, SELF, string_result);
         if (STRING_IS_NULL(string_result))
             Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_PIO_ERROR,
                 "Cannot read from a closed filehandle");
 
-        string_result = string_copy(INTERP, string_result);
+        orig_length = string_length(INTERP, string_result);
+        GET_ATTR_read_offset(INTERP, SELF, offset);
+        newline_pos = string_str_index(INTERP, string_result,
+                const_string(INTERP, "\n"), offset);
+
+        /* No newline found, read the rest of the string. */
+        if (newline_pos == -1)
+            read_length = orig_length - offset;
+        else
+            read_length = newline_pos - offset + 1; /* +1 to include the newline */
+
+        string_result = string_substr(INTERP, string_result, offset,
+                read_length, NULL, 0);
+        SET_ATTR_read_offset(INTERP, SELF, newline_pos + 1);
 
         RETURN(STRING *string_result);
     }
