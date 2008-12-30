@@ -1838,6 +1838,17 @@ method variable($/, $key) {
         my $varname    := $sigil ~ $name;
         $past := PAST::Var.new( :name($varname), :node($/) );
 
+        if $varname eq '@_' || $varname eq '%_' {
+            unless $?BLOCK.symbol($varname) {
+                $?BLOCK.symbol( $varname, :scope('lexical') );
+                my $param := PAST::Var.new( :name($varname), 
+                                            :scope('parameter'),
+                                            :slurpy(1) );
+                if $sigil eq '%' { $param.named(1); }
+                $?BLOCK[0].unshift($param);
+            }
+        }
+
         if $sigil eq '&' {
             $varname := $name;
             $past.name($varname);
@@ -1854,15 +1865,15 @@ method variable($/, $key) {
             unless $?BLOCK.symbol($varname) {
                 $?BLOCK.symbol( $varname, :scope('lexical') );
                 $?BLOCK.arity( +$?BLOCK.arity() + 1 );
-                my $var := PAST::Var.new(:name($varname), :scope('parameter'));
-                if $twigil eq ':' { $var.named( $name ); }
+                my $param := PAST::Var.new(:name($varname), :scope('parameter'));
+                if $twigil eq ':' { $param.named( $name ); }
                 my $block := $?BLOCK[0];
                 my $i := +@($block);
                 while $i > 0 && $block[$i-1]<name> gt $varname {
                     $block[$i] := $block[$i-1];
                     $i--;
                 }
-                $block[$i] := $var;
+                $block[$i] := $param;
             }
         }
 
