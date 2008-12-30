@@ -2,15 +2,14 @@
 # $Id$
 
 # PHP grammar for Pipp PCT
-
 grammar Pipp::Grammar is PCT::Grammar;
 
 # the starting rule
 token TOP {
-     {*}                                     #= open
-     <sea_or_code>*
-     [ $ || <.panic: 'Syntax error'> ]
-     {*}                                     #= close
+    {*}                                     #= open
+    <sea_or_code>*
+    [ $ || <.panic: 'Syntax error'> ]
+    {*}                                     #= close
 }
 
 # Whitespace and comments
@@ -49,22 +48,22 @@ regex SEA {
 }
 
 rule code_echo_tag {
-    <.CODE_START_ECHO_TAG> <arguments> <.statement_delimiter>
-        <statement>*
+    <.CODE_START_ECHO_TAG> <argument_list> <.statement_delimiter>
+        <statement_list>
     <.close_short_tag>?
     {*}
 }
 
 rule code_script_tag {
     <.open_script_tag>
-        <statement>*
+        <statement_list>
     <.close_script_tag>?
     {*}
 }
 
 rule code_short_tag {
     <.open_short_tag>
-        <statement>*
+        <statement_list>
     <.close_short_tag>?
     {*}
 }
@@ -73,7 +72,7 @@ regex open_script_tag {
     '<script' <ws_char>+: 'language' <ws_char>*: '=' <ws_char>*: <quoted_lang_name> <ws_char>*: '>'
     {{ $P0 = new 'String'
        $P0 = "script"
-        set_global "tag_type", $P0
+       set_global "tag_type", $P0
     }}
 }
 
@@ -94,7 +93,7 @@ token CODE_START_ECHO_TAG {
     '<?=' 
     {{ $P0 = new 'String'
        $P0 = "short"
-        set_global "tag_type", $P0
+       set_global "tag_type", $P0
     }}
 }
 
@@ -102,7 +101,7 @@ token open_short_tag {
     '<?' 'php'?  
     {{ $P0 = new 'String'
        $P0 = "short"
-        set_global "tag_type", $P0
+       set_global "tag_type", $P0
     }}
 }
 
@@ -117,14 +116,10 @@ token close_short_tag {
     }} <.fail>
 }
 
-# block and statements
-rule block {
-    '{' <statement>* '}'
-    {*}
-}
+# statements
 
 rule statement {
-      <namespace_statement>     {*}  #= namespace_statement
+    | <namespace_statement>     {*}  #= namespace_statement
     | <return_statement>        {*}  #= return_statement
     | <require_once_statement>  {*}  #= require_once_statement
     | <echo_statement>          {*}  #= echo_statement
@@ -135,13 +130,17 @@ rule statement {
     | <for_statement>           {*}  #= for_statement
     | <inline_sea_short_tag>    {*}  #= inline_sea_short_tag
     | <inline_sea_script_tag>   {*}  #= inline_sea_script_tag
-    | <var_assign>              {*}  #= var_assign
+    | [ <var_assign> ';' ]      {*}  #= var_assign
     | <function_definition>     {*}  #= function_definition
     | <class_definition>        {*}  #= class_definition
 }
 
+rule statement_list {
+    <statement>* {*}            
+}
+
 rule statement_delimiter {
-      ';'
+    | ';'
     | <before '?'>
     | $
 }
@@ -163,7 +162,7 @@ token require_once_statement {
 }
 
 token echo_statement {
-    'echo' <.ws_char> <arguments> <ws> <.statement_delimiter>
+    'echo' <.ws_char> <argument_list> <ws> <.statement_delimiter>
     {*}
 }
 
@@ -172,26 +171,25 @@ rule expression_statement {
     {*}
 }
 
-rule arguments {
+rule argument_list {
     [ <expression> [',' <expression>]* ]?
     {*}
 }
 
 rule conditional_expression {
-    '(' <expression> ')' <block>
+    '(' <expression> ')' '{' <statement_list> '}'
     {*}
 }
 
 rule if_statement {
     'if' <conditional_expression>
-    [<elseif_clause>]*
-    [<else_clause>]?
+    <elseif_clause>*
+    <else_clause>?
     {*}
 }
 
 rule else_clause {
-    'else' <block>
-    {*}
+    'else' '{' <statement_list> '}'
 }
 
 rule elseif_clause {
@@ -205,12 +203,12 @@ rule while_statement {
 }
 
 rule do_while_statement {
-    'do' <block> 'while' '(' <expression> ')' <.statement_delimiter>
+    'do' '{' <statement_list> '}' 'while' '(' <expression> ')' <.statement_delimiter>
     {*}
 }
 
 rule for_statement {
-    'for' '(' <var_assign> <expression> ';' <expression> ')' <block>
+    'for' '(' <var_assign> ';' <expression> ';' <expression> ')' '{' <statement_list> '}'
     {*}
 }
 
@@ -233,7 +231,7 @@ regex SEA_empty_allowed {
 }
 
 rule var_assign {
-    <var> '=' <expression> <.statement_delimiter>
+    <var> '=' <expression>
     {*}
 }
 
@@ -258,23 +256,41 @@ token METHOD_NAME              { <ident> }
 
 # namespace support
 
-token NAMESPACE_SEPARATOR { '\\' }
+token NAMESPACE_SEPARATOR      { '\\' }
 
-token NAMESPACE_NAME { <ident>? [ <.NAMESPACE_SEPARATOR> <ident> ]* }
+token NAMESPACE_NAME           { <ident>? [ <.NAMESPACE_SEPARATOR> <ident> ]* }
 
-token VAR_NAME {
-    '$' <ident>
-    {*}
-}
+token VAR_NAME                 { '$' <ident> }
 
 # terms
 rule method_call {
-    <var> '->' <METHOD_NAME> '(' <arguments> ')'
+    <var> '->' <METHOD_NAME> '(' <argument_list> ')'
+    {*}
+}
+
+rule closure_call {
+    <var> '(' <argument_list> ')'
     {*}
 }
 
 rule function_call {
-    <FUNCTION_NAME> '(' <arguments> ')'
+    <FUNCTION_NAME> '(' <argument_list> ')'
+    {*}
+}
+
+# a trailing ',' is allowed
+rule instantiate_array {
+    'array' '(' [ <array_argument> [ ',' <array_argument> ]* ]? ','? ')'
+    {*}
+}
+
+rule array_argument {
+    | <key_value_pair>  {*}    #= key_value_pair
+    | <expression>      {*}    #= expression
+}
+
+rule key_value_pair {
+    <key=expression> '=>' <value=expression>
     {*}
 }
 
@@ -340,14 +356,19 @@ rule array_elem {
     {*}
 }
 
+token simple_var {
+    <VAR_NAME>
+    {*}
+}
+
 token var {
-      <this>        {*}   #= this
+    | <this>        {*}   #= this
     | <array_elem>  {*}   #= array_elem
-    | <VAR_NAME>    {*}   #= VAR_NAME
+    | <simple_var>  {*}   #= simple_var
 }
 
 rule literal {
-      <TRUE>    {*}    #= TRUE
+    | <TRUE>    {*}    #= TRUE
     | <FALSE>   {*}    #= FALSE
     | <NULL>    {*}    #= NULL
     | <NUMBER>  {*}    #= NUMBER
@@ -356,10 +377,14 @@ rule literal {
 }
 
 rule term {
-      <method_call>            {*}   #= method_call
+    | <method_call>            {*}   #= method_call
+    | <closure>                {*}   #= closure
+    | <closure_call>           {*}   #= closure_call
     | <function_call>          {*}   #= function_call
+    | <instantiate_array>      {*}   #= instantiate_array
     | <constructor_call>       {*}   #= constructor_call
-    | '(' <expression> {*} ')'       #= expression
+    | '(' <var_assign> ')'     {*}   #= var_assign
+    | '(' <expression> ')'     {*}   #= expression
     | <literal>                {*}   #= literal
     | <class_constant>         {*}   #= class_constant
     | <constant>               {*}   #= constant
@@ -369,19 +394,22 @@ rule term {
 
 
 # declarations
+rule closure {
+    'function' <bind_list>? <param_list> 
+    {*}                                     #= open
+    '{' <statement_list> '}'
+    {*}                                     #= close
+}
+
+rule bind_list {
+    'use' '(' [ '&'? <VAR_NAME> [',' '&'? <VAR_NAME>]* ]? ')'
+}
+
 rule function_definition {
-    'function' <FUNCTION_NAME> <.ENTER_FUNCTION_DEF> <param_list> <block> <.EXIT_FUNCTION_DEF>
-    {*}
-}
-
-# special subrule for marking variable scope
-token ENTER_FUNCTION_DEF {
-    {*}
-}
-
-# ditto
-token EXIT_FUNCTION_DEF {
-    {*}
+    'function' <FUNCTION_NAME> <param_list>
+    {*}                                     #= open
+    '{' <statement_list> '}'
+    {*}                                     #= close
 }
 
 rule param_list {
@@ -404,8 +432,8 @@ rule method_declaration {
 }
 
 rule class_definition {
-    {*}                                     #= open
     'class' <CLASS_NAME> [ 'implements' <INTERFACE_NAME> ]? '{'
+    {*}                                     #= open
         <class_constant_definition>*
         <class_member_definition>*
         <class_method_definition>*
@@ -423,11 +451,11 @@ rule class_member_definition {
 }
 
 rule class_method_definition {
-    'function' <METHOD_NAME> <param_list> <block>
-    {*}
+    'function' <METHOD_NAME> <param_list>
+    {*}                                     #= open
+    '{' <statement_list> '}'
+    {*}                                     #= close
 }
-
-
 
 token curly_interpolation {
     '{' <var> '}'

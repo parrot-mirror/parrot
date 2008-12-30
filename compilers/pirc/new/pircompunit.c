@@ -27,17 +27,20 @@ O(c) (constant) time.
 #include "pircompiler.h"
 #include "pirsymbol.h"
 #include "piryy.h"
+#include "pirdefines.h"
+#include "bcgen.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
+#include <assert.h>
 
 #include "parrot/oplib/ops.h"
 #include "parrot/string_funcs.h"
 #include "parrot/dynext.h"
 
-#include <assert.h>
+
 
 static unsigned const prime_numbers[] = {113 /* XXX think of more primes */ };
 
@@ -49,7 +52,7 @@ static unsigned const prime_numbers[] = {113 /* XXX think of more primes */ };
 
 
 =item C<void
-panic(lexer_state * lexer, char * const message)>
+panic(lexer_state * lexer, char const * const message)>
 
 Function to emit a final last cry that something's wrong and exit.
 
@@ -57,8 +60,12 @@ Function to emit a final last cry that something's wrong and exit.
 
 */
 void
-panic(lexer_state * lexer, char const * const message) {
-    fprintf(stderr, "Fatal: %s\n", message);
+panic(lexer_state * lexer, char const * const message, ...) {
+    va_list arg_ptr;
+    fprintf(stderr, "Fatal: ");
+    va_start(arg_ptr, message);
+    vfprintf(stderr, message, arg_ptr);
+    va_end(arg_ptr);
     release_resources(lexer);
     exit(EXIT_FAILURE);
 }
@@ -80,10 +87,9 @@ types).
 void
 reset_register_allocator(lexer_state * const lexer) {
     /* set register allocator to 0 for all register types. */
-    lexer->curregister[INT_TYPE]    = 0;
-    lexer->curregister[NUM_TYPE]    = 0;
-    lexer->curregister[PMC_TYPE]    = 0;
-    lexer->curregister[STRING_TYPE] = 0;
+    int i;
+    for (i = 0; i < NUM_PARROT_TYPES; ++i)
+        lexer->curregister[i] = 0;
 }
 
 
@@ -107,7 +113,7 @@ set_namespace(lexer_state * const lexer, key * const ns) {
 /*
 
 =item C<void
-set_sub_outer(lexer_state * const lexer, char * const outersub)>
+set_sub_outer(lexer_state * const lexer, char const * const outersub)>
 
 Set the lexically enclosing sub for the current sub.
 Thus, set the :outer() argument to the current subroutine.
@@ -117,15 +123,64 @@ Thus, set the :outer() argument to the current subroutine.
 */
 void
 set_sub_outer(lexer_state * const lexer, char const * const outersub) {
-    CURRENT_SUB(lexer)->outer_sub = outersub;
-    SET_FLAG(lexer->subs->flags, SUB_FLAG_OUTER);
+    CURRENT_SUB(lexer)->info.outersub = outersub;
+    SET_FLAG(lexer->subs->flags, PIRC_SUB_FLAG_HAS_OUTER);
 }
+
 
 
 /*
 
 =item C<void
-set_sub_vtable(lexer_state * const lexer, char const *vtablename)>
+set_sub_multi_type(lexer_state * const lexer, expression * const multitype)>
+
+Add the multi-method signature type in C<multitype> to the current subroutine.
+
+=cut
+
+*/
+void
+set_sub_multi_types(lexer_state * const lexer, expression * const multitype) {
+    /* info.num_types is 1 higher than the actual number of types;
+     * n=1 means :multi() without any types; therefore, subtract 1 for actual number.
+     */
+    unsigned num_types = CURRENT_SUB(lexer)->info.num_multi_types - 1;
+
+    /* create an array of sufficient size, in which the multi type info is copied */
+    CURRENT_SUB(lexer)->info.multi_types
+                          = (multi_type *)pir_mem_allocate(lexer, num_types * sizeof (multi_type));
+
+
+    /* add types from end to beginning, as the list is in reversed order. */
+    while (num_types-- > 0) {
+        /* get a pointer to the multi_type in the current index, for easy reference */
+        multi_type *mtype = &CURRENT_SUB(lexer)->info.multi_types[num_types];
+
+        switch (multitype->type) {
+            case EXPR_CONSTANT:
+                mtype->u.ident    = multitype->expr.c->val.sval;
+                mtype->entry_type = MULTI_TYPE_IDENT;
+                break;
+            case EXPR_IDENT:
+                mtype->u.ident    = multitype->expr.id;
+                mtype->entry_type = MULTI_TYPE_IDENT;
+                break;
+            case EXPR_KEY:
+                /* mtype->u.key      = XXX todo */
+                mtype->entry_type = MULTI_TYPE_KEYED;
+                break;
+            default:
+                break;
+        }
+
+    }
+
+}
+
+/*
+
+=item C<void
+set_sub_vtable(lexer_state * const lexer, char const * vtablename)>
 
 Set the :vtable() flag argument to the current subroutine. If C<vtablename>
 is NULL, the name of the current sub is taken to be the vtable method name.
@@ -140,7 +195,7 @@ set_sub_vtable(lexer_state * const lexer, char const * vtablename) {
     int vtable_index;
 
     if (vtablename == NULL)  /* the sub's name I<is> the vtablename */
-        vtablename = CURRENT_SUB(lexer)->sub_name;
+        vtablename = CURRENT_SUB(lexer)->info.subname;
 
     /* get the index number of this vtable method */
     vtable_index = Parrot_get_vtable_index(lexer->interp,
@@ -152,15 +207,15 @@ set_sub_vtable(lexer_state * const lexer, char const * vtablename) {
         yypirerror(lexer->yyscanner, lexer,
                    "'%s' is not a vtable method but was used with :vtable flag", vtablename);
     else {
-        CURRENT_SUB(lexer)->vtable_index = vtable_index;
-        SET_FLAG(lexer->subs->flags, SUB_FLAG_VTABLE);
+        CURRENT_SUB(lexer)->info.vtable_index = vtable_index;
+        SET_FLAG(lexer->subs->flags, PIRC_SUB_FLAG_VTABLE);
     }
 }
 
 /*
 
 =item C<void
-set_sub_subid(lexer_state * const lexer, char * const subid)>
+set_sub_subid(lexer_state * const lexer, char const * const subid)>
 
 Set the name specified in the :subid flag on the sub.
 
@@ -169,14 +224,14 @@ Set the name specified in the :subid flag on the sub.
 */
 void
 set_sub_subid(lexer_state * const lexer, char const * const subid) {
-    CURRENT_SUB(lexer)->subid = subid;
-    SET_FLAG(lexer->subs->flags, SUB_FLAG_SUBID);
+    CURRENT_SUB(lexer)->info.subid = subid;
+    SET_FLAG(lexer->subs->flags, PIRC_SUB_FLAG_SUBID);
 }
 
 /*
 
 =item C<void
-set_sub_methodname(lexer_state * const lexer, char * const methodname)>
+set_sub_methodname(lexer_state * const lexer, char const * const methodname)>
 
 Set the :method flag on a sub; if C<methodname> is not NULL, then it contains
 the name by which the sub is stored as a method.
@@ -189,15 +244,15 @@ set_sub_methodname(lexer_state * const lexer, char const * const methodname) {
     if (methodname) /* :method("foo") */
         CURRENT_SUB(lexer)->methodname = methodname;
     else /* :method without a value defaults to the subname. */
-        CURRENT_SUB(lexer)->methodname = CURRENT_SUB(lexer)->sub_name;
+        CURRENT_SUB(lexer)->methodname = CURRENT_SUB(lexer)->info.subname;
 
-    SET_FLAG(lexer->subs->flags, SUB_FLAG_METHOD);
+    SET_FLAG(lexer->subs->flags, PIRC_SUB_FLAG_METHOD);
 }
 
 /*
 
 =item C<void
-set_sub_instanceof(lexer_state * const lexer, char * const classname)>
+set_sub_instanceof(lexer_state * const lexer, char const * const classname)>
 
 Set the value of the C<:instanceof> flag on a sub. Note that this flag
 is experimental, and not actually used at this point.
@@ -223,7 +278,7 @@ by which the sub is stored in the namespace.
 */
 void
 set_sub_nsentry(lexer_state * const lexer, char const * const nsentry) {
-    CURRENT_SUB(lexer)->nsentry = nsentry;
+    CURRENT_SUB(lexer)->info.nsentry = nsentry;
 }
 
 /*
@@ -231,7 +286,9 @@ set_sub_nsentry(lexer_state * const lexer, char const * const nsentry) {
 =item C<void
 set_sub_flag(lexer_state * const lexer, sub_flag flag)>
 
-Set a subroutine flag on the current sub.
+Set a subroutine flag on the current sub. The C<flag> parameter may encode
+multiple flags. If it encodes the C<:vtable> or C<:method> flag, an extra
+parameter named C<self> is added to the current subroutine.
 
 =cut
 
@@ -242,14 +299,14 @@ set_sub_flag(lexer_state * const lexer, sub_flag flag) {
     SET_FLAG(CURRENT_SUB(lexer)->flags, flag);
 
     /* if the sub is a method or a :vtable method, then also add a "self" parameter */
-    if (TEST_FLAG(flag, (SUB_FLAG_VTABLE | SUB_FLAG_METHOD)))
+    if (TEST_FLAG(flag, (PIRC_SUB_FLAG_VTABLE | PIRC_SUB_FLAG_METHOD)))
         add_param(lexer, PMC_TYPE, "self");
 }
 
 /*
 
 =item C<void
-new_subr(lexer_state * const lexer, char * const subname)>
+new_subr(lexer_state * const lexer, char const * const subname)>
 
 Create a new subroutine node, and set it as the "current"
 subroutine, on which all other sub-related operations do
@@ -260,29 +317,30 @@ their thing.
 */
 void
 new_subr(lexer_state * const lexer, char const * const subname) {
-    subroutine *newsub  = pir_mem_allocate_zeroed_typed(lexer, subroutine);
-    int index;
+    subroutine *newsub       = pir_mem_allocate_zeroed_typed(lexer, subroutine);
+    int         index;
 
     /* set the sub fields */
-    newsub->sub_name    = subname;
-
+    newsub->info.subname     = subname;
     /* set default lexid */
-    newsub->subid       = subname;
-
+    newsub->info.subid       = subname;
     /* take namespace of this sub of the lexer, which keeps track of that */
-    newsub->name_space  = lexer->current_ns;
+    newsub->name_space       = lexer->current_ns;
 
-    newsub->parameters  = NULL;
-    newsub->statements  = NULL;
-    newsub->flags       = 0;
-    newsub->startoffset = lexer->codesize; /* start offset in bytecode */
+    newsub->parameters       = NULL;
+    newsub->statements       = NULL;
+    newsub->flags            = 0;
+    newsub->info.startoffset = lexer->codesize; /* start offset in bytecode */
 
+
+
+    /* initialize hashtables for .local and label identifiers */
     init_hashtable(lexer, &newsub->symbols, HASHTABLE_SIZE_INIT);
     init_hashtable(lexer, &newsub->labels, HASHTABLE_SIZE_INIT);
 
     for (index = 0; index < NUM_PARROT_TYPES; ++index) {
-        newsub->registers[index] = NULL; /* set all "register" tables to NULL */
-        newsub->regs_used[index] = 0;    /* set all register counts to 0 */
+        newsub->registers[index]      = NULL; /* set all "register" tables to NULL */
+        newsub->info.regs_used[index] = 0;    /* set all register counts to 0 */
     }
 
     /* link the new sub node into the list of subroutines */
@@ -291,8 +349,8 @@ new_subr(lexer_state * const lexer, char const * const subname) {
     }
     else { /* there is at least 1 other subroutine */
         /* lexer->subs points to "end of list", to the last added one */
-        newsub->next             = CURRENT_SUB(lexer)->next; /* set newsub's next to the
-                                                                first item in the list */
+        newsub->next = CURRENT_SUB(lexer)->next; /* set newsub's next to the
+                                                    first item in the list */
         CURRENT_SUB(lexer)->next = newsub;    /* set current sub's next to the new sub. */
     }
     CURRENT_SUB(lexer) = newsub;
@@ -303,13 +361,12 @@ new_subr(lexer_state * const lexer, char const * const subname) {
     /* vanilla register allocator is reset for each sub */
     reset_register_allocator(lexer);
 
-
 }
 
 /*
 
 =item C<void
-set_sub_name(struct lexer_state * const lexer, char const * const subname)>
+set_sub_name(lexer_state * const lexer, char const * const subname)>
 
 Set the current subroutine's name to C<subname>.
 
@@ -317,15 +374,15 @@ Set the current subroutine's name to C<subname>.
 
 */
 void
-set_sub_name(struct lexer_state * const lexer, char const * const subname) {
-    CURRENT_SUB(lexer)->sub_name = subname;
+set_sub_name(lexer_state * const lexer, char const * const subname) {
+    CURRENT_SUB(lexer)->info.subname = subname;
 }
 
 
 /*
 
 =item C<static instruction *
-new_instruction(char * const opname)>
+new_instruction(lexer_state * const lexer, char const * const opname)>
 
 Create a new instruction node and set C<opname> as the instruction.
 
@@ -345,7 +402,7 @@ new_instruction(lexer_state * const lexer, char const * const opname) {
 /*
 
 =item C<static void
-new_statement(lexer_state * const lexer)>
+new_statement(lexer_state * const lexer, char const * const opname)>
 
 Constructor for a statement. The newly allocated statement will be inserted
 into the current subroutine's statements list.
@@ -399,7 +456,7 @@ set_curtarget(lexer_state * const lexer, target * const t) {
 /*
 
 =item C<argument *
-set_curarg(lexer_state * const lexer, argument *arg)>
+set_curarg(lexer_state * const lexer, argument * const arg)>
 
 Sets the argument C<arg> as the current argument in C<lexer>
 to make it accessible to other parse actions. C<arg> is returned.
@@ -554,7 +611,7 @@ add_target(lexer_state * const lexer, target *last, target * const t) {
 /*
 
 =item C<target *
-add_param(lexer_state * const lexer, pir_type type, char * const name)>
+add_param(lexer_state * const lexer, pir_type type, char const * const name)>
 
 Add a parameter of type C<type> and named C<name> to the current
 subroutine. The parameter will be declared as a local symbol in the
@@ -603,7 +660,7 @@ add_param(lexer_state * const lexer, pir_type type, char const * const name) {
 /*
 
 =item C<void
-set_param_alias(lexer_state * const lexer, char * const alias)>
+set_param_alias(lexer_state * const lexer, char const * const alias)>
 
 Set the argument of the :named flag for the current target
 (parameter). Returns the current target (parameter).
@@ -649,12 +706,12 @@ set_param_flag(lexer_state * const lexer, target * const param, target_flag flag
     /* :slurpy can only be set on a PMC parameter */
     if (TEST_FLAG(flag, TARGET_FLAG_SLURPY) && param->info->type != PMC_TYPE)
         yypirerror(lexer->yyscanner, lexer,
-                   "cannot set :slurpy flag on non-pmc %s", param->info->id.name);
+                   "cannot set :slurpy flag on non-pmc parameter '%s'", param->info->id.name);
 
     /* :opt_flag can only be set on a int parameter */
     if (TEST_FLAG(flag, TARGET_FLAG_OPT_FLAG) && param->info->type != INT_TYPE)
         yypirerror(lexer->yyscanner, lexer,
-                   "cannot set :opt_flag flag on non-int %s", param->info->id.name);
+                   "cannot set :opt_flag flag on non-int parameter '%s'", param->info->id.name);
 
     return param;
 }
@@ -662,7 +719,7 @@ set_param_flag(lexer_state * const lexer, target * const param, target_flag flag
 /*
 
 =item C<argument *
-new_argument(expression * const expr)>
+new_argument(lexer_state * const lexer, expression * const expr)>
 
 Create a new argument node which wraps C<expr>.
 
@@ -732,7 +789,7 @@ set_arg_flag(argument * const arg, arg_flag flag) {
 /*
 
 =item C<void
-set_arg_alias(lexer_state * const lexer, char * const alias)>
+set_arg_alias(lexer_state * const lexer, char const * const alias)>
 
 Set the alias specified in C<alias> on the current argument, accessible
 through C<lexer>. The alias is the name under which the argument is passed
@@ -755,7 +812,7 @@ set_arg_alias(lexer_state * const lexer, char const * const alias) {
 /*
 
 =item C<void
-load_library(lexer_state * const lexer, char * const library)>
+load_library(lexer_state * const lexer, char const * const library)>
 
 Load the library indicated by C<library>.
 
@@ -775,7 +832,7 @@ load_library(lexer_state * const lexer, char const * const library) {
 /*
 
 =item C<void
-set_label(lexer_state * const lexer, char * const label)>
+set_label(lexer_state * const lexer, char const * const label)>
 
 Set the label C<label> on the current instruction.
 
@@ -1154,6 +1211,8 @@ get_operands(lexer_state * const lexer, int bitmask, ...) {
 get_operand_count(lexer_state * const lexer)>
 
 Returns the number of operands of the I<current> instruction.
+This function assumes there is an instruction in place
+(in CURRENT_INSTRUCTION(lexer)).
 
 =cut
 
@@ -1163,6 +1222,8 @@ unsigned
 get_operand_count(lexer_state * const lexer) {
     unsigned count = 0;
     expression *first, *operand;
+
+    PARROT_ASSERT(CURRENT_INSTRUCTION(lexer));
 
     /* if no operands, return 0 */
     if (CURRENT_INSTRUCTION(lexer)->operands == NULL)
@@ -1222,7 +1283,6 @@ create_const(lexer_state * const lexer, pir_type type, char const * const name, 
 }
 
 /*
-
 
 =item C<constant *
 new_named_const(lexer_state * const lexer, pir_type type, char * const name, ...)>
@@ -1358,12 +1418,11 @@ PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 target *
 new_reg(lexer_state * const lexer, pir_type type, int regno) {
-    target *t       = new_target(lexer);
+    target  *t = new_target(lexer);
     pir_reg *reg;
 
     color_reg(lexer, type, regno);
-    reg = find_register(lexer, type, regno);
-    /* XXX t->s.reg = reg; */
+    reg     = find_register(lexer, type, regno);
     t->info = &reg->info;
 
     /* set a flag on this target node saying it's a register */
@@ -1376,7 +1435,8 @@ new_reg(lexer_state * const lexer, pir_type type, int regno) {
 =item C<expression *
 expr_from_target(target *t)>
 
-convert a target to an expression node
+Wrap a target in an expression node; the expression node is
+returned.
 
 =cut
 
@@ -1413,6 +1473,62 @@ expr_from_const(lexer_state * const lexer, constant * const c) {
 /*
 
 =item C<expression *
+expr_from_int(lexer_state * const lexer, int ival)>
+
+Create an expression node from an integer constant. This is a wrapper
+function, which uses C<expr_from_const()> and C<new_const()>.
+Creating an expression from an integer constant is a common operation,
+so using this wrapper function makes the rest of the code slightly cleaner.
+
+=cut
+
+*/
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
+expression *
+expr_from_int(lexer_state * const lexer, int ival) {
+    return expr_from_const(lexer, new_const(lexer, INT_TYPE, ival));
+}
+
+/*
+
+=item C<expression *
+expr_from_num(lexer_state * const lexer, double nval)>
+
+Same as C<expr_from_int()>, except it takes a C<double> parameter,
+not an C<int>.
+
+=cut
+
+*/
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
+expression *
+expr_from_num(lexer_state * const lexer, double nval) {
+    return expr_from_const(lexer, new_const(lexer, NUM_TYPE, nval));
+}
+
+/*
+
+=item C<expression *
+expr_from_string(lexer_state * const lexer, char const * const sval)>
+
+Same as C<expr_from_int()>, except it takes a C<string> parameter.
+
+=cut
+
+*/
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
+expression *
+expr_from_string(lexer_state * const lexer, char const * const sval) {
+    return expr_from_const(lexer, new_const(lexer, STRING_TYPE, sval));
+}
+
+
+/*
+
+=item C<expression *
 expr_from_ident(char * const id)>
 
 Convert a ident to an expression node and returns it.
@@ -1435,13 +1551,33 @@ expr_from_ident(lexer_state * const lexer, char const * const id) {
 set_invocation_args(invocation * const inv, argument * const args)>
 
 Set the args of an invocation onto the current invocation object.
+The number of arguments in the list is counted, and stored in the
+C<inv> object.
 
 =cut
 
 */
 invocation *
 set_invocation_args(invocation * const inv, argument * const args) {
+    argument *count_iter;
+    unsigned  arg_count = 0;
+
     inv->arguments = args;
+
+    if (args) {
+        count_iter = args->next;
+        do {
+            count_iter = count_iter->next;
+            ++arg_count;
+        }
+        while (count_iter != args->next);
+    }
+
+    /* fprintf(stderr, "invocation has %u args\n", arg_count); */
+
+    /* store number of arguments in list in the invocation object */
+    inv->num_arguments = arg_count;
+
     return inv;
 }
 
@@ -1451,13 +1587,31 @@ set_invocation_args(invocation * const inv, argument * const args) {
 set_invocation_results(invocation * const inv, target * const results)>
 
 Set the invocation results on the invocation object C<inv>.
+The number of results is stored in the invocation object.
 
 =cut
 
 */
 invocation *
 set_invocation_results(invocation * const inv, target * const results) {
+    target  *count_iter;
+    unsigned result_count = 0;
+
     inv->results = results;
+
+    if (results) {
+        count_iter = results->next;
+        do {
+            count_iter = count_iter->next;
+            ++result_count;
+        }
+        while (count_iter != results->next);
+    }
+
+    /* fprintf(stderr, "invocation has %u results\n", result_count); */
+
+    inv->num_results = result_count;
+
     return inv;
 }
 
@@ -1533,16 +1687,24 @@ invoke(lexer_state * const lexer, invoke_type type, ...) {
 /*
 
 =item C<void
-set_lex_flag(target *t, char * const name)>
+set_lex_flag(lexer_state * const lexer, target * const t, char const * const name)>
 
-Set the lexical name C<name> on target C<t>.
+Store target C<t> as a lexical in the sub_info struct. The lexical node
+stores a pointer to the target's syminfo structure, so it can access
+the allocated register.
 
 =cut
 
 */
 void
-set_lex_flag(target * const t, char const * const name) {
-    t->lex_name = name;
+set_lex_flag(lexer_state * const lexer, target * const t, char const * const name) {
+    lexical *lex = (lexical *)pir_mem_allocate(lexer, sizeof (lexical));
+    lex->name    = name;
+    lex->info    = t->info;
+
+    /* link this lex node in the list of lexicals */
+    lex->next = CURRENT_SUB(lexer)->info.lexicals;
+    CURRENT_SUB(lexer)->info.lexicals = lex;
 }
 
 /*
@@ -1640,7 +1802,7 @@ Add an operand at the end of the list of operands of the current instruction.
 */
 void
 push_operand(lexer_state * const lexer, NOTNULL(expression * const operand)) {
-    PARROT_ASSERT(lexer->subs->statements);
+    PARROT_ASSERT(CURRENT_INSTRUCTION(lexer));
 
     if (CURRENT_INSTRUCTION(lexer)->operands) {
         operand->next = CURRENT_INSTRUCTION(lexer)->operands->next;
@@ -1671,7 +1833,7 @@ remove_all_operands(NOTNULL(lexer_state * const lexer)) {
 /*
 
 =item C<expression *
-expr_from_key(key * const k)>
+expr_from_key(lexer_state * const lexer, key * const k)>
 
 Wraps the key C<k> in an C<expression> node and returns that.
 The returned expression node has type EXPR_KEY.
@@ -1689,7 +1851,7 @@ expr_from_key(NOTNULL(lexer_state * const lexer), NOTNULL(key * const k)) {
 /*
 
 =item C<key *
-new_key(expression * const expr)>
+new_key(lexer_state * const lexer, expression * const expr)>
 
 Wraps the expression C<expr> in a key node and returns that.
 
@@ -1811,8 +1973,111 @@ is_parrot_op(lexer_state * const lexer, char const * const name) {
 
 }
 
+/*
+
+=item C<static int
+generate_signature_pmc(lexer_state * const lexer, unsigned size)>
+
+Create a FixedIntegerArray PMC object that encodes the types and flags
+of parameters and add it to the PBC constant table. The index in that
+PBC constant table is returned.
+
+=cut
+
+*/
+static int
+generate_signature_pmc(lexer_state * const lexer, unsigned size) {
+    PMC *fixed_int_array;
+    int  array_index;
+
+    /* flags and types are encoded in a FixedIntegerArray PMC */
+    fixed_int_array = pmc_new(lexer->interp, enum_class_FixedIntegerArray);
+
+    if (size > 0) /* can't resize a fixed integer array to 0 elements, default size is 0. */
+        VTABLE_set_integer_native(lexer->interp, fixed_int_array, size);
+
+    array_index     = add_pmc_const(lexer->bc, fixed_int_array);
+
+    return array_index;
+
+}
 
 
+/*
+
+=item C<static int
+calculate_pcc_argument_flags(argument * const arg)>
+
+Calculate the Parrot Calling Conventions flags for the
+argument C<arg>. An int encoding the flags is returned.
+
+=cut
+
+*/
+static int
+calculate_pcc_argument_flags(argument * const arg) {
+    int flag = 0;
+
+    switch (arg->value->type) {
+        case EXPR_TARGET:
+            /* copy the type of the target */
+            SET_FLAG(flag, arg->value->expr.t->info->type);
+            break;
+        case EXPR_CONSTANT:
+            /* copy the type of the constant */
+            SET_FLAG(flag, arg->value->expr.c->type);
+            /* set the flag indicating the argument is a constant literal, not a register. */
+            SET_FLAG(flag, PARROT_ARG_CONSTANT);
+            break;
+        default:
+            break;
+    }
+
+    /* if the argument has a :flat flag, copy that */
+    if (TEST_FLAG(arg->flags, ARG_FLAG_FLAT))
+        SET_FLAG(flag, PARROT_ARG_FLATTEN);
+
+    /* if the argument has a :named flag, copy that */
+    if (TEST_FLAG(arg->flags, ARG_FLAG_NAMED))
+        SET_FLAG(flag, PARROT_ARG_NAME);
+
+    return flag;
+}
+
+
+/*
+
+=item C<static int
+calculate_pcc_target_flags(target * const result)>
+
+Calculate Parrot Calling Conventions flags for the target node
+C<result>.
+
+=cut
+
+*/
+static int
+calculate_pcc_target_flags(target * const result) {
+    int flag = 0;
+
+
+    SET_FLAG(flag, result->info->type);
+
+    if (TEST_FLAG(result->flags, TARGET_FLAG_SLURPY))
+        SET_FLAG(flag, PARROT_ARG_SLURPY_ARRAY);
+
+    if (TEST_FLAG(result->flags, TARGET_FLAG_NAMED))
+        SET_FLAG(flag, PARROT_ARG_NAME);
+
+    if (TEST_FLAG(result->flags, TARGET_FLAG_OPT_FLAG))
+        SET_FLAG(flag, PARROT_ARG_OPT_FLAG);
+
+    if (TEST_FLAG(result->flags, TARGET_FLAG_OPTIONAL))
+        SET_FLAG(flag, PARROT_ARG_OPTIONAL);
+
+
+    return flag;
+}
 
 
 
@@ -1821,104 +2086,49 @@ is_parrot_op(lexer_state * const lexer, char const * const name) {
 =item C<static void
 arguments_to_operands(lexer_state * const lexer, argument * const args)>
 
-part of inv->instr conversion.
-
-Add arguments as operands on the current instruction.
+Convert a list of C<argument> nodes into operands. Before the operands are
+added to the I<current> instruction, a FixedIntegerArray PMC is created
+which will hold one integer for each argument in the list. The integer
+at index C<i> encodes the type and flags (such as C<:flat>) for operand C<i>.
 
 =cut
 
 */
 static void
-arguments_to_operands(lexer_state * const lexer, argument * const args) {
+arguments_to_operands(lexer_state * const lexer, argument * const args, unsigned num_arguments) {
     argument *argiter;
+    int       array_index;
+    unsigned  i;
+    PMC      *signature_array;
 
     /* create a FixedIntegerArray object as first argument, which encodes
      * the number of arguments and their flags.
      */
+    array_index = generate_signature_pmc(lexer, num_arguments);
+    /* add the index (of the signature PMC) in the PBC constant table as operand */
+    push_operand(lexer, expr_from_int(lexer, array_index));
 
-    /* XXX in compilers/imcc/pcc.c there's a maximum number of 15 values;
-     * do the same here to Get Things To Work, but fix later.
-     */
-    int flags_arg[15];
-    int index         = 0;
-    int forindex      = 0;
-    int len;
-    char *flagsstring, *strwriter;
-
-    if (args == NULL) {
-        push_operand(lexer, expr_from_const(lexer, new_const(lexer, PMC_TYPE, "")));
+    /* no need to continue if there's no arguments */
+    if (num_arguments == 0)
         return;
-    }
-    else {
 
-        argiter = args;
-        do {
-            int flag = 0;
-            expression *argvalue;
+    /* retrieve the signature array PMC */
+    signature_array = get_pmc_const(lexer->bc, array_index);
 
-            argiter  = argiter->next;
-            argvalue = argiter->value;
-            /*
-            fprintf(stderr, "converting arg to operand %d\n", ++numargs);
-            */
+    /* initialize the argument iterator for the loop */
+    argiter = args->next;
 
+    for (i = 0; i < num_arguments; ++i) {
+        int flag = calculate_pcc_argument_flags(argiter);
 
-            switch (argvalue->type) {
-                case EXPR_TARGET:
-                    flag |= argvalue->expr.t->info->type;
-                    break;
-                case EXPR_CONSTANT:
-                    flag |= argvalue->expr.c->type;
-                    break;
-                default:
-                    yypirerror(lexer->yyscanner, lexer, "invalid expression type for argument");
-                    break;
-            }
-            /* store the flag for this argument */
-            flags_arg[index++] = flag;
-        }
-        while (argiter != args);
+        /* set the flags for this argument in the right position in the array */
+        VTABLE_set_integer_keyed_int(lexer->interp, signature_array, i, flag);
 
-        /* allocate space for each flag, + commas (index - 1) and 2 quotes */
-        strwriter = flagsstring = (char *)mem_sys_allocate((index + index - 1 + 2) * sizeof (char));
-        *strwriter++ = '"';
-
-        while (forindex < index) {
-            sprintf(strwriter++, "%d", flags_arg[forindex]);
-
-            if (forindex < index - 1) {
-                *strwriter++ = ',';
-            }
-
-            ++forindex;
-        }
-        /* write closing quote and NULL character */
-        *strwriter++ = '"';
-        *strwriter++ = '\0';
-
-        /*
-        fprintf(stderr, "args2operands: [%s]\n", flagsstring);
-        */
-
-        /* don't add it now, it will break tests. */
-        /*
-        push_operand(lexer, expr_from_const(lexer, new_const(lexer, STRING_TYPE, flagsstring)));
-        */
-
-
-        /* XXX Yes, this is a hacky attempt. Cleanups will follow. */
-    }
-
-
-    /* go over the arguments again, and add them as operands */
-    argiter = args;
-
-    do {
-        argiter = argiter->next;
-        /* how to handle named args? */
+        /* and add the current argument as an operand; operands are always expression nodes. */
         push_operand(lexer, argiter->value);
+
+        argiter = argiter->next;
     }
-    while (argiter != args);
 }
 
 /*
@@ -1926,29 +2136,54 @@ arguments_to_operands(lexer_state * const lexer, argument * const args) {
 =item C<static void
 targets_to_operands(lexer_state * const lexer, target * const targets)>
 
-Convert a list of targets pointed to by C<targets> into operands; each
-C<target> node is added as an operand to the current instruction. If
-C<targets> is NULL, an empty string is added as an operand.
+Convert a list of C<target> nodes into operands. Before the operands
+are added to the I<current> instruction, a FixedIntegerArray is created,
+which contains one integer for each target (to be converted into an operand).
+The integer encodes the type of the target (operand) and other flags, such
+as C<:slurpy> etc.
 
 =cut
 
 */
 static void
-targets_to_operands(lexer_state * const lexer, target * const targets) {
-    target *iter;
+targets_to_operands(lexer_state * const lexer, target * const targets, unsigned num_targets) {
+    target  *iter;
+    int      array_index;
+    PMC     *signature_array;
+    unsigned i;
 
-    if (targets == NULL) {
-        push_operand(lexer, expr_from_const(lexer, new_const(lexer, PMC_TYPE, "")));
+    /* generate a FixedIntegerArray of the right size to encode the signature */
+    array_index = generate_signature_pmc(lexer, num_targets);
+    /* add the index in the constant table of this signature PMC as an operand */
+    push_operand(lexer, expr_from_int(lexer, array_index));
+
+    /* no need to continue if there's no target nodes */
+    if (num_targets == 0)
         return;
-    }
 
-    iter = targets;
+    /* retrieve the FixedIntegerArray PMC */
+    signature_array = get_pmc_const(lexer->bc, array_index);
 
-    do {
+    /* initialize the iterator */
+    iter = targets->next;
+
+    for (i = 0; i < num_targets; ++i) {
+        int flag = calculate_pcc_target_flags(iter);
+
+        /* store the flag at position i in the array */
+        VTABLE_set_integer_keyed_int(lexer->interp, signature_array, i, flag);
+
+        /* add the current target as an operand; these targets have already
+         * got an assigned register, so we're emitting that register number.
+         */
+        PARROT_ASSERT(iter->info->color != NO_REG_ALLOCATED);
+
+        push_operand(lexer, expr_from_int(lexer, iter->info->color));
+
+        /* go to next target in list */
         iter = iter->next;
-        push_operand(lexer, expr_from_target(lexer, iter));
     }
-    while (iter != targets);
+
 }
 
 
@@ -1977,7 +2212,8 @@ generate_unique_pir_reg(lexer_state * const lexer, pir_type type) {
 /*
 
 =item C<static void
-new_sub_instr(lexer_state * const lexer, int opcode, char * const opname)>
+new_sub_instr(lexer_state * const lexer, int opcode, char const * const opname,
+              unsigned num_var_args)>
 
 Create a new instruction node, and initialize the opcode and opinfo on that
 node. This function can be used to create an instruction of which the signature
@@ -1985,19 +2221,32 @@ is known beforehand, without the need to compute the signature during runtime.
 This is useful for generating special subroutine instructions, such as
 C<get_params_pc> etc.
 
+The parameter C<num_var_args> passes the number of variable arguments (if any)
+that C<opcode> has.
+
 =cut
 
 */
 static void
-new_sub_instr(lexer_state * const lexer, int opcode, char const * const opname, ...) {
+new_sub_instr(lexer_state * const lexer, int opcode, char const * const opname,
+              unsigned num_var_args)
+
+{
     new_statement(lexer, opname);
     CURRENT_INSTRUCTION(lexer)->opinfo = &lexer->interp->op_info_table[opcode];
     CURRENT_INSTRUCTION(lexer)->opcode = opcode;
 
-    /* XXX how to calculate size of var-arg ops? */
+    /* The size of a var-arg op (get_params, etc.) is 1 for the op,
+     * 1 for the fixed integer array, and n for the variable number of arguments.
+     * So, 2 + n, where n is the number of arguments.
+     */
 
     /* count number of ints needed to store this instruction in bytecode */
     lexer->codesize += CURRENT_INSTRUCTION(lexer)->opinfo->op_count;
+
+    /* add the var. number of args for the PCC instructions. */
+    lexer->codesize += num_var_args;
+
 }
 
 /*
@@ -2019,6 +2268,10 @@ update_op(NOTNULL(lexer_state * const lexer), NOTNULL(instruction * const instr)
      */
     if (instr->opinfo)
         lexer->codesize -= instr->opinfo->op_count;
+
+/*
+    fprintf(stderr, "updateop(): %s\n", CURRENT_INSTRUCTION(lexer)->opname);
+*/
     /* else the instruction was already set; decrement the codesize, as it was added already */
 
     /* now get the opinfo structure, update the name, and update the opcode. */
@@ -2031,11 +2284,30 @@ update_op(NOTNULL(lexer_state * const lexer), NOTNULL(instruction * const instr)
 }
 
 
+/*
+
+=item C<void
+generate_parameters_instr(lexer_state * const lexer, unsigned num_parameters)>
+
+Generate the "get_params" instruction, taking <num_parameters> variable arguments;
+this is the number of parameters of this function.
+
+=cut
+
+*/
+void
+generate_parameters_instr(lexer_state * const lexer, unsigned num_parameters) {
+    new_sub_instr(lexer, PARROT_OP_get_params_pc, "get_params_pc", num_parameters);
+    /* convert the parameter list into operands. Parameters are stored as target nodes. */
+    targets_to_operands(lexer, CURRENT_SUB(lexer)->parameters, num_parameters);
+}
+
 
 /*
 
 =item C<static void
-save_global_reference(lexer_state * const lexer, instruction *instr, char * const label)>
+save_global_reference(lexer_state * const lexer, instruction * const instr,
+                      char const * const label)>
 
 Store the instruction C<instr>, which references the global label C<label> in a list.
 After the parse phase, this instruction can be patched, if C<label> can be resolved
@@ -2045,7 +2317,10 @@ during compile time.
 
 */
 static void
-save_global_reference(lexer_state * const lexer, instruction * const instr, char const * const label) {
+save_global_reference(lexer_state * const lexer, instruction * const instr,
+                      char const * const label)
+
+{
     global_fixup *ref = pir_mem_allocate_zeroed_typed(lexer, global_fixup);
 
     ref->instr = instr;
@@ -2058,20 +2333,236 @@ save_global_reference(lexer_state * const lexer, instruction * const instr, char
 
 /*
 
+=item C<static void
+convert_pcc_call(lexer_state * const lexer, invocation * const inv)>
+
+Generate instructions for a normal invocation using the Parrot Calling
+Conventions (PCC). This is the sequence of the following instructions:
+
+For $P0():
+
+ set_args_pc
+ get_results_pc
+ invokecc_p / invoke_p_p
+
+For "foo"() and foo():
+
+ set_args_pc
+ get_results_pc
+ set_p_pc / find_sub_not_null_p_sc
+ invokecc_p
+
+=cut
+
+*/
+static void
+convert_pcc_call(lexer_state * const lexer, invocation * const inv) {
+    new_sub_instr(lexer, PARROT_OP_set_args_pc, "set_args_pc", inv->num_arguments);
+    arguments_to_operands(lexer, inv->arguments, inv->num_arguments);
+
+    new_sub_instr(lexer, PARROT_OP_get_results_pc, "get_results_pc", inv->num_results);
+    targets_to_operands(lexer, inv->results, inv->num_results);
+
+    /* if the target is a register, invoke that. */
+    if (TEST_FLAG(inv->sub->flags, TARGET_FLAG_IS_REG)) {
+        target *sub = new_reg(lexer, PMC_TYPE, inv->sub->info->color);
+
+        if (inv->retcc) { /* return continuation present? */
+            new_sub_instr(lexer, PARROT_OP_invoke_p_p, "invoke_p_p", 0);
+            add_operands(lexer, "%T%T", inv->sub, inv->retcc);
+        }
+        else {
+            new_sub_instr(lexer, PARROT_OP_invokecc_p, "invokecc_p", 0);
+            add_operands(lexer, "%T", sub);
+        }
+    }
+    else { /* find the global label in the current file, or find it during runtime */
+        target *sub        = generate_unique_pir_reg(lexer, PMC_TYPE);
+        global_label *glob = find_global_label(lexer, inv->sub->info->id.name);
+
+        if (glob) {
+            new_sub_instr(lexer, PARROT_OP_set_p_pc, "set_p_pc", 0);
+            add_operands(lexer, "%T%i", sub, glob->const_table_index);
+        }
+        else { /* find it during runtime (hopefully, otherwise exception) */
+            new_sub_instr(lexer, PARROT_OP_find_sub_not_null_p_sc, "find_sub_not_null_p_sc", 0);
+
+            add_operands(lexer, "%T%s", sub, inv->sub->info->id.name);
+
+            /* save the current instruction in a list; entries in this list will be
+             * fixed up, if possible, after the parsing phase.
+             *
+             * Instead of the instruction
+             *
+             *   set_p_pc
+             *
+             * that is generated when the global label C<glob> was found (see above),
+             * another instructions is generated. After the parse, we'll re-try
+             * to find the global label that is referenced. For now, just generate
+             * this instruction to do the resolving of the label during runtime:
+             *
+             *   find_sub_not_null_p_sc
+             */
+            save_global_reference(lexer, CURRENT_INSTRUCTION(lexer), inv->sub->info->id.name);
+        }
+
+        new_sub_instr(lexer, PARROT_OP_invokecc_p, "invokecc_p", 0);
+        add_operands(lexer, "%T", sub);
+
+    }
+}
+
+/*
+
+=item C<static void
+convert_pcc_return(lexer_state * const lexer, invocation * const inv)>
+
+Generate instructions for a normal return statement using the Parrot Calling
+Conventions (PCC). The sequence of instructions is:
+
+ set_returns_pc
+ returncc
+
+=cut
+
+*/
+static void
+convert_pcc_return(lexer_state * const lexer, invocation * const inv) {
+    new_sub_instr(lexer, PARROT_OP_set_returns_pc, "set_returns_pc", inv->num_arguments);
+    arguments_to_operands(lexer, inv->arguments, inv->num_arguments);
+    new_sub_instr(lexer, PARROT_OP_returncc, "returncc", 0);
+}
+
+/*
+
+=item C<static void
+convert_nci_call(lexer_state * const lexer, invocation * const inv)>
+
+Generate instructions for a function invocation using the Native Call
+Interface (NCI). The sequence of instructions is:
+
+XXX complete this.
+
+ invokecc_p
+
+=cut
+
+*/
+static void
+convert_nci_call(lexer_state * const lexer, invocation * const inv) {
+    set_instr(lexer, "invokecc_p");
+}
+
+/*
+
+=item C<static void
+convert_pcc_yield(lexer_state * const lexer, invocation * const inv)>
+
+Generate instructions for a yield statement using the Parrot Calling Conventions.
+The sequence of instructions is:
+
+ set_returns_pc
+ yield
+
+=cut
+
+*/
+static void
+convert_pcc_yield(lexer_state * const lexer, invocation * const inv) {
+    new_sub_instr(lexer, PARROT_OP_set_returns_pc, "set_returns_pc", inv->num_arguments);
+    arguments_to_operands(lexer, inv->arguments, inv->num_arguments);
+
+    new_sub_instr(lexer, PARROT_OP_yield, "yield", 0);
+}
+
+/*
+
+=item C<static void
+convert_pcc_tailcall(lexer_state * const lexer, invocation * const inv)>
+
+Generate instructions for a tailcall using the Parrot Calling Conventions (PCC).
+The sequence of instructions is:
+
+ set_args_pc
+ tailcall_pc
+
+=cut
+
+*/
+static void
+convert_pcc_tailcall(lexer_state * const lexer, invocation * const inv) {
+    new_sub_instr(lexer, PARROT_OP_set_args_pc, "set_args_pc", inv->num_arguments);
+    arguments_to_operands(lexer, inv->arguments, inv->num_arguments);
+
+    new_sub_instr(lexer, PARROT_OP_tailcall_p, "tailcall_p", 0);
+}
+
+/*
+
+=item C<static void
+convert_pcc_methodcall(lexer_state * const lexer, invocation * const inv)>
+
+Generate instructions for a method call using the Parrot Calling Conventions (PCC).
+The sequence of instructions is:
+
+ set_args_pc
+ get_results_pc
+ callmethodcc_p_sc
+
+=cut
+
+*/
+static void
+convert_pcc_methodcall(lexer_state * const lexer, invocation * const inv) {
+    new_sub_instr(lexer, PARROT_OP_set_args_pc, "set_args_pc", inv->num_arguments);
+    arguments_to_operands(lexer, inv->arguments, inv->num_arguments);
+    /* in a methodcall, the invocant object is passed as the first argument */
+    unshift_operand(lexer, expr_from_target(lexer, inv->sub));
+
+    new_sub_instr(lexer, PARROT_OP_get_results_pc, "get_results_pc", inv->num_results);
+    targets_to_operands(lexer, inv->results, inv->num_results);
+
+    new_sub_instr(lexer, PARROT_OP_callmethodcc_p_sc, "callmethodcc_p_sc", 0);
+    add_operands(lexer, "%T%E", inv->sub, inv->method);
+}
+
+/*
+
+=item C<static void
+convert_pcc_methodtailcall(lexer_state * const lexer, invocation * const inv)>
+
+Generate instructions for a method tailcall, using the Parrot Calling Conventions (PCC).
+The sequence of instructions is:
+
+ set_args_pc
+ tailcallmethod_p_p / tailcallmethod_p_sc
+
+=cut
+
+*/
+static void
+convert_pcc_methodtailcall(lexer_state * const lexer, invocation * const inv) {
+    new_sub_instr(lexer, PARROT_OP_set_args_pc, "set_args_pc", inv->num_arguments);
+    arguments_to_operands(lexer, inv->arguments, inv->num_arguments);
+
+    /* check out the type of the method expression; it may be a PMC or a STRING. */
+    if (inv->method->type == EXPR_TARGET)
+        new_sub_instr(lexer, PARROT_OP_tailcallmethod_p_p, "tailcallmethod_p_p", 0);
+    else if (inv->method->type == EXPR_CONSTANT)
+        new_sub_instr(lexer, PARROT_OP_tailcallmethod_p_sc, "tailcallmethod_p_sc", 0);
+    else
+        panic(lexer, "unknown expression type in tailcallmethod instruction");
+
+}
+
+/*
+
 =item C<void
 convert_inv_to_instr(lexer_state * const lexer, invocation * const inv)>
 
-Convert an C<invocation> structure into a series of instructions.
-
-XXX Some of the conversion should be done during emit_pbc(), because only at that
-point is there a bytecode object around, in which PMCs can be emitted.
-Subs are stored as PMCs, and we need to look up the PMC constant and emit
-its index as an operand. Also, the first operands of the special PCC instructions
-must be generated once the bytecode object is around, because they use a FixedIntegerArray
-to encode flags/types of the rest of the operands.
-
-One solution would be to mark these instructions, and fix them during emitting bytecode.
-This needs more thought.
+Convert an C<invocation> structure into a series of instructions. This is the
+dispatch function, which calls the appropriate conversion function, based
+on the type of C<inv>.
 
 =cut
 
@@ -2080,109 +2571,25 @@ void
 convert_inv_to_instr(lexer_state * const lexer, invocation * const inv) {
     switch (inv->type) {
         case CALL_PCC:
-            new_sub_instr(lexer, PARROT_OP_set_args_pc, "set_args_pc");
-            arguments_to_operands(lexer, inv->arguments);
-
-            new_sub_instr(lexer, PARROT_OP_get_results_pc, "get_results_pc");
-            targets_to_operands(lexer, inv->results);
-
-            /* if the target is a register, invoke that. */
-            if (TEST_FLAG(inv->sub->flags, TARGET_FLAG_IS_REG)) {
-                target *sub = new_reg(lexer, PMC_TYPE, inv->sub->info->color);
-                if (inv->retcc) { /* return continuation present? */
-                    new_sub_instr(lexer, PARROT_OP_invoke_p_p, "invoke_p_p");
-                    add_operands(lexer, "%T%T", inv->sub, inv->retcc);
-                }
-                else {
-                    new_sub_instr(lexer, PARROT_OP_invokecc_p, "invokecc_p");
-                    add_operands(lexer, "%T", sub);
-                }
-            }
-            else { /* find the global label in the current file, or find it during runtime */
-                target *sub        = generate_unique_pir_reg(lexer, PMC_TYPE);
-                global_label *glob = find_global_label(lexer, inv->sub->info->id.name);
-
-                if (glob) {
-                    /* XXX fix pmc const stuff */
-                    new_sub_instr(lexer, PARROT_OP_set_p_pc, "set_p_pc");
-                    add_operands(lexer, "%T%i", sub, glob->const_nr);
-                }
-                else { /* find it during runtime (hopefully, otherwise exception) */
-                    new_sub_instr(lexer, PARROT_OP_find_sub_not_null_p_sc,
-                                  "find_sub_not_null_p_sc");
-
-                    add_operands(lexer, "%T%s", sub, inv->sub->info->id.name);
-
-                    /* save the current instruction in a list; entries in this list will be
-                     * fixed up, if possible, after the parsing phase.
-                     *
-                     * Instead of the instruction
-                     *
-                     *   set_p_pc
-                     *
-                     * that is generated when the global label C<glob> was found (see above),
-                     * another instructions is generated. After the parse, we'll re-try
-                     * to find the global label that is referenced. For now, just generate
-                     * this instruction to do the resolving of the label during runtime:
-                     *
-                     *   find_sub_not_null_p_sc
-                     *
-                     */
-                    save_global_reference(lexer, CURRENT_INSTRUCTION(lexer),
-                                          inv->sub->info->id.name);
-                }
-
-                new_sub_instr(lexer, PARROT_OP_invokecc_p, "invokecc_p");
-                add_operands(lexer, "%T", sub);
-
-            }
+            convert_pcc_call(lexer, inv);
             break;
         case CALL_RETURN:
-            new_sub_instr(lexer, PARROT_OP_set_returns_pc, "set_returns_pc");
-            arguments_to_operands(lexer, inv->arguments);
-
-            new_sub_instr(lexer, PARROT_OP_returncc, "returncc");
+            convert_pcc_return(lexer, inv);
             break;
         case CALL_NCI:
-            set_instr(lexer, "invokecc_p");
+            convert_nci_call(lexer, inv);
             break;
         case CALL_YIELD:
-            new_sub_instr(lexer, PARROT_OP_set_returns_pc, "set_returns_pc");
-            arguments_to_operands(lexer, inv->arguments);
-
-            new_sub_instr(lexer, PARROT_OP_yield, "yield");
+            convert_pcc_yield(lexer, inv);
             break;
         case CALL_TAILCALL:
-            new_sub_instr(lexer, PARROT_OP_set_args_pc, "set_args_pc");
-            arguments_to_operands(lexer, inv->arguments);
-
-            new_sub_instr(lexer, PARROT_OP_tailcall_p, "tailcall_pc");
+            convert_pcc_tailcall(lexer, inv);
             break;
         case CALL_METHOD:
-            new_sub_instr(lexer, PARROT_OP_set_args_pc, "set_args_pc");
-            arguments_to_operands(lexer, inv->arguments);
-            /* in a methodcall, the invocant object is passed as the first argument */
-            unshift_operand(lexer, expr_from_target(lexer, inv->sub));
-
-            new_sub_instr(lexer, PARROT_OP_get_results_pc, "get_results_pc");
-            targets_to_operands(lexer, inv->results);
-
-            new_sub_instr(lexer, PARROT_OP_callmethodcc_p_sc, "callmethodcc_p_sc");
-            add_operands(lexer, "%T%E", inv->sub, inv->method);
-
+            convert_pcc_methodcall(lexer, inv);
             break;
         case CALL_METHOD_TAILCALL:
-            new_sub_instr(lexer, PARROT_OP_set_args_pc, "set_args_pc");
-            arguments_to_operands(lexer, inv->arguments);
-
-            /* check out the type of the method expression; it may be a PMC or a STRING. */
-            if (inv->method->type == EXPR_TARGET)
-                new_sub_instr(lexer, PARROT_OP_tailcallmethod_p_p, "tailcallmethod_p_p");
-            else if (inv->method->type == EXPR_CONSTANT)
-                new_sub_instr(lexer, PARROT_OP_tailcallmethod_p_p, "tailcallmethod_p_sc");
-            else
-                panic(lexer, "unknown expression type in tailcallmethod instruction");
-
+            convert_pcc_methodtailcall(lexer, inv);
             break;
         default:
             panic(lexer, "Unknown invocation type in convert_inv_to_instr()");
@@ -2196,7 +2603,9 @@ convert_inv_to_instr(lexer_state * const lexer, invocation * const inv) {
 =item C<static label *
 new_label(lexer_state * const lexer, char const * const labelid, int offset)>
 
-Constructor for a label operand.
+Constructor for a label struct node. A new C<label> object is created,
+initialized with the label id specified in C<labelid>, and the bytecode
+offset in C<offset>. A pointer to the label node is returned.
 
 =cut
 
@@ -2235,12 +2644,10 @@ fixup_local_labels(lexer_state * const lexer) {
     do {
         iter = iter->next; /* init pointer to first instruction */
 
-        /* depending on what kind of branching instruction, get the right operand
-         * that contains the label.
+        /* Do a quick global check if any label bits have been set
+         * if no label at all, skip this whole block.
          */
-        if (iter->oplabelbits) { /* this is a quick global check if any label bits have been set
-                                  * if no label at all, skip this whole block.
-                                  */
+        if (iter->oplabelbits) {
 
             /* now check for each operand */
             expression *operand = iter->operands;
@@ -2263,7 +2670,10 @@ fixup_local_labels(lexer_state * const lexer) {
                     unsigned     offset     = find_local_label(lexer, labelid);
                     unsigned     curr_instr = iter->offset;
 
-                    /* convert the label identifier into a real label object */
+                    /* convert the label identifier into a real label object.
+                     * The label offset is calculated deducting the current
+                     * Program Counter from the PC of the label.
+                     */
                     operand->expr.l = new_label(lexer, labelid, offset - curr_instr);
                     operand->type   = EXPR_LABEL;
                 }
@@ -2302,7 +2712,7 @@ fixup_global_labels(lexer_state * const lexer) {
         global_label *glob = find_global_label(lexer, iter->label);
 
         /* if found, then fix it; if not, that's fine, the right instruction to find the
-         * sub during runtime is in place already.
+         * sub during runtime is in place already (i.e. "find_sub_not_null").
          */
         if (glob) {
             expression *new_second_operand;
@@ -2318,7 +2728,8 @@ fixup_global_labels(lexer_state * const lexer) {
              */
 
             /* create an operand that refers to a constant PMC */
-            new_second_operand = expr_from_const(lexer, new_const(lexer, INT_TYPE, glob->const_nr));
+            new_second_operand = expr_from_const(lexer, new_const(lexer, INT_TYPE,
+                                                                  glob->const_table_index));
             /* link it into the list of operands; the /current/ second operand should be removed,
              * so insert the new expression as second operand, and make sure the old second
              * operand is no longer in the list.
@@ -2334,7 +2745,7 @@ fixup_global_labels(lexer_state * const lexer) {
 /*
 
 =item C<static void
-emit_sub_leaving_instructions(lexer_state * const lexer)>
+emit_sub_epilogue(lexer_state * const lexer)>
 
 Emit final instructions for the current subroutine. In case
 this is a C<:main> sub, the "end" instruction is emitted,
@@ -2344,18 +2755,17 @@ otherwise it's a standard return sequence.
 
 */
 static void
-emit_sub_leaving_instructions(lexer_state * const lexer) {
-    /* a :main-marked sub ends with the "end" instruction;
-     * otherwise it's this pair:
-     *
-     *    set_returns_pc
-     *    returncc
-     */
-    if (TEST_FLAG(lexer->subs->flags, SUB_FLAG_MAIN))
-        new_sub_instr(lexer, PARROT_OP_end, "end");
+emit_sub_epilogue(lexer_state * const lexer) {
+
+    if (TEST_FLAG(lexer->subs->flags, PIRC_SUB_FLAG_MAIN))
+        new_sub_instr(lexer, PARROT_OP_end, "end", 0);
     else {
-        new_sub_instr(lexer, PARROT_OP_set_returns_pc, "set_returns_pc");
-        new_sub_instr(lexer, PARROT_OP_returncc, "returncc");
+        /* default sub epilogue; no return values, hence 0 */
+        int array_index = generate_signature_pmc(lexer, 0);
+        new_sub_instr(lexer, PARROT_OP_set_returns_pc, "set_returns_pc", 0);
+        push_operand(lexer, expr_from_const(lexer, new_const(lexer, INT_TYPE, array_index)));
+
+        new_sub_instr(lexer, PARROT_OP_returncc, "returncc", 0);
     }
 }
 
@@ -2375,34 +2785,51 @@ If register optimization was requested, this is invoked here.
 */
 void
 close_sub(lexer_state * const lexer) {
-    int need_leaving_instr = 1;
+    int need_epilogue = 1;
+    int sub_const_table_index;
+    global_label *glob;
 
-    /* don't generate leaving instructions if the last instruction was already
+    /* don't generate the sub epilogue if the last instruction was already
      * leaving the sub.
+     * XXX add all instructions that make the sub epilogue unnecessary.
+     * XXX should all branching instructions prevent generation of the epilogue?
      */
     if (CURRENT_INSTRUCTION(lexer)) {
         switch (CURRENT_INSTRUCTION(lexer)->opcode) {
             case PARROT_OP_end:
             case PARROT_OP_returncc:
-                need_leaving_instr = 0;
+                need_epilogue = 0;
                 break;
             default:
                 break;
         }
     }
 
-    if (need_leaving_instr)
-        emit_sub_leaving_instructions(lexer);
+    if (need_epilogue)
+        emit_sub_epilogue(lexer);
 
     /* fix up all local branch labels */
     fixup_local_labels(lexer);
 
     /* store end offset in bytecode of this subroutine */
-    CURRENT_SUB(lexer)->endoffset = lexer->codesize;
+    CURRENT_SUB(lexer)->info.endoffset = lexer->codesize;
 
      /* if register allocation was requested, do that now */
     if (TEST_FLAG(lexer->flags, LEXER_FLAG_REGALLOC))
         linear_scan_register_allocation(lexer->lsr);
+
+    /* store the subroutine in the bytecode constant table. */
+    sub_const_table_index = add_sub_pmc(lexer->bc, &CURRENT_SUB(lexer)->info,
+                                        TEST_FLAG(CURRENT_SUB(lexer)->flags, PIRC_SUB_FLAG_LEX));
+
+    /* store the sub PMC index in the constant table with the global label,
+     * so that invoking ops can find this index.
+     */
+    glob = find_global_label(lexer, CURRENT_SUB(lexer)->info.subname);
+
+    PARROT_ASSERT(glob != NULL); /* it was stored in new_subr(), so must be there. */
+
+    glob->const_table_index = sub_const_table_index;
 }
 
 /*
@@ -2420,7 +2847,7 @@ void
 update_sub_register_usage(lexer_state * const lexer, unsigned reg_usage[NUM_PARROT_TYPES]) {
     int i;
     for (i = 0; i < NUM_PARROT_TYPES; ++i)
-        CURRENT_SUB(lexer)->regs_used[i] = reg_usage[i];
+        CURRENT_SUB(lexer)->info.regs_used[i] = reg_usage[i];
 }
 
 

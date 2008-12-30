@@ -9,9 +9,12 @@
 #include "pircompiler.h"
 #include "bcgen.h"
 
+#include "parrot/oplib/ops.h"
+#include "assert.h"
+
 /*
 
-=head1 FUNCTIONS
+=head1 DESCRIPTION
 
 This file contains emit functions. Depending on the requested output,
 the appropriate emit functions are used. Options are:
@@ -19,14 +22,35 @@ the appropriate emit functions are used. Options are:
  -p     for PASM output
  -b     for bytecode output
 
+The functions in this file walk the data structure that is built during
+the parse phase. During the traversal, bytecode for instructions and
+their operands are emitted through the C<bcgen> module.
+
+
+=head1 FUNCTIONS
+
 =over 4
 
 =cut
 
 */
 
+static char const * const subflag_names[] = {
+    "method",
+    "init",
+    "load",
+    "outer",
+    "main",
+    "anon",
+    "postcomp",
+    "immediate",
+    "vtable",
+    "lex",
+    "multi",
+    "lexid"
+};
 
-#define out stdout
+#define out lexer->outfile
 
 /* the order of these letters match with the pir_type enumeration.
  * These are used for human-readable PASM output.
@@ -36,20 +60,21 @@ static char const pir_register_types[5] = {'I', 'S', 'P', 'N', '?'};
 static void emit_pir_statement(lexer_state * const lexer, subroutine * const sub);
 static void emit_pir_instruction(lexer_state * const lexer, instruction * const instr);
 
+static void emit_pbc_key(lexer_state * const lexer, key * const k);
 
 /* prototype declaration */
 void print_expr(lexer_state * const lexer, expression * const expr);
 void print_key(lexer_state * const lexer, key *k);
-void print_target(lexer_state *lexer, target * const t);
+void print_target(lexer_state * const lexer, target * const t);
 void print_constant(lexer_state * const lexer, constant * const c);
 void print_expressions(lexer_state * const lexer, expression * const expr);
-void print_instruction(lexer_state * const lexer, instruction *ins);
+void print_instruction(lexer_state * const lexer, instruction * const ins);
 void print_statement(lexer_state * const lexer, subroutine * const sub);
 
 /*
 
 =item C<void
-print_key(key *k)>
+print_key(lexer_state * const lexer, key *k)>
 
 Print the key C<k>. The total key is enclosed in square brackets,
 and different key elements are separated by semicolons. Example:
@@ -80,7 +105,7 @@ print_key(lexer_state * const lexer, key *k) {
 /*
 
 =item C<void
-print_target(target * const t)>
+print_target(lexer_state * const lexer, target * const t)>
 
 Print the target C<t>; if C<t> has a key, that key is
 printed as well. Examples:
@@ -91,7 +116,7 @@ printed as well. Examples:
 
 */
 void
-print_target(lexer_state *lexer, target * const t) {
+print_target(lexer_state * const lexer, target * const t) {
     fprintf(out, "%c%d", pir_register_types[t->info->type], t->info->color);
 
     /* if the target has a key, print that too */
@@ -102,7 +127,7 @@ print_target(lexer_state *lexer, target * const t) {
 /*
 
 =item C<void
-print_constant(constant *c)>
+print_constant(lexer_state * const lexer, constant * const c)>
 
 Print the value of constant C<c>.
 
@@ -189,9 +214,16 @@ print_expressions(lexer_state * const lexer, expression * const expr) {
     }
 }
 
+/*
 
+=item C<void
+print_instruction(lexer_state * const lexer, instruction * const ins)>
+
+=cut
+
+*/
 void
-print_instruction(lexer_state * const lexer, instruction *ins) {
+print_instruction(lexer_state * const lexer, instruction * const ins) {
     PARROT_ASSERT(ins != NULL);
 
     if (ins->label) {
@@ -221,6 +253,16 @@ print_instruction(lexer_state * const lexer, instruction *ins) {
     }
 }
 
+/*
+
+=item C<void
+print_statement(lexer_state * const lexer, subroutine * const sub)>
+
+XXX
+
+=cut
+
+*/
 void
 print_statement(lexer_state * const lexer, subroutine * const sub) {
     if (sub->statements != NULL) {
@@ -235,29 +277,12 @@ print_statement(lexer_state * const lexer, subroutine * const sub) {
 
 }
 
-
-static char const * const subflag_names[] = {
-    "method",
-    "init",
-    "load",
-    "outer",
-    "main",
-    "anon",
-    "postcomp",
-    "immediate",
-    "vtable",
-    "lex",
-    "multi",
-    "lexid"
-};
-
-
-
-
 /*
 
 =item C<void
 print_subs(struct lexer_state * const lexer)>
+
+XXX
 
 =cut
 
@@ -268,6 +293,8 @@ print_subs(struct lexer_state * const lexer) {
         /* set iterator to first item */
         subroutine *subiter = lexer->subs->next;
 
+        /* XXX for now this works */
+        lexer->outfile = stderr;
 
         do {
 
@@ -287,15 +314,15 @@ print_subs(struct lexer_state * const lexer) {
 
                 fprintf(out, ".pcc_sub ");
 
-                if (TEST_FLAG(subiter->flags, SUB_FLAG_MAIN))
+                if (TEST_FLAG(subiter->flags, PIRC_SUB_FLAG_MAIN))
                     fprintf(out, ":main ");
-                if (TEST_FLAG(subiter->flags, SUB_FLAG_METHOD))
+                if (TEST_FLAG(subiter->flags, PIRC_SUB_FLAG_METHOD))
                     fprintf(out, ":method ");
                     /* XXX and so on; check which ones are available in PASM mode. */
 
             }
 
-            fprintf(out, "%s:\n", subiter->sub_name);
+            fprintf(out, "%s:\n", subiter->info.subname);
             print_statement(lexer, subiter);
             subiter = subiter->next;
         }
@@ -303,21 +330,37 @@ print_subs(struct lexer_state * const lexer) {
     }
 }
 
+/*
 
+=item C<static void
+emit_pir_instruction(lexer_state * const lexer, instruction * const instr)>
+
+Print the PIR representation of C<instr>.
+
+=cut
+
+*/
 static void
 emit_pir_instruction(lexer_state * const lexer, instruction * const instr) {
 
     if (instr->label)
         fprintf(out, "  %s:\n", instr->label);
+
     if (instr->opinfo) {
-        fprintf(out, "    %-10s\t", instr->opinfo->name);   /* set_p_pc became 'chopn'... XXX!!! */
-
+        fprintf(out, "    %-10s\t", instr->opinfo->name);
         print_expressions(lexer, instr->operands);
-
         fprintf(out, "\n");
     }
 }
 
+/*
+
+=item C<static void
+emit_pir_statement(lexer_state * const lexer, subroutine * const sub)>
+
+=cut
+
+*/
 static void
 emit_pir_statement(lexer_state * const lexer, subroutine * const sub) {
     if (sub->statements != NULL) {
@@ -331,33 +374,56 @@ emit_pir_statement(lexer_state * const lexer, subroutine * const sub) {
     }
 }
 
+/*
+
+=item C<void
+emit_pir_subs(lexer_state * const lexer)>
+
+Print the PIR representation of all subroutines stored
+in the C<lexer>.
+
+=cut
+
+*/
 void
-emit_pir_subs(lexer_state * const lexer) {
-    if (lexer->subs != NULL) {
-        /* set iterator to first item */
-        subroutine *subiter = lexer->subs->next;
+emit_pir_subs(lexer_state * const lexer, char const * const outfile) {
+    subroutine *subiter;
 
-        do {
-            int i;
-            fprintf(out, "\n.namespace ");
-            print_key(lexer, subiter->name_space);
+    if (lexer->subs == NULL)
+        return;
 
-            fprintf(out, "\n.sub %s", subiter->sub_name);
+    /* set iterator to first item */
+    subiter = lexer->subs->next;
 
-            for (i = 0; i < BIT(i); i++) {
-                if (TEST_FLAG(subiter->flags, BIT(i))) {
-                    fprintf(out, " :%s", subflag_names[i]);
-                }
-            }
-
-            fprintf(out, "\n");
-            emit_pir_statement(lexer, subiter);
-            fprintf(out, ".end\n");
-
-            subiter = subiter->next;
-        }
-        while (subiter != lexer->subs->next);
+    if (outfile) {
+        lexer->outfile = fopen(outfile, "w");
     }
+    else {
+        lexer->outfile = stdout;
+    }
+
+
+    do {
+        int i;
+        fprintf(out, "\n.namespace ");
+        print_key(lexer, subiter->name_space);
+
+        fprintf(out, "\n.sub %s", subiter->info.subname);
+
+        for (i = 0; i < BIT(i); i++) {
+            if (TEST_FLAG(subiter->flags, BIT(i))) {
+                fprintf(out, " :%s", subflag_names[i]);
+            }
+        }
+
+        fprintf(out, "\n");
+        emit_pir_statement(lexer, subiter);
+        fprintf(out, ".end\n");
+
+        subiter = subiter->next;
+    }
+    while (subiter != lexer->subs->next);
+
 }
 
 
@@ -401,12 +467,15 @@ emit_pbc_const_arg(lexer_state * const lexer, constant * const c) {
             emit_int_arg(lexer->bc, index);
 
             */
+            fprintf(stderr, "emit_pbc_const_arg: pmc type\n");
             break;
         }
         default:
             break;
     }
 }
+
+
 
 /*
 
@@ -426,6 +495,9 @@ emit_pbc_target_arg(lexer_state * const lexer, target * const t) {
     emit_int_arg(lexer->bc, t->info->color);
 }
 
+
+
+
 /*
 
 =item C<static void
@@ -441,6 +513,139 @@ emit_pbc_label_arg(lexer_state * const lexer, label * const l) {
     emit_int_arg(lexer->bc, l->offset);
 }
 
+
+static void
+build_key(lexer_state * const lexer, key * const k) {
+    /* XXX TODO
+     *
+     * who can help? :-)
+     */
+}
+
+
+
+static void
+emit_pbc_expr(lexer_state * const lexer, expression * const operand) {
+    switch (operand->type) {
+        case EXPR_CONSTANT:
+            emit_pbc_const_arg(lexer, operand->expr.c);
+            break;
+        case EXPR_TARGET:
+            emit_pbc_target_arg(lexer, operand->expr.t);
+
+            if (operand->expr.t->key)
+                emit_pbc_key(lexer, operand->expr.t->key);
+
+            break;
+        case EXPR_LABEL:
+            emit_pbc_label_arg(lexer, operand->expr.l);
+            break;
+        /*
+        case EXPR_KEY:
+            fprintf(stderr, "emit pbc isntr key arg\n");
+            break;
+        */
+        default:
+            break;
+    }
+}
+
+/*
+
+=item C<static void
+emit_pbc_key(lexer_state * const lexer, key * const k)>
+
+Emit bytecode for the key C<k>.
+
+=cut
+
+*/
+static void
+emit_pbc_key(lexer_state * const lexer, key * const k) {
+    fprintf(stderr, "emit pbc key\n");
+    emit_pbc_expr(lexer, k->expr);
+    /* XXX finish this. */
+}
+
+/*
+
+=item C<static void
+optimize_instr(lexer_state * const lexer, instruction * const instr)>
+
+Optimize the instruction C<instr>. Currently, these instructions are optimized:
+
+ box_p_ic  --> set_p_pc
+ box_p_nc  --> set_p_pc
+ box_p_sc  --> set_p_pc
+
+=cut
+
+*/
+static void
+optimize_instr(lexer_state * const lexer, instruction * const instr) {
+
+    switch (instr->opcode) {
+        case PARROT_OP_box_p_ic: {
+            /* box P0, 42 --> set P0, <Integer PMC const with value 42> */
+
+            /* the last operand, which is the second in this case */
+            expression *second_operand = instr->operands;
+            PMC *intconst = pmc_new(lexer->interp,
+                                    Parrot_get_ctx_HLL_type(lexer->interp, enum_class_Integer));
+            int index     = add_pmc_const(lexer->bc, intconst);
+            VTABLE_set_integer_native(lexer->interp, intconst, second_operand->expr.c->val.ival);
+
+            instr->opcode = PARROT_OP_set_p_pc;
+
+            /* replace 2nd operand with the new one. */
+            second_operand->expr.c->val.ival = index;
+
+            break;
+        }
+        case PARROT_OP_box_p_nc: {
+            /* box P0, 3.14 --> set P0, <Integer PMC const with value 3.14> */
+
+            /* the last operand, which is the second in this case */
+            expression *second_operand = instr->operands;
+            PMC *numconst = pmc_new(lexer->interp,
+                                    Parrot_get_ctx_HLL_type(lexer->interp, enum_class_Float));
+            int index     = add_pmc_const(lexer->bc, numconst);
+            VTABLE_set_number_native(lexer->interp, numconst, second_operand->expr.c->val.nval);
+
+            instr->opcode = PARROT_OP_set_p_pc;
+
+            /* replace 2nd operand with the new one. */
+            second_operand->expr.c->val.ival = index;
+            second_operand->expr.c->type     = INT_TYPE;
+
+            break;
+        }
+        case PARROT_OP_box_p_sc: {
+            /* box P0, "hi" --> set P0, <String PMC const with value "hi"> */
+
+            /* the last operand, which is the second in this case */
+            expression *second_operand = instr->operands;
+            PMC *strconst = pmc_new(lexer->interp,
+                                    Parrot_get_ctx_HLL_type(lexer->interp, enum_class_String));
+            int index     = add_pmc_const(lexer->bc, strconst);
+
+            VTABLE_set_string_native(lexer->interp, strconst,
+                                     string_from_cstring(lexer->interp,
+                                                         second_operand->expr.c->val.sval,
+                                                         strlen(second_operand->expr.c->val.sval)));
+
+            instr->opcode = PARROT_OP_set_p_pc;
+
+            /* replace 2nd operand with the new one. */
+            second_operand->expr.c->val.ival = index;
+            second_operand->expr.c->type     = INT_TYPE;
+
+            break;
+        }
+        default:
+            break;
+    }
+}
 
 /*
 
@@ -459,40 +664,36 @@ emit_pbc_instr(lexer_state * const lexer, instruction * const instr) {
 
     /* emit the opcode */
 
-    if (instr->opinfo) {
-        emit_opcode(lexer->bc, instr->opcode);
+    if (instr->opinfo == NULL)
+        return;
 
-        /* emit the arguments */
 
-        /* note that opinfo->op_count counts all operands plus the op itself;
-         * so substract 1 for the op itself.
+    /* optimize, if possible.
+     * XXX is this a good place to do that?
+     */
+    optimize_instr(lexer, instr);
+
+
+    emit_opcode(lexer->bc, instr->opcode);
+
+    /* emit the arguments */
+
+    /* note that opinfo->op_count counts all operands plus the op itself;
+     * so substract 1 for the op itself.
+     */
+    if (instr->opinfo->op_count > 1) {
+        /* operands are stored in a circular linked list; instr->operands points
+         * to the *last* operand, its next pointer points to the first operand.
          */
-        if (instr->opinfo->op_count > 1) {
-            /* operands are stored in a circular linked list; instr->operands points
-             * to the *last* operand, its next pointer points to the first operand.
-             */
-            operand = instr->operands->next;
+        operand = instr->operands->next;
 
-            for (i = 0; i < instr->opinfo->op_count - 1; ++i) {
-
-                switch (operand->type) {
-                    case EXPR_CONSTANT:
-                        emit_pbc_const_arg(lexer, operand->expr.c);
-                        break;
-                    case EXPR_TARGET:
-                        emit_pbc_target_arg(lexer, operand->expr.t);
-                        break;
-                    case EXPR_LABEL:
-                        emit_pbc_label_arg(lexer, operand->expr.l);
-                        break;
-                    default:
-                        break;
-                }
-
-                operand = operand->next;
-            }
+        do {
+            emit_pbc_expr(lexer, operand);
+            operand = operand->next;
         }
+        while (operand != instr->operands->next);
     }
+
 
 }
 
@@ -522,6 +723,11 @@ emit_pbc_sub(lexer_state * const lexer, subroutine * const sub) {
         iter = iter->next;
     }
     while (iter != sub->statements->next);
+
+    /* XXX why does this not work? */
+    if (TEST_FLAG(sub->flags, PIRC_SUB_FLAG_IMMEDIATE)) {
+        PackFile_fixup_subs(lexer->interp, PBC_IMMEDIATE, NULL);
+    }
 }
 
 /*
@@ -529,8 +735,9 @@ emit_pbc_sub(lexer_state * const lexer, subroutine * const sub) {
 =item C<void
 emit_pbc(lexer_state * const lexer)>
 
-Generate Parrot Byte Code from the abstract syntax tree. This is the top-level
-function.
+Generate Parrot Byte Code from the abstract syntax tree.
+This is the top-level function. After all instructions
+have been emitted, the PBC is written to a file.
 
 =cut
 
@@ -541,32 +748,30 @@ emit_pbc(lexer_state * const lexer) {
 
     if (lexer->subs == NULL)
         return;
+/*
+    fprintf(stderr, "emit_pbc(): starting...\n");
+*/
+    create_codesegment(lexer->bc, lexer->codesize);
 
-    lexer->bc = new_bytecode(lexer->interp, lexer->filename,
-                             lexer->codesize * 4, lexer->codesize);
-
+/*
+    fprintf(stderr, "ok 1\n");
+*/
     subiter = lexer->subs->next;
 
+    assert(subiter);
     /* iterate over all instructions and emit them */
     do {
+/*
         fprintf(stderr, "start offset of sub '%s' is: %d\tend offest: %d\n",
-                    subiter->sub_name, subiter->startoffset, subiter->endoffset);
-
-        add_sub_pmc(lexer->bc,
-                    subiter->sub_name,
-                    subiter->nsentry,
-                    subiter->subid,
-                    subiter->vtable_index,
-                    subiter->regs_used,
-                    subiter->startoffset,
-                    subiter->endoffset);
-
+                    subiter->info.subname, subiter->info.startoffset, subiter->info.endoffset);
+*/
         emit_pbc_sub(lexer, subiter);
         subiter = subiter->next;
     }
     while (subiter != lexer->subs->next);
 
     /* write the output to a file. */
+
     write_pbc_file(lexer->bc, "a.pbc");
 
     /* XXX just make sure no seg. faults  happened */

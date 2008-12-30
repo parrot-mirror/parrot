@@ -13,6 +13,9 @@
 #ifndef PARROT_PIR_PIRCOMPUNIT_H_GUARD
 #define PARROT_PIR_PIRCOMPUNIT_H_GUARD
 
+#include "pirdefines.h"
+#include "bcgen.h"
+
 /* the 4 parrot types; use explicit values that match the values in
  * PDD03_calling_conventions.pod.
  */
@@ -25,8 +28,6 @@ typedef enum pir_types {
 
 } pir_type;
 
-/* Parrot has 4 types */
-#define NUM_PARROT_TYPES    4
 
 
 /* selector values for the expression value union */
@@ -70,21 +71,21 @@ typedef enum arg_flags {
 
 /* sub flags */
 typedef enum sub_flags {
-    SUB_FLAG_METHOD     = 1 << 0,  /* the sub is a method */
-    SUB_FLAG_INIT       = 1 << 1,  /* the sub is run before :main when starting up */
-    SUB_FLAG_LOAD       = 1 << 2,  /* the sub is run when the bytecode is loaded */
-    SUB_FLAG_OUTER      = 1 << 3,  /* the sub is lexically nested */
-    SUB_FLAG_MAIN       = 1 << 4,  /* execution of the program will start at this sub */
-    SUB_FLAG_ANON       = 1 << 5,  /* this sub is shy and will not be stored in the global
-                                      namespace */
-    SUB_FLAG_POSTCOMP   = 1 << 6,  /* this sub will be executed after compilation */
-    SUB_FLAG_IMMEDIATE  = 1 << 7,  /* similar to POSTCOMP above; check out PDD19 for difference */
-    SUB_FLAG_VTABLE     = 1 << 8,  /* this sub overrides a vtable method */
-    SUB_FLAG_LEX        = 1 << 9,  /* this sub needs a LexPad */
-    SUB_FLAG_MULTI      = 1 << 10, /* this sub is a multi method/sub */
-    SUB_FLAG_SUBID      = 1 << 11, /* this sub has a namespace-unaware identifier
-                                      XXX this flag needed? XXX */
-    SUB_FLAG_INSTANCEOF = 1 << 12  /* this sub has an :instanceof flag. XXX document this XXX */
+    PIRC_SUB_FLAG_METHOD     = 1 << 0,  /* the sub is a method */
+    PIRC_SUB_FLAG_INIT       = 1 << 1,  /* the sub is run before :main when starting up */
+    PIRC_SUB_FLAG_LOAD       = 1 << 2,  /* the sub is run when the bytecode is loaded */
+    PIRC_SUB_FLAG_HAS_OUTER  = 1 << 3,  /* the sub is lexically nested */
+    PIRC_SUB_FLAG_IS_OUTER   = 1 << 4,  /* the sub contains lexically nested subs. */
+    PIRC_SUB_FLAG_MAIN       = 1 << 5,  /* execution of the program will start at this sub */
+    PIRC_SUB_FLAG_ANON       = 1 << 6,  /* this sub is shy and will not be stored in the global
+                                           namespace */
+    PIRC_SUB_FLAG_POSTCOMP   = 1 << 7,  /* this sub will be executed after compilation */
+    PIRC_SUB_FLAG_IMMEDIATE  = 1 << 8,  /* similar to POSTCOMP above; check PDD19 for difference */
+    PIRC_SUB_FLAG_VTABLE     = 1 << 9,  /* this sub overrides a vtable method */
+    PIRC_SUB_FLAG_LEX        = 1 << 10, /* this sub needs a LexPad */
+    PIRC_SUB_FLAG_MULTI      = 1 << 11, /* this sub is a multi method/sub */
+    PIRC_SUB_FLAG_SUBID      = 1 << 12, /* this sub has a namespace-unaware identifier */
+    PIRC_SUB_FLAG_INSTANCEOF = 1 << 13  /* this sub has an :instanceof flag. XXX document this */
 
 } sub_flag;
 
@@ -111,9 +112,9 @@ typedef enum invoke_types {
 
 /* macros to set the i-th bit */
 #define BIT(i)          (1 << (i))
-#define SET_BIT(M,B)    SET_FLAG(M,B)
-#define TEST_BIT(M,B)   TEST_FLAG(M,B)
-#define CLEAR_BIT(M,B)  CLEAR_FLAG(M,B)
+#define SET_BIT(M,B)    SET_FLAG((M),(B))
+#define TEST_BIT(M,B)   TEST_FLAG((M),(B))
+#define CLEAR_BIT(M,B)  CLEAR_FLAG((M),(B))
 
 #define NOT(X)          !(X)
 
@@ -152,17 +153,17 @@ typedef struct label {
 } label;
 
 
-#define CONST_INTVAL(c) c->val.ival
-#define CONST_NUMVAL(c) c->val.nval
-#define CONST_PMCVAL(c) c->val.pval
-#define CONST_STRVAL(c) c->val.sval
+#define CONST_INTVAL(c) (c)->val.ival
+#define CONST_NUMVAL(c) (c)->val.nval
+#define CONST_PMCVAL(c) (c)->val.pval
+#define CONST_STRVAL(c) (c)->val.sval
 
 /* The expression node is used as a wrapper to represent target nodes (like .param, .local
  * and registers), constant nodes (either named or anonymous), label identifiers,
  * or key nodes, such as ["x";42].
  */
 typedef struct expression {
-    union __expression_union {
+    union expression_union {
         struct target  *t;
         constant       *c;
         char const     *id;
@@ -198,7 +199,6 @@ typedef struct target {
     struct syminfo *info;           /* pointer to symbol/pir_reg's information */
     target_flag     flags;          /* flags like :slurpy etc. */
     char const     *alias;          /* if this is a named parameter, this is the alias */
-    char const     *lex_name;       /* if this is a lexical, this field contains the name */
     struct key     *key;            /* the key of this target, i.e. $P0[$P1], $P1 is key. */
 
     struct target  *next;
@@ -239,6 +239,8 @@ typedef struct invocation {
     target             *retcc;         /* return continuation, if any */
     target             *results;       /* targets that will receive return values */
     argument           *arguments;     /* values passed into the sub, or return values */
+    unsigned            num_results;   /* number of result target nodes */
+    unsigned            num_arguments; /* number of argument nodes */
 
 } invocation;
 
@@ -263,7 +265,7 @@ typedef struct instruction {
 
 /* a hashtable bucket for storing something */
 typedef struct bucket {
-    union __bucket_union {
+    union bucket_union {
         char const          *str;
         struct symbol       *sym;
         struct local_label  *loc;
@@ -276,11 +278,11 @@ typedef struct bucket {
 } bucket;
 
 /* accessors for the bucket union */
-#define bucket_string(B)    B->u.str
-#define bucket_symbol(B)    B->u.sym
-#define bucket_local(B)     B->u.loc
-#define bucket_global(B)    B->u.glob
-#define bucket_constant(B)  B->u.cons
+#define bucket_string(B)    (B)->u.str
+#define bucket_symbol(B)    (B)->u.sym
+#define bucket_local(B)     (B)->u.loc
+#define bucket_global(B)    (B)->u.glob
+#define bucket_constant(B)  (B)->u.cons
 
 /* hashtable structure */
 typedef struct hashtable {
@@ -290,26 +292,22 @@ typedef struct hashtable {
 
 } hashtable;
 
+
 /* forward declaration of structs */
 struct symbol;
 struct label;
 
+
+
 /* a sub */
 typedef struct subroutine {
     key                *name_space;    /* this sub's namespace */
-    char const         *sub_name;      /* this sub's name */
-    char const         *outer_sub;     /* this sub's outer subroutine, if any */
-    char const         *subid;         /* this sub's subid, if any */
-    int                 vtable_index;  /* index of vtable method this sub's overriding, if any */
+
     char const         *instanceof;    /* XXX document this XXX */
-    char const         *nsentry;       /* name by which the sub is stored in the namespace */
     char const         *methodname;    /* name of this sub by which it's stored as a method */
     int                 flags;         /* this sub's flags */
-    int                 startoffset;   /* start offset in bytecode where this sub starts */
-    int                 endoffset;     /* end offset in bytecode where this sub ends */
 
-    /* XXX the whole multi stuff must be implemented */
-    char              **multi_types;   /* data types of parameters if this is a multi sub */
+    struct sub_info     info;
 
     target             *parameters;    /* parameters of this sub */
     instruction        *statements;    /* statements of this sub */
@@ -317,16 +315,15 @@ typedef struct subroutine {
     hashtable           symbols;
     hashtable           labels;        /* local labels */
 
-    struct pir_reg     *registers[4];  /* used PIR registers in this sub (1 list for each type) */
-    unsigned            regs_used[4];  /* number of PASM registers allocated for this sub */
+    struct pir_reg     *registers[NUM_PARROT_TYPES];  /* used PIR registers in this sub */
 
     struct subroutine  *next;          /* pointer to next subroutine in the list */
 
 } subroutine;
 
 /* accessors for current sub and current instruction; makes code a bit more readable */
-#define CURRENT_SUB(L)          L->subs
-#define CURRENT_INSTRUCTION(L)  L->subs->statements
+#define CURRENT_SUB(L)          (L)->subs
+#define CURRENT_INSTRUCTION(L)  (L)->subs->statements
 
 /* forward declaration */
 struct lexer_state;
@@ -341,6 +338,8 @@ void set_sub_subid(struct lexer_state * const lexer, char const * const subid);
 void set_sub_instanceof(struct lexer_state * const lexer, char const * const classname);
 void set_sub_nsentry(struct lexer_state * const lexer, char const * const nsentry);
 void set_sub_methodname(struct lexer_state * const lexer, char const * const methodname);
+
+void set_sub_multi_types(struct lexer_state * const lexer, expression * const multitype);
 
 /* install a new subroutine node */
 void new_subr(struct lexer_state * const lexer, char const * const subname);
@@ -364,6 +363,7 @@ expression *expr_from_const(struct lexer_state * const lexer, constant * const c
 expression *expr_from_target(struct lexer_state * const lexer, target * const t);
 expression *expr_from_ident(struct lexer_state * const lexer, char const * const name);
 expression *expr_from_key(struct lexer_state * const lexer, key * const k);
+expression *expr_from_string(struct lexer_state * const lexer, char const * const sval);
 
 /* functions for argument node creation and storing */
 argument *new_argument(struct lexer_state * const lexer, expression * const expr);
@@ -423,7 +423,7 @@ void remove_operand(struct lexer_state * const lexer, unsigned index);
 void remove_all_operands(struct lexer_state * const lexer);
 
 
-void set_lex_flag(target * const t, char const * const lexname);
+void set_lex_flag(struct lexer_state * const lexer, target * const t, char const * const lexname);
 char const *get_inverse(char const * const instr);
 void invert_instr(struct lexer_state * const lexer);
 
@@ -448,7 +448,9 @@ void convert_inv_to_instr(struct lexer_state * const lexer, invocation * const i
 void update_sub_register_usage(struct lexer_state * const lexer,
                                unsigned reg_usage[NUM_PARROT_TYPES]);
 
-void panic(struct lexer_state * lexer, char const * const message);
+void generate_parameters_instr(struct lexer_state * const lexer, unsigned num_parameters);
+
+void panic(struct lexer_state * lexer, char const * const message, ...);
 
 #endif /* PARROT_PIR_PIRCOMPUNIT_H_GUARD */
 

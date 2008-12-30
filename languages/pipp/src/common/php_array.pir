@@ -61,6 +61,38 @@ php_array.pir - PHP array Standard Library
     .REGISTER_LONG_CONSTANT(cst, 'COUNT_RECURSIVE', COUNT_RECURSIVE)
 .end
 
+=item C<array array([mixed $...])>
+
+Creates an array
+
+=cut
+
+.sub 'array'
+    .param pmc args :slurpy
+    .local pmc array, iter
+    array = new 'PhpArray'
+    iter = new 'Iterator', args
+    $I1 = 0
+    args_loop:
+        unless iter goto args_end
+        $P0 = shift iter
+        $I0 = isa $P0, 'ResizablePMCArray'
+        unless $I0 goto add_var
+        $P1 = $P0[0]
+        $P2 = $P0[1]
+        array[$P1] = $P2
+        goto args_loop
+    add_var:
+        array[$I1] = $P0
+        inc $I1
+        goto end
+    end:
+        goto args_loop
+    args_end:
+    .return(array)
+.end
+
+
 =item C<array array_change_key_case(array input [, int case=CASE_LOWER])>
 
 Retuns an array with all string keys lowercased [or uppercased]
@@ -173,12 +205,34 @@ NOT IMPLEMENTED.
 
 Create an array containing num elements starting with index start_key each initialized to val
 
-NOT IMPLEMENTED.
-
 =cut
 
 .sub 'array_fill'
-    not_implemented()
+    .param pmc args :slurpy
+    .local pmc array, index, value
+    .local int count
+    array = new 'PhpArray'
+    ($I0, index, count, value) = parse_parameters('llz', args :flat)
+    unless $I0 goto L4
+    unless count >= 0 goto L3
+    #set start index then continue from 0
+    unless index < 0 goto L1
+    array[index] = value
+    index = 0
+    $I0 = 1
+    goto L2
+  L1:
+    $I0 = 0
+  L2:
+    inc $I0
+    unless $I0 <= count goto L4
+    array[index] = value
+    inc index
+    goto L2
+  L3:
+    error(E_WARNING, "Warning: array_fill(): Number of elements must be positive")
+  L4:
+    .return(array)
 .end
 
 =item C<array array_fill_keys(array keys, mixed val)>

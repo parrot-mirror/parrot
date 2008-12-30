@@ -315,6 +315,7 @@ STILL INCOMPLETE (see _getmode)
 
 .sub 'fopen'
     .param pmc args :slurpy
+
     .local string filename
     .local string mode
     .local int use_include_path
@@ -342,33 +343,10 @@ STILL INCOMPLETE (see _getmode)
 .sub '_getmode' :anon
     .param string mode
     .local string res
-    unless mode == 'r' goto L1
-    res = '<'
-    goto L9
-  L1:
-    unless mode == 'w' goto L2
-    res = '>'
-    goto L9
-  L2:
-    unless mode == 'a' goto L3
-    res = '>>'
-    goto L9
-  L3:
-    unless mode == 'r+' goto L4
-    res = '+<'
-    goto L9
-  L4:
-    unless mode == 'w+' goto L5
-    res = '+>'
-    goto L9
-  L5:
-    unless mode == 'a+' goto L6
-    res = '+>>'
-    goto L9
-  L6:
-    res = ''
-  L9:
-    .return (res)
+
+    # TODO: check which Parrot modes differ from the PHP modes
+  NO_CHANGE:
+    .return (mode)
 .end
 
 =item C<int fpassthru(resource fp)>
@@ -574,7 +552,7 @@ STILL INCOMPLETE (see stream_open)
     unless use_include_path goto L2
     $I0 |= USE_PATH
   L2:
-    stream = stream_open(filename, '<', $I0, context)
+    stream = stream_open(filename, 'r', $I0, context)
     unless stream goto L3
     $I0 = stream_passthru(stream)
     close stream

@@ -66,7 +66,7 @@ same syntax as is used for labels in PIR. Simple labels are often all
 capital letters to make them stand out from the rest of the source code
 more clearly. A label definition is simply the name of the label
 followed by a colon. It can be on its own line N<In fact, we recommend
-that it be on it's own line, for readability.>:
+that it be on its own line, for readability.>:
 
   LABEL:
       print "Norwegian Blue\n"
@@ -1024,11 +1024,11 @@ and a modestring. It returns a C<ParrotIO>X<ParrotIO object> object on
 success and a C<Undef>X<Undef PMC> X<I/O;failure> object on
 failure. The C<ParrotIO> object hides OS-specific details.
 
-  open P0, "people.txt", "<"
+  open P0, "people.txt", "r"
 
 The modestring specifies whether the file is opened in read-only
-(C<E<lt>>), write-only (C<E<gt>>), read-write (C<+E<lt>>), or append
-mode (C<E<gt>E<gt>>).
+(C<r>), write-only (C<w>), read-write (C<rw>), or append
+mode (C<wa>).
 
 The C<close>X<close opcode (PASM)> opcode closes a C<ParrotIO> object:
 
@@ -2775,149 +2775,6 @@ the class:
     set P5, 42                  # inherited __set_integer_native
     inc P5                      # overridden __increment
     print P5                    # prints 41 as Bar's __increment decrements
-    print "\n"
-
-    set S0, "_half"             # set method name
-    set P2, P5                  # the object
-    savetop                     # preserve registers
-    callmethodcc                # create return continuation, call
-    restoretop
-    print I5
-    print "\n"
-
-=head2 Additional Object Opcodes
-
-Z<CHP-5-SECT-12.5>
-
-The C<isa> and C<can> opcodes are also useful when working with
-objects. C<isa>X<isa opcode (PASM)> checks whether an object belongs
-to or inherits from a particular class. C<can>X<can opcode (PASM)>
-checks whether an object has a particular method. Both return a true
-or false value.
-
-    isa I0, P3, "Foo"		# 1
-    isa I0, P3, "Bar"		# 1
-    can I0, P3, "__add"		# 1
-
-=head2 Complete Example
-
-Z<CHP-5-SECT-12.6>
-
-    newclass P1, "Foo"
-    addattribute P1, "$.i"                # Foo.i
-
-    find_type I1, "Foo"
-    new P3, I1          # call __init if it exists
-    set P3, 30          # call __set_integer_native method
-
-    new P4, I1          # same with P4
-    set P4, 12
-    new P5, I1          # create a new LHS for add
-
-    add P5, P3, P4      # __add method
-    set I10, P5         # __get_integer
-    print I10
-    print "\n"
-    print P5            # calls __get_string prints 'fortytwo'
-    print "\n"
-
-    inc P3              # __increment
-    add P5, P3, P4
-    print P5            # calls __get_string prints '43'
-    print "\n"
-
-    subclass P3, P1, "Bar"
-
-    find_type I1, "Bar"
-    new P3, I1
-
-    set P3, 100
-    new P4, I1
-    set P4, 200
-    new P5, I1
-
-    add P5, P3, P4
-    print P5                    # prints 300
-    print "\n"
-
-    set P5, 42
-    print P5                    # prints 'fortytwo'
-    print "\n"
-
-    inc P5
-    print P5                    # prints 41 as Bar's
-    print P5                    # prints 41 as _bar_inc decrements
-    print "\n"
-
-    set S0, "_half"             # set method name
-    set P2, P5                  # the object
-    savetop                     # preserve registers
-    callmethodcc                # create return continuation, call
-    restoretop
-    print I5
-    print "\n"
-
-=head2 Additional Object Opcodes
-
-Z<CHP-5-SECT-12.5>
-
-The C<isa> and C<can> opcodes are also useful when working with
-objects. C<isa>X<isa opcode (PASM)> checks whether an object belongs to or
-inherits from a particular class. C<can>X<can opcode (PASM)> checks whether
-an object has a particular method. Both return a true or false value.
-
-    isa I0, P3, "Foo"		# 1
-    isa I0, P3, "Bar"		# 1
-    can I0, P3, "__add"		# 1
-
-=head2 Complete Example
-
-Z<CHP-5-SECT-12.6>
-
-    newclass P1, "Foo"
-    addattribute P1, "$.i"                # Foo.i
-
-    find_type I1, "Foo"
-    new P3, I1          # call __init if it exists
-    set P3, 30          # call __set_integer_native method
-
-    new P4, I1          # same with P4
-    set P4, 12
-    new P5, I1          # create a new LHS for add
-
-    add P5, P3, P4      # __add method
-    set I10, P5         # __get_integer
-    print I10
-    print "\n"
-    print P5            # calls __get_string prints 'fortytwo'
-    print "\n"
-
-    inc P3              # __increment
-    add P5, P3, P4
-    print P5            # calls __get_string prints '43'
-    print "\n"
-
-    subclass P3, P1, "Bar"
-
-    find_type I1, "Bar"
-    new P3, I1
-
-    set P3, 100
-    new P4, I1
-    set P4, 200
-    new P5, I1
-
-    add P5, P3, P4
-    print P5                    # prints 300
-    print "\n"
-
-    set P5, 42
-    print P5                    # prints 'fortytwo'
-    print "\n"
-
-    inc P5
-    print P5                    # prints 41 as Bar's
-    print P5                    # prints 41 as _bar_inc decrements
     print "\n"
 
     set S0, "_half"             # set method name

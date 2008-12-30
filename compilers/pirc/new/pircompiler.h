@@ -14,9 +14,6 @@
 #include "parrot/embed.h"
 
 
-#define TRUE    1
-#define FALSE   0
-
 #include <stdio.h> /* for FILE * */
 
 
@@ -37,7 +34,7 @@ typedef enum lexer_flags {
     LEXER_FLAG_NOOUTPUT            = 1 << 6, /* don't print anything on success, except 'ok' */
     LEXER_FLAG_REGALLOC            = 1 << 7, /* use register allocation optimizer */
     LEXER_FLAG_PASMFILE            = 1 << 8, /* the input is PASM, not PIR code */
-    LEXER_FLAG_OUTPUTPBC         = 1 << 9  /* generate PBC file */
+    LEXER_FLAG_OUTPUTPBC           = 1 << 9  /* generate PBC file */
 
 } lexer_flags;
 
@@ -80,6 +77,7 @@ typedef void * yyscan_t;
 #endif
 
 /* macros can store up to 4K characters, after which the buffer must be resized.
+ * This value is the default, and can be changed through PIRC's command line option.
  */
 #define INIT_MACRO_SIZE     4096
 
@@ -92,7 +90,7 @@ typedef struct lexer_state {
     int            flags;          /* general flags, e.g. warnings level */
     unsigned       parse_errors;
     char const    *filename;       /* name of input file */
-    FILE          *outfile;        /* name of output file */
+    FILE          *outfile;        /* output file */
 
     subroutine    *subs;           /* list of subs; always points to the current sub. */
 
@@ -101,7 +99,7 @@ typedef struct lexer_state {
     target        *curtarget;      /* access to current target node being parsed, if any */
     argument      *curarg;         /* access to current argument node being parsed, if any */
 
-    int            curregister[4]; /* for register allocation */
+    int            curregister[NUM_PARROT_TYPES]; /* for register allocation */
     int            pir_reg_generator; /* for unique PIR register allocator, for temp. PIR regs. */
 
     unsigned       stmt_counter;   /* to count "logical" statements, even if multi-line. */
@@ -148,7 +146,7 @@ typedef struct lexer_state {
 } lexer_state;
 
 /* accessor for current macro; always first on the list. */
-#define CURRENT_MACRO(X)    X->macros->definitions
+#define CURRENT_MACRO(X)    (X)->macros->definitions
 
 
 /* constructor for a lexer_state object */

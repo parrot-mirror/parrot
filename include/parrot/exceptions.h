@@ -183,7 +183,7 @@ void Parrot_ex_throw_from_c(PARROT_INTERP, ARGIN(PMC *exception))
 PARROT_EXPORT
 PARROT_DOES_NOT_RETURN
 void Parrot_ex_throw_from_c_args(PARROT_INTERP,
-    ARGIN_NULLOK(void *ret_addr),
+    SHIM(void *ret_addr),
     int exitcode,
     ARGIN(const char *format),
     ...)
@@ -207,6 +207,11 @@ opcode_t * Parrot_ex_throw_from_op_args(PARROT_INTERP,
     ...)
         __attribute__nonnull__(1)
         __attribute__nonnull__(4);
+
+PARROT_DOES_NOT_RETURN
+void die_from_exception(PARROT_INTERP, ARGIN(PMC *exception))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
 
 PARROT_DOES_NOT_RETURN
 void do_panic(

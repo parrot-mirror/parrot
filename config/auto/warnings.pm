@@ -103,23 +103,18 @@ sub _init {
 
     my @cage_warnings = qw(
         -std=c89
-        -Wconversion
         -Werror-implicit-function-declaration
         -Wformat=2
         -Wlarger-than-4096
         -Wlong-long
         -Wmissing-format-attribute
-        -Wmissing-noreturn
-        -Wno-deprecated-declarations
-        -Wno-div-by-zero
+        -Wdeprecated-declarations
+        -Wdiv-by-zero
         -Wno-format-extra-args
         -Wno-import
         -Wno-multichar
         -Wno-pointer-sign
         -Wold-style-definition
-        -Wredundant-decls
-        -Wswitch-enum
-        -Wsystem-headers
         -Wunreachable-code
         -Wunused-function
         -Wunused-label
@@ -130,11 +125,16 @@ sub _init {
 
     my @may_not_even_be_interesting = qw(
         -Wpadded
+        -Wredundant-decls
+        -Wswitch-enum
+        -Wsystem-headers
     );
 
     my @nice_to_have_but_too_noisy_for_now = qw(
         -pedantic
+        -Wconversion
         -Wint-to-pointer-cast
+        -Wmissing-noreturn
         -Wshadow
         -Wunused-macros
     );

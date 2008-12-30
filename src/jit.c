@@ -366,10 +366,8 @@ set_register_usage(PARROT_INTERP,
                     else if (flags & KEY_string_FLAG)
                         typ = 2;
 
-                    if (n < NUM_REGISTERS) {
-                        if (!ru[typ].reg_count[n]++)
-                            ru[typ].reg_dir[n] |= PARROT_ARGDIR_IN;
-                    }
+                    if (n < NUM_REGISTERS && !ru[typ].reg_count[n]++)
+                        ru[typ].reg_dir[n] |= PARROT_ARGDIR_IN;
                 }
                 key = key_next(interp, key);
             }
@@ -393,7 +391,7 @@ subroutines to registers only
 static void
 init_regusage(PARROT_INTERP, Parrot_jit_optimizer_section_ptr cur_section)
 {
-    int typ, j;
+    int typ;
 
     cur_section->ru[0].registers_used =
         CONTEXT(interp)->n_regs_used[REGNO_INT];
@@ -401,9 +399,11 @@ init_regusage(PARROT_INTERP, Parrot_jit_optimizer_section_ptr cur_section)
         CONTEXT(interp)->n_regs_used[REGNO_NUM];
     cur_section->ru[1].registers_used =
         cur_section->ru[2].registers_used = 0;
-    for (typ = 0; typ < 4; typ++)
+    for (typ = 0; typ < 4; typ++) {
+        int j;
         for (j = 0; j < cur_section->ru[typ].registers_used; j++)
             cur_section->ru[typ].reg_usage[j] = j;
+    }
 }
 
 /*

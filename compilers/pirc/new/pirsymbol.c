@@ -63,7 +63,7 @@ This is the vanilla register allocator.
 */
 static int
 next_register(NOTNULL(lexer_state * const lexer), pir_type type) {
-    CURRENT_SUB(lexer)->regs_used[type]++; /* count number of registers used */
+    CURRENT_SUB(lexer)->info.regs_used[type]++; /* count number of registers used */
     return lexer->curregister[type]++;
 }
 
@@ -229,7 +229,6 @@ declare_local(NOTNULL(lexer_state * const lexer), pir_type type,
             iter->info.type  = type;
         }
 
-
         iter = iter->next;
     }
 
@@ -261,7 +260,7 @@ check_unused_symbols(NOTNULL(lexer_state * const lexer)) {
             while (b) {
                 if (bucket_symbol(b)->info.color == NO_REG_ALLOCATED)
                     fprintf(stderr, "Warning: in sub '%s': symbol '%s' declared but not used\n",
-                                    subiter->sub_name, bucket_symbol(b)->info.id.name);
+                                    subiter->info.subname, bucket_symbol(b)->info.id.name);
 
                 b = b->next;
             }
@@ -511,7 +510,7 @@ static global_label *
 new_global_label(NOTNULL(lexer_state * const lexer), NOTNULL(char const * const name)) {
     global_label *glob = pir_mem_allocate_zeroed_typed(lexer, global_label);
     glob->name         = name;
-    glob->const_nr     = 0;
+    glob->const_table_index = 0;
     return glob;
 }
 
@@ -575,11 +574,16 @@ Store the globally defined constant C<c> in the constant table.
 */
 void
 store_global_constant(NOTNULL(lexer_state * const lexer), NOTNULL(constant * const c)) {
-    hashtable    *table = &lexer->constants;
-    unsigned long hash  = get_hashcode(c->name, table->size);
-    bucket *b           = new_bucket(lexer);
-    bucket_constant(b)  = c;
+    hashtable    *table  = &lexer->constants;
+    unsigned long hash   = get_hashcode(c->name, table->size);
+    bucket *b            = new_bucket(lexer);
+    bucket_constant(b)   = c;
     store_bucket(table, b, hash);
+
+    /* add it as a constant in the PBC constant table */
+    /* XXX is this necessary? Seems not. 12/27/2008. --kjs
+    c->const_table_index = emit_pbc_const(lexer, c);
+    */
 }
 
 /*
@@ -688,7 +692,7 @@ find_local_label(NOTNULL(lexer_state * const lexer), NOTNULL(char const * const 
 
     /* no label found, emit an error message. */
     yypirerror(lexer->yyscanner, lexer, "in sub '%s': cannot find offset for label '%s'",
-               CURRENT_SUB(lexer)->sub_name, labelname);
+               CURRENT_SUB(lexer)->info.subname, labelname);
 
     return 0;
 }
