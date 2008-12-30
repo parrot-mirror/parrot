@@ -949,8 +949,7 @@ method signature($/, $key) {
             my $name       := $param_past.name();
             my $symbol     := $?SIGNATURE_BLOCK.symbol($name);
 
-            ##  set the default value of the param and add var node to block
-            $param_past.viviself( $symbol<viviself> );
+            ##  add var node to block
             $?SIGNATURE.push( $param_past );
 
             if $symbol<type_binding> {
@@ -1018,11 +1017,11 @@ method parameter($/) {
     elsif $<named> eq ':' {          # named
         $past.named(~$<param_var><identifier>);
         if $quant ne '!' {      #  required (optional is default)
-            $symbol<viviself> := 'Nil';
+            $past.viviself('Nil');
         }
     }
     elsif $quant eq '?' {           # positional optional
-        $symbol<viviself> := 'Nil';
+        $past.viviself('Nil');
     }
 
     ##  handle any default value
@@ -1033,7 +1032,7 @@ method parameter($/) {
         if $quant eq '*' {
             $/.panic("Can't put a default on a slurpy parameter");
         }
-        $symbol<viviself> := $( $<default_value>[0]<EXPR> );
+        $past.viviself( $( $<default_value>[0]<EXPR> ) );
     }
 
     ##  keep track of any type constraints
@@ -1094,7 +1093,9 @@ method param_var($/) {
     ##  Declare symbol as lexical in current (signature) block.
     ##  This is needed in case any post_constraints try to reference
     ##  this new param_var.
-    $?SIGNATURE_BLOCK.symbol( $name, :scope('lexical') );
+    $?SIGNATURE_BLOCK.symbol( $name, :scope('lexical'),
+        :itype( container_itype( $<sigil> ) ) 
+    );
 }
 
 
@@ -1728,7 +1729,6 @@ method package_block($/, $key) {
 }
 
 
-
 method scope_declarator($/) {
     my $sym  := ~$<sym>;
     my $past := $( $<scoped> );
@@ -1738,9 +1738,19 @@ method scope_declarator($/) {
             $scope := 'package';
             $past.lvalue(1);
         }
+
+        # This is a variable declaration, so we set the scope in
+        # the block.  The symbol entry also tells us the
+        # implementation type of the variable (itype), any
+        # initial value for the variable (viviself), and
+        # any type constraints (type).
         our $?BLOCK;
         my $symbol := $?BLOCK.symbol( $past.name(), :scope($scope) );
-        $past.viviself( $symbol<viviself> );
+        my $viviself := PAST::Op.new( :pirop('new PsP'), $symbol<itype> );
+        if $symbol<viviself> {
+            $viviself.push( $symbol<viviself> );
+        }
+        $past.viviself( $viviself );
         if $symbol<type> {
             $past := PAST::Op.new( :pirop('setprop'), 
                                    $past, 'type', $symbol<type>[0] );
@@ -1764,9 +1774,8 @@ method scoped($/) {
             for @($<fulltypename>) {
                 $type.push( $( $_ ) );
             }
-            $symbol<viviself> := PAST::Op.new( :pirop('new PsP'), 
-                                     'ObjectRef', 
-                                     $( $<fulltypename>[0] ) );
+            ## XXX: might need to revisit this, puts node in tree twice
+            $symbol<viviself> := $( $<fulltypename>[0] );
         }
     }
     make $past;
@@ -1795,9 +1804,9 @@ method variable_declarator($/) {
     }
     
     $past.isdecl(1);
-    my $type     := List.new();
-    my $viviself := container_type($<variable><sigil>);
-    $?BLOCK.symbol($name, :type($type), :viviself($viviself) );
+    my $type  := List.new();
+    my $itype := container_itype($<variable><sigil>);
+    $?BLOCK.symbol($name, :type($type), :itype($itype) );
     make $past;
 }
 
@@ -1844,7 +1853,7 @@ method variable($/, $key) {
         if @identifier || $twigil eq '*' {
             $past.namespace(@identifier);
             $past.scope('package');
-            $past.viviself( container_type($sigil) );
+            $past.viviself( container_itype($sigil) );
         }
     }
     elsif $key eq 'special_variable' {
@@ -2583,10 +2592,10 @@ sub contextualizer_name($/, $sigil) {
 }
 
 
-sub container_type($sigil) {
-    if    $sigil eq '@' { return 'Perl6Array'  }
-    elsif $sigil eq '%' { return 'Perl6Hash'   }
-    else                { return 'Perl6Scalar' }
+sub container_itype($sigil) {
+    if    $sigil eq '@' { return 'Perl6Array' }
+    elsif $sigil eq '%' { return 'Perl6Hash'  }
+    else                { return 'ObjectRef'  }
 }
 
 
