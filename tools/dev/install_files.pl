@@ -208,7 +208,8 @@ while (<>) {
         next if $dest =~ /^compilers|config|language|tools/;
         if (/^runtime/) {
             $dest =~ s/^runtime/$options{libdir}/;
-        } else {
+        }
+        else {
             $dest = File::Spec->catdir( $options{prefix}, $dest );
         }
     }

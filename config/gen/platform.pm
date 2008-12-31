@@ -19,6 +19,7 @@ use warnings;
 use base qw(Parrot::Configure::Step);
 
 use Parrot::Configure::Utils ':gen';
+use Parrot::BuildUtil;
 
 sub _init {
     my $self = shift;
@@ -56,6 +57,7 @@ sub runstep {
     # interface is the same for all platforms
     copy_if_diff( $self->{platform_interface},
         "include/parrot/platform_interface.h" );
+    add_to_generated("include/parrot/platform_interface.h", "[main]", "include");
 
     $self->_set_limits($conf, $verbose, $platform);
 
@@ -106,6 +108,8 @@ sub _set_headers {
 
     my $plat_h = q{include/parrot/platform.h};
     $conf->append_configure_log($plat_h);
+    add_to_generated($plat_h, "[main]", "include");
+
     open my $PLATFORM_H, ">", $plat_h
         or die "Can't open $plat_h: $!";
 
@@ -154,6 +158,7 @@ END_HERE
 END_HERE
             print {$PLATFORM_H} $in_h, "\n\n";
             close $IN_H;
+            add_to_generated($header_file, "[main]", "include");
         }
 
         # just fall through if file is missing; means neither this platform nor
@@ -178,6 +183,7 @@ END_HERE
 END_HERE
             print {$PLATFORM_H} <$IN_H>, "\n\n";
             close $IN_H;
+            add_to_generated($h, "[main]", "include");
         }
         else {
             warn("Header file '$h' listed in TEMP_generated but not found\n");
@@ -204,6 +210,7 @@ sub _set_limits {
         $limits = "config/gen/platform/$platform/platform_limits.h";
     }
     copy_if_diff( $limits, "include/parrot/platform_limits.h" );
+    add_to_generated("include/parrot/platform_limits.h", "[main]", "include");
 
     return;
 }
@@ -244,7 +251,7 @@ sub _set_implementations {
 END_HERE
 
     # We need to put things from begin.c before the parrot.h include.
-    $self->_handle_begin_c($platform, $PLATFORM_C);
+    $self->_handle_begin_c($conf, $platform, $PLATFORM_C);
 
     # Copy the rest.
     print {$PLATFORM_C} <<'END_HERE';
@@ -277,6 +284,7 @@ END_HERE
 END_HERE
             print {$PLATFORM_C} $in_c, "\n\n";
             close $IN_C;
+            $conf->append_configure_log($impl_file);
         }
     }
 
@@ -295,6 +303,7 @@ END_HERE
 END_HERE
             print {$PLATFORM_C} <$IN_C>, "\n\n";
             close $IN_C;
+            $conf->append_configure_log($im);
         }
     }
 
@@ -310,10 +319,11 @@ END_HERE
 
 sub _handle_begin_c {
     my $self = shift;
-    my ($platform, $PLATFORM_C) = @_;
-    if ( -e "config/gen/platform/$platform/begin.c" ) {
+    my ($conf, $platform, $PLATFORM_C) = @_;
+    my $f = "config/gen/platform/$platform/begin.c";
+    if ( -e $f ) {
         local $/ = undef;
-        open my $IN_C, "<", "config/gen/platform/$platform/begin.c" or die "Can't open begin.c: $!";
+        open my $IN_C, "<", $f or die "Can't open $f: $!";
 
         # slurp in the C file
         my $in_c = <$IN_C>;
@@ -325,10 +335,11 @@ sub _handle_begin_c {
 /*
 ** begin.c
 */
-#line 1 "config/gen/platform/$platform/begin.c"
+#line 1 "$f"
 END_HERE
         print {$PLATFORM_C} $in_c, "\n\n";
         close $IN_C;
+        $conf->append_configure_log($f);
     }
 
     return;
@@ -341,6 +352,7 @@ sub _handle_asm {
         my $asm_file = "config/gen/platform/$platform/asm.s";
         if ( -e $asm_file ) {
             copy_if_diff( $asm_file, "src/platform_asm.s" );
+            $conf->append_configure_log("src/platform_asm.s");
         }
     }
 

@@ -689,6 +689,14 @@ sub cond_eval {
     cond_eval_single($conf, $expr);
 }
 
+=item C<append_configure_log()>
+
+    $conf->append_configure_log($target)
+
+Adds $target to MANIFEST.configure.generated.
+
+=cut
+
 sub append_configure_log {
     my $conf = shift;
     my $target = shift;

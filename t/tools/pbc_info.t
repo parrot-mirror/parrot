@@ -1,6 +1,6 @@
 #! perl
 # Copyright (C) 2007-2008, The Perl Foundation.
-# $Id: pbc_info.t 34223 2008-12-22 03:24:34Z petdance $
+# $Id$
 
 =head1 NAME
 

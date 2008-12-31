@@ -1,6 +1,6 @@
 #! perl
 # Copyright (C) 2008, The Perl Foundation.
-# $Id: parrot_config.t 30553 2008-08-26 01:31:47Z chromatic $
+# $Id$
 
 =head1 NAME
 

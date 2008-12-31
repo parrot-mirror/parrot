@@ -19,7 +19,7 @@ use warnings;
 use base qw(Parrot::Configure::Step);
 
 use Parrot::Configure::Utils ':auto';
-
+use Parrot::BuildUtil;
 
 sub _init {
     my $self = shift;
@@ -65,6 +65,7 @@ sub runstep {
     # now generate signal constants
     my $signalpasm = "runtime/parrot/include/signal.pasm";
     _print_signalpasm($conf, $signalpasm);
+    add_to_generated($signalpasm, "[main]");
 
     return 1;
 }

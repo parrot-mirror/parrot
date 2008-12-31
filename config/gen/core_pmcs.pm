@@ -20,6 +20,7 @@ use warnings;
 use base qw(Parrot::Configure::Step);
 
 use Parrot::Configure::Utils ':gen';
+use Parrot::BuildUtil;
 
 sub _init {
     my $self = shift;
@@ -44,6 +45,7 @@ sub generate_h {
 
     my $file = "include/parrot/core_pmcs.h";
     $conf->append_configure_log($file);
+    add_to_generated($file, "[main]", "include");
     open( my $OUT, ">", "$file.tmp" );
 
     print {$OUT} <<"END_H";

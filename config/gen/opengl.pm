@@ -549,6 +549,7 @@ sub gen_opengl_defines {
     }
 
     $conf->append_configure_log($MACRO_FILE);
+    add_to_generated($MACRO_FILE, "[main]");
 
     return 1;
 }
@@ -827,6 +828,7 @@ SUB_FOOTER
 
     close $funcs;
     $conf->append_configure_log($FUNCS_FILE);
+    add_to_generated($FUNCS_FILE, "[main]");
 
     # PHASE 4: Print statistical info on parse results if verbose
     if ($verbose) {

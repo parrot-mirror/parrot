@@ -62,6 +62,7 @@ sub runstep {
                 );
                 print " (\U$suffix) " if ($verbose);
                 $conf->data->add( ' ', TEMP_atomic_o => 'src/atomic/sparc_v9.o' );
+                $conf->append_configure_log($f);
             }
         }
         $conf->cc_clean();

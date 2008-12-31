@@ -27,7 +27,7 @@ use warnings;
 use base qw(Parrot::Configure::Step);
 
 use Parrot::Configure::Utils '_slurp';
-
+use Parrot::BuildUtil;
 
 sub _init {
     my $self = shift;
@@ -66,7 +66,7 @@ sub runstep {
     print {$combined} $text_file_coda;
 
     $conf->append_configure_log($combined_file);
-
+    add_to_generated($combined_file, "[devel]", "doc");
     return 1;
 }
 

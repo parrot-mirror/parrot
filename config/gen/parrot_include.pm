@@ -19,7 +19,7 @@ use warnings;
 use base qw(Parrot::Configure::Step);
 
 use Parrot::Configure::Utils ':gen';
-
+use Parrot::BuildUtil;
 
 sub _init {
     my $self = shift;
@@ -217,6 +217,7 @@ EOF
                 $target =~ m[/] or $target = "$self->{destdir}/$target";
                 move_if_diff( $target_tmp, $target );
                 push @generated, $target;
+                add_to_generated($target, "[main]");
             }
         }
     }

@@ -8,6 +8,7 @@ use Parrot::OpLib::core;
 use Parrot::OpsFile;
 use File::Spec;
 use IO::File;
+use Parrot::BuildUtil;
 
 =head1 NAME
 
@@ -249,6 +250,7 @@ sub print_c_header_file {
 
     open my $HEADER, '>', $self->{header}
         or die "ops2c.pl: Cannot open header file '$self->{header}' for writing: $!!\n";
+    add_to_generated($self->{header},'[main]','include') if $self->{flag}->{core};
 
     $self->_print_guard_prefix($HEADER);
 
@@ -298,6 +300,7 @@ sub print_c_source_file {
 
     my $source = IO::File->new('>' . $self->{source})
         or die "ops2c.pl: Cannot open source file '$self->{source}' for writing: $!!\n";
+
     $self->print_c_source_top($source);
 
     $self->_reset_line_number($source);
@@ -307,6 +310,7 @@ sub print_c_source_file {
     $source->close() or die "Unable to close handle to $self->{source}: $!";
 
     my $c_source_final = $self->_rename_source();
+    add_to_generated($c_source_final,'[main]') if $self->{flag}->{core};
     return $c_source_final;
 }
 

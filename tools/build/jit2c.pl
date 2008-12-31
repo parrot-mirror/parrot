@@ -24,6 +24,7 @@ use lib 'lib';
 use Parrot::OpLib::core;
 use Parrot::Op;
 use Parrot::OpTrans::C;
+use Parrot::BuildUtil;
 
 my $trans = Parrot::OpTrans::C->new;
 
@@ -513,6 +514,7 @@ print $JITCPU <<"EOC";
  */
 EOC
 
+add_to_generated($genfile, "[main]");
 print("jit2c: JITed $njit (+ $vjit vtable) of $core_numops ops\n");
 
 sub make_subs {

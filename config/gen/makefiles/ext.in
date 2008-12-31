@@ -12,7 +12,13 @@ EXT = \
     Parrot-Embed
 
 # the default target
-all: $(EXT)
+build: $(EXT)
+
+all: build Makefile 
+
+# regenerate the Makefile
+Makefile: @build_dir@/config/gen/makefiles/json.in
+	cd @build_dir@ && $(RECONFIGURE) --step=gen::makefiles --target=compilers/json/Makefile
 
 # hard-code these for now
 test: Parrot-Embed
@@ -66,3 +72,8 @@ Parrot-Embed.clean:
 #IF(win32):	- cd Parrot-Embed && nmake clean
 #UNLESS(win32):	- cd Parrot-Embed && $(MAKE) clean
 
+#
+# Local variables:
+# mode: makefile
+# ex: ft=make
+# End:

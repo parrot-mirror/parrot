@@ -20,6 +20,7 @@ use warnings;
 
 use base qw(Parrot::Configure::Step);
 use Parrot::Configure::Utils ':gen';
+use Parrot::BuildUtil;
 
 use Cwd qw(cwd);
 use File::Spec::Functions qw(catdir);
@@ -43,6 +44,7 @@ sub runstep {
     $conf->data->clean;
 
     $conf->genfile($self->{templates}->{myconfig}, 'myconfig' );
+    add_to_generated('myconfig', "[main]", "lib");
 
     open( my $IN, "<", $self->{templates}->{Config_pm} )
         or die "Can't open Config_pm.in: $!";
@@ -72,6 +74,7 @@ sub runstep {
     open( $IN,  "<", $template ) or die "Can't open '$template': $!";
     my $c_l_pasm = q{config_lib.pasm};
     $conf->append_configure_log($c_l_pasm);
+    add_to_generated($c_l_pasm, "[main]", "lib");
     open( $OUT, ">", $c_l_pasm ) or die "Can't open $c_l_pasm: $!";
 
     print {$OUT} <<"END";
