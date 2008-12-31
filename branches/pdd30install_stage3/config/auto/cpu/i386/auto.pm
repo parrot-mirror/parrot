@@ -70,6 +70,7 @@ sub _handle_cc_run_ok {
     );
     print " (\U$suffix) " if ($verbose);
     $conf->data->add( ' ', TEMP_generated => $path_f );
+    $conf->append_configure_log($path_f);
 }
 
 1;

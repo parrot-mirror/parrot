@@ -106,6 +106,7 @@ LDFLAGS          = @ldflags@ @ld_debug@
 RECONFIGURE      = $(PERL) tools/dev/reconfigure.pl
 INNO_SETUP       = iscc
 JIT_BUILD_TOOL   = $(BUILD_TOOLS_DIR)/jit2c.pl
+ADDGENERATED     = $(PERL) $(BUILD_TOOLS_DIR)/addgenerated.pl
 #IF(darwin):export MACOSX_DEPLOYMENT_TARGET := @osx_version@
 
 ###############################################################################
@@ -196,6 +197,7 @@ CONFIGURE_GENERATED_FILES = \
     myconfig  \
     $(GEN_PASM_INCLUDES) \
     $(SRC_DIR)/call_list.txt \
+    MANIFEST.generated \
     MANIFEST.configure.generated \
     .configure_trace.sto \
     .parrot_current_rev
@@ -543,6 +545,7 @@ MAKE = @make_c@
 
 .pir.pbc :
 	$(PARROT) -o $@ $<
+	@$(ADDGENERATED) "$@"
 
 .pbc$(O) :
 	$(PARROT) -o $@ $<
@@ -565,7 +568,7 @@ build : \
     docs \
     $(LIBNCI_TEST_SO) \
 #IF(has_glut):    $(LIBGLUTCB_SO) \
-    $(GEN_LIBRARY) \
+    gen_library \
     dynpmc \
     dynoplibs \
     compilers \
@@ -576,7 +579,7 @@ build : \
 
 all : build parrot_utils installable $(PERL6) languages
 
-$(GEN_LIBRARY) : $(PARROT)
+gen_library : $(GEN_LIBRARY) $(PARROT)
 
 # constant string support
 .c.str :
@@ -782,17 +785,20 @@ flags_dummy :
 
 runtime/parrot/include/parrotlib.pbc: runtime/parrot/library/parrotlib.pir $(PARROT)
 	$(PARROT) -o $@ runtime/parrot/library/parrotlib.pir
+	$(ADDGENERATED) "$@"
 
 runtime/parrot/include/config.fpmc : myconfig config_lib.pasm $(MINIPARROT)
-	@echo Invoking Parrot to generate runtime/parrot/include/config.fpmc --cross your fingers
+	@echo "Invoking Parrot to generate runtime/parrot/include/config.fpmc --cross your fingers"
 	$(MINIPARROT) config_lib.pasm > $@
+	$(ADDGENERATED) "$@"
 
 $(PARROT) : $(SRC_DIR)/main$(O) $(GEN_HEADERS) $(LIBPARROT) CFLAGS \
     lib/Parrot/OpLib/core.pm $(SRC_DIR)/parrot_config$(O) \
     $(MINIPARROT)
 	$(LINK) @ld_out@$@ \
-	$(SRC_DIR)/main$(O) $(SRC_DIR)/parrot_config$(O) \
-	@rpath_blib@ $(ALL_PARROT_LIBS) $(LINKFLAGS) $(LINK_DYNAMIC)
+    $(SRC_DIR)/main$(O) $(SRC_DIR)/parrot_config$(O) \
+    @rpath_blib@ $(ALL_PARROT_LIBS) $(LINKFLAGS) $(LINK_DYNAMIC)
+	$(ADDGENERATED) "$@" "[main]" bin
 #IF(win32):	if exist $@.manifest mt.exe -nologo -manifest $@.manifest -outputresource:$@;1
 
 pbc_to_exe.pir : $(PARROT) tools/dev/pbc_to_exe_gen.pl
@@ -802,14 +808,17 @@ pbc_to_exe.pir : $(PARROT) tools/dev/pbc_to_exe_gen.pl
 $(PBC_TO_EXE) : pbc_to_exe.pir $(PARROT)
 	$(PARROT) -o pbc_to_exe.pbc pbc_to_exe.pir
 	$(PARROT) pbc_to_exe.pir pbc_to_exe.pbc
+	$(ADDGENERATED) "$@" "[main]" bin
 
 $(PARROT_CONFIG) : tools/util/parrot-config.pir $(PARROT) $(PBC_TO_EXE)
 	$(PARROT) -o parrot_config.pbc tools/util/parrot-config.pir
 	$(PARROT) pbc_to_exe.pir parrot_config.pbc
+	$(ADDGENERATED) "$@" "[main]" bin
 
 $(INSTALLABLECONFIG) : $(SRC_DIR)/install_config$(O) $(PARROT_CONFIG) $(PBC_TO_EXE)
 	$(PARROT) -o parrot_config.pbc tools/util/parrot-config.pir
 	$(PBC_TO_EXE) parrot_config.pbc --install
+	$(ADDGENERATED) "$@" "[main]" bin
 
 # HLL Executable targets
 #IF(win32 or cygwin):perl6 : $(PERL6)
@@ -817,6 +826,7 @@ $(INSTALLABLECONFIG) : $(SRC_DIR)/install_config$(O) $(PARROT_CONFIG) $(PBC_TO_E
 $(PERL6) : compilers $(PBC_TO_EXE)
 	$(MAKE) languages/perl6 perl6$(EXE)
 	$(CP) languages/perl6/perl6$(EXE) $(PERL6)
+	$(ADDGENERATED) "$@" "[main]" bin
 	$(CHMOD) 0755 $(PERL6)
 	$(PERL6) -e"say 'Hello, world.'"
 
@@ -826,7 +836,9 @@ $(MINIPARROT) : $(SRC_DIR)/main$(O) $(GEN_HEADERS) $(LIBPARROT) \
     lib/Parrot/OpLib/core.pm $(SRC_DIR)/null_config$(O)
 	$(LINK) @ld_out@$@ $(SRC_DIR)/main$(O) $(SRC_DIR)/null_config$(O) \
 	@rpath_blib@ $(ALL_PARROT_LIBS) $(LINKFLAGS)
+	$(ADDGENERATED) "# $@" "[main]" bin
 #IF(win32):	if exist $@.manifest mt.exe -nologo -manifest $@.manifest -outputresource:$@;1
+
 
 $(INSTALLABLEPARROT) : $(SRC_DIR)/main$(O) $(GEN_HEADERS) $(LIBPARROT) \
     lib/Parrot/OpLib/core.pm $(SRC_DIR)/install_config$(O) \
@@ -834,7 +846,9 @@ $(INSTALLABLEPARROT) : $(SRC_DIR)/main$(O) $(GEN_HEADERS) $(LIBPARROT) \
 	$(LINK) @ld_out@$@ \
     $(SRC_DIR)/main$(O) $(SRC_DIR)/install_config$(O) \
     $(ALL_PARROT_LIBS) $(LINKFLAGS)
+	$(ADDGENERATED) "$@" "[main]" bin
 #IF(win32):	if exist $@.manifest mt.exe -nologo -manifest $@.manifest -outputresource:$@;1
+
 
 $(INC_DIR)/parrot.h : $(INC_DIR)/pbcversion.h $(INC_DIR)/vtable.h
 
@@ -847,19 +861,23 @@ $(SRC_DIR)/parrot_config.c :  runtime/parrot/include/config.fpmc \
     $(BUILD_TOOLS_DIR)/parrot_config_c.pl
 	$(PERL) $(BUILD_TOOLS_DIR)/parrot_config_c.pl > \
     $(SRC_DIR)/parrot_config.c
+	$(ADDGENERATED) "$@" "[main]"
 
 $(SRC_DIR)/install_config.c :  install_config.fpmc \
     $(BUILD_TOOLS_DIR)/parrot_config_c.pl
 	$(PERL) $(BUILD_TOOLS_DIR)/parrot_config_c.pl --install > \
     $(SRC_DIR)/install_config.c
+	$(ADDGENERATED) "$@" "[main]"
 
 $(SRC_DIR)/null_config.c : myconfig $(BUILD_TOOLS_DIR)/parrot_config_c.pl
 	$(PERL) $(BUILD_TOOLS_DIR)/parrot_config_c.pl --mini > \
     $(SRC_DIR)/null_config.c
+	$(ADDGENERATED) "$@" "[main]"
 
 install_config.fpmc : myconfig config_lib.pasm $(PARROT)
 	@echo "Invoking Parrot to generate install_config.fpmc"
 	$(PARROT) config_lib.pasm --install > $@
+	$(ADDGENERATED) "$@" "[main]"
 
 $(SRC_DIR)/parrot_config$(O) : $(SRC_DIR)/parrot_config.c
 
@@ -900,6 +918,7 @@ $(LIBPARROT_STATIC) : $(O_FILES)
 	$(AR_CR) @ar_out@$@ @ar_extra@ $(O_FILES)
 #IF(win32):	if exist $@.manifest mt.exe -nologo -manifest $@.manifest -outputresource:$@;2
 	$(RANLIB) $@
+	$(ADDGENERATED) "$@" "[main]" lib
 
 $(LIBPARROT_SHARED) : $(O_FILES)
 	$(MKPATH) @blib_dir@
@@ -908,6 +927,9 @@ $(LIBPARROT_SHARED) : $(O_FILES)
 		$(O_FILES) $(C_LIBS) $(ICU_SHARED)
 #IF(win32):	if exist $@.manifest mt.exe -nologo -manifest $@.manifest -outputresource:$@;2
 #IF(libparrot_shared_alias):	( cd @blib_dir@ ; ln -sf @libparrot_shared@ @libparrot_shared_alias@ )
+#IF(libparrot_shared_alias):	$(ADDGENERATED) "@blib_dir@/@libparrot_shared_alias@" "[main]" lib
+	$(ADDGENERATED) "$@" "[main]" lib
+#IF(cygwin or msys or mingw):	$(ADDGENERATED) "libparrot.dll.a" "[main]" lib
 
 
 #
@@ -921,6 +943,7 @@ $(PDB) : $(SRC_DIR)/parrot_debugger$(O) $(LIBPARROT)
     $(SRC_DIR)/parrot_debugger$(O) \
     $(SRC_DIR)/parrot_config$(O) \
     @rpath_blib@ $(ALL_PARROT_LIBS) $(LINKFLAGS)
+	$(ADDGENERATED) "$@" "[main]" bin
 #IF(win32):	if exist $@.manifest mt.exe -nologo -manifest $@.manifest -outputresource:$@;1
 
 $(INSTALLABLEPDB) : $(SRC_DIR)/parrot_debugger$(O) $(LIBPARROT)
@@ -928,6 +951,7 @@ $(INSTALLABLEPDB) : $(SRC_DIR)/parrot_debugger$(O) $(LIBPARROT)
     $(SRC_DIR)/parrot_debugger$(O) \
     $(SRC_DIR)/parrot_config$(O) \
     $(ALL_PARROT_LIBS) $(LINKFLAGS)
+	$(ADDGENERATED) "$@" "[main]" bin
 #IF(win32):	if exist $@.manifest mt.exe -nologo -manifest $@.manifest -outputresource:$@;1
 
 #
@@ -940,12 +964,14 @@ $(DIS) : $(SRC_DIR)/pbc_disassemble$(O) $(LIBPARROT)
 	$(LINK) @ld_out@$@ \
     $(SRC_DIR)/pbc_disassemble$(O) \
     @rpath_blib@ $(ALL_PARROT_LIBS) $(LINKFLAGS)
+	$(ADDGENERATED) "$@" "[main]" bin
 #IF(win32):	if exist $@.manifest mt.exe -nologo -manifest $@.manifest -outputresource:$@;1
 
 $(INSTALLABLEDIS) : $(SRC_DIR)/pbc_disassemble$(O) $(LIBPARROT)
 	$(LINK) @ld_out@$@ \
     $(SRC_DIR)/pbc_disassemble$(O) \
     $(ALL_PARROT_LIBS) $(LINKFLAGS)
+	$(ADDGENERATED) "$@" "[main]" bin
 #IF(win32):	if exist $@.manifest mt.exe -nologo -manifest $@.manifest -outputresource:$@;1
 
 #
@@ -956,6 +982,7 @@ $(PDUMP) : $(SRC_DIR)/pdump$(O) $(SRC_DIR)/packdump$(O) $(LIBPARROT)
 	$(LINK) @ld_out@$@ \
     $(SRC_DIR)/pdump$(O) \
     $(SRC_DIR)/packdump$(O) @rpath_blib@ $(ALL_PARROT_LIBS) $(LINKFLAGS)
+	$(ADDGENERATED) "$@" "[main]" bin
 #IF(win32):	if exist $@.manifest mt.exe -nologo -manifest $@.manifest -outputresource:$@;1
 
 $(SRC_DIR)/pdump$(O) : $(GEN_HEADERS)
@@ -964,14 +991,15 @@ $(INSTALLABLEPDUMP) : $(SRC_DIR)/pdump$(O) $(SRC_DIR)/packdump$(O) $(LIBPARROT)
 	$(LINK) @ld_out@$@ \
     $(SRC_DIR)/pdump$(O) \
     $(SRC_DIR)/packdump$(O) $(ALL_PARROT_LIBS) $(LINKFLAGS)
+	$(ADDGENERATED) "$@" "[main]" bin
 #IF(win32):	if exist $@.manifest mt.exe -nologo -manifest $@.manifest -outputresource:$@;1
-
 
 # pbc_info
 $(PINFO) : $(SRC_DIR)/pbc_info$(O) $(LIBPARROT)
 	$(LINK) @ld_out@$@ \
     $(SRC_DIR)/pbc_info$(O) \
     @rpath_blib@ $(ALL_PARROT_LIBS) $(LINKFLAGS)
+	$(ADDGENERATED) "$@" "[main]" bin
 #IF(win32):	if exist $@.manifest mt.exe -nologo -manifest $@.manifest -outputresource:$@;1
 
 $(SRC_DIR)/pbc_info$(O) : $(GEN_HEADERS)
@@ -980,6 +1008,7 @@ $(INSTALLABLEPINFO) : $(SRC_DIR)/pbc_info$(O) $(LIBPARROT)
 	$(LINK) @ld_out@$@ \
     $(SRC_DIR)/pbc_info$(O) \
     $(ALL_PARROT_LIBS) $(LINKFLAGS)
+	$(ADDGENERATED) "$@" "[main]" bin
 #IF(win32):	if exist $@.manifest mt.exe -nologo -manifest $@.manifest -outputresource:$@;1
 
 #
@@ -991,6 +1020,7 @@ $(PBCMERGE) : $(SRC_DIR)/pbc_merge$(O) $(LIBPARROT) $(SRC_DIR)/parrot_config$(O)
     $(SRC_DIR)/pbc_merge$(O) \
     $(SRC_DIR)/parrot_config$(O) \
     @rpath_blib@ $(ALL_PARROT_LIBS) $(LINK_DYNAMIC) $(LINKFLAGS)
+	$(ADDGENERATED) "$@" "[main]" bin
 #IF(win32):	if exist $@.manifest mt.exe -nologo -manifest $@.manifest -outputresource:$@;1
 
 $(INSTALLABLEPBCMERGE) : $(SRC_DIR)/pbc_merge$(O) $(LIBPARROT) $(INSTALLABLECONFIG)
@@ -998,6 +1028,7 @@ $(INSTALLABLEPBCMERGE) : $(SRC_DIR)/pbc_merge$(O) $(LIBPARROT) $(INSTALLABLECONF
     $(SRC_DIR)/pbc_merge$(O) \
     $(SRC_DIR)/install_config$(O) \
     $(ALL_PARROT_LIBS) $(LINKFLAGS)
+	$(ADDGENERATED) "$@" "[main]" bin
 #IF(win32):	if exist $@.manifest mt.exe -nologo -manifest $@.manifest -outputresource:$@;1
 
 
@@ -1012,6 +1043,7 @@ $(IMCC_DIR)/main$(O) : $(IMCC_DIR)/main.c $(GENERAL_H_FILES) $(IMCC_H_FILES)
 $(INC_DIR)/oplib/ops.h lib/Parrot/OpLib/core.pm : $(OPS_FILES) $(BUILD_TOOLS_DIR)/ops2pm.pl \
     lib/Parrot/OpsFile.pm lib/Parrot/Op.pm $(OPS_DIR)/ops.num $(OPS_DIR)/ops.skip
 	$(PERL) $(BUILD_TOOLS_DIR)/ops2pm.pl $(OPS_FILES)
+	$(ADDGENERATED) "$@" "[main]" include
 
 Makefile : config/gen/makefiles/root.in
 	$(PERL) tools/dev/reconfigure.pl --step=gen::makefiles --target=Makefile
@@ -1210,6 +1242,7 @@ $(SRC_DIR)/cpu_dep$(O) : $(GENERAL_H_FILES)
 
 $(SRC_DIR)/nci.c : $(SRC_DIR)/call_list.txt $(BUILD_TOOLS_DIR)/nativecall.pl
 	$(PERL) $(BUILD_TOOLS_DIR)/nativecall.pl $(SRC_DIR)/call_list.txt
+	$(ADDGENERATED) "$@" "[main]"
 
 $(SRC_DIR)/warnings$(O) : $(GENERAL_H_FILES)
 
@@ -1265,14 +1298,18 @@ $(INC_DIR)/vtable.h : src/vtable.tbl $(BUILD_TOOLS_DIR)/vtable_h.pl lib/Parrot/V
 
 $(SRC_DIR)/jit_emit.h : $(SRC_DIR)/jit/@jitcpuarch@/jit_emit.h
 	$(CP) $(SRC_DIR)/jit/@jitcpuarch@/jit_emit.h $(SRC_DIR)/jit_emit.h
+	$(ADDGENERATED) "$@" "[main]" "include"
 $(SRC_DIR)/exec_dep.h : $(SRC_DIR)/jit/@jitcpuarch@/exec_dep.h
 	$(CP) $(SRC_DIR)/jit/@jitcpuarch@/exec_dep.h $(SRC_DIR)/exec_dep.h
+	$(ADDGENERATED) "$@" "[main]" "include"
 $(SRC_DIR)/jit_cpu.c : lib/Parrot/OpLib/core.pm $(SRC_DIR)/jit_emit.h \
     $(SRC_DIR)/jit/@jitcpuarch@/core.jit $(JIT_BUILD_TOOL)
 	$(PERL) $(JIT_BUILD_TOOL) @jitcpuarch@ $(SRC_DIR)/jit_cpu.c
+	$(ADDGENERATED) "$@" "[main]"
 $(SRC_DIR)/exec_cpu.c : lib/Parrot/OpLib/core.pm $(SRC_DIR)/jit_emit.h \
     $(SRC_DIR)/jit/@jitcpuarch@/core.jit @TEMP_exec_h@ $(SRC_DIR)/exec_dep.h $(JIT_BUILD_TOOL)
 	$(PERL) $(JIT_BUILD_TOOL) @jitcpuarch@ $(SRC_DIR)/exec_cpu.c
+	$(ADDGENERATED) "$@" "[main]"
 @TEMP_exec_dep@
 
 # imcc file dependencies
@@ -1287,10 +1324,13 @@ $(IMCC_DIR)/imcc.y.flag $(IMCC_DIR)/imcparser.c $(IMCC_DIR)/imcparser.h : $(IMCC
 	$(PERL) $(BUILD_TOOLS_DIR)/fixup_gen_file.pl -noheaderizer $(IMCC_DIR)/imcparser.c $(IMCC_DIR)/imcc.y
 	$(PERL) $(BUILD_TOOLS_DIR)/fixup_gen_file.pl -noheaderizer $(IMCC_DIR)/imcparser.h $(IMCC_DIR)/imcc.y
 	$(TOUCH) $(IMCC_DIR)/imcc.y.flag $(IMCC_DIR)/imcparser.c $(IMCC_DIR)/imcparser.h
+	$(PERL) tools/build/addgenerated.pl $(IMCC_DIR)/imcparser.c "[main]"
+	$(PERL) tools/build/addgenerated.pl $(IMCC_DIR)/imcparser.h "[main]"
 
 $(IMCC_DIR)/imcc.l.flag $(IMCC_DIR)/imclexer.c : $(IMCC_DIR)/imcc.l
 	$(LEX) -o$(IMCC_DIR)/imclexer.c $(IMCC_DIR)/imcc.l
 	$(TOUCH) $(IMCC_DIR)/imcc.l.flag $(IMCC_DIR)/imclexer.c
+	$(PERL) tools/build/addgenerated.pl $(IMCC_DIR)/imclexer.c "[main]"
 
 $(IMCC_O_FILES) : $(IMCC_H_FILES) $(ALL_H_FILES)
 
@@ -1368,7 +1408,7 @@ dynoplibs-clean :
 
 compilers : compilers.dummy
 
-compilers.dummy : $(PARROT) $(GEN_LIBRARY)
+compilers.dummy : $(PARROT)
 	$(MAKE) compilers/pct
 	$(MAKE) compilers/pge
 	$(MAKE) compilers/tge
@@ -2170,15 +2210,7 @@ cover-clean:
 #
 ###############################################################################
 
-install:
-	@echo "WARNING:"
-	@echo "  Installing Parrot may interfere with developing Parrot"
-	@echo "  on the same machine.  This is a temporary flaw in the"
-	@echo "  Parrot build system."
-	@echo "  To use the make install target, type: make reallyinstall"
-	$(PERL) -e "exit(1)"
-
-reallyinstall: installable
+install: installable
 	$(PERL) tools/dev/install_files.pl \
     --buildprefix=$(BUILDPREFIX) \
     --prefix=$(PREFIX) \
@@ -2189,6 +2221,10 @@ reallyinstall: installable
     --destdir=$(DESTDIR) \
     --docdir=$(DOC_DIR) \
     MANIFEST MANIFEST.generated
+
+# legacy, to be deprecated
+reallyinstall: install
+	@echo "make reallyinstall is deprecated. Use make install now"
 
 ###############################################################################
 #
@@ -2230,11 +2266,13 @@ exec : $(SRC_DIR)/exec_start$(O) $(SRC_DIR)/parrot_config$(O) $(LIBPARROT)
 $(LIBNCI_TEST_SO): $(SRC_DIR)/nci_test$(O)
 	$(LD) $(LD_LOAD_FLAGS) @ncilib_link_extra@ $(LDFLAGS) \
     @ld_out@$@ $(SRC_DIR)/nci_test$(O) $(C_LIBS)
+	$(ADDGENERATED) "$@"
 
 # for use by runtime/parrot/library/OpenGL.pir
 $(LIBGLUTCB_SO): $(LIBPARROT) $(SRC_DIR)/glut_callbacks$(O)
 	$(LD) $(LD_LOAD_FLAGS) $(LDFLAGS) \
     @ld_out@$@ $(SRC_DIR)/glut_callbacks$(O) $(ALL_PARROT_LIBS)
+	$(ADDGENERATED) "$@"
 
 # emacs etags
 # this needs exuberant-ctags

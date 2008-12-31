@@ -22,7 +22,7 @@ use warnings;
 use base qw(Parrot::Configure::Step);
 
 use Parrot::Configure::Utils ':gen';
-
+use Parrot::BuildUtil;
 
 sub _init {
     my $self = shift;
@@ -43,14 +43,16 @@ sub runstep {
         ignore_pattern    => 'PARROT_CONFIG_DATE',
         conditioned_lines => 1
     );
-
+    add_to_generated('include/parrot/config.h', "[main]", "include");
     $conf->genfile($self->{templates}->{feature_h}, 'include/parrot/feature.h',
         ignore_pattern => 'PARROT_CONFIG_DATE',
         feature_file   => 1
     );
+    add_to_generated('include/parrot/feature.h', "[main]", "include");
 
     my $hh = "include/parrot/has_header.h";
     $conf->append_configure_log($hh);
+    add_to_generated($hh, "[main]", "include");
     open( my $HH, ">", "$hh.tmp" )
         or die "Can't open has_header.h: $!";
 

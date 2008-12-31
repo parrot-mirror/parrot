@@ -10,6 +10,7 @@ use File::Spec;
 use lib qw ( lib );
 use base qw( Parrot::Ops2pm::Base );
 use Parrot::OpsFile;
+use Parrot::BuildUtil;
 
 =head1 NAME
 
@@ -291,6 +292,7 @@ sub print_module {
     open my $MODULE, '>', $fullpath
         or die "$self->{script}: Could not open module file '$fullpath' for writing: $!!\n";
 
+    add_to_generated(File::Spec->catfile( $self->{moddir}, $self->{module} ), '[main]');
     my $version = $self->{real_ops}->version();
     ( my $pod = <<"END_POD") =~ s/^    //osmg;
     =head1 NAME
@@ -379,6 +381,7 @@ sub print_h {
     my $fullpath = File::Spec->catfile( ($fulldir), $self->{inc_f} );
     open my $OUT, '>', $fullpath
         or die "$self->{script}: Could not open module file '$fullpath' for writing: $!!\n";
+    add_to_generated($fullpath, '[main]', 'include');
 
     print $OUT <<END_C;
 /* ex: set ro:

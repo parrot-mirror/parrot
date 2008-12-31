@@ -3,6 +3,8 @@
 PERL        = @perl@
 RM_F        = @rm_f@
 LOAD_EXT    = @load_ext@
+RECONFIGURE = $(PERL) @build_dir@/tools/dev/reconfigure.pl
+ADDGENERATED= $(PERL) ../../tools/build/addgenerated.pl
 RUNTIME_DIR = @build_dir@/runtime/parrot/dynext
 O           = @o@
 
@@ -39,11 +41,18 @@ GEN_PMC_DEFINITIONS = \
 #IF(has_crypto):  sha256.pmc \
 #IF(has_crypto):  sha512.pmc
 
-all :
+all : Makefile ../../tools/build/dynpmc.pl
 	@$(BUILD) generate $(PMCS)
 	@$(BUILD) compile $(PMCS)
 	@$(BUILD) linklibs $(PMCS)
 	@$(BUILD) copy --destination=$(RUNTIME_DIR) $(PMCS)
+
+# regenerate the Makefile
+Makefile: ../../config/gen/makefiles/dynpmc.in
+	cd @build_dir@ && $(RECONFIGURE) --step=gen::makefiles --target=src/dynoplibs/Makefile
+
+../../tools/build/dynpmc.pl: ../../config/gen/makefiles/dynpmc_pl.in
+	cd @build_dir@ && $(RECONFIGURE) --step=gen::makefiles --target=tools/build/dynpmc.pl
 
 test : all
 	cd ../.. ; perl -Ilib t/harness t/dynpmc/*.t
@@ -60,8 +69,9 @@ testclean :
 dynext-clean :
 	$(RM_F) "*.lib" "*.pdb" "*.ilk" "*.exp" "*.def" "*.manifest"
 
-clean : testclean dynext-clean
+clean : testclean
 	$(RM_F) "*.c" "pmc_*.h" "*_group.h" "*$(LOAD_EXT)" "*.dump" "lib-*" "*$(O)"
+#IF(win32):	$(RM_F) "*.lib" "*.pdb" "*.ilk" "*.exp" "*.def" "*.manifest"
 
 archclean :
 	$(RM_F) "*$(LOAD_EXT)" "*$(O)" Makefile
@@ -72,3 +82,9 @@ realclean: clean
 distclean: realclean
 
 svnclean: realclean
+
+#
+# Local variables:
+# mode: makefile
+# ex: ft=make
+# End:

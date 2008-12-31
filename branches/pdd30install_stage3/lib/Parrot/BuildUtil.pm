@@ -7,15 +7,24 @@ lib/Parrot/BuildUtil.pm - Utilities for building Parrot
 
 =head1 DESCRIPTION
 
-This package holds three subroutines:  C<parrot_version()>, C<slurp_file>,
-and C<generated_file_header>. Subroutines are not exported--each must be
-requested by using a fully qualified name.
+This package holds five subroutines:  C<parrot_version()>, C<slurp_file>,
+C<generated_file_header> and C<add_to_generated>, C<add_list_to_generated>.
+
+Only C<add_to_generated()> is exported, the other subroutines are not exported,
+they must be requested by using a fully qualified name.
 
 =cut
 
 package Parrot::BuildUtil;
 use strict;
 use warnings;
+use vars qw( @ISA @EXPORT );
+use Exporter;
+@ISA = qw( Exporter );
+@EXPORT = qw( add_to_generated );
+
+use File::Basename qw/basename/;
+use File::Spec;
 
 =head1 SUBROUTINES
 
@@ -101,7 +110,6 @@ sub generated_file_header {
     die "unknown style '$style'"
         if $style !~ m/\A(perl|c)\z/;
 
-    require File::Spec;
     my $script = File::Spec->abs2rel($0);
     $script =~ s/\\/\//g;
 
@@ -126,13 +134,75 @@ END_HEADER
     return $header;
 }
 
+=item C<add_to_generated($filename, $section, $dir)>
+
+Adds the filename to MANIFEST.generated into the given section.
+$dir is optional.
+
+Note that Parrot::Config might not be generated yet (TBD), so
+we must assure thet the current directory is the the build_dir.
+This is the job of F<tools/build/addgenerated.pl>, but
+within some perl5 modules you must take care.
+
+=cut
+
+sub add_to_generated {
+    my ($filename, $section, $dir) = @_;
+
+    # Support quirky Makefile invocation as
+    #   $(PERL) -Ilib -MParrot::BuildUtil -e add_to_generated "$@",'[main]','lib'
+    ($filename, $section, $dir) = @ARGV unless $filename;
+    if ($filename =~ /,/ and !$section) { # split it here, when the shell is fooled
+        ($filename, $section, $dir) = split /,/, $filename;
+    }
+
+    my $path = File::Spec->abs2rel($filename);
+    $path =~ s/\\/\//g;
+    $section = "[library]" unless $section;
+    $dir = "" unless $dir;
+
+    open( my $M, '>>', "MANIFEST.generated" ) or die "open 'MANIFEST.generated': $!";
+    printf $M "%-49s %s%s\n", $path, $section, $dir;
+
+    # Additional .manifest logic on windows and [main]bin
+    if ($section eq '[main]' and $dir eq 'bin' and $^O =~ /cygwin|MSWin32/) {
+        my $base = basename($filename,'.exe');
+        if (-e "$base.manifest") {
+            my $mpath = File::Spec->abs2rel($base) . ".manifest";
+            $mpath =~ s/\\/\//g;
+            printf $M "%-49s %s%s\n", $mpath, $section, $dir;
+        }
+    }
+    close $M;
+    ''
+}
+
+=item C<add_list_to_generated( [$section,] @files)>
+
+Adds the list of filenames to MANIFEST.generated into $section,
+Default: '[library]'.
+
+$section is optional.
+
+=cut
+
+sub add_list_to_generated {
+    @_ = @ARGV unless @_;
+    my $section = '';
+    $section = shift @_ if $_[0] =~ /^\[/;
+    add_to_generated($_, $section) for @_;
+}
+
+
 1;
 
 =back
 
 =head1 AUTHOR
 
-Gregor N. Purdy.  Revised by James E Keenan.
+Gregor N. Purdy
+James E Keenan
+Reini Urban
 
 =cut
 

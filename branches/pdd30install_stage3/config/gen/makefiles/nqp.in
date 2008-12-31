@@ -3,12 +3,15 @@
 # Setup some commands
 PERL     = @perl@
 RM_F     = @rm_f@
+CP       = @cp@
+MKPATH   = @mkpath@
 PARROT   = ../../parrot@exe@
 RECONFIGURE   = $(PERL) @build_dir@/tools/dev/reconfigure.pl
+ADDGENERATED  = $(PERL) ../../tools/build/addgenerated.pl
 #IF(parrot_is_shared and !(cygwin|win32)):export LD_RUN_PATH := @blib_dir@:$(LD_RUN_PATH)
 
-PARROT_LIBRARY = @build_dir@/runtime/parrot/library
-PGE_LIBRARY    = @build_dir@/runtime/parrot/library/PGE
+PARROT_LIB    = @build_dir@/runtime/parrot/library
+PGE_LIBRARY   = @build_dir@/runtime/parrot/library/PGE
 
 build: nqp.pbc
 
@@ -27,6 +30,8 @@ nqp.pbc: $(PARROT) $(PGE_LIBRARY)/Perl6Grammar.pir $(SOURCES)
 	$(PARROT) $(PARROT_ARGS) $(PGE_LIBRARY)/Perl6Grammar.pir \
 	    --output=src/Grammar_gen.pir src/Grammar.pg
 	$(PARROT) -o nqp.pbc nqp.pir
+	$(CP) nqp.pbc $(PARROT_LIB)/nqp.pbc
+	$(ADDGENERATED) "runtime/parrot/library/nqp.pbc"
 
 boot: $(BOOTSRC)
 	$(PARROT) nqp.pbc \
@@ -42,6 +47,8 @@ help:
 	@echo ""
 	@echo "  all:               nqp.pbc"
 	@echo "                     This is the default."
+	@echo "  install:           nqp.pbc only"
+	@echo ""
 	@echo "Testing:"
 	@echo "  test:              Run the test suite."
 	@echo "  testclean:         Clean up test results."
@@ -57,6 +64,10 @@ help:
 
 test: all
 	$(PERL) t/harness t
+
+install: build
+	-$(MKPATH) $(DESTDIR)$(LIB_DIR)/parrot/library
+	$(CP) nqp.pbc $(DESTDIR)$(LIB_DIR)/parrot/library
 
 # this target has nothing to do
 testclean:

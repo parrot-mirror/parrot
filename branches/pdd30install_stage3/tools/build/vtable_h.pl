@@ -30,10 +30,12 @@ use warnings;
 
 use lib 'lib';
 use Parrot::Vtable;
+use Parrot::BuildUtil;
 
 my $vtable = parse_vtable();
-
-open my $OUT, '>', 'include/parrot/vtable.h' or die $!;
+my $filename = 'include/parrot/vtable.h';
+open my $OUT, '>', $filename or die $!;
+add_to_generated($filename,'[main]','include');
 
 print $OUT <<'EOF';
 /* ex: set ro:

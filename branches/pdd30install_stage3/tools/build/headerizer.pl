@@ -65,6 +65,9 @@ One or more object file names.
 use Getopt::Long;
 use lib qw( lib );
 use Parrot::Config;
+use Parrot::BuildUtil;
+use File::Spec;
+use File::Basename;
 
 my %warnings;
 my %opt;
@@ -177,6 +180,7 @@ sub extract_function_declarations_and_update_source {
     open( my $fhout, '>', $cfile_name ) or die "Can't create $cfile_name: $!";
     print {$fhout} $text;
     close $fhout;
+    add_to_generated($cfile_name,'[main]','headerizer');
 
     return @func_declarations;
 }
@@ -506,6 +510,7 @@ sub main {
             }
 
             write_file( $hfile, $header );
+            add_to_generated($hfile, '[main]', 'include-headerizer');
         }
 
         # Update all the .c files in place
@@ -517,6 +522,7 @@ sub main {
             $source = replace_headerized_declarations( $source, 'static', $cfile, @funcs );
 
             write_file( $cfile, $source );
+            add_to_generated($cfile, '[main]', 'c-headerizer');
         }
         print "Headerization complete.\n";
     }

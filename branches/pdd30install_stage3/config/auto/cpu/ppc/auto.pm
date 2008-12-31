@@ -39,6 +39,7 @@ sub runstep {
                 );
                 print " (\U$suffix) " if ($verbose);
                 $conf->data->add( ' ', TEMP_generated => $f );
+                $conf->append_configure_log($f);
             }
         }
         $conf->cc_clean();
