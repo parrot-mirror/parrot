@@ -604,33 +604,23 @@ token named_0ary {
 }
 
 rule package_declarator {
-    [
-    | $<sym>=[class|grammar|module|package] {*}  #= open
-      <package_def> {*}                          #= package_def
-    | $<sym>=[role] {*}                          #= open
-      <role_def> {*}                             #= role_def
-    ]
+    $<sym>=[class|grammar|module|package|role] {*}       #= open
+    <package_def> {*}                                    #= package_def
 }
 
 
 rule package_def {
-    <name>? <trait>* {*}                         #= open
-    <package_block> {*}                          #= close
-}
-
-
-rule role_def {
-    <name>['['<signature>']']? <trait>* {*}      #= open
-    <package_block> {*}                          #= close
-}
-
-
-rule package_block {
     [
-    || ';' <statement_block> {*}                 #= statement_block
-    || <block> {*}                               #= block
+        <module_name=name>
+    ]? 
+    <trait>*
+    [
+    | ';' <statement_block>
+    | <block>
     ]
+    {*}
 }
+
 
 rule enum_declarator {
     'enum' <name>?
