@@ -173,12 +173,6 @@ The files in this directory test functionality used by F<Configure.pl>.
 
 The tests in this file test gen::makefiles.
 
-=head1 AUTHOR
-
-James E Keenan
-
-Reini Urban (#+, #-)
-
 =head1 SEE ALSO
 
 config::gen::makefiles, F<Configure.pl>.
