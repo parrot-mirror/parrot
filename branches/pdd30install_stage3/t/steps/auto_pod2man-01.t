@@ -73,10 +73,6 @@ The files in this directory test functionality used by F<Configure.pl>.
 
 The tests in this file test auto::pod2man.
 
-=head1 AUTHOR
-
-Reini Urban
-
 =head1 SEE ALSO
 
 config::auto::pod2man, F<Configure.pl>.

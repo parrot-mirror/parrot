@@ -104,15 +104,6 @@ do_dis(Parrot_Interp interp)
 
 F<src/embed.c> and F<src/debug.c>.
 
-=head1 HISTORY
-
-Initial version by Daniel Grunblatt on 2002.5.26.
-
-Florian Ragwitz: Moved POD documentation that's not necessary to know how to
-actually run the disassembler to normal C comments (Wed, 16 Nov 2005).
-
-Reini Urban: Renamed from disassemble to pbc_disassemble (2008-07-03).
-
 =cut
 
 */
