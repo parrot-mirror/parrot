@@ -57,13 +57,13 @@ method TOP($/) {
 
 
 method statement_block($/, $key) {
-    our $?BLOCK;
     our @?BLOCK;
     our $?SIGNATURE_BLOCK;
     ##  when entering a block, use any $?SIGNATURE_BLOCK if it exists,
     ##  otherwise create an empty block with an empty first child to
     ##  hold any parameters we might encounter inside the block.
     if $key eq 'open' {
+        my $?BLOCK;
         if $?SIGNATURE_BLOCK {
             $?BLOCK := $?SIGNATURE_BLOCK;
             $?SIGNATURE_BLOCK := 0;
@@ -75,7 +75,6 @@ method statement_block($/, $key) {
     }
     if $key eq 'close' {
         my $past := @?BLOCK.shift();
-        $?BLOCK := @?BLOCK[0];
         $past.push($($<statementlist>));
         make $past;
     }
@@ -232,7 +231,8 @@ method default_statement($/) {
 }
 
 sub when_handler_helper($block) {
-    our $?BLOCK;
+    our @?BLOCK;
+    my $?BLOCK := @?BLOCK[0];
     # XXX TODO: This isn't quite the right way to check this...
     unless $?BLOCK.handlers() {
         my @handlers;
@@ -326,8 +326,8 @@ method use_statement($/) {
     if $name ne 'v6' && $name ne 'lib' {
         ##  Create a loadinit node so the use module is loaded
         ##  when this module is loaded...
-        our $?BLOCK;
-        $?BLOCK.loadinit().push(
+        our @?BLOCK;
+        @?BLOCK[0].loadinit().push(
             PAST::Op.new(
                 PAST::Val.new( :value($name) ),
                 :name('use'),
@@ -380,7 +380,8 @@ method catch_statement($/) {
         ),
         $past
     );
-    our $?BLOCK;
+    our @?BLOCK;
+    my $?BLOCK := @?BLOCK[0];
     my $eh := PAST::Control.new( $past );
     my @handlers;
     if $?BLOCK.handlers() {
@@ -407,7 +408,8 @@ method control_statement($/) {
         ),
         $past
     );
-    our $?BLOCK;
+    our @?BLOCK;
+    my $?BLOCK := @?BLOCK[0];
     my $eh := PAST::Control.new(
         $past,
         :handle_types('CONTROL')
@@ -789,8 +791,8 @@ method enum_declarator($/, $key) {
 
         # Assemble all that we build into a statement list and then place it
         # into the init code.
-        our $?BLOCK;
-        my $loadinit := $?BLOCK.loadinit();
+        our @?BLOCK;
+        my $loadinit := @?BLOCK[0].loadinit();
         $loadinit.push($role_past);
         $loadinit.push($class_past);
 
@@ -838,8 +840,8 @@ method routine_def($/) {
     if $<deflongname> {
         my $name := ~$<deflongname>[0];
         $past.name( $name );
-        our $?BLOCK;
-        $?BLOCK.symbol( $name, :scope('package') );
+        our @?BLOCK;
+        @?BLOCK[0].symbol( $name, :scope('package') );
     }
     $past.control('return_pir');
     make $past;
@@ -920,7 +922,6 @@ method trait_verb($/) {
 method signature($/, $key) {
     our $?SIGNATURE;
     our $?SIGNATURE_BLOCK;
-    our $?BLOCK;
     our @?BLOCK;
     if $key eq 'open' {
         $?SIGNATURE := PAST::Op.new( :pasttype('stmts'), :node($/) );
@@ -987,8 +988,6 @@ method signature($/, $key) {
         @?BLOCK.shift();
         make $?SIGNATURE;
     }
-
-    $?BLOCK := @?BLOCK[0];
 }
 
 
@@ -1592,8 +1591,8 @@ method package_def($/, $key) {
             );
 
             # Attatch grammar declaration to the init code.
-            our $?BLOCK;
-            $?BLOCK.loadinit().push( $?GRAMMAR );
+            our @?BLOCK;
+            @?BLOCK[0].loadinit().push( $?GRAMMAR );
 
             # Clear namespace.
             $?NS := '';
@@ -1654,8 +1653,8 @@ method package_def($/, $key) {
                     $past[0].push( $_ );
                 }
                 else {
-                    our $?BLOCK;
-                    $?BLOCK.loadinit().push( $_ );
+                    our @?BLOCK;
+                    @?BLOCK[0].loadinit().push( $_ );
                 }
             }
         }
@@ -1709,8 +1708,8 @@ method role_def($/, $key) {
                 $past.push( $_ );
             }
             else {
-                our $?BLOCK;
-                $?BLOCK.loadinit().push( $_ );
+                our @?BLOCK;
+                @?BLOCK[0].loadinit().push( $_ );
             }
         }
 
@@ -1751,8 +1750,8 @@ method scope_declarator($/) {
             # implementation type of the variable (itype), any
             # initial value for the variable (viviself), and
             # any type constraints (type).
-            our $?BLOCK;
-            $?BLOCK.symbol( $var.name(), :scope($scope) );
+            our @?BLOCK;
+            @?BLOCK[0].symbol( $var.name(), :scope($scope) );
             $var.scope($scope);
             $var.isdecl(1);
            
@@ -1813,10 +1812,10 @@ method declarator($/) {
 
 
 method variable_declarator($/) {
-    our $?BLOCK;
+    our @?BLOCK;
     my $var    := $( $<variable> );
     my $name   := $var.name();
-    my $symbol := $?BLOCK.symbol( $name );
+    my $symbol := @?BLOCK[0].symbol( $name );
     if $symbol<scope> eq 'lexical' {
         $/.panic("Redeclaration of variable " ~ $name);
     }
@@ -1829,7 +1828,8 @@ method variable_declarator($/) {
 
 method variable($/, $key) {
     my $past;
-    our $?BLOCK;
+    our @?BLOCK;
+    my $?BLOCK := @?BLOCK[0];
     if $key eq 'desigilname' {
         my $sigil      := ~$<sigil>;
         my $twigil     := ~$<twigil>[0];
@@ -2450,8 +2450,8 @@ method type_declarator($/) {
 
     # Put this code in loadinit, so the type is created early enough,
     # then this node results in an empty statement node.
-    our $?BLOCK;
-    $?BLOCK.loadinit().push($past);
+    our @?BLOCK;
+    @?BLOCK[0].loadinit().push($past);
 
     make PAST::Stmts.new();
 }
