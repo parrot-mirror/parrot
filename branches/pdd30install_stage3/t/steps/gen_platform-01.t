@@ -181,7 +181,7 @@ $conf->data->set( platform_asm => $platform_asm_orig );
     my $plat_c = q{src/platform.c};
     open my $PLATFORM_C, '>', $plat_c
         or croak "Unable to open handle for writing";
-    $step->_handle_begin_c($platform, $PLATFORM_C);
+    $step->_handle_begin_c($conf, $platform, $PLATFORM_C);
     close $PLATFORM_C or croak "Unable to close handle after writing";
 
     my $text = _slurp( $plat_c );

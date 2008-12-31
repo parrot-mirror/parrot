@@ -42,7 +42,7 @@ use File::Glob;
 use base qw(Parrot::Configure::Step);
 
 use Parrot::Configure::Utils ':gen';
-
+use Parrot::BuildUtil;
 
 my @GLUT_1_CALLBACKS = (
     [ 'Display',          'void' ],
