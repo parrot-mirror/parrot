@@ -59,6 +59,7 @@ EOF
 close $OUT or die $!;
 
 open $OUT, '>', 'src/extend_vtable.c' or die $!;
+add_to_generated('src/extend_vtable.c','[main]');
 
 print $OUT $header, <<'EOF';
 
