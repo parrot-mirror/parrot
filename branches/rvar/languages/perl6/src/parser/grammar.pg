@@ -380,8 +380,9 @@ rule routine_def {
 }
 
 rule method_def {
-    <identifier>? <multisig>?
-    <trait>*
+    [
+    | <longname=name> [ <multisig> | <trait> ]*
+    ]
     <block>
     {*}
 }

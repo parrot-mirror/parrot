@@ -816,6 +816,9 @@ method routine_declarator($/, $key) {
     if $key eq 'sub' {
         $past := $($<routine_def>);
     }
+    elsif $key eq 'method' {
+        $past := $($<method_def>);
+    }   
     elsif $key eq 'submethod' {
         $/.panic('submethod declarations not yet implemented');
     }
@@ -850,44 +853,20 @@ method routine_def($/) {
 
 method method_def($/) {
     my $past := $( $<block> );
-    my $identifier := $<identifier>;
-    if $identifier {
-        $past.name( ~$identifier[0] );
+    $past.blocktype('method');
+
+    if $<longname> {
+        $past.name( ~$<longname> );
     }
+
+    # Add lexical 'self'.
+    $past[0].unshift(
+        PAST::Var.new( :name('self'), :scope('lexical'), :isdecl(1),
+            :viviself( PAST::Var.new( :name('self'), :scope('register' ) ) )
+        )
+    );
+
     $past.control('return_pir');
-
-    # Emit code to apply any traits.
-    if $<trait> {
-        for $<trait> {
-            my $trait := $_;
-            if $trait<trait_auxiliary> {
-                my $aux  := $trait<trait_auxiliary>;
-                my $sym  := $aux<sym>;
-
-                if $sym eq 'is' {
-                    my $name := $aux<name>;
-
-                    # Emit call to trait_auxiliary:is apply trait.
-                    my @ns := Perl6::Compiler.parse_name( $name );
-                    $past.loadinit().push(
-                        PAST::Op.new(
-                            :pasttype('call'),
-                            :name('trait_auxiliary:is'),
-                            PAST::Var.new(
-                                :name(@ns.pop()),
-                                :namespace(@ns),
-                                :scope('package')
-                            ),
-                            PAST::Var.new(
-                                :name('block'), :scope('register')
-                            )
-                        )
-                    );
-                }
-            }
-        }
-    }
-
     make $past;
 }
 
@@ -927,7 +906,7 @@ method signature($/, $key) {
         $?SIGNATURE := PAST::Op.new( :pasttype('stmts'), :node($/) );
         $?SIGNATURE_BLOCK := PAST::Block.new( $?SIGNATURE,
                                               :blocktype('declaration') );
-        $?SIGNATURE_BLOCK.symbol( '!signature', :force(1) );
+        $?SIGNATURE_BLOCK<signature> := 1;
         @?BLOCK.unshift($?SIGNATURE_BLOCK);
     }
     else {
@@ -1368,14 +1347,19 @@ method package_def($/, $key) {
     my $past := $( $/{$key} );
     $past.blocktype('declaration');
 
+    my $modulename := $<module_name> 
+                         ?? ~$<module_name>[0] !! 
+                         $past.unique('!ANON');
+    if ($modulename) {
+        $past.namespace( PAST::Compiler.parse_name( $modulename ) );
+    }
+
     if $key eq 'block' {
         # A normal block acts like a BEGIN and is executed ASAP.
         $past.pirflags(':load :init');
     }
-    elsif $key eq 'statement_block' {
-        unless ~$<module_name> {
-            $/.panic("Compilation unit cannot be anonymous");
-        }
+    elsif $key eq 'statement_block' && !$<module_name> {
+        $/.panic("Compilation unit cannot be anonymous");
     }
     #  Create a node at the beginning of the block's initializer
     #  for package initializations
@@ -1387,7 +1371,7 @@ method package_def($/, $key) {
     $init.unshift( 
         PAST::Op.new( :pasttype('bind'),
             PAST::Var.new( :name('metaclass'), :scope('register'), :isdecl(1) ),
-            PAST::Op.new( :name('!class_create'), $?PKGDECL, ~$<module_name>[0])
+            PAST::Op.new( :name('!meta_create'), $?PKGDECL, $modulename )
         )
     );
 
@@ -1397,10 +1381,10 @@ method package_def($/, $key) {
     if $<trait> {
         for @($<trait>) {
             #  Trait nodes come in as PAST::Op( :name('list') ).
-            #  We just modify them to call !class_trait and add
+            #  We just modify them to call !meta_trait and add
             #  the metaclass as the first argument.
             my $trait := $( $_ );
-            $trait.name('!class_trait');
+            $trait.name('!meta_trait');
             $trait.unshift($metaclass);
             $init.push($trait);
         }
@@ -1408,7 +1392,7 @@ method package_def($/, $key) {
 
     #  ...and at the end of the block's initializer, we finalize any
     #  composition that occurred.
-    $past[0].push( PAST::Op.new( :name('!class_compose'), $metaclass) );
+    $past[0].push( PAST::Op.new( :name('!meta_compose'), $metaclass) );
 
     make $past;
 }
@@ -1546,7 +1530,7 @@ method variable($/, $key) {
 
         ##  if twigil is ^ or :, it's a placeholder var
         if $twigil eq '^' || $twigil eq ':' {
-            if $?BLOCK.symbol('!signature') {
+            if $?BLOCK<signature> {
                 $/.panic("Cannot use placeholder var in block with signature.");
             }
             unless $?BLOCK.symbol($varname) {
