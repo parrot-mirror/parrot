@@ -593,9 +593,12 @@ sub write_html {
     $docs_file->write( $self->html_for_file($file) );
     my $path = File::Spec->abs2rel(
        File::Spec->catfile($docs_file->{PATH}), $PConfig{build_dir});
-    chdir "..";
-    add_to_generated($path, "[main]", "html");
-    chdir "docs";
+
+    unless ($self->{TESTING}) {
+        chdir "..";
+        add_to_generated($path, "[main]", "html");
+        chdir "docs";
+    }
 }
 
 =item C<append_html_suffix($path)>
