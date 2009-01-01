@@ -33,6 +33,8 @@ use Parrot::Configure::Utils qw(
     _run_command _build_compile_command
     move_if_diff
 );
+use Parrot::BuildUtil;
+
 my $DEBUG;
 
 our %file_types_info = (
@@ -337,6 +339,11 @@ sub genfile {
     if ( $calling_sub !~ /cc_gen$/ ) {
         $conf->append_configure_log($target);
     }
+    # special rules for to be installed files:
+    add_to_generated($target, "[main]", "pkgconfig")
+        if $target eq 'parrot.pc';
+    add_to_generated($target, "[devel]")
+        if $target eq 'tools/build/dynpmc.pl';
 
     open my $in,  '<', $source       or die "Can't open $source: $!";
     open my $out, '>', "$target.tmp" or die "Can't open $target.tmp: $!";
