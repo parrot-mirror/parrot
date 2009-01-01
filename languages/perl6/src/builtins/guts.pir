@@ -366,16 +366,16 @@ first). So for now we just transform multis in user code like this.
 .end
 
 
-=item !class_create(type, name)
+=item !meta_create(type, name)
 
 Create a metaclass object for C<type> with the given C<name>.  
 This simply creates a handle on which we can hang methods, attributes,
 traits, etc. -- the class itself isn't created until the class
-is composed (see C<!class_compose> below).
+is composed (see C<!meta_compose> below).
 
 =cut
 
-.sub '!class_create'
+.sub '!meta_create'
     .param string type
     .param string name
 
@@ -385,14 +385,14 @@ is composed (see C<!class_compose> below).
 .end 
 
 
-=item !class_compose(Class metaclass)
+=item !meta_compose(Class metaclass)
 
 Compose the class.  This includes resolving any inconsistencies
 and creating the protoobjects.
 
 =cut
 
-.sub '!class_compose' :multi(['Class'])
+.sub '!meta_compose' :multi(['Class'])
     .param pmc metaclass
     .local pmc p6meta
     p6meta = get_hll_global ['Perl6Object'], '$!P6META'
@@ -401,13 +401,13 @@ and creating the protoobjects.
 .end
 
 
-=item !class_trait(metaclass, type, name)
+=item !meta_trait(metaclass, type, name)
 
 Add a trait with the given C<type> and C<name> to C<metaclass>.
 
 =cut
 
-.sub '!class_trait'
+.sub '!meta_trait'
     .param pmc metaclass
     .param string type
     .param string name
