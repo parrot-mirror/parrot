@@ -743,10 +743,11 @@ Return the POST representation of a C<PAST::Block>.
     unshift blockpast, node
 
     .local string name, pirflags, blocktype
-    .local pmc ns, hll
+    .local pmc subid, ns, hll
     name = node.'name'()
     pirflags = node.'pirflags'()
     blocktype = node.'blocktype'()
+    subid = node.'subid'()
     ns = node.'namespace'()
     hll = node.'hll'()
 
@@ -760,7 +761,7 @@ Return the POST representation of a C<PAST::Block>.
     ##  create a POST::Sub node for this block
     .local pmc bpost
     $P0 = get_hll_global ['POST'], 'Sub'
-    bpost = $P0.'new'('node'=>node, 'name'=>name, 'blocktype'=>blocktype, 'namespace'=>ns, 'hll'=>hll)
+    bpost = $P0.'new'('node'=>node, 'name'=>name, 'blocktype'=>blocktype, 'namespace'=>ns, 'hll'=>hll, 'subid'=>subid)
     unless pirflags goto pirflags_done
     bpost.'pirflags'(pirflags)
   pirflags_done:
