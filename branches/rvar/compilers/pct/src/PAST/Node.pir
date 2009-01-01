@@ -670,6 +670,27 @@ not set.
     .tailcall self.'attr'('compiler_args', value, have_value)
 .end
 
+=item subid([subid])
+
+If C<subid> is provided, then sets the subid for this block.
+Returns the current subid for the block, generating a unique
+subid for the block if one does not already exist.
+
+=cut
+
+.sub 'subid' :method
+    .param pmc value           :optional
+    .param int has_value       :opt_flag
+    if has_value goto getset_value
+    $I0 = exists self['subid']
+    if $I0 goto getset_value
+    value = self.'unique'()
+    has_value = 1
+  getset_value:
+    .tailcall self.'attr'('subid', value, has_value)
+.end
+
+
 =item pirflags([pirflags])
 
 Get/set any pirflags for this block.
