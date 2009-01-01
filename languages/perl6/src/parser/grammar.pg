@@ -615,10 +615,10 @@ rule package_def {
     ]? 
     <trait>*
     [
-    | ';' <statement_block>
-    | <block>
+    | ';' <statement_block> {*}                          #= statement_block
+    | <block> {*}                                        #= block
+    | {*}                                                #= panic
     ]
-    {*}
 }
 
 
