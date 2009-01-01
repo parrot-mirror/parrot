@@ -366,6 +366,63 @@ first). So for now we just transform multis in user code like this.
 .end
 
 
+=item !class_create(type, name)
+
+Create a metaclass object for C<type> with the given C<name>.  
+This simply creates a handle on which we can hang methods, attributes,
+traits, etc. -- the class itself isn't created until the class
+is composed (see C<!class_compose> below).
+
+=cut
+
+.sub '!class_create'
+    .param string type
+    .param string name
+
+    .local pmc metaclass
+    metaclass = newclass name
+    .return (metaclass)
+.end 
+
+
+=item !class_compose(Class metaclass)
+
+Compose the class.  This includes resolving any inconsistencies
+and creating the protoobjects.
+
+=cut
+
+.sub '!class_compose' :multi(['Class'])
+    .param pmc metaclass
+    .local pmc p6meta
+    p6meta = get_hll_global ['Perl6Object'], '$!P6META'
+
+    p6meta.'register'(metaclass, 'parent'=>'Any')
+.end
+
+
+=item !class_trait(metaclass, type, name)
+
+Add a trait with the given C<type> and C<name> to C<metaclass>.
+
+=cut
+
+.sub '!class_trait'
+    .param pmc metaclass
+    .param string type
+    .param string name
+
+    ##  get the (parrot)class object associated with name
+    $P0 = compreg 'Perl6'
+    $P0 = $P0.'parse_name'(name)
+    $P0 = get_hll_namespace $P0
+    $P0 = get_class $P0
+
+    ##  add it as parent to metaclass
+    metaclass.'add_parent'($P0)
+.end
+
+
 =item !keyword_class(name)
 
 Internal helper method to create a class.

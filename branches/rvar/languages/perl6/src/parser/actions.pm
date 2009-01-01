@@ -1345,11 +1345,72 @@ sub apply_package_traits($package, $traits) {
 
 method package_declarator($/, $key) {
     our @?PKGDECL;
-    my $sym := $<sym>;
-
+    my $sym := ~$<sym>;
+    my $past;
     if $key eq 'open' {
-        @?PKGDECL.push( $sym );
+        @?PKGDECL.unshift( $sym );
     }
+    else {
+        make $( $<package_def> );
+        @?PKGDECL.shift();
+    }
+}
+
+
+method package_def($/, $key) {
+    our @?PKGDECL;
+    my $?PKGDECL := @?PKGDECL[0];
+
+    if $key eq 'panic' {
+        $/.panic("Unable to parse " ~ $?PKGDECL ~ " definition");
+    }
+
+    my $past := $( $/{$key} );
+    $past.blocktype('declaration');
+
+    if $key eq 'block' {
+        # A normal block acts like a BEGIN and is executed ASAP.
+        $past.pirflags(':load :init');
+    }
+    elsif $key eq 'statement_block' {
+        unless ~$<module_name> {
+            $/.panic("Compilation unit cannot be anonymous");
+        }
+    }
+    #  Create a node at the beginning of the block's initializer
+    #  for package initializations
+    my $init := PAST::Stmts.new();
+    $past[0].unshift( $init );
+
+    #  At the beginning, create the "class/module/grammar/role/etc" 
+    #  metaclass handle on which we do the other operations.
+    $init.unshift( 
+        PAST::Op.new( :pasttype('bind'),
+            PAST::Var.new( :name('metaclass'), :scope('register'), :isdecl(1) ),
+            PAST::Op.new( :name('!class_create'), $?PKGDECL, ~$<module_name>[0])
+        )
+    );
+
+    #  Add any traits coming from the package declarator.
+    #  Traits in the body have already been added to the block.
+    my $metaclass := PAST::Var.new( :name('metaclass'), :scope('register') );
+    if $<trait> {
+        for @($<trait>) {
+            #  Trait nodes come in as PAST::Op( :name('list') ).
+            #  We just modify them to call !class_trait and add
+            #  the metaclass as the first argument.
+            my $trait := $( $_ );
+            $trait.name('!class_trait');
+            $trait.unshift($metaclass);
+            $init.push($trait);
+        }
+    }
+
+    #  ...and at the end of the block's initializer, we finalize any
+    #  composition that occurred.
+    $past[0].push( PAST::Op.new( :name('!class_compose'), $metaclass) );
+
+    make $past;
 }
 
 
