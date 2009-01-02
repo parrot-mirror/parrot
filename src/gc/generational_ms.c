@@ -4,7 +4,7 @@ $Id$
 
 =head1 NAME
 
-src/gc/gc_gms.c - Generational mark and sweep garbage collection
+src/gc/generational_ms.c - Generational mark and sweep garbage collection
 
 =head1 OVERVIEW
 

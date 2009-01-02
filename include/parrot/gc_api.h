@@ -1,5 +1,5 @@
-/* dod.h
- *  Copyright (C) 2001-2007, The Perl Foundation.
+/* gc_api.h
+ *  Copyright (C) 2001-2009, The Perl Foundation.
  *  SVN Info
  *     $Id$
  *  Overview:
@@ -47,7 +47,7 @@
 #define GC_finish_FLAG         (UINTVAL)(1 << 2)   /* on Parrot exit: mark (almost) all PMCs dead and */
                                                    /* garbage collect. */
 
-/* HEADERIZER BEGIN: src/gc/dod.c */
+/* HEADERIZER BEGIN: src/gc/api.c */
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 
 PARROT_EXPORT
@@ -135,7 +135,7 @@ void used_cow(PARROT_INTERP, ARGMOD(Small_Object_Pool *pool), int cleanup)
         FUNC_MODIFIES(*pool);
 
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
-/* HEADERIZER END: src/gc/dod.c */
+/* HEADERIZER END: src/gc/api.c */
 
 
 /* HEADERIZER BEGIN: src/cpu_dep.c */
@@ -155,7 +155,7 @@ extern int CONSERVATIVE_POINTER_CHASING;
 
 
 /* GC subsystem init functions */
-/* HEADERIZER BEGIN: src/gc/gc_gms.c */
+/* HEADERIZER BEGIN: src/gc/generational_ms.c */
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 
 PARROT_EXPORT
@@ -191,7 +191,7 @@ void parrot_gc_gms_wb_key(PARROT_INTERP,
         __attribute__nonnull__(6);
 
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
-/* HEADERIZER END: src/gc/gc_gms.c */
+/* HEADERIZER END: src/gc/generational_gms.c */
 
 /* HEADERIZER BEGIN: src/gc/gc_ims.c */
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
