@@ -567,7 +567,7 @@ Always use these provided macros when you need to test or set these flags.
 
 The PMC has some sort of active destructor, and will have that destructor
 called when the PMC is destroyed. The destructor is typically called from
-within C<src/gc/api.c:Parrot_dod_free_pmc>.
+within C<src/gc/api.c:Parrot_gc_free_pmc>.
 
 =item PObj_custom_mark_FLAG
 

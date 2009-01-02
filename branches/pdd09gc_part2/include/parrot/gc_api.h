@@ -8,8 +8,8 @@
  *     Initial version by Mike Lambert on 2002.05.27
  */
 
-#ifndef PARROT_DOD_H_GUARD
-#define PARROT_DOD_H_GUARD
+#ifndef PARROT_GC_API_H_GUARD
+#define PARROT_GC_API_H_GUARD
 
 #include "parrot/parrot.h"
 
@@ -64,10 +64,10 @@ void clear_cow(PARROT_INTERP, ARGMOD(Small_Object_Pool *pool), int cleanup)
 void Parrot_do_dod_run(PARROT_INTERP, UINTVAL flags)
         __attribute__nonnull__(1);
 
-void Parrot_dod_clear_live_bits(PARROT_INTERP)
+void Parrot_gc_clear_live_bits(PARROT_INTERP)
         __attribute__nonnull__(1);
 
-void Parrot_dod_free_buffer(SHIM_INTERP,
+void Parrot_gc_free_buffer(SHIM_INTERP,
     ARGMOD(Small_Object_Pool *pool),
     ARGMOD(PObj *b))
         __attribute__nonnull__(2)
@@ -75,50 +75,50 @@ void Parrot_dod_free_buffer(SHIM_INTERP,
         FUNC_MODIFIES(*pool)
         FUNC_MODIFIES(*b);
 
-void Parrot_dod_free_buffer_malloc(SHIM_INTERP,
+void Parrot_gc_free_buffer_malloc(SHIM_INTERP,
     SHIM(Small_Object_Pool *pool),
     ARGMOD(PObj *b))
         __attribute__nonnull__(3)
         FUNC_MODIFIES(*b);
 
-void Parrot_dod_free_pmc(PARROT_INTERP,
+void Parrot_gc_free_pmc(PARROT_INTERP,
     SHIM(Small_Object_Pool *pool),
     ARGMOD(PObj *p))
         __attribute__nonnull__(1)
         __attribute__nonnull__(3)
         FUNC_MODIFIES(*p);
 
-void Parrot_dod_free_sysmem(SHIM_INTERP,
+void Parrot_gc_free_sysmem(SHIM_INTERP,
     SHIM(Small_Object_Pool *pool),
     ARGMOD(PObj *b))
         __attribute__nonnull__(3)
         FUNC_MODIFIES(*b);
 
-void Parrot_dod_ms_run(PARROT_INTERP, UINTVAL flags)
+void Parrot_gc_ms_run(PARROT_INTERP, UINTVAL flags)
         __attribute__nonnull__(1);
 
-void Parrot_dod_ms_run_init(PARROT_INTERP)
+void Parrot_gc_ms_run_init(PARROT_INTERP)
         __attribute__nonnull__(1);
 
-void Parrot_dod_profile_end(PARROT_INTERP, int what)
+void Parrot_gc_profile_end(PARROT_INTERP, int what)
         __attribute__nonnull__(1);
 
-void Parrot_dod_profile_start(PARROT_INTERP)
+void Parrot_gc_profile_start(PARROT_INTERP)
         __attribute__nonnull__(1);
 
-void Parrot_dod_sweep(PARROT_INTERP, ARGMOD(Small_Object_Pool *pool))
+void Parrot_gc_sweep(PARROT_INTERP, ARGMOD(Small_Object_Pool *pool))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         FUNC_MODIFIES(*pool);
 
-int Parrot_dod_trace_children(PARROT_INTERP, size_t how_many)
+int Parrot_gc_trace_children(PARROT_INTERP, size_t how_many)
         __attribute__nonnull__(1);
 
-void Parrot_dod_trace_pmc_data(PARROT_INTERP, ARGIN(PMC *p))
+void Parrot_gc_trace_pmc_data(PARROT_INTERP, ARGIN(PMC *p))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
-int Parrot_dod_trace_root(PARROT_INTERP, int trace_stack)
+int Parrot_gc_trace_root(PARROT_INTERP, int trace_stack)
         __attribute__nonnull__(1);
 
 void Parrot_free_pmc_ext(PARROT_INTERP, ARGMOD(PMC *p))
@@ -196,7 +196,7 @@ void parrot_gc_gms_wb_key(PARROT_INTERP,
 /* HEADERIZER BEGIN: src/gc/gc_ims.c */
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 
-void Parrot_dod_ims_wb(PARROT_INTERP, ARGMOD(PMC *agg), ARGMOD(PMC *_new))
+void Parrot_gc_ims_wb(PARROT_INTERP, ARGMOD(PMC *agg), ARGMOD(PMC *_new))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3)
@@ -219,7 +219,7 @@ void Parrot_gc_ims_init(PARROT_INTERP)
                 PObj_live_TEST(agg) && \
                 (PObj_get_FLAGS(agg) & PObj_custom_GC_FLAG) && \
                 !PObj_live_TEST(_new)) { \
-            Parrot_dod_ims_wb((interp), (agg), (_new)); \
+            Parrot_gc_ims_wb((interp), (agg), (_new)); \
         } \
     } while (0)
 
@@ -256,7 +256,7 @@ void Parrot_gc_ims_init(PARROT_INTERP)
 
 #endif
 
-#endif /* PARROT_DOD_H_GUARD */
+#endif /* PARROT_GC_API_H_GUARD */
 
 /*
  * Local variables:
