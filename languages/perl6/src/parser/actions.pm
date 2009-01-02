@@ -1342,36 +1342,35 @@ method package_def($/, $key) {
         $/.panic("Unable to parse " ~ $?PKGDECL ~ " definition");
     }
 
-    my $past := $( $/{$key} );
-    $past.blocktype('declaration');
+    my $block := $( $/{$key} );
+    $block.blocktype('declaration');
+    $block.lexical(0);
 
     my $modulename := $<module_name> 
                          ?? ~$<module_name>[0] !! 
-                         $past.unique('!ANON');
+                         $block.unique('!ANON');
     if ($modulename) {
-        $past.namespace( PAST::Compiler.parse_name( $modulename ) );
+        $block.namespace( PAST::Compiler.parse_name( $modulename ) );
     }
 
     if $key eq 'block' {
         # A normal block acts like a BEGIN and is executed ASAP.
-        $past.pirflags(':load :init');
+        $block.pirflags(':load :init');
     }
     elsif $key eq 'statement_block' && !$<module_name> {
         $/.panic("Compilation unit cannot be anonymous");
     }
+
     #  Create a node at the beginning of the block's initializer
     #  for package initializations
     my $init := PAST::Stmts.new();
-    $past[0].unshift( $init );
+    $block[0].unshift( $init );
 
-    #  At the beginning, create the "class/module/grammar/role/etc" 
-    #  metaclass handle on which we do the other operations.
-    $init.unshift( 
-        PAST::Op.new( :pasttype('bind'),
-            PAST::Var.new( :name('metaclass'), :scope('register'), :isdecl(1) ),
-            PAST::Op.new( :name('!meta_create'), $?PKGDECL, $modulename )
-        )
-    );
+    #  Normally we would create the metaclass object first,
+    #  but if there's an "is also" trait we want to do a class
+    #  lookup instead.  So we do the trait processing first
+    #  (scanning for 'is also' as we go), and then decide how
+    #  to obtain the metaclass.
 
     #  Add any traits coming from the package declarator.
     #  Traits in the body have already been added to the block.
@@ -1382,17 +1381,31 @@ method package_def($/, $key) {
             #  We just modify them to call !meta_trait and add
             #  the metaclass as the first argument.
             my $trait := $( $_ );
-            $trait.name('!meta_trait');
-            $trait.unshift($metaclass);
-            $init.push($trait);
+            if $trait[1] eq 'also' { $block<isalso> := 1; }
+            else {
+                $trait.name('!meta_trait');
+                $trait.unshift($metaclass);
+                $init.push($trait);
+            }
         }
     }
 
-    #  ...and at the end of the block's initializer, we finalize any
-    #  composition that occurred.
-    $past[0].push( PAST::Op.new( :name('!meta_compose'), $metaclass) );
+    #  At the beginning, create the "class/module/grammar/role/etc" 
+    #  metaclass handle on which we do the other operations.
+    $init.unshift( 
+        PAST::Op.new( :pasttype('bind'),
+            PAST::Var.new(:name('metaclass'), :scope('register'), :isdecl(1) ),
+            PAST::Op.new(:name('!meta_create'), 
+                $?PKGDECL, $modulename, +$block<isalso>
+            )
+        )
+    );
 
-    make $past;
+    #  ...and at the end of the block's initializer (after any other
+    #  items added by the block), we finalize the composition
+    $block[0].push( PAST::Op.new( :name('!meta_compose'), $metaclass) );
+
+    make $block;
 }
 
 
