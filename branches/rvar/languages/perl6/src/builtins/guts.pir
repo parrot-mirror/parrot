@@ -366,7 +366,7 @@ first). So for now we just transform multis in user code like this.
 .end
 
 
-=item !meta_create(type, name)
+=item !meta_create(type, name, also)
 
 Create a metaclass object for C<type> with the given C<name>.  
 This simply creates a handle on which we can hang methods, attributes,
@@ -378,9 +378,14 @@ is composed (see C<!meta_compose> below).
 .sub '!meta_create'
     .param string type
     .param string name
+    .param int also
 
     .local pmc metaclass
+    if also goto is_also
     metaclass = newclass name
+    .return (metaclass)
+  is_also:
+    metaclass = get_class name
     .return (metaclass)
 .end 
 
