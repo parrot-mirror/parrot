@@ -2178,9 +2178,6 @@ attribute.
     name = node.'name'()
     name = self.'escape'(name)
 
-    .local int isdecl
-    isdecl = node.'isdecl'()
-
     .local pmc call_on, ops
     call_on = node[0]
     if null call_on goto use_self
@@ -2195,21 +2192,14 @@ attribute.
     if bindpost goto attribute_bind
 
   attribute_post:
-    if isdecl goto attribute_decl
     .local pmc fetchop, storeop
     $P0 = get_hll_global ['POST'], 'Op'
     fetchop = $P0.'new'(ops, call_on, name, 'pirop'=>'getattribute')
     storeop = $P0.'new'(call_on, name, ops, 'pirop'=>'setattribute')
     .tailcall self.'vivify'(node, ops, fetchop, storeop)
 
-  attribute_decl:
-    .tailcall $P0.'new'('node'=>node)
-
   attribute_bind:
     $P0 = get_hll_global ['POST'], 'Op'
-    if isdecl goto attribute_bind_decl
-    .tailcall $P0.'new'(call_on, name, bindpost, 'pirop'=>'setattribute', 'result'=>bindpost)
-  attribute_bind_decl:
     .tailcall $P0.'new'(call_on, name, bindpost, 'pirop'=>'setattribute', 'result'=>bindpost)
 .end
 
