@@ -897,18 +897,17 @@ method trait_verb($/) {
     
 
 method signature($/, $key) {
-    our $?SIGNATURE;
-    our $?SIGNATURE_BLOCK;
     our @?BLOCK;
     if $key eq 'open' {
-        $?SIGNATURE := PAST::Op.new( :pasttype('stmts'), :node($/) );
-        $?SIGNATURE_BLOCK := PAST::Block.new( $?SIGNATURE,
-                                              :blocktype('declaration') );
-        $?SIGNATURE_BLOCK<signature> := 1;
-        @?BLOCK.unshift($?SIGNATURE_BLOCK);
+        my $sigpast := PAST::Op.new( :pasttype('stmts'), :node($/) );
+        my $block    := PAST::Block.new( $sigpast, :blocktype('declaration') );
+        $block<signature> := 1;
+        @?BLOCK.unshift($block);
     }
     else {
-        my $loadinit := $?SIGNATURE_BLOCK.loadinit();
+        my $block    := @?BLOCK.shift();
+        my $sigpast := $block[0];
+        my $loadinit := $block.loadinit();
         my $sigobj   := PAST::Var.new( :scope('register') );
 
         ##  create a Signature object and attach to the block
@@ -920,17 +919,17 @@ method signature($/, $key) {
 
         ##  loop through parameters of signature
         my $arity := $<parameter> ?? +@($<parameter>) !! 0;
-        $?SIGNATURE_BLOCK.arity($arity);
+        $block.arity($arity);
         my $i     := 0;
         while $i < $arity {
             my $var    := $( $<parameter>[$i] );
             my $name   := $var.name();
 
             ##  add var node to block
-            $?SIGNATURE.push( $var );
+            $sigpast.push( $var );
 
             if $var<type_binding> {
-                $?SIGNATURE.push( $var<type_binding> );
+                $sigpast.push( $var<type_binding> );
             }
 
             ##  add parameter to the signature object
@@ -963,8 +962,8 @@ method signature($/, $key) {
 
         ##  restore block stack and return signature ast
         our $?BLOCK_OPEN;
-        $?BLOCK_OPEN := @?BLOCK.shift();
-        make $?SIGNATURE;
+        $?BLOCK_OPEN := $block;
+        make $sigpast;
     }
 }
 
@@ -1025,8 +1024,8 @@ method parameter($/) {
                     )
                 );
                 $var<type_binding> := $type_past;
-                our $?SIGNATURE_BLOCK;
-                $?SIGNATURE_BLOCK.symbol( $type_past.name(), :scope('lexical') );
+                our @?BLOCK;
+                @?BLOCK[0].symbol( $type_past.name(), :scope('lexical') );
             }
             else {
                 $typelist.push( $type_past );
@@ -1068,8 +1067,8 @@ method param_var($/) {
     # Declare symbol as lexical in current (signature) block.
     # This is needed in case any post_constraints try to reference
     # this new param_var.
-    our $?SIGNATURE_BLOCK;
-    $?SIGNATURE_BLOCK.symbol( $name, :scope('lexical') );
+    our @?BLOCK;
+    @?BLOCK[0].symbol( $name, :scope('lexical') );
 
     make $var;
 }
