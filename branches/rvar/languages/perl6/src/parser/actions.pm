@@ -58,20 +58,18 @@ method TOP($/) {
 
 method statement_block($/, $key) {
     our @?BLOCK;
-    our $?SIGNATURE_BLOCK;
-    ##  when entering a block, use any $?SIGNATURE_BLOCK if it exists,
+    our $?BLOCK_OPEN;
+    ##  when entering a block, use any $?BLOCK_OPEN if it exists,
     ##  otherwise create an empty block with an empty first child to
     ##  hold any parameters we might encounter inside the block.
     if $key eq 'open' {
-        my $?BLOCK;
-        if $?SIGNATURE_BLOCK {
-            $?BLOCK := $?SIGNATURE_BLOCK;
-            $?SIGNATURE_BLOCK := 0;
+        if $?BLOCK_OPEN {
+            @?BLOCK.unshift( $?BLOCK_OPEN );
+            $?BLOCK_OPEN := 0;
         }
         else {
-            $?BLOCK := PAST::Block.new( PAST::Stmts.new(), :node($/));
+            @?BLOCK.unshift( PAST::Block.new( PAST::Stmts.new(), :node($/)));
         }
-        @?BLOCK.unshift($?BLOCK);
     }
     if $key eq 'close' {
         my $past := @?BLOCK.shift();
@@ -964,7 +962,8 @@ method signature($/, $key) {
         }
 
         ##  restore block stack and return signature ast
-        @?BLOCK.shift();
+        our $?BLOCK_OPEN;
+        $?BLOCK_OPEN := @?BLOCK.shift();
         make $?SIGNATURE;
     }
 }
@@ -1472,8 +1471,8 @@ method declarator($/) {
     }
     elsif $<signature> {
         $past := $( $<signature> );
-        our $?SIGNATURE_BLOCK;
-        $?SIGNATURE_BLOCK := 0;
+        our $?BLOCK_OPEN;
+        $?BLOCK_OPEN := 0;
     }
     elsif $<routine_declarator> {
         $past := $( $<routine_declarator> );
