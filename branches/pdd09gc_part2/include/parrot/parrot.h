@@ -299,7 +299,7 @@ typedef struct PackFile_ByteCode PackFile_ByteCode;
 #include "parrot/intlist.h"
 #include "parrot/smallobject.h"
 #include "parrot/headers.h"
-#include "parrot/dod.h"
+#include "parrot/gc_api.h"
 #include "parrot/resources.h"
 #include "parrot/string_funcs.h"
 #include "parrot/misc.h"

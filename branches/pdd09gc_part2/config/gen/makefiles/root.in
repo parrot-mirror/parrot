@@ -383,7 +383,7 @@ INTERP_O_FILES = \
     $(SRC_DIR)/exit$(O) \
     $(SRC_DIR)/extend$(O) \
     $(SRC_DIR)/extend_vtable$(O) \
-    $(SRC_DIR)/gc/dod$(O) \
+    $(SRC_DIR)/gc/api$(O) \
     $(SRC_DIR)/gc/gc_gms$(O) \
     $(SRC_DIR)/gc/gc_ims$(O) \
     $(SRC_DIR)/gc/memory$(O) \
@@ -1069,7 +1069,7 @@ $(SRC_DIR)/key$(O) : $(GENERAL_H_FILES) $(SRC_DIR)/key.str
 
 $(SRC_DIR)/gc/smallobject$(O) : $(GENERAL_H_FILES)
 
-$(SRC_DIR)/gc/dod$(O) : $(GENERAL_H_FILES)
+$(SRC_DIR)/gc/api$(O) : $(GENERAL_H_FILES)
 
 $(SRC_DIR)/gc/gc_ims$(O) : $(GENERAL_H_FILES)
 

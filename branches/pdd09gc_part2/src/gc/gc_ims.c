@@ -155,7 +155,7 @@ The graph of all objects found live during the last collection.
 
 The work area of the collector. During marking live objects are "moved"
 from the from-space into the to-space. This is the same as the text_for_GC
-list used in src/dod.c. The to-space is initially empty. During marking
+list used in src/gc/api.c. The to-space is initially empty. During marking
 it gets greyed and finally all reachable objects are black.
 
 =item free-list
@@ -334,9 +334,9 @@ a sleep opcode.
 */
 
 #include "parrot/parrot.h"
-#include "parrot/dod.h"
+#include "parrot/gc_api.h"
 
-/* HEADERIZER HFILE: include/parrot/dod.h */
+/* HEADERIZER HFILE: include/parrot/gc_api.h */
 
 /* HEADERIZER BEGIN: static */
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
@@ -1096,7 +1096,7 @@ Parrot_dod_ims_wb(PARROT_INTERP, ARGMOD(PMC *agg), ARGMOD(PMC *_new))
 
 =head1 SEE ALSO
 
-F<src/gc/dod.c>, F<include/parrot/dod.h>, F<include/parrot/pobj.h>,
+F<src/gc/api.c>, F<include/parrot/gc_api.h>, F<include/parrot/pobj.h>,
 
 =head1 HISTORY
 

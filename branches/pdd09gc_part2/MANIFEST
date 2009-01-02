@@ -897,7 +897,7 @@ include/parrot/charset.h                                    [main]include
 include/parrot/compiler.h                                   [main]include
 include/parrot/datatypes.h                                  [main]include
 include/parrot/debugger.h                                   [main]include
-include/parrot/dod.h                                        [main]include
+include/parrot/gc_api.h                                     [main]include
 include/parrot/dynext.h                                     [main]include
 include/parrot/embed.h                                      [main]include
 include/parrot/encoding.h                                   [main]include
@@ -2949,7 +2949,7 @@ src/exec_save.h                                             []
 src/exec_start.c                                            []
 src/exit.c                                                  []
 src/extend.c                                                []
-src/gc/dod.c                                                []
+src/gc/api.c                                                []
 src/gc/gc_gms.c                                             []
 src/gc/gc_ims.c                                             []
 src/gc/memory.c                                             []

@@ -4,7 +4,7 @@ $Id$
 
 =head1 NAME
 
-src/gc/dod.c - Dead object destruction of the various headers
+src/gc/api.c - Dead object destruction of the various headers
 
 =head1 DESCRIPTION
 
@@ -28,9 +28,9 @@ There's also a verbose mode for garbage collection.
 
 #define DOD_C_SOURCE
 #include "parrot/parrot.h"
-#include "parrot/dod.h"
+#include "parrot/gc_api.h"
 
-/* HEADERIZER HFILE: include/parrot/dod.h */
+/* HEADERIZER HFILE: include/parrot/gc_api.h */
 
 /* HEADERIZER BEGIN: static */
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
@@ -1216,7 +1216,7 @@ Parrot_do_dod_run(PARROT_INTERP, UINTVAL flags)
 
 =head1 SEE ALSO
 
-F<include/parrot/dod.h>, F<src/cpu_dep.c>, F<docs/dev/dod.dev> and
+F<include/parrot/gc_api.h>, F<src/cpu_dep.c>, F<docs/dev/dod.dev> and
 F<docs/pdds/pdd09_gc.pod>.
 
 =head1 HISTORY
