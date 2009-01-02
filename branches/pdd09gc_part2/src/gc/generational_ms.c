@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2001-2007, The Perl Foundation.
+Copyright (C) 2001-2009, The Perl Foundation.
 $Id$
 
 =head1 NAME
@@ -1822,7 +1822,7 @@ gms_debug_verify(PARROT_INTERP, ARGMOD(Small_Object_Pool *pool), ARGIN(const cha
 =head1 SEE ALSO
 
 F<src/gc/api.c>, F<include/parrot/gc_api.h>, F<include/parrot/pobj.h>,
-F<src/gc/gc_ims.c>
+F<src/gc/incremental_ms.c>
 
 =head1 HISTORY
 
