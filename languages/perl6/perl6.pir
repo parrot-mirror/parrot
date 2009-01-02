@@ -101,6 +101,11 @@ USAGE
     $P0 = new 'List'
     set_hll_global ['Perl6';'Grammar';'Actions'], '@?PKGDECL', $P0
 
+    ## create a (shared) metaclass node
+    $P0 = get_hll_global ['PAST'], 'Var'
+    $P0 = $P0.'new'( 'name'=>'metaclass', 'scope'=>'register' )
+    set_hll_global ['Perl6';'Grammar';'Actions'], '$?METACLASS', $P0
+
     ##  create a list of END blocks to be run
     $P0 = new 'List'
     set_hll_global ['Perl6'], '@?END_BLOCKS', $P0
