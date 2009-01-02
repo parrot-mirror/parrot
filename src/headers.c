@@ -136,7 +136,7 @@ new_pmc_pool(PARROT_INTERP)
         new_small_object_pool(sizeof (PMC), num_headers);
 
     pmc_pool->mem_pool   = NULL;
-    pmc_pool->dod_object = Parrot_dod_free_pmc;
+    pmc_pool->dod_object = Parrot_gc_free_pmc;
 
     (interp->arena_base->init_pool)(interp, pmc_pool);
     return pmc_pool;
@@ -164,7 +164,7 @@ new_bufferlike_pool(PARROT_INTERP, size_t actual_buffer_size)
     Small_Object_Pool * const pool =
             new_small_object_pool(buffer_size, num_headers);
 
-    pool->dod_object = Parrot_dod_free_sysmem;
+    pool->dod_object = Parrot_gc_free_sysmem;
     pool->mem_pool   = interp->arena_base->memory_pool;
     (interp->arena_base->init_pool)(interp, pool);
     return pool;
@@ -191,9 +191,9 @@ new_buffer_pool(PARROT_INTERP)
     Small_Object_Pool * const pool = make_bufferlike_pool(interp, sizeof (Buffer));
 
 #ifdef GC_IS_MALLOC
-    pool->dod_object = Parrot_dod_free_buffer_malloc;
+    pool->dod_object = Parrot_gc_free_buffer_malloc;
 #else
-    pool->dod_object = Parrot_dod_free_buffer;
+    pool->dod_object = Parrot_gc_free_buffer;
 #endif
 
     return pool;
@@ -824,7 +824,7 @@ free_pool(ARGMOD(Small_Object_Pool *pool))
 =item C<static int sweep_cb_buf>
 
 Performs a final garbage collection sweep, and then frees the pool. Calls
-C<Parrot_dod_sweep> to perform the sweep, and C<free_pool> to free the
+C<Parrot_gc_sweep> to perform the sweep, and C<free_pool> to free the
 pool and all it's arenas.
 
 =cut
@@ -846,7 +846,7 @@ sweep_cb_buf(PARROT_INTERP, ARGMOD(Small_Object_Pool *pool), SHIM(int flag),
 #endif
     {
         UNUSED(arg);
-        Parrot_dod_sweep(interp, pool);
+        Parrot_gc_sweep(interp, pool);
         free_pool(pool);
     }
     return 0;
@@ -858,7 +858,7 @@ sweep_cb_buf(PARROT_INTERP, ARGMOD(Small_Object_Pool *pool), SHIM(int flag),
 =item C<static int sweep_cb_pmc>
 
 Performs a garbage collection sweep of the given pmc pool, and then frees
-it. Calls C<Parrot_dod_sweep> to perform the sweep, and C<free_pool> to
+it. Calls C<Parrot_gc_sweep> to perform the sweep, and C<free_pool> to
 free the pool and all it's arenas. Always returns C<0>.
 
 =cut
@@ -869,7 +869,7 @@ static int
 sweep_cb_pmc(PARROT_INTERP, ARGMOD(Small_Object_Pool *pool),
         SHIM(int flag), SHIM(void *arg))
 {
-    Parrot_dod_sweep(interp, pool);
+    Parrot_gc_sweep(interp, pool);
     free_pool(pool);
     return 0;
 }

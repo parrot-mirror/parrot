@@ -501,7 +501,7 @@ Parrot_gc_ms_init(PARROT_INTERP)
 {
     Arenas * const arena_base     = interp->arena_base;
 
-    arena_base->do_gc_mark         = Parrot_dod_ms_run;
+    arena_base->do_gc_mark         = Parrot_gc_ms_run;
     arena_base->finalize_gc_system = NULL;
     arena_base->init_pool          = gc_ms_pool_init;
 }

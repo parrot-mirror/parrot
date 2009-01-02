@@ -1446,7 +1446,7 @@ Trace the root set. If C<trace_stack> is true, trace system areas.
 static int
 gc_gms_trace_root(PARROT_INTERP, int trace_stack)
 {
-    const int ret = Parrot_dod_trace_root(interp, trace_stack);
+    const int ret = Parrot_gc_trace_root(interp, trace_stack);
 
     if (ret == 0)
         return 0;
