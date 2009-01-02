@@ -428,6 +428,46 @@ Add a trait with the given C<type> and C<name> to C<metaclass>.
 .end
 
 
+=item !meta_attribute(metaclass, name, itype [, 'type'=>type] )
+
+Add attribute C<name> to C<metaclass> with the given C<itype>
+and C<type>.
+
+=cut
+
+.sub '!meta_attribute'
+    .param pmc metaclass
+    .param string name
+    .param string itype
+    .param pmc attr            :slurpy :named
+
+    # If the name doesn't have a twigil, we give it one.
+    $S0 = substr name, 1, 1
+    if $S0 == '!' goto have_name
+    substr name, 1, 0, '!'
+  have_name:
+
+    # Add the attribute to the metaclass.
+    metaclass.'add_attribute'(name)
+
+    # Set the itype for the attribute.
+    .local pmc attrhash, it
+    $P0 = metaclass.'attributes'()
+    attrhash = $P0[name]
+    attrhash['itype'] = itype
+
+    # and set any other attributes that came in via the slurpy hash
+    it = iter attr
+  attr_loop:
+    unless it goto attr_done
+    $S0 = shift it
+    $P0 = attr[$S0]
+    attrhash[$S0] = $P0
+    goto attr_loop
+  attr_done:
+.end
+
+
 =item !keyword_class(name)
 
 Internal helper method to create a class.

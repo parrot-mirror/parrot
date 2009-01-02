@@ -1374,7 +1374,7 @@ method package_def($/, $key) {
 
     #  Add any traits coming from the package declarator.
     #  Traits in the body have already been added to the block.
-    my $metaclass := PAST::Var.new( :name('metaclass'), :scope('register') );
+    our $?METACLASS;
     if $<trait> {
         for @($<trait>) {
             #  Trait nodes come in as PAST::Op( :name('list') ).
@@ -1384,7 +1384,7 @@ method package_def($/, $key) {
             if $trait[1] eq 'also' { $block<isalso> := 1; }
             else {
                 $trait.name('!meta_trait');
-                $trait.unshift($metaclass);
+                $trait.unshift($?METACLASS);
                 $init.push($trait);
             }
         }
@@ -1403,15 +1403,18 @@ method package_def($/, $key) {
 
     #  ...and at the end of the block's initializer (after any other
     #  items added by the block), we finalize the composition
-    $block[0].push( PAST::Op.new( :name('!meta_compose'), $metaclass) );
+    $block[0].push( PAST::Op.new( :name('!meta_compose'), $?METACLASS) );
 
     make $block;
 }
 
 
 method scope_declarator($/) {
-    my $sym  := ~$<sym>;
-    my $past := $( $<scoped> );
+    my $sym   := ~$<sym>;
+    my $past  := $( $<scoped> );
+    my $scope := 'lexical';
+    if    $sym eq 'our' { $scope := 'package'; }
+    elsif $sym eq 'has' { $scope := 'attribute'; }
 
     if $past.isa(PAST::Var) {
         $past := PAST::Op.new( $past );
@@ -1421,12 +1424,10 @@ method scope_declarator($/) {
     for @($past) {
         if $_.isa(PAST::Var) {
             my $var := $_;
-            my $scope := 'lexical';
-            if $sym eq 'our' {
-                $scope := 'package';
-                $var.lvalue(1);
-            }
-    
+
+            my $type;
+            if +@($var<type>) { $type := $var<type>[0]; }  # FIXME
+
             # This is a variable declaration, so we set the scope in
             # the block.  The symbol entry also tells us the
             # implementation type of the variable (itype), any
@@ -1436,22 +1437,37 @@ method scope_declarator($/) {
             @?BLOCK[0].symbol( $var.name(), :scope($scope) );
             $var.scope($scope);
             $var.isdecl(1);
-           
+            if $scope eq 'package' { $var.lvalue(1); }
             my $init_value := $var.viviself(); 
-            my $viviself   := PAST::Op.new( :pirop('new PsP'), $var<itype> );
-            if $init_value { $viviself.push( $init_value ); }
-            $var.viviself( $viviself );
 
-            if +@($var<type>) {
-                $var := PAST::Op.new( :pirop('setprop'), 
-                                      $var, 'type', $var<type>[0] );
+            if $scope eq 'attribute' {
+                our $?METACLASS;
+                my $has := PAST::Op.new( :name('!meta_attribute'), 
+                               $?METACLASS, $var.name(), $var<itype> );
+                if $type { $type.named('type'); $has.push($type); }
+                if $init_value { 
+                    $init_value.named('init_value');
+                    $has.push($init_value);
+                }
+                @?BLOCK[0].push( $has );
+            }
+            else { 
+                # $scope eq 'package' | 'lexical'
+                my $viviself := PAST::Op.new( :pirop('new PsP'), $var<itype> );
+                if $init_value { $viviself.push( $init_value ); }
+                $var.viviself( $viviself );
+                if $type { 
+                    $var := PAST::Op.new( :pirop('setprop'), 
+                                          $var, 'type', $type );
+                }
             }
             $past[$i] := $var;
         }
         $i++;
     }
-    if +@($past) == 1 { $past := $past[0]; }
-    else { $past.name('infix:,'); $past.pasttype('call'); }
+    if    $scope eq 'attribute' { $past := PAST::Stmts.new(); }
+    elsif +@($past) == 1        { $past := $past[0]; }
+    else  { $past.name('infix:,'); $past.pasttype('call'); }
     make $past;
 }
 
@@ -1564,6 +1580,14 @@ method variable($/, $key) {
             $past.namespace(@identifier);
             $past.scope('package');
             $past.viviself( container_itype($sigil) );
+        }
+
+        ##  if ! twigil, it's a private attribute
+        if $twigil eq '!' {
+            $varname := $sigil ~ $twigil ~ $name;
+            $past.name($varname);
+            $past.scope('attribute');
+            $past.unshift( PAST::Var.new( :name('self'), :scope('lexical') ) );
         }
     }
     elsif $key eq 'special_variable' {
