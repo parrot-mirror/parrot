@@ -193,7 +193,7 @@ void parrot_gc_gms_wb_key(PARROT_INTERP,
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 /* HEADERIZER END: src/gc/generational_gms.c */
 
-/* HEADERIZER BEGIN: src/gc/gc_ims.c */
+/* HEADERIZER BEGIN: src/gc/incremental_ms.c */
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 
 void Parrot_gc_ims_wb(PARROT_INTERP, ARGMOD(PMC *agg), ARGMOD(PMC *_new))
@@ -207,7 +207,7 @@ void Parrot_gc_ims_init(PARROT_INTERP)
         __attribute__nonnull__(1);
 
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
-/* HEADERIZER END: src/gc/gc_ims.c */
+/* HEADERIZER END: src/gc/incremental_ms.c */
 
 /*
  * write barrier
