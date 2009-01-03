@@ -3,8 +3,8 @@
  * Copyright (C) 2002-2008, The Perl Foundation
  */
 
-#ifndef PARROT_SMALLOBJECT_H_GUARD
-#define PARROT_SMALLOBJECT_H_GUARD
+#ifndef PARROT_GC_MARK_SWEEP_H_GUARD
+#define PARROT_GC_MARK_SWEEP_H_GUARD
 
 #  include "parrot/parrot.h"
 
@@ -134,7 +134,7 @@ typedef struct Small_Object_Pool {
 #endif
 
 
-/* HEADERIZER BEGIN: src/gc/smallobject.c */
+/* HEADERIZER BEGIN: src/gc/gc_mark_sweep.c */
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 
 PARROT_WARN_UNUSED_RESULT
@@ -190,9 +190,9 @@ void Parrot_small_object_pool_merge(PARROT_INTERP,
         FUNC_MODIFIES(*source);
 
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
-/* HEADERIZER END: src/gc/smallobject.c */
+/* HEADERIZER END: src/gc/gc_mark_sweep.c */
 
-#endif /* PARROT_SMALLOBJECT_H_GUARD */
+#endif /* PARROT_GC_MARK_SWEEP_H_GUARD */
 
 /*
  * Local variables:
