@@ -1938,7 +1938,17 @@ attribute.
     scope = concat " '", scope
     scope = concat scope, "'"
   scope_error_1:
-    .tailcall self.'panic'("Scope", scope, " not found for PAST::Var '", name, "'")
+    # Find the nearest named block
+    .local pmc it
+    $P0 = get_global '@?BLOCK'
+    it = iter $P0
+  scope_error_block_loop:
+    unless it goto scope_error_2
+    $P0 = shift it
+    $S0 = $P0.'name'()
+    unless $S0 goto scope_error_block_loop
+  scope_error_2:
+    .tailcall self.'panic'("Scope", scope, " not found for PAST::Var '", name, "' in ", $S0)
 .end
 
 
