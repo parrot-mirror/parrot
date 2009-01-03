@@ -56,7 +56,7 @@ static int sweep_cb(PARROT_INTERP,
         FUNC_MODIFIES(*pool)
         FUNC_MODIFIES(*arg);
 
-static int trace_active_PMCs(PARROT_INTERP, int trace_stack)
+static int trace_active_PMCs(PARROT_INTERP, Parrot_gc_trace_type trace)
         __attribute__nonnull__(1);
 
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
@@ -242,16 +242,28 @@ that need timely destruction were found.
 
 C<trace_stack> can have these values:
 
- 0 ... trace normal roots, no system areas
- 1 ... trace whole root set
- 2 ... trace system areas only
+=over 4
+
+=item * GC_TRACE_FULL
+
+trace whole root set, including system areas
+
+=item * GC_TRACE_ROOT_ONLY
+
+trace normal roots, no system areas
+
+=item * GC_TRACE_SYSTEM_ONLY
+
+trace system areas only
+
+=back
 
 =cut
 
 */
 
 int
-Parrot_gc_trace_root(PARROT_INTERP, int trace_stack)
+Parrot_gc_trace_root(PARROT_INTERP, Parrot_gc_trace_type trace)
 {
     Arenas           * const arena_base = interp->arena_base;
     Parrot_Context   *ctx;
@@ -260,7 +272,7 @@ Parrot_gc_trace_root(PARROT_INTERP, int trace_stack)
     /* note: adding locals here did cause increased DOD runs */
     mark_context_start();
 
-    if (trace_stack == 2) {
+    if (trace == GC_TRACE_SYSTEM_ONLY) {
         trace_system_areas(interp);
         return 0;
     }
@@ -339,7 +351,7 @@ Parrot_gc_trace_root(PARROT_INTERP, int trace_stack)
         return 0;
 
     /* Find important stuff on the system stack */
-    if (trace_stack)
+    if (trace == GC_TRACE_FULL)
         trace_system_areas(interp);
 
     if (interp->profile)
@@ -362,9 +374,9 @@ to proceed with GC.
 */
 
 static int
-trace_active_PMCs(PARROT_INTERP, int trace_stack)
+trace_active_PMCs(PARROT_INTERP, Parrot_gc_trace_type trace)
 {
-    if (!Parrot_gc_trace_root(interp, trace_stack))
+    if (!Parrot_gc_trace_root(interp, trace))
         return 0;
 
     /* Okay, we've marked the whole root set, and should have a good-sized
@@ -1156,7 +1168,9 @@ Parrot_gc_ms_run(PARROT_INTERP, UINTVAL flags)
     Parrot_go_collect(interp);
 
     /* Now go trace the PMCs */
-    if (trace_active_PMCs(interp, (int)(flags & GC_trace_stack_FLAG))) {
+    if (trace_active_PMCs(interp, (flags & GC_trace_stack_FLAG)
+        ? GC_TRACE_FULL
+        : GC_TRACE_ROOT_ONLY)) {
         int ignored;
 
         arena_base->dod_trace_ptr = NULL;
