@@ -17,7 +17,7 @@ specified type.
 .sub _main :main
     .param pmc argv
 
-    load_bytecode '../../../runtime/parrot/library/TGE.pbc'
+    load_bytecode 'TGE.pbc'
     load_bytecode 'lib/Leaf.pir'
     load_bytecode 'lib/Branch.pir'
 
