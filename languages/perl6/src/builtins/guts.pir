@@ -441,11 +441,22 @@ and C<type>.
     .param string itype
     .param pmc attr            :slurpy :named
 
-    # If the name doesn't have a twigil, we give it one.
-    $S0 = substr name, 1, 1
-    if $S0 == '!' goto have_name
+    # twigil handling
+    .local string twigil
+    twigil = substr name, 1, 1
+    if twigil == '.' goto twigil_public
+    if twigil == '!' goto twigil_done
     substr name, 1, 0, '!'
-  have_name:
+    goto twigil_done
+  twigil_public:
+    substr name, 1, 1, '!'
+    .const 'Sub' accessor = '!default_accessor'
+    $P0 = clone accessor
+    $P1 = box name
+    setprop $P0, 'name', $P1
+    $S0 = substr name, 2
+    metaclass.'add_method'($S0, $P0)
+  twigil_done:
 
     # Add the attribute to the metaclass.
     metaclass.'add_attribute'(name)
@@ -465,6 +476,17 @@ and C<type>.
     attrhash[$S0] = $P0
     goto attr_loop
   attr_done:
+.end
+
+
+.sub '!default_accessor' :anon :method
+    .local pmc interp, accessor
+    interp = getinterp
+    accessor = interp['sub']
+    $P0 = getprop 'name', accessor
+    $S0 = $P0
+    $P1 = getattribute self, $S0
+    .return ($P1)
 .end
 
 

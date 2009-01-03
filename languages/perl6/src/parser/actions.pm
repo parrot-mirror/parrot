@@ -1512,6 +1512,11 @@ method declarator($/) {
 method variable_declarator($/) {
     our @?BLOCK;
     my $var    := $( $<variable> );
+
+    ##  The $<variable> subrule might've saved a PAST::Var node for
+    ##  us (e.g., $.x), if so, use it instead.
+
+    if $var<vardecl> { $var := $var<vardecl>; }
     my $name   := $var.name();
     my $symbol := @?BLOCK[0].symbol( $name );
     if $symbol<scope> eq 'lexical' {
@@ -1536,6 +1541,13 @@ method variable($/, $key) {
         my $varname    := $sigil ~ $name;
         $past := PAST::Var.new( :name($varname), :node($/) );
 
+        ##  if namespace qualified or has a '*' twigil, it's a package var
+        if @identifier || $twigil eq '*' {
+            $past.namespace(@identifier);
+            $past.scope('package');
+            $past.viviself( container_itype($sigil) );
+        }
+
         if $varname eq '@_' || $varname eq '%_' {
             unless $?BLOCK.symbol($varname) {
                 $?BLOCK.symbol( $varname, :scope('lexical') );
@@ -1548,6 +1560,7 @@ method variable($/, $key) {
         }
 
         if $sigil eq '&' {
+            $sigil := '';
             $varname := $name;
             $past.name($varname);
             $past.scope('package');
@@ -1575,19 +1588,32 @@ method variable($/, $key) {
             }
         }
 
-        ##  if namespace qualified or has a '*' twigil, it's a package var
-        if @identifier || $twigil eq '*' {
-            $past.namespace(@identifier);
-            $past.scope('package');
-            $past.viviself( container_itype($sigil) );
+        ##  if no twigil, but variable is 'attribute' in an outer scope,
+        ##  it's really a private attribute
+        if !$twigil {
+            my $sym := outer_symbol($varname);
+            if $sym && $sym<scope> eq 'attribute' { $twigil := '!' };
         }
 
-        ##  if ! twigil, it's a private attribute
-        if $twigil eq '!' {
+        ##  handle ! and . twigil as attribute lookup...
+        our @?IN_DECL;
+        if $twigil eq '!' || $twigil eq '.' {
             $varname := $sigil ~ $twigil ~ $name;
             $past.name($varname);
             $past.scope('attribute');
             $past.unshift( PAST::Var.new( :name('self'), :scope('lexical') ) );
+        }
+
+        ## ...but return . twigil as a method call, saving the
+        ## PAST::Var node in $past <vardecl>where it can be easily 
+        ## retrieved by <variable_declarator> if we're called from there.
+        if $twigil eq '.' {
+            my $var := $past;
+            $past := PAST::Op.new( :node($/), :pasttype('callmethod'),
+                :name($name),
+                PAST::Var.new( :name('self'), :scope('lexical') )
+            );
+            $past<vardecl> := $var;
         }
     }
     elsif $key eq 'special_variable' {
