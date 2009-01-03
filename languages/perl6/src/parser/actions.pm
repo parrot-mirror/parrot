@@ -952,9 +952,14 @@ method signature($/, $key) {
                 $sigparam.push($trait);
             }
 
-            my $readtype := $var<readtype>;
-            $readtype.named('readtype');
-            $sigparam.push($readtype);
+            my $readtype := trait_readtype( $var<traitlist> ) || 'readonly';
+            if $readtype eq 'CONFLICT' {
+                $<parameter>[$i].panic(
+                    "Can use only one of readonly, rw, and copy on "
+                    ~ $name ~ " parameter"
+                );
+            }
+            $sigparam.push(PAST::Val.new(:value($readtype),:named('readtype')));
 
             $loadinit.push($sigparam);
             $i++;
@@ -1033,20 +1038,11 @@ method parameter($/) {
         }
     }
 
-    my $readtype := '';
+    my $traitlist := PAST::Op.new( :name('infix:,'), :pasttype('call') );
+    $var<traitlist> := $traitlist;
     if $<trait> {
-        for @($<trait>) {
-            my $traitpast := $( $_ );
-            my $name := $traitpast[1];
-            if $name eq 'readonly' || $name eq 'rw' || $name eq 'copy' {
-                $readtype && 
-                    $/.panic("Can only use one of readonly, rw, and copy");
-                $readtype := $name;
-            }
-            # else $traitlist.push( $traitpast );  ## when we do other traits
-        }
+        for @($<trait>) { $traitlist.push( $( $_ ) ); }
     }
-    $var<readtype> := PAST::Val.new( :value($readtype || 'readonly') );
 
     make $var;
 }
@@ -2373,70 +2369,15 @@ sub container_itype($sigil) {
 }
 
 
-# Processes a handles expression to produce the appropriate method(s).
-sub process_handles($/, $expr, $attr_name) {
-    my $past := PAST::Stmts.new();
-
-    # What type of expression do we have?
-    if $expr.isa(PAST::Val) && $expr.returns() eq 'Str' {
-        # Just a single string mapping.
-        my $name := ~$expr.value();
-        my $method := make_handles_method($/, $name, $name, $attr_name);
-        $past.push(add_method_to_class($method));
-    }
-    elsif $expr.isa(PAST::Op) && $expr.returns() eq 'Pair' {
-        # Single pair.
-        my $method := make_handles_method_from_pair($/, $expr, $attr_name);
-        $past.push(add_method_to_class($method));
-    }
-    elsif $expr.isa(PAST::Op) && $expr.pasttype() eq 'call' &&
-          $expr.name() eq 'list' {
-        # List of something, but what is it?
-        for @($expr) {
-            if $_.isa(PAST::Val) && $_.returns() eq 'Str' {
-                # String value.
-                my $name := ~$_.value();
-                my $method := make_handles_method($/, $name, $name, $attr_name);
-                $past.push(add_method_to_class($method));
-            }
-            elsif $_.isa(PAST::Op) && $_.returns() eq 'Pair' {
-                # Pair.
-                my $method := make_handles_method_from_pair($/, $_, $attr_name);
-                $past.push(add_method_to_class($method));
-            }
-            else {
-                $/.panic(
-                    'Only a list of constants or pairs can be used in handles'
-                );
-            }
+sub trait_readtype($traitpast) {
+    my $readtype;
+    for @($traitpast) {
+        my $tname := $_[1];
+        if $tname eq 'readonly' || $tname eq 'rw' || $tname eq 'copy' {
+            $readtype := $readtype ?? 'CONFLICT' !! $tname;
         }
     }
-    elsif $expr.isa(PAST::Stmts) && $expr[0].name() eq 'infix:,' {
-        # Also a list, but constructed differently.
-        for @($expr[0]) {
-            if $_.isa(PAST::Val) && $_.returns() eq 'Str' {
-                # String value.
-                my $name := ~$_.value();
-                my $method := make_handles_method($/, $name, $name, $attr_name);
-                $past.push(add_method_to_class($method));
-            }
-            elsif $_.isa(PAST::Op) && $_.returns() eq 'Pair' {
-                # Pair.
-                my $method := make_handles_method_from_pair($/, $_, $attr_name);
-                $past.push(add_method_to_class($method));
-            }
-            else {
-                $/.panic(
-                    'Only a list of constants or pairs can be used in handles'
-                );
-            }
-        }
-    }
-    else {
-        $/.panic('Illegal or unimplemented use of handles');
-    }
-
-    $past
+    $readtype;
 }
 
 
