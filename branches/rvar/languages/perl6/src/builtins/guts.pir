@@ -450,12 +450,6 @@ and C<type>.
     goto twigil_done
   twigil_public:
     substr name, 1, 1, '!'
-    .const 'Sub' accessor = '!default_accessor'
-    $P0 = clone accessor
-    $P1 = box name
-    setprop $P0, 'name', $P1
-    $S0 = substr name, 2
-    metaclass.'add_method'($S0, $P0)
   twigil_done:
 
     # Add the attribute to the metaclass.
@@ -476,17 +470,6 @@ and C<type>.
     attrhash[$S0] = $P0
     goto attr_loop
   attr_done:
-.end
-
-
-.sub '!default_accessor' :anon :method
-    .local pmc interp, accessor
-    interp = getinterp
-    accessor = interp['sub']
-    $P0 = getprop 'name', accessor
-    $S0 = $P0
-    $P1 = getattribute self, $S0
-    .return ($P1)
 .end
 
 

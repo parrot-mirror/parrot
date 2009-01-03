@@ -1410,6 +1410,8 @@ method package_def($/, $key) {
 
 
 method scope_declarator($/) {
+    our @?BLOCK;
+    my $block := @?BLOCK[0];
     my $sym   := ~$<sym>;
     my $past  := $( $<scoped> );
     my $scope := 'lexical';
@@ -1425,22 +1427,29 @@ method scope_declarator($/) {
         if $_.isa(PAST::Var) {
             my $var := $_;
 
-            my $type;
-            if +@($var<type>) { $type := $var<type>[0]; }  # FIXME
-
             # This is a variable declaration, so we set the scope in
-            # the block.  The symbol entry also tells us the
-            # implementation type of the variable (itype), any
-            # initial value for the variable (viviself), and
-            # any type constraints (type).
-            our @?BLOCK;
-            @?BLOCK[0].symbol( $var.name(), :scope($scope) );
+            # the block's symbol table as well as the variable itself.
+            $block.symbol( $var.name(), :scope($scope) );
             $var.scope($scope);
             $var.isdecl(1);
             if $scope eq 'package' { $var.lvalue(1); }
             my $init_value := $var.viviself(); 
+            my $type;
+            if +@($var<type>) { $type := $var<type>[0]; }  # FIXME
 
+            # If the var has a '.' twigil, we need to create an
+            # accessor method for it in the block (class/grammar/role)
+            if $var<twigil> eq '.' {
+                my $method := PAST::Block.new( :blocktype('method') );
+                $method.name( substr($var.name(), 2) );
+                $method.push( PAST::Var.new( :name($var.name()) ) );
+                $block[0].push($method);
+            }
+            
             if $scope eq 'attribute' {
+                # Attribute declaration.  Add code to the beginning
+                # of the block (really class/grammar/role) to
+                # create the attribute.
                 our $?METACLASS;
                 my $has := PAST::Op.new( :name('!meta_attribute'), 
                                $?METACLASS, $var.name(), $var<itype> );
@@ -1449,7 +1458,7 @@ method scope_declarator($/) {
                     $init_value.named('init_value');
                     $has.push($init_value);
                 }
-                @?BLOCK[0].push( $has );
+                $block[0].push( $has );
             }
             else { 
                 # $scope eq 'package' | 'lexical'
@@ -1542,7 +1551,7 @@ method variable($/, $key) {
         my $varname  := $sigil ~ $twigil ~ $name;
 
         # If no twigil, but varname is 'attribute' in outer scope,
-        # it's really a private attribute and needs a '!' twigil
+        # it's really a private attribute and implies a '!' twigil
         if !$twigil {
             my $sym := outer_symbol($varname);
             if $sym && $sym<scope> eq 'attribute' { 
@@ -1613,6 +1622,7 @@ method variable($/, $key) {
         # retrieved by <variable_declarator> if we're called from there.
         if $twigil eq '.' {
             my $vardecl := $var;
+            $vardecl.name( $sigil ~ '!' ~ $name );
             $var := PAST::Op.new( :node($/), :pasttype('callmethod'),
                 :name($name),
                 PAST::Var.new( :name('self'), :scope('lexical') )
