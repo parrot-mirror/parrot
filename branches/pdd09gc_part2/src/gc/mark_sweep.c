@@ -19,9 +19,9 @@ Handles the accessing of small object pools (header pools).
 */
 
 #include "parrot/parrot.h"
-#include "parrot/smallobject.h"
+#include "parrot/gc_mark_sweep.h"
 
-/* HEADERIZER HFILE: include/parrot/smallobject.h */
+/* HEADERIZER HFILE: include/parrot/mark_sweep.h */
 
 /* HEADERIZER BEGIN: static */
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
@@ -585,7 +585,7 @@ Parrot_small_object_pool_merge(PARROT_INTERP,
 
 =head1 SEE ALSO
 
-F<include/parrot/smallobject.h>, F<docs/memory_internals.pod>.
+F<include/parrot/mark_sweep.h>, F<docs/memory_internals.pod>.
 
 =cut
 

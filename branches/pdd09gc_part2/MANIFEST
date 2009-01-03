@@ -944,7 +944,7 @@ include/parrot/scheduler.h                                  [main]include
 include/parrot/scheduler_private.h                          [main]include
 include/parrot/settings.h                                   [main]include
 include/parrot/slice.h                                      [main]include
-include/parrot/smallobject.h                                [main]include
+include/parrot/gc_mark_sweep.h                              [main]include
 include/parrot/stacks.h                                     [main]include
 include/parrot/stat.h                                       [main]include
 include/parrot/stm/backend.h                                [main]include
@@ -2956,7 +2956,7 @@ src/gc/memory.c                                             []
 src/gc/register.c                                           []
 src/gc/res_lea.c                                            []
 src/gc/resources.c                                          []
-src/gc/smallobject.c                                        []
+src/gc/mark_sweep.c                                         []
 src/global.c                                                []
 src/global_setup.c                                          []
 src/hash.c                                                  []

@@ -65,7 +65,7 @@ are still alive, it will scan through all of the dead objects to see if any of
 them believe they are alive (which will happen for infants, since they come
 into existence marked live.) If it finds any, it will print them out.
 You can then re-run the program with a breakpoint set on the routine that
-allocated the object (e.g. C<get_free_object> in F<src/gc/smallobject.c>).
+allocated the object (e.g. C<get_free_object> in F<src/gc/mark_sweep.c>).
 You'll probably want to make the breakpoint conditional on the object having
 the version number that was reported, because the same memory location will
 probably hold many different objects over the lifetime of the program.
