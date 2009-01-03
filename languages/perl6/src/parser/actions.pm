@@ -1038,9 +1038,9 @@ method parameter($/) {
         }
     }
 
-    my $traitlist := PAST::Op.new( :name('infix:,'), :pasttype('call') );
-    $var<traitlist> := $traitlist;
     if $<trait> {
+        my $traitlist := PAST::Op.new( :name('infix:,'), :pasttype('call') );
+        $var<traitlist> := $traitlist;
         for @($<trait>) { $traitlist.push( $( $_ ) ); }
     }
 
@@ -1438,7 +1438,21 @@ method scope_declarator($/) {
             if $var<twigil> eq '.' {
                 my $method := PAST::Block.new( :blocktype('method') );
                 $method.name( substr($var.name(), 2) );
-                $method.push( PAST::Var.new( :name($var.name()) ) );
+                my $value := PAST::Var.new( :name($var.name()) );
+                my $readtype := trait_readtype( $var<traitlist> ) || 'readonly';
+                if $readtype eq 'CONFLICT' {
+                    $<scoped>.panic(
+                        "Can use only one of readonly, rw, and copy on "
+                        ~ $var.name() ~ " parameter"
+                    );
+                }
+                elsif $readtype ne 'rw' {
+                    $value := PAST::Op.new( :pirop('new PsP'), 
+                                  'ObjectRef', $value);
+                    $value := PAST::Op.new( :pirop('setprop'),
+                                  $value, 'readonly', 1);
+                }
+                $method.push( $value );
                 $block[0].push($method);
             }
             
@@ -1531,6 +1545,13 @@ method variable_declarator($/) {
     $var.isdecl(1);
     $var<type>  := PAST::Op.new( :name('and'), :pasttype('call') );
     $var<itype> := container_itype($<variable><sigil>);
+
+    if $<trait> {
+        my $traitlist := PAST::Op.new( :name('infix:,'), :pasttype('call') );
+        $var<traitlist> := $traitlist;
+        for @($<trait>) { $traitlist.push( $( $_ ) ); }
+    }
+
     make $var;
 }
 
@@ -2371,10 +2392,12 @@ sub container_itype($sigil) {
 
 sub trait_readtype($traitpast) {
     my $readtype;
-    for @($traitpast) {
-        my $tname := $_[1];
-        if $tname eq 'readonly' || $tname eq 'rw' || $tname eq 'copy' {
-            $readtype := $readtype ?? 'CONFLICT' !! $tname;
+    if $traitpast {
+        for @($traitpast) {
+            my $tname := $_[1];
+            if $tname eq 'readonly' || $tname eq 'rw' || $tname eq 'copy' {
+                $readtype := $readtype ?? 'CONFLICT' !! $tname;
+            }
         }
     }
     $readtype;
