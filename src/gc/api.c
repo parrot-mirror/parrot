@@ -702,7 +702,7 @@ Parrot_gc_free_pmc(PARROT_INTERP, SHIM(Small_Object_Pool *pool),
         VTABLE_destroy(interp, pmc);
 
     if (PObj_is_PMC_EXT_TEST(p))
-         Parrot_free_pmc_ext(interp, pmc);
+         Parrot_gc_free_pmc_ext(interp, pmc);
 
 #ifndef NDEBUG
 
@@ -716,7 +716,7 @@ Parrot_gc_free_pmc(PARROT_INTERP, SHIM(Small_Object_Pool *pool),
 
 /*
 
-=item C<void Parrot_free_pmc_ext>
+=item C<void Parrot_gc_free_pmc_ext>
 
 Frees the C<PMC_EXT> structure attached to a PMC, if it exists.
 
@@ -725,7 +725,7 @@ Frees the C<PMC_EXT> structure attached to a PMC, if it exists.
 */
 
 void
-Parrot_free_pmc_ext(PARROT_INTERP, ARGMOD(PMC *p))
+Parrot_gc_free_pmc_ext(PARROT_INTERP, ARGMOD(PMC *p))
 {
     /* if the PMC has a PMC_EXT structure, return it to the pool/arena */
     Arenas            * const arena_base = interp->arena_base;
@@ -784,7 +784,6 @@ void
 Parrot_gc_free_buffer_malloc(SHIM_INTERP, SHIM(Small_Object_Pool *pool),
         ARGMOD(PObj *b))
 {
-
     /* free allocated space at (int *)bufstart - 1, but not if it used COW or is
      * external */
     PObj_buflen(b) = 0;
