@@ -1530,24 +1530,61 @@ method variable_declarator($/) {
 }
 
 method variable($/, $key) {
-    my $past;
+    my $var;
     our @?BLOCK;
     my $?BLOCK := @?BLOCK[0];
     if $key eq 'desigilname' {
-        my $sigil      := ~$<sigil>;
-        my $twigil     := ~$<twigil>[0];
-        my @identifier := Perl6::Compiler.parse_name( $<desigilname> );
-        my $name       := ~@identifier.pop();
-        my $varname    := $sigil ~ $name;
-        $past := PAST::Var.new( :name($varname), :node($/) );
+        my $sigil    := ~$<sigil>;
+        if $sigil eq '&' { $sigil := ''; }
+        my $twigil   := ~$<twigil>[0];
+        my @ns       := Perl6::Compiler.parse_name( $<desigilname> );
+        my $name     := ~@ns.pop();
+        my $varname  := $sigil ~ $twigil ~ $name;
 
-        ##  if namespace qualified or has a '*' twigil, it's a package var
-        if @identifier || $twigil eq '*' {
-            $past.namespace(@identifier);
-            $past.scope('package');
-            $past.viviself( container_itype($sigil) );
+        # If no twigil, but varname is 'attribute' in outer scope,
+        # it's really a private attribute and needs a '!' twigil
+        if !$twigil {
+            my $sym := outer_symbol($varname);
+            if $sym && $sym<scope> eq 'attribute' { 
+                $twigil  := '!';
+                $varname := $sigil ~ $twigil ~ $name;
+            };
         }
 
+        # If twigil is ^ or :, it's a placeholder var.  Create the
+        # parameter for the block if one doesn't already exist.
+        if $twigil eq '^' || $twigil eq ':' {
+            if $?BLOCK<signature> {
+                $/.panic("Cannot use placeholder var in block with signature.");
+            }
+            $twigil := '';
+            $varname := $sigil ~ $name;
+            unless $?BLOCK.symbol($varname) {
+                $?BLOCK.symbol( $varname, :scope('lexical') );
+                $?BLOCK.arity( +$?BLOCK.arity() + 1 );
+                my $param := PAST::Var.new(:name($varname), :scope('parameter'));
+                if $twigil eq ':' { $param.named( $name ); }
+                my $block := $?BLOCK[0];
+                my $i := +@($block);
+                while $i > 0 && $block[$i-1].name() gt $varname {
+                    $block[$i] := $block[$i-1];
+                    $i--;
+                }
+                $block[$i] := $param;
+            }
+        }
+
+        $var := PAST::Var.new( :name($varname), :node($/) );
+        if $twigil { $var<twigil> := $twigil; }
+
+        # If namespace qualified or has a '*' twigil, it's a package var.
+        if @ns || $twigil eq '*' {
+            $var.namespace(@ns);
+            $var.scope('package');
+            $var.viviself( container_itype($sigil) );
+        }
+
+        ## @_ and %_ add a slurpy param to the block
         if $varname eq '@_' || $varname eq '%_' {
             unless $?BLOCK.symbol($varname) {
                 $?BLOCK.symbol( $varname, :scope('lexical') );
@@ -1559,67 +1596,34 @@ method variable($/, $key) {
             }
         }
 
-        if $sigil eq '&' {
-            $sigil := '';
-            $varname := $name;
-            $past.name($varname);
-            $past.scope('package');
+        # Until PCT has 'name' scope, we handle lexical/package lookup here.
+        if $<sigil> eq '&' {
+            $var.scope('package');
             my $sym := outer_symbol($varname);
-            if $sym && $sym<scope> { $past.scope( $sym<scope> ); }
+            if $sym && $sym<scope> { $var.scope( $sym<scope> ); }
         }
 
-        ##  if twigil is ^ or :, it's a placeholder var
-        if $twigil eq '^' || $twigil eq ':' {
-            if $?BLOCK<signature> {
-                $/.panic("Cannot use placeholder var in block with signature.");
-            }
-            unless $?BLOCK.symbol($varname) {
-                $?BLOCK.symbol( $varname, :scope('lexical') );
-                $?BLOCK.arity( +$?BLOCK.arity() + 1 );
-                my $param := PAST::Var.new(:name($varname), :scope('parameter'));
-                if $twigil eq ':' { $param.named( $name ); }
-                my $block := $?BLOCK[0];
-                my $i := +@($block);
-                while $i > 0 && $block[$i-1]<name> gt $varname {
-                    $block[$i] := $block[$i-1];
-                    $i--;
-                }
-                $block[$i] := $param;
-            }
-        }
-
-        ##  if no twigil, but variable is 'attribute' in an outer scope,
-        ##  it's really a private attribute
-        if !$twigil {
-            my $sym := outer_symbol($varname);
-            if $sym && $sym<scope> eq 'attribute' { $twigil := '!' };
-        }
-
-        ##  handle ! and . twigil as attribute lookup...
-        our @?IN_DECL;
+        # ! and . twigils may need 'self' for attribute lookup ...
         if $twigil eq '!' || $twigil eq '.' {
-            $varname := $sigil ~ $twigil ~ $name;
-            $past.name($varname);
-            $past.scope('attribute');
-            $past.unshift( PAST::Var.new( :name('self'), :scope('lexical') ) );
+            $var.unshift( PAST::Var.new( :name('self'), :scope('lexical') ) );
         }
 
-        ## ...but return . twigil as a method call, saving the
-        ## PAST::Var node in $past <vardecl>where it can be easily 
-        ## retrieved by <variable_declarator> if we're called from there.
+        # ...but return . twigil as a method call, saving the
+        # PAST::Var node in $var<vardecl> where it can be easily 
+        # retrieved by <variable_declarator> if we're called from there.
         if $twigil eq '.' {
-            my $var := $past;
-            $past := PAST::Op.new( :node($/), :pasttype('callmethod'),
+            my $vardecl := $var;
+            $var := PAST::Op.new( :node($/), :pasttype('callmethod'),
                 :name($name),
                 PAST::Var.new( :name('self'), :scope('lexical') )
             );
-            $past<vardecl> := $var;
+            $var<vardecl> := $vardecl;
         }
     }
     elsif $key eq 'special_variable' {
-        $past := $( $<special_variable> );
+        $var := $( $<special_variable> );
     }
-    make $past;
+    make $var;
 }
 
 
