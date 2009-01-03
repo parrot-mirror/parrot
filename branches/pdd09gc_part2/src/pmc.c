@@ -183,7 +183,7 @@ pmc_reuse(PARROT_INTERP, ARGIN(PMC *pmc), INTVAL new_type,
     }
     else {
         if (has_ext)
-            Parrot_free_pmc_ext(interp, pmc);
+            Parrot_gc_free_pmc_ext(interp, pmc);
 
 #if ! PMC_DATA_IN_EXT
         PMC_data(pmc) = NULL;
@@ -471,7 +471,7 @@ pmc_free_to_pool(PARROT_INTERP, ARGMOD(PMC *pmc),
         VTABLE_destroy(interp, pmc);
 
     if (PObj_is_PMC_EXT_TEST(pmc))
-        Parrot_free_pmc_ext(interp, pmc);
+        Parrot_gc_free_pmc_ext(interp, pmc);
 
     PObj_flags_SETTO((PObj *)pmc, PObj_on_free_list_FLAG);
     pool->add_free_object(interp, pool, (PObj *)pmc);
@@ -630,7 +630,7 @@ create_class_pmc(PARROT_INTERP, INTVAL type)
     }
     else {
         if (PObj_is_PMC_EXT_TEST(_class))
-            Parrot_free_pmc_ext(interp, _class);
+            Parrot_gc_free_pmc_ext(interp, _class);
 
         DOD_flag_CLEAR(is_special_PMC, _class);
 

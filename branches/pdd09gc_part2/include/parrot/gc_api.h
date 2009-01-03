@@ -127,7 +127,7 @@ void Parrot_gc_trace_pmc_data(PARROT_INTERP, ARGIN(PMC *p))
 int Parrot_gc_trace_root(PARROT_INTERP, Parrot_gc_trace_type)
         __attribute__nonnull__(1);
 
-void Parrot_free_pmc_ext(PARROT_INTERP, ARGMOD(PMC *p))
+void Parrot_gc_free_pmc_ext(PARROT_INTERP, ARGMOD(PMC *p))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         FUNC_MODIFIES(*p);
