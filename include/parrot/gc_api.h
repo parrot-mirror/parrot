@@ -13,6 +13,12 @@
 
 #include "parrot/parrot.h"
 
+typedef enum {
+    GC_TRACE_FULL,
+    GC_TRACE_ROOT_ONLY,
+    GC_TRACE_SYSTEM_ONLY
+} Parrot_gc_trace_type;
+
 /* Macros for recursively blocking and unblocking DOD */
 #define Parrot_block_GC_mark(interp) \
         { \
@@ -118,7 +124,7 @@ void Parrot_gc_trace_pmc_data(PARROT_INTERP, ARGIN(PMC *p))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
-int Parrot_gc_trace_root(PARROT_INTERP, int trace_stack)
+int Parrot_gc_trace_root(PARROT_INTERP, Parrot_gc_trace_type)
         __attribute__nonnull__(1);
 
 void Parrot_free_pmc_ext(PARROT_INTERP, ARGMOD(PMC *p))

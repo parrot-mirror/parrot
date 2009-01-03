@@ -665,7 +665,7 @@ parrot_gc_ims_reinit(PARROT_INTERP)
      * trace root set w/o system areas
      * TODO also skip volatile roots
      */
-    Parrot_gc_trace_root(interp, 0);
+    Parrot_gc_trace_root(interp, GC_TRACE_ROOT_ONLY);
 
     g_ims        = (Gc_ims_private *)arena_base->gc_private;
     g_ims->state = GC_IMS_MARKING;
@@ -770,7 +770,8 @@ parrot_gc_ims_sweep(PARROT_INTERP)
      */
 
     /* TODO mark volatile roots */
-    Parrot_gc_trace_root(interp, g_ims->lazy ? 0 : (int)GC_trace_stack_FLAG);
+    Parrot_gc_trace_root(interp, g_ims->lazy ? GC_TRACE_ROOT_ONLY
+                                             : GC_TRACE_FULL);
 
     /* mark (again) rest of children */
     Parrot_gc_trace_children(interp, (size_t) -1);
