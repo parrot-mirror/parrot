@@ -29,9 +29,9 @@ Creates the 3 Stream objects and dumps the combined stream.
     .local pmc text
     .local pmc combined
 
-    load_bytecode "library/Stream/Base.pbc"
-    load_bytecode "library/Stream/Combiner.pbc"
-    load_bytecode "library/Stream/Sub.pbc"
+    load_bytecode "Stream/Base"
+    load_bytecode "Stream/Combiner"
+    load_bytecode "Stream/Sub"
 
     # create the counter stream
     counter = new "Stream::Sub"
@@ -131,7 +131,7 @@ Please send patches and suggestions to the Perl 6 Internals mailing list.
 
 =head1 COPYRIGHT
 
-Copyright (C) 2004-2008, The Perl Foundation.
+Copyright (C) 2004-2009, The Perl Foundation.
 
 =cut
 

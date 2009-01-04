@@ -965,13 +965,13 @@ This method is called automatically when this module is loaded.
     .local int rect_type
     .local int surface_type
 
-    load_bytecode "examples/sdl/minesweeper/eventhandler.pir"
-    load_bytecode "library/SDL/Button.pir"
-    load_bytecode "library/SDL/StopWatch.pir"
-    load_bytecode "library/SDL/Image.pir"
+    load_bytecode "examples/sdl/minesweeper/eventhandler"
+    load_bytecode "SDL/Button"
+    load_bytecode "SDL/StopWatch"
+    load_bytecode "SDL/Image"
 
     # XXX: remove
-    load_bytecode "library/Data/Dumper.pir"
+    load_bytecode "Data/Dumper"
 
     $P0 = new 'String'
     $P0 = "examples/sdl/minesweeper/mines.png"
@@ -1109,7 +1109,7 @@ Please send patches and suggestions to the Perl 6 Internals mailing list.
 
 =head1 COPYRIGHT
 
-Copyright (C) 2004-2008, The Perl Foundation.
+Copyright (C) 2004-2009, The Perl Foundation.
 
 =cut
 

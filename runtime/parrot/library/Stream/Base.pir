@@ -27,7 +27,7 @@ TBD
 .sub onload :load :anon
     $P0 = get_class 'Stream::Base'
     unless null $P0 goto END
-    load_bytecode "library/Data/Escape.pir"
+    load_bytecode "Data/Escape.pir"
 
     newclass $P0, "Stream::Base"
     addattribute $P0, 'source'
@@ -351,7 +351,7 @@ Please send patches and suggestions to the Perl 6 Internals mailing list.
 
 =head1 COPYRIGHT
 
-Copyright (C) 2004-2008, The Perl Foundation.
+Copyright (C) 2004-2009, The Perl Foundation.
 
 =cut
 

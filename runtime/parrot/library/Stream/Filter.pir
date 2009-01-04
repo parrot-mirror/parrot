@@ -30,7 +30,7 @@ TBD
     $P0 = get_class 'Stream::Filter'
     unless null $P0 goto END
 
-    load_bytecode "library/Stream/Base.pir"
+    load_bytecode "Stream/Base.pir"
 
     get_class base, "Stream::Base"
     subclass filter, base, "Stream::Filter"

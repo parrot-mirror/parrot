@@ -9,7 +9,7 @@ Parrot::Coroutine - A pure PIR implementation of coroutines
 =head1 SYNOPSIS
 
     .sub onload :load
-        load_bytecode 'Parrot/Coroutine.pir'
+        load_bytecode 'Parrot/Coroutine'
     .end
 
     ## Recursive coroutine to enumerate tree elements.  Each element that is
@@ -247,7 +247,7 @@ Bob Rogers C<E<lt>rogers-perl6@rgrjr.dyndns.orgE<gt>>
 
 =head1 COPYRIGHT
 
-Copyright (C) 2006-2008, The Perl Foundation.
+Copyright (C) 2006-2009, The Perl Foundation.
 This program is free software. It is subject to the same
 license as The Parrot Interpreter.
 

@@ -33,13 +33,13 @@ it parent classes nor is it subclassed.
     $P0 = get_class "Tetris::App"
     unless null $P0 goto END
 
-    load_bytecode "library/SDL/App.pir"
-    load_bytecode "library/SDL/Color.pir"
-    load_bytecode "library/SDL/Event.pir"
-    load_bytecode "library/SDL/Rect.pir"
+    load_bytecode "SDL/App"
+    load_bytecode "SDL/Color"
+    load_bytecode "SDL/Event"
+    load_bytecode "SDL/Rect"
 
-    load_bytecode "examples/sdl/tetris/eventhandler.pir"
-    load_bytecode "examples/sdl/tetris/board.pir"
+    load_bytecode "examples/sdl/tetris/eventhandler"
+    load_bytecode "examples/sdl/tetris/board"
 
     newclass $P0, "Tetris::App"
 
@@ -1045,7 +1045,7 @@ Please send patches and suggestions to the Perl 6 Internals mailing list.
 
 =head1 COPYRIGHT
 
-Copyright (C) 2004-2008, The Perl Foundation.
+Copyright (C) 2004-2009, The Perl Foundation.
 
 =cut
 

@@ -23,7 +23,8 @@ This module provides the default output style of C<Data::Dumper>.
     goto END
 
   create_ddb:
-    load_bytecode "library/Data/Dumper/Base.pir"
+    load_bytecode "Data/Dumper/Base.pbc" #TODO: without .pbc RT #39807 hits us.
+                                         #      t/pmc/sub.t 54+55 fail
     get_class $P0, "Data::Dumper::Base"
     subclass $P0, $P0, "Data::Dumper::Default"
 END:
@@ -414,7 +415,7 @@ Please send patches and suggestions to the Perl 6 Internals mailing list.
 
 =head1 COPYRIGHT
 
-Copyright (C) 2004-2008, The Perl Foundation.
+Copyright (C) 2004-2009, The Perl Foundation.
 
 =cut
 

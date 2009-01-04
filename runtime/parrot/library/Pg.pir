@@ -1,4 +1,4 @@
-# Copyright (C) 2006-2008, The Perl Foundation.
+# Copyright (C) 2006-2009, The Perl Foundation.
 # $Id$
 
 =head1 NAME
@@ -31,7 +31,7 @@ Leopold "leo" Toetsch <lt(at)toetsch.at>
 
 =head1 DESCRIPTION
 
-Pg.pir is a thin wrapper around F<postgres.pir> - the NCI functions of
+F<Pg.pir> is a thin wrapper around F<postgres.pir> - the NCI functions of
 the C<libpq> library. It's roughly divided into 3 parts, represented
 by 'Pg', 'Pg;Conn', and 'Pg;Result' classes.
 
@@ -44,7 +44,7 @@ by 'Pg', 'Pg;Conn', and 'Pg;Result' classes.
 
 .sub __load :load
     .local pmc cl
-    load_bytecode "postgres.pir"         # TODO .pbc
+    load_bytecode "postgres"
     cl = newclass 'Pg'       # Pg connection constructor
 
     # XXX the hasa 'con' is suboptimal

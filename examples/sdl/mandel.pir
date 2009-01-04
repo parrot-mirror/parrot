@@ -1,4 +1,4 @@
-# Copyright (C) 2006-2008, The Perl Foundation.
+# Copyright (C) 2006-2009, The Perl Foundation.
 # $Id$
 
 =head1 TITLE
@@ -47,12 +47,12 @@ ex:
 # utils
 .sub 'load_libs'
     # load the necessary libraries
-    load_bytecode "library/SDL/App.pir"
-    load_bytecode "library/SDL/Rect.pir"
-    load_bytecode "library/SDL/Color.pir"
-    load_bytecode "library/SDL/EventHandler.pir"
-    load_bytecode "library/SDL/Event.pir"
-    load_bytecode "library/Getopt/Obj.pir"
+    load_bytecode "SDL/App"
+    load_bytecode "SDL/Rect"
+    load_bytecode "SDL/Color"
+    load_bytecode "SDL/EventHandler"
+    load_bytecode "SDL/Event"
+    load_bytecode "Getopt/Obj"
 .end
 
 # cmd line processing

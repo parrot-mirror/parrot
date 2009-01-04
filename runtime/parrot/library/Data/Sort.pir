@@ -6,7 +6,7 @@ Data::Sort - simple sort algorithm implemented in PIR
 
     ...
 
-    load_bytecode "library/Data/Sort.pir"
+    load_bytecode "Data/Sort"
 
     .local pmc sort
 
@@ -107,7 +107,7 @@ Please send patches and suggestions to the Perl 6 Internals mailing list.
 
 =head1 COPYRIGHT
 
-Copyright (C) 2004-2008, The Perl Foundation.
+Copyright (C) 2004-2009, The Perl Foundation.
 
 =cut
 

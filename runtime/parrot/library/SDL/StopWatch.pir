@@ -42,7 +42,7 @@ An SDL::StopWatch object has the following methods:
     .return()
 
   create_class:
-    load_bytecode "library/SDL/LCD.pir"
+    load_bytecode "SDL/LCD"
     class = get_class 'SDL::LCD'
     class = subclass class, 'SDL::StopWatch'
     addattribute $P0, 'time'
@@ -333,7 +333,7 @@ Please send patches and suggestions to the Perl 6 Internals mailing list.
 
 =head1 COPYRIGHT
 
-Copyright (C) 2004-2008, The Perl Foundation.
+Copyright (C) 2004-2009, The Perl Foundation.
 
 =cut
 

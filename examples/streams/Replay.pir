@@ -1,8 +1,8 @@
 .sub _main :main
     .local pmc stream
 
-    load_bytecode "library/Stream/Writer.pir"
-    load_bytecode "library/Stream/Replay.pir"
+    load_bytecode "Stream/Writer"
+    load_bytecode "Stream/Replay"
 
     stream = new "Stream::Writer"
     $P0 = global "_reader"

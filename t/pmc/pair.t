@@ -5,7 +5,7 @@
 .const int NUM_OF_TESTS = 8
 
 .sub main :main
-    load_bytecode 'library/Test/More.pir'
+    load_bytecode 'Test/More.pir'
 
     .local pmc plan, is, ok
     plan = get_hll_global [ 'Test'; 'More' ], 'plan'

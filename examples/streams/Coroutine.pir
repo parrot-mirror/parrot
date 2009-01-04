@@ -24,8 +24,8 @@ Creates a coroutine stream and dumps it.
     .local pmc stream
     .local pmc temp
 
-    load_bytecode "library/Stream/Base.pbc"
-    load_bytecode "library/Stream/Coroutine.pbc"
+    load_bytecode "Stream/Base"
+    load_bytecode "Stream/Coroutine"
 
     # create the coroutine stream
     stream = new "Stream::Coroutine"
@@ -82,7 +82,7 @@ Please send patches and suggestions to the Perl 6 Internals mailing list.
 
 =head1 COPYRIGHT
 
-Copyright (C) 2004-2008, The Perl Foundation.
+Copyright (C) 2004-2009, The Perl Foundation.
 
 =cut
 

@@ -6,7 +6,7 @@
     goto END
 
   load_library:
-        load_bytecode "library/YAML/Dumper/Default.pir"
+        load_bytecode "YAML/Dumper/Default"
         newclass $P0, "YAML::Dumper"
 END:
     .return ()

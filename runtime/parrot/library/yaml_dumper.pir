@@ -32,7 +32,7 @@ version 0.1
 # first method prints usage information
 .sub __library_dumper_onload
     print "usage:"
-    print "\tload_bytecode \"library/YAML/Dumper.pir\"\n"
+    print "\tload_bytecode \"YAML/Dumper\"\n"
     print "\t...\n"
     print "\tnew yaml, \"YAML::Dumper\"\n"
     print "\tyaml.\"yaml\"( foo, \"foo\" )\n\n"
@@ -151,13 +151,13 @@ Returns the global dumper instance used by the non object interface.
     goto TYPE_OK
 
   load_yd_pir:
-    load_bytecode "library/YAML/Dumper.pir"
+    load_bytecode "YAML/Dumper"
     get_class yd_class, "YAML::Dumper"
     if null yd_class goto no_class
     goto TYPE_OK
 
   no_class:
-    print "fatal error: failure while loading library/YAML/Dumper.pir\n"
+    print "fatal error: failure while loading YAML::Dumper\n"
     end
 TYPE_OK:
 
@@ -184,7 +184,7 @@ Please send patches and suggestions to the Perl 6 Internals mailing list.
 
 =head1 COPYRIGHT
 
-Copyright (C) 2004-2008, The Perl Foundation.
+Copyright (C) 2004-2009, The Perl Foundation.
 
 =cut
 

@@ -31,7 +31,7 @@ version 0.10
 # first method prints usage information
 .sub __library_dumper_onload
     print "usage:"
-    print "\tload_bytecode \"library/Data/Dumper.pir\"\n"
+    print "\tload_bytecode \"Data/Dumper.pbc\"\n"
     print "\t...\n"
     print "\tnew dumper, \"Data::Dumper\"\n"
     print "\tdumper.\"dumper\"( foo, \"foo\" )\n\n"
@@ -150,7 +150,7 @@ Returns the global dumper instance used by the non object interface.
     goto TYPE_OK
 
   load_dd_pir:
-    load_bytecode "library/Data/Dumper.pir"
+    load_bytecode "Data/Dumper.pbc"
     get_class dd_class, "Data::Dumper"
     if null dd_class goto no_class
     goto TYPE_OK
@@ -183,7 +183,7 @@ Please send patches and suggestions to the Perl 6 Internals mailing list.
 
 =head1 COPYRIGHT
 
-Copyright (C) 2004-2008, The Perl Foundation.
+Copyright (C) 2004-2009, The Perl Foundation.
 
 =cut
 

@@ -34,7 +34,7 @@ for my $a (@streams) {
 
 .sub _main
     print "loading '$a'...\\n"
-    load_bytecode "library/Stream/$a.pir"
+    load_bytecode "Stream/$a.pir"
     print "loaded\\n"
 
     \$P0 = new "Stream::$a"
@@ -62,7 +62,7 @@ pir_output_is( <<'CODE', <<'OUT', "Stream::Sub" );
 .sub _main :main
     .local pmc stream
 
-    load_bytecode "library/Stream/Sub.pir"
+    load_bytecode "Stream/Sub.pir"
 
     stream = new "Stream::Sub"
 
@@ -108,8 +108,8 @@ pir_output_is( <<'CODE', <<'OUT', "Stream::read_bytes" );
 .sub _main :main
     .local pmc stream
 
-    load_bytecode "library/Stream/Sub.pir"
-    load_bytecode "library/Stream/Replay.pir"
+    load_bytecode "Stream/Sub.pir"
+    load_bytecode "Stream/Replay.pir"
 
     $P0 = new "Stream::Sub"
     # set the stream's source sub      #'
@@ -185,9 +185,9 @@ pir_output_is( <<'CODE', <<'OUT', "Stream::Combiner" );
     .local pmc text
     .local pmc combined
 
-    load_bytecode "library/Stream/Base.pir"
-    load_bytecode "library/Stream/Combiner.pir"
-    load_bytecode "library/Stream/Sub.pir"
+    load_bytecode "Stream/Base.pir"
+    load_bytecode "Stream/Combiner.pir"
+    load_bytecode "Stream/Sub.pir"
 
     # create the counter stream
     counter = new "Stream::Sub"
@@ -271,8 +271,8 @@ pir_output_is( <<'CODE', <<'OUT', "Stream::Coroutine" );
 .sub _main
     .local pmc stream
 
-    load_bytecode "library/Stream/Base.pir"
-    load_bytecode "library/Stream/Coroutine.pir"
+    load_bytecode "Stream/Base.pir"
+    load_bytecode "Stream/Coroutine.pir"
 
     # create the coroutine stream
     stream = new "Stream::Coroutine"
@@ -343,10 +343,10 @@ pir_output_is( <<'CODE', <<'OUT', "Stream::ParrotIO" );
 
     name = "t/library/perlhist.txt"
 
-    load_bytecode "library/Stream/ParrotIO.pir"
-    load_bytecode "library/Stream/Lines.pir"
-    load_bytecode "library/Stream/Sub.pir"
-    load_bytecode "library/Stream/Combiner.pir"
+    load_bytecode "Stream/ParrotIO.pir"
+    load_bytecode "Stream/Lines.pir"
+    load_bytecode "Stream/Sub.pir"
+    load_bytecode "Stream/Combiner.pir"
 
     # create a file stream
     file = new "Stream::ParrotIO"
@@ -704,8 +704,8 @@ pir_output_is( <<'CODE', <<'OUT', "Stream::Filter" );
     .local pmc stream
     .local pmc filter
 
-    load_bytecode "library/Stream/Sub.pir"
-    load_bytecode "library/Stream/Filter.pir"
+    load_bytecode "Stream/Sub.pir"
+    load_bytecode "Stream/Filter.pir"
 
     # create the counter stream
     stream = new "Stream::Sub"
@@ -789,7 +789,7 @@ pir_output_is( <<'CODE', <<'OUT', "Stream::include" );
 .sub _main
     .local pmc stream
 
-    load_bytecode "library/Stream/Sub.pir"
+    load_bytecode "Stream/Sub.pir"
 
     stream = new "Stream::Sub"
 
@@ -895,8 +895,8 @@ pir_output_is( <<'CODE', <<'OUT', "Stream::Lines" );
     .local pmc stream
     .local pmc lines
 
-    load_bytecode "library/Stream/Sub.pir"
-    load_bytecode "library/Stream/Lines.pir"
+    load_bytecode "Stream/Sub.pir"
+    load_bytecode "Stream/Lines.pir"
 
     # create a text stream
     stream = new "Stream::Sub"
@@ -942,7 +942,7 @@ pir_output_is( <<'CODE', <<'OUT', "Stream::ParrotIO" );
     .local pmc stream
     .local pmc temp
 
-    load_bytecode "library/Stream/ParrotIO.pir"
+    load_bytecode "Stream/ParrotIO.pir"
 
     # create the ParrotIO stream
     stream = new "Stream::ParrotIO"
@@ -1256,8 +1256,8 @@ SKIP:
 .sub _main :main
     .local pmc stream
 
-    load_bytecode "library/Stream/Writer.pir"
-    load_bytecode "library/Stream/Replay.pir"
+    load_bytecode "Stream/Writer.pir"
+    load_bytecode "Stream/Replay.pir"
 
     stream = new "Stream::Writer"
     P0 = global "_reader"
@@ -1358,8 +1358,8 @@ pir_output_is( <<'CODE', <<'OUT', "Stream::Sub" );
     .local pmc stream
     .local pmc temp
 
-    load_bytecode "library/Stream/Base.pir"
-    load_bytecode "library/Stream/Sub.pir"
+    load_bytecode "Stream/Base.pir"
+    load_bytecode "Stream/Sub.pir"
 
     stream = new "Stream::Sub"
 
@@ -1419,7 +1419,7 @@ SKIP:
 .sub _main :main
     .local pmc stream
 
-    load_bytecode "library/Stream/Writer.pir"
+    load_bytecode "Stream/Writer.pir"
 
     stream = new "Stream::Writer"
 

@@ -8,7 +8,7 @@ SDL::Event - Parrot extension representing SDL Events
 =head1 SYNOPSIS
 
     # load this library
-    load_bytecode 'library/SDL/Event.pir'
+    load_bytecode 'SDL/Event'
 
     # create a new SDL::Event object
     .local pmc event
@@ -346,7 +346,7 @@ suggestions to the Perl 6 Internals mailing list.
 
 =head1 COPYRIGHT
 
-Copyright (C) 2004-2008, The Perl Foundation.
+Copyright (C) 2004-2009, The Perl Foundation.
 
 =cut
 

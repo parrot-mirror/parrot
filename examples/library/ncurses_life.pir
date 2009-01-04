@@ -1,4 +1,4 @@
-# Copyright (C) 2001-2008, The Perl Foundation.
+# Copyright (C) 2001-2009, The Perl Foundation.
 # $Id$
 
 =head1 NAME
@@ -59,7 +59,7 @@ Run faster.
 .sub _MAIN :main
     .param pmc argv
     # the command line
-    load_bytecode "library/ncurses.pasm"
+    load_bytecode "ncurses"
 
     # should autogenerate these
     .globalconst int KEY_DOWN = 258

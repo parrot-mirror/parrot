@@ -16,8 +16,8 @@ Creates a stream and pipes it through a Stream::Lines stream.
     .local pmc stream
     .local pmc lines
 
-    load_bytecode "library/Stream/Sub.pir"
-    load_bytecode "library/Stream/Lines.pir"
+    load_bytecode "Stream/Sub"
+    load_bytecode "Stream/Lines"
 
     # create a text stream
     stream = new "Stream::Sub"
@@ -61,7 +61,7 @@ Please send patches and suggestions to the Perl 6 Internals mailing list.
 
 =head1 COPYRIGHT
 
-Copyright (C) 2004-2008, The Perl Foundation.
+Copyright (C) 2004-2009, The Perl Foundation.
 
 =cut
 

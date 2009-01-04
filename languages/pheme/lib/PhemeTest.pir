@@ -39,7 +39,7 @@
 .namespace [ 'Pheme' ]
 
 .sub _load :load
-    load_bytecode 'library/Test/More.pir'
+    load_bytecode 'Test/More'
     _export( 'is', 'ok', 'nok', 'diag', 'is_deeply', 'plan' )
 .end
 

@@ -8,7 +8,7 @@ SDL::Surface - Parrot class representing surfaces in Parrot SDL
 =head1 SYNOPSIS
 
     # load this library
-    load_bytecode 'library/SDL/Surface.pir'
+    load_bytecode 'SDL/Surface'
 
     # create a new SDL::Surface object
     surface = new 'SDL::Surface'
@@ -601,7 +601,7 @@ the Perl 6 Internals mailing list.
 
 =head1 COPYRIGHT
 
-Copyright (C) 2004-2008, The Perl Foundation.
+Copyright (C) 2004-2009, The Perl Foundation.
 
 =cut
 

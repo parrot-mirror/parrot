@@ -27,7 +27,7 @@ Tests file specifications.
 
 my $PRE = <<'PRE';
 .sub 'main' :main
-        load_bytecode 'library/File/Spec.pir'
+        load_bytecode 'File/Spec.pir'
 
         .local int classtype
         .local pmc spec
