@@ -1,14 +1,18 @@
 /*
-Copyright (C) 2004-2007, The Perl Foundation.
+Copyright (C) 2004-2009, The Perl Foundation.
 $Id$
 
 =head1 NAME
 
-src/library.c - Interface to Parrot's bytecode library
+src/library.c - Search parrot files in the libpaths
 
 =head1 DESCRIPTION
 
-This file contains C functions to access Parrot's bytecode library functions.
+This file contains C functions to find include (via C<.include>), 
+library (via C<load_bytecode>) or dynext (via C<loadlib>) files.
+
+The libpaths are hardcoded, and different when building from source 
+(F<runtime/parrot>) and when being installed (F<$libdir/parrot>).
 
 =head2 Functions
 
@@ -86,7 +90,7 @@ static STRING* try_bytecode_extensions(PARROT_INTERP, ARGMOD(STRING* path))
 
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
-static STRING* try_load_path(PARROT_INTERP, ARGMOD(STRING* path))
+static STRING* try_load_file(PARROT_INTERP, ARGMOD(STRING* path))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         FUNC_MODIFIES(* path);
@@ -121,14 +125,9 @@ if will be called as a function with this prototype:
 Platform code may add, delete, or replace search path entries as needed. See
 also F<include/parrot/library.h> for C<enum_lib_paths>.
 
-#ifdef ENABLE_PARROT_LIBRARY_INSTALLED
-then the config hash is checked for the path prefix. This still crashes.
-
 =cut
 
 */
-
-#undef ENABLE_PARROT_LIBRARY_INSTALLED
 
 void
 parrot_init_library_paths(PARROT_INTERP)
@@ -140,90 +139,74 @@ parrot_init_library_paths(PARROT_INTERP)
     PMC * const iglobals = interp->iglobals;
     /* create the lib_paths array */
     PMC * const lib_paths = pmc_new(interp, enum_class_FixedPMCArray);
-#ifdef ENABLE_PARROT_LIBRARY_INSTALLED
     PMC * const config_hash = VTABLE_get_pmc_keyed_int(interp, iglobals, IGLOBALS_CONFIG_HASH);
     STRING * const key = CONST_STRING(interp, "installed");
-#endif
 
     VTABLE_set_integer_native(interp, lib_paths, PARROT_LIB_PATH_SIZE);
     VTABLE_set_pmc_keyed_int(interp, iglobals,
             IGLOBALS_LIB_PATHS, lib_paths);
-#ifdef ENABLE_PARROT_LIBRARY_INSTALLED
     if (VTABLE_elements(interp, config_hash) &&
-        VTABLE_exists_keyed_str(interp, config_hash, key))) {
+        VTABLE_exists_keyed_str(interp, config_hash, key)) {
         installed = VTABLE_get_integer_keyed_str(interp, config_hash, key);
     }
-#endif
 
     /* each is an array of strings */
     /* define include paths */
     paths = pmc_new(interp, enum_class_ResizableStringArray);
     VTABLE_set_pmc_keyed_int(interp, lib_paths,
             PARROT_LIB_PATH_INCLUDE, paths);
-#ifdef ENABLE_PARROT_LIBRARY_INSTALLED
     if (installed) {
-#endif
         entry = CONST_STRING(interp, "lib/parrot/include/");
         VTABLE_push_string(interp, paths, entry);
         entry = CONST_STRING(interp, "lib/parrot/");
         VTABLE_push_string(interp, paths, entry);
-#ifdef ENABLE_PARROT_LIBRARY_INSTALLED
     }
     else {
-#endif
         entry = CONST_STRING(interp, "runtime/parrot/include/");
         VTABLE_push_string(interp, paths, entry);
         entry = CONST_STRING(interp, "runtime/parrot/");
         VTABLE_push_string(interp, paths, entry);
-#ifdef ENABLE_PARROT_LIBRARY_INSTALLED
+        entry = CONST_STRING(interp, "./");  /* requires the build_dir */
+        VTABLE_push_string(interp, paths, entry);
     }
-#endif
-    entry = CONST_STRING(interp, "./");
+    entry = CONST_STRING(interp, ""); /* do not add the prefix here */
     VTABLE_push_string(interp, paths, entry);
 
     /* define library paths */
     paths = pmc_new(interp, enum_class_ResizableStringArray);
     VTABLE_set_pmc_keyed_int(interp, lib_paths,
             PARROT_LIB_PATH_LIBRARY, paths);
-#ifdef ENABLE_PARROT_LIBRARY_INSTALLED
     if (installed) {
-#endif
         entry = CONST_STRING(interp, "lib/parrot/library/");
         VTABLE_push_string(interp, paths, entry);
-        entry = CONST_STRING(interp, "lib/parrot/");
-        VTABLE_push_string(interp, paths, entry);
-#ifdef ENABLE_PARROT_LIBRARY_INSTALLED
+        /* This can be removed. TT #126 */
+        /* entry = CONST_STRING(interp, "lib/parrot/");
+           VTABLE_push_string(interp, paths, entry); */
     }
     else {
-#endif
         entry = CONST_STRING(interp, "runtime/parrot/library/");
         VTABLE_push_string(interp, paths, entry);
-        entry = CONST_STRING(interp, "runtime/parrot/");
+        /* This can be removed. TT #126 */
+        /*entry = CONST_STRING(interp, "runtime/parrot/"); 
+          VTABLE_push_string(interp, paths, entry);*/
+        entry = CONST_STRING(interp, "./");  /* with the build_dir */
         VTABLE_push_string(interp, paths, entry);
-#ifdef ENABLE_PARROT_LIBRARY_INSTALLED
     }
-#endif
-    entry = CONST_STRING(interp, "./");
+    entry = CONST_STRING(interp, ""); /* do not add the prefix here */
     VTABLE_push_string(interp, paths, entry);
 
     /* define dynext paths */
     paths = pmc_new(interp, enum_class_ResizableStringArray);
     VTABLE_set_pmc_keyed_int(interp, lib_paths,
             PARROT_LIB_PATH_DYNEXT, paths);
-#ifdef ENABLE_PARROT_LIBRARY_INSTALLED
     if (installed) {
-#endif
         entry = CONST_STRING(interp, "lib/parrot/dynext/");
         VTABLE_push_string(interp, paths, entry);
-#ifdef ENABLE_PARROT_LIBRARY_INSTALLED
     }
     else {
-#endif
         entry = CONST_STRING(interp, "runtime/parrot/dynext/");
         VTABLE_push_string(interp, paths, entry);
-#ifdef ENABLE_PARROT_LIBRARY_INSTALLED
     }
-#endif
     entry = CONST_STRING(interp, "");
     VTABLE_push_string(interp, paths, entry);
 
@@ -467,7 +450,7 @@ static const char* load_ext_code[ LOAD_EXT_CODE_LAST + 1 ] = {
 
 /*
 
-=item C<static STRING* try_load_path>
+=item C<static STRING* try_load_file>
 
 Attempts to load a file with name C<path>. If the file is successfully located,
 the finalized name of the file is returned as a STRING. Otherwise, returns
@@ -480,7 +463,7 @@ NULL.
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 static STRING*
-try_load_path(PARROT_INTERP, ARGMOD(STRING* path))
+try_load_file(PARROT_INTERP, ARGMOD(STRING* path))
 {
     STRING *final;
 
@@ -488,9 +471,10 @@ try_load_path(PARROT_INTERP, ARGMOD(STRING* path))
 
     final = path_finalize(interp, final);
 
-    if (Parrot_stat_info_intval(interp, final, STAT_EXISTS)) {
+    /* only files */
+    if (Parrot_stat_info_intval(interp, final, STAT_EXISTS)
+        && !Parrot_stat_info_intval(interp, final, STAT_ISDIR))
         return final;
-    }
 
     return NULL;
 }
@@ -519,13 +503,31 @@ try_bytecode_extensions(PARROT_INTERP, ARGMOD(STRING* path))
     /*
       First try the path without guessing the extension to ensure compatibility
       with existing code.
+      But if that finds a directory skip it.
+      e.g. load_bytecode "Test/Builder" => .pbc or .pir, but not the dir
      */
 
     with_ext = string_copy(interp, path);
 
-    result = try_load_path(interp, with_ext);
+    result = try_load_file(interp, with_ext);
     if (result)
         return result;
+
+    /*
+      Check if the file already contains one of the 3 known extensions.
+      If so fail. A file test.pir.pbc will not be found on "test.pir"
+    */
+    for (guess = 0 ; guess <= LOAD_EXT_CODE_LAST ; guess++) {
+        STRING *d;
+        int len_ext = strlen(load_ext_code[guess]);
+        int len_str = with_ext->strlen;
+        if (len_str <= len_ext) continue;
+        if (!string_equal(interp, string_substr(interp, with_ext, -len_ext,
+                                                len_ext, NULL, 0),
+                          const_string(interp, load_ext_code[guess]))) {
+            return NULL;
+        }
+    }
 
     /*
       Start guessing now. This version tries to find the lowest form of the
@@ -538,11 +540,15 @@ try_bytecode_extensions(PARROT_INTERP, ARGMOD(STRING* path))
         with_ext = string_append(interp,
                                  with_ext, const_string(interp, load_ext_code[guess]));
 
-        result = try_load_path(interp, with_ext);
+        result = try_load_file(interp, with_ext);
         if (result)
             return result;
     }
 
+    if (Parrot_stat_info_intval(interp, path, STAT_EXISTS)
+        && Parrot_stat_info_intval(interp, path, STAT_ISDIR))
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_SUBSTR_OUT_OF_STRING,
+                                    "'%s' is a directory", path->strstart);
     return NULL;
 }
 
@@ -624,16 +630,21 @@ Parrot_locate_runtime_file_str(PARROT_INTERP, ARGMOD(STRING *file),
     for (i = 0; i < n; ++i) {
         STRING * const path = VTABLE_get_string_keyed_int(interp, paths, i);
 
-        if (string_length(interp, prefix) && !is_abs_path(path))
+        if (string_length(interp, prefix)
+            && string_length(interp, path) /* empty libpath uses no prefix */
+            && !is_abs_path(path))
             full_name = path_concat(interp, prefix, path);
         else
             full_name = string_copy(interp, path);
 
-        full_name = path_append(interp, full_name, file);
+        if (string_length(interp, path))
+            full_name = path_append(interp, full_name, file);
+        else
+            full_name = string_copy(interp, file);
 
         full_name =
             (type & PARROT_RUNTIME_FT_DYNEXT)
-                ? try_load_path(interp, full_name)
+                ? try_load_file(interp, full_name)
                 : try_bytecode_extensions(interp, full_name);
 
         if (full_name)
@@ -642,7 +653,7 @@ Parrot_locate_runtime_file_str(PARROT_INTERP, ARGMOD(STRING *file),
 
     full_name =
         (type & PARROT_RUNTIME_FT_DYNEXT)
-            ? try_load_path(interp, file)
+            ? try_load_file(interp, file)
             : try_bytecode_extensions(interp, file);
 
     return full_name;
