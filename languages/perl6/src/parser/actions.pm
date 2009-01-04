@@ -1491,9 +1491,12 @@ method scope_declarator($/) {
         }
         $i++;
     }
-    if    $scope eq 'attribute' { $past := PAST::Stmts.new(); }
-    elsif +@($past) == 1        { $past := $past[0]; }
-    else  { $past.name('infix:,'); $past.pasttype('call'); }
+    if $scope eq 'attribute' { 
+        $past.pasttype('null'); 
+        $past<scopedecl> := $scope; 
+    }
+    elsif +@($past) == 1 { $past := $past[0]; }
+    else { $past.name('infix:,'); $past.pasttype('call'); }
     make $past;
 }
 
@@ -1998,26 +2001,14 @@ method EXPR($/, $key) {
         my $rhs := $( $/[1] );
         my $past;
 
-        # Is it an assignment to an attribute?
-        if $lhs.isa(PAST::Var) && $lhs.scope() eq 'attribute' && $lhs.isdecl() {
-            # Add this to the WHENCE clause.
-            # XXX Need to make it a closure, but will need :subid to get
-            # scoping right.
-            our $?CLASS;
-            $?CLASS.push(
-                PAST::Op.new(
-                    :pasttype('call'),
-                    :name('!ADD_TO_WHENCE'),
-                    PAST::Var.new(
-                        :name('def'),
-                        :scope('register')
-                    ),
-                    $lhs.name(),
-                    $rhs
-                )
+        if $lhs<scopedecl> eq 'attribute' {
+            $rhs.named('init_value');
+            our $?METACLASS;
+            $past := PAST::Op.new( :name('!meta_attribute'),
+                         $?METACLASS, $lhs[0].name(), $rhs
             );
-
-            # Nothing to emit at this point.
+            our @?BLOCK;
+            @?BLOCK[0][0].push($past);
             $past := PAST::Stmts.new();
         }
         else {
