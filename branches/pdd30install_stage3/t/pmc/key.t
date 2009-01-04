@@ -19,7 +19,7 @@ Tests the C<Key> PMC.
 .sub main :main
     .include 'include/test_more.pir'
 
-    plan(7)
+    plan(6)
 
     traverse_key_chain()
     extract_int_from_string_keys()
