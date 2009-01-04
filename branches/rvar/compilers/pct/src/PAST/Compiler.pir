@@ -1527,6 +1527,21 @@ children and return the value of the last one.
 .end
 
 
+=item null(PAST::Op node)
+
+A "no-op" node -- none of the children are processed, and
+no statements are generated.
+
+=cut
+
+.sub 'null' :method :multi(_, ['PAST';'Op'])
+    .param pmc node
+    .param pmc options         :slurpy :named
+    $P0 = get_hll_global ['POST'], 'Ops'
+    .tailcall $P0.'new'('node'=>node)
+.end
+
+
 =item return(PAST::Op node)
 
 Generate a return exception, using the first child (if any) as
