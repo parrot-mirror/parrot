@@ -470,6 +470,49 @@ and C<type>.
     attrhash[$S0] = $P0
     goto attr_loop
   attr_done:
+
+    .const 'Sub' handles = '!handles'
+    $P0 = attr['traitlist']
+    if null $P0 goto traitlist_done
+    it = iter $P0
+  traitlist_loop:
+    unless it goto traitlist_done
+    .local pmc trait
+    trait = shift it
+    $S0 = trait[0]
+    if $S0 != 'trait_verb:handles' goto traitlist_loop
+    .local pmc handles_it
+    $P0 = trait[1]
+    $P0 = 'list'($P0)
+    handles_it = iter $P0
+  handles_loop:
+    unless handles_it goto handles_done
+    $P0 = clone handles
+    $P1 = box name
+    setprop $P0, 'attrname', $P1
+    $P1 = shift handles_it
+    setprop $P0, 'methodname', $P1
+    $S1 = $P1
+    metaclass.'add_method'($S1, $P0)
+    goto handles_loop
+  handles_done:
+    goto traitlist_loop
+  traitlist_done:
+.end
+
+
+.sub '!handles' :method
+    .param pmc args            :slurpy
+    .param pmc options         :slurpy :named
+    .local pmc method, attribute
+    $P0 = getinterp
+    method = $P0['sub']
+    $P1 = getprop 'attrname', method
+    $S1 = $P1
+    attribute = getattribute self, $S1
+    $P1 = getprop 'methodname', method
+    $S1 = $P1
+    .tailcall attribute.$S1(args :flat, options :flat :named)
 .end
 
 
