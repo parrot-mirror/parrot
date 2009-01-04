@@ -166,7 +166,30 @@ pobject_lives(PARROT_INTERP, ARGMOD(PObj *obj))
                 PObj_to_GMSH(obj)->gen->gen_no >= interp->gc_generation) \
             parrot_gc_gms_pobject_lives(interp, obj); \
     } while (0);
-#else /* not PARROT_GC_GMS */
+#elif PARROT_GC_IT
+    do {
+        Gc_it_hdr *hdr = PObj_to_IT_HDR(obj);
+        Gc_it_data * const gc_priv_data = (Gc_it_data *)interp->arena_base->gc_private;
+        const Gc_it_hdr * const temp = gc_priv_data->queue;
+
+        if(hdr->next) return;
+
+        gc_priv_data->queue = hdr;
+        hdr->next = temp;
+
+        if (PObj_is_PMC_TEST(obj)) {
+            PMC * const p = (PMC *)obj;
+
+            if (p->real_self != p)
+                pobject_lives(interp, (PObj *)p->real_self);
+
+        /* if object is a PMC and contains buffers or PMCs, then attach the PMC
+         * to the chained mark list. */
+            if (PObj_is_special_PMC_TEST(obj))
+                mark_special(interp, p);
+        }
+    } while(0);
+#else /* not PARROT_GC_GMS or PARROT_GC_IT */
 
     /* if object is live or on free list return */
     if (PObj_is_live_or_free_TESTALL(obj))
