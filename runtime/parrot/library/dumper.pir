@@ -156,7 +156,7 @@ Returns the global dumper instance used by the non object interface.
     goto TYPE_OK
 
   no_class:
-    print "fatal error: failure while loading library/Data/Dumper.pir\n"
+    print "fatal error: failure while loading library/Data/Dumper.pbc\n"
     end
 TYPE_OK:
 
