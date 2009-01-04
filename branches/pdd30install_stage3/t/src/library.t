@@ -37,7 +37,10 @@ tested in t/op/load_bytecode.t
 
 =cut
 
-c_output_is( <<'CODE', <<'OUTPUT', "Parrot_locate_runtime_file" );
+my $dumperpath = "./runtime/parrot/library/Data/Dumper";
+$dumperpath =~ s|/|\\|g if $^O eq 'MSWin32';
+
+c_output_is( <<'CODE', <<"OUTPUT", "Parrot_locate_runtime_file" );
 
 #include <parrot/parrot.h>
 #include <parrot/embed.h>
@@ -73,11 +76,11 @@ main(int argc, char* argv[])
     return 0;
 }
 CODE
-./runtime/parrot/library/Data/Dumper.pir
-./runtime/parrot/library/Data/Dumper.pbc
-./runtime/parrot/library/Data/Dumper.pbc
+$dumperpath.pir
+$dumperpath.pbc
+$dumperpath.pbc
 (null)
-./runtime/parrot/library/Data/Dumper.pir
+$dumperpath.pir
 OUTPUT
 
 my $dynpath = "." . $PConfig{slash} .
@@ -129,7 +132,7 @@ $dynpath
 (null)
 OUTPUT
 
-c_output_is( <<'CODE', <<'OUTPUT', "FT_SOURCE, FT_PIR", 'todo' => 'TT #128 force pir')
+c_output_is( <<'CODE', <<"OUTPUT", "FT_SOURCE, FT_PIR", 'todo' => 'TT #128 force pir')
 
 #include <parrot/parrot.h>
 #include <parrot/embed.h>
@@ -157,8 +160,8 @@ main(int argc, char* argv[])
     return 0;
 }
 CODE
-./runtime/parrot/library/Data/Dumper.pir
-./runtime/parrot/library/Data/Dumper.pir
+$dumperpath.pir
+$dumperpath.pir
 OUTPUT
 
 
