@@ -438,7 +438,8 @@ and C<type>.
 .sub '!meta_attribute'
     .param pmc metaclass
     .param string name
-    .param string itype
+    .param string itype        :optional
+    .param int has_itype       :opt_flag
     .param pmc attr            :slurpy :named
 
     # twigil handling
@@ -452,14 +453,20 @@ and C<type>.
     substr name, 1, 1, '!'
   twigil_done:
 
-    # Add the attribute to the metaclass.
-    metaclass.'add_attribute'(name)
-
-    # Set the itype for the attribute.
-    .local pmc attrhash, it
     $P0 = metaclass.'attributes'()
+    $I0 = exists $P0[name]
+    if $I0 goto attr_exists
+    metaclass.'add_attribute'(name)
+    $P0 = metaclass.'attributes'()
+  attr_exists:
+
+    .local pmc attrhash, it
     attrhash = $P0[name]
+
+    # Set any itype for the attribute.
+    unless has_itype goto itype_done
     attrhash['itype'] = itype
+  itype_done:
 
     # and set any other attributes that came in via the slurpy hash
     it = iter attr
