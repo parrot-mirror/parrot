@@ -886,13 +886,16 @@ method trait_auxiliary($/) {
     if $sym eq 'is' {
         $trait := ~$<name>;
     }
-    make PAST::Op.new( :name('list'), 'trait_auxiliary:' ~ $sym, $trait );
+    make PAST::Op.new( :name('infix:,'), 'trait_auxiliary:' ~ $sym, $trait );
 }
 
 
 method trait_verb($/) {
     my $sym := ~$<sym>;
-    make PAST::Op.new( :name('list'), 'trait_verb:' ~ $sym, 'XXX' );
+    my $value;
+    if $sym eq 'handles' { $value := $( $<EXPR> ); }
+    else { $value := $( $<typename> ); }
+    make PAST::Op.new( :name('infix:,'), 'trait_verb:' ~ $sym, $value );
 }
     
 
@@ -1467,6 +1470,10 @@ method scope_declarator($/) {
                 if $init_value { 
                     $init_value.named('init_value');
                     $has.push($init_value);
+                }
+                if $var<traitlist> {
+                    $var<traitlist>.named('traitlist');
+                    $has.push($var<traitlist>);
                 }
                 $block[0].push( $has );
             }
