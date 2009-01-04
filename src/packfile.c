@@ -3759,17 +3759,19 @@ Parrot_load_bytecode(PARROT_INTERP, ARGIN_NULLOK(STRING *file_str))
         interp->iglobals, IGLOBALS_PBC_LIBS);
     if (VTABLE_exists_keyed_str(interp, is_loaded_hash, wo_ext))
         return;
+
+    path = Parrot_locate_runtime_file_str(interp, file_str, PARROT_RUNTIME_FT_PBC);
+    if (!path)
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_LIBRARY_ERROR,
+            "\"load_bytecode\" couldn't find file '%Ss'", file_str);
+
+    /* we might have found a different file_type now */
+    parrot_split_path_ext(interp, file_str, &wo_ext, &ext);
     pbc = CONST_STRING(interp, "pbc");
     if (string_equal(interp, ext, pbc) == 0)
         file_type = PARROT_RUNTIME_FT_PBC;
     else
         file_type = PARROT_RUNTIME_FT_SOURCE;
-
-    path = Parrot_locate_runtime_file_str(interp, file_str, file_type);
-    if (!path)
-        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_LIBRARY_ERROR,
-            "\"load_bytecode\" couldn't find file '%Ss'", file_str);
-
     /* remember wo_ext => full_path mapping */
     VTABLE_set_string_keyed_str(interp, is_loaded_hash,
             wo_ext, path);
