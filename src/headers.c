@@ -340,11 +340,6 @@ new_pmc_header(PARROT_INTERP, UINTVAL flags)
 #if ! PMC_DATA_IN_EXT
     PMC_data(pmc) = NULL;
 #endif
-#if PARROT_GC_IT
-    /* In the GC_IT, we need to mark all PMCs as being PMCs so the system
-       knows to do all the special mark stuff that PMCs need. */
-    gc_it_ptr_set_aggregate(pmc, 1);
-#endif
     return pmc;
 }
 
@@ -452,12 +447,6 @@ new_string_header(PARROT_INTERP, UINTVAL flags)
         flags | PObj_is_string_FLAG | PObj_is_COWable_FLAG | PObj_live_FLAG;
 
     string->strstart        = NULL;
-#if PARROT_GC_IT
-    /* the GC_IT needs to know that this is just a dumb buffer, and that
-       we shouldn't try to examine it's "children", because there are none.
-    */
-    gc_it_ptr_set_aggregate(string, 0);
-#endif
     return string;
 }
 
