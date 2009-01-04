@@ -132,7 +132,7 @@ $dynpath
 (null)
 OUTPUT
 
-c_output_is( <<'CODE', <<"OUTPUT", "FT_SOURCE, FT_PIR", 'todo' => 'TT #128 force pir')
+c_output_is( <<'CODE', <<"OUTPUT", "FT_SOURCE, FT_PIR")
 
 #include <parrot/parrot.h>
 #include <parrot/embed.h>

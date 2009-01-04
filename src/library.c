@@ -83,7 +83,8 @@ static STRING* path_guarantee_trailing_separator(PARROT_INTERP,
 
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
-static STRING* try_bytecode_extensions(PARROT_INTERP, ARGMOD(STRING* path))
+static STRING* try_bytecode_extensions(PARROT_INTERP, ARGMOD(STRING* path),
+    enum_runtime_ft file_type)
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         FUNC_MODIFIES(* path);
@@ -494,7 +495,7 @@ a .pbc, .pasm or a .pir file is used.
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 static STRING*
-try_bytecode_extensions(PARROT_INTERP, ARGMOD(STRING* path))
+try_bytecode_extensions(PARROT_INTERP, ARGMOD(STRING* path), enum_runtime_ft file_type)
 {
     STRING *with_ext, *result;
 
@@ -535,7 +536,8 @@ try_bytecode_extensions(PARROT_INTERP, ARGMOD(STRING* path))
       loop control. This is so the array can easily be processed in reverse.
      */
 
-    for (guess = 0 ; guess <= LOAD_EXT_CODE_LAST ; guess++) {
+    guess = file_type & PARROT_RUNTIME_FT_PBC ? 0 : 1;
+    for (; guess <= LOAD_EXT_CODE_LAST ; guess++) {
         with_ext = string_copy(interp, path);
         with_ext = string_append(interp,
                                  with_ext, const_string(interp, load_ext_code[guess]));
@@ -645,7 +647,7 @@ Parrot_locate_runtime_file_str(PARROT_INTERP, ARGMOD(STRING *file),
         full_name =
             (type & PARROT_RUNTIME_FT_DYNEXT)
                 ? try_load_file(interp, full_name)
-                : try_bytecode_extensions(interp, full_name);
+                : try_bytecode_extensions(interp, full_name, type);
 
         if (full_name)
             return full_name;
@@ -654,7 +656,7 @@ Parrot_locate_runtime_file_str(PARROT_INTERP, ARGMOD(STRING *file),
     full_name =
         (type & PARROT_RUNTIME_FT_DYNEXT)
             ? try_load_file(interp, file)
-            : try_bytecode_extensions(interp, file);
+            : try_bytecode_extensions(interp, file, type);
 
     return full_name;
 }
