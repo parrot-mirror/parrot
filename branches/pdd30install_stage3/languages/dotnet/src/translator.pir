@@ -22,7 +22,7 @@
     assembly.'load'()
 
     # Load the escaper library, which we will be using.
-    load_bytecode "library/Data/Escape.pir"
+    load_bytecode "Data/Escape"
 
     # Initialize PIR output string.
     pir_output = ""

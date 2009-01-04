@@ -13,12 +13,13 @@ php_pcre.pir - PHP pcre  Library
 
 =cut
 
+# FIXME: Should it get installed or load pipplib.pbc?
 .include 'languages/pipp/src/common/php_MACRO.pir'
 .include 'cclass.pasm'
 
 .sub '__onload' :anon :load :init
     push_eh _handler
-    load_bytecode "library/pcre.pir"
+    load_bytecode "pcre"
     $P0 = get_global ['PCRE'], 'init'
     $P1 = $P0()
     new $P0, 'PhpInteger'

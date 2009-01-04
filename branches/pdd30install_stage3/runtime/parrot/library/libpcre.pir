@@ -7,7 +7,7 @@ libpcre.pir - NCI interface to Perl-Compatible Regular Expression library
 
 =head1 DESCRIPTION
 
-See 'library/pcre.pir' for details on the user interface.
+See F<library/pcre.pir> for details on the user interface.
 
 =cut
 
@@ -163,7 +163,7 @@ all:
 
 =head1 FILES
 
-pcre.pir, libpcre.pir
+F<pcre.pir>, F<libpcre.pir>
 
 =head1 SEE ALSO
 

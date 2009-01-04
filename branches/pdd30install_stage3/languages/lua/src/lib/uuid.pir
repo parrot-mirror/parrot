@@ -30,7 +30,7 @@ This implementation is based on F<runtime/parrot/library/uuid.pir>.
 .sub 'luaopen_uuid'
 
 #    print "luaopen_uuid\n"
-    load_bytecode 'uuid.pir'
+    load_bytecode 'uuid'
 
     .local pmc _lua__GLOBAL
     _lua__GLOBAL = get_hll_global '_G'

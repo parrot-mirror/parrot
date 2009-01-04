@@ -20,10 +20,10 @@ royalty-free font file.  Maybe soon.
 .sub main :main
 
     # first load the necessary libraries
-    load_bytecode "library/SDL/App.pir"
-    load_bytecode "library/SDL/Rect.pir"
-    load_bytecode "library/SDL/Color.pir"
-    load_bytecode "library/SDL/Font.pir"
+    load_bytecode "SDL/App"
+    load_bytecode "SDL/Rect"
+    load_bytecode "SDL/Color"
+    load_bytecode "SDL/Font"
 
     # create an SDL::App object
     .local pmc app
@@ -88,7 +88,7 @@ chromatic, E<lt>chromatic at wgz dot orgE<gt>.
 
 =head1 COPYRIGHT
 
-Copyright (C) 2004-2008, The Perl Foundation.
+Copyright (C) 2004-2009, The Perl Foundation.
 
 =cut
 

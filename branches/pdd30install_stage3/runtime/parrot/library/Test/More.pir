@@ -5,7 +5,7 @@ Test::More - Parrot extension for testing modules
 =head1 SYNOPSIS
 
     # load this library
-    load_bytecode 'library/Test/More.pbc'
+    load_bytecode 'Test/More'
 
     # get the testing functions
     .local pmc exports, curr_namespace, test_namespace
@@ -64,7 +64,7 @@ This class defines the following functions:
 .namespace [ 'Test'; 'More' ]
 
 .sub _initialize :load
-    load_bytecode 'library/Test/Builder.pbc'
+    load_bytecode 'Test/Builder.pir'
 
     .local pmc test
     test = new [ 'Test'; 'Builder' ]
@@ -999,7 +999,7 @@ to the Perl 6 internals mailing list.
 
 =head1 COPYRIGHT
 
-Copyright (C) 2005-2008, The Perl Foundation.
+Copyright (C) 2005-2009, The Perl Foundation.
 
 =cut
 

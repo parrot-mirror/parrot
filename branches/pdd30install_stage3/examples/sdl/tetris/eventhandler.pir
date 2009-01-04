@@ -9,7 +9,7 @@ eventhandler.pir - a tetris event handler class
 .sub __onload :load
     $P0 = get_class "Tetris::EventHandler"
     unless null $P0 goto END
-    load_bytecode "library/SDL/EventHandler.pir"
+    load_bytecode "SDL/EventHandler"
 
     get_class $P0, "SDL::EventHandler"
     subclass $P0, $P0, "Tetris::EventHandler"
@@ -153,7 +153,7 @@ Please send patches and suggestions to the Perl 6 Internals mailing list.
 
 =head1 COPYRIGHT
 
-Copyright (C) 2004-2008, The Perl Foundation.
+Copyright (C) 2004-2009, The Perl Foundation.
 
 =cut
 

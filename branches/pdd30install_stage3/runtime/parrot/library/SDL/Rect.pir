@@ -8,7 +8,7 @@ SDL::Rect - Parrot class representing rectangles in Parrot SDL
 =head1 SYNOPSIS
 
     # load this library
-    load_bytecode 'library/SDL/Rect.pir'
+    load_bytecode 'SDL/Rect'
 
     # create a new SDL::Rect object
     .local pmc rect
@@ -243,7 +243,7 @@ the Perl 6 Internals mailing list.
 
 =head1 COPYRIGHT
 
-Copyright (C) 2004-2008, The Perl Foundation.
+Copyright (C) 2004-2009, The Perl Foundation.
 
 =cut
 

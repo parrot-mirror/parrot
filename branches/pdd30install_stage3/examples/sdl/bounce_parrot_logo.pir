@@ -16,13 +16,13 @@ Use the Escape key or close the window when you've had enough.
 =cut
 
 .sub _main :main
-    load_bytecode "library/SDL/App.pir"
-    load_bytecode "library/SDL/Color.pir"
-    load_bytecode "library/SDL/Rect.pir"
-    load_bytecode "library/SDL/Image.pir"
-    load_bytecode "library/SDL/Sprite.pir"
-    load_bytecode "library/SDL/EventHandler.pir"
-    load_bytecode "library/SDL/Event.pir"
+    load_bytecode "SDL/App"
+    load_bytecode "SDL/Color"
+    load_bytecode "SDL/Rect"
+    load_bytecode "SDL/Image"
+    load_bytecode "SDL/Sprite"
+    load_bytecode "SDL/EventHandler"
+    load_bytecode "SDL/Event"
 
     .local pmc app
     app = new 'SDL::App'
@@ -339,7 +339,7 @@ chromatic, E<lt>chromatic at wgz dot orgE<gt>.
 
 =head1 COPYRIGHT
 
-Copyright (C) 2004-2008, The Perl Foundation.
+Copyright (C) 2004-2009, The Perl Foundation.
 
 =cut
 

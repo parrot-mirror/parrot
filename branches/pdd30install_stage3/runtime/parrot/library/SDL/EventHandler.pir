@@ -8,8 +8,8 @@ SDL::EventHandler - base class for application-specific SDL event handlers
 =head1 SYNOPSIS
 
     # load the event class and this library
-    load_bytecode 'library/SDL/Event.pir'
-    load_bytecode 'library/SDL/EventHandler.pir'
+    load_bytecode 'SDL/Event'
+    load_bytecode 'SDL/EventHandler'
 
     # subclass this class
     .local pmc parent_class
@@ -378,7 +378,7 @@ the Perl 6 Internals mailing list.
 
 =head1 COPYRIGHT
 
-Copyright (C) 2004-2008, The Perl Foundation.
+Copyright (C) 2004-2009, The Perl Foundation.
 
 =cut
 

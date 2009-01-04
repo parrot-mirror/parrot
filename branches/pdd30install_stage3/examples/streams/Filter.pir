@@ -21,8 +21,8 @@ Creates a counter stream that generates numbers from 0 to 9.
     .local pmc stream
     .local pmc filter
 
-    load_bytecode "library/Stream/Sub.pir"
-    load_bytecode "library/Stream/Filter.pir"
+    load_bytecode "Stream/Sub"
+    load_bytecode "Stream/Filter"
 
     # create the counter stream
     stream = new "Stream::Sub"
@@ -107,7 +107,7 @@ Please send patches and suggestions to the Perl 6 Internals mailing list.
 
 =head1 COPYRIGHT
 
-Copyright (C) 2004-2008, The Perl Foundation.
+Copyright (C) 2004-2009, The Perl Foundation.
 
 =cut
 

@@ -10,7 +10,7 @@ version 0.1
 
 =head1 SYNOPSIS
 
-    load_bytecode "library/Stream/Replay.pir"
+    load_bytecode "Stream/Replay.pir"
 
     $P0 = new "Stream::Replay"
     assign $P0, other_stream
@@ -40,7 +40,7 @@ By using C<clone>, you can read data from a stream as often as you want.
     $P0 = get_class 'Stream::Replay'
     unless null $P0 goto END
 
-    load_bytecode "library/Stream/Base.pir"
+    load_bytecode "Stream/Base.pir"
 
     # Stream::Replay
     get_class $P0, "Stream::Base"

@@ -9,7 +9,7 @@ library/Getopt/Obj.pir - parse long and short command line options
 
     .local string prog_name
     prog_name = shift argv
-    load_bytecode "Getopt/Obj.pir"
+    load_bytecode "Getopt/Obj"
     .local pmc getopts
     getopts = new "Getopt::Obj"
     getopts."notOptStop"(1)
@@ -854,7 +854,7 @@ F<t/library/getopt_obj.t>
 
 =head1 COPYRIGHT
 
-Copyright (C) 2006-2008, The Perl Foundation.
+Copyright (C) 2006-2009, The Perl Foundation.
 
 =cut
 

@@ -26,10 +26,10 @@ The main function.
 =cut
 
 .sub _main :main
-    load_bytecode "library/SDL/App.pir"
-    load_bytecode "library/SDL/Event.pir"
-    load_bytecode "library/SDL/EventHandler.pir"
-    load_bytecode "library/SDL/LCD.pir"
+    load_bytecode "SDL/App"
+    load_bytecode "SDL/Event"
+    load_bytecode "SDL/EventHandler"
+    load_bytecode "SDL/LCD"
 
     # create the SDL application object
     .local pmc app
@@ -144,7 +144,7 @@ Please send patches and suggestions to the Perl 6 Internals mailing list.
 
 =head1 COPYRIGHT
 
-Copyright (C) 2004-2008, The Perl Foundation.
+Copyright (C) 2004-2009, The Perl Foundation.
 
 =cut
 

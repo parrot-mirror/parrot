@@ -272,7 +272,7 @@ err:
 .sub parse_options
     .param pmc argv
 
-    load_bytecode "Getopt/Obj.pbc"
+    load_bytecode "Getopt/Obj"
 
     .local string prog
     prog = shift argv
@@ -2148,7 +2148,7 @@ out:
 
 .sub nc_start
     .local pmc stdscr
-    load_bytecode "library/ncurses.pasm"
+    load_bytecode "ncurses.pasm"
     stdscr = _init_curses()
     .return(stdscr)
 .end

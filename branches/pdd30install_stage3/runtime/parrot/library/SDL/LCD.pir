@@ -45,8 +45,8 @@ An SDL::LCD object has the following methods:
     .return()
 
   create_class:
-    load_bytecode 'SDL/Image.pir'
-    load_bytecode 'SDL/Rect.pir'
+    load_bytecode 'SDL/Image'
+    load_bytecode 'SDL/Rect'
 
     .local pmc digits
     digits = new 'SDL::Image'
@@ -285,7 +285,7 @@ Please send patches and suggestions to the Perl 6 Internals mailing list.
 
 =head1 COPYRIGHT
 
-Copyright (C) 2004-2008, The Perl Foundation.
+Copyright (C) 2004-2009, The Perl Foundation.
 
 =cut
 

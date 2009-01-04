@@ -6,7 +6,7 @@ Data::Escape - simple string escaping implemented in PIR
 
     ...
 
-    load_bytecode "library/Data/Escape.pir"
+    load_bytecode "Data/Escape.pir"
 
     .local pmc escape
 
@@ -154,7 +154,7 @@ Modifications by Jerry Gay to escape backslash and use character class ops.
 
 =head1 COPYRIGHT
 
-Copyright (C) 2004-2008, The Perl Foundation.
+Copyright (C) 2004-2009, The Perl Foundation.
 
 =cut
 

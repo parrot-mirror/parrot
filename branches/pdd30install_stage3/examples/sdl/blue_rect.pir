@@ -13,9 +13,9 @@ To run this file, run the following command from the Parrot directory:
 
 .sub _main :main
     # first load the necessary libraries
-    load_bytecode "library/SDL/App.pir"
-    load_bytecode "library/SDL/Rect.pir"
-    load_bytecode "library/SDL/Color.pir"
+    load_bytecode "SDL/App"
+    load_bytecode "SDL/Rect"
+    load_bytecode "SDL/Color"
 
     # create an SDL::App object
     .local pmc app
@@ -54,7 +54,7 @@ chromatic, E<lt>chromatic at wgz dot orgE<gt>.
 
 =head1 COPYRIGHt
 
-Copyright (C) 2004-2008, The Perl Foundation.
+Copyright (C) 2004-2009, The Perl Foundation.
 
 =cut
 

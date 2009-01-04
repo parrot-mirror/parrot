@@ -23,7 +23,7 @@ This module provides the default output style of C<YAML::Dumper>.
     goto END
 
   create_ydb:
-    load_bytecode "library/YAML/Dumper/Base.pir"
+    load_bytecode "YAML/Dumper/Base"
     get_class $P0, "YAML::Dumper::Base"
     subclass $P0, $P0, "YAML::Dumper::Default"
 END:
@@ -445,7 +445,7 @@ Please send patches and suggestions to the Perl 6 Internals mailing list.
 
 =head1 COPYRIGHT
 
-Copyright (C) 2004-2008, The Perl Foundation.
+Copyright (C) 2004-2009, The Perl Foundation.
 
 =cut
 

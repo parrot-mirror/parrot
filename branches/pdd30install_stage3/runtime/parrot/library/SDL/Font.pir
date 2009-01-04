@@ -8,7 +8,7 @@ SDL::Font - Parrot class representing fonts in Parrot SDL
 =head1 SYNOPSIS
 
     # load this library
-    load_bytecode 'library/SDL/Font.pir'
+    load_bytecode 'SDL/Font'
 
     # create a new SDL::Font object
     .local pmc font
@@ -200,7 +200,7 @@ list.
 
 =head1 COPYRIGHT
 
-Copyright (C) 2004-2008, The Perl Foundation.
+Copyright (C) 2004-2009, The Perl Foundation.
 
 =cut
 

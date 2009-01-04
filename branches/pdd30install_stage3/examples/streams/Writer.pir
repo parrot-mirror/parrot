@@ -15,7 +15,7 @@ Creates a C<Stream::Writer> and writes to it.
 .sub _main :main
     .local pmc stream
 
-    load_bytecode "library/Stream/Writer.pir"
+    load_bytecode "Stream/Writer"
 
     stream = new "Stream::Writer"
 
@@ -58,7 +58,7 @@ Please send patches and suggestions to the Perl 6 Internals mailing list.
 
 =head1 COPYRIGHT
 
-Copyright (C) 2004-2008, The Perl Foundation.
+Copyright (C) 2004-2009, The Perl Foundation.
 
 =cut
 
