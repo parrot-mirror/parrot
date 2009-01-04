@@ -706,12 +706,7 @@ gc_it_mark_PObj_children_grey(PARROT_INTERP, ARGMOD(Gc_it_hdr *hdr))
             pobject_lives(interp, (PObj *)(pmc->real_self));
     }
     else if (PObj_is_string_TEST(obj)) {
-        /* XXX: It's a string or a const-string, or whatever. Deal
-                with that here. */
-    }
-    else {
-        /* I don't even know what it would be here, but it definitely
-           isn't a PMC or anything with children */
+        return;
     }
 
     /* if the PMC is an array of other PMCs, we cycle through those. I'm
@@ -830,7 +825,6 @@ gc_it_add_free_object(PARROT_INTERP, ARGMOD(struct Small_Object_Pool *pool),
     PObj * p = (PObj*)to_add;
     Gc_it_hdr * const hdr = PObj_to_IT_HDR(p);
     PARROT_ASSERT(IT_HDR_to_PObj(hdr) == p);
-    //PARROT_ASSERT(contained_in_pool(pool, p));
     gc_it_add_free_header(interp, pool, hdr);
 }
 
@@ -920,9 +914,6 @@ gc_it_get_free_object(PARROT_INTERP, ARGMOD(struct Small_Object_Pool *pool))
                warning if we don't have a default, so I jam it in. */
             break;
     }
-
-    /* clear the aggregate flag, in case it hasn't been done yet */
-    hdr->data.agg = 0;
 
 /*
 #  if GC_IT_DEBUG
@@ -1035,7 +1026,6 @@ gc_it_add_arena_to_free_list(PARROT_INTERP,
 
     PARROT_ASSERT(new_arena == pool->last_Arena);
     PARROT_ASSERT((ptrdiff_t)p - (ptrdiff_t)new_arena->start_objects == 0);
-    //PARROT_ASSERT(contained_in_pool(pool, IT_HDR_to_PObj(p)));
 
     /* Here, we loop over the entire arena, finding the various object
        headers and attaching them to the pool's free list. Each object
@@ -1047,11 +1037,10 @@ gc_it_add_arena_to_free_list(PARROT_INTERP,
     for (i = 0; i < num_objs; i++) {
         PObj * pobj = IT_HDR_to_PObj(p);
         Gc_it_hdr *next = (Gc_it_hdr *)((char*)p + pool->object_size);
+        p->next = NULL;
 
         /* Add the current item to the free list */
-        //PARROT_ASSERT(contained_in_pool(pool, pobj));
         gc_it_add_free_object(interp, pool, pobj);
-        p->data.agg = 0;
         p = next;
     }
 
@@ -1075,43 +1064,7 @@ PARROT_INLINE
 void
 gc_it_set_card_mark(ARGMOD(Gc_it_hdr *hdr), UINTVAL flag)
 {
-    /* I'm going to try to mirror the GC flags in the PMC flags field, for
-       objects which are marked as being aggregates (and are therefore
-       isomorphic with Buffer *.
-    */
-#  ifdef GC_IT_USE_POBJ_FLAGS
-    if(hdr->agg) {
-        PObj * const p = IT_HDR_to_PObj(hdr);
-        switch (flag) {
-            /* This is relatively inefficient. I should be able to create
-               constant bitmaps for each condition and perform a logical
-               AND or OR to set them in a single operation. That's an
-               optimization to pursue later. */
-            case GC_IT_FLAG_BLACK:
-                PObj_live_SET(p);
-                PObj_is_fully_live_SET(p);
-                PObj_on_free_list_CLEAR(p);
-                break;
-            case GC_IT_FLAG_WHITE:
-                PObj_live_CLEAR(p);
-                PObj_is_fully_live_CLEAR(p);
-                PObj_on_free_list_CLEAR(p);
-                break;
-            case GC_IT_FLAG_GREY:
-                PObj_live_SET(p);
-                PObj_is_fully_live_CLEAR(p);
-                PObj_on_free_list_CLEAR(p);
-                break;
-            case CG_IT_FLAG_FREE:
-                PObj_live_CLEAR(p);
-                PObj_is_fully_live_CLEAR(p);
-                PObj_on_free_list_SET(p);
-        }
-    }
-#  else
     hdr->data.flag = flag;
-#  endif
-
 }
 
 /*
@@ -1129,13 +1082,7 @@ PARROT_INLINE
 UINTVAL
 gc_it_get_card_mark(ARGMOD(Gc_it_hdr *hdr))
 {
-#  ifdef GC_IT_USE_POBJ_FLAGS
-    /* if defined, GC_IT_USE_POBJ_FLAGS says that we should use the ->flags
-       field of the PObj structure to hold the white/grey/black state of
-       the object, instead of using the ->data.flag field of the header. */
-#  else
     return hdr->data.flag;
-#  endif
 }
 
 /*
@@ -1208,39 +1155,6 @@ gc_it_post_sweep_cleanup(PARROT_INTERP)
 #  if GC_IT_DEBUG
     fprintf(stderr, "Post-sweep cleanup. Sweep ended\n");
 #  endif
-}
-
-/*
-
-=item C<void gc_it_ptr_set_aggregate>
-
-Sets whether the given object is a PObj or not. "aggregates" are mostly
-PMCs which need to get marked themselves and may also contain pointers
-to other data structures which also need to be marked.
-
-This function should be called on all PMC objects when they are allocated.
-
-=item C<UINTVAL gc_it_ptr_get_aggregate>
-
-Returns a boolean value for whether the given object is flagged as an
-aggregate object or not.
-
-=cut
-
-*/
-
-void
-gc_it_ptr_set_aggregate(ARGMOD(void *ptr), unsigned char flag)
-{
-    Gc_it_hdr * const hdr = PObj_to_IT_HDR(ptr);
-    hdr->data.agg = flag;
-}
-
-UINTVAL
-gc_it_ptr_get_aggregate(ARGIN(void * const ptr))
-{
-    const Gc_it_hdr * const hdr = PObj_to_IT_HDR(ptr);
-    return (UINTVAL)hdr->data.agg;
 }
 
 /*
