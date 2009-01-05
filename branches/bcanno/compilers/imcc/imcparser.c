@@ -3059,8 +3059,9 @@ yyreduce:
     {
           /* We'll want to store an entry while emitting instructions, so just
            * store annotation like it's an instruction. */
-          (yyval.i) = MK_I(interp, IMCC_INFO(interp)->cur_unit, ".annotate", 
-2, (yyvsp[(2) - (3)].s), (yyvsp[(3) - (3)].sr));
+          SymReg * const key = mk_const(interp, (yyvsp[(2) - (3)].s), 'S');
+          (yyval.i) = MK_I(interp, IMCC_INFO(interp)->cur_unit, ".annotate",  2, key, (yyvsp[(3) - (3)].sr));
+          mem_sys_free((yyvsp[(2) - (3)].s));
         }
     break;
 

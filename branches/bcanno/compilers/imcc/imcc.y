@@ -932,8 +932,9 @@ annotate_directive:
         {
           /* We'll want to store an entry while emitting instructions, so just
            * store annotation like it's an instruction. */
-          $$ = MK_I(interp, IMCC_INFO(interp)->cur_unit, ".annotate", 
-2, $2, $3);
+          SymReg * const key = mk_const(interp, $2, 'S');
+          $$ = MK_I(interp, IMCC_INFO(interp)->cur_unit, ".annotate",  2, key, $3);
+          mem_sys_free($2);
         }
     ;
 
