@@ -4019,6 +4019,8 @@ void PackFile_Annotations_dump(PARROT_INTERP, struct PackFile_Segment *seg) {
     PackFile_Annotations *self = (PackFile_Annotations *)seg;
     INTVAL i;
 
+    default_dump_header(interp, self);
+
     /* Dump keys. */
     Parrot_io_printf(interp, "\n  keys => [\n");
     for (i = 0; i < self->num_keys; i++) {
@@ -4061,6 +4063,8 @@ void PackFile_Annotations_dump(PARROT_INTERP, struct PackFile_Segment *seg) {
         Parrot_io_printf(interp, "    ],\n");
     }
     Parrot_io_printf(interp, "  ],\n");
+
+    Parrot_io_printf(interp, "],\n");
 }
 
 
