@@ -2163,12 +2163,18 @@ e_pbc_emit(PARROT_INTERP, SHIM(void *param), ARGIN(const IMC_Unit *unit),
     }
 
     if (ins->opname && strcmp(ins->opname, ".annotate") == 0) {
-        /* It's an annotation. Add annotations seg if we're missing one. */
-        printf("annotation to emit\n");
+        /* It's an annotation. */
+        int annotation_type;
+
+        /* Add annotations seg if we're missing one. */
         if (!interp->code->annotations) {
             /* Create segment. */
+            char *name = mem_sys_allocate(strlen(interp->code->base.name) + 5);
+            strcpy(name, interp->code->base.name);
+            strcpy(name + strlen(name), "_ANN");
             interp->code->annotations = PackFile_Segment_new_seg(interp, interp->code->base.dir,
-                    PF_ANNOTATIONS_SEG, "ANNOTATIONS", 1);
+                    PF_ANNOTATIONS_SEG, name, 1);
+            interp->code->annotations->code = interp->code;
 
             /* Create initial group. */
             PackFile_Annotations_add_group(interp, interp->code->annotations,
@@ -2176,7 +2182,23 @@ e_pbc_emit(PARROT_INTERP, SHIM(void *param), ARGIN(const IMC_Unit *unit),
         }
 
         /* Add annotation. */
-        
+        switch (ins->symregs[1]->set) {
+            case 'I':
+                annotation_type = PF_ANNOTATION_KEY_TYPE_INT;
+                break;
+            case 'N':
+                annotation_type = PF_ANNOTATION_KEY_TYPE_NUM;
+                break;
+            case 'S':
+                annotation_type = PF_ANNOTATION_KEY_TYPE_STR;
+                break;
+            default:
+                IMCC_fatal(interp, 1, "e_pbc_emit:"
+                        "invalid type for annotation value\n");
+        }
+        PackFile_Annotations_add_entry(interp, interp->code->annotations,
+                    IMCC_INFO(interp)->pc - interp->code->base.data,
+                    ins->symregs[0]->color, annotation_type, ins->symregs[1]->color);
     }
     else if (ins->opname && *ins->opname) {
         SymReg  *addr, *r;

@@ -3955,7 +3955,7 @@ opcode_t *PackFile_Annotations_pack(PARROT_INTERP, struct PackFile_Segment *seg,
     for (i = 0; i < self->num_entries; i++) {
         *cursor++ = self->entries[i]->bytecode_offset;
         *cursor++ = self->entries[i]->key;
-        *cursor++ = self->entries[i]->value.integer;
+        *cursor++ = self->entries[i]->value;
     }
 
     return cursor;
@@ -3973,7 +3973,9 @@ Unpacks this segment from the bytecode.
 opcode_t *PackFile_Annotations_unpack(PARROT_INTERP, PackFile_Segment *seg,
         opcode_t *cursor) {
     PackFile_Annotations *self = (PackFile_Annotations *)seg;
-    INTVAL i;
+    INTVAL               i, str_len;
+    PackFile_ByteCode    *code;
+    char                 *code_name;
 
     /* Unpack keys. */
     self->num_keys = PF_fetch_opcode(seg->pf, &cursor);
@@ -4000,8 +4002,23 @@ opcode_t *PackFile_Annotations_unpack(PARROT_INTERP, PackFile_Segment *seg,
         self->entries[i]                  = mem_allocate_typed(PackFile_Annotations_Entry);
         self->entries[i]->bytecode_offset = PF_fetch_opcode(seg->pf, &cursor);
         self->entries[i]->key             = PF_fetch_opcode(seg->pf, &cursor);
-        self->entries[i]->value.integer   = PF_fetch_opcode(seg->pf, &cursor);
+        self->entries[i]->value           = PF_fetch_opcode(seg->pf, &cursor);
     }
+
+    /* Need to associate this segment with the applicable code segment. */
+    code_name = str_dup(self->base.name);
+    str_len = strlen(code_name);
+    code_name[str_len - 4] = 0;
+    code = (PackFile_ByteCode *)PackFile_find_segment(interp,
+            self->base.dir, code_name, 0);
+    if (!code || code->base.type != PF_BYTEC_SEG) {
+        Parrot_ex_throw_from_c_args(interp, NULL, 1,
+            "Code '%s' not found for annotations segment '%s'\n",
+            code_name, self->base.name);
+    }
+    self->code = code;
+    code->annotations = self;
+    mem_sys_free(code_name);
 
     return cursor;
 }
@@ -4019,7 +4036,7 @@ void PackFile_Annotations_dump(PARROT_INTERP, struct PackFile_Segment *seg) {
     PackFile_Annotations *self = (PackFile_Annotations *)seg;
     INTVAL i;
 
-    default_dump_header(interp, self);
+    default_dump_header(interp, (PackFile_Segment *)self);
 
     /* Dump keys. */
     Parrot_io_printf(interp, "\n  keys => [\n");
@@ -4102,32 +4119,62 @@ void PackFile_Annotations_add_group(PARROT_INTERP, struct PackFile_Annotations *
 
 Adds a new bytecode annotation entry. Takes the annotations segment to add the
 entry to, the current bytecode offset (assumed to be the greatest one so far
-in the currently active group), the annotation key, the annotation value type
-(one of PF_ANNOTATION_KEY_TYPE_INT, PF_ANNOTATION_KEY_TYPE_STR or
-PF_ANNOTATION_KEY_TYPE_NUM) and the value (set the appropriate of the last
-three parameters; those mapping to types other than the specified annotaiton
-value type will be ignored).
+in the currently active group), the annotation key (as an index into the constats
+table), the annotation value type (one of PF_ANNOTATION_KEY_TYPE_INT,
+PF_ANNOTATION_KEY_TYPE_STR or PF_ANNOTATION_KEY_TYPE_NUM) and the value. The value
+will be an integer literal in the case of type being PF_ANNOTATION_KEY_TYPE_INT, or
+an index into the constants table otherwise.
 
 */
 
 void PackFile_Annotations_add_entry(PARROT_INTERP, struct PackFile_Annotations *self,
-        opcode_t offset, STRING *key, INTVAL type, INTVAL integer_value,
-        FLOATVAL number_value, STRING *string_value) {
+        opcode_t offset, opcode_t key, opcode_t type, opcode_t value) {
     INTVAL i;
     opcode_t key_id = 0;
 
     /* See if we already have this key. */
+    STRING *key_name = PF_CONST(self->code, key)->u.string;
     for (i = 0; i < self->num_keys; i++) {
         STRING *test_key = PF_CONST(self->code, self->keys[i]->name)->u.string;
-        if (string_equal(interp, test_key, key) == 0) {
+        if (string_equal(interp, test_key, key_name) == 0) {
             key_id = 0;
             break;
         }
     }
     if (key_id == 0) {
-        /* We do nee have it. Add. */
+        /* We do nee have it. Add key entry. */
+        if (self->keys)
+            self->keys = mem_sys_realloc(self->keys, (1 + self->num_keys) *
+                    sizeof(PackFile_Annotations_Key *));
+        else
+            self->keys = mem_allocate_n_typed(self->num_keys + 1, PackFile_Annotations_Key *);
+        key_id = self->num_keys;
+        self->keys[key_id] = mem_allocate_typed(PackFile_Annotations_Key);
+        self->num_keys++;
 
+        /* Populate it. */
+        self->keys[key_id]->name = key;
+        self->keys[key_id]->type = type;
     }
+    else {
+        /* Ensure key types are compatible. */
+        if (self->keys[key_id]->type != type)
+            Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INVALID_OPERATION,
+                    "Annotations with different types of value used for key '%S'\n",
+                    key_name);
+    }
+
+    /* Add annotations entry. */
+    if (self->entries)
+            self->entries = mem_sys_realloc(self->entries, (1 + self->num_entries) *
+                    sizeof(PackFile_Annotations_Entry *));
+        else
+            self->entries = mem_allocate_n_typed(self->num_entries + 1, PackFile_Annotations_Entry *);
+    self->entries[self->num_entries] = mem_allocate_typed(PackFile_Annotations_Entry);
+    self->entries[self->num_entries]->bytecode_offset = offset;
+    self->entries[self->num_entries]->key = key_id;
+    self->entries[self->num_entries]->value = value;
+    self->num_entries++;
 }
 
 

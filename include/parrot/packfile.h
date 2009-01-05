@@ -230,10 +230,7 @@ typedef struct PackFile_Annotations_Group {
 typedef struct PackFile_Annotations_Entry {
     opcode_t bytecode_offset;
     opcode_t key;
-    union {
-        opcode_t integer;
-        opcode_t constant;
-    } value;
+    opcode_t value;
 } PackFile_Annotations_Entry;
 
 typedef struct PackFile_Annotations {
