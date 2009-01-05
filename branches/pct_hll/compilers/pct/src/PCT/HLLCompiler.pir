@@ -152,7 +152,7 @@ the compiler is ready for code to be compiled and executed.
 .end
 
 .sub 'parsegrammar' :method
-    .param string value        :optional
+    .param pmc value        :optional
     .param int has_value       :opt_flag
     .tailcall self.'attr'('$parsegrammar', value, has_value)
 .end
@@ -342,16 +342,22 @@ to any options and return the resulting parse tree.
     top = find_method parsegrammar, 'TOP'
     goto have_top
   parsegrammar_string:
+    $S0 = typeof parsegrammar
+    eq $S0, 'NameSpace', parsegrammar_ns
     $P0 = self.'parse_name'(parsegrammar)
     $S0 = pop $P0
     $P1 = get_hll_global $P0, $S0
     $I0 = can $P1, 'TOP'
-    unless $I0 goto parsegrammar_ns
+    unless $I0 goto parsegrammar_ns_string
     top = find_method $P1, 'TOP'
     goto have_top
-  parsegrammar_ns:
+  parsegrammar_ns_string:
     $P0 = self.'parse_name'(parsegrammar)
     top = get_hll_global $P0, 'TOP'
+    unless null top goto have_top
+    goto err_notop
+  parsegrammar_ns:
+    top = parsegrammar['TOP']
     unless null top goto have_top
   err_notop:
     self.'panic'('Cannot find TOP regex in ', parsegrammar)

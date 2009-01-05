@@ -31,15 +31,23 @@ Creates the Perl 6 compiler by subclassing a C<PCT::HLLCompiler> object.
 .sub 'onload' :load :init :anon
     load_bytecode 'PCT.pbc'
 
+    .local pmc parrotns, hllns, exports
+    parrotns = get_root_namespace ['parrot']
+    hllns = get_hll_namespace
+    exports = split ' ', 'PGE PAST'
+    parrotns.'export_to'(hllns, exports)
+
     .local pmc p6meta, perl6
     p6meta = get_hll_global ['Perl6Object'], '$!P6META'
-    perl6 = p6meta.'new_class'('Perl6::Compiler', 'parent'=>'PCT::HLLCompiler')
+    perl6 = p6meta.'new_class'('Perl6::Compiler', 'parent'=>'parrot;PCT::HLLCompiler')
 
     load_bytecode 'config.pbc'
 
     perl6.'language'('Perl6')
-    perl6.'parsegrammar'('Perl6::Grammar')
-    perl6.'parseactions'('Perl6::Grammar::Actions')
+    $P0 = get_hll_namespace ['Perl6';'Grammar']
+    perl6.'parsegrammar'($P0)
+    $P0 = get_hll_namespace ['Perl6';'Grammar';'Action']
+    perl6.'parseactions'($P0)
 
     ##  set the compilation stages in the @stages attribute
     $P0 = split ' ', 'parse past check_syntax post pir evalpmc'
@@ -121,7 +129,7 @@ USAGE
     set_hll_global ['Perl6'], '@?END_BLOCKS', $P0
 
     ##  tell PAST::Var how to encode Perl6Str and Str values
-    $P0 = get_hll_global ['PAST';'Compiler'], '%valflags'
+    $P0 = get_root_global ['parrot';'PAST';'Compiler'], '%valflags'
     $P0['Perl6Str'] = 'e'
     $P0['Str'] = 'e'
 .end
