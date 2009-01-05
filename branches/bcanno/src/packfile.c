@@ -2604,44 +2604,13 @@ pf_debug_dump(PARROT_INTERP, ARGIN(const PackFile_Segment *self))
 
     Parrot_io_printf(interp, "\n  mappings => [\n");
     for (i = 0; i < debug->num_mappings; i++) {
-<<<<<<< .working
         char *filename = string_to_cstring(interp, PF_CONST(debug->code,
                    debug->mappings[i]->filename)->u.string);;
-        PIO_printf(interp, "    #%d\n    [\n", i);
-        PIO_printf(interp, "        OFFSET => %d,\n",
-=======
         Parrot_io_printf(interp, "    #%d\n    [\n", i);
         Parrot_io_printf(interp, "        OFFSET => %d,\n",
->>>>>>> .merge-right.r34983
                    debug->mappings[i]->offset);
-<<<<<<< .working
-        PIO_printf(interp, "        FILENAME => %s\n", filename);
+        Parrot_io__printf(interp, "        FILENAME => %s\n", filename);
         string_cstring_free(filename);
-=======
-        switch (debug->mappings[i]->mapping_type) {
-            case PF_DEBUGMAPPINGTYPE_NONE:
-                Parrot_io_printf(interp, "        MAPPINGTYPE => NONE\n");
-                break;
-            case PF_DEBUGMAPPINGTYPE_FILENAME:
-                {
-                char *filename;
-
-                Parrot_io_printf(interp, "        MAPPINGTYPE => FILENAME,\n");
-                filename = string_to_cstring(interp, PF_CONST(debug->code,
-                           debug->mappings[i]->u.filename)->u.string);
-                Parrot_io_printf(interp, "        FILENAME => %s\n", filename);
-                string_cstring_free(filename);
-                }
-                break;
-            case PF_DEBUGMAPPINGTYPE_SOURCESEG:
-                Parrot_io_printf(interp, "        MAPPINGTYPE => SOURCESEG,\n");
-                Parrot_io_printf(interp, "        SOURCESEG => %d\n",
-                           debug->mappings[i]->u.source_seg);
-                break;
-            default:
-                break;
-        }
->>>>>>> .merge-right.r34983
         Parrot_io_printf(interp, "    ],\n");
     }
 
