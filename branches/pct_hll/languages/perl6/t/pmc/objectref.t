@@ -16,6 +16,7 @@ Tests the ObjectRef PMC.
 
 =cut
 
+.HLL 'perl6'
 .loadlib 'perl6_group'
 
 .sub main :main
