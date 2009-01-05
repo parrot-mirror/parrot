@@ -1513,8 +1513,7 @@ method scoped($/) {
             for @($<fulltypename>) {
                 $type.push( $( $_ ) );
             }
-            ## XXX: might need to revisit this, puts node in tree twice
-            $past.viviself( $( $<fulltypename>[0] ) );
+            $past.viviself( $( $<fulltypename>[0] ).clone() );
         }
     }
     make $past;

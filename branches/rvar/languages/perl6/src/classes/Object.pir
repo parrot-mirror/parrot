@@ -305,6 +305,8 @@ the object's type and address.
     .local pmc attr
     attr = new itypeclass
     setattribute candidate, parrotclass, attrname, attr
+    $P0 = attrhash['type']
+    setprop attr, 'type', $P0
     .local string keyname
     $I0 = index attrname, '!'
     if $I0 < 0 goto attrinit_loop
