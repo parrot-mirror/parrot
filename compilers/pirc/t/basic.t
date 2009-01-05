@@ -38,7 +38,6 @@ pirc_2_pasm_is(<<'CODE', <<'OUTPUT', "test a basic :main sub");
 CODE
 .namespace []
 .pcc_sub :main main:
-    get_params
     end
 OUTPUT
 
@@ -48,20 +47,18 @@ pirc_2_pasm_is(<<'CODE', <<'OUTPUT', "test a normal basic sub");
 CODE
 .namespace []
 main:
-    get_params
-    set_returns
+    set_returns 1
     returncc
 OUTPUT
 
 
 pirc_2_pasm_is(<<'CODE', <<'OUTPUT', "test sub with sub pragmas");
-.sub main :load :init :immediate :postcomp :anon :multi
+.sub main :load :init :immediate :postcomp :anon :multi()
 .end
 CODE
 .namespace []
 .pcc_sub main:
-    get_params
-    set_returns
+    set_returns 1
     returncc
 OUTPUT
 
@@ -74,13 +71,11 @@ pirc_2_pasm_is(<<'CODE', <<'OUTPUT', "test sub with vtable pragma");
 CODE
 .namespace []
 .pcc_sub main:
-    get_params
-    set_returns
+    set_returns 1
     returncc
 .namespace []
 .pcc_sub get_integer:
-    get_params
-    set_returns
+    set_returns 5
     returncc
 OUTPUT
 
@@ -93,13 +88,11 @@ pirc_2_pasm_is(<<'CODE', <<'OUTPUT', "test sub with method pragma");
 CODE
 .namespace []
 .pcc_sub :method main:
-    get_params
-    set_returns
+    set_returns 1
     returncc
 .namespace []
 .pcc_sub :method bye:
-    get_params
-    set_returns
+    set_returns 5
     returncc
 OUTPUT
 
@@ -110,8 +103,7 @@ pirc_2_pasm_is(<<'CODE', <<'OUTPUT', "test sub with :subid");
 CODE
 .namespace []
 .pcc_sub main:
-    get_params
-    set_returns
+    set_returns 1
     returncc
 OUTPUT
 

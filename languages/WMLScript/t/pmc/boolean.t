@@ -1,5 +1,5 @@
 #! perl
-# Copyright (C) 2006-2007, The Perl Foundation.
+# Copyright (C) 2006-2008, The Perl Foundation.
 # $Id$
 
 =head1 NAME
@@ -8,7 +8,7 @@ t/pmc/boolean.t - WmlsBoolean
 
 =head1 SYNOPSIS
 
-    % perl -I../../lib t/pmc/boolean.t
+    % perl t/pmc/boolean.t
 
 =head1 DESCRIPTION
 
@@ -19,6 +19,9 @@ Tests C<WmlsBoolean> PMC
 
 use strict;
 use warnings;
+use FindBin;
+use lib "$FindBin::Bin/../../../../lib";
+
 use Parrot::Test tests => 9;
 use Test::More;
 
@@ -130,7 +133,7 @@ false
 OUTPUT
 
 pir_output_is( << 'CODE', << 'OUTPUT', 'check HLL' );
-.HLL "WMLScript"
+.HLL "wmlscript"
 .loadlib "wmls_group"
 .sub _main
     .local pmc pmc1
@@ -150,7 +153,7 @@ true
 OUTPUT
 
 pir_output_is( << 'CODE', << 'OUTPUT', 'check istrue' );
-.HLL "WMLScript"
+.HLL "wmlscript"
 .loadlib "wmls_group"
 .loadlib "wmls_ops"
 .sub _main
@@ -171,7 +174,7 @@ WmlsBoolean
 OUTPUT
 
 pir_output_is( << 'CODE', << 'OUTPUT', 'check typeof' );
-.HLL "WMLScript"
+.HLL "wmlscript"
 .loadlib "wmls_group"
 .loadlib "wmls_ops"
 .sub _main
@@ -192,7 +195,7 @@ WmlsInteger
 OUTPUT
 
 pir_output_is( << 'CODE', << 'OUTPUT', 'check defined' );
-.HLL "WMLScript"
+.HLL "wmlscript"
 .loadlib "wmls_group"
 .loadlib "wmls_ops"
 .sub _main

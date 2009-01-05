@@ -17,7 +17,7 @@ This implementation is based on F<runtime/parrot/library/uuid.pir>.
 
 =cut
 
-.HLL 'Lua'
+.HLL 'lua'
 .loadlib 'lua_group'
 .namespace [ 'uuid' ]
 
@@ -145,10 +145,6 @@ LIST
 
 
 =back
-
-=head1 AUTHORS
-
-Francois Perrad
 
 =cut
 

@@ -8,7 +8,7 @@ t/pmc/string.t - LuaString
 
 =head1 SYNOPSIS
 
-    % perl -I../../lib t/pmc/string.t
+    % perl t/pmc/string.t
 
 =head1 DESCRIPTION
 
@@ -19,8 +19,10 @@ Tests C<LuaString> PMC
 
 use strict;
 use warnings;
+use FindBin;
+use lib "$FindBin::Bin/../../../../lib";
 
-use Parrot::Test tests => 14;
+use Parrot::Test tests => 15;
 use Test::More;
 
 pir_output_is( << 'CODE', << 'OUTPUT', 'check inheritance' );
@@ -139,7 +141,7 @@ CODE
 OUTPUT
 
 pir_output_is( << 'CODE', << 'OUTPUT', 'check HLL' );
-.HLL 'Lua'
+.HLL 'lua'
 .loadlib 'lua_group'
 .sub _main
     .local pmc pmc1
@@ -159,7 +161,7 @@ simple string
 OUTPUT
 
 pir_output_is( << 'CODE', << 'OUTPUT', 'check HLL (autoboxing)' );
-.HLL 'Lua'
+.HLL 'lua'
 .loadlib 'lua_group'
 .sub _main
     .local pmc pmc1
@@ -180,7 +182,7 @@ simple string
 OUTPUT
 
 pir_output_is( << 'CODE', << 'OUTPUT', 'check HLL & .const' );
-.HLL 'Lua'
+.HLL 'lua'
 .loadlib 'lua_group'
 .sub _main
     .const 'LuaString' cst1 = "simple string"
@@ -197,7 +199,7 @@ simple string
 OUTPUT
 
 pir_output_is( << 'CODE', << 'OUTPUT', '.const & empty string' );
-.HLL 'Lua'
+.HLL 'lua'
 .loadlib 'lua_group'
 .sub _main
     .const 'LuaString' cst1 = ''
@@ -213,8 +215,26 @@ CODE
 1
 OUTPUT
 
+pir_output_is( << 'CODE', << 'OUTPUT', 'check box' );
+.HLL 'lua'
+.loadlib 'lua_group'
+.sub _main
+    .local pmc pmc1
+    box pmc1, "simple string"
+    print pmc1
+    print "\n"
+    .local int bool1
+    bool1 = isa pmc1, 'LuaString'
+    print bool1
+    print "\n"
+.end
+CODE
+simple string
+1
+OUTPUT
+
 pir_output_is( << 'CODE', << 'OUTPUT', 'check is_equal (RT #60292)' );
-.HLL 'Lua'
+.HLL 'lua'
 .loadlib 'lua_group'
 .sub _main
     new $P1, 'LuaString'
@@ -230,7 +250,7 @@ CODE
 OUTPUT
 
 pir_output_is( << 'CODE', << 'OUTPUT', 'check tostring' );
-.HLL 'Lua'
+.HLL 'lua'
 .loadlib 'lua_group'
 .sub _main
     .local pmc pmc1
@@ -252,7 +272,7 @@ string
 OUTPUT
 
 pir_output_is( << 'CODE', << 'OUTPUT', 'check tonumber' );
-.HLL 'Lua'
+.HLL 'lua'
 .loadlib 'lua_group'
 .sub _main
     .local pmc pmc1
@@ -274,7 +294,7 @@ number
 OUTPUT
 
 pir_output_is( << 'CODE', << 'OUTPUT', 'check tobase' );
-.HLL 'Lua'
+.HLL 'lua'
 .loadlib 'lua_group'
 .sub _main
     .local pmc pmc1

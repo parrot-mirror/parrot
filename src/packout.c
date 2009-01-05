@@ -41,6 +41,7 @@ PARROT_EXPORT
 opcode_t
 PackFile_pack_size(PARROT_INTERP, ARGMOD(PackFile *self))
 {
+    ASSERT_ARGS(PackFile_pack_size);
     size_t size;
     size_t header_size = 0;
     PackFile_Directory * const dir = &self->directory;
@@ -84,6 +85,7 @@ PARROT_EXPORT
 void
 PackFile_pack(PARROT_INTERP, ARGMOD(PackFile *self), ARGOUT(opcode_t *cursor))
 {
+    ASSERT_ARGS(PackFile_pack);
     opcode_t *ret;
 
     size_t size;
@@ -151,6 +153,7 @@ PARROT_EXPORT
 size_t
 PackFile_ConstTable_pack_size(PARROT_INTERP, ARGIN(PackFile_Segment *seg))
 {
+    ASSERT_ARGS(PackFile_ConstTable_pack_size);
     opcode_t i;
     const PackFile_ConstTable* const self = (const PackFile_ConstTable *) seg;
     size_t size = 1;    /* const_count */
@@ -183,6 +186,7 @@ opcode_t *
 PackFile_ConstTable_pack(PARROT_INTERP,
         ARGIN(PackFile_Segment *seg), ARGMOD(opcode_t *cursor))
 {
+    ASSERT_ARGS(PackFile_ConstTable_pack);
     const PackFile_ConstTable * const self = (const PackFile_ConstTable *)seg;
     opcode_t i;
 
@@ -210,6 +214,7 @@ int
 PackFile_find_in_const(PARROT_INTERP,
         ARGIN(const PackFile_ConstTable *ct), ARGIN(const PMC *key), int type)
 {
+    ASSERT_ARGS(PackFile_find_in_const);
     int i;
     for (i = 0; i < ct->const_count; i++)
         if (type == PFC_STRING && ct->constants[i]->u.string ==
@@ -218,7 +223,7 @@ PackFile_find_in_const(PARROT_INTERP,
         else if (type == PFC_NUMBER && ct->constants[i]->u.number ==
                  PMC_num_val(key))
             return i;
-    PIO_eprintf(NULL, "find_in_const: couldn't find const for key\n");
+    Parrot_io_eprintf(NULL, "find_in_const: couldn't find const for key\n");
     Parrot_exit(interp, 1);
 }
 
@@ -249,6 +254,7 @@ PackFile_Constant_pack(PARROT_INTERP,
         ARGIN(const PackFile_ConstTable *const_table),
         ARGIN(const PackFile_Constant *self), ARGOUT(opcode_t *cursor))
 {
+    ASSERT_ARGS(PackFile_Constant_pack);
     PMC *key;
     size_t i;
     opcode_t slice_bits;
@@ -325,7 +331,7 @@ PackFile_Constant_pack(PARROT_INTERP,
                     *cursor++ = PMC_int_val(key);
                     break;
                 default:
-                    PIO_eprintf(NULL, "PackFile_Constant_pack: "
+                    Parrot_io_eprintf(NULL, "PackFile_Constant_pack: "
                             "unsupported constant type\n");
                     Parrot_exit(interp, 1);
             }
@@ -334,7 +340,7 @@ PackFile_Constant_pack(PARROT_INTERP,
         break;
 
     default:
-        PIO_eprintf(NULL, "PackFile_Constant_pack: unsupported constant\n");
+        Parrot_io_eprintf(NULL, "PackFile_Constant_pack: unsupported constant\n");
         Parrot_exit(interp, 1);
         break;
     }

@@ -43,7 +43,7 @@ pmclass LuaThread
     dynpmc
     need_ext
     group lua_group
-    hll Lua {
+    hll lua {
 
 /*
 
@@ -236,10 +236,6 @@ Return the string "thread".
 /*
 
 =back
-
-=head1 AUTHORS
-
-Francois Perrad
 
 =cut
 

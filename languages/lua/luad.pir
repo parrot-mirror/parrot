@@ -17,10 +17,6 @@ B<luad> disassembles Lua 5.1 bytecode produced by C<luac>.
 
 L<http://luaforge.net/projects/chunkspy/>
 
-=head1 AUTHOR
-
-Francois Perrad.
-
 =cut
 
 .loadlib 'lua_group'
@@ -35,10 +31,9 @@ Francois Perrad.
     if argc != 2 goto USAGE
     progname = shift argv
     filename = shift argv
-    content = load_file(filename)
-    unless content goto L1
-    .local pmc script
     push_eh _handler
+    content = load_file(filename)
+    .local pmc script
     new $P0, 'LuaBytecode'
     script = $P0.'undump'(content)
     .local string basename
@@ -49,38 +44,35 @@ Francois Perrad.
     script.'brief'(basename)
     pop_eh
     end
+  USAGE:
+    printerr "Usage: parrot luad.pir filename\n"
+    exit -1
   _handler:
     .local pmc e
     .local string msg
     .get_results (e)
     msg = e
-    print msg
-    print "\n"
-  L1:
-    end
-  USAGE:
-    printerr "Usage: parrot luad.pir filename\n"
-    exit -1
+    say msg
 .end
 
 .sub 'load_file'
     .param string filename
-    .local pmc pio
+    .local pmc fh
     .local string content
-    pio = new 'ParrotIO'
+    fh = new 'FileHandle'
     push_eh _handler
-    content = pio.'slurp'(filename)
+    content = fh.'readall'(filename)
     pop_eh
-    if content goto L1
-    $S0 = err
-    print "Can't slurp '"
-    print filename
-    print "' ("
-    print $S0
-    print ")\n"
-  L1:
-  _handler:
     .return (content)
+  _handler:
+    $S0 = "Can't slurp '"
+    $S0 .= filename
+    $S0 .= "' ("
+    $S1 = err
+    $S0 .= $S1
+    $S0 .= ")\n"
+    printerr $S0
+    .return ('')
 .end
 
 .include 'languages/lua/src/lib/luabytecode.pir'

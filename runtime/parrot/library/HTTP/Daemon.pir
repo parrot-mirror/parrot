@@ -332,7 +332,8 @@ runnloop.
 add_lp:
     conn = active[i]
     sock = conn.'socket'()
-    add_io_event sock, req_handler, conn, .IO_THR_MSG_ADD_SELECT_RD
+    # XXX: this opcode is long gone; need something else
+    # add_io_event sock, req_handler, conn, .IO_THR_MSG_ADD_SELECT_RD
     ## self.'debug'('**select ', i, "\n")
     inc i
     if i < n goto add_lp
@@ -713,7 +714,7 @@ normal:
 
 SERVE_file:
     # try to open the file in url
-    fp = open url, "<"
+    fp = open url, 'r'
     unless fp goto SERVE_404
     len = stat url, .STAT_FILESIZE
     read file_content, fp, len

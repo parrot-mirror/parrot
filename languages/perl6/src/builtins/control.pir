@@ -31,7 +31,7 @@ the moment -- we'll do more complex handling a bit later.)
     .param int has_value       :opt_flag
 
     if has_value goto have_value
-    value = 'list'()
+    value = new 'Nil'
   have_value:
     $P0         = new 'Exception'
     $P0['type'] = .CONTROL_RETURN
@@ -118,11 +118,48 @@ the moment -- we'll do more complex handling a bit later.)
 
 =cut
 
+.sub 'last'
+    .local pmc e
+    e = new 'Exception'
+    e['severity'] = .EXCEPT_NORMAL
+    e['type'] = .CONTROL_LOOP_LAST
+    throw e
+.end
+
 .sub 'next'
     .local pmc e
     e = new 'Exception'
     e['severity'] = .EXCEPT_NORMAL
     e['type'] = .CONTROL_LOOP_NEXT
+    throw e
+.end
+
+.sub 'redo'
+    .local pmc e
+    e = new 'Exception'
+    e['severity'] = .EXCEPT_NORMAL
+    e['type'] = .CONTROL_LOOP_REDO
+    throw e
+.end
+
+.sub 'continue'
+    .local pmc e
+    e = new 'Exception'
+    e['severity'] = .EXCEPT_NORMAL
+    e['type'] = .CONTROL_CONTINUE
+    throw e
+.end
+
+.sub 'break'
+    .param pmc arg :optional
+    .param int has_arg :opt_flag
+    .local pmc e
+    e = new 'Exception'
+    e['severity'] = .EXCEPT_NORMAL
+    e['type'] = .CONTROL_BREAK
+    unless has_arg, no_arg
+    e['payload'] = arg
+  no_arg:
     throw e
 .end
 
@@ -134,7 +171,7 @@ the moment -- we'll do more complex handling a bit later.)
     .param pmc message        :optional
     .param int have_message   :opt_flag
     if have_message goto message_done
-    message = new 'Perl6Str'
+    message = new 'Str'
     message = "Attempt to execute stub code (...)"
   message_done:
     'fail'(message)
@@ -145,27 +182,26 @@ the moment -- we'll do more complex handling a bit later.)
 
 =cut
 
-.sub 'die'
-    .param pmc list            :slurpy
-    .local pmc iter
-    .local string message
+.sub 'die' :multi('Exception')
+    .param pmc ex
+    set_global '$!', ex
+    throw ex
+    .return ()
+.end
 
-    message = ''
-    iter = new 'Iterator', list
-  iter_loop:
-    unless iter goto iter_end
-    $P0 = shift iter
-    $S0 = $P0
-    message .= $S0
-    goto iter_loop
-  iter_end:
+.sub 'die' :multi(_)
+    .param pmc list            :slurpy
+    .local string message
+    .local pmc ex
+
+    message = list.'join'('')
     if message > '' goto have_message
     message = "Died\n"
   have_message:
-    $P0 = new 'Exception'
-    $P0 = message
-    set_global '$!', $P0
-    throw $P0
+    ex = new 'Exception'
+    ex = message
+    set_global '$!', ex
+    throw ex
     .return ()
 .end
 
@@ -276,20 +312,48 @@ on error.
     invokable = compiler.'compile'(code)
 
     res = invokable()
-    pop_eh
     exception = new 'Failure'
     goto done
 
   catch:
     .get_results (exception)
-    goto done
 
   done:
+    pop_eh
     # Propagate exception to caller
     $P0 = getinterp
     $P0 = $P0['lexpad';1]
     $P0['$!'] = exception
+    unless null res goto with_res
+    res = new ['Nil']
+  with_res:
     .return (res)
+.end
+
+=item warn
+
+=cut
+
+.sub 'warn'
+    .param pmc list            :slurpy
+    .local pmc ex
+    .local string message
+
+    message = list.'join'('')
+    if message > '' goto have_message
+    message = "Warning!  Something's wrong\n"
+  have_message:
+    ## count_eh is broken
+    # $I0 = count_eh
+    # eq $I0, 0, no_eh
+    ex = new 'Exception'
+    ex['severity'] = .EXCEPT_WARNING
+    ex['message'] = message
+    throw ex
+    .return ()
+  no_eh:
+    printerr message
+    .return ()
 .end
 
 
@@ -310,6 +374,12 @@ support.
 =item fail
 
 B<TODO>: Research the exception handling system.
+
+=item warn
+
+B<TODO>: Throw a resumable exception when Rakudo supports top-level exception
+handlers.  Note that the default exception handler should print the message of
+this exception to standard error.
 
 
 =back

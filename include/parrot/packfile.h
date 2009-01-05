@@ -350,6 +350,29 @@ opcode_t PackFile_pack_size(PARROT_INTERP, ARGMOD(PackFile *self))
         __attribute__nonnull__(2)
         FUNC_MODIFIES(*self);
 
+#define ASSERT_ARGS_PackFile_Constant_pack __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(const_table) \
+    || PARROT_ASSERT_ARG(self) \
+    || PARROT_ASSERT_ARG(cursor)
+#define ASSERT_ARGS_PackFile_ConstTable_pack __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(seg) \
+    || PARROT_ASSERT_ARG(cursor)
+#define ASSERT_ARGS_PackFile_ConstTable_pack_size __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(seg)
+#define ASSERT_ARGS_PackFile_find_in_const __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(ct) \
+    || PARROT_ASSERT_ARG(key)
+#define ASSERT_ARGS_PackFile_pack __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(self) \
+    || PARROT_ASSERT_ARG(cursor)
+#define ASSERT_ARGS_PackFile_pack_size __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(self)
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 /* HEADERIZER END: src/packout.c */
 
@@ -374,7 +397,8 @@ INTVAL PackFile_add_segment(SHIM_INTERP,
 
 PARROT_EXPORT
 void PackFile_Constant_destroy(SHIM_INTERP,
-    ARGMOD_NULLOK(PackFile_Constant *self));
+    ARGMOD_NULLOK(PackFile_Constant *self))
+        FUNC_MODIFIES(*self);
 
 PARROT_EXPORT
 PARROT_MALLOC
@@ -447,7 +471,8 @@ const opcode_t * PackFile_ConstTable_unpack(PARROT_INTERP,
 
 PARROT_EXPORT
 void PackFile_destroy(PARROT_INTERP, ARGMOD_NULLOK(PackFile *pf))
-        __attribute__nonnull__(1);
+        __attribute__nonnull__(1)
+        FUNC_MODIFIES(*pf);
 
 PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
@@ -664,6 +689,122 @@ void default_dump_header(PARROT_INTERP, ARGIN(const PackFile_Segment *self))
 void mark_const_subs(PARROT_INTERP)
         __attribute__nonnull__(1);
 
+#define ASSERT_ARGS_do_sub_pragmas __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(self)
+#define ASSERT_ARGS_PackFile_add_segment __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(dir) \
+    || PARROT_ASSERT_ARG(seg)
+#define ASSERT_ARGS_PackFile_Constant_destroy __attribute__unused__ int _ASSERT_ARGS_CHECK = 0
+#define ASSERT_ARGS_PackFile_Constant_new __attribute__unused__ int _ASSERT_ARGS_CHECK = 0
+#define ASSERT_ARGS_PackFile_Constant_pack_size __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(self)
+#define ASSERT_ARGS_PackFile_Constant_unpack __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(constt) \
+    || PARROT_ASSERT_ARG(self) \
+    || PARROT_ASSERT_ARG(cursor)
+#define ASSERT_ARGS_PackFile_Constant_unpack_key __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(constt) \
+    || PARROT_ASSERT_ARG(self) \
+    || PARROT_ASSERT_ARG(cursor)
+#define ASSERT_ARGS_PackFile_Constant_unpack_pmc __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(constt) \
+    || PARROT_ASSERT_ARG(self) \
+    || PARROT_ASSERT_ARG(cursor)
+#define ASSERT_ARGS_PackFile_ConstTable_clear __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(self)
+#define ASSERT_ARGS_PackFile_ConstTable_unpack __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(seg) \
+    || PARROT_ASSERT_ARG(cursor)
+#define ASSERT_ARGS_PackFile_destroy __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp)
+#define ASSERT_ARGS_PackFile_find_fixup_entry __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(name)
+#define ASSERT_ARGS_PackFile_find_segment __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(name)
+#define ASSERT_ARGS_PackFile_fixup_subs __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp)
+#define ASSERT_ARGS_PackFile_FixupTable_clear __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(self)
+#define ASSERT_ARGS_PackFile_FixupTable_new_entry __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(label)
+#define ASSERT_ARGS_PackFile_funcs_register __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(pf)
+#define ASSERT_ARGS_PackFile_map_segments __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(dir)
+#define ASSERT_ARGS_PackFile_new __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp)
+#define ASSERT_ARGS_PackFile_new_dummy __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(name)
+#define ASSERT_ARGS_PackFile_remove_segment_by_name \
+     __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(dir) \
+    || PARROT_ASSERT_ARG(name)
+#define ASSERT_ARGS_PackFile_Segment_destroy __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(self)
+#define ASSERT_ARGS_PackFile_Segment_dump __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(self)
+#define ASSERT_ARGS_PackFile_Segment_new __attribute__unused__ int _ASSERT_ARGS_CHECK = 0
+#define ASSERT_ARGS_PackFile_Segment_new_seg __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(dir) \
+    || PARROT_ASSERT_ARG(name)
+#define ASSERT_ARGS_PackFile_Segment_pack __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(self) \
+    || PARROT_ASSERT_ARG(cursor)
+#define ASSERT_ARGS_PackFile_Segment_packed_size __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(self)
+#define ASSERT_ARGS_PackFile_Segment_unpack __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(self) \
+    || PARROT_ASSERT_ARG(cursor)
+#define ASSERT_ARGS_PackFile_unpack __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(self) \
+    || PARROT_ASSERT_ARG(packed)
+#define ASSERT_ARGS_Parrot_debug_add_mapping __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(debug) \
+    || PARROT_ASSERT_ARG(filename)
+#define ASSERT_ARGS_Parrot_debug_pc_to_filename __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(debug)
+#define ASSERT_ARGS_Parrot_destroy_constants __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp)
+#define ASSERT_ARGS_Parrot_load_bytecode __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp)
+#define ASSERT_ARGS_Parrot_new_debug_seg __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(cs)
+#define ASSERT_ARGS_Parrot_switch_to_cs __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(new_cs)
+#define ASSERT_ARGS_Parrot_switch_to_cs_by_nr __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp)
+#define ASSERT_ARGS_PF_create_default_segs __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(file_name)
+#define ASSERT_ARGS_default_dump_header __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(self)
+#define ASSERT_ARGS_mark_const_subs __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp)
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 /* HEADERIZER END: src/packfile.c */
 
@@ -683,6 +824,12 @@ void PackFile_Fixup_dump(PARROT_INTERP,
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
+#define ASSERT_ARGS_PackFile_ConstTable_dump __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(self)
+#define ASSERT_ARGS_PackFile_Fixup_dump __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(ft)
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 /* HEADERIZER END: src/packdump.c */
 
@@ -792,6 +939,40 @@ opcode_t* PF_store_string(ARGOUT(opcode_t *cursor), ARGIN(const STRING *s))
         __attribute__nonnull__(2)
         FUNC_MODIFIES(*cursor);
 
+#define ASSERT_ARGS_PackFile_assign_transforms __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(pf)
+#define ASSERT_ARGS_PF_fetch_cstring __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(pf) \
+    || PARROT_ASSERT_ARG(cursor)
+#define ASSERT_ARGS_PF_fetch_integer __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(stream)
+#define ASSERT_ARGS_PF_fetch_number __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(stream)
+#define ASSERT_ARGS_PF_fetch_opcode __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(stream)
+#define ASSERT_ARGS_PF_fetch_string __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(cursor)
+#define ASSERT_ARGS_PF_size_cstring __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(s)
+#define ASSERT_ARGS_PF_size_integer __attribute__unused__ int _ASSERT_ARGS_CHECK = 0
+#define ASSERT_ARGS_PF_size_number __attribute__unused__ int _ASSERT_ARGS_CHECK = 0
+#define ASSERT_ARGS_PF_size_opcode __attribute__unused__ int _ASSERT_ARGS_CHECK = 0
+#define ASSERT_ARGS_PF_size_string __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(s)
+#define ASSERT_ARGS_PF_store_cstring __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(cursor) \
+    || PARROT_ASSERT_ARG(s)
+#define ASSERT_ARGS_PF_store_integer __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(cursor)
+#define ASSERT_ARGS_PF_store_number __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(cursor) \
+    || PARROT_ASSERT_ARG(val)
+#define ASSERT_ARGS_PF_store_opcode __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(cursor)
+#define ASSERT_ARGS_PF_store_string __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(cursor) \
+    || PARROT_ASSERT_ARG(s)
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 /* HEADERIZER END: src/packfile/pf_items.c */
 
@@ -876,6 +1057,34 @@ PARROT_WARN_UNUSED_RESULT
 PARROT_CONST_FUNCTION
 opcode_t fetch_op_le(opcode_t w);
 
+#define ASSERT_ARGS_fetch_buf_be_12 __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(rb) \
+    || PARROT_ASSERT_ARG(b)
+#define ASSERT_ARGS_fetch_buf_be_16 __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(rb) \
+    || PARROT_ASSERT_ARG(b)
+#define ASSERT_ARGS_fetch_buf_be_4 __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(rb) \
+    || PARROT_ASSERT_ARG(b)
+#define ASSERT_ARGS_fetch_buf_be_8 __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(rb) \
+    || PARROT_ASSERT_ARG(b)
+#define ASSERT_ARGS_fetch_buf_le_12 __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(rb) \
+    || PARROT_ASSERT_ARG(b)
+#define ASSERT_ARGS_fetch_buf_le_16 __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(rb) \
+    || PARROT_ASSERT_ARG(b)
+#define ASSERT_ARGS_fetch_buf_le_4 __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(rb) \
+    || PARROT_ASSERT_ARG(b)
+#define ASSERT_ARGS_fetch_buf_le_8 __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(rb) \
+    || PARROT_ASSERT_ARG(b)
+#define ASSERT_ARGS_fetch_iv_be __attribute__unused__ int _ASSERT_ARGS_CHECK = 0
+#define ASSERT_ARGS_fetch_iv_le __attribute__unused__ int _ASSERT_ARGS_CHECK = 0
+#define ASSERT_ARGS_fetch_op_be __attribute__unused__ int _ASSERT_ARGS_CHECK = 0
+#define ASSERT_ARGS_fetch_op_le __attribute__unused__ int _ASSERT_ARGS_CHECK = 0
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 /* HEADERIZER END: src/byteorder.c */
 

@@ -30,7 +30,6 @@ PMCS = \
  luaany \
  luaboolean \
  luabytecode \
- luaclosure \
  luafunction \
  luanil \
  luanumber \
@@ -44,7 +43,6 @@ PMC_FILES = \
  $(PMCDIR)/luaany.pmc \
  $(PMCDIR)/luaboolean.pmc \
  $(PMCDIR)/luabytecode.pmc \
- $(PMCDIR)/luaclosure.pmc \
  $(PMCDIR)/luafunction.pmc \
  $(PMCDIR)/luanil.pmc \
  $(PMCDIR)/luanumber.pmc \
@@ -104,6 +102,7 @@ all: \
  alarm.pbc \
  base64.pbc \
  bc.pbc \
+ bit.pbc \
  bitlib.pbc \
  complex.pbc \
  $(LIBPATH)/gl.pbc \
@@ -208,6 +207,9 @@ base64.pbc: $(LIBPATH)/base64.pir
 bc.pbc: $(LIBPATH)/bc.pir
 	-$(PARROT) --output=bc.pbc $(LIBPATH)/bc.pir
 
+bit.pbc: $(LIBPATH)/bit.pir
+	-$(PARROT) --output=bit.pbc $(LIBPATH)/bit.pir
+
 bitlib.pbc: $(LIBPATH)/bitlib.pir
 	-$(PARROT) --output=bitlib.pbc $(LIBPATH)/bitlib.pir
 
@@ -272,6 +274,7 @@ help:
 	@echo "                     This is the default."
 	@echo "Testing:"
 	@echo "  test:              Run the test suite."
+	@echo "  smoke:             Run the test suite and send report to the smolder server"
 	@echo "  testclean:         Clean up test results."
 	@echo ""
 	@echo "Cleaning:"
@@ -286,6 +289,9 @@ help:
 test: all
 	cd .. && $(PERL) t/harness --languages=lua
 
+# run the test suite, create a TAP archive and send it off to smolder
+smoke : all
+	-$(PERL) t/harness --archive --send-to-smolder
 
 TEST_CLEANERS = \
  "t/pmc/*.pir" \

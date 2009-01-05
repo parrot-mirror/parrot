@@ -7,7 +7,8 @@ src/builtins/eval.pir - Perl6 evaluators
 =head1 DESCRIPTION
 
 This file implements methods and functions that evaluate code,
-such as C<eval>, C<require>, and C<use>.
+such as C<evalfile>, C<require>, and C<use>. The function C<eval>
+itself can be found in src/builtins/control.pir.
 
 =head1 Methods
 
@@ -40,6 +41,10 @@ such as C<eval>, C<require>, and C<use>.
     .tailcall compiler.'evalfiles'(filename)
 
   lang_parrot:
+    ##  load_bytecode currently doesn't accept non-ascii filenames (TT #65)
+    ##  so we'll force it to ascii for now.
+    $I0 = find_charset 'ascii'
+    filename = trans_charset filename, $I0
     load_bytecode filename
     .return (1)
 .end

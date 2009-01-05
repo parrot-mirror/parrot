@@ -1,5 +1,6 @@
-# Copyright (C) 2008, The Perl Foundation.
+# Copyright (C) 2008-2009, The Perl Foundation.
 # $Id$
+
 class JS::Grammar::Actions;
 
 method TOP($/, $key) {
@@ -138,7 +139,19 @@ method while_statement($/) {
 ##   <step>
 ## }
 ##
-method for1_statement($/) {
+sub c_style_for($/,$var_decl) {
+
+    ## if there are variable declarations in the init portion of the C-style
+    ## for loop, we have to evaluate it first so that they are available
+    ## during the rest of loop
+    my $init;
+    if $var_decl {
+        $init := $( $<init> );
+    }
+    else {
+        if $<init> { $init := $( $<init>[0] ); }
+    }
+
     my $body := $( $<statement> );
 
     ## if there's a step, create a new compound statement node,
@@ -164,13 +177,14 @@ method for1_statement($/) {
 
     ## if there's an init step, it is evaluated before the loop, so
     ## create a compound statement node ($init, $loop).
-    if $<init> {
-        my $init := $( $<init>[0] );
-        make PAST::Stmts.new( $init, $loop, :node($/) );
+    if $init {
+        $loop := PAST::Stmts.new( $init, $loop, :node($/) );
     }
-    else {
-        make $loop;
-    }
+    make $loop;
+}
+
+method for1_statement($/) {
+    c_style_for($/,0);
 }
 
 method for2_statement($/) {
@@ -190,11 +204,7 @@ method for3_statement($/) {
 }
 
 method for4_statement($/) {
-    # XXX todo
-    my $past;
-    my $body := $( $<statement> );
-    $past := $body;
-    make $past;
+    c_style_for($/,1);
 }
 
 method labelled_statement($/) {
@@ -262,7 +272,7 @@ method return_statement($/) {
     make $past;
 }
 
-method variable_statement($/) {
+method variable_declaration_list($/) {
     ## each variable declared in this statement becomes a separate PIR
     ## statement; therefore create a Stmts node.
     my $past := PAST::Stmts.new( :node($/) );
@@ -270,6 +280,10 @@ method variable_statement($/) {
         $past.push( $( $_ ) );
     }
     make $past;
+}
+
+method variable_statement($/) {
+    make $( $<variable_declaration_list> )
 }
 
 method variable_declaration($/) {
@@ -395,6 +409,10 @@ method primary_expression($/, $key) {
     make $( $/{$key} );
 }
 
+method regular_expression_literal ($/) {
+    make PAST::Val.new( :value( ~$<regular_expression_literal> ), :node($/) );
+}
+
 method this($/) {
     ## XXX wait for PAST support for 'self'
     ## load 'self' into a register; when this PAST node is used as a child somewhere
@@ -430,7 +448,7 @@ method post_call_expr($/, $key) {
     make $( $/{$key} );
 }
 
-method assignment_expression($/) {
+method assignment_expression_X($/) {
     my $past := $( $<conditional_expression> );
 
     ## get number of lhs_expressions
@@ -546,8 +564,8 @@ method lhs_expression($/, $key) {
     make $( $/{$key} );
 }
 
-method member_expression($/) {
-    my $member := $( $<member> );
+method member_expressionX($/) {
+    my $member := $( $<member_prefix> );
 
     ## if there are any arguments, $member is invoked with these arguments.
     if $<arguments> {
@@ -563,14 +581,14 @@ method member_expression($/) {
     }
 }
 
-method member($/) {
+method member_expression($/) {
     my $past := $( $<member_prefix> );
 
     ## for each index, $past acts as the invocant or main object on
     ## which some operation is executed; therefore $past must be the
     ## first child, so unshift it. Then, $past is assigned this result
     ## preparing for either the next index or as argument for 'make'.
-    for $<index> {
+    for $<member_suffix> {
         my $idx := $( $_ );
         $idx.unshift($past);
         $past := $idx;
@@ -583,7 +601,7 @@ method member_prefix($/, $key) {
     make $( $/{$key} );
 }
 
-method index($/, $key) {
+method member_suffix($/, $key) {
     ## get the index expression
     my $idx := $( $/{$key} );
 
@@ -646,17 +664,18 @@ method builtin_literal($/, $key) {
 
 method true($/) {
     # XXX change this into type a ECMAScript type, 'Boolean' or whatever
-    make PAST::Val.new( :returns('Integer'), :value('1'), :node($/) );
+    make PAST::Var.new( :name(~$/), :namespace('JSBoolean'), :scope('package'), :node($/) );
 }
 
 method false($/) {
     # XXX change this into type 'Boolean' or whatever
-    make PAST::Val.new( :returns('Integer'), :value('0'), :node($/) );
+    make PAST::Var.new( :name(~$/), :namespace('JSBoolean'), :scope('package'), :node($/) );
 }
 
 method null($/) {
     # XXX would this work?
-    make PAST::Var.new( :name('null'), :scope('package'), :node($/) );
+    #make PAST::Var.new( :name('null'), :scope('package'), :node($/) );
+    make PAST::Var.new( :name('null'), :namespace('JSNull'), :scope('package'), :node($/) );
 }
 
 method object_literal($/) {
@@ -681,7 +700,7 @@ method property($/) {
     my $key  := $( $<property_name> );
 
     ## XXX my $key  := PAST::Val.new( $prop, :returns('String'), :node($/) );
-    my $val  := $( $<expression> );
+    my $val  := $( $<assignment_expression> );
 
     $val.named($key);
     make $val;
@@ -737,7 +756,8 @@ method decimal_literal($/, $key) {
     make $( $/{$key} );
 }
 
-method logical_or_expression($/, $key) {
+#method logical_or_expression($/, $key) {
+method assignment_expression($/, $key) {
     ## Handle the operator table
     ##
     if ($key eq 'end') {

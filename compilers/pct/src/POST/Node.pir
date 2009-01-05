@@ -187,6 +187,13 @@ Get/set the opcode type for this node.
 .end
 
 
+.sub 'hll' :method
+    .param pmc value           :optional
+    .param int has_value       :opt_flag
+    .tailcall self.'attr'('hll', value, has_value)
+.end
+
+
 .sub 'outer' :method
     .param pmc value           :optional
     .param int has_value       :opt_flag
@@ -197,6 +204,12 @@ Get/set the opcode type for this node.
 .sub 'subid' :method
     .param pmc value           :optional
     .param int has_value       :opt_flag
+    if has_value goto getset_value
+    $I0 = exists self['subid']
+    if $I0 goto getset_value
+    value = self.'unique'()
+    has_value = 1
+  getset_value:
     .tailcall self.'attr'('subid', value, has_value)
 .end
 

@@ -94,9 +94,11 @@ C<target> adverbs.
     $P1 = $P0(code)
   make_grammar:
     if grammar == '' goto end
-    push_eh end
-    $P0 = get_hll_global 'P6metaclass'
-    $P0.'new_class'(grammar, 'parent'=>'PGE::Grammar')
+    .local pmc p6meta
+    p6meta = get_hll_global 'P6metaclass'
+    $P0 = p6meta.'get_proto'(grammar)
+    unless null $P0 goto end
+    $P0 = p6meta.'new_class'(grammar, 'parent'=>'PGE::Grammar')
   end:
     .return ($P1)
 
@@ -128,6 +130,15 @@ tree as a PIR code object that can be compiled.
     name = code.'escape'(name)
     namecorou = code.'escape'(namecorou)
 
+    .local string subid
+    subid = ''
+    $P0 = adverbs['subid']
+    if null $P0 goto have_subid
+    $S0 = code.'escape'($P0)
+    subid = concat ':subid(', $S0
+    concat subid, ')'
+  have_subid:
+
     ##   Perform reduction/optimization on the
     ##   expression tree before generating PIR.
     .local pmc exp
@@ -151,25 +162,25 @@ tree as a PIR code object that can be compiled.
     ##   Generate the initial PIR code for a backtracking (uncut) rule.
     .local string returnop
     returnop = '.yield'
-    code.'emit'(<<"        CODE", name, namecorou, .INTERPINFO_CURRENT_SUB)
-      .sub %0 :method
+    code.'emit'(<<"        CODE", name, subid, namecorou, .INTERPINFO_CURRENT_SUB)
+      .sub %0 :method %1
           .param pmc adverbs   :slurpy :named
           .local pmc mob
-          .const 'Sub' corou = %1
+          .const 'Sub' corou = %2
           $P0 = corou
           $P0 = clone $P0
           mob = $P0(self, adverbs)
           .return (mob)
       .end
-      .sub %1
+      .sub '' :subid(%2)
           .param pmc mob       :unique_reg
           .param pmc adverbs   :unique_reg
           .local string target :unique_reg
           .local pmc mfrom, mpos :unique_reg
           .local int cpos, iscont :unique_reg
-          $P0 = get_hll_global ['PGE'], 'Match'
+          $P0 = get_hll_global ['PGE'], '$!MATCH'
           (mob, cpos, target, mfrom, mpos, iscont) = $P0.'new'(mob, adverbs :flat :named)
-          $P0 = interpinfo %2
+          $P0 = interpinfo %3
           setattribute mob, '&!corou', $P0
           .local int lastpos
           lastpos = length target
@@ -180,14 +191,14 @@ tree as a PIR code object that can be compiled.
   code_cutrule:
     ##   Initial code for a rule that cannot be backtracked into.
     returnop = '.return'
-    code.'emit'(<<"        CODE", name)
-      .sub %0 :method
+    code.'emit'(<<"        CODE", name, subid)
+      .sub %0 :method %1
           .param pmc adverbs      :unique_reg :slurpy :named
           .local pmc mob
           .local string target    :unique_reg
           .local pmc mfrom, mpos  :unique_reg
           .local int cpos, iscont :unique_reg
-          $P0 = get_hll_global ['PGE'], 'Match'
+          $P0 = get_hll_global ['PGE'], '$!MATCH'
           (mob, cpos, target, mfrom, mpos, iscont) = $P0.'new'(self, adverbs :flat :named)
           .local int lastpos
           lastpos = length target
@@ -771,11 +782,18 @@ tree as a PIR code object that can be compiled.
     .local string subarg
     subarg = ''
     $I0 = exists self['arg']
-    if $I0 == 0 goto subarg_end
+    if $I0 == 0 goto subarg_dba
     subarg = self['arg']
     subarg = code.'escape'(subarg)
     subarg = concat ', ', subarg
     args['A'] = $S0
+  subarg_dba:
+    $I0 = exists self['dba']
+    if $I0 == 0 goto subarg_end
+    $S0 = self['dba']
+    $S0 = code.'escape'($S0)
+    subarg .= ", 'dba'=>"
+    subarg .= $S0
   subarg_end:
 
     .local string cname, captgen, captsave, captback
@@ -1423,25 +1441,44 @@ tree as a PIR code object that can be compiled.
     ##  two different compilers.  Also, if the sources can be lengthy
     ##  we might be well served to use a hashed representation of
     ##  the source.
-    code.'emit'(<<"        CODE", label, next, lang, value)
+    code.'emit'(<<"        CODE", label, lang, value)
         %0: # closure
-          $S1 = %3
+          $S1 = %2
           $P0 = get_hll_global ['PGE';'Match'], '%!cache'
           $P1 = $P0[$S1]
           unless null $P1 goto %0_1
-          $P1 = compreg %2
+          $P1 = compreg %1
           $P1 = $P1($S1)
           $P0[$S1] = $P1
         %0_1:
+        CODE
+    $I0 = self['iszerowidth']
+    if $I0 goto closure_zerowidth
+    code.'emit'(<<"        CODE", next)
           mpos = pos
           ($P0 :optional, $I0 :opt_flag) = $P1(mob)
-          if $I0 == 0 goto %1
+          if $I0 == 0 goto %0
           mob.'result_object'($P0)
           push ustack, pos
           local_branch cstack, succeed
           pos = pop ustack
           null $P0
           mob.'result_object'($P0)
+          goto fail
+        CODE
+    .return ()
+  closure_zerowidth:
+    ##  we're doing a <?{{ or <!{{ assertion.
+    .local string test
+    test = 'if'
+    $I0 = self['isnegated']
+    unless $I0 goto have_test
+    test = 'unless'
+  have_test:
+    code.'emit'(<<"        CODE", test, next)
+          mpos = pos
+          $P0 = $P1(mob)
+          %0 $P0 goto %1
           goto fail
         CODE
     .return ()

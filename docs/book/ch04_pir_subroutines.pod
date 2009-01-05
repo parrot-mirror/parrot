@@ -18,7 +18,7 @@ single stand-alone unit for reuse. PIR is a subroutine-based language
 in that all code in PIR must exist in a subroutine. Execution starts,
 as we have seen, in the C<:main> subroutine, and others can be called
 to perform the tasks of a program. From subroutines we can construct
-more elaborate chunks of code reusability: methods and objects. In
+more elaborate chunks of code reusability methods and objects. In
 this chapter we will talk about how subroutines work in PIR, and how
 they can be used by developers to create programs for Parrot.
 
@@ -94,7 +94,7 @@ retrieves returned values from the call.
 
 X<.param directive>
 In addition to syntax for subroutine calls, PIR provides syntax for
-subroutine definitions. Subrtroutines are defined with the C<.sub>
+subroutine definitions. Subroutines are defined with the C<.sub>
 directive, and end with the C<.end> directive. We've already seen
 this syntax in our earlier examples. The C<.param> defines input
 parameters and creates local named variables for them:
@@ -147,6 +147,103 @@ they're stored in typed integer variables. The C<fact> subroutine
 uses C<.param> and the C<.return> directives for retrieving parameters
 and returning results. The final printed result is 120.
 
+=head3 Named Parameters
+
+Parameters that are passed in a strict order like we've seen above are
+called '''positional arguments'''. Positional arguments are
+differentiated from one another by their position in the function call.
+Putting positional arguments in a different order will produce different
+effects, or may cause errors. Parrot supports a second type of parameter,
+a '''named parameter'''. Instead of passing parameters by their position
+in the string, parameters are passed by name and can be in any order.
+Here's an example:
+
+ .sub 'MySub'
+    .param int yrs :named("age")
+    .param string call :named("name")
+    $S0 = "Hello " . call
+    $S1 = "You are " . yrs
+    $S1 = $S1 . " years old
+    print $S0
+    print $S1
+ .end
+
+ .sub main :main
+    'MySub'("age" => 42, "name" => "Bob")
+ .end
+
+In the example above, we could have easily reversed the order too:
+
+ .sub main :main
+    'MySub'("name" => "Bob", "age" => 42)    # Same!
+ .end
+
+Named arguments can be a big help because you don't have to worry about
+the exact order of variables, especially as argument lists get very long.
+
+=head3 Optional Parameters
+
+Sometimes there are parameters to a function that don't always need to be
+passed, or values for a parameter which should be given a default value
+if a different value hasn't been explicitly provided. Parrot provides
+a mechanism for allowing optional parameters to be specifed, so an
+error won't be raised if the parameter isn't provided. Parrot also
+provides a flag value that can be tested to determine if an optional
+parameter has been provided or not, so a default value can be supplied.
+
+Optional parameters are actually treated like two parameters: The value
+that may or may not be passed, and the flag value to determine if it
+has been or not. Here's an example declaration of an optional parameter:
+
+  .param string name :optional
+  .param int has_name :opt_flag
+
+The C<:optional> flag specifies that the given parameter is optional and
+does not necessarily need to be provided. The C<:opt_flag> specifies that
+an integer parameter contains a boolean flag. This flag is true if the
+value was passed, and false otherwise. This means we can use logic like
+this to provide a default value:
+
+  .param string name :optional
+  .param int has_name :opt_flag
+  if has_name goto we_have_a_name
+    name = "Default value"
+  we_have_a_name:
+
+Optional parameters can be positional or named parameters. When using them
+with positional parameters, they must appear at the end of the list of
+postional parameters. Also, the C<:opt_flag> parameter must always appear
+directly after the C<:optional> parameter.
+
+  .sub 'Foo'
+    .param int optvalue :optional
+    .param int hasvalue :opt_flag
+    .param pmc notoptional          # WRONG!
+    ...
+
+  .sub 'Bar'
+     .param int hasvalue :opt_flag
+     .param int optvalue :optional  # WRONG!
+     ...
+
+  .sub 'Baz'
+    .param int optvalue :optional
+    .param pmc notoptional
+    .param int hasvalue :opt_flag   # WRONG!
+    ...
+
+Optional parameters can also be mixed with named parameters:
+
+  .sub 'MySub'
+    .param int value :named("answer") :optional
+    .param int has_value :opt_flag
+    ...
+
+This could be called in two ways:
+
+  'MySub'("answer" => 42)  # with a value
+  'MySub'()                # without
+
 =head2 Continuation Passing Style
 
 Continuations are snapshots, a frozen image of the current execution
@@ -154,7 +251,7 @@ state of the VM. Once we have a continuation we can invoke it to
 return to the point where the continuation was first created. It's
 like a magical timewarp that allows the developer to arbitrarily move
 control flow back to any previous point in the program N<there's actually
-no magic involved, just a lot of interesting ideas and involved code>. 
+no magic involved, just a lot of interesting ideas and involved code>.
 
 Continuations are not a new concept, they've been boggling the minds
 of Lisp and Scheme programmers for many years. However, despite all
@@ -180,14 +277,14 @@ a X<tailcall> tailcall, and is important in PIR. Here's a contrived
 example in pseudocode:
 
  call add_two(5)
- 
+
  subroutine add_two(value)
 	 value = add_one(value)
 	 return add_one(value)
 
 In this example, the subroutine C<add_two> makes two calls to
 c<add_one>. The second call to C<add_one> is used as the return
-value. C<add_one> is called and it's result is immediately returned
+value. C<add_one> is called and its result is immediately returned
 to the caller of C<add_two>, it is never stored anywhere. We can
 optimize this situation is we realize that the second call to
 C<add_one> is returning to the same place that C<add_two> is. The
@@ -202,7 +299,41 @@ the parent function to make the tailcall.
 
 =head3 Creating and Using Continuations
 
-{{TODO: Write this section!}}
+Most often continuations are used implicitly in the other control-flow
+operations in Parrot. However, they can also be created and used explicitly
+when required. Continuations are like any other PMC, and can be created
+using the C<new> keyword:
+
+  $P0 = new 'Continuation'
+  
+The new continuation starts off in an undefined state. Attempting to invoke
+a new continuation after it's first been created will raise an exception. To
+prepare the continuation for use, a destination label must be assigned to it
+with the C<set_addr> opcode:
+
+  $P0 = new 'Continuation'
+  set_addr $P0, my_label
+ 
+ my_label:
+  ...
+
+To jump to the continuation's stored label and return the context to the
+state it was in when the continuation was created, use the C<invoke> opcode
+or the C<()> notaton:
+
+  invoke $P0  # Explicit using PASM-like opcodes
+  $P0()       # Same, but nicer syntax
+
+Notice that even though you can use the subroutine notation C<$P0()> to
+invoke the continuation, it doesn't make any sense to try and pass arguments
+to it or to try and return values from it:
+
+  $P0 = new 'Continuation'
+  set_addr $P0, my_label
+
+  $P0(1, 2)      # WRONG!
+  
+  $P1 = $P0()    # WRONG!
 
 =head2 Lexical Subroutines
 
@@ -211,8 +342,11 @@ As we've mentioned above, Parrot offers support for lexical subroutines.
 What this means is that we can define a subroutine by name inside a
 larger subroutine, and our "inner" subroutine is only visible and callable
 from the "outer" subroutine. Plus, the "inner" subroutine inherits all the
-lexical variables from the outer subroutine, but is able to define it's
+lexical variables from the outer subroutine, but is able to define its
 own lexical variables that cannot be seen or modified by the outer subroutine.
+This is important because PIR doesn't have anything corresponding to blocks
+or nested scopes like some other languages have. Lexical subroutines play
+the role of nested scopes when they are needed.
 
 =head3 Scope and HLLs
 
@@ -230,13 +364,30 @@ programming language, where this kind of construct is not uncommon:
           // x, y, and z are all visible here
       }
       // only x and y are visible here
-  {
+  }
 
 The code above illustrates this idea perfectly without having to get into a
 detailed and convoluted example: In the inner block, we define the variable
 C<z> which is only visible inside that block. The outer block has no
 knowledge of C<z> at all. However, the inner block does have access to the
-variables C<x> and C<y>.
+variables C<x> and C<y>. This is an example of nested scopes where the
+visibility of different data items can change in a single subroutine. As
+we've discussed above, Parrot does't have any direct analog for this
+situation: If we tried to write the code above directly, we would end up
+with this PIR code:
+
+  .param int x
+  .param int y
+  .param int z
+  x = 0
+  y = 1
+  z = 2
+  ...
+
+This PIR code is similar, but the handling of the variable C<z> is
+different: C<z> is visible throughout the entire current subroutine, where it
+is not visible throughout the entire C function. To help approximate this
+effect, PIR supplies lexical subroutines to create nested lexical scopes.
 
 =head3 PIR Scoping
 
@@ -252,7 +403,7 @@ we can use lexical subroutines to simulate this behavior that HLLs require:
       'MyInner'()
       # only x and y are visible here
   .end
-  
+
   .sub 'MyInner' :outer('MyOuter')
       .lex int z
       #x, y, and z are all visible here
@@ -268,7 +419,7 @@ multisubs, which we will discuss soon>, we can use the C<:subid> flag on the
 outer subroutine to give it a different--and unique--name that the lexical
 subroutines can reference in their C<:outer> declarations. Within lexical
 subroutines, the C<.lex> command defines a local variable that follows these
-scoping rules. 
+scoping rules.
 
 Sound confusing? It's not so bad. The basics are that we use C<:outer> to
 define a lexically-scoped subroutine, and we use C<.lex> to define lexically
@@ -282,7 +433,7 @@ Z<CHP-4-SECT-1.2>
 The example above could have been written using simple labels instead
 of separate compilation units:
 
-  .sub _main
+  .sub main
       $I1 = 5         # counter
       call fact       # same as bsr fact
       print $I0
@@ -467,14 +618,14 @@ first method:
     .local pmc obj
     newclass class, "Foo"       # create a new Foo class
     new obj, "Foo"              # instantiate a Foo object
-    obj."meth"()                # call obj."_meth" which is actually
-    print "done\n"              # "_meth" in the "Foo" namespace
+    obj."meth"()                # call obj."meth" which is actually
+    print "done\n"              # in the "Foo" namespace
     end
   .end
 
   .namespace [ "Foo" ]          # start namespace "Foo"
 
-  .sub meth :method             # define Foo::_meth global
+  .sub meth :method             # define Foo::meth global
      print "in meth\n"
      $S0 = "other_meth"         # method names can be in a register too
      self.$S0()                 # self is the invocant
@@ -567,14 +718,14 @@ be used directly in PIR code as methods, in addition to being used by Parrot
 as VTABLE interfaces. This means we can have the following:
 
   .namespace [ "MyClass" ]
-  
+
   .sub 'ToString' :vtable('get_string') :method
       $S0 = "hello!"
       .return($S0)
   .end
-  
+
   .namespace [ "OtherClass" ]
-  
+
   .local pmc myclass = new "MyClass"
   say myclass                 # say converts to string internally
   $S0 = myclass               # Convert to a string, store in SS0
@@ -651,7 +802,7 @@ MultiSubs (also called "Multis") must all differ from one another in
 the number and/or type of arguments passed to the function. Having
 two multisubs with the same function signature could result in a
 parsing error, or the later function could overwrite the former one
-in the multi. 
+in the multi.
 
 Multisubs are defined like this:
 
@@ -733,7 +884,7 @@ a multi is used.
 #  Tables
 #  ......
 #  A 2x2 table with top header row looks like this:
-#  
+#
 #  =begin table An Example Table
 #  =headrow
 #  =row

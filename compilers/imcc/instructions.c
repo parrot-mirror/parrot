@@ -50,9 +50,18 @@ static int e_file_emit(PARROT_INTERP,
         __attribute__nonnull__(1)
         __attribute__nonnull__(4);
 
-static int e_file_open(SHIM_INTERP, ARGIN(void *param))
+static int e_file_open(PARROT_INTERP, ARGIN(void *param))
+        __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
+#define ASSERT_ARGS_e_file_close __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp)
+#define ASSERT_ARGS_e_file_emit __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(ins)
+#define ASSERT_ARGS_e_file_open __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(param)
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 /* HEADERIZER END: static */
 
@@ -88,6 +97,7 @@ Instruction *
 _mk_instruction(ARGIN(const char *op), ARGIN(const char *fmt), int n,
         ARGIN(SymReg * const *r), int flags)
 {
+    ASSERT_ARGS(_mk_instruction);
     const size_t reg_space  = (n > 1) ? (sizeof (SymReg *) * (n - 1)) : 0;
     Instruction * const ins =
         (Instruction*)mem_sys_allocate_zeroed(sizeof (Instruction) + reg_space);
@@ -130,6 +140,7 @@ C<w_special>.
 void
 imcc_init_tables(PARROT_INTERP)
 {
+    ASSERT_ARGS(imcc_init_tables);
     const char *writes[] = {
         "cleari", "clearn", "clearp", "clears",
     };
@@ -157,6 +168,7 @@ Returns TRUE if instruction ins writes to a register of type t
 int
 ins_writes2(ARGIN(const Instruction *ins), int t)
 {
+    ASSERT_ARGS(ins_writes2);
     const char *p;
 
     if (ins->opnum == w_special[0])
@@ -190,6 +202,7 @@ they should be fast
 int
 instruction_reads(ARGIN(const Instruction *ins), ARGIN(const SymReg *r))
 {
+    ASSERT_ARGS(instruction_reads);
     int f, i;
 
     if (ins->opnum == PARROT_OP_set_args_pc
@@ -259,6 +272,7 @@ Returns 1 if it does, 0 if not.
 int
 instruction_writes(ARGIN(const Instruction *ins), ARGIN(const SymReg *r))
 {
+    ASSERT_ARGS(instruction_writes);
     const int f = ins->flags;
     int i;
 
@@ -342,6 +356,7 @@ Get the register number of an address which is a branch target
 int
 get_branch_regno(ARGIN(const Instruction *ins))
 {
+    ASSERT_ARGS(get_branch_regno);
     int j;
 
     for (j = ins->opsize - 2; j >= 0 && ins->symregs[j] ; --j)
@@ -366,6 +381,7 @@ PARROT_CAN_RETURN_NULL
 SymReg *
 get_branch_reg(ARGIN(const Instruction *ins))
 {
+    ASSERT_ARGS(get_branch_reg);
     const int r = get_branch_regno(ins);
 
     if (r >= 0)
@@ -394,6 +410,7 @@ PARROT_CAN_RETURN_NULL
 Instruction *
 _delete_ins(ARGMOD(IMC_Unit *unit), ARGIN(Instruction *ins))
 {
+    ASSERT_ARGS(_delete_ins);
     Instruction * const next = ins->next;
     Instruction * const prev = ins->prev;
 
@@ -427,7 +444,9 @@ PARROT_CAN_RETURN_NULL
 Instruction *
 delete_ins(ARGMOD(IMC_Unit *unit), ARGMOD(Instruction *ins))
 {
+    ASSERT_ARGS(delete_ins);
     Instruction * next = _delete_ins(unit, ins);
+
 
     free_ins(ins);
 
@@ -449,6 +468,7 @@ void
 insert_ins(ARGMOD(IMC_Unit *unit), ARGMOD_NULLOK(Instruction *ins),
         ARGMOD(Instruction *tmp))
 {
+    ASSERT_ARGS(insert_ins);
     if (!ins) {
         Instruction * const next = unit->instructions;
 
@@ -495,6 +515,7 @@ void
 prepend_ins(ARGMOD(IMC_Unit *unit), ARGMOD_NULLOK(Instruction *ins),
         ARGMOD(Instruction *tmp))
 {
+    ASSERT_ARGS(prepend_ins);
     if (!ins) {
         Instruction * const next = unit->instructions;
 
@@ -533,7 +554,9 @@ void
 subst_ins(ARGMOD(IMC_Unit *unit), ARGMOD(Instruction *ins),
           ARGMOD(Instruction *tmp), int needs_freeing)
 {
+    ASSERT_ARGS(subst_ins);
     Instruction * const prev = ins->prev;
+
 
     if (prev)
         prev->next = tmp;
@@ -571,6 +594,7 @@ PARROT_CAN_RETURN_NULL
 Instruction *
 move_ins(ARGMOD(IMC_Unit *unit), ARGMOD(Instruction *ins), ARGMOD(Instruction *to))
 {
+    ASSERT_ARGS(move_ins);
     Instruction * const next = _delete_ins(unit, ins);
     insert_ins(unit, to, ins);
     return next;
@@ -591,7 +615,7 @@ PARROT_CAN_RETURN_NULL
 Instruction *
 emitb(PARROT_INTERP, ARGMOD_NULLOK(IMC_Unit *unit), ARGIN_NULLOK(Instruction *i))
 {
-
+    ASSERT_ARGS(emitb);
     if (!unit || !i)
         return NULL;
 
@@ -622,6 +646,7 @@ Free the Instruction structure ins.
 void
 free_ins(ARGMOD(Instruction *ins))
 {
+    ASSERT_ARGS(free_ins);
     free(ins->format);
     free(ins->opname);
     free(ins);
@@ -639,8 +664,9 @@ Print details of instruction ins in file fd.
 
 #define REGB_SIZE 256
 int
-ins_print(PARROT_INTERP, ARGMOD(FILE *fd), ARGIN(const Instruction *ins))
+ins_print(PARROT_INTERP, ARGIN(PMC *io), ARGIN(const Instruction *ins))
 {
+    ASSERT_ARGS(ins_print);
     char regb[IMCC_MAX_FIX_REGS][REGB_SIZE];
     /* only long key constants can overflow */
     char *regstr[IMCC_MAX_FIX_REGS];
@@ -648,12 +674,12 @@ ins_print(PARROT_INTERP, ARGMOD(FILE *fd), ARGIN(const Instruction *ins))
     int len;
 
 #if IMC_TRACE
-    PIO_eprintf(NULL, "ins_print\n");
+    Parrot_io_eprintf(NULL, "ins_print\n");
 #endif
 
     /* comments, labels and such */
     if (!ins->symregs[0] || !strchr(ins->format, '%'))
-        return fprintf(fd, "%s", ins->format);
+        return Parrot_io_fprintf(interp, io, "%s", ins->format);
 
     for (i = 0; i < ins->symreg_count; i++) {
         const SymReg *p = ins->symregs[i];
@@ -719,29 +745,30 @@ ins_print(PARROT_INTERP, ARGMOD(FILE *fd), ARGIN(const Instruction *ins))
     switch (ins->opsize-1) {
         case -1:        /* labels */
         case 1:
-            len = fprintf(fd, ins->format, regstr[0]);
+            len = Parrot_io_fprintf(interp, io, ins->format, regstr[0]);
             break;
         case 2:
-            len = fprintf(fd, ins->format, regstr[0], regstr[1]);
+            len = Parrot_io_fprintf(interp, io, ins->format, regstr[0], regstr[1]);
             break;
         case 3:
-            len = fprintf(fd, ins->format, regstr[0], regstr[1], regstr[2]);
+            len = Parrot_io_fprintf(interp, io, ins->format, regstr[0], regstr[1], regstr[2]);
             break;
         case 4:
-            len = fprintf(fd, ins->format, regstr[0], regstr[1], regstr[2],
+            len = Parrot_io_fprintf(interp, io, ins->format, regstr[0], regstr[1], regstr[2],
                     regstr[3]);
             break;
         case 5:
-            len = fprintf(fd, ins->format, regstr[0], regstr[1], regstr[2],
+            len = Parrot_io_fprintf(interp, io, ins->format, regstr[0], regstr[1], regstr[2],
                     regstr[3], regstr[4]);
             break;
         case 6:
-            len = fprintf(fd, ins->format, regstr[0], regstr[1], regstr[2],
+            len = Parrot_io_fprintf(interp, io, ins->format, regstr[0], regstr[1], regstr[2],
                     regstr[3], regstr[4], regstr[5]);
             break;
         default:
-            fprintf(stderr, "unhandled: opsize (%d), op %s, fmt %s\n",
-                    ins->opsize, ins->opname, ins->format);
+            Parrot_io_fprintf(interp, Parrot_io_STDERR(interp),
+                "unhandled: opsize (%d), op %s, fmt %s\n",
+                ins->opsize, ins->opname, ins->format);
             exit(EXIT_FAILURE);
             break;
     }
@@ -756,22 +783,28 @@ static char *output;
 
 =item C<static int e_file_open>
 
-Prints a me
+Prints a message to STDOUT.
 
 =cut
 
 */
 
 static int
-e_file_open(SHIM_INTERP, ARGIN(void *param))
+e_file_open(PARROT_INTERP, ARGIN(void *param))
 {
+    ASSERT_ARGS(e_file_open);
     char * const file = (char *) param;
 
-    if (!STREQ(file, "-"))
-        freopen(file, "w", stdout);
+    if (!STREQ(file, "-")) {
+        FILE *newfile = freopen(file, "w", stdout);
+        if (!newfile)
+            Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_EXTERNAL_ERROR,
+                "Cannot reopen stdout: %s'\n", strerror(errno));
+    }
+
     output = file;
-    printf("# IMCC does produce b0rken PASM files\n");
-    printf("# see http://guest@rt.perl.org/rt3/Ticket/Display.html?id=32392\n");
+    Parrot_io_printf(interp, "# IMCC does produce b0rken PASM files\n");
+    Parrot_io_printf(interp, "# see http://guest@rt.perl.org/rt3/Ticket/Display.html?id=32392\n");
     return 1;
 }
 
@@ -788,6 +821,7 @@ RT#48260: Not yet documented!!!
 static int
 e_file_close(PARROT_INTERP, SHIM(void *param))
 {
+    ASSERT_ARGS(e_file_close);
     printf("\n\n");
     fclose(stdout);
     IMCC_info(interp, 1, "assembly module %s written.\n", output);
@@ -810,15 +844,18 @@ e_file_emit(PARROT_INTERP,
         SHIM(const IMC_Unit *unit),
         ARGIN(const Instruction *ins))
 {
+    ASSERT_ARGS(e_file_emit);
 #if IMC_TRACE
-    PIO_eprintf(NULL, "e_file_emit\n");
+    Parrot_io_eprintf(NULL, "e_file_emit\n");
 #endif
     if ((ins->type & ITLABEL) || ! *ins->opname)
-        ins_print(interp, stdout, ins);
+        ins_print(interp, Parrot_io_STDOUT(interp), ins);
     else {
-        imcc_fprintf(interp, stdout, "\t%I ", ins);
+        Parrot_io_fprintf(interp, Parrot_io_STDOUT(interp), "\t%s ", ins->opname);
+        ins_print(interp, Parrot_io_STDOUT(interp), ins);
     }
-    printf("\n");
+
+    Parrot_io_printf(interp, "\n");
     return 0;
 }
 
@@ -837,6 +874,7 @@ PARROT_EXPORT
 int
 emit_open(PARROT_INTERP, int type, ARGIN_NULLOK(void *param))
 {
+    ASSERT_ARGS(emit_open);
     IMCC_INFO(interp)->emitter       = type;
     IMCC_INFO(interp)->has_compile   = 0;
     IMCC_INFO(interp)->dont_optimize = 0;
@@ -859,6 +897,7 @@ PARROT_EXPORT
 int
 emit_flush(PARROT_INTERP, ARGIN_NULLOK(void *param), ARGIN(IMC_Unit *unit))
 {
+    ASSERT_ARGS(emit_flush);
     Instruction *ins;
     int          emitter = IMCC_INFO(interp)->emitter;
 
@@ -890,6 +929,7 @@ PARROT_EXPORT
 int
 emit_close(PARROT_INTERP, ARGIN_NULLOK(void *param))
 {
+    ASSERT_ARGS(emit_close);
     return (emitters[IMCC_INFO(interp)->emitter]).close(interp, param);
 }
 

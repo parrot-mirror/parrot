@@ -59,29 +59,11 @@ typedef struct _multi_func_list {
 PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
-funcptr_t get_mmd_dispatch_type(PARROT_INTERP,
-    INTVAL func_nr,
-    INTVAL left_type,
-    INTVAL right_type,
-    ARGOUT(int *is_pmc))
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(5)
-        FUNC_MODIFIES(*is_pmc);
-
-PARROT_EXPORT
-PARROT_WARN_UNUSED_RESULT
-PARROT_CANNOT_RETURN_NULL
 PMC* Parrot_build_sig_object_from_varargs(PARROT_INTERP,
     ARGIN(const char *sig),
     va_list args)
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
-
-PARROT_EXPORT
-void Parrot_mmd_add_function(PARROT_INTERP,
-    INTVAL func_nr,
-    NULLOK(funcptr_t function))
-        __attribute__nonnull__(1);
 
 PARROT_EXPORT
 void Parrot_mmd_add_multi_from_c_args(PARROT_INTERP,
@@ -121,50 +103,71 @@ PMC* Parrot_mmd_build_type_tuple_from_sig_obj(PARROT_INTERP,
         __attribute__nonnull__(2);
 
 PARROT_EXPORT
+PARROT_CANNOT_RETURN_NULL
 MMD_Cache * Parrot_mmd_cache_create(PARROT_INTERP)
         __attribute__nonnull__(1);
 
 PARROT_EXPORT
-void Parrot_mmd_cache_destroy(PARROT_INTERP, MMD_Cache *cache)
-        __attribute__nonnull__(1);
+void Parrot_mmd_cache_destroy(PARROT_INTERP, ARGMOD(MMD_Cache *cache))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        FUNC_MODIFIES(*cache);
 
 PARROT_EXPORT
+PARROT_CANNOT_RETURN_NULL
 PMC * Parrot_mmd_cache_lookup_by_types(PARROT_INTERP,
-    MMD_Cache *cache,
-    const char *name,
-    PMC *types)
-        __attribute__nonnull__(1);
+    ARGMOD(MMD_Cache *cache),
+    ARGIN(const char *name),
+    ARGIN(PMC *types))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3)
+        __attribute__nonnull__(4)
+        FUNC_MODIFIES(*cache);
 
 PARROT_EXPORT
+PARROT_CANNOT_RETURN_NULL
 PMC * Parrot_mmd_cache_lookup_by_values(PARROT_INTERP,
-    MMD_Cache *cache,
-    const char *name,
-    PMC *values)
-        __attribute__nonnull__(1);
+    ARGMOD(MMD_Cache *cache),
+    ARGIN(const char *name),
+    ARGIN(PMC *values))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3)
+        __attribute__nonnull__(4)
+        FUNC_MODIFIES(*cache);
 
 PARROT_EXPORT
-void Parrot_mmd_cache_mark(PARROT_INTERP, MMD_Cache *cache)
-        __attribute__nonnull__(1);
+void Parrot_mmd_cache_mark(PARROT_INTERP, ARGMOD(MMD_Cache *cache))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        FUNC_MODIFIES(*cache);
 
 PARROT_EXPORT
 void Parrot_mmd_cache_store_by_types(PARROT_INTERP,
-    MMD_Cache *cache,
-    const char *name,
-    PMC *types,
-    PMC *chosen)
-        __attribute__nonnull__(1);
+    ARGMOD(MMD_Cache *cache),
+    ARGIN(const char *name),
+    ARGIN(PMC *types),
+    ARGIN(PMC *chosen))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3)
+        __attribute__nonnull__(4)
+        __attribute__nonnull__(5)
+        FUNC_MODIFIES(*cache);
 
 PARROT_EXPORT
 void Parrot_mmd_cache_store_by_values(PARROT_INTERP,
-    MMD_Cache *cache,
-    const char *name,
-    PMC *values,
-    PMC *chosen)
-        __attribute__nonnull__(1);
-
-PARROT_EXPORT
-void Parrot_mmd_destroy(PARROT_INTERP)
-        __attribute__nonnull__(1);
+    ARGMOD(MMD_Cache *cache),
+    ARGIN(const char *name),
+    ARGIN(PMC *values),
+    ARGIN(PMC *chosen))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3)
+        __attribute__nonnull__(4)
+        __attribute__nonnull__(5)
+        FUNC_MODIFIES(*cache);
 
 PARROT_EXPORT
 PARROT_CANNOT_RETURN_NULL
@@ -197,33 +200,6 @@ void Parrot_mmd_multi_dispatch_from_c_args(PARROT_INTERP,
         __attribute__nonnull__(3);
 
 PARROT_EXPORT
-void Parrot_mmd_register(PARROT_INTERP,
-    INTVAL func_nr,
-    INTVAL left_type,
-    INTVAL right_type,
-    NULLOK(funcptr_t funcptr))
-        __attribute__nonnull__(1);
-
-PARROT_EXPORT
-void Parrot_mmd_register_sub(PARROT_INTERP,
-    INTVAL func_nr,
-    INTVAL left_type,
-    INTVAL right_type,
-    ARGIN(const PMC *sub))
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(5);
-
-PARROT_EXPORT
-PARROT_CANNOT_RETURN_NULL
-PARROT_WARN_UNUSED_RESULT
-PMC * Parrot_MMD_search_default_infix(PARROT_INTERP,
-    ARGIN(STRING *meth),
-    INTVAL left_type,
-    INTVAL right_type)
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(2);
-
-PARROT_EXPORT
 PARROT_CAN_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
 PMC * Parrot_mmd_sort_manhattan(PARROT_INTERP, ARGIN(PMC *candidates))
@@ -235,11 +211,93 @@ PARROT_CAN_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
 PMC * Parrot_mmd_sort_manhattan_by_sig_pmc(PARROT_INTERP,
     ARGIN(PMC *candidates),
-    ARGIN(PMC* invoke_sig))
+    ARGIN(PMC *invoke_sig))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3);
 
+#define ASSERT_ARGS_Parrot_build_sig_object_from_varargs \
+     __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(sig)
+#define ASSERT_ARGS_Parrot_mmd_add_multi_from_c_args \
+     __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(sub_name) \
+    || PARROT_ASSERT_ARG(short_sig) \
+    || PARROT_ASSERT_ARG(long_sig) \
+    || PARROT_ASSERT_ARG(multi_func_ptr)
+#define ASSERT_ARGS_Parrot_mmd_add_multi_from_long_sig \
+     __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(sub_name) \
+    || PARROT_ASSERT_ARG(long_sig) \
+    || PARROT_ASSERT_ARG(sub_obj)
+#define ASSERT_ARGS_Parrot_mmd_add_multi_list_from_c_args \
+     __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(mmd_info)
+#define ASSERT_ARGS_Parrot_mmd_build_type_tuple_from_sig_obj \
+     __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(sig_obj)
+#define ASSERT_ARGS_Parrot_mmd_cache_create __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp)
+#define ASSERT_ARGS_Parrot_mmd_cache_destroy __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(cache)
+#define ASSERT_ARGS_Parrot_mmd_cache_lookup_by_types \
+     __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(cache) \
+    || PARROT_ASSERT_ARG(name) \
+    || PARROT_ASSERT_ARG(types)
+#define ASSERT_ARGS_Parrot_mmd_cache_lookup_by_values \
+     __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(cache) \
+    || PARROT_ASSERT_ARG(name) \
+    || PARROT_ASSERT_ARG(values)
+#define ASSERT_ARGS_Parrot_mmd_cache_mark __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(cache)
+#define ASSERT_ARGS_Parrot_mmd_cache_store_by_types \
+     __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(cache) \
+    || PARROT_ASSERT_ARG(name) \
+    || PARROT_ASSERT_ARG(types) \
+    || PARROT_ASSERT_ARG(chosen)
+#define ASSERT_ARGS_Parrot_mmd_cache_store_by_values \
+     __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(cache) \
+    || PARROT_ASSERT_ARG(name) \
+    || PARROT_ASSERT_ARG(values) \
+    || PARROT_ASSERT_ARG(chosen)
+#define ASSERT_ARGS_Parrot_mmd_find_multi_from_long_sig \
+     __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(name) \
+    || PARROT_ASSERT_ARG(long_sig)
+#define ASSERT_ARGS_Parrot_mmd_find_multi_from_sig_obj \
+     __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(name) \
+    || PARROT_ASSERT_ARG(invoke_sig)
+#define ASSERT_ARGS_Parrot_mmd_multi_dispatch_from_c_args \
+     __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(name) \
+    || PARROT_ASSERT_ARG(sig)
+#define ASSERT_ARGS_Parrot_mmd_sort_manhattan __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(candidates)
+#define ASSERT_ARGS_Parrot_mmd_sort_manhattan_by_sig_pmc \
+     __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(candidates) \
+    || PARROT_ASSERT_ARG(invoke_sig)
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 /* HEADERIZER END: src/multidispatch.c */
 

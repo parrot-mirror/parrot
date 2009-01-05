@@ -43,6 +43,8 @@ PARROT_WARN_UNUSED_RESULT
 static PMC* new_hll_entry(PARROT_INTERP, ARGIN_NULLOK(STRING *entry_name))
         __attribute__nonnull__(1);
 
+#define ASSERT_ARGS_new_hll_entry __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp)
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 /* HEADERIZER END: static */
 
@@ -79,6 +81,7 @@ PARROT_WARN_UNUSED_RESULT
 static PMC*
 new_hll_entry(PARROT_INTERP, ARGIN_NULLOK(STRING *entry_name))
 {
+    ASSERT_ARGS(new_hll_entry);
     PMC * const hll_info = interp->HLL_info;
     const INTVAL id      = VTABLE_elements(interp, hll_info);
 
@@ -128,6 +131,7 @@ calls C<Parrot_register_HLL> to register name within Parrot core.
 void
 Parrot_init_HLL(PARROT_INTERP)
 {
+    ASSERT_ARGS(Parrot_init_HLL);
     interp->HLL_info      =
         constant_pmc_new(interp, enum_class_OrderedHash);
     interp->HLL_namespace =
@@ -140,12 +144,11 @@ Parrot_init_HLL(PARROT_INTERP)
 
 =item C<INTVAL Parrot_register_HLL>
 
-Register HLL C<hll_name> within Parrot core.  If C<hll_lib> isn't a NULL
-STRING, load the shared language support library.  Creates a root namespace for
-the HLL named C<hll_name>.  Returns a type ID for this HLL or 0 on error.
+Return the HLL id if C<hll_name> is already registered in the interpreter.
 
-If C<hll_name> is NULL, only the library is loaded.  The C<.loadlib> pragma
-uses this.
+Otherwise register the HLL C<hll_name> within the interpreter.
+Creates a root namespace for the HLL named C<hll_name>.
+Returns a type ID for this HLL or 0 on error.
 
 =cut
 
@@ -155,6 +158,7 @@ PARROT_EXPORT
 INTVAL
 Parrot_register_HLL(PARROT_INTERP, ARGIN(STRING *hll_name))
 {
+    ASSERT_ARGS(Parrot_register_HLL);
     PMC   *entry, *name, *type_hash, *ns_hash, *hll_info;
     INTVAL idx;
 
@@ -219,6 +223,7 @@ PARROT_EXPORT
 INTVAL
 Parrot_register_HLL_lib(PARROT_INTERP, ARGIN(STRING *hll_lib))
 {
+    ASSERT_ARGS(Parrot_register_HLL_lib);
     PMC   *hll_info = interp->HLL_info;
     PMC   *entry, *name;
     INTVAL nelements, i;
@@ -271,6 +276,7 @@ PARROT_WARN_UNUSED_RESULT
 INTVAL
 Parrot_get_HLL_id(PARROT_INTERP, ARGIN_NULLOK(STRING *hll_name))
 {
+    ASSERT_ARGS(Parrot_get_HLL_id);
     PMC * const hll_info = interp->HLL_info;
     INTVAL      i;
 
@@ -308,6 +314,7 @@ PARROT_CAN_RETURN_NULL
 STRING *
 Parrot_get_HLL_name(PARROT_INTERP, INTVAL id)
 {
+    ASSERT_ARGS(Parrot_get_HLL_name);
     PMC * const  hll_info  = interp->HLL_info;
     const INTVAL nelements = VTABLE_elements(interp, hll_info);
 
@@ -345,8 +352,8 @@ void
 Parrot_register_HLL_type(PARROT_INTERP, INTVAL hll_id,
         INTVAL core_type, INTVAL hll_type)
 {
-    PMC  *entry, *type_hash, *instantiated;
-    Hash *hash;
+    ASSERT_ARGS(Parrot_register_HLL_type);
+    PMC  *entry, *type_hash;
     PMC  *hll_info = interp->HLL_info;
     const INTVAL n = VTABLE_elements(interp, hll_info);
 
@@ -390,6 +397,7 @@ PARROT_EXPORT
 INTVAL
 Parrot_get_HLL_type(PARROT_INTERP, INTVAL hll_id, INTVAL core_type)
 {
+    ASSERT_ARGS(Parrot_get_HLL_type);
     PMC    *entry, *type_hash, *hll_info;
     INTVAL  n, id;
 
@@ -436,6 +444,7 @@ PARROT_EXPORT
 INTVAL
 Parrot_get_ctx_HLL_type(PARROT_INTERP, INTVAL core_type)
 {
+    ASSERT_ARGS(Parrot_get_ctx_HLL_type);
     const INTVAL hll_id = CONTEXT(interp)->current_HLL;
 
     return Parrot_get_HLL_type(interp, hll_id, core_type);
@@ -457,6 +466,7 @@ PARROT_CAN_RETURN_NULL
 PMC*
 Parrot_get_ctx_HLL_namespace(PARROT_INTERP)
 {
+    ASSERT_ARGS(Parrot_get_ctx_HLL_namespace);
     return Parrot_get_HLL_namespace(interp, CONTEXT(interp)->current_HLL);
 }
 
@@ -477,6 +487,7 @@ PARROT_CAN_RETURN_NULL
 PMC*
 Parrot_get_HLL_namespace(PARROT_INTERP, int hll_id)
 {
+    ASSERT_ARGS(Parrot_get_HLL_namespace);
     if (hll_id == PARROT_HLL_NONE)
         return interp->root_namespace;
 
@@ -501,6 +512,7 @@ PARROT_EXPORT
 void
 Parrot_regenerate_HLL_namespaces(PARROT_INTERP)
 {
+    ASSERT_ARGS(Parrot_regenerate_HLL_namespaces);
     const INTVAL n = VTABLE_elements(interp, interp->HLL_info);
     INTVAL       hll_id;
 

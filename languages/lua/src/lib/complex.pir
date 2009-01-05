@@ -17,7 +17,7 @@ This implementation is based on F<src/pmc/complex.pmc>.
 
 =cut
 
-.HLL 'Lua'
+.HLL 'lua'
 .loadlib 'lua_group'
 .namespace [ 'complex' ]
 
@@ -147,7 +147,8 @@ LIST
     $P1 = get(1, z)
     $P2 = get(2, w)
     $P0 = add $P1, $P2
-    .tailcall newcomplex($P0)
+    $P0 = newcomplex($P0)
+    .return ($P0)
 .end
 
 
@@ -162,7 +163,8 @@ LIST
     $P1 = get(1, z)
     $P2 = get(2, w)
     $P0 = div $P1, $P2
-    .tailcall newcomplex($P0)
+    $P0 = newcomplex($P0)
+    .return ($P0)
 .end
 
 
@@ -194,7 +196,8 @@ LIST
     $P1 = get(1, z)
     $P2 = get(2, w)
     $P0 = mul $P1, $P2
-    .tailcall newcomplex($P0)
+    $P0 = newcomplex($P0)
+    .return ($P0)
 .end
 
 
@@ -209,7 +212,8 @@ LIST
     $P1 = get(1, z)
     $P2 = get(2, w)
     $P0 = sub $P1, $P2
-    .tailcall newcomplex($P0)
+    $P0 = newcomplex($P0)
+    .return ($P0)
 .end
 
 
@@ -221,8 +225,9 @@ LIST
     .param pmc z :optional
     .param pmc extra :slurpy
     $P1 = get(1, z)
-    $P0 = new $P1
-    .tailcall newcomplex($P0)
+    $P0 = neg $P1
+    $P0 = newcomplex($P0)
+    .return ($P0)
 .end
 
 
@@ -234,9 +239,7 @@ LIST
     .param pmc z :optional
     .param pmc extra :slurpy
     $P1 = get(1, z)
-    $N0 = $P1.'abs'()
-    new $P0, 'LuaNumber'
-    set $P0, $N0
+    $P0 = abs $P1
     .return ($P0)
 .end
 
@@ -441,7 +444,6 @@ NOT YET IMPLEMENTED.
 =cut
 
 .sub 'pow'
-    .param pmc extra :slurpy
     .param pmc z :optional
     .param pmc w :optional
     .param pmc extra :slurpy
@@ -563,10 +565,6 @@ NOT YET IMPLEMENTED.
 
 
 =back
-
-=head1 AUTHORS
-
-Francois Perrad
 
 =cut
 

@@ -8,7 +8,7 @@ t/pmc/nil.t - LuaNil
 
 =head1 SYNOPSIS
 
-    % perl -I../../lib t/pmc/nil.t
+    % perl t/pmc/nil.t
 
 =head1 DESCRIPTION
 
@@ -19,6 +19,8 @@ Tests C<LuaNil> PMC
 
 use strict;
 use warnings;
+use FindBin;
+use lib "$FindBin::Bin/../../../../lib";
 
 use Parrot::Test tests => 10;
 use Test::More;
@@ -126,7 +128,7 @@ boolean
 OUTPUT
 
 pir_output_is( << 'CODE', << 'OUTPUT', 'check HLL' );
-.HLL 'Lua'
+.HLL 'lua'
 .loadlib 'lua_group'
 .sub _main
     .local pmc pmc1
@@ -145,7 +147,7 @@ nil
 OUTPUT
 
 pir_output_is( << 'CODE', << 'OUTPUT', 'check HLL & .const' );
-.HLL 'Lua'
+.HLL 'lua'
 .loadlib 'lua_group'
 .sub _main
     .const 'LuaNil' cst1 = 'dummy'
@@ -162,7 +164,7 @@ nil
 OUTPUT
 
 pir_output_is( << 'CODE', << 'OUTPUT', 'check tostring' );
-.HLL 'Lua'
+.HLL 'lua'
 .loadlib 'lua_group'
 .sub _main
     .local pmc pmc1
@@ -183,7 +185,7 @@ string
 OUTPUT
 
 pir_output_is( << 'CODE', << 'OUTPUT', 'check tonumber' );
-.HLL 'Lua'
+.HLL 'lua'
 .loadlib 'lua_group'
 .sub _main
     .local pmc pmc1

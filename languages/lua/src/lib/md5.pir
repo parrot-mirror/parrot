@@ -18,7 +18,7 @@ see F<src/dynpmc/mdx.pmc>.
 
 =cut
 
-.HLL 'Lua'
+.HLL 'lua'
 .loadlib 'lua_group'
 .namespace [ 'md5' ]
 
@@ -213,10 +213,6 @@ LIST
 
 
 =back
-
-=head1 AUTHORS
-
-Francois Perrad
 
 =cut
 

@@ -189,6 +189,30 @@ void Parrot_small_object_pool_merge(PARROT_INTERP,
         FUNC_MODIFIES(*dest)
         FUNC_MODIFIES(*source);
 
+#define ASSERT_ARGS_contained_in_pool __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(pool) \
+    || PARROT_ASSERT_ARG(ptr)
+#define ASSERT_ARGS_gc_pmc_ext_pool_init __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(pool)
+#define ASSERT_ARGS_new_small_object_pool __attribute__unused__ int _ASSERT_ARGS_CHECK = 0
+#define ASSERT_ARGS_Parrot_add_to_free_list __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(pool) \
+    || PARROT_ASSERT_ARG(arena)
+#define ASSERT_ARGS_Parrot_append_arena_in_pool __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(pool) \
+    || PARROT_ASSERT_ARG(new_arena)
+#define ASSERT_ARGS_Parrot_gc_ms_init __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp)
+#define ASSERT_ARGS_Parrot_is_const_pmc __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(pmc)
+#define ASSERT_ARGS_Parrot_small_object_pool_merge \
+     __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(dest) \
+    || PARROT_ASSERT_ARG(source)
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 /* HEADERIZER END: src/gc/smallobject.c */
 

@@ -27,7 +27,8 @@ PIR or an Eval PMC (bytecode).
     set_global '@!subcode', $P0
 
     $P0 = new 'String'
-    $P0 = '[]'
+    set_global '$?HLL', $P0
+    $P0 = box '[]'
     set_global '$?NAMESPACE', $P0
     .return ()
 .end
@@ -212,8 +213,7 @@ the sub.
     $I0 = index pirflags, ':subid('
     if $I0 >= 0 goto pirflags_subid_done
     .local string subid
-    subid = code.'unique'()
-    node.'subid'(subid)
+    subid = node.'subid'()
     pirflags = concat pirflags, ' :subid("'
     pirflags .= subid
     pirflags .= '")'
@@ -239,6 +239,14 @@ the sub.
     concat pirflags, ')'
   pirflags_done:
 
+    .local pmc outerhll, hll
+    outerhll = get_global '$?HLL'
+    hll = node.'hll'()
+    if hll goto have_hll
+    hll = outerhll
+  have_hll:
+    set_global '$?HLL', hll
+
     .local pmc outerns, ns, nskey
     outerns = get_global '$?NAMESPACE'
     nskey = outerns
@@ -261,6 +269,10 @@ the sub.
     goto subpir_done
 
   subpir_post:
+    unless hll goto subpir_ns
+    $P0 = code.'escape'(hll)
+    code.'emit'("\n.HLL %0", $P0)
+  subpir_ns:
     code.'emit'("\n.namespace %0", nskey)
     $S0 = code.'escape'(name)
     code.'emit'(".sub %0 %1", $S0, pirflags)
@@ -288,6 +300,7 @@ the sub.
     $P0 .= code
 
     set_global '$?NAMESPACE', outerns
+    set_global '$?HLL', outerhll
 
     code = new 'CodeString'
     .return (code)
@@ -300,6 +313,8 @@ the sub.
 
     options['target'] = 'pir'
     options['grammar'] = ''
+    $P0 = node.'subid'()
+    options['subid'] = $P0
     .local pmc source, compiler, pir
     source = node[0]
     $S0 = node.'compiler'()

@@ -13,7 +13,7 @@ lib/_helpers.pir - library
 
 =cut
 
-.HLL 'Lua'
+.HLL 'lua'
 .loadlib 'lua_group'
 .namespace []
 
@@ -53,10 +53,6 @@ LIST
 
 
 =back
-
-=head1 AUTHORS
-
-Francois Perrad
 
 =cut
 

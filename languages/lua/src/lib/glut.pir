@@ -18,7 +18,7 @@ see F<runtime/parrot/library/OpenGL.pir>.
 
 =cut
 
-.HLL 'Lua'
+.HLL 'lua'
 .loadlib 'lua_group'
 .namespace [ 'glut' ]
 
@@ -366,10 +366,6 @@ not LuaGL
 
 
 =back
-
-=head1 AUTHORS
-
-Francois Perrad
 
 =cut
 

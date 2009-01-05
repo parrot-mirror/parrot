@@ -147,33 +147,6 @@ Check whether a constant exists
 .end
 
 
-=item C<mixed constant(string const_name)>
-
-Given the name of a constant this function will return the constants associated value
-
-=cut
-
-.sub 'constant'
-    .param pmc args :slurpy
-    .local int argc
-    argc = args
-    unless argc != 1 goto L1
-    wrong_param_count()
-    .RETURN_NULL()
-  L1:
-    $P1 = shift args
-    $S1 = $P1
-    .local pmc cst
-    .GET_CONSTANTS(cst)
-    $I0 = exists cst[$S1]
-    unless $I0 goto L2
-    $P0 = cst[$S1]
-    .return ($P0)
-  L2:
-    error(E_WARNING, "Couldn't find constant ", $S1)
-    .RETURN_NULL()
-.end
-
 =item C<array each(array arr)>
 
 Return the currently pointed key..value pair in the passed array, and advance the pointer to the next element
@@ -195,7 +168,15 @@ DUMMY IMPLEMENTATION.
 =cut
 
 .sub 'error_reporting'
-    .RETURN_LONG(0)
+    .param pmc level       :optional
+    .param int has_level   :opt_flag
+
+    unless has_level goto L1
+       set_hll_global 'php_errorreporting', level
+    L1:
+    get_hll_global $P0, 'php_errorreporting'
+
+    .return($P0)
 .end
 
 =item C<bool extension_loaded(string extension_name)>

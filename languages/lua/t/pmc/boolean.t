@@ -8,7 +8,7 @@ t/pmc/boolean.t - LuaBoolean
 
 =head1 SYNOPSIS
 
-    % perl -I../../lib t/pmc/boolean.t
+    % perl t/pmc/boolean.t
 
 =head1 DESCRIPTION
 
@@ -19,6 +19,8 @@ Tests C<LuaBoolean> PMC
 
 use strict;
 use warnings;
+use FindBin;
+use lib "$FindBin::Bin/../../../../lib";
 
 use Parrot::Test tests => 8;
 use Test::More;
@@ -103,7 +105,7 @@ true
 OUTPUT
 
 pir_output_is( << 'CODE', << 'OUTPUT', 'check HLL' );
-.HLL 'Lua'
+.HLL 'lua'
 .loadlib 'lua_group'
 .sub _main
     .local pmc pmc1
@@ -123,7 +125,7 @@ true
 OUTPUT
 
 pir_output_is( << 'CODE', << 'OUTPUT', 'check HLL & .const' );
-.HLL 'Lua'
+.HLL 'lua'
 .loadlib 'lua_group'
 .sub _main
     .const 'LuaBoolean' cst1 = "1"
@@ -140,7 +142,7 @@ true
 OUTPUT
 
 pir_output_is( << 'CODE', << 'OUTPUT', 'check tostring' );
-.HLL 'Lua'
+.HLL 'lua'
 .loadlib 'lua_group'
 .sub _main
     .local pmc pmc1
@@ -162,7 +164,7 @@ string
 OUTPUT
 
 pir_output_is( << 'CODE', << 'OUTPUT', 'check tonumber' );
-.HLL 'Lua'
+.HLL 'lua'
 .loadlib 'lua_group'
 .sub _main
     .local pmc pmc1

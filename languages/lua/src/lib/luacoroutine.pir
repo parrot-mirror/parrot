@@ -19,7 +19,7 @@ L<http://www.lua.org/manual/5.1/manual.html#5.2>.
 
 =cut
 
-.HLL 'Lua'
+.HLL 'lua'
 .loadlib 'lua_group'
 .namespace [ 'coroutine' ]
 
@@ -70,8 +70,8 @@ Returns this new coroutine, an object with type C<"thread">.
     .param pmc extra :slurpy
     .local pmc res
     lua_checktype(1, f, 'function')
-    $I0 = isa f, 'LuaClosure'
-    if $I0 goto L1
+    $P0 = f.'get_outer'()
+    unless null $P0 goto L1
     lua_argerror(1, 'Lua function expected')
   L1:
     new res, 'LuaThread', f
@@ -260,12 +260,6 @@ Any arguments to C<yield> are passed as extra results to C<resume>.
 .end
 
 =back
-
-=head1 AUTHORS
-
-Francois Perrad.
-
-Bob Rogers.
 
 =cut
 

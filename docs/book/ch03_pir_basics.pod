@@ -1,4 +1,4 @@
-=pod 
+=pod
 
 =head0 Parrot Intermediate Representation
 
@@ -16,7 +16,7 @@ the Parrot developers specifically want to keep in that way for a
 number of reasons. PASM, the Parrot assembly language on which PIR is
 based, is discussed in more detail in A<CHP-5>Chapter 5.
 
-X<.pir files> As a convention, files containing pure PIR code generally 
+X<.pir files> As a convention, files containing pure PIR code generally
 have a F<.pir> extension. Parrot will treat a file with any other
 extension, besides F<.pasm> as a PIR file in mixed mode. This means that
 the file can contain PIR and PASM code interchangably, with a few caveats
@@ -25,13 +25,13 @@ that will be discussed later.
 X<PIR (Parrot intermediate representation);documentation>
 PIR is well documented, both in traditional documentation and in
 instructional code examples. The documentation for the PIR compiler IMCC
-in F<imcc/docs/> or the project documentation in F<docs/> are good
+in F<docs/imcc/> or the project documentation in F<docs/> are good
 sources for information about the current syntax, semantics, and
-implementation. The other PIR compiler, PIRC, has it's own documentation
+implementation. The other PIR compiler, PIRC, has its own documentation
 that is slowly maturing. This is a useful source of information too. The
-test suite in F<imcc/t> shows examples of proper working code. In fact,
+test suite in F<t/compilers/imcc/> shows examples of proper working code. In fact,
 the test suite is the definitive PIR resource, because it shows how PIR
-I<actually works>, even when the documentation may be out of date. 
+I<actually works>, even when the documentation may be out of date.
 
 =head1 Statements
 
@@ -99,20 +99,18 @@ programmers should never have to worry about it.
 
 Parrot registers are allocated in a linear array, and register numbers
 are indices into this array. Having more registers means Parrot must
-allocate more storage space for them, which can decrease memory efficency
+allocate more storage space for them, which can decrease memory efficiency
 and register allocation/fetch performance. In general, it's better to
 keep the number of registers small. However, the number of the register
 does not necessarily correspond to the actual storage location where the
 register data is held. A memory allocator unit translates register names
 in the form "$S0" into an actual fixed memory location. This allocator
 can also help to optimize register usage so that existing registers are
-reused instead of allocating new ones in memory. The sort version is that
+reused instead of allocating new ones in memory. The short version is that
 the programmer should never have to worry about register allocation, and
 should feel free to use as many as she wants. As with any system, it's
 a good idea to be mindful of the things that might impact performance
 anyway.
-
-
 
 =head2 Constants
 
@@ -131,7 +129,7 @@ in the code with numeric constants.
   $N0 = 3.14     # Numbers can have a decimal point
   $N1 = 4        # ...or they don't
   $N2 = -1.2e+4  # Numbers can also use scientific notation.
-  
+
 String literals are enclosed in single or double-quotes:
 
   $S0 = "This is a valid literal string"
@@ -147,12 +145,12 @@ quotes:
 Or, if you need more flexibility, you can use a heredoc:
 
   $S2 = << "End_Token"
-  
+
   This is a multi-line string literal. Notice that
   it doesn't use quotation marks. The string continues
   until the ending token (the thing in quotes next to
   the << above) is found.
-  
+
   End_Token
 
 =head2 Named Variables
@@ -270,11 +268,11 @@ example snippet:
 The statement C<sum = $I42 + 5> translates to something like
 C<add I16, I17, 5> in PASM. The exact translation isn't too important
 N<Unless you're hacking on IMCC or PIRC!>, so we don't have to worry
-about it for now. We will talk more about PASM and it's instruction
+about it for now. We will talk more about PASM and its instruction
 set in X<CHP-5> Chapter 5.
 
 PIR also provides automatic assignment operators such as C<+=>, C<-=>,
-and C<<< >>= >>>. These operators help programmers to peform common
+and C<<< >>= >>>. These operators help programmers to perform common
 manipulations on a data value in place, and save a few keystrokes while
 doing them.
 
@@ -293,8 +291,8 @@ times. Labels and jump operations (which we will discuss a little bit
 later) are one of the primary methods to change control flow in PIR, so
 it is well worth understanding.
 
-PIR code can contain both local and global labels. Global labels start 
-with an underscore. The name of a global label has to be unique since 
+PIR code can contain both local and global labels. Global labels start
+with an underscore. The name of a global label has to be unique since
 it can be called at any point in the program. Local labels start with a
 letter. A local label is accessible only in the function where it is
 defined. The name has to be unique within that function, but the same
@@ -354,11 +352,11 @@ is never executed. However, if we change around this example a little:
   .end
 
 The output now is "Polly want a cracker?". Execution in PIR starts
-at the main function and continues until the end of that function only.
-If you want to do more stuff if your program, you will need to call
-other functions explicitly.
+at the C<:main> function and continues until the end of that function
+only. If you want to do more stuff if your program, you will need to
+call other functions explicitly.
 
-A<CHP-04>Chapter 4 goes into much more detail about compilation units 
+A<CHP-04>Chapter 4 goes into much more detail about compilation units
 and their uses.
 
 =head1 Flow Control
@@ -372,11 +370,13 @@ unconditional branches. This may seem simplistic and primitive, but
 remember that PIR is a thin overlay on the assembly language of a
 virtual processor. High level control structures are invariably linked
 to the language in which they are used, so any attempt by Parrot to
-provide these structures would work for some languages but not by
-others. The only way to make sure all languages and their control
-structures can be equally accomdated is to simply give them the most
-simple and fundamental building blocks to work with. Language
-agnosticism is an important design goal in Parrot. 
+provide these structures would work well for some languages but would
+require all sorts of messy translation in others. The only way to make
+sure all languages and their control structures can be equally
+accommodated is to simply give them the most simple and fundamental
+building blocks to work with. Language agnosticism is an important
+design goal in Parrot, and creates a very flexible and powerful
+development environment for our language developers.
 
 X<goto instruction (PIR)>
 The most basic branching instruction is the unconditional branch:
@@ -482,12 +482,15 @@ conditional branch together with an unconditional branch:
 This example tests the counter C<$I1> at the start of the loop. At the
 end of the loop, it unconditionally branches back to the start of the
 loop and tests the condition again. The loop ends when the counter
-C<$I1> reaches 0 and the C<if> branches to the C<LAST> label.  If the
+C<$I1> reaches 0 and the C<if> branches to the C<LAST> label. If the
 counter isn't a positive number before the loop, the loop never
 executes.
 
 Any high-level flow control construct can be built from conditional
-and unconditional branches.
+and unconditional branches, because this is the way almost all computer
+hardware operates at the lowest-level, so all modern programming
+languages use branching constructs to implement their most complex
+flow control devices.
 
 Fortunately, libraries of macros have been developed that can implement
 more familiar syntax for many of these control structures. We will discuss
@@ -561,7 +564,7 @@ these libraries in more detail in A<CHP-6> "PIR Standard Library".
 #  Tables
 #  ......
 #  A 2x2 table with top header row looks like this:
-#  
+#
 #  =begin table An Example Table
 #  =headrow
 #  =row

@@ -1,4 +1,4 @@
-# Copyright (C) 2008, The Perl Foundation.
+# Copyright (C) 2008-2009, The Perl Foundation.
 # $Id$
 
 =begin comments
@@ -19,86 +19,85 @@ value of the comment is passed as the second argument to the method.
 
 class Pipp::Grammar::Actions;
 
-method TOP($/) {
-    my $past := PAST::Stmts.new( :node($/) );
+method TOP($/, $key) {
+    our @?BLOCK; # A stack of PAST::Block
+    our @?SUPER_GLOBALS :=
+          ( '$_GET', '$_POST', '$_SERVER', '$_GLOBALS',
+            '$_FILES', '$_COOKIE', '$_SESSION', '$_REQUEST', '$_ENV' );
 
-    for $<sea_or_code> {
-        $past.push( $($_) );
+    if $key eq 'open' {
+        my $block := PAST::Block.new(
+                         :node($/),
+                         :hll('pipp')
+                     );
+
+        # by default all symbols are lexical
+        $block.symbol_defaults( :scope('lexical') );
+
+        # set up scope 'package' for the superglobals
+        for ( @?SUPER_GLOBALS ) { $block.symbol( :scope('package'), $_ ); }
+
+        @?BLOCK.unshift($block);
     }
+    else {
+        # retrieve the block created in the "if" section in this method.
+        my $block := @?BLOCK.shift();
 
-    # subrules may have added stuff to $?INIT
-    # execute it first
-    our $?INIT;
-    if pipp_defined( $?INIT ) {
-        $?INIT.blocktype('declaration');
-        $?INIT.pirflags(':init :load');
-        $past.unshift( $?INIT );
-        $?INIT := PAST::Block.new(); # For the next eval.
+        # a PHP script consists of a list of statements
+        for $<sea_or_code> {
+            $block.push( $($_) );
+        }
+
+        make $block;
     }
-    $past.unshift( PAST::Block.new( :name( 'INIT should have been added' ) ) );
-
-    make $past;
 }
 
-method sea_or_code($/,$key) {
+method sea_or_code($/, $key) {
     make $( $/{$key} );
 }
 
 # The sea, text, surrounding the island, code, is printed out
 method SEA($/) {
     make PAST::Op.new(
+             :name('echo'),
+             :node($/),
              PAST::Val.new(
                  :value(~$/),
                  :returns('PhpString')
-             ),
-             :name('echo'),
-             :node($/)
+             )
          );
 }
 
 method code_short_tag($/) {
-    my $past := PAST::Stmts.new( :node($/) );
-    for $<statement> {
-        $past.push( $($_) );
-    }
-
-    make $past;
+    make $( $<statement_list> );
 }
 
 method code_echo_tag($/) {
-    my $past := PAST::Stmts.new( :node($/) );
+    my $stmts := $( $<statement_list> );
 
-    my $echo := $( $<arguments> );
+    my $echo := $( $<argument_list> );
     $echo.name( 'echo' );
-    $past.push( $echo );
 
-    for $<statement> {
-        $past.push( $($_) );
-    }
+    $stmts.unshift( $echo );
 
-    make $past;
+    make $stmts;
 }
 
 method code_script_tag($/) {
-    my $past := PAST::Stmts.new( :node($/) );
-    for $<statement> {
-        $past.push( $($_) );
-    }
-
-    make $past;
+    make $( $<statement_list> );
 }
 
-method block($/) {
-    my $past := PAST::Stmts.new( :node($/) );
-    for $<statement> {
-        $past.push( $($_) );
-    }
-
-    make $past;
-}
-
-method statement($/,$key) {
+method statement($/, $key) {
     make $( $/{$key} );
+}
+
+method statement_list($/) {
+    my $stmts := PAST::Stmts.new( :node($/) );
+    for $<statement> {
+        $stmts.push( $($_) );
+    }
+
+    make $stmts;
 }
 
 method inline_sea_short_tag($/) {
@@ -113,7 +112,7 @@ method inline_sea_short_tag($/) {
 }
 
 method namespace_statement($/) {
-    our $?NS := ~$<NAMESPACE_NAME>; 
+    our $?NS := ~$<NAMESPACE_NAME>;
     my $past := PAST::Op.new(
                     :pasttype('call'),
                     :name('echo'),
@@ -123,6 +122,17 @@ method namespace_statement($/) {
                         :returns('PhpString'),
                     ),
                 );
+    make $past;
+}
+
+method return_statement($/) {
+    my $past := PAST::Op.new(
+                   :name('return'),
+                   :pasttype('call'),
+                   :node( $/ ),
+                   $( $/<expression> )
+               );
+
     make $past;
 }
 
@@ -138,7 +148,7 @@ method require_once_statement($/) {
 }
 
 method echo_statement($/) {
-    my $past := $( $<arguments> );
+    my $past := $( $<argument_list> );
     $past.name( 'echo' );
 
     make $past;
@@ -148,65 +158,127 @@ method expression_statement($/) {
     make $( $<expression> );
 }
 
+method closure_call($/) {
+    my $past := $( $<argument_list> );
+    $past.unshift( $( $<var> ) );
+
+    make $past;
+}
+
 method function_call($/) {
-    my $past := $( $<arguments> );
+    my $past := $( $<argument_list> );
     $past.name( ~$<FUNCTION_NAME> );
 
     make $past;
 }
 
-method method_call($/) {
+method instantiate_array($/) {
     my $past := PAST::Op.new(
-                    :name( ~$<METHOD_NAME> ),
-                    :pasttype( 'callmethod' ),
-                    :name( ~$<METHOD_NAME> ),
-                    $( $<var> )
+                    :pasttype( 'call' ),
+                    :name( 'array' ),
+                    :node( $/ )
                 );
+
+    for $<array_argument> {
+        $past.push( $($_) );
+    }
 
     make $past;
 }
 
-method constructor_call($/) {
-    my $past := PAST::Op.new(
-                    :name( 'new' ),
-                    :pasttype( 'callmethod' ),
-                    PAST::Var.new(
-                        :name( ~$<CLASS_NAME> ),
-                        :scope( 'package' ),
-                    )
-                );
+method array_argument($/, $key) {
+    make $( $/{$key} );
+}
+
+method key_value_pair($/) {
+   make
+       PAST::Op.new(
+           :node( $/ ),
+           :pasttype( 'call' ),
+           :name( 'infix:=>' ),
+           :returns( 'Array' ),
+           $( $<key> ),
+           $( $<value> )
+       );
+}
+
+method method_call($/) {
+    my $past := $( $<argument_list> );
+    $past.name( ~$<METHOD_NAME> );
+    $past.pasttype( 'callmethod' );
+    $past.unshift( $( $<var> ) );
 
     make $past;
+}
+
+# TODO: Call the default constructor without explicit check, inherit from PippObject instead
+method constructor_call($/) {
+    my $class_name := ~$<CLASS_NAME>;
+    # The constructor needs a list of it's arguments, or an empty list
+    my $cons_call  := +$<argument_list> ??
+                        $( $<argument_list>[0] )
+                        !!
+                        PAST::Op.new();
+    $cons_call.pasttype('callmethod');
+    # The object onto which the method is called
+    $cons_call.unshift(
+        PAST::Op.new(
+            :inline('%r = new %0', 'obj = %r'),
+            $class_name
+        )
+    );
+    # The method comes before the first argument
+    $cons_call.unshift(
+        PAST::Var.new(:name('cons'), :scope('register'))
+    );
+
+    make
+        PAST::Stmts.new(
+            PAST::Var.new( :name('obj'),  :scope('register'), :isdecl(1) ),
+            PAST::Var.new( :name('cons'), :scope('register'), :isdecl(1) ),
+            # use default constructor when there is no explicit constructor
+            PAST::Op.new(
+                :pasttype('if'),
+                PAST::Op.new(
+                    :pirop('isnull'),
+                    PAST::Op.new( :inline("%r = get_global ['" ~ $class_name ~ "'], '__construct'") )  # condition
+                ),
+                PAST::Op.new( :inline("cons = get_global ['PippObject'], '__construct'") ),
+                PAST::Op.new( :inline("cons = get_global ['" ~ $class_name ~ "'], '__construct'") )
+            ),
+            $cons_call,                                       # call the constructor
+            PAST::Var.new( :name('obj'), :scope('register') ) # return the created object
+        );
 }
 
 method constant($/) {
-    make PAST::Op.new(
-             :name('constant'),
-             PAST::Val.new(
-                 :returns('PhpString'),
-                 :value( ~$<CONSTANT_NAME> ),
-             )
-         );
+    make
+        PAST::Op.new(
+            :name('constant'),
+            PAST::Val.new(
+                :returns('PhpString'),
+                :value( ~$<CONSTANT_NAME> ),
+            )
+        );
 }
 
-# can be mergerd with constant
+# TODO: merge with rule 'constant'
 method class_constant($/) {
-    make PAST::Op.new(
-             :name('constant'),
-             PAST::Val.new(
-                 :returns('PhpString'),
-                 :value( ~$/ ),
-             )
-         );
+    make
+        PAST::Op.new(
+            :name('constant'),
+            PAST::Val.new(
+                :returns('PhpString'),
+                :value( ~$/ ),
+            )
+        );
 }
 
 # class constants could probably also be set in a class init block
 method class_constant_definition($/) {
-    our $?INIT;
-    unless pipp_defined( $?INIT ) {
-        $?INIT := PAST::Block.new();
-    }
-    $?INIT.push( 
+    my $past := PAST::Block.new( :name('class_constant_definition') );
+    my $loadinit := $past.loadinit();
+    $loadinit.unshift(
         PAST::Op.new(
             :pasttype('call'),
             :name('define'),
@@ -219,102 +291,172 @@ method class_constant_definition($/) {
         )
     );
 
-    make PAST::Block.new( :name( 'class_constant_definition' ) );
+    make $past;
 }
 
-method arguments($/) {
+method argument_list($/) {
     my $past := PAST::Op.new(
                     :pasttype('call'),
                     :node($/)
                 );
     for $<expression> {
-        $past.push($($_));
+        $past.push( $($_) );
     }
 
     make $past;
 }
 
+method conditional_expression($/) {
+    make
+        PAST::Op.new(
+            :node($/),
+            $( $<expression> ),
+            $( $<statement_list> )
+        );
+}
+
+method do_while_statement($/) {
+    make
+        PAST::Op.new(
+            :pasttype('repeat_while'),
+            :node($/),
+            $( $<expression> ),
+            $( $<statement_list> )
+        );
+}
+
 method if_statement($/) {
-    my $past := PAST::Op.new(
-                    $( $<expression> ),
-                    $( $<block> ),
-                    :pasttype('if'),
-                    :node($/)
-                );
-    for $<else_clause> {
-        $past.push( $( $_ ) );
+    my $past := $( $<conditional_expression> );
+    $past.pasttype('if');
+
+    my $else := undef;
+    if +$<else_clause> {
+        $else := $( $<else_clause>[0]<statement_list> );
     }
+    my $first_eif := undef;
+    if +$<elseif_clause> {
+        my $count := +$<elseif_clause> - 1;
+        $first_eif := $( $<elseif_clause>[$count] );
+        while $count != 0 {
+            my $eif := $( $<elseif_clause>[$count] );
+            $count--;
+            my $eifchild := $( $<elseif_clause>[$count] );
+            if ($else) {
+                $eif.push($else);
+            }
+            $eif.push($eifchild);
+        }
+        if $else && +$<elseif_clause> == 1 {
+            $first_eif.push($else);
+        }
+    }
+
+    if $first_eif {
+        $past.push($first_eif);
+    }
+    elsif $else {
+        $past.push($else);
+    }
+
+    make $past;
+}
+
+method elseif_clause($/) {
+    my $past := $( $<conditional_expression> );
+    $past.pasttype('if');
 
     make $past;
 }
 
 method var_assign($/) {
-    make PAST::Op.new(
-             $( $<var> ),
-             $( $<expression> ),
-             :pasttype('bind'),
-         );
+    make
+        PAST::Op.new(
+            :pasttype('bind'),
+            $( $<var> ),
+            $( $<expression> ),
+        );
 }
 
 method array_elem($/) {
-    my $past_var_name := $( $<VAR_NAME> );
-    $past_var_name.scope('package');
-    $past_var_name.viviself('PhpArray');
+    our @?BLOCK;
+    unless @?BLOCK[0].symbol( ~$<VAR_NAME> ) {
+        @?BLOCK[0].symbol( ~$<VAR_NAME>, :scope('lexical') );
+        @?BLOCK[0].push(
+            PAST::Var.new(
+                :name(~$<VAR_NAME>),
+                :viviself('PhpArray'),
+                :isdecl(1)
+            )
+        );
+    }
 
-    make PAST::Var.new(
-             $past_var_name,
-             $( $<expression> ),
-             :scope('keyed'),
-             :viviself('Undef'),
-             :lvalue(1)
-         );
+    make
+        PAST::Var.new(
+            :scope('keyed'),
+            :viviself('PhpNull'),
+            :lvalue(1),
+            PAST::Var.new(
+                :name(~$<VAR_NAME>),
+                :viviself('PhpArray'),
+                :lvalue(1),
+            ),
+            $( $<expression> )
+        );
 }
 
-method var($/,$key) {
+method simple_var($/) {
+    our @?BLOCK;
+    unless ( @?BLOCK[0].symbol( ~$<VAR_NAME> ) || @?BLOCK[0].symbol( ~$<VAR_NAME> ~ '_hidden' ) ) {
+        @?BLOCK[0].symbol( ~$<VAR_NAME>, :scope('lexical') );
+        @?BLOCK[0].push(
+            PAST::Var.new(
+                :name(~$<VAR_NAME>),
+                :viviself('PhpNull'),
+                :isdecl(1)
+            )
+        );
+    }
+
+    make
+        PAST::Var.new(
+            :name(~$<VAR_NAME>),
+            :viviself('PhpNull'),
+            :lvalue(1),
+        );
+}
+
+method var($/, $key) {
     make $( $/{$key} );
 }
 
-method VAR_NAME($/) {
-    our $?PIPP_CURRENT_SCOPE;
-    make PAST::Var.new(
-             :scope( $?PIPP_CURRENT_SCOPE ?? $?PIPP_CURRENT_SCOPE !! 'package' ),
-             :name(~$/),
-             :viviself('Undef'),
-             :lvalue(1),
-         );
-}
-
 method this($/) {
-    make PAST::Op.new(
-             :inline( "%r = self" )
-         );
+    make PAST::Op.new( :inline( "%r = self" ) );
 }
 
 method member($/) {
-    make PAST::Op.new(
-             :inline( "%r = self" )
-         );
-}
-
-method else_clause($/) {
-    make $( $<block> );
+    make
+        PAST::Op.new(
+            :pasttype('callmethod'),
+            :name('member'),
+            PAST::Var.new(
+                :name('$this'),
+                :scope('lexical')
+            )
+        );
 }
 
 method while_statement($/) {
-    my $cond  := $( $<expression> );
-    my $block := $( $<block> );
+    my $past := $( $<conditional_expression> );
+    $past.pasttype('while');
 
-    make PAST::Op.new( $cond,
-                       $block,
-                       :pasttype('while'),
-                       :node($/) );
+    make $past;
 }
 
 method for_statement($/) {
     my $init  := $( $<var_assign> );
+
     my $cond  := $( $<expression>[0] );
-    my $work  := PAST::Stmts.new( $( $<block> ), $( $<expression>[1] ) );
-    
+    my $work  := PAST::Stmts.new( $( $<statement_list> ), $( $<expression>[1] ) );
     my $while := PAST::Op.new(
                        $cond,
                        $work,
@@ -328,7 +470,7 @@ method for_statement($/) {
 # Handle the operator precedence table.
 method expression($/, $key) {
     if ($key eq 'end') {
-        make $($<expr>);
+        make $( $<expr> );
     }
     else {
         my $past := PAST::Op.new( :name($<type>),
@@ -340,16 +482,17 @@ method expression($/, $key) {
         for @($/) {
             $past.push( $($_) );
         }
+
         make $past;
     }
 }
 
 
-method term($/,$key) {
+method term($/, $key) {
     make $( $/{$key} );
 }
 
-method literal($/,$key) {
+method literal($/, $key) {
     make $( $/{$key} );
 }
 
@@ -393,104 +536,272 @@ method NUMBER($/) {
          );
 }
 
-method function_definition($/) {
+method closure($/, $key) {
+    our @?BLOCK; # A stack of PAST::Block
 
-    # PHP has two scopes: local to functions and global
-    our $?PIPP_CURRENT_SCOPE := 'lexical';
+    if $key eq 'open' {
+        # note that $<param_list> creates a new PAST::Block.
+        my $block := $( $<param_list> );
 
-    # note that $<param_list> creates a new PAST::Block.
-    my $past := $( $<param_list> );
+        # set up scope 'package' for the superglobals
+        our @?SUPER_GLOBALS;
+        for ( @?SUPER_GLOBALS ) { $block.symbol( :scope('package'), $_ ); }
 
-    $past.name( ~$<FUNCTION_NAME> );
-    $past.control('return_pir');
-    $past.push( $( $<block> ) );
+        # declare the bound vars a lexical
+        if +$<bind_list> == 1 {
+            for $<bind_list>[0]<VAR_NAME> {
+                $block.symbol( ~$_ ~ '_hidden', :comment('bound with use') );
+            }
+        }
+        @?BLOCK.unshift( $block );
+    }
+    else {
+        my $block := @?BLOCK.shift();
 
-    $?PIPP_CURRENT_SCOPE := '';
+        $block.control('return_pir');
+        $block.push( $( $<statement_list> ) );
 
-    make $past;
+        make $block;
+    }
 }
 
-# nested functions are not supported yet
-method ENTER_FUNCTION_DEF($/) {
-    our $?PIPP_CURRENT_SCOPE;
-    $?PIPP_CURRENT_SCOPE := 'lexical';
+method function_definition($/, $key) {
+    our @?BLOCK; # A stack of PAST::Block
+
+    if $key eq 'open' {
+        # note that $<param_list> creates a new PAST::Block.
+        my $block := $( $<param_list> );
+
+        # set up scope 'package' for the superglobals
+        our @?SUPER_GLOBALS;
+        for ( @?SUPER_GLOBALS ) { $block.symbol( :scope('package'), $_ ); }
+
+        @?BLOCK.unshift( $block );
+    }
+    else {
+        my $block := @?BLOCK.shift();
+
+        $block.name( ~$<FUNCTION_NAME> );
+        $block.control('return_pir');
+        $block.push( $( $<statement_list> ) );
+
+        make $block;
+    }
 }
-method EXIT_FUNCTION_DEF($/) {
-    our $?PIPP_CURRENT_SCOPE;
-    $?PIPP_CURRENT_SCOPE := 'package';
-}
 
-method class_method_definition($/) {
+method class_method_definition($/, $key) {
+    our @?BLOCK; # A stack of PAST::Block
 
-    # note that $<param_list> creates a new PAST::Block.
-    my $past := $( $<param_list> );
+    if $key eq 'open' {
+        # note that $<param_list> creates a new PAST::Block.
+        my $block := $( $<param_list> );
 
-    $past.name( ~$<METHOD_NAME> );
-    $past.blocktype( 'method' );
-    $past.control('return_pir');
-    $past.push( $( $<block> ) );
+        # set up scope 'package' for the superglobals
+        our @?SUPER_GLOBALS;
+        for ( @?SUPER_GLOBALS ) { $block.symbol( :scope('package'), $_ ); }
 
-    make $past;
+        $block.unshift(
+            PAST::Op.new(
+                :pasttype('bind'),
+                PAST::Var.new(
+                    :name('$this'),
+                    :scope('lexical'),
+                    :isdecl(1)
+                ),
+                PAST::Var.new(
+                    :name('self'),
+                    :scope('register')
+                )
+            )
+        );
+
+        @?BLOCK.unshift( $block );
+    }
+    else {
+        my $block := @?BLOCK.shift();
+
+        $block.name( ~$<METHOD_NAME> );
+        $block.blocktype( 'method' );
+        $block.control('return_pir');
+        $block.push( $( $<statement_list> ) );
+
+        make $block;
+    }
 }
 
 method param_list($/) {
-
-    my $past := PAST::Block.new(
-                    :blocktype('declaration'),
-                    :node($/)
-                );
+    my $block := PAST::Block.new( :blocktype('declaration'), :node($/) );
     my $arity := 0;
     for $<VAR_NAME> {
-        my $param := $( $_ );
-        $param.scope('parameter');
-        $past.push($param);
-
-        # enter the parameter as a lexical into the block's symbol table
-        $past.symbol(
-             :scope('lexical'),
-             $param.name()
+        $block.push(
+            PAST::Var.new(
+                :name(~$_),
+                :scope('parameter'),
+            )
         );
-        $arity++;
-    }
-    $past.arity( $arity );
+#####        $block.push(
+#####            PAST::Op.new(
+#####                :pasttype('bind'),
+#####                PAST::Var.new(
+#####                    :name(~$_),
+#####                    :scope('lexical')
+#####                ),
+#####                PAST::Op.new(
+#####                    :inline(
+#####                        '#   %r = new "Perl6Scalar", %0',
+#####                        '#   $P0 = get_hll_global ["Bool"], "True"',
+#####                        '#   setprop %r, "readonly", $P0'
+#####                    ),
+#####                    PAST::Var.new(
+#####                        :name(~$_),
+#####                        :scope('lexical')
+#####                    )
+#####                )
+#####            )
+#####        );
 
-    make $past;
+        $arity++;
+        $block.symbol( ~$_, :scope('lexical') );
+    }
+    $block.arity( $arity );
+
+    make $block;
 }
 
-method class_definition($/) {
-    my $past := PAST::Block.new(
-                    :node($/),
-                    :namespace( $<CLASS_NAME><ident> ),
+method class_definition($/, $key) {
+    our @?BLOCK; # A stack of PAST::Block
+
+    if $key eq 'open' {
+        my $block := PAST::Block.new(
+                :node($/),
+                :blocktype('declaration'),
+                :pirflags( ':init :load' )
+            );
+
+        # set up scope 'package' for the superglobals
+        our @?SUPER_GLOBALS;
+        for ( @?SUPER_GLOBALS ) { $block.symbol( :scope('package'), $_ ); }
+
+        @?BLOCK.unshift( $block );
+    }
+    else {
+        my $block := @?BLOCK.shift();
+        my $class_name := ~$<CLASS_NAME><ident>;
+        $block.namespace( $class_name );
+        $block.push(
+            # Start of class definition; make PAST to create class object if
+            # we're creating a new class.
+            PAST::Op.new(
+                :pasttype('bind'),
+                PAST::Var.new(
+                    :name('def'),
+                    :scope('register'),
+                    :isdecl(1)
+                ),
+                PAST::Op.new(
+                    :pasttype('call'),
+                    :name('pipp_create_class'),
+                    PAST::Val.new( :value($class_name) )
+                )
+            )
+        );
+
+        # nothing to do for $<const_definition,
+        # setup of class constants is done in the 'loadinit' node
+        for $<class_constant_definition> {
+           $block.push( $($_) );
+        }
+
+        my $methods_block := PAST::Block.new( :blocktype('immediate') );
+
+        # declare the attributes
+        for $<class_member_definition> {
+            my $member_name := ~$_<VAR_NAME><ident>;
+            $methods_block.symbol(
+                $member_name,
+                :scope('attribute'),
+                :default( $( $_<literal> ) )
+            );
+
+            $block.push(
+                PAST::Op.new(
+                    :pasttype('call'),
+                    :name('pipp_add_attribute'),
+                    PAST::Var.new(
+                        :name('def'),
+                        :scope('register')
+                    ),
+                    PAST::Val.new( :value($member_name) )
+                )
+            );
+            $block.push(
+                PAST::Op.new(
+                    :pasttype('call'),
+                    :name('!ADD_TO_WHENCE'),
+                    PAST::Var.new(
+                        :name('def'),
+                        :scope('register'),
+                    ),
+                    PAST::Val.new(
+                        :value($member_name)
+                    ),
+                    $( $_<literal> )
+                )
+            );
+        }
+
+        # It's a new class definition. Make proto-object.
+        $block.push(
+            PAST::Op.new(
+                :pasttype('call'),
+                :name('!PROTOINIT'),
+                PAST::Op.new(
+                    :pasttype('callmethod'),
+                    :name('register'),
+                    PAST::Var.new(
+                        :scope('package'),
+                        :name('$!P6META'),
+                        :namespace('PippObject')
+                    ),
+                    PAST::Var.new(
+                        :scope('register'),
+                        :name('def')
+                    ),
+                    PAST::Val.new(
+                        :value('PippObject'),
+                        :named( PAST::Val.new( :value('parent') ) )
+                    )
+                )
+            )
+        );
+
+        # add the methods
+        for $<class_method_definition> {
+            $methods_block.push( $($_) );
+        }
+
+        # add accessors for the attributes
+        for $<class_member_definition> {
+            $methods_block.push(
+                PAST::Block.new(
                     :blocktype('declaration'),
-                    :pirflags( ':init :load' ),
+                    :name(~$_<VAR_NAME><ident>),
+                    :pirflags(':method'),
+                    :node( $/ ),
                     PAST::Stmts.new(
-                        PAST::Op.new(
-                            :inline(   "$P0 = get_hll_global 'P6metaclass'\n"
-                                     ~ "$P2 = $P0.'new_class'('" ~ $<CLASS_NAME> ~ "')\n" ),
-                            :pasttype( 'inline' )
+                        PAST::Var.new(
+                            :name(~$_<VAR_NAME><ident>),
+                            :scope('attribute')
                         )
                     )
-                );
+                )
+            );
+        }
 
-    # nothing to do for $<const_definition,
-    # setup of class constants is done in $?INIT
-    for $<class_constant_definition> {
-       $past.push($($_));
-    }
+        $block.push( $methods_block );
 
-    my $methods_block
-        := PAST::Block.new(
-                    :blocktype('immediate'),
-           );
-    for $<class_member_definition> {
-        $methods_block.symbol( ~$_<VAR_NAME><ident>, :scope('attribute') );
+        make $block;
     }
-    for $<class_method_definition> {
-        $methods_block.push( $($_) );
-    }
-    $past.push( $methods_block );
-
-    make $past;
 }
 
 

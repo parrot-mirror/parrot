@@ -17,7 +17,7 @@ This implementation is based on F<languages/markdown/markdown.pir>.
 
 =cut
 
-.HLL 'Lua'
+.HLL 'lua'
 .loadlib 'lua_group'
 .namespace [ 'markdown' ]
 
@@ -69,10 +69,6 @@ LIST
 
 
 =back
-
-=head1 AUTHORS
-
-Francois Perrad
 
 =cut
 

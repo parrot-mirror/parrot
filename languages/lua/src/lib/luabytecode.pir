@@ -66,7 +66,7 @@ lib/luabytecode.pir - Lua bytecode translation Library
     .local string pir
     pir = <<'PIRCODE'
 .include 'interpinfo.pasm'
-.HLL 'Lua'
+.HLL 'lua'
 .loadlib 'lua_group'
 
 .namespace []
@@ -167,7 +167,9 @@ PIRCODE
     $S0 = i
     pir .= "    .param pmc loc_"
     pir .= $S0
-    pir .= " :optional\n"
+    pir .= " :optional\n    .param int has_loc_"
+    pir .= $S0
+    pir .= " :opt_flag\n"
     inc i
     goto L1
   L2:
@@ -184,7 +186,7 @@ PIRCODE
   L5:
     unless i < numparams goto L6
     $S0 = i
-    pir .= "    unless_null loc_"
+    pir .= "    if has_loc_"
     pir .= $S0
     pir .= ", vivify_"
     pir .= $S0
@@ -331,9 +333,7 @@ PIRCODE
     pir = "    .local pmc k_"
     $S0 = i
     pir .= $S0
-    pir .= "\n    new k_"
-    pir .= $S0
-    pir .= ", 'LuaNumber'\n    set k_"
+    pir .= "\n    box k_"
     pir .= $S0
     pir .= ", "
     $S0 = self
@@ -362,9 +362,7 @@ PIRCODE
     pir = "    .local pmc k_"
     $S0 = i
     pir .= $S0
-    pir .= "\n    new k_"
-    pir .= $S0
-    pir .= ", 'LuaString'\n    set k_"
+    pir .= "\n    box k_"
     pir .= $S0
     pir .= ", \""
     $S0 = self
@@ -508,12 +506,6 @@ PIRCODE
 
 
 .include 'languages/lua/src/lib/luabytecode_gen.pir'
-
-=head1 AUTHOR
-
-Francois Perrad.
-
-=cut
 
 # Local Variables:
 #   mode: pir

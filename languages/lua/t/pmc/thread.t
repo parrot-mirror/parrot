@@ -8,7 +8,7 @@ t/pmc/thread.t - Lua thread
 
 =head1 SYNOPSIS
 
-    % perl -I../../lib t/pmc/thread.t
+    % perl t/pmc/thread.t
 
 =head1 DESCRIPTION
 
@@ -19,6 +19,8 @@ Tests Lua C<thread> type
 
 use strict;
 use warnings;
+use FindBin;
+use lib "$FindBin::Bin/../../../../lib";
 
 use Parrot::Test tests => 9;
 use Test::More;
@@ -126,7 +128,7 @@ CODE
 OUTPUT
 
 pir_output_is( << 'CODE', << 'OUTPUT', 'check logical_not' );
-.HLL 'Lua'
+.HLL 'lua'
 .loadlib 'lua_group'
 
 .sub '__start' :main
@@ -159,7 +161,7 @@ boolean
 OUTPUT
 
 pir_output_is( << 'CODE', << 'OUTPUT', 'check HLL' );
-.HLL 'Lua'
+.HLL 'lua'
 .loadlib 'lua_group'
 .sub '__start' :main
     load_bytecode 'Parrot/Coroutine.pbc'
@@ -184,7 +186,7 @@ CODE
 OUTPUT
 
 pir_output_like( << 'CODE', << 'OUTPUT', 'check tostring' );
-.HLL 'Lua'
+.HLL 'lua'
 .loadlib 'lua_group'
 .sub '__start' :main
     load_bytecode 'Parrot/Coroutine.pbc'
@@ -217,7 +219,7 @@ string\n
 OUTPUT
 
 pir_output_is( << 'CODE', << 'OUTPUT', 'check tonumber' );
-.HLL 'Lua'
+.HLL 'lua'
 .loadlib 'lua_group'
 .sub '__start' :main
     load_bytecode 'Parrot/Coroutine.pbc'
@@ -245,7 +247,7 @@ nil
 OUTPUT
 
 pir_error_output_like( << 'CODE', << 'OUTPUT', 'check __add' );
-.HLL 'Lua'
+.HLL 'lua'
 .loadlib 'lua_group'
 .sub '__start' :main
     load_bytecode 'Parrot/Coroutine.pbc'

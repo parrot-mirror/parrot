@@ -21,7 +21,7 @@ See original on L<http://luaforge.net/projects/luafilesystem/>
 
 =cut
 
-.HLL 'Lua'
+.HLL 'lua'
 .loadlib 'lua_group'
 .namespace [ 'lfs' ]
 
@@ -81,7 +81,7 @@ LIST
     .param pmc fh
     .param string funcname
     .local pmc res
-    res = lua_checkudata(narg, fh, 'ParrotIO')
+    res = lua_checkudata(narg, fh, 'FileHandle')
     unless null res goto L1
     lua_error(funcname, ": closed file")
   L1:
@@ -495,10 +495,12 @@ when there is no more entries. Raises an error if C<path> is not a directory.
     .return (res)
   _handler:
     .local pmc e
-    .local string s
+    .local string msg
     .get_results (e)
-    s = e
-    lua_error("cannot open ", $S0, ": ", s)
+    msg = e
+    $S0 = lua_x_error("cannot open ", $S0, ": ", msg)
+    e = $S0
+    rethrow e
 .end
 
 .sub 'dir_aux' :anon :lex :outer(dir)
@@ -683,10 +685,6 @@ NOT YET IMPLEMENTED.
 .end
 
 =back
-
-=head1 AUTHORS
-
-Francois Perrad
 
 =cut
 

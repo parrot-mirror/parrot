@@ -1,5 +1,5 @@
 #! perl
-# Copyright (C) 2006-2007, The Perl Foundation.
+# Copyright (C) 2006-2008, The Perl Foundation.
 # $Id$
 
 =head1 NAME
@@ -8,7 +8,7 @@ t/pmc/string.t - WmlsString
 
 =head1 SYNOPSIS
 
-    % perl -I../../lib t/pmc/string.t
+    % perl t/pmc/string.t
 
 =head1 DESCRIPTION
 
@@ -19,7 +19,10 @@ Tests C<WmlsString> PMC
 
 use strict;
 use warnings;
-use Parrot::Test tests => 12;
+use FindBin;
+use lib "$FindBin::Bin/../../../../lib";
+
+use Parrot::Test tests => 13;
 use Test::More;
 
 pir_output_is( << 'CODE', << 'OUTPUT', 'check inheritance' );
@@ -144,7 +147,7 @@ CODE
 OUTPUT
 
 pir_output_is( << 'CODE', << 'OUTPUT', 'check HLL' );
-.HLL "WMLScript"
+.HLL "wmlscript"
 .loadlib "wmls_group"
 .sub _main
     .local pmc pmc1
@@ -164,7 +167,7 @@ simple string
 OUTPUT
 
 pir_output_is( << 'CODE', << 'OUTPUT', 'check HLL & .const' );
-.HLL "WMLScript"
+.HLL "wmlscript"
 .loadlib "wmls_group"
 .sub _main
     .const "WmlsString" cst1 = "simple string"
@@ -181,7 +184,7 @@ simple string
 OUTPUT
 
     pir_output_is( << 'CODE', << 'OUTPUT', '.const & empty string' );
-.HLL "WMLScript"
+.HLL "wmlscript"
 .loadlib "wmls_group"
 .sub _main
     .const "WmlsString" cst1 = ""
@@ -199,7 +202,7 @@ OUTPUT
 
 pir_output_is( << 'CODE', << 'OUTPUT', 'check istrue' );
 .loadlib "wmls_ops"
-.HLL "WMLScript"
+.HLL "wmlscript"
 .loadlib "wmls_group"
 .sub _main
     .const "WmlsString" cst1 = "simple string"
@@ -220,7 +223,7 @@ OUTPUT
 
 pir_output_is( << 'CODE', << 'OUTPUT', 'check typeof' );
 .loadlib "wmls_ops"
-.HLL "WMLScript"
+.HLL "wmlscript"
 .loadlib "wmls_group"
 .sub _main
     .const "WmlsString" cst1 = "simple string"
@@ -241,7 +244,7 @@ OUTPUT
 
 pir_output_is( << 'CODE', << 'OUTPUT', 'check defined' );
 .loadlib "wmls_ops"
-.HLL "WMLScript"
+.HLL "wmlscript"
 .loadlib "wmls_group"
 .sub _main
     .const "WmlsString" cst1 = "simple string"
@@ -258,6 +261,23 @@ CODE
 simple string
 true
 WmlsBoolean
+OUTPUT
+
+pir_output_is( << 'CODE', << 'OUTPUT', 'check box' );
+.HLL "wmlscript"
+.loadlib "wmls_group"
+.loadlib "wmls_ops"
+.sub _main
+    $P0 = box "simple string"
+    print $P0
+    print "\n"
+    $S0 = typeof $P0
+    print $S0
+    print "\n"
+.end
+CODE
+simple string
+WmlsString
 OUTPUT
 
 # Local Variables:

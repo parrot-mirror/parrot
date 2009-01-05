@@ -105,7 +105,7 @@ All functions are registered inside a table C<struct>.
 
 =cut
 
-.HLL 'Lua'
+.HLL 'lua'
 .loadlib 'lua_group'
 .namespace [ 'struct' ]
 
@@ -507,10 +507,6 @@ nor the option C<c0>.
 
 
 =back
-
-=head1 AUTHORS
-
-Francois Perrad
 
 =cut
 

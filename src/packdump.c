@@ -38,6 +38,12 @@ static void PackFile_Constant_dump(PARROT_INTERP,
 static void pobj_flag_dump(PARROT_INTERP, ARGIN_NULLOK(long flags))
         __attribute__nonnull__(1);
 
+#define ASSERT_ARGS_PackFile_Constant_dump __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(ct) \
+    || PARROT_ASSERT_ARG(self)
+#define ASSERT_ARGS_pobj_flag_dump __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp)
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 /* HEADERIZER END: static */
 
@@ -56,10 +62,11 @@ PARROT_EXPORT
 void
 PackFile_ConstTable_dump(PARROT_INTERP, ARGIN(const PackFile_ConstTable *self))
 {
+    ASSERT_ARGS(PackFile_ConstTable_dump);
     opcode_t i;
 
     for (i = 0; i < self->const_count; i++) {
-        PIO_printf(interp, "    # %ld:\n", (long)i);
+        Parrot_io_printf(interp, "    # %ld:\n", (long)i);
         PackFile_Constant_dump(interp, self, self->constants[i]);
     }
 }
@@ -118,90 +125,92 @@ pobj_flag_dump(PARROT_INTERP, ARGIN_NULLOK(long flags))
  * followed by individual bits.
  */
 {
+    ASSERT_ARGS(pobj_flag_dump);
     INTVAL idx = 0;
     int printed_flag_p = 0;
 
-    PIO_printf(interp, "\tFLAGS => 0x%04lx (", flags);
+    Parrot_io_printf(interp, "\tFLAGS => 0x%04lx (", flags);
     while (flags) {
         if (flags & 1) {
             if (printed_flag_p)
-                PIO_printf(interp, ",");
-            PIO_printf(interp, "%s", flag_bit_names[idx]);
+                Parrot_io_printf(interp, ",");
+            Parrot_io_printf(interp, "%s", flag_bit_names[idx]);
             printed_flag_p++;
         }
         idx++;
         flags >>= 1;
     }
-    PIO_printf(interp, ")\n");
+    Parrot_io_printf(interp, ")\n");
 }
 
 static void
 PackFile_Constant_dump(PARROT_INTERP, ARGIN(const PackFile_ConstTable *ct),
                        ARGIN(const PackFile_Constant *self))
 {
+    ASSERT_ARGS(PackFile_Constant_dump);
     PMC *key;
     size_t i;
 
     switch (self->type) {
 
     case PFC_NUMBER:
-        PIO_printf(interp, "    [ 'PFC_NUMBER', %g ],\n", self->u.number);
+        Parrot_io_printf(interp, "    [ 'PFC_NUMBER', %g ],\n", self->u.number);
         break;
 
     case PFC_STRING:
-        PIO_printf(interp, "    [ 'PFC_STRING', {\n");
+        Parrot_io_printf(interp, "    [ 'PFC_STRING', {\n");
         pobj_flag_dump(interp, (long)PObj_get_FLAGS(self->u.string));
-        PIO_printf(interp, "        CHARSET  => %ld,\n",
+        Parrot_io_printf(interp, "        CHARSET  => %ld,\n",
                    self->u.string->charset);
         i = self->u.string->bufused;
-        PIO_printf(interp, "        SIZE     => %ld,\n",
+        Parrot_io_printf(interp, "        SIZE     => %ld,\n",
                    (long)i);
 
-        PIO_printf(interp, "        DATA     => \"%Ss\"\n",
+        Parrot_io_printf(interp, "        DATA     => \"%Ss\"\n",
                        string_escape_string(interp, self->u.string));
-        PIO_printf(interp, "    } ],\n");
+        Parrot_io_printf(interp, "    } ],\n");
         break;
 
     case PFC_KEY:
         for (i = 0, key = self->u.key; key; key = (PMC*)PMC_data(key), i++)
             ;
         /* number of key components */
-        PIO_printf(interp, "    [ 'PFC_KEY' (%ld items)\n", i);
+        Parrot_io_printf(interp, "    [ 'PFC_KEY' (%ld items)\n", i);
         /* and now type / value per component */
         for (key = self->u.key; key; key = (PMC*)PMC_data(key)) {
             opcode_t type = PObj_get_FLAGS(key);
 
-            PIO_printf(interp, "       {\n");
+            Parrot_io_printf(interp, "       {\n");
             if ((type & (KEY_start_slice_FLAG|KEY_inf_slice_FLAG)) ==
                 (KEY_start_slice_FLAG|KEY_inf_slice_FLAG))
-                PIO_printf(interp, "        SLICE_BITS  => PF_VT_END_INF\n");
+                Parrot_io_printf(interp, "        SLICE_BITS  => PF_VT_END_INF\n");
             if ((type & (KEY_end_slice_FLAG|KEY_inf_slice_FLAG)) ==
                 (KEY_end_slice_FLAG|KEY_inf_slice_FLAG))
-                PIO_printf(interp, "        SLICE_BITS  => PF_VT_START_ZERO\n");
+                Parrot_io_printf(interp, "        SLICE_BITS  => PF_VT_START_ZERO\n");
             if (type & KEY_start_slice_FLAG)
-                PIO_printf(interp, "        SLICE_BITS  => PF_VT_START_SLICE\n");
+                Parrot_io_printf(interp, "        SLICE_BITS  => PF_VT_START_SLICE\n");
             if (type & KEY_end_slice_FLAG)
-                PIO_printf(interp, "        SLICE_BITS  => PF_VT_END_SLICE\n");
+                Parrot_io_printf(interp, "        SLICE_BITS  => PF_VT_END_SLICE\n");
 
             type &= KEY_type_FLAGS;
             pobj_flag_dump(interp, (long)PObj_get_FLAGS(key));
             switch (type) {
                 case KEY_integer_FLAG:
-                    PIO_printf(interp, "        TYPE        => INTEGER\n");
-                    PIO_printf(interp, "        DATA        => %ld\n", PMC_int_val(key));
-                    PIO_printf(interp, "       },\n");
+                    Parrot_io_printf(interp, "        TYPE        => INTEGER\n");
+                    Parrot_io_printf(interp, "        DATA        => %ld\n", PMC_int_val(key));
+                    Parrot_io_printf(interp, "       },\n");
                     break;
                 case KEY_number_FLAG:
                     {
                     const PackFile_Constant *detail;
                     size_t ct_index;
 
-                    PIO_printf(interp, "        TYPE        => NUMBER\n");
+                    Parrot_io_printf(interp, "        TYPE        => NUMBER\n");
                     ct_index = PackFile_find_in_const(interp, ct, key, PFC_NUMBER);
-                    PIO_printf(interp, "        PFC_OFFSET  => %ld\n", ct_index);
+                    Parrot_io_printf(interp, "        PFC_OFFSET  => %ld\n", ct_index);
                     detail = ct->constants[ct_index];
-                    PIO_printf(interp, "        DATA        => %ld\n", detail->u.number);
-                    PIO_printf(interp, "       },\n");
+                    Parrot_io_printf(interp, "        DATA        => %ld\n", detail->u.number);
+                    Parrot_io_printf(interp, "       },\n");
                     }
                     break;
                 case KEY_string_FLAG:
@@ -209,46 +218,46 @@ PackFile_Constant_dump(PARROT_INTERP, ARGIN(const PackFile_ConstTable *ct),
                     const PackFile_Constant *detail;
                     size_t ct_index;
 
-                    PIO_printf(interp, "        TYPE        => STRING\n");
+                    Parrot_io_printf(interp, "        TYPE        => STRING\n");
                     ct_index = PackFile_find_in_const(interp, ct, key, PFC_STRING);
-                    PIO_printf(interp, "        PFC_OFFSET  => %ld\n", ct_index);
+                    Parrot_io_printf(interp, "        PFC_OFFSET  => %ld\n", ct_index);
                     detail = ct->constants[ct_index];
-                    PIO_printf(interp, "        DATA        => '%.*s'\n",
+                    Parrot_io_printf(interp, "        DATA        => '%.*s'\n",
                               (int)detail->u.string->bufused,
                               (char *)detail->u.string->strstart);
-                    PIO_printf(interp, "       },\n");
+                    Parrot_io_printf(interp, "       },\n");
                     }
                     break;
                 case KEY_integer_FLAG | KEY_register_FLAG:
-                    PIO_printf(interp, "        TYPE        => I REGISTER\n");
-                    PIO_printf(interp, "        DATA        => %ld\n", PMC_int_val(key));
-                    PIO_printf(interp, "       },\n");
+                    Parrot_io_printf(interp, "        TYPE        => I REGISTER\n");
+                    Parrot_io_printf(interp, "        DATA        => %ld\n", PMC_int_val(key));
+                    Parrot_io_printf(interp, "       },\n");
                     break;
                 case KEY_number_FLAG | KEY_register_FLAG:
-                    PIO_printf(interp, "        TYPE        => N REGISTER\n");
-                    PIO_printf(interp, "        DATA        => %ld\n", PMC_int_val(key));
-                    PIO_printf(interp, "       },\n");
+                    Parrot_io_printf(interp, "        TYPE        => N REGISTER\n");
+                    Parrot_io_printf(interp, "        DATA        => %ld\n", PMC_int_val(key));
+                    Parrot_io_printf(interp, "       },\n");
                     break;
                 case KEY_string_FLAG | KEY_register_FLAG:
-                    PIO_printf(interp, "        TYPE        => S REGISTER\n");
-                    PIO_printf(interp, "        DATA        => %ld\n", PMC_int_val(key));
-                    PIO_printf(interp, "       },\n");
+                    Parrot_io_printf(interp, "        TYPE        => S REGISTER\n");
+                    Parrot_io_printf(interp, "        DATA        => %ld\n", PMC_int_val(key));
+                    Parrot_io_printf(interp, "       },\n");
                     break;
                 case KEY_pmc_FLAG | KEY_register_FLAG:
-                    PIO_printf(interp, "        TYPE        => P REGISTER\n");
-                    PIO_printf(interp, "        DATA        => %ld\n", PMC_int_val(key));
-                    PIO_printf(interp, "       },\n");
+                    Parrot_io_printf(interp, "        TYPE        => P REGISTER\n");
+                    Parrot_io_printf(interp, "        DATA        => %ld\n", PMC_int_val(key));
+                    Parrot_io_printf(interp, "       },\n");
                     break;
                 default:
-                    PIO_eprintf(NULL, "PackFile_Constant_pack: "
+                    Parrot_io_eprintf(NULL, "PackFile_Constant_pack: "
                             "unsupported constant type\n");
                     Parrot_exit(interp, 1);
             }
         }
-        PIO_printf(interp, "    ],\n");
+        Parrot_io_printf(interp, "    ],\n");
         break;
     case PFC_PMC:
-        PIO_printf(interp, "    [ 'PFC_PMC', {\n");
+        Parrot_io_printf(interp, "    [ 'PFC_PMC', {\n");
         {
             PMC * const pmc = self->u.key;
             Parrot_sub *sub;
@@ -269,7 +278,7 @@ PackFile_Constant_dump(PARROT_INTERP, ARGIN(const PackFile_ConstTable *ct),
                     {
                     const int n = VTABLE_get_integer(interp, pmc);
                     STRING* const out_buffer = VTABLE_get_repr(interp, pmc);
-                    PIO_printf(interp,
+                    Parrot_io_printf(interp,
                             "\tclass => %Ss,\n"
                             "\telement count => %d,\n"
                             "\telements => %Ss,\n",
@@ -304,37 +313,43 @@ PackFile_Constant_dump(PARROT_INTERP, ARGIN(const PackFile_ConstTable *ct),
                     else {
                         namespace_description = null;
                     }
-                    PIO_printf(interp,
+                    Parrot_io_printf(interp,
                             "\tclass => %Ss,\n"
                             "\tstart_offs => %d,\n"
                             "\tend_offs => %d,\n"
-                            "\tname => '%Ss',\n"
+                            "\tname    => '%Ss',\n"
+                            "\tsubid   => '%Ss',\n"
+                            "\tmethod  => '%Ss',\n"
+                            "\tnsentry => '%Ss',\n"
                             "\tnamespace => %Ss\n"
                             "\tHLL_id => %d,\n",
                             pmc->vtable->whoami,
                             sub->start_offs,
                             sub->end_offs,
                             sub->name,
+                            sub->subid,
+                            sub->method_name,
+                            sub->ns_entry_name,
                             namespace_description,
                             sub->HLL_id);
                     break;
                 case enum_class_FixedIntegerArray:
-                    PIO_printf(interp,
+                    Parrot_io_printf(interp,
                             "\tclass => %Ss,\n"
                             "\trepr => '%Ss'\n",
                             pmc->vtable->whoami,
                             VTABLE_get_repr(interp, pmc));
                     break;
                 default:
-                    PIO_printf(interp, "\tno dump info for PMC %ld %Ss\n",
+                    Parrot_io_printf(interp, "\tno dump info for PMC %ld %Ss\n",
                             pmc->vtable->base_type, pmc->vtable->whoami);
-                    PIO_printf(interp, "\tclass => %Ss,\n", pmc->vtable->whoami);
+                    Parrot_io_printf(interp, "\tclass => %Ss,\n", pmc->vtable->whoami);
             }
         }
-        PIO_printf(interp, "    } ],\n");
+        Parrot_io_printf(interp, "    } ],\n");
         break;
     default:
-        PIO_printf(interp, "    [ 'PFC_\?\?\?', type '0x%x' ],\n",
+        Parrot_io_printf(interp, "    [ 'PFC_\?\?\?', type '0x%x' ],\n",
                 self->type);
         break;
     }
@@ -354,21 +369,22 @@ PARROT_EXPORT
 void
 PackFile_Fixup_dump(PARROT_INTERP, ARGIN(const PackFile_FixupTable *ft))
 {
+    ASSERT_ARGS(PackFile_Fixup_dump);
     opcode_t i;
 
     for (i = 0; i < ft->fixup_count; i++) {
-        PIO_printf(interp, "\t#%d\n", (int) i);
+        Parrot_io_printf(interp, "\t#%d\n", (int) i);
         switch (ft->fixups[i]->type) {
             case enum_fixup_label:
             case enum_fixup_sub:
-                PIO_printf(interp,
+                Parrot_io_printf(interp,
                         "\ttype => %d offs => %8d name => '%s',\n",
                         (int)ft->fixups[i]->type,
                         (int)ft->fixups[i]->offset,
                         ft->fixups[i]->name);
                     break;
             default:
-                PIO_printf(interp, "\ttype => %d ???,\n",
+                Parrot_io_printf(interp, "\ttype => %d ???,\n",
                         (int) ft->fixups[i]->type);
                 break;
         }

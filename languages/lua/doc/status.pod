@@ -140,7 +140,6 @@ There are eight basic types in Lua, each of them is implemented by a PMC.
 =item * string F<languages/lua/src/pmc/luastring.pmc>
 
 =item * function F<languages/lua/src/pmc/luafunction.pmc>
-& F<languages/lua/src/pmc/luaclosure.pmc>
 
 =item * userdata F<languages/lua/src/pmc/luauserdata.pmc>
 
@@ -218,6 +217,8 @@ These libraries are loaded dynamically with the Lua function C<require>.
 =item * base64 library F<languages/lua/src/lib/base64.pir>
 
 =item * big number library F<languages/lua/src/lib/bc.pir>
+
+=item * bitwise operation library F<languages/lua/src/lib/bit.pir>
 
 =item * bitwise operation library F<languages/lua/src/lib/bitlib.pir>
 

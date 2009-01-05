@@ -93,7 +93,7 @@ show version information.
 .include 'languages/lua/src/lib/luaregex.pir'
 
 
-.HLL 'Lua'
+.HLL 'lua'
 .loadlib 'lua_group'
 
 .sub 'main' :anon :main
@@ -522,10 +522,6 @@ USAGE
 =head1 SEE ALSO
 
 F<languages/lua/doc/status.pod>
-
-=head1 AUTHORS
-
-Francois Perrad
 
 =cut
 

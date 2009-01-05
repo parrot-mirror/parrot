@@ -252,6 +252,26 @@ Add C<method> with C<name> to C<parrotclass>.
 .end
 
 
+=item add_role(role, [, 'to'=>parrotclass])
+
+Add C<role> to C<parrotclass>.
+
+=cut
+
+.sub 'add_role' :method
+    .param pmc role
+    .param pmc options         :slurpy :named
+
+    $P0 = options['to']
+    unless null $P0 goto have_to
+    $P0 = self
+  have_to:
+    .local pmc parrotclass
+    parrotclass = self.'get_parrotclass'($P0)
+    parrotclass.'add_role'(role)
+.end
+
+
 =item register(parrotclass [, 'name'=>name] [, 'protoobject'=>proto] [, 'parent'=>parentclass] [, 'hll'=>hll])
 
 Sets objects of type C<parrotclass> to use C<protoobject>,
@@ -487,6 +507,28 @@ of names separated by spaces.
 .end
 
 
+=item get_proto(name)
+
+Retrieve the protoobject for C<name>.  Return null if no
+protoobject exists, or whatever is present isn't a protoobject.
+
+=cut
+
+.sub 'get_proto' :method
+    .param string name
+    .local pmc ns, proto
+    ns = split '::', name
+    $S0 = pop ns
+    proto = get_hll_global ns, $S0
+    if null proto goto done
+    $I0 = isa proto, ['P6protoobject']
+    if $I0 goto done
+    null proto
+  done:
+    .return (proto)
+.end
+
+
 =item get_parrotclass(x)
 
 Multimethod helper to return the parrotclass for C<x>.
@@ -511,6 +553,8 @@ Multimethod helper to return the parrotclass for C<x>.
     parrotclass = getattribute $P0, 'parrotclass'
     .return (parrotclass)
   x_string:
+    $I0 = isa x, 'P6protoobject'
+    if $I0 goto x_p6object
     parrotclass = get_class x
     unless null parrotclass goto done
     $S0 = x
@@ -633,7 +677,7 @@ will be used in lieu of this one.)
 
 Written and maintained by Patrick R. Michaud, C<< pmichaud at pobox.com >>.
 Please send patches, feedback, and suggestions to the parrot-porters
-mailing list or to C< parrotbug@perl.org >.
+mailing list or to C< parrotbug@parrotcode.org >.
 
 =head1 COPYRIGHT
 
