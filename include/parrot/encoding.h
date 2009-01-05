@@ -153,6 +153,34 @@ INTVAL Parrot_register_encoding(PARROT_INTERP,
 
 void parrot_deinit_encodings(void);
 void parrot_init_encodings_2(void);
+#define ASSERT_ARGS_Parrot_default_encoding __attribute__unused__ int _ASSERT_ARGS_CHECK = 0
+#define ASSERT_ARGS_Parrot_encoding_c_name __attribute__unused__ int _ASSERT_ARGS_CHECK = 0
+#define ASSERT_ARGS_Parrot_encoding_name __attribute__unused__ int _ASSERT_ARGS_CHECK = 0
+#define ASSERT_ARGS_Parrot_encoding_number __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(encodingname)
+#define ASSERT_ARGS_Parrot_encoding_number_of_str __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(src)
+#define ASSERT_ARGS_Parrot_find_encoding __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(encodingname)
+#define ASSERT_ARGS_Parrot_find_encoding_converter \
+     __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(lhs) \
+    || PARROT_ASSERT_ARG(rhs)
+#define ASSERT_ARGS_Parrot_get_encoding __attribute__unused__ int _ASSERT_ARGS_CHECK = 0
+#define ASSERT_ARGS_Parrot_load_encoding __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(encodingname)
+#define ASSERT_ARGS_Parrot_make_default_encoding __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(encoding)
+#define ASSERT_ARGS_Parrot_new_encoding __attribute__unused__ int _ASSERT_ARGS_CHECK = 0
+#define ASSERT_ARGS_Parrot_register_encoding __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(encodingname) \
+    || PARROT_ASSERT_ARG(encoding)
+#define ASSERT_ARGS_parrot_deinit_encodings __attribute__unused__ int _ASSERT_ARGS_CHECK = 0
+#define ASSERT_ARGS_parrot_init_encodings_2 __attribute__unused__ int _ASSERT_ARGS_CHECK = 0
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 /* HEADERIZER END: src/encoding.c */
 

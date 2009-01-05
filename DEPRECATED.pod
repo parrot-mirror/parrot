@@ -43,17 +43,9 @@ See RT #48016. Replace usage with set_[hll,root]_global variants.
 
 See RT #48018. Replace usage with get_[hll,root]_global variants.
 
-=item * C<get_mro> [post 0.5.0]
-
-See RT #47976.
-
 =item * C<n_*> math opcode variants [post 0.7.1]
 
 See RT #58410.
-
-=item * C<infix> and C<n_infix> opcodes [post 0.8.2]
-
-These opcodes were only used by the old MMD system. See TT #7.
 
 =back
 
@@ -93,14 +85,18 @@ Will have to be:
     print $S0
     substr $P0, 1, 2, "x"
 
-=item * Exception Handlers won't automatically be disabled [post 0.8.1]
+=item * named class/pmc lookup in pir syntax such as new, isa, subclass, get_class, etc
 
-Exception handlers won't be automatically disabled after 0.8.1.
-Any exception handlers that currently rely on this feature will need to
-either be more specific about what they catch or rethrow exceptions they
-don't recognize.
+Class PMC name resolution will be the following.
 
-See RT #60640.
+if the arg is a STRING
+  Relative to the current Namespace
+
+if the arg is a ResizableStringArray
+  Relative to the current HLL Namespace
+
+if the arg is a Namespace or Class PMC
+  The passed in class or the class attatched to the passed in namespace.
 
 =back
 
@@ -127,20 +123,16 @@ Subs marked with C<:vtable> or C<:method> flags are no longer given a
 namespace entry by default.  Use the C<:nsentry> flag to cause this
 to happen.  See RT #60586 and RT #53302.
 
-=item * Bytecode packfile segment will use subid not sub name [post 0.8.1]
-
-See RT #60590.
-
 =back
 
-=head1 Compiler Tools
+=head1 Compiler tools
 
 =over 4
 
-=item 'get_string', 'get_bool', etc. named vtable functions [post 0.8.1]
+=item P6protoobject stringification [post 0.9.0]
 
-All of the named vtable functions in PCT and PGE will lose
-their names and effectively become anonymous.  See RT #60384.
+Stringification of protoobjects will return the full name of the type
+and parentheses, per Synopsis 12.
 
 =back
 

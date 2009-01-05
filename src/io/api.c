@@ -52,6 +52,7 @@ PARROT_CANNOT_RETURN_NULL
 PMC *
 Parrot_io_new_pmc(PARROT_INTERP, INTVAL flags)
 {
+    ASSERT_ARGS(Parrot_io_new_pmc);
     PMC * const new_io = pmc_new(interp, enum_class_FileHandle);
 
     Parrot_io_set_flags(interp, new_io, flags);
@@ -66,7 +67,9 @@ Parrot_io_new_pmc(PARROT_INTERP, INTVAL flags)
 
 =item C<PMC * Parrot_io_open>
 
-Creates and returns a C<FileHandle> PMC for a given string path and flags.
+Return an open filehandle for a given string path and flags. Defaults to
+creating a new FileHandle PMC. If a PMC object is passed in, it uses that
+object instead of creating a new FileHandle.
 
 =cut
 
@@ -77,19 +80,19 @@ PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 PMC *
 Parrot_io_open(PARROT_INTERP, ARGIN_NULLOK(PMC *pmc),
-        ARGIN(STRING *path), ARGIN_NULLOK(STRING *mode_str))
+        ARGIN(STRING *path), ARGIN_NULLOK(STRING *mode))
 {
+    ASSERT_ARGS(Parrot_io_open);
     PMC *new_filehandle;
-    const INTVAL flags = Parrot_io_parse_open_flags(interp, mode_str);
 
+    if (PMC_IS_NULL(pmc))
+        new_filehandle = pmc_new(interp, enum_class_FileHandle);
+    else
+        new_filehandle = pmc;
 
-    new_filehandle = PIO_OPEN(interp, pmc, path, flags);
+    Parrot_PCCINVOKE(interp, new_filehandle, CONST_STRING(interp, "open"), "SS->P",
+            path, mode, &new_filehandle);
 
-    if (PMC_IS_NULL(new_filehandle))
-        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_PIO_ERROR,
-            "Unable to open filehandle");
-
-    Parrot_io_setbuf(interp, new_filehandle, PIO_UNBOUND);
     return new_filehandle;
 }
 
@@ -114,6 +117,7 @@ PMC *
 Parrot_io_fdopen(PARROT_INTERP, ARGIN_NULLOK(PMC *pmc), PIOHANDLE fd,
         ARGIN(STRING *sflags))
 {
+    ASSERT_ARGS(Parrot_io_fdopen);
     PMC *new_filehandle;
     INTVAL flags;
 
@@ -139,7 +143,7 @@ Parrot_io_fdopen(PARROT_INTERP, ARGIN_NULLOK(PMC *pmc), PIOHANDLE fd,
 
 =item C<INTVAL Parrot_io_close>
 
-Flushes, closes, and destroys the C<ParrotIO> PMC C<*pmc>.
+Closes the filehandle object.
 
 =cut
 
@@ -149,15 +153,15 @@ PARROT_EXPORT
 INTVAL
 Parrot_io_close(PARROT_INTERP, ARGMOD(PMC *pmc))
 {
-    INTVAL res;
+    ASSERT_ARGS(Parrot_io_close);
+    INTVAL result;
 
-    if (Parrot_io_is_closed(interp, pmc))
+    if (PMC_IS_NULL(pmc))
         return -1;
 
-    Parrot_io_flush(interp, pmc);
-    res =  PIO_CLOSE(interp, pmc);
-    Parrot_io_clear_buffer(interp, pmc);
-    return res;
+    Parrot_PCCINVOKE(interp, pmc, CONST_STRING(interp, "close"), "->I", &result);
+
+    return result;
 }
 
 /*
@@ -174,7 +178,14 @@ PARROT_EXPORT
 INTVAL
 Parrot_io_is_closed(PARROT_INTERP, ARGMOD(PMC *pmc))
 {
-    return PIO_IS_CLOSED(interp, pmc);
+    ASSERT_ARGS(Parrot_io_is_closed);
+    INTVAL result;
+
+    if (PMC_IS_NULL(pmc))
+        return 1;
+
+    Parrot_PCCINVOKE(interp, pmc, CONST_STRING(interp, "is_closed"), "->I", &result);
+    return result;
 }
 
 /*
@@ -191,14 +202,11 @@ PARROT_EXPORT
 void
 Parrot_io_flush(PARROT_INTERP, ARGMOD(PMC *pmc))
 {
-    INTVAL ignored;
-
-    if (Parrot_io_is_closed(interp, pmc))
+    ASSERT_ARGS(Parrot_io_flush);
+    if (PMC_IS_NULL(pmc))
         return;
 
-    Parrot_io_flush_buffer(interp, pmc);
-    ignored = PIO_FLUSH(interp, pmc);
-    UNUSED(ignored);
+    Parrot_PCCINVOKE(interp, pmc, CONST_STRING(interp, "flush"), "->");
 }
 
 /*
@@ -216,63 +224,37 @@ PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 STRING *
-Parrot_io_reads(PARROT_INTERP, ARGMOD(PMC *pmc), size_t len)
+Parrot_io_reads(PARROT_INTERP, ARGMOD(PMC *pmc), size_t length)
 {
-    STRING               *res;
-    INTVAL                ignored;
-
-    if (Parrot_io_is_closed(interp, pmc))
-        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_PIO_ERROR,
-            "Cannot read from a closed filehandle");
-
-    if (Parrot_io_get_buffer_flags(interp, pmc) & PIO_BF_MMAP) {
-        res           = new_string_header(interp, 0);
-        res->charset  = Parrot_iso_8859_1_charset_ptr;   /* XXX binary */
-        res->encoding = Parrot_fixed_8_encoding_ptr;
-    }
-    else {
-        res = NULL;
-        res = Parrot_io_make_string(interp, &res, len);
-    }
-
-    res->bufused = len;
-
-    if (Parrot_io_is_encoding(interp, pmc, CONST_STRING(interp, "utf8")))
-        ignored = Parrot_io_read_utf8(interp, pmc, &res);
-    else
-        ignored = Parrot_io_read_buffer(interp, pmc, &res);
-    UNUSED(ignored);
-
-    return res;
+    ASSERT_ARGS(Parrot_io_reads);
+    STRING *result;
+    Parrot_PCCINVOKE(interp, pmc, CONST_STRING(interp, "read"), "I->S",
+            length, &result);
+    return result;
 }
 
 /*
 
-=item C<INTVAL Parrot_io_read>
+=item C<STRING * Parrot_io_readline>
 
-Reads up to C<len> bytes from C<*pmc> and copies them into C<*buffer>.
+Return a new C<STRING*> holding the next line read from the file.
 
 =cut
 
 */
 
+
 PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
-INTVAL
-Parrot_io_read(PARROT_INTERP, ARGMOD(PMC *pmc), ARGIN(char *buffer), size_t len)
+PARROT_CANNOT_RETURN_NULL
+STRING *
+Parrot_io_readline(PARROT_INTERP, ARGMOD(PMC *pmc))
 {
-    STRING *res = new_string_header(interp, 0);
-
-    if (Parrot_io_is_closed(interp, pmc))
-        return -1;
-
-    res->strstart = buffer;
-    res->bufused = len;
-
-    if (Parrot_io_is_encoding(interp, pmc, CONST_STRING(interp, "utf8")))
-        return Parrot_io_read_utf8(interp, pmc, &res);
-
-    return Parrot_io_read_buffer(interp, pmc, &res);
+    ASSERT_ARGS(Parrot_io_readline);
+    STRING *result;
+    Parrot_PCCINVOKE(interp, pmc, CONST_STRING(interp, "readline"), "->S",
+            &result);
+    return result;
 }
 
 /*
@@ -288,28 +270,23 @@ Writes C<len> bytes from C<*buffer> to C<*pmc>.
 PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
 INTVAL
-Parrot_io_write(PARROT_INTERP, ARGMOD(PMC *pmc), ARGIN(const void *buffer), size_t len)
+Parrot_io_write(PARROT_INTERP, ARGMOD(PMC *pmc), ARGIN(const void *buffer), size_t length)
 {
+    ASSERT_ARGS(Parrot_io_write);
     DECL_CONST_CAST;
+    INTVAL result;
+    STRING fake;
 
-    if (Parrot_io_is_closed(interp, pmc))
+    if (PMC_IS_NULL(pmc))
         return -1;
 
-    if (Parrot_io_get_flags(interp, pmc) & PIO_F_WRITE) {
-        STRING fake;
-        /* TODO skip utf8 translation layers if any */
-        fake.strstart = (char *) PARROT_const_cast(void *, buffer);
-        fake.strlen = fake.bufused = len;
-        fake.charset = Parrot_default_charset_ptr;
-        fake.encoding = Parrot_default_encoding_ptr;
+    fake.strstart = (char *) PARROT_const_cast(void *, buffer);
+    fake.strlen = fake.bufused = length;
+    fake.charset = Parrot_default_charset_ptr;
+    fake.encoding = Parrot_default_encoding_ptr;
 
-        if (Parrot_io_is_encoding(interp, pmc, CONST_STRING(interp, "utf8")))
-            return Parrot_io_write_utf8(interp, pmc, &fake);
-
-        return Parrot_io_write_buffer(interp, pmc, &fake);
-    }
-    else
-        return 0;
+    result = Parrot_io_putps(interp, pmc, &fake);
+    return result;
 }
 
 /*
@@ -329,6 +306,7 @@ PARROT_WARN_UNUSED_RESULT
 PIOOFF_T
 Parrot_io_seek(PARROT_INTERP, ARGMOD(PMC *pmc), PIOOFF_T offset, INTVAL w)
 {
+    ASSERT_ARGS(Parrot_io_seek);
     if (Parrot_io_is_closed(interp, pmc))
         return -1;
 
@@ -350,6 +328,7 @@ PARROT_WARN_UNUSED_RESULT
 PIOOFF_T
 Parrot_io_tell(PARROT_INTERP, ARGMOD(PMC *pmc))
 {
+    ASSERT_ARGS(Parrot_io_tell);
     if (Parrot_io_is_closed(interp, pmc))
         return -1;
 
@@ -372,6 +351,7 @@ PARROT_EXPORT
 INTVAL
 Parrot_io_peek(PARROT_INTERP, ARGMOD(PMC *pmc), ARGOUT(STRING **buffer))
 {
+    ASSERT_ARGS(Parrot_io_peek);
     if (Parrot_io_is_closed(interp, pmc))
         return -1;
 
@@ -394,13 +374,19 @@ PARROT_WARN_UNUSED_RESULT
 INTVAL
 Parrot_io_eof(PARROT_INTERP, ARGMOD(PMC *pmc))
 {
+    ASSERT_ARGS(Parrot_io_eof);
+    INTVAL result;
+
     /* io could be null here, but rather than return a negative error
      * we just fake EOF since eof test is usually in a boolean context.
      */
-    if (PMC_IS_NULL(pmc) || Parrot_io_is_closed(interp, pmc))
+    if (PMC_IS_NULL(pmc))
             return 1;
 
-    return (Parrot_io_get_flags(interp, pmc) & (PIO_F_EOF)) ? 1 : 0;
+    Parrot_PCCINVOKE(interp, pmc, CONST_STRING(interp, "eof"), "->I",
+            &result);
+
+    return result;
 
 }
 
@@ -418,6 +404,7 @@ PARROT_EXPORT
 INTVAL
 Parrot_io_puts(PARROT_INTERP, ARGMOD(PMC *pmc), ARGIN(const char *s))
 {
+    ASSERT_ARGS(Parrot_io_puts);
     return Parrot_io_write(interp, pmc, s, strlen(s));
 }
 
@@ -435,33 +422,17 @@ PARROT_EXPORT
 INTVAL
 Parrot_io_putps(PARROT_INTERP, ARGMOD(PMC *pmc), ARGMOD_NULLOK(STRING *s))
 {
+    ASSERT_ARGS(Parrot_io_putps);
+    INTVAL result;
 
-    if (PMC_IS_NULL(pmc)
-    || !VTABLE_isa(interp, pmc, CONST_STRING(interp, "FileHandle")))
+    if (PMC_IS_NULL(pmc))
         Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_PIO_ERROR,
-            "Cannot write to non-IO PMC");
+            "Cannot write to null PMC");
 
-    if (Parrot_io_is_closed(interp, pmc))
-        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_PIO_ERROR,
-            "Cannot write to a closed filehandle");
+    Parrot_PCCINVOKE(interp, pmc, CONST_STRING(interp, "puts"), "S->I",
+            s, &result);
+    return result;
 
-    if (!(Parrot_io_get_flags(interp, pmc) & PIO_F_WRITE))
-        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_PIO_ERROR,
-            "Cannot write to a filehandle not opened for write");
-
-    if (STRING_IS_NULL(s))
-        return 0;
-
-#if ! DISABLE_GC_DEBUG
-    /* trigger GC for debug - but not during tests */
-    if (0 && GC_DEBUG(interp))
-        Parrot_do_dod_run(interp, GC_trace_stack_FLAG);
-#endif
-
-    if (Parrot_io_is_encoding(interp, pmc, CONST_STRING(interp, "utf8")))
-        return Parrot_io_write_utf8(interp, pmc, s);
-
-    return Parrot_io_write_buffer(interp, pmc, s);
 }
 
 /*
@@ -478,6 +449,7 @@ PARROT_EXPORT
 INTVAL
 Parrot_io_fprintf(PARROT_INTERP, ARGMOD(PMC *pmc), ARGIN(const char *s), ...)
 {
+    ASSERT_ARGS(Parrot_io_fprintf);
     va_list args;
     INTVAL ret;
 
@@ -504,6 +476,7 @@ PARROT_EXPORT
 INTVAL
 Parrot_io_printf(PARROT_INTERP, ARGIN(const char *s), ...)
 {
+    ASSERT_ARGS(Parrot_io_printf);
     va_list args;
     INTVAL ret;
 
@@ -540,6 +513,7 @@ PARROT_IGNORABLE_RESULT
 INTVAL
 Parrot_io_eprintf(NULLOK(PARROT_INTERP), ARGIN(const char *s), ...)
 {
+    ASSERT_ARGS(Parrot_io_eprintf);
     va_list args;
     INTVAL ret;
 
@@ -577,6 +551,7 @@ PARROT_WARN_UNUSED_RESULT
 PIOHANDLE
 Parrot_io_getfd(PARROT_INTERP, ARGMOD(PMC *pmc))
 {
+    ASSERT_ARGS(Parrot_io_getfd);
     return Parrot_io_get_os_handle(interp, pmc);
 }
 
@@ -595,6 +570,7 @@ PARROT_WARN_UNUSED_RESULT
 INTVAL
 Parrot_io_is_tty(PARROT_INTERP, ARGMOD(PMC *pmc))
 {
+    ASSERT_ARGS(Parrot_io_is_tty);
     if (Parrot_io_is_closed(interp, pmc))
         return 0;
 
@@ -623,6 +599,7 @@ PARROT_CANNOT_RETURN_NULL
 PMC *
 Parrot_io_STDIN(PARROT_INTERP)
 {
+    ASSERT_ARGS(Parrot_io_STDIN);
     return _PIO_STDIN(interp);
 }
 
@@ -642,6 +619,7 @@ PARROT_CANNOT_RETURN_NULL
 PMC *
 Parrot_io_STDOUT(PARROT_INTERP)
 {
+    ASSERT_ARGS(Parrot_io_STDOUT);
     return _PIO_STDOUT(interp);
 }
 
@@ -661,6 +639,7 @@ PARROT_CANNOT_RETURN_NULL
 PMC *
 Parrot_io_STDERR(PARROT_INTERP)
 {
+    ASSERT_ARGS(Parrot_io_STDERR);
     return _PIO_STDERR(interp);
 }
 
@@ -686,6 +665,7 @@ PARROT_EXPORT
 PIOOFF_T
 Parrot_io_make_offset(INTVAL offset)
 {
+    ASSERT_ARGS(Parrot_io_make_offset);
     return offset;
 }
 
@@ -703,6 +683,7 @@ This allows 64-bit seeks with only 32-bit C<INTVALS>.
 PIOOFF_T
 Parrot_io_make_offset32(INTVAL hi, INTVAL lo)
 {
+    ASSERT_ARGS(Parrot_io_make_offset32);
     return ((PIOOFF_T)hi << 31) | lo;
 }
 
@@ -719,6 +700,7 @@ Returns the return value of the C<get_integer> vtable method on C<*pmc>.
 PIOOFF_T
 Parrot_io_make_offset_pmc(PARROT_INTERP, ARGMOD(PMC *pmc))
 {
+    ASSERT_ARGS(Parrot_io_make_offset_pmc);
     return VTABLE_get_integer(interp, pmc);
 }
 

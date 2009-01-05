@@ -1,4 +1,4 @@
-# Copyright (C) 2008, The Perl Foundation.
+# Copyright (C) 2008-2009, The Perl Foundation.
 # $Id$
 
 =head1 NAME
@@ -15,16 +15,12 @@ Test PHP superglobal variables.
 
 =cut
 
-# pragmata
 use strict;
 use warnings;
-
 use FindBin;
 use lib "$FindBin::Bin/../../../../lib", "$FindBin::Bin/../../lib";
 
-use Parrot::Config ();
-use Parrot::Test;
-use Test::More     tests => 3;
+use Parrot::Test tests => 6;
 
 language_output_is( 'Pipp', <<'CODE', <<'OUT', 'php_sapi_name' );
 <?php
@@ -33,6 +29,21 @@ echo "\n";
 ?>
 CODE
 cgi-fcgi
+OUT
+
+language_output_is( 'Pipp', <<'CODE', <<'OUT', 'using two superglobals' );
+<?php
+
+echo $_REQUEST['name'];
+echo "\n";
+
+echo $_SESSION['name'];
+echo "\n";
+
+?>
+CODE
+$_REQUEST
+$_SESSION
 OUT
 
 $ENV{REQUEST_TYPE} = 'GET';
@@ -60,3 +71,35 @@ array(1) {
 
 OUT
 
+language_output_is( 'Pipp', <<'CODE', <<'OUT', q{$_ENV['QUERY_STRING']}, todo => '$_ENV not set yet' );
+<?php
+
+echo 'outside function: ';
+echo $_ENV['QUERY_STRING'];
+echo "\n";
+
+?>
+CODE
+outside function: as=df
+OUT
+
+language_output_is( 'Pipp', <<'CODE', <<'OUT', '$_GET in a function' );
+<?php
+
+echo 'outside function: ';
+echo $_GET['as'];
+echo "\n";
+
+function echo_as () {
+    echo 'inside function: ';
+    echo $_GET['as'];
+    echo "\n";
+}
+
+echo_as();
+
+?>
+CODE
+outside function: df
+inside function: df
+OUT

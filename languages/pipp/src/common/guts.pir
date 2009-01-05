@@ -53,57 +53,15 @@ Dump a PMC
     .return ()
 .end
 
-=item !EXPORT(symbols, from :named('from') [, to :named('to')] )
-
-Export symbols in namespace C<from> to the namespace given by C<to>.
-If C<to> isn't given, then exports into the HLL global namespace.
-This function differs somewhat from Parrot's C<Exporter> PMC in that
-it understands how to properly merge C<MultiSub> PMCs.
-
-=cut
-
-.sub '!EXPORT'
-    .param string symbols
-    .param pmc from            :named('from')
-    .param pmc to              :named('to') :optional
-    .param int has_to          :opt_flag
-
-    if has_to goto have_to
-    to = get_hll_namespace
-  have_to:
-
-    .local pmc list
-    list = split ' ', symbols
-  list_loop:
-    unless list goto list_end
-    .local string symbol
-    .local pmc value
-    symbol = shift list
-    value = from[symbol]
-    $I0 = isa value, 'MultiSub'
-    unless $I0 goto store_value
-    $P0 = to[symbol]
-    if null $P0 goto store_value
-    $I0 = isa $P0, 'MultiSub'
-    unless $I0 goto err_type_conflict
-    $I0 = elements $P0
-    splice $P0, value, $I0, 0
-    goto list_loop
-  store_value:
-    to[symbol] = value
-    goto list_loop
-  list_end:
-    .return ()
-
-  err_type_conflict:
-    $S0 = concat "Unable to add Multisub '", symbol
-    $S0 .= "' to existing value"
-    die $S0
-.end
-
 
 .include 'except_types.pasm'
 .include 'except_severity.pasm'
+
+=head2 return
+
+For returning a value from a function.
+
+=cut
 
 .sub 'return'
     .param pmc value           :optional
@@ -117,6 +75,87 @@ it understands how to properly merge C<MultiSub> PMCs.
     setattribute $P0, 'payload', value
     throw $P0
     .return (value)
+.end
+
+=item pipp_create_class(name)
+
+Internal helper method to create a class.
+See C<!keyword_class> in Rakudo.
+
+=cut
+
+.sub 'pipp_create_class'
+    .param string name
+
+    .local pmc class
+    class = newclass name
+
+    .return (class)
+.end
+
+
+=item tipp_add_attribute(class, attr_name, attr_value)
+
+Adds an attribute with the given name to the class or role.
+See C<!keyword_has> in Rakudo.
+
+=cut
+
+.sub 'pipp_add_attribute'
+    .param pmc class
+    .param string attr_name
+
+    addattribute class, attr_name
+
+    .return ()
+.end
+
+=item !ADD_TO_WHENCE
+
+Adds a key/value mapping to what will become the WHENCE on a proto-object (we
+don't have a proto-object to stick them on yet, so we put a property on the
+class temporarily, then attach it as the WHENCE clause later).
+
+=cut
+
+.sub '!ADD_TO_WHENCE'
+    .param pmc class
+    .param pmc attr_name
+    .param pmc value
+
+    # Get hash if we have it, if not make it.
+    .local pmc whence_hash
+    whence_hash = getprop '%!WHENCE', class
+    unless null whence_hash goto have_hash
+    whence_hash = new 'PhpArray'
+    setprop class, '%!WHENCE', whence_hash
+
+    # Make entry.
+  have_hash:
+    whence_hash[attr_name] = value
+.end
+
+
+=item !PROTOINIT
+
+Called after a new proto-object has been made for a new class or grammar. It
+finds any WHENCE data that we may need to add.
+
+=cut
+
+.sub '!PROTOINIT'
+    .param pmc proto
+
+    # See if there's any attribute initializers.
+    .local pmc p6meta, WHENCE
+    p6meta = get_hll_global ['PippObject'], '$!P6META'
+    $P0 = p6meta.'get_parrotclass'(proto)
+    WHENCE = getprop '%!WHENCE', $P0
+    if null WHENCE goto no_whence
+
+    setprop proto, '%!WHENCE', WHENCE
+  no_whence:
+    .return (proto)
 .end
 
 
