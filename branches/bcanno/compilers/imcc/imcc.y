@@ -932,7 +932,8 @@ annotate_directive:
         {
           /* We'll want to store an entry while emitting instructions, so just
            * store annotation like it's an instruction. */
-          $$ = MK_I(interp, IMCC_INFO(interp)->cur_unit, ".annotate", 2, $2, $3);
+          $$ = MK_I(interp, IMCC_INFO(interp)->cur_unit, ".annotate", 
+2, $2, $3);
         }
     ;
 
@@ -1567,7 +1568,7 @@ statement:
    | FILECOMMENT               { $$ = 0; }
    | LINECOMMENT               { $$ = 0; }
    | location_directive        { $$ = 0; }
-   | annotate_directive        { $$ = $8; }
+   | annotate_directive        { $$ = $1; }
    ;
 
 labels:
