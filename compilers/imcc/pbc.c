@@ -723,7 +723,12 @@ get_codesize(PARROT_INTERP, ARGIN(const IMC_Unit *unit), ARGOUT(size_t *src_line
         if (ins->type & ITLABEL)
             ins->symregs[0]->color = code_size;
 
-        if (ins->opname && *ins->opname) {
+        if (ins->opname && STREQ(ins->opname, ".annotate")) {
+            /* Annotations contribute nothing to code size, since they do not
+             * end up in bytecode segment. */
+            (*src_lines)++;
+        }
+        else if (ins->opname && *ins->opname) {
             (*src_lines)++;
             if (ins->opnum < 0)
                 IMCC_fatal(interp, 1, "get_codesize: "
@@ -2159,6 +2164,7 @@ e_pbc_emit(PARROT_INTERP, SHIM(void *param), ARGIN(const IMC_Unit *unit),
 
     if (ins->opname && strcmp(ins->opname, ".annotate") == 0) {
         /* It's an annotation. Add annotations seg if we're missing one. */
+        printf("annotation to emit\n");
         if (!interp->code->annotations) {
         }
 
