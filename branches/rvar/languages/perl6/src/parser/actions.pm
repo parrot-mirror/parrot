@@ -1324,6 +1324,9 @@ method package_declarator($/, $key) {
     my $sym := ~$<sym>;
     my $past;
     if $key eq 'open' {
+        our $?BLOCK_OPEN;
+        $?BLOCK_OPEN := PAST::Block.new( PAST::Stmts.new(), :node($/) );
+        $?BLOCK_OPEN<pkgdecl> := $sym;
         @?PKGDECL.unshift( $sym );
     }
     else {
@@ -1460,6 +1463,12 @@ method scope_declarator($/) {
             }
             
             if $scope eq 'attribute' {
+                my $pkgdecl := $block<pkgdecl>;
+                unless $pkgdecl eq 'class' || $pkgdecl eq 'role' 
+                        || $pkgdecl eq 'grammar' {
+                    $/.panic("Attempt to define attribute " ~ $var.name() ~
+                             " outside of class, role, or grammar");
+                }
                 # Attribute declaration.  Add code to the beginning
                 # of the block (really class/grammar/role) to
                 # create the attribute.
