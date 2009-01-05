@@ -2166,6 +2166,13 @@ e_pbc_emit(PARROT_INTERP, SHIM(void *param), ARGIN(const IMC_Unit *unit),
         /* It's an annotation. Add annotations seg if we're missing one. */
         printf("annotation to emit\n");
         if (!interp->code->annotations) {
+            /* Create segment. */
+            interp->code->annotations = PackFile_Segment_new_seg(interp, interp->code->base.dir,
+                    PF_ANNOTATIONS_SEG, "ANNOTATIONS", 1);
+
+            /* Create initial group. */
+            PackFile_Annotations_add_group(interp, interp->code->annotations,
+                    IMCC_INFO(interp)->pc - interp->code->base.data);
         }
 
         /* Add annotation. */
