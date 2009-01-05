@@ -2609,7 +2609,7 @@ pf_debug_dump(PARROT_INTERP, ARGIN(const PackFile_Segment *self))
         Parrot_io_printf(interp, "    #%d\n    [\n", i);
         Parrot_io_printf(interp, "        OFFSET => %d,\n",
                    debug->mappings[i]->offset);
-        Parrot_io__printf(interp, "        FILENAME => %s\n", filename);
+        Parrot_io_printf(interp, "        FILENAME => %s\n", filename);
         string_cstring_free(filename);
         Parrot_io_printf(interp, "    ],\n");
     }
