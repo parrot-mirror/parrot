@@ -16,6 +16,7 @@ Tests for arity based dispatch using the Perl 6 MultiSub PMC.
 
 =cut
 
+.HLL 'perl6'
 .loadlib 'perl6_group'
 
 .sub main :main
