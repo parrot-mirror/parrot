@@ -1,4 +1,4 @@
-# Copyright (C) 2008, The Perl Foundation.
+# Copyright (C) 2008-2009, The Perl Foundation.
 # $Id$
 
 =head1 NAME
@@ -20,7 +20,7 @@ use warnings;
 use FindBin;
 use lib "$FindBin::Bin/../../../../lib", "$FindBin::Bin/../../lib";
 
-use Parrot::Test tests => 8;
+use Parrot::Test tests => 12;
 
 language_output_is( 'Pipp', <<'CODE', <<'OUT', 'definition of a class' );
 <?php
@@ -80,6 +80,7 @@ class Dings {
 
     function bums() {
         echo "The function bums() in class Dings has been called.\n";
+        return '';
     }
 }
 
@@ -219,3 +220,68 @@ three
 four
 OUT
 
+language_output_is( 'Pipp', <<'CODE', <<'OUT', 'class with constructor' );
+<?php
+
+class Foo {
+    function __construct() {
+        echo "method __construct() of class Foo was called.\n";
+    }
+}
+
+$foo = new Foo;
+echo 'Dummy statement, so that $foo is not returned.';
+echo "\n";
+
+?>
+CODE
+method __construct() of class Foo was called.
+Dummy statement, so that $foo is not returned.
+OUT
+
+language_output_is( 'Pipp', <<'CODE', <<'OUT', 'class with constructor, returning a PippObject' );
+<?php
+
+class Foo {
+    function __construct() {
+        echo "method __construct() of class Foo was called.\n";
+    }
+}
+
+$foo = new Foo;
+
+?>
+CODE
+method __construct() of class Foo was called.
+OUT
+
+language_output_is( 'Pipp', <<'CODE', <<'OUT', 'constructor with one arg' );
+<?php
+
+class Foo {
+    function __construct($msg) {
+        echo "The message is $msg.\n";
+    }
+}
+
+$foo = new Foo('what the message is');
+
+?>
+CODE
+The message is what the message is.
+OUT
+
+language_output_is( 'Pipp', <<'CODE', <<'OUT', 'ReflectionClass::getName()' );
+<?php
+
+class Foo {
+}
+
+$refl_1 = new ReflectionClass('Foo');
+echo $refl_1->getName();
+echo "\n";
+
+?>
+CODE
+Foo
+OUT

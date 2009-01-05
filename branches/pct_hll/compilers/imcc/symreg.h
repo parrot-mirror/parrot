@@ -67,6 +67,14 @@ enum USAGE {
 typedef struct _SymReg {
     char                *name;
     char                *subid;
+    Life_range         **life_info;     /* Each block has a Life_range status */
+    struct _SymReg      *nextkey;       /* keys */
+    struct _SymReg      *reg;           /* key->register for VTREGKEYs */
+    struct pcc_sub_t    *pcc_sub;       /* PCC subroutine */
+    struct _SymReg      *used;          /* used register in invoke */
+    struct _SymReg      *next;          /* used in the symbols hash */
+    struct _Instruction *first_ins;     /* first and last instruction */
+    struct _Instruction *last_ins;      /* this symbol is in */
     INTVAL               type;          /* Variable type */
     INTVAL               usage;         /* s. USAGE above */
     int                  set;           /* parent register set/file */
@@ -76,20 +84,11 @@ typedef struct _SymReg {
     int                  offset;        /* used for label fixup */
     int                  use_count;     /* How often this symbol is used */
     int                  lhs_use_count; /* Frequency of writing to this symbol*/
-    Life_range         **life_info;     /* Each block has a Life_range status */
-    struct _SymReg      *next;          /* used in the symbols hash */
-    struct _Instruction *first_ins;     /* first and last instruction */
-    struct _Instruction *last_ins;      /* this symbol is in */
-    /* also used by labels as position of label and last reference */
-    struct _SymReg      *nextkey;       /* keys */
-    struct _SymReg      *reg;           /* key->register for VTREGKEYs */
-    struct pcc_sub_t    *pcc_sub;       /* PCC subroutine */
-    struct _SymReg      *used;          /* used register in invoke */
     int                  pmc_type;      /* class enum */
 } SymReg;
 
 typedef struct _SymHash {
-    SymReg **data;
+    SymReg     **data;
     unsigned int size;
     unsigned int entries;
 } SymHash;
@@ -112,7 +111,6 @@ struct namespace_t {
 EXTERN Namespace * _namespace;
 
 struct _IMC_Unit;
-
 
 /* functions */
 
@@ -335,20 +333,124 @@ PARROT_CANNOT_RETURN_NULL
 char * symreg_to_str(ARGIN(const SymReg *s))
         __attribute__nonnull__(1);
 
+#define ASSERT_ARGS__find_sym __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(hsh) \
+    || PARROT_ASSERT_ARG(name)
+#define ASSERT_ARGS__get_sym __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(hsh) \
+    || PARROT_ASSERT_ARG(name)
+#define ASSERT_ARGS__mk_address __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(hsh) \
+    || PARROT_ASSERT_ARG(name)
+#define ASSERT_ARGS__mk_const __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(hsh) \
+    || PARROT_ASSERT_ARG(name)
+#define ASSERT_ARGS__store_symreg __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(hsh) \
+    || PARROT_ASSERT_ARG(r)
+#define ASSERT_ARGS_add_namespace __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(unit)
+#define ASSERT_ARGS_add_pcc_arg __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(r) \
+    || PARROT_ASSERT_ARG(arg)
+#define ASSERT_ARGS_add_pcc_cc __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(r) \
+    || PARROT_ASSERT_ARG(arg)
+#define ASSERT_ARGS_add_pcc_multi __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(r)
+#define ASSERT_ARGS_add_pcc_result __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(r) \
+    || PARROT_ASSERT_ARG(arg)
+#define ASSERT_ARGS_add_pcc_sub __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(r) \
+    || PARROT_ASSERT_ARG(arg)
+#define ASSERT_ARGS_clear_globals __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp)
+#define ASSERT_ARGS_clear_locals __attribute__unused__ int _ASSERT_ARGS_CHECK = 0
+#define ASSERT_ARGS_clear_sym_hash __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(hsh)
+#define ASSERT_ARGS_create_symhash __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(hash)
+#define ASSERT_ARGS_debug_dump_sym_hash __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(hsh)
+#define ASSERT_ARGS_dup_sym __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(r)
+#define ASSERT_ARGS_find_sym __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(name)
+#define ASSERT_ARGS_free_sym __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(r)
+#define ASSERT_ARGS_get_sym __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(name)
+#define ASSERT_ARGS_hash_str __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(str)
+#define ASSERT_ARGS_link_keys __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(keys)
+#define ASSERT_ARGS_mk_const __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(name)
+#define ASSERT_ARGS_mk_const_ident __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(name) \
+    || PARROT_ASSERT_ARG(val)
+#define ASSERT_ARGS_mk_ident __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(name)
+#define ASSERT_ARGS_mk_ident_ur __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(name)
+#define ASSERT_ARGS_mk_label_address __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(name)
+#define ASSERT_ARGS_mk_local_label __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(name)
+#define ASSERT_ARGS_mk_pasm_reg __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(name)
+#define ASSERT_ARGS_mk_pcc_sub __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(name)
+#define ASSERT_ARGS_mk_sub_address __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(name)
+#define ASSERT_ARGS_mk_sub_label __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(name)
+#define ASSERT_ARGS_mk_symreg __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(name)
+#define ASSERT_ARGS_mk_temp_reg __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp)
+#define ASSERT_ARGS_pop_namespace __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(name)
+#define ASSERT_ARGS_push_namespace __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(name)
+#define ASSERT_ARGS_store_symreg __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(r)
+#define ASSERT_ARGS_symreg_to_str __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(s)
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 /* HEADERIZER END: compilers/imcc/symreg.c */
 
 typedef enum {
     P_NONE           = 0x00,                  /* 0<<0 */
     P_NEED_LEX       = 0x01,                  /* 1<<0 */
-    /* P_XXXX           = 0x02, */                /* 1<<1 */
+    /* P_XXXX        = 0x02, */               /* 1<<1 */
     P_METHOD         = 0x04,                  /* 1<<2 */
-    P_ANON           = SUB_FLAG_PF_ANON,      /* 1<<3 0x8 - private3 */
-    P_MAIN           = SUB_FLAG_PF_MAIN,      /* 1<<4 0x10 - private4 */
-    P_LOAD           = SUB_FLAG_PF_LOAD,      /* 1<<5 0x20 - private5 */
-    P_IMMEDIATE      = SUB_FLAG_PF_IMMEDIATE, /* 1<<6 0x40 - private6 */
-    P_POSTCOMP       = SUB_FLAG_PF_POSTCOMP,  /* 1<<7 0x80 - private7 */
-    P_INIT           = SUB_COMP_FLAG_PF_INIT  /* 1<<10 0x400 - 10 */
+    P_ANON           = SUB_FLAG_PF_ANON,      /* 1<<3 0x8    - private3 */
+    P_MAIN           = SUB_FLAG_PF_MAIN,      /* 1<<4 0x10   - private4 */
+    P_LOAD           = SUB_FLAG_PF_LOAD,      /* 1<<5 0x20   - private5 */
+    P_IMMEDIATE      = SUB_FLAG_PF_IMMEDIATE, /* 1<<6 0x40   - private6 */
+    P_POSTCOMP       = SUB_FLAG_PF_POSTCOMP,  /* 1<<7 0x80   - private7 */
+    P_INIT           = SUB_COMP_FLAG_PF_INIT  /* 1<<10 0x400 - 10       */
 } pragma_enum_t;
 
 typedef enum {
@@ -357,23 +459,22 @@ typedef enum {
 } pcc_flags_t;
 
 typedef struct pcc_sub_t {
-    SymReg ** args;
-    int *arg_flags;    /* :slurpy, :optional, ... */
-    int nargs;
     SymReg *sub;
     SymReg *cc;
-    SymReg ** ret;
-    int *ret_flags;    /* :slurpy, :optional, ... */
-    int nret;
-    SymReg ** multi;
-    int nmulti;
-    INTVAL pragma;
-    int calls_a_sub;
-    int flags;    /* isNCI, isTAIL_CALL */
-    int label;
-    SymReg * object;
+    SymReg **args;
+    SymReg **multi;
+    SymReg **ret;
+    SymReg *object;
+    int    *arg_flags;    /* :slurpy, :optional, ... */
+    int    *ret_flags;    /* :slurpy, :optional, ... */
+    int     nargs;
+    int     nret;
+    int     nmulti;
+    int     calls_a_sub;
+    int     flags;    /* isNCI, isTAIL_CALL */
+    int     label;
+    INTVAL  pragma;
 } pcc_sub_t;
-
 
 enum uniq_t {
     U_add_once,
@@ -390,4 +491,3 @@ enum uniq_t {
  * End:
  * vim: expandtab shiftwidth=4:
  */
-

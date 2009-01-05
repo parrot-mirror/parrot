@@ -281,6 +281,9 @@ pir_output_is( <<"CODE", <<'OUT', 'readline 10,000 lines' );
 #      goto read_loop
 
   end_read_loop:
+    if counter > 1 goto read_something
+      print "not "
+  read_something:
     say 'ok 1 - read 10,000 lines'
     filehandle.'close'()
 .end
