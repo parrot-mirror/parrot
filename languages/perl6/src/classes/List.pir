@@ -10,7 +10,7 @@ src/classes/List.pir - Perl 6 List class and related functions
 .sub '' :anon :load :init
     .local pmc p6meta, listproto
     p6meta = get_hll_global ['Perl6Object'], '$!P6META'
-    listproto = p6meta.'new_class'('List', 'parent'=>'ResizablePMCArray Any')
+    listproto = p6meta.'new_class'('List', 'parent'=>'parrot;ResizablePMCArray Any')
     $P0 = get_hll_global 'Positional'
     p6meta.'add_role'($P0, 'to'=>listproto)
     p6meta.'register'('ResizablePMCArray', 'parent'=>listproto, 'protoobject'=>listproto)
@@ -176,6 +176,8 @@ This version of list morphs a ResizablePMCArray into a List.
 
 =cut
 
+.HLL 'parrot'
+
 .namespace ['ResizablePMCArray']
 .sub 'list' :method
     ##  this code morphs a ResizablePMCArray into a List
@@ -188,6 +190,7 @@ This version of list morphs a ResizablePMCArray into a List.
     .return (self)
 .end
 
+.HLL 'perl6'
 
 =back
 

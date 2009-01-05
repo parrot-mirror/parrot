@@ -441,10 +441,10 @@ resulting ast.
     .tailcall astbuilder.'get'('past')
 
   compile_match:
-    push_eh err_past
+    #push_eh err_past
     .local pmc ast
     ast = source.'item'()
-    pop_eh
+    #pop_eh
     $I0 = isa ast, ['PAST';'Node']
     unless $I0 goto err_past
     .return (ast)

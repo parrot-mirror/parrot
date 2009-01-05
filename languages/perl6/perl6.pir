@@ -26,17 +26,27 @@ Creates the Perl 6 compiler by subclassing a C<PCT::HLLCompiler> object.
 .loadlib 'perl6_ops'
 .include 'src/gen_builtins.pir'
 
-.namespace [ 'Perl6';'Compiler' ]
-
-.sub 'onload' :load :init :anon
+.sub '' :load :init :anon
     load_bytecode 'PCT.pbc'
 
     .local pmc parrotns, hllns, exports
     parrotns = get_root_namespace ['parrot']
     hllns = get_hll_namespace
-    exports = split ' ', 'PGE PAST'
+    exports = split ' ', 'PGE PAST PCT'
     parrotns.'export_to'(hllns, exports)
+.end
 
+.include 'src/gen_grammar.pir'
+.include 'src/parser/expression.pir'
+.include 'src/parser/quote_expression.pir'
+.include 'src/gen_actions.pir'
+.include 'src/gen_metaop.pir'
+.include 'src/gen_junction.pir'
+
+
+.namespace [ 'Perl6';'Compiler' ]
+
+.sub 'onload' :load :init :anon
     .local pmc p6meta, perl6
     p6meta = get_hll_global ['Perl6Object'], '$!P6META'
     perl6 = p6meta.'new_class'('Perl6::Compiler', 'parent'=>'parrot;PCT::HLLCompiler')
@@ -46,7 +56,7 @@ Creates the Perl 6 compiler by subclassing a C<PCT::HLLCompiler> object.
     perl6.'language'('Perl6')
     $P0 = get_hll_namespace ['Perl6';'Grammar']
     perl6.'parsegrammar'($P0)
-    $P0 = get_hll_namespace ['Perl6';'Grammar';'Action']
+    $P0 = get_hll_namespace ['Perl6';'Grammar';'Actions']
     perl6.'parseactions'($P0)
 
     ##  set the compilation stages in the @stages attribute
@@ -214,14 +224,6 @@ to the Perl 6 compiler.
   iter_done:
     .return (list)
 .end
-
-
-.include 'src/gen_grammar.pir'
-.include 'src/parser/expression.pir'
-.include 'src/parser/quote_expression.pir'
-.include 'src/gen_actions.pir'
-.include 'src/gen_metaop.pir'
-.include 'src/gen_junction.pir'
 
 
 =back

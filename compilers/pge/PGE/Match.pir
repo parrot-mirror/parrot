@@ -114,9 +114,10 @@ is set or implied.
     ne $S0, 'String', have_grammar
     $S0 = grammar
     $P0 = split '::', $S0
-  have_grammar:
     grammar_class = get_class $P0
     goto with_grammar
+  have_grammar:
+    grammar_class = grammar
   grammar_namespace:
     grammar_class = get_class grammar
   with_grammar:

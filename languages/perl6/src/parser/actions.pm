@@ -8,6 +8,7 @@ method TOP($/) {
     $past.blocktype('declaration');
     declare_implicit_routine_vars($past);
     $past.lexical(0);
+    $past.hll('perl6');
 
     #  Make sure we have the interpinfo constants.
     $past.unshift( PAST::Op.new( :inline('.include "interpinfo.pasm"') ) );
@@ -16,7 +17,7 @@ method TOP($/) {
     $past.unshift(set_package_magical());
 
     # Create the unit's startup block.
-    my $main := PAST::Block.new( :pirflags(':main') );
+    my $main := PAST::Block.new( :pirflags(':main'), :hll('perl6') );
     $main.loadinit().push(
         PAST::Op.new( :inline('$P0 = compreg "Perl6"',
                               'unless null $P0 goto have_perl6',
