@@ -2692,12 +2692,8 @@ void
 Parrot_debug_add_mapping(PARROT_INTERP, ARGMOD(PackFile_Debug *debug),
                          opcode_t offset, ARGIN(const char *filename))
 {
-<<<<<<< .working
-    PackFile_DebugFilenameMapping *mapping;
-=======
     ASSERT_ARGS(Parrot_debug_add_mapping);
-    PackFile_DebugMapping *mapping;
->>>>>>> .merge-right.r34983
+    PackFile_DebugFilenameMapping *mapping;
     PackFile_ConstTable * const ct = debug->code->const_table;
     int insert_pos = 0;
     PackFile_Constant *fnconst;
@@ -4024,47 +4020,47 @@ void PackFile_Annotations_dump(PARROT_INTERP, struct PackFile_Segment *seg) {
     INTVAL i;
 
     /* Dump keys. */
-    PIO_printf(interp, "\n  keys => [\n");
+    Parrot_io_printf(interp, "\n  keys => [\n");
     for (i = 0; i < self->num_keys; i++) {
         char *key_name = string_to_cstring(interp, PF_CONST(self->code,
                self->keys[i]->name)->u.string);
-        PIO_printf(interp, "    #%d\n    [\n", i);
-        PIO_printf(interp, "        NAME => %s\n", key_name);
-        PIO_printf(interp, "        TYPE => %s\n",
+        Parrot_io_printf(interp, "    #%d\n    [\n", i);
+        Parrot_io_printf(interp, "        NAME => %s\n", key_name);
+        Parrot_io_printf(interp, "        TYPE => %s\n",
                 self->keys[i]->type == PF_ANNOTATION_KEY_TYPE_INT ? "integer" :
                 self->keys[i]->type == PF_ANNOTATION_KEY_TYPE_STR ? "string" :
                 self->keys[i]->type == PF_ANNOTATION_KEY_TYPE_NUM ? "number" :
                 "PMC");
-        PIO_printf(interp, "    ],\n");
+        Parrot_io_printf(interp, "    ],\n");
         string_cstring_free(key_name);
     }
-    PIO_printf(interp, "  ],\n");
+    Parrot_io_printf(interp, "  ],\n");
 
     /* Dump groups. */
-    PIO_printf(interp, "\n  groups => [\n");
+    Parrot_io_printf(interp, "\n  groups => [\n");
     for (i = 0; i < self->num_groups; i++) {
-        PIO_printf(interp, "    #%d\n    [\n", i);
-        PIO_printf(interp, "        BYTECODE_OFFSET => %d\n",
+        Parrot_io_printf(interp, "    #%d\n    [\n", i);
+        Parrot_io_printf(interp, "        BYTECODE_OFFSET => %d\n",
                 self->groups[i]->bytecode_offset);
-        PIO_printf(interp, "        ENTRIES_OFFSET => %d\n",
+        Parrot_io_printf(interp, "        ENTRIES_OFFSET => %d\n",
                 self->groups[i]->entries_offset);
-        PIO_printf(interp, "    ],\n");
+        Parrot_io_printf(interp, "    ],\n");
     }
-    PIO_printf(interp, "  ],\n");
+    Parrot_io_printf(interp, "  ],\n");
 
     /* Dump entries. */
-    PIO_printf(interp, "\n  entries => [\n");
+    Parrot_io_printf(interp, "\n  entries => [\n");
     for (i = 0; i < self->num_entries; i++) {
-        PIO_printf(interp, "    #%d\n    [\n", i);
-        PIO_printf(interp, "        BYTECODE_OFFSET => %d\n",
+        Parrot_io_printf(interp, "    #%d\n    [\n", i);
+        Parrot_io_printf(interp, "        BYTECODE_OFFSET => %d\n",
                 self->entries[i]->bytecode_offset);
-        PIO_printf(interp, "        KEY => %d\n",
+        Parrot_io_printf(interp, "        KEY => %d\n",
                 self->entries[i]->key);
-        PIO_printf(interp, "        VALUE => %d\n",
+        Parrot_io_printf(interp, "        VALUE => %d\n",
                 self->entries[i]->value);
-        PIO_printf(interp, "    ],\n");
+        Parrot_io_printf(interp, "    ],\n");
     }
-    PIO_printf(interp, "  ],\n");
+    Parrot_io_printf(interp, "  ],\n");
 }
 
 
