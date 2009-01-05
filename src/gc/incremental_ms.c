@@ -693,21 +693,20 @@ gc_it_mark_PObj_children_grey(PARROT_INTERP, ARGMOD(Gc_it_hdr *hdr))
     PARROT_ASSERT(hdr);
     PARROT_ASSERT(obj);
 
-    if (PObj_is_PMC_TEST(obj)) {
-        if (pmc->pmc_ext) {
-            const PMC * next_for_gc = PMC_next_for_GC(pmc);
-            if (PMC_metadata(pmc))
-                pobject_lives(interp, (PObj *)PMC_metadata(pmc));
-            if (next_for_gc != pmc && next_for_gc != NULL)
-                pobject_lives(interp, (PObj *)PMC_next_for_GC(pmc));
-        }
+    if (!PObj_is_PMC_TEST(obj)) return;
+    if (pmc->pmc_ext) {
+        PMC * const next_for_gc = PMC_next_for_GC(pmc);
+        if (PMC_metadata(pmc))
+            pobject_lives(interp, (PObj *)PMC_metadata(pmc));
 
-        if (pmc->real_self != pmc && pmc->real_self != NULL)
-            pobject_lives(interp, (PObj *)(pmc->real_self));
+        /* I don't use next_for_gc, but some other places still do */
+        if (next_for_gc != pmc && next_for_gc != NULL)
+            pobject_lives(interp, (PObj *)PMC_next_for_GC(pmc));
     }
-    else if (PObj_is_string_TEST(obj)) {
-        return;
-    }
+
+    if (pmc->real_self != pmc && pmc->real_self != NULL)
+        pobject_lives(interp, (PObj *)(pmc->real_self));
+
 
     /* if the PMC is an array of other PMCs, we cycle through those. I'm
        surprised if this isn't covered by VTABLE_mark, but I won't question it
@@ -718,8 +717,10 @@ gc_it_mark_PObj_children_grey(PARROT_INTERP, ARGMOD(Gc_it_hdr *hdr))
     /* if it's a PMC with a custom mark routine, call that here. The
        custom mark routine will call pobject_lives on the children,
        which will add them to the queue properly. */
-    if (PObj_custom_mark_TEST(obj))
+    if (PObj_custom_mark_TEST(obj)) {
+        PObj_get_FLAGS(obj) |= PObj_custom_GC_FLAG;
         VTABLE_mark(interp, pmc);
+    }
 
     /* If the item is shared, we need to do some magic trickery with it. I
        don't know if I'm going to do said trickery here, or offload it to a
