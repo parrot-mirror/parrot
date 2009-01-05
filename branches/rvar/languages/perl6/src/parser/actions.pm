@@ -521,7 +521,7 @@ method multi_declarator($/) {
         if $sym eq 'multi' || $sym eq 'proto' {
             my $pirflags := ~$past.pirflags();
             $past.pirflags( $pirflags ~ ' :multi()' );
-            $past.loadinit().push( 
+            $past.loadinit().push(
                 PAST::Op.new( :name('!TOPERL6MULTISUB'), :pasttype('call'),
                     PAST::Var.new( :name('block'), :scope('register') )
                 )
@@ -816,7 +816,7 @@ method routine_declarator($/, $key) {
     }
     elsif $key eq 'method' {
         $past := $($<method_def>);
-    }   
+    }
     elsif $key eq 'submethod' {
         $/.panic('submethod declarations not yet implemented');
     }
@@ -897,7 +897,7 @@ method trait_verb($/) {
     else { $value := $( $<typename> ); }
     make PAST::Op.new( :name('infix:,'), 'trait_verb:' ~ $sym, $value );
 }
-    
+
 
 method signature($/, $key) {
     our @?BLOCK;
@@ -916,7 +916,7 @@ method signature($/, $key) {
         ##  create a Signature object and attach to the block
         $loadinit.push(
             PAST::Op.new( :inline('    %0 = new "Signature"',
-                                  '    setprop block, "$!signature", %0'), 
+                                  '    setprop block, "$!signature", %0'),
                            $sigobj)
         );
 
@@ -936,7 +936,7 @@ method signature($/, $key) {
             }
 
             ##  add parameter to the signature object
-            my $sigparam := PAST::Op.new( :pasttype('callmethod'), 
+            my $sigparam := PAST::Op.new( :pasttype('callmethod'),
                                 :name('!add_param'), $sigobj, $name );
 
             ##  add any typechecks
@@ -1020,13 +1020,13 @@ method parameter($/) {
     my $typelist := PAST::Op.new( :name('and'), :pasttype('call') );
     $var<type> := $typelist;
     if $<type_constraint> {
-        for @($<type_constraint>) { 
+        for @($<type_constraint>) {
             my $type_past := $( $_ );
             if substr( $_.text() , 0, 2 ) eq '::' {
                 # it's a type binding
                 $type_past.scope('lexical');
                 $type_past.isdecl(1);
-                $type_past.viviself( 
+                $type_past.viviself(
                     PAST::Op.new( :pasttype('callmethod'), :name('WHAT'),
                         PAST::Var.new( :name($var.name()) )
                     )
@@ -1348,8 +1348,8 @@ method package_def($/, $key) {
     $block.blocktype('declaration');
     $block.lexical(0);
 
-    my $modulename := $<module_name> 
-                         ?? ~$<module_name>[0] !! 
+    my $modulename := $<module_name>
+                         ?? ~$<module_name>[0] !!
                          $block.unique('!ANON');
     if ($modulename) {
         $block.namespace( PAST::Compiler.parse_name( $modulename ) );
@@ -1392,12 +1392,12 @@ method package_def($/, $key) {
         }
     }
 
-    #  At the beginning, create the "class/module/grammar/role/etc" 
+    #  At the beginning, create the "class/module/grammar/role/etc"
     #  metaclass handle on which we do the other operations.
-    $init.unshift( 
+    $init.unshift(
         PAST::Op.new( :pasttype('bind'),
             PAST::Var.new(:name('metaclass'), :scope('register'), :isdecl(1) ),
-            PAST::Op.new(:name('!meta_create'), 
+            PAST::Op.new(:name('!meta_create'),
                 $?PKGDECL, $modulename, +$block<isalso>
             )
         )
@@ -1420,92 +1420,104 @@ method scope_declarator($/) {
     if    $sym eq 'our' { $scope := 'package'; }
     elsif $sym eq 'has' { $scope := 'attribute'; }
 
+    #  Private methods get a leading !.
+    if $scope eq 'lexical' && $past.isa(PAST::Block)
+        && $past.blocktype() eq 'method' {
+            $past.name( '!' ~ $past.name());
+    }
+
+    #  If we have a single variable, we temporarily pack it into
+    #  a PAST::Op node (like a signature of one variable) and
+    #  let the PAST::Op code below handle it.  It then gets
+    #  unpacked at the end.
     if $past.isa(PAST::Var) {
         $past := PAST::Op.new( $past );
     }
 
-    my $i := 0;
-    for @($past) {
-        if $_.isa(PAST::Var) {
-            my $var := $_;
+    if $past.isa(PAST::Op) {
+        my $i := 0;
+        for @($past) {
+            if $_.isa(PAST::Var) {
+                my $var := $_;
 
-            # This is a variable declaration, so we set the scope in
-            # the block's symbol table as well as the variable itself.
-            $block.symbol( $var.name(), :scope($scope) );
-            $var.scope($scope);
-            $var.isdecl(1);
-            if $scope eq 'package' { $var.lvalue(1); }
-            my $init_value := $var.viviself(); 
-            my $type;
-            if +@($var<type>) { $type := $var<type>[0]; }  # FIXME
+                # This is a variable declaration, so we set the scope in
+                # the block's symbol table as well as the variable itself.
+                $block.symbol( $var.name(), :scope($scope) );
+                $var.scope($scope);
+                $var.isdecl(1);
+                if $scope eq 'package' { $var.lvalue(1); }
+                my $init_value := $var.viviself();
+                my $type;
+                if +@($var<type>) { $type := $var<type>[0]; }  # FIXME
 
-            # If the var has a '.' twigil, we need to create an
-            # accessor method for it in the block (class/grammar/role)
-            if $var<twigil> eq '.' {
-                my $method := PAST::Block.new( :blocktype('method') );
-                $method.name( substr($var.name(), 2) );
-                my $value := PAST::Var.new( :name($var.name()) );
-                my $readtype := trait_readtype( $var<traitlist> ) || 'readonly';
-                if $readtype eq 'CONFLICT' {
-                    $<scoped>.panic(
-                        "Can use only one of readonly, rw, and copy on "
-                        ~ $var.name() ~ " parameter"
-                    );
+                # If the var has a '.' twigil, we need to create an
+                # accessor method for it in the block (class/grammar/role)
+                if $var<twigil> eq '.' {
+                    my $method := PAST::Block.new( :blocktype('method') );
+                    $method.name( substr($var.name(), 2) );
+                    my $value := PAST::Var.new( :name($var.name()) );
+                    my $readtype := trait_readtype( $var<traitlist> ) || 'readonly';
+                    if $readtype eq 'CONFLICT' {
+                        $<scoped>.panic(
+                            "Can use only one of readonly, rw, and copy on "
+                            ~ $var.name() ~ " parameter"
+                        );
+                    }
+                    elsif $readtype ne 'rw' {
+                        $value := PAST::Op.new( :pirop('new PsP'),
+                                      'ObjectRef', $value);
+                        $value := PAST::Op.new( :pirop('setprop'),
+                                      $value, 'readonly', 1);
+                    }
+                    $method.push( $value );
+                    $block[0].push($method);
                 }
-                elsif $readtype ne 'rw' {
-                    $value := PAST::Op.new( :pirop('new PsP'), 
-                                  'ObjectRef', $value);
-                    $value := PAST::Op.new( :pirop('setprop'),
-                                  $value, 'readonly', 1);
+
+                if $scope eq 'attribute' {
+                    my $pkgdecl := $block<pkgdecl>;
+                    unless $pkgdecl eq 'class' || $pkgdecl eq 'role'
+                            || $pkgdecl eq 'grammar' {
+                        $/.panic("Attempt to define attribute " ~ $var.name() ~
+                                 " outside of class, role, or grammar");
+                    }
+                    # Attribute declaration.  Add code to the beginning
+                    # of the block (really class/grammar/role) to
+                    # create the attribute.
+                    our $?METACLASS;
+                    my $has := PAST::Op.new( :name('!meta_attribute'),
+                                   $?METACLASS, $var.name(), $var<itype> );
+                    if $type { $type.named('type'); $has.push($type); }
+                    if $init_value {
+                        $init_value.named('init_value');
+                        $has.push($init_value);
+                    }
+                    if $var<traitlist> {
+                        $var<traitlist>.named('traitlist');
+                        $has.push($var<traitlist>);
+                    }
+                    $block[0].push( $has );
                 }
-                $method.push( $value );
-                $block[0].push($method);
+                else {
+                    # $scope eq 'package' | 'lexical'
+                    my $viviself := PAST::Op.new( :pirop('new PsP'), $var<itype> );
+                    if $init_value { $viviself.push( $init_value ); }
+                    $var.viviself( $viviself );
+                    if $type {
+                        $var := PAST::Op.new( :pirop('setprop'),
+                                              $var, 'type', $type );
+                    }
+                }
+                $past[$i] := $var;
             }
-            
-            if $scope eq 'attribute' {
-                my $pkgdecl := $block<pkgdecl>;
-                unless $pkgdecl eq 'class' || $pkgdecl eq 'role' 
-                        || $pkgdecl eq 'grammar' {
-                    $/.panic("Attempt to define attribute " ~ $var.name() ~
-                             " outside of class, role, or grammar");
-                }
-                # Attribute declaration.  Add code to the beginning
-                # of the block (really class/grammar/role) to
-                # create the attribute.
-                our $?METACLASS;
-                my $has := PAST::Op.new( :name('!meta_attribute'), 
-                               $?METACLASS, $var.name(), $var<itype> );
-                if $type { $type.named('type'); $has.push($type); }
-                if $init_value { 
-                    $init_value.named('init_value');
-                    $has.push($init_value);
-                }
-                if $var<traitlist> {
-                    $var<traitlist>.named('traitlist');
-                    $has.push($var<traitlist>);
-                }
-                $block[0].push( $has );
-            }
-            else { 
-                # $scope eq 'package' | 'lexical'
-                my $viviself := PAST::Op.new( :pirop('new PsP'), $var<itype> );
-                if $init_value { $viviself.push( $init_value ); }
-                $var.viviself( $viviself );
-                if $type { 
-                    $var := PAST::Op.new( :pirop('setprop'), 
-                                          $var, 'type', $type );
-                }
-            }
-            $past[$i] := $var;
+            $i++;
         }
-        $i++;
+        if $scope eq 'attribute' {
+            $past.pasttype('null');
+            $past<scopedecl> := $scope;
+        }
+        elsif +@($past) == 1 { $past := $past[0]; }
+        else { $past.name('infix:,'); $past.pasttype('call'); }
     }
-    if $scope eq 'attribute' { 
-        $past.pasttype('null'); 
-        $past<scopedecl> := $scope; 
-    }
-    elsif +@($past) == 1 { $past := $past[0]; }
-    else { $past.name('infix:,'); $past.pasttype('call'); }
     make $past;
 }
 
@@ -1559,7 +1571,7 @@ method variable_declarator($/) {
     if $symbol<scope> eq 'lexical' {
         $/.panic("Redeclaration of variable " ~ $name);
     }
-    
+
     $var.isdecl(1);
     $var<type>  := PAST::Op.new( :name('and'), :pasttype('call') );
     $var<itype> := container_itype($<variable><sigil>);
@@ -1589,7 +1601,7 @@ method variable($/, $key) {
         # it's really a private attribute and implies a '!' twigil
         if !$twigil {
             my $sym := outer_symbol($varname);
-            if $sym && $sym<scope> eq 'attribute' { 
+            if $sym && $sym<scope> eq 'attribute' {
                 $twigil  := '!';
                 $varname := $sigil ~ $twigil ~ $name;
             };
@@ -1632,7 +1644,7 @@ method variable($/, $key) {
         if $varname eq '@_' || $varname eq '%_' {
             unless $?BLOCK.symbol($varname) {
                 $?BLOCK.symbol( $varname, :scope('lexical') );
-                my $param := PAST::Var.new( :name($varname), 
+                my $param := PAST::Var.new( :name($varname),
                                             :scope('parameter'),
                                             :slurpy(1) );
                 if $sigil eq '%' { $param.named(1); }
@@ -1653,7 +1665,7 @@ method variable($/, $key) {
         }
 
         # ...but return . twigil as a method call, saving the
-        # PAST::Var node in $var<vardecl> where it can be easily 
+        # PAST::Var node in $var<vardecl> where it can be easily
         # retrieved by <variable_declarator> if we're called from there.
         if $twigil eq '.' {
             my $vardecl := $var;
