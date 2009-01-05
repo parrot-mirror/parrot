@@ -380,12 +380,17 @@ is composed (see C<!meta_compose> below).
     .param string name
     .param int also
 
+    .local pmc nsarray, ns
+    $P0 = compreg 'Perl6'
+    nsarray = $P0.'parse_name'(name)
+    ns = get_hll_namespace nsarray
+
     .local pmc metaclass
     if also goto is_also
-    metaclass = newclass name
+    metaclass = newclass ns
     .return (metaclass)
   is_also:
-    metaclass = get_class name
+    metaclass = get_class ns
     .return (metaclass)
 .end 
 
