@@ -128,7 +128,7 @@ Accessor for the C<parsegrammar> attribute.
 
 Accessor for the C<parseactions> attribute.
 
-=item astgrammar([string grammar])
+=item astgrammar([grammar])
 
 Accessor for the C<astgrammar> attribute.
 
@@ -164,7 +164,7 @@ the compiler is ready for code to be compiled and executed.
 .end
 
 .sub 'astgrammar' :method
-    .param string value        :optional
+    .param pmc value        :optional
     .param int has_value       :opt_flag
     .tailcall self.'attr'('$astgrammar', value, has_value)
 .end
@@ -428,8 +428,10 @@ resulting ast.
     .param pmc adverbs         :slurpy :named
 
   compile_astgrammar:
-    .local string astgrammar_name
+    .local pmc astgrammar_name
     astgrammar_name = self.'astgrammar'()
+    $S0 = typeof astgrammar_name
+    eq $S0, 'NameSpace', astgrammar_ns
     unless astgrammar_name goto compile_match
 
     .local pmc astgrammar_namelist
@@ -437,6 +439,11 @@ resulting ast.
     astgrammar_namelist = self.'parse_name'(astgrammar_name)
     unless astgrammar_namelist goto err_past
     astgrammar = new astgrammar_namelist
+    astbuilder = astgrammar.'apply'(source)
+    .tailcall astbuilder.'get'('past')
+  astgrammar_ns:
+    $P0 = get_class astgrammar_name
+    astgrammar = new $P0
     astbuilder = astgrammar.'apply'(source)
     .tailcall astbuilder.'get'('past')
 
