@@ -19,10 +19,12 @@ class APL::Grammar::Actions;
 
 method TOP($/) {
     my $catchpir := "    get_results '0', $P0\n    $S0 = $P0\n    print $S0\n    exit 1\n";
-    my $past := PAST::Op.new( $( $<statement_list> ),
+    my $past := PAST::Block.new(
+                    PAST::Op.new( $( $<statement_list> ),
                               PAST::Op.new( :inline( $catchpir) ),
                               :pasttype('try'),
-                              :node($/) );
+                              :node($/) ),
+                        :hll('apl') );
     make $past;
 }
 
