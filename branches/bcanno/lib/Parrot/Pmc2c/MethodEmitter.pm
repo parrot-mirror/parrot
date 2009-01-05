@@ -1,4 +1,4 @@
-# Copyright (C) 2004-2007, The Perl Foundation.
+# Copyright (C) 2004-2008, The Perl Foundation.
 
 # $Id$
 
@@ -23,10 +23,8 @@ C<Parrot::Pmc2c> is used by F<tools/build/pmc2c.pl> to generate C code from PMC 
 package Parrot::Pmc2c::Method;
 use strict;
 use warnings;
-use Parrot::Pmc2c::Emitter;
-use Parrot::Pmc2c::UtilFunctions
-    qw( gen_ret dont_edit count_newlines dynext_load_code c_code_coda );
-use Parrot::Pmc2c::PCCMETHOD;
+use Parrot::Pmc2c::Emitter ();
+use Parrot::Pmc2c::PCCMETHOD ();
 
 =item C<generate_body($pmc)>
 
@@ -49,7 +47,7 @@ sub generate_body {
         $self->rewrite_nci_method($pmc);
     }
 
-    $emit->( ( $pmc->is_dynamic ? 'PARROT_DYNEXT_EXPORT ' : 'PARROT_EXPORT ') . $self->decl( $pmc, 'CFILE' ) );
+    $emit->( $pmc->export . ' ' . $self->decl( $pmc, 'CFILE' ) );
     $emit->("{\n");
     $emit->($body);
     $emit->("}\n");
@@ -65,9 +63,8 @@ sub generate_body {
 
 sub generate_headers {
     my ( $self, $pmc ) = @_;
-    my $hout = "";
 
-    $hout .= $self->decl( $pmc, 'HEADER' );
+    my $hout = $self->decl( $pmc, 'HEADER' );
 
     if ( $self->mmds ) {
         for my $mmd ( @{ $self->mmds } ) {
@@ -92,8 +89,7 @@ sub decl {
     my $ret     = $self->return_type;
     my $meth    = $self->name;
     my $args    = $self->parameters;
-    my $ro      = $pmc->flag('is_ro') ? '' : '';
-    my $decs    = $self->decorators;
+    my $decs    = join( $/, @{$self->decorators}, '' );
 
     # convert 'type*' to 'type *' per PDD07
     $ret =~ s/^(.*)\s*(\*)$/$1 $2/;
@@ -102,26 +98,22 @@ sub decl {
     $args = ", $args" if $args =~ /\S/;
     $args =~ s/(\w+)\s*(\*)\s*/$1 $2/g;
 
-    my ( $decorators, $export, $extern, $newl, $semi, $interp, $pmcvar );
-    $decorators = join($/, @$decs, '');
+    my ( $export, $extern, $newl, $semi );
     if ( $for_header eq 'HEADER' ) {
-        $export = $pmc->is_dynamic ? 'PARROT_DYNEXT_EXPORT ' : 'PARROT_EXPORT ';
-        $extern = "";
-        $newl   = " ";
-        $semi   = ";";
-        $interp = $pmcvar = "";
+        $export = $pmc->export;
+        $newl   = ' ';
+        $semi   = ';';
     }
     else {
-        $export = "";
-        $extern = "";
+        $export = '';
         $newl   = "\n";
-        $semi   = "";
-        $interp = 'interp';
-        $pmcvar = 'pmc';
+        $semi   = '';
     }
+    my $pmcarg = 'PMC *pmc';
+    $pmcarg    = "SHIM($pmcarg)" if $self->pmc_unused;
 
     return <<"EOC";
-$decorators$export$extern$ret${newl}Parrot_${pmcname}${ro}_$meth(PARROT_INTERP, PMC *$pmcvar$args)$semi
+$decs$export $ret${newl}Parrot_${pmcname}_$meth(PARROT_INTERP, $pmcarg$args)$semi
 EOC
 }
 
@@ -133,32 +125,32 @@ Determines the prototype (argument signature) for a method body
 =cut
 
 my %calltype = (
-    "char"     => "c",
-    "short"    => "s",
-    "char"     => "c",
-    "short"    => "s",
-    "int"      => "i",
-    "INTVAL"   => "I",
-    "float"    => "f",
-    "FLOATVAL" => "N",
-    "double"   => "d",
-    "STRING*"  => "S",
-    "STRING *" => "S",
-    "char*"    => "t",
-    "char *"   => "t",
-    "PMC*"     => "P",
-    "PMC *"    => "P",
-    "short*"   => "2",
-    "short *"  => "2",
-    "int*"     => "3",
-    "int *"    => "3",
-    "long*"    => "4",
-    "long *"   => "4",
-    "void"     => "v",
-    "void*"    => "b",
-    "void *"   => "b",
-    "void**"   => "B",
-    "void **"  => "B",
+    'char'     => 'c',
+    'short'    => 's',
+    'char'     => 'c',
+    'short'    => 's',
+    'int'      => 'i',
+    'INTVAL'   => 'I',
+    'float'    => 'f',
+    'FLOATVAL' => 'N',
+    'double'   => 'd',
+    'STRING*'  => 'S',
+    'STRING *' => 'S',
+    'char*'    => 't',
+    'char *'   => 't',
+    'PMC*'     => 'P',
+    'PMC *'    => 'P',
+    'short*'   => '2',
+    'short *'  => '2',
+    'int*'     => '3',
+    'int *'    => '3',
+    'long*'    => '4',
+    'long *'   => '4',
+    'void'     => 'v',
+    'void*'    => 'b',
+    'void *'   => 'b',
+    'void**'   => 'B',
+    'void **'  => 'B',
 
     #"BIGNUM*" => "???" # RT#43731
     #"BIGNUM *"=> "???" # RT#43731

@@ -41,26 +41,12 @@
 #include "imc.h"
 #include "parser.h"
 
-#define MAX_PARAM 16
-
 typedef struct yyguts_t       yyguts_t;
 typedef struct parser_state_t parser_state_t;
 
-typedef struct params_t {
-    char *name[MAX_PARAM];
-    int   num_param;
-} params_t;
-
-typedef struct macro_t {
-    char    *expansion;
-    int      line;
-    params_t params;
-} macro_t;
-
 /* parser state structure
  * the first few items are common to struct parser_state, but
- * we AFAIK need this hack as flex doesn't export YY_BUFFER_STATE
- */
+ * we AFAIK need this hack as flex doesn't export YY_BUFFER_STATE */
 typedef struct macro_frame_t {
     struct parser_state_t s;
 
@@ -238,13 +224,6 @@ SP              [ ]
         }
     }
 
-
-<*>^"#line"{SP}{DIGITS}{SP}["] {
-        yy_push_state(cmt2, yyscanner);
-        IMCC_INFO(interp)->line = atoi(yytext+6);
-        return LINECOMMENT;
-    }
-
 <cmt2>[^"]+ {
         yy_pop_state(yyscanner);
         yy_push_state(cmt3, yyscanner);
@@ -322,9 +301,9 @@ SP              [ ]
 <pod>{EOL}      { IMCC_INFO(interp)->line++; }
 
 <*>".line"               return TK_LINE;
+<*>".file"               return TK_FILE;
 <INITIAL,emit>".annotate" return ANNOTATE;
 <INITIAL,emit>".lex"     return LEXICAL;
-".arg"                   return ARG;
 ".set_arg"               return ARG;
 ".sub"                   return SUB;
 ".end"                   return ESUB;
@@ -351,14 +330,17 @@ SP              [ ]
 <emit,INITIAL>":outer"     return OUTER;
 <emit,INITIAL>":lex"       return NEED_LEX;
 <emit,INITIAL>":vtable"    return VTABLE_METHOD;
+<emit,INITIAL>":nsentry"   return NS_ENTRY;
 ":unique_reg"              return UNIQUE_REG;
 ":instanceof"              return SUB_INSTANCE_OF;
-":subid"                   return SUB_LEXID;
+":subid"                   return SUBID;
 
-".result"                  return RESULT;
+".get_result"                  return RESULT;
 ".get_results"             return GET_RESULTS;
 ".yield"                   return YIELDT;
+".set_yield"               return SET_YIELD;
 ".return"                  return RETURN;
+".set_return"              return SET_RETURN;
 ".tailcall"                return TAILCALL;
 <emit,INITIAL>".loadlib"   return LOADLIB;
 
@@ -373,7 +355,7 @@ SP              [ ]
 <emit,INITIAL>".namespace"    return NAMESPACE;
 <emit,INITIAL>".HLL"          return HLL;
 <emit,INITIAL>".HLL_map"      return HLL_MAP;
-".endnamespace"               return ENDNAMESPACE;
+
 ".local"                      return LOCAL;
 <emit,INITIAL>".const"        return CONST;
 ".globalconst"                return GLOBAL_CONST;
@@ -385,7 +367,6 @@ SP              [ ]
 "int"                         return INTV;
 "num"                         return FLOATV;
 "new"                         return NEW;
-"global"                      return GLOBALOP;
 "pmc"                         return PMCV;
 "string"                      return STRINGV;
 "<<"                          return SHIFT_LEFT;
@@ -404,7 +385,7 @@ SP              [ ]
 
 {WS}+"."{WS}+          return CONCAT;
 "."                    return DOT;
-<emit,INITIAL>".."     return DOTDOT;
+
 "+="                   return PLUS_ASSIGN;
 "-="                   return MINUS_ASSIGN;
 "*="                   return MUL_ASSIGN;
@@ -854,6 +835,13 @@ yylex_skip(YYSTYPE *valp, PARROT_INTERP, const char *skip, void *yyscanner)
         while (*p && c != *p)
             p++;
 
+        /* leave loop early if it gets found */
+        if (*p == '\0')
+            break;
+
+        /* free any str_dup()ed strings */
+        if (yytext)
+            mem_sys_free(valp->s);
     } while (*p != '\0');
 
     if (c)
@@ -911,11 +899,6 @@ read_params(YYSTYPE *valp, PARROT_INTERP, params_t *params,
     int      c        = yylex_skip(&val, interp, " \n", yyscanner);
 
     params->num_param = 0;
-
-    /* See http://rt.perl.org/rt3/Ticket/Display.html?id=50920 for the saga of this bug. */
-    /* For some reason, we have to use a dupe of the macro name to pass in to */
-    /* read_params, or we get a segfault. XXX Make it stop. */
-    macro_name = str_dup(macro_name);
 
     while (c != ')') {
         if (YYSTATE == heredoc2)
@@ -1007,37 +990,42 @@ read_macro(YYSTYPE *valp, PARROT_INTERP, void *yyscanner)
     }
 
     while (c != ENDM) {
-        int elem_len;
+        char *old_s = valp->s;
+        int   elem_len;
 
-        if (c <= 0)
+        if (c <= 0) {
+            mem_sys_free(valp->s);
             IMCC_fataly(interp, EXCEPTION_SYNTAX_ERROR,
                         "File ended before macro '%s' was complete",
                         IMCC_INFO(interp)->cur_macro_name);
+        }
 
-        PARROT_ASSERT(valp->s);
-        elem_len = strlen(valp->s);
+        if (valp->s) {
+            elem_len = strlen(valp->s);
 
-        if (buffer_used) {
-            if (buffer_used + elem_len > buffer_size) {
-                buffer_size += elem_len;
-                buffer_size <<= 1;
+            if (buffer_used) {
+                if (buffer_used + elem_len > buffer_size) {
+                    buffer_size += elem_len;
+                    buffer_size <<= 1;
+
+                    IMCC_INFO(interp)->macro_buffer =
+                        (char *)mem_sys_realloc(IMCC_INFO(interp)->macro_buffer,
+                            buffer_size);
+                }
+            }
+            else {
+                buffer_size = (elem_len << 1) > 1024 ? elem_len << 1 : 1024;
 
                 IMCC_INFO(interp)->macro_buffer =
-                    (char *)mem_sys_realloc(IMCC_INFO(interp)->macro_buffer,
-                        buffer_size);
+                    (char *)mem_sys_allocate_zeroed(buffer_size);
             }
-        }
-        else {
-            buffer_size = (elem_len << 1) > 1024 ? elem_len << 1 : 1024;
 
-            IMCC_INFO(interp)->macro_buffer =
-                (char *)mem_sys_allocate_zeroed(buffer_size);
-        }
-        strcat(IMCC_INFO(interp)->macro_buffer, valp->s);
-        buffer_used += elem_len;
-        mem_sys_free(valp->s);
-        valp->s = NULL;
+            strcat(IMCC_INFO(interp)->macro_buffer, valp->s);
+            buffer_used += elem_len;
 
+            mem_sys_free(valp->s);
+            valp->s = NULL;
+        }
         c = yylex(valp, yyscanner, interp);
     }
 
@@ -1050,7 +1038,7 @@ read_macro(YYSTYPE *valp, PARROT_INTERP, void *yyscanner)
                  &params, IMCC_INFO(interp)->macro_buffer, start_line);
 
     mem_sys_free(IMCC_INFO(interp)->macro_buffer);
-    IMCC_INFO(interp)->macro_buffer = NULL;
+    IMCC_INFO(interp)->macro_buffer   = NULL;
     IMCC_INFO(interp)->cur_macro_name = NULL;
 
     return MACRO;
@@ -1078,6 +1066,8 @@ static void
 define_macro(PARROT_INTERP, ARGIN(const char *name), ARGIN(const params_t *params),
              ARGIN(const char *expansion), int start_line)
 {
+    DECL_CONST_CAST;
+
     macro_t *m = find_macro(interp, name);
 
     if (m) {
@@ -1089,7 +1079,8 @@ define_macro(PARROT_INTERP, ARGIN(const char *name), ARGIN(const params_t *param
 
         if (!IMCC_INFO(interp)->macros)
             parrot_new_cstring_hash(interp, &IMCC_INFO(interp)->macros);
-        parrot_hash_put(interp, IMCC_INFO(interp)->macros, str_dup(name), m);
+        parrot_hash_put(interp, IMCC_INFO(interp)->macros,
+            PARROT_const_cast(char *, name), m);
     }
 
     if (params)

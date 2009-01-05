@@ -47,7 +47,7 @@ L<http://www.lua.org/manual/5.1/manual.html#5.6>.
 
 =cut
 
-.HLL 'Lua'
+.HLL 'lua'
 .loadlib 'lua_group'
 .namespace [ 'math' ]
 
@@ -256,8 +256,7 @@ LIST
     .param pmc extra :slurpy
     .local pmc res
     lua_checknumber(1, x)
-    new $P0, 'Lua'
-    res = $P0.'frexp'(x)
+    res = x.'frexp'()
     .return (res :flat)
 .end
 
@@ -269,8 +268,7 @@ LIST
     .local pmc res
     lua_checknumber(1, x)
     lua_checknumber(2, nexp)
-    new $P0, 'Lua'
-    res = $P0.'ldexp'(x, nexp)
+    res = x.'ldexp'(nexp)
     .return (res)
 .end
 
@@ -356,8 +354,7 @@ LIST
     .param pmc extra :slurpy
     .local pmc res
     lua_checknumber(1, x)
-    new $P0, 'Lua'
-    res = $P0.'modf'(x)
+    res = x.'modf'()
     .return (res :flat)
 .end
 
@@ -475,13 +472,6 @@ LIST
     set res, $N0
     .return (res)
 .end
-
-
-=head1 AUTHORS
-
-Francois Perrad.
-
-=cut
 
 
 # Local Variables:

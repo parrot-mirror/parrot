@@ -29,7 +29,7 @@ pmclass LuaString
     provides string
     dynpmc
     group    lua_group
-    hll      Lua
+    hll      lua
     maps     String {
 
 /*
@@ -1087,12 +1087,6 @@ Throws an exception unless C<value> is a LuaString.
 /*
 
 =back
-
-=head1 AUTHORS
-
-Francois Perrad.
-
-Klaas-Jan Stol.
 
 =cut
 

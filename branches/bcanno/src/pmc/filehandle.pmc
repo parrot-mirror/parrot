@@ -21,11 +21,23 @@ The FileHandle PMC performs I/O operations on a source or destination file.
 #include "parrot/parrot.h"
 #include "../src/io/io_private.h"
 
+#ifdef PARROT_HAS_READLINE
+#ifdef __cplusplus
+extern "C" {
+#endif
+    char *readline(const char *);
+    void add_history(const char*);
+#ifdef __cplusplus
+}
+#endif
+#endif
+
 
 pmclass FileHandle need_ext {
     ATTR INTVAL flags;                /* Filehandle flags             */
     ATTR STRING *filename;            /* The opened path and filename */
     ATTR STRING *mode;                /* The mode string used in open */
+    ATTR STRING *encoding;            /* The encoding for read/write  */
     ATTR PIOHANDLE os_handle;         /* Low level OS descriptor      */
     ATTR PIOOFF_T file_size;          /* Current file size            */
     ATTR PIOOFF_T file_pos;           /* Current real file pointer    */
@@ -53,6 +65,7 @@ Initializes a newly created FileHandle object.
         PMC_data(SELF)            = data_struct;
         data_struct->flags        = 0;
         data_struct->mode         = NULL;
+        data_struct->encoding     = NULL;
         data_struct->filename     = NULL;
         data_struct->file_size    = 0;
         data_struct->file_pos     = piooffsetzero;
@@ -65,13 +78,13 @@ Initializes a newly created FileHandle object.
 
         /* Initialize the os_handle to the platform-specific value for closed. */
 #ifdef PIO_OS_WIN32
-        data_struct->os_handle    = (PIOHANDLE)INVALID_HANDLE_VALUE;
+    data_struct->os_handle    = (PIOHANDLE)INVALID_HANDLE_VALUE;
 #endif
 #ifdef PIO_OS_UNIX
-        data_struct->os_handle    = (PIOHANDLE)-1;
+    data_struct->os_handle    = (PIOHANDLE)-1;
 #endif
 #ifdef PIO_OS_STDIO
-        data_struct->os_handle    = (PIOHANDLE)NULL;
+    data_struct->os_handle    = (PIOHANDLE)NULL;
 #endif
 
         PObj_custom_mark_SET(SELF);
@@ -114,6 +127,8 @@ Mark active filehandle data as live.
             pobject_lives(interp, (PObj *)data_struct->mode);
         if (data_struct->filename)
             pobject_lives(interp, (PObj *)data_struct->filename);
+        if (data_struct->encoding)
+            pobject_lives(interp, (PObj *)data_struct->encoding);
     }
 
 /*
@@ -129,8 +144,12 @@ Free structures.
         if (PARROT_FILEHANDLE(SELF)) {
             Parrot_FileHandle_attributes *data_struct = PARROT_FILEHANDLE(SELF);
 
-            if (!Parrot_io_is_closed(INTERP, SELF))
-                Parrot_io_close(INTERP, SELF);
+            if (!Parrot_io_is_closed_filehandle(INTERP, SELF)) {
+                if (data_struct->flags & PIO_F_SHARED)
+                    Parrot_io_flush_filehandle(INTERP, SELF);
+                else
+                    Parrot_io_close_filehandle(INTERP, SELF);
+            }
 
             if (data_struct->buffer_start)
                 mem_sys_free(data_struct->buffer_start);
@@ -138,6 +157,20 @@ Free structures.
             mem_sys_free(PARROT_FILEHANDLE(SELF));
             PMC_data(SELF) = NULL;
         }
+    }
+
+/*
+
+=item C<INTVAL get_bool()>
+
+Returns whether the FileHandle has reached the end of the file.
+
+=cut
+
+*/
+
+    VTABLE INTVAL get_bool() {
+        return !Parrot_io_eof(INTERP, SELF);
     }
 
 
@@ -163,34 +196,56 @@ filehandle, rather than modifying the invocant).
     METHOD open(STRING *filename :optional, INTVAL got_filename :opt_flag,
                 STRING *mode :optional, INTVAL got_mode :opt_flag) {
         PMC *filehandle;
+        STRING *open_filename, *open_mode;
+        INTVAL flags;
 
-        if (!Parrot_io_is_closed(INTERP, SELF))
+        if (!Parrot_io_is_closed_filehandle(INTERP, SELF))
             Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_PIO_ERROR,
                                 "Cannot reopen already open filehandle");
 
-        if (got_filename && got_mode) {
-            SET_ATTR_filename(INTERP, SELF, string_copy(INTERP, filename));
+        if (got_mode && !STRING_IS_NULL(mode))
             SET_ATTR_mode(INTERP, SELF, string_copy(INTERP, mode));
-            filehandle = Parrot_io_open(INTERP, SELF, filename, mode);
-        }
-        else if (got_filename) {
-            SET_ATTR_filename(INTERP, SELF, string_copy(INTERP, filename));
-            SET_ATTR_mode(INTERP, SELF, CONST_STRING(INTERP, "r"));
-            filehandle = Parrot_io_open(INTERP, SELF, filename, NULL);
-        }
-        else {
-            /* When no options are passed, reopen the same file as before */
-            STRING *reopen_filename, *reopen_mode;
-            GET_ATTR_filename(INTERP, SELF, reopen_filename);
-            GET_ATTR_mode(INTERP, SELF, reopen_mode);
 
-            if (STRING_IS_NULL(reopen_filename))
-                Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_PIO_ERROR,
-                                "Cannot reopen filehandle, no filename stored");
-            filehandle = Parrot_io_open(INTERP, SELF, reopen_filename, reopen_mode);
+        if (got_filename && !STRING_IS_NULL(filename))
+            SET_ATTR_filename(INTERP, SELF, string_copy(INTERP, filename));
+
+        /* Open the file. When no options are passed, reopen the same file as
+         * before */
+        GET_ATTR_filename(INTERP, SELF, open_filename);
+        GET_ATTR_mode(INTERP, SELF, open_mode);
+
+
+        if (STRING_IS_NULL(open_filename))
+            Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_PIO_ERROR,
+                            "Cannot open filehandle, no filename");
+
+        if (STRING_IS_NULL(open_mode)) {
+            open_mode = CONST_STRING(INTERP, "r");
+            SET_ATTR_mode(INTERP, SELF, open_mode);
         }
+
+        flags = Parrot_io_parse_open_flags(interp, open_mode);
+        filehandle = PIO_OPEN(INTERP, SELF, open_filename, flags);
+
+        if (PMC_IS_NULL(filehandle))
+            Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_PIO_ERROR,
+                "Unable to open filehandle");
+
+        Parrot_io_setbuf(interp, filehandle, PIO_UNBOUND);
 
         RETURN(PMC *filehandle);
+    }
+
+/*
+
+=item C<METHOD isatty()>
+
+=cut
+
+*/
+    METHOD isatty() {
+        INTVAL isatty = (PARROT_FILEHANDLE(SELF)->flags & PIO_F_CONSOLE) == PIO_F_CONSOLE;
+        RETURN(INTVAL isatty);
     }
 
 /*
@@ -204,8 +259,25 @@ Close the filehandle.
 */
 
     METHOD close() {
+        INTVAL status;
+        status = Parrot_io_close_filehandle(interp, SELF);
+        RETURN(INTVAL status);
+    }
 
-        Parrot_io_close(INTERP, SELF);
+/*
+
+=item C<METHOD is_closed()>
+
+Test if the filehandle is closed.
+
+=cut
+
+*/
+
+    METHOD is_closed() {
+        INTVAL status;
+        status = Parrot_io_is_closed_filehandle(interp, SELF);
+        RETURN(INTVAL status);
     }
 
 /*
@@ -218,8 +290,22 @@ Read the given number of bytes from the filehandle and return them in a string.
 
 */
 
-    METHOD read(INTVAL bytes) {
-        STRING *string_result = Parrot_io_reads(INTERP, SELF, bytes);
+    METHOD read(INTVAL length) {
+        STRING *string_result = NULL;
+        INTVAL  ignored;
+
+        if (Parrot_io_is_closed_filehandle(interp, SELF))
+            Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_PIO_ERROR,
+                "Cannot read from a closed filehandle");
+
+        string_result = Parrot_io_make_string(interp, &string_result, length);
+        string_result->bufused = length;
+
+        if (Parrot_io_is_encoding(interp, SELF, CONST_STRING(interp, "utf8")))
+            ignored = Parrot_io_read_utf8(interp, SELF, &string_result);
+        else
+            ignored = Parrot_io_read_buffer(interp, SELF, &string_result);
+
         RETURN(STRING *string_result);
     }
 
@@ -245,6 +331,141 @@ Read a line from the filehandle and return it in a string.
 
 /*
 
+=item C<METHOD readline_interactive(STRING *prompt)>
+
+Read a line from the filehandle and return it in a string.
+
+=cut
+
+*/
+
+    METHOD readline_interactive(STRING *prompt :optional, INTVAL got_prompt :opt_flag) {
+        STRING *string_result;
+#ifdef PARROT_HAS_READLINE
+        char * const r = readline(got_prompt ? prompt->strstart : NULL);
+
+        if (r) {
+            if (*r)
+                add_history(r);
+
+            string_result = string_from_cstring(INTERP, r, 0);
+            mem_sys_free(r);
+            RETURN(STRING *string_result);
+        }
+
+        RETURN(PMC *PMCNULL);
+#else
+        UINTVAL len;
+
+        if (got_prompt)
+            fprintf(stderr, "%s", prompt->strstart);
+
+        if (!(PARROT_FILEHANDLE(SELF)->flags & PIO_F_LINEBUF))
+            Parrot_io_setlinebuf(INTERP, SELF);
+
+        string_result = Parrot_io_reads(INTERP, SELF, 0);
+        if (!string_result)
+            RETURN(PMC *PMCNULL);
+        len = string_length(INTERP, string_result);
+        if (len < 1)
+            RETURN(PMC *PMCNULL);
+        while (len > 0 &&
+                (((char*)string_result->strstart)[len - 1] == '\n' ||
+                 ((char*)string_result->strstart)[len - 1] == '\r')) {
+            --len;
+            --string_result->strlen;
+            --string_result->bufused;
+        }
+
+        RETURN(STRING *string_result);
+#endif
+    }
+
+/*
+
+=item METHOD readall(STRING *name);
+
+Read the entire contents of a file named I<name> into a Parrot string. On a
+filehandle object that isn't opened yet, the path to a file can be passed to
+C<readall> and it will open a filehandle on that file, read in the contents,
+and close the filehandle.
+
+  .local pmc pio
+  pio = new 'FileHandle'
+  $S0 = pio.'readall'('the_file')
+
+If the filehandle is already open, then no file path should be passed. The
+C<readall> method will read the contents of the file, and will not close the
+filehandle when finished.
+
+  pio = open 'the_file', 'r'
+  $S0 = pio.'readall'()
+
+=cut
+
+*/
+
+    METHOD readall(STRING *name :optional, INTVAL got_name :opt_flag) {
+        STRING *result;
+
+        if (got_name) {
+            /* called as class method - open, slurp, close file */
+            PMC *filehandle;
+            STRING *encoding;
+            size_t size;
+            GET_ATTR_encoding(INTERP, SELF, encoding);
+            if (!Parrot_io_is_closed_filehandle(INTERP, SELF)) {
+                Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_PIO_ERROR,
+                                "Cannot readall on a new file from an already open filehandle");
+            }
+            filehandle  = Parrot_io_open(INTERP, PMCNULL, name, NULL);
+            SET_ATTR_encoding(INTERP, filehandle, encoding);
+            size = (size_t)(Parrot_stat_info_intval(INTERP, name, STAT_FILESIZE));
+
+            result = Parrot_io_reads(INTERP, filehandle, size);
+            Parrot_io_close(INTERP, filehandle);
+            RETURN(STRING *result);
+        }
+        else {
+            /* slurp open file */
+            if (Parrot_io_is_closed_filehandle(INTERP, SELF)) {
+                Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_PIO_ERROR,
+                                "Cannot readall without a file name or open filehandle");
+            }
+            result = string_make_empty(INTERP, enum_stringrep_one, 0);
+
+            /* Do line buffering on the filehandle */
+            if (!(PARROT_FILEHANDLE(SELF)->flags & PIO_F_LINEBUF))
+                Parrot_io_setlinebuf(INTERP, SELF);
+
+            do {
+                STRING * const part = Parrot_io_reads(INTERP, SELF, 0);
+
+                result = string_append(INTERP, result, part);
+                if (Parrot_io_eof(INTERP, SELF))
+                    break;
+            } while (1);
+        }
+
+        RETURN(STRING *result);
+    }
+
+/*
+
+=item C<METHOD flush()>
+
+Flushes the filehandle.
+
+=cut
+
+*/
+
+    METHOD flush() {
+        Parrot_io_flush_filehandle(interp, SELF);
+    }
+
+/*
+
 =item C<METHOD print([INTVAL|FLOATVAL|STRING *|PMC*] value)>
 
 Print the passed in integer, number, string, or PMC to the filehandle.
@@ -258,6 +479,44 @@ Print the passed in integer, number, string, or PMC to the filehandle.
         STRING *string_to_print = VTABLE_get_string(INTERP, to_print);
 
         Parrot_io_putps(interp, SELF, string_to_print);
+    }
+
+/*
+
+=item C<METHOD puts(STRING *value)>
+
+Print the string to the filehandle.
+
+=cut
+
+*/
+
+    METHOD puts(STRING *to_print) {
+        INTVAL flags, status;
+        if (Parrot_io_is_closed_filehandle(interp, SELF))
+            Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_PIO_ERROR,
+                "Cannot write to a closed filehandle");
+
+        GET_ATTR_flags(INTERP, SELF, flags);
+        if (!(flags & PIO_F_WRITE))
+            Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_PIO_ERROR,
+                "Cannot write to a filehandle not opened for write");
+
+        if (STRING_IS_NULL(to_print))
+            RETURN(INTVAL 0);
+
+#if ! DISABLE_GC_DEBUG
+        /* trigger GC for debug - but not during tests */
+        if (0 && GC_DEBUG(interp))
+            Parrot_do_dod_run(interp, GC_trace_stack_FLAG);
+#endif
+
+        if (Parrot_io_is_encoding(interp, SELF, CONST_STRING(interp, "utf8")))
+            status = Parrot_io_write_utf8(interp, SELF, to_print);
+        else
+            status = Parrot_io_write_buffer(interp, SELF, to_print);
+
+        RETURN(INTVAL status);
     }
 
 /*
@@ -354,26 +613,81 @@ Retrieve the read mode string for the filehandle.
 
     }
 
-#ifdef PIO_OS_UNIX
+/*
+
+=item C<METHOD encoding(STRING *new_encoding)>
+
+Set or retrieve the encoding attribute (a string name of the selected encoding
+scheme) for the filehandle.
+
+=cut
+
+*/
+
+    METHOD encoding(STRING *new_encoding :optional, INTVAL got_encoding :opt_flag) {
+        STRING *encoding;
+        STRING *encoding_copy = NULL;
+
+        if (got_encoding) {
+            if (!STRING_IS_NULL(new_encoding))
+                encoding_copy = string_copy(INTERP, new_encoding);
+            SET_ATTR_encoding(INTERP, SELF, encoding_copy);
+            RETURN(STRING *new_encoding);
+        }
+
+        GET_ATTR_encoding(INTERP, SELF, encoding);
+        if (!STRING_IS_NULL(encoding))
+            encoding_copy = string_copy(INTERP, encoding);
+
+        RETURN(STRING *encoding_copy);
+
+    }
+
+/*
+
+=item C<METHOD eof()>
+
+Returns true if the filehandle is at end-of-file, returns false otherwise.
+
+=cut
+
+*/
+
+    METHOD eof() {
+        INTVAL flags;
+        if (Parrot_io_is_closed_filehandle(interp, SELF))
+            RETURN(INTVAL 1);
+
+        GET_ATTR_flags(INTERP, SELF, flags);
+        if (flags & PIO_F_EOF)
+            RETURN(INTVAL 1);
+
+        RETURN(INTVAL 0);
+    }
+
 
 /*
 
 =item C<METHOD get_fd()>
 
 Retrieve the integer file descriptor for the FileHandle (only available on
-Unix-based platforms that use integer file descriptors).
+platforms that use integer file descriptors).
 
 =cut
 
 */
 
     METHOD get_fd() {
+#ifndef PIO_OS_STDIO
         INTVAL os_handle;
         GET_ATTR_os_handle(INTERP, SELF, os_handle);
         RETURN(INTVAL os_handle);
+#endif /*PIO_OS_STDIO*/
+
+        RETURN(INTVAL -1);
+
     }
 
-#endif /*PIO_OS_UNIX*/
 
 /*
 

@@ -7,7 +7,7 @@ src/common/eval.pir - PHP evaluators
 =head1 DESCRIPTION
 
 This file implements methods and functions that evaluate code,
-such as C<include>, C<require>, and C<require>.
+such as C<include>, C<eval>, C<require>, and C<require_once>.
 The code originates from Rakudo's eval.pir.
 
 =head1 Methods
@@ -16,14 +16,18 @@ The code originates from Rakudo's eval.pir.
 
 =cut
 
-.namespace []
-.sub 'onload' :anon :init :load
-    $P0 = get_hll_namespace ['Any']
-    '!EXPORT'('evalfile', 'from'=>$P0)
+.HLL 'pipp'
+
+.sub 'eval'
+
+    .param pmc code
+
+    .local pmc compiler
+    compiler = compreg 'Pipp'
+
+    .tailcall compiler.'eval'(code)
 .end
 
-
-.namespace ['Any']
 .sub 'evalfile' :method :multi(_)
     .param pmc options         :slurpy :named
 
@@ -45,8 +49,6 @@ The code originates from Rakudo's eval.pir.
     .return (1)
 .end
 
-
-.namespace []
 .sub 'require' :multi(_)
     .param string name
     .param pmc options         :named :slurpy

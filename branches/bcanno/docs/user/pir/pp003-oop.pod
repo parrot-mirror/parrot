@@ -1,3 +1,5 @@
+# $Id$
+
 =head1 Programming Parrot -- Using objects
 
 Yes, you've read correctly. Parrot has the ability to create
@@ -38,13 +40,13 @@ is some code to illustrate this example:
     .namespace [ "Person" ]
 
     .sub run
-        print "Run Forrest, Run!\n"
+        say "Run Forrest, Run!"
     .end
 
     .namespace [ "Process" ]
 
     .sub run
-        print "Running process #53\n"
+        say "Running process #53"
     .end
 
 As you might guess, the C<.namespace> directive tells Parrot

@@ -11,12 +11,6 @@ languages/pipp/t/harness - A harness for Pipp
 
   cd languages/pipp && perl t/harness 
 
-  cd languages/pipp && perl t/harness --with-phc
-
-  cd languages/pipp && perl t/harness --with-antlr3
-
-  cd languages/pipp && perl t/harness --with-pct
-
   cd languages/pipp && perl t/harness --verbose t/hello.t 
 
 =head1 DESCRIPTION
@@ -28,9 +22,6 @@ This list is one per line, and is relative to the languages dir.
 If I'm called with no args, I run the complete suite.
 
 Otherwise I run the tests that were passed on the command line.
-The options C<--with-pct>, C<--with-phc> and C<--with-antlr3> select
-the variant of Pipp. Default is the PCT variant, using the
-Parrot Compiler Toolkit.
 
 =cut
 
@@ -50,16 +41,14 @@ use Parrot::Harness::Smoke;
 use Parrot::Test;
 
 my ( $files_flag, $master_flag, $send_to_smolder_flag, $archive_flag, $verbose_flag );
-my ( $php_flag, $pct_flag, $antlr3_flag, $phc_flag );
+my ( $php_flag, $pct_flag);
 GetOptions(
     'files'           => \$files_flag,
     'master'          => \$master_flag,          # unused, but passed by languages/t/harness
     'send-to-smolder' => \$send_to_smolder_flag,
     'archive'         => \$archive_flag,
     'verbose'         => \$verbose_flag,
-    'with-antlr3'     => \$antlr3_flag,
     'with-pct'        => \$pct_flag,
-    'with-phc'        => \$phc_flag,
     'with-php'        => \$php_flag,
 );
 
@@ -71,10 +60,11 @@ if ( $files_flag ) {
     # Only the Makefile in 'parrot/languages' uses --files for unified testing
     my $dir = File::Spec->catfile( $hll, 't' );
     # unified testing can't handle test scripts written in PHP
-    my @files = grep { ! m/in_php/ && ! m/pmc/ } glob( File::Spec->catfile( $dir, '*/*.t' ) );
+    my @files = grep { ! m!in_php|pmc|embed! } glob( File::Spec->catfile( $dir, '*/*.t' ) );
     print join( "\n", @files );
     print "\n" if scalar(@files);
-} else { 
+}
+else { 
     my $path_to_parrot = Parrot::Test::path_to_parrot();
     my @cmd = ( "$path_to_parrot/parrot$PConfig{exe}", "$path_to_parrot/languages/pipp/pipp.pbc" );
     $ENV{PARROT_PIPP_TEST_MODULE} = 'Parrot::Test::Pipp::PCT';
@@ -83,24 +73,16 @@ if ( $files_flag ) {
          $ENV{PARROT_PIPP_TEST_MODULE} = 'Parrot::Test::Pipp::PHP';
          @cmd = qw{ php-cgi -q -C -n } ;
     }
-    elsif ( $phc_flag ) {
-        $ENV{PARROT_PIPP_TEST_MODULE} = 'Parrot::Test::Pipp::Phc';
-        push @cmd, '--variant=phc';
-    }
-    elsif ( $antlr3_flag ) {
-        $ENV{PARROT_PIPP_TEST_MODULE} = 'Parrot::Test::Pipp::Antlr3';
-        push @cmd, '--variant=antlr3';
-    }
     elsif ( $pct_flag ) {
         $ENV{PARROT_PIPP_TEST_MODULE} = 'Parrot::Test::Pipp::PCT';
-        push @cmd, '--variant=pct';
     }
 
     my @files;
     if ( scalar(@ARGV) ) {
         # Someone specified tests for me to run.
         @files = grep { -f $_ } @ARGV
-    } else {
+    }
+    else {
         ( undef, undef, my $current_dir ) = File::Spec->splitpath( Cwd::getcwd() );
         if ( $current_dir eq 'languages' ) {
             @files = glob( File::Spec->catfile( $hll, 't', '*/*.t' ) );
@@ -116,6 +98,9 @@ if ( $files_flag ) {
     my $exec_sub
         = sub {
               my ( $harness, $test_file ) = @_;
+
+              # the directory t/embed contains only PIR test files
+              return [ "$path_to_parrot/parrot$PConfig{exe}", $test_file ] if $test_file =~ m!t/embed/.*[.]t$!;
 
               # the directory t/pmc contains only PIR test files
               return [ "$path_to_parrot/parrot$PConfig{exe}", $test_file ] if $test_file =~ m!t/pmc/.*[.]t$!;
@@ -156,10 +141,6 @@ if ( $files_flag ) {
         $harness->runtests(@files);
     }
 }
-
-=head1 HISTORY
-
-Mostly taken from bc/t/harness.
 
 =head1 SEE ALSO
 

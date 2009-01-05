@@ -13,7 +13,7 @@ php_file.pir - PHP file Standard Library
 
 =cut
 
-.const string STREAM_PMC = 'ParrotIO'
+.const string STREAM_PMC = 'FileHandle'
 
 .const int SEEK_SET = 0
 .const int SEEK_CUR = 1
@@ -124,12 +124,14 @@ Close an open file pointer
   L1:
     $P1 = shift args
     .local pmc stream
+    push_eh L3
     stream = fetch_resource($P1, STREAM_PMC)
-    unless null stream goto L2
-    .RETURN_FALSE()
+    pop_eh
   L2:
     close stream
     .RETURN_TRUE()
+  L3:
+    .RETURN_FALSE()
 .end
 
 =item C<bool feof(resource fp)>
@@ -226,6 +228,7 @@ STILL INCOMPLETE.
 
 .sub 'file_get_contents'
     .param pmc args :slurpy
+
     .local string filename
     .local int use_include_path
     .local pmc context
@@ -249,13 +252,21 @@ STILL INCOMPLETE.
     unless use_include_path goto L3
     $I0 |= USE_PATH
   L3:
-    stream = stream_open(filename, '<', $I0, context)
-    if stream goto L4
-    .RETURN_FALSE()
+    stream = stream_open(filename, 'r', $I0, context)
   L4:
-    $S0 = stream.'slurp'('')
+    # for now ignore failures
+    push_eh catch
+
+    $S0 = stream.'readall'()
     close stream
+
+    pop_eh
+
     .RETURN_STRING($S0)
+
+catch:
+    .RETURN_FALSE()
+
 .end
 
 =item C<int file_put_contents(string file, mixed data [, int flags [, resource context]])>
@@ -304,6 +315,7 @@ STILL INCOMPLETE (see _getmode)
 
 .sub 'fopen'
     .param pmc args :slurpy
+
     .local string filename
     .local string mode
     .local int use_include_path
@@ -319,43 +331,22 @@ STILL INCOMPLETE (see _getmode)
     $I0 |= USE_PATH
   L2:
     $S0 = _getmode(mode)
+    push_eh L4
     stream = stream_open(filename, $S0, $I0, context)
-    if stream goto L3
-    .RETURN_FALSE()
+    pop_eh
   L3:
     .RETURN_RESOURCE(stream)
+  L4:
+    .RETURN_FALSE()
 .end
 
 .sub '_getmode' :anon
     .param string mode
     .local string res
-    unless mode == 'r' goto L1
-    res = '<'
-    goto L9
-  L1:
-    unless mode == 'w' goto L2
-    res = '>'
-    goto L9
-  L2:
-    unless mode == 'a' goto L3
-    res = '>>'
-    goto L9
-  L3:
-    unless mode == 'r+' goto L4
-    res = '+<'
-    goto L9
-  L4:
-    unless mode == 'w+' goto L5
-    res = '+>'
-    goto L9
-  L5:
-    unless mode == 'a+' goto L6
-    res = '+>>'
-    goto L9
-  L6:
-    res = ''
-  L9:
-    .return (res)
+
+    # TODO: check which Parrot modes differ from the PHP modes
+  NO_CHANGE:
+    .return (mode)
 .end
 
 =item C<int fpassthru(resource fp)>
@@ -561,7 +552,7 @@ STILL INCOMPLETE (see stream_open)
     unless use_include_path goto L2
     $I0 |= USE_PATH
   L2:
-    stream = stream_open(filename, '<', $I0, context)
+    stream = stream_open(filename, 'r', $I0, context)
     unless stream goto L3
     $I0 = stream_passthru(stream)
     close stream

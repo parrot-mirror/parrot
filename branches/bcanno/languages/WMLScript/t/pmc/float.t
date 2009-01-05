@@ -1,5 +1,5 @@
 #! perl
-# Copyright (C) 2006-2007, The Perl Foundation.
+# Copyright (C) 2006-2008, The Perl Foundation.
 # $Id$
 
 =head1 NAME
@@ -8,7 +8,7 @@ t/pmc/float.t - WmlsFloat
 
 =head1 SYNOPSIS
 
-    % perl -I../../lib t/pmc/float.t
+    % perl t/pmc/float.t
 
 =head1 DESCRIPTION
 
@@ -19,7 +19,10 @@ Tests C<WmlsFloat> PMC
 
 use strict;
 use warnings;
-use Parrot::Test tests => 10;
+use FindBin;
+use lib "$FindBin::Bin/../../../../lib";
+
+use Parrot::Test tests => 11;
 use Test::More;
 
 pir_output_is( << 'CODE', << 'OUTPUT', 'check inheritance' );
@@ -129,7 +132,7 @@ CODE
 OUTPUT
 
 pir_output_is( << 'CODE', << 'OUTPUT', 'check HLL' );
-.HLL "WMLScript"
+.HLL "wmlscript"
 .loadlib "wmls_group"
 .sub _main
     .local pmc pmc1
@@ -149,7 +152,7 @@ CODE
 OUTPUT
 
 pir_output_is( << 'CODE', << 'OUTPUT', 'check HLL & .const' );
-.HLL "WMLScript"
+.HLL "wmlscript"
 .loadlib "wmls_group"
 .sub _main
     .const "WmlsFloat" cst1 = "3.14"
@@ -166,7 +169,7 @@ CODE
 OUTPUT
 
 pir_output_is( << 'CODE', << 'OUTPUT', 'check istrue' );
-.HLL "WMLScript"
+.HLL "wmlscript"
 .loadlib "wmls_group"
 .loadlib "wmls_ops"
 .sub _main
@@ -187,7 +190,7 @@ WmlsBoolean
 OUTPUT
 
 pir_output_is( << 'CODE', << 'OUTPUT', 'check typeof' );
-.HLL "WMLScript"
+.HLL "wmlscript"
 .loadlib "wmls_group"
 .loadlib "wmls_ops"
 .sub _main
@@ -208,7 +211,7 @@ WmlsInteger
 OUTPUT
 
 pir_output_is( << 'CODE', << 'OUTPUT', 'check defined' );
-.HLL "WMLScript"
+.HLL "wmlscript"
 .loadlib "wmls_group"
 .loadlib "wmls_ops"
 .sub _main
@@ -226,6 +229,23 @@ CODE
 3.14
 true
 WmlsBoolean
+OUTPUT
+
+pir_output_is( << 'CODE', << 'OUTPUT', 'check box' );
+.HLL "wmlscript"
+.loadlib "wmls_group"
+.loadlib "wmls_ops"
+.sub _main
+    $P0 = box 3.14
+    print $P0
+    print "\n"
+    $S0 = typeof $P0
+    print $S0
+    print "\n"
+.end
+CODE
+3.14
+WmlsFloat
 OUTPUT
 
 # Local Variables:

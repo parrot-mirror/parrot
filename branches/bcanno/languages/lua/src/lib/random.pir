@@ -18,7 +18,7 @@ see F<runtime/parrot/library/Math/Random/mt19937ar.pir>.
 
 =cut
 
-.HLL 'Lua'
+.HLL 'lua'
 .loadlib 'lua_group'
 .namespace [ 'random' ]
 
@@ -219,10 +219,6 @@ LIST
 
 
 =back
-
-=head1 AUTHORS
-
-Francois Perrad
 
 =cut
 

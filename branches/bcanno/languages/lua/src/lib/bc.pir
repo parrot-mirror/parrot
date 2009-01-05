@@ -20,7 +20,7 @@ Use PMC BigFloat when available.
 
 =cut
 
-.HLL 'Lua'
+.HLL 'lua'
 .loadlib 'lua_group'
 .namespace [ 'bc' ]
 
@@ -425,10 +425,6 @@ LIST
 
 
 =back
-
-=head1 AUTHORS
-
-Francois Perrad
 
 =cut
 

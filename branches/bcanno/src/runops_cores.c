@@ -39,6 +39,9 @@ static opcode_t * runops_trace_core(PARROT_INTERP, ARGIN(opcode_t *pc))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
+#define ASSERT_ARGS_runops_trace_core __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(pc)
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 /* HEADERIZER END: static */
 
@@ -58,6 +61,7 @@ PARROT_CAN_RETURN_NULL
 opcode_t *
 runops_fast_core(PARROT_INTERP, ARGIN(opcode_t *pc))
 {
+    ASSERT_ARGS(runops_fast_core);
     while (pc) {
         DO_OP(pc, interp);
     }
@@ -85,12 +89,13 @@ PARROT_CAN_RETURN_NULL
 opcode_t *
 runops_cgoto_core(PARROT_INTERP, ARGIN(opcode_t *pc))
 {
+    ASSERT_ARGS(runops_cgoto_core);
 #ifdef HAVE_COMPUTED_GOTO
     pc = cg_core(pc, interp);
     return pc;
 #else
     UNUSED(pc);
-    PIO_eprintf(interp,
+    Parrot_io_eprintf(interp,
             "Computed goto unavailable in this configuration.\n");
     Parrot_exit(interp, 1);
 #endif
@@ -123,10 +128,10 @@ PARROT_CAN_RETURN_NULL
 static opcode_t *
 runops_trace_core(PARROT_INTERP, ARGIN(opcode_t *pc))
 {
+    ASSERT_ARGS(runops_trace_core);
     static size_t dod, gc;
     Arenas * const arena_base = interp->arena_base;
     Interp *debugger;
-    PMC* pio;
 
     dod = arena_base->dod_runs;
     gc = arena_base->collect_runs;
@@ -147,14 +152,14 @@ runops_trace_core(PARROT_INTERP, ARGIN(opcode_t *pc))
          * see trace_system_areas() in src/cpu_dep.c */
         debugger->lo_var_ptr = interp->lo_var_ptr;
 
-        pio = PIO_STDERR(debugger);
+        pio = Parrot_io_STDERR(debugger);
 
-        if (PIO_isatty(debugger, pio))
-            PIO_setlinebuf(debugger, pio);
+        if (Parrot_io_is_tty(debugger, pio))
+            Parrot_io_setlinebuf(debugger, pio);
         else {
             /* this is essential (100 x faster!)  and should probably
              * be in init/open code */
-            PIO_setbuf(debugger, pio, 8192);
+            Parrot_io_setbuf(debugger, pio, 8192);
         }
     }
     else
@@ -173,16 +178,16 @@ runops_trace_core(PARROT_INTERP, ARGIN(opcode_t *pc))
 
         if (dod != arena_base->dod_runs) {
             dod = arena_base->dod_runs;
-            PIO_eprintf(debugger, "       DOD\n");
+            Parrot_io_eprintf(debugger, "       DOD\n");
         }
 
         if (gc != arena_base->collect_runs) {
             gc = arena_base->collect_runs;
-            PIO_eprintf(debugger, "       GC\n");
+            Parrot_io_eprintf(debugger, "       GC\n");
         }
     }
 
-    PIO_flush(debugger, PIO_STDERR(debugger));
+    Parrot_io_flush(debugger, Parrot_io_STDERR(debugger));
 
     return pc;
 }
@@ -204,6 +209,7 @@ PARROT_CAN_RETURN_NULL
 opcode_t *
 runops_slow_core(PARROT_INTERP, ARGIN(opcode_t *pc))
 {
+    ASSERT_ARGS(runops_slow_core);
 
     if (Interp_trace_TEST(interp, PARROT_TRACE_OPS_FLAG))
         return runops_trace_core(interp, pc);
@@ -243,6 +249,7 @@ PARROT_CAN_RETURN_NULL
 opcode_t *
 runops_gc_debug_core(PARROT_INTERP, ARGIN(opcode_t *pc))
 {
+    ASSERT_ARGS(runops_gc_debug_core);
     while (pc) {
         if (pc < code_start || pc >= code_end)
             Parrot_ex_throw_from_c_args(interp, NULL, 1,
@@ -277,6 +284,7 @@ PARROT_CAN_RETURN_NULL
 opcode_t *
 runops_profile_core(PARROT_INTERP, ARGIN(opcode_t *pc))
 {
+    ASSERT_ARGS(runops_profile_core);
     RunProfile * const profile = interp->profile;
     const opcode_t     old_op  = profile->cur_op;
 
@@ -324,6 +332,7 @@ PARROT_CAN_RETURN_NULL
 opcode_t *
 runops_debugger_core(PARROT_INTERP, ARGIN(opcode_t *pc))
 {
+    ASSERT_ARGS(runops_debugger_core);
     /*fprintf(stderr, "Enter runops_debugger_core\n");*/
 
     PARROT_ASSERT(interp->pdb);

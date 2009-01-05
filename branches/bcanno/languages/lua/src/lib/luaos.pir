@@ -18,7 +18,7 @@ L<http://www.lua.org/manual/5.1/manual.html#5.8>.
 
 =cut
 
-.HLL 'Lua'
+.HLL 'lua'
 .loadlib 'lua_group'
 .namespace [ 'os' ]
 
@@ -488,10 +488,6 @@ when no longer needed.
 .end
 
 =back
-
-=head1 AUTHORS
-
-Francois Perrad.
 
 =cut
 

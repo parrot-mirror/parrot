@@ -7,7 +7,7 @@ use constant VTABLE_ENTRY => 'VTABLE_ENTRY';
 use constant VTABLE       => 'VTABLE';
 use constant NON_VTABLE   => 'NON_VTABLE';
 use constant MULTI        => 'MULTI';
-use Parrot::Pmc2c::UtilFunctions qw(count_newlines args_from_parameter_list passable_args_from_parameter_list);
+use Parrot::Pmc2c::UtilFunctions qw( args_from_parameter_list passable_args_from_parameter_list );
 
 sub new {
     my ( $class, $self_hash ) = @_;
@@ -20,6 +20,7 @@ sub new {
             mmd_rights  => [],
             parent_name => "",
             decorators  => [],
+            pmc_unused  => 0,
             %{ $self_hash || {} }
         )
     };
@@ -78,6 +79,12 @@ sub is_multi {
     return 0;
 }
 
+sub pmc_unused {
+    my ($self) = @_;
+
+    return $self->{pmc_unused};
+}
+
 =head1 C<trans($type)>
 
 Used in C<signature()> to normalize argument types.
@@ -94,7 +101,7 @@ sub trans {
     return $1  if $char =~ /([ISP])/;
     return 'N' if $char eq 'F';
     return 'v' if $type eq 'void';
-    return 'V' if $type =~ /void\s*\*\s*/;
+    return 'V' if $type =~ /void\s*\*/;
     return 'P' if $type =~ /opcode_t\*/;
     return 'I' if $type =~ /int(val)?/i;
     return '?';

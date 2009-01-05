@@ -29,6 +29,7 @@ src/builtins/globals.pir - initialize miscellaneous global variables
     $P0 = split ':', $S0
     push $P0, '.'
     $P0 = 'list'($P0)
+    $P0 = $P0.'Array'()
     set_hll_global '@INC', $P0
 
     ##  set up %*INC
@@ -38,17 +39,17 @@ src/builtins/globals.pir - initialize miscellaneous global variables
     ##  set up $*OS, $*OSVER $*EXECUTABLE_NAME
     .local string info
     info = sysinfo .SYSINFO_PARROT_OS
-    $P0 = new 'Perl6Str'
+    $P0 = new 'Str'
     $P0 = info
     set_hll_global '$OS', $P0
 
     info = sysinfo .SYSINFO_PARROT_OS_VERSION
-    $P0 = new 'Perl6Str'
+    $P0 = new 'Str'
     $P0 = info
     set_hll_global '$OSVER', $P0
 
     info = interpinfo .INTERPINFO_EXECUTABLE_FULLNAME
-    $P0 = new 'Perl6Str'
+    $P0 = new 'Str'
     $P0 = info
     set_hll_global '$EXECUTABLE_NAME', $P0
 

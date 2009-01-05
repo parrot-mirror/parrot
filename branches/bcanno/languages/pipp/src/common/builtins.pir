@@ -1,9 +1,12 @@
 # $Id$
 
+.HLL 'pipp'
+
 .loadlib 'php_group'
 
 .include 'languages/pipp/src/common/php_MACRO.pir'
 .include 'languages/pipp/src/common/guts.pir'
+.include 'languages/pipp/src/classes/Object.pir'
 .include 'languages/pipp/src/common/eval.pir'
 
 # steal builtins from Perl6
@@ -69,7 +72,7 @@
 
 ## symbolic unary
 .sub 'prefix:-' :multi(_)
-    .param num a
+    .param pmc a
 
     neg a
 
@@ -308,6 +311,14 @@
     .RETURN_BOOL($I0)
 .end
 
+.sub 'infix:=>'
+    .param pmc key
+    .param pmc value
+    $P0 = new 'ResizablePMCArray'
+    $P0[0] = key
+    $P0[1] = value
+    .return($P0)
+.end
 
 .include 'languages/pipp/src/common/php_standard.pir'
 

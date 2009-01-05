@@ -112,9 +112,9 @@ Adds (or replaces) a syntactic category's defaults.
     $P0 = new 'Iterator', args
   args_loop:
     unless $P0 goto args_end
-    $P1 = shift $P0
-    $P2 = $P0[$P1]
-    token[$P1] = $P2
+    $S1 = shift $P0
+    $P2 = $P0[$S1]
+    token[$S1] = $P2
     goto args_loop
   args_end:
 
@@ -127,6 +127,15 @@ Adds (or replaces) a syntactic category's defaults.
     if $I1 < $I0 goto with_wb
     token['wb'] = 1
   with_wb:
+
+    ##  handle key scanning
+    unless key goto with_skipkey
+    $I0 = exists token['skipkey']
+    if $I0 goto with_skipkey
+    $P0 = token['parsed']
+    if null $P0 goto with_skipkey
+    token['skipkey'] = 1
+  with_skipkey:
 
     $S0 = token['match']
     if $S0 > '' goto with_match
@@ -547,10 +556,13 @@ Adds (or replaces) a syntactic category's defaults.
     goto token_match_success
   token_match_sub:
     $P0 = token['parsed']
-    $I0 = length key
-    $I0 += pos
     mob['KEY'] = key
-    mpos = $I0
+    mpos = pos
+    $I0 = token['skipkey']
+    unless $I0 goto token_match_sub_1
+    $I0 = length key
+    mpos += $I0
+  token_match_sub_1:
     oper = $P0(mob, 'action'=>action)
     delete mob['KEY']
     $P0 = oper.'from'()

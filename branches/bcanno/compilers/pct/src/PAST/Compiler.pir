@@ -59,8 +59,6 @@ any value type.
     piropsig['isnull']     = 'IP'
     piropsig['issame']     = 'IPP'
     piropsig['istrue']     = 'IP'
-    piropsig['newclosure'] = 'PP'
-    piropsig['n_abs']      = 'PP'
     piropsig['add']        = 'PP+'
     piropsig['band']       = 'PPP'
     piropsig['bnot']       = 'PP'
@@ -68,10 +66,13 @@ any value type.
     piropsig['concat']     = 'PP~'
     piropsig['div']        = 'PP+'
     piropsig['fdiv']       = 'PP+'
+    piropsig['find_name']  = 'P~'
     piropsig['getprop']    = 'P~P'
     piropsig['mod']        = 'PP+'
     piropsig['mul']        = 'PP+'
+    piropsig['n_abs']      = 'PP'
     piropsig['n_neg']      = 'PP'
+    piropsig['newclosure'] = 'PP'
     piropsig['not']        = 'PP'
     piropsig['shl']        = 'PP+'
     piropsig['shr']        = 'PP+'
@@ -92,11 +93,51 @@ any value type.
     valflags['Float']    = 'n+*:'
     set_global '%valflags', valflags
 
+    ##  %!controltypes holds the list of exception types for each
+    ##  type of exception handler we support
+    .local pmc controltypes
+    controltypes = new 'Hash'
+    $P0 = new 'ResizablePMCArray'
+    $P0.'push'(.CONTROL_RETURN)
+    $P0.'push'(.CONTROL_OK)
+    $P0.'push'(.CONTROL_BREAK)
+    $P0.'push'(.CONTROL_CONTINUE)
+    $P0.'push'(.CONTROL_ERROR)
+    $P0.'push'(.CONTROL_TAKE)
+    $P0.'push'(.CONTROL_LOOP_NEXT)
+    $P0.'push'(.CONTROL_LOOP_LAST)
+    $P0.'push'(.CONTROL_LOOP_REDO)
+    controltypes['CONTROL']   = $P0
+    $P0 = new 'ResizablePMCArray'
+    $P0.'push'(.CONTROL_TAKE)
+    controltypes['GATHER']   = $P0
+    $P0 = new 'ResizablePMCArray'
+    $P0.'push'(.CONTROL_OK)
+    controltypes['OK'] = $P0
+    $P0 = new 'ResizablePMCArray'
+    $P0.'push'(.CONTROL_BREAK)
+    controltypes['BREAK'] = $P0
+    $P0 = new 'ResizablePMCArray'
+    $P0.'push'(.CONTROL_CONTINUE)
+    controltypes['CONTINUE'] = $P0
+    $P0 = new 'ResizablePMCArray'
+    $P0.'push'(.CONTROL_ERROR)
+    controltypes['ERROR'] = $P0
+    $P0 = new 'ResizablePMCArray'
+    $P0.'push'(.CONTROL_LOOP_NEXT)
+    controltypes['NEXT'] = $P0
+    $P0 = new 'ResizablePMCArray'
+    $P0.'push'(.CONTROL_LOOP_LAST)
+    controltypes['LAST'] = $P0
+    $P0 = new 'ResizablePMCArray'
+    $P0.'push'(.CONTROL_LOOP_REDO)
+    controltypes['REDO'] = $P0
+    set_global '%!controltypes', controltypes
+
     $P0 = new 'CodeString'
     set_global '%!codestring', $P0
 
-    $P0 = new 'Integer'
-    $P0 = 11
+    $P0 = box 11
     set_global '$!serno', $P0
 
     .return ()
@@ -557,6 +598,126 @@ nodes of type C<PAST::Stmts>.
     ops = self.'post_children'(node, 'signature'=>$S0)
     $P0 = ops[-1]
     ops.'result'($P0)
+    .local pmc eh
+    eh = node.'handlers'()
+    unless eh, no_eh
+    ops = self.'wrap_handlers'(ops,eh,'rtype'=>rtype)
+  no_eh:
+    .return (ops)
+.end
+
+=back
+
+=head3 C<PAST::Control>
+
+=over 4
+
+=item as_post(PAST::Control node)
+
+Return the POST representation of a C<PAST::Control>.
+
+=cut
+
+.sub 'as_post' :method :multi(_, ['PAST';'Control'])
+    .param pmc node
+    .param pmc options         :slurpy :named
+
+    .local pmc ops, children, ishandled, nothandled
+    .local string handled
+    $P0 = get_hll_global ['POST'], 'Label'
+    $S0 = self.'unique'('handled_')
+    ishandled = $P0.'new'('result'=>$S0)
+    $S0 = self.'unique'('nothandled_')
+    nothandled = $P0.'new'('result'=>$S0)
+    $P0 = get_hll_global ['POST'], 'Ops'
+    ops = $P0.'new'('node'=>node)
+    .local string rtype
+    rtype = options['rtype']
+    $P0 = node.'list'()
+    $I0 = elements $P0
+    $S0 = repeat 'v', $I0
+    concat $S0, rtype
+    ops.'push_pirop'('.local pmc exception')
+    ops.'push_pirop'('.get_results (exception)')
+    children = self.'post_children'(node, 'signature'=>$S0)
+    ops.'push'(children)
+    handled = self.'uniquereg'('I')
+    ops.'push_pirop'('set', handled, 'exception["handled"]')
+    ops.'push_pirop'('ne', handled, 1, nothandled)
+    ops.'push'(ishandled)
+    ops.'push_pirop'('return', 'exception')
+    ops.'push'(nothandled)
+    ops.'push_pirop'('rethrow', 'exception')
+    .return (ops)
+.end
+
+.sub 'wrap_handlers' :method
+    .param pmc child
+    .param pmc ehs
+    .param pmc options         :slurpy :named
+
+    .local string rtype
+    rtype = options['rtype']
+
+    .local pmc iter, node, ops, pops, tail, skip
+    $P0 = get_hll_global ['POST'], 'Ops'
+    ops = $P0.'new'('node'=>node)
+    $P0 = get_hll_global ['POST'], 'Ops'
+    pops = $P0.'new'('node'=>node)
+    $P0 = get_hll_global ['POST'], 'Ops'
+    tail = $P0.'new'('node'=>node)
+    $P0 = get_hll_global ['POST'], 'Label'
+    $S0 = self.'unique'('skip_handler_')
+    skip = $P0.'new'('result'=>$S0)
+
+    iter = new 'Iterator', ehs
+  handler_loop:
+    unless iter, handler_loop_done
+    node = shift iter
+
+    .local pmc ehpir, types, label
+    .local string ehreg, type
+    $P0 = get_hll_global ['POST'], 'Label'
+    $S0 = self.'unique'('control_')
+    label = $P0.'new'('result'=>$S0)
+
+    ehreg = self.'uniquereg'('P')
+    ops.'push_pirop'('new', ehreg, "'ExceptionHandler'")
+    ops.'push_pirop'('set_addr', ehreg, label)
+    $P0 = get_global '%!controltypes'
+    type = node.'handle_types'()
+    unless type, no_handle_types
+    types = $P0[type]
+    unless type, no_handle_types
+    ops.'push_pirop'('callmethod', '"handle_types"', ehreg, types :flat)
+  no_handle_types:
+    type = node.'handle_types_except'()
+    unless type, no_handle_types_except
+    types = $P0[type]
+    unless type, no_handle_types_except
+    ops.'push_pirop'('callmethod', '"handle_types_except"', ehreg, types :flat)
+  no_handle_types_except:
+    ops.'push_pirop'('push_eh', ehreg)
+
+    # Add one pop_eh for every handler we push_eh
+    pops.'push_pirop'('pop_eh')
+
+    # Push the handler itself
+    tail.'push'(label)
+    ehpir = self.'as_post'(node, 'rtype'=>rtype)
+    tail.'push'(ehpir)
+
+    goto handler_loop
+  handler_loop_done:
+
+    ops.'push'(child)
+
+
+    ops.'push'(pops)
+    ops.'push_pirop'('goto', skip)
+    ops.'push'(tail)
+    ops.'push'(skip)
+
     .return (ops)
 .end
 
@@ -582,11 +743,12 @@ Return the POST representation of a C<PAST::Block>.
     unshift blockpast, node
 
     .local string name, pirflags, blocktype
-    .local pmc ns
+    .local pmc ns, hll
     name = node.'name'()
     pirflags = node.'pirflags'()
     blocktype = node.'blocktype'()
     ns = node.'namespace'()
+    hll = node.'hll'()
 
     ##  handle anonymous blocks
     if name goto have_name
@@ -598,42 +760,41 @@ Return the POST representation of a C<PAST::Block>.
     ##  create a POST::Sub node for this block
     .local pmc bpost
     $P0 = get_hll_global ['POST'], 'Sub'
-    bpost = $P0.'new'('node'=>node, 'name'=>name, 'blocktype'=>blocktype, 'namespace'=>ns)
+    bpost = $P0.'new'('node'=>node, 'name'=>name, 'blocktype'=>blocktype, 'namespace'=>ns, 'hll'=>hll)
     unless pirflags goto pirflags_done
     bpost.'pirflags'(pirflags)
   pirflags_done:
 
     ##  pir-encode name and namespace
     .local string blockreg, blockref
-    name = self.'escape'(name)
     blockreg = self.'uniquereg'('P')
     if ns goto block_ns
     blockref = concat ".const 'Sub' ", blockreg
     concat blockref, ' = '
-    concat blockref, name
+    $P0 = bpost.'subid'()
+    $S0 = self.'escape'($P0)
+    concat blockref, $S0
     goto have_blockref
   block_ns:
     $P0 = get_global '%!codestring'
-    ns = $P0.'key'(ns)
     blockref = concat 'get_hll_global ', blockreg
+    $S0 = $P0.'key'(ns)
     concat blockref, ', '
-    $S0 = ns
     concat blockref, $S0
+    $S0 = self.'escape'(name)
     concat blockref, ', '
-    concat blockref, name
+    concat blockref, $S0
   have_blockref:
 
     ##  determine the outer POST::Sub for the new one
     .local pmc outerpost
     outerpost = get_global '$?SUB'
-    $P0 = node.'lexical'()
-    if $P0 goto outer_block
-    null $P0
-    set_global '$?SUB', $P0
-    goto outer_done
-  outer_block:
-    bpost.'outer'(outerpost)
     set_global '$?SUB', bpost
+
+    .local int islexical
+    islexical = node.'lexical'()
+    unless islexical goto outer_done
+    bpost.'outer'(outerpost)
 
     ##  add block setup code (cpost) to outer block if needed
     if null outerpost goto outer_done
@@ -698,12 +859,22 @@ Return the POST representation of a C<PAST::Block>.
     $S0 = repeat 'v', $I0
     concat $S0, '*'
     ##  convert children to post
-    .local pmc ops
+    .local pmc ops, retval
     ops = self.'post_children'(node, 'signature'=>$S0)
-    bpost.'push'(ops)
+    ##  wrap the child with appropriate exception handlers, if any
+    .local pmc eh
+    eh = node.'handlers'()
+    unless eh, no_eh
+    $S0 = options['rtype']
+    retval = ops[-1]
+    ops = self.'wrap_handlers'(ops,eh,'rtype'=>$S0)
+    goto had_eh
+  no_eh:
     ##  result of last child is return from block
-    $P0 = ops[-1]
-    bpost.'push_pirop'('return', $P0)
+    retval = ops[-1]
+  had_eh:
+    bpost.'push'(ops)
+    bpost.'push_pirop'('return', retval)
 
     unless ctrlpast goto sub_done
     bpost.'push'(ctrllabel)
@@ -741,9 +912,9 @@ Return the POST representation of a C<PAST::Block>.
     .local pmc lisub
     $P0 = get_hll_global ['POST'], 'Sub'
     lisub = $P0.'new'('outer'=>bpost, 'pirflags'=>':load :init')
+    lisub.'push_pirop'(blockref)
     lisub.'push_pirop'('.local pmc', 'block')
-    lisub.'push_pirop'('interpinfo', '$P20', .INTERPINFO_CURRENT_SUB)
-    lisub.'push_pirop'('callmethod', '"get_outer"', '$P20', 'result'=>'block')
+    lisub.'push_pirop'('set', 'block', blockreg)
     .local pmc lipast, lipost
     lipast = node.'loadinit'()
     lipost = self.'as_post'(lipast, 'rtype'=>'v')
@@ -764,6 +935,7 @@ Return the POST representation of a C<PAST::Block>.
     $P0 = get_hll_global ['POST'], 'Ops'
     bpost = $P0.'new'( bpost, 'node'=>node, 'result'=>blockreg)
     bpost.'push_pirop'( blockref, 'result'=>blockreg )
+    unless islexical goto block_done
     bpost.'push_pirop'('capture_lex', blockreg)
     goto block_done
 
@@ -777,7 +949,9 @@ Return the POST representation of a C<PAST::Block>.
     $P0 = get_hll_global ['POST'], 'Ops'
     bpost = $P0.'new'(bpost, 'node'=>node, 'result'=>result)
     bpost.'push_pirop'(blockref)
+    unless islexical goto block_immediate_capture_skip
     bpost.'push_pirop'('capture_lex', blockreg)
+  block_immediate_capture_skip:
     bpost.'push_pirop'('call', blockreg, arglist :flat, 'result'=>result)
 
   block_done:
@@ -1068,9 +1242,95 @@ a 'pasttype' of if/unless.
 .end
 
 
+=item loop_gen(...)
+
+Generate a standard loop with NEXT/LAST/REDO exception handling.
+
+=cut
+
+.sub 'loop_gen' :method
+    .param pmc options         :slurpy :named
+
+    .local pmc testlabel, prelabel, redolabel, nextlabel, donelabel, handlabel
+    $P0 = get_hll_global ['POST'], 'Label'
+    .local string loopname
+    loopname = self.'unique'('loop')
+    $S0 = concat loopname, '_test'
+    testlabel = $P0.'new'('result'=>$S0)
+    $S0 = concat loopname, '_redo'
+    redolabel = $P0.'new'('result'=>$S0)
+    $S0 = concat loopname, '_next'
+    nextlabel = $P0.'new'('result'=>$S0)
+    $S0 = concat loopname, '_done'
+    donelabel = $P0.'new'('result'=>$S0)
+    $S0 = concat loopname, '_handler'
+    handlabel = $P0.'new'('result'=>$S0)
+
+    .local pmc testpost, prepost, bodypost, nextpost
+    .local string testop
+    .local int bodyfirst
+    testop = options['testop']
+    testpost = options['test']
+    prepost  = options['pre']
+    bodypost = options['body']
+    nextpost = options['next']
+    bodyfirst = options['bodyfirst']
+
+    if testop goto have_testop
+    testop = 'unless'
+  have_testop:
+
+    .local pmc ops
+    $P0 = get_hll_global ['POST'], 'Ops'
+    ops = $P0.'new'()
+
+    .local string handreg
+    handreg = self.'uniquereg'('P')
+    ops.'push_pirop'('new', handreg, "'ExceptionHandler'")
+    ops.'push_pirop'('set_addr', handreg, handlabel)
+    ops.'push_pirop'('callmethod', '"handle_types"', handreg, .CONTROL_LOOP_NEXT, .CONTROL_LOOP_REDO, .CONTROL_LOOP_LAST)
+    ops.'push_pirop'('push_eh', handreg)
+
+    unless bodyfirst goto bodyfirst_done
+    ops.'push_pirop'('goto', redolabel)
+  bodyfirst_done:
+    ops.'push'(testlabel)
+    if null testpost goto test_done
+    ops.'push'(testpost)
+    ops.'push_pirop'(testop, testpost, donelabel)
+  test_done:
+    if null prepost goto pre_done
+    ops.'push'(prepost)
+  pre_done:
+    ops.'push'(redolabel)
+    if null bodypost goto body_done
+    ops.'push'(bodypost)
+  body_done:
+    ops.'push'(nextlabel)
+    if null nextpost goto next_done
+    ops.'push'(nextpost)
+  next_done:
+    ops.'push_pirop'('goto', testlabel)
+    ops.'push'(handlabel)
+    ops.'push_pirop'('.local pmc exception')
+    ops.'push_pirop'('.get_results (exception)')
+    $S0 = self.'uniquereg'('P')
+    ops.'push_pirop'('getattribute', $S0, 'exception', "'type'")
+    ops.'push_pirop'('eq', $S0, .CONTROL_LOOP_NEXT, nextlabel)
+    ops.'push_pirop'('eq', $S0, .CONTROL_LOOP_REDO, redolabel)
+    ops.'push'(donelabel)
+    ops.'push_pirop'('pop_eh')
+    .return (ops)
+.end
+
+
 =item while(PAST::Op node)
 
 =item until(PAST::Op node)
+
+=item repeat_while(PAST::Op node)
+
+=item repeat_until(PAST::Op node)
 
 Return the POST representation of a C<while> or C<until> loop.
 
@@ -1079,126 +1339,55 @@ Return the POST representation of a C<while> or C<until> loop.
 .sub 'while' :method :multi(_, ['PAST';'Op'])
     .param pmc node
     .param pmc options         :slurpy :named
-
-    .local string pasttype
-    pasttype = node.'pasttype'()
-
-    .local pmc ops
-    $P0 = get_hll_global ['POST'], 'Ops'
-    ops = $P0.'new'('node'=>node)
-
-    .local pmc exprpast, exprpost
-    .local pmc bodypast, bodypost
+    .local pmc exprpast, bodypast, nextpast
     exprpast = node[0]
     bodypast = node[1]
+    nextpast = node[2]
 
-    .local pmc looplabel, endlabel
-    $P0 = get_hll_global ['POST'], 'Label'
-    $S0 = concat pasttype, '_'
-    $S0 = self.'unique'($S0)
-    looplabel = $P0.'new'('result'=>$S0)
-    $S0 = concat $S0, '_end'
-    endlabel = $P0.'new'('result'=>$S0)
-
-    ##  determine if we need an 'if' or an 'unless'
-    ##  on the conditional (while => if, until => unless)
-    .local string iftype
-    iftype = 'if'
-    if pasttype == 'until' goto have_iftype
-    iftype = 'unless'
-  have_iftype:
-
-    .local string rtype, exprrtype
-    rtype = options['rtype']
-    exprrtype = 'r'
-    if rtype != 'v' goto have_exprrtype
-    exprrtype = '*'
-  have_exprrtype:
-
-    exprpost = self.'as_post'(exprpast, 'rtype'=>exprrtype)
+    .local pmc exprpost, bodypost, nextpost
+    exprpost = self.'as_post'(exprpast, 'rtype'=>'r')
 
     .local pmc arglist
     arglist = new 'ResizablePMCArray'
     $I0 = bodypast.'arity'()
-    unless $I0 goto have_arglist
+    if $I0 < 1 goto have_arglist
     push arglist, exprpost
   have_arglist:
-
-    ops.'push'(looplabel)
-    ops.'push'(exprpost)
-    ops.'push_pirop'(iftype, exprpost, endlabel)
     bodypost = self.'as_post'(bodypast, 'rtype'=>'v', 'arglist'=>arglist)
-    ops.'push'(bodypost)
-    ops.'push_pirop'('goto', looplabel)
-    ops.'push'(endlabel)
+
+    null nextpost
+    if null nextpast goto have_nextpost
+    nextpost = self.'as_post'(nextpast, 'rtype'=>'v')
+  have_nextpost:
+
+    .local string testop
+    testop = options['testop']
+    .local int bodyfirst
+    bodyfirst = options['bodyfirst']
+
+    .local pmc ops
+    ops = self.'loop_gen'('testop'=>testop, 'test'=>exprpost, 'body'=>bodypost, 'bodyfirst'=>bodyfirst, 'next'=>nextpost)
     ops.'result'(exprpost)
+    ops.'node'(node)
     .return (ops)
 .end
 
 .sub 'until' :method :multi(_, ['PAST';'Op'])
     .param pmc node
     .param pmc options         :slurpy :named
-    .tailcall self.'while'(node, options :flat :named)
+    .tailcall self.'while'(node, options :flat :named, 'testop'=>'if')
 .end
-
-=item repeat_while(PAST::Op node)
-
-=item repeat_until(PAST::Op node)
-
-Return the POST representation of a C<repeat_while> or C<repeat_until> loop.
-
-=cut
 
 .sub 'repeat_while' :method :multi(_, ['PAST';'Op'])
     .param pmc node
     .param pmc options         :slurpy :named
-
-    .local string pasttype
-    pasttype = node.'pasttype'()
-
-    .local pmc ops
-    $P0 = get_hll_global ['POST'], 'Ops'
-    ops = $P0.'new'('node'=>node)
-
-    .local pmc exprpast, exprpost
-    .local pmc bodypast, bodypost
-    exprpast = node[0]
-    bodypast = node[1]
-
-    .local pmc looplabel
-    $P0 = get_hll_global ['POST'], 'Label'
-    $S0 = concat pasttype, '_'
-    looplabel = $P0.'new'('name'=>$S0)
-
-    ##  determine if we need an 'if' or an 'unless'
-    ##  on the conditional (repeat_while => if, repeat_until => unless)
-    .local string iftype
-    iftype = 'if'
-    if pasttype != 'repeat_until' goto have_iftype
-    iftype = 'unless'
-  have_iftype:
-
-    .local string rtype, exprrtype
-    rtype = options['rtype']
-    exprrtype = 'r'
-    if rtype != 'v' goto have_exprrtype
-    exprrtype = '*'
-  have_exprrtype:
-
-    ops.'push'(looplabel)
-    bodypost = self.'as_post'(bodypast, 'rtype'=>'v')
-    ops.'push'(bodypost)
-    exprpost = self.'as_post'(exprpast, 'rtype'=>exprrtype)
-    ops.'push'(exprpost)
-    ops.'push_pirop'(iftype, exprpost, looplabel)
-    ops.'result'(exprpost)
-    .return (ops)
+    .tailcall self.'while'(node, options :flat :named, 'bodyfirst'=>1)
 .end
 
 .sub 'repeat_until' :method :multi(_, ['PAST';'Op'])
     .param pmc node
     .param pmc options         :slurpy :named
-    .tailcall self.'repeat_while'(node, options :flat :named)
+    .tailcall self.'while'(node, options :flat :named, 'testop'=>'if', 'bodyfirst'=>1)
 .end
 
 
@@ -1213,45 +1402,33 @@ by C<node>.
     .param pmc node
     .param pmc options         :slurpy :named
 
-    .local pmc ops
+    .local pmc ops, prepost, testpost
     $P0 = get_hll_global ['POST'], 'Ops'
-    ops = $P0.'new'('node'=>node)
+    ops      = $P0.'new'('node'=>node)
+    prepost  = $P0.'new'()
+    $S0      = self.'uniquereg'('P')
+    testpost = $P0.'new'('result'=>$S0)
 
-    .local pmc looplabel, nextlabel, endlabel, undeflabel
-    $P0 = get_hll_global ['POST'], 'Label'
-    $S0 = self.'unique'('for_')
-    looplabel = $P0.'new'('result'=>$S0)
-    $S1 = concat $S0, '_next'
-    nextlabel = $P0.'new'('result'=>$S1)
-    $S2 = concat $S0, '_end'
-    endlabel = $P0.'new'('result'=>$S2)
-    $S3 = concat $S0, '_undef_iter'
-    undeflabel = $P0.'new'('result'=>$S3)
-
-    .local pmc collpast, collpost
+    .local pmc collpast, bodypast
     collpast = node[0]
+    bodypast = node[1]
+
+    .local pmc collpost, testpost
     collpost = self.'as_post'(collpast, 'rtype'=>'P')
     ops.'push'(collpost)
 
-    .local string iter, next_handler
-    iter = self.'uniquereg'('P')
-    ops.'result'(iter)
+    ##  don't try to iterate undefined values
+    .local pmc undeflabel
+    $P0 = get_hll_global ['POST'], 'Label'
+    undeflabel = $P0.'new'('name'=>'for_undef_')
     $S0 = self.'uniquereg'('I')
     ops.'push_pirop'('defined', $S0, collpost)
     ops.'push_pirop'('unless', $S0, undeflabel)
-    next_handler = self.'uniquereg'('P')
-    ops.'push_pirop'('new', next_handler, "'ExceptionHandler'")
-    ops.'push_pirop'('set_addr', next_handler, nextlabel)
-    ops.'push_pirop'('callmethod', '"handle_types"', next_handler, .CONTROL_LOOP_NEXT)
-    ops.'push_pirop'('push_eh', next_handler)
-    ops.'push_pirop'('iter', iter, collpost)
-    ops.'push'(looplabel)
-    ops.'push_pirop'('unless', iter, endlabel)
 
-    .local pmc subpast
-    subpast = node[1]
+    ops.'push_pirop'('iter', testpost, collpost)
 
-    ##  determine the number of elements to take at each iteration
+    ##  determine the arity of the loop.  We check arity of the 'for'
+    ##  node itself, and if not set we use the arity of the body.
     .local int arity
     arity = 1
     $P0 = node.'arity'()
@@ -1260,37 +1437,34 @@ by C<node>.
     arity = $P0
     goto have_arity
   arity_child:
-    $P0 = subpast.'arity'()
+    $P0 = bodypast.'arity'()
     $I0 = defined $P0
     unless $I0 goto have_arity
     arity = $P0
   have_arity:
 
+    ##  build the argument list to pass to the body
     .local pmc arglist
     arglist = new 'ResizablePMCArray'
   arity_loop:
-    .local string nextval
-    nextval = self.'uniquereg'('P')
-    ops.'push_pirop'('shift', nextval, iter)
+    .local string nextarg
+    nextarg = self.'uniquereg'('P')
+    prepost.'push_pirop'('shift', nextarg, testpost)
     if arity < 1 goto arity_end
-    push arglist, nextval
+    push arglist, nextarg
     dec arity
     if arity > 0 goto arity_loop
   arity_end:
 
-    .local pmc subpost
-    subpast.'blocktype'('immediate')                       # FIXME
-    subpost = self.'as_post'(subpast, 'rtype'=>'P', 'arglist'=>arglist)
-    ops.'push'(subpost)
-    ops.'push_pirop'('goto', looplabel)
-    ops.'push'(nextlabel)
-    ops.'push_pirop'('.local pmc exception')
-    ops.'push_pirop'('.get_results (exception)')
-    ops.'push_pirop'('set', next_handler, 0)
-    ops.'push_pirop'('goto', looplabel)
-    ops.'push'(endlabel)
-    ops.'push_pirop'('pop_eh')
+    ##  now build the body itself
+    .local pmc bodypost
+    bodypost = self.'as_post'(bodypast, 'rtype'=>'v', 'arglist'=>arglist)
+
+    ##  generate the loop and return
+    $P0 = self.'loop_gen'('test'=>testpost, 'pre'=>prepost, 'body'=>bodypost)
+    ops.'push'($P0)
     ops.'push'(undeflabel)
+    ops.'result'(testpost)
     .return (ops)
 .end
 
@@ -1313,8 +1487,7 @@ to C<ResizablePMCArray> if not set.
     .local pmc returns
     returns = node.'returns'()
     if returns goto have_returns
-    returns = new 'String'
-    returns = 'ResizablePMCArray'
+    returns = box 'ResizablePMCArray'
   have_returns:
 
     .local pmc listpost, iter
@@ -1694,7 +1867,7 @@ node with a 'pasttype' of inline.
 
 =over 4
 
-=item as_post(PAST::Block node)
+=item as_post(PAST::Var node)
 
 Return the POST representation of a C<PAST::Var>.  Generally we
 redispatch to an appropriate handler based on the node's 'scope'
@@ -1993,8 +2166,7 @@ attribute.
     ops = call_on
     goto invocant_done
   use_self:
-    call_on = new 'String'
-    call_on = 'self'
+    call_on = box 'self'
     ops = $P0.'new'('node'=>node)
   invocant_done:
 

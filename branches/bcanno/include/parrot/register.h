@@ -80,6 +80,7 @@ void Parrot_clear_s(PARROT_INTERP)
         __attribute__nonnull__(1);
 
 PARROT_EXPORT
+PARROT_CANNOT_RETURN_NULL
 Parrot_Context * Parrot_context_ref_trace(PARROT_INTERP,
     ARGMOD(Parrot_Context *ctx),
     ARGIN(const char *file),
@@ -109,10 +110,9 @@ PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 Parrot_Context * Parrot_push_context(PARROT_INTERP,
-    ARGMOD(INTVAL *n_regs_used))
+    ARGIN(const INTVAL *n_regs_used))
         __attribute__nonnull__(1)
-        __attribute__nonnull__(2)
-        FUNC_MODIFIES(*n_regs_used);
+        __attribute__nonnull__(2);
 
 PARROT_EXPORT
 void Parrot_set_context_threshold(SHIM_INTERP, SHIM(Parrot_Context *ctx));
@@ -126,20 +126,51 @@ void destroy_context(PARROT_INTERP)
 PARROT_CANNOT_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
 Parrot_Context * Parrot_alloc_context(PARROT_INTERP,
-    ARGMOD(INTVAL *number_regs_used),
+    ARGIN(const INTVAL *number_regs_used),
     ARGIN_NULLOK(Parrot_Context *old))
         __attribute__nonnull__(1)
-        __attribute__nonnull__(2)
-        FUNC_MODIFIES(*number_regs_used);
+        __attribute__nonnull__(2);
 
 PARROT_CANNOT_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
 Parrot_Context * Parrot_set_new_context(PARROT_INTERP,
-    ARGMOD(INTVAL *number_regs_used))
+    ARGIN(const INTVAL *number_regs_used))
         __attribute__nonnull__(1)
-        __attribute__nonnull__(2)
-        FUNC_MODIFIES(*number_regs_used);
+        __attribute__nonnull__(2);
 
+#define ASSERT_ARGS_Parrot_clear_i __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp)
+#define ASSERT_ARGS_Parrot_clear_n __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp)
+#define ASSERT_ARGS_Parrot_clear_p __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp)
+#define ASSERT_ARGS_Parrot_clear_s __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp)
+#define ASSERT_ARGS_Parrot_context_ref_trace __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(ctx) \
+    || PARROT_ASSERT_ARG(file)
+#define ASSERT_ARGS_Parrot_free_context __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(ctx)
+#define ASSERT_ARGS_parrot_gc_context __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp)
+#define ASSERT_ARGS_Parrot_pop_context __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp)
+#define ASSERT_ARGS_Parrot_push_context __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(n_regs_used)
+#define ASSERT_ARGS_Parrot_set_context_threshold __attribute__unused__ int _ASSERT_ARGS_CHECK = 0
+#define ASSERT_ARGS_create_initial_context __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp)
+#define ASSERT_ARGS_destroy_context __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp)
+#define ASSERT_ARGS_Parrot_alloc_context __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(number_regs_used)
+#define ASSERT_ARGS_Parrot_set_new_context __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(number_regs_used)
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 /* HEADERIZER END: src/gc/register.c */
 

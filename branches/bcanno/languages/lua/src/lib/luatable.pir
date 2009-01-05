@@ -23,7 +23,7 @@ L<http://www.lua.org/manual/5.1/manual.html#5.5>.
 
 =cut
 
-.HLL 'Lua'
+.HLL 'lua'
 .loadlib 'lua_group'
 .namespace [ 'table' ]
 
@@ -505,10 +505,6 @@ the given order may have their relative positions changed by the sort.
 .end
 
 =back
-
-=head1 AUTHORS
-
-Francois Perrad
 
 =cut
 

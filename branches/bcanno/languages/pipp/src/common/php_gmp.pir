@@ -17,6 +17,8 @@ The good way is by a full NCI wrapper over the GMP library.
 
 =cut
 
+.HLL 'pipp'
+
 .include 'languages/pipp/src/common/php_MACRO.pir'
 
 .const string GMP_PMC          = 'BigInt'

@@ -35,10 +35,6 @@ See RT #47011.
 
 =over 4
 
-=item * C<pioctl> [post 0.5.1]
-
-See RT #48589.
-
 =item * C<store_global> [post 0.5.0]
 
 See RT #48016. Replace usage with set_[hll,root]_global variants.
@@ -47,22 +43,9 @@ See RT #48016. Replace usage with set_[hll,root]_global variants.
 
 See RT #48018. Replace usage with get_[hll,root]_global variants.
 
-=item * C<get_mro> [post 0.5.0]
-
-See RT #47976.
-
 =item * C<n_*> math opcode variants [post 0.7.1]
 
 See RT #58410.
-
-=item * C<open> opcode mode string [post 0.8.2]
-
-The C<open> opcode will change from Perl-style mode-strings to 'r' for read,
-'w' for write, 'a' for append, and 'p' for pipe.
-
-=item * C<infix> and C<n_infix> opcodes [post 0.8.2]
-
-These opcodes were only used by the old MMD system. See TT #7.
 
 =back
 
@@ -74,7 +57,7 @@ These opcodes were only used by the old MMD system. See TT #7.
 
 See RT #48014. This will be removed once all core PMCs have been updated.
 
-=item :anon and :vtable named parameters to add_method [post 0.8.2]
+=item * :anon and :vtable named parameters to add_method [post 0.8.2]
 
 If you want to override a vtable method/function when building a Class, then
 use the method C<add_vtable_override> instead of calling C<add_method> with
@@ -85,36 +68,6 @@ one or both of these flags.
 =head1 PIR syntax
 
 =over 4
-
-=item * old-style PASM registers [post 0.6.4]
-
-Old-style PASM registers without the C<$> character are deprecated; use
-PIR-style registers only.
-
-See RT #57638.
-
-=item * C<global> keyword [post 0.6.4]
-
-See RT #48016
-and RT #48018.
-
-=item * C<#line> [post 0.6.4]
-
-Will be replaced by C<.line> to be more consistent with other PIR syntax.
-
-See RT #45857, RT #43269, and RT #47141.
-
-=item * C<<.namespace <identifier> >> syntax [post 0.5.1]
-
-See RT #48737.
-
-=item * C<.namespace [ "a" .. "b" ]> [post 0.5.0]
-
-See RT #46715.
-
-=item * vtable name .constants and __vtable overrides [post 0.5.2]
-
-See RT #48877.
 
 =item * Assignment syntax with opcodes [post 0.8.2]
 
@@ -132,38 +85,18 @@ Will have to be:
     print $S0
     substr $P0, 1, 2, "x"
 
-=item * C<.return> in C<.begin_return> / C<.end_return> [post 0.7.2]
+=item * named class/pmc lookup in pir syntax such as new, isa, subclass, get_class, etc
 
-The C<.return> directive in a C<.begin_return> sequence will be replaced by
-the C<.set_return> directive. Likewise, C<.yield> in a C<.begin_yield>
-sequence will be replaced by C<.set_yield>.
+Class PMC name resolution will be the following.
 
-See RT #58980.
+if the arg is a STRING
+  Relative to the current Namespace
 
-=item * C<.arg> will become C<.set_arg> [post 0.7.2]
+if the arg is a ResizableStringArray
+  Relative to the current HLL Namespace
 
-In a C<.begin_call> sequence, the C<.arg> directive will be replaced by
-C<.set_arg>.
-
-See RT #58976.
-
-=item * C<.result> will become C<.get_result> [post 0.7.2]
-
-In a C<.begin_call> sequence, the C<.result> direcive will be replaced by
-the more descriptive C<.get_result>.
-
-See RT #58978.
-
-See RT #60592.
-
-=item * Exception Handlers won't automatically be disabled [post 0.8.1]
-
-Exception handlers won't be automatically disabled after 0.8.1.
-Any exception handlers that currently rely on this feature will need to
-either be more specific about what they catch or rethrow exceptions they
-don't recognize.
-
-See RT #60640.
+if the arg is a Namespace or Class PMC
+  The passed in class or the class attatched to the passed in namespace.
 
 =back
 
@@ -173,9 +106,7 @@ See RT #60640.
 
 =item Old-style MMD functions [post 0.7.1]
 
-Parrot_mmd_add_function, mmd_expand_x, mmd_expand_y, Parrot_mmd_register,
-Parrot_mmd_register_sub, Parrot_mmd_destroy, Parrot_MMD_search_default_infix,
-Parrot_mmd_search_default, mmd_cvt_to_types.
+mmd_cvt_to_types.
 
 See RT #60626.
 
@@ -186,16 +117,22 @@ Caching that only ever applied to 4 opcodes, one of which has now been removed.
 The files (and all functions in them) are deprecated, and will be removed. See
 RT #60048.
 
+=item * Subs marked with C<:vtable>/C<:method> aren't in namespace [post 0.8.2]
+
+Subs marked with C<:vtable> or C<:method> flags are no longer given a
+namespace entry by default.  Use the C<:nsentry> flag to cause this
+to happen.  See RT #60586 and RT #53302.
+
 =back
 
-=head1 Compiler Tools
+=head1 Compiler tools
 
 =over 4
 
-=item 'get_string', 'get_bool', etc. named vtable functions [post 0.8.1]
+=item P6protoobject stringification [post 0.9.0]
 
-All of the named vtable functions in PCT and PGE will lose
-their names and effectively become anonymous.  See RT #60384.
+Stringification of protoobjects will return the full name of the type
+and parentheses, per Synopsis 12.
 
 =back
 

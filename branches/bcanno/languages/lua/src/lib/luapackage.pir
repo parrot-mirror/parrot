@@ -17,7 +17,7 @@ L<http://www.lua.org/manual/5.1/manual.html#5.3>.
 
 =cut
 
-.HLL 'Lua'
+.HLL 'lua'
 .loadlib 'lua_group'
 .namespace [ 'package' ]
 
@@ -439,8 +439,6 @@ any loader for the module, then C<require> signals an error.
   L4:
     new $P1, 'LuaNil'
     $P1 = $P0(modname)  # call it
-    $I0 = isa $P1 , 'LuaClosure'
-    if $I0 goto L5
     $I0 = isa $P1 , 'LuaFunction'
     if $I0 goto L5
     $I0 = isa $P1 , 'LuaString'
@@ -563,10 +561,6 @@ environment. To be used as an option to function C<module>.
 .end
 
 =back
-
-=head1 AUTHORS
-
-Francois Perrad
 
 =cut
 

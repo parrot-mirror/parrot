@@ -29,6 +29,15 @@ for doing syntax analysis on c99 programs.
     .return ()
 .end
 
+.sub 'clone' :method
+    $P0 = clone self
+    .return ($P0)
+.end
+
+.sub 'item' :method
+    .return (self)
+.end
+
 =head1 NCIGENAST Node types
 
 =head2 NCIGENAST::Node
@@ -148,6 +157,12 @@ parameter, and array/hash variables respectively.
 =cut
 
 .namespace [ 'NCIGENAST';'VarDecl' ]
+
+.sub 'source' :method
+    .param pmc value           :optional
+    .param int has_value       :opt_flag
+    .tailcall self.'attr'('source', value, has_value)
+.end
 
 .sub 'type' :method
     .param pmc value           :optional

@@ -41,6 +41,12 @@ SOURCES = \
   src/gen_grammar.pir \
   src/gen_actions.pir \
   src/builtin/builtins.pir \
+  src/classes/Object.pir \
+  src/classes/Null.pir \
+  src/classes/Boolean.pir \
+  src/classes/Number.pir \
+  src/classes/String.pir \
+  src/classes/Undefined.pir \
 
 #PMCS = \
 #  jsobject \
@@ -127,7 +133,7 @@ help:
 	@echo ""
 
 test: all
-	$(PERL) t/harness t
+	$(PERL) t/harness
 
 testclean:
 	$(RM_F) "t/*.js" "t/*.out"

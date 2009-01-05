@@ -28,7 +28,7 @@ L<http://www.lua.org/manual/5.1/manual.html#5.9>.
 
 =cut
 
-.HLL 'Lua'
+.HLL 'lua'
 .loadlib 'lua_group'
 .namespace [ 'debug' ]
 
@@ -387,10 +387,6 @@ STILL INCOMPLETE (see traceback in lua.pmc).
 
 
 =back
-
-=head1 AUTHORS
-
-Francois Perrad
 
 =cut
 

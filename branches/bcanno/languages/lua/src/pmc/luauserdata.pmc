@@ -56,7 +56,7 @@ pmclass LuaUserdata
     dynpmc
     need_ext
     group    lua_group
-    hll      Lua {
+    hll      lua {
 
     ATTR PMC    *val;
     ATTR PMC    *env;
@@ -204,7 +204,7 @@ The C<==> operation. Compares reference (not in depth).
 =cut
 
 */
-    MULTI INTVAL is_equal(LuaUserdate value) {
+    MULTI INTVAL is_equal(LuaUserdata value) {
         PMC *meth = find_meth(INTERP, SELF, "__eq");
         if (meth) {
             PMC *retval = Parrot_runops_fromc_args(INTERP, meth, "PPP",
@@ -377,10 +377,6 @@ The C<==> operation. Compares reference (not in depth).
 /*
 
 =back
-
-=head1 AUTHORS
-
-Francois Perrad.
 
 =cut
 

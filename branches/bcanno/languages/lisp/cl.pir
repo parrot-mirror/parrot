@@ -44,8 +44,7 @@ cl.pir - Set up the package 'COMMON-LISP'
     .DEFVAR(symbol, package, "*STANDARD-INPUT*", value)
 
     getstdout stream
-    .local int res
-    pioctl res, stream, 3, 0
+    stream.'buffer_type'('unbuffered')
     .STREAM(value,stream)
     .DEFVAR(symbol, package, "*STANDARD-OUTPUT*", value)
 
@@ -312,7 +311,7 @@ DONE:
   if k > leng goto BOUNDS
   if k < 0 goto BOUNDS
 
-  sstr = str[k]
+  sstr = substr str, k, 1
   retval = new 'LispString'
   retval = sstr
   goto DONE

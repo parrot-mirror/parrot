@@ -326,7 +326,8 @@ CODE
 /End of file reached/
 OUTPUT
 
-pir_error_output_like( <<'CODE', <<'OUTPUT', 'unterminated macro 2' );
+my @todo = (($^O =~ /darwin/i) ? (todo => 'Darwin segfault -- RT #60926') : ());
+pir_error_output_like( <<'CODE', <<'OUTPUT', 'unterminated macro 2', @todo );
 .sub test :main
 .macro M(A, B)
   print .A
@@ -466,7 +467,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', 'test that macros labels names can have the
 CODE
 OUTPUT
 
-pir_error_output_like( <<'CODE', <<'OUTPUT', 'invalid label syntax', todo => 'RT #47978, RT #51104');
+pir_error_output_like( <<'CODE', <<'OUTPUT', 'invalid label syntax' );
 .sub test :main
     .macro m()
         .local $iter_loop:

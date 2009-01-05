@@ -34,11 +34,11 @@ assembly suppport.
  */
 /*
 
-=item C<void * parrot_i386_cmpxchg>
+=item C<void * parrot_i386_cmpxchg (ptr, expect, update)>
 
 The CMPXCHG assembly instruction is a single cycle x86 instruction
-that compares C<expect> and C<update>. If they are equal, sets
-C<expect> to C<update>. Otherwise sets C<update> to C<ptr>.
+that compares C<expect> and C<*ptr>. If they are equal, sets
+C<*ptr> to C<update>. Otherwise sets C<expect> to C<*ptr>.
 
 =cut
 
@@ -48,9 +48,10 @@ C<expect> to C<update>. Otherwise sets C<update> to C<ptr>.
 PARROT_EXPORT
 PARROT_CANNOT_RETURN_NULL
 void *
-parrot_i386_cmpxchg(void *volatile *ptr, void *expect,
-                                        void *update)
+parrot_i386_cmpxchg(ARGMOD(void *volatile *ptr), ARGIN_NULLOK(void *expect),
+                                        ARGIN_NULLOK(void *update))
 {
+    ASSERT_ARGS(parrot_i386_cmpxchg);
 #if defined(PARROT_HAS_X86_64_GCC_CMPXCHG)
     __asm__ __volatile__("lock\n"
                          "cmpxchgq %1,%2":"=a"(expect):"q"(update), "m"(*ptr),
@@ -81,8 +82,9 @@ C<l> = C<result>;
 
 PARROT_EXPORT
 long
-parrot_i386_xadd(volatile long *l, long amount)
+parrot_i386_xadd(ARGIN(volatile long *l), long amount)
 {
+    ASSERT_ARGS(parrot_i386_xadd);
     long result = amount;
 #if defined(PARROT_HAS_X86_64_GCC_CMPXCHG)
     __asm__ __volatile__("lock\n" "xaddq %0, %1" : "=r"(result), "=m"(*l) :

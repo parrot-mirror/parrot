@@ -13,7 +13,7 @@ See "WMLScript Reference UP.SDK R4.B3 - October 1999".
 
 =cut
 
-.HLL 'WMLScript'
+.HLL 'wmlscript'
 .loadlib 'wmls_group'
 .loadlib 'wmls_ops'
 
@@ -53,8 +53,7 @@ Number or invalid.
     $S0 = str
     print $S0
     $I0 = length $S0
-    new res, 'WmlsInteger'
-    set res, $I0
+    box res, $I0
     goto L2
   L1:
     new res, 'WmlsInvalid'
@@ -84,11 +83,9 @@ Number or invalid.
     $I0 = isa str, 'WmlsInvalid'
     if $I0 goto L1
     $S0 = str
-    print $S0
-    print "\n"
+    say $S0
     $I0 = length $S0
-    new res, 'WmlsInteger'
-    set res, $I0
+    box res, $I0
     goto L2
   L1:
     new res, 'WmlsInvalid'

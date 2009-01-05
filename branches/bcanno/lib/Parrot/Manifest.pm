@@ -151,7 +151,6 @@ sub _get_special {
         RESPONSIBLE_PARTIES                             [main]doc
         TODO                                            [main]doc
         parrot-config                                   [main]bin
-        docs/ROADMAP.pod                                [devel]doc
         docs/compiler_faq.pod                           [devel]doc
         docs/configuration.pod                          [devel]doc
         docs/debug.pod                                  [devel]doc
@@ -171,7 +170,6 @@ sub _get_special {
         examples/sdl/raw_pixels.pir                     [devel]
         languages/t/harness                             []
         runtime/parrot/dynext/README                    [devel]doc
-        runtime/parrot/include/DWIM.pir                 [devel]doc
         runtime/parrot/include/README                   [devel]doc
         src/call_list.txt                               [devel]doc
         src/ops/ops.num                                 [devel]

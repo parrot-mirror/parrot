@@ -16,7 +16,7 @@ see F<runtime/parrot/library/OpenGL.pir>.
 
 =cut
 
-.HLL 'Lua'
+.HLL 'lua'
 .loadlib 'lua_group'
 .namespace [ 'gl_binding' ]
 
@@ -808,10 +808,6 @@ LIST
 .end
 
 =back
-
-=head1 AUTHORS
-
-Francois Perrad
 
 =cut
 

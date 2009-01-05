@@ -8,7 +8,7 @@ t/pmc/number.t - LuaNumber
 
 =head1 SYNOPSIS
 
-    % perl -I../../lib t/pmc/number.t
+    % perl t/pmc/number.t
 
 =head1 DESCRIPTION
 
@@ -19,8 +19,10 @@ Tests C<LuaNumber> PMC
 
 use strict;
 use warnings;
+use FindBin;
+use lib "$FindBin::Bin/../../../../lib";
 
-use Parrot::Test tests => 11;
+use Parrot::Test tests => 13;
 use Test::More;
 
 pir_output_is( << 'CODE', << 'OUTPUT', 'check inheritance' );
@@ -151,7 +153,7 @@ boolean
 OUTPUT
 
 pir_output_is( << 'CODE', << 'OUTPUT', 'check HLL' );
-.HLL 'Lua'
+.HLL 'lua'
 .loadlib 'lua_group'
 .sub _main
     .local pmc pmc1
@@ -171,7 +173,7 @@ CODE
 OUTPUT
 
 pir_output_is( << 'CODE', << 'OUTPUT', 'check HLL (autoboxing)' );
-.HLL 'Lua'
+.HLL 'lua'
 .loadlib 'lua_group'
 .sub _main
     .local pmc pmc1
@@ -192,7 +194,7 @@ CODE
 OUTPUT
 
 pir_output_is( << 'CODE', << 'OUTPUT', 'check HLL & .const' );
-.HLL 'Lua'
+.HLL 'lua'
 .loadlib 'lua_group'
 .sub _main
     .const 'LuaNumber' cst1 = '3.14'
@@ -208,8 +210,44 @@ CODE
 1
 OUTPUT
 
+pir_output_is( << 'CODE', << 'OUTPUT', 'check box float' );
+.HLL 'lua'
+.loadlib 'lua_group'
+.sub _main
+    .local pmc pmc1
+    box pmc1, 3.14
+    print pmc1
+    print "\n"
+    .local int bool1
+    bool1 = isa pmc1, 'LuaNumber'
+    print bool1
+    print "\n"
+.end
+CODE
+3.14
+1
+OUTPUT
+
+pir_output_is( << 'CODE', << 'OUTPUT', 'check box integer' );
+.HLL 'lua'
+.loadlib 'lua_group'
+.sub _main
+    .local pmc pmc1
+    box pmc1, -2
+    print pmc1
+    print "\n"
+    .local int bool1
+    bool1 = isa pmc1, 'LuaNumber'
+    print bool1
+    print "\n"
+.end
+CODE
+-2
+1
+OUTPUT
+
 pir_output_is( << 'CODE', << 'OUTPUT', 'check tostring' );
-.HLL 'Lua'
+.HLL 'lua'
 .loadlib 'lua_group'
 .sub _main
     .const 'LuaNumber' cst1 = '3.14'
@@ -229,7 +267,7 @@ string
 OUTPUT
 
 pir_output_is( << 'CODE', << 'OUTPUT', 'check tonumber' );
-.HLL 'Lua'
+.HLL 'lua'
 .loadlib 'lua_group'
 .sub _main
     .const 'LuaNumber' cst1 = '3.14'

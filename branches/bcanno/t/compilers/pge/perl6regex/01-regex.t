@@ -81,6 +81,7 @@ Description of the test.
     push test_files, 'rx_captures'
     push test_files, 'rx_modifiers'
     push test_files, 'rx_syntax'
+    push test_files, 'rx_goal'
 
     .local pmc interp     # a handle to our interpreter object.
                interp = getinterp
@@ -136,7 +137,7 @@ Description of the test.
     test_file = test_dir . test_name
 
     # Open the test file
-    file_handle = open test_file, '<'
+    file_handle = open test_file, 'r'
     $S0 = typeof file_handle
     if $S0 == 'Undef' goto bad_file
 

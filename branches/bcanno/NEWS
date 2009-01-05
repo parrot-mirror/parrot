@@ -1,14 +1,85 @@
 # $Id$
 
-New in December 2008 Release
-- Deprecations
-  + PARROT_API is now PARROT_EXPORT
-  + :lexid is now :subid
+New in January 2009 release
 - Compilers
+  + IMCC
+    - removed keyed string indexing, e.g. $S0[1].
+    - removed slice syntax, e.g. $P0[1..2]
+    - removed .namespace <ident>/.endnamespace <ident> pair
+  + PIRC
+    - refactoring of various data structures
+    - various bug fixes and updates
+    - basic bytecode generation for calling conventions
+- Languages
+  + Pipp
+    - added support for 'elsif'
+    - added support for 'do-while'
+- Miscellaneous
+  + Infrastructure
+    - 'make smoke' now generates Smolder reports sent to
+      http://smolder.plusthree.com/app/public_projects/smoke_reports/8
+
+
+New in 0.8.2
+- Implementation
+  + fixed lexical semantics
+  + added the 'capture_lex' opcode
+  + added automatic resume for nonfatal exceptions
+  + added multidispatch cache
+  + applied miscellaneous performance improvements, including startup time
+  + fixed several bugs and leaks found by Coverity Scan
+  + removed race conditions from parallel testing
+- Compilers
+  + IMCC
+    - removed undocumented .param int <stringc> => <ident> syntax
+    - .line directive now only takes an integer argument
+    - new .file directive to specify the file name being compiled
+  + PCT
+    - properly handles lexical generation and closure semantics
+    - uses :subid instead of name lookups to reference PAST::Block nodes
+    - added PAST::Control node type (exception handlers)
+  + PGE
+    - add support for <?{{...}}> and <!{{...}}> assertions
+    - Match objects use Capture PMC instead of Capture_PIR
   + PIRC
     - add macro handling to PASM mode
     - disable vanilla register allocation in PASM mode, but do allow optimization
     - add tests and bug fixes
+    - first bits of bytecode generation. No sub calling/returning yet.
+- Languages
+  + Rakudo
+    - fixed lexical handling and recursion
+    - refactored subtypes implementation
+    - support for quotes with multi-character delimiters
+    - implemented list slices (Positional role)
+    - list assignment
+    - reduction meta operators
+    - hyper meta operators
+    - cross meta operators
+    - more builtin functions
+    - added Nil type
+    - basic support for protos
+    - iterator on filehandle objects
+    - basic support for exception handlers
+    - warn
+  + Lua
+    - added complex & mathx libraries
+    - merged LuaClosure & LuaFunction PMC
+  + Pipp
+    - added support for a return value from user defined functions
+    - added incomplete implemention of 'require_once'
+  + Ecmascript
+    - parser fixes, parses spidermonkey's top level test/shell.js
+- Deprecations
+  + PARROT_API is now PARROT_EXPORT
+  + PIR
+    - :lexid is now :subid
+    - .arg is now .set_arg
+    - .result is now .get_result
+    - .yield (in .begin/end_yield) is now .set_yield
+    - .return (in .begin/end_return) is now .set_return
+    - .namespace x / .endnamespace x syntax is removed
+  + Capture_PIR (runtime/parrot/library/Parrot/Capture_PIR.pir)
 
 New in 0.8.1
 - Implementation
@@ -41,8 +112,8 @@ New in 0.8.1
     - added initial support for MAIN subs
     - added .PARROT method
   + Pipp
-    - added some predefined constants.
-    - added implemention of the function basename().
+    - added some predefined constants
+    - added implemention of the function basename()
   + Cardinal (Ruby)
     - Added initial support for the classes Proc, Continuation, Queue, Dir, File, and FileStat
     - fixed various minor bugs
@@ -76,6 +147,7 @@ New in 0.8.1
   + Tests
     - further improvements to parallel tests
     - tests no longer leave filesystem breadcrumbs
+    - more thorough testing of Parrot::Test itself
 
 New in 0.8.0
 - Implementation

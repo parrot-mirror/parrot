@@ -146,30 +146,11 @@ inline op splice(invar PMC, invar PMC, in INT, in INT) {
 }
 
 
-=item B<slice>(out PMC, invar PMC, in KEY)
-
-Return a new Iterator PMC $1 for aggregate $2 and Slice PMC $3.
-
-=item B<slice>(out PMC, invar PMC, in KEY, inconst INT)
-
-Return a new list PMC $1 for aggregate $2 and Slice PMC $3.
-
-This is a Python opcode. Range is i <= k < j. $4 must be 1.
-May change and move to python.ops.
-
 =item B<iter>(out PMC, invar PMC)
 
 Return a new Iterator PMC $1 for aggregate $2.
 
 =cut
-
-inline op slice(out PMC, invar PMC, in KEY) :base_core {
-    $1 = VTABLE_slice(interp, $2, $3, 0);
-}
-
-inline op slice(out PMC, invar PMC, in KEY, inconst INT) :python {
-    $1 = VTABLE_slice(interp, $2, $3, $4);
-}
 
 inline op iter(out PMC, invar PMC) :base_core {
     $1 = VTABLE_get_iter(interp, $2);
@@ -296,17 +277,6 @@ inline op pow(out NUM, in NUM, in INT) :base_core {
 }
 
 ########################################
-
-=item B<add_io_event>(invar PMC, invar PMC, invar PMC, inconst INT)
-
-Call the sub $2 for PIO $1 with user data $3 on ready state of $4.
-RT#42376 The only handled $4 = IO_THR_MSG_ADD_SELECT_RD aka 2 for now.
-
-=cut
-
-op add_io_event(invar PMC, invar PMC, invar PMC, inconst INT) {
-    Parrot_event_add_io_event(interp, $1, $2, $3, $4);
-}
 
 =item B<need_finalize>(invar PMC)
 

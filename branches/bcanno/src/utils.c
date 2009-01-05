@@ -49,8 +49,14 @@ static long _lrand48(void);
 static long _mrand48(void);
 static long _nrand48(_rand_buf buf);
 static void _srand48(long seed);
-static INTVAL COMPARE(PARROT_INTERP, void *a, void *b, PMC *cmp)
-        __attribute__nonnull__(1);
+static INTVAL COMPARE(PARROT_INTERP,
+    ARGIN(void *a),
+    ARGIN(void *b),
+    ARGIN(PMC *cmp))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3)
+        __attribute__nonnull__(4);
 
 static void next_rand(_rand_buf X);
 static void process_cycle_without_exit(
@@ -63,7 +69,23 @@ static void rec_climb_back_and_mark(
     ARGIN(parrot_prm_context* c))
         __attribute__nonnull__(2);
 
-static void swap(void **x, void **y);
+#define ASSERT_ARGS__drand48 __attribute__unused__ int _ASSERT_ARGS_CHECK = 0
+#define ASSERT_ARGS__erand48 __attribute__unused__ int _ASSERT_ARGS_CHECK = 0
+#define ASSERT_ARGS__jrand48 __attribute__unused__ int _ASSERT_ARGS_CHECK = 0
+#define ASSERT_ARGS__lrand48 __attribute__unused__ int _ASSERT_ARGS_CHECK = 0
+#define ASSERT_ARGS__mrand48 __attribute__unused__ int _ASSERT_ARGS_CHECK = 0
+#define ASSERT_ARGS__nrand48 __attribute__unused__ int _ASSERT_ARGS_CHECK = 0
+#define ASSERT_ARGS__srand48 __attribute__unused__ int _ASSERT_ARGS_CHECK = 0
+#define ASSERT_ARGS_COMPARE __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(a) \
+    || PARROT_ASSERT_ARG(b) \
+    || PARROT_ASSERT_ARG(cmp)
+#define ASSERT_ARGS_next_rand __attribute__unused__ int _ASSERT_ARGS_CHECK = 0
+#define ASSERT_ARGS_process_cycle_without_exit __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(c)
+#define ASSERT_ARGS_rec_climb_back_and_mark __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(c)
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 /* HEADERIZER END: static */
 
@@ -100,6 +122,7 @@ PARROT_CONST_FUNCTION
 INTVAL
 intval_mod(INTVAL i2, INTVAL i3)
 {
+    ASSERT_ARGS(intval_mod);
     INTVAL z = i3;
 
     if (z == 0)
@@ -146,20 +169,21 @@ PARROT_CONST_FUNCTION
 FLOATVAL
 floatval_mod(FLOATVAL n2, FLOATVAL n3)
 {
+    ASSERT_ARGS(floatval_mod);
 #ifdef __LCC__
 
-  /* Another workaround for buggy code generation in the lcc compiler-
-   * adding a temporary variable makes it pass the test.
-   */
-  const FLOATVAL temp = n3 * floor(n2 / n3);
+    /* Another workaround for buggy code generation in the lcc compiler-
+     * adding a temporary variable makes it pass the test.
+     */
+    const FLOATVAL temp = n3 * floor(n2 / n3);
 
-  return !FLOAT_IS_ZERO(n3)
-     ? (n2 - temp)
-     : n2;
+    return !FLOAT_IS_ZERO(n3)
+      ? (n2 - temp)
+      : n2;
 #else
-  return !FLOAT_IS_ZERO(n3)
-     ? (n2 - n3 * floor(n2 / n3))
-     : n2;
+    return !FLOAT_IS_ZERO(n3)
+      ? (n2 - n3 * floor(n2 / n3))
+      : n2;
 #endif
 }
 
@@ -212,6 +236,7 @@ Returns the next random number in C<X>.
 static void
 next_rand(_rand_buf X)
 {
+    ASSERT_ARGS(next_rand);
     unsigned short lo, mid, hi;
     unsigned int t;
 
@@ -244,6 +269,7 @@ Returns a C<double> in the interval C<[0.0, 1.0)>.
 static FLOATVAL
 _erand48(_rand_buf buf)
 {
+    ASSERT_ARGS(_erand48);
     FLOATVAL r;
     next_rand(buf);
     r = ((buf[0] / 65536.0 + buf[1]) / 65536.0 + buf[2]) / 65536.0;
@@ -263,6 +289,7 @@ Returns a C<double> in the interval C<[0.0, 1.0)>.
 static FLOATVAL
 _drand48(void)
 {
+    ASSERT_ARGS(_drand48);
     return _erand48(last_rand);
 }
 
@@ -279,6 +306,7 @@ Returns a C<long> in the interval C<[-2^31, 2^31)>.
 static long
 _jrand48(_rand_buf buf)
 {
+    ASSERT_ARGS(_jrand48);
     long ret;
     next_rand(buf);
     ret = buf[2] << 16 | buf[1];
@@ -298,6 +326,7 @@ Returns a C<long> in the interval C<[0, 2^31)>.
 static long
 _nrand48(_rand_buf buf)
 {
+    ASSERT_ARGS(_nrand48);
     return _jrand48(buf) & 0x7fffffff;
 }
 
@@ -314,6 +343,7 @@ Returns a C<long> in the interval C<[0, 2^31)>.
 static long
 _lrand48(void)
 {
+    ASSERT_ARGS(_lrand48);
     return _nrand48(last_rand);
 }
 
@@ -330,6 +360,7 @@ Returns a C<long> in the interval C<[-2^31, 2^31)>.
 static long
 _mrand48(void)
 {
+    ASSERT_ARGS(_mrand48);
     return _jrand48(last_rand);
 }
 
@@ -347,6 +378,7 @@ bits are set to the arbitrary value 0x330e.
 static void
 _srand48(long seed)
 {
+    ASSERT_ARGS(_srand48);
     last_rand[0] = SEED_LO;
     last_rand[1] = (unsigned short)(seed & 0xffff);
     last_rand[2] = (unsigned short)((seed >> 16) & 0xffff);
@@ -391,6 +423,7 @@ PARROT_EXPORT
 FLOATVAL
 Parrot_float_rand(INTVAL how_random)
 {
+    ASSERT_ARGS(Parrot_float_rand);
     UNUSED(how_random);
 
     return _drand48();          /* [0.0..1.0] */
@@ -412,6 +445,7 @@ PARROT_EXPORT
 INTVAL
 Parrot_uint_rand(INTVAL how_random)
 {
+    ASSERT_ARGS(Parrot_uint_rand);
     UNUSED(how_random);
 
     return _lrand48();          /* [0..2^31] */
@@ -433,6 +467,7 @@ PARROT_EXPORT
 INTVAL
 Parrot_int_rand(INTVAL how_random)
 {
+    ASSERT_ARGS(Parrot_int_rand);
     UNUSED(how_random);
 
     return _mrand48();          /* [-2^31..2^31] */
@@ -454,6 +489,7 @@ PARROT_EXPORT
 INTVAL
 Parrot_range_rand(INTVAL from, INTVAL to, INTVAL how_random)
 {
+    ASSERT_ARGS(Parrot_range_rand);
     return (INTVAL)(from + ((double)(to - from))
                      * Parrot_float_rand(how_random));
 }
@@ -472,6 +508,7 @@ PARROT_EXPORT
 void
 Parrot_srand(INTVAL seed)
 {
+    ASSERT_ARGS(Parrot_srand);
     _srand48(seed);
 }
 
@@ -505,9 +542,8 @@ PARROT_CANNOT_RETURN_NULL
 PMC*
 tm_to_array(PARROT_INTERP, ARGIN(const struct tm *tm))
 {
+    ASSERT_ARGS(tm_to_array);
     PMC * const Array = pmc_new(interp, enum_class_Array);
-
-    PARROT_ASSERT(tm);
 
     VTABLE_set_integer_native(interp, Array, 9);
     VTABLE_set_integer_keyed_int(interp, Array, 0, tm->tm_sec);
@@ -542,6 +578,7 @@ INTVAL
 Parrot_byte_index(SHIM_INTERP, ARGIN(const STRING *base),
         ARGIN(const STRING *search), UINTVAL start_offset)
 {
+    ASSERT_ARGS(Parrot_byte_index);
     const char * const str_start  = base->strstart;
     const INTVAL       str_len    = base->strlen;
     const char * const search_str = search->strstart;
@@ -589,6 +626,7 @@ INTVAL
 Parrot_byte_rindex(SHIM_INTERP, ARGIN(const STRING *base),
         ARGIN(const STRING *search), UINTVAL start_offset)
 {
+    ASSERT_ARGS(Parrot_byte_rindex);
     const INTVAL searchlen          = search->strlen;
     const char * const search_start = search->strstart;
     UINTVAL max_possible_offset     = (base->strlen - search->strlen);
@@ -636,6 +674,7 @@ case marks it, and set node_index as its backup.
 static void
 rec_climb_back_and_mark(int node_index, ARGIN(parrot_prm_context* c))
 {
+    ASSERT_ARGS(rec_climb_back_and_mark);
     const int node = c->dest_regs[node_index];
     const int pred = c->src_regs[node_index];
     const int pred_index = c->reg_to_index[pred];
@@ -677,6 +716,7 @@ For instance: 1-->2, 2-->3, 3-->1
 static void
 process_cycle_without_exit(int node_index, ARGIN(parrot_prm_context* c))
 {
+    ASSERT_ARGS(process_cycle_without_exit);
     const int pred = c->src_regs[node_index];
 
     /* let's try the alternate move function*/
@@ -759,6 +799,7 @@ Parrot_register_move(PARROT_INTERP,
         reg_move_func mov_alt,
         ARGIN(void *info))
 {
+    ASSERT_ARGS(Parrot_register_move);
     int i;
     int max_reg       = 0;
     int* nb_succ      = NULL;
@@ -838,23 +879,17 @@ Parrot_register_move(PARROT_INTERP,
     mem_sys_free(backup);
 }
 
-/* TODO: Macroize swap and COMPARE */
-static void
-swap(void **x, void **y)
-{
-    void *t = *x;
-    *x      = *y;
-    *y      =  t;
-}
+typedef INTVAL (*sort_func_t)(PARROT_INTERP, void *, void *);
 
-typedef INTVAL (*sort_func_t)(PARROT_INTERP, void*, void*);
-
+/* TODO: Macroize COMPARE */
+/* This is an awfully expensive function to call, what with all the */
+/* comparisons that never change. We ought to precompute everything. */
 static INTVAL
-COMPARE(PARROT_INTERP, void *a, void *b, PMC *cmp)
+COMPARE(PARROT_INTERP, ARGIN(void *a), ARGIN(void *b), ARGIN(PMC *cmp))
 {
-    if (PMC_IS_NULL(cmp)) {
-        return VTABLE_cmp(interp, (PMC*)a, (PMC*)b);
-    }
+    ASSERT_ARGS(COMPARE);
+    if (PMC_IS_NULL(cmp))
+        return VTABLE_cmp(interp, (PMC *)a, (PMC *)b);
 
     if (cmp->vtable->base_type == enum_class_NCI) {
         const sort_func_t f = (sort_func_t)D2FPTR(PMC_struct_val(cmp));
@@ -866,17 +901,21 @@ COMPARE(PARROT_INTERP, void *a, void *b, PMC *cmp)
 
 
 void
-Parrot_quicksort(PARROT_INTERP, void **data, UINTVAL n, PMC *cmp)
+Parrot_quicksort(PARROT_INTERP, ARGMOD(void **data), UINTVAL n, ARGIN(PMC *cmp))
 {
+    ASSERT_ARGS(Parrot_quicksort);
     while (n > 1) {
         UINTVAL i, j, ln, rn;
+        void *temp;
 
-        swap(&data[0], &data[n/2]);
+        /* Swap */
+        temp      = data[0];
+        data[0]   = data[n/2];
+        data[n/2] = temp;
 
         for (i = 0, j = n; ;) {
             do
                 --j;
-
             while (j > 0 && COMPARE(interp, data[j], data[0], cmp) > 0);
 
             do
@@ -886,10 +925,16 @@ Parrot_quicksort(PARROT_INTERP, void **data, UINTVAL n, PMC *cmp)
             if (i >= j)
                 break;
 
-            swap(&data[i], &data[j]);
+            /* Swap */
+            temp    = data[i];
+            data[i] = data[j];
+            data[j] = temp;
         }
 
-        swap(&data[j], &data[0]);
+        /* Swap */
+        temp    = data[j];
+        data[j] = data[0];
+        data[0] = temp;
 
         ln = j;
         rn = n - ++j;

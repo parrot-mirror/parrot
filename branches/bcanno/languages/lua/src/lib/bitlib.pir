@@ -20,7 +20,7 @@ that can be used in bitwise operations, and the following functions:
 
 =cut
 
-.HLL 'Lua'
+.HLL 'lua'
 .loadlib 'lua_group'
 .namespace [ 'bitlib' ]
 
@@ -260,10 +260,6 @@ returns C<a> shifted arithmetically right C<b> places
 
 
 =back
-
-=head1 AUTHORS
-
-Francois Perrad
 
 =cut
 

@@ -19,7 +19,7 @@ See on L<http://www.inf.puc-rio.br/~roberto/lpeg.html#intro>
 
 =cut
 
-.HLL 'Lua'
+.HLL 'lua'
 .loadlib 'lua_group'
 .namespace [ 'lpeg' ]
 
@@ -1192,10 +1192,6 @@ L<http://en.wikipedia.org/wiki/Parsing_expression_grammar>
 L<http://pdos.csail.mit.edu/%7Ebaford/packrat/popl04/peg-popl04.pdf>
 
 =back
-
-=head1 AUTHORS
-
-Francois Perrad
 
 =cut
 

@@ -68,7 +68,7 @@ src/builtins/cmp.pir - Perl6 comparison builtins
 .end
 
 
-.sub 'infix:<=>'
+.sub 'infix:<=>' :multi(_,_)
     .param pmc a
     .param pmc b
     $I0 = cmp_num a, b
@@ -140,7 +140,7 @@ src/builtins/cmp.pir - Perl6 comparison builtins
 .end
 
 
-.sub 'infix:cmp'
+.sub 'infix:cmp' :multi(_,_)
     .param pmc a
     .param pmc b
     $I0 = cmp a, b
@@ -150,7 +150,7 @@ src/builtins/cmp.pir - Perl6 comparison builtins
 .end
 
 
-.sub 'infix:leg'
+.sub 'infix:leg' :multi(_,_)
     .param string a
     .param string b
     $I0 = cmp a, b
