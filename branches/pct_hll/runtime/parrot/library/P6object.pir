@@ -479,18 +479,29 @@ of names separated by spaces.
     options['hll'] = hll
   have_hll:
 
+    .local pmc class_ns, ns
+    $S0 = typeof name
     $I0 = isa name, 'String'
     if $I0, parrotclass_string
+    $I0 = isa name, 'ResizableStringArray'
+    if $I0, parrotclass_array
     parrotclass = newclass name
     goto have_parrotclass
   parrotclass_string:
     $S0 = name
-    .local pmc class_ns, ns
     class_ns = split '::', $S0
     unshift class_ns, hll
     $P0 = get_root_namespace
     ns = $P0.'make_namespace'(class_ns)
     parrotclass = newclass ns
+    goto have_parrotclass
+  parrotclass_array:
+    class_ns = name
+    unshift class_ns, hll
+    $P0 = get_root_namespace
+    ns = $P0.'make_namespace'(class_ns)
+    parrotclass = newclass ns
+    goto have_parrotclass
   have_parrotclass:
 
     .local pmc attrlist, iter

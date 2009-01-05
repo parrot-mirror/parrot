@@ -370,12 +370,18 @@ to any options and return the resulting parse tree.
     ##  if parseactions is a Class or array, make action directly from that
     $I0 = isa parseactions, 'Class'
     if $I0 goto action_make
+    $I0 = isa parseactions, 'NameSpace'
+    if $I0 goto action_namespace
     $I0 = does parseactions, 'array'
     if $I0 goto action_make
     ##  if parseactions is not a String, use it directly.
     $I0 = isa parseactions, 'String'
     if $I0 goto action_string
     action = parseactions
+    goto have_action
+  action_namespace:
+    $P0 = get_class parseactions
+    action = new $P0
     goto have_action
   action_string:
     ##  Try the string itself, if that fails try splitting on '::'
