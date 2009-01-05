@@ -94,6 +94,7 @@ mark_special(PARROT_INTERP, ARGIN(PMC *obj))
     if (PObj_needs_early_DOD_TEST(obj))
         ++arena_base->num_early_PMCs_seen;
 
+#if 0
     if (PObj_high_priority_DOD_TEST(obj) && arena_base->dod_trace_ptr) {
         /* set obj's parent to high priority */
         PObj_high_priority_DOD_SET(arena_base->dod_trace_ptr);
@@ -136,7 +137,8 @@ mark_special(PARROT_INTERP, ARGIN(PMC *obj))
             arena_base->dod_mark_ptr = PMC_next_for_GC(obj) = obj;
         }
     }
-    else if (PObj_custom_mark_TEST(obj)) {
+#endif
+    /* else */ if (PObj_custom_mark_TEST(obj)) {
         PObj_get_FLAGS(obj) |= PObj_custom_GC_FLAG;
         VTABLE_mark(interp, obj);
     }
