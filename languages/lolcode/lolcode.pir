@@ -53,12 +53,8 @@ object.
     $P1 = $P0.'new'()
     $P1.'language'('lolcode')
     $P0 = get_hll_namespace ['lolcode';'Grammar']
-    $P2 = get_class $P0
-    $P2 = new $P2
     $P1.'parsegrammar'($P0)
     $P0 = get_hll_namespace ['lolcode';'Grammar';'Actions']
-    $P2 = get_class $P0
-    $P2 = new $P2
     $P1.'parseactions'($P0)
 .end
 
