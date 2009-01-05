@@ -58,7 +58,7 @@ object.
     $P0 = get_hll_global ['PCT'], 'HLLCompiler'
     $P1 = $P0.'new'()
 
-    $P1.'language'('Pheme')
+    $P1.'language'('pheme')
     $P0 = get_hll_namespace ['Pheme';'Grammar']
     $P1.'parsegrammar'($P0)
     $P0 = get_hll_namespace ['Pheme';'AST';'Grammar']
