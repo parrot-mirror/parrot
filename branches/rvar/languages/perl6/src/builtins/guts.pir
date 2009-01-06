@@ -422,6 +422,11 @@ Add a trait with the given C<type> and C<name> to C<metaclass>.
     .param string type
     .param string name
 
+    if type == 'trait_auxiliary:is' goto is
+    if type == 'trait_auxiliary:does' goto does
+    'die'("Unknown trait auxiliary ", type)
+  
+  is:
     ##  get the (parrot)class object associated with name
     $P0 = compreg 'Perl6'
     $P0 = $P0.'parse_name'(name)
@@ -430,6 +435,18 @@ Add a trait with the given C<type> and C<name> to C<metaclass>.
 
     ##  add it as parent to metaclass
     metaclass.'add_parent'($P0)
+    .return ()
+
+  does:
+    ##  get the role to be composed
+    $P0 = compreg 'Perl6'
+    $P0 = $P0.'parse_name'(name)
+    $S0 = pop $P0
+    $P0 = get_hll_global $P0, $S0
+    say $P0
+
+    ##  add it to the class.
+    metaclass.'add_role'($P0)
 .end
 
 

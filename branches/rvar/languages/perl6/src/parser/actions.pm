@@ -897,7 +897,7 @@ method trait($/) {
 method trait_auxiliary($/) {
     my $sym := ~$<sym>;
     my $trait;
-    if $sym eq 'is' {
+    if $sym eq 'is' || $sym eq 'does' {
         $trait := ~$<name>;
     }
     make PAST::Op.new( :name('infix:,'), 'trait_auxiliary:' ~ $sym, $trait );
