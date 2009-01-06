@@ -845,6 +845,7 @@ method routine_def($/) {
         @?BLOCK[0].symbol( $name, :scope('package') );
     }
     $past.control('return_pir');
+    create_signature_if_none($past);
     make $past;
 }
 
@@ -865,6 +866,7 @@ method method_def($/) {
     );
 
     $past.control('return_pir');
+    create_signature_if_none($past);
     make $past;
 }
 
@@ -905,6 +907,7 @@ method signature($/, $key) {
         my $sigpast := PAST::Op.new( :pasttype('stmts'), :node($/) );
         my $block    := PAST::Block.new( $sigpast, :blocktype('declaration') );
         $block<signature> := 1;
+        $block<explicit_signature> := 1;
         @?BLOCK.unshift($block);
     }
     else {
@@ -1610,7 +1613,7 @@ method variable($/, $key) {
         # If twigil is ^ or :, it's a placeholder var.  Create the
         # parameter for the block if one doesn't already exist.
         if $twigil eq '^' || $twigil eq ':' {
-            if $?BLOCK<signature> {
+            if $?BLOCK<explicit_signature> {
                 $/.panic("Cannot use placeholder var in block with signature.");
             }
             $twigil := '';
@@ -1627,6 +1630,9 @@ method variable($/, $key) {
                     $i--;
                 }
                 $block[$i] := $param;
+
+                # XXX Need to generate Signature accounting for the placeholders.
+                $?BLOCK<signature> := 1;
             }
         }
 
@@ -2627,6 +2633,19 @@ sub set_package_magical() {
             :isdecl(1),
             :viviself(PAST::Op.new(:pirop('get_namespace P')))
     );
+}
+
+
+# Adds an empty signature to a routine if it is missing one.
+sub create_signature_if_none($block) {
+    unless $block<signature> {
+        my $sigobj   := PAST::Var.new( :scope('register') );
+        $block.loadinit().push(
+            PAST::Op.new( :inline('    %0 = new "Signature"',
+                                  '    setprop block, "$!signature", %0'),
+                           $sigobj)
+        );
+    }
 }
 
 
