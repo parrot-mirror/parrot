@@ -55,6 +55,21 @@ the Signature.
     .param pmc attr            :slurpy :named
 
     attr['name'] = varname
+
+    # If no multi_invocant value, set it to 1 (meaning it is one).
+    $I0 = exists attr['multi_invocant']
+    if $I0 goto have_mi
+    attr['multi_invocant'] = 1
+  have_mi:
+
+    # For now, if no type, set it to Any.
+    $I0 = exists attr['type']
+    if $I0 goto have_type
+    $P0 = get_hll_global 'Any'
+    attr['type'] = $P0
+  have_type:
+
+    # Add to parameters list.
     .local pmc params
     params = self.'params'()
     push params, attr
