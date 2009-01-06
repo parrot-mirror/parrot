@@ -184,7 +184,7 @@ void Parrot_pcc_invoke_sub_from_c_args(PARROT_INTERP,
         __attribute__nonnull__(3);
 
 PARROT_EXPORT
-void Parrot_pcc_invoke_sub_from_sig_object(PARROT_INTERP,
+void Parrot_pcc_invoke_from_sig_object(PARROT_INTERP,
     ARGIN(PMC *sub_obj),
     ARGIN(PMC *sig_obj))
         __attribute__nonnull__(1)
