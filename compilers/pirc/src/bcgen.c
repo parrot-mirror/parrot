@@ -355,6 +355,52 @@ create_codesegment(bytecode * const bc, int codesize) {
     bc->opcursor = (opcode_t *)bc->interp->code->base.data;
 }
 
+#if 0
+/*
+
+=item C<void
+create_annotations_segment(bytecode * const bc)>
+
+Create an annotations segment, and an initial annotations group.
+
+=cut
+
+*/
+void
+create_annotations_segment(bytecode * const bc, char const * const name) {
+    char *segment_name = (char *)mem_sys_allocate((strlen(name) + 5) * sizeof (char));
+    sprintf(segment_name, "%s_ANN", name);
+
+    bc->interp->code->annotations = PackFile_Segment_new_seg(bc->interp,
+                                        bc->interp->code->base.dir,
+                                        PF_ANNOTATIONS_SEG, segment_name, 1);
+
+    /* Create initial group. */
+    PackFile_Annotations_add_group(bc->interp,
+                                   bc->interp->code->annotations,
+                                   bc->interp->code->base.data);
+}
+
+
+/*
+
+void
+add_annotation(bytecode * const bc, opcode_t offset, opcode_t key, opcode_t type, opcode_t value)>
+
+Add an annotation for the bytecode at C<offset>, having a key C<key>,
+of type C<type> and a value passed in C<value>.
+
+=cut
+
+*/
+void
+add_annotation(bytecode * const bc, opcode_t offset, opcode_t key, opcode_t type, opcode_t value) {
+    PackFile_Annotations_add_entry(bc->interp, bc->interp->code->annotations,
+                                   offset, key, type, value);
+}
+
+#endif
+
 /*
 
 =item C<void
@@ -375,38 +421,41 @@ destroy_bytecode(bytecode * bc) {
 
 /*
 
-=item C<void
+=item C<opcode_t
 emit_opcode(bytecode * const bc, opcode_t op)>
 
-Write the opcode C<op> into the bytecode stream.
+Write the opcode C<op> into the bytecode stream. The bytecode
+offset where the instruction is written is returned.
 
 =cut
 
 */
-void
+PARROT_IGNORABLE_RESULT
+opcode_t
 emit_opcode(bytecode * const bc, opcode_t op) {
-    *bc->opcursor++ = op;
+    *bc->opcursor = op;
     fprintf(stderr, "[%d]", op);
+    return (bc->opcursor++ - bc->interp->code->base.data);
 
 }
 
 /*
 
-=item C<void
+=item C<opcode_t
 emit_int_arg(bytecode * const bc, int intval)>
 
-Write an integer argument into the bytecode stream.
-XXX Possibly use 1 function for emitting opcodes and ints; they're
-the same anyway?
+Write an integer argument into the bytecode stream. The offset
+in bytecode where the instruction is written is returned.
 
 =cut
 
 */
-void
+PARROT_IGNORABLE_RESULT
+opcode_t
 emit_int_arg(bytecode * const bc, int intval) {
-    *bc->opcursor++ = intval;
+    *bc->opcursor = intval;
     fprintf(stderr, "{%d}", intval);
-
+    return (bc->opcursor++ - bc->interp->code->base.data);
 }
 
 
