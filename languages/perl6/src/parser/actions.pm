@@ -926,7 +926,8 @@ method signature($/, $key) {
         ##  loop through parameters of signature
         my $arity := $<parameter> ?? +@($<parameter>) !! 0;
         $block.arity($arity);
-        my $i     := 0;
+        my $i         := 0;
+        my $multi_inv := 1;
         while $i < $arity {
             my $var    := $( $<parameter>[$i] );
             my $name   := $var.name();
@@ -966,6 +967,9 @@ method signature($/, $key) {
                 );
             }
             $sigparam.push(PAST::Val.new(:value($readtype),:named('readtype')));
+
+            $sigparam.push(PAST::Val.new(:value($multi_inv),:named('multi_invocant')));
+            if substr($<param_sep>[$i], 0, 2) eq ';;' { $multi_inv := 0; }
 
             $loadinit.push($sigparam);
             $i++;
