@@ -380,18 +380,33 @@ is composed (see C<!meta_compose> below).
     .param string name
     .param int also
 
-    .local pmc nsarray, ns
+    .local pmc nsarray
     $P0 = compreg 'Perl6'
     nsarray = $P0.'parse_name'(name)
-    ns = get_hll_namespace nsarray
 
-    .local pmc metaclass
+    if type == 'class' goto class
+    if type == 'grammar' goto class
+    if type == 'role' goto role
+    'die'("Unsupported package declarator ", type)
+
+  class:
+    .local pmc metaclass, ns
+    ns = get_hll_namespace nsarray
     if also goto is_also
     metaclass = newclass ns
     .return (metaclass)
   is_also:
     metaclass = get_class ns
     .return (metaclass)
+
+  role:
+    .local pmc info, metarole
+    info = new 'Hash'
+    $P0 = nsarray[-1]
+    info['name'] = $P0
+    info['namespace'] = nsarray
+    metarole = new 'Role', info
+    .return (metarole)
 .end 
 
 
@@ -408,6 +423,18 @@ and creating the protoobjects.
     p6meta = get_hll_global ['Perl6Object'], '$!P6META'
 
     p6meta.'register'(metaclass, 'parent'=>'Any')
+.end
+
+
+=item !meta_compose(Role role)
+
+Compose the role.
+
+=cut
+
+.sub '!meta_compose' :multi(['Role'])
+    .param pmc role
+    # Currently, nothing to do.
 .end
 
 
@@ -443,7 +470,7 @@ Add a trait with the given C<type> and C<name> to C<metaclass>.
     $P0 = $P0.'parse_name'(name)
     $S0 = pop $P0
     $P0 = get_hll_global $P0, $S0
-    say $P0
+    $P0 = get_class $P0
 
     ##  add it to the class.
     metaclass.'add_role'($P0)
