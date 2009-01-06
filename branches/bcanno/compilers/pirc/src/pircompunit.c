@@ -2477,19 +2477,41 @@ update_sub_register_usage(lexer_state * const lexer, unsigned reg_usage[NUM_PARR
         CURRENT_SUB(lexer)->info.regs_used[i] = reg_usage[i];
 }
 
+
 /*
 
 =item C<void
-annotate(lexer_state * const lexer, char const * const key, char const * const value)>
+annotate(lexer_state * const lexer, char const * const key, constant * const value)>
 
-Add a new annotation with key C<key> and value C<value>.
+Add a new annotation with key C<key> and value C<value>. This function assumes
+that there's an instruction in place, as it will store a pointer to the current
+instruction.
 
 =cut
 
 */
 void
-annotate(lexer_state * const lexer, char const * const key, char const * const value) {
-    /* XXX todo */
+annotate(lexer_state * const lexer, char const * const key, constant * const value) {
+    annotation *ann     = (annotation *)pir_mem_allocate(lexer, sizeof (annotation));
+    ann->key            = key;
+    ann->value          = value;
+
+    ++lexer->num_annotations; /* keep track of number of annotations */
+
+
+    ann->offset = CURRENT_INSTRUCTION(lexer)->offset;
+
+    /* store the annotation in a list, managed by the lexer
+     * the list is circular linked, so that the order of annotations is preserved.
+     */
+    if (lexer->annotations) {
+        ann->next = lexer->annotations->next; /* new node's next becomes the first one. */
+        lexer->annotations->next = ann;
+    }
+    else {
+        ann->next = ann; /* link to itself */
+    }
+    lexer->annotations = ann;
 }
 
 
