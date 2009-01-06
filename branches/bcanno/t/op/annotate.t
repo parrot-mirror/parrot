@@ -19,7 +19,7 @@ Test various use cases of the annotate directive.
 .sub main :main
     .include 'include/test_more.pir'
 
-    plan(8)
+    plan(9)
 
     'no_annotations'()
     'annotations_exception'()
