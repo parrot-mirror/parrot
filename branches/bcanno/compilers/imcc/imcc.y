@@ -929,12 +929,12 @@ location_directive:
    ;
 
 annotate_directive:
-    ANNOTATE STRINGC const
+    ANNOTATE STRINGC COMMA const
         {
           /* We'll want to store an entry while emitting instructions, so just
            * store annotation like it's an instruction. */
           SymReg * const key = mk_const(interp, $2, 'S');
-          $$ = MK_I(interp, IMCC_INFO(interp)->cur_unit, ".annotate",  2, key, $3);
+          $$ = MK_I(interp, IMCC_INFO(interp)->cur_unit, ".annotate", 2, key, $4);
           mem_sys_free($2);
         }
     ;
