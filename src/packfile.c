@@ -3981,7 +3981,7 @@ Unpacks this segment from the bytecode.
 PARROT_CANNOT_RETURN_NULL
 opcode_t *
 PackFile_Annotations_unpack(PARROT_INTERP, ARGMOD(PackFile_Segment *seg),
-        ARGMOD(opcode_t *cursor))
+        ARGIN(const opcode_t *cursor))
 {
     ASSERT_ARGS(PackFile_Annotations_unpack)
     PackFile_Annotations *self = (PackFile_Annotations *)seg;
@@ -4121,7 +4121,7 @@ PackFile_Annotations_add_group(PARROT_INTERP, ARGMOD(struct PackFile_Annotations
 
     /* Allocate extra space for the group in the groups array. */
     if (self->groups)
-        self->groups = mem_sys_realloc(self->groups, (1 + self->num_groups) *
+        self->groups = (PackFile_Annotations_Group **)mem_sys_realloc(self->groups, (1 + self->num_groups) *
                 sizeof(PackFile_Annotations_Group *));
     else
         self->groups = mem_allocate_n_typed(self->num_groups + 1, PackFile_Annotations_Group *);
@@ -4172,7 +4172,7 @@ PackFile_Annotations_add_entry(PARROT_INTERP, ARGMOD(struct PackFile_Annotations
     if (key_id == -1) {
         /* We do nee have it. Add key entry. */
         if (self->keys)
-            self->keys = mem_sys_realloc(self->keys, (1 + self->num_keys) *
+            self->keys = (PackFile_Annotations_Key **)mem_sys_realloc(self->keys, (1 + self->num_keys) *
                     sizeof(PackFile_Annotations_Key *));
         else
             self->keys = mem_allocate_n_typed(self->num_keys + 1, PackFile_Annotations_Key *);
@@ -4194,7 +4194,7 @@ PackFile_Annotations_add_entry(PARROT_INTERP, ARGMOD(struct PackFile_Annotations
 
     /* Add annotations entry. */
     if (self->entries)
-            self->entries = mem_sys_realloc(self->entries, (1 + self->num_entries) *
+            self->entries = (PackFile_Annotations_Entry **)mem_sys_realloc(self->entries, (1 + self->num_entries) *
                     sizeof(PackFile_Annotations_Entry *));
         else
             self->entries = mem_allocate_n_typed(self->num_entries + 1, PackFile_Annotations_Entry *);
