@@ -3970,7 +3970,7 @@ PackFile_Annotations_pack(PARROT_INTERP, ARGIN(struct PackFile_Segment *seg),
 
 /*
 
-=item C<opcode_t * PackFile_Annotations_unpack>
+=item C<const opcode_t * PackFile_Annotations_unpack>
 
 Unpacks this segment from the bytecode.
 
@@ -3979,7 +3979,7 @@ Unpacks this segment from the bytecode.
 */
 
 PARROT_CANNOT_RETURN_NULL
-opcode_t *
+const opcode_t *
 PackFile_Annotations_unpack(PARROT_INTERP, ARGMOD(PackFile_Segment *seg),
         ARGIN(const opcode_t *cursor))
 {

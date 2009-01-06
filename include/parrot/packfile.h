@@ -744,7 +744,7 @@ size_t PackFile_Annotations_packed_size(PARROT_INTERP,
         __attribute__nonnull__(2);
 
 PARROT_CANNOT_RETURN_NULL
-opcode_t * PackFile_Annotations_unpack(PARROT_INTERP,
+const opcode_t * PackFile_Annotations_unpack(PARROT_INTERP,
     ARGMOD(PackFile_Segment *seg),
     ARGIN(const opcode_t *cursor))
         __attribute__nonnull__(1)
