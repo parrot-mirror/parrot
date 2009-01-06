@@ -231,12 +231,10 @@ static const opcode_t * fixup_unpack(PARROT_INTERP,
 PARROT_CANNOT_RETURN_NULL
 static PMC * make_annotation_value_pmc(PARROT_INTERP,
     ARGIN(struct PackFile_Annotations *self),
-    ARGIN(INTVAL type),
-    ARGIN(opcode_t value))
+    INTVAL type,
+    opcode_t value)
         __attribute__nonnull__(1)
-        __attribute__nonnull__(2)
-        __attribute__nonnull__(3)
-        __attribute__nonnull__(4);
+        __attribute__nonnull__(2);
 
 static void make_code_pointers(ARGMOD(PackFile_Segment *seg))
         __attribute__nonnull__(1)
@@ -406,9 +404,7 @@ static int sub_pragma(PARROT_INTERP,
     || PARROT_ASSERT_ARG(cursor)
 #define ASSERT_ARGS_make_annotation_value_pmc __attribute__unused__ int _ASSERT_ARGS_CHECK = \
        PARROT_ASSERT_ARG(interp) \
-    || PARROT_ASSERT_ARG(self) \
-    || PARROT_ASSERT_ARG(type) \
-    || PARROT_ASSERT_ARG(value)
+    || PARROT_ASSERT_ARG(self)
 #define ASSERT_ARGS_make_code_pointers __attribute__unused__ int _ASSERT_ARGS_CHECK = \
        PARROT_ASSERT_ARG(seg)
 #define ASSERT_ARGS_mark_1_seg __attribute__unused__ int _ASSERT_ARGS_CHECK = \
@@ -3853,7 +3849,7 @@ and C<add>.
 PARROT_CANNOT_RETURN_NULL
 PackFile_Segment *
 PackFile_Annotations_new(PARROT_INTERP, ARGIN(struct PackFile *pf),
-        ARGIN_NULLOK(const char *name), ARGIN(int add))
+        SHIM(const char *name), SHIM(int add))
 {
     ASSERT_ARGS(PackFile_Annotations_new)
 
@@ -4119,7 +4115,7 @@ the new annotations group starts.
 
 void
 PackFile_Annotations_add_group(PARROT_INTERP, ARGMOD(struct PackFile_Annotations *self),
-        ARGIN(opcode_t offset))
+        opcode_t offset)
 {
     ASSERT_ARGS(PackFile_Annotations_add_group)
 
@@ -4158,7 +4154,7 @@ an index into the constants table otherwise.
 
 void
 PackFile_Annotations_add_entry(PARROT_INTERP, ARGMOD(struct PackFile_Annotations *self),
-        ARGIN(opcode_t offset), ARGIN(opcode_t key), ARGIN(opcode_t type), ARGIN(opcode_t value))
+        opcode_t offset, opcode_t key, opcode_t type, opcode_t value)
 {
     ASSERT_ARGS(PackFile_Annotations_add_entry)
     INTVAL i;
@@ -4224,7 +4220,7 @@ holding the value.
 PARROT_CANNOT_RETURN_NULL
 static PMC *
 make_annotation_value_pmc(PARROT_INTERP, ARGIN(struct PackFile_Annotations *self),
-        ARGIN(INTVAL type), ARGIN(opcode_t value))
+        INTVAL type, opcode_t value)
 {
     ASSERT_ARGS(make_annotation_value_pmc)
     PMC *result;
@@ -4264,7 +4260,7 @@ empty hash will be returned.
 PARROT_CANNOT_RETURN_NULL
 PMC *
 PackFile_Annotations_lookup(PARROT_INTERP, ARGIN(struct PackFile_Annotations *self),
-        ARGIN(opcode_t offset), ARGIN_NULLOK(STRING *key))
+        opcode_t offset, ARGIN_NULLOK(STRING *key))
 {
     ASSERT_ARGS(PackFile_Annotations_lookup)
     INTVAL i;
