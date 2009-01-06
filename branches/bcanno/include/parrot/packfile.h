@@ -746,12 +746,11 @@ size_t PackFile_Annotations_packed_size(PARROT_INTERP,
 PARROT_CANNOT_RETURN_NULL
 opcode_t * PackFile_Annotations_unpack(PARROT_INTERP,
     ARGMOD(PackFile_Segment *seg),
-    ARGMOD(opcode_t *cursor))
+    ARGIN(const opcode_t *cursor))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3)
-        FUNC_MODIFIES(*seg)
-        FUNC_MODIFIES(*cursor);
+        FUNC_MODIFIES(*seg);
 
 #define ASSERT_ARGS_do_sub_pragmas __attribute__unused__ int _ASSERT_ARGS_CHECK = \
        PARROT_ASSERT_ARG(interp) \
