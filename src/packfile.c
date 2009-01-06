@@ -228,6 +228,16 @@ static const opcode_t * fixup_unpack(PARROT_INTERP,
         __attribute__nonnull__(2)
         __attribute__nonnull__(3);
 
+PARROT_CANNOT_RETURN_NULL
+static PMC * make_annotation_value_pmc(PARROT_INTERP,
+    ARGIN(struct PackFile_Annotations *self),
+    ARGIN(INTVAL type),
+    ARGIN(opcode_t value))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3)
+        __attribute__nonnull__(4);
+
 static void make_code_pointers(ARGMOD(PackFile_Segment *seg))
         __attribute__nonnull__(1)
         FUNC_MODIFIES(*seg);
@@ -317,31 +327,6 @@ static int sub_pragma(PARROT_INTERP,
         __attribute__nonnull__(1)
         __attribute__nonnull__(3);
 
-PackFile_Segment *
-PackFile_Annotations_new(PARROT_INTERP,
-    struct PackFile *pf,
-    const char *name,
-    int add);
-
-void
-PackFile_Annotations_destroy(PARROT_INTERP,
-    struct PackFile_Segment *seg);
-
-size_t
-PackFile_Annotations_packed_size(PARROT_INTERP,
-    struct PackFile_Segment *seg);
-
-opcode_t *PackFile_Annotations_pack(PARROT_INTERP,
-    struct PackFile_Segment *seg,
-    opcode_t *cursor);
-
-opcode_t *PackFile_Annotations_unpack(PARROT_INTERP,
-    PackFile_Segment *seg,
-    opcode_t *cursor);
-
-void PackFile_Annotations_dump(PARROT_INTERP,
-    struct PackFile_Segment *seg);
-
 #define ASSERT_ARGS_byte_code_destroy __attribute__unused__ int _ASSERT_ARGS_CHECK = \
        PARROT_ASSERT_ARG(self)
 #define ASSERT_ARGS_byte_code_new __attribute__unused__ int _ASSERT_ARGS_CHECK = 0
@@ -419,6 +404,11 @@ void PackFile_Annotations_dump(PARROT_INTERP,
        PARROT_ASSERT_ARG(interp) \
     || PARROT_ASSERT_ARG(seg) \
     || PARROT_ASSERT_ARG(cursor)
+#define ASSERT_ARGS_make_annotation_value_pmc __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(self) \
+    || PARROT_ASSERT_ARG(type) \
+    || PARROT_ASSERT_ARG(value)
 #define ASSERT_ARGS_make_code_pointers __attribute__unused__ int _ASSERT_ARGS_CHECK = \
        PARROT_ASSERT_ARG(seg)
 #define ASSERT_ARGS_mark_1_seg __attribute__unused__ int _ASSERT_ARGS_CHECK = \
@@ -3856,11 +3846,17 @@ PackFile_Constant_unpack_key(PARROT_INTERP, ARGIN(PackFile_ConstTable *constt),
 Creates a new annotations segment structure. Ignores the parameters C<name>
 and C<add>.
 
+=cut
+
 */
 
+PARROT_CANNOT_RETURN_NULL
 PackFile_Segment *
-PackFile_Annotations_new(PARROT_INTERP, struct PackFile *pf, const char *name,
-        int add) {
+PackFile_Annotations_new(PARROT_INTERP, ARGIN(struct PackFile *pf),
+        ARGIN_NULLOK(const char *name), ARGIN(int add))
+{
+    ASSERT_ARGS(PackFile_Annotations_new)
+
     /* Allocate annotations structure; create it all zeroed, and we will
      * allocate memory for each of the arrays on demand. */
     PackFile_Annotations *seg = mem_allocate_zeroed_typed(PackFile_Annotations);
@@ -3874,10 +3870,14 @@ PackFile_Annotations_new(PARROT_INTERP, struct PackFile *pf, const char *name,
 
 Frees all memory associated with an annotations segment.
 
+=cut
+
 */
 
 void
-PackFile_Annotations_destroy(PARROT_INTERP, struct PackFile_Segment *seg) {
+PackFile_Annotations_destroy(SHIM_INTERP, ARGMOD(struct PackFile_Segment *seg))
+{
+    ASSERT_ARGS(PackFile_Annotations_destroy)
     PackFile_Annotations *self = (PackFile_Annotations *)seg;
     INTVAL i;
 
@@ -3911,10 +3911,14 @@ PackFile_Annotations_destroy(PARROT_INTERP, struct PackFile_Segment *seg) {
 Computes the number of opcode_ts we'll need to store the passed annotations
 segment.
 
+=cut
+
 */
 
 size_t
-PackFile_Annotations_packed_size(PARROT_INTERP, struct PackFile_Segment *seg) {
+PackFile_Annotations_packed_size(PARROT_INTERP, ARGIN(struct PackFile_Segment *seg))
+{
+    ASSERT_ARGS(PackFile_Annotations_packed_size)
     PackFile_Annotations *self = (PackFile_Annotations *)seg;
     return 3                      /* Counts. */
          + self->num_keys    * 2  /* Keys. */
@@ -3929,10 +3933,16 @@ PackFile_Annotations_packed_size(PARROT_INTERP, struct PackFile_Segment *seg) {
 
 Packs this segment into bytecode.
 
+=cut
+
 */
 
-opcode_t *PackFile_Annotations_pack(PARROT_INTERP, struct PackFile_Segment *seg,
-        opcode_t *cursor) {
+PARROT_CANNOT_RETURN_NULL
+opcode_t *
+PackFile_Annotations_pack(PARROT_INTERP, ARGIN(struct PackFile_Segment *seg),
+        ARGMOD(opcode_t *cursor))
+{
+    ASSERT_ARGS(PackFile_Annotations_pack)
     PackFile_Annotations *self = (PackFile_Annotations *)seg;
     INTVAL i;
 
@@ -3968,10 +3978,16 @@ opcode_t *PackFile_Annotations_pack(PARROT_INTERP, struct PackFile_Segment *seg,
 
 Unpacks this segment from the bytecode.
 
+=cut
+
 */
 
-opcode_t *PackFile_Annotations_unpack(PARROT_INTERP, PackFile_Segment *seg,
-        opcode_t *cursor) {
+PARROT_CANNOT_RETURN_NULL
+opcode_t *
+PackFile_Annotations_unpack(PARROT_INTERP, ARGMOD(PackFile_Segment *seg),
+        ARGMOD(opcode_t *cursor))
+{
+    ASSERT_ARGS(PackFile_Annotations_unpack)
     PackFile_Annotations *self = (PackFile_Annotations *)seg;
     INTVAL               i, str_len;
     PackFile_ByteCode    *code;
@@ -4030,9 +4046,14 @@ opcode_t *PackFile_Annotations_unpack(PARROT_INTERP, PackFile_Segment *seg,
 
 Produces a dump of the annotations segment.
 
+=cut
+
 */
 
-void PackFile_Annotations_dump(PARROT_INTERP, struct PackFile_Segment *seg) {
+void
+PackFile_Annotations_dump(PARROT_INTERP, ARGIN(struct PackFile_Segment *seg))
+{
+    ASSERT_ARGS(PackFile_Annotations_dump)
     PackFile_Annotations *self = (PackFile_Annotations *)seg;
     INTVAL i;
 
@@ -4092,10 +4113,16 @@ void PackFile_Annotations_dump(PARROT_INTERP, struct PackFile_Segment *seg) {
 Starts a new bytecode annotation group. Takes the offset in the bytecode where
 the new annotations group starts.
 
+=cut
+
 */
 
-void PackFile_Annotations_add_group(PARROT_INTERP, struct PackFile_Annotations *self,
-        opcode_t offset) {
+void
+PackFile_Annotations_add_group(PARROT_INTERP, ARGMOD(struct PackFile_Annotations *self),
+        ARGIN(opcode_t offset))
+{
+    ASSERT_ARGS(PackFile_Annotations_add_group)
+
     /* Allocate extra space for the group in the groups array. */
     if (self->groups)
         self->groups = mem_sys_realloc(self->groups, (1 + self->num_groups) *
@@ -4125,10 +4152,15 @@ PF_ANNOTATION_KEY_TYPE_STR or PF_ANNOTATION_KEY_TYPE_NUM) and the value. The val
 will be an integer literal in the case of type being PF_ANNOTATION_KEY_TYPE_INT, or
 an index into the constants table otherwise.
 
+=cut
+
 */
 
-void PackFile_Annotations_add_entry(PARROT_INTERP, struct PackFile_Annotations *self,
-        opcode_t offset, opcode_t key, opcode_t type, opcode_t value) {
+void
+PackFile_Annotations_add_entry(PARROT_INTERP, ARGMOD(struct PackFile_Annotations *self),
+        ARGIN(opcode_t offset), ARGIN(opcode_t key), ARGIN(opcode_t type), ARGIN(opcode_t value))
+{
+    ASSERT_ARGS(PackFile_Annotations_add_entry)
     INTVAL i;
     opcode_t key_id = -1;
 
@@ -4189,8 +4221,12 @@ holding the value.
 
 */
 
-static PMC * make_annotation_value_pmc(PARROT_INTERP, struct PackFile_Annotations *self,
-        INTVAL type, opcode_t value) {
+PARROT_CANNOT_RETURN_NULL
+static PMC *
+make_annotation_value_pmc(PARROT_INTERP, ARGIN(struct PackFile_Annotations *self),
+        ARGIN(INTVAL type), ARGIN(opcode_t value))
+{
+    ASSERT_ARGS(make_annotation_value_pmc)
     PMC *result;
     switch (type) {
         case PF_ANNOTATION_KEY_TYPE_INT:
@@ -4225,8 +4261,12 @@ empty hash will be returned.
 
 */
 
-PMC * PackFile_Annotations_lookup(PARROT_INTERP, struct PackFile_Annotations *self,
-        opcode_t offset, STRING *key) {
+PARROT_CANNOT_RETURN_NULL
+PMC *
+PackFile_Annotations_lookup(PARROT_INTERP, ARGIN(struct PackFile_Annotations *self),
+        ARGIN(opcode_t offset), ARGIN_NULLOK(STRING *key))
+{
+    ASSERT_ARGS(PackFile_Annotations_lookup)
     INTVAL i;
     INTVAL start_entry = 0;
     PMC *  result;
