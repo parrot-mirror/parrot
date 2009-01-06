@@ -23,6 +23,7 @@ Conventions.
 #include "pircompunit.h"
 #include "pircompiler.h"
 #include "pirerr.h"
+#include "pirsymbol.h"
 
 #include "parrot/oplib/ops.h"
 
@@ -84,8 +85,10 @@ calculate_pcc_argument_flags(argument * const arg) {
             SET_FLAG(flag, arg->value->expr.t->info->type);
             break;
         case EXPR_CONSTANT:
-            /* copy the type of the constant */
-            SET_FLAG(flag, arg->value->expr.c->type);
+            /* copy the type of the constant; note that constants store a value_type,
+             * not a pir_type, so convert here.
+             */
+            SET_FLAG(flag, valuetype_pirtype_clut[arg->value->expr.c->type]);
             /* set the flag indicating the argument is a constant literal, not a register. */
             SET_FLAG(flag, PARROT_ARG_CONSTANT);
             break;
@@ -122,6 +125,7 @@ mapped to a PASM register, so using negative PIR register is safe.
 */
 static target *
 generate_unique_pir_reg(lexer_state * const lexer, pir_type type) {
+    fprintf(stderr, "unique reg of type %d: %d\n", type, lexer->pir_reg_generator - 1);
     return new_reg(lexer, type, --lexer->pir_reg_generator);
 }
 
@@ -389,6 +393,75 @@ save_global_reference(lexer_state * const lexer, instruction * const instr,
 
 /*
 
+=item C<static target *
+get_invoked_sub(lexer_state * const lexer, target * const sub)>
+
+Return a C<target> node that represents the sub to invoke.
+If C<sub> is a register, that is returned. If it's a declared C<.local>,
+then a target node representing that symbol is returned. If it's
+just the name of a .sub, then there's 2 possibilities: either the
+sub was already parsed, in which case it's stored as a global_label,
+or the sub was not parsed yet, in which case a runtime resolving
+instruction is emitted.
+
+=cut
+
+*/
+static target *
+get_invoked_sub(lexer_state * const lexer, target * const sub) {
+    target       *subreg = NULL;
+    symbol       *sym    = NULL;
+    global_label *glob   = NULL;
+
+    /* if the target is a register, invoke that. */
+    if (TEST_FLAG(sub->flags, TARGET_FLAG_IS_REG))
+        return sub;
+
+
+    /* find the global label in the current file, or find it during runtime */
+    sym  = find_symbol(lexer, sub->info->id.name);
+
+    /* if the invoked object was declared as a .local, return that */
+    if (sym)
+        return target_from_symbol(lexer, sym);
+
+    /* it was not a .local, so check whether it's a declared .sub */
+    glob   = find_global_label(lexer, sub->info->id.name);
+    subreg = generate_unique_pir_reg(lexer, PMC_TYPE);
+
+    if (glob) {
+        new_sub_instr(lexer, PARROT_OP_set_p_pc, "set_p_pc", 0);
+        add_operands(lexer, "%T%i", subreg, glob->const_table_index);
+        return subreg;
+    }
+
+    /* find it during runtime (hopefully, otherwise exception) */
+    new_sub_instr(lexer, PARROT_OP_find_sub_not_null_p_sc, "find_sub_not_null_p_sc", 0);
+
+    add_operands(lexer, "%T%s", subreg, sub->info->id.name);
+
+    /* save the current instruction in a list; entries in this list will be
+     * fixed up, if possible, after the parsing phase.
+     *
+     * Instead of the instruction
+     *
+     *   set_p_pc
+     *
+     * that is generated when the global label C<glob> was found (see above),
+     * another instructions is generated. After the parse, we'll re-try
+     * to find the global label that is referenced. For now, just generate
+     * this instruction to do the resolving of the label during runtime:
+     *
+     *   find_sub_not_null_p_sc
+     */
+    save_global_reference(lexer, CURRENT_INSTRUCTION(lexer), sub->info->id.name);
+
+    return subreg;
+
+}
+
+/*
+
 =item C<static void
 convert_pcc_call(lexer_state * const lexer, invocation * const inv)>
 
@@ -413,60 +486,52 @@ For "foo"() and foo():
 */
 static void
 convert_pcc_call(lexer_state * const lexer, invocation * const inv) {
+    target *sub;
+
     new_sub_instr(lexer, PARROT_OP_set_args_pc, "set_args_pc", inv->num_arguments);
     arguments_to_operands(lexer, inv->arguments, inv->num_arguments);
 
+    new_sub_instr(lexer, PARROT_OP_get_results_pc, "get_results_pc", inv->num_results);
+    targets_to_operands(lexer, inv->results, inv->num_results);
 
-    /* if the target is a register, invoke that. */
-    if (TEST_FLAG(inv->sub->flags, TARGET_FLAG_IS_REG)) {
-        target *sub = new_reg(lexer, PMC_TYPE, inv->sub->info->color);
+    sub = get_invoked_sub(lexer, inv->sub);
 
-        if (inv->retcc) { /* return continuation present? */
-            new_sub_instr(lexer, PARROT_OP_invoke_p_p, "invoke_p_p", 0);
-            add_operands(lexer, "%T%T", inv->sub, inv->retcc);
-        }
-        else {
-            new_sub_instr(lexer, PARROT_OP_invokecc_p, "invokecc_p", 0);
-            add_operands(lexer, "%T", sub);
-        }
+    if (inv->retcc) { /* return continuation present? */
+        new_sub_instr(lexer, PARROT_OP_invoke_p_p, "invoke_p_p", 0);
+        add_operands(lexer, "%T%T", sub, inv->retcc);
     }
-    else { /* find the global label in the current file, or find it during runtime */
-        target *sub        = generate_unique_pir_reg(lexer, PMC_TYPE);
-        global_label *glob = find_global_label(lexer, inv->sub->info->id.name);
-
-        if (glob) {
-            new_sub_instr(lexer, PARROT_OP_set_p_pc, "set_p_pc", 0);
-            add_operands(lexer, "%T%i", sub, glob->const_table_index);
-        }
-        else { /* find it during runtime (hopefully, otherwise exception) */
-            new_sub_instr(lexer, PARROT_OP_find_sub_not_null_p_sc, "find_sub_not_null_p_sc", 0);
-
-            add_operands(lexer, "%T%s", sub, inv->sub->info->id.name);
-
-            /* save the current instruction in a list; entries in this list will be
-             * fixed up, if possible, after the parsing phase.
-             *
-             * Instead of the instruction
-             *
-             *   set_p_pc
-             *
-             * that is generated when the global label C<glob> was found (see above),
-             * another instructions is generated. After the parse, we'll re-try
-             * to find the global label that is referenced. For now, just generate
-             * this instruction to do the resolving of the label during runtime:
-             *
-             *   find_sub_not_null_p_sc
-             */
-            save_global_reference(lexer, CURRENT_INSTRUCTION(lexer), inv->sub->info->id.name);
-        }
-
-        new_sub_instr(lexer, PARROT_OP_get_results_pc, "get_results_pc", inv->num_results);
-        targets_to_operands(lexer, inv->results, inv->num_results);
-
+    else {
         new_sub_instr(lexer, PARROT_OP_invokecc_p, "invokecc_p", 0);
         add_operands(lexer, "%T", sub);
-
     }
+
+}
+
+/*
+
+=item C<static void
+convert_pcc_tailcall(lexer_state * const lexer, invocation * const inv)>
+
+Generate instructions for a tailcall using the Parrot Calling Conventions (PCC).
+The sequence of instructions is:
+
+ set_args_pc
+ tailcall_pc
+
+=cut
+
+*/
+static void
+convert_pcc_tailcall(lexer_state * const lexer, invocation * const inv) {
+    target *sub;
+
+    new_sub_instr(lexer, PARROT_OP_set_args_pc, "set_args_pc", inv->num_arguments);
+    arguments_to_operands(lexer, inv->arguments, inv->num_arguments);
+
+    sub = get_invoked_sub(lexer, inv->sub);
+
+    new_sub_instr(lexer, PARROT_OP_tailcall_p, "tailcall_p", 0);
+    add_operands(lexer, "%T", sub);
 }
 
 /*
@@ -533,30 +598,7 @@ convert_pcc_yield(lexer_state * const lexer, invocation * const inv) {
     new_sub_instr(lexer, PARROT_OP_yield, "yield", 0);
 }
 
-/*
 
-=item C<static void
-convert_pcc_tailcall(lexer_state * const lexer, invocation * const inv)>
-
-Generate instructions for a tailcall using the Parrot Calling Conventions (PCC).
-The sequence of instructions is:
-
- set_args_pc
- tailcall_pc
-
-=cut
-
-*/
-static void
-convert_pcc_tailcall(lexer_state * const lexer, invocation * const inv) {
-    new_sub_instr(lexer, PARROT_OP_set_args_pc, "set_args_pc", inv->num_arguments);
-    arguments_to_operands(lexer, inv->arguments, inv->num_arguments);
-
-    /* XXX this needs an argument; possibly refactor PCC_CALL code, so we can re-use
-     * the code to get the sub to invoke.
-     */
-    new_sub_instr(lexer, PARROT_OP_tailcall_p, "tailcall_p", 0);
-}
 
 /*
 

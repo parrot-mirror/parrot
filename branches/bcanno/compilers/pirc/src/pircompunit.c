@@ -848,6 +848,7 @@ set_label(lexer_state * const lexer, char const * const labelname) {
      *
      * jumping to L1 is equivalent to jumping to L2 or L3; so when calculating
      * branch offsets, all three labels must yield the same offset.
+     */
 
     /* store the labelname and its offset */
     store_local_label(lexer, labelname, instr->offset);
@@ -1308,7 +1309,7 @@ PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 constdecl *
 new_named_const(lexer_state * const lexer, value_type type, char const * const name, ...) {
-    constdecl *c = pir_mem_allocate(lexer, sizeof (constdecl));
+    constdecl *c = (constdecl *)pir_mem_allocate(lexer, sizeof (constdecl));
     va_list arg_ptr;
     va_start(arg_ptr, name);
 
@@ -2416,6 +2417,7 @@ close_sub(lexer_state * const lexer) {
      */
     if (CURRENT_INSTRUCTION(lexer)) {
         switch (CURRENT_INSTRUCTION(lexer)->opcode) {
+            case PARROT_OP_tailcall_p:
             case PARROT_OP_end:
             case PARROT_OP_returncc:
             case PARROT_OP_yield:
@@ -2483,9 +2485,7 @@ update_sub_register_usage(lexer_state * const lexer, unsigned reg_usage[NUM_PARR
 =item C<void
 annotate(lexer_state * const lexer, char const * const key, constant * const value)>
 
-Add a new annotation with key C<key> and value C<value>. This function assumes
-that there's an instruction in place, as it will store a pointer to the current
-instruction.
+Add a new annotation with key C<key> and value C<value>.
 
 =cut
 
@@ -2499,7 +2499,7 @@ annotate(lexer_state * const lexer, char const * const key, constant * const val
     ++lexer->num_annotations; /* keep track of number of annotations */
 
 
-    ann->offset = CURRENT_INSTRUCTION(lexer)->offset;
+    ann->offset = lexer->codesize;
 
     /* store the annotation in a list, managed by the lexer
      * the list is circular linked, so that the order of annotations is preserved.
