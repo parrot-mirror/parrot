@@ -3863,7 +3863,7 @@ PackFile_Annotations_new(PARROT_INTERP, struct PackFile *pf, const char *name,
         int add) {
     /* Allocate annotations structure; create it all zeroed, and we will
      * allocate memory for each of the arrays on demand. */
-    PackFile_Annotations *seg = mem_allocate_typed(PackFile_Annotations);
+    PackFile_Annotations *seg = mem_allocate_zeroed_typed(PackFile_Annotations);
     return (PackFile_Segment *) seg;
 }
 
@@ -4130,18 +4130,18 @@ an index into the constants table otherwise.
 void PackFile_Annotations_add_entry(PARROT_INTERP, struct PackFile_Annotations *self,
         opcode_t offset, opcode_t key, opcode_t type, opcode_t value) {
     INTVAL i;
-    opcode_t key_id = 0;
+    opcode_t key_id = -1;
 
     /* See if we already have this key. */
     STRING *key_name = PF_CONST(self->code, key)->u.string;
     for (i = 0; i < self->num_keys; i++) {
         STRING *test_key = PF_CONST(self->code, self->keys[i]->name)->u.string;
         if (string_equal(interp, test_key, key_name) == 0) {
-            key_id = 0;
+            key_id = i;
             break;
         }
     }
-    if (key_id == 0) {
+    if (key_id == -1) {
         /* We do nee have it. Add key entry. */
         if (self->keys)
             self->keys = mem_sys_realloc(self->keys, (1 + self->num_keys) *
@@ -4175,6 +4175,131 @@ void PackFile_Annotations_add_entry(PARROT_INTERP, struct PackFile_Annotations *
     self->entries[self->num_entries]->key = key_id;
     self->entries[self->num_entries]->value = value;
     self->num_entries++;
+}
+
+
+/*
+
+=item C<static PMC * make_annotation_value_pmc>
+
+Helper for PackFile_Annotations_lookup that makes a PMC of the right type
+holding the value.
+
+=cut
+
+*/
+
+static PMC * make_annotation_value_pmc(PARROT_INTERP, struct PackFile_Annotations *self,
+        INTVAL type, opcode_t value) {
+    PMC *result;
+    switch (type) {
+        case PF_ANNOTATION_KEY_TYPE_INT:
+            result = pmc_new(interp, enum_class_Integer);
+            VTABLE_set_integer_native(interp, result, value);
+            break;
+        case PF_ANNOTATION_KEY_TYPE_NUM:
+            result = pmc_new(interp, enum_class_Float);
+            VTABLE_set_number_native(interp, result,
+                    PF_CONST(self->code, value)->u.number);
+            break;
+        default:
+            result = pmc_new(interp, enum_class_String);
+            VTABLE_set_string_native(interp, result,
+                    PF_CONST(self->code, value)->u.string);
+    }
+    return result;
+}
+
+
+/*
+
+=item C<PMC * PackFile_Annotations_lookup>
+
+Looks up the annotation(s) in force at the given bytecode offset. If just one
+particular annotation is required, it can be passed as key, and the value will
+be returned (or a NULL PMC if no annotation of that name is in force). Otherwise,
+a Hash will be returned of the all annotations. If there are none in force, an
+empty hash will be returned.
+
+=cut
+
+*/
+
+PMC * PackFile_Annotations_lookup(PARROT_INTERP, struct PackFile_Annotations *self,
+        opcode_t offset, STRING *key) {
+    INTVAL i;
+    INTVAL start_entry = 0;
+    PMC *  result;
+
+    /* If we have a key, look up its ID; if we don't find one. */
+    opcode_t key_id = -1;
+    if (key != NULL) {
+        for (i = 0; i < self->num_keys; i++) {
+            STRING *test_key = PF_CONST(self->code, self->keys[i]->name)->u.string;
+            if (string_equal(interp, test_key, key) == 0) {
+                key_id = i;
+                break;
+            }
+        }
+        if (key_id == -1)
+            return PMCNULL;
+    }
+
+    /* Use groups to find search start point. */
+    for (i = 0; i < self->num_groups; i++)
+        if (offset < self->groups[i]->bytecode_offset)
+            break;
+        else
+            start_entry = self->groups[i]->entries_offset;
+    
+    if (key_id == -1) {
+        /* Look through entries, storing what we find by key and tracking those
+         * that we have values for. */
+        opcode_t *latest_values = mem_allocate_n_zeroed_typed(self->num_keys, opcode_t);
+        opcode_t *have_values   = mem_allocate_n_zeroed_typed(self->num_keys, opcode_t);
+        for (i = start_entry; i < self->num_entries; i++) {
+            if (self->entries[i]->bytecode_offset >= offset)
+                break;
+            latest_values[self->entries[i]->key] = self->entries[i]->value;
+            have_values[self->entries[i]->key]   = 1;
+        }
+
+        /* Create hash of values we have. */
+        result = pmc_new(interp, enum_class_Hash);
+        for (i = 0; i < self->num_keys; i++) {
+            if (have_values[i]) {
+                STRING *key_name = PF_CONST(self->code, self->keys[i]->name)->u.string;
+                VTABLE_set_pmc_keyed_str(interp, result, key_name,
+                        make_annotation_value_pmc(interp, self, self->keys[i]->type,
+                                latest_values[i]));
+            }
+        }
+
+        mem_sys_free(latest_values);
+        mem_sys_free(have_values);
+    }
+    else {
+        /* Look for latest applicable value of the key. */
+        opcode_t latest_value = 0;
+        opcode_t found_value  = 0;
+        for (i = start_entry; i < self->num_entries; i++) {
+            if (self->entries[i]->bytecode_offset >= offset)
+                break;
+            if (self->entries[i]->key == key_id) {
+                latest_value = self->entries[i]->value;
+                found_value  = 1;
+            }
+        }
+
+        /* Did we find anything? */
+        if (!found_value)
+            result = PMCNULL;
+        else
+            result = make_annotation_value_pmc(interp, self,
+                    self->keys[key_id]->type, latest_value);
+    }
+
+    return result;
 }
 
 
