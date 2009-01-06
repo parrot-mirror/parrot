@@ -532,6 +532,13 @@ method multi_declarator($/) {
                 )
             );
         }
+
+        # Protos also need the proto property setting on them.
+        if $<sym> eq 'proto' {
+            $past.loadinit().push(
+                PAST::Op.new(:inline('    setprop block, "proto", %0'), 1)
+            );
+        }
     }
 
     make $past;
