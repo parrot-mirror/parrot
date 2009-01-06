@@ -18,6 +18,8 @@
 #include "pircompunit.h"
 #include "pirregalloc.h"
 
+#define NO_REG_ALLOCATED    -1
+
 /* core info of all symbols and PIR registers ($I42, etc.). */
 typedef struct syminfo {
     int            color;
@@ -69,6 +71,9 @@ typedef struct local_label {
 
 } local_label;
 
+
+/* lookup table to convert value_type and pir_type values into one another. */
+extern const int valuetype_pirtype_clut[10];
 
 
 /* symbol constructor */
