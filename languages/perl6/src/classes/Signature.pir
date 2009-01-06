@@ -63,8 +63,8 @@ the Signature.
   have_mi:
 
     # For now, if no type, set it to Any.
-    $I0 = exists attr['type']
-    if $I0 goto have_type
+    $P0 = attr['type']
+    unless null $P0 goto have_type
     $P0 = get_hll_global 'Any'
     attr['type'] = $P0
   have_type:
