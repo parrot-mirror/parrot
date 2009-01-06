@@ -516,6 +516,11 @@ method multi_declarator($/) {
     my $past :=  $<declarator> ?? $( $<declarator> ) !! $( $<routine_def> );
 
     if $past.isa(PAST::Block) {
+        # If we have a multi declarator, must have a named routine too.
+        if $sym ne "" && $past.name() eq "" {
+            $/.panic("'" ~ $<sym> ~ "' can only be used on named routines");
+        }
+
         # If we're declaring a multi or a proto, flag the sub as :multi,
         # and transform the sub's container to a Perl6MultiSub.
         if $sym eq 'multi' || $sym eq 'proto' {
