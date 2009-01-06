@@ -969,7 +969,7 @@ method signature($/, $key) {
             $sigparam.push(PAST::Val.new(:value($readtype),:named('readtype')));
 
             $sigparam.push(PAST::Val.new(:value($multi_inv),:named('multi_invocant')));
-            if substr($<param_sep>[$i], 0, 2) eq ';;' { $multi_inv := 0; }
+            if $<param_sep>[$i][0] eq ';;' { $multi_inv := 0; }
 
             $loadinit.push($sigparam);
             $i++;

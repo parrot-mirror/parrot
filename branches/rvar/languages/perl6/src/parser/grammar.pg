@@ -426,7 +426,7 @@ token sigterm {
     ':(' ~ ')' <signature> {*}
 }
 
-rule param_sep { [','|':'|';;'|';'] }
+rule param_sep { (','|':'|';;'|';') }
 
 token signature {
     {*} #= open
