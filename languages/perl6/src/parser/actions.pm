@@ -958,9 +958,7 @@ method signature($/, $key) {
             ##  add any typechecks
             my $type := $var<type>;
             if +@($type) > 0 {
-                ##  don't need the 'and' junction for only one type
-                if +@($type) == 1 { $type := $type[0] }
-                $type.named('type');
+                $type.named('constraints');
                 $sigparam.push($type);
             }
 
@@ -1047,7 +1045,7 @@ method parameter($/) {
     }
 
     ##  keep track of any type constraints
-    my $typelist := PAST::Op.new( :name('and'), :pasttype('call') );
+    my $typelist := PAST::Op.new( :name('list'), :pasttype('call') );
     $var<type> := $typelist;
     if $<type_constraint> {
         for @($<type_constraint>) {
