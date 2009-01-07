@@ -1671,6 +1671,20 @@ method variable($/, $key) {
     elsif $key eq 'special_variable' {
         $var := $( $<special_variable> );
     }
+    elsif $key eq '$0' {
+        $var := PAST::Var.new( 
+                    :scope('keyed_int'), 
+                    :node($/),
+                    :viviself('Failure'),
+                    PAST::Var.new( :scope('lexical'), :name('$/') ),
+                    +$<matchidx> );
+    }
+    elsif $key eq '$<>' {
+        $var := $( $<postcircumfix> );
+        $var.unshift( PAST::Var.new( :scope('lexical'), :name('$/'), 
+                                     :viviself('Failure'), :node($/) )
+        );
+    }
     make $var;
 }
 
@@ -2115,32 +2129,23 @@ method EXPR($/, $key) {
 }
 
 
-method regex_declarator($/, $key) {
-    make $( $/{$key} );
-}
-
-
-method regex_declarator_regex($/) {
-    my $past := $( $<quote_expression> );
-    $past.name( ~$<identifier>[0] );
+method regex_declarator($/) {
+    my $sym  := ~$<sym>;
+    my $past := $( $<regex_def> );
+    if $sym eq 'token'   { $past.compiler_args( :ratchet(1) ); }
+    elsif $sym eq 'rule' { $past.compiler_args( :s(1), :ratchet(1) ); }
     make $past;
 }
 
-
-method regex_declarator_token($/) {
-    my $past := $( $<quote_expression> );
-    $past.compiler_args( :ratchet(1) );
-    $past.name( ~$<identifier>[0] );
+method regex_def($/) {
+    my $past := $( $<regex_block> );
+    $past.name( ~$<deflongname>[0] );
     make $past;
 }
-
-
-method regex_declarator_rule($/) {
-    my $past := $( $<quote_expression> );
-    $past.compiler_args( :s(1), :ratchet(1) );
-    $past.name( ~$<identifier>[0] );
-    make $past;
-}
+   
+method regex_block($/) {
+    make $( $<quote_expression> );
+} 
 
 
 method type_declarator($/) {
