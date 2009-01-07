@@ -406,6 +406,9 @@ is composed (see C<!meta_compose> below).
     info['name'] = $P0
     info['namespace'] = nsarray
     metarole = new 'Role', info
+    nsarray = clone nsarray
+    $S0 = pop nsarray
+    set_hll_global nsarray, $S0, metarole
     .return (metarole)
 .end 
 
@@ -470,7 +473,6 @@ Add a trait with the given C<type> and C<name> to C<metaclass>.
     $P0 = $P0.'parse_name'(name)
     $S0 = pop $P0
     $P0 = get_hll_global $P0, $S0
-    $P0 = get_class $P0
 
     ##  add it to the class.
     metaclass.'add_role'($P0)

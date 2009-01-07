@@ -400,10 +400,6 @@ src/builtins/op.pir - Perl 6 builtin operators
     .local pmc derived
     derived = new 'Class'
     addparent derived, parrot_class
-    $I0 = isa role, 'NameSpace'
-    unless $I0 goto not_ns
-    role = get_class role
-  not_ns:
     $I0 = isa role, 'Role'
     if $I0 goto one_role
     $I0 = isa role, 'List'
@@ -421,10 +417,6 @@ src/builtins/op.pir - Perl 6 builtin operators
   roles_loop:
     unless role_it goto roles_loop_end
     cur_role = shift role_it
-    $I0 = isa cur_role, 'NameSpace'
-    unless $I0 goto many_not_ns
-    cur_role = get_class cur_role
-  many_not_ns:
     $I0 = isa cur_role, 'Role'
     unless $I0 goto error
     '!keyword_does'(derived, cur_role)
