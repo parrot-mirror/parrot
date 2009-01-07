@@ -391,13 +391,16 @@ is composed (see C<!meta_compose> below).
 
   class:
     .local pmc metaclass, ns
-    ns = get_hll_namespace nsarray
     if also goto is_also
+    ns = get_hll_namespace nsarray
     metaclass = newclass ns
     .return (metaclass)
   is_also:
-    metaclass = get_class ns
-    .return (metaclass)
+    .local pmc proto, p6meta
+    $S0 = shift nsarray
+    proto = get_hll_global nsarray, $S0
+    p6meta = get_hll_global ['Perl6Object'], '$!P6META'
+    .tailcall p6meta.'get_parrotclass'(proto)
 
   role:
     .local pmc info, metarole
