@@ -2608,6 +2608,47 @@ Parrot_PCCINVOKE(PARROT_INTERP, ARGIN(PMC* pmc), ARGMOD(STRING *method_name),
 
 /*
 
+=item C<void Parrot_pcc_invoke_method_from_c_args>
+
+Makes a method call given the name of the method and the arguments as a
+C variadic argument list. C<pmc> is the invocant, C<method_name> is the
+string name of the method, C<signature> is a C string describing the
+signature of the invocation, according to the Parrot calling
+conventions.  The variadic argument list contains the input arguments
+followed by the output results in the same order that they appear in the
+function signature.
+
+=cut
+
+*/
+
+PARROT_EXPORT
+void
+Parrot_pcc_invoke_method_from_c_args(PARROT_INTERP, ARGIN(PMC* pmc),
+        ARGMOD(STRING *method_name),
+        ARGIN(const char *signature), ...)
+{
+    PMC *sig_obj;
+    PMC *sub_obj;
+    va_list args;
+    va_start(args, signature);
+    sig_obj = Parrot_build_sig_object_from_varargs(interp, pmc, signature, args);
+    va_end(args);
+
+    /* Find the subroutine object as a named method on pmc */
+    sub_obj = VTABLE_find_method(interp, pmc, method_name);
+    if (PMC_IS_NULL(sub_obj))
+         Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_METH_NOT_FOUND,
+             "Method '%Ss' not found", method_name);
+
+    /* Invoke the subroutine object with the given CallSignature object */
+    Parrot_pcc_invoke_from_sig_object(interp, sub_obj, sig_obj);
+    dod_unregister_pmc(interp, sig_obj);
+
+}
+
+/*
+
 =item C<void Parrot_pcc_invoke_from_sig_object>
 
 Follows the same conventions as C<Parrot_PCCINVOKE>, but the subroutine object
