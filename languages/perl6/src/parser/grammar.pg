@@ -465,7 +465,7 @@ rule type_constraint {
 }
 
 rule post_constraint {
-    where <EXPR: 'm='>                 # XXX <EXPR(item %chaining)>
+    where <EXPR: 'm='> {*}             # XXX <EXPR(item %chaining)>
 }
 
 token param_var {
