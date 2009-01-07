@@ -425,6 +425,19 @@ and creating the protoobjects.
     .local pmc p6meta
     p6meta = get_hll_global ['Perl6Object'], '$!P6META'
 
+    # Parrot handles composing methods into roles, but we need to handle the
+    # attribute composition ourselves.
+    .local pmc roles, roles_it
+    roles = inspect metaclass, 'roles'
+    roles_it = iter roles
+  roles_it_loop:
+    unless roles_it goto roles_it_loop_end
+    $P0 = shift roles_it
+    '!compose_role_attributes'(metaclass, $P0)
+    goto roles_it_loop
+  roles_it_loop_end:
+
+    # Create proto-object with default parent being Any.
     p6meta.'register'(metaclass, 'parent'=>'Any')
 .end
 
@@ -571,6 +584,60 @@ and C<type>.
     $P1 = getprop 'methodname', method
     $S1 = $P1
     .tailcall attribute.$S1(args :flat, options :flat :named)
+.end
+
+
+=item !compose_role_attributes(class, role)
+
+Helper method to compose the attributes of a role into a class.
+
+=cut
+
+.sub '!compose_role_attributes'
+    .param pmc class
+    .param pmc role
+
+    .local pmc role_attrs, class_attrs, ra_iter
+    .local string cur_attr
+    role_attrs = inspect role, "attributes"
+    class_attrs = inspect class, "attributes"
+    ra_iter = iter role_attrs
+  ra_iter_loop:
+    unless ra_iter goto ra_iter_loop_end
+    cur_attr = shift ra_iter
+
+    # Check that this attribute doesn't conflict with one already in the class.
+    $I0 = exists class_attrs[cur_attr]
+    unless $I0 goto no_conflict
+
+    # We have a name conflict. Let's compare the types. If they match, then we
+    # can merge the attributes.
+    .local pmc class_attr_type, role_attr_type
+    $P0 = class_attrs[cur_attr]
+    if null $P0 goto conflict
+    class_attr_type = $P0['type']
+    if null class_attr_type goto conflict
+    $P0 = role_attrs[cur_attr]
+    if null $P0 goto conflict
+    role_attr_type = $P0['type']
+    if null role_attr_type goto conflict
+    $I0 = '!SAMETYPE_EXACT'(class_attr_type, role_attr_type)
+    if $I0 goto merge
+
+  conflict:
+    $S0 = "Conflict of attribute '"
+    $S0 = concat cur_attr
+    $S0 = concat "' in composition of role '"
+    $S1 = role
+    $S0 = concat $S1
+    $S0 = concat "'"
+    'die'($S0)
+
+  no_conflict:
+    addattribute class, cur_attr
+  merge:
+    goto ra_iter_loop
+  ra_iter_loop_end:
 .end
 
 
