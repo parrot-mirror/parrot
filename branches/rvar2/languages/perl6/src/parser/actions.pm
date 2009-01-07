@@ -1002,6 +1002,15 @@ method type_constraint($/) {
     if $<fulltypename> {
         $past := $( $<fulltypename> );
     }
+    else {
+        $past := make_subset_type($( $<EXPR> ));
+    }
+    make $past;
+}
+
+
+method post_constraint($/) {
+    my $past := make_anon_subtype($( $<EXPR> ));
     make $past;
 }
 
@@ -1059,6 +1068,11 @@ method parameter($/) {
             else {
                 $typelist.push( $type_past );
             }
+        }
+    }
+    if $<post_constraint> {
+        for @($<post_constraint>) {
+            $typelist.push($( $_ ));
         }
     }
 
@@ -2527,10 +2541,9 @@ sub add_method_to_class($method) {
 }
 
 # Creates an anonymous subset type.
-sub make_anon_subset($past, $parameter) {
+sub make_anon_subtype($past) {
     # We need a block containing the constraint condition.
     if !$past.isa(PAST::Block) {
-        # Make block with the expression as its contents.
         $past := PAST::Block.new(
             PAST::Stmts.new(),
             PAST::Stmts.new( $past )
@@ -2553,31 +2566,16 @@ sub make_anon_subset($past, $parameter) {
     unless $param {
         if $dollar_underscore {
             $dollar_underscore.scope('parameter');
-            $param := $dollar_underscore;
         }
         else {
-            $param := PAST::Var.new(
+            $past[0].push(PAST::Var.new(
                 :name('$_'),
                 :scope('parameter')
-            );
-            $past[0].push($param);
+            ));
         }
     }
 
-    # Now we'll just pass this block to the type checker,
-    # since smart-matching a block invokes it.
-    return PAST::Op.new(
-        :pasttype('call'),
-        :name('!TYPECHECKPARAM'),
-        PAST::Op.new(
-            :pirop('newclosure'),
-            $past
-        ),
-        PAST::Var.new(
-            :name($parameter.name()),
-            :scope('lexical')
-        )
-    );
+    return $past;
 }
 
 
