@@ -62,12 +62,52 @@ the Signature.
     attr['multi_invocant'] = 1
   have_mi:
 
-    # For now, if no type, set it to Any.
-    $P0 = attr['type']
-    unless null $P0 goto have_type
-    $P0 = get_hll_global 'Any'
-    attr['type'] = $P0
+    # Get constraints list, which may have class and role types as well as
+    # subset types. If we have no unique role or class type, they all become
+    # constraints; otherwise, we find the unique type. Finally, we turn the
+    # list of constraints into a junction.
+    .local pmc cur_list, cur_list_iter, constraints, type, test_item
+    constraints = 'list'()
+    type = null
+    cur_list = attr["constraints"]
+    if null cur_list goto cur_list_loop_end
+    cur_list_iter = iter cur_list
+  cur_list_loop:
+    unless cur_list_iter goto cur_list_loop_end
+    test_item = shift cur_list_iter
+    $I0 = isa test_item, "Role"
+    if $I0 goto is_type
+    $P0 = getprop "subtype_realtype", test_item
+    if null $P0 goto not_refinement
+    unless null type goto all_constraints
+    type = $P0
+    push constraints, test_item
+    goto cur_list_loop
+  not_refinement:
+    $I0 = isa test_item, "P6protoobject"
+    if $I0 goto is_type
+    push constraints, test_item
+    goto cur_list_loop
+  is_type:
+    unless null type goto all_constraints
+    type = test_item
+    goto cur_list_loop
+  all_constraints:
+    type = null
+    constraints = cur_list
+  cur_list_loop_end:
+    unless null type goto have_type
+    type = get_hll_global 'Any'
   have_type:
+    attr["type"] = type
+    $I0 = elements constraints
+    if $I0 == 0 goto no_constraints
+    constraints = 'all'(constraints)
+    goto set_constraints
+  no_constraints:
+    constraints = null
+  set_constraints:
+    attr["constraints"] = constraints
 
     # Add to parameters list.
     .local pmc params
