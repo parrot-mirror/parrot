@@ -812,34 +812,22 @@ token rad_number {
     {*}
 }
 
-# These regex rules are some way off STD.pm at the moment, but we'll work them
-# closer to it over time.
+
 rule regex_declarator {
-    | <regex_declarator_regex> {*}          #= regex_declarator_regex
-    | <regex_declarator_token> {*}          #= regex_declarator_token
-    | <regex_declarator_rule> {*}           #= regex_declarator_rule
-}
-
-rule regex_declarator_regex {
-    $<sym>='regex'
-    <identifier>?
-    <before '{'> <quote_expression: :regex><.BLOCK_STATEMENT_END>?
+    $<sym>=[regex|token|rule] <regex_def>
     {*}
 }
 
-rule regex_declarator_token {
-    $<sym>='token'
-    <identifier>?
-    <before '{'> <quote_expression: :regex :ratchet><.BLOCK_STATEMENT_END>?
+rule regex_def {
+    <deflongname=name>?  <regex_block> {*}
+}
+
+token regex_block {
+    <?before '{'> <quote_expression: :regex>
+    <.BLOCK_STATEMENT_END>?
     {*}
 }
 
-rule regex_declarator_rule {
-    $<sym>='rule'
-    <identifier>?
-    <before '{'> <quote_expression: :regex :ratchet :sigspace><.BLOCK_STATEMENT_END>?
-    {*}
-}
 
 ##  S05 shows semilist as being a list of statements, in order
 ##  to support multidimensional argument lists.  For now we
