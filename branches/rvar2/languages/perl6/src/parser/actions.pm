@@ -958,7 +958,7 @@ method signature($/, $key) {
             ##  add any typechecks
             my $type := $var<type>;
             if +@($type) > 0 {
-                $type.named('constraints');
+                $type.named('type');
                 $sigparam.push($type);
             }
 
@@ -1045,7 +1045,7 @@ method parameter($/) {
     }
 
     ##  keep track of any type constraints
-    my $typelist := PAST::Op.new( :name('list'), :pasttype('call') );
+    my $typelist := PAST::Op.new( :name('all'), :pasttype('call') );
     $var<type> := $typelist;
     if $<type_constraint> {
         for @($<type_constraint>) {
