@@ -1650,6 +1650,11 @@ method variable($/, $key) {
             if $sym && $sym<scope> { $var.scope( $sym<scope> ); }
         }
 
+        # The ! twigil always implies attribute scope.
+        if $twigil eq '!' {
+            $var.scope('attribute');
+        }
+
         # ! and . twigils may need 'self' for attribute lookup ...
         if $twigil eq '!' || $twigil eq '.' {
             $var.unshift( PAST::Var.new( :name('self'), :scope('lexical') ) );
