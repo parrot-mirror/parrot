@@ -1252,13 +1252,22 @@ Parrot_mmd_build_type_tuple_from_sig_obj(PARROT_INTERP, ARGIN(PMC *sig_obj))
                 break;
             case 'P':
             {
-                PMC *pmc_arg = VTABLE_get_pmc_keyed_int(interp, sig_obj, i);
-                if (PMC_IS_NULL(pmc_arg))
-                    VTABLE_set_integer_keyed_int(interp, type_tuple,
-                            i, enum_type_PMC);
-                else
-                    VTABLE_set_integer_keyed_int(interp, type_tuple, i,
-                            VTABLE_type(interp, pmc_arg));
+                INTVAL type_lookahead = string_index(interp, string_sig, (i + 1));
+                if (type_lookahead == 'i') {
+                    if (i != 0)
+                        Parrot_ex_throw_from_c_args(interp, NULL,
+                            EXCEPTION_INVALID_OPERATION,
+                            "Multiple Dispatch: only the first argument can be an invocant");
+                }
+                else {
+                    PMC *pmc_arg = VTABLE_get_pmc_keyed_int(interp, sig_obj, i);
+                    if (PMC_IS_NULL(pmc_arg))
+                        VTABLE_set_integer_keyed_int(interp, type_tuple,
+                                i, enum_type_PMC);
+                    else
+                        VTABLE_set_integer_keyed_int(interp, type_tuple, i,
+                                VTABLE_type(interp, pmc_arg));
+                }
 
                 break;
             }
