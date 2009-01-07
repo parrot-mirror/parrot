@@ -491,17 +491,6 @@ and C<type>.
     .param int has_itype       :opt_flag
     .param pmc attr            :slurpy :named
 
-    # twigil handling
-    .local string twigil
-    twigil = substr name, 1, 1
-    if twigil == '.' goto twigil_public
-    if twigil == '!' goto twigil_done
-    substr name, 1, 0, '!'
-    goto twigil_done
-  twigil_public:
-    substr name, 1, 1, '!'
-  twigil_done:
-
     $P0 = metaclass.'attributes'()
     $I0 = exists $P0[name]
     if $I0 goto attr_exists
