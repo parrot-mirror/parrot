@@ -1405,6 +1405,17 @@ method scope_declarator($/) {
             if $_.isa(PAST::Var) {
                 my $var := $_;
 
+                # If it's an attribute with no twigil, need to modify the
+                # name to include one, but also register it in the block
+                # with the original name.
+                if $scope eq 'attribute' && $var<twigil> eq '' {
+                    $block.symbol( $var.name(), :scope($scope) );
+                    $var<twigil> := '!';
+                    my $sigil := substr($var.name(), 0, 1);
+                    my $name  := substr($var.name(), 1);
+                    $var.name($sigil ~ '!' ~ $name);
+                }
+
                 # This is a variable declaration, so we set the scope in
                 # the block's symbol table as well as the variable itself.
                 $block.symbol( $var.name(), :scope($scope) );
