@@ -1075,7 +1075,10 @@ method parameter($/) {
 method param_var($/) {
     my $name := ~$/;
     my $twigil := ~$<twigil>[0];
-    if $twigil && $twigil ne '.' && $twigil ne '!' {
+    if $twigil eq '.' {
+        $name := ~$<sigil> ~ '!' ~ $<identifier>;
+    }
+    elsif $twigil && $twigil ne '!' {
         $/.panic('Invalid twigil used in signature parameter.');
     }
     my $var := PAST::Var.new(
@@ -1083,7 +1086,8 @@ method param_var($/) {
         :scope('parameter'),
         :node($/)
     );
-    $var<itype> := container_itype( $<sigil> );
+    $var<twigil> := $twigil;
+    $var<itype>  := container_itype( $<sigil> );
     # Declare symbol as lexical in current (signature) block.
     # This is needed in case any post_constraints try to reference
     # this new param_var.
@@ -1405,17 +1409,6 @@ method scope_declarator($/) {
             if $_.isa(PAST::Var) {
                 my $var := $_;
 
-                # If it's an attribute with no twigil, need to modify the
-                # name to include one, but also register it in the block
-                # with the original name.
-                if $scope eq 'attribute' && $var<twigil> eq '' {
-                    $block.symbol( $var.name(), :scope($scope) );
-                    $var<twigil> := '!';
-                    my $sigil := substr($var.name(), 0, 1);
-                    my $name  := substr($var.name(), 1);
-                    $var.name($sigil ~ '!' ~ $name);
-                }
-
                 # This is a variable declaration, so we set the scope in
                 # the block's symbol table as well as the variable itself.
                 $block.symbol( $var.name(), :scope($scope) );
@@ -1450,6 +1443,13 @@ method scope_declarator($/) {
                 }
 
                 if $scope eq 'attribute' {
+                    # If no twigil, we need a twigiled entry of
+                    # the attribute in the block's symbol table.
+                    if $var<twigil> eq '' {
+                        my $sigil := substr($var.name(), 0, 1);
+                        my $name  := substr($var.name(), 1);
+                        $block.symbol( $sigil ~ '!' ~ $name, :scope($scope));
+                    }
                     my $pkgdecl := $block<pkgdecl>;
                     unless $pkgdecl eq 'class' || $pkgdecl eq 'role'
                             || $pkgdecl eq 'grammar' {
