@@ -69,8 +69,9 @@ the Signature.
     .local pmc cur_list, cur_list_iter, constraints, type, test_item
     constraints = 'list'()
     type = null
-    cur_list = attr["constraints"]
+    cur_list = attr["type"]
     if null cur_list goto cur_list_loop_end
+    cur_list = cur_list.'!eigenstates'()
     cur_list_iter = iter cur_list
   cur_list_loop:
     unless cur_list_iter goto cur_list_loop_end
@@ -99,7 +100,7 @@ the Signature.
     unless null type goto have_type
     type = get_hll_global 'Any'
   have_type:
-    attr["type"] = type
+    attr["nom_type"] = type
     $I0 = elements constraints
     if $I0 == 0 goto no_constraints
     constraints = 'all'(constraints)
@@ -107,7 +108,7 @@ the Signature.
   no_constraints:
     constraints = null
   set_constraints:
-    attr["constraints"] = constraints
+    attr["cons_type"] = constraints
 
     # Add to parameters list.
     .local pmc params
