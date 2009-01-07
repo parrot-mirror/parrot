@@ -1997,13 +1997,23 @@ count_signature_elements(PARROT_INTERP, ARGIN(const char *signature),
                 break;
             case 'P':
                 arg_ret_cnt[seen_arrow]++;
-                max_regs[seen_arrow * 4 + REGNO_PMC]++;
+                {
+                    /* Lookahead to see if PMC is marked as invocant */
+                    if (*(++x) == 'i') {
+                        max_regs[REGNO_PMC]++;
+                    }
+                    else {
+                        x--; /* Undo lookahead */
+                        max_regs[seen_arrow * 4 + REGNO_PMC]++;
+                    }
+                }
                 break;
             case 'f':
             case 'n':
             case 's':
             case 'o':
             case 'p':
+            case 'i':
                 break;
             default:
                 Parrot_ex_throw_from_c_args(interp, NULL,
@@ -2057,7 +2067,22 @@ commit_last_arg_sig_object(PARROT_INTERP, int index, int cur,
         case PARROT_ARG_STRING:
             reg_offset = n_regs_used[seen_arrow * 4 + REGNO_STR]++; break;
         case PARROT_ARG_PMC :
-            reg_offset = n_regs_used[seen_arrow * 4 + REGNO_PMC]++; break;
+            if (cur & PARROT_ARG_INVOCANT) {
+                if (seen_arrow == 0 && index == 0) {
+                    n_regs_used[REGNO_PMC]++;
+                    reg_offset = 0;
+                }
+                else {
+                    Parrot_ex_throw_from_c_args(interp, NULL,
+                            EXCEPTION_INVALID_OPERATION,
+                            "Parrot_pcc_invoke: Only the first parameter can be an invocant %d, %d",
+                            seen_arrow, index);
+                }
+            }
+            else {
+                reg_offset = n_regs_used[seen_arrow * 4 + REGNO_PMC]++;
+            }
+            break;
         default:
             Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INVALID_OPERATION,
                 "Parrot_PCCINVOKE: invalid reg type");
@@ -2084,6 +2109,9 @@ commit_last_arg_sig_object(PARROT_INTERP, int index, int cur,
                 break;
             case PARROT_ARG_PMC:
                 CTX_REG_PMC(ctx, reg_offset) = VTABLE_get_pmc_keyed_int(interp, sig_obj, index);
+                if (cur & PARROT_ARG_INVOCANT) {
+                    interp->current_object = CTX_REG_PMC(ctx, reg_offset);
+                }
                 break;
             default:
                 Parrot_ex_throw_from_c_args(interp, NULL,
@@ -2308,6 +2336,7 @@ set_context_sig_params(PARROT_INTERP, ARGIN(const char *signature),
                 case 's': cur |= PARROT_ARG_SLURPY_ARRAY; break;
                 case 'o': cur |= PARROT_ARG_OPTIONAL;     break;
                 case 'p': cur |= PARROT_ARG_OPT_FLAG;     break;
+                case 'i': cur |= PARROT_ARG_INVOCANT;     break;
                 default:
                     Parrot_ex_throw_from_c_args(interp, NULL,
                         EXCEPTION_INVALID_OPERATION,
