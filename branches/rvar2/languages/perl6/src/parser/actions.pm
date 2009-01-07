@@ -1284,65 +1284,6 @@ method noun($/, $key) {
 }
 
 
-sub apply_package_traits($package, $traits) {
-    for $traits {
-        my $aux := $_<trait_auxiliary>;
-        # Apply any "is" traits through MMD.
-        if $aux<sym> eq 'is' {
-            # Check it's not a compiler-handled one.
-            if $aux<name> ne 'also' {
-                # Emit the call.
-                my @identifier := Perl6::Compiler.parse_name(~$aux<name>);
-                my $name := @identifier.pop();
-                my $superclass := PAST::Var.new(
-                                      :name($name),
-                                      :scope('package'),
-                                      :viviself('Undef')
-                                  );
-                if +@identifier != 0 {
-                    $superclass.namespace(@identifier);
-                }
-                $package.push(
-                    PAST::Op.new(
-                        :pasttype('call'),
-                        :name('trait_auxiliary:is'),
-                        $superclass,
-                        PAST::Var.new(
-                            :name('def'),
-                            :scope('register')
-                        )
-                    )
-                );
-            }
-        }
-        elsif $aux<sym> eq 'does' {
-            # Role.
-            my @identifier := Perl6::Compiler.parse_name(~$aux<name>);
-            my $name := @identifier.pop();
-            my $role_name := PAST::Var.new(
-                                 :name($name),
-                                 :namespace(@identifier),
-                                 :scope('package'),
-                             );
-            $package.push(
-                PAST::Op.new(
-                    :pasttype('call'),
-                    :name('!keyword_does'),
-                    PAST::Var.new(
-                        :name('def'),
-                        :scope('register')
-                    ),
-                    $role_name
-                )
-            );
-        }
-        else {
-            $traits.panic("Currently only is and does traits are supported on packages.");
-        }
-    }
-}
-
-
 method package_declarator($/, $key) {
     our @?PKGDECL;
     my $sym := ~$<sym>;
