@@ -2728,8 +2728,10 @@ Parrot_pcc_invoke_from_sig_object(PARROT_INTERP, ARGIN(PMC *sub_obj),
     /* Invoke the function */
     dest = VTABLE_invoke(interp, sub_obj, NULL);
 
-    /* PIR Subs need runops to run their opcodes. */
-    if (sub_obj->vtable->base_type == enum_class_Sub) {
+    /* PIR Subs need runops to run their opcodes. Methods and NCI subs
+     * don't. */
+    if (sub_obj->vtable->base_type == enum_class_Sub
+            && PMC_IS_NULL(interp->current_object)) {
         INTVAL old_core  = interp->run_core;
         opcode_t offset  = dest - interp->code->base.data;
 
