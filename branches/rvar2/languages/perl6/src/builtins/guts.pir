@@ -58,6 +58,36 @@ it understands how to properly merge C<MultiSub> PMCs.
 .end
 
 
+=item !CALLMETHOD('method', obj)
+
+Invoke a method on a possibly foreign object.  If the object
+supports the requested method, we use it, otherwise we assume
+the object is foreign and try using the corresponding method
+from C<Any>.
+
+=cut
+
+.namespace []
+.sub '!CALLMETHOD'
+    .param string method
+    .param pmc obj
+    $I0 = isa obj, 'ObjectRef'
+    if $I0 goto any_method
+    $I0 = can obj, method
+    unless $I0 goto any_method
+    .tailcall obj.method()
+  any_method:
+    .local pmc anyobj
+    anyobj = get_global '$!ANY'
+    unless null anyobj goto any_method_1
+    anyobj = new 'Any'
+    set_global '$!ANY', anyobj
+  any_method_1:
+    $P0 = find_method anyobj, method
+    .tailcall obj.$P0()
+.end
+
+
 =item !VAR
 
 Helper function for implementing the VAR and .VAR macros.
@@ -333,6 +363,212 @@ first). So for now we just transform multis in user code like this.
     result = MAIN(args :flat)
   done:
     .return (result)
+.end
+
+
+=item !meta_create(type, name, also)
+
+Create a metaclass object for C<type> with the given C<name>.  
+This simply creates a handle on which we can hang methods, attributes,
+traits, etc. -- the class itself isn't created until the class
+is composed (see C<!meta_compose> below).
+
+=cut
+
+.sub '!meta_create'
+    .param string type
+    .param string name
+    .param int also
+
+    .local pmc nsarray
+    $P0 = compreg 'Perl6'
+    nsarray = $P0.'parse_name'(name)
+
+    if type == 'class' goto class
+    if type == 'grammar' goto class
+    if type == 'role' goto role
+    'die'("Unsupported package declarator ", type)
+
+  class:
+    .local pmc metaclass, ns
+    ns = get_hll_namespace nsarray
+    if also goto is_also
+    metaclass = newclass ns
+    .return (metaclass)
+  is_also:
+    metaclass = get_class ns
+    .return (metaclass)
+
+  role:
+    .local pmc info, metarole
+    info = new 'Hash'
+    $P0 = nsarray[-1]
+    info['name'] = $P0
+    info['namespace'] = nsarray
+    metarole = new 'Role', info
+    .return (metarole)
+.end 
+
+
+=item !meta_compose(Class metaclass)
+
+Compose the class.  This includes resolving any inconsistencies
+and creating the protoobjects.
+
+=cut
+
+.sub '!meta_compose' :multi(['Class'])
+    .param pmc metaclass
+    .local pmc p6meta
+    p6meta = get_hll_global ['Perl6Object'], '$!P6META'
+
+    p6meta.'register'(metaclass, 'parent'=>'Any')
+.end
+
+
+=item !meta_compose(Role role)
+
+Compose the role.
+
+=cut
+
+.sub '!meta_compose' :multi(['Role'])
+    .param pmc role
+    # Currently, nothing to do.
+.end
+
+
+=item !meta_trait(metaclass, type, name)
+
+Add a trait with the given C<type> and C<name> to C<metaclass>.
+
+=cut
+
+.sub '!meta_trait'
+    .param pmc metaclass
+    .param string type
+    .param string name
+
+    if type == 'trait_auxiliary:is' goto is
+    if type == 'trait_auxiliary:does' goto does
+    'die'("Unknown trait auxiliary ", type)
+  
+  is:
+    ##  get the (parrot)class object associated with name
+    $P0 = compreg 'Perl6'
+    $P0 = $P0.'parse_name'(name)
+    $P0 = get_hll_namespace $P0
+    $P0 = get_class $P0
+
+    ##  add it as parent to metaclass
+    metaclass.'add_parent'($P0)
+    .return ()
+
+  does:
+    ##  get the role to be composed
+    $P0 = compreg 'Perl6'
+    $P0 = $P0.'parse_name'(name)
+    $S0 = pop $P0
+    $P0 = get_hll_global $P0, $S0
+    $P0 = get_class $P0
+
+    ##  add it to the class.
+    metaclass.'add_role'($P0)
+.end
+
+
+=item !meta_attribute(metaclass, name, itype [, 'type'=>type] )
+
+Add attribute C<name> to C<metaclass> with the given C<itype>
+and C<type>.
+
+=cut
+
+.sub '!meta_attribute'
+    .param pmc metaclass
+    .param string name
+    .param string itype        :optional
+    .param int has_itype       :opt_flag
+    .param pmc attr            :slurpy :named
+
+    # twigil handling
+    .local string twigil
+    twigil = substr name, 1, 1
+    if twigil == '.' goto twigil_public
+    if twigil == '!' goto twigil_done
+    substr name, 1, 0, '!'
+    goto twigil_done
+  twigil_public:
+    substr name, 1, 1, '!'
+  twigil_done:
+
+    $P0 = metaclass.'attributes'()
+    $I0 = exists $P0[name]
+    if $I0 goto attr_exists
+    metaclass.'add_attribute'(name)
+    $P0 = metaclass.'attributes'()
+  attr_exists:
+
+    .local pmc attrhash, it
+    attrhash = $P0[name]
+
+    # Set any itype for the attribute.
+    unless has_itype goto itype_done
+    attrhash['itype'] = itype
+  itype_done:
+
+    # and set any other attributes that came in via the slurpy hash
+    it = iter attr
+  attr_loop:
+    unless it goto attr_done
+    $S0 = shift it
+    $P0 = attr[$S0]
+    attrhash[$S0] = $P0
+    goto attr_loop
+  attr_done:
+
+    .const 'Sub' handles = '!handles'
+    $P0 = attr['traitlist']
+    if null $P0 goto traitlist_done
+    it = iter $P0
+  traitlist_loop:
+    unless it goto traitlist_done
+    .local pmc trait
+    trait = shift it
+    $S0 = trait[0]
+    if $S0 != 'trait_verb:handles' goto traitlist_loop
+    .local pmc handles_it
+    $P0 = trait[1]
+    $P0 = 'list'($P0)
+    handles_it = iter $P0
+  handles_loop:
+    unless handles_it goto handles_done
+    $P0 = clone handles
+    $P1 = box name
+    setprop $P0, 'attrname', $P1
+    $P1 = shift handles_it
+    setprop $P0, 'methodname', $P1
+    $S1 = $P1
+    metaclass.'add_method'($S1, $P0)
+    goto handles_loop
+  handles_done:
+    goto traitlist_loop
+  traitlist_done:
+.end
+
+
+.sub '!handles' :method
+    .param pmc args            :slurpy
+    .param pmc options         :slurpy :named
+    .local pmc method, attribute
+    $P0 = getinterp
+    method = $P0['sub']
+    $P1 = getprop 'attrname', method
+    $S1 = $P1
+    attribute = getattribute self, $S1
+    $P1 = getprop 'methodname', method
+    $S1 = $P1
+    .tailcall attribute.$S1(args :flat, options :flat :named)
 .end
 
 
