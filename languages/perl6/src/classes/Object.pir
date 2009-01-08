@@ -52,17 +52,23 @@ like this.
     result = clone self
 
     # Set any new attributes.
-    .local pmc it
-    it = iter new_attrs
-  it_loop:
-    unless it goto it_loop_end
-    $S0 = shift it
-    $P0 = new_attrs[$S0]
-    $S0 = concat '!', $S0
-    $P1 = result.$S0()
-    'infix:='($P1, $P0)
-    goto it_loop
-  it_loop_end:
+    .local pmc p6meta, parrotclass, attributes, it
+    p6meta = get_hll_global ['Perl6Object'], '$!P6META'
+    parrotclass = p6meta.'get_parrotclass'(result)
+    attributes = inspect parrotclass, 'attributes'
+    it = iter attributes
+  attrinit_loop:
+    unless it goto attrinit_done
+    .local string attrname, shortname
+    attrname = shift it
+    shortname = substr attrname, 2
+    $I0 = exists new_attrs[shortname]
+    unless $I0 goto attrinit_loop
+    $P0 = getattribute result, attrname
+    $P1 = new_attrs[shortname]
+    'infix:='($P0, $P1)
+    goto attrinit_loop
+  attrinit_done:
 
     .return (result)
 .end
