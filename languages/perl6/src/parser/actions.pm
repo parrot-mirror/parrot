@@ -859,45 +859,73 @@ method routine_declarator($/, $key) {
 
 
 method routine_def($/) {
-    my $past := $( $<block> );
-    $past.blocktype('declaration');
+    my $block := $( $<block> );
+    $block.blocktype('declaration');
     if $<deflongname> {
         my $name := ~$<deflongname>[0];
-        $past.name( $name );
+        $block.name( $name );
         our @?BLOCK;
         @?BLOCK[0].symbol( $name, :scope('package') );
     }
-    $past.control('return_pir');
-    block_signature($past);
-    make $past;
+    $block.control('return_pir');
+    block_signature($block);
+
+    if $<trait> {
+        my $loadinit := $block.loadinit();
+        my $blockreg := PAST::Var.new( :name('block'), :scope('register') );
+        for @($<trait>) {
+            #  Trait nodes come in as PAST::Op( :name('list') ).
+            #  We just modify them to call !sub_trait and add
+            #  'block' as the first argument.
+            my $trait := $( $_ );
+            $trait.name('!sub_trait');
+            $trait.unshift($blockreg);
+            $loadinit.push($trait);
+        }
+    }
+    make $block;
 }
 
 
 method method_def($/) {
-    my $past := $( $<block> );
-    $past.blocktype('method');
+    my $block := $( $<block> );
+    $block.blocktype('method');
 
     if $<longname> {
-        $past.name( ~$<longname> );
+        $block.name( ~$<longname> );
     }
 
     # Add lexical 'self'.
-    $past[0].unshift(
+    $block[0].unshift(
         PAST::Var.new( :name('self'), :scope('lexical'), :isdecl(1),
             :viviself( PAST::Var.new( :name('self'), :scope('register' ) ) )
         )
     );
 
+    $block.control('return_pir');
+    block_signature($block);
     # Ensure there's an invocant in the signature.
-    block_signature($past);
-    $past.loadinit().push(PAST::Op.new(
+    $block.loadinit().push(PAST::Op.new(
         :pasttype('callmethod'),
         :name('!add_implicit_self'),
         PAST::Var.new( :name('signature'), :scope('register') )
     ));
 
-    $past.control('return_pir');
-    make $past;
+    if $<trait> {
+        my $loadinit := $block.loadinit();
+        my $blockreg := PAST::Var.new( :name('block'), :scope('register') );
+        for @($<trait>) {
+            #  Trait nodes come in as PAST::Op( :name('list') ).
+            #  We just modify them to call !sub_trait and add
+            #  'block' as the first argument.
+            my $trait := $( $_ );
+            $trait.name('!sub_trait');
+            $trait.unshift($blockreg);
+            $loadinit.push($trait);
+        }
+    }
+
+    make $block;
 }
 
 
