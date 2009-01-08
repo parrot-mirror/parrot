@@ -382,6 +382,8 @@ rule routine_def {
 rule method_def {
     [
     | <longname=name> [ <multisig> | <trait> ]*
+    | <multisig> <trait>*
+    | ::
     ]
     <block>
     {*}
