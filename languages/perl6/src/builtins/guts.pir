@@ -626,6 +626,23 @@ and C<type>.
 .end
 
 
+=item !sub_trait_default(trait, block, arg)
+
+Sets the default trait, which marks a multi candidate as the default choice
+in an ambiguous multiple dispatch.
+
+=cut
+
+.sub '!sub_trait_default'
+    .param string trait
+    .param pmc block
+    .param pmc arg
+    $P0 = new 'Integer'
+    $P0 = 1
+    setprop block, 'default', $P0
+.end
+
+
 =item !sub_trait_export(trait, block, arg)
 
 =cut
