@@ -949,9 +949,6 @@ method signature($/, $key) {
             my $var    := $( $<parameter>[$i] );
             my $name   := $var.name();
 
-            ##  add var node to block
-            $sigpast.push( $var );
-
             if $var<type_binding> {
                 $sigpast.push( $var<type_binding> );
             }
@@ -983,10 +980,32 @@ method signature($/, $key) {
             }
             $sigparam.push(PAST::Val.new(:value($readtype),:named('readtype')));
 
+            ##  if it's an invocant, flag it as such and make the var be a
+            ##  lexical that has self register bound to it
+            if $<param_sep>[$i][0] eq ':' {
+                if $i == 0 {
+                    $sigparam.push(PAST::Val.new( :value(1), :named('invocant')));
+                    $var.scope('lexical');
+                    $var.isdecl(1);
+                    $var := PAST::Op.new(
+                        :pasttype('bind'),
+                        $var,
+                        PAST::Var.new( :name('self'), :scope('register') )
+                    );
+                }
+                else {
+                    $/.panic("Can only use : separator to denote invocant after first parameter.");
+                }
+            }
+
+            ##  handle end of multi-invocant sequence
             if ($multi_inv_suppress) {
                 $sigparam.push(PAST::Val.new(:value(0),:named('multi_invocant')));
             }
             if $<param_sep>[$i][0] eq ';;' { $multi_inv_suppress := 1; }
+
+            ##  add var node to block
+            $sigpast.push( $var );
 
             $loadinit.push($sigparam);
             $i++;
