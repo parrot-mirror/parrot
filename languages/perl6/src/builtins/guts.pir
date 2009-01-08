@@ -366,6 +366,32 @@ first). So for now we just transform multis in user code like this.
 .end
 
 
+=item !capture
+
+Combine slurpy positional and slurpy named args into a list.
+Note that original order may be lost -- that's the nature
+of captures.
+
+=cut
+
+.sub '!capture'
+    .param pmc args            :slurpy
+    .param pmc options         :slurpy :named
+    unless options goto done
+    .local pmc it
+    it = iter options
+  iter_loop:
+    unless it goto done
+    $S0 = shift it
+    $P0 = options[$S0]
+    $P0 = 'infix:=>'($S0, $P0)
+    push args, $P0
+    goto iter_loop
+  done:
+    .tailcall args.'list'()
+.end
+
+
 =item !meta_create(type, name, also)
 
 Create a metaclass object for C<type> with the given C<name>.  
@@ -652,12 +678,28 @@ in an ambiguous multiple dispatch.
     .param pmc block
     .param pmc arg
 
+    .local string blockname
+    blockname = block
     .local pmc blockns, exportns
     blockns = block.'get_namespace'()
-    $P0 = split '::', 'EXPORT::ALL'
-    exportns = blockns.'make_namespace'($P0)
-    $S0 = block
-    exportns[$S0] = block
+    exportns = blockns.'make_namespace'('EXPORT')
+    if null arg goto arg_done
+    .local pmc it
+    arg = arg.'list'()
+    it = iter arg
+  arg_loop:
+    unless it goto arg_done
+    .local pmc tag, ns
+    tag = shift it
+    $I0 = isa tag, ['Perl6Pair']
+    unless $I0 goto arg_loop
+    $S0 = tag.'key'()
+    ns = exportns.'make_namespace'($S0)
+    ns[blockname] = block
+    goto arg_loop
+  arg_done:
+    ns = exportns.'make_namespace'('ALL')
+    ns[blockname] = block
 .end
 
 

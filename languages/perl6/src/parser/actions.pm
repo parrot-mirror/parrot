@@ -940,13 +940,22 @@ method trait($/) {
     make $past;
 }
 
+
 method trait_auxiliary($/) {
-    my $sym := ~$<sym>;
-    my $trait;
-    if $sym eq 'is' || $sym eq 'does' {
-        $trait := ~$<name>;
+    my $sym   := ~$<sym>;
+    my $trait := PAST::Op.new( :name('infix:,'), 'trait_auxiliary:' ~ $sym);
+    if $sym eq 'is' {
+        $trait.push( ~$<name> );
+        if $<postcircumfix> {
+            my $arg := $( $<postcircumfix>[0] );
+            $arg.name('!capture');
+            $trait.push($arg);
+        }
     }
-    make PAST::Op.new( :name('infix:,'), 'trait_auxiliary:' ~ $sym, $trait );
+    elsif $sym eq 'does' {
+        $trait.push( ~$<name> );
+    }
+    make $trait;
 }
 
 
