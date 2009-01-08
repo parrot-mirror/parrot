@@ -868,7 +868,7 @@ method routine_def($/) {
         @?BLOCK[0].symbol( $name, :scope('package') );
     }
     $past.control('return_pir');
-    create_signature_if_none($past);
+    block_signature($past);
     make $past;
 }
 
@@ -889,7 +889,7 @@ method method_def($/) {
     );
 
     $past.control('return_pir');
-    create_signature_if_none($past);
+    block_signature($past);
     make $past;
 }
 
@@ -929,7 +929,6 @@ method signature($/, $key) {
     if $key eq 'open' {
         my $sigpast := PAST::Op.new( :pasttype('stmts'), :node($/) );
         my $block    := PAST::Block.new( $sigpast, :blocktype('declaration') );
-        $block<signature> := 1;
         $block<explicit_signature> := 1;
         @?BLOCK.unshift($block);
     }
@@ -937,14 +936,9 @@ method signature($/, $key) {
         my $block    := @?BLOCK.shift();
         my $sigpast := $block[0];
         my $loadinit := $block.loadinit();
-        my $sigobj   := PAST::Var.new( :scope('register') );
+        my $sigobj   := PAST::Var.new( :name('signature'), :scope('register') );
 
-        ##  create a Signature object and attach to the block
-        $loadinit.push(
-            PAST::Op.new( :inline('    %0 = new "Signature"',
-                                  '    setprop block, "$!signature", %0'),
-                           $sigobj)
-        );
+        block_signature($block);
 
         ##  loop through parameters of signature
         my $arity := $<parameter> ?? +@($<parameter>) !! 0;
@@ -1616,24 +1610,31 @@ method variable($/, $key) {
             if $?BLOCK<explicit_signature> {
                 $/.panic("Cannot use placeholder var in block with signature.");
             }
-            $twigil := '';
             $varname := $sigil ~ $name;
             unless $?BLOCK.symbol($varname) {
                 $?BLOCK.symbol( $varname, :scope('lexical') );
                 $?BLOCK.arity( +$?BLOCK.arity() + 1 );
                 my $param := PAST::Var.new(:name($varname), :scope('parameter'));
                 if $twigil eq ':' { $param.named( $name ); }
-                my $block := $?BLOCK[0];
-                my $i := +@($block);
-                while $i > 0 && $block[$i-1].name() gt $varname {
-                    $block[$i] := $block[$i-1];
+                my $blockinit := $?BLOCK[0];
+                my $i := +@($blockinit);
+                while $i > 0 && $blockinit[$i-1].name() gt $varname {
+                    $blockinit[$i] := $blockinit[$i-1];
                     $i--;
                 }
-                $block[$i] := $param;
+                $blockinit[$i] := $param;
 
-                # XXX Need to generate Signature accounting for the placeholders.
-                $?BLOCK<signature> := 1;
+                ##  add to block's signature
+                block_signature($?BLOCK);
+                $?BLOCK.loadinit().push(
+                    PAST::Op.new( :pasttype('callmethod'), :name('!add_param'),
+                        PAST::Var.new( :name('signature'), :scope('register') ),
+                        $varname
+                    )
+                );
             }
+            ## use twigil-less form afterwards
+            $twigil := '';
         }
 
         $var := PAST::Var.new( :name($varname), :node($/) );
@@ -2520,15 +2521,15 @@ sub set_package_magical() {
 }
 
 
-# Adds an empty signature to a routine if it is missing one.
-sub create_signature_if_none($block) {
+sub block_signature($block) {
     unless $block<signature> {
-        my $sigobj   := PAST::Var.new( :scope('register') );
         $block.loadinit().push(
-            PAST::Op.new( :inline('    %0 = new "Signature"',
-                                  '    setprop block, "$!signature", %0'),
-                           $sigobj)
+            PAST::Op.new( :inline('    .local pmc signature',
+                                  '    signature = new ["Signature"]',
+                                  '    setprop block, "$!signature", signature')
+            )
         );
+        $block<signature> := 1;
     }
 }
 
