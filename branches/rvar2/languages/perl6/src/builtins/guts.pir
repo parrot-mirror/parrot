@@ -384,10 +384,16 @@ is composed (see C<!meta_compose> below).
     $P0 = compreg 'Perl6'
     nsarray = $P0.'parse_name'(name)
 
+    if type == 'package' goto package
+    if type == 'module' goto package
     if type == 'class' goto class
     if type == 'grammar' goto class
     if type == 'role' goto role
     'die'("Unsupported package declarator ", type)
+
+  package:
+    $P0 = get_hll_namespace nsarray
+    .return ($P0)
 
   class:
     .local pmc metaclass, ns
@@ -451,14 +457,15 @@ and creating the protoobjects.
 .end
 
 
-=item !meta_compose(Role role)
+=item !meta_compose()
 
-Compose the role.
+Default meta composer -- does nothing.
+
 
 =cut
 
-.sub '!meta_compose' :multi(['Role'])
-    .param pmc role
+.sub '!meta_compose' :multi()
+    .param pmc metaclass
     # Currently, nothing to do.
 .end
 
@@ -593,6 +600,47 @@ and C<type>.
     $P1 = getprop 'methodname', method
     $S1 = $P1
     .tailcall attribute.$S1(args :flat, options :flat :named)
+.end
+
+
+=item !sub_trait(sub, type, trait, arg?)
+
+=cut
+
+.sub '!sub_trait'
+    .param pmc block
+    .param string type
+    .param string trait
+    .param pmc arg             :optional
+    .param int has_arg         :opt_flag
+
+    if has_arg goto have_arg
+    null arg
+  have_arg:
+
+    $S0 = concat '!sub_trait_', trait
+    $P0 = find_name $S0
+    if null $P0 goto done
+    $P0(trait, block, arg)
+  done:
+.end
+
+
+=item !sub_trait_export(trait, block, arg)
+
+=cut
+
+.sub '!sub_trait_export'
+    .param string trait
+    .param pmc block
+    .param pmc arg
+
+    .local pmc blockns, exportns
+    blockns = block.'get_namespace'()
+    $P0 = split '::', 'EXPORT::ALL'
+    exportns = blockns.'make_namespace'($P0)
+    $S0 = block
+    exportns[$S0] = block
 .end
 
 
