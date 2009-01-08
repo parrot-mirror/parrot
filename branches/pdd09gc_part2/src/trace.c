@@ -35,6 +35,8 @@ PARROT_CANNOT_RETURN_NULL
 static STRING* trace_class_name(ARGIN(const PMC* pmc))
         __attribute__nonnull__(1);
 
+#define ASSERT_ARGS_trace_class_name __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(pmc)
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 /* HEADERIZER END: static */
 
@@ -54,6 +56,7 @@ PARROT_CANNOT_RETURN_NULL
 static STRING*
 trace_class_name(ARGIN(const PMC* pmc))
 {
+    ASSERT_ARGS(trace_class_name)
     STRING *class_name;
     if (PObj_is_class_TEST(pmc)) {
         SLOTTYPE * const class_array = (SLOTTYPE *)PMC_data(pmc);
@@ -79,6 +82,7 @@ Prints a PMC to C<stderr>.
 void
 trace_pmc_dump(PARROT_INTERP, ARGIN_NULLOK(PMC *pmc))
 {
+    ASSERT_ARGS(trace_pmc_dump)
     Interp * const debugger = interp->debugger;
 
     if (!pmc) {
@@ -168,6 +172,7 @@ Prints a key to C<stderr>, returns the length of the output.
 int
 trace_key_dump(PARROT_INTERP, ARGIN(const PMC *key))
 {
+    ASSERT_ARGS(trace_key_dump)
     Interp * const debugger = interp->debugger;
 
     int len = Parrot_io_eprintf(debugger, "[");
@@ -250,6 +255,7 @@ trace_op_dump(PARROT_INTERP,
         ARGIN(const opcode_t *code_start),
         ARGIN(const opcode_t *pc))
 {
+    ASSERT_ARGS(trace_op_dump)
     INTVAL s, n;
     int more = 0, var_args;
     Interp * const debugger = interp->debugger;
@@ -465,6 +471,7 @@ trace_op(PARROT_INTERP,
         ARGIN(const opcode_t *code_end),
         ARGIN_NULLOK(const opcode_t *pc))
 {
+    ASSERT_ARGS(trace_op)
     if (!pc) {
         return;
     }

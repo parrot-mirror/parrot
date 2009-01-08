@@ -59,7 +59,7 @@ static void build_interference_graph(PARROT_INTERP, ARGMOD(IMC_Unit *unit))
         __attribute__nonnull__(2)
         FUNC_MODIFIES(*unit);
 
-static void build_reglist(Parrot_Interp interp, ARGMOD(IMC_Unit *unit))
+static void build_reglist(NULLOK_INTERP, ARGMOD(IMC_Unit *unit))
         __attribute__nonnull__(2)
         FUNC_MODIFIES(*unit);
 
@@ -76,7 +76,8 @@ static int first_avail(
     ARGIN(const IMC_Unit *unit),
     int reg_set,
     ARGOUT_NULLOK(Set **avail))
-        __attribute__nonnull__(1);
+        __attribute__nonnull__(1)
+        FUNC_MODIFIES(*avail);
 
 PARROT_CANNOT_RETURN_NULL
 static unsigned int* ig_allocate(int N);
@@ -119,7 +120,9 @@ static void make_stat(
     ARGMOD_NULLOK(int *sets),
     ARGMOD_NULLOK(int *cols))
         __attribute__nonnull__(1)
-        FUNC_MODIFIES(*unit);
+        FUNC_MODIFIES(*unit)
+        FUNC_MODIFIES(*sets)
+        FUNC_MODIFIES(*cols);
 
 static void map_colors(
     ARGIN(const IMC_Unit* unit),
@@ -158,6 +161,64 @@ static void vanilla_reg_alloc(SHIM_INTERP, ARGMOD(IMC_Unit *unit))
         __attribute__nonnull__(2)
         FUNC_MODIFIES(*unit);
 
+#define ASSERT_ARGS_allocate_lexicals __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(unit)
+#define ASSERT_ARGS_allocate_non_volatile __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(unit)
+#define ASSERT_ARGS_allocate_uniq __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(unit)
+#define ASSERT_ARGS_build_interference_graph __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(unit)
+#define ASSERT_ARGS_build_reglist __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(unit)
+#define ASSERT_ARGS_compute_du_chain __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(unit)
+#define ASSERT_ARGS_compute_one_du_chain __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(r) \
+    || PARROT_ASSERT_ARG(unit)
+#define ASSERT_ARGS_first_avail __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(unit)
+#define ASSERT_ARGS_ig_allocate __attribute__unused__ int _ASSERT_ARGS_CHECK = 0
+#define ASSERT_ARGS_ig_find_color __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(unit) \
+    || PARROT_ASSERT_ARG(avail)
+#define ASSERT_ARGS_ig_get_word __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(graph) \
+    || PARROT_ASSERT_ARG(bit_ofs)
+#define ASSERT_ARGS_ig_set __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(graph)
+#define ASSERT_ARGS_imc_stat_init __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(unit)
+#define ASSERT_ARGS_interferes __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(unit) \
+    || PARROT_ASSERT_ARG(r0) \
+    || PARROT_ASSERT_ARG(r1)
+#define ASSERT_ARGS_make_stat __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(unit)
+#define ASSERT_ARGS_map_colors __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(unit) \
+    || PARROT_ASSERT_ARG(graph) \
+    || PARROT_ASSERT_ARG(avail)
+#define ASSERT_ARGS_print_stat __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(unit)
+#define ASSERT_ARGS_rebuild_reglist __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(unit)
+#define ASSERT_ARGS_reg_sort_f __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(a) \
+    || PARROT_ASSERT_ARG(b)
+#define ASSERT_ARGS_sort_reglist __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(unit)
+#define ASSERT_ARGS_try_allocate __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(unit)
+#define ASSERT_ARGS_vanilla_reg_alloc __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(unit)
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 /* HEADERIZER END: static */
 
@@ -176,6 +237,7 @@ static unsigned int*
 ig_get_word(int i, int j, int N, ARGIN(unsigned int *graph),
             ARGMOD(int *bit_ofs))
 {
+    ASSERT_ARGS(ig_get_word)
     unsigned int bit = i * N + j;
     *bit_ofs        = bit % sizeof (*graph);
 
@@ -195,6 +257,7 @@ RT #48260: Not yet documented!!!
 static void
 ig_set(int i, int j, int N, ARGIN(unsigned int *graph))
 {
+    ASSERT_ARGS(ig_set)
     int bit_ofs;
     unsigned int *word = ig_get_word(i, j, N, graph, &bit_ofs);
     *word |= (1 << bit_ofs);
@@ -213,6 +276,7 @@ RT #48260: Not yet documented!!!
 unsigned int
 ig_test(int i, int j, int N, ARGIN(unsigned int *graph))
 {
+    ASSERT_ARGS(ig_test)
     int bit_ofs;
     unsigned int* word = ig_get_word(i, j, N, graph, &bit_ofs);
     return *word & (1 << bit_ofs);
@@ -232,6 +296,7 @@ PARROT_CANNOT_RETURN_NULL
 static unsigned int*
 ig_allocate(int N)
 {
+    ASSERT_ARGS(ig_allocate)
     /* size is N*N bits, but we want don't want to allocate a partial
      * word, so round up to the nearest multiple of sizeof (int).
      */
@@ -254,6 +319,7 @@ on a single compilation unit at a time.
 void
 imc_reg_alloc(PARROT_INTERP, ARGIN_NULLOK(IMC_Unit *unit))
 {
+    ASSERT_ARGS(imc_reg_alloc)
     const char *function;
 
     if (!unit)
@@ -359,6 +425,7 @@ RT #48260: Not yet documented!!!
 void
 free_reglist(ARGMOD(IMC_Unit *unit))
 {
+    ASSERT_ARGS(free_reglist)
 #if IMC_TRACE
     fprintf(stderr, "reg_alloc.c: free_reglist\n");
 #endif
@@ -392,6 +459,7 @@ RT #48260: Not yet documented!!!
 void
 graph_coloring_reg_alloc(PARROT_INTERP, ARGMOD(IMC_Unit *unit))
 {
+    ASSERT_ARGS(graph_coloring_reg_alloc)
     build_interference_graph(interp, unit);
 
     try_allocate(interp, unit);
@@ -412,6 +480,7 @@ printed with --verbose --verbose
 static void
 make_stat(ARGMOD(IMC_Unit *unit), ARGMOD_NULLOK(int *sets), ARGMOD_NULLOK(int *cols))
 {
+    ASSERT_ARGS(make_stat)
     /* register usage summary */
     SymHash * const hsh = &unit->hash;
     unsigned int    i;
@@ -465,6 +534,7 @@ registes usage of .pir
 static void
 imc_stat_init(ARGMOD(IMC_Unit *unit))
 {
+    ASSERT_ARGS(imc_stat_init)
     int j;
 
     make_stat(unit, unit->n_vars_used, NULL);
@@ -490,6 +560,7 @@ and final
 static void
 print_stat(PARROT_INTERP, ARGMOD(IMC_Unit *unit))
 {
+    ASSERT_ARGS(print_stat)
     int sets[4] = {0, 0, 0, 0};
 
     const char * const function =
@@ -537,6 +608,7 @@ sort list by line  nr
 static int
 reg_sort_f(ARGIN(const void *a), ARGIN(const void *b))
 {
+    ASSERT_ARGS(reg_sort_f)
     const SymReg * const ra = *(SymReg**)a;
     const SymReg * const rb = *(SymReg**)b;
 
@@ -562,6 +634,7 @@ RT #48260: Not yet documented!!!
 static void
 sort_reglist(ARGMOD(IMC_Unit *unit))
 {
+    ASSERT_ARGS(sort_reglist)
     qsort(unit->reglist, unit->n_symbols, sizeof (SymReg *), reg_sort_f);
 }
 
@@ -585,8 +658,9 @@ Run through them and allocate all that don't overlap in one bunch.
 */
 
 static void
-build_reglist(Parrot_Interp interp, ARGMOD(IMC_Unit *unit))
+build_reglist(NULLOK_INTERP, ARGMOD(IMC_Unit *unit))
 {
+    ASSERT_ARGS(build_reglist)
     SymHash  const *hsh = &unit->hash;
     unsigned int    i, count, unused, n_symbols;
 
@@ -649,6 +723,7 @@ significantly
 static void
 rebuild_reglist(ARGMOD(IMC_Unit *unit))
 {
+    ASSERT_ARGS(rebuild_reglist)
     unsigned int i, count, unused;
     static const char types[] = "INSP";
 
@@ -700,6 +775,7 @@ Two variables interfere when they are alive at the same time.
 static void
 build_interference_graph(PARROT_INTERP, ARGMOD(IMC_Unit *unit))
 {
+    ASSERT_ARGS(build_interference_graph)
     int x;
     unsigned int *interference_graph;
 
@@ -748,6 +824,7 @@ Compute a DU-chain for each symbolic in a compilation unit
 static void
 compute_du_chain(ARGMOD(IMC_Unit *unit))
 {
+    ASSERT_ARGS(compute_du_chain)
     Instruction *ins        = unit->instructions;
     Instruction *lastbranch = NULL;
     unsigned int i;
@@ -786,6 +863,7 @@ RT #48260: Not yet documented!!!
 static void
 compute_one_du_chain(ARGMOD(SymReg *r), ARGIN(IMC_Unit *unit))
 {
+    ASSERT_ARGS(compute_one_du_chain)
     Instruction * ins;
 
     /* We cannot rely on computing the value of r->first when parsing,
@@ -837,6 +915,7 @@ static int
 interferes(PARROT_INTERP, ARGIN(const IMC_Unit *unit),
         ARGIN(const SymReg *r0), ARGIN(const SymReg *r1))
 {
+    ASSERT_ARGS(interferes)
     unsigned int i;
 
     /* Registers don't interfere with themselves */
@@ -925,6 +1004,7 @@ find available color for register #x in available colors
 static int
 ig_find_color(ARGIN(const IMC_Unit *unit), ARGIN(const char *avail))
 {
+    ASSERT_ARGS(ig_find_color)
     unsigned int c;
 
     for (c = 0; c < unit->n_symbols; c++)
@@ -952,6 +1032,7 @@ If we run out of colors, then we need to spill the top node.
 static int
 try_allocate(PARROT_INTERP, ARGIN(IMC_Unit *unit))
 {
+    ASSERT_ARGS(try_allocate)
     unsigned int    i;
     char           *avail;
     unsigned int   *graph   = unit->interference_graph;
@@ -1023,6 +1104,7 @@ static void
 map_colors(ARGIN(const IMC_Unit* unit), int x, ARGIN(unsigned int *graph),
         ARGMOD(char *avail), int typ, int already_allocated)
 {
+    ASSERT_ARGS(map_colors)
     const int n_symbols = unit->n_symbols;
     int       y;
 
@@ -1052,6 +1134,7 @@ find first available register of the given reg_set
 static int
 first_avail(ARGIN(const IMC_Unit *unit), int reg_set, ARGOUT_NULLOK(Set **avail))
 {
+    ASSERT_ARGS(first_avail)
     int n                     = (int)unit->n_symbols > unit->max_color
                               ? (int)unit->n_symbols
                               : unit->max_color;
@@ -1096,6 +1179,7 @@ allocate lexicals or non-volatile in ascending order
 static void
 allocate_uniq(PARROT_INTERP, ARGMOD(IMC_Unit *unit), int usage)
 {
+    ASSERT_ARGS(allocate_uniq)
     SymHash     *hsh     = &unit->hash;
     Set         *sets[4] = { NULL, NULL, NULL, NULL };
     SymReg      *r;
@@ -1158,6 +1242,7 @@ RT #48260: Not yet documented!!!
 static void
 vanilla_reg_alloc(SHIM_INTERP, ARGMOD(IMC_Unit *unit))
 {
+    ASSERT_ARGS(vanilla_reg_alloc)
     char         type[] = "INSP";
     SymHash     *hsh    = &unit->hash;
     Set         *avail;
@@ -1211,6 +1296,7 @@ RT #48260: Not yet documented!!!
 static void
 allocate_lexicals(PARROT_INTERP, ARGMOD(IMC_Unit *unit))
 {
+    ASSERT_ARGS(allocate_lexicals)
     IMCC_debug(interp, DEBUG_IMC, "allocate lexicals\n");
     allocate_uniq(interp, unit, U_LEXICAL);
 }
@@ -1228,6 +1314,7 @@ RT #48260: Not yet documented!!!
 static void
 allocate_non_volatile(PARROT_INTERP, ARGMOD(IMC_Unit *unit))
 {
+    ASSERT_ARGS(allocate_non_volatile)
     IMCC_debug(interp, DEBUG_IMC, "allocate non_volatile\n");
     allocate_uniq(interp, unit, U_NON_VOLATILE);
 }

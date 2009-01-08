@@ -111,6 +111,8 @@ void trace_mem_block(PARROT_INTERP, size_t lo_var_ptr, size_t hi_var_ptr)
 void trace_system_areas(PARROT_INTERP)
         __attribute__nonnull__(1);
 
+#define ASSERT_ARGS_trace_system_areas __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp)
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 /* HEADERIZER END: src/cpu_dep.c */
 

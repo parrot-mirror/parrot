@@ -60,7 +60,7 @@ This class defines the following methods:
     .local pmc single
     single = new 'Undef'
 
-    store_global [ 'Test'; 'Builder'; '_singleton' ], 'singleton', single
+    set_hll_global [ 'Test'; 'Builder'; '_singleton' ], 'singleton', single
 .end
 
 =item C<new( args_hash )>
@@ -166,7 +166,7 @@ This probably doesn't work correctly yet, but you will probably never use it.
     .param pmc args
 
     .local pmc single
-    single     = find_global [ 'Test'; 'Builder'; '_singleton' ], 'singleton'
+    single     = get_hll_global [ 'Test'; 'Builder'; '_singleton' ], 'singleton'
 
     .local pmc output
     .local pmc testplan
@@ -212,7 +212,7 @@ This probably doesn't work correctly yet, but you will probably never use it.
     results    = new 'ResizablePMCArray'
 
     # store this as the singleton
-    store_global [ 'Test'; 'Builder'; '_singleton' ], 'singleton', self
+    set_hll_global [ 'Test'; 'Builder'; '_singleton' ], 'singleton', self
 
   RESULTS_DEFINED:
     .return( output, testplan, results )
@@ -532,7 +532,7 @@ also calls C<exit>.
     push results, test
 
     .local pmc tbt_create
-    find_global tbt_create, [ 'Test'; 'Builder'; 'Test' ], 'create'
+    get_hll_global tbt_create, [ 'Test'; 'Builder'; 'Test' ], 'create'
     test = tbt_create( test_args )
 
     .local pmc output

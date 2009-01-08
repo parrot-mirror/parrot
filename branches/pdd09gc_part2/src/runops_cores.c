@@ -39,6 +39,9 @@ static opcode_t * runops_trace_core(PARROT_INTERP, ARGIN(opcode_t *pc))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
+#define ASSERT_ARGS_runops_trace_core __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(pc)
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 /* HEADERIZER END: static */
 
@@ -58,6 +61,7 @@ PARROT_CAN_RETURN_NULL
 opcode_t *
 runops_fast_core(PARROT_INTERP, ARGIN(opcode_t *pc))
 {
+    ASSERT_ARGS(runops_fast_core)
     while (pc) {
         DO_OP(pc, interp);
     }
@@ -85,6 +89,7 @@ PARROT_CAN_RETURN_NULL
 opcode_t *
 runops_cgoto_core(PARROT_INTERP, ARGIN(opcode_t *pc))
 {
+    ASSERT_ARGS(runops_cgoto_core)
 #ifdef HAVE_COMPUTED_GOTO
     pc = cg_core(pc, interp);
     return pc;
@@ -123,6 +128,7 @@ PARROT_CAN_RETURN_NULL
 static opcode_t *
 runops_trace_core(PARROT_INTERP, ARGIN(opcode_t *pc))
 {
+    ASSERT_ARGS(runops_trace_core)
     static size_t dod, gc;
     Arenas * const arena_base = interp->arena_base;
     Interp *debugger;
@@ -203,6 +209,7 @@ PARROT_CAN_RETURN_NULL
 opcode_t *
 runops_slow_core(PARROT_INTERP, ARGIN(opcode_t *pc))
 {
+    ASSERT_ARGS(runops_slow_core)
 
     if (Interp_trace_TEST(interp, PARROT_TRACE_OPS_FLAG))
         return runops_trace_core(interp, pc);
@@ -242,6 +249,7 @@ PARROT_CAN_RETURN_NULL
 opcode_t *
 runops_gc_debug_core(PARROT_INTERP, ARGIN(opcode_t *pc))
 {
+    ASSERT_ARGS(runops_gc_debug_core)
     while (pc) {
         if (pc < code_start || pc >= code_end)
             Parrot_ex_throw_from_c_args(interp, NULL, 1,
@@ -276,6 +284,7 @@ PARROT_CAN_RETURN_NULL
 opcode_t *
 runops_profile_core(PARROT_INTERP, ARGIN(opcode_t *pc))
 {
+    ASSERT_ARGS(runops_profile_core)
     RunProfile * const profile = interp->profile;
     const opcode_t     old_op  = profile->cur_op;
 
@@ -323,6 +332,7 @@ PARROT_CAN_RETURN_NULL
 opcode_t *
 runops_debugger_core(PARROT_INTERP, ARGIN(opcode_t *pc))
 {
+    ASSERT_ARGS(runops_debugger_core)
     /*fprintf(stderr, "Enter runops_debugger_core\n");*/
 
     PARROT_ASSERT(interp->pdb);

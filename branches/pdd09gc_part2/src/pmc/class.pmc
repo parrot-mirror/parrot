@@ -105,14 +105,13 @@ static void
 build_attrib_index(PARROT_INTERP, PMC *self)
 {
     Parrot_Class_attributes * const _class      = PARROT_CLASS(self);
-    int                  cur_index   = 0;
-    PMC * const          table       = pmc_new(interp, enum_class_Hash);
-    PMC * const          cache       = pmc_new(interp, enum_class_Hash);
-    const int            num_classes = VTABLE_elements(interp,
-                                            _class->all_parents);
+    int                  cur_index    = 0;
+    PMC * const          attrib_index = pmc_new(interp, enum_class_Hash);
+    PMC * const          cache        = pmc_new(interp, enum_class_Hash);
+    const int            num_classes  = VTABLE_elements(interp, _class->all_parents);
     int                  i;
 
-    /* We will go over the list of all parents to construct the table. */
+    /* We will go over the list of all parents to construct the attribute index. */
     for (i = 0; i < num_classes; i++) {
        /* Get the class and check that it respects the standard class interface
         * (if not we don't know how it stores its attributes, so we'll have to
@@ -123,13 +122,13 @@ build_attrib_index(PARROT_INTERP, PMC *self)
         if (PObj_is_class_TEST(cur_class)) {
             /* The attribute metadata hash. */
             Parrot_Class_attributes * const class_info = PARROT_CLASS(cur_class);
-            PMC          * const attribs    = class_info->attrib_metadata;
-            PMC          * const iter       = VTABLE_get_iter(interp, attribs);
+            PMC          * const attribs     = class_info->attrib_metadata;
+            PMC          * const iter        = VTABLE_get_iter(interp, attribs);
 
             /* Build a string representing the fully qualified class name. */
             /* Retrieve the fully qualified class name for the class. */
-            STRING * const fq_class         = VTABLE_get_string(interp, cur_class);
-            PMC    * const class_cache = pmc_new(interp, enum_class_Hash);
+            STRING       * const fq_class    = VTABLE_get_string(interp, cur_class);
+            PMC          * const class_cache = pmc_new(interp, enum_class_Hash);
             VTABLE_set_pmc_keyed_str(interp, cache, fq_class, class_cache);
 
             /* Iterate over the attributes. */
@@ -146,15 +145,15 @@ build_attrib_index(PARROT_INTERP, PMC *self)
                 STRING *full_key           = string_append(interp, fq_class, attrib_name);
 
                 /* Insert into hash, along with index. */
-                VTABLE_set_integer_keyed_str(interp, table, full_key, cur_index);
+                VTABLE_set_integer_keyed_str(interp, attrib_index, full_key, cur_index);
                 VTABLE_set_integer_keyed_str(interp, class_cache, attrib_name, cur_index);
                 cur_index++;
             }
         }
     }
 
-    /* Store built table and invalidate cache. */
-    _class->attrib_index = table;
+    /* Store built attribute index and invalidate cache. */
+    _class->attrib_index = attrib_index;
     _class->attrib_cache = cache;
 }
 
@@ -218,7 +217,7 @@ init_class_from_hash(PARROT_INTERP, PMC *self, PMC *info)
         CLASS_is_anon_CLEAR(self);
 
         /* Register a type number for the class. */
-        type_num   = Parrot_oo_register_type(interp, name_arg);
+        type_num   = Parrot_oo_register_type(interp, name_arg, new_namespace);
 
         /* Link the type number with the class's vtable. */
         new_vtable = Parrot_clone_vtable(interp, self->vtable);
@@ -443,9 +442,9 @@ Initializes a Class PMC.
 
 =item C<void init_pmc(PMC *init_data)>
 
-The actual class creation code, called from C<newclass> opcode.  The C<init>
-argument may either be the name of the class, or a hash of initialization
-arguments.  The class is attatched to the current HLL namespace.
+The actual class creation code, called from C<newclass> opcode. The C<init_data>
+argument may be either the name of the class or a hash of initialization
+arguments. The class is attached to the current HLL namespace.
 
 =cut
 
@@ -499,6 +498,7 @@ arguments.  The class is attatched to the current HLL namespace.
             case enum_class_Key:
             case enum_class_ResizableStringArray:
             case enum_class_NameSpace:
+                /* set only the name property */
                 arg = pmc_new(interp, enum_class_Hash);
                 VTABLE_set_pmc_keyed_str(interp, arg, name_str, init_data);
                 break;
@@ -512,6 +512,7 @@ arguments.  The class is attatched to the current HLL namespace.
                 if (VTABLE_isa(interp, init_data, CONST_STRING(interp, "String"))
                 || VTABLE_isa(interp, init_data, CONST_STRING(interp, "Key"))
                 || VTABLE_isa(interp, init_data, CONST_STRING(interp, "ResizableStringArray"))) {
+                    /* set only the name property */
                     arg = pmc_new(interp, enum_class_Hash);
                     VTABLE_set_pmc_keyed_str(interp, arg, name_str, init_data);
                 }
@@ -634,7 +635,7 @@ Marks any referenced strings and PMCs in the structure as live.
 
 Adds the given attribute (C<name>) with an optional C<type>.
 Creates a new class if the current class has been instantiated.
-Enters the attribute in the C<attributes> array.
+Enters the attribute in the C<attrib_metadata> table.
 Returns an error if an attribute of C<name> already exists.
 
 =cut
@@ -662,7 +663,7 @@ Returns an error if an attribute of C<name> already exists.
         if (!PMC_IS_NULL(type))
             VTABLE_set_pmc_keyed_str(interp, new_attribute, CONST_STRING(interp, "type"), type);
 
-        /* Enter the attribute in the attributes array. */
+        /* Enter the attribute in the attrib_metadata table. */
         VTABLE_set_pmc_keyed_str(interp, _class->attrib_metadata, name,
             new_attribute);
     }
@@ -1048,10 +1049,10 @@ Creates a new PMC object of the type of the class and calls init().
 
     VTABLE PMC *instantiate(PMC *init) {
         Parrot_Class_attributes  * const _class    = PARROT_CLASS(SELF);
-        STRING        * const class_str = CONST_STRING(interp, "Class");
+        STRING                   * const class_str = CONST_STRING(interp, "Class");
 
         Parrot_Object_attributes *obj_guts;
-        PMC           *object;
+        PMC                      *object;
 
         /* If we've not been instantiated before... */
         if (!_class->instantiated) {
@@ -1508,7 +1509,7 @@ Called after the class has been thawed.
 
 =item C<void name(STRING *name :optional, int has_name :opt_flag)>
 
-Sets the name of the class, and updates the namespace accoringly.
+Sets the name of the class, and updates the namespace accordingly.
 
 =cut
 

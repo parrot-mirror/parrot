@@ -121,6 +121,41 @@ static UHUGEINTVAL getuint_va(PARROT_INTERP,
         __attribute__nonnull__(1)
         __attribute__nonnull__(3);
 
+#define ASSERT_ARGS_getchr_pmc __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(obj)
+#define ASSERT_ARGS_getchr_va __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(obj)
+#define ASSERT_ARGS_getfloat_pmc __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(obj)
+#define ASSERT_ARGS_getfloat_va __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(obj)
+#define ASSERT_ARGS_getint_pmc __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(obj)
+#define ASSERT_ARGS_getint_va __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(obj)
+#define ASSERT_ARGS_getptr_pmc __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(obj)
+#define ASSERT_ARGS_getptr_va __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(obj)
+#define ASSERT_ARGS_getstring_pmc __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(obj)
+#define ASSERT_ARGS_getstring_va __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(obj)
+#define ASSERT_ARGS_getuint_pmc __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(obj)
+#define ASSERT_ARGS_getuint_va __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(obj)
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 /* HEADERIZER END: static */
 
@@ -142,6 +177,7 @@ PARROT_WARN_UNUSED_RESULT
 static STRING *
 getchr_va(PARROT_INTERP, SHIM(INTVAL size), ARGIN(SPRINTF_OBJ *obj))
 {
+    ASSERT_ARGS(getchr_va)
     va_list *arg = (va_list *)(obj->data);
 
     /* char promoted to int */
@@ -168,6 +204,7 @@ PARROT_WARN_UNUSED_RESULT
 static HUGEINTVAL
 getint_va(PARROT_INTERP, INTVAL size, ARGIN(SPRINTF_OBJ *obj))
 {
+    ASSERT_ARGS(getint_va)
     va_list * const arg = (va_list *)(obj->data);
 
     switch (size) {
@@ -217,6 +254,7 @@ PARROT_WARN_UNUSED_RESULT
 static UHUGEINTVAL
 getuint_va(PARROT_INTERP, INTVAL size, ARGIN(SPRINTF_OBJ *obj))
 {
+    ASSERT_ARGS(getuint_va)
     va_list * const arg = (va_list *)(obj->data);
 
     switch (size) {
@@ -266,6 +304,7 @@ PARROT_WARN_UNUSED_RESULT
 static HUGEFLOATVAL
 getfloat_va(PARROT_INTERP, INTVAL size, ARGIN(SPRINTF_OBJ *obj))
 {
+    ASSERT_ARGS(getfloat_va)
     va_list * const arg = (va_list *)(obj->data);
 
     switch (size) {
@@ -312,6 +351,7 @@ PARROT_CANNOT_RETURN_NULL
 static STRING *
 getstring_va(PARROT_INTERP, INTVAL size, ARGIN(SPRINTF_OBJ *obj))
 {
+    ASSERT_ARGS(getstring_va)
     va_list * const arg = (va_list *)(obj->data);
 
     switch (size) {
@@ -360,6 +400,7 @@ PARROT_CAN_RETURN_NULL
 static void *
 getptr_va(SHIM_INTERP, SHIM(INTVAL size), ARGIN(SPRINTF_OBJ *obj))
 {
+    ASSERT_ARGS(getptr_va)
     va_list * const arg = (va_list *)(obj->data);
 
     return (void *)va_arg(*arg, void *);
@@ -392,6 +433,7 @@ PARROT_WARN_UNUSED_RESULT
 static STRING *
 getchr_pmc(PARROT_INTERP, SHIM(INTVAL size), ARGMOD(SPRINTF_OBJ *obj))
 {
+    ASSERT_ARGS(getchr_pmc)
     STRING *s;
     PMC * const tmp = VTABLE_get_pmc_keyed_int(interp,
             ((PMC *)obj->data),
@@ -418,6 +460,7 @@ PARROT_WARN_UNUSED_RESULT
 static HUGEINTVAL
 getint_pmc(PARROT_INTERP, INTVAL size, ARGIN(SPRINTF_OBJ *obj))
 {
+    ASSERT_ARGS(getint_pmc)
     HUGEINTVAL ret;
     PMC * const tmp = VTABLE_get_pmc_keyed_int(interp,
             ((PMC *)obj->data),
@@ -456,6 +499,7 @@ PARROT_WARN_UNUSED_RESULT
 static UHUGEINTVAL
 getuint_pmc(PARROT_INTERP, INTVAL size, ARGIN(SPRINTF_OBJ *obj))
 {
+    ASSERT_ARGS(getuint_pmc)
     UHUGEINTVAL ret;
     PMC * const tmp = VTABLE_get_pmc_keyed_int(interp,
             ((PMC *)obj->data),
@@ -494,6 +538,7 @@ PARROT_WARN_UNUSED_RESULT
 static HUGEFLOATVAL
 getfloat_pmc(PARROT_INTERP, INTVAL size, ARGIN(SPRINTF_OBJ *obj))
 {
+    ASSERT_ARGS(getfloat_pmc)
     HUGEFLOATVAL ret;
     PMC * const tmp = VTABLE_get_pmc_keyed_int(interp,
             ((PMC *)obj->data),
@@ -530,6 +575,7 @@ PARROT_CANNOT_RETURN_NULL
 static STRING *
 getstring_pmc(PARROT_INTERP, SHIM(INTVAL size), ARGIN(SPRINTF_OBJ *obj))
 {
+    ASSERT_ARGS(getstring_pmc)
     STRING *s;
     PMC * const tmp = VTABLE_get_pmc_keyed_int(interp,
             ((PMC *)obj->data),
@@ -556,6 +602,7 @@ PARROT_CANNOT_RETURN_NULL
 static void *
 getptr_pmc(PARROT_INTERP, SHIM(INTVAL size), ARGIN(SPRINTF_OBJ *obj))
 {
+    ASSERT_ARGS(getptr_pmc)
     PMC * const tmp = VTABLE_get_pmc_keyed_int(interp,
             ((PMC *)obj->data), (obj->index));
     const INTVAL i  = VTABLE_get_integer(interp, tmp);

@@ -225,7 +225,8 @@ For example:
 
 =item C<slurp_file($file_name)>
 
-Read the whole file $file_name and return the content as a string.
+Read the whole file $file_name and return the content as a string.  This is
+just an alias for C<Parrot::BuildUtil::slurp_file>.
 
 =item C<convert_line_endings($text)>
 
@@ -266,6 +267,8 @@ use File::Spec;
 use File::Basename;
 use Memoize ();
 
+use lib qw( lib );
+use Parrot::BuildUtil ();
 use Parrot::Config;
 
 require Exporter;
@@ -384,22 +387,10 @@ sub write_code_to_file {
     return;
 }
 
-# We can inherit from Test::More, so we do it.
+# We can inherit from other modules, so we do so.
 *plan = \&Test::More::plan;
 *skip = \&Test::More::skip;
-
-# What about File::Slurp?
-sub slurp_file {
-    my ($file_name) = @_;
-
-    open( my $SLURP, '<', $file_name ) or die "open '$file_name': $!";
-    local $/ = undef;
-    my $file = <$SLURP> . '';
-    $file    =~ s/\cM\cJ/\n/g;
-    close $SLURP;
-
-    return $file;
-}
+*slurp_file = \&Parrot::BuildUtil::slurp_file;
 
 sub convert_line_endings {
     my ($text) = @_;
@@ -944,6 +935,7 @@ sub _generate_test_functions {
 
                 my $cmd =
                       "$PConfig{cc} $PConfig{ccflags} $PConfig{cc_debug} "
+                    . ($^O =~ m/MSWin32/ and $PConfig{cc} eq 'cl' ? "-DPARROT_IN_EXTENSION" : "")
                     . " -I./include -c "
                     . "$PConfig{cc_o_out}$obj_f $source_f";
                 my $exit_code = run_command(
@@ -969,7 +961,9 @@ sub _generate_test_functions {
                 my $iculibs = $PConfig{has_icu} ? $PConfig{icu_shared} : q{};
                 my $libparrot =
                     $PConfig{parrot_is_shared}
-                    ? "$PConfig{rpath_blib} -L$PConfig{blib_dir} "
+                    ? ("$PConfig{rpath_blib} " .
+                      (($^O =~ m/MSWin32/ and $PConfig{cc} eq 'cl')
+                         ? "" : "-L$PConfig{blib_dir} "))
                     . (
                       $^O =~ m/MSWin32/
                     ? $PConfig{libparrot_ldflags}

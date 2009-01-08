@@ -97,7 +97,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "PIR compiler sub" );
     code .= "returncc\n"
     the_sub = my_compiler("_foo", code)
     the_sub()
-    the_sub = find_global "_foo"
+    the_sub = get_global "_foo"
     the_sub()
 .end
 
@@ -122,7 +122,7 @@ OUTPUT
 pir_output_is( <<'CODE', <<'OUTPUT', "bug #31467" );
 
   .sub main :main
-     $P1 = new 'Hash'
+     $P1 = new ['Hash']
      $P0 = find_name "_builtin"
      $P1['builtin'] = $P0
 
@@ -205,7 +205,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "PIR compiler sub PIR" );
 
 .sub register_compiler
  .local pmc counter
- counter = new 'Integer'
+ counter = new ['Integer']
  counter = 0
  set_global "counter", counter
 
@@ -317,7 +317,7 @@ hello from foo_2
 OUTPUT
 
 TODO: {
-    local $TODO = "cannot 'rm' an open file on windows" if $^O eq 'MSWin32';
+    local $TODO = "cannot 'rm' an open file on windows. TT#121" if $^O =~ /(MSWin32|cygwin)/;
 pir_output_is( <<"CODE", <<'OUTPUT', "eval.get_string - same file" );
 .sub main :main
 
@@ -329,7 +329,7 @@ pir_output_is( <<"CODE", <<'OUTPUT', "eval.get_string - same file" );
   print io, \$S0
   close io
   load_bytecode "$temp_pbc"
-  os = new 'OS'
+  os = new ['OS']
   os.'rm'("$temp_pbc")
   f2 = compi("foo_2", "hello from foo_2")
   io = open "$temp_pbc", 'w'

@@ -47,6 +47,7 @@ void
 register_nci_method(PARROT_INTERP, const int type, ARGIN(void *func),
                     ARGIN(const char *name), ARGIN(const char *proto))
 {
+    ASSERT_ARGS(register_nci_method)
     PMC    * const method      = pmc_new(interp, enum_class_NCI);
     STRING * const method_name = string_make(interp, name, strlen(name),
         NULL, PObj_constant_FLAG|PObj_external_FLAG);
@@ -78,6 +79,7 @@ void
 register_raw_nci_method_in_ns(PARROT_INTERP, const int type, ARGIN(void *func),
         ARGIN(const char *name))
 {
+    ASSERT_ARGS(register_raw_nci_method_in_ns)
     PMC    * const method      = pmc_new(interp, enum_class_NCI);
     STRING * const method_name = string_make(interp, name, strlen(name),
         NULL, PObj_constant_FLAG|PObj_external_FLAG);
@@ -104,6 +106,7 @@ PARROT_EXPORT
 void
 Parrot_mark_method_writes(PARROT_INTERP, int type, ARGIN(const char *name))
 {
+    ASSERT_ARGS(Parrot_mark_method_writes)
     STRING *const str_name = const_string(interp, name);
     PMC    *const pmc_true = pmc_new(interp, enum_class_Integer);
     PMC    *const method   = VTABLE_get_pmc_keyed_str(
@@ -127,6 +130,7 @@ void
 Parrot_compreg(PARROT_INTERP, ARGIN(STRING *type),
                     NOTNULL(Parrot_compiler_func_t func))
 {
+    ASSERT_ARGS(Parrot_compreg)
     PMC* const iglobals = interp->iglobals;
     PMC        *nci     = pmc_new(interp, enum_class_NCI);
     STRING     *sc      = CONST_STRING(interp, "PJt");
@@ -163,6 +167,7 @@ PMC *
 Parrot_compile_string(PARROT_INTERP, ARGIN(STRING *type),
         ARGIN(const char *code), ARGOUT(STRING **error))
 {
+    ASSERT_ARGS(Parrot_compile_string)
     if (string_compare(interp, CONST_STRING(interp, "PIR"), type) == 0)
         return IMCC_compile_pir_s(interp, code, error);
 
@@ -188,6 +193,7 @@ PARROT_CANNOT_RETURN_NULL
 void *
 Parrot_compile_file(PARROT_INTERP, ARGIN(const char *fullname), ARGOUT(STRING **error))
 {
+    ASSERT_ARGS(Parrot_compile_file)
     return IMCC_compile_file_s(interp, fullname, error);
 }
 
@@ -225,6 +231,7 @@ PARROT_EXPORT
 INTVAL
 interpinfo(PARROT_INTERP, INTVAL what)
 {
+    ASSERT_ARGS(interpinfo)
     INTVAL ret = 0;
     int j;
     Arenas *arena_base = interp->arena_base;
@@ -315,6 +322,7 @@ PARROT_CAN_RETURN_NULL
 PMC*
 interpinfo_p(PARROT_INTERP, INTVAL what)
 {
+    ASSERT_ARGS(interpinfo_p)
     switch (what) {
         case CURRENT_SUB:
             return CONTEXT(interp)->current_sub;
@@ -357,6 +365,7 @@ PARROT_CANNOT_RETURN_NULL
 STRING*
 interpinfo_s(PARROT_INTERP, INTVAL what)
 {
+    ASSERT_ARGS(interpinfo_s)
     switch (what) {
         case EXECUTABLE_FULLNAME:
         {
@@ -427,6 +436,7 @@ PARROT_WARN_UNUSED_RESULT
 INTVAL
 sysinfo_i(SHIM_INTERP, INTVAL info_wanted)
 {
+    ASSERT_ARGS(sysinfo_i)
     switch (info_wanted) {
         case PARROT_INTSIZE:
             return sizeof (INTVAL);
@@ -468,6 +478,7 @@ PARROT_WARN_UNUSED_RESULT
 STRING *
 sysinfo_s(PARROT_INTERP, INTVAL info_wanted)
 {
+    ASSERT_ARGS(sysinfo_s)
     switch (info_wanted) {
         case PARROT_OS:
             return const_string(interp, BUILD_OS_NAME);

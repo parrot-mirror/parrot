@@ -89,7 +89,7 @@ sub decl {
     my $ret     = $self->return_type;
     my $meth    = $self->name;
     my $args    = $self->parameters;
-    my $decs    = $self->decorators;
+    my $decs    = join( $/, @{$self->decorators}, '' );
 
     # convert 'type*' to 'type *' per PDD07
     $ret =~ s/^(.*)\s*(\*)$/$1 $2/;
@@ -98,27 +98,22 @@ sub decl {
     $args = ", $args" if $args =~ /\S/;
     $args =~ s/(\w+)\s*(\*)\s*/$1 $2/g;
 
-    my ( $decorators, $export, $extern, $newl, $semi, $interp, $pmcvar );
-    $decorators = join($/, @$decs, '');
+    my ( $export, $extern, $newl, $semi );
     if ( $for_header eq 'HEADER' ) {
         $export = $pmc->export;
-        $extern = '';
         $newl   = ' ';
         $semi   = ';';
-        $interp = '';
-        $pmcvar = '';
     }
     else {
         $export = '';
-        $extern = '';
         $newl   = "\n";
         $semi   = '';
-        $interp = 'interp';
-        $pmcvar = 'pmc';
     }
+    my $pmcarg = 'PMC *pmc';
+    $pmcarg    = "SHIM($pmcarg)" if $self->pmc_unused;
 
     return <<"EOC";
-$decorators$export $extern$ret${newl}Parrot_${pmcname}_$meth(PARROT_INTERP, PMC *$pmcvar$args)$semi
+$decs$export $ret${newl}Parrot_${pmcname}_$meth(PARROT_INTERP, $pmcarg$args)$semi
 EOC
 }
 

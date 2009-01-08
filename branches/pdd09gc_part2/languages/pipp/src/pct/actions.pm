@@ -1,4 +1,4 @@
-# Copyright (C) 2008, The Perl Foundation.
+# Copyright (C) 2008-2009, The Perl Foundation.
 # $Id$
 
 =begin comments
@@ -21,6 +21,9 @@ class Pipp::Grammar::Actions;
 
 method TOP($/, $key) {
     our @?BLOCK; # A stack of PAST::Block
+    our @?SUPER_GLOBALS :=
+          ( '$_GET', '$_POST', '$_SERVER', '$_GLOBALS',
+            '$_FILES', '$_COOKIE', '$_SESSION', '$_REQUEST', '$_ENV' );
 
     if $key eq 'open' {
         my $block := PAST::Block.new(
@@ -28,13 +31,12 @@ method TOP($/, $key) {
                          :hll('pipp')
                      );
 
-        # set up scope 'package' for the superglobals
-        # TODO: use a loop
+        # by default all symbols are lexical
         $block.symbol_defaults( :scope('lexical') );
-        for ( '$_GET', '$_POST', '$_SERVER', '$_GLOBALS',
-              '$_FILES', '$_COOKIE', '$_SESSION', '$_REQUEST', '$_ENV' ) {
-            $block.symbol( :scope('package'), $_ );
-        }
+
+        # set up scope 'package' for the superglobals
+        for ( @?SUPER_GLOBALS ) { $block.symbol( :scope('package'), $_ ); }
+
         @?BLOCK.unshift($block);
     }
     else {
@@ -45,6 +47,8 @@ method TOP($/, $key) {
         for $<sea_or_code> {
             $block.push( $($_) );
         }
+
+        $block.hll('pipp');
 
         make $block;
     }
@@ -209,34 +213,67 @@ method method_call($/) {
     make $past;
 }
 
+# TODO: Call the default constructor without explicit check, inherit from PippObject instead
 method constructor_call($/) {
-    make
+    my $class_name := ~$<CLASS_NAME>;
+    # The constructor needs a list of it's arguments, or an empty list
+    my $cons_call  := +$<argument_list> ??
+                        $( $<argument_list>[0] )
+                        !!
+                        PAST::Op.new();
+    $cons_call.pasttype('callmethod');
+    # The object onto which the method is called
+    $cons_call.unshift(
         PAST::Op.new(
-            # :inline( "$S1 = 'member'\n$P2 = new 'PhpString'\n$P2 = 'workaround in actions.pm:215'\n%r = new %0\nsetattribute %r, $S1, $P2" ),
-            :inline( "%r = new %0" ),                                                   
-            ~$<CLASS_NAME>
+            :inline('%r = new %0', 'obj = %r'),
+            $class_name
+        )
+    );
+    # The method comes before the first argument
+    $cons_call.unshift(
+        PAST::Var.new(:name('cons'), :scope('register'))
+    );
+
+    make
+        PAST::Stmts.new(
+            PAST::Var.new( :name('obj'),  :scope('register'), :isdecl(1) ),
+            PAST::Var.new( :name('cons'), :scope('register'), :isdecl(1) ),
+            # use default constructor when there is no explicit constructor
+            PAST::Op.new(
+                :pasttype('if'),
+                PAST::Op.new(
+                    :pirop('isnull'),
+                    PAST::Op.new( :inline("%r = get_global ['" ~ $class_name ~ "'], '__construct'") )  # condition
+                ),
+                PAST::Op.new( :inline("cons = get_global ['PippObject'], '__construct'") ),
+                PAST::Op.new( :inline("cons = get_global ['" ~ $class_name ~ "'], '__construct'") )
+            ),
+            $cons_call,                                       # call the constructor
+            PAST::Var.new( :name('obj'), :scope('register') ) # return the created object
         );
 }
 
 method constant($/) {
-    make PAST::Op.new(
-             :name('constant'),
-             PAST::Val.new(
-                 :returns('PhpString'),
-                 :value( ~$<CONSTANT_NAME> ),
-             )
-         );
+    make
+        PAST::Op.new(
+            :name('constant'),
+            PAST::Val.new(
+                :returns('PhpString'),
+                :value( ~$<CONSTANT_NAME> ),
+            )
+        );
 }
 
-# can be mergerd with constant
+# TODO: merge with rule 'constant'
 method class_constant($/) {
-    make PAST::Op.new(
-             :name('constant'),
-             PAST::Val.new(
-                 :returns('PhpString'),
-                 :value( ~$/ ),
-             )
-         );
+    make
+        PAST::Op.new(
+            :name('constant'),
+            PAST::Val.new(
+                :returns('PhpString'),
+                :value( ~$/ ),
+            )
+        );
 }
 
 # class constants could probably also be set in a class init block
@@ -244,16 +281,16 @@ method class_constant_definition($/) {
     my $past := PAST::Block.new( :name('class_constant_definition') );
     my $loadinit := $past.loadinit();
     $loadinit.unshift(
-       PAST::Op.new(
-           :pasttype('call'),
-           :name('define'),
-           :node( $/ ),
-           PAST::Val.new(
-               :value( 'Foo::' ~ ~$<CONSTANT_NAME> ),
-               :returns('PhpString'),
-           ),
-           $( $<literal> ),
-       )
+        PAST::Op.new(
+            :pasttype('call'),
+            :name('define'),
+            :node( $/ ),
+            PAST::Val.new(
+                :value( 'Foo::' ~ ~$<CONSTANT_NAME> ),
+                :returns('PhpString'),
+            ),
+            $( $<literal> ),
+        )
     );
 
     make $past;
@@ -314,16 +351,16 @@ method if_statement($/) {
         if $else && +$<elseif_clause> == 1 {
             $first_eif.push($else);
         }
-     }
+    }
 
-     if $first_eif {
-         $past.push($first_eif);
-     }
-     elsif $else {
-         $past.push($else);
-     }
+    if $first_eif {
+        $past.push($first_eif);
+    }
+    elsif $else {
+        $past.push($else);
+    }
 
-     make $past;
+    make $past;
 }
 
 method elseif_clause($/) {
@@ -334,11 +371,12 @@ method elseif_clause($/) {
 }
 
 method var_assign($/) {
-    make PAST::Op.new(
-             $( $<var> ),
-             $( $<expression> ),
-             :pasttype('bind'),
-         );
+    make
+        PAST::Op.new(
+            :pasttype('bind'),
+            $( $<var> ),
+            $( $<expression> ),
+        );
 }
 
 method array_elem($/) {
@@ -354,25 +392,23 @@ method array_elem($/) {
         );
     }
 
-    my $past_var_name :=
+    make
         PAST::Var.new(
-            :name(~$<VAR_NAME>),
-            :viviself('PhpArray'),
+            :scope('keyed'),
+            :viviself('PhpNull'),
             :lvalue(1),
+            PAST::Var.new(
+                :name(~$<VAR_NAME>),
+                :viviself('PhpArray'),
+                :lvalue(1),
+            ),
+            $( $<expression> )
         );
-
-    make PAST::Var.new(
-             $past_var_name,
-             $( $<expression> ),
-             :scope('keyed'),
-             :viviself('PhpNull'),
-             :lvalue(1)
-         );
 }
 
 method simple_var($/) {
     our @?BLOCK;
-    unless @?BLOCK[0].symbol( ~$<VAR_NAME> ) {
+    unless ( @?BLOCK[0].symbol( ~$<VAR_NAME> ) || @?BLOCK[0].symbol( ~$<VAR_NAME> ~ '_hidden' ) ) {
         @?BLOCK[0].symbol( ~$<VAR_NAME>, :scope('lexical') );
         @?BLOCK[0].push(
             PAST::Var.new(
@@ -383,11 +419,12 @@ method simple_var($/) {
         );
     }
 
-    make PAST::Var.new(
-             :name(~$<VAR_NAME>),
-             :viviself('PhpNull'),
-             :lvalue(1),
-         );
+    make
+        PAST::Var.new(
+            :name(~$<VAR_NAME>),
+            :viviself('PhpNull'),
+            :lvalue(1),
+        );
 }
 
 method var($/, $key) {
@@ -395,9 +432,7 @@ method var($/, $key) {
 }
 
 method this($/) {
-    make PAST::Op.new(
-             :inline( "%r = self" )
-         );
+    make PAST::Op.new( :inline( "%r = self" ) );
 }
 
 method member($/) {
@@ -415,6 +450,7 @@ method member($/) {
 method while_statement($/) {
     my $past := $( $<conditional_expression> );
     $past.pasttype('while');
+
     make $past;
 }
 
@@ -448,6 +484,7 @@ method expression($/, $key) {
         for @($/) {
             $past.push( $($_) );
         }
+
         make $past;
     }
 }
@@ -508,10 +545,14 @@ method closure($/, $key) {
         # note that $<param_list> creates a new PAST::Block.
         my $block := $( $<param_list> );
 
+        # set up scope 'package' for the superglobals
+        our @?SUPER_GLOBALS;
+        for ( @?SUPER_GLOBALS ) { $block.symbol( :scope('package'), $_ ); }
+
         # declare the bound vars a lexical
         if +$<bind_list> == 1 {
             for $<bind_list>[0]<VAR_NAME> {
-                $block.symbol( ~$_, :scope('lexical') );
+                $block.symbol( ~$_ ~ '_hidden', :comment('bound with use') );
             }
         }
         @?BLOCK.unshift( $block );
@@ -531,7 +572,13 @@ method function_definition($/, $key) {
 
     if $key eq 'open' {
         # note that $<param_list> creates a new PAST::Block.
-        @?BLOCK.unshift( $( $<param_list> ) );
+        my $block := $( $<param_list> );
+
+        # set up scope 'package' for the superglobals
+        our @?SUPER_GLOBALS;
+        for ( @?SUPER_GLOBALS ) { $block.symbol( :scope('package'), $_ ); }
+
+        @?BLOCK.unshift( $block );
     }
     else {
         my $block := @?BLOCK.shift();
@@ -550,6 +597,11 @@ method class_method_definition($/, $key) {
     if $key eq 'open' {
         # note that $<param_list> creates a new PAST::Block.
         my $block := $( $<param_list> );
+
+        # set up scope 'package' for the superglobals
+        our @?SUPER_GLOBALS;
+        for ( @?SUPER_GLOBALS ) { $block.symbol( :scope('package'), $_ ); }
+
         $block.unshift(
             PAST::Op.new(
                 :pasttype('bind'),
@@ -580,22 +632,36 @@ method class_method_definition($/, $key) {
 }
 
 method param_list($/) {
-
-    my $block :=
-        PAST::Block.new(
-            :blocktype('declaration'),
-            :node($/)
-        );
+    my $block := PAST::Block.new( :blocktype('declaration'), :node($/) );
     my $arity := 0;
     for $<VAR_NAME> {
-        my $param :=
+        $block.push(
             PAST::Var.new(
                 :name(~$_),
                 :scope('parameter'),
-                :viviself('PhpNull'),
-                :lvalue(1),
-            );
-        $block.push($param);
+            )
+        );
+#####        $block.push(
+#####            PAST::Op.new(
+#####                :pasttype('bind'),
+#####                PAST::Var.new(
+#####                    :name(~$_),
+#####                    :scope('lexical')
+#####                ),
+#####                PAST::Op.new(
+#####                    :inline(
+#####                        '#   %r = new "Perl6Scalar", %0',
+#####                        '#   $P0 = get_hll_global ["Bool"], "True"',
+#####                        '#   setprop %r, "readonly", $P0'
+#####                    ),
+#####                    PAST::Var.new(
+#####                        :name(~$_),
+#####                        :scope('lexical')
+#####                    )
+#####                )
+#####            )
+#####        );
+
         $arity++;
         $block.symbol( ~$_, :scope('lexical') );
     }
@@ -608,13 +674,17 @@ method class_definition($/, $key) {
     our @?BLOCK; # A stack of PAST::Block
 
     if $key eq 'open' {
-        @?BLOCK.unshift(
-            PAST::Block.new(
+        my $block := PAST::Block.new(
                 :node($/),
                 :blocktype('declaration'),
                 :pirflags( ':init :load' )
-            )
-        );
+            );
+
+        # set up scope 'package' for the superglobals
+        our @?SUPER_GLOBALS;
+        for ( @?SUPER_GLOBALS ) { $block.symbol( :scope('package'), $_ ); }
+
+        @?BLOCK.unshift( $block );
     }
     else {
         my $block := @?BLOCK.shift();
@@ -666,7 +736,46 @@ method class_definition($/, $key) {
                     PAST::Val.new( :value($member_name) )
                 )
             );
+            $block.push(
+                PAST::Op.new(
+                    :pasttype('call'),
+                    :name('!ADD_TO_WHENCE'),
+                    PAST::Var.new(
+                        :name('def'),
+                        :scope('register'),
+                    ),
+                    PAST::Val.new(
+                        :value($member_name)
+                    ),
+                    $( $_<literal> )
+                )
+            );
         }
+
+        # It's a new class definition. Make proto-object.
+        $block.push(
+            PAST::Op.new(
+                :pasttype('call'),
+                :name('!PROTOINIT'),
+                PAST::Op.new(
+                    :pasttype('callmethod'),
+                    :name('register'),
+                    PAST::Var.new(
+                        :scope('package'),
+                        :name('$!P6META'),
+                        :namespace('PippObject')
+                    ),
+                    PAST::Var.new(
+                        :scope('register'),
+                        :name('def')
+                    ),
+                    PAST::Val.new(
+                        :value('PippObject'),
+                        :named( PAST::Val.new( :value('parent') ) )
+                    )
+                )
+            )
+        );
 
         # add the methods
         for $<class_method_definition> {

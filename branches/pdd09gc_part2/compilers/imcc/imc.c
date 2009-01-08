@@ -41,6 +41,10 @@ PARROT_CANNOT_RETURN_NULL
 PARROT_MALLOC
 static IMC_Unit * imc_new_unit(IMC_Unit_Type t);
 
+#define ASSERT_ARGS_imc_free_unit __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(unit)
+#define ASSERT_ARGS_imc_new_unit __attribute__unused__ int _ASSERT_ARGS_CHECK = 0
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 /* HEADERIZER END: static */
 
@@ -61,6 +65,7 @@ PARROT_EXPORT
 void
 imc_compile_all_units(PARROT_INTERP)
 {
+    ASSERT_ARGS(imc_compile_all_units)
     /* compile all units created during the parse */
     IMC_Unit *unit;
 
@@ -110,6 +115,7 @@ PARROT_EXPORT
 void
 imc_compile_unit(PARROT_INTERP, ARGIN(IMC_Unit *unit))
 {
+    ASSERT_ARGS(imc_compile_unit)
     /* Not much here for now except the allocator */
     IMCC_INFO(interp)->cur_unit = unit;
 
@@ -132,6 +138,7 @@ PARROT_EXPORT
 void
 imc_cleanup(PARROT_INTERP, ARGIN_NULLOK(void *yyscanner))
 {
+    ASSERT_ARGS(imc_cleanup)
     IMCC_pop_parser_state(interp, yyscanner);
     clear_globals(interp);
     mem_sys_free(IMCC_INFO(interp)->ghash.data);
@@ -154,6 +161,7 @@ PARROT_MALLOC
 static IMC_Unit *
 imc_new_unit(IMC_Unit_Type t)
 {
+    ASSERT_ARGS(imc_new_unit)
     IMC_Unit * const unit = mem_allocate_zeroed_typed(IMC_Unit);
     create_symhash(&unit->hash);
     unit->type = t;
@@ -177,6 +185,7 @@ PARROT_CANNOT_RETURN_NULL
 IMC_Unit *
 imc_open_unit(PARROT_INTERP, IMC_Unit_Type t)
 {
+    ASSERT_ARGS(imc_open_unit)
     IMC_Unit   * const unit     = imc_new_unit(t);
     imc_info_t * const imc_info = IMCC_INFO(interp);
 
@@ -215,6 +224,7 @@ on the list of units.
 void
 imc_close_unit(PARROT_INTERP, ARGIN_NULLOK(IMC_Unit *unit))
 {
+    ASSERT_ARGS(imc_close_unit)
 #if COMPILE_IMMEDIATE
     if (unit)
         imc_compile_unit(interp, unit);
@@ -237,6 +247,7 @@ Frees an IMC_Unit and all of its associated memory.
 static void
 imc_free_unit(PARROT_INTERP, ARGMOD(IMC_Unit *unit))
 {
+    ASSERT_ARGS(imc_free_unit)
     imc_info_t * const imc = IMCC_INFO(interp);
 
 #if IMC_TRACE_HIGH

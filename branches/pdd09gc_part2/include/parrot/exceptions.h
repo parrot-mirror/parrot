@@ -221,16 +221,74 @@ void do_panic(
     unsigned int line);
 
 void Parrot_print_backtrace(void);
+#define ASSERT_ARGS_exit_fatal __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(format)
+#define ASSERT_ARGS_Parrot_assert __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(condition_string) \
+    || PARROT_ASSERT_ARG(file)
+#define ASSERT_ARGS_Parrot_confess __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(cond) \
+    || PARROT_ASSERT_ARG(file)
+#define ASSERT_ARGS_Parrot_ex_add_c_handler __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(jp)
+#define ASSERT_ARGS_Parrot_ex_build_exception __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp)
+#define ASSERT_ARGS_Parrot_ex_calc_handler_offset __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp)
+#define ASSERT_ARGS_Parrot_ex_mark_unhandled __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(exception)
+#define ASSERT_ARGS_Parrot_ex_rethrow_from_c __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(exception)
+#define ASSERT_ARGS_Parrot_ex_rethrow_from_op __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(exception)
+#define ASSERT_ARGS_Parrot_ex_throw_from_c __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(exception)
+#define ASSERT_ARGS_Parrot_ex_throw_from_c_args __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(format)
+#define ASSERT_ARGS_Parrot_ex_throw_from_op __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(exception)
+#define ASSERT_ARGS_Parrot_ex_throw_from_op_args __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(format)
+#define ASSERT_ARGS_die_from_exception __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(exception)
+#define ASSERT_ARGS_do_panic __attribute__unused__ int _ASSERT_ARGS_CHECK = 0
+#define ASSERT_ARGS_Parrot_print_backtrace __attribute__unused__ int _ASSERT_ARGS_CHECK = 0
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 /* HEADERIZER END: src/exceptions.c */
 
 #define PANIC(interp, message) do_panic((interp), (message), __FILE__, __LINE__)
 
+/* having a modified version of PARROT_ASSERT which resolves as an integer
+ * rvalue lets us put ASSERT_ARGS() at the top of the list of local variables.
+ * Thus, we can catch bad pointers before any of the local initialization
+ * logic is run.  And it always returns 0, so headerizer can chain them in
+ * ASSERT_ARGS_* macros like:
+ * int _ASSERT_ARGS = PARROT_ASSERT_ARG(a) || PARROT_ASSERT_ARG(b) || ...
+ */
 #ifdef NDEBUG
 #  define PARROT_ASSERT(x) ((void)0)
+#  define PARROT_ASSERT_ARG(x) (0)
+#  define ASSERT_ARGS(a)
 #else
 #  define PARROT_ASSERT(x) (x) ? ((void)0) : Parrot_confess(#x, __FILE__, __LINE__)
-#endif
+#  define PARROT_ASSERT_ARG(x) ((x) ? (0) : (Parrot_confess(#x, __FILE__, __LINE__), 0))
+
+#  ifdef _MSC_VER
+#    define ASSERT_ARGS(a)
+#  else
+#    define ASSERT_ARGS(a) ASSERT_ARGS_ ## a ;
+#  endif /* _MSC_VER */
+
+#endif /* NDEBUG */
 
 
 #endif /* PARROT_EXCEPTIONS_H_GUARD */
