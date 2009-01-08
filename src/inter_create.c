@@ -36,6 +36,10 @@ static int is_env_var_set(ARGIN(const char* var))
 static void setup_default_compreg(PARROT_INTERP)
         __attribute__nonnull__(1);
 
+#define ASSERT_ARGS_is_env_var_set __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(var)
+#define ASSERT_ARGS_setup_default_compreg __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp)
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 /* HEADERIZER END: static */
 
@@ -63,6 +67,7 @@ PARROT_WARN_UNUSED_RESULT
 static int
 is_env_var_set(ARGIN(const char* var))
 {
+    ASSERT_ARGS(is_env_var_set)
     int free_it, retval;
     char* const value = Parrot_getenv(var, &free_it);
     if (value == NULL)
@@ -89,6 +94,7 @@ Setup default compiler for PASM.
 static void
 setup_default_compreg(PARROT_INTERP)
 {
+    ASSERT_ARGS(setup_default_compreg)
     STRING * const pasm1 = CONST_STRING(interp, "PASM1");
 
     /* register the nci compiler object */
@@ -110,6 +116,7 @@ PARROT_CANNOT_RETURN_NULL
 Parrot_Interp
 make_interpreter(ARGIN_NULLOK(Interp *parent), INTVAL flags)
 {
+    ASSERT_ARGS(make_interpreter)
     Interp *interp;
 
     /* Get an empty interpreter from system memory */
@@ -286,6 +293,7 @@ PARROT_EXPORT
 void
 Parrot_destroy(PARROT_INTERP)
 {
+    ASSERT_ARGS(Parrot_destroy)
 #ifdef ATEXIT_DESTROY
     UNUSED(interp);
 #else
@@ -309,6 +317,7 @@ Note that C<exit_code> is ignored.
 void
 Parrot_really_destroy(PARROT_INTERP, SHIM(int exit_code), SHIM(void *arg))
 {
+    ASSERT_ARGS(Parrot_really_destroy)
     /* wait for threads to complete if needed; terminate the event loop */
     if (!interp->parent_interpreter) {
         Parrot_cx_runloop_end(interp);

@@ -133,7 +133,7 @@ inline op wrapper__() :internal :flow {
 }
 
 inline op prederef__() :internal :flow {
-    const opcode_t * const _this = CUR_OPCODE;
+    opcode_t * const _this = CUR_OPCODE;
     if (interp->run_core & PARROT_CGOTO_CORE) {
         /* must be CGP then - check for events in not yet prederefed code */
         Parrot_cx_runloop_wake(interp, interp->scheduler);
@@ -1386,6 +1386,60 @@ inline op compreg(out PMC, in STR) {
 
 op new_callback(out PMC, invar PMC, invar PMC, in STR) {
     $1 = Parrot_make_cb(interp, $2, $3, $4);
+}
+
+=back
+
+=cut
+
+###############################################################################
+
+=head2 Annotations operations
+
+These operations relate to bytecode annotations.
+
+=over 4
+
+=cut
+
+########################################
+
+=item B<annotations>(out PMC)
+
+Gets all bytecode annotations in effect at the current point, in a Hash.
+If there are none, returns an empty Hash.
+
+=cut
+
+inline op annotations(out PMC) {
+    if (interp->code->annotations) {
+        opcode_t const cur_pos = (expr NEXT()) - interp->code->base.data;
+        $1 = PackFile_Annotations_lookup(interp, interp->code->annotations,
+                cur_pos, NULL);
+    }
+    else {
+        $1 = pmc_new(interp, enum_class_Hash);
+    }
+    goto NEXT();
+}
+
+=item B<annotations>(out PMC, in STR)
+
+Gets the bytecode annotation with the given name that is in effect at the
+current point. Returns PMCNULL if there is none.
+
+=cut
+
+inline op annotations(out PMC, in STR) {
+    if (interp->code->annotations) {
+        opcode_t const cur_pos = (expr NEXT()) - interp->code->base.data;
+        $1 = PackFile_Annotations_lookup(interp, interp->code->annotations,
+                cur_pos, $2);
+    }
+    else {
+        $1 = PMCNULL;
+    }
+    goto NEXT();
 }
 
 =back

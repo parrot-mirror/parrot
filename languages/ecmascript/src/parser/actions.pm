@@ -1,5 +1,6 @@
-# Copyright (C) 2008, The Perl Foundation.
+# Copyright (C) 2008-2009, The Perl Foundation.
 # $Id$
+
 class JS::Grammar::Actions;
 
 method TOP($/, $key) {
@@ -138,7 +139,19 @@ method while_statement($/) {
 ##   <step>
 ## }
 ##
-method for1_statement($/) {
+sub c_style_for($/,$var_decl) {
+
+    ## if there are variable declarations in the init portion of the C-style
+    ## for loop, we have to evaluate it first so that they are available
+    ## during the rest of loop
+    my $init;
+    if $var_decl {
+        $init := $( $<init> );
+    }
+    else {
+        if $<init> { $init := $( $<init>[0] ); }
+    }
+
     my $body := $( $<statement> );
 
     ## if there's a step, create a new compound statement node,
@@ -164,13 +177,14 @@ method for1_statement($/) {
 
     ## if there's an init step, it is evaluated before the loop, so
     ## create a compound statement node ($init, $loop).
-    if $<init> {
-        my $init := $( $<init>[0] );
-        make PAST::Stmts.new( $init, $loop, :node($/) );
+    if $init {
+        $loop := PAST::Stmts.new( $init, $loop, :node($/) );
     }
-    else {
-        make $loop;
-    }
+    make $loop;
+}
+
+method for1_statement($/) {
+    c_style_for($/,0);
 }
 
 method for2_statement($/) {
@@ -190,11 +204,7 @@ method for3_statement($/) {
 }
 
 method for4_statement($/) {
-    # XXX todo
-    my $past;
-    my $body := $( $<statement> );
-    $past := $body;
-    make $past;
+    c_style_for($/,1);
 }
 
 method labelled_statement($/) {
@@ -262,7 +272,7 @@ method return_statement($/) {
     make $past;
 }
 
-method variable_statement($/) {
+method variable_declaration_list($/) {
     ## each variable declared in this statement becomes a separate PIR
     ## statement; therefore create a Stmts node.
     my $past := PAST::Stmts.new( :node($/) );
@@ -270,6 +280,10 @@ method variable_statement($/) {
         $past.push( $( $_ ) );
     }
     make $past;
+}
+
+method variable_statement($/) {
+    make $( $<variable_declaration_list> )
 }
 
 method variable_declaration($/) {
@@ -665,9 +679,13 @@ method null($/) {
 }
 
 method object_literal($/) {
-    my $past := PAST::Op.new( :pasttype('call'), :node($/) );
-    $past.name('Object');
+    my $past := PAST::Stmts.new( :node($/) );
+
+    my $type := PAST::Var.new( :name('JSObject'), :scope('package'), :node($/) );
+    my $obj := PAST::Op.new( :pasttype('callmethod'), :name("new"), :node($/), $type);
+
     for $<property> {
+        $($_).unshift($obj);
         $past.push( $($_) );
     }
     make $past;
@@ -688,17 +706,19 @@ method property($/) {
     ## XXX my $key  := PAST::Val.new( $prop, :returns('String'), :node($/) );
     my $val  := $( $<assignment_expression> );
 
-    $val.named($key);
-    make $val;
+    my $past := PAST::Op.new( :pasttype('callmethod'), :name('Set'), $key, $val, :node($/) );
+
+    make $past;
 }
 
 
 method property_name($/, $key) {
     ## XXX
     my $propname := $( $/{$key} );
-    my $past := PAST::Op.new( :inline('    $S0 = %0'), :node($/) );
-    $past.push($propname);
-    make $past;
+    #my $past := PAST::Op.new( :inline('    $S0 = %0'), :node($/) );
+    #$past.push($propname);
+    #make $past;
+    make $propname;
 }
 
 method array_literal($/) {

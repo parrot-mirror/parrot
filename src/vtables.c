@@ -37,6 +37,7 @@ PARROT_CANNOT_RETURN_NULL
 VTABLE *
 Parrot_new_vtable(SHIM_INTERP)
 {
+    ASSERT_ARGS(Parrot_new_vtable)
     return mem_allocate_zeroed_typed(VTABLE);
 }
 
@@ -56,6 +57,7 @@ PARROT_CANNOT_RETURN_NULL
 VTABLE *
 Parrot_clone_vtable(PARROT_INTERP, ARGIN(const VTABLE *base_vtable))
 {
+    ASSERT_ARGS(Parrot_clone_vtable)
     VTABLE * const new_vtable = mem_allocate_typed(VTABLE);
 
     STRUCT_COPY(new_vtable, base_vtable);
@@ -86,9 +88,9 @@ PARROT_EXPORT
 void
 Parrot_destroy_vtable(PARROT_INTERP, ARGMOD(VTABLE *vtable))
 {
+    ASSERT_ARGS(Parrot_destroy_vtable)
     /* We sometimes get a type number allocated without any corresponding
      * vtable. E.g. if you load perl_group, perlscalar is this way.  */
-    PARROT_ASSERT(vtable);
 
     if (vtable->ro_variant_vtable) {
         VTABLE *ro_vtable = vtable->ro_variant_vtable;
@@ -126,6 +128,7 @@ Allocate memory for the vtables for all known classes (PMC types).
 void
 parrot_alloc_vtables(PARROT_INTERP)
 {
+    ASSERT_ARGS(parrot_alloc_vtables)
     interp->vtables          = mem_allocate_n_zeroed_typed(PARROT_MAX_CLASSES, VTABLE *);
     interp->n_vtable_max     = enum_class_core_max;
     interp->n_vtable_alloced = PARROT_MAX_CLASSES - 1;
@@ -144,6 +147,7 @@ Reallocate memory for vtables, increasing the number of vtables by 16.
 void
 parrot_realloc_vtables(PARROT_INTERP)
 {
+    ASSERT_ARGS(parrot_realloc_vtables)
     /* 16 bigger seems reasonable, though it's only a pointer
        table and we could get bigger without blowing much memory
        */
@@ -172,6 +176,7 @@ of pointers to these vtables is freed.
 void
 parrot_free_vtables(PARROT_INTERP)
 {
+    ASSERT_ARGS(parrot_free_vtables)
     int i;
 
     for (i = 1; i < interp->n_vtable_max; i++)
@@ -193,6 +198,7 @@ Mark all vtables as being alive for the garbage collector.
 void
 mark_vtables(PARROT_INTERP)
 {
+    ASSERT_ARGS(mark_vtables)
     INTVAL i;
 
     for (i = 1; i < interp->n_vtable_max; i++) {

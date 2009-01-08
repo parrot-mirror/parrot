@@ -144,6 +144,56 @@ static void sort_loops(PARROT_INTERP, ARGIN(IMC_Unit *unit))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
+#define ASSERT_ARGS_analyse_life_block __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(bb) \
+    || PARROT_ASSERT_ARG(r)
+#define ASSERT_ARGS_analyse_life_symbol __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(unit) \
+    || PARROT_ASSERT_ARG(r)
+#define ASSERT_ARGS_bb_add_edge __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(unit) \
+    || PARROT_ASSERT_ARG(from) \
+    || PARROT_ASSERT_ARG(to)
+#define ASSERT_ARGS_bb_check_set_addr __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(unit) \
+    || PARROT_ASSERT_ARG(bb) \
+    || PARROT_ASSERT_ARG(label)
+#define ASSERT_ARGS_bb_findadd_edge __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(unit) \
+    || PARROT_ASSERT_ARG(from) \
+    || PARROT_ASSERT_ARG(label)
+#define ASSERT_ARGS_bb_remove_edge __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(unit) \
+    || PARROT_ASSERT_ARG(edge)
+#define ASSERT_ARGS_check_invoke_type __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(unit) \
+    || PARROT_ASSERT_ARG(ins)
+#define ASSERT_ARGS_free_dominance_frontiers __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(unit)
+#define ASSERT_ARGS_free_dominators __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(unit)
+#define ASSERT_ARGS_free_edge __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(unit)
+#define ASSERT_ARGS_free_loops __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(unit)
+#define ASSERT_ARGS_init_basic_blocks __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(unit)
+#define ASSERT_ARGS_make_basic_block __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(unit) \
+    || PARROT_ASSERT_ARG(ins)
+#define ASSERT_ARGS_mark_loop __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(unit) \
+    || PARROT_ASSERT_ARG(e)
+#define ASSERT_ARGS_propagate_need __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(bb) \
+    || PARROT_ASSERT_ARG(r)
+#define ASSERT_ARGS_sort_loops __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(unit)
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 /* HEADERIZER END: static */
 
@@ -169,6 +219,7 @@ static int
 check_invoke_type(PARROT_INTERP, ARGIN(const IMC_Unit    *unit),
                                  ARGIN(const Instruction *ins))
 {
+    ASSERT_ARGS(check_invoke_type)
     /* 1) pcc sub call or yield */
     if (ins->type & (ITPCCSUB | ITPCCYIELD))
         return INVOKE_SUB_CALL;
@@ -207,6 +258,7 @@ true.
 void
 find_basic_blocks(PARROT_INTERP, ARGMOD(IMC_Unit *unit), int first)
 {
+    ASSERT_ARGS(find_basic_blocks)
     Basic_block          *bb;
     Instruction          *ins;
     const SymHash * const hsh = &unit->hash;
@@ -318,6 +370,7 @@ static void
 bb_check_set_addr(PARROT_INTERP, ARGMOD(IMC_Unit *unit),
         ARGMOD(Basic_block *bb), ARGIN(const SymReg *label))
 {
+    ASSERT_ARGS(bb_check_set_addr)
     const Instruction *ins;
 
     for (ins = unit->instructions; ins; ins = ins->next) {
@@ -353,6 +406,7 @@ between them.
 void
 build_cfg(PARROT_INTERP, ARGMOD(IMC_Unit *unit))
 {
+    ASSERT_ARGS(build_cfg)
     Basic_block *last = NULL;
     unsigned int i;
     int changes;
@@ -495,6 +549,7 @@ static void
 bb_findadd_edge(PARROT_INTERP, ARGMOD(IMC_Unit *unit), ARGIN(Basic_block *from),
         ARGIN(const SymReg *label))
 {
+    ASSERT_ARGS(bb_findadd_edge)
     Instruction         *ins;
     const SymReg * const r = find_sym(interp, label->name);
 
@@ -535,6 +590,7 @@ int
 blocks_are_connected(ARGIN(const Basic_block *from),
                      ARGIN(const Basic_block *to))
 {
+    ASSERT_ARGS(blocks_are_connected)
     const Edge *pred = to->pred_list;
 
     while (pred) {
@@ -563,6 +619,7 @@ static void
 bb_add_edge(ARGMOD(IMC_Unit *unit), ARGIN(Basic_block  *from),
                                     ARGMOD(Basic_block *to))
 {
+    ASSERT_ARGS(bb_add_edge)
     Edge *e;
     if (blocks_are_connected(from, to))
         return;
@@ -604,6 +661,7 @@ Removes the given edge from the graph.
 static void
 bb_remove_edge(ARGMOD(IMC_Unit *unit), ARGMOD(Edge *edge))
 {
+    ASSERT_ARGS(bb_remove_edge)
     if (edge->from->succ_list == edge) {
         edge->from->succ_list = edge->succ_next;
     }
@@ -658,6 +716,7 @@ Frees the memory of an IMC_Unit's edge list.
 static void
 free_edge(ARGMOD(IMC_Unit *unit))
 {
+    ASSERT_ARGS(free_edge)
     Edge *e;
 
     for (e = unit->edge_list; e;) {
@@ -684,9 +743,9 @@ PARROT_WARN_UNUSED_RESULT
 int
 edge_count(ARGIN(const IMC_Unit *unit))
 {
+    ASSERT_ARGS(edge_count)
     Edge *e = unit->edge_list;
     int   i = 0;
-
     while (e) {
         i++;
         e = e->next;
@@ -710,6 +769,7 @@ IMC_Unit.
 void
 life_analysis(PARROT_INTERP, ARGIN(const IMC_Unit *unit))
 {
+    ASSERT_ARGS(life_analysis)
     SymReg  ** const reglist = unit->reglist;
     unsigned int     i;
 
@@ -733,6 +793,7 @@ Analyzes the lifetime for a given symbol.
 static void
 analyse_life_symbol(ARGIN(const IMC_Unit *unit), ARGMOD(SymReg* r))
 {
+    ASSERT_ARGS(analyse_life_symbol)
     unsigned int i;
 
 #if IMC_TRACE_HIGH
@@ -795,6 +856,7 @@ Frees memory of the life analysis info structures.
 void
 free_life_info(ARGIN(const IMC_Unit *unit), ARGMOD(SymReg *r))
 {
+    ASSERT_ARGS(free_life_info)
 #if IMC_TRACE_HIGH
     fprintf(stderr, "free_life_into(%s)\n", r->name);
 #endif
@@ -827,6 +889,7 @@ the block where the var is alive.
 static void
 analyse_life_block(ARGIN(const Basic_block* bb), ARGMOD(SymReg *r))
 {
+    ASSERT_ARGS(analyse_life_block)
     Life_range  * const l        = make_life_range(r, bb->index);
     Instruction         *special = NULL;
     Instruction         *ins;
@@ -905,6 +968,7 @@ unit.
 static void
 propagate_need(ARGMOD(Basic_block *bb), ARGIN(const SymReg *r), int i)
 {
+    ASSERT_ARGS(propagate_need)
     Edge        *edge;
     Life_range  *l;
     Basic_block *pred;
@@ -973,6 +1037,7 @@ See gcc:flow.c compute_dominators
 void
 compute_dominators(PARROT_INTERP, ARGMOD(IMC_Unit *unit))
 {
+    ASSERT_ARGS(compute_dominators)
 #define USE_BFS 0
 
 #if !USE_BFS
@@ -1111,6 +1176,7 @@ Dominance Algorithm", Cooper et al. (2001)
 void
 compute_dominance_frontiers(PARROT_INTERP, ARGMOD(IMC_Unit *unit))
 {
+    ASSERT_ARGS(compute_dominance_frontiers)
     int i, b;
 
     const int    n                   = unit->n_basic_blocks;
@@ -1172,6 +1238,7 @@ Frees the memory in the given unit related to all dominators.
 static void
 free_dominators(ARGMOD(IMC_Unit *unit))
 {
+    ASSERT_ARGS(free_dominators)
     if (unit->dominators) {
         unsigned int i;
 
@@ -1199,6 +1266,7 @@ Frees the memory in the given unit related to all dominance frontiers.
 static void
 free_dominance_frontiers(ARGMOD(IMC_Unit *unit))
 {
+    ASSERT_ARGS(free_dominance_frontiers)
     if (unit->dominance_frontiers) {
         unsigned int i;
 
@@ -1225,6 +1293,7 @@ Sorts the loops found in the CFG of the current unit.
 static void
 sort_loops(PARROT_INTERP, ARGIN(IMC_Unit *unit))
 {
+    ASSERT_ARGS(sort_loops)
 
     Loop_info   *li;
     Loop_info  **loop_info = unit->loop_info;
@@ -1305,6 +1374,7 @@ of its dominators.
 void
 find_loops(PARROT_INTERP, ARGMOD(IMC_Unit *unit))
 {
+    ASSERT_ARGS(find_loops)
     unsigned int i;
 
     IMCC_info(interp, 2, "find_loops\n");
@@ -1342,6 +1412,7 @@ PARROT_WARN_UNUSED_RESULT
 int
 natural_preheader(ARGIN(const IMC_Unit *unit), ARGIN(const Loop_info *loop_info))
 {
+    ASSERT_ARGS(natural_preheader)
     Edge *edge;
     int   preheader = -1;
 
@@ -1380,6 +1451,7 @@ Increases the loop_depth of all the nodes in a loop.
 static void
 mark_loop(PARROT_INTERP, ARGMOD(IMC_Unit *unit), ARGIN(const Edge *e))
 {
+    ASSERT_ARGS(mark_loop)
     Set         *loop;
     Set         *exits;
     Edge        *edge;
@@ -1466,6 +1538,7 @@ Frees the memory associated with the loops in this unit.
 static void
 free_loops(ARGMOD(IMC_Unit *unit))
 {
+    ASSERT_ARGS(free_loops)
     int i;
 
     for (i = 0; i < unit->n_loops; i++) {
@@ -1495,6 +1568,7 @@ them).
 void
 search_predecessors_not_in(ARGIN(const Basic_block *node), ARGMOD(Set *s))
 {
+   ASSERT_ARGS(search_predecessors_not_in)
    Edge *edge;
 
    for (edge = node->pred_list; edge; edge = edge->pred_next) {
@@ -1523,6 +1597,8 @@ Initializes the basic blocks memory for this unit.
 static void
 init_basic_blocks(ARGMOD(IMC_Unit *unit))
 {
+    ASSERT_ARGS(init_basic_blocks)
+
     if (!unit->bb_list)
         clear_basic_blocks(unit);
 
@@ -1547,6 +1623,8 @@ Frees all of the blocks and CFG memory allocated for this unit.
 void
 clear_basic_blocks(ARGMOD(IMC_Unit *unit))
 {
+    ASSERT_ARGS(clear_basic_blocks)
+
     if (unit->bb_list) {
         unsigned int i;
 
@@ -1579,10 +1657,9 @@ PARROT_WARN_UNUSED_RESULT
 static Basic_block*
 make_basic_block(ARGMOD(IMC_Unit *unit), ARGMOD(Instruction *ins))
 {
+    ASSERT_ARGS(make_basic_block)
     Basic_block * const bb = mem_allocate_typed(Basic_block);
     int                 n  = unit->n_basic_blocks;
-
-    PARROT_ASSERT(ins);
 
     bb->start      = ins;
     bb->end        = ins;
@@ -1621,6 +1698,7 @@ PARROT_CANNOT_RETURN_NULL
 Life_range *
 make_life_range(ARGMOD(SymReg *r), int idx)
 {
+    ASSERT_ARGS(make_life_range)
     Life_range * const l = mem_allocate_zeroed_typed(Life_range);
     r->life_info[idx]    = l;
 

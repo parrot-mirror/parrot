@@ -66,12 +66,14 @@ static int remove_first(
 static void waitlist_remove(
     ARGMOD_NULLOK(STM_waitlist *waitlist),
     ARGIN(struct waitlist_entry *what))
-        __attribute__nonnull__(2);
+        __attribute__nonnull__(2)
+        FUNC_MODIFIES(*waitlist);
 
 static void waitlist_remove_check(
     ARGMOD_NULLOK(STM_waitlist *waitlist),
     ARGIN(struct waitlist_entry *what))
-        __attribute__nonnull__(2);
+        __attribute__nonnull__(2)
+        FUNC_MODIFIES(*waitlist);
 
 static void waitlist_signal_all(ARGMOD(STM_waitlist *list))
         __attribute__nonnull__(1)
@@ -81,6 +83,28 @@ static void waitlist_signal_one(ARGMOD(struct waitlist_entry *who))
         __attribute__nonnull__(1)
         FUNC_MODIFIES(*who);
 
+#define ASSERT_ARGS_add_entry __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(waitlist) \
+    || PARROT_ASSERT_ARG(entry)
+#define ASSERT_ARGS_alloc_entry __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp)
+#define ASSERT_ARGS_get_thread __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp)
+#define ASSERT_ARGS_get_thread_noalloc __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp)
+#define ASSERT_ARGS_Parrot_STM_tx_log_alloc __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp)
+#define ASSERT_ARGS_remove_first __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(waitlist) \
+    || PARROT_ASSERT_ARG(expect_first)
+#define ASSERT_ARGS_waitlist_remove __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(what)
+#define ASSERT_ARGS_waitlist_remove_check __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(what)
+#define ASSERT_ARGS_waitlist_signal_all __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(list)
+#define ASSERT_ARGS_waitlist_signal_one __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(who)
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 /* HEADERIZER END: static */
 
@@ -102,6 +126,7 @@ PARROT_WARN_UNUSED_RESULT
 static struct waitlist_thread_data *
 get_thread(PARROT_INTERP)
 {
+    ASSERT_ARGS(get_thread)
     STM_tx_log * const txlog = Parrot_STM_tx_log_get(interp);
 
     if (!txlog->waitlist_data) {
@@ -131,6 +156,7 @@ PARROT_CAN_RETURN_NULL
 static struct waitlist_thread_data *
 get_thread_noalloc(PARROT_INTERP)
 {
+    ASSERT_ARGS(get_thread_noalloc)
     const STM_tx_log * const txlog = Parrot_STM_tx_log_get(interp);
     return txlog->waitlist_data;
 }
@@ -150,6 +176,7 @@ PARROT_WARN_UNUSED_RESULT
 static struct waitlist_entry *
 alloc_entry(PARROT_INTERP)
 {
+    ASSERT_ARGS(alloc_entry)
     size_t i;
 
     struct waitlist_thread_data * const thr = get_thread(interp);
@@ -191,6 +218,7 @@ RT #48260: Not yet documented!!!
 static void
 add_entry(ARGMOD(STM_waitlist *waitlist), ARGIN(struct waitlist_entry *entry))
 {
+    ASSERT_ARGS(add_entry)
     int successp = -1;
     void *result;
     PARROT_ASSERT(entry->next == NULL);
@@ -220,6 +248,7 @@ RT #48260: Not yet documented!!!
 static int
 remove_first(ARGMOD(STM_waitlist *waitlist), ARGIN(struct waitlist_entry *expect_first))
 {
+    ASSERT_ARGS(remove_first)
     int successp;
     PARROT_ATOMIC_PTR_CAS(successp, waitlist->first, expect_first,
                         expect_first->next);
@@ -245,6 +274,7 @@ RT #48260: Not yet documented!!!
 static void
 waitlist_remove(ARGMOD_NULLOK(STM_waitlist *waitlist), ARGIN(struct waitlist_entry *what))
 {
+    ASSERT_ARGS(waitlist_remove)
     struct waitlist_entry *cur;
     void *result;
 
@@ -303,6 +333,7 @@ RT #48260: Not yet documented!!!
 static void
 waitlist_remove_check(ARGMOD_NULLOK(STM_waitlist *waitlist), ARGIN(struct waitlist_entry *what))
 {
+    ASSERT_ARGS(waitlist_remove_check)
     struct waitlist_entry *cur;
 
     if (!waitlist)
@@ -331,6 +362,7 @@ RT #48260: Not yet documented!!!
 static void
 waitlist_signal_one(ARGMOD(struct waitlist_entry *who))
 {
+    ASSERT_ARGS(waitlist_signal_one)
     struct waitlist_thread_data *thread;
 
     thread = who->thread;
@@ -359,6 +391,7 @@ RT #48260: Not yet documented!!!
 static void
 waitlist_signal_all(ARGMOD(STM_waitlist *list))
 {
+    ASSERT_ARGS(waitlist_signal_all)
     int successp;
     struct waitlist_entry *cur;
     void *result;
@@ -405,6 +438,7 @@ RT #48260: Not yet documented!!!
 void
 Parrot_STM_waitlist_add_self(PARROT_INTERP, ARGMOD(STM_waitlist *waitlist))
 {
+    ASSERT_ARGS(Parrot_STM_waitlist_add_self)
     struct waitlist_entry * const entry = alloc_entry(interp);
 
     entry->head = waitlist;
@@ -428,6 +462,7 @@ RT #48260: Not yet documented!!!
 void
 Parrot_STM_waitlist_signal(PARROT_INTERP, ARGMOD(STM_waitlist *waitlist))
 {
+    ASSERT_ARGS(Parrot_STM_waitlist_signal)
 #if WAITLIST_DEBUG
     fprintf(stderr, "%p: signal %p\n", interp, waitlist);
 #endif
@@ -447,6 +482,7 @@ RT #48260: Not yet documented!!!
 void
 Parrot_STM_waitlist_remove_all(PARROT_INTERP)
 {
+    ASSERT_ARGS(Parrot_STM_waitlist_remove_all)
     struct waitlist_thread_data *thr;
     size_t i;
 #if WAITLIST_DEBUG
@@ -485,6 +521,7 @@ RT #48260: Not yet documented!!!
 void
 Parrot_STM_waitlist_wait(PARROT_INTERP)
 {
+    ASSERT_ARGS(Parrot_STM_waitlist_wait)
     struct waitlist_thread_data *thr;
     thr = get_thread(interp);
     LOCK(thr->signal_mutex);
@@ -516,6 +553,7 @@ RT #48260: Not yet documented!!!
 void
 Parrot_STM_waitlist_init(PARROT_INTERP, ARGMOD(STM_waitlist *waitlist))
 {
+    ASSERT_ARGS(Parrot_STM_waitlist_init)
     PARROT_ATOMIC_PTR_INIT(waitlist->first);
     PARROT_ATOMIC_PTR_SET(waitlist->first, NULL);
     MUTEX_INIT(waitlist->remove_mutex);
@@ -534,6 +572,7 @@ RT #48260: Not yet documented!!!
 void
 Parrot_STM_waitlist_destroy_thread(PARROT_INTERP)
 {
+    ASSERT_ARGS(Parrot_STM_waitlist_destroy_thread)
     struct waitlist_thread_data *thr;
     size_t i;
 
@@ -566,6 +605,7 @@ PARROT_CANNOT_RETURN_NULL
 static STM_tx_log *
 Parrot_STM_tx_log_alloc(PARROT_INTERP, size_t size)
 {
+    ASSERT_ARGS(Parrot_STM_tx_log_alloc)
     int                i;
     STM_tx_log * const log       = (STM_tx_log *)mem_sys_allocate_zeroed(size);
     interp->thread_data->stm_log = log;
@@ -610,6 +650,7 @@ PARROT_CANNOT_RETURN_NULL
 STM_tx_log *
 Parrot_STM_tx_log_get(PARROT_INTERP)
 {
+    ASSERT_ARGS(Parrot_STM_tx_log_get)
     STM_tx_log *log = interp->thread_data->stm_log;
 
     if (!log)
