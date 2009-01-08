@@ -446,7 +446,7 @@ and creating the protoobjects.
     if $P0 != 'grammar' goto register
     $S0 = 'Grammar'
   register:
-    p6meta.'register'(metaclass, 'parent'=>$S0)
+    .tailcall p6meta.'register'(metaclass, 'parent'=>$S0)
   no_pkgtype:
 .end
 
