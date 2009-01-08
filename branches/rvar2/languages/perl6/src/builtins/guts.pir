@@ -394,6 +394,8 @@ is composed (see C<!meta_compose> below).
     ns = get_hll_namespace nsarray
     if also goto is_also
     metaclass = newclass ns
+    $P0 = box type
+    setprop metaclass, 'pkgtype', $P0
     .return (metaclass)
   is_also:
     metaclass = get_class ns
@@ -437,8 +439,13 @@ and creating the protoobjects.
     goto roles_it_loop
   roles_it_loop_end:
 
-    # Create proto-object with default parent being Any.
-    p6meta.'register'(metaclass, 'parent'=>'Any')
+    # Create proto-object with default parent being Any or Grammar.
+    $S0 = 'Any'
+    $P0 = getprop 'pkgtype', metaclass
+    if $P0 != 'grammar' goto register
+    $S0 = 'Grammar'
+  register:
+    p6meta.'register'(metaclass, 'parent'=>$S0)
 .end
 
 

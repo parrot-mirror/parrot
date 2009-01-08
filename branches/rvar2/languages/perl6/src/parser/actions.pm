@@ -2152,8 +2152,12 @@ method EXPR($/, $key) {
 method regex_declarator($/) {
     my $sym  := ~$<sym>;
     my $past := $( $<regex_def> );
-    if $sym eq 'token'   { $past.compiler_args( :ratchet(1) ); }
-    elsif $sym eq 'rule' { $past.compiler_args( :s(1), :ratchet(1) ); }
+    if $sym eq 'token'   
+        { $past.compiler_args( :grammar(''), :ratchet(1) ); }
+    elsif $sym eq 'rule' 
+        { $past.compiler_args( :grammar(''), :s(1), :ratchet(1) ); }
+    else                
+        { $past.compiler_args( :grammar('') ); }
     make $past;
 }
 
