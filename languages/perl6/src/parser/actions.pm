@@ -1394,8 +1394,23 @@ method package_def($/, $key) {
     );
 
     #  ...and at the end of the block's initializer (after any other
-    #  items added by the block), we finalize the composition
-    $block[0].push( PAST::Op.new( :name('!meta_compose'), $?METACLASS) );
+    #  items added by the block), we finalize the composition. This
+    # returns a proto, which we need to keep around and also return at
+    # the end of initialization for anonymous classes.
+    if $<module_name> eq "" && ($?PKGDECL eq 'class' || $?PKGDECL eq 'role'
+            || $?PKGDECL eq 'grammar') {
+        $block[0].push(PAST::Op.new(
+            :pasttype('bind'),
+            PAST::Var.new(:name('proto_store'), :scope('register'), :isdecl(1)),
+            PAST::Op.new( :name('!meta_compose'), $?METACLASS)
+        ));
+        $block.push(PAST::Var.new(:name('proto_store'), :scope('register')));
+        $block.blocktype('immediate');
+        $block.pirflags('');
+    }
+    else {
+        $block[0].push( PAST::Op.new( :name('!meta_compose'), $?METACLASS) );
+    }
 
     make $block;
 }
