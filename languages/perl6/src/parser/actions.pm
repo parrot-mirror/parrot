@@ -2443,66 +2443,6 @@ sub trait_readtype($traitpast) {
 
 
 # Produces a handles method.
-sub make_handles_method($/, $from_name, $to_name, $attr_name) {
-    PAST::Block.new(
-        :name($from_name),
-        :pirflags(':method'),
-        :blocktype('declaration'),
-        :node($/),
-        PAST::Var.new(
-            :name('@a'),
-            :scope('parameter'),
-            :slurpy(1)
-        ),
-        PAST::Var.new(
-            :name('%h'),
-            :scope('parameter'),
-            :named(1),
-            :slurpy(1)
-        ),
-        PAST::Op.new(
-            :name($to_name),
-            :pasttype('callmethod'),
-            PAST::Var.new(
-                :name($attr_name),
-                :scope('attribute')
-            ),
-            PAST::Var.new(
-                :name('@a'),
-                :scope('lexical'),
-                :flat(1)
-            ),
-            PAST::Var.new(
-                :name('%h'),
-                :scope('lexical'),
-                :flat(1),
-                :named(1)
-            )
-        )
-    )
-}
-
-
-# Makes a handles method from a pair.
-sub make_handles_method_from_pair($/, $pair, $attr_name) {
-    my $meth;
-
-    # Single pair mapping. Check we have string name and value.
-    my $key := $pair[0];
-    my $value := $pair[1];
-    if $key.isa((PAST::Val) && $value.isa(PAST::Val)) {
-        my $from_name := ~$key.value();
-        my $to_name := ~$value.value();
-        $meth := make_handles_method($/, $from_name, $to_name, $attr_name);
-    }
-    else {
-        $/.panic('Only constants may be used in a handles pair argument.');
-    }
-
-    $meth
-}
-
-
 # Generates a setter/getter method for an attribute in a class or role.
 sub make_accessor($/, $method_name, $attr_name, $rw, $scope) {
     my $getset;
@@ -2529,43 +2469,6 @@ sub make_accessor($/, $method_name, $attr_name, $rw, $scope) {
     $accessor
 }
 
-
-# Adds the given method to the current class. This just returns the method that
-# is passed to it if the current class is named and the original declaration; in
-# the case that it is anonymous or we're adding to it we need instead to emit an
-# add_method call and remove the methods name so it doesn't pollute the namespace.
-sub add_method_to_class($method) {
-    our $?CLASS;
-    our $?PACKAGE;
-    if !($?CLASS =:= $?PACKAGE) || $?CLASS[0][1].name() eq '!keyword_class' && +@($?CLASS[0][1]) == 1 {
-        $method
-    }
-    else {
-        # Create new PAST::Block - can't work out how to unset the name of an
-        # existing one.
-        my $new_method := PAST::Block.new(
-            :blocktype($method.blocktype()),
-            :pirflags($method.pirflags())
-        );
-        for @($method) {
-            $new_method.push($_);
-        }
-
-        # Put call to add method into the class definition.
-        $?CLASS.push(PAST::Op.new(
-            :pasttype('callmethod'),
-            :name('add_method'),
-            PAST::Var.new(
-                :name('def'),
-                :scope('register')
-            ),
-            PAST::Val.new( :value($method.name()) ),
-            $new_method
-        ));
-
-        $new_method
-    }
-}
 
 # Creates an anonymous subset type.
 sub make_anon_subtype($past) {
@@ -2603,23 +2506,6 @@ sub make_anon_subtype($past) {
     }
 
     return $past;
-}
-
-
-# Takes a parse tree of traits and checks if we have the trait of the given
-# name applied with the given verb. If it finds the trait, returns the
-# syntax tree for that trait; otherwise, returns undef.
-sub have_trait($name, $verb, $traits) {
-    unless $traits { return 0; }
-    for @($traits) {
-        if $_ && $_<trait_auxiliary> {
-            my $trait := $_<trait_auxiliary>;
-            if $trait<sym> eq $verb && $trait<name> eq $name {
-                return $trait;
-            }
-        }
-    }
-    return 0;
 }
 
 
