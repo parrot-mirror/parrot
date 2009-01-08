@@ -987,11 +987,9 @@ method signature($/, $key) {
                     $sigparam.push(PAST::Val.new( :value(1), :named('invocant')));
                     $var.scope('lexical');
                     $var.isdecl(1);
-                    $var := PAST::Op.new(
-                        :pasttype('bind'),
-                        $var,
+                    $var.viviself( 
                         PAST::Var.new( :name('self'), :scope('register') )
-                    );
+                    )
                 }
                 else {
                     $/.panic("Can only use : separator to denote invocant after first parameter.");
