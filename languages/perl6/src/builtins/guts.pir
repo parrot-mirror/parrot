@@ -442,10 +442,12 @@ and creating the protoobjects.
     # Create proto-object with default parent being Any or Grammar.
     $S0 = 'Any'
     $P0 = getprop 'pkgtype', metaclass
+    if null $P0 goto no_pkgtype
     if $P0 != 'grammar' goto register
     $S0 = 'Grammar'
   register:
     p6meta.'register'(metaclass, 'parent'=>$S0)
+  no_pkgtype:
 .end
 
 
