@@ -27,6 +27,9 @@ src/builtins/assign.pir - assignments
     unless $I0 goto do_assign
     getprop type, 'type', cont
     if null type goto do_assign
+    # XXX FIXME We should instead translate this to a proto.
+    $I0 = isa type, 'NameSpace'
+    if $I0 goto do_assign
     $I0 = type.'ACCEPTS'(source)
     if $I0 goto do_assign
     'die'("Type mismatch in assignment.")
