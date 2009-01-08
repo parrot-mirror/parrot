@@ -888,8 +888,15 @@ method method_def($/) {
         )
     );
 
-    $past.control('return_pir');
+    # Ensure there's an invocant in the signature.
     block_signature($past);
+    $past.loadinit().push(PAST::Op.new(
+        :pasttype('callmethod'),
+        :name('!add_implicit_self'),
+        PAST::Var.new( :name('signature'), :scope('register') )
+    ));
+
+    $past.control('return_pir');
     make $past;
 }
 

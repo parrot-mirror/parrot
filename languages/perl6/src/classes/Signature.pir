@@ -116,6 +116,35 @@ the Signature.
     push params, attr
 .end
 
+
+=item !add_implicit_self
+
+Ensures that if there is no explicit invocant, we add one.
+
+=cut
+
+.sub '!add_implicit_self' :method
+    .local pmc params
+    params = self.'params'()
+    $I0 = elements params
+    if $I0 == 0 goto add_implicit_self
+    $P0 = params[0]
+    $I0 = $P0['invocant']
+    if $I0 != 1 goto add_implicit_self
+    .return ()
+
+  add_implicit_self:
+    $P0 = new 'Hash'
+    $P0['name'] = 'self'
+    $P0['invocant'] = 1
+    $P0['multi_invocant'] = 1
+    # XXX Need to get type of class/role/grammar method is in.
+    $P1 = get_hll_global 'Object'
+    $P0['nom_type'] = $P1
+    unshift params, $P0
+.end
+
+
 =item params
 
 Get the array of parameter describing hashes.
@@ -174,7 +203,7 @@ Gets a perl representation of the signature.
   separator_done:
 
     # First any nominal type.
-    $P0 = cur_param["type"]
+    $P0 = cur_param["nom_type"]
     if null $P0 goto any_type
     $P0 = $P0.'perl'()
     concat s, $P0
@@ -203,7 +232,7 @@ Gets a perl representation of the signature.
   optional_done:
 
     # Now any constraints.
-    $P0 = cur_param["constraints"]
+    $P0 = cur_param["cons_type"]
     if null $P0 goto constraints_done
     unless $P0 goto constraints_done
     concat s, " where "
@@ -251,6 +280,7 @@ lexicals as needed and performing type checks.
     param = shift it
     .local string name, sigil
     name = param['name']
+    if name == 'self' goto param_loop
     sigil = substr name, 0, 1
     .local pmc type, orig, var
     type = param['type']
