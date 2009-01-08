@@ -112,6 +112,7 @@ A chained list of headers used e.g. for the IGP list.
 
 #include "parrot/parrot.h"
 #include "parrot/gc_api.h"
+#include "parrot/gc_mark_sweep.h"
 
 #if PARROT_GC_GMS
 

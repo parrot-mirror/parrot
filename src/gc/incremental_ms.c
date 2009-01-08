@@ -335,6 +335,7 @@ a sleep opcode.
 
 #include "parrot/parrot.h"
 #include "parrot/gc_api.h"
+#include "parrot/gc_mark_sweep.h"
 
 /* HEADERIZER HFILE: include/parrot/gc_api.h */
 

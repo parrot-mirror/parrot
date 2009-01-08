@@ -11,13 +11,11 @@
 #ifndef PARROT_GC_API_H_GUARD
 #define PARROT_GC_API_H_GUARD
 
-#include "parrot/parrot.h"
+/* Set this to 1 to see if unanchored objects are found in system areas.
+ * Please note: these objects might be bogus */
+#define GC_VERBOSE 0
 
-typedef enum {
-    GC_TRACE_FULL,
-    GC_TRACE_ROOT_ONLY,
-    GC_TRACE_SYSTEM_ONLY
-} Parrot_gc_trace_type;
+#include "parrot/parrot.h"
 
 /* Macros for recursively blocking and unblocking DOD */
 #define Parrot_block_GC_mark(interp) \
@@ -56,21 +54,7 @@ typedef enum {
 /* HEADERIZER BEGIN: src/gc/api.c */
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 
-PARROT_EXPORT
-void pobject_lives(PARROT_INTERP, ARGMOD(PObj *obj))
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(2)
-        FUNC_MODIFIES(*obj);
-
-void clear_cow(PARROT_INTERP, ARGMOD(Small_Object_Pool *pool), int cleanup)
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(2)
-        FUNC_MODIFIES(*pool);
-
 void Parrot_do_dod_run(PARROT_INTERP, UINTVAL flags)
-        __attribute__nonnull__(1);
-
-void Parrot_gc_clear_live_bits(PARROT_INTERP)
         __attribute__nonnull__(1);
 
 void Parrot_gc_free_buffer(SHIM_INTERP,
@@ -94,14 +78,16 @@ void Parrot_gc_free_pmc(PARROT_INTERP,
         __attribute__nonnull__(3)
         FUNC_MODIFIES(*p);
 
+void Parrot_gc_free_pmc_ext(PARROT_INTERP, ARGMOD(PMC *p))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        FUNC_MODIFIES(*p);
+
 void Parrot_gc_free_sysmem(SHIM_INTERP,
     SHIM(Small_Object_Pool *pool),
     ARGMOD(PObj *b))
         __attribute__nonnull__(3)
         FUNC_MODIFIES(*b);
-
-void Parrot_gc_ms_run(PARROT_INTERP, UINTVAL flags)
-        __attribute__nonnull__(1);
 
 void Parrot_gc_ms_run_init(PARROT_INTERP)
         __attribute__nonnull__(1);
@@ -112,33 +98,8 @@ void Parrot_gc_profile_end(PARROT_INTERP, int what)
 void Parrot_gc_profile_start(PARROT_INTERP)
         __attribute__nonnull__(1);
 
-void Parrot_gc_sweep(PARROT_INTERP, ARGMOD(Small_Object_Pool *pool))
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(2)
-        FUNC_MODIFIES(*pool);
-
-int Parrot_gc_trace_children(PARROT_INTERP, size_t how_many)
-        __attribute__nonnull__(1);
-
-void Parrot_gc_trace_pmc_data(PARROT_INTERP, ARGIN(PMC *p))
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(2);
-
-int Parrot_gc_trace_root(PARROT_INTERP, Parrot_gc_trace_type)
-        __attribute__nonnull__(1);
-
-void Parrot_gc_free_pmc_ext(PARROT_INTERP, ARGMOD(PMC *p))
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(2)
-        FUNC_MODIFIES(*p);
-
 void trace_mem_block(PARROT_INTERP, size_t lo_var_ptr, size_t hi_var_ptr)
         __attribute__nonnull__(1);
-
-void used_cow(PARROT_INTERP, ARGMOD(Small_Object_Pool *pool), int cleanup)
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(2)
-        FUNC_MODIFIES(*pool);
 
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 /* HEADERIZER END: src/gc/api.c */
@@ -261,6 +222,13 @@ void Parrot_gc_ims_init(PARROT_INTERP)
 } while (0)
 
 #endif
+
+/* HEADERIZER BEGIN: src/gc/gc_malloc.c */
+/* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
+
+
+/* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
+/* HEADERIZER END: src/gc/gc_malloc.c */
 
 #endif /* PARROT_GC_API_H_GUARD */
 
