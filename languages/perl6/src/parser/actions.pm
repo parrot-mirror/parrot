@@ -3,6 +3,17 @@
 
 class Perl6::Grammar::Actions ;
 
+# The %?CLASSMAP hash is used to identify those classes where we
+# "lie" about the class name in order to work around RT #43419 / TT #71.
+# When those are fixed and we can use the "true" Perl 6 classnames,
+# this can be removed.  (See also the C<package_def> method below.)
+our %?CLASSMAP;
+%?CLASSMAP<Object>  := 'Perl6Object';
+%?CLASSMAP<Array>   := 'Perl6Array';
+%?CLASSMAP<Hash>    := 'Perl6Hash';
+%?CLASSMAP<Pair>    := 'Perl6Pair';
+%?CLASSMAP<Complex> := 'Perl6Complex';
+
 method TOP($/) {
     my $past := $( $<statement_block> );
     $past.blocktype('declaration');
@@ -1332,8 +1343,12 @@ method package_def($/, $key) {
     my $modulename := $<module_name>
                          ?? ~$<module_name>[0] !!
                          $block.unique('!ANON');
+
+    # See note at top of file for %?CLASSMAP.
+    if %?CLASSMAP{$modulename} { $modulename := %?CLASSMAP{$modulename}; }
+
     if ($modulename) {
-        $block.namespace( PAST::Compiler.parse_name( $modulename ) );
+        $block.namespace( Perl6::Compiler.parse_name($modulename) );
     }
 
     if $key eq 'block' {
