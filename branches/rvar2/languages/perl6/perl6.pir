@@ -106,6 +106,10 @@ USAGE
     $P0 = $P0.'new'( 'name'=>'metaclass', 'scope'=>'register' )
     set_hll_global ['Perl6';'Grammar';'Actions'], '$?METACLASS', $P0
 
+    ## create the $?CLASSMAP hash
+    $P0 = new ['Hash']
+    set_hll_global ['Perl6';'Grammar';'Actions'], '%?CLASSMAP', $P0
+
     ##  create a list of END blocks to be run
     $P0 = new 'List'
     set_hll_global ['Perl6'], '@?END_BLOCKS', $P0
