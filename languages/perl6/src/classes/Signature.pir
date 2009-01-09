@@ -303,12 +303,15 @@ lexicals as needed and performing type checks.
     ## handle readonly/copy traits
     $S0 = param['readtype']
     if $S0 == 'rw' goto param_readtype_done
+    if $S0 == 'copy' goto param_readtype_copy
     ne_addr orig, var, param_readtype_var
     var = new 'ObjectRef', var
   param_readtype_var:
-    if $S0 == 'copy' goto param_readtype_done
     $P0 = get_hll_global ['Bool'], 'True'
     setprop var, 'readonly', $P0
+    goto param_readtype_done
+  param_readtype_copy:
+    var = clone var
   param_readtype_done:
     ## set any type properties
     setprop var, 'type', type
