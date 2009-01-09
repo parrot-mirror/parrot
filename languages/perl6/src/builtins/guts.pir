@@ -321,9 +321,13 @@ first). So for now we just transform multis in user code like this.
     # also add it back to the class.
     .local pmc class
     class = get_class namespace
-    if null class goto no_class
+    if null class goto class_done
     class.'remove_method'(name)
-  no_class:
+    $I0 = isa class, 'Class'
+    if $I0 goto class_done
+    ##  class isn't really a Class, it's (likely) a Role
+    class.'add_method'(name, p6multi)
+  class_done:
 
     # Make new namespace entry.
     namespace[name] = p6multi
