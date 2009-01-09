@@ -1524,7 +1524,7 @@ method scope_declarator($/) {
     if $past.isa(PAST::Op) {
         my $i := 0;
         for @($past) {
-            if $_.isa(PAST::Var) {
+            if $_.isa(PAST::Var) && !$_<redecl> {
                 my $var := $_;
 
                 # This is a variable declaration, so we set the scope in
@@ -1663,17 +1663,20 @@ method variable_declarator($/) {
     my $name   := $var.name();
     my $symbol := @?BLOCK[0].symbol( $name );
     if $symbol<scope> eq 'lexical' {
-        $/.panic("Redeclaration of variable " ~ $name);
+        warn("Redeclaration of variable " ~ $name);
+        $var<redecl> := 1;
+        $var.isdecl(0);
     }
-
-    $var.isdecl(1);
-    $var<type>  := PAST::Op.new( :name('and'), :pasttype('call') );
-    $var<itype> := container_itype($<variable><sigil>);
-
-    if $<trait> {
-        my $traitlist := PAST::Op.new( :name('infix:,'), :pasttype('call') );
-        $var<traitlist> := $traitlist;
-        for @($<trait>) { $traitlist.push( $( $_ ) ); }
+    else {
+        $var.isdecl(1);
+        $var<type>  := PAST::Op.new( :name('and'), :pasttype('call') );
+        $var<itype> := container_itype($<variable><sigil>);
+    
+        if $<trait> {
+            my $traitlist := PAST::Op.new( :name('infix:,'), :pasttype('call') );
+            $var<traitlist> := $traitlist;
+            for @($<trait>) { $traitlist.push( $( $_ ) ); }
+        }
     }
 
     make $var;
