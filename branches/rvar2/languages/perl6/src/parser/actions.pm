@@ -1122,18 +1122,31 @@ method parameter($/) {
     if $<type_constraint> {
         for @($<type_constraint>) {
             my $type_past := $( $_ );
-            if substr( $_.text() , 0, 2 ) eq '::' {
-                # it's a type binding
-                $type_past.scope('lexical');
-                $type_past.isdecl(1);
-                $type_past.viviself(
-                    PAST::Op.new( :pasttype('callmethod'), :name('WHAT'),
-                        PAST::Var.new( :name($var.name()) )
-                    )
-                );
-                $var<type_binding> := $type_past;
+            if $type_past.isa(PAST::Var) && $type_past.scope() eq 'lexical' {
                 our @?BLOCK;
-                @?BLOCK[0].symbol( $type_past.name(), :scope('lexical') );
+                # Lexical type constraint.  
+                if $type_past.isdecl() {
+                    # If it's a declaration, we need to initialize it.
+                    $type_past.viviself(
+                        PAST::Op.new( :pasttype('callmethod'), :name('WHAT'),
+                            PAST::Var.new( :name($var.name()) )
+                        )
+                    );
+                    $var<type_binding> := $type_past;
+                    @?BLOCK[0].symbol( $type_past.name(), :scope('lexical') );
+                }
+                else {
+                    # we need to thunk it
+                    my $thunk := PAST::Op.new( 
+                        :name('ACCEPTS'), :pasttype('callmethod'),
+                        $type_past,
+                        PAST::Var.new( :name('$_'), :scope('parameter') )
+                    );
+                    $thunk := PAST::Block.new($thunk, :blocktype('declaration'));
+                    @?BLOCK[0].push($thunk);
+                    $type_past := PAST::Val.new( :value($thunk) );
+                    $typelist.push( $type_past );
+                }
             }
             else {
                 $typelist.push( $type_past );
@@ -1885,26 +1898,26 @@ method typename($/) {
     my $ns := Perl6::Compiler.parse_name($<name>);
     my $shortname := $ns.pop();
 
-    # determine type's scope
+    my $past := PAST::Var.new( :name($shortname), :namespace($ns), :node($/) );
+
     my $scope := '';
-    our @?BLOCK;
-    if +$ns == 0 && @?BLOCK {
-        for @?BLOCK {
-            if defined($_) && !$scope {
-                my $sym := $_.symbol($shortname);
-                if defined($sym) && $sym<scope> { $scope := $sym<scope>; }
+    if +$ns == 0 {
+        our @?BLOCK;
+        if substr(~$/, 0, 2) eq '::' {
+            $scope := 'lexical';
+            $past.isdecl(1);
+        }
+        elsif @?BLOCK {
+            for @?BLOCK {
+                if defined($_) && !$scope {
+                    my $sym := $_.symbol($shortname);
+                    if defined($sym) && $sym<scope> { $scope := $sym<scope>; }
+                }
             }
         }
     }
 
-    # Create default PAST node for package lookup of type.
-    my $past := PAST::Var.new(
-        :name($shortname),
-        :namespace($ns),
-        :node($/),
-        :scope($scope || 'package'),
-    );
-
+    $past.scope($scope || 'package');
     make $past;
 }
 
