@@ -276,7 +276,7 @@ the object's type and address.
 
     .local pmc candidate
     candidate = self.'CREATE'()
-    .tailcall self.'BUILDALL'(candidate, attrinit)
+    .tailcall self.'BUILDALL'(candidate, attrinit, posargs)
 .end
 
 
@@ -333,6 +333,7 @@ the object's type and address.
 .sub 'BUILDALL' :method
     .param pmc candidate
     .param pmc attrinit
+    .param pmc posargs
 
     .include 'iterator.pasm'
     .local pmc p6meta, parents, it
@@ -342,6 +343,9 @@ the object's type and address.
     it = iter parents
     set it, .ITERATE_FROM_END
   parents_loop:
+    # Loop through all of the parent classes, in reverse mro.
+    # For each parent class, call its BUILD method with the
+    # appropriate arguments.
     unless it goto parents_done
     $P0 = pop it
     $I0 = isa $P0, 'PMCProxy'
@@ -351,6 +355,21 @@ the object's type and address.
     parentproto = $P0.'WHAT'()
     $I0 = can parentproto, 'BUILD'
     unless $I0 goto parents_loop
+    # Look through posargs for a corresponding protoobject
+    # with a WHENCE property.  If found, that WHENCE property
+    # is used as the arguments to the parent class BUILD.
+    .local pmc pos_it, argproto
+    pos_it = iter posargs
+  posargs_loop:
+    unless pos_it goto posargs_done
+    argproto = shift pos_it
+    $P1 = $P0.'WHAT'()
+    ne_addr parentproto, $P1, posargs_loop
+    $P0 = argproto.'WHENCE'()
+    if null $P0 goto posargs_done
+    parentproto.'BUILD'(candidate, $P0 :flat :named)
+    goto parents_loop
+  posargs_done:
     parentproto.'BUILD'(candidate, attrinit :flat :named)
     goto parents_loop
   parents_done:
