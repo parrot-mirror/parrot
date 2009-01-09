@@ -315,6 +315,12 @@ method for_statement($/) {
 
 method pblock($/) {
     my $block := $( $<block> );
+    ##  Add a call to !SIGNATURE_BIND to fixup params and do typechecks.
+    if $block<signature> {
+        $block[0].push(
+            PAST::Op.new( :pasttype('call'), :name('!SIGNATURE_BIND') )
+        );
+    }
     make $block;
 }
 
