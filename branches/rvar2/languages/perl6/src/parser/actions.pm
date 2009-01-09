@@ -1739,6 +1739,9 @@ method variable($/, $key) {
 
         # If namespace qualified or has a '*' twigil, it's a package var.
         if @ns || $twigil eq '*' {
+            $twigil := '';
+            $varname := $sigil ~ $name;
+            $var.name($varname);
             $var.namespace(@ns);
             $var.scope('package');
             $var.viviself( container_itype($sigil) );
@@ -1758,9 +1761,8 @@ method variable($/, $key) {
 
         # Until PCT has 'name' scope, we handle lexical/package lookup here.
         if $<sigil> eq '&' {
-            $var.scope('package');
             my $sym := outer_symbol($varname);
-            if $sym && $sym<scope> { $var.scope( $sym<scope> ); }
+            $var.scope( ($sym && $sym<scope>) || 'package');
         }
 
         # The ! twigil always implies attribute scope.
