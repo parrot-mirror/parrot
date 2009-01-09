@@ -1073,7 +1073,7 @@ method type_constraint($/) {
         $past := $( $<fulltypename> );
     }
     else {
-        $past := make_subset_type($( $<EXPR> ));
+        $past := make_anon_subtype($( $<EXPR> ));
     }
     make $past;
 }
