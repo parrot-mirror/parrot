@@ -799,8 +799,6 @@ Return the POST representation of a C<PAST::Block>.
 
     ##  add block setup code (cpost) to outer block if needed
     if null outerpost goto outer_done
-    $I0 = index pirflags, ':anon'
-    if $I0 >= 0 goto outer_done
     .local pmc cpost
     $P0 = get_hll_global ['POST'], 'Ops'
     cpost = $P0.'new'( 'result'=>blockreg )
@@ -2294,6 +2292,8 @@ to have a PMC generated containing the constant value.
     .local pmc value, returns
     value = node['value']
     if null value goto err_novalue
+    $I0 = isa value, ['PAST';'Block']
+    if $I0 goto value_block
     returns = node.'returns'()
     if returns goto have_returns
     $S0 = typeof value
@@ -2318,11 +2318,23 @@ to have a PMC generated containing the constant value.
 
   result_pmc:
     .local string result
-    result = self.'unique'('$P')
+    result = self.'uniquereg'('P')
     returns = self.'escape'(returns)
     ops.'push_pirop'('new', result, returns)
     ops.'push_pirop'('assign', result, value)
     ops.'result'(result)
+    .return (ops)
+
+  value_block:
+    .local string blockreg, blockref
+    blockreg = self.'uniquereg'('P')
+    blockref = concat ".const 'Sub' ", blockreg
+    concat blockref, ' = '
+    $P0 = value.'subid'()
+    $S0 = self.'escape'($P0)
+    concat blockref, $S0
+    ops.'push_pirop'(blockref)
+    ops.'result'(blockreg)
     .return (ops)
 
   err_novalue:
