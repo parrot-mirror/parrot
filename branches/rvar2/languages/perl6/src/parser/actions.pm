@@ -1923,7 +1923,7 @@ method typename($/) {
 
 method fulltypename($/) {
     my $past := $( $<typename> );
-    if substr( ~$<typename>, 0, 2) eq '::' {
+    if substr( $<typename>.text(), 0, 2) eq '::' {
         $past.isdecl(1);
         $past.scope('lexical');
     }
