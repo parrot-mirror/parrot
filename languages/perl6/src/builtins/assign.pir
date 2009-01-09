@@ -34,9 +34,14 @@ src/builtins/assign.pir - assignments
     if $I0 goto do_assign
     'die'("Type mismatch in assignment.")
   do_assign:
-    eq_addr cont, source, skip_copy
+    eq_addr cont, source, assign_done
     copy cont, source
-  skip_copy:
+    # We need to copy over any $!signature property on sub objects
+    $I0 = isa source, 'Sub'
+    unless $I0 goto assign_done
+    $P0 = getprop '$!signature', source
+    setprop cont, '$!signature', $P0
+  assign_done:
     .return (cont)
 .end
 
