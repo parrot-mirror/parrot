@@ -1151,10 +1151,12 @@ method parameter($/) {
 
 
 method param_var($/) {
-    my $name := ~$/;
+    my $sigil  := ~$<sigil>;
     my $twigil := ~$<twigil>[0];
+    if $sigil eq '&' { $sigil := ''; }
+    my $name := $sigil ~ $twigil ~ ~$<identifier>;
     if $twigil eq '.' {
-        $name := ~$<sigil> ~ '!' ~ $<identifier>;
+        $name := $sigil ~ '!' ~ $<identifier>;
     }
     elsif $twigil && $twigil ne '!' {
         $/.panic('Invalid twigil used in signature parameter.');
