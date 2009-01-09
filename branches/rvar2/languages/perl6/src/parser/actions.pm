@@ -1906,18 +1906,12 @@ method typename($/) {
     my $past := PAST::Var.new( :name($shortname), :namespace($ns), :node($/) );
 
     my $scope := '';
-    if +$ns == 0 {
-        our @?BLOCK;
-        if substr(~$/, 0, 2) eq '::' {
-            $scope := 'lexical';
-            $past.isdecl(1);
-        }
-        elsif @?BLOCK {
-            for @?BLOCK {
-                if defined($_) && !$scope {
-                    my $sym := $_.symbol($shortname);
-                    if defined($sym) && $sym<scope> { $scope := $sym<scope>; }
-                }
+    our @?BLOCK;
+    if +$ns == 0 && @?BLOCK {
+        for @?BLOCK {
+            if defined($_) && !$scope {
+                my $sym := $_.symbol($shortname);
+                if defined($sym) && $sym<scope> { $scope := $sym<scope>; }
             }
         }
     }
@@ -1928,7 +1922,12 @@ method typename($/) {
 
 
 method fulltypename($/) {
-    make $( $<typename> );
+    my $past := $( $<typename> );
+    if substr( ~$<typename>, 0, 2) eq '::' {
+        $past.isdecl(1);
+        $past.scope('lexical');
+    }
+    make $past;
 }
 
 
