@@ -169,7 +169,7 @@ new_pmc_pool(PARROT_INTERP)
 =item C<Small_Object_Pool * new_bufferlike_pool>
 
 Creates a new pool for buffer-like structures. This is called from
-C<make_bufferlike_pool()>, and should probably not be called directly.
+C<get_bufferlike_pool()>, and should probably not be called directly.
 
 =cut
 
@@ -212,7 +212,7 @@ Small_Object_Pool *
 new_buffer_pool(PARROT_INTERP)
 {
     ASSERT_ARGS(new_buffer_pool)
-    Small_Object_Pool * const pool = make_bufferlike_pool(interp, sizeof (Buffer));
+    Small_Object_Pool * const pool = get_bufferlike_pool(interp, sizeof (Buffer));
 
 #ifdef GC_IS_MALLOC
     pool->dod_object = Parrot_gc_free_buffer_malloc;
@@ -229,7 +229,7 @@ new_buffer_pool(PARROT_INTERP)
 =item C<Small_Object_Pool * new_string_pool>
 
 Creates a new pool for C<STRING>s and returns it. This calls
-C<make_bufferlike_pool> internally, which in turn calls C<new_bufferlike_pool>.
+C<get_bufferlike_pool> internally, which in turn calls C<new_bufferlike_pool>.
 
 =cut
 
@@ -247,7 +247,7 @@ new_string_pool(PARROT_INTERP, INTVAL constant)
         pool->mem_pool = interp->arena_base->constant_string_pool;
     }
     else
-        pool = make_bufferlike_pool(interp, sizeof (STRING));
+        pool = get_bufferlike_pool(interp, sizeof (STRING));
 
     pool->objects_per_alloc = STRING_HEADERS_PER_ALLOC;
 
@@ -257,7 +257,7 @@ new_string_pool(PARROT_INTERP, INTVAL constant)
 
 /*
 
-=item C<Small_Object_Pool * make_bufferlike_pool>
+=item C<Small_Object_Pool * get_bufferlike_pool>
 
 Makes and return a bufferlike header pool for objects of a given size. If a
 pool for objects of that size already exists, no new pool will be created and
@@ -270,9 +270,9 @@ the pointer to the existing pool is returned.
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 Small_Object_Pool *
-make_bufferlike_pool(PARROT_INTERP, size_t buffer_size)
+get_bufferlike_pool(PARROT_INTERP, size_t buffer_size)
 {
-    ASSERT_ARGS(make_bufferlike_pool)
+    ASSERT_ARGS(get_bufferlike_pool)
     Small_Object_Pool **sized_pools = interp->arena_base->sized_header_pools;
     const UINTVAL       num_old     = interp->arena_base->num_sized;
     const UINTVAL       idx         =
@@ -505,7 +505,7 @@ void *
 new_bufferlike_header(PARROT_INTERP, size_t size)
 {
     ASSERT_ARGS(new_bufferlike_header)
-    Small_Object_Pool * const pool = make_bufferlike_pool(interp, size);
+    Small_Object_Pool * const pool = get_bufferlike_pool(interp, size);
 
     return get_free_buffer(interp, pool);
 }
@@ -1037,7 +1037,7 @@ Parrot_merge_header_pools(ARGMOD(Interp *dest_interp), ARGIN(Interp *source_inte
 
         if (i >= dest_arena->num_sized
         || !dest_arena->sized_header_pools[i]) {
-            Small_Object_Pool *ignored = make_bufferlike_pool(dest_interp,
+            Small_Object_Pool *ignored = get_bufferlike_pool(dest_interp,
                     i * sizeof (void *) + sizeof (Buffer));
             UNUSED(ignored);
             PARROT_ASSERT(dest_arena->sized_header_pools[i]);

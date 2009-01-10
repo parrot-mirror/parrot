@@ -86,7 +86,7 @@ int is_pmc_ptr(PARROT_INTERP, ARGIN(const void *ptr))
 
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
-Small_Object_Pool * make_bufferlike_pool(PARROT_INTERP, size_t buffer_size)
+Small_Object_Pool * get_bufferlike_pool(PARROT_INTERP, size_t buffer_size)
         __attribute__nonnull__(1);
 
 PARROT_CANNOT_RETURN_NULL
@@ -176,7 +176,7 @@ void Parrot_merge_header_pools(
 #define ASSERT_ARGS_is_pmc_ptr __attribute__unused__ int _ASSERT_ARGS_CHECK = \
        PARROT_ASSERT_ARG(interp) \
     || PARROT_ASSERT_ARG(ptr)
-#define ASSERT_ARGS_make_bufferlike_pool __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+#define ASSERT_ARGS_get_bufferlike_pool __attribute__unused__ int _ASSERT_ARGS_CHECK = \
        PARROT_ASSERT_ARG(interp)
 #define ASSERT_ARGS_new_buffer_header __attribute__unused__ int _ASSERT_ARGS_CHECK = \
        PARROT_ASSERT_ARG(interp)
