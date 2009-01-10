@@ -302,31 +302,6 @@ make_bufferlike_pool(PARROT_INTERP, size_t buffer_size)
 
 /*
 
-=item C<Small_Object_Pool * get_bufferlike_pool>
-
-Returns a bufferlike header pool for objects of a given size. Does not check to
-see if the pool already exists, so if the pool does not exist, this will return
-an invalid pointer.  That's bad.  Don't use this until it gets fixed.
-
-=cut
-
-*/
-
-PARROT_WARN_UNUSED_RESULT
-PARROT_CANNOT_RETURN_NULL
-Small_Object_Pool *
-get_bufferlike_pool(PARROT_INTERP, size_t buffer_size)
-{
-    ASSERT_ARGS(get_bufferlike_pool)
-    Small_Object_Pool ** const sized_pools =
-            interp->arena_base->sized_header_pools;
-
-    return sized_pools[ (buffer_size - sizeof (Buffer)) / sizeof (void *) ];
-}
-
-
-/*
-
 =item C<PMC * new_pmc_header>
 
 Gets a new PMC header from the PMC pool's free list. Guaranteed to return a
