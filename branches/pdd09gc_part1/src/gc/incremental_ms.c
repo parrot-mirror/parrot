@@ -657,7 +657,6 @@ what children there are, and add all of them to the queue.
 
 Places to search (for PMCs):
 1) C<PMC_metadata(obj)>
-2) C<obj->real_self>
 3) C<PMC_next_for_GC(obj)>
 4) C<obj->pmc_ext>
 5) C<VTABLE_mark(obj)>, if C<PObj_custom_mark_TEST(obj) == 1>
@@ -703,10 +702,6 @@ gc_it_mark_PObj_children_grey(PARROT_INTERP, ARGMOD(Gc_it_hdr *hdr))
         if (next_for_gc != pmc && next_for_gc != NULL)
             pobject_lives(interp, (PObj *)PMC_next_for_GC(pmc));
     }
-
-    if (pmc->real_self != pmc && pmc->real_self != NULL)
-        pobject_lives(interp, (PObj *)(pmc->real_self));
-
 
     /* if the PMC is an array of other PMCs, we cycle through those. I'm
        surprised if this isn't covered by VTABLE_mark, but I won't question it
