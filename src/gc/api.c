@@ -39,6 +39,15 @@ PARROT_CONST_FUNCTION
 static size_t find_common_mask(PARROT_INTERP, size_t val1, size_t val2)
         __attribute__nonnull__(1);
 
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
+static PMC_EXT * new_pmc_ext(PARROT_INTERP)
+        __attribute__nonnull__(1);
+
+#define ASSERT_ARGS_find_common_mask __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp)
+#define ASSERT_ARGS_new_pmc_ext __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp)
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 /* HEADERIZER END: static */
 
@@ -48,6 +57,216 @@ static size_t find_common_mask(PARROT_INTERP, size_t val1, size_t val2)
 int CONSERVATIVE_POINTER_CHASING = 0;
 
 #endif
+
+/*
+
+=item C<PMC * new_pmc_header>
+
+Gets a new PMC header from the PMC pool's free list. Guaranteed to return a
+valid PMC object or else Parrot will panic. Sets the necessary flags for the
+objects and initializes the PMC data pointer to C<NULL>.
+
+=cut
+
+*/
+
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
+PMC *
+new_pmc_header(PARROT_INTERP, UINTVAL flags)
+{
+    ASSERT_ARGS(new_pmc_header)
+    Small_Object_Pool * const pool = flags & PObj_constant_FLAG
+            ? interp->arena_base->constant_pmc_pool
+            : interp->arena_base->pmc_pool;
+    PMC * const pmc = (PMC *)pool->get_free_object(interp, pool);
+
+    if (!pmc)
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_ALLOCATION_ERROR,
+            "Parrot VM: PMC allocation failed!\n");
+
+    /* clear flags, set is_PMC_FLAG */
+    if (flags & PObj_is_PMC_EXT_FLAG) {
+        flags |= PObj_is_special_PMC_FLAG;
+        pmc->pmc_ext = new_pmc_ext(interp);
+
+        if (flags & PObj_is_PMC_shared_FLAG)
+            add_pmc_sync(interp, pmc);
+    }
+    else
+        pmc->pmc_ext = NULL;
+
+    PObj_get_FLAGS(pmc) = PObj_is_PMC_FLAG|flags;
+    pmc->vtable         = NULL;
+
+#if ! PMC_DATA_IN_EXT
+    PMC_data(pmc)       = NULL;
+#endif
+
+    return pmc;
+}
+
+
+/*
+
+=item C<static PMC_EXT * new_pmc_ext>
+
+Gets a new free C<PMC_EXT> structure from the PMC_EXT pool. A pointer to the
+new PMC_EXT is returned. Does not check to ensure the PMC_EXT is non-null
+before it is returned (yet).
+
+=cut
+
+*/
+
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
+static PMC_EXT *
+new_pmc_ext(PARROT_INTERP)
+{
+    ASSERT_ARGS(new_pmc_ext)
+    Small_Object_Pool * const pool = interp->arena_base->pmc_ext_pool;
+    /* XXX: Should we check here to ensure the PMC_EXT is non-null
+            like we do in C<new_pmc>? */
+    return (PMC_EXT *)pool->get_free_object(interp, pool);
+}
+
+
+/*
+
+=item C<void add_pmc_ext>
+
+Obtains a new C<PMC_EXT> structure, and attaches it to the given C<PMC>.
+Sets the necessary flags associated with the PMC_EXT structure. Ensures
+that the PMC_EXT structure is marked as "alive" by the GC.
+
+=cut
+
+*/
+
+void
+add_pmc_ext(PARROT_INTERP, ARGMOD(PMC *pmc))
+{
+    ASSERT_ARGS(add_pmc_ext)
+    pmc->pmc_ext = new_pmc_ext(interp);
+    PObj_is_PMC_EXT_SET(pmc);
+
+#ifdef PARROT_GC_IMS
+    /*
+     * preserve DDD color: a simple PMC  live = black
+     *                     an aggregate  live = grey
+     * set'em black
+     */
+    if (PObj_live_TEST(pmc))
+        PObj_get_FLAGS(pmc) |= PObj_custom_GC_FLAG;
+#endif
+
+    PMC_next_for_GC(pmc) = PMCNULL;
+}
+
+
+/*
+
+=item C<void add_pmc_sync>
+
+Adds a C<Sync*> structure to the given C<PMC>. Initializes the PMC's owner
+field and the synchronization mutext. Does not check to ensure the C<Sync *> is
+non-null.
+
+=cut
+
+*/
+
+void
+add_pmc_sync(PARROT_INTERP, ARGMOD(PMC *pmc))
+{
+    ASSERT_ARGS(add_pmc_sync)
+    if (!PObj_is_PMC_EXT_TEST(pmc))
+        add_pmc_ext(interp, pmc);
+
+    /* XXX: Should we test the Sync * for non-null? should we allocate these
+            from a bufferlike pool instead of directly from the system? */
+    PMC_sync(pmc)        = mem_allocate_typed(Sync);
+    PMC_sync(pmc)->owner = interp;
+
+    MUTEX_INIT(PMC_sync(pmc)->pmc_lock);
+}
+
+
+/*
+
+=item C<STRING * new_string_header>
+
+Returns a new C<STRING> header from the string pool or the constant string
+pool. Sets default flags on the string object: C<PObj_is_string_FLAG>,
+C<PObj_is_COWable_FLAG>, and C<PObj_live_FLAG> (for GC). Initializes the data
+field of the string buffer to C<NULL>.
+
+=cut
+
+*/
+
+PARROT_CANNOT_RETURN_NULL
+PARROT_WARN_UNUSED_RESULT
+STRING *
+new_string_header(PARROT_INTERP, UINTVAL flags)
+{
+    ASSERT_ARGS(new_string_header)
+    STRING * const string = (STRING *)get_free_buffer(interp,
+        (flags & PObj_constant_FLAG)
+            ? interp->arena_base->constant_string_header_pool
+            : interp->arena_base->string_header_pool);
+
+    string->strstart        = NULL;
+    PObj_get_FLAGS(string) |=
+        flags | PObj_is_string_FLAG | PObj_is_COWable_FLAG | PObj_live_FLAG;
+
+    return string;
+}
+
+
+/*
+
+=item C<Buffer * new_buffer_header>
+
+Creates and returns a new C<Buffer> from the buffer header pool.  Calls
+C<get_free_buffer> to do all the work.
+
+=cut
+
+*/
+
+PARROT_CANNOT_RETURN_NULL
+PARROT_WARN_UNUSED_RESULT
+Buffer *
+new_buffer_header(PARROT_INTERP)
+{
+    ASSERT_ARGS(new_buffer_header)
+    return (Buffer *)get_free_buffer(interp,
+            interp->arena_base->buffer_header_pool);
+}
+
+
+/*
+
+=item C<void * new_bufferlike_header>
+
+Returns a new buffer-like header from the appropriate sized pool.
+
+=cut
+
+*/
+
+PARROT_CANNOT_RETURN_NULL
+PARROT_WARN_UNUSED_RESULT
+void *
+new_bufferlike_header(PARROT_INTERP, size_t size)
+{
+    ASSERT_ARGS(new_bufferlike_header)
+    Small_Object_Pool * const pool = get_bufferlike_pool(interp, size);
+
+    return get_free_buffer(interp, pool);
+}
 
 
 /*
