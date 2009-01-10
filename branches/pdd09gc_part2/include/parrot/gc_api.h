@@ -54,6 +54,36 @@
 /* HEADERIZER BEGIN: src/gc/api.c */
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 
+void add_pmc_ext(PARROT_INTERP, ARGMOD(PMC *pmc))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        FUNC_MODIFIES(*pmc);
+
+void add_pmc_sync(PARROT_INTERP, ARGMOD(PMC *pmc))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        FUNC_MODIFIES(*pmc);
+
+PARROT_CANNOT_RETURN_NULL
+PARROT_WARN_UNUSED_RESULT
+Buffer * new_buffer_header(PARROT_INTERP)
+        __attribute__nonnull__(1);
+
+PARROT_CANNOT_RETURN_NULL
+PARROT_WARN_UNUSED_RESULT
+void * new_bufferlike_header(PARROT_INTERP, size_t size)
+        __attribute__nonnull__(1);
+
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
+PMC * new_pmc_header(PARROT_INTERP, UINTVAL flags)
+        __attribute__nonnull__(1);
+
+PARROT_CANNOT_RETURN_NULL
+PARROT_WARN_UNUSED_RESULT
+STRING * new_string_header(PARROT_INTERP, UINTVAL flags)
+        __attribute__nonnull__(1);
+
 void Parrot_do_dod_run(PARROT_INTERP, UINTVAL flags)
         __attribute__nonnull__(1);
 
@@ -101,6 +131,43 @@ void Parrot_gc_profile_start(PARROT_INTERP)
 void trace_mem_block(PARROT_INTERP, size_t lo_var_ptr, size_t hi_var_ptr)
         __attribute__nonnull__(1);
 
+#define ASSERT_ARGS_add_pmc_ext __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(pmc)
+#define ASSERT_ARGS_add_pmc_sync __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(pmc)
+#define ASSERT_ARGS_new_buffer_header __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp)
+#define ASSERT_ARGS_new_bufferlike_header __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp)
+#define ASSERT_ARGS_new_pmc_header __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp)
+#define ASSERT_ARGS_new_string_header __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp)
+#define ASSERT_ARGS_Parrot_do_dod_run __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp)
+#define ASSERT_ARGS_Parrot_gc_free_buffer __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(pool) \
+    || PARROT_ASSERT_ARG(b)
+#define ASSERT_ARGS_Parrot_gc_free_buffer_malloc __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(b)
+#define ASSERT_ARGS_Parrot_gc_free_pmc __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(p)
+#define ASSERT_ARGS_Parrot_gc_free_pmc_ext __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(p)
+#define ASSERT_ARGS_Parrot_gc_free_sysmem __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(b)
+#define ASSERT_ARGS_Parrot_gc_ms_run_init __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp)
+#define ASSERT_ARGS_Parrot_gc_profile_end __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp)
+#define ASSERT_ARGS_Parrot_gc_profile_start __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp)
+#define ASSERT_ARGS_trace_mem_block __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp)
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 /* HEADERIZER END: src/gc/api.c */
 
@@ -159,11 +226,31 @@ void parrot_gc_gms_wb_key(PARROT_INTERP,
         __attribute__nonnull__(5)
         __attribute__nonnull__(6);
 
+#define ASSERT_ARGS_Parrot_gc_gms_init __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp)
+#define ASSERT_ARGS_parrot_gc_gms_pobject_lives __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(obj)
+#define ASSERT_ARGS_parrot_gc_gms_wb __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(agg) \
+    || PARROT_ASSERT_ARG(old) \
+    || PARROT_ASSERT_ARG(_new)
+#define ASSERT_ARGS_parrot_gc_gms_wb_key __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(agg) \
+    || PARROT_ASSERT_ARG(old) \
+    || PARROT_ASSERT_ARG(old_key) \
+    || PARROT_ASSERT_ARG(_new) \
+    || PARROT_ASSERT_ARG(new_key)
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
-/* HEADERIZER END: src/gc/generational_gms.c */
+/* HEADERIZER END: src/gc/generational_ms.c */
 
 /* HEADERIZER BEGIN: src/gc/incremental_ms.c */
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
+
+void Parrot_gc_ims_init(PARROT_INTERP)
+        __attribute__nonnull__(1);
 
 void Parrot_gc_ims_wb(PARROT_INTERP, ARGMOD(PMC *agg), ARGMOD(PMC *_new))
         __attribute__nonnull__(1)
@@ -172,15 +259,16 @@ void Parrot_gc_ims_wb(PARROT_INTERP, ARGMOD(PMC *agg), ARGMOD(PMC *_new))
         FUNC_MODIFIES(*agg)
         FUNC_MODIFIES(*_new);
 
-void Parrot_gc_ims_init(PARROT_INTERP)
-        __attribute__nonnull__(1);
-
+#define ASSERT_ARGS_Parrot_gc_ims_init __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp)
+#define ASSERT_ARGS_Parrot_gc_ims_wb __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(agg) \
+    || PARROT_ASSERT_ARG(_new)
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 /* HEADERIZER END: src/gc/incremental_ms.c */
 
-/*
- * write barrier
- */
+/* write barrier */
 #if PARROT_GC_IMS
 #  define GC_WRITE_BARRIER(interp, agg, old, _new) \
     do { \
@@ -188,7 +276,7 @@ void Parrot_gc_ims_init(PARROT_INTERP)
                 PObj_live_TEST(agg) && \
                 (PObj_get_FLAGS(agg) & PObj_custom_GC_FLAG) && \
                 !PObj_live_TEST(_new)) { \
-            Parrot_gc_ims_wb((interp), (agg), (_new)); \
+            Parrot_dod_ims_wb((interp), (agg), (_new)); \
         } \
     } while (0)
 
@@ -224,13 +312,6 @@ void Parrot_gc_ims_init(PARROT_INTERP)
 } while (0)
 
 #endif
-
-/* HEADERIZER BEGIN: src/gc/gc_malloc.c */
-/* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
-
-
-/* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
-/* HEADERIZER END: src/gc/gc_malloc.c */
 
 #endif /* PARROT_GC_API_H_GUARD */
 
