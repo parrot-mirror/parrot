@@ -1,18 +1,17 @@
-/* headers.h
+/* gc_pools.h
  *  Copyright (C) 2001-2009, The Perl Foundation.
  *  SVN Info
  *     $Id$
  *  Overview:
- *     Header management functions. Handles getting of various headers,
- *     and pool creation
+ *     Handles pool management for GC.
  *  Data Structure and Algorithms:
  *  History:
  *  Notes:
  *  References:
  */
 
-#ifndef PARROT_HEADERS_H_GUARD
-#define PARROT_HEADERS_H_GUARD
+#ifndef PARROT_GC_POOLS_H_GUARD
+#define PARROT_GC_POOLS_H_GUARD
 
 #include "parrot/parrot.h"
 
@@ -45,7 +44,7 @@ typedef enum {
 typedef int (*pool_iter_fn)(PARROT_INTERP, struct Small_Object_Pool *, int, void*);
 
 
-/* HEADERIZER BEGIN: src/headers.c */
+/* HEADERIZER BEGIN: src/gc/pools.c */
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 
 PARROT_WARN_UNUSED_RESULT
@@ -166,10 +165,10 @@ void Parrot_merge_header_pools(
        PARROT_ASSERT_ARG(dest_interp) \
     || PARROT_ASSERT_ARG(source_interp)
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
-/* HEADERIZER END: src/headers.c */
+/* HEADERIZER END: src/gc/pools.c */
 
 
-#endif /* PARROT_HEADERS_H_GUARD */
+#endif /* PARROT_GC_POOLS_H_GUARD */
 
 /*
  * Local variables:
