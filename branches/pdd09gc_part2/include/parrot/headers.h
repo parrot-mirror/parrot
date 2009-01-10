@@ -1,5 +1,5 @@
 /* headers.h
- *  Copyright (C) 2001-2003, The Perl Foundation.
+ *  Copyright (C) 2001-2009, The Perl Foundation.
  *  SVN Info
  *     $Id$
  *  Overview:
@@ -57,11 +57,6 @@ void add_pmc_sync(PARROT_INTERP, ARGMOD(PMC *pmc))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         FUNC_MODIFIES(*pmc);
-
-PARROT_WARN_UNUSED_RESULT
-PARROT_CANNOT_RETURN_NULL
-Small_Object_Pool * get_bufferlike_pool(PARROT_INTERP, size_t buffer_size)
-        __attribute__nonnull__(1);
 
 PARROT_WARN_UNUSED_RESULT
 size_t get_max_buffer_address(PARROT_INTERP)
