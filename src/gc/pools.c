@@ -4,20 +4,20 @@ $Id$
 
 =head1 NAME
 
-src/headers.c - Header management functions
+src/gc/pools.c - Header management functions
 
 =head1 DESCRIPTION
 
-Handles getting of various headers, and pool creation.
+Handles pool creation for PMC headers.
 
 =cut
 
 */
 
 #include "parrot/parrot.h"
-#include "parrot/headers.h"
+#include "parrot/gc_pools.h"
 
-/* HEADERIZER HFILE: include/parrot/headers.h */
+/* HEADERIZER HFILE: include/parrot/gc_pools.h */
 
 /* HEADERIZER BEGIN: static */
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
@@ -829,7 +829,7 @@ Parrot_merge_header_pools(ARGMOD(Interp *dest_interp), ARGIN(Interp *source_inte
 
 =head1 SEE ALSO
 
-F<include/parrot/headers.h>.
+F<include/parrot/gc_pools.h>.
 
 =head1 HISTORY
 
