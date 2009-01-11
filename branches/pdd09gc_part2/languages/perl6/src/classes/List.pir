@@ -153,13 +153,13 @@ A List in list context returns itself.
 
 =item Scalar
 
-A list in Scalar context becomes an Array ObjectRef.
+A list in Scalar context becomes a Scalar containing an Array.
 
 =cut
 
 .sub 'Scalar' :method
     $P0 = self.'Array'()
-    $P0 = new 'ObjectRef', $P0
+    $P0 = new 'Perl6Scalar', $P0
     .return ($P0)
 .end
 
@@ -279,10 +279,6 @@ layer.  It will likely change substantially when we have lazy lists.
     .local pmc elem
     elem = self[i]
     $I0 = isa elem, 'Perl6Scalar'
-    unless $I0 goto no_deref
-    elem = deref elem
-  no_deref:
-    $I0 = isa elem, 'ObjectRef'
     if $I0 goto flat_next
     $I0 = can elem, '!flatten'
     if $I0 goto flat_elem

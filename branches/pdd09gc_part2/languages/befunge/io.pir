@@ -18,130 +18,161 @@
     set_global "stack", $P1
 .end
 
-=pod
 
-IO_PUSH_CHAR:
+# ** input
 
-# Input integer.
-# Befunge stack:
-#   before:     ...
-#   after:      ... i
-# i = readint()
-IO_INPUT_INT:
-    save S2
-    restore S2
-    length I10, S2
-    gt I10, 0, IO_INPUT_INT_PARSE_INPUT
-    getstdin P15
-    readline S2, P15
-    length I10, S2
-IO_INPUT_INT_PARSE_INPUT:
-    set I11, 0
-    set S10, ""
-IO_INPUT_INT_NEXT_CHAR:
-    substr S11, S2, I11, 1
-    lt S11, "0", IO_INPUT_INT_NAN
-    gt S11, "9", IO_INPUT_INT_NAN
-    concat S10, S10, S11
-    inc I11
-    lt I11, I10, IO_INPUT_INT_NEXT_CHAR
-    set I10, 0
-    set I11, 0
-IO_INPUT_INT_NAN:
-    substr S2, S2, I11, I10
-    push P2, S10
-    branch MOVE_PC
-
-# Input character.
-# Befunge stack:
+#
+# io__input_char()
+#
+# input character.
+# befunge stack:
 #   before:     ...
 #   after:      ... c
 # c = getchar()
-IO_INPUT_CHAR:
-    save S2
-    restore S2
-    length I10, S2
-    gt I10, 0, IO_INPUT_CHAR_SUBSTR
-    getstdin P15
-    readline S2, P15
-IO_INPUT_CHAR_SUBSTR:
-    substr S10, S2, 0, 1
-    length I10, S2
-    substr S2, S2, 1, I10
-    ord I10, S10
-    push P2, I10
-    save S2
-    restore S2
-    branch MOVE_PC
+# no return value.
+#
+.sub "io__input_char"
+    $P0 = get_global "user_input"
+    $S0 = $P0
 
-# Output integer.
-# Befunge stack:
-#   before:     ... i
-#   after:      ...
-# writeint(i)
-IO_OUTPUT_INT:
-    set I10, P2
-    unless I10, IO_OUTPUT_INT_POP_1
-    pop I10, P2
-IO_OUTPUT_INT_POP_1:
-    print I10
-    print " "
-    branch MOVE_PC
+    $I0 = length $S0
+    if $I0 > 0 goto _IO__INPUT_CHAR__SUBSTR
 
-# Output character.
-# Befunge stack:
+    $P1 = getstdin
+    $S0 = readline $P1
+    chopn $S0, 1
+
+  _IO__INPUT_CHAR__SUBSTR:
+    $S1 = substr $S0, 0, 1, ""
+    $P0 = $S0
+    set_global "user_input", $P0
+
+    $I0 = ord $S1
+    stack__push($I0)
+
+.end
+
+#
+# io__input_integer()
+#
+# input integer.
+# befunge stack:
+#   before:     ...
+#   after:      ... i
+# i = readint()
+# no return value.
+#
+.sub "io__input_integer"
+    $P0 = get_global "user_input"
+    $S0 = $P0
+
+    .local int len
+    len = length $S0
+    if len > 0 goto _IO__INPUT_INT__PARSE_INPUT
+
+    $P1 = getstdin
+    $S0 = readline $P1
+    chopn $S0, 1
+    len = length $S0
+
+  _IO__INPUT_INT__PARSE_INPUT:
+    .local int    i
+    .local string buf
+    i   = 0
+    buf = ""
+  _IO__INPUT_INT__NEXT_CHAR:
+    $S1 = substr $S0, i, 1
+    if $S1 < '0' goto _IO__INPUT_INT__NAN
+    if $S1 > '9' goto _IO__INPUT_INT__NAN
+    concat buf, $S1
+    inc i
+    if i < len goto _IO__INPUT_INT__NEXT_CHAR
+
+  _IO__INPUT_INT__NAN:
+    substr $S0, 0, i, ""
+    $P0 = $S0
+    set_global "user_input", $P0
+
+    $I0 = buf
+    stack__push($I0)
+.end
+
+
+# ** output
+
+#
+# io__output_char()
+#
+# output character.
+# befunge stack:
 #   before:     ... i
 #   after:      ...
 # writechar( chr(i) )
-IO_OUTPUT_CHAR:
-    set I10, P2
-    unless I10, IO_OUTPUT_CHAR_POP_1
-    pop I10, P2
-IO_OUTPUT_CHAR_POP_1:
-    chr S10, I10
-    print S10
-    branch MOVE_PC
+#
+.sub "io__output_char"
+    $I0 = stack__pop()
+    $S0 = chr $I0
+    print $S0
+.end
 
-# Get a value from playfield.
-# Befunge stack:
+#
+# io__output_int()
+#
+# output integer.
+# befunge stack:
+#   before:     ... i
+#   after:      ...
+# writeint(i)
+#
+.sub "io__output_int"
+    $I0 = stack__pop()
+    print $I0
+    print " "
+.end
+
+
+# ** playfield tinkering
+
+#
+# io__value_get()
+#
+# get a value from the playfield.
+# befunge stack:
 #   before:     ... x y
 #   after:      ... i
 # i = value_at(x,y)
-IO_GET_VALUE:
-    set I11, P2
-    unless I11, IO_GET_VALUE_POP_1
-    pop I11, P2
-IO_GET_VALUE_POP_1:
-    set I10, P2
-    unless I10, IO_GET_VALUE_POP_2
-    pop I10, P2
-IO_GET_VALUE_POP_2:
-    set I12, P1[I11;I10]
-    push P2, I12
-    branch MOVE_PC
+#
+.sub "io__value_get"
+    .local int x, y
+    y = stack__pop()
+    x = stack__pop()
 
-# Put a value in the playfield.
-# Befunge stack:
+    $P0 = get_global "playfield"
+    $I0 = $P0[y;x]
+    stack__push($I0)
+.end
+
+
+#
+# io__value_put()
+#
+# put a value in the playfield.
+# befunge stack:
 #   before:     ... i x y
 #   after:      ...
 # value_at(x,y) = i
-IO_PUT_VALUE:
-    set I11, P2
-    unless I11, IO_PUT_VALUE_POP_1
-    pop I11, P2
-IO_PUT_VALUE_POP_1:
-    set I10, P2         # offset
-    unless I10, IO_PUT_VALUE_POP_2
-    pop I10, P2
-IO_PUT_VALUE_POP_2:
-    set I20, P2
-    unless I20, IO_PUT_VALUE_POP_3
-    pop I20, P2
-IO_PUT_VALUE_POP_3:
-    set P1[I11;I10], I20
-    branch MOVE_PC
+#
+.sub "io__value_put"
+    .local int x, y, v
+    y = stack__pop()
+    x = stack__pop()
+    v = stack__pop()
 
-=cut
+    $P0 = get_global "playfield"
+    $P0[y;x] = v
+    set_global"playfield", $P0
+.end
+
 
 ########################################################################
 # Local Variables:

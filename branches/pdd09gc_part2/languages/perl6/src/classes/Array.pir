@@ -211,6 +211,7 @@ Create an array.
 
 =cut
 
+.namespace ['Perl6Array']
 .sub 'Array' :method
     .return (self)
 .end
@@ -251,7 +252,7 @@ Store things into an Array (e.g., upon assignment)
   array_loop:
     unless it goto array_done
     $P0 = shift it
-    $P0 = 'Scalar'($P0)
+    $P0 = '!CALLMETHOD'('Scalar',$P0)
     $P0 = clone $P0
     push array, $P0
     goto array_loop

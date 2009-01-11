@@ -272,14 +272,14 @@ Returns values of hash as a List
 =item Scalar
 
 When we're going to be stored as an item, become a Hash and
-return an ObjectRef to it.
+return a Perl6Scalar with it.
 
 =cut
 
 .namespace ['Mapping']
 .sub 'Scalar' :method
     $P0 = self.'Hash'()
-    $P0 = new 'ObjectRef', $P0
+    $P0 = new 'Perl6Scalar', $P0
     .return ($P0)
 .end
 

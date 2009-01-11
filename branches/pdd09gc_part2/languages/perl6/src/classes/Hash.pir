@@ -89,7 +89,7 @@ Create a Hash (hashref).
 .sub 'circumfix:{ }'
     .param pmc values :slurpy
     $P0 = values.'Hash'()
-    $P0 = new 'ObjectRef', $P0
+    $P0 = new 'Perl6Scalar', $P0
     .return ($P0)
 .end
 
@@ -130,7 +130,7 @@ Store a value into a hash.
     key = elem.'key'()
     value = elem.'value'()
   iter_kv:
-    value = 'Scalar'(value)
+    value = '!CALLMETHOD'('Scalar', value)
     hash[key] = value
     goto iter_loop
   iter_hash:
@@ -140,7 +140,7 @@ Store a value into a hash.
     unless hashiter goto hashiter_done
     $S0 = shift hashiter
     value = elem[$S0]
-    value = 'Scalar'(value)
+    value = '!CALLMETHOD'('Scalar', value)
     value = clone value
     hash[$S0] = value
     goto hashiter_loop
