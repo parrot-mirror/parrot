@@ -879,6 +879,7 @@ Parrot_mmd_build_type_tuple_from_sig_obj(PARROT_INTERP, ARGIN(PMC *sig_obj))
                         Parrot_ex_throw_from_c_args(interp, NULL,
                             EXCEPTION_INVALID_OPERATION,
                             "Multiple Dispatch: only the first argument can be an invocant");
+                    i++;
                 }
                 else {
                     PMC *pmc_arg = VTABLE_get_pmc_keyed_int(interp, sig_obj, i);
