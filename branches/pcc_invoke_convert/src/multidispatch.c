@@ -839,7 +839,7 @@ Parrot_mmd_build_type_tuple_from_sig_obj(PARROT_INTERP, ARGIN(PMC *sig_obj))
     const INTVAL sig_len    = string_length(interp, string_sig);
     INTVAL       tuple_size = 0;
     INTVAL       args_ended = 0;
-    INTVAL       i;
+    INTVAL       i, j;
 
     /* First calculate the number of arguments participating in MMD */
     for (i = 0; i < sig_len; ++i) {
@@ -852,6 +852,7 @@ Parrot_mmd_build_type_tuple_from_sig_obj(PARROT_INTERP, ARGIN(PMC *sig_obj))
 
     VTABLE_set_integer_native(interp, type_tuple, tuple_size);
 
+    j = 0;
     for (i = 0; i < sig_len; ++i) {
         INTVAL type = string_index(interp, string_sig, i);
         if (args_ended)
@@ -861,15 +862,15 @@ Parrot_mmd_build_type_tuple_from_sig_obj(PARROT_INTERP, ARGIN(PMC *sig_obj))
         switch (type) {
             case 'I':
                 VTABLE_set_integer_keyed_int(interp, type_tuple,
-                        i, enum_type_INTVAL);
+                        j, enum_type_INTVAL);
                 break;
             case 'N':
                 VTABLE_set_integer_keyed_int(interp, type_tuple,
-                        i, enum_type_FLOATVAL);
+                        j, enum_type_FLOATVAL);
                 break;
             case 'S':
                 VTABLE_set_integer_keyed_int(interp, type_tuple,
-                        i, enum_type_STRING);
+                        j, enum_type_STRING);
                 break;
             case 'P':
             {
@@ -882,12 +883,12 @@ Parrot_mmd_build_type_tuple_from_sig_obj(PARROT_INTERP, ARGIN(PMC *sig_obj))
                     i++;
                 }
                 else {
-                    PMC *pmc_arg = VTABLE_get_pmc_keyed_int(interp, sig_obj, i);
+                    PMC *pmc_arg = VTABLE_get_pmc_keyed_int(interp, sig_obj, j);
                     if (PMC_IS_NULL(pmc_arg))
                         VTABLE_set_integer_keyed_int(interp, type_tuple,
-                                i, enum_type_PMC);
+                                j, enum_type_PMC);
                     else
-                        VTABLE_set_integer_keyed_int(interp, type_tuple, i,
+                        VTABLE_set_integer_keyed_int(interp, type_tuple, j,
                                 VTABLE_type(interp, pmc_arg));
                 }
 
@@ -901,6 +902,7 @@ Parrot_mmd_build_type_tuple_from_sig_obj(PARROT_INTERP, ARGIN(PMC *sig_obj))
                     EXCEPTION_INVALID_OPERATION,
                     "Multiple Dispatch: invalid argument type %c!", type);
         }
+        j++;
     }
 
     return type_tuple;
