@@ -10,8 +10,6 @@
 .sub "befunge" :main
     .param pmc argv
 
-    print "befunge being ported to a working state...\n"
-
     # disable buffering on stdout
     #getstdout stdout
     #pioctl I10, P10, 3, 0
@@ -28,31 +26,17 @@
     status["x"] = 0       # x coord of the pc
     status["y"] = 0       # y coord of the pc
     status["dir"]  = 1    # direction of the pc
-    status["flag"] = 0    # 1=string-mode, 2=bridge, 3=end
+    status["flag"] = 0    # 1=string-mode, 2=bridge
     set_global "status", status
 
     .local pmc stack
     stack = new 'ResizablePMCArray'
     set_global "stack", stack
 
-    .local num seed
-    seed = time
-    seed = mod seed, .RANDMAX
-
-    .local string user_input
+    .local pmc user_input
+    user_input = new 'String'
     user_input = ""
-
-        # I5 is debug
-        #set S10, P5[I0] ??
-        # P1 = the playfield
-        # P2 = the stack
-        # I0 = x coord of the PC
-        # I1 = y coord of the PC
-        # I2 = direction of the PC
-        # I4 = flag (1=string-mode,2=bridge,3=end)
-        # N0 = random seed
-        # S2 = user input
-        # S0 = current instruction
+    set_global "user_input", user_input
 
     .local int    x, y, flag, val
     .local string char
@@ -75,7 +59,8 @@
     if char == '"' goto FLOW_TOGGLE_STRING_MODE
     if flag == 1   goto IO_PUSH_CHAR
     if flag == 2   goto FLOW_TRAMPOLINE
-    if flag == 3   goto END
+
+    if char == ' ' goto MOVE_PC
 
     # sole number
     if char <  '0' goto NOT_NUM
@@ -87,51 +72,52 @@
     if char == '^' goto FLOW_GO_NORTH
     if char == 'v' goto FLOW_GO_SOUTH
     if char == '<' goto FLOW_GO_WEST
+    if char == '?' goto FLOW_GO_AWAY
+
+    # flow control
+    if char == '`' goto FLOW_COMPARE
+    if char == '_' goto FLOW_IF_HORIZONTAL
+    if char == '|' goto FLOW_IF_VERTICAL
+    if char == '#' goto FLOW_BRIDGE
+    if char == '@' goto FLOW_END
+
+    # math functions
+    if char == '+' goto MATHS_ADD
+    if char == '-' goto MATHS_SUB
+    if char == '*' goto MATHS_MUL
+    if char == '/' goto MATHS_DIV
+    if char == '%' goto MATHS_MOD
+    if char == '!' goto MATHS_NOT
+
+    # stack operations
+    if char == ':' goto STACK_DUP
+    if char == '$' goto STACK_POP
+    if char == '\' goto STACK_SWAP
+
+    # i/o operations
+    if char == '~' goto IO_INPUT_CHAR
+    if char == '&' goto IO_INPUT_INT
+    if char == ',' goto IO_OUTPUT_CHAR
+    if char == '.' goto IO_OUTPUT_INT
+    if char == 'g' goto IO_VALUE_GET
+    if char == 'p' goto IO_VALUE_PUT
 
     # unknown instruction
     goto MOVE_PC
 
-=pod
-
-
-        # Direction changing.
-        eq S0, "^", FLOW_GO_NORTH
-        eq S0, ">", FLOW_GO_EAST
-        eq S0, "v", FLOW_GO_SOUTH
-        eq S0, "<", FLOW_GO_WEST
-        eq S0, "?", FLOW_GO_AWAY
-
-        # Flow control.
-        eq S0, "`", FLOW_COMPARE
-        eq S0, "_", FLOW_EW_IF
-        eq S0, "|", FLOW_NS_IF
-        eq S0, "#", FLOW_BRIDGE
-        eq S0, "@", FLOW_END
-
-        # Math functions.
-        eq S0, "+", MATHS_ADD
-        eq S0, "-", MATHS_SUB
-        eq S0, "*", MATHS_MUL
-        eq S0, "/", MATHS_DIV
-        eq S0, "%", MATHS_MOD
-        eq S0, "!", MATHS_NOT
-
-        # Stack operations.
-        eq S0, ":", STACK_DUP
-        eq S0, "$", STACK_POP
-        eq S0, "\\", STACK_SWAP
-
-        # I/O operations.
-        eq S0, "&", IO_INPUT_INT
-        eq S0, "~", IO_INPUT_CHAR
-        eq S0, ".", IO_OUTPUT_INT
-        eq S0, ",", IO_OUTPUT_CHAR
-        eq S0, "g", IO_GET_VALUE
-        eq S0, "p", IO_PUT_VALUE
-
-=cut
-
     # flow instructions
+  FLOW_BRIDGE:
+    flow__trampoline(1)
+    goto MOVE_PC
+  FLOW_COMPARE:
+    flow__compare()
+    goto MOVE_PC
+  FLOW_END:
+    flow__end()
+    goto MOVE_PC
+  FLOW_GO_AWAY:
+    flow__go_away()
+    goto MOVE_PC
   FLOW_GO_EAST:
     flow__go_east()
     goto MOVE_PC
@@ -144,21 +130,74 @@
   FLOW_GO_WEST:
     flow__go_west()
     goto MOVE_PC
+  FLOW_IF_HORIZONTAL:
+    flow__if_horizontal()
+    goto MOVE_PC
+  FLOW_IF_VERTICAL:
+    flow__if_vertical()
+    goto MOVE_PC
   FLOW_TOGGLE_STRING_MODE:
     flow__toggle_string_mode()
     goto MOVE_PC
   FLOW_TRAMPOLINE:
-    flow__trampoline()
+    flow__trampoline(0)
     goto MOVE_PC
 
     # io instructions
+  IO_INPUT_CHAR:
+    io__input_char()
+    goto MOVE_PC
+  IO_INPUT_INT:
+    io__input_integer()
+    goto MOVE_PC
+  IO_OUTPUT_CHAR:
+    io__output_char()
+    goto MOVE_PC
+  IO_OUTPUT_INT:
+    io__output_int()
+    goto MOVE_PC
   IO_PUSH_CHAR:
     io__push_char()
     goto MOVE_PC
+  IO_VALUE_GET:
+    io__value_get()
+    goto MOVE_PC
+  IO_VALUE_PUT:
+    io__value_put()
+    goto MOVE_PC
 
     # maths instructions
+  MATHS_ADD:
+    maths__add()
+    goto MOVE_PC
+  MATHS_DIV:
+    maths__div()
+    goto MOVE_PC
+  MATHS_MOD:
+    maths__mod()
+    goto MOVE_PC
+  MATHS_MUL:
+    maths__mul()
+    goto MOVE_PC
+  MATHS_NOT:
+    maths__not()
+    goto MOVE_PC
   MATHS_PUSH_NUMBER:
     maths__push_number()
+    goto MOVE_PC
+  MATHS_SUB:
+    maths__sub()
+    goto MOVE_PC
+
+    # stack operations
+  STACK_DUP:
+    stack__duplicate()
+    goto MOVE_PC
+  STACK_POP:
+    $I0 = stack__pop()
+    goto MOVE_PC
+  STACK_SWAP:
+    $I0 = stack__swap()
     goto MOVE_PC
 
 
@@ -200,8 +239,6 @@
     set_global "status", status
     goto TICK
 
-  END:
-    end
 .end
 
 

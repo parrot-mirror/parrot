@@ -732,7 +732,7 @@ Adds the given sub PMC as a vtable override with the given name.
 
         /* Check that the name is actually valid as a vtable override */
         if (Parrot_get_vtable_index(interp, name) == -1)
-            Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_METH_NOT_FOUND,
+            Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_METHOD_NOT_FOUND,
                 "'%S' is not a valid vtable function name.", name);
 
         /* Add it to vtable methods list. */
@@ -923,8 +923,21 @@ Array of Class PMCs representing the direct parents of this class.
             Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INVALID_OPERATION,
                 "Unknown introspection value '%S'", what);
 
-        /* Clone and return. */
-        return PMC_IS_NULL(found) ? PMCNULL : VTABLE_clone(interp, found);
+        /* return found value */
+        if (PMC_IS_NULL(found)) { return PMCNULL; }
+        if (found->vtable->base_type == enum_class_Hash) {
+            /* for Hash return values, create and return a shallow
+             * clone because the VTABLE_clone does a deep clone */
+            PMC * const hash = pmc_new(interp, enum_class_Hash);
+            PMC * const iter = VTABLE_get_iter(interp, found);
+            while (VTABLE_get_bool(interp, iter)) {
+                STRING * key = VTABLE_shift_string(interp, iter);
+                PMC * value  = VTABLE_get_pmc_keyed_str(interp, found, key);
+                VTABLE_set_pmc_keyed_str(interp, hash, key, value);
+            }
+            return hash;
+        }
+        return VTABLE_clone(interp, found);
     }
 
 /*
@@ -1070,7 +1083,7 @@ Creates a new PMC object of the type of the class and calls init().
                     VTABLE_get_string_keyed_int(interp, _class->resolve_method, i);
                 if (!VTABLE_exists_keyed_str(interp, _class->methods, check_meth))
                     Parrot_ex_throw_from_c_args(interp, NULL,
-                        EXCEPTION_METH_NOT_FOUND, "The method '%S' was named "
+                        EXCEPTION_METHOD_NOT_FOUND, "The method '%S' was named "
                         "in the resolve list, but not supplied", check_meth);
             }
 
