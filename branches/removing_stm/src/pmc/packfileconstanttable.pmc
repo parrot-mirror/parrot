@@ -1,0 +1,204 @@
+/*
+Copyright (C) 2001-2008, The Perl Foundation.
+$Id$
+
+=head1 NAME
+
+src/pmc/packfileconstanttable.pmc - PackfileConstantTable PMC
+
+=head1 DESCRIPTION
+
+This class implements a PackfileConstantTable object, a segment of the .pbc
+data file used for storing constants of various types.  (int, string, PMC)
+
+See packfile.pmc for the toplevel Packfile interface, see packfilesegment.pmc
+for the list of common methods every packfile segment pmc must implement; see
+PDD13 for the design spec.
+
+
+=head2 Methods
+
+=over 4
+
+=cut
+
+*/
+
+#include "parrot/parrot.h"
+
+static PackFile_Constant *
+getconst(PARROT_INTERP, PackFile_ConstTable *table, int index, int type)
+{
+    PackFile_Constant *rv;
+    if (index < 0 || index >= table->const_count)
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_OUT_OF_BOUNDS,
+                "Requested data out of range.");
+    rv = table->constants[index];
+    if (rv->type != type)
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INVALID_OPERATION,
+                "Requested constant of the wrong type.");
+    return rv;
+}
+
+
+pmclass PackfileConstantTable extends PackfileSegment {
+
+
+/*
+
+=item C<INTVAL elements()>
+
+Get the number of elements in the array.
+
+=cut
+
+*/
+    VTABLE INTVAL elements() {
+        PackFile_ConstTable *pftable = PMC_data_typed(SELF, PackFile_ConstTable *);
+        return pftable->const_count;
+    }
+
+
+/*
+
+=item C<FLOATVAL get_number_keyed_int(INTVAL index)>
+
+Fetch a numeric constant.  An exception is thrown if the given constant isn't
+numeric.
+
+=cut
+
+*/
+    VTABLE FLOATVAL get_number_keyed_int(INTVAL index)  {
+        PackFile_ConstTable *pftable = PMC_data_typed(SELF, PackFile_ConstTable *);
+        PackFile_Constant *constant = getconst(interp, pftable, index, PFC_NUMBER);
+        return constant->u.number;
+    }
+
+
+/*
+
+=item C<STRING *get_string_keyed_int(INTVAL index)>
+
+Fetch a string constant.  An exception is thrown if the given constant isn't
+a string.
+
+=cut
+
+*/
+    VTABLE STRING *get_string_keyed_int(INTVAL index)  {
+        PackFile_ConstTable *pftable = PMC_data_typed(SELF, PackFile_ConstTable *);
+        PackFile_Constant *constant = getconst(interp, pftable, index, PFC_STRING);
+        return constant->u.string;
+    }
+
+
+/*
+
+=item C<PMC *get_pmc_keyed_int(INTVAL index)>
+
+Fetch a PMC constant.  An exception is thrown if the given constant isn't a PMC.
+
+=cut
+
+*/
+    VTABLE PMC *get_pmc_keyed_int(INTVAL index)  {
+        PackFile_ConstTable *pftable = PMC_data_typed(SELF, PackFile_ConstTable *);
+        PackFile_Constant *constant = getconst(interp, pftable, index, PFC_PMC);
+        return constant->u.key;
+    }
+
+
+/*
+
+=item C<void set_number_keyed_int(INTVAL index, INTVAL value)>
+
+Set the constant to the given number.
+
+=cut
+
+*/
+    VTABLE void set_number_keyed_int(INTVAL index, FLOATVAL value)  {
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_UNIMPLEMENTED, "Not implemented yet.");
+    }
+
+
+/*
+
+=item C<void set_string_keyed_int(INTVAL index, STRING *value)>
+
+Set the constant to the given string.
+
+=cut
+
+*/
+    VTABLE void set_string_keyed_int(INTVAL index, STRING *value)  {
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_UNIMPLEMENTED, "Not implemented yet.");
+    }
+
+
+/*
+
+=item C<void set_pmc_keyed_int(INTVAL index, PMC *value)>
+
+Set the constant to the given PMC (or key).
+
+=cut
+
+*/
+    VTABLE void set_pmc_keyed_int(INTVAL index, PMC *value)  {
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_UNIMPLEMENTED, "Not implemented yet.");
+    }
+
+
+/*
+
+=item C<INTVAL get_type(INTVAL index)>
+
+Get the type of the specified constant.  Possible type IDs:
+
+=over 4
+
+=item 0x00 - No constant
+
+=item 0x6E - Number constant
+
+=item 0x73 - String constant
+
+=item 0x70 - PMC constant
+
+=item 0x6B - Key constant
+
+=back
+
+=cut
+
+*/
+    METHOD get_type(INTVAL index) {
+        PackFile_ConstTable *pftable = PMC_data_typed(SELF, PackFile_ConstTable *);
+        PackFile_Constant *constant;
+        INTVAL rv;
+        if (index < 0 || index >= pftable->const_count)
+            Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_OUT_OF_BOUNDS,
+                    "Requested data out of range.");
+        constant = pftable->constants[index];
+        rv = constant->type;
+        RETURN(INTVAL rv);
+    }
+
+
+}
+/*
+
+=back
+
+=cut
+
+*/
+
+/*
+ * Local variables:
+ *   c-file-style: "parrot"
+ * End:
+ * vim: expandtab shiftwidth=4:
+ */
