@@ -90,18 +90,6 @@ pointer.
         if (data->sig)
             pobject_lives(interp, (PObj *)data->sig);
 
-        if (data->pointer) {
-            if (string_equal(interp, data->sig, CONST_STRING(interp, "P")) == 0) {
-                PMC **pmc_pointer = (PMC **) data->pointer;
-                PARROT_ASSERT(*pmc_pointer);
-                pobject_lives(interp, (PObj *) *pmc_pointer);
-            }
-            else if (string_equal(interp, data->sig, CONST_STRING(interp, "S")) == 0) {
-                STRING **str_pointer = (STRING **) data->pointer;
-                PARROT_ASSERT(*str_pointer);
-                pobject_lives(interp, (PObj *) *str_pointer);
-            }
-        }
     }
 
 /*
