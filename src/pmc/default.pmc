@@ -635,6 +635,11 @@ Changes the PMC to a PMC of a new type
         pmc_reuse(INTERP, SELF, type, 0);
     }
 
+    VTABLE void morph_string(STRING * type) {
+        const INTVAL typenum = pmc_type(interp, type);
+        pmc_reuse(INTERP, SELF, typenum, 0);
+    }
+
 /*
 
 =item C<void set_integer_keyed_int(INTVAL key, INTVAL value)>

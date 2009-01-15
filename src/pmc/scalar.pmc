@@ -101,6 +101,13 @@ Morphs the scalar to the specified type.
             return;
         pmc_reuse(INTERP, SELF, type, 0);
     }
+
+    VTABLE void morph_string(STRING * type) {
+        const INTVAL t = pmc_type(INTERP, type);
+        if (SELF->vtable->base_type == t)
+            return;
+        pmc_reuse(INTERP, SELF, t, 0);
+    }
 /*
 
 =item C<void assign_pmc(PMC *value)>
