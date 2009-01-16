@@ -150,10 +150,6 @@ Changes the PMC to a PMC of a new type.
 
 */
 
-    VTABLE void morph(INTVAL type) {
-        SUPER(type);
-    }
-
     VTABLE void morph_string(STRING * type) {
         SUPER(type);
     }

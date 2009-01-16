@@ -96,12 +96,6 @@ Morphs the scalar to the specified type.
 
 */
 
-    VTABLE void morph(INTVAL type) {
-        if (SELF->vtable->base_type == type)
-            return;
-        pmc_reuse(INTERP, SELF, type, 0);
-    }
-
     VTABLE void morph_string(STRING * type) {
         const INTVAL t = pmc_type(INTERP, type);
         if (SELF->vtable->base_type == t)
@@ -126,11 +120,11 @@ according to the type of C<*value>.
 
         if (SELF->vtable->base_type == enum_class_Boolean) {
             /* doesn't morph */
-            SELF.morph(value->vtable->base_type);
+            SELF.morph_string(value->vtable->whoami);
         }
 
         if (value->vtable->base_type == enum_class_Undef) {
-            SELF.morph(value->vtable->base_type);
+            SELF.morph_string(value->vtable->whoami);
             return;
         }
 
@@ -155,7 +149,7 @@ according to the type of C<*value>.
             SELF.set_string_native(v);
             return;
         }
-        SELF.morph(enum_class_Ref);
+        SELF.morph_string(interp->vtables[enum_class_Ref]->whoami);
         SELF.set_pmc(value);
     }
 

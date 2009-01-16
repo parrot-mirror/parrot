@@ -847,21 +847,6 @@ Changes the PMC to a PMC of a new type
 
 */
 
-    VTABLE void morph(INTVAL type) {
-        PMC    * const classobj = VTABLE_get_class(interp, SELF);
-        STRING * meth_name      = CONST_STRING(interp, "morph");
-        /* If there's a vtable override for 'morph' run that instead. */
-        PMC * const method = Parrot_oo_find_vtable_override(interp,
-                classobj, meth_name);
-
-        if (!PMC_IS_NULL(method)) {
-            STRING * typename = string_copy(interp, interp->vtables[type]->whoami);
-            Parrot_run_meth_fromc_args(interp, method, SELF, meth_name, "vS", typename);
-        }
-        else
-            SUPER(type);
-    }
-
     VTABLE void morph_string(STRING * type) {
         PMC * const classobj = VTABLE_get_class(interp, SELF);
 

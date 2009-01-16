@@ -48,9 +48,6 @@ Does nothing.
 
 */
 
-    VTABLE void morph(INTVAL type) {
-    }
-
     VTABLE void morph_string(STRING type) {
     }
 
