@@ -131,6 +131,12 @@ Creates an identical copy of the matchrange number.
             return;
         SUPER(type);
     }
+    
+    void morph_string(STRING *type) {
+        if (SELF->vtable->base_type == pmc_type(interp, type))
+            return;
+        SUPER(type);
+    }
 
     PMC* clone() {
         PMC* dest = pmc_new_noinit(interp, SELF->vtable->base_type);
@@ -365,7 +371,7 @@ result in C<dest>.
 
     PMC* add_int(INTVAL value, PMC* dest) {
         if (dest)
-            VTABLE_morph(interp, dest, MatchRange_type_id);
+            VTABLE_morph_string(interp, dest, MatchRange_type_id);
         else
             dest = pmc_new(interp,  MatchRange_type_id);
         if (RANGE_END(SELF) == -2) {
@@ -406,7 +412,7 @@ the result in C<dest>.
 
     PMC* subtract_int(INTVAL value, PMC* dest) {
         if (dest)
-            VTABLE_morph(interp, dest, MatchRange_type_id);
+            VTABLE_morph_string(interp, dest, interp->vtables[MatchRange_type_id]->whoami);
         else
             dest = pmc_new(interp,  MatchRange_type_id);
         RANGE_END(dest) = RANGE_END(SELF) - value;
