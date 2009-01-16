@@ -73,7 +73,7 @@ bitwise_left_shift_internal(PARROT_INTERP, PMC *self,
     else {
         /* Overflow; must promote dest to BigInt, and do a BigInt shift. */
         if (self == dest)
-            VTABLE_morph(interp, self, enum_class_BigInt);
+            VTABLE_morph_string(interp, self, interp->vtables[enum_class_BigInt]->whoami);
         else
             dest = pmc_new(interp, enum_class_BigInt);
 
@@ -252,7 +252,7 @@ Adds C<value> to C<SELF> inplace.
     MULTI void i_add(Complex value) {
         const FLOATVAL a = SELF.get_number();
 
-        VTABLE_morph(INTERP, SELF, value->vtable->base_type);
+        VTABLE_morph_string(INTERP, SELF, value->vtable->whoami);
         VTABLE_set_number_native(INTERP, SELF,
                 a + VTABLE_get_number_keyed_int(INTERP, value, 0));
         VTABLE_set_number_keyed_int(INTERP, SELF, 1,
@@ -300,7 +300,7 @@ Subtracts C<value> from C<SELF> inplace.
     MULTI PMC *subtract(Complex value, PMC *dest) {
         const FLOATVAL a = SELF.get_number();
         if (dest)
-            VTABLE_morph(INTERP, dest, value->vtable->base_type);
+            VTABLE_morph_string(INTERP, dest, value->vtable->whoami);
         else
             dest = pmc_new(INTERP, VTABLE_type(INTERP, value));
 
@@ -337,7 +337,7 @@ Subtracts C<value> from C<SELF> inplace.
     MULTI void i_subtract(Complex value) {
         const FLOATVAL a = SELF.get_number();
 
-        VTABLE_morph(INTERP, SELF, value->vtable->base_type);
+        VTABLE_morph_string(INTERP, SELF, value->vtable->whoami);
         VTABLE_set_number_native(INTERP, SELF,
                 a - VTABLE_get_number_keyed_int(INTERP, value, 0));
         VTABLE_set_number_keyed_int(INTERP, SELF, 1,

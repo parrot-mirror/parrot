@@ -46,7 +46,7 @@ upgrade_self_to_bignum(PARROT_INTERP, PMC *self)
     /* Do an in-place upgrade to a Bignum of SELF and return a pointer
        to it (which is probably redundant, but whatever). */
     const INTVAL a = VTABLE_get_integer(interp, self);
-    VTABLE_morph(interp, self, enum_class_BigInt);
+    VTABLE_morph_string(interp, self, interp->vtables[enum_class_BigInt]->whoami);
     VTABLE_set_integer_native(interp, self, a);
     return self;
 }
@@ -280,25 +280,25 @@ Morphs the integer to a C<String> and sets the value from C<value>.
 */
 
 VTABLE void set_number_native(FLOATVAL value) {
-    SELF.morph(enum_class_Float);
+    SELF.morph_string(interp->vtables[enum_class_Float]->whoami);
     SELF.set_number_native(value);
 }
 
 
 VTABLE void set_bool(INTVAL value) {
-    SELF.morph(enum_class_Boolean);
+    SELF.morph_string(interp->vtables[enum_class_Boolean]->whoami);
     SELF.set_bool(value);
 }
 
 
 VTABLE void set_bignum_int(INTVAL value) {
-    SELF.morph(enum_class_BigInt);
+    SELF.morph_string(interp->vtables[enum_class_BigInt]->whoami);
     SELF.set_integer_native(value);
 }
 
 
 VTABLE void set_string_native(STRING *value) {
-    SELF.morph(enum_class_String);
+    SELF.morph_string(interp->vtables[enum_class_String]->whoami);
     SELF.set_string_native(value);
 }
 
@@ -418,7 +418,7 @@ MULTI void i_add(Integer value) {
 MULTI void i_add(Complex value) {
     const INTVAL a = SELF.get_integer();
 
-    VTABLE_morph(INTERP, SELF, value->vtable->base_type);
+    VTABLE_morph_string(INTERP, SELF, value->vtable->whoami);
     VTABLE_set_number_native(INTERP, SELF,
         SELF.get_integer() + VTABLE_get_number(INTERP, value));
 }
@@ -574,7 +574,7 @@ MULTI void i_subtract(Integer value) {
 MULTI void i_subtract(Complex value) {
     const INTVAL a = SELF.get_integer();
 
-    VTABLE_morph(INTERP, SELF, value->vtable->base_type);
+    VTABLE_morph_string(INTERP, SELF, value->vtable->whoami);
     VTABLE_set_number_native(INTERP, SELF,
             (FLOATVAL)a - VTABLE_get_number_keyed_int(INTERP, value, 0));
     VTABLE_set_number_keyed_int(INTERP, SELF, 1,
@@ -1237,7 +1237,7 @@ VTABLE void increment() {
     if ((c^a) >= 0 || (c^1) >= 0)
         VTABLE_set_integer_native(interp, SELF, c);
     else {
-        VTABLE_morph(INTERP, SELF, enum_class_BigInt);
+        VTABLE_morph_string(INTERP, SELF, interp->vtables[enum_class_BigInt]->whoami);
         VTABLE_set_integer_native(INTERP, SELF, a);
         VTABLE_increment(interp, SELF);
     }
@@ -1261,7 +1261,7 @@ VTABLE void decrement() {
     if ((c^a) >= 0 || (c^~1) >= 0)
         VTABLE_set_integer_native(interp, SELF, c);
     else {
-        VTABLE_morph(interp, SELF, enum_class_BigInt);
+        VTABLE_morph_string(interp, SELF, interp->vtables[enum_class_BigInt]->whoami);
         VTABLE_set_integer_native(interp, SELF, a);
         VTABLE_decrement(interp, SELF);
     }
