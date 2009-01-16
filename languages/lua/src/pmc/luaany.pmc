@@ -140,7 +140,7 @@ Returns the address of the PMC.
 
 */
     VTABLE void assign_pmc(PMC *value) {
-        VTABLE_morph(INTERP, SELF, PMC_type(value));
+        VTABLE_morph_string(INTERP, SELF, value->vtable->whoami);
         if (PMC_type(value) != dynpmc_LuaNil)
             SELF.set_pmc(value);
     }
