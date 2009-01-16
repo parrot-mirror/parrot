@@ -11,7 +11,6 @@ void init()
 void init_pmc(PMC* initializer)
 PMC* instantiate(PMC* sig)
 PMC* new_from_string(STRING* rep, INTVAL flags)
-void morph(INTVAL type) :write
 void morph_string(STRING* type) :write
 void mark()
 void destroy()

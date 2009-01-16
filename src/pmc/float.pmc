@@ -135,12 +135,12 @@ Returns a Parrot string representation of the number.
 */
 
     VTABLE void set_integer_native(INTVAL value) {
-        SELF.morph(enum_class_Integer);
+        SELF.morph_string(interp->vtables[enum_class_Integer]->whoami);
         SELF.set_integer_native(value);
     }
 
     VTABLE void set_bool(INTVAL value) {
-        SELF.morph(enum_class_Boolean);
+        SELF.morph_string(interp->vtables[enum_class_Boolean]->whoami);
         SELF.set_bool(value);
     }
 
@@ -185,7 +185,7 @@ Note that this method morphs the number into a C<String>.
 */
 
     VTABLE void set_string_native(STRING *value) {
-        SELF.morph(enum_class_String);
+        SELF.morph_string(interp->vtables[enum_class_String]->whoami);
         SELF.set_string_native(value);
     }
 
