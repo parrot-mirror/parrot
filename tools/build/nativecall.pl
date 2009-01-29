@@ -560,7 +560,7 @@ $put_pointer
     /* Try if JIT code can build that signature. If yes, we are done */
 
     jit_key_name = CONST_STRING(interp, "_XJIT_");
-    jit_key_name = string_concat(interp, jit_key_name, signature, 0);
+    jit_key_name = Parrot_str_concat(interp, jit_key_name, signature, 0);
     b            = VTABLE_get_pmc_keyed_str(interp, HashPointer, jit_key_name);
 
     if (b && b->vtable->base_type == enum_class_ManagedStruct) {
@@ -591,14 +591,14 @@ $put_pointer
       with a neater way to do this.
      */
     ns = string_make(interp, " is an unknown signature type", 29, "ascii", 0);
-    message = string_concat(interp, signature, ns, 0);
+    message = Parrot_str_concat(interp, signature, ns, 0);
 
 #if defined(CAN_BUILD_CALL_FRAMES)
     ns = string_make(interp, ".\\nCAN_BUILD_CALL_FRAMES is enabled, this should not happen", 58, "ascii", 0);
 #else
     ns = string_make(interp, ".\\nCAN_BUILD_CALL_FRAMES is disabled, add the signature to src/call_list.txt", 75, "ascii", 0);
 #endif
-    message = string_concat(interp, message, ns, 0);
+    message = Parrot_str_concat(interp, message, ns, 0);
 
     /*
      * I think there may be memory issues with this but if we get to here we are

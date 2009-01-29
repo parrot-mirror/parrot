@@ -386,7 +386,7 @@ Parrot_build_sig_object_from_varargs(PARROT_INTERP, ARGIN_NULLOK(PMC* obj),
 
     /* Check if we have an invocant, and add it to the front of the arguments */
     if (!PMC_IS_NULL(obj)) {
-        string_sig = string_concat(interp, CONST_STRING(interp, "Pi"), string_sig, 0);
+        string_sig = Parrot_str_concat(interp, CONST_STRING(interp, "Pi"), string_sig, 0);
         VTABLE_set_string_native(interp, call_object, string_sig);
         VTABLE_unshift_pmc(interp, call_object, obj);
     }

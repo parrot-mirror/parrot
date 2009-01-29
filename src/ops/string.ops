@@ -113,7 +113,7 @@ inline op concat(invar PMC, in STR) :base_core {
 }
 
 inline op concat(out STR, in STR, in STR) :base_mem {
-    $1 = string_concat(interp, $2, $3, 1);
+    $1 = Parrot_str_concat(interp, $2, $3, 1);
 }
 
 inline op concat(invar PMC, invar PMC, in STR) :base_core {

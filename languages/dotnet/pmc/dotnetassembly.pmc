@@ -1194,9 +1194,9 @@ static PMC* make_class_pmc(Interp *INTERP, PMC *self, dotnet_assembly *ass,
     {
         type->str_namespace = string_from_cstring(INTERP,
             ass->strings + pos_namespace, 0);
-        type->str_fullname = string_concat(INTERP, type->str_namespace,
+        type->str_fullname = Parrot_str_concat(INTERP, type->str_namespace,
             string_from_literal(INTERP, "."), 0);
-        type->str_fullname = string_concat(INTERP, type->str_fullname,
+        type->str_fullname = Parrot_str_concat(INTERP, type->str_fullname,
             type->str_name, 0);
     }
     else

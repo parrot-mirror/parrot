@@ -795,7 +795,7 @@ Decrements the number.
 
 */
     MULTI PMC *concatenate(LuaNumber value,  PMC *dest) {
-        STRING *s = string_concat(INTERP, SELF.get_string(),
+        STRING *s = Parrot_str_concat(INTERP, SELF.get_string(),
             VTABLE_get_string(INTERP, value), 0);
 
         dest = pmc_new(INTERP, dynpmc_LuaNumber);
@@ -805,7 +805,7 @@ Decrements the number.
     }
 
     MULTI PMC *concatenate(LuaString value,  PMC *dest) {
-        STRING *s = string_concat(INTERP, SELF.get_string(),
+        STRING *s = Parrot_str_concat(INTERP, SELF.get_string(),
             VTABLE_get_string(INTERP, value), 0);
 
         dest = pmc_new(INTERP, dynpmc_LuaNumber);
