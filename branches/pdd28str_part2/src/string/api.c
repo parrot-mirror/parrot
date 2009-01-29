@@ -121,9 +121,9 @@ Parrot_str_write_COW(PARROT_INTERP, ARGMOD(STRING *s))
 
 /*
 
-=item C<STRING * Parrot_make_COW_reference>
+=item C<STRING * Parrot_str_new_COW>
 
-Creates a copy-on-write string by cloning a string header without
+Creates a copy-on-write string, cloning a string header without
 allocating a new buffer.
 
 =cut
@@ -134,9 +134,9 @@ PARROT_EXPORT
 PARROT_CANNOT_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
 STRING *
-Parrot_make_COW_reference(PARROT_INTERP, ARGMOD(STRING *s))
+Parrot_str_new_COW(PARROT_INTERP, ARGMOD(STRING *s))
 {
-    ASSERT_ARGS(Parrot_make_COW_reference)
+    ASSERT_ARGS(Parrot_str_new_COW)
     STRING *d;
 
     if (PObj_constant_TEST(s)) {
@@ -233,7 +233,7 @@ string_set(PARROT_INTERP, ARGIN_NULLOK(STRING *dest), ARGMOD(STRING *src))
         dest = Parrot_reuse_COW_reference(interp, src, dest);
     }
     else
-        dest = Parrot_make_COW_reference(interp, src);
+        dest = Parrot_str_new_COW(interp, src);
     return dest;
 }
 
@@ -1022,7 +1022,7 @@ STRING *
 string_copy(PARROT_INTERP, ARGMOD(STRING *s))
 {
     ASSERT_ARGS(string_copy)
-    return Parrot_make_COW_reference(interp, s);
+    return Parrot_str_new_COW(interp, s);
 }
 
 

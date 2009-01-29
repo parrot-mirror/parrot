@@ -69,7 +69,7 @@ A newline is automatically added to the end of the fmt.
     INTVAL replen       = 0;
     INTVAL I0, I1;
 
-    fmt = Parrot_make_COW_reference(INTERP, fmt);
+    fmt = Parrot_str_new_COW(INTERP, fmt);
 
     while (pos >= 0) {
         pos += replen;
@@ -88,7 +88,7 @@ A newline is automatically added to the end of the fmt.
         }
         else if (0 == string_equal(INTERP, key, comma)) {
             repl = VTABLE_get_string_keyed_int(INTERP, args, 0);
-            repl = Parrot_make_COW_reference(INTERP, repl);
+            repl = Parrot_str_new_COW(INTERP, repl);
             I1   = VTABLE_elements(INTERP, args);
             I0   = 1;
 

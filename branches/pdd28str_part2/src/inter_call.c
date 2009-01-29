@@ -712,7 +712,7 @@ fetch_arg_op(PARROT_INTERP, ARGMOD(call_state *st))
         {
             /* ensure that callees don't modify constant caller strings */
             if (constant)
-                UVal_str(st->val) = Parrot_make_COW_reference(interp,
+                UVal_str(st->val) = Parrot_str_new_COW(interp,
                                         st->src.ctx->constants[idx]->u.string);
             else
                 UVal_str(st->val) = CTX_REG_STR(st->src.ctx, idx);
