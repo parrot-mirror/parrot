@@ -173,7 +173,7 @@ Parrot_str_new_COW(PARROT_INTERP, ARGMOD(STRING *s))
 
 /*
 
-=item C<STRING * Parrot_reuse_COW_reference>
+=item C<STRING * Parrot_str_reuse_COW>
 
 Creates a copy-on-write string by cloning a string header without
 allocating a new buffer. Doesn't allocate a new string header, instead
@@ -186,9 +186,9 @@ using the one passed in and returns it.
 PARROT_EXPORT
 PARROT_CANNOT_RETURN_NULL
 STRING *
-Parrot_reuse_COW_reference(SHIM_INTERP, ARGMOD(STRING *s), ARGOUT(STRING *d))
+Parrot_str_reuse_COW(SHIM_INTERP, ARGMOD(STRING *s), ARGOUT(STRING *d))
 {
-    ASSERT_ARGS(Parrot_reuse_COW_reference)
+    ASSERT_ARGS(Parrot_str_reuse_COW)
 
     if (PObj_constant_TEST(s)) {
         PObj_COW_SET(s);
@@ -230,7 +230,7 @@ string_set(PARROT_INTERP, ARGIN_NULLOK(STRING *dest), ARGMOD(STRING *src))
             mem_sys_free(PObj_bufallocstart(dest));
         }
 #endif
-        dest = Parrot_reuse_COW_reference(interp, src, dest);
+        dest = Parrot_str_reuse_COW(interp, src, dest);
     }
     else
         dest = Parrot_str_new_COW(interp, src);
@@ -2980,7 +2980,7 @@ Parrot_string_trans_charset(PARROT_INTERP, ARGMOD_NULLOK(STRING *src),
      */
     if (dest) {
         if (new_charset == src->charset) {
-            dest          = Parrot_reuse_COW_reference(interp, src, dest);
+            dest          = Parrot_str_reuse_COW(interp, src, dest);
             dest->charset = new_charset;
             /* keep encoding */
             return dest;
@@ -3039,7 +3039,7 @@ Parrot_string_trans_encoding(PARROT_INTERP, ARGIN_NULLOK(STRING *src),
     if (dest) {
         dest->encoding = new_encoding;
         if (new_encoding == src->encoding) {
-            dest = Parrot_reuse_COW_reference(interp, src, dest);
+            dest = Parrot_str_reuse_COW(interp, src, dest);
             return dest;
         }
     }

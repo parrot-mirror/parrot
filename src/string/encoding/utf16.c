@@ -489,7 +489,7 @@ get_codepoints_inplace(PARROT_INTERP, ARGIN(STRING *src),
     ASSERT_ARGS(get_codepoints_inplace)
     String_iter iter;
     UINTVAL start;
-    Parrot_reuse_COW_reference(interp, src, return_string);
+    Parrot_str_reuse_COW(interp, src, return_string);
     iter_init(interp, src, &iter);
     iter.set_position(interp, &iter, offset);
     start = iter.bytepos;
