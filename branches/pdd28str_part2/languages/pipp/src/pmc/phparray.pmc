@@ -1832,16 +1832,16 @@ this string is the same as a Parrot Hash's C<get_repr()>:
             else
                 key_str = Parrot_sprintf_c(INTERP, "\"%Ss\": ", bkt->key);
 
-            repr    = string_append(INTERP, repr, key_str);
+            repr    = Parrot_str_append(INTERP, repr, key_str);
             val_str = VTABLE_get_string(INTERP, bkt->value);
-            repr    = string_append(INTERP, repr, val_str);
+            repr    = Parrot_str_append(INTERP, repr, val_str);
 
             if (bkt->tableNext != NULL)
-                repr = string_append(INTERP, repr, CONST_STRING(INTERP, ", "));
+                repr = Parrot_str_append(INTERP, repr, CONST_STRING(INTERP, ", "));
 
             bkt = bkt->tableNext;
         }
-        repr = string_append(INTERP, repr, CONST_STRING(INTERP, "}"));
+        repr = Parrot_str_append(INTERP, repr, CONST_STRING(INTERP, "}"));
         return repr;
     }
 

@@ -670,8 +670,8 @@ static PMC* do_dispatch(PARROT_INTERP, PMC *self, candidate_info **candidates, P
                 PMC    *perl_meth = VTABLE_find_method(interp, sig_obj, perl_name);
                 STRING *sig_perl  = (STRING *)Parrot_run_meth_fromc_args(interp, perl_meth,
                         sig_obj, perl_name, "S");
-                signatures = string_append(interp, signatures, sig_perl);
-                signatures = string_append(interp, signatures, newline);
+                signatures = Parrot_str_append(interp, signatures, sig_perl);
+                signatures = Parrot_str_append(interp, signatures, newline);
             }
             Parrot_ex_throw_from_c_args(interp, next, 1,
                 "Ambiguous dispatch to multi '%Ss'. Ambiguous candidates had signatures:\n%Ss",

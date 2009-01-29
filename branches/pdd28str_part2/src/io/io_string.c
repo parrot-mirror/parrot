@@ -151,7 +151,7 @@ PIO_string_write(PARROT_INTERP, ARGMOD(ParrotIOLayer *l), SHIM(ParrotIO *io), AR
         return s->strlen;
     }
 
-    l->self = string_append(interp, old_string, s);
+    l->self = Parrot_str_append(interp, old_string, s);
     return string_length(interp, (STRING *)l->self);
 }
 

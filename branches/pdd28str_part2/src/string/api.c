@@ -510,8 +510,8 @@ Parrot_str_concat(PARROT_INTERP, ARGIN_NULLOK(STRING *a),
             result = string_make_direct(interp, NULL, a->bufused + b->bufused,
                         enc, cs, 0);
 
-            result = string_append(interp, result, a);
-            result = string_append(interp, result, b);
+            result = Parrot_str_append(interp, result, a);
+            result = Parrot_str_append(interp, result, b);
 
             return result;
         }
@@ -527,7 +527,7 @@ Parrot_str_concat(PARROT_INTERP, ARGIN_NULLOK(STRING *a),
 
 /*
 
-=item C<STRING * string_append>
+=item C<STRING * Parrot_str_append>
 
 Take in two Parrot strings and append the second to the first.  NOTE THAT
 RETURN VALUE MAY NOT BE THE FIRST STRING, if the first string is COW'd or
@@ -541,9 +541,9 @@ PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 STRING *
-string_append(PARROT_INTERP, ARGMOD_NULLOK(STRING *a), ARGIN_NULLOK(STRING *b))
+Parrot_str_append(PARROT_INTERP, ARGMOD_NULLOK(STRING *a), ARGIN_NULLOK(STRING *b))
 {
-    ASSERT_ARGS(string_append)
+    ASSERT_ARGS(Parrot_str_append)
     UINTVAL a_capacity;
     UINTVAL total_length;
     const CHARSET *cs;
@@ -2527,7 +2527,7 @@ string_escape_string_delimited(PARROT_INTERP,
         else
             hex = Parrot_sprintf_c(interp, "\\u%04x", c);
 
-        result = string_append(interp, result, hex);
+        result = Parrot_str_append(interp, result, hex);
 
         /* adjust our insert idx */
         i += hex->strlen;
@@ -3113,8 +3113,8 @@ string_join(PARROT_INTERP, ARGIN_NULLOK(STRING *j), ARGIN(PMC *ar))
     for (i = 1; i < ar_len; ++i) {
         STRING * const next = VTABLE_get_string_keyed_int(interp, ar, i);
 
-        res  = string_append(interp, res, j);
-        res  = string_append(interp, res, next);
+        res  = Parrot_str_append(interp, res, j);
+        res  = Parrot_str_append(interp, res, next);
     }
 
     return res;

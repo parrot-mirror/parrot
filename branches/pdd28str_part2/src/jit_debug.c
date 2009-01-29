@@ -252,7 +252,7 @@ debug_file(PARROT_INTERP, STRING *file, const char *ext)
 {
     STRING *ret;
     ret = string_copy(interp, file);
-    ret = string_append(interp, ret,
+    ret = Parrot_str_append(interp, ret,
             string_make(interp, ext, strlen(ext), NULL,
                 PObj_external_FLAG));
     return ret;
@@ -297,7 +297,7 @@ Parrot_jit_debug_stabs(PARROT_INTERP)
         else if (ext && STREQ(ext, ".pir"))
             string_chopn_inplace(interp, file, 3);
         else if (!ext) /* EVAL_n */
-            file = string_append(interp, file,
+            file = Parrot_str_append(interp, file,
                     string_make(interp, ".", 1, NULL, PObj_external_FLAG));
 
         string_cstring_free(src);

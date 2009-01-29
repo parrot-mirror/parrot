@@ -367,7 +367,7 @@ path_finalize(PARROT_INTERP, ARGMOD(STRING *path))
 
     STRING * const nul = string_chr(interp, '\0');
 
-    path = string_append(interp, path, nul);
+    path = Parrot_str_append(interp, path, nul);
     path->bufused--;
     path->strlen--;
 
@@ -401,7 +401,7 @@ path_guarantee_trailing_separator(PARROT_INTERP, ARGMOD(STRING *path))
     /* make sure the path has a trailing slash before appending the file */
     if (string_index(interp, path , path->strlen - 1)
          != string_index(interp, path_separator_string, 0))
-        path = string_append(interp, path , path_separator_string);
+        path = Parrot_str_append(interp, path , path_separator_string);
 
     return path;
 }
@@ -425,7 +425,7 @@ path_append(PARROT_INTERP, ARGMOD(STRING *l_path), ARGMOD(STRING *r_path))
 {
     ASSERT_ARGS(path_append)
     l_path = path_guarantee_trailing_separator(interp, l_path);
-    l_path = string_append(interp, l_path, r_path);
+    l_path = Parrot_str_append(interp, l_path, r_path);
 
     return l_path;
 }
@@ -452,7 +452,7 @@ path_concat(PARROT_INTERP, ARGMOD(STRING *l_path), ARGMOD(STRING *r_path))
 
     join = string_copy(interp, l_path);
     join = path_guarantee_trailing_separator(interp, join);
-    join = string_append(interp, join, r_path);
+    join = Parrot_str_append(interp, join, r_path);
 
     return join;
 }
@@ -532,7 +532,7 @@ try_bytecode_extensions(PARROT_INTERP, ARGMOD(STRING* path))
             /* First try substituting .pbc for the .pir extension */
             if (string_equal(interp, orig_ext, pir_extension) == 0) {
                 STRING *without_ext = string_chopn(interp, test_path, 4);
-                test_path = string_append(interp, without_ext, bytecode_extension);
+                test_path = Parrot_str_append(interp, without_ext, bytecode_extension);
                 result = try_load_path(interp, test_path);
                 if (result)
                     return result;
@@ -540,12 +540,12 @@ try_bytecode_extensions(PARROT_INTERP, ARGMOD(STRING* path))
             /* Next try substituting .pir, then .pasm for the .pbc extension */
             else if (string_equal(interp, orig_ext, bytecode_extension) == 0) {
                 STRING *without_ext = string_chopn(interp, test_path, 4);
-                test_path = string_append(interp, without_ext, pir_extension);
+                test_path = Parrot_str_append(interp, without_ext, pir_extension);
                 result = try_load_path(interp, test_path);
                 if (result)
                     return result;
 
-                test_path = string_append(interp, without_ext, pasm_extension);
+                test_path = Parrot_str_append(interp, without_ext, pasm_extension);
                 result = try_load_path(interp, test_path);
                 if (result)
                     return result;
@@ -558,7 +558,7 @@ try_bytecode_extensions(PARROT_INTERP, ARGMOD(STRING* path))
             STRING *orig_ext = string_substr(interp, test_path, -5, 5, NULL, 0);
             if (string_equal(interp, orig_ext, pasm_extension) == 0) {
                 STRING *without_ext = string_chopn(interp, test_path, 5);
-                test_path = string_append(interp, without_ext, bytecode_extension);
+                test_path = Parrot_str_append(interp, without_ext, bytecode_extension);
                 result = try_load_path(interp, test_path);
                 if (result)
                     return result;

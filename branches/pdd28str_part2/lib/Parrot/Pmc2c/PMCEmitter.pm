@@ -624,7 +624,7 @@ EOC
         vt_clone->base_type    = entry;
         vt_clone->whoami       = string_make(interp, "$classname", @{[length($classname)]}, "ascii",
             PObj_constant_FLAG|PObj_external_FLAG);
-        vt_clone->provides_str = string_append(interp, vt_clone->provides_str,
+        vt_clone->provides_str = Parrot_str_append(interp, vt_clone->provides_str,
             string_make(interp, " $provides", @{[length($provides) + 1]}, "ascii",
             PObj_constant_FLAG|PObj_external_FLAG));
 

@@ -841,13 +841,13 @@ Decrements the number.
     MULTI void i_concatenate(LuaNumber value) {
         STRING *s = SELF.get_string();
         STRING *v = VTABLE_get_string(INTERP, value);
-        SELF.set_string_native(string_append(INTERP, s, v));
+        SELF.set_string_native(Parrot_str_append(INTERP, s, v));
     }
 
     MULTI void i_concatenate(LuaString value) {
         STRING *s = SELF.get_string();
         STRING *v = VTABLE_get_string(INTERP, value);
-        SELF.set_string_native(string_append(INTERP, s, v));
+        SELF.set_string_native(Parrot_str_append(INTERP, s, v));
     }
 
     MULTI void i_concatenate(DEFAULT value) {
