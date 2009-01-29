@@ -142,19 +142,19 @@ handle_flags(PARROT_INTERP, ARGIN(const SpfInfo *info), ARGMOD(STRING *str),
         if (!len || string_ord(interp, str, 0) != '-') {
             if (info->flags & FLAG_PLUS) {
                 STRING * const cs = CONST_STRING(interp, "+");
-                str = string_concat(interp, cs, str, 0);
+                str = Parrot_str_concat(interp, cs, str, 0);
                 len++;
             }
             else if (info->flags & FLAG_SPACE) {
                 STRING * const cs = CONST_STRING(interp, " ");
-                str = string_concat(interp, cs, str, 0);
+                str = Parrot_str_concat(interp, cs, str, 0);
                 len++;
             }
         }
 
         /* # 0x ... */
         if ((info->flags & FLAG_SHARP) && prefix) {
-            str = string_concat(interp, prefix, str, 0);
+            str = Parrot_str_concat(interp, prefix, str, 0);
             len += string_length(interp, prefix);
         }
         /* XXX sharp + fill ??? */
@@ -194,7 +194,7 @@ handle_flags(PARROT_INTERP, ARGIN(const SpfInfo *info), ARGMOD(STRING *str),
         STRING * const fill = Parrot_str_repeat(interp, filler, info->width - len);
 
         if (info->flags & FLAG_MINUS) { /* left-align */
-            str = string_concat(interp, str, fill, 0);
+            str = Parrot_str_concat(interp, str, fill, 0);
         }
         else {                  /* right-align */
             /* signed and zero padded */
@@ -210,7 +210,7 @@ handle_flags(PARROT_INTERP, ARGIN(const SpfInfo *info), ARGMOD(STRING *str),
                 str = string_append(interp, str, temp);
             }
             else {
-                str = string_concat(interp, fill, str, 0);
+                str = Parrot_str_concat(interp, fill, str, 0);
             }
         }
     }

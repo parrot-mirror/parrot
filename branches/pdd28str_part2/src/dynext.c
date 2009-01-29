@@ -249,7 +249,7 @@ get_path(PARROT_INTERP, ARGMOD_NULLOK(STRING *lib), ARGOUT(void **handle),
 
         for (i = 0; i < n; ++i) {
             ext = VTABLE_get_string_keyed_int(interp, share_ext, i);
-            full_name = string_concat(interp, wo_ext, ext, 0);
+            full_name = Parrot_str_concat(interp, wo_ext, ext, 0);
             path = Parrot_locate_runtime_file_str(interp, full_name,
                     PARROT_RUNTIME_FT_DYNEXT);
             if (path) {

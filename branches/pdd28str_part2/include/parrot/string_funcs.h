@@ -223,7 +223,7 @@ INTVAL string_compute_strlen(PARROT_INTERP, ARGMOD(STRING *s))
 
 PARROT_EXPORT
 PARROT_CANNOT_RETURN_NULL
-STRING * string_concat(PARROT_INTERP,
+STRING * Parrot_str_concat(PARROT_INTERP,
     ARGIN_NULLOK(STRING *a),
     ARGIN_NULLOK(STRING *b),
     UINTVAL Uflags)
@@ -616,7 +616,7 @@ STRING* uint_to_str(PARROT_INTERP,
 #define ASSERT_ARGS_string_compute_strlen __attribute__unused__ int _ASSERT_ARGS_CHECK = \
        PARROT_ASSERT_ARG(interp) \
     || PARROT_ASSERT_ARG(s)
-#define ASSERT_ARGS_string_concat __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+#define ASSERT_ARGS_Parrot_str_concat __attribute__unused__ int _ASSERT_ARGS_CHECK = \
        PARROT_ASSERT_ARG(interp)
 #define ASSERT_ARGS_string_copy __attribute__unused__ int _ASSERT_ARGS_CHECK = \
        PARROT_ASSERT_ARG(interp) \

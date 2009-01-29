@@ -478,7 +478,7 @@ string_rep_compatible(SHIM_INTERP,
 
 /*
 
-=item C<STRING * string_concat>
+=item C<STRING * Parrot_str_concat>
 
 Concatenates two Parrot strings. If necessary, converts the second
 string's encoding and/or type to match those of the first string. If
@@ -493,10 +493,10 @@ created and returned.
 PARROT_EXPORT
 PARROT_CANNOT_RETURN_NULL
 STRING *
-string_concat(PARROT_INTERP, ARGIN_NULLOK(STRING *a),
+Parrot_str_concat(PARROT_INTERP, ARGIN_NULLOK(STRING *a),
             ARGIN_NULLOK(STRING *b), UINTVAL Uflags)
 {
-    ASSERT_ARGS(string_concat)
+    ASSERT_ARGS(Parrot_str_concat)
     if (a != NULL && a->strlen != 0) {
         if (b != NULL && b->strlen != 0) {
             const ENCODING *enc;
@@ -564,9 +564,9 @@ string_append(PARROT_INTERP, ARGMOD_NULLOK(STRING *a), ARGIN_NULLOK(STRING *b))
     saneify_string(b);
 
     /* If the destination's constant, or external then just fall back to
-       string_concat */
+       Parrot_str_concat */
     if (PObj_is_cowed_TESTALL(a))
-        return string_concat(interp, a, b, 0);
+        return Parrot_str_concat(interp, a, b, 0);
 
     cs = string_rep_compatible(interp, a, b, &enc);
     if (cs) {
