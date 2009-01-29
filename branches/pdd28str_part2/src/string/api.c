@@ -378,7 +378,7 @@ string_capacity(SHIM_INTERP, ARGIN(const STRING *s))
 
 /*
 
-=item C<STRING * string_make_empty>
+=item C<STRING * Parrot_str_new_noinit>
 
 Creates and returns an empty Parrot string.
 
@@ -389,10 +389,10 @@ Creates and returns an empty Parrot string.
 PARROT_EXPORT
 PARROT_CANNOT_RETURN_NULL
 STRING *
-string_make_empty(PARROT_INTERP,
+Parrot_str_new_noinit(PARROT_INTERP,
     parrot_string_representation_t representation, UINTVAL capacity)
 {
-    ASSERT_ARGS(string_make_empty)
+    ASSERT_ARGS(Parrot_str_new_noinit)
     STRING * const s = new_string_header(interp, 0);
 
     /* TODO adapt string creation functions */
@@ -1190,7 +1190,7 @@ string_substr(PARROT_INTERP,
 
         /* Allow regexes to return $' easily for "aaa" =~ /aaa/ */
         if (offset == (INTVAL)string_length(interp, src) || length < 1)
-            return string_make_empty(interp, enum_stringrep_one, 0);
+            return Parrot_str_new_noinit(interp, enum_stringrep_one, 0);
 
         if (offset < 0)
             true_offset = (UINTVAL)(src->strlen + offset);
@@ -1569,7 +1569,7 @@ make_writable(PARROT_INTERP, ARGMOD(STRING **s),
 {
     ASSERT_ARGS(make_writable)
     if (!*s)
-        *s = string_make_empty(interp, representation, len);
+        *s = Parrot_str_new_noinit(interp, representation, len);
     else if ((*s)->strlen < len)
         string_grow(interp, *s, (UINTVAL)(len - (*s)->strlen));
     else if (PObj_is_cowed_TESTALL(*s))
@@ -3075,7 +3075,7 @@ string_compose(PARROT_INTERP, ARGIN_NULLOK(STRING *src))
         return NULL;
 
     if (!src->strlen)
-        return string_make_empty(interp, enum_stringrep_one, 0);
+        return Parrot_str_new_noinit(interp, enum_stringrep_one, 0);
 
     return CHARSET_COMPOSE(interp, src);
 }
@@ -3105,7 +3105,7 @@ string_join(PARROT_INTERP, ARGIN_NULLOK(STRING *j), ARGIN(PMC *ar))
     int i;
 
     if (ar_len == 0)
-        return string_make_empty(interp, enum_stringrep_one, 0);
+        return Parrot_str_new_noinit(interp, enum_stringrep_one, 0);
 
     s   = VTABLE_get_string_keyed_int(interp, ar, 0);
     res = s ? string_copy(interp, s) : NULL;

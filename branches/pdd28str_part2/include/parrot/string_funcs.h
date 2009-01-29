@@ -364,7 +364,7 @@ STRING * string_make_direct(PARROT_INTERP,
 
 PARROT_EXPORT
 PARROT_CANNOT_RETURN_NULL
-STRING * string_make_empty(PARROT_INTERP,
+STRING * Parrot_str_new_noinit(PARROT_INTERP,
     parrot_string_representation_t representation,
     UINTVAL capacity)
         __attribute__nonnull__(1);
@@ -666,7 +666,7 @@ STRING* uint_to_str(PARROT_INTERP,
 #define ASSERT_ARGS_string_make_direct __attribute__unused__ int _ASSERT_ARGS_CHECK = \
        PARROT_ASSERT_ARG(interp) \
     || PARROT_ASSERT_ARG(encoding)
-#define ASSERT_ARGS_string_make_empty __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+#define ASSERT_ARGS_Parrot_str_new_noinit __attribute__unused__ int _ASSERT_ARGS_CHECK = \
        PARROT_ASSERT_ARG(interp)
 #define ASSERT_ARGS_string_max_bytes __attribute__unused__ int _ASSERT_ARGS_CHECK = \
        PARROT_ASSERT_ARG(s)
