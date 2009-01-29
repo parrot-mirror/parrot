@@ -749,7 +749,7 @@ create_lexinfo(bytecode * const bc, PMC * sub, lexical * const lexicals, int nee
 
     /* walk through the list of lexicals and register them */
     while (lexiter) {
-        STRING *lexname = string_from_cstring(bc->interp, lexiter->name, strlen(lexiter->name));
+        STRING *lexname = Parrot_str_new_from_cstring(bc->interp, lexiter->name, strlen(lexiter->name));
 
         /* declare the .lex as such */
 
@@ -900,7 +900,7 @@ create_sub_pmc(bytecode * const bc, int iscoroutine, char const * const instance
     if (instanceof) {
         /* Look it up as a class and as a PMC type. */
         STRING * const classname
-                 = string_from_cstring(bc->interp, instanceof + 1, strlen(instanceof) - 2);
+                 = Parrot_str_new_from_cstring(bc->interp, instanceof + 1, strlen(instanceof) - 2);
 
         PMC * const classobj = Parrot_oo_get_class_str(bc->interp, classname);
 

@@ -593,7 +593,7 @@ Parrot_add_library_path(PARROT_INTERP,
     PMC * const lib_paths = VTABLE_get_pmc_keyed_int(interp, iglobals,
         IGLOBALS_LIB_PATHS);
     PMC * paths = VTABLE_get_pmc_keyed_int(interp, lib_paths, which);
-    STRING * const path_str = string_from_cstring(interp, path, 0);
+    STRING * const path_str = Parrot_str_new_from_cstring(interp, path, 0);
     VTABLE_push_string(interp, paths, path_str);
 }
 
@@ -682,7 +682,7 @@ Parrot_locate_runtime_file(PARROT_INTERP, ARGIN(const char *file_name),
         enum_runtime_ft type)
 {
     ASSERT_ARGS(Parrot_locate_runtime_file)
-    STRING * const file   = string_from_cstring(interp, file_name, 0);
+    STRING * const file   = Parrot_str_new_from_cstring(interp, file_name, 0);
     STRING * const result = Parrot_locate_runtime_file_str(interp, file, type);
     /*
      * XXX valgrind shows e.g.
@@ -757,7 +757,7 @@ Parrot_get_runtime_path(PARROT_INTERP)
 
     if (env)
     {
-        result = string_from_cstring(interp, env, 0);
+        result = Parrot_str_new_from_cstring(interp, env, 0);
         if (free_it)
              free(env);
     }

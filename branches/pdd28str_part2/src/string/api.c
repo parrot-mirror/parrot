@@ -607,7 +607,7 @@ Parrot_str_append(PARROT_INTERP, ARGMOD_NULLOK(STRING *a), ARGIN_NULLOK(STRING *
 
 /*
 
-=item C<STRING * string_from_cstring>
+=item C<STRING * Parrot_str_new_from_cstring>
 
 Make a Parrot string from a specified C string.
 
@@ -620,9 +620,9 @@ PARROT_WARN_UNUSED_RESULT
 PARROT_MALLOC
 PARROT_CANNOT_RETURN_NULL
 STRING *
-string_from_cstring(PARROT_INTERP, ARGIN_NULLOK(const char * const buffer), const UINTVAL len)
+Parrot_str_new_from_cstring(PARROT_INTERP, ARGIN_NULLOK(const char * const buffer), const UINTVAL len)
 {
-    ASSERT_ARGS(string_from_cstring)
+    ASSERT_ARGS(Parrot_str_new_from_cstring)
     return string_make_direct(interp, buffer, len ? len :
             buffer ? strlen(buffer) : 0,
                               PARROT_DEFAULT_ENCODING, PARROT_DEFAULT_CHARSET,

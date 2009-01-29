@@ -826,7 +826,7 @@ eval_ins(PARROT_INTERP, ARGIN(const char *op), size_t ops, ARGIN(SymReg **r))
                             break;
                         case 'N':
                             {
-                            STRING * const s = string_from_cstring(interp, r[i]->name, 0);
+                            STRING * const s = Parrot_str_new_from_cstring(interp, r[i]->name, 0);
                             REG_NUM(interp, i) = string_to_num(interp, s);
                             }
                             break;

@@ -112,11 +112,11 @@ static STRING* _get_string(Interp *interp)
     memcpy(&s, fp, sizeof s);
     fp += sizeof s;
     if (s != 0) {
-        str = string_from_cstring(interp, fp, s-1);
+        str = Parrot_str_new_from_cstring(interp, fp, s-1);
         fp += s;
     }
     else
-        str = string_from_cstring(interp, "", 0);
+        str = Parrot_str_new_from_cstring(interp, "", 0);
     return str;
 }
 

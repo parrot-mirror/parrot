@@ -152,7 +152,7 @@ iNEW(PARROT_INTERP, ARGMOD(IMC_Unit *unit), ARGMOD(SymReg *r0),
     SymReg *pmc;
     int nargs;
     const int pmc_num = pmc_type(interp,
-            string_from_cstring(interp, *type == '.' ? type + 1 : type, 0));
+            Parrot_str_new_from_cstring(interp, *type == '.' ? type + 1 : type, 0));
 
     snprintf(fmt, sizeof (fmt), "%d", pmc_num);
     pmc = mk_const(interp, fmt, 'I');
@@ -698,7 +698,7 @@ imcc_compile(PARROT_INTERP, ARGIN(const char *s), int pasm_file,
         sub_data->seg        = new_cs;
         sub_data->start_offs = 0;
         sub_data->end_offs   = new_cs->base.size;
-        sub_data->name       = string_from_cstring(interp, name, 0);
+        sub_data->name       = Parrot_str_new_from_cstring(interp, name, 0);
 
         *error_message = NULL;
     }

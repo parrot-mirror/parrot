@@ -55,7 +55,7 @@ Returns a string representation of a Rational-PMC to a certain base.
 static STRING *rat_get_string_to_base(PARROT_INTERP, PMC *self, int base) {
   #ifdef PARROT_HAS_GMP
     char * const cstr = mpq_get_str(NULL, (int) base, RT(self));
-    STRING * pstr     = string_from_cstring(interp, cstr, 0);
+    STRING * pstr     = Parrot_str_new_from_cstring(interp, cstr, 0);
     string_cstring_free(cstr);
     return pstr;
   #else
@@ -286,9 +286,9 @@ Returns the version of GNU Multiple Precision library. Returns 0.0.0, if GMP is 
     METHOD version() {
         STRING *version;
       #ifdef PARROT_HAS_GMP
-        version = string_from_cstring(INTERP, gmp_version, 0);
+        version = Parrot_str_new_from_cstring(INTERP, gmp_version, 0);
       #else
-        version = string_from_cstring(INTERP, "0.0.0", 0);
+        version = Parrot_str_new_from_cstring(INTERP, "0.0.0", 0);
       #endif
         RETURN(STRING *version);
     }

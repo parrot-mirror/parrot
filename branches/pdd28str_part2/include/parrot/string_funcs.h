@@ -19,7 +19,7 @@
 
 /* Declarations of accessors */
 
-#define string_from_literal(i, s) string_from_cstring((i), (s), (sizeof (s)-1))
+#define string_from_literal(i, s) Parrot_str_new_from_cstring((i), (s), (sizeof (s)-1))
 #define Parrot_unCOW_string(i, s) PObj_COW_TEST((s)) ? \
     Parrot_str_write_COW((i), (s)), (s) : (s)
 
@@ -281,7 +281,7 @@ PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
 PARROT_MALLOC
 PARROT_CANNOT_RETURN_NULL
-STRING * string_from_cstring(PARROT_INTERP,
+STRING * Parrot_str_new_from_cstring(PARROT_INTERP,
     ARGIN_NULLOK(const char * const buffer),
     const UINTVAL len)
         __attribute__nonnull__(1);
@@ -637,7 +637,7 @@ STRING* uint_to_str(PARROT_INTERP,
 #define ASSERT_ARGS_string_escape_string_delimited \
      __attribute__unused__ int _ASSERT_ARGS_CHECK = \
        PARROT_ASSERT_ARG(interp)
-#define ASSERT_ARGS_string_from_cstring __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+#define ASSERT_ARGS_Parrot_str_new_from_cstring __attribute__unused__ int _ASSERT_ARGS_CHECK = \
        PARROT_ASSERT_ARG(interp)
 #define ASSERT_ARGS_string_from_int __attribute__unused__ int _ASSERT_ARGS_CHECK = \
        PARROT_ASSERT_ARG(interp)
