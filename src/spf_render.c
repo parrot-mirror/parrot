@@ -206,8 +206,8 @@ handle_flags(PARROT_INTERP, ARGIN(const SpfInfo *info), ARGMOD(STRING *str),
                 ignored = string_substr(interp, str, 1, len-1, &temp, 0);
                 UNUSED(ignored);
                 string_chopn_inplace(interp, str, -1);
-                str = string_append(interp, str, fill);
-                str = string_append(interp, str, temp);
+                str = Parrot_str_append(interp, str, fill);
+                str = Parrot_str_append(interp, str, temp);
             }
             else {
                 str = Parrot_str_concat(interp, fill, str, 0);
@@ -237,7 +237,7 @@ str_append_w_flags(PARROT_INTERP, ARGOUT(STRING *dest), ARGIN(const SpfInfo *inf
 {
     ASSERT_ARGS(str_append_w_flags)
     src = handle_flags(interp, info, src, 1, prefix);
-    dest = string_append(interp, dest, src);
+    dest = Parrot_str_append(interp, dest, src);
     return dest;
 }
 
@@ -345,7 +345,7 @@ Parrot_sprintf_format(PARROT_INTERP,
                     = string_substr(interp, pat, old, len, &substr, 1);
                 UNUSED(ignored);
                 /* XXX This shouldn't modify targ the pointer */
-                targ = string_append(interp, targ, substr);
+                targ = Parrot_str_append(interp, targ, substr);
             }
             len = 0;
             old = i;
@@ -713,7 +713,7 @@ Parrot_sprintf_format(PARROT_INTERP,
 #endif
                                 string_cstring_free(tempstr);
                             }
-                            targ = string_append(interp, targ, cstr2pstr(tc));
+                            targ = Parrot_str_append(interp, targ, cstr2pstr(tc));
                             }
                             break;
 
@@ -813,7 +813,7 @@ Parrot_sprintf_format(PARROT_INTERP,
                             }
 #endif /* WIN32 */
 
-                            targ = string_append(interp, targ, cstr2pstr(tc));
+                            targ = Parrot_str_append(interp, targ, cstr2pstr(tc));
                             }
                             break;
 
@@ -833,7 +833,7 @@ Parrot_sprintf_format(PARROT_INTERP,
                                                     string, 0, NULL);
                                 obj->index++;
 
-                                targ = string_append(interp, targ, ts);
+                                targ = Parrot_str_append(interp, targ, ts);
                                 break;
                             }
 
@@ -844,7 +844,7 @@ Parrot_sprintf_format(PARROT_INTERP,
                                                         info.type, obj);
                             STRING * const ts     = handle_flags(interp, &info,
                                                         string, 0, NULL);
-                            targ = string_append(interp, targ, ts);
+                            targ = Parrot_str_append(interp, targ, ts);
                             }
                             break;
 
@@ -888,7 +888,7 @@ Parrot_sprintf_format(PARROT_INTERP,
     if (len) {
         STRING *ignored = string_substr(interp, pat, old, len, &substr, 1);
         UNUSED(ignored);
-        targ = string_append(interp, targ, substr);
+        targ = Parrot_str_append(interp, targ, substr);
     }
 
     return targ;

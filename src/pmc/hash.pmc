@@ -369,23 +369,23 @@ Return a representation of the hash contents.
             }
 
             if (all_digit) {
-                res = string_append(INTERP, res, key);
+                res = Parrot_str_append(INTERP, res, key);
             }
             else {
-                res = string_append(INTERP, res, CONST_STRING(INTERP, "'"));
-                res = string_append(INTERP, res, key);
-                res = string_append(INTERP, res, CONST_STRING(INTERP, "'"));
+                res = Parrot_str_append(INTERP, res, CONST_STRING(INTERP, "'"));
+                res = Parrot_str_append(INTERP, res, key);
+                res = Parrot_str_append(INTERP, res, CONST_STRING(INTERP, "'"));
             }
 
-            res = string_append(INTERP, res, CONST_STRING(INTERP, ": "));
+            res = Parrot_str_append(INTERP, res, CONST_STRING(INTERP, ": "));
             val = SELF.get_pmc_keyed_str(key);
-            res = string_append(INTERP, res, VTABLE_get_string(INTERP, val));
+            res = Parrot_str_append(INTERP, res, VTABLE_get_string(INTERP, val));
 
             if (j < n - 1)
-                res = string_append(INTERP, res, CONST_STRING(INTERP, ", "));
+                res = Parrot_str_append(INTERP, res, CONST_STRING(INTERP, ", "));
         }
 
-        res = string_append(INTERP, res, CONST_STRING(INTERP, "}"));
+        res = Parrot_str_append(INTERP, res, CONST_STRING(INTERP, "}"));
 
         return res;
     }

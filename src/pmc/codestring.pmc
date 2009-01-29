@@ -94,8 +94,8 @@ A newline is automatically added to the end of the fmt.
 
             while (I0 < I1) {
                 S0   = VTABLE_get_string_keyed_int(INTERP, args, I0);
-                repl = string_append(INTERP, repl, comma_space);
-                repl = string_append(INTERP, repl, S0);
+                repl = Parrot_str_append(INTERP, repl, comma_space);
+                repl = Parrot_str_append(INTERP, repl, S0);
                 I0++;
             }
         }
@@ -229,21 +229,21 @@ For example, C<key('Foo', 'Bar')> returns C<["Foo";"Bar"]>.
             for (index2 = 0; index2 < elements2; index2++) {
                 STRING *S0   = VTABLE_get_string_keyed_int(INTERP, P0, index2);
                 (STRING *S0) = PCCINVOKE(INTERP, SELF, "escape", STRING *S0);
-                if (prefix) out = string_append(INTERP, out, prefix);
-                out    = string_append(INTERP, out, S0);
+                if (prefix) out = Parrot_str_append(INTERP, out, prefix);
+                out    = Parrot_str_append(INTERP, out, S0);
                 prefix = semi;
             }
         }
         else {
             STRING *S0   = VTABLE_get_string_keyed_int(INTERP, args, index);
             (STRING *S0) = PCCINVOKE(INTERP, SELF, "escape", STRING *S0);
-            if (prefix) out = string_append(INTERP, out, prefix);
-            out    = string_append(INTERP, out, S0);
+            if (prefix) out = Parrot_str_append(INTERP, out, prefix);
+            out    = Parrot_str_append(INTERP, out, S0);
             prefix = semi;
         }
     }
 
-    out = string_append(INTERP, out, close_bracket);
+    out = Parrot_str_append(INTERP, out, close_bracket);
 
     RETURN(STRING *out);
 }

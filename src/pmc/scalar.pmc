@@ -1120,12 +1120,12 @@ Concatenate the string C<value> in place.
     VTABLE void i_concatenate(PMC *value) {
         STRING * const s = SELF.get_string();
         STRING * const v = VTABLE_get_string(INTERP, value);
-        SELF.set_string_native(string_append(INTERP, s, v));
+        SELF.set_string_native(Parrot_str_append(INTERP, s, v));
     }
 
     VTABLE void i_concatenate_str(STRING *value) {
         STRING * const s = SELF.get_string();
-        SELF.set_string_native(string_append(INTERP, s, value));
+        SELF.set_string_native(Parrot_str_append(INTERP, s, value));
     }
 
 /*

@@ -101,7 +101,7 @@ Append string $3 to string $2 and place the result into string $1.
 =cut
 
 inline op concat(inout STR, in STR) :base_mem {
-    $1 = string_append(interp, $1, $2);
+    $1 = Parrot_str_append(interp, $1, $2);
 }
 
 inline op concat(invar PMC, invar PMC) :base_core {

@@ -138,7 +138,7 @@ build_attrib_index(PARROT_INTERP, PMC *self)
                 STRING * const attrib_name = VTABLE_get_string_keyed_str(
                     interp, cur_attrib, name_str);
 
-                STRING *full_key           = string_append(interp, fq_class, attrib_name);
+                STRING *full_key           = Parrot_str_append(interp, fq_class, attrib_name);
 
                 /* Insert into hash, along with index. */
                 VTABLE_set_integer_keyed_str(interp, attrib_index, full_key, cur_index);

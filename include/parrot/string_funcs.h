@@ -130,7 +130,7 @@ void Parrot_str_write_COW(PARROT_INTERP, ARGMOD(STRING *s))
 PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
-STRING * string_append(PARROT_INTERP,
+STRING * Parrot_str_append(PARROT_INTERP,
     ARGMOD_NULLOK(STRING *a),
     ARGIN_NULLOK(STRING *b))
         __attribute__nonnull__(1)
@@ -587,7 +587,7 @@ STRING* uint_to_str(PARROT_INTERP,
 #define ASSERT_ARGS_Parrot_str_write_COW __attribute__unused__ int _ASSERT_ARGS_CHECK = \
        PARROT_ASSERT_ARG(interp) \
     || PARROT_ASSERT_ARG(s)
-#define ASSERT_ARGS_string_append __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+#define ASSERT_ARGS_Parrot_str_append __attribute__unused__ int _ASSERT_ARGS_CHECK = \
        PARROT_ASSERT_ARG(interp)
 #define ASSERT_ARGS_string_bitwise_and __attribute__unused__ int _ASSERT_ARGS_CHECK = \
        PARROT_ASSERT_ARG(interp)
