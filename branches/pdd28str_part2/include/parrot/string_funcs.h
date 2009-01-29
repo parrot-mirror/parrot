@@ -43,7 +43,7 @@ STRING * Parrot_str_new_COW(PARROT_INTERP, ARGMOD(STRING *s))
 
 PARROT_EXPORT
 PARROT_CANNOT_RETURN_NULL
-STRING * Parrot_reuse_COW_reference(SHIM_INTERP,
+STRING * Parrot_str_reuse_COW(SHIM_INTERP,
     ARGMOD(STRING *s),
     ARGOUT(STRING *d))
         __attribute__nonnull__(2)
@@ -563,7 +563,7 @@ STRING* uint_to_str(PARROT_INTERP,
 #define ASSERT_ARGS_Parrot_str_new_COW __attribute__unused__ int _ASSERT_ARGS_CHECK = \
        PARROT_ASSERT_ARG(interp) \
     || PARROT_ASSERT_ARG(s)
-#define ASSERT_ARGS_Parrot_reuse_COW_reference __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+#define ASSERT_ARGS_Parrot_str_reuse_COW __attribute__unused__ int _ASSERT_ARGS_CHECK = \
        PARROT_ASSERT_ARG(s) \
     || PARROT_ASSERT_ARG(d)
 #define ASSERT_ARGS_Parrot_str_repeat __attribute__unused__ int _ASSERT_ARGS_CHECK = \

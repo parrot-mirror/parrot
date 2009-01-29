@@ -424,7 +424,7 @@ get_bytes_inplace(PARROT_INTERP, ARGIN(STRING *source_string),
         UINTVAL offset, UINTVAL count, ARGMOD(STRING *return_string))
 {
     ASSERT_ARGS(get_bytes_inplace)
-    Parrot_reuse_COW_reference(interp, source_string, return_string);
+    Parrot_str_reuse_COW(interp, source_string, return_string);
 
     return_string->strstart = (char *)return_string->strstart + offset ;
     return_string->bufused = count;
