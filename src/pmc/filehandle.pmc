@@ -348,7 +348,7 @@ Read a line from the filehandle and return it in a string.
             if (*r)
                 add_history(r);
 
-            string_result = Parrot_str_new_from_cstring(INTERP, r, 0);
+            string_result = Parrot_str_new(INTERP, r, 0);
             mem_sys_free(r);
             RETURN(STRING *string_result);
         }

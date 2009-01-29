@@ -294,13 +294,13 @@ PackFile_Constant_dump(PARROT_INTERP, ARGIN(const PackFile_ConstTable *ct),
                     if (sub->namespace_name) {
                         switch (sub->namespace_name->vtable->base_type) {
                             case enum_class_String:
-                                namespace_description = Parrot_str_new_from_cstring(interp, "'", 1);
+                                namespace_description = Parrot_str_new(interp, "'", 1);
                                 namespace_description = Parrot_str_append(interp,
                                         namespace_description,
                                         PMC_str_val(sub->namespace_name));
                                 namespace_description = Parrot_str_append(interp,
                                         namespace_description,
-                                        Parrot_str_new_from_cstring(interp, "'", 1));
+                                        Parrot_str_new(interp, "'", 1));
                                 break;
                             case enum_class_Key:
                                 namespace_description =

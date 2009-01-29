@@ -418,9 +418,9 @@ Parrot_Context_get_info(PARROT_INTERP, ARGIN(const Parrot_Context *ctx),
 
     /* is the current sub of the specified context valid? */
     if (PMC_IS_NULL(ctx->current_sub)) {
-        info->subname  = Parrot_str_new_from_cstring(interp, "???", 3);
+        info->subname  = Parrot_str_new(interp, "???", 3);
         info->nsname   = info->subname;
-        info->fullname = Parrot_str_new_from_cstring(interp, "??? :: ???", 10);
+        info->fullname = Parrot_str_new(interp, "??? :: ???", 10);
         info->pc       = -1;
         return 0;
     }

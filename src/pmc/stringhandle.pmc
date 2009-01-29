@@ -175,7 +175,7 @@ stored for mocking.
             &&  string_equal(INTERP, encoding, CONST_STRING(INTERP, "utf8")) == 0)
                 new_string = string_make(INTERP, "", 0, "unicode", 0);
             else
-                new_string = Parrot_str_new_from_cstring(INTERP, "", 0);
+                new_string = Parrot_str_new(INTERP, "", 0);
 
             SET_ATTR_stringhandle(INTERP, SELF, new_string);
         }

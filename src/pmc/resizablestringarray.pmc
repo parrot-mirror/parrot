@@ -54,7 +54,7 @@ Returns the Parrot string value of the element at index C<key>.
         data = (STRING**)PMC_data(SELF);
 
         if (!data[key])
-            data[key] = Parrot_str_new_from_cstring(interp, NULL, 0);
+            data[key] = Parrot_str_new(interp, NULL, 0);
 
         return data[key];
     }

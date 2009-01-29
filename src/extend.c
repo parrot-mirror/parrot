@@ -683,7 +683,7 @@ Parrot_PMC_set_cstring(PARROT_INTERP, Parrot_PMC pmc, ARGIN_NULLOK(const char *v
     ASSERT_ARGS(Parrot_PMC_set_cstring)
     PARROT_CALLIN_START(interp);
     VTABLE_set_string_native(interp, pmc,
-                             Parrot_str_new_from_cstring(interp, value, 0));
+                             Parrot_str_new(interp, value, 0));
     PARROT_CALLIN_END(interp);
 }
 
@@ -705,7 +705,7 @@ Parrot_PMC_set_cstring_intkey(PARROT_INTERP,
     ASSERT_ARGS(Parrot_PMC_set_cstring_intkey)
     PARROT_CALLIN_START(interp);
     VTABLE_set_string_keyed_int(interp, pmc, key,
-                                Parrot_str_new_from_cstring(interp, value, 0));
+                                Parrot_str_new(interp, value, 0));
     PARROT_CALLIN_END(interp);
 }
 
@@ -727,7 +727,7 @@ Parrot_PMC_set_cstringn(PARROT_INTERP,
     ASSERT_ARGS(Parrot_PMC_set_cstringn)
     PARROT_CALLIN_START(interp);
     VTABLE_set_string_native(interp, pmc,
-                             Parrot_str_new_from_cstring(interp, value, length));
+                             Parrot_str_new(interp, value, length));
     PARROT_CALLIN_END(interp);
 }
 
@@ -811,7 +811,7 @@ Parrot_PMC_set_cstringn_intkey(PARROT_INTERP,
     ASSERT_ARGS(Parrot_PMC_set_cstringn_intkey)
     PARROT_CALLIN_START(interp);
     VTABLE_set_string_keyed_int(interp, pmc, key,
-                                Parrot_str_new_from_cstring(interp, value, length));
+                                Parrot_str_new(interp, value, length));
     PARROT_CALLIN_END(interp);
 }
 
@@ -855,7 +855,7 @@ Parrot_PMC_typenum(PARROT_INTERP, ARGIN_NULLOK(const char *_class))
     ASSERT_ARGS(Parrot_PMC_typenum)
     Parrot_Int retval;
     PARROT_CALLIN_START(interp);
-    retval = pmc_type(interp, Parrot_str_new_from_cstring(interp, _class, 0));
+    retval = pmc_type(interp, Parrot_str_new(interp, _class, 0));
     PARROT_CALLIN_END(interp);
     return retval;
 }

@@ -398,7 +398,7 @@ interpinfo_s(PARROT_INTERP, INTVAL what)
                 if (pos > 0)
                     pos++;
 
-                basename = Parrot_str_new_from_cstring(interp, fullname_c + pos, 0);
+                basename = Parrot_str_new(interp, fullname_c + pos, 0);
                 mem_sys_free(fullname_c);
 
                 return basename;
