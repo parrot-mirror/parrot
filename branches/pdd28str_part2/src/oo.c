@@ -133,7 +133,7 @@ Parrot_oo_extract_methods_from_namespace(PARROT_INTERP, ARGIN(PMC *self), ARGIN(
             /* Look up the name of the vtable function from the index. */
             const INTVAL vtable_index = string_to_int(interp, vtable_index_str);
             const char * const meth_c = Parrot_vtable_slot_names[vtable_index];
-            STRING     *vtable_name   = Parrot_str_new_from_cstring(interp, meth_c, 0);
+            STRING     *vtable_name   = Parrot_str_new(interp, meth_c, 0);
 
             /* Strip leading underscores in the vtable name */
             if (string_str_index(interp, vtable_name, CONST_STRING(interp, "__"), 0) == 0) {

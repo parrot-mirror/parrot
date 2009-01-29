@@ -588,7 +588,7 @@ Return GMP version string "x.y.z".
     METHOD version() {
         STRING *version;
 #ifdef PARROT_HAS_GMP
-        version = Parrot_str_new_from_cstring(INTERP, gmp_version, 0);
+        version = Parrot_str_new(INTERP, gmp_version, 0);
 #else
         version = CONST_STRING(INTERP, "0.0.0");
 #endif
@@ -793,14 +793,14 @@ appended.
 
     VTABLE STRING *get_string() {
         char   *s  = bigint_get_string(INTERP, SELF, 10);
-        STRING *ps = Parrot_str_new_from_cstring(INTERP, s, 0);
+        STRING *ps = Parrot_str_new(INTERP, s, 0);
         mem_sys_free(s);
         return ps;
     }
 
     VTABLE STRING *get_string_keyed_int(INTVAL base) {
         char   *s  = bigint_get_string(INTERP, SELF, base);
-        STRING *ps = Parrot_str_new_from_cstring(INTERP, s, 0);
+        STRING *ps = Parrot_str_new(INTERP, s, 0);
         mem_sys_free(s);
         return ps;
     }

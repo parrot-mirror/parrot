@@ -141,7 +141,7 @@ PMC *
 key_new_cstring(PARROT_INTERP, ARGIN_NULLOK(const char *value))
 {
     ASSERT_ARGS(key_new_cstring)
-    return key_new_string(interp, Parrot_str_new_from_cstring(interp, value, 0));
+    return key_new_string(interp, Parrot_str_new(interp, value, 0));
 }
 
 
@@ -589,7 +589,7 @@ key_set_to_string(PARROT_INTERP, ARGIN_NULLOK(PMC *key))
     ASSERT_ARGS(key_set_to_string)
     STRING * const semicolon = CONST_STRING(interp, " ; ");
     STRING * const quote     = CONST_STRING(interp, "'");
-    STRING        *value     = Parrot_str_new_from_cstring(interp, "[ ", 2);
+    STRING        *value     = Parrot_str_new(interp, "[ ", 2);
 
     for (; key; key = (PMC *)PMC_data(key)) {
         switch (PObj_get_FLAGS(key) & KEY_type_FLAGS) {
@@ -633,7 +633,7 @@ key_set_to_string(PARROT_INTERP, ARGIN_NULLOK(PMC *key))
             value = Parrot_str_append(interp, value, semicolon);
     }
 
-    value = Parrot_str_append(interp, value, Parrot_str_new_from_cstring(interp, " ]", 2));
+    value = Parrot_str_append(interp, value, Parrot_str_new(interp, " ]", 2));
     return value;
 }
 

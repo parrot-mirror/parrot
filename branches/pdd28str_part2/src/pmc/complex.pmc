@@ -164,7 +164,7 @@ complex_parse_string(PARROT_INTERP, FLOATVAL *re, FLOATVAL *im, STRING *value) {
 
     if (first_num_length) {
         /* there is a real part, interpret it */
-        S   = Parrot_str_new_from_cstring(interp, first_num_offset, first_num_length);
+        S   = Parrot_str_new(interp, first_num_offset, first_num_length);
         *re = string_to_num(interp, S);
     }
     else {
@@ -174,7 +174,7 @@ complex_parse_string(PARROT_INTERP, FLOATVAL *re, FLOATVAL *im, STRING *value) {
 
     if (second_num_length) {
         /* there is an imaginary part, interpret it */
-        S   = Parrot_str_new_from_cstring(interp, second_num_offset, second_num_length);
+        S   = Parrot_str_new(interp, second_num_offset, second_num_length);
         *im = string_to_num(interp, S);
     }
     else {

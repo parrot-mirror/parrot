@@ -53,7 +53,7 @@ my %sig_table = (
     d => { as_proto => "double", sig_char => "N" },
     t => { as_proto => "char *",
            other_decl => "STRING *final_destination;",
-           ret_assign => "final_destination = Parrot_str_new_from_cstring(interp, return_data, 0);\n    set_nci_S(interp, &st, final_destination);",
+           ret_assign => "final_destination = Parrot_str_new(interp, return_data, 0);\n    set_nci_S(interp, &st, final_destination);",
            sig_char => "S" },
     v => { as_proto => "void",
            return_type => "void *",

@@ -87,7 +87,7 @@ Returns the current working directory.
 #  endif
 #endif
         if (cwd) {
-            STRING * const scwd = Parrot_str_new_from_cstring(interp, cwd, strlen(cwd));
+            STRING * const scwd = Parrot_str_new(interp, cwd, strlen(cwd));
             mem_sys_free(cwd);
             RETURN(STRING *scwd);
         }
@@ -492,7 +492,7 @@ reads entries from a directory.
         array = pmc_new(interp, enum_class_ResizableStringArray);
 
         while ((dirent = readdir(dir)) != NULL) {
-            retval = Parrot_str_new_from_cstring(interp, dirent->d_name, 0) ;
+            retval = Parrot_str_new(interp, dirent->d_name, 0) ;
             VTABLE_push_string(interp, array, retval);
         }
 

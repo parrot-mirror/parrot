@@ -235,7 +235,7 @@ Returns the string value for the element at C<*key>.
         key_gdbm.dptr  = keystr->strstart;
         val_gdbm       = gdbm_fetch(dbf, key_gdbm);
 
-        val = Parrot_str_new_from_cstring(interp, val_gdbm.dptr, val_gdbm.dsize);
+        val = Parrot_str_new(interp, val_gdbm.dptr, val_gdbm.dsize);
         free(val_gdbm.dptr);
 
         return val;
