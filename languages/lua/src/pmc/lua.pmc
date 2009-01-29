@@ -146,7 +146,7 @@ information see F<src/pmc.c>.
         if (p) {
             retval = pmc_new(INTERP, dynpmc_LuaString);
             VTABLE_set_string_native(INTERP, retval,
-                                     string_from_cstring(INTERP, p, 0));
+                                     Parrot_str_new_from_cstring(INTERP, p, 0));
         }
         else
             retval = pmc_new(INTERP, dynpmc_LuaNil);
@@ -183,7 +183,7 @@ information see F<src/pmc.c>.
             string_cstring_free(s);
         }
 
-        retval = string_from_cstring(INTERP, b, reslen);
+        retval = Parrot_str_new_from_cstring(INTERP, b, reslen);
         RETURN(STRING *retval);
     }
 
@@ -213,7 +213,7 @@ information see F<src/pmc.c>.
             Parrot_ex_throw_from_c_args(INTERP, NULL, 1,
                 "unable to generate a unique filename");
 
-        retval = string_from_cstring(INTERP, buff, 0);
+        retval = Parrot_str_new_from_cstring(INTERP, buff, 0);
         RETURN(STRING *retval);
     }
 

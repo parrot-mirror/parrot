@@ -176,7 +176,7 @@ Fetch a string keyed value from the packfile object.  Valid keys are:
     VTABLE STRING *get_string_keyed_str(STRING *key) {
         PackFile *pf = PMC_data_typed(SELF, PackFile *);
         if (!string_compare(interp, key, CONST_STRING(interp, "uuid")))
-            return string_from_cstring(interp, (char*)pf->header->uuid_data, pf->header->uuid_size);
+            return Parrot_str_new_from_cstring(interp, (char*)pf->header->uuid_data, pf->header->uuid_size);
 
         Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_KEY_NOT_FOUND,
                        "Packfile: No such string key \"%s\"",

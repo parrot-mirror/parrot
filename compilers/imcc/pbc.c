@@ -1060,7 +1060,7 @@ add_const_num(PARROT_INTERP, ARGIN_NULLOK(const char *buf))
 {
     ASSERT_ARGS(add_const_num)
     const int      k = add_const_table(interp);
-    STRING * const s = string_from_cstring(interp, buf, 0);
+    STRING * const s = Parrot_str_new_from_cstring(interp, buf, 0);
 
     interp->code->const_table->constants[k]->type     = PFC_NUMBER;
     interp->code->const_table->constants[k]->u.number = string_to_num(interp, s);
@@ -1323,7 +1323,7 @@ add_const_pmc_sub(PARROT_INTERP, ARGMOD(SymReg *r), size_t offs, size_t end)
     /* Do we have to create an instance of a specific type for this sub? */
     if (unit->instance_of) {
         /* Look it up as a class and as a PMC type. */
-        STRING * const classname = string_from_cstring(interp,
+        STRING * const classname = Parrot_str_new_from_cstring(interp,
                 unit->instance_of + 1, strlen(unit->instance_of) - 2);
 
         PMC * const classobj = Parrot_oo_get_class_str(interp, classname);
@@ -1420,7 +1420,7 @@ add_const_pmc_sub(PARROT_INTERP, ARGMOD(SymReg *r), size_t offs, size_t end)
 
         /* Work out the name of the vtable method. */
         if (unit->vtable_name) {
-            vtable_name = string_from_cstring(interp, unit->vtable_name + 1,
+            vtable_name = Parrot_str_new_from_cstring(interp, unit->vtable_name + 1,
                     strlen(unit->vtable_name) - 2);
             UNIT_FREE_CHAR(unit->method_name);
         }
@@ -1450,7 +1450,7 @@ add_const_pmc_sub(PARROT_INTERP, ARGMOD(SymReg *r), size_t offs, size_t end)
             sub->method_name = sub->name;
     }
     else
-        sub->method_name = string_from_cstring(interp, "", 0);
+        sub->method_name = Parrot_str_new_from_cstring(interp, "", 0);
 
 
     if (unit->has_ns_entry_name == 1) {

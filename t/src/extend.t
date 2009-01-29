@@ -457,7 +457,7 @@ the_test(PARROT_INTERP, opcode_t *cur_op, opcode_t *start)
     arg  = pmc_new(interp, enum_class_String);
 
     Parrot_PMC_set_string_native(interp, arg,
-                 string_from_cstring(interp, "hello ", 0));
+                 Parrot_str_new_from_cstring(interp, "hello ", 0));
 
     Parrot_call_sub(interp, sub, "vP", arg);
     Parrot_eprintf(interp, "back\\n");
