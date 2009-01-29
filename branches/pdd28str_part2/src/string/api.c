@@ -331,7 +331,7 @@ Parrot_str_init(PARROT_INTERP)
 
 /*
 
-=item C<void string_deinit>
+=item C<void Parrot_str_finish>
 
 De-Initializes the Parrot string subsystem.
 
@@ -341,9 +341,9 @@ De-Initializes the Parrot string subsystem.
 
 PARROT_EXPORT
 void
-string_deinit(PARROT_INTERP)
+Parrot_str_finish(PARROT_INTERP)
 {
-    ASSERT_ARGS(string_deinit)
+    ASSERT_ARGS(Parrot_str_finish)
     /* all are shared between interpreters */
     if (!interp->parent_interpreter) {
         mem_sys_free(interp->const_cstring_table);

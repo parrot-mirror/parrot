@@ -435,7 +435,7 @@ Parrot_really_destroy(PARROT_INTERP, SHIM(int exit_code), SHIM(void *arg))
     }
 
     /* strings, charsets, encodings - only once */
-    string_deinit(interp);
+    Parrot_str_finish(interp);
 
     if (!interp->parent_interpreter) {
         if (interp->thread_data)

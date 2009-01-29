@@ -241,7 +241,7 @@ PARROT_EXPORT
 void string_cstring_free(ARGIN_NULLOK(char *p));
 
 PARROT_EXPORT
-void string_deinit(PARROT_INTERP)
+void Parrot_str_finish(PARROT_INTERP)
         __attribute__nonnull__(1);
 
 PARROT_EXPORT
@@ -622,7 +622,7 @@ STRING* uint_to_str(PARROT_INTERP,
        PARROT_ASSERT_ARG(interp) \
     || PARROT_ASSERT_ARG(s)
 #define ASSERT_ARGS_string_cstring_free __attribute__unused__ int _ASSERT_ARGS_CHECK = 0
-#define ASSERT_ARGS_string_deinit __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+#define ASSERT_ARGS_Parrot_str_finish __attribute__unused__ int _ASSERT_ARGS_CHECK = \
        PARROT_ASSERT_ARG(interp)
 #define ASSERT_ARGS_string_downcase __attribute__unused__ int _ASSERT_ARGS_CHECK = \
        PARROT_ASSERT_ARG(interp) \
