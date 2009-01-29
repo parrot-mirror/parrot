@@ -176,7 +176,7 @@ make_interpreter(ARGIN_NULLOK(Interp *parent), INTVAL flags)
      * Set up the string subsystem
      * This also generates the constant string tables
      */
-    string_init(interp);
+    Parrot_str_init(interp);
 
     /* Set up the MMD struct */
     interp->binop_mmd_funcs = NULL;
