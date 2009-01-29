@@ -371,7 +371,7 @@ upcase(PARROT_INTERP, ARGIN(STRING *source_string))
     if (!source_string->strlen)
         return;
 
-    Parrot_unmake_COW(interp, source_string);
+    Parrot_str_write_COW(interp, source_string);
     buffer = (unsigned char *)source_string->strstart;
     for (offset = 0; offset < source_string->strlen; offset++) {
         unsigned int c = buffer[offset]; /* XXX use encoding ? */
@@ -402,7 +402,7 @@ downcase(PARROT_INTERP, ARGIN(STRING *source_string))
         UINTVAL offset;
         unsigned char *buffer;
 
-        Parrot_unmake_COW(interp, source_string);
+        Parrot_str_write_COW(interp, source_string);
         buffer = (unsigned char *)source_string->strstart;
         for (offset = 0; offset < source_string->strlen; offset++) {
             unsigned int c = buffer[offset];
@@ -437,7 +437,7 @@ titlecase(PARROT_INTERP, ARGIN(STRING *source_string))
     if (!source_string->strlen)
         return;
 
-    Parrot_unmake_COW(interp, source_string);
+    Parrot_str_write_COW(interp, source_string);
     buffer = (unsigned char *)source_string->strstart;
     c = buffer[0];
     if (c >= 0xe0 && c != 0xf7)
@@ -475,7 +475,7 @@ upcase_first(PARROT_INTERP, ARGIN(STRING *source_string))
         unsigned char *buffer;
         unsigned int c;
 
-        Parrot_unmake_COW(interp, source_string);
+        Parrot_str_write_COW(interp, source_string);
         buffer = (unsigned char *)source_string->strstart;
         c = buffer[0];
         if (c >= 0xe0 && c != 0xf7)
@@ -505,7 +505,7 @@ downcase_first(PARROT_INTERP, ARGIN(STRING *source_string))
         unsigned char *buffer;
         unsigned int c;
 
-        Parrot_unmake_COW(interp, source_string);
+        Parrot_str_write_COW(interp, source_string);
         buffer = (unsigned char *)source_string->strstart;
         c = buffer[0];
         if (c >= 0xc0 && c != 0xd7 && c <= 0xde)

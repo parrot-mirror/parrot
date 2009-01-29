@@ -21,7 +21,7 @@
 
 #define string_from_literal(i, s) string_from_cstring((i), (s), (sizeof (s)-1))
 #define Parrot_unCOW_string(i, s) PObj_COW_TEST((s)) ? \
-    Parrot_unmake_COW((i), (s)), (s) : (s)
+    Parrot_str_write_COW((i), (s)), (s) : (s)
 
 /* HEADERIZER BEGIN: src/string/api.c */
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
@@ -122,7 +122,7 @@ STRING* Parrot_string_trans_encoding(PARROT_INTERP,
         FUNC_MODIFIES(*dest);
 
 PARROT_EXPORT
-void Parrot_unmake_COW(PARROT_INTERP, ARGMOD(STRING *s))
+void Parrot_str_write_COW(PARROT_INTERP, ARGMOD(STRING *s))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         FUNC_MODIFIES(*s);
@@ -584,7 +584,7 @@ STRING* uint_to_str(PARROT_INTERP,
        PARROT_ASSERT_ARG(interp)
 #define ASSERT_ARGS_Parrot_string_trans_encoding __attribute__unused__ int _ASSERT_ARGS_CHECK = \
        PARROT_ASSERT_ARG(interp)
-#define ASSERT_ARGS_Parrot_unmake_COW __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+#define ASSERT_ARGS_Parrot_str_write_COW __attribute__unused__ int _ASSERT_ARGS_CHECK = \
        PARROT_ASSERT_ARG(interp) \
     || PARROT_ASSERT_ARG(s)
 #define ASSERT_ARGS_string_append __attribute__unused__ int _ASSERT_ARGS_CHECK = \

@@ -69,7 +69,7 @@ static void make_writable(PARROT_INTERP,
 
 /*
 
-=item C<void Parrot_unmake_COW>
+=item C<void Parrot_str_write_COW>
 
 If the specified Parrot string is copy-on-write then the memory is
 copied over and the copy-on-write flag is cleared.
@@ -80,9 +80,9 @@ copied over and the copy-on-write flag is cleared.
 
 PARROT_EXPORT
 void
-Parrot_unmake_COW(PARROT_INTERP, ARGMOD(STRING *s))
+Parrot_str_write_COW(PARROT_INTERP, ARGMOD(STRING *s))
 {
-    ASSERT_ARGS(Parrot_unmake_COW)
+    ASSERT_ARGS(Parrot_str_write_COW)
 
     /* COW_FLAG | constant_FLAG | external_FLAG) */
     if (PObj_is_cowed_TESTALL(s)) {
@@ -160,7 +160,7 @@ Parrot_make_COW_reference(PARROT_INTERP, ARGMOD(STRING *s))
          * is fixed correctly. */
         if (n_interpreters > 1 && PObj_is_movable_TESTALL(s) &&
                 !Parrot_in_memory_pool(interp, PObj_bufstart(s))) {
-            Parrot_unmake_COW(interp, d);
+            Parrot_str_write_COW(interp, d);
             Parrot_io_eprintf(interp, "cross-interpreter copy of "
                                      "relocatable string '%Ss' into tid %d\n",
                         d,
@@ -825,7 +825,7 @@ STRING *
 string_grow(PARROT_INTERP, ARGMOD(STRING *s), UINTVAL addlen)
 {
     ASSERT_ARGS(string_grow)
-    Parrot_unmake_COW(interp, s);
+    Parrot_str_write_COW(interp, s);
 
     /* Don't check buflen, if we are here, we already checked. */
     Parrot_reallocate_string(interp,
@@ -1280,7 +1280,7 @@ string_replace(PARROT_INTERP, ARGIN(STRING *src),
     &&  length        == 1
     &&  rep->strlen   == 1) {
         if (PObj_is_cowed_TESTALL(src))
-            Parrot_unmake_COW(interp, src);
+            Parrot_str_write_COW(interp, src);
 
         ((char *)src->strstart)[offset] = ((char *)rep->strstart)[0];
 
@@ -1345,7 +1345,7 @@ string_replace(PARROT_INTERP, ARGIN(STRING *src),
 
     if (diff >= 0
     || ((INTVAL)src->bufused - (INTVAL)PObj_buflen(src)) <= diff) {
-        Parrot_unmake_COW(interp, src);
+        Parrot_str_write_COW(interp, src);
 
         if (diff != 0) {
             mem_sys_memmove((char *)src->strstart + start_byte + rep->bufused,
@@ -1573,7 +1573,7 @@ make_writable(PARROT_INTERP, ARGMOD(STRING **s),
     else if ((*s)->strlen < len)
         string_grow(interp, *s, (UINTVAL)(len - (*s)->strlen));
     else if (PObj_is_cowed_TESTALL(*s))
-        Parrot_unmake_COW(interp, *s);
+        Parrot_str_write_COW(interp, *s);
 }
 
 
@@ -2296,7 +2296,7 @@ string_pin(PARROT_INTERP, ARGMOD(STRING *s))
      *          not work for these
      *          so probably only sysmem should be tested
      */
-    Parrot_unmake_COW(interp, s);
+    Parrot_str_write_COW(interp, s);
 
     size   = PObj_buflen(s);
     memory = (char *)mem_sys_allocate(size);
@@ -2334,7 +2334,7 @@ string_unpin(PARROT_INTERP, ARGMOD(STRING *s))
     if (!PObj_sysmem_TEST(s))
         return;
 
-    Parrot_unmake_COW(interp, s);
+    Parrot_str_write_COW(interp, s);
     size = PObj_buflen(s);
 
     /* We need a handle on the fixed memory so we can get rid of it later */
@@ -2705,7 +2705,7 @@ string_upcase_inplace(PARROT_INTERP, ARGMOD_NULLOK(STRING *s))
             "Can't upcase NULL string");
     }
     else {
-        Parrot_unmake_COW(interp, s);
+        Parrot_str_write_COW(interp, s);
         CHARSET_UPCASE(interp, s);
     }
 }
@@ -2757,7 +2757,7 @@ string_downcase_inplace(PARROT_INTERP, ARGMOD(STRING *s))
      * * conversion to utf16, with doubling the buffer
      * * possibly one more reallocation in downcase
      */
-    Parrot_unmake_COW(interp, s);
+    Parrot_str_write_COW(interp, s);
     CHARSET_DOWNCASE(interp, s);
 }
 
@@ -2802,7 +2802,7 @@ void
 string_titlecase_inplace(PARROT_INTERP, ARGMOD(STRING *s))
 {
     ASSERT_ARGS(string_titlecase_inplace)
-    Parrot_unmake_COW(interp, s);
+    Parrot_str_write_COW(interp, s);
     CHARSET_TITLECASE(interp, s);
 }
 
@@ -2995,7 +2995,7 @@ Parrot_string_trans_charset(PARROT_INTERP, ARGMOD_NULLOK(STRING *src),
         if (new_charset == src->charset)
             return src;
 
-        Parrot_unmake_COW(interp, src);
+        Parrot_str_write_COW(interp, src);
     }
 
     return new_charset->to_charset(interp, src, dest);
@@ -3047,7 +3047,7 @@ Parrot_string_trans_encoding(PARROT_INTERP, ARGIN_NULLOK(STRING *src),
         if (new_encoding == src->encoding)
             return src;
 
-        Parrot_unmake_COW(interp, src);
+        Parrot_str_write_COW(interp, src);
     }
 
     return new_encoding->to_encoding(interp, src, dest);
