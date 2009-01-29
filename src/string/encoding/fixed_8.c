@@ -369,7 +369,7 @@ static STRING *
 get_bytes(PARROT_INTERP, ARGIN(STRING *source_string), UINTVAL offset, UINTVAL count)
 {
     ASSERT_ARGS(get_bytes)
-    STRING * const return_string = Parrot_make_COW_reference(interp,
+    STRING * const return_string = Parrot_str_new_COW(interp,
             source_string);
     return_string->encoding = source_string->encoding;
     return_string->charset = source_string->charset;

@@ -36,7 +36,7 @@ STRING * const_string(PARROT_INTERP, ARGIN(const char *buffer))
 PARROT_EXPORT
 PARROT_CANNOT_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
-STRING * Parrot_make_COW_reference(PARROT_INTERP, ARGMOD(STRING *s))
+STRING * Parrot_str_new_COW(PARROT_INTERP, ARGMOD(STRING *s))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         FUNC_MODIFIES(*s);
@@ -560,7 +560,7 @@ STRING* uint_to_str(PARROT_INTERP,
 #define ASSERT_ARGS_const_string __attribute__unused__ int _ASSERT_ARGS_CHECK = \
        PARROT_ASSERT_ARG(interp) \
     || PARROT_ASSERT_ARG(buffer)
-#define ASSERT_ARGS_Parrot_make_COW_reference __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+#define ASSERT_ARGS_Parrot_str_new_COW __attribute__unused__ int _ASSERT_ARGS_CHECK = \
        PARROT_ASSERT_ARG(interp) \
     || PARROT_ASSERT_ARG(s)
 #define ASSERT_ARGS_Parrot_reuse_COW_reference __attribute__unused__ int _ASSERT_ARGS_CHECK = \
