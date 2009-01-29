@@ -206,7 +206,7 @@ Parrot_str_reuse_COW(SHIM_INTERP, ARGMOD(STRING *s), ARGOUT(STRING *d))
 
 /*
 
-=item C<STRING * string_set>
+=item C<STRING * Parrot_str_set>
 
 Makes the contents of first Parrot string a copy of the contents of
 second.
@@ -218,9 +218,9 @@ second.
 PARROT_EXPORT
 PARROT_CANNOT_RETURN_NULL
 STRING *
-string_set(PARROT_INTERP, ARGIN_NULLOK(STRING *dest), ARGMOD(STRING *src))
+Parrot_str_set(PARROT_INTERP, ARGIN_NULLOK(STRING *dest), ARGMOD(STRING *src))
 {
-    ASSERT_ARGS(string_set)
+    ASSERT_ARGS(Parrot_str_set)
     if (dest == src)
         return dest;
     if (dest) { /* && dest != src */

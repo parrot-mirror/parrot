@@ -434,7 +434,7 @@ STRING * string_replace(PARROT_INTERP,
 
 PARROT_EXPORT
 PARROT_CANNOT_RETURN_NULL
-STRING * string_set(PARROT_INTERP,
+STRING * Parrot_str_set(PARROT_INTERP,
     ARGIN_NULLOK(STRING *dest),
     ARGMOD(STRING *src))
         __attribute__nonnull__(1)
@@ -692,7 +692,7 @@ STRING* uint_to_str(PARROT_INTERP,
        PARROT_ASSERT_ARG(interp) \
     || PARROT_ASSERT_ARG(src) \
     || PARROT_ASSERT_ARG(rep)
-#define ASSERT_ARGS_string_set __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+#define ASSERT_ARGS_Parrot_str_set __attribute__unused__ int _ASSERT_ARGS_CHECK = \
        PARROT_ASSERT_ARG(interp) \
     || PARROT_ASSERT_ARG(src)
 #define ASSERT_ARGS_string_split __attribute__unused__ int _ASSERT_ARGS_CHECK = \
