@@ -325,7 +325,7 @@ INTVAL string_index(PARROT_INTERP, ARGIN(const STRING *s), UINTVAL idx)
         __attribute__nonnull__(2);
 
 PARROT_EXPORT
-void string_init(PARROT_INTERP)
+void Parrot_str_init(PARROT_INTERP)
         __attribute__nonnull__(1);
 
 PARROT_EXPORT
@@ -654,7 +654,7 @@ STRING* uint_to_str(PARROT_INTERP,
 #define ASSERT_ARGS_string_index __attribute__unused__ int _ASSERT_ARGS_CHECK = \
        PARROT_ASSERT_ARG(interp) \
     || PARROT_ASSERT_ARG(s)
-#define ASSERT_ARGS_string_init __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+#define ASSERT_ARGS_Parrot_str_init __attribute__unused__ int _ASSERT_ARGS_CHECK = \
        PARROT_ASSERT_ARG(interp)
 #define ASSERT_ARGS_string_join __attribute__unused__ int _ASSERT_ARGS_CHECK = \
        PARROT_ASSERT_ARG(interp) \

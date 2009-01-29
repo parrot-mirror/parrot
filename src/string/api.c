@@ -270,7 +270,7 @@ Creation, enlargement, etc.
 
 =over 4
 
-=item C<void string_init>
+=item C<void Parrot_str_init>
 
 Initializes the Parrot string subsystem.
 
@@ -280,9 +280,9 @@ Initializes the Parrot string subsystem.
 
 PARROT_EXPORT
 void
-string_init(PARROT_INTERP)
+Parrot_str_init(PARROT_INTERP)
 {
-    ASSERT_ARGS(string_init)
+    ASSERT_ARGS(Parrot_str_init)
     Hash        *const_cstring_hash;
     size_t       i;
     const size_t n_parrot_cstrings =
