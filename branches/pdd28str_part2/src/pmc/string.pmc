@@ -235,7 +235,7 @@ Sets the value of the string to a copy of the specified C<string>.
 */
 
     VTABLE void assign_string_native(STRING *value) {
-        PMC_str_val(SELF) = string_set(INTERP, SELF.get_string(), value);
+        PMC_str_val(SELF) = Parrot_str_set(INTERP, SELF.get_string(), value);
     }
 
 /*
@@ -251,7 +251,7 @@ the specified C<String> PMC.
 
     VTABLE void set_string_same(PMC *value) {
         PMC_str_val(SELF) =
-            string_set(INTERP, SELF.get_string(), VTABLE_get_string(INTERP, value));
+            Parrot_str_set(INTERP, SELF.get_string(), VTABLE_get_string(INTERP, value));
     }
 
 /*
