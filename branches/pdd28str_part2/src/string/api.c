@@ -863,7 +863,7 @@ Parrot_str_byte_length(SHIM_INTERP, ARGIN(const STRING *s))
 
 /*
 
-=item C<INTVAL string_index>
+=item C<INTVAL Parrot_str_indexed>
 
 Returns the character (or glyph, depending upon the string's encoding).  This
 abstracts the process of finding the Nth character in a (possibly Unicode or
@@ -879,9 +879,9 @@ Note that this is not range-checked.
 PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
 INTVAL
-string_index(PARROT_INTERP, ARGIN(const STRING *s), UINTVAL idx)
+Parrot_str_indexed(PARROT_INTERP, ARGIN(const STRING *s), UINTVAL idx)
 {
-    ASSERT_ARGS(string_index)
+    ASSERT_ARGS(Parrot_str_indexed)
     saneify_string(s);
     return (INTVAL)CHARSET_GET_CODEPOINT(interp, s, idx);
 }
@@ -968,7 +968,7 @@ string_ord(PARROT_INTERP, ARGIN_NULLOK(const STRING *s), INTVAL idx)
         Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_ORD_OUT_OF_STRING,
             "Cannot get character past end of string");
 
-    return string_index(interp, s, true_index);
+    return Parrot_str_indexed(interp, s, true_index);
 }
 
 
@@ -1978,7 +1978,7 @@ string_bool(PARROT_INTERP, ARGIN_NULLOK(const STRING *s))
         return 0;
 
     if (len == 1) {
-        const UINTVAL c = string_index(interp, s, 0);
+        const UINTVAL c = Parrot_str_indexed(interp, s, 0);
 
         /* relying on character literals being interpreted as ASCII--may
         not be correct on EBCDIC systems. use numeric value instead? */

@@ -249,12 +249,12 @@ does_isa(PARROT_INTERP, const STRING *method, const STRING *what)
 
         len = Parrot_str_byte_length(interp, method);
 
-        if (pos && string_index(interp, what, pos - 1) != 32) {
+        if (pos && Parrot_str_indexed(interp, what, pos - 1) != 32) {
             pos += len;
             continue;
         }
 
-        if (pos + len < length && string_index(interp, what, pos + len) != 32) {
+        if (pos + len < length && Parrot_str_indexed(interp, what, pos + len) != 32) {
             pos += len;
             continue;
         }

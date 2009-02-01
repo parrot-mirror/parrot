@@ -320,7 +320,7 @@ STRING * string_increment(PARROT_INTERP, ARGIN(const STRING *s))
 
 PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
-INTVAL string_index(PARROT_INTERP, ARGIN(const STRING *s), UINTVAL idx)
+INTVAL Parrot_str_indexed(PARROT_INTERP, ARGIN(const STRING *s), UINTVAL idx)
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
@@ -651,7 +651,7 @@ STRING* uint_to_str(PARROT_INTERP,
 #define ASSERT_ARGS_string_increment __attribute__unused__ int _ASSERT_ARGS_CHECK = \
        PARROT_ASSERT_ARG(interp) \
     || PARROT_ASSERT_ARG(s)
-#define ASSERT_ARGS_string_index __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+#define ASSERT_ARGS_Parrot_str_indexed __attribute__unused__ int _ASSERT_ARGS_CHECK = \
        PARROT_ASSERT_ARG(interp) \
     || PARROT_ASSERT_ARG(s)
 #define ASSERT_ARGS_Parrot_str_init __attribute__unused__ int _ASSERT_ARGS_CHECK = \

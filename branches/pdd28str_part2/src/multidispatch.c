@@ -316,7 +316,7 @@ Parrot_build_sig_object_from_varargs(PARROT_INTERP, ARGIN_NULLOK(PMC* obj),
 
     /* Process the varargs list */
     for (i = 0; i < sig_len; ++i) {
-        const INTVAL type = string_index(interp, string_sig, i);
+        const INTVAL type = Parrot_str_indexed(interp, string_sig, i);
 
         /* Only create the returns array if it's needed */
         if (in_return_sig && PMC_IS_NULL(returns)) {
@@ -843,7 +843,7 @@ Parrot_mmd_build_type_tuple_from_sig_obj(PARROT_INTERP, ARGIN(PMC *sig_obj))
 
     /* First calculate the number of arguments participating in MMD */
     for (i = 0; i < sig_len; ++i) {
-        INTVAL type = string_index(interp, string_sig, i);
+        INTVAL type = Parrot_str_indexed(interp, string_sig, i);
         if (type == '-')
             break;
 
@@ -853,7 +853,7 @@ Parrot_mmd_build_type_tuple_from_sig_obj(PARROT_INTERP, ARGIN(PMC *sig_obj))
     VTABLE_set_integer_native(interp, type_tuple, tuple_size);
 
     for (i = 0; i < sig_len; ++i) {
-        INTVAL type = string_index(interp, string_sig, i);
+        INTVAL type = Parrot_str_indexed(interp, string_sig, i);
         if (args_ended)
             break;
 
@@ -873,7 +873,7 @@ Parrot_mmd_build_type_tuple_from_sig_obj(PARROT_INTERP, ARGIN(PMC *sig_obj))
                 break;
             case 'P':
             {
-                INTVAL type_lookahead = string_index(interp, string_sig, (i + 1));
+                INTVAL type_lookahead = Parrot_str_indexed(interp, string_sig, (i + 1));
                 if (type_lookahead == 'i') {
                     if (i != 0)
                         Parrot_ex_throw_from_c_args(interp, NULL,
