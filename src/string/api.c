@@ -811,7 +811,7 @@ string_make_direct(PARROT_INTERP, ARGIN_NULLOK(const char *buffer), UINTVAL len,
 
 /*
 
-=item C<STRING * string_grow>
+=item C<STRING * Parrot_str_resize>
 
 Grows the Parrot string's buffer by the specified number of characters.
 
@@ -822,9 +822,9 @@ Grows the Parrot string's buffer by the specified number of characters.
 PARROT_EXPORT
 PARROT_CANNOT_RETURN_NULL
 STRING *
-string_grow(PARROT_INTERP, ARGMOD(STRING *s), UINTVAL addlen)
+Parrot_str_resize(PARROT_INTERP, ARGMOD(STRING *s), UINTVAL addlen)
 {
-    ASSERT_ARGS(string_grow)
+    ASSERT_ARGS(Parrot_str_resize)
     Parrot_str_write_COW(interp, s);
 
     /* Don't check buflen, if we are here, we already checked. */
@@ -1365,7 +1365,7 @@ string_replace(PARROT_INTERP, ARGIN(STRING *src),
     else {
         /* diff is negative here, make it positive */
         diff = -(diff);
-        string_grow(interp, src, (UINTVAL)diff);
+        Parrot_str_resize(interp, src, (UINTVAL)diff);
 
         /* Move the end of old string that isn't replaced to new offset first */
         mem_sys_memmove((char *)src->strstart + end_byte + diff,
@@ -1571,7 +1571,7 @@ make_writable(PARROT_INTERP, ARGMOD(STRING **s),
     if (!*s)
         *s = Parrot_str_new_noinit(interp, representation, len);
     else if ((*s)->strlen < len)
-        string_grow(interp, *s, (UINTVAL)(len - (*s)->strlen));
+        Parrot_str_resize(interp, *s, (UINTVAL)(len - (*s)->strlen));
     else if (PObj_is_cowed_TESTALL(*s))
         Parrot_str_write_COW(interp, *s);
 }
