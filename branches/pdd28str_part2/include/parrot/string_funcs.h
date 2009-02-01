@@ -300,7 +300,7 @@ STRING * string_from_num(PARROT_INTERP, FLOATVAL f)
 
 PARROT_EXPORT
 PARROT_CANNOT_RETURN_NULL
-STRING * string_grow(PARROT_INTERP, ARGMOD(STRING *s), UINTVAL addlen)
+STRING * Parrot_str_resize(PARROT_INTERP, ARGMOD(STRING *s), UINTVAL addlen)
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         FUNC_MODIFIES(*s);
@@ -643,7 +643,7 @@ STRING* uint_to_str(PARROT_INTERP,
        PARROT_ASSERT_ARG(interp)
 #define ASSERT_ARGS_string_from_num __attribute__unused__ int _ASSERT_ARGS_CHECK = \
        PARROT_ASSERT_ARG(interp)
-#define ASSERT_ARGS_string_grow __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+#define ASSERT_ARGS_Parrot_str_resize __attribute__unused__ int _ASSERT_ARGS_CHECK = \
        PARROT_ASSERT_ARG(interp) \
     || PARROT_ASSERT_ARG(s)
 #define ASSERT_ARGS_string_hash __attribute__unused__ int _ASSERT_ARGS_CHECK = \
