@@ -35,7 +35,7 @@ Return the string 'integer'.
 
 */
     STRING* name() {
-        return const_string(INTERP, "integer");
+        return Parrot_str_new_constant(INTERP, "integer");
     }
 
 /*

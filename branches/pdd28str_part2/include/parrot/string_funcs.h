@@ -29,7 +29,7 @@
 PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
-STRING * const_string(PARROT_INTERP, ARGIN(const char *buffer))
+STRING * Parrot_str_new_constant(PARROT_INTERP, ARGIN(const char *buffer))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
@@ -557,7 +557,7 @@ STRING* uint_to_str(PARROT_INTERP,
         __attribute__nonnull__(2)
         FUNC_MODIFIES(*tc);
 
-#define ASSERT_ARGS_const_string __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+#define ASSERT_ARGS_Parrot_str_new_constant __attribute__unused__ int _ASSERT_ARGS_CHECK = \
        PARROT_ASSERT_ARG(interp) \
     || PARROT_ASSERT_ARG(buffer)
 #define ASSERT_ARGS_Parrot_str_new_COW __attribute__unused__ int _ASSERT_ARGS_CHECK = \

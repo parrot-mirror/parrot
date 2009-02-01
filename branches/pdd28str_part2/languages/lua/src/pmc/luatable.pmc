@@ -343,10 +343,10 @@ static void lua_mark_table(PARROT_INTERP, LuaHash *t, STRING *mode)
 
     if (mode) {
         mark_key = string_str_index(interp, mode,
-                    const_string(interp, "k"), 0) < 0;
+                    Parrot_str_new_constant(interp, "k"), 0) < 0;
 
         mark_val = string_str_index(interp, mode,
-                    const_string(interp, "v"), 0) < 0;
+                    Parrot_str_new_constant(interp, "v"), 0) < 0;
     }
 
     for (i = 0; i < t->size; i++) {
@@ -402,11 +402,11 @@ Marks the hash as live.
 #if 0
             PMC *key = pmc_new(INTERP, dynpmc_LuaString);
             VTABLE_set_string_native(INTERP, key,
-                    const_string(INTERP, "__mode"));
+                    Parrot_str_new_constant(INTERP, "__mode"));
             m = lua_get(INTERP, PMC_hash(meta), key);
 #else
             m = lua_getstr(INTERP, PMC_hash(meta),
-                    const_string(INTERP, "__mode"));
+                    Parrot_str_new_constant(INTERP, "__mode"));
 #endif
             if (m && *m)
                 mode = PMC_str_val(*m);
@@ -445,7 +445,7 @@ Return the string "table".
 
 */
     VTABLE STRING* name() {
-        return const_string(INTERP, "table");
+        return Parrot_str_new_constant(INTERP, "table");
     }
 
 /*

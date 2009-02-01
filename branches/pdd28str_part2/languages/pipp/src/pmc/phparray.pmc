@@ -1260,7 +1260,7 @@ Return the string 'array'.
 
 */
     VTABLE STRING* name() {
-        return const_string(INTERP, "array");
+        return Parrot_str_new_constant(INTERP, "array");
     }
 
 /*
@@ -1273,7 +1273,7 @@ Return the string 'Array'.
 
 */
     VTABLE STRING* get_string() {
-        return const_string(INTERP, "Array");
+        return Parrot_str_new_constant(INTERP, "Array");
     }
 
 /*

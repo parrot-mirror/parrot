@@ -183,7 +183,7 @@ stored for mocking.
         /* Set a default mode of read-only. */
         GET_ATTR_mode(INTERP, SELF, open_mode);
         if (STRING_IS_NULL(open_mode)) {
-            open_mode = const_string(INTERP, "r");
+            open_mode = Parrot_str_new_constant(INTERP, "r");
             SET_ATTR_mode(INTERP, SELF, open_mode);
         }
 
@@ -339,10 +339,10 @@ StringHandle object that isn't opened yet, returns an empty string.
             STRING *encoding;
             GET_ATTR_encoding(INTERP, SELF, encoding);
             if (!STRING_IS_NULL(encoding) &&
-                    string_equal(INTERP, encoding, const_string(INTERP, "utf8")) == 0)
+                    string_equal(INTERP, encoding, Parrot_str_new_constant(INTERP, "utf8")) == 0)
                 string_result = string_make(INTERP, "", 0, "unicode", 0);
             else
-                string_result = const_string(INTERP, "");
+                string_result = Parrot_str_new_constant(INTERP, "");
         }
         else
             string_result = string_copy(INTERP, string_result);
@@ -426,9 +426,9 @@ ignored, but stored for mocking.
 
     METHOD buffer_type(STRING *new_type :optional, INTVAL got_type :opt_flag) {
         INTVAL flags;
-        STRING *nobuffer_string   = const_string(INTERP, "unbuffered");
-        STRING *linebuffer_string = const_string(INTERP, "line-buffered");
-        STRING *fullbuffer_string = const_string(INTERP, "full-buffered");
+        STRING *nobuffer_string   = Parrot_str_new_constant(INTERP, "unbuffered");
+        STRING *linebuffer_string = Parrot_str_new_constant(INTERP, "line-buffered");
+        STRING *fullbuffer_string = Parrot_str_new_constant(INTERP, "full-buffered");
 
         GET_ATTR_flags(INTERP, SELF, flags);
 

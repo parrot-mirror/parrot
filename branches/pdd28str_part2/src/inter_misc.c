@@ -107,7 +107,7 @@ void
 Parrot_mark_method_writes(PARROT_INTERP, int type, ARGIN(const char *name))
 {
     ASSERT_ARGS(Parrot_mark_method_writes)
-    STRING *const str_name = const_string(interp, name);
+    STRING *const str_name = Parrot_str_new_constant(interp, name);
     PMC    *const pmc_true = pmc_new(interp, enum_class_Integer);
     PMC    *const method   = VTABLE_get_pmc_keyed_str(
         interp, interp->vtables[type]->_namespace, str_name);
@@ -481,7 +481,7 @@ sysinfo_s(PARROT_INTERP, INTVAL info_wanted)
     ASSERT_ARGS(sysinfo_s)
     switch (info_wanted) {
         case PARROT_OS:
-            return const_string(interp, BUILD_OS_NAME);
+            return Parrot_str_new_constant(interp, BUILD_OS_NAME);
         case PARROT_OS_VERSION:
 #ifdef PARROT_HAS_HEADER_SYSUTSNAME
             {
