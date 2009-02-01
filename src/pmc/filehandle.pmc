@@ -366,7 +366,7 @@ Read a line from the filehandle and return it in a string.
         string_result = Parrot_io_reads(INTERP, SELF, 0);
         if (!string_result)
             RETURN(PMC *PMCNULL);
-        len = string_length(INTERP, string_result);
+        len = Parrot_str_byte_length(INTERP, string_result);
         if (len < 1)
             RETURN(PMC *PMCNULL);
         while (len > 0 &&

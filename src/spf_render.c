@@ -129,7 +129,7 @@ handle_flags(PARROT_INTERP, ARGIN(const SpfInfo *info), ARGMOD(STRING *str),
         INTVAL is_int_type, ARGIN_NULLOK(STRING* prefix))
 {
     ASSERT_ARGS(handle_flags)
-    UINTVAL len = string_length(interp, str);
+    UINTVAL len = Parrot_str_byte_length(interp, str);
 
     if (is_int_type) {
         if (info->flags & FLAG_PREC && info->prec == 0 &&
@@ -155,7 +155,7 @@ handle_flags(PARROT_INTERP, ARGIN(const SpfInfo *info), ARGMOD(STRING *str),
         /* # 0x ... */
         if ((info->flags & FLAG_SHARP) && prefix) {
             str = Parrot_str_concat(interp, prefix, str, 0);
-            len += string_length(interp, prefix);
+            len += Parrot_str_byte_length(interp, prefix);
         }
         /* XXX sharp + fill ??? */
 
@@ -325,7 +325,7 @@ Parrot_sprintf_format(PARROT_INTERP,
     INTVAL i;
     INTVAL len     = 0;
     INTVAL old     = 0;
-    INTVAL pat_len = (INTVAL)string_length(interp, pat);
+    INTVAL pat_len = (INTVAL)Parrot_str_byte_length(interp, pat);
     HUGEINTVAL num;
 
     /* start with a buffer; double the pattern length to avoid realloc #1 */

@@ -178,7 +178,7 @@ Sets the specified function pointer and signature (C<*key>).
         pcc_params(INTERP, key, nci_info);
 
         /* Arity is length of that string minus one (the return type). */
-        nci_info->arity      = string_length(INTERP, key) - 1;
+        nci_info->arity      = Parrot_str_byte_length(INTERP, key) - 1;
 
         /* Build call function. */
         nci_info->func       = (PMC *)(build_call_func(INTERP, SELF,

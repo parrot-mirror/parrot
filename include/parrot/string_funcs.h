@@ -337,7 +337,7 @@ STRING* string_join(PARROT_INTERP, ARGIN_NULLOK(STRING *j), ARGIN(PMC *ar))
 
 PARROT_EXPORT
 PARROT_PURE_FUNCTION
-UINTVAL string_length(SHIM_INTERP, ARGIN(const STRING *s))
+UINTVAL Parrot_str_byte_length(SHIM_INTERP, ARGIN(const STRING *s))
         __attribute__nonnull__(2);
 
 PARROT_EXPORT
@@ -659,7 +659,7 @@ STRING* uint_to_str(PARROT_INTERP,
 #define ASSERT_ARGS_string_join __attribute__unused__ int _ASSERT_ARGS_CHECK = \
        PARROT_ASSERT_ARG(interp) \
     || PARROT_ASSERT_ARG(ar)
-#define ASSERT_ARGS_string_length __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+#define ASSERT_ARGS_Parrot_str_byte_length __attribute__unused__ int _ASSERT_ARGS_CHECK = \
        PARROT_ASSERT_ARG(s)
 #define ASSERT_ARGS_string_make __attribute__unused__ int _ASSERT_ARGS_CHECK = \
        PARROT_ASSERT_ARG(interp)

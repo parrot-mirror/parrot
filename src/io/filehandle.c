@@ -48,7 +48,7 @@ Parrot_io_parse_open_flags(PARROT_INTERP, ARGIN_NULLOK(STRING *mode_str))
     if (STRING_IS_NULL(mode_str))
         return PIO_F_READ;
 
-    mode_len = string_length(interp, mode_str);
+    mode_len = Parrot_str_byte_length(interp, mode_str);
 
     for (i = 0; i < mode_len; ++i) {
         INTVAL s = string_index(interp, mode_str, i);

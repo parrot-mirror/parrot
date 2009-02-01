@@ -233,7 +233,7 @@ static INTVAL
 does_isa(PARROT_INTERP, const STRING *method, const STRING *what)
 {
     INTVAL  pos    = 0;
-    INTVAL  length = string_length(interp, what);
+    INTVAL  length = Parrot_str_byte_length(interp, what);
 
     do {
         INTVAL len;
@@ -247,7 +247,7 @@ does_isa(PARROT_INTERP, const STRING *method, const STRING *what)
         if (pos >= length)
             return 0;
 
-        len = string_length(interp, method);
+        len = Parrot_str_byte_length(interp, method);
 
         if (pos && string_index(interp, what, pos - 1) != 32) {
             pos += len;

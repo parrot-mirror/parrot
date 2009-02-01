@@ -109,11 +109,11 @@ A newline is automatically added to the end of the fmt.
         }
 
         (void) string_replace(INTERP, fmt, pos, 2, repl, NULL);
-        replen = string_length(INTERP, repl);
+        replen = Parrot_str_byte_length(INTERP, repl);
     }
 
     /* Add a newline if necessary */
-    if ('\n' != string_index(INTERP, fmt, string_length(interp, fmt) - 1))
+    if ('\n' != string_index(INTERP, fmt, Parrot_str_byte_length(interp, fmt) - 1))
         fmt = Parrot_str_concat(INTERP, fmt, newline, 0);
 
     S1 = Parrot_str_concat(INTERP, SELF.get_string(), fmt, 0);

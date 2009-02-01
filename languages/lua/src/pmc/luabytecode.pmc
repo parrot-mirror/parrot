@@ -66,7 +66,7 @@ static const char *fp;
 static void _init(Interp *interp, STRING *str)
 {
     bytecode = Parrot_string_cstring(interp, str);
-    maxi     = string_length(interp, str);
+    maxi     = Parrot_str_byte_length(interp, str);
     fp       = (const char *)bytecode;
 }
 
