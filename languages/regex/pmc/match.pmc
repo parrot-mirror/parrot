@@ -38,7 +38,7 @@ static STRING* make_hash_key(Interp* interp, PMC * key)
 
 static STRING* match_range(Interp* interp, PMC* self, PMC* range)
 {
-    STRING* input_key = const_string(interp, "!INPUT");
+    STRING* input_key = Parrot_str_new_constant(interp, "!INPUT");
     Hash* hash = (Hash*) PMC_struct_val(self);
     HashBucket *b;
     STRING* input;
@@ -210,7 +210,7 @@ has not completed yet.
 
 */
     INTVAL get_bool() {
-        STRING* input_key = const_string(interp, "!RESULT");
+        STRING* input_key = Parrot_str_new_constant(interp, "!RESULT");
         Hash* hash = (Hash*) PMC_struct_val(SELF);
         HashBucket *b;
 

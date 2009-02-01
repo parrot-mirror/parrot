@@ -304,7 +304,7 @@ Parrot_build_sig_object_from_varargs(PARROT_INTERP, ARGIN_NULLOK(PMC* obj),
     PMC         *type_tuple    = PMCNULL;
     PMC         *returns       = PMCNULL;
     PMC         *call_object   = pmc_new(interp, enum_class_CallSignature);
-    STRING      *string_sig    = const_string(interp, sig);
+    STRING      *string_sig    = Parrot_str_new_constant(interp, sig);
     const INTVAL sig_len       = string_length(interp, string_sig);
     INTVAL       in_return_sig = 0;
     INTVAL       i;
@@ -434,7 +434,7 @@ Parrot_mmd_multi_dispatch_from_c_args(PARROT_INTERP,
 
     if (PMC_IS_NULL(sub)) {
         sub = Parrot_mmd_find_multi_from_sig_obj(interp,
-            const_string(interp, name), sig_object);
+            Parrot_str_new_constant(interp, name), sig_object);
 
         if (!PMC_IS_NULL(sub))
             Parrot_mmd_cache_store_by_types(interp, interp->op_mmd_cache, name,
@@ -1441,9 +1441,9 @@ Parrot_mmd_add_multi_from_c_args(PARROT_INTERP,
 {
     ASSERT_ARGS(Parrot_mmd_add_multi_from_c_args)
     STRING *comma         = CONST_STRING(interp, ",");
-    STRING *sub_name_str  = const_string(interp, sub_name);
-    STRING *long_sig_str  = const_string(interp, long_sig);
-    STRING *short_sig_str = const_string(interp, short_sig);
+    STRING *sub_name_str  = Parrot_str_new_constant(interp, sub_name);
+    STRING *long_sig_str  = Parrot_str_new_constant(interp, long_sig);
+    STRING *short_sig_str = Parrot_str_new_constant(interp, short_sig);
     PMC    *type_list     = string_split(interp, comma, long_sig_str);
     STRING *ns_name       = VTABLE_get_string_keyed_int(interp, type_list, 0);
 

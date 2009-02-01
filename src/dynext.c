@@ -140,7 +140,7 @@ set_cstring_prop(PARROT_INTERP, ARGMOD(PMC *lib_pmc), ARGIN(const char *what),
         ARGIN(STRING *name))
 {
     ASSERT_ARGS(set_cstring_prop)
-    STRING * const key  = const_string(interp, what);
+    STRING * const key  = Parrot_str_new_constant(interp, what);
     PMC    * const prop = constant_pmc_new(interp, enum_class_String);
 
     VTABLE_set_string_native(interp, prop, name);

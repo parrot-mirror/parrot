@@ -849,7 +849,7 @@ inline op throw(invar PMC) :flow {
      * current context appropriately.
      */
     Parrot_context_ref(interp, CONTEXT(interp));
-    VTABLE_set_attr_str(interp, $1, const_string(interp, "resume"), resume);
+    VTABLE_set_attr_str(interp, $1, Parrot_str_new_constant(interp, "resume"), resume);
     dest = Parrot_ex_throw_from_op(interp, $1, ret);
     goto ADDRESS(dest);
 }
@@ -878,7 +878,7 @@ inline op die(in STR) :flow {
                                     CONTROL_ERROR, $1);
 
     VTABLE_set_attr_str(interp, exception,
-                        const_string(interp, "resume"), resume);
+                        Parrot_str_new_constant(interp, "resume"), resume);
     dest = Parrot_ex_throw_from_op(interp, exception, ret);
     goto ADDRESS(dest);
 }
@@ -893,7 +893,7 @@ inline op die(in PMC) :flow {
         Parrot_ex_build_exception(interp, EXCEPT_error, CONTROL_ERROR, msg);
 
     VTABLE_set_attr_str(interp, exception,
-                        const_string(interp, "resume"), resume);
+                        Parrot_str_new_constant(interp, "resume"), resume);
     dest = Parrot_ex_throw_from_op(interp, exception, ret);
     goto ADDRESS(dest);
 }
@@ -919,7 +919,7 @@ inline op exit(in INT) :flow {
     PMC             *exception = Parrot_ex_build_exception(interp, EXCEPT_exit,
                                                       $1, NULL);
     VTABLE_set_attr_str(interp, exception,
-                        const_string(interp, "resume"), resume);
+                        Parrot_str_new_constant(interp, "resume"), resume);
     dest = Parrot_ex_throw_from_op(interp, exception, ret);
     goto ADDRESS(dest);
 }

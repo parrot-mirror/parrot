@@ -228,11 +228,11 @@ parrot_init_library_paths(PARROT_INTERP)
     VTABLE_set_pmc_keyed_int(interp, lib_paths,
             PARROT_LIB_DYN_EXTS, paths);
     /* no CONST_STRING here - the c2str.pl preprocessor needs "real strs" */
-    entry = const_string(interp, PARROT_LOAD_EXT);
+    entry = Parrot_str_new_constant(interp, PARROT_LOAD_EXT);
     VTABLE_push_string(interp, paths, entry);
     /* OS/X has .dylib and .bundle */
     if (!STREQ(PARROT_LOAD_EXT, PARROT_SHARE_EXT)) {
-        entry = const_string(interp, PARROT_SHARE_EXT);
+        entry = Parrot_str_new_constant(interp, PARROT_SHARE_EXT);
         VTABLE_push_string(interp, paths, entry);
     }
 

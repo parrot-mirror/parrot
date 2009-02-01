@@ -38,7 +38,7 @@ Return the string 'boolean'.
 
 */
     STRING* name() {
-        return const_string(INTERP, "boolean");
+        return Parrot_str_new_constant(INTERP, "boolean");
     }
 
 /*
@@ -52,9 +52,9 @@ Return the string '1' or ''.
 */
     STRING* get_string() {
         if (PMC_int_val(SELF))
-            return const_string(INTERP, "1");
+            return Parrot_str_new_constant(INTERP, "1");
         else
-            return const_string(INTERP, "");
+            return Parrot_str_new_constant(INTERP, "");
     }
 
 

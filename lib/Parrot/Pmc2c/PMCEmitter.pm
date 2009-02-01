@@ -69,8 +69,8 @@ sub generate_c_file {
     $c->emit( dont_edit( $self->filename ) );
     if ($self->is_dynamic) {
         $c->emit("#define PARROT_IN_EXTENSION\n");
-        $c->emit("#define CONST_STRING(i, s) const_string((i), s)\n");
-        $c->emit("#define CONST_STRING_GEN(i, s) const_string((i), s)\n");
+        $c->emit("#define CONST_STRING(i, s) Parrot_str_new_constant((i), s)\n");
+        $c->emit("#define CONST_STRING_GEN(i, s) Parrot_str_new_constant((i), s)\n");
     }
 
     $self->gen_includes;

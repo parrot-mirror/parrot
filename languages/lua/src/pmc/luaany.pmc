@@ -59,8 +59,8 @@ find_meth(PARROT_INTERP, PMC *obj, const char *name) {
 
     if (dynpmc_LuaString == type) {
         meta = Parrot_find_global_s(interp,
-                                    const_string(interp, "string"),
-                                    const_string(interp, "mt_string"));
+                                    Parrot_str_new_constant(interp, "string"),
+                                    Parrot_str_new_constant(interp, "mt_string"));
     }
 
     if (dynpmc_LuaFunction != type) {
@@ -74,7 +74,7 @@ find_meth(PARROT_INTERP, PMC *obj, const char *name) {
     if (meta) {
         PMC *method;
         PMC *key = pmc_new(interp, dynpmc_LuaString);
-        VTABLE_set_string_native(interp, key, const_string(interp, name));
+        VTABLE_set_string_native(interp, key, Parrot_str_new_constant(interp, name));
 
         method = VTABLE_get_pmc_keyed(interp, meta, key);
 

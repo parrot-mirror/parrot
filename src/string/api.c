@@ -660,7 +660,7 @@ string_primary_encoding_for_representation(PARROT_INTERP,
 
 /*
 
-=item C<STRING * const_string>
+=item C<STRING * Parrot_str_new_constant>
 
 Creates and returns a constant Parrot string.
 
@@ -672,9 +672,9 @@ PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 STRING *
-const_string(PARROT_INTERP, ARGIN(const char *buffer))
+Parrot_str_new_constant(PARROT_INTERP, ARGIN(const char *buffer))
 {
-    ASSERT_ARGS(const_string)
+    ASSERT_ARGS(Parrot_str_new_constant)
     DECL_CONST_CAST;
     STRING *s;
     Hash   * const cstring_cache = (Hash *)interp->const_cstring_hash;

@@ -389,7 +389,7 @@ trace_op_dump(PARROT_INTERP,
             goto done;
         if (len < ARGS_COLUMN)  {
             STRING * const fill = Parrot_str_repeat(debugger,
-                    const_string(debugger, " "),
+                    Parrot_str_new_constant(debugger, " "),
                     ARGS_COLUMN);
             Parrot_io_putps(debugger, Parrot_io_STDERR(debugger), fill);
         }

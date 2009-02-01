@@ -1041,13 +1041,13 @@ void
 register_compilers(PARROT_INTERP)
 {
     ASSERT_ARGS(register_compilers)
-    Parrot_compreg(interp, const_string(interp, "PASM"), imcc_compile_pasm_ex);
-    Parrot_compreg(interp, const_string(interp, "PIR"),  imcc_compile_pir_ex);
+    Parrot_compreg(interp, Parrot_str_new_constant(interp, "PASM"), imcc_compile_pasm_ex);
+    Parrot_compreg(interp, Parrot_str_new_constant(interp, "PIR"),  imcc_compile_pir_ex);
 
     /* It looks like this isn't used anywhere yet */
     /* TODO: return a Eval PMC, instead of a packfile */
     /* Parrot_compreg(interp,
-                      const_string(interp, "FILE"),
+                      Parrot_str_new_constant(interp, "FILE"),
                       imcc_compile_file ); */
 }
 
