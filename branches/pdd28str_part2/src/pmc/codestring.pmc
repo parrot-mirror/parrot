@@ -149,7 +149,7 @@ counting at 10 (so that the values 0..9 can be considered "safe").
         RETURN(STRING *counter_as_string);
     }
     else {
-        STRING *result = string_copy(INTERP, format);
+        STRING *result = Parrot_str_copy(INTERP, format);
         result         = Parrot_str_concat(INTERP, result, counter_as_string, 1);
         RETURN(STRING *result);
     }

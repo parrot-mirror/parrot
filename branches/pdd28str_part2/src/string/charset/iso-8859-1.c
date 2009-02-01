@@ -328,7 +328,7 @@ static STRING*
 compose(PARROT_INTERP, ARGIN(STRING *src))
 {
     ASSERT_ARGS(compose)
-    return string_copy(interp, src);
+    return Parrot_str_copy(interp, src);
 }
 
 /*

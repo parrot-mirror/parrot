@@ -450,7 +450,7 @@ path_concat(PARROT_INTERP, ARGMOD(STRING *l_path), ARGMOD(STRING *r_path))
     ASSERT_ARGS(path_concat)
     STRING* join;
 
-    join = string_copy(interp, l_path);
+    join = Parrot_str_copy(interp, l_path);
     join = path_guarantee_trailing_separator(interp, join);
     join = Parrot_str_append(interp, join, r_path);
 
@@ -477,7 +477,7 @@ try_load_path(PARROT_INTERP, ARGMOD(STRING* path))
     ASSERT_ARGS(try_load_path)
     STRING *final;
 
-    final = string_copy(interp, path);
+    final = Parrot_str_copy(interp, path);
 
     final = path_finalize(interp, final);
 
@@ -512,7 +512,7 @@ try_bytecode_extensions(PARROT_INTERP, ARGMOD(STRING* path))
     STRING * const pasm_extension     = CONST_STRING(interp, ".pasm");
     int guess;
 
-    test_path = string_copy(interp, path);
+    test_path = Parrot_str_copy(interp, path);
 
     /* First try the path as given. */
     result = try_load_path(interp, test_path);
@@ -652,7 +652,7 @@ Parrot_locate_runtime_file_str(PARROT_INTERP, ARGMOD(STRING *file),
         if (Parrot_str_byte_length(interp, prefix) && !is_abs_path(path))
             full_name = path_concat(interp, prefix, path);
         else
-            full_name = string_copy(interp, path);
+            full_name = Parrot_str_copy(interp, path);
 
         full_name = path_append(interp, full_name, file);
 
@@ -835,11 +835,11 @@ parrot_split_path_ext(PARROT_INTERP, ARGMOD(STRING *in),
     }
     else if (pos_sl) {
         stem = string_substr(interp, in, pos_sl, len - pos_sl, NULL, 0);
-        *wo_ext = string_copy(interp, in);
+        *wo_ext = Parrot_str_copy(interp, in);
         *ext = NULL;
     }
     else {
-        stem = string_copy(interp, in);
+        stem = Parrot_str_copy(interp, in);
         *wo_ext = stem;
         *ext = NULL;
     }

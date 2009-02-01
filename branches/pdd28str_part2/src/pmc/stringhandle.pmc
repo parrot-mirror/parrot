@@ -72,9 +72,9 @@ Create a copy of the stringhandle.
         Parrot_StringHandle_attributes * const data_struct = PARROT_STRINGHANDLE(copy);
 
         data_struct->flags        = old_struct->flags;
-        data_struct->stringhandle = string_copy(INTERP, old_struct->stringhandle);
-        data_struct->mode         = string_copy(INTERP, old_struct->mode);
-        data_struct->encoding     = string_copy(INTERP, old_struct->encoding);
+        data_struct->stringhandle = Parrot_str_copy(INTERP, old_struct->stringhandle);
+        data_struct->mode         = Parrot_str_copy(INTERP, old_struct->mode);
+        data_struct->encoding     = Parrot_str_copy(INTERP, old_struct->encoding);
 
         return copy;
     }
@@ -161,10 +161,10 @@ stored for mocking.
         INTVAL flags;
 
         if (got_mode && !STRING_IS_NULL(mode))
-            SET_ATTR_mode(INTERP, SELF, string_copy(INTERP, mode));
+            SET_ATTR_mode(INTERP, SELF, Parrot_str_copy(INTERP, mode));
 
         if (got_filename && !STRING_IS_NULL(filename))
-            SET_ATTR_filename(INTERP, SELF, string_copy(INTERP, filename));
+            SET_ATTR_filename(INTERP, SELF, Parrot_str_copy(INTERP, filename));
 
 
         /* If StringHandle hasn't already been initialized, create a new string. */
@@ -263,7 +263,7 @@ C<bytes> argument is currently ignored.
                 "Cannot read from a closed filehandle");
 
         if (length == 0)
-            string_result = string_copy(INTERP, string_orig);
+            string_result = Parrot_str_copy(INTERP, string_orig);
         else {
             INTVAL orig_length, read_length;
             read_length = length;
@@ -345,7 +345,7 @@ StringHandle object that isn't opened yet, returns an empty string.
                 string_result = Parrot_str_new_constant(INTERP, "");
         }
         else
-            string_result = string_copy(INTERP, string_result);
+            string_result = Parrot_str_copy(INTERP, string_result);
 
         RETURN(STRING *string_result);
     }
@@ -494,7 +494,7 @@ Retrieve the read mode string for the stringhandle.
         STRING *mode, *mode_copy;
 
         GET_ATTR_mode(INTERP, SELF, mode);
-        mode_copy = string_copy(INTERP, mode);
+        mode_copy = Parrot_str_copy(INTERP, mode);
 
         RETURN(STRING *mode_copy);
 
@@ -517,14 +517,14 @@ scheme) for the stringhandle.
 
         if (got_encoding) {
             if (!STRING_IS_NULL(new_encoding))
-                encoding_copy = string_copy(INTERP, new_encoding);
+                encoding_copy = Parrot_str_copy(INTERP, new_encoding);
             SET_ATTR_encoding(INTERP, SELF, encoding_copy);
             RETURN(STRING *new_encoding);
         }
 
         GET_ATTR_encoding(INTERP, SELF, encoding);
         if (!STRING_IS_NULL(encoding))
-            encoding_copy = string_copy(INTERP, encoding);
+            encoding_copy = Parrot_str_copy(INTERP, encoding);
 
         RETURN(STRING *encoding_copy);
 

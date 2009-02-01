@@ -223,7 +223,7 @@ static STRING *
 debug_file(PARROT_INTERP, STRING *file, const char *ext)
 {
     STRING *ret;
-    ret = string_copy(interp, file);
+    ret = Parrot_str_copy(interp, file);
     ret = Parrot_str_append(interp, ret,
             string_make(interp, ext, strlen(ext), NULL,
                 PObj_external_FLAG));
@@ -259,7 +259,7 @@ Parrot_jit_debug_stabs(PARROT_INTERP)
             interp->code->debugs, 0));
         pasmfile = string_make(interp, src, strlen(src), NULL,
                 PObj_external_FLAG);
-        file = string_copy(interp, pasmfile);
+        file = Parrot_str_copy(interp, pasmfile);
         /* chop pasm/pir */
 
         ext = strrchr(src, '.');

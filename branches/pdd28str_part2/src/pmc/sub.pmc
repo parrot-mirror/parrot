@@ -116,12 +116,12 @@ Sets the name of the subroutine.
 
     VTABLE STRING *get_string() {
         const Parrot_sub * const sub = PMC_sub(SELF);
-        return string_copy(INTERP, sub->name);
+        return Parrot_str_copy(INTERP, sub->name);
     }
 
     VTABLE void set_string_native(STRING *subname) {
         Parrot_sub * const sub = PMC_sub(SELF);
-        sub->name              = string_copy(INTERP, subname);
+        sub->name              = Parrot_str_copy(INTERP, subname);
     }
 
 /*
@@ -381,12 +381,12 @@ Creates and returns a clone of the subroutine.
         /* we have to mark it ourselves */
         PObj_custom_mark_destroy_SETALL(ret);
 
-        /* first set the sub struct, string_copy may cause GC */
+        /* first set the sub struct, Parrot_str_copy may cause GC */
         PMC_struct_val(ret) = sub;
         PMC_pmc_val(ret)    = NULL;
         memcpy(sub, PMC_sub(SELF), sizeof (Parrot_sub));
         if (sub->name != NULL)
-            sub->name = string_copy(INTERP, sub->name);
+            sub->name = Parrot_str_copy(INTERP, sub->name);
 
         if (sub->ctx)
             Parrot_context_ref(INTERP, sub->ctx);
@@ -417,7 +417,7 @@ Set SELF to the data in other.
             memcpy(PMC_sub(SELF), PMC_sub(other), sizeof (struct Parrot_sub));
 
             /* copy the name so it's a different string in memory */
-            PMC_sub(SELF)->name = string_copy(INTERP, PMC_sub(SELF)->name);
+            PMC_sub(SELF)->name = Parrot_str_copy(INTERP, PMC_sub(SELF)->name);
         }
         else
             Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
