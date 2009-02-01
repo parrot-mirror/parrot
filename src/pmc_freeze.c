@@ -564,7 +564,7 @@ push_ascii_string(PARROT_INTERP, ARGIN(IMAGE_IO *io), ARGIN(const STRING *s))
 
     /* temporary--write out in UTF-8 */
     for (idx = 0; idx < length; ++idx) {
-        *cursor++ = (unsigned char)string_index(interp, s, idx);
+        *cursor++ = (unsigned char)Parrot_str_indexed(interp, s, idx);
     }
 
     str_append(interp, io->image, buffer, cursor - buffer);
