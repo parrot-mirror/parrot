@@ -87,7 +87,7 @@ Implementation note: taken from the bottom end of Parrot_readbc().
     VTABLE void set_string_native(STRING *str) {
         PackFile *pf = PMC_data_typed(SELF, PackFile *);
         const opcode_t *ptr = (const opcode_t*)Parrot_string_cstring(interp, str);
-        int length = string_length(interp, str);
+        int length = Parrot_str_byte_length(interp, str);
         if (!PackFile_unpack(interp, pf, ptr, length))
             Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_MALFORMED_PACKFILE,
                                         "Can't unpack packfile.");

@@ -552,7 +552,7 @@ Parrot_str_append(PARROT_INTERP, ARGMOD_NULLOK(STRING *a), ARGIN_NULLOK(STRING *
     /* XXX should this be a CHARSET method? */
 
     /* If B isn't real, we just bail */
-    const UINTVAL b_len = b ? string_length(interp, b) : 0;
+    const UINTVAL b_len = b ? Parrot_str_byte_length(interp, b) : 0;
     if (!b_len)
         return a;
 
@@ -842,7 +842,7 @@ Parrot_str_resize(PARROT_INTERP, ARGMOD(STRING *s), UINTVAL addlen)
 
 =over 4
 
-=item C<UINTVAL string_length>
+=item C<UINTVAL Parrot_str_byte_length>
 
 Returns the number of characters in the specified Parrot string.
 
@@ -853,9 +853,9 @@ Returns the number of characters in the specified Parrot string.
 PARROT_EXPORT
 PARROT_PURE_FUNCTION
 UINTVAL
-string_length(SHIM_INTERP, ARGIN(const STRING *s))
+Parrot_str_byte_length(SHIM_INTERP, ARGIN(const STRING *s))
 {
-    ASSERT_ARGS(string_length)
+    ASSERT_ARGS(Parrot_str_byte_length)
 
     return s->strlen;
 }
@@ -913,7 +913,7 @@ string_str_index(PARROT_INTERP, ARGIN(const STRING *s),
     if (start < 0)
         return -1;
 
-    len = string_length(interp, s);
+    len = Parrot_str_byte_length(interp, s);
 
     if (!len)
         return -1;
@@ -921,7 +921,7 @@ string_str_index(PARROT_INTERP, ARGIN(const STRING *s),
     if (start >= (INTVAL)len)
         return -1;
 
-    if (!string_length(interp, s2))
+    if (!Parrot_str_byte_length(interp, s2))
         return -1;
 
     src    = PARROT_const_cast(STRING *, s);
@@ -948,7 +948,7 @@ INTVAL
 string_ord(PARROT_INTERP, ARGIN_NULLOK(const STRING *s), INTVAL idx)
 {
     ASSERT_ARGS(string_ord)
-    const UINTVAL len        = s ? string_length(interp, s) : 0;
+    const UINTVAL len        = s ? Parrot_str_byte_length(interp, s) : 0;
     UINTVAL       true_index = (UINTVAL)idx;
 
     if (len == 0)
@@ -1189,7 +1189,7 @@ string_substr(PARROT_INTERP,
         saneify_string(src);
 
         /* Allow regexes to return $' easily for "aaa" =~ /aaa/ */
-        if (offset == (INTVAL)string_length(interp, src) || length < 1)
+        if (offset == (INTVAL)Parrot_str_byte_length(interp, src) || length < 1)
             return Parrot_str_new_noinit(interp, enum_stringrep_one, 0);
 
         if (offset < 0)
@@ -1972,7 +1972,7 @@ INTVAL
 string_bool(PARROT_INTERP, ARGIN_NULLOK(const STRING *s))
 {
     ASSERT_ARGS(string_bool)
-    const INTVAL len = s ? string_length(interp, s) : 0;
+    const INTVAL len = s ? Parrot_str_byte_length(interp, s) : 0;
 
     if (len == 0)
         return 0;
@@ -2827,7 +2827,7 @@ string_increment(PARROT_INTERP, ARGIN(const STRING *s))
     ASSERT_ARGS(string_increment)
     UINTVAL o;
 
-    if (string_length(interp, s) != 1)
+    if (Parrot_str_byte_length(interp, s) != 1)
         Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_UNIMPLEMENTED,
             "increment only for length = 1 done");
 
@@ -2886,7 +2886,7 @@ Parrot_string_is_cclass(PARROT_INTERP, INTVAL flags,
         ARGIN(const STRING *s), UINTVAL offset)
 {
     ASSERT_ARGS(Parrot_string_is_cclass)
-    if (!string_length(interp, s))
+    if (!Parrot_str_byte_length(interp, s))
         return 0;
 
     return CHARSET_IS_CCLASS(interp, flags, s, offset);
@@ -3140,7 +3140,7 @@ string_split(PARROT_INTERP, ARGIN(STRING *delim), ARGIN(STRING *str))
 {
     ASSERT_ARGS(string_split)
     PMC * const res  = pmc_new(interp, enum_class_ResizableStringArray);
-    const int   slen = string_length(interp, str);
+    const int   slen = Parrot_str_byte_length(interp, str);
 
     int dlen;
     int ps, pe;
@@ -3148,7 +3148,7 @@ string_split(PARROT_INTERP, ARGIN(STRING *delim), ARGIN(STRING *str))
     if (!slen)
         return res;
 
-    dlen = string_length(interp, delim);
+    dlen = Parrot_str_byte_length(interp, delim);
 
     if (dlen == 0) {
         int i;
@@ -3176,7 +3176,7 @@ string_split(PARROT_INTERP, ARGIN(STRING *delim), ARGIN(STRING *str))
         STRING * const tstr = string_substr(interp, str, ps, pl, NULL, 0);
 
         VTABLE_push_string(interp, res, tstr);
-        ps = pe + string_length(interp, delim);
+        ps = pe + Parrot_str_byte_length(interp, delim);
 
         if (ps > slen)
             break;

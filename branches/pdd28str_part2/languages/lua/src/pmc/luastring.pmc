@@ -228,7 +228,7 @@ Return length of the string.
 
 */
     VTABLE INTVAL elements() {
-        return string_length(INTERP, PMC_str_val(SELF));
+        return Parrot_str_byte_length(INTERP, PMC_str_val(SELF));
     }
 
 /*

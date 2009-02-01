@@ -267,7 +267,7 @@ C<bytes> argument is currently ignored.
         else {
             INTVAL orig_length, read_length;
             read_length = length;
-            orig_length = string_length(INTERP, string_orig);
+            orig_length = Parrot_str_byte_length(INTERP, string_orig);
 
             GET_ATTR_read_offset(INTERP, SELF, offset);
 
@@ -303,7 +303,7 @@ responds to "\n" newlines.)
             Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_PIO_ERROR,
                 "Cannot read from a closed filehandle");
 
-        orig_length = string_length(INTERP, string_result);
+        orig_length = Parrot_str_byte_length(INTERP, string_result);
         GET_ATTR_read_offset(INTERP, SELF, offset);
         newline_pos = string_str_index(INTERP, string_result, CONST_STRING(INTERP, "\n"), offset);
 
@@ -409,7 +409,7 @@ Print the string to the stringhandle.
 
         SET_ATTR_stringhandle(INTERP, SELF, new_string);
 
-        status = string_length(interp, new_string);
+        status = Parrot_str_byte_length(interp, new_string);
         RETURN(INTVAL status);
     }
 
@@ -474,7 +474,7 @@ Returns the current size of the stringhandle.
 
         if (STRING_IS_NULL(stringhandle))
             RETURN(INTVAL 0);
-        buffer_size = string_length(interp, stringhandle);
+        buffer_size = Parrot_str_byte_length(interp, stringhandle);
 
         RETURN(INTVAL buffer_size);
 
@@ -547,7 +547,7 @@ string data).
         GET_ATTR_stringhandle(INTERP, SELF, stringhandle);
         GET_ATTR_read_offset(INTERP, SELF, offset);
 
-        if (offset >= string_length(INTERP, stringhandle))
+        if (offset >= Parrot_str_byte_length(INTERP, stringhandle))
             RETURN(INTVAL 1);
 
         RETURN(INTVAL 0);

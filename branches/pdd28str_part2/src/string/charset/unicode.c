@@ -767,7 +767,7 @@ validate(PARROT_INTERP, ARGIN(STRING *src))
     String_iter iter;
 
     ENCODING_ITER_INIT(interp, src, &iter);
-    for (offset = 0; offset < string_length(interp, src); ++offset) {
+    for (offset = 0; offset < Parrot_str_byte_length(interp, src); ++offset) {
         const UINTVAL codepoint = iter.get_and_advance(interp, &iter);
         /* Check for Unicode non-characters */
         if (codepoint >= 0xfdd0

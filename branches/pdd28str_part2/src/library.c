@@ -527,7 +527,7 @@ try_bytecode_extensions(PARROT_INTERP, ARGMOD(STRING* path))
     */
 
     if (!STRING_IS_NULL(test_path)) {
-        if (string_length(interp, test_path) > 4) {
+        if (Parrot_str_byte_length(interp, test_path) > 4) {
             STRING *orig_ext = string_substr(interp, test_path, -4, 4, NULL, 0);
             /* First try substituting .pbc for the .pir extension */
             if (string_equal(interp, orig_ext, pir_extension) == 0) {
@@ -554,7 +554,7 @@ try_bytecode_extensions(PARROT_INTERP, ARGMOD(STRING* path))
         }
 
         /* Finally, try substituting .pbc for the .pasm extension. */
-        if (string_length(interp, test_path) > 5) {
+        if (Parrot_str_byte_length(interp, test_path) > 5) {
             STRING *orig_ext = string_substr(interp, test_path, -5, 5, NULL, 0);
             if (string_equal(interp, orig_ext, pasm_extension) == 0) {
                 STRING *without_ext = string_chopn(interp, test_path, 5);
@@ -649,7 +649,7 @@ Parrot_locate_runtime_file_str(PARROT_INTERP, ARGMOD(STRING *file),
     for (i = 0; i < n; ++i) {
         STRING * const path = VTABLE_get_string_keyed_int(interp, paths, i);
 
-        if (string_length(interp, prefix) && !is_abs_path(path))
+        if (Parrot_str_byte_length(interp, prefix) && !is_abs_path(path))
             full_name = path_concat(interp, prefix, path);
         else
             full_name = string_copy(interp, path);
@@ -807,7 +807,7 @@ parrot_split_path_ext(PARROT_INTERP, ARGMOD(STRING *in),
     STRING * const dot     = string_make(interp, ".", 1, charset,
             PObj_external_FLAG|PObj_constant_FLAG);
 
-    const INTVAL len = string_length(interp, in);
+    const INTVAL len = Parrot_str_byte_length(interp, in);
     STRING *stem;
     INTVAL pos_sl, pos_dot;
 

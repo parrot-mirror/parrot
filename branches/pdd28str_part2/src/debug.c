@@ -2764,7 +2764,7 @@ PDB_disassemble_op(PARROT_INTERP, ARGOUT(char *dest), size_t space,
                         strcpy(&dest[size], temp);
                         string_cstring_free(temp);
                     }
-                    size += string_length(interp, PMC_str_val(k));
+                    size += Parrot_str_byte_length(interp, PMC_str_val(k));
                     dest[size++] = '"';
                     break;
                 case KEY_integer_FLAG|KEY_register_FLAG:

@@ -272,7 +272,7 @@ C<isdigit()> respectively.
     VTABLE void increment() {
         STRING            *str   = Parrot_unCOW_string(interp, PMC_str_val(SELF));
         char              *start = str->strstart;
-        const char * const end   = start + string_length(INTERP, str);
+        const char * const end   = start + Parrot_str_byte_length(INTERP, str);
 
         /* pointer to the substring we're going to increment */
         char       *substr;
@@ -367,7 +367,7 @@ C<isdigit()> respectively.
     VTABLE void decrement() {
         STRING      *str   = Parrot_unCOW_string(interp, PMC_str_val(SELF));
         char        *start = str->strstart;
-        char * const end   = start + string_length(INTERP, str);
+        char * const end   = start + Parrot_str_byte_length(INTERP, str);
 
         /* pointer to the substring we're going to decrement */
         char *substr;

@@ -530,14 +530,14 @@ NOTNULL(STRING *signature), NOTNULL(int *jitted))
 
     /* And in here is the platform-independent way. Which is to say
        "here there be hacks" */
-    signature_len = string_length(interp, signature);
+    signature_len = Parrot_str_byte_length(interp, signature);
     if (0 == signature_len)
        return F2DPTR(pcf_v_);
     /* remove deprecated void argument 'v' character */
     if (2 == signature_len && 'v' == string_index(interp, signature, 1)) {
        Parrot_warn(interp, PARROT_WARNINGS_ALL_FLAG, "function signature argument character 'v' ignored");
        string_chopn_inplace(interp, signature, 1);
-       signature_len = string_length(interp, signature);
+       signature_len = Parrot_str_byte_length(interp, signature);
     }
 
     iglobals = interp->iglobals;

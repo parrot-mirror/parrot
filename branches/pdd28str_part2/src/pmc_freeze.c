@@ -557,7 +557,7 @@ static void
 push_ascii_string(PARROT_INTERP, ARGIN(IMAGE_IO *io), ARGIN(const STRING *s))
 {
     ASSERT_ARGS(push_ascii_string)
-    const UINTVAL length = string_length(interp, s);
+    const UINTVAL length = Parrot_str_byte_length(interp, s);
     char * const buffer = (char *)malloc(4*length); /* XXX Why 4?  What does that mean? */
     char *cursor = buffer;
     UINTVAL idx = 0;
@@ -1099,7 +1099,7 @@ ft_init(PARROT_INTERP, ARGIN(visit_info *info))
         s->strlen += header_length;
     }
     else {
-        if (string_length(interp, s) < header_length) {
+        if (Parrot_str_byte_length(interp, s) < header_length) {
             Parrot_ex_throw_from_c_args(interp, NULL,
                 EXCEPTION_INVALID_STRING_REPRESENTATION,
                 "bad string to thaw");
@@ -1838,7 +1838,7 @@ run_thaw(PARROT_INTERP, ARGIN(STRING* image), visit_enum_type what)
      * info->thaw_ptr becomes invalid - seems that the hash got
      * collected under us.
      */
-    if (1 || (string_length(interp, image) > THAW_BLOCK_DOD_SIZE)) {
+    if (1 || (Parrot_str_byte_length(interp, image) > THAW_BLOCK_DOD_SIZE)) {
         Parrot_do_dod_run(interp, 1);
         Parrot_block_GC_mark(interp);
         Parrot_block_GC_sweep(interp);

@@ -305,7 +305,7 @@ Parrot_build_sig_object_from_varargs(PARROT_INTERP, ARGIN_NULLOK(PMC* obj),
     PMC         *returns       = PMCNULL;
     PMC         *call_object   = pmc_new(interp, enum_class_CallSignature);
     STRING      *string_sig    = Parrot_str_new_constant(interp, sig);
-    const INTVAL sig_len       = string_length(interp, string_sig);
+    const INTVAL sig_len       = Parrot_str_byte_length(interp, string_sig);
     INTVAL       in_return_sig = 0;
     INTVAL       i;
 
@@ -836,7 +836,7 @@ Parrot_mmd_build_type_tuple_from_sig_obj(PARROT_INTERP, ARGIN(PMC *sig_obj))
     ASSERT_ARGS(Parrot_mmd_build_type_tuple_from_sig_obj)
     PMC * const  type_tuple = pmc_new(interp, enum_class_FixedIntegerArray);
     STRING      *string_sig = VTABLE_get_string(interp, sig_obj);
-    const INTVAL sig_len    = string_length(interp, string_sig);
+    const INTVAL sig_len    = Parrot_str_byte_length(interp, string_sig);
     INTVAL       tuple_size = 0;
     INTVAL       args_ended = 0;
     INTVAL       i;
