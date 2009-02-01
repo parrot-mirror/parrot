@@ -216,7 +216,7 @@ STRING * string_compose(PARROT_INTERP, ARGIN_NULLOK(STRING *src))
 
 PARROT_EXPORT
 PARROT_IGNORABLE_RESULT
-INTVAL string_compute_strlen(PARROT_INTERP, ARGMOD(STRING *s))
+INTVAL Parrot_str_length(PARROT_INTERP, ARGMOD(STRING *s))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         FUNC_MODIFIES(*s);
@@ -613,7 +613,7 @@ STRING* uint_to_str(PARROT_INTERP,
        PARROT_ASSERT_ARG(interp)
 #define ASSERT_ARGS_string_compose __attribute__unused__ int _ASSERT_ARGS_CHECK = \
        PARROT_ASSERT_ARG(interp)
-#define ASSERT_ARGS_string_compute_strlen __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+#define ASSERT_ARGS_Parrot_str_length __attribute__unused__ int _ASSERT_ARGS_CHECK = \
        PARROT_ASSERT_ARG(interp) \
     || PARROT_ASSERT_ARG(s)
 #define ASSERT_ARGS_Parrot_str_concat __attribute__unused__ int _ASSERT_ARGS_CHECK = \

@@ -786,7 +786,7 @@ Parrot_str_new_init(PARROT_INTERP, ARGIN_NULLOK(const char *buffer), UINTVAL len
         if (encoding == Parrot_fixed_8_encoding_ptr)
             s->strlen = len;
         else
-            string_compute_strlen(interp, s);
+            Parrot_str_length(interp, s);
 
         return s;
     }
@@ -799,7 +799,7 @@ Parrot_str_new_init(PARROT_INTERP, ARGIN_NULLOK(const char *buffer), UINTVAL len
         if (encoding == Parrot_fixed_8_encoding_ptr)
             s->strlen = len;
         else
-            string_compute_strlen(interp, s);
+            Parrot_str_length(interp, s);
     }
     else {
         s->strlen = s->bufused = 0;
@@ -1034,7 +1034,7 @@ string_copy(PARROT_INTERP, ARGMOD(STRING *s))
 
 =over 4
 
-=item C<INTVAL string_compute_strlen>
+=item C<INTVAL Parrot_str_length>
 
 Calculates and returns the number of characters in the specified Parrot string.
 
@@ -1045,9 +1045,9 @@ Calculates and returns the number of characters in the specified Parrot string.
 PARROT_EXPORT
 PARROT_IGNORABLE_RESULT
 INTVAL
-string_compute_strlen(PARROT_INTERP, ARGMOD(STRING *s))
+Parrot_str_length(PARROT_INTERP, ARGMOD(STRING *s))
 {
-    ASSERT_ARGS(string_compute_strlen)
+    ASSERT_ARGS(Parrot_str_length)
 
     s->strlen = CHARSET_CODEPOINTS(interp, s);
     return s->strlen;
@@ -1358,7 +1358,7 @@ string_replace(PARROT_INTERP, ARGIN(STRING *src),
                 rep->strstart, rep->bufused);
 
         if (diff)
-            (void)string_compute_strlen(interp, src);
+            (void)Parrot_str_length(interp, src);
     }
 
     /* Replacement is larger than avail buffer, grow the string */
@@ -1376,7 +1376,7 @@ string_replace(PARROT_INTERP, ARGIN(STRING *src),
         mem_sys_memcopy((char *)src->strstart + start_byte, rep->strstart,
                 rep->bufused);
         src->bufused += diff;
-        (void)string_compute_strlen(interp, src);
+        (void)Parrot_str_length(interp, src);
     }
 
     /* src is modified, now return the original substring */
@@ -2644,7 +2644,7 @@ string_unescape_cstring(PARROT_INTERP,
 
     /* this also validates the string */
     if (encoding != result->encoding)
-        string_compute_strlen(interp, result);
+        Parrot_str_length(interp, result);
 
     if (!CHARSET_VALIDATE(interp, result, 0))
         Parrot_ex_throw_from_c_args(interp, NULL,
