@@ -451,7 +451,7 @@ PMC* string_split(PARROT_INTERP, ARGIN(STRING *delim), ARGIN(STRING *str))
 
 PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
-INTVAL string_str_index(PARROT_INTERP,
+INTVAL Parrot_str_find_index(PARROT_INTERP,
     ARGIN(const STRING *s),
     ARGIN(const STRING *s2),
     INTVAL start)
@@ -699,7 +699,7 @@ STRING* uint_to_str(PARROT_INTERP,
        PARROT_ASSERT_ARG(interp) \
     || PARROT_ASSERT_ARG(delim) \
     || PARROT_ASSERT_ARG(str)
-#define ASSERT_ARGS_string_str_index __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+#define ASSERT_ARGS_Parrot_str_find_index __attribute__unused__ int _ASSERT_ARGS_CHECK = \
        PARROT_ASSERT_ARG(interp) \
     || PARROT_ASSERT_ARG(s) \
     || PARROT_ASSERT_ARG(s2)

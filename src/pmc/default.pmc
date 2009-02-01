@@ -237,7 +237,7 @@ does_isa(PARROT_INTERP, const STRING *method, const STRING *what)
 
     do {
         INTVAL len;
-        INTVAL idx = string_str_index(interp, what, method, (INTVAL)pos);
+        INTVAL idx = Parrot_str_find_index(interp, what, method, (INTVAL)pos);
 
         if (idx < 0)
             return 0;

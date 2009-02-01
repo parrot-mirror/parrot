@@ -889,7 +889,7 @@ Parrot_str_indexed(PARROT_INTERP, ARGIN(const STRING *s), UINTVAL idx)
 
 /*
 
-=item C<INTVAL string_str_index>
+=item C<INTVAL Parrot_str_find_index>
 
 Returns the character position of the second Parrot string in the first at or
 after C<start>. The return value is a (0 based) offset in characters, not
@@ -902,10 +902,10 @@ bytes. If second string is not found in the first string, returns -1.
 PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
 INTVAL
-string_str_index(PARROT_INTERP, ARGIN(const STRING *s),
+Parrot_str_find_index(PARROT_INTERP, ARGIN(const STRING *s),
         ARGIN(const STRING *s2), INTVAL start)
 {
-    ASSERT_ARGS(string_str_index)
+    ASSERT_ARGS(Parrot_str_find_index)
     STRING *src, *search;
     UINTVAL len;
     DECL_CONST_CAST;
@@ -3162,7 +3162,7 @@ string_split(PARROT_INTERP, ARGIN(STRING *delim), ARGIN(STRING *str))
         return res;
     }
 
-    pe = string_str_index(interp, str, delim, 0);
+    pe = Parrot_str_find_index(interp, str, delim, 0);
 
     if (pe < 0) {
         VTABLE_push_string(interp, res, str);
@@ -3181,7 +3181,7 @@ string_split(PARROT_INTERP, ARGIN(STRING *delim), ARGIN(STRING *str))
         if (ps > slen)
             break;
 
-        pe = string_str_index(interp, str, delim, ps);
+        pe = Parrot_str_find_index(interp, str, delim, ps);
 
         if (pe < 0)
             pe = slen;
