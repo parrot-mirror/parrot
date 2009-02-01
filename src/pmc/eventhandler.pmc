@@ -194,7 +194,7 @@ Retrieves the C<type> attribute of this event handler.
             PMC_data_typed(SELF, Parrot_EventHandler_attributes *);
 
         if (e)
-            return string_copy(INTERP, e->type);
+            return Parrot_str_copy(INTERP, e->type);
 
         return string_from_literal(INTERP, "");
     }

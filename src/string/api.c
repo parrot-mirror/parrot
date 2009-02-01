@@ -516,11 +516,11 @@ Parrot_str_concat(PARROT_INTERP, ARGIN_NULLOK(STRING *a),
             return result;
         }
 
-        return string_copy(interp, a);
+        return Parrot_str_copy(interp, a);
     }
 
     return b
-        ? string_copy(interp, b)
+        ? Parrot_str_copy(interp, b)
         : string_make(interp, NULL, 0, NULL, Uflags);
 }
 
@@ -558,7 +558,7 @@ Parrot_str_append(PARROT_INTERP, ARGMOD_NULLOK(STRING *a), ARGIN_NULLOK(STRING *
 
     /* Is A real? */
     if (a == NULL || PObj_bufstart(a) == NULL)
-        return string_copy(interp, b);
+        return Parrot_str_copy(interp, b);
 
     saneify_string(a);
     saneify_string(b);
@@ -1007,7 +1007,7 @@ string_chr(PARROT_INTERP, UINTVAL character)
 
 /*
 
-=item C<STRING * string_copy>
+=item C<STRING * Parrot_str_copy>
 
 Creates and returns a copy of the specified Parrot string.
 
@@ -1019,9 +1019,9 @@ PARROT_EXPORT
 PARROT_CANNOT_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
 STRING *
-string_copy(PARROT_INTERP, ARGMOD(STRING *s))
+Parrot_str_copy(PARROT_INTERP, ARGMOD(STRING *s))
 {
-    ASSERT_ARGS(string_copy)
+    ASSERT_ARGS(Parrot_str_copy)
     return Parrot_str_new_COW(interp, s);
 }
 
@@ -1402,7 +1402,7 @@ STRING *
 string_chopn(PARROT_INTERP, ARGMOD(STRING *s), INTVAL n)
 {
     ASSERT_ARGS(string_chopn)
-    STRING * const chopped = string_copy(interp, s);
+    STRING * const chopped = Parrot_str_copy(interp, s);
     string_chopn_inplace(interp, chopped, n);
     return chopped;
 }
@@ -2678,7 +2678,7 @@ string_upcase(PARROT_INTERP, ARGIN_NULLOK(const STRING *s))
     }
     else {
         DECL_CONST_CAST;
-        STRING * const dest = string_copy(interp, PARROT_const_cast(STRING *, s));
+        STRING * const dest = Parrot_str_copy(interp, PARROT_const_cast(STRING *, s));
         string_upcase_inplace(interp, dest);
         return dest;
     }
@@ -2730,7 +2730,7 @@ string_downcase(PARROT_INTERP, ARGIN(const STRING *s))
 {
     ASSERT_ARGS(string_downcase)
     DECL_CONST_CAST;
-    STRING * const dest = string_copy(interp, PARROT_const_cast(STRING *, s));
+    STRING * const dest = Parrot_str_copy(interp, PARROT_const_cast(STRING *, s));
     string_downcase_inplace(interp, dest);
     return dest;
 }
@@ -2753,7 +2753,7 @@ string_downcase_inplace(PARROT_INTERP, ARGMOD(STRING *s))
     ASSERT_ARGS(string_downcase_inplace)
     /*
      * TODO get rid of all the inplace variants. We have for utf8:
-     * * 1 string_copy from the non-incase variant
+     * * 1 Parrot_str_copy from the non-incase variant
      * * conversion to utf16, with doubling the buffer
      * * possibly one more reallocation in downcase
      */
@@ -2781,7 +2781,7 @@ string_titlecase(PARROT_INTERP, ARGIN(const STRING *s))
 {
     ASSERT_ARGS(string_titlecase)
     DECL_CONST_CAST;
-    STRING * const dest = string_copy(interp, PARROT_const_cast(STRING *, s));
+    STRING * const dest = Parrot_str_copy(interp, PARROT_const_cast(STRING *, s));
     string_titlecase_inplace(interp, dest);
     return dest;
 }
@@ -3108,7 +3108,7 @@ string_join(PARROT_INTERP, ARGIN_NULLOK(STRING *j), ARGIN(PMC *ar))
         return Parrot_str_new_noinit(interp, enum_stringrep_one, 0);
 
     s   = VTABLE_get_string_keyed_int(interp, ar, 0);
-    res = s ? string_copy(interp, s) : NULL;
+    res = s ? Parrot_str_copy(interp, s) : NULL;
 
     for (i = 1; i < ar_len; ++i) {
         STRING * const next = VTABLE_get_string_keyed_int(interp, ar, i);

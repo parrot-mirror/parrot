@@ -27,7 +27,7 @@ $1. Removes the constant flag on the copy, if there was one.
 =cut
 
 inline op clone(out STR, in STR) :base_mem {
-  $1 = string_copy(interp, $2);
+  $1 = Parrot_str_copy(interp, $2);
 }
 
 
@@ -153,7 +153,7 @@ inline op set(out STR, invar STR) :base_core {
 }
 
 inline op set(out STR, inconst STR) :base_core {
-  $1 = string_copy(interp, $2);
+  $1 = Parrot_str_copy(interp, $2);
 }
 
 inline op set(out STR, in INT) :base_core {
@@ -186,7 +186,7 @@ inline op set(invar PMC, invar STR) :base_core {
 
 inline op set(invar PMC, inconst STR) :base_core {
   VTABLE_set_string_native(interp, $1,
-    string_copy(interp, $2));
+    Parrot_str_copy(interp, $2));
 }
 inline op set(out INT, invar PMC) :base_core {
   $1 = VTABLE_get_integer(interp, $2);

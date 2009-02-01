@@ -255,7 +255,7 @@ to_encoding(PARROT_INTERP, ARGIN(STRING *src), ARGIN_NULLOK(STRING *dest))
 
     if (src->encoding == Parrot_utf16_encoding_ptr ||
             src->encoding == Parrot_ucs2_encoding_ptr)
-        return in_place ? src : string_copy(interp, src);
+        return in_place ? src : Parrot_str_copy(interp, src);
     /*
      * TODO adapt string creation functions
      */

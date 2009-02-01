@@ -570,7 +570,7 @@ to_encoding(PARROT_INTERP, ARGMOD(STRING *src), ARGMOD_NULLOK(STRING *dest))
     unsigned char *new_pos, *pos, *p;
 
     if (src->encoding == Parrot_utf8_encoding_ptr)
-        return in_place ? src : string_copy(interp, src);
+        return in_place ? src : Parrot_str_copy(interp, src);
     src_len = src->strlen;
     if (in_place) {
         result = src;

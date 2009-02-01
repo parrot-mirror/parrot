@@ -570,7 +570,7 @@ Need by NameSpace.export_to().
 */
     VTABLE void set_pmc_keyed_str(STRING *key, PMC *value) {
         PMC * pmc_key = pmc_new(INTERP, dynpmc_LuaString);
-        VTABLE_set_string_native(INTERP, pmc_key, string_copy(INTERP, key));
+        VTABLE_set_string_native(INTERP, pmc_key, Parrot_str_copy(INTERP, key));
         value = VTABLE_clone(interp, value);
         *lua_set(INTERP, PMC_hash(SELF), pmc_key) = value;
     }

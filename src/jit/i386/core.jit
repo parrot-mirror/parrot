@@ -1114,7 +1114,7 @@ Parrot_set_s_sc {
     Parrot_jit_emit_get_INTERP(interp, jit_info->native_ptr, emit_ECX);
     emitm_pushl_i(NATIVECODE, CONST(2)->u.string);
     emitm_pushl_r(NATIVECODE, emit_ECX);
-    CALL_FUNCTION(jit_info, string_copy);
+    CALL_FUNCTION(jit_info, Parrot_str_copy);
     emitm_addb_i_r(NATIVECODE, 8, emit_ESP);
     jit_emit_mov_MR_i(interp, NATIVECODE, ROFFS_STR(1), emit_EAX );
 }
