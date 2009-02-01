@@ -342,10 +342,10 @@ static void lua_mark_table(PARROT_INTERP, LuaHash *t, STRING *mode)
     int   i;
 
     if (mode) {
-        mark_key = string_str_index(interp, mode,
+        mark_key = Parrot_str_find_index(interp, mode,
                     Parrot_str_new_constant(interp, "k"), 0) < 0;
 
-        mark_val = string_str_index(interp, mode,
+        mark_val = Parrot_str_find_index(interp, mode,
                     Parrot_str_new_constant(interp, "v"), 0) < 0;
     }
 
