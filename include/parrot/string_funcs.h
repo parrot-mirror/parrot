@@ -353,7 +353,7 @@ STRING * string_make(PARROT_INTERP,
 PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
-STRING * string_make_direct(PARROT_INTERP,
+STRING * Parrot_str_new_init(PARROT_INTERP,
     ARGIN_NULLOK(const char *buffer),
     UINTVAL len,
     ARGIN(const ENCODING *encoding),
@@ -663,7 +663,7 @@ STRING* uint_to_str(PARROT_INTERP,
        PARROT_ASSERT_ARG(s)
 #define ASSERT_ARGS_string_make __attribute__unused__ int _ASSERT_ARGS_CHECK = \
        PARROT_ASSERT_ARG(interp)
-#define ASSERT_ARGS_string_make_direct __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+#define ASSERT_ARGS_Parrot_str_new_init __attribute__unused__ int _ASSERT_ARGS_CHECK = \
        PARROT_ASSERT_ARG(interp) \
     || PARROT_ASSERT_ARG(encoding)
 #define ASSERT_ARGS_Parrot_str_new_noinit __attribute__unused__ int _ASSERT_ARGS_CHECK = \

@@ -97,7 +97,7 @@ new_hll_entry(PARROT_INTERP, ARGIN_NULLOK(STRING *entry_name))
     if (entry_name && !STRING_IS_EMPTY(entry_name)) {
         char   * const cstring    = string_to_cstring(interp, entry_name);
         const  UINTVAL len        = string_length(interp, entry_name);
-        STRING *const_name        = string_make_direct(interp, cstring,
+        STRING *const_name        = Parrot_str_new_init(interp, cstring,
             len, PARROT_DEFAULT_ENCODING, PARROT_DEFAULT_CHARSET,
             PObj_constant_FLAG);
 

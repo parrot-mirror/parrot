@@ -2720,7 +2720,7 @@ Parrot_debug_add_mapping(PARROT_INTERP, ARGMOD(PackFile_Debug *debug),
     mem_realloc_n_typed(ct->constants, ct->const_count, PackFile_Constant *);
     fnconst = PackFile_Constant_new(interp);
     fnconst->type = PFC_STRING;
-    fnconst->u.string = string_make_direct(interp, filename,
+    fnconst->u.string = Parrot_str_new_init(interp, filename,
         strlen(filename), PARROT_DEFAULT_ENCODING,
         PARROT_DEFAULT_CHARSET, PObj_constant_FLAG);
     ct->constants[ct->const_count - 1] = fnconst;

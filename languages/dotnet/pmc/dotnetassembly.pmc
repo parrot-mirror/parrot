@@ -1989,7 +1989,7 @@ pmclass DotNetAssembly dynpmc group dotnet {
                "Blob position and length out of range");
 
         /* Return string. */
-        result = string_make_direct(INTERP, ass->user_strings + start,
+        result = Parrot_str_new_init(INTERP, ass->user_strings + start,
                     length - 1, encoding, charset, 0);
         RETURN(STRING *result);
     }

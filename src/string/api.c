@@ -318,7 +318,7 @@ Parrot_str_init(PARROT_INTERP)
     for (i = 0; i < n_parrot_cstrings; ++i) {
         DECL_CONST_CAST;
         STRING * const s =
-            string_make_direct(interp,
+            Parrot_str_new_init(interp,
                 parrot_cstrings[i].string,
                 parrot_cstrings[i].len,
                 PARROT_DEFAULT_ENCODING, PARROT_DEFAULT_CHARSET,
@@ -507,7 +507,7 @@ Parrot_str_concat(PARROT_INTERP, ARGIN_NULLOK(STRING *a),
                 cs  = a->charset;
                 enc = a->encoding;
             }
-            result = string_make_direct(interp, NULL, a->bufused + b->bufused,
+            result = Parrot_str_new_init(interp, NULL, a->bufused + b->bufused,
                         enc, cs, 0);
 
             result = Parrot_str_append(interp, result, a);
@@ -623,7 +623,7 @@ STRING *
 Parrot_str_new(PARROT_INTERP, ARGIN_NULLOK(const char * const buffer), const UINTVAL len)
 {
     ASSERT_ARGS(Parrot_str_new)
-    return string_make_direct(interp, buffer, len ? len :
+    return Parrot_str_new_init(interp, buffer, len ? len :
             buffer ? strlen(buffer) : 0,
                               PARROT_DEFAULT_ENCODING, PARROT_DEFAULT_CHARSET,
                               0); /* Force an 8-bit encoding at some
@@ -684,7 +684,7 @@ Parrot_str_new_constant(PARROT_INTERP, ARGIN(const char *buffer))
     if (s)
         return s;
 
-    s = string_make_direct(interp, buffer, strlen(buffer),
+    s = Parrot_str_new_init(interp, buffer, strlen(buffer),
                        PARROT_DEFAULT_ENCODING, PARROT_DEFAULT_CHARSET,
                        PObj_external_FLAG|PObj_constant_FLAG);
 
@@ -741,14 +741,14 @@ string_make(PARROT_INTERP, ARGIN_NULLOK(const char *buffer),
             "Can't make '%s' charset strings", charset_name);
 
 
-    return string_make_direct(interp, buffer, len,
+    return Parrot_str_new_init(interp, buffer, len,
         charset->preferred_encoding, charset, flags);
 
 }
 
 /*
 
-=item C<STRING * string_make_direct>
+=item C<STRING * Parrot_str_new_init>
 
 Given a buffer, its length, an encoding, a character set, and STRING flags,
 creates and returns a new string.  Don't call this directly.
@@ -761,10 +761,10 @@ PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 STRING *
-string_make_direct(PARROT_INTERP, ARGIN_NULLOK(const char *buffer), UINTVAL len,
+Parrot_str_new_init(PARROT_INTERP, ARGIN_NULLOK(const char *buffer), UINTVAL len,
         ARGIN(const ENCODING *encoding), ARGIN_NULLOK(const CHARSET *charset), UINTVAL flags)
 {
-    ASSERT_ARGS(string_make_direct)
+    ASSERT_ARGS(Parrot_str_new_init)
     DECL_CONST_CAST;
     STRING * const s = new_string_header(interp, flags);
     s->encoding      = encoding;
@@ -1097,7 +1097,7 @@ string_repeat(PARROT_INTERP, ARGIN(const STRING *s),
     ASSERT_ARGS(string_repeat)
     UINTVAL i;
 
-    STRING * const dest = string_make_direct(interp, NULL,
+    STRING * const dest = Parrot_str_new_init(interp, NULL,
                         s->bufused * num,
                         s->encoding, s->charset, 0);
 
@@ -1136,7 +1136,7 @@ STRING *
 Parrot_str_repeat(PARROT_INTERP, ARGIN(const STRING *s), UINTVAL num)
 {
     ASSERT_ARGS(Parrot_str_repeat)
-    STRING * const dest = string_make_direct(interp, NULL,
+    STRING * const dest = Parrot_str_new_init(interp, NULL,
                         s->bufused * num,
                         s->encoding, s->charset, 0);
     if (num > 0) {
@@ -1622,7 +1622,7 @@ string_bitwise_and(PARROT_INTERP, ARGIN_NULLOK(const STRING *s1),
         res->charset  = Parrot_binary_charset_ptr;
     }
     else
-        res = string_make_direct(interp, NULL, minlen,
+        res = Parrot_str_new_init(interp, NULL, minlen,
                 Parrot_fixed_8_encoding_ptr, Parrot_binary_charset_ptr, 0);
 
     if (!s1 || !s2) {
@@ -1775,7 +1775,7 @@ string_bitwise_or(PARROT_INTERP, ARGIN_NULLOK(const STRING *s1),
         res->charset  = Parrot_binary_charset_ptr;
     }
     else
-        res = string_make_direct(interp, NULL, maxlen,
+        res = Parrot_str_new_init(interp, NULL, maxlen,
                 Parrot_fixed_8_encoding_ptr, Parrot_binary_charset_ptr, 0);
 
     if (!maxlen) {
@@ -1850,7 +1850,7 @@ string_bitwise_xor(PARROT_INTERP, ARGIN_NULLOK(const STRING *s1),
         res->charset  = Parrot_binary_charset_ptr;
     }
     else
-        res = string_make_direct(interp, NULL, maxlen,
+        res = Parrot_str_new_init(interp, NULL, maxlen,
                 Parrot_fixed_8_encoding_ptr, Parrot_binary_charset_ptr, 0);
 
     if (!maxlen) {
@@ -1928,7 +1928,7 @@ string_bitwise_not(PARROT_INTERP, ARGIN_NULLOK(const STRING *s),
         res->charset  = Parrot_binary_charset_ptr;
     }
     else
-        res = string_make_direct(interp, NULL, len,
+        res = Parrot_str_new_init(interp, NULL, len,
                 Parrot_fixed_8_encoding_ptr, Parrot_binary_charset_ptr, 0);
 
     if (!len) {
@@ -2455,7 +2455,7 @@ string_escape_string_delimited(PARROT_INTERP,
         charlen = 16;
 
     /* create ascii result */
-    result = string_make_direct(interp, NULL, charlen,
+    result = Parrot_str_new_init(interp, NULL, charlen,
             Parrot_fixed_8_encoding_ptr, Parrot_ascii_charset_ptr, 0);
 
     /* more work TODO */
@@ -2603,7 +2603,7 @@ string_unescape_cstring(PARROT_INTERP,
             Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_UNIMPLEMENTED,
                 "Can't make '%s' charset strings", p + 1);
 
-        result   = string_make_direct(interp, cstring, clength,
+        result   = Parrot_str_new_init(interp, cstring, clength,
                         encoding, charset, flags);
         encoding = Parrot_fixed_8_encoding_ptr;
     }

@@ -454,7 +454,7 @@ clone_string_into(ARGMOD(Interp *d), ARGIN(Interp *s), ARGIN(PMC *value))
     STRING * const  orig   = VTABLE_get_string(s, value);
     char   * const raw_str = string_to_cstring(s, orig);
     STRING * const   ret   =
-        string_make_direct(d, raw_str, strlen(raw_str),
+        Parrot_str_new_init(d, raw_str, strlen(raw_str),
             PARROT_DEFAULT_ENCODING, PARROT_DEFAULT_CHARSET,
             PObj_constant_FLAG);
     string_cstring_free(raw_str);
