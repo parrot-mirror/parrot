@@ -343,7 +343,7 @@ compose(PARROT_INTERP, ARGIN(STRING *src))
        UErrorCode *status);
        */
     dest_len = src_len = src->strlen;
-    dest     = string_make_direct(interp, NULL, src_len * sizeof (UChar),
+    dest     = Parrot_str_new_init(interp, NULL, src_len * sizeof (UChar),
             src->encoding, src->charset, 0);
 
     err      = U_ZERO_ERROR;
