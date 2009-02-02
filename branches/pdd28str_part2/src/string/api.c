@@ -1534,7 +1534,7 @@ make_writable(PARROT_INTERP, ARGMOD(STRING **s),
 
 /*
 
-=item C<STRING * string_bitwise_and>
+=item C<STRING * Parrot_str_bitwise_and>
 
 Performs a bitwise C<AND> on two Parrot string, performing type and encoding
 conversions if necessary. If the second string is not C<NULL> then it is
@@ -1547,10 +1547,10 @@ reused.  Otherwise a new Parrot string is created.
 PARROT_EXPORT
 PARROT_CANNOT_RETURN_NULL
 STRING *
-string_bitwise_and(PARROT_INTERP, ARGIN_NULLOK(const STRING *s1),
+Parrot_str_bitwise_and(PARROT_INTERP, ARGIN_NULLOK(const STRING *s1),
         ARGIN_NULLOK(const STRING *s2), ARGOUT_NULLOK(STRING **dest))
 {
-    ASSERT_ARGS(string_bitwise_and)
+    ASSERT_ARGS(Parrot_str_bitwise_and)
     STRING *res;
     size_t  minlen;
 
@@ -1685,7 +1685,7 @@ do { \
 
 /*
 
-=item C<STRING * string_bitwise_or>
+=item C<STRING * Parrot_str_bitwise_or>
 
 Performs a bitwise C<OR> on two Parrot strings, performing type and encoding
 conversions if necessary. If the third string is not C<NULL>, then it is
@@ -1698,10 +1698,10 @@ reused.  Otherwise a new Parrot string is created.
 PARROT_EXPORT
 PARROT_CANNOT_RETURN_NULL
 STRING *
-string_bitwise_or(PARROT_INTERP, ARGIN_NULLOK(const STRING *s1),
+Parrot_str_bitwise_or(PARROT_INTERP, ARGIN_NULLOK(const STRING *s1),
         ARGIN_NULLOK(const STRING *s2), ARGOUT_NULLOK(STRING **dest))
 {
-    ASSERT_ARGS(string_bitwise_or)
+    ASSERT_ARGS(Parrot_str_bitwise_or)
     STRING *res;
     size_t  maxlen = 0;
 
@@ -1760,7 +1760,7 @@ string_bitwise_or(PARROT_INTERP, ARGIN_NULLOK(const STRING *s1),
 
 /*
 
-=item C<STRING * string_bitwise_xor>
+=item C<STRING * Parrot_str_bitwise_xor>
 
 Performs a bitwise C<XOR> on two Parrot strings, performing type and encoding
 conversions if necessary. If the second string is not C<NULL>, then it is
@@ -1773,10 +1773,10 @@ reused.  Otherwise a new Parrot string is created.
 PARROT_EXPORT
 PARROT_CANNOT_RETURN_NULL
 STRING *
-string_bitwise_xor(PARROT_INTERP, ARGIN_NULLOK(const STRING *s1),
+Parrot_str_bitwise_xor(PARROT_INTERP, ARGIN_NULLOK(const STRING *s1),
         ARGIN_NULLOK(const STRING *s2), ARGOUT_NULLOK(STRING **dest))
 {
-    ASSERT_ARGS(string_bitwise_xor)
+    ASSERT_ARGS(Parrot_str_bitwise_xor)
     STRING *res;
     size_t  maxlen = 0;
 
@@ -1847,7 +1847,7 @@ do { \
 
 /*
 
-=item C<STRING * string_bitwise_not>
+=item C<STRING * Parrot_str_bitwise_not>
 
 Performs a bitwise C<NOT> on a Parrot string. If the second string is
 not C<NULL> then it is reused, otherwise a new Parrot string is created.
@@ -1859,10 +1859,10 @@ not C<NULL> then it is reused, otherwise a new Parrot string is created.
 PARROT_EXPORT
 PARROT_CANNOT_RETURN_NULL
 STRING *
-string_bitwise_not(PARROT_INTERP, ARGIN_NULLOK(const STRING *s),
+Parrot_str_bitwise_not(PARROT_INTERP, ARGIN_NULLOK(const STRING *s),
     ARGOUT_NULLOK(STRING **dest))
 {
-    ASSERT_ARGS(string_bitwise_not)
+    ASSERT_ARGS(Parrot_str_bitwise_not)
     STRING *res;
     size_t  len;
 
@@ -1912,7 +1912,7 @@ string_bitwise_not(PARROT_INTERP, ARGIN_NULLOK(const STRING *s),
 
 /*
 
-=item C<INTVAL string_bool>
+=item C<INTVAL Parrot_str_boolean>
 
 Returns whether the specified Parrot string is true. A string is true if it is
 equal to anything other than C<0>, C<""> or C<"0">.
@@ -1924,9 +1924,9 @@ equal to anything other than C<0>, C<""> or C<"0">.
 PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
 INTVAL
-string_bool(PARROT_INTERP, ARGIN_NULLOK(const STRING *s))
+Parrot_str_boolean(PARROT_INTERP, ARGIN_NULLOK(const STRING *s))
 {
-    ASSERT_ARGS(string_bool)
+    ASSERT_ARGS(Parrot_str_boolean)
     const INTVAL len = s ? Parrot_str_byte_length(interp, s) : 0;
 
     if (len == 0)
