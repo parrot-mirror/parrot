@@ -2355,17 +2355,17 @@ PDB_check_condition(PARROT_INTERP, ARGIN(const PDB_condition_t *condition))
             n = REG_STR(interp, *(int *)condition->value);
 
         if (((condition->type & PDB_cond_gt) &&
-                (string_compare(interp, m, n) >  0)) ||
+                (Parrot_str_compare(interp, m, n) >  0)) ||
             ((condition->type & PDB_cond_ge) &&
-                (string_compare(interp, m, n) >= 0)) ||
+                (Parrot_str_compare(interp, m, n) >= 0)) ||
             ((condition->type & PDB_cond_eq) &&
-                (string_compare(interp, m, n) == 0)) ||
+                (Parrot_str_compare(interp, m, n) == 0)) ||
             ((condition->type & PDB_cond_ne) &&
-                (string_compare(interp, m, n) != 0)) ||
+                (Parrot_str_compare(interp, m, n) != 0)) ||
             ((condition->type & PDB_cond_le) &&
-                (string_compare(interp, m, n) <= 0)) ||
+                (Parrot_str_compare(interp, m, n) <= 0)) ||
             ((condition->type & PDB_cond_lt) &&
-                (string_compare(interp, m, n) <  0)))
+                (Parrot_str_compare(interp, m, n) <  0)))
                     return 1;
 
         return 0;

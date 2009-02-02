@@ -934,7 +934,7 @@ imcc_compile_file(PARROT_INTERP, ARGIN(const char *fullname),
     IMCC_INFO(interp)->line        = 1;
 
     /*
-     * the string_compare() called from pmc_type() triggers DOD
+     * the Parrot_str_compare() called from pmc_type() triggers DOD
      * which can destroy packfiles under construction
      */
     Parrot_block_GC_mark(interp);

@@ -1220,7 +1220,7 @@ C<*value>.
 */
 
     MULTI INTVAL cmp_string(PMC *value) {
-        return string_compare(INTERP, SELF.get_string(),
+        return Parrot_str_compare(INTERP, SELF.get_string(),
             VTABLE_get_string(INTERP, value));
     }
 

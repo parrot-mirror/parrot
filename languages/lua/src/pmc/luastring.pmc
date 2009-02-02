@@ -873,7 +873,7 @@ Throws an exception unless C<value> is a LuaString.
     MULTI INTVAL cmp(LuaString value) {
         STRING *s = PMC_str_val(SELF);
         STRING *v = VTABLE_get_string(INTERP, value);
-        return string_compare(INTERP, s, v);
+        return Parrot_str_compare(INTERP, s, v);
     }
 
     MULTI INTVAL cmp(DEFAULT value) {
