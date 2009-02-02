@@ -138,7 +138,7 @@ STRING * Parrot_str_append(PARROT_INTERP,
 
 PARROT_EXPORT
 PARROT_CANNOT_RETURN_NULL
-STRING * string_bitwise_and(PARROT_INTERP,
+STRING * Parrot_str_bitwise_and(PARROT_INTERP,
     ARGIN_NULLOK(const STRING *s1),
     ARGIN_NULLOK(const STRING *s2),
     ARGOUT_NULLOK(STRING **dest))
@@ -147,7 +147,7 @@ STRING * string_bitwise_and(PARROT_INTERP,
 
 PARROT_EXPORT
 PARROT_CANNOT_RETURN_NULL
-STRING * string_bitwise_not(PARROT_INTERP,
+STRING * Parrot_str_bitwise_not(PARROT_INTERP,
     ARGIN_NULLOK(const STRING *s),
     ARGOUT_NULLOK(STRING **dest))
         __attribute__nonnull__(1)
@@ -155,7 +155,7 @@ STRING * string_bitwise_not(PARROT_INTERP,
 
 PARROT_EXPORT
 PARROT_CANNOT_RETURN_NULL
-STRING * string_bitwise_or(PARROT_INTERP,
+STRING * Parrot_str_bitwise_or(PARROT_INTERP,
     ARGIN_NULLOK(const STRING *s1),
     ARGIN_NULLOK(const STRING *s2),
     ARGOUT_NULLOK(STRING **dest))
@@ -164,7 +164,7 @@ STRING * string_bitwise_or(PARROT_INTERP,
 
 PARROT_EXPORT
 PARROT_CANNOT_RETURN_NULL
-STRING * string_bitwise_xor(PARROT_INTERP,
+STRING * Parrot_str_bitwise_xor(PARROT_INTERP,
     ARGIN_NULLOK(const STRING *s1),
     ARGIN_NULLOK(const STRING *s2),
     ARGOUT_NULLOK(STRING **dest))
@@ -173,7 +173,7 @@ STRING * string_bitwise_xor(PARROT_INTERP,
 
 PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
-INTVAL string_bool(PARROT_INTERP, ARGIN_NULLOK(const STRING *s))
+INTVAL Parrot_str_boolean(PARROT_INTERP, ARGIN_NULLOK(const STRING *s))
         __attribute__nonnull__(1);
 
 PARROT_EXPORT
@@ -579,15 +579,15 @@ STRING* uint_to_str(PARROT_INTERP,
     || PARROT_ASSERT_ARG(s)
 #define ASSERT_ARGS_Parrot_str_append __attribute__unused__ int _ASSERT_ARGS_CHECK = \
        PARROT_ASSERT_ARG(interp)
-#define ASSERT_ARGS_string_bitwise_and __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+#define ASSERT_ARGS_Parrot_str_bitwise_and __attribute__unused__ int _ASSERT_ARGS_CHECK = \
        PARROT_ASSERT_ARG(interp)
-#define ASSERT_ARGS_string_bitwise_not __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+#define ASSERT_ARGS_Parrot_str_bitwise_not __attribute__unused__ int _ASSERT_ARGS_CHECK = \
        PARROT_ASSERT_ARG(interp)
-#define ASSERT_ARGS_string_bitwise_or __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+#define ASSERT_ARGS_Parrot_str_bitwise_or __attribute__unused__ int _ASSERT_ARGS_CHECK = \
        PARROT_ASSERT_ARG(interp)
-#define ASSERT_ARGS_string_bitwise_xor __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+#define ASSERT_ARGS_Parrot_str_bitwise_xor __attribute__unused__ int _ASSERT_ARGS_CHECK = \
        PARROT_ASSERT_ARG(interp)
-#define ASSERT_ARGS_string_bool __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+#define ASSERT_ARGS_Parrot_str_boolean __attribute__unused__ int _ASSERT_ARGS_CHECK = \
        PARROT_ASSERT_ARG(interp)
 #define ASSERT_ARGS_string_capacity __attribute__unused__ int _ASSERT_ARGS_CHECK = \
        PARROT_ASSERT_ARG(s)

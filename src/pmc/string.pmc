@@ -167,7 +167,7 @@ Returns the boolean value of the string.
 
     VTABLE INTVAL get_bool() {
         STRING * const s = SELF.get_string();
-        return string_bool(INTERP, s);
+        return Parrot_str_boolean(INTERP, s);
     }
 
 /*
@@ -315,7 +315,7 @@ strings in place.
             dest = pmc_new(INTERP, SELF->vtable->base_type);
 
         VTABLE_set_string_native(INTERP, dest,
-            string_bitwise_or(INTERP, s, v, NULL));
+            Parrot_str_bitwise_or(INTERP, s, v, NULL));
 
         return dest;
     }
@@ -327,7 +327,7 @@ strings in place.
             dest = pmc_new(INTERP, SELF->vtable->base_type);
 
         VTABLE_set_string_native(INTERP, dest,
-            string_bitwise_or(INTERP, s, value, NULL));
+            Parrot_str_bitwise_or(INTERP, s, value, NULL));
 
         return dest;
     }
@@ -335,12 +335,12 @@ strings in place.
     VTABLE void i_bitwise_ors(PMC *value) {
         STRING        *s = VTABLE_get_string(INTERP, SELF);
         STRING * const v = VTABLE_get_string(INTERP, value);
-        SELF.set_string_native(string_bitwise_or(INTERP, s, v, &s));
+        SELF.set_string_native(Parrot_str_bitwise_or(INTERP, s, v, &s));
     }
 
     VTABLE void i_bitwise_ors_str(STRING *value) {
         STRING *s = VTABLE_get_string(INTERP, SELF);
-        SELF.set_string_native(string_bitwise_or(INTERP, s, value, &s));
+        SELF.set_string_native(Parrot_str_bitwise_or(INTERP, s, value, &s));
     }
 
     VTABLE PMC *bitwise_ands(PMC *value, PMC *dest) {
@@ -351,7 +351,7 @@ strings in place.
             dest = pmc_new(INTERP, SELF->vtable->base_type);
 
         VTABLE_set_string_native(INTERP, dest,
-            string_bitwise_and(INTERP, s, v, NULL));
+            Parrot_str_bitwise_and(INTERP, s, v, NULL));
 
         return dest;
     }
@@ -363,7 +363,7 @@ strings in place.
             dest = pmc_new(INTERP, SELF->vtable->base_type);
 
         VTABLE_set_string_native(INTERP, dest,
-            string_bitwise_and(INTERP, s, value, NULL));
+            Parrot_str_bitwise_and(INTERP, s, value, NULL));
 
         return dest;
     }
@@ -372,12 +372,12 @@ strings in place.
     VTABLE void i_bitwise_ands(PMC *value) {
         STRING        *s = VTABLE_get_string(INTERP, SELF);
         STRING * const v = VTABLE_get_string(INTERP, value);
-        SELF.set_string_native(string_bitwise_and(INTERP, s, v, &s));
+        SELF.set_string_native(Parrot_str_bitwise_and(INTERP, s, v, &s));
     }
 
     VTABLE void i_bitwise_ands_str(STRING *value) {
         STRING *s = VTABLE_get_string(INTERP, SELF);
-        SELF.set_string_native(string_bitwise_and(INTERP, s, value, &s));
+        SELF.set_string_native(Parrot_str_bitwise_and(INTERP, s, value, &s));
     }
 
     VTABLE PMC *bitwise_xors(PMC *value, PMC *dest) {
@@ -388,7 +388,7 @@ strings in place.
             dest = pmc_new(INTERP, SELF->vtable->base_type);
 
         VTABLE_set_string_native(INTERP, dest,
-            string_bitwise_xor(INTERP, s, v, NULL));
+            Parrot_str_bitwise_xor(INTERP, s, v, NULL));
 
         return dest;
     }
@@ -400,7 +400,7 @@ strings in place.
             dest = pmc_new(INTERP, SELF->vtable->base_type);
 
         VTABLE_set_string_native(INTERP, dest,
-            string_bitwise_xor(INTERP, s, value, NULL));
+            Parrot_str_bitwise_xor(INTERP, s, value, NULL));
 
         return dest;
     }
@@ -408,12 +408,12 @@ strings in place.
     VTABLE void i_bitwise_xors(PMC *value) {
         STRING        *s = VTABLE_get_string(INTERP, SELF);
         STRING * const v = VTABLE_get_string(INTERP, value);
-        SELF.set_string_native(string_bitwise_xor(INTERP, s, v, &s));
+        SELF.set_string_native(Parrot_str_bitwise_xor(INTERP, s, v, &s));
     }
 
     VTABLE void i_bitwise_xors_str(STRING *value) {
         STRING *s = VTABLE_get_string(INTERP, SELF);
-        SELF.set_string_native(string_bitwise_xor(INTERP, s, value, &s));
+        SELF.set_string_native(Parrot_str_bitwise_xor(INTERP, s, value, &s));
     }
 
     VTABLE PMC *bitwise_nots(PMC *dest) {
@@ -423,7 +423,7 @@ strings in place.
             dest = pmc_new(INTERP, SELF->vtable->base_type);
 
         VTABLE_set_string_native(INTERP, dest,
-            string_bitwise_not(INTERP, s, NULL));
+            Parrot_str_bitwise_not(INTERP, s, NULL));
 
         return dest;
     }
@@ -431,7 +431,7 @@ strings in place.
     VTABLE void i_bitwise_nots() {
         STRING *s = VTABLE_get_string(INTERP, SELF);
         VTABLE_set_string_native(
-            INTERP, SELF, string_bitwise_not(INTERP, s, &s));
+            INTERP, SELF, Parrot_str_bitwise_not(INTERP, s, &s));
     }
 
 /*

@@ -377,7 +377,7 @@ inline op if(invar NUM, inconst LABEL) {
 }
 
 op if (invar STR, inconst LABEL) {
-    if (string_bool(interp, $1))
+    if (Parrot_str_boolean(interp, $1))
         goto OFFSET($2);
 }
 
@@ -411,7 +411,7 @@ inline op unless(invar NUM, inconst LABEL) {
 }
 
 op unless(invar STR, inconst LABEL) {
-    if (!string_bool(interp, $1))
+    if (!Parrot_str_boolean(interp, $1))
         goto OFFSET($2);
 }
 
