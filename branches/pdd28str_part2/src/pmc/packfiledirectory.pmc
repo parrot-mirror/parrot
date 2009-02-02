@@ -121,7 +121,7 @@ Search the array for a segment with the given name, and return it if it exists.
         for (i = 0; i < total; i++) {
             PackFile_Segment *pfseg;
             pfseg = pfd->segments[i];
-            if (!string_compare(interp, name, Parrot_str_new_constant(interp, pfseg->name)))
+            if (!Parrot_str_compare(interp, name, Parrot_str_new_constant(interp, pfseg->name)))
                 return VTABLE_get_pmc_keyed_int(interp, SELF, i);
         }
         /* the specified segment name wasn't found. */

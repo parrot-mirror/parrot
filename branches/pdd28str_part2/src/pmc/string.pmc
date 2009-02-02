@@ -497,7 +497,7 @@ is smaller.
     VTABLE INTVAL cmp(PMC *value) {
         STRING * const s = VTABLE_get_string(INTERP, SELF);
         STRING * const v = VTABLE_get_string(INTERP, value);
-        return string_compare(INTERP, s, v);
+        return Parrot_str_compare(INTERP, s, v);
     }
 
 /*
@@ -538,7 +538,7 @@ is smaller.
     VTABLE INTVAL cmp_string(PMC *value) {
         STRING * const s = VTABLE_get_string(INTERP, SELF);
         STRING * const v = VTABLE_get_string(INTERP, value);
-        return string_compare(INTERP, s, v);
+        return Parrot_str_compare(INTERP, s, v);
     }
 
 /*

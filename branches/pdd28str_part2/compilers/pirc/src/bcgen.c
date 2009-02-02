@@ -838,7 +838,7 @@ find_outer_sub(bytecode * const bc, char const * const outername, struct lexer_s
 
     cur_name = PMC_sub(current)->name;
 
-    /* XXX can't this be a call to string_compare() ? */
+    /* XXX can't this be a call to Parrot_str_compare() ? */
     if (cur_name->strlen == len && (memcmp((char *)cur_name->strstart, outername, len) == 0))
         return current;
 

@@ -557,7 +557,7 @@ Without shortcut like in Default PMC.
         STRING *self_name = SELF.name();
         STRING *val_name  = VTABLE_name(INTERP, value);
 
-        if (string_compare(INTERP, self_name, val_name) != 0)
+        if (Parrot_str_compare(INTERP, self_name, val_name) != 0)
             Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_ILL_INHERIT,
                 "attempt to compare %Ss with %Ss", self_name, val_name);
         else

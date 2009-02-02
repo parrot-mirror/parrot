@@ -203,7 +203,7 @@ STRING * string_chr(PARROT_INTERP, UINTVAL character)
 
 PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
-INTVAL string_compare(PARROT_INTERP,
+INTVAL Parrot_str_compare(PARROT_INTERP,
     ARGIN_NULLOK(const STRING *s1),
     ARGIN_NULLOK(const STRING *s2))
         __attribute__nonnull__(1);
@@ -599,7 +599,7 @@ STRING* uint_to_str(PARROT_INTERP,
     || PARROT_ASSERT_ARG(s)
 #define ASSERT_ARGS_string_chr __attribute__unused__ int _ASSERT_ARGS_CHECK = \
        PARROT_ASSERT_ARG(interp)
-#define ASSERT_ARGS_string_compare __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+#define ASSERT_ARGS_Parrot_str_compare __attribute__unused__ int _ASSERT_ARGS_CHECK = \
        PARROT_ASSERT_ARG(interp)
 #define ASSERT_ARGS_string_compose __attribute__unused__ int _ASSERT_ARGS_CHECK = \
        PARROT_ASSERT_ARG(interp)

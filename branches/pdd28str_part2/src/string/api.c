@@ -1424,7 +1424,7 @@ Parrot_str_chopn_inplace(PARROT_INTERP, ARGMOD(STRING *s), INTVAL n)
 
 /*
 
-=item C<INTVAL string_compare>
+=item C<INTVAL Parrot_str_compare>
 
 Compares two strings to each other.  If s1 is less than s2, returns -1.  If the
 strings are equal, returns 0.  If s1 is greater than s2, returns 2.  This
@@ -1438,9 +1438,9 @@ comparison.
 PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
 INTVAL
-string_compare(PARROT_INTERP, ARGIN_NULLOK(const STRING *s1), ARGIN_NULLOK(const STRING *s2))
+Parrot_str_compare(PARROT_INTERP, ARGIN_NULLOK(const STRING *s1), ARGIN_NULLOK(const STRING *s2))
 {
-    ASSERT_ARGS(string_compare)
+    ASSERT_ARGS(Parrot_str_compare)
     if (!s2)
         return s1 && (s1->strlen != 0);
 
