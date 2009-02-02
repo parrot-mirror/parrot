@@ -1075,51 +1075,6 @@ string_max_bytes(SHIM_INTERP, ARGIN(const STRING *s), UINTVAL nchars)
     return ENCODING_MAX_BYTES_PER_CODEPOINT(interp, s) * nchars;
 }
 
-
-/*
-
-=item C<STRING * string_repeat>
-
-Repeats the specified Parrot string I<num> times and stores the result in the
-second string, and returns it. The second string is created if necessary (that
-is, if you pass in a NULL value).
-
-=cut
-
-*/
-
-PARROT_EXPORT
-PARROT_CANNOT_RETURN_NULL
-STRING *
-string_repeat(PARROT_INTERP, ARGIN(const STRING *s),
-    UINTVAL num, ARGOUT_NULLOK(STRING **d))
-{
-    ASSERT_ARGS(string_repeat)
-    UINTVAL i;
-
-    STRING * const dest = Parrot_str_new_init(interp, NULL,
-                        s->bufused * num,
-                        s->encoding, s->charset, 0);
-
-    if (num == 0)
-        return dest;
-
-    /* copy s into dest num times */
-    for (i = 0; i < num; i++) {
-        mem_sys_memcopy((void *)((ptrcast_t)dest->strstart + s->bufused * i),
-                        s->strstart, s->bufused);
-    }
-
-    dest->bufused = s->bufused * num;
-    dest->strlen  = s->strlen * num;
-
-    if (d != NULL)
-        *d = dest;
-
-    return dest;
-}
-
-
 /*
 
 =item C<STRING * Parrot_str_repeat>

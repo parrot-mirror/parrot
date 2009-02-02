@@ -410,16 +410,6 @@ const CHARSET * string_rep_compatible(SHIM_INTERP,
         FUNC_MODIFIES(*e);
 
 PARROT_EXPORT
-PARROT_CANNOT_RETURN_NULL
-STRING * string_repeat(PARROT_INTERP,
-    ARGIN(const STRING *s),
-    UINTVAL num,
-    ARGOUT_NULLOK(STRING **d))
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(2)
-        FUNC_MODIFIES(*d);
-
-PARROT_EXPORT
 PARROT_CAN_RETURN_NULL
 STRING * string_replace(PARROT_INTERP,
     ARGIN(STRING *src),
