@@ -76,7 +76,7 @@ A newline is automatically added to the end of the fmt.
         pos = Parrot_str_find_index(INTERP, fmt, percent, pos);
         if (pos < 0) break;
 
-        key = string_substr(INTERP, fmt, pos+1, 1, &key, 0);
+        key = Parrot_str_substr(INTERP, fmt, pos+1, 1, &key, 0);
 
         if (VTABLE_exists_keyed_str(INTERP, hash, key)) {
             repl = VTABLE_get_string_keyed_str(INTERP, hash, key);

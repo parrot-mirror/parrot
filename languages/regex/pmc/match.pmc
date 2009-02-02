@@ -58,7 +58,7 @@ static STRING* match_range(Interp* interp, PMC* self, PMC* range)
     if (start == -2 || end == -2 || end < start - 1)
         return NULL;
     else
-        return string_substr(interp, input, start, end - start + 1, NULL, 0);
+        return Parrot_str_substr(interp, input, start, end - start + 1, NULL, 0);
 }
 
 static STRING* fetch_string(Interp* interp, PMC* matchobj, PMC* val)

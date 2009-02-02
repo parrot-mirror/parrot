@@ -203,7 +203,7 @@ handle_flags(PARROT_INTERP, ARGIN(const SpfInfo *info), ARGMOD(STRING *str),
                     string_ord(interp, str, 0) == '+')) {
                 STRING *temp = NULL;
                 STRING *ignored;
-                ignored = string_substr(interp, str, 1, len-1, &temp, 0);
+                ignored = Parrot_str_substr(interp, str, 1, len-1, &temp, 0);
                 UNUSED(ignored);
                 string_chopn_inplace(interp, str, -1);
                 str = Parrot_str_append(interp, str, fill);
@@ -342,7 +342,7 @@ Parrot_sprintf_format(PARROT_INTERP,
         if (string_ord(interp, pat, i) == '%') {        /* % */
             if (len) {
                 STRING *ignored
-                    = string_substr(interp, pat, old, len, &substr, 1);
+                    = Parrot_str_substr(interp, pat, old, len, &substr, 1);
                 UNUSED(ignored);
                 /* XXX This shouldn't modify targ the pointer */
                 targ = Parrot_str_append(interp, targ, substr);
@@ -886,7 +886,7 @@ Parrot_sprintf_format(PARROT_INTERP,
         }
     }
     if (len) {
-        STRING *ignored = string_substr(interp, pat, old, len, &substr, 1);
+        STRING *ignored = Parrot_str_substr(interp, pat, old, len, &substr, 1);
         UNUSED(ignored);
         targ = Parrot_str_append(interp, targ, substr);
     }

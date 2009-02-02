@@ -528,7 +528,7 @@ try_bytecode_extensions(PARROT_INTERP, ARGMOD(STRING* path))
 
     if (!STRING_IS_NULL(test_path)) {
         if (Parrot_str_byte_length(interp, test_path) > 4) {
-            STRING *orig_ext = string_substr(interp, test_path, -4, 4, NULL, 0);
+            STRING *orig_ext = Parrot_str_substr(interp, test_path, -4, 4, NULL, 0);
             /* First try substituting .pbc for the .pir extension */
             if (string_equal(interp, orig_ext, pir_extension) == 0) {
                 STRING *without_ext = string_chopn(interp, test_path, 4);
@@ -555,7 +555,7 @@ try_bytecode_extensions(PARROT_INTERP, ARGMOD(STRING* path))
 
         /* Finally, try substituting .pbc for the .pasm extension. */
         if (Parrot_str_byte_length(interp, test_path) > 5) {
-            STRING *orig_ext = string_substr(interp, test_path, -5, 5, NULL, 0);
+            STRING *orig_ext = Parrot_str_substr(interp, test_path, -5, 5, NULL, 0);
             if (string_equal(interp, orig_ext, pasm_extension) == 0) {
                 STRING *without_ext = string_chopn(interp, test_path, 5);
                 test_path = Parrot_str_append(interp, without_ext, bytecode_extension);
@@ -823,18 +823,18 @@ parrot_split_path_ext(PARROT_INTERP, ARGMOD(STRING *in),
     ++pos_dot;
     ++pos_sl;
     if (pos_sl && pos_dot) {
-        stem = string_substr(interp, in, pos_sl, pos_dot - pos_sl - 1,
+        stem = Parrot_str_substr(interp, in, pos_sl, pos_dot - pos_sl - 1,
                 NULL, 0);
-        *wo_ext = string_substr(interp, in, 0, pos_dot - 1, NULL, 0);
-        *ext = string_substr(interp, in, pos_dot, len - pos_dot, NULL, 0);
+        *wo_ext = Parrot_str_substr(interp, in, 0, pos_dot - 1, NULL, 0);
+        *ext = Parrot_str_substr(interp, in, pos_dot, len - pos_dot, NULL, 0);
     }
     else if (pos_dot) {
-        stem = string_substr(interp, in, 0, pos_dot - 1, NULL, 0);
+        stem = Parrot_str_substr(interp, in, 0, pos_dot - 1, NULL, 0);
         *wo_ext = stem;
-        *ext = string_substr(interp, in, pos_dot, len - pos_dot, NULL, 0);
+        *ext = Parrot_str_substr(interp, in, pos_dot, len - pos_dot, NULL, 0);
     }
     else if (pos_sl) {
-        stem = string_substr(interp, in, pos_sl, len - pos_sl, NULL, 0);
+        stem = Parrot_str_substr(interp, in, pos_sl, len - pos_sl, NULL, 0);
         *wo_ext = Parrot_str_copy(interp, in);
         *ext = NULL;
     }

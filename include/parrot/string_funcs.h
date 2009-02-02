@@ -452,7 +452,7 @@ INTVAL Parrot_str_find_index(PARROT_INTERP,
 PARROT_EXPORT
 PARROT_CANNOT_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
-STRING * string_substr(PARROT_INTERP,
+STRING * Parrot_str_substr(PARROT_INTERP,
     ARGIN_NULLOK(STRING *src),
     INTVAL offset,
     INTVAL length,
@@ -693,7 +693,7 @@ STRING* uint_to_str(PARROT_INTERP,
        PARROT_ASSERT_ARG(interp) \
     || PARROT_ASSERT_ARG(s) \
     || PARROT_ASSERT_ARG(s2)
-#define ASSERT_ARGS_string_substr __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+#define ASSERT_ARGS_Parrot_str_substr __attribute__unused__ int _ASSERT_ARGS_CHECK = \
        PARROT_ASSERT_ARG(interp)
 #define ASSERT_ARGS_string_titlecase __attribute__unused__ int _ASSERT_ARGS_CHECK = \
        PARROT_ASSERT_ARG(interp) \

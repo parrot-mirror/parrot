@@ -137,7 +137,7 @@ Parrot_oo_extract_methods_from_namespace(PARROT_INTERP, ARGIN(PMC *self), ARGIN(
 
             /* Strip leading underscores in the vtable name */
             if (Parrot_str_find_index(interp, vtable_name, CONST_STRING(interp, "__"), 0) == 0) {
-                vtable_name = string_substr(interp, vtable_name, 2,
+                vtable_name = Parrot_str_substr(interp, vtable_name, 2,
                     Parrot_str_byte_length(interp, vtable_name) - 2, NULL, 0);
             }
 
