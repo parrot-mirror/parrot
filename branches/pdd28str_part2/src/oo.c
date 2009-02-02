@@ -799,7 +799,7 @@ Parrot_find_method_direct(PARROT_INTERP, ARGIN(PMC *_class), ARGIN(STRING *metho
         return found;
 
 
-    if (!string_equal(interp, method_name, CONST_STRING(interp, "__get_string")))
+    if (!Parrot_str_equal(interp, method_name, CONST_STRING(interp, "__get_string")))
         return find_method_direct_1(interp, _class, CONST_STRING(interp, "__get_repr"));
 
     return PMCNULL;
@@ -1220,7 +1220,7 @@ Parrot_ComposeRole(PARROT_INTERP, ARGIN(PMC *role),
                 const STRING * const check =
                     VTABLE_get_string_keyed_int(interp, exclude, i);
 
-                if (string_equal(interp, check, method_name) == 0) {
+                if (Parrot_str_equal(interp, check, method_name) == 0) {
                     excluded = 1;
                     break;
                 }
