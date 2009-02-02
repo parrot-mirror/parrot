@@ -1187,7 +1187,7 @@ Parrot_str_substr(PARROT_INTERP,
 
 /*
 
-=item C<STRING * string_replace>
+=item C<STRING * Parrot_str_replace>
 
 Replaces a sequence of C<length> characters from C<offset> in the first
 Parrot string with the second Parrot string, returning what was
@@ -1212,10 +1212,10 @@ A negative offset is allowed to replace from the end.
 PARROT_EXPORT
 PARROT_CAN_RETURN_NULL
 STRING *
-string_replace(PARROT_INTERP, ARGIN(STRING *src),
+Parrot_str_replace(PARROT_INTERP, ARGIN(STRING *src),
     INTVAL offset, INTVAL length, ARGIN(STRING *rep), ARGOUT_NULLOK(STRING **d))
 {
-    ASSERT_ARGS(string_replace)
+    ASSERT_ARGS(Parrot_str_replace)
     UINTVAL         start_byte, end_byte;
     INTVAL          diff;
     String_iter     iter;

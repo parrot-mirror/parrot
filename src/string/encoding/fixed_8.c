@@ -469,7 +469,7 @@ set_bytes(PARROT_INTERP, ARGIN(STRING *source_string),
         UINTVAL offset, UINTVAL count, ARGMOD(STRING *new_bytes))
 {
     ASSERT_ARGS(set_bytes)
-    string_replace(interp, source_string, offset, count, new_bytes, NULL);
+    Parrot_str_replace(interp, source_string, offset, count, new_bytes, NULL);
 }
 
 /*

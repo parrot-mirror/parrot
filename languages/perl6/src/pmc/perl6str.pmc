@@ -358,8 +358,8 @@ C<isdigit()> respectively.
             if (isalpha((unsigned char)start[a]))
                 c = start[a];
 
-            string_replace(INTERP, str, a + 1, b, rep, 0);
-            string_replace(INTERP, str, a, 1, string_chr(INTERP, c), 0);
+            Parrot_str_replace(INTERP, str, a + 1, b, rep, 0);
+            Parrot_str_replace(INTERP, str, a, 1, string_chr(INTERP, c), 0);
         }
     }
 

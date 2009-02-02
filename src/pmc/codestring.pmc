@@ -108,7 +108,7 @@ A newline is automatically added to the end of the fmt.
             continue;
         }
 
-        (void) string_replace(INTERP, fmt, pos, 2, repl, NULL);
+        (void) Parrot_str_replace(INTERP, fmt, pos, 2, repl, NULL);
         replen = Parrot_str_byte_length(INTERP, repl);
     }
 

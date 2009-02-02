@@ -411,7 +411,7 @@ const CHARSET * string_rep_compatible(SHIM_INTERP,
 
 PARROT_EXPORT
 PARROT_CAN_RETURN_NULL
-STRING * string_replace(PARROT_INTERP,
+STRING * Parrot_str_replace(PARROT_INTERP,
     ARGIN(STRING *src),
     INTVAL offset,
     INTVAL length,
@@ -678,7 +678,7 @@ STRING* uint_to_str(PARROT_INTERP,
 #define ASSERT_ARGS_string_repeat __attribute__unused__ int _ASSERT_ARGS_CHECK = \
        PARROT_ASSERT_ARG(interp) \
     || PARROT_ASSERT_ARG(s)
-#define ASSERT_ARGS_string_replace __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+#define ASSERT_ARGS_Parrot_str_replace __attribute__unused__ int _ASSERT_ARGS_CHECK = \
        PARROT_ASSERT_ARG(interp) \
     || PARROT_ASSERT_ARG(src) \
     || PARROT_ASSERT_ARG(rep)
