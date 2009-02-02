@@ -296,7 +296,7 @@ get_path(PARROT_INTERP, ARGMOD_NULLOK(STRING *lib), ARGOUT(void **handle),
     if (!STRING_IS_EMPTY(lib) && memcmp(lib->strstart, "lib", 3) == 0) {
         *handle = Parrot_dlopen((char*)lib->strstart + 3);
         if (*handle) {
-            path = string_substr(interp, lib, 3, lib->strlen - 3, NULL, 0);
+            path = Parrot_str_substr(interp, lib, 3, lib->strlen - 3, NULL, 0);
             return path;
         }
     }
@@ -306,7 +306,7 @@ get_path(PARROT_INTERP, ARGMOD_NULLOK(STRING *lib), ARGOUT(void **handle),
 #ifdef __CYGWIN__
     if (!STRING_IS_EMPTY(lib) && memcmp(lib->strstart, "lib", 3) == 0) {
         path = Parrot_str_append(interp, CONST_STRING(interp, "cyg"),
-            string_substr(interp, lib, 3, lib->strlen - 3, NULL, 0));
+            Parrot_str_substr(interp, lib, 3, lib->strlen - 3, NULL, 0));
 
         *handle           = Parrot_dlopen(path->strstart);
 

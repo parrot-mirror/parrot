@@ -1114,7 +1114,7 @@ Parrot_str_repeat(PARROT_INTERP, ARGIN(const STRING *s), UINTVAL num)
 
 /*
 
-=item C<STRING * string_substr>
+=item C<STRING * Parrot_str_substr>
 
 Copies the substring of length C<length> from C<offset> from the specified
 Parrot string and stores it in C<**d>, allocating memory if necessary. The
@@ -1128,11 +1128,11 @@ PARROT_EXPORT
 PARROT_CANNOT_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
 STRING *
-string_substr(PARROT_INTERP,
+Parrot_str_substr(PARROT_INTERP,
         ARGIN_NULLOK(STRING *src), INTVAL offset, INTVAL length,
         ARGOUT_NULLOK(STRING **d), int replace_dest)
 {
-    ASSERT_ARGS(string_substr)
+    ASSERT_ARGS(Parrot_str_substr)
     if (src == NULL)
         Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_SUBSTR_OUT_OF_STRING,
             "Cannot substr on a null string");
@@ -3110,7 +3110,7 @@ string_split(PARROT_INTERP, ARGIN(STRING *delim), ARGIN(STRING *str))
         VTABLE_set_integer_native(interp, res, slen);
 
         for (i = 0; i < slen; ++i) {
-           STRING * const p = string_substr(interp, str, i, 1, NULL, 0);
+           STRING * const p = Parrot_str_substr(interp, str, i, 1, NULL, 0);
            VTABLE_set_string_keyed_int(interp, res, i, p);
         }
 
@@ -3128,7 +3128,7 @@ string_split(PARROT_INTERP, ARGIN(STRING *delim), ARGIN(STRING *str))
 
     while (ps <= slen) {
         const int      pl   = pe - ps;
-        STRING * const tstr = string_substr(interp, str, ps, pl, NULL, 0);
+        STRING * const tstr = Parrot_str_substr(interp, str, ps, pl, NULL, 0);
 
         VTABLE_push_string(interp, res, tstr);
         ps = pe + Parrot_str_byte_length(interp, delim);

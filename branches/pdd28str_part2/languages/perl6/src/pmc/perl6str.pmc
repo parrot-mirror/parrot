@@ -352,7 +352,7 @@ C<isdigit()> respectively.
             /* length to end of string */
             INTVAL b = str->strlen - a;
 
-            STRING *rep = string_substr(INTERP, str, a, b, NULL, 0);
+            STRING *rep = Parrot_str_substr(INTERP, str, a, b, NULL, 0);
             INTVAL  c   = '1';
 
             if (isalpha((unsigned char)start[a]))

@@ -260,11 +260,11 @@ substring and does not waste a register to do the string replace.
 
 inline op substr(out STR, in STR, in INT) :base_core {
     const INTVAL len = Parrot_str_byte_length(interp, $2);
-    $1 = string_substr(interp, $2, $3, len, &$1, 0);
+    $1 = Parrot_str_substr(interp, $2, $3, len, &$1, 0);
 }
 
 inline op substr(out STR, in STR, in INT, in INT) :base_core {
-    $1 = string_substr(interp, $2, $3, $4, &$1, 0);
+    $1 = Parrot_str_substr(interp, $2, $3, $4, &$1, 0);
 }
 
 inline op substr(out STR, inout STR, in INT, in INT, in STR) :base_core {
