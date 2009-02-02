@@ -135,7 +135,7 @@ handle_flags(PARROT_INTERP, ARGIN(const SpfInfo *info), ARGMOD(STRING *str),
         if (info->flags & FLAG_PREC && info->prec == 0 &&
                 len == 1 &&
                 string_ord(interp, str, 0) == '0') {
-            string_chopn_inplace(interp, str, len);
+            Parrot_str_chopn_inplace(interp, str, len);
             len = 0;
         }
         /* +, space */
@@ -176,12 +176,12 @@ handle_flags(PARROT_INTERP, ARGIN(const SpfInfo *info), ARGMOD(STRING *str),
     else {
         /* string precision */
         if (info->flags & FLAG_PREC && info->prec == 0) {
-            string_chopn_inplace(interp, str, len);
+            Parrot_str_chopn_inplace(interp, str, len);
             len = 0;
         }
         else
             if (info->flags & FLAG_PREC && info->prec < len) {
-                string_chopn_inplace(interp, str, -(INTVAL)(info->prec));
+                Parrot_str_chopn_inplace(interp, str, -(INTVAL)(info->prec));
                 len = info->prec;
             }
     }
@@ -205,7 +205,7 @@ handle_flags(PARROT_INTERP, ARGIN(const SpfInfo *info), ARGMOD(STRING *str),
                 STRING *ignored;
                 ignored = Parrot_str_substr(interp, str, 1, len-1, &temp, 0);
                 UNUSED(ignored);
-                string_chopn_inplace(interp, str, -1);
+                Parrot_str_chopn_inplace(interp, str, -1);
                 str = Parrot_str_append(interp, str, fill);
                 str = Parrot_str_append(interp, str, temp);
             }

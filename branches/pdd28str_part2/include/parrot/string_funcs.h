@@ -184,13 +184,13 @@ UINTVAL string_capacity(SHIM_INTERP, ARGIN(const STRING *s))
 
 PARROT_EXPORT
 PARROT_CANNOT_RETURN_NULL
-STRING * string_chopn(PARROT_INTERP, ARGMOD(STRING *s), INTVAL n)
+STRING * Parrot_str_chopn(PARROT_INTERP, ARGMOD(STRING *s), INTVAL n)
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         FUNC_MODIFIES(*s);
 
 PARROT_EXPORT
-void string_chopn_inplace(PARROT_INTERP, ARGMOD(STRING *s), INTVAL n)
+void Parrot_str_chopn_inplace(PARROT_INTERP, ARGMOD(STRING *s), INTVAL n)
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         FUNC_MODIFIES(*s);
@@ -591,10 +591,10 @@ STRING* uint_to_str(PARROT_INTERP,
        PARROT_ASSERT_ARG(interp)
 #define ASSERT_ARGS_string_capacity __attribute__unused__ int _ASSERT_ARGS_CHECK = \
        PARROT_ASSERT_ARG(s)
-#define ASSERT_ARGS_string_chopn __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+#define ASSERT_ARGS_Parrot_str_chopn __attribute__unused__ int _ASSERT_ARGS_CHECK = \
        PARROT_ASSERT_ARG(interp) \
     || PARROT_ASSERT_ARG(s)
-#define ASSERT_ARGS_string_chopn_inplace __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+#define ASSERT_ARGS_Parrot_str_chopn_inplace __attribute__unused__ int _ASSERT_ARGS_CHECK = \
        PARROT_ASSERT_ARG(interp) \
     || PARROT_ASSERT_ARG(s)
 #define ASSERT_ARGS_string_chr __attribute__unused__ int _ASSERT_ARGS_CHECK = \

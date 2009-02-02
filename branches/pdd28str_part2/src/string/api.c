@@ -1341,7 +1341,7 @@ Parrot_str_replace(PARROT_INTERP, ARGIN(STRING *src),
 
 /*
 
-=item C<STRING * string_chopn>
+=item C<STRING * Parrot_str_chopn>
 
 Removes the last C<n> characters of the specified Parrot string. If C<n> is
 negative, cuts the string after C<+n> characters. The returned string is a copy
@@ -1354,18 +1354,18 @@ of the one passed in.
 PARROT_EXPORT
 PARROT_CANNOT_RETURN_NULL
 STRING *
-string_chopn(PARROT_INTERP, ARGMOD(STRING *s), INTVAL n)
+Parrot_str_chopn(PARROT_INTERP, ARGMOD(STRING *s), INTVAL n)
 {
-    ASSERT_ARGS(string_chopn)
+    ASSERT_ARGS(Parrot_str_chopn)
     STRING * const chopped = Parrot_str_copy(interp, s);
-    string_chopn_inplace(interp, chopped, n);
+    Parrot_str_chopn_inplace(interp, chopped, n);
     return chopped;
 }
 
 
 /*
 
-=item C<void string_chopn_inplace>
+=item C<void Parrot_str_chopn_inplace>
 
 Removes the last C<n> characters of the specified Parrot string. If C<n> is
 negative, cuts the string after C<+n> characters. The string passed in is
@@ -1377,9 +1377,9 @@ modified and returned.
 
 PARROT_EXPORT
 void
-string_chopn_inplace(PARROT_INTERP, ARGMOD(STRING *s), INTVAL n)
+Parrot_str_chopn_inplace(PARROT_INTERP, ARGMOD(STRING *s), INTVAL n)
 {
-    ASSERT_ARGS(string_chopn_inplace)
+    ASSERT_ARGS(Parrot_str_chopn_inplace)
     UINTVAL new_length, uchar_size;
 
     if (n < 0) {

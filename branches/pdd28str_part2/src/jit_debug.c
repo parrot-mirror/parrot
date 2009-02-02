@@ -293,9 +293,9 @@ Parrot_jit_debug_stabs(PARROT_INTERP)
 
         ext = strrchr(src, '.');
         if (ext && STREQ(ext, ".pasm"))
-            string_chopn_inplace(interp, file, 4);
+            Parrot_str_chopn_inplace(interp, file, 4);
         else if (ext && STREQ(ext, ".pir"))
-            string_chopn_inplace(interp, file, 3);
+            Parrot_str_chopn_inplace(interp, file, 3);
         else if (!ext) /* EVAL_n */
             file = Parrot_str_append(interp, file,
                     string_make(interp, ".", 1, NULL, PObj_external_FLAG));
@@ -304,7 +304,7 @@ Parrot_jit_debug_stabs(PARROT_INTERP)
     }
     else {
         /* chop pbc */
-        string_chopn_inplace(interp, file, 3);
+        Parrot_str_chopn_inplace(interp, file, 3);
         pasmfile = debug_file(interp, file, "pasm");
     }
     stabsfile = debug_file(interp, file, "stabs.s");
