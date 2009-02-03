@@ -1,3 +1,4 @@
+# Copyright (C) 2006-2009, The Perl Foundation.
 ## $Id$
 
 ## arguments we want to run parrot with
@@ -14,7 +15,7 @@ PERL          = @perl@
 RM_F          = @rm_f@
 CP            = @cp@
 PARROT        = ../../parrot@exe@
-CAT           = $(PERL) -MExtUtils::Command -e cat
+CAT           = @cat@
 BUILD_DYNPMC  = $(PERL) $(BUILD_DIR)/tools/build/dynpmc.pl
 RECONFIGURE   = $(PERL) $(BUILD_DIR)/tools/dev/reconfigure.pl
 #CONDITIONED_LINE(darwin):
@@ -121,4 +122,7 @@ realclean: clean
 
 distclean: realclean
 
-
+# Local variables:
+#   mode: makefile
+# End:
+# vim: ft=make:

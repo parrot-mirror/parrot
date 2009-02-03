@@ -21,6 +21,7 @@ mark/sweep garbage collectors use this code.
 
 #include "parrot/parrot.h"
 #include "parrot/gc_mark_sweep.h"
+#include "gc_private.h"
 
 /* HEADERIZER HFILE: include/parrot/gc_mark_sweep.h */
 
@@ -669,7 +670,9 @@ mark_special(PARROT_INTERP, ARGIN(PMC *obj))
     }
     if (PObj_custom_mark_TEST(obj)) {
         PObj_get_FLAGS(obj) |= PObj_custom_GC_FLAG;
-        VTABLE_mark(interp, obj);
+
+        if (!PObj_constant_TEST(obj))
+            VTABLE_mark(interp, obj);
     }
 }
 

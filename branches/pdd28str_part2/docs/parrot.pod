@@ -157,11 +157,11 @@ See:
 
 =over 4
 
-=item * L<http://www.parrotcode.org/>
+=item * L<http://www.parrot.org/>
 
 =item * L<http://dev.perl.org/>
 
-=item * L<http://svn.perl.org/>
+=item * L<https://svn.parrot.org/>
 
 =back
 

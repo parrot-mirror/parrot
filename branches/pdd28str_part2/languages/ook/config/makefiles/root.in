@@ -1,3 +1,4 @@
+# Copyright (C) 2003-2009, The Perl Foundation.
 # $Id$
 
 # Makefile for languages/ook
@@ -52,3 +53,8 @@ clean:
 
 realclean: clean
 	$(RM_F) Makefile
+
+# Local variables:
+#   mode: makefile
+# End:
+# vim: ft=make:

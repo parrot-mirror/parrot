@@ -1,5 +1,5 @@
 #! perl
-# Copyright (C) 2006-2007, The Perl Foundation.
+# Copyright (C) 2006-2009, The Perl Foundation.
 # $Id$
 
 use strict;
@@ -35,9 +35,9 @@ L<docs/pdds/pdd07_codingstd.pod>
 
 my $DIST = Parrot::Distribution->new;
 
-my $skip_files = $DIST->generated_files();
 my @files = @ARGV ? @ARGV : (
     $DIST->get_c_language_files(),
+    $DIST->get_make_language_files(),
     $DIST->get_perl_language_files(),
     $DIST->get_pir_language_files(),
 );
@@ -45,7 +45,6 @@ my @files = @ARGV ? @ARGV : (
 Parrot::Test::Util::Runloop->testloop(
     name     => 'no trailing whitespace',
     files    => [@files],
-    skips    => $skip_files,
     per_line => sub { $_[0] !~ m{[ \t]$}m },
     diag_prefix => 'Trailing space or tab char found'
 );

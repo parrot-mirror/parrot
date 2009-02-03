@@ -1,3 +1,6 @@
+# Copyright (C) 2002-2009, The Perl Foundation.
+# $Id$
+
 RM_F = @rm_f@
 PERL = @perl@
 PARROT=../../parrot
@@ -42,3 +45,7 @@ clean:
 realclean: clean
 	$(RM_F) Makefile
 
+# Local variables:
+#   mode: makefile
+# End:
+# vim: ft=make:

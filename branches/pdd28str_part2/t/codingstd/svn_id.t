@@ -35,10 +35,10 @@ L<docs/pdds/pdd07_codingstd.pod>
 
 my $DIST = Parrot::Distribution->new;
 
-my $skip_files = $DIST->generated_files();
 my @c_files    = $DIST->get_c_language_files();
 my @perl_files = $DIST->get_perl_language_files();
-my @all_files  = ( @c_files, @perl_files );
+my @make_files = $DIST->get_make_language_files();
+my @all_files  = ( @c_files, @perl_files, @make_files );
 
 my @files = @ARGV ? @ARGV : @all_files;
 my @no_id_files;
@@ -48,8 +48,6 @@ foreach my $file (@files) {
     # if we have command line arguments, the file is the full path
     # otherwise, use the relevant Parrot:: path method
     my $path = @ARGV ? $file : $file->path;
-
-    next if exists $skip_files->{$path};
 
     my $buf = $DIST->slurp($path);
 

@@ -1,5 +1,5 @@
 #! perl
-# Copyright (C) 2007, The Perl Foundation.
+# Copyright (C) 2007-2009, The Perl Foundation.
 # $Id$
 
 use strict;
@@ -17,10 +17,10 @@ statement in parrot source files
 =head1 SYNOPSIS
 
     # test all files
-    % prove t/codingstd/check_copyright.t
+    % prove t/codingstd/copyright.t
 
     # test specific files
-    % perl t/codingstd/check_copyright.t src/foo.c include/parrot/bar.h
+    % perl t/codingstd/copyright.t src/foo.c include/parrot/bar.h
 
 =head1 DESCRIPTION
 
@@ -35,10 +35,10 @@ L<docs/pdds/pdd07_codingstd.pod>
 
 my $DIST = Parrot::Distribution->new;
 
-my $skip_files = $DIST->generated_files();
 my @c_files    = $DIST->get_c_language_files();
 my @perl_files = $DIST->get_perl_language_files();
-my @all_files  = ( @c_files, @perl_files );
+my @make_files = $DIST->get_make_language_files();
+my @all_files  = ( @c_files, @perl_files, @make_files );
 
 my @files = @ARGV ? @ARGV : @all_files;
 my ( @no_copyright_files, @outdated_copyright_files );
@@ -53,8 +53,6 @@ foreach my $file (@files) {
     # if we have command line arguments, the file is the full path
     # otherwise, use the relevant Parrot:: path method
     my $path = @ARGV ? $file : $file->path;
-
-    next if exists $skip_files->{$path};
 
     my $buf = $DIST->slurp($path);
 

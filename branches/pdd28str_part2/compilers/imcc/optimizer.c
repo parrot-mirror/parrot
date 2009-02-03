@@ -43,7 +43,7 @@ unused labels and dead_code_remove() to remove unreachable code
 cfg_optimize may be called multiple times during the construction of the
 CFG depending on whether or not it finds anything to optimize.
 
-RT #46277: subst_constants ... rewrite e.g. add_i_ic_ic -- where does this happen?
+subst_constants ... rewrite e.g. add_i_ic_ic
 
 optimizer
 ---------
@@ -51,7 +51,8 @@ optimizer
 runs with CFG and life info
 
 used_once ... deletes assignments, when LHS is unused
-RT #46279 e.g. constant_propagation
+
+constant_propagation
 
 post_optimizer: currently pcc_optimize in pcc.c
 ---------------
@@ -1368,7 +1369,7 @@ branch_cond_loop(PARROT_INTERP, ARGMOD(IMC_Unit *unit))
 
 =item C<static int unused_label>
 
-Removes unused labels. A label is unused if ... [RT #46287: finish this].
+Removes unused labels.
 
 Returns TRUE if any optimizations were performed. Otherwise, returns
 FALSE.
