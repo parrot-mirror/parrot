@@ -829,7 +829,7 @@ Downcase this string
 */
 
     METHOD lower() {
-        STRING * const s   = string_downcase(INTERP,
+        STRING * const s   = Parrot_str_downcase(INTERP,
             VTABLE_get_string(INTERP, SELF));
 
         RETURN(STRING *s);
