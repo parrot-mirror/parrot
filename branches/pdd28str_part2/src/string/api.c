@@ -1949,7 +1949,7 @@ Parrot_str_boolean(PARROT_INTERP, ARGIN_NULLOK(const STRING *s))
 
 /*
 
-=item C<STRING * string_printf>
+=item C<STRING * Parrot_str_format_data>
 
 Writes and returns a Parrot string.
 
@@ -1960,9 +1960,9 @@ Writes and returns a Parrot string.
 PARROT_EXPORT
 PARROT_CANNOT_RETURN_NULL
 STRING *
-string_printf(PARROT_INTERP, ARGIN(const char *format), ...)
+Parrot_str_format_data(PARROT_INTERP, ARGIN(const char *format), ...)
 {
-    ASSERT_ARGS(string_printf)
+    ASSERT_ARGS(Parrot_str_format_data)
     STRING *output;
     va_list args;
 
@@ -3011,7 +3011,7 @@ Parrot_str_change_encoding(PARROT_INTERP, ARGIN_NULLOK(STRING *src),
 
 /*
 
-=item C<STRING * string_compose>
+=item C<STRING * Parrot_str_compose>
 
 Normalizes the string.
 
@@ -3023,9 +3023,9 @@ PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 STRING *
-string_compose(PARROT_INTERP, ARGIN_NULLOK(STRING *src))
+Parrot_str_compose(PARROT_INTERP, ARGIN_NULLOK(STRING *src))
 {
-    ASSERT_ARGS(string_compose)
+    ASSERT_ARGS(Parrot_str_compose)
     if (!src)
         return NULL;
 
@@ -3038,7 +3038,7 @@ string_compose(PARROT_INTERP, ARGIN_NULLOK(STRING *src))
 
 /*
 
-=item C<STRING* string_join>
+=item C<STRING* Parrot_str_join>
 
 Joins the elements of the array C<ar> as strings with the string C<j> between
 them, returning the result.
@@ -3051,9 +3051,9 @@ PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 STRING*
-string_join(PARROT_INTERP, ARGIN_NULLOK(STRING *j), ARGIN(PMC *ar))
+Parrot_str_join(PARROT_INTERP, ARGIN_NULLOK(STRING *j), ARGIN(PMC *ar))
 {
-    ASSERT_ARGS(string_join)
+    ASSERT_ARGS(Parrot_str_join)
     STRING *res;
     STRING *s;
     const int ar_len = VTABLE_elements(interp, ar);

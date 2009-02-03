@@ -379,7 +379,7 @@ Parrot_full_sub_name(PARROT_INTERP, ARGIN_NULLOK(PMC* sub))
             if (s->name)
                 VTABLE_push_string(interp, ns_array, s->name);
 
-            res = string_join(interp, j, ns_array);
+            res = Parrot_str_join(interp, j, ns_array);
             Parrot_unblock_GC_mark(interp);
             return res;
         }

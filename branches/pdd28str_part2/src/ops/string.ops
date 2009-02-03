@@ -481,7 +481,7 @@ on regular expression, use C<PGE::Util>'s split from the standard library.
 =cut
 
 op join(out STR, in STR, invar PMC) :base_core {
-    $1 = string_join(interp, $2, $3);
+    $1 = Parrot_str_join(interp, $2, $3);
 }
 
 op split(out PMC, in STR, in STR) :base_core {
@@ -657,7 +657,7 @@ op escape(out STR, invar STR) {
 }
 
 op compose(out STR, in STR) {
-    $1 = string_compose(interp, $2);
+    $1 = Parrot_str_compose(interp, $2);
 }
 
 
