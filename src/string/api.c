@@ -3078,10 +3078,11 @@ Parrot_str_join(PARROT_INTERP, ARGIN_NULLOK(STRING *j), ARGIN(PMC *ar))
 
 /*
 
-=item C<PMC* string_split>
+=item C<PMC* Parrot_str_split>
 
 Splits the string C<str> at the delimiter C<delim>, returning a
-C<ResizableStringArray> of results.
+C<ResizableStringArray> of results. Returns PMCNULL if the string or the
+delimiter is NULL.
 
 =cut
 
@@ -3091,14 +3092,18 @@ PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 PMC*
-string_split(PARROT_INTERP, ARGIN(STRING *delim), ARGIN(STRING *str))
+Parrot_str_split(PARROT_INTERP,
+    ARGIN_NULLOK(STRING *delim), ARGIN_NULLOK(STRING *str))
 {
-    ASSERT_ARGS(string_split)
-    PMC * const res  = pmc_new(interp, enum_class_ResizableStringArray);
-    const int   slen = Parrot_str_byte_length(interp, str);
+    ASSERT_ARGS(Parrot_str_split)
+    PMC    *res;
+    INTVAL  slen, dlen, ps, pe;
 
-    int dlen;
-    int ps, pe;
+    if(STRING_IS_NULL(delim) || STRING_IS_NULL(str))
+        return PMCNULL;
+
+    res  = pmc_new(interp, enum_class_ResizableStringArray);
+    slen = Parrot_str_byte_length(interp, str);
 
     if (!slen)
         return res;
@@ -3145,29 +3150,6 @@ string_split(PARROT_INTERP, ARGIN(STRING *delim), ARGIN(STRING *str))
     return res;
 }
 
-
-/*
-
-=item C<PMC* Parrot_str_split>
-
-Split a string with a delimiter.
-Returns PMCNULL if the string or the delimiter is NULL,
-else is the same as string_split.
-
-=cut
-
-*/
-
-PARROT_EXPORT
-PARROT_WARN_UNUSED_RESULT
-PARROT_CANNOT_RETURN_NULL
-PMC*
-Parrot_str_split(PARROT_INTERP,
-    ARGIN_NULLOK(STRING *delim), ARGIN_NULLOK(STRING *str))
-{
-    ASSERT_ARGS(Parrot_str_split)
-    return (delim && str) ? string_split(interp, delim, str) : NULL;
-}
 
 /*
 

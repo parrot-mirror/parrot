@@ -810,7 +810,7 @@ static PMC*
 mmd_build_type_tuple_from_long_sig(PARROT_INTERP, ARGIN(STRING *long_sig))
 {
     ASSERT_ARGS(mmd_build_type_tuple_from_long_sig)
-    PMC *type_list = string_split(interp, CONST_STRING(interp, ","), long_sig);
+    PMC *type_list = Parrot_str_split(interp, CONST_STRING(interp, ","), long_sig);
 
     return mmd_build_type_tuple_from_type_list(interp, type_list);
 }
@@ -1401,7 +1401,7 @@ Parrot_mmd_add_multi_from_long_sig(PARROT_INTERP,
         ARGIN(STRING *sub_name), ARGIN(STRING *long_sig), ARGIN(PMC *sub_obj))
 {
     ASSERT_ARGS(Parrot_mmd_add_multi_from_long_sig)
-    PMC    *type_list   = string_split(interp, CONST_STRING(interp, ","), long_sig);
+    PMC    *type_list   = Parrot_str_split(interp, CONST_STRING(interp, ","), long_sig);
     STRING *ns_name     = VTABLE_get_string_keyed_int(interp, type_list, 0);
     STRING *sub_str     = CONST_STRING(interp, "Sub");
     STRING *closure_str = CONST_STRING(interp, "Closure");
@@ -1444,7 +1444,7 @@ Parrot_mmd_add_multi_from_c_args(PARROT_INTERP,
     STRING *sub_name_str  = Parrot_str_new_constant(interp, sub_name);
     STRING *long_sig_str  = Parrot_str_new_constant(interp, long_sig);
     STRING *short_sig_str = Parrot_str_new_constant(interp, short_sig);
-    PMC    *type_list     = string_split(interp, comma, long_sig_str);
+    PMC    *type_list     = Parrot_str_split(interp, comma, long_sig_str);
     STRING *ns_name       = VTABLE_get_string_keyed_int(interp, type_list, 0);
 
     /* Create an NCI sub for the C function */

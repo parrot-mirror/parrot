@@ -1459,7 +1459,7 @@ Used to unarchive the class.
             STRING * const serial_namespace = VTABLE_shift_string(INTERP, io);
             STRING * const semicolon_str = CONST_STRING(INTERP, ";");
             PMC    * const namespace_array =
-                string_split(INTERP, semicolon_str, serial_namespace);
+                Parrot_str_split(INTERP, semicolon_str, serial_namespace);
             PMC *ns = Parrot_get_namespace_keyed(interp,
                     INTERP->root_namespace, namespace_array);
 
