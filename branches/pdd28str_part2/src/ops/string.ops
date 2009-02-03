@@ -536,12 +536,12 @@ op find_charset(out INT, in STR) :base_core {
 }
 
 op trans_charset(inout STR, in INT) {
-    $1 = Parrot_string_trans_charset(interp, $1, $2, NULL);
+    $1 = Parrot_str_change_charset(interp, $1, $2, NULL);
 }
 
 op trans_charset(out STR, in STR, in INT) {
     STRING *dest = new_string_header(interp, 0);
-    $1 = Parrot_string_trans_charset(interp, $2, $3, dest);
+    $1 = Parrot_str_change_charset(interp, $2, $3, dest);
 }
 
 
@@ -592,12 +592,12 @@ op find_encoding(out INT, in STR) :base_core {
 }
 
 op trans_encoding(inout STR, in INT) {
-    $1 = Parrot_string_trans_encoding(interp, $1, $2, NULL);
+    $1 = Parrot_str_change_encoding(interp, $1, $2, NULL);
 }
 
 op trans_encoding(out STR, in STR, in INT) {
     STRING * const dest = new_string_header(interp, 0);
-    $1 = Parrot_string_trans_encoding(interp, $2, $3, dest);
+    $1 = Parrot_str_change_encoding(interp, $2, $3, dest);
 }
 
 
