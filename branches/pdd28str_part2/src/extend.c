@@ -357,7 +357,7 @@ Parrot_PMC_get_numval_intkey(PARROT_INTERP,
 
 Return a null-terminated string that represents the string value of the PMC.
 
-Note that you must free this string with C<string_cstring_free()>!
+Note that you must free this string with C<Parrot_str_free_cstring()>!
 
 =cut
 
@@ -388,7 +388,7 @@ Parrot_PMC_get_cstring_intkey(PARROT_INTERP,
 
 Return a null-terminated string that represents the string value of the PMC.
 
-Note that you must free this string with C<string_cstring_free()>!
+Note that you must free this string with C<Parrot_str_free_cstring()>!
 
 =cut
 
@@ -421,7 +421,7 @@ Return a null-terminated string for the PMC, along with the length.
 Yes, right now this is a bit of a cheat. It needs fixing, but without
 disturbing the interface.
 
-Note that you must free the string with C<string_cstring_free()>.
+Note that you must free the string with C<Parrot_str_free_cstring()>.
 
 =cut
 
@@ -454,7 +454,7 @@ Return a null-terminated string for the PMC, along with the length.
 Yes, right now this is a bit of a cheat. It needs fixing, but without
 disturbing the interface.
 
-Note that you must free this string with C<string_cstring_free()>.
+Note that you must free this string with C<Parrot_str_free_cstring()>.
 
 =cut
 
@@ -893,7 +893,7 @@ void
 Parrot_free_cstring(ARGIN_NULLOK(char *string))
 {
     ASSERT_ARGS(Parrot_free_cstring)
-    string_cstring_free(string);
+    Parrot_str_free_cstring(string);
 }
 
 /*

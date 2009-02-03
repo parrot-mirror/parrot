@@ -603,7 +603,7 @@ Parrot_add_library_path(PARROT_INTERP,
 
 Locate the full path for C<file_name> and the given file type(s). If
 successful, returns a C-string allocated with C<Parrot_str_to_cstring> or
-NULL otherwise.  Remember to free the string with C<string_cstring_free()>.
+NULL otherwise.  Remember to free the string with C<Parrot_str_free_cstring()>.
 
 =item C<STRING* Parrot_locate_runtime_file_str>
 

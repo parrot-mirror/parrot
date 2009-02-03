@@ -2605,7 +2605,7 @@ pf_debug_dump(PARROT_INTERP, ARGIN(const PackFile_Segment *self))
         Parrot_io_printf(interp, "        OFFSET => %d,\n",
                    debug->mappings[i]->offset);
         Parrot_io_printf(interp, "        FILENAME => %s\n", filename);
-        string_cstring_free(filename);
+        Parrot_str_free_cstring(filename);
         Parrot_io_printf(interp, "    ],\n");
     }
 
@@ -4077,7 +4077,7 @@ PackFile_Annotations_dump(PARROT_INTERP, ARGIN(const struct PackFile_Segment *se
                 self->keys[i]->type == PF_ANNOTATION_KEY_TYPE_NUM ? "number" :
                 "PMC");
         Parrot_io_printf(interp, "    ],\n");
-        string_cstring_free(key_name);
+        Parrot_str_free_cstring(key_name);
     }
     Parrot_io_printf(interp, "  ],\n");
 
@@ -4436,7 +4436,7 @@ Parrot_load_bytecode(PARROT_INTERP, ARGIN_NULLOK(STRING *file_str))
     filename = Parrot_str_to_cstring(interp, path);
     if (file_type == PARROT_RUNTIME_FT_PBC) {
         PackFile *pf = PackFile_append_pbc(interp, filename);
-        string_cstring_free(filename);
+        Parrot_str_free_cstring(filename);
 
         if (!pf)
             Parrot_ex_throw_from_c_args(interp, NULL, 1,
@@ -4447,7 +4447,7 @@ Parrot_load_bytecode(PARROT_INTERP, ARGIN_NULLOK(STRING *file_str))
         PackFile_ByteCode * const cs =
             (PackFile_ByteCode *)IMCC_compile_file_s(interp,
                 filename, &err);
-        string_cstring_free(filename);
+        Parrot_str_free_cstring(filename);
 
         if (cs)
             do_sub_pragmas(interp, cs, PBC_LOADED, NULL);

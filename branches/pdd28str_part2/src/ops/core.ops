@@ -189,7 +189,7 @@ inline op branch_cs(in STR) :base_loop :check_event :flow {
     {
         char * const label = Parrot_str_to_cstring(interp, $1);
         fe = PackFile_find_fixup_entry(interp, enum_fixup_label, label);
-        string_cstring_free(label);
+        Parrot_str_free_cstring(label);
     }
 
     if (!fe) {
@@ -1351,7 +1351,7 @@ op dlfunc(out PMC, invar PMC, in STR, in STR) {
         VTABLE_set_pointer_keyed_str(interp, $1, $4, F2DPTR(p));
         PObj_get_FLAGS($1) |= PObj_private1_FLAG;
     }
-    string_cstring_free(name);
+    Parrot_str_free_cstring(name);
 }
 
 op dlvar(out PMC, invar PMC, in STR) {
@@ -1369,7 +1369,7 @@ op dlvar(out PMC, invar PMC, in STR) {
         $1 = pmc_new(interp, enum_class_UnManagedStruct);
         PMC_data($1) = p;
     }
-    string_cstring_free(name);
+    Parrot_str_free_cstring(name);
 }
 
 inline op compreg(in STR, invar PMC) {

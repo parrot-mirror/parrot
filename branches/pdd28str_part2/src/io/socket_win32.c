@@ -349,7 +349,7 @@ Parrot_io_sockaddr_in(PARROT_INTERP, unsigned short port, ARGMOD(STRING *addr))
      * it may have been toggled off.
      */
     he = gethostbyname(s);
-    string_cstring_free(s);
+    Parrot_str_free_cstring(s);
 
     /* XXX FIXME - Handle error condition better */
     if (!he) {

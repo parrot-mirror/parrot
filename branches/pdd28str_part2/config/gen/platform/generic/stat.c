@@ -164,7 +164,7 @@ Parrot_stat_info_intval(PARROT_INTERP, STRING *file, INTVAL thing)
 
     /* Everything needs the result of stat, so just go do it */
     const int status = stat(filename, &statbuf);
-    string_cstring_free(filename);
+    Parrot_str_free_cstring(filename);
     return stat_common(interp, &statbuf, thing, status);
 }
 

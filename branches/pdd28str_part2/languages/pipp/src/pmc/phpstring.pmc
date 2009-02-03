@@ -93,7 +93,7 @@ Return the string 'string'.
             }
         }
 
-        string_cstring_free(s);
+        Parrot_str_free_cstring(s);
         RETURN(INTVAL retval);
     }
 
@@ -113,7 +113,7 @@ Return the string 'string'.
 
         retval = pmc_new(INTERP, dynpmc_PhpInteger);
         VTABLE_set_integer_native(INTERP, retval, n);
-        string_cstring_free(s1);
+        Parrot_str_free_cstring(s1);
         RETURN(PMC *retval);
     }
 
@@ -158,7 +158,7 @@ Return the string 'string'.
             }
         }
 
-        string_cstring_free(s);
+        Parrot_str_free_cstring(s);
         RETURN(PMC *retval);
     }
 

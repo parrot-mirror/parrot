@@ -270,7 +270,7 @@ Parrot_jit_debug_stabs(PARROT_INTERP)
         else if (!ext) /* EVAL_n */
             file = Parrot_str_append(interp, file,
                     string_make(interp, ".", 1, NULL, PObj_external_FLAG));
-        string_cstring_free(src);
+        Parrot_str_free_cstring(src);
     }
     else {
         /* chop pbc */
@@ -282,7 +282,7 @@ Parrot_jit_debug_stabs(PARROT_INTERP)
     {
         char * const temp = Parrot_str_to_cstring(interp, stabsfile);
         stabs      = fopen(temp, "w");
-        string_cstring_free(temp);
+        Parrot_str_free_cstring(temp);
     }
     if (stabs == NULL)
         return;
@@ -291,7 +291,7 @@ Parrot_jit_debug_stabs(PARROT_INTERP)
         char * const temp = Parrot_str_to_cstring(interp, pasmfile);
         /* filename info */
         fprintf(stabs, ".file \"%s\"\n", temp);
-        string_cstring_free(temp);
+        Parrot_str_free_cstring(temp);
     }
     /* declare function name */
     fprintf(stabs, ".jit_func:\n");
@@ -336,7 +336,7 @@ Parrot_jit_debug_stabs(PARROT_INTERP)
     {
         char * const temp = Parrot_str_to_cstring(interp, cmd);
         system(temp);
-        string_cstring_free(temp);
+        Parrot_str_free_cstring(temp);
     }
 }
 

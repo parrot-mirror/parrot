@@ -419,7 +419,7 @@ Parrot_get_vtable_index(PARROT_INTERP, ARGIN(const STRING *name))
         const INTVAL cmp = strcmp(name_c, meth_c);
 
         if (cmp == 0) {
-            string_cstring_free(name_c);
+            Parrot_str_free_cstring(name_c);
             return mid;
         }
         else if (cmp > 0)
@@ -428,7 +428,7 @@ Parrot_get_vtable_index(PARROT_INTERP, ARGIN(const STRING *name))
             high = mid;
     }
 
-    string_cstring_free(name_c);
+    Parrot_str_free_cstring(name_c);
 
     return -1;
 }

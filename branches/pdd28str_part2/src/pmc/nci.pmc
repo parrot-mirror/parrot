@@ -89,7 +89,7 @@ void pcc_params(PARROT_INTERP, STRING *sig, Parrot_NCI_attributes * const nci_in
             nci_info->pcc_params_signature = CONST_STRING(interp, "");
 
         mem_sys_free(param_sig);
-        string_cstring_free(sig_c);
+        Parrot_str_free_cstring(sig_c);
     }
 
 
@@ -174,7 +174,7 @@ Sets the specified function pointer and signature (C<*key>).
         PMC_struct_val(SELF) = func;
         nci_info->signature  = string_make(interp, key_c, strlen(key_c),
                                     NULL, PObj_constant_FLAG);
-        string_cstring_free(key_c);
+        Parrot_str_free_cstring(key_c);
         pcc_params(INTERP, key, nci_info);
 
         /* Arity is length of that string minus one (the return type). */

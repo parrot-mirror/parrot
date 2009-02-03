@@ -397,12 +397,12 @@ run_init_lib(PARROT_INTERP, ARGIN(void *handle),
         /* get load_func */
         load_func       = (PMC * (*)(PARROT_INTERP))
             D2FPTR(Parrot_dlsym(handle, cload_func_name));
-        string_cstring_free(cload_func_name);
+        Parrot_str_free_cstring(cload_func_name);
 
         /* get init_func */
         init_func       = (void (*)(PARROT_INTERP, PMC *))
             D2FPTR(Parrot_dlsym(handle, cinit_func_name));
-        string_cstring_free(cinit_func_name);
+        Parrot_str_free_cstring(cinit_func_name);
     }
     else {
         load_func = NULL;
@@ -457,7 +457,7 @@ clone_string_into(ARGMOD(Interp *d), ARGIN(Interp *s), ARGIN(PMC *value))
         Parrot_str_new_init(d, raw_str, strlen(raw_str),
             PARROT_DEFAULT_ENCODING, PARROT_DEFAULT_CHARSET,
             PObj_constant_FLAG);
-    string_cstring_free(raw_str);
+    Parrot_str_free_cstring(raw_str);
     return ret;
 }
 

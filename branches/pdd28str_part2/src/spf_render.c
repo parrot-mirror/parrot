@@ -711,7 +711,7 @@ Parrot_sprintf_format(PARROT_INTERP,
                                 /* the buffer is 4096, so no problem here */
                                 sprintf(tc, tempstr, sharedint);
 #endif
-                                string_cstring_free(tempstr);
+                                Parrot_str_free_cstring(tempstr);
                             }
                             targ = Parrot_str_append(interp, targ, cstr2pstr(tc));
                             }
@@ -770,7 +770,7 @@ Parrot_sprintf_format(PARROT_INTERP,
                                 /* the buffer is 4096, so no problem here */
                                 sprintf(tc, tempstr, (double)thefloat);
 #endif
-                                string_cstring_free(tempstr);
+                                Parrot_str_free_cstring(tempstr);
                             }
 
 #ifdef WIN32

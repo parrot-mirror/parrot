@@ -240,7 +240,7 @@ Parrot_str_set(PARROT_INTERP, ARGIN_NULLOK(STRING *dest), ARGMOD(STRING *src))
 
 /*
 
-=item C<void string_free>
+=item C<void Parrot_str_free>
 
 Frees the given STRING's header, accounting for reference counts for the
 STRING's buffer &c.  Use this only if you I<know> that nothing else has stored
@@ -251,9 +251,9 @@ the STRING elsewhere.
 */
 
 void
-string_free(PARROT_INTERP, ARGIN(STRING *s))
+Parrot_str_free(PARROT_INTERP, ARGIN(STRING *s))
 {
-    ASSERT_ARGS(string_free)
+    ASSERT_ARGS(Parrot_str_free)
     if (!PObj_constant_TEST(s)) {
         Small_Object_Pool * const pool = interp->arena_base->string_header_pool;
         pool->add_free_object(interp, pool, s);
@@ -2097,7 +2097,7 @@ Parrot_str_to_num(PARROT_INTERP, ARGIN(const STRING *s))
 #else
         f = -0.0;
 #endif
-    string_cstring_free(cstr);
+    Parrot_str_free_cstring(cstr);
 
     return f;
 }
@@ -2154,7 +2154,7 @@ Parrot_str_from_num(PARROT_INTERP, FLOATVAL f)
 =item C<char * Parrot_str_to_cstring>
 
 Returns a C string for the specified Parrot string. Use
-C<string_cstring_free()> to free the string. Failure to do this will result in
+C<Parrot_str_free_cstring()> to free the string. Failure to do this will result in
 a memory leak.
 
 =cut
@@ -2182,7 +2182,7 @@ Parrot_str_to_cstring(PARROT_INTERP, ARGIN_NULLOK(const STRING *s))
 =item C<char * string_to_cstring_nullable>
 
 Returns a C string for the specified Parrot string. Use
-C<string_cstring_free()> to free the string. Failure to do this will result in
+C<Parrot_str_free_cstring()> to free the string. Failure to do this will result in
 a memory leak.
 
 =cut
@@ -2209,7 +2209,7 @@ string_to_cstring_nullable(SHIM_INTERP, ARGIN_NULLOK(const STRING *s))
 
 /*
 
-=item C<void string_cstring_free>
+=item C<void Parrot_str_free_cstring>
 
 Free a string created by C<Parrot_str_to_cstring()>.
 
@@ -2222,16 +2222,16 @@ sorts of leak potential otherwise.
 
 PARROT_EXPORT
 void
-string_cstring_free(ARGIN_NULLOK(char *p))
+Parrot_str_free_cstring(ARGIN_NULLOK(char *p))
 {
-    ASSERT_ARGS(string_cstring_free)
+    ASSERT_ARGS(Parrot_str_free_cstring)
     mem_sys_free((void *)p);
 }
 
 
 /*
 
-=item C<void string_pin>
+=item C<void Parrot_str_pin>
 
 Replaces the specified Parrot string's managed buffer memory by system memory.
 
@@ -2241,9 +2241,9 @@ Replaces the specified Parrot string's managed buffer memory by system memory.
 
 PARROT_EXPORT
 void
-string_pin(PARROT_INTERP, ARGMOD(STRING *s))
+Parrot_str_pin(PARROT_INTERP, ARGMOD(STRING *s))
 {
-    ASSERT_ARGS(string_pin)
+    ASSERT_ARGS(Parrot_str_pin)
     char  *memory;
     size_t size;
 
@@ -2267,9 +2267,9 @@ string_pin(PARROT_INTERP, ARGMOD(STRING *s))
 
 /*
 
-=item C<void string_unpin>
+=item C<void Parrot_str_unpin>
 
-Undoes a C<string_pin()> so that the string once again uses managed memory.
+Undoes a C<Parrot_str_pin()> so that the string once again uses managed memory.
 
 =cut
 
@@ -2277,9 +2277,9 @@ Undoes a C<string_pin()> so that the string once again uses managed memory.
 
 PARROT_EXPORT
 void
-string_unpin(PARROT_INTERP, ARGMOD(STRING *s))
+Parrot_str_unpin(PARROT_INTERP, ARGMOD(STRING *s))
 {
-    ASSERT_ARGS(string_unpin)
+    ASSERT_ARGS(Parrot_str_unpin)
     void  *memory;
     size_t size;
 

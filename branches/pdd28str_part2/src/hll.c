@@ -101,7 +101,7 @@ new_hll_entry(PARROT_INTERP, ARGIN_NULLOK(STRING *entry_name))
             len, PARROT_DEFAULT_ENCODING, PARROT_DEFAULT_CHARSET,
             PObj_constant_FLAG);
 
-        string_cstring_free(cstring);
+        Parrot_str_free_cstring(cstring);
         VTABLE_set_pmc_keyed_str(interp, hll_info, const_name, entry);
     }
     else
