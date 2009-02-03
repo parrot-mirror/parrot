@@ -3148,7 +3148,7 @@ string_split(PARROT_INTERP, ARGIN(STRING *delim), ARGIN(STRING *str))
 
 /*
 
-=item C<PMC* Parrot_string_split>
+=item C<PMC* Parrot_str_split>
 
 Split a string with a delimiter.
 Returns PMCNULL if the string or the delimiter is NULL,
@@ -3162,10 +3162,10 @@ PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 PMC*
-Parrot_string_split(PARROT_INTERP,
+Parrot_str_split(PARROT_INTERP,
     ARGIN_NULLOK(STRING *delim), ARGIN_NULLOK(STRING *str))
 {
-    ASSERT_ARGS(Parrot_string_split)
+    ASSERT_ARGS(Parrot_str_split)
     return (delim && str) ? string_split(interp, delim, str) : NULL;
 }
 
