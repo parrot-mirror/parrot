@@ -1226,7 +1226,7 @@ Parrot_debugger_load(PARROT_INTERP, ARGIN_NULLOK(STRING *filename))
 
     file = Parrot_str_to_cstring(interp, filename);
     PDB_load_source(interp, file);
-    string_cstring_free(file);
+    Parrot_str_free_cstring(file);
 }
 
 /*
@@ -2762,7 +2762,7 @@ PDB_disassemble_op(PARROT_INTERP, ARGOUT(char *dest), size_t space,
                     {
                         char * const temp = Parrot_str_to_cstring(interp, PMC_str_val(k));
                         strcpy(&dest[size], temp);
-                        string_cstring_free(temp);
+                        Parrot_str_free_cstring(temp);
                     }
                     size += Parrot_str_byte_length(interp, PMC_str_val(k));
                     dest[size++] = '"';

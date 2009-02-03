@@ -84,7 +84,7 @@ in the constant PMC pool.
 
         /* "()" - no args */
         if (l <= 2 && *source == '(') {
-            string_cstring_free(source);
+            Parrot_str_free_cstring(source);
             return SELF;
         }
 
@@ -137,7 +137,7 @@ in the constant PMC pool.
             }
         }
 
-        string_cstring_free(source);
+        Parrot_str_free_cstring(source);
         return SELF;
     }
 

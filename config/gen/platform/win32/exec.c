@@ -49,7 +49,7 @@ Parrot_Run_OS_Command(PARROT_INTERP, STRING *command)
 
     strcpy(cmd, "/c ");
     strcat(cmd, cmdin);
-    string_cstring_free(cmdin);
+    Parrot_str_free_cstring(cmdin);
 
     memset(&si, 0, sizeof (si));
     si.cb = sizeof (si);

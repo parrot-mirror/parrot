@@ -300,7 +300,7 @@ Parrot_jit_debug_stabs(PARROT_INTERP)
             file = Parrot_str_append(interp, file,
                     string_make(interp, ".", 1, NULL, PObj_external_FLAG));
 
-        string_cstring_free(src);
+        Parrot_str_free_cstring(src);
     }
     else {
         /* chop pbc */
@@ -312,7 +312,7 @@ Parrot_jit_debug_stabs(PARROT_INTERP)
     {
         char *const temp = Parrot_str_to_cstring(interp, stabsfile);
         stabs            = fopen(temp, "w");
-        string_cstring_free(temp);
+        Parrot_str_free_cstring(temp);
     }
     if (stabs == NULL)
         return;
@@ -322,7 +322,7 @@ Parrot_jit_debug_stabs(PARROT_INTERP)
         /* filename info */
         fprintf(stabs, ".data\n.text\n");       /* darwin wants it */
         fprintf(stabs, ".stabs \"%s\"," N_SO ",0,0,0\n", temp);
-        string_cstring_free(temp);
+        Parrot_str_free_cstring(temp);
     }
     /* jit_func start addr */
     fprintf(stabs, ".stabs \"jit_func:F(0,1)\"," N_FUN ",0,1,%p\n",
@@ -368,7 +368,7 @@ Parrot_jit_debug_stabs(PARROT_INTERP)
         int          status = system(temp);
         if (status)
             fprintf(stderr, "Assembly failed: %d\n%s\n", status, temp);
-        string_cstring_free(temp);
+        Parrot_str_free_cstring(temp);
     }
 }
 

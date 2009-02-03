@@ -152,7 +152,7 @@ Parrot_io_open_portable(PARROT_INTERP, ARGMOD(PMC *filehandle),
         if (fptr == NULL && errno == ENOENT && (flags & PIO_F_WRITE))
             fptr = fopen(spath, "w+b");
 
-        string_cstring_free(spath);
+        Parrot_str_free_cstring(spath);
     }
 
     /* File open */

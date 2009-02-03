@@ -190,7 +190,7 @@ op debug_load(inconst STR) :base_debug {
     if (!(interp->pdb->state & PDB_BREAK)) {
         f = string_to_cstring(interp, ($1));
         PDB_load_source(interp, f);
-        string_cstring_free(f);
+        Parrot_str_free_cstring(f);
     }
 }
 

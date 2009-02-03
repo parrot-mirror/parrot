@@ -152,7 +152,7 @@ complex_parse_string(PARROT_INTERP, FLOATVAL *re, FLOATVAL *im, STRING *value) {
         }
         else {
             /* "+" or "-" not found: error */
-            string_cstring_free(str);
+            Parrot_str_free_cstring(str);
 
             Parrot_ex_throw_from_c_args(interp, NULL,
                 EXCEPTION_INVALID_STRING_REPRESENTATION,
@@ -191,7 +191,7 @@ complex_parse_string(PARROT_INTERP, FLOATVAL *re, FLOATVAL *im, STRING *value) {
     if (second_num_minus)
         *im = -*im;
 
-    string_cstring_free(str);
+    Parrot_str_free_cstring(str);
 }
 
 static void

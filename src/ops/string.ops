@@ -211,7 +211,7 @@ $1 should be unpinned if it is used after pinning is no longer necessary.
 =cut
 
 op pin(inout STR) :base_mem {
-    string_pin(interp, $1);
+    Parrot_str_pin(interp, $1);
 }
 
 
@@ -223,7 +223,7 @@ This will make the memory in $1 move.
 =cut
 
 op unpin(inout STR) :base_mem {
-    string_unpin(interp, $1);
+    Parrot_str_unpin(interp, $1);
 }
 
 

@@ -56,7 +56,7 @@ static STRING *rat_get_string_to_base(PARROT_INTERP, PMC *self, int base) {
   #ifdef PARROT_HAS_GMP
     char * const cstr = mpq_get_str(NULL, (int) base, RT(self));
     STRING * pstr     = Parrot_str_new(interp, cstr, 0);
-    string_cstring_free(cstr);
+    Parrot_str_free_cstring(cstr);
     return pstr;
   #else
     RAISE_EXCEPTION
@@ -393,7 +393,7 @@ Returns the version of GNU Multiple Precision library. Returns 0.0.0, if GMP is 
         char * const cstr = string_to_cstring(INTERP, value);
         mpq_set_str(RT(SELF), cstr, 0);
         mpq_canonicalize(RT(SELF));
-        string_cstring_free(cstr);
+        Parrot_str_free_cstring(cstr);
       #else
         RAISE_EXCEPTION
       #endif
@@ -411,7 +411,7 @@ Returns the version of GNU Multiple Precision library. Returns 0.0.0, if GMP is 
         char * const cstr = string_to_cstring(INTERP, value);
         mpq_set_str(RT(SELF), cstr, (int) base);
         mpq_canonicalize(RT(SELF));
-        string_cstring_free(cstr);
+        Parrot_str_free_cstring(cstr);
       #else
         RAISE_EXCEPTION
       #endif

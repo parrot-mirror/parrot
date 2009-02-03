@@ -2891,7 +2891,7 @@ Parrot_pcc_invoke_from_sig_object(PARROT_INTERP, ARGIN(PMC *sub_obj),
     interp->current_args   = save_current_args;
     interp->args_signature = save_args_signature;
     interp->current_object = save_current_object;
-    string_cstring_free(signature);
+    Parrot_str_free_cstring(signature);
 }
 
 

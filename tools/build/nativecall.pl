@@ -368,7 +368,7 @@ sub make_arg {
         push @{$temps_ref}, "char *t_$temp_num;";
         push @{$extra_preamble_ref},
             "{STRING * s= GET_NCI_S($reg_num); t_$temp_num = s ? Parrot_str_to_cstring(interp, s) : (char *) NULL;}";
-        push @{$extra_postamble_ref}, "do { if (t_$temp_num) string_cstring_free(t_$temp_num); } while (0);";
+        push @{$extra_postamble_ref}, "do { if (t_$temp_num) Parrot_str_free_cstring(t_$temp_num); } while (0);";
         return "t_$temp_num";
     };
     /b/ && do {
@@ -380,7 +380,7 @@ sub make_arg {
         push @{$temps_ref}, "char *s_$temp_num;\n    char *t_$temp_num;\n    void** v_$temp_num = (void **) &t_$temp_num;";
         push @{$extra_preamble_ref},
             "{STRING * s= GET_NCI_S($reg_num); t_$temp_num = s ? Parrot_str_to_cstring(interp, s) : (char *) NULL; s_$temp_num = t_$temp_num;}";
-        push @{$extra_postamble_ref}, "do { if (s_$temp_num) string_cstring_free(s_$temp_num); } while (0);";
+        push @{$extra_postamble_ref}, "do { if (s_$temp_num) Parrot_str_free_cstring(s_$temp_num); } while (0);";
         return "v_$temp_num";
     };
     /J/ && do {

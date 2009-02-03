@@ -99,12 +99,12 @@ Parrot_io_sockaddr_in(PARROT_INTERP, unsigned short port, ARGIN(STRING *addr))
         /* XXX FIXME - Handle error condition better */
         if (!he) {
             fprintf(stderr, "gethostbyname failure [%s]\n", s);
-            string_cstring_free(s);
+            Parrot_str_free_cstring(s);
             return NULL;
         }
         memcpy((char*)&sa.sin_addr, he->h_addr, sizeof (sa.sin_addr));
     }
-    string_cstring_free(s);
+    Parrot_str_free_cstring(s);
 
     sa.sin_family = family;
     sa.sin_port = htons(port);
