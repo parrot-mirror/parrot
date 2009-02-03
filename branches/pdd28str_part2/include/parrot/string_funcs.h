@@ -67,7 +67,7 @@ const char * Parrot_string_cstring(SHIM_INTERP, ARGIN(const STRING *str))
 
 PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
-INTVAL Parrot_string_find_cclass(PARROT_INTERP,
+INTVAL Parrot_str_find_cclass(PARROT_INTERP,
     INTVAL flags,
     ARGIN_NULLOK(STRING *s),
     UINTVAL offset,
@@ -76,7 +76,7 @@ INTVAL Parrot_string_find_cclass(PARROT_INTERP,
 
 PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
-INTVAL Parrot_string_find_not_cclass(PARROT_INTERP,
+INTVAL Parrot_str_find_not_cclass(PARROT_INTERP,
     INTVAL flags,
     ARGIN_NULLOK(STRING *s),
     UINTVAL offset,
@@ -85,7 +85,7 @@ INTVAL Parrot_string_find_not_cclass(PARROT_INTERP,
 
 PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
-INTVAL Parrot_string_is_cclass(PARROT_INTERP,
+INTVAL Parrot_str_is_cclass(PARROT_INTERP,
     INTVAL flags,
     ARGIN(const STRING *s),
     UINTVAL offset)
@@ -561,11 +561,11 @@ STRING* Parrot_str_from_uint(PARROT_INTERP,
     || PARROT_ASSERT_ARG(s)
 #define ASSERT_ARGS_Parrot_string_cstring __attribute__unused__ int _ASSERT_ARGS_CHECK = \
        PARROT_ASSERT_ARG(str)
-#define ASSERT_ARGS_Parrot_string_find_cclass __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+#define ASSERT_ARGS_Parrot_str_find_cclass __attribute__unused__ int _ASSERT_ARGS_CHECK = \
        PARROT_ASSERT_ARG(interp)
-#define ASSERT_ARGS_Parrot_string_find_not_cclass __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+#define ASSERT_ARGS_Parrot_str_find_not_cclass __attribute__unused__ int _ASSERT_ARGS_CHECK = \
        PARROT_ASSERT_ARG(interp)
-#define ASSERT_ARGS_Parrot_string_is_cclass __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+#define ASSERT_ARGS_Parrot_str_is_cclass __attribute__unused__ int _ASSERT_ARGS_CHECK = \
        PARROT_ASSERT_ARG(interp) \
     || PARROT_ASSERT_ARG(s)
 #define ASSERT_ARGS_Parrot_string_split __attribute__unused__ int _ASSERT_ARGS_CHECK = \

@@ -81,7 +81,7 @@ A newline is automatically added to the end of the fmt.
         if (VTABLE_exists_keyed_str(INTERP, hash, key)) {
             repl = VTABLE_get_string_keyed_str(INTERP, hash, key);
         }
-        else if (Parrot_string_is_cclass(INTERP, enum_cclass_numeric, fmt,
+        else if (Parrot_str_is_cclass(INTERP, enum_cclass_numeric, fmt,
                 (UINTVAL)pos + 1)) {
             I0   = Parrot_str_to_int(INTERP, key);
             repl = VTABLE_get_string_keyed_int(INTERP, args, I0);
