@@ -1,3 +1,4 @@
+# Copyright (C) 2007-2009, The Perl Foundation.
 # $Id$
 
 .SUFFIXES : .c @o@
@@ -108,3 +109,8 @@ realclean: clean
 	    doc/*.html
 
 distclean: realclean
+
+# Local variables:
+#   mode: makefile
+# End:
+# vim: ft=make:

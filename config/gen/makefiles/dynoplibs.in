@@ -1,3 +1,4 @@
+# Copyright (C) 2003-2009, The Perl Foundation.
 # $Id$
 
 PERL        = @perl@
@@ -44,3 +45,8 @@ realclean: clean
 	$(RM_F) Makefile
 
 distclean: realclean
+
+# Local variables:
+#   mode: makefile
+# End:
+# vim: ft=make:

@@ -210,7 +210,7 @@ BEGIN {
             },
             yacc => { file_exts => ['y'] },
             perl => {
-                file_exts   => [ 'pl', 'pm', 'in', 't' ],
+                file_exts   => [ 'pl', 'pm', 't' ],
                 shebang     => qr/^#!\s*perl/,
                 shebang_ext => qr/.t$/,
             },
@@ -232,7 +232,7 @@ BEGIN {
                 ? @{ $file_class{$class}{$type}{except_dirs} }
                 : ();
             my $method = join '_' => $type, $class;
-            my $filter_ext = join '|' => map { "\\.${_}\$" } @exts;
+            my $filter_ext = join '|' => map { "\\.${_}\$|_${_}\\.in\$" } @exts;
             my $filter_dir = join
                 '|' => map { qr{\b$_\b} }
                 map { quotemeta($_) } @ignore_dirs,
@@ -321,6 +321,24 @@ sub is_git_co {
     return shift->directory_exists_with_name('.git');
 }
 
+=item C<get_make_language_files()>
+
+Returns the Make language source files within Parrot.
+
+=cut
+
+sub get_make_language_files {
+    my ($self) = @_;
+
+    # Look through the list of distribution files
+    # and return a sorted list of filenames
+    my @files = sort
+        map  { $self->file_with_name($_) }
+        grep { m|[/\\]makefiles[/\\][a-z]+\.in$| }
+        $self->_dist_files;
+    return @files;
+}
+
 =item C<get_c_language_files()>
 
 Returns the C language source files within Parrot.  Namely:
@@ -389,6 +407,8 @@ This is to exclude automatically generated C-language files Parrot might have.
             config/auto/cpu/i386/memcpy_mmx_in.c
             config/auto/cpu/i386/memcpy_sse.c
             config/auto/cpu/i386/memcpy_sse_in.c
+            config/gen/config_h/config_h.in
+            config/gen/config_h/feature_h.in
             compilers/imcc/imclexer.c
             compilers/imcc/imcparser.c
             compilers/imcc/imcparser.h
@@ -435,8 +455,6 @@ Returns the Perl language source files within Parrot.  Namely:
 =item Perl source files C<*.pl>
 
 =item Perl module files C<*.pm>
-
-=item .in files C<*.in>
 
 =item test files C<*.t>
 
@@ -491,6 +509,7 @@ sub get_perl_exemption_regexp {
 
     my $parrot_dir = $self->path();
     my @paths = map { File::Spec->catdir( $parrot_dir, File::Spec->canonpath($_) ) } qw{
+        languages/dotnet/config/N2PConfig_pm.in
         languages/regex/lib/Regex/Grammar.pm
         languages/pipp/src/pct/actions.pm
         compilers/nqp/
@@ -523,10 +542,11 @@ sub is_perl {
 
     # modules and perl scripts should always be tested..
     return 1 if $filename =~ /\.(?:pm|pl)$/;
+    return 1 if $filename =~ /_(?:pm|pl)\.in$/;
 
-    # test files (.t) and configure (.in) files might need testing.
+    # test files (.t) might need testing.
     # ignore everything else.
-    return 0 unless $filename !~ /\.(?:t|in)$/;
+    return 0 unless $filename !~ /\.t$/;
 
     # Now let's check to see if there's a perl shebang.
 

@@ -1,4 +1,4 @@
-# Copyright (C) 2008, The Perl Foundation.
+# Copyright (C) 2008-2009, The Perl Foundation.
 # $Id$
 
 =head1 NAME
@@ -342,12 +342,12 @@ operations, and offset math is messy with encodings that aren't byte-based.}}
 
 Conversion will be done with a function called C<Parrot_str_grapheme_copy>:
 
-    INTVAL string_grapheme_copy(STRING *src, STRING *dst)
+    INTVAL Parrot_str_grapheme_copy(STRING *src, STRING *dst)
 
 Converting a string from one format to another involves creating a new empty
 string with the required attributes, and passing the source string and the new
-string to C<string_grapheme_copy>. This function iterates through the source
-string one grapheme at a time, using the character set function pointer
+string to C<Parrot_str_grapheme_copy>. This function iterates through the
+source string one grapheme at a time, using the character set function pointer
 C<get_grapheme> (which may read ahead multiple characters with strings that
 aren't in NFG). For each source grapheme, the function will call
 C<set_grapheme> on the destination string (which may append multiple
@@ -396,19 +396,15 @@ return value is the same as the first string argument (modifying that argument
 in place). If the first argument is COW or read-only, then the return value is
 a new string.
 
-=head3 Parrot_str_from_cstring (was string_from_cstring)
+=head3 Parrot_str_new (was string_from_cstring)
 
-Create a Parrot string from a C string (a C<char *>). Takes two arguments, a C
-string, and an integer length of the string (number of characters). If the
-integer length isn't passed, the function will calculate the length.
+Return a new string with the default encoding and character set. Accepts two
+arguments, a C string (C<char *>) to initialize the value of the string, and
+an integer length of the string (number of characters). If the integer length
+isn't passed, the function will calculate the length.
 
 {{NOTE: the integer length isn't really necessary, and is under consideration
 for deprecation.}}
-
-=head3 Parrot_str_new
-
-Return a new string with the default encoding and character set. Accepts one
-argument, a C string (C<char *>) to initialize the value of the string.
 
 =head3 Parrot_str_new_noinit (was string_make_empty)
 
@@ -429,7 +425,7 @@ a string name for the character set. This behavior is no longer supported, but
 C<Parrot_find_encoding> and C<Parrot_find_charset> can look up the encoding or
 character set structs. }}
 
-=head3 Parrot_str_constant_new (was const_string)
+=head3 Parrot_str_new_constant (was const_string)
 
 Creates and returns a new Parrot constant string. Takes one C string (a C<char
 *>) as an argument, the value of the constant string. The length of the C
@@ -459,13 +455,13 @@ variable-width encodings is ignored. Combining characters are not treated any
 differently than other characters. This is equivalent to accessing the
 C<strlen> member of the C<STRING> struct directly.
 
-=head3 Parrot_str_index (was string_index)
+=head3 Parrot_str_indexed (was string_index)
 
 Returns the character at the specified index (the Nth character from the start
 of the string). Combining characters are counted separately. Variable-width
 encodings will lookahead to capture full character values.
 
-=head3 Parrot_str_grapheme_index
+=head3 Parrot_str_grapheme_indexed
 
 Returns the grapheme at the given index (the Nth grapheme from the string's
 start). Groups of combining characters count as a single grapheme, so this
@@ -536,21 +532,48 @@ original string.
 Chop the requested number of graphemes off the end of a string without
 modifying the original string.
 
+=head3 Parrot_str_compare (was string_compare)
+
+Compare two strings to each other. Return 0 if they are equal, 1 if the first
+is greater and -1 if the second is greater. Uses character set collation order
+for the comparison. (Two strings that are logically equivalent in terms of
+display, but stored in different normalizations are not equal.)
+
+=head3 Parrot_str_grapheme_compare
+
+Compare two strings to each other. Return 0 if they are equal, 1 if the first
+is greater and -1 if the second is greater. Uses NFG normalization to compare
+the two strings.
+
+=head3 Parrot_str_equal (was string_equal)
+
+Compare two strings, return 1 if they are equal, 0 if they are not equal.
+
+{{DEPRECATION NOTE: The return value is reversed from the current logic.}}
+
+=head3 Parrot_str_grapheme_equal
+
+Compare two strings using NFG normalization, return 1 if they are equal, 0 if
+they are not equal.
 
 =head2 Internal String Functions
 
 The following functions are used internally and are not part of the public
 interface.
 
-=head3 string_system_init (was string_init)
+=head3 Parrot_str_init (was string_init)
 
 Initialize Parrot's string subsystem, including string allocation and garbage
 collection.
 
-=head3 string_system_end (was string_deinit)
+=head3 Parrot_str_finish (was string_deinit)
 
 Terminate and clean up Parrot's string subsystem, including string allocation
 and garbage collection.
+
+=head3 Parrot_str_free (was string_free)
+
+Free the string's header.
 
 =head3 string_max_bytes
 
@@ -584,17 +607,36 @@ pointer. Deprecated with C<strstart>.
 
 =head3 string_ord
 
-Replaced by C<Parrot_string_index>.
+Replaced by C<Parrot_str_indexed>.
 
 =head3 string_chr
 
-This is handled just fine by C<Parrot_string_new>, we don't need a special
+This is handled just fine by C<Parrot_str_new>, we don't need a special
 version for a single character.
 
 =head3 make_writable
 
 An archaic function that uses a method of describing strings that hasn't been
 allowed for years.
+
+=head3 string_to_cstring_nullable
+
+Just the implementation of string_to_cstring, no need for a separate function
+that specially allows returning a NULL string.
+
+=head3 string_increment
+
+Old Perl 5-style behavior where "aa" goes to "bb". Only useful for ASCII
+strings, and not terribly useful even there.
+
+=head3 Parrot_string_cstring
+
+Unsafe, and behavior handled by Parrot_str_to_cstring.
+
+
+=head3 Parrot_string_split
+
+Is the same as Parrot_str_split.
 
 =head2 String PMC API
 

@@ -1,3 +1,4 @@
+# Copyright (C) 2006-2009, The Perl Foundation.
 # $Id$
 
 # setup of commands
@@ -38,7 +39,8 @@ help:
 	@echo "  make <lang>"
 	@echo "  make <lang>.test"
 	@echo "  make <lang>.clean"
-	@echo "For the status of individual languages see LANGUAGES.STATUS.pod"
+	@echo "For the status of individual languages see:"
+	@echo " https://trac.parrot.org/parrot/wiki/Languages"
 	@echo ""
 
 clean: \
@@ -60,3 +62,7 @@ Parrot-Embed.clean:
 #IF(win32):	- cd Parrot-Embed && nmake clean
 #UNLESS(win32):	- cd Parrot-Embed && $(MAKE) clean
 
+# Local variables:
+#   mode: makefile
+# End:
+# vim: ft=make:

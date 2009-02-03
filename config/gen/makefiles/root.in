@@ -138,7 +138,7 @@ NONGEN_HEADERS   = @TEMP_nongen_headers@
 
 GEN_MAKEFILES = \
     Makefile \
-#IF(has_perldoc):    docs/Makefile \
+    docs/Makefile \
     compilers/json/Makefile \
     compilers/ncigen/Makefile \
     compilers/nqp/Makefile \
@@ -243,7 +243,6 @@ GEN_LIBRARY = \
     $(LIBRARY_DIR)/Data/Dumper/Default.pbc \
     $(LIBRARY_DIR)/Data/Dumper.pbc \
     $(LIBRARY_DIR)/Data/Escape.pbc \
-    $(LIBRARY_DIR)/Data/Sort.pbc \
     $(LIBRARY_DIR)/Digest/MD5.pbc \
     $(LIBRARY_DIR)/dumper.pbc \
     $(LIBRARY_DIR)/yaml_dumper.pbc \
@@ -372,7 +371,6 @@ INTERP_O_FILES = \
     $(SRC_DIR)/byteorder$(O) \
     $(SRC_DIR)/string/charset$(O) \
     $(SRC_DIR)/core_pmcs$(O) \
-    $(SRC_DIR)/cpu_dep$(O) \
     $(SRC_DIR)/datatypes$(O) \
     $(SRC_DIR)/debug$(O) \
     $(SRC_DIR)/dynext$(O) \
@@ -390,6 +388,7 @@ INTERP_O_FILES = \
     $(SRC_DIR)/gc/pools$(O) \
     $(SRC_DIR)/gc/register$(O) \
     $(SRC_DIR)/gc/mark_sweep$(O) \
+    $(SRC_DIR)/gc/system$(O) \
     $(SRC_DIR)/global$(O) \
     $(SRC_DIR)/global_setup$(O) \
     $(SRC_DIR)/hash$(O) \
@@ -1062,9 +1061,9 @@ $(SRC_DIR)/exec_save$(O) : $(GENERAL_H_FILES) @TEMP_exec_h@
 
 $(SRC_DIR)/key$(O) : $(GENERAL_H_FILES) $(SRC_DIR)/key.str
 
-$(SRC_DIR)/gc/mark_sweep$(O) : $(GENERAL_H_FILES)
+$(SRC_DIR)/gc/mark_sweep$(O) : $(GENERAL_H_FILES) $(SRC_DIR)/gc/gc_private.h
 
-$(SRC_DIR)/gc/api$(O) : $(GENERAL_H_FILES)
+$(SRC_DIR)/gc/api$(O) : $(GENERAL_H_FILES) $(SRC_DIR)/gc/gc_private.h
 
 $(SRC_DIR)/gc/generational_ms$(O) : $(GENERAL_H_FILES)
 
@@ -1171,7 +1170,7 @@ $(SRC_DIR)/nci$(O) : $(GENERAL_H_FILES) $(SRC_DIR)/nci.c $(SRC_DIR)/nci.str
 
 $(SRC_DIR)/vtables$(O) : $(GENERAL_H_FILES) $(SRC_DIR)/vtables.c
 
-$(SRC_DIR)/cpu_dep$(O) : $(GENERAL_H_FILES)
+$(SRC_DIR)/gc/system$(O) : $(GENERAL_H_FILES)  $(SRC_DIR)/gc/gc_private.h
 
 $(SRC_DIR)/nci.c : $(SRC_DIR)/call_list.txt $(BUILD_TOOLS_DIR)/nativecall.pl
 	$(PERL) $(BUILD_TOOLS_DIR)/nativecall.pl $(SRC_DIR)/call_list.txt
@@ -1444,7 +1443,7 @@ CONFIGURE_TEST_FILES = \
 test_prep : all
 
 # We always want to test annotations are persisted in PBC during make test.
-test_pbc_annotation_persistence :
+test_pbc_annotation_persistence : test_prep
 	$(PERL) t/harness $(EXTRA_TEST_ARGS) -r t/op/annotate.t
 
 # Run test cases with a single call of t/harness. Users have to look at only
@@ -2188,14 +2187,13 @@ exec : $(SRC_DIR)/exec_start$(O) $(SRC_DIR)/parrot_config$(O) $(LIBPARROT)
 # for use by t/pmc/nci.t
 $(LIBNCI_TEST_SO): $(SRC_DIR)/nci_test$(O)
 	$(LD) $(LD_LOAD_FLAGS) @ncilib_link_extra@ $(LDFLAGS) \
-    @ld_out@$@ $(SRC_DIR)/nci_test$(O) $(C_LIBS)
+    @ld_out@$@ $(SRC_DIR)/nci_test$(O) $(C_LIBS) $(LINKFLAGS)
 
 # for use by runtime/parrot/library/OpenGL.pir
 $(LIBGLUTCB_SO): $(LIBPARROT) $(SRC_DIR)/glut_callbacks$(O)
 	$(LD) $(LD_LOAD_FLAGS) $(LDFLAGS) \
     @ld_out@$@ $(SRC_DIR)/glut_callbacks$(O) \
-    $(ALL_PARROT_LIBS) \
-#IF(has_opengl):    @opengl_lib@
+    $(ALL_PARROT_LIBS) @opengl_lib@ $(LINKFLAGS)
 
 # emacs etags
 # this needs exuberant-ctags
@@ -2234,12 +2232,14 @@ tags-vi: tags.vi.dummy
 
 tags.vi.dummy:
 
+CRITIC_FILES='lib/Parrot'
+
 perlcritic:
-	perlcritic --profile tools/util/perlcritic.conf
+	perlcritic --profile tools/util/perlcritic.conf $(CRITIC_FILES)
 
 # Andy's extra-cranky Perl::Critic checking for cage cleaners
 cagecritic:
-	perlcritic -1 --profile tools/util/perlcritic-cage.conf lib/Parrot
+	perlcritic -1 --profile tools/util/perlcritic-cage.conf $(CRITIC_FILES)
 
 # This target will eventually create all the headers automatically.  If you are
 # having problems with linkage in Win32 (or elsewhere), because something is
@@ -2260,8 +2260,7 @@ apilist: $(SRC_DIR)/core_pmcs.c
 malloclist: $(SRC_DIR)/core_pmcs.c
 	$(PERL) $(BUILD_TOOLS_DIR)/headerizer.pl --macro=PARROT_MALLOC $(HEADERIZER_O_FILES)
 
-#
 # Local variables:
-# mode: makefile
-# ex: ft=make
+#   mode: makefile
 # End:
+# vim: ft=make:

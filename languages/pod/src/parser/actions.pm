@@ -17,22 +17,25 @@ value of the comment is passed as the second argument to the method.
 
 class Pod::Grammar::Actions;
 
+
+
 method TOP($/) {
-    make $( $/ );
-    # for $<pod_section> {
-    #     $( $_  );
-    # }
+    my $file := Pod::DocTree::File.new();
+
+    for $<pod_section> {
+        $file.push( $( $_ ) );
+    }
+    make $file;
 }
 
-method skipped($/) {
-
-}
 
 method pod_section($/) {
-    for $<pod_sequence> {
-        ## XXX store it where? A block?
-        $( $_ );
-    }
+    #for $<pod_sequence> {
+    #    ## XXX store it where? A block?
+    #    $( $_ );
+    #}
+    #make $( $<pod_sequence>[0] );
+    make Pod::DocTree::Text.new( :name("pod-section"));
 }
 
 method pod_sequence($/, $key) {
@@ -40,24 +43,30 @@ method pod_sequence($/, $key) {
 }
 
 method pod_directive($/) {
-
+    make Pod::DocTree::Text.new( :name("pod-directive") );
 }
 
 method cut_directive($/) {
-
+    make Pod::DocTree::Text.new( :name("cut-directive") );
 }
 
-## XXX refactor the block_title stuff for heading and begin_directive.
+
+
+sub title($/, $block) {
+    if $<block_title> {
+        my $title := $( $<block_title>[0] );
+        $block.title( $title.name() );
+    }
+}
 
 method heading($/) {
     my $heading := Pod::DocTree::Heading.new();
+
     ## set the level of the heading
     $heading.level($<digit>);
 
-    if $<block_title> {
-        my $title := $( $<block_title>[0] );
-        $heading.title( $title.name() );
-    }
+    title($/, $heading);
+
     make $heading;
 }
 
@@ -67,26 +76,27 @@ method begin_directive($/) {
     my $name  := $( $<block_name> );
     $block.name( $name.name() );
 
-    if $<block_title> {
-        my $title := $( $<block_title>[0] );
-        $heading.title( $title.name() );
-    }
+    title($/, $block);
+
     make $block;
 }
 
-method end_directive($/) {
 
+method end_directive($/) {
+    make Pod::DocTree::Text.new( :name("end-directive") );
 }
+
 method for_directive($/) {
     # use same code as in begin-directive.
+    make Pod::DocTree::Text.new( :name("for-directive") );
 }
 
 method over_directive($/) {
-
+    make Pod::DocTree::Text.new( :name("over-directive") );
 }
 
 method back_directive($/) {
-
+    make Pod::DocTree::Text.new( :name("back-directive") );
 }
 
 method item_directive($/) {
@@ -96,15 +106,15 @@ method item_directive($/) {
 }
 
 method encoding_directive($/) {
-
+    make Pod::DocTree::Text.new( :name("encoding-directive") );
 }
 
 method paragraph($/) {
-
+    make Pod::DocTree::Text.new( :name("paragraph") );
 }
 
 method literal_paragraph($/) {
-
+    make Pod::DocTree::Text.new( :name("literal-paragraph") );
 }
 
 method block_name($/) {
@@ -117,13 +127,10 @@ method block_title($/) {
 }
 
 method format_code($/) {
-
+    make Pod::DocTree::Text.new( :name("format-code") );
 }
 
-## XXX not sure if this needs action method is needed.
-method pod_ws($/) {
 
-}
 
 # Local Variables:
 #   mode: cperl

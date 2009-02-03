@@ -1,4 +1,4 @@
-# Copyright (C) 2001-2005, The Perl Foundation.
+# Copyright (C) 2001-2009, The Perl Foundation.
 # $Id$
 
 =head1 NAME
@@ -28,7 +28,7 @@ use Storable;
 # Config stuff
 our $CC = q[@cc@ -c];
 our $LD = q[@ld@];
-our $LDFLAGS = q[@ldflags@ @ld_debug@ @rpath_blib@];
+our $LDFLAGS = q[@ldflags@ @ld_debug@ @rpath_blib@ @linkflags@];
 our $LD_LOAD_FLAGS = q[@ld_load_flags@];
 our $PERL = q[@perl@];
 our $LOAD_EXT = q[@load_ext@];
@@ -109,7 +109,7 @@ sub partial_link_cmd {
     }
 
     if (defined $ENV{DYNPMC_LINK}) {
-        push @$sources, split ",", $ENV{DYNPMC_LINK};
+        push @{$sources}, split /,/, $ENV{DYNPMC_LINK};
     }
 
     return

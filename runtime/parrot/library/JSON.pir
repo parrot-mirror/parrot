@@ -355,9 +355,6 @@ done:
   .return (result)
 .end
 
-.include  'library/Data/Escape.pir'
-.include  'library/Data/Sort.pir'
-
 =back
 
 =head1 TODO

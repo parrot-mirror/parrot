@@ -1,3 +1,4 @@
+# Copyright (C) 2005-2009, The Perl Foundation.
 # $Id$
 
 # Setup some commands
@@ -45,3 +46,8 @@ testclean:
 
 realclean: clean
 	$(RM_F) Makefile
+
+# Local variables:
+#   mode: makefile
+# End:
+# vim: ft=make:

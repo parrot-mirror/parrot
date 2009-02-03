@@ -1,3 +1,4 @@
+# Copyright (C) 2006-2009, The Perl Foundation.
 # $Id$
 
 # arguments we want to run parrot with
@@ -25,7 +26,7 @@ MAKE          = @make_c@
 PERL          = @perl@
 RM_F          = @rm_f@
 PARROT        = ../../parrot$(EXE)
-CAT           = $(PERL) -MExtUtils::Command -e cat
+CAT           = @cat@
 BUILD_DYNPMC  = $(PERL) $(BUILD_DIR)/tools/build/dynpmc.pl
 BUILD_DYNOPS  = $(PERL) $(BUILD_DIR)/tools/build/dynoplibs.pl
 RECONFIGURE   = $(PERL) $(BUILD_DIR)/tools/dev/reconfigure.pl
@@ -155,7 +156,7 @@ perl6$(EXE): perl6.pbc
 
 spectest_checkout : t/spec
 
-t/spec : 
+t/spec :
 	svn co http:////svn.pugscode.org//pugs//t//spec t/spec
 
 spectest_update :
@@ -304,3 +305,7 @@ help:
 Makefile: config/makefiles/root.in config/makefiles/utils.in
 	cd $(BUILD_DIR) && $(RECONFIGURE) --step=gen::languages --languages=perl6
 
+# Local variables:
+#   mode: makefile
+# End:
+# vim: ft=make:

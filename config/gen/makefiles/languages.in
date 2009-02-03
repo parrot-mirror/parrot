@@ -1,3 +1,4 @@
+# Copyright (C) 2002-2009, The Perl Foundation.
 # $Id$
 
 # setup of commands
@@ -25,8 +26,7 @@ LANGUAGES = \
     parrot_compiler perl6 pheme PIR pipp punie pynie \
     regex \
     scheme squaak \
-    urm \
-    Zcode
+    urm
 
 # the default target
 all: $(LANGUAGES)
@@ -85,7 +85,7 @@ help:
 	@echo ""
 	@echo "  co-unlambda:   Try to fetch unlambda"
 	@echo ""
-    @echo "NOTE: These make targets assume that you have run the corresponding co target."
+	@echo "NOTE: These make targets assume that you have run the corresponding co target."
 	@echo "  up-all:        Try to update externally managed languages"
 	@echo ""
 	@echo "  up-eclectus:   Try to update eclectus"
@@ -129,8 +129,7 @@ test-separate: all \
     parrot_compiler.test perl6.test pheme.test PIR.test pipp.test punie.test pynie.test \
     regex.test \
     scheme.test squaak.test \
-    urm.test \
-    Zcode.test
+    urm.test
 
 clean: \
     abc.clean APL.clean \
@@ -146,8 +145,7 @@ clean: \
     parrot_compiler.clean perl6.clean pheme.clean PIR.clean pipp.clean punie.clean pynie.clean \
     regex.clean \
     scheme.clean squaak.clean \
-    urm.clean \
-    Zcode.clean
+    urm.clean
 
 realclean: \
     abc.realclean APL.realclean \
@@ -162,8 +160,7 @@ realclean: \
     parrot_compiler.realclean perl6.realclean pheme.realclean PIR.realclean pipp.realclean punie.realclean pynie.realclean \
     regex.realclean \
     scheme.realclean squaak.realclean \
-    urm.realclean \
-    Zcode.realclean
+    urm.realclean
 
 
 #
@@ -461,16 +458,6 @@ urm.clean:
 urm.realclean:
 	- $(MAKE) urm realclean
 
-Zcode : Zcode.dummy
-Zcode.dummy:
-# Do nothing. make Zcode requires an Inform compiler
-Zcode.test:
-	- $(MAKE) Zcode test
-Zcode.clean:
-	- $(MAKE) Zcode clean
-Zcode.realclean:
-	- $(MAKE) Zcode realclean
-
 # helpers for checking out externally managed languages
 
 # check out all known externally managed languages
@@ -478,68 +465,72 @@ co-all: co-eclectus co-gil co-hq9plus co-lazy-k co-m4 co-markdown co-pjs co-prim
 up-all: up-eclectus up-gil up-hq9plus up-lazy-k up-m4 up-markdown up-pjs up-primitivearc up-tcl up-unlambda up-wmlscript
 
 co-eclectus:
-	- $(GIT) clone 'git:////github.com/bschmalhofer/eclectus.git'
+	- $(GIT) clone 'git:////github.com//bschmalhofer//eclectus.git'
 
 up-eclectus:
 	cd eclectus &&  $(GIT) pull
 
 co-gil:
-	- $(GIT) clone 'git:////github.com/tene/gil.git'
+	- $(GIT) clone 'git:////github.com//tene//gil.git'
 
 up-gil:
 	cd gil && $(GIT) pull
 
 co-hq9plus:
-	- $(GIT) clone 'git:////github.com/bschmalhofer/hq9plus.git'
+	- $(GIT) clone 'git:////github.com//bschmalhofer//hq9plus.git'
 
 up-hq9plus:
 	cd hq9plus && $(GIT) pull
 
 co-lazy-k:
-	- $(GIT) clone 'git:////github.com/bschmalhofer/lazy-k.git'
+	- $(GIT) clone 'git:////github.com//bschmalhofer//lazy-k.git'
 
 up-lazy-k:
 	cd lazy-k && $(GIT) pull
 
 co-m4:
-	- $(GIT) clone 'git:////github.com/bschmalhofer/m4.git'
+	- $(GIT) clone 'git:////github.com//bschmalhofer//m4.git'
 
 up-m4:
 	cd m4 && $(GIT) pull
 
 co-markdown:
-	- $(GIT) clone 'git:////github.com/fperrad/markdown.git'
+	- $(GIT) clone 'git:////github.com//fperrad//markdown.git'
 
 up-markdown:
 	cd markdown && $(GIT) pull
 
 co-pjs:
-	- $(SVN) checkout 'http:////parrotjs.googlecode.com/svn/trunk/' pjs
+	- $(SVN) checkout 'http:////parrotjs.googlecode.com//svn//trunk' pjs
 
 up-pjs:
 	cd pjs && $(SVN) up
 
 co-primitivearc:
-	- $(GIT) clone 'git:////github.com/stefano/primitivearc.git'
+	- $(GIT) clone 'git:////github.com//stefano//primitivearc.git'
 
 up-primitivearc:
 	cd primitivearc && $(GIT) pull
 
 co-tcl:
-	- $(SVN) checkout 'http:////partcl.googlecode.com/svn/trunk' tcl
+	- $(SVN) checkout 'http:////partcl.googlecode.com//svn//trunk' tcl
 
 up-tcl:
 	cd tcl && $(SVN) up
 
 co-unlambda:
-	- $(GIT) clone 'git:////github.com/bschmalhofer/unlambda.git'
+	- $(GIT) clone 'git:////github.com//bschmalhofer//unlambda.git'
 
 up-unlambda:
 	cd unlambda && $(GIT) pull
 
 co-wmlscript:
-	- $(GIT) clone 'git:////github.com/fperrad/wmlscript.git'
+	- $(GIT) clone 'git:////github.com//fperrad//wmlscript.git'
 
 up-wmlscript:
 	cd wmlscript && $(GIT) pull
 
+# Local variables:
+#   mode: makefile
+# End:
+# vim: ft=make:

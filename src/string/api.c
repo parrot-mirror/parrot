@@ -4,7 +4,7 @@ $Id$
 
 =head1 NAME
 
-src/string.c - Parrot Strings
+src/string/api.c - Parrot Strings
 
 =head1 DESCRIPTION
 
@@ -3233,7 +3233,7 @@ Parrot_str_from_int_base(PARROT_INTERP, ARGOUT(char *tc), HUGEINTVAL num, unsign
 
 =over
 
-=item F<src/string_primitives.c>
+=item F<src/string/primitives.c>
 
 =item F<include/parrot/string.h>
 
