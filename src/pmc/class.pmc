@@ -388,7 +388,7 @@ make_class_name(PARROT_INTERP, PMC *SELF)
             if (!PMC_IS_NULL(names))
                 /* remove the HLL namespace name */
                 VTABLE_shift_string(interp, names);
-                _class->fullname = string_join(interp, CONST_STRING(interp, ";"), names);
+                _class->fullname = Parrot_str_join(interp, CONST_STRING(interp, ";"), names);
                 return _class->fullname;
         }
     }
@@ -1423,7 +1423,7 @@ Used to archive the class.
             PMC * const names = Parrot_ns_get_name(interp,
                     class_data->_namespace);
             if (!PMC_IS_NULL(names))
-                serial_namespace = string_join(interp, CONST_STRING(interp, ";"), names);
+                serial_namespace = Parrot_str_join(interp, CONST_STRING(interp, ";"), names);
         }
         VTABLE_push_string(INTERP, io, serial_namespace);
     }
