@@ -131,7 +131,7 @@ Parrot_oo_extract_methods_from_namespace(PARROT_INTERP, ARGIN(PMC *self), ARGIN(
                 vtable_overrides, vtable_index_str);
 
             /* Look up the name of the vtable function from the index. */
-            const INTVAL vtable_index = string_to_int(interp, vtable_index_str);
+            const INTVAL vtable_index = Parrot_str_to_int(interp, vtable_index_str);
             const char * const meth_c = Parrot_vtable_slot_names[vtable_index];
             STRING     *vtable_name   = Parrot_str_new(interp, meth_c, 0);
 
@@ -406,7 +406,7 @@ INTVAL
 Parrot_get_vtable_index(PARROT_INTERP, ARGIN(const STRING *name))
 {
     ASSERT_ARGS(Parrot_get_vtable_index)
-    char * const name_c      = string_to_cstring(interp, name);
+    char * const name_c      = Parrot_str_to_cstring(interp, name);
 
     /* some of the first "slots" don't have names. skip 'em. */
     INTVAL low               = PARROT_VTABLE_LOW;
@@ -532,7 +532,7 @@ Parrot_oo_register_type(PARROT_INTERP, ARGIN(PMC *name), ARGIN(PMC *_namespace))
         STRING *classname = VTABLE_get_string(interp, _namespace);
         Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INVALID_OPERATION,
                 "Class %Ss already registered!\n",
-                string_escape_string(interp, classname));
+                Parrot_str_escape(interp, classname));
     }
 
     /* Type doesn't exist, so go ahead and register it. Lock interpreter so

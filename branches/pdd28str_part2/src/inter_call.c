@@ -892,7 +892,7 @@ convert_arg_from_int(PARROT_INTERP, ARGMOD(call_state *st))
             UVal_num(st->val) = (FLOATVAL)UVal_int(st->val);
             break;
         case PARROT_ARG_STRING:
-            UVal_str(st->val) = string_from_int(interp, UVal_int(st->val));
+            UVal_str(st->val) = Parrot_str_from_int(interp, UVal_int(st->val));
             break;
         case PARROT_ARG_PMC:
             {
@@ -927,7 +927,7 @@ convert_arg_from_num(PARROT_INTERP, ARGMOD(call_state *st))
             UVal_int(st->val) = (INTVAL)UVal_num(st->val);
             break;
         case PARROT_ARG_STRING:
-            UVal_str(st->val) = string_from_num(interp, UVal_num(st->val));
+            UVal_str(st->val) = Parrot_str_from_num(interp, UVal_num(st->val));
             break;
         case PARROT_ARG_PMC:
             {
@@ -960,10 +960,10 @@ convert_arg_from_str(PARROT_INTERP, ARGMOD(call_state *st))
     ASSERT_ARGS(convert_arg_from_str)
     switch (st->dest.sig & PARROT_ARG_TYPE_MASK) {
         case PARROT_ARG_INTVAL:
-            UVal_int(st->val) = string_to_int(interp, UVal_str(st->val));
+            UVal_int(st->val) = Parrot_str_to_int(interp, UVal_str(st->val));
             break;
         case PARROT_ARG_FLOATVAL:
-            UVal_num(st->val) = string_to_num(interp, UVal_str(st->val));
+            UVal_num(st->val) = Parrot_str_to_num(interp, UVal_str(st->val));
             break;
         case PARROT_ARG_PMC:
             {
@@ -2813,7 +2813,7 @@ Parrot_pcc_invoke_from_sig_object(PARROT_INTERP, ARGIN(PMC *sub_obj),
 
     /* create the signature string, and the various PMCs that are needed to
        store all the parameters and parameter counts. */
-    char * const signature  = string_to_cstring(interp, VTABLE_get_string(interp, sig_obj));
+    char * const signature  = Parrot_str_to_cstring(interp, VTABLE_get_string(interp, sig_obj));
     PMC * const args_sig    = temporary_pmc_new(interp, enum_class_FixedIntegerArray);
     PMC * const results_sig = temporary_pmc_new(interp, enum_class_FixedIntegerArray);
     PMC * const ret_cont    = new_ret_continuation_pmc(interp, NULL);

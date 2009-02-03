@@ -167,7 +167,7 @@ PackFile_Constant_dump(PARROT_INTERP, ARGIN(const PackFile_ConstTable *ct),
                    (long)i);
 
         Parrot_io_printf(interp, "        DATA     => \"%Ss\"\n",
-                       string_escape_string(interp, self->u.string));
+                       Parrot_str_escape(interp, self->u.string));
         Parrot_io_printf(interp, "    } ],\n");
         break;
 

@@ -95,7 +95,7 @@ new_hll_entry(PARROT_INTERP, ARGIN_NULLOK(STRING *entry_name))
     PMC * const entry = constant_pmc_new(interp, enum_class_FixedPMCArray);
 
     if (entry_name && !STRING_IS_EMPTY(entry_name)) {
-        char   * const cstring    = string_to_cstring(interp, entry_name);
+        char   * const cstring    = Parrot_str_to_cstring(interp, entry_name);
         const  UINTVAL len        = Parrot_str_byte_length(interp, entry_name);
         STRING *const_name        = Parrot_str_new_init(interp, cstring,
             len, PARROT_DEFAULT_ENCODING, PARROT_DEFAULT_CHARSET,

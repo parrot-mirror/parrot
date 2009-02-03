@@ -80,7 +80,7 @@ in the constant PMC pool.
             Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_INVALID_ENCODING,
                     "unhandled string encoding in constructor");
 
-        source = string_to_cstring(interp, rep);
+        source = Parrot_str_to_cstring(interp, rep);
 
         /* "()" - no args */
         if (l <= 2 && *source == '(') {

@@ -991,7 +991,7 @@ compile_to_bytecode(PARROT_INTERP,
         imc_compile_all_units(interp);
     }
     IMCC_CATCH(IMCC_FATAL_EXCEPTION) {
-        char * const error_str = string_to_cstring(interp,
+        char * const error_str = Parrot_str_to_cstring(interp,
                                                    IMCC_INFO(interp)->error_message);
 
         IMCC_INFO(interp)->error_code=IMCC_FATAL_EXCEPTION;
@@ -1001,7 +1001,7 @@ compile_to_bytecode(PARROT_INTERP,
         Parrot_exit(interp, IMCC_FATAL_EXCEPTION);
     }
     IMCC_CATCH(IMCC_FATALY_EXCEPTION) {
-        char * const error_str = string_to_cstring(interp,
+        char * const error_str = Parrot_str_to_cstring(interp,
                                                    IMCC_INFO(interp)->error_message);
 
         IMCC_INFO(interp)->error_code=IMCC_FATALY_EXCEPTION;

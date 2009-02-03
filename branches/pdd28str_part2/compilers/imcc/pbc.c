@@ -957,7 +957,7 @@ IMCC_string_from_reg(PARROT_INTERP, ARGIN(const SymReg *r))
 
         /* past delim */
         buf     = p + 1;
-        s       = string_unescape_cstring(interp, buf, '"', charset);
+        s       = Parrot_str_unescape(interp, buf, '"', charset);
 
         /* restore colon, as we may reuse this string */
         p[-1] = ':';
@@ -965,7 +965,7 @@ IMCC_string_from_reg(PARROT_INTERP, ARGIN(const SymReg *r))
     }
     else if (*buf == '"') {
         buf++;
-        return string_unescape_cstring(interp, buf, '"', NULL);
+        return Parrot_str_unescape(interp, buf, '"', NULL);
     }
     else if (*buf == '\'') {   /* TODO handle python raw strings */
         buf++;
@@ -999,7 +999,7 @@ IMCC_string_from__STRINGC(PARROT_INTERP, ARGIN(const char *buf))
 
         /* past delim */
         buf     = p + 1;
-        s       = string_unescape_cstring(interp, buf, '"', charset);
+        s       = Parrot_str_unescape(interp, buf, '"', charset);
 
         /* restore colon, as we may reuse this string */
         p[-1] = ':';
@@ -1007,7 +1007,7 @@ IMCC_string_from__STRINGC(PARROT_INTERP, ARGIN(const char *buf))
     }
     else if (*buf == '"') {
         buf++;
-        return string_unescape_cstring(interp, buf, '"', NULL);
+        return Parrot_str_unescape(interp, buf, '"', NULL);
     }
     else if (*buf == '\'') {
         buf++;
@@ -1063,7 +1063,7 @@ add_const_num(PARROT_INTERP, ARGIN_NULLOK(const char *buf))
     STRING * const s = Parrot_str_new(interp, buf, 0);
 
     interp->code->const_table->constants[k]->type     = PFC_NUMBER;
-    interp->code->const_table->constants[k]->u.number = string_to_num(interp, s);
+    interp->code->const_table->constants[k]->u.number = Parrot_str_to_num(interp, s);
 
     return k;
 }
@@ -1773,13 +1773,13 @@ make_pmc_const(PARROT_INTERP, ARGMOD(SymReg *r))
     PMC    *p;
 
     if (*r->name == '"')
-        s = string_unescape_cstring(interp, r->name + 1, '"', NULL);
+        s = Parrot_str_unescape(interp, r->name + 1, '"', NULL);
 
     else if (*r->name == '\'')
-        s = string_unescape_cstring(interp, r->name + 1, '\'', NULL);
+        s = Parrot_str_unescape(interp, r->name + 1, '\'', NULL);
 
     else
-        s = string_unescape_cstring(interp, r->name, 0, NULL);
+        s = Parrot_str_unescape(interp, r->name, 0, NULL);
 
     p = VTABLE_instantiate_str(interp, _class, s, PObj_constant_FLAG);
 

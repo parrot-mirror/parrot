@@ -63,7 +63,7 @@ Class method to construct an Boolean from the string representation C<rep>.
             res = constant_pmc_new(INTERP, type);
         else
             res = pmc_new(INTERP, type);
-        PMC_int_val(res) = (string_to_int(INTERP, rep) != 0);
+        PMC_int_val(res) = (Parrot_str_to_int(INTERP, rep) != 0);
         return res;
     }
 

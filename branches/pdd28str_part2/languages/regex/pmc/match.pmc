@@ -75,7 +75,7 @@ static INTVAL fetch_integer(Interp* interp, PMC* matchobj, PMC* val)
 {
     if (val->vtable->base_type == MatchRange_type_id) {
         STRING* valstr = match_range(interp, matchobj, val);
-        return string_to_int(interp, valstr);
+        return Parrot_str_to_int(interp, valstr);
     }
     else {
         return VTABLE_get_integer(interp, val);
@@ -145,7 +145,7 @@ Returns the string value for the element at C<*key>.
                 result = parrot_hash_get_idx(interp, hash, key);
 
                 if (hash->key_type == Hash_key_type_int)
-                    return string_from_int(interp, (INTVAL)result);
+                    return Parrot_str_from_int(interp, (INTVAL)result);
 
                 return (STRING *)result;
             default:
@@ -181,7 +181,7 @@ Returns the string value for the element at C<*key>.
                 if (hash->key_type == Hash_key_type_int)
                     return (INTVAL)result;
                 else
-                    return string_to_int(interp, (STRING *)result);
+                    return Parrot_str_to_int(interp, (STRING *)result);
             default:
                 keystr = make_hash_key(interp, key);
         }

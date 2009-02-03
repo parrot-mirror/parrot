@@ -653,7 +653,7 @@ Compose (normalize) a string.
 =cut
 
 op escape(out STR, invar STR) {
-    $1 = string_escape_string(interp, $2);
+    $1 = Parrot_str_escape(interp, $2);
 }
 
 op compose(out STR, in STR) {

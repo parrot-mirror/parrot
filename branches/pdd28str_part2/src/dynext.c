@@ -391,8 +391,8 @@ run_init_lib(PARROT_INTERP, ARGIN(void *handle),
                                         "Parrot_lib_%Ss_load", lib_name);
         STRING * const init_func_name  = Parrot_sprintf_c(interp,
                                         "Parrot_lib_%Ss_init", lib_name);
-        char   * const cload_func_name = string_to_cstring(interp, load_name);
-        char   * const cinit_func_name = string_to_cstring(interp, init_func_name);
+        char   * const cload_func_name = Parrot_str_to_cstring(interp, load_name);
+        char   * const cinit_func_name = Parrot_str_to_cstring(interp, init_func_name);
 
         /* get load_func */
         load_func       = (PMC * (*)(PARROT_INTERP))
@@ -452,7 +452,7 @@ clone_string_into(ARGMOD(Interp *d), ARGIN(Interp *s), ARGIN(PMC *value))
 {
     ASSERT_ARGS(clone_string_into)
     STRING * const  orig   = VTABLE_get_string(s, value);
-    char   * const raw_str = string_to_cstring(s, orig);
+    char   * const raw_str = Parrot_str_to_cstring(s, orig);
     STRING * const   ret   =
         Parrot_str_new_init(d, raw_str, strlen(raw_str),
             PARROT_DEFAULT_ENCODING, PARROT_DEFAULT_CHARSET,

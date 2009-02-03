@@ -187,7 +187,7 @@ Intersegment branch to location in fixup table named $1.
 inline op branch_cs(in STR) :base_loop :check_event :flow {
     PackFile_FixupEntry * fe;
     {
-        char * const label = string_to_cstring(interp, $1);
+        char * const label = Parrot_str_to_cstring(interp, $1);
         fe = PackFile_find_fixup_entry(interp, enum_fixup_label, label);
         string_cstring_free(label);
     }
@@ -1331,7 +1331,7 @@ inline op loadlib(out PMC, in STR) {
 }
 
 op dlfunc(out PMC, invar PMC, in STR, in STR) {
-    char * const name = string_to_cstring(interp, ($3));
+    char * const name = Parrot_str_to_cstring(interp, ($3));
     void * const ptr  = Parrot_dlsym(
                             PMC_IS_NULL($2) ? NULL :
                             VTABLE_defined(interp, $2) ? PMC_data($2) :
@@ -1355,7 +1355,7 @@ op dlfunc(out PMC, invar PMC, in STR, in STR) {
 }
 
 op dlvar(out PMC, invar PMC, in STR) {
-    char * const name = string_to_cstring(interp, ($3));
+    char * const name = Parrot_str_to_cstring(interp, ($3));
     void * const p = Parrot_dlsym(PMC_IS_NULL($2) ? NULL : PMC_data($2), name);
     if (p == NULL) {
         const char * const err = Parrot_dlerror();

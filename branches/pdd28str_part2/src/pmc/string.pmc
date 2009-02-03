@@ -105,7 +105,7 @@ Returns the integer representation of the string.
 
     VTABLE INTVAL get_integer() {
         STRING * const s = SELF.get_string();
-        return string_to_int(INTERP, s);
+        return Parrot_str_to_int(INTERP, s);
     }
 
 /*
@@ -120,7 +120,7 @@ Returns the floating-point representation of the string.
 
     VTABLE FLOATVAL get_number() {
         STRING * const s = SELF.get_string();
-        return string_to_num(INTERP, s);
+        return Parrot_str_to_num(INTERP, s);
     }
 
 /*
@@ -183,11 +183,11 @@ Sets the value of the string to the integer C<value>.
 */
 
     VTABLE void set_integer_native(INTVAL value) {
-        SELF.set_string_native(string_from_int(INTERP, value));
+        SELF.set_string_native(Parrot_str_from_int(INTERP, value));
     }
 
     VTABLE void set_bool(INTVAL value) {
-        SELF.set_string_native(string_from_int(INTERP, value));
+        SELF.set_string_native(Parrot_str_from_int(INTERP, value));
     }
 
 /*
@@ -201,7 +201,7 @@ Sets the value of the string to the floating-point C<value>.
 */
 
     VTABLE void set_number_native(FLOATVAL value) {
-        SELF.set_string_native(string_from_num(INTERP, value));
+        SELF.set_string_native(Parrot_str_from_num(INTERP, value));
     }
 
 
@@ -218,7 +218,7 @@ Sets the value of the string to that of the specified C<string>.
     VTABLE void set_string_native(STRING *value) {
         /* Only allow constant PMCs to embed constant strings */
         if (PObj_constant_TEST(SELF) && !PObj_constant_TEST(value)) {
-             const char *copy = string_to_cstring(INTERP, value);
+             const char *copy = Parrot_str_to_cstring(INTERP, value);
              value            = Parrot_str_new_constant(INTERP, copy);
         }
         PMC_str_val(SELF) = value;
@@ -462,7 +462,7 @@ C<value>; returns true if they match.
 */
 
     VTABLE INTVAL is_equal_num(PMC *value) {
-        const FLOATVAL sf = string_to_num(INTERP, VTABLE_get_string(INTERP, SELF));
+        const FLOATVAL sf = Parrot_str_to_num(INTERP, VTABLE_get_string(INTERP, SELF));
         const FLOATVAL vf = VTABLE_get_number(INTERP, value);
         return (INTVAL)(sf == vf);
     }
@@ -512,7 +512,7 @@ are equal, and 1 if C<value> is smaller.
 
 */
     VTABLE INTVAL cmp_num(PMC *value) {
-        const FLOATVAL sf = string_to_num(INTERP, VTABLE_get_string(INTERP, SELF));
+        const FLOATVAL sf = Parrot_str_to_num(INTERP, VTABLE_get_string(INTERP, SELF));
         const FLOATVAL vf = VTABLE_get_number(INTERP, value);
 
         if (sf < vf)
