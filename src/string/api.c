@@ -2901,7 +2901,7 @@ Parrot_str_find_not_cclass(PARROT_INTERP, INTVAL flags,
 
 /*
 
-=item C<STRING* Parrot_string_trans_charset>
+=item C<STRING* Parrot_str_change_charset>
 
 If C<dest> == NULL, converts C<src> to the given charset or encoding inplace.
 Otherwise returns a copy of C<src> with the charset/encoding in C<dest>.
@@ -2914,10 +2914,10 @@ PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 STRING*
-Parrot_string_trans_charset(PARROT_INTERP, ARGMOD_NULLOK(STRING *src),
+Parrot_str_change_charset(PARROT_INTERP, ARGMOD_NULLOK(STRING *src),
         INTVAL charset_nr, ARGOUT_NULLOK(STRING *dest))
 {
-    ASSERT_ARGS(Parrot_string_trans_charset)
+    ASSERT_ARGS(Parrot_str_change_charset)
     const CHARSET *new_charset;
 
     if (!src)
@@ -2959,7 +2959,7 @@ Parrot_string_trans_charset(PARROT_INTERP, ARGMOD_NULLOK(STRING *src),
 
 /*
 
-=item C<STRING* Parrot_string_trans_encoding>
+=item C<STRING* Parrot_str_change_encoding>
 
 If C<dest> == NULL, converts C<src> to the given charset or encoding in place.
 Otherwise returns a copy of C<src> with the charset/encoding in C<dest>
@@ -2972,10 +2972,10 @@ PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 STRING*
-Parrot_string_trans_encoding(PARROT_INTERP, ARGIN_NULLOK(STRING *src),
+Parrot_str_change_encoding(PARROT_INTERP, ARGIN_NULLOK(STRING *src),
         INTVAL encoding_nr, ARGOUT_NULLOK(STRING *dest))
 {
-    ASSERT_ARGS(Parrot_string_trans_encoding)
+    ASSERT_ARGS(Parrot_str_change_encoding)
     const ENCODING *new_encoding;
 
     if (!src)

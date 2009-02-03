@@ -103,7 +103,7 @@ PMC* Parrot_string_split(PARROT_INTERP,
 PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
-STRING* Parrot_string_trans_charset(PARROT_INTERP,
+STRING* Parrot_str_change_charset(PARROT_INTERP,
     ARGMOD_NULLOK(STRING *src),
     INTVAL charset_nr,
     ARGOUT_NULLOK(STRING *dest))
@@ -114,7 +114,7 @@ STRING* Parrot_string_trans_charset(PARROT_INTERP,
 PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
-STRING* Parrot_string_trans_encoding(PARROT_INTERP,
+STRING* Parrot_str_change_encoding(PARROT_INTERP,
     ARGIN_NULLOK(STRING *src),
     INTVAL encoding_nr,
     ARGOUT_NULLOK(STRING *dest))
@@ -570,9 +570,9 @@ STRING* Parrot_str_from_uint(PARROT_INTERP,
     || PARROT_ASSERT_ARG(s)
 #define ASSERT_ARGS_Parrot_string_split __attribute__unused__ int _ASSERT_ARGS_CHECK = \
        PARROT_ASSERT_ARG(interp)
-#define ASSERT_ARGS_Parrot_string_trans_charset __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+#define ASSERT_ARGS_Parrot_str_change_charset __attribute__unused__ int _ASSERT_ARGS_CHECK = \
        PARROT_ASSERT_ARG(interp)
-#define ASSERT_ARGS_Parrot_string_trans_encoding __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+#define ASSERT_ARGS_Parrot_str_change_encoding __attribute__unused__ int _ASSERT_ARGS_CHECK = \
        PARROT_ASSERT_ARG(interp)
 #define ASSERT_ARGS_Parrot_str_write_COW __attribute__unused__ int _ASSERT_ARGS_CHECK = \
        PARROT_ASSERT_ARG(interp) \
