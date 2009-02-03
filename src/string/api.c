@@ -2824,7 +2824,7 @@ Parrot_string_cstring(SHIM_INTERP, ARGIN(const STRING *str))
 
 /*
 
-=item C<INTVAL Parrot_string_is_cclass>
+=item C<INTVAL Parrot_str_is_cclass>
 
 Returns 1 if the codepoint of string C<s> at given offset is in the given
 character class C<flags>. See also F<include/parrot/cclass.h> for possible
@@ -2837,10 +2837,10 @@ character classes. Returns 0 otherwise, or if the string is empty or NULL.
 PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
 INTVAL
-Parrot_string_is_cclass(PARROT_INTERP, INTVAL flags,
+Parrot_str_is_cclass(PARROT_INTERP, INTVAL flags,
         ARGIN(const STRING *s), UINTVAL offset)
 {
-    ASSERT_ARGS(Parrot_string_is_cclass)
+    ASSERT_ARGS(Parrot_str_is_cclass)
     if (!Parrot_str_byte_length(interp, s))
         return 0;
 
@@ -2850,7 +2850,7 @@ Parrot_string_is_cclass(PARROT_INTERP, INTVAL flags,
 
 /*
 
-=item C<INTVAL Parrot_string_find_cclass>
+=item C<INTVAL Parrot_str_find_cclass>
 
 Finds the first occurrence of the given character class in C<flags> in the
 string, and returns its glyph-wise index.
@@ -2862,10 +2862,10 @@ string, and returns its glyph-wise index.
 PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
 INTVAL
-Parrot_string_find_cclass(PARROT_INTERP, INTVAL flags, ARGIN_NULLOK(STRING *s),
+Parrot_str_find_cclass(PARROT_INTERP, INTVAL flags, ARGIN_NULLOK(STRING *s),
                           UINTVAL offset, UINTVAL count)
 {
-    ASSERT_ARGS(Parrot_string_find_cclass)
+    ASSERT_ARGS(Parrot_str_find_cclass)
     if (!s)
         return -1;
 
@@ -2874,7 +2874,7 @@ Parrot_string_find_cclass(PARROT_INTERP, INTVAL flags, ARGIN_NULLOK(STRING *s),
 
 /*
 
-=item C<INTVAL Parrot_string_find_not_cclass>
+=item C<INTVAL Parrot_str_find_not_cclass>
 
 Finds the first occurrence of the a character I<not> in the given character
 class in C<flags> in the string starting from C<offset> and looking at C<count>
@@ -2888,10 +2888,10 @@ found.
 PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
 INTVAL
-Parrot_string_find_not_cclass(PARROT_INTERP, INTVAL flags,
+Parrot_str_find_not_cclass(PARROT_INTERP, INTVAL flags,
     ARGIN_NULLOK(STRING *s), UINTVAL offset, UINTVAL count)
 {
-    ASSERT_ARGS(Parrot_string_find_not_cclass)
+    ASSERT_ARGS(Parrot_str_find_not_cclass)
     if (!s)
         return -1;
 
