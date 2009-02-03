@@ -183,7 +183,7 @@ Parrot_register_HLL(PARROT_INTERP, ARGIN(STRING *hll_name))
     VTABLE_set_pmc_keyed_int(interp, entry, e_HLL_name, name);
 
     /* create HLL namespace using the *constant* name */
-    hll_name = string_downcase(interp, VTABLE_get_string(interp, name));
+    hll_name = Parrot_str_downcase(interp, VTABLE_get_string(interp, name));
 
     /* HLL type mappings aren't yet created, we can't create
      * a namespace in HLL's flavor yet - maybe promote the
@@ -530,7 +530,7 @@ Parrot_regenerate_HLL_namespaces(PARROT_INTERP)
             if (!hll_name)
                 continue;
 
-            string_downcase_inplace(interp, hll_name);
+            Parrot_str_downcase_inplace(interp, hll_name);
 
             /* XXX as in Parrot_register_HLL() this needs to be fixed to use
              * the correct type of namespace. It's relatively easy to do that

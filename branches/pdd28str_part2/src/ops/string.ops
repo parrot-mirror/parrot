@@ -417,11 +417,11 @@ Uppercase $1 in place
 =cut
 
 inline op upcase(out STR, in STR) :base_core {
-    $1 = string_upcase(interp, $2);
+    $1 = Parrot_str_upcase(interp, $2);
 }
 
 inline op upcase(inout STR) :base_core {
-    string_upcase_inplace(interp, $1);
+    Parrot_str_upcase_inplace(interp, $1);
 }
 
 
@@ -436,11 +436,11 @@ Downcase $1 in place
 =cut
 
 inline op downcase(out STR, in STR) :base_core {
-    $1 = string_downcase(interp, $2);
+    $1 = Parrot_str_downcase(interp, $2);
 }
 
 inline op downcase(inout STR) :base_core {
-    string_downcase_inplace(interp, $1);
+    Parrot_str_downcase_inplace(interp, $1);
 }
 
 
@@ -455,11 +455,11 @@ Titlecase $1 in place
 =cut
 
 inline op titlecase(out STR, in STR) :base_core {
-    $1 = string_titlecase(interp, $2);
+    $1 = Parrot_str_titlecase(interp, $2);
 }
 
 inline op titlecase(inout STR) :base_core {
-    string_titlecase_inplace(interp, $1);
+    Parrot_str_titlecase_inplace(interp, $1);
 }
 
 

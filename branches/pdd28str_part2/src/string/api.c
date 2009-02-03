@@ -2611,7 +2611,7 @@ Parrot_str_unescape(PARROT_INTERP,
 
 /*
 
-=item C<STRING * string_upcase>
+=item C<STRING * Parrot_str_upcase>
 
 Returns a copy of the specified Parrot string converted to upper case.
 Non-caseable characters are left unchanged.
@@ -2624,9 +2624,9 @@ PARROT_EXPORT
 PARROT_CANNOT_RETURN_NULL
 PARROT_MALLOC
 STRING *
-string_upcase(PARROT_INTERP, ARGIN_NULLOK(const STRING *s))
+Parrot_str_upcase(PARROT_INTERP, ARGIN_NULLOK(const STRING *s))
 {
-    ASSERT_ARGS(string_upcase)
+    ASSERT_ARGS(Parrot_str_upcase)
     if (STRING_IS_NULL(s)) {
         Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_UNEXPECTED_NULL,
             "Can't upcase NULL string");
@@ -2634,7 +2634,7 @@ string_upcase(PARROT_INTERP, ARGIN_NULLOK(const STRING *s))
     else {
         DECL_CONST_CAST;
         STRING * const dest = Parrot_str_copy(interp, PARROT_const_cast(STRING *, s));
-        string_upcase_inplace(interp, dest);
+        Parrot_str_upcase_inplace(interp, dest);
         return dest;
     }
 }
@@ -2642,7 +2642,7 @@ string_upcase(PARROT_INTERP, ARGIN_NULLOK(const STRING *s))
 
 /*
 
-=item C<void string_upcase_inplace>
+=item C<void Parrot_str_upcase_inplace>
 
 Converts the specified Parrot string to upper case.
 
@@ -2652,9 +2652,9 @@ Converts the specified Parrot string to upper case.
 
 PARROT_EXPORT
 void
-string_upcase_inplace(PARROT_INTERP, ARGMOD_NULLOK(STRING *s))
+Parrot_str_upcase_inplace(PARROT_INTERP, ARGMOD_NULLOK(STRING *s))
 {
-    ASSERT_ARGS(string_upcase_inplace)
+    ASSERT_ARGS(Parrot_str_upcase_inplace)
     if (STRING_IS_NULL(s)) {
         Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_UNEXPECTED_NULL,
             "Can't upcase NULL string");
@@ -2668,7 +2668,7 @@ string_upcase_inplace(PARROT_INTERP, ARGMOD_NULLOK(STRING *s))
 
 /*
 
-=item C<STRING * string_downcase>
+=item C<STRING * Parrot_str_downcase>
 
 Returns a copy of the specified Parrot string converted to lower case.
 Non-caseable characters are left unchanged.
@@ -2681,19 +2681,19 @@ PARROT_EXPORT
 PARROT_CANNOT_RETURN_NULL
 PARROT_MALLOC
 STRING *
-string_downcase(PARROT_INTERP, ARGIN(const STRING *s))
+Parrot_str_downcase(PARROT_INTERP, ARGIN(const STRING *s))
 {
-    ASSERT_ARGS(string_downcase)
+    ASSERT_ARGS(Parrot_str_downcase)
     DECL_CONST_CAST;
     STRING * const dest = Parrot_str_copy(interp, PARROT_const_cast(STRING *, s));
-    string_downcase_inplace(interp, dest);
+    Parrot_str_downcase_inplace(interp, dest);
     return dest;
 }
 
 
 /*
 
-=item C<void string_downcase_inplace>
+=item C<void Parrot_str_downcase_inplace>
 
 Converts the specified Parrot string to lower case.
 
@@ -2703,9 +2703,9 @@ Converts the specified Parrot string to lower case.
 
 PARROT_EXPORT
 void
-string_downcase_inplace(PARROT_INTERP, ARGMOD(STRING *s))
+Parrot_str_downcase_inplace(PARROT_INTERP, ARGMOD(STRING *s))
 {
-    ASSERT_ARGS(string_downcase_inplace)
+    ASSERT_ARGS(Parrot_str_downcase_inplace)
     /*
      * TODO get rid of all the inplace variants. We have for utf8:
      * * 1 Parrot_str_copy from the non-incase variant
@@ -2719,7 +2719,7 @@ string_downcase_inplace(PARROT_INTERP, ARGMOD(STRING *s))
 
 /*
 
-=item C<STRING * string_titlecase>
+=item C<STRING * Parrot_str_titlecase>
 
 Returns a copy of the specified Parrot string converted to title case.
 Non-caseable characters are left unchanged.
@@ -2732,19 +2732,19 @@ PARROT_EXPORT
 PARROT_CANNOT_RETURN_NULL
 PARROT_MALLOC
 STRING *
-string_titlecase(PARROT_INTERP, ARGIN(const STRING *s))
+Parrot_str_titlecase(PARROT_INTERP, ARGIN(const STRING *s))
 {
-    ASSERT_ARGS(string_titlecase)
+    ASSERT_ARGS(Parrot_str_titlecase)
     DECL_CONST_CAST;
     STRING * const dest = Parrot_str_copy(interp, PARROT_const_cast(STRING *, s));
-    string_titlecase_inplace(interp, dest);
+    Parrot_str_titlecase_inplace(interp, dest);
     return dest;
 }
 
 
 /*
 
-=item C<void string_titlecase_inplace>
+=item C<void Parrot_str_titlecase_inplace>
 
 Converts the specified Parrot string to title case.
 
@@ -2754,9 +2754,9 @@ Converts the specified Parrot string to title case.
 
 PARROT_EXPORT
 void
-string_titlecase_inplace(PARROT_INTERP, ARGMOD(STRING *s))
+Parrot_str_titlecase_inplace(PARROT_INTERP, ARGMOD(STRING *s))
 {
-    ASSERT_ARGS(string_titlecase_inplace)
+    ASSERT_ARGS(Parrot_str_titlecase_inplace)
     Parrot_str_write_COW(interp, s);
     CHARSET_TITLECASE(interp, s);
 }

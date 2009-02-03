@@ -640,7 +640,7 @@ Parrot_sprintf_format(PARROT_INTERP,
                                 obj->getuint(interp, info.type, obj);
                             STRING * const ts =
                                 Parrot_str_from_uint(interp, tc, theuint, 16, 0);
-                            string_upcase_inplace(interp, ts);
+                            Parrot_str_upcase_inplace(interp, ts);
 
                             /* unsigned conversion - no plus */
                             info.flags &= ~FLAG_PLUS;
