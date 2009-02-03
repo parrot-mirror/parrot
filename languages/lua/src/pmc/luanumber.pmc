@@ -69,7 +69,7 @@ Allow :
             res = constant_pmc_new(INTERP, type);
         else
             res = pmc_new(INTERP, type);
-        PMC_num_val(res) = string_to_num(INTERP, rep);
+        PMC_num_val(res) = Parrot_str_to_num(INTERP, rep);
         return res;
     }
 

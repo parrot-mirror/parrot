@@ -602,7 +602,7 @@ Parrot_add_library_path(PARROT_INTERP,
 =item C<char* Parrot_locate_runtime_file>
 
 Locate the full path for C<file_name> and the given file type(s). If
-successful, returns a C-string allocated with C<string_to_cstring> or
+successful, returns a C-string allocated with C<Parrot_str_to_cstring> or
 NULL otherwise.  Remember to free the string with C<string_cstring_free()>.
 
 =item C<STRING* Parrot_locate_runtime_file_str>
@@ -692,7 +692,7 @@ Parrot_locate_runtime_file(PARROT_INTERP, ARGIN(const char *file_name),
      *
      *     see also the log at #37814
      */
-    return result ? string_to_cstring(interp, result) : NULL;
+    return result ? Parrot_str_to_cstring(interp, result) : NULL;
 }
 
 /*
@@ -728,7 +728,7 @@ Parrot_get_runtime_prefix(PARROT_INTERP)
         if (VTABLE_elements(interp, config_hash)) {
             STRING * const key = CONST_STRING(interp, "prefix");
             STRING * const s   = VTABLE_get_string_keyed_str(interp, config_hash, key);
-            return string_to_cstring(interp, s);
+            return Parrot_str_to_cstring(interp, s);
         }
         else
             return str_dup(".");

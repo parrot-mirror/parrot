@@ -110,7 +110,7 @@ Changes the current working directory to the one specified by C<path>.
 
     METHOD chdir(STRING *path) {
         int error;
-        char * const cpath = string_to_cstring(interp, path);
+        char * const cpath = Parrot_str_to_cstring(interp, path);
 #ifdef _MSC_VER
         error = _chdir(cpath);
 #else
@@ -137,7 +137,7 @@ C<path>.
 
     METHOD rm(STRING *path) {
         struct stat info;
-        char * const cpath = string_to_cstring(interp, path);
+        char * const cpath = Parrot_str_to_cstring(interp, path);
         int          error = stat(cpath, &info);
 
         if (error) {
@@ -182,7 +182,7 @@ Creates a directory specified by C<path> with mode C<mode>.
 */
 
     METHOD mkdir(STRING *path, INTVAL mode) {
-        char * const cpath = string_to_cstring(interp, path);
+        char * const cpath = Parrot_str_to_cstring(interp, path);
         /* should we validate mode? */
 #ifdef WIN32
         int error = _mkdir(cpath);
@@ -225,7 +225,7 @@ Stats a file, and returns a 13 position array as in Perl:
 
     METHOD stat(STRING *path) {
         struct stat   info;
-        char  * const cpath = string_to_cstring(interp, path);
+        char  * const cpath = Parrot_str_to_cstring(interp, path);
         const int     error = stat(cpath, &info);
 
         string_cstring_free(cpath);
@@ -300,7 +300,7 @@ Stats a file, and returns a 13 position array as in Perl:
     METHOD lstat(STRING *path) {
         struct stat info;
 
-        char * const cpath = string_to_cstring(interp, path);
+        char * const cpath = Parrot_str_to_cstring(interp, path);
 #ifdef WIN32
         const int error = stat(cpath, &info);
 #else
@@ -361,8 +361,8 @@ Creates a symlink, where available
 
     METHOD symlink(STRING *from, STRING *to) {
 #ifndef WIN32
-        char * const cfrom = string_to_cstring(interp, from);
-        char * const cto   = string_to_cstring(interp, to);
+        char * const cfrom = Parrot_str_to_cstring(interp, from);
+        char * const cto   = Parrot_str_to_cstring(interp, to);
         const int error    = symlink(cfrom, cto);
 
         string_cstring_free(cfrom);
@@ -391,8 +391,8 @@ Creates a hard link, where available(?)
 
     METHOD link(STRING *from, STRING *to) {
 #ifndef WIN32
-        char * const cfrom = string_to_cstring(interp, from);
-        char * const cto   = string_to_cstring(interp, to);
+        char * const cfrom = Parrot_str_to_cstring(interp, from);
+        char * const cto   = Parrot_str_to_cstring(interp, to);
         const int    error = link(cfrom, cto);
 
         string_cstring_free(cfrom);
@@ -447,7 +447,7 @@ idea to do the same with parrot.
 
     METHOD chroot(STRING *path) {
 #ifndef WIN32
-        char * const cpath = string_to_cstring(interp, path);
+        char * const cpath = Parrot_str_to_cstring(interp, path);
         const int    error = chroot(cpath);
 
         string_cstring_free(cpath);
@@ -477,7 +477,7 @@ reads entries from a directory.
 #ifndef _MSC_VER
         struct dirent *dirent;
         PMC           *array;
-        char          *cpath = string_to_cstring(interp, path);
+        char          *cpath = Parrot_str_to_cstring(interp, path);
         STRING        *retval;
         DIR           *dir   = opendir(cpath);
 
@@ -513,8 +513,8 @@ thrown.
 =cut
 */
     METHOD rename(STRING *oldpath, STRING *newpath) {
-        char * const coldpath = string_to_cstring(interp, oldpath);
-        char * const cnewpath = string_to_cstring(interp, newpath);
+        char * const coldpath = Parrot_str_to_cstring(interp, oldpath);
+        char * const cnewpath = Parrot_str_to_cstring(interp, newpath);
         const int    ret      = rename(coldpath, cnewpath);
 
         string_cstring_free(coldpath);

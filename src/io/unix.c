@@ -156,7 +156,7 @@ Parrot_io_open_unix(PARROT_INTERP, ARGMOD_NULLOK(PMC *filehandle),
                                 "Invalid mode for file open");
 
     oflags = convert_flags_to_unix(flags);
-    spath = string_to_cstring(interp, path);
+    spath = Parrot_str_to_cstring(interp, path);
 
     /* Only files for now */
     flags |= PIO_F_FILE;
@@ -692,7 +692,7 @@ Parrot_io_open_pipe_unix(PARROT_INTERP, ARGMOD(PMC *filehandle),
 
         /* XXX ugly hack to be able to pass some arguments
          *     split cmd at blanks */
-        orig_cmd = cmd = string_to_cstring(interp, command);
+        orig_cmd = cmd = Parrot_str_to_cstring(interp, command);
         c        = strdup(cmd);
 
         for (n = 0, p = strtok(c, " "); n < 9 && p; p = strtok(NULL, " ")) {

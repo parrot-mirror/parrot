@@ -2599,7 +2599,7 @@ pf_debug_dump(PARROT_INTERP, ARGIN(const PackFile_Segment *self))
 
     Parrot_io_printf(interp, "\n  mappings => [\n");
     for (i = 0; i < debug->num_mappings; i++) {
-        char * const filename = string_to_cstring(interp, PF_CONST(debug->code,
+        char * const filename = Parrot_str_to_cstring(interp, PF_CONST(debug->code,
                    debug->mappings[i]->filename)->u.string);;
         Parrot_io_printf(interp, "    #%d\n    [\n", i);
         Parrot_io_printf(interp, "        OFFSET => %d,\n",
@@ -4067,7 +4067,7 @@ PackFile_Annotations_dump(PARROT_INTERP, ARGIN(const struct PackFile_Segment *se
     /* Dump keys. */
     Parrot_io_printf(interp, "\n  keys => [\n");
     for (i = 0; i < self->num_keys; i++) {
-        char * const key_name = string_to_cstring(interp, PF_CONST(self->code,
+        char * const key_name = Parrot_str_to_cstring(interp, PF_CONST(self->code,
                self->keys[i]->name)->u.string);
         Parrot_io_printf(interp, "    #%d\n    [\n", i);
         Parrot_io_printf(interp, "        NAME => %s\n", key_name);
@@ -4433,7 +4433,7 @@ Parrot_load_bytecode(PARROT_INTERP, ARGIN_NULLOK(STRING *file_str))
     /* remember wo_ext => full_path mapping */
     VTABLE_set_string_keyed_str(interp, is_loaded_hash,
             wo_ext, path);
-    filename = string_to_cstring(interp, path);
+    filename = Parrot_str_to_cstring(interp, path);
     if (file_type == PARROT_RUNTIME_FT_PBC) {
         PackFile *pf = PackFile_append_pbc(interp, filename);
         string_cstring_free(filename);

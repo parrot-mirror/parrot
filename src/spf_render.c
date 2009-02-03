@@ -332,7 +332,7 @@ Parrot_sprintf_format(PARROT_INTERP,
     STRING *targ = Parrot_str_new_noinit(interp, enum_stringrep_one, pat_len << 1);
 
     /* ts is used almost universally as an intermediate target;
-     * tc is used as a temporary buffer by uint_to_string and
+     * tc is used as a temporary buffer by Parrot_str_from_uint and
      * as a target by gen_sprintf_call.
      */
     STRING *substr = NULL;
@@ -608,7 +608,7 @@ Parrot_sprintf_format(PARROT_INTERP,
                             const UHUGEINTVAL theuint =
                                 obj->getuint(interp, info.type, obj);
                             STRING * const ts    =
-                                uint_to_str(interp, tc, theuint, 8, 0);
+                                Parrot_str_from_uint(interp, tc, theuint, 8, 0);
                             STRING * const prefix = CONST_STRING(interp, "0");
 
                             /* unsigned conversion - no plus */
@@ -623,7 +623,7 @@ Parrot_sprintf_format(PARROT_INTERP,
                             const UHUGEINTVAL theuint =
                                 obj->getuint(interp, info.type, obj);
                             STRING * const ts         =
-                                uint_to_str(interp, tc, theuint, 16, 0);
+                                Parrot_str_from_uint(interp, tc, theuint, 16, 0);
                             STRING * const prefix = CONST_STRING(interp, "0x");
 
                             /* unsigned conversion - no plus */
@@ -639,7 +639,7 @@ Parrot_sprintf_format(PARROT_INTERP,
                             const UHUGEINTVAL theuint =
                                 obj->getuint(interp, info.type, obj);
                             STRING * const ts =
-                                uint_to_str(interp, tc, theuint, 16, 0);
+                                Parrot_str_from_uint(interp, tc, theuint, 16, 0);
                             string_upcase_inplace(interp, ts);
 
                             /* unsigned conversion - no plus */
@@ -655,7 +655,7 @@ Parrot_sprintf_format(PARROT_INTERP,
                             const UHUGEINTVAL theuint =
                                 obj->getuint(interp, info.type, obj);
                             STRING * const ts =
-                                uint_to_str(interp, tc, theuint, 2, 0);
+                                Parrot_str_from_uint(interp, tc, theuint, 2, 0);
 
                             /* unsigned conversion - no plus */
                             info.flags &= ~FLAG_PLUS;
@@ -670,7 +670,7 @@ Parrot_sprintf_format(PARROT_INTERP,
                             const HUGEINTVAL theint =
                                 obj->getint(interp, info.type, obj);
                             STRING * const ts =
-                                int_to_str(interp, tc, theint, 2);
+                                Parrot_str_from_int_base(interp, tc, theint, 2);
 
                             /* unsigned conversion - no plus */
                             info.flags &= ~FLAG_PLUS;
@@ -702,7 +702,7 @@ Parrot_sprintf_format(PARROT_INTERP,
                             ts = cstr2pstr(tc);
                             {
                                 char * const tempstr =
-                                    string_to_cstring(interp, ts);
+                                    Parrot_str_to_cstring(interp, ts);
 
 #ifdef PARROT_HAS_SNPRINTF
                                 snprintf(tc, PARROT_SPRINTF_BUFFER_SIZE,
@@ -722,7 +722,7 @@ Parrot_sprintf_format(PARROT_INTERP,
                             STRING * const prefix = CONST_STRING(interp, "0x");
                             const void * const ptr =
                                 obj->getptr(interp, info.type, obj);
-                            STRING * const ts = uint_to_str(interp, tc,
+                            STRING * const ts = Parrot_str_from_uint(interp, tc,
                                        (UHUGEINTVAL) (size_t) ptr, 16, 0);
 
                             targ = str_append_w_flags(interp, targ, &info,
@@ -760,7 +760,7 @@ Parrot_sprintf_format(PARROT_INTERP,
                             /* XXX lost precision if %Hg or whatever */
                             {
                                 char * const tempstr =
-                                    string_to_cstring(interp, ts);
+                                    Parrot_str_to_cstring(interp, ts);
 
 #ifdef PARROT_HAS_SNPRINTF
                                 snprintf(tc, PARROT_SPRINTF_BUFFER_SIZE,

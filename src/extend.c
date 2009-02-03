@@ -376,7 +376,7 @@ Parrot_PMC_get_cstring_intkey(PARROT_INTERP,
 
     PARROT_CALLIN_START(interp);
     intermediate = VTABLE_get_string_keyed_int(interp, pmc, key);
-    retval       = string_to_cstring(interp, intermediate);
+    retval       = Parrot_str_to_cstring(interp, intermediate);
     PARROT_CALLIN_END(interp);
 
     return retval;
@@ -406,7 +406,7 @@ Parrot_PMC_get_cstring(PARROT_INTERP, Parrot_PMC pmc)
 
     PARROT_CALLIN_START(interp);
     intermediate = VTABLE_get_string(interp, pmc);
-    retval       = string_to_cstring(interp, intermediate);
+    retval       = Parrot_str_to_cstring(interp, intermediate);
     PARROT_CALLIN_END(interp);
 
     return retval;
@@ -438,7 +438,7 @@ Parrot_PMC_get_cstringn(PARROT_INTERP, ARGIN(Parrot_PMC pmc),
     char *retval;
 
     PARROT_CALLIN_START(interp);
-    retval  = string_to_cstring(interp, VTABLE_get_string(interp, pmc));
+    retval  = Parrot_str_to_cstring(interp, VTABLE_get_string(interp, pmc));
     *length = strlen(retval);
     PARROT_CALLIN_END(interp);
 
@@ -471,7 +471,7 @@ Parrot_PMC_get_cstringn_intkey(PARROT_INTERP, ARGIN(Parrot_PMC pmc),
     char *retval;
 
     PARROT_CALLIN_START(interp);
-    retval  = string_to_cstring(interp,
+    retval  = Parrot_str_to_cstring(interp,
                                VTABLE_get_string_keyed_int(interp, pmc, key));
     *length = strlen(retval);
     PARROT_CALLIN_END(interp);

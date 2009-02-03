@@ -1224,7 +1224,7 @@ Parrot_debugger_load(PARROT_INTERP, ARGIN_NULLOK(STRING *filename))
     if (!interp->pdb)
         Parrot_ex_throw_from_c_args(interp, NULL, 0, "No debugger");
 
-    file = string_to_cstring(interp, filename);
+    file = Parrot_str_to_cstring(interp, filename);
     PDB_load_source(interp, file);
     string_cstring_free(file);
 }
@@ -2760,7 +2760,7 @@ PDB_disassemble_op(PARROT_INTERP, ARGOUT(char *dest), size_t space,
                 case KEY_string_FLAG:
                     dest[size++] = '"';
                     {
-                        char * const temp = string_to_cstring(interp, PMC_str_val(k));
+                        char * const temp = Parrot_str_to_cstring(interp, PMC_str_val(k));
                         strcpy(&dest[size], temp);
                         string_cstring_free(temp);
                     }
@@ -3647,9 +3647,9 @@ GDB_print_reg(PARROT_INTERP, int t, int n)
     if (n >= 0 && n < CONTEXT(interp)->n_regs_used[t]) {
         switch (t) {
             case REGNO_INT:
-                return string_from_int(interp, REG_INT(interp, n))->strstart;
+                return Parrot_str_from_int(interp, REG_INT(interp, n))->strstart;
             case REGNO_NUM:
-                return string_from_num(interp, REG_NUM(interp, n))->strstart;
+                return Parrot_str_from_num(interp, REG_NUM(interp, n))->strstart;
             case REGNO_STR:
                 return REG_STR(interp, n)->strstart;
             case REGNO_PMC:

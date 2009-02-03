@@ -182,7 +182,7 @@ RT #46673 implement freeze/thaw and use that instead.
 */
 
     VTABLE STRING *get_string() {
-        return string_from_int(INTERP, SELF.elements());
+        return Parrot_str_from_int(INTERP, SELF.elements());
     }
 
     VTABLE STRING *get_repr() {

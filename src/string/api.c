@@ -1976,7 +1976,7 @@ string_printf(PARROT_INTERP, ARGIN(const char *format), ...)
 
 /*
 
-=item C<INTVAL string_to_int>
+=item C<INTVAL Parrot_str_to_int>
 
 Converts a numeric Parrot string to an integer value.
 
@@ -2000,9 +2000,9 @@ rounding towards zero.
 PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
 INTVAL
-string_to_int(SHIM_INTERP, ARGIN_NULLOK(const STRING *s))
+Parrot_str_to_int(SHIM_INTERP, ARGIN_NULLOK(const STRING *s))
 {
-    ASSERT_ARGS(string_to_int)
+    ASSERT_ARGS(Parrot_str_to_int)
     if (s == NULL)
         return 0;
     {
@@ -2049,7 +2049,7 @@ string_to_int(SHIM_INTERP, ARGIN_NULLOK(const STRING *s))
 
 /*
 
-=item C<FLOATVAL string_to_num>
+=item C<FLOATVAL Parrot_str_to_num>
 
 Converts a numeric Parrot STRING to a floating point number.
 
@@ -2060,9 +2060,9 @@ Converts a numeric Parrot STRING to a floating point number.
 PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
 FLOATVAL
-string_to_num(PARROT_INTERP, ARGIN(const STRING *s))
+Parrot_str_to_num(PARROT_INTERP, ARGIN(const STRING *s))
 {
-    ASSERT_ARGS(string_to_num)
+    ASSERT_ARGS(Parrot_str_to_num)
     FLOATVAL    f = 0.0;
     char       *cstr;
     const char *p;
@@ -2073,7 +2073,7 @@ string_to_num(PARROT_INTERP, ARGIN(const STRING *s))
      * XXX C99 atof interprets 0x prefix
      * XXX would strtod() be better for detecting malformed input?
      */
-    cstr = string_to_cstring(interp, s);
+    cstr = Parrot_str_to_cstring(interp, s);
     p    = cstr;
 
     while (isspace((unsigned char)*p))
@@ -2105,7 +2105,7 @@ string_to_num(PARROT_INTERP, ARGIN(const STRING *s))
 
 /*
 
-=item C<STRING * string_from_int>
+=item C<STRING * Parrot_str_from_int>
 
 Returns a Parrot string representation of the specified integer value.
 
@@ -2117,17 +2117,17 @@ PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 STRING *
-string_from_int(PARROT_INTERP, INTVAL i)
+Parrot_str_from_int(PARROT_INTERP, INTVAL i)
 {
-    ASSERT_ARGS(string_from_int)
+    ASSERT_ARGS(Parrot_str_from_int)
     char buf[128];
-    return int_to_str(interp, buf, (HUGEINTVAL)i, 10);
+    return Parrot_str_from_int_base(interp, buf, (HUGEINTVAL)i, 10);
 }
 
 
 /*
 
-=item C<STRING * string_from_num>
+=item C<STRING * Parrot_str_from_num>
 
 Returns a Parrot string representation of the specified floating-point value.
 
@@ -2139,9 +2139,9 @@ PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 STRING *
-string_from_num(PARROT_INTERP, FLOATVAL f)
+Parrot_str_from_num(PARROT_INTERP, FLOATVAL f)
 {
-    ASSERT_ARGS(string_from_num)
+    ASSERT_ARGS(Parrot_str_from_num)
     /* Too damn hard--hand it off to Parrot_sprintf, which'll probably
        use the system sprintf anyway, but has gigantic buffers that are
        awfully hard to overflow. */
@@ -2151,7 +2151,7 @@ string_from_num(PARROT_INTERP, FLOATVAL f)
 
 /*
 
-=item C<char * string_to_cstring>
+=item C<char * Parrot_str_to_cstring>
 
 Returns a C string for the specified Parrot string. Use
 C<string_cstring_free()> to free the string. Failure to do this will result in
@@ -2165,9 +2165,9 @@ PARROT_EXPORT
 PARROT_MALLOC
 PARROT_CANNOT_RETURN_NULL
 char *
-string_to_cstring(PARROT_INTERP, ARGIN_NULLOK(const STRING *s))
+Parrot_str_to_cstring(PARROT_INTERP, ARGIN_NULLOK(const STRING *s))
 {
-    ASSERT_ARGS(string_to_cstring)
+    ASSERT_ARGS(Parrot_str_to_cstring)
     if (! s) {
         Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_UNEXPECTED_NULL,
             "Can't convert NULL string");
@@ -2211,7 +2211,7 @@ string_to_cstring_nullable(SHIM_INTERP, ARGIN_NULLOK(const STRING *s))
 
 =item C<void string_cstring_free>
 
-Free a string created by C<string_to_cstring()>.
+Free a string created by C<Parrot_str_to_cstring()>.
 
 TODO - Hopefully this can go away at some point, as it's got all
 sorts of leak potential otherwise.
@@ -2316,7 +2316,7 @@ string_unpin(PARROT_INTERP, ARGMOD(STRING *s))
 
 /*
 
-=item C<size_t string_hash>
+=item C<size_t Parrot_str_to_hashval>
 
 Returns the hash value for the specified Parrot string, caching it in
 C<< s->hashval >>.
@@ -2328,9 +2328,9 @@ C<< s->hashval >>.
 PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
 size_t
-string_hash(PARROT_INTERP, ARGMOD_NULLOK(STRING *s))
+Parrot_str_to_hashval(PARROT_INTERP, ARGMOD_NULLOK(STRING *s))
 {
-    ASSERT_ARGS(string_hash)
+    ASSERT_ARGS(Parrot_str_to_hashval)
     register size_t h;
     const UINTVAL seed = interp->hash_seed;
 
@@ -2349,10 +2349,10 @@ string_hash(PARROT_INTERP, ARGMOD_NULLOK(STRING *s))
 
 /*
 
-=item C<STRING * string_escape_string>
+=item C<STRING * Parrot_str_escape>
 
 Escapes all non-ASCII chars to backslash sequences. Control chars that
-C<string_unescape_cstring> can handle are escaped as I<\x>, as well as a double
+C<Parrot_str_unescape> can handle are escaped as I<\x>, as well as a double
 quote character. Other control chars and codepoints < 0x100 are escaped as
 I<\xhh>, codepoints up to 0xffff, as I<\uhhhh>, and codepoints greater than
 this as I<\x{hh...hh}>.
@@ -2364,16 +2364,16 @@ this as I<\x{hh...hh}>.
 PARROT_EXPORT
 PARROT_CAN_RETURN_NULL
 STRING *
-string_escape_string(PARROT_INTERP, ARGIN_NULLOK(const STRING *src))
+Parrot_str_escape(PARROT_INTERP, ARGIN_NULLOK(const STRING *src))
 {
-    ASSERT_ARGS(string_escape_string)
-    return string_escape_string_delimited(interp, src, (UINTVAL) ~0);
+    ASSERT_ARGS(Parrot_str_escape)
+    return Parrot_str_escape_truncate(interp, src, (UINTVAL) ~0);
 }
 
 
 /*
 
-=item C<STRING * string_escape_string_delimited>
+=item C<STRING * Parrot_str_escape_truncate>
 
 
 Escapes all non-ASCII characters in the given string with backslashed versions,
@@ -2386,10 +2386,10 @@ but limits the length of the output (used for trace output of strings).
 PARROT_EXPORT
 PARROT_CAN_RETURN_NULL
 STRING *
-string_escape_string_delimited(PARROT_INTERP,
+Parrot_str_escape_truncate(PARROT_INTERP,
         ARGIN_NULLOK(const STRING *src), UINTVAL limit)
 {
-    ASSERT_ARGS(string_escape_string_delimited)
+    ASSERT_ARGS(Parrot_str_escape_truncate)
     STRING *result, *hex;
     UINTVAL i, len, charlen;
     String_iter iter;
@@ -2501,7 +2501,7 @@ string_escape_string_delimited(PARROT_INTERP,
 
 /*
 
-=item C<STRING * string_unescape_cstring>
+=item C<STRING * Parrot_str_unescape>
 
 Unescapes the specified C string. These sequences are covered:
 
@@ -2520,10 +2520,10 @@ Unescapes the specified C string. These sequences are covered:
 PARROT_EXPORT
 PARROT_CANNOT_RETURN_NULL
 STRING *
-string_unescape_cstring(PARROT_INTERP,
+Parrot_str_unescape(PARROT_INTERP,
     ARGIN(const char *cstring), char delimiter, ARGIN_NULLOK(const char *enc_char))
 {
-    ASSERT_ARGS(string_unescape_cstring)
+    ASSERT_ARGS(Parrot_str_unescape)
     size_t          clength = strlen(cstring);
     Parrot_UInt4    r;
     String_iter     iter;
@@ -3171,7 +3171,7 @@ Parrot_string_split(PARROT_INTERP,
 
 /*
 
-=item C<STRING* uint_to_str>
+=item C<STRING* Parrot_str_from_uint>
 
 Returns C<num> converted to a Parrot C<STRING>.
 
@@ -3188,10 +3188,10 @@ If C<minus> is true, then C<-> is prepended to the string representation.
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 STRING*
-uint_to_str(PARROT_INTERP, ARGOUT(char *tc), UHUGEINTVAL num,
+Parrot_str_from_uint(PARROT_INTERP, ARGOUT(char *tc), UHUGEINTVAL num,
     unsigned int base, int minus)
 {
-    ASSERT_ARGS(uint_to_str)
+    ASSERT_ARGS(Parrot_str_from_uint)
     /* the buffer must be at least as long as this */
     char               *p    = tc + sizeof (UHUGEINTVAL)*8 + 1;
     const char * const  tail = p;
@@ -3217,7 +3217,7 @@ uint_to_str(PARROT_INTERP, ARGOUT(char *tc), UHUGEINTVAL num,
 
 /*
 
-=item C<STRING * int_to_str>
+=item C<STRING * Parrot_str_from_int_base>
 
 Returns C<num> converted to a Parrot C<STRING>.
 
@@ -3232,15 +3232,15 @@ If C<< num < 0 >>, then C<-> is prepended to the string representation.
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 STRING *
-int_to_str(PARROT_INTERP, ARGOUT(char *tc), HUGEINTVAL num, unsigned int base)
+Parrot_str_from_int_base(PARROT_INTERP, ARGOUT(char *tc), HUGEINTVAL num, unsigned int base)
 {
-    ASSERT_ARGS(int_to_str)
+    ASSERT_ARGS(Parrot_str_from_int_base)
     const int is_neg = (num < 0);
 
     if (is_neg)
         num = -num;
 
-    return uint_to_str(interp, tc, (UHUGEINTVAL)num, base, is_neg);
+    return Parrot_str_from_uint(interp, tc, (UHUGEINTVAL)num, base, is_neg);
 }
 
 /*

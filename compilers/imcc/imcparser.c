@@ -1098,7 +1098,7 @@ static void
 do_loadlib(PARROT_INTERP, ARGIN(const char *lib))
 {
     ASSERT_ARGS(do_loadlib)
-    STRING * const s = string_unescape_cstring(interp, lib + 1, '"', NULL);
+    STRING * const s = Parrot_str_unescape(interp, lib + 1, '"', NULL);
     PMC    *ignored  = Parrot_load_lib(interp, s, NULL);
     UNUSED(ignored);
     Parrot_register_HLL_lib(interp, s);
@@ -3044,7 +3044,7 @@ yyreduce:
   case 18:
 #line 945 "compilers/imcc/imcc.y"
     {
-            STRING * const hll_name = string_unescape_cstring(interp, (yyvsp[(2) - (2)].s) + 1, '"', NULL);
+            STRING * const hll_name = Parrot_str_unescape(interp, (yyvsp[(2) - (2)].s) + 1, '"', NULL);
             CONTEXT(interp)->current_HLL =
                 Parrot_register_HLL(interp, hll_name);
 
@@ -3058,9 +3058,9 @@ yyreduce:
     {
             Parrot_Context *ctx           = CONTEXT(interp);
             STRING * const  built_in_name =
-                string_unescape_cstring(interp, (yyvsp[(2) - (4)].s) + 1, '"', NULL);
+                Parrot_str_unescape(interp, (yyvsp[(2) - (4)].s) + 1, '"', NULL);
             STRING * const language_name  =
-                string_unescape_cstring(interp, (yyvsp[(4) - (4)].s) + 1, '"', NULL);
+                Parrot_str_unescape(interp, (yyvsp[(4) - (4)].s) + 1, '"', NULL);
 
             int             built_in_type = pmc_type(interp, built_in_name);
             int             language_type = pmc_type(interp, language_name);

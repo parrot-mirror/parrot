@@ -159,7 +159,7 @@ Sets the value of the string to that of the specified C<string>.
     VTABLE void set_string_native(STRING *value) {
         /* Only allow constant PMCs to embed constant strings */
         if (PObj_constant_TEST(SELF) && !PObj_constant_TEST(value)) {
-            const char *copy = string_to_cstring(INTERP, value);
+            const char *copy = Parrot_str_to_cstring(INTERP, value);
             value            = Parrot_str_new_constant(INTERP, copy);
         }
 
@@ -1025,7 +1025,7 @@ Throws an exception unless C<value> is a LuaString.
     METHOD PMC* tonumber() {
         PMC     *retval;
         STRING  *rep = SELF.get_string();
-        char    *s1  = string_to_cstring(INTERP, rep);
+        char    *s1  = Parrot_str_to_cstring(INTERP, rep);
         char    *s2;
         FLOATVAL d   = strtod(s1, &s2);
 
@@ -1058,7 +1058,7 @@ Throws an exception unless C<value> is a LuaString.
     METHOD PMC* tobase(INTVAL base) {
         PMC          *retval;
         STRING       *rep = SELF.get_string();
-        char         *s1  = string_to_cstring(INTERP, rep);
+        char         *s1  = Parrot_str_to_cstring(INTERP, rep);
         char         *s2;
         unsigned long n   = strtoul(s1, &s2, base);
 

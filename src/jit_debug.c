@@ -283,7 +283,7 @@ Parrot_jit_debug_stabs(PARROT_INTERP)
 
     if (interp->code->debugs) {
         char *ext;
-        char * const src = string_to_cstring(interp,
+        char * const src = Parrot_str_to_cstring(interp,
             Parrot_debug_pc_to_filename(interp,
             interp->code->debugs, 0));
         pasmfile = string_make(interp, src, strlen(src), NULL,
@@ -310,7 +310,7 @@ Parrot_jit_debug_stabs(PARROT_INTERP)
     stabsfile = debug_file(interp, file, "stabs.s");
     ofile     = debug_file(interp, file, "o");
     {
-        char *const temp = string_to_cstring(interp, stabsfile);
+        char *const temp = Parrot_str_to_cstring(interp, stabsfile);
         stabs            = fopen(temp, "w");
         string_cstring_free(temp);
     }
@@ -318,7 +318,7 @@ Parrot_jit_debug_stabs(PARROT_INTERP)
         return;
 
     {
-        char * const temp = string_to_cstring(interp, pasmfile);
+        char * const temp = Parrot_str_to_cstring(interp, pasmfile);
         /* filename info */
         fprintf(stabs, ".data\n.text\n");       /* darwin wants it */
         fprintf(stabs, ".stabs \"%s\"," N_SO ",0,0,0\n", temp);
@@ -364,7 +364,7 @@ Parrot_jit_debug_stabs(PARROT_INTERP)
     cmd = Parrot_sprintf_c(interp, "as %Ss -o %Ss", stabsfile, ofile);
 
     {
-        char * const temp   = string_to_cstring(interp, cmd);
+        char * const temp   = Parrot_str_to_cstring(interp, cmd);
         int          status = system(temp);
         if (status)
             fprintf(stderr, "Assembly failed: %d\n%s\n", status, temp);

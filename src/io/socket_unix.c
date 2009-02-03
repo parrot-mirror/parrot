@@ -76,7 +76,7 @@ Parrot_io_sockaddr_in(PARROT_INTERP, unsigned short port, ARGIN(STRING *addr))
     /* Hard coded to IPv4 for now */
     const int family = AF_INET;
 
-    char * const s = string_to_cstring(interp, addr);
+    char * const s = Parrot_str_to_cstring(interp, addr);
     /*
      * due to a bug in OS/X, we've to zero the struct
      * else bind is failing erratically

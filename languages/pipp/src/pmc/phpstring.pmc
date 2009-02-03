@@ -68,7 +68,7 @@ Return the string 'string'.
     METHOD INTVAL is_numeric(INTVAL allow_errors) {
         INTVAL       retval = 0;
         STRING       *rep = SELF.get_string();
-        char         *s   = string_to_cstring(INTERP, rep);
+        char         *s   = Parrot_str_to_cstring(INTERP, rep);
         char         *s1, *s2;
         INTVAL       i;
 
@@ -107,7 +107,7 @@ Return the string 'string'.
     METHOD PMC* to_base(INTVAL base) {
         PMC          *retval;
         STRING       *rep = SELF.get_string();
-        char         *s1  = string_to_cstring(INTERP, rep);
+        char         *s1  = Parrot_str_to_cstring(INTERP, rep);
         char         *s2;
         unsigned long n   = strtoul(s1, &s2, base);
 
@@ -127,7 +127,7 @@ Return the string 'string'.
     METHOD PMC* to_number() {
         PMC          *retval;
         STRING       *rep = SELF.get_string();
-        char         *s   = string_to_cstring(INTERP, rep);
+        char         *s   = Parrot_str_to_cstring(INTERP, rep);
         char         *s1, *s2;
         INTVAL       i;
 

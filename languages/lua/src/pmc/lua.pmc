@@ -139,7 +139,7 @@ information see F<src/pmc.c>.
             LC_ALL, LC_COLLATE, LC_CTYPE, LC_MONETARY, LC_NUMERIC, LC_TIME
         };
 
-        char *loc = (locale != NULL) ? string_to_cstring(INTERP, locale) : NULL;
+        char *loc = (locale != NULL) ? Parrot_str_to_cstring(INTERP, locale) : NULL;
         char *p   = setlocale(cat[category], loc);
         PMC  *retval;
 
@@ -178,7 +178,7 @@ information see F<src/pmc.c>.
         stm.tm_isdst = VTABLE_get_integer_keyed_int(INTERP, tm, 8);
 
         { /* Limit s scope and lifetime */
-            char *s = string_to_cstring(INTERP, fmt);
+            char *s = Parrot_str_to_cstring(INTERP, fmt);
             reslen = strftime(b, sizeof b, s, &stm);
             string_cstring_free(s);
         }

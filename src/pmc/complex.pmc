@@ -41,7 +41,7 @@ use C<j> instead of C<i>.
 
 static void
 complex_parse_string(PARROT_INTERP, FLOATVAL *re, FLOATVAL *im, STRING *value) {
-    char   *str               = string_to_cstring(interp, value);
+    char   *str               = Parrot_str_to_cstring(interp, value);
     char   *t                 = str;
     char   *first_num_offset  = str;
     char   *second_num_offset = NULL;
@@ -165,7 +165,7 @@ complex_parse_string(PARROT_INTERP, FLOATVAL *re, FLOATVAL *im, STRING *value) {
     if (first_num_length) {
         /* there is a real part, interpret it */
         S   = Parrot_str_new(interp, first_num_offset, first_num_length);
-        *re = string_to_num(interp, S);
+        *re = Parrot_str_to_num(interp, S);
     }
     else {
         /* consider the real part 0.0 */
@@ -175,7 +175,7 @@ complex_parse_string(PARROT_INTERP, FLOATVAL *re, FLOATVAL *im, STRING *value) {
     if (second_num_length) {
         /* there is an imaginary part, interpret it */
         S   = Parrot_str_new(interp, second_num_offset, second_num_length);
-        *im = string_to_num(interp, S);
+        *im = Parrot_str_to_num(interp, S);
     }
     else {
         /* consider the imaginary part 0.0 */

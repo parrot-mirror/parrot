@@ -65,7 +65,7 @@ Returns a true value (1) if the supplied file or directory exists.
 
     METHOD exists(STRING *path) {
         struct stat info;
-        char * const cpath = string_to_cstring(interp, path);
+        char * const cpath = Parrot_str_to_cstring(interp, path);
 #ifdef WIN32
         int error   = stat(cpath, &info);
 #else
@@ -91,7 +91,7 @@ Returns a true value (1) if the supplied path is a directory.
 
     METHOD is_dir(STRING *path) {
         struct stat info;
-        char * const cpath = string_to_cstring(interp, path);
+        char * const cpath = Parrot_str_to_cstring(interp, path);
 #ifdef WIN32
         int error   = stat(cpath, &info);
 #else
@@ -123,7 +123,7 @@ Returns a true value (1) if the supplied path is a plain file.
 
     METHOD is_file(STRING *path) {
         struct stat info;
-        char * const cpath = string_to_cstring(interp, path);
+        char * const cpath = Parrot_str_to_cstring(interp, path);
 #ifdef WIN32
         int error   = stat(cpath, &info);
 #else
@@ -160,7 +160,7 @@ Returns a true value (1) if the supplied path is a link.
 #else
         struct stat info;
 
-        char * const cpath = string_to_cstring(interp, path);
+        char * const cpath = Parrot_str_to_cstring(interp, path);
         int          error = lstat(cpath, &info);
 
         string_cstring_free(cpath);
@@ -197,13 +197,13 @@ free to change or give me hints on how to change it. -- ambs
     METHOD copy(STRING *from, STRING *to) {
 #define CHUNK_SIZE 1024
 
-        char * const cfrom  = string_to_cstring(interp, from);
+        char * const cfrom  = Parrot_str_to_cstring(interp, from);
         FILE       * source = fopen(cfrom, "rb");
 
         string_cstring_free(cfrom);
 
         if (source) {
-            char * const cto = string_to_cstring(interp, to);
+            char * const cto = Parrot_str_to_cstring(interp, to);
             FILE    * target = fopen(cto, "w+b");
 
             string_cstring_free(cto);
@@ -251,8 +251,8 @@ Rename a file C<from> to the path C<to>.
 */
 
     METHOD rename(STRING *from, STRING *to) {
-        char * const cfrom = string_to_cstring(interp, from);
-        char * const   cto = string_to_cstring(interp, to);
+        char * const cfrom = Parrot_str_to_cstring(interp, from);
+        char * const   cto = Parrot_str_to_cstring(interp, to);
         int          error = rename(cfrom, cto);
 
         string_cstring_free(cfrom);

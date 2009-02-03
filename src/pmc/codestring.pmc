@@ -83,7 +83,7 @@ A newline is automatically added to the end of the fmt.
         }
         else if (Parrot_string_is_cclass(INTERP, enum_cclass_numeric, fmt,
                 (UINTVAL)pos + 1)) {
-            I0   = string_to_int(INTERP, key);
+            I0   = Parrot_str_to_int(INTERP, key);
             repl = VTABLE_get_string_keyed_int(INTERP, args, I0);
         }
         else if (0 == Parrot_str_equal(INTERP, key, comma)) {
@@ -140,7 +140,7 @@ counting at 10 (so that the values 0..9 can be considered "safe").
 
   METHOD unique(STRING *format :optional, int has_fmt :opt_flag) {
     static INTVAL counter = 10;
-    STRING *counter_as_string = string_from_int(INTERP, counter);
+    STRING *counter_as_string = Parrot_str_from_int(INTERP, counter);
     UNUSED(SELF);
 
     counter++;
@@ -168,7 +168,7 @@ prefixed with 'unicode:'.
 */
 
   METHOD escape(STRING *str) {
-    STRING *escaped_str = string_escape_string(INTERP, str);
+    STRING *escaped_str = Parrot_str_escape(INTERP, str);
     STRING *quote       = CONST_STRING(INTERP, "\x22");
     STRING *x           = CONST_STRING(INTERP, "\\x");
     INTVAL x_pos;

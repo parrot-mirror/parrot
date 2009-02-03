@@ -340,7 +340,7 @@ Parrot_io_sockaddr_in(PARROT_INTERP, unsigned short port, ARGMOD(STRING *addr))
 {
     struct sockaddr_in sa;
     struct hostent *he;
-    char * const s = string_to_cstring(interp, addr);
+    char * const s = Parrot_str_to_cstring(interp, addr);
     /* Hard coded to IPv4 for now */
 
     sa.sin_addr.s_addr = inet_addr(s);

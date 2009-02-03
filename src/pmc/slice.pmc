@@ -348,7 +348,7 @@ This is used for implementing Pythons xrange()
 
     VTABLE STRING *get_string_keyed(PMC *key) {
         const INTVAL v = VTABLE_get_integer(INTERP, key);
-        return string_from_int(INTERP, v);
+        return Parrot_str_from_int(INTERP, v);
     }
 
     VTABLE PMC *get_pmc_keyed(PMC *key) {

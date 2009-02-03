@@ -188,7 +188,7 @@ key_hash_STRING(PARROT_INTERP, ARGMOD(STRING *s), SHIM(size_t seed))
     if (s->hashval)
         return s->hashval;
 
-   return string_hash(interp, s);
+   return Parrot_str_to_hashval(interp, s);
 }
 
 

@@ -200,7 +200,7 @@ Store C<i_val> in this PHPArray, indexed by the INTVAL C<i_key>.
 
         PippHashTable *ht;
         PMC           *p_val = pmc_new(INTERP, enum_class_Integer);
-        STRING        *s_key = string_from_int(INTERP, i_key);
+        STRING        *s_key = Parrot_str_from_int(INTERP, i_key);
 
         GET_ATTR_hash_table(INTERP, SELF, ht);
         VTABLE_set_integer_native(INTERP, p_val, i_val);
@@ -274,7 +274,7 @@ Store C<val> in this PHPArray, indexed by the INTVAL C<i_key>.
     VTABLE void set_pmc_keyed_int(INTVAL i_key, PMC *p_val) {
 
         PippHashTable *ht;
-        STRING        *s_key = string_from_int(INTERP, i_key);
+        STRING        *s_key = Parrot_str_from_int(INTERP, i_key);
 
         GET_ATTR_hash_table(INTERP, SELF, ht);
         pipp_hash_put(INTERP, ht, s_key, p_val);
@@ -349,7 +349,7 @@ Store C<s_val> in this PHPArray, indexed by the INTVAL C<i_key>.
     VTABLE void set_string_keyed_int(INTVAL i_key, STRING *s_val) {
 
         PippHashTable *ht;
-        STRING        *s_key = string_from_int(INTERP, i_key);
+        STRING        *s_key = Parrot_str_from_int(INTERP, i_key);
         PMC           *p_val = pmc_new(INTERP, enum_class_String);
 
         GET_ATTR_hash_table(INTERP, SELF, ht);
@@ -427,7 +427,7 @@ Store C<f_val> in this PHPArray, indexed by the INTVAL C<i_key>.
     VTABLE void set_number_keyed_int(INTVAL i_key, FLOATVAL f_val) {
 
         PippHashTable *ht;
-        STRING        *s_key = string_from_int(INTERP, i_key);
+        STRING        *s_key = Parrot_str_from_int(INTERP, i_key);
         PMC           *p_val = pmc_new(INTERP, enum_class_Float);
 
         GET_ATTR_hash_table(INTERP, SELF, ht);
@@ -509,7 +509,7 @@ C<i_key>.
 
         PippHashTable *ht;
         PMC           *p_val;
-        STRING        *s_key = string_from_int(INTERP, i_key);
+        STRING        *s_key = Parrot_str_from_int(INTERP, i_key);
 
         GET_ATTR_hash_table(INTERP, SELF, ht);
         p_val = pipp_hash_get(INTERP, ht, s_key);
@@ -598,7 +598,7 @@ C<i_key>.
     VTABLE PMC *get_pmc_keyed_int(INTVAL i_key) {
 
         PippHashTable *ht;
-        STRING        *s_key = string_from_int(INTERP, i_key);
+        STRING        *s_key = Parrot_str_from_int(INTERP, i_key);
 
         GET_ATTR_hash_table(INTERP, SELF, ht);
 
@@ -688,7 +688,7 @@ C<i_key>.
 
         PippHashTable *ht;
         PMC           *p_val;
-        STRING        *s_key = string_from_int(INTERP, i_key);
+        STRING        *s_key = Parrot_str_from_int(INTERP, i_key);
 
         GET_ATTR_hash_table(INTERP, SELF, ht);
 
@@ -771,7 +771,7 @@ C<i_key>.
 
         PippHashTable *ht;
         PMC           *p_val;
-        STRING        *s_key = string_from_int(INTERP, i_key);
+        STRING        *s_key = Parrot_str_from_int(INTERP, i_key);
 
         GET_ATTR_hash_table(INTERP, SELF, ht);
 
@@ -842,7 +842,7 @@ Return non-zero if an element keyed by C<i_key> exists.
     VTABLE INTVAL exists_keyed_int(INTVAL i_key) {
 
         PippHashTable *ht;
-        STRING        *s_key = string_from_int(INTERP, i_key);
+        STRING        *s_key = Parrot_str_from_int(INTERP, i_key);
 
         GET_ATTR_hash_table(INTERP, SELF, ht);
 
@@ -917,7 +917,7 @@ nothing.
     VTABLE void delete_keyed_int(INTVAL i_key) {
 
         PippHashTable *ht;
-        STRING        *s_key = string_from_int(INTERP, i_key);
+        STRING        *s_key = Parrot_str_from_int(INTERP, i_key);
 
         GET_ATTR_hash_table(INTERP, SELF, ht);
 
