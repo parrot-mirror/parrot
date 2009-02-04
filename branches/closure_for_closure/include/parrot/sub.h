@@ -4,7 +4,7 @@
  *     $Id$
  *  Overview:
  *  Data Structure and Algorithms:
- *     Subroutine, coroutine, closure and continuation structures
+ *     Subroutine, coroutine and continuation structures
  *     and related routines.
  *  History:
  *     Initial version by Melvin on on 2002/06/6
@@ -138,8 +138,7 @@ typedef struct Parrot_sub_arginfo {
 
 
 /*
- * Sub and Closure share a Parrot_sub structure.
- * Closures have additionally an 'outer_ctx'
+ * Sub has a Parrot_sub structure.
  */
 typedef struct Parrot_sub {
     PackFile_ByteCode *seg;     /* bytecode segment */
@@ -161,20 +160,17 @@ typedef struct Parrot_sub {
     INTVAL   n_regs_used[4];     /* INSP in PBC */
 
     PMC      *lex_info;          /* LexInfo PMC */
-    PMC      *outer_sub;         /* :outer for closures */
     PMC      *eval_pmc;          /* eval container / NULL */
     Parrot_Context *ctx;         /* the context this sub is in */
     UINTVAL  comp_flags;         /* compile time and additional flags */
     Parrot_sub_arginfo *arg_info;/* Argument counts and flags. */
 
     /* - end common */
-    struct Parrot_Context *outer_ctx;   /* outer context, if a closure */
 } Parrot_sub;
 
 #define PMC_sub(pmc) ((pmc)->vtable->base_type == enum_class_Sub || \
                       (pmc)->vtable->base_type == enum_class_Coroutine || \
-                      (pmc)->vtable->base_type == enum_class_Eval || \
-                      (pmc)->vtable->base_type == enum_class_Closure ? \
+                      (pmc)->vtable->base_type == enum_class_Eval ? \
     (Parrot_sub *)PMC_struct_val(pmc) : \
     Parrot_get_sub_pmc_from_subclass(interp, (pmc)))
 
@@ -201,7 +197,6 @@ typedef struct Parrot_coro {
     INTVAL   n_regs_used[4];     /* INSP in PBC */
 
     PMC      *lex_info;          /* LexInfo PMC */
-    PMC      *outer_sub;         /* :outer for closures */
     PMC      *eval_pmc;          /* eval container / NULL */
     struct Parrot_Context  *ctx; /* coroutine context */
     UINTVAL  comp_flags;         /* compile time and additional flags */
@@ -282,13 +277,6 @@ Parrot_sub * Parrot_get_sub_pmc_from_subclass(PARROT_INTERP,
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
-PARROT_EXPORT
-PARROT_CANNOT_RETURN_NULL
-PARROT_WARN_UNUSED_RESULT
-PMC* parrot_new_closure(PARROT_INTERP, ARGIN(PMC *sub_pmc))
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(2);
-
 void invalidate_retc_context(PARROT_INTERP, ARGMOD(PMC *cont))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
@@ -300,10 +288,6 @@ void mark_context(PARROT_INTERP, ARGMOD(Parrot_Context* ctx))
         FUNC_MODIFIES(* ctx);
 
 void mark_context_start(void);
-PARROT_MALLOC
-PARROT_CANNOT_RETURN_NULL
-Parrot_sub * new_closure(PARROT_INTERP)
-        __attribute__nonnull__(1);
 
 PARROT_MALLOC
 PARROT_CANNOT_RETURN_NULL
@@ -368,9 +352,6 @@ PMC* Parrot_find_pad(PARROT_INTERP,
      __attribute__unused__ int _ASSERT_ARGS_CHECK = \
        PARROT_ASSERT_ARG(interp) \
     || PARROT_ASSERT_ARG(subclass)
-#define ASSERT_ARGS_parrot_new_closure __attribute__unused__ int _ASSERT_ARGS_CHECK = \
-       PARROT_ASSERT_ARG(interp) \
-    || PARROT_ASSERT_ARG(sub_pmc)
 #define ASSERT_ARGS_invalidate_retc_context __attribute__unused__ int _ASSERT_ARGS_CHECK = \
        PARROT_ASSERT_ARG(interp) \
     || PARROT_ASSERT_ARG(cont)
@@ -378,8 +359,6 @@ PMC* Parrot_find_pad(PARROT_INTERP,
        PARROT_ASSERT_ARG(interp) \
     || PARROT_ASSERT_ARG(ctx)
 #define ASSERT_ARGS_mark_context_start __attribute__unused__ int _ASSERT_ARGS_CHECK = 0
-#define ASSERT_ARGS_new_closure __attribute__unused__ int _ASSERT_ARGS_CHECK = \
-       PARROT_ASSERT_ARG(interp)
 #define ASSERT_ARGS_new_continuation __attribute__unused__ int _ASSERT_ARGS_CHECK = \
        PARROT_ASSERT_ARG(interp)
 #define ASSERT_ARGS_new_coroutine __attribute__unused__ int _ASSERT_ARGS_CHECK = \

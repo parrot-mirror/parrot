@@ -22,7 +22,7 @@ t/pmc/sub.t - Subroutine PMCs
 
 =head1 DESCRIPTION
 
-Tests the creation and invocation of C<Sub>, C<Closure> and
+Tests the creation and invocation of C<Sub> and
 C<Continuation> PMCs.
 
 =cut
@@ -329,34 +329,34 @@ in sub1
 back
 OUTPUT
 
-pasm_output_is( <<'CODE', <<'OUTPUT', "equality of closures" );
-.pcc_sub main:
-      .const 'Sub' P3 = "f1"
-      newclosure P0, P3
-      clone P1, P0
-      eq P0, P1, OK1
-      print "not "
-OK1:  print "ok 1\n"
-
-      .const 'Sub' P4 = "f2"
-      newclosure P2, P4
-      eq P0, P2, BAD2
-      branch OK2
-BAD2: print "not "
-OK2:  print "ok 2\n"
-      end
-
-.pcc_sub :outer(main) f1:
-      print "Test\n"
-      end
-
-.pcc_sub :outer(main) f2:
-      new P1, ['Undef']
-      end
-CODE
-ok 1
-ok 2
-OUTPUT
+#pasm_output_is( <<'CODE', <<'OUTPUT', "equality of closures" );
+#.pcc_sub main:
+#      .const 'Sub' P3 = "f1"
+#      newclosure P0, P3
+#      clone P1, P0
+#      eq P0, P1, OK1
+#      print "not "
+#OK1:  print "ok 1\n"
+#
+#      .const 'Sub' P4 = "f2"
+#      newclosure P2, P4
+#      eq P0, P2, BAD2
+#      branch OK2
+#BAD2: print "not "
+#OK2:  print "ok 2\n"
+#      end
+#
+#.pcc_sub :outer(main) f1:
+#      print "Test\n"
+#      end
+#
+#.pcc_sub :outer(main) f2:
+#      new P1, ['Undef']
+#      end
+#CODE
+#ok 1
+#ok 2
+#OUTPUT
 
 pasm_output_is( <<'CODE', <<'OUTPUT', "equality of subs" );
       .const 'Sub' P0 = "f1"

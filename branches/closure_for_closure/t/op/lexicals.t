@@ -414,50 +414,50 @@ foo
 main
 OUTPUT
 
-pir_output_is( <<'CODE', <<'OUTPUT', 'get_outer via interp' );
-.sub "main"
-    .const 'Sub' foo = "foo"
-    .local pmc foo_cl
-    .lex "a", $P0
-    foo_cl = newclosure foo
-    foo_cl()
-    print $P0
-.end
-.sub foo  :outer('main')
-    .const 'Sub' bar = "bar"
-    .local pmc bar_cl
-    bar_cl = newclosure bar
-    bar_cl()
-.end
-.sub bar   :outer('foo')
-    .local pmc sub, interp, pad
-    interp = getinterp
-    sub = interp["outer"]
-    print sub
-    print "\n"
-    sub = interp["outer"; "sub"]
-    print sub
-    print "\n"
-    sub = interp["outer"; 2]
-    print sub
-    print "\n"
-    sub = interp["outer"; "sub"; 2]
-    print sub
-    print "\n"
-    $P0 = new 'String'
-    $P0 = "I messed with your var\n"
-    pad = interp["outer"; "lexpad"; 2]
-    pad['a'] = $P0
-.end
-CODE
-foo
-foo
-main
-main
-I messed with your var
-OUTPUT
+#pir_output_is( <<'CODE', <<'OUTPUT', 'get_outer via interp' );
+#.sub "main"
+#    .const 'Sub' foo = "foo"
+#    .local pmc foo_cl
+#    .lex "a", $P0
+#    foo_cl = newclosure foo
+#    foo_cl()
+#    print $P0
+#.end
+#.sub foo  :outer('main')
+#    .const 'Sub' bar = "bar"
+#    .local pmc bar_cl
+#    bar_cl = newclosure bar
+#    bar_cl()
+#.end
+#.sub bar   :outer('foo')
+#    .local pmc sub, interp, pad
+#    interp = getinterp
+#    sub = interp["outer"]
+#    print sub
+#    print "\n"
+#    sub = interp["outer"; "sub"]
+#    print sub
+#    print "\n"
+#    sub = interp["outer"; 2]
+#    print sub
+#    print "\n"
+#    sub = interp["outer"; "sub"; 2]
+#    print sub
+#    print "\n"
+#    $P0 = new 'String'
+#    $P0 = "I messed with your var\n"
+#    pad = interp["outer"; "lexpad"; 2]
+#    pad['a'] = $P0
+#.end
+#CODE
+#foo
+#foo
+#main
+#main
+#I messed with your var
+#OUTPUT
 
-pir_output_is( <<'CODE', <<'OUTPUT', 'closure 3' );
+#pir_output_is( <<'CODE', <<'OUTPUT', 'closure 3' );
 # sub foo {
 #     my ($n) = @_;
 #     sub {$n += shift}
@@ -468,388 +468,388 @@ pir_output_is( <<'CODE', <<'OUTPUT', 'closure 3' );
 # print &$g(3), "\n";
 # print &$f(3), "\n";
 # print &$g(4), "\n";
+#
+#.sub foo
+#    .param pmc arg
+#    .local pmc n
+#    .lex '$n', n
+#    n = arg
+#    .const 'Sub' anon = "anon"
+#    $P0 = newclosure anon
+#    .return ($P0)
+#.end
+#
+#.sub anon :outer(foo)
+#    .param pmc arg
+#    $P0 = find_lex '$n'
+#    # in practice we need copying the arg but as it is passed
+#    # as native int, we already have a fresh pmc
+#    $P0 += arg
+#    .return ($P0)
+#.end
+#
+#.sub main :main
+#    .local pmc f, g
+#    .lex '$f', f
+#    .lex '$g', g
+#    f = foo(5)
+#    $P0 = f(3)
+#    print $P0
+#    print "\n"
+#    g = foo(20)
+#    $P0 = g(3)
+#    print $P0
+#    print "\n"
+#    $P0 = f(3)
+#    print $P0
+#    print "\n"
+#    $P0 = g(4)
+#    print $P0
+#    print "\n"
+#.end
+#CODE
+#8
+#23
+#11
+#27
+#OUTPUT
 
-.sub foo
-    .param pmc arg
-    .local pmc n
-    .lex '$n', n
-    n = arg
-    .const 'Sub' anon = "anon"
-    $P0 = newclosure anon
-    .return ($P0)
-.end
+#pir_output_is( <<'CODE', <<'OUTPUT', 'closure 4' );
+## code by Piers Cawley
+#=pod
+#
+#  ;;; Indicate that the computation has failed, and that the program
+#  ;;; should try another path.  We rebind this variable as needed.
+#  (define fail
+#    (lambda () (error "Program failed")))
+#
+#  ;;; Choose an arbitrary value and return it, with backtracking.
+#  ;;; You are not expected to understand this.
+#  (define (choose . all-choices)
+#    (let ((old-fail fail))
+#      (call-with-current-continuation
+#       (lambda (continuation)
+#         (define (try choices)
+#           (if (null? choices)
+#               (begin
+#                 (set! fail old-fail)
+#                 (fail))
+#               (begin
+#                 (set! fail
+#                      (lambda () (continuation (try (cdr choices)))))
+#                 (car choices))))
+#         (try all-choices)))))
+#
+#  ;;; Find two numbers with a product of 15.
+#  (let ((x (choose 1 3 5))
+#        (y (choose 1 5 9)))
+#    (for-each display `("Trying " ,x " and " ,y #\newline))
+#    (unless (= (* x y) 15)
+#      (fail))
+#    (for-each display `("Found " ,x " * " ,y " = 15" #\newline)))
+#
+#=cut
+#
+#.sub main :main
+#     .local pmc fail, arr1, arr2, x, y, choose
+#     .lex 'fail', fail
+#     .lex 'arr1', arr1
+#     .lex 'arr2', arr2
+#     .lex 'x', x
+#     .lex 'y', y
+#     .lex 'choose', choose
+#     .const 'Sub' choose_sub = "_choose"
+#     .const 'Sub' fail_sub = "_fail"
+#     fail = newclosure fail_sub
+#     arr1 = new 'ResizablePMCArray'
+#     arr1[0] = 1
+#     arr1[1] = 3
+#     arr1[2] = 5
+#     arr2 = new 'ResizablePMCArray'
+#     arr2[0] = 1
+#     arr2[1] = 5
+#     arr2[2] = 9
+#
+#     choose = newclosure choose_sub
+#     x = choose(arr1)
+#     #print "Chosen "
+#     #print x
+#     #print " from arr1\n"
+#
+#     # need to create a new closure: these closures have different state
+#     choose = newclosure choose_sub
+#     y = choose(arr2)
+#     #print "Chosen "
+#     #print y
+#     #print " from arr2\n"
+#     $I1 = x
+#     $I2 = y
+#     $I0 = $I1 * $I2
+#     if $I0 == 15 goto success
+#     fail()
+#     print "Shouldn't get here without a failure report\n"
+#     branch the_end
+#success:
+#     print x
+#     print " * "
+#     print y
+#     print " == 15!\n"
+#the_end:
+#     end
+#.end
+#
+#.sub _choose :outer(main)
+#     .param pmc choices
+#
+#     .local pmc our_try, old_fail, cc, try
+#     .lex 'old_fail', old_fail
+#     .lex 'cc', cc
+#     .lex 'try', try
+#     #print "In choose\n"
+#     old_fail = find_lex "fail"
+#     .include "interpinfo.pasm"
+#     $P1 = interpinfo .INTERPINFO_CURRENT_CONT
+#     store_lex  "cc", $P1
+#     .const 'Sub' tr_sub = "_try"
+#     newclosure our_try, tr_sub
+#     store_lex "try", our_try
+#     $P2 = our_try(choices)
+#     .return($P2)
+#.end
+#
+#.sub _try :outer(_choose)
+#     .param pmc choices
+#
+#     .lex 'choices', $P0
+#     #print "In try\n"
+#     clone $P0, choices
+#     if choices goto have_choices
+#     $P1 = find_lex "old_fail"
+#     store_lex "fail", $P1
+#     $P1()
+#have_choices:
+#     .const 'Sub' f = "new_fail"
+#     newclosure $P2, f
+#     store_lex "fail", $P2
+#     $P3 = find_lex "choices"
+#     shift $P4, $P3
+#
+#     .return($P4)
+#.end
+#
+#.sub new_fail :outer(_try)
+#     .local pmc our_try
+#     .local pmc our_cc
+#     #print "In new_fail\n"
+#     our_cc = find_lex "cc"
+#     our_try = find_lex "try"
+#     $P2 = find_lex "choices"
+#     $P3 = our_try($P2)
+#     our_cc($P3)
+#.end
+#
+#.sub _fail :outer(main)
+#     print "Program failed\n"
+#.end
+#CODE
+#3 * 5 == 15!
+#OUTPUT
 
-.sub anon :outer(foo)
-    .param pmc arg
-    $P0 = find_lex '$n'
-    # in practice we need copying the arg but as it is passed
-    # as native int, we already have a fresh pmc
-    $P0 += arg
-    .return ($P0)
-.end
+#pir_output_is( <<'CODE', <<'OUTPUT', 'closure 5' );
+## FIXME - we need to detect the destruction of the P registers
+## associated with the Contexts for the calls of xyzzy and plugh.
+## Otherwise, this test is just a repeat of others
+#
+#.sub main :main
+#    .local pmc f
+#    f = xyzzy()
+#    f()
+#    f()
+#    f()
+#.end
+#
+#.sub xyzzy
+#    $P1 = plugh()
+#    .return ($P1)
+#.end
+#
+#.sub plugh
+#    $P1 = foo()
+#    .return ($P1)
+#.end
+#
+#.sub foo
+#    .lex 'a', $P0
+#    $P0 = new 'Integer'
+#    $P0 = 0
+#
+#    .const 'Sub' bar_sub = "bar"
+#    $P1 = newclosure bar_sub
+#    .return ($P1)
+#.end
+#
+#.sub bar :anon :outer(foo)
+#    $P0 = find_lex 'a'
+#    inc $P0
+#    print "bar: "
+#    print $P0
+#    print "\n"
+#.end
+#CODE
+#bar: 1
+#bar: 2
+#bar: 3
+#OUTPUT
 
-.sub main :main
-    .local pmc f, g
-    .lex '$f', f
-    .lex '$g', g
-    f = foo(5)
-    $P0 = f(3)
-    print $P0
-    print "\n"
-    g = foo(20)
-    $P0 = g(3)
-    print $P0
-    print "\n"
-    $P0 = f(3)
-    print $P0
-    print "\n"
-    $P0 = g(4)
-    print $P0
-    print "\n"
-.end
-CODE
-8
-23
-11
-27
-OUTPUT
+#pir_output_is( <<'CODE', <<'OUTPUT', 'closure 6' );
+## Leo's version of xyzzy original by particle, p5 by chip     #'
+#
+#.sub main :main
+#    .local pmc f,g
+#    f = xyzzy(42)
+#    $P0 = f()
+#    $P0 = f()
+#    $P0 = f()
+#    g = xyzzy(13013)
+#    $P0 = g()
+#    $P0 = f()
+#.end
+#
+#.sub xyzzy
+#    .param int i
+#    .local pmc f
+#    f = plugh(i)
+#    .return (f)
+#.end
+#
+#.sub plugh
+#    .param int i
+#    .local pmc f
+#    f = foo(i)
+#    .return (f)
+#.end
+#
+#.sub foo
+#    .param int i
+#    .lex 'a', $P0
+#    $P1 = new 'Integer'
+#    $P1 = i
+#    store_lex 'a', $P1
+#    print "foo: "
+#    print $P0
+#    print "\n"
+#    .const 'Sub' closure = 'bar'
+#    $P2 = newclosure closure
+#    .return($P2)
+#.end
+#
+#.sub bar :anon :outer(foo)
+#    $P0 = find_lex 'a'
+#    inc $P0
+#    store_lex 'a', $P0
+#    print "bar: "
+#    print $P0
+#    print "\n"
+#.end
+#CODE
+#foo: 42
+#bar: 43
+#bar: 44
+#bar: 45
+#foo: 13013
+#bar: 13014
+#bar: 46
+#OUTPUT
 
-pir_output_is( <<'CODE', <<'OUTPUT', 'closure 4' );
-# code by Piers Cawley
-=pod
+#pir_output_is( <<'CODE', <<'OUTPUT', 'closure 7 - evaled' );
+#.sub main :main
+#    .local pmc f,g
+#    f = xyzzy(42)
+#    $P0 = f()
+#    $P0 = f()
+#    $P0 = f()
+#    g = xyzzy(13013)
+#    $P0 = g()
+#    $P0 = f()
+#.end
+#
+#.sub xyzzy
+#    .param int i
+#    .local pmc f
+#    f = plugh(i)
+#    .return (f)
+#.end
+#
+#.sub plugh
+#    .param int i
+#    .local pmc f
+#    f = foo(i)
+#    .return (f)
+#.end
+#
+#.sub foo
+#    .param int i
+#    .lex 'a', $P0
+#    $P1 = new 'Integer'
+#    $P1 = i
+#    store_lex 'a', $P1
+#    print "foo: "
+#    print $P0
+#    print "\n"
+#    .local string code
+#    code = <<'EOC'
+#        .sub bar :anon :outer(foo)
+#            $P0 = find_lex 'a'
+#            inc $P0
+#            store_lex 'a', $P0
+#            print "bar: "
+#            print $P0
+#            print "\n"
+#        .end
+#EOC
+#    .local pmc compiler
+#    compiler = compreg "PIR"
+#    $P1 = compiler(code)
+#    $P2 = $P1[0]   # first sub of eval
+#    $P3 = newclosure $P2
+#    .return($P3)
+#.end
+#CODE
+#foo: 42
+#bar: 43
+#bar: 44
+#bar: 45
+#foo: 13013
+#bar: 13014
+#bar: 46
+#OUTPUT
 
-  ;;; Indicate that the computation has failed, and that the program
-  ;;; should try another path.  We rebind this variable as needed.
-  (define fail
-    (lambda () (error "Program failed")))
-
-  ;;; Choose an arbitrary value and return it, with backtracking.
-  ;;; You are not expected to understand this.
-  (define (choose . all-choices)
-    (let ((old-fail fail))
-      (call-with-current-continuation
-       (lambda (continuation)
-         (define (try choices)
-           (if (null? choices)
-               (begin
-                 (set! fail old-fail)
-                 (fail))
-               (begin
-                 (set! fail
-                      (lambda () (continuation (try (cdr choices)))))
-                 (car choices))))
-         (try all-choices)))))
-
-  ;;; Find two numbers with a product of 15.
-  (let ((x (choose 1 3 5))
-        (y (choose 1 5 9)))
-    (for-each display `("Trying " ,x " and " ,y #\newline))
-    (unless (= (* x y) 15)
-      (fail))
-    (for-each display `("Found " ,x " * " ,y " = 15" #\newline)))
-
-=cut
-
-.sub main :main
-     .local pmc fail, arr1, arr2, x, y, choose
-     .lex 'fail', fail
-     .lex 'arr1', arr1
-     .lex 'arr2', arr2
-     .lex 'x', x
-     .lex 'y', y
-     .lex 'choose', choose
-     .const 'Sub' choose_sub = "_choose"
-     .const 'Sub' fail_sub = "_fail"
-     fail = newclosure fail_sub
-     arr1 = new 'ResizablePMCArray'
-     arr1[0] = 1
-     arr1[1] = 3
-     arr1[2] = 5
-     arr2 = new 'ResizablePMCArray'
-     arr2[0] = 1
-     arr2[1] = 5
-     arr2[2] = 9
-
-     choose = newclosure choose_sub
-     x = choose(arr1)
-     #print "Chosen "
-     #print x
-     #print " from arr1\n"
-
-     # need to create a new closure: these closures have different state
-     choose = newclosure choose_sub
-     y = choose(arr2)
-     #print "Chosen "
-     #print y
-     #print " from arr2\n"
-     $I1 = x
-     $I2 = y
-     $I0 = $I1 * $I2
-     if $I0 == 15 goto success
-     fail()
-     print "Shouldn't get here without a failure report\n"
-     branch the_end
-success:
-     print x
-     print " * "
-     print y
-     print " == 15!\n"
-the_end:
-     end
-.end
-
-.sub _choose :outer(main)
-     .param pmc choices
-
-     .local pmc our_try, old_fail, cc, try
-     .lex 'old_fail', old_fail
-     .lex 'cc', cc
-     .lex 'try', try
-     #print "In choose\n"
-     old_fail = find_lex "fail"
-     .include "interpinfo.pasm"
-     $P1 = interpinfo .INTERPINFO_CURRENT_CONT
-     store_lex  "cc", $P1
-     .const 'Sub' tr_sub = "_try"
-     newclosure our_try, tr_sub
-     store_lex "try", our_try
-     $P2 = our_try(choices)
-     .return($P2)
-.end
-
-.sub _try :outer(_choose)
-     .param pmc choices
-
-     .lex 'choices', $P0
-     #print "In try\n"
-     clone $P0, choices
-     if choices goto have_choices
-     $P1 = find_lex "old_fail"
-     store_lex "fail", $P1
-     $P1()
-have_choices:
-     .const 'Sub' f = "new_fail"
-     newclosure $P2, f
-     store_lex "fail", $P2
-     $P3 = find_lex "choices"
-     shift $P4, $P3
-
-     .return($P4)
-.end
-
-.sub new_fail :outer(_try)
-     .local pmc our_try
-     .local pmc our_cc
-     #print "In new_fail\n"
-     our_cc = find_lex "cc"
-     our_try = find_lex "try"
-     $P2 = find_lex "choices"
-     $P3 = our_try($P2)
-     our_cc($P3)
-.end
-
-.sub _fail :outer(main)
-     print "Program failed\n"
-.end
-CODE
-3 * 5 == 15!
-OUTPUT
-
-pir_output_is( <<'CODE', <<'OUTPUT', 'closure 5' );
-# FIXME - we need to detect the destruction of the P registers
-# associated with the Contexts for the calls of xyzzy and plugh.
-# Otherwise, this test is just a repeat of others
-
-.sub main :main
-    .local pmc f
-    f = xyzzy()
-    f()
-    f()
-    f()
-.end
-
-.sub xyzzy
-    $P1 = plugh()
-    .return ($P1)
-.end
-
-.sub plugh
-    $P1 = foo()
-    .return ($P1)
-.end
-
-.sub foo
-    .lex 'a', $P0
-    $P0 = new 'Integer'
-    $P0 = 0
-
-    .const 'Sub' bar_sub = "bar"
-    $P1 = newclosure bar_sub
-    .return ($P1)
-.end
-
-.sub bar :anon :outer(foo)
-    $P0 = find_lex 'a'
-    inc $P0
-    print "bar: "
-    print $P0
-    print "\n"
-.end
-CODE
-bar: 1
-bar: 2
-bar: 3
-OUTPUT
-
-pir_output_is( <<'CODE', <<'OUTPUT', 'closure 6' );
-# Leo's version of xyzzy original by particle, p5 by chip     #'
-
-.sub main :main
-    .local pmc f,g
-    f = xyzzy(42)
-    $P0 = f()
-    $P0 = f()
-    $P0 = f()
-    g = xyzzy(13013)
-    $P0 = g()
-    $P0 = f()
-.end
-
-.sub xyzzy
-    .param int i
-    .local pmc f
-    f = plugh(i)
-    .return (f)
-.end
-
-.sub plugh
-    .param int i
-    .local pmc f
-    f = foo(i)
-    .return (f)
-.end
-
-.sub foo
-    .param int i
-    .lex 'a', $P0
-    $P1 = new 'Integer'
-    $P1 = i
-    store_lex 'a', $P1
-    print "foo: "
-    print $P0
-    print "\n"
-    .const 'Sub' closure = 'bar'
-    $P2 = newclosure closure
-    .return($P2)
-.end
-
-.sub bar :anon :outer(foo)
-    $P0 = find_lex 'a'
-    inc $P0
-    store_lex 'a', $P0
-    print "bar: "
-    print $P0
-    print "\n"
-.end
-CODE
-foo: 42
-bar: 43
-bar: 44
-bar: 45
-foo: 13013
-bar: 13014
-bar: 46
-OUTPUT
-
-pir_output_is( <<'CODE', <<'OUTPUT', 'closure 7 - evaled' );
-.sub main :main
-    .local pmc f,g
-    f = xyzzy(42)
-    $P0 = f()
-    $P0 = f()
-    $P0 = f()
-    g = xyzzy(13013)
-    $P0 = g()
-    $P0 = f()
-.end
-
-.sub xyzzy
-    .param int i
-    .local pmc f
-    f = plugh(i)
-    .return (f)
-.end
-
-.sub plugh
-    .param int i
-    .local pmc f
-    f = foo(i)
-    .return (f)
-.end
-
-.sub foo
-    .param int i
-    .lex 'a', $P0
-    $P1 = new 'Integer'
-    $P1 = i
-    store_lex 'a', $P1
-    print "foo: "
-    print $P0
-    print "\n"
-    .local string code
-    code = <<'EOC'
-        .sub bar :anon :outer(foo)
-            $P0 = find_lex 'a'
-            inc $P0
-            store_lex 'a', $P0
-            print "bar: "
-            print $P0
-            print "\n"
-        .end
-EOC
-    .local pmc compiler
-    compiler = compreg "PIR"
-    $P1 = compiler(code)
-    $P2 = $P1[0]   # first sub of eval
-    $P3 = newclosure $P2
-    .return($P3)
-.end
-CODE
-foo: 42
-bar: 43
-bar: 44
-bar: 45
-foo: 13013
-bar: 13014
-bar: 46
-OUTPUT
-
-pir_error_output_like( <<'CODE', <<'OUT', 'closure 8' );
-
-# p6 example from pmichaud
-# { my $x = 5;  { print $x; my $x = 4; print $x; } }
-
-## According to S04 this is an error
-
-.sub main :main
-    .lex '$x', $P0
-    $P0 = new 'Integer'
-    $P0 = 5
-    anon_1()
-.end
-
-.sub anon_1 :anon :outer(main)
-    # anon closure
-    $P0 = find_lex '$x'
-    print $P0
-    .lex '$x', $P1
-    $P1 = new 'Integer'
-    $P1 = 4
-    print $P1
-.end
-CODE
-/Null PMC access/
-OUT
+#pir_error_output_like( <<'CODE', <<'OUT', 'closure 8' );
+#
+## p6 example from pmichaud
+## { my $x = 5;  { print $x; my $x = 4; print $x; } }
+#
+### According to S04 this is an error
+#
+#.sub main :main
+#    .lex '$x', $P0
+#    $P0 = new 'Integer'
+#    $P0 = 5
+#    anon_1()
+#.end
+#
+#.sub anon_1 :anon :outer(main)
+#    # anon closure
+#    $P0 = find_lex '$x'
+#    print $P0
+#    .lex '$x', $P1
+#    $P1 = new 'Integer'
+#    $P1 = 4
+#    print $P1
+#.end
+#CODE
+#/Null PMC access/
+#OUT
 
 pir_error_output_like( <<'CODE', <<'OUTPUT', 'get non existing' );
 .sub "main" :main

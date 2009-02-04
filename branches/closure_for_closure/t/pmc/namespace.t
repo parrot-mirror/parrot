@@ -1338,8 +1338,8 @@ pir_error_output_like( <<'CODE', <<'OUTPUT', 'add_sub() with error', todo => 'ne
     .local pmc s_child
     s_child = subclass 'Sub', 'SubChild'
 
-    .local pmc e_child
-    e_child = subclass 'Closure', 'ClosureChild'
+#    .local pmc e_child
+#    e_child = subclass 'Closure', 'ClosureChild'
 
     .local pmc child
     child = new ['SubChild']
@@ -1350,9 +1350,9 @@ pir_error_output_like( <<'CODE', <<'OUTPUT', 'add_sub() with error', todo => 'ne
     root_ns.'add_sub'( 'child', child )
     print "Added sub child\n"
 
-    child = new ['Closure']
-    root_ns.'add_sub'( 'closure', child )
-    print "Added closure\n"
+#    child = new ['Closure']
+#    root_ns.'add_sub'( 'closure', child )
+#    print "Added closure\n"
 
     child = new ['Coroutine']
     root_ns.'add_sub'( 'coroutine', child )
@@ -1362,9 +1362,9 @@ pir_error_output_like( <<'CODE', <<'OUTPUT', 'add_sub() with error', todo => 'ne
     root_ns.'add_sub'( 'eval', child )
     print "Added eval\n"
 
-    child = new ['ClosureChild']
-    root_ns.'add_sub'( 'closure_child', child )
-    print "Added closure child\n"
+#    child = new ['ClosureChild']
+#    root_ns.'add_sub'( 'closure_child', child )
+#    print "Added closure child\n"
 
     .local pmc not_a_sub
     not_a_sub = new ['Integer']
@@ -1384,12 +1384,13 @@ _invalid_sub:
 .end
 CODE
 /Added sub child
-Added closure
 Added coroutine
 Added eval
 Added closure child
 Invalid type \d+ in add_sub\(\)/
 OUTPUT
+
+#Added closure
 
 pir_output_is( <<"CODE", <<'OUTPUT', 'add_var()' );
 $create_nested_key
