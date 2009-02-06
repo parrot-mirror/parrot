@@ -1,5 +1,0 @@
-# $Id$
-
-2005-07-30     Bernhard Schmalhofer
-        * Release initial version to the Parrot SVN repository
-	* '+', '-', '*', '/', '%' are evaluated
