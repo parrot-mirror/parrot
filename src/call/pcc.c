@@ -2,11 +2,9 @@
 Copyright (C) 2001-2008, The Perl Foundation.
 $Id$
 
-=head1 NAME
+=head1 Parrot Calling Conventions
 
-src/inter_call.c - Parrot Interpreter - Argument passing code
-
-=head1 DESCRIPTION
+=head1 Description
 
 Functions in this file handle argument/return value passing to and from
 subroutines.
@@ -21,9 +19,9 @@ subroutines.
 
 #include "parrot/parrot.h"
 #include "parrot/oplib/ops.h"
-#include "inter_call.str"
+#include "pcc.str"
 
-/* HEADERIZER HFILE: include/parrot/inter_call.h */
+/* HEADERIZER HFILE: include/parrot/call.h */
 
 /* HEADERIZER BEGIN: static */
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
