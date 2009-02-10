@@ -85,7 +85,7 @@ PARROT_WARN_UNUSED_RESULT
 STRING * new_string_header(PARROT_INTERP, UINTVAL flags)
         __attribute__nonnull__(1);
 
-void Parrot_do_dod_run(PARROT_INTERP, UINTVAL flags)
+void Parrot_do_gc_run(PARROT_INTERP, UINTVAL flags)
         __attribute__nonnull__(1);
 
 void Parrot_gc_free_buffer(SHIM_INTERP,
@@ -143,7 +143,7 @@ void Parrot_gc_profile_start(PARROT_INTERP)
        PARROT_ASSERT_ARG(interp)
 #define ASSERT_ARGS_new_string_header __attribute__unused__ int _ASSERT_ARGS_CHECK = \
        PARROT_ASSERT_ARG(interp)
-#define ASSERT_ARGS_Parrot_do_dod_run __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+#define ASSERT_ARGS_Parrot_do_gc_run __attribute__unused__ int _ASSERT_ARGS_CHECK = \
        PARROT_ASSERT_ARG(interp)
 #define ASSERT_ARGS_Parrot_gc_free_buffer __attribute__unused__ int _ASSERT_ARGS_CHECK = \
        PARROT_ASSERT_ARG(pool) \
@@ -246,21 +246,6 @@ void Parrot_gc_ims_wb(PARROT_INTERP, ARGMOD(PMC *agg), ARGMOD(PMC *_new))
 /* HEADERIZER END: src/gc/incremental_ms.c */
 
 /* write barrier */
-#if PARROT_GC_IMS
-#  define GC_WRITE_BARRIER(interp, agg, old, _new) \
-    do { \
-        if (!PMC_IS_NULL(_new)   && \
-                PObj_live_TEST(agg) && \
-                (PObj_get_FLAGS(agg) & PObj_custom_GC_FLAG) && \
-                !PObj_live_TEST(_new)) { \
-            Parrot_dod_ims_wb((interp), (agg), (_new)); \
-        } \
-    } while (0)
-
-#  define GC_WRITE_BARRIER_KEY(interp, agg, old, old_key, _new, new_key) \
-          GC_WRITE_BARRIER((interp), (agg), (old), (_new))
-#endif
-
 #if PARROT_GC_MS
 #  define GC_WRITE_BARRIER(interp, agg, old, _new) do { } while (0)
 #  define GC_WRITE_BARRIER_KEY(interp, agg, old, old_key, _new, new_key) do { } while (0)

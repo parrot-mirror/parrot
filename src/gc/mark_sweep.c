@@ -195,7 +195,7 @@ Parrot_gc_ms_run(PARROT_INTERP, UINTVAL flags)
     }
 
     ++arena_base->DOD_block_level;
-    arena_base->lazy_dod = flags & GC_lazy_FLAG;
+    arena_base->lazy_gc = flags & GC_lazy_FLAG;
 
     /* tell the threading system that we're doing DOD mark */
     pt_DOD_start_mark(interp);
@@ -210,8 +210,8 @@ Parrot_gc_ms_run(PARROT_INTERP, UINTVAL flags)
         : GC_TRACE_ROOT_ONLY)) {
         int ignored;
 
-        arena_base->dod_trace_ptr = NULL;
-        arena_base->dod_mark_ptr  = NULL;
+        arena_base->gc_trace_ptr = NULL;
+        arena_base->gc_mark_ptr  = NULL;
 
         /* mark is now finished */
         pt_DOD_stop_mark(interp);
@@ -228,7 +228,7 @@ Parrot_gc_ms_run(PARROT_INTERP, UINTVAL flags)
         pt_DOD_stop_mark(interp); /* XXX */
 
         /* successful lazy DOD count */
-        ++arena_base->lazy_dod_runs;
+        ++arena_base->lazy_gc_runs;
 
         Parrot_gc_clear_live_bits(interp);
         if (interp->profile)
@@ -236,7 +236,7 @@ Parrot_gc_ms_run(PARROT_INTERP, UINTVAL flags)
     }
 
     /* Note it */
-    arena_base->dod_runs++;
+    arena_base->gc_runs++;
     --arena_base->DOD_block_level;
 
     return;
@@ -292,9 +292,9 @@ Parrot_gc_trace_root(PARROT_INTERP, Parrot_gc_trace_type trace)
         Parrot_gc_profile_start(interp);
 
     /* We have to start somewhere; the interpreter globals is a good place */
-    if (!arena_base->dod_mark_start) {
-        arena_base->dod_mark_start
-            = arena_base->dod_mark_ptr
+    if (!arena_base->gc_mark_start) {
+        arena_base->gc_mark_start
+            = arena_base->gc_mark_ptr
             = interp->iglobals;
     }
 
@@ -352,7 +352,7 @@ Parrot_gc_trace_root(PARROT_INTERP, Parrot_gc_trace_type trace)
     Parrot_IOData_mark(interp, interp->piodata);
 
     /* quick check if we can already bail out */
-    if (arena_base->lazy_dod
+    if (arena_base->lazy_gc
     &&  arena_base->num_early_PMCs_seen >= arena_base->num_early_DOD_PMCs)
         return 0;
 
@@ -387,7 +387,7 @@ Parrot_gc_sweep(PARROT_INTERP, ARGMOD(Small_Object_Pool *pool))
     const UINTVAL object_size = pool->object_size;
 
     Small_Object_Arena *cur_arena;
-    dod_object_fn_type dod_object = pool->dod_object;
+    gc_object_fn_type   gc_object = pool->gc_object;
 
 #if GC_VERBOSE
     if (Interp_trace_TEST(interp, 1)) {
@@ -445,7 +445,7 @@ Parrot_gc_sweep(PARROT_INTERP, ARGMOD(Small_Object_Pool *pool))
                     }
                 }
 
-                dod_object(interp, pool, b);
+                gc_object(interp, pool, b);
 
                 pool->add_free_object(interp, pool, b);
             }
@@ -617,8 +617,8 @@ mark_special(PARROT_INTERP, ARGIN(PMC *obj))
         interp = PMC_sync(obj)->owner;
         PARROT_ASSERT(interp);
         /* XXX FIXME hack */
-        if (!interp->arena_base->dod_mark_ptr)
-            interp->arena_base->dod_mark_ptr = obj;
+        if (!interp->arena_base->gc_mark_ptr)
+            interp->arena_base->gc_mark_ptr = obj;
     }
 
     arena_base = interp->arena_base;
@@ -626,16 +626,16 @@ mark_special(PARROT_INTERP, ARGIN(PMC *obj))
     if (PObj_needs_early_DOD_TEST(obj))
         ++arena_base->num_early_PMCs_seen;
 
-    if (PObj_high_priority_DOD_TEST(obj) && arena_base->dod_trace_ptr) {
+    if (PObj_high_priority_DOD_TEST(obj) && arena_base->gc_trace_ptr) {
         /* set obj's parent to high priority */
-        PObj_high_priority_DOD_SET(arena_base->dod_trace_ptr);
+        PObj_high_priority_DOD_SET(arena_base->gc_trace_ptr);
         hi_prio = 1;
     }
     else
         hi_prio = 0;
 
     if (obj->pmc_ext) {
-        PMC * const tptr = arena_base->dod_trace_ptr;
+        PMC * const tptr = arena_base->gc_trace_ptr;
 
         ++arena_base->num_extended_PMCs;
         /*
@@ -661,11 +661,11 @@ mark_special(PARROT_INTERP, ARGIN(PMC *obj))
         }
         else {
             /* put it on the end of the list */
-            PMC_next_for_GC(arena_base->dod_mark_ptr) = obj;
+            PMC_next_for_GC(arena_base->gc_mark_ptr) = obj;
 
             /* Explicitly make the tail of the linked list be
              * self-referential */
-            arena_base->dod_mark_ptr = PMC_next_for_GC(obj) = obj;
+            arena_base->gc_mark_ptr = PMC_next_for_GC(obj) = obj;
         }
     }
     if (PObj_custom_mark_TEST(obj)) {
@@ -698,14 +698,14 @@ more_traceable_objects(PARROT_INTERP, ARGMOD(Small_Object_Pool *pool))
         Small_Object_Arena * const arena = pool->last_Arena;
         if (arena) {
             if (arena->used == arena->total_objects)
-                Parrot_do_dod_run(interp, GC_trace_stack_FLAG);
+                Parrot_do_gc_run(interp, GC_trace_stack_FLAG);
 
             if (pool->num_free_objects <= pool->replenish_level)
                 pool->skip = 1;
         }
     }
 
-    /* requires that num_free_objects be updated in Parrot_do_dod_run. If dod
+    /* requires that num_free_objects be updated in Parrot_do_gc_run. If dod
      * is disabled, then we must check the free list directly. */
     if (!pool->free_list)
         (*pool->alloc_objects) (interp, pool);
@@ -954,8 +954,8 @@ Parrot_gc_trace_children(PARROT_INTERP, size_t how_many)
 {
     ASSERT_ARGS(Parrot_gc_trace_children)
     Arenas * const arena_base = interp->arena_base;
-    const int      lazy_dod   = arena_base->lazy_dod;
-    PMC           *current    = arena_base->dod_mark_start;
+    const int      lazy_gc    = arena_base->lazy_gc;
+    PMC           *current    = arena_base->gc_mark_start;
 
     /*
      * First phase of mark is finished. Now if we are the owner
@@ -974,12 +974,12 @@ Parrot_gc_trace_children(PARROT_INTERP, size_t how_many)
     do {
         PMC *next;
 
-        if (lazy_dod && arena_base->num_early_PMCs_seen >=
+        if (lazy_gc && arena_base->num_early_PMCs_seen >=
                 arena_base->num_early_DOD_PMCs) {
             return 0;
         }
 
-        arena_base->dod_trace_ptr = current;
+        arena_base->gc_trace_ptr = current;
 
         /* short-term hack to color objects black */
         PObj_get_FLAGS(current) |= PObj_custom_GC_FLAG;
@@ -1005,8 +1005,8 @@ Parrot_gc_trace_children(PARROT_INTERP, size_t how_many)
         current = next;
     } while (--how_many > 0);
 
-    arena_base->dod_mark_start = current;
-    arena_base->dod_trace_ptr  = NULL;
+    arena_base->gc_mark_start = current;
+    arena_base->gc_trace_ptr  = NULL;
 
     if (interp->profile)
         Parrot_gc_profile_end(interp, PARROT_PROF_DOD_p2);

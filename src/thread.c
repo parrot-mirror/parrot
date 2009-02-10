@@ -1344,7 +1344,7 @@ pt_thread_join(NOTNULL(Parrot_Interp parent), UINTVAL tid)
              * dying interpreter, so register it in parent's DOD registry
              * XXX is this still needed?
              */
-            dod_register_pmc(parent, parent_ret);
+            gc_register_pmc(parent, parent_ret);
             Parrot_unblock_GC_mark(parent);
             retval = parent_ret;
         }
@@ -1368,7 +1368,7 @@ pt_thread_join(NOTNULL(Parrot_Interp parent), UINTVAL tid)
          * value, caller gets it now
          */
         if (retval)
-            dod_unregister_pmc(parent, retval);
+            gc_unregister_pmc(parent, retval);
 
         return retval;
     }
@@ -1605,7 +1605,7 @@ not.
 
 TODO - Have a count of shared PMCs and check it during DOD.
 
-TODO - Evaluate if a interpreter lock is cheaper when C<dod_mark_ptr> is
+TODO - Evaluate if a interpreter lock is cheaper when C<gc_mark_ptr> is
 updated.
 
 =cut

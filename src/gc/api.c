@@ -436,7 +436,7 @@ Parrot_gc_profile_start(PARROT_INTERP)
 {
     ASSERT_ARGS(Parrot_gc_profile_start)
     if (Interp_flags_TEST(interp, PARROT_PROFILE_FLAG))
-        interp->profile->dod_time = Parrot_floatval_time();
+        interp->profile->gc_time = Parrot_floatval_time();
 }
 
 /*
@@ -459,18 +459,18 @@ Parrot_gc_profile_end(PARROT_INTERP, int what)
         const FLOATVAL     now     = Parrot_floatval_time();
 
         profile->data[what].numcalls++;
-        profile->data[what].time += now - profile->dod_time;
+        profile->data[what].time += now - profile->gc_time;
 
         /*
          * we've recorded the time of a DOD/GC piece from
-         * dod_time until now, so add this to the start of the
+         * gc_time until now, so add this to the start of the
          * currently executing opcode, which hasn't run this
          * interval.
          */
-        profile->starttime += now - profile->dod_time;
+        profile->starttime += now - profile->gc_time;
 
         /* prepare start for next step */
-        profile->dod_time   = now;
+        profile->gc_time    = now;
     }
 }
 
@@ -491,8 +491,8 @@ Parrot_gc_ms_run_init(PARROT_INTERP)
     ASSERT_ARGS(Parrot_gc_ms_run_init)
     Arenas * const arena_base       = interp->arena_base;
 
-    arena_base->dod_trace_ptr       = NULL;
-    arena_base->dod_mark_start      = NULL;
+    arena_base->gc_trace_ptr        = NULL;
+    arena_base->gc_mark_start       = NULL;
     arena_base->num_early_PMCs_seen = 0;
     arena_base->num_extended_PMCs   = 0;
 }
@@ -500,7 +500,7 @@ Parrot_gc_ms_run_init(PARROT_INTERP)
 
 /*
 
-=item C<void Parrot_do_dod_run>
+=item C<void Parrot_do_gc_run>
 
 Calls the configured garbage collector to find and reclaim unused
 headers.
@@ -510,9 +510,9 @@ headers.
 */
 
 void
-Parrot_do_dod_run(PARROT_INTERP, UINTVAL flags)
+Parrot_do_gc_run(PARROT_INTERP, UINTVAL flags)
 {
-    ASSERT_ARGS(Parrot_do_dod_run)
+    ASSERT_ARGS(Parrot_do_gc_run)
     interp->arena_base->do_gc_mark(interp, flags);
     parrot_gc_context(interp);
 }

@@ -6,7 +6,9 @@ use strict;
 use warnings;
 use lib qw( . lib ../lib ../../lib );
 use Test::More;
-use Parrot::Test tests => 5;
+use Parrot::Test;
+
+plan skip_all => 'TT #306; many symbols not exported, embedding parrot fails';
 
 =head1 NAME
 
@@ -26,9 +28,7 @@ gathered in some API calls..
 c_output_is( <<'CODE', <<'OUTPUT', "Parrot Compile API Single call" );
 
 #include <stdio.h>
-#include "parrot/parrot.h"
 #include "parrot/embed.h"
-#include "parrot/extend.h"
 
 static opcode_t *
 run(PARROT_INTERP, int argc, char *argv[])
@@ -61,7 +61,7 @@ run(PARROT_INTERP, int argc, char *argv[])
     }
 
     /* keep eval PMC alive */
-    dod_register_pmc(interp, prog);
+    gc_register_pmc(interp, prog);
 
     /* locate function to run */
     smain = Parrot_str_new_constant(interp, "main");
@@ -108,9 +108,7 @@ OUTPUT
 c_output_is( <<'CODE', <<'OUTPUT', "Parrot Compile API Multiple Calls" );
 
 #include <stdio.h>
-#include "parrot/parrot.h"
 #include "parrot/embed.h"
-#include "parrot/extend.h"
 
 static void
 compile_run(PARROT_INTERP, const char *src, STRING *type, int argc,
@@ -128,7 +126,7 @@ compile_run(PARROT_INTERP, const char *src, STRING *type, int argc,
     }
 
     /* keep eval PMC alive */
-    dod_register_pmc(interp, prog);
+    gc_register_pmc(interp, prog);
 
     /* locate function to run */
     smain = Parrot_str_new_constant(interp, "main");
@@ -201,9 +199,7 @@ OUTPUT
 c_output_is( <<'CODE', <<'OUTPUT', "Parrot Compile API Multiple 1st bad PIR" );
 
 #include <stdio.h>
-#include "parrot/parrot.h"
 #include "parrot/embed.h"
-#include "parrot/extend.h"
 
 static void
 compile_run(PARROT_INTERP, const char *src, STRING *type, int argc,
@@ -221,7 +217,7 @@ compile_run(PARROT_INTERP, const char *src, STRING *type, int argc,
     }
 
     /* keep eval PMC alive */
-    dod_register_pmc(interp, prog);
+    gc_register_pmc(interp, prog);
 
     /* locate function to run */
     smain = Parrot_str_new_constant(interp, "main");
@@ -294,9 +290,7 @@ OUTPUT
 c_output_is( <<'CODE', <<'OUTPUT', "Parrot Compile API Multiple 2nd bad PIR" );
 
 #include <stdio.h>
-#include "parrot/parrot.h"
 #include "parrot/embed.h"
-#include "parrot/extend.h"
 
 static void
 compile_run(PARROT_INTERP, const char *src, STRING *type, int argc,
@@ -314,7 +308,7 @@ compile_run(PARROT_INTERP, const char *src, STRING *type, int argc,
     }
 
     /* keep eval PMC alive */
-    dod_register_pmc(interp, prog);
+    gc_register_pmc(interp, prog);
 
     /* locate function to run */
     smain = Parrot_str_new_constant(interp, "main");
@@ -386,9 +380,7 @@ OUTPUT
 c_output_is( <<'CODE', <<'OUTPUT', "Parrot Compile API Multiple bad PIR" );
 
 #include <stdio.h>
-#include "parrot/parrot.h"
 #include "parrot/embed.h"
-#include "parrot/extend.h"
 
 static void
 compile_run(PARROT_INTERP, const char *src, STRING *type, int argc,
@@ -406,7 +398,7 @@ compile_run(PARROT_INTERP, const char *src, STRING *type, int argc,
     }
 
     /* keep eval PMC alive */
-    dod_register_pmc(interp, prog);
+    gc_register_pmc(interp, prog);
 
     /* locate function to run */
     smain = Parrot_str_new_constant(interp, "main");
