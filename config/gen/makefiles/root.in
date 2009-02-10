@@ -20,6 +20,8 @@ DEVEL           = @DEVEL@
 VERSION         = @VERSION@$(DEVEL)
 SOVERSION       = @VERSION@
 
+CONFIG_ARGS     = @configure_args@
+
 # Override at least PREFIX with the install location if you're going
 # to be using this outside of your build area.
 BUILDPREFIX     =
@@ -458,25 +460,21 @@ OPS_FILES = @ops@ $(GEN_OPSFILES)
 PARROT              = $(CUR_DIR)/@test_prog@$(EXE)
 MINIPARROT          = $(CUR_DIR)/miniparrot$(EXE)
 DIS                 = $(CUR_DIR)/pbc_disassemble$(EXE)
-PDUMP               = $(CUR_DIR)/pdump$(EXE)
+PDUMP               = $(CUR_DIR)/pbc_dump$(EXE)
 PINFO               = $(CUR_DIR)/pbc_info$(EXE)
 PBCMERGE            = $(CUR_DIR)/pbc_merge$(EXE)
 PDB                 = $(CUR_DIR)/parrot_debugger$(EXE)
 PBC_TO_EXE          = $(CUR_DIR)/pbc_to_exe$(EXE)
 PARROT_CONFIG       = $(CUR_DIR)/parrot_config$(EXE)
 
-# HLL Executables
-PERL6               = $(CUR_DIR)/perl6$(EXE)
-
 # Installable executables
 INSTALLABLEPARROT   = $(CUR_DIR)/installable_parrot$(EXE)
 INSTALLABLEDIS      = $(CUR_DIR)/installable_pbc_disassemble$(EXE)
-INSTALLABLEPDUMP    = $(CUR_DIR)/installable_pdump$(EXE)
+INSTALLABLEPDUMP    = $(CUR_DIR)/installable_pbc_dump$(EXE)
 INSTALLABLEPINFO    = $(CUR_DIR)/installable_pbc_info$(EXE)
 INSTALLABLEPBCMERGE = $(CUR_DIR)/installable_pbc_merge$(EXE)
 INSTALLABLEPDB      = $(CUR_DIR)/installable_parrot_debugger$(EXE)
 INSTALLABLECONFIG   = $(CUR_DIR)/installable_parrot_config$(EXE)
-INSTALLABLEPERL6    = $(CUR_DIR)/installable_perl6$(EXE)
 
 # Libraries
 LIBPARROT_STATIC    = @blib_dir@/@libparrot_static@
@@ -644,10 +642,6 @@ help :
 	@echo " $(PARROT_CONFIG):"
 	@echo "                     Provide Parrot configuration information"
 	@echo ""
-	@echo "HLL Executables:"
-	@echo " $(PERL6):"
-	@echo "                     Generate C, compile, and link the Rakudo compiler"
-	@echo ""
 	@echo "Installation:"
 	@echo "  install:           Install under '$(PREFIX)' on Unix systems"
 	@echo ""
@@ -742,7 +736,7 @@ world : all parrot_utils
 
 parrot_utils : $(PDUMP) $(DIS) $(PINFO) $(PDB) $(PBCMERGE) $(PBC_TO_EXE) $(PARROT_CONFIG)
 
-installable: all $(INSTALLABLEPARROT) $(INSTALLABLEPDUMP) $(INSTALLABLEDIS) $(INSTALLABLEPINFO) $(INSTALLABLEPDB) $(INSTALLABLEPBCMERGE) $(INSTALLABLECONFIG) $(INSTALLABLEPERL6)
+installable: all $(INSTALLABLEPARROT) $(INSTALLABLEPDUMP) $(INSTALLABLEDIS) $(INSTALLABLEPINFO) $(INSTALLABLEPDB) $(INSTALLABLEPBCMERGE) $(INSTALLABLECONFIG)
 
 
 flags_dummy :
@@ -764,31 +758,13 @@ $(PARROT) : $(SRC_DIR)/main$(O) $(GEN_HEADERS) $(LIBPARROT) CFLAGS \
 	@rpath_blib@ $(ALL_PARROT_LIBS) $(LINKFLAGS) $(LINK_DYNAMIC)
 #IF(win32):	if exist $@.manifest mt.exe -nologo -manifest $@.manifest -outputresource:$@;1
 
-pbc_to_exe.pir : $(PARROT) tools/dev/pbc_to_exe_gen.pl
-	$(PERL) tools/dev/pbc_to_exe_gen.pl \
-    > pbc_to_exe.pir
-
-$(PBC_TO_EXE) : pbc_to_exe.pir $(PARROT)
-	$(PARROT) -o pbc_to_exe.pbc pbc_to_exe.pir
-	$(PARROT) pbc_to_exe.pir pbc_to_exe.pbc
+$(PBC_TO_EXE) : tools/dev/pbc_to_exe.pir $(PARROT)
+	$(PARROT) -o pbc_to_exe.pbc tools/dev/pbc_to_exe.pir
+	$(PARROT) pbc_to_exe.pbc pbc_to_exe.pbc
 
 $(PARROT_CONFIG) : tools/util/parrot-config.pir $(PARROT) $(PBC_TO_EXE)
 	$(PARROT) -o parrot_config.pbc tools/util/parrot-config.pir
 	$(PARROT) pbc_to_exe.pbc parrot_config.pbc
-
-# HLL Executable targets
-#IF(win32):perl6 : $(PERL6)
-
-$(PERL6) : compilers $(PBC_TO_EXE)
-	$(MAKE) languages/perl6 perl6$(EXE)
-	$(CP) languages/perl6/perl6$(EXE) $(PERL6)
-	$(CHMOD) 0755 $(PERL6)
-	$(PERL6) -e"say 'Hello, world.'"
-
-$(INSTALLABLEPERL6) : $(PERL6)
-	$(MAKE) languages/perl6 installable_perl6$(EXE)
-	$(CP) languages/perl6/installable_perl6$(EXE) $(INSTALLABLEPERL6)
-	$(CHMOD) 0755 $(INSTALLABLEPERL6)
 
 $(MINIPARROT) : $(SRC_DIR)/main$(O) $(GEN_HEADERS) $(LIBPARROT) \
     lib/Parrot/OpLib/core.pm $(SRC_DIR)/null_config$(O)
@@ -925,17 +901,17 @@ $(INSTALLABLEDIS) : $(SRC_DIR)/pbc_disassemble$(O) $(LIBPARROT)
 # Parrot Dump
 #
 
-$(PDUMP) : $(SRC_DIR)/pdump$(O) $(SRC_DIR)/packdump$(O) $(LIBPARROT)
+$(PDUMP) : $(SRC_DIR)/pbc_dump$(O) $(SRC_DIR)/packdump$(O) $(LIBPARROT)
 	$(LINK) @ld_out@$@ \
-    $(SRC_DIR)/pdump$(O) \
+    $(SRC_DIR)/pbc_dump$(O) \
     $(SRC_DIR)/packdump$(O) @rpath_blib@ $(ALL_PARROT_LIBS) $(LINKFLAGS)
 #IF(win32):	if exist $@.manifest mt.exe -nologo -manifest $@.manifest -outputresource:$@;1
 
-$(SRC_DIR)/pdump$(O) : $(GEN_HEADERS)
+$(SRC_DIR)/pbc_dump$(O) : $(GEN_HEADERS)
 
-$(INSTALLABLEPDUMP) : $(SRC_DIR)/pdump$(O) $(SRC_DIR)/packdump$(O) $(LIBPARROT)
+$(INSTALLABLEPDUMP) : $(SRC_DIR)/pbc_dump$(O) $(SRC_DIR)/packdump$(O) $(LIBPARROT)
 	$(LINK) @ld_out@$@ \
-    $(SRC_DIR)/pdump$(O) \
+    $(SRC_DIR)/pbc_dump$(O) \
     $(SRC_DIR)/packdump$(O) \
     @rpath_lib@ $(ALL_PARROT_LIBS) $(LINKFLAGS)
 #IF(win32):	if exist $@.manifest mt.exe -nologo -manifest $@.manifest -outputresource:$@;1
@@ -1617,10 +1593,9 @@ prog-clean :
     $(INSTALLABLEPINFO) \
     $(INSTALLABLEPBCMERGE) \
     $(INSTALLABLEPDB) \
-    pbc_to_exe.pir pbc_to_exe.pbc pbc_to_exe.c pbc_to_exe$(O) pbc_to_exe$(EXE) \
-    $(PERL6) \
+    pbc_to_exe.pbc pbc_to_exe.c pbc_to_exe$(O) pbc_to_exe$(EXE) \
     $(IMCC_DIR)/main$(O) \
-    $(PDUMP) $(SRC_DIR)/pdump$(O) $(SRC_DIR)/packdump$(O) \
+    $(PDUMP) $(SRC_DIR)/pbc_dump$(O) $(SRC_DIR)/packdump$(O) \
     $(SRC_DIR)/pbc_info$(O) $(PINFO) \
     $(PDB) $(SRC_DIR)/parrot_debugger$(O) \
     $(PBCMERGE) $(SRC_DIR)/pbc_merge$(O) \
@@ -1657,7 +1632,7 @@ archclean: dynoplibs-clean dynpmc-clean dynext-clean
     $(INSTALLABLEPDB) \
     $(INSTALLABLECONFIG) \
     $(IMCC_DIR)/main$(O) \
-    $(PDUMP) $(SRC_DIR)/pdump$(O) $(SRC_DIR)/packdump$(O) \
+    $(PDUMP) $(SRC_DIR)/pbc_dump$(O) $(SRC_DIR)/packdump$(O) \
     $(SRC_DIR)/pbc_info$(O) $(PINFO) \
     $(PDB) $(SRC_DIR)/parrot_debugger$(O) \
     $(PBCMERGE) $(SRC_DIR)/pbc_merge$(O) \
@@ -1766,8 +1741,8 @@ distclean : realclean
 svnclobber : .svn
 	$(PERL) tools/dev/svnclobber.pl
 
-reconfig : clean
-	$(PERL) Configure.pl
+reconfig : realclean
+	$(PERL) Configure.pl $(CONFIG_ARGS)
 
 manitest :
 	$(PERL) tools/dev/manicheck.pl
@@ -2187,13 +2162,13 @@ exec : $(SRC_DIR)/exec_start$(O) $(SRC_DIR)/parrot_config$(O) $(LIBPARROT)
 # for use by t/pmc/nci.t
 $(LIBNCI_TEST_SO): $(SRC_DIR)/nci_test$(O)
 	$(LD) $(LD_LOAD_FLAGS) @ncilib_link_extra@ $(LDFLAGS) \
-    @ld_out@$@ $(SRC_DIR)/nci_test$(O) $(C_LIBS) $(LINKFLAGS)
+    @ld_out@$@ $(SRC_DIR)/nci_test$(O) $(C_LIBS)
 
 # for use by runtime/parrot/library/OpenGL.pir
 $(LIBGLUTCB_SO): $(LIBPARROT) $(SRC_DIR)/glut_callbacks$(O)
 	$(LD) $(LD_LOAD_FLAGS) $(LDFLAGS) \
     @ld_out@$@ $(SRC_DIR)/glut_callbacks$(O) \
-    $(ALL_PARROT_LIBS) @opengl_lib@ $(LINKFLAGS)
+    $(ALL_PARROT_LIBS) @opengl_lib@
 
 # emacs etags
 # this needs exuberant-ctags

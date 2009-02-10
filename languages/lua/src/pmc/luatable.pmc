@@ -23,6 +23,11 @@ This implementation is based on the Lua 4.0 one.
 
 #include "lua_private.h"
 
+PMC *
+_LuaTable_get_metatable(PARROT_INTERP, PMC *obj) {
+    return PMC_metadata(obj);
+}
+
 #define LUA_ASSERT(c, s)         assert(((void)(s), (c)))
 
 #define PMC_hash(s) (LuaHash *)PMC_struct_val((s))
@@ -396,12 +401,12 @@ Marks the hash as live.
 */
     VTABLE void mark() {
         STRING *mode = NULL;
-        PMC    *meta = PMC_metadata(SELF);
+        PMC * const meta = PMC_metadata(SELF);
 
         if (meta) {
             PMC **m;
 #if 0
-            PMC *key = pmc_new(INTERP, dynpmc_LuaString);
+            PMC * const key = pmc_new(INTERP, dynpmc_LuaString);
             VTABLE_set_string_native(INTERP, key,
                     Parrot_str_new_constant(INTERP, "__mode"));
             m = lua_get(INTERP, PMC_hash(meta), key);
@@ -508,7 +513,7 @@ C<table> accessor.
         if (pvalue)
             value = *pvalue;
         else {
-            PMC * const meth = find_meth(INTERP, SELF, "__index");
+            PMC * const meth = _LuaAny_find_meth(INTERP, SELF, "__index");
             if (meth) {
                 if (dynpmc_LuaFunction == PMC_type(meth)) {
                     value = Parrot_runops_fromc_args(INTERP, meth, "PPP",
@@ -536,7 +541,7 @@ C<table> mutator.
 */
     VTABLE void set_pmc_keyed(PMC *key, PMC *value) {
         if (! lua_get(INTERP, PMC_hash(SELF), key)) {
-            PMC * const meth = find_meth(INTERP, SELF, "__newindex");
+            PMC * const meth = _LuaAny_find_meth(INTERP, SELF, "__newindex");
             if (meth) {
                 if (dynpmc_LuaFunction == PMC_type(meth)) {
                     Parrot_runops_fromc_args(INTERP, meth, "vPPP", SELF,
@@ -570,7 +575,7 @@ Need by NameSpace.export_to().
 
 */
     VTABLE void set_pmc_keyed_str(STRING *key, PMC *value) {
-        PMC * pmc_key = pmc_new(INTERP, dynpmc_LuaString);
+        PMC * const pmc_key = pmc_new(INTERP, dynpmc_LuaString);
         VTABLE_set_string_native(INTERP, pmc_key, Parrot_str_copy(INTERP, key));
         value = VTABLE_clone(interp, value);
         *lua_set(INTERP, PMC_hash(SELF), pmc_key) = value;
@@ -605,10 +610,10 @@ The C<==> operation. Compares reference (not in depth).
 
 */
     MULTI INTVAL is_equal(LuaTable value) {
-        PMC * const meth = find_meth(INTERP, SELF, "__eq");
+        PMC * const meth = _LuaAny_find_meth(INTERP, SELF, "__eq");
         if (meth) {
-            PMC *retval = Parrot_runops_fromc_args(INTERP, meth, "PPP",
-                                                   SELF, value);
+            PMC * const retval = Parrot_runops_fromc_args(INTERP, meth, "PPP",
+                                                          SELF, value);
 
             if (PMC_IS_NULL(retval))
                 return (INTVAL)0;
@@ -616,10 +621,7 @@ The C<==> operation. Compares reference (not in depth).
             return VTABLE_get_bool(INTERP, retval);
         }
 
-        if (SELF == value)
-            return (INTVAL)1;
-        else
-            return (INTVAL)0;
+        return (SELF == value) ? (INTVAL)1 : (INTVAL)0;
     }
 
     MULTI INTVAL is_equal(DEFAULT value) {
@@ -635,16 +637,16 @@ The C<==> operation. Compares reference (not in depth).
 */
     MULTI INTVAL cmp(LuaTable value) {
 #if 0
-        PMC * const meth = find_meth(INTERP, SELF, "__cmp");
+        PMC * const meth = _LuaAny_find_meth(INTERP, SELF, "__cmp");
         if (meth) {
-            PMC *retval = Parrot_runops_fromc_args(INTERP, meth, "PPP",
-                                                   SELF, value);
+            PMC * const retval = Parrot_runops_fromc_args(INTERP, meth, "PPP",
+                                                          SELF, value);
 
             if (retval)
                 return (INTVAL)VTABLE_get_number(INTERP, retval);
         }
 #else
-        PMC * const _lt = find_meth(INTERP, SELF, "__lt");
+        PMC * const _lt = _LuaAny_find_meth(INTERP, SELF, "__lt");
 
         if (_lt) {
             PMC *retval = Parrot_runops_fromc_args(INTERP, _lt, "PPP",
@@ -654,7 +656,7 @@ The C<==> operation. Compares reference (not in depth).
             if (r)
                 return (INTVAL)-1;
             else {
-                PMC * const _le = find_meth(INTERP, SELF, "__le");
+                PMC * const _le = _LuaAny_find_meth(INTERP, SELF, "__le");
                 if (_le) {
                     retval = Parrot_runops_fromc_args(INTERP, _le, "PPP",
                                                       SELF, value);
@@ -704,7 +706,7 @@ The C<==> operation. Compares reference (not in depth).
 
 */
     METHOD PMC* get_metatable() {
-        PMC *retval = PMC_metadata(SELF);
+        PMC *retval = _LuaUserdata_get_metatable(INTERP, SELF);
 
         if (!retval)
             retval = pmc_new(INTERP, dynpmc_LuaNil);
@@ -720,8 +722,8 @@ The C<==> operation. Compares reference (not in depth).
 
 */
     METHOD PMC* len() {
-        PMC   **pvalue;
-        PMC   *key = pmc_new(INTERP, dynpmc_LuaNumber);
+        PMC **pvalue;
+        PMC * const key = pmc_new(INTERP, dynpmc_LuaNumber);
         INTVAL idx = 1;
 
         VTABLE_set_integer_native(INTERP, key, idx);
@@ -746,17 +748,17 @@ The C<==> operation. Compares reference (not in depth).
 
 */
     METHOD PMC* next(PMC* index) {
-        Node *n = lua_next(INTERP, PMC_hash(SELF), index);
+        Node * const n = lua_next(INTERP, PMC_hash(SELF), index);
 
         if (n) {
-            PMC *retval = pmc_new(INTERP, enum_class_Array);
+            PMC * const retval = pmc_new(INTERP, enum_class_Array);
             VTABLE_set_integer_native(INTERP, retval, 2);
             VTABLE_set_pmc_keyed_int(INTERP, retval, 0, n->key);
             VTABLE_set_pmc_keyed_int(INTERP, retval, 1, n->val);
             RETURN(PMC *retval);
         }
         else {
-            PMC *retval = pmc_new(INTERP, dynpmc_LuaNil);
+            PMC * const retval = pmc_new(INTERP, dynpmc_LuaNil);
             RETURN(PMC *retval);
         }
 
@@ -770,8 +772,9 @@ The C<==> operation. Compares reference (not in depth).
 
 */
     METHOD PMC* rawequal(PMC *value) {
-        PMC *retval = pmc_new(INTERP, dynpmc_LuaBoolean);
-        VTABLE_set_integer_native(INTERP, retval, (SELF == value) ? 1 : 0);
+        const INTVAL b = (SELF == value) ? 1 : 0;
+        PMC * const retval = pmc_new(INTERP, dynpmc_LuaBoolean);
+        VTABLE_set_integer_native(INTERP, retval, b);
         RETURN(PMC *retval);
     }
 

@@ -115,9 +115,12 @@ die_from_exception(PARROT_INTERP, ARGIN(PMC *exception))
     Parrot_io_flush(interp, Parrot_io_STDOUT(interp));
     Parrot_io_flush(interp, Parrot_io_STDERR(interp));
 
-    if (interp->debugger) {
-        Parrot_io_flush(interp->debugger, Parrot_io_STDOUT(interp->debugger));
-        Parrot_io_flush(interp->debugger, Parrot_io_STDERR(interp->debugger));
+    if (interp->pdb) {
+        Interp * interpdeb = interp->pdb->debugger;
+        if (interpdeb) {
+            Parrot_io_flush(interpdeb, Parrot_io_STDOUT(interpdeb));
+            Parrot_io_flush(interpdeb, Parrot_io_STDERR(interpdeb));
+        }
     }
 
     if (Parrot_str_not_equal(interp, message, CONST_STRING(interp, "")) == 1) {
@@ -690,7 +693,7 @@ do_panic(NULLOK_INTERP, ARGIN_NULLOK(const char *message),
     fprintf(stderr, "\n\
 We highly suggest you notify the Parrot team if you have not been working on\n\
 Parrot.  Use parrotbug (located in parrot's root directory) or send an\n\
-e-mail to parrot-porters@perl.org.\n\
+e-mail to parrot-dev@lists.parrot.org.\n\
 Include the entire text of this error message and the text of the script that\n\
 generated the error.  If you've made any modifications to Parrot, please\n\
 describe them as well.\n\n");

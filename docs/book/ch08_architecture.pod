@@ -819,7 +819,7 @@ structure. Thread safety is far too big a topic to cover in this book,
 but trust us when we say it's something worth being concerned with.
 
 X<Parrot;native data type;;(see PMCs)>
-X<PMCs (Parrot Magic Cookies);Parrot's native data type> 
+X<PMCs (Polymorphic Containers);Parrot's native data type> 
 PMCs are complex structures, even the simplest ones. We can't count on
 the hardware or even the operating system to provide us atomic access.
 Parrot has to provide that atomicity itself, which is expensive. Getting
@@ -901,7 +901,7 @@ override.
 
 Z<CHP-8-SECT-5.1>
 
-X<PMCs (Parrot Magic Cookies);handling method calls>
+X<PMCs (Polymorphic Containers);handling method calls>
 Parrot's object system is very simple--in fact, a PMC only has to handle
 method calls to be considered an object. Just handling methods covers
 well over 90% of the object functionality that most programs use, since
@@ -1038,7 +1038,7 @@ allocation system has its own garbage collection scheme. Parrot also
 has some strict rules over what can be referenced and from where.
 This allows it to have a more efficient garbage collection system.
 
-X<PMCs (Parrot Magic Cookies);garbage collection and>
+X<PMCs (Polymorphic Containers);garbage collection and>
 X<garbage collection;Parrot;PMC and>
 The first allocation system is responsible for PMC and string
 structures. These are fixed-sized objects that Parrot allocates out of
@@ -1264,86 +1264,6 @@ works to expand your knowledge with the Parrot documentation and
 source.
 
 =cut
-
-##########################################################################
-#                              PSEUDOPOD LEGEND
-#
-#  Interior Sequences
-#  ..................
-#  A<>         link anchor (source)
-#  B<>         bold text
-#  C<>         monospace text
-#  E<>         named character
-#  F<>         file name
-#  G<>         superscript
-#  H<>         subscript
-#  I<>         italicized text
-#  L<>         link to other manpage (see A<>)
-#  M<>         firstterm
-#  N<>         footnote
-#  Q<>         quoted text
-#  R<>         replaceable item
-#  S<>         text with non-breaking spaces
-#  T<>         cited title for book, etc.
-#  U<>         URL
-#  X<>         a single index term of the form:
-#                    primary:sortas;secondary:sortas;tertiary:sortas;;ETC
-#                    where ETC is either (see term) or (see also term)
-#                    only primary term is required
-#  Z<>         link anchor (destination)
-#
-#  Heads
-#  .....
-#  head0                    chapter title
-#  head{1-4}                section title (4 levels)
-#
-#  Command Paragraphs (begin/end Blocks)
-#  .....................................
-#  blockquote               quotation
-#  comment                  ignored text
-#  caution                  admonition
-#  epigraph                 quotation
-#  example                  container
-#  figure CAPTION           figure
-#  important                admonition
-#  note                     admonition
-#  programlisting           literal text
-#  screen                   literal text
-#  sidebar                  container
-#  table html [CAPTION]     table rendered in HTML
-#  table picture [CAPTION]  table rendered in plain text
-#  tip                      admonition
-#  warning                  admonition
-#
-#
-#  Command Paragraphs (for Blocks)
-#  ...............................
-#  This structure will be used only for comments. For example:
-#
-#    =for editor
-#    Check my spelling on this.
-#    =end
-#
-#  This will be rendered as a visible comment in the final output
-#  with a label at the top addressing it to "editor". The exception is
-#  =for ignore which will always be ignored by the parser.
-#
-#  Tables
-#  ......
-#  A 2x2 table with top header row looks like this:
-#  
-#  =begin table An Example Table
-#  =headrow
-#  =row
-#  =cell Header for first column (row 1, col 1)
-#  =cell Header for 2nd column (row 1, col 2)
-#  =bodyrows
-#  =cell Cell for row 2, col 1
-#  =cell Cell for row 2, col 2
-#  =end table
-#
-#  For more information on PSEUDOPOD, write to tools@oreilly.com
-##########################################################################
 
 # Local variables:
 #   c-file-style: "parrot"

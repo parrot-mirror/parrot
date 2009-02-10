@@ -1,10 +1,15 @@
 # Copyright (C) 2004-2009, The Perl Foundation.
 # $Id$
+
 package Parrot::Pmc2c::Pmc2cMain;
+
 use strict;
 use warnings;
 
+use File::Spec ();
+use Carp;
 use Storable;
+
 use Parrot::PMC ();
 use Parrot::Pmc2c::VTable ();
 use Parrot::Pmc2c::Dumper 'dump_pmc';
@@ -16,8 +21,6 @@ use Parrot::Pmc2c::PMC::Null ();
 use Parrot::Pmc2c::PMC::Ref ();
 use Parrot::Pmc2c::PMC::SharedRef ();
 use Parrot::Pmc2c::PMC::Object ();
-use File::Spec ();
-use Carp;
 
 $SIG{'__WARN__'} = sub { use Carp; warn $_[0]; Carp::confess; };
 
@@ -86,13 +89,14 @@ sub new {
         unless ( defined $allargsref->{args} and ref( $allargsref->{args} ) eq q{ARRAY} );
 
     unshift @{ $allargsref->{include} },
-        ( ".", "$allargsref->{bin}/../..", "$allargsref->{bin}/../../src/pmc/" );
+        '.', "$allargsref->{bin}/../..", "$allargsref->{bin}/../../src/pmc", "$allargsref->{bin}/../../src/dynpmc";
 
     foreach my $opt qw(nolines) {
         if ( !defined $allargsref->{opt}{$opt} ) {
             $allargsref->{opt}{$opt} = 0;
         }
     }
+
     return bless( $allargsref, $class );
 }
 

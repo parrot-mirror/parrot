@@ -62,7 +62,8 @@ mark_context(PARROT_INTERP, ARGMOD(Parrot_Context* ctx))
     PObj *obj;
     int   i;
 
-    if (ctx->gc_mark == context_gc_mark) return;
+    if (ctx->gc_mark == context_gc_mark)
+        return;
     ctx->gc_mark = context_gc_mark;
 
     /* don't mark the context if it's actually dead */
@@ -355,13 +356,13 @@ Parrot_full_sub_name(PARROT_INTERP, ARGIN_NULLOK(PMC* sub))
              * have to save these and restore them to avoid affecting
              * the running program.
              */
-            PMC *saved_ccont            = interp->current_cont;
-            opcode_t *current_args      = interp->current_args;
-            opcode_t *current_params    = interp->current_params;
-            opcode_t *current_returns   = interp->current_returns;
-            PMC      *args_signature    = interp->args_signature;
-            PMC      *params_signature  = interp->params_signature;
-            PMC      *returns_signature = interp->returns_signature;
+            PMC      * const saved_ccont       = interp->current_cont;
+            opcode_t * const current_args      = interp->current_args;
+            opcode_t * const current_params    = interp->current_params;
+            opcode_t * const current_returns   = interp->current_returns;
+            PMC      * const args_signature    = interp->args_signature;
+            PMC      * const params_signature  = interp->params_signature;
+            PMC      * const returns_signature = interp->returns_signature;
 
             Parrot_block_GC_mark(interp);
 
@@ -659,8 +660,8 @@ Verifies that the provided continuation is sane.
 */
 
 void
-Parrot_continuation_check(PARROT_INTERP, ARGIN(PMC *pmc),
-    ARGIN(Parrot_cont *cc))
+Parrot_continuation_check(PARROT_INTERP, ARGIN(const PMC *pmc),
+    ARGIN(const Parrot_cont *cc))
 {
     ASSERT_ARGS(Parrot_continuation_check)
     Parrot_Context *to_ctx       = cc->to_ctx;
@@ -670,7 +671,7 @@ Parrot_continuation_check(PARROT_INTERP, ARGIN(PMC *pmc),
     if (Interp_debug_TEST(interp, PARROT_CTX_DESTROY_DEBUG_FLAG))
         fprintf(stderr,
                 "[invoke cont    %p, to_ctx %p, from_ctx %p (refs %d)]\n",
-                (void *)pmc, (void *)to_ctx, (void *)from_ctx, (int)from_ctx->ref_count);
+                (const void *)pmc, (void *)to_ctx, (void *)from_ctx, (int)from_ctx->ref_count);
 #endif
     if (!to_ctx)
         Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INVALID_OPERATION,

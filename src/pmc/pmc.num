@@ -45,12 +45,12 @@ nci.pmc    27
 float.pmc    28
 integer.pmc    29
 bigint.pmc    30
-complex.pmc    31
-string.pmc    32
+bignum.pmc    31
+complex.pmc    32
+string.pmc    33
 
 # abstract perlscalar.pmc
-perlint.pmc    33
-perlnum.pmc    34
+perlint.pmc    34
 perlstring.pmc    35
 perlundef.pmc    36
 boolean.pmc    37
