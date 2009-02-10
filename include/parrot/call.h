@@ -94,7 +94,7 @@ typedef enum arg_pass_t {
 PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
-PMC* Parrot_build_sig_object_from_varargs(PARROT_INTERP,
+PMC* Parrot_pcc_build_sig_object_from_varargs(PARROT_INTERP,
     ARGIN_NULLOK(PMC* obj),
     ARGIN(const char *sig),
     va_list args)
@@ -278,7 +278,7 @@ STRING* set_retval_s(PARROT_INTERP, int sig_ret, ARGIN(Parrot_Context *ctx))
         __attribute__nonnull__(1)
         __attribute__nonnull__(3);
 
-#define ASSERT_ARGS_Parrot_build_sig_object_from_varargs \
+#define ASSERT_ARGS_Parrot_pcc_build_sig_object_from_varargs \
      __attribute__unused__ int _ASSERT_ARGS_CHECK = \
        PARROT_ASSERT_ARG(interp) \
     || PARROT_ASSERT_ARG(sig)

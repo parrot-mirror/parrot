@@ -348,7 +348,7 @@ static void too_many(PARROT_INTERP,
 
 /*
 
-=item C<PMC* Parrot_build_sig_object_from_varargs>
+=item C<PMC* Parrot_pcc_build_sig_object_from_varargs>
 
 Take a varargs list, and convert it into a CallSignature PMC. The CallSignature
 stores the original short signature string, and an array of integer types to
@@ -362,10 +362,10 @@ PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 PMC*
-Parrot_build_sig_object_from_varargs(PARROT_INTERP, ARGIN_NULLOK(PMC* obj),
+Parrot_pcc_build_sig_object_from_varargs(PARROT_INTERP, ARGIN_NULLOK(PMC* obj),
         ARGIN(const char *sig), va_list args)
 {
-    ASSERT_ARGS(Parrot_build_sig_object_from_varargs)
+    ASSERT_ARGS(Parrot_pcc_build_sig_object_from_varargs)
     PMC         *type_tuple    = PMCNULL;
     PMC         *returns       = PMCNULL;
     PMC         *call_object   = pmc_new(interp, enum_class_CallSignature);
@@ -2621,7 +2621,7 @@ Parrot_pcc_invoke_sub_from_c_args(PARROT_INTERP, ARGIN(PMC *sub_obj),
     PMC *sig_obj;
     va_list args;
     va_start(args, sig);
-    sig_obj = Parrot_build_sig_object_from_varargs(interp, PMCNULL, sig, args);
+    sig_obj = Parrot_pcc_build_sig_object_from_varargs(interp, PMCNULL, sig, args);
     va_end(args);
 
     Parrot_pcc_invoke_from_sig_object(interp, sub_obj, sig_obj);
@@ -2881,7 +2881,7 @@ Parrot_pcc_invoke_method_from_c_args(PARROT_INTERP, ARGIN(PMC* pmc),
     PMC *sub_obj;
     va_list args;
     va_start(args, signature);
-    sig_obj = Parrot_build_sig_object_from_varargs(interp, pmc, signature, args);
+    sig_obj = Parrot_pcc_build_sig_object_from_varargs(interp, pmc, signature, args);
     va_end(args);
 
     /* Find the subroutine object as a named method on pmc */

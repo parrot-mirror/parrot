@@ -306,7 +306,7 @@ Parrot_mmd_multi_dispatch_from_c_args(PARROT_INTERP,
 
     va_list args;
     va_start(args, sig);
-    sig_object = Parrot_build_sig_object_from_varargs(interp, PMCNULL, sig, args);
+    sig_object = Parrot_pcc_build_sig_object_from_varargs(interp, PMCNULL, sig, args);
     va_end(args);
 
     /* Check the cache. */
