@@ -2,37 +2,17 @@
 # Copyright (C) 2001-2009, The Perl Foundation.
 # $Id$
 
-=head1 NAME
-
-t/doc/pod.t - Pod document syntax tests
-
-=head1 SYNOPSIS
-
-    # test all files
-    % prove t/doc/pod.t
-
-    # test specific files
-    % perl t/doc/pod.t perl_module.pm perl_file.pl
-
-=head1 DESCRIPTION
-
-Tests the Pod syntax for all files listed in F<MANIFEST> and
-F<MANIFEST.generated> that appear to contain Pod markup. If any files
-contain invalid POD markup, they are reported in the test output.
-Use C<podchecker> to ferret out individual issues.
-
-=cut
-
 use strict;
 use warnings;
 
 use lib qw( . lib ../lib ../../lib );
 
+use Carp;
 use Test::More;
 use Parrot::Config;
 use ExtUtils::Manifest qw(maniread);
 
-use vars qw(@failed_syntax @empty_description);
+our (@failed_syntax, @empty_description);
 
 BEGIN {
     eval 'use Pod::Find';
@@ -52,62 +32,51 @@ plan tests => 2;
 # RT #44437 this should really be using src_dir instead of build_dir but it
 # does not exist (yet)
 my $build_dir    = $PConfig{build_dir};
+#print STDERR $build_dir, "\n";
+
+croak "Cannot run test if build_dir does not yet exist"
+    unless -d $build_dir;
+croak "Test cannot be run unless MANIFEST exists in build dir"
+    unless -f "$build_dir/MANIFEST";
+croak "Test cannot be run unless MANIFEST exists in build dir"
+    unless -f "$build_dir/MANIFEST.generated";
+
 my $manifest     = maniread("$build_dir/MANIFEST");
 my $manifest_gen = maniread("$build_dir/MANIFEST.generated");
 
-# if we have files passed in at the command line, use them
-my @files;
-if (@ARGV) {
-    @files = <@ARGV>;
-}
-else {
-    diag "finding files with POD, this may take a minute.";
-    @files = ( keys(%$manifest), keys(%$manifest_gen) );
-}
+my $need_testing_ref = identify_files_for_POD_testing( {
+    argv            => [ @ARGV  ],
+    manifest        => $manifest,
+    manifest_gen    => $manifest_gen,
+    build_dir       => $build_dir,
+} );
+#print STDERR scalar(@$need_testing_ref), "\n";
 
-foreach my $file (@files) {
-    $file = "$build_dir/$file";
-
-    # skip missing MANIFEST.generated files ( -e )
-    # skip binary files (including .pbc files) ( -B )
-    # skip files that pass the -e test because they resolve the .exe variant
-    next unless -T $file;
-
-    # Skip the book, because it uses extended O'Reilly-specific POD
-    next if $file =~ m{docs/book/};
-
-    # skip files without POD
-    next unless Pod::Find::contains_pod( $file, 0 );
-
-    # skip POD generating scripts
-    next if $file =~ m/ops_summary\.pl/;
-
-    # skip file which includes malformed POD for other testing purposes
-    next if $file =~ m{t/tools/dev/searchops/samples\.pm};
-
+foreach my $file ( @{ $need_testing_ref } ) {
     # skip files with valid POD
     if (file_pod_ok($file)) {
-
         #check DESCRIPTION section on valid POD files
         push @empty_description, $file if empty_description($file);
-
     }
     else {
-
         # report whatever is not skipped
         push @failed_syntax, $file;
     }
 }
 
-my $bad_syntax_files = join( "\n", @failed_syntax );
+my $bad_syntax_files        = join( "\n", @failed_syntax );
 my $empty_description_files = join( "\n", @empty_description);
-my $nempty_description = scalar( @empty_description );
+my $nempty_description      = scalar( @empty_description );
 
 is( $bad_syntax_files, q{}, 'Pod syntax correct' );    # only ok if everything passed
 
 TODO: {
     local $TODO = "not quite done yet";
-    is( $empty_description_files, q{}, 'All Pod files have non-empty DESCRIPTION sections' );
+    is(
+        $empty_description_files,
+        q{},
+        'All Pod files have non-empty DESCRIPTION sections'
+    );
 }
 
 diag("You should use podchecker to check the failed files.\n")
@@ -115,6 +84,70 @@ diag("You should use podchecker to check the failed files.\n")
 
 diag("Found $nempty_description files without DESCRIPTION sections.\n")
     if $nempty_description;
+
+#################### SUBROUTINES ####################
+
+sub identify_files_for_POD_testing {
+    my $args = shift;
+    my ( @files, %files_needing_analysis );
+
+    if ( scalar(@{ $args->{argv} }) ) {
+        @files = @{ $args->{argv} };
+    }
+    else {
+        diag "finding files with POD, this may take a minute.";
+        @files = (
+            keys(%{ $args->{manifest} }),
+            keys(%{ $args->{manifest_gen} })
+        );
+    }
+    $files_needing_analysis{$_}++ for @files;
+#    foreach my $k (keys %files_needing_analysis) {
+#        print STDERR "$k\t$files_needing_analysis{$k}\n"
+#        if $files_needing_analysis{$k} > 1;
+#    }
+    
+    FILE: foreach my $file ( keys %files_needing_analysis ) {
+        my $full_file = qq|$args->{build_dir}/$file|;
+    
+        # skip missing MANIFEST.generated files ( -e )
+        # skip binary files (including .pbc files) ( -B )
+        # skip files that pass the -e test because they resolve the .exe variant
+        unless (-T $full_file) {
+            delete $files_needing_analysis{ $file };
+            next FILE;
+        }
+    
+        # Skip the book, because it uses extended O'Reilly-specific POD
+        if ($full_file =~ m{docs/book/}) {
+            delete $files_needing_analysis{ $file };
+            next FILE;
+        }
+        # skip files without POD
+        unless (Pod::Find::contains_pod( $full_file, 0 )) {
+            delete $files_needing_analysis{ $file };
+            next FILE;
+        }
+    
+        # skip POD generating scripts
+        if ($full_file =~ m/ops_summary\.pl/) {
+            delete $files_needing_analysis{ $file };
+            next FILE;
+        }
+    
+        # skip file which includes malformed POD for other testing purposes
+        if ($full_file =~ m{
+                t/tools/dev/searchops/samples\.pm
+                |
+                languages/pod/test\.pod
+            }x
+        ) {
+            delete $files_needing_analysis{ $file };
+            next FILE;
+        }
+    }
+    return [ keys %files_needing_analysis ];
+}
 
 # Pulled from Test::Pod
 sub file_pod_ok {
@@ -141,6 +174,28 @@ sub empty_description {
 
     return 0;
 }
+
+
+=head1 NAME
+
+t/doc/pod.t - Pod document syntax tests
+
+=head1 SYNOPSIS
+
+    # test all files
+    % prove t/doc/pod.t
+
+    # test specific files
+    % perl t/doc/pod.t perl_module.pm perl_file.pl
+
+=head1 DESCRIPTION
+
+Tests the Pod syntax for all files listed in F<MANIFEST> and
+F<MANIFEST.generated> that appear to contain Pod markup. If any files
+contain invalid POD markup, they are reported in the test output.
+Use C<podchecker> to ferret out individual issues.
+
+=cut
 
 # Local Variables:
 #   mode: cperl
