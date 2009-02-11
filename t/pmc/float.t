@@ -1,5 +1,5 @@
 #!perl
-# Copyright (C) 2001-2006, The Perl Foundation.
+# Copyright (C) 2001-2009, The Perl Foundation.
 # $Id$
 
 use strict;
@@ -503,19 +503,20 @@ ok 1
 ok 2
 OUTPUT
 
-SKIP: {
-    skip 'failing on your platform' => 1 if $^O =~ m/openbsd/i;
+TODO: {
+    my @todo;
+    @todo = ( todo => '-0.0 not implemented, TT #313' )
+        if $^O =~ m/(?:openbsd|win32)/i;
 
-pasm_output_like( << 'CODE', << 'OUTPUT', "neg 0" );
+pasm_output_like( <<'CODE', <<'OUTPUT', 'neg 0', @todo );
     new P0, ['Float']
     set P0, 0.0
     neg P0
-        print P0
+    print P0
     end
 CODE
 /^-0/
 OUTPUT
-
 }
 
 pasm_output_is( << 'CODE', << 'OUTPUT', "Equality" );
