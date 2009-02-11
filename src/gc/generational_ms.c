@@ -741,7 +741,7 @@ gc_gms_more_objects(PARROT_INTERP, ARGMOD(Small_Object_Pool *pool))
     if (pool->skip)
         pool->skip = 0;
     else if (pool->last_Arena) {
-        Parrot_do_dod_run(interp, GC_trace_stack_FLAG);
+        Parrot_do_gc_run(interp, GC_trace_stack_FLAG);
         if (pool->num_free_objects <= pool->replenish_level)
             pool->skip = 1;
     }
@@ -1525,10 +1525,10 @@ gc_gms_init_mark(PARROT_INTERP)
     ASSERT_ARGS(gc_gms_init_mark)
     Arenas * const arena_base = interp->arena_base;
 
-    arena_base->dod_trace_ptr = NULL;
-    arena_base->dod_mark_start = NULL;
+    arena_base->gc_trace_ptr        = NULL;
+    arena_base->gc_mark_start       = NULL;
     arena_base->num_early_PMCs_seen = 0;
-    arena_base->num_extended_PMCs = 0;
+    arena_base->num_extended_PMCs   = 0;
 
     Parrot_forall_header_pools(interp, POOL_ALL, 0, init_mark_cb);
 }
@@ -1598,19 +1598,19 @@ trace_children_cb(PARROT_INTERP, ARGIN(Small_Object_Pool *pool), int flag, SHIM(
 {
     ASSERT_ARGS(trace_children_cb)
     Arenas * const arena_base = interp->arena_base;
-    const int lazy_dod = arena_base->lazy_dod;
+    const int lazy_gc = arena_base->lazy_gc;
     Gc_gms_hdr *h;
 
     for (h = pool->gray; h != pool->white;) {
         PMC * const current = (PMC*)GMSH_to_PObj(h);
         UINTVAL bits;
 
-        if (lazy_dod && arena_base->num_early_PMCs_seen >=
+        if (lazy_gc && arena_base->num_early_PMCs_seen >=
                 arena_base->num_early_DOD_PMCs) {
             return 1;
         }
         /* TODO propagate flag in pobject_lives */
-        arena_base->dod_trace_ptr = current;
+        arena_base->gc_trace_ptr = current;
         if (!PObj_needs_early_DOD_TEST(current))
             PObj_high_priority_DOD_CLEAR(current);
 
@@ -1829,7 +1829,7 @@ gc_gms_end_cycle(PARROT_INTERP)
 
 =item C<static void parrot_gc_gms_run>
 
-Interface to C<Parrot_do_dod_run>. C<flags> is one of:
+Interface to C<Parrot_do_gc_run>. C<flags> is one of:
 
   GC_lazy_FLAG   ... timely destruction
   GC_finish_FLAG ... run a final sweep to destruct objects at
@@ -1863,10 +1863,10 @@ parrot_gc_gms_run(PARROT_INTERP, UINTVAL flags)
     }
 
     /* normal or lazy DOD run */
-    arena_base->dod_runs++;
-    arena_base->lazy_dod = (flags & GC_lazy_FLAG);
+    arena_base->gc_runs++;
+    arena_base->lazy_gc = (flags & GC_lazy_FLAG);
     gc_gms_init_mark(interp);
-    if (gc_gms_trace_root(interp, !arena_base->lazy_dod) &&
+    if (gc_gms_trace_root(interp, !arena_base->lazy_gc) &&
             gc_gms_trace_children(interp)) {
         gc_gms_sweep(interp);
         gc_gms_set_gen(interp);
@@ -1875,7 +1875,7 @@ parrot_gc_gms_run(PARROT_INTERP, UINTVAL flags)
         /*
          * successful lazy DOD run
          */
-        ++arena_base->lazy_dod_runs;
+        ++arena_base->lazy_gc_runs;
     }
     gc_gms_end_cycle(interp);
     --arena_base->DOD_block_level;

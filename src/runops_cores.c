@@ -346,12 +346,13 @@ static opcode_t *
 runops_trace_core(PARROT_INTERP, ARGIN(opcode_t *pc))
 {
     ASSERT_ARGS(runops_trace_core)
-    static size_t dod, gc;
-    Arenas * const arena_base = interp->arena_base;
-    Interp *debugger;
 
-    dod = arena_base->dod_runs;
-    gc = arena_base->collect_runs;
+    static size_t  gc_runs, collect_runs;
+    Arenas * const arena_base = interp->arena_base;
+    Interp        *debugger;
+
+    gc_runs      = arena_base->gc_runs;
+    collect_runs = arena_base->collect_runs;
     if (interp->pdb) {
         debugger = interp->pdb->debugger;
         PARROT_ASSERT(debugger);
@@ -398,13 +399,13 @@ runops_trace_core(PARROT_INTERP, ARGIN(opcode_t *pc))
         DO_OP(pc, interp);
         trace_op(interp, code_start, code_end, pc);
 
-        if (dod != arena_base->dod_runs) {
-            dod = arena_base->dod_runs;
+        if (gc_runs != arena_base->gc_runs) {
+            gc_runs = arena_base->gc_runs;
             Parrot_io_eprintf(debugger, "       DOD\n");
         }
 
-        if (gc != arena_base->collect_runs) {
-            gc = arena_base->collect_runs;
+        if (collect_runs != arena_base->collect_runs) {
+            collect_runs  = arena_base->collect_runs;
             Parrot_io_eprintf(debugger, "       GC\n");
         }
     }
@@ -477,7 +478,7 @@ runops_gc_debug_core(PARROT_INTERP, ARGIN(opcode_t *pc))
             Parrot_ex_throw_from_c_args(interp, NULL, 1,
                 "attempt to access code outside of current code segment");
 
-        Parrot_do_dod_run(interp, 0);
+        Parrot_do_gc_run(interp, 0);
         CONTEXT(interp)->current_pc = pc;
 
         DO_OP(pc, interp);
@@ -569,7 +570,7 @@ runops_debugger_core(PARROT_INTERP, ARGIN(opcode_t *pc))
                     "attempt to access code outside of current code segment");
 
         if (interp->pdb->state & PDB_GCDEBUG)
-            Parrot_do_dod_run(interp, 0);
+            Parrot_do_gc_run(interp, 0);
 
         if (interp->pdb->state & PDB_TRACING) {
             trace_op(interp,

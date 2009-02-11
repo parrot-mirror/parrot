@@ -698,7 +698,7 @@ parrot_gc_ims_reinit(PARROT_INTERP)
     Gc_ims_private *g_ims;
     Arenas * const  arena_base = interp->arena_base;
 
-    arena_base->lazy_dod = 0;
+    arena_base->lazy_gc = 0;
     Parrot_gc_ms_run_init(interp);
 
     /*
@@ -745,11 +745,11 @@ parrot_gc_ims_mark(PARROT_INTERP)
 
     todo = (size_t)(g_ims->alloc_trigger * g_ims->throttle * work_factor);
 
-    PARROT_ASSERT(arena_base->lazy_dod == 0);
+    PARROT_ASSERT(arena_base->lazy_gc == 0);
     Parrot_gc_trace_children(interp, todo);
 
     /* check if we are finished with marking -- the end is self-referential */
-    next = arena_base->dod_mark_start;
+    next = arena_base->gc_mark_start;
 
     if (next == PMC_next_for_GC(next))
         g_ims->state = GC_IMS_START_SWEEP;
@@ -980,7 +980,7 @@ parrot_gc_ims_run_increment(PARROT_INTERP)
             (void)parrot_gc_ims_collect(interp, 0);
             break;
         case GC_IMS_FINISHED:
-            ++arena_base->dod_runs;
+            ++arena_base->gc_runs;
             g_ims->state = GC_IMS_CONSUMING;
             /* fall through */
         case GC_IMS_CONSUMING:
@@ -1011,7 +1011,7 @@ parrot_gc_ims_run_increment(PARROT_INTERP)
 
 =item C<static void parrot_gc_ims_run>
 
-Interface to C<Parrot_do_dod_run>. C<flags> is one of:
+Interface to C<Parrot_do_gc_run>. C<flags> is one of:
 
   GC_lazy_FLAG   ... timely destruction
   GC_finish_FLAG ... run until live bits are clear
@@ -1049,7 +1049,7 @@ parrot_gc_ims_run(PARROT_INTERP, UINTVAL flags)
     }
 
     /* make the test happy that checks the count ;) */
-    arena_base->dod_runs++;
+    arena_base->gc_runs++;
 
     lazy = flags & GC_lazy_FLAG;
 
@@ -1104,7 +1104,7 @@ parrot_gc_ims_run(PARROT_INTERP, UINTVAL flags)
 
     /* if we stopped early, the lazy run was successful */
     if (g_ims->state < GC_IMS_COLLECT)
-        ++arena_base->lazy_dod_runs;
+        ++arena_base->lazy_gc_runs;
 
     g_ims->lazy = 0;
 }
