@@ -99,8 +99,8 @@ pointer.
             }
             else if (Parrot_str_not_equal(interp, data->sig, CONST_STRING(interp, "S")) == 0) {
                 STRING **str_pointer = (STRING **) data->pointer;
-                PARROT_ASSERT(*str_pointer);
-                pobject_lives(interp, (PObj *) *str_pointer);
+                if(*str_pointer)
+                    pobject_lives(interp, (PObj *) *str_pointer);
             }
         }
 
