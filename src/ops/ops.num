@@ -1257,3 +1257,5 @@ set_root_global_p_sc_p         1226
 set_root_global_pc_sc_p        1227
 find_name_p_s                  1228
 find_name_p_sc                 1229
+load_language_s                1230
+load_language_sc               1231

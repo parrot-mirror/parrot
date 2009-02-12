@@ -676,6 +676,10 @@ void Parrot_load_bytecode(PARROT_INTERP, ARGIN_NULLOK(STRING *file_str))
         __attribute__nonnull__(1);
 
 PARROT_EXPORT
+void Parrot_load_language(PARROT_INTERP, ARGIN_NULLOK(STRING *lang_name))
+        __attribute__nonnull__(1);
+
+PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 PackFile_Debug * Parrot_new_debug_seg(PARROT_INTERP,
@@ -865,6 +869,8 @@ const opcode_t * PackFile_Annotations_unpack(PARROT_INTERP,
 #define ASSERT_ARGS_Parrot_destroy_constants __attribute__unused__ int _ASSERT_ARGS_CHECK = \
        PARROT_ASSERT_ARG(interp)
 #define ASSERT_ARGS_Parrot_load_bytecode __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp)
+#define ASSERT_ARGS_Parrot_load_language __attribute__unused__ int _ASSERT_ARGS_CHECK = \
        PARROT_ASSERT_ARG(interp)
 #define ASSERT_ARGS_Parrot_new_debug_seg __attribute__unused__ int _ASSERT_ARGS_CHECK = \
        PARROT_ASSERT_ARG(interp) \
