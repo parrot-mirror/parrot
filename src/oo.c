@@ -100,7 +100,7 @@ void
 Parrot_oo_extract_methods_from_namespace(PARROT_INTERP, ARGIN(PMC *self), ARGIN(PMC *ns))
 {
    ASSERT_ARGS(Parrot_oo_extract_methods_from_namespace)
-   PMC *methods, *vtable_overrides;
+   PMC *methods = PMCNULL, *vtable_overrides = PMCNULL;
 
     /* Pull in methods from the namespace, if any. */
    if (PMC_IS_NULL(ns))
@@ -1079,12 +1079,11 @@ Parrot_ComputeMRO_C3(PARROT_INTERP, ARGIN(PMC *_class))
     ASSERT_ARGS(Parrot_ComputeMRO_C3)
     PMC *result;
     PMC * const merge_list = pmc_new(interp, enum_class_ResizablePMCArray);
-    PMC *immediate_parents = pmc_new(interp, enum_class_Undef);
+    PMC *immediate_parents = PMCNULL;
     int i, parent_count;
 
     /* Now get immediate parents list. */
-    Parrot_pcc_invoke_method_from_c_args(interp, _class, CONST_STRING(interp, "parents"),
-        "->P", &immediate_parents);
+    Parrot_pcc_invoke_method_from_c_args(interp, _class, CONST_STRING(interp, "parents"), "->P", &immediate_parents);
 
     if (!immediate_parents)
         Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_METHOD_NOT_FOUND,
@@ -1148,15 +1147,15 @@ the default implementation.
 PARROT_EXPORT
 void
 Parrot_ComposeRole(PARROT_INTERP, ARGIN(PMC *role),
-                        ARGIN(PMC *exclude), int got_exclude,
-                        ARGIN(PMC *alias),   int got_alias,
-                        ARGIN(PMC *methods_hash), ARGIN(PMC *roles_list))
+    ARGIN(PMC *exclude), int got_exclude,
+    ARGIN(PMC *alias),   int got_alias,
+    ARGIN(PMC *methods_hash), ARGIN(PMC *roles_list))
 {
     ASSERT_ARGS(Parrot_ComposeRole)
-    PMC *methods;
-    PMC *methods_iter;
-    PMC *roles_of_role;
-    PMC *proposed_add_methods;
+    PMC *methods = PMCNULL;
+    PMC *methods_iter = PMCNULL;
+    PMC *roles_of_role = PMCNULL;
+    PMC *proposed_add_methods = PMCNULL;
 
     int i, roles_of_role_count;
 

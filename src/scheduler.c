@@ -644,7 +644,8 @@ Parrot_cx_add_handler(PARROT_INTERP, ARGIN(PMC *handler))
         Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INVALID_OPERATION,
             "Scheduler was not initialized for this interpreter.\n");
 
-    Parrot_PCCINVOKE(interp, interp->scheduler, add_handler, "P->", handler);
+    Parrot_pcc_invoke_method_from_c_args(interp, interp->scheduler,
+        add_handler, "P->", handler);
 }
 
 /*
@@ -667,7 +668,7 @@ Parrot_cx_delete_handler_typed(PARROT_INTERP, ARGIN(STRING *handler_type))
         Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INVALID_OPERATION,
             "Scheduler was not initialized for this interpreter.\n");
 
-    Parrot_PCCINVOKE(interp, interp->scheduler, CONST_STRING(interp, "delete_handler"), "S->", handler_type);
+    Parrot_pcc_invoke_method_from_c_args(interp, interp->scheduler, CONST_STRING(interp, "delete_handler"), "S->", handler_type);
 }
 
 /*
@@ -692,7 +693,7 @@ Parrot_cx_count_handlers_typed(PARROT_INTERP, ARGIN(STRING *handler_type))
         Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INVALID_OPERATION,
             "Scheduler was not initialized for this interpreter.\n");
 
-    Parrot_PCCINVOKE(interp, interp->scheduler, CONST_STRING(interp, "count_handlers"), "S->I", handler_type, &count);
+    Parrot_pcc_invoke_method_from_c_args(interp, interp->scheduler, CONST_STRING(interp, "count_handlers"), "S->I", handler_type, &count);
 
     return count;
 }
@@ -808,7 +809,7 @@ Parrot_cx_find_handler_for_task(PARROT_INTERP, ARGIN(PMC *task))
         Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INVALID_OPERATION,
             "Scheduler was not initialized for this interpreter.\n");
 
-    Parrot_PCCINVOKE(interp, interp->scheduler, CONST_STRING(interp, "find_handler"), "P->P", task, &handler);
+    Parrot_pcc_invoke_method_from_c_args(interp, interp->scheduler, CONST_STRING(interp, "find_handler"), "P->P", task, &handler);
 
 #if CX_DEBUG
     fprintf(stderr, "done searching for handler\n");
@@ -891,8 +892,7 @@ Parrot_cx_find_handler_local(PARROT_INTERP, ARGIN(PMC *task))
 
             if (!PMC_IS_NULL(handler)) {
                 INTVAL valid_handler = 0;
-                Parrot_PCCINVOKE(interp, handler, CONST_STRING(interp, "can_handle"),
-                        "P->I", task, &valid_handler);
+                Parrot_pcc_invoke_method_from_c_args(interp, handler, CONST_STRING(interp, "can_handle"), "P->I", task, &valid_handler);
 
                 if (valid_handler) {
                     if (task->vtable->base_type == enum_class_Exception) {
