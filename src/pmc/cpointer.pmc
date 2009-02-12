@@ -90,6 +90,7 @@ pointer.
         if (data->sig)
             pobject_lives(interp, (PObj *)data->sig);
 
+
         if (data->pointer) {
             if (Parrot_str_not_equal(interp, data->sig, CONST_STRING(interp, "P")) == 0) {
                 PMC **pmc_pointer = (PMC **) data->pointer;
@@ -102,6 +103,7 @@ pointer.
                 pobject_lives(interp, (PObj *) *str_pointer);
             }
         }
+
     }
 
 /*
