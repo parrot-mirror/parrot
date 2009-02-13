@@ -14,8 +14,6 @@ use Parrot::Test::Pod::Util qw(
     identify_files_for_POD_testing
 );
 
-our (@failed_syntax, @empty_description);
-
 BEGIN {
     eval 'use Pod::Simple';
     if ($@) {
@@ -48,6 +46,8 @@ my $need_testing_ref = identify_files_for_POD_testing( {
     build_dir       => $build_dir,
     second_analysis => \&second_analysis,
 } );
+
+my (@failed_syntax, @empty_description);
 
 foreach my $file ( @{ $need_testing_ref } ) {
     # skip files with valid POD
