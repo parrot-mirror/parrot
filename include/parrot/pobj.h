@@ -248,7 +248,7 @@ typedef enum PObj_enum {
     /* Mark the object as on the free list */
     b_PObj_on_free_list_FLAG    = POBJ_FLAG(19),
 
-/* DOD/GC FLAGS */
+/* GC FLAGS */
     /* Set to true if the PObj has a custom mark routine */
     PObj_custom_mark_FLAG       = POBJ_FLAG(20),
     /* Mark the buffer as needing GC */
@@ -261,16 +261,16 @@ typedef enum PObj_enum {
 /* PMC specific FLAGs */
     /* call object finalizer */
     PObj_need_finalize_FLAG     = POBJ_FLAG(25),
-    /* a PMC that needs special handling in DOD, i.e one that has either:
+    /* a PMC that needs special handling in GC, i.e one that has either:
      * - metadata
      * - data_is_PMC_array_FLAG
      * - custom_mark_FLAG
      */
     b_PObj_is_special_PMC_FLAG  = POBJ_FLAG(26),
 
-    /* true if this is connected by some route to a needs_early_DOD object */
-    PObj_high_priority_DOD_FLAG = POBJ_FLAG(27),
-    PObj_needs_early_DOD_FLAG   = (POBJ_FLAG(27) | POBJ_FLAG(28)),
+    /* true if this is connected by some route to a needs_early_gc object */
+    PObj_high_priority_gc_FLAG  = POBJ_FLAG(27),
+    PObj_needs_early_gc_FLAG    = (POBJ_FLAG(27) | POBJ_FLAG(28)),
 
     /* True if the PMC is a class */
     PObj_is_class_FLAG          = POBJ_FLAG(29),
@@ -290,9 +290,9 @@ typedef enum PObj_enum {
 #  define PObj_on_free_list_FLAG      b_PObj_on_free_list_FLAG
 #  define PObj_is_special_PMC_FLAG    b_PObj_is_special_PMC_FLAG
 
-#  define DOD_flag_TEST(flag, o)      PObj_flag_TEST(flag, o)
-#  define DOD_flag_SET(flag, o)       PObj_flag_SET(flag, o)
-#  define DOD_flag_CLEAR(flag, o)     PObj_flag_CLEAR(flag, o)
+#  define gc_flag_TEST(flag, o)      PObj_flag_TEST(flag, o)
+#  define gc_flag_SET(flag, o)       PObj_flag_SET(flag, o)
+#  define gc_flag_CLEAR(flag, o)     PObj_flag_CLEAR(flag, o)
 
 #define PObj_get_FLAGS(o) ((o)->flags)
 
@@ -327,13 +327,13 @@ typedef enum PObj_enum {
 #define PObj_report_CLEAR(o) PObj_flag_CLEAR(report, o)
 
 
-#define PObj_on_free_list_TEST(o) DOD_flag_TEST(on_free_list, o)
-#define PObj_on_free_list_SET(o) DOD_flag_SET(on_free_list, o)
-#define PObj_on_free_list_CLEAR(o) DOD_flag_CLEAR(on_free_list, o)
+#define PObj_on_free_list_TEST(o) gc_flag_TEST(on_free_list, o)
+#define PObj_on_free_list_SET(o) gc_flag_SET(on_free_list, o)
+#define PObj_on_free_list_CLEAR(o) gc_flag_CLEAR(on_free_list, o)
 
-#define PObj_live_TEST(o) DOD_flag_TEST(live, o)
-#define PObj_live_SET(o) DOD_flag_SET(live, o)
-#define PObj_live_CLEAR(o) DOD_flag_CLEAR(live, o)
+#define PObj_live_TEST(o) gc_flag_TEST(live, o)
+#define PObj_live_SET(o) gc_flag_SET(live, o)
+#define PObj_live_CLEAR(o) gc_flag_CLEAR(live, o)
 
 #define PObj_is_string_TEST(o) PObj_flag_TEST(is_string, o)
 #define PObj_is_string_SET(o) PObj_flag_SET(is_string, o)
@@ -346,7 +346,7 @@ typedef enum PObj_enum {
 
 #define PObj_special_SET(flag, o) do { \
     PObj_flag_SET(flag, o); \
-    DOD_flag_SET(is_special_PMC, o); \
+    gc_flag_SET(is_special_PMC, o); \
 } while (0)
 
 #define PObj_special_CLEAR(flag, o) do { \
@@ -355,22 +355,22 @@ typedef enum PObj_enum {
                 (PObj_active_destroy_FLAG | \
                  PObj_custom_mark_FLAG | \
                  PObj_is_PMC_EXT_FLAG | \
-                 PObj_needs_early_DOD_FLAG))) \
-        DOD_flag_SET(is_special_PMC, o); \
+                 PObj_needs_early_gc_FLAG))) \
+        gc_flag_SET(is_special_PMC, o); \
     else \
-        DOD_flag_CLEAR(is_special_PMC, o); \
+        gc_flag_CLEAR(is_special_PMC, o); \
 } while (0)
 
-#define PObj_is_special_PMC_TEST(o) DOD_flag_TEST(is_special_PMC, o)
-#define PObj_is_special_PMC_SET(o) DOD_flag_SET(is_special_PMC, o)
+#define PObj_is_special_PMC_TEST(o) gc_flag_TEST(is_special_PMC, o)
+#define PObj_is_special_PMC_SET(o) gc_flag_SET(is_special_PMC, o)
 
-#define PObj_needs_early_DOD_TEST(o) PObj_flag_TEST(needs_early_DOD, o)
-#define PObj_needs_early_DOD_SET(o) PObj_special_SET(needs_early_DOD, o)
-#define PObj_needs_early_DOD_CLEAR(o) PObj_special_CLEAR(needs_early_DOD, o)
+#define PObj_needs_early_gc_TEST(o) PObj_flag_TEST(needs_early_gc, o)
+#define PObj_needs_early_gc_SET(o) PObj_special_SET(needs_early_gc, o)
+#define PObj_needs_early_gc_CLEAR(o) PObj_special_CLEAR(needs_early_gc, o)
 
-#define PObj_high_priority_DOD_TEST(o)   PObj_flag_TEST(high_priority_DOD, o)
-#define PObj_high_priority_DOD_SET(o)     PObj_special_SET(high_priority_DOD, o)
-#define PObj_high_priority_DOD_CLEAR(o) PObj_special_CLEAR(high_priority_DOD, o)
+#define PObj_high_priority_gc_TEST(o)   PObj_flag_TEST(high_priority_gc, o)
+#define PObj_high_priority_gc_SET(o)     PObj_special_SET(high_priority_gc, o)
+#define PObj_high_priority_gc_CLEAR(o) PObj_special_CLEAR(high_priority_gc, o)
 
 #define PObj_custom_mark_SET(o)   PObj_special_SET(custom_mark, o)
 #define PObj_custom_mark_CLEAR(o)   PObj_special_CLEAR(custom_mark, o)

@@ -2,7 +2,7 @@
 
 /*
  * $Id$
- * Copyright (C) 2007-2009, The Perl Foundation.
+ * Copyright (C) 2007-2009, Parrot Foundation.
  */
 
 /*
@@ -254,7 +254,6 @@ static char const * const pir_type_names[] = { "int", "string", "pmc", "num" };
 
 
 %token TK_HLL               ".HLL"
-       TK_HLL_MAP           ".HLL_map"
        TK_LOADLIB           ".loadlib"
 
 %token TK_SUB               ".sub"
@@ -588,7 +587,6 @@ pir_chunk         : sub_def
                   | const_decl_chunk
                   | namespace_decl
                   | hll_specifier
-                  | hll_mapping
                   | loadlib
                   | location_directive
                   | macro_definition
@@ -676,10 +674,6 @@ location_directive: ".line" TK_INTC
 
 hll_specifier     : ".HLL" TK_STRINGC
                         { set_hll(lexer, $2); }
-                  ;
-
-hll_mapping       : ".HLL_map" TK_STRINGC '=' TK_STRINGC
-                        { set_hll_map(lexer, $2, $4); }
                   ;
 
 namespace_decl    : ".namespace" '[' opt_namespace ']'
@@ -3382,30 +3376,8 @@ check_op_args_for_symbols(lexer_state * const lexer) {
             }
             else { /* it may be a constant, otherwise it's a label */
 
-/* XXX */
-#if 0
-/* experimental code to integrate constants. Doesn't work properly, this is only
- * 1 spot in which symbol lookups are done; needs to be done everywhere.
- * XXX possibly integrate constdecl and symbol, or represent constdecl's as symbols.
- */
-                constdecl *c = find_global_constant(lexer, operand->expr.id);
-
-                if (c) { /* it's a constant */
-
-                    /* convert the operand to a constant, copy the const value into this. */
-                    operand->type         = EXPR_CONSTANT;
-                    /* allocate a new const; doesn't matter which type/value, overwritten later */
-                    operand->expr.c       = new_const(lexer, INT_VAL, 0); /* dummy value */
-                    operand->expr.c->val  = c->val; /* copy value union */
-                    operand->expr.c->type = c->type; /* copy value type */
-                }
-                else
-#endif
-/* XXX */
-                {
-                    /* it must be a label */
-                    SET_BIT(label_bitmask, BIT(i));
-                }
+                /* it must be a label */
+                SET_BIT(label_bitmask, BIT(i));
             }
         }
     }

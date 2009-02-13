@@ -22,6 +22,11 @@
 
 typedef int Parrot_warnclass;
 
+typedef enum {
+    enum_DIS_BARE      = 1,
+    enum_DIS_HEADER    = 2
+} Parrot_disassemble_options;
+
 PARROT_EXPORT Parrot_Interp Parrot_new(Parrot_Interp parent);
 
 PARROT_EXPORT void Parrot_init_stacktop(Parrot_Interp, void *);
@@ -44,9 +49,9 @@ PARROT_EXPORT void Parrot_set_run_core(Parrot_Interp, Parrot_Run_core_t core);
 
 PARROT_EXPORT void Parrot_setwarnings(Parrot_Interp, Parrot_warnclass);
 
-PARROT_EXPORT Parrot_PackFile Parrot_readbc(Parrot_Interp, const char *);
+PARROT_EXPORT Parrot_PackFile Parrot_pbc_read(Parrot_Interp, const char *, const int);
 
-PARROT_EXPORT void Parrot_loadbc(Parrot_Interp, Parrot_PackFile);
+PARROT_EXPORT void Parrot_pbc_load(Parrot_Interp, Parrot_PackFile);
 
 PARROT_EXPORT void Parrot_setup_argv(Parrot_Interp, int argc, const char **argv);
 
@@ -58,7 +63,7 @@ PARROT_EXPORT void Parrot_destroy(Parrot_Interp);
 
 PARROT_EXPORT Parrot_Opcode * Parrot_debug(Parrot_Interp, Parrot_Interp, Parrot_Opcode *pc);
 
-PARROT_EXPORT void Parrot_disassemble(Parrot_Interp);
+PARROT_EXPORT void Parrot_disassemble(Parrot_Interp, const char *outfile, Parrot_disassemble_options options);
 
 PARROT_EXPORT
 PARROT_DOES_NOT_RETURN
@@ -72,6 +77,12 @@ PARROT_EXPORT void Parrot_run_native(PARROT_INTERP, native_func_t func);
 void Parrot_set_config_hash(void);
 
 int Parrot_revision(void);
+
+/* Deprecated */
+
+/* with 0.9.1 TT #266 */
+#define Parrot_readbc(i, c)  Parrot_pbc_read((i), (c), 0)
+#define Parrot_loadbc(i, pf) Parrot_pbc_load((i), (pf))
 
 #endif /* PARROT_EMBED_H_GUARD */
 

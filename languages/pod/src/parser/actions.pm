@@ -62,10 +62,36 @@ method begin_directive($/) {
     make $block;
 }
 
+method pod_directive($/) {
+    my $block := Pod::DocTree::Block.new();
+    our @?BLOCK;
+    @?BLOCK.unshift($block);
+    make $block;
+}
+
 method for_directive($/) {
     my $block := Pod::DocTree::Block.new();
-
+    our @?BLOCK;
+    @?BLOCK.unshift($block);
     make $block;
+}
+
+method cut_directive($/) {
+    our @?BLOCK;
+    my $count := @?BLOCK;
+    if $count > 0 {
+        my $block := @?BLOCK.shift();
+        make $block;
+    }
+}
+
+method end_directive($/) {
+    our @?BLOCK;
+    my $count := @?BLOCK;
+    if $count > 0 {
+        my $block := @?BLOCK.shift();
+        make $block;
+    }
 }
 
 method over_directive($/) {
@@ -106,7 +132,7 @@ method item_directive($/) {
 }
 
 method block_title($/) {
-    make Pod::DocTree::Text.new( :name("text") );
+    make Pod::DocTree::Text.new( :name('text') );
 }
 
 method paragraph($/) {
@@ -129,6 +155,51 @@ method block_name($/) {
     ## is this the right node type? or should be literal?
     ## XXX check spec.
     make Pod::DocTree::Text.new( :name(~$/) );
+}
+
+method format_code($/) {
+    my $fcode := Pod::DocTree::FormatCode.new();
+    $fcode.code($<code>);
+    my $text  := $( $<formatted_text> );
+    my $name;
+    if $<code> eq 'B' {
+        $name := 'bold';
+    }
+    elsif $<code> eq 'C' {
+        $name := 'code';
+    }
+    elsif $<code> eq 'E' {
+        $name := 'escape';
+    }
+    elsif $<code> eq 'F' {
+        $name := 'filename';
+    }
+    elsif $<code> eq 'I' {
+        $name := 'italic';
+    }
+    elsif $<code> eq 'L' {
+        $name := 'link';
+    }
+    elsif $<code> eq 'S' {
+        $name := 'XXX';
+    }
+    elsif $<code> eq 'X' {
+        $name := 'XXX';
+    }
+    elsif $<code> eq 'Z' {
+        $name := 'XXX';
+    }
+    $fcode.name($name);
+    $fcode.push($text);
+    make $fcode;
+}
+
+method literal_paragraph($/) {
+    my $paragraph := Pod::DocTree::Literal.new();
+    for $<formatted_text> {
+        $paragraph.push( $( $_ ) );
+    }
+    make $paragraph;
 }
 
 method formatted_text($/) {

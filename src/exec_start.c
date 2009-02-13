@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2001-2006, The Perl Foundation.
+Copyright (C) 2001-2006, Parrot Foundation.
 $Id$
 
 =head1 NAME
@@ -81,7 +81,7 @@ main(int argc, char * argv[])
         printf("Can't unpack.\n");
         return 1;
     }
-    Parrot_loadbc(interp, pf);
+    Parrot_pbc_load(interp, pf);
     PackFile_fixup_subs(interp, PBC_PBC, NULL);
 
     /* opcode_map has the offset of each opcode in the compiled code

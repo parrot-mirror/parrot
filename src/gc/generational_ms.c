@@ -1240,7 +1240,7 @@ gc_gms_set_gen(PARROT_INTERP)
      * 2) Merge the blacks to the existing older generation
      *    The plan to use depends on the interpreter, specifically, if
      *    we are doing a lazy run, entering a new scope, or what not.
-     * 3) If we are leaving a scope (denoted by a lazy DOD run
+     * 3) If we are leaving a scope (denoted by a lazy GC run
      *    and we had created one or more generations in this scope
      *    go back by resetting the generation number to the outer
      *    scope's generation
@@ -1477,7 +1477,7 @@ parrot_gc_gms_pobject_lives(PARROT_INTERP, ARGMOD(PObj *obj))
     int priority;
 
     PObj_live_SET(obj);
-    priority =  PObj_needs_early_DOD_TEST(obj);
+    priority =  PObj_needs_early_gc_TEST(obj);
     if (priority)
         ++interp->arena_base->num_early_PMCs_seen;
     h = PObj_to_GMSH(obj);
@@ -1606,13 +1606,13 @@ trace_children_cb(PARROT_INTERP, ARGIN(Small_Object_Pool *pool), int flag, SHIM(
         UINTVAL bits;
 
         if (lazy_gc && arena_base->num_early_PMCs_seen >=
-                arena_base->num_early_DOD_PMCs) {
+                arena_base->num_early_gc_PMCs) {
             return 1;
         }
         /* TODO propagate flag in pobject_lives */
         arena_base->gc_trace_ptr = current;
-        if (!PObj_needs_early_DOD_TEST(current))
-            PObj_high_priority_DOD_CLEAR(current);
+        if (!PObj_needs_early_gc_TEST(current))
+            PObj_high_priority_gc_CLEAR(current);
 
         /* mark children */
         if (PObj_custom_mark_TEST(current)) {
@@ -1672,8 +1672,8 @@ sweep_cb_pmc(PARROT_INTERP, ARGIN(Small_Object_Pool *pool), int flag, SHIM(void 
 
     for (h = pool->white; h != pool->free_list; h = h->next) {
         PMC * const obj = (PMC*)GMSH_to_PObj(h);
-        if (PObj_needs_early_DOD_TEST(obj))
-            --arena_base->num_early_DOD_PMCs;
+        if (PObj_needs_early_gc_TEST(obj))
+            --arena_base->num_early_gc_PMCs;
         if (PObj_active_destroy_TEST(obj))
             VTABLE_destroy(interp, (PMC *)obj);
         if (PObj_is_PMC_EXT_TEST(obj) && obj->pmc_ext) {
@@ -1846,10 +1846,10 @@ parrot_gc_gms_run(PARROT_INTERP, UINTVAL flags)
     Arenas * const arena_base = interp->arena_base;
     Gc_gms_private *g_gms;
 
-    if (arena_base->DOD_block_level) {
+    if (arena_base->gc_mark_block_level) {
         return;
     }
-    ++arena_base->DOD_block_level;
+    ++arena_base->gc_mark_block_level;
     g_gms = arena_base->gc_private;
     if (flags & GC_finish_FLAG) {
         Small_Object_Pool * const pool = arena_base->pmc_pool;
@@ -1858,12 +1858,12 @@ parrot_gc_gms_run(PARROT_INTERP, UINTVAL flags)
         /* XXX need to sweep over objects that have finalizers only */
         Parrot_forall_header_pools(interp, POOL_PMC, 0, sweep_cb_pmc);
         gc_gms_end_cycle(interp);
-        --arena_base->DOD_block_level;
+        --arena_base->gc_mark_block_level;
         return;
     }
 
-    /* normal or lazy DOD run */
-    arena_base->gc_runs++;
+    /* normal or lazy mark run */
+    arena_base->gc_mark_runs++;
     arena_base->lazy_gc = (flags & GC_lazy_FLAG);
     gc_gms_init_mark(interp);
     if (gc_gms_trace_root(interp, !arena_base->lazy_gc) &&
@@ -1873,12 +1873,12 @@ parrot_gc_gms_run(PARROT_INTERP, UINTVAL flags)
     }
     else {
         /*
-         * successful lazy DOD run
+         * successful lazy mark run
          */
-        ++arena_base->lazy_gc_runs;
+        ++arena_base->gc_lazy_mark_runs;
     }
     gc_gms_end_cycle(interp);
-    --arena_base->DOD_block_level;
+    --arena_base->gc_mark_block_level;
 }
 
 /*

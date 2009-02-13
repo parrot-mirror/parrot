@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2001-2008, The Perl Foundation.
+Copyright (C) 2001-2008, Parrot Foundation.
 $Id$
 
 =head1 NAME
@@ -245,14 +245,14 @@ interpinfo(PARROT_INTERP, INTVAL what)
 #endif
             ret = arena_base->memory_allocated;
             break;
-        case DOD_RUNS:
-            ret = arena_base->gc_runs;
+        case GC_MARK_RUNS:
+            ret = arena_base->gc_mark_runs;
             break;
-        case LAZY_DOD_RUNS:
-            ret = arena_base->lazy_gc_runs;
+        case GC_LAZY_MARK_RUNS:
+            ret = arena_base->gc_lazy_mark_runs;
             break;
-        case COLLECT_RUNS:
-            ret = arena_base->collect_runs;
+        case GC_COLLECT_RUNS:
+            ret = arena_base->gc_collect_runs;
             break;
         case ACTIVE_PMCS:
             ret = arena_base->pmc_pool->total_objects -
@@ -290,7 +290,7 @@ interpinfo(PARROT_INTERP, INTVAL what)
             ret = arena_base->memory_collected;
             break;
         case IMPATIENT_PMCS:
-            ret = arena_base->num_early_DOD_PMCs;
+            ret = arena_base->num_early_gc_PMCs;
             break;
         case EXTENDED_PMCS:
             ret = arena_base->num_extended_PMCs;

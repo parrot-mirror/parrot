@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2001-2008, The Perl Foundation.
+Copyright (C) 2001-2008, Parrot Foundation.
 $Id$
 
 =head1 Run Cores
@@ -347,12 +347,12 @@ runops_trace_core(PARROT_INTERP, ARGIN(opcode_t *pc))
 {
     ASSERT_ARGS(runops_trace_core)
 
-    static size_t  gc_runs, collect_runs;
+    static size_t  gc_mark_runs, gc_collect_runs;
     Arenas * const arena_base = interp->arena_base;
     Interp        *debugger;
 
-    gc_runs      = arena_base->gc_runs;
-    collect_runs = arena_base->collect_runs;
+    gc_mark_runs    = arena_base->gc_mark_runs;
+    gc_collect_runs = arena_base->gc_collect_runs;
     if (interp->pdb) {
         debugger = interp->pdb->debugger;
         PARROT_ASSERT(debugger);
@@ -399,14 +399,14 @@ runops_trace_core(PARROT_INTERP, ARGIN(opcode_t *pc))
         DO_OP(pc, interp);
         trace_op(interp, code_start, code_end, pc);
 
-        if (gc_runs != arena_base->gc_runs) {
-            gc_runs = arena_base->gc_runs;
-            Parrot_io_eprintf(debugger, "       DOD\n");
+        if (gc_mark_runs != arena_base->gc_mark_runs) {
+            gc_mark_runs  = arena_base->gc_mark_runs;
+            Parrot_io_eprintf(debugger, "       GC mark\n");
         }
 
-        if (collect_runs != arena_base->collect_runs) {
-            collect_runs  = arena_base->collect_runs;
-            Parrot_io_eprintf(debugger, "       GC\n");
+        if (gc_collect_runs != arena_base->gc_collect_runs) {
+            gc_collect_runs  = arena_base->gc_collect_runs;
+            Parrot_io_eprintf(debugger, "       GC collect\n");
         }
     }
 

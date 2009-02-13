@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2001-2008, The Perl Foundation.
+Copyright (C) 2001-2008, Parrot Foundation.
 $Id$
 
 =head1 NAME
@@ -666,7 +666,7 @@ create_class_pmc(PARROT_INTERP, INTVAL type)
         if (PObj_is_PMC_EXT_TEST(_class))
             Parrot_gc_free_pmc_ext(interp, _class);
 
-        DOD_flag_CLEAR(is_special_PMC, _class);
+        gc_flag_CLEAR(is_special_PMC, _class);
 
         PMC_pmc_val(_class)    = (PMC  *)0xdeadbeef;
         PMC_struct_val(_class) = (void *)0xdeadbeef;
@@ -755,7 +755,7 @@ Parrot_create_mro(PARROT_INTERP, INTVAL type)
 
 =item C<void gc_register_pmc>
 
-Registers the PMC with the interpreter's DOD registry.
+Registers the PMC with the interpreter's GC registry.
 
 =cut
 
@@ -766,7 +766,7 @@ void
 gc_register_pmc(PARROT_INTERP, ARGIN(PMC *pmc))
 {
     ASSERT_ARGS(gc_register_pmc)
-    /* Better not trigger a DOD run with a potentially unanchored PMC */
+    /* Better not trigger a GC run with a potentially unanchored PMC */
     Parrot_block_GC_mark(interp);
 
     PARROT_ASSERT(interp->gc_registry);
@@ -780,7 +780,7 @@ gc_register_pmc(PARROT_INTERP, ARGIN(PMC *pmc))
 
 =item C<void gc_unregister_pmc>
 
-Unregisters the PMC from the interpreter's DOD registry.
+Unregisters the PMC from the interpreter's GC registry.
 
 =cut
 

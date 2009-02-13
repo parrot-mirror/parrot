@@ -35,7 +35,7 @@ handle "external" strings.
 
 =item C<void Parrot_go_collect(PARROT_INTERP)>
 
-Does nothing other than increment the interpreter's C<collect_runs>
+Does nothing other than increment the interpreter's C<gc_collect_runs>
 count.
 
 =cut
@@ -46,10 +46,10 @@ void
 Parrot_go_collect(PARROT_INTERP)
 {
     ASSERT_ARGS(parrot_go_collect)
-    if (interp->arena_base->GC_block_level) {
+    if (interp->arena_base->gc_sweep_block_level) {
         return;
     }
-    interp->arena_base->collect_runs++;        /* fake it */
+    interp->arena_base->gc_collect_runs++;        /* fake it */
 }
 
 /*
@@ -120,7 +120,7 @@ xrealloc(void *p, size_t size)
 =item C<void Parrot_reallocate(PARROT_INTERP, Buffer *buffer, size_t newsize)>
 
 COWable objects (strings or Buffers) use an INTVAL before C<bufstart> for
-refcounting in DOD.
+refcounting in GC.
 
 =cut
 

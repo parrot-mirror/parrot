@@ -139,13 +139,12 @@ typedef struct Arenas {
     void (*finalize_gc_system) (PARROT_INTERP);
     void (*init_pool)(PARROT_INTERP, struct Small_Object_Pool *);
     /*
-     * statistics for DOD and GC
+     * statistics for GC
      */
-    size_t  gc_runs;           /* Number of times we've done a DOD sweep */
-    size_t  lazy_gc_runs;       /* Number of successful lazy DOD sweep */
-    size_t  collect_runs;       /* Number of times we've
-                                 * done a memory compaction
-                                 */
+    size_t  gc_mark_runs;       /* Number of times we've done a mark run*/
+    size_t  gc_lazy_mark_runs;  /* Number of successful lazy mark runs */
+    size_t  gc_collect_runs;    /* Number of times we've done a memory
+                                   compaction */
     size_t  mem_allocs_since_last_collect;      /* The number of memory
                                                  * allocations from the
                                                  * system since the last
@@ -153,42 +152,42 @@ typedef struct Arenas {
     size_t  header_allocs_since_last_collect;   /* The number of header
                                                  * blocks allocated from
                                                  * the system since the last
-                                                 * DOD run */
-    size_t  memory_allocated;   /* The total amount of
-                                 * allocatable memory
-                                 * allocated. Doesn't count
-                                 * memory for headers or
-                                 * internal structures or
-                                 * anything */
-    UINTVAL memory_collected;   /* Total amount of memory copied
-                                   during collection */
-    UINTVAL num_early_DOD_PMCs; /* how many PMCs want immediate destruction */
-    UINTVAL num_early_PMCs_seen;/* how many such PMCs has DOD seen */
-    UINTVAL num_extended_PMCs;  /* active PMCs having pmc_ext */
-    PMC* gc_mark_start;         /* first PMC marked during a DOD run */
-    PMC* gc_mark_ptr;           /* last PMC marked during a DOD run */
-    PMC* gc_trace_ptr;          /* last PMC trace_children was called on */
-    int lazy_gc;                /* flag that indicates whether we should stop
-                                   when we've seen all impatient PMCs */
+                                                 * GC run */
+    size_t  memory_allocated;     /* The total amount of
+                                   * allocatable memory
+                                   * allocated. Doesn't count
+                                   * memory for headers or
+                                   * internal structures or
+                                   * anything */
+    UINTVAL memory_collected;     /* Total amount of memory copied
+                                     during collection */
+    UINTVAL num_early_gc_PMCs;    /* how many PMCs want immediate destruction */
+    UINTVAL num_early_PMCs_seen;  /* how many such PMCs has GC seen */
+    UINTVAL num_extended_PMCs;    /* active PMCs having pmc_ext */
+    PMC* gc_mark_start;           /* first PMC marked during a GC run */
+    PMC* gc_mark_ptr;             /* last PMC marked during a GC run */
+    PMC* gc_trace_ptr;            /* last PMC trace_children was called on */
+    int lazy_gc;                  /* flag that indicates whether we should stop
+                                     when we've seen all impatient PMCs */
     /*
-     * DOD, GC blocking
+     * GC blocking
      */
-    UINTVAL DOD_block_level;    /* How many outstanding DOD block
-                                   requests are there? */
-    UINTVAL GC_block_level;     /* How many outstanding GC block
-                                   requests are there? */
+    UINTVAL gc_mark_block_level;  /* How many outstanding GC block
+                                     requests are there? */
+    UINTVAL gc_sweep_block_level; /* How many outstanding GC block
+                                     requests are there? */
     /*
      * private data for the GC subsystem
      */
-    void *  gc_private;         /* gc subsystem data */
+    void *  gc_private;           /* gc subsystem data */
 } Arenas;
 
 /* &gen_from_enum(interpinfo.pasm) prefix(INTERPINFO_) */
 
 typedef enum {
     TOTAL_MEM_ALLOC = 1,
-    DOD_RUNS,
-    COLLECT_RUNS,
+    GC_MARK_RUNS,
+    GC_COLLECT_RUNS,
     ACTIVE_PMCS,
     ACTIVE_BUFFERS,
     TOTAL_PMCS,
@@ -197,7 +196,7 @@ typedef enum {
     MEM_ALLOCS_SINCE_COLLECT,
     TOTAL_COPIED,
     IMPATIENT_PMCS,
-    LAZY_DOD_RUNS,
+    GC_LAZY_MARK_RUNS,
     EXTENDED_PMCS,
     CURRENT_RUNCORE,
 

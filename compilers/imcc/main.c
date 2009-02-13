@@ -4,7 +4,7 @@
  * Intermediate Code Compiler for Parrot.
  *
  * Copyright (C) 2002 Melvin Smith <melvin.smith@mindspring.com>
- * Copyright (C) 2003-2008, The Perl Foundation.
+ * Copyright (C) 2003-2009, Parrot Foundation.
  */
 
 /*
@@ -269,7 +269,7 @@ Parrot_version(PARROT_INTERP)
     ASSERT_ARGS(Parrot_version)
     printf("This is parrot version " PARROT_VERSION);
     printf(" built for " PARROT_ARCHNAME ".\n");
-    printf("Copyright (C) 2001-2008, The Perl Foundation.\n\
+    printf("Copyright (C) 2001-2009, Parrot Foundation.\n\
 \n\
 This code is distributed under the terms of the Artistic License 2.0.\
 \n\
@@ -413,6 +413,9 @@ parseflags(PARROT_INTERP, int *argc, char **argv[])
                         "\n\nhelp: parrot -h\n", opt.opt_arg);
                 break;
             case 'b':
+                Parrot_warn(interp, PARROT_WARNINGS_ALL_FLAG,
+                        "The -b option is deprecated, use the -R or "
+                        "--runcore options instead.");
                 SET_FLAG(PARROT_BOUNDS_FLAG);
                 break;
             case 'p':
@@ -425,18 +428,33 @@ parseflags(PARROT_INTERP, int *argc, char **argv[])
                     SET_TRACE(PARROT_TRACE_OPS_FLAG);
                 break;
             case 'j':
+                Parrot_warn(interp, PARROT_WARNINGS_ALL_FLAG,
+                        "The -j option is deprecated, use the -R or "
+                        "--runcore options instead.");
                 SET_CORE(PARROT_JIT_CORE);
                 break;
             case 'S':
+                Parrot_warn(interp, PARROT_WARNINGS_ALL_FLAG,
+                        "The -S option is deprecated, use the -R or "
+                        "--runcore options instead.");
                 SET_CORE(PARROT_SWITCH_CORE);
                 break;
             case 'C':
+                Parrot_warn(interp, PARROT_WARNINGS_ALL_FLAG,
+                        "The -C option is deprecated, use the -R or "
+                        "--runcore options instead.");
                 SET_CORE(PARROT_CGP_CORE);
                 break;
             case 'f':
+                Parrot_warn(interp, PARROT_WARNINGS_ALL_FLAG,
+                        "The -f option is deprecated, use the -R or "
+                        "--runcore options instead.");
                 SET_CORE(PARROT_FAST_CORE);
                 break;
             case 'g':
+                Parrot_warn(interp, PARROT_WARNINGS_ALL_FLAG,
+                        "The -g option is deprecated, use the -R or "
+                        "--runcore options instead.");
                 SET_CORE(PARROT_CGOTO_CORE);
                 break;
             case 'd':
@@ -972,7 +990,7 @@ compile_to_bytecode(PARROT_INTERP,
               opt_desc, opt_level);
 
     pf = PackFile_new(interp, 0);
-    Parrot_loadbc(interp, pf);
+    Parrot_pbc_load(interp, pf);
 
     IMCC_push_parser_state(interp);
     IMCC_INFO(interp)->state->file = sourcefile;
@@ -1076,11 +1094,11 @@ imcc_run(PARROT_INTERP, ARGIN(const char *sourcefile), int argc,
     /* If the input file is Parrot bytecode, then we simply read it
        into a packfile, which Parrot then loads */
     if (STATE_LOAD_PBC(interp)) {
-        PackFile * const pf = Parrot_readbc(interp, sourcefile);
+        PackFile * const pf = Parrot_pbc_read(interp, sourcefile, 0);
 
         if (!pf)
             IMCC_fatal_standalone(interp, 1, "main: Packfile loading failed\n");
-        Parrot_loadbc(interp, pf);
+        Parrot_pbc_load(interp, pf);
     }
     else
         compile_to_bytecode(interp, sourcefile, output_file);
@@ -1098,10 +1116,10 @@ imcc_run(PARROT_INTERP, ARGIN(const char *sourcefile), int argc,
             PackFile *pf;
 
             IMCC_info(interp, 1, "Loading %s\n", output_file);
-            pf = Parrot_readbc(interp, output_file);
+            pf = Parrot_pbc_read(interp, output_file, 0);
             if (!pf)
                 IMCC_fatal_standalone(interp, 1, "Packfile loading failed\n");
-            Parrot_loadbc(interp, pf);
+            Parrot_pbc_load(interp, pf);
             SET_STATE_LOAD_PBC(interp);
         }
     }

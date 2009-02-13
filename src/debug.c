@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2001-2008, The Perl Foundation.
+Copyright (C) 2001-2008, Parrot Foundation.
 $Id$
 
 =head1 NAME
@@ -1005,6 +1005,7 @@ Parrot_debugger_init(PARROT_INTERP)
         /* Allocate space for command line buffers, NUL terminated c strings */
         pdb->cur_command = (char *)mem_sys_allocate_zeroed(DEBUG_CMD_BUFFER_LENGTH + 1);
         pdb->last_command = (char *)mem_sys_allocate_zeroed(DEBUG_CMD_BUFFER_LENGTH + 1);
+        pdb->file = mem_allocate_zeroed_typed(PDB_file_t);
     }
 
     /* PDB_disassemble(interp, NULL); */
@@ -3161,7 +3162,8 @@ PDB_list(PARROT_INTERP, ARGIN(const char *command))
     PDB_t         *pdb = interp->pdb;
     unsigned long  n   = 10;
 
-    if (!pdb->file) {
+    TRACEDEB_MSG("PDB_list");
+    if (!pdb->file || !pdb->file->line) {
         Parrot_io_eprintf(pdb->debugger, "No source file loaded\n");
         return;
     }
@@ -3326,32 +3328,35 @@ void
 PDB_info(PARROT_INTERP)
 {
     ASSERT_ARGS(PDB_info)
-    Parrot_io_eprintf(interp, "Total memory allocated = %ld\n",
-            interpinfo(interp, TOTAL_MEM_ALLOC));
-    Parrot_io_eprintf(interp, "DOD runs = %ld\n",
-            interpinfo(interp, DOD_RUNS));
-    Parrot_io_eprintf(interp, "Lazy DOD runs = %ld\n",
-            interpinfo(interp, LAZY_DOD_RUNS));
-    Parrot_io_eprintf(interp, "Collect runs = %ld\n",
-            interpinfo(interp, COLLECT_RUNS));
-    Parrot_io_eprintf(interp, "Collect memory = %ld\n",
-            interpinfo(interp, TOTAL_COPIED));
-    Parrot_io_eprintf(interp, "Active PMCs = %ld\n",
-            interpinfo(interp, ACTIVE_PMCS));
-    Parrot_io_eprintf(interp, "Extended PMCs = %ld\n",
-            interpinfo(interp, EXTENDED_PMCS));
-    Parrot_io_eprintf(interp, "Timely DOD PMCs = %ld\n",
-            interpinfo(interp, IMPATIENT_PMCS));
-    Parrot_io_eprintf(interp, "Total PMCs = %ld\n",
-            interpinfo(interp, TOTAL_PMCS));
-    Parrot_io_eprintf(interp, "Active buffers = %ld\n",
-            interpinfo(interp, ACTIVE_BUFFERS));
-    Parrot_io_eprintf(interp, "Total buffers = %ld\n",
-            interpinfo(interp, TOTAL_BUFFERS));
-    Parrot_io_eprintf(interp, "Header allocations since last collect = %ld\n",
-            interpinfo(interp, HEADER_ALLOCS_SINCE_COLLECT));
-    Parrot_io_eprintf(interp, "Memory allocations since last collect = %ld\n",
-            interpinfo(interp, MEM_ALLOCS_SINCE_COLLECT));
+    Parrot_Interp itdeb = interp->pdb->debugger;
+    Parrot_Interp itp = interp->pdb->debugee;
+
+    Parrot_io_eprintf(itdeb, "Total memory allocated = %ld\n",
+            interpinfo(itp, TOTAL_MEM_ALLOC));
+    Parrot_io_eprintf(itdeb, "GC mark runs = %ld\n",
+            interpinfo(itp, GC_MARK_RUNS));
+    Parrot_io_eprintf(itdeb, "Lazy gc mark runs = %ld\n",
+            interpinfo(itp, GC_LAZY_MARK_RUNS));
+    Parrot_io_eprintf(itdeb, "GC collect runs = %ld\n",
+            interpinfo(itp, GC_COLLECT_RUNS));
+    Parrot_io_eprintf(itdeb, "Collect memory = %ld\n",
+            interpinfo(itp, TOTAL_COPIED));
+    Parrot_io_eprintf(itdeb, "Active PMCs = %ld\n",
+            interpinfo(itp, ACTIVE_PMCS));
+    Parrot_io_eprintf(itdeb, "Extended PMCs = %ld\n",
+            interpinfo(itp, EXTENDED_PMCS));
+    Parrot_io_eprintf(itdeb, "Timely GC PMCs = %ld\n",
+            interpinfo(itp, IMPATIENT_PMCS));
+    Parrot_io_eprintf(itdeb, "Total PMCs = %ld\n",
+            interpinfo(itp, TOTAL_PMCS));
+    Parrot_io_eprintf(itdeb, "Active buffers = %ld\n",
+            interpinfo(itp, ACTIVE_BUFFERS));
+    Parrot_io_eprintf(itdeb, "Total buffers = %ld\n",
+            interpinfo(itp, TOTAL_BUFFERS));
+    Parrot_io_eprintf(itdeb, "Header allocations since last collect = %ld\n",
+            interpinfo(itp, HEADER_ALLOCS_SINCE_COLLECT));
+    Parrot_io_eprintf(itdeb, "Memory allocations since last collect = %ld\n",
+            interpinfo(itp, MEM_ALLOCS_SINCE_COLLECT));
 }
 
 /*

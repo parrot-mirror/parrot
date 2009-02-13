@@ -239,13 +239,13 @@ mem_allocate(PARROT_INTERP, size_t size, ARGMOD(Memory_Pool *pool))
     /* If not enough room, try to find some */
     if (pool->top_block->free < size) {
         /*
-         * force a DOD run to get live flags set
+         * force a GC mark run to get live flags set
          * for incremental M&S collection is run from there
          * but only if there may be something worth collecting!
-         * TODO pass required allocation size to the DOD system,
+         * TODO pass required allocation size to the GC system,
          *      so that collection can be skipped if needed
          */
-        if (!interp->arena_base->DOD_block_level
+        if (!interp->arena_base->gc_mark_block_level
         &&   interp->arena_base->mem_allocs_since_last_collect) {
             Parrot_do_gc_run(interp, GC_trace_stack_FLAG);
 #if !PARROT_GC_IMS
@@ -374,10 +374,10 @@ compact_pool(PARROT_INTERP, ARGMOD(Memory_Pool *pool))
     Arenas * const      arena_base = interp->arena_base;
 
     /* Bail if we're blocked */
-    if (arena_base->GC_block_level)
+    if (arena_base->gc_sweep_block_level)
         return;
 
-    ++arena_base->GC_block_level;
+    ++arena_base->gc_sweep_block_level;
 
     if (interp->profile)
         Parrot_gc_profile_start(interp);
@@ -385,7 +385,7 @@ compact_pool(PARROT_INTERP, ARGMOD(Memory_Pool *pool))
     /* We're collecting */
     arena_base->mem_allocs_since_last_collect    = 0;
     arena_base->header_allocs_since_last_collect = 0;
-    arena_base->collect_runs++;
+    arena_base->gc_collect_runs++;
 
     /* total - reclaimable == currently used. Add a minimum block to the
      * current amount, so we can avoid having to allocate it in the future. */
@@ -583,7 +583,7 @@ compact_pool(PARROT_INTERP, ARGMOD(Memory_Pool *pool))
     if (interp->profile)
         Parrot_gc_profile_end(interp, PARROT_PROF_GC);
 
-    --arena_base->GC_block_level;
+    --arena_base->gc_sweep_block_level;
 }
 
 /*

@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2007-2009, The Perl Foundation.
+Copyright (C) 2007-2009, Parrot Foundation.
 $Id$
 
 =head1 NAME
@@ -527,7 +527,7 @@ Parrot_oo_register_type(PARROT_INTERP, ARGIN(PMC *name), ARGIN(PMC *_namespace))
     INTVAL type;
     const INTVAL typeid_exists = fail_if_type_exists(interp, name);
 
-    PMC *classobj = VTABLE_get_class(interp, _namespace);
+    PMC * const classobj = VTABLE_get_class(interp, _namespace);
     if (!PMC_IS_NULL(classobj)) {
         STRING *classname = VTABLE_get_string(interp, _namespace);
         Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INVALID_OPERATION,
@@ -745,7 +745,7 @@ Parrot_invalidate_method_cache(PARROT_INTERP, ARGIN_NULLOK(STRING *_class))
  * quick'n'dirty method cache
  * RT #45987: use a hash if method_name is not constant
  *       i.e. from obj.$Sreg(args)
- *       If this hash is implemented mark it during DOD
+ *       If this hash is implemented mark it during GC
  */
 
 /*

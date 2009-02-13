@@ -157,12 +157,12 @@ Parrot_gc_ms_run(PARROT_INTERP, UINTVAL flags)
     /* XXX these should go into the interpreter */
     int total_free     = 0;
 
-    if (arena_base->DOD_block_level)
+    if (arena_base->gc_mark_block_level)
         return;
 
     if (interp->pdb && interp->pdb->debugger) {
         /*
-         * if the other interpreter did a DOD run, it can set
+         * if the other interpreter did a GC mark run, it can set
          * live bits of shared objects, but these aren't reset, because
          * they are in a different arena. When now such a PMC points to
          * other non-shared object, these wouldn't be marked and hence
@@ -194,10 +194,10 @@ Parrot_gc_ms_run(PARROT_INTERP, UINTVAL flags)
         return;
     }
 
-    ++arena_base->DOD_block_level;
+    ++arena_base->gc_mark_block_level;
     arena_base->lazy_gc = flags & GC_lazy_FLAG;
 
-    /* tell the threading system that we're doing DOD mark */
+    /* tell the threading system that we're doing GC mark */
     pt_gc_start_mark(interp);
     Parrot_gc_ms_run_init(interp);
 
@@ -222,22 +222,22 @@ Parrot_gc_ms_run(PARROT_INTERP, UINTVAL flags)
         UNUSED(ignored);
 
         if (interp->profile)
-            Parrot_gc_profile_end(interp, PARROT_PROF_DOD_cb);
+            Parrot_gc_profile_end(interp, PARROT_PROF_GC_cb);
     }
     else {
         pt_gc_stop_mark(interp); /* XXX */
 
-        /* successful lazy DOD count */
-        ++arena_base->lazy_gc_runs;
+        /* successful lazy mark run count */
+        ++arena_base->gc_lazy_mark_runs;
 
         Parrot_gc_clear_live_bits(interp);
         if (interp->profile)
-            Parrot_gc_profile_end(interp, PARROT_PROF_DOD_p2);
+            Parrot_gc_profile_end(interp, PARROT_PROF_GC_p2);
     }
 
     /* Note it */
-    arena_base->gc_runs++;
-    --arena_base->DOD_block_level;
+    arena_base->gc_mark_runs++;
+    --arena_base->gc_mark_block_level;
 
     return;
 }
@@ -247,7 +247,7 @@ Parrot_gc_ms_run(PARROT_INTERP, UINTVAL flags)
 
 =item C<int Parrot_gc_trace_root>
 
-Traces the root set. Returns 0 if it's a lazy DOD run and all objects
+Traces the root set. Returns 0 if it's a lazy GC run and all objects
 that need timely destruction were found.
 
 C<trace_stack> can have these values:
@@ -280,7 +280,7 @@ Parrot_gc_trace_root(PARROT_INTERP, Parrot_gc_trace_type trace)
     Parrot_Context   *ctx;
     PObj             *obj;
 
-    /* note: adding locals here did cause increased DOD runs */
+    /* note: adding locals here did cause increased GC runs */
     mark_context_start();
 
     if (trace == GC_TRACE_SYSTEM_ONLY) {
@@ -319,7 +319,7 @@ Parrot_gc_trace_root(PARROT_INTERP, Parrot_gc_trace_type trace)
      * XXX these PMCs are constant and shouldn't get collected
      * but t/library/dumper* fails w/o this marking.
      *
-     * It seems that the Class PMC gets DODed - these should
+     * It seems that the Class PMC gets GCed - these should
      * get created as constant PMCs.
      */
     mark_vtables(interp);
@@ -353,7 +353,7 @@ Parrot_gc_trace_root(PARROT_INTERP, Parrot_gc_trace_type trace)
 
     /* quick check if we can already bail out */
     if (arena_base->lazy_gc
-    &&  arena_base->num_early_PMCs_seen >= arena_base->num_early_DOD_PMCs)
+    &&  arena_base->num_early_PMCs_seen >= arena_base->num_early_gc_PMCs)
         return 0;
 
     /* Find important stuff on the system stack */
@@ -361,7 +361,7 @@ Parrot_gc_trace_root(PARROT_INTERP, Parrot_gc_trace_type trace)
         trace_system_areas(interp);
 
     if (interp->profile)
-        Parrot_gc_profile_end(interp, PARROT_PROF_DOD_p1);
+        Parrot_gc_profile_end(interp, PARROT_PROF_GC_p1);
 
     return 1;
 }
@@ -607,7 +607,7 @@ mark_special(PARROT_INTERP, ARGIN(PMC *obj))
      * pointers of the originating interpreter.
      *
      * We are possibly changing another interpreter's data here, so
-     * the mark phase of DOD must run only on one interpreter of a pool
+     * the mark phase of GC must run only on one interpreter of a pool
      * at a time. However, freeing unused objects can occur in parallel.
      * And: to be sure that a shared object is dead, we have to finish
      * the mark phase of all interpreters in a pool that might reference
@@ -623,12 +623,12 @@ mark_special(PARROT_INTERP, ARGIN(PMC *obj))
 
     arena_base = interp->arena_base;
 
-    if (PObj_needs_early_DOD_TEST(obj))
+    if (PObj_needs_early_gc_TEST(obj))
         ++arena_base->num_early_PMCs_seen;
 
-    if (PObj_high_priority_DOD_TEST(obj) && arena_base->gc_trace_ptr) {
+    if (PObj_high_priority_gc_TEST(obj) && arena_base->gc_trace_ptr) {
         /* set obj's parent to high priority */
-        PObj_high_priority_DOD_SET(arena_base->gc_trace_ptr);
+        PObj_high_priority_gc_SET(arena_base->gc_trace_ptr);
         hi_prio = 1;
     }
     else
@@ -681,7 +681,7 @@ mark_special(PARROT_INTERP, ARGIN(PMC *obj))
 
 =item C<static void more_traceable_objects>
 
-We're out of traceable objects. First we try a DOD run to free some up. If
+We're out of traceable objects. First we try a GC run to free some up. If
 that doesn't work, allocate a new arena.
 
 =cut
@@ -764,7 +764,7 @@ gc_ms_add_free_object(SHIM_INTERP, ARGMOD(Small_Object_Pool *pool), ARGIN(void *
 
 Free object allocator for the MS garbage collector system. If there are no
 free objects, call C<gc_ms_add_free_object> to either free them up with a
-DOD run, or allocate new objects. If there are objects available on the
+GC run, or allocate new objects. If there are objects available on the
 free list, pop it off and return it.
 
 =cut
@@ -854,7 +854,7 @@ sweep_cb(PARROT_INTERP, ARGMOD(Small_Object_Pool *pool), int flag,
     Parrot_gc_sweep(interp, pool);
 
     if (interp->profile && (flag & POOL_PMC))
-        Parrot_gc_profile_end(interp, PARROT_PROF_DOD_cp);
+        Parrot_gc_profile_end(interp, PARROT_PROF_GC_cp);
 
     *total_free += pool->num_free_objects;
 
@@ -975,7 +975,7 @@ Parrot_gc_trace_children(PARROT_INTERP, size_t how_many)
         PMC *next;
 
         if (lazy_gc && arena_base->num_early_PMCs_seen >=
-                arena_base->num_early_DOD_PMCs) {
+                arena_base->num_early_gc_PMCs) {
             return 0;
         }
 
@@ -985,8 +985,8 @@ Parrot_gc_trace_children(PARROT_INTERP, size_t how_many)
         PObj_get_FLAGS(current) |= PObj_custom_GC_FLAG;
 
         /* clearing the flag is much more expensive then testing */
-        if (!PObj_needs_early_DOD_TEST(current))
-            PObj_high_priority_DOD_CLEAR(current);
+        if (!PObj_needs_early_gc_TEST(current))
+            PObj_high_priority_gc_CLEAR(current);
 
         /* mark properties */
         if (PMC_metadata(current))
@@ -1009,7 +1009,7 @@ Parrot_gc_trace_children(PARROT_INTERP, size_t how_many)
     arena_base->gc_trace_ptr  = NULL;
 
     if (interp->profile)
-        Parrot_gc_profile_end(interp, PARROT_PROF_DOD_p2);
+        Parrot_gc_profile_end(interp, PARROT_PROF_GC_p2);
 
     return 1;
 }

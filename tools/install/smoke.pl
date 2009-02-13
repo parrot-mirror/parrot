@@ -71,6 +71,7 @@ my $exe;
 my $out;
 my $FH;
 my $parrot = catfile($bindir, 'parrot');
+my $pirc = catfile($bindir, 'pirc');
 
 #
 # parrot executable
@@ -97,6 +98,19 @@ print $FH "token TOP { \\s* }\n";
 close $FH;
 $out = `$parrot $libdir/parrot/library/PGE/Perl6Grammar.pir $filename`;
 ok($out =~ /^\n## <::TOP>/, "check PGE");
+unlink($filename);
+
+$filename = 'test.pir';
+open $FH, '>', $filename
+        or die "Can't open $filename ($!).\n";
+print $FH <<'PIR';
+.sub main
+    say "hello world!"
+.end
+PIR
+close $FH;
+$out = `$pirc -n $filename`;
+ok($out eq "ok\n", "check pirc");
 unlink($filename);
 
 # compilers/tge is typically not installed
@@ -187,12 +201,6 @@ close $FH;
 $out = `$parrot languages/lolcode/lolcode.pbc $filename`;
 ok($out eq "HAI WORLD!\n", "check lolcode");
 unlink($filename);
-
-$out = `$parrot languages/lua/lua.pbc -e "print(nil)"`;
-ok($out eq "nil\n", "check lua");
-
-$out = `$parrot languages/ook/ook.pbc`;
-ok($out eq q{}, "check ook");
 
 $filename = 'test.l';
 open $FH, '>', $filename

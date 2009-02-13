@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2001-2008, The Perl Foundation.
+Copyright (C) 2001-2008, Parrot Foundation.
 This program is free software. It is subject to the same license as
 Parrot itself.
 $Id$
@@ -113,8 +113,8 @@ static const char *flag_bit_names[] =
     "data_is_PMC_array",
     "need_finalize",
     "is_special_PMC",
-    "high_priority_DOD",
-    "needs_early_DOD",
+    "high_priority_gc",
+    "needs_early_gc",
     "is_class",
     "is_object"
 };

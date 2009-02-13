@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2001-2008, The Perl Foundation.
+Copyright (C) 2001-2008, Parrot Foundation.
 $Id$
 
 =head1 NAME
@@ -113,10 +113,10 @@ extern void Parrot_initialize_core_pmcs(PARROT_INTERP);
 Initializes the new interpreter when it hasn't been initialized before.
 
 Additionally sets the stack top, so that Parrot objects created
-in inner stack frames will be visible during DODs stack walking code.
+in inner stack frames will be visible during GC stack walking code.
 B<stack_top> should be the address of an automatic variable in the caller's
 stack frame. All unanchored Parrot objects (PMCs) must live in inner stack
-frames so that they are not destroyed during DOD runs.
+frames so that they are not destroyed during GC runs.
 
 Use this function when you call into Parrot before entering a run loop.
 
@@ -374,7 +374,7 @@ Parrot_setwarnings(PARROT_INTERP, Parrot_warnclass wc)
 
 /*
 
-=item C<PackFile * Parrot_readbc>
+=item C<PackFile * Parrot_pbc_read>
 
 Read in a bytecode, unpack it into a C<PackFile> structure, and do fixups.
 
@@ -385,7 +385,7 @@ Read in a bytecode, unpack it into a C<PackFile> structure, and do fixups.
 PARROT_EXPORT
 PARROT_CAN_RETURN_NULL
 PackFile *
-Parrot_readbc(PARROT_INTERP, ARGIN_NULLOK(const char *fullname))
+Parrot_pbc_read(PARROT_INTERP, ARGIN_NULLOK(const char *fullname), const int debug)
 {
     FILE     *io        = NULL;
     INTVAL    is_mapped = 0;
@@ -440,9 +440,9 @@ again:
 #endif
     /* if we've opened a file (or stdin) with PIO, read it in */
     if (io) {
+        char  *cursor;
         size_t chunk_size = program_size > 0 ? program_size : 1024;
         INTVAL wanted     = program_size;
-        char  *cursor;
         size_t read_result;
 
         program_code = (char *)mem_sys_allocate(chunk_size);
@@ -461,6 +461,7 @@ again:
                 Parrot_io_eprintf(interp,
                             "Parrot VM: Could not reallocate buffer "
                             "while reading packfile from PIO.\n");
+                fclose(io);
                 return NULL;
             }
 
@@ -527,6 +528,9 @@ again:
 
     pf = PackFile_new(interp, is_mapped);
 
+    /* Make the cmdline option available to the unpackers */
+    pf->options = debug;
+
     if (!PackFile_unpack(interp, pf, (opcode_t *)program_code,
             (size_t)program_size)) {
         Parrot_io_eprintf(interp, "Parrot VM: Can't unpack packfile %s.\n",
@@ -555,9 +559,9 @@ again:
 
 /*
 
-=item C<void Parrot_loadbc>
+=item C<void Parrot_pbc_load>
 
-Loads the C<PackFile> returned by C<Parrot_readbc()>.
+Loads the C<PackFile> returned by C<Parrot_pbc_read()>.
 
 =cut
 
@@ -565,7 +569,7 @@ Loads the C<PackFile> returned by C<Parrot_readbc()>.
 
 PARROT_EXPORT
 void
-Parrot_loadbc(PARROT_INTERP, NOTNULL(PackFile *pf))
+Parrot_pbc_load(PARROT_INTERP, NOTNULL(PackFile *pf))
 {
     if (pf == NULL) {
         Parrot_io_eprintf(interp, "Invalid packfile\n");
@@ -669,14 +673,14 @@ op_name(PARROT_INTERP, int k)
 {
     ASSERT_ARGS(op_name)
     switch (k) {
-        case PARROT_PROF_DOD_p1:
-            return "DOD_mark_root";
-        case PARROT_PROF_DOD_p2:
-            return "DOD_mark_next";
-        case PARROT_PROF_DOD_cp:
-            return "DOD_collect_PMC";
-        case PARROT_PROF_DOD_cb:
-            return "DOD_collect_buffers";
+        case PARROT_PROF_GC_p1:
+            return "GC_mark_root";
+        case PARROT_PROF_GC_p2:
+            return "GC_mark_next";
+        case PARROT_PROF_GC_cp:
+            return "GC_collect_PMC";
+        case PARROT_PROF_GC_cb:
+            return "GC_collect_buffers";
         case PARROT_PROF_GC:
             return "GC";
         case PARROT_PROF_EXCEPTION:
@@ -1040,7 +1044,7 @@ print_constant_table(PARROT_INTERP) {
     INTVAL i;
 
     /* TODO: would be nice to print the name of the file as well */
-    Parrot_io_printf(interp, "Constant-table\n");
+    Parrot_io_printf(interp, "=head1 Constant-table\n\n");
 
     for (i = 0; i < numconstants; ++i) {
         PackFile_Constant *c = interp->code->const_table->constants[i];
@@ -1110,7 +1114,7 @@ print_constant_table(PARROT_INTERP) {
         }
     }
 
-    Parrot_io_printf(interp, "\n");
+    Parrot_io_printf(interp, "\n=cut\n\n");
 }
 
 
@@ -1128,7 +1132,7 @@ This is used by the Parrot disassembler.
 
 PARROT_EXPORT
 void
-Parrot_disassemble(PARROT_INTERP)
+Parrot_disassemble(PARROT_INTERP, const char *outfile, Parrot_disassemble_options options)
 {
     PDB_line_t *line;
     PDB_t      *pdb             = mem_allocate_zeroed_typed(PDB_t);
@@ -1146,11 +1150,15 @@ Parrot_disassemble(PARROT_INTERP)
     debugs = (interp->code->debugs != NULL);
 
     print_constant_table(interp);
+    if (options & enum_DIS_HEADER)
+        return;
 
-    Parrot_io_printf(interp, "%12s-%12s", "Seq_Op_Num", "Relative-PC");
+    if (!(options & enum_DIS_BARE))
+        Parrot_io_printf(interp, "# %12s-%12s", "Seq_Op_Num", "Relative-PC");
 
     if (debugs) {
-        Parrot_io_printf(interp, " %6s:\n", "SrcLn#");
+        if (!(options & enum_DIS_BARE))
+            Parrot_io_printf(interp, " %6s:\n", "SrcLn#");
         num_mappings = interp->code->debugs->num_mappings;
     }
     else {
@@ -1168,16 +1176,17 @@ Parrot_disassemble(PARROT_INTERP)
             if (op_code_seq_num == interp->code->debugs->mappings[curr_mapping]->offset) {
                 const int filename_const_offset =
                     interp->code->debugs->mappings[curr_mapping]->filename;
-                Parrot_io_printf(interp, "Current Source Filename %Ss\n",
+                Parrot_io_printf(interp, "# Current Source Filename '%Ss'\n",
                         interp->code->const_table->constants[filename_const_offset]->u.string);
                 curr_mapping++;
             }
         }
 
-        Parrot_io_printf(interp, "%012i-%012i",
-                op_code_seq_num, line->opcode - interp->code->base.data);
+        if (!(options & enum_DIS_BARE))
+            Parrot_io_printf(interp, "%012i-%012i",
+                             op_code_seq_num, line->opcode - interp->code->base.data);
 
-        if (debugs)
+        if (debugs && !(options & enum_DIS_BARE))
             Parrot_io_printf(interp, " %06i: ",
                     interp->code->debugs->base.data[op_code_seq_num]);
 
@@ -1231,7 +1240,7 @@ Parrot_run_native(PARROT_INTERP, native_func_t func)
     pf->cur_cs->base.data = program_code;
     pf->cur_cs->base.size = 2;
 
-    Parrot_loadbc(interp, pf);
+    Parrot_pbc_load(interp, pf);
 
     run_native = func;
 

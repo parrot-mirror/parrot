@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2001-2008, The Perl Foundation.
+Copyright (C) 2001-2008, Parrot Foundation.
 $Id$
 
 =head1 NAME
@@ -118,7 +118,7 @@ new_stack(PARROT_INTERP, ARGIN(const char *name))
 
 =item C<void mark_stack>
 
-Mark entries in a stack structure during DOD.
+Mark entries in a stack structure during GC.
 
 =cut
 
