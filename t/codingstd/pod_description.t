@@ -23,7 +23,7 @@ BEGIN {
     }
 }
 
-plan tests => 2;
+plan tests => 1;
 
 # RT #44437 this should really be using src_dir instead of build_dir but it
 # does not exist (yet)
@@ -48,26 +48,18 @@ my $need_testing_ref = identify_files_for_POD_testing( {
     second_analysis => \&oreilly_summary_malformed,
 } );
 
-my (@failed_syntax, @empty_description);
+my @empty_description;
 
 foreach my $file ( @{ $need_testing_ref } ) {
     # skip files with valid POD
-    if (file_pod_ok($file)) {
-        #check DESCRIPTION section on valid POD files
-        push @empty_description, $file if empty_description($file);
-    }
-    else {
-        # report whatever is not skipped
-        push @failed_syntax, $file;
+    #check DESCRIPTION section on valid POD files
+    if ( file_pod_ok($file) and empty_description($file) ) {
+        push @empty_description, $file;
     }
 }
 
-my $bad_syntax_files        = join( "\n", @failed_syntax );
-my $empty_description_files = join( "\n", @empty_description);
+my $empty_description_files = join( "\n", sort @empty_description);
 my $nempty_description      = scalar( @empty_description );
-
-# only ok if everything passed
-is( $bad_syntax_files, q{}, 'Pod syntax correct' );
 
 TODO: {
     local $TODO = "not quite done yet";
@@ -77,9 +69,6 @@ TODO: {
         'All Pod files have non-empty DESCRIPTION sections'
     );
 }
-
-diag("You should use podchecker to check the failed files.\n")
-    if $bad_syntax_files;
 
 diag("Found $nempty_description files without DESCRIPTION sections.\n")
     if $nempty_description;
@@ -112,24 +101,23 @@ sub empty_description {
     return 0;
 }
 
-=head1 NAME
+=head1 t/codingstd/pod_description.t
 
-t/codingstd/pod.t - Pod document syntax tests
+Identify files lacking 'Description' section in their POD
 
-=head1 SYNOPSIS
+=head2 SYNOPSIS
 
     # test all files
-    % prove t/codingstd/pod.t
+    % prove t/codingstd/pod_description.t
 
     # test specific files
-    % perl t/codingstd/pod.t perl_module.pm perl_file.pl
+    % perl t/codingstd/pod_description.t perl_module.pm perl_file.pl
 
-=head1 DESCRIPTION
+=head2 DESCRIPTION
 
 Tests the Pod syntax for all files listed in F<MANIFEST> and
 F<MANIFEST.generated> that appear to contain Pod markup. If any files
-contain invalid POD markup, they are reported in the test output.
-Use C<podchecker> to ferret out individual issues.
+contain with valid POD markup lack C<DESCRIPTION> sections, list them.
 
 =cut
 
