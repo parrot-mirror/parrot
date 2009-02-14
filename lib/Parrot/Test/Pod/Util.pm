@@ -10,6 +10,7 @@ use Exporter;
 our @ISA = qw( Exporter );
 our @EXPORT_OK = qw(
     identify_files_for_POD_testing
+    oreilly_summary_malformed
 );
 
 =head1 Parrot::Test::Pod::Util
@@ -35,8 +36,8 @@ All subroutines herein are exported only on demand.
 
 B<Purpose:>
 
-Identifies files in the Parrot distribution
-which are likely to merit examination for the validity of their POD.
+Identifies files in the Parrot distribution which are likely to merit
+examination for the validity of their POD.
 
 The subroutine itself does a first pass at that process, and takes as one of
 its arguments a reference to a subroutine which does a second such pass.
@@ -48,7 +49,7 @@ B<Arguments:>
         manifest        => $manifest,
         manifest_gen    => $manifest_gen,
         build_dir       => $build_dir,
-        second_analysis => \&second_analysis,
+        second_analysis => \&oreilly_summary_malformed,
     } );
 
 B<Return Value:>
@@ -137,6 +138,98 @@ sub identify_files_for_POD_testing {
     }
 
     return [ keys %{ $files_needing_analysis } ];
+}
+
+=head3 C<oreilly_summary_malformed()>
+
+B<Purpose:>
+
+An instance of the "second pass" type of subroutine passed to
+C<identify_files_for_POD_testing()> C<second_analysis> argument.
+
+In this instance, we omit:
+
+=over 4
+
+=item *
+
+files in F<docs/book/> that use
+extended O'Reilly-specific POD;
+
+=item *
+
+programs that generate POD; and
+
+=item *
+
+files which for other testing purposes have deliberately malformed POD.
+
+=back
+
+B<Arguments:> Two scalar arguments:
+
+=over 4
+
+=item *
+
+Reference to hash of files meriting analysis, generated in first part of 
+C<identify_files_for_POD_testing()>.
+
+=item *
+
+Path to build directory (currently, the top-level Parrot directory).
+
+=back
+
+B<Return Value:>
+
+Reference to hash of files meriting analysis, I<i.e.,> the results of the
+first pass minus the results of the second pass.
+
+=cut
+
+sub oreilly_summary_malformed {
+    my ($files_needing_analysis, $build_dir) = @_;
+    my $sto = q{.pod_examinable_oreilly_summary_malformed.sto};
+    if ( -e $sto ) {
+        eval { $files_needing_analysis = retrieve($sto) };
+        if ($@) {
+            croak "$sto exists on disk but could not retrieve from it";
+        }
+        else {
+            return $files_needing_analysis;
+        }
+    }
+    else {
+        SECOND_FILE: foreach my $file ( keys %{ $files_needing_analysis } ) {
+            my $full_file = qq|$build_dir/$file|;
+        
+            # Skip the book, because it uses extended O'Reilly-specific POD
+            if ($full_file =~ m{docs/book/}) {
+                delete $files_needing_analysis->{ $file };
+                next SECOND_FILE;
+            }
+        
+            # skip POD generating scripts
+            if ($full_file =~ m/ops_summary\.pl/) {
+                delete $files_needing_analysis->{ $file };
+                next SECOND_FILE;
+            }
+        
+            # skip file which includes malformed POD for other testing purposes
+            if ($full_file =~ m{
+                    t/tools/dev/searchops/samples\.pm
+                    |
+                    languages/pod/test\.pod
+                }x
+            ) {
+                delete $files_needing_analysis->{ $file };
+                next SECOND_FILE;
+            }
+        }
+    }
+    nstore $files_needing_analysis, $sto;
+    return $files_needing_analysis;
 }
 
 =head2 Author

@@ -8,11 +8,11 @@ use warnings;
 use Carp;
 use Test::More;
 use ExtUtils::Manifest qw(maniread);
-use Storable qw(nstore retrieve);
 use lib qw( lib );
 use Parrot::Config;
 use Parrot::Test::Pod::Util qw(
     identify_files_for_POD_testing
+    oreilly_summary_malformed
 );
 
 BEGIN {
@@ -86,50 +86,6 @@ diag("Found $nempty_description files without DESCRIPTION sections.\n")
 
 #################### SUBROUTINES ####################
 
-sub oreilly_summary_malformed {
-    my ($files_needing_analysis, $build_dir) = @_;
-    my $sto = q{.pod_examinable_oreilly_summary_malformed.sto};
-    if ( -e $sto ) {
-        eval { $files_needing_analysis = retrieve($sto) };
-        if ($@) {
-            croak "$sto exists on disk but could not retrieve from it";
-        }
-        else {
-            return $files_needing_analysis;
-        }
-    }
-    else {
-        SECOND_FILE: foreach my $file ( keys %{ $files_needing_analysis } ) {
-            my $full_file = qq|$build_dir/$file|;
-        
-            # Skip the book, because it uses extended O'Reilly-specific POD
-            if ($full_file =~ m{docs/book/}) {
-                delete $files_needing_analysis->{ $file };
-                next SECOND_FILE;
-            }
-        
-            # skip POD generating scripts
-            if ($full_file =~ m/ops_summary\.pl/) {
-                delete $files_needing_analysis->{ $file };
-                next SECOND_FILE;
-            }
-        
-            # skip file which includes malformed POD for other testing purposes
-            if ($full_file =~ m{
-                    t/tools/dev/searchops/samples\.pm
-                    |
-                    languages/pod/test\.pod
-                }x
-            ) {
-                delete $files_needing_analysis->{ $file };
-                next SECOND_FILE;
-            }
-        }
-    }
-    nstore $files_needing_analysis, $sto;
-    return $files_needing_analysis;
-}
-
 # Pulled from Test::Pod
 sub file_pod_ok {
     my $file    = shift;
@@ -155,7 +111,6 @@ sub empty_description {
 
     return 0;
 }
-
 
 =head1 NAME
 
