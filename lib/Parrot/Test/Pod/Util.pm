@@ -35,7 +35,7 @@ All subroutines herein are exported only on demand.
 
 B<Purpose:>
 
-Identifies files in the Parrot distribution 
+Identifies files in the Parrot distribution
 which are likely to merit examination for the validity of their POD.
 
 The subroutine itself does a first pass at that process, and takes as one of
@@ -111,7 +111,7 @@ sub identify_files_for_POD_testing {
         # do FIRST_FILE
         FIRST_FILE: foreach my $file ( keys %{ $files_needing_analysis } ) {
             my $full_file = qq|$args->{build_dir}/$file|;
-        
+
             # skip missing MANIFEST.generated files ( -e )
             # skip binary files # (including .pbc files) ( -B )
             # skip files that pass the -e test
@@ -120,7 +120,7 @@ sub identify_files_for_POD_testing {
                 delete $files_needing_analysis->{ $file };
                 next FIRST_FILE;
             }
-        
+
             # skip files without POD
             unless (Pod::Find::contains_pod( $full_file, 0 )) {
                 delete $files_needing_analysis->{ $file };
