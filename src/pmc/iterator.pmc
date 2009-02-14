@@ -144,7 +144,7 @@ Make a clone of the iterator.
         PMC    * const key  = (PMC *)PMC_struct_val(SELF);
         PMC    * const res  = pmc_new_init(INTERP, SELF->vtable->base_type,
                                            SELF.get_pmc());
-        Parrot_PCCINVOKE(interp, res, name, "P->", VTABLE_clone(interp, key));
+        Parrot_pcc_invoke_method_from_c_args(interp, res, name, "P->", VTABLE_clone(interp, key));
         return res;
     }
 
