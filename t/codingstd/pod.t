@@ -145,15 +145,15 @@ sub empty_description {
 
 =head1 NAME
 
-t/doc/pod.t - Pod document syntax tests
+t/codingstd/pod.t - Pod document syntax tests
 
 =head1 SYNOPSIS
 
     # test all files
-    % prove t/doc/pod.t
+    % prove t/codingstd/pod.t
 
     # test specific files
-    % perl t/doc/pod.t perl_module.pm perl_file.pl
+    % perl t/codingstd/pod.t perl_module.pm perl_file.pl
 
 =head1 DESCRIPTION
 
