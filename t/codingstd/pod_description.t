@@ -7,13 +7,8 @@ use warnings;
 
 use Carp;
 use Test::More;
-use ExtUtils::Manifest qw(maniread);
 use lib qw( lib );
-use Parrot::Config;
-use Parrot::Test::Pod::Util qw(
-    identify_files_for_POD_testing
-    oreilly_summary_malformed
-);
+use Parrot::Test::Pod::Util;
 
 BEGIN {
     eval 'use Pod::Simple';
@@ -23,36 +18,21 @@ BEGIN {
     }
 }
 
-plan tests => 1;
+plan tests => 2;
 
-# RT #44437 this should really be using src_dir instead of build_dir but it
-# does not exist (yet)
-my $build_dir    = $PConfig{build_dir};
-#print STDERR $build_dir, "\n";
+my $self = Parrot::Test::Pod::Util->new( {
+    argv => [ @ARGV ],
+} );
+ok( defined $self, "Parrot::Test::Pod::Util returned defined value" );
 
-croak "Cannot run test if build_dir does not yet exist"
-    unless -d $build_dir;
-croak "Test cannot be run unless MANIFEST exists in build dir"
-    unless -f "$build_dir/MANIFEST";
-croak "Test cannot be run unless MANIFEST exists in build dir"
-    unless -f "$build_dir/MANIFEST.generated";
-
-my $manifest     = maniread("$build_dir/MANIFEST");
-my $manifest_gen = maniread("$build_dir/MANIFEST.generated");
-
-my $need_testing_ref = identify_files_for_POD_testing( {
-    argv            => [ @ARGV ],
-    manifest        => $manifest,
-    manifest_gen    => $manifest_gen,
-    build_dir       => $build_dir,
-    second_analysis => \&oreilly_summary_malformed,
+my $need_testing_ref = $self->identify_files_for_POD_testing( {
+    second_analysis => 'oreilly_summary_malformed',
 } );
 
 my @empty_description;
 
 foreach my $file ( @{ $need_testing_ref } ) {
-    # skip files with valid POD
-    #check DESCRIPTION section on valid POD files
+    # check DESCRIPTION section on valid POD files
     if ( file_pod_ok($file) and empty_description($file) ) {
         push @empty_description, $file;
     }

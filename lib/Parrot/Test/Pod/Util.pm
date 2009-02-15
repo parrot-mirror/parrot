@@ -4,13 +4,57 @@ package Parrot::Test::Pod::Util;
 use strict;
 use warnings;
 use Carp;
-use Storable qw(nstore retrieve);
+use ExtUtils::Manifest qw(maniread);
 use Pod::Find qw(contains_pod);
-use Exporter;
-our @ISA = qw( Exporter );
-our @EXPORT_OK = qw(
-    identify_files_for_POD_testing
-    oreilly_summary_malformed
+use Storable qw(nstore retrieve);
+use lib qw( lib );
+use Parrot::Config;
+
+our %second_analysis_subs = (
+    oreilly_summary_malformed => sub {
+        my ($files_needing_analysis, $build_dir) = @_;
+        my $sto = q{.pod_examinable_oreilly_summary_malformed.sto};
+        if ( -e $sto ) {
+            eval { $files_needing_analysis = retrieve($sto) };
+            if ($@) {
+                croak "$sto exists on disk but could not retrieve from it";
+            }
+            else {
+                return $files_needing_analysis;
+            }
+        }
+        else {
+            SECOND_FILE: foreach my $file ( keys %{ $files_needing_analysis } ) {
+                my $full_file = qq|$build_dir/$file|;
+    
+                # Skip the book, because it uses extended O'Reilly-specific POD
+                if ($full_file =~ m{docs/book/}) {
+                    delete $files_needing_analysis->{ $file };
+                    next SECOND_FILE;
+                }
+    
+                # skip POD generating scripts
+                if ($full_file =~ m/ops_summary\.pl/) {
+                    delete $files_needing_analysis->{ $file };
+                    next SECOND_FILE;
+                }
+    
+                # skip file which includes malformed POD for 
+                # other testing purposes
+                if ($full_file =~ m{
+                        t/tools/dev/searchops/samples\.pm
+                        |
+                        languages/pod/test\.pod
+                    }x
+                ) {
+                    delete $files_needing_analysis->{ $file };
+                    next SECOND_FILE;
+                }
+            }
+        }
+        nstore $files_needing_analysis, $sto;
+        return $files_needing_analysis;
+    },
 );
 
 =head1 Parrot::Test::Pod::Util
@@ -19,9 +63,7 @@ Utilities for tests which test POD.
 
 =head2 Synopsis
 
-    use Parrot::Test::Pod::Util qw(
-        identify_files_for_POD_testing
-    );
+    use Parrot::Test::Pod::Util;
 
 =head2 Description
 
@@ -31,6 +73,28 @@ the validity of documentation written in the POD format.
 All subroutines herein are exported only on demand.
 
 =head2 Functions
+
+=cut
+
+# RT #44437 this should really be using src_dir instead of build_dir but it
+# does not exist (yet)
+
+sub new {
+    my $class = shift;
+    my $args = shift;
+    $args->{build_dir} = $PConfig{build_dir};
+    
+    croak "Cannot run test if build_dir does not yet exist"
+        unless -d $args->{build_dir};
+    croak "Test cannot be run unless MANIFEST exists in build dir"
+        unless -f "$args->{build_dir}/MANIFEST";
+    croak "Test cannot be run unless MANIFEST exists in build dir"
+        unless -f "$args->{build_dir}/MANIFEST.generated";
+    
+    $args->{manifest}     = maniread("$args->{build_dir}/MANIFEST");
+    $args->{manifest_gen} = maniread("$args->{build_dir}/MANIFEST.generated");
+    return bless $args, $class;
+}
 
 =head3 C<identify_files_for_POD_testing()>
 
@@ -44,12 +108,8 @@ its arguments a reference to a subroutine which does a second such pass.
 
 B<Arguments:>
 
-    $need_testing_ref = identify_files_for_POD_testing( {
-        argv            => [ @ARGV ],
-        manifest        => $manifest,
-        manifest_gen    => $manifest_gen,
-        build_dir       => $build_dir,
-        second_analysis => \&oreilly_summary_malformed,
+    $need_testing_ref = $self->identify_files_for_POD_testing( {
+        second_analysis => 'oreilly_summary_malformed',
     } );
 
 B<Return Value:>
@@ -69,6 +129,7 @@ eliminated.
 =cut
 
 sub identify_files_for_POD_testing {
+    my $self = shift;
     my $args = shift;
     my $files_needing_analysis = {};
 
@@ -82,22 +143,22 @@ sub identify_files_for_POD_testing {
         else {
             # go to second-level analysis
             $files_needing_analysis =
-                $args->{second_analysis}(
+                $second_analysis_subs{$args->{second_analysis}}(
                     $files_needing_analysis,
-                    $args->{build_dir}
+                    $self->{build_dir},
                 );
         }
     }
     else {
         my @files;
-        if ( scalar(@{ $args->{argv} }) ) {
-            @files = @{ $args->{argv} };
+        if ( scalar(@{ $self->{argv} }) ) {
+            @files = @{ $self->{argv} };
         }
         else {
             print STDERR "\nFinding files with POD, this may take a minute.\n";
             @files = (
-                keys(%{ $args->{manifest} }),
-                keys(%{ $args->{manifest_gen} })
+                keys(%{ $self->{manifest} }),
+                keys(%{ $self->{manifest_gen} })
             );
         }
         $files_needing_analysis->{$_}++ for @files;
@@ -111,7 +172,7 @@ sub identify_files_for_POD_testing {
 
         # do FIRST_FILE
         FIRST_FILE: foreach my $file ( keys %{ $files_needing_analysis } ) {
-            my $full_file = qq|$args->{build_dir}/$file|;
+            my $full_file = qq|$self->{build_dir}/$file|;
 
             # skip missing MANIFEST.generated files ( -e )
             # skip binary files # (including .pbc files) ( -B )
@@ -131,9 +192,9 @@ sub identify_files_for_POD_testing {
         nstore $files_needing_analysis, $sto;
         # go to second-level analysis
         $files_needing_analysis =
-            $args->{second_analysis}(
+            $second_analysis_subs{$args->{second_analysis}}(
                 $files_needing_analysis,
-                $args->{build_dir}
+                $self->{build_dir},
             );
     }
 
@@ -188,56 +249,11 @@ first pass minus the results of the second pass.
 
 =cut
 
-sub oreilly_summary_malformed {
-    my ($files_needing_analysis, $build_dir) = @_;
-    my $sto = q{.pod_examinable_oreilly_summary_malformed.sto};
-    if ( -e $sto ) {
-        eval { $files_needing_analysis = retrieve($sto) };
-        if ($@) {
-            croak "$sto exists on disk but could not retrieve from it";
-        }
-        else {
-            return $files_needing_analysis;
-        }
-    }
-    else {
-        SECOND_FILE: foreach my $file ( keys %{ $files_needing_analysis } ) {
-            my $full_file = qq|$build_dir/$file|;
-
-            # Skip the book, because it uses extended O'Reilly-specific POD
-            if ($full_file =~ m{docs/book/}) {
-                delete $files_needing_analysis->{ $file };
-                next SECOND_FILE;
-            }
-
-            # skip POD generating scripts
-            if ($full_file =~ m/ops_summary\.pl/) {
-                delete $files_needing_analysis->{ $file };
-                next SECOND_FILE;
-            }
-
-            # skip file which includes malformed POD for other testing purposes
-            if ($full_file =~ m{
-                    t/tools/dev/searchops/samples\.pm
-                    |
-                    languages/pod/test\.pod
-                }x
-            ) {
-                delete $files_needing_analysis->{ $file };
-                next SECOND_FILE;
-            }
-        }
-    }
-    nstore $files_needing_analysis, $sto;
-    return $files_needing_analysis;
-}
-
 =head2 Author
 
 James E Keenan, refactored from earlier code
 
 =cut
-
 
 1;
 

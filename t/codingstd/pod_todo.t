@@ -2,30 +2,6 @@
 # Copyright (C) 2001-2009, The Perl Foundation.
 # $Id$
 
-=head1 NAME
-
-t/doc/pod_todo.t - find todo items in pod files
-
-=head1 SYNOPSIS
-
-    # test all files
-    % prove t/doc/pod_todo.t
-
-    # test specific files
-    % perl t/doc/pod_todo.t perl_module.pm perl_file.pl
-
-=head1 DESCRIPTION
-
-Tests the all files listed in F<MANIFEST> and F<MANIFEST.generated> that
-appear to contain Pod markup for any todo items. If any files contain the
-string 'TODO', 'FIXME' or 'XXX', they are reported in the test output.
-
-=head1 AUTHOR
-
-Paul Cochrane <paultcochrane at gmail dot com>; stolen from t/doc/pod.t
-
-=cut
-
 use strict;
 use warnings;
 
@@ -114,6 +90,30 @@ sub no_pod_todo {
         return 1;
     }
 }
+
+=head1 NAME
+
+t/doc/pod_todo.t - find todo items in pod files
+
+=head1 SYNOPSIS
+
+    # test all files
+    % prove t/doc/pod_todo.t
+
+    # test specific files
+    % perl t/doc/pod_todo.t perl_module.pm perl_file.pl
+
+=head1 DESCRIPTION
+
+Tests the all files listed in F<MANIFEST> and F<MANIFEST.generated> that
+appear to contain Pod markup for any todo items. If any files contain the
+string 'TODO', 'FIXME' or 'XXX', they are reported in the test output.
+
+=head1 AUTHOR
+
+Paul Cochrane <paultcochrane at gmail dot com>; stolen from t/doc/pod.t
+
+=cut
 
 # Local Variables:
 #   mode: cperl
