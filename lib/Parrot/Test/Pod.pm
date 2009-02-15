@@ -27,20 +27,20 @@ our %second_analysis_subs = (
         else {
             SECOND_FILE: foreach my $file ( keys %{ $files_needing_analysis } ) {
                 my $full_file = qq|$build_dir/$file|;
-    
+
                 # Skip the book, because it uses extended O'Reilly-specific POD
                 if ($full_file =~ m{docs/book/}) {
                     delete $files_needing_analysis->{ $file };
                     next SECOND_FILE;
                 }
-    
+
                 # skip POD generating scripts
                 if ($full_file =~ m/ops_summary\.pl/) {
                     delete $files_needing_analysis->{ $file };
                     next SECOND_FILE;
                 }
-    
-                # skip file which includes malformed POD for 
+
+                # skip file which includes malformed POD for
                 # other testing purposes
                 if ($full_file =~ m{
                         t/tools/dev/searchops/samples\.pm
@@ -71,30 +71,7 @@ our %second_analysis_subs = (
         else {
             SECOND_FILE: foreach my $file ( keys %{ $files_needing_analysis } ) {
                 my $full_file = qq|$build_dir/$file|;
-    
-#                # Skip the book, because it uses extended O'Reilly-specific POD
-#                if ($full_file =~ m{docs/book/}) {
-#                    delete $files_needing_analysis->{ $file };
-#                    next SECOND_FILE;
-#                }
-#    
-#                # skip POD generating scripts
-#                if ($full_file =~ m/ops_summary\.pl/) {
-#                    delete $files_needing_analysis->{ $file };
-#                    next SECOND_FILE;
-#                }
-#    
-#                # skip file which includes malformed POD for 
-#                # other testing purposes
-#                if ($full_file =~ m{
-#                        t/tools/dev/searchops/samples\.pm
-#                        |
-#                        languages/pod/test\.pod
-#                    }x
-#                ) {
-#                    delete $files_needing_analysis->{ $file };
-#                    next SECOND_FILE;
-#                }
+
                 if ($full_file =~ m/(?:pod_todo|fixme)\.t/) {
                     delete $files_needing_analysis->{ $file };
                     next SECOND_FILE;
@@ -136,14 +113,14 @@ sub new {
     my $class = shift;
     my $args = shift;
     $args->{build_dir} = $PConfig{build_dir};
-    
+
     croak "Cannot run test if build_dir does not yet exist"
         unless -d $args->{build_dir};
     croak "Test cannot be run unless MANIFEST exists in build dir"
         unless -f "$args->{build_dir}/MANIFEST";
     croak "Test cannot be run unless MANIFEST exists in build dir"
         unless -f "$args->{build_dir}/MANIFEST.generated";
-    
+
     $args->{manifest}     = maniread("$args->{build_dir}/MANIFEST");
     $args->{manifest_gen} = maniread("$args->{build_dir}/MANIFEST.generated");
     return bless $args, $class;
