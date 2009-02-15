@@ -118,7 +118,7 @@ Parrot_io_open(PARROT_INTERP, ARGIN_NULLOK(PMC *pmc),
 
     if (!mode)
         mode = CONST_STRING(interp, "r");
-    Parrot_pcc_invoke_method_from_c_args(interp, new_filehandle, CONST_STRING(interp, "open"), "SS->P",
+    Parrot_PCCINVOKE(interp, new_filehandle, CONST_STRING(interp, "open"), "SS->P",
             path, mode, &new_filehandle);
 
     return new_filehandle;
@@ -187,7 +187,7 @@ Parrot_io_close(PARROT_INTERP, ARGMOD(PMC *pmc))
     if (PMC_IS_NULL(pmc))
         return -1;
 
-    Parrot_pcc_invoke_method_from_c_args(interp, pmc, CONST_STRING(interp, "close"), "->I", &result);
+    Parrot_PCCINVOKE(interp, pmc, CONST_STRING(interp, "close"), "->I", &result);
 
     return result;
 }
@@ -212,7 +212,7 @@ Parrot_io_is_closed(PARROT_INTERP, ARGMOD(PMC *pmc))
     if (PMC_IS_NULL(pmc))
         return 1;
 
-    Parrot_pcc_invoke_method_from_c_args(interp, pmc, CONST_STRING(interp, "is_closed"), "->I", &result);
+    Parrot_PCCINVOKE(interp, pmc, CONST_STRING(interp, "is_closed"), "->I", &result);
     return result;
 }
 
@@ -234,7 +234,7 @@ Parrot_io_flush(PARROT_INTERP, ARGMOD(PMC *pmc))
     if (PMC_IS_NULL(pmc))
         return;
 
-    Parrot_pcc_invoke_method_from_c_args(interp, pmc, CONST_STRING(interp, "flush"), "->");
+    Parrot_PCCINVOKE(interp, pmc, CONST_STRING(interp, "flush"), "->");
 }
 
 /*
@@ -256,7 +256,7 @@ Parrot_io_reads(PARROT_INTERP, ARGMOD(PMC *pmc), size_t length)
 {
     ASSERT_ARGS(Parrot_io_reads)
     STRING *result = NULL;
-    Parrot_pcc_invoke_method_from_c_args(interp, pmc, CONST_STRING(interp, "read"), "I->S",
+    Parrot_PCCINVOKE(interp, pmc, CONST_STRING(interp, "read"), "I->S",
             length, &result);
     return result;
 }
@@ -280,7 +280,7 @@ Parrot_io_readline(PARROT_INTERP, ARGMOD(PMC *pmc))
 {
     ASSERT_ARGS(Parrot_io_readline)
     STRING *result = NULL;
-    Parrot_pcc_invoke_method_from_c_args(interp, pmc, CONST_STRING(interp, "readline"), "->S",
+    Parrot_PCCINVOKE(interp, pmc, CONST_STRING(interp, "readline"), "->S",
             &result);
     return result;
 }
@@ -411,7 +411,7 @@ Parrot_io_eof(PARROT_INTERP, ARGMOD(PMC *pmc))
     if (PMC_IS_NULL(pmc))
             return 1;
 
-    Parrot_pcc_invoke_method_from_c_args(interp, pmc, CONST_STRING(interp, "eof"), "->I",
+    Parrot_PCCINVOKE(interp, pmc, CONST_STRING(interp, "eof"), "->I",
             &result);
 
     return result;
@@ -457,7 +457,7 @@ Parrot_io_putps(PARROT_INTERP, ARGMOD(PMC *pmc), ARGMOD_NULLOK(STRING *s))
         Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_PIO_ERROR,
             "Cannot write to null PMC");
 
-    Parrot_pcc_invoke_method_from_c_args(interp, pmc, CONST_STRING(interp, "puts"), "S->I",
+    Parrot_PCCINVOKE(interp, pmc, CONST_STRING(interp, "puts"), "S->I",
             s, &result);
     return result;
 
