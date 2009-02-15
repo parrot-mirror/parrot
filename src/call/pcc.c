@@ -374,6 +374,7 @@ Parrot_pcc_build_sig_object_from_varargs(PARROT_INTERP, ARGIN_NULLOK(PMC* obj),
     INTVAL       in_return_sig = 0;
     INTVAL       i;
 
+    gc_register_pmc(interp, call_object);
     if (!sig_len)
         return call_object;
 
