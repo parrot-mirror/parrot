@@ -4,7 +4,6 @@
 
 use strict;
 use warnings;
-
 use Carp;
 use Test::More;
 use lib qw( lib );
@@ -12,6 +11,15 @@ BEGIN {
     eval 'use Parrot::Test::Pod';
     if ($@) {
         plan skip_all => 'Prerequisites for Parrot::Test::Pod not satisfied';
+        exit;
+    }
+    eval 'use Parrot::Test::Pod::Utils qw(
+        file_pod_ok
+        empty_description
+    )';
+    if ($@) {
+        plan skip_all =>
+            'Prerequisites for Parrot::Test::Pod::Utils not satisfied';
         exit;
     }
 }
@@ -52,32 +60,6 @@ diag("\nFound $nempty_description files without DESCRIPTION sections.\n")
     if $nempty_description;
 
 #################### SUBROUTINES ####################
-
-# Pulled from Test::Pod
-sub file_pod_ok {
-    my $file    = shift;
-    my $checker = Pod::Simple->new;
-
-    $checker->output_string( \my $trash );      # Ignore any output
-    $checker->parse_file($file);
-
-    return !$checker->any_errata_seen;
-}
-
-sub empty_description {
-    my $file = shift;
-
-    use Pod::Simple::PullParser;
-    my $parser = Pod::Simple::PullParser->new;
-    $parser->set_source( $file );
-    my $description = $parser->get_description;
-
-    if ( $description =~ m{^\s*$}m ) {
-        return 1;
-    }
-
-    return 0;
-}
 
 =head1 t/codingstd/pod_description.t
 

@@ -13,6 +13,9 @@ BEGIN {
         plan skip_all => 'Prerequisites for Parrot::Test::Pod not satisfied';
         exit;
     }
+    eval 'use Parrot::Test::Pod::Utils qw(
+        file_pod_ok
+    )';
 }
 
 plan tests => 2;
@@ -45,17 +48,6 @@ diag("You should use podchecker to check the failed files.\n")
     if $bad_syntax_files;
 
 #################### SUBROUTINES ####################
-
-# Pulled from Test::Pod
-sub file_pod_ok {
-    my $file    = shift;
-    my $checker = Pod::Simple->new;
-
-    $checker->output_string( \my $trash );      # Ignore any output
-    $checker->parse_file($file);
-
-    return !$checker->any_errata_seen;
-}
 
 =head1 NAME
 
