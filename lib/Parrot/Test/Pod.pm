@@ -1,6 +1,6 @@
 # Copyright (C) 2009, The Parrot Foundation.
 # $Id$
-package Parrot::Test::Pod::Util;
+package Parrot::Test::Pod;
 use strict;
 use warnings;
 use Carp;
@@ -110,13 +110,13 @@ our %second_analysis_subs = (
     },
 );
 
-=head1 Parrot::Test::Pod::Util
+=head1 Parrot::Test::Pod
 
 Utilities for tests which test POD.
 
 =head2 Synopsis
 
-    use Parrot::Test::Pod::Util;
+    use Parrot::Test::Pod;
 
 =head2 Description
 

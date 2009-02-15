@@ -8,19 +8,19 @@ use Carp;
 use Test::More;
 use lib qw( lib );
 BEGIN {
-    eval 'use Parrot::Test::Pod::Util';
+    eval 'use Parrot::Test::Pod';
     if ($@) {
-        plan skip_all => 'Prerequisites for Parrot::Test::Pod::Util not satisfied';
+        plan skip_all => 'Prerequisites for Parrot::Test::Pod not satisfied';
         exit;
     }
 }
 
 plan tests => 2;
 
-my $self = Parrot::Test::Pod::Util->new( {
+my $self = Parrot::Test::Pod->new( {
     argv => [ @ARGV ],
 } );
-ok( defined $self, "Parrot::Test::Pod::Util returned defined value" );
+ok( defined $self, "Parrot::Test::Pod returned defined value" );
 
 my $need_testing_ref = $self->identify_files_for_POD_testing( {
     second_analysis => 'oreilly_summary_malformed',
