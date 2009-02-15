@@ -8,12 +8,10 @@ use warnings;
 use Carp;
 use Test::More;
 use lib qw( lib );
-use Parrot::Test::Pod::Util;
-
 BEGIN {
-    eval 'use Pod::Simple';
+    eval 'use Parrot::Test::Pod::Util';
     if ($@) {
-        plan skip_all => 'Pod::Simple not installed';
+        plan skip_all => 'Prerequisites for Parrot::Test::Pod::Util not satisfied';
         exit;
     }
 }
@@ -50,7 +48,7 @@ TODO: {
     );
 }
 
-diag("Found $nempty_description files without DESCRIPTION sections.\n")
+diag("\nFound $nempty_description files without DESCRIPTION sections.\n")
     if $nempty_description;
 
 #################### SUBROUTINES ####################
