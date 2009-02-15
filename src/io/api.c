@@ -187,7 +187,7 @@ Parrot_io_close(PARROT_INTERP, ARGMOD(PMC *pmc))
     if (PMC_IS_NULL(pmc))
         return -1;
 
-    Parrot_PCCINVOKE(interp, pmc, CONST_STRING(interp, "close"), "->I", &result);
+    Parrot_pcc_invoke_method_from_c_args(interp, pmc, CONST_STRING(interp, "close"), "->I", &result);
 
     return result;
 }
@@ -212,7 +212,7 @@ Parrot_io_is_closed(PARROT_INTERP, ARGMOD(PMC *pmc))
     if (PMC_IS_NULL(pmc))
         return 1;
 
-    Parrot_PCCINVOKE(interp, pmc, CONST_STRING(interp, "is_closed"), "->I", &result);
+    Parrot_pcc_invoke_method_from_c_args(interp, pmc, CONST_STRING(interp, "is_closed"), "->I", &result);
     return result;
 }
 
@@ -234,7 +234,7 @@ Parrot_io_flush(PARROT_INTERP, ARGMOD(PMC *pmc))
     if (PMC_IS_NULL(pmc))
         return;
 
-    Parrot_PCCINVOKE(interp, pmc, CONST_STRING(interp, "flush"), "->");
+    Parrot_pcc_invoke_method_from_c_args(interp, pmc, CONST_STRING(interp, "flush"), "->");
 }
 
 /*
@@ -411,7 +411,7 @@ Parrot_io_eof(PARROT_INTERP, ARGMOD(PMC *pmc))
     if (PMC_IS_NULL(pmc))
             return 1;
 
-    Parrot_PCCINVOKE(interp, pmc, CONST_STRING(interp, "eof"), "->I",
+    Parrot_pcc_invoke_method_from_c_args(interp, pmc, CONST_STRING(interp, "eof"), "->I",
             &result);
 
     return result;
