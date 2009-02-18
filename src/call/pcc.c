@@ -2200,7 +2200,10 @@ count_signature_elements(PARROT_INTERP, ARGIN(const char *signature),
     int arg_ret_cnt[2]       = { 0, 0 };
 
     /* Increment these values if we are not calling from a CallSignature
-       PMC */
+       PMC. CallSignature PMCs are going to include an invocant PMC in the
+       signature string so it will get added automatically. Calls through
+       Parrot_PCCINVOKE do not do this so we need to hack in an increment
+       here. */
     if (flag) {
         arg_ret_cnt[seen_arrow]++;
         max_regs[REGNO_PMC]++;
@@ -2418,11 +2421,6 @@ set_context_sig_returns(PARROT_INTERP,
                         EXCEPTION_INVALID_OPERATION,
                         "Parrot_pcc_invoke_from_sig_object: invalid reg type %c!", *x);
             }
-
-            /* invalidate the CPointer's pointers so that GC doesn't try to
-             * mark stack values -- RT #59880*/
-            VTABLE_set_string_keyed_str(interp, result_item,
-                empty_string, empty_string);
         }
     }
 
@@ -2932,7 +2930,7 @@ Parrot_pcc_invoke_from_sig_object(PARROT_INTERP, ARGIN(PMC *sub_obj),
     PMC * const ret_cont    = new_ret_continuation_pmc(interp, NULL);
     PMC * const result_list = VTABLE_get_attr_str(interp, sig_obj, CONST_STRING(interp, "returns"));
 
-    Parrot_Context *ctx;
+    Parrot_Context   *ctx;
     opcode_t         *dest;
     opcode_t         *save_current_args;
     PMC              *save_args_signature;

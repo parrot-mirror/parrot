@@ -256,7 +256,7 @@ Parrot_io_reads(PARROT_INTERP, ARGMOD(PMC *pmc), size_t length)
 {
     ASSERT_ARGS(Parrot_io_reads)
     STRING *result = NULL;
-    Parrot_PCCINVOKE(interp, pmc, CONST_STRING(interp, "read"), "I->S",
+    Parrot_pcc_invoke_method_from_c_args(interp, pmc, CONST_STRING(interp, "read"), "I->S",
             length, &result);
     return result;
 }
@@ -280,7 +280,7 @@ Parrot_io_readline(PARROT_INTERP, ARGMOD(PMC *pmc))
 {
     ASSERT_ARGS(Parrot_io_readline)
     STRING *result = NULL;
-    Parrot_PCCINVOKE(interp, pmc, CONST_STRING(interp, "readline"), "->S",
+    Parrot_pcc_invoke_method_from_c_args(interp, pmc, CONST_STRING(interp, "readline"), "->S",
             &result);
     return result;
 }
