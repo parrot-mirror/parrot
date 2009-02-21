@@ -177,6 +177,16 @@ void parrot_pass_args(PARROT_INTERP,
 PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
+PMC* Parrot_pcc_build_sig_object_from_c_args(PARROT_INTERP,
+    ARGIN_NULLOK(PMC* obj),
+    ARGIN(const char *sig),
+    ...)
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(3);
+
+PARROT_EXPORT
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
 PMC* Parrot_pcc_build_sig_object_from_varargs(PARROT_INTERP,
     ARGIN_NULLOK(PMC* obj),
     ARGIN(const char *sig),
@@ -313,6 +323,10 @@ STRING* set_retval_s(PARROT_INTERP, int sig_ret, ARGIN(Parrot_Context *ctx))
        PARROT_ASSERT_ARG(interp) \
     || PARROT_ASSERT_ARG(src_ctx) \
     || PARROT_ASSERT_ARG(dest_ctx)
+#define ASSERT_ARGS_Parrot_pcc_build_sig_object_from_c_args \
+     __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(sig)
 #define ASSERT_ARGS_Parrot_pcc_build_sig_object_from_varargs \
      __attribute__unused__ int _ASSERT_ARGS_CHECK = \
        PARROT_ASSERT_ARG(interp) \

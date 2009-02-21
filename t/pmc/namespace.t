@@ -1687,7 +1687,7 @@ pir_output_is( <<"CODE", <<'OUTPUT', 'del_var()' );
 CODE
 OUTPUT
 
-pir_error_output_like( <<'CODE', <<'OUTPUT', 'overriding find_method()' );
+pir_output_like( <<'CODE', <<'OUTPUT', 'overriding find_method()' );
 .sub 'main' :main
     $P0 = newclass 'Override'
     $P1 = new ['Override']
@@ -1699,6 +1699,8 @@ pir_error_output_like( <<'CODE', <<'OUTPUT', 'overriding find_method()' );
 .sub 'find_method' :vtable
     .param string method
     say "Finding method"
+    $P0 = new 'Sub'
+    .return($P0)
 .end
 CODE
 /Finding method/

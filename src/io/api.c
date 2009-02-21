@@ -457,7 +457,7 @@ Parrot_io_putps(PARROT_INTERP, ARGMOD(PMC *pmc), ARGMOD_NULLOK(STRING *s))
         Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_PIO_ERROR,
             "Cannot write to null PMC");
 
-    Parrot_pcc_PCCINVOKE(interp, pmc, CONST_STRING(interp, "puts"), "S->I",
+    Parrot_PCCINVOKE(interp, pmc, CONST_STRING(interp, "puts"), "S->I",
             s, &result);
     return result;
 

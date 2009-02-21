@@ -57,19 +57,19 @@ sub body {
     # Need to build signature and work out what return type we expect.
     my $ret_sig  = ctype_to_sigchar( $method->{type} );
 
-    my $ret_type = $ret_sig eq 'I' ? '_reti' : '_retf';
+    my $ret_type = $method->{type};
 
-    my $sig      = $ret_sig;
+    my $sig      = "";
     my @types    = grep { $_ } map { my @x = split /\s+/; $x[0] }
                         split /\s*,\s*/, $parameters;
 
     foreach (@types) {
         $sig .= ctype_to_sigchar($_);
     }
+    $sig .= "->" . $ret_sig;
 
     # Do we have a return value?
     my $return      = $method->{type} =~ /void/ ? ''        : 'return ';
-    my $void_return = $method->{type} =~ /void/ ? 'return;' : '';
 
     # work out what the null return should be so that we can quieten the "no
     # return from non-void function" warnings.
@@ -79,22 +79,25 @@ sub body {
     # icc), so we add a workaround for the null return from a FLOATVAL
     # function
     my $null_return;
+    my $the_return = "return ret_val;";
     if ( $method->{type} eq 'void' ) {
         $null_return = '';
+        $the_return = "return;";
     }
     elsif ( $method->{type} eq 'void*' ) {
-        $null_return = 'return NULL;';
+        $null_return = '= NULL;';
     }
     elsif ( $method->{type} =~ /PMC|INTVAL|STRING|opcode_t/ ) {
-        $null_return = "return ($method->{type})NULL;";
+        $null_return = "= ($method->{type})NULL;";
     }
 
     # workaround for gcc because the general case doesn't work there
     elsif ( $method->{type} =~ /FLOATVAL/ ) {
-        $null_return = 'return (FLOATVAL) 0;';
+        $null_return = '= (FLOATVAL) 0;';
     }
     else {
         $null_return = '';
+        $the_return = "return;";
     }
 
     my $l         = $self->line_directive( $line + 1, "\L$self->{class}.c" );
@@ -127,10 +130,11 @@ EOC
             const ParrotClass_attributes * const class_info = PARROT_CLASS(cur_class);
             if (VTABLE_exists_keyed_str(interp, class_info->vtable_overrides, CONST_STRING_GEN(interp, "$meth"))) {
                 /* Found it; call. */
-                PMC * const meth = VTABLE_get_pmc_keyed_str(interp,
-                    class_info->vtable_overrides, CONST_STRING_GEN(interp, "$meth"));
-                ${return}Parrot_run_meth_fromc_args$ret_type(interp, meth, pmc, CONST_STRING_GEN(interp, "$meth"), "$sig"$arg);
-                $void_return
+                $ret_type ret_val $null_return;
+                PMC * sig_obj = Parrot_pcc_build_sig_object_from_c_args(interp, pmc, "$sig"$arg, &ret_val);
+                PMC * const meth = VTABLE_get_pmc_keyed_str(interp, class_info->vtable_overrides, CONST_STRING_GEN(interp, "$meth"));
+                Parrot_pcc_invoke_from_sig_object(interp, meth, sig_object);
+                $the_return
             }
 EOC
     }
@@ -157,7 +161,7 @@ sub ctype_to_sigchar {
     $ctype    =~ s/\s//g;
 
     if ( !$ctype || $ctype =~ /void/ ) {
-        return "v";
+        return "";
     }
     elsif ( $ctype =~ /opcode_t\*/ ) {
 

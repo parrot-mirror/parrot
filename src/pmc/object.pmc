@@ -169,8 +169,12 @@ Returns the fully qualified name of the object's class.
         /* If there's a vtable override for 'name' run that instead. */
         PMC * const method = Parrot_oo_find_vtable_override(interp, _class, name);
 
-        if (!PMC_IS_NULL(method))
-            return (STRING *)Parrot_run_meth_fromc_args(interp, method, SELF, name, "S");
+        if (!PMC_IS_NULL(method)) {
+            STRING * ret_val;
+            PMC * sig_obj = Parrot_pcc_build_sig_object_from_c_args(interp, SELF, "->S", &ret_val);
+            Parrot_pcc_invoke_from_sig_object(interp, method, sig_obj);
+            return ret_val;
+        }
         else
             return VTABLE_get_string(interp, _class);
     }
@@ -214,9 +218,12 @@ of the given name walking up the inheritance tree.
         PMC * const method = Parrot_oo_find_vtable_override(interp,
                 VTABLE_get_class(interp, SELF), get_attr);
 
-        if (!PMC_IS_NULL(method))
-            return (PMC *)Parrot_run_meth_fromc_args(interp, method, SELF,
-                    get_attr, "PS", name);
+        if (!PMC_IS_NULL(method)) {
+            PMC * ret_val;
+            PMC * sig_obj = Parrot_pcc_build_sig_object_from_c_args(interp, SELF, "S->P", name, &ret_val);
+            Parrot_pcc_invoke_from_sig_object(interp, method, sig_obj);
+            return ret_val;
+        }
 
         /* Look up the index. */
         index = get_attrib_index(interp, obj->_class, name);
@@ -273,9 +280,8 @@ of the given name walking up the inheritance tree.
         PMC * const method = Parrot_oo_find_vtable_override(interp,
                 VTABLE_get_class(interp, SELF), vtable_meth_name);
         if (!PMC_IS_NULL(method)) {
-            PMC *unused = (PMC *)Parrot_run_meth_fromc_args(interp, method,
-                SELF, vtable_meth_name, "vSP", name, value);
-            UNUSED(unused);
+            PMC * sig_obj = Parrot_pcc_build_sig_object_from_c_args(interp, SELF, "SP->", name, value);
+            Parrot_pcc_invoke_from_sig_object(interp, method, sig_obj);
             return;
         }
 
@@ -345,9 +351,12 @@ Queries this object's class to find the method with the given name.
             method = Parrot_oo_find_vtable_override_for_class(interp, cur_class,
                     find_method);
 
-            if (!PMC_IS_NULL(method))
-                return (PMC *)Parrot_run_meth_fromc_args(interp, method, SELF,
-                        find_method, "PS", name);
+            if (!PMC_IS_NULL(method)) {
+                PMC * ret_val;
+                PMC * sig_obj = Parrot_pcc_build_sig_object_from_c_args(interp, SELF, "S->P", name, &ret_val);
+                Parrot_pcc_invoke_from_sig_object(interp, method, sig_obj);
+                return ret_val;
+            }
 
             /* If it's from this universe or the class doesn't inherit from
              * anything outside of it... */
@@ -397,7 +406,7 @@ Invoke the PIR-defined vtable override, or call the default get_integer.
 
 */
     VTABLE INTVAL get_integer() {
-        Parrot_Object_attributes * const obj       = PARROT_OBJECT(pmc);
+        Parrot_Object_attributes * const obj       = PARROT_OBJECT(SELF);
         Parrot_Class_attributes  * const _class    = PARROT_CLASS(obj->_class);
         STRING * const meth_name = CONST_STRING(interp, "get_integer");
 
@@ -408,20 +417,19 @@ Invoke the PIR-defined vtable override, or call the default get_integer.
             /* Get the class. */
             PMC * const cur_class = VTABLE_get_pmc_keyed_int(interp, _class->all_parents, i);
 
-            PMC * const meth = Parrot_oo_find_vtable_override_for_class(interp,
+            PMC * const method = Parrot_oo_find_vtable_override_for_class(interp,
                     cur_class, meth_name);
-            if (!PMC_IS_NULL(meth)) {
-                INTVAL result;
-                Parrot_pcc_invoke_sub_from_c_args(interp, meth, "P->I", pmc, &result);
-                return result;
-/*            return (INTVAL)Parrot_run_meth_fromc_args_reti(interp, meth, pmc, meth_name, "I"); */
-
+            if (!PMC_IS_NULL(method)) {
+                INTVAL ret_val;
+                PMC * sig_obj = Parrot_pcc_build_sig_object_from_c_args(interp, SELF, "->I", &ret_val);
+                Parrot_pcc_invoke_from_sig_object(interp, method, sig_obj);
+                return ret_val;
             }
             /* method name is get_integer */
             if (cur_class->vtable->base_type == enum_class_PMCProxy) {
                 /* Get the PMC instance and call the vtable method on that. */
                 STRING * const proxy      = CONST_STRING(interp, "proxy");
-                PMC    * const del_object = VTABLE_get_attr_str(interp, pmc, proxy);
+                PMC    * const del_object = VTABLE_get_attr_str(interp, SELF, proxy);
 
                 if (!PMC_IS_NULL(del_object)) {
                     return (INTVAL)VTABLE_get_integer(interp, del_object);
@@ -429,7 +437,7 @@ Invoke the PIR-defined vtable override, or call the default get_integer.
                 }
             }
         }
-        return (INTVAL)Parrot_default_get_integer(interp, pmc);
+        return (INTVAL)Parrot_default_get_integer(interp, SELF);
     }
 
 /*
@@ -448,9 +456,12 @@ Get the class PMC representing the class that this object is an instance of.
         PMC * const method = Parrot_oo_find_vtable_override(interp,
                 classobj, get_class);
 
-        if (!PMC_IS_NULL(method))
-            return (PMC *)Parrot_run_meth_fromc_args(interp, method, SELF,
-                    get_class, "P");
+        if (!PMC_IS_NULL(method)) {
+            PMC * ret_val;
+            PMC * sig_obj = Parrot_pcc_build_sig_object_from_c_args(interp, SELF, "->P", &ret_val);
+            Parrot_pcc_invoke_from_sig_object(interp, method, sig_obj);
+            return  ret_val;
+        }
 
         return classobj;
     }
@@ -472,12 +483,14 @@ Get the namespace PMC associated with the class that this object is an instance 
         PMC * const method = Parrot_oo_find_vtable_override(interp,
                 classobj, get_namespace);
 
-        if (!PMC_IS_NULL(method))
-            return (PMC *)Parrot_run_meth_fromc_args(interp, method, SELF,
-                    get_namespace, "P");
-        else
-            return VTABLE_inspect_str(interp, classobj, CONST_STRING(interp, "namespace"));
+        if (!PMC_IS_NULL(method)) {
+            PMC * ret_val;
+            PMC * sig_obj = Parrot_pcc_build_sig_object_from_c_args(interp, SELF, "->P", &ret_val);
+            Parrot_pcc_invoke_from_sig_object(interp, method, sig_obj);
+            return ret_val;
+        }
 
+        return VTABLE_inspect_str(interp, classobj, CONST_STRING(interp, "namespace"));
     }
 
 /*
@@ -558,10 +571,15 @@ Returns whether the object's class does the role with name C<*role_name>.
             PMC * const method = Parrot_oo_find_vtable_override(interp,
                 classobj, meth_name);
 
-            if (!PMC_IS_NULL(method)
-             && Parrot_run_meth_fromc_args_reti(interp, method, SELF, meth_name, "IS", role_name))
-                return 1;
+            if (!PMC_IS_NULL(method)) {
+                INTVAL * ret_val;
+                PMC * sig_obj = Parrot_pcc_build_sig_object_from_c_args(interp, SELF, "S->I", role_name, &ret_val);
+                Parrot_pcc_invoke_from_sig_object(interp, method, sig_obj);
+                if(ret_val)
+                    return 1;
+            }
         }
+
         /* Check the superclass's vtable interface, if any. */
         if (SUPER(role_name))
             return 1;
@@ -616,11 +634,12 @@ Invokes the object (if this vtable function is overridden).
             PMC * const cur_class =
                 VTABLE_get_pmc_keyed_int(interp, _class->all_parents, i);
 
-            PMC * const meth =
+            PMC * const method =
                 Parrot_oo_find_vtable_override_for_class(interp, cur_class,
                                                          meth_name);
-            if (!PMC_IS_NULL(meth))
-                return VTABLE_invoke(interp, meth, next);
+
+            if (!PMC_IS_NULL(method))
+                return VTABLE_invoke(interp, method, next);
 
             if (cur_class->vtable->base_type == enum_class_PMCProxy) {
                 /* Get the PMC instance and call the vtable method on that. */
@@ -675,10 +694,14 @@ Creates a clone of the object.
             PMC * const cur_class = VTABLE_get_pmc_keyed_int(interp, _class->all_parents, i);
 
             /* Look for a method and run it if we find one. */
-            PMC * const meth =
+            PMC * const method =
                 Parrot_oo_find_vtable_override_for_class(interp, cur_class, meth_name);
-            if (!PMC_IS_NULL(meth))
-                return (PMC*)Parrot_run_meth_fromc_args(interp, meth, pmc, meth_name, "P");
+            if (!PMC_IS_NULL(method)) {
+                PMC * ret_val;
+                PMC * sig_obj = Parrot_pcc_build_sig_object_from_c_args(interp, SELF, "->P", &ret_val);
+                Parrot_pcc_invoke_from_sig_object(interp, method, sig_obj);
+                return ret_val;
+            }
         }
 
         /* If we get here, no custom clone. Create a new object PMC. */
@@ -869,8 +892,10 @@ Changes the PMC to a PMC of a new type
         PMC * const method = Parrot_oo_find_vtable_override(interp,
                 classobj, meth_name);
 
-        if (!PMC_IS_NULL(method))
-            Parrot_run_meth_fromc_args(interp, method, SELF, meth_name, "vP", type);
+        if (!PMC_IS_NULL(method)) {
+            PMC * sig_obj = Parrot_pcc_build_sig_object_from_c_args(interp, SELF, "P->", type);
+            Parrot_pcc_invoke_from_sig_object(interp, method, sig_obj);
+        }
         else
             SUPER(type);
     }
