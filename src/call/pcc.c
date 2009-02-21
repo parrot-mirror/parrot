@@ -354,9 +354,27 @@ Take a varargs list, and convert it into a CallSignature PMC. The CallSignature
 stores the original short signature string, and an array of integer types to
 pass on to the multiple dispatch search.
 
+=item C<PMC* Parrot_pcc_build_sig_object_from_c_args>
+
+Same, but with a variadic argument list instead aof a C<va_list> pointer.
+
 =cut
 
 */
+
+PARROT_EXPORT
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
+PMC*
+Parrot_pcc_build_sig_object_from_c_args(PARROT_INTERP, ARGIN_NULLOK(PMC* obj),
+    ARGIN(const char *sig), ...)
+{
+    PMC *sig_obj;
+    va_list args;
+    va_start(args, sig);
+    sig_obj = Parrot_pcc_build_sig_object_from_varargs(interp, obj, sig, args);
+    va_end(args);
+}
 
 PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
