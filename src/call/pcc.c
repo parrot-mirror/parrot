@@ -148,6 +148,11 @@ static void null_val(int sig, ARGMOD(call_state *st))
         __attribute__nonnull__(2)
         FUNC_MODIFIES(*st);
 
+PARROT_CANNOT_RETURN_NULL
+static PMC * resolve_key_register_values(PARROT_INTERP, ARGIN(PMC *key))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
 PARROT_CAN_RETURN_NULL
 static const char * set_context_sig_params(PARROT_INTERP,
     ARGIN(const char *signature),
@@ -290,6 +295,9 @@ static void too_many(PARROT_INTERP,
     || PARROT_ASSERT_ARG(sti)
 #define ASSERT_ARGS_null_val __attribute__unused__ int _ASSERT_ARGS_CHECK = \
        PARROT_ASSERT_ARG(st)
+#define ASSERT_ARGS_resolve_key_register_values __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(key)
 #define ASSERT_ARGS_set_context_sig_params __attribute__unused__ int _ASSERT_ARGS_CHECK = \
        PARROT_ASSERT_ARG(interp) \
     || PARROT_ASSERT_ARG(signature) \
@@ -452,7 +460,8 @@ Parrot_pcc_build_sig_object_from_varargs(PARROT_INTERP, ARGIN_NULLOK(PMC* obj),
                     break;
                 case 'P':
                 {
-                    PMC * const pmc_arg = va_arg(args, PMC *);
+                    /* PMC * pmc_arg = resolve_key_register_values(interp, va_arg(args, PMC *)); */
+                    PMC * pmc_arg = va_arg(args, PMC *);
                     VTABLE_push_pmc(interp, call_object, pmc_arg);
                     break;
                 }
@@ -1183,6 +1192,42 @@ check_for_opt_flag(PARROT_INTERP, ARGMOD(call_state *st), int has_arg)
     CTX_REG_INT(st->dest.ctx, idx) = has_arg;
 }
 
+/*
+
+=item C<static PMC * resolve_key_register_values>
+
+If a key PMC contains references to register names in the current context,
+we need to resolve those to their current values so we don't lose them
+when we switch to a new context during a subroutine invocation. Take the
+key PMC, shift all elements off it and onto a new key pmc, resolving any
+register names along the way into their values. Return the new PMC
+
+=cut
+
+*/
+
+PARROT_CANNOT_RETURN_NULL
+static PMC *
+resolve_key_register_values(PARROT_INTERP, ARGIN_NULLOK(PMC *key))
+{
+    PMC * key_top = key;
+    if (!key)
+        return NULL;
+    if (key->vtable->base_type != enum_class_Key)
+        return key;
+    for (; key; key=key_next(interp, key)) {
+        if (PObj_get_FLAGS(key) & KEY_register_FLAG) {
+            Parrot_Context *ctx = CONTEXT(interp), temp_ctx;
+            Parrot_Context *caller = ctx->caller_ctx;
+            PMC * new_key;
+            //SAVE_OFF_REGS(interp->ctx, *caller, temp_ctx);
+            new_key = VTABLE_clone(interp, key_top);
+            //RESTORE_REGS(interp->ctx, temp_ctx);
+            return new_key;
+        }
+    }
+    return key;
+}
 
 /*
 
@@ -1221,7 +1266,6 @@ clone_key_arg(PARROT_INTERP, ARGMOD(call_state *st))
         }
     }
 }
-
 
 /*
 

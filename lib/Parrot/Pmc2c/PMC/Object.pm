@@ -34,15 +34,8 @@ sub pre_method_gen {
 
         my ( $return_prefix, $ret_suffix, $args, $sig, $return_type_char, $null_return ) =
             $new_default_method->signature;
-        $null_return =~ m/\(([^\)]*)\)(.*)$/;
-        my $decl_return = $return_type_char eq 'v' ? '' : "$1 ret_val = ($1) $2";
-        $sig =~ m/(.)(.*)$/;
-        my $sig_ret_val = $1 eq 'v' ? '' : $1;
-        $sig = "$2->$sig_ret_val";
-        my $ret_val_ptr = $return_type_char eq 'v' ? '' : ', &ret_val';
         my $void_return  = $return_type_char eq 'v' ? 'return;'    : '';
         my $return       = $return_type_char eq 'v' ? ''           : $return_prefix;
-        my $do_return    = $return_type_char eq 'v' ? 'return;'    : 'return ret_val;';
         my $superargs    = $args;
         $superargs       =~ s/^,//;
 
@@ -60,11 +53,8 @@ sub pre_method_gen {
 
         PMC * const meth = Parrot_oo_find_vtable_override_for_class(interp, cur_class, meth_name);
         if (!PMC_IS_NULL(meth)) {
-            /* $return_prefix, $ret_suffix, $args, $sig, $return_type_char, $null_return */
-            $decl_return
-            PMC * sig_obj = Parrot_pcc_build_sig_object_from_c_args(interp, pmc, "$sig"$args$ret_val_ptr);
-            Parrot_pcc_invoke_from_sig_object(interp, meth, sig_obj);
-            $do_return
+            ${return}Parrot_run_meth_fromc_args$ret_suffix(interp, meth, pmc, meth_name, "$sig"$args);
+            $void_return
         }
         /* method name is $vt_method_name */
 EOC
