@@ -1,4 +1,5 @@
 package Parrot::Install;
+# $Id$
 
 use strict;
 use warnings;
@@ -32,7 +33,7 @@ sub install_files {
 }
 
 # Created the directories passed in
-sub  create_directories {
+sub create_directories {
     my($destdir, $directories) = @_;
     my($dir, @dirs);
 
@@ -94,7 +95,9 @@ sub lines_to_files {
             # Have to catch this case early for some unknown reason
             if ( /^runtime/ ) {
                 $dest =~ s/^runtime\/parrot\///;
-                $dest = File::Spec->catdir( $options->{libdir}, $parrotdir, $dest );
+                $dest = File::Spec->catdir(
+                    $options->{libdir}, $parrotdir, $dest
+                );
                 last FIXFILE;
             }
 
@@ -106,8 +109,10 @@ sub lines_to_files {
                         $options->{$metatransforms->{$tkey}->{optiondir} . 'dir'},
                         &{ $metatransforms->{$tkey}->{transform} }($dest)
                     );
-                    # TODO track bin here to check later below -- only needed for installable
-                    if ( $metatransforms->{$tkey}->{isbin} and $copy =~ /^installable/ ) {
+                    if ( $metatransforms->{$tkey}->{isbin}
+                            and
+                        $copy =~ /^installable/
+                    ) {
                         push @installable_exe, [ $src, $dest ];
                         next LINE;
                     }
@@ -141,3 +146,10 @@ sub lines_to_files {
 }
 
 1;
+
+# Local Variables:
+#   mode: cperl
+#   cperl-indent-level: 4
+#   fill-column: 100
+# End:
+# vim: expandtab shiftwidth=4:
