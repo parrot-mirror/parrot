@@ -213,12 +213,12 @@ my %othertransforms = (
     },
 );
 
-my($files, $installable_exe, $directories) = Parrot::Install::lines_to_files(
+my($files, $installable_exe, $directories) = lines_to_files(
     \%metatransforms, \%othertransforms, \@manifests, \%options, $parrotdir
 );
 
 unless ( $options{'dry-run'} ) {
-    Parrot::Install::create_directories($options{destdir}, $directories);
+    create_directories($options{destdir}, $directories);
 }
 
 # TT #347
@@ -249,7 +249,10 @@ foreach my $f (@$files ) {
     }
 }
 
-Parrot::Install::install_files($options{destdir}, $options{'dry-run'}, @$files, @$installable_exe);
+install_files(
+    $options{destdir}, $options{'dry-run'}, @$files, @$installable_exe
+);
+
 print "Finished install_files.pl\n";
 
 # Local Variables:

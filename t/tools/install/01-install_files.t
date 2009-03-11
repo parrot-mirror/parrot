@@ -8,12 +8,14 @@ use warnings;
 
 use Test::More tests =>  1;
 use Carp;
+use File::Temp qw( tempdir );
 use lib qw( lib );
 use Parrot::Install qw(
     install_files
     create_directories
     lines_to_files
 );
+use IO::CaptureOutput qw( capture );
 
 pass("Completed all tests in $0");
 
