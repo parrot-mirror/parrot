@@ -58,7 +58,12 @@ format.
 use strict;
 use warnings;
 use File::Basename qw(basename);
-use Parrot::Install;
+use lib qw( lib );
+use Parrot::Install qw(
+    install_files
+    create_directories
+    lines_to_files
+);
 
 # When run from the makefile, which is probably the only time this
 # script will ever be used, all of these defaults will get overridden.

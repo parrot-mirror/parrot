@@ -1,11 +1,15 @@
 package Parrot::Install;
 # $Id$
-
 use strict;
 use warnings;
-
 use File::Basename qw(dirname);
 use File::Copy;
+use base qw( Exporter );
+our @EXPORT_OK = qw(
+    install_files
+    create_directories
+    lines_to_files
+);
 
 # Install the mentioned files into the appropriate locations
 sub install_files {
@@ -52,7 +56,8 @@ sub create_directories {
     }
 }
 
-# Suck in the lines from the mentioned manifests, and turn them into file locations
+# Suck in the lines from the mentioned manifests,
+# and turn them into file locations.
 sub lines_to_files {
     my($metatransforms, $othertransforms, $manifests, $options, $parrotdir) = @_;
     my @files;
