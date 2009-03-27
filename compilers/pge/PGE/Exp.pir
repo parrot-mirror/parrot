@@ -417,7 +417,7 @@ tree as a PIR code object that can be compiled.
     $S0 = exp0.'ast'()
     $S1 = exp1.'ast'()
     concat $S0, $S1
-    exp0.'result_object'($S0)
+    exp0.'!make'($S0)
     goto concat_lit_loop
   concat_lit_shift:
     inc j
@@ -1455,12 +1455,12 @@ tree as a PIR code object that can be compiled.
           mpos = pos
           ($P0 :optional, $I0 :opt_flag) = $P1(mob)
           if $I0 == 0 goto %0
-          mob.'result_object'($P0)
+          mob.'!make'($P0)
           push ustack, pos
           local_branch cstack, succeed
           pos = pop ustack
           null $P0
-          mob.'result_object'($P0)
+          mob.'!make'($P0)
           goto fail
         CODE
     .return ()

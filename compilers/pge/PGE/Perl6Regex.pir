@@ -407,7 +407,7 @@ Parses terms beginning with backslash.
 
   term_charlist:
     mob = mob.'new'(mob, 'grammar'=>'PGE::Exp::EnumCharList')
-    mob.'result_object'(charlist)
+    mob.'!make'(charlist)
     mob['isnegated'] = isnegated
     mob.'to'(pos)
     .return (mob)
@@ -921,7 +921,7 @@ Extract an enumerated character list.
     ##   create a node for the charlist
     term = mob.'new'(mob, 'grammar'=>'PGE::Exp::EnumCharList')
     term.'to'(pos)
-    term.'result_object'(charlist)
+    term.'!make'(charlist)
     goto combine
 
   subrule:
@@ -948,7 +948,7 @@ Extract an enumerated character list.
     ##   token is '<-', we need to match a char by concat dot
     $P0 = mob.'new'(mob, 'grammar'=>'PGE::Exp::CCShortcut')
     $P0.'to'(pos)
-    $P0.'result_object'('.')
+    $P0.'!make'('.')
     mob = mob.'new'(mob, 'grammar'=>'PGE::Exp::Concat')
     mob.'to'(pos)
     mob[0] = term
@@ -1118,14 +1118,14 @@ Parse a modifier.
     if $I1 == 0 goto fail
     $S0 = substr target, $I0, $I1
     mob['key'] = $S0
-    mob.'result_object'(value)
+    mob.'!make'(value)
     $S0 = substr target, pos, 1
     if $S0 != '(' goto end
     $I0 = pos + 1
     pos = index target, ')', pos
     $I1 = pos - $I0
     $S0 = substr target, $I0, $I1
-    mob.'result_object'($S0)
+    mob.'!make'($S0)
     inc pos
   end:
     ### XXX pos = find_not_cclass .CCLASS_WHITESPACE, target, pos, lastpos
@@ -1167,7 +1167,7 @@ Parse a modifier.
     if $I0 < pos goto err_noclose
     $I1 = $I0 - pos
     $S1 = substr target, pos, $I1
-    mob.'result_object'($S1)
+    mob.'!make'($S1)
     pos = $I0 + len
     mob.'to'(pos)
     .return (mob)
@@ -1636,7 +1636,7 @@ Parse a modifier.
     closure_fn = closure_pp[lang]
     $S1 = self.'ast'()
     $S1 = closure_fn($S1)
-    self.'result_object'($S1)
+    self.'!make'($S1)
   end:
     .return (self)
 .end
