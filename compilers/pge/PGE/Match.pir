@@ -243,17 +243,22 @@ object.
 =cut
 
 .sub 'item' :method
-    .tailcall self.'result_object'()
+    .tailcall self.'ast'()
+.end
+
+.sub 'result_object' :method
+    .param pmc obj             :slurpy
+    .tailcall self.'ast'(obj :flat)
 .end
 
 
-=item C<result_object([pmc obj])>
+=item C<ast([pmc obj])>
 
 Returns or sets the "result object" for the match object.
 
 =cut
 
-.sub 'result_object' :method
+.sub 'ast' :method
     .param pmc obj             :optional
     .param int has_obj         :opt_flag
     if has_obj == 0 goto get_obj
