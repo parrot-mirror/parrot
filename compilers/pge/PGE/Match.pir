@@ -212,13 +212,13 @@ Returns C<.to()> - C<.from()>.
 .end
 
 
-=item C<text()>
+=item C<Str()>
 
 Returns the portion of the target string matched by this object.
 
 =cut
 
-.sub 'text' :method
+.sub 'Str' :method
     $P0 = getattribute self, '$.target'
     $P1 = getattribute self, '$.from'
     $P2 = getattribute self, '$.pos'
@@ -231,6 +231,10 @@ Returns the portion of the target string matched by this object.
     .return ($S1)
   false:
     .return ('')
+.end
+
+.sub 'text' :method
+    .tailcall self.'Str'()
 .end
 
 
@@ -270,7 +274,7 @@ Returns or sets the "result object" for the match object.
     if null obj goto ret_null
     .return (obj)
   ret_null:
-    .tailcall self.'text'()
+    .tailcall self.'Str'()
 .end
 
 
