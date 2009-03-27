@@ -372,7 +372,7 @@ Returns the portion of the target string matched by this object.
 =cut
 
 .sub 'get_string' :vtable :method
-    $S0 = self.'result_object'()
+    $S0 = self.'Str'()
     .return ($S0)
 .end
 

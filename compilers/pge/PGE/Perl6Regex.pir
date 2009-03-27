@@ -1584,7 +1584,7 @@ Parse a modifier.
     .local string key
     .local string value
     key = self['key']
-    value = self
+    value = self.'ast'()
     if key == 'words' goto sigspace
     if key == 's' goto sigspace
     if key == 'w' goto sigspace
@@ -1634,7 +1634,7 @@ Parse a modifier.
     $I0 = defined closure_pp[lang]
     if $I0 == 0 goto end
     closure_fn = closure_pp[lang]
-    $S1 = self
+    $S1 = self.'ast'()
     $S1 = closure_fn($S1)
     self.'result_object'($S1)
   end:
@@ -1683,7 +1683,7 @@ already present.
 
 .sub 'perl6exp' :method
     .param pmc pad
-    $S0 = self
+    $S0 = self.'ast'()
     if $S0 == ':::' goto cut_rule
     if $S0 == '<commit>' goto cut_match
     self['cutmark'] = PGE_CUT_GROUP
