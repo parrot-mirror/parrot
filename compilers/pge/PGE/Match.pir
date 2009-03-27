@@ -15,7 +15,7 @@ This file implements match objects returned by the Parrot Grammar Engine.
     load_bytecode 'PGE/Dumper.pir'                 # FIXME, XXX, etc.
     .local pmc p6meta
     p6meta = new 'P6metaclass'
-    $P0 = p6meta.'new_class'('PGE::Match', 'parent'=>'Capture', 'attr'=>'$.target $.from $.pos &!corou $!item')
+    $P0 = p6meta.'new_class'('PGE::Match', 'parent'=>'Capture', 'attr'=>'$.target $.from $.pos &!corou $!ast')
     set_hll_global ['PGE'], '$!MATCH', $P0
     .return ()
 .end
@@ -266,10 +266,10 @@ Returns or sets the "result object" for the match object.
     .param pmc obj             :optional
     .param int has_obj         :opt_flag
     if has_obj == 0 goto get_obj
-    setattribute self, '$!item', obj
+    setattribute self, '$!ast', obj
     goto ret_obj
   get_obj:
-    obj = getattribute self, '$!item'
+    obj = getattribute self, '$!ast'
   ret_obj:
     if null obj goto ret_null
     .return (obj)
@@ -323,7 +323,7 @@ the position of the match object to C<cutvalue>.
     null $P0
     setattribute self, '$.target', $P0
     setattribute self, '&!corou', $P0
-    setattribute self, '$!item', $P0
+    setattribute self, '$!ast', $P0
     setref self, $P0
     .return ()
 .end
