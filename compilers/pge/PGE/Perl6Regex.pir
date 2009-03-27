@@ -333,7 +333,7 @@ Return a failed match if the stoptoken is found.
     $S0 = substr target, pos, litlen
     pos += litlen
     mob = mob.'new'(mob, 'grammar'=>'PGE::Exp::Literal')
-    mob.'result_object'($S0)
+    mob.'ast'($S0)
     mob.'to'(pos)
     .return (mob)
 
@@ -376,7 +376,7 @@ Parses terms beginning with backslash.
   quoted_metachar:
     inc pos
     mob = mob.'new'(mob, 'grammar'=>'PGE::Exp::Literal')
-    mob.'result_object'(initchar)
+    mob.'ast'(initchar)
     mob.'to'(pos)
     .return (mob)
 
@@ -401,7 +401,7 @@ Parses terms beginning with backslash.
 
   term_literal:
     mob = mob.'new'(mob, 'grammar'=>'PGE::Exp::Literal')
-    mob.'result_object'(charlist)
+    mob.'ast'(charlist)
     mob.'to'(pos)
     .return (mob)
 
@@ -1032,7 +1032,7 @@ Parses '...' literals.
     goto literal_iter
   literal_end:
     inc pos
-    mob.'result_object'(lit)
+    mob.'ast'(lit)
     mob.'to'(pos)
     .return (mob)
   literal_error:

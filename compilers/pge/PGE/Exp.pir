@@ -353,7 +353,7 @@ tree as a PIR code object that can be compiled.
     args = self.'getargs'(label, next)
     .local string literal
     .local int litlen
-    literal = self
+    literal = self.'ast'()
     litlen = length literal
 
     args['I'] = ''
