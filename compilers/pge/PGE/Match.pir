@@ -251,26 +251,33 @@ object.
 .end
 
 .sub 'result_object' :method
-    .param pmc obj             :slurpy
-    .tailcall self.'ast'(obj :flat)
+    .param pmc obj
+    .tailcall self.'!make'(obj)
+.end
+
+=item C<!make(pmc obj)>
+
+Sets the "ast object" for the Match invocant.
+
+=cut
+
+.sub '!make' :method
+    .param pmc obj
+    setattribute self, '$!ast', obj
+    .return (obj)
 .end
 
 
 =item C<ast([pmc obj])>
 
-Returns or sets the "result object" for the match object.
+Returns the "ast object" for the match object.  If no ast object
+has been set, then it returns the string between C<.from> and C<.to>.
 
 =cut
 
 .sub 'ast' :method
-    .param pmc obj             :optional
-    .param int has_obj         :opt_flag
-    if has_obj == 0 goto get_obj
-    setattribute self, '$!ast', obj
-    goto ret_obj
-  get_obj:
+    .local pmc obj
     obj = getattribute self, '$!ast'
-  ret_obj:
     if null obj goto ret_null
     .return (obj)
   ret_null:
