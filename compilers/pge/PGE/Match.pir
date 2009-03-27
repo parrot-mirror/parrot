@@ -349,8 +349,8 @@ Returns the integer value of this match.
 
 =cut
 
-.sub 'get_integer' :vtable :method
-    $I0 = self.'result_object'()
+.sub '' :vtable('get_integer') :method
+    $I0 = self.'Str'()
     .return ($I0)
 .end
 
@@ -360,8 +360,8 @@ Returns the numeric value of this match.
 
 =cut
 
-.sub 'get_number' :vtable :method
-    $N0 = self.'result_object'()
+.sub '' :vtable('get_number') :method
+    $N0 = self.'Str'()
     .return ($N0)
 .end
 
@@ -371,7 +371,7 @@ Returns the portion of the target string matched by this object.
 
 =cut
 
-.sub 'get_string' :vtable :method
+.sub '' :vtable('get_string') :method
     $S0 = self.'Str'()
     .return ($S0)
 .end
