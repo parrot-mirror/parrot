@@ -42,7 +42,7 @@
     $P0 = match['statement_block']
     past = $P0.'item'()
     past.'blocktype'('declaration')
-    match.'result_object'(past)
+    match.'!make'(past)
 .end
 
 
@@ -85,7 +85,7 @@
     $P2 = match['statement_list']
     $P3 = $P2.'item'()
     past.'push'($P3)
-    match.'result_object'(past)
+    match.'!make'(past)
 .end
 
 
@@ -112,7 +112,7 @@
     past.'push'($P2)
     goto iter_loop
   iter_end:
-    match.'result_object'(past)
+    match.'!make'(past)
 .end
 
 
@@ -124,7 +124,7 @@
     .param string key
     $P0 = match[key]
     $P1 = $P0.'item'()
-    match.'result_object'($P1)
+    match.'!make'($P1)
 .end
 
 
@@ -188,7 +188,7 @@
     block = block.'item'()
     ret
   end:
-    match.'result_object'(past)
+    match.'!make'(past)
 .end
 
 
@@ -211,7 +211,7 @@
     block = block.'item'()
     $P0 = get_hll_global ['PAST'], 'Op'
     past = $P0.'new'(expr, block, 'pasttype'=>'unless', 'node'=>match)
-    match.'result_object'(past)
+    match.'!make'(past)
 .end
 
 
@@ -232,7 +232,7 @@
     $S0 = concat 'repeat_', $S0
     $P0 = get_hll_global ['PAST'], 'Op'
     $P5 = $P0.'new'( $P1, $P2, 'pasttype'=>$S0, 'node'=>match)
-    match.'result_object'($P5)
+    match.'!make'($P5)
 .end
 
 
@@ -252,7 +252,7 @@
     $S0 = match['sym']
     $P0 = get_hll_global ['PAST'], 'Op'
     $P5 = $P0.'new'( $P1, $P2, 'pasttype'=>$S0, 'node'=>match)
-    match.'result_object'($P5)
+    match.'!make'($P5)
 .end
 
 
@@ -285,7 +285,7 @@
     $P2  = get_hll_global ['PAST'], 'Op'
     $S1  = match['sym']
     past = $P2.'new'($P0, block, 'pasttype'=>$S1, 'node'=>match)
-    match.'result_object'(past)
+    match.'!make'(past)
 .end
 
 
@@ -301,7 +301,7 @@
 
     $P1 = get_hll_global ['PAST'], 'Op'
     $P1 = $P1.'new'( $P0, 'pasttype'=>'return', 'node'=>match)
-    match.'result_object'($P1)
+    match.'!make'($P1)
 .end
 
 
@@ -309,7 +309,7 @@
 ##        make PAST::Op.new( PAST::Var.new( :name('$/'),
 ##                                          :scope('lexical') ),
 ##                           $($<EXPR>),
-##                           :name('result_object'),
+##                           :name('!make'),
 ##                           :pasttype('callmethod') );
 ##    }
 .sub 'make_statement' :method
@@ -319,8 +319,8 @@
     $P2 = match['EXPR']
     $P3 = $P2.'item'()
     $P4 = get_hll_global ['PAST'], 'Op'
-    $P5 = $P4.'new'($P1, $P3, 'name'=>'result_object', 'pasttype'=>'callmethod')
-    match.'result_object'($P5)
+    $P5 = $P4.'new'($P1, $P3, 'name'=>'!make', 'pasttype'=>'callmethod')
+    match.'!make'($P5)
 .end
 
 
@@ -351,7 +351,7 @@
   make:
     $P1 = get_hll_global ['PAST'], 'Op'
     $P2 = $P1.'new'( 'inline'=>inline, 'pasttype'=>'inline', 'node'=>match)
-    match.'result_object'($P2)
+    match.'!make'($P2)
 .end
 
 
@@ -362,7 +362,7 @@
     .param pmc match
     $P0 = match['statement_block']
     $P0 = $P0.'item'()
-    match.'result_object'($P0)
+    match.'!make'($P0)
 .end
 
 
@@ -418,7 +418,7 @@
     params.'push'(parameter)
     goto param_loop
   param_end:
-    match.'result_object'(past)
+    match.'!make'(past)
 .end
 
 
@@ -474,7 +474,7 @@
     if $S0 != '?' goto make_past
     past.'viviself'('Undef')
   make_past:
-    match.'result_object'(past)
+    match.'!make'(past)
 .end
 
 
@@ -488,7 +488,7 @@
     $S0 = match
     $P0 = get_hll_global ['PAST'], 'Var'
     $P1 = $P0.'new'('name'=>$S0, 'scope'=>'parameter', 'node'=>match)
-    match.'result_object'($P1)
+    match.'!make'($P1)
 .end
 
 
@@ -521,7 +521,7 @@
     past.'unshift'(term)
     goto iter_loop
   end:
-    match.'result_object'(past)
+    match.'!make'(past)
 .end
 
 
@@ -533,7 +533,7 @@
     .param string key
     $P0 = match[key]
     $P1 = $P0.'item'()
-    match.'result_object'($P1)
+    match.'!make'($P1)
 .end
 
 
@@ -554,7 +554,7 @@
     past.'name'($S0)
     past.'pasttype'('callmethod')
     past.'node'(match)
-    match.'result_object'(past)
+    match.'!make'(past)
 .end
 
 
@@ -600,14 +600,14 @@
     $P1 = match['EXPR']
     $P2 = $P1.'item'()
     $P3 = $P0.'new'( $P2, 'scope'=>scope, 'vivibase'=>vivibase, 'viviself'=>'Undef', 'node'=>match )
-    match.'result_object'($P3)
+    match.'!make'($P3)
     .return ()
   subcall:
     $P0 = match['arglist']
     past = $P0.'item'()
     past.'pasttype'('call')
     past.'node'(match)
-    match.'result_object'(past)
+    match.'!make'(past)
     .return ()
   keyed_const:
     $P0 = get_hll_global ['PAST'], 'Val'
@@ -617,7 +617,7 @@
     value = $P0.'new'( 'value' => $P2, 'node'=> $P1 )
     $P0 = get_hll_global ['PAST'], 'Var'
     $P1 = $P0.'new'( value, 'scope'=>'keyed', 'vivibase'=>'Hash', 'viviself'=>'Undef', 'node'=>match)
-    match.'result_object'($P1)
+    match.'!make'($P1)
 .end
 
 
@@ -653,15 +653,15 @@
     if key == '@( )' goto list_context
     if key == '$( )' goto scalar_context
   parenthetical:
-    match.'result_object'($P1)
+    match.'!make'($P1)
     .return ()
   list_context:
     past = $P0.'new'($P1, 'name' => 'list',  'pasttype'=>'callmethod', 'node'=>match)
-    match.'result_object'(past)
+    match.'!make'(past)
     .return ()
   scalar_context:
     past = $P0.'new'($P1, 'name' => 'item', 'pasttype'=>'callmethod', 'node'=>match)
-    match.'result_object'(past)
+    match.'!make'(past)
 .end
 
 
@@ -713,7 +713,7 @@
     $P0 = 'callarg'(expr)
     past.'push'($P0)
   end:
-    match.'result_object'(past)
+    match.'!make'(past)
 .end
 
 .sub 'callarg'
@@ -737,7 +737,7 @@
     .param pmc key
     $P0 = match[key]
     $P1 = $P0.'item'()
-    match.'result_object'($P1)
+    match.'!make'($P1)
 .end
 
 
@@ -760,7 +760,7 @@
     $P2 = $P2.'item'()
     $P9 = get_hll_global ['PAST'], 'Op'
     $P3 = $P9.'new'($P1, $P2, 'name'=>'infix:=>', 'returns'=>'Pair', 'node'=>match)
-    match.'result_object'($P3)
+    match.'!make'($P3)
 .end
 
 
@@ -803,7 +803,7 @@
     $P2 = past[0]
     $P2.'push'($P1)
   class_done:
-    match.'result_object'(past)
+    match.'!make'(past)
 .end
 
 
@@ -837,7 +837,7 @@
   have_scope:
     block.'symbol'(name, 'scope'=>scope)
   end:
-    match.'result_object'(past)
+    match.'!make'(past)
 .end
 
 
@@ -864,7 +864,7 @@
     $S0 = match[0]
     $P3 = $P2.'new'('value'=>$S0)
     $P4 = $P0.'new'($P1, $P3, 'scope'=>'keyed', 'viviself'=>'Undef')
-    match.'result_object'($P4)
+    match.'!make'($P4)
     .return ()
   past_var:
     $S0 = match
@@ -880,7 +880,7 @@
   past_sigil:
     $P0 = get_hll_global ['PAST'], 'Var'
     $P1 = $P0.'new'('node'=>match, 'name'=>$S0, 'viviself'=>$S2)
-    match.'result_object'($P1)
+    match.'!make'($P1)
 .end
 
 
@@ -892,7 +892,7 @@
     .param pmc key
     $P0 = match[key]
     $P1 = $P0.'item'()
-    match.'result_object'($P1)
+    match.'!make'($P1)
 .end
 
 
@@ -907,7 +907,7 @@
     value = $P0.'item'()
     $P0 = get_hll_global ['PAST'], 'Val'
     $P1 = $P0.'new'('node'=>match, 'value'=>value)
-    match.'result_object'($P1)
+    match.'!make'($P1)
 .end
 
 
@@ -930,7 +930,7 @@
     name = pop ns
     $P0 = get_hll_global ['PAST'], 'Var'
     $P1 = $P0.'new'('node'=>match, 'scope'=>'package', 'name'=>name, 'namespace'=>ns)
-    match.'result_object'($P1)
+    match.'!make'($P1)
 .end
 
 
@@ -944,7 +944,7 @@
     $I0 = match
     $P0 = get_hll_global ['PAST'], 'Val'
     past = $P0.'new'('node'=>match, 'value'=>$I0)
-    match.'result_object'(past)
+    match.'!make'(past)
 .end
 
 
@@ -965,7 +965,7 @@
     past.'name'($S0)
     past.'pasttype'('call')
     past.'node'(match)
-    match.'result_object'(past)
+    match.'!make'(past)
 .end
 
 
@@ -989,7 +989,7 @@
   expr_end:
     $P0 = match['expr']
     $P1 = $P0.'item'()
-    match.'result_object'($P1)
+    match.'!make'($P1)
     .return ()
   expr_reduce:
     .local pmc past, opattr
@@ -1012,7 +1012,7 @@
     past.'push'($P2)
     goto iter_loop
   iter_end:
-    match.'result_object'(past)
+    match.'!make'(past)
 .end
 
 # Local Variables:
