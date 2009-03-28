@@ -223,7 +223,7 @@ to enforce whitespace between lexical words.
 
   literal_end:
     mob.'to'(pos)
-    mob.'result_object'(literal)
+    mob.'!make'(literal)
     .return (mob)
 
   fail:
