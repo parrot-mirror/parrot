@@ -80,7 +80,7 @@ throw an exception if a result object hasn't been set.
 
 =cut
 
-.sub 'item' :method
+.sub 'ast' :method
     .local pmc obj
     obj = getattribute self, '$!ast'
     unless null obj goto end
