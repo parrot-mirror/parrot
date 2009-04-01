@@ -204,7 +204,7 @@ and someday may be refactored to a different location.
     decnum = 0
     if base != 10 goto scan_xco_char_digits
     unless isbracketed goto scan_xco_char_digits
-    $I0 = is_cclass .CCLASS_NUMERIC, $S0, pos
+    $I0 = is_cclass .CCLASS_NUMERIC, target, pos
     if $I0 goto scan_xco_char_digits
     ##  look up character by name
     .local int namepos
