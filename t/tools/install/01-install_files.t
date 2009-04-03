@@ -47,6 +47,20 @@ Parrot::Install, F<tools/dev/install_files.pl>, F<tools/dev/install_dev_files.pl
 =cut
 
 {
+    my $dir = tempdir( CLEANUP => 1 );
+    $dir .= '/';
+
+    my @dirs = qw(foo/bar foo/bar/baz);
+    create_directories($dir, { map { $_ => 1 } @dirs });
+    my($fullname);
+    my $dirs_created = 0;
+    foreach my $d (@dirs) {
+        $dirs_created++ if -d "$dir$d";
+    }
+    is($dirs_created, 2, 'got expected number of directories created');
+}
+
+{
     my($dir) = tempdir( CLEANUP => 1 );
     $dir .= '/';
 
