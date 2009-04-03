@@ -173,19 +173,18 @@ B<Comment:>
 
 sub create_directories {
     my($destdir, $directories) = @_;
-#    my($dir, @dirs);
 
     for my $dir ( map { $destdir . $_ } keys %$directories ) {
         unless ( -d $dir ) {
-            my @dirs;
+            my @dirs_needed;
 
             # Make full path to the directory $dir
             while ( ! -d $dir ) {    # Scan up to nearest existing ancestor
-                unshift @dirs, $dir;
+                unshift @dirs_needed, $dir;
                 $dir = dirname($dir);
             }
-            foreach my $d (@dirs) {
-                -d $d or mkdir( $d, 0777 ) or die "mkdir $d: $!";
+            foreach my $d ( @dirs_needed ) {
+                mkdir( $d, 0777 ) or die "mkdir $d: $!";
             }
         }
     }

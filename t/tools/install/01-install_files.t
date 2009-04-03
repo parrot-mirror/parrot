@@ -45,42 +45,60 @@ Parrot::Install, F<tools/dev/install_files.pl>, F<tools/dev/install_dev_files.pl
 =cut
 
 {
-    my $dir = tempdir( CLEANUP => 1 );
-    $dir .= '/';
+    my $tdir = tempdir( CLEANUP => 1 );
+    $tdir .= '/';
 
     my @dirs = qw(foo/bar foo/bar/baz);
-    create_directories($dir, { map { $_ => 1 } @dirs });
+    create_directories($tdir, { map { $_ => 1 } @dirs });
     my $dirs_seen = 0;
     foreach my $d (@dirs) {
-        $dirs_seen++ if -d "$dir$d";
+        $dirs_seen++ if -d "$tdir$d";
     }
     is($dirs_seen, 2, 'got expected number of directories created');
 }
 
 {
-    my $dir = tempdir( CLEANUP => 1 );
-    $dir .= '/';
+    my $tdir = tempdir( CLEANUP => 1 );
+    $tdir .= '/';
 
     my @dirs = qw(foo/bar foo/bar/baz);
-    my @created = mkpath( "$dir$dirs[0]" );
+    my @created = mkpath( "$tdir$dirs[0]" );
     ok( ( -d $created[0] ),
         "one directory created before create_directories() is called" );
 
-    create_directories($dir, { map { $_ => 1 } @dirs });
+    create_directories($tdir, { map { $_ => 1 } @dirs });
     my $dirs_seen = 0;
     foreach my $d (@dirs) {
-        $dirs_seen++ if -d "$dir$d";
+        $dirs_seen++ if -d "$tdir$d";
     }
     is($dirs_seen, 2,
         "create_directories() handled case where one directory already existed" );
 }
 
 {
-    my $dir = tempdir( CLEANUP => 1 );
-    $dir .= '/';
+    my $tdir = tempdir( CLEANUP => 1 );
+    $tdir .= '/';
 
     my @dirs = qw(foo/bar foo/bar/baz);
-    create_directories($dir, { map { $_ => 1 } @dirs });
+    my @created = mkpath( $tdir . 'foo' );
+    ok( ( -d $created[0] ),
+        "one directory created before create_directories() is called" );
+
+    create_directories($tdir, { map { $_ => 1 } @dirs });
+    my $dirs_seen = 0;
+    foreach my $d (@dirs) {
+        $dirs_seen++ if -d "$tdir$d";
+    }
+    is($dirs_seen, 2,
+        "create_directories() handled case where one path partially existed" );
+}
+
+{
+    my $tdir = tempdir( CLEANUP => 1 );
+    $tdir .= '/';
+
+    my @dirs = qw(foo/bar foo/bar/baz);
+    create_directories($tdir, { map { $_ => 1 } @dirs });
     my($fullname);
 
     my @files = ( ['README', "$dirs[0]/README"] );
@@ -88,7 +106,7 @@ Parrot::Install, F<tools/dev/install_files.pl>, F<tools/dev/install_dev_files.pl
     {
         my ( $stdout, $stderr, $rv );
         capture(
-            sub { $rv = install_files($dir, 1, @files); },
+            sub { $rv = install_files($tdir, 1, @files); },
             \$stdout,
             \$stderr,
         );
@@ -96,7 +114,7 @@ Parrot::Install, F<tools/dev/install_files.pl>, F<tools/dev/install_dev_files.pl
     
         my $files_created = 0;
         foreach my $el (@files) {
-            $files_created++ if -f "$dir$el->[1]";
+            $files_created++ if -f "$tdir$el->[1]";
         }
         is( $files_created, 0, 'dry-run, so no files created' );
 
@@ -107,7 +125,7 @@ Parrot::Install, F<tools/dev/install_files.pl>, F<tools/dev/install_dev_files.pl
     {
         my ( $stdout, $stderr, $rv );
         capture(
-            sub { $rv = install_files($dir, 0, @files); },
+            sub { $rv = install_files($tdir, 0, @files); },
             \$stdout,
             \$stderr,
         );
@@ -115,7 +133,7 @@ Parrot::Install, F<tools/dev/install_files.pl>, F<tools/dev/install_dev_files.pl
     
         my $files_created = 0;
         foreach my $el (@files) {
-            $files_created++ if -f "$dir$el->[1]";
+            $files_created++ if -f "$tdir$el->[1]";
         }
         is( $files_created, 1, 'production, so 1 file created' );
 
