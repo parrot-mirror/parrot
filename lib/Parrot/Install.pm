@@ -68,6 +68,8 @@ sub lines_to_files {
     # We'll report multiple occurrences of the same file
     my(%seen);
 
+    ref($manifests) eq 'ARRAY' or die "\$manifests must be an array reference\n";
+    @$manifests > 0 or die "No manifests specified";
     @ARGV = @$manifests;
     LINE: while (<>) {
         chomp;
@@ -89,7 +91,9 @@ sub lines_to_files {
         $meta =~ s/^\[(.*?)\]//;
         next unless $package;    # Skip if this file belongs to no package
 
-        my($plist) = $options->{packages};
+        my $plist = defined ( $options->{packages})
+            ? $options->{packages}
+            : '.*';
         next unless $package =~ /$plist/;
 
         my %meta;
@@ -105,7 +109,6 @@ sub lines_to_files {
                 );
                 last FIXFILE;
             }
-
             my($copy);
             foreach $tkey (keys %$metatransforms) {
                 if ( $meta{$tkey} ) {
@@ -134,7 +137,7 @@ sub lines_to_files {
                     last FIXFILE;
                 }
             }
-            die "Unknown install location in MANIFEST: $_";
+            die "Unknown install location in MANIFEST for file '$_': ";
         }
 
         $dest = File::Spec->catdir( $options->{buildprefix}, $dest )
