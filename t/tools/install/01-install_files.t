@@ -193,55 +193,55 @@ Parrot::Install, F<tools/dev/install_files.pl>, F<tools/dev/install_dev_files.pl
     }
 }
 
-## Can't safely run lines_to_files() more than once in a program until it's been fixed, 
-## and we can't fix it until its tested, so I've commented most of these out until we've
-## fixed lines_to_files() not to use @ARGV
-#{
-#    my($metatransforms, $othertransforms, $manifests, $options, $parrotdir,
-#        $files, $installable_exe, $directories);
-#
-#    # First lines_to_files test
-##    eval { lines_to_files(); };
-##    $@ or die "lines_to_files didn't die with no parameters\n";
-##    ok($@ =~ /^.manifests must be an array reference$/, 'lines_to_files dies with bad parameters');
-#
-#    # Second lines_to_files test
-##    eval { lines_to_files(
-##        $metatransforms, $othertransforms, 
-##        [qw(MANIFEST MANIFEST.generated)], 
-##        $options, $parrotdir
-##    ); };
-##    ok($@ =~ /^Unknown install location in MANIFEST for file/, 'fails for install locations not specified in transforms');
-#
-#    # Third lines_to_files test
-#    $metatransforms = {
-#        doc => {
-#            optiondir => 'doc',
-#            transform => sub {
-#                my($dest) = @_;
-#                $dest =~ s/^docs\/resources/resources/; # resources go in the top level of docs
-#                $dest =~ s/^docs/pod/; # other docs are actually raw Pod
-#                $parrotdir, $dest;
-#            },
-#        },
-#    };
-#    $othertransforms = {
-#        '.*' => {
-#            optiondir => 'foo',
-#            transform => sub {
-#                return(@_);
-#            }
-#        }
-#    };
-#
-#    ($files, $installable_exe, $directories) = lines_to_files(
+# Can't safely run lines_to_files() more than once in a program until it's been fixed, 
+# and we can't fix it until its tested, so I've commented most of these out until we've
+# fixed lines_to_files() not to use @ARGV
+{
+    my($metatransforms, $othertransforms, $manifests, $options, $parrotdir,
+        $files, $installable_exe, $directories);
+
+    # First lines_to_files test
+#    eval { lines_to_files(); };
+#    $@ or die "lines_to_files didn't die with no parameters\n";
+#    ok($@ =~ /^.manifests must be an array reference$/, 'lines_to_files dies with bad parameters');
+
+    # Second lines_to_files test
+#    eval { lines_to_files(
 #        $metatransforms, $othertransforms, 
 #        [qw(MANIFEST MANIFEST.generated)], 
-#        { packages => 'main' }, $parrotdir
-#    );
-#    ok((ref($files) and ref($installable_exe) and ref($directories)), 'lines_to_files returns something vaguely sensible');
-#    ok(1, 'lines_to_files passed all tests');
-#}
+#        $options, $parrotdir
+#    ); };
+#    ok($@ =~ /^Unknown install location in MANIFEST for file/, 'fails for install locations not specified in transforms');
+
+    # Third lines_to_files test
+    $metatransforms = {
+        doc => {
+            optiondir => 'doc',
+            transform => sub {
+                my($dest) = @_;
+                $dest =~ s/^docs\/resources/resources/; # resources go in the top level of docs
+                $dest =~ s/^docs/pod/; # other docs are actually raw Pod
+                $parrotdir, $dest;
+            },
+        },
+    };
+    $othertransforms = {
+        '.*' => {
+            optiondir => 'foo',
+            transform => sub {
+                return(@_);
+            }
+        }
+    };
+
+    ($files, $installable_exe, $directories) = lines_to_files(
+        $metatransforms, $othertransforms, 
+        [qw(MANIFEST MANIFEST.generated)], 
+        { packages => 'main' }, $parrotdir
+    );
+    ok((ref($files) and ref($installable_exe) and ref($directories)), 'lines_to_files returns something vaguely sensible');
+    ok(1, 'lines_to_files passed all tests');
+}
 
 pass("Completed all tests in $0");
 
