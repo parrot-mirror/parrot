@@ -6,9 +6,9 @@
 use strict;
 use warnings;
 
-use Test::More tests =>  8;
+use Test::More qw(no_plan); # tests =>  8;
 use Carp;
-use Cwd;
+use File::Path qw( mkpath );
 use File::Temp qw( tempdir );
 use lib qw( lib );
 use Parrot::Install qw(
@@ -44,8 +44,6 @@ Parrot::Install, F<tools/dev/install_files.pl>, F<tools/dev/install_dev_files.pl
 
 =cut
 
-my $cwd = cwd();
-
 {
     my $dir = tempdir( CLEANUP => 1 );
     $dir .= '/';
@@ -57,6 +55,24 @@ my $cwd = cwd();
         $dirs_seen++ if -d "$dir$d";
     }
     is($dirs_seen, 2, 'got expected number of directories created');
+}
+
+{
+    my $dir = tempdir( CLEANUP => 1 );
+    $dir .= '/';
+
+    my @dirs = qw(foo/bar foo/bar/baz);
+    my @created = mkpath( "$dir$dirs[0]" );
+    ok( ( -d $created[0] ),
+        "one directory created before create_directories() is called" );
+
+    create_directories($dir, { map { $_ => 1 } @dirs });
+    my $dirs_seen = 0;
+    foreach my $d (@dirs) {
+        $dirs_seen++ if -d "$dir$d";
+    }
+    is($dirs_seen, 2,
+        "create_directories() handled case where one directory already existed" );
 }
 
 {

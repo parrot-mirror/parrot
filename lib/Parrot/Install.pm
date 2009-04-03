@@ -173,10 +173,11 @@ B<Comment:>
 
 sub create_directories {
     my($destdir, $directories) = @_;
-    my($dir, @dirs);
+#    my($dir, @dirs);
 
-    for $dir ( map { $destdir . $_ } keys %$directories ) {
+    for my $dir ( map { $destdir . $_ } keys %$directories ) {
         unless ( -d $dir ) {
+            my @dirs;
 
             # Make full path to the directory $dir
             while ( ! -d $dir ) {    # Scan up to nearest existing ancestor
