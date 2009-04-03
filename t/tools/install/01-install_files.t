@@ -142,6 +142,57 @@ Parrot::Install, F<tools/dev/install_files.pl>, F<tools/dev/install_dev_files.pl
     }
 }
 
+{
+    my $tdir = tempdir( CLEANUP => 1 );
+    $tdir .= '/';
+
+    my @dirs = qw(foo/bar foo/bar/baz);
+    create_directories($tdir, { map { $_ => 1 } @dirs });
+    my($fullname);
+
+    # Case where element in @files is not an array ref
+    my @files = ( q{} );
+
+    {
+        my ( $stdout, $stderr, $rv );
+        capture(
+            sub { $rv = install_files($tdir, 0, @files); },
+            \$stdout,
+            \$stderr,
+        );
+        ok( $rv, 'install_files() handled invalid argument as expected' );
+    
+        like( $stdout, qr/Installing \.\.\./, 
+            'got expected installation message' );
+    }
+}
+
+{
+    my $tdir = tempdir( CLEANUP => 1 );
+    $tdir .= '/';
+
+    my @dirs = qw(foo/bar foo/bar/baz);
+    create_directories($tdir, { map { $_ => 1 } @dirs });
+    my($fullname);
+
+    # Case where element in @files does not hold existent file
+    my $nonexistent = q{ajdpfadksjfjvjkvds} . $$;
+    my @files = ( [ $nonexistent, "$dirs[0]/$nonexistent"] );
+
+    {
+        my ( $stdout, $stderr, $rv );
+        capture(
+            sub { $rv = install_files($tdir, 0, @files); },
+            \$stdout,
+            \$stderr,
+        );
+        ok( $rv, 'install_files() handled non-existent file as expected' );
+    
+        like( $stdout, qr/Installing \.\.\./, 
+            'got expected installation message' );
+    }
+}
+
 ## Can't safely run lines_to_files() more than once in a program until it's been fixed, 
 ## and we can't fix it until its tested, so I've commented most of these out until we've
 ## fixed lines_to_files() not to use @ARGV

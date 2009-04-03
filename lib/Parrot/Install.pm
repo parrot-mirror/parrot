@@ -216,7 +216,7 @@ sub install_files {
 
     print("Installing ...\n");
     foreach my $el ( @files ) {
-        next unless $el;
+        next unless ref($el) eq 'ARRAY';
         ( $src, $dest ) = @{ $el };
         $dest = $destdir . $dest;
         if ( $dryrun ) {
