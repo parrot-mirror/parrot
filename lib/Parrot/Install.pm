@@ -68,7 +68,8 @@ sub lines_to_files {
     # We'll report multiple occurrences of the same file
     my(%seen);
 
-    ref($manifests) eq 'ARRAY' or die "\$manifests must be an array reference\n";
+    ref($manifests) eq 'ARRAY'
+        or die "\$manifests must be an array reference: $!";
     @$manifests > 0 or die "No manifests specified";
     @ARGV = @$manifests;
     LINE: while (<>) {
@@ -178,12 +179,12 @@ sub create_directories {
         unless ( -d $dir ) {
 
             # Make full path to the directory $dir
-            while ( !-d $dir ) {    # Scan up to nearest existing ancestor
+            while ( ! -d $dir ) {    # Scan up to nearest existing ancestor
                 unshift @dirs, $dir;
                 $dir = dirname($dir);
             }
-            foreach (@dirs) {
-                -d or mkdir( $_, 0777 ) or die "mkdir $_: $!\n";
+            foreach my $d (@dirs) {
+                -d $d or mkdir( $d, 0777 ) or die "mkdir $d: $!";
             }
         }
     }
@@ -200,8 +201,8 @@ B<Purpose:> Install the mentioned files into the appropriate locations.
         @list_of_files_and_executables,
     );
 
-B<Arguments:>  Takes two scalar arguments, followed by a list.  (B<NOTE:>  We
-must change this to three scalars, where the last is an array ref.)
+B<Arguments:>  Takes two scalar arguments, followed by a list consisting of
+2-element, C<source => destination> array references.
 
 B<Return Value:>  True value.
 
@@ -214,9 +215,9 @@ sub install_files {
     my($src, $dest, $mode);
 
     print("Installing ...\n");
-    foreach ( @files ) {
-        next unless $_;
-        ( $src, $dest ) = @$_;
+    foreach my $el ( @files ) {
+        next unless $el;
+        ( $src, $dest ) = @{ $el };
         $dest = $destdir . $dest;
         if ( $dryrun ) {
             print "$src -> $dest\n";
@@ -225,7 +226,7 @@ sub install_files {
         else {
             next unless -e $src;
             next if $^O eq 'cygwin' and -e "$src.exe"; # stat works, copy not
-            copy( $src, $dest ) or die "copy $src to $dest: $!\n";
+            copy( $src, $dest ) or die "copy $src to $dest: $!";
             print "$dest\n";
         }
         $mode = ( stat($src) )[2];
