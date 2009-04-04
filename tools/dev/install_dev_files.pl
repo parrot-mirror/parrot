@@ -78,6 +78,7 @@ my %options = (
     docdir      => '/usr/share/doc', # parrot/ subdir added below
     datadir     => '/usr/share/',    # parrot/ subdir added below
     srcdir      => '/usr/src/',      # parrot/ subdir added below
+    versiondir  => '',
     'dry-run'   => 0,
     packages    => 'devel|pct|tge|nqp',
 );

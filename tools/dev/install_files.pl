@@ -131,7 +131,7 @@ my %options = (
     libdir      => '/usr/lib',       # parrot/ subdir added below
     includedir  => '/usr/include',   # parrot/ subdir added below
     docdir      => '/usr/share/doc', # parrot/ subdir added below
-    version     => '',
+    versiondir  => '',
     'dry-run'   => 0,
     packages    => 'main|library|pge',
 );
