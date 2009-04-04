@@ -58,7 +58,7 @@ B<Comment:>
 =cut
 
 sub lines_to_files {
-    my ($metatransforms, $othertransforms, $manifests, $options, $parrotdir)
+    my ($metatransforms, $othertransforms, $manifests_ref, $options_ref, $parrotdir)
         = @_;
     my @files;
     my @installable_exe;
@@ -67,10 +67,10 @@ sub lines_to_files {
     # We'll report multiple occurrences of the same file
     my(%seen);
 
-    ref($manifests) eq 'ARRAY'
-        or die "\$manifests must be an array reference: $!";
-    @$manifests > 0 or die "No manifests specified";
-    local @ARGV = @$manifests;
+    ref($manifests_ref) eq 'ARRAY'
+        or die "Manifests must be listed in an array reference: $!";
+    @{ $manifests_ref } > 0 or die "No manifests specified";
+    @ARGV = @{ $manifests_ref };
     LINE: while ( my $entry = <> ) {
         chomp $entry;
 
@@ -91,8 +91,8 @@ sub lines_to_files {
         $meta =~ s/^\[(.*?)\]//;
         next unless $package;    # Skip if this file belongs to no package
 
-        my $plist = defined ( $options->{packages})
-            ? $options->{packages}
+        my $plist = defined ( $options_ref->{packages})
+            ? $options_ref->{packages}
             : '.*';
         next unless $package =~ /$plist/;
 
@@ -105,7 +105,7 @@ sub lines_to_files {
             if ( $entry =~ /^runtime/ ) {
                 $dest =~ s/^runtime\/parrot\///;
                 $dest = File::Spec->catdir(
-                    $options->{libdir}, $parrotdir, $dest
+                    $options_ref->{libdir}, $parrotdir, $dest
                 );
                 last FIXFILE;
             }
@@ -114,7 +114,7 @@ sub lines_to_files {
                 if ( $meta{$tkey} ) {
                     $copy = $dest; # only needed for installable
                     $dest = File::Spec->catdir(
-                        $options->{$metatransforms->{$tkey}->{optiondir} . 'dir'},
+                        $options_ref->{$metatransforms->{$tkey}->{optiondir} . 'dir'},
                         &{ $metatransforms->{$tkey}->{transform} }($dest)
                     );
                     if ( $metatransforms->{$tkey}->{isbin}
@@ -131,7 +131,7 @@ sub lines_to_files {
             foreach my $tkey (keys %$othertransforms) {
                 if ( $entry =~ /$tkey/ ) {
                     $dest = File::Spec->catdir(
-                        $options->{$othertransforms->{$tkey}->{optiondir} . 'dir'},
+                        $options_ref->{$othertransforms->{$tkey}->{optiondir} . 'dir'},
                         &{ $othertransforms->{$tkey}->{transform} }($dest)
                     );
                     last FIXFILE;
@@ -140,8 +140,8 @@ sub lines_to_files {
             die "Unknown install location in MANIFEST for file '$entry': ";
         }
 
-        $dest = File::Spec->catdir( $options->{buildprefix}, $dest )
-            if $options->{buildprefix};
+        $dest = File::Spec->catdir( $options_ref->{buildprefix}, $dest )
+            if $options_ref->{buildprefix};
 
         $directories{ dirname($dest) } = 1;
         push( @files, [ $src => $dest ] );
