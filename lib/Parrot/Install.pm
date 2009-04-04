@@ -63,7 +63,6 @@ sub lines_to_files {
     my @files;
     my @installable_exe;
     my %directories;
-    my $tkey;
 
     # We'll report multiple occurrences of the same file
     my(%seen);
@@ -71,14 +70,14 @@ sub lines_to_files {
     ref($manifests) eq 'ARRAY'
         or die "\$manifests must be an array reference: $!";
     @$manifests > 0 or die "No manifests specified";
-    @ARGV = @$manifests;
-    LINE: while (<>) {
-        chomp;
+    local @ARGV = @$manifests;
+    LINE: while ( my $entry = <> ) {
+        chomp $entry;
 
-        s/\#.*//;    # Ignore comments
-        next if /^\s*$/;    # Skip blank lines
+        $entry =~ s/\#.*//;    # Ignore comments
+        next if $entry =~ /^\s*$/;    # Skip blank lines
 
-        my ( $src, $meta, $dest ) = split( /\s+/, $_ );
+        my ( $src, $meta, $dest ) = split( /\s+/, $entry );
         $dest ||= $src;
 
         if ( $seen{$src}++ ) {
@@ -86,7 +85,7 @@ sub lines_to_files {
         }
 
         # Parse out metadata
-        die "Malformed line in MANIFEST: $_" if not defined $meta;
+        die "Malformed line in MANIFEST: $entry" if not defined $meta;
         my $generated = $meta =~ s/^\*//;
         my ($package) = $meta =~ /^\[(.*?)\]/;
         $meta =~ s/^\[(.*?)\]//;
@@ -99,11 +98,11 @@ sub lines_to_files {
 
         my %meta;
         @meta{ split( /,/, $meta ) } = ();
-        $meta{$_} = 1 for ( keys %meta );          # Laziness
+        $meta{$entry} = 1 for ( keys %meta );          # Laziness
 
         FIXFILE: {
             # Have to catch this case early for some unknown reason
-            if ( /^runtime/ ) {
+            if ( $entry =~ /^runtime/ ) {
                 $dest =~ s/^runtime\/parrot\///;
                 $dest = File::Spec->catdir(
                     $options->{libdir}, $parrotdir, $dest
@@ -111,7 +110,7 @@ sub lines_to_files {
                 last FIXFILE;
             }
             my($copy);
-            foreach $tkey (keys %$metatransforms) {
+            foreach my $tkey (keys %$metatransforms) {
                 if ( $meta{$tkey} ) {
                     $copy = $dest; # only needed for installable
                     $dest = File::Spec->catdir(
@@ -129,8 +128,8 @@ sub lines_to_files {
                 }
             }
 
-            foreach $tkey (keys %$othertransforms) {
-                if ( /$tkey/ ) {
+            foreach my $tkey (keys %$othertransforms) {
+                if ( $entry =~ /$tkey/ ) {
                     $dest = File::Spec->catdir(
                         $options->{$othertransforms->{$tkey}->{optiondir} . 'dir'},
                         &{ $othertransforms->{$tkey}->{transform} }($dest)
@@ -138,7 +137,7 @@ sub lines_to_files {
                     last FIXFILE;
                 }
             }
-            die "Unknown install location in MANIFEST for file '$_': ";
+            die "Unknown install location in MANIFEST for file '$entry': ";
         }
 
         $dest = File::Spec->catdir( $options->{buildprefix}, $dest )
