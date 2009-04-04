@@ -78,7 +78,7 @@ sub lines_to_files {
         next if $entry =~ /^\s*$/;    # Skip blank lines
 
         my ( $src, $meta, $dest ) = split( /\s+/, $entry );
-        $dest ||= $src;
+        $dest = $src unless $dest;
 
         if ( $seen{$src}++ ) {
             print STDERR "$ARGV:$.: Duplicate entry $src\n";
@@ -109,10 +109,9 @@ sub lines_to_files {
                 );
                 last FIXFILE;
             }
-            my($copy);
             foreach my $tkey (keys %$metatransforms) {
                 if ( $meta{$tkey} ) {
-                    $copy = $dest; # only needed for installable
+                    my $copy = $dest; # only needed for installable
                     $dest = File::Spec->catdir(
                         $options_ref->{$metatransforms->{$tkey}->{optiondir} . 'dir'},
                         &{ $metatransforms->{$tkey}->{transform} }($dest)
