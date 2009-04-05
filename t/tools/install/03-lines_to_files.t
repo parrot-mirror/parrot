@@ -6,7 +6,7 @@
 use strict;
 use warnings;
 
-use Test::More qw(no_plan); # tests => 11;
+use Test::More tests =>  6;
 use Carp;
 use Cwd;
 use File::Copy;
@@ -105,6 +105,8 @@ like($@, qr/No manifests specified/,
     );
     like($stderr, qr/MANIFEST\.generated:\d+:\s+Duplicate entry/,
         "Detected duplicate entries in one or more manifest files" );
+    is( scalar @{ $installable_exe_ref }, 0,
+        "No installable executables in this test" );
 
     chdir $cwd or die "Unable to return to starting directory: $!";
 }
