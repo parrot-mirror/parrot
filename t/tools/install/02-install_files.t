@@ -6,8 +6,10 @@
 use strict;
 use warnings;
 
-use Test::More tests => 11;
+use Test::More qw(no_plan); # tests => 11;
 use Carp;
+use Cwd;
+use File::Copy;
 use File::Path qw( mkpath );
 use File::Temp qw( tempdir );
 use lib qw( lib );
@@ -17,15 +19,17 @@ use Parrot::Install qw(
 );
 use IO::CaptureOutput qw( capture );
 
+my $cwd = cwd();
+my $testsourcedir = qq{$cwd/t/tools/install/testlib};
+
 {
     my $tdir = tempdir( CLEANUP => 1 );
     $tdir .= '/';
 
     my @dirs = qw(foo/bar foo/bar/baz);
     create_directories($tdir, { map { $_ => 1 } @dirs });
-    my($fullname);
 
-    my @files = ( ['README', "$dirs[0]/README"] );
+    my @files = ( [ "$testsourcedir/README", "$dirs[0]/README"] );
 
     {
         my ( $stdout, $stderr, $rv );
@@ -40,10 +44,10 @@ use IO::CaptureOutput qw( capture );
         foreach my $el (@files) {
             $files_created++ if -f "$tdir$el->[1]";
         }
-        is( $files_created, 0, 'dry-run, so no files created' );
+        is( $files_created, 0, 'Dry run, so no files created' );
 
         like( $stdout, qr/Installing.*README.*README/s,
-            'got expected installation message' );
+            'Got expected installation message' );
     }
 
     {
@@ -59,11 +63,93 @@ use IO::CaptureOutput qw( capture );
         foreach my $el (@files) {
             $files_created++ if -f "$tdir$el->[1]";
         }
-        is( $files_created, 1, 'production, so 1 file created' );
+        is( $files_created, 1, 'Production, so 1 file created' );
 
         like( $stdout, qr/Installing.*README/s,
-            'got expected installation message' );
+            'Got expected installation message' );
     }
+}
+
+{
+    local $^O = 'cygwin';
+    my $tdir = tempdir( CLEANUP => 1 );
+    chdir $tdir or die "Unable to change to testing directory: $!";
+    $tdir .= '/';
+
+    my @dirs = qw(foo/bar foo/bar/baz);
+    create_directories($tdir, { map { $_ => 1 } @dirs });
+
+    my @testingfiles = qw( README phony );
+    foreach my $f ( @testingfiles ) {
+        copy "$testsourcedir/$f", "$tdir/$f"
+            or die "Unable to copy $f prior to testing: $!";
+    }
+    my @files = (
+        [ "$tdir/README", "$dirs[0]/README" ],
+        [ "$tdir/phony", "$dirs[0]/phony" ],
+    );
+
+    {
+        my ( $stdout, $stderr, $rv );
+        capture(
+            sub { $rv = install_files($tdir, 0, @files); },
+            \$stdout,
+            \$stderr,
+        );
+        ok( $rv, 'install_files() completed successfully in mock-Cygwin case' );
+    
+        my $files_created = 0;
+        foreach my $el (@files) {
+            $files_created++ if -f "$tdir$el->[1]";
+        }
+        is( $files_created, 2, 'Production, so 2 files created' );
+
+        like( $stdout, qr/Installing.*README.*phony/s,
+            'Got expected installation message' );
+    }
+    chdir $cwd or die "Unable to change back to starting directory: $!";
+}
+
+{
+    local $^O = 'cygwin';
+    my $tdir = tempdir( CLEANUP => 1 );
+    chdir $tdir or die "Unable to change to testing directory: $!";
+    $tdir .= '/';
+
+    my @dirs = qw(foo/bar foo/bar/baz);
+    create_directories($tdir, { map { $_ => 1 } @dirs });
+
+    my @testingfiles = qw( README phony phony.exe );
+    foreach my $f ( @testingfiles ) {
+        copy "$testsourcedir/$f", "$tdir/$f"
+            or die "Unable to copy $f prior to testing: $!";
+    }
+    my @files = (
+        [ "$tdir/README", "$dirs[0]/README" ],
+        [ "$tdir/phony", "$dirs[0]/phony" ],
+        [ "$tdir/phony.exe", "$dirs[0]/phony.exe" ],
+    );
+
+    {
+        my ( $stdout, $stderr, $rv );
+        capture(
+            sub { $rv = install_files($tdir, 0, @files); },
+            \$stdout,
+            \$stderr,
+        );
+        ok( $rv, 'install_files() completed successfully in mock-Cygwin case' );
+    
+        my $files_created = 0;
+        foreach my $el (@files) {
+            $files_created++ if -f "$tdir$el->[1]";
+        }
+        is( $files_created, 2,
+            'Production, so 2 files created; 1 file passed over' );
+
+        like( $stdout, qr/Installing.*README.*phony/s,
+            'Got expected installation message' );
+    }
+    chdir $cwd or die "Unable to change back to starting directory: $!";
 }
 
 {
@@ -72,7 +158,6 @@ use IO::CaptureOutput qw( capture );
 
     my @dirs = qw(foo/bar foo/bar/baz);
     create_directories($tdir, { map { $_ => 1 } @dirs });
-    my($fullname);
 
     # Case where element in @files is not an array ref
     my @files = ( q{} );
@@ -87,7 +172,7 @@ use IO::CaptureOutput qw( capture );
         ok( $rv, 'install_files() handled invalid argument as expected' );
     
         like( $stdout, qr/Installing \.\.\./, 
-            'got expected installation message' );
+            'Got expected installation message' );
     }
 }
 
@@ -97,7 +182,6 @@ use IO::CaptureOutput qw( capture );
 
     my @dirs = qw(foo/bar foo/bar/baz);
     create_directories($tdir, { map { $_ => 1 } @dirs });
-    my($fullname);
 
     # Case where element in @files does not hold existent file
     my $nonexistent = q{ajdpfadksjfjvjkvds} . $$;
@@ -113,7 +197,7 @@ use IO::CaptureOutput qw( capture );
         ok( $rv, 'install_files() handled non-existent file as expected' );
     
         like( $stdout, qr/Installing \.\.\./, 
-            'got expected installation message' );
+            'Got expected installation message' );
     }
 }
 
