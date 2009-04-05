@@ -58,8 +58,8 @@ B<Comment:>
 =cut
 
 sub lines_to_files {
-    my ($metatransforms, $othertransforms, $manifests_ref, $options_ref, $parrotdir)
-        = @_;
+    my ($metatransforms, $othertransforms, $manifests_ref, 
+        $options_ref, $parrotdir) = @_;
     my @files;
     my @installable_exe;
     my %directories;
@@ -96,9 +96,9 @@ sub lines_to_files {
             : '.*';
         next unless $package =~ /$plist/;
 
-        my %meta;
-        @meta{ split( /,/, $meta ) } = ();
-        $meta{$entry} = 1 for ( keys %meta );          # Laziness
+        my %metadata;
+        @metadata{ split( /,/, $meta ) } = ();
+        $metadata{$entry} = 1 for ( keys %metadata );          # Laziness
 
         FIXFILE: {
             # Have to catch this case early for some unknown reason
@@ -110,7 +110,7 @@ sub lines_to_files {
                 last FIXFILE;
             }
             foreach my $tkey (keys %$metatransforms) {
-                if ( $meta{$tkey} ) {
+                if ( $metadata{$tkey} ) {
                     my $copy = $dest; # only needed for installable
                     $dest = File::Spec->catdir(
                         $options_ref->{$metatransforms->{$tkey}->{optiondir} . 'dir'},
