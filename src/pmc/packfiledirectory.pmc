@@ -172,6 +172,7 @@ name already existed, it will be replaced with the new segment.
             if (!Parrot_str_compare(interp, name,
                     Parrot_str_new_constant(interp, pfseg->name))) {
                     add_seg->pf = pfd->base.pf;
+                    add_seg->name = pfseg->name;
                     pfd->segments[i] = add_seg;
                 return;
             }
