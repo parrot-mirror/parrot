@@ -57,43 +57,29 @@ Destroys the PackFile object.
 
 =item C<STRING *get_string()>
 
-Return raw serialized PBC file data.
+Shortcut for self.pack.
 
 =cut
 
 */
     VTABLE STRING *get_string() {
-        PackFile *pf = PMC_data_typed(SELF, PackFile *);
-        opcode_t length = PackFile_pack_size(interp, pf) * sizeof (opcode_t);
-        opcode_t *ptr = (opcode_t*)mem_sys_allocate(length);
-        STRING *str;
-        PackFile_pack(interp, pf, ptr);
-        str = Parrot_str_new_init(interp, (const char*)ptr, length,
-                PARROT_FIXED_8_ENCODING, PARROT_BINARY_CHARSET, 0);
-        mem_sys_free(ptr);
-        return str;
+        STRING * ret;
+        (STRING *ret) = PCCINVOKE(INTERP, SELF, "pack");
+        return ret;
     }
 
 /*
 
 =item C<void set_string_native(STRING *str)>
 
-Parse raw serialized PBC file data into the Packfile data structure.
+Shortcut for self.unpack.
 
 =cut
 
 Implementation note: taken from the bottom end of Parrot_pbc_read().
 */
     VTABLE void set_string_native(STRING *str) {
-        PackFile *pf = PMC_data_typed(SELF, PackFile *);
-        const opcode_t *ptr = (const opcode_t*)Parrot_string_cstring(interp, str);
-        int length = Parrot_str_byte_length(interp, str);
-        if (!PackFile_unpack(interp, pf, ptr, length))
-            Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_MALFORMED_PACKFILE,
-                                        "Can't unpack packfile.");
-
-        /* Set :main routine */
-        do_sub_pragmas(interp, pf->cur_cs, PBC_PBC, NULL);
+        PCCINVOKE(INTERP, SELF, "unpack", STRING *str);
     }
 
 
@@ -275,6 +261,49 @@ set_integer_keyed_str.
         SELF.set_integer_keyed_str(s, val);
     }
 
+/*
+
+=item C<STRING * pack()>
+
+Return raw serialized PBC file data.
+
+=cut
+
+*/
+
+    METHOD STRING *pack() {
+        PackFile *pf = PMC_data_typed(SELF, PackFile *);
+        opcode_t length = PackFile_pack_size(interp, pf) * sizeof (opcode_t);
+        opcode_t *ptr = (opcode_t*)mem_sys_allocate(length);
+        STRING *str;
+        PackFile_pack(interp, pf, ptr);
+        str = Parrot_str_new_init(interp, (const char*)ptr, length,
+                PARROT_FIXED_8_ENCODING, PARROT_BINARY_CHARSET, 0);
+        mem_sys_free(ptr);
+        RETURN(STRING *str);
+    }
+
+/*
+
+=item C<STRING * unpack()>
+
+Parse raw serialized PBC file data into the Packfile data structure.
+
+=cut
+
+*/
+    
+    METHOD void unpack(STRING *str) {
+        PackFile *pf = PMC_data_typed(SELF, PackFile *);
+        const opcode_t *ptr = (const opcode_t*)Parrot_string_cstring(interp, str);
+        int length = Parrot_str_byte_length(interp, str);
+        if (!PackFile_unpack(interp, pf, ptr, length))
+            Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_MALFORMED_PACKFILE,
+                                        "Can't unpack packfile.");
+
+        /* Set :main routine */
+        do_sub_pragmas(interp, pf->cur_cs, PBC_PBC, NULL);
+    }
 
 /*
 
