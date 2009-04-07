@@ -135,9 +135,6 @@ Tests the PackfileDirectory PMC.
     pfdir = pf.'get_directory'()
     $P0   = new [ 'PackfileRawSegment' ]
 
-	# We've got some bug during replacing old Segment
-	goto add_new
-
 	# Adding segment with same name replaces old one
 	$I0   = elements pfdir
 	$S0   = pfdir[0]
