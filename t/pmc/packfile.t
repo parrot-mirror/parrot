@@ -21,13 +21,14 @@ Tests the Packfile PMC.
 .sub main :main
 .include 'test_more.pir'
 
-    plan(6)
+    plan(7)
     'test_new'()
     'test_get_integer'()
     'test_get_directory'()
     'test_get_integer_keyed_str'()
     'test_set_integer_keyed_str'()
     'test_get_directory'()
+    'test_pack'()
 .end
 
 
@@ -104,10 +105,35 @@ Tests the Packfile PMC.
     ok($I1, 'get_directory')
 .end
 
+# Packfile.pack.
+# Check that unpack-pack produce correct result.
+.sub 'test_pack'
+    .local string filename, first
+    $S0 = '_filename'()
+    $P0 = open $S0, 'r'
+
+    first = $P0.'readall'()
+
+    .local pmc packfile
+    packfile = new 'Packfile'
+    packfile = first
+
+    # Packed file should be exactly the same as loaded
+    .local string second
+    # Pack
+    second = packfile
+    
+    $I0 = cmp first, second
+    $I0 = not $I0
+    todo($I0, 'pack produced same result twice')
+.end
+
 # Return test filename
+# Currently parrot doesn't support system independent PBCs. So, cross your
+# fingers and try different filename for binary-dependent tests...
 .sub '_filename'
     .local string filename
-    filename = 't/native_pbc/integer_1.pbc'
+    filename = 't/native_pbc/number_1.pbc'
     .return (filename)
 .end
 
