@@ -63,23 +63,6 @@ Tests the Packfile PMC.
 .end
 
 
-# common setup code for later tests
-.sub '_pbc'
-    .include "stat.pasm"
-    .include "interpinfo.pasm"
-    .local pmc pf, pio
-    pf   = new ['Packfile']
-    #$S0  = interpinfo .INTERPINFO_RUNTIME_PREFIX
-    #$S0 .= "/runtime/parrot/library/uuid.pbc"
-    $S0 .= "t/native_pbc/integer_1.pbc"
-    pio  = open $S0, 'r'
-    $S0  = pio.'readall'()
-    close pio
-    pf   = $S0
-    .return(pf)
-.end
-
-
 # Packfile.set_string_native, Packfile.get_integer_keyed_str
 .sub 'test_get_integer_keyed_str'
     .local pmc pf
@@ -120,6 +103,24 @@ Tests the Packfile PMC.
     $I1 = cmp $I0, 0
     ok($I1, 'get_directory')
 .end
+
+
+# common pbc loading function
+.sub '_pbc'
+    .include "stat.pasm"
+    .include "interpinfo.pasm"
+    .local pmc pf, pio
+    pf   = new ['Packfile']
+    #$S0  = interpinfo .INTERPINFO_RUNTIME_PREFIX
+    #$S0 .= "/runtime/parrot/library/uuid.pbc"
+    $S0 .= "t/native_pbc/integer_1.pbc"
+    pio  = open $S0, 'r'
+    $S0  = pio.'readall'()
+    close pio
+    pf   = $S0
+    .return(pf)
+.end
+
 
 
 # Local Variables:
