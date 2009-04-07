@@ -1831,6 +1831,7 @@ PackFile_Segment_pack(PARROT_INTERP, ARGIN(PackFile_Segment *self),
     /*const size_t align             = 16 / sizeof (opcode_t);*/
     PackFile_Segment_pack_func_t f =
         self->pf->PackFuncs[self->type].pack;
+    opcode_t * old_cursor;          // Used for filling padding with 0
 #if TRACE_PACKFILE
     PackFile * const pf  = self->pf;
 #endif
@@ -1842,7 +1843,12 @@ PackFile_Segment_pack(PARROT_INTERP, ARGIN(PackFile_Segment *self),
 
     TRACE_PRINTF_ALIGN(("-ALIGN_16: offset=0x%x src=0x%x cursor=0x%x\n",
                         OFFS(pf, cursor), pf->src, cursor));
+    old_cursor = cursor;
     ALIGN_16(self->pf, cursor);
+    /* fill padding with zeros */
+    while (old_cursor != cursor)
+        *old_cursor++ = 0;
+
     /*if (align && (cursor - self->pf->src) % align)
       cursor += align - (cursor - self->pf->src) % align;*/
     TRACE_PRINTF_ALIGN(("+ALIGN_16: offset=0x%x src=0x%x cursor=0x%x\n",
