@@ -72,9 +72,8 @@ Tests the Packfile PMC.
     #$S0  = interpinfo .INTERPINFO_RUNTIME_PREFIX
     #$S0 .= "/runtime/parrot/library/uuid.pbc"
     $S0 .= "t/native_pbc/integer_1.pbc"
-    $I0  = stat $S0, .STAT_FILESIZE
     pio  = open $S0, 'r'
-    $S0  = read pio, $I0
+    $S0  = pio.'readall'()
     close pio
     pf   = $S0
     .return(pf)
