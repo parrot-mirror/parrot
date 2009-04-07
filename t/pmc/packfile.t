@@ -104,6 +104,12 @@ Tests the Packfile PMC.
     ok($I1, 'get_directory')
 .end
 
+# Return test filename
+.sub '_filename'
+    .local string filename
+    filename = 't/native_pbc/integer_1.pbc'
+    .return (filename)
+.end
 
 # common pbc loading function
 .sub '_pbc'
@@ -113,7 +119,7 @@ Tests the Packfile PMC.
     pf   = new ['Packfile']
     #$S0  = interpinfo .INTERPINFO_RUNTIME_PREFIX
     #$S0 .= "/runtime/parrot/library/uuid.pbc"
-    $S0 .= "t/native_pbc/integer_1.pbc"
+    $S0 = '_filename'()
     pio  = open $S0, 'r'
     $S0  = pio.'readall'()
     close pio
