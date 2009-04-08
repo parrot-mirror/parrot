@@ -1,13 +1,6 @@
-#!perl
+#!parrot
 # Copyright (C) 2009, Parrot Foundation.
 # $Id$
-
-use strict;
-use warnings;
-use lib qw( . lib ../lib ../../lib );
-use Test::More;
-use Parrot::Test tests => 3;
-use Parrot::Config;
 
 =head1 NAME
 
@@ -29,68 +22,45 @@ Tests the PackfileConstantTable PMC.
 # fetches for the found types don't crash.
 
 
-# common setup code for later tests
+.sub 'main' :main
+.include 'test_more.pir'
+	'plan'(3)
 
-my $get_uuid_pbc = <<'EOF';
-
-.sub _pbc
-    .include "stat.pasm"
-    .include "interpinfo.pasm"
-    .local pmc pf, pio
-    pf   = new ['Packfile']
-    $S0  = interpinfo .INTERPINFO_RUNTIME_PREFIX
-    $S0 .= "/runtime/parrot/library/uuid.pbc"
-    $I0  = stat $S0, .STAT_FILESIZE
-    pio  = open $S0, 'r'
-    $S0  = read pio, $I0
-    close pio
-    pf   = $S0
-    .return(pf)
+	'test_sanity'()
+	'test_elements'()
+	'test_get'()
 .end
-EOF
+
 
 
 # sanity check we have a PackfileConstantTable
-
-pir_output_is( <<'CODE' . $get_uuid_pbc, <<'OUT', 'sanity' );
-.sub 'test' :main
+.sub 'test_sanity'
     .local pmc pf, pfdir, pftable
     .local string name
     pf      = _pbc()
     pfdir   = pf.'get_directory'()
     pftable = pfdir[2]
     name    = typeof pftable
-    say name
+    $I0 = cmp name, "PackfileConstantTable"
+	$I0 = not $I0
+	ok($I0, "PackfileConstantTable sanity check")
 .end
-CODE
-PackfileConstantTable
-OUT
 
 
 # PackfileConstantTable.elements
-
-pir_output_is( <<'CODE' . $get_uuid_pbc, <<'OUT', 'elements' );
-.sub 'test' :main
+.sub 'test_elements'
     .local pmc pf, pfdir, pftable
     .local int size
     pf      = _pbc()
     pfdir   = pf.'get_directory'()
     pftable = pfdir[2]
     size    = elements pftable
-    gt size, 0, DONE
-    say 'not '
-    DONE:
-    say 'greater'
+	ok(size, "PackfileConstantTable.elements returns non-zero")
 .end
-CODE
-greater
-OUT
 
 
 # PackfileConstantTable.get_type and PackfileConstantTable.get_*_keyed_int
-
-pir_output_is( <<'CODE' . $get_uuid_pbc, <<'OUT', 'get_type, get_*_keyed_int', todo=> 'See TT #385.' );
-.sub 'test' :main
+.sub 'test_get'
     .local pmc pf, pfdir, pftable
     .local int size, this, type
     pf      = _pbc()
@@ -98,44 +68,69 @@ pir_output_is( <<'CODE' . $get_uuid_pbc, <<'OUT', 'get_type, get_*_keyed_int', t
     pftable = pfdir[2]
     size    = elements pftable
     this    = 0
-    LOOP:
+  loop:
     type = pftable.'get_type'(this)
-    eq type, 0x00, NEXT
-    eq type, 0x6E, CONST_NUM
-    eq type, 0x73, CONST_STR
-    eq type, 0x70, CONST_PMC
-    eq type, 0x6B, CONST_KEY
-    goto BAD
-    CONST_NUM:
+    eq type, 0x00, next
+    eq type, 0x6E, const_num
+    eq type, 0x73, const_str
+    eq type, 0x70, const_pmc
+    eq type, 0x6B, const_key
+    goto bad
+  const_num:
     $N0 = pftable[this]
-    goto NEXT
-    CONST_STR:
+    goto next
+  const_str:
     $S0 = pftable[this]
-    goto NEXT
-    CONST_PMC:
+    goto next
+  const_pmc:
     $P0 = pftable[this]
-    goto NEXT
-    CONST_KEY:
+    goto next
+  const_key:
     $P0 = pftable[this]
     $S0 = typeof $P0
-    eq $S0, 'Key', NEXT
-    print 'constant Key with wrong type: '
-    say $S0
-    goto BAD
-    NEXT:
-    this = this + 1
-    ge this, size, DONE
-    goto LOOP
-    gt size, 0, DONE
-    BAD:
-    say 'unknown constant type found!'
-    DONE:
-    say 'done.'
-.end
-CODE
-done.
-OUT
+    eq $S0, 'Key', next
+    $S0 = concat 'constant Key with wrong type: ', $S0
+	ok(0, $S0)
+	.return()
 
+  next:
+    this = this + 1
+    ge this, size, done
+    goto loop
+    gt size, 0, done
+
+  done:
+    ok(1, 'PackfileConstantTable.get_*_int works')
+	.return()
+  bad:
+	ok(0, 'Unknown constant type')
+	.return()
+.end
+
+# Return test filename
+# Currently parrot doesn't support system independent PBCs. So, cross your
+# fingers and try different filename for binary-dependent tests...
+.sub '_filename'
+    .local string filename
+    filename = 't/native_pbc/number_1.pbc'
+    .return (filename)
+.end
+
+# common pbc loading function
+.sub '_pbc'
+    .include "stat.pasm"
+    .include "interpinfo.pasm"
+    .local pmc pf, pio
+    pf   = new ['Packfile']
+    #$S0  = interpinfo .INTERPINFO_RUNTIME_PREFIX
+    #$S0 .= "/runtime/parrot/library/uuid.pbc"
+    $S0 = '_filename'()
+    pio  = open $S0, 'r'
+    $S0  = pio.'readall'()
+    close pio
+    pf   = $S0
+    .return(pf)
+.end
 
 # Local Variables:
 #   mode: cperl
