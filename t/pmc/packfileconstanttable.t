@@ -24,11 +24,12 @@ Tests the PackfileConstantTable PMC.
 
 .sub 'main' :main
 .include 'test_more.pir'
-	'plan'(3)
+	'plan'(7)
 
 	'test_sanity'()
 	'test_elements'()
 	'test_get'()
+	'test_set'()
 .end
 
 
@@ -106,6 +107,34 @@ Tests the PackfileConstantTable PMC.
 	ok(0, 'Unknown constant type')
 	.return()
 .end
+
+# Test setting constants into PackfileConstantTable
+.sub 'test_set'
+	.local pmc ct
+	.local int size
+	ct = new ['PackfileConstantTable']
+
+	# Initial PackfileConstantTable is empty
+	size = elements ct
+	is(size, 0, "Empty PackfileConstantTable created")
+
+	# Set first string
+	ct[0] = "string"
+	$I0 = elements ct
+	is($I0, 1, "String element added")
+	
+	ct[1] = 1.0
+	$I0 = elements ct
+	is($I0, 2, "Number elements added")
+
+	$P0 = new 'Integer'
+	$P0 = 42
+	ct[2] = $P0
+	$I0 = elements ct
+	is($I0, 3, "PMC elements added")
+
+.end
+
 
 # Return test filename
 # Currently parrot doesn't support system independent PBCs. So, cross your
