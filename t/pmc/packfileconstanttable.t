@@ -24,12 +24,12 @@ Tests the PackfileConstantTable PMC.
 
 .sub 'main' :main
 .include 'test_more.pir'
-	'plan'(10)
+    'plan'(10)
 
-	'test_sanity'()
-	'test_elements'()
-	'test_get'()
-	'test_set'()
+    'test_sanity'()
+    'test_elements'()
+    'test_get'()
+    'test_set'()
 .end
 
 
@@ -43,8 +43,8 @@ Tests the PackfileConstantTable PMC.
     pftable = pfdir[2]
     name    = typeof pftable
     $I0 = cmp name, "PackfileConstantTable"
-	$I0 = not $I0
-	ok($I0, "PackfileConstantTable sanity check")
+    $I0 = not $I0
+    ok($I0, "PackfileConstantTable sanity check")
 .end
 
 
@@ -56,7 +56,7 @@ Tests the PackfileConstantTable PMC.
     pfdir   = pf.'get_directory'()
     pftable = pfdir[2]
     size    = elements pftable
-	ok(size, "PackfileConstantTable.elements returns non-zero")
+    ok(size, "PackfileConstantTable.elements returns non-zero")
 .end
 
 
@@ -91,8 +91,8 @@ Tests the PackfileConstantTable PMC.
     $S0 = typeof $P0
     eq $S0, 'Key', next
     $S0 = concat 'constant Key with wrong type: ', $S0
-	ok(0, $S0)
-	.return()
+    ok(0, $S0)
+    .return()
 
   next:
     this = this + 1
@@ -102,36 +102,36 @@ Tests the PackfileConstantTable PMC.
 
   done:
     ok(1, 'PackfileConstantTable.get_*_int works')
-	.return()
+    .return()
   bad:
-	ok(0, 'Unknown constant type')
-	.return()
+    ok(0, 'Unknown constant type')
+    .return()
 .end
 
 # Test setting constants into PackfileConstantTable
 .sub 'test_set'
-	.local pmc ct
-	.local int size
-	ct = new ['PackfileConstantTable']
+    .local pmc ct
+    .local int size
+    ct = new ['PackfileConstantTable']
 
-	# Initial PackfileConstantTable is empty
-	size = elements ct
-	is(size, 0, "Empty PackfileConstantTable created")
+    # Initial PackfileConstantTable is empty
+    size = elements ct
+    is(size, 0, "Empty PackfileConstantTable created")
 
-	# Set first string
-	ct[0] = "string"
-	$I0 = elements ct
-	is($I0, 1, "String element added")
-	
-	ct[1] = 1.0
-	$I0 = elements ct
-	is($I0, 2, "Number elements added")
+    # Set first string
+    ct[0] = "string"
+    $I0 = elements ct
+    is($I0, 1, "String element added")
+    
+    ct[1] = 1.0
+    $I0 = elements ct
+    is($I0, 2, "Number elements added")
 
-	$P0 = new 'Integer'
-	$P0 = 42
-	ct[2] = $P0
-	$I0 = elements ct
-	is($I0, 3, "PMC elements added")
+    $P0 = new 'Integer'
+    $P0 = 42
+    ct[2] = $P0
+    $I0 = elements ct
+    is($I0, 3, "PMC elements added")
 
     # Check types of created constants
     $I0 = ct.'get_type'(0)
