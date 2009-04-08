@@ -61,8 +61,7 @@ Tests the Packfile PMC.
     $P1 = pf.'get_directory'()
     $S0 = typeof $P1
     $I0 = cmp $S0, 'PackfileDirectory'
-    $I0 = not $I0 # cmp returns 0 when arguments are equal
-    ok($I0, 'get_directory')
+    is($I0, 0, 'get_directory')
 .end
 
 
@@ -138,8 +137,7 @@ Tests the Packfile PMC.
     $S0 = pf
     $S1 = pf.'pack'()
     $I0 = cmp $S0, $S1
-    $I0 = not $I0
-    ok($I0, "pack and get_string are synonyms")
+    is($I0, 0, "pack and get_string are synonyms")
 
     # Unpack data in two ways
     $P0 = new ['Packfile']
@@ -150,8 +148,7 @@ Tests the Packfile PMC.
     $S0 = $P0
     $S1 = $P1
     $I0 = cmp $S0, $S1
-    $I0 = not $I0
-    ok($I0, "unpack and set_string are synonyms")
+    is($I0, 0, "unpack and set_string are synonyms")
 .end
 
 # Return test filename

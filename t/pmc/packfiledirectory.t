@@ -19,14 +19,14 @@ Tests the PackfileDirectory PMC.
 
 .sub 'main' :main
 .include 'test_more.pir'
-	plan(14)
+    plan(14)
 
-	'test_typeof'()
-	'test_elements'()
-	'test_get_pmc_keyed_int'()
-	'test_get_string_keyed_int'()
-	'test_get_pmc_keyed_str'()
-	'test_set_pmc_keyed_str'()
+    'test_typeof'()
+    'test_elements'()
+    'test_get_pmc_keyed_int'()
+    'test_get_string_keyed_int'()
+    'test_get_pmc_keyed_str'()
+    'test_set_pmc_keyed_str'()
 .end
 
 # PackfileDirectory.typeof
@@ -34,10 +34,7 @@ Tests the PackfileDirectory PMC.
     .local pmc pf
     pf = new ['Packfile']
     $P1 = pf.'get_directory'()
-    $S0 = typeof $P1
-    $I0 = cmp $S0, 'PackfileDirectory'
-	$I0 = not $I0
-	ok($I0, 'PackfileDirectory.get_directory')
+    isa_ok($P1, 'PackfileDirectory', 'PackfileDirectory.get_directory')
 .end
 
 
@@ -47,8 +44,7 @@ Tests the PackfileDirectory PMC.
     pf    = _pbc()
     pfdir = pf.'get_directory'()
     $I0   = elements pfdir
-    $I0   = 5 == $I0
-	ok($I0, 'PackfileDirectory.elements')
+    is($I0, 5, 'PackfileDirectory.elements')
 .end
 
 
@@ -67,19 +63,19 @@ Tests the PackfileDirectory PMC.
     eq $I0, $I1, done
     goto loop
   done:
-	.return ()
+    .return ()
 .end
 
 ## PackfileDirectory.get_string_keyed_int
 .sub 'test_get_string_keyed_int'
     .local pmc pf, pfdir
-	.local pmc expected
-	expected = new 'ResizableStringArray'
-	push expected, 'BYTECODE'
-	push expected, 'FIXUP'
-	push expected, 'CONSTANT'
-	push expected, 'PIC'
-	push expected, 'BYTECODE'
+    .local pmc expected
+    expected = new 'ResizableStringArray'
+    push expected, 'BYTECODE'
+    push expected, 'FIXUP'
+    push expected, 'CONSTANT'
+    push expected, 'PIC'
+    push expected, 'BYTECODE'
 
     pf    = _pbc()
     pfdir = pf.'get_directory'()
@@ -87,14 +83,13 @@ Tests the PackfileDirectory PMC.
     $I1   = 0
   loop:
     $S0   = pfdir[$I1]
-	$P0   = split '_', $S0
-	$S0   = shift $P0
-	$S1   = shift expected
-	$I3	  = cmp $S0, $S1
-	$I3   = not $I3
-	ok($I3, 'PackfileDirectory.get_string_keyed_int')
+    $P0   = split '_', $S0
+    $S0   = shift $P0
+    $S1   = shift expected
+    $I3   = cmp $S0, $S1
+    is($I3, 0, 'PackfileDirectory.get_string_keyed_int')
     inc $I1
-	eq $I0, $I1, done
+    eq $I0, $I1, done
     goto loop
   done:
     .return()
@@ -135,23 +130,23 @@ Tests the PackfileDirectory PMC.
     pfdir = pf.'get_directory'()
     $P0   = new [ 'PackfileRawSegment' ]
 
-	# Adding segment with same name replaces old one
-	$I0   = elements pfdir
-	$S0   = pfdir[0]
+    # Adding segment with same name replaces old one
+    $I0   = elements pfdir
+    $S0   = pfdir[0]
     pfdir[$S0] = $P0
     $I1   = elements pfdir
-	if $I0 == $I1 goto add_new
-	ok(0, "Segment with old name was added")
-	goto done
+    if $I0 == $I1 goto add_new
+    ok(0, "Segment with old name was added")
+    goto done
 
-	# Add segment with new name
+    # Add segment with new name
   add_new:
-	$P0   = new [ 'PackfileRawSegment' ]
-	$S0	  = 'BYTECODE_foo'
-	pfdir[$S0] = $P0
-	$I1   = elements pfdir
-	$I3   = $I0 != $I1
-	ok($I3, "New segment added")
+    $P0   = new [ 'PackfileRawSegment' ]
+    $S0   = 'BYTECODE_foo'
+    pfdir[$S0] = $P0
+    $I1   = elements pfdir
+    $I3   = $I0 != $I1
+    ok($I3, "New segment added")
 
   done:
     .return()
