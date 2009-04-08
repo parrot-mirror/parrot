@@ -29,6 +29,8 @@ Tests the Packfile PMC.
     'test_set_integer_keyed_str'()
     'test_get_directory'()
     'test_pack'()
+    # This test will crash on many platforms. See TT#545.
+    #'test_synonyms'()
 .end
 
 
@@ -126,6 +128,30 @@ Tests the Packfile PMC.
     $I0 = cmp first, second
     $I0 = not $I0
     todo($I0, 'pack produced same result twice')
+.end
+
+# Test pack/set_string unpack/get_string equivalency
+.sub 'test_synonyms'
+    .local pmc pf
+    pf = '_pbc'()
+
+    $S0 = pf
+    $S1 = pf.'pack'()
+    $I0 = cmp $S0, $S1
+    $I0 = not $I0
+    ok($I0, "pack and get_string are synonyms")
+
+    # Unpack data in two ways
+    $P0 = new ['Packfile']
+    $P0 = $S0
+    $P1 = new ['Packfile']
+    $P1.'unpack'($S0)
+
+    $S0 = $P0
+    $S1 = $P1
+    $I0 = cmp $S0, $S1
+    $I0 = not $I0
+    ok($I0, "unpack and set_string are synonyms")
 .end
 
 # Return test filename
