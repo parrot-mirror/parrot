@@ -76,6 +76,23 @@ vivify(PARROT_INTERP, PackFile_ConstTable *table, int index)
 
 pmclass PackfileConstantTable extends PackfileSegment {
 
+/*
+
+=item C<init>
+
+Create empty PackfileConstantTable.
+
+=cut
+
+FIXME: It will leak created PackFile_ConstTable.
+
+*/
+
+    VTABLE void init() {
+        PackFile_ConstTable * table = 
+            mem_allocate_zeroed_typed(PackFile_ConstTable);
+        PMC_data(SELF) = table;
+    }
 
 /*
 
