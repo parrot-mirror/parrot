@@ -201,11 +201,13 @@ Set the constant to the given PMC (or key).
 
 =cut
 
+TODO: Distinguish between Key and other PMCs.
+
 */
     VTABLE void set_pmc_keyed_int(INTVAL index, PMC *value)  {
         PackFile_ConstTable *pftable = PMC_data_typed(SELF, PackFile_ConstTable *);
         PackFile_Constant   *constant = vivify(interp, pftable, index);
-        constant->type  = PFC_KEY;
+        constant->type  = PFC_PMC;
         constant->u.key = value;
     }
 

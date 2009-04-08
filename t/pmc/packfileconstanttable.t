@@ -24,7 +24,7 @@ Tests the PackfileConstantTable PMC.
 
 .sub 'main' :main
 .include 'test_more.pir'
-	'plan'(7)
+	'plan'(10)
 
 	'test_sanity'()
 	'test_elements'()
@@ -132,6 +132,14 @@ Tests the PackfileConstantTable PMC.
 	ct[2] = $P0
 	$I0 = elements ct
 	is($I0, 3, "PMC elements added")
+
+    # Check types of created constants
+    $I0 = ct.'get_type'(0)
+    is($I0, 0x73, "First element is string")
+    $I0 = ct.'get_type'(1)
+    is($I0, 0x6E, "Second element is number")
+    $I0 = ct.'get_type'(2)
+    is($I0, 0x70, "Third element is PMC")
 
 .end
 
