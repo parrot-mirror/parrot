@@ -26,54 +26,6 @@ PDD13 for the design spec.
 
 #include "parrot/parrot.h"
 
-static PackFile_Constant *
-getconst(PARROT_INTERP, PackFile_ConstTable *table, int index, int type)
-{
-    PackFile_Constant *rv;
-    if (index < 0 || index >= table->const_count)
-        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_OUT_OF_BOUNDS,
-                "Requested data out of range.");
-    rv = table->constants[index];
-    if (rv->type != type)
-        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INVALID_OPERATION,
-                "Requested constant of the wrong type.");
-    return rv;
-}
-
-/*
- * Extend constant table if required
- * 
- * Implementation details: very similar to imcc/pbc.c. We need refactor
- * it to common subroutine.
- */
-static PackFile_Constant *
-vivify(PARROT_INTERP, PackFile_ConstTable *table, int index)
-{
-    const size_t    old_count = table->const_count;
-    const size_t    new_count = index+1;
-    size_t          i;
-
-    if (index >= table->const_count) {
-        /* Update the constant count and reallocate */
-        if (table->constants)
-            table->constants = mem_realloc_n_typed(table->constants, new_count,
-                PackFile_Constant *);
-        else
-            table->constants =
-                mem_allocate_n_typed(new_count, PackFile_Constant *);
-
-        for (i=old_count; i<new_count; ++i) {
-            table->constants[i] = PackFile_Constant_new(interp);
-        }
-
-        /* Store new size */
-        table->const_count = new_count;
-    }
-
-    return table->constants[index];
-}
-
-
 pmclass PackfileConstantTable extends PackfileSegment {
     /* ResizablePMCArray for storing constants */
     ATTR PMC *constants;
