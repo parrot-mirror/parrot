@@ -125,20 +125,33 @@ Parse raw serialized PBC file data into the Packfile data structure.
 Implementation note: taken from the bottom end of Parrot_pbc_read().
 */
     VTABLE void set_string_native(STRING *str) {
-    /*
+        PackFile        *pf = PackFile_new(interp, 0);
+        const opcode_t  *ptr =
+                (const opcode_t*)Parrot_string_cstring(interp, str);
+        int             length = Parrot_str_byte_length(interp, str);
         Parrot_Packfile_attributes * attrs = PARROT_PACKFILE(SELF);
-        const opcode_t *ptr;
-        int length;
-        
-        ptr = (const opcode_t*)Parrot_string_cstring(interp, attrs->packed);
-        length = Parrot_str_byte_length(interp, str);
-        if (!PackFile_unpack(interp, attrs->pf, ptr, length))
+
+        if (!PackFile_unpack(interp, pf, ptr, length)) {
+            PackFile_destroy(interp, pf);
             Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_MALFORMED_PACKFILE,
                                         "Can't unpack packfile.");
+        }
 
-    */
-        /* Set :main routine */
-        //do_sub_pragmas(interp, attrs->pf->cur_cs, PBC_PBC, NULL);
+        /* Copy values from PackFile header to own attributes */
+        attrs->wordsize         = pf->header->wordsize;
+        attrs->byteorder        = pf->header->byteorder;
+        attrs->fptype           = pf->header->floattype;
+        attrs->version_major    = pf->header->major;
+        attrs->version_minor    = pf->header->minor;
+        attrs->version_patch    = pf->header->patch;
+        attrs->bytecode_major   = pf->header->bc_major;
+        attrs->bytecode_minor   = pf->header->bc_minor;
+        attrs->uuid_type        = pf->header->uuid_type;
+
+        attrs->uuid = Parrot_str_new(interp, (char*)pf->header->uuid_data,
+                pf->header->uuid_size);
+
+        PackFile_destroy(interp, pf);
     }
 
 
