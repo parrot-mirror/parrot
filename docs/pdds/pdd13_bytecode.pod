@@ -875,26 +875,14 @@ be thrown.
 
 =head4 PackfileDirectory.pmc (isa PackfileSegment)
 
-This PMC represents a directory segment. Essentially it is an array of
-PackfileSegment PMCs. When indexed using an integer key, it gets the segment
-at that position in the segments table. When indexed using a string key, it
-looks for a segment of that name. It implements the following methods:
+This PMC represents a directory segment. Essentially it is an hash of
+PackfileSegment PMCs. It implements the following methods:
 
 =over 4
 
 =item * C<elements> (v-table)
 
 Gets the number of segments listed in the directory.
-
-=item * C<get_pmc_keyed_int> (v-table)
-
-Gets a PackfileSegment PMC or an appropriate subclass of it representing the
-segment at the specified index in the directory segment.
-
-=item * C<get_string_keyed_int> (v-table)
-
-Gets a string containing the name of the segment at the specified index in the
-directory segment.
 
 =item * C<get_pmc_keyed_str> (v-table)
 
@@ -913,6 +901,10 @@ will be replaced with the supplied PMC.
 Removes the PackfileSegment PMC from the directory which has the name
 specified by the key.  This is the only way to remove a segment from the
 directory.
+
+=item * C<get_iter> (v-table)
+
+Returns iterator for existing keys.
 
 =back
 
