@@ -21,13 +21,14 @@ Tests the Packfile PMC.
 .sub main :main
 .include 'test_more.pir'
 
-    plan(12)
+    plan(15)
     'test_new'()
     'test_get_string'()
     'test_set_string'()
     'test_get_integer'()
     'test_set_integer'()
     'test_get_directory'()
+    'test_load'()
     'test_pack'()
     # This test will crash on many platforms. See TT#545.
     #'test_synonyms'()
@@ -144,6 +145,25 @@ Tests the Packfile PMC.
     $I0   = length $S0
     $I1 = cmp $I0, 0
     ok($I1, 'get_directory')
+.end
+
+
+# Packfile.set_string_native
+# Check that packfile was loaded properly and set various attributes
+.sub 'test_load'
+    .local pmc pf
+    pf = _pbc()
+
+    # wordsize always greater than 0
+    $I0 = pf["wordsize"]
+    ok($I0, "Wordsize set")
+
+    # We are living in post-1.0 era.
+    $I0 = pf["version_major"]
+    ok($I0, "version_major set")
+
+    $I0 = pf["bytecode_major"]
+    ok($I0, "bytecode_major set")
 .end
 
 # Packfile.pack.
