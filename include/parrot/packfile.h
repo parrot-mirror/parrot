@@ -229,12 +229,18 @@ typedef struct PackFile_FixupTable {
     PackFile_ByteCode           *code;   /* where this segment belongs to */
 } PackFile_FixupTable;
 
-#define PFC_NONE    '\0'
+
+
+/* &gen_from_def(packfile_constants.pasm) */
+
 /* no ascii chars use numbers: for n, s, k, p */
-#define PFC_NUMBER  '\156'
-#define PFC_STRING  '\163'
-#define PFC_KEY     '\153'
-#define PFC_PMC     '\160'
+#define PFC_NONE    0x0
+#define PFC_NUMBER  0x6E
+#define PFC_STRING  0x73
+#define PFC_PMC     0x70
+#define PFC_KEY     0x6B
+
+/* &end_gen */
 
 enum PF_VARTYPE {                  /* s. also imcc/symreg.h */
     PF_VT_START_SLICE = 1 << 10,   /* x .. y slice range */
