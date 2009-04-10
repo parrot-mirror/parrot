@@ -28,7 +28,7 @@ PDD13 for the design spec.
 
 pmclass PackfileRawSegment extends PackfileSegment {
     /* ResizableIntegerArray of opcodes */
-    ATTR PMC *opcodes;
+    ATTR PMC    *opcodes;
 
 /*
 
@@ -106,14 +106,43 @@ Initialize PackfileRawSegment from PackFile_Segment
         PMC * opcodes = PARROT_PACKFILERAWSEGMENT(SELF)->opcodes;
         size_t i;
 
-        /* copy data to own array */
-        VTABLE_set_integer_native(interp, opcodes, pfseg->op_count);
-        /* Not very efficient... */
-        for (i = 0; i < pfseg->op_count; ++i) {
-            VTABLE_set_integer_keyed_int(interp, opcodes, i, pfseg->data[i]);
+        if (pfseg->size) {
+            /* copy data to own array */
+            VTABLE_set_integer_native(interp, opcodes, pfseg->size);
+            /* Not very efficient... */
+            for (i = 0; i < pfseg->op_count; ++i) {
+                VTABLE_set_integer_keyed_int(interp, opcodes, i, pfseg->data[i]);
+            }
         }
     }
 
+/*
+
+=item C<void *get_pointer()>
+
+=cut
+
+*/
+
+    VTABLE void *get_pointer() {
+        PackFile_Segment * pfseg =
+                (PackFile_Segment*)mem_allocate_zeroed_typed(PackFile_ByteCode);
+        Parrot_PackfileRawSegment_attributes * attrs =
+                PARROT_PACKFILERAWSEGMENT(SELF);
+        PMC * opcodes = attrs->opcodes;
+        size_t i;
+
+        pfseg->type     = PF_BYTEC_SEG;
+        pfseg->size     = VTABLE_get_integer(interp, opcodes);
+        pfseg->data     = mem_allocate_n_typed(pfseg->size, opcode_t);
+
+        /* Not very efficient... */
+        for (i = 0; i < pfseg->size; ++i) {
+            pfseg->data[i] = VTABLE_get_integer_keyed_int(interp, opcodes, i);
+        }
+
+        return pfseg;
+    }
 /*
 
 =item C<INTVAL elements()>

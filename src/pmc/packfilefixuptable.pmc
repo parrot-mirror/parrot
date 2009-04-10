@@ -27,6 +27,98 @@ PDD13 for the design spec.
 #include "parrot/parrot.h"
 
 pmclass PackfileFixupTable extends PackfileSegment {
+    /* RPA of entries */
+    ATTR PMC *entries;
+
+/*
+
+=item C<init>
+
+Create empty PackfileFixupTable.
+
+=cut
+
+*/
+
+    VTABLE void init() {
+        Parrot_PackfileFixupTable_attributes * attrs =
+                mem_allocate_zeroed_typed(Parrot_PackfileFixupTable_attributes);
+
+        attrs->entries = pmc_new(interp, enum_class_ResizablePMCArray);
+
+        PObj_custom_mark_destroy_SETALL(SELF);
+        PMC_data(SELF) = attrs;
+    }
+
+/*
+
+=item C<void mark()>
+
+Marks the object as live. 
+
+=cut
+
+*/
+
+    VTABLE void mark() {
+        Parrot_PackfileFixupTable_attributes * attrs =
+                PARROT_PACKFILEFIXUPTABLE(SELF);
+
+        if (attrs->entries)
+            pobject_lives(interp, (PObj *)attrs->entries);
+    }
+
+/*
+
+=item C<void destroy()>
+
+Destroys the PMC and frees all allocated memory.
+
+=cut
+
+*/
+
+    VTABLE void destroy() {
+        Parrot_PackfileFixupTable_attributes * attrs =
+                PARROT_PACKFILEFIXUPTABLE(SELF);
+
+        if (attrs) {
+            mem_sys_free(attrs);
+            PMC_data(SELF) = NULL;
+        }
+    }
+
+
+
+/*
+
+=item C<set_pointer>
+
+=cut
+
+*/
+
+    VTABLE void set_pointer(void * pointer) {
+    }
+
+/*
+
+=item C<void *get_pointer()>
+=cut
+
+*/
+    VTABLE void *get_pointer() {
+        Parrot_PackfileFixupTable_attributes * attrs =
+                PARROT_PACKFILEFIXUPTABLE(SELF);
+        PackFile_FixupTable * pftable = 
+                mem_allocate_zeroed_typed(PackFile_FixupTable);
+
+        pftable->base.type = PF_FIXUP_SEG;
+
+        /* TODO: Copy all entries */
+
+        return pftable;
+    }
 
 
 /*

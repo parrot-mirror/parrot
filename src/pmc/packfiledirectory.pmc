@@ -143,6 +143,41 @@ Initialize PackfileDirectory from PackFile_Directory.
 
 /*
 
+=item C<void *get_pointer()>
+
+Creates PackFile for given directory.
+
+=cut
+
+*/
+
+    VTABLE void *get_pointer() {
+        Parrot_PackfileDirectory_attributes * attrs =
+                PARROT_PACKFILEDIRECTORY(SELF);
+        PackFile           * pf = PackFile_new(interp, 0); /* dummy PackFile... */
+        PackFile_Directory * pfdir = &pf->directory;
+        PackFile_Segment   * pfseg;
+        PMC                * seg;
+        PMC                * iter;
+        STRING             * name;
+        STRING             * res;
+
+        /* Create Segments. Add to Directory with transfering ownership */
+        iter = VTABLE_get_iter(interp, attrs->hash);
+        while (VTABLE_get_bool(interp, iter)) {
+            name  = VTABLE_shift_string(interp, iter);
+            seg   = VTABLE_get_pmc_keyed_str(interp, attrs->hash, name);
+            pfseg = (PackFile_Segment*)VTABLE_get_pointer(interp, seg);
+            pfseg->pf   = pf;
+            pfseg->name = strdup(Parrot_string_cstring(interp, name));
+            PackFile_add_segment(interp, pfdir, pfseg);
+        }
+        
+        return pf;
+    }
+
+/*
+
 =item C<INTVAL elements()>
 
 Get the number of elements in the array.

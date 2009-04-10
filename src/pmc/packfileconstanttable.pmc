@@ -136,6 +136,25 @@ Set pointer to underlying PackFile_ConstTable
 
 /*
 
+=item C<void *get_pointer()>
+=cut
+
+*/
+    VTABLE void *get_pointer() {
+        Parrot_PackfileConstantTable_attributes * attrs =
+                PARROT_PACKFILECONSTANTTABLE(SELF);
+        PackFile_ConstTable * pftable = 
+                mem_allocate_zeroed_typed(PackFile_ConstTable);
+
+        pftable->base.type = PF_CONST_SEG;
+        
+        /* TODO Copy all constanst with respect of type */
+
+        return pftable;
+    }
+
+/*
+
 =item C<INTVAL elements()>
 
 Get the number of elements in the array.

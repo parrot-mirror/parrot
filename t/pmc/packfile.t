@@ -22,7 +22,7 @@ Tests the Packfile PMC.
 .sub main :main
 .include 'test_more.pir'
 
-    plan(15)
+    plan(17)
     'test_new'()
     'test_get_string'()
     'test_set_string'()
@@ -30,6 +30,7 @@ Tests the Packfile PMC.
     'test_set_integer'()
     'test_get_directory'()
     'test_load'()
+    'test_pack_fresh_packfile'()
     'test_pack'()
     # This test will crash on many platforms. See TT#545.
     #'test_synonyms'()
@@ -165,6 +166,34 @@ Tests the Packfile PMC.
 
     $I0 = pf["bytecode_major"]
     ok($I0, "bytecode_major set")
+.end
+
+
+# Create very simple Packfile and pack it
+.sub 'test_pack_fresh_packfile'
+    .local pmc pf, pfdir
+    pf = new 'Packfile'
+    pfdir = pf.'get_directory'()
+    #$P0 = new 'PackfileConstantTable'
+    #$P0[0] = 42.0
+    $P0 = new 'PackfileFixupTable'
+    pfdir["FIXUP_t/pmc/packfile.t"] = $P0
+
+    $P1 = new 'PackfileRawSegment'
+    pfdir["BYTECODE_t/pmc/packfile.t"] = $P1
+
+    # Pack it
+    $S0 = pf
+
+    ok(1, "PackFile packed")
+
+    pf = new 'Packfile'
+    pf = $S0
+    ok(1, "PackFile unpacked after pack")
+
+    #$P1 = open "/tmp/1.pbc", "w"
+    #$P1.'puts'($S0)
+    #close $P1
 .end
 
 # Packfile.pack.

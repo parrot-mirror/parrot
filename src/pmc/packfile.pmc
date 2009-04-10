@@ -99,18 +99,30 @@ Return raw serialized PBC file data.
 
 =cut
 
+Implementation note: all hard stuff done by PackfileDirectory.
+
 */
     VTABLE STRING *get_string() {
-    /*
         Parrot_Packfile_attributes * attrs = PARROT_PACKFILE(SELF);
-        opcode_t length = PackFile_pack_size(interp, attrs->pf) * sizeof (opcode_t);
-        opcode_t *ptr = (opcode_t*)mem_sys_allocate(length);
-        PackFile_pack(interp, attrs->pf, ptr);
+        PackFile                   * pf =
+                (PackFile*)VTABLE_get_pointer(interp, attrs->directory);
+
+        opcode_t    length;
+        opcode_t    *ptr;
+        STRING      *str;
+
+        /* Calculate required memory */
+        length  = PackFile_pack_size(interp, pf) * sizeof(opcode_t);
+        ptr     = (opcode_t*)mem_sys_allocate(length);
+
+        /* And pack it! */
+        PackFile_pack(interp, pf, ptr);
+
         str = Parrot_str_new_init(interp, (const char*)ptr, length,
                 PARROT_FIXED_8_ENCODING, PARROT_BINARY_CHARSET, 0);
         mem_sys_free(ptr);
-        */
-        STRING *str = Parrot_str_new_noinit(INTERP, enum_stringrep_one, 0);
+        
+        PackFile_destroy(interp, pf);
         return str;
     }
 
