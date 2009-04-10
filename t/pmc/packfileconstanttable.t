@@ -36,25 +36,20 @@ Tests the PackfileConstantTable PMC.
 
 # sanity check we have a PackfileConstantTable
 .sub 'test_sanity'
-    .local pmc pf, pfdir, pftable
+    .local pmc pbc, pftable
     .local string name
-    pf      = _pbc()
-    pfdir   = pf.'get_directory'()
-    pftable = pfdir[2]
-    name    = typeof pftable
-    $I0 = cmp name, "PackfileConstantTable"
-    $I0 = not $I0
-    ok($I0, "PackfileConstantTable sanity check")
+    pbc     = _pbc()
+    pftable = _get_consttable(pbc)
+    isa_ok(pftable, "PackfileConstantTable")
 .end
 
 
 # PackfileConstantTable.elements
 .sub 'test_elements'
-    .local pmc pf, pfdir, pftable
+    .local pmc pf, pftable
     .local int size
     pf      = _pbc()
-    pfdir   = pf.'get_directory'()
-    pftable = pfdir[2]
+    pftable = _get_consttable(pf)
     size    = elements pftable
     ok(size, "PackfileConstantTable.elements returns non-zero")
 .end
@@ -62,11 +57,10 @@ Tests the PackfileConstantTable PMC.
 
 # PackfileConstantTable.get_type and PackfileConstantTable.get_*_keyed_int
 .sub 'test_get'
-    .local pmc pf, pfdir, pftable
+    .local pmc pf, pftable
     .local int size, this, type
     pf      = _pbc()
-    pfdir   = pf.'get_directory'()
-    pftable = pfdir[2]
+    pftable = _get_consttable(pf)
     size    = elements pftable
     this    = 0
   loop:
@@ -167,6 +161,23 @@ Tests the PackfileConstantTable PMC.
     close pio
     pf   = $S0
     .return(pf)
+.end
+
+.sub '_get_consttable'
+    .param pmc pf
+    .local pmc dir, it
+    dir = pf.'get_directory'()
+    it = iter dir
+  loop:
+    unless it goto done
+    $S0 = shift it
+    $P0 = dir[$S0]
+    $I0 = isa $P0, 'PackfileConstantTable'
+    unless $I0 goto loop
+    .return ($P0)
+  done:
+    die "Can't find ConstantTable in Packfile!"
+    .return ()
 .end
 
 # Local Variables:
