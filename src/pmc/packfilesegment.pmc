@@ -53,8 +53,6 @@ Initialize PMC internals.
 
 */
     VTABLE void set_pointer(void *ptr) {
-        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_UNIMPLEMENTED,
-            "PackfileSegment.set_pointer() not implemented");
     }
 
 /*
