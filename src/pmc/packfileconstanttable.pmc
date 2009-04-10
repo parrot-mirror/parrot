@@ -156,6 +156,31 @@ Set pointer to underlying PackFile_ConstTable
 */
 
     VTABLE void set_pointer(void * pointer) {
+        const PackFile_ConstTable const * table =
+                (const PackFile_ConstTable const *)(pointer);
+        const PackFile_Constant * val;
+        opcode_t i;
+
+        for (i = 0; i < table->const_count; ++i) {
+            val = table->constants[i];
+            switch (val->type) {
+                case PFC_NONE:
+                    break;
+                case PFC_NUMBER:
+                    SELF.set_number_keyed_int(i, val->u.number);
+                    break;
+                case PFC_STRING:
+                    SELF.set_string_keyed_int(i, val->u.string);
+                    break;
+                case PFC_PMC:
+                    SELF.set_pmc_keyed_int(i, val->u.key);
+                    break;
+                default:
+                    Parrot_ex_throw_from_c_args(interp, NULL,
+                        EXCEPTION_MALFORMED_PACKFILE,
+                        "Unknown PackFile constant type: %d", val->type);
+            }
+        }
     }
 
 /*
