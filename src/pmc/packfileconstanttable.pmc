@@ -47,9 +47,8 @@ Create empty PackfileConstantTable.
         Parrot_PackfileConstantTable_attributes * attrs =
                 mem_allocate_zeroed_typed(Parrot_PackfileConstantTable_attributes);
 
-        attrs->constants        = pmc_new(interp, enum_class_ResizablePMCArray);
-        attrs->types   = pmc_new(interp,
-                enum_class_ResizableIntegerArray);
+        attrs->constants = pmc_new(interp, enum_class_ResizablePMCArray);
+        attrs->types     = pmc_new(interp, enum_class_ResizableIntegerArray);
 
         PObj_custom_mark_destroy_SETALL(SELF);
         PMC_data(SELF) = attrs;
