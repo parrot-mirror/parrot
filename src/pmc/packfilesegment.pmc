@@ -27,22 +27,6 @@ spec.
 
 pmclass PackfileSegment {
 
-
-/*
-
-=item C<void init()>
-
-Initialize the structure.  (Create a blank PackFile_Segment object.)
-
-=cut
-
-*/
-    VTABLE void init() {
-        PackFile_Segment *seg = PackFile_Segment_new(interp, NULL, "", 0);
-        PMC_data(SELF) = seg;
-        seg->type = PF_UNKNOWN_SEG;
-    }
-
 /*
 
 =item C<void set_pointer(void *ptr)>
@@ -57,6 +41,19 @@ Initialize PMC internals.
 
 /*
 
+=item C<void *get_pointer()>
+
+Initialize PMC internals.
+
+=cut
+
+*/
+    VTABLE void *get_pointer() {
+        return NULL;
+    }
+
+/*
+
 =item C<STRING *pack()>
 
 Serialize the segment.
@@ -65,16 +62,8 @@ Serialize the segment.
 
 */
     METHOD pack() {
-        PackFile_Segment *pfseg = PMC_data_typed(SELF, PackFile_Segment *);
-        opcode_t length = PackFile_Segment_packed_size(interp, pfseg) * sizeof (opcode_t);
-        opcode_t *newptr, *ptr = (opcode_t*)mem_sys_allocate(length);
-        STRING *str;
-        newptr = PackFile_Segment_pack(interp, pfseg, ptr);
-        str = Parrot_str_new_init(interp, (const char*)ptr,
-                (newptr - ptr) * sizeof (opcode_t),
-                PARROT_FIXED_8_ENCODING, PARROT_BINARY_CHARSET, 0);
-        mem_sys_free(ptr);
-        RETURN(STRING *str);
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_UNIMPLEMENTED,
+                                    "PackfileSegment.pack() not implemented yet.");
     }
 
 
