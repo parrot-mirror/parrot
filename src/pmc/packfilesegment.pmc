@@ -43,6 +43,19 @@ Initialize the structure.  (Create a blank PackFile_Segment object.)
         seg->type = PF_UNKNOWN_SEG;
     }
 
+/*
+
+=item C<void set_pointer(void *ptr)>
+
+Initialize PMC internals.
+
+=cut
+
+*/
+    VTABLE void set_pointer(void *ptr) {
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_UNIMPLEMENTED,
+            "PackfileSegment.set_pointer() not implemented");
+    }
 
 /*
 
