@@ -24,6 +24,7 @@ Tests the PackfileConstantTable PMC.
 
 .sub 'main' :main
 .include 'test_more.pir'
+.include 'packfile_constants.pasm'
     'plan'(10)
 
     'test_sanity'()
@@ -65,11 +66,11 @@ Tests the PackfileConstantTable PMC.
     this    = 0
   loop:
     type = pftable.'get_type'(this)
-    eq type, 0x00, next
-    eq type, 0x6E, const_num
-    eq type, 0x73, const_str
-    eq type, 0x70, const_pmc
-    eq type, 0x6B, const_key
+    eq type, .PFC_NONE, next
+    eq type, .PFC_NUMBER, const_num
+    eq type, .PFC_STRING, const_str
+    eq type, .PFC_PMC, const_pmc
+    eq type, .PFC_KEY, const_key
     goto bad
   const_num:
     $N0 = pftable[this]
