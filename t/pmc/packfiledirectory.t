@@ -19,13 +19,11 @@ Tests the PackfileDirectory PMC.
 
 .sub 'main' :main
 .include 'test_more.pir'
-    plan(14)
+    plan(13)
 
     'test_typeof'()
     'test_elements'()
-    'test_get_pmc_keyed_int'()
-    'test_get_string_keyed_int'()
-    'test_get_pmc_keyed_str'()
+    'test_get_iter'()
     'test_set_pmc_keyed_str'()
 .end
 
@@ -48,19 +46,37 @@ Tests the PackfileDirectory PMC.
 .end
 
 
-# PackfileDirectory.get_pmc_keyed_int
-.sub 'test_get_pmc_keyed_int'
-    .local pmc pf, pfdir
+# PackfileDirectory.get_iter
+.sub 'test_get_iter'
+    .local pmc pf, pfdir, it, expected
+    .local string name
+
+    # expected contains all expected segment "prefixes" with count
+    expected = new 'Hash'
+    expected["BYTECODE"] = 2
+    expected["FIXUP"]    = 1
+    expected["CONSTANT"] = 1
+    expected["PIC"]      = 1
+
     pf    = _pbc()
     pfdir = pf.'get_directory'()
     $I0   = elements pfdir
-    $I1   = 0
+    it    = iter pfdir
   loop:
-    $P0   = pfdir[$I1]
-    $I2   = defined $P0
-    ok($I2, 'PackfileDirectory.get_pmc_keyed_int')
-    inc $I1
-    eq $I0, $I1, done
+    unless it goto done
+    name = shift it
+
+    # Get prefix
+    $P0 = split '_', name
+    $S0 = shift $P0
+    $I0 = expected[$S0]
+    ok($I0, $S0)
+    # Decrease expectation count
+    dec $I0
+    expected[$S0] = $I0
+
+    $P1 = pfdir[name]
+    isa_ok($P1, 'PackfileSegment')
     goto loop
   done:
     .return ()
@@ -96,57 +112,30 @@ Tests the PackfileDirectory PMC.
 .end
 
 
-## PackfileDirectory.get_pmc_keyed_str
-.sub 'test_get_pmc_keyed_str'
-    .local pmc pf, pfdir
-    pf    = _pbc()
-    pfdir = pf.'get_directory'()
-    $I0   = elements pfdir
-    $I1   = 0
-  loop:
-    $P0 = pfdir[$I1]
-    $S1 = pfdir[$I1]
-    $P1 = pfdir[$S1]
-    $S0 = typeof $P0
-    $S1 = typeof $P1
-    eq $S0, $S1, good
-    goto error
-  good:
-    inc $I1
-    eq $I0, $I1, done
-    goto loop
-  done:
-    ok(1, 'PackfileDirectory.get_pmc_keyed_int')
-    .return()
-  error:
-    ok(0, 'PackfileDirectory.get_pmc_keyed_int')
-.end
-
-
 ## PackfileDirectory.set_pmc_keyed_str
 .sub 'test_set_pmc_keyed_str'
-    .local pmc pf, pfdir
+    .local pmc pf, pfdir, seg
     pf    = _pbc()
     pfdir = pf.'get_directory'()
-    $P0   = new [ 'PackfileRawSegment' ]
+    seg   = new [ 'PackfileRawSegment' ]
 
     # Adding segment with same name replaces old one
-    $I0   = elements pfdir
-    $S0   = pfdir[0]
+    $I0 = elements pfdir
+    $P0 = iter pfdir
+    $S0 = shift $P0
     pfdir[$S0] = $P0
     $I1   = elements pfdir
-    if $I0 == $I1 goto add_new
-    ok(0, "Segment with old name was added")
+    is($I0, $I1, "Segment with old name was added")
     goto done
 
     # Add segment with new name
   add_new:
-    $P0   = new [ 'PackfileRawSegment' ]
-    $S0   = 'BYTECODE_foo'
+    seg = new [ 'PackfileRawSegment' ]
+    $S0 = 'BYTECODE_foo'
     pfdir[$S0] = $P0
     $I1   = elements pfdir
-    $I3   = $I0 != $I1
-    ok($I3, "New segment added")
+    inc $I0
+    is($I0, $I1, "New segment added")
 
   done:
     .return()
