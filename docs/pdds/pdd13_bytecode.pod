@@ -805,8 +805,6 @@ keys are:
 
 =item uuid_type
 
-=item uuid_length
-
 =back
 
 =item * C<get_string_keyed_str> (v-table)
