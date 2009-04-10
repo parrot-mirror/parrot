@@ -17,6 +17,8 @@ Tests the PackfileDirectory PMC.
 
 =cut
 
+.include 't/pmc/packfile_common.pir'
+
 .sub 'main' :main
 .include 'test_more.pir'
     plan(13)
@@ -109,31 +111,6 @@ Tests the PackfileDirectory PMC.
 
   done:
     .return()
-.end
-
-# Return test filename
-# Currently parrot doesn't support system independent PBCs. So, cross your
-# fingers and try different filename for binary-dependent tests...
-.sub '_filename'
-    .local string filename
-    filename = 't/native_pbc/number_1.pbc'
-    .return (filename)
-.end
-
-# common pbc loading function
-.sub '_pbc'
-    .include "stat.pasm"
-    .include "interpinfo.pasm"
-    .local pmc pf, pio
-    pf   = new ['Packfile']
-    #$S0  = interpinfo .INTERPINFO_RUNTIME_PREFIX
-    #$S0 .= "/runtime/parrot/library/uuid.pbc"
-    $S0 = '_filename'()
-    pio  = open $S0, 'r'
-    $S0  = pio.'readall'()
-    close pio
-    pf   = $S0
-    .return(pf)
 .end
 
 # Local Variables:

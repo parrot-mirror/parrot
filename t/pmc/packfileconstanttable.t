@@ -22,6 +22,8 @@ Tests the PackfileConstantTable PMC.
 # fetches for the found types don't crash.
 
 
+.include 't/pmc/packfile_common.pir'
+
 .sub 'main' :main
 .include 'test_more.pir'
 .include 'packfile_constants.pasm'
@@ -130,39 +132,14 @@ Tests the PackfileConstantTable PMC.
 
     # Check types of created constants
     $I0 = ct.'get_type'(0)
-    is($I0, 0x73, "First element is string")
+    is($I0, .PFC_STRING, "First element is string")
     $I0 = ct.'get_type'(1)
-    is($I0, 0x6E, "Second element is number")
+    is($I0, .PFC_NUMBER, "Second element is number")
     $I0 = ct.'get_type'(2)
-    is($I0, 0x70, "Third element is PMC")
+    is($I0, .PFC_PMC, "Third element is PMC")
 
 .end
 
-
-# Return test filename
-# Currently parrot doesn't support system independent PBCs. So, cross your
-# fingers and try different filename for binary-dependent tests...
-.sub '_filename'
-    .local string filename
-    filename = 't/native_pbc/number_1.pbc'
-    .return (filename)
-.end
-
-# common pbc loading function
-.sub '_pbc'
-    .include "stat.pasm"
-    .include "interpinfo.pasm"
-    .local pmc pf, pio
-    pf   = new ['Packfile']
-    #$S0  = interpinfo .INTERPINFO_RUNTIME_PREFIX
-    #$S0 .= "/runtime/parrot/library/uuid.pbc"
-    $S0 = '_filename'()
-    pio  = open $S0, 'r'
-    $S0  = pio.'readall'()
-    close pio
-    pf   = $S0
-    .return(pf)
-.end
 
 .sub '_get_consttable'
     .param pmc pf
