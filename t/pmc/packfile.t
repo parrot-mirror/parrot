@@ -21,12 +21,12 @@ Tests the Packfile PMC.
 .sub main :main
 .include 'test_more.pir'
 
-    plan(7)
+    plan(12)
     'test_new'()
+    'test_get_string'()
+    'test_set_string'()
     'test_get_integer'()
-    'test_get_directory'()
-    'test_get_integer_keyed_str'()
-    'test_set_integer_keyed_str'()
+    'test_set_integer'()
     'test_get_directory'()
     'test_pack'()
     # This test will crash on many platforms. See TT#545.
@@ -44,44 +44,75 @@ Tests the Packfile PMC.
 
 
 # Packfile.get_integer_keyed_str
-
-.sub 'test_get_integer'
+.sub 'test_get_string'
     .local pmc pf
     pf = new ['Packfile']
-    $S0 = 'version_major'
-    $I0 = pf[$S0]
-    ok($I0, 'get_integer_keyed_str')
+    $S0 = pf["uuid"]
+    ok(1, 'get_string(uuid)')
+    
+    # Requesting unknown key should throw exception
+    push_eh unknown_key
+    $S0 = pf["foo"]
+    ok(0, "get_string_keyed_int return unknown key")
+    .return ()
+
+  unknown_key:
+    pop_eh
+    ok(1, "get_string_keyed_int handle unknown key properly")
+    .return ()
+.end
+
+# Packfile.get_integer_keyed_str
+.sub 'test_set_string'
+    .local pmc pf
+    pf = new ['Packfile']
+    pf["uuid"] = "fe9ab64082e0f6bbbd7b1e8264127908"
+    ok(1, 'set_string(uuid)')
+    
+    # Requesting unknown key should throw exception
+    push_eh unknown_key
+    pf["foo"] = "fe9ab64082e0f6bbbd7b1e8264127908"
+    ok(0, "set_string_keyed_int set unknown key")
+    .return ()
+
+  unknown_key:
+    pop_eh
+    ok(1, "set_string_keyed_int handle unknown key properly")
+    .return ()
 .end
 
 
-# Packfile.get_directory
-.sub 'test_get_directory'
-    .local pmc pf
-    pf = new ['Packfile']
-    $P1 = pf.'get_directory'()
-    $S0 = typeof $P1
-    $I0 = cmp $S0, 'PackfileDirectory'
-    is($I0, 0, 'get_directory')
-.end
 
 
 # Packfile.set_string_native, Packfile.get_integer_keyed_str
-.sub 'test_get_integer_keyed_str'
+.sub 'test_get_integer'
     .local pmc pf
-    pf   = _pbc()
-    $S0  = "version_major"
-    $I0  = pf[$S0]
-    $S0  = "version_minor"
-    $I1  = pf[$S0]
-    $S0  = "version_patch"
-    $I2  = pf[$S0]
+    pf  = _pbc()
+    $I0 = pf["version_major"]
+    ok(1, "get_integer_keyed_str(version_major)")
 
-    ok(1, "get_integer_keyed_str")
+    $I1 = pf["version_minor"]
+    ok(1, "get_integer_keyed_str(version_minor)")
+
+    $I2 = pf["version_patch"]
+    ok(1, "get_integer_keyed_str(version_patch)")
+
+    # Requesting unknown key should throw exception
+    push_eh unknown_key
+    $I3 = pf["foo"]
+    ok(0, "get_integer_keyed_str return unknown key")
+    .return ()
+
+  unknown_key:
+    pop_eh
+    ok(1, "get_integer_keyed_str handle unknown key properly")
+    .return ()
+
 .end
 
 
 # Packfile.set_integer_keyed_str
-.sub 'test_set_integer_keyed_str'
+.sub 'test_set_integer'
     .local pmc pf
     pf  = _pbc()
     $S1 = 'version_major'
@@ -94,6 +125,15 @@ Tests the Packfile PMC.
     $I3 = cmp $I3, 0
     ok($I3, 'set_integer_keyed_str version bumped')
 .end
+
+# Packfile.get_directory
+.sub 'test_get_directory'
+    .local pmc pf
+    pf = new ['Packfile']
+    $P0 = pf.'get_directory'()
+    isa_ok($P0, 'PackfileDirectory')
+.end
+
 
 # PackfileSegment.pack (via subclass PackfileDirectory)
 .sub 'test_get_directory'
