@@ -82,36 +82,6 @@ Tests the PackfileDirectory PMC.
     .return ()
 .end
 
-## PackfileDirectory.get_string_keyed_int
-.sub 'test_get_string_keyed_int'
-    .local pmc pf, pfdir
-    .local pmc expected
-    expected = new 'ResizableStringArray'
-    push expected, 'BYTECODE'
-    push expected, 'FIXUP'
-    push expected, 'CONSTANT'
-    push expected, 'PIC'
-    push expected, 'BYTECODE'
-
-    pf    = _pbc()
-    pfdir = pf.'get_directory'()
-    $I0   = elements pfdir
-    $I1   = 0
-  loop:
-    $S0   = pfdir[$I1]
-    $P0   = split '_', $S0
-    $S0   = shift $P0
-    $S1   = shift expected
-    $I3   = cmp $S0, $S1
-    is($I3, 0, 'PackfileDirectory.get_string_keyed_int')
-    inc $I1
-    eq $I0, $I1, done
-    goto loop
-  done:
-    .return()
-.end
-
-
 ## PackfileDirectory.set_pmc_keyed_str
 .sub 'test_set_pmc_keyed_str'
     .local pmc pf, pfdir, seg
