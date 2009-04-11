@@ -26,16 +26,28 @@
     .return(pf)
 .end
 
+.sub '_find_segment_by_type'
+    .param pmc pf
+    .param string type
+    .local pmc pfdir, it
+
+    pfdir = pf.'get_directory'()
+    it = iter pfdir
+  loop:
+    unless it goto done
+    $S0 = shift it
+    $P0 = pfdir[$S0]
+    $I0 = isa $P0, type
+    unless $I0 goto loop
+    .return ($P0)
+  done:
+    .return ()
+.end
+
 .sub '_get_fixup_table'
     .param pmc pf
-    .local pmc pfdir, pftable
     
-    pfdir   = pf.'get_directory'()
-    $P0   = iter pfdir
-    $S0   = shift $P0
-    $S0   = shift $P0
-    pftable = pfdir[$S0]
-    .return (pftable)
+    .tailcall '_find_segment_by_type'(pf, "PackfileFixupTable")
 .end
 
 
