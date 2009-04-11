@@ -260,15 +260,17 @@ Set the constant to the given PMC (or key).
 
 =cut
 
-TODO: Distinguish between Key and other PMCs.
-
 */
     VTABLE void set_pmc_keyed_int(INTVAL index, PMC *value)  {
         Parrot_PackfileConstantTable_attributes * attrs =
                 PARROT_PACKFILECONSTANTTABLE(SELF);
+        opcode_t type = VTABLE_isa(interp, value,
+                Parrot_str_new_constant(interp, "Key"))
+                ? PFC_KEY
+                : PFC_PMC;
 
         VTABLE_set_pmc_keyed_int(interp, attrs->constants,  index, value);
-        VTABLE_set_integer_keyed_int(interp, attrs->types, index, PFC_PMC);
+        VTABLE_set_integer_keyed_int(interp, attrs->types, index, type);
     }
 
 
