@@ -924,6 +924,10 @@ Get type of PackfileRawSegment.
 
 Set type of PackfileRawSegment.
 
+=item * C<get_iter>
+
+Returns iterator for Segment.
+
 =item * C<get_integer_keyed_int> (v-table)
 
 Reads the integer at the specified offset into the segment, excluding the data
@@ -955,6 +959,10 @@ grow automatically.
 The PMC implements the following methods:
 
 =over 4
+
+=item * C<get_iter>
+
+Returns iterator for stored Constants.
 
 =item * C<elements> (v-table)
 
@@ -1027,6 +1035,10 @@ the table is represented by a PackfileFixupEntry PMC. It implements the
 following methods:
 
 =over 4
+
+=item * C<get_iter>
+
+Returns iterator for stored fixup entries.
 
 =item * C<elements> (v-table)
 
