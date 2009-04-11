@@ -173,17 +173,21 @@ typedef struct PackFile_funcs {
     PackFile_Segment_dump_func_t        dump;
 } PackFile_funcs;
 
-typedef enum {
-    PF_DIR_SEG,
-    PF_UNKNOWN_SEG,
-    PF_FIXUP_SEG,
-    PF_CONST_SEG,
-    PF_BYTEC_SEG,
-    PF_DEBUG_SEG,
-    PF_ANNOTATIONS_SEG,
+/* &gen_from_enum(packfile_segments.pasm) */
 
-    PF_MAX_SEG
+typedef enum {
+    PF_DIR_SEG          = 0,
+    PF_UNKNOWN_SEG      = 1,
+    PF_FIXUP_SEG        = 2,
+    PF_CONST_SEG        = 3,
+    PF_BYTEC_SEG        = 4,
+    PF_DEBUG_SEG        = 5,
+    PF_ANNOTATIONS_SEG  = 6,
+
+    PF_MAX_SEG          = 7
 } pack_file_types;
+
+/* &end_gen */
 
 #define PF_DIR_FORMAT 1
 
