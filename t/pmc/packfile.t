@@ -187,9 +187,24 @@ Tests the Packfile PMC.
     $P1 = new 'PackfileRawSegment'
     pfdir["BYTECODE_t/pmc/packfile.t"] = $P1
 
+    $P2 = new 'PackfileConstantTable'
+    $P2[0] = 42.0
+    $P2[1] = "42"
+    $P3 = new 'Integer'
+    $P3 = 42
+    $P2[2] = $P3
+    $P4 = new 'Key'
+    $P4 = 42
+    $P2[3] = $P4
+    pfdir["CONSTANTS_t/pmc/packfile.t"] = $P2
+
     # Pack it
     $S0 = pf
     ok(1, "PackFile packed")
+
+    $P1 = open "/tmp/1.pbc", "w"
+    $P1.'puts'($S0)
+    close $P1
 
     pf = new 'Packfile'
     pf = $S0
@@ -206,9 +221,22 @@ Tests the Packfile PMC.
     $S0 = $P1
     is($S0, "The fixup", "FixupEntry name preserved")
 
-    #$P1 = open "/tmp/1.pbc", "w"
-    #$P1.'puts'($S0)
-    #close $P1
+    # Check unpacked ConstTable
+    $P0 = _find_segment_by_type(pf, "PackfileConstantTable")
+    $I0 = defined $P0
+    ok($I0, "ConstantTable unpacked")
+    $I0 = elements $P0
+    is($I0, 4, "    and contains 4 elements")
+    $N0 = $P0[0]
+    is($N0, 42.0, "    first is number")
+    $S0 = $P0[1]
+    is($S0, "42", "    second is string")
+    $P1 = $P0[2]
+    isa_ok($P1, "Integer")
+    $I0 = $P1
+    is($I0, 42, "    with proper value")
+    $P1 = $P0[3]
+    isa_ok($P1, "Key")
 .end
 
 # Packfile.pack.
