@@ -110,7 +110,7 @@ Initialize PackfileRawSegment from PackFile_Segment
             /* copy data to own array */
             VTABLE_set_integer_native(interp, opcodes, pfseg->size);
             /* Not very efficient... */
-            for (i = 0; i < pfseg->op_count; ++i) {
+            for (i = 0; i < pfseg->size; ++i) {
                 VTABLE_set_integer_keyed_int(interp, opcodes, i, pfseg->data[i]);
             }
         }
