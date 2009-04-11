@@ -908,13 +908,21 @@ Returns iterator for existing keys.
 
 =back
 
-=head4 RawSegment.pmc (isa PackfileSegment)
+=head4 PackfileRawSegment.pmc (isa PackfileSegment)
 
 This PMC presents a segment of a packfile as an array of integers. This is the
 lowest possible level of access to a segment, and covers both the default and
 bytecode segment types. It implements the following methods:
 
 =over 4
+
+=item * C<get_type>
+
+Get type of PackfileRawSegment.
+
+=item * C<set_type>
+
+Set type of PackfileRawSegment.
 
 =item * C<get_integer_keyed_int> (v-table)
 
