@@ -22,7 +22,7 @@ Tests the Packfile PMC.
 .sub main :main
 .include 'test_more.pir'
 
-    plan(17)
+    plan(21)
     'test_new'()
     'test_get_string'()
     'test_set_string'()
@@ -177,6 +177,11 @@ Tests the Packfile PMC.
     #$P0 = new 'PackfileConstantTable'
     #$P0[0] = 42.0
     $P0 = new 'PackfileFixupTable'
+    $P1 = new 'PackfileFixupEntry'
+    $P1 = 42
+    $P1.'set_type'(1)
+    $P1 = "The fixup"
+    $P0[0] = $P1
     pfdir["FIXUP_t/pmc/packfile.t"] = $P0
 
     $P1 = new 'PackfileRawSegment'
@@ -184,12 +189,22 @@ Tests the Packfile PMC.
 
     # Pack it
     $S0 = pf
-
     ok(1, "PackFile packed")
 
     pf = new 'Packfile'
     pf = $S0
     ok(1, "PackFile unpacked after pack")
+
+    # Check that FixupTable contains our Entry.
+    $P0 = _get_fixup_table(pf)
+    $I1 = elements $P0
+    is($I1, 1, "FixupTable contains one element")
+    $P1 = $P0[0]
+    isa_ok($P1, "PackfileFixupEntry")
+    $I0 = $P1
+    is($I0, 42, "FixupEntry offset preserved")
+    $S0 = $P1
+    is($S0, "The fixup", "FixupEntry name preserved")
 
     #$P1 = open "/tmp/1.pbc", "w"
     #$P1.'puts'($S0)
