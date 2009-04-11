@@ -202,9 +202,9 @@ Tests the Packfile PMC.
     $S0 = pf
     ok(1, "PackFile packed")
 
-    $P1 = open "/tmp/1.pbc", "w"
-    $P1.'puts'($S0)
-    close $P1
+    #$P1 = open "/tmp/1.pbc", "w"
+    #$P1.'puts'($S0)
+    #close $P1
 
     pf = new 'Packfile'
     pf = $S0
