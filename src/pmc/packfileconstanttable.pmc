@@ -58,7 +58,7 @@ Create empty PackfileConstantTable.
 
 =item C<void mark()>
 
-Marks the object as live. 
+Marks the object as live.
 
 =cut
 
@@ -143,11 +143,11 @@ Set pointer to underlying PackFile_ConstTable
     VTABLE void *get_pointer() {
         Parrot_PackfileConstantTable_attributes * attrs =
                 PARROT_PACKFILECONSTANTTABLE(SELF);
-        PackFile_ConstTable * pftable = 
+        PackFile_ConstTable * pftable =
                 mem_allocate_zeroed_typed(PackFile_ConstTable);
 
         pftable->base.type = PF_CONST_SEG;
-        
+
         /* TODO Copy all constanst with respect of type */
 
         return pftable;
@@ -227,7 +227,7 @@ Set the constant to the given number.
     VTABLE void set_number_keyed_int(INTVAL index, FLOATVAL value)  {
         Parrot_PackfileConstantTable_attributes * attrs =
                 PARROT_PACKFILECONSTANTTABLE(SELF);
-        
+
         VTABLE_set_number_keyed_int(interp, attrs->constants, index, value);
         VTABLE_set_integer_keyed_int(interp, attrs->types, index, PFC_NUMBER);
     }

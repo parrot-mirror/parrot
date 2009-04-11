@@ -54,7 +54,7 @@ Create empty PackfileFixupTable.
 
 =item C<void mark()>
 
-Marks the object as live. 
+Marks the object as live.
 
 =cut
 
@@ -126,12 +126,12 @@ Destroys the PMC and frees all allocated memory.
     VTABLE void *get_pointer() {
         Parrot_PackfileFixupTable_attributes * attrs =
                 PARROT_PACKFILEFIXUPTABLE(SELF);
-        PackFile_FixupTable * pftable = 
+        PackFile_FixupTable * pftable =
                 mem_allocate_zeroed_typed(PackFile_FixupTable);
         PMC                 * entry;
         PackFile_FixupEntry * val;
         opcode_t              i;
-        
+
         pftable->base.type   = PF_FIXUP_SEG;
         pftable->fixup_count = VTABLE_elements(interp, attrs->entries);
         pftable->fixups      = mem_allocate_n_typed(pftable->fixup_count,

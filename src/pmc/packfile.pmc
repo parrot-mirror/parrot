@@ -112,7 +112,7 @@ Implementation note: all hard stuff done by PackfileDirectory.
         STRING      *str;
 
         /* Calculate required memory */
-        length  = PackFile_pack_size(interp, pf) * sizeof(opcode_t);
+        length  = PackFile_pack_size(interp, pf) * sizeof (opcode_t);
         ptr     = (opcode_t*)mem_sys_allocate(length);
 
         /* And pack it! */
@@ -121,7 +121,7 @@ Implementation note: all hard stuff done by PackfileDirectory.
         str = Parrot_str_new_init(interp, (const char*)ptr, length,
                 PARROT_FIXED_8_ENCODING, PARROT_BINARY_CHARSET, 0);
         mem_sys_free(ptr);
-        
+
         PackFile_destroy(interp, pf);
         return str;
     }
@@ -413,7 +413,7 @@ Synonym for set_string.
 =cut
 
 */
-    
+
     METHOD void unpack(STRING *str) {
         SELF.set_string_native(str);
     }

@@ -54,7 +54,7 @@ Initialize PackfileDirectory.
 
 =item C<void mark()>
 
-Marks the object as live. 
+Marks the object as live.
 
 =cut
 
@@ -107,7 +107,7 @@ Initialize PackfileDirectory from PackFile_Directory.
         unsigned int     i;
         STRING           *name;
         PMC              *hash = PARROT_PACKFILEDIRECTORY(SELF)->hash;
-        
+
         SUPER(ptr);
 
         /* Iterate over elements and create corresponded PMCs */
@@ -172,7 +172,7 @@ Creates PackFile for given directory.
             pfseg->name = strdup(Parrot_string_cstring(interp, name));
             PackFile_add_segment(interp, pfdir, pfseg);
         }
-        
+
         return pf;
     }
 

@@ -50,7 +50,7 @@ Initialize PackfileFixupEntry.
 
 =item C<void mark()>
 
-Marks the object as live. 
+Marks the object as live.
 
 =cut
 

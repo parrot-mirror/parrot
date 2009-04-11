@@ -1831,7 +1831,7 @@ PackFile_Segment_pack(PARROT_INTERP, ARGIN(PackFile_Segment *self),
     /*const size_t align             = 16 / sizeof (opcode_t);*/
     PackFile_Segment_pack_func_t f =
         self->pf->PackFuncs[self->type].pack;
-    opcode_t * old_cursor;          // Used for filling padding with 0
+    opcode_t * old_cursor;          /* Used for filling padding with 0 */
 #if TRACE_PACKFILE
     PackFile * const pf  = self->pf;
 #endif
@@ -2304,7 +2304,7 @@ directory_pack(PARROT_INTERP, ARGIN(PackFile_Segment *self), ARGOUT(opcode_t *cu
     /*const size_t               align    = 16/sizeof (opcode_t);*/
     size_t i;
     PackFile           * const pf       = self->pf;
-    opcode_t                 * old_cursor;          // Used for filling padding with 0
+    opcode_t                 * old_cursor;  /* Used for filling padding with 0 */
 
     *cursor++ = num_segs;
 
