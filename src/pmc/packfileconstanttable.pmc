@@ -107,10 +107,16 @@ Set pointer to underlying PackFile_ConstTable
 */
 
     VTABLE void set_pointer(void * pointer) {
+        Parrot_PackfileConstantTable_attributes * attrs =
+                PARROT_PACKFILECONSTANTTABLE(SELF);
         const PackFile_ConstTable const * table =
                 (const PackFile_ConstTable const *)(pointer);
         const PackFile_Constant * val;
         opcode_t i;
+
+        /* Preallocate required amount of memory */
+        VTABLE_set_integer_native(interp, attrs->constants, table->const_count);
+        VTABLE_set_integer_native(interp, attrs->types, table->const_count);
 
         for (i = 0; i < table->const_count; ++i) {
             val = table->constants[i];
@@ -123,6 +129,8 @@ Set pointer to underlying PackFile_ConstTable
                 case PFC_STRING:
                     SELF.set_string_keyed_int(i, val->u.string);
                     break;
+                case PFC_KEY:
+                    /* fall through */
                 case PFC_PMC:
                     SELF.set_pmc_keyed_int(i, val->u.key);
                     break;
@@ -145,10 +153,43 @@ Set pointer to underlying PackFile_ConstTable
                 PARROT_PACKFILECONSTANTTABLE(SELF);
         PackFile_ConstTable * pftable =
                 mem_allocate_zeroed_typed(PackFile_ConstTable);
-
+        PackFile_Constant   * value;
+        opcode_t              i;
+        
         pftable->base.type = PF_CONST_SEG;
 
-        /* TODO Copy all constanst with respect of type */
+        /* Copy all constanst with respect of type */
+        pftable->const_count = VTABLE_get_integer(interp, attrs->constants);
+        pftable->constants   = mem_allocate_n_typed(pftable->const_count,
+                PackFile_Constant*);
+
+        for (i = 0; i < pftable->const_count; ++i) {
+            value = PackFile_Constant_new(interp);
+            value->type = VTABLE_get_integer_keyed_int(interp, attrs->types, i);
+            switch (value->type) {
+                case PFC_NONE:
+                    break;
+                case PFC_NUMBER:
+                    value->u.number = VTABLE_get_number_keyed_int(interp,
+                            attrs->constants, i);
+                    break;
+                case PFC_STRING:
+                    value->u.string = VTABLE_get_string_keyed_int(interp,
+                            attrs->constants, i);
+                    break;
+                case PFC_KEY:
+                case PFC_PMC:
+                    value->u.key = VTABLE_get_pmc_keyed_int(interp,
+                            attrs->constants, i);
+                    break;
+                default:
+                    Parrot_ex_throw_from_c_args(interp, NULL,
+                        EXCEPTION_MALFORMED_PACKFILE,
+                        "Unknown PackFile constant type: %d", value->type);
+            }
+            
+            pftable->constants[i] = value;
+        }
 
         return pftable;
     }
