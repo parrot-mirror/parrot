@@ -26,6 +26,18 @@
     .return(pf)
 .end
 
+.sub '_get_fixup_table'
+    .param pmc pf
+    .local pmc pfdir, pftable
+    
+    pfdir   = pf.'get_directory'()
+    $P0   = iter pfdir
+    $S0   = shift $P0
+    $S0   = shift $P0
+    pftable = pfdir[$S0]
+    .return (pftable)
+.end
+
 
 
 # Local Variables:
