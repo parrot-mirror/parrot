@@ -99,6 +99,22 @@ Destroys the PMC and frees all allocated memory.
 */
 
     VTABLE void set_pointer(void * pointer) {
+        Parrot_PackfileFixupTable_attributes * attrs =
+                PARROT_PACKFILEFIXUPTABLE(SELF);
+        PackFile_FixupTable * table = (PackFile_FixupTable*)pointer;
+
+        PMC                 *entry;
+        PackFile_FixupEntry *val;
+        opcode_t             i;
+
+        VTABLE_set_integer_native(interp, attrs->entries, table->fixup_count);
+
+        for (i = 0; i < table->fixup_count; ++i) {
+            val = table->fixups[i];
+            entry = pmc_new(interp, enum_class_PackfileFixupEntry);
+            VTABLE_set_pointer(interp, entry, (void*)val);
+            VTABLE_set_pmc_keyed_int(interp, attrs->entries, i, entry);
+        }
     }
 
 /*
@@ -112,10 +128,21 @@ Destroys the PMC and frees all allocated memory.
                 PARROT_PACKFILEFIXUPTABLE(SELF);
         PackFile_FixupTable * pftable = 
                 mem_allocate_zeroed_typed(PackFile_FixupTable);
+        PMC                 * entry;
+        PackFile_FixupEntry * val;
+        opcode_t              i;
+        
+        pftable->base.type   = PF_FIXUP_SEG;
+        pftable->fixup_count = VTABLE_elements(interp, attrs->entries);
+        pftable->fixups      = mem_allocate_n_typed(pftable->fixup_count,
+                PackFile_FixupEntry*);
 
-        pftable->base.type = PF_FIXUP_SEG;
-
-        /* TODO: Copy all entries */
+        /* Copy all entries */
+        for (i = 0; i < pftable->fixup_count; ++i) {
+            entry = VTABLE_get_pmc_keyed_int(interp, attrs->entries, i);
+            val   = (PackFile_FixupEntry*)VTABLE_get_pointer(interp, entry);
+            pftable->fixups[i] = val;
+        }
 
         return pftable;
     }
@@ -131,8 +158,8 @@ Get the number of elements in the array.
 
 */
     VTABLE INTVAL elements() {
-        PackFile_FixupTable *pftable = PMC_data_typed(SELF, PackFile_FixupTable *);
-        return pftable->fixup_count;
+        return VTABLE_elements(interp,
+                PARROT_PACKFILEFIXUPTABLE(SELF)->entries);
     }
 
 
@@ -146,14 +173,8 @@ Fetch the given PackfileFixupEntry PMC.
 
 */
     VTABLE PMC *get_pmc_keyed_int(INTVAL index)  {
-        PackFile_FixupTable *pftable = PMC_data_typed(SELF, PackFile_FixupTable *);
-        PMC *rv;
-        if (index < 0 || index >= pftable->fixup_count)
-            Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_OUT_OF_BOUNDS,
-                    "Requested data out of range.");
-        rv = pmc_new(interp, enum_class_PackfileFixupEntry);
-        PMC_data(rv) = pftable->fixups[index];
-        return rv;
+        return VTABLE_get_pmc_keyed_int(interp,
+            PARROT_PACKFILEFIXUPTABLE(SELF)->entries, index);
     }
 
 
@@ -167,7 +188,8 @@ Store a PackfileFixupEntry PMC to the given slot.
 
 */
     VTABLE void set_pmc_keyed_int(INTVAL index, PMC *value)  {
-        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_UNIMPLEMENTED, "Not implemented yet.");
+        VTABLE_set_pmc_keyed_int(interp,
+                PARROT_PACKFILEFIXUPTABLE(SELF)->entries, index, value);
     }
 
 
