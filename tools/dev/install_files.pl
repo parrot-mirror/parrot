@@ -1,6 +1,6 @@
-# perl
+#! perl
 ################################################################################
-# Copyright (C) 2001-2008, Parrot Foundation.
+# Copyright (C) 2001-2009, Parrot Foundation.
 # $Id$
 ################################################################################
 
@@ -148,73 +148,85 @@ foreach (@ARGV) {
 
 my $parrotdir = $options{versiondir};
 
-my %metatransforms = (
+# Set up transforms on filenames
+my(@transformorder) = qw(lib bin include doc pkgconfig ^compilers);
+my(%metatransforms) = (
     lib => {
+        ismeta => 1,
         optiondir => 'lib',
         transform => sub {
-            my($dest) = @_;
-            if ( $dest =~ /^install_/ ) {
-                $dest =~ s/^install_//;     # parrot with different config
-                $parrotdir, 'include', $dest;
+            my($filehash) = @_;
+            local($_) = $filehash->{Dest};
+            if ( /^install_/ ) {
+                s/^install_//;     # parrot with different config
+                $filehash->{DestDirs} = [$parrotdir, 'include'];
+                $filehash->{Dest} = $_;
             }
             else {
                 # don't allow libraries to be installed into subdirs of libdir
-                basename($dest);
+                $filehash->{Dest} = basename($_);
             }
+            return($filehash);
         },
     },
     bin => {
+        ismeta => 1,
         optiondir => 'bin',
         transform => sub {
-            my($dest) = @_;
-            $dest =~ s/^installable_//;     # parrot with different config
-            $dest;
+            my($filehash) = @_;
+            # parrot with different config
+            $filehash->{Installable} = $filehash->{Dest} =~ s/^installable_//;     
+            return($filehash);
         },
         isbin => 1,
     },
     include => {
+        ismeta => 1,
         optiondir => 'include',
         transform => sub {
-            my($dest) = @_;
-            $dest =~ s/^include//;
-            $parrotdir, $dest;
+            my($filehash) = @_;
+            $filehash->{Dest} =~ s/^include//;
+            $filehash->{DestDirs} = [$parrotdir];
+            return($filehash);
         },
     },
     doc => {
+        ismeta => 1,
         optiondir => 'doc',
         transform => sub {
-            my($dest) = @_;
-            $dest =~ s/^docs\/resources/resources/; # resources go in the top level of docs
-            $dest =~ s/^docs/pod/; # other docs are actually raw Pod
-            $parrotdir, $dest;
+            my($filehash) = @_;
+            $filehash->{Dest} =~ s#^docs/resources#resources#; # resources go in the top level of docs
+            $filehash->{Dest} =~ s/^docs/pod/; # other docs are actually raw Pod
+            $filehash->{DestDirs} = [$parrotdir];
+            return($filehash);
         },
     },
     pkgconfig => {
+        ismeta => 1,
         optiondir => 'lib',
         transform => sub {
-            my($dest) = @_;
+            my($filehash) = @_;
             # For the time being this is hardcoded as being installed under
             # libdir as it is typically done with automake installed packages.
             # If there is a use case to make this configurable we'll add a
             # seperate --pkgconfigdir option.
-            'pkgconfig', $parrotdir, $dest;
+            $filehash->{DestDirs} = ['pkgconfig', $parrotdir];
+            return($filehash);
         },
     },
-);
-
-my %othertransforms = (
     '^compilers' => {
         optiondir => 'lib',
         transform => sub {
-            my($dest) = @_;
-            $dest =~ s/^compilers/languages/;
-            $parrotdir, $dest;
+            my($filehash) = @_;
+            $filehash->{Dest} =~ s/^compilers/languages/;
+            $filehash->{DestDirs} = [$parrotdir];
+            return($filehash);
         },
     },
 );
 
-my($files, $installable_exe, $directories) = lines_to_files(
-    \%metatransforms, \%othertransforms, \@manifests, \%options, $parrotdir
+my($filehashes, $directories) = lines_to_files(
+    \%metatransforms, \@transformorder, \@manifests, \%options, $parrotdir
 );
 
 unless ( $options{'dry-run'} ) {
@@ -222,36 +234,34 @@ unless ( $options{'dry-run'} ) {
 }
 
 # TT #347
-# 1. skip build_dir-only binaries for @installable_exe
-for (@$installable_exe) {
-    my ( $i, $dest ) = @$_;
-    my ($file) = $i =~ /installable_(.+)$/;
+# 1. skip build_dir-only binaries for files marked Installable
+my($filehash, @removes, $removes);
+foreach $filehash (grep { $_->{Installable} } @$filehashes) {
+    my( $src, $dest ) = map { $filehash->{$_} } qw(Source Dest);
+    my ($file) = $src =~ /installable_(.+)$/;
     next unless $file;
-    my @f = map { $_ ? $_->[0] : '' } @$files;
-    if (grep(/^$file$/, @f)) {
-        if (-e $file) {
-            print "skipping $file, using installable_$file instead\n";
-            @$files = map {$_ and $_->[0] !~ /^$file$/ ? $_ : undef} @$files;
-        }
+    if((grep { $_->{Source} =~ /^$file$/ } @$filehashes) and -e $file) {
+        print "skipping $file, using installable_$file instead\n";
+        push @removes, $file;
     }
 }
+$removes = join '|', @removes;
+@$filehashes = grep { $_->{Source} !~ /^($removes)$/ } @$filehashes;
+
 # 2. for every .exe check if there's an installable. Fail if not
-foreach my $f (@$files ) {
-    next unless $_;
-    my ( $f, $dest ) = @$_;
-    my $i;
+my $i;
+foreach $filehash (grep { ! $_->{Installable} } @$filehashes ) {
+    my( $src, $dest ) = map { $filehash->{$_} } qw(Source Dest);
+    next unless $src =~ /\.exe$/;
     # This logic will fail on non-win32 if the generated files are really
     # generated as with rt #40817. We don't have [main]bin here.
-    $i = "installable_$f" if $f =~ /\.exe$/;
-    next unless $i;
-    unless (map {$_->[0] =~ /^$i$/} @$installable_exe) {
+    $i = "installable_$src";
+    unless (map {$_->{Source} =~ /^$i$/} grep { $_->{Installable} } @$filehashes) {
         die "$i is missing in MANIFEST or MANIFEST.generated\n";
     }
 }
 
-install_files(
-    $options{destdir}, $options{'dry-run'}, @$files, @$installable_exe
-);
+install_files($options{destdir}, $options{'dry-run'}, $filehashes);
 
 print "Finished install_files.pl\n";
 

@@ -6,7 +6,7 @@
 use strict;
 use warnings;
 
-use Test::More tests =>  6;
+use Test::More tests =>  8;
 use Carp;
 use Cwd;
 use File::Copy;
@@ -24,7 +24,30 @@ my $cwd = cwd();
 my $testsourcedir = qq{$cwd/t/tools/install/testlib};
 
 my $parrotdir = q{};;
+
+# Double-check these to see if they make sense now
 my %metatransforms = (
+    doc => {
+        optiondir => 'doc',
+        transform => sub {
+            my($dest) = @_;
+            # resources go in the top level of docs
+            $dest =~ s/^docs\/resources/resources/;
+            # other docs are actually raw Pod
+            $dest =~ s/^docs/pod/;
+            $parrotdir, $dest;
+        },
+    },
+    '.*' => {
+        optiondir => 'foo',
+        transform => sub {
+            return($_[0]);
+        }
+    }
+);
+my(@transformorder) = ('doc', '.*');
+
+my %badmetatransforms = (
     doc => {
         optiondir => 'doc',
         transform => sub {
@@ -34,9 +57,6 @@ my %metatransforms = (
             $parrotdir, $dest;
         },
     },
-);
-
-my %othertransforms = (
     '.*' => {
         optiondir => 'foo',
         transform => sub {
@@ -50,13 +70,13 @@ my %options = (
     packages => 'main',
 );
 
-my ($files_ref, $installable_exe_ref, $directories_ref);
+my ($files_ref, $directories_ref, %badtransformorder);
 
 eval {
-    ($files_ref, $installable_exe_ref, $directories_ref) =
+    ($files_ref, $directories_ref) =
         lines_to_files(
             \%metatransforms,
-            \%othertransforms,
+            \@transformorder,
             {},
             \%options,
             $parrotdir,
@@ -67,10 +87,10 @@ like($@, qr/Manifests must be listed in an array reference/,
 );
 
 eval {
-    ($files_ref, $installable_exe_ref, $directories_ref) =
+    ($files_ref, $directories_ref) =
         lines_to_files(
             \%metatransforms,
-            \%othertransforms,
+            \@transformorder,
             [],
             \%options,
             $parrotdir,
@@ -78,6 +98,20 @@ eval {
 };
 like($@, qr/No manifests specified/,
     "Correctly detected lack of manifest files"
+);
+
+eval {
+    ($files_ref, $directories_ref) =
+        lines_to_files(
+            \%metatransforms,
+            \%badtransformorder,
+            [ qw( MANIFEST MANIFEST.generated ) ],
+            \%options,
+            $parrotdir,
+        );
+};
+like($@, qr/Transform order should be an array of keys/,
+    "Correctly detected incorrect type for transform order"
 );
 
 {
@@ -89,23 +123,40 @@ like($@, qr/No manifests specified/,
         or die "Unable to copy file to tempdir for testing:  $!";
 
     my ($stdout, $stderr);
-    capture(
-        sub {
-            ($files_ref, $installable_exe_ref, $directories_ref) =
-                lines_to_files(
-                    \%metatransforms,
-                    \%othertransforms,
-                    [ qw( MANIFEST MANIFEST.generated ) ],
-                    \%options,
-                    $parrotdir,
-                );
-        },
-        \$stdout,
-        \$stderr,
+    eval {
+        ($files_ref, $directories_ref) =
+            lines_to_files(
+                \%badmetatransforms,
+                \@transformorder,
+                [ qw( MANIFEST MANIFEST.generated ) ],
+                \%options,
+                $parrotdir,
+            );
+    };
+    like($@, qr/transform didn't return a hash for key/,
+        "Correctly detected transform with a bad return value"
     );
+    eval {
+        capture(
+            sub {
+                ($files_ref, $directories_ref) =
+                    lines_to_files(
+                        \%metatransforms,
+                        \@transformorder,
+                        [ qw( MANIFEST MANIFEST.generated ) ],
+                        \%options,
+                        $parrotdir,
+                    );
+            },
+            \$stdout,
+            \$stderr,
+        );
+    };
+# Is there a way we can skip these two tests as failed and continue?
+    $@ and die "Error encountered while testing for duplicates: $@ ##";
     like($stderr, qr/MANIFEST\.generated:\d+:\s+Duplicate entry/,
         "Detected duplicate entries in one or more manifest files" );
-    is( scalar @{ $installable_exe_ref }, 0,
+    is( scalar(grep { $_->{Installable} } @$files_ref), 0,
         "No installable executables in this test" );
 
     chdir $cwd or die "Unable to return to starting directory: $!";
@@ -119,10 +170,10 @@ like($@, qr/No manifests specified/,
         or die "Unable to copy file to tempdir for testing:  $!";
 
     eval {
-        ($files_ref, $installable_exe_ref, $directories_ref) =
+        ($files_ref, $directories_ref) =
             lines_to_files(
                 \%metatransforms,
-                \%othertransforms,
+                \@transformorder,
                 [ $defective_man ],
                 \%options,
                 $parrotdir,
@@ -178,9 +229,13 @@ __END__
 
 
 
+## In the code below:
+## - othertransforms needs to be merged into metatransforms
+## - transformorder needs to be added
+## - $installable_exe needs to be removed
 
 #{
-#    my($metatransforms, $othertransforms, $manifests, $options, $parrotdir,
+#    my($metatransforms, $transformorder, $manifests, $options, $parrotdir,
 #        $files, $installable_exe, $directories);
 #
 #    # First lines_to_files test
@@ -190,7 +245,7 @@ __END__
 #
 #    # Second lines_to_files test
 ##    eval { lines_to_files(
-##        $metatransforms, $othertransforms, 
+##        $metatransforms, $transformorder, 
 ##        [qw(MANIFEST MANIFEST.generated)], 
 ##        $options, $parrotdir
 ##    ); };

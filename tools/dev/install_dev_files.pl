@@ -1,4 +1,4 @@
-#! perl -Ilib
+#! perl
 ################################################################################
 # Copyright (C) 2001-2009, Parrot Foundation.
 # $Id$
@@ -96,74 +96,87 @@ foreach (@ARGV) {
 my $parrotdir = $options{versiondir};
 
 # Set up transforms on filenames
+my(@transformorder) = (qw(lib share include src doc), '^(tools|VERSION)', '^compilers');
 my(%metatransforms) = (
     lib => {
+        ismeta => 1,
         optiondir => 'lib',
         transform => sub {
-            my($dest) = @_;
-            $parrotdir, "tools", $dest;
+            my($filehash) = @_;
+            $filehash->{DestDirs} = [$parrotdir, "tools"];
+            return($filehash);
         },
     },
     share => {
+        ismeta => 1,
         optiondir => 'data',
         transform => sub {
-            my($dest) = @_;
-            $parrotdir, basename($dest);
+            my($filehash) = @_;
+            $filehash->{Dest} = basename($filehash->{Dest});
+            $filehash->{DestDirs} = [$parrotdir];
+            return($filehash);
         },
     },
     include => {
+        ismeta => 1,
         optiondir => 'include',
         transform => sub {
-            my($dest) = @_;
-            $dest =~ s/^src//; # strip off leading src/ dir
-            $dest =~ s/^include//;
-            $parrotdir, $dest;
+            my($filehash) = @_;
+            $filehash->{Dest} =~ s/^src//; # strip off leading src/ dir
+            $filehash->{Dest} =~ s/^include//;
+            $filehash->{DestDirs} = [$parrotdir];
+            return($filehash);
         },
     },
     src => {
+        ismeta => 1,
         optiondir => 'src',
         transform => sub {
-            my($dest) = @_;
-            $dest =~ s/^src//; # strip off leading src/ dir
-            $parrotdir, $dest;
+            my($filehash) = @_;
+            $filehash->{Dest} =~ s/^src//; # strip off leading src/ dir
+            $filehash->{DestDirs} = [$parrotdir];
+            return($filehash);
         },
     },
     doc => {
+        ismeta => 1,
         optiondir => 'doc',
         transform => sub {
-            my($dest) = @_;
-            $dest =~ s/^docs/pod/; # other docs are actually raw Pod
-            $parrotdir, $dest;
+            my($filehash) = @_;
+            $filehash->{Dest} =~ s/^docs/pod/; # other docs are actually raw Pod
+            $filehash->{DestDirs} = [$parrotdir];
+            return($filehash);
         },
     },
-);
-
-my(%othertransforms) = (
     '^(tools|VERSION)' => {
         optiondir => 'lib',
         transform => sub {
-            my($dest) = @_;
-            $parrotdir, $dest;
+            my($filehash) = @_;
+            $filehash->{DestDirs} = [$parrotdir];
+            return($filehash);
         },
     },
     '^compilers' => {
         optiondir => 'lib',
         transform => sub {
-            my($dest) = @_;
-            $dest =~ s/^compilers/languages/;
-            $parrotdir, $dest;
+            my($filehash) = @_;
+            $filehash->{Dest} =~ s/^compilers/languages/;
+            $filehash->{DestDirs} = [$parrotdir];
+            return($filehash);
         },
     },
 );
 
-my($files, $installable_exe, $directories) = Parrot::Install::lines_to_files(
-    \%metatransforms, \%othertransforms, \@manifests, \%options, $parrotdir
+my($filehashes, $directories) = lines_to_files(
+    \%metatransforms, \@transformorder, \@manifests, \%options, $parrotdir
 );
 
 unless ( $options{'dry-run'} ) {
-    Parrot::Install::create_directories($options{destdir}, $directories);
+    create_directories($options{destdir}, $directories);
 }
-Parrot::Install::install_files($options{destdir}, $options{'dry-run'}, @$files, @$installable_exe);
+install_files($options{destdir}, $options{'dry-run'}, $filehashes);
+
+print "Finished install_dev_files.pl\n";
 
 # Local Variables:
 #   mode: cperl

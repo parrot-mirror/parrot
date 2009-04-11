@@ -6,7 +6,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 17;
+use Test::More tests => 18;
 use Carp;
 use Cwd;
 use File::Copy;
@@ -29,39 +29,89 @@ my $testsourcedir = qq{$cwd/t/tools/install/testlib};
     my @dirs = qw(foo/bar foo/bar/baz);
     create_directories($tdir, { map { $_ => 1 } @dirs });
 
-    my @files = ( [ "$testsourcedir/README", "$dirs[0]/README"] );
+    {
+        my ( $stdout, $stderr, $rv );
+    
+        eval {
+            capture(
+                sub { $rv = install_files($tdir, 1); },
+                \$stdout,
+                \$stderr,
+            );
+        };
+        like($@, qr/Error: parameter \$files must be an array/s, "Catches non-ARRAY \$files");
+    }
+}
+
+{
+    my $tdir = tempdir( CLEANUP => 1 );
+    $tdir .= '/';
+
+    my @dirs = qw(foo/bar foo/bar/baz);
+    create_directories($tdir, { map { $_ => 1 } @dirs });
+
+    # Case where element in @files is not a hash ref
+    my $files_ref = [ q[] ];
 
     {
         my ( $stdout, $stderr, $rv );
         capture(
-            sub { $rv = install_files($tdir, 1, @files); },
+            sub { $rv = install_files($tdir, 0, $files_ref); },
+            \$stdout,
+            \$stderr,
+        );
+        like($stderr, qr/Bad reference passed in \$files/, "Catches non-HASH files");
+    
+        like( $stdout, qr/Installing \.\.\./, 
+            'Got expected installation message' );
+    }
+}
+
+{
+    my $tdir = tempdir( CLEANUP => 1 );
+    $tdir .= '/';
+
+    my @dirs = qw(foo/bar foo/bar/baz);
+    create_directories($tdir, { map { $_ => 1 } @dirs });
+
+    my $files_ref = [ {
+        Source => "$testsourcedir/README",
+        Dest => "$dirs[0]/README",
+    } ];
+
+    {
+        my ( $stdout, $stderr, $rv );
+
+        capture(
+            sub { $rv = install_files($tdir, 1, $files_ref); },
             \$stdout,
             \$stderr,
         );
         ok( $rv, 'install_files() completed successfully in dry-run case' );
     
         my $files_created = 0;
-        foreach my $el (@files) {
-            $files_created++ if -f "$tdir$el->[1]";
+        foreach my $el (@$files_ref) {
+            $files_created++ if -f $tdir . $el->{Dest};
         }
         is( $files_created, 0, 'Dry run, so no files created' );
 
         like( $stdout, qr/Installing.*README.*README/s,
             'Got expected installation message' );
+        $stdout =~ qr/Installing.*README.*README/s or print "Warning was: $stderr";
     }
 
     {
         my ( $stdout, $stderr, $rv );
         capture(
-            sub { $rv = install_files($tdir, 0, @files); },
+            sub { $rv = install_files($tdir, 0, $files_ref); },
             \$stdout,
             \$stderr,
         );
         ok( $rv, 'install_files() completed successfully in production case' );
     
         my $files_created = 0;
-        foreach my $el (@files) {
-            $files_created++ if -f "$tdir$el->[1]";
+        foreach my $el (@$files_ref) {
+            $files_created++ if -f "$tdir$el->{Dest}";
         }
         is( $files_created, 1, 'Production, so 1 file created' );
 
@@ -84,23 +134,29 @@ my $testsourcedir = qq{$cwd/t/tools/install/testlib};
         copy "$testsourcedir/$f", "$tdir/$f"
             or die "Unable to copy $f prior to testing: $!";
     }
-    my @files = (
-        [ "$tdir/README", "$dirs[0]/README" ],
-        [ "$tdir/phony", "$dirs[0]/phony" ],
-    );
+    my $files_ref = [
+        {
+            Source => "$tdir/README",
+            Dest => "$dirs[0]/README",
+        },
+        {
+            Source => "$tdir/phony",
+            Dest => "$dirs[0]/phony",
+        },
+    ];
 
     {
         my ( $stdout, $stderr, $rv );
         capture(
-            sub { $rv = install_files($tdir, 0, @files); },
+            sub { $rv = install_files($tdir, 0, $files_ref); },
             \$stdout,
             \$stderr,
         );
         ok( $rv, 'install_files() completed successfully in mock-Cygwin case' );
     
         my $files_created = 0;
-        foreach my $el (@files) {
-            $files_created++ if -f "$tdir$el->[1]";
+        foreach my $el (@$files_ref) {
+            $files_created++ if -f "$tdir$el->{Dest}";
         }
         is( $files_created, 2, 'Production, so 2 files created' );
 
@@ -124,24 +180,33 @@ my $testsourcedir = qq{$cwd/t/tools/install/testlib};
         copy "$testsourcedir/$f", "$tdir/$f"
             or die "Unable to copy $f prior to testing: $!";
     }
-    my @files = (
-        [ "$tdir/README", "$dirs[0]/README" ],
-        [ "$tdir/phony", "$dirs[0]/phony" ],
-        [ "$tdir/phony.exe", "$dirs[0]/phony.exe" ],
-    );
+    my $files_ref = [
+        {
+            Source => "$tdir/README",
+            Dest => "$dirs[0]/README"
+        },
+        {
+            Source => "$tdir/phony",
+            Dest => "$dirs[0]/phony"
+        },
+        {
+            Source => "$tdir/phony.exe",
+            Dest => "$dirs[0]/phony.exe"
+        },
+    ];
 
     {
         my ( $stdout, $stderr, $rv );
         capture(
-            sub { $rv = install_files($tdir, 0, @files); },
+            sub { $rv = install_files($tdir, 0, $files_ref); },
             \$stdout,
             \$stderr,
         );
         ok( $rv, 'install_files() completed successfully in mock-Cygwin case' );
     
         my $files_created = 0;
-        foreach my $el (@files) {
-            $files_created++ if -f "$tdir$el->[1]";
+        foreach my $el (@$files_ref) {
+            $files_created++ if -f "$tdir$el->{Dest}";
         }
         is( $files_created, 2,
             'Production, so 2 files created; 1 file passed over' );
@@ -159,38 +224,19 @@ my $testsourcedir = qq{$cwd/t/tools/install/testlib};
     my @dirs = qw(foo/bar foo/bar/baz);
     create_directories($tdir, { map { $_ => 1 } @dirs });
 
-    # Case where element in @files is not an array ref
-    my @files = ( q{} );
-
-    {
-        my ( $stdout, $stderr, $rv );
-        capture(
-            sub { $rv = install_files($tdir, 0, @files); },
-            \$stdout,
-            \$stderr,
-        );
-        ok( $rv, 'install_files() handled invalid argument as expected' );
-    
-        like( $stdout, qr/Installing \.\.\./, 
-            'Got expected installation message' );
-    }
-}
-
-{
-    my $tdir = tempdir( CLEANUP => 1 );
-    $tdir .= '/';
-
-    my @dirs = qw(foo/bar foo/bar/baz);
-    create_directories($tdir, { map { $_ => 1 } @dirs });
-
     # Case where element in @files does not hold existent file
     my $nonexistent = q{ajdpfadksjfjvjkvds} . $$;
-    my @files = ( [ $nonexistent, "$dirs[0]/$nonexistent"] );
+    my $files_ref = [
+        {
+            Source => $nonexistent,
+            Dest => "$dirs[0]/$nonexistent",
+        }
+    ];
 
     {
         my ( $stdout, $stderr, $rv );
         capture(
-            sub { $rv = install_files($tdir, 0, @files); },
+            sub { $rv = install_files($tdir, 0, $files_ref); },
             \$stdout,
             \$stderr,
         );

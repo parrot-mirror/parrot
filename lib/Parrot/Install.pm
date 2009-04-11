@@ -4,6 +4,7 @@ use strict;
 use warnings;
 use File::Basename qw(dirname);
 use File::Copy;
+use File::Path; # mkpath
 use File::Spec;
 use base qw( Exporter );
 our @EXPORT_OK = qw(
@@ -42,10 +43,10 @@ file locations.
 
 B<Arguments:> List of five scalars.
 
-    ($files, $installable_exe, $directories) =
+    ($files, $directories) =
         lines_to_files(
             \%metatransforms,
-            \%othertransforms,
+            \@transformorder,
             \@manifests,
             \%options,
             $parrotdir,
@@ -58,18 +59,25 @@ B<Comment:>
 =cut
 
 sub lines_to_files {
-    my ($metatransforms, $othertransforms, $manifests_ref, 
+    my ($metatransforms, $transformorder, $manifests_ref, 
         $options_ref, $parrotdir) = @_;
     my @files;
-    my @installable_exe;
     my %directories;
+    my($tkey, $thash);
+    my $filehash;
 
     # We'll report multiple occurrences of the same file
     my(%seen);
 
+    # Check $manifests_ref
     ref($manifests_ref) eq 'ARRAY'
         or die "Manifests must be listed in an array reference: $!";
     @{ $manifests_ref } > 0 or die "No manifests specified";
+
+    # Check $transformorder
+    ref($transformorder) eq 'ARRAY'
+        or die "Transform order should be an array of keys\n";
+
     @ARGV = @{ $manifests_ref };
     LINE: while ( my $entry = <> ) {
         chomp $entry;
@@ -100,56 +108,50 @@ sub lines_to_files {
         @metadata{ split( /,/, $meta ) } = ();
         $metadata{$entry} = 1 for ( keys %metadata );          # Laziness
 
+        $filehash = {
+            Source => $src,
+            Dest => $dest,
+            DestDirs => [],
+        };
+
         FIXFILE: {
             # Have to catch this case early for some unknown reason
             if ( $entry =~ /^runtime/ ) {
-                $dest =~ s/^runtime\/parrot\///;
-                $dest = File::Spec->catdir(
+                $filehash->{Dest} =~ s/^runtime\/parrot\///;
+                $filehash->{Dest} = File::Spec->catdir(
                     $options_ref->{libdir}, $parrotdir, $dest
                 );
                 last FIXFILE;
             }
-            foreach my $tkey (keys %$metatransforms) {
-                if ( $metadata{$tkey} ) {
-                    my $copy = $dest; # only needed for installable
-                    $dest = File::Spec->catdir(
-                        $options_ref->{$metatransforms->{$tkey}->{optiondir} . 'dir'},
-                        &{ $metatransforms->{$tkey}->{transform} }($dest)
-                    );
-                    if ( $metatransforms->{$tkey}->{isbin}
-                            and
-                        $copy =~ /^installable/
-                    ) {
-                        push @installable_exe, [ $src, $dest ];
-                        next LINE;
-                    }
-                    last FIXFILE;
-                }
+            foreach my $tkey (@$transformorder) {
+                $thash = $metatransforms->{$tkey};
+                unless($thash->{ismeta} ? $metadata{$tkey} : $entry =~ /$tkey/) { next; }
+                $filehash = &{ $thash->{transform} }($filehash);
+                ref($filehash) eq 'HASH' or die "Error: transform didn't return a hash for key '$tkey'\n";
+                $filehash->{Dest} = File::Spec->catdir(
+                    $options_ref->{$thash->{optiondir} . 'dir'},
+                    @{ $filehash->{DestDirs} }, 
+                    $filehash->{Dest}
+                );
+                last FIXFILE;
             }
-
-            foreach my $tkey (keys %$othertransforms) {
-                if ( $entry =~ /$tkey/ ) {
-                    $dest = File::Spec->catdir(
-                        $options_ref->{$othertransforms->{$tkey}->{optiondir} . 'dir'},
-                        &{ $othertransforms->{$tkey}->{transform} }($dest)
-                    );
-                    last FIXFILE;
-                }
-            }
-            die "Unknown install location in MANIFEST for file '$entry': ";
+            die "Unknown install location in MANIFEST for file '$entry'\n";
         }
 
-        $dest = File::Spec->catdir( $options_ref->{buildprefix}, $dest )
-            if $options_ref->{buildprefix};
+        if(! $filehash->{Installable}) {
+            $filehash->{Dest} = File::Spec->catdir( $options_ref->{buildprefix}, $filehash->{Dest} )
+                if $options_ref->{buildprefix};
+        }
 
-        $directories{ dirname($dest) } = 1;
-        push( @files, [ $src => $dest ] );
+        $directories{ dirname($filehash->{Dest}) } = 1;
+        push( @files, $filehash );
     }
     continue {
         close ARGV if eof;    # Reset line numbering for each input file
     }
 
-    return(\@files, \@installable_exe, \%directories);
+    (grep { ! ref } @files) and die "lines_to_files from Parrot::Install created a bad hash!\n";
+    return(\@files, \%directories);
 }
 
 =head2 C<create_directories()>
@@ -172,21 +174,9 @@ B<Comment:>
 sub create_directories {
     my($destdir, $directories) = @_;
 
-    for my $dir ( map { $destdir . $_ } keys %$directories ) {
-        unless ( -d $dir ) {
-            my @dirs_needed;
-
-            # Make full path to the directory $dir
-            while ( ! -d $dir ) {    # Scan up to nearest existing ancestor
-                unshift @dirs_needed, $dir;
-                $dir = dirname($dir);
-            }
-            foreach my $d ( @dirs_needed ) {
-                mkdir( $d, 0777 ) or die "mkdir $d: $!";
-            }
-        }
-    }
-    return 1;
+    mkpath([
+        grep { ! -d } map { $destdir . $_ } keys %$directories
+    ],0,0777);
 }
 
 =head2 C<install_files()>
@@ -196,11 +186,11 @@ B<Purpose:> Install the mentioned files into the appropriate locations.
     install_files(
         $destination_directory,
         $dry_run_option,
-        @list_of_files_and_executables,
+        $list_of_files_and_executables,
     );
 
-B<Arguments:>  Takes two scalar arguments, followed by a list consisting of
-2-element, C<source => destination> array references.
+B<Arguments:>  Takes two scalar arguments, followed by a reference to a 
+list consisting of hashes.  
 
 B<Return Value:>  True value.
 
@@ -209,14 +199,20 @@ B<Comment:>
 =cut
 
 sub install_files {
-    my($destdir, $dryrun, @files) = @_;
+    my($destdir, $dryrun, $files) = @_;
     my($src, $dest, $mode);
 
+    ref($files) eq 'ARRAY' or die "Error: parameter \$files must be an array\n";
     print("Installing ...\n");
-    foreach my $el ( @files ) {
-        next unless ref($el) eq 'ARRAY';
-        ( $src, $dest ) = @{ $el };
+    foreach my $el ( @$files ) {
+        unless(ref($el) eq 'HASH') {
+            my($ref) = ref($el);
+            warn "Bad reference passed in \$files (want a HASH, got a '$ref')\n";
+            next;
+        }
+        ( $src, $dest ) = map { $el->{$_} } qw(Source Dest);
         $dest = $destdir . $dest;
+        print "Installing $src to $dest\n";
         if ( $dryrun ) {
             print "$src -> $dest\n";
             next;
@@ -224,7 +220,7 @@ sub install_files {
         else {
             next unless -e $src;
             next if $^O eq 'cygwin' and -e "$src.exe"; # stat works, copy not
-            copy( $src, $dest ) or die "copy $src to $dest: $!";
+            copy( $src, $dest ) or die "Error: couldn't copy $src to $dest: $!\n";
             print "$dest\n";
         }
         $mode = ( stat($src) )[2];
