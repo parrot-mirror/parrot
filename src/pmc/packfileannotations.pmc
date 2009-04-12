@@ -104,8 +104,9 @@ contained within this object.
 =cut
 
 */
-    PMC *get_key_list() {
-        PARROT_PACKFILEANNOTATIONS(SELF)->keys;
+    METHOD get_key_list() {
+        PMC * keys = PARROT_PACKFILEANNOTATIONS(SELF)->keys;
+        RETURN(PMC* keys);
     }
 
 
