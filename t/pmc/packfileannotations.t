@@ -19,8 +19,9 @@ Tests the PackfileAnnotations PMC.
 
 .sub 'main' :main
 .include 'test_more.pir'
-    plan(1)
+    plan(4)
     test_sanity()
+    test_handling_directory()
 .end
 
 
@@ -31,3 +32,26 @@ Tests the PackfileAnnotations PMC.
     $I0 = defined pf
     ok($I0, "PackfileAnnotations created")
 .end
+
+# Annotations should propogate ConstantTable to Keys.
+.sub 'test_handling_directory'
+    .local pmc keys, anns, pfdir
+
+    anns = new 'PackfileAnnotations'
+    keys = anns.'get_key_list'()
+    $I0 = defined keys
+    ok($I0, "Keys created")
+    $P0 = keys.'get_constant_table'()
+    $I0 = defined $P0
+    is($I0, 0, "    without ConstantTable")
+
+    pfdir = new 'PackfileDirectory'
+    $P0 = new 'PackfileConstantTable'
+    # Order does matter
+    pfdir['CONSTANTS'] = $P0
+    pfdir['ANNOTATIONS'] = anns
+    $P0 = keys.'get_constant_table'()
+    $I0 = defined $P0
+    ok($I0, 'PackfileConstantTable found and propogated to Keys')
+.end
+

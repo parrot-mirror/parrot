@@ -16,6 +16,8 @@ See packfile.pmc for the toplevel Packfile interface, see packfilesegment.pmc
 for the list of common methods every packfile segment pmc must implement; see
 PDD13 for the design spec.
 
+To works properly PackfileAnnotations has to be added to PackfileDirectory with
+PackfileConstantTable. Otherwise PackfileAnnotationKey can't be created.
 
 =head2 Methods
 
@@ -171,6 +173,38 @@ thrown unless all of the following criteria are met:
         VTABLE_set_pmc_keyed_int(interp, annotations, index, annotation);
     }
 
+/*
+
+=item C<void set_directory()>
+
+Handle setting of ownershit.
+
+Find PackfileConstantTable in PackfileDirectory and pass it to
+PackfileAnnotationKeys.
+
+=cut
+
+*/
+
+    METHOD set_directory(PMC *directory) {
+        Parrot_PackfileAnnotations_attributes *attrs =
+                PARROT_PACKFILEANNOTATIONS(SELF);
+        STRING *name;
+        PMC    *segment;
+
+        PMC *iter = VTABLE_get_iter(interp, directory);
+        while (VTABLE_get_bool(interp, iter)) {
+            name = VTABLE_shift_string(interp, iter);
+            segment = VTABLE_get_pmc_keyed_str(interp, directory, name);
+            if (VTABLE_isa(interp, segment,
+                    Parrot_str_new_constant(interp, "PackfileConstantTable"))) {
+                Parrot_PCCINVOKE(interp, attrs->keys,
+                        Parrot_str_new_constant(interp, "set_constant_table"),
+                        "P->", segment);
+                break;
+            }
+        }
+    }
 
 }
 /*

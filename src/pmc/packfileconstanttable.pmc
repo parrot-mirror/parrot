@@ -155,7 +155,7 @@ Set pointer to underlying PackFile_ConstTable
                 mem_allocate_zeroed_typed(PackFile_ConstTable);
         PackFile_Constant   * value;
         opcode_t              i;
-        
+
         pftable->base.type = PF_CONST_SEG;
 
         /* Copy all constanst with respect of type */
@@ -187,7 +187,7 @@ Set pointer to underlying PackFile_ConstTable
                         EXCEPTION_MALFORMED_PACKFILE,
                         "Unknown PackFile constant type: %d", value->type);
             }
-            
+
             pftable->constants[i] = value;
         }
 
