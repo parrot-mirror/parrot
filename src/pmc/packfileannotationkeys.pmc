@@ -181,19 +181,6 @@ Store the given entry's annotation type.
 
 /*
 
-=item C<void set_const_table(PMC *table)>
-
-Set PackfileConstantTable used for Key names lookup.
-
-=cut
-
-*/
-    METHOD set_const_table(PMC *table) {
-        PARROT_PACKFILEANNOTATIONKEYS(SELF)->const_table = table;
-    }
-
-/*
-
 =item C<void set_pointer()>
 
 Initialize from PackFile_Annotation pointer.
@@ -215,6 +202,35 @@ Initialize from PackFile_Annotation pointer.
         }
     }
 
+/*
+
+=item C<void set_constant_table()>
+
+Set PackfileConstantTable associated with Keys.
+
+=cut
+
+*/
+    METHOD set_constant_table(PMC *table) {
+        PARROT_PACKFILEANNOTATIONKEYS(SELF)->const_table = table;
+    }
+
+/*
+
+=item C<void get_constant_table()>
+
+Get PackfileConstantTable associated with PackfileAnnotationKeys.
+Solely for testing purpose only.
+
+=cut
+
+*/
+    METHOD get_constant_table() {
+        PMC * table = PARROT_PACKFILEANNOTATIONKEYS(SELF)->const_table;
+        if (!table)
+            table = PMCNULL;
+        RETURN(PMC* table);
+    }
 }
 
 /*
