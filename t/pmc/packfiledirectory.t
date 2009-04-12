@@ -95,7 +95,7 @@ Tests the PackfileDirectory PMC.
     $I0 = elements pfdir
     $P0 = iter pfdir
     $S0 = shift $P0
-    pfdir[$S0] = $P0
+    pfdir[$S0] = seg
     $I1   = elements pfdir
     is($I0, $I1, "Segment with old name was added")
     goto done
@@ -104,7 +104,7 @@ Tests the PackfileDirectory PMC.
   add_new:
     seg = new [ 'PackfileRawSegment' ]
     $S0 = 'BYTECODE_foo'
-    pfdir[$S0] = $P0
+    pfdir[$S0] = seg
     $I1   = elements pfdir
     inc $I0
     is($I0, $I1, "New segment added")
