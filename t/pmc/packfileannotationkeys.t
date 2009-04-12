@@ -1,12 +1,5 @@
-#!perl
+#!parrot
 # Copyright (C) 2006-2009, Parrot Foundation.
-
-use strict;
-use warnings;
-use lib qw( . lib ../lib ../../lib );
-use Test::More;
-use Parrot::Test tests => 1;
-use Parrot::Config;
 
 =head1 NAME
 
@@ -25,14 +18,14 @@ Tests the PackfileAnnotationKeys PMC.
 
 
 # Packfile constructor
-
-pir_output_is( <<'CODE', <<'OUT', 'new' );
 .sub 'test' :main
+.include 'test_more.pir'
     .local pmc pf
+
+    plan(5)
+
     pf = new ['PackfileAnnotationKeys']
     $I0 = defined pf
-    say $I0
+    ok($I0, "PackfileAnnotationKeys created")
+
 .end
-CODE
-1
-OUT
