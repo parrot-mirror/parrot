@@ -26,6 +26,69 @@ spec.
 #include "parrot/parrot.h"
 
 pmclass PackfileSegment {
+    /*
+    Directory which owns this segment. Required for correct pack/unpack
+    Annotations.
+    */
+    ATTR PMC *directory;
+
+
+/*
+
+=item C<void init()>
+
+Initialize PackfileSegment.
+
+=cut
+
+*/
+    VTABLE void init() {
+        Parrot_PackfileSegment_attributes * attrs =
+                mem_allocate_zeroed_typed(Parrot_PackfileSegment_attributes);
+
+        attrs->directory = NULL;
+
+        PObj_custom_mark_destroy_SETALL(SELF);
+        PMC_data(SELF) = attrs;
+    }
+
+/*
+
+=item C<void mark()>
+
+Marks the object as live.
+
+=cut
+
+*/
+
+    VTABLE void mark() {
+        Parrot_PackfileSegment_attributes * attrs =
+                PARROT_PACKFILESEGMENT(SELF);
+
+        if (attrs->directory)
+            pobject_lives(interp, (PObj *)attrs->directory);
+    }
+
+/*
+
+=item C<void destroy()>
+
+Destroys the PMC and frees all allocated memory.
+
+=cut
+
+*/
+
+    VTABLE void destroy() {
+        Parrot_PackfileSegment_attributes * attrs =
+                PARROT_PACKFILESEGMENT(SELF);
+
+        if (attrs) {
+            mem_sys_free(attrs);
+            PMC_data(SELF) = NULL;
+        }
+    }
 
 /*
 
@@ -79,6 +142,35 @@ Unpack a serialized segment string.
     METHOD unpack(STRING *data) {
         Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_UNIMPLEMENTED,
                                     "PackfileSegment.unpack() not implemented yet.");
+    }
+
+/*
+
+=item C<void set_directory(PMC *directory)>
+
+Set owning directory.
+
+=cut
+
+*/
+    METHOD set_directory(PMC *directory) {
+        PARROT_PACKFILESEGMENT(SELF)->directory = directory;
+    }
+
+/*
+
+=item C<void get_directory(PMC *directory)>
+
+Get owning directory.
+
+=cut
+
+*/
+    METHOD get_directory() {
+        PMC * directory = PARROT_PACKFILESEGMENT(SELF)->directory;
+        if (!directory)
+            directory = PMCNULL;
+        RETURN(PMC* directory);
     }
 
 }

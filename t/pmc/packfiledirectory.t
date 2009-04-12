@@ -21,12 +21,34 @@ Tests the PackfileDirectory PMC.
 
 .sub 'main' :main
 .include 'test_more.pir'
-    plan(13)
+    plan(21)
 
+    'test_create'()
     'test_typeof'()
     'test_elements'()
     'test_get_iter'()
     'test_set_pmc_keyed_str'()
+.end
+
+# Test creation of fresh directory
+.sub 'test_create'
+    .local pmc dir, seg
+    dir = new 'PackfileDirectory'
+    isa_ok(dir, 'PackfileDirectory')
+
+    seg = new 'PackfileRawSegment'
+    # We should set owner
+    $P0 = seg.'get_directory'()
+    $I0 = defined $P0
+    $I0 = not $I0
+    ok($I0, "Owner of fresh segment unknown")
+
+    dir['RAWSEGMENT'] = seg
+
+    # We should set owner
+    $P0 = seg.'get_directory'()
+    $I0 = defined $P0
+    ok($I0, "Owner of segment set correctly")
 .end
 
 # PackfileDirectory.typeof
@@ -36,7 +58,6 @@ Tests the PackfileDirectory PMC.
     $P1 = pf.'get_directory'()
     isa_ok($P1, 'PackfileDirectory', 'PackfileDirectory.get_directory')
 .end
-
 
 # PackfileDirectory.elements
 .sub 'test_elements'
@@ -79,6 +100,9 @@ Tests the PackfileDirectory PMC.
 
     $P1 = pfdir[name]
     isa_ok($P1, 'PackfileSegment')
+    $P2 = $P1.'get_directory'()
+    $I0 = defined $P2
+    ok($I0, "Loaded Segment has proper directory")
     goto loop
   done:
     .return ()

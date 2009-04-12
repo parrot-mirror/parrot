@@ -133,11 +133,12 @@ Initialize PackfileDirectory from PackFile_Directory.
             }
 
             segment = pmc_new(interp, pmc_type);
+            name    = Parrot_str_new(interp, pfseg->name, strlen(pfseg->name));
+            VTABLE_set_pmc_keyed_str(interp, SELF, name, segment);
+
             /* Initialize internal PMC structure */
             VTABLE_set_pointer(interp, segment, pfseg);
 
-            name    = Parrot_str_new(interp, pfseg->name, strlen(pfseg->name));
-            VTABLE_set_pmc_keyed_str(interp, hash, name, segment);
         }
     }
 
@@ -249,6 +250,9 @@ TODO: check type
 
 */
     VTABLE void set_pmc_keyed_str(STRING *name, PMC *segment)  {
+        Parrot_PCCINVOKE(interp, segment,
+            Parrot_str_new_constant(interp, "set_directory"),
+            "P->", SELF);
         VTABLE_set_pmc_keyed_str(interp,
             PARROT_PACKFILEDIRECTORY(SELF)->hash, name, segment);
     }
