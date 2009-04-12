@@ -22,7 +22,7 @@ Tests the Packfile PMC.
 .sub main :main
 .include 'test_more.pir'
 
-    plan(28)
+    plan(30)
     'test_new'()
     'test_get_string'()
     'test_set_string'()
@@ -71,6 +71,15 @@ Tests the Packfile PMC.
     pf = new ['Packfile']
     pf["uuid"] = "fe9ab64082e0f6bbbd7b1e8264127908"
     ok(1, 'set_string(uuid)')
+
+    # Special check for 0
+    $S0 = "\0"
+    $I0 = length $S0
+    is($I0, 1, "Length is 1")
+    pf["uuid"] = $S0
+    $S1 = pf["uuid"]
+    $I1 = length $S1
+    is($I1, 1, "Fetched length is 1")
     
     # Requesting unknown key should throw exception
     push_eh unknown_key
