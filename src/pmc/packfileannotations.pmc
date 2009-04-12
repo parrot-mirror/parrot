@@ -177,7 +177,7 @@ thrown unless all of the following criteria are met:
 
 =item C<void set_directory()>
 
-Handle setting of ownershit.
+Handle setting of ownership.
 
 Find PackfileConstantTable in PackfileDirectory and pass it to
 PackfileAnnotationKeys.
