@@ -28,7 +28,71 @@ PDD13 for the design spec.
 #include "parrot/parrot.h"
 
 pmclass PackfileAnnotations extends PackfileSegment {
+    /* RPA of Annotation */
+    ATTR PMC *annotations;
 
+    /* AnnotationKeys */
+    ATTR PMC *keys;
+
+/*
+
+=item C<void init()>
+
+Initialize PackfileAnnotations.
+
+=cut
+
+*/
+    VTABLE void init() {
+        Parrot_PackfileAnnotations_attributes * attrs =
+                mem_allocate_zeroed_typed(Parrot_PackfileAnnotations_attributes);
+
+        attrs->annotations = pmc_new(interp, enum_class_ResizablePMCArray);
+        attrs->keys        = pmc_new(interp, enum_class_PackfileAnnotationKeys);
+
+        PObj_custom_mark_destroy_SETALL(SELF);
+        PMC_data(SELF) = attrs;
+    }
+
+/*
+
+=item C<void mark()>
+
+Marks the object as live.
+
+=cut
+
+*/
+
+    VTABLE void mark() {
+        Parrot_PackfileAnnotations_attributes * attrs =
+                PARROT_PACKFILEANNOTATIONS(SELF);
+
+        if (attrs->annotations)
+            pobject_lives(interp, (PObj *)attrs->annotations);
+        if (attrs->keys)
+            pobject_lives(interp, (PObj *)attrs->keys);
+    }
+
+/*
+
+=item C<void destroy()>
+
+Destroys the PMC and frees all allocated memory.
+
+=cut
+
+*/
+
+    VTABLE void destroy() {
+        Parrot_PackfileAnnotations_attributes * attrs =
+                PARROT_PACKFILEANNOTATIONS(SELF);
+
+        if (attrs) {
+            mem_sys_free(attrs);
+            PMC_data(SELF) = NULL;
+        }
+    }
 
 /*
 
@@ -41,7 +105,7 @@ contained within this object.
 
 */
     PMC *get_key_list() {
-        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_UNIMPLEMENTED, "Not implemented yet.");
+        PARROT_PACKFILEANNOTATIONS(SELF)->keys;
     }
 
 
@@ -55,7 +119,8 @@ Get the number of elements in the array.
 
 */
     VTABLE INTVAL elements() {
-        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_UNIMPLEMENTED, "Not implemented yet.");
+        return VTABLE_elements(interp,
+                PARROT_PACKFILEANNOTATIONS(SELF)->annotations);
     }
 
 
@@ -69,7 +134,8 @@ Fetch an annotation PMC from the array.
 
 */
     VTABLE PMC *get_pmc_keyed_int(INTVAL index)  {
-        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_UNIMPLEMENTED, "Not implemented yet.");
+        return VTABLE_get_pmc_keyed_int(interp,
+                PARROT_PACKFILEANNOTATIONS(SELF)->annotations, index);
     }
 
 
@@ -98,7 +164,10 @@ thrown unless all of the following criteria are met:
 
 */
     VTABLE void set_pmc_keyed_int(INTVAL index, PMC *annotation)  {
-        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_UNIMPLEMENTED, "Not implemented yet.");
+        PMC * annotations = PARROT_PACKFILEANNOTATIONS(SELF)->annotations;
+
+        /* TODO: add checks desribed above */
+        VTABLE_set_pmc_keyed_int(interp, annotations, index, annotation);
     }
 
 
