@@ -22,7 +22,7 @@ Tests the Packfile PMC.
 .sub main :main
 .include 'test_more.pir'
 
-    plan(21)
+    plan(28)
     'test_new'()
     'test_get_string'()
     'test_set_string'()
