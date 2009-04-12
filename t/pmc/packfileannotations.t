@@ -1,12 +1,6 @@
-#!perl
+#!parrot
 # Copyright (C) 2006-2009, Parrot Foundation.
 
-use strict;
-use warnings;
-use lib qw( . lib ../lib ../../lib );
-use Test::More;
-use Parrot::Test tests => 1;
-use Parrot::Config;
 
 =head1 NAME
 
@@ -23,16 +17,17 @@ Tests the PackfileAnnotations PMC.
 
 =cut
 
+.sub 'main' :main
+.include 'test_more.pir'
+    plan(1)
+    test_sanity()
+.end
+
 
 # Packfile constructor
-
-pir_output_is( <<'CODE', <<'OUT', 'new' );
-.sub 'test' :main
+.sub 'test_sanity'
     .local pmc pf
     pf = new ['PackfileAnnotations']
     $I0 = defined pf
-    say $I0
+    ok($I0, "PackfileAnnotations created")
 .end
-CODE
-1
-OUT
