@@ -17,9 +17,11 @@ Tests the PackfileAnnotations PMC.
 
 =cut
 
+.include 't/pmc/packfile_common.pir'
+
 .sub 'main' :main
 .include 'test_more.pir'
-    plan(9)
+    plan(14)
     test_sanity()
     test_handling_directory()
     test_unpack()
@@ -90,11 +92,38 @@ Tests the PackfileAnnotations PMC.
     $S0 = keys[2]
     is($S0, "line", "Third key is correct")
 
+    # Test entities
+    $I0 = elements pfanns
+    is($I0, 4, "Annotations were unpack correctly")
+
+    .local pmc a
+    .local pmc constants
+    constants = _find_segment_by_type(pf, "PackfileConstantTable")
+    # "file"
+    a = pfanns[0]
+    $I0 = a
+    $S0 = constants[$I0]
+    is($S0, "annotations.pir", "First annotation is correct")
+
+    # "creator"
+    a = pfanns[1]
+    $I0 = a
+    $S0 = constants[$I0]
+    is($S0, "Parrot Foundation", "Second annotation is correct")
+
+    # Two "line"
+    a = pfanns[2]
+    $I0 = a
+    is($I0, 1, "Third annotation is correct")
+    a = pfanns[3]
+    $I0 = a
+    is($I0, 2, "Forth annotation is correct")
+
 
     .return()
 
   fail:
     nok(1, "PackfileAnnotations wasn't found in Directory")
     # BAIL_OUT
-    skip(4, "PackfileAnnotations tests failed")
+    skip(9, "PackfileAnnotations tests failed")
 .end
