@@ -1145,6 +1145,10 @@ against that key. It implements the following methods:
 
 =over 4
 
+=item * C<elements> (v-table)
+
+Get the number of stored Keys.
+
 =item * C<get_string_keyed_int> (v-table)
 
 Gets the name of the annotation key specified by the index. An exception will
