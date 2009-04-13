@@ -19,9 +19,10 @@ Tests the PackfileAnnotations PMC.
 
 .sub 'main' :main
 .include 'test_more.pir'
-    plan(4)
+    plan(5)
     test_sanity()
     test_handling_directory()
+    test_unpack()
 .end
 
 
@@ -55,3 +56,28 @@ Tests the PackfileAnnotations PMC.
     ok($I0, 'PackfileConstantTable found and propogated to Keys')
 .end
 
+# PackfileAnnotations unpack from PBC
+.sub 'test_unpack'
+    .local pmc pf, pfdir, pfanns, it
+
+    $P0 = open 't/native_pbc/annotations.pbc'
+    $S0 = $P0.'readall'()
+    pf = new 'Packfile'
+    pf = $S0
+
+    # Find annotations
+    pfdir = pf.'get_directory'()
+    it = iter pfdir
+  loop:
+    unless it goto fail
+    $S0 = shift it
+    $P0 = pfdir[$S0]
+    $I0 = isa $P0, 'PackfileAnnotations'
+    unless $I0 goto loop
+    ok(1, "PackfileAnnotations unpacked")
+
+    .return()
+
+  fail:
+    ok(0, "PackfileAnnotations wasn't found in Directory")
+.end
