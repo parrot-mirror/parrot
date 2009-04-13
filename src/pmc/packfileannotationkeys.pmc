@@ -204,6 +204,20 @@ Initialize from PackFile_Annotation pointer.
 
 /*
 
+=item C<INTVAL elements()>
+
+Get the number of stored Keys.
+
+=cut
+
+*/
+    VTABLE INTVAL elements() {
+        return VTABLE_elements(interp,
+                PARROT_PACKFILEANNOTATIONKEYS(SELF)->names);
+    }
+
+/*
+
 =item C<void set_constant_table()>
 
 Set PackfileConstantTable associated with Keys.
