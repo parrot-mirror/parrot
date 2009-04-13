@@ -19,7 +19,7 @@ Tests the PackfileAnnotations PMC.
 
 .sub 'main' :main
 .include 'test_more.pir'
-    plan(5)
+    plan(9)
     test_sanity()
     test_handling_directory()
     test_unpack()
@@ -75,9 +75,26 @@ Tests the PackfileAnnotations PMC.
     $I0 = isa $P0, 'PackfileAnnotations'
     unless $I0 goto loop
     ok(1, "PackfileAnnotations unpacked")
+    pfanns = $P0
+
+    # Check keys
+    .local pmc keys
+    keys = pfanns.'get_key_list'()
+    $I0 = elements keys
+    is($I0, 3, 'Keys were successfully unpacked')
+
+    $S0 = keys[0]
+    is($S0, "file", "First key is correct")
+    $S0 = keys[1]
+    is($S0, "creator", "Second key is correct")
+    $S0 = keys[2]
+    is($S0, "line", "Third key is correct")
+
 
     .return()
 
   fail:
-    ok(0, "PackfileAnnotations wasn't found in Directory")
+    nok(1, "PackfileAnnotations wasn't found in Directory")
+    # BAIL_OUT
+    skip(4, "PackfileAnnotations tests failed")
 .end

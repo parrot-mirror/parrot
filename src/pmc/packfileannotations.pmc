@@ -206,6 +206,26 @@ PackfileAnnotationKeys.
         }
     }
 
+/*
+
+=item C<void set_pointer(void *ptr)>
+
+Initialize PackfileAnnotations from PackFile_Annotations*.
+
+=cut
+
+*/
+    VTABLE void set_pointer(void *pointer) {
+        PackFile_Annotations * a = (PackFile_Annotations*)pointer;
+        Parrot_PackfileAnnotations_attributes *attrs =
+                PARROT_PACKFILEANNOTATIONS(SELF);
+
+        /* Initialize Keys */
+        VTABLE_set_pointer(interp, attrs->keys, a);
+
+        /* TODO: Copy annotations to own array */
+    }
+
 }
 /*
 
