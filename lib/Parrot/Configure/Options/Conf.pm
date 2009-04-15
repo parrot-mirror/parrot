@@ -92,8 +92,6 @@ Parrot Options:
    --cgoto=0            Don't build cgoto core - recommended when short of mem
    --jitcapable         Use JIT
    --execcapable        Use JIT to emit a native executable
-   --gc=(type)          Determine the type of garbage collection
-                        type=(gc|libc|malloc|malloc-trace) default is gc
 
 External Library Options:
 

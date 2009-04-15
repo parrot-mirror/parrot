@@ -27,7 +27,6 @@ our @shared_valid_options = qw{
     fatal
     fatal-step
     floatval
-    gc
     help
     icu-config
     icuheaders

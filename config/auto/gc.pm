@@ -7,16 +7,14 @@ config/auto/gc.pm - Garbage Collection
 
 =head1 DESCRIPTION
 
-Checks whether the C<--gc> command-line option was passed to F<Configure.pl>
-and sets the memory allocator accordingly.
+Sets memory allocator.
 
-Eventually, C<--gc> will be able to take any of the following values:
+Currently, we have only one choice:  the memory allocator in F<src/gc/resources.c>.
 
-=over
+In the future, we will have a C<--gc> command-line option which will enable
+the configurer to choose among the default and:
 
-=item C<gc>
-
-The default. Use the memory allocator in F<src/resources.c>.
+=over4
 
 =item C<libc>
 
@@ -36,8 +34,6 @@ Since this uses res_lea.c, it doesn't work currently either.  See [perl #42774].
 
 =back
 
-So, for the time being, only the default value works.
-
 =cut
 
 package auto::gc;
@@ -49,8 +45,6 @@ use base qw(Parrot::Configure::Step);
 
 use Parrot::Configure::Utils ':auto';
 
-
-# valid libc/malloc/malloc-trace/gc
 sub _init {
     my $self = shift;
     my %data;
@@ -62,47 +56,15 @@ sub _init {
 sub runstep {
     my ( $self, $conf ) = @_;
 
-    my $gc = $conf->options->get('gc');
+    my $gc = 'gc';
 
-    # default is GC in resources.c
-    $gc = 'gc' unless defined $gc;
-
-    if ( $gc =~ /^malloc(?:-trace)?$/ ) {
-        $conf->data->set(
-            TEMP_gc_c => <<"EOF",
-\$(SRC_DIR)/$gc\$(O):	\$(GENERAL_H_FILES) \$(SRC_DIR)/$gc.c
-\$(SRC_DIR)/gc/res_lea\$(O):	\$(GENERAL_H_FILES) \$(SRC_DIR)/gc/res_lea.c
-EOF
-            TEMP_gc_o => "\$(SRC_DIR)\/$gc\$(O) \$(SRC_DIR)/gc/res_lea\$(O)",
-            gc_flag   => '-DGC_IS_MALLOC',
-        );
-    }
-    elsif ( $gc eq 'libc' ) {
-        $conf->data->set(
-            TEMP_gc_c => <<"EOF",
-\$(SRC_DIR)/gc/res_lea\$(O):	\$(GENERAL_H_FILES) \$(SRC_DIR)/gc/res_lea.c
-EOF
-            TEMP_gc_o => "\$(SRC_DIR)/gc/res_lea\$(O)",
-            gc_flag   => '-DGC_IS_MALLOC',
-        );
-        # tests mallinfo after allocation of 128 bytes
-        if ( $conf->data->get('i_malloc') ) {
-            $conf->data->set( malloc_header => 'malloc.h' );
-        }
-        else {
-            $conf->data->set( malloc_header => 'stdlib.h' );
-        }
-    }
-    else {
-        $gc = 'gc';
-        $conf->data->set(
-            TEMP_gc_c => <<"EOF",
+    $conf->data->set(
+        TEMP_gc_c => <<"EOF",
 \$(SRC_DIR)/gc/resources\$(O):	\$(GENERAL_H_FILES) \$(SRC_DIR)/gc/resources.c
 EOF
-            TEMP_gc_o => "\$(SRC_DIR)/gc/resources\$(O)",
-            gc_flag   => '',
-        );
-    }
+        TEMP_gc_o => "\$(SRC_DIR)/gc/resources\$(O)",
+        gc_flag   => '',
+    );
     print(" ($gc) ") if $conf->options->get('verbose');
 
     return 1;
