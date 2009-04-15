@@ -142,7 +142,17 @@ Store the given entry's name key.
 
 */
     VTABLE void set_string_keyed_int(INTVAL index, STRING *value)  {
-        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_UNIMPLEMENTED, "Not implemented yet.");
+        Parrot_PackfileAnnotationKeys_attributes *attrs =
+                PARROT_PACKFILEANNOTATIONKEYS(SELF);
+        PMC    *const_table = fetch_const_table(interp, SELF);
+        INTVAL  i;
+
+        /* Store constant into ConstantTable. Don't check for duplicates for now. */
+        i = VTABLE_elements(interp, const_table);
+        VTABLE_set_string_keyed_int(interp, const_table, i, value);
+
+        /* And store C<i> in names */
+        VTABLE_set_integer_keyed_int(interp, attrs->names, index, i);
     }
 
 
@@ -176,7 +186,9 @@ Store the given entry's annotation type.
 
 */
     VTABLE void set_integer_keyed_int(INTVAL index, INTVAL value)  {
-        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_UNIMPLEMENTED, "Not implemented yet.");
+        Parrot_PackfileAnnotationKeys_attributes *attrs =
+                PARROT_PACKFILEANNOTATIONKEYS(SELF);
+        VTABLE_set_integer_keyed_int(interp, attrs->types, index, value);
     }
 
 /*
