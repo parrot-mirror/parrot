@@ -286,11 +286,14 @@ typedef struct PackFile_Debug {
     PackFile_ByteCode      *code;   /* where this segment belongs to */
 } PackFile_Debug;
 
+/* &gen_from_def(packfile_annotation_key_type.pasm) */
 
 /* Key types for annotation segment. */
 #define PF_ANNOTATION_KEY_TYPE_INT 0
 #define PF_ANNOTATION_KEY_TYPE_STR 1
 #define PF_ANNOTATION_KEY_TYPE_NUM 2
+
+/* &end_gen */
 
 typedef struct PackFile_Annotations_Key {
     opcode_t name;
