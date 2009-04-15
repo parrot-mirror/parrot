@@ -155,7 +155,6 @@ Store the given entry's name key.
         VTABLE_set_integer_keyed_int(interp, attrs->names, index, i);
     }
 
-
 /*
 
 =item C<INTVAL get_integer_keyed_int(INTVAL index)>
@@ -257,6 +256,23 @@ Solely for testing purpose only.
             table = PMCNULL;
         RETURN(PMC* table);
     }
+
+/*
+
+=item C<void get_name_constant()>
+
+Get constant id used for name at given C<index>.
+
+=cut
+
+*/
+    METHOD get_name_constant(INTVAL index) {
+        Parrot_PackfileAnnotationKeys_attributes *attrs =
+                PARROT_PACKFILEANNOTATIONKEYS(SELF);
+        INTVAL res = VTABLE_get_integer_keyed_int(interp, attrs->names, index);
+        RETURN(INTVAL res);
+    }
+
 }
 
 /*
