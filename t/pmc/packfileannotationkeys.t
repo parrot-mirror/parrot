@@ -17,7 +17,7 @@ Tests the PackfileAnnotationKeys PMC.
 =cut
 
 .include 'packfile_annotation_key_type.pasm'
-.include 't/pmc/packfile_common.pir'
+.include 't/pmc/testlib/packfile_common.pir'
 
 # Packfile constructor
 .sub 'test' :main

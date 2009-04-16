@@ -17,7 +17,7 @@ Tests the Packfile PMC.
 
 =cut
 
-.include 't/pmc/packfile_common.pir'
+.include 't/pmc/testlib/packfile_common.pir'
 
 .sub main :main
 .include 'test_more.pir'

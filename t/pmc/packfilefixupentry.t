@@ -19,7 +19,7 @@ Tests the PackfileFixupEntry PMC.
 # Having some known data would be helpful, here.  For now, just make sure
 # the values returned seem sane.
 
-.include 't/pmc/packfile_common.pir'
+.include 't/pmc/testlib/packfile_common.pir'
 
 .sub 'main' :main
 .include 'test_more.pir'

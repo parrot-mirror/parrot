@@ -21,7 +21,7 @@ Tests the PackfileRawSegment PMC.
 # the value returned by elements() is greater than zero, and that
 # get_integer_keyed_int doesn't return all zeroes either.
 
-.include 't/pmc/packfile_common.pir'
+.include 't/pmc/testlib/packfile_common.pir'
 .sub 'main' :main
 .include 'test_more.pir'
     plan(2)

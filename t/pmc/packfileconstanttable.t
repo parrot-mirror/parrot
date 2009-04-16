@@ -22,7 +22,7 @@ Tests the PackfileConstantTable PMC.
 # fetches for the found types don't crash.
 
 
-.include 't/pmc/packfile_common.pir'
+.include 't/pmc/testlib/packfile_common.pir'
 
 .sub 'main' :main
 .include 'test_more.pir'
