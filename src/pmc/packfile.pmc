@@ -22,6 +22,28 @@ the top level parser and serializer for *.pbc files.
 #include "parrot/parrot.h"
 #include "pmc_packfiledirectory.h"
 
+/*
+Copy attributes from PackFile* to Packfile PMC.
+*/
+static void
+copy_packfile_header(PARROT_INTERP, PMC *self, PackFile *pf) {
+    Parrot_Packfile_attributes *attrs = PARROT_PACKFILE(self);
+
+    attrs->wordsize         = pf->header->wordsize;
+    attrs->byteorder        = pf->header->byteorder;
+    attrs->fptype           = pf->header->floattype;
+    attrs->version_major    = pf->header->major;
+    attrs->version_minor    = pf->header->minor;
+    attrs->version_patch    = pf->header->patch;
+    attrs->bytecode_major   = pf->header->bc_major;
+    attrs->bytecode_minor   = pf->header->bc_minor;
+    attrs->uuid_type        = pf->header->uuid_type;
+
+    attrs->uuid = Parrot_str_new(interp, (char*)pf->header->uuid_data,
+            pf->header->uuid_size);
+
+}
+
 pmclass Packfile {
         ATTR INTVAL wordsize;
         ATTR INTVAL byteorder;
@@ -47,10 +69,16 @@ Initialize the structure.  (Create a blank PackFile object.)
     VTABLE void init() {
         Parrot_Packfile_attributes *attrs =
             mem_allocate_zeroed_typed(Parrot_Packfile_attributes);
+        PackFile                   *pf;
 
         attrs->uuid     = Parrot_str_new_noinit(INTERP, enum_stringrep_one, 0);
         attrs->directory = pmc_new(INTERP, enum_class_PackfileDirectory);
         PMC_data(SELF)  = attrs;
+
+        /* Create dummy PackFile and copy default attributes to self */
+        pf = PackFile_new(interp, 0);
+        copy_packfile_header(interp, SELF, pf);
+        PackFile_destroy(interp, pf);
 
         PObj_custom_mark_destroy_SETALL(SELF);
     }
@@ -150,18 +178,7 @@ Implementation note: taken from the bottom end of Parrot_pbc_read().
         }
 
         /* Copy values from PackFile header to own attributes */
-        attrs->wordsize         = pf->header->wordsize;
-        attrs->byteorder        = pf->header->byteorder;
-        attrs->fptype           = pf->header->floattype;
-        attrs->version_major    = pf->header->major;
-        attrs->version_minor    = pf->header->minor;
-        attrs->version_patch    = pf->header->patch;
-        attrs->bytecode_major   = pf->header->bc_major;
-        attrs->bytecode_minor   = pf->header->bc_minor;
-        attrs->uuid_type        = pf->header->uuid_type;
-
-        attrs->uuid = Parrot_str_new(interp, (char*)pf->header->uuid_data,
-                pf->header->uuid_size);
+        copy_packfile_header(interp, SELF, pf);
 
         VTABLE_set_pointer(interp, attrs->directory, &pf->directory);
 

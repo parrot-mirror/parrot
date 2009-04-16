@@ -22,7 +22,7 @@ Tests the Packfile PMC.
 .sub main :main
 .include 'test_more.pir'
 
-    plan(30)
+    plan(33)
     'test_new'()
     'test_get_string'()
     'test_set_string'()
@@ -43,6 +43,7 @@ Tests the Packfile PMC.
     pf = new ['Packfile']
     $I0 = defined pf
     ok($I0, 'new')
+    _check_header(pf)
 .end
 
 
@@ -165,6 +166,13 @@ Tests the Packfile PMC.
     .local pmc pf
     pf = _pbc()
 
+    _check_header(pf)
+.end
+
+# Helper sub to check fields in Packfile header
+.sub '_check_header'
+    .param pmc pf
+    
     # wordsize always greater than 0
     $I0 = pf["wordsize"]
     ok($I0, "Wordsize set")
@@ -176,7 +184,6 @@ Tests the Packfile PMC.
     $I0 = pf["bytecode_major"]
     ok($I0, "bytecode_major set")
 .end
-
 
 # Create very simple Packfile and pack it
 .sub 'test_pack_fresh_packfile'
