@@ -110,7 +110,7 @@ Fetch the ID of the key of the annotation.
 
 /*
 
-=item C<void set_key_id(INTVAL offset)>
+=item C<void set_key_id(INTVAL key_id)>
 
 Set the ID of the key of the annotation.
 
@@ -138,7 +138,7 @@ Fetch the value of the annotation.
 
 /*
 
-=item C<void set_integer(INTVAL offset)>
+=item C<void set_integer(INTVAL value)>
 
 Set the value of the annotation.
 

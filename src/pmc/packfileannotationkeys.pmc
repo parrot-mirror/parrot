@@ -192,7 +192,7 @@ Store the given entry's annotation type.
 
 /*
 
-=item C<void set_pointer()>
+=item C<void set_pointer(void *pointer)>
 
 Initialize from PackFile_Annotation pointer.
 
@@ -229,7 +229,7 @@ Get the number of stored Keys.
 
 /*
 
-=item C<void set_constant_table()>
+=item C<void set_constant_table(PMC *table)>
 
 Set PackfileConstantTable associated with Keys.
 
@@ -242,7 +242,7 @@ Set PackfileConstantTable associated with Keys.
 
 /*
 
-=item C<void get_constant_table()>
+=item C<PMC *get_constant_table()>
 
 Get PackfileConstantTable associated with PackfileAnnotationKeys.
 Solely for testing purpose only.
@@ -259,7 +259,7 @@ Solely for testing purpose only.
 
 /*
 
-=item C<void get_name_constant()>
+=item C<INTVAL get_name_constant(INTVAL index)>
 
 Get constant id used for name at given C<index>.
 

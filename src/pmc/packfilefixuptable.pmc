@@ -92,7 +92,9 @@ Destroys the PMC and frees all allocated memory.
 
 /*
 
-=item C<set_pointer>
+=item C<void set_pointer(void *pointer)>
+
+Initialize from PackFile_FixupTable pointer.
 
 =cut
 
@@ -120,6 +122,9 @@ Destroys the PMC and frees all allocated memory.
 /*
 
 =item C<void *get_pointer()>
+
+Create PackFile_FixupTable* from self.
+
 =cut
 
 */

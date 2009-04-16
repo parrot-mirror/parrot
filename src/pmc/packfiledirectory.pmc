@@ -227,8 +227,7 @@ Search the array for a segment with the given name, and return it if it exists.
 
 =item C<PMC *get_pmc_keyed(PMC *key)>
 
-Fetch a keyed string value from the packfiledirectory object.  Dispatches to
-get_pmc_keyed_str.
+Fetch a keyed string value from the packfiledirectory object.
 
 =cut
 
@@ -259,6 +258,17 @@ TODO: check type
         VTABLE_set_pmc_keyed_str(interp,
             PARROT_PACKFILEDIRECTORY(SELF)->hash, name, segment);
     }
+
+/*
+
+=item C<PMC *set_pmc_keyed(PMC *key)>
+
+Add a segment with the given name to the directory.  Dispatches to
+set_pmc_keyed_str.
+
+=cut
+
+*/
 
     VTABLE void set_pmc_keyed(PMC *key, PMC *segment)  {
         STRING *s_key = VTABLE_get_string(interp, key);

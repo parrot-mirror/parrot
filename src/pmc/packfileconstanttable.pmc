@@ -30,7 +30,7 @@ pmclass PackfileConstantTable extends PackfileSegment {
     /* ResizablePMCArray for storing constants */
     ATTR PMC *constants;
 
-    /* ResizablePMCArray for storing constant types */
+    /* ResizableIntegerArray for storing constant types */
     ATTR PMC *types;
 
 /*
@@ -258,7 +258,7 @@ Fetch a PMC constant.  An exception is thrown if the given constant isn't a PMC.
 
 /*
 
-=item C<void set_number_keyed_int(INTVAL index, INTVAL value)>
+=item C<void set_number_keyed_int(INTVAL index, FLOATVAL value)>
 
 Set the constant to the given number.
 
