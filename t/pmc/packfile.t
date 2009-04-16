@@ -22,7 +22,7 @@ Tests the Packfile PMC.
 .sub main :main
 .include 'test_more.pir'
 
-    plan(33)
+    plan(34)
     'test_new'()
     'test_get_string'()
     'test_set_string'()
@@ -214,8 +214,11 @@ Tests the Packfile PMC.
     $P2[3] = $P4
     pfdir["CONSTANTS_t/pmc/packfile.t"] = $P2
 
-    # Pack it
+    # Set uuid_type
+    pf['uuid_type'] = 1
     $S0 = pf
+    
+    # Pack it
     ok(1, "PackFile packed")
 
     #$P1 = open "/tmp/1.pbc", "w"
@@ -225,6 +228,9 @@ Tests the Packfile PMC.
     pf = new 'Packfile'
     pf = $S0
     ok(1, "PackFile unpacked after pack")
+
+    $I0 = pf['uuid_type']
+    is($I0, 1, "uuid_type preserved")
 
     # Check that FixupTable contains our Entry.
     $P0 = _get_fixup_table(pf)

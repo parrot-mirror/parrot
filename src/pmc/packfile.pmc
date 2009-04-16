@@ -143,6 +143,12 @@ Implementation note: all hard stuff done by PackfileDirectory.
         length  = PackFile_pack_size(interp, pf) * sizeof (opcode_t);
         ptr     = (opcode_t*)mem_sys_allocate(length);
 
+        /* Copy related attributes to header */
+        pf->header->major     = attrs->version_major;
+        pf->header->minor     = attrs->version_minor;
+        pf->header->patch     = attrs->version_patch;
+        pf->header->uuid_type = attrs->uuid_type;
+
         /* And pack it! */
         PackFile_pack(interp, pf, ptr);
 
