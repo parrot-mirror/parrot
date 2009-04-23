@@ -1458,7 +1458,9 @@ MANIFEST_TEST_FILES := \
     $(MANIFEST_DIR)/03-regenerate_skip.t \
     $(MANIFEST_DIR)/04-alt_file.t \
     $(MANIFEST_DIR)/05-alt_skip.t \
-	$(INSTALL_TOOLS_DIR)/01-install_files.t
+    $(INSTALL_TOOLS_DIR)/01-create_directories.t \
+    $(INSTALL_TOOLS_DIR)/02-install_files.t \
+    $(INSTALL_TOOLS_DIR)/03-lines_to_files.t
 EXAMPLES_TEST_FILES := \
     t/examples/*.t
 CONFIGURE_TEST_FILES := \
