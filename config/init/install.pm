@@ -108,7 +108,7 @@ sub runstep {
         srcdir         => $srcdir,
 
         # parrot internal use only
-        doc_dir        => $datadir . "/doc",
+        docdir        => $datadir . "/doc",
         versiondir     => $versiondir,
     );
 

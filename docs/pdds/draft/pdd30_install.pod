@@ -206,8 +206,8 @@ language pbc's are F<php_*.pbc>, F<pipplib.pbc> and F<tcllib.pbc>.
 destination directory's F<lib> directory under F<parrot/include/> I<(not
 yet)>.
 
-=item * doc_dir: Copy documentation files to a
-F<$doc_dir/languages/mylanguage/> subdirectory tree.
+=item * docdir: Copy documentation files to a
+F<$docdir/languages/mylanguage/> subdirectory tree.
 
 =item * man_dir: Generate man(1) pages and copy to destination directory's
 F<$man_dir/man1/> directory. {{ what about man(2) and man(3) pages? info_dir
