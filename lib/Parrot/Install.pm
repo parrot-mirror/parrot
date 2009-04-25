@@ -106,7 +106,7 @@ sub lines_to_files {
 
         my %metadata;
         @metadata{ split( /,/, $meta ) } = ();
-        $metadata{$entry} = 1 for ( keys %metadata );          # Laziness
+        $metadata{$_} = 1 for ( keys %metadata );          # Laziness
 
         $filehash = {
             Source => $src,
