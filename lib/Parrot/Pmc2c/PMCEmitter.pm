@@ -120,6 +120,19 @@ sub generate_h_file {
 EOH
 
     $h->emit("#define PARROT_IN_EXTENSION\n") if ( $self->is_dynamic );
+
+    # Emit available functions for work with vtables.
+    my $export = $self->is_dynamic ? 'PARROT_DYNEXT_EXPORT ' : 'PARROT_EXPORT ';
+
+    if (!$name eq 'default') {
+        $h->emit("${export}VTABLE* Parrot_${name}_update_vtable(VTABLE*);\n");
+        $h->emit("${export}VTABLE* Parrot_${name}_ro_update_vtable(VTABLE*);\n");
+    }
+
+    $h->emit("${export}VTABLE* Parrot_${name}_get_vtable(PARROT_INTERP);\n");
+    $h->emit("${export}VTABLE* Parrot_${name}_ro_get_vtable(PARROT_INTERP);\n");
+
+
     $self->gen_attributes;
     $h->emit(<<"EOH");
 
