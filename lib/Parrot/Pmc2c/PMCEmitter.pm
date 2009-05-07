@@ -80,6 +80,8 @@ sub generate_c_file {
 
     $c->emit( $self->preamble );
 
+    $c->emit( $self->hdecls );
+    $c->emit( $self->{ro}->hdecls ) if ( $self->{ro} );
     $self->gen_methods;
 
     my $ro = $self->ro;
@@ -118,8 +120,6 @@ sub generate_h_file {
 EOH
 
     $h->emit("#define PARROT_IN_EXTENSION\n") if ( $self->is_dynamic );
-    $h->emit( $self->hdecls );
-    $h->emit( $self->{ro}->hdecls ) if ( $self->{ro} );
     $self->gen_attributes;
     $h->emit(<<"EOH");
 
