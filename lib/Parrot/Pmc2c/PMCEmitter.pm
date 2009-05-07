@@ -109,13 +109,14 @@ Generates the C header file code for the PMC.
 sub generate_h_file {
     my ($self)  = @_;
     my $h       = $self->{emitter};
-    my $name    = uc $self->name;
+    my $uc_name = uc $self->name;
+    my $name    = $self->name;
 
     $h->emit( dont_edit( $self->filename ) );
     $h->emit(<<"EOH");
 
-#ifndef PARROT_PMC_${name}_H_GUARD
-#define PARROT_PMC_${name}_H_GUARD
+#ifndef PARROT_PMC_${uc_name}_H_GUARD
+#define PARROT_PMC_${uc_name}_H_GUARD
 
 EOH
 
@@ -136,7 +137,7 @@ EOH
     $self->gen_attributes;
     $h->emit(<<"EOH");
 
-#endif /* PARROT_PMC_${name}_H_GUARD */
+#endif /* PARROT_PMC_${uc_name}_H_GUARD */
 
 EOH
     $h->emit( c_code_coda() );
