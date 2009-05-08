@@ -880,31 +880,25 @@ $get_vtable
 
 EOC
 
-    my %extra_vt;
-    $extra_vt{ro} = $self->{ro} if $self->{ro};
-
-    for my $k (keys %extra_vt) {
-        my $get_extra_vtable = '';
-        foreach my $parent_name ( reverse ($self->name, @{ $self->parents }) ) {
-            if ($parent_name eq 'default') {
-                $get_extra_vtable .= "    vt = Parrot_default_get_vtable(interp);\n";
-            }
-            else {
-                $get_extra_vtable .= "    Parrot_${parent_name}_update_vtable(vt);\n";
-                $get_extra_vtable .= "    Parrot_${parent_name}_${k}_update_vtable(vt);\n";
-            }
+    my $get_extra_vtable = '';
+    foreach my $parent_name ( reverse ($self->name, @{ $self->parents }) ) {
+        if ($parent_name eq 'default') {
+            $get_extra_vtable .= "    vt = Parrot_default_ro_get_vtable(interp);\n";
         }
+        else {
+            $get_extra_vtable .= "    Parrot_${parent_name}_ro_update_vtable(vt);\n";
+        }
+    }
 
-        $cout .= <<"EOC";
+    $cout .= <<"EOC";
 PARROT_EXPORT
-VTABLE* Parrot_${classname}_${k}_get_vtable(PARROT_INTERP) {
+VTABLE* Parrot_${classname}_ro_get_vtable(PARROT_INTERP) {
     VTABLE *vt;
 $get_extra_vtable
     return vt;
 }
 
 EOC
-    }
 
     $cout;
 }
