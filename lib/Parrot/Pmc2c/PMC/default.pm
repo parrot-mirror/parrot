@@ -41,6 +41,19 @@ sub gen_methods {
     $ro->{emitter} = $self->{emitter};
     foreach my $method ( @{ $self->vtable->methods } ) {
         my $vt_method_name = $method->name;
+        if ($vt_method_name eq 'find_method') {
+            # Generate default_ro_find_method.
+            $self->{emitter}->emit(<<'EOC');
+static  PMC *
+Parrot_default_ro_find_method(PARROT_INTERP, PMC *pmc, STRING *method_name) {
+    PMC *const method = VTABLE_find_method(interp, pmc, method_name);
+    if (!PMC_IS_NULL(VTABLE_getprop(interp, method, CONST_STRING_GEN(interp, "write"))))
+        return PMCNULL;
+    else
+        return method;
+}
+EOC
+        }
         if ( $self->vtable_method_does_write($vt_method_name) ) {
             my $m = $self->_generate_default_method($ro, $method, 'cant_do_write_method');
             $m->generate_body($ro);
@@ -101,8 +114,9 @@ EOC
     # Generate RO version of default VTABLE.
     my $ro_vtable_decl = '';
     foreach my $name ( @{ $self->vtable->names } ) {
-        next unless $self->vtable_method_does_write($name);
-        $ro_vtable_decl .= "    vt->$name = Parrot_default_ro_${name};\n";
+        if ($self->vtable_method_does_write($name) || ($name eq 'find_method')) {
+            $ro_vtable_decl .= "    vt->$name = Parrot_default_ro_${name};\n";
+        }
     }
 
     $cout .= <<"EOC";
