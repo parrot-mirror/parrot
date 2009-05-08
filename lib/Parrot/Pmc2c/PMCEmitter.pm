@@ -827,28 +827,23 @@ $vtable_updates
 
 EOC
 
-    my %extra_vt;
-    $extra_vt{ro} = $self->{ro} if $self->{ro};
+    # Generate RO vtable for implemented non-updating methods
+    $vtable_updates = '';
+    foreach my $name ( @{ $self->vtable->names} ) {
+        next if $self->vtable_method_does_write($name);
+        next unless exists $self->{has_method}{$name};
 
-    for my $k (keys %extra_vt) {
+        $vtable_updates .= "    vt->$name = Parrot_${classname}_${name};\n";
+    }
 
-        my $vtable_updates = '';
-        foreach my $vt_method ( @{ $self->$k->vtable->names} ) {
+    $cout .= <<"EOC";
 
-            next unless ($self->$k->implements_vtable($vt_method));
-
-            $vtable_updates .= "    vt->$vt_method = Parrot_${classname}_${k}_${vt_method};\n";
-        }
-
-        $cout .= <<"EOC";
-
-PARROT_EXPORT VTABLE *Parrot_${classname}_${k}_update_vtable(VTABLE *vt) {
+PARROT_EXPORT VTABLE *Parrot_${classname}_ro_update_vtable(VTABLE *vt) {
 $vtable_updates
     return vt;
 }
 
 EOC
-    }
 
     $cout;
 }
