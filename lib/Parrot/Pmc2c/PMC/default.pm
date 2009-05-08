@@ -32,7 +32,6 @@ sub pre_method_gen {
                 type        => Parrot::Pmc2c::Method::VTABLE,
             }
         );
-        my $ret = return_statement($method);
 
         # take care to mark the parameters as unused
         # to avoid compiler warnings
@@ -74,6 +73,8 @@ $vtable_decl
 
 EOC
 
+    # Generate RO version of default VTABLE.
+    
     $cout;
 }
 
