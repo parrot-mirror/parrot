@@ -65,8 +65,11 @@ sub new {
 
     foreach my $vt_method ( @{ $self->vtable->methods } ) {
         my $name = $vt_method->name;
-        next unless $parent->vtable_method_does_write($name)
-                    && $parent->{has_method}{$name};
+
+        # Generate ro variant only iff we override method constantness with ":write"
+        next unless $parent->{has_method}{$name}
+                    && $parent->vtable_method_does_write($name)
+                    && !$parent->vtable->attrs($name)->{write};
 
         # All parameters passed in are shims, because we're
         # creating an exception-thrower.

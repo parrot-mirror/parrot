@@ -830,10 +830,16 @@ EOC
     # Generate RO vtable for implemented non-updating methods
     $vtable_updates = '';
     foreach my $name ( @{ $self->vtable->names} ) {
-        next if $self->vtable_method_does_write($name);
         next unless exists $self->{has_method}{$name};
-
-        $vtable_updates .= "    vt->$name = Parrot_${classname}_${name};\n";
+        if ($self->vtable_method_does_write($name)) {
+            # If we override constantness status of vtable
+            if (!$self->vtable->attrs($name)->{write}) {
+                $vtable_updates .= "    vt->$name = Parrot_${classname}_ro_${name};\n";
+            }
+        }
+        else {
+            $vtable_updates .= "    vt->$name = Parrot_${classname}_${name};\n";
+        }
     }
 
     $cout .= <<"EOC";
