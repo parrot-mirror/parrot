@@ -26,26 +26,51 @@ sub pre_method_gen {
     foreach my $method ( @{ $self->vtable->methods } ) {
         my $vt_method_name = $method->name;
         next unless $self->unimplemented_vtable($vt_method_name);
-        my $new_default_method = $method->clone(
-            {
-                parent_name => $self->name,
-                type        => Parrot::Pmc2c::Method::VTABLE,
-            }
-        );
-
-        # take care to mark the parameters as unused
-        # to avoid compiler warnings
-        my $body;
-        foreach my $param (split /,\s*/, $method->parameters) {
-            $param =~ s/.*\b(\w+)/$1/;
-            $body .= "    UNUSED($param)\n";
-        }
-        $body .= qq{    cant_do_method(interp, pmc, "$vt_method_name");\n};
-
-        $new_default_method->body( Parrot::Pmc2c::Emitter->text($body));
-        $self->add_method($new_default_method);
+        $self->add_method($self->_generate_default_method($self, $method, 'cant_do_method'));
     }
     return 1;
+}
+
+sub gen_methods {
+    my ($self) = @_;
+
+    $self->SUPER::gen_methods;
+
+    # Generate RO variants.
+    my $ro = Parrot::Pmc2c::PMC::RO->new($self);
+    $ro->{emitter} = $self->{emitter};
+    foreach my $method ( @{ $self->vtable->methods } ) {
+        my $vt_method_name = $method->name;
+        if ( $self->vtable_method_does_write($vt_method_name) ) {
+            my $m = $self->_generate_default_method($ro, $method, 'cant_do_write_method');
+            $m->generate_body($ro);
+        }
+    }
+}
+
+sub _generate_default_method {
+    my ($self, $pmc, $method, $stub_func) = @_;
+        
+    my $clone = $method->clone(
+         {
+             parent_name => $self->name,
+             type        => Parrot::Pmc2c::Method::VTABLE,
+         }
+     );
+
+    # take care to mark the parameters as unused
+    # to avoid compiler warnings
+    my $body;
+    foreach my $param (split /,\s*/, $method->parameters) {
+        $param =~ s/.*\b(\w+)/$1/;
+        $body .= "    UNUSED($param)\n";
+    }
+    my $vt_method_name = $method->name;
+    $body .= qq{    $stub_func(interp, pmc, "$vt_method_name");\n};
+
+    $clone->body( Parrot::Pmc2c::Emitter->text($body));
+
+    $clone;
 }
 
 sub update_vtable_func {
