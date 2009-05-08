@@ -99,7 +99,25 @@ $vtable_decl
 EOC
 
     # Generate RO version of default VTABLE.
-    
+    my $ro_vtable_decl = '';
+    foreach my $name ( @{ $self->vtable->names } ) {
+        next unless $self->vtable_method_does_write($name);
+        $ro_vtable_decl .= "    vt->$name = Parrot_default_ro_${name};\n";
+    }
+
+    $cout .= <<"EOC";
+
+PARROT_EXPORT VTABLE* Parrot_default_ro_get_vtable(PARROT_INTERP) {
+
+    VTABLE * vt = Parrot_default_get_vtable(interp);
+
+$ro_vtable_decl
+
+    return vt;
+}
+
+EOC
+
     $cout;
 }
 
