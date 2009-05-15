@@ -250,8 +250,8 @@ Parrot_ex_throw_from_op(PARROT_INTERP, ARGIN(PMC *exception), ARGIN_NULLOK(void 
     if (PMC_IS_NULL(handler)) {
         const INTVAL   severity    = VTABLE_get_integer_keyed_str(interp, exception, CONST_STRING(interp, "severity"));
         if (severity < EXCEPT_error) {
-            print_hll_info_from_exception(interp, exception);
             PMC * const resume = VTABLE_get_attr_str(interp, exception, CONST_STRING(interp, "resume"));
+            print_hll_info_from_exception(interp, exception);
 
             /* caution against output swap (with PDB_backtrace) */
             fflush(stderr);
