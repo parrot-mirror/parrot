@@ -21,7 +21,7 @@ Tests the PackfileAnnotations PMC.
 
 .sub 'main' :main
 .include 'test_more.pir'
-    plan(14)
+    plan(16)
     test_sanity()
     test_handling_directory()
     test_unpack()
@@ -101,15 +101,17 @@ Tests the PackfileAnnotations PMC.
     constants = _find_segment_by_type(pf, "PackfileConstantTable")
     # "file"
     a = pfanns[0]
-    $I0 = a
-    $S0 = constants[$I0]
-    is($S0, "annotations.pir", "First annotation is correct")
+    $S0 = a.'get_name'()
+    is($S0, "file", "First annotation's name unpacked")
+    $S0 = a
+    is($S0, "annotations.pir", "First annotation's value is correct")
 
     # "creator"
     a = pfanns[1]
-    $I0 = a
-    $S0 = constants[$I0]
-    is($S0, "Parrot Foundation", "Second annotation is correct")
+    $S0 = a.'get_name'()
+    is($S0, "creator", "Second annotation's name unpacked")
+    $S0 = a
+    is($S0, "Parrot Foundation", "Second annotation's value is correct")
 
     # Two "line"
     a = pfanns[2]
