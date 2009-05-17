@@ -60,12 +60,18 @@ Tests the PackfileAnnotations PMC.
 
 # PackfileAnnotations unpack from PBC
 .sub 'test_unpack'
-    .local pmc pf, pfdir, pfanns, it
+    .local pmc pf
 
     $P0 = open 't/native_pbc/annotations.pbc'
     $S0 = $P0.'readall'()
     pf = new 'Packfile'
     pf = $S0
+    .tailcall '!test_unpack'(pf)
+.end
+
+.sub '!test_unpack'
+    .param pmc pf
+    .local pmc pfdir, pfanns, it
 
     # Find annotations
     pfdir = pf.'get_directory'()
