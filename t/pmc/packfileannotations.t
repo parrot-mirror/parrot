@@ -88,6 +88,8 @@ Tests the PackfileAnnotations PMC.
 
     .local pmc anns
     anns = new 'PackfileAnnotations'
+    # We have to add it to Directory before doing anything to handle Constants properly
+    pfdir["BYTECODE_t/pmc/packfileannotations.t_ANN"] = anns
 
     $P3 = new 'PackfileAnnotation'
     $P3.'set_name'('file')
@@ -108,8 +110,6 @@ Tests the PackfileAnnotations PMC.
     $P6.'set_name'('line')
     $P6 = 2
     anns[3] = $P6
-
-    pfdir["BYTECODE_t/pmc/packfileannotations.t_ANN"] = anns
 
     # Pack
     $S0 = pf
