@@ -21,9 +21,8 @@ Tests the PackfileAnnotations PMC.
 
 .sub 'main' :main
 .include 'test_more.pir'
-    plan(28)
+    plan(17)
     test_sanity()
-    test_handling_directory()
     test_unpack()
     test_pack_unpack()
 .end
@@ -35,28 +34,6 @@ Tests the PackfileAnnotations PMC.
     pf = new ['PackfileAnnotations']
     $I0 = defined pf
     ok($I0, "PackfileAnnotations created")
-.end
-
-# Annotations should propogate ConstantTable to Keys.
-.sub 'test_handling_directory'
-    .local pmc keys, anns, pfdir
-
-    anns = new 'PackfileAnnotations'
-    keys = anns.'get_key_list'()
-    $I0 = defined keys
-    ok($I0, "Keys created")
-    $P0 = keys.'get_constant_table'()
-    $I0 = defined $P0
-    is($I0, 0, "    without ConstantTable")
-
-    pfdir = new 'PackfileDirectory'
-    $P0 = new 'PackfileConstantTable'
-    # Order does matter
-    pfdir['CONSTANTS'] = $P0
-    pfdir['ANNOTATIONS'] = anns
-    $P0 = keys.'get_constant_table'()
-    $I0 = defined $P0
-    ok($I0, 'PackfileConstantTable found and propogated to Keys')
 .end
 
 # PackfileAnnotations unpack from PBC
@@ -133,19 +110,6 @@ Tests the PackfileAnnotations PMC.
     unless $I0 goto loop
     ok(1, "PackfileAnnotations unpacked")
     pfanns = $P0
-
-    # Check keys
-    .local pmc keys
-    keys = pfanns.'get_key_list'()
-    $I0 = elements keys
-    is($I0, 3, 'Keys were successfully unpacked')
-
-    $S0 = keys[0]
-    is($S0, "file", "First key is correct")
-    $S0 = keys[1]
-    is($S0, "creator", "Second key is correct")
-    $S0 = keys[2]
-    is($S0, "line", "Third key is correct")
 
     # Test entities
     $I0 = elements pfanns
