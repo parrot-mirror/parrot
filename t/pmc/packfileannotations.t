@@ -21,10 +21,11 @@ Tests the PackfileAnnotations PMC.
 
 .sub 'main' :main
 .include 'test_more.pir'
-    plan(16)
+    plan(28)
     test_sanity()
     test_handling_directory()
     test_unpack()
+    test_pack_unpack()
 .end
 
 
@@ -64,6 +65,54 @@ Tests the PackfileAnnotations PMC.
 
     $P0 = open 't/native_pbc/annotations.pbc'
     $S0 = $P0.'readall'()
+    pf = new 'Packfile'
+    pf = $S0
+    .tailcall '!test_unpack'(pf)
+.end
+
+# Programatically create PBC same as t/native_pbc/annotations.pbc and check unpack of it.
+.sub 'test_pack_unpack'
+    .local pmc pf, pfdir
+    pf = new 'Packfile'
+    pfdir = pf.'get_directory'()
+    #$P0 = new 'PackfileConstantTable'
+    #$P0[0] = 42.0
+    $P0 = new 'PackfileFixupTable'
+    pfdir["FIXUP_t/pmc/packfileannotations.t"] = $P0
+
+    $P1 = new 'PackfileRawSegment'
+    pfdir["BYTECODE_t/pmc/packfileannotations.t"] = $P1
+
+    $P2 = new 'PackfileConstantTable'
+    pfdir["CONSTANTS_t/pmc/packfileannotations.t"] = $P2
+
+    .local pmc anns
+    anns = new 'PackfileAnnotations'
+
+    $P3 = new 'PackfileAnnotation'
+    $P3.'set_name'('file')
+    $P3 = 'annotations.pir'
+    anns[0] = $P3
+
+    $P4 = new 'PackfileAnnotation'
+    $P4.'set_name'('creator')
+    $P4 = 'Parrot Foundation'
+    anns[1] = $P4
+
+    $P5 = new 'PackfileAnnotation'
+    $P5.'set_name'('line')
+    $P5 = 1
+    anns[2] = $P5
+
+    $P6 = new 'PackfileAnnotation'
+    $P6.'set_name'('line')
+    $P6 = 2
+    anns[3] = $P6
+
+    pfdir["BYTECODE_t/pmc/packfileannotations.t_ANN"] = anns
+
+    # Pack
+    $S0 = pf
     pf = new 'Packfile'
     pf = $S0
     .tailcall '!test_unpack'(pf)
