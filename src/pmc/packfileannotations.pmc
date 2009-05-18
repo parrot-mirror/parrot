@@ -173,6 +173,8 @@ thrown unless all of the following criteria are met:
     VTABLE void set_pmc_keyed_int(INTVAL index, PMC *annotation)  {
         Parrot_PackfileAnnotations_attributes * attrs =
                 PARROT_PACKFILEANNOTATIONS(SELF);
+        Parrot_PackfileAnnotation_attributes  * entity_attrs =
+                PARROT_PACKFILEANNOTATION(annotation);
         INTVAL dummy;
 
         /* TODO: add checks desribed above */
@@ -181,8 +183,25 @@ thrown unless all of the following criteria are met:
         /* Add required constants */
         Parrot_mmd_multi_dispatch_from_c_args(interp,
             "get_or_create_constant", "PS->I", attrs->const_table,
-            PARROT_PACKFILEANNOTATION(annotation)->name, &dummy);
-        /* TODO: Add FLOATVAL and STRING* into ConstantTable as well */
+            entity_attrs->name, &dummy);
+
+        switch (entity_attrs->value_type) {
+            case PF_ANNOTATION_KEY_TYPE_STR:
+                Parrot_mmd_multi_dispatch_from_c_args(interp,
+                    "get_or_create_constant", "PS->I", attrs->const_table,
+                    entity_attrs->str_value, &dummy);
+                break;
+
+            case PF_ANNOTATION_KEY_TYPE_NUM:
+                Parrot_mmd_multi_dispatch_from_c_args(interp,
+                    "get_or_create_constant", "PN->I", attrs->const_table,
+                    entity_attrs->num_value, &dummy);
+                break;
+
+            default:
+                /* Do nothing. If value_type if INT it will be stored directly */
+                break;
+        }
     }
 
 /*
@@ -366,20 +385,19 @@ Create PackFile_Annotations* from self.
             res->entries[i]->key             = key_id;
 
             /* Handle value */
-            /* FIXME: It's pretty dumb. We need couple of helper functions in ConstantTable */
             switch (entity_attrs->value_type) {
                 case PF_ANNOTATION_KEY_TYPE_INT:
                     res->entries[i]->value = entity_attrs->int_value;
                     break;
                 case PF_ANNOTATION_KEY_TYPE_STR:
-                    res->entries[i]->value = VTABLE_elements(interp, attrs->const_table);
-                    VTABLE_set_string_keyed_int(interp, attrs->const_table,
-                            VTABLE_elements(interp, attrs->const_table), entity_attrs->str_value);
+                    Parrot_mmd_multi_dispatch_from_c_args(interp, "get_or_create_constant",
+                            "PS->I", attrs->const_table, entity_attrs->str_value,
+                            &res->entries[i]->value);
                     break;
                 case PF_ANNOTATION_KEY_TYPE_NUM:
-                    res->entries[i]->value = VTABLE_elements(interp, attrs->const_table);
-                    VTABLE_set_number_keyed_int(interp, attrs->const_table,
-                            VTABLE_elements(interp, attrs->const_table), entity_attrs->num_value);
+                    Parrot_mmd_multi_dispatch_from_c_args(interp, "get_or_create_constant",
+                            "PN->I", attrs->const_table, entity_attrs->num_value,
+                            &res->entries[i]->value);
                     break;
                 default:
                     Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_MALFORMED_PACKFILE,
