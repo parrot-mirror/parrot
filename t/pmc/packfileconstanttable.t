@@ -27,7 +27,7 @@ Tests the PackfileConstantTable PMC.
 .sub 'main' :main
 .include 'test_more.pir'
 .include 'packfile_constants.pasm'
-    'plan'(12)
+    'plan'(14)
 
     'test_sanity'()
     'test_elements'()
@@ -146,11 +146,20 @@ Tests the PackfileConstantTable PMC.
     pfc = new 'PackfileConstantTable'
     $I1 = pfc.'get_or_create_constant'('foo')
     $I2 = pfc.'get_or_create_constant'('foo')
-    is($I1, $I2, "get_or_create_constant returs same value for same key")
+    is($I1, $I2, "get_or_create_constant returs same string value for same key")
     
     $I2 = pfc.'get_or_create_constant'('bar')
     $I0 = $I1 != $I2
-    ok($I0, "get_or_create_constant returs different values for different keys")
+    ok($I0, "get_or_create_constant returs different string values for different keys")
+
+
+    $I1 = pfc.'get_or_create_constant'(1.0)
+    $I2 = pfc.'get_or_create_constant'(1.0)
+    is($I1, $I2, "get_or_create_constant returs same number value for same key")
+    
+    $I2 = pfc.'get_or_create_constant'(42.1)
+    $I0 = $I1 != $I2
+    ok($I0, "get_or_create_constant returs different number values for different keys")
 .end
 
 .sub '_get_consttable'
