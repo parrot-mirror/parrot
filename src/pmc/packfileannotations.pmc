@@ -171,10 +171,18 @@ thrown unless all of the following criteria are met:
 
 */
     VTABLE void set_pmc_keyed_int(INTVAL index, PMC *annotation)  {
-        PMC * annotations = PARROT_PACKFILEANNOTATIONS(SELF)->annotations;
+        Parrot_PackfileAnnotations_attributes * attrs =
+                PARROT_PACKFILEANNOTATIONS(SELF);
+        INTVAL dummy;
 
         /* TODO: add checks desribed above */
-        VTABLE_set_pmc_keyed_int(interp, annotations, index, annotation);
+        VTABLE_set_pmc_keyed_int(interp, attrs->annotations, index, annotation);
+
+        /* Add required constants */
+        Parrot_mmd_multi_dispatch_from_c_args(interp,
+            "get_or_create_constant", "PS->I", attrs->const_table,
+            PARROT_PACKFILEANNOTATION(annotation)->name, &dummy);
+        /* TODO: Add FLOATVAL and STRING* into ConstantTable as well */
     }
 
 /*
@@ -279,11 +287,12 @@ Create PackFile_Annotations* from self.
         PackFile_Annotations *res = mem_allocate_zeroed_typed(PackFile_Annotations);
         INTVAL                i, num;
         INTVAL                key_type;
-        PMC                  *keys; /* Temporary representation of Keys */
-        PMC                  *names; /* Constants for Key's names */
-        PMC                  *types; /* Types of Keys */
+        PMC                  *keys;             /* Temporary representation of Keys */
+        PMC                  *names;            /* Constants for Key's names */
+        PMC                  *types;            /* Types of Keys */
         INTVAL                key_id;
         INTVAL                last_key_id;
+        INTVAL                name_id;
 
         res->base.type = PF_ANNOTATIONS_SEG;
 
@@ -340,16 +349,13 @@ Create PackFile_Annotations* from self.
 
                 /* Store type */
                 VTABLE_set_integer_keyed_int(interp, types, key_id, entity_attrs->value_type);
+                        
+                
+                /* Store constant for name. */
+                Parrot_mmd_multi_dispatch_from_c_args(interp, "get_or_create_constant",
+                            "PS->I", attrs->const_table, entity_attrs->name, &name_id);
 
-                /* Create constant for name. */
-                /*
-                    FIXME: We should create constants during adding Annotation.
-                    Otherwise ConstantTable can be packed before us
-                */
-                VTABLE_set_integer_keyed_int(interp, names, key_id,
-                        VTABLE_elements(interp, attrs->const_table));
-                VTABLE_set_string_keyed_int(interp, attrs->const_table,
-                        VTABLE_elements(interp, attrs->const_table), entity_attrs->name);
+                VTABLE_set_integer_keyed_int(interp, names, key_id, name_id);
             }
 
             /* At this point we have create (if nesassary) key and name constant. */
