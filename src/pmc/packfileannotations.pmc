@@ -37,9 +37,6 @@ pmclass PackfileAnnotations extends PackfileSegment {
     /* RPA of Annotation */
     ATTR PMC *annotations;
 
-    /* AnnotationKeys */
-    ATTR PMC *keys;
-
 /*
 
 =item C<void init()>
@@ -54,7 +51,6 @@ Initialize PackfileAnnotations.
                 mem_allocate_zeroed_typed(Parrot_PackfileAnnotations_attributes);
 
         attrs->annotations = pmc_new(interp, enum_class_ResizablePMCArray);
-        attrs->keys        = pmc_new(interp, enum_class_PackfileAnnotationKeys);
 
         PObj_custom_mark_destroy_SETALL(SELF);
         PMC_data(SELF) = attrs;
@@ -76,8 +72,6 @@ Marks the object as live.
 
         if (attrs->annotations)
             pobject_lives(interp, (PObj *)attrs->annotations);
-        if (attrs->keys)
-            pobject_lives(interp, (PObj *)attrs->keys);
     }
 
 /*
@@ -98,21 +92,6 @@ Destroys the PMC and frees all allocated memory.
             mem_sys_free(attrs);
             PMC_data(SELF) = NULL;
         }
-    }
-
-/*
-
-=item C<PMC *get_key_list()>
-
-Get the PackfileAnnotationKeys PMC, listing the keys and types of annotations
-contained within this object.
-
-=cut
-
-*/
-    METHOD get_key_list() {
-        PMC * keys = PARROT_PACKFILEANNOTATIONS(SELF)->keys;
-        RETURN(PMC* keys);
     }
 
 
@@ -230,9 +209,6 @@ PackfileAnnotationKeys.
             if (VTABLE_isa(interp, segment,
                     Parrot_str_new_constant(interp, "PackfileConstantTable"))) {
                 attrs->const_table = segment;
-                Parrot_PCCINVOKE(interp, attrs->keys,
-                        Parrot_str_new_constant(interp, "set_constant_table"),
-                        "P->", segment);
                 break;
             }
         }
@@ -254,9 +230,6 @@ Initialize PackfileAnnotations from PackFile_Annotations*.
         opcode_t  i;
         PMC      *annotation;
         Parrot_PackfileAnnotation_attributes *annotation_attrs;
-
-        /* Initialize Keys */
-        VTABLE_set_pointer(interp, attrs->keys, a);
 
         /* Copy annotations to own array */
         VTABLE_set_integer_native(interp, attrs->annotations, a->num_entries);
