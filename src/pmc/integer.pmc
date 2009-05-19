@@ -1184,31 +1184,35 @@ Returns the result of comparing the integer with C<*value>.
 
 */
 
-    MULTI INTVAL cmp(String value) {
-        const FLOATVAL fdiff = SELF.get_number() - VTABLE_get_number(INTERP, value);
+    VTABLE INTVAL cmp(PMC *value) {
+        FLOATVAL fdiff;
 
-        if (FLOAT_IS_ZERO(fdiff)) {
-            const INTVAL idiff =
-                SELF.get_integer() - VTABLE_get_integer(INTERP, value);
-            return idiff > 0 ? 1 : idiff < 0 ? -1 : 0;
+        switch (value->vtable->base_type) {
+            case enum_class_String:
+                fdiff = SELF.get_number() - VTABLE_get_number(INTERP, value);
+
+                if (FLOAT_IS_ZERO(fdiff)) {
+                    INTVAL idiff = SELF.get_integer() - VTABLE_get_integer(INTERP, value);
+                    return idiff > 0 ? 1 : idiff < 0 ? -1 : 0;
+                }
+
+                return fdiff > 0 ? 1 : -1;
+                break;
+
+            case enum_class_Float:
+                fdiff = SELF.get_number() - VTABLE_get_number(INTERP, value);
+                return fdiff > 0 ? 1 : fdiff < 0 ? -1 : 0;
+                break;
+
+            default:
+                {
+                    /* int or undef */
+                    const INTVAL selfint  = SELF.get_integer();
+                    const INTVAL valueint = VTABLE_get_integer(INTERP, value);
+
+                    return selfint > valueint ? 1 : selfint < valueint ? -1 : 0;
+                }
         }
-
-        return fdiff > 0 ? 1 : -1;
-    }
-
-
-    MULTI INTVAL cmp(Float value) {
-        const FLOATVAL diff = SELF.get_number() - VTABLE_get_number(INTERP, value);
-        return diff > 0 ? 1 : diff < 0 ? -1 : 0;
-    }
-
-
-    MULTI INTVAL cmp(DEFAULT value) {
-        /* int or undef */
-        const INTVAL selfint  = SELF.get_integer();
-        const INTVAL valueint = VTABLE_get_integer(INTERP, value);
-
-        return selfint > valueint ? 1 : selfint < valueint ? -1 : 0;
     }
 
 
