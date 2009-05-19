@@ -1162,9 +1162,7 @@ The C<==> operation.
             case enum_class_BigInt:
                 temp = pmc_new(INTERP, enum_class_BigInt);
                 VTABLE_set_integer_native(INTERP, temp, SELF.get_integer());
-                Parrot_mmd_multi_dispatch_from_c_args(interp,
-                    "is_equal", "PP->I", temp, value, &retval);
-                return retval;
+                return VTABLE_is_equal(INTERP, temp, value);
                 break;
             default:
                 return (VTABLE_get_integer(INTERP, SELF)
