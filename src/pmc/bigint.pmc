@@ -1251,63 +1251,43 @@ Inplace shift left.
 
 */
 
-    MULTI PMC *bitwise_shl(BigInt value, PMC *dest) {
-        if (dest)
-            pmc_reuse(interp, dest, SELF->vtable->base_type, 0);
-        else
-            dest = pmc_new(INTERP, SELF->vtable->base_type);
-
-        bigint_bitwise_shl_bigint_int(INTERP, SELF,
-                                      VTABLE_get_integer(INTERP, value),
-                                      dest);
+    VTABLE PMC *bitwise_shl(PMC *value, PMC *dest) {
+        dest = pmc_new(INTERP, SELF->vtable->base_type);
+        switch (value->vtable->base_type) {
+            case enum_class_BigInt:
+            case enum_class_Integer:
+                bigint_bitwise_shl_bigint_int(INTERP, SELF, VTABLE_get_integer(interp, value),
+                        dest);
+                break;
+            default:
+                Parrot_ex_throw_from_c_args(INTERP, NULL,
+                    EXCEPTION_INTERNAL_NOT_IMPLEMENTED,
+                    "BigInt: no multiple dispatch variant 'bitwise_shl' for %Ss",
+                    VTABLE_name(interp, value));
+        }
         return dest;
-    }
-
-    MULTI PMC *bitwise_shl(Integer value, PMC *dest) {
-        if (dest)
-            pmc_reuse(interp, dest, SELF->vtable->base_type, 0);
-        else
-            dest = pmc_new(INTERP, SELF->vtable->base_type);
-
-        bigint_bitwise_shl_bigint_int(INTERP, SELF,
-                VTABLE_get_integer(interp, value), dest);
-        return dest;
-    }
-    MULTI PMC *bitwise_shl(DEFAULT value, PMC *dest) {
-        UNUSED(dest)
-        Parrot_ex_throw_from_c_args(INTERP, NULL,
-            EXCEPTION_INTERNAL_NOT_IMPLEMENTED,
-            "BigInt: no multiple dispatch variant 'bitwise_shl' for %Ss",
-            VTABLE_name(interp, value));
     }
 
     VTABLE PMC *bitwise_shl_int(INTVAL value, PMC *dest) {
-        if (dest)
-            pmc_reuse(interp, dest, SELF->vtable->base_type, 0);
-        else
-            dest = pmc_new(INTERP, SELF->vtable->base_type);
-
+        dest = pmc_new(INTERP, SELF->vtable->base_type);
         bigint_bitwise_shl_bigint_int(INTERP, SELF, value, dest);
         return dest;
     }
 
 
-    MULTI void i_bitwise_shl(BigInt value) {
-        bigint_bitwise_shl_bigint_int(INTERP, SELF,
-                                      VTABLE_get_integer(INTERP, value),
-                                      SELF);
-    }
-
-    MULTI void i_bitwise_shl(Integer value) {
-        bigint_bitwise_shl_bigint_int(INTERP, SELF,
-                VTABLE_get_integer(interp, value), SELF);
-    }
-
-    MULTI void i_bitwise_shl(DEFAULT value) {
-        Parrot_ex_throw_from_c_args(INTERP, NULL,
-            EXCEPTION_INTERNAL_NOT_IMPLEMENTED,
-            "BigInt: no multiple dispatch variant 'i_bitwise_shl' for %Ss",
-            VTABLE_name(interp, value));
+    VTABLE void i_bitwise_shl(PMC *value) {
+        switch (value->vtable->base_type) {
+            case enum_class_BigInt:
+            case enum_class_Integer:
+                bigint_bitwise_shl_bigint_int(INTERP, SELF, VTABLE_get_integer(interp, value),
+                        SELF);
+                break;
+            default:
+                Parrot_ex_throw_from_c_args(INTERP, NULL,
+                    EXCEPTION_INTERNAL_NOT_IMPLEMENTED,
+                    "BigInt: no multiple dispatch variant 'bitwise_shl' for %Ss",
+                    VTABLE_name(interp, value));
+        }
     }
 
     VTABLE void i_bitwise_shl_int(INTVAL value) {
