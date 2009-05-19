@@ -1063,8 +1063,8 @@ Concatenate the string C<value> in place.
 */
 
     VTABLE PMC *concatenate(PMC *value, PMC *dest) {
-        STRING * s = SELF.get_string();
-        s = Parrot_str_append(interp, s, VTABLE_get_string(INTERP, value));
+        STRING * const s = Parrot_str_concat(INTERP, SELF.get_string(),
+            VTABLE_get_string(INTERP, value), 0);
 
         dest = pmc_new(INTERP, VTABLE_type(INTERP, SELF));
 
