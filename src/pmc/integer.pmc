@@ -346,6 +346,7 @@ Adds C<value> to the integer and returns the result in C<*dest>.
         return dest;
     }
 
+    /* Register in MMD to allow override */
     MULTI PMC *add(DEFAULT value, PMC *dest) {
         return Parrot_Integer_add(INTERP, SELF, value, dest);
     }
@@ -411,6 +412,7 @@ Adds C<value> to C<SELF> inplace.
         }
     }
     
+    /* Register in MMD to allow override */
     MULTI void i_add(DEFAULT value) {
         Parrot_Integer_i_add(INTERP, SELF, value);
     }
@@ -457,6 +459,10 @@ C<get_integer> and C<set_integer_native> always.
         return dest;
     }
 
+    /* Register in MMD to allow override */
+    MULTI PMC *subtract(DEFAULT value, PMC *dest) {
+        return Parrot_Integer_subtract(INTERP, SELF, value, dest);
+    }
 
 /*
 
@@ -528,6 +534,11 @@ Subtracts C<value> from C<SELF> inplace.
         }
     }
 
+    /* Register in MMD to allow override */
+    MULTI void i_subtract(DEFAULT value) {
+        Parrot_Integer_i_subtract(INTERP, SELF, value);
+    }
+
 
     VTABLE void i_subtract_int(INTVAL b) {
         const INTVAL a = SELF.get_integer();
@@ -567,6 +578,10 @@ Multiplies the integer by C<*value> and returns the result in C<*dest>.
         return dest;
     }
 
+    /* Register in MMD to allow override */
+    MULTI PMC *multiply(DEFAULT value, PMC *dest) {
+        return Parrot_Integer_multiply(INTERP, SELF, value, dest);
+    }
 
     VTABLE PMC *multiply_int(INTVAL b, PMC *dest) {
         const INTVAL a  = SELF.get_integer();
@@ -627,6 +642,12 @@ Multiply C<value> with C<SELF> inplace.
                 break;
         }
     }
+    
+    /* Register in MMD to allow override */
+    MULTI void i_multiply(DEFAULT value) {
+        Parrot_Integer_i_multiply(INTERP, SELF, value);
+    }
+
 
     VTABLE void i_multiply_int(INTVAL b) {
         const INTVAL a  = SELF.get_integer();
