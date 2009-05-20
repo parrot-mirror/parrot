@@ -692,43 +692,39 @@ Divides C<SELF> by C<value> inplace.
 
 */
 
-    MULTI PMC *divide(BigInt value, PMC *dest) {
-        PMC *temp;
-        maybe_throw_overflow_error(INTERP);
-        temp = VTABLE_get_bignum(INTERP, SELF);
-        return VTABLE_divide(INTERP, temp, value, dest);
-    }
-
-    MULTI PMC *divide(DEFAULT value, PMC *dest) {
-        const FLOATVAL d = VTABLE_get_number(INTERP, value);
-
-        if (FLOAT_IS_ZERO(d))
-            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_DIV_BY_ZERO,
-                    "float division by zero");
-
-        dest = pmc_new(INTERP, VTABLE_type(INTERP, SELF));
-        VTABLE_set_number_native(INTERP, dest, SELF.get_number() / d);
+    VTABLE PMC *divide(PMC *value, PMC *dest) {
+        dest = VTABLE_clone(INTERP, SELF);
+        VTABLE_i_divide(INTERP, dest, value);
         return dest;
     }
 
-
-    MULTI void i_divide(BigInt value) {
-        maybe_throw_overflow_error(INTERP);
-        SELF = upgrade_self_to_bignum(INTERP, SELF);
-        VTABLE_i_divide(INTERP, SELF, value);
+    /* Register in MMD to allow override */
+    MULTI PMC *divide(DEFAULT value, PMC *dest) {
+        return Parrot_Integer_divide(INTERP, SELF, value, dest);
     }
 
 
-    MULTI void i_divide(DEFAULT value) {
-        const FLOATVAL d = VTABLE_get_number(INTERP, value);
+    VTABLE void i_divide(PMC *value) {
+        if (VTABLE_type(INTERP, value) == enum_class_BigInt) {
+            maybe_throw_overflow_error(INTERP);
+            SELF = upgrade_self_to_bignum(INTERP, SELF);
+            VTABLE_i_divide(INTERP, SELF, value);
+        }
+        else {
+            const FLOATVAL d = VTABLE_get_number(INTERP, value);
 
-        if (FLOAT_IS_ZERO(d))
-            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_DIV_BY_ZERO,
+            if (FLOAT_IS_ZERO(d))
+                Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_DIV_BY_ZERO,
                     "float division by zero");
 
-        VTABLE_set_number_native(INTERP, SELF, SELF.get_number() / d);
+            VTABLE_set_number_native(INTERP, SELF, SELF.get_number() / d);
+        }
     }
 
+    /* Register in MMD to allow override */
+    MULTI void i_divide(DEFAULT value) {
+        Parrot_Integer_i_divide(INTERP, SELF, value);
+    }
 
 /*
 
@@ -752,29 +748,16 @@ Divides C<SELF> by C<value> inplace.
 
 */
 
-    MULTI PMC *floor_divide(BigInt value, PMC *dest) {
-        PMC *temp;
-        maybe_throw_overflow_error(INTERP);
-        temp = VTABLE_get_bignum(INTERP, SELF);
-        return VTABLE_floor_divide(INTERP, temp, value, dest);
-    }
-
-
-    MULTI PMC *floor_divide(DEFAULT value, PMC *dest) {
-        const FLOATVAL d = VTABLE_get_number(INTERP, value);
-        FLOATVAL f;
-
-        if (FLOAT_IS_ZERO(d))
-            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_DIV_BY_ZERO,
-                    "float division by zero");
-
-        dest = pmc_new(INTERP, VTABLE_type(INTERP, SELF));
-
-        f = floor(SELF.get_number() / d);
-        VTABLE_set_integer_native(INTERP, dest, (INTVAL)f);
+    VTABLE PMC *floor_divide(PMC *value, PMC *dest) {
+        dest = VTABLE_clone(INTERP, SELF);
+        VTABLE_i_floor_divide(INTERP, dest, value);
         return dest;
     }
 
+    /* Register in MMD to allow override */
+    MULTI PMC *floor_divide(DEFAULT value, PMC *dest) {
+        return Parrot_Integer_floor_divide(INTERP, SELF, value, dest);
+    }
 
     VTABLE PMC *floor_divide_int(INTVAL value, PMC *dest) {
         FLOATVAL f;
@@ -806,22 +789,28 @@ Divides C<SELF> by C<value> inplace.
         return dest;
     }
 
-    MULTI void i_floor_divide(BigInt value) {
-        maybe_throw_overflow_error(INTERP);
-        SELF = upgrade_self_to_bignum(INTERP, SELF);
-        VTABLE_i_floor_divide(INTERP, SELF, value);
-    }
+    VTABLE void i_floor_divide(PMC *value) {
+        if (VTABLE_type(INTERP, value) == enum_class_BigInt) {
+            maybe_throw_overflow_error(INTERP);
+            SELF = upgrade_self_to_bignum(INTERP, SELF);
+            VTABLE_i_floor_divide(INTERP, SELF, value);
+        }
+        else {
+            const FLOATVAL d = VTABLE_get_number(INTERP, value);
+            FLOATVAL f;
 
-    MULTI void i_floor_divide(DEFAULT value) {
-        const FLOATVAL d = VTABLE_get_number(INTERP, value);
-        FLOATVAL f;
-
-        if (FLOAT_IS_ZERO(d))
-            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_DIV_BY_ZERO,
+            if (FLOAT_IS_ZERO(d))
+                Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_DIV_BY_ZERO,
                     "float division by zero");
 
-        f = floor(SELF.get_number() / d);
-        VTABLE_set_integer_native(INTERP, SELF, (INTVAL)f);
+            f = floor(SELF.get_number() / d);
+            VTABLE_set_integer_native(INTERP, SELF, (INTVAL)f);
+        }
+    }
+
+    /* Register in MMD to allow override */
+    MULTI void i_floor_divide(DEFAULT value) {
+        Parrot_Integer_i_floor_divide(INTERP, SELF, value);
     }
 
 
