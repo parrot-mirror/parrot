@@ -452,10 +452,10 @@ Adds C<value> to C<SELF> inplace.
         if ((c^a) >= 0 || (c^b) >= 0)
             VTABLE_set_integer_native(INTERP, SELF, c);
         else {
-            PMC *temp;
             maybe_throw_overflow_error(interp);
-            temp = VTABLE_get_bignum(interp, SELF);
-            VTABLE_i_add_int(interp, temp, b);
+            pmc_reuse(INTERP, SELF, enum_class_BigInt, 0);
+            VTABLE_set_integer_native(INTERP, SELF, a);
+            VTABLE_i_add_int(interp, SELF, b);
         }
     }
 
