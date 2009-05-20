@@ -1124,29 +1124,8 @@ Returns the result of numerically comparing the integer with C<*value>.
 
 */
 
-    MULTI INTVAL cmp_num(String value) {
-        const FLOATVAL fdiff = SELF.get_number() - VTABLE_get_number(INTERP, value);
-
-        if (FLOAT_IS_ZERO(fdiff)) {
-            const INTVAL idiff =
-                SELF.get_integer() - VTABLE_get_integer(INTERP, value);
-            return idiff > 0 ? 1 : idiff < 0 ? -1 : 0;
-        }
-
-        return fdiff > 0 ? 1 : -1;
-    }
-
-
-    MULTI INTVAL cmp_num(Float value) {
-        const FLOATVAL diff = SELF.get_number() - VTABLE_get_number(INTERP, value);
-        return diff > 0 ? 1 : diff < 0 ? -1 : 0;
-    }
-
-
-    MULTI INTVAL cmp_num(DEFAULT value) {
-        /* int or undef */
-        const INTVAL diff = SELF.get_integer() - VTABLE_get_integer(INTERP, value);
-        return diff > 0 ? 1 : diff < 0 ? -1 : 0;
+    VTABLE INTVAL cmp_num(PMC *value) {
+        return Parrot_Integer_cmp(INTERP, SELF, value);
     }
 
 
