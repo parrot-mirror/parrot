@@ -1009,7 +1009,7 @@ Decrements the integer.
         return dest;
     }
 
-    MULTI PMC *pow(PMC *value, PMC *dest) {
+    VTABLE PMC *pow(PMC *value, PMC *dest) {
         /* XXX only Integer RHS currently */
         const INTVAL r = VTABLE_get_integer(INTERP, value);
         dest = pmc_new(INTERP, SELF->vtable->base_type);
@@ -1056,7 +1056,7 @@ Decrements the integer.
         return dest;
     }
 
-    MULTI void i_divide(PMC *value) {
+    VTABLE void i_divide(PMC *value) {
         switch (value->vtable->base_type) {
             case enum_class_BigInt:
                 bigint_div_bigint(INTERP, SELF, value, SELF);
