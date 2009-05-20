@@ -554,47 +554,9 @@ Multiplies the integer by C<*value> and returns the result in C<*dest>.
 
 */
 
-    MULTI PMC *multiply(Integer value, PMC *dest) {
-        const INTVAL a  = VTABLE_get_integer(INTERP, SELF);
-        const INTVAL b  = VTABLE_get_integer(INTERP, value);
-        const INTVAL c  = a * b;
-        const double cf = (double)a * (double)b;
-
-        if ((double) c == cf) {
-            dest = pmc_new(INTERP, VTABLE_type(interp, SELF));
-
-            VTABLE_set_integer_native(INTERP, dest, c);
-            return dest;
-        }
-        else {
-            PMC *temp;
-            maybe_throw_overflow_error(INTERP);
-            temp = VTABLE_get_bignum(INTERP, SELF);
-            return VTABLE_multiply(INTERP, temp, value, dest);
-        }
-    }
-
-
-    MULTI PMC *multiply(Complex value, PMC *dest) {
-        return VTABLE_multiply(INTERP, value, SELF, dest);
-    }
-
-
-    MULTI PMC *multiply(BigInt value, PMC *dest) {
-        return VTABLE_multiply_int(INTERP, value, SELF.get_integer(), dest);
-    }
-
-
-    MULTI PMC *multiply(String value, PMC *dest) {
-        return Parrot_Integer_multi_multiply_Integer_PMC(INTERP, SELF, value, dest);
-    }
-
-
-    MULTI PMC *multiply(DEFAULT value, PMC *dest) {
-        const FLOATVAL valf = VTABLE_get_number(INTERP, value);
-        dest                = pmc_new(INTERP, VTABLE_type(INTERP, SELF));
-
-        VTABLE_set_number_native(INTERP, dest, SELF.get_number() * valf);
+    VTABLE PMC *multiply(PMC *value, PMC *dest) {
+        dest = VTABLE_clone(interp, pmc);
+        VTABLE_i_multiply(INTERP, dest, value);
         return dest;
     }
 
@@ -632,26 +594,32 @@ Multiply C<value> with C<SELF> inplace.
 
 */
 
-    MULTI void i_multiply(Integer value) {
-        STATICSELF.i_multiply_int(VTABLE_get_integer(INTERP, value));
+    VTABLE void i_multiply(PMC *value) {
+        const INTVAL a = SELF.get_integer();
+        const INTVAL type = value->vtable->base_type;
+
+        switch (type) {
+            case enum_class_Integer:
+                STATICSELF.i_multiply_int(VTABLE_get_integer(INTERP, value));
+                break;
+
+            case enum_class_Complex:
+                pmc_reuse(INTERP, SELF, enum_class_Complex, 0);
+                VTABLE_set_integer_native(INTERP, SELF, a);
+                VTABLE_i_multiply(INTERP, SELF, value);
+                break;
+
+            case enum_class_BigInt:
+                upgrade_self_to_bignum(INTERP, SELF);
+                VTABLE_i_multiply(INTERP, SELF, value);
+                break;
+
+            default:
+                VTABLE_set_number_native(INTERP, SELF,
+                        a * VTABLE_get_number(INTERP, value));
+                break;
+        }
     }
-
-
-    MULTI void i_multiply(BigInt value) {
-        interp->vtables[enum_class_BigInt]->multiply_int(INTERP, value, SELF.get_integer(), SELF);
-    }
-
-
-    MULTI void i_multiply(Complex value) {
-        VTABLE_multiply(INTERP, value, SELF, SELF);
-    }
-
-
-    MULTI void i_multiply(DEFAULT value) {
-        VTABLE_set_number_native(INTERP, SELF,
-                SELF.get_integer() * VTABLE_get_number(INTERP, value));
-    }
-
 
     VTABLE void i_multiply_int(INTVAL b) {
         const INTVAL a  = SELF.get_integer();
