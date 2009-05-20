@@ -346,6 +346,10 @@ Adds C<value> to the integer and returns the result in C<*dest>.
         return dest;
     }
 
+    MULTI PMC *add(DEFAULT value, PMC *dest) {
+        return Parrot_Integer_add(INTERP, SELF, value, dest);
+    }
+
 
     VTABLE PMC *add_int(INTVAL b, PMC *dest) {
         const INTVAL a = VTABLE_get_integer(INTERP, SELF);
@@ -406,6 +410,11 @@ Adds C<value> to C<SELF> inplace.
                 break;
         }
     }
+    
+    MULTI void i_add(DEFAULT value) {
+        Parrot_Integer_i_add(INTERP, SELF, value);
+    }
+
 
     VTABLE void i_add_int(INTVAL b) {
         const INTVAL a = SELF.get_integer();
