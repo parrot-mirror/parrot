@@ -910,10 +910,7 @@ Decrements the integer.
     }
 
     VTABLE PMC *subtract_int(INTVAL value, PMC *dest) {
-        if (dest)
-            pmc_reuse(interp, dest, SELF->vtable->base_type, 0);
-        else
-            dest = pmc_new(INTERP, SELF->vtable->base_type);
+        dest = pmc_new(INTERP, SELF->vtable->base_type);
 
         bigint_sub_bigint_int(INTERP, SELF, value, dest);
         return dest;
@@ -1000,11 +997,7 @@ Decrements the integer.
     }
 
     VTABLE PMC *pow_int(INTVAL value, PMC *dest) {
-        if (dest)
-            pmc_reuse(interp, dest, SELF->vtable->base_type, 0);
-        else
-            dest = pmc_new(INTERP, SELF->vtable->base_type);
-
+        dest = pmc_new(INTERP, SELF->vtable->base_type);
         bigint_pow_bigint_int(INTERP, SELF, value, dest);
         return dest;
     }
@@ -1047,11 +1040,7 @@ Decrements the integer.
     }
 
     VTABLE PMC *divide_int(INTVAL value, PMC *dest) {
-        if (dest)
-            pmc_reuse(interp, dest, SELF->vtable->base_type, 0);
-        else
-            dest = pmc_new(INTERP, SELF->vtable->base_type);
-
+        dest = pmc_new(INTERP, SELF->vtable->base_type);
         bigint_div_bigint_int(INTERP, SELF, value, dest);
         return dest;
     }
@@ -1095,11 +1084,7 @@ Decrements the integer.
     }
 
     VTABLE PMC *floor_divide_int(INTVAL value, PMC *dest) {
-        if (dest)
-            pmc_reuse(interp, dest, SELF->vtable->base_type, 0);
-        else
-            dest = pmc_new(INTERP, SELF->vtable->base_type);
-
+        dest = pmc_new(INTERP, SELF->vtable->base_type);
         bigint_fdiv_bigint_int(INTERP, SELF, value, dest);
         return dest;
     }
@@ -1330,11 +1315,7 @@ Inplace shift left.
     }
 
     VTABLE PMC *bitwise_shr_int(INTVAL value, PMC *dest) {
-        if (dest)
-            pmc_reuse(interp, dest, SELF->vtable->base_type, 0);
-        else
-            dest = pmc_new(INTERP, SELF->vtable->base_type);
-
+        dest = pmc_new(INTERP, SELF->vtable->base_type);
         bigint_bitwise_shr_bigint_int(INTERP, SELF, value, dest);
         return dest;
     }
