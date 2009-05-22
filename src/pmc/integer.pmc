@@ -346,12 +346,6 @@ Adds C<value> to the integer and returns the result in C<*dest>.
         return dest;
     }
 
-    /* Register in MMD to allow override */
-    MULTI PMC *add(DEFAULT value, PMC *dest) {
-        return Parrot_Integer_add(INTERP, SELF, value, dest);
-    }
-
-
     VTABLE PMC *add_int(INTVAL b, PMC *dest) {
         const INTVAL a = VTABLE_get_integer(INTERP, SELF);
         const INTVAL c = a + b;
@@ -412,12 +406,6 @@ Adds C<value> to C<SELF> inplace.
         }
     }
     
-    /* Register in MMD to allow override */
-    MULTI void i_add(DEFAULT value) {
-        Parrot_Integer_i_add(INTERP, SELF, value);
-    }
-
-
     VTABLE void i_add_int(INTVAL b) {
         const INTVAL a = SELF.get_integer();
         const INTVAL c = a + b;
@@ -457,11 +445,6 @@ C<get_integer> and C<set_integer_native> always.
         dest = VTABLE_clone(INTERP, SELF);
         VTABLE_i_subtract(INTERP, dest, value);
         return dest;
-    }
-
-    /* Register in MMD to allow override */
-    MULTI PMC *subtract(DEFAULT value, PMC *dest) {
-        return Parrot_Integer_subtract(INTERP, SELF, value, dest);
     }
 
 /*
@@ -534,12 +517,6 @@ Subtracts C<value> from C<SELF> inplace.
         }
     }
 
-    /* Register in MMD to allow override */
-    MULTI void i_subtract(DEFAULT value) {
-        Parrot_Integer_i_subtract(INTERP, SELF, value);
-    }
-
-
     VTABLE void i_subtract_int(INTVAL b) {
         const INTVAL a = SELF.get_integer();
         const INTVAL c = a - b;
@@ -576,11 +553,6 @@ Multiplies the integer by C<*value> and returns the result in C<*dest>.
         dest = VTABLE_clone(interp, pmc);
         VTABLE_i_multiply(INTERP, dest, value);
         return dest;
-    }
-
-    /* Register in MMD to allow override */
-    MULTI PMC *multiply(DEFAULT value, PMC *dest) {
-        return Parrot_Integer_multiply(INTERP, SELF, value, dest);
     }
 
     VTABLE PMC *multiply_int(INTVAL b, PMC *dest) {
@@ -642,12 +614,6 @@ Multiply C<value> with C<SELF> inplace.
                 break;
         }
     }
-    
-    /* Register in MMD to allow override */
-    MULTI void i_multiply(DEFAULT value) {
-        Parrot_Integer_i_multiply(INTERP, SELF, value);
-    }
-
 
     VTABLE void i_multiply_int(INTVAL b) {
         const INTVAL a  = SELF.get_integer();
@@ -698,12 +664,6 @@ Divides C<SELF> by C<value> inplace.
         return dest;
     }
 
-    /* Register in MMD to allow override */
-    MULTI PMC *divide(DEFAULT value, PMC *dest) {
-        return Parrot_Integer_divide(INTERP, SELF, value, dest);
-    }
-
-
     VTABLE void i_divide(PMC *value) {
         if (VTABLE_type(INTERP, value) == enum_class_BigInt) {
             maybe_throw_overflow_error(INTERP);
@@ -719,11 +679,6 @@ Divides C<SELF> by C<value> inplace.
 
             VTABLE_set_number_native(INTERP, SELF, SELF.get_number() / d);
         }
-    }
-
-    /* Register in MMD to allow override */
-    MULTI void i_divide(DEFAULT value) {
-        Parrot_Integer_i_divide(INTERP, SELF, value);
     }
 
 /*
@@ -752,11 +707,6 @@ Divides C<SELF> by C<value> inplace.
         dest = VTABLE_clone(INTERP, SELF);
         VTABLE_i_floor_divide(INTERP, dest, value);
         return dest;
-    }
-
-    /* Register in MMD to allow override */
-    MULTI PMC *floor_divide(DEFAULT value, PMC *dest) {
-        return Parrot_Integer_floor_divide(INTERP, SELF, value, dest);
     }
 
     VTABLE PMC *floor_divide_int(INTVAL value, PMC *dest) {
@@ -807,12 +757,6 @@ Divides C<SELF> by C<value> inplace.
             VTABLE_set_integer_native(INTERP, SELF, (INTVAL)f);
         }
     }
-
-    /* Register in MMD to allow override */
-    MULTI void i_floor_divide(DEFAULT value) {
-        Parrot_Integer_i_floor_divide(INTERP, SELF, value);
-    }
-
 
     VTABLE void i_floor_divide_int(INTVAL value) {
         FLOATVAL f;
