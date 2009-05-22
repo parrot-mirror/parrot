@@ -864,28 +864,9 @@ Calculates modulus in place.
 
 
     VTABLE PMC *modulus(PMC *value, PMC *dest) {
-        switch (value->vtable->base_type) {
-            case enum_class_BigInt:
-                {
-                    PMC *temp = VTABLE_get_bignum(INTERP, SELF);
-                    maybe_throw_overflow_error(INTERP);
-                    return VTABLE_modulus(INTERP, temp, value, dest);
-                }
-                break;
-
-            default:
-                {
-                    INTVAL d = VTABLE_get_integer(INTERP, value);
-                    if (d == 0)
-                        Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_DIV_BY_ZERO,
-                            "int modulus by zero");
-
-                    dest = pmc_new(INTERP, VTABLE_type(INTERP, SELF));
-                    VTABLE_set_integer_native(INTERP, dest,
-                        intval_mod(SELF.get_integer(), d));
-                }
-                return dest;
-        }
+        dest = VTABLE_clone(INTERP, SELF);
+        VTABLE_i_modulus(INTERP, dest, value);
+        return dest;
     }
 
 
@@ -915,22 +896,25 @@ Calculates modulus in place.
     }
 
 
-    MULTI void i_modulus(BigInt value) {
-        maybe_throw_overflow_error(INTERP);
-        SELF = upgrade_self_to_bignum(INTERP, SELF);
-        VTABLE_i_modulus(INTERP, SELF, value);
-    }
+    VTABLE void i_modulus(PMC *value) {
+        switch (value->vtable->base_type) {
+            case enum_class_BigInt:
+                maybe_throw_overflow_error(INTERP);
+                SELF = upgrade_self_to_bignum(INTERP, SELF);
+                VTABLE_i_modulus(INTERP, SELF, value);
+                break;
+            default:
+                {
+                    const INTVAL d = VTABLE_get_integer(INTERP, value);
 
+                    if (d == 0)
+                        Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_DIV_BY_ZERO,
+                            "int modulus by zero");
 
-    MULTI void i_modulus(DEFAULT value) {
-        const INTVAL d = VTABLE_get_integer(INTERP, value);
-
-        if (d == 0)
-            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_DIV_BY_ZERO,
-                    "int modulus by zero");
-
-        VTABLE_set_integer_native(INTERP, SELF,
-                intval_mod(SELF.get_integer(), d));
+                    VTABLE_set_integer_native(INTERP, SELF,
+                        intval_mod(SELF.get_integer(), d));
+                }
+        }
     }
 
 
