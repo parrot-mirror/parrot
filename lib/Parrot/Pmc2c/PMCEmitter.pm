@@ -333,7 +333,49 @@ sub proto {
     return $ret;
 }
 
+# For each VTABLE we generate correspondent MULTI to participate in MMD.
 sub pre_method_gen {
+    my ($self) = @_;
+
+    # vtable methods
+    foreach my $method ( @{ $self->vtable->methods } ) {
+        my $vt_method_name = $method->name;
+        next if $self->unimplemented_vtable($vt_method_name);
+
+        # If VTABLE returns not PMC result - ignore method.
+        next unless $method->return_type =~ /PMC/;
+
+        # Generate body.
+        my $body = 'return VTABLE_' . $method->name . '(INTERP, SELF';
+
+        # If during parsing parameters we'll find non PMC argument - ignore this method.
+        # If there is no params - ignore method.
+        my $got_params = 0;
+        foreach my $param (split /,\s*/, $method->parameters) {
+            unless ($param =~ /PMC/) {
+                $got_params = 0;
+                last;
+            }
+            $param =~ s/.*\b(\w+)/$1/;
+            $body .= ", $param";
+            $got_params = 1;
+        }
+        next unless $got_params;
+        $body .= ");\n";
+
+        my $multi = $method->clone(
+            {
+                parent_name => $self->name,
+                type        => Parrot::Pmc2c::Method::MULTI,
+            }
+        );
+        $multi->body( Parrot::Pmc2c::Emitter->text($body));
+        $multi->symbol($method->name);
+        Parrot::Pmc2c::MULTI::rewrite_multi_sub( $multi, $self );
+
+        $self->add_method($multi);
+    }
+    return 1;
 }
 
 =item C<gen_methods()>
