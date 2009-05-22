@@ -163,7 +163,7 @@ pir_output_is( <<'CODE', <<'OUTPUT', "Foo subclass isa Integer" );
     d = new 'Integer'
     r = new 'Integer'
     r = 2
-    d = f - r
+    d = f."subtract"(r, d)
     print d
     print "\n"
 .end
