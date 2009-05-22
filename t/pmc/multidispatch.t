@@ -25,7 +25,7 @@ Tests the multi-method dispatch.
 
 =cut
 
-pir_output_is( <<'CODE', <<'OUTPUT', 'Integer_divide_Integer  10 / 3 = 1003' );
+pir_output_is( <<'CODE', <<'OUTPUT', 'Integer_divide_Integer  10 / 3 = 1003', todo => 'TT#452');
 
 .sub 'test' :main
     .local pmc divide
@@ -57,7 +57,7 @@ CODE
 1003
 OUTPUT
 
-pir_output_is( <<'CODE', <<'OUTPUT', "1+1=3" );
+pir_output_is( <<'CODE', <<'OUTPUT', "1+1=3", todo => 'TT#452' );
 
 .sub _main
     .local pmc add
@@ -89,7 +89,7 @@ CODE
 3
 OUTPUT
 
-pir_output_is( <<'CODE', <<'OUTPUT', "PASM divide - override builtin 10 / 3 = 42" );
+pir_output_is( <<'CODE', <<'OUTPUT', "PASM divide - override builtin 10 / 3 = 42", todo => 'TT#452' );
 
 .sub _main
     .local pmc divide
@@ -220,7 +220,7 @@ print $TEMP <<'EOF';
 EOF
 close $TEMP;
 
-pir_output_is( <<"CODE", <<'OUTPUT', "PASM MMD divide - loaded sub" );
+pir_output_is( <<"CODE", <<'OUTPUT', "PASM MMD divide - loaded sub", todo => 'TT#452' );
 .sub _main
     .local pmc divide
     load_bytecode "$temp_pir"
@@ -842,7 +842,7 @@ CODE
 42.42
 OUTPUT
 
-pir_output_is( <<'CODE', <<'OUTPUT', "bound add method" );
+pir_output_is( <<'CODE', <<'OUTPUT', "bound add method", todo => 'TT#452' );
 .sub main :main
     .local pmc d, l, r, m
     d = new ['Integer']
