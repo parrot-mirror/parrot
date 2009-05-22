@@ -117,7 +117,7 @@ CODE
 42
 OUTPUT
 
-pir_output_is( <<'CODE', <<'OUTPUT', "INTVAL return numeq" );
+pir_output_is( <<'CODE', <<'OUTPUT', "INTVAL return numeq", todo => 'TT#452' );
 
 .sub _main
     .local pmc comp
@@ -867,7 +867,7 @@ CODE
 42
 OUTPUT
 
-pir_output_is( <<'CODE', <<'OUTPUT', "Integer subclasses" );
+pir_output_is( <<'CODE', <<'OUTPUT', "Integer subclasses", todo => 'TT#452' );
 .sub main :main
     .local pmc d, l, r, cl
     cl = subclass "Integer", "AInt"
