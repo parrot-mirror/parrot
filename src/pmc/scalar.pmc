@@ -1168,23 +1168,6 @@ C<*value>.
 
 /*
 
-=item C<INTVAL is_equal(PMC *value)>
-
-Returns whether the PMC is equal to C<*value>.
-
-=cut
-
-*/
-
-/*
-    MULTI INTVAL is_equal(PMC *value) {
-        return (SELF->vtable         == value->vtable
-            &&  PMC_data(SELF)       == PMC_data(value));
-    }
-*/
-
-/*
-
 =item C<INTVAL is_equal_num(PMC *value)>
 
 Returns whether the PMC is numerically equal to C<*value>.
