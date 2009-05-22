@@ -275,19 +275,11 @@ The C<==> operation.
 
 */
 
-    MULTI INTVAL is_equal(Float value) {
+    VTABLE INTVAL is_equal(PMC *value) {
         return (INTVAL)(SELF.get_number() == VTABLE_get_number(INTERP, value));
     }
 
-    MULTI INTVAL is_equal(DEFAULT *value) {
-        return (INTVAL)(SELF.get_number() == VTABLE_get_number(INTERP, value));
-    }
-
-    MULTI INTVAL is_equal_num(Float value) {
-        return (INTVAL)(SELF.get_number() == VTABLE_get_number(INTERP, value));
-    }
-
-    MULTI INTVAL is_equal_num(DEFAULT value) {
+    VTABLE INTVAL is_equal_num(PMC *value) {
         return (INTVAL)(SELF.get_number() == VTABLE_get_number(INTERP, value));
     }
 
@@ -301,12 +293,7 @@ The C<cmp> operation.
 
 */
 
-    MULTI INTVAL cmp(Float value) {
-        const FLOATVAL diff = SELF.get_number() - VTABLE_get_number(INTERP, value);
-        return diff > 0 ? 1 : diff < 0 ? -1 : 0;
-    }
-
-    MULTI INTVAL cmp(DEFAULT value) {
+    VTABLE INTVAL cmp(PMC *value) {
         const FLOATVAL diff =
                 SELF.get_number() - VTABLE_get_number(INTERP, value);
         return diff > 0 ? 1 : diff < 0 ? -1 : 0;
@@ -322,14 +309,8 @@ Returns the result of comparing the number with C<*value>.
 
 */
 
-    MULTI INTVAL cmp_num(Float value) {
+    VTABLE INTVAL cmp_num(PMC *value) {
         const FLOATVAL diff = SELF.get_number() - VTABLE_get_number(INTERP, value);
-        return diff > 0 ? 1 : diff < 0 ? -1 : 0;
-    }
-
-    MULTI INTVAL cmp_num(DEFAULT value) {
-        const FLOATVAL diff =
-                SELF.get_number() - VTABLE_get_number(INTERP, value);
         return diff > 0 ? 1 : diff < 0 ? -1 : 0;
     }
 
