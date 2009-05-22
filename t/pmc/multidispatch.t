@@ -239,7 +239,7 @@ CODE
 42
 OUTPUT
 
-pasm_output_is( <<'CODE', <<'OUTPUT', "PASM INTVAL - new result" );
+pasm_output_is( <<'CODE', <<'OUTPUT', "PASM INTVAL - new result", todo => 'TT#452' );
 .include "datatypes.pasm"
     get_global P10, "Integer_bxor_Intval"
     add_multi "bitwise_xor_int", "Integer,INTVAL,PMC", P10
@@ -264,7 +264,7 @@ ok
 1
 OUTPUT
 
-pasm_output_is( <<'CODE', <<'OUTPUT', "PASM INTVAL - existing result" );
+pasm_output_is( <<'CODE', <<'OUTPUT', "PASM INTVAL - existing result", todo => 'TT#452' );
 .include "datatypes.pasm"
     get_global P10, "Integer_bxor_Intval"
     add_multi "bitwise_xor_int", "Integer,INTVAL,PMC", P10
@@ -289,7 +289,7 @@ ok
 1
 OUTPUT
 
-pasm_output_is( <<'CODE', <<'OUTPUT', "PASM INTVAL - mixed" );
+pasm_output_is( <<'CODE', <<'OUTPUT', "PASM INTVAL - mixed", todo => 'TT#452' );
 .include "datatypes.pasm"
     get_global P10, "Integer_bxor_Intval"
     add_multi "bitwise_xor_int", "Integer,INTVAL,PMC", P10
