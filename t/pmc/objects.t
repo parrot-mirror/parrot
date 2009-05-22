@@ -512,6 +512,8 @@ l1:
 .sub PMC_as_classes__overridden_mmd_methods
     .local pmc myint, i, j, k
 
+    skip (3, 'TT#452') # +1 for 'ok(in add method)
+    .return()
     get_class $P0, "Integer"
     subclass myint, $P0, "MyInt1"
 
@@ -795,6 +797,8 @@ l1:
   k = new "MyInt6"
   i = 6
   j = 7
+  skip(2, 'TT#452' )
+  .return()
   k = i * j
   $I0 = k
   is( $I0, 42, 'MyInt6 defaults to Integer class for mult' )
@@ -1063,6 +1067,8 @@ l1:
     set $S0, b
     is( $S0, '1', 'subclassed Integer is 1' )
 
+    skip(1, 'TT#452' )
+    .return()
     a = a * b
     set $S0, a
     is( $S0, '1', 'multip and reasign to subclassed Integer is 1' )
