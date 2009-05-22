@@ -475,10 +475,6 @@ they match.
         return (INTVAL)(Parrot_str_equal(INTERP, s, v));
     }
 
-    MULTI INTVAL is_equal(PMC *value) {
-        return SELF.is_equal(value);
-    }
-
 /*
 
 =item C<INTVAL is_equal_num(PMC *value)>
