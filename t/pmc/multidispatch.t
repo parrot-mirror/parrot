@@ -775,7 +775,7 @@ Any    42
 Any    43
 OUT
 
-pir_output_is( <<'CODE', <<'OUTPUT', "add as function - Int, Float" );
+pir_output_is( <<'CODE', <<'OUTPUT', "add as function - Int, Float", todo => 'TT#452' );
 .sub main :main
     .local pmc d, l, r, a
     d = new ['Integer']
@@ -793,7 +793,7 @@ CODE
 42.42
 OUTPUT
 
-pir_output_is( <<'CODE', <<'OUTPUT', "add as method" );
+pir_output_is( <<'CODE', <<'OUTPUT', "add as method", todo => 'TT#452' );
 .sub main :main
     .local pmc d, l, r
     l = new ['Integer']
@@ -826,7 +826,7 @@ CODE
 42
 OUTPUT
 
-pir_output_is( <<'CODE', <<'OUTPUT', "add as method - Int, Float" );
+pir_output_is( <<'CODE', <<'OUTPUT', "add as method - Int, Float", todo => 'TT#452' );
 .sub main :main
     .local pmc d, l, r
     l = new ['Integer']
