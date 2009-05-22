@@ -15,7 +15,7 @@ arg3 = "3.87";
 arg4 = "21000000";
 
 result = 0
-50000.times {
+500000.times {
 	result = addit(arg0, arg1, arg2, arg3, arg4)
 }
 puts result
