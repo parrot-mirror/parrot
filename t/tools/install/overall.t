@@ -39,6 +39,7 @@ my $full_gen_pseudo = File::Spec->catfile( $cwd, $gen_pseudo );
     }
 
     my $includedir = File::Spec->catdir( $prefixdir, 'include' );
+    my $libdir = File::Spec->catdir( $prefixdir, 'lib' );
     my $docdir = File::Spec->catdir( $prefixdir, 'share', 'doc' );
     my $versiondir = $PConfig{versiondir};
 
@@ -58,6 +59,11 @@ my $full_gen_pseudo = File::Spec->catfile( $cwd, $gen_pseudo );
             end     => File::Spec->catfile(
                         $includedir, $versiondir, 'parrot', 'charset.h' ),
         },
+        'runtime/parrot/include/sockets.pasm' => {
+            start   => File::Spec->catfile( qw| . runtime parrot include sockets.pasm | ),
+            end     => File::Spec->catfile(
+                        $libdir, $versiondir, 'include', 'sockets.pasm' ),
+        },
     );
     chdir $builddir or croak "Unable to change to tempdir for testing: $!";
     my $man_quasi = File::Spec->catfile( $builddir, 'MANIFEST' );
@@ -71,6 +77,7 @@ my $full_gen_pseudo = File::Spec->catfile( $cwd, $gen_pseudo );
         src
         docs
         include/parrot
+        runtime/parrot/include
     );
     my @created =
         mkpath( map { File::Spec->catdir( $builddir, $_ ) } @dirs_needed );
@@ -82,6 +89,7 @@ my $full_gen_pseudo = File::Spec->catfile( $cwd, $gen_pseudo );
     }
     my $cmd = qq{$^X $full_installer --prefix=$prefixdir};
     $cmd .= qq{ --includedir=$includedir};
+    $cmd .= qq{ --libdir=$libdir};
     $cmd .= qq{ --versiondir=$versiondir};
     $cmd .= qq{ --docdir=$docdir};
     $cmd .= qq{ MANIFEST MANIFEST.generated};
