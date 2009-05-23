@@ -6,8 +6,8 @@
 # format of this file.
 # See docs/submissions.pod on how to recreate this file after SVN
 # has been told about new or deleted files.
-CREDITS                                                     []
-#docs/gettingstarted.pod                                     [main]doc
+LICENSE                                                     [main]doc
+docs/gettingstarted.pod                                     [main]doc
 # Local variables:
 #   mode: text
 # End:
