@@ -64,6 +64,12 @@ my $full_gen_pseudo = File::Spec->catfile( $cwd, $gen_pseudo );
             end     => File::Spec->catfile(
                         $libdir, $versiondir, 'include', 'sockets.pasm' ),
         },
+        'install_config.fpmc'                 => {
+            start   => File::Spec->catfile( qw| . install_config.fpmc | ),
+            end     => File::Spec->catfile(
+                        $libdir, $versiondir, 'include', 'config.fpmc' ),
+        },
+
     );
     chdir $builddir or croak "Unable to change to tempdir for testing: $!";
     my $man_quasi = File::Spec->catfile( $builddir, 'MANIFEST' );
