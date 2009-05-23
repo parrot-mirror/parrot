@@ -5,15 +5,20 @@
 
 use strict;
 use warnings;
-use Test::More qw(no_plan); # tests =>  4;
+#use Data::Dumper;$Data::Dumper::Indent = 1;
+use Test::More tests =>  4;
 use Carp;
 use Cwd;
+use File::Basename;
 use File::Copy;
 use File::Path qw( mkpath );
 use File::Spec ();
 use File::Temp qw( tempdir );
 use lib qw( lib );
+use Parrot::Config qw( %PConfig );
 use IO::CaptureOutput qw( capture );
+
+my $DEBUG = 0;
 
 my $cwd = cwd();
 my $installer = File::Spec->catfile( 'tools', 'dev', 'install_files.pl' );
@@ -26,16 +31,28 @@ my $full_man_pseudo = File::Spec->catfile( $cwd, $man_pseudo );
 my $gen_pseudo = File::Spec->catfile( $testlibdir, q|generated_pseudo| );
 my $full_gen_pseudo = File::Spec->catfile( $cwd, $gen_pseudo );
 
-my %testfiles = (
-    'CREDITS'                 => File::Spec->catdir( qw| . | ),
-    'vtable.dump'             => File::Spec->catdir( qw| . src | ),
-#    'docs/gettingstarted.pod'      => File::Spec->catdir( qw| . docs | ),
-);
-
 {
     my $builddir    = tempdir( CLEANUP => 1 );
     my $prefixdir   = tempdir( CLEANUP => 1 );
+    if ($DEBUG) {
+        print STDERR "$builddir\n$prefixdir\n";
+    }
 
+    my $docdir = File::Spec->catdir( $prefixdir, 'share', 'doc' );
+    my $versiondir = $PConfig{versiondir};
+
+    my %testfiles = (
+        'LICENSE'                 => {
+            start   => File::Spec->catdir( qw| . | ),
+            end     => File::Spec->catdir(
+                        'share', 'doc', $versiondir ),
+        },
+        'docs/gettingstarted.pod' => {
+            start   => File::Spec->catdir( qw| . | ),
+            end     => File::Spec->catdir(
+                        'share', 'doc', $versiondir, 'pod' ),
+        },
+    );
     chdir $builddir or croak "Unable to change to tempdir for testing: $!";
     my $man_quasi = File::Spec->catfile( $builddir, 'MANIFEST' );
     my $gen_quasi = File::Spec->catfile( $builddir, 'MANIFEST.generated' );
@@ -46,16 +63,19 @@ my %testfiles = (
 
     my @dirs_needed = qw(
         src
+        docs
     );
-#        docs
-    my @created = mkpath( @dirs_needed );
+    my @created =
+        mkpath( map { File::Spec->catdir( $builddir, $_ ) } @dirs_needed );
     foreach my $f ( keys %testfiles ) {
         my $src = File::Spec->catfile( $cwd, $testlibdir, $f );
-        my $des = File::Spec->catfile( $builddir, $testfiles{$f}, $f );
+        my $des = File::Spec->catfile( $builddir, $testfiles{$f}{start}, $f );
         copy $src, $des or croak "Unable to copy $f for testing: $!";
     }
     my $cmd = qq{$^X $full_installer --prefix=$prefixdir};
-    $cmd .= qq{ MANIFEST MANIFEST.generated };
+    $cmd .= qq{ --versiondir=$versiondir};
+    $cmd .= qq{ --docdir=$docdir};
+    $cmd .= qq{ MANIFEST MANIFEST.generated};
     my ($stdout, $stderr);
     capture(
         sub {
@@ -67,7 +87,9 @@ my %testfiles = (
     like( $stdout, qr/^Installing/, "Got expected standard output" );
     my $seen = 0;
     foreach my $f ( keys %testfiles ) {
-        my $des = File::Spec->catfile( $builddir, $testfiles{$f}, $f );
+        my $des =
+            File::Spec->catfile( $prefixdir, $testfiles{$f}{end}, basename($f) );
+        print STDERR "wanted:  $des\n" if $DEBUG;
         $seen++ if -f $des;
     }
     is( $seen, scalar keys %testfiles,
