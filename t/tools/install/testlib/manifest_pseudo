@@ -9,6 +9,7 @@
 LICENSE                                                     [main]doc
 docs/gettingstarted.pod                                     [main]doc
 include/parrot/charset.h                                    [main]include
+runtime/parrot/include/sockets.pasm                         [library]
 # Local variables:
 #   mode: text
 # End:
