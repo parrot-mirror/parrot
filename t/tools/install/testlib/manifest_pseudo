@@ -8,6 +8,7 @@
 # has been told about new or deleted files.
 LICENSE                                                     [main]doc
 docs/gettingstarted.pod                                     [main]doc
+include/parrot/charset.h                                    [main]include
 # Local variables:
 #   mode: text
 # End:

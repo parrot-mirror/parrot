@@ -38,6 +38,7 @@ my $full_gen_pseudo = File::Spec->catfile( $cwd, $gen_pseudo );
         print STDERR "$builddir\n$prefixdir\n";
     }
 
+    my $includedir = File::Spec->catdir( $prefixdir, 'include' );
     my $docdir = File::Spec->catdir( $prefixdir, 'share', 'doc' );
     my $versiondir = $PConfig{versiondir};
 
@@ -45,12 +46,17 @@ my $full_gen_pseudo = File::Spec->catfile( $cwd, $gen_pseudo );
         'LICENSE'                 => {
             start   => File::Spec->catfile( qw| . LICENSE | ),
             end     => File::Spec->catfile(
-                        'share', 'doc', $versiondir, 'LICENSE' )
+                        $docdir, $versiondir, 'LICENSE' )
         },
         'docs/gettingstarted.pod' => {
             start   => File::Spec->catfile( qw| . docs gettingstarted.pod | ),
             end     => File::Spec->catfile(
-                        'share', 'doc', $versiondir, 'pod', 'gettingstarted.pod' ),
+                        $docdir,  $versiondir, 'pod', 'gettingstarted.pod' ),
+        },
+        'include/parrot/charset.h' => {
+            start   => File::Spec->catfile( qw| . include parrot charset.h | ),
+            end     => File::Spec->catfile(
+                        $includedir, $versiondir, 'parrot', 'charset.h' ),
         },
     );
     chdir $builddir or croak "Unable to change to tempdir for testing: $!";
@@ -64,15 +70,18 @@ my $full_gen_pseudo = File::Spec->catfile( $cwd, $gen_pseudo );
     my @dirs_needed = qw(
         src
         docs
+        include/parrot
     );
     my @created =
         mkpath( map { File::Spec->catdir( $builddir, $_ ) } @dirs_needed );
+    print STDERR "dirs created:  @created\n" if $DEBUG;
     foreach my $f ( keys %testfiles ) {
         my $src = File::Spec->catfile( $cwd, $testlibdir, $f );
         my $des = File::Spec->catfile( $builddir, $testfiles{$f}{start} );
         copy $src, $des or croak "Unable to copy $f for testing: $!";
     }
     my $cmd = qq{$^X $full_installer --prefix=$prefixdir};
+    $cmd .= qq{ --includedir=$includedir};
     $cmd .= qq{ --versiondir=$versiondir};
     $cmd .= qq{ --docdir=$docdir};
     $cmd .= qq{ MANIFEST MANIFEST.generated};
@@ -87,8 +96,7 @@ my $full_gen_pseudo = File::Spec->catfile( $cwd, $gen_pseudo );
     like( $stdout, qr/^Installing/, "Got expected standard output" );
     my $seen = 0;
     foreach my $f ( keys %testfiles ) {
-        my $des =
-            File::Spec->catfile( $prefixdir, $testfiles{$f}{end} );
+        my $des = $testfiles{$f}{end};
         print STDERR "wanted:  $des\n" if $DEBUG;
         $seen++ if -f $des;
     }
