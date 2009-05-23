@@ -194,8 +194,10 @@ foreach ( @files, @installable_exe ) {
         next;
     }
     else {
+#        print STDERR "Before copy: $dest\n";
         next unless -e $src;
         copy( $src, $dest ) or die "copy $src to $dest: $!\n";
+#        print STDERR "After copy: $dest\n";
         print "$dest\n";
     }
     my $mode = ( stat($src) )[2];
