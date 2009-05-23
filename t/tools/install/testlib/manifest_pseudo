@@ -7,6 +7,7 @@
 # See docs/submissions.pod on how to recreate this file after SVN
 # has been told about new or deleted files.
 LICENSE                                                     [main]doc
+compilers/pge/PGE.pir                                       [pge]
 docs/gettingstarted.pod                                     [main]doc
 docs/resources/phony_resource                               [main]doc
 include/parrot/charset.h                                    [main]include

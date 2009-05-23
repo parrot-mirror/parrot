@@ -79,6 +79,11 @@ my $full_gen_pseudo = File::Spec->catfile( $cwd, $gen_pseudo );
             end     => File::Spec->catfile(
                         $libdir, 'pkgconfig', $versiondir, 'parrot.pc' ),
         },
+        'compilers/pge/PGE.pir'                 => {
+            start   => File::Spec->catfile( qw| . compilers pge PGE.pir | ),
+            end     => File::Spec->catfile(
+                        $libdir, $versiondir, 'languages', 'pge', 'PGE.pir' ),
+        },
 
     );
     chdir $builddir or croak "Unable to change to tempdir for testing: $!";
@@ -94,6 +99,7 @@ my $full_gen_pseudo = File::Spec->catfile( $cwd, $gen_pseudo );
         docs/resources
         include/parrot
         runtime/parrot/include
+        compilers/pge
     );
     my @created =
         mkpath( map { File::Spec->catdir( $builddir, $_ ) } @dirs_needed );
