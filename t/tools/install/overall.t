@@ -54,6 +54,11 @@ my $full_gen_pseudo = File::Spec->catfile( $cwd, $gen_pseudo );
             end     => File::Spec->catfile(
                         $docdir,  $versiondir, 'pod', 'gettingstarted.pod' ),
         },
+        'docs/resources/phony_resource' => {
+            start   => File::Spec->catfile( qw| . docs resources phony_resource | ),
+            end     => File::Spec->catfile(
+                        $docdir,  $versiondir, 'resources', 'phony_resource' ),
+        },
         'include/parrot/charset.h' => {
             start   => File::Spec->catfile( qw| . include parrot charset.h | ),
             end     => File::Spec->catfile(
@@ -81,7 +86,7 @@ my $full_gen_pseudo = File::Spec->catfile( $cwd, $gen_pseudo );
 
     my @dirs_needed = qw(
         src
-        docs
+        docs/resources
         include/parrot
         runtime/parrot/include
     );
@@ -98,7 +103,9 @@ my $full_gen_pseudo = File::Spec->catfile( $cwd, $gen_pseudo );
     $cmd .= qq{ --libdir=$libdir};
     $cmd .= qq{ --versiondir=$versiondir};
     $cmd .= qq{ --docdir=$docdir};
+#    $cmd .= qq{ --dry-run=1} if $DEBUG;
     $cmd .= qq{ MANIFEST MANIFEST.generated};
+    print "cmd: $cmd\n" if $DEBUG;
     my ($stdout, $stderr);
     capture(
         sub {
@@ -108,14 +115,17 @@ my $full_gen_pseudo = File::Spec->catfile( $cwd, $gen_pseudo );
         \$stderr,
     );
     like( $stdout, qr/^Installing/, "Got expected standard output" );
+    print STDERR "out:  $stdout\n" if $DEBUG;
+    print STDERR "err:  $stderr\n" if $DEBUG;
     my $seen = 0;
+    my $expected = scalar keys %testfiles;
     foreach my $f ( keys %testfiles ) {
         my $des = $testfiles{$f}{end};
         print STDERR "wanted:  $des\n" if $DEBUG;
         $seen++ if -f $des;
     }
-    is( $seen, scalar keys %testfiles,
-        "Got all $seen expected files in installation" );
+    is( $seen, $expected,
+        "Got all $expected expected files in installation" );
 
     chdir $cwd
         or croak "Unable to return to top-level directory after testing: $!";

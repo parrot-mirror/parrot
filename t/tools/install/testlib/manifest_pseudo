@@ -8,6 +8,7 @@
 # has been told about new or deleted files.
 LICENSE                                                     [main]doc
 docs/gettingstarted.pod                                     [main]doc
+docs/resources/phony_resource                               [main]doc
 include/parrot/charset.h                                    [main]include
 runtime/parrot/include/sockets.pasm                         [library]
 # Local variables:
