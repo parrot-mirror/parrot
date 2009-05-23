@@ -43,14 +43,14 @@ my $full_gen_pseudo = File::Spec->catfile( $cwd, $gen_pseudo );
 
     my %testfiles = (
         'LICENSE'                 => {
-            start   => File::Spec->catdir( qw| . | ),
-            end     => File::Spec->catdir(
-                        'share', 'doc', $versiondir ),
+            start   => File::Spec->catfile( qw| . LICENSE | ),
+            end     => File::Spec->catfile(
+                        'share', 'doc', $versiondir, 'LICENSE' )
         },
         'docs/gettingstarted.pod' => {
-            start   => File::Spec->catdir( qw| . | ),
-            end     => File::Spec->catdir(
-                        'share', 'doc', $versiondir, 'pod' ),
+            start   => File::Spec->catfile( qw| . docs gettingstarted.pod | ),
+            end     => File::Spec->catfile(
+                        'share', 'doc', $versiondir, 'pod', 'gettingstarted.pod' ),
         },
     );
     chdir $builddir or croak "Unable to change to tempdir for testing: $!";
@@ -69,7 +69,7 @@ my $full_gen_pseudo = File::Spec->catfile( $cwd, $gen_pseudo );
         mkpath( map { File::Spec->catdir( $builddir, $_ ) } @dirs_needed );
     foreach my $f ( keys %testfiles ) {
         my $src = File::Spec->catfile( $cwd, $testlibdir, $f );
-        my $des = File::Spec->catfile( $builddir, $testfiles{$f}{start}, $f );
+        my $des = File::Spec->catfile( $builddir, $testfiles{$f}{start} );
         copy $src, $des or croak "Unable to copy $f for testing: $!";
     }
     my $cmd = qq{$^X $full_installer --prefix=$prefixdir};
@@ -88,7 +88,7 @@ my $full_gen_pseudo = File::Spec->catfile( $cwd, $gen_pseudo );
     my $seen = 0;
     foreach my $f ( keys %testfiles ) {
         my $des =
-            File::Spec->catfile( $prefixdir, $testfiles{$f}{end}, basename($f) );
+            File::Spec->catfile( $prefixdir, $testfiles{$f}{end} );
         print STDERR "wanted:  $des\n" if $DEBUG;
         $seen++ if -f $des;
     }
