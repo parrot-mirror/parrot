@@ -802,10 +802,23 @@ mark_1_seg(PARROT_INTERP, ARGMOD(PackFile_ConstTable *ct))
     opcode_t i;
 
     for (i = 0; i < ct->const_count; i++) {
-        if (constants[i]->type == PFC_PMC) {
-            PMC * const pmc = constants[i]->u.key;
-            if (pmc)
-                Parrot_gc_mark_PObj_alive(interp, (PObj *)pmc);
+        PMC    * pmc;
+        STRING * string;
+        switch (constants[i]->type) {
+            case PFC_PMC:
+            case PFC_KEY:
+                pmc = constants[i]->u.key;
+                if (pmc)
+                    Parrot_gc_mark_PObj_alive(interp, (PObj *)pmc);
+                break;
+            case PFC_STRING:
+                string = constants[i]->u.string;
+                if (string)
+                    Parrot_gc_mark_PObj_alive(interp, (PObj *)string);
+                break;
+            default:
+                /* Do nothing. */
+                break;
         }
     }
 }
@@ -4809,6 +4822,7 @@ Parrot_load_bytecode(PARROT_INTERP, ARGIN_NULLOK(STRING *file_str))
 {
     ASSERT_ARGS(Parrot_load_bytecode)
     STRING         *wo_ext, *ext, *pbc, *path;
+    STRING         *found_path, *found_ext;
     PMC            *is_loaded_hash;
     enum_runtime_ft file_type;
 
@@ -4839,6 +4853,16 @@ Parrot_load_bytecode(PARROT_INTERP, ARGIN_NULLOK(STRING *file_str))
 
     /* remember wo_ext => full_path mapping */
     VTABLE_set_string_keyed_str(interp, is_loaded_hash, wo_ext, path);
+
+    parrot_split_path_ext(interp, path, &found_path, &found_ext);
+
+    /* Check if the file found was actually a bytecode file (.pbc
+     * extension) or a source file (.pir or .pasm extension). */
+
+    if (Parrot_str_equal(interp, found_ext, pbc))
+        file_type = PARROT_RUNTIME_FT_PBC;
+    else
+        file_type = PARROT_RUNTIME_FT_SOURCE;
 
     compile_or_load_file(interp, path, file_type);
 }
