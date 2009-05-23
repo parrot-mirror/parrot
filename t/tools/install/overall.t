@@ -74,6 +74,11 @@ my $full_gen_pseudo = File::Spec->catfile( $cwd, $gen_pseudo );
             end     => File::Spec->catfile(
                         $libdir, $versiondir, 'include', 'config.fpmc' ),
         },
+        'parrot.pc'                 => {
+            start   => File::Spec->catfile( qw| . | ),
+            end     => File::Spec->catfile(
+                        $libdir, 'pkgconfig', $versiondir, 'parrot.pc' ),
+        },
 
     );
     chdir $builddir or croak "Unable to change to tempdir for testing: $!";
