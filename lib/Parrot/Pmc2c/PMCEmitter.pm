@@ -341,12 +341,13 @@ sub pre_method_gen {
     foreach my $method ( @{ $self->vtable->methods } ) {
         my $vt_method_name = $method->name;
         next if $self->unimplemented_vtable($vt_method_name);
+        next if $self->has_method($vt_method_name);
 
-        # If VTABLE returns not PMC result - ignore method.
-        next unless $method->return_type =~ /PMC/;
+        # If VTABLE returns not PMC or void result - ignore method.
+        next unless $method->return_type =~ /PMC|void\s*$/;
 
         # Generate body.
-        my $body = 'return VTABLE_' . $method->name . '(INTERP, SELF';
+        my $body = 'return VTABLE_' . $vt_method_name . '(INTERP, SELF';
 
         # If during parsing parameters we'll find non PMC argument - ignore this method.
         # If there is no params - ignore method.
