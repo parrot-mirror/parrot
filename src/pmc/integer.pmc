@@ -1016,12 +1016,7 @@ Returns the result of comparing the integer with C<*value>.
                 return fdiff > 0 ? 1 : -1;
                 break;
 
-            case enum_class_Float:
-                fdiff = SELF.get_number() - VTABLE_get_number(INTERP, value);
-                return fdiff > 0 ? 1 : fdiff < 0 ? -1 : 0;
-                break;
-
-            default:
+            case enum_class_Integer:
                 {
                     /* int or undef */
                     const INTVAL selfint  = SELF.get_integer();
@@ -1029,6 +1024,12 @@ Returns the result of comparing the integer with C<*value>.
 
                     return selfint > valueint ? 1 : selfint < valueint ? -1 : 0;
                 }
+
+            default:
+                fdiff = SELF.get_number() - VTABLE_get_number(INTERP, value);
+                return fdiff > 0 ? 1 : fdiff < 0 ? -1 : 0;
+                break;
+
         }
     }
 
