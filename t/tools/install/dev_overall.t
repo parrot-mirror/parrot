@@ -1,7 +1,7 @@
 #! perl
 # Copyright (C) 2007-2008, Parrot Foundation.
 # $Id$
-# overall.t
+# dev_overall.t
 
 use strict;
 use warnings;
@@ -20,14 +20,14 @@ use IO::CaptureOutput qw( capture );
 my $DEBUG = 0;
 
 my $cwd = cwd();
-my $installer = File::Spec->catfile( 'tools', 'dev', 'install_files.pl' );
+my $installer = File::Spec->catfile( 'tools', 'dev', 'install_dev_files.pl' );
 my $full_installer = File::Spec->catfile( $cwd, $installer );
 ok(-f $full_installer, "Able to locate $installer");
 
 my $testlibdir = File::Spec->catdir( qw| t tools install testlib | );
-my $man_pseudo = File::Spec->catfile( $testlibdir, q|manifest_pseudo| );
+my $man_pseudo = File::Spec->catfile( $testlibdir, q|dev_manifest_pseudo| );
 my $full_man_pseudo = File::Spec->catfile( $cwd, $man_pseudo );
-my $gen_pseudo = File::Spec->catfile( $testlibdir, q|generated_pseudo| );
+my $gen_pseudo = File::Spec->catfile( $testlibdir, q|dev_generated_pseudo| );
 my $full_gen_pseudo = File::Spec->catfile( $cwd, $gen_pseudo );
 
 {
@@ -40,50 +40,63 @@ my $full_gen_pseudo = File::Spec->catfile( $cwd, $gen_pseudo );
     my $includedir = File::Spec->catdir( $prefixdir, 'include' );
     my $libdir = File::Spec->catdir( $prefixdir, 'lib' );
     my $docdir = File::Spec->catdir( $prefixdir, 'share', 'doc' );
+    my $srcdir = File::Spec->catdir( $prefixdir, 'src' );
     my $versiondir = $PConfig{versiondir};
 
     my %testfiles = (
-        'LICENSE'                 => {
-            start   => File::Spec->catfile( qw| . LICENSE | ),
+        'compilers/nqp/bootstrap/actions.pm'                 => {
+            start   => File::Spec->catfile(
+                        qw| .  compilers nqp bootstrap actions.pm | ),
             end     => File::Spec->catfile(
-                        $docdir, $versiondir, 'LICENSE' )
+                        $libdir, $versiondir, 'languages', 'nqp', 'bootstrap', 'actions.pm' ),
         },
-        'docs/gettingstarted.pod' => {
-            start   => File::Spec->catfile( qw| . docs gettingstarted.pod | ),
+        'docs/compiler_faq.pod' => {
+            start   => File::Spec->catfile( qw| . docs compiler_faq.pod | ),
             end     => File::Spec->catfile(
-                        $docdir,  $versiondir, 'pod', 'gettingstarted.pod' ),
+                        $docdir,  $versiondir, 'pod', 'compiler_faq.pod' ),
         },
-        'docs/resources/phony_resource' => {
-            start   => File::Spec->catfile( qw| . docs resources phony_resource | ),
+        'docs/pct/past_building_blocks.pod' => {
+            start   => File::Spec->catfile(
+                        qw| . docs pct past_building_blocks.pod | ),
             end     => File::Spec->catfile(
-                        $docdir,  $versiondir, 'resources', 'phony_resource' ),
+                        $docdir,  $versiondir, 'pod', 'pct', 'past_building_blocks.pod' ),
         },
-        'include/parrot/charset.h' => {
-            start   => File::Spec->catfile( qw| . include parrot charset.h | ),
+        'lib/Parrot/Configure.pm' => {
+            start   => File::Spec->catfile(
+                        qw| . lib Parrot Configure.pm | ),
             end     => File::Spec->catfile(
-                        $includedir, $versiondir, 'parrot', 'charset.h' ),
+                        $libdir, $versiondir, 'tools', 'lib', 'Parrot', 'Configure.pm' ),
         },
-        'runtime/parrot/include/sockets.pasm' => {
-            start   => File::Spec->catfile( qw| . runtime parrot include sockets.pasm | ),
+        'src/ops/ops.num' => {
+            start   => File::Spec->catfile(
+                        qw| . src ops ops.num | ),
             end     => File::Spec->catfile(
-                        $libdir, $versiondir, 'include', 'sockets.pasm' ),
+                        $srcdir, $versiondir, 'ops', 'ops.num' ),
         },
-        'install_config.fpmc'                 => {
-            start   => File::Spec->catfile( qw| . install_config.fpmc | ),
+        'tools/build/ops2c.pl' => {
+            start   => File::Spec->catfile(
+                        qw| . tools build ops2c.pl | ),
             end     => File::Spec->catfile(
-                        $libdir, $versiondir, 'include', 'config.fpmc' ),
+                        $libdir, $versiondir, 'tools', 'build', 'ops2c.pl' ),
         },
-        'parrot.pc'                 => {
-            start   => File::Spec->catfile( qw| . | ),
+        'runtime/parrot/library/TGE.pbc' => {
+            start   => File::Spec->catfile(
+                        qw| . runtime parrot library TGE.pbc | ),
             end     => File::Spec->catfile(
-                        $libdir, 'pkgconfig', $versiondir, 'parrot.pc' ),
+                        $libdir, $versiondir, 'library', 'TGE.pbc' ),
         },
-        'compilers/pge/PGE.pir'                 => {
-            start   => File::Spec->catfile( qw| . compilers pge PGE.pir | ),
+        'src/pmc/pmc_object.h' => {
+            start   => File::Spec->catfile(
+                        qw| . src pmc pmc_object.h | ),
             end     => File::Spec->catfile(
-                        $libdir, $versiondir, 'languages', 'pge', 'PGE.pir' ),
+                        $includedir, $versiondir, 'pmc', 'pmc_object.h' ),
         },
-
+        'vtable.dump' => {
+            start   => File::Spec->catfile(
+                        qw| . vtable.dump | ),
+            end     => File::Spec->catfile(
+                        $srcdir, $versiondir, 'vtable.dump' ),
+        },
     );
     chdir $builddir or croak "Unable to change to tempdir for testing: $!";
     my $man_quasi = File::Spec->catfile( $builddir, 'MANIFEST' );
@@ -94,11 +107,13 @@ my $full_gen_pseudo = File::Spec->catfile( $cwd, $gen_pseudo );
         or croak "Unable to copy $gen_pseudo for testing: $!";
 
     my @dirs_needed = qw(
-        src
-        docs/resources
-        include/parrot
-        runtime/parrot/include
-        compilers/pge
+        compilers/nqp/bootstrap
+        docs/pct
+        lib/Parrot
+        src/ops
+        tools/build
+        runtime/parrot/library
+        src/pmc
     );
     my @created =
         mkpath( map { File::Spec->catdir( $builddir, $_ ) } @dirs_needed );
@@ -113,6 +128,7 @@ my $full_gen_pseudo = File::Spec->catfile( $cwd, $gen_pseudo );
     $cmd .= qq{ --libdir=$libdir};
     $cmd .= qq{ --versiondir=$versiondir};
     $cmd .= qq{ --docdir=$docdir};
+    $cmd .= qq{ --srcdir=$srcdir};
 #    $cmd .= qq{ --dry-run=1} if $DEBUG;
     $cmd .= qq{ MANIFEST MANIFEST.generated};
     print "cmd: $cmd\n" if $DEBUG;
@@ -147,15 +163,15 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-overall.t - test tools/dev/install_files.pl
+dev_overall.t - test tools/dev/install_dev_files.pl
 
 =head1 SYNOPSIS
 
-    % prove t/tools/install/overall.t
+    % prove t/tools/install/dev_overall.t
 
 =head1 DESCRIPTION
 
-This file simulates the operation of F<tools/dev/install_files.pl> and
+This file simulates the operation of F<tools/dev/install_dev_files.pl> and
 sanity-checks the results.
 
 =head1 AUTHOR
@@ -164,7 +180,7 @@ James E Keenan
 
 =head1 SEE ALSO
 
-F<tools/dev/install_files.pl>.
+F<tools/dev/install_dev_files.pl>.
 
 =cut
 
