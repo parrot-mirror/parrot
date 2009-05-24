@@ -1,0 +1,134 @@
+/*
+Copyright (C) 2008, Parrot Foundation.
+$Id: filehandle.pmc 39074 2009-05-23 03:25:04Z jkeenan $
+
+=head1 NAME
+
+src/pmc/iorequest.pmc - Request status object for asynchronous IO
+
+=head1 DESCRIPTION
+
+The IORequest PMC is used to keep track of asynchronous IO requests.
+Notice that not all platforms support AIO, so for places that don't support
+it we need to use a regular synchronous request transparently.
+
+=head2 Vtable Functions
+
+=over 4
+
+=cut
+
+*/
+
+#include "../src/io/io_private.h"
+#include "pmc_filehandle.h"
+
+/*
+
+=item C<create_new_poll_object>
+
+Create a new structure for polling.
+
+=item C<poll_io_request>
+
+Poll the stream, to see if there are any events to be aware of
+
+=item C<track_stream_events>
+
+Associate the stream with the poll object, so we can keep track of it
+
+=cut
+
+*/
+
+#define IORequestSuccess 1
+#define IORequestPending 0
+#define IORequestError -1
+
+pmclass IORequest need_ext {
+    ATTR PMC * stream;      /* The stream object, FileHandle, Socket, etc */
+    ATTR INTVAL status;     /* 1 = success, -1 = error, 0 = pending */
+    ATTR PMC * ret;         /* The return value of the request, boxed. */
+    ATTR PMC * err;         /* The error object */
+
+    VTABLE void init()
+    {
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INVALID_OPERATION,
+            "Cannot create an IORequest without a stream object!");
+    }
+
+    VTABLE void init_pmc(PMC *stream)
+    {
+        if(PMC_IS_NULL(stream))
+            Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INVALID_OPERATION,
+                "Cannot create an IORequest without a stream object!");
+        {
+            Parrot_IORequest_attributes * attrs =
+                mem_allocate_typed(Parrot_IORequest_attributes);
+            PMC_data(SELF) = attrs;
+            attrs->stream = stream;
+            attrs->status = IORequestPending;
+            attrs->ret = PMCNULL;
+            attrs->err = PMCNULL;
+        }
+        PObj_custom_destroy_SET(SELF);
+    }
+
+    VTABLE void destroy()
+    {
+        mem_sys_free(PMC_data(SELF));
+    }
+
+    VTABLE void mark()
+    {
+        Parrot_IORequest_attributes * attr = PARROT_IOREQUEST(SELF);
+        if (!PMC_IS_NULL(attr->stream))
+            Parrot_gc_mark_PObj_alive(INTERP, attr->stream);
+        if (!PMC_IS_NULL(attr->ret))
+            Parrot_gc_mark_PObj_alive(INTERP, attr->ret);
+        if (!PMC_IS_NULL(attr->err))
+            Parrot_gc_mark_PObj_alive(INTERP, attr->err);
+    }
+
+    VTABLE INTVAL get_integer()
+    {
+        poll_io_request(INTERP, SELF);
+        return PARROT_IOREQUEST(SELF)->status;
+    }
+
+    VTABLE INTVAL get_bool()
+    {
+        poll_io_request(INTERP, SELF);
+        return PARROT_IOREQUEST(SELF)->status != IORequestError;
+    }
+
+    METHOD return_value()
+    {
+        PMC * ret = PARROT_IOREQUEST(SELF)->ret;
+        RETURN(PMC * ret);
+    }
+
+    METHOD error()
+    {
+        PMC * err = PARROT_IOREQUEST(SELF)->error;
+        RETURN(PMC * err);
+    }
+
+    METHOD throw()
+    {
+        PMC * err = PARROT_IOREQUEST(SELF)->error;
+        if(!PMC_IS_NULL(err)) {
+            const STRING * const msg = VTABLE_get_string(err);
+            PMC * const except = Parrot_ex_build_exception(INTERP,
+                EXCEPT_error, EXCEPTION_PIO_ERROR, msg);
+            Parrot_ex_throw_from_c(INTERP, except);
+        }
+    }
+}
+
+/*
+ * Local variables:
+ *   c-file-style: "parrot"
+ * End:
+ * vim: expandtab shiftwidth=4:
+ */

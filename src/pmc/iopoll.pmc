@@ -1,0 +1,174 @@
+/*
+Copyright (C) 2008, Parrot Foundation.
+$Id: filehandle.pmc 39074 2009-05-23 03:25:04Z jkeenan $
+
+=head1 NAME
+
+src/pmc/iopoll.pmc - IOPoll PMC, polls outstanding asynchronous requests
+
+=head1 DESCRIPTION
+
+Similar to the Scheduler, the IOPoll PMC keeps track of outstanding
+asynchronous IO requests and polls them on request.
+
+=head2 Vtable Functions
+
+=over 4
+
+=cut
+
+*/
+
+#include "../src/io/io_private.h"
+#include "pmc_filehandle.h"
+
+#include "pmc_filehandle.h"
+
+/*
+
+=item C<create_new_poll_object>
+
+Create a new structure for polling.
+
+=item C<poll_io_request>
+
+Poll the stream, to see if there are any events to be aware of
+
+=item C<track_stream_events>
+
+Associate the stream with the poll object, so we can keep track of it
+
+=cut
+
+*/
+
+#ifdef PIO_OS_WIN32
+
+/* TODO: on Win32, a thread may only have one completion port object
+   associated with it. This means we shouldn't have a completion port
+   here, but instead have a separate PMC type that will be "global" for the
+   thread. */
+typedef HANDLE PIOPOLLOBJ;
+
+static void
+create_new_poll_object(PARROT_INTERP, PMC * self)
+{
+    PARROT_IOREQUEST(self)->poll =
+        CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, 0, 0);
+}
+
+static void
+poll_io_request(PARROT_INTERP, PMC * self)
+{
+    DWORD num_bytes = 0;
+    LONG key = 0;
+    OVERLAPPED olp;
+    GetQueuedCompletionStatus(PARROT_IOREQUEST(self)->poll, &num_bytes,
+        &key, &olp, 0);
+    /* TODO: Check here for the return values, and set the associated ATTRs
+       appropriately */
+}
+
+static void
+track_stream_events(PARROT_INTERP, PMC * self, PMC * stream)
+{
+    CreateIoCompletionPort(PARROT_FILEHANDLE(stream)->os_handle,
+        PARROT_IOREQUEST(self)->poll, 0, 0);
+}
+#endif
+
+#ifdef PIO_OS_UNIX
+#include <sys/epoll.h>
+
+typedef struct PIOPOLLOBJ {
+    struct epoll_events * events; /* A C array of file descriptors to poll */
+    UINTVAL num_fds_current;      /* Number of fds in the list currently   */
+    UINTVAL num_fds_total;        /* total size of the array */
+} PIOPOLLOBJ;
+
+static void
+create_new_poll_object(PARROT_INTERP, PMC * self)
+{
+    /* TODO: Not sure whether I want to maintain a persistent list of
+       epoll_event structures, or whether I want to create it anew from
+       my list of stream PMCs. */
+    Parrot_IOPoll_attributes * attrs = PARROT_IOREQUEST(self);
+    attrs->poll.events = (struct epoll_events *)calloc(sizeof(epoll_events) * 10);
+    attrs->poll.num_fds_current = 0;
+    attrs->pool.num_fds_total = 10;
+}
+
+static void
+poll_io_request(PARROT_INTERP, PMC * self)
+{
+}
+
+static void
+track_stream_events(PARROT_INTERP, PMC * self, PMC * stream)
+{
+    Parrot_IOPoll_attributes * attrs = PARROT_IOREQUEST(self);
+    PIOHANDLE fd;
+    if (attrs->poll.num_fds_current == attrs->poll.num_fds_total) {
+        attrs->poll.num_fds_total += 10;
+        attrs->poll.fdlist = (struct epoll_eents *)realloc(attrs->poll.fdlist,
+            sizeof(struct epoll_events) * attrs->poll.num_fds_tota);
+    }
+    GET_ATTR_os_handle(interp, stream, fd);
+    attrs->poll.events[attrs->poll.num_fds_current] = fd;
+}
+#endif
+
+#ifdef PIO_OS_STDIO
+typedef void * PIOPOLLOBJ;
+
+static void
+create_new_poll_object(PARROT_INTERP, PMC * self)
+{
+    PARROT_IOREQUEST(self)->poll = NULL;
+}
+
+static void
+poll_io_request(PARROT_INTERP, PMC * self)
+{
+    PARROT_IOREQUEST(self)->status = IORequestSuccess;
+}
+
+static void
+track_stream_events(PARROT_INTERP, PMC * self, PMC * stream)
+{
+}
+#endif
+
+
+pmclass IOPoll need_ext {
+    ATTR PIOPOLLOBJ poll;     /* OS structure that does the polling */
+    ATTR PMC * requests;      /* RPA of IORequest objects that are pending */
+
+    VTABLE void init()
+    {
+        Parrot_IOPoll_attributes * attrs = mem_allocate_typed(Parrot_IOPoll_attributes);
+        PMC_data(SELF) = attrs;
+        create_new_poll_object(INTERP, SELF);
+        attrs->requests = pmc_new(interp, enum_class_ResizablePMCArray);
+        PObj_custom_destroy_SET(SELF);
+    }
+
+    VTABLE void destroy()
+    {
+        /* TODO: Implement this! */
+        free_poll_storage(INTERP, SELF);
+        mem_sys_free(PMC_data(SELF));
+    }
+
+    VTABLE void mark()
+    {
+        Parrot_gc_mark_PObj_alive(INTERP, PARROT_IOPOLL(SELF)->requests);
+    }
+}
+
+/*
+ * Local variables:
+ *   c-file-style: "parrot"
+ * End:
+ * vim: expandtab shiftwidth=4:
+ */
