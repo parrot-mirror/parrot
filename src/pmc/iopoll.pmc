@@ -58,7 +58,7 @@ create_new_poll_object(PARROT_INTERP, PMC * self)
 }
 
 static void
-poll_io_request(PARROT_INTERP, PMC * self)
+poll_io_requests(PARROT_INTERP, PMC * self)
 {
     DWORD num_bytes = 0;
     LONG key = 0;
@@ -74,6 +74,11 @@ track_stream_events(PARROT_INTERP, PMC * self, PMC * stream)
 {
     CreateIoCompletionPort(PARROT_FILEHANDLE(stream)->os_handle,
         PARROT_IOREQUEST(self)->poll, 0, 0);
+}
+
+static void
+free_poll_storage(PARROT_INTERP, PMC * self)
+{
 }
 #endif
 
@@ -99,7 +104,7 @@ create_new_poll_object(PARROT_INTERP, PMC * self)
 }
 
 static void
-poll_io_request(PARROT_INTERP, PMC * self)
+poll_io_requests(PARROT_INTERP, PMC * self)
 {
 }
 
@@ -115,6 +120,11 @@ track_stream_events(PARROT_INTERP, PMC * self, PMC * stream)
     }
     GET_ATTR_os_handle(interp, stream, fd);
     attrs->poll.events[attrs->poll.num_fds_current] = fd;
+}
+
+static void
+free_poll_storage(PARROT_INTERP, PMC * self)
+{
 }
 #endif
 
@@ -135,6 +145,11 @@ poll_io_request(PARROT_INTERP, PMC * self)
 
 static void
 track_stream_events(PARROT_INTERP, PMC * self, PMC * stream)
+{
+}
+
+static void
+free_poll_storage(PARROT_INTERP, PMC * self)
 {
 }
 #endif
