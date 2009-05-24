@@ -23,6 +23,7 @@ Handles class and object manipulation.
 #include "parrot/parrot.h"
 #include "parrot/oo_private.h"
 #include "pmc/pmc_class.h"
+#include "pmc/pmc_object.h"
 
 #include "oo.str"
 
@@ -248,6 +249,112 @@ Parrot_oo_get_class(PARROT_INTERP, ARGIN(PMC *key))
     return classobj;
 }
 
+/*
+
+=item C<PMC * Parrot_oo_clone_object(PARROT_INTERP, PMC * pmc, PMC * class_, PMC
+* dest)>
+
+Clone an Object PMC. If an existing PMC C<dest> is provided, reuse that
+PMC to store copies of the data. Otherwise, create a new PMC and populate
+that with the data.
+
+=cut
+
+*/
+
+PARROT_CANNOT_RETURN_NULL
+PMC *
+Parrot_oo_clone_object(PARROT_INTERP, ARGIN(PMC * pmc),
+    ARGMOD_NULLOK(PMC * class_), ARGMOD_NULLOK(PMC * dest))
+{
+    ASSERT_ARGS(Parrot_oo_clone_object)
+    Parrot_Object_attributes * obj;
+    Parrot_Class_attributes  * _class;
+    INTVAL num_classes;
+    PMC * cloned;
+    Parrot_Object_attributes * cloned_guts;
+    INTVAL i, num_attrs;
+
+    if (!PMC_IS_NULL(dest)) {
+        PARROT_ASSERT(!PMC_IS_NULL(class_));
+        PARROT_ASSERT(class_->vtable->base_type == enum_class_Class);
+        obj = (Parrot_Object_attributes *)
+            Parrot_oo_new_object_attrs(interp, class_);
+        cloned = dest;
+    }
+    else {
+        obj = PARROT_OBJECT(pmc);
+        cloned = pmc_new_noinit(interp, enum_class_Object);
+    }
+    _class = PARROT_CLASS(obj->_class);
+    PARROT_ASSERT(_class);
+    num_classes = VTABLE_elements(interp, _class->all_parents);
+
+    /* Set custom GC mark and destroy on the object. */
+    PObj_custom_mark_SET(cloned);
+    PObj_active_destroy_SET(cloned);
+
+    /* Flag that it is an object */
+    PObj_is_object_SET(cloned);
+
+    /* Now create the underlying structure, and clone attributes list.class. */
+    cloned_guts               = mem_allocate_zeroed_typed(Parrot_Object_attributes);
+    cloned_guts->_class       = obj->_class;
+    cloned_guts->attrib_store = VTABLE_clone(interp, obj->attrib_store);
+    PMC_data(cloned)          = cloned_guts;
+    num_attrs                 = VTABLE_elements(interp, cloned_guts->attrib_store);
+    for (i = 0; i < num_attrs; i++) {
+        PMC * const to_clone = VTABLE_get_pmc_keyed_int(interp, cloned_guts->attrib_store, i);
+        if (!PMC_IS_NULL(to_clone)) {
+            VTABLE_set_pmc_keyed_int(interp, cloned_guts->attrib_store, i,
+                    VTABLE_clone(interp, to_clone));
+        }
+    }
+
+    /* Some of the attributes may have been the PMCs providing storage for any
+     * PMCs we inherited from; also need to clone those. */
+    if (CLASS_has_alien_parents_TEST(obj->_class)) {
+        /* Locate any PMC parents. */
+        for (i = 0; i < num_classes; i++) {
+            PMC * const cur_class = VTABLE_get_pmc_keyed_int(interp, _class->all_parents, i);
+            if (cur_class->vtable->base_type == enum_class_PMCProxy) {
+                /* Clone this PMC too. */
+                STRING * const proxy = CONST_STRING(interp, "proxy");
+                VTABLE_set_attr_keyed(interp, cloned, cur_class, proxy,
+                    VTABLE_clone(interp,
+                        VTABLE_get_attr_keyed(interp, cloned, cur_class, proxy)));
+            }
+        }
+    }
+
+    /* And we have ourselves a clone. */
+    return cloned;
+}
+
+/*
+
+=item C<void * Parrot_oo_new_object_attrs(PARROT_INTERP, PMC * class_)>
+
+Create a new C<Parrot_Object_attributes> structure, which is the thing that
+holds data for an Object PMC. We need this for places where a new Object
+is being created without being instantiated by it's associated class, such
+as in C<Parrot_oo_clone_object>.
+
+=cut
+
+*/
+
+PARROT_CANNOT_RETURN_NULL
+void *
+Parrot_oo_new_object_attrs(PARROT_INTERP, ARGIN(PMC * class_))
+{
+    ASSERT_ARGS(Parrot_oo_new_object_attrs)
+    Parrot_Object_attributes * const obj_guts =
+        mem_allocate_zeroed_typed(Parrot_Object_attributes);
+    obj_guts->_class       = class_;
+    obj_guts->attrib_store = pmc_new(interp, enum_class_ResizablePMCArray);
+    return (void *)obj_guts;
+}
 
 /*
 
@@ -280,9 +387,17 @@ Parrot_oo_get_class_str(PARROT_INTERP, ARGIN(STRING *name))
         if (type > interp->n_vtable_max || type <= 0)
             return PMCNULL;
         else {
+            PMC * new_class;
+            PMC * new_ns;
             PMC * const type_num = pmc_new(interp, enum_class_Integer);
             VTABLE_set_integer_native(interp, type_num, type);
-            return pmc_new_init(interp, enum_class_PMCProxy, type_num);
+            new_ns = ns;
+            new_class = pmc_new_init(interp, enum_class_PMCProxy, type_num);
+            if (ns->vtable->base_type != enum_class_NameSpace) {
+                new_ns = Parrot_make_namespace_keyed_str(interp, hll_ns, name);
+            }
+            Parrot_PCCINVOKE(interp, new_ns, Parrot_str_new_constant(interp, "set_class"), "P->", new_class);
+            return new_class;
         }
     }
 
@@ -307,7 +422,7 @@ Parrot_oo_newclass_from_str(PARROT_INTERP, ARGIN(STRING *name))
 {
     ASSERT_ARGS(Parrot_oo_newclass_from_str)
     PMC * const namearg  = pmc_new(interp, enum_class_String);
-    PMC        *namehash = pmc_new(interp, enum_class_Hash);
+    PMC * const namehash = pmc_new(interp, enum_class_Hash);
     PMC        *classobj;
 
     VTABLE_set_string_native(interp, namearg, name);
@@ -567,7 +682,7 @@ Parrot_oo_register_type(PARROT_INTERP, ARGIN(PMC *name), ARGIN(PMC *_namespace))
 
     PMC * const classobj = VTABLE_get_class(interp, _namespace);
     if (!PMC_IS_NULL(classobj)) {
-        STRING *classname = VTABLE_get_string(interp, _namespace);
+        STRING * const classname = VTABLE_get_string(interp, _namespace);
         Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INVALID_OPERATION,
                 "Class %Ss already registered!\n",
                 Parrot_str_escape(interp, classname));
@@ -581,9 +696,9 @@ Parrot_oo_register_type(PARROT_INTERP, ARGIN(PMC *name), ARGIN(PMC *_namespace))
     }
     {
         if (!typeid_exists) {
-            PMC    *classname_hash = interp->class_hash;
+            PMC * const classname_hash = interp->class_hash;
+            PMC * const item           = pmc_new(interp, enum_class_Integer);
             /* set entry in name->type hash */
-            PMC    *item     = pmc_new(interp, enum_class_Integer);
             VTABLE_set_integer_native(interp, item, type);
 
             VTABLE_set_pmc_keyed(interp, classname_hash, name, item);
@@ -876,7 +991,7 @@ Parrot_find_method_with_cache(PARROT_INTERP, ARGIN(PMC *_class), ARGIN(STRING *m
         mc->mc_size = type + 1;
     }
 
-    if (!mc->idx[type]) {
+    if (mc->idx[type] == NULL) {
         mc->idx[type] = (Meth_cache_entry **)mem_sys_allocate_zeroed(
             sizeof (Meth_cache_entry *) * TBL_SIZE);
     }
@@ -938,7 +1053,7 @@ debug_trace_find_meth(PARROT_INTERP, ARGIN(const PMC *_class),
 
     if (PObj_is_class_TEST(_class)) {
         SLOTTYPE * const class_array    = PMC_data_typed(_class, SLOTTYPE *);
-        PMC *const       class_name_pmc = get_attrib_num(class_array, PCD_CLASS_NAME);
+        PMC      * const class_name_pmc = get_attrib_num(class_array, PCD_CLASS_NAME);
         class_name                      = VTABLE_get_string(interp, class_name_pmc);
     }
     else
@@ -1257,7 +1372,7 @@ Parrot_ComposeRole(PARROT_INTERP, ARGIN(PMC *role),
             if (VTABLE_exists_keyed_str(interp, methods_hash, method_name)) {
                 /* Conflicts with something already in the class, unless it's a
                  * multi-method. */
-                PMC *cur_entry = VTABLE_get_pmc_keyed_str(interp, methods_hash, method_name);
+                PMC * const cur_entry = VTABLE_get_pmc_keyed_str(interp, methods_hash, method_name);
                 if (PMC_IS_NULL(cur_entry) || !VTABLE_isa(interp, cur_entry, CONST_STRING(interp, "MultiSub")))
                     Parrot_ex_throw_from_c_args(interp, NULL,
                         EXCEPTION_ROLE_COMPOSITION_METHOD_CONFLICT,
@@ -1290,7 +1405,7 @@ Parrot_ComposeRole(PARROT_INTERP, ARGIN(PMC *role),
             /* Is there a method with this name already in the class? If it's
              * not a multi-method, error. */
             if (VTABLE_exists_keyed_str(interp, methods_hash, alias_name)) {
-                PMC *cur_entry = VTABLE_get_pmc_keyed_str(interp, methods_hash, alias_name);
+                PMC * const cur_entry = VTABLE_get_pmc_keyed_str(interp, methods_hash, alias_name);
                 if (PMC_IS_NULL(cur_entry) || !VTABLE_isa(interp, cur_entry, CONST_STRING(interp, "MultiSub")))
                     /* Conflicts with something already in the class. */
                     Parrot_ex_throw_from_c_args(interp, NULL,
@@ -1327,17 +1442,17 @@ Parrot_ComposeRole(PARROT_INTERP, ARGIN(PMC *role),
                                         proposed_add_methods, method_name);
 
         /* Add it to the methods of the class. */
-        PMC *cur_entry = VTABLE_get_pmc_keyed_str(interp, methods_hash, method_name);
+        PMC * const cur_entry = VTABLE_get_pmc_keyed_str(interp, methods_hash, method_name);
         if (VTABLE_isa(interp, cur_method, CONST_STRING(interp, "MultiSub"))) {
             /* The thing we're adding is a multi-sub, but is the thing in the
              * class already a multi-sub? */
             if (!PMC_IS_NULL(cur_entry) && VTABLE_isa(interp, cur_entry, CONST_STRING(interp, "MultiSub"))) {
                 /* Class already has a multi-sub; need to merge our methods into it. */
                 const INTVAL num_subs = VTABLE_elements(interp, cur_method);
-                INTVAL i;
-                for (i = 0; i < num_subs; i++)
+                INTVAL j;
+                for (j = 0; j < num_subs; j++)
                     VTABLE_push_pmc(interp, cur_entry, VTABLE_get_pmc_keyed_int(interp,
-                            cur_method, i));
+                            cur_method, j));
             }
             else {
                 /* It's not, and we didn't conflict so must be no entry. Just stick it in. */
