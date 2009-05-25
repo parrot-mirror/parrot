@@ -1,4 +1,5 @@
 package Parrot::Install;
+# Copyright (C) 2001-2009, Parrot Foundation.
 # $Id$
 use strict;
 use warnings;
@@ -59,7 +60,7 @@ B<Comment:>
 =cut
 
 sub lines_to_files {
-    my ($metatransforms, $transformorder, $manifests_ref, 
+    my ($metatransforms, $transformorder, $manifests_ref,
         $options_ref, $parrotdir) = @_;
     my @files;
     my %directories;
@@ -130,7 +131,7 @@ sub lines_to_files {
                 ref($filehash) eq 'HASH' or die "Error: transform didn't return a hash for key '$tkey'\n";
                 $filehash->{Dest} = File::Spec->catdir(
                     $options_ref->{$thash->{optiondir} . 'dir'},
-                    @{ $filehash->{DestDirs} }, 
+                    @{ $filehash->{DestDirs} },
                     $filehash->{Dest}
                 );
                 last FIXFILE;
@@ -189,8 +190,8 @@ B<Purpose:> Install the mentioned files into the appropriate locations.
         $list_of_files_and_executables,
     );
 
-B<Arguments:>  Takes two scalar arguments, followed by a reference to a 
-list consisting of hashes.  
+B<Arguments:>  Takes two scalar arguments, followed by a reference to a
+list consisting of hashes.
 
 B<Return Value:>  True value.
 

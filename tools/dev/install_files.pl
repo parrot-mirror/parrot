@@ -175,7 +175,7 @@ my(%metatransforms) = (
         transform => sub {
             my($filehash) = @_;
             # parrot with different config
-            $filehash->{Installable} = $filehash->{Dest} =~ s/^installable_//;     
+            $filehash->{Installable} = $filehash->{Dest} =~ s/^installable_//;
             return($filehash);
         },
         isbin => 1,
