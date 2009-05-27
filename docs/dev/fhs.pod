@@ -55,12 +55,12 @@ host-specific or varies with time is stored elsewhere.
 =head3 /usr/bin
 
 This is the primary directory of executable commands on the system. All
-executables that are intended to be called directly by the user (i.e.
-parrot, parrot_debugger, pbc_disassemble, pbc_dump, pbc_info, pbg_merge, ...)
-should go here. The current version number should be appended to the
-binaries itself and a symlink needs to be created that points from the
-binary with version number to the normal name of the file without a
-version. That makes installing more than one version possible.
+executables that are intended to be called directly by the user (i.e.  parrot,
+parrot_debugger, pbc_disassemble, pbc_dump, pbg_merge, ...) should go here.
+The current version number should be appended to the binaries itself and a
+symlink needs to be created that points from the binary with version number to
+the normal name of the file without a version. That makes installing more than
+one version possible.
 
 Executables that are for internal use only are stored elsewhere.
 

@@ -264,6 +264,11 @@ Here is a list of functions in this file which are currently being exported:
 
 * = item may be kept but reimplemented.
 
+=item functions in src/pbc_info.c [eligible in 1.5]
+
+L<https://trac.parrot.org/parrot/ticket/440>
+To be moved to F<examples/c/pbc_info.c>.  Will no longer be built by F<make>.
+
 =back
 
 =head1 Compiler tools
