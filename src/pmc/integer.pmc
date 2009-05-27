@@ -90,9 +90,10 @@ Destroys this PMC.
 
 
     VTABLE void init() {
-        Parrot_Integer_attributes* const attrs =
-            mem_allocate_zeroed_typed(Parrot_Integer_attributes);
-        attrs->iv = 0;
+        Parrot_Integer_attributes * const attrs =
+            mem_allocate_typed(Parrot_Integer_attributes);
+
+        attrs->iv      = 0;
         PMC_data(SELF) = attrs;
         PObj_active_destroy_SET(SELF);
     }
@@ -399,13 +400,27 @@ Adds C<value> to C<SELF> inplace.
                 VTABLE_i_add(INTERP, SELF, value);
                 break;
 
-            default:
+            case enum_class_Float:
                 VTABLE_set_number_native(INTERP, SELF,
                         a + VTABLE_get_number(INTERP, value));
+                break;
+
+            default:
+                /* Falling to MMD */
+                Parrot_mmd_multi_dispatch_from_c_args(INTERP,
+                        "i_add", "PP->", SELF, value);
                 break;
         }
     }
     
+    MULTI void i_add(Integer value) {
+        STATICSELF.i_add_int(VTABLE_get_integer(INTERP, value));
+    }
+    
+    MULTI void i_add(DEFAULT value) {
+        STATICSELF.i_add_float(VTABLE_get_number(INTERP, value));
+    }
+
     VTABLE void i_add_int(INTVAL b) {
         const INTVAL a = SELF.get_integer();
         const INTVAL c = a + b;
@@ -419,7 +434,6 @@ Adds C<value> to C<SELF> inplace.
             VTABLE_i_add_int(interp, SELF, b);
         }
     }
-
 
     VTABLE void i_add_float(FLOATVAL value) {
         const INTVAL a = SELF.get_integer();
@@ -510,12 +524,26 @@ Subtracts C<value> from C<SELF> inplace.
                 VTABLE_i_subtract(INTERP, SELF, value);
                 break;
 
+            case enum_class_Float:
+                STATICSELF.i_subtract_float(VTABLE_get_number(INTERP, value));
+                break;
+
             default:
-                VTABLE_set_number_native(INTERP, SELF,
-                        a - VTABLE_get_number(INTERP, value));
+                /* Falling to MMD */
+                Parrot_mmd_multi_dispatch_from_c_args(INTERP,
+                        "i_subtract", "PP->", SELF, value);
                 break;
         }
     }
+
+    MULTI void i_subtract(Integer value) {
+        STATICSELF.i_subtract_int(VTABLE_get_integer(INTERP, value));
+    }
+    
+    MULTI void i_subtract(DEFAULT value) {
+        STATICSELF.i_subtract_float(VTABLE_get_number(INTERP, value));
+    }
+
 
     VTABLE void i_subtract_int(INTVAL b) {
         const INTVAL a = SELF.get_integer();
@@ -608,11 +636,25 @@ Multiply C<value> with C<SELF> inplace.
                 VTABLE_i_multiply(INTERP, SELF, value);
                 break;
 
-            default:
+            case enum_class_Float:
                 VTABLE_set_number_native(INTERP, SELF,
-                        a * VTABLE_get_number(INTERP, value));
+                        a - VTABLE_get_number(INTERP, value));
+                break;
+
+            default:
+                /* Falling to MMD */
+                Parrot_mmd_multi_dispatch_from_c_args(INTERP,
+                        "i_multiply", "PP->", SELF, value);
                 break;
         }
+    }
+    
+    MULTI void i_multiply(Integer value) {
+        STATICSELF.i_multiply_int(VTABLE_get_integer(INTERP, value));
+    }
+    
+    MULTI void i_multiply(DEFAULT value) {
+        STATICSELF.i_multiply_float(VTABLE_get_number(INTERP, value));
     }
 
     VTABLE void i_multiply_int(INTVAL b) {
