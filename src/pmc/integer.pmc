@@ -43,6 +43,33 @@ upgrade_self_to_bignum(PARROT_INTERP, PMC *self)
     return self;
 }
 
+/* Try to reuse dest PMC if possible */
+static PMC*
+reuse_or_clone(PARROT_INTERP, PMC *self, PMC * value, PMC *dest)
+{
+    /* Can't reuse dest because we'll lost value */
+    if (dest == value)
+        return VTABLE_clone(interp, self);
+
+    /* Can't reuse Null */
+    if (PMC_IS_NULL(dest))
+        return VTABLE_clone(interp, self);
+        
+    /* Can't reuse read-only variables */
+    if (dest->vtable->flags & VTABLE_IS_READONLY_FLAG)
+        return VTABLE_clone(interp, self);
+
+    if (dest == self)
+        return dest;
+
+    /* Morph to Integer is required */
+    if (dest->vtable->base_type != enum_class_Integer)
+        pmc_reuse(interp, dest, enum_class_Integer, 0);
+
+    VTABLE_set_integer_native(interp, dest, VTABLE_get_integer(interp, self));
+    return dest;
+}
+
 pmclass Integer extends scalar provides integer provides scalar {
     ATTR INTVAL iv; /* the value of this Integer */
 
@@ -342,7 +369,7 @@ Adds C<value> to the integer and returns the result in C<*dest>.
 */
 
     VTABLE PMC *add(PMC *value, PMC *dest) {
-        dest = VTABLE_clone(INTERP, SELF);
+        dest = reuse_or_clone(INTERP, SELF, value, dest);
         VTABLE_i_add(INTERP, dest, value);
         return dest;
     }
@@ -456,7 +483,7 @@ C<get_integer> and C<set_integer_native> always.
 */
 
     VTABLE PMC *subtract(PMC *value, PMC *dest) {
-        dest = VTABLE_clone(INTERP, SELF);
+        dest = reuse_or_clone(INTERP, SELF, value, dest);
         VTABLE_i_subtract(INTERP, dest, value);
         return dest;
     }
@@ -578,7 +605,7 @@ Multiplies the integer by C<*value> and returns the result in C<*dest>.
 */
 
     VTABLE PMC *multiply(PMC *value, PMC *dest) {
-        dest = VTABLE_clone(interp, pmc);
+        dest = reuse_or_clone(INTERP, SELF, value, dest);
         VTABLE_i_multiply(INTERP, dest, value);
         return dest;
     }
@@ -701,7 +728,7 @@ Divides C<SELF> by C<value> inplace.
 */
 
     VTABLE PMC *divide(PMC *value, PMC *dest) {
-        dest = VTABLE_clone(INTERP, SELF);
+        dest = reuse_or_clone(INTERP, SELF, value, dest);
         VTABLE_i_divide(INTERP, dest, value);
         return dest;
     }
@@ -773,7 +800,7 @@ Divides C<SELF> by C<value> inplace.
 */
 
     VTABLE PMC *floor_divide(PMC *value, PMC *dest) {
-        dest = VTABLE_clone(INTERP, SELF);
+        dest = reuse_or_clone(INTERP, SELF, value, dest);
         VTABLE_i_floor_divide(INTERP, dest, value);
         return dest;
     }
@@ -877,7 +904,7 @@ Calculates modulus in place.
 
 
     VTABLE PMC *modulus(PMC *value, PMC *dest) {
-        dest = VTABLE_clone(INTERP, SELF);
+        dest = reuse_or_clone(INTERP, SELF, value, dest);
         VTABLE_i_modulus(INTERP, dest, value);
         return dest;
     }
