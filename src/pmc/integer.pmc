@@ -707,20 +707,47 @@ Divides C<SELF> by C<value> inplace.
     }
 
     VTABLE void i_divide(PMC *value) {
-        if (VTABLE_type(INTERP, value) == enum_class_BigInt) {
-            maybe_throw_overflow_error(INTERP);
-            SELF = upgrade_self_to_bignum(INTERP, SELF);
-            VTABLE_i_divide(INTERP, SELF, value);
-        }
-        else {
-            const FLOATVAL d = VTABLE_get_number(INTERP, value);
+        const INTVAL type = value->vtable->base_type;
+        switch (type) {
+            case enum_class_BigInt:
+                maybe_throw_overflow_error(INTERP);
+                SELF = upgrade_self_to_bignum(INTERP, SELF);
+                VTABLE_i_divide(INTERP, SELF, value);
+                break;
 
-            if (FLOAT_IS_ZERO(d))
-                Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_DIV_BY_ZERO,
-                    "float division by zero");
+            case enum_class_Integer:
+                STATICSELF.i_divide_int(VTABLE_get_integer(INTERP, value));
+                break;
 
-            VTABLE_set_number_native(INTERP, SELF, SELF.get_number() / d);
+            case enum_class_Float:
+                STATICSELF.i_divide_float(VTABLE_get_number(INTERP, value));
+
+            default:
+                /* Falling to MMD */
+                Parrot_mmd_multi_dispatch_from_c_args(INTERP,
+                        "i_divide", "PP->", SELF, value);
+                break;
         }
+    }
+
+    MULTI void i_divide(Integer value) {
+        STATICSELF.i_divide_int(VTABLE_get_integer(INTERP, value));
+    }
+
+    MULTI void i_divide(DEFAULT value) {
+        STATICSELF.i_divide_float(VTABLE_get_number(INTERP, value));
+    }
+
+    VTABLE void i_divide_int(INTVAL value) {
+        STATICSELF.i_divide_float(value);
+    }
+
+    VTABLE void i_divide_float(FLOATVAL value) {
+        if (FLOAT_IS_ZERO(value))
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_DIV_BY_ZERO,
+                "float division by zero");
+
+        VTABLE_set_number_native(INTERP, SELF, SELF.get_number() / value);
     }
 
 /*
