@@ -7,7 +7,7 @@ use warnings;
 use lib qw( . lib ../lib ../../lib );
 
 use Test::More;
-use Parrot::Test tests => 165;
+use Parrot::Test tests => 166;
 use Parrot::Config;
 
 =head1 NAME
@@ -2955,6 +2955,22 @@ CODE
 140
 140
 OUT
+
+pir_output_is( <<'CODE', <<'OUT', 'numification of unicode strings (see TT#724)', todo =>'TT#724' );
+.sub main :main
+    $S0 = unicode:"140 r\x{e9}sum\x{e9}s"
+    $N0 = $S0
+    say $N0
+    $I0 = find_encoding 'ucs2'
+    $S0 = trans_encoding $S0, $I0
+    $N0 = $S0
+    say $N0
+.end
+CODE
+140
+140
+OUT
+
 
 # Local Variables:
 #   mode: cperl
