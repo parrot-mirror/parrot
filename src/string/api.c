@@ -27,6 +27,7 @@ members, beside setting C<bufstart>/C<buflen> for external strings.
 #include "parrot/compiler.h"
 #include "parrot/string_funcs.h"
 #include "private_cstring.h"
+#include "api.str"
 
 #define nonnull_encoding_name(s) (s) ? (s)->encoding->name : "null string"
 #define saneify_string(s) \
@@ -2122,6 +2123,17 @@ Parrot_str_to_int(PARROT_INTERP, ARGIN_NULLOK(const STRING *s))
     }
 }
 
+/*
+ State of FSM during float value parsing
+ */
+typedef enum float_parse_state {
+    parse_start,
+    parse_before_dot,
+    parse_after_dot,
+    parse_after_e,
+    parse_after_e_sign,
+    parse_end
+} float_parse_state;
 
 /*
 
@@ -2139,39 +2151,103 @@ FLOATVAL
 Parrot_str_to_num(PARROT_INTERP, ARGIN(const STRING *s))
 {
     ASSERT_ARGS(Parrot_str_to_num)
-    FLOATVAL    f;
-    char       *cstr;
-    const char *p;
+    FLOATVAL    f      = 0.0;
+    FLOATVAL    sign   = 1.0; /* -1 for '-' */
+    FLOATVAL    d      = 0.1;
+    INTVAL      e      = 0;
+    INTVAL      e_sign = 1; /* -1 for '-' */
+    String_iter iter;
+    UINTVAL     offs;
+    float_parse_state state = parse_start;
 
-    /*
-     * XXX C99 atof interprets 0x prefix
-     * XXX would strtod() be better for detecting malformed input?
-     */
-    cstr = Parrot_str_to_cstring(interp, s);
-    p    = cstr;
+    if (Parrot_str_equal(interp, s, CONST_STRING(interp, "Inf")))
+        return PARROT_FLOATVAL_INF_POSITIVE;
+    else if (Parrot_str_equal(interp, s, CONST_STRING(interp, "-Inf")))
+        return PARROT_FLOATVAL_INF_NEGATIVE;
+    else if (Parrot_str_equal(interp, s, CONST_STRING(interp, "NaN")))
+        return PARROT_FLOATVAL_NAN_QUIET;
 
-    while (isspace((unsigned char)*p))
-        p++;
+    ENCODING_ITER_INIT(interp, s, &iter);
 
-    if (STREQ(p, PARROT_CSTRING_INF_POSITIVE))
-        f = PARROT_FLOATVAL_INF_POSITIVE;
-    else if (STREQ(p, PARROT_CSTRING_INF_NEGATIVE))
-        f = PARROT_FLOATVAL_INF_NEGATIVE;
-    else if (STREQ(p, PARROT_CSTRING_NAN_QUIET))
-        f = PARROT_FLOATVAL_NAN_QUIET;
+    /* Handcrafter FSM to read float value */
+    for (offs = 0; (state != parse_end) && (offs < s->strlen); ++offs) {
+        const UINTVAL c = iter.get_and_advance(interp, &iter);
+        switch (state) {
+            case parse_start:
+                if (isdigit(c)) {
+                    f = c - '0';
+                    state = parse_before_dot;
+                }
+                else if (c == '-') {
+                    sign = -1.0;
+                    state = parse_before_dot;
+                }
+                else if (c == '+')
+                    state = parse_before_dot;
+                else if (c == '.')
+                    state = parse_after_dot;
+                else if (isspace(c))
+                    ; /* Do nothing */
+                else
+                    state = parse_end;
+                break;
+
+            case parse_before_dot:
+                if (isdigit(c))
+                    f = f*10.0 + (c-'0');
+                else if (c == '.')
+                    state = parse_after_dot;
+                else if (c == 'e' || c == 'E')
+                    state = parse_after_e;
+                else
+                    state = parse_end;
+                break;
+
+            case parse_after_dot:
+                if (isdigit(c)) {
+                    f += (c-'0') * d;
+                    d /= 10.0;
+                }
+                else if (c == 'e' || c == 'E')
+                    state = parse_after_e;
+                else
+                    state = parse_end;
+                break;
+
+            case parse_after_e:
+                if (isdigit(c)) {
+                    e = e*10 + (c-'0');
+                    state = parse_after_e_sign;
+                }
+                else if (c == '-') {
+                    e_sign = -1;
+                    state = parse_after_e_sign;
+                }
+                else if (c == '+')
+                    state = parse_after_e_sign;
+                else
+                    state = parse_end;
+                break;
+
+            case parse_after_e_sign:
+                if (isdigit(c))
+                    e = e*10 + (c-'0');
+                else
+                    state = parse_end;
+                break;
+
+            case parse_end:
+            default:
+                /* Pacify compiler */
+                break;
+        }
+    }
+
+    f = f * sign;
+    if (e_sign == 1)
+        f *= powl(10, e);
     else
-        f = atof(p);
-
-    /* Not all atof()s return -0 from "-0" */
-    if (*p == '-' && FLOAT_IS_ZERO(f))
-#if defined(_MSC_VER)
-        /* Visual C++ compiles -0.0 to 0.0, so we need to trick
-            the compiler. */
-        f = 0.0 * -1;
-#else
-        f = -0.0;
-#endif
-    Parrot_str_free_cstring(cstr);
+        f /= powl(10, e);
 
     return f;
 }
