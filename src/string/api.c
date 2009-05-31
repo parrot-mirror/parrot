@@ -2169,11 +2169,19 @@ FLOATVAL
 Parrot_str_to_num(PARROT_INTERP, ARGIN(const STRING *s))
 {
     ASSERT_ARGS(Parrot_str_to_num)
-    FLOATVAL    f      = 0.0;
-    FLOATVAL    sign   = 1.0; /* -1 for '-' */
-    FLOATVAL    d      = 0.1;
-    INTVAL      e      = 0;
-    INTVAL      e_sign = 1; /* -1 for '-' */
+    FLOATVAL      f         = 0.0;
+    FLOATVAL      mantissa  = 0.0;
+    FLOATVAL      sign      = 1.0; /* -1 for '-' */
+    FLOATVAL      divider   = 0.1;
+    INTVAL        e         = 0;
+    INTVAL        e_sign    = 1; /* -1 for '-' */
+    /* How many digits it's safe to parse */
+    const INTVAL  max_safe  = PARROT_INTVAL_MAX / 10;
+    INTVAL        m         = 0;    /* Integer mantissa */
+    int           m_is_safe = 1;    /* We can use integer mantissa */
+    INTVAL        d         = 0;    /* Integer descriminator */
+    int           d_is_safe = 1;    /* We can use integer mantissa */
+    int           d_length  = 0;
     String_iter iter;
     UINTVAL     offs;
     number_parse_state state = parse_start;
@@ -2194,6 +2202,7 @@ Parrot_str_to_num(PARROT_INTERP, ARGIN(const STRING *s))
             case parse_start:
                 if (isdigit(c)) {
                     f = c - '0';
+                    m = c - '0';
                     state = parse_before_dot;
                 }
                 else if (c == '-') {
@@ -2211,20 +2220,42 @@ Parrot_str_to_num(PARROT_INTERP, ARGIN(const STRING *s))
                 break;
 
             case parse_before_dot:
-                if (isdigit(c))
+                if (isdigit(c)) {
                     f = f*10.0 + (c-'0');
-                else if (c == '.')
+                    m = m*10 + (c-'0');
+                    /* Integer overflow for mantissa */
+                    if (m > max_safe)
+                        m_is_safe = 0;
+                }
+                else if (c == '.') {
                     state = parse_after_dot;
-                else if (c == 'e' || c == 'E')
+                    /*
+                     * Throw gathered result. Recalulate from integer mantissa
+                     * to preserve precision.
+                     */
+                    if (m_is_safe)
+                        f = m;
+                    mantissa = f;
+                }
+                else if (c == 'e' || c == 'E') {
                     state = parse_after_e;
+                    /* See comment above */
+                    if (m_is_safe)
+                        f = m;
+                    mantissa = f;
+                }
                 else
                     state = parse_end;
                 break;
 
             case parse_after_dot:
                 if (isdigit(c)) {
-                    f += (c-'0') * d;
-                    d /= 10.0;
+                    f += (c-'0') * divider;
+                    divider /= 10.0;
+                    d = d*10 + (c-'0');
+                    if (d >= max_safe)
+                        d_is_safe = 0;
+                    d_length++;
                 }
                 else if (c == 'e' || c == 'E')
                     state = parse_after_e;
@@ -2259,6 +2290,10 @@ Parrot_str_to_num(PARROT_INTERP, ARGIN(const STRING *s))
                 /* Pacify compiler */
                 break;
         }
+    }
+
+    if (d && d_is_safe) {
+        f = mantissa + (1.0 * d / powl(10, d_length));
     }
 
     f = f * sign;
