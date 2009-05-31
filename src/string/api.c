@@ -2043,6 +2043,21 @@ Parrot_str_format_data(PARROT_INTERP, ARGIN(const char *format), ...)
     return output;
 }
 
+/*
+State of FSM during number value parsing.
+
+Integer uses only parse_start, parse_before_dot and parse_end.
+
+*/
+typedef enum number_parse_state {
+    parse_start,
+    parse_before_dot,
+    parse_after_dot,
+    parse_after_e,
+    parse_after_e_sign,
+    parse_end
+} number_parse_state;
+
 
 /*
 
@@ -2076,45 +2091,60 @@ Parrot_str_to_int(PARROT_INTERP, ARGIN_NULLOK(const STRING *s))
     if (s == NULL)
         return 0;
     {
-        const char         *start     = s->strstart;
-        const char * const  end       = start + s->bufused;
         const INTVAL        max_safe  = PARROT_INTVAL_MAX / 10;
         const INTVAL        last_dig  = PARROT_INTVAL_MAX % 10;
         int                 sign      = 1;
-        INTVAL              in_number = 0;
         INTVAL              i         = 0;
+        String_iter         iter;
+        UINTVAL             offs;
+        number_parse_state  state = parse_start;
 
-        PARROT_ASSERT(s);
+        ENCODING_ITER_INIT(interp, s, &iter);
 
-        while (start < end) {
-            const unsigned char c = *start;
+        for (offs = 0; (state != parse_end) && (offs < s->strlen); ++offs) {
+            const UINTVAL c = iter.get_and_advance(interp, &iter);
 
-            if (isdigit((unsigned char)c)) {
-                const INTVAL nextval = c - '0';
-                in_number = 1;
-                if (i < max_safe || (i == max_safe && nextval <= last_dig))
-                    i = i * 10 + nextval;
-                else
-                    Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_ERR_OVERFLOW,
-                        "Integer value of String '%S' too big", s);
-            }
-            else if (!in_number) {
-                /* we've not yet seen any digits */
-                if (c == '-') {
-                    sign      = -1;
-                    in_number = 1;
-                }
-                else if (c == '+')
-                    in_number = 1;
-                else if (isspace((unsigned char)c))
-                    ;
-                else
+            switch (state) {
+                case parse_start:
+                    if (isdigit(c)) {
+                        const INTVAL nextval = c - '0';
+                        if (i < max_safe || (i == max_safe && nextval <= last_dig))
+                            i = i * 10 + nextval;
+                        else
+                            Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_ERR_OVERFLOW,
+                                "Integer value of String '%S' too big", s);
+                        state = parse_before_dot;
+                    }
+                    else if (c == '-') {
+                        sign      = -1;
+                        state = parse_before_dot;
+                    }
+                    else if (c == '+')
+                        state = parse_before_dot;
+                    else if (isspace((unsigned char)c))
+                        ; /* Do nothing */
+                    else
+                        state = parse_end;
+
+                    break;
+
+                case parse_before_dot:
+                    if (isdigit(c)) {
+                        const INTVAL nextval = c - '0';
+                        if (i < max_safe || (i == max_safe && nextval <= last_dig))
+                            i = i * 10 + nextval;
+                        else
+                            Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_ERR_OVERFLOW,
+                                "Integer value of String '%S' too big", s);
+                    }
+                    else
+                        state = parse_end;
+                    break;
+
+                default:
+                    /* Pacify compiler */
                     break;
             }
-            else {
-                break;
-            }
-            ++start;
         }
 
         i *= sign;
@@ -2122,18 +2152,6 @@ Parrot_str_to_int(PARROT_INTERP, ARGIN_NULLOK(const STRING *s))
         return i;
     }
 }
-
-/*
- State of FSM during float value parsing
- */
-typedef enum float_parse_state {
-    parse_start,
-    parse_before_dot,
-    parse_after_dot,
-    parse_after_e,
-    parse_after_e_sign,
-    parse_end
-} float_parse_state;
 
 /*
 
@@ -2158,7 +2176,7 @@ Parrot_str_to_num(PARROT_INTERP, ARGIN(const STRING *s))
     INTVAL      e_sign = 1; /* -1 for '-' */
     String_iter iter;
     UINTVAL     offs;
-    float_parse_state state = parse_start;
+    number_parse_state state = parse_start;
 
     if (Parrot_str_equal(interp, s, CONST_STRING(interp, "Inf")))
         return PARROT_FLOATVAL_INF_POSITIVE;
