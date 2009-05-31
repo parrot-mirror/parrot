@@ -2224,7 +2224,7 @@ Parrot_str_to_num(PARROT_INTERP, ARGIN(const STRING *s))
                     f = f*10.0 + (c-'0');
                     m = m*10 + (c-'0');
                     /* Integer overflow for mantissa */
-                    if (m > max_safe)
+                    if (m >= max_safe)
                         m_is_safe = 0;
                 }
                 else if (c == '.') {
@@ -2297,10 +2297,13 @@ Parrot_str_to_num(PARROT_INTERP, ARGIN(const STRING *s))
     }
 
     f = f * sign;
-    if (e_sign == 1)
-        f *= powl(10, e);
-    else
-        f /= powl(10, e);
+
+    if (e) {
+        if (e_sign == 1)
+            f *= powl(10, e);
+        else
+            f /= powl(10, e);
+    }
 
     return f;
 }

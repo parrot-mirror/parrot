@@ -7,7 +7,7 @@ use warnings;
 use lib qw( . lib ../lib ../../lib );
 
 use Test::More;
-use Parrot::Test tests => 163;
+use Parrot::Test tests => 164;
 use Parrot::Config;
 
 =head1 NAME
@@ -2924,6 +2924,16 @@ Foo/Bar
 Foo::Bar
 Foo/Bar
 Foo/Bar
+OUT
+
+pir_output_is( <<'CODE', <<'OUT', 'Corner cases of numification' );
+.sub main :main
+    say 2147483647.0
+    say -2147483648.0
+.end
+CODE
+2147483647
+-2147483648
 OUT
 
 
