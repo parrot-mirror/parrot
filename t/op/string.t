@@ -2941,12 +2941,18 @@ pir_output_is( <<'CODE', <<'OUT', 'Non canonical nan and inf' );
     say $N0
     $N0 = 'iNf'
     say $N0
+    $N0 = 'INFINITY'
+    say $N0
     $N0 = '-INF'
+    say $N0
+    $N0 = '-Infinity'
     say $N0
 .end
 CODE
 NaN
 Inf
+Inf
+-Inf
 -Inf
 OUT
 

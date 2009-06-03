@@ -2182,20 +2182,13 @@ Parrot_str_to_num(PARROT_INTERP, ARGIN(const STRING *s))
     INTVAL        d         = 0;    /* Integer descriminator */
     int           d_is_safe = 1;    /* We can use integer mantissa */
     int           d_length  = 0;
-    int           check_nan = 0;    /* Support for deprecated nan, inf */
+    int           check_nan = 0;    /* Check for NaN and Inf after main loop */
     String_iter iter;
     UINTVAL     offs;
     number_parse_state state = parse_start;
 
     if (!s)
         return 0.0;
-
-    if (Parrot_str_equal(interp, s, CONST_STRING(interp, "Inf")))
-        return PARROT_FLOATVAL_INF_POSITIVE;
-    else if (Parrot_str_equal(interp, s, CONST_STRING(interp, "-Inf")))
-        return PARROT_FLOATVAL_INF_NEGATIVE;
-    else if (Parrot_str_equal(interp, s, CONST_STRING(interp, "NaN")))
-        return PARROT_FLOATVAL_NAN_QUIET;
 
     ENCODING_ITER_INIT(interp, s, &iter);
 
@@ -2300,15 +2293,17 @@ Parrot_str_to_num(PARROT_INTERP, ARGIN(const STRING *s))
         }
     }
 
-    /* DEPRECATED support for non-canonical NaN and Inf */
+    /* Support for non-canonical NaN and Inf */
     /* charpos <=2 because for "-i" iter will be advanced to next char already */
     if (check_nan && (iter.charpos <= 2)) {
         STRING *t = Parrot_str_upcase(interp, s);
         if (Parrot_str_equal(interp, t, CONST_STRING(interp, "NAN")))
             return PARROT_FLOATVAL_NAN_QUIET;
-        else if (Parrot_str_equal(interp, t, CONST_STRING(interp, "INF")))
+        else if (Parrot_str_equal(interp, t, CONST_STRING(interp, "INF"))
+                || Parrot_str_equal(interp, t, CONST_STRING(interp, "INFINITY")))
             return PARROT_FLOATVAL_INF_POSITIVE;
-        else if (Parrot_str_equal(interp, t, CONST_STRING(interp, "-INF")))
+        else if (Parrot_str_equal(interp, t, CONST_STRING(interp, "-INF"))
+                || Parrot_str_equal(interp, t, CONST_STRING(interp, "-INFINITY")))
             return PARROT_FLOATVAL_INF_NEGATIVE;
         else
             return 0.0;
