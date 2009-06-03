@@ -2182,9 +2182,13 @@ Parrot_str_to_num(PARROT_INTERP, ARGIN(const STRING *s))
     INTVAL        d         = 0;    /* Integer descriminator */
     int           d_is_safe = 1;    /* We can use integer mantissa */
     int           d_length  = 0;
+    int           check_nan = 0;    /* Support for deprecated nan, inf */
     String_iter iter;
     UINTVAL     offs;
     number_parse_state state = parse_start;
+
+    if (!s)
+        return 0.0;
 
     if (Parrot_str_equal(interp, s, CONST_STRING(interp, "Inf")))
         return PARROT_FLOATVAL_INF_POSITIVE;
@@ -2215,8 +2219,10 @@ Parrot_str_to_num(PARROT_INTERP, ARGIN(const STRING *s))
                     state = parse_after_dot;
                 else if (isspace(c))
                     ; /* Do nothing */
-                else
-                    state = parse_end;
+                else {
+                    check_nan = 1;
+                    state     = parse_end;
+                }
                 break;
 
             case parse_before_dot:
@@ -2244,8 +2250,10 @@ Parrot_str_to_num(PARROT_INTERP, ARGIN(const STRING *s))
                         f = m;
                     mantissa = f;
                 }
-                else
-                    state = parse_end;
+                else {
+                    check_nan = 1;
+                    state     = parse_end;
+                }
                 break;
 
             case parse_after_dot:
@@ -2290,6 +2298,20 @@ Parrot_str_to_num(PARROT_INTERP, ARGIN(const STRING *s))
                 /* Pacify compiler */
                 break;
         }
+    }
+
+    /* DEPRECATED support for non-canonical NaN and Inf */
+    /* charpos <=2 because for "-i" iter will be advanced to next char already */
+    if (check_nan && (iter.charpos <= 2)) {
+        STRING *t = Parrot_str_upcase(interp, s);
+        if (Parrot_str_equal(interp, t, CONST_STRING(interp, "NAN")))
+            return PARROT_FLOATVAL_NAN_QUIET;
+        else if (Parrot_str_equal(interp, t, CONST_STRING(interp, "INF")))
+            return PARROT_FLOATVAL_INF_POSITIVE;
+        else if (Parrot_str_equal(interp, t, CONST_STRING(interp, "-INF")))
+            return PARROT_FLOATVAL_INF_NEGATIVE;
+        else
+            return 0.0;
     }
 
     if (d && d_is_safe) {

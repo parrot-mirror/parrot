@@ -7,7 +7,7 @@ use warnings;
 use lib qw( . lib ../lib ../../lib );
 
 use Test::More;
-use Parrot::Test tests => 164;
+use Parrot::Test tests => 165;
 use Parrot::Config;
 
 =head1 NAME
@@ -2935,6 +2935,21 @@ CODE
 2147483647
 -2147483648
 OUT
+pir_output_is( <<'CODE', <<'OUT', 'Non canonical nan and inf' );
+.sub main :main
+    $N0 = 'nan'
+    say $N0
+    $N0 = 'iNf'
+    say $N0
+    $N0 = '-INF'
+    say $N0
+.end
+CODE
+NaN
+Inf
+-Inf
+OUT
+
 
 
 # Local Variables:
