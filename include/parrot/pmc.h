@@ -97,6 +97,18 @@ PMC * pmc_reuse_by_class(PARROT_INTERP,
         FUNC_MODIFIES(*pmc);
 
 PARROT_EXPORT
+PARROT_CANNOT_RETURN_NULL
+PARROT_IGNORABLE_RESULT
+PMC * pmc_reuse_init(PARROT_INTERP,
+    ARGIN(PMC *pmc),
+    INTVAL new_type,
+    ARGIN(PMC *init),
+    NULLOK(UINTVAL flags))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(4);
+
+PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
 INTVAL pmc_type(PARROT_INTERP, ARGIN_NULLOK(STRING *name))
         __attribute__nonnull__(1);
@@ -151,6 +163,10 @@ PMC * temporary_pmc_new(PARROT_INTERP, INTVAL base_type)
        PARROT_ASSERT_ARG(interp) \
     || PARROT_ASSERT_ARG(pmc) \
     || PARROT_ASSERT_ARG(class_)
+#define ASSERT_ARGS_pmc_reuse_init __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(pmc) \
+    || PARROT_ASSERT_ARG(init)
 #define ASSERT_ARGS_pmc_type __attribute__unused__ int _ASSERT_ARGS_CHECK = \
        PARROT_ASSERT_ARG(interp)
 #define ASSERT_ARGS_pmc_type_p __attribute__unused__ int _ASSERT_ARGS_CHECK = \
