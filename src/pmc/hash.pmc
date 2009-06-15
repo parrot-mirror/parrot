@@ -20,6 +20,7 @@ These are the vtable functions for the Hash PMC.
 
 #include "pmc_iterator.h"
 #include "pmc_key.h"
+#include "pmc_hashiteratorkey.h"
 
 /*
 
@@ -507,6 +508,12 @@ Returns the string value for the element at C<*key>.
         PMC         *nextkey;
         Hash * const hash = (Hash *)SELF.get_pointer();
 
+        /* called from iterator */
+        if (VTABLE_type(INTERP, key) == enum_class_HashIteratorKey) {
+            PMC *val = (PMC*)PARROT_HASHITERATORKEY(key)->bucket->value;
+            return VTABLE_get_string(INTERP, val);
+        }
+
         if ((PObj_get_FLAGS(key) & KEY_type_FLAGS) == KEY_hash_iterator_FLAGS) {
             /* called from iterator with an integer idx in key */
             if (hash->key_type == Hash_key_type_int) {
@@ -623,6 +630,11 @@ Returns the PMC value for the element at C<*key>.
         STRING        *keystr;
         HashBucket    *b;
         PMC           *nextkey;
+
+        /* called from iterator */
+        if (VTABLE_type(INTERP, key) == enum_class_HashIteratorKey) {
+            return (PMC*)PARROT_HASHITERATORKEY(key)->bucket->value;
+        }
 
         /* called from iterator with an integer idx in key */
         if ((PObj_get_FLAGS(key) & KEY_type_FLAGS) == KEY_hash_iterator_FLAGS) {
