@@ -153,6 +153,18 @@ Marks the hash as live.
 
 /*
 
+=item C<PMC *get_pmc()>
+
+Returns this Iterator's Hash.
+
+=cut
+*/
+    VTABLE PMC* get_pmc() {
+        return PARROT_HASHITERATOR(SELF)->pmc_hash;
+    }
+
+/*
+
 =item C<INTVAL get_bool()>
 
 Returns true if there is more elements to iterate over.
@@ -216,7 +228,13 @@ the next one.
     }
 
 /*
+
 */
+
+    VTABLE STRING* shift_string() {
+        PMC *key = SELF.shift_pmc();
+        return VTABLE_get_string(INTERP, key);
+    }
 
 }
 
