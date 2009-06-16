@@ -607,18 +607,7 @@ Returns the PMC value for the element at C<*key>.
 */
 
     VTABLE PMC *get_iter() {
-        PMC * const iter     = pmc_new_init(INTERP, enum_class_Iterator, SELF);
-        PMC * const key      = pmc_new(INTERP, enum_class_Key);
-
-        SETATTR_Iterator_key(INTERP, iter, key);
-        PObj_get_FLAGS(key) |= KEY_hash_iterator_FLAGS;
-        SETATTR_Key_next_key(INTERP, key, (PMC *)INITBucketIndex);
-
-        /* -1 for an empty hash, 0 for a non-empty hash.  */
-        SETATTR_Key_int_key(INTERP, key,
-            parrot_hash_size(INTERP, (Hash *)SELF.get_pointer()) ? 0 : -1);
-
-        return iter;
+        return pmc_new_init(INTERP, enum_class_HashIterator, SELF);
     }
 
     VTABLE PMC *slice(PMC *key) {
