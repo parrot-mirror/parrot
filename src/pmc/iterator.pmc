@@ -105,6 +105,10 @@ Defaults iteration mode to iterate from start.
             SELF = pmc_reuse_init(INTERP, SELF, enum_class_ArrayIterator, aggregate, 0);
             return;
         }
+        else if (VTABLE_does(INTERP, aggregate, CONST_STRING(INTERP, "hash"))) {
+            SELF = pmc_reuse_init(INTERP, SELF, enum_class_HashIterator, aggregate, 0);
+            return;
+        }
         else {
             Parrot_Iterator_attributes *attrs =
                 mem_allocate_zeroed_typed(Parrot_Iterator_attributes);
