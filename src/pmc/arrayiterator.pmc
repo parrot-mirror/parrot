@@ -58,15 +58,6 @@ pmclass ArrayIterator no_ro {
     ATTR INTVAL  length;    /* Length of C<array> */
     ATTR INTVAL  reverse;   /* Direction of iteration. 1 - for reverse iteration */
 
-    void class_init() {
-        if (pass) {
-            /* Make the shift_pmc vtable function available as
-             * a method named "next" */
-            register_nci_method(INTERP, enum_class_ArrayIterator,
-                    F2DPTR(Parrot_ArrayIterator_shift_pmc), "next", "PJO");
-        }
-    }
-
 /*
 
 =item C<void init()>
