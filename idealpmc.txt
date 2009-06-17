@@ -1,0 +1,69 @@
+#include "../src/io/io_private.h"
+
+#ifdef PARROT_HAS_READLINE
+#ifdef __cplusplus
+extern "C" {
+#endif
+    char *readline(const char *);
+    void add_history(const char*);
+#ifdef __cplusplus
+}
+#endif
+#endif
+
+pmclass FileHandle extends Handle {
+    ATTR INTVAL flags;                /* Filehandle flags             */
+    ATTR STRING *filename;            /* The opened path and filename */
+    ATTR STRING *mode;                /* The mode string used in open */
+    ATTR STRING *encoding;            /* The encoding for read/write  */
+    ATTR INTVAL process_id;           /* Child process on pipes       */
+    ATTR PIOOFF_T file_size;          /* Current file size            */
+    ATTR PIOOFF_T file_pos;           /* Current real file pointer    */
+    ATTR PIOOFF_T last_pos;           /* Last file position           */
+    ATTR size_t buffer_size;          /* Buffer size                  */
+    ATTR INTVAL buffer_flags;         /* Buffer flags                 */
+    ATTR unsigned char *buffer_start; /* Start of buffer              */
+    ATTR unsigned char *buffer_end;   /* End of buffer                */
+    ATTR unsigned char *buffer_next;  /* Current read/write pointer   */
+
+/*
+
+=item C<METHOD readline_interactive(STRING *prompt)>
+
+Read a line from the filehandle and return it in a string.
+
+=cut
+
+*/
+
+    METHOD readline_interactive(STRING *prompt :optional, INTVAL got_prompt :opt_flag) {
+        STRING *string_result = NULL;
+#ifdef PARROT_HAS_READLINE
+        char * const r = readline(got_prompt ? prompt->strstart : NULL);
+
+        if (r) {
+            if (*r)
+                add_history(r);
+
+            string_result = Parrot_str_new(INTERP, r, 0);
+            mem_sys_free(r);
+        }
+#else
+        if (got_prompt)
+            fprintf(stderr, "%s", prompt->strstart);
+
+#endif
+        if (string_result)
+            RETURN(STRING *string_result);
+        else
+            RETURN(PMC *PMCNULL);
+    }
+} /* end pmclass */
+
+    /* 4-column indent to get c_indent.t to DTRT */
+/*
+ * Local variables:
+ *   c-file-style: "parrot"
+ * End:
+ * vim: expandtab shiftwidth=4:
+ */
