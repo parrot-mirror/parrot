@@ -71,6 +71,7 @@ advance_to_next(PARROT_INTERP, PMC *self) {
         bucket = attrs->parrot_hash->bi[attrs->pos++];
     }
     attrs->bucket = bucket;
+    attrs->elements--;
     return bucket;
 }
 
@@ -80,6 +81,7 @@ pmclass HashIterator extends Iterator no_ro {
     ATTR HashBucket *bucket;        /* Current bucket */
     ATTR INTVAL      total_buckets; /* */
     ATTR INTVAL      pos;           /* */
+    ATTR INTVAL      elements;      /* How many elements left to iterate over */
 
 /*
 
@@ -101,6 +103,9 @@ Defaults iteration mode to iterate from start.
         attrs->total_buckets    = attrs->parrot_hash->mask + 1;
         attrs->bucket           = 0;
         attrs->pos              = 0;
+        /* Will be decreased on initial advance_to_next */
+        /* XXX Do we really need to support this use-case ? */
+        attrs->elements         = attrs->parrot_hash->entries + 1;
         PMC_data(SELF)          = attrs;
 
         PObj_custom_mark_destroy_SETALL(SELF);
@@ -181,14 +186,14 @@ Returns true if there is more elements to iterate over.
 
 =item C<INTVAL elements()>
 
-Returns the number of remaining elements in the array.
+Returns the number of remaining elements in the Hash.
 
 =cut
 
 */
 
     VTABLE INTVAL elements() {
-        return 0;
+        return PARROT_HASHITERATOR(SELF)->elements;
     }
 
     VTABLE INTVAL get_integer() {
