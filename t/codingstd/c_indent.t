@@ -6,7 +6,7 @@ use strict;
 use warnings;
 
 use lib qw( . lib ../lib ../../lib );
-use Data::Dumper;$Data::Dumper::Indent=1;
+use Data::Dumper;$Data::Dumper::Indent=0;
 use Test::More tests => 2;
 use Parrot::Distribution;
 
@@ -63,6 +63,7 @@ sub check_indent {
             $state{line_cnt}++;
             next unless defined $line;
             chomp $line;
+#print STDERR Dumper \%state;print STDERR "\n";
 
             $state{prev_last_char} = $state{last_char};
             $state{last_char} = substr( $line, -1, 1 );
