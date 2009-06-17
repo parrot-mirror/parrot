@@ -1204,22 +1204,27 @@ lp:
   iter = new ['Iterator'], thash
   iter = .ITERATE_FROM_START
 
-  .local string key
+  .local pmc keys, key
+  keys = new ['ResizablePMCArray']
 
   # go through the hash, print out all the keys: should be a c and e
 preit_loop:
   unless iter goto preit_end
 
   key = shift iter
-  result .= key
+  $S0 = key
+  push keys, $S0
 
   branch preit_loop
 preit_end:
 
+  keys.'sort'()
+  result = join '', keys
   is( result, 'ace', 'iterated through keys successfully' )
 
   # get rid of the c element?
   delete thash["c"]
+  keys = new ['ResizablePMCArray']
 
   # what do we have after deletion?
   result = ""
@@ -1233,11 +1238,15 @@ postit_loop:
   unless iter goto postit_end
 
   key = shift iter
-  result .= key
+  $S0 = key
+  push keys, $S0
+
 
   branch postit_loop
 postit_end:
 
+  keys.'sort'()
+  result = join '', keys
   is( result, 'ae', 'the c key was no longer iterated over' )
 .end
 
