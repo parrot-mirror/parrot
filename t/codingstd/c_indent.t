@@ -53,7 +53,7 @@ sub check_indent {
         my %state = (
             stack           => [],
             line_cnt        => 0,
-            block_indent    => undef,
+            bif             => undef,
             prev_last_char  => '',
             last_char       => '',
             in_comment      => 0,
@@ -61,9 +61,9 @@ sub check_indent {
 
         foreach my $line (@source) {
             $state{line_cnt}++;
-            next unless defined $line;
             chomp $line;
-#print STDERR Dumper \%state;print STDERR "\n";
+#            dump_state(\%state, $line);
+            next unless $line;
 
             $state{prev_last_char} = $state{last_char};
             $state{last_char} = substr( $line, -1, 1 );
@@ -92,6 +92,7 @@ sub check_indent {
                     $pp_failed{"$path\n"} = 1;
                 }
                 push @{ $state{stack} }, "#$condition $postspace";
+                $state{bif} = undef;
                 next;
             }
             if ( $line =~ m/^\s*\#(\s*)(else|elif)/)
@@ -150,7 +151,7 @@ sub check_indent {
 
                 my $prespace = $1;
                 # note the beginning of a block, and its indent depth.
-                $state{block_indent} = length($prespace);
+                $state{bif} = length($prespace);
                 next;
             }
 
@@ -158,14 +159,18 @@ sub check_indent {
 
                 my $closing_punc = $1;
                 # skip the last line of the func or cpp directives.
-                $state{block_indent} = undef if ( $closing_punc eq "}" );
+#                $state{bif} = undef if ( $closing_punc eq "}" );
+                if ( $closing_punc eq "}" ) {
+                    $state{bif} = undef;
+                    next;
+                }
                 next;
             }
 
-            if ( defined($state{block_indent}) ) {
+            if ( defined($state{bif}) ) {
 
                 # first line of a block
-                if ( $state{block_indent} == 0 ) {
+                if ( $state{bif} == 0 ) {
 
                     # first line of a top-level block (first line of a function,
                     # in other words)
@@ -178,7 +183,7 @@ sub check_indent {
                         $c_failed{"$path\n"} = 1;
                     }
                 }
-                $state{block_indent} = undef;
+                $state{bif} = undef;
             }
 
             my ($indent) = $line =~ /^(\s+)/ or next;
@@ -220,6 +225,17 @@ sub check_indent {
             . " occurrences in "
             . scalar @c_failed_files
             . " files:\n@c_indent" );
+}
+
+sub dump_state {
+    my ($state, $line) = @_;
+    print STDERR (join q{|} => (
+        $state->{line_cnt},
+        (defined($state->{bif}) ? $state->{bif} : q{u}),
+        $state->{in_comment},
+        (join q{*} => @{ $state->{stack} }),
+        $line,
+    ) ), "\n";
 }
 
 # Local Variables:
