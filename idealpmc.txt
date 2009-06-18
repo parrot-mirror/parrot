@@ -60,7 +60,7 @@ Read a line from the filehandle and return it in a string.
     }
 } /* end pmclass */
 
-    /* 4-column indent to get c_indent.t to DTRT */
+
 /*
  * Local variables:
  *   c-file-style: "parrot"
