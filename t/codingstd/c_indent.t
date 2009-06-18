@@ -159,11 +159,7 @@ sub check_indent {
 
                 my $closing_punc = $1;
                 # skip the last line of the func or cpp directives.
-#                $state{bif} = undef if ( $closing_punc eq "}" );
-                if ( $closing_punc eq "}" ) {
-                    $state{bif} = undef;
-                    next;
-                }
+                $state{bif} = undef if ( $closing_punc eq "}" );
                 next;
             }
 
