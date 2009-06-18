@@ -6,7 +6,6 @@ use strict;
 use warnings;
 
 use lib qw( . lib ../lib ../../lib );
-use Data::Dumper;$Data::Dumper::Indent=0;
 use Test::More tests => 2;
 use Parrot::Distribution;
 
