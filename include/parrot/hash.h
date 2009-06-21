@@ -46,6 +46,7 @@ typedef int (*hash_comp_fn)(PARROT_INTERP, const void*const, const void*const);
 typedef void (*hash_mark_key_fn)(PARROT_INTERP, PObj *);
 typedef size_t (*hash_hash_key_fn)(PARROT_INTERP, ARGIN(const void *), size_t seed);
 
+/* &gen_from_enum(hash_key_type.pasm) */
 typedef enum {
     Hash_key_type_int,
     Hash_key_type_cstring,
@@ -53,6 +54,7 @@ typedef enum {
     Hash_key_type_PMC,
     Hash_key_type_ptr
 } Hash_key_type;
+/* &end_gen */
 
 typedef struct _hashbucket {
     struct _hashbucket *next;

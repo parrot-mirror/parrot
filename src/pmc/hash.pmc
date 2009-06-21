@@ -228,6 +228,40 @@ Use C<ptr> as this PMC's Hash*.
     }
 
 /*
+=item C<void set_integer(INTVAL type)>
+
+Reset Hash to use non-string keys. See enum C<Hash_key_type> for possible values.
+
+=cut
+*/
+    VTABLE void set_integer_native(INTVAL type) {
+        Hash *old_hash = (Hash *)SELF.get_pointer();
+        Hash *new_hash = 0;
+
+        if (type == Hash_key_type_STRING)
+            new_hash = parrot_new_hash(INTERP);
+        else if (type == Hash_key_type_int)
+            new_hash = parrot_new_intval_hash(INTERP);
+        else
+            /*
+                We probably will not implement other types of keys. They are way
+                too dangerous to use from PIR
+            */
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_UNIMPLEMENTED,
+                "Hash: Unknown key type");
+
+
+        PARROT_HASH(SELF)->hash = new_hash;
+        new_hash->container     = SELF;
+
+        if (old_hash)
+            parrot_hash_destroy(INTERP, old_hash);
+    }
+
+    METHOD set_key_type(INTVAL type) {
+        SELF.set_integer_native(type);
+    }
+/*
 
 =item C<void *get_pointer()>
 
@@ -308,7 +342,7 @@ Returns the integer value for the element at C<*key>.
         /* called from iterator */
         if (VTABLE_type(INTERP, key) == enum_class_HashIteratorKey) {
             PMC *val = (PMC*)PARROT_HASHITERATORKEY(key)->bucket->value;
-            return VTABLE_get_string(INTERP, val);
+            return VTABLE_get_integer(INTERP, val);
         }
 
         keystr  = make_ro_hash_key(INTERP, key);

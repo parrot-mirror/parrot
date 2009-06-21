@@ -22,7 +22,7 @@ well.
     .include 'test_more.pir'
     .include 'except_types.pasm'
 
-    plan(146)
+    plan(147)
 
     initial_hash_tests()
     more_than_one_hash()
@@ -67,6 +67,7 @@ well.
     unicode_keys_register_rt_39249()
     unicode_keys_literal_rt_39249()
 
+    integer_keys()
 .end
 
 .sub initial_hash_tests
@@ -1269,6 +1270,22 @@ postit_end:
   $S2 = unicode:"\u7777"
   $S1 = $P1[$S2]
   is( $S1, 'ok', 'literal unicode key lookup via var' )
+.end
+
+# Switch to use integer keys instead of strings.
+.sub integer_keys
+    .include "hash_key_type.pasm"
+    .local pmc hash
+    hash = new ['Hash']
+    hash = .Hash_key_type_int
+
+    hash[0]  = 'foo'
+    hash[42] = 'bar'
+    hash['foo'] = 'BAZ'
+
+    # 'foo' numifies to '0'. So check it
+    $P0 = hash[0]
+    is($P0, 'BAZ', 'Key was numified')
 .end
 
 # Local Variables:
