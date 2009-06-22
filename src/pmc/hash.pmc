@@ -32,8 +32,7 @@ Lookup the PMC type which is used for storing native integers.
 
 */
 
-static PMC *get_integer_pmc(PARROT_INTERP, INTVAL base_type) {
-    UNUSED(base_type)
+static PMC *get_integer_pmc(PARROT_INTERP) {
     return pmc_new(interp, Parrot_get_ctx_HLL_type(interp, enum_class_Integer));
 }
 
@@ -48,8 +47,7 @@ Lookup the PMC type which is used for floating point numbers.
 
 */
 
-static PMC *get_number_pmc(PARROT_INTERP, INTVAL base_type) {
-    UNUSED(base_type)
+static PMC *get_number_pmc(PARROT_INTERP) {
     return pmc_new(interp, Parrot_get_ctx_HLL_type(interp, enum_class_Float));
 }
 
@@ -63,8 +61,7 @@ Lookup the PMC type which is used for storing strings.
 
 */
 
-static PMC *get_string_pmc(PARROT_INTERP, INTVAL base_type) {
-    UNUSED(base_type)
+static PMC *get_string_pmc(PARROT_INTERP) {
     return pmc_new(interp, Parrot_get_ctx_HLL_type(interp, enum_class_String));
 }
 
@@ -111,29 +108,6 @@ static STRING
     return s;
 }
 
-
-/*
-
-=item C<static STRING *make_hash_key(PARROT_INTERP, PMC *key)>
-
-Returns a Parrot STRING for C<*key>.  This STRING is safe to modify or store.
-
-=cut
-
-*/
-
-PARROT_CANNOT_RETURN_NULL
-static STRING
-*make_hash_key(PARROT_INTERP, NOTNULL(PMC *key))
-{
-    STRING * const keystr = key_string(interp, key);
-
-    if (STRING_IS_NULL(keystr))
-        Parrot_ex_throw_from_c_args(interp, NULL,
-            EXCEPTION_UNEXPECTED_NULL, "Hash: Cannot use NULL STRING key");
-
-    return keystr;
-}
 
 /*
 
@@ -217,7 +191,7 @@ hash_value_from_int(PARROT_INTERP, const Hash * const hash, INTVAL value)
             break;
         case enum_type_PMC:
             {
-                PMC *tmp = pmc_new(interp, enum_class_Integer);
+                PMC *tmp = get_integer_pmc(interp);
                 VTABLE_set_integer_native(interp, tmp, value);
                 ret = (void *)tmp;
             }
@@ -245,7 +219,7 @@ hash_value_from_string(PARROT_INTERP, const Hash * const hash, STRING *value)
             break;
         case enum_type_PMC:
             {
-                PMC *s = pmc_new(interp, enum_class_String);
+                PMC *s = get_string_pmc(interp);
                 VTABLE_set_string_native(interp, s, value);
                 ret = (void *)s;
             }
@@ -294,7 +268,7 @@ hash_value_from_number(PARROT_INTERP, const Hash * const hash, FLOATVAL value)
             break;
         case enum_type_PMC:
             {
-                PMC *tmp = pmc_new(interp, enum_class_Float);
+                PMC *tmp = get_number_pmc(interp);
                 VTABLE_set_number_native(interp, tmp, value);
                 ret = (void *)tmp;
             }
@@ -354,11 +328,11 @@ hash_value_to_pmc(PARROT_INTERP, const Hash * const hash, void *value)
     PMC *ret;
     switch (hash->entry_type) {
         case enum_type_INTVAL:
-            ret = pmc_new(interp, enum_class_Integer);
+            ret = get_integer_pmc(interp);
             VTABLE_set_integer_native(interp, ret, (INTVAL)value);
             break;
         case enum_type_STRING:
-            ret = pmc_new(interp, enum_class_String);
+            ret = get_string_pmc(interp);
             VTABLE_set_string_native(interp, ret, (STRING *)value);
             break;
         case enum_type_PMC:
@@ -931,25 +905,29 @@ Returns whether the hash is the same as C<*other>.
 */
 
     VTABLE void set_integer_keyed(PMC *key, INTVAL value) {
-        STRING *keystr;
+        Hash   *hash = (Hash *)SELF.get_pointer();
+        void   *keystr;
         PMC    *nextkey;
         PMC    *box;
+        HashBucket *b;
 
         if (!key)
             return;
 
-        keystr  = make_hash_key(INTERP, key);
+        keystr  = hash_key_from_pmc(INTERP, hash, key);
         nextkey = key_next(INTERP, key);
 
         if (!nextkey) {
-            PMC *val = get_integer_pmc(INTERP, SELF->vtable->base_type);
+            PMC *val = get_integer_pmc(INTERP);
 
             VTABLE_set_integer_native(INTERP, val, value);
-            parrot_hash_put(INTERP, (Hash *)SELF.get_pointer(), keystr, val);
+            parrot_hash_put(INTERP, hash, keystr, val);
             return;
         }
 
-        box = SELF.get_pmc_keyed_str(keystr);
+        b = parrot_hash_get_bucket(INTERP, (Hash *)SELF.get_pointer(), keystr);
+        if (b)
+            box = hash_value_to_pmc(INTERP, hash, b->value);
 
         /* autovivify an Hash */
         if (!box)
@@ -972,7 +950,7 @@ Returns whether the hash is the same as C<*other>.
 */
 
     VTABLE void set_integer_keyed_str(STRING *key, INTVAL value) {
-        PMC * const val  = get_integer_pmc(INTERP, SELF->vtable->base_type);
+        PMC * const val  = get_integer_pmc(INTERP);
         VTABLE_set_integer_native(INTERP, val, value);
 
         parrot_hash_put(INTERP, (Hash *)SELF.get_pointer(), key, val);
@@ -987,24 +965,28 @@ Returns whether the hash is the same as C<*other>.
 */
 
     VTABLE void set_number_keyed(PMC *key, FLOATVAL value) {
-        STRING *keystr;
+        Hash   *hash = (Hash *)SELF.get_pointer();
+        void   *keystr;
         PMC    *nextkey;
         PMC    *box;
+        HashBucket *b;
 
         if (!key)
             return;
 
-        keystr  = make_hash_key(INTERP, key);
+        keystr  = hash_key_from_pmc(INTERP, hash, key);
         nextkey = key_next(INTERP, key);
 
         if (!nextkey) {
-            PMC *val         = get_number_pmc(INTERP, SELF->vtable->base_type);
+            PMC *val = get_number_pmc(INTERP);
             VTABLE_set_number_native(INTERP, val, value);
-            parrot_hash_put(INTERP, (Hash *)SELF.get_pointer(), keystr, val);
+            parrot_hash_put(INTERP, hash, keystr, hash_value_from_pmc(INTERP, hash, val));
             return;
         }
 
-        box = SELF.get_pmc_keyed_str(keystr);
+        b = parrot_hash_get_bucket(INTERP, (Hash *)SELF.get_pointer(), keystr);
+        if (b)
+            box = hash_value_to_pmc(INTERP, hash, b->value);
 
         /* autovivify an Hash */
         if (!box)
@@ -1024,7 +1006,7 @@ Sets C<value> as the value for C<*key>.
 */
 
     VTABLE void set_number_keyed_str(STRING *key, FLOATVAL value) {
-        PMC * const val  = get_number_pmc(INTERP, SELF->vtable->base_type);
+        PMC * const val  = get_number_pmc(INTERP);
         VTABLE_set_number_native(INTERP, val, value);
 
         parrot_hash_put(INTERP, (Hash *)SELF.get_pointer(), key, val);
@@ -1040,24 +1022,27 @@ Sets C<value> as the value for C<*key>.
 
     VTABLE void set_string_keyed(PMC *key, STRING *value) {
         Hash   *hash = (Hash *)SELF.get_pointer();
-        STRING *keystr;
+        void   *keystr;
         PMC    *nextkey;
         PMC    *box;
+        HashBucket *b;
 
         if (!key)
             return;
 
-        keystr  = make_hash_key(INTERP, key);
+        keystr  = hash_key_from_pmc(INTERP, hash, key);
         nextkey = key_next(INTERP, key);
 
         if (!nextkey) {
-            parrot_hash_put(INTERP, hash,
-                    hash_key_from_pmc(INTERP, hash, key),
+            parrot_hash_put(INTERP, hash, keystr,
                     hash_value_from_string(INTERP, hash, value));
             return;
         }
 
-        box = SELF.get_pmc_keyed_str(keystr);
+        b = parrot_hash_get_bucket(INTERP, (Hash *)SELF.get_pointer(), keystr);
+        if (b)
+            box = hash_value_to_pmc(INTERP, hash, b->value);
+
 
         /* autovivify an Hash */
         if (!box)
@@ -1097,14 +1082,15 @@ Sets C<value> as the value for C<*key>.
 */
 
     VTABLE void set_pmc_keyed(PMC *key, PMC *value) {
-        STRING *keystr;
+        Hash   *hash = (Hash *)SELF.get_pointer();
+        void   *keystr;
         PMC    *nextkey;
         PMC    *box;
 
         if (!key)
             return;
 
-        keystr  = make_hash_key(INTERP, key);
+        keystr  = hash_key_from_pmc(INTERP, hash, key);
         nextkey = key_next(INTERP, key);
 
         if (!nextkey) {
@@ -1112,7 +1098,7 @@ Sets C<value> as the value for C<*key>.
             return;
         }
 
-        box = SELF.get_pmc_keyed_str(keystr);
+        box = SELF.get_pmc_keyed_str((STRING*)keystr);
 
         /* autovivify an Hash */
         if (!box)
