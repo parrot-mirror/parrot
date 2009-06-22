@@ -119,7 +119,7 @@ Marks the OrderedHash as live.
             return VTABLE_get_pmc_keyed(INTERP, item, next);
         }
 
-        return SUPER(key);
+        return INTERP->vtables[enum_class_Hash]->get_pmc_keyed(INTERP, SELF, key);
     }
 
 /*
@@ -216,7 +216,7 @@ Returns the integer value associated with C<key>.
             return VTABLE_get_integer_keyed(INTERP, item, next);
         }
 
-        return SUPER(key);
+        return INTERP->vtables[enum_class_Hash]->get_integer_keyed(INTERP, SELF, key);
     }
 
 /*
