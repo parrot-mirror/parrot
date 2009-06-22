@@ -8,6 +8,28 @@ src/pmc/hash.pmc - Hash PMC
 
 =head1 DESCRIPTION
 
+Hash PMC wraps Parrot's _hash to provide high-level API:
+
+=over 4
+
+=item *
+
+Convert between various types to use as hash keys.
+
+=item *
+
+Convert between various types to use as hash values.
+
+=item *
+
+Handle compound Keys for nested Hash/Array lookups.
+
+=item *
+
+Provide C<HashIterator> to iterate over C<Hash>.
+
+=back
+
 These are the vtable functions for the Hash PMC.
 
 =head2 Functions
@@ -68,7 +90,14 @@ static PMC *get_string_pmc(PARROT_INTERP) {
 
 /*
 
-Poor-man polymorphic functions to convert something to hash key-type.
+Poor-man polymorphic functions to convert something to something.
+
+There is bunch of functions to convert from passed value to stored keys type and to/from
+stored values type.
+
+void *hash_key_from_TYPE convert to keys type.
+void *hash_value_from_TYPE convert to values type.
+TYPE hash_value_to_TYPE convert from values type.
 
 */
 
