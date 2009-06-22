@@ -515,34 +515,44 @@ Returns the integer value for the element at C<*key>.
 
 */
 
-    VTABLE INTVAL get_integer_keyed(PMC *key) {
-        PMC        *valpmc;
-        void       *keystr;
-        HashBucket *b;
-        PMC        *nextkey;
+    /* Call from HashIterator */
+    MULTI INTVAL get_integer_keyed(HashIteratorKey key) {
+        void *value = (PMC*)PARROT_HASHITERATORKEY(key)->bucket->value;
+        return hash_value_to_int(INTERP, (Hash*)SELF.get_pointer(), value);
+    }
+
+    /* Handling Keys */
+    MULTI INTVAL get_integer_keyed(Key key) {
         const Hash * const hash = (Hash *)SELF.get_pointer();
-
-        /* called from iterator */
-        if (VTABLE_type(INTERP, key) == enum_class_HashIteratorKey) {
-            PMC *val = (PMC*)PARROT_HASHITERATORKEY(key)->bucket->value;
-            return VTABLE_get_integer(INTERP, val);
-        }
-
-        keystr  = hash_key_from_pmc(INTERP, hash, key);
-        b       = parrot_hash_get_bucket(INTERP, hash, keystr);
+        HashBucket *b = parrot_hash_get_bucket(INTERP, hash,
+                hash_key_from_pmc(INTERP, hash, key));
+        PMC        *valpmc;
+        PMC        *nextkey;
 
         if (!b)
             return 0;
 
-        nextkey = key_next(INTERP, key);
+        nextkey = VTABLE_shift_pmc(INTERP, key);
         valpmc  = hash_value_to_pmc(INTERP, hash, b->value);
 
+        /* Stop recursion. This is last step */
         if (!nextkey)
             return VTABLE_get_integer(INTERP, valpmc);
 
+        /* Recusively call to enclosed aggregate */
         return VTABLE_get_integer_keyed(INTERP, valpmc, nextkey);
     }
 
+    MULTI INTVAL get_integer_keyed(DEFAULT key) {
+        const Hash * const hash = (Hash*)SELF.get_pointer();
+        HashBucket * const b    = parrot_hash_get_bucket(INTERP, hash,
+                hash_key_from_pmc(INTERP, hash, key));
+
+        if (!b)
+            return 0;
+
+        return hash_value_to_int(INTERP, hash, b->value);
+    }
 /*
 
 =item C<FLOATVAL get_number()>
