@@ -80,7 +80,7 @@ PARROT_IGNORABLE_RESULT
 PMC * pmc_reuse(PARROT_INTERP,
     ARGIN(PMC *pmc),
     INTVAL new_type,
-    NULLOK(UINTVAL flags))
+    UINTVAL flags)
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
@@ -103,7 +103,7 @@ PMC * pmc_reuse_init(PARROT_INTERP,
     ARGIN(PMC *pmc),
     INTVAL new_type,
     ARGIN(PMC *init),
-    NULLOK(UINTVAL flags))
+    UINTVAL flags)
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(4);
