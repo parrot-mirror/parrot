@@ -86,8 +86,11 @@ Get "key".
             case Hash_key_type_STRING:
                 return (STRING*)attrs->bucket->key;
 
+            case Hash_key_type_PMC:
+                return VTABLE_get_string(INTERP, (PMC *)attrs->bucket->key);
+
             default:
-                /* Horribly die */
+                /* Horribly die? */
                 break;
         }
 
