@@ -126,7 +126,13 @@ hash_key_from_pmc(PARROT_INTERP, const Hash * const hash, ARGIN(PMC *key))
         /* Currently PMCs are stringified */
         case Hash_key_type_PMC:
         case Hash_key_type_STRING:
-            ret = (void *)Parrot_str_new_COW(interp, VTABLE_get_string(interp, key));
+            {
+                STRING *tmp = VTABLE_get_string(interp, key);
+                if (!tmp)
+                    Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_UNEXPECTED_NULL,
+                            "hash: can't use null as key");
+                ret = (void *)Parrot_str_new_COW(interp, tmp);
+            }
             break;
         default:
             Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_UNIMPLEMENTED,
