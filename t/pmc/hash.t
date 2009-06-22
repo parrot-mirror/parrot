@@ -22,7 +22,7 @@ well.
     .include 'test_more.pir'
     .include 'except_types.pasm'
 
-    plan(147)
+    plan(148)
 
     initial_hash_tests()
     more_than_one_hash()
@@ -1279,13 +1279,21 @@ postit_end:
     hash = new ['Hash']
     hash = .Hash_key_type_int
 
-    hash[0]  = 'foo'
-    hash[42] = 'bar'
-    hash['foo'] = 'BAZ'
+    hash[0]   = 'foo'
+    hash[42]  = 'bar'
+    $S0       = 'foo'
+    hash[$S0] = 'BAZ'
+
+    $S0       = '42 parrots'
+    hash[$S0] = 'Wins!'
 
     # 'foo' numifies to '0'. So check it
-    $P0 = hash[0]
-    is($P0, 'BAZ', 'Key was numified')
+    $S0 = hash[0]
+    is($S0, 'BAZ', 'Key was numified')
+
+    # '42 parrots' numifies to '42'. So check it
+    $S0 = hash[42]
+    is($S0, 'Wins!', 'Key was numified again')
 .end
 
 # Local Variables:
