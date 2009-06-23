@@ -21,8 +21,9 @@ well.
 .sub main :main
     .include 'test_more.pir'
     .include 'except_types.pasm'
+    .include 'datatypes.pasm'
 
-    plan(148)
+    plan(155)
 
     initial_hash_tests()
     more_than_one_hash()
@@ -68,6 +69,7 @@ well.
     unicode_keys_literal_rt_39249()
 
     integer_keys()
+    value_types_convertion()
 .end
 
 .sub initial_hash_tests
@@ -1294,6 +1296,46 @@ postit_end:
     # '42 parrots' numifies to '42'. So check it
     $S0 = hash[42]
     is($S0, 'Wins!', 'Key was numified again')
+.end
+
+# Check that we can set various value types and they properly converted
+.sub value_types_convertion
+    .local pmc hash
+    hash = new ['Hash']
+
+    # PMC is first value type
+    hash.'set_value_type'(.DATATYPE_PMC)
+    $P0 = new 'Env' # arbitary choice. Just to prevent possible casting.
+    hash['env'] = $P0
+    hash['foo'] = 42
+    hash['bar'] = 21285.06
+    hash['baz'] = 'forty two'
+
+    # Check that original value preserved
+    $P1 = hash['env']
+    $I0 = isa $P1, 'Env'
+    ok($I0, 'Env PMC preserved')
+    $I0 = hash['foo']
+    is($I0, 42, 'Intval preserved')
+    $N0 = hash['bar']
+    is($N0, 21285.06, 'Number preserved')
+    $S0 = hash['baz']
+    is($S0, 'forty two', 'String preserved')
+
+    # Clear the Hash and set INTVAL as stored values.
+    hash.'set_value_type'(.DATATYPE_INTVAL)
+    hash['foo'] = 42            # Use as-is
+    hash['bar'] = 21285.06      # Truncate to int
+    hash['baz'] = 'forty two'   # Cast to int
+
+    $I0 = hash['foo']
+    is($I0, 42, 'Intval preserved with datatype int')
+    $I0 = hash['bar']
+    is($I0, 21285, 'Floatval trunkated to int')
+    $I0 = hash['baz']
+    is($I0, 0, 'String casted to int')
+
+    # TODO Add tests for String.
 .end
 
 # Local Variables:
