@@ -906,24 +906,25 @@ Returns whether the hash is the same as C<*other>.
 
 */
 
-    VTABLE void set_integer_keyed(PMC *key, INTVAL value) {
+    MULTI void set_integer_keyed(DEFAULT key, INTVAL value) {
+        Hash   *hash = (Hash *)SELF.get_pointer();
+        parrot_hash_put(INTERP, hash, hash_key_from_pmc(INTERP, hash, key),
+                hash_value_from_int(INTERP, hash, value));
+    }
+
+    MULTI void set_integer_keyed(Key key, INTVAL value) {
         Hash   *hash = (Hash *)SELF.get_pointer();
         void   *keystr;
         PMC    *nextkey;
-        PMC    *box;
+        PMC    *box = NULL;
         HashBucket *b;
 
-        if (!key)
-            return;
-
         keystr  = hash_key_from_pmc(INTERP, hash, key);
-        nextkey = key_next(INTERP, key);
+        nextkey = VTABLE_shift_pmc(INTERP, key);
 
         if (!nextkey) {
-            PMC *val = get_integer_pmc(INTERP);
-
-            VTABLE_set_integer_native(INTERP, val, value);
-            parrot_hash_put(INTERP, hash, keystr, val);
+            parrot_hash_put(INTERP, hash, keystr,
+                    hash_value_from_int(INTERP, hash, value));
             return;
         }
 
@@ -940,7 +941,8 @@ Returns whether the hash is the same as C<*other>.
 
     VTABLE void set_integer_keyed_int(INTVAL key, INTVAL value) {
         Hash * const hash = (Hash *)SELF.get_pointer();
-        parrot_hash_put(INTERP, hash, hash_key_from_int(INTERP, hash, key), (void *)value);
+        parrot_hash_put(INTERP, hash, hash_key_from_int(INTERP, hash, key),
+                hash_value_from_int(INTERP, hash, value));
     }
 
 /*
@@ -952,10 +954,9 @@ Returns whether the hash is the same as C<*other>.
 */
 
     VTABLE void set_integer_keyed_str(STRING *key, INTVAL value) {
-        PMC * const val  = get_integer_pmc(INTERP);
-        VTABLE_set_integer_native(INTERP, val, value);
-
-        parrot_hash_put(INTERP, (Hash *)SELF.get_pointer(), key, val);
+        Hash * const hash = (Hash *)SELF.get_pointer();
+        parrot_hash_put(INTERP, hash, hash_key_from_string(INTERP, hash, key),
+                hash_value_from_int(INTERP, hash, value));
     }
 
 /*
