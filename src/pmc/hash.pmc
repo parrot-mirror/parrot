@@ -337,11 +337,29 @@ hash_value_to_pmc(PARROT_INTERP, const Hash * const hash, void *value)
     return ret;
 }
 
-static void*
-hash_value_to_number(PARROT_INTERP, const Hash * const hash, FLOATVAL value)
+static FLOATVAL
+hash_value_to_number(PARROT_INTERP, const Hash * const hash, void *value)
 {
-    Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_UNIMPLEMENTED,
-            "Hash: unimplemented");
+    FLOATVAL ret;
+    switch (hash->entry_type) {
+        case enum_type_INTVAL:
+            {
+                /* Pacify compiler about casting */
+                INTVAL tmp = (INTVAL)value;
+                ret = tmp;
+            }
+            break;
+        case enum_type_STRING:
+            ret = Parrot_str_to_num(interp, (STRING*)value);
+            break;
+        case enum_type_PMC:
+            ret = VTABLE_get_number(interp, (PMC*)value);
+            break;
+        default:
+            Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_UNIMPLEMENTED,
+                    "Hash: unsupported entry_type");
+    }
+    return ret;
 }
 
 
@@ -515,8 +533,8 @@ Returns the size of the hash.
 
     VTABLE INTVAL get_integer_keyed_str(STRING *key) {
         const Hash * const hash = (Hash*)SELF.get_pointer();
-        HashBucket * const b =
-            parrot_hash_get_bucket(INTERP, hash, hash_key_from_string(INTERP, hash, key));
+        HashBucket * const b = parrot_hash_get_bucket(INTERP, hash,
+                hash_key_from_string(INTERP, hash, key));
 
         if (!b)
             return 0;
@@ -526,8 +544,8 @@ Returns the size of the hash.
 
     VTABLE INTVAL get_integer_keyed_int(INTVAL key) {
         const Hash * const hash = (Hash*)SELF.get_pointer();
-        HashBucket * const b =
-            parrot_hash_get_bucket(INTERP, hash, hash_key_from_int(INTERP, hash, key));
+        HashBucket * const b = parrot_hash_get_bucket(INTERP, hash,
+                hash_key_from_int(INTERP, hash, key));
 
         if (!b)
             return 0;
@@ -609,18 +627,25 @@ Returns the size of the hash.
 */
 
     VTABLE FLOATVAL get_number_keyed_str(STRING *key) {
-        HashBucket * const b =
-            parrot_hash_get_bucket(INTERP, (Hash *)SELF.get_pointer(), key);
+        const Hash * const hash = (Hash *)SELF.get_pointer();
+        HashBucket * const b = parrot_hash_get_bucket(INTERP, hash,
+                hash_key_from_string(INTERP, hash, key));
 
         if (!b)
             return 0.0;
 
-        return VTABLE_get_number(INTERP, (PMC *)b->value);
+        return hash_value_to_number(INTERP, hash, b->value);
     }
 
     VTABLE FLOATVAL get_number_keyed_int(INTVAL key) {
-        STRING * const s = Parrot_str_from_int(INTERP, key);
-        return SELF.get_number_keyed_str(s);
+        const Hash * const hash = (Hash *)SELF.get_pointer();
+        HashBucket * const b = parrot_hash_get_bucket(INTERP, hash,
+                hash_key_from_int(INTERP, hash, key));
+
+        if (!b)
+            return 0.0;
+
+        return hash_value_to_number(INTERP, hash, b->value);
     }
 /*
 
