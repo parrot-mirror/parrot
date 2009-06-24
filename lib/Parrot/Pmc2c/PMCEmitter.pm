@@ -1036,9 +1036,9 @@ sub gen_defaul_case_wrapping {
     elsif ($letter eq 'P') {
         return (
             'PPP->P',
-            '',
-            ", &$parameters[1]",
-            "return $parameters[1];",
+            'PMC *retval;',
+            ", &retval",
+            "return retval;",
         );
     }
     elsif ($letter eq 'v') {
