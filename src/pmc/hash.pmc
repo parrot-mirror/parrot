@@ -714,6 +714,7 @@ Returns the floating-point value for the element at C<*key>.
 
 */
 
+    /* I can't migrate this function right now. Some problem with JITting */
     VTABLE FLOATVAL get_number_keyed(PMC *key) {
         PMC               *nextkey;
         PMC               *valpmc;
@@ -916,18 +917,25 @@ Returns the number of elements in the hash.
 */
 
     VTABLE PMC *get_pmc_keyed_str(STRING *key) {
-        HashBucket * const b =
-            parrot_hash_get_bucket(INTERP, (Hash *)SELF.get_pointer(), key);
+        const Hash * const hash = (Hash *)SELF.get_pointer();
+        HashBucket * const b    = parrot_hash_get_bucket(INTERP, hash,
+                hash_key_from_string(INTERP, hash, key));
 
         if (!b)
             return PMCNULL;
 
-        return (PMC *)b->value;
+        return hash_value_to_pmc(INTERP, hash, b->value);
     }
 
     VTABLE PMC *get_pmc_keyed_int(INTVAL key) {
-        STRING * const s = Parrot_str_from_int(INTERP, key);
-        return SELF.get_pmc_keyed_str(s);
+        const Hash * const hash = (Hash *)SELF.get_pointer();
+        HashBucket * const b    = parrot_hash_get_bucket(INTERP, hash,
+                hash_key_from_int(INTERP, hash, key));
+
+        if (!b)
+            return PMCNULL;
+
+        return hash_value_to_pmc(INTERP, hash, b->value);
     }
 
     VTABLE PMC *get_pmc_keyed(PMC *key) {
@@ -1316,14 +1324,15 @@ Returns whether a key C<*key> exists in the hash.
 */
 
     VTABLE INTVAL defined_keyed_str(STRING *key) {
-        HashBucket * const b =
-            parrot_hash_get_bucket(INTERP, (Hash *)SELF.get_pointer(), key);
+        const Hash * const hash = (Hash *)SELF.get_pointer();
+        HashBucket * const b = parrot_hash_get_bucket(INTERP, hash,
+                hash_key_from_string(INTERP, hash, key));
 
         /* no such key */
         if (!b)
             return 0;
 
-        return VTABLE_defined(INTERP, (PMC*)b->value);
+        return VTABLE_defined(INTERP, hash_value_to_pmc(INTERP, hash, b->value));
     }
 
 /*
