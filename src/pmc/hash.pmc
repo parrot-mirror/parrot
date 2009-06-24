@@ -837,31 +837,43 @@ Returns the string value for the element at C<*key>.
 
 */
 
-    VTABLE STRING *get_string_keyed(PMC *key) {
-        PMC         *valpmc;
-        void        *keystr;
-        HashBucket  *b;
-        PMC         *nextkey;
-        Hash * const hash = (Hash *)SELF.get_pointer();
+    /* Called from HashIterator */
+    MULTI STRING *get_string_keyed(HashIteratorKey key) {
+        void *value = (PMC*)PARROT_HASHITERATORKEY(key)->bucket->value;
+        return hash_value_to_string(INTERP, (Hash*)SELF.get_pointer(), value);
+    }
 
-        /* called from iterator */
-        if (VTABLE_type(INTERP, key) == enum_class_HashIteratorKey) {
-            PMC *val = (PMC*)PARROT_HASHITERATORKEY(key)->bucket->value;
-            return VTABLE_get_string(INTERP, val);
-        }
-
-        keystr = hash_key_from_pmc(INTERP, hash, key);
-        b      = parrot_hash_get_bucket(INTERP, hash, keystr);
+    /* Simple PMC */
+    MULTI STRING *get_string_keyed(DEFAULT key) {
+        const Hash * const hash = (Hash*)SELF.get_pointer();
+        HashBucket * const b    = parrot_hash_get_bucket(INTERP, hash,
+                hash_key_from_pmc(INTERP, hash, key));
 
         if (!b)
             return Parrot_str_new_noinit(INTERP, enum_stringrep_one, 0);
 
-        nextkey = key_next(INTERP, key);
-        valpmc  = (PMC *)b->value;
+        return hash_value_to_string(INTERP, hash, b->value);
+    }
 
+    /* Compound Key */
+    MULTI STRING *get_string_keyed(Key key) {
+        const Hash * const hash = (Hash *)SELF.get_pointer();
+        HashBucket *b = parrot_hash_get_bucket(INTERP, hash,
+                hash_key_from_pmc(INTERP, hash, key));
+        PMC        *valpmc;
+        PMC        *nextkey;
+
+        if (!b)
+            return Parrot_str_new_noinit(INTERP, enum_stringrep_one, 0);
+
+        nextkey = VTABLE_shift_pmc(INTERP, key);
+        valpmc  = hash_value_to_pmc(INTERP, hash, b->value);
+
+        /* Stop recursion. This is last step */
         if (!nextkey)
             return VTABLE_get_string(INTERP, valpmc);
 
+        /* Recusively call to enclosed aggregate */
         return VTABLE_get_string_keyed(INTERP, valpmc, nextkey);
     }
 
