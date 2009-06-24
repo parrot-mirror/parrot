@@ -1030,29 +1030,44 @@ Returns the PMC value for the element at C<*key>.
         return hash_value_to_pmc(INTERP, hash, b->value);
     }
 
-    VTABLE PMC *get_pmc_keyed(PMC *key) {
-        const Hash * const hash = (Hash *)SELF.get_pointer();
-        void          *keystr;
-        HashBucket    *b;
-        PMC           *nextkey;
+    /* Called from HashIterator */
+    MULTI PMC *get_pmc_keyed(HashIteratorKey key) {
+        void *value = (PMC*)PARROT_HASHITERATORKEY(key)->bucket->value;
+        return hash_value_to_pmc(INTERP, (Hash*)SELF.get_pointer(), value);
+    }
 
-        /* called from iterator */
-        if (VTABLE_type(INTERP, key) == enum_class_HashIteratorKey) {
-            return (PMC*)PARROT_HASHITERATORKEY(key)->bucket->value;
-        }
-
-        keystr = hash_key_from_pmc(INTERP, hash, key);
-        b      = parrot_hash_get_bucket(INTERP, hash, keystr);
+    /* Simple PMC */
+    MULTI PMC *get_pmc_keyed(DEFAULT key) {
+        const Hash * const hash = (Hash*)SELF.get_pointer();
+        HashBucket * const b    = parrot_hash_get_bucket(INTERP, hash,
+                hash_key_from_pmc(INTERP, hash, key));
 
         if (!b)
             return PMCNULL;
 
-        nextkey = key_next(INTERP, key);
+        return hash_value_to_pmc(INTERP, hash, b->value);
+    }
 
+    /* Compound Key */
+    MULTI PMC *get_pmc_keyed(Key key) {
+        const Hash * const hash = (Hash *)SELF.get_pointer();
+        HashBucket *b = parrot_hash_get_bucket(INTERP, hash,
+                hash_key_from_pmc(INTERP, hash, key));
+        PMC        *valpmc;
+        PMC        *nextkey;
+
+        if (!b)
+            return PMCNULL;
+
+        nextkey = VTABLE_shift_pmc(INTERP, key);
+        valpmc  = hash_value_to_pmc(INTERP, hash, b->value);
+
+        /* Stop recursion. This is last step */
         if (!nextkey)
-            return (PMC *)b->value;
+            return valpmc;
 
-        return VTABLE_get_pmc_keyed(INTERP, (PMC*)b->value, nextkey);
+        /* Recusively call to enclosed aggregate */
+        return VTABLE_get_pmc_keyed(INTERP, valpmc, nextkey);
     }
 
 /*
