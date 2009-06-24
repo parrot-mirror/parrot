@@ -568,6 +568,8 @@ Get a pointer to this PMC's Hash*.
 
 =item C<INTVAL get_integer()>
 
+=item C<FLOATVAL get_number()>
+
 Returns the size of the hash.
 
 =cut
@@ -576,6 +578,71 @@ Returns the size of the hash.
 
     VTABLE INTVAL get_integer() {
         return parrot_hash_size(INTERP, (Hash *)SELF.get_pointer());
+    }
+
+    VTABLE FLOATVAL get_number() {
+        return SELF.get_integer();
+    }
+
+/*
+
+=item C<STRING *get_string()>
+
+Returns a string representation of the hash, showing its class name and
+memory address.
+
+=item  C<STRING *get_repr()>
+
+Return a representation of the hash contents.
+
+=cut
+
+*/
+
+    VTABLE STRING *get_string() {
+        return Parrot_sprintf_c(INTERP, "Hash[0x%x]", SELF);
+    }
+
+    VTABLE STRING *get_repr() {
+        /* RT #44643 use freeze */
+        PMC * const  iter = VTABLE_get_iter(INTERP, SELF);
+        STRING      *res  = CONST_STRING(INTERP, "{");
+        const INTVAL n    = VTABLE_elements(INTERP, SELF);
+        INTVAL       j;
+
+        for (j = 0; j < n; ++j) {
+            STRING * const key       = VTABLE_shift_string(INTERP, iter);
+            int            all_digit = 1;
+            int            i;
+            PMC           *val;
+
+            for (i = 0; i < (int)key->strlen; ++i) {
+                if (!isdigit((unsigned char)((char *)key->strstart)[i])) {
+                    all_digit = 0;
+                    break;
+                }
+            }
+
+            if (all_digit) {
+                res = Parrot_str_append(INTERP, res, key);
+            }
+            else {
+                res = Parrot_str_append(INTERP, res, CONST_STRING(INTERP, "'"));
+                res = Parrot_str_append(INTERP, res, key);
+                res = Parrot_str_append(INTERP, res, CONST_STRING(INTERP, "'"));
+            }
+
+            res = Parrot_str_append(INTERP, res, CONST_STRING(INTERP, ": "));
+            val = SELF.get_pmc_keyed_str(key);
+            res = Parrot_str_append(INTERP, res, VTABLE_get_string(INTERP, val));
+
+            if (j < n - 1)
+                res = Parrot_str_append(INTERP, res, CONST_STRING(INTERP, ", "));
+        }
+
+        res = Parrot_str_append(INTERP, res, CONST_STRING(INTERP, "}"));
+
+        return res;
     }
 
 /*
@@ -718,21 +785,6 @@ Returns the integer value for the element at C<*key>.
                 hash_value_from_int(INTERP, hash, value));
     }
 
-/*
-
-=item C<FLOATVAL get_number()>
-
-Returns the size of the hash.
-
-=cut
-
-*/
-
-    VTABLE FLOATVAL get_number() {
-        /* doing this in two steps avoids dodgy cast warnings with -O */
-        const INTVAL size = parrot_hash_size(INTERP, (Hash *)SELF.get_pointer());
-        return (FLOATVAL)size;
-    }
 
 /*
 
@@ -795,67 +847,6 @@ Returns the floating-point value for the element at C<*key>.
         return VTABLE_get_number_keyed(INTERP, valpmc, nextkey);
     }
 
-
-/*
-
-=item C<STRING *get_string()>
-
-Returns a string representation of the hash, showing its class name and
-memory address.
-
-=item  C<STRING *get_repr()>
-
-Return a representation of the hash contents.
-
-=cut
-
-*/
-
-    VTABLE STRING *get_string() {
-        return Parrot_sprintf_c(INTERP, "Hash[0x%x]", SELF);
-    }
-
-    VTABLE STRING *get_repr() {
-        /* RT #44643 use freeze */
-        PMC * const  iter = VTABLE_get_iter(INTERP, SELF);
-        STRING      *res  = CONST_STRING(INTERP, "{");
-        const INTVAL n    = VTABLE_elements(INTERP, SELF);
-        INTVAL       j;
-
-        for (j = 0; j < n; ++j) {
-            STRING * const key       = VTABLE_shift_string(INTERP, iter);
-            int            all_digit = 1;
-            int            i;
-            PMC           *val;
-
-            for (i = 0; i < (int)key->strlen; ++i) {
-                if (!isdigit((unsigned char)((char *)key->strstart)[i])) {
-                    all_digit = 0;
-                    break;
-                }
-            }
-
-            if (all_digit) {
-                res = Parrot_str_append(INTERP, res, key);
-            }
-            else {
-                res = Parrot_str_append(INTERP, res, CONST_STRING(INTERP, "'"));
-                res = Parrot_str_append(INTERP, res, key);
-                res = Parrot_str_append(INTERP, res, CONST_STRING(INTERP, "'"));
-            }
-
-            res = Parrot_str_append(INTERP, res, CONST_STRING(INTERP, ": "));
-            val = SELF.get_pmc_keyed_str(key);
-            res = Parrot_str_append(INTERP, res, VTABLE_get_string(INTERP, val));
-
-            if (j < n - 1)
-                res = Parrot_str_append(INTERP, res, CONST_STRING(INTERP, ", "));
-        }
-
-        res = Parrot_str_append(INTERP, res, CONST_STRING(INTERP, "}"));
-
-        return res;
-    }
 
 /*
 
@@ -1005,37 +996,13 @@ Returns the string value for the element at C<*key>.
 
 /*
 
-=item C<INTVAL get_bool()>
-
-Returns true if the hash size is not zero.
-
-=cut
-
-*/
-
-    VTABLE INTVAL get_bool() {
-        return parrot_hash_size(INTERP, (Hash *)SELF.get_pointer()) != 0;
-    }
-
-/*
-
-=item C<INTVAL elements()>
-
-Returns the number of elements in the hash.
-
-=cut
-
-*/
-
-    VTABLE INTVAL elements() {
-        return parrot_hash_size(INTERP, (Hash *)SELF.get_pointer());
-    }
-
-/*
+=item C<PMC *get_pmc_keyed(PMC *key)>
 
 =item C<PMC *get_pmc_keyed_str(STRING *key)>
 
 =item C<PMC *get_pmc_keyed_int(INTVAL key)>
+
+Returns the PMC value for the element at C<*key>.
 
 =cut
 
@@ -1086,43 +1053,6 @@ Returns the number of elements in the hash.
             return (PMC *)b->value;
 
         return VTABLE_get_pmc_keyed(INTERP, (PMC*)b->value, nextkey);
-    }
-
-/*
-
-=item C<PMC *get_iter()>
-
-Return a new iterator for the slice PMC C<key>
-
-=item C<PMC *get_pmc_keyed(PMC *key)>
-
-Returns the PMC value for the element at C<*key>.
-
-=cut
-
-*/
-
-    VTABLE PMC *get_iter() {
-        return pmc_new_init(INTERP, enum_class_HashIterator, SELF);
-    }
-
-    VTABLE PMC *slice(PMC *key) {
-        return PMCNULL;
-    }
-
-/*
-
-=item C<INTVAL is_same(const PMC *other)>
-
-Returns whether the hash is the same as C<*other>.
-
-=cut
-
-*/
-
-    VTABLE INTVAL is_same(PMC *other) {
-        return (INTVAL)(other->vtable == SELF->vtable &&
-            VTABLE_get_pointer(INTERP, other) == SELF.get_pointer());
     }
 
 /*
@@ -1227,53 +1157,6 @@ Sets C<*value> as the value for C<*key>.
 
     VTABLE void set_pmc_keyed_str(STRING *key, PMC *value) {
         parrot_hash_put(INTERP, (Hash *)SELF.get_pointer(), key, value);
-    }
-
-/*
-
-=item C<INTVAL is_equal(PMC *value)>
-
-The C<==> operation.
-
-Check if two hashes hold the same keys and values.
-
-=cut
-
-*/
-
-    VTABLE INTVAL is_equal(PMC *value) {
-        PMC * const iter = VTABLE_get_iter(INTERP, SELF);
-        INTVAL      j, n;
-
-        if (value->vtable->base_type != SELF->vtable->base_type)
-            return 0;
-
-        n = SELF.elements();
-
-        if (VTABLE_elements(INTERP, value) != n)
-            return 0;
-
-        for (j = 0; j < n; ++j) {
-            STRING * const key = VTABLE_shift_string(INTERP, iter);
-            PMC           *item1, *item2;
-            INTVAL         result;
-
-            if (!VTABLE_exists_keyed_str(INTERP, value, key))
-                return 0;
-
-            item1 = SELF.get_pmc_keyed_str(key);
-            item2 = VTABLE_get_pmc_keyed_str(INTERP, value, key);
-
-            if (item1 == item2)
-                continue;
-
-            Parrot_mmd_multi_dispatch_from_c_args(INTERP, "is_equal",
-                "PP->I", item1, item2, &result);
-            if (!result)
-                return 0;
-        }
-
-        return 1;
     }
 
 /*
@@ -1402,6 +1285,110 @@ Deletes the element associated with C<*key>.
             parrot_hash_delete(INTERP, h, sx);
         else
             VTABLE_delete_keyed(INTERP, (PMC *)b->value, key);
+    }
+
+/*
+
+=item C<INTVAL get_bool()>
+
+Returns true if the hash size is not zero.
+
+=cut
+
+*/
+
+    VTABLE INTVAL get_bool() {
+        return parrot_hash_size(INTERP, (Hash *)SELF.get_pointer()) != 0;
+    }
+
+/*
+
+=item C<INTVAL elements()>
+
+Returns the number of elements in the hash.
+
+=cut
+
+*/
+
+    VTABLE INTVAL elements() {
+        return parrot_hash_size(INTERP, (Hash *)SELF.get_pointer());
+    }
+
+/*
+
+=item C<PMC *get_iter()>
+
+Return a new iterator for the slice PMC C<key>
+
+=cut
+
+*/
+
+    VTABLE PMC *get_iter() {
+        return pmc_new_init(INTERP, enum_class_HashIterator, SELF);
+    }
+
+/*
+
+=item C<INTVAL is_same(const PMC *other)>
+
+Returns whether the hash is the same as C<*other>.
+
+=cut
+
+*/
+
+    VTABLE INTVAL is_same(PMC *other) {
+        return (INTVAL)(other->vtable == SELF->vtable &&
+            VTABLE_get_pointer(INTERP, other) == SELF.get_pointer());
+    }
+
+/*
+
+=item C<INTVAL is_equal(PMC *value)>
+
+The C<==> operation.
+
+Check if two hashes hold the same keys and values.
+
+=cut
+
+*/
+
+    VTABLE INTVAL is_equal(PMC *value) {
+        PMC * const iter = VTABLE_get_iter(INTERP, SELF);
+        INTVAL      j, n;
+
+        if (value->vtable->base_type != SELF->vtable->base_type)
+            return 0;
+
+        n = SELF.elements();
+
+        if (VTABLE_elements(INTERP, value) != n)
+            return 0;
+
+        for (j = 0; j < n; ++j) {
+            STRING * const key = VTABLE_shift_string(INTERP, iter);
+            PMC           *item1, *item2;
+            INTVAL         result;
+
+            if (!VTABLE_exists_keyed_str(INTERP, value, key))
+                return 0;
+
+            item1 = SELF.get_pmc_keyed_str(key);
+            item2 = VTABLE_get_pmc_keyed_str(INTERP, value, key);
+
+            if (item1 == item2)
+                continue;
+
+            Parrot_mmd_multi_dispatch_from_c_args(INTERP, "is_equal",
+                "PP->I", item1, item2, &result);
+            if (!result)
+                return 0;
+        }
+
+        return 1;
     }
 
 /*
