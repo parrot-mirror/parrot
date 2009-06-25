@@ -1418,9 +1418,7 @@ Return a new iterator for the slice PMC C<key>
 
     VTABLE PMC *slice(PMC *key, INTVAL f) {
         if (f == 0) {
-            PMC * const iter = pmc_new_init(INTERP, enum_class_Iterator, SELF);
-            PARROT_ITERATOR(iter)->key = key;
-            return iter;
+            return SELF.get_iter();
         }
 
         Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_OUT_OF_BOUNDS,
