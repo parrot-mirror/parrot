@@ -17,7 +17,7 @@ in that aggregate.
 =head2 default usage
 
     .local pmc iterator, array, entry
-    iterator = new 'Iterator', array
+    iterator = iter array
   iter_loop:
     unless iterator, iter_end  # while (more values)
     entry = shift iterator     # get an entry
@@ -25,14 +25,10 @@ in that aggregate.
     goto iter_loop
   iter_end:
 
-The C<new> can alternatively be written as:
-
-  iterator = iter array
-
 =head2 iterate from the end, for arrays
 
     .local pmc iterator, array, entry
-    iterator = new 'Iterator', array
+    iterator = iter array
     iterator = .ITERATE_FROM_END
   iter_loop:
     unless iterator, iter_end  # while (more values)
@@ -44,7 +40,7 @@ The C<new> can alternatively be written as:
 =head2 iterate over a hash
 
     .local pmc iterator, hash, key, entry
-    iterator = new 'Iterator', hash
+    iterator = iter hash
   iter_loop:
     unless iterator, iter_end  # while (more values)
     key   = shift iterator     # get the key..
@@ -91,7 +87,9 @@ Defaults iteration mode to iterate from start.
 
     VTABLE void init_pmc(PMC *aggregate) {
         if (VTABLE_does(INTERP, aggregate, CONST_STRING(INTERP, "array"))
-            || VTABLE_does(INTERP, aggregate, CONST_STRING(INTERP, "hash"))) {
+            || VTABLE_does(INTERP, aggregate, CONST_STRING(INTERP, "hash"))
+            || VTABLE_does(INTERP, aggregate, CONST_STRING(INTERP, "string"))
+            ) {
             /* It's ugly hack... But I cant figure out proper way to do it. */
             PMC *real_iter = VTABLE_get_iter(INTERP, aggregate);
             SELF = pmc_reuse_init(INTERP, SELF, VTABLE_type(INTERP, real_iter), aggregate, 0);
@@ -152,57 +150,6 @@ Returns the element for C<*key>.
 
     VTABLE PMC *get_pmc_keyed(PMC *key) {
         return VTABLE_get_pmc_keyed(INTERP, SELF.get_pmc(), key);
-    }
-
-/*
-
-=item C<opcode_t *invoke(void *next)>
-
-Return the next element of the aggregate. The return type may depend on
-the aggregate. If there are no more items in the aggregate, I1 .. I4 are
-zero.
-
-See F<docs/pdds/pdd03_calling_conventions.pod>.
-
-=cut
-
-*/
-    VTABLE opcode_t *invoke(void *next) {
-        PMC *agg;
-
-        /* iterator constructor */
-        if (REG_INT(interp, 3) == 1) {
-            PMC * const arg = REG_PMC(interp, 5);
-            PMC *iter;
-
-            if (PObj_is_object_TEST(arg)) {
-                REG_PMC(interp, 5) = VTABLE_get_iter(INTERP, arg);
-                return (opcode_t *)next;
-            }
-
-            REG_PMC(interp, 5) = iter = pmc_new_init(INTERP,
-                    enum_class_Iterator, arg);
-            VTABLE_set_integer_native(INTERP, iter, 0);
-            return (opcode_t *)next;
-        }
-        /* TODO function + sentinel */
-        else if (REG_INT(interp, 3) == 2)
-            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
-                    "Iterator: invoke 2 args");
-
-        REG_INT(interp, 1) =
-            REG_INT(interp, 2) =
-            REG_INT(interp, 3) =
-            REG_INT(interp, 4) = 0;
-
-        agg = SELF.get_pmc();
-
-        {
-            PMC * const res    = SELF.shift_pmc();
-            REG_INT(interp, 3) = 1;
-            REG_PMC(interp, 5) = res;
-            return (opcode_t *)next;
-        }
     }
 
 /*
