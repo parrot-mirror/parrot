@@ -158,6 +158,29 @@ Marks the hash as live.
 
 /*
 
+=item C<void set_integer_native()>
+
+=cut
+
+*/
+    VTABLE void set_integer_native(INTVAL value) {
+        Parrot_HashIterator_attributes *attrs =
+                PARROT_HASHITERATOR(SELF);
+
+        if (value == 0) {
+            /* Restart iterator */
+            attrs->bucket           = 0;
+            attrs->pos              = 0;
+            advance_to_next(INTERP, SELF);
+            return;
+        }
+
+        Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_INVALID_OPERATION,
+                "HashIterator: unknown iterator type");
+    };
+
+/*
+
 =item C<PMC *get_pmc()>
 
 Returns this Iterator's Hash.
