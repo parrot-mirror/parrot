@@ -77,6 +77,20 @@ Marks the OrderedHash as live.
 
 /*
 
+=item C<PMC *get_iter()>
+
+Return a new iterator
+
+=cut
+
+*/
+
+    VTABLE PMC *get_iter() {
+        return pmc_new_init(INTERP, enum_class_OrderedHashIterator, SELF);
+    }
+
+/*
+
 =item C<PMC *get_pmc_keyed(PMC *key)>
 
 =item C<PMC *get_pmc_keyed_int(INTVAL key)>
