@@ -132,7 +132,11 @@ hash_key_from_string(PARROT_INTERP, const Hash * const hash, ARGIN(STRING *key))
         /* Currently PMCs are stringified */
         case Hash_key_type_PMC:
         case Hash_key_type_STRING:
+            /* XXX This line spotted some nasty bug in GC when Hash wasn't marked
+            propely and COWed key string was put into GC's free list.
             ret = (void *)Parrot_str_new_COW(interp, key);
+            */
+            ret = (void *)key;
             break;
         default:
             Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_UNIMPLEMENTED,
