@@ -101,7 +101,6 @@ TYPE hash_value_to_TYPE convert from values type.
 
 */
 
-PARROT_PURE_FUNCTION
 static void*
 hash_key_from_int(PARROT_INTERP, const Hash * const hash, INTVAL key)
 {
@@ -122,10 +121,9 @@ hash_key_from_int(PARROT_INTERP, const Hash * const hash, INTVAL key)
     return ret;
 }
 
-PARROT_PURE_FUNCTION
 static void*
 hash_key_from_string(PARROT_INTERP, const Hash * const hash, ARGIN(STRING *key))
-{
+{ 
     void *ret;
     switch (hash->key_type) {
         case Hash_key_type_int:
@@ -143,7 +141,6 @@ hash_key_from_string(PARROT_INTERP, const Hash * const hash, ARGIN(STRING *key))
     return ret;
 }
 
-PARROT_PURE_FUNCTION
 static void*
 hash_key_from_pmc(PARROT_INTERP, const Hash * const hash, ARGIN(PMC *key))
 {
@@ -1085,9 +1082,6 @@ Returns the PMC value for the element at C<*key>.
         PMC    *box;
         HashBucket *b;
 
-        if (!key)
-            return;
-
         keystr  = hash_key_from_pmc(INTERP, hash, key);
         nextkey = key_next(INTERP, key);
 
@@ -1139,23 +1133,26 @@ Sets C<value> as the value for C<*key>.
         void   *keystr;
         PMC    *nextkey;
         PMC    *box;
-
-        if (!key)
-            return;
+        HashBucket *b;
 
         keystr  = hash_key_from_pmc(INTERP, hash, key);
         nextkey = key_next(INTERP, key);
 
         if (!nextkey) {
-            parrot_hash_put(INTERP, (Hash *)SELF.get_pointer(), keystr, value);
+            parrot_hash_put(INTERP, hash, keystr, value);
             return;
         }
 
-        box = SELF.get_pmc_keyed_str((STRING*)keystr);
-
-        /* autovivify an Hash */
-        if (!box)
+        b = parrot_hash_get_bucket(INTERP, hash, keystr);
+        if (b)
+            box = hash_value_to_pmc(INTERP, hash, b->value);
+        else {
+            /* autovivify an Hash */
             box = pmc_new(INTERP, SELF.type());
+            parrot_hash_put(INTERP, hash, keystr,
+                    hash_value_from_pmc(INTERP, hash, box));
+        }
+
 
         VTABLE_set_pmc_keyed(INTERP, box, nextkey, value);
     }
@@ -1171,7 +1168,9 @@ Sets C<*value> as the value for C<*key>.
 */
 
     VTABLE void set_pmc_keyed_str(STRING *key, PMC *value) {
-        parrot_hash_put(INTERP, (Hash *)SELF.get_pointer(), key, value);
+        Hash *hash = (Hash *)SELF.get_pointer();
+        parrot_hash_put(INTERP, hash, hash_key_from_string(INTERP, hash, key),
+                hash_value_from_pmc(INTERP, hash, value));
     }
 
 /*
@@ -1183,8 +1182,9 @@ Sets C<*value> as the value for C<*key>.
 */
 
     VTABLE INTVAL exists_keyed_str(STRING *key) {
-        HashBucket * const b =
-            parrot_hash_get_bucket(INTERP, (Hash *)SELF.get_pointer(), key);
+        Hash *hash = (Hash *)SELF.get_pointer();
+        HashBucket * const b = parrot_hash_get_bucket(INTERP, hash,
+                hash_key_from_string(INTERP, hash, key));
         return b != NULL;
     }
 
@@ -1213,7 +1213,7 @@ Returns whether a key C<*key> exists in the hash.
         if (!key)
             return 1;
 
-        return VTABLE_exists_keyed(INTERP, (PMC *)b->value, key);
+        return VTABLE_exists_keyed(INTERP, hash_value_to_pmc(INTERP, h, b->value), key);
     }
 
 /*
@@ -1258,9 +1258,10 @@ Returns whether the value for C<*key> is defined.
         key = key_next(INTERP, key);
 
         if (!key)
-            return VTABLE_defined(INTERP, (PMC *)b->value);
+            return VTABLE_defined(INTERP, hash_value_to_pmc(INTERP, h, b->value));
         else
-            return VTABLE_defined_keyed(INTERP, (PMC *)b->value, key);
+            return VTABLE_defined_keyed(INTERP,
+                    hash_value_to_pmc(INTERP, h, b->value), key);
     }
 
 /*
@@ -1272,7 +1273,8 @@ Returns whether the value for C<*key> is defined.
 */
 
     VTABLE void delete_keyed_str(STRING *key) {
-        parrot_hash_delete(INTERP, (Hash *)SELF.get_pointer(), key);
+        Hash *hash = (Hash *)SELF.get_pointer();
+        parrot_hash_delete(INTERP, hash, hash_key_from_string(INTERP, hash, key));
     }
 
 /*
