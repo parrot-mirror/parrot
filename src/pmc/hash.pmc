@@ -132,10 +132,6 @@ hash_key_from_string(PARROT_INTERP, const Hash * const hash, ARGIN(STRING *key))
         /* Currently PMCs are stringified */
         case Hash_key_type_PMC:
         case Hash_key_type_STRING:
-            /* XXX This line spotted some nasty bug in GC when Hash wasn't marked
-            propely and COWed key string was put into GC's free list.
-            ret = (void *)Parrot_str_new_COW(interp, key);
-            */
             ret = (void *)key;
             break;
         default:
@@ -161,7 +157,7 @@ hash_key_from_pmc(PARROT_INTERP, const Hash * const hash, ARGIN(PMC *key))
                 if (!tmp)
                     Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_UNEXPECTED_NULL,
                             "hash: can't use null as key");
-                ret = (void *)Parrot_str_new_COW(interp, tmp);
+                ret = (void *)tmp;
             }
             break;
         default:
@@ -687,14 +683,8 @@ Returns the integer value for the element at C<*key>.
 
 */
 
-    /* Call from HashIterator */
-    MULTI INTVAL get_integer_keyed(HashIteratorKey key) {
-        void *value = (PMC*)PARROT_HASHITERATORKEY(key)->bucket->value;
-        return hash_value_to_int(INTERP, (Hash*)SELF.get_pointer(), value);
-    }
-
     /* Handling Keys */
-    MULTI INTVAL get_integer_keyed(Key key) {
+    VTABLE INTVAL get_integer_keyed(PMC *key) {
         const Hash * const hash = (Hash *)SELF.get_pointer();
         HashBucket *b = parrot_hash_get_bucket(INTERP, hash,
                 hash_key_from_pmc(INTERP, hash, key));
@@ -704,7 +694,7 @@ Returns the integer value for the element at C<*key>.
         if (!b)
             return 0;
 
-        nextkey = VTABLE_shift_pmc(INTERP, key);
+        nextkey = key_next(INTERP, key);
         valpmc  = hash_value_to_pmc(INTERP, hash, b->value);
 
         /* Stop recursion. This is last step */
@@ -715,17 +705,6 @@ Returns the integer value for the element at C<*key>.
         return VTABLE_get_integer_keyed(INTERP, valpmc, nextkey);
     }
 
-    MULTI INTVAL get_integer_keyed(DEFAULT key) {
-        const Hash * const hash = (Hash*)SELF.get_pointer();
-        HashBucket * const b    = parrot_hash_get_bucket(INTERP, hash,
-                hash_key_from_pmc(INTERP, hash, key));
-
-        if (!b)
-            return 0;
-
-        return hash_value_to_int(INTERP, hash, b->value);
-    }
-
 /*
 
 =item C<void set_integer_keyed(PMC *key, INTVAL value)>
@@ -734,16 +713,10 @@ Returns the integer value for the element at C<*key>.
 
 */
 
-    MULTI void set_integer_keyed(DEFAULT key, INTVAL value) {
-        Hash   *hash = (Hash *)SELF.get_pointer();
-        parrot_hash_put(INTERP, hash, hash_key_from_pmc(INTERP, hash, key),
-                hash_value_from_int(INTERP, hash, value));
-    }
-
-    MULTI void set_integer_keyed(Key key, INTVAL value) {
+    VTABLE void set_integer_keyed(PMC *key, INTVAL value) {
         Hash   *hash    = (Hash *)SELF.get_pointer();
         void   *keystr  = hash_key_from_pmc(INTERP, hash, key);
-        PMC    *nextkey = VTABLE_shift_pmc(INTERP, key);
+        PMC    *nextkey = key_next(INTERP, key);
         PMC    *box     = NULL;
         HashBucket *b;
 
@@ -891,26 +864,7 @@ Returns the string value for the element at C<*key>.
 
 */
 
-    /* Called from HashIterator */
-    MULTI STRING *get_string_keyed(HashIteratorKey key) {
-        void *value = (PMC*)PARROT_HASHITERATORKEY(key)->bucket->value;
-        return hash_value_to_string(INTERP, (Hash*)SELF.get_pointer(), value);
-    }
-
-    /* Simple PMC */
-    MULTI STRING *get_string_keyed(DEFAULT key) {
-        const Hash * const hash = (Hash*)SELF.get_pointer();
-        HashBucket * const b    = parrot_hash_get_bucket(INTERP, hash,
-                hash_key_from_pmc(INTERP, hash, key));
-
-        if (!b)
-            return Parrot_str_new_noinit(INTERP, enum_stringrep_one, 0);
-
-        return hash_value_to_string(INTERP, hash, b->value);
-    }
-
-    /* Compound Key */
-    MULTI STRING *get_string_keyed(Key key) {
+    VTABLE STRING *get_string_keyed(PMC *key) {
         const Hash * const hash = (Hash *)SELF.get_pointer();
         HashBucket *b = parrot_hash_get_bucket(INTERP, hash,
                 hash_key_from_pmc(INTERP, hash, key));
@@ -920,7 +874,7 @@ Returns the string value for the element at C<*key>.
         if (!b)
             return Parrot_str_new_noinit(INTERP, enum_stringrep_one, 0);
 
-        nextkey = VTABLE_shift_pmc(INTERP, key);
+        nextkey = key_next(INTERP, key);
         valpmc  = hash_value_to_pmc(INTERP, hash, b->value);
 
         /* Stop recursion. This is last step */
@@ -939,21 +893,14 @@ Returns the string value for the element at C<*key>.
 
 */
 
-    MULTI void set_string_keyed(DEFAULT key, STRING *value) {
-        Hash   *hash = (Hash *)SELF.get_pointer();
-
-        parrot_hash_put(INTERP, hash, hash_key_from_pmc(INTERP, hash, key),
-                hash_value_from_string(INTERP, hash, value));
-    }
-
-    MULTI void set_string_keyed(Key key, STRING *value) {
+    VTABLE void set_string_keyed(PMC *key, STRING *value) {
         Hash   *hash    = (Hash *)SELF.get_pointer();
         void   *keystr  = hash_key_from_pmc(INTERP, hash, key);
         PMC    *nextkey;
         PMC    *box     = NULL;
         HashBucket *b;
 
-        nextkey = VTABLE_shift_pmc(INTERP, key);
+        nextkey = key_next(INTERP, key);
         if (!nextkey) {
             parrot_hash_put(INTERP, hash, keystr,
                     hash_value_from_string(INTERP, hash, value));
@@ -1031,26 +978,8 @@ Returns the PMC value for the element at C<*key>.
         return hash_value_to_pmc(INTERP, hash, b->value);
     }
 
-    /* Called from HashIterator */
-    MULTI PMC *get_pmc_keyed(HashIteratorKey key) {
-        void *value = (PMC*)PARROT_HASHITERATORKEY(key)->bucket->value;
-        return hash_value_to_pmc(INTERP, (Hash*)SELF.get_pointer(), value);
-    }
-
-    /* Simple PMC */
-    MULTI PMC *get_pmc_keyed(DEFAULT key) {
-        const Hash * const hash = (Hash*)SELF.get_pointer();
-        HashBucket * const b    = parrot_hash_get_bucket(INTERP, hash,
-                hash_key_from_pmc(INTERP, hash, key));
-
-        if (!b)
-            return PMCNULL;
-
-        return hash_value_to_pmc(INTERP, hash, b->value);
-    }
-
     /* Compound Key */
-    MULTI PMC *get_pmc_keyed(Key key) {
+    VTABLE PMC *get_pmc_keyed(PMC *key) {
         const Hash * const hash = (Hash *)SELF.get_pointer();
         HashBucket *b = parrot_hash_get_bucket(INTERP, hash,
                 hash_key_from_pmc(INTERP, hash, key));
@@ -1060,7 +989,7 @@ Returns the PMC value for the element at C<*key>.
         if (!b)
             return PMCNULL;
 
-        nextkey = VTABLE_shift_pmc(INTERP, key);
+        nextkey = key_next(INTERP, key);
         valpmc  = hash_value_to_pmc(INTERP, hash, b->value);
 
         /* Stop recursion. This is last step */
