@@ -291,9 +291,9 @@ const char *
 get_neg_op(ARGIN(const char *op), ARGOUT(int *n))
 {
     ASSERT_ARGS(get_neg_op)
-    static const struct br_pairs {
-        const char * const op;
-        const char * const nop;
+    PARROT_OBSERVER static const struct br_pairs {
+        PARROT_OBSERVER const char * const op;
+        PARROT_OBSERVER const char * const nop;
         int n;
     } br_pairs[] = {
         { "if", "unless", 2 },
@@ -360,15 +360,15 @@ if_branch(PARROT_INTERP, ARGMOD(IMC_Unit *unit))
                 IMCC_debug(interp, DEBUG_OPT1, "if_branch %s ... %s\n",
                         last->opname, br_dest->name);
                 /* find the negated op (e.g if->unless, ne->eq ... */
-                if ((neg_op = get_neg_op(last->opname, &args)) != 0) {
+                if ((neg_op = get_neg_op(last->opname, &args)) != NULL) {
                     Instruction * tmp;
                     last->symregs[reg] = go;
-                    tmp = INS(interp, unit, (char*)neg_op, "",
+                    tmp = INS(interp, unit, neg_op, "",
                               last->symregs, args, 0, 0);
                     last->opnum = tmp->opnum;
                     last->opsize = tmp->opsize;
                     free(last->opname);
-                    last->opname = str_dup(tmp->opname);
+                    last->opname = mem_sys_strdup(tmp->opname);
                     free_ins(tmp);
 
                     /* delete branch */
@@ -757,7 +757,7 @@ IMCC_subst_constants_umix(PARROT_INTERP, ARGMOD(IMC_Unit *unit), ARGIN(const cha
 {
     ASSERT_ARGS(IMCC_subst_constants_umix)
     Instruction *tmp;
-    const char * const ops[] = {
+    PARROT_OBSERVER const char * const ops[] = {
         "abs", "add", "div", "mul", "sub", "fdiv"
     };
     size_t i;
@@ -882,7 +882,7 @@ IMCC_subst_constants(PARROT_INTERP, ARGMOD(IMC_Unit *unit), ARGIN(const char *na
 {
     ASSERT_ARGS(IMCC_subst_constants)
     Instruction *tmp;
-    const char * const ops[] = {
+    PARROT_OBSERVER const char * const ops[] = {
         "add", "sub", "mul", "div", "fdiv", "pow",
         "cmod", "mod", "atan",
         "shr", "shl", "lsr",
@@ -892,16 +892,16 @@ IMCC_subst_constants(PARROT_INTERP, ARGMOD(IMC_Unit *unit), ARGIN(const char *na
         "and", "or", "xor",
         "iseq", "isne", "islt", "isle", "isgt", "isge", "cmp", "concat"
     };
-    const char * const ops2[] = {
+    PARROT_OBSERVER const char * const ops2[] = {
         "abs", "neg", "not", "fact", "sqrt", "ceil", "floor"
         "acos", "asec", "asin",
         "atan", "cos", "cosh", "exp", "ln", "log10", "log2", "sec",
         "sech", "sin", "sinh", "tan", "tanh", "fact"
     };
-    const char * const ops3[] = {
+    PARROT_OBSERVER const char * const ops3[] = {
         "eq", "ne", "gt", "ge", "lt", "le"
     };
-    const char * const ops4[] = {
+    PARROT_OBSERVER const char * const ops4[] = {
         "if", "unless"
     };
 
@@ -1002,6 +1002,7 @@ IMCC_subst_constants(PARROT_INTERP, ARGMOD(IMC_Unit *unit), ARGIN(const char *na
         return NULL;
     }
 
+    /* XXX We can get to this point with debug_fmt = NULL */
     IMCC_debug(interp, DEBUG_OPT1, debug_fmt, name);
     /* we construct a parrot instruction
      * here and let parrot do the calculation in a
@@ -1245,7 +1246,7 @@ branch_cond_loop_swap(PARROT_INTERP, ARGMOD(IMC_Unit *unit), ARGMOD(Instruction 
 
         for (count = 1; count != 999; ++count) {
             snprintf(label, size, "%s_post%d", branch->symregs[0]->name, count);
-            if (get_sym(interp, label) == 0) {
+            if (get_sym(interp, label) == NULL) {
                 found = 1;
                 break;
             }

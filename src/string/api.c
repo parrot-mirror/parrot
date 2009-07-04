@@ -426,23 +426,21 @@ string_rep_compatible(SHIM_INTERP,
 
     /* a table could possibly simplify the logic */
     if (a->encoding == Parrot_utf8_encoding_ptr &&
-            (b->charset == Parrot_ascii_charset_ptr ||
-             b->charset == Parrot_iso_8859_1_charset_ptr)) {
+            b->charset == Parrot_ascii_charset_ptr) {
         if (a->strlen == a->bufused) {
             *e = Parrot_fixed_8_encoding_ptr;
-            return Parrot_ascii_charset_ptr;
+            return b->charset;
         }
         *e = a->encoding;
         return a->charset;
     }
     if (b->encoding == Parrot_utf8_encoding_ptr &&
-            (a->charset == Parrot_ascii_charset_ptr ||
-             a->charset == Parrot_iso_8859_1_charset_ptr)) {
+            a->charset == Parrot_ascii_charset_ptr) {
         if (b->strlen == b->bufused) {
             *e = Parrot_fixed_8_encoding_ptr;
             return a->charset;
         }
-        *e = Parrot_utf8_encoding_ptr;
+        *e = b->encoding;
         return b->charset;
     }
     if (a->encoding != b->encoding)
@@ -562,14 +560,22 @@ Parrot_str_append(PARROT_INTERP, ARGMOD_NULLOK(STRING *a), ARGIN_NULLOK(STRING *
         a->encoding = enc;
     }
     else {
-        /* upgrade to utf16 */
-        Parrot_utf16_encoding_ptr->to_encoding(interp, a, NULL);
-        b = Parrot_utf16_encoding_ptr->to_encoding(interp, b,
+        /* upgrade strings for concatenation */
+        enc = (a->encoding == Parrot_utf16_encoding_ptr ||
+                  b->encoding == Parrot_utf16_encoding_ptr ||
+                  a->encoding == Parrot_ucs2_encoding_ptr ||
+                  b->encoding == Parrot_ucs2_encoding_ptr)
+              ? Parrot_utf16_encoding_ptr
+              : Parrot_utf8_encoding_ptr;
+
+        Parrot_unicode_charset_ptr->to_charset(interp, a, NULL);
+        b = Parrot_unicode_charset_ptr->to_charset(interp, b,
                 Parrot_gc_new_string_header(interp, 0));
 
-        /* result could be mixed ucs2 / utf16 */
-        if (b->encoding == Parrot_utf16_encoding_ptr)
-            a->encoding = Parrot_utf16_encoding_ptr;
+        if (a->encoding != enc)
+            enc->to_encoding(interp, a, NULL);
+        if (b->encoding != enc)
+            enc->to_encoding(interp, b, NULL);
     }
 
     /* calc usable and total bytes */
@@ -2315,19 +2321,28 @@ Parrot_str_to_num(PARROT_INTERP, ARGIN(const STRING *s))
             return 0.0;
     }
 
-    if (d && d_is_safe) {
-        f = mantissa + (1.0 * d / powl(10, d_length));
-    }
+/* local macro to call proper pow version depending on FLOATVAL */
+#if NUMVAL_SIZE == DOUBLE_SIZE
+#  define POW pow
+#else
+#  define POW powl
+#endif
+
+     if (d && d_is_safe) {
+        f = mantissa + (1.0 * d / POW(10.0, d_length));
+     }
 
     if (sign < 0)
         f = -f;
 
     if (e) {
         if (e_sign == 1)
-            f *= powl(10, e);
+            f *= POW(10.0, e);
         else
-            f /= powl(10, e);
+            f /= POW(10.0, e);
     }
+
+#undef POW
 
     return f;
 }
@@ -3325,8 +3340,8 @@ Parrot_str_join(PARROT_INTERP, ARGIN_NULLOK(STRING *j), ARGIN(PMC *ar))
 =item C<PMC* Parrot_str_split(PARROT_INTERP, STRING *delim, STRING *str)>
 
 Splits the string C<str> at the delimiter C<delim>, returning a
-C<ResizableStringArray> of results. Returns PMCNULL if the string or the
-delimiter is NULL.
+C<ResizableStringArray>, or his mapped type in the current HLL,
+of results. Returns PMCNULL if the string or the delimiter is NULL.
 
 =cut
 
@@ -3346,7 +3361,7 @@ Parrot_str_split(PARROT_INTERP,
     if (STRING_IS_NULL(delim) || STRING_IS_NULL(str))
         return PMCNULL;
 
-    res  = pmc_new(interp, enum_class_ResizableStringArray);
+    res  = pmc_new(interp, Parrot_get_ctx_HLL_type(interp, enum_class_ResizableStringArray));
     slen = Parrot_str_byte_length(interp, str);
 
     if (!slen)

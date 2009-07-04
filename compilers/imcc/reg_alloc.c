@@ -72,16 +72,20 @@ static void compute_one_du_chain(ARGMOD(SymReg *r), ARGIN(IMC_Unit *unit))
         __attribute__nonnull__(2)
         FUNC_MODIFIES(*r);
 
-static int first_avail(
+PARROT_WARN_UNUSED_RESULT
+static unsigned int first_avail(
     ARGIN(const IMC_Unit *unit),
     int reg_set,
     ARGOUT_NULLOK(Set **avail))
         __attribute__nonnull__(1)
         FUNC_MODIFIES(*avail);
 
+PARROT_WARN_UNUSED_RESULT
+PARROT_MALLOC
 PARROT_CANNOT_RETURN_NULL
 static unsigned int* ig_allocate(int N);
 
+PARROT_WARN_UNUSED_RESULT
 static int ig_find_color(
     ARGIN(const IMC_Unit *unit),
     ARGIN(const char *avail))
@@ -145,6 +149,7 @@ static void rebuild_reglist(ARGMOD(IMC_Unit *unit))
         __attribute__nonnull__(1)
         FUNC_MODIFIES(*unit);
 
+PARROT_WARN_UNUSED_RESULT
 static int reg_sort_f(ARGIN(const void *a), ARGIN(const void *b))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
@@ -153,6 +158,7 @@ static void sort_reglist(ARGMOD(IMC_Unit *unit))
         __attribute__nonnull__(1)
         FUNC_MODIFIES(*unit);
 
+PARROT_WARN_UNUSED_RESULT
 static int try_allocate(PARROT_INTERP, ARGIN(IMC_Unit *unit))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
@@ -237,7 +243,7 @@ ig_get_word(int i, int j, int N, ARGIN(unsigned int *graph),
             ARGMOD(int *bit_ofs))
 {
     ASSERT_ARGS(ig_get_word)
-    unsigned int bit = i * N + j;
+    const unsigned int bit = i * N + j;
     *bit_ofs        = bit % sizeof (*graph);
 
     return &graph[bit / sizeof (*graph)];
@@ -256,7 +262,7 @@ ig_set(int i, int j, int N, ARGIN(unsigned int *graph))
 {
     ASSERT_ARGS(ig_set)
     int bit_ofs;
-    unsigned int *word = ig_get_word(i, j, N, graph, &bit_ofs);
+    unsigned int * const word = ig_get_word(i, j, N, graph, &bit_ofs);
     *word |= (1 << bit_ofs);
 }
 
@@ -268,6 +274,7 @@ ig_set(int i, int j, int N, ARGIN(unsigned int *graph))
 
 */
 
+PARROT_WARN_UNUSED_RESULT
 unsigned int
 ig_test(int i, int j, int N, ARGIN(unsigned int *graph))
 {
@@ -285,6 +292,8 @@ ig_test(int i, int j, int N, ARGIN(unsigned int *graph))
 
 */
 
+PARROT_WARN_UNUSED_RESULT
+PARROT_MALLOC
 PARROT_CANNOT_RETURN_NULL
 static unsigned int*
 ig_allocate(int N)
@@ -422,7 +431,7 @@ free_reglist(ARGMOD(IMC_Unit *unit))
 #endif
     if (unit->interference_graph) {
         free(unit->interference_graph);
-        unit->interference_graph =  0;
+        unit->interference_graph = NULL;
     }
 
     if (unit->reglist) {
@@ -594,6 +603,7 @@ sort list by line  nr
 
 */
 
+PARROT_WARN_UNUSED_RESULT
 static int
 reg_sort_f(ARGIN(const void *a), ARGIN(const void *b))
 {
@@ -812,7 +822,7 @@ static void
 compute_du_chain(ARGMOD(IMC_Unit *unit))
 {
     ASSERT_ARGS(compute_du_chain)
-    Instruction *ins        = unit->instructions;
+    Instruction *ins = unit->instructions;
     Instruction *lastbranch = NULL;
     unsigned int i;
 
@@ -854,14 +864,14 @@ compute_one_du_chain(ARGMOD(SymReg *r), ARGIN(IMC_Unit *unit))
     /* We cannot rely on computing the value of r->first when parsing,
      * since the situation can be changed at any time by the register
      * allocation algorithm */
-    r->first_ins = 0;
-    r->use_count = r->lhs_use_count = 0;
+    r->first_ins     = NULL;
+    r->use_count     = 0;
+    r->lhs_use_count = 0;
 
     for (ins = unit->instructions; ins; ins = ins->next) {
-        const int ro = instruction_reads(ins, r);
         const int rw = instruction_writes(ins, r);
 
-        if (ro || rw) {
+        if (rw || instruction_reads(ins, r)) {
             if (!r->first_ins)
                 r->first_ins = ins;
 
@@ -987,6 +997,7 @@ find available color for register #x in available colors
 
 */
 
+PARROT_WARN_UNUSED_RESULT
 static int
 ig_find_color(ARGIN(const IMC_Unit *unit), ARGIN(const char *avail))
 {
@@ -1015,6 +1026,7 @@ If we run out of colors, then we need to spill the top node.
 
 */
 
+PARROT_WARN_UNUSED_RESULT
 static int
 try_allocate(PARROT_INTERP, ARGIN(IMC_Unit *unit))
 {
@@ -1037,7 +1049,7 @@ try_allocate(PARROT_INTERP, ARGIN(IMC_Unit *unit))
 
     for (i = 0; i < unit->n_symbols; ++i) {
         int     already_allocated, color;
-        SymReg *r = reglist[i];
+        SymReg * const r = reglist[i];
         int     t = -1;
 
         if (r->color >= 0)
@@ -1110,7 +1122,8 @@ map_colors(ARGIN(const IMC_Unit* unit), int x, ARGIN(unsigned int *graph),
 
 /*
 
-=item C<static int first_avail(const IMC_Unit *unit, int reg_set, Set **avail)>
+=item C<static unsigned int first_avail(const IMC_Unit *unit, int reg_set, Set
+**avail)>
 
 find first available register of the given reg_set
 
@@ -1118,7 +1131,8 @@ find first available register of the given reg_set
 
 */
 
-static int
+PARROT_WARN_UNUSED_RESULT
+static unsigned int
 first_avail(ARGIN(const IMC_Unit *unit), int reg_set, ARGOUT_NULLOK(Set **avail))
 {
     ASSERT_ARGS(first_avail)
@@ -1188,10 +1202,10 @@ allocate_uniq(PARROT_INTERP, ARGMOD(IMC_Unit *unit), int usage)
             &&  r->color == -1
             && (r->usage & usage)
             && r->use_count) {
-                Set *avail    = sets[j];
-                int first_reg = avail
-                              ? set_first_zero(avail)
-                              : first_avail(unit, (int)r->set, &avail);
+                Set         *avail     = sets[j];
+                unsigned int first_reg = avail
+                                       ? set_first_zero(avail)
+                                       : first_avail(unit, (int)r->set, &avail);
                 set_add(avail, first_reg);
                 r->color = first_reg++;
 
@@ -1233,15 +1247,15 @@ static void
 vanilla_reg_alloc(SHIM_INTERP, ARGMOD(IMC_Unit *unit))
 {
     ASSERT_ARGS(vanilla_reg_alloc)
-    char         type[] = "INSP";
+    const char   type[] = "INSP";
     SymHash     *hsh    = &unit->hash;
     Set         *avail;
-    SymReg      *r;
     unsigned int i, j;
     int          reg_set, first_reg;
 
     /* Clear the pre-assigned colors. */
     for (i = 0; i < hsh->size; i++) {
+        SymReg *r;
         for (r = hsh->data[i]; r; r = r->next) {
             /* TODO Ignore non-volatiles */
             if (REG_NEEDS_ALLOC(r) && r->use_count)
@@ -1254,7 +1268,9 @@ vanilla_reg_alloc(SHIM_INTERP, ARGMOD(IMC_Unit *unit))
         reg_set   = type[j];
         first_reg = first_avail(unit, reg_set, &avail);
 
+        /* XXX Use a different loop variable that doesn't shadow outer i */
         for (i = 0; i < hsh->size; i++) {
+            SymReg *r;
             for (r = hsh->data[i]; r; r = r->next) {
                 if (r->set != reg_set)
                     continue;

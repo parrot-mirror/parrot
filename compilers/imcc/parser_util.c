@@ -677,7 +677,7 @@ imcc_compile(PARROT_INTERP, ARGIN(const char *s), int pasm_file,
         IMCC_INFO(interp)->state->next = NULL;
 
     IMCC_INFO(interp)->state->pasm_file = pasm_file;
-    IMCC_INFO(interp)->state->file      = name;
+    IMCC_INFO(interp)->state->file      = mem_sys_strdup(name);
     IMCC_INFO(interp)->expect_pasm      = 0;
 
     compile_string(interp, s, yyscanner);
@@ -941,7 +941,7 @@ imcc_compile_file(PARROT_INTERP, ARGIN(const char *fullname),
     IMCC_push_parser_state(interp);
     {
         /* Store a copy, in order to know how to free it later */
-        char *copyname = strdup(fullname);
+        char *copyname = mem_sys_strdup(fullname);
         IMCC_INFO(interp)->state->file = copyname;
         ext                            = strrchr(copyname, '.');
     }
@@ -1221,8 +1221,8 @@ try_rev_cmp(ARGIN(const char *name), ARGMOD(SymReg **r))
 {
     ASSERT_ARGS(try_rev_cmp)
     static struct br_pairs {
-        ARGIN(const char * const op);
-        ARGIN(const char * const nop);
+        PARROT_OBSERVER const char * const op;
+        PARROT_OBSERVER const char * const nop;
         const int to_swap;
     } br_pairs[] = {
         { "gt",   "lt",   0 },
@@ -1265,8 +1265,9 @@ the given Parrot IO PMC.
 
 */
 
+PARROT_IGNORABLE_RESULT
 int
-imcc_vfprintf(PARROT_INTERP, ARGIN(PMC *io), ARGIN(const char *format), va_list ap)
+imcc_vfprintf(PARROT_INTERP, ARGMOD(PMC *io), ARGIN(const char *format), va_list ap)
 {
     ASSERT_ARGS(imcc_vfprintf)
     return Parrot_io_putps(interp, io, Parrot_vsprintf_c(interp, format, ap));

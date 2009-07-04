@@ -149,7 +149,7 @@ it isn't optimized as aggressively as is possible.
 The precomputed goto core is an amazingly fast optimized core that uses
 the same computed goto feature, but performs the array dereferencing
 before the core even starts. The compiled bytecode is fed into a
-preprocessor that converts the bytecode instruction numbers into lable
+preprocessor that converts the bytecode instruction numbers into label
 pointer values. In the computed goto core, you have this
 operation to move to the next opcode:
 
@@ -489,7 +489,7 @@ runops_gc_debug_core(PARROT_INTERP, ARGIN(opcode_t *pc))
             Parrot_ex_throw_from_c_args(interp, NULL, 1,
                 "attempt to access code outside of current code segment");
 
-        Parrot_gc_mark_and_sweep(interp, 0);
+        Parrot_gc_mark_and_sweep(interp, GC_TRACE_FULL);
         CONTEXT(interp)->current_pc = pc;
 
         DO_OP(pc, interp);

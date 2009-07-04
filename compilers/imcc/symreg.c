@@ -74,6 +74,15 @@ static char * add_ns(PARROT_INTERP, ARGIN(const char *name))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
+PARROT_WARN_UNUSED_RESULT
+PARROT_CAN_RETURN_NULL
+static SymReg * get_sym_by_name(
+    ARGIN(const SymHash *hsh),
+    ARGIN(const char *name))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+PARROT_WARN_UNUSED_RESULT
 static int int_overflows(ARGIN(const SymReg *r))
         __attribute__nonnull__(1);
 
@@ -105,6 +114,9 @@ static void resize_symhash(ARGMOD(SymHash *hsh))
 #define ASSERT_ARGS_add_ns __attribute__unused__ int _ASSERT_ARGS_CHECK = \
        PARROT_ASSERT_ARG(interp) \
     || PARROT_ASSERT_ARG(name)
+#define ASSERT_ARGS_get_sym_by_name __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(hsh) \
+    || PARROT_ASSERT_ARG(name)
 #define ASSERT_ARGS_int_overflows __attribute__unused__ int _ASSERT_ARGS_CHECK = \
        PARROT_ASSERT_ARG(r)
 #define ASSERT_ARGS_mk_pmc_const_2 __attribute__unused__ int _ASSERT_ARGS_CHECK = \
@@ -134,7 +146,7 @@ push_namespace(SHIM_INTERP, ARGIN(const char *name))
     Namespace * const ns = mem_allocate_zeroed_typed(Namespace);
 
     ns->parent = pesky_global__namespace;
-    ns->name   = str_dup(name);
+    ns->name   = mem_sys_strdup(name);
     pesky_global__namespace = ns;
 }
 
@@ -203,6 +215,35 @@ _get_sym_typed(ARGIN(const SymHash *hsh), ARGIN(const char *name), int t)
 }
 
 
+/*
+
+=item C<static SymReg * get_sym_by_name(const SymHash *hsh, const char *name)>
+
+Gets a symbol from the hash, with the given C<name>.
+
+=cut
+
+*/
+
+PARROT_WARN_UNUSED_RESULT
+PARROT_CAN_RETURN_NULL
+static SymReg *
+get_sym_by_name(ARGIN(const SymHash *hsh), ARGIN(const char *name))
+{
+    ASSERT_ARGS(get_sym_by_name)
+
+    SymReg            *p;
+    const unsigned int i = hash_str(name) % hsh->size;
+
+    for (p = hsh->data[i]; p; p = p->next) {
+        if (STREQ(name, p->name))
+            return p;
+    }
+
+    return NULL;
+}
+
+
 /* symbolic registers */
 
 /*
@@ -227,7 +268,7 @@ _mk_symreg(ARGMOD(SymHash *hsh), ARGIN(const char *name), int t)
         r             = mem_allocate_zeroed_typed(SymReg);
         r->set        = t;
         r->type       = VTREG;
-        r->name       = str_dup(name);
+        r->name       = mem_sys_strdup(name);
         r->color      = -1;
         r->want_regno = -1;
 
@@ -579,7 +620,7 @@ _mk_fullname(ARGIN_NULLOK(const Namespace *ns), ARGIN(const char *name))
         return result;
     }
 
-    return str_dup(name);
+    return mem_sys_strdup(name);
 }
 
 
@@ -600,9 +641,15 @@ mk_ident(PARROT_INTERP, ARGIN(const char *name), int t)
 {
     ASSERT_ARGS(mk_ident)
     char   * const fullname = _mk_fullname(pesky_global__namespace, name);
-    SymReg        *r        = mk_symreg(interp, fullname, t);
+    SymReg *r = get_sym_by_name(&(IMCC_INFO(interp)->last_unit->hash), name);
+    if (r && r->set != t) {
+        IMCC_print_inc(interp);
+        IMCC_warning(interp, "Duplicated IDENTIFIER '%s'\n", fullname);
+    }
 
+    r = mk_symreg(interp, fullname, t);
     r->type = VTIDENTIFIER;
+
 
     if (pesky_global__namespace) {
         Identifier * const ident = mem_allocate_zeroed_typed(Identifier);
@@ -676,7 +723,7 @@ mk_pmc_const_2(PARROT_INTERP, ARGMOD(IMC_Unit *unit), ARGIN(SymReg *left),
     r[0] = left;
 
     /* strip delimiters */
-    name          = str_dup(rhs->name + 1);
+    name          = mem_sys_strdup(rhs->name + 1);
     len           = strlen(name);
     name[len - 1] = '\0';
 
@@ -801,28 +848,39 @@ _mk_const(ARGMOD(SymHash *hsh), ARGIN(const char *name), int t)
 
 */
 
+PARROT_WARN_UNUSED_RESULT
 static int
 int_overflows(ARGIN(const SymReg *r))
 {
     ASSERT_ARGS(int_overflows)
     INTVAL i;
-    errno = 0;
+    int base;
+    const char *digits;
 
     if (r->type & VT_CONSTP)
         r = r->reg;
 
-    if (r->name[0] == '0' && (r->name[1] == 'x' || r->name[1] == 'X')) {
-        i = strtoul(r->name + 2, 0, 16);
+    /* Refactor this code to hoist common from functionality between
+     * this function and IMCC_int_from_reg in pbc.c */
+    digits = r->name;
+    base   = 10;
+
+    if (digits[0] == '0') {
+        switch (toupper((unsigned char)digits[1])) {
+            case 'B': base =  2; break;
+            case 'O': base =  8; break;
+            case 'X': base = 16; break;
+            default: break;
+        }
     }
 
-    else if (r->name[0] == '0' && (r->name[1] == 'O' || r->name[1] == 'o'))
-        i = strtoul(r->name + 2, 0, 8);
-
-    else if (r->name[0] == '0' && (r->name[1] == 'b' || r->name[1] == 'B'))
-        i = strtoul(r->name + 2, 0, 2);
-
-    else
-        i = strtol(r->name, 0, 10);
+    errno = 0;
+    if (base == 10) {
+        i = strtol(digits, NULL, base);
+    }
+    else {
+        i = strtoul(digits + 2, NULL, base);
+    }
 
     return errno ? 1 : 0;
 }
@@ -874,7 +932,7 @@ add_ns(PARROT_INTERP, ARGIN(const char *name))
 
     if (!IMCC_INFO(interp)->cur_namespace
     || (l = strlen(IMCC_INFO(interp)->cur_namespace->name)) <= 2)
-        return str_dup(name);
+        return mem_sys_strdup(name);
 
     /* TODO keyed syntax */
     len     = strlen(name) + l  + 4;
@@ -921,7 +979,7 @@ _mk_address(PARROT_INTERP, ARGMOD(SymHash *hsh), ARGIN(const char *name), int un
     if (uniq == U_add_all) {
         r       = mem_allocate_zeroed_typed(SymReg);
         r->type = VTADDRESS;
-        r->name = str_dup(name);
+        r->name = mem_sys_strdup(name);
         _store_symreg(hsh, r);
     }
     else {
@@ -1104,7 +1162,7 @@ dup_sym(ARGIN(const SymReg *r))
     ASSERT_ARGS(dup_sym)
     SymReg * const new_sym = mem_allocate_zeroed_typed(SymReg);
     STRUCT_COPY(new_sym, r);
-    new_sym->name = str_dup(r->name);
+    new_sym->name = mem_sys_strdup(r->name);
 
     if (r->nextkey)
         new_sym->nextkey = dup_sym(r->nextkey);

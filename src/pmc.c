@@ -364,16 +364,12 @@ pmc_reuse_check_pmc_ext(PARROT_INTERP, ARGMOD(PMC * pmc),
     /* Do we need one? */
     if (flags & VTABLE_PMC_NEEDS_EXT) {
         /* If we need an ext area, go allocate one */
-        if (!has_ext)
-            Parrot_gc_add_pmc_ext(interp, pmc);
+        Parrot_gc_add_pmc_ext(interp, pmc);
         newflags |= PObj_is_PMC_EXT_FLAG;
-        PARROT_ASSERT(pmc->pmc_ext != NULL);
         PARROT_ASSERT((newflags & PObj_is_PMC_EXT_FLAG) != 0);
     }
     else {
-        if (has_ext)
-            Parrot_gc_free_pmc_ext(interp, pmc);
-        pmc->pmc_ext = NULL;
+        Parrot_gc_free_pmc_ext(interp, pmc);
         PMC_data(pmc) = NULL;
         newflags &= ~PObj_is_PMC_EXT_FLAG;
         PARROT_ASSERT((newflags & PObj_is_PMC_EXT_FLAG) == 0);
@@ -818,13 +814,9 @@ create_class_pmc(PARROT_INTERP, INTVAL type)
         interp->vtables[type]->pmc_class = _class;
     }
     else {
-        if (PObj_is_PMC_EXT_TEST(_class))
-            Parrot_gc_free_pmc_ext(interp, _class);
-
+        Parrot_gc_free_pmc_ext(interp, _class);
         gc_flag_CLEAR(is_special_PMC, _class);
-
         PObj_is_PMC_shared_CLEAR(_class);
-
         interp->vtables[type]->pmc_class = _class;
     }
 
@@ -938,6 +930,7 @@ Unregisters the PMC from the interpreter's GC registry.
 
 */
 
+PARROT_EXPORT
 void
 gc_unregister_pmc(PARROT_INTERP, ARGIN(PMC *pmc))
 {
