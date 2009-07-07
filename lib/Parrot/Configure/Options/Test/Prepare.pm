@@ -77,11 +77,11 @@ sub _prepare_steps_tests_list {
     my %steps_tests = %{ $steps_tests_ref };
     my @steps_tests;
     foreach my $step ( @{ $steps_expected_ref } ) {
-        my @temp = split /::/, $step;
-        my $these_tests = $steps_tests{$temp[0]}{$temp[1]}
+        my @module_path = split /::/, $step;
+        my $these_tests = $steps_tests{$module_path[0]}{$module_path[1]}
             or carp "No tests exist for configure step $step";
         foreach my $k (sort keys %$these_tests) {
-            push @steps_tests, qq{$steps_dir/$temp[0]_$temp[1]-$k.t};
+            push @steps_tests, qq{$steps_dir/$module_path[0]_$module_path[1]-$k.t};
         }
     }
     return @steps_tests;
