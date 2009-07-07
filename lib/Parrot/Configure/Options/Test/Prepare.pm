@@ -52,6 +52,41 @@ sub _get_framework_tests {
     return @framework_tests;
 }
 
+# _get_steps_tests() currently returns a ref to a seen-hash of .t files found
+# in t/steps/*.t.  The hash has 4 elements, 'init', 'inter', 'auto' and 'gen'.
+# The value of each such element is another hash where each element
+# corresponds to the (1 or more) tests for each configuration step.  The key
+# of that hash is the second part of the step's name, and its value is a
+# reference to another seen-hash where each element is the 2-digit, 0-padded
+# number of the test.
+#
+#  $steps_tests_ref = {
+#    'auto' => {
+#      ...
+#    },
+#    'gen' => {
+#      ...
+#    },
+#    'inter' => {
+#      'lex' => {
+#        '01' => 1,
+#        '02' => 1,
+#        '03' => 1,
+#      },
+#      ...
+#    },
+#    'init' => {
+#      'manifest' => {
+#        '01' => 1
+#      },
+#      ...
+#      'hints' => {
+#        '01' => 1
+#      },
+#      ...
+#    },
+#  };
+
 sub _get_steps_tests {
     my $steps_dir = shift;
     my %steps_tests = ();
@@ -74,11 +109,10 @@ sub _prepare_steps_tests_list {
     my $steps_dir = shift;
     my $steps_tests_ref = shift;
     my $steps_expected_ref = shift;
-    my %steps_tests = %{ $steps_tests_ref };
     my @steps_tests;
     foreach my $step ( @{ $steps_expected_ref } ) {
         my @module_path = split /::/, $step;
-        my $these_tests = $steps_tests{$module_path[0]}{$module_path[1]}
+        my $these_tests = $steps_tests_ref->{$module_path[0]}{$module_path[1]}
             or carp "No tests exist for configure step $step";
         foreach my $k (sort keys %$these_tests) {
             push @steps_tests, qq{$steps_dir/$module_path[0]_$module_path[1]-$k.t};
