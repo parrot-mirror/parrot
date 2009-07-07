@@ -143,11 +143,11 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-auto_crypto-01.t - test auto::crypto
+auto/crypto-01.t - test auto::crypto
 
 =head1 SYNOPSIS
 
-    % prove t/steps/auto_crypto-01.t
+    % prove t/steps/auto/crypto-01.t
 
 =head1 DESCRIPTION
 
@@ -157,7 +157,7 @@ The tests in this file test auto::crypto.
 
 =head1 HISTORY
 
-Mostly taken from F<t/steps/auto_gdbm-01.t>.
+Mostly taken from F<t/steps/auto/gdbm-01.t>.
 
 =head1 AUTHOR
 

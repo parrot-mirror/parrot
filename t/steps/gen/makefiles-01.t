@@ -1,7 +1,7 @@
 #! perl
 # Copyright (C) 2007-2009, Parrot Foundation.
 # $Id$
-# gen_makefiles-01.t
+# gen/makefiles-01.t
 
 use strict;
 use warnings;
@@ -195,11 +195,11 @@ END {
 
 =head1 NAME
 
-gen_makefiles-01.t - test gen::makefiles
+gen/makefiles-01.t - test gen::makefiles
 
 =head1 SYNOPSIS
 
-    % prove t/steps/gen_makefiles-01.t
+    % prove t/steps/gen/makefiles-01.t
 
 =head1 DESCRIPTION
 

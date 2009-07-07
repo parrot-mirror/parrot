@@ -1,7 +1,7 @@
 #! perl
 # Copyright (C) 2007, Parrot Foundation.
 # $Id$
-# auto_perldoc-01.t
+# auto/perldoc-01.t
 
 use strict;
 use warnings;
@@ -110,11 +110,11 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-auto_perldoc-01.t - test auto::perldoc
+auto/perldoc-01.t - test auto::perldoc
 
 =head1 SYNOPSIS
 
-    % prove t/steps/auto_perldoc-01.t
+    % prove t/steps/auto/perldoc-01.t
 
 =head1 DESCRIPTION
 

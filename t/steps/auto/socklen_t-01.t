@@ -1,7 +1,7 @@
 #! perl
 # Copyright (C) 2007, Parrot Foundation.
 # $Id$
-# auto_socklen_t-01.t
+# auto/socklen_t-01.t
 
 use strict;
 use warnings;
@@ -76,11 +76,11 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-auto_socklen_t-01.t - test auto::socklen_t
+auto/socklen_t-01.t - test auto::socklen_t
 
 =head1 SYNOPSIS
 
-    % prove t/steps/auto_socklen_t-01.t
+    % prove t/steps/auto/socklen_t-01.t
 
 =head1 DESCRIPTION
 

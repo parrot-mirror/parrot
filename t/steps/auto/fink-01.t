@@ -1,7 +1,7 @@
 #! perl
 # Copyright (C) 2007-2009, Parrot Foundation.
 # $Id$
-# auto_fink-01.t
+# auto/fink-01.t
 
 use strict;
 use warnings;
@@ -258,11 +258,11 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-auto_fink-01.t - test auto::fink
+auto/fink-01.t - test auto::fink
 
 =head1 SYNOPSIS
 
-    % prove t/steps/auto_fink-01.t
+    % prove t/steps/auto/fink-01.t
 
 =head1 DESCRIPTION
 

@@ -1,7 +1,7 @@
 #! perl
 # Copyright (C) 2007-2008, Parrot Foundation.
 # $Id$
-# auto_pcre-01.t
+# auto/pcre-01.t
 
 use strict;
 use warnings;
@@ -150,11 +150,11 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-  auto_pcre-01.t - test auto::pcre
+  auto/pcre-01.t - test auto::pcre
 
 =head1 SYNOPSIS
 
-    % prove t/steps/auto_pcre-01.t
+    % prove t/steps/auto/pcre-01.t
 
 =head1 DESCRIPTION
 

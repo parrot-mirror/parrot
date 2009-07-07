@@ -1,7 +1,7 @@
 #! perl
 # Copyright (C) 2007, Parrot Foundation.
 # $Id$
-# inter_encoding-01.t
+# inter/encoding-01.t
 
 use strict;
 use warnings;
@@ -83,11 +83,11 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-inter_encoding-01.t - test inter::encoding
+inter/encoding-01.t - test inter::encoding
 
 =head1 SYNOPSIS
 
-    % prove t/steps/inter_encoding-01.t
+    % prove t/steps/inter/encoding-01.t
 
 =head1 DESCRIPTION
 

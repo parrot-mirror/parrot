@@ -1,7 +1,7 @@
 #! perl
 # Copyright (C) 2008, Parrot Foundation.
 # $Id$
-# auto_glibc-01.t
+# auto/glibc-01.t
 
 use strict;
 use warnings;
@@ -64,11 +64,11 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-auto_glibc-01.t - test auto::glibc
+auto/glibc-01.t - test auto::glibc
 
 =head1 SYNOPSIS
 
-    % prove t/steps/auto_glibc-01.t
+    % prove t/steps/auto/glibc-01.t
 
 =head1 DESCRIPTION
 

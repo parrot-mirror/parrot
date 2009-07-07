@@ -1,7 +1,7 @@
 #! perl
 # Copyright (C) 2007, Parrot Foundation.
 # $Id$
-# auto_cpu-01.t
+# auto/cpu-01.t
 
 use strict;
 use warnings;
@@ -74,11 +74,11 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-auto_cpu-01.t - test auto::cpu
+auto/cpu-01.t - test auto::cpu
 
 =head1 SYNOPSIS
 
-    % prove t/steps/auto_cpu-01.t
+    % prove t/steps/auto/cpu-01.t
 
 =head1 DESCRIPTION
 

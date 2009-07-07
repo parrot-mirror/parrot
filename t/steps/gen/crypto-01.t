@@ -1,7 +1,7 @@
 #! perl
 # Copyright (C) 2008, Parrot Foundation.
 # $Id$
-# gen_crypto-01.t
+# gen/crypto-01.t
 
 use strict;
 use warnings;
@@ -54,11 +54,11 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-  gen_crypto-01.t - test gen::crypto
+  gen/crypto-01.t - test gen::crypto
 
 =head1 SYNOPSIS
 
-    % prove t/steps/gen_crypto-01.t
+    % prove t/steps/gen/crypto-01.t
 
 =head1 DESCRIPTION
 

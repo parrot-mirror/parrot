@@ -1,7 +1,7 @@
 #! perl
 # Copyright (C) 2007-2008, Parrot Foundation.
 # $Id$
-# auto_opengl-01.t
+# auto/opengl-01.t
 
 use strict;
 use warnings;
@@ -208,11 +208,11 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-  auto_opengl-01.t - test auto::opengl
+  auto/opengl-01.t - test auto::opengl
 
 =head1 SYNOPSIS
 
-    % prove t/steps/auto_opengl-01.t
+    % prove t/steps/auto/opengl-01.t
 
 =head1 DESCRIPTION
 

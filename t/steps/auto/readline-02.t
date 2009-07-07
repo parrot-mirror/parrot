@@ -1,7 +1,7 @@
 #! perl
 # Copyright (C) 2007, Parrot Foundation.
 # $Id$
-# auto_readline-02.t
+# auto/readline-02.t
 
 use strict;
 use warnings;
@@ -84,11 +84,11 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-auto_readline-02.t - test auto::readline
+auto/readline-02.t - test auto::readline
 
 =head1 SYNOPSIS
 
-    % prove t/steps/auto_readline-02.t
+    % prove t/steps/auto/readline-02.t
 
 =head1 DESCRIPTION
 

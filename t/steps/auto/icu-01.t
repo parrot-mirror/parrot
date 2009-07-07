@@ -1,7 +1,7 @@
 #! perl
 # Copyright (C) 2007-2008, Parrot Foundation.
 # $Id$
-# auto_icu-01.t
+# auto/icu-01.t
 
 use strict;
 use warnings;
@@ -693,11 +693,11 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-auto_icu-01.t - test auto::icu
+auto/icu-01.t - test auto::icu
 
 =head1 SYNOPSIS
 
-    % prove t/steps/auto_icu-01.t
+    % prove t/steps/auto/icu-01.t
 
 =head1 DESCRIPTION
 

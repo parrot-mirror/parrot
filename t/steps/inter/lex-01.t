@@ -1,7 +1,7 @@
 #! perl
 # Copyright (C) 2007-2008, Parrot Foundation.
 # $Id$
-# inter_lex-01.t
+# inter/lex-01.t
 
 use strict;
 use warnings;
@@ -144,11 +144,11 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-inter_lex-01.t - test inter::lex
+inter/lex-01.t - test inter::lex
 
 =head1 SYNOPSIS
 
-    % prove t/steps/inter_lex-01.t
+    % prove t/steps/inter/lex-01.t
 
 =head1 DESCRIPTION
 

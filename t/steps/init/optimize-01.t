@@ -1,7 +1,7 @@
 #! perl
 # Copyright (C) 2007, Parrot Foundation.
 # $Id$
-# init_optimize-01.t
+# init/optimize-01.t
 use strict;
 use warnings;
 use Test::More tests => 33;
@@ -125,11 +125,11 @@ pass("Completed all tests in $0");
 
 =head1 NAME
 
-init_optimize-01.t - test init::optimize
+init/optimize-01.t - test init::optimize
 
 =head1 SYNOPSIS
 
-    % prove t/steps/init_optimize-01.t
+    % prove t/steps/init/optimize-01.t
 
 =head1 DESCRIPTION
 
