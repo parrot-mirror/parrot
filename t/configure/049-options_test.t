@@ -52,7 +52,7 @@ my $cwd = cwd();
         my ($stdout, $stderr);
         capture (
             sub { $steps_tests_ref =
-                Parrot::Configure::Options::Test::Prepare::_get_steps_tests(
+                Parrot::Configure::Options::Test::Prepare::_find_steps_tests(
                     $tdir
                 ) },
             \$stdout,

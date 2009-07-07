@@ -16,7 +16,7 @@ my $config_dir = q{t/configure};
 my @framework_tests = _get_framework_tests($config_dir);
 
 my $steps_dir = q{t/steps};
-my $steps_tests_ref  = _get_steps_tests($steps_dir);
+my $steps_tests_ref  = _find_steps_tests($steps_dir);
 my @steps_expected = get_steps_list();
 my @steps_tests = _prepare_steps_tests_list(
     $steps_dir,
@@ -52,7 +52,7 @@ sub _get_framework_tests {
     return @framework_tests;
 }
 
-# _get_steps_tests() currently returns a ref to a seen-hash of .t files found
+# _find_steps_tests() currently returns a ref to a seen-hash of .t files found
 # in t/steps/*.t.  The hash has 4 elements, 'init', 'inter', 'auto' and 'gen'.
 # The value of each such element is another hash where each element
 # corresponds to the (1 or more) tests for each configuration step.  The key
@@ -87,9 +87,13 @@ sub _get_framework_tests {
 #    },
 #  };
 
-sub _get_steps_tests {
+sub _find_steps_tests {
     my $steps_dir = shift;
     my %steps_tests = ();
+    # Will have to alter this to reflect repositioning of steps tests and
+    # possibility of 2nd level tests.
+    # We should continue to carp if there are no tests for a top-level step
+    # class.
     opendir my $DIRH2, $steps_dir or croak "Unable to open $steps_dir";
     for my $t (grep { /\.t$/ } readdir $DIRH2) {
         my ($type, $class, $num);
@@ -110,8 +114,12 @@ sub _prepare_steps_tests_list {
     my $steps_tests_ref = shift;
     my $steps_expected_ref = shift;
     my @steps_tests;
+    # The order of config steps should still be governed by
+    # Parrot::Configure::Step::List::get_steps_list.
     foreach my $step ( @{ $steps_expected_ref } ) {
         my @module_path = split /::/, $step;
+        # Will have to how $these_steps gets assigned to
+        # in order to accommodate 2nd level tests.
         my $these_tests = $steps_tests_ref->{$module_path[0]}{$module_path[1]}
             or carp "No tests exist for configure step $step";
         foreach my $k (sort keys %$these_tests) {
