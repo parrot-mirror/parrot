@@ -9,8 +9,9 @@ use Carp;
 use Cwd;
 use File::Basename qw( basename fileparse );
 use File::Path qw( mkpath );
+use File::Spec ();
 use File::Temp 0.13 qw| tempdir |;
-use Test::More qw(no_plan); # tests => 12;
+use Test::More tests => 10;
 use lib qw( lib );
 use IO::CaptureOutput qw| capture |;
 use Parrot::Configure::Options::Test::Prepare ();
@@ -43,6 +44,7 @@ my $cwd = cwd();
     my $gen_test = q{gen/sometest-01.t};
     my $bad_test  = q{bad/sometest-01.t};
     my $lack_number_test = q{init/test.t};
+    my $CamelCase_test = q{gen/CamelCase-01.t};
     touch($init_test);
     touch($init_hints_test);
     touch($inter_test);
@@ -50,47 +52,48 @@ my $cwd = cwd();
     touch($gen_test);
     touch($bad_test);
     touch($lack_number_test);
+    touch($CamelCase_test);
 
-    my ( $steps_tests_simple_ref, $steps_tests_complex_ref )  = ( {}, {} );
-#    {
-#        my ($stdout, $stderr);
-#        capture (
-#            sub {
-#                ( $steps_tests_simple_ref, $steps_tests_complex_ref )  =
-#                    Parrot::Configure::Options::Test::Prepare::_find_steps_tests($tdir)
-#            },
-#            \$stdout,
-#            \$stderr,
-#        );
-#        like($stderr, qr/Unable to match $bad_test/,
-#            "Warning about badly named test captured");
-#        like($stderr, qr/Unable to match $lack_number_test/,
-#            "Warning about badly named test captured");
-#    }
+    my ( $steps_tests_simple_ref, $steps_tests_complex_ref )  =
+        Parrot::Configure::Options::Test::Prepare::_find_steps_tests($tdir);
+    my $full_bad_test = File::Spec->catfile( $tdir, $bad_test );
+    ok( ! exists $steps_tests_simple_ref->{$full_bad_test},
+        "File in incorrect directory correctly excluded from list of configuration step tests");
+    my $full_lack_number_test = File::Spec->catfile( $tdir, $lack_number_test );
+    ok( ! exists $steps_tests_simple_ref->{$full_lack_number_test},
+        "File lacking 2-digit number correctly excluded from list of configuration step tests");
+    my $full_init_hints_test = File::Spec->catfile( $tdir, $init_hints_test );
+    ok( exists $steps_tests_simple_ref->{$full_init_hints_test},
+        "File in second-level directory correctly included in list of configuration step tests");
+    my $full_CamelCase_test = File::Spec->catfile( $tdir, $CamelCase_test );
+    ok( ! exists $steps_tests_simple_ref->{$full_CamelCase_test},
+        "File containing capital letters in name correctly excluded from list of configuration step tests");
 
-#    my @tests_expected = qw(
-#        init::sometest
-#        inter::sometest
-#        auto::sometest
-#        gen::sometest
-#        gen::missing
-#    );
-#    my %tests_seen = ();
-#    {
-#        my ($stdout, $stderr);
-#        capture (
-#            sub { %tests_seen = map { basename($_), 1}
-#                Parrot::Configure::Options::Test::Prepare::_prepare_steps_tests_list(
-#                    $tdir,
-#                    $steps_tests_complex_ref,
-#                    \@tests_expected,
-#                ) },
-#            \$stdout,
-#            \$stderr,
-#        );
-#        like($stderr, qr/No tests exist for configure step gen::missing/,
-#            "Warning about step class lacking test test captured");
-#    }
+    my @tests_expected = qw(
+        init::sometest
+        init::hints::sometest
+        inter::sometest
+        auto::sometest
+        gen::sometest
+    );
+    my $not_expected = q{gen::missing};
+    push @tests_expected, $not_expected;
+    my %tests_seen = ();
+    {
+        my ($stdout, $stderr);
+        capture (
+            sub { %tests_seen = map { $_, 1}
+                Parrot::Configure::Options::Test::Prepare::_prepare_steps_tests_list(
+                    $tdir,
+                    $steps_tests_complex_ref,
+                    \@tests_expected,
+                ) },
+            \$stdout,
+            \$stderr,
+        );
+        like($stderr, qr/No tests exist for configure step $not_expected/,
+            "Warning about step class lacking test captured");
+    }
 #    foreach my $type ( qw| init inter auto gen | ) {
 #        my $t = $type . q(_sometest-01.t);
 #        ok($tests_seen{$t}, "Found needed test");
@@ -100,16 +103,6 @@ my $cwd = cwd();
 }
 
 pass("Completed all tests in $0");
-
-#{
-#    my $tdir = tempdir( CLEANUP => 1 );
-#    chdir $tdir or croak "Unable to change to temporary directory";
-#    my $init_test = q{init/sometest-01.t};
-#    my $init_hints_test = q{init/hints/sometest-01.t};
-#    touch($init_test);
-#    touch($init_hints_test);
-#    chdir $cwd or croak "Unable to change back to starting directory";
-#}
 
 sub touch {
     my $path = shift;
@@ -145,7 +138,8 @@ sub touch_in_this_dir {
 
 The files in this directory test functionality used by F<Configure.pl>.
 
-The tests in this file test Parrot::Configure::Options::Test methods.
+The tests in this file test Parrot::Configure::Options::Test::Prepare
+subroutines.
 
 =head1 AUTHOR
 
@@ -153,7 +147,7 @@ James E Keenan
 
 =head1 SEE ALSO
 
-Parrot::Configure::Options, F<Configure.pl>.
+Parrot::Configure::Options::Test, F<Configure.pl>.
 
 =cut
 
@@ -163,3 +157,4 @@ Parrot::Configure::Options, F<Configure.pl>.
 #   fill-column: 100
 # End:
 # vim: expandtab shiftwidth=4:
+
