@@ -1,7 +1,7 @@
 #! perl
 # Copyright (C) 2007, Parrot Foundation.
 # $Id$
-# 049-options_test.t
+# 049-options_test_prepare.t
 
 use strict;
 use warnings;
@@ -128,11 +128,11 @@ sub touch_in_this_dir {
 
 =head1 NAME
 
-049-options_test.t - test Parrot::Configure::Options::Test
+049-options_test_prepare.t - test Parrot::Configure::Options::Test
 
 =head1 SYNOPSIS
 
-    % prove t/configure/049-options_test.t
+    % prove t/configure/049-options_test_prepare.t
 
 =head1 DESCRIPTION
 
