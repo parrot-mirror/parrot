@@ -683,10 +683,10 @@ Parrot_str_new_constant(PARROT_INTERP, ARGIN(const char *buffer))
 
     s = Parrot_str_new_init(interp, buffer, strlen(buffer),
                        PARROT_DEFAULT_ENCODING, PARROT_DEFAULT_CHARSET,
-                       PObj_external_FLAG|PObj_constant_FLAG);
+                       PObj_constant_FLAG);
 
     parrot_hash_put(interp, cstring_cache,
-        PARROT_const_cast(char *, buffer), (void *)s);
+        PARROT_const_cast(char *, s->strstart), (void *)s);
 
     return s;
 }

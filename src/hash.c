@@ -724,6 +724,8 @@ expand_hash(PARROT_INTERP, ARGMOD(Hash *hash))
     const UINTVAL old_nb   = N_BUCKETS(old_size);
     size_t        offset, i, new_loc;
 
+    Parrot_block_GC_mark(interp);
+
     /*
        allocate some less buckets
        e.g. 3 buckets, 4 pointers:
@@ -816,6 +818,7 @@ expand_hash(PARROT_INTERP, ARGMOD(Hash *hash))
         hash->free_list = b;
     }
 
+    Parrot_unblock_GC_mark(interp);
 }
 
 
@@ -1303,6 +1306,8 @@ parrot_hash_put(PARROT_INTERP, ARGMOD(Hash *hash), ARGIN_NULLOK(void *key), ARGI
     const UINTVAL hashval = (hash->hash_val)(interp, key, hash->seed);
     HashBucket   *bucket  = hash->bi[hashval & hash->mask];
 
+    Parrot_block_GC_mark(interp);
+
     while (bucket) {
         /* store hash_val or not */
         if ((hash->compare)(interp, key, bucket->key) == 0)
@@ -1338,6 +1343,8 @@ parrot_hash_put(PARROT_INTERP, ARGMOD(Hash *hash), ARGIN_NULLOK(void *key), ARGI
         bucket->next                   = hash->bi[hashval & hash->mask];
         hash->bi[hashval & hash->mask] = bucket;
     }
+
+    Parrot_unblock_GC_mark(interp);
 
     return bucket;
 }
