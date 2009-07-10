@@ -41,6 +41,16 @@ sub runstep {
     $flagsref->{ldflags} .= " -L$lib_dir";
     $flagsref->{ccflags} .= " -pipe -fno-common -Wno-long-double ";
 
+    # Here is the place where we will have to incorporate functionality
+    # currently found in auto::fink and auto::macports.
+    # For example, in the case of Fink, we'll have to determine whether Fink
+    # is found on the box, set fink_base_dir, fink_lib_dir and
+    # fink_include_dir. Then we'll have to add them to linkflags, ldflags and
+    # ccflags as is currently done by
+    # Parrot::Configure::Step:::Methods::_handle_darwin_for_fink().
+    # For macports, we only have to handle ports_lib_dir and
+    # ports_include_dir.
+
     $conf->data->set(
         darwin              => 1,
         osx_version         => $ENV{'MACOSX_DEPLOYMENT_TARGET'},
