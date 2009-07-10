@@ -50,7 +50,6 @@ Initializes the library with a C<NULL> oplib init function.
             mem_allocate_zeroed_typed(Parrot_ParrotLibrary_attributes);
         PMC_data(SELF) = attrs;
         PObj_active_destroy_SET(SELF);
-        PObj_is_special_PMC_SET(SELF);
     }
 
 /*
