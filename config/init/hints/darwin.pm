@@ -6,6 +6,11 @@ package init::hints::darwin;
 use strict;
 use warnings;
 
+use lib qw( lib );
+use File::Spec ();
+use base qw(Parrot::Configure::Step);
+use Parrot::BuildUtil;
+
 our %defaults = (
     uname           => `uname -r`,
     sw_vers         => `sw_vers -productVersion`,
@@ -40,16 +45,14 @@ sub runstep {
     my $lib_dir = $conf->data->get('build_dir') . "/blib/lib";
     $flagsref->{ldflags} .= " -L$lib_dir";
     $flagsref->{ccflags} .= " -pipe -fno-common -Wno-long-double ";
+    $flagsref->{linkflags} .= " -undefined dynamic_lookup";
 
-    # Here is the place where we will have to incorporate functionality
-    # currently found in auto::fink and auto::macports.
-    # For example, in the case of Fink, we'll have to determine whether Fink
-    # is found on the box, set fink_base_dir, fink_lib_dir and
-    # fink_include_dir. Then we'll have to add them to linkflags, ldflags and
-    # ccflags as is currently done by
-    # Parrot::Configure::Step:::Methods::_handle_darwin_for_fink().
-    # For macports, we only have to handle ports_lib_dir and
-    # ports_include_dir.
+    _probe_for_libraries($conf, $flagsref, 'fink');
+    _probe_for_libraries($conf, $flagsref, 'macports');
+
+    for my $flag ( keys %$flagsref ) {
+        $flagsref->{$flag} =~ s/^\s+//;
+    }
 
     $conf->data->set(
         darwin              => 1,
@@ -61,7 +64,7 @@ sub runstep {
         share_ext           => '.dylib',
         load_ext            => '.bundle',
         link                => 'c++',
-        linkflags           => '-undefined dynamic_lookup',
+        linkflags           => $flagsref->{linkflags},
         ld                  => 'c++',
         ld_share_flags      => '-dynamiclib -undefined dynamic_lookup',
         ld_load_flags       => '-undefined dynamic_lookup -bundle',
@@ -96,7 +99,7 @@ sub _precheck {
 
 sub _strip_arch_flags_engine {
     my ($arches, $stored, $flagsref, $flag) = @_;
-    for my $arch ( @{ $defaults{architectures} } ) {
+    for my $arch ( @{ $arches } ) {
         $stored =~ s/-arch\s+$arch//g;
         $stored =~ s/\s+/ /g;
         $flagsref->{$flag} = $stored;
@@ -151,6 +154,107 @@ sub _set_deployment_environment {
         # remove minor version
         $OSX_vers =join '.', (split /[.]/, $OSX_vers)[0,1];
         $ENV{'MACOSX_DEPLOYMENT_TARGET'} = $OSX_vers;
+    }
+}
+
+sub _probe_for_fink {
+    my $conf = shift;
+    my $verbose = $conf->options->get( 'verbose' );
+    # Per fink(8), this is location for Fink configuration file, presumably
+    # regardless of where Fink itself is installed.
+    my $fink_conf    = q{/sw/etc/fink.conf};
+    unless (-f $fink_conf) {
+        print "Fink configuration file not located\n" if $verbose;
+        return;
+    }
+    my $fink_conf_str = Parrot::BuildUtil::slurp_file($fink_conf);
+    my @lines = split /\n/, $fink_conf_str;
+    my $fink_base_dir;
+    while (defined (my $l = shift @lines) ) {
+        chomp $l;
+        next unless $l =~ /^Basepath:\s(.*)/;
+        $fink_base_dir = $1;
+        last;
+    }
+    unless (defined $fink_base_dir) {
+        print "Fink configuration file defective:  no 'Basepath'\n"
+            if $verbose;
+        return;
+    }
+    my $fink_lib_dir = qq{$fink_base_dir/lib};
+    my $fink_include_dir = qq{$fink_base_dir/include};
+    my @unlocateables;
+    foreach my $dir ($fink_base_dir, $fink_lib_dir, $fink_include_dir) {
+        push @unlocateables, $dir unless (-d $dir);
+    }
+    if (@unlocateables) {
+        print "Could not locate Fink directories:  @unlocateables\n"
+            if $verbose;
+        return;
+    }
+    else {
+        my %addl_flags = (
+            linkflags => "-L$fink_lib_dir",
+            ldflags   => "-L$fink_lib_dir",
+            ccflags   => "-I$fink_include_dir",
+        );
+        return \%addl_flags;
+    }
+}
+
+sub _probe_for_macports {
+    my $conf = shift;
+    my $verbose = $conf->options->get( 'verbose' );
+    my $ports_base_dir = File::Spec->catdir( '/', 'opt', 'local' );
+    my $ports_lib_dir = qq{$ports_base_dir/lib};
+    my $ports_include_dir = qq{$ports_base_dir/include};
+    my @unlocateables;
+    foreach my $dir ($ports_base_dir, $ports_lib_dir, $ports_include_dir) {
+        push @unlocateables, $dir unless (-d $dir);
+    }
+    if (@unlocateables) {
+        print "Could not locate Macports directories:  @unlocateables\n"
+            if $verbose;
+        return;
+    }
+    else {
+        my %addl_flags = (
+            linkflags => "-L$ports_lib_dir",
+            ldflags   => "-L$ports_lib_dir",
+            ccflags   => "-I$ports_include_dir",
+        );
+        return \%addl_flags;
+    }
+    return 1;
+}
+
+sub _probe_for_libraries {
+    my ($conf, $flagsref, $library) = @_;
+    my $no_library_option = "darwin_no_$library";
+    my $title = ucfirst(lc($library));
+    my $verbose = $conf->options->get( 'verbose' );
+    unless ($conf->options->get( $no_library_option ) ) {
+        my $addl_flags_ref;
+        if ($library eq 'fink') {
+            $addl_flags_ref = _probe_for_fink($conf);
+        }
+        if ($library eq 'macports') {
+            $addl_flags_ref = _probe_for_macports($conf);
+        }
+        if (defined $addl_flags_ref) {
+            foreach my $addl (keys %{ $addl_flags_ref } ) {
+                if (defined $flagsref->{$addl}) {
+                    my @elements = split /\s+/, $flagsref->{$addl};
+                    my %seen = map {$_, 1} @elements;
+                    $flagsref->{$addl} .= " $addl_flags_ref->{$addl}"
+                        unless $seen{$addl_flags_ref->{$addl}};
+                }
+            }
+            print "Probe for $title successful\n" if $verbose;
+        }
+        else {
+            print "Probe for $title unsuccessful\n" if $verbose;
+        }
     }
 }
 
