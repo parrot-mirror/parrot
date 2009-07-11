@@ -135,18 +135,6 @@ sub _select_lib {
     return $libs;
 }
 
-sub _add_flags_not_yet_seen {
-    my ($conf, $intended) = @_;
-    foreach my $flag (keys %{ $intended }) {
-        my $flagstr = $conf->data->get($flag);
-        my @elements = split /\s+/, $flagstr;
-        my %seen = map {$_, 1} @elements;
-        $conf->data->add( ' ', $flag => $intended->{$flag} )
-            unless $seen{$intended->{$flag}};
-    }
-}
-
-
 =head1 SEE ALSO
 
 Parrot::Configure::Step.
