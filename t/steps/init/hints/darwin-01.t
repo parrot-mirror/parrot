@@ -5,10 +5,10 @@
 
 use strict;
 use warnings;
-use Test::More;
-plan( skip_all => 'only needs testing on Darwin' ) unless $^O =~ /darwin/i;
-plan( tests =>  26 );
-#use Test::More qw(no_plan); # tests => 26;
+#use Test::More;
+#plan( skip_all => 'only needs testing on Darwin' ) unless $^O =~ /darwin/i;
+#plan( tests =>  26 );
+use Test::More qw(no_plan); # tests => 26;
 
 use lib qw( lib t/configure/testlib );
 use_ok('config::init::defaults');
@@ -188,15 +188,26 @@ my $stored = $conf->data->get($problematic_flag);
 ##### _strip_ldl_as_needed #####
 
 {
-    my $major = '7.99.11';
-    local $init::hints::darwin::defaults{uname} = $major;
     my $oldflag = $conf->data->get( 'libs ' );
+    my ( $major, $libs );
+
+    $major = '7.99.11';
+    local $init::hints::darwin::defaults{uname} = $major;
     $conf->data->set( libs => '-somelib -ldl -someotherlib' );
-    my $libs = init::hints::darwin::_strip_ldl_as_needed(
+    $libs = init::hints::darwin::_strip_ldl_as_needed(
         $conf->data->get( 'libs' )
     );
     like( $libs, qr/-somelib\s+-someotherlib/,
         "_strip_ldl_as_needed(): '-ldl' stripped as expected" );
+
+    $major = '6.99.11';
+    local $init::hints::darwin::defaults{uname} = $major;
+    $conf->data->set( libs => '-somelib -ldl -someotherlib' );
+    $libs = init::hints::darwin::_strip_ldl_as_needed(
+        $conf->data->get( 'libs' )
+    );
+    like( $libs, qr/-somelib\s+-ldl\s+-someotherlib/,
+        "_strip_ldl_as_needed(): '-ldl' not stripped as expected in older darwin" );
 
     $conf->data->set( libs => $oldflag );
 }
