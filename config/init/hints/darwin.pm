@@ -250,11 +250,14 @@ sub _probe_for_libraries {
                 }
             }
             print "Probe for $title successful\n" if $verbose;
+            return 1;
         }
         else {
             print "Probe for $title unsuccessful\n" if $verbose;
+            return 1;
         }
     }
+    return;
 }
 
 1;

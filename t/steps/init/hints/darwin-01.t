@@ -225,6 +225,24 @@ my $stored = $conf->data->get($problematic_flag);
         "_set_deployment_environment(): MACOSX_DEPLOYMENT_TARGET set as expected");
 }
     
+
+##### _probe_for_libraries() #####
+{
+    $conf->options->set( 'darwin_no_fink' => 1 );
+    $conf->options->set( 'verbose' => 0 );
+    my $lib_dir = $conf->data->get('build_dir') . "/blib/lib";
+    my $flagsref = {};
+    $flagsref->{ldflags} .= " -L$lib_dir";
+    $flagsref->{ccflags} .= " -pipe -fno-common -Wno-long-double ";
+    $flagsref->{linkflags} .= " -undefined dynamic_lookup";
+    my %state_before = map { $_ => $flagsref->{$_} } keys %{ $flagsref };
+    ok( ! defined ( init::hints::darwin::_probe_for_libraries(
+        $conf, $flagsref, 'fink')
+    ), "_probe_for_libraries() returned undef as expected" );
+    is_deeply( $flagsref, { %state_before },
+        "No change in flags, as expected" );
+}
+
 pass("Completed all tests in $0");
 
 ################### DOCUMENTATION ###################
