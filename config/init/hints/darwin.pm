@@ -225,7 +225,6 @@ sub _probe_for_macports {
         );
         return \%addl_flags;
     }
-    return 1;
 }
 
 sub _probe_for_libraries {
