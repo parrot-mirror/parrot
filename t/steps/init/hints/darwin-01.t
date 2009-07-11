@@ -5,16 +5,11 @@
 
 use strict;
 use warnings;
-#use Test::More;
-#plan( skip_all => 'only needs testing on Darwin' ) unless $^O =~ /darwin/i;
-#plan( tests =>  15 );
-use Test::More qw(no_plan); # tests => 15;
+use Test::More;
+plan( skip_all => 'only needs testing on Darwin' ) unless $^O =~ /darwin/i;
+plan( tests =>  26 );
+#use Test::More qw(no_plan); # tests => 26;
 
-#use Carp;
-#use Cwd;
-#use File::Path ();
-#use File::Spec::Functions qw/catfile/;
-#use File::Temp qw(tempdir);
 use lib qw( lib t/configure/testlib );
 use_ok('config::init::defaults');
 use_ok('config::init::hints');
@@ -27,8 +22,6 @@ use Parrot::Configure::Test qw(
 );
 use IO::CaptureOutput qw | capture |;
 
-########### --verbose ##########
-
 my ($args, $step_list_ref) = process_options(
     {
         argv => [],
@@ -40,17 +33,12 @@ my $conf = Parrot::Configure->new;
 
 test_step_thru_runstep( $conf, q{init::defaults}, $args );
 
-#my $pkg = q{init::hints};
-#
-#$conf->add_steps($pkg);
-
 ##### Tests of some internal subroutines #####
 
 ##### _precheck() #####
 
 my $problematic_flag = 'ccflags';
 my $stored = $conf->data->get($problematic_flag);
-print STDERR "$problematic_flag\t$stored\n";
 
 {
     my ($stdout, $stderr);
@@ -96,6 +84,130 @@ print STDERR "$problematic_flag\t$stored\n";
         "_precheck():  Got expected verbose output" );
 }
 
+##### _strip_arch_flags_engine #####
+
+{
+    my %defaults = (
+        architectures   => [ qw( i386 ppc64 ppc x86_64 ) ],
+    );
+    my $flagsref = {};
+    my $stored = q{-someflag  -arch i386 -someotherflag -arch ppc};
+    my $flag = q{ccflags};
+    $flagsref = init::hints::darwin::_strip_arch_flags_engine(
+      $defaults{architectures}, $stored, $flagsref, $flag
+    );
+    like(
+        $flagsref->{$flag}, 
+        qr{-someflag -someotherflag},
+        "_strip_arch_flags_engine(): '-arch' flags and extra whitespace removed",
+    );
+
+
+}
+
+##### _postcheck #####
+
+{
+    my $flag = 'ccflags';
+    my $flagsref = { 'ccflags' => 'my ccflag' };
+    my ($stdout, $stderr);
+
+    capture(
+        sub { init::hints::darwin::_postcheck(
+            $flagsref, $flag, 0
+        ) },
+        \$stdout,
+        \$stderr,
+    );
+    ok( ! $stdout, "_postcheck():  Non-verbose mode produced no output" );
+
+    capture(
+        sub { init::hints::darwin::_postcheck(
+            $flagsref, $flag, 1
+        ) },
+        \$stdout,
+        \$stderr,
+    );
+    ok( $stdout, "_postcheck():  Verbose mode produced output" );
+    like($stdout, qr/Post-check:\s+$flagsref->{$flag}/,
+        "_postcheck():  Got expected verbose output" );
+
+    $flagsref = { 'ccflags' => undef };
+    capture(
+        sub { init::hints::darwin::_postcheck(
+            $flagsref, $flag, 1
+        ) },
+        \$stdout,
+        \$stderr,
+    );
+    ok( $stdout, "_postcheck():  Verbose mode produced output" );
+    like($stdout, qr/Post-check:\s+\(nil\)/,
+        "_postcheck():  Got expected verbose output" );
+}
+
+##### _strip_arch_flags #####
+
+{
+    my %defaults = (
+        problem_flags   => [ qw( ccflags ldflags ) ],
+        architectures   => [ qw( i386 ppc64 ppc x86_64 ) ],
+    );
+    my $flagsref = {};
+    my $flag = q{ccflags};
+    my $stored = q{-someflag  -arch i386 -someotherflag -arch ppc};
+    $conf->data->set( $flag => $stored );
+
+    $flagsref = init::hints::darwin::_strip_arch_flags($conf, 0);
+    like($flagsref->{$flag},
+        qr/-someflag -someotherflag/,
+        "_strip_arch_flags(): '-arch' flags and extra whitespace removed",
+    );    
+
+    my ($stdout, $stderr);
+    capture(
+        sub {
+            $flagsref = init::hints::darwin::_strip_arch_flags($conf, 1);
+        },
+        \$stdout,
+        \$stderr,
+    );
+    like($flagsref->{$flag},
+        qr/-someflag -someotherflag/,
+        "_strip_arch_flags(): '-arch' flags and extra whitespace removed",
+    );
+    like(
+        $stdout,
+        qr/Stripping -arch flags due to Apple multi-architecture build problems:/,
+        "_strip_arch_flags(): Got expected verbose output",
+    );
+}
+
+##### _strip_ldl_as_needed #####
+
+{
+    my $major = '7.99.11';
+    local $init::hints::darwin::defaults{uname} = $major;
+    $conf->data->set( libs => '-somelib -ldl -someotherlib' );
+    my $libs = init::hints::darwin::_strip_ldl_as_needed(
+        $conf->data->get( 'libs' )
+    );
+    like( $libs, qr/-somelib\s+-someotherlib/,
+        "_strip_ldl_as_needed(): '-ldl' stripped as expected" );
+}
+
+##### _set_deployment_environment() #####
+
+{
+    my $predicted = '10.99';
+    local $ENV{'MACOSX_DEPLOYMENT_TARGET'} = undef;
+    no warnings 'once';
+    local $init::hints::darwin::defaults{sw_vers} = qq{$predicted.11};
+    use warnings;
+    init::hints::darwin::_set_deployment_environment();
+    is($ENV{'MACOSX_DEPLOYMENT_TARGET'}, $predicted,
+        "_set_deployment_environment(): MACOSX_DEPLOYMENT_TARGET set as expected");
+}
+    
 pass("Completed all tests in $0");
 
 ################### DOCUMENTATION ###################
