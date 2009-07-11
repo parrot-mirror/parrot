@@ -5,10 +5,10 @@
 
 use strict;
 use warnings;
-#use Test::More;
-#plan( skip_all => 'only needs testing on Darwin' ) unless $^O =~ /darwin/i;
-#plan( tests =>  26 );
-use Test::More qw(no_plan); # tests => 26;
+use Test::More;
+plan( skip_all => 'only needs testing on Darwin' ) unless $^O =~ /darwin/i;
+plan( tests =>  26 );
+#use Test::More qw(no_plan); # tests => 26;
 
 use lib qw( lib t/configure/testlib );
 use_ok('config::init::defaults');
