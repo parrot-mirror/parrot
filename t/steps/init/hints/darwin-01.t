@@ -5,10 +5,10 @@
 
 use strict;
 use warnings;
-use Test::More;
-plan( skip_all => 'only needs testing on Darwin' ) unless $^O =~ /darwin/i;
-plan( tests =>  26 );
-#use Test::More qw(no_plan); # tests => 26;
+#use Test::More;
+#plan( skip_all => 'only needs testing on Darwin' ) unless $^O =~ /darwin/i;
+#plan( tests =>  26 );
+use Test::More qw(no_plan); # tests => 26;
 
 use lib qw( lib t/configure/testlib );
 use_ok('config::init::defaults');
@@ -155,6 +155,7 @@ my $stored = $conf->data->get($problematic_flag);
     my $flagsref = {};
     my $flag = q{ccflags};
     my $stored = q{-someflag  -arch i386 -someotherflag -arch ppc};
+    my $oldflag = $conf->data->get( $flag );
     $conf->data->set( $flag => $stored );
 
     $flagsref = init::hints::darwin::_strip_arch_flags($conf, 0);
@@ -180,6 +181,8 @@ my $stored = $conf->data->get($problematic_flag);
         qr/Stripping -arch flags due to Apple multi-architecture build problems:/,
         "_strip_arch_flags(): Got expected verbose output",
     );
+
+    $conf->data->set( $flag => $oldflag );
 }
 
 ##### _strip_ldl_as_needed #####
@@ -187,12 +190,15 @@ my $stored = $conf->data->get($problematic_flag);
 {
     my $major = '7.99.11';
     local $init::hints::darwin::defaults{uname} = $major;
+    my $oldflag = $conf->data->get( 'libs ' );
     $conf->data->set( libs => '-somelib -ldl -someotherlib' );
     my $libs = init::hints::darwin::_strip_ldl_as_needed(
         $conf->data->get( 'libs' )
     );
     like( $libs, qr/-somelib\s+-someotherlib/,
         "_strip_ldl_as_needed(): '-ldl' stripped as expected" );
+
+    $conf->data->set( libs => $oldflag );
 }
 
 ##### _set_deployment_environment() #####
