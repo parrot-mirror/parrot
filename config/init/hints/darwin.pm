@@ -16,6 +16,8 @@ our %defaults = (
     sw_vers         => `sw_vers -productVersion`,
     problem_flags   => [ qw( ccflags ldflags ) ],
     architectures   => [ qw( i386 ppc64 ppc x86_64 ) ],
+    fink_conf       => q{/sw/etc/fink.conf},
+    ports_base_dir  => q{/opt/local},
 );
 
 sub runstep {
@@ -162,7 +164,7 @@ sub _probe_for_fink {
     my $verbose = $conf->options->get( 'verbose' );
     # Per fink(8), this is location for Fink configuration file, presumably
     # regardless of where Fink itself is installed.
-    my $fink_conf    = q{/sw/etc/fink.conf};
+    my $fink_conf    = $defaults{fink_conf};
     unless (-f $fink_conf) {
         print "Fink configuration file not located\n" if $verbose;
         return;
@@ -205,7 +207,7 @@ sub _probe_for_fink {
 sub _probe_for_macports {
     my $conf = shift;
     my $verbose = $conf->options->get( 'verbose' );
-    my $ports_base_dir = File::Spec->catdir( '/', 'opt', 'local' );
+    my $ports_base_dir = $defaults{ports_base_dir};
     my $ports_lib_dir = qq{$ports_base_dir/lib};
     my $ports_include_dir = qq{$ports_base_dir/include};
     my @unlocateables;
