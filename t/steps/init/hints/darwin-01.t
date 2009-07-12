@@ -7,10 +7,10 @@ use strict;
 use warnings;
 use Cwd;
 use File::Temp qw( tempdir );
-#use Test::More;
-#plan( skip_all => 'only needs testing on Darwin' ) unless $^O =~ /darwin/i;
-#plan( tests =>  40 );
-use Test::More qw(no_plan); # tests => 40;
+use Test::More;
+plan( skip_all => 'only needs testing on Darwin' ) unless $^O =~ /darwin/i;
+plan( tests =>  41 );
+#use Test::More qw(no_plan); # tests => 41;
 
 use lib qw( lib t/configure/testlib );
 use_ok('config::init::defaults');
