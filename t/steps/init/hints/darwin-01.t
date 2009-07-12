@@ -5,10 +5,12 @@
 
 use strict;
 use warnings;
-#use Test::More;
-#plan( skip_all => 'only needs testing on Darwin' ) unless $^O =~ /darwin/i;
-#plan( tests =>  26 );
-use Test::More qw(no_plan); # tests => 26;
+use Cwd;
+use File::Temp qw( tempdir );
+use Test::More;
+plan( skip_all => 'only needs testing on Darwin' ) unless $^O =~ /darwin/i;
+plan( tests =>  37 );
+#use Test::More qw(no_plan); # tests => 37;
 
 use lib qw( lib t/configure/testlib );
 use_ok('config::init::defaults');
@@ -22,6 +24,7 @@ use Parrot::Configure::Test qw(
 );
 use IO::CaptureOutput qw | capture |;
 
+my $cwd = cwd();
 my ($args, $step_list_ref) = process_options(
     {
         argv => [],
@@ -224,7 +227,99 @@ my $stored = $conf->data->get($problematic_flag);
     is($ENV{'MACOSX_DEPLOYMENT_TARGET'}, $predicted,
         "_set_deployment_environment(): MACOSX_DEPLOYMENT_TARGET set as expected");
 }
-    
+
+##### _probe_for_fink() #####
+
+{
+    my $tdir = tempdir( CLEANUP => 1 );
+    chdir $tdir or die "Unable to change to temporary directory: $!";
+
+    local $init::hints::darwin::defaults{fink_conf} = qq{$tdir/fink.conf};
+    ok( ! defined( init::hints::darwin::_probe_for_fink( $conf ) ),
+        "_probe_for_fink(): returned undefined value for no config file" );
+    $conf->options->set( 'verbose' => 1 );
+    {
+        my ($stdout, $stderr);
+        capture(
+            sub { init::hints::darwin::_probe_for_fink( $conf ); },
+            \$stdout,
+            \$stderr,
+        );
+        like( $stdout, qr/Fink configuration file not located/,
+            "Got expected verbose output when Fink config not located" );
+    }
+    $conf->options->set( 'verbose' => 0 );
+
+    my $fink_conf_file = q{fink.conf};
+    open my $CONF, '>', $fink_conf_file
+        or die "Unable to open $fink_conf_file for writing: $!";
+    print $CONF "Hello, world, but no Fink info\n";
+    close $CONF or die "Unable to close $fink_conf_file after writing: $!";
+    ok( ! defined( init::hints::darwin::_probe_for_fink( $conf ) ),
+        "_probe_for_fink(): returned undefined value for defective config file" );
+
+    $conf->options->set( 'verbose' => 1 );
+    {
+        my ($stdout, $stderr);
+        capture(
+            sub { init::hints::darwin::_probe_for_fink( $conf ); },
+            \$stdout,
+            \$stderr,
+        );
+        like( $stdout, qr/Fink configuration file defective/,
+            "Got expected verbose output when Fink config was defective" );
+    }
+    $conf->options->set( 'verbose' => 0 );
+
+    my $other = qq{$tdir/other_fink.conf};
+    local $init::hints::darwin::defaults{fink_conf} = $other;
+    $fink_conf_file = $other;
+    open my $OCONF, '>', $fink_conf_file
+        or die "Unable to open $fink_conf_file for writing: $!";
+    print $OCONF "Basepath:  /tmp/foobar\n";
+    close $OCONF or die "Unable to close $fink_conf_file after writing: $!";
+    ok( ! defined( init::hints::darwin::_probe_for_fink( $conf ) ),
+        "_probe_for_fink(): returned undefined value for missing directories" );
+
+    $conf->options->set( 'verbose' => 1 );
+    {
+        my ($stdout, $stderr);
+        capture(
+            sub { init::hints::darwin::_probe_for_fink( $conf ); },
+            \$stdout,
+            \$stderr,
+        );
+        like( $stdout, qr/Could not locate Fink directories/,
+            "Got expected verbose output when Fink directories were missing" );
+    }
+    $conf->options->set( 'verbose' => 0 );
+
+    chdir $cwd or die "Unable to change back to starting directory: $!";
+}
+
+##### _probe_for_macports() #####
+
+{
+    my $tdir = tempdir( CLEANUP => 1 );
+    chdir $tdir or die "Unable to change to temporary directory: $!";
+
+    local $init::hints::darwin::defaults{ports_base_dir} = qq{$tdir/foobar};
+    ok( ! defined( init::hints::darwin::_probe_for_macports( $conf ) ),
+        "_probe_for_macports(): returned undefined value for no config file" );
+
+    $conf->options->set( 'verbose' => 1 );
+    {
+        my ($stdout, $stderr);
+        capture(
+            sub { init::hints::darwin::_probe_for_macports( $conf ); },
+            \$stdout,
+            \$stderr,
+        );
+        like( $stdout, qr/Could not locate Macports directories/,
+            "Got expected verbose output when Macports directories not found" );
+    }
+    $conf->options->set( 'verbose' => 0 );
+}
 
 ##### _probe_for_libraries() #####
 {
