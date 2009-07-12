@@ -1,4 +1,4 @@
-# Copyright (C) 2005, Parrot Foundation.
+# Copyright (C) 2005-2009, Parrot Foundation.
 # $Id$
 
 package init::hints::darwin;
@@ -269,6 +269,28 @@ sub _add_to_flags {
 }
 
 1;
+
+################### DOCUMENTATION ###################
+
+=head1 NAME
+
+init::hints::Darwin - hints for the Darwin compiler
+
+=head1 DESCRIPTION
+
+The functionality in this package is run automatically during configuration
+step F<init::hints> when run on Darwin.
+
+Among other things, this step probes for Fink and Macports libraries --
+functionality previously provided by configuration steps F<auto::fink> and
+F<auto::macports>, which have now been eliminated.
+
+Should you not want to search for either of these packages, you may specify
+the command-line options C<darwin_no_fink> and/or C<darwin_no_macports>.
+
+The functionality is tested in F<t/steps/init/hints/darwin-01.t>.
+
+=cut
 
 # Local Variables:
 #   mode: cperl
