@@ -242,24 +242,30 @@ sub _probe_for_libraries {
         if ($library eq 'macports') {
             $addl_flags_ref = _probe_for_macports($conf);
         }
-        if (defined $addl_flags_ref) {
-            foreach my $addl (keys %{ $addl_flags_ref } ) {
-                if (defined $flagsref->{$addl}) {
-                    my @elements = split /\s+/, $flagsref->{$addl};
-                    my %seen = map {$_, 1} @elements;
-                    $flagsref->{$addl} .= " $addl_flags_ref->{$addl}"
-                        unless $seen{$addl_flags_ref->{$addl}};
-                }
-            }
-            print "Probe for $title successful\n" if $verbose;
-            return 1;
-        }
-        else {
-            print "Probe for $title unsuccessful\n" if $verbose;
-            return 1;
-        }
+        my $rv = _add_to_flags( $addl_flags_ref, $flagsref, $title, $verbose );
+        return $rv;
     }
     return;
+}
+
+sub _add_to_flags {
+    my ( $addl_flags_ref, $flagsref, $title, $verbose ) = @_;
+    if ( defined $addl_flags_ref ) {
+        foreach my $addl ( keys %{ $addl_flags_ref } ) {
+            my %seen;
+            if ( defined $flagsref->{$addl} ) {
+                my @elements = split /\s+/, $flagsref->{$addl};
+                %seen = map {$_, 1} @elements;
+            }
+            $flagsref->{$addl} .= " $addl_flags_ref->{$addl}"
+                unless $seen{ $addl_flags_ref->{$addl} };
+        }
+        print "Probe for $title successful\n" if $verbose;
+    }
+    else {
+        print "Probe for $title unsuccessful\n" if $verbose;
+    }
+    return 1;
 }
 
 1;

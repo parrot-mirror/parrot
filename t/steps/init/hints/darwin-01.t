@@ -9,8 +9,8 @@ use Cwd;
 use File::Temp qw( tempdir );
 use Test::More;
 plan( skip_all => 'only needs testing on Darwin' ) unless $^O =~ /darwin/i;
-plan( tests =>  37 );
-#use Test::More qw(no_plan); # tests => 37;
+plan( tests =>  40 );
+#use Test::More qw(no_plan); # tests => 40;
 
 use lib qw( lib t/configure/testlib );
 use_ok('config::init::defaults');
@@ -322,6 +322,7 @@ my $stored = $conf->data->get($problematic_flag);
 }
 
 ##### _probe_for_libraries() #####
+
 {
     $conf->options->set( 'darwin_no_fink' => 1 );
     $conf->options->set( 'verbose' => 0 );
@@ -336,6 +337,53 @@ my $stored = $conf->data->get($problematic_flag);
     ), "_probe_for_libraries() returned undef as expected" );
     is_deeply( $flagsref, { %state_before },
         "No change in flags, as expected" );
+
+    $conf->options->set( 'darwin_no_fink' => 0 );
+}
+
+##### _add_to_flags() #####
+
+{
+    my ( $addl_flags_ref, $flagsref, $title, $verbose );
+    $addl_flags_ref = undef;
+    $flagsref = undef;
+    $title = 'Fink';
+    $verbose = 0;
+    ok( init::hints::darwin::_add_to_flags(
+        $addl_flags_ref, $flagsref, $title, $verbose
+    ), "_add_to_flags(): returned true value when no probes found" );
+
+    $verbose = 1;
+    {
+        my ($stdout, $stderr);
+        capture(
+            sub { init::hints::darwin::_add_to_flags(
+                $addl_flags_ref, $flagsref, $title, $verbose
+            ); },
+            \$stdout,
+            \$stderr,
+        );
+        like( $stdout, qr/Probe for $title unsuccessful/,
+            "_add_to_flags(): got expected verbose output when probe unsuccessful" );
+    }
+
+    $addl_flags_ref = {
+        ldflags   => "-Lfink_lib_dir",
+        ccflags   => "-Lfink_include_dir",
+        linkflags => "-Lfink_lib_dir",
+    };
+    my $lib_dir = $conf->data->get('build_dir') . "/blib/lib";
+    $flagsref = undef;
+    $flagsref->{ldflags} = " -L$lib_dir";
+    $flagsref->{ccflags} = " -pipe -fno-common -Wno-long-double ";
+    $flagsref->{linkflags} = undef;
+    $title = 'Fink';
+    $verbose = 0;
+    my $rv = init::hints::darwin::_add_to_flags(
+        $addl_flags_ref, $flagsref, $title, $verbose
+    );
+    is( $flagsref->{linkflags}, " $addl_flags_ref->{linkflags}",
+        "_add_to_flags():  flag added where not previously populated" );
 }
 
 pass("Completed all tests in $0");
