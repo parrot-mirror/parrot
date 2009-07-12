@@ -7,10 +7,10 @@ use strict;
 use warnings;
 use Cwd;
 use File::Temp qw( tempdir );
-use Test::More;
-plan( skip_all => 'only needs testing on Darwin' ) unless $^O =~ /darwin/i;
-plan( tests =>  40 );
-#use Test::More qw(no_plan); # tests => 40;
+#use Test::More;
+#plan( skip_all => 'only needs testing on Darwin' ) unless $^O =~ /darwin/i;
+#plan( tests =>  40 );
+use Test::More qw(no_plan); # tests => 40;
 
 use lib qw( lib t/configure/testlib );
 use_ok('config::init::defaults');
@@ -157,8 +157,9 @@ my $stored = $conf->data->get($problematic_flag);
     );
     my $flagsref = {};
     my $flag = q{ccflags};
-    my $stored = q{-someflag  -arch i386 -someotherflag -arch ppc};
     my $oldflag = $conf->data->get( $flag );
+
+    my $stored = q{-someflag  -arch i386 -someotherflag -arch ppc};
     $conf->data->set( $flag => $stored );
 
     $flagsref = init::hints::darwin::_strip_arch_flags($conf, 0);
@@ -184,6 +185,12 @@ my $stored = $conf->data->get($problematic_flag);
         qr/Stripping -arch flags due to Apple multi-architecture build problems:/,
         "_strip_arch_flags(): Got expected verbose output",
     );
+
+    $flag = q{ccflags};
+    $conf->data->set( $flag => undef );
+    $flagsref = init::hints::darwin::_strip_arch_flags($conf, 0);
+    is( $flagsref->{$flag}, q{},
+        "_strip_arch_flags():  Got empty flag when expected" );
 
     $conf->data->set( $flag => $oldflag );
 }
