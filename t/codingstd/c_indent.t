@@ -221,6 +221,11 @@ sub check_indent {
             . " files:\n@c_indent" );
 }
 
+# dump_state() may be used to diagnose indentation problems.
+#     dump_state(\%state, $line);
+# Takes a list of two arguments:  reference to %state and the current line
+# (once it has been chomped).
+# Prints pipe-delimited list of important features of current state.
 sub dump_state {
     my ($state, $line) = @_;
     print STDERR (join q{|} => (
