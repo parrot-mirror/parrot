@@ -79,8 +79,8 @@ pmclass HashIterator extends Iterator no_ro {
     ATTR PMC        *pmc_hash;      /* the Hash which this Iterator iterates */
     ATTR Hash       *parrot_hash;   /* Underlying implementation of hash */
     ATTR HashBucket *bucket;        /* Current bucket */
-    ATTR INTVAL      total_buckets; /* */
-    ATTR INTVAL      pos;           /* */
+    ATTR INTVAL      total_buckets; /* Total buckets in index */
+    ATTR INTVAL      pos;           /* Current position in index */
     ATTR INTVAL      elements;      /* How many elements left to iterate over */
 
 /*
@@ -143,6 +143,7 @@ Marks the hash as live.
         PMC *hash = PARROT_HASHITERATOR(SELF)->pmc_hash;
         if (hash)
              Parrot_gc_mark_PObj_alive(INTERP, (PObj *)hash);
+        /* We don't mark underlying parrot_hash. Hash PMC will mark it */
     }
 
 /*
