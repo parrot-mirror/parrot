@@ -324,6 +324,8 @@ needed for compiling regexes.
     optable.'newtok'('term:\B',  'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::Anchor')
     optable.'newtok'('term:<<',  'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::Anchor')
     optable.'newtok'('term:>>',  'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::Anchor')
+    optable.'newtok'('term:<?>', 'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::Anchor')
+    optable.'newtok'('term:<!>', 'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::Anchor')
     optable.'newtok'(unicode:"term:\xab", 'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::Anchor')
     optable.'newtok'(unicode:"term:\xbb", 'equiv'=>'term:', 'nows'=>1, 'match'=>'PGE::Exp::Anchor')
 
@@ -1244,7 +1246,7 @@ Parse a goal.
     failsub = mob.'new'(mob, 'grammar'=>'PGE::Exp::Subrule')
     failsub.'to'(pos)
     failsub['subname'] = 'FAILGOAL'
-    $S0 = goal.'text'()
+    $S0 = goal.'Str'()
     failsub['arg'] = $S0
     alt = mob.'new'(mob, 'grammar'=>'PGE::Exp::Alt')
     alt.'to'(pos)
