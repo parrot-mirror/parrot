@@ -123,7 +123,7 @@ hash_key_from_int(PARROT_INTERP, const Hash * const hash, INTVAL key)
 
 static void*
 hash_key_from_string(PARROT_INTERP, const Hash * const hash, ARGIN(STRING *key))
-{ 
+{
     void *ret;
     switch (hash->key_type) {
         case Hash_key_type_int:

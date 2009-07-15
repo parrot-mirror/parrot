@@ -1295,7 +1295,8 @@ PARROT_EXPORT
 PARROT_IGNORABLE_RESULT
 PARROT_CANNOT_RETURN_NULL
 HashBucket*
-parrot_hash_put(PARROT_INTERP, ARGMOD(Hash *hash), ARGIN_NULLOK(void *key), ARGIN_NULLOK(void *value))
+parrot_hash_put(PARROT_INTERP, ARGMOD(Hash *hash),
+        ARGIN_NULLOK(void *key), ARGIN_NULLOK(void *value))
 {
     ASSERT_ARGS(parrot_hash_put)
     const UINTVAL hashval = (hash->hash_val)(interp, key, hash->seed);
