@@ -88,8 +88,7 @@ Defaults iteration mode to iterate from start.
     VTABLE void init_pmc(PMC *aggregate) {
         if (VTABLE_does(INTERP, aggregate, CONST_STRING(INTERP, "array"))
             || VTABLE_does(INTERP, aggregate, CONST_STRING(INTERP, "hash"))
-            || VTABLE_does(INTERP, aggregate, CONST_STRING(INTERP, "string"))
-            ) {
+            || VTABLE_does(INTERP, aggregate, CONST_STRING(INTERP, "string"))) {
             /* It's ugly hack... But I cant figure out proper way to do it. */
             PMC *real_iter = VTABLE_get_iter(INTERP, aggregate);
             SELF = pmc_reuse_init(INTERP, SELF, VTABLE_type(INTERP, real_iter), aggregate, 0);
