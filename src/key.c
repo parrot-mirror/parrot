@@ -367,14 +367,6 @@ key_integer(PARROT_INTERP, ARGIN(PMC *key))
             return Parrot_str_to_int(interp, s_reg);
             }
 
-        case KEY_string_FLAG | KEY_start_slice_FLAG:
-        case KEY_string_FLAG | KEY_inf_slice_FLAG:
-            {
-            STRING * const s_key = VTABLE_get_string(interp, key);
-            return Parrot_str_to_int(interp, s_key);
-            }
-        case KEY_start_slice_FLAG:
-        case KEY_inf_slice_FLAG:
         default:
             break;
     }
