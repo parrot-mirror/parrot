@@ -15,6 +15,14 @@
 
 #include "parrot/parrot.h"
 
+/*
+ Type of Keys.
+ C<KEY_register_FLAG> used for indirect referencing. E.g.
+   $S0 = "foo"
+   $P1 = $P0[$S0]
+ In this case C<[$S0]> will have type C<KEY_string_FLAG | KEY_register_FLAG>
+ and store I<integer> value of string register number.
+*/
 typedef enum {
     KEY_integer_FLAG        = PObj_private0_FLAG,
     KEY_number_FLAG         = PObj_private1_FLAG,
