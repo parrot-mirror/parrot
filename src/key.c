@@ -332,8 +332,6 @@ key_integer(PARROT_INTERP, ARGIN(PMC *key))
     FLOATVAL num_key;
 
     switch (PObj_get_FLAGS(key) & KEY_type_FLAGS) {
-        case KEY_hash_iterator_FLAGS:
-
         case KEY_integer_FLAG:
             GETATTR_Key_int_key(interp, key, int_key);
             return int_key;
@@ -619,16 +617,11 @@ key_mark(PARROT_INTERP, ARGIN(PMC *key))
         Parrot_gc_mark_PObj_alive(interp, (PObj *)str_key);
     }
 
-    /*
-     * KEY_hash_iterator_FLAGS denote a hash key iteration, PMC_data() is
-     * the bucket_index and not the next key component
-     * Note to self: shoot whoever thought this was a good idea.
-     */
-    if (flags != KEY_hash_iterator_FLAGS) {
+    if (flags == KEY_pmc_FLAG || flags == KEY_string_FLAG) {
         PMC *next_key;
         /* if iteration hasn't started, above flag isn't set yet */
         GETATTR_Key_next_key(interp, key, next_key);
-        if (next_key && (void *)next_key != (void *)INITBucketIndex)
+        if (next_key)
             Parrot_gc_mark_PObj_alive(interp, (PObj *)next_key);
     }
 
