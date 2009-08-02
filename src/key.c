@@ -606,6 +606,7 @@ void
 key_mark(PARROT_INTERP, ARGIN(PMC *key))
 {
     ASSERT_ARGS(key_mark)
+    PMC          *next_key;
     const UINTVAL flags = PObj_get_FLAGS(key) & KEY_type_FLAGS;
 
     if (flags == KEY_string_FLAG) {
@@ -617,13 +618,10 @@ key_mark(PARROT_INTERP, ARGIN(PMC *key))
         Parrot_gc_mark_PObj_alive(interp, (PObj *)str_key);
     }
 
-    if (flags == KEY_pmc_FLAG || flags == KEY_string_FLAG) {
-        PMC *next_key;
-        /* if iteration hasn't started, above flag isn't set yet */
-        GETATTR_Key_next_key(interp, key, next_key);
-        if (next_key)
-            Parrot_gc_mark_PObj_alive(interp, (PObj *)next_key);
-    }
+    /* Mark next key */
+    GETATTR_Key_next_key(interp, key, next_key);
+    if (next_key)
+        Parrot_gc_mark_PObj_alive(interp, (PObj *)next_key);
 
 }
 
