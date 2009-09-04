@@ -1036,10 +1036,39 @@ init_profiling_core(PARROT_INTERP, ARGIN(Parrot_profiling_runcore_t *runcore), A
 {
     ASSERT_ARGS(init_profiling_core)
 
-    char *profile_filename;
+    char *profile_filename, *profile_output_var;
+    int free_env_var;
 
-    runcore->profile_filename = Parrot_sprintf_c(interp, "parrot.pprof.%d", getpid());
-    profile_filename          = Parrot_str_to_cstring(interp, runcore->profile_filename);     
+    profile_output_var = Parrot_getenv("PARROT_PROFILING_OUTPUT", &free_env_var);
+
+    if (profile_output_var) {
+
+        STRING  *lc_filename;
+        runcore->profile_filename = Parrot_str_new(interp, profile_output_var, 0);
+        profile_filename          = Parrot_str_to_cstring(interp, runcore->profile_filename);
+        lc_filename               = Parrot_str_downcase(interp, runcore->profile_filename);
+
+        if (Parrot_str_equal(interp, lc_filename, CONST_STRING(interp, "stderr"))) {
+            runcore->profile_fd       = stderr;
+            runcore->profile_filename = lc_filename;
+        }
+        else if (Parrot_str_equal(interp, lc_filename, CONST_STRING(interp, "stdout"))) {
+            runcore->profile_fd       = stdout;
+            runcore->profile_filename = lc_filename;
+        }
+        else {
+            runcore->profile_fd = fopen(profile_filename, "w");
+        }
+
+        if (free_env_var)
+            mem_sys_free(profile_output_var);
+    }
+    else {
+        runcore->profile_filename = Parrot_sprintf_c(interp, "parrot.pprof.%d", getpid());
+        profile_filename          = Parrot_str_to_cstring(interp, runcore->profile_filename);
+        runcore->profile_fd       = fopen(profile_filename, "w");
+    }
+
     /* profile_filename gets collected if it's not marked or in the root set. */
     gc_register_pmc(interp, (PMC *) runcore->profile_filename);
 
@@ -1050,7 +1079,6 @@ init_profiling_core(PARROT_INTERP, ARGIN(Parrot_profiling_runcore_t *runcore), A
     runcore->level           = 0;
     runcore->time_size       = 32;
     runcore->time            = mem_allocate_n_typed(runcore->time_size, UHUGEINTVAL);
-    runcore->profile_fd      = fopen(profile_filename, "w");
 
     if (!runcore->profile_fd) {
         fprintf(stderr, "unable to open %s for writing", profile_filename);
