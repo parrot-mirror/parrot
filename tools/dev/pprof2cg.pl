@@ -39,16 +39,24 @@ sub main {
     my $ctx_stack = [];
     my $filename  = $argv->[0];
 
-    $stats->{'global_stats'}{'filename'} = $filename;
-    open FH, "<$filename" or die "couldn't open $filename for reading";
+    open IN_FH, "<$filename" or die "couldn't open $filename for reading";
 
-    while (<FH>) {
+    while (<IN_FH>) {
         my $line = $_;
         process_line($line, $stats, $ctx_stack);
     }
+    close(IN_FH);
 
-    print_stats($stats);
-    write_cg_profile($stats);
+    #print_stats($stats);
+
+    unless ($filename =~ s/\.pprof\./.out./) {
+        $filename = "$filename.out";
+    }
+
+    open(OUT_FH, ">$filename") or die "couldn't open $filename for writing";
+    my $cg_profile = get_cg_profile($stats);
+    print OUT_FH $cg_profile;
+    close(OUT_FH);
 }
 
 
@@ -187,15 +195,12 @@ sub store_stats {
 }
 
 
-sub write_cg_profile {
+sub get_cg_profile {
 
     my $stats = shift;
-    my $filename = $stats->{'global_stats'}{'filename'};
-    $filename =~ s/\.pprof\./.out./;
+    my @output;
 
-    open(OUT_FH, ">$filename") or die "couldn't open parrot.out for writing";
-
-    print OUT_FH <<"HEADER";
+    push @output, <<"HEADER";
 version: 1
 creator: 3.4.1-Debian
 pid: 5751
@@ -211,15 +216,14 @@ positions: line
 events: Ir
 summary: $stats->{'global_stats'}{'total_time'}
 
-
 HEADER
 
     for my $file (grep {$_ ne 'global_stats'} keys %$stats) {
 
-        print OUT_FH "fl=$file\n";
+        push @output, "fl=$file";
 
         for my $ns (keys %{ $stats->{$file} }) {
-            print OUT_FH "\nfn=$ns\n";
+            push @output, "\nfn=$ns";
 
             for my $line (sort keys %{ $stats->{$file}{$ns} }) {
 
@@ -231,15 +235,15 @@ HEADER
                     $op_time += $stats->{$file}{$ns}{$line}[$curr_op]{'time'};
                     $curr_op++;
                 }
-                print OUT_FH "$line $op_time\n";
+                push @output, "$line $op_time";
 
                 if ($curr_op < $op_count && $stats->{$file}{$ns}{$line}[$curr_op]{'op_name'} eq 'CALL') {
                     my $call_target = $stats->{$file}{$ns}{$line}[$curr_op]{'target'};
                     my $call_count  = $stats->{$file}{$ns}{$line}[$curr_op]{'hits'};
                     my $call_cost   = $stats->{$file}{$ns}{$line}[$curr_op]{'time'};
 
-                    print OUT_FH "cfn=$call_target\n";
-                    print OUT_FH "calls=$call_count $call_cost\n";
+                    push @output, "cfn=$call_target";
+                    push @output, "calls=$call_count $call_cost";
                 }
 
                 if ($curr_op < $op_count) {
@@ -248,12 +252,12 @@ HEADER
                         $op_time += $stats->{$file}{$ns}{$line}[$curr_op]{'time'};
                         $curr_op++;
                     }
-                    print OUT_FH "$line $op_time\n";
+                    push @output, "$line $op_time";
                 }
             }
         }
     }
 
-    print OUT_FH "totals: $stats->{'global_stats'}{'total_time'}\n";
-    close OUT_FH;
+    push @output, "totals: $stats->{'global_stats'}{'total_time'}";
+    return join("\n", @output);
 }
