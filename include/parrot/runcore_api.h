@@ -78,7 +78,7 @@ typedef enum Parrot_runcore_flags {
 
 
 #define Profiling_flag_SET(runcore, flag) \
-    ((runcore)->profiling_flags = flag)
+    ((runcore)->profiling_flags |= flag)
 #define Profiling_flag_TEST(runcore, flag) \
     ((runcore)->profiling_flags & flag)
 #define Profiling_flag_CLEAR(runcore, flag) \
