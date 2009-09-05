@@ -1208,7 +1208,9 @@ ARGIN(opcode_t *pc))
         if (!postop_file_name) postop_file_name = unknown_file;
 
         /* if current context changed since the last time a CS line was printed... */
-        if ((runcore->prev_ctx != preop_ctx) || preop_sub != preop_ctx->current_sub) {
+        /* Occasionally the ctx stays the same while the sub changes, possible
+         * with a call to a subclass' method. */
+        if ((runcore->prev_ctx != preop_ctx) || runcore->prev_sub != preop_ctx->current_sub) {
 
             if (preop_ctx->current_sub) {
                 STRING *sub_name;
@@ -1231,6 +1233,7 @@ ARGIN(opcode_t *pc))
             }
 
             runcore->prev_ctx = preop_ctx;
+            runcore->prev_sub = preop_ctx->current_sub;
         }
 
         /* I'd expect that preop_info.line would be the right thing to use here

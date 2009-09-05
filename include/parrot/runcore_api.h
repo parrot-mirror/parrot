@@ -60,6 +60,7 @@ struct profiling_runcore_t {
     INTVAL          profiling_flags;
     FILE           *profile_fd;
     STRING         *profile_filename;
+    PMC            *prev_sub;
     Parrot_Context *prev_ctx;
     UINTVAL         level;      /* how many nested runloops */
     UINTVAL         time_size;  /* how big is the following array */

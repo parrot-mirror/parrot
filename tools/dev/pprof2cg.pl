@@ -47,7 +47,7 @@ sub main {
     }
     close(IN_FH);
 
-    #print_stats($stats);
+    print_stats($stats);
 
     unless ($filename =~ s/\.pprof\./.out./) {
         $filename = "$filename.out";
@@ -82,13 +82,18 @@ sub process_line {
         #context switch
         elsif (/^CS:(.*)$/) {
 
-            my $cs_hash      = split_vars($1);
-            my $is_first     = scalar(@$ctx_stack) == 0;
-            my $is_redundant = !$is_first && ($ctx_stack->[0]{'ctx'} eq $cs_hash->{'ctx'});
-            my $is_call      = !scalar(grep {$_->{'ctx'} eq $cs_hash->{'ctx'}} @$ctx_stack);
+            my $cs_hash         = split_vars($1);
+            my $is_first        = scalar(@$ctx_stack) == 0;
+            my $is_redundant    = !$is_first && ($ctx_stack->[0]{'ctx'} eq $cs_hash->{'ctx'});
+            my $new_sub_old_ctx = $is_redundant && ($ctx_stack->[0]{'sub'} ne $cs_hash->{'sub'});
+            my $is_call         = !scalar(grep {$_->{'ctx'} eq $cs_hash->{'ctx'}} @$ctx_stack);
 
             if ($is_first) {
                 $ctx_stack->[0] = $cs_hash;
+            }
+            elsif ($new_sub_old_ctx) {
+                $ctx_stack->[0]{'sub'} = $cs_hash->{'sub'};
+                $ctx_stack->[0]{'ns'}  = $cs_hash->{'ns'};
             }
             elsif ($is_redundant) {
                 #don't do anything
@@ -138,12 +143,12 @@ sub print_stats {
     for my $file (grep {$_ ne 'global_stats'} sort keys %$stats) {
         for my $ns (sort keys %{ $stats->{$file} }) {
             for my $line_num (sort {$a<=>$b} keys %{ $stats->{$file}{$ns} }) {
-                for my $op_numbr (0 .. $#{$stats->{$file}{$ns}{$line_num}}) {
+                for my $op_num (0 .. $#{$stats->{$file}{$ns}{$line_num}}) {
 
-                    print "$file  $ns  line:$line_num  op:$op_numbr ";
+                    print "$file  $ns  line/op:$line_num/$op_num ";
 
-                    for my $attr (sort keys %{ $stats->{$file}{$ns}{$line_num}[$op_numbr] }) {
-                        print "{ $attr => $stats->{$file}{$ns}{$line_num}[$op_numbr]{$attr} } ";
+                    for my $attr (sort keys %{ $stats->{$file}{$ns}{$line_num}[$op_num] }) {
+                        print "{ $attr => $stats->{$file}{$ns}{$line_num}[$op_num]{$attr} } ";
                     }
                     print "\n";
                 }
