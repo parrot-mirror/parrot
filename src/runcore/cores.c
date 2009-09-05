@@ -1076,7 +1076,7 @@ init_profiling_core(PARROT_INTERP, ARGIN(Parrot_profiling_runcore_t *runcore), A
     runcore->destroy = (Parrot_runcore_destroy_fn_t) destroy_profiling_core;
 
     runcore->prev_ctx        = 0;
-    runcore->profiling_flags = (Parrot_profiling_flags) 0;
+    runcore->profiling_flags = 0;
     runcore->level           = 0;
     runcore->time_size       = 32;
     runcore->time            = mem_allocate_n_typed(runcore->time_size, UHUGEINTVAL);
@@ -1162,32 +1162,15 @@ ARGIN(opcode_t *pc))
 
     if (Profiling_first_op_TEST(runcore)) {
 
-        char *ns_cstr, *sub_cstr, *filename_cstr;
-
-        filename_cstr = Parrot_str_to_cstring(interp, postop_info.file);
-        ns_cstr       = Parrot_str_to_cstring(interp,
-                          VTABLE_get_string(interp, CONTEXT(interp)->current_namespace));
-        sub_cstr      = Parrot_str_to_cstring(interp,
-                          VTABLE_get_string(interp, CONTEXT(interp)->current_sub));
-
         /* The CLI line won't reflect any options passed to the parrot binary. */
         fprintf(runcore->profile_fd, "VERSION:1\n");
-        fprintf(runcore->profile_fd, "CS:{ns:%s;%s}{file:%s}{sub:0x%X}{ctx:0x%X}\n",
-                ns_cstr, sub_cstr, filename_cstr,
-                (unsigned int) CONTEXT(interp)->current_sub,
-                (unsigned int) CONTEXT(interp));
-
-        mem_sys_free(ns_cstr);
-        mem_sys_free(sub_cstr);
-        mem_sys_free(filename_cstr);
-
-        runcore->prev_ctx = CONTEXT(interp);
         Profiling_first_op_CLEAR(runcore);
     }
 
     while (pc) {
 
-        STRING *preop_file_name, *postop_file_name;
+        STRING         *postop_file_name;
+        Parrot_Context *preop_ctx;
 
         if (pc < code_start || pc >= code_end) {
             Parrot_ex_throw_from_c_args(interp, NULL, 1,
@@ -1198,11 +1181,11 @@ ARGIN(opcode_t *pc))
         mem_sys_memcopy(&preop_info, &postop_info, sizeof (Parrot_Context_info));
 
         Parrot_Context_get_info(interp, CONTEXT(interp), &postop_info);
-        preop_file_name = preop_info.file;
 
         CONTEXT(interp)->current_pc = pc;
         preop_sub = CONTEXT(interp)->current_sub;
         preop_pc = pc;
+        preop_ctx = CONTEXT(interp);
 
         runcore->level++;
         Profiling_exit_check_CLEAR(runcore);
@@ -1222,39 +1205,42 @@ ARGIN(opcode_t *pc))
         runcore->level--;
         postop_file_name = postop_info.file;
 
-        if (!preop_file_name)  preop_file_name  = unknown_file;
         if (!postop_file_name) postop_file_name = unknown_file;
 
-        fprintf(runcore->profile_fd, "OP:{line:%d}{time:%lli}{op:%s}\n",
-                postop_info.line, op_time,
-                (interp->op_info_table)[*preop_pc].name);
-
         /* if current context changed since the last time a CS line was printed... */
-        if ((runcore->prev_ctx && runcore->prev_ctx != CONTEXT(interp))
-            || preop_sub != CONTEXT(interp)->current_sub) {
+        if ((runcore->prev_ctx != preop_ctx) || preop_sub != preop_ctx->current_sub) {
 
-            if (CONTEXT(interp)->current_sub) {
+            if (preop_ctx->current_sub) {
                 STRING *sub_name;
                 char *sub_cstr, *filename_cstr, *ns_cstr;
 
-                GETATTR_Sub_name(interp, CONTEXT(interp)->current_sub, sub_name);
+                GETATTR_Sub_name(interp, preop_ctx->current_sub, sub_name);
                 sub_cstr      = Parrot_str_to_cstring(interp, sub_name);
                 filename_cstr = Parrot_str_to_cstring(interp, postop_file_name);
                 ns_cstr       = Parrot_str_to_cstring(interp,
-                                  VTABLE_get_string(interp, CONTEXT(interp)->current_namespace));
+                                  VTABLE_get_string(interp, preop_ctx->current_namespace));
 
                 fprintf(runcore->profile_fd, "CS:{ns:%s;%s}{file:%s}{sub:0x%X}{ctx:0x%X}\n",
                         ns_cstr, sub_cstr, filename_cstr,
-                        (unsigned int) CONTEXT(interp)->current_sub,
-                        (unsigned int) CONTEXT(interp));
+                        (unsigned int) preop_ctx->current_sub,
+                        (unsigned int) preop_ctx);
 
                 mem_sys_free(sub_cstr);
                 mem_sys_free(filename_cstr);
                 mem_sys_free(ns_cstr);
             }
 
-            runcore->prev_ctx = CONTEXT(interp);
+            runcore->prev_ctx = preop_ctx;
         }
+
+        /* I'd expect that preop_info.line would be the right thing to use here
+         * but it gives me obviously incorrect results while postop_info.line
+         * works.  It might be an imcc bug or it might just be me
+         * misunderstanding something. */
+        fprintf(runcore->profile_fd, "OP:{line:%d}{time:%lli}{op:%s}\n",
+                postop_info.line, op_time,
+                (interp->op_info_table)[*preop_pc].name);
+
     } /* while (pc) */
 
     Profiling_exit_check_SET(runcore);
