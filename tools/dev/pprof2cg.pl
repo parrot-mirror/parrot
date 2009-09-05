@@ -90,7 +90,6 @@ sub process_line {
 
             if ($is_first) {
                 $ctx_stack->[0] = $cs_hash;
-                print "added $cs_hash->{'ns'} with ctx $cs_hash->{'ctx'}\n";
             }
             elsif ($reused_ctx) {
                 $ctx_stack->[0]{'sub'} = $cs_hash->{'sub'};
@@ -107,21 +106,18 @@ sub process_line {
                 };
                 store_stats($stats, $ctx_stack->[0], 0, $extra );
                 unshift @$ctx_stack, $cs_hash;
-                print "added $cs_hash->{'ns'} with ctx $cs_hash->{'ctx'}\n";
             }
             else {
                 #shift contexts off the stack until one matches the current ctx
                 while ($ctx_stack->[0]->{'ctx'} ne $cs_hash->{'ctx'}) {
                     my $ctx = shift @$ctx_stack;
-                    print "shifted away $ctx->{'ns'}@ $ctx->{'ctx'} looking for $cs_hash->{'ctx'}\n";
                 }
-                print "done\n";
             }
             #print Dumper($ctx_stack);
         }
         elsif (/^END_OF_RUNLOOP$/) {
             #end of loop
-            $ctx_stack = [];
+            @$ctx_stack = ();
         }
         elsif (/^OP:(.*)$/) {
             my $op_hash = split_vars($1);
