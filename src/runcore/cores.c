@@ -1076,7 +1076,7 @@ init_profiling_core(PARROT_INTERP, ARGIN(Parrot_profiling_runcore_t *runcore), A
     runcore->destroy = (Parrot_runcore_destroy_fn_t) destroy_profiling_core;
 
     runcore->prev_ctx        = 0;
-    runcore->profiling_flags = 0;
+    runcore->profiling_flags = (Parrot_profiling_flags) 0;
     runcore->level           = 0;
     runcore->time_size       = 32;
     runcore->time            = mem_allocate_n_typed(runcore->time_size, UHUGEINTVAL);

@@ -566,7 +566,7 @@ parseflags(PARROT_INTERP, int *argc, char **argv[])
     *argc -= opt.opt_index;
     *argv += opt.opt_index;
 
-    Parrot_set_run_core(interp, core);
+    Parrot_set_run_core(interp, (Parrot_Run_core_t) core);
     return (*argv)[0];
 }
 

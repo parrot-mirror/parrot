@@ -53,17 +53,17 @@ struct profiling_runcore_t {
     INTVAL                       flags;
 
     /* end of common members */
-    UHUGEINTVAL              runcore_start;
-    UHUGEINTVAL              op_start;
-    UHUGEINTVAL              op_finish;
-    UHUGEINTVAL              runcore_finish;
-    Parrot_profiling_flags   profiling_flags;
-    FILE                    *profile_fd;
-    STRING                  *profile_filename;
-    Parrot_Context          *prev_ctx;
-    UINTVAL                  level;      /* how many nested runloops */
-    UINTVAL                  time_size;  /* how big is the following array */
-    UHUGEINTVAL             *time;       /* time spent between DO_OP and start/end of a runcore */
+    UHUGEINTVAL     runcore_start;
+    UHUGEINTVAL     op_start;
+    UHUGEINTVAL     op_finish;
+    UHUGEINTVAL     runcore_finish;
+    INTVAL          profiling_flags;
+    FILE           *profile_fd;
+    STRING         *profile_filename;
+    Parrot_Context *prev_ctx;
+    UINTVAL         level;      /* how many nested runloops */
+    UINTVAL         time_size;  /* how big is the following array */
+    UHUGEINTVAL    *time;       /* time spent between DO_OP and start/end of a runcore */
 };
 
 
@@ -77,24 +77,33 @@ typedef enum Parrot_runcore_flags {
 } Parrot_runcore_flags;
 
 
-#define Profiling_get_FLAGS(o) ((o)->profiling_flags)
+#define Profiling_flag_SET(runcore, flag) \
+    ((runcore)->profiling_flags = flag)
+#define Profiling_flag_TEST(runcore, flag) \
+    ((runcore)->profiling_flags & flag)
+#define Profiling_flag_CLEAR(runcore, flag) \
+    ((runcore)->profiling_flags &= ~(flag))
 
-#define Profiling_flag_TEST(flag, o) (Profiling_get_FLAGS(o) & PROFILING_ ## flag ## _FLAG)
-#define Profiling_flag_SET(flag, o) (Profiling_get_FLAGS(o) |= PROFILING_ ## flag ## _FLAG)
-#define Profiling_flag_CLEAR(flag, o) \
-            (Profiling_get_FLAGS(o) &= ~(UINTVAL)(PROFILING_ ## flag ## _FLAG))
+#define Profiling_exit_check_TEST(o) \
+    Profiling_flag_TEST(o, PROFILING_EXIT_CHECK_FLAG)
+#define Profiling_exit_check_SET(o) \
+    Profiling_flag_SET(o, PROFILING_EXIT_CHECK_FLAG)
+#define Profiling_exit_check_CLEAR(o) \
+    Profiling_flag_CLEAR(o, PROFILING_EXIT_CHECK_FLAG)
 
-#define Profiling_exit_check_TEST(o)  Profiling_flag_TEST(EXIT_CHECK, o)
-#define Profiling_exit_check_SET(o)   Profiling_flag_SET(EXIT_CHECK, o)
-#define Profiling_exit_check_CLEAR(o) Profiling_flag_CLEAR(EXIT_CHECK, o)
+#define Profiling_first_op_TEST(o) \
+    Profiling_flag_TEST(o, PROFILING_FIRST_OP_FLAG)
+#define Profiling_first_op_SET(o) \
+    Profiling_flag_SET(o, PROFILING_FIRST_OP_FLAG)
+#define Profiling_first_op_CLEAR(o) \
+    Profiling_flag_CLEAR(o, PROFILING_FIRST_OP_FLAG)
 
-#define Profiling_first_op_TEST(o)  Profiling_flag_TEST(FIRST_OP, o)
-#define Profiling_first_op_SET(o)   Profiling_flag_SET(FIRST_OP, o)
-#define Profiling_first_op_CLEAR(o) Profiling_flag_CLEAR(FIRST_OP, o)
-
-#define Profiling_have_printed_cli_TEST(o)  Profiling_flag_TEST(HAVE_PRINTED_CLI, o)
-#define Profiling_have_printed_cli_SET(o)   Profiling_flag_SET(HAVE_PRINTED_CLI, o)
-#define Profiling_have_printed_cli_CLEAR(o) Profiling_flag_CLEAR(HAVE_PRINTED_CLI, o)
+#define Profiling_have_printed_cli_TEST(o) \
+    Profiling_flag_TEST(o, PROFILING_HAVE_PRINTED_CLI_FLAG)
+#define Profiling_have_printed_cli_SET(o) \
+    Profiling_flag_SET(o, PROFILING_HAVE_PRINTED_CLI_FLAG)
+#define Profiling_have_printed_cli_CLEAR(o) \
+    Profiling_flag_CLEAR(o, PROFILING_HAVE_PRINTED_CLI_FLAG)
 
 #define Runcore_flag_SET(runcore, flag) \
     ((runcore)->flags |= flag)
