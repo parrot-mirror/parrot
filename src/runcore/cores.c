@@ -1246,6 +1246,11 @@ ARGIN(opcode_t *pc))
 
     } /* while (pc) */
 
+    /* make it easy to tell separate runloops apart */
+    if (runcore->level == 0) {
+        fprintf(runcore->profile_fd, "END_OF_RUNLOOP\n");
+    }
+
     Profiling_exit_check_SET(runcore);
     runcore->runcore_finish = Parrot_hires_get_time();;
     return pc;

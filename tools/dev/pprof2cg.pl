@@ -47,7 +47,7 @@ sub main {
     }
     close(IN_FH);
 
-    print_stats($stats);
+    #print_stats($stats);
 
     unless ($filename =~ s/\.pprof\./.out./) {
         $filename = "$filename.out";
@@ -82,16 +82,17 @@ sub process_line {
         #context switch
         elsif (/^CS:(.*)$/) {
 
-            my $cs_hash         = split_vars($1);
-            my $is_first        = scalar(@$ctx_stack) == 0;
-            my $is_redundant    = !$is_first && ($ctx_stack->[0]{'ctx'} eq $cs_hash->{'ctx'});
-            my $new_sub_old_ctx = $is_redundant && ($ctx_stack->[0]{'sub'} ne $cs_hash->{'sub'});
-            my $is_call         = !scalar(grep {$_->{'ctx'} eq $cs_hash->{'ctx'}} @$ctx_stack);
+            my $cs_hash      = split_vars($1);
+            my $is_first     = scalar(@$ctx_stack) == 0;
+            my $is_redundant = !$is_first && ($ctx_stack->[0]{'ctx'} eq $cs_hash->{'ctx'});
+            my $reused_ctx   = $is_redundant && ($ctx_stack->[0]{'sub'} ne $cs_hash->{'sub'});
+            my $is_call      = scalar(grep {$_->{'ctx'} eq $cs_hash->{'ctx'}} @$ctx_stack) == 0;
 
             if ($is_first) {
                 $ctx_stack->[0] = $cs_hash;
+                print "added $cs_hash->{'ns'} with ctx $cs_hash->{'ctx'}\n";
             }
-            elsif ($new_sub_old_ctx) {
+            elsif ($reused_ctx) {
                 $ctx_stack->[0]{'sub'} = $cs_hash->{'sub'};
                 $ctx_stack->[0]{'ns'}  = $cs_hash->{'ns'};
             }
@@ -105,12 +106,22 @@ sub process_line {
                     target  => $cs_hash->{'ns'}
                 };
                 store_stats($stats, $ctx_stack->[0], 0, $extra );
-            unshift @$ctx_stack, $cs_hash;
+                unshift @$ctx_stack, $cs_hash;
+                print "added $cs_hash->{'ns'} with ctx $cs_hash->{'ctx'}\n";
             }
             else {
-                shift @$ctx_stack while ($ctx_stack->[0]->{'ctx'} ne $cs_hash->{'ctx'});
+                #shift contexts off the stack until one matches the current ctx
+                while ($ctx_stack->[0]->{'ctx'} ne $cs_hash->{'ctx'}) {
+                    my $ctx = shift @$ctx_stack;
+                    print "shifted away $ctx->{'ns'}@ $ctx->{'ctx'} looking for $cs_hash->{'ctx'}\n";
+                }
+                print "done\n";
             }
             #print Dumper($ctx_stack);
+        }
+        elsif (/^END_OF_RUNLOOP$/) {
+            #end of loop
+            $ctx_stack = [];
         }
         elsif (/^OP:(.*)$/) {
             my $op_hash = split_vars($1);
