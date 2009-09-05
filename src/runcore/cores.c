@@ -1077,9 +1077,11 @@ init_profiling_core(PARROT_INTERP, ARGIN(Parrot_profiling_runcore_t *runcore), A
 
     runcore->prev_ctx        = 0;
     runcore->profiling_flags = 0;
+    runcore->runloop_count   = 0;
     runcore->level           = 0;
     runcore->time_size       = 32;
     runcore->time            = mem_allocate_n_typed(runcore->time_size, UHUGEINTVAL);
+    Profiling_first_loop_SET(runcore);
 
     if (!runcore->profile_fd) {
         fprintf(stderr, "unable to open %s for writing", profile_filename);
@@ -1088,7 +1090,6 @@ init_profiling_core(PARROT_INTERP, ARGIN(Parrot_profiling_runcore_t *runcore), A
     }
 
     mem_sys_free(profile_filename);
-    Profiling_first_op_SET(runcore);
 
     return runops_profiling_core(interp, runcore, pc);
 }
@@ -1160,11 +1161,15 @@ ARGIN(opcode_t *pc))
     }
 
 
-    if (Profiling_first_op_TEST(runcore)) {
+    if (Profiling_first_loop_TEST(runcore)) {
 
         /* The CLI line won't reflect any options passed to the parrot binary. */
         fprintf(runcore->profile_fd, "VERSION:1\n");
-        Profiling_first_op_CLEAR(runcore);
+        /* silly hack to make all separate runloops appear to come from a single source */
+        fprintf(runcore->profile_fd, "CS:{ns:main}{file:no_file}{sub:0x1}{ctx:0x1}\n");
+        fprintf(runcore->profile_fd, "OP:{line:%d}{time:0}{op:noop}\n", (int) runcore->runloop_count);
+        runcore->runloop_count++;
+        Profiling_first_loop_CLEAR(runcore);
     }
 
     while (pc) {
@@ -1249,6 +1254,10 @@ ARGIN(opcode_t *pc))
     /* make it easy to tell separate runloops apart */
     if (runcore->level == 0) {
         fprintf(runcore->profile_fd, "END_OF_RUNLOOP\n");
+        /* silly hack to make all separate runloops appear to come from a single source */
+        fprintf(runcore->profile_fd, "CS:{ns:main}{file:no_file}{sub:0x1}{ctx:0x1}\n");
+        fprintf(runcore->profile_fd, "OP:{line:%d}{time:0}{op:noop}\n", (int) runcore->runloop_count);
+        runcore->runloop_count++;
     }
 
     Profiling_exit_check_SET(runcore);

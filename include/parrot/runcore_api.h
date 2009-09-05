@@ -40,7 +40,7 @@ struct runcore_t {
 
 typedef enum Parrot_profiling_flags {
     PROFILING_EXIT_CHECK_FLAG       = 1 << 0,
-    PROFILING_FIRST_OP_FLAG         = 1 << 1,
+    PROFILING_FIRST_LOOP_FLAG       = 1 << 1,
     PROFILING_HAVE_PRINTED_CLI_FLAG = 1 << 2
 } Parrot_profiling_flags;
 
@@ -58,6 +58,7 @@ struct profiling_runcore_t {
     UHUGEINTVAL     op_finish;
     UHUGEINTVAL     runcore_finish;
     INTVAL          profiling_flags;
+    INTVAL          runloop_count;
     FILE           *profile_fd;
     STRING         *profile_filename;
     PMC            *prev_sub;
@@ -92,12 +93,12 @@ typedef enum Parrot_runcore_flags {
 #define Profiling_exit_check_CLEAR(o) \
     Profiling_flag_CLEAR(o, PROFILING_EXIT_CHECK_FLAG)
 
-#define Profiling_first_op_TEST(o) \
-    Profiling_flag_TEST(o, PROFILING_FIRST_OP_FLAG)
-#define Profiling_first_op_SET(o) \
-    Profiling_flag_SET(o, PROFILING_FIRST_OP_FLAG)
-#define Profiling_first_op_CLEAR(o) \
-    Profiling_flag_CLEAR(o, PROFILING_FIRST_OP_FLAG)
+#define Profiling_first_loop_TEST(o) \
+    Profiling_flag_TEST(o, PROFILING_FIRST_LOOP_FLAG)
+#define Profiling_first_loop_SET(o) \
+    Profiling_flag_SET(o, PROFILING_FIRST_LOOP_FLAG)
+#define Profiling_first_loop_CLEAR(o) \
+    Profiling_flag_CLEAR(o, PROFILING_FIRST_LOOP_FLAG)
 
 #define Profiling_have_printed_cli_TEST(o) \
     Profiling_flag_TEST(o, PROFILING_HAVE_PRINTED_CLI_FLAG)
