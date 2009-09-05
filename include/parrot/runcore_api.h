@@ -41,8 +41,7 @@ struct runcore_t {
 typedef enum Parrot_profiling_flags {
     PROFILING_EXIT_CHECK_FLAG       = 1 << 0,
     PROFILING_FIRST_OP_FLAG         = 1 << 1,
-    PROFILING_NEW_CONTEXT_FLAG      = 1 << 2,
-    PROFILING_HAVE_PRINTED_CLI_FLAG = 1 << 3
+    PROFILING_HAVE_PRINTED_CLI_FLAG = 1 << 2
 } Parrot_profiling_flags;
 
 struct profiling_runcore_t {
@@ -92,10 +91,6 @@ typedef enum Parrot_runcore_flags {
 #define Profiling_first_op_TEST(o)  Profiling_flag_TEST(FIRST_OP, o)
 #define Profiling_first_op_SET(o)   Profiling_flag_SET(FIRST_OP, o)
 #define Profiling_first_op_CLEAR(o) Profiling_flag_CLEAR(FIRST_OP, o)
-
-#define Profiling_new_context_TEST(o)  Profiling_flag_TEST(NEW_CONTEXT, o)
-#define Profiling_new_context_SET(o)   Profiling_flag_SET(NEW_CONTEXT, o)
-#define Profiling_new_context_CLEAR(o) Profiling_flag_CLEAR(NEW_CONTEXT, o)
 
 #define Profiling_have_printed_cli_TEST(o)  Profiling_flag_TEST(HAVE_PRINTED_CLI, o)
 #define Profiling_have_printed_cli_SET(o)   Profiling_flag_SET(HAVE_PRINTED_CLI, o)

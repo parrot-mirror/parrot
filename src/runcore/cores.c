@@ -1075,6 +1075,7 @@ init_profiling_core(PARROT_INTERP, ARGIN(Parrot_profiling_runcore_t *runcore), A
     runcore->runops  = (Parrot_runcore_runops_fn_t)  runops_profiling_core;
     runcore->destroy = (Parrot_runcore_destroy_fn_t) destroy_profiling_core;
 
+    runcore->prev_ctx        = 0;
     runcore->profiling_flags = 0;
     runcore->level           = 0;
     runcore->time_size       = 32;
@@ -1136,16 +1137,13 @@ ARGIN(opcode_t *pc))
 
     Parrot_Context_get_info(interp, CONTEXT(interp), &postop_info);
 
-    /* detect if the current context has changed while entering an inner runloop */
-    if (runcore->prev_ctx && runcore->prev_ctx != CONTEXT(interp))
-        Profiling_new_context_SET(runcore);
-    runcore->prev_ctx = CONTEXT(interp);
-
     argv = VTABLE_get_pmc_keyed_int(interp, interp->iglobals, IGLOBALS_ARGV_LIST);
 
     if (argv && !Profiling_have_printed_cli_TEST(runcore)) {
 
-        PMC    *executable   = VTABLE_get_pmc_keyed_int(interp, interp->iglobals, IGLOBALS_EXECUTABLE);
+        /* silly way to avoid line length codingstds nit */
+        PMC    *iglobals     = interp->iglobals;
+        PMC    *executable   = VTABLE_get_pmc_keyed_int(interp, iglobals, IGLOBALS_EXECUTABLE);
         STRING *command_line = Parrot_str_join(interp, CONST_STRING(interp, " "), argv);
 
         char   *exec_cstr, *command_line_cstr;
@@ -1183,6 +1181,7 @@ ARGIN(opcode_t *pc))
         mem_sys_free(sub_cstr);
         mem_sys_free(filename_cstr);
 
+        runcore->prev_ctx = CONTEXT(interp);
         Profiling_first_op_CLEAR(runcore);
     }
 
@@ -1230,11 +1229,10 @@ ARGIN(opcode_t *pc))
                 postop_info.line, op_time,
                 (interp->op_info_table)[*preop_pc].name);
 
-        /* if current context changed during the previous op... */
-        if (Profiling_new_context_TEST(runcore) || preop_sub != CONTEXT(interp)->current_sub) {
+        /* if current context changed since the last time a CS line was printed... */
+        if ((runcore->prev_ctx && runcore->prev_ctx != CONTEXT(interp))
+            || preop_sub != CONTEXT(interp)->current_sub) {
 
-            /* if the current_sub is null, Parrot's probably done executing */
-            Profiling_new_context_CLEAR(runcore);
             if (CONTEXT(interp)->current_sub) {
                 STRING *sub_name;
                 char *sub_cstr, *filename_cstr, *ns_cstr;
@@ -1254,6 +1252,8 @@ ARGIN(opcode_t *pc))
                 mem_sys_free(filename_cstr);
                 mem_sys_free(ns_cstr);
             }
+
+            runcore->prev_ctx = CONTEXT(interp);
         }
     } /* while (pc) */
 
