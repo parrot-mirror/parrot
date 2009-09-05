@@ -151,7 +151,7 @@ Parrot_runcore_init(PARROT_INTERP)
 
 /*
 
-=item C<INTVAL Parrot_runcore_register(PARROT_INTERP, const Parrot_runcore_t
+=item C<INTVAL Parrot_runcore_register(PARROT_INTERP, Parrot_runcore_t
 *coredata)>
 
 Registers a new runcore with Parrot.  Returns 1 on success, 0 on failure.
@@ -162,7 +162,7 @@ Registers a new runcore with Parrot.  Returns 1 on success, 0 on failure.
 
 PARROT_EXPORT
 INTVAL
-Parrot_runcore_register(PARROT_INTERP, ARGIN(const Parrot_runcore_t *coredata))
+Parrot_runcore_register(PARROT_INTERP, ARGIN(Parrot_runcore_t *coredata))
 {
     ASSERT_ARGS(Parrot_runcore_register)
     size_t num_cores = ++interp->num_cores;

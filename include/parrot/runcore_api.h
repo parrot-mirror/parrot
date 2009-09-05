@@ -139,7 +139,7 @@ void enable_event_checking(PARROT_INTERP)
 
 PARROT_EXPORT
 INTVAL Parrot_runcore_register(PARROT_INTERP,
-    ARGIN(const Parrot_runcore_t *coredata))
+    ARGIN(Parrot_runcore_t *coredata))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
