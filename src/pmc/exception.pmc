@@ -645,7 +645,7 @@ Set an attribute value for the exception object.
              * XXX TT#596 - when we have Context PMCs, just take and set that. */
             if (!PMC_IS_NULL(value) && VTABLE_isa(interp, value, CONST_STRING(interp, "Continuation"))) {
                 PMC *ctx = PMC_cont(value)->from_ctx;
-                if (!PMC_IS_NULL(ctx)) {
+                if (!PMC_IS_NULL(ctx))
                     SET_ATTR_thrower(interp, SELF, ctx);
             }
         }
