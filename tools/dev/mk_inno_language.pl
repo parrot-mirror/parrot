@@ -69,7 +69,7 @@ my $pmc = <src/pmc/*.dll>
 my $ops = <src/ops/*.dll>
         ? qq{Source: ".\\src\\ops\\*.dll"; DestDir: "{app}\\lib\\parrot\\dynext"; Flags:}
         : '; no ops';
-my $dynext = <dynext/*.dll>
+my $dynext = <dynext/*.dll> && !<src/pmc/*.dll> && !<src/ops/*.dll>
            ? qq{Source: ".\\dynext\\*.dll"; DestDir: "{app}\\lib\\parrot\\dynext"; Flags:}
            : '; no dynext';
 my $man = -d 'man'

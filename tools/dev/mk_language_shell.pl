@@ -297,8 +297,7 @@ __build/src/ops/Makefile.in__
 VERSION_DIR   := @versiondir@
 INCLUDE_DIR   := @includedir@$(VERSION_DIR)
 LIB_DIR       := @libdir@$(VERSION_DIR)
-#STAGING_DIR   := ../../dynext
-STAGING_DIR   := @build_dir@/runtime/parrot/dynext
+STAGING_DIR   := ../../dynext
 #INSTALL_DIR   := $(LIB_DIR)/languages/@lclang@/dynext
 INSTALL_DIR   := $(LIB_DIR)/dynext
 
@@ -309,6 +308,7 @@ O             := @o@
 # Setup some commands
 PERL          := @perl@
 RM_F          := @rm_f@
+MKPATH        := @mkpath@
 CHMOD         := @chmod@
 CP            := @cp@
 CC            := @cc@ -c
@@ -361,6 +361,7 @@ staging: linklibs
 
 install:
 #IF(cygwin or hpux):	CHMOD 0775 "*$(LOAD_EXT)"
+	$(MKPATH) $(INSTALL_DIR)
 	$(CP) "*$(LOAD_EXT)" $(INSTALL_DIR)
 
 uninstall:
@@ -389,8 +390,7 @@ INCLUDE_DIR   := @includedir@$(VERSION_DIR)
 LIB_DIR       := @libdir@$(VERSION_DIR)
 SRC_DIR       := @srcdir@$(VERSION_DIR)
 TOOLS_DIR     := @libdir@$(VERSION_DIR)/tools/lib
-#STAGING_DIR   := ../../dynext
-STAGING_DIR   := @build_dir@/runtime/parrot/dynext
+STAGING_DIR   := ../../dynext
 #INSTALL_DIR   := $(LIB_DIR)/languages/@lclang@/dynext
 INSTALL_DIR   := $(LIB_DIR)/dynext
 
@@ -401,6 +401,7 @@ O             := @o@
 # Setup some commands
 PERL          := @perl@
 RM_F          := @rm_f@
+MKPATH        := @mkpath@
 CHMOD         := @chmod@
 CP            := @cp@
 CC            := @cc@ -c
@@ -463,6 +464,7 @@ staging: linklibs
 
 install:
 #IF(cygwin or hpux):	CHMOD 0775 "*$(LOAD_EXT)"
+	$(MKPATH) $(INSTALL_DIR)
 	$(CP) "*$(LOAD_EXT)" $(INSTALL_DIR)
 
 uninstall:

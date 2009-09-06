@@ -79,6 +79,7 @@ Parrot_make_cb(PARROT_INTERP, ARGMOD(PMC* sub), ARGIN(PMC* user_data),
     int type;
     char * sig_str;
     STRING *sc;
+    char * const signature = Parrot_str_to_cstring(interp, cb_signature);
     /*
      * we stuff all the information into the user_data PMC and pass that
      * on to the external sub
@@ -92,11 +93,13 @@ Parrot_make_cb(PARROT_INTERP, ARGMOD(PMC* sub), ARGIN(PMC* user_data),
     sc = CONST_STRING(interp, "_sub");
     VTABLE_setprop(interp, user_data, sc, sub);
     /* only ASCII signatures are supported */
-    sig_str = cb_signature->strstart;
+    sig_str = signature;
 
-    if (strlen(sig_str) != 3)
+    if (strlen(sig_str) != 3) {
+        mem_sys_free(signature);
         Parrot_ex_throw_from_c_args(interp, NULL, 1,
-            "unhandled signature '%s' in make_cb", cb_signature->strstart);
+            "unhandled signature '%Ss' in make_cb", cb_signature);
+    }
 
     ++sig_str;     /* Skip callback return type */
 
@@ -109,11 +112,13 @@ Parrot_make_cb(PARROT_INTERP, ARGMOD(PMC* sub), ARGIN(PMC* user_data),
             type = 'C';
         }
         else {
+            mem_sys_free(signature);
             Parrot_ex_throw_from_c_args(interp, NULL, 1,
-                "unhandled signature '%s' in make_cb", cb_signature->strstart);
+                "unhandled signature '%Ss' in make_cb", cb_signature);
         }
     }
 
+    mem_sys_free(signature);
     cb_sig = pmc_new(interp, enum_class_String);
     VTABLE_set_string_native(interp, cb_sig, cb_signature);
     sc = CONST_STRING(interp, "_signature");
@@ -294,6 +299,8 @@ Parrot_run_callback(PARROT_INTERP,
     PMC     *sub;
     STRING  *sig_str;
     char    *p;
+    char     ch;
+    char    *sig_cstr;
     char     pasm_sig[4];
     INTVAL   i_param;
     PMC     *p_param;
@@ -306,7 +313,8 @@ Parrot_run_callback(PARROT_INTERP,
     signature = VTABLE_getprop(interp, user_data, sc);
 
     sig_str   = VTABLE_get_string(interp, signature);
-    p         = sig_str->strstart;
+    sig_cstr  = Parrot_str_to_cstring(interp, sig_str);
+    p         = sig_cstr;
     ++p;     /* Skip return type */
 
     pasm_sig[0] = 'v';  /* no return value supported yet */
@@ -362,9 +370,12 @@ case_I:
             param = Parrot_str_new(interp, external_data, 0);
             break;
         default:
+            ch = *p;
+            Parrot_str_free_cstring(sig_cstr);
             Parrot_ex_throw_from_c_args(interp, NULL, 1,
-                "unhandled signature char '%c' in run_cb", *p);
+                "unhandled signature char '%c' in run_cb", ch);
     }
+    Parrot_str_free_cstring(sig_cstr);
     pasm_sig[3] = '\0';
     Parrot_runops_fromc_args_event(interp, sub, pasm_sig,
             user_data, param);

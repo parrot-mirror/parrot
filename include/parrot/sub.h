@@ -178,7 +178,7 @@ PMC * new_ret_continuation_pmc(PARROT_INTERP,
 
 PARROT_EXPORT
 int Parrot_Context_get_info(PARROT_INTERP,
-    ARGIN(const Parrot_Context *ctx),
+    ARGIN(PMC *ctx),
     ARGOUT(Parrot_Context_info *info))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
@@ -188,8 +188,7 @@ int Parrot_Context_get_info(PARROT_INTERP,
 PARROT_EXPORT
 PARROT_CAN_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
-STRING* Parrot_Context_infostr(PARROT_INTERP,
-    ARGIN(const Parrot_Context *ctx))
+STRING* Parrot_Context_infostr(PARROT_INTERP, ARGIN(PMC *ctx))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
@@ -217,11 +216,6 @@ void invalidate_retc_context(PARROT_INTERP, ARGMOD(PMC *cont))
         __attribute__nonnull__(2)
         FUNC_MODIFIES(*cont);
 
-void mark_context(PARROT_INTERP, ARGMOD(Parrot_Context* ctx))
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(2)
-        FUNC_MODIFIES(* ctx);
-
 void mark_context_start(void);
 void Parrot_capture_lex(PARROT_INTERP, ARGMOD(PMC *sub_pmc))
         __attribute__nonnull__(1)
@@ -238,9 +232,18 @@ void Parrot_continuation_rewind_environment(PARROT_INTERP, ARGIN(PMC *pmc))
 
 PARROT_CAN_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
+PMC* Parrot_find_dynamic_pad(PARROT_INTERP,
+    ARGIN(STRING *lex_name),
+    ARGIN(PMC *ctx))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3);
+
+PARROT_CAN_RETURN_NULL
+PARROT_WARN_UNUSED_RESULT
 PMC* Parrot_find_pad(PARROT_INTERP,
     ARGIN(STRING *lex_name),
-    ARGIN(const Parrot_Context *ctx))
+    ARGIN(PMC *ctx))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3);
@@ -266,9 +269,6 @@ PMC* Parrot_find_pad(PARROT_INTERP,
 #define ASSERT_ARGS_invalidate_retc_context __attribute__unused__ int _ASSERT_ARGS_CHECK = \
        PARROT_ASSERT_ARG(interp) \
     || PARROT_ASSERT_ARG(cont)
-#define ASSERT_ARGS_mark_context __attribute__unused__ int _ASSERT_ARGS_CHECK = \
-       PARROT_ASSERT_ARG(interp) \
-    || PARROT_ASSERT_ARG(ctx)
 #define ASSERT_ARGS_mark_context_start __attribute__unused__ int _ASSERT_ARGS_CHECK = 0
 #define ASSERT_ARGS_Parrot_capture_lex __attribute__unused__ int _ASSERT_ARGS_CHECK = \
        PARROT_ASSERT_ARG(interp) \
@@ -280,6 +280,10 @@ PMC* Parrot_find_pad(PARROT_INTERP,
      __attribute__unused__ int _ASSERT_ARGS_CHECK = \
        PARROT_ASSERT_ARG(interp) \
     || PARROT_ASSERT_ARG(pmc)
+#define ASSERT_ARGS_Parrot_find_dynamic_pad __attribute__unused__ int _ASSERT_ARGS_CHECK = \
+       PARROT_ASSERT_ARG(interp) \
+    || PARROT_ASSERT_ARG(lex_name) \
+    || PARROT_ASSERT_ARG(ctx)
 #define ASSERT_ARGS_Parrot_find_pad __attribute__unused__ int _ASSERT_ARGS_CHECK = \
        PARROT_ASSERT_ARG(interp) \
     || PARROT_ASSERT_ARG(lex_name) \

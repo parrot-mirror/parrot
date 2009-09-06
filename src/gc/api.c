@@ -406,10 +406,13 @@ void
 Parrot_gc_add_pmc_sync(PARROT_INTERP, ARGMOD(PMC *pmc))
 {
     ASSERT_ARGS(Parrot_gc_add_pmc_sync)
+
+    /* This mutex already exists, leave it alone. */
     if (PMC_sync(pmc))
-        /* This mutex already exists, leave it alone. */
         return;
+
     PMC_sync(pmc) = mem_allocate_typed(Sync);
+
     if (!PMC_sync(pmc))
         Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_ALLOCATION_ERROR,
             "Parrot VM: PMC Sync allocation failed!\n");
@@ -790,7 +793,6 @@ Parrot_gc_mark_and_sweep(PARROT_INTERP, UINTVAL flags)
 {
     ASSERT_ARGS(Parrot_gc_mark_and_sweep)
     interp->arena_base->do_gc_mark(interp, flags);
-    parrot_gc_context(interp);
 }
 
 /*
@@ -1627,10 +1629,11 @@ Parrot_gc_free_pmc_attributes(PARROT_INTERP, ARGMOD(PMC *pmc), size_t item_size)
 {
     ASSERT_ARGS(Parrot_gc_free_pmc_attributes)
     void * const data = PMC_data(pmc);
-    /* const size_t size = pmc->vtable->attr_size; */
-    const size_t size = item_size;
-    if (data != NULL) {
-        PMC_Attribute_Pool * const pool = Parrot_gc_get_attribute_pool(interp, size);
+
+    if (data) {
+        PMC_Attribute_Pool       **pools = interp->arena_base->attrib_pools;
+        const size_t               idx   = item_size - sizeof (void *);
+        PMC_Attribute_Pool * const pool  = pools[idx];
         Parrot_gc_free_attributes_from_pool(interp, pool, data);
         PMC_data(pmc) = NULL;
     }
@@ -1658,18 +1661,20 @@ Parrot_gc_allocate_fixed_size_storage(PARROT_INTERP, size_t size)
 /*
 
 =item C<void Parrot_gc_free_fixed_size_storage(PARROT_INTERP, size_t size, void
-* data)>
+*data)>
 
 EXPERIMENTAL!!!  See above.
 
 */
 
 void
-Parrot_gc_free_fixed_size_storage(PARROT_INTERP, size_t size, ARGMOD(void * data))
+Parrot_gc_free_fixed_size_storage(PARROT_INTERP, size_t size, ARGMOD(void *data))
 {
     ASSERT_ARGS(Parrot_gc_free_fixed_size_storage)
-    PMC_Attribute_Pool * const pool = Parrot_gc_get_attribute_pool(interp,
-        size);
+    PMC_Attribute_Pool       **pools = interp->arena_base->attrib_pools;
+    const size_t               idx   = size - sizeof (void *);
+    PMC_Attribute_Pool * const pool  = pools[idx];
+
     Parrot_gc_free_attributes_from_pool(interp, pool, data);
 }
 
@@ -1679,7 +1684,7 @@ Parrot_gc_free_fixed_size_storage(PARROT_INTERP, size_t size, ARGMOD(void * data
 
 =head1 SEE ALSO
 
-F<include/parrot/gc_api.h>, F<src/cpu_dep.c> and F<docs/pdds/pdd09_gc.pod>.
+F<include/parrot/gc_api.h>, F<src/gc/system.c> and F<docs/pdds/pdd09_gc.pod>.
 
 =head1 HISTORY
 

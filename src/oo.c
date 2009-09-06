@@ -209,7 +209,7 @@ Parrot_oo_get_class(PARROT_INTERP, ARGIN(PMC *key))
                 {
                 PMC * const hll_ns = VTABLE_get_pmc_keyed_int(interp,
                                         interp->HLL_namespace,
-                                        CONTEXT(interp)->current_HLL);
+                                        Parrot_pcc_get_HLL(interp, CURRENT_CONTEXT(interp)));
                 PMC * const ns     = Parrot_get_namespace_keyed(interp,
                                         hll_ns, key);
 
@@ -286,7 +286,7 @@ Parrot_oo_clone_object(PARROT_INTERP, ARGIN(PMC *pmc),
 
     /* Set custom GC mark and destroy on the object. */
     PObj_custom_mark_SET(cloned);
-    PObj_active_destroy_SET(cloned);
+    PObj_custom_destroy_SET(cloned);
 
     /* Flag that it is an object */
     PObj_is_object_SET(cloned);
@@ -421,7 +421,7 @@ Parrot_oo_get_class_str(PARROT_INTERP, ARGIN(STRING *name))
 
     /* First check in current HLL namespace */
     PMC * const hll_ns = VTABLE_get_pmc_keyed_int(interp, interp->HLL_namespace,
-                           CONTEXT(interp)->current_HLL);
+                           Parrot_pcc_get_HLL(interp, CURRENT_CONTEXT(interp)));
     PMC * const ns     = Parrot_get_namespace_keyed_str(interp, hll_ns, name);
     PMC * const _class = PMC_IS_NULL(ns)
                        ? PMCNULL : VTABLE_get_class(interp, ns);

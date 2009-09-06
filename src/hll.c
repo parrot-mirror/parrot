@@ -53,7 +53,7 @@ static PMC* new_hll_entry(PARROT_INTERP, ARGIN_NULLOK(STRING *entry_name))
 #define END_READ_HLL_INFO(interp, hll_info)
 #define START_WRITE_HLL_INFO(interp, hll_info) \
     do { \
-        if (PMC_sync((interp)->HLL_info)) { \
+        if (PObj_is_PMC_shared_TEST(hll_info) && PMC_sync((interp)->HLL_info)) { \
             (hll_info) = (interp)->HLL_info = \
                 Parrot_clone((interp), (interp)->HLL_info); \
             if (PMC_sync((interp)->HLL_info)) \
@@ -362,8 +362,8 @@ Parrot_register_HLL_type(PARROT_INTERP, INTVAL hll_id,
             "no such HLL ID (%vd)", hll_id);
 
     /* the type might already be registered in a non-conflicting way, in which
-     * case we can avoid copying */
-    if (PMC_sync(hll_info)) {
+     * ca se we can avoid copying */
+    if (PObj_is_PMC_shared_TEST(hll_info) && PMC_sync(hll_info)) {
         if (hll_type == Parrot_get_HLL_type(interp, hll_id, core_type))
             return;
     }
@@ -446,7 +446,7 @@ INTVAL
 Parrot_get_ctx_HLL_type(PARROT_INTERP, INTVAL core_type)
 {
     ASSERT_ARGS(Parrot_get_ctx_HLL_type)
-    const INTVAL hll_id = CONTEXT(interp)->current_HLL;
+    const INTVAL hll_id = Parrot_pcc_get_HLL(interp, CURRENT_CONTEXT(interp));
 
     return Parrot_get_HLL_type(interp, hll_id, core_type);
 }
@@ -468,7 +468,7 @@ PMC*
 Parrot_get_ctx_HLL_namespace(PARROT_INTERP)
 {
     ASSERT_ARGS(Parrot_get_ctx_HLL_namespace)
-    return Parrot_get_HLL_namespace(interp, CONTEXT(interp)->current_HLL);
+    return Parrot_get_HLL_namespace(interp, Parrot_pcc_get_HLL(interp, CURRENT_CONTEXT(interp)));
 }
 
 /*
