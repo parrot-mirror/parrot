@@ -961,7 +961,7 @@ dynop_register_xx(PARROT_INTERP,
     }
 
     /* if we are running this core, update event check ops */
-    if ((int)interp->run_core == cg_lib->core_type) {
+    if (interp->run_core->id == cg_lib->core_type) {
         size_t i;
 
         for (i = n_old; i < n_tot; ++i)

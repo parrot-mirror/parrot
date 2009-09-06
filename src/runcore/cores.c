@@ -445,6 +445,7 @@ Parrot_runcore_slow_init(PARROT_INTERP)
 
     Parrot_runcore_t *coredata = mem_allocate_typed(Parrot_runcore_t);
     coredata->name             = CONST_STRING(interp, "slow");
+    coredata->id               = PARROT_SLOW_CORE;
     coredata->opinit           = PARROT_CORE_OPLIB_INIT;
     coredata->runops           = runops_slow_core;
     coredata->prepare_run      = NULL;
@@ -476,6 +477,7 @@ Parrot_runcore_fast_init(PARROT_INTERP)
 
     Parrot_runcore_t *coredata = mem_allocate_typed(Parrot_runcore_t);
     coredata->name             = CONST_STRING(interp, "fast");
+    coredata->id               = PARROT_FAST_CORE;
     coredata->opinit           = PARROT_CORE_OPLIB_INIT;
     coredata->runops           = runops_fast_core;
     coredata->destroy          = NULL;
@@ -504,6 +506,7 @@ Parrot_runcore_switch_init(PARROT_INTERP)
 
     Parrot_runcore_t *coredata = mem_allocate_typed(Parrot_runcore_t);
     coredata->name             = CONST_STRING(interp, "switch");
+    coredata->id               = PARROT_SWITCH_CORE;
     coredata->opinit           = PARROT_CORE_SWITCH_OPLIB_INIT;
     coredata->runops           = runops_switch_core;
     coredata->prepare_run      = init_prederef;
@@ -532,6 +535,7 @@ Parrot_runcore_jit_init(PARROT_INTERP)
 
     Parrot_runcore_t *coredata = mem_allocate_typed(Parrot_runcore_t);
     coredata->name             = CONST_STRING(interp, "jit");
+    coredata->id               = PARROT_JIT_CORE;
     coredata->opinit           = PARROT_CORE_OPLIB_INIT;
     coredata->prepare_run      = init_jit_run;
     coredata->runops           = runops_jit_core;
@@ -560,6 +564,7 @@ Parrot_runcore_switch_jit_init(PARROT_INTERP)
 
     Parrot_runcore_t *coredata = mem_allocate_typed(Parrot_runcore_t);
     coredata->name             = CONST_STRING(interp, "switch_jit");
+    coredata->id               = PARROT_SWITCH_JIT_CORE;
     coredata->opinit           = PARROT_CORE_SWITCH_OPLIB_INIT;
     coredata->destroy          = NULL;
     coredata->prepare_run      = init_prederef;
@@ -589,6 +594,7 @@ Parrot_runcore_exec_init(PARROT_INTERP)
 
     Parrot_runcore_t *coredata = mem_allocate_typed(Parrot_runcore_t);
     coredata->name             = CONST_STRING(interp, "exec");
+    coredata->id               = PARROT_EXEC_CORE;
     coredata->opinit           = PARROT_CORE_OPLIB_INIT;
     coredata->runops           = runops_exec_core;
     coredata->destroy          = NULL;
@@ -615,6 +621,7 @@ Parrot_runcore_gc_debug_init(PARROT_INTERP)
 
     Parrot_runcore_t *coredata = mem_allocate_typed(Parrot_runcore_t);
     coredata->name             = CONST_STRING(interp, "gc_debug");
+    coredata->id               = PARROT_GC_DEBUG_CORE;
     coredata->opinit           = PARROT_CORE_OPLIB_INIT;
     coredata->runops           = runops_gc_debug_core;
     coredata->destroy          = NULL;
@@ -643,6 +650,7 @@ Parrot_runcore_debugger_init(PARROT_INTERP)
 
     Parrot_runcore_t *coredata = mem_allocate_typed(Parrot_runcore_t);
     coredata->name             = CONST_STRING(interp, "debugger");
+    coredata->id               = PARROT_DEBUGGER_CORE;
     coredata->opinit           = PARROT_CORE_OPLIB_INIT;
     coredata->prepare_run      = init_prederef;
     coredata->runops           = runops_debugger_core;
@@ -673,6 +681,7 @@ Parrot_runcore_cgp_init(PARROT_INTERP)
 
     Parrot_runcore_t *coredata = mem_allocate_typed(Parrot_runcore_t);
     coredata->name             = CONST_STRING(interp, "cgp");
+    coredata->id               = PARROT_CGP_CORE;
     coredata->opinit           = PARROT_CORE_CGP_OPLIB_INIT;
     coredata->prepare_run      = init_prederef;
     coredata->runops           = runops_cgp_core;
@@ -704,6 +713,7 @@ Parrot_runcore_cgoto_init(PARROT_INTERP)
 
     Parrot_runcore_t *coredata = mem_allocate_typed(Parrot_runcore_t);
     coredata->name             = CONST_STRING(interp, "cgoto");
+    coredata->id               = PARROT_CGOTO_CORE;
     coredata->opinit           = PARROT_CORE_CG_OPLIB_INIT;
     coredata->runops           = runops_cgoto_core;
     coredata->destroy          = NULL;
@@ -734,6 +744,7 @@ Parrot_runcore_cgp_jit_init(PARROT_INTERP)
 
     Parrot_runcore_t *coredata = mem_allocate_typed(Parrot_runcore_t);
     coredata->name             = CONST_STRING(interp, "cgp_jit");
+    coredata->id               = PARROT_CGP_JIT_CORE;
     coredata->opinit           = PARROT_CORE_CGP_OPLIB_INIT;
     coredata->prepare_run      = init_prederef;
     coredata->runops           = runops_cgp_core;
@@ -767,6 +778,7 @@ Parrot_runcore_profiling_init(PARROT_INTERP)
     Parrot_profiling_runcore_t *coredata =
                                  mem_allocate_typed(Parrot_profiling_runcore_t);
     coredata->name             = CONST_STRING(interp, "profiling");
+    coredata->id               = PARROT_PROFILING_CORE;
     coredata->opinit           = PARROT_CORE_OPLIB_INIT;
     coredata->runops           = (Parrot_runcore_runops_fn_t) init_profiling_core;
     coredata->destroy          = NULL;

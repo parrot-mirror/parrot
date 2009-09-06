@@ -30,6 +30,7 @@ typedef runcore_prepare_fn_type Parrot_runcore_prepare_fn_t;
 
 struct runcore_t {
     STRING                  *name;
+    int                      id;
     oplib_init_f             opinit;
     runcore_runops_fn_type   runops;
     runcore_destroy_fn_type  destroy;
@@ -46,6 +47,7 @@ typedef enum Parrot_profiling_flags {
 
 struct profiling_runcore_t {
     STRING                      *name;
+    int                          id;
     oplib_init_f                 opinit;
     Parrot_runcore_runops_fn_t   runops;
     Parrot_runcore_destroy_fn_t  destroy;
