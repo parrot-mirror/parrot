@@ -1152,6 +1152,7 @@ ARGIN(opcode_t *pc))
         exec_cstr         = Parrot_str_to_cstring(interp, VTABLE_get_string(interp, executable));
         command_line_cstr = Parrot_str_to_cstring(interp, command_line);
 
+        /* The CLI line won't reflect any options passed to the parrot binary. */
         fprintf(runcore->profile_fd, "CLI:%s %s\n", exec_cstr, command_line_cstr);
 
         mem_sys_free(exec_cstr);
@@ -1163,7 +1164,6 @@ ARGIN(opcode_t *pc))
 
     if (Profiling_first_loop_TEST(runcore)) {
 
-        /* The CLI line won't reflect any options passed to the parrot binary. */
         fprintf(runcore->profile_fd, "VERSION:1\n");
         /* silly hack to make all separate runloops appear to come from a single source */
         fprintf(runcore->profile_fd, "CS:{ns:main}{file:no_file}{sub:0x1}{ctx:0x1}\n");
