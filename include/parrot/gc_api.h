@@ -21,9 +21,9 @@
    to allocate these things using mem_sys_allocate instead */
 /* Disabled on Windows platforms until problems get fixed, TT #940 */
 #if defined(_WIN32) || defined(_WIN64)
-#  define GC_USE_FIXED_SIZE_ALLOCATOR 0
+#  define GC_USE_FIXED_SIZE_ALLOCATOR 1
 #else
-#  define GC_USE_FIXED_SIZE_ALLOCATOR 0
+#  define GC_USE_FIXED_SIZE_ALLOCATOR 1
 #endif
 
 /*
@@ -248,10 +248,10 @@ void Parrot_gc_free_bufferlike_header(PARROT_INTERP,
 
 void Parrot_gc_free_fixed_size_storage(PARROT_INTERP,
     size_t size,
-    ARGMOD(void * data))
+    ARGMOD(void *data))
         __attribute__nonnull__(1)
         __attribute__nonnull__(3)
-        FUNC_MODIFIES(* data);
+        FUNC_MODIFIES(*data);
 
 void Parrot_gc_free_pmc_attributes(PARROT_INTERP,
     ARGMOD(PMC *pmc),

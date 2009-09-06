@@ -105,15 +105,21 @@ subsystem.
 
 PARROT_EXPORT
 void
-Parrot_pmc_destroy(PARROT_INTERP, ARGIN(PMC *pmc))
+Parrot_pmc_destroy(PARROT_INTERP, ARGMOD(PMC *pmc))
 {
     ASSERT_ARGS(Parrot_pmc_destroy)
 
-    if (PObj_active_destroy_TEST(pmc)) {
+    if (PObj_custom_destroy_TEST(pmc)) {
         VTABLE_destroy(interp, pmc);
         /* Prevent repeated calls. */
-        PObj_active_destroy_CLEAR(pmc);
+        PObj_custom_destroy_CLEAR(pmc);
     }
+
+    PObj_custom_mark_CLEAR(pmc);
+    PObj_live_CLEAR(pmc);
+
+    if (PObj_is_PMC_shared_TEST(pmc) && PMC_sync(pmc))
+        Parrot_gc_free_pmc_sync(interp, pmc);
 
     if (pmc->vtable->attr_size) {
         if (PMC_data(pmc)) {
@@ -889,7 +895,7 @@ Parrot_create_mro(PARROT_INTERP, INTVAL type)
 
             /* anchor at parent, aka current_namespace, that is 'parrot' */
             VTABLE_set_pmc_keyed_str(interp,
-                    CONTEXT(interp)->current_namespace, class_name, ns);
+                    Parrot_pcc_get_namespace(interp, CURRENT_CONTEXT(interp)), class_name, ns);
         }
 
         _class = vtable->pmc_class;

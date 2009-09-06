@@ -244,7 +244,7 @@ Initializes the interpreter.
         if (!PMC_interp(SELF)) {
             create_interp(SELF, INTERP);
         }
-        PObj_active_destroy_SET(SELF);
+        PObj_custom_destroy_SET(SELF);
     }
 
 /*
@@ -270,7 +270,7 @@ C<parent> and uses that thread.
         if (!PMC_interp(SELF)) {
             create_interp(SELF, p);
         }
-        PObj_active_destroy_SET(SELF);
+        PObj_custom_destroy_SET(SELF);
     }
 
 
@@ -311,7 +311,7 @@ Sets C<struct_val> to C<*value>.
             Parrot_ParrotInterpreter_attributes *attrs =
                 mem_allocate_zeroed_typed(Parrot_ParrotInterpreter_attributes);
             PMC_data(SELF) = attrs;
-            PObj_active_destroy_SET(SELF);
+            PObj_custom_destroy_SET(SELF);
         }
         PMC_interp(SELF) = (struct parrot_interp_t *)value;
     }
@@ -452,7 +452,7 @@ Introspection interface. C<key> can be:
         STRING *s     = CONST_STRING(interp, "globals");
         int     level = 0;
 
-        Parrot_Context *ctx;
+        PMC *ctx;
 
         if (Parrot_str_equal(interp, item, s))
             return interp->root_namespace;
@@ -480,71 +480,70 @@ Introspection interface. C<key> can be:
             Parrot_ex_throw_from_c_args(interp, NULL, CONTROL_ERROR,
                 "No such caller depth");
 
-        ctx = CONTEXT(interp);
+        ctx = CURRENT_CONTEXT(interp);
 
         if (outer) {
             for (; level; --level) {
-                ctx = ctx->outer_ctx;
-                if (!ctx)
+                ctx = Parrot_pcc_get_outer_ctx(interp, ctx);
+                if (PMC_IS_NULL(ctx))
                     Parrot_ex_throw_from_c_args(interp, NULL,
                         CONTROL_ERROR, "No such outer depth");
             }
         }
         else {
             for (; level; --level) {
-                cont = ctx->current_cont;
+                cont = Parrot_pcc_get_continuation(interp, ctx);
 
-                if (PMC_IS_NULL(cont) || !PMC_cont(cont)->seg)
+                if (PMC_IS_NULL(cont) || !PARROT_CONTINUATION(cont)->seg)
                     Parrot_ex_throw_from_c_args(interp, NULL,
                         CONTROL_ERROR, "No such caller depth");
 
-                ctx = PMC_cont(cont)->to_ctx;
+                ctx = PARROT_CONTINUATION(cont)->to_ctx;
 
-                if (!ctx->current_sub)
+                if (PMC_IS_NULL(Parrot_pcc_get_sub(interp, ctx)))
                     Parrot_ex_throw_from_c_args(interp, NULL,
                         CONTROL_ERROR, "No such caller depth");
             }
         }
 
         if (item == outer)
-            return ctx->current_sub;
+            return Parrot_pcc_get_sub(interp, ctx);
 
         s = CONST_STRING(interp, "sub");
 
         if (Parrot_str_equal(interp, item, s))
-            return ctx->current_sub;
+            return Parrot_pcc_get_sub(interp, ctx);
 
         s = CONST_STRING(interp, "lexpad");
 
         if (Parrot_str_equal(interp, item, s))
-            return ctx->lex_pad;
+            return Parrot_pcc_get_lex_pad(interp, ctx);
 
         s = CONST_STRING(interp, "namespace");
 
         if (Parrot_str_equal(interp, item, s))
-            return ctx->current_namespace;
+            return Parrot_pcc_get_namespace(interp, ctx);
 
         s = CONST_STRING(interp, "continuation");
 
         if (Parrot_str_equal(interp, item, s))
-            return VTABLE_clone(interp, ctx->current_cont);
+            return VTABLE_clone(interp, Parrot_pcc_get_continuation(interp, ctx));
 
         s = CONST_STRING(interp, "annotations");
 
         if (Parrot_str_equal(interp, item, s)) {
-            PMC        *sub_pmc = ctx->current_sub;
-            if (ctx == CONTEXT(interp)) {
+            PMC        *sub_pmc = Parrot_pcc_get_sub(interp, ctx);
+            if (ctx == CURRENT_CONTEXT(interp)) {
                 /* We can't know the current program counter for the currently
                  * executing sub, so can't return annotations for that. */
-                if (ctx == CONTEXT(interp))
-                    Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INVALID_OPERATION,
-                            "Cannot get annotations at depth 0; use annotations op instead.");
+                Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INVALID_OPERATION,
+                        "Cannot get annotations at depth 0; use annotations op instead.");
             }
             if (!PMC_IS_NULL(sub_pmc)
             &&   sub_pmc->vtable->base_type == enum_class_Sub) {
                 Parrot_Sub_attributes *sub;
                 PackFile_ByteCode     *seg;
-                opcode_t              *pc  = ctx->current_pc;
+                opcode_t              *pc  = Parrot_pcc_get_pc(interp, ctx);
 
                 PMC_get_sub(interp, sub_pmc, sub);
                 seg = sub->seg;
@@ -724,7 +723,7 @@ Finish thawing.
                 Parrot_ParrotInterpreter_attributes *attrs =
                     mem_allocate_zeroed_typed(Parrot_ParrotInterpreter_attributes);
                 PMC_data(SELF) = attrs;
-                PObj_active_destroy_SET(SELF);
+                PObj_custom_destroy_SET(SELF);
             }
 
             PMC_interp(SELF) = INTERP;
@@ -805,7 +804,7 @@ Map core_type to hll_type.
     METHOD hll_map(PMC *core_type, PMC *hll_type) {
         INTVAL core_type_id = VTABLE_type(INTERP, core_type);
         INTVAL hll_type_id  = VTABLE_type(INTERP, hll_type);
-        INTVAL hll_id       = CONTEXT(interp)->current_HLL;
+        INTVAL hll_id       = Parrot_pcc_get_HLL(interp, CURRENT_CONTEXT(interp));
         Parrot_register_HLL_type(INTERP, hll_id, core_type_id, hll_type_id);
     }
 
@@ -847,3 +846,5 @@ This method is experimental. See TT #264.
  * End:
  * vim: expandtab shiftwidth=4:
  */
+
+

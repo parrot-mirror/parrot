@@ -798,9 +798,16 @@ runops_fast_core(PARROT_INTERP, ARGIN(Parrot_runcore_t *runcore), ARGIN(opcode_t
     ASSERT_ARGS(runops_fast_core)
 
     /* disable pc */
-    CONTEXT(interp)->current_pc = NULL;
+    Parrot_pcc_set_pc(interp, CURRENT_CONTEXT(interp), NULL);
 
     while (pc) {
+        /* TODO
+         * Decide do we need check here.
+         * Fast-core cause segfaults even on test suite
+        if (pc < code_start || pc >= code_end)
+            Parrot_ex_throw_from_c_args(interp, NULL, 1,
+                "attempt to access code outside of current code segment");
+        */
         DO_OP(pc, interp);
     }
 
@@ -831,7 +838,7 @@ runops_cgoto_core(PARROT_INTERP, ARGIN(Parrot_runcore_t *runcore), ARGIN(opcode_
     ASSERT_ARGS(runops_cgoto_core)
 
     /* disable pc */
-    CONTEXT(interp)->current_pc = NULL;
+    Parrot_pcc_set_pc(interp, CURRENT_CONTEXT(interp), NULL);
 
 #ifdef HAVE_COMPUTED_GOTO
     pc = cg_core(pc, interp);
@@ -850,9 +857,10 @@ runops_cgoto_core(PARROT_INTERP, ARGIN(Parrot_runcore_t *runcore), ARGIN(opcode_
 #ifdef code_end
 #  undef code_end
 #endif
-
+ 
 #define  code_start interp->code->base.data
 #define  code_end (interp->code->base.data + interp->code->base.size)
+
 
 
 /*
@@ -900,7 +908,7 @@ runops_trace_core(PARROT_INTERP, ARGIN(Parrot_runcore_t *runcore), ARGIN(opcode_
         PARROT_ASSERT(debugger);
 
         /* set the top of the stack so GC can trace it for GC-able pointers
-         * see trace_system_areas() in src/cpu_dep.c */
+         * see trace_system_areas() in src/gc/system.c */
         debugger->lo_var_ptr = interp->lo_var_ptr;
 
         pio = Parrot_io_STDERR(debugger);
@@ -921,7 +929,7 @@ runops_trace_core(PARROT_INTERP, ARGIN(Parrot_runcore_t *runcore), ARGIN(opcode_
             Parrot_ex_throw_from_c_args(interp, NULL, 1,
                 "attempt to access code outside of current code segment");
 
-        CONTEXT(interp)->current_pc = pc;
+        Parrot_pcc_set_pc(interp, CURRENT_CONTEXT(interp), pc);
 
         DO_OP(pc, interp);
         trace_op(interp, code_start, code_end, pc);
@@ -976,7 +984,7 @@ runops_slow_core(PARROT_INTERP, ARGIN(Parrot_runcore_t *runcore), ARGIN(opcode_t
             Parrot_ex_throw_from_c_args(interp, NULL, 1,
                 "attempt to access code outside of current code segment");
 
-        CONTEXT(interp)->current_pc = pc;
+        Parrot_pcc_set_pc(interp, CURRENT_CONTEXT(interp), pc);
 
         DO_OP(pc, interp);
     }
@@ -1010,7 +1018,7 @@ runops_gc_debug_core(PARROT_INTERP, ARGIN(Parrot_runcore_t *runcore), ARGIN(opco
                 "attempt to access code outside of current code segment");
 
         Parrot_gc_mark_and_sweep(interp, GC_TRACE_FULL);
-        CONTEXT(interp)->current_pc = pc;
+        Parrot_pcc_set_pc(interp, CURRENT_CONTEXT(interp), pc);
 
         DO_OP(pc, interp);
     }
@@ -1335,7 +1343,7 @@ runops_debugger_core(PARROT_INTERP, ARGIN(Parrot_runcore_t *runcore), ARGIN(opco
                     pc);
         }
 
-        CONTEXT(interp)->current_pc = pc;
+        Parrot_pcc_set_pc(interp, CURRENT_CONTEXT(interp), pc);
         DO_OP(pc, interp);
 
         if (interp->pdb->state & PDB_STOPPED) {

@@ -26,6 +26,7 @@ about the structure of the frozen bytecode.
 
 #include "parrot/parrot.h"
 #include "parrot/embed.h"
+#include "parrot/extend.h"
 #include "parrot/packfile.h"
 #include "parrot/runcore_api.h"
 #include "jit.h"
@@ -681,7 +682,8 @@ run_sub(PARROT_INTERP, ARGIN(PMC *sub_pmc))
     ||  PARROT_RUNCORE_PREDEREF_OPS_TEST(interp->run_core))
         Parrot_runcore_switch(interp, CONST_STRING(interp, "fast"));
 
-    CONTEXT(interp)->constants = interp->code->const_table->constants;
+    Parrot_pcc_set_constants(interp, CURRENT_CONTEXT(interp),
+            interp->code->const_table->constants);
 
     retval           = (PMC *)Parrot_runops_fromc_args(interp, sub_pmc, "P");
     interp->run_core = old_core;
@@ -759,7 +761,7 @@ do_1_sub_pragma(PARROT_INTERP, ARGMOD(PMC *sub_pmc), pbc_action_enum_t action)
                                           / sizeof (opcode_t *);
 
                     PObj_get_FLAGS(sub_pmc)      &= ~SUB_FLAG_PF_MAIN;
-                    CONTEXT(interp)->current_sub  = sub_pmc;
+                    Parrot_pcc_set_sub(interp, CURRENT_CONTEXT(interp), sub_pmc);
                 }
                 else {
                     Parrot_warn(interp, PARROT_WARNINGS_ALL_FLAG,
@@ -3083,13 +3085,13 @@ Parrot_switch_to_cs(PARROT_INTERP, ARGIN(PackFile_ByteCode *new_cs), int really)
     }
 
     interp->code               = new_cs;
-    CONTEXT(interp)->constants = really
+    Parrot_pcc_set_constants(interp, CURRENT_CONTEXT(interp), really
                                ? find_constants(interp, new_cs->const_table)
-                               : new_cs->const_table->constants;
+                               : new_cs->const_table->constants);
 
     /* new_cs->const_table->constants; */
-    CONTEXT(interp)->pred_offset =
-        new_cs->base.data - (opcode_t*) new_cs->prederef.code;
+    Parrot_pcc_set_pred_offset(interp, CURRENT_CONTEXT(interp),
+        new_cs->base.data - (opcode_t*) new_cs->prederef.code);
 
     if (really)
         prepare_for_run(interp);
@@ -4921,7 +4923,9 @@ void
 PackFile_fixup_subs(PARROT_INTERP, pbc_action_enum_t what, ARGIN_NULLOK(PMC *eval))
 {
     ASSERT_ARGS(PackFile_fixup_subs)
+    PARROT_CALLIN_START(interp);
     do_sub_pragmas(interp, interp->code, what, eval);
+    PARROT_CALLIN_END(interp);
 }
 
 
