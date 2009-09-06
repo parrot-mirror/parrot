@@ -12,7 +12,39 @@ t/pmc/namepspace.t - test NameSpace PMC
 
 =head1 DESCRIPTION
 
-Tests the NameSpace PMC.
+Tests the NameSpace PMC. Some things that it tests specifically:
+
+=over 4
+
+=item* Creating new NameSpace PMCs
+
+=item* Verify that things which are supposed to return a NameSpace actually
+do.
+
+=item* Various forms of get_global opcode
+
+=item* Finding and calling Subs which are stored in the NameSpace
+
+=item* Methods on the NameSpace PMC
+
+=item* Building NameSpace hierarchies on the fly
+
+=item* HLL NameSpaces
+
+=back
+
+Items that need to be tested according to PDD21, or the current source code
+of the NameSpace PMC:
+
+=over 4
+
+=item* methods: add_sub, del_sub, del_var, del_namespace
+
+=item* Typed and Untyped interfaces
+
+=item* Subclassing NameSpace (If it's possible)
+
+=back
 
 =cut
 
@@ -20,10 +52,11 @@ Tests the NameSpace PMC.
 
 .sub main :main
     .include 'test_more.pir'
-    plan(44)
+    plan(59)
 
     create_namespace_pmc()
     verify_namespace_type()
+    get_namespace_class()
     get_global_opcode()
     get_sub_from_namespace_hash()
     access_sub_in_namespace()
@@ -55,14 +88,76 @@ Tests the NameSpace PMC.
     typeof $S0, $P0
     is($S0, "NameSpace", "Root NameSpace is a NameSpace")
 
+    # While we're here. Prove that the root namespace stringifies to ""
+    $S0 = $P0
+    is($S0, "", "Root NameSpace stringifies to empty string")
+
     # parrot namespace
     $P1 = $P0["parrot"]
     typeof $S0, $P1
     is($S0, "NameSpace", "::parrot NameSpace is a NameSpace")
 
+    # get_namespace with no args
     $P0 = get_namespace
     typeof $S0, $P1
     is($S0, "NameSpace", "Current NameSpace is a NameSpace")
+
+    # Prove that HLL namespace names are mangled to lower-case
+    $P0 = get_root_namespace ["MyHLL"]
+    $I0 = isnull $P0
+    is($I0, 1, "HLL NameSpace names are stored lowercase")
+
+    $P0 = get_root_namespace ["myhll"]
+    $I0 = isnull $P0
+    is($I0, 0, "HLL NameSpaces are name-mangled lowercase")
+
+    # Get an HLL namespace and verify that it's a NameSpace PMC
+    $P0 = get_root_namespace ["myhll"]
+    $S0 = typeof $P0
+    is($S0, "NameSpace", "HLL NameSpaces are NameSpaces too")
+
+.end
+
+.sub 'get_namespace_class'
+    # First, prove that we don't have a class until it's created
+    $P0 = get_global "Foo"
+    $P1 = get_class $P0
+    $I0 = isnull $P1
+    is($I0, 1, "NameSpace doesn't have a Class till it's created")
+
+    # Can create a new class from a NameSpace
+    $P1 = newclass $P0
+    $I0 = isnull $P1
+    is($I0, 0, "Create Class from NameSpace")
+
+    # New Class is a Class
+    $S0 = typeof $P1
+    is($S0, "Class", "get_class on a NameSpace returns a Class")
+
+    # Class has same name as namespace
+    $S0 = $P0
+    $S1 = $P1
+    is($S0, $S1, "Class has same name as NameSpace")
+
+    # Now, we do have a class
+    $P1 = get_class $P0
+    $I0 = isnull $P1
+    is($I0, 0, "get_class on a NameSpace returns something")
+
+    # Create object from class from NameSpace
+    push_eh eh
+    $P2 = new $P1
+    pop_eh
+    ok(1, "Can create a new object from a namespace")
+    goto pmc_is_created
+  eh:
+    ok(0, "Cannot create a new object from a namespace")
+  pmc_is_created:
+
+    # Object from Class from NameSpace has right type
+    $S0 = typeof $P2
+    is($S0, "Foo", "Object created from class has name of NameSpace")
+
 .end
 
 # L<PDD21//>
@@ -198,11 +293,13 @@ Tests the NameSpace PMC.
 .end
 
 .sub 'access_sub_in_namespace'
+    # Direct access of sub that does exist in current namespace
     $S0 = baz()
     $P0 = get_global "baz"
     $S1 = $P0()
     is($S0, $S1, "Direct and Indirect Sub calls")
 
+    # Direct access of sub that doesn't exist in current namespace
     push_eh eh
     'SUB_AINT_THERE'()
     ok(0, "Directly called a sub that doesn't exist")
@@ -246,6 +343,13 @@ Tests the NameSpace PMC.
     $P2 = $P3.'get_name'()
     $S0 = join '::', $P2
     is($S0, "parrot::Temp1", "Add a NameSpace with a given name")
+
+    # test VTABLE_get_string while we are here
+    $S0 = $P1
+    is($S0, "parrot", "get_string on HLL NameSpace")
+
+    $S0 = $P3
+    is($S0, "Temp1", "get_string on NameSpace")
 .end
 
 .sub 'hll_namespaces'
@@ -269,6 +373,22 @@ Tests the NameSpace PMC.
     $P1 = $P0["baz"]
     $S0 = $P1()
     is($S0, "Foo", "get a Sub from a HLL namespace")
+
+    # find something an a different .HLL
+    push_eh eh1
+    $P0 = get_root_namespace ["myhll"]
+    $P1 = $P0["baz"]
+    $S0 = $P1()
+    pop_eh
+    is($S0, "MyHLL", "Found Sub in HLL namespace by key")
+    goto test2
+  eh1:
+    ok(0, "Cannot find sub in HLL NameSpace by key")
+
+  test2:
+    $P0 = get_root_namespace ["myhll";"baz"]
+    $I0 = isnull $P0
+    is($I0, 1, "get_root_namespace only returns NameSpace PMCs")
 .end
 
 .sub 'namespace_methods'
@@ -377,4 +497,10 @@ Tests the NameSpace PMC.
 .namespace [ "Foo"; iso-8859-1:"François" ]
 .sub 'baz'
     .return(iso-8859-1:"Foo::François")
+.end
+
+.HLL "MyHLL"
+
+.sub 'baz'
+    .return("MyHLL")
 .end
