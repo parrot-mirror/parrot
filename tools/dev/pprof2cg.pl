@@ -172,7 +172,9 @@ sub print_stats {
 sub split_vars {
     my $href;
     my $str = shift;
-    while ($str =~ /\G {x{ ([^:]+) : (.*?) }x} /cxg) {
+    die "invalidly formed line '$str'"
+        unless $str =~ /({x{  [^:]+  : (.*?) }x})+/x;
+    while ($str =~ /\G   {x{ ([^:]+) : (.*?) }x} /cxg) {
         $href->{$1} = $2;
     }
     return $href;
