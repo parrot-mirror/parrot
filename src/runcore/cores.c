@@ -1144,7 +1144,7 @@ ARGIN(opcode_t *pc))
         runcore->time[runcore->level] = runcore->runcore_start - runcore->op_start;
     }
 
-    Parrot_Context_get_info(interp, CONTEXT(interp), &postop_info);
+    Parrot_Context_get_info(interp, CURRENT_CONTEXT(interp), &postop_info);
 
     argv = VTABLE_get_pmc_keyed_int(interp, interp->iglobals, IGLOBALS_ARGV_LIST);
 
@@ -1193,7 +1193,7 @@ ARGIN(opcode_t *pc))
         /* avoid an extra call to Parrot_Context_get_info */
         mem_sys_memcopy(&preop_info, &postop_info, sizeof (Parrot_Context_info));
 
-        Parrot_Context_get_info(interp, CONTEXT(interp), &postop_info);
+        Parrot_Context_get_info(interp, CURRENT_CONTEXT(interp), &postop_info);
 
         CONTEXT(interp)->current_pc = pc;
         preop_sub = CONTEXT(interp)->current_sub;
