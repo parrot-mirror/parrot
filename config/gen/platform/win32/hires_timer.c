@@ -48,7 +48,7 @@ UINTVAL Parrot_hires_get_tick_duration()
     /* QueryPerformanceCounter returns ticks per second, so divide 1 billion by
      * that to find the length of each tick */
     QueryPerformanceFrequency(&ticks);
-    return (UINTVAL) (1000*1000*1000 / ticks.QuadPart );
+    return (UINTVAL) (1000*1000*1000 / ticks.QuadPart);
 }
 
 
