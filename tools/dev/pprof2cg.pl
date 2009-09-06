@@ -44,8 +44,7 @@ sub main {
 
     open(my $in_fh, '<', $filename) or die "couldn't open $filename for reading: $!";
 
-    while (<$in_fh>) {
-        my $line = $_;
+    while (my $line = <$in_fh>) {
         process_line($line, $stats, $ctx_stack);
     }
     close($in_fh) or die "couldn't close $filename: $!";
@@ -244,21 +243,21 @@ HEADER
 
             for my $line (sort keys %{ $stats->{$file}{$ns} }) {
 
-                my $curr_op  = 0;
-                my $op_count = scalar(@{$stats->{$file}{$ns}{$line}});
-                my $op_time  = 0;
+                my $curr_op    = 0;
+                my $line_stats = $stats->{$file}{$ns}{$line};
+                my $op_count   = scalar(@$line_stats);
+                my $op_time    = 0;
 
-                #XXX: "cache" $stats->{$file}{$ns}{$line}[$curr_op]
-                while ($curr_op < $op_count && $stats->{$file}{$ns}{$line}[$curr_op]{'op_name'} ne 'CALL') {
-                    $op_time += $stats->{$file}{$ns}{$line}[$curr_op]{'time'};
+                while ($curr_op < $op_count && $line_stats->[$curr_op]{'op_name'} ne 'CALL') {
+                    $op_time += $line_stats->[$curr_op]{'time'};
                     $curr_op++;
                 }
                 push @output, "$line $op_time";
 
-                if ($curr_op < $op_count && $stats->{$file}{$ns}{$line}[$curr_op]{'op_name'} eq 'CALL') {
-                    my $call_target = $stats->{$file}{$ns}{$line}[$curr_op]{'target'};
-                    my $call_count  = $stats->{$file}{$ns}{$line}[$curr_op]{'hits'};
-                    my $call_cost   = $stats->{$file}{$ns}{$line}[$curr_op]{'time'};
+                if ($curr_op < $op_count && $line_stats->[$curr_op]{'op_name'} eq 'CALL') {
+                    my $call_target = $line_stats->[$curr_op]{'target'};
+                    my $call_count  = $line_stats->[$curr_op]{'hits'};
+                    my $call_cost   = $line_stats->[$curr_op]{'time'};
 
                     push @output, "cfn=$call_target";
                     push @output, "calls=$call_count $call_cost";
@@ -267,7 +266,7 @@ HEADER
                 if ($curr_op < $op_count) {
                     $op_time = 0;
                     while ($curr_op < $op_count) {
-                        $op_time += $stats->{$file}{$ns}{$line}[$curr_op]{'time'};
+                        $op_time += $line_stats->[$curr_op]{'time'};
                         $curr_op++;
                     }
                     push @output, "$line $op_time";
