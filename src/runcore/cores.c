@@ -869,7 +869,7 @@ runops_cgoto_core(PARROT_INTERP, ARGIN(Parrot_runcore_t *runcore), ARGIN(opcode_
 #ifdef code_end
 #  undef code_end
 #endif
- 
+
 #define  code_start interp->code->base.data
 #define  code_end (interp->code->base.data + interp->code->base.size)
 
@@ -1187,7 +1187,8 @@ ARGIN(opcode_t *pc))
         fprintf(runcore->profile_fd, "VERSION:1\n");
         /* silly hack to make all separate runloops appear to come from a single source */
         fprintf(runcore->profile_fd, "CS:{ns:main}{file:no_file}{sub:0x1}{ctx:0x1}\n");
-        fprintf(runcore->profile_fd, "OP:{line:%d}{time:0}{op:noop}\n", (int) runcore->runloop_count);
+        fprintf(runcore->profile_fd, "OP:{line:%d}{time:0}{op:noop}\n",
+                (int) runcore->runloop_count);
         runcore->runloop_count++;
         Profiling_first_loop_CLEAR(runcore);
     }
@@ -1276,7 +1277,8 @@ ARGIN(opcode_t *pc))
         fprintf(runcore->profile_fd, "END_OF_RUNLOOP\n");
         /* silly hack to make all separate runloops appear to come from a single source */
         fprintf(runcore->profile_fd, "CS:{ns:main}{file:no_file}{sub:0x1}{ctx:0x1}\n");
-        fprintf(runcore->profile_fd, "OP:{line:%d}{time:0}{op:noop}\n", (int) runcore->runloop_count);
+        fprintf(runcore->profile_fd, "OP:{line:%d}{time:0}{op:noop}\n",
+                (int) runcore->runloop_count);
         runcore->runloop_count++;
     }
 
