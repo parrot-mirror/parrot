@@ -148,9 +148,6 @@ Destroys the continuation.
 */
 
     VTABLE void destroy() {
-        Parrot_Continuation_attributes * const cc = PARROT_CONTINUATION(SELF);
-        if (cc)
-            mem_sys_free(cc);
     }
 /*
 
