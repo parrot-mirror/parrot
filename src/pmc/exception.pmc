@@ -644,7 +644,7 @@ Set an attribute value for the exception object.
             /* Ensure it's a ret cont, and extract the from_ctx. */
             if (!PMC_IS_NULL(value) && VTABLE_isa(interp, value, CONST_STRING(interp, "Continuation"))) {
                 PMC *ctx = PARROT_CONTINUATION(value)->from_ctx;
-                if (!PMC_IS_NULL(ctx)) 
+                if (!PMC_IS_NULL(ctx))
                     SET_ATTR_thrower(interp, SELF, ctx);
             }
         }

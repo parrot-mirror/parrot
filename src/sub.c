@@ -498,7 +498,7 @@ Parrot_continuation_rewind_environment(PARROT_INTERP, ARGIN(PMC *pmc))
 {
     ASSERT_ARGS(Parrot_continuation_rewind_environment)
 
-    PMC * const to_ctx = PARROT_CONTINUATION(pmc)->to_ctx; 
+    PMC * const to_ctx = PARROT_CONTINUATION(pmc)->to_ctx;
 
     /* debug print before context is switched */
     if (Interp_trace_TEST(interp, PARROT_TRACE_SUB_CALL_FLAG)) {
