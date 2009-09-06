@@ -1099,6 +1099,11 @@ init_profiling_core(PARROT_INTERP, ARGIN(Parrot_profiling_runcore_t *runcore), A
     runcore->profiling_flags = 0;
     runcore->runloop_count   = 0;
     runcore->level           = 0;
+    /* XXX: workaround for a nasty memory corruption bug that prevents the
+     * profiling of Rakudo hello world.  Normally this would be 32, but when
+     * profiling hello world it becomes corrupted when growing to 512.  Setting
+     * it to this value prevents the need for reallocation and avoids exposing
+     * the corruption.  Also, the bug doesn't affect everyone. */
     runcore->time_size       = 1024;
     runcore->time            = mem_allocate_n_typed(runcore->time_size, UHUGEINTVAL);
     Profiling_first_loop_SET(runcore);
