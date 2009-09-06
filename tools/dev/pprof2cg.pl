@@ -4,6 +4,7 @@
 # $Id$
 
 use strict;
+use warnings;
 
 use Data::Dumper;
 
@@ -27,6 +28,8 @@ To generate a Callgrind-compatible profile, run this script with the pprof
 filename as the first argument.  The output file will be in parrot.out.XXXX,
 where XXXX again is the PID of the original parrot process.
 
+XXX: document $stats format
+
 =cut
 
 
@@ -39,13 +42,13 @@ sub main {
     my $ctx_stack = [];
     my $filename  = $argv->[0];
 
-    open IN_FH, "<$filename" or die "couldn't open $filename for reading";
+    open(my $in_fh, '<', $filename) or die "couldn't open $filename for reading: $!";
 
-    while (<IN_FH>) {
+    while (<$in_fh>) {
         my $line = $_;
         process_line($line, $stats, $ctx_stack);
     }
-    close(IN_FH);
+    close($in_fh) or die "couldn't close $filename: $!";
 
     #print_stats($stats);
 
@@ -53,10 +56,10 @@ sub main {
         $filename = "$filename.out";
     }
 
-    open(OUT_FH, ">$filename") or die "couldn't open $filename for writing";
+    open(my $out_fh, '>', $filename) or die "couldn't open $filename for writing: $!";
     my $cg_profile = get_cg_profile($stats);
-    print OUT_FH $cg_profile;
-    close(OUT_FH);
+    print $out_fh $cg_profile;
+    close($out_fh) or die "couldn't close $filename: $!";
 }
 
 
@@ -122,6 +125,8 @@ sub process_line {
         elsif (/^OP:(.*)$/) {
             my $op_hash = split_vars($1);
 
+            die "input file did not specify an initial context" if (@$ctx_stack == 0);
+
             if (exists $ctx_stack->[0]{'line'} && $op_hash->{'line'} == $ctx_stack->[0]{'line'}) {
                 $ctx_stack->[0]{'op_num'}++;
             }
@@ -165,7 +170,7 @@ sub print_stats {
     }
 }
 
-sub split_vars{
+sub split_vars {
     my $href;
     my $str = shift;
     while ($str =~ /\G { ([^:]+) : (.*?) } /cxg) {
@@ -175,10 +180,10 @@ sub split_vars{
 }
 
 sub store_stats {
-    my $stats = shift;
-    my $locator   = shift;
-    my $time      = shift;
-    my $extra     = shift;
+    my $stats   = shift;
+    my $locator = shift;
+    my $time    = shift;
+    my $extra   = shift;
 
     my $file   = $locator->{'file'};
     my $ns     = $locator->{'ns'};
@@ -210,7 +215,7 @@ sub store_stats {
 sub get_cg_profile {
 
     my $stats = shift;
-    my @output;
+    my @output = ();
 
     push @output, <<"HEADER";
 version: 1
@@ -243,6 +248,7 @@ HEADER
                 my $op_count = scalar(@{$stats->{$file}{$ns}{$line}});
                 my $op_time  = 0;
 
+                #XXX: "cache" $stats->{$file}{$ns}{$line}[$curr_op]
                 while ($curr_op < $op_count && $stats->{$file}{$ns}{$line}[$curr_op]{'op_name'} ne 'CALL') {
                     $op_time += $stats->{$file}{$ns}{$line}[$curr_op]{'time'};
                     $curr_op++;
