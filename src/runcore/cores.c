@@ -1099,7 +1099,7 @@ init_profiling_core(PARROT_INTERP, ARGIN(Parrot_profiling_runcore_t *runcore), A
     runcore->profiling_flags = 0;
     runcore->runloop_count   = 0;
     runcore->level           = 0;
-    runcore->time_size       = 32;
+    runcore->time_size       = 1024;
     runcore->time            = mem_allocate_n_typed(runcore->time_size, UHUGEINTVAL);
     Profiling_first_loop_SET(runcore);
 
@@ -1186,9 +1186,14 @@ ARGIN(opcode_t *pc))
 
         fprintf(runcore->profile_fd, "VERSION:1\n");
         /* silly hack to make all separate runloops appear to come from a single source */
-        fprintf(runcore->profile_fd, "CS:{ns:main}{file:no_file}{sub:0x1}{ctx:0x1}\n");
-        fprintf(runcore->profile_fd, "OP:{line:%d}{time:0}{op:noop}\n",
-                (int) runcore->runloop_count);
+        /* NOTE: yes, {x{ foo:bar }x} is ugly an inefficient.  Escaping would
+         * be more effort but the priority right now is to get the runcore
+         * working correctly.  Once all the bugs are ironed out we'll switch to
+         * a nice efficient compressed binary format. */
+        fprintf(runcore->profile_fd,
+                "CS:{x{ns:main}x}{x{file:no_file}x}{x{sub:0x1}x}{x{ctx:0x1}x}\n");
+        fprintf(runcore->profile_fd,
+                "OP:{x{line:%d}x}{x{time:0}x}{x{op:noop}x}\n", (int) runcore->runloop_count);
         runcore->runloop_count++;
         Profiling_first_loop_CLEAR(runcore);
     }
@@ -1248,7 +1253,8 @@ ARGIN(opcode_t *pc))
                 ns_cstr       = Parrot_str_to_cstring(interp,
                                   VTABLE_get_string(interp, preop_ctx->current_namespace));
 
-                fprintf(runcore->profile_fd, "CS:{ns:%s;%s}{file:%s}{sub:0x%X}{ctx:0x%X}\n",
+                fprintf(runcore->profile_fd,
+                        "CS:{x{ns:%s;%s}x}{x{file:%s}x}{x{sub:0x%X}x}{x{ctx:0x%X}x}\n",
                         ns_cstr, sub_cstr, filename_cstr,
                         (unsigned int) preop_ctx->current_sub,
                         (unsigned int) preop_ctx);
@@ -1266,7 +1272,7 @@ ARGIN(opcode_t *pc))
          * but it gives me obviously incorrect results while postop_info.line
          * works.  It might be an imcc bug or it might just be me
          * misunderstanding something. */
-        fprintf(runcore->profile_fd, "OP:{line:%d}{time:%lli}{op:%s}\n",
+        fprintf(runcore->profile_fd, "OP:{x{line:%d}x}{x{time:%lli}x}{x{op:%s}x}\n",
                 postop_info.line, op_time,
                 (interp->op_info_table)[*preop_pc].name);
 
@@ -1276,9 +1282,10 @@ ARGIN(opcode_t *pc))
     if (runcore->level == 0) {
         fprintf(runcore->profile_fd, "END_OF_RUNLOOP\n");
         /* silly hack to make all separate runloops appear to come from a single source */
-        fprintf(runcore->profile_fd, "CS:{ns:main}{file:no_file}{sub:0x1}{ctx:0x1}\n");
-        fprintf(runcore->profile_fd, "OP:{line:%d}{time:0}{op:noop}\n",
-                (int) runcore->runloop_count);
+        fprintf(runcore->profile_fd,
+                "CS:{x{ns:main}x}{x{file:no_file}x}{x{sub:0x1}x}{x{ctx:0x1}x}\n");
+        fprintf(runcore->profile_fd,
+                "OP:{x{line:%d}x}{x{time:0}x}{x{op:noop}x}\n", (int) runcore->runloop_count);
         runcore->runloop_count++;
     }
 

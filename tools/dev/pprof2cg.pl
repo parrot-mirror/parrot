@@ -172,7 +172,7 @@ sub print_stats {
 sub split_vars {
     my $href;
     my $str = shift;
-    while ($str =~ /\G { ([^:]+) : (.*?) } /cxg) {
+    while ($str =~ /\G {x{ ([^:]+) : (.*?) }x} /cxg) {
         $href->{$1} = $2;
     }
     return $href;
