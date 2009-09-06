@@ -47,8 +47,6 @@ mark_context_start(void)
 }
 
 
-/*
-
 
 /*
 

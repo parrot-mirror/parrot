@@ -641,10 +641,11 @@ Set an attribute value for the exception object.
             SET_ATTR_handler_iter(interp, SELF, value);
         }
         else if (Parrot_str_equal(INTERP, name, CONST_STRING(INTERP, "thrower"))) {
-            /* Ensure it's a ret cont, and extract the from_ctx. */
+            /* Ensure it's a ret cont, and extract the from_ctx.
+             * XXX TT#596 - when we have Context PMCs, just take and set that. */
             if (!PMC_IS_NULL(value) && VTABLE_isa(interp, value, CONST_STRING(interp, "Continuation"))) {
-                PMC *ctx = PARROT_CONTINUATION(value)->from_ctx;
-                if (!PMC_IS_NULL(ctx))
+                PMC *ctx = PMC_cont(value)->from_ctx;
+                if (!PMC_IS_NULL(ctx)) {
                     SET_ATTR_thrower(interp, SELF, ctx);
             }
         }

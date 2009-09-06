@@ -1194,22 +1194,28 @@ clone_key_arg(PARROT_INTERP, ARGMOD(call_state *st))
     for (; key; key = VTABLE_shift_pmc(interp, key)) {
         /* register keys have to be cloned */
         if (PObj_get_FLAGS(key) & KEY_register_FLAG) {
+            INTVAL  n_regs_used[4];
             Regs_ni bp;
             Regs_ps bp_ps;
 
             /* clone sets key values according to refered register items */
             bp    = *Parrot_pcc_get_regs_ni(interp, CURRENT_CONTEXT(interp));
             bp_ps = *Parrot_pcc_get_regs_ps(interp, CURRENT_CONTEXT(interp));
+            memcpy(n_regs_used, CONTEXT(interp)->n_regs_used, 4 * sizeof (INTVAL));
 
             Parrot_pcc_set_regs_ni(interp, CURRENT_CONTEXT(interp),
                     Parrot_pcc_get_regs_ni(interp, st->src.ctx));
             Parrot_pcc_set_regs_ps(interp, CURRENT_CONTEXT(interp),
                     Parrot_pcc_get_regs_ps(interp, st->src.ctx));
+            memcpy(CONTEXT(interp)->n_regs_used,
+                    Parrot_pcc_get_context_struct(interp, st->src.ctx),
+                    4 * sizeof (INTVAL));
 
             UVal_pmc(st->val) = VTABLE_clone(interp, key);
 
             Parrot_pcc_set_regs_ni(interp, CURRENT_CONTEXT(interp), &bp);
             Parrot_pcc_set_regs_ps(interp, CURRENT_CONTEXT(interp), &bp_ps);
+            memcpy(CONTEXT(interp)->n_regs_used, n_regs_used, 4 * sizeof (INTVAL));
 
             return;
         }
@@ -2869,8 +2875,7 @@ Parrot_PCCINVOKE(PARROT_INTERP, ARGIN(PMC* pmc), ARGMOD(STRING *method_name),
     interp->current_object       = pmc;
     interp->current_cont         = NEED_CONTINUATION;
     Parrot_pcc_set_continuation(interp, ctx, ret_cont);
-    PARROT_CONTINUATION(ret_cont)->from_ctx = ctx;
-
+    PMC_cont(ret_cont)->from_ctx = ctx;
     pccinvoke_meth               = VTABLE_find_method(interp, pmc, method_name);
 
     if (PMC_IS_NULL(pccinvoke_meth))
@@ -3011,10 +3016,9 @@ Parrot_pcc_invoke_from_sig_object(PARROT_INTERP, ARGIN(PMC *sub_obj),
     else {
         interp->current_object       = PMCNULL;
     }
-
     interp->current_cont             = NEED_CONTINUATION;
     Parrot_pcc_set_continuation(interp, ctx, ret_cont);
-    PARROT_CONTINUATION(ret_cont)->from_ctx     = ctx;
+    PMC_cont(ret_cont)->from_ctx     = ctx;
 
     /* Invoke the function */
     dest = VTABLE_invoke(interp, sub_obj, NULL);
