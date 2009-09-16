@@ -366,7 +366,7 @@ do_prederef(ARGIN(void **pc_prederef), PARROT_INTERP, ARGIN(Parrot_runcore_t *ru
     prederef_args(pc_prederef, interp, pc, opinfo);
 
     if (PARROT_RUNCORE_PREDEREF_OPS_TEST(runcore))
-        parrot_PIC_prederef(interp, *pc, pc_prederef, interp->run_core);
+        *pc_prederef = ((void **)interp->op_lib->op_func_table)[*pc];
     else
         Parrot_ex_throw_from_c_args(interp, NULL, 1,
             "Tried to prederef wrong core");
