@@ -24,155 +24,19 @@
 #include "parrot/hash.h"
 #include "parrot/oplib/ops.h"
 
-/*  Parrot_jit_fixup_t
- *      Platform generic fixup information
- *
- *  type:           The type of fixup.
- *  native_offset:  Where to apply the fixup.
- *  skip:           Skip instructions after the target.
- *  param:          Fixup specific data.
- */
-
-typedef struct Parrot_jit_fixup *Parrot_jit_fixup_ptr;
-
-typedef struct Parrot_jit_fixup {
-    int                         type;
-    ptrdiff_t                   native_offset;
-    char                        skip;
-    char                        dummy[3]; /* For alignment ??? XXX */
-    union {                               /* What has to align with what? */
-        opcode_t opcode;
-        void (*fptr)(void);
-    } param;
-
-    Parrot_jit_fixup_ptr        next;
-} Parrot_jit_fixup_t;
-
-/*  Parrot_jit_opmap_t
- *      Hold native code offsets/addresses
- *
- *  ptr:    Pointer to native code
- *  offset: Offset of native code from arena.start
- */
-
-typedef union {
-    void *ptr;
-    ptrdiff_t offset;
-} Parrot_jit_opmap_t;
-
-enum {
-    JIT_BRANCH_NO,      /* The opcode doesn't branch */
-    JIT_BRANCH_TARGET,  /* The opcode is a branch target */
-    JIT_BRANCH_SOURCE   /* The opcode is a branch source */
-};
-
-
 /*  Parrot_jit_arena_t
  *      Holds pointers to the native code of one or more sections.
  *
  *  start:          Start of current native code segment.
  *  size:           The size of the arena in bytes
- *  op_map:         Maps opcode offsets to native code.
  *  map_size:       The size of the map in bytes.
- *  fixups:         List of fixups.
  */
 
 typedef struct Parrot_jit_arena_t {
     char                            *start;
     ptrdiff_t                        size;
-    Parrot_jit_opmap_t              *op_map;
     unsigned long                    map_size;
-    Parrot_jit_fixup_t              *fixups;
 } Parrot_jit_arena_t;
-
-/*  Parrot_jit_optimizer_section_t
- *      The bytecode will be divided in sections depending on the
- *      program structure.
- *
- *  begin:              Points where sections begins in the bytecode.
- *  end:                Points where sections ends in the bytecode.
- *  arena:              The first arena for this section, or NULL if the
- *                      section is in the arena inlined in jit_info.
- *  ru[4]:              register_usage_t per [IPSN]
- *  maps:               Total maps done.
- *  jit_op_count:       How many opcodes are jitted.
- *  op_count:           Opcodes in this section.
- *  load_size:          The size of the register load instructions to be
- *                      skipped in an in-section branch.
- *  isjit:              If this section is a jitted one or not.
- *  block:              block number of section
- *  branch_target:      The section where execution continues if this section
- *                      ends at a branch source the targeted section is used.
- */
-
-typedef struct Parrot_jit_optimizer_section *Parrot_jit_optimizer_section_ptr;
-
-/*  reg_count:      An array with one position for each register
- *                  holding the number of times each register is used in the
- *                  section.
- *  reg_usage:      An array with the registers sorted by the usage.
- *  reg_dir:        If the register needs to be loaded or saved.
- *  registers_used: count of used registers
- */
-typedef struct Parrot_jit_register_usage_t {
-    int                                 reg_count[NUM_REGISTERS];
-    unsigned int                        reg_usage[NUM_REGISTERS];
-    char                                reg_dir[NUM_REGISTERS];
-    int                        registers_used;
-} Parrot_jit_register_usage_t;
-
-typedef struct Parrot_jit_optimizer_section {
-    opcode_t                            *begin;
-    opcode_t                            *end;
-    Parrot_jit_register_usage_t          ru[4];
-    Parrot_jit_arena_t                  *arena;
-    unsigned int                         maps;
-    unsigned int                         jit_op_count;
-    unsigned int                         op_count;
-    ptrdiff_t                            load_size;
-    char                                 isjit;
-    char                                 done;
-    char                                 ins_count;
-    char                                 dummy; /* For alignment ??? XXX */
-    int                                  block; /* What has to align with what? */
-    Parrot_jit_optimizer_section_ptr     branch_target;
-    Parrot_jit_optimizer_section_ptr     prev;
-    Parrot_jit_optimizer_section_ptr     next;
-} Parrot_jit_optimizer_section_t;
-
-/*  Parrot_jit_optimizer_section_t
- *      All the information related to optimizing the bytecode.
- *
- *  sections:               A pointer to the first section.
- *  cur_section:            Pointer to the current section.
- *  map_branch:             A pointer to an array with the size of the bytecode
- *                          where the positions of the opcodes will have a value
- *                          indicating if the opcode is a branch target, source
- *                          or isn't related with a control flow opcode at all,
- *                          and which register was allocated for each opcode
- *                          argument if any.
- *  has_unpredictable_jump: XXX need to define how to handle this.
- */
-
-typedef struct Parrot_jit_optimizer_t {
-    Parrot_jit_optimizer_section_t  *sections;
-    Parrot_jit_optimizer_section_t  *cur_section;
-    char                            *map_branch;
-    opcode_t                       **branch_list;
-    unsigned char                    has_unpredictable_jump;
-    unsigned char                    dummy[3]; /* For alignment ??? XXX */
-} Parrot_jit_optimizer_t;                      /* What has to align with what? */
-
-/*  Parrot_jit_constant_pool_t
- *      Constants pool information.
- *
- */
-typedef struct Parrot_jit_constant_pool_t {
-    long                             frames_used;
-    long                             cur_used;
-    char                            *cur_const;
-    INTVAL                          *slot_ptr;
-} Parrot_jit_constant_pool_t;
 
 typedef enum {
     JIT_CODE_FILE,
@@ -189,63 +53,22 @@ typedef enum {
 /*  Parrot_jit_info_t
  *      All the information needed to jit the bytecode will be here.
  *
- *  prev_op:        The previous opcode in this section.
- *  cur_op:         The current opcode during the build process.
- *  op_i:           Opcode index.
  *  native_ptr:     Current pointer to native code.
  *  arena:          The arena inlined, this will be the only one used in cases
  *                  where there is a way to load an immediate.
- *  optimizer:      Optimizer information.
- *  constant_pool:  The constant pool information.
  */
 
 typedef struct Parrot_jit_info_t {
-    opcode_t                        *prev_op;
-    opcode_t                        *cur_op;
-    opcode_t                         op_i;
-    char                            *native_ptr;
-    Parrot_jit_arena_t               arena;
-    Parrot_jit_optimizer_t          *optimizer;
-    Parrot_jit_constant_pool_t      *constant_pool;
-    INTVAL                          code_type;
-    int                             flags;
-    const struct jit_arch_info_t    *arch_info;
-    int                              n_args;
-    void                            *objfile;
+    char                         *native_ptr;
+    Parrot_jit_arena_t            arena;
+    INTVAL                        code_type;
+    const struct jit_arch_info_t *arch_info;
 } Parrot_jit_info_t;
-
-#define Parrot_jit_fixup_target(jit_info, fixup) \
-    ((jit_info)->arena.start + (fixup)->native_offset)
-
-typedef void (*jit_fn_t)(Parrot_jit_info_t *jit_info,
-                         PARROT_INTERP);
-
-/*  Parrot_jit_fn_info_t
- *      The table of opcodes.
- *
- *  jit_fn_t:       A pointer to the function that emits code for the opcode
- *                  or to the C funtion if the opcode is not jitted.
- *  extcall:        If the opcode makes an external call to a C funtion.
- *                  also used for vtable functions, extcall is #of vtable func
- */
-
-typedef struct Parrot_jit_fn_info_t {
-    jit_fn_t                        fn;
-    int                            extcall;
-} Parrot_jit_fn_info_t;
-
-void Parrot_jit_newfixup(Parrot_jit_info_t *jit_info);
-
-/*
- * interface to architecture specific details
- */
-typedef void (*jit_arch_f)(Parrot_jit_info_t *, Interp *);
 
 typedef struct jit_arch_regs {
     /*
      * begin function - emit ABI call prologue
      */
-    jit_arch_f jit_begin;
 
     int n_mapped_I;
     int n_preserved_I;
@@ -268,21 +91,10 @@ typedef struct jit_arch_info_t {
     mov_MR_f mov_MR_i;
     mov_MR_f mov_MR_n;
 
-    /* fixup branches and calls after codegen */
-    jit_arch_f jit_dofixup;
-    /* flush caches */
-    jit_arch_f jit_flush_cache;
     /* register mapping info */
     const jit_arch_regs regs[JIT_CODE_TYPES];
 } jit_arch_info;
 
-/*
- * interface to create JIT code
- */
-Parrot_jit_info_t *
-parrot_build_asm(PARROT_INTERP,
-                opcode_t *code_start, opcode_t *code_end,
-                void *objfile, INTVAL);
 /*
  * NCI interface
  */
@@ -319,7 +131,6 @@ struct jit_buffer_private_data {
 INTVAL get_nci_I(PARROT_INTERP, ARGMOD(call_state *st), int n);
 
 FLOATVAL get_nci_N(PARROT_INTERP, ARGMOD(call_state *st), int n);
-;
 
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
@@ -346,35 +157,6 @@ void set_nci_N(PARROT_INTERP, ARGOUT(call_state *st), FLOATVAL val);
 void set_nci_S(PARROT_INTERP, ARGOUT(call_state *st), STRING *val);
 
 void set_nci_P(PARROT_INTERP, ARGOUT(call_state *st), PMC* val);
-
-
-#if defined HAVE_COMPUTED_GOTO && defined __GNUC__ && PARROT_I386_JIT_CGP
-#  define JIT_CGP
-#endif
-
-void call_func(Parrot_jit_info_t *jit_info, void (*addr) (void));
-
-void jit_emit_real_exception(Parrot_jit_info_t *jit_info);
-
-/*
- * get the register frame pointer
- */
-#define Parrot_jit_emit_get_base_reg_no(pc) \
-    emit_EBX
-
-/*
- * get the *runtime* interpreter
- */
-
-#define Parrot_jit_emit_get_INTERP(interp, pc, dest) \
-    emitm_movl_m_r((interp), (pc), (dest), emit_EBP, emit_None, 1, INTERP_BP_OFFS)
-
-/* see jit_begin */
-#ifdef JIT_CGP
-#  define INTERP_BP_OFFS todo
-#else
-#  define INTERP_BP_OFFS -16
-#endif
 
 /*
  * if we have a delegated method like typeof_i_p, that returns an INTVAL
@@ -412,8 +194,6 @@ extern UINTVAL ld(UINTVAL);
 #define emit_EBP 6
 #define emit_ESI 7
 #define emit_EDI 8
-
-#define INT_REGISTERS_TO_MAP 4
 
 /* Scratch register. */
 
@@ -1886,44 +1666,6 @@ void jit_set_args_pc(Parrot_jit_info_t *jit_info, PARROT_INTERP,
 #  define JUMP_ALIGN 0
 #  define SUB_ALIGN 0
 
-#ifdef JIT_EMIT
-#  if JIT_EMIT == 0
-
-extern int control_word;
-
-#    ifdef JIT_CGP
-#      include <parrot/oplib/core_ops_cgp.h>
-#    endif
-
-#    define REQUIRES_CONSTANT_POOL 0
-/*
- * examples/pir/mandel.pir and t/op/jitn_14 show rounding problems
- * due to keeping intermediate results in FP registers
- * When intermediates are written back to parrot regs, rounding to
- * 64 bit is performed, which changes results slightly
- *
- * One method is to just turn off mapped floats. The other one is
- * setting a different control word (with precision control = double)
- * see emitm_fldcw above
- */
-#    define FLOAT_REGISTERS_TO_MAP 4
-
-/* registers are either allocate per section or per basic block
- * set this to 1 or 0 to change allocation scheme
- */
-#    define ALLOCATE_REGISTERS_PER_SECTION 1
-
-/*
- * new style move function using offsets relative to the base_reg
- */
-#    ifdef JIT_CGP
-#      define INTERP_BP_OFFS todo
-#    else
-#      define INTERP_BP_OFFS -16
-#    endif
-
-#  endif /* JIT_EMIT = 0 */
-#endif /* JIT_EMIT */
 int count_regs(PARROT_INTERP, char *sig, char *sig_start);
 
 size_t calc_signature_needs(const char *sig, int *strings);
@@ -1939,19 +1681,6 @@ void * Parrot_jit_build_call_func(PARROT_INTERP, PMC *pmc_nci,
  * %eax       ... scratch, return value register
  */
 
-extern const char i_map[];
-
-extern const char floatval_map[];
-
-extern const char i_map_sub[];
-
-extern const jit_arch_info arch_info;
-
-PARROT_WARN_UNUSED_RESULT
-PARROT_CANNOT_RETURN_NULL
-const jit_arch_info * Parrot_jit_init(PARROT_INTERP);
-
-#undef INT_REGISTERS_TO_MAP
 #endif /* PARROT_I386_JIT_EMIT_H_GUARD */
 
 /*

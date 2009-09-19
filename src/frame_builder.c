@@ -100,23 +100,6 @@ Parrot_jit_clone_buffer(PARROT_INTERP, PMC *pmc, void *priv)
     return rv;
 }
 
-
-void
-Parrot_jit_newfixup(Parrot_jit_info_t *jit_info)
-{
-    Parrot_jit_fixup_t *fixup;
-
-    fixup = mem_allocate_zeroed_typed(Parrot_jit_fixup_t);
-
-    /* Insert fixup at the head of the list */
-    fixup->next = jit_info->arena.fixups;
-    jit_info->arena.fixups = fixup;
-
-    /* Fill in the native code offset */
-    fixup->native_offset =
-        (ptrdiff_t)(jit_info->native_ptr - jit_info->arena.start);
-}
-
 INTVAL
 get_nci_I(PARROT_INTERP, ARGMOD(call_state *st), int n)
 {
@@ -356,109 +339,7 @@ emit_popl_r(char *pc, int reg)
     return pc;
 }
 
-int
-intreg_is_used(Parrot_jit_info_t *jit_info, char reg)
-{
-    int i;
-    const jit_arch_regs *reg_info;
-    Parrot_jit_register_usage_t *ru = jit_info->optimizer->cur_section->ru;
-
-    reg_info = jit_info->arch_info->regs + jit_info->code_type;
-
-    for (i = 0; i < ru[0].registers_used; ++i) {
-        if (reg_info->map_I[i] == reg) {
-            return 1;
-        }
-    }
-    return 0;
-}
-
-void call_func(Parrot_jit_info_t *jit_info, void (*addr) (void))
-{
-    Parrot_jit_newfixup(jit_info);
-    jit_info->arena.fixups->type = JIT_X86CALL;
-    jit_info->arena.fixups->param.fptr = D2FPTR(addr);
-    emitm_calll(jit_info->native_ptr, 0xdeafc0de);
-}
-
-void jit_emit_real_exception(Parrot_jit_info_t *jit_info)
-{
-    call_func(jit_info, (void (*) (void)) & Parrot_ex_throw_from_c_args);
-}
-
 unsigned char *lastpc;
-
-void
-jit_emit_jcc(Parrot_jit_info_t *jit_info, int code, opcode_t disp)
-{
-    long offset;
-    opcode_t opcode;
-
-    opcode = jit_info->op_i + disp;
-
-    if (opcode <= jit_info->op_i) {
-        offset = jit_info->arena.op_map[opcode].offset -
-                (jit_info->native_ptr - jit_info->arena.start);
-
-        /* If we are here, the current section must have a branch_target
-           section, I think. */
-        if (jit_info->optimizer->cur_section->branch_target ==
-            jit_info->optimizer->cur_section)
-                offset +=
-                    jit_info->optimizer->cur_section->branch_target->load_size;
-
-        if (emit_is8bit(offset - 2)) {
-            emitm_jxs(jit_info->native_ptr, code, offset - 2);
-        }
-        else {
-            emitm_jxl(jit_info->native_ptr, code, offset - 6);
-        }
-
-        return;
-    }
-
-    Parrot_jit_newfixup(jit_info);
-    jit_info->arena.fixups->type = JIT_X86BRANCH;
-    jit_info->arena.fixups->param.opcode = opcode;
-    /* If the branch is to the current section, skip the load instructions. */
-    if (jit_info->optimizer->cur_section->branch_target ==
-        jit_info->optimizer->cur_section)
-            jit_info->arena.fixups->skip =
-                (char)jit_info->optimizer->cur_section->branch_target->load_size;
-
-    emitm_jxl(jit_info->native_ptr, code, 0xc0def00d);
-}
-
-void
-emit_jump(Parrot_jit_info_t *jit_info, opcode_t disp)
-{
-    long offset;
-    opcode_t opcode;
-
-    opcode = jit_info->op_i + disp;
-
-    if (opcode <= jit_info->op_i) {
-        offset = jit_info->arena.op_map[opcode].offset -
-                                (jit_info->native_ptr - jit_info->arena.start);
-        if (emit_is8bit(offset - 2)) {
-            emitm_jumps(jit_info->native_ptr, (char)(offset - 2));
-        }
-        else {
-            emitm_jumpl(jit_info->native_ptr, offset - 5);
-        }
-        return;
-    }
-
-    Parrot_jit_newfixup(jit_info);
-    jit_info->arena.fixups->type = JIT_X86JUMP;
-    jit_info->arena.fixups->param.opcode = opcode;
-    /* If the branch is to the current section, skip the load instructions. */
-    if (jit_info->optimizer->cur_section->branch_target ==
-        jit_info->optimizer->cur_section)
-            jit_info->arena.fixups->skip =
-                (char)jit_info->optimizer->cur_section->branch_target->load_size;
-    emitm_jumpl(jit_info->native_ptr, 0xc0def00d);
-}
 
 #  define NATIVECODE jit_info->native_ptr
 
@@ -530,8 +411,6 @@ jit_restore_regs_call(Parrot_jit_info_t *jit_info, PARROT_INTERP,
     jit_emit_add_ri_i(interp, jit_info->native_ptr, emit_ESP,
             (used_i * sizeof (INTVAL) + used_n * sizeof (FLOATVAL)));
 }
-
-int control_word = 0x27f;
 
 /*
  * params are put rigth to left on the stack
