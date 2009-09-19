@@ -2049,37 +2049,6 @@ void Parrot_jit_dofixup(Parrot_jit_info_t *jit_info, PARROT_INTERP);
 
 void Parrot_jit_begin(Parrot_jit_info_t *jit_info, PARROT_INTERP);
 
-/*
- * create a JITted version of a PIR sub, where everything
- * resided in registers
- *
- * The sub is called as
- *
- *   opcode_t * func(Interp *i, INTVAL *sig_bits, void **args);
- *
- *   args[0] ...    NULL / return value address
- *   args[1..n] ... addresses of n arguments
- *   args[n + 1] .. opcode_t* next - usually just returned
- */
-
-void Parrot_jit_begin_sub_regs(Parrot_jit_info_t *jit_info, PARROT_INTERP);
-
-void Parrot_jit_begin_sub(Parrot_jit_info_t *jit_info, PARROT_INTERP);
-
-void jit_mov_mr_n_offs(PARROT_INTERP, Parrot_jit_info_t *jit_info,
-        int base_reg, INTVAL offs, int src_reg);
-
-void jit_mov_mr_offs(PARROT_INTERP, Parrot_jit_info_t *jit_info,
-        int base_reg, INTVAL offs, int src_reg);
-
-void jit_mov_rm_n_offs(PARROT_INTERP, Parrot_jit_info_t *jit_info,
-        int dst_reg, int base_reg, INTVAL offs);
-
-void jit_mov_rm_offs(PARROT_INTERP, Parrot_jit_info_t *jit_info,
-        int dst_reg, int base_reg, INTVAL offs);
-
-void Parrot_jit_emit_finit(Parrot_jit_info_t *jit_info);
-
 void Parrot_jit_normal_op(Parrot_jit_info_t *jit_info, PARROT_INTERP);
 
 void Parrot_jit_cpcf_op(Parrot_jit_info_t *jit_info, PARROT_INTERP);
