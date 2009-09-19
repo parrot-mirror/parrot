@@ -3,7 +3,7 @@
  */
 
 /*
- * jit_emit.h
+ * frame_builder.h
  *
  * i386
  *
@@ -250,20 +250,6 @@ void Parrot_exec_normal_op(Parrot_jit_info_t *jit_info,
 
 void Parrot_exec_restart_op(Parrot_jit_info_t *jit_info,
                           PARROT_INTERP);
-
-/*
- * interface functions for the register save/restore code
- * with offsets relative to the base register (obtained by
- * Parrot_jit_emit_get_base_reg_no)
- */
-void Parrot_jit_emit_mov_mr_n_offs(
-    Interp *, int base_reg, size_t offs, int src_reg);
-void Parrot_jit_emit_mov_mr_offs(
-    Interp *,  int base_reg, size_t offs, int src_reg);
-void Parrot_jit_emit_mov_rm_n_offs(
-    Interp *, int dst_reg, int base_reg, size_t offs);
-void Parrot_jit_emit_mov_rm_offs(
-    Interp *, int dst_reg, int base_reg, size_t offs);
 
 /*
  * interface to architecture specific details

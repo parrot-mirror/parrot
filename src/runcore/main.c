@@ -494,56 +494,6 @@ stop_prederef(PARROT_INTERP)
 
 /*
 
-=item C<void * init_jit(PARROT_INTERP, opcode_t *pc)>
-
-Initializes JIT function for the specified opcode and returns it.
-
-=cut
-
-*/
-
-PARROT_WARN_UNUSED_RESULT
-PARROT_CAN_RETURN_NULL
-void *
-init_jit(PARROT_INTERP, SHIM(opcode_t *pc))
-{
-    ASSERT_ARGS(init_jit)
-#if JIT_CAPABLE
-    opcode_t          *code_start;
-    UINTVAL            code_size;          /* in opcodes */
-    opcode_t          *code_end;
-    Parrot_jit_info_t *jit_info;
-
-    if (interp->code->jit_info)
-        return ((Parrot_jit_info_t *)interp->code->jit_info)->arena.start;
-
-    code_start = interp->code->base.data;
-    code_size  = interp->code->base.size;
-    code_end   = code_start + code_size;
-
-#  if defined HAVE_COMPUTED_GOTO && PARROT_I386_JIT_CGP
-#    ifdef __GNUC__
-#      ifdef PARROT_I386
-    init_prederef(interp, PARROT_CGP_CORE);
-#      endif
-#    endif
-#  endif
-
-    interp->code->jit_info =
-        jit_info = parrot_build_asm(interp, code_start, code_end,
-            NULL, JIT_CODE_FILE);
-
-    return jit_info->arena.start;
-#else
-    UNUSED(interp);
-    return NULL;
-#endif
-
-}
-
-
-/*
-
 =item C<void prepare_for_run(PARROT_INTERP)>
 
 Prepares to run the interpreter's run core.
