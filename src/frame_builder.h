@@ -236,21 +236,6 @@ typedef struct Parrot_jit_fn_info_t {
 
 void Parrot_jit_newfixup(Parrot_jit_info_t *jit_info);
 
-void Parrot_jit_normal_op(Parrot_jit_info_t *jit_info,
-                          PARROT_INTERP);
-
-void Parrot_jit_restart_op(Parrot_jit_info_t *jit_info,
-                          PARROT_INTERP);
-
-void Parrot_exec_cpcf_op(Parrot_jit_info_t *jit_info,
-                        PARROT_INTERP);
-
-void Parrot_exec_normal_op(Parrot_jit_info_t *jit_info,
-                          PARROT_INTERP);
-
-void Parrot_exec_restart_op(Parrot_jit_info_t *jit_info,
-                          PARROT_INTERP);
-
 /*
  * interface to architecture specific details
  */
@@ -2044,28 +2029,6 @@ extern int control_word;
 
 #  endif /* JIT_EMIT = 0 */
 #endif /* JIT_EMIT */
-
-void Parrot_jit_dofixup(Parrot_jit_info_t *jit_info, PARROT_INTERP);
-
-void Parrot_jit_begin(Parrot_jit_info_t *jit_info, PARROT_INTERP);
-
-void Parrot_jit_normal_op(Parrot_jit_info_t *jit_info, PARROT_INTERP);
-
-void Parrot_jit_cpcf_op(Parrot_jit_info_t *jit_info, PARROT_INTERP);
-
-#ifdef JIT_EMIT
-#  if JIT_EMIT == 2
-/* generate code just once */
-
-/* autogened inside core.ops */
-static void Parrot_end_jit(Parrot_jit_info_t *jit_info, PARROT_INTERP);
-
-#    undef Parrot_jit_restart_op
-#  endif /* JIT_EMIT == 2 */
-#endif /* JIT_EMIT */
-
-void Parrot_jit_restart_op(Parrot_jit_info_t *jit_info, PARROT_INTERP);
-
 int count_regs(PARROT_INTERP, char *sig, char *sig_start);
 
 size_t calc_signature_needs(const char *sig, int *strings);
