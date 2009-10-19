@@ -687,6 +687,7 @@ if ( $ENV{TEST_PROG_ARGS} ) {
     push @todo, ( todo => 'Broken with JIT' ) if $ENV{TEST_PROG_ARGS} =~ /--runcore=jit/;
     push @todo, ( todo => 'Broken with switch core' )  if $ENV{TEST_PROG_ARGS} =~ /--runcore=switch/;
 }
+# Direct constant access to sub objects commented out, see TT #1120.
 pir_output_unlike( <<'CODE', qr/not/, "globals + constant table subs issue", @todo );
 .namespace [ 'Foo' ]
 
@@ -749,7 +750,7 @@ okay:
 .end
 
 .sub check_sanity
-    _check_sanity( 'direct call' )
+#    _check_sanity( 'direct call' )
     $P0 = get_global '_check_sanity'
     $P0( 'call from get_global' )
     $P0 = get_hll_global [ 'Foo' ], '_check_sanity'
@@ -764,7 +765,7 @@ okay:
 
 .sub check_value
     .param int value
-    _check_value(value)
+#    _check_value(value)
     $P0 = get_global '_check_value'
     $P0(value)
     $P0 = get_hll_global [ 'Foo' ], '_check_value'
@@ -772,10 +773,19 @@ okay:
 .end
 
 .sub full_check
-    .const 'Sub' c_setup = 'setup'
-    .const 'Sub' c_sanity = 'check_sanity'
-    .const 'Sub' c_mutate = 'mutate'
-    .const 'Sub' c_value = 'check_value'
+#    .const 'Sub' c_setup = 'setup'
+#    .const 'Sub' c_sanity = 'check_sanity'
+#    .const 'Sub' c_mutate = 'mutate'
+#    .const 'Sub' c_value = 'check_value'
+
+    .local pmc c_setup
+    c_setup = get_global  'setup'
+    .local pmc c_sanity
+    c_sanity = get_global 'check_sanity'
+    .local pmc c_mutate
+    c_mutate = get_global 'mutate'
+    .local pmc c_value
+    c_value = get_global  'check_value'
 
     .local pmc g_setup
     g_setup = get_hll_global [ 'Foo' ], 'setup'
