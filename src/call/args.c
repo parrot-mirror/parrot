@@ -836,6 +836,7 @@ Parrot_pcc_build_sig_object_from_varargs(PARROT_INTERP, ARGIN_NULLOK(PMC *obj),
     const INTVAL sig_len            = strlen(sig);
     INTVAL       in_return_sig      = 0;
     INTVAL       i;
+    int          append_pi          = 1;
 
     if (!sig_len)
         return call_object;
@@ -918,6 +919,7 @@ Parrot_pcc_build_sig_object_from_varargs(PARROT_INTERP, ARGIN_NULLOK(PMC *obj),
                                     EXCEPTION_INVALID_OPERATION,
                                     "Dispatch: only the first argument can be an invocant");
                             i++; /* skip 'i' */
+                            append_pi = 0; /* Don't append Pi in front of signature */
                         }
                     }
                     break;
@@ -934,8 +936,8 @@ Parrot_pcc_build_sig_object_from_varargs(PARROT_INTERP, ARGIN_NULLOK(PMC *obj),
         }
     }
 
-    /* Check if we have an invocant, and add it to the front of the arguments */
-    if (!PMC_IS_NULL(obj)) {
+    /* Check if we have an invocant, and add it to the front of the arguments iff needed */
+    if (!PMC_IS_NULL(obj) && append_pi) {
         string_sig = Parrot_str_concat(interp, CONST_STRING(interp, "Pi"), string_sig, 0);
         VTABLE_set_string_native(interp, call_object, string_sig);
         VTABLE_unshift_pmc(interp, call_object, obj);
