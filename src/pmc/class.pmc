@@ -344,10 +344,14 @@ initialize_parents(PARROT_INTERP, PMC *object, PMC *all_parents)
         if (!PMC_IS_NULL(meth)) {
             /* build an empty signature; it has an invocant but no args/retvals */
             PMC * const sig_obj = pmc_new(interp, enum_class_CallSignature);
+            /* preserve current_object */
+            PMC * const old_object = interp->current_object;
             VTABLE_set_string_native(interp, sig_obj, CONST_STRING(interp, "Pi->"));
             /* add the invocant */
             VTABLE_unshift_pmc(interp, sig_obj, object);
+            interp->current_object = object;
             Parrot_pcc_invoke_from_sig_object(interp, meth, sig_obj);
+            interp->current_object = old_object;
         }
     }
 }
