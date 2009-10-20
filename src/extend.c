@@ -1242,14 +1242,14 @@ Parrot_call_method(PARROT_INTERP, Parrot_PMC sub_pmc, Parrot_PMC obj,
     ASSERT_ARGS(Parrot_call_method)
     va_list args;
     PMC  *sig_object;
-    void *result;
+    void *result = NULL;
     char  return_sig = signature[0];
     char *arg_sig = (char*)malloc(strlen(signature)+2);
     Parrot_sub *sub;
     arg_sig[0] = 'P';
     arg_sig[1] = 'i';
     arg_sig[2] = 0;
-    strcat(arg_sig, signature + 1);
+    strcat(arg_sig, signature);
 
     va_start(args, signature);
     sig_object = Parrot_pcc_build_sig_object_from_varargs(interp, obj, arg_sig, args);
@@ -1307,14 +1307,14 @@ Parrot_call_method_ret_int(PARROT_INTERP, Parrot_PMC sub_pmc,
     ASSERT_ARGS(Parrot_call_method_ret_int)
     va_list args;
     PMC  *sig_object;
-    Parrot_Int result;
+    Parrot_Int result = 0;
     char  return_sig = signature[0];
     char *arg_sig = (char*)malloc(strlen(signature)+2);
     Parrot_sub *sub;
     arg_sig[0] = 'P';
     arg_sig[1] = 'i';
     arg_sig[2] = 0;
-    strcat(arg_sig, signature + 1);
+    strcat(arg_sig, signature);
 
     va_start(args, signature);
     sig_object = Parrot_pcc_build_sig_object_from_varargs(interp, obj, arg_sig, args);
@@ -1348,14 +1348,14 @@ Parrot_call_method_ret_float(PARROT_INTERP, Parrot_PMC sub_pmc,
     ASSERT_ARGS(Parrot_call_method_ret_float)
     va_list args;
     PMC  *sig_object;
-    Parrot_Float result;
+    Parrot_Float result = 0.0;
     char  return_sig = signature[0];
     char *arg_sig = (char*)malloc(strlen(signature)+2);
     Parrot_sub *sub;
     arg_sig[0] = 'P';
     arg_sig[1] = 'i';
     arg_sig[2] = 0;
-    strcat(arg_sig, signature + 1);
+    strcat(arg_sig, signature);
 
     va_start(args, signature);
     sig_object = Parrot_pcc_build_sig_object_from_varargs(interp, obj, arg_sig, args);
