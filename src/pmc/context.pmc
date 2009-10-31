@@ -8,7 +8,7 @@ src/pmc/context.pmc - Interpreter Context.
 
 =head1 DESCRIPTION
 
-Stores context of execution. Currently we store pointer to Parrot_Context
+Stores context of execution. Currently we store pointer to Parrot_Context_attributes
 structure in PMC_data.
 
 =head2 Vtable Functions
@@ -74,7 +74,6 @@ Initialize new Context. See C<Parrot_alloc_context>.
 */
 
     VTABLE void init() {
-        PMC_data(SELF) = NULL;
         PObj_custom_mark_destroy_SETALL(SELF);
     }
 
@@ -91,7 +90,7 @@ Mark Context as alive.
 
     VTABLE void mark()
     {
-        Parrot_Context * const ctx = PMC_data_typed(SELF, Parrot_Context*);
+        Parrot_Context_attributes * const ctx = PARROT_CONTEXT(SELF);
         UINTVAL i;
 
         /* If Context wasn't initialised just return */
@@ -138,43 +137,22 @@ Destroy Context and memory allocated by C<Parrot_alloc_context>.
 
     VTABLE void destroy() {
         /* We own this pointer */
-        Parrot_Context * const ctx = PMC_data_typed(SELF, Parrot_Context*);
+        Parrot_Context_attributes * const ctx = PARROT_CONTEXT(SELF);
+        size_t reg_size;
 
         if (!ctx)
             return;
 
+        reg_size = Parrot_pcc_calculate_registers_size(INTERP, ctx->n_regs_used);
+        if (!reg_size)
+            return;
+
+        /* Free registers */
         Parrot_gc_free_fixed_size_storage(interp,
-                Parrot_pcc_calculate_context_size(INTERP, ctx->n_regs_used),
-                ctx);
+                Parrot_pcc_calculate_registers_size(INTERP, ctx->n_regs_used),
+                ctx->registers);
 
         PMC_data(SELF) = NULL;
-    }
-
-/*
-
-=item C<void *get_pointer()>
-
-Return pointer to underlying Parrot_Context structure.
-
-=cut
-
-*/
-
-    VTABLE void *get_pointer() {
-        return PMC_data(SELF);
-    }
-
-/*
-
-=item C<void set_pointer(void *)>
-
-Set new Parrot_Context structure.
-
-=cut
-
-*/
-    VTABLE void set_pointer(void *context) {
-        PMC_data(SELF) = context;
     }
 
 /*
@@ -195,7 +173,7 @@ Introspection interface. C<key> can be:
 
 */
     VTABLE PMC *get_pmc_keyed_str(STRING *key) {
-        Parrot_Context *ctx = PMC_data_typed(SELF, Parrot_Context*);
+        Parrot_Context_attributes *ctx = PARROT_CONTEXT(SELF);
 
         if (Parrot_str_equal(INTERP, key, CONST_STRING(INTERP, "caller_ctx")))
             return ctx->caller_ctx;
