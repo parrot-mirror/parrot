@@ -10,8 +10,8 @@
  * $Id$
  */
 
-#ifndef PARROT_I386_JIT_EMIT_H_GUARD
-#define PARROT_I386_JIT_EMIT_H_GUARD
+#ifndef PARROT_FRAME_BUILDER_H_GUARD
+#define PARROT_FRAME_BUILDER_H_GUARD
 
 #if defined(__cplusplus)
 #  define EXTERN extern "C"
