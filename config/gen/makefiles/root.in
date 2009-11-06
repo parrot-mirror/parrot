@@ -217,6 +217,8 @@ CONFIGURE_GENERATED_FILES := \
     myconfig  \
     $(GEN_PASM_INCLUDES) \
     $(SRC_DIR)/call_list.txt \
+    $(SRC_DIR)/frame_builder_libjit.h \
+    $(SRC_DIR)/frame_builder_libjit.c \
     MANIFEST.configure.generated \
     .configure_trace.sto \
     .parrot_current_rev
@@ -442,6 +444,7 @@ INTERP_O_FILES := \
     $(SRC_DIR)/misc$(O) \
     $(SRC_DIR)/multidispatch$(O) \
     $(SRC_DIR)/frame_builder$(O) \
+    $(SRC_DIR)/frame_builder_libjit$(O) \
     $(SRC_DIR)/nci$(O) \
     $(SRC_DIR)/oo$(O) \
     $(SRC_DIR)/packfile$(O) \
@@ -625,6 +628,7 @@ STR_FILES := \
     $(SRC_DIR)/library.str \
     $(SRC_DIR)/multidispatch.str \
     $(SRC_DIR)/frame_builder.str \
+    $(SRC_DIR)/frame_builder_libjit.str \
     $(SRC_DIR)/nci.str \
     $(SRC_DIR)/packfile.str \
     $(SRC_DIR)/pmc.str \
