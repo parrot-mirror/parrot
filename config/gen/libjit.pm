@@ -62,6 +62,8 @@ sub _init {
 
             mem_sys_allocate => [ ('long')     => 'void_ptr' ],
             mem_sys_free     => [ ('void_ptr') => 'void' ],
+
+       null_func => [ () => 'void' ],
         },
     );
     return \%data;
@@ -168,7 +170,7 @@ sub gen_function_wrapper {
     my $ret_t = pop @$func_sig;
 
     my $vararg = 0;
-    if ($func_sig->[-1] eq '...') {
+    if (@$func_sig and $func_sig->[-1] eq '...') {
         $vararg = 1;
         pop @$func_sig;
     }
@@ -180,15 +182,18 @@ sub gen_function_wrapper {
     my $arg_decls_v = join ", ", map {"jit_value_t v$_"} 1..$n_args;
     my $arg_v       = join ", ", map {"v$_"}             1..$n_args;
 
+    my $_arg_decls_t = $arg_decls_t =~ /\S/ ? ", $arg_decls_t": "";
+    my $_arg_decls_v = $arg_decls_v =~ /\S/ ? ", $arg_decls_v": "";
+
     my ($decl, $defn);
     if ($vararg) {
         $decl = <<DECL;
 static jit_value_t
-jit__$func_name(jit_function_t, $arg_decls_t, jit_type_t *, jit_value_t *, int);
+jit__$func_name(jit_function_t $_arg_decls_t, jit_type_t *, jit_value_t *, int);
 DECL
         $defn = <<DEFN;
 static jit_value_t
-jit__$func_name(jit_function_t f, $arg_decls_v, jit_type_t *va_t, jit_value_t *va_v, int va_n) {
+jit__$func_name(jit_function_t f $_arg_decls_v, jit_type_t *va_t, jit_value_t *va_v, int va_n) {
     int i;
     int n_args           = $n_args + va_n;
     jit_type_t sig;
@@ -215,11 +220,11 @@ DEFN
     else {
         $decl = <<DECL;
 static jit_value_t
-jit__$func_name(jit_function_t, $arg_decls_t);
+jit__$func_name(jit_function_t $_arg_decls_t);
 DECL
         $defn = <<DEFN;
 static jit_value_t
-jit__$func_name(jit_function_t f, $arg_decls_v) {
+jit__$func_name(jit_function_t f $_arg_decls_v) {
     int n_args          = $n_args;
     jit_type_t  sig;
     jit_type_t  arg_t[] = { $arg_t };
