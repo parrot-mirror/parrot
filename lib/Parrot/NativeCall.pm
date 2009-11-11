@@ -47,7 +47,7 @@ our %signature_table = (
     i => { as_proto => "int",    sig_char => "I" },
     l => { as_proto => "long",   sig_char => "I" },
     c => { as_proto => "char",   sig_char => "I" },
-    s => { as_proto => "short",  sig_char => "I" },
+    s => { as_proto => "short",  sig_char => "I", return_type => 'INTVAL' },
     f => { as_proto => "float",  sig_char => "N" },
     d => { as_proto => "double", sig_char => "N" },
     t => { as_proto => "char *",
