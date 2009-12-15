@@ -519,16 +519,14 @@ to the elements of the signature array.
 
 
 op set_args(inconst PMC) :flow {
-    opcode_t * const raw_args = CUR_OPCODE;
-    PMC * const signature = $1;
-    PMC * call_sig;
-    INTVAL argc;
+    opcode_t * const raw_args  = CUR_OPCODE;
+    PMC      * const signature = $1;
+    PMC             *call_sig  = Parrot_pcc_build_sig_object_from_op(interp,
+                                    PMCNULL, signature, raw_args);
+    INTVAL           argc      = VTABLE_elements(interp, signature);
 
-    call_sig = Parrot_pcc_build_sig_object_from_op(interp,
-            PMCNULL, signature, raw_args);
     Parrot_pcc_set_signature(interp, CURRENT_CONTEXT(interp), call_sig);
 
-    argc = VTABLE_elements(interp, signature);
     goto OFFSET(argc + 2);
 }
 
@@ -549,15 +547,11 @@ op get_results(inconst PMC) :flow {
 
 op get_params(inconst PMC) :flow {
     opcode_t * const raw_params = CUR_OPCODE;
-    PMC *caller_ctx, *ctx;
-    PMC *ccont, *call_object;
-    PMC * const signature = $1;
-    INTVAL argc;
-
-    ctx     = CURRENT_CONTEXT(interp);
-    ccont   = Parrot_pcc_get_continuation(interp, ctx);
-
-    caller_ctx  = Parrot_pcc_get_caller_ctx(interp, ctx);
+    PMC      * const signature  = $1;
+    PMC             *ctx        = CURRENT_CONTEXT(interp);
+    PMC             *ccont      = Parrot_pcc_get_continuation(interp, ctx);
+    PMC             *caller_ctx = Parrot_pcc_get_caller_ctx(interp, ctx);
+    INTVAL           argc       = VTABLE_elements(interp, signature);
 
     Parrot_pcc_fill_params_from_op(interp, ctx, signature, raw_params);
 
@@ -565,9 +559,10 @@ op get_params(inconst PMC) :flow {
     if (PObj_get_FLAGS(ccont) & SUB_FLAG_TAILCALL) {
         PObj_get_FLAGS(ccont) &= ~SUB_FLAG_TAILCALL;
         Parrot_pcc_dec_recursion_depth(interp, ctx);
-        Parrot_pcc_set_caller_ctx(interp, ctx, Parrot_pcc_get_caller_ctx(interp, caller_ctx));
+        Parrot_pcc_set_caller_ctx(interp, ctx,
+            Parrot_pcc_get_caller_ctx(interp, caller_ctx));
     }
-    argc = VTABLE_elements(interp, signature);
+
     goto OFFSET(argc + 2);
 }
 
