@@ -143,8 +143,8 @@ Swaps the "context".
             print_sub_name(INTERP, SELF);
 
         if (PMC_IS_NULL(co->ctx)) {
-            PMC * const caller_ctx = CURRENT_CONTEXT(interp);
-            PMC *ctx;
+            PMC *       ctx        = CURRENT_CONTEXT(interp);
+            PMC * const caller_ctx = Parrot_pcc_get_caller_ctx(INTERP, ctx);
             PMC *ccont = INTERP->current_cont;
 
             if (ccont == NEED_CONTINUATION)
@@ -154,9 +154,7 @@ Swaps the "context".
                 Parrot_ex_throw_from_c_args(INTERP, NULL, CONTROL_ERROR,
                         "tail call to coro not allowed");
 
-            /* first time set current sub, cont, object */
-            ctx     = Parrot_set_new_context(INTERP, co->n_regs_used);
-
+            Parrot_pcc_allocate_registers(interp, ctx, co->n_regs_used);
             co->ctx = ctx;
 
             PARROT_CONTINUATION(ccont)->from_ctx = ctx;
@@ -182,8 +180,9 @@ Swaps the "context".
 
         /* if calling the Coro we need the segment of the Coro */
         else if (!(PObj_get_FLAGS(SELF) & SUB_FLAG_CORO_FF)) {
-            PMC * const ctx   = co->ctx;
-            PMC * const ccont = Parrot_pcc_get_continuation(INTERP, ctx);
+            PMC * const ctx         = co->ctx;
+            PMC * const caller_ctx  = Parrot_pcc_get_caller_ctx(INTERP, ctx);
+            PMC * const ccont       = Parrot_pcc_get_continuation(INTERP, ctx);
 
             PObj_get_FLAGS(SELF) |= SUB_FLAG_CORO_FF;
             wanted_seg            = co->seg;
@@ -192,8 +191,7 @@ Swaps the "context".
             co->caller_seg        = INTERP->code;
 
             /* and the recent call context */
-            PARROT_CONTINUATION(ccont)->to_ctx = CURRENT_CONTEXT(interp);
-            Parrot_pcc_set_caller_ctx(interp, ctx, CURRENT_CONTEXT(interp));
+            PARROT_CONTINUATION(ccont)->to_ctx = caller_ctx;
 
             /* set context to coro context */
             CURRENT_CONTEXT(interp) = ctx;
