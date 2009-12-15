@@ -82,7 +82,9 @@ void Parrot_pcc_invoke_sub_from_c_args(PARROT_INTERP,
         __attribute__nonnull__(3);
 
 PARROT_EXPORT
-void Parrot_pcc_prepare_call(PARROT_INTERP,
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
+PMC* Parrot_pcc_prepare_call(PARROT_INTERP,
     ARGIN(PMC *call_object),
     ARGIN(PMC *ret_cont),
     ARGIN_NULLOK(PMC *current_object))

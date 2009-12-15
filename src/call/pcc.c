@@ -254,7 +254,7 @@ do_run_ops(PARROT_INTERP, ARGIN(PMC *sub_obj))
 
 /*
  
-=item C<void Parrot_pcc_prepare_call(PARROT_INTERP, PMC *call_object, PMC
+=item C<PMC* Parrot_pcc_prepare_call(PARROT_INTERP, PMC *call_object, PMC
 *ret_cont, PMC *current_object)>
 
 Prepare and push CallContext for invoke Sub.
@@ -265,11 +265,16 @@ TODO Invent better name for it.
 
 */
 PARROT_EXPORT
-void
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
+PMC*
 Parrot_pcc_prepare_call(PARROT_INTERP, ARGIN(PMC *call_object),
         ARGIN(PMC *ret_cont), ARGIN_NULLOK(PMC *current_object))
 {
     ASSERT_ARGS(Parrot_pcc_prepare_call)
+
+    if (PMC_IS_NULL(call_object))
+        call_object = pmc_new(interp, enum_class_CallContext);
 
     Parrot_pcc_set_signature(interp, CURRENT_CONTEXT(interp), call_object);
     Parrot_pcc_init_context(interp, call_object, CURRENT_CONTEXT(interp));
@@ -278,6 +283,8 @@ Parrot_pcc_prepare_call(PARROT_INTERP, ARGIN(PMC *call_object),
     interp->current_cont    = ret_cont;
     interp->current_object  = current_object;
     CURRENT_CONTEXT(interp) = call_object;
+
+    return call_object;
 }
 
 /*
