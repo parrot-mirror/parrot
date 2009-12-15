@@ -301,12 +301,12 @@ init_context(PARROT_INTERP, ARGMOD(PMC *pmcctx), ARGIN_NULLOK(PMC *pmcold))
     ASSERT_ARGS(init_context)
     Parrot_Context *ctx    = get_context_struct_fast(interp, pmcctx);
 
-    PARROT_ASSERT(!PMC_IS_NULL(pmcctx) || !"Can't initialise Null CallContext");
-
     /* pmcold may be null */
     Parrot_Context *old    = PMC_IS_NULL(pmcold)
                            ? NULL
                            : get_context_struct_fast(interp, pmcold);
+
+    PARROT_ASSERT(!PMC_IS_NULL(pmcctx) || !"Can't initialise Null CallContext");
 
     ctx->current_results   = NULL;
     ctx->results_signature = NULL;
