@@ -130,6 +130,7 @@ op tailcallmethod(invar PMC, in STR) :object_base :flow {
     STRING   * const meth       = $2;
     PMC      * const method_pmc = VTABLE_find_method(interp, object, meth);
     PMC      * const ctx        = CURRENT_CONTEXT(interp);
+    PMC      *       call_object = Parrot_pcc_get_signature(interp, ctx);
 
     opcode_t *dest;
 
@@ -139,10 +140,10 @@ op tailcallmethod(invar PMC, in STR) :object_base :flow {
             VTABLE_get_string(interp, VTABLE_get_class(interp, object)));
     }
     else {
-        interp->current_cont = Parrot_pcc_get_continuation(interp, ctx);
+        Parrot_pcc_merge_signature_for_tailcall(interp, ctx, call_object);
+        Parrot_pcc_prepare_call(interp, call_object,
+                Parrot_pcc_get_continuation(interp, ctx), object);
         SUB_FLAG_TAILCALL_SET(interp->current_cont);
-        interp->current_object = object;
-        Parrot_pcc_merge_signature_for_tailcall(interp, ctx, Parrot_pcc_get_signature(interp, ctx));
         dest = (opcode_t *)VTABLE_invoke(interp, method_pmc, next);
     }
     goto ADDRESS(dest);
@@ -153,13 +154,14 @@ op tailcallmethod(invar PMC, invar PMC) :object_base :flow {
     PMC      * const object     = $1;
     PMC      * const method_pmc = $2;
     PMC      * const ctx        = CURRENT_CONTEXT(interp);
+    PMC      *       call_object = Parrot_pcc_get_signature(interp, ctx);
 
     opcode_t *dest;
 
-    interp->current_cont = Parrot_pcc_get_continuation(interp, ctx);
+    Parrot_pcc_merge_signature_for_tailcall(interp, ctx, call_object);
+    Parrot_pcc_prepare_call(interp, call_object,
+            Parrot_pcc_get_continuation(interp, ctx), object);
     SUB_FLAG_TAILCALL_SET(interp->current_cont);
-    interp->current_object = object;
-    Parrot_pcc_merge_signature_for_tailcall(interp, ctx, Parrot_pcc_get_signature(interp, ctx));
     dest = (opcode_t *)VTABLE_invoke(interp, method_pmc, next);
     goto ADDRESS(dest);
 }
