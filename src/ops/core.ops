@@ -557,10 +557,8 @@ op get_params(inconst PMC) :flow {
 
     /* TODO Factor out with Sub.invoke */
     if (PObj_get_FLAGS(ccont) & SUB_FLAG_TAILCALL) {
-        PObj_get_FLAGS(ccont) &= ~SUB_FLAG_TAILCALL;
         Parrot_pcc_dec_recursion_depth(interp, ctx);
-        Parrot_pcc_set_caller_ctx(interp, ctx,
-            Parrot_pcc_get_caller_ctx(interp, caller_ctx));
+        PObj_get_FLAGS(ccont) &= ~SUB_FLAG_TAILCALL;
     }
 
     goto OFFSET(argc + 2);
