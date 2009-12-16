@@ -19,7 +19,7 @@ Tests the CallContext PMC.
 .sub 'main' :main
     .include 'test_more.pir'
 
-    plan(69)
+    plan(85)
 
     test_instantiate()
     test_get_set_attrs()
@@ -32,10 +32,10 @@ Tests the CallContext PMC.
     test_clone()
     test_backtrace()
 
-    #$P0 = get_hll_global ['Foo'], 'load'
-    #$P0()
-    #$P0 = new ['Foo']
-    #$P0.'test_inspect'() # 16 tests
+    $P0 = get_hll_global ['Foo'], 'load'
+    $P0()
+    $P0 = new ['Foo']
+    $P0.'test_inspect'() # 16 tests
 .end
 
 .sub 'test_instantiate'
