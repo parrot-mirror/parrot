@@ -248,7 +248,8 @@ destination to continue execution.
                 Parrot_pcc_parse_signature_string(INTERP, string_sig, &raw_sig, &invalid_sig);
 
                 /* Build results signature for continuation */
-                if (*pc == PARROT_OP_get_results_pc)
+                /* FIXME First check is band-aid for wrongly created Continutation */
+                if (pc && *pc == PARROT_OP_get_results_pc)
                     call_obj = Parrot_pcc_build_sig_object_returns_from_op(INTERP, call_obj,
                         Parrot_pcc_get_pmc_constant(INTERP, to_ctx, pc[1]), pc);
 
