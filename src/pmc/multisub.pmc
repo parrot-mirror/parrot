@@ -65,7 +65,7 @@ pmclass MultiSub extends ResizablePMCArray auto_attrs provides array {
     }
 
     VTABLE opcode_t *invoke(void *next) {
-        PMC * const sig_obj = CONTEXT(interp)->current_sig;
+        PMC * const sig_obj = CURRENT_CONTEXT(INTERP);
         PMC * const func    = Parrot_mmd_sort_manhattan_by_sig_pmc(interp,
                 SELF, sig_obj);
 
