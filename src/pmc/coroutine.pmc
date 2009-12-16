@@ -180,9 +180,11 @@ Swaps the "context".
 
         /* if calling the Coro we need the segment of the Coro */
         else if (!(PObj_get_FLAGS(SELF) & SUB_FLAG_CORO_FF)) {
-            PMC * const ctx         = co->ctx;
-            PMC * const caller_ctx  = Parrot_pcc_get_caller_ctx(INTERP, ctx);
-            PMC * const ccont       = Parrot_pcc_get_continuation(INTERP, ctx);
+            PMC * const ctx     = co->ctx;
+            PMC * const ccont   = Parrot_pcc_get_continuation(INTERP, ctx);
+
+            /* op invoke pushed new CallContext. Just pop it back */
+            Parrot_pop_context(INTERP);
 
             PObj_get_FLAGS(SELF) |= SUB_FLAG_CORO_FF;
             wanted_seg            = co->seg;
@@ -191,7 +193,8 @@ Swaps the "context".
             co->caller_seg        = INTERP->code;
 
             /* and the recent call context */
-            PARROT_CONTINUATION(ccont)->to_ctx = caller_ctx;
+            PARROT_CONTINUATION(ccont)->to_ctx = CURRENT_CONTEXT(INTERP);
+            Parrot_pcc_set_caller_ctx(interp, ctx, CURRENT_CONTEXT(INTERP));
 
             /* set context to coro context */
             CURRENT_CONTEXT(interp) = ctx;
