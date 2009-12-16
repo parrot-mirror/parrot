@@ -308,6 +308,13 @@ init_context(PARROT_INTERP, ARGMOD(PMC *pmcctx), ARGIN_NULLOK(PMC *pmcold))
 
     PARROT_ASSERT(!PMC_IS_NULL(pmcctx) || !"Can't initialise Null CallContext");
 
+    /* 
+     * FIXME Invoking corotine shouldn't initialise context. So just
+     * check ctx->current_sub. If it's not null return from here
+     */
+    if (!PMC_IS_NULL(ctx->current_sub))
+        return;
+
     ctx->current_results   = NULL;
     ctx->results_signature = NULL;
     ctx->lex_pad           = PMCNULL;
