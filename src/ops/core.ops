@@ -463,10 +463,15 @@ inline op tailcall(invar PMC) :flow {
     opcode_t   *dest            = expr NEXT();
     PMC * const ctx             = CURRENT_CONTEXT(interp);
     PMC        *call_object     = Parrot_pcc_get_signature(interp, ctx);
-    interp->current_cont        = Parrot_pcc_get_continuation(interp, ctx);
+
+    /* If there is no call_object - create new one */
+    if (PMC_IS_NULL(call_object))
+        call_object = pmc_new(interp, enum_class_CallContext);
 
     Parrot_pcc_merge_signature_for_tailcall(interp, ctx, call_object);
-    Parrot_pcc_prepare_call(interp, call_object, interp->current_cont, interp->current_object);
+    Parrot_pcc_prepare_call(interp, call_object,
+            Parrot_pcc_get_continuation(interp, ctx),
+            interp->current_object);
 
     SUB_FLAG_TAILCALL_SET(interp->current_cont);
     dest = VTABLE_invoke(interp, p, dest);
@@ -560,8 +565,10 @@ op get_params(inconst PMC) :flow {
 
     /* TODO Factor out with Sub.invoke */
     if (PObj_get_FLAGS(ccont) & SUB_FLAG_TAILCALL) {
-        Parrot_pcc_dec_recursion_depth(interp, ctx);
         PObj_get_FLAGS(ccont) &= ~SUB_FLAG_TAILCALL;
+        Parrot_pcc_dec_recursion_depth(interp, ctx);
+        Parrot_pcc_set_caller_ctx(interp, ctx,
+            Parrot_pcc_get_caller_ctx(interp, caller_ctx));
     }
 
     goto OFFSET(argc + 2);
