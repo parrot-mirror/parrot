@@ -3510,7 +3510,7 @@ PDB_backtrace(PARROT_INTERP)
     PMC *sub = interpinfo_p(interp, CURRENT_SUB);
     PMC *ctx = CURRENT_CONTEXT(interp);
 
-    if (!PMC_IS_NULL(sub)) {
+    //if (!PMC_IS_NULL(sub)) {
         str = Parrot_Context_infostr(interp, ctx);
         if (str) {
             Parrot_io_eprintf(interp, "%Ss", str);
@@ -3531,7 +3531,7 @@ PDB_backtrace(PARROT_INTERP)
             }
             Parrot_io_eprintf(interp, "\n");
         }
-    }
+    //}
 
     /* backtrace: follow the continuation chain */
     while (1) {
