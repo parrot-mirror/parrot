@@ -70,9 +70,13 @@ op callmethodcc(invar PMC, in STR) :object_base :flow {
         }
     }
     else {
-        call_object = Parrot_pcc_prepare_call(interp, call_object,
-                new_ret_continuation_pmc(interp, next), object);
-        dest                   = VTABLE_invoke(interp, method_pmc, next);
+        PMC *ret_cont = method_pmc->vtable->base_type == enum_class_NCI
+                      ? PMCNULL
+                      : new_ret_continuation_pmc(interp, next);
+
+        call_object   = Parrot_pcc_prepare_call(interp, call_object,
+                                                ret_cont, object);
+        dest          = VTABLE_invoke(interp, method_pmc, next);
     }
     goto ADDRESS(dest);
 }
