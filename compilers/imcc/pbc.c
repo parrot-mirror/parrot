@@ -1211,7 +1211,7 @@ find_outer(PARROT_INTERP, ARGIN(const IMC_Unit *unit))
     PMC_get_sub(interp, current, sub);
     cur_name = sub->name;
 
-    cur_name_str = Parrot_str_to_cstring(interp,  sub->name);
+    cur_name_str = Parrot_str_to_cstring(interp, sub->name);
     if (strlen(cur_name_str) == len
     && (memcmp(cur_name_str, unit->outer->name, len) == 0)) {
         Parrot_str_free_cstring(cur_name_str);

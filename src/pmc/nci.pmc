@@ -320,6 +320,10 @@ class, the PMC arguments are shifted down.
                     "attempt to call NULL function");
         }
 
+        Parrot_pcc_set_sub(interp, CURRENT_CONTEXT(interp),
+            Parrot_pcc_get_sub(interp,
+                Parrot_pcc_get_caller_ctx(interp, CURRENT_CONTEXT(interp))));
+
         if (nci_info->jitted) {
             nci_jit_sub_t jit_func = (nci_jit_sub_t) D2FPTR(nci_info->func);
 

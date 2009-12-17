@@ -253,7 +253,7 @@ do_run_ops(PARROT_INTERP, ARGIN(PMC *sub_obj))
 }
 
 /*
- 
+
 =item C<PMC* Parrot_pcc_prepare_call(PARROT_INTERP, PMC *call_object, PMC
 *ret_cont, PMC *current_object)>
 
