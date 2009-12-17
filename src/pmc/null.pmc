@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2001-2007, Parrot Foundation.
+Copyright (C) 2001-2009, Parrot Foundation.
 $Id$
 
 =head1 NAME
@@ -55,6 +55,25 @@ Overrides the default to do nothing.
         UNUSED(what)
         /* XXX maybe a hack to get TGE running again */
         return 0;
+    }
+
+
+/*
+
+=item C<opcode_t *invoke(void *next)>
+
+Throws an exception.
+
+=cut
+
+*/
+
+    VTABLE opcode_t *invoke(void *next) {
+        UNUSED(pmc)
+        UNUSED(next)
+
+        Parrot_pop_context(interp);
+        null_pmc_access(interp, PARROT_VTABLE_SLOT_INVOKE);
     }
 
 /*
