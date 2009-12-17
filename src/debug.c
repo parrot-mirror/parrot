@@ -3501,37 +3501,39 @@ void
 PDB_backtrace(PARROT_INTERP)
 {
     ASSERT_ARGS(PDB_backtrace)
-    STRING           *str;
-    PMC              *old       = PMCNULL;
-    int               rec_level = 0;
-    int               limit_count = 0;
 
     /* information about the current sub */
-    PMC *sub = interpinfo_p(interp, CURRENT_SUB);
-    PMC *ctx = CURRENT_CONTEXT(interp);
+    PMC    *sub         = interpinfo_p(interp, CURRENT_SUB);
+    PMC    *ctx         = CURRENT_CONTEXT(interp);
+    STRING *str         = Parrot_Context_infostr(interp, ctx);
+    PMC    *old         = PMCNULL;
+    int     rec_level   = 0;
+    int     limit_count = 0;
 
-    //if (!PMC_IS_NULL(sub)) {
-        str = Parrot_Context_infostr(interp, ctx);
-        if (str) {
-            Parrot_io_eprintf(interp, "%Ss", str);
-            if (interp->code->annotations) {
-                PMC *annot = PackFile_Annotations_lookup(interp, interp->code->annotations,
-                        Parrot_pcc_get_pc(interp, ctx) - interp->code->base.data + 1, NULL);
-                if (!PMC_IS_NULL(annot)) {
-                    PMC *pfile = VTABLE_get_pmc_keyed_str(interp, annot,
-                            Parrot_str_new_constant(interp, "file"));
-                    PMC *pline = VTABLE_get_pmc_keyed_str(interp, annot,
-                            Parrot_str_new_constant(interp, "line"));
-                    if ((!PMC_IS_NULL(pfile)) && (!PMC_IS_NULL(pline))) {
-                        STRING *file = VTABLE_get_string(interp, pfile);
-                        INTVAL line = VTABLE_get_integer(interp, pline);
-                        Parrot_io_eprintf(interp, " (%Ss:%li)", file, (long)line);
-                    }
+    if (str) {
+        Parrot_io_eprintf(interp, "%Ss", str);
+        if (interp->code->annotations) {
+            PMC *annot = PackFile_Annotations_lookup(interp,
+                interp->code->annotations,
+                Parrot_pcc_get_pc(interp, ctx) - interp->code->base.data + 1,
+                NULL);
+
+            if (!PMC_IS_NULL(annot)) {
+                PMC *pfile = VTABLE_get_pmc_keyed_str(interp, annot,
+                        Parrot_str_new_constant(interp, "file"));
+                PMC *pline = VTABLE_get_pmc_keyed_str(interp, annot,
+                        Parrot_str_new_constant(interp, "line"));
+
+                if ((!PMC_IS_NULL(pfile)) && (!PMC_IS_NULL(pline))) {
+                    STRING *file = VTABLE_get_string(interp, pfile);
+                    INTVAL  line = VTABLE_get_integer(interp, pline);
+                    Parrot_io_eprintf(interp, " (%Ss:%li)", file, (long)line);
                 }
             }
-            Parrot_io_eprintf(interp, "\n");
         }
-    //}
+
+        Parrot_io_eprintf(interp, "\n");
+    }
 
     /* backtrace: follow the continuation chain */
     while (1) {
@@ -3546,33 +3548,30 @@ PDB_backtrace(PARROT_INTERP)
         if (PMC_IS_NULL(sub))
             break;
 
-
         sub_cont = PARROT_CONTINUATION(sub);
 
         if (!sub_cont)
             break;
 
-
         str = Parrot_Context_infostr(interp, Parrot_pcc_get_caller_ctx(interp, ctx));
-
 
         if (!str)
             break;
-
 
         /* recursion detection */
         if (ctx == sub_cont->to_ctx) {
             ++rec_level;
         }
-        else if (!PMC_IS_NULL(old) && PMC_cont(old) &&
-            Parrot_pcc_get_pc(interp, PMC_cont(old)->to_ctx) ==
-            Parrot_pcc_get_pc(interp, PMC_cont(sub)->to_ctx) &&
-            Parrot_pcc_get_sub(interp, PMC_cont(old)->to_ctx) ==
-            Parrot_pcc_get_sub(interp, PMC_cont(sub)->to_ctx)) {
+        else if (!PMC_IS_NULL(old) && PMC_cont(old)
+             && Parrot_pcc_get_pc(interp, PMC_cont(old)->to_ctx)
+             == Parrot_pcc_get_pc(interp, PMC_cont(sub)->to_ctx)
+             && Parrot_pcc_get_sub(interp, PMC_cont(old)->to_ctx)
+             == Parrot_pcc_get_sub(interp, PMC_cont(sub)->to_ctx)) {
                 ++rec_level;
         }
         else if (rec_level != 0) {
-            Parrot_io_eprintf(interp, "... call repeated %d times\n", rec_level);
+            Parrot_io_eprintf(interp, "... call repeated %d times\n",
+                rec_level);
             rec_level = 0;
         }
 
