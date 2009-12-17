@@ -2414,10 +2414,20 @@ merge in signatures for tailcall
 
 void
 Parrot_pcc_merge_signature_for_tailcall(PARROT_INTERP,
-        ARGMOD_NULLOK(PMC * parent), ARGMOD_NULLOK(PMC * tailcall))
+        ARGMOD_NULLOK(PMC *parent), ARGMOD_NULLOK(PMC *tailcall))
 {
     ASSERT_ARGS(Parrot_pcc_merge_signature_for_tailcall)
-    if (PMC_IS_NULL(parent) || PMC_IS_NULL(tailcall) || (parent == tailcall))
+
+    if (PMC_IS_NULL(parent))
+        return;
+
+    if (PMC_IS_NULL(tailcall)) {
+        Parrot_pcc_set_signature(interp, CURRENT_CONTEXT(interp),
+            Parrot_pcc_get_signature(interp, parent));
+        return;
+    }
+
+    if (parent == tailcall)
         return;
     else {
         /* Broke encapuslation. Direct poking into CallContext is much faster */
@@ -2438,7 +2448,6 @@ Parrot_pcc_merge_signature_for_tailcall(PARROT_INTERP,
         /* Store raw signature */
         GETATTR_CallContext_return_flags(interp, parent, return_flags);
         SETATTR_CallContext_return_flags(interp, tailcall, return_flags);
-
     }
 }
 
