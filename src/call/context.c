@@ -308,7 +308,7 @@ init_context(PARROT_INTERP, ARGMOD(PMC *pmcctx), ARGIN_NULLOK(PMC *pmcold))
 
     PARROT_ASSERT(!PMC_IS_NULL(pmcctx) || !"Can't initialise Null CallContext");
 
-    /* 
+    /*
      * FIXME Invoking corotine shouldn't initialise context. So just
      * check ctx->current_sub. If it's not null return from here
      */
@@ -581,7 +581,7 @@ Parrot_alloc_context(PARROT_INTERP, ARGIN(const INTVAL *number_regs_used),
 =item C<PMC * Parrot_pcc_allocate_empty_context(PARROT_INTERP, PMC *old)>
 
 Allocates and returns a new context.  Does not set this new context as the
-current context. 
+current context.
 
 =cut
 
