@@ -19,7 +19,7 @@ Tests OO features related to instantiating new objects.
 .sub main :main
     .include 'except_types.pasm'
     .include 'test_more.pir'
-    plan(111)
+    plan(112)
 
     instantiate_from_class_object()
     manually_create_anonymous_class_object()
@@ -44,6 +44,7 @@ Tests OO features related to instantiating new objects.
     get_class_retrieves_a_proxy_class_object()
     get_class_retrieves_a_class_object_that_doesnt_exist()
     instantiate_class_from_invalid_key()
+    current_object_set()
 .end
 
 
@@ -479,6 +480,20 @@ Tests OO features related to instantiating new objects.
     is(message, "Class '[ 'Foo' ; 'Bar' ; 'Baz' ]' not found", 'Class not found')
 .end
 
+.namespace [ "Foo13" ]
+.sub 'init' :vtable
+.include "interpinfo.pasm"
+    interpinfo $P2, .INTERPINFO_CURRENT_OBJECT
+    $I0 = isa $P2, 'Foo13'
+    ok( $I0, ".INTERPINFO_CURRENT_OBJECT set properly")
+    .return ()
+.end
+
+.namespace []
+.sub current_object_set
+    newclass $P1, "Foo13"
+    new $P3, "Foo13"
+.end
 
 # Local Variables:
 #   mode: pir

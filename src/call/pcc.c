@@ -309,7 +309,7 @@ Parrot_pcc_invoke_from_sig_object(PARROT_INTERP, ARGIN(PMC *sub_obj),
     opcode_t    *dest;
     PMC * const  ret_cont = new_ret_continuation_pmc(interp, NULL);
 
-    Parrot_pcc_prepare_call(interp, call_object, ret_cont, NULL);
+    Parrot_pcc_prepare_call(interp, call_object, ret_cont, interp->current_object);
 
     /* Invoke the function */
     dest = VTABLE_invoke(interp, sub_obj, NULL);
