@@ -306,6 +306,15 @@ init_context(PARROT_INTERP, ARGMOD(PMC *pmcctx), ARGIN_NULLOK(PMC *pmcold))
                            ? NULL
                            : get_context_struct_fast(interp, pmcold);
 
+    PARROT_ASSERT(!PMC_IS_NULL(pmcctx) || !"Can't initialise Null CallContext");
+
+    /*
+     * FIXME Invoking corotine shouldn't initialise context. So just
+     * check ctx->current_sub. If it's not null return from here
+     */
+    if (!PMC_IS_NULL(ctx->current_sub))
+        return;
+
     ctx->current_results   = NULL;
     ctx->results_signature = NULL;
     ctx->lex_pad           = PMCNULL;
@@ -480,6 +489,8 @@ allocate_registers(PARROT_INTERP, ARGIN(PMC *pmcctx), ARGIN(const INTVAL *number
 
     /* ctx.bp_ps points to S0, which has Px on the left */
     ctx->bp_ps.regs_s = (STRING **)((char *)ctx->registers + size_nip);
+
+    clear_regs(interp, pmcctx);
 }
 
 
@@ -570,7 +581,7 @@ Parrot_alloc_context(PARROT_INTERP, ARGIN(const INTVAL *number_regs_used),
 =item C<PMC * Parrot_pcc_allocate_empty_context(PARROT_INTERP, PMC *old)>
 
 Allocates and returns a new context.  Does not set this new context as the
-current context. 
+current context.
 
 =cut
 
@@ -600,7 +611,6 @@ Initialise new context from old.
 */
 
 PARROT_CANNOT_RETURN_NULL
-PARROT_WARN_UNUSED_RESULT
 PMC *
 Parrot_pcc_init_context(PARROT_INTERP, ARGIN(PMC *ctx), ARGIN_NULLOK(PMC *old))
 {
