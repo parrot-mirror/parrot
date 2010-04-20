@@ -65,6 +65,12 @@ static void check_memory_system(ARGIN(const Memory_Pools *mem_pools))
 static void check_var_size_obj_pool(ARGIN(const Variable_Size_Pool *pool))
         __attribute__nonnull__(1);
 
+static int compare_memory_blocks(
+    ARGIN(const void * lv),
+    ARGIN(const void * rv))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
 static void debug_print_buf(PARROT_INTERP, ARGIN(const Buffer *b))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
@@ -166,6 +172,9 @@ static int sweep_cb_pmc(PARROT_INTERP,
        PARROT_ASSERT_ARG(mem_pools))
 #define ASSERT_ARGS_check_var_size_obj_pool __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
        PARROT_ASSERT_ARG(pool))
+#define ASSERT_ARGS_compare_memory_blocks __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
+       PARROT_ASSERT_ARG(lv) \
+    , PARROT_ASSERT_ARG(rv))
 #define ASSERT_ARGS_debug_print_buf __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
        PARROT_ASSERT_ARG(interp) \
     , PARROT_ASSERT_ARG(b))
@@ -483,12 +492,12 @@ compact_pool(PARROT_INTERP,
 
     /* Allocate storage for skip list */
     skip_blocks = (Memory_Block**)Parrot_gc_allocate_fixed_size_storage(interp,
-                        sizeof (Memory_Block**) * total_blocks);
+                        sizeof (Memory_Block*) * total_blocks);
 
     /* Snag a block big enough for everything */
     total_size = pad_pool_size(pool, skip_blocks, &skip_blocks_count);
 
-    //fprintf(stderr, "%d %d\n", total_blocks, skip_blocks_count);
+    fprintf(stderr, "%d %d\n", total_blocks, skip_blocks_count);
 
     alloc_new_block(mem_pools, total_size, pool, "inside compact");
 
@@ -516,22 +525,36 @@ compact_pool(PARROT_INTERP,
 
             for (i = objects_end; i; --i) {
                 UINTVAL  k;
-                INTVAL   skip = 0;
+                INTVAL   skip = !PObj_is_movable_TESTALL(b);
 
                 /* Check that buffer isn't in skip list */
-                if (PObj_is_movable_TESTALL(b)) {
-                    char *bufstart = (char*)Buffer_bufstart(b);
-                    for (k = 0; k < skip_blocks_count; ++k) {
-                        if ((bufstart >= skip_blocks[k]->start)
-                            && (bufstart < skip_blocks[k]->top)) {
-                            /* Skip buffer. */
-                            skip = 1;
-                            break;
+                if (skip_blocks_count && Buffer_buflen(b) && !skip) {
+                    char         *buf_start = (char*)Buffer_bufstart(b);
+
+                    /* Poor man std::lower_bound */
+                    size_t       low = 0, high = skip_blocks_count;
+                    Memory_Block *block = skip_blocks[0], *middle;
+
+                    while (low < high) {
+                        /* It's unlikely to have integer overflow here */
+                        size_t mid = (high + low)/2;
+                        middle = skip_blocks[mid];
+
+                        if (middle->start < buf_start) {
+                            block = middle;
+                            low   = mid + 1;
                         }
+                        else
+                            high  = mid;
                     }
+
+                    /* And check that is real one */
+                    if (block && (block->start <= buf_start) && (buf_start < block->top))
+                        skip = 1;
                 }
 
-                if (!skip)
+
+                if (!skip && PObj_is_movable_TESTALL(b))
                     cur_spot = move_one_buffer(interp, b, cur_spot);
 
                 b = (Buffer *)((char *)b + object_size);
@@ -554,9 +577,29 @@ compact_pool(PARROT_INTERP,
 
     if (total_blocks)
         Parrot_gc_free_fixed_size_storage(interp,
-                sizeof (Memory_Block**) * total_blocks, skip_blocks);
+                sizeof (Memory_Block*) * total_blocks, skip_blocks);
 
     --mem_pools->gc_sweep_block_level;
+}
+
+/*
+
+=item C<static int compare_memory_blocks(const void * lv, const void * rv)>
+
+Compare Memory_Block by C<start> element. Used for sorting and binary
+search
+
+=cut
+
+*/
+
+static int
+compare_memory_blocks(ARGIN(const void * lv), ARGIN(const void * rv))
+{
+    ASSERT_ARGS(compare_memory_blocks)
+    const Memory_Block ** l = (const Memory_Pools **)lv;
+    const Memory_Block ** r = (const Memory_Pools **)rv;
+    return (*l)->start > (*r)->start;
 }
 
 /*
@@ -600,8 +643,7 @@ pad_pool_size(ARGIN(const Variable_Size_Pool *pool),
     size_t skip_pos    = 0;
 
     while (cur_block) {
-        if ((cur_block->size * 0.2 > cur_block->freed)
-            && (cur_block->free < cur_block->size * 0.2)) {
+        if (cur_block->freed < cur_block->size * 0.2) {
             /* Don't reclaim almost filled blocks */
             /* TODO Keep blocks ordered by block->start to use binary search */
             skip_blocks[skip_pos++] = cur_block;
@@ -626,6 +668,9 @@ pad_pool_size(ARGIN(const Variable_Size_Pool *pool),
 #endif
 
     *skip_blocks_count = skip_pos;
+
+    /* Sort skip_blocks to use binary search */
+    qsort(skip_blocks, skip_pos, sizeof(Memory_Block*), compare_memory_blocks);
 
     return total_size;
 }

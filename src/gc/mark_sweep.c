@@ -740,17 +740,18 @@ free_buffer(SHIM_INTERP,
         }
 
         /* Find our block */
-        while (block) {
-            if (block->start <= (char*)Buffer_bufstart(b)
-                && (char*)Buffer_bufstart(b) < block->top) {
-                /* ... and update usage */
-                block->freed += aligned_string_size(Buffer_buflen(b));
-                break;
+        if (Buffer_buflen(b) && PObj_is_movable_TESTALL(b)) {
+            while (block) {
+                if (block->start <= (char*)Buffer_bufstart(b)
+                    && (char*)Buffer_bufstart(b) < block->top) {
+                    /* ... and update usage */
+                    block->freed += aligned_string_size(Buffer_buflen(b));
+                    break;
+                }
+
+                block = block->prev;
             }
-
-            block = block->prev;
         }
-
     }
 
     Buffer_buflen(b) = 0;
