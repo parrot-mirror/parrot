@@ -75,6 +75,15 @@ static void debug_print_buf(PARROT_INTERP, ARGIN(const Buffer *b))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
+PARROT_CAN_RETURN_NULL
+static Memory_Block* find_block_for_buffer(PARROT_INTERP,
+    ARGIN(const Buffer *buf),
+    ARGIN(Memory_Block **blocks),
+    size_t blocks_count)
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3);
+
 static void fix_pmc_syncs(
     ARGMOD(Interp *dest_interp),
     ARGIN(const Fixed_Size_Pool *pool))
@@ -178,6 +187,10 @@ static int sweep_cb_pmc(PARROT_INTERP,
 #define ASSERT_ARGS_debug_print_buf __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
        PARROT_ASSERT_ARG(interp) \
     , PARROT_ASSERT_ARG(b))
+#define ASSERT_ARGS_find_block_for_buffer __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
+       PARROT_ASSERT_ARG(interp) \
+    , PARROT_ASSERT_ARG(buf) \
+    , PARROT_ASSERT_ARG(blocks))
 #define ASSERT_ARGS_fix_pmc_syncs __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
        PARROT_ASSERT_ARG(dest_interp) \
     , PARROT_ASSERT_ARG(pool))
@@ -524,37 +537,12 @@ compact_pool(PARROT_INTERP,
             const size_t objects_end = cur_buffer_arena->used;
 
             for (i = objects_end; i; --i) {
-                UINTVAL  k;
-                INTVAL   skip = !PObj_is_movable_TESTALL(b);
+                /* Find buffer in skip list */
+                Memory_Block *block = find_block_for_buffer(interp, b,
+                                        skip_blocks, skip_blocks_count);
 
-                /* Check that buffer isn't in skip list */
-                if (skip_blocks_count && Buffer_buflen(b) && !skip) {
-                    char         *buf_start = (char*)Buffer_bufstart(b);
-
-                    /* Poor man std::lower_bound */
-                    size_t       low = 0, high = skip_blocks_count;
-                    Memory_Block *block = skip_blocks[0], *middle;
-
-                    while (low < high) {
-                        /* It's unlikely to have integer overflow here */
-                        size_t mid = (high + low)/2;
-                        middle = skip_blocks[mid];
-
-                        if (middle->start < buf_start) {
-                            block = middle;
-                            low   = mid + 1;
-                        }
-                        else
-                            high  = mid;
-                    }
-
-                    /* And check that is real one */
-                    if (block && (block->start <= buf_start) && (buf_start < block->top))
-                        skip = 1;
-                }
-
-
-                if (!skip && PObj_is_movable_TESTALL(b))
+                /* ... and don't move it if found */
+                if (!block)
                     cur_spot = move_one_buffer(interp, b, cur_spot);
 
                 b = (Buffer *)((char *)b + object_size);
@@ -600,6 +588,58 @@ compare_memory_blocks(ARGIN(const void * lv), ARGIN(const void * rv))
     const Memory_Block ** l = (const Memory_Pools **)lv;
     const Memory_Block ** r = (const Memory_Pools **)rv;
     return (*l)->start > (*r)->start;
+}
+
+/*
+
+=item C<static Memory_Block* find_block_for_buffer(PARROT_INTERP, const Buffer
+*buf, Memory_Block **blocks, size_t blocks_count)>
+
+Find block to which buffer belongs. Returns NULL if block not found.
+
+NB: C<blocks> must be ordered by block->start pointer.
+See C<compare_memory_blocks> function used in C<qsort>.
+
+=cut
+
+*/
+
+PARROT_CAN_RETURN_NULL
+static Memory_Block*
+find_block_for_buffer(PARROT_INTERP, ARGIN(const Buffer *buf),
+        ARGIN(Memory_Block **blocks), size_t blocks_count)
+{
+    ASSERT_ARGS(find_block_for_buffer)
+
+    char         *buf_start = (char*)Buffer_bufstart(buf);
+    size_t       low = 0, high = blocks_count;
+    Memory_Block *block, *middle;
+
+    /* Non-movable buffers are allocated from sysmem (usually) */
+    if (!blocks_count || !Buffer_buflen(buf) || !PObj_is_movable_TESTALL(buf))
+        return NULL;
+
+    /* Poor man std::lower_bound */
+    block = blocks[0];
+
+    while (low < high) {
+        /* It's unlikely to have integer overflow here */
+        size_t mid = (high + low)/2;
+        middle = blocks[mid];
+
+        if (middle->start < buf_start) {
+            block = middle;
+            low   = mid + 1;
+        }
+        else
+            high  = mid;
+    }
+
+    /* And check that is real one */
+    if (block && (block->start <= buf_start) && (buf_start < block->top))
+        return block;
+
+    return NULL;
 }
 
 /*
