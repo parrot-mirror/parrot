@@ -104,16 +104,13 @@ static STRING * to_encoding(PARROT_INTERP, ARGIN(const STRING *src))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
-static UINTVAL ucs2_decode_and_advance(PARROT_INTERP,
-    ARGMOD(String_iter *i))
-        __attribute__nonnull__(1)
+static UINTVAL ucs2_decode_and_advance(SHIM_INTERP, ARGMOD(String_iter *i))
         __attribute__nonnull__(2)
         FUNC_MODIFIES(*i);
 
-static void ucs2_encode_and_advance(PARROT_INTERP,
+static void ucs2_encode_and_advance(SHIM_INTERP,
     ARGMOD(String_iter *i),
     UINTVAL c)
-        __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         FUNC_MODIFIES(*i);
 
@@ -158,11 +155,9 @@ static void ucs2_set_position(SHIM_INTERP,
        PARROT_ASSERT_ARG(interp) \
     , PARROT_ASSERT_ARG(src))
 #define ASSERT_ARGS_ucs2_decode_and_advance __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
-       PARROT_ASSERT_ARG(interp) \
-    , PARROT_ASSERT_ARG(i))
+       PARROT_ASSERT_ARG(i))
 #define ASSERT_ARGS_ucs2_encode_and_advance __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
-       PARROT_ASSERT_ARG(interp) \
-    , PARROT_ASSERT_ARG(i))
+       PARROT_ASSERT_ARG(i))
 #define ASSERT_ARGS_ucs2_hash __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
        PARROT_ASSERT_ARG(interp) \
     , PARROT_ASSERT_ARG(s))
@@ -415,12 +410,12 @@ Moves the string iterator C<i> to the next UCS-2 codepoint.
 */
 
 static UINTVAL
-ucs2_decode_and_advance(PARROT_INTERP, ARGMOD(String_iter *i))
+ucs2_decode_and_advance(SHIM_INTERP, ARGMOD(String_iter *i))
 {
     ASSERT_ARGS(ucs2_decode_and_advance)
 
 #if PARROT_HAS_ICU
-    const UChar * const s = (UChar*) i->str->strstart;
+    const UChar * const s = (const UChar*) i->str->strstart;
     size_t pos = i->bytepos / sizeof (UChar);
 
     /* TODO either make sure that we don't go past end or use SAFE
@@ -435,7 +430,6 @@ ucs2_decode_and_advance(PARROT_INTERP, ARGMOD(String_iter *i))
      * See TT #557
      */
     PARROT_ASSERT(0);
-    UNUSED(interp);
     UNUSED(i);
     return (UINTVAL)0; /* Stop the static analyzers from panicing */
 #endif
@@ -454,7 +448,7 @@ next position in the string.
 */
 
 static void
-ucs2_encode_and_advance(PARROT_INTERP, ARGMOD(String_iter *i), UINTVAL c)
+ucs2_encode_and_advance(SHIM_INTERP, ARGMOD(String_iter *i), UINTVAL c)
 {
     ASSERT_ARGS(ucs2_encode_and_advance)
 
@@ -468,7 +462,6 @@ ucs2_encode_and_advance(PARROT_INTERP, ARGMOD(String_iter *i), UINTVAL c)
     /* This function must never be called if compiled without ICU.
      * See TT #557
      */
-    UNUSED(interp);
     UNUSED(i);
     UNUSED(c);
     PARROT_ASSERT(0);
@@ -554,6 +547,7 @@ iter_init(PARROT_INTERP, ARGIN(const STRING *src), ARGOUT(String_iter *iter))
 {
     ASSERT_ARGS(iter_init)
 #if PARROT_HAS_ICU
+    UNUSED(interp);
     iter->str             = src;
     iter->bytepos         = 0;
     iter->charpos         = 0;

@@ -62,13 +62,15 @@ static int maybe_add_sub_to_namespace(PARROT_INTERP,
         __attribute__nonnull__(3)
         __attribute__nonnull__(4);
 
+PARROT_WARN_UNUSED_RESULT
 static int ns_insert_sub_keyed_str(PARROT_INTERP,
     ARGIN(PMC *self),
     ARGIN(STRING *key),
-    ARGIN_NULLOK(PMC *value))
+    ARGIN(PMC *value))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
-        __attribute__nonnull__(3);
+        __attribute__nonnull__(3)
+        __attribute__nonnull__(4);
 
 #define ASSERT_ARGS_add_multi_to_namespace __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
        PARROT_ASSERT_ARG(interp) \
@@ -91,7 +93,8 @@ static int ns_insert_sub_keyed_str(PARROT_INTERP,
 #define ASSERT_ARGS_ns_insert_sub_keyed_str __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
        PARROT_ASSERT_ARG(interp) \
     , PARROT_ASSERT_ARG(self) \
-    , PARROT_ASSERT_ARG(key))
+    , PARROT_ASSERT_ARG(key) \
+    , PARROT_ASSERT_ARG(value))
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 /* HEADERIZER END: static */
 
@@ -117,9 +120,10 @@ add_to_class(PARROT_INTERP, ARGMOD(Parrot_NameSpace_attributes *nsinfo),
     }
 }
 
+PARROT_WARN_UNUSED_RESULT
 static int
 ns_insert_sub_keyed_str(PARROT_INTERP, ARGIN(PMC *self), ARGIN(STRING *key),
-        ARGIN_NULLOK(PMC *value))
+        ARGIN(PMC *value))
 {
     ASSERT_ARGS(ns_insert_sub_keyed_str)
 
@@ -128,6 +132,7 @@ ns_insert_sub_keyed_str(PARROT_INTERP, ARGIN(PMC *self), ARGIN(STRING *key),
     PMC              * const classobj = VTABLE_get_class(interp, self);
     STRING           * vtable_key     = STRINGNULL;
     Parrot_Sub_attributes *sub;
+    INTVAL stored = 0;
 
     PMC_get_sub(interp, value, sub);
 
@@ -152,6 +157,8 @@ ns_insert_sub_keyed_str(PARROT_INTERP, ARGIN(PMC *self), ARGIN(STRING *key),
             /* Insert it. */
             VTABLE_set_pmc_keyed_int(interp, vtable, sub->vtable_index, value);
         }
+        if (!(sub->comp_flags & SUB_COMP_FLAG_NSENTRY))
+            stored = 1;
     }
 
     if (sub->comp_flags & SUB_COMP_FLAG_METHOD) {
@@ -166,9 +173,12 @@ ns_insert_sub_keyed_str(PARROT_INTERP, ARGIN(PMC *self), ARGIN(STRING *key),
             method_name = sub->method_name;
         }
         add_to_class(interp, nsinfo, classobj, method_name, value);
+
+        if (!(sub->comp_flags & SUB_COMP_FLAG_NSENTRY))
+            stored = 1;
     }
 
-    return 0;
+    return stored;
 }
 
 PARROT_WARN_UNUSED_RESULT
