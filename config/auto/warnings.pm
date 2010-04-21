@@ -113,6 +113,7 @@ sub _init {
         -Wcomment
         -Wdisabled-optimization
         -Wdiv-by-zero
+        -Wenum-compare
         -Wendif-labels
         -Wextra
         -Wformat
@@ -125,6 +126,7 @@ sub _init {
         -Winit-self
         -Winline
         -Winvalid-pch
+        -Wjump-misses-init
         -Wlogical-op
         -Wmissing-braces
         -Wmissing-field-initializers
@@ -247,13 +249,21 @@ sub _init {
         -Wwrite-strings
         ),
         # Disable some warnings and notifications that are overly noisy
-        '-diag-disable 981',  # Operands are evaluated in unspecified order
-        '-diag-disable 2259', # Non-pointer conversion from "typeA" to "typeB" may lose significant bits
+        '-diag-disable 271',  # trailing comma is nonstandard
+        '-diag-disable 981',  # operands are evaluated in unspecified order
+        '-diag-disable 1572', # floating-point equality and inequality comparisons are unreliable
+        '-diag-disable 2259', # non-pointer conversion from "typeA" to "typeB" may lose significant bits
+    ];
+    $icc->{'cage'} = [
+        # http://software.intel.com/sites/products/documentation/hpc/compilerpro/en-us/cpp/lin/compiler_c/bldaps_cls/common/bldaps_svover.htm
+        '-diag-enable sc3',
+        '-diag-enable sc-include',
     ];
 
     $data->{'warnings'}{'gcc'} = $gcc;
     $data->{'warnings'}{'g++'} = $gpp;
     $data->{'warnings'}{'icc'} = $icc;
+    $data->{'warnings'}{'clang'} = $gcc;
 
     ## end gcc/g++
 
@@ -272,6 +282,9 @@ sub runstep {
     }
     elsif ( $conf->option_or_data('cc') =~ /icc/ ) {
         $compiler = 'icc';
+    }
+    elsif ( $conf->option_or_data('cc') =~ /clang/ ) {
+        $compiler = 'clang';
     }
 
     if ($compiler eq '') {

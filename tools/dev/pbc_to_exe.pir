@@ -1,5 +1,5 @@
 #! parrot
-# Copyright (C) 2009, Parrot Foundation.
+# Copyright (C) 2009-2010, Parrot Foundation.
 # $Id$
 
 =head1 NAME
@@ -32,7 +32,7 @@ Warning! With --install there must be no directory prefix in the first arg yet.
     .local string objfile
     .local string exefile
 
-    (infile, cfile, objfile, exefile) = 'handle_args'(argv)
+    (infile :optional, cfile :optional, objfile :optional, exefile :optional) = 'handle_args'(argv)
     unless infile > '' goto err_infile
 
     .local string code_type
@@ -66,7 +66,7 @@ HEADER
     print outfh, codestring
 
     print outfh, <<'MAIN'
-        int main(int argc, char *argv[])
+        int main(int argc, const char *argv[])
         {
             PackFile     *pf;
             Parrot_Interp interp;
@@ -155,8 +155,8 @@ MAIN
   check_install:
     .local string infile, install
 
-    $P0    = shift args
-    infile = shift args
+    $P0     = shift args
+    infile  = shift args
     install = shift args
     if install == '--install' goto proper_install
     .return ()
@@ -217,9 +217,12 @@ MAIN
     .local pmc ifh
     ifh = open infile, 'r'
     unless ifh goto err_infile
-    .local string codestring
+
+    .local pmc codestring
     .local int size
-    codestring = "const Parrot_UInt1 program_code[] = {"
+
+    codestring = new [ 'ResizableStringArray' ]
+    push codestring, "const Parrot_UInt1 program_code[] = {"
     size = 0
 
   read_loop:
@@ -236,13 +239,13 @@ MAIN
     unless pos < pbclength goto code_done
     $I0 = ord pbcstring, pos
     $S0 = $I0
-    codestring .= $S0
-    codestring .= ','
+    push codestring, $S0
+    push codestring, ','
     inc pos
     inc size
     $I0 = size % 32
     unless $I0 == 0 goto code_loop
-    codestring .= "\n"
+    push codestring, "\n"
     goto code_loop
   code_done:
     goto read_loop
@@ -250,19 +253,19 @@ MAIN
   read_done:
     close ifh
 
-    codestring .= "\n};\n\n"
-    codestring .= "const int bytecode_size = "
+    push codestring, "\n};\n\nconst int bytecode_size = "
     $S0 = size
-    codestring .= $S0
-    codestring .= ";\n"
-    codestring .= <<'END_OF_FUNCTION'
+    push codestring, $S0
+    push codestring, ";\n"
+    push codestring, <<'END_OF_FUNCTION'
         const void * get_program_code(void)
         {
             return program_code;
         }
 END_OF_FUNCTION
 
-    .return (codestring)
+    $S0 = join '', codestring
+    .return ($S0)
 
   err_infile:
     die "cannot open infile"
@@ -307,10 +310,13 @@ END_OF_FUNCTION
     .local pmc encoding_table
     encoding_table = 'generate_encoding_table'()
 
-    .local string codestring
+    .local pmc codestring
     .local int size
-    codestring = "const char * program_code =\n"
-    codestring .= '"'
+
+    codestring = new ['ResizableStringArray']
+
+    push codestring, "const char * program_code =\n"
+    push codestring, '"'
     size = 0
 
   read_loop:
@@ -327,14 +333,14 @@ END_OF_FUNCTION
     unless pos < pbclength goto code_done
     $I0 = ord pbcstring, pos
     $S0 = encoding_table[$I0]
-    codestring .= $S0
+    push codestring, $S0
     inc pos
     inc size
     $I0 = size % 32
     unless $I0 == 0 goto code_loop
-    codestring .= '"'
-    codestring .= "\n"
-    codestring .= '"'
+    push codestring, '"'
+    push codestring, "\n"
+    push codestring, '"'
     goto code_loop
   code_done:
     goto read_loop
@@ -342,21 +348,22 @@ END_OF_FUNCTION
   read_done:
     close ifh
 
-    codestring .= '"'
-    codestring .= "\n;\n\n"
-    codestring .= "const int bytecode_size = "
+    push codestring, '"'
+    push codestring, "\n;\n\n"
+    push codestring, "const int bytecode_size = "
     $S0 = size
-    codestring .= $S0
-    codestring .= ";\n"
+    push codestring, $S0
+    push codestring, ";\n"
 
-    codestring .= <<'END_OF_FUNCTION'
+    push codestring, <<'END_OF_FUNCTION'
         const void * get_program_code(void)
         {
             return program_code;
         }
 END_OF_FUNCTION
 
-    .return (codestring)
+    $S0 = join '', codestring
+    .return ($S0)
 
   err_infile:
     die "cannot open infile"
@@ -687,19 +694,14 @@ END_OF_FUNCTION
 .sub 'prepend_installable'
     .param string file
 
-    $P0   = '_config'()
-
-    .local string slash
-    slash = $P0['slash']
-
     .local pmc path
-    path = split slash, file
+    path     = split '/', file
 
     file     = path[-1]
     file     = concat 'installable_', file
     path[-1] = file
 
-    file     = join slash, path
+    file     = join '/', path
 
     .return( file )
 .end

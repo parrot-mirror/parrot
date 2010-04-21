@@ -36,6 +36,10 @@ more information.
 
 */
 
+/* HEADERIZER HFILE: none */
+/* HEADERIZER BEGIN: static */
+/* HEADERIZER END: static */
+
 
 /*
  * A Continuation (and RetContinuation, ExceptionHandler) has in its
@@ -74,15 +78,6 @@ Initializes the continuation.
         SET_ATTR_address(INTERP, SELF, NULL);
 
         PObj_custom_mark_SET(SELF);
-
-        /* PANIC("don't do that"); */
-        /*
-         * Whenever we create a continuation, all return continuations
-         * up the call chain may be reused due to invoking the
-         * continuation. To avoid that all return continuations are
-         * converted to true continuations.
-         */
-        invalidate_retc_context(INTERP, SELF);
     }
 
     /*if they pass in a PMC to initialize with*/
@@ -105,15 +100,6 @@ Initializes the continuation.
         SET_ATTR_address(INTERP, SELF, address);
 
         PObj_custom_mark_SET(SELF);
-
-        /* PANIC("don't do that"); */
-        /*
-         * Whenever we create a continuation, all return continuations
-         * up the call chain may be reused due to invoking the
-         * continuation. To avoid that all return continuations are
-         * converted to true continuations.
-         */
-        invalidate_retc_context(INTERP, SELF);
     }
 
 
@@ -262,19 +248,7 @@ destination to continue execution.
         Parrot_continuation_rewind_environment(INTERP, SELF);
 
         if (!PMC_IS_NULL(from_obj)) {
-            STRING * const string_sig = VTABLE_get_string(INTERP, from_obj);
-            /* If there is no string - there is no args */
-            if (string_sig) {
-                PMC *raw_sig, *invalid_sig;
-                Parrot_pcc_parse_signature_string(INTERP, string_sig, &raw_sig, &invalid_sig);
-
-                /* Build results signature for continuation */
-                if (*pc == PARROT_OP_get_results_pc)
-                    call_obj = Parrot_pcc_build_sig_object_returns_from_op(INTERP, call_obj,
-                        Parrot_pcc_get_pmc_constant(INTERP, to_ctx, pc[1]), pc);
-
-                Parrot_pcc_fill_returns_from_continuation(INTERP, call_obj, raw_sig, from_obj);
-            }
+            Parrot_pcc_set_signature(INTERP, CURRENT_CONTEXT(INTERP), from_obj);
         }
 
         /* switch segment */

@@ -44,7 +44,7 @@ static PMC* set_current_sub(PARROT_INTERP)
         __attribute__nonnull__(1);
 
 PARROT_CANNOT_RETURN_NULL
-static PMC* setup_argv(PARROT_INTERP, int argc, ARGIN(char **argv))
+static PMC* setup_argv(PARROT_INTERP, int argc, ARGIN(const char **argv))
         __attribute__nonnull__(1)
         __attribute__nonnull__(3);
 
@@ -586,7 +586,7 @@ Loads the C<PackFile> returned by C<Parrot_pbc_read()>.
 
 PARROT_EXPORT
 void
-Parrot_pbc_load(PARROT_INTERP, NOTNULL(PackFile *pf))
+Parrot_pbc_load(PARROT_INTERP, ARGIN(PackFile *pf))
 {
     if (!pf) {
         Parrot_io_eprintf(interp, "Invalid packfile\n");
@@ -618,7 +618,7 @@ Parrot_pbc_fixup_loaded(PARROT_INTERP)
 
 /*
 
-=item C<static PMC* setup_argv(PARROT_INTERP, int argc, char **argv)>
+=item C<static PMC* setup_argv(PARROT_INTERP, int argc, const char **argv)>
 
 Creates and returns C<ARGS> array PMC.
 
@@ -628,7 +628,7 @@ Creates and returns C<ARGS> array PMC.
 
 PARROT_CANNOT_RETURN_NULL
 static PMC*
-setup_argv(PARROT_INTERP, int argc, ARGIN(char **argv))
+setup_argv(PARROT_INTERP, int argc, ARGIN(const char **argv))
 {
     ASSERT_ARGS(setup_argv)
     PMC   * const userargv = Parrot_pmc_new(interp, enum_class_ResizableStringArray);
@@ -702,7 +702,7 @@ static PMC*
 set_current_sub(PARROT_INTERP)
 {
     ASSERT_ARGS(set_current_sub)
-    PMC *sub_pmc;
+    PMC *new_sub_pmc;
 
     PackFile_ByteCode   * const cur_cs = interp->code;
     PackFile_FixupTable * const ft     = cur_cs->fixups;
@@ -739,16 +739,16 @@ set_current_sub(PARROT_INTERP)
     /* If we didn't find anything, put a dummy PMC into current_sub.
        The default values set by SUb.init are appropiate for the
        dummy, don't need additional settings. */
-    sub_pmc                      = Parrot_pmc_new(interp, enum_class_Sub);
-    Parrot_pcc_set_sub(interp, CURRENT_CONTEXT(interp), sub_pmc);
+    new_sub_pmc = Parrot_pmc_new(interp, enum_class_Sub);
+    Parrot_pcc_set_sub(interp, CURRENT_CONTEXT(interp), new_sub_pmc);
 
-    return sub_pmc;
+    return new_sub_pmc;
 }
 
 
 /*
 
-=item C<void Parrot_runcode(PARROT_INTERP, int argc, char **argv)>
+=item C<void Parrot_runcode(PARROT_INTERP, int argc, const char **argv)>
 
 Sets up C<ARGV> and runs the ops.
 
@@ -758,7 +758,7 @@ Sets up C<ARGV> and runs the ops.
 
 PARROT_EXPORT
 void
-Parrot_runcode(PARROT_INTERP, int argc, ARGIN(char **argv))
+Parrot_runcode(PARROT_INTERP, int argc, ARGIN(const char **argv))
 {
     PMC *userargv, *main_sub;
 
@@ -803,7 +803,7 @@ Parrot_runcode(PARROT_INTERP, int argc, ARGIN(char **argv))
 /*
 
 =item C<opcode_t * Parrot_debug(PARROT_INTERP, Parrot_Interp debugger, opcode_t
-* pc)>
+*pc)>
 
 Runs the interpreter's bytecode in debugging mode.
 
@@ -814,7 +814,7 @@ Runs the interpreter's bytecode in debugging mode.
 PARROT_EXPORT
 PARROT_CAN_RETURN_NULL
 opcode_t *
-Parrot_debug(PARROT_INTERP, NOTNULL(Parrot_Interp debugger), opcode_t * pc)
+Parrot_debug(PARROT_INTERP, ARGIN(Parrot_Interp debugger), ARGIN(opcode_t *pc))
 {
     PDB_t      * const pdb = debugger->pdb;
 
@@ -1105,7 +1105,8 @@ Parrot_compile_string(PARROT_INTERP, Parrot_String type,
 
     if (!interp->initial_pf) {
         /* SIDE EFFECT: PackFile_new_dummy sets interp->initial_pf */
-        PackFile_new_dummy(interp, Parrot_str_new_constant(interp, "compile_string"));
+        interp->initial_pf = PackFile_new_dummy(interp,
+            Parrot_str_new_constant(interp, "compile_string"));
         /* Assumption: there is no valid reason to fail to create it.
          * If the assumption changes, replace the assertion with a
          * runtime check */

@@ -277,11 +277,7 @@ instruction_writes(ARGIN(const Instruction *ins), ARGIN(const SymReg *r))
     const int f = ins->flags;
     int j;
 
-    /*
-     * a get_results opcode is before the actual sub call
-     * but for the register allocator, the effect matters, thus
-     * postpone the effect after the invoke
-     */
+    /* a get_results opcode occurs after the actual sub call */
     if (ins->opnum == PARROT_OP_get_results_pc) {
         int i;
 
@@ -289,7 +285,7 @@ instruction_writes(ARGIN(const Instruction *ins), ARGIN(const SymReg *r))
          * an ExceptionHandler, which doesn't have
          * a call next
          */
-        if (ins->next && (ins->next->type & ITPCCSUB))
+        if (ins->prev && (ins->prev->type & ITPCCSUB))
             return 0;
 
         for (i = ins->symreg_count - 1; i >= 0; --i) {
@@ -308,7 +304,7 @@ instruction_writes(ARGIN(const Instruction *ins), ARGIN(const SymReg *r))
          * structure
          */
         while (ins && ins->opnum != PARROT_OP_get_results_pc)
-            ins = ins->prev;
+            ins = ins->next;
 
         if (!ins)
             return 0;
@@ -343,6 +339,7 @@ instruction_writes(ARGIN(const Instruction *ins), ARGIN(const SymReg *r))
 
     return 0;
 }
+
 
 /*
 
@@ -816,6 +813,8 @@ e_file_open(PARROT_INTERP, ARGIN(const char *param))
 
 =item C<static int e_file_close(PARROT_INTERP, void *param)>
 
+Close STDOUT
+
 =cut
 
 */
@@ -834,6 +833,8 @@ e_file_close(PARROT_INTERP, SHIM(void *param))
 
 =item C<static int e_file_emit(PARROT_INTERP, void *param, const IMC_Unit *unit,
 const Instruction *ins)>
+
+emit the Instruction C<ins> to the given IMC_Unit C<unit>, passing C<param>
 
 =cut
 
