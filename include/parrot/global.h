@@ -20,7 +20,7 @@ PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 PMC * Parrot_find_global_cur(PARROT_INTERP,
-    ARGIN_NULLOK(STRING *globalname))
+    ARGIN_NULLOK(const STRING *globalname))
         __attribute__nonnull__(1);
 
 PARROT_EXPORT
@@ -28,7 +28,7 @@ PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 PMC * Parrot_find_global_n(PARROT_INTERP,
     ARGIN_NULLOK(PMC *ns),
-    ARGIN_NULLOK(STRING *globalname))
+    ARGIN_NULLOK(const STRING *globalname))
         __attribute__nonnull__(1);
 
 PARROT_EXPORT
@@ -36,7 +36,7 @@ PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 PMC * Parrot_find_global_op(PARROT_INTERP,
     ARGIN(PMC *ns),
-    ARGIN_NULLOK(STRING *globalname),
+    ARGIN_NULLOK(const STRING *globalname),
     ARGIN_NULLOK(void *next))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
@@ -45,15 +45,15 @@ PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 PMC * Parrot_find_global_s(PARROT_INTERP,
-    ARGIN_NULLOK(STRING *str_key),
-    ARGIN_NULLOK(STRING *globalname))
+    ARGIN_NULLOK(const STRING *str_key),
+    ARGIN_NULLOK(const STRING *globalname))
         __attribute__nonnull__(1);
 
 PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 PMC * Parrot_find_name_op(PARROT_INTERP,
-    ARGIN(STRING *name),
+    ARGIN(const STRING *name),
     SHIM(void *next))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
@@ -63,7 +63,7 @@ PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 PMC * Parrot_get_global(PARROT_INTERP,
     ARGIN_NULLOK(PMC *ns),
-    ARGIN_NULLOK(STRING *globalname))
+    ARGIN_NULLOK(const STRING *globalname))
         __attribute__nonnull__(1);
 
 PARROT_EXPORT
@@ -81,7 +81,7 @@ PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 PMC * Parrot_get_namespace_keyed_str(PARROT_INTERP,
     ARGIN(PMC *base_ns),
-    ARGIN_NULLOK(STRING *str_key))
+    ARGIN_NULLOK(const STRING *str_key))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
@@ -106,7 +106,7 @@ PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 PMC * Parrot_make_namespace_keyed_str(PARROT_INTERP,
     ARGIN(PMC *base_ns),
-    ARGIN(STRING *str_key))
+    ARGIN(const STRING *str_key))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3);
@@ -121,21 +121,21 @@ PMC * Parrot_ns_get_name(PARROT_INTERP, ARGIN(PMC *_namespace))
 PARROT_EXPORT
 void Parrot_set_global(PARROT_INTERP,
     ARGIN_NULLOK(PMC *ns),
-    ARGIN_NULLOK(STRING *globalname),
+    ARGIN_NULLOK(const STRING *globalname),
     ARGIN_NULLOK(PMC *val))
         __attribute__nonnull__(1);
 
 PARROT_EXPORT
 void Parrot_store_global_n(PARROT_INTERP,
     ARGIN_NULLOK(PMC *ns),
-    ARGIN_NULLOK(STRING *globalname),
+    ARGIN_NULLOK(const STRING *globalname),
     ARGIN_NULLOK(PMC *val))
         __attribute__nonnull__(1);
 
 PARROT_EXPORT
 void Parrot_store_global_s(PARROT_INTERP,
-    ARGIN_NULLOK(STRING *str_key),
-    ARGIN_NULLOK(STRING *globalname),
+    ARGIN_NULLOK(const STRING *str_key),
+    ARGIN_NULLOK(const STRING *globalname),
     ARGIN_NULLOK(PMC *val))
         __attribute__nonnull__(1);
 

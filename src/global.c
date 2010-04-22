@@ -57,7 +57,7 @@ PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 static PMC * internal_ns_keyed_str(PARROT_INTERP,
     ARGIN(PMC *base_ns),
-    ARGIN(STRING *key),
+    ARGIN(const STRING *key),
     int flags)
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
@@ -67,7 +67,7 @@ PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 static PMC * internal_ns_maybe_create(PARROT_INTERP,
     ARGIN(PMC *ns),
-    ARGIN(STRING *key),
+    ARGIN(const STRING *key),
     int flags)
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
@@ -113,8 +113,8 @@ static void store_sub_in_multi(PARROT_INTERP,
 
 /*
 
-=item C<static PMC * internal_ns_keyed_str(PARROT_INTERP, PMC *base_ns, STRING
-*key, int flags)>
+=item C<static PMC * internal_ns_keyed_str(PARROT_INTERP, PMC *base_ns, const
+STRING *key, int flags)>
 
 Internal function to do keyed namespace lookup relative to a given namespace
 PMC.  Understands STRINGs.
@@ -127,7 +127,7 @@ PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 static PMC *
 internal_ns_keyed_str(PARROT_INTERP, ARGIN(PMC *base_ns),
-    ARGIN(STRING *key), int flags)
+        ARGIN(const STRING *key), int flags)
 {
     ASSERT_ARGS(internal_ns_keyed_str)
     PMC * const ns = VTABLE_get_pmc_keyed_str(interp, base_ns, key);
@@ -224,8 +224,8 @@ internal_ns_keyed(PARROT_INTERP, ARGIN(PMC *base_ns), ARGIN(PMC *pmc_key), int f
 
 /*
 
-=item C<static PMC * internal_ns_maybe_create(PARROT_INTERP, PMC *ns, STRING
-*key, int flags)>
+=item C<static PMC * internal_ns_maybe_create(PARROT_INTERP, PMC *ns, const
+STRING *key, int flags)>
 
 Given the a namespace PMC, a STRING containing a name, and flags from
 C<internal_ns_keyed> or C<internal_ns_keyed_str>, creates and returns a new
@@ -239,7 +239,8 @@ function only.
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 static PMC *
-internal_ns_maybe_create(PARROT_INTERP, ARGIN(PMC *ns), ARGIN(STRING *key), int flags)
+internal_ns_maybe_create(PARROT_INTERP, ARGIN(PMC *ns),
+        ARGIN(const STRING *key), int flags)
 {
     ASSERT_ARGS(internal_ns_maybe_create)
     PMC *sub_ns;
@@ -286,8 +287,8 @@ Parrot_get_namespace_keyed(PARROT_INTERP, ARGIN(PMC *base_ns), ARGIN(PMC *pmc_ke
 
 /*
 
-=item C<PMC * Parrot_get_namespace_keyed_str(PARROT_INTERP, PMC *base_ns, STRING
-*str_key)>
+=item C<PMC * Parrot_get_namespace_keyed_str(PARROT_INTERP, PMC *base_ns, const
+STRING *str_key)>
 
 Find the namespace relative to the namespace C<base_ns> with the string key
 C<str_key>.  Return the namespace, or NULL if not found.
@@ -301,7 +302,7 @@ PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 PMC *
 Parrot_get_namespace_keyed_str(PARROT_INTERP, ARGIN(PMC *base_ns),
-        ARGIN_NULLOK(STRING *str_key))
+        ARGIN_NULLOK(const STRING *str_key))
 {
     ASSERT_ARGS(Parrot_get_namespace_keyed_str)
     return internal_ns_keyed_str(interp, base_ns, str_key, 0);
@@ -333,7 +334,7 @@ Parrot_make_namespace_keyed(PARROT_INTERP, ARGIN(PMC *base_ns),
 
 /*
 
-=item C<PMC * Parrot_make_namespace_keyed_str(PARROT_INTERP, PMC *base_ns,
+=item C<PMC * Parrot_make_namespace_keyed_str(PARROT_INTERP, PMC *base_ns, const
 STRING *str_key)>
 
 Find, or create if necessary, the namespace relative to the namespace
@@ -349,7 +350,7 @@ PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 PMC *
 Parrot_make_namespace_keyed_str(PARROT_INTERP, ARGIN(PMC *base_ns),
-        ARGIN(STRING *str_key))
+        ARGIN(const STRING *str_key))
 {
     ASSERT_ARGS(Parrot_make_namespace_keyed_str)
     return internal_ns_keyed_str(interp, base_ns, str_key, INTERN_NS_CREAT);
@@ -409,7 +410,8 @@ Parrot_ns_get_name(PARROT_INTERP, ARGIN(PMC *_namespace))
 
 /*
 
-=item C<PMC * Parrot_get_global(PARROT_INTERP, PMC *ns, STRING *globalname)>
+=item C<PMC * Parrot_get_global(PARROT_INTERP, PMC *ns, const STRING
+*globalname)>
 
 Parrot_get_global allows a null namespace without throwing an exception; it
 simply returns PMCNULL in that case.
@@ -443,7 +445,8 @@ PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 PMC *
-Parrot_get_global(PARROT_INTERP, ARGIN_NULLOK(PMC *ns), ARGIN_NULLOK(STRING *globalname))
+Parrot_get_global(PARROT_INTERP, ARGIN_NULLOK(PMC *ns),
+        ARGIN_NULLOK(const STRING *globalname))
 {
     ASSERT_ARGS(Parrot_get_global)
     if (PMC_IS_NULL(ns))
@@ -454,8 +457,8 @@ Parrot_get_global(PARROT_INTERP, ARGIN_NULLOK(PMC *ns), ARGIN_NULLOK(STRING *glo
 
 /*
 
-=item C<void Parrot_set_global(PARROT_INTERP, PMC *ns, STRING *globalname, PMC
-*val)>
+=item C<void Parrot_set_global(PARROT_INTERP, PMC *ns, const STRING *globalname,
+PMC *val)>
 
 Set the global named C<globalname> in the namespace C<ns> to the value C<val>.
 
@@ -466,7 +469,7 @@ Set the global named C<globalname> in the namespace C<ns> to the value C<val>.
 PARROT_EXPORT
 void
 Parrot_set_global(PARROT_INTERP, ARGIN_NULLOK(PMC *ns),
-        ARGIN_NULLOK(STRING *globalname), ARGIN_NULLOK(PMC *val))
+        ARGIN_NULLOK(const STRING *globalname), ARGIN_NULLOK(PMC *val))
 {
     ASSERT_ARGS(Parrot_set_global)
     VTABLE_set_pmc_keyed_str(interp, ns, globalname, val);
@@ -475,7 +478,8 @@ Parrot_set_global(PARROT_INTERP, ARGIN_NULLOK(PMC *ns),
 
 /*
 
-=item C<PMC * Parrot_find_global_n(PARROT_INTERP, PMC *ns, STRING *globalname)>
+=item C<PMC * Parrot_find_global_n(PARROT_INTERP, PMC *ns, const STRING
+*globalname)>
 
 Search the namespace PMC C<ns> for an object with name C<globalname>.
 Return the object, or NULL if not found.
@@ -491,7 +495,8 @@ PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 PMC *
-Parrot_find_global_n(PARROT_INTERP, ARGIN_NULLOK(PMC *ns), ARGIN_NULLOK(STRING *globalname))
+Parrot_find_global_n(PARROT_INTERP, ARGIN_NULLOK(PMC *ns),
+        ARGIN_NULLOK(const STRING *globalname))
 {
     ASSERT_ARGS(Parrot_find_global_n)
     PMC *res;
@@ -519,7 +524,7 @@ Parrot_find_global_n(PARROT_INTERP, ARGIN_NULLOK(PMC *ns), ARGIN_NULLOK(STRING *
 
 /*
 
-=item C<PMC * Parrot_find_global_cur(PARROT_INTERP, STRING *globalname)>
+=item C<PMC * Parrot_find_global_cur(PARROT_INTERP, const STRING *globalname)>
 
 Finds and returns the data time named C<globalname> in the current namespace.
 
@@ -531,7 +536,7 @@ PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 PMC *
-Parrot_find_global_cur(PARROT_INTERP, ARGIN_NULLOK(STRING *globalname))
+Parrot_find_global_cur(PARROT_INTERP, ARGIN_NULLOK(const STRING *globalname))
 {
     ASSERT_ARGS(Parrot_find_global_cur)
     PMC * const ns = Parrot_pcc_get_namespace(interp, CURRENT_CONTEXT(interp));
@@ -540,8 +545,8 @@ Parrot_find_global_cur(PARROT_INTERP, ARGIN_NULLOK(STRING *globalname))
 
 /*
 
-=item C<PMC * Parrot_find_global_s(PARROT_INTERP, STRING *str_key, STRING
-*globalname)>
+=item C<PMC * Parrot_find_global_s(PARROT_INTERP, const STRING *str_key, const
+STRING *globalname)>
 
 Search the namespace designated by C<str_key>, or the HLL root if
 C<str_key> is NULL, for an object with name C<globalname>.  Return the
@@ -558,8 +563,8 @@ PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 PMC *
-Parrot_find_global_s(PARROT_INTERP, ARGIN_NULLOK(STRING *str_key),
-        ARGIN_NULLOK(STRING *globalname))
+Parrot_find_global_s(PARROT_INTERP, ARGIN_NULLOK(const STRING *str_key),
+        ARGIN_NULLOK(const STRING *globalname))
 {
     ASSERT_ARGS(Parrot_find_global_s)
     PMC *const ns =
@@ -571,8 +576,8 @@ Parrot_find_global_s(PARROT_INTERP, ARGIN_NULLOK(STRING *str_key),
 
 /*
 
-=item C<void Parrot_store_global_n(PARROT_INTERP, PMC *ns, STRING *globalname,
-PMC *val)>
+=item C<void Parrot_store_global_n(PARROT_INTERP, PMC *ns, const STRING
+*globalname, PMC *val)>
 
 Store the PMC C<val> into the namespace PMC C<ns> with name C<globalname>.
 
@@ -583,7 +588,7 @@ Store the PMC C<val> into the namespace PMC C<ns> with name C<globalname>.
 PARROT_EXPORT
 void
 Parrot_store_global_n(PARROT_INTERP, ARGIN_NULLOK(PMC *ns),
-        ARGIN_NULLOK(STRING *globalname), ARGIN_NULLOK(PMC *val))
+        ARGIN_NULLOK(const STRING *globalname), ARGIN_NULLOK(PMC *val))
 {
     ASSERT_ARGS(Parrot_store_global_n)
 #if DEBUG_GLOBAL
@@ -599,8 +604,8 @@ Parrot_store_global_n(PARROT_INTERP, ARGIN_NULLOK(PMC *ns),
 
 /*
 
-=item C<void Parrot_store_global_s(PARROT_INTERP, STRING *str_key, STRING
-*globalname, PMC *val)>
+=item C<void Parrot_store_global_s(PARROT_INTERP, const STRING *str_key, const
+STRING *globalname, PMC *val)>
 
 Store the PMC C<val> into the namespace designated by C<str_key>, or
 the HLL root if C<str_key> is NULL, with the name C<globalname>.
@@ -611,8 +616,8 @@ the HLL root if C<str_key> is NULL, with the name C<globalname>.
 
 PARROT_EXPORT
 void
-Parrot_store_global_s(PARROT_INTERP, ARGIN_NULLOK(STRING *str_key),
-        ARGIN_NULLOK(STRING *globalname), ARGIN_NULLOK(PMC *val))
+Parrot_store_global_s(PARROT_INTERP, ARGIN_NULLOK(const STRING *str_key),
+        ARGIN_NULLOK(const STRING *globalname), ARGIN_NULLOK(PMC *val))
 {
     ASSERT_ARGS(Parrot_store_global_s)
     PMC * const ns = Parrot_make_namespace_keyed_str(interp,
@@ -628,8 +633,8 @@ Parrot_store_global_s(PARROT_INTERP, ARGIN_NULLOK(STRING *str_key),
 
 /*
 
-=item C<PMC * Parrot_find_global_op(PARROT_INTERP, PMC *ns, STRING *globalname,
-void *next)>
+=item C<PMC * Parrot_find_global_op(PARROT_INTERP, PMC *ns, const STRING
+*globalname, void *next)>
 
 If the global exists in the given namespace PMC, return it.  If not, return
 PMCNULL.
@@ -643,7 +648,7 @@ PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 PMC *
 Parrot_find_global_op(PARROT_INTERP, ARGIN(PMC *ns),
-        ARGIN_NULLOK(STRING *globalname), ARGIN_NULLOK(void *next))
+        ARGIN_NULLOK(const STRING *globalname), ARGIN_NULLOK(void *next))
 {
     ASSERT_ARGS(Parrot_find_global_op)
     PMC *res;
@@ -662,7 +667,8 @@ Parrot_find_global_op(PARROT_INTERP, ARGIN(PMC *ns),
 
 /*
 
-=item C<PMC * Parrot_find_name_op(PARROT_INTERP, STRING *name, void *next)>
+=item C<PMC * Parrot_find_name_op(PARROT_INTERP, const STRING *name, void
+*next)>
 
 TT #1223 - THIS IS BROKEN - it doesn't walk up the scopes yet
 
@@ -678,7 +684,7 @@ PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 PMC *
-Parrot_find_name_op(PARROT_INTERP, ARGIN(STRING *name), SHIM(void *next))
+Parrot_find_name_op(PARROT_INTERP, ARGIN(const STRING *name), SHIM(void *next))
 {
     ASSERT_ARGS(Parrot_find_name_op)
     PMC * const ctx     = CURRENT_CONTEXT(interp);
