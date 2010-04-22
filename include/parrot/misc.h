@@ -144,7 +144,7 @@ PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 STRING * Parrot_psprintf(PARROT_INTERP,
-    ARGIN(STRING *pat),
+    ARGIN(const STRING *pat),
     ARGOUT(PMC *ary))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)

@@ -222,7 +222,7 @@ Parrot_snprintf(PARROT_INTERP, ARGOUT(char *targ), size_t len,
 
 /*
 
-=item C<STRING * Parrot_psprintf(PARROT_INTERP, STRING *pat, PMC *ary)>
+=item C<STRING * Parrot_psprintf(PARROT_INTERP, const STRING *pat, PMC *ary)>
 
 Calls C<Parrot_sprintf_format()> with the insertion arguments in an
 C<Array> PMC.
@@ -235,7 +235,7 @@ PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 STRING *
-Parrot_psprintf(PARROT_INTERP, ARGIN(STRING *pat), ARGOUT(PMC *ary))
+Parrot_psprintf(PARROT_INTERP, ARGIN(const STRING *pat), ARGOUT(PMC *ary))
 {
     ASSERT_ARGS(Parrot_psprintf)
     SPRINTF_OBJ obj = pmc_core;
