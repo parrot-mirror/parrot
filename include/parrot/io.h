@@ -174,7 +174,7 @@ PARROT_CANNOT_RETURN_NULL
 PMC * Parrot_io_fdopen(PARROT_INTERP,
     ARGIN_NULLOK(PMC *pmc),
     PIOHANDLE fd,
-    ARGIN(STRING *sflags))
+    ARGIN(const STRING *sflags))
         __attribute__nonnull__(1)
         __attribute__nonnull__(4);
 
@@ -231,8 +231,8 @@ PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 PMC * Parrot_io_open(PARROT_INTERP,
     ARGIN_NULLOK(PMC *pmc),
-    ARGIN_NULLOK(STRING *path),
-    ARGIN_NULLOK(STRING *mode))
+    ARGIN_NULLOK(const STRING *path),
+    ARGIN_NULLOK(const STRING *mode))
         __attribute__nonnull__(1);
 
 PARROT_EXPORT
@@ -258,7 +258,7 @@ Parrot_io_printf(PARROT_INTERP,
 PARROT_EXPORT
 INTVAL Parrot_io_putps(PARROT_INTERP,
     ARGMOD(PMC *pmc),
-    ARGMOD_NULLOK(STRING *s))
+    ARGMOD_NULLOK(const STRING *s))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         FUNC_MODIFIES(*pmc)

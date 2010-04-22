@@ -101,8 +101,8 @@ Parrot_io_new_pmc(PARROT_INTERP, INTVAL flags)
 
 /*
 
-=item C<PMC * Parrot_io_open(PARROT_INTERP, PMC *pmc, STRING *path, STRING
-*mode)>
+=item C<PMC * Parrot_io_open(PARROT_INTERP, PMC *pmc, const STRING *path, const
+STRING *mode)>
 
 Return an open filehandle for a given string path and flags. Defaults to
 creating a new FileHandle PMC. If a PMC object is passed in, it uses that
@@ -117,7 +117,7 @@ PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 PMC *
 Parrot_io_open(PARROT_INTERP, ARGIN_NULLOK(PMC *pmc),
-        ARGIN_NULLOK(STRING *path), ARGIN_NULLOK(STRING *mode))
+        ARGIN_NULLOK(const STRING *path), ARGIN_NULLOK(const STRING *mode))
 {
     ASSERT_ARGS(Parrot_io_open)
     PMC *new_filehandle, *filehandle;
@@ -157,8 +157,8 @@ Parrot_io_open(PARROT_INTERP, ARGIN_NULLOK(PMC *pmc),
 
 /*
 
-=item C<PMC * Parrot_io_fdopen(PARROT_INTERP, PMC *pmc, PIOHANDLE fd, STRING
-*sflags)>
+=item C<PMC * Parrot_io_fdopen(PARROT_INTERP, PMC *pmc, PIOHANDLE fd, const
+STRING *sflags)>
 
 Creates and returns a C<FileHandle> PMC for a given set of flags on an
 existing, open file descriptor.
@@ -175,7 +175,7 @@ PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 PMC *
 Parrot_io_fdopen(PARROT_INTERP, ARGIN_NULLOK(PMC *pmc), PIOHANDLE fd,
-        ARGIN(STRING *sflags))
+        ARGIN(const STRING *sflags))
 {
     ASSERT_ARGS(Parrot_io_fdopen)
     PMC *new_filehandle;
@@ -601,7 +601,7 @@ Parrot_io_puts(PARROT_INTERP, ARGMOD(PMC *pmc), ARGIN(const char *s))
 
 /*
 
-=item C<INTVAL Parrot_io_putps(PARROT_INTERP, PMC *pmc, STRING *s)>
+=item C<INTVAL Parrot_io_putps(PARROT_INTERP, PMC *pmc, const STRING *s)>
 
 Writes C<*s> to C<*pmc>. Parrot string version. Calls the C<puts> method
 on the filehandle PMC.
@@ -612,7 +612,7 @@ on the filehandle PMC.
 
 PARROT_EXPORT
 INTVAL
-Parrot_io_putps(PARROT_INTERP, ARGMOD(PMC *pmc), ARGMOD_NULLOK(STRING *s))
+Parrot_io_putps(PARROT_INTERP, ARGMOD(PMC *pmc), ARGMOD_NULLOK(const STRING *s))
 {
     ASSERT_ARGS(Parrot_io_putps)
     INTVAL result;
