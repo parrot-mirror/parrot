@@ -397,7 +397,8 @@ Parrot_str_copy(PARROT_INTERP, ARGIN(const STRING *s))
 
 /*
 
-=item C<STRING * Parrot_str_concat(PARROT_INTERP, STRING *a, STRING *b)>
+=item C<STRING * Parrot_str_concat(PARROT_INTERP, const STRING *a, const STRING
+*b)>
 
 Concatenates two Parrot strings. If necessary, converts the second
 string's encoding and/or type to match those of the first string. If
@@ -412,8 +413,8 @@ created and returned.
 PARROT_EXPORT
 PARROT_CANNOT_RETURN_NULL
 STRING *
-Parrot_str_concat(PARROT_INTERP, ARGIN_NULLOK(STRING *a),
-            ARGIN_NULLOK(STRING *b))
+Parrot_str_concat(PARROT_INTERP, ARGIN_NULLOK(const STRING *a),
+            ARGIN_NULLOK(const STRING *b))
 {
     ASSERT_ARGS(Parrot_str_concat)
     const CHARSET   *cs;
@@ -426,22 +427,18 @@ Parrot_str_concat(PARROT_INTERP, ARGIN_NULLOK(STRING *a),
     /* If B isn't real, we just bail */
     const UINTVAL b_len = b ? Parrot_str_byte_length(interp, b) : 0;
     if (!b_len)
-        return a;
+        return Parrot_str_copy(interp, a);
 
     /* Is A real? */
     if (STRING_IS_NULL(a) || Buffer_bufstart(a) == NULL)
-        return b;
+        return Parrot_str_copy(interp, b);
 
     ASSERT_STRING_SANITY(a);
     ASSERT_STRING_SANITY(b);
 
     cs = string_rep_compatible(interp, a, b, &enc);
 
-    if (cs) {
-        a->charset  = cs;
-        a->encoding = enc;
-    }
-    else {
+    if (!cs) {
         /* upgrade strings for concatenation */
         enc = (a->encoding == Parrot_utf16_encoding_ptr
            ||  b->encoding == Parrot_utf16_encoding_ptr
@@ -457,14 +454,18 @@ Parrot_str_concat(PARROT_INTERP, ARGIN_NULLOK(STRING *a),
             a = enc->to_encoding(interp, a);
         if (b->encoding != enc)
             b = enc->to_encoding(interp, b);
+
+        /* Remember selected cs/enc for result string */
+        cs  = a->charset;
+        enc = a->encoding;
     }
 
     /* calc usable and total bytes */
     total_length = a->bufused + b->bufused;
 
     dest = Parrot_str_new_noinit(interp, enum_stringrep_one, total_length);
-    dest->encoding = a->encoding;
-    dest->charset  = a->charset;
+    dest->encoding = enc;
+    dest->charset  = cs;
 
     /* Copy A first */
     mem_sys_memcopy(dest->strstart, a->strstart, a->bufused);
@@ -867,11 +868,7 @@ Parrot_str_find_index(PARROT_INTERP, ARGIN(const STRING *s),
     if (!Parrot_str_byte_length(interp, s2))
         return -1;
     else {
-        DECL_CONST_CAST;
-        STRING *src    = PARROT_const_cast(STRING *, s);
-        STRING *search = PARROT_const_cast(STRING *, s2);
-
-        return CHARSET_INDEX(interp, src, search, (UINTVAL)start);
+        return CHARSET_INDEX(interp, s, s2, (UINTVAL)start);
     }
 }
 
@@ -1040,8 +1037,8 @@ Parrot_str_repeat(PARROT_INTERP, ARGIN(const STRING *s), UINTVAL num)
 
 /*
 
-=item C<STRING * Parrot_str_substr(PARROT_INTERP, STRING *src, INTVAL offset,
-INTVAL length)>
+=item C<STRING * Parrot_str_substr(PARROT_INTERP, const STRING *src, INTVAL
+offset, INTVAL length)>
 
 Returns substring of length C<length> from C<offset> from the specified
 Parrot string.
@@ -1055,7 +1052,7 @@ PARROT_CANNOT_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
 STRING *
 Parrot_str_substr(PARROT_INTERP,
-        ARGIN_NULLOK(STRING *src), INTVAL offset, INTVAL length)
+        ARGIN_NULLOK(const STRING *src), INTVAL offset, INTVAL length)
 {
     ASSERT_ARGS(Parrot_str_substr)
 
@@ -1220,7 +1217,7 @@ Parrot_str_replace(PARROT_INTERP, ARGIN(const STRING *src),
 
 /*
 
-=item C<STRING * Parrot_str_chopn(PARROT_INTERP, STRING *s, INTVAL n)>
+=item C<STRING * Parrot_str_chopn(PARROT_INTERP, const STRING *s, INTVAL n)>
 
 Removes the last C<n> characters of the specified Parrot string and returns the
 modified string. If C<n> is negative, cuts the string after C<+n> characters.
@@ -1232,7 +1229,7 @@ modified string. If C<n> is negative, cuts the string after C<+n> characters.
 PARROT_EXPORT
 PARROT_CANNOT_RETURN_NULL
 STRING *
-Parrot_str_chopn(PARROT_INTERP, ARGMOD(STRING *s), INTVAL n)
+Parrot_str_chopn(PARROT_INTERP, ARGIN(const STRING *s), INTVAL n)
 {
     ASSERT_ARGS(Parrot_str_chopn)
 
@@ -2846,8 +2843,8 @@ Parrot_str_find_not_cclass(PARROT_INTERP, INTVAL flags,
 
 /*
 
-=item C<STRING* Parrot_str_change_charset(PARROT_INTERP, STRING *src, INTVAL
-charset_nr)>
+=item C<STRING* Parrot_str_change_charset(PARROT_INTERP, const STRING *src,
+INTVAL charset_nr)>
 
 Converts C<src> to the given charset or encoding and returns the result as a
 new string.
@@ -2860,7 +2857,7 @@ PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 STRING*
-Parrot_str_change_charset(PARROT_INTERP, ARGMOD_NULLOK(STRING *src),
+Parrot_str_change_charset(PARROT_INTERP, ARGIN_NULLOK(const STRING *src),
         INTVAL charset_nr)
 {
     ASSERT_ARGS(Parrot_str_change_charset)
@@ -2876,7 +2873,7 @@ Parrot_str_change_charset(PARROT_INTERP, ARGMOD_NULLOK(STRING *src),
                 "charset #%d not found", (int) charset_nr);
 
     if (new_charset == src->charset)
-        return src;
+        return Parrot_str_copy(interp, src);
 
     return new_charset->to_charset(interp, src);
 }
@@ -2884,8 +2881,8 @@ Parrot_str_change_charset(PARROT_INTERP, ARGMOD_NULLOK(STRING *src),
 
 /*
 
-=item C<STRING* Parrot_str_change_encoding(PARROT_INTERP, STRING *src, INTVAL
-encoding_nr)>
+=item C<STRING* Parrot_str_change_encoding(PARROT_INTERP, const STRING *src,
+INTVAL encoding_nr)>
 
 Converts C<src> to the given charset or encoding and returns the result as a
 new string.
@@ -2898,7 +2895,7 @@ PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 STRING*
-Parrot_str_change_encoding(PARROT_INTERP, ARGIN_NULLOK(STRING *src),
+Parrot_str_change_encoding(PARROT_INTERP, ARGIN_NULLOK(const STRING *src),
         INTVAL encoding_nr)
 {
     ASSERT_ARGS(Parrot_str_change_encoding)
@@ -2914,7 +2911,7 @@ Parrot_str_change_encoding(PARROT_INTERP, ARGIN_NULLOK(STRING *src),
             "encoding #%d not found", (int) encoding_nr);
 
     if (new_encoding == src->encoding)
-        return src;
+        return Parrot_str_copy(interp, src);
 
     return new_encoding->to_encoding(interp, src);
 }
@@ -2922,7 +2919,7 @@ Parrot_str_change_encoding(PARROT_INTERP, ARGIN_NULLOK(STRING *src),
 
 /*
 
-=item C<STRING * Parrot_str_compose(PARROT_INTERP, STRING *src)>
+=item C<STRING * Parrot_str_compose(PARROT_INTERP, const STRING *src)>
 
 Normalizes the string.
 
@@ -2934,7 +2931,7 @@ PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 STRING *
-Parrot_str_compose(PARROT_INTERP, ARGIN_NULLOK(STRING *src))
+Parrot_str_compose(PARROT_INTERP, ARGIN_NULLOK(const STRING *src))
 {
     ASSERT_ARGS(Parrot_str_compose)
 
@@ -2950,7 +2947,7 @@ Parrot_str_compose(PARROT_INTERP, ARGIN_NULLOK(STRING *src))
 
 /*
 
-=item C<STRING* Parrot_str_join(PARROT_INTERP, STRING *j, PMC *ar)>
+=item C<STRING* Parrot_str_join(PARROT_INTERP, const STRING *j, PMC *ar)>
 
 Joins the elements of the array C<ar> as strings with the string C<j> between
 them, returning the result.
@@ -2963,7 +2960,7 @@ PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 STRING*
-Parrot_str_join(PARROT_INTERP, ARGIN_NULLOK(STRING *j), ARGIN(PMC *ar))
+Parrot_str_join(PARROT_INTERP, ARGIN_NULLOK(const STRING *j), ARGIN(PMC *ar))
 {
     ASSERT_ARGS(Parrot_str_join)
     STRING  **chunks;
@@ -3071,7 +3068,8 @@ Parrot_str_join(PARROT_INTERP, ARGIN_NULLOK(STRING *j), ARGIN(PMC *ar))
 
 /*
 
-=item C<PMC* Parrot_str_split(PARROT_INTERP, STRING *delim, STRING *str)>
+=item C<PMC* Parrot_str_split(PARROT_INTERP, const STRING *delim, const STRING
+*str)>
 
 Splits the string C<str> at the delimiter C<delim>, returning a
 C<ResizableStringArray>, or his mapped type in the current HLL, of results.
@@ -3086,7 +3084,7 @@ PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 PMC*
 Parrot_str_split(PARROT_INTERP,
-    ARGIN_NULLOK(STRING *delim), ARGIN_NULLOK(STRING *str))
+    ARGIN_NULLOK(const STRING *delim), ARGIN_NULLOK(const STRING *str))
 {
     ASSERT_ARGS(Parrot_str_split)
     PMC    *res;
@@ -3119,7 +3117,8 @@ Parrot_str_split(PARROT_INTERP,
     pe = Parrot_str_find_index(interp, str, delim, 0);
 
     if (pe < 0) {
-        VTABLE_push_string(interp, res, str);
+        DECL_CONST_CAST;
+        VTABLE_push_string(interp, res, PARROT_const_cast(STRING*, str));
         return res;
     }
 
