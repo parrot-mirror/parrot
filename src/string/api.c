@@ -33,7 +33,7 @@ STRING *STRINGNULL;
 #endif
 
 #define nonnull_encoding_name(s) (s) ? (s)->encoding->name : "null string"
-#define saneify_string(s) \
+#define ASSERT_STRING_SANITY(s) \
     PARROT_ASSERT((s)->encoding); \
     PARROT_ASSERT((s)->charset); \
     PARROT_ASSERT(!PObj_on_free_list_TEST(s))
@@ -44,7 +44,7 @@ STRING *STRINGNULL;
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 
 PARROT_INLINE
-PARROT_WARN_UNUSED_RESULT
+PARROT_IGNORABLE_RESULT
 PARROT_CAN_RETURN_NULL
 static const CHARSET * string_rep_compatible(SHIM_INTERP,
     ARGIN(const STRING *a),
@@ -258,7 +258,7 @@ Returs NULL, if no compatible string representation can be found.
 */
 
 PARROT_INLINE
-PARROT_WARN_UNUSED_RESULT
+PARROT_IGNORABLE_RESULT
 PARROT_CAN_RETURN_NULL
 static const CHARSET *
 string_rep_compatible(SHIM_INTERP,
@@ -434,8 +434,8 @@ Parrot_str_concat(PARROT_INTERP, ARGIN_NULLOK(STRING *a),
     if (STRING_IS_NULL(a) || Buffer_bufstart(a) == NULL)
         return b;
 
-    saneify_string(a);
-    saneify_string(b);
+    ASSERT_STRING_SANITY(a);
+    ASSERT_STRING_SANITY(b);
 
     cs = string_rep_compatible(interp, a, b, &enc);
 
@@ -828,7 +828,7 @@ INTVAL
 Parrot_str_indexed(PARROT_INTERP, ARGIN(const STRING *s), UINTVAL idx)
 {
     ASSERT_ARGS(Parrot_str_indexed)
-    saneify_string(s);
+    ASSERT_STRING_SANITY(s);
     return (INTVAL)CHARSET_GET_CODEPOINT(interp, s, idx);
 }
 
@@ -1068,7 +1068,7 @@ Parrot_str_substr(PARROT_INTERP,
         Parrot_ex_throw_from_c_args(interp, NULL,
             EXCEPTION_SUBSTR_OUT_OF_STRING, "Cannot substr on a null string");
 
-    saneify_string(src);
+    ASSERT_STRING_SANITY(src);
 
     /* Allow regexes to return $' easily for "aaa" =~ /aaa/ */
     if (offset == (INTVAL)Parrot_str_byte_length(interp, src) || length < 1)
@@ -1094,8 +1094,8 @@ Parrot_str_substr(PARROT_INTERP,
 
 /*
 
-=item C<STRING * Parrot_str_replace(PARROT_INTERP, STRING *src, INTVAL offset,
-INTVAL length, STRING *rep)>
+=item C<STRING * Parrot_str_replace(PARROT_INTERP, const STRING *src, INTVAL
+offset, INTVAL length, const STRING *rep)>
 
 Replaces a sequence of C<length> characters from C<offset> in the first
 Parrot string with the second Parrot string, returning what was
@@ -1121,8 +1121,8 @@ PARROT_EXPORT
 PARROT_CAN_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
 STRING *
-Parrot_str_replace(PARROT_INTERP, ARGIN(STRING *src),
-    INTVAL offset, INTVAL length, ARGIN(STRING *rep))
+Parrot_str_replace(PARROT_INTERP, ARGIN(const STRING *src),
+    INTVAL offset, INTVAL length, ARGIN(const STRING *rep))
 {
     ASSERT_ARGS(Parrot_str_replace)
     String_iter     iter;
@@ -1162,10 +1162,9 @@ Parrot_str_replace(PARROT_INTERP, ARGIN(STRING *src),
     if (!cs) {
         src = Parrot_utf16_encoding_ptr->to_encoding(interp, src);
         rep = Parrot_utf16_encoding_ptr->to_encoding(interp, rep);
-    }
-    else {
-        src->charset  = cs;
-        src->encoding = enc;
+        /* Remember selected charset and encoding */
+        enc = src->encoding;
+        cs  = src->charset;
     }
 
     /* get byte position of the part that will be replaced */
@@ -1186,8 +1185,9 @@ Parrot_str_replace(PARROT_INTERP, ARGIN(STRING *src),
     /* Now do the replacement */
     dest = Parrot_gc_new_string_header(interp, 0);
 
-    /* Copy encoding/charset/etc */
-    STRUCT_COPY(dest, src);
+    /* Set encoding and charset to compatible */
+    dest->encoding = enc;
+    dest->charset  = cs;
 
     /* Clear COW flag. We own buffer */
     PObj_get_FLAGS(dest) = PObj_is_string_FLAG
@@ -1307,8 +1307,8 @@ Parrot_str_compare(PARROT_INTERP, ARGIN_NULLOK(const STRING *s1), ARGIN_NULLOK(c
     if (STRING_IS_NULL(s1))
         return -(s2->strlen != 0);
 
-    saneify_string(s1);
-    saneify_string(s2);
+    ASSERT_STRING_SANITY(s1);
+    ASSERT_STRING_SANITY(s2);
 
     return CHARSET_COMPARE(interp, s1, s2);
 }
@@ -2329,7 +2329,7 @@ Parrot_str_to_hashval(PARROT_INTERP, ARGMOD_NULLOK(STRING *s))
         hashval = ENCODING_HASH(interp, s, hashval);
     else {
         /* ZZZZZ workaround for something not setting up encodings right */
-        saneify_string(s);
+        ASSERT_STRING_SANITY(s);
 
         ENCODING_ITER_INIT(interp, s, &iter);
 
@@ -2996,7 +2996,8 @@ Parrot_str_join(PARROT_INTERP, ARGIN_NULLOK(STRING *j), ARGIN(PMC *ar))
 
         if (next->encoding != j->encoding) {
             const ENCODING *e = j->encoding;
-            const CHARSET  *c = string_rep_compatible(interp, next, j, &e);
+
+            string_rep_compatible(interp, next, j, &e);
             if (e == Parrot_fixed_8_encoding_ptr)
                 e = Parrot_utf8_encoding_ptr;
             j           = e->to_encoding(interp, j);
