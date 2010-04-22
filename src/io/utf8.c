@@ -101,7 +101,8 @@ ok:
 
 /*
 
-=item C<size_t Parrot_io_write_utf8(PARROT_INTERP, PMC *filehandle, STRING *s)>
+=item C<size_t Parrot_io_write_utf8(PARROT_INTERP, PMC *filehandle, const STRING
+*s)>
 
 Write a Parrot string to a filehandle in UTF-8 format.
 
@@ -111,7 +112,7 @@ Write a Parrot string to a filehandle in UTF-8 format.
 
 size_t
 Parrot_io_write_utf8(PARROT_INTERP, ARGMOD(PMC *filehandle),
-        ARGMOD(STRING *s))
+        ARGIN(const STRING *s))
 {
     ASSERT_ARGS(Parrot_io_write_utf8)
     STRING *dest;

@@ -133,8 +133,8 @@ Parrot_io_init_unix(PARROT_INTERP)
 
 /*
 
-=item C<PMC * Parrot_io_open_unix(PARROT_INTERP, PMC *filehandle, STRING *path,
-INTVAL flags)>
+=item C<PMC * Parrot_io_open_unix(PARROT_INTERP, PMC *filehandle, const STRING
+*path, INTVAL flags)>
 
 Opens a string C<path>. C<flags> is a bitwise C<or> combination of C<PIO_F_*>
 flag values.
@@ -147,7 +147,7 @@ PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 PMC *
 Parrot_io_open_unix(PARROT_INTERP, ARGMOD_NULLOK(PMC *filehandle),
-              ARGIN(STRING *path), INTVAL flags)
+              ARGIN(const STRING *path), INTVAL flags)
 {
     ASSERT_ARGS(Parrot_io_open_unix)
     int oflags;
@@ -541,7 +541,8 @@ Parrot_io_read_unix(PARROT_INTERP, ARGMOD(PMC *filehandle),
 
 /*
 
-=item C<size_t Parrot_io_write_unix(PARROT_INTERP, PMC *filehandle, STRING *s)>
+=item C<size_t Parrot_io_write_unix(PARROT_INTERP, PMC *filehandle, const STRING
+*s)>
 
 Calls C<write()> to write C<len> bytes from the memory starting at
 C<buffer> to the file descriptor in C<*io>.
@@ -551,7 +552,7 @@ C<buffer> to the file descriptor in C<*io>.
 */
 
 size_t
-Parrot_io_write_unix(PARROT_INTERP, ARGIN(PMC *filehandle), ARGMOD(STRING *s))
+Parrot_io_write_unix(PARROT_INTERP, ARGIN(PMC *filehandle), ARGIN(const STRING *s))
 {
     ASSERT_ARGS(Parrot_io_write_unix)
     const PIOHANDLE file_descriptor = Parrot_io_get_os_handle(interp, filehandle);
@@ -659,8 +660,8 @@ Parrot_io_tell_unix(PARROT_INTERP, ARGMOD(PMC *filehandle))
 
 /*
 
-=item C<PMC * Parrot_io_open_pipe_unix(PARROT_INTERP, PMC *filehandle, STRING
-*command, int flags)>
+=item C<PMC * Parrot_io_open_pipe_unix(PARROT_INTERP, PMC *filehandle, const
+STRING *command, int flags)>
 
 Very limited C<exec> for now.
 
@@ -672,7 +673,7 @@ PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 PMC *
 Parrot_io_open_pipe_unix(PARROT_INTERP, ARGMOD(PMC *filehandle),
-        ARGIN(STRING *command), int flags)
+        ARGIN(const STRING *command), int flags)
 {
     ASSERT_ARGS(Parrot_io_open_pipe_unix)
     /*
