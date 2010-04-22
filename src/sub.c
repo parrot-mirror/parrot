@@ -323,7 +323,7 @@ Parrot_Context_infostr(PARROT_INTERP, ARGIN(PMC *ctx))
 
 /*
 
-=item C<PMC* Parrot_find_pad(PARROT_INTERP, STRING *lex_name, PMC *ctx)>
+=item C<PMC* Parrot_find_pad(PARROT_INTERP, const STRING *lex_name, PMC *ctx)>
 
 Locate the LexPad containing the given name. Return NULL on failure.
 
@@ -334,7 +334,7 @@ Locate the LexPad containing the given name. Return NULL on failure.
 PARROT_CAN_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
 PMC*
-Parrot_find_pad(PARROT_INTERP, ARGIN(STRING *lex_name), ARGIN(PMC *ctx))
+Parrot_find_pad(PARROT_INTERP, ARGIN(const STRING *lex_name), ARGIN(PMC *ctx))
 {
     ASSERT_ARGS(Parrot_find_pad)
     while (1) {
@@ -355,7 +355,8 @@ Parrot_find_pad(PARROT_INTERP, ARGIN(STRING *lex_name), ARGIN(PMC *ctx))
 
 /*
 
-=item C<PMC* Parrot_find_dynamic_pad(PARROT_INTERP, STRING *lex_name, PMC *ctx)>
+=item C<PMC* Parrot_find_dynamic_pad(PARROT_INTERP, const STRING *lex_name, PMC
+*ctx)>
 
 Locate the LexPad containing the given C<lex_name> in C<ctx> and
 its caller pads.  Return PMCNULL on failure.
@@ -367,7 +368,7 @@ its caller pads.  Return PMCNULL on failure.
 PARROT_CAN_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
 PMC*
-Parrot_find_dynamic_pad(PARROT_INTERP, ARGIN(STRING *lex_name), ARGIN(PMC *ctx))
+Parrot_find_dynamic_pad(PARROT_INTERP, ARGIN(const STRING *lex_name), ARGIN(PMC *ctx))
 {
     ASSERT_ARGS(Parrot_find_dynamic_pad)
     while (1) {

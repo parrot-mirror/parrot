@@ -224,7 +224,7 @@ void Parrot_continuation_rewind_environment(PARROT_INTERP, ARGIN(PMC *pmc))
 PARROT_CAN_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
 PMC* Parrot_find_dynamic_pad(PARROT_INTERP,
-    ARGIN(STRING *lex_name),
+    ARGIN(const STRING *lex_name),
     ARGIN(PMC *ctx))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
@@ -233,7 +233,7 @@ PMC* Parrot_find_dynamic_pad(PARROT_INTERP,
 PARROT_CAN_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
 PMC* Parrot_find_pad(PARROT_INTERP,
-    ARGIN(STRING *lex_name),
+    ARGIN(const STRING *lex_name),
     ARGIN(PMC *ctx))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
