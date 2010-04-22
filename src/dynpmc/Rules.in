@@ -9,8 +9,8 @@ src/dynpmc/dynlexpad.c: src/dynpmc/dynlexpad.dump
 src/dynpmc/dynlexpad.dump: src/dynpmc/dynlexpad.pmc vtable.dump
 	$(PMC2CD) src/dynpmc/dynlexpad.pmc
 
-$(DYNEXT_DIR)/foo_group$(LOAD_EXT): $(DYNPMC_FOO_OBJS) src/dynpmc/lib-foo_group$(O)
-	$(LD)  @ld_out@$(DYNEXT_DIR)/foo_group$(LOAD_EXT) src/dynpmc/lib-foo_group$(O) $(DYNPMC_FOO_OBJS) $(LINKARGS)
+$(DYNEXT_DIR)/foo_group$(LOAD_EXT): $(DYNPMC_FOO_OBJS) src/dynpmc/foo_group$(O)
+	$(LD)  @ld_out@$(DYNEXT_DIR)/foo_group$(LOAD_EXT) src/dynpmc/foo_group$(O) $(DYNPMC_FOO_OBJS) $(LINKARGS)
 #IF(win32):	if exist $@.manifest mt.exe -nologo -manifest $@.manifest -outputresource:$@;2
 #IF(cygwin or hpux):   $(CHMOD) 0775 $@
 
