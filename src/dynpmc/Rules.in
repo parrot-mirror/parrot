@@ -10,7 +10,7 @@ src/dynpmc/dynlexpad.dump: src/dynpmc/dynlexpad.pmc vtable.dump
 	$(PMC2CD) src/dynpmc/dynlexpad.pmc
 
 $(DYNEXT_DIR)/foo_group$(LOAD_EXT): $(DYNPMC_FOO_OBJS) src/dynpmc/lib-foo_group$(O)
-	$(LD)  @ld_out@$(DYNEXT_DIR)/foo_group$(LOAD_EXT) src/dynpmc/lib-foo_group$(O) $(OBJS_FOO) $(LINKARGS)
+	$(LD)  @ld_out@$(DYNEXT_DIR)/foo_group$(LOAD_EXT) src/dynpmc/lib-foo_group$(O) $(DYNPMC_FOO_OBJS) $(LINKARGS)
 #IF(win32):	if exist $@.manifest mt.exe -nologo -manifest $@.manifest -outputresource:$@;2
 #IF(cygwin or hpux):   $(CHMOD) 0775 $@
 
@@ -51,17 +51,6 @@ src/dynpmc/rotest.c: src/dynpmc/rotest.dump
 src/dynpmc/rotest.dump: src/dynpmc/rotest.pmc vtable.dump
 	$(PMC2CD) src/dynpmc/rotest.pmc
 
-$(DYNEXT_DIR)/gdbmhash$(LOAD_EXT): src/dynpmc/gdbmhash$(O)
-	$(LD)  @ld_out@$(DYNEXT_DIR)/gdbmhash$(LOAD_EXT) src/dynpmc/gdbmhash$(O) $(LINKARGS) $(LIB_GDBM)
-#IF(win32):	if exist $@.manifest mt.exe -nologo -manifest $@.manifest -outputresource:$@;2
-#IF(cygwin or hpux):   $(CHMOD) 0775 $@
-
-src/dynpmc/gdbmhash.c: src/dynpmc/gdbmhash.dump
-	$(PMC2CC) src/dynpmc/gdbmhash.pmc
-
-src/dynpmc/gdbmhash.dump: src/dynpmc/gdbmhash.pmc vtable.dump
-	$(PMC2CD) src/dynpmc/gdbmhash.pmc
-
 $(DYNEXT_DIR)/rational$(LOAD_EXT): src/dynpmc/rational$(O)
 	$(LD)  @ld_out@$(DYNEXT_DIR)/rational$(LOAD_EXT) src/dynpmc/rational$(O) $(LINKARGS)
 #IF(win32):	if exist $@.manifest mt.exe -nologo -manifest $@.manifest -outputresource:$@;2
@@ -72,63 +61,6 @@ src/dynpmc/rational.c: src/dynpmc/rational.dump
 
 src/dynpmc/rational.dump: src/dynpmc/rational.pmc vtable.dump
 	$(PMC2CD) src/dynpmc/rational.pmc
-
-$(DYNEXT_DIR)/digest_group$(LOAD_EXT): $(OBJS_DIGEST) src/dynpmc/lib-digest_group$(O)
-	$(LD)  @ld_out@$(DYNEXT_DIR)/digest_group$(LOAD_EXT) src/dynpmc/lib-digest_group$(O) $(OBJS_DIGEST) $(LINKARGS) $(LIB_CRYPTO)
-#IF(win32):	if exist $@.manifest mt.exe -nologo -manifest $@.manifest -outputresource:$@;2
-#IF(cygwin or hpux):   $(CHMOD) 0775 $@
-
-src/dynpmc/digest_group.c: $(DYNPMC_DIGEST_OBJS)
-	$(PMC2C) --library digest_group --c $(DYNPMC_DIGEST)
-	$(MV) digest_group.c src/dynpmc/digest_group.c
-
-src/dynpmc/md2.c: src/dynpmc/md2.dump
-	$(PMC2CC) src/dynpmc/md2.pmc
-
-src/dynpmc/md2.dump: src/dynpmc/md2.pmc vtable.dump
-	$(PMC2CD) src/dynpmc/md2.pmc
-
-src/dynpmc/md4.c: src/dynpmc/md4.dump
-	$(PMC2CC) src/dynpmc/md4.pmc
-
-src/dynpmc/md4.dump: src/dynpmc/md4.pmc vtable.dump
-	$(PMC2CD) src/dynpmc/md4.pmc
-
-src/dynpmc/md5.c: src/dynpmc/md5.dump
-	$(PMC2CC) src/dynpmc/md5.pmc
-
-src/dynpmc/md5.dump: src/dynpmc/md5.pmc vtable.dump
-	$(PMC2CD) src/dynpmc/md5.pmc
-
-src/dynpmc/ripemd160.c: src/dynpmc/ripemd160.dump
-	$(PMC2CC) src/dynpmc/ripemd160.pmc
-
-src/dynpmc/ripemd160.dump: src/dynpmc/ripemd160.pmc vtable.dump
-	$(PMC2CD) src/dynpmc/ripemd160.pmc
-
-src/dynpmc/sha.c: src/dynpmc/sha.dump
-	$(PMC2CC) src/dynpmc/sha.pmc
-
-src/dynpmc/sha.dump: src/dynpmc/sha.pmc vtable.dump
-	$(PMC2CD) src/dynpmc/sha.pmc
-
-src/dynpmc/sha1.c: src/dynpmc/sha1.dump
-	$(PMC2CC) src/dynpmc/sha1.pmc
-
-src/dynpmc/sha1.dump: src/dynpmc/sha1.pmc vtable.dump
-	$(PMC2CD) src/dynpmc/sha1.pmc
-
-src/dynpmc/sha256.c: src/dynpmc/sha256.dump
-	$(PMC2CC) src/dynpmc/sha256.pmc
-
-src/dynpmc/sha256.dump: src/dynpmc/sha256.pmc vtable.dump
-	$(PMC2CD) src/dynpmc/sha256.pmc
-
-src/dynpmc/sha512.c: src/dynpmc/sha512.dump
-	$(PMC2CC) src/dynpmc/sha512.pmc
-
-src/dynpmc/sha512.dump: src/dynpmc/sha512.pmc vtable.dump
-	$(PMC2CD) src/dynpmc/sha512.pmc
 
 $(DYNEXT_DIR)/subproxy$(LOAD_EXT): src/dynpmc/subproxy$(O)
 	$(LD)  @ld_out@$(DYNEXT_DIR)/subproxy$(LOAD_EXT) src/dynpmc/subproxy$(O) $(LINKARGS)
