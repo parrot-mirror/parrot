@@ -69,9 +69,9 @@ PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 static STRING * handle_flags(PARROT_INTERP,
     ARGIN(const SpfInfo *info),
-    ARGIN(STRING *str),
+    ARGIN(const STRING *str),
     INTVAL is_int_type,
-    ARGIN_NULLOK(STRING* prefix))
+    ARGIN_NULLOK(const STRING* prefix))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3);
@@ -81,7 +81,7 @@ static STRING* str_concat_w_flags(PARROT_INTERP,
     ARGOUT(STRING *dest),
     ARGIN(const SpfInfo *info),
     ARGMOD(STRING *src),
-    ARGIN_NULLOK(STRING *prefix))
+    ARGIN_NULLOK(const STRING *prefix))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3)
@@ -126,8 +126,8 @@ Handles C<+>, C<->, C<0>, C<#>, space, width, and prec.
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 static STRING *
-handle_flags(PARROT_INTERP, ARGIN(const SpfInfo *info), ARGIN(STRING *str),
-        INTVAL is_int_type, ARGIN_NULLOK(STRING* prefix))
+handle_flags(PARROT_INTERP, ARGIN(const SpfInfo *info), ARGIN(const STRING *str),
+        INTVAL is_int_type, ARGIN_NULLOK(const STRING* prefix))
 {
     ASSERT_ARGS(handle_flags)
     UINTVAL len = Parrot_str_byte_length(interp, str);
@@ -233,7 +233,7 @@ Returns the pointer to the modified string.
 PARROT_CANNOT_RETURN_NULL
 static STRING*
 str_concat_w_flags(PARROT_INTERP, ARGOUT(STRING *dest), ARGIN(const SpfInfo *info),
-        ARGMOD(STRING *src), ARGIN_NULLOK(STRING *prefix))
+        ARGMOD(STRING *src), ARGIN_NULLOK(const STRING *prefix))
 {
     ASSERT_ARGS(str_concat_w_flags)
     src = handle_flags(interp, info, src, 1, prefix);
@@ -309,8 +309,8 @@ gen_sprintf_call(ARGOUT(char *out), ARGMOD(SpfInfo *info), int thingy)
 
 /*
 
-=item C<STRING * Parrot_sprintf_format(PARROT_INTERP, STRING *pat, SPRINTF_OBJ
-*obj)>
+=item C<STRING * Parrot_sprintf_format(PARROT_INTERP, const STRING *pat,
+SPRINTF_OBJ *obj)>
 
 This is the engine that does all the formatting.
 
@@ -322,7 +322,7 @@ PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 STRING *
 Parrot_sprintf_format(PARROT_INTERP,
-        ARGIN(STRING *pat), ARGIN(SPRINTF_OBJ *obj))
+        ARGIN(const STRING *pat), ARGIN(SPRINTF_OBJ *obj))
 {
     ASSERT_ARGS(Parrot_sprintf_format)
     INTVAL i;
