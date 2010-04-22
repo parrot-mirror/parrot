@@ -3245,7 +3245,7 @@ PDB_backtrace(PARROT_INTERP)
                     PMC *pline = VTABLE_get_pmc_keyed_str(interp, annot,
                             Parrot_str_new_constant(interp, "line"));
                     if ((!PMC_IS_NULL(pfile)) && (!PMC_IS_NULL(pline))) {
-                        STRING *file = VTABLE_get_string(interp, pfile);
+                        const STRING *file = VTABLE_get_string(interp, pfile);
                         INTVAL line = VTABLE_get_integer(interp, pline);
                         Parrot_io_eprintf(interp, " (%Ss:%li)", file, (long)line);
                     }
@@ -3313,7 +3313,7 @@ PDB_backtrace(PARROT_INTERP)
                     PMC *pline = VTABLE_get_pmc_keyed_str(interp, annot,
                             Parrot_str_new_constant(interp, "line"));
                     if ((!PMC_IS_NULL(pfile)) && (!PMC_IS_NULL(pline))) {
-                        STRING *file = VTABLE_get_string(interp, pfile);
+                        const STRING *file = VTABLE_get_string(interp, pfile);
                         INTVAL line = VTABLE_get_integer(interp, pline);
                         Parrot_io_eprintf(interp, " (%Ss:%li)", file, (long)line);
                     }
