@@ -727,7 +727,7 @@ Parrot_pmc_get_new_vtable_index(PARROT_INTERP)
 
 /*
 
-=item C<INTVAL Parrot_pmc_register_new_type(PARROT_INTERP, STRING *name)>
+=item C<INTVAL Parrot_pmc_register_new_type(PARROT_INTERP, const STRING *name)>
 
 Registers the name of a new PMC type with Parrot, returning the INTVAL
 representing that type.
@@ -738,7 +738,7 @@ representing that type.
 
 PARROT_EXPORT
 INTVAL
-Parrot_pmc_register_new_type(PARROT_INTERP, ARGIN(STRING *name))
+Parrot_pmc_register_new_type(PARROT_INTERP, ARGIN(const STRING *name))
 {
     ASSERT_ARGS(Parrot_pmc_register_new_type)
     /* If they're looking to register an existing class, return that
@@ -763,7 +763,7 @@ Parrot_pmc_register_new_type(PARROT_INTERP, ARGIN(STRING *name))
 
 /*
 
-=item C<INTVAL Parrot_pmc_get_type_str(PARROT_INTERP, STRING *name)>
+=item C<INTVAL Parrot_pmc_get_type_str(PARROT_INTERP, const STRING *name)>
 
 Returns the PMC type for C<name>.
 
@@ -774,7 +774,7 @@ Returns the PMC type for C<name>.
 PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
 INTVAL
-Parrot_pmc_get_type_str(PARROT_INTERP, ARGIN_NULLOK(STRING *name))
+Parrot_pmc_get_type_str(PARROT_INTERP, ARGIN_NULLOK(const STRING *name))
 {
     ASSERT_ARGS(Parrot_pmc_get_type_str)
     if (!name)
@@ -983,7 +983,8 @@ Parrot_pmc_gc_unregister(PARROT_INTERP, ARGIN(PMC *pmc))
 
 /*
 
-=item C<INTVAL Parrot_pmc_type_does(PARROT_INTERP, STRING *role, INTVAL type)>
+=item C<INTVAL Parrot_pmc_type_does(PARROT_INTERP, const STRING *role, INTVAL
+type)>
 
 Checks to see if PMCs of the given type does the given role. Checks
 C<<vtable->provides_str>> to find a match.
@@ -994,7 +995,7 @@ Returns true (1) if B<role> is found, false (0) otherwise.
 */
 
 INTVAL
-Parrot_pmc_type_does(PARROT_INTERP, ARGIN(STRING *role), INTVAL type)
+Parrot_pmc_type_does(PARROT_INTERP, ARGIN(const STRING *role), INTVAL type)
 {
     ASSERT_ARGS(Parrot_pmc_type_does)
 

@@ -49,7 +49,8 @@ INTVAL Parrot_pmc_get_type(PARROT_INTERP, ARGIN(PMC *name))
 
 PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
-INTVAL Parrot_pmc_get_type_str(PARROT_INTERP, ARGIN_NULLOK(STRING *name))
+INTVAL Parrot_pmc_get_type_str(PARROT_INTERP,
+    ARGIN_NULLOK(const STRING *name))
         __attribute__nonnull__(1);
 
 PARROT_EXPORT
@@ -107,7 +108,8 @@ PMC * Parrot_pmc_new_noinit(PARROT_INTERP, INTVAL base_type)
         __attribute__nonnull__(1);
 
 PARROT_EXPORT
-INTVAL Parrot_pmc_register_new_type(PARROT_INTERP, ARGIN(STRING *name))
+INTVAL Parrot_pmc_register_new_type(PARROT_INTERP,
+    ARGIN(const STRING *name))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
@@ -157,7 +159,9 @@ PARROT_CANNOT_RETURN_NULL
 PMC * Parrot_pmc_new_temporary(PARROT_INTERP, INTVAL base_type)
         __attribute__nonnull__(1);
 
-INTVAL Parrot_pmc_type_does(PARROT_INTERP, ARGIN(STRING *role), INTVAL type)
+INTVAL Parrot_pmc_type_does(PARROT_INTERP,
+    ARGIN(const STRING *role),
+    INTVAL type)
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
