@@ -54,7 +54,7 @@ static void setup_exception_args(PARROT_INTERP, ARGIN(const char *sig), ...)
 /*
 
 =item C<PMC * Parrot_ex_build_exception(PARROT_INTERP, INTVAL severity, long
-error, STRING *msg)>
+error, const STRING *msg)>
 
 Constructs a new exception object from the passed in arguments.
 
@@ -65,7 +65,7 @@ PARROT_EXPORT
 PARROT_CAN_RETURN_NULL
 PMC *
 Parrot_ex_build_exception(PARROT_INTERP, INTVAL severity,
-        long error, ARGIN_NULLOK(STRING *msg))
+        long error, ARGIN_NULLOK(const STRING *msg))
 {
     ASSERT_ARGS(Parrot_ex_build_exception)
     PMC *exception = Parrot_pmc_new(interp, enum_class_Exception);
@@ -94,7 +94,7 @@ void
 die_from_exception(PARROT_INTERP, ARGIN(PMC *exception))
 {
     ASSERT_ARGS(die_from_exception)
-    STRING * const message     = VTABLE_get_string(interp, exception);
+    const STRING * const message     = VTABLE_get_string(interp, exception);
     INTVAL         exit_status = 1;
     const INTVAL   severity    = VTABLE_get_integer_keyed_str(interp, exception, CONST_STRING(interp, "severity"));
 
@@ -208,7 +208,7 @@ Parrot_ex_throw_from_op(PARROT_INTERP, ARGIN(PMC *exception), ARGIN_NULLOK(void 
     opcode_t   *address;
     PMC * const handler = Parrot_cx_find_handler_local(interp, exception);
     if (PMC_IS_NULL(handler)) {
-        STRING * const message     = VTABLE_get_string(interp, exception);
+        const STRING * const message     = VTABLE_get_string(interp, exception);
         const INTVAL   severity    = VTABLE_get_integer_keyed_str(interp, exception, CONST_STRING(interp, "severity"));
         if (severity < EXCEPT_error) {
             PMC * const resume = VTABLE_get_attr_str(interp, exception, CONST_STRING(interp, "resume"));
@@ -342,8 +342,8 @@ Parrot_ex_throw_from_c(PARROT_INTERP, ARGIN(PMC *exception))
         die_from_exception(interp, exception);
 
     if (Interp_debug_TEST(interp, PARROT_BACKTRACE_DEBUG_FLAG)) {
-        STRING * const exit_code = CONST_STRING(interp, "exit_code");
-        STRING * const msg       = VTABLE_get_string(interp, exception);
+        const STRING * const exit_code = CONST_STRING(interp, "exit_code");
+        const STRING * const msg       = VTABLE_get_string(interp, exception);
         int            exitcode  = VTABLE_get_integer_keyed_str(interp,
                                         exception, exit_code);
 

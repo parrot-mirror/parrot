@@ -152,7 +152,7 @@ PARROT_CAN_RETURN_NULL
 PMC * Parrot_ex_build_exception(PARROT_INTERP,
     INTVAL severity,
     long error,
-    ARGIN_NULLOK(STRING *msg))
+    ARGIN_NULLOK(const STRING *msg))
         __attribute__nonnull__(1);
 
 PARROT_EXPORT
