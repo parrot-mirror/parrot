@@ -90,14 +90,13 @@ void parrot_init_library_paths(PARROT_INTERP)
 PARROT_IGNORABLE_RESULT
 PARROT_CANNOT_RETURN_NULL
 const STRING * parrot_split_path_ext(PARROT_INTERP,
-    ARGMOD(STRING *in),
+    ARGIN(const STRING *in),
     ARGOUT(STRING const**wo_ext),
     ARGOUT(STRING const**ext))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3)
         __attribute__nonnull__(4)
-        FUNC_MODIFIES(*in)
         FUNC_MODIFIES(*wo_ext)
         FUNC_MODIFIES(*ext);
 

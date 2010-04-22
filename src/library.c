@@ -859,8 +859,8 @@ Parrot_get_runtime_path(PARROT_INTERP)
 
 /*
 
-=item C<const STRING * parrot_split_path_ext(PARROT_INTERP, STRING *in, STRING
-const**wo_ext, STRING const**ext)>
+=item C<const STRING * parrot_split_path_ext(PARROT_INTERP, const STRING *in,
+STRING const**wo_ext, STRING const**ext)>
 
 Split the pathstring C<in> into <path><filestem><ext>. Return the
 C<filestem> of the pathstring. Set C<wo_ext> to the part without
@@ -873,7 +873,7 @@ extension and C<ext> to the extension or NULL.
 PARROT_IGNORABLE_RESULT
 PARROT_CANNOT_RETURN_NULL
 const STRING *
-parrot_split_path_ext(PARROT_INTERP, ARGMOD(STRING *in),
+parrot_split_path_ext(PARROT_INTERP, ARGIN(const STRING *in),
         ARGOUT(STRING const**wo_ext), ARGOUT(STRING const**ext))
 {
     ASSERT_ARGS(parrot_split_path_ext)
@@ -891,7 +891,7 @@ parrot_split_path_ext(PARROT_INTERP, ARGMOD(STRING *in),
             PObj_external_FLAG|PObj_constant_FLAG);
 
     const INTVAL len = Parrot_str_byte_length(interp, in);
-    STRING *stem;
+    const STRING *stem;
     INTVAL pos_sl, pos_dot;
 
     pos_sl = CHARSET_RINDEX(interp, in, slash1, len);
