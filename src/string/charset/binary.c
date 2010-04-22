@@ -34,17 +34,17 @@ static INTVAL compare(SHIM_INTERP,
         __attribute__nonnull__(3);
 
 PARROT_CANNOT_RETURN_NULL
-static STRING* compose(PARROT_INTERP, SHIM(STRING *source_string))
+static STRING* compose(PARROT_INTERP, SHIM(const STRING *source_string))
         __attribute__nonnull__(1);
 
 static INTVAL cs_index(SHIM_INTERP,
-    SHIM(STRING *source_string),
-    SHIM(STRING *search_string),
+    SHIM(const STRING *source_string),
+    SHIM(const STRING *search_string),
     SHIM(UINTVAL offset));
 
 static INTVAL cs_rindex(SHIM_INTERP,
-    SHIM(STRING *source_string),
-    SHIM(STRING *search_string),
+    SHIM(const STRING *source_string),
+    SHIM(const STRING *search_string),
     SHIM(UINTVAL offset));
 
 PARROT_CANNOT_RETURN_NULL
@@ -62,13 +62,13 @@ static STRING* downcase_first(PARROT_INTERP,
 
 static INTVAL find_cclass(SHIM_INTERP,
     SHIM(INTVAL flags),
-    SHIM(STRING *source_string),
+    SHIM(const STRING *source_string),
     UINTVAL offset,
     UINTVAL count);
 
 static INTVAL find_not_cclass(SHIM_INTERP,
     SHIM(INTVAL flags),
-    SHIM(STRING *source_string),
+    SHIM(const STRING *source_string),
     UINTVAL offset,
     UINTVAL count);
 
@@ -91,7 +91,7 @@ static STRING* titlecase_first(PARROT_INTERP,
         __attribute__nonnull__(1);
 
 PARROT_CANNOT_RETURN_NULL
-static STRING* to_charset(PARROT_INTERP, ARGIN(STRING *src))
+static STRING* to_charset(PARROT_INTERP, ARGIN(const STRING *src))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
@@ -104,7 +104,7 @@ static STRING* upcase_first(PARROT_INTERP,
     SHIM(const STRING *source_string))
         __attribute__nonnull__(1);
 
-static UINTVAL validate(SHIM_INTERP, SHIM(STRING *source_string));
+static UINTVAL validate(SHIM_INTERP, SHIM(const STRING *source_string));
 #define ASSERT_ARGS_compare __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
        PARROT_ASSERT_ARG(lhs) \
     , PARROT_ASSERT_ARG(rhs))
@@ -148,7 +148,7 @@ static UINTVAL validate(SHIM_INTERP, SHIM(STRING *source_string));
 
 /*
 
-=item C<static STRING* to_charset(PARROT_INTERP, STRING *src)>
+=item C<static STRING* to_charset(PARROT_INTERP, const STRING *src)>
 
 Converts the STRING C<src> to STRING C<dest> in binary mode. Throws
 an exception if a suitable conversion function is not found.
@@ -159,7 +159,7 @@ an exception if a suitable conversion function is not found.
 
 PARROT_CANNOT_RETURN_NULL
 static STRING*
-to_charset(PARROT_INTERP, ARGIN(STRING *src))
+to_charset(PARROT_INTERP, ARGIN(const STRING *src))
 {
     ASSERT_ARGS(to_charset)
     charset_converter_t conversion_func =
@@ -174,7 +174,7 @@ to_charset(PARROT_INTERP, ARGIN(STRING *src))
 
 /*
 
-=item C<static STRING* compose(PARROT_INTERP, STRING *source_string)>
+=item C<static STRING* compose(PARROT_INTERP, const STRING *source_string)>
 
 Throws an exception because we cannot compose a binary string.
 
@@ -185,7 +185,7 @@ Throws an exception because we cannot compose a binary string.
 /* A err. can't compose binary */
 PARROT_CANNOT_RETURN_NULL
 static STRING*
-compose(PARROT_INTERP, SHIM(STRING *source_string))
+compose(PARROT_INTERP, SHIM(const STRING *source_string))
 {
     ASSERT_ARGS(compose)
     EXCEPTION(EXCEPTION_INVALID_CHARTYPE, "Can't compose binary data");
@@ -351,8 +351,8 @@ compare(SHIM_INTERP, ARGIN(const STRING *lhs), ARGIN(const STRING *rhs))
 
 /*
 
-=item C<static INTVAL cs_index(PARROT_INTERP, STRING *source_string, STRING
-*search_string, UINTVAL offset)>
+=item C<static INTVAL cs_index(PARROT_INTERP, const STRING *source_string, const
+STRING *search_string, UINTVAL offset)>
 
 Returns -1. It makes no sense to try and search for a substring in
 raw binary data.
@@ -362,8 +362,8 @@ raw binary data.
 */
 
 static INTVAL
-cs_index(SHIM_INTERP, SHIM(STRING *source_string),
-        SHIM(STRING *search_string), SHIM(UINTVAL offset))
+cs_index(SHIM_INTERP, SHIM(const STRING *source_string),
+        SHIM(const STRING *search_string), SHIM(UINTVAL offset))
 {
     ASSERT_ARGS(cs_index)
     return -1;
@@ -371,8 +371,8 @@ cs_index(SHIM_INTERP, SHIM(STRING *source_string),
 
 /*
 
-=item C<static INTVAL cs_rindex(PARROT_INTERP, STRING *source_string, STRING
-*search_string, UINTVAL offset)>
+=item C<static INTVAL cs_rindex(PARROT_INTERP, const STRING *source_string,
+const STRING *search_string, UINTVAL offset)>
 
 Returns -1. It makes no sense to search for the last substring match
 in raw binary data.
@@ -382,8 +382,8 @@ in raw binary data.
 */
 
 static INTVAL
-cs_rindex(SHIM_INTERP, SHIM(STRING *source_string),
-        SHIM(STRING *search_string), SHIM(UINTVAL offset))
+cs_rindex(SHIM_INTERP, SHIM(const STRING *source_string),
+        SHIM(const STRING *search_string), SHIM(UINTVAL offset))
 {
     ASSERT_ARGS(cs_rindex)
     return -1;
@@ -391,7 +391,7 @@ cs_rindex(SHIM_INTERP, SHIM(STRING *source_string),
 
 /*
 
-=item C<static UINTVAL validate(PARROT_INTERP, STRING *source_string)>
+=item C<static UINTVAL validate(PARROT_INTERP, const STRING *source_string)>
 
 Returns 1. All sequential data is valid binary data.
 
@@ -401,7 +401,7 @@ Returns 1. All sequential data is valid binary data.
 
 /* Binary's always valid */
 static UINTVAL
-validate(SHIM_INTERP, SHIM(STRING *source_string))
+validate(SHIM_INTERP, SHIM(const STRING *source_string))
 {
     ASSERT_ARGS(validate)
     return 1;
@@ -426,7 +426,7 @@ is_cclass(SHIM_INTERP, SHIM(INTVAL flags), SHIM(const STRING *source_string),
 
 /*
 
-=item C<static INTVAL find_cclass(PARROT_INTERP, INTVAL flags, STRING
+=item C<static INTVAL find_cclass(PARROT_INTERP, INTVAL flags, const STRING
 *source_string, UINTVAL offset, UINTVAL count)>
 
 =cut
@@ -435,7 +435,7 @@ is_cclass(SHIM_INTERP, SHIM(INTVAL flags), SHIM(const STRING *source_string),
 
 static INTVAL
 find_cclass(SHIM_INTERP, SHIM(INTVAL flags),
-            SHIM(STRING *source_string), UINTVAL offset, UINTVAL count)
+            SHIM(const STRING *source_string), UINTVAL offset, UINTVAL count)
 {
     ASSERT_ARGS(find_cclass)
     return offset + count;
@@ -443,7 +443,7 @@ find_cclass(SHIM_INTERP, SHIM(INTVAL flags),
 
 /*
 
-=item C<static INTVAL find_not_cclass(PARROT_INTERP, INTVAL flags, STRING
+=item C<static INTVAL find_not_cclass(PARROT_INTERP, INTVAL flags, const STRING
 *source_string, UINTVAL offset, UINTVAL count)>
 
 =cut
@@ -452,7 +452,7 @@ find_cclass(SHIM_INTERP, SHIM(INTVAL flags),
 
 static INTVAL
 find_not_cclass(SHIM_INTERP, SHIM(INTVAL flags),
-               SHIM(STRING *source_string), UINTVAL offset, UINTVAL count)
+               SHIM(const STRING *source_string), UINTVAL offset, UINTVAL count)
 {
     ASSERT_ARGS(find_not_cclass)
     return offset + count;

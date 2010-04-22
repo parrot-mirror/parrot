@@ -37,7 +37,7 @@ static UINTVAL codepoints(PARROT_INTERP, ARGIN(const STRING *src))
 
 PARROT_WARN_UNUSED_RESULT
 static UINTVAL find_cclass(PARROT_INTERP,
-    ARGIN(STRING *s),
+    ARGIN(const STRING *s),
     ARGIN(const INTVAL *typetable),
     INTVAL flags,
     UINTVAL pos,
@@ -54,7 +54,7 @@ static UINTVAL get_byte(SHIM_INTERP,
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 static STRING * get_bytes(PARROT_INTERP,
-    ARGIN(STRING *src),
+    ARGIN(const STRING *src),
     UINTVAL offset,
     UINTVAL count)
         __attribute__nonnull__(1)
@@ -69,7 +69,7 @@ static UINTVAL get_codepoint(PARROT_INTERP,
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 static STRING * get_codepoints(PARROT_INTERP,
-    ARGIN(STRING *src),
+    ARGIN(const STRING *src),
     UINTVAL offset,
     UINTVAL count)
         __attribute__nonnull__(1)
@@ -298,7 +298,7 @@ get_codepoint(PARROT_INTERP, ARGIN(const STRING *src), UINTVAL offset)
 
 /*
 
-=item C<static UINTVAL find_cclass(PARROT_INTERP, STRING *s, const INTVAL
+=item C<static UINTVAL find_cclass(PARROT_INTERP, const STRING *s, const INTVAL
 *typetable, INTVAL flags, UINTVAL pos, UINTVAL end)>
 
 Stub, the charset level handles this for unicode strings.
@@ -309,8 +309,8 @@ Stub, the charset level handles this for unicode strings.
 
 PARROT_WARN_UNUSED_RESULT
 static UINTVAL
-find_cclass(PARROT_INTERP, ARGIN(STRING *s), ARGIN(const INTVAL *typetable),
-INTVAL flags, UINTVAL pos, UINTVAL end)
+find_cclass(PARROT_INTERP, ARGIN(const STRING *s), ARGIN(const INTVAL *typetable),
+        INTVAL flags, UINTVAL pos, UINTVAL end)
 {
     UNUSED(s);
     UNUSED(typetable);
@@ -375,7 +375,7 @@ set_byte(PARROT_INTERP, ARGIN(const STRING *src), UINTVAL offset, UINTVAL byte)
 
 /*
 
-=item C<static STRING * get_codepoints(PARROT_INTERP, STRING *src, UINTVAL
+=item C<static STRING * get_codepoints(PARROT_INTERP, const STRING *src, UINTVAL
 offset, UINTVAL count)>
 
 Returns the codepoints in string C<src> at position C<offset> and length
@@ -388,7 +388,7 @@ C<count>.
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 static STRING *
-get_codepoints(PARROT_INTERP, ARGIN(STRING *src), UINTVAL offset, UINTVAL count)
+get_codepoints(PARROT_INTERP, ARGIN(const STRING *src), UINTVAL offset, UINTVAL count)
 {
     ASSERT_ARGS(get_codepoints)
     String_iter iter;
@@ -409,8 +409,8 @@ get_codepoints(PARROT_INTERP, ARGIN(STRING *src), UINTVAL offset, UINTVAL count)
 
 /*
 
-=item C<static STRING * get_bytes(PARROT_INTERP, STRING *src, UINTVAL offset,
-UINTVAL count)>
+=item C<static STRING * get_bytes(PARROT_INTERP, const STRING *src, UINTVAL
+offset, UINTVAL count)>
 
 Returns the bytes in string C<src> at position C<offset> and length C<count>.
 
@@ -421,7 +421,7 @@ Returns the bytes in string C<src> at position C<offset> and length C<count>.
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 static STRING *
-get_bytes(PARROT_INTERP, ARGIN(STRING *src), UINTVAL offset, UINTVAL count)
+get_bytes(PARROT_INTERP, ARGIN(const STRING *src), UINTVAL offset, UINTVAL count)
 {
     ASSERT_ARGS(get_bytes)
     UNUSED(interp);
