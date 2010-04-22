@@ -44,54 +44,47 @@ static int is_abs_path(ARGIN(const STRING *file))
 
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
-static STRING* path_append(PARROT_INTERP,
-    ARGMOD(STRING *l_path),
-    ARGMOD(STRING *r_path))
+static const STRING* path_append(PARROT_INTERP,
+    ARGIN(const STRING *l_path),
+    ARGIN(const STRING *r_path))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
-        __attribute__nonnull__(3)
-        FUNC_MODIFIES(*l_path)
-        FUNC_MODIFIES(*r_path);
+        __attribute__nonnull__(3);
 
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 static STRING* path_concat(PARROT_INTERP,
-    ARGMOD(STRING *l_path),
-    ARGMOD(STRING *r_path))
+    ARGIN(const STRING *l_path),
+    ARGIN(const STRING *r_path))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
-        __attribute__nonnull__(3)
-        FUNC_MODIFIES(*l_path)
-        FUNC_MODIFIES(*r_path);
+        __attribute__nonnull__(3);
 
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
-static STRING* path_finalize(PARROT_INTERP, ARGMOD(STRING *path))
+static STRING* path_finalize(PARROT_INTERP, ARGIN(const STRING *path))
         __attribute__nonnull__(1)
-        __attribute__nonnull__(2)
-        FUNC_MODIFIES(*path);
+        __attribute__nonnull__(2);
 
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
-static STRING* path_guarantee_trailing_separator(PARROT_INTERP,
-    ARGMOD(STRING *path))
+static const STRING* path_guarantee_trailing_separator(PARROT_INTERP,
+    ARGIN(const STRING *path))
         __attribute__nonnull__(1)
-        __attribute__nonnull__(2)
-        FUNC_MODIFIES(*path);
+        __attribute__nonnull__(2);
 
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
-static STRING* try_bytecode_extensions(PARROT_INTERP, ARGMOD(STRING* path))
+static const STRING* try_bytecode_extensions(PARROT_INTERP,
+    ARGIN(const STRING* path))
         __attribute__nonnull__(1)
-        __attribute__nonnull__(2)
-        FUNC_MODIFIES(* path);
+        __attribute__nonnull__(2);
 
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
-static STRING* try_load_path(PARROT_INTERP, ARGMOD(STRING* path))
+static const STRING* try_load_path(PARROT_INTERP, ARGIN(const STRING* path))
         __attribute__nonnull__(1)
-        __attribute__nonnull__(2)
-        FUNC_MODIFIES(* path);
+        __attribute__nonnull__(2);
 
 #define ASSERT_ARGS_cnv_to_win32_filesep __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
        PARROT_ASSERT_ARG(path))
@@ -394,7 +387,7 @@ cnv_to_win32_filesep(ARGMOD(STRING *path))
 
 /*
 
-=item C<static STRING* path_finalize(PARROT_INTERP, STRING *path)>
+=item C<static STRING* path_finalize(PARROT_INTERP, const STRING *path)>
 
 Ensures the given STRING C<path> has a C-style NULL character at the end. The
 length of the string is not increased to account for this NULL, however. In
@@ -408,7 +401,7 @@ Windows-style "\".
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 static STRING*
-path_finalize(PARROT_INTERP, ARGMOD(STRING *path))
+path_finalize(PARROT_INTERP, ARGIN(const STRING *path))
 {
     ASSERT_ARGS(path_finalize)
 
@@ -419,21 +412,21 @@ path_finalize(PARROT_INTERP, ARGMOD(STRING *path))
 
     STRING * const nul = string_chr(interp, '\0');
 
-    path = Parrot_str_concat(interp, path, nul);
-    path->bufused--;
-    path->strlen--;
+    STRING * res = Parrot_str_concat(interp, path, nul);
+    res->bufused--;
+    res->strlen--;
 
 #ifdef WIN32
-    cnv_to_win32_filesep(path);
+    cnv_to_win32_filesep(res);
 #endif
 
-    return path;
+    return res;
 }
 
 /*
 
-=item C<static STRING* path_guarantee_trailing_separator(PARROT_INTERP, STRING
-*path)>
+=item C<static const STRING* path_guarantee_trailing_separator(PARROT_INTERP,
+const STRING *path)>
 
 unary path argument. the path string will have a
 trailing path-separator appended if it is not
@@ -445,8 +438,8 @@ there already.
 
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
-static STRING*
-path_guarantee_trailing_separator(PARROT_INTERP, ARGMOD(STRING *path))
+static const STRING*
+path_guarantee_trailing_separator(PARROT_INTERP, ARGIN(const STRING *path))
 {
     ASSERT_ARGS(path_guarantee_trailing_separator)
     STRING * const path_separator_string = string_chr(interp, path_separator);
@@ -461,8 +454,8 @@ path_guarantee_trailing_separator(PARROT_INTERP, ARGMOD(STRING *path))
 
 /*
 
-=item C<static STRING* path_append(PARROT_INTERP, STRING *l_path, STRING
-*r_path)>
+=item C<static const STRING* path_append(PARROT_INTERP, const STRING *l_path,
+const STRING *r_path)>
 
 binary path arguments, the left arg is modified.
 a trailing separator is guaranteed for the left
@@ -474,8 +467,8 @@ argument and the right argument is appended
 
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
-static STRING*
-path_append(PARROT_INTERP, ARGMOD(STRING *l_path), ARGMOD(STRING *r_path))
+static const STRING*
+path_append(PARROT_INTERP, ARGIN(const STRING *l_path), ARGIN(const STRING *r_path))
 {
     ASSERT_ARGS(path_append)
     l_path = path_guarantee_trailing_separator(interp, l_path);
@@ -486,8 +479,8 @@ path_append(PARROT_INTERP, ARGMOD(STRING *l_path), ARGMOD(STRING *r_path))
 
 /*
 
-=item C<static STRING* path_concat(PARROT_INTERP, STRING *l_path, STRING
-*r_path)>
+=item C<static STRING* path_concat(PARROT_INTERP, const STRING *l_path, const
+STRING *r_path)>
 
 binary path arguments. A new string is created
 that is the concatenation of the two path components
@@ -500,21 +493,19 @@ with a path-separator.
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 static STRING*
-path_concat(PARROT_INTERP, ARGMOD(STRING *l_path), ARGMOD(STRING *r_path))
+path_concat(PARROT_INTERP, ARGIN(const STRING *l_path), ARGIN(const STRING *r_path))
 {
     ASSERT_ARGS(path_concat)
-    STRING* join;
+    const STRING* join;
 
     join = l_path;
     join = path_guarantee_trailing_separator(interp, join);
-    join = Parrot_str_concat(interp, join, r_path);
-
-    return join;
+    return Parrot_str_concat(interp, join, r_path);
 }
 
 /*
 
-=item C<static STRING* try_load_path(PARROT_INTERP, STRING* path)>
+=item C<static const STRING* try_load_path(PARROT_INTERP, const STRING* path)>
 
 Attempts to load a file with name C<path>. If the file is successfully located,
 the finalized name of the file is returned as a STRING. Otherwise, returns
@@ -526,8 +517,8 @@ NULL.
 
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
-static STRING*
-try_load_path(PARROT_INTERP, ARGMOD(STRING* path))
+static const STRING*
+try_load_path(PARROT_INTERP, ARGIN(const STRING* path))
 {
     ASSERT_ARGS(try_load_path)
     STRING *final;
@@ -543,7 +534,8 @@ try_load_path(PARROT_INTERP, ARGMOD(STRING* path))
 
 /*
 
-=item C<static STRING* try_bytecode_extensions(PARROT_INTERP, STRING* path)>
+=item C<static const STRING* try_bytecode_extensions(PARROT_INTERP, const
+STRING* path)>
 
 Guess extensions, so that the user can drop the extensions
 leaving it up to the build process/install whether or not
@@ -555,11 +547,11 @@ a .pbc, .pasm or a .pir file is used.
 
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
-static STRING*
-try_bytecode_extensions(PARROT_INTERP, ARGMOD(STRING* path))
+static const STRING*
+try_bytecode_extensions(PARROT_INTERP, ARGIN(const STRING* path))
 {
     ASSERT_ARGS(try_bytecode_extensions)
-    STRING *test_path, *result;
+    const STRING *test_path, *result;
     STRING * const bytecode_extension = CONST_STRING(interp, ".pbc");
     STRING * const pir_extension      = CONST_STRING(interp, ".pir");
     STRING * const pasm_extension     = CONST_STRING(interp, ".pasm");
@@ -670,8 +662,8 @@ Parrot_lib_add_path_from_cstring(PARROT_INTERP,
 
 /*
 
-=item C<STRING* Parrot_locate_runtime_file_str(PARROT_INTERP, STRING *file,
-enum_runtime_ft type)>
+=item C<const STRING* Parrot_locate_runtime_file_str(PARROT_INTERP, const STRING
+*file, enum_runtime_ft type)>
 
 Locate the full path for C<file_name> and the given file type(s).
 
@@ -685,13 +677,13 @@ F<include/parrot/library.h>.
 PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
-STRING*
-Parrot_locate_runtime_file_str(PARROT_INTERP, ARGMOD(STRING *file),
+const STRING*
+Parrot_locate_runtime_file_str(PARROT_INTERP, ARGIN(const STRING *file),
         enum_runtime_ft type)
 {
     ASSERT_ARGS(Parrot_locate_runtime_file_str)
-    STRING *prefix;
-    STRING *full_name;
+    const STRING *prefix;
+    const STRING *full_name;
     PMC    *paths;
     INTVAL  i, n;
 
@@ -713,7 +705,7 @@ Parrot_locate_runtime_file_str(PARROT_INTERP, ARGMOD(STRING *file),
 
     for (i = 0; i < n; ++i) {
         STRING * const path = VTABLE_get_string_keyed_int(interp, paths, i);
-        STRING *found_name;
+        const STRING *found_name;
 
         full_name = path_append(interp, path, file);
 
@@ -776,8 +768,8 @@ Parrot_locate_runtime_file(PARROT_INTERP, ARGIN(const char *file_name),
         enum_runtime_ft type)
 {
     ASSERT_ARGS(Parrot_locate_runtime_file)
-    STRING * const file   = Parrot_str_new(interp, file_name, 0);
-    STRING * const result = Parrot_locate_runtime_file_str(interp, file, type);
+    const STRING * const file   = Parrot_str_new(interp, file_name, 0);
+    const STRING * const result = Parrot_locate_runtime_file_str(interp, file, type);
     /*
      * XXX valgrind shows e.g.
      *     invalid read of size 8 inside a string of length 69
@@ -867,8 +859,8 @@ Parrot_get_runtime_path(PARROT_INTERP)
 
 /*
 
-=item C<STRING * parrot_split_path_ext(PARROT_INTERP, STRING *in, STRING
-**wo_ext, STRING **ext)>
+=item C<const STRING * parrot_split_path_ext(PARROT_INTERP, STRING *in, STRING
+const**wo_ext, STRING const**ext)>
 
 Split the pathstring C<in> into <path><filestem><ext>. Return the
 C<filestem> of the pathstring. Set C<wo_ext> to the part without
@@ -880,9 +872,9 @@ extension and C<ext> to the extension or NULL.
 
 PARROT_IGNORABLE_RESULT
 PARROT_CANNOT_RETURN_NULL
-STRING *
+const STRING *
 parrot_split_path_ext(PARROT_INTERP, ARGMOD(STRING *in),
-        ARGOUT(STRING **wo_ext), ARGOUT(STRING **ext))
+        ARGOUT(STRING const**wo_ext), ARGOUT(STRING const**ext))
 {
     ASSERT_ARGS(parrot_split_path_ext)
 

@@ -78,22 +78,21 @@ char* Parrot_locate_runtime_file(PARROT_INTERP,
 PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
-STRING* Parrot_locate_runtime_file_str(PARROT_INTERP,
-    ARGMOD(STRING *file),
+const STRING* Parrot_locate_runtime_file_str(PARROT_INTERP,
+    ARGIN(const STRING *file),
     enum_runtime_ft type)
         __attribute__nonnull__(1)
-        __attribute__nonnull__(2)
-        FUNC_MODIFIES(*file);
+        __attribute__nonnull__(2);
 
 void parrot_init_library_paths(PARROT_INTERP)
         __attribute__nonnull__(1);
 
 PARROT_IGNORABLE_RESULT
 PARROT_CANNOT_RETURN_NULL
-STRING * parrot_split_path_ext(PARROT_INTERP,
+const STRING * parrot_split_path_ext(PARROT_INTERP,
     ARGMOD(STRING *in),
-    ARGOUT(STRING **wo_ext),
-    ARGOUT(STRING **ext))
+    ARGOUT(STRING const**wo_ext),
+    ARGOUT(STRING const**ext))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3)
