@@ -73,7 +73,7 @@ PARROT_CAN_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
 PMC * Parrot_find_method_direct(PARROT_INTERP,
     ARGIN(PMC *_class),
-    ARGIN(STRING *method_name))
+    ARGIN(const STRING *method_name))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3);
@@ -83,7 +83,7 @@ PARROT_CAN_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
 PMC * Parrot_find_method_with_cache(PARROT_INTERP,
     ARGIN(PMC *_class),
-    ARGIN(STRING *method_name))
+    ARGIN(const STRING *method_name))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3);
@@ -100,7 +100,7 @@ const char * Parrot_get_vtable_name(SHIM_INTERP, INTVAL idx);
 
 PARROT_EXPORT
 void Parrot_invalidate_method_cache(PARROT_INTERP,
-    ARGIN_NULLOK(STRING *_class))
+    ARGIN_NULLOK(const STRING *_class))
         __attribute__nonnull__(1);
 
 PARROT_EXPORT
@@ -108,7 +108,7 @@ PARROT_CAN_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
 PMC * Parrot_oo_find_vtable_override(PARROT_INTERP,
     ARGIN(PMC *classobj),
-    ARGIN(STRING *name))
+    ARGIN(const STRING *name))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3);
@@ -118,7 +118,7 @@ PARROT_CAN_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
 PMC * Parrot_oo_find_vtable_override_for_class(PARROT_INTERP,
     ARGIN(PMC *classobj),
-    ARGIN(STRING *name))
+    ARGIN(const STRING *name))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3);
@@ -133,7 +133,8 @@ PMC * Parrot_oo_get_class(PARROT_INTERP, ARGIN(PMC *key))
 PARROT_EXPORT
 PARROT_CAN_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
-PMC * Parrot_oo_get_class_str(PARROT_INTERP, ARGIN_NULLOK(STRING *name))
+PMC * Parrot_oo_get_class_str(PARROT_INTERP,
+    ARGIN_NULLOK(const STRING *name))
         __attribute__nonnull__(1);
 
 void destroy_object_cache(PARROT_INTERP)
@@ -162,7 +163,7 @@ void Parrot_oo_extract_methods_from_namespace(PARROT_INTERP,
 
 PARROT_CAN_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
-PMC * Parrot_oo_newclass_from_str(PARROT_INTERP, ARGIN(STRING *name))
+PMC * Parrot_oo_newclass_from_str(PARROT_INTERP, ARGIN(const STRING *name))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 

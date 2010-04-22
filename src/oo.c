@@ -54,7 +54,7 @@ PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 static PMC * find_method_direct_1(PARROT_INTERP,
     ARGIN(PMC *_class),
-    ARGIN(STRING *method_name))
+    ARGIN(const STRING *method_name))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3);
@@ -348,7 +348,7 @@ get_pmc_proxy(PARROT_INTERP, INTVAL type)
 
 /*
 
-=item C<PMC * Parrot_oo_get_class_str(PARROT_INTERP, STRING *name)>
+=item C<PMC * Parrot_oo_get_class_str(PARROT_INTERP, const STRING *name)>
 
 Lookup a class object from a builtin string.
 
@@ -360,7 +360,7 @@ PARROT_EXPORT
 PARROT_CAN_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
 PMC *
-Parrot_oo_get_class_str(PARROT_INTERP, ARGIN_NULLOK(STRING *name))
+Parrot_oo_get_class_str(PARROT_INTERP, ARGIN_NULLOK(const STRING *name))
 {
     ASSERT_ARGS(Parrot_oo_get_class_str)
 
@@ -386,7 +386,7 @@ Parrot_oo_get_class_str(PARROT_INTERP, ARGIN_NULLOK(STRING *name))
 
 /*
 
-=item C<PMC * Parrot_oo_newclass_from_str(PARROT_INTERP, STRING *name)>
+=item C<PMC * Parrot_oo_newclass_from_str(PARROT_INTERP, const STRING *name)>
 
 Create a new class object from a string name.
 
@@ -397,7 +397,7 @@ Create a new class object from a string name.
 PARROT_CAN_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
 PMC *
-Parrot_oo_newclass_from_str(PARROT_INTERP, ARGIN(STRING *name))
+Parrot_oo_newclass_from_str(PARROT_INTERP, ARGIN(const STRING *name))
 {
     ASSERT_ARGS(Parrot_oo_newclass_from_str)
     PMC * const namearg  = Parrot_pmc_new(interp, enum_class_String);
@@ -417,7 +417,7 @@ Parrot_oo_newclass_from_str(PARROT_INTERP, ARGIN(STRING *name))
 /*
 
 =item C<PMC * Parrot_oo_find_vtable_override_for_class(PARROT_INTERP, PMC
-*classobj, STRING *name)>
+*classobj, const STRING *name)>
 
 Lookup a vtable override in a specific class object.
 
@@ -430,7 +430,7 @@ PARROT_CAN_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
 PMC *
 Parrot_oo_find_vtable_override_for_class(PARROT_INTERP,
-        ARGIN(PMC *classobj), ARGIN(STRING *name))
+        ARGIN(PMC *classobj), ARGIN(const STRING *name))
 {
     ASSERT_ARGS(Parrot_oo_find_vtable_override_for_class)
     Parrot_Class_attributes *class_info;
@@ -443,7 +443,7 @@ Parrot_oo_find_vtable_override_for_class(PARROT_INTERP,
 
 /*
 
-=item C<PMC * Parrot_oo_find_vtable_override(PARROT_INTERP, PMC *classobj,
+=item C<PMC * Parrot_oo_find_vtable_override(PARROT_INTERP, PMC *classobj, const
 STRING *name)>
 
 Lookup a vtable override in a class, including any vtable overrides inherited
@@ -458,7 +458,7 @@ PARROT_CAN_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
 PMC *
 Parrot_oo_find_vtable_override(PARROT_INTERP,
-        ARGIN(PMC *classobj), ARGIN(STRING *name))
+        ARGIN(PMC *classobj), ARGIN(const STRING *name))
 {
     ASSERT_ARGS(Parrot_oo_find_vtable_override)
     Parrot_Class_attributes * const _class = PARROT_CLASS(classobj);
@@ -811,7 +811,8 @@ invalidate_all_caches(PARROT_INTERP)
 
 /*
 
-=item C<void Parrot_invalidate_method_cache(PARROT_INTERP, STRING *_class)>
+=item C<void Parrot_invalidate_method_cache(PARROT_INTERP, const STRING
+*_class)>
 
 Clear method cache for the given class. If class is NULL, caches for
 all classes are invalidated.
@@ -822,7 +823,7 @@ all classes are invalidated.
 
 PARROT_EXPORT
 void
-Parrot_invalidate_method_cache(PARROT_INTERP, ARGIN_NULLOK(STRING *_class))
+Parrot_invalidate_method_cache(PARROT_INTERP, ARGIN_NULLOK(const STRING *_class))
 {
     ASSERT_ARGS(Parrot_invalidate_method_cache)
     INTVAL type;
@@ -850,7 +851,7 @@ Parrot_invalidate_method_cache(PARROT_INTERP, ARGIN_NULLOK(STRING *_class))
 
 /*
 
-=item C<PMC * Parrot_find_method_direct(PARROT_INTERP, PMC *_class, STRING
+=item C<PMC * Parrot_find_method_direct(PARROT_INTERP, PMC *_class, const STRING
 *method_name)>
 
 Find a method PMC for a named method, given the class PMC, current
@@ -864,7 +865,7 @@ PARROT_EXPORT
 PARROT_CAN_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
 PMC *
-Parrot_find_method_direct(PARROT_INTERP, ARGIN(PMC *_class), ARGIN(STRING *method_name))
+Parrot_find_method_direct(PARROT_INTERP, ARGIN(PMC *_class), ARGIN(const STRING *method_name))
 {
     ASSERT_ARGS(Parrot_find_method_direct)
     PMC * const found = find_method_direct_1(interp, _class, method_name);
@@ -882,8 +883,8 @@ Parrot_find_method_direct(PARROT_INTERP, ARGIN(PMC *_class), ARGIN(STRING *metho
 
 /*
 
-=item C<PMC * Parrot_find_method_with_cache(PARROT_INTERP, PMC *_class, STRING
-*method_name)>
+=item C<PMC * Parrot_find_method_with_cache(PARROT_INTERP, PMC *_class, const
+STRING *method_name)>
 
 Find a method PMC for a named method, given the class PMC, current
 interp, and name of the method.
@@ -901,7 +902,7 @@ PARROT_EXPORT
 PARROT_CAN_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
 PMC *
-Parrot_find_method_with_cache(PARROT_INTERP, ARGIN(PMC *_class), ARGIN(STRING *method_name))
+Parrot_find_method_with_cache(PARROT_INTERP, ARGIN(PMC *_class), ARGIN(const STRING *method_name))
 {
     ASSERT_ARGS(Parrot_find_method_with_cache)
 
@@ -1019,8 +1020,8 @@ debug_trace_find_meth(PARROT_INTERP, ARGIN(const PMC *_class),
 
 /*
 
-=item C<static PMC * find_method_direct_1(PARROT_INTERP, PMC *_class, STRING
-*method_name)>
+=item C<static PMC * find_method_direct_1(PARROT_INTERP, PMC *_class, const
+STRING *method_name)>
 
 Find the method with the given name in the specified class.
 
@@ -1032,7 +1033,7 @@ PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 static PMC *
 find_method_direct_1(PARROT_INTERP, ARGIN(PMC *_class),
-                              ARGIN(STRING *method_name))
+                              ARGIN(const STRING *method_name))
 {
     ASSERT_ARGS(find_method_direct_1)
     INTVAL i;
