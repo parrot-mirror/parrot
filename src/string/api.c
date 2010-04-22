@@ -2963,9 +2963,9 @@ STRING*
 Parrot_str_join(PARROT_INTERP, ARGIN_NULLOK(const STRING *j), ARGIN(PMC *ar))
 {
     ASSERT_ARGS(Parrot_str_join)
-    STRING  **chunks;
+    STRING  const * *chunks;
     STRING   *res;
-    STRING   *s;
+    const STRING   *s;
     char     *pos;
     const int ar_len       = VTABLE_elements(interp, ar);
     int       total_length = 0;
@@ -2978,11 +2978,11 @@ Parrot_str_join(PARROT_INTERP, ARGIN_NULLOK(const STRING *j), ARGIN(PMC *ar))
     if (STRING_IS_NULL(j))
         j = Parrot_str_new_noinit(interp, enum_stringrep_one, 0);
 
-    chunks = (STRING **)Parrot_gc_allocate_fixed_size_storage(interp,
+    chunks = (STRING const* *)Parrot_gc_allocate_fixed_size_storage(interp,
         ar_len * sizeof (STRING *));
 
     for (i = 0; i < ar_len; ++i) {
-        STRING *next = VTABLE_get_string_keyed_int(interp, ar, i);
+        const STRING *next = VTABLE_get_string_keyed_int(interp, ar, i);
 
         if (STRING_IS_NULL(next)) {
             chunks[i] = STRINGNULL;
@@ -3009,7 +3009,7 @@ Parrot_str_join(PARROT_INTERP, ARGIN_NULLOK(const STRING *j), ARGIN(PMC *ar))
         const ENCODING *e = j->encoding;
 
         for (i = 0; i < ar_len; ++i) {
-            STRING *s = chunks[i];
+            const STRING *s = chunks[i];
 
             if (STRING_IS_NULL(s))
                 continue;
@@ -3042,7 +3042,7 @@ Parrot_str_join(PARROT_INTERP, ARGIN_NULLOK(const STRING *j), ARGIN(PMC *ar))
     }
 
     for (i = 1; i < ar_len; ++i) {
-        STRING *next = chunks[i];
+        const STRING *next = chunks[i];
 
         if (STRING_IS_NULL(next))
             continue;
