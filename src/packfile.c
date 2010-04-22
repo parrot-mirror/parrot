@@ -61,7 +61,7 @@ static PackFile_Constant * clone_constant(PARROT_INTERP,
         __attribute__nonnull__(2);
 
 static void compile_or_load_file(PARROT_INTERP,
-    ARGIN(STRING *path),
+    ARGIN(const STRING *path),
     enum_runtime_ft file_type)
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
@@ -4676,7 +4676,7 @@ PackFile_Annotations_lookup(PARROT_INTERP, ARGIN(PackFile_Annotations *self),
 
 /*
 
-=item C<static void compile_or_load_file(PARROT_INTERP, STRING *path,
+=item C<static void compile_or_load_file(PARROT_INTERP, const STRING *path,
 enum_runtime_ft file_type)>
 
 Either load a bytecode file and append it to the current packfile directory, or
@@ -4687,7 +4687,7 @@ compile a PIR or PASM file from source.
 */
 
 static void
-compile_or_load_file(PARROT_INTERP, ARGIN(STRING *path),
+compile_or_load_file(PARROT_INTERP, ARGIN(const STRING *path),
         enum_runtime_ft file_type)
 {
     ASSERT_ARGS(compile_or_load_file)
@@ -4747,8 +4747,12 @@ void
 Parrot_load_language(PARROT_INTERP, ARGIN_NULLOK(STRING *lang_name))
 {
     ASSERT_ARGS(Parrot_load_language)
-    STRING *wo_ext, *file_str, *path, *pbc;
-    STRING *found_path, *found_ext;
+    const STRING *wo_ext;
+    const STRING *file_str;
+    const STRING *path;
+    const STRING *pbc;
+    const STRING *found_path;
+    const STRING *found_ext;
     INTVAL name_length;
     enum_runtime_ft file_type;
     PMC *is_loaded_hash;
@@ -4855,8 +4859,12 @@ void
 Parrot_load_bytecode(PARROT_INTERP, ARGIN_NULLOK(STRING *file_str))
 {
     ASSERT_ARGS(Parrot_load_bytecode)
-    STRING         *wo_ext, *ext, *pbc, *path;
-    STRING         *found_path, *found_ext;
+    const STRING   *wo_ext;
+    const STRING   *ext;
+    const STRING   *pbc;
+    const STRING   *path;
+    const STRING   *found_path;
+    const STRING   *found_ext;
     PMC            *is_loaded_hash;
     enum_runtime_ft file_type;
 
