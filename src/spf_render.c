@@ -114,8 +114,8 @@ static STRING* str_concat_w_flags(PARROT_INTERP,
 
 /*
 
-=item C<static STRING * handle_flags(PARROT_INTERP, const SpfInfo *info, STRING
-*str, INTVAL is_int_type, STRING* prefix)>
+=item C<static STRING * handle_flags(PARROT_INTERP, const SpfInfo *info, const
+STRING *str, INTVAL is_int_type, const STRING* prefix)>
 
 Handles C<+>, C<->, C<0>, C<#>, space, width, and prec.
 
@@ -219,7 +219,7 @@ handle_flags(PARROT_INTERP, ARGIN(const SpfInfo *info), ARGIN(const STRING *str)
 /*
 
 =item C<static STRING* str_concat_w_flags(PARROT_INTERP, STRING *dest, const
-SpfInfo *info, STRING *src, STRING *prefix)>
+SpfInfo *info, STRING *src, const STRING *prefix)>
 
 Used by Parrot_sprintf_format.  Prepends supplied prefix for numeric
 values. (e.g. 0x for hex.)
