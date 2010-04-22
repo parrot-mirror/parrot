@@ -202,7 +202,7 @@ op print(in STR) :base_io {
 
 op print(invar PMC) :base_io {
     PMC * const p = $1;
-    STRING * const s = (VTABLE_get_string(interp, p));
+    const STRING * const s = (VTABLE_get_string(interp, p));
     if (s)
         Parrot_io_putps(interp, _PIO_STDOUT(interp), s);
 }
@@ -254,7 +254,7 @@ op say(invar PMC) :base_io {
         goto ADDRESS(handler);
     }
     else {
-        STRING * const s = VTABLE_get_string(interp, p);
+        const STRING * const s = VTABLE_get_string(interp, p);
         if (s)
             Parrot_io_putps(interp, _PIO_STDOUT(interp), s);
         Parrot_io_putps(interp, _PIO_STDOUT(interp), Parrot_str_new_constant(interp, "\n"));
@@ -294,7 +294,7 @@ op printerr(in STR) :base_io {
 
 op printerr(invar PMC) :base_io {
     PMC * const p = $1;
-    STRING * const s = (VTABLE_get_string(interp, p));
+    const STRING * const s = (VTABLE_get_string(interp, p));
     if (s)
         Parrot_io_putps(interp, _PIO_STDERR(interp), s);
 }
@@ -335,7 +335,7 @@ op print(invar PMC, in STR) :base_io {
 
 op print(invar PMC, invar PMC) :base_io {
     if ($2 && $1) {
-        STRING * const s = VTABLE_get_string(interp, $2);
+        const STRING * const s = VTABLE_get_string(interp, $2);
         Parrot_io_putps(interp, $1, s);
     }
 }

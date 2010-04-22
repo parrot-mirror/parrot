@@ -646,7 +646,7 @@ inline op cmp(out INT, invar PMC, in NUM) :base_core {
 }
 
 inline op cmp(out INT, invar PMC, in STR) :base_core {
-    STRING* const l = VTABLE_get_string(interp, $2);
+    const STRING* const l = VTABLE_get_string(interp, $2);
     $1 = Parrot_str_compare(interp, l, $3);
 }
 

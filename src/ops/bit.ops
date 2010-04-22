@@ -114,16 +114,16 @@ inline op bands(inout STR, in STR) :base_core :deprecated {
 }
 
 inline op bands(invar PMC, in STR) :base_core {
-    STRING * const a = VTABLE_get_string(interp, $1);
+    const STRING * const a = VTABLE_get_string(interp, $1);
     STRING * const b = Parrot_str_bitwise_and(interp, a, $2);
     VTABLE_set_string_native(interp, $1, b);
 }
 
 inline op bands(invar PMC, invar PMC) :base_core {
-    STRING * a = VTABLE_get_string(interp, $1);
-    STRING * const b = VTABLE_get_string(interp, $2);
-    a = Parrot_str_bitwise_and(interp, a, b);
-    VTABLE_set_string_native(interp, $1, a);
+    const STRING * const a = VTABLE_get_string(interp, $1);
+    const STRING * const b = VTABLE_get_string(interp, $2);
+    VTABLE_set_string_native(interp, $1, 
+        Parrot_str_bitwise_and(interp, a, b));
 }
 
 inline op bands(out STR, in STR, in STR) :base_core {
@@ -131,14 +131,14 @@ inline op bands(out STR, in STR, in STR) :base_core {
 }
 
 inline op bands(invar PMC, invar PMC, in STR) :base_core {
-    STRING * const a = VTABLE_get_string(interp, $2);
+    const STRING * const a = VTABLE_get_string(interp, $2);
     STRING * const b = Parrot_str_bitwise_and(interp, a, $3);
     VTABLE_set_string_native(interp, $1, b);
 }
 
 inline op bands(invar PMC, invar PMC, invar PMC) :base_core {
-    STRING * const a = VTABLE_get_string(interp, $2);
-    STRING * const b = VTABLE_get_string(interp, $3);
+    const STRING * const a = VTABLE_get_string(interp, $2);
+    const STRING * const b = VTABLE_get_string(interp, $3);
     STRING * const c = Parrot_str_bitwise_and(interp, a, b);
     VTABLE_set_string_native(interp, $1, c);
 }
@@ -196,15 +196,15 @@ inline op bnots(out STR, in STR) :base_core {
 }
 
 inline op bnots(invar PMC) :base_core {
-    STRING * const a = VTABLE_get_string(interp, $1);
-    STRING * const b = Parrot_str_bitwise_not(interp, a);
-    VTABLE_set_string_native(interp, $1, b);
+    const STRING * const a = VTABLE_get_string(interp, $1);
+    VTABLE_set_string_native(interp, $1, 
+            Parrot_str_bitwise_not(interp, a));
 }
 
 inline op bnots(out PMC, invar PMC) :base_core {
-    STRING * const a = VTABLE_get_string(interp, $2);
-    STRING * const b = Parrot_str_bitwise_not(interp, a);
-    VTABLE_set_string_native(interp, $1, b);
+    const STRING * const a = VTABLE_get_string(interp, $2);
+    VTABLE_set_string_native(interp, $1, 
+            Parrot_str_bitwise_not(interp, a));
 }
 
 ########################################
@@ -284,16 +284,16 @@ inline op bors(inout STR, in STR) :base_core :deprecated {
 }
 
 inline op bors(invar PMC, in STR) :base_core {
-    STRING * const a = VTABLE_get_string(interp, $1);
-    STRING * const b = Parrot_str_bitwise_or(interp, a, $2);
-    VTABLE_set_string_native(interp, $1, b);
+    const STRING * const a = VTABLE_get_string(interp, $1);
+    VTABLE_set_string_native(interp, $1,
+            Parrot_str_bitwise_or(interp, a, $2));
 }
 
 inline op bors(invar PMC, invar PMC) :base_core {
-    STRING * const a = VTABLE_get_string(interp, $1);
-    STRING * const b = VTABLE_get_string(interp, $2);
-    STRING * const c = Parrot_str_bitwise_or(interp, a, b);
-    VTABLE_set_string_native(interp, $1, c);
+    const STRING * const a = VTABLE_get_string(interp, $1);
+    const STRING * const b = VTABLE_get_string(interp, $2);
+    VTABLE_set_string_native(interp, $1,
+            Parrot_str_bitwise_or(interp, a, b));
 }
 
 inline op bors(out STR, in STR, in STR) :base_core {
@@ -301,16 +301,16 @@ inline op bors(out STR, in STR, in STR) :base_core {
 }
 
 inline op bors(invar PMC, invar PMC, in STR) :base_core {
-    STRING * const b = VTABLE_get_string(interp, $2);
-    STRING * const c = Parrot_str_bitwise_or(interp, b, $3);
-    VTABLE_set_string_native(interp, $1, c);
+    const STRING * const b = VTABLE_get_string(interp, $2);
+    VTABLE_set_string_native(interp, $1,
+            Parrot_str_bitwise_or(interp, b, $3));
 }
 
 inline op bors(invar PMC, invar PMC, invar PMC) :base_core {
-    STRING * const a = VTABLE_get_string(interp, $2);
-    STRING * const b = VTABLE_get_string(interp, $3);
-    STRING * const c = Parrot_str_bitwise_or(interp, a, b);
-    VTABLE_set_string_native(interp, $1, c);
+    const STRING * const a = VTABLE_get_string(interp, $2);
+    const STRING * const b = VTABLE_get_string(interp, $3);
+    VTABLE_set_string_native(interp, $1,
+            Parrot_str_bitwise_or(interp, a, b));
 }
 
 ########################################
@@ -584,16 +584,16 @@ inline op bxors(inout STR, in STR) :base_core :deprecated {
 }
 
 inline op bxors(invar PMC, in STR) :base_core {
-    STRING * const a = VTABLE_get_string(interp, $1);
-    STRING * const b = Parrot_str_bitwise_xor(interp, a, $2);
-    VTABLE_set_string_native(interp, $1, b);
+    const STRING * const a = VTABLE_get_string(interp, $1);
+    VTABLE_set_string_native(interp, $1,
+            Parrot_str_bitwise_xor(interp, a, $2));
 }
 
 inline op bxors(invar PMC, invar PMC) :base_core {
-    STRING * const a = VTABLE_get_string(interp, $1);
-    STRING * const b = VTABLE_get_string(interp, $2);
-    STRING * const c = Parrot_str_bitwise_xor(interp, a, b);
-    VTABLE_set_string_native(interp, $1, c);
+    const STRING * const a = VTABLE_get_string(interp, $1);
+    const STRING * const b = VTABLE_get_string(interp, $2);
+    VTABLE_set_string_native(interp, $1, 
+        Parrot_str_bitwise_xor(interp, a, b));
 }
 
 inline op bxors(out STR, in STR, in STR) :base_core {
@@ -601,16 +601,16 @@ inline op bxors(out STR, in STR, in STR) :base_core {
 }
 
 inline op bxors(invar PMC, invar PMC, in STR) :base_core {
-    STRING * const a = VTABLE_get_string(interp, $2);
-    STRING * const b = Parrot_str_bitwise_xor(interp, a, $3);
-    VTABLE_set_string_native(interp, $1, b);
+    const STRING * const a = VTABLE_get_string(interp, $2);
+    VTABLE_set_string_native(interp, $1,
+            Parrot_str_bitwise_xor(interp, a, $3));
 }
 
 inline op bxors(invar PMC, invar PMC, invar PMC) :base_core {
-    STRING * const a = VTABLE_get_string(interp, $2);
-    STRING * const b = VTABLE_get_string(interp, $3);
-    STRING * const c = Parrot_str_bitwise_xor(interp, a, b);
-    VTABLE_set_string_native(interp, $1, c);
+    const STRING * const a = VTABLE_get_string(interp, $2);
+    const STRING * const b = VTABLE_get_string(interp, $3);
+    VTABLE_set_string_native(interp, $1,
+            Parrot_str_bitwise_xor(interp, a, b));
 }
 
 =back
