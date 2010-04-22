@@ -912,7 +912,7 @@ print_constant_table(PARROT_INTERP, ARGIN(PMC *output))
                   case enum_class_ResizableStringArray:
                     {
                         /*Parrot_print_p(interp, c->u.key);*/
-                        STRING * const s = VTABLE_get_string(interp, c->u.key);
+                        const STRING * const s = VTABLE_get_string(interp, c->u.key);
                         if (s)
                             Parrot_io_fprintf(interp, output, "%Ss", s);
                         break;

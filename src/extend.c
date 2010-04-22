@@ -423,7 +423,7 @@ char *
 Parrot_PMC_get_cstring_intkey(PARROT_INTERP, Parrot_PMC pmc, Parrot_Int key)
 {
     ASSERT_ARGS(Parrot_PMC_get_cstring_intkey)
-    STRING *intermediate;
+    const STRING *intermediate;
     char   *retval;
 
     PARROT_CALLIN_START(interp);
@@ -454,7 +454,7 @@ char *
 Parrot_PMC_get_cstring(PARROT_INTERP, Parrot_PMC pmc)
 {
     ASSERT_ARGS(Parrot_PMC_get_cstring)
-    STRING *intermediate;
+    const STRING *intermediate;
     char   *retval;
 
     PARROT_CALLIN_START(interp);
