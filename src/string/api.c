@@ -355,7 +355,7 @@ Parrot_str_clone(PARROT_INTERP, ARGIN(const STRING *s))
 
 /*
 
-=item C<STRING * Parrot_str_copy(PARROT_INTERP, STRING *s)>
+=item C<STRING * Parrot_str_copy(PARROT_INTERP, const STRING *s)>
 
 Creates and returns a shallow copy of the specified Parrot string.
 
@@ -367,18 +367,19 @@ PARROT_EXPORT
 PARROT_CANNOT_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
 STRING *
-Parrot_str_copy(PARROT_INTERP, ARGMOD(STRING *s))
+Parrot_str_copy(PARROT_INTERP, ARGIN(const STRING *s))
 {
     ASSERT_ARGS(Parrot_str_copy)
-    STRING *d;
+    STRING *d = Parrot_gc_new_string_header(interp,
+                    PObj_get_FLAGS(s) & ~PObj_constant_FLAG);
+
+    DECL_CONST_CAST;
 
     /* We set COW flag to avoid cloning buffer in compact_pool */
+    PObj_COW_SET(PARROT_const_cast(STRING*, s));
+    STRUCT_COPY(d, s);
 
     if (PObj_constant_TEST(s)) {
-        d = Parrot_gc_new_string_header(interp,
-            PObj_get_FLAGS(s) & ~PObj_constant_FLAG);
-        PObj_COW_SET(s);
-        STRUCT_COPY(d, s);
         /* we can't move the memory, because constants aren't
          * scanned in compact_pool, therefore the other end
          * would point to garbage.
@@ -387,9 +388,6 @@ Parrot_str_copy(PARROT_INTERP, ARGMOD(STRING *s))
         PObj_external_SET(d);
     }
     else {
-        d = Parrot_gc_new_string_header(interp, PObj_get_FLAGS(s));
-        PObj_COW_SET(s);
-        STRUCT_COPY(d, s);
         PObj_sysmem_CLEAR(d);
     }
 
