@@ -65,9 +65,9 @@ char* Parrot_asctime_r(const struct tm*, char *);
  * Env
  */
 
-void Parrot_setenv(PARROT_INTERP, STRING *name, STRING *value);
-void Parrot_unsetenv(PARROT_INTERP, STRING *name);
-char * Parrot_getenv(PARROT_INTERP, STRING *name);
+void Parrot_setenv(PARROT_INTERP, const STRING *name, const STRING *value);
+void Parrot_unsetenv(PARROT_INTERP, const STRING *name);
+char * Parrot_getenv(PARROT_INTERP, const STRING *name);
 
 /*
 ** Dynamic Loading:
@@ -132,7 +132,7 @@ UINTVAL     Parrot_hires_get_tick_duration(void);
 
 
 struct parrot_string_t;
-INTVAL Parrot_Run_OS_Command(Interp*, struct parrot_string_t *);
+INTVAL Parrot_Run_OS_Command(Interp*, const struct parrot_string_t *);
 INTVAL Parrot_Run_OS_Command_Argv(Interp*, struct PMC *);
 
 #endif /* PARROT_PLATFORM_INTERFACE_H_GUARD */

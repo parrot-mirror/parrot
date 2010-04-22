@@ -62,7 +62,7 @@ PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 PMC * Parrot_io_open_pipe_unix(PARROT_INTERP,
     ARGMOD(PMC *filehandle),
-    ARGIN(STRING *command),
+    ARGIN(const STRING *command),
     int flags)
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
@@ -73,7 +73,7 @@ PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 PMC * Parrot_io_open_unix(PARROT_INTERP,
     ARGMOD_NULLOK(PMC *filehandle),
-    ARGIN(STRING *path),
+    ARGIN(const STRING *path),
     INTVAL flags)
         __attribute__nonnull__(1)
         __attribute__nonnull__(3)
@@ -117,11 +117,10 @@ PIOOFF_T Parrot_io_tell_unix(PARROT_INTERP, ARGMOD(PMC *filehandle))
 
 size_t Parrot_io_write_unix(PARROT_INTERP,
     ARGIN(PMC *filehandle),
-    ARGMOD(STRING *s))
+    ARGIN(const STRING *s))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
-        __attribute__nonnull__(3)
-        FUNC_MODIFIES(*s);
+        __attribute__nonnull__(3);
 
 #define ASSERT_ARGS_Parrot_io_async_unix __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
        PARROT_ASSERT_ARG(interp) \

@@ -31,7 +31,7 @@ File stat stuff
 */
 
 PMC *
-Parrot_stat_file(SHIM_INTERP, SHIM(STRING *filename))
+Parrot_stat_file(SHIM_INTERP, SHIM(const STRING *filename))
 {
     return NULL;
 }
@@ -46,7 +46,7 @@ thing)>
 */
 
 PMC *
-Parrot_stat_info_pmc(SHIM_INTERP, SHIM(STRING *filename), SHIM(INTVAL thing))
+Parrot_stat_info_pmc(SHIM_INTERP, SHIM(const STRING *filename), SHIM(INTVAL thing))
 {
     return NULL;
 }
@@ -146,7 +146,7 @@ thing)>
 */
 
 INTVAL
-Parrot_stat_info_intval(PARROT_INTERP, STRING *file, INTVAL thing)
+Parrot_stat_info_intval(PARROT_INTERP, const STRING *file, INTVAL thing)
 {
     struct stat statbuf;
 
@@ -189,7 +189,7 @@ INTVAL thing)>
 */
 
 FLOATVAL
-Parrot_stat_info_floatval(SHIM_INTERP, SHIM(STRING *filename), SHIM(INTVAL thing))
+Parrot_stat_info_floatval(SHIM_INTERP, SHIM(const STRING *filename), SHIM(INTVAL thing))
 {
     return (FLOATVAL)-1;
 }

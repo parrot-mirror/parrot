@@ -35,7 +35,7 @@ Set up Environment vars
 */
 
 void
-Parrot_setenv(PARROT_INTERP, STRING *str_name, STRING *str_value)
+Parrot_setenv(PARROT_INTERP, const STRING *str_name, const STRING *str_value)
 {
     char *name  = Parrot_str_to_cstring(interp, str_name);
     char *value = Parrot_str_to_cstring(interp, str_value);
@@ -72,7 +72,7 @@ UnSet Environment vars
 */
 
 void
-Parrot_unsetenv(PARROT_INTERP, STRING *str_name)
+Parrot_unsetenv(PARROT_INTERP, const STRING *str_name)
 {
     char * const name = Parrot_str_to_cstring(interp, str_name);
 #ifdef PARROT_HAS_UNSETENV
@@ -94,7 +94,7 @@ Get Environment vars
 */
 
 char *
-Parrot_getenv(PARROT_INTERP, STRING *str_name)
+Parrot_getenv(PARROT_INTERP, const STRING *str_name)
 {
     char *name  = Parrot_str_to_cstring(interp, str_name);
     char *value = getenv(name);

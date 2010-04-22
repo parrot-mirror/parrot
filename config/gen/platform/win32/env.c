@@ -97,7 +97,7 @@ freed later.
 */
 
 char *
-Parrot_getenv(PARROT_INTERP, ARGIN(STRING *str_name))
+Parrot_getenv(PARROT_INTERP, ARGIN(const STRING *str_name))
 {
     char *name       = Parrot_str_to_cstring(interp, str_name);
     const DWORD size = GetEnvironmentVariable(name, NULL, 0);

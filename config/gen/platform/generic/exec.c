@@ -36,7 +36,7 @@ returning the return value of the process
 */
 
 INTVAL
-Parrot_Run_OS_Command(PARROT_INTERP, STRING *command)
+Parrot_Run_OS_Command(PARROT_INTERP, const STRING *command)
 {
     pid_t child;
     child = fork();
