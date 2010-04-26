@@ -744,6 +744,18 @@ free_old_mem_blocks(
     pool->possibly_reclaimable   = 0;
 }
 
+/*
+
+=item C<static int block_is_almost_full(const Memory_Block *block)>
+
+Tests if the block is almost full
+
+Returns true if less that 20% of block is available
+
+=cut
+
+*/
+
 static int
 block_is_almost_full(ARGIN(const Memory_Block *block))
 {
