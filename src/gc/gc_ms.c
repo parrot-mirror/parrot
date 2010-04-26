@@ -841,7 +841,7 @@ gc_ms_allocate_buffer_storage(PARROT_INTERP,
         interp->mem_pools, new_size, interp->mem_pools->memory_pool));
 
     /* Save pool used to allocate into buffer header */
-    *Buffer_bufrefcountptr(buffer) = interp->mem_pools->memory_pool;
+    *Buffer_poolptr(buffer) = interp->mem_pools->memory_pool->top_block;
 
     Buffer_buflen(buffer)   = new_size - sizeof (void *);
 }
@@ -912,7 +912,7 @@ gc_ms_reallocate_buffer_storage(PARROT_INTERP, ARGMOD(Buffer *buffer),
     Buffer_buflen(buffer) = new_size;
 
     /* Save pool used to allocate into buffer header */
-    *Buffer_bufrefcountptr(buffer) = interp->mem_pools->memory_pool;
+    *Buffer_poolptr(buffer) = interp->mem_pools->memory_pool->top_block;
 }
 
 /*
@@ -956,7 +956,7 @@ gc_ms_allocate_string_storage(PARROT_INTERP, ARGOUT(STRING *str),
     Buffer_buflen(str)   = new_size - sizeof (void *);
 
     /* Save pool used to allocate into buffer header */
-    *Buffer_bufrefcountptr(str) = pool;
+    *Buffer_poolptr(str) = pool->top_block;
 }
 
 /*
@@ -1027,7 +1027,7 @@ gc_ms_reallocate_string_storage(PARROT_INTERP, ARGMOD(STRING *str),
         memcpy(mem, oldmem, copysize);
 
     /* Save pool used to allocate into buffer header */
-    *Buffer_bufrefcountptr(str) = pool;
+    *Buffer_poolptr(str) = pool->top_block;
 }
 
 /*

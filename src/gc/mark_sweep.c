@@ -713,10 +713,10 @@ free_buffer(SHIM_INTERP,
     if (mem_pool) {
         /* Update Memory_Block usage */
         if (PObj_is_movable_TESTALL(b)) {
-            INTVAL *buffer_flags = buffer_flags = Buffer_bufrefcountptr(b);
+            INTVAL *buffer_flags = Buffer_bufrefcountptr(b);
 
             /* Mask low 2 bits used for flags */
-            Memory_Block * block = (Memory_Block *)(*buffer_flags & ~3);
+            Memory_Block * block = Buffer_pool(b);
 
             PARROT_ASSERT(block);
 

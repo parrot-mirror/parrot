@@ -491,8 +491,7 @@ compact_pool(PARROT_INTERP,
             for (i = objects_end; i; --i) {
 
                 if (Buffer_buflen(b) && PObj_is_movable_TESTALL(b)) {
-                    INTVAL *buffer_flags = Buffer_bufrefcountptr(b);
-                    Memory_Block *old_block = (Memory_Block*)(*buffer_flags & ~3);
+                    Memory_Block *old_block = Buffer_pool(b);
 
                     if (!block_is_almost_full(old_block))
                         cur_spot = move_one_buffer(interp, new_block, b, cur_spot);
@@ -615,7 +614,7 @@ move_one_buffer(PARROT_INTERP, ARGIN(Memory_Block *pool),
         * strstart might be in unallocated memory */
     if (PObj_is_COWable_TEST(old_buf)) {
         flags = Buffer_bufrefcountptr(old_buf);
-        old_block = (Memory_Block *)(*flags & ~3);
+        old_block = Buffer_pool(old_buf);
 
         if (PObj_is_string_TEST(old_buf)) {
             offset = (ptrdiff_t)((STRING *)old_buf)->strstart -
@@ -668,7 +667,7 @@ move_one_buffer(PARROT_INTERP, ARGIN(Memory_Block *pool),
         Buffer_bufstart(old_buf) = new_pool_ptr;
 
         /* Remember new pool inside */
-        *Buffer_bufrefcountptr(old_buf) = pool;
+        *Buffer_pool(old_buf) = pool;
 
         if (PObj_is_string_TEST(old_buf))
             ((STRING *)old_buf)->strstart =
