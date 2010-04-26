@@ -50,7 +50,7 @@ static void alloc_new_block(
         FUNC_MODIFIES(*mem_pools)
         FUNC_MODIFIES(*pool);
 
-static int block_is_almost_full(ARGIN(const Memory_Block *block))
+static int is_block_almost_full(ARGIN(const Memory_Block *block))
         __attribute__nonnull__(1);
 
 PARROT_CANNOT_RETURN_NULL
@@ -152,7 +152,7 @@ static int sweep_cb_pmc(PARROT_INTERP,
        PARROT_ASSERT_ARG(mem_pools) \
     , PARROT_ASSERT_ARG(pool) \
     , PARROT_ASSERT_ARG(why))
-#define ASSERT_ARGS_block_is_almost_full __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
+#define ASSERT_ARGS_is_block_almost_full __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
        PARROT_ASSERT_ARG(block))
 #define ASSERT_ARGS_buffer_location __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
        PARROT_ASSERT_ARG(interp) \
@@ -493,7 +493,7 @@ compact_pool(PARROT_INTERP,
                 if (Buffer_buflen(b) && PObj_is_movable_TESTALL(b)) {
                     Memory_Block *old_block = Buffer_pool(b);
 
-                    if (!block_is_almost_full(old_block))
+                    if (!is_block_almost_full(old_block))
                         cur_spot = move_one_buffer(interp, new_block, b, cur_spot);
                 }
 
@@ -712,7 +712,7 @@ free_old_mem_blocks(
     while (cur_block) {
         Memory_Block * const next_block = cur_block->prev;
 
-        if (block_is_almost_full(cur_block)) {
+        if (is_block_almost_full(cur_block)) {
             /* Skip block */
             prev_block = cur_block;
             cur_block  = next_block;
@@ -746,9 +746,9 @@ free_old_mem_blocks(
 
 /*
 
-=item C<static int block_is_almost_full(const Memory_Block *block)>
+=item C<static int is_block_almost_full(const Memory_Block *block)>
 
-Tests if the block is almost full
+Tests if the block is almost full and should be skipped during compacting.
 
 Returns true if less that 20% of block is available
 
@@ -757,9 +757,9 @@ Returns true if less that 20% of block is available
 */
 
 static int
-block_is_almost_full(ARGIN(const Memory_Block *block))
+is_block_almost_full(ARGIN(const Memory_Block *block))
 {
-    ASSERT_ARGS(block_is_almost_full)
+    ASSERT_ARGS(is_block_almost_full)
     return (block->free + block->freed) < block->size * 0.2;
 }
 
