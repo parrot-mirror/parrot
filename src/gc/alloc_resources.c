@@ -558,7 +558,6 @@ pad_pool_size(ARGIN(const Variable_Size_Pool *pool))
 #endif
 
     while (cur_block) {
-        //total_size += cur_block->size - cur_block->free;
         total_size += cur_block->size - cur_block->freed - cur_block->free;
         cur_block   = cur_block->prev;
 #if RESOURCE_DEBUG
