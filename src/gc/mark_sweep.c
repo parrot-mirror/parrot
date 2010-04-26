@@ -712,7 +712,7 @@ free_buffer(SHIM_INTERP,
      * shouldn't happen */
     if (mem_pool) {
         /* Update Memory_Block usage */
-        if (Buffer_buflen(b) && PObj_is_movable_TESTALL(b)) {
+        if (PObj_is_movable_TESTALL(b)) {
             INTVAL *buffer_flags = buffer_flags = Buffer_bufrefcountptr(b);
 
             /* Mask low 2 bits used for flags */
