@@ -717,19 +717,13 @@ free_buffer(SHIM_INTERP,
     if (mem_pool) {
         /* Update Memory_Block usage */
         Memory_Block * block = mem_pool->top_block;
-        INTVAL *ref_count = NULL;
+        INTVAL *buffer_flags = NULL;
 
-        if (PObj_is_COWable_TEST(b)) {
-            ref_count = Buffer_bufrefcountptr(b);
+        if (PObj_is_movable_TESTALL(b)) {
+            buffer_flags = Buffer_bufrefcountptr(b);
         }
 
-
-        if (!PObj_COW_TEST(b)) {
-            mem_pool->guaranteed_reclaimable += Buffer_buflen(b);
-        }
-        else {
-            mem_pool->possibly_reclaimable   += Buffer_buflen(b);
-
+#if 0
             /* If block was already moved - skip it */
             if (ref_count && *ref_count & Buffer_counted_FLAG)
                 return;
@@ -737,8 +731,6 @@ free_buffer(SHIM_INTERP,
             /* Set counted flag */
             if (ref_count)
                 *ref_count |= Buffer_counted_FLAG;
-        }
-
         /* Find our block */
         if (Buffer_buflen(b) && PObj_is_movable_TESTALL(b)) {
             while (block) {
@@ -752,6 +744,7 @@ free_buffer(SHIM_INTERP,
                 block = block->prev;
             }
         }
+#endif
     }
 
     Buffer_buflen(b) = 0;

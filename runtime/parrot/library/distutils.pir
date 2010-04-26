@@ -62,7 +62,7 @@ Update from the repository.
 
 Output a skeleton for Plumage
 
-=item sdist, sdist_gztar, sdist_bztar, sdist_zip, sdist_rpm, manifest
+=item sdist, sdist_gztar, sdist_zip, sdist_rpm, manifest
 
 Create a source distribution or a source RPM package
 
@@ -96,17 +96,9 @@ Typical invocations are:
 
 =over 4
 
-=item prove --archive (in step 'smoke')
-
-module TAP-Harness-Archive
-
 =item pod2html
 
 core module Pod-Html
-
-=item chmod (in step 'install')
-
-core module ExtUtils::Command, see TT #1322
 
 =back
 
@@ -116,7 +108,11 @@ core module ExtUtils::Command, see TT #1322
 
 =item glob (in step 'manifest' & 'sdist')
 
-PGE::Glob
+PGE/Glob.pbc
+
+=item tempdir (in step 'smoke')
+
+Math/Rand.pbc
 
 =back
 
@@ -126,15 +122,11 @@ PGE::Glob
 
 =item smoke
 
-curl
+tar, curl
 
 =item sdist_gztar
 
-Some coreutils : tar, gzip
-
-=item sdist_bztar
-
-bzip2
+Some coreutils : tar
 
 =item sdist_zip
 
@@ -254,8 +246,6 @@ L<http://gitorious.org/kakapo/kakapo/blobs/master/setup.nqp>
     register_step_after('clean', _clean_html_pod)
     .const 'Sub' _clean_gztar = '_clean_gztar'
     register_step_after('clean', _clean_gztar)
-    .const 'Sub' _clean_bztar = '_clean_bztar'
-    register_step_after('clean', _clean_bztar)
     .const 'Sub' _clean_zip = '_clean_zip'
     register_step_after('clean', _clean_zip)
     .const 'Sub' _clean_smoke = '_clean_smoke'
@@ -289,8 +279,6 @@ L<http://gitorious.org/kakapo/kakapo/blobs/master/setup.nqp>
     register_step('sdist', _sdist)
     .const 'Sub' _sdist_gztar = '_sdist_gztar'
     register_step('sdist_gztar', _sdist_gztar)
-    .const 'Sub' _sdist_bztar = '_sdist_bztar'
-    register_step('sdist_bztar', _sdist_bztar)
     .const 'Sub' _sdist_zip = '_sdist_zip'
     register_step('sdist_zip', _sdist_zip)
     .const 'Sub' _manifest = '_manifest'
@@ -1276,9 +1264,6 @@ the value is the OPS pathname
 .sub 'get_cores'
     $P0 = new 'Hash'
     $P0['C'] = ''
-#    $P0['CGP'] = '_cgp'
-#    $P0['CGoto'] = '_cg'
-    $P0['CSwitch'] = '_switch'
     .return ($P0)
 .end
 
@@ -1364,10 +1349,6 @@ an array creates a PMC group
     pmc2c .= " "
     $S0 = get_tool('build/pmc2c.pl')
     pmc2c .= $S0
-    $S0 = config['osname']
-    unless $S0 == 'solaris' goto L1
-    pmc2c .= " --no-lines"
-  L1:
     .local string pmc2c_includes
     pmc2c_includes = "--include "
     $S0 = get_srcdir()
@@ -1416,10 +1397,6 @@ an array creates a PMC group
     cmd .= " "
     $S0 = get_tool('build/pmc2c.pl')
     cmd .= $S0
-    $S0 = config['osname']
-    unless $S0 == 'solaris' goto L0
-    cmd .= " --no-lines"
-  L0:
     cmd .= " --library "
     $S0 = dirname(src)
     cmd .= $S0
@@ -2088,7 +2065,8 @@ the default value is "t/*.t"
     unless $I0 goto L4
     $S0 = kv['test_files']
   L4:
-    files = glob($S0)
+    $P0 = glob($S0)
+    files = sort_strings($P0)
     harness = new ['TAP';'Harness']
     harness.'process_args'(opts)
     aggregate = harness.'runtests'(files)
@@ -2098,61 +2076,41 @@ the default value is "t/*.t"
   L5:
 .end
 
-=head3 Step smoke
-
-Unless t/harness exists, run : prove --archive t/*.t
-
-=cut
-
-.sub '_smoke' :anon
-    .param pmc kv :slurpy :named
-    run_step('build', kv :flat :named)
-    $I0 = file_exists('t/harness')
-    if $I0 goto L1
-    $S0 = get_prove_version()
-    $S0 = substr $S0, 0, 1
-    unless $S0 == "3" goto L2
-    .tailcall _smoke_prove(kv :flat :named)
-  L2:
-    die "Require Test::Harness v3.x (option --archive)."
+.sub 'sort_strings'
+    .param pmc array
+    # currently, FixedStringArray hasn't the method sort.
+    # see TT #1356
+    $I0 = elements array
+    $P0 = new 'FixedPMCArray'
+    set $P0, $I0
+    $I0 = 0
+    $P1 = iter array
   L1:
-    .tailcall _smoke_harness(kv :flat :named)
+    unless $P1 goto L2
+    $S0 = shift $P1
+    $P0[$I0] = $S0
+    inc $I0
+    goto L1
+  L2:
+    $P0.'sort'()
+    .return ($P0)
 .end
 
-.sub 'get_prove_version' :anon
-    $P0 = open 'prove --version', 'rp'
-    $S0 = $P0.'readline'()
-    $P0.'close'()
-    $I1 = index $S0, "Test::Harness v"
-    $I1 += 15
-    $I2 = index $S0, " ", $I1
-    $I3 = $I2 - $I1
-    $S0 = substr $S0, $I1, $I3
-    .return ($S0)
-.end
-
-.sub '_clean_smoke' :anon
-    .param pmc kv :slurpy :named
-    $S0 = get_value('prove_archive', "report.tar.gz" :named('default'), kv :flat :named)
-    unlink($S0, 1 :named('verbose'))
-    $S0 = get_value('harness_archive', "report.tar.gz" :named('default'), kv :flat :named)
-    unlink($S0, 1 :named('verbose'))
-    unlink('meta.yml', 1 :named('verbose'))
-.end
+=head3 Step smoke
 
 =over 4
 
-=item prove_exec
+=item prove_exec / test_exec
 
 option --exec of prove
 
-=item prove_files
+=item prove_files / test_files
 
 the default value is "t/*.t"
 
-=item prove_archive
+=item prove_archive / smolder_archive
 
-option --archive of prove
+option --archive of prove / tapir
 
 the default value is report.tar.gz
 
@@ -2172,80 +2130,60 @@ a string
 
 a hash
 
+=back
+
 =cut
 
-.sub '_smoke_prove' :anon
+.sub '_smoke' :anon
     .param pmc kv :slurpy :named
-    .local string cmd
-    cmd = "prove"
+    run_step('build', kv :flat :named)
+
+    load_bytecode 'TAP/Harness.pbc'
+    .local pmc opts, files, harness, aggregate
+    opts = new 'Hash'
     $I0 = exists kv['prove_exec']
     unless $I0 goto L1
-    cmd .= " --exec="
     $S0 = kv['prove_exec']
-    $I0 = index $S0, ' '
-    if $I0 < 0 goto L2
-    cmd .= "\""
-  L2:
-    cmd .= $S0
-    if $I0 < 0 goto L1
-    cmd .= "\""
+    opts['exec'] = $S0
   L1:
-    cmd .= " "
-    $S0 = get_value('prove_files', "t/*.t" :named('default'), kv :flat :named)
-    cmd .= $S0
-    cmd .= " --archive="
+    $I0 = exists kv['test_exec']
+    unless $I0 goto L2
+    $S0 = kv['test_exec']
+    opts['exec'] = $S0
+  L2:
+    $S0 = "t/*.t"
+    $I0 = exists kv['prove_files']
+    unless $I0 goto L3
+    $S0 = kv['prove_files']
+  L3:
+    $I0 = exists kv['test_files']
+    unless $I0 goto L4
+    $S0 = kv['test_files']
+  L4:
+    $P0 = glob($S0)
+    files = sort_strings($P0)
+    harness = new ['TAP';'Harness';'Archive']
+    harness.'process_args'(opts)
     .local string archive
+    archive = "report.tar.gz"
+    $I0 = exists kv['prove_archive']
+    unless $I0 goto L5
+    archive = kv['prove_archive']
+  L5:
+    $I0 = exists kv['smolder_archive']
+    unless $I0 goto L6
+    archive = kv['smolder_archive']
+  L6:
     archive = get_value('prove_archive', "report.tar.gz" :named('default'), kv :flat :named)
-    cmd .= archive
-    system(cmd, 1 :named('verbose'), 1 :named('ignore_error'))
-
-    add_extra_properties(archive, kv :flat :named)
-    smolder_post(archive, kv :flat :named)
-.end
-
-.sub 'add_extra_properties' :anon
-    .param string archive
-    .param pmc kv :slurpy :named
-    .local string cmd
+    harness.'archive'(archive)
     $I0 = exists kv['smolder_extra_properties']
-    unless $I0 goto L1
-    system('perl -MExtUtils::Command -e rm_rf tmp')
-    cmd = "mkdir tmp && cd tmp && tar xzf ../"
-    cmd .= archive
-    system(cmd, 1 :named('verbose'))
-
+    unless $I0 goto L7
     $P0 = kv['smolder_extra_properties']
-    $S0 = mk_extra_properties($P0)
-    say "append extra properties"
-    append('tmp/meta.yml', $S0)
+    harness.'extra_props'($P0)
+  L7:
+    aggregate = harness.'runtests'(files)
 
-    unlink(archive)
-    cmd = "cd tmp && tar czf ../"
-    cmd .= archive
-    cmd .= " *"
-    system(cmd, 1 :named('verbose'))
-    system('perl -MExtUtils::Command -e rm_rf tmp')
-  L1:
-.end
-
-.sub 'mk_extra_properties' :anon
-    .param pmc hash
-    $S0 = "extra_properties:\n"
-    $P0 = iter hash
-  L1:
-    unless $P0 goto L2
-    .local string key, value
-    key = shift $P0
-    value = hash[key]
-    if value == '' goto L1
-    $S0 .= "  "
-    $S0 .= key
-    $S0 .= ": "
-    $S0 .= value
-    $S0 .= "\n"
-    goto L1
-  L2:
-    .return ($S0)
+    smolder_post(archive, kv :flat :named)
 .end
 
 .sub 'smolder_post' :anon
@@ -2288,53 +2226,12 @@ a hash
   L1:
 .end
 
-=item harness_exec
-
-the default value is with perl
-
-=item harness_options
-
-the default value is empty
-
-=item harness_archive
-
-the default value is report.tar.gz
-
-=item harness_files
-
-the default value is "t/*.t"
-
-=back
-
-=cut
-
-.sub '_smoke_harness' :anon
+.sub '_clean_smoke' :anon
     .param pmc kv :slurpy :named
-    .local string cmd
-    $I0 = exists kv['harness_exec']
-    unless $I0 goto L1
-    cmd = kv['harness_exec']
-    goto L2
-  L1:
-    cmd = "perl -I"
-    $S0 = get_libdir()
-    cmd .= $S0
-    cmd .= "/tools/lib"
-  L2:
-    cmd .= " t/harness "
-    $S0 = get_value('harness_options', '' :named('default'), kv :flat :named)
-    cmd .= $S0
-    cmd .= " --archive="
-    .local string archive
-    archive = get_value('harness_archive', "report.tar.gz" :named('default'), kv :flat :named)
-    cmd .= archive
-    cmd .= " "
-    $S0 = get_value('harness_files', "t/*.t" :named('default'), kv :flat :named)
-    cmd .= $S0
-    system(cmd, 1 :named('verbose'), 1 :named('ignore_error'))
-
-    add_extra_properties(archive, kv :flat :named)
-    smolder_post(archive, kv :flat :named)
+    $S0 = get_value('prove_archive', "report.tar.gz" :named('default'), kv :flat :named)
+    unlink($S0, 1 :named('verbose'))
+    $S0 = get_value('smolder_archive', "report.tar.gz" :named('default'), kv :flat :named)
+    unlink($S0, 1 :named('verbose'))
 .end
 
 =head3 Step install
@@ -3146,9 +3043,8 @@ On Windows calls sdist_zip, otherwise sdist_gztar
 
     rmtree($S0)
 
-    cmd = 'gzip --best ' . $S0
-    cmd .= '.tar'
-    system(cmd, 1 :named('verbose'))
+    $S1 = $S0 . '.tar'
+    gzip($S1)
   L1:
 .end
 
@@ -3187,45 +3083,6 @@ On Windows calls sdist_zip, otherwise sdist_gztar
     $S0 .= $S1
     $S0 .= ext
     .return ($S0)
-.end
-
-=head3 Step sdist_bztar
-
-=cut
-
-.sub '_sdist_bztar' :anon
-    .param pmc kv :slurpy :named
-    run_step('manifest', kv :flat :named)
-
-    $S0 = slurp('MANIFEST')
-    $P0 = split "\n", $S0
-    $S0 = pop $P0
-    $S0 = get_tarname('.tar.bz2', kv :flat :named)
-    $I0 = newer($S0, $P0)
-    if $I0 goto L1
-    $S0 = get_tarname('', kv :flat :named)
-    copy_sdist($S0, $P0)
-
-    .local string cmd
-    cmd = 'tar -cvf ' . $S0
-    cmd .= '.tar '
-    cmd .= $S0
-    system(cmd, 1 :named('verbose'))
-
-    rmtree($S0)
-
-    cmd = 'bzip2 ' . $S0
-    cmd .= '.tar'
-    system(cmd, 1 :named('verbose'))
-  L1:
-.end
-
-.sub '_clean_bztar' :anon
-    .param pmc kv :slurpy :named
-
-    $S0 = get_tarname('.tar.bz2', kv :flat :named)
-    unlink($S0, 1 :named('verbose'))
-    unlink('MANIFEST', 1 :named('verbose'))
 .end
 
 =head3 Step sdist_zip
@@ -4363,9 +4220,6 @@ Return the whole config
     flags .= $S0
     flags .= " "
     $S0 = $P0['cc_hasjit']
-    flags .= $S0
-    flags .= " "
-    $S0 = $P0['cg_flag']
     flags .= $S0
     .return (flags)
 .end

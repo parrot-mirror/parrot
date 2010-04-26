@@ -56,7 +56,7 @@ PARROT_EXPORT void Parrot_pbc_load(Parrot_Interp, Parrot_PackFile);
 
 PARROT_EXPORT void Parrot_pbc_fixup_loaded(Parrot_Interp);
 
-PARROT_EXPORT void Parrot_runcode(Parrot_Interp, int argc, char **argv);
+PARROT_EXPORT void Parrot_runcode(Parrot_Interp, int argc, const char **argv);
 
 PARROT_EXPORT Parrot_PMC Parrot_compile_string(Parrot_Interp,
         Parrot_String type, const char *code, Parrot_String *error);
@@ -72,6 +72,8 @@ PARROT_DOES_NOT_RETURN
 void Parrot_exit(Parrot_Interp, int status);
 
 PARROT_EXPORT void Parrot_run_native(PARROT_INTERP, native_func_t func);
+
+PARROT_EXPORT void Parrot_load_bytecode(PARROT_INTERP, Parrot_String file_str);
 
 /* Parrot_set_config_hash exists in *_config.o (e.g install_config.o),
    so if you make this call then you will need to link with it in

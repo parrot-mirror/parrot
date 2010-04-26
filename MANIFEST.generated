@@ -2,16 +2,12 @@
 # See tools/dev/install_files.pl for documentation on the
 # format of this file.
 # Please re-sort this file after *EVERY* modification
-blib/lib/libparrot.2.2.0.dylib                    [main]lib
+blib/lib/libparrot.2.3.0.dylib                    [main]lib
 blib/lib/libparrot.a                              [main]lib
 blib/lib/libparrot.dylib                          [main]lib
-blib/lib/libparrot.so.2.2.0                       [main]lib
+blib/lib/libparrot.so.2.3.0                       [main]lib
 blib/lib/libparrot.so                             [main]lib
 compilers/data_json/data_json.pbc                 [data_json]
-compilers/json/JSON.pbc                           [json]
-compilers/json/JSON/grammar.pbc                   [json]
-compilers/json/JSON/pge2pir.pbc                   [json]
-compilers/nqp/nqp.pbc                             [nqp]
 config/gen/call_list/opengl.in                    []
 docs/ops/bit.pod                                  [doc]
 docs/ops/cmp.pod                                  [doc]
@@ -37,10 +33,7 @@ include/parrot/exec_dep.h                         [main]include
 include/parrot/extend_vtable.h                    [main]include
 include/parrot/feature.h                          [main]include
 include/parrot/has_header.h                       [main]include
-include/parrot/oplib/core_ops_cg.h                [main]include
-include/parrot/oplib/core_ops_cgp.h               [main]include
 include/parrot/oplib/core_ops.h                   [main]include
-include/parrot/oplib/core_ops_switch.h            [main]include
 include/parrot/oplib/ops.h                        [main]include
 include/parrot/pbcversion.h                       [devel]include
 include/parrot/platform.h                         [main]include
@@ -75,30 +68,18 @@ lib/Parrot/OpLib/core.pm                          [devel]lib
 lib/Parrot/Pmc2c/PCCMETHOD_BITS.pm                [devel]lib
 lib/Parrot/PMC.pm                                 [devel]lib
 parrot.pc                                         [main]pkgconfig
-runtime/parrot/dynext/digest_group.bundle         [library]
-runtime/parrot/dynext/digest_group.dll            [library]
-runtime/parrot/dynext/digest_group.dylib          [library]
-runtime/parrot/dynext/digest_group.so             [library]
 runtime/parrot/dynext/dynlexpad.bundle            [library]
 runtime/parrot/dynext/dynlexpad.dll               [library]
 runtime/parrot/dynext/dynlexpad.dylib             [library]
 runtime/parrot/dynext/dynlexpad.so                [library]
-runtime/parrot/dynext/gdbmhash.bundle             [library]
-runtime/parrot/dynext/gdbmhash.dll                [library]
-runtime/parrot/dynext/gdbmhash.dylib              [library]
-runtime/parrot/dynext/gdbmhash.so                 [library]
+runtime/parrot/dynext/gziphandle.bundle           [library]
+runtime/parrot/dynext/gziphandle.dll              [library]
+runtime/parrot/dynext/gziphandle.dylib            [library]
+runtime/parrot/dynext/gziphandle.so               [library]
 runtime/parrot/dynext/libglutcb.bundle            [library]
 runtime/parrot/dynext/libglutcb.dll               [library]
 runtime/parrot/dynext/libglutcb.dylib             [library]
 runtime/parrot/dynext/libglutcb.so                [library]
-runtime/parrot/dynext/libnci_test.bundle          [library]
-runtime/parrot/dynext/libnci_test.dll             [library]
-runtime/parrot/dynext/libnci_test.dylib           [library]
-runtime/parrot/dynext/libnci_test.so              [library]
-runtime/parrot/dynext/match_group.bundle          [library]
-runtime/parrot/dynext/match_group.dll             [library]
-runtime/parrot/dynext/match_group.dylib           [library]
-runtime/parrot/dynext/match_group.so              [library]
 runtime/parrot/dynext/math_ops.so                 [library]
 runtime/parrot/dynext/math_ops.bundle             [library]
 runtime/parrot/dynext/math_ops.dll                [library]
@@ -111,10 +92,6 @@ runtime/parrot/dynext/rational.bundle             [library]
 runtime/parrot/dynext/rational.dll                [library]
 runtime/parrot/dynext/rational.dylib              [library]
 runtime/parrot/dynext/rational.so                 [library]
-runtime/parrot/dynext/subproxy.bundle             [library]
-runtime/parrot/dynext/subproxy.dll                [library]
-runtime/parrot/dynext/subproxy.dylib              [library]
-runtime/parrot/dynext/subproxy.so                 [library]
 runtime/parrot/include/call_bits.pasm             [main]
 runtime/parrot/include/cclass.pasm                [main]
 runtime/parrot/include/config.fpmc                []
@@ -229,8 +206,6 @@ src/glut_callbacks.c                              []
 src/jit_emit.h                                    []
 src/nci.c                                         []
 src/null_config.c                                 []
-src/ops/core_ops_cgp.c                            []
-src/ops/core_ops_switch.c                         []
 src/parrot_config.c                               []
 src/pmc/boolean.dump                              [devel]src
 src/pmc/continuation.dump                         [devel]src

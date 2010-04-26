@@ -41,7 +41,6 @@ my @steps = qw(
     auto::isreg
     auto::jit
     auto::frames
-    auto::cgoto
     auto::inline
     auto::gc
     auto::memalign
@@ -52,10 +51,9 @@ my @steps = qw(
     auto::thread
     auto::gmp
     auto::readline
-    auto::gdbm
     auto::pcre
     auto::opengl
-    auto::crypto
+    auto::zlib
     auto::gettext
     auto::snprintf
     auto::perldoc
@@ -65,7 +63,6 @@ my @steps = qw(
     auto::icu
     gen::config_h
     gen::core_pmcs
-    gen::crypto
     gen::opengl
     gen::makefiles
     gen::platform

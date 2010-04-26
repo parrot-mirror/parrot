@@ -44,7 +44,7 @@ static PMC* set_current_sub(PARROT_INTERP)
         __attribute__nonnull__(1);
 
 PARROT_CANNOT_RETURN_NULL
-static PMC* setup_argv(PARROT_INTERP, int argc, ARGIN(char **argv))
+static PMC* setup_argv(PARROT_INTERP, int argc, ARGIN(const char **argv))
         __attribute__nonnull__(1)
         __attribute__nonnull__(3);
 
@@ -336,15 +336,6 @@ Parrot_set_run_core(PARROT_INTERP, Parrot_Run_core_t core)
       case PARROT_FAST_CORE:
         Parrot_runcore_switch(interp, Parrot_str_new_constant(interp, "fast"));
         break;
-      case PARROT_SWITCH_CORE:
-        Parrot_runcore_switch(interp, Parrot_str_new_constant(interp, "switch"));
-        break;
-      case PARROT_CGP_CORE:
-        Parrot_runcore_switch(interp, Parrot_str_new_constant(interp, "cgp"));
-        break;
-      case PARROT_CGOTO_CORE:
-        Parrot_runcore_switch(interp, Parrot_str_new_constant(interp, "cgoto"));
-        break;
       case PARROT_EXEC_CORE:
         Parrot_runcore_switch(interp, Parrot_str_new_constant(interp, "exec"));
         break;
@@ -618,7 +609,7 @@ Parrot_pbc_fixup_loaded(PARROT_INTERP)
 
 /*
 
-=item C<static PMC* setup_argv(PARROT_INTERP, int argc, char **argv)>
+=item C<static PMC* setup_argv(PARROT_INTERP, int argc, const char **argv)>
 
 Creates and returns C<ARGS> array PMC.
 
@@ -628,7 +619,7 @@ Creates and returns C<ARGS> array PMC.
 
 PARROT_CANNOT_RETURN_NULL
 static PMC*
-setup_argv(PARROT_INTERP, int argc, ARGIN(char **argv))
+setup_argv(PARROT_INTERP, int argc, ARGIN(const char **argv))
 {
     ASSERT_ARGS(setup_argv)
     PMC   * const userargv = Parrot_pmc_new(interp, enum_class_ResizableStringArray);
@@ -716,8 +707,8 @@ set_current_sub(PARROT_INTERP)
      */
 
     for (i = 0; i < ft->fixup_count; i++) {
-        if (ft->fixups[i]->type == enum_fixup_sub) {
-            const opcode_t ci      = ft->fixups[i]->offset;
+        if (ft->fixups[i].type == enum_fixup_sub) {
+            const opcode_t ci      = ft->fixups[i].offset;
             PMC    * const sub_pmc = ct->constants[ci]->u.key;
             Parrot_Sub_attributes *sub;
 
@@ -748,7 +739,7 @@ set_current_sub(PARROT_INTERP)
 
 /*
 
-=item C<void Parrot_runcode(PARROT_INTERP, int argc, char **argv)>
+=item C<void Parrot_runcode(PARROT_INTERP, int argc, const char **argv)>
 
 Sets up C<ARGV> and runs the ops.
 
@@ -758,7 +749,7 @@ Sets up C<ARGV> and runs the ops.
 
 PARROT_EXPORT
 void
-Parrot_runcode(PARROT_INTERP, int argc, ARGIN(char **argv))
+Parrot_runcode(PARROT_INTERP, int argc, ARGIN(const char **argv))
 {
     PMC *userargv, *main_sub;
 
@@ -1001,12 +992,12 @@ Parrot_disassemble(PARROT_INTERP, ARGIN(const char *outfile), Parrot_disassemble
 
         /* Parrot_io_fprintf(interp, output, "%i < %i %i == %i \n", curr_mapping,
          * num_mappings, op_code_seq_num,
-         * interp->code->debugs->mappings[curr_mapping]->offset); */
+         * interp->code->debugs->mappings[curr_mapping].offset); */
 
         if (debugs && curr_mapping < num_mappings) {
-            if (op_code_seq_num == interp->code->debugs->mappings[curr_mapping]->offset) {
+            if (op_code_seq_num == interp->code->debugs->mappings[curr_mapping].offset) {
                 const int filename_const_offset =
-                    interp->code->debugs->mappings[curr_mapping]->filename;
+                    interp->code->debugs->mappings[curr_mapping].filename;
                 Parrot_io_fprintf(interp, output, "# Current Source Filename '%Ss'\n",
                         interp->code->const_table->constants[filename_const_offset]->u.string);
                 curr_mapping++;

@@ -25,7 +25,7 @@ typedef struct parrot_string_t STRING;
 
 typedef enum Forward_flag {
     Buffer_moved_FLAG   = 1 << 0,
-    Buffer_counted_FLAG = 1 << 1
+    Buffer_shared_FLAG  = 1 << 1
 } Forward_flags;
 
 /* String iterator */
