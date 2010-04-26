@@ -50,6 +50,9 @@ static void alloc_new_block(
         FUNC_MODIFIES(*mem_pools)
         FUNC_MODIFIES(*pool);
 
+static int block_is_almost_full(ARGIN(const Memory_Block *block))
+        __attribute__nonnull__(1);
+
 PARROT_CANNOT_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
 static const char * buffer_location(PARROT_INTERP, ARGIN(const Buffer *b))
@@ -65,24 +68,9 @@ static void check_memory_system(ARGIN(const Memory_Pools *mem_pools))
 static void check_var_size_obj_pool(ARGIN(const Variable_Size_Pool *pool))
         __attribute__nonnull__(1);
 
-static int compare_memory_blocks(
-    ARGIN(const void * lv),
-    ARGIN(const void * rv))
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(2);
-
 static void debug_print_buf(PARROT_INTERP, ARGIN(const Buffer *b))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
-
-PARROT_CAN_RETURN_NULL
-static Memory_Block* find_block_for_buffer(PARROT_INTERP,
-    ARGIN(const Buffer *buf),
-    ARGIN(Memory_Block **blocks),
-    size_t blocks_count)
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(2)
-        __attribute__nonnull__(3);
 
 static void fix_pmc_syncs(
     ARGMOD(Interp *dest_interp),
@@ -96,13 +84,10 @@ static void free_old_mem_blocks(
      ARGMOD(Memory_Pools *mem_pools),
     ARGMOD(Variable_Size_Pool *pool),
     ARGMOD(Memory_Block *new_block),
-    UINTVAL total_size,
-    ARGIN(Memory_Block **skip_blocks),
-    size_t skip_blocks_count)
+    UINTVAL total_size)
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3)
-        __attribute__nonnull__(5)
         FUNC_MODIFIES(*mem_pools)
         FUNC_MODIFIES(*pool)
         FUNC_MODIFIES(*new_block);
@@ -111,11 +96,13 @@ static void free_pool(ARGFREE(Fixed_Size_Pool *pool));
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 static char * move_one_buffer(PARROT_INTERP,
+    ARGIN(Memory_Block *pool),
     ARGMOD(Buffer *old_buf),
     ARGMOD(char *new_pool_ptr))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3)
+        __attribute__nonnull__(4)
         FUNC_MODIFIES(*old_buf)
         FUNC_MODIFIES(*new_pool_ptr);
 
@@ -127,15 +114,8 @@ static Variable_Size_Pool * new_memory_pool(
     ARGIN_NULLOK(compact_f compact));
 
 PARROT_CANNOT_RETURN_NULL
-static UINTVAL pad_pool_size(
-    ARGIN(const Variable_Size_Pool *pool),
-    ARGMOD(Memory_Block **skip_blocks),
-    ARGMOD(size_t *skip_blocks_count))
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(2)
-        __attribute__nonnull__(3)
-        FUNC_MODIFIES(*skip_blocks)
-        FUNC_MODIFIES(*skip_blocks_count);
+static UINTVAL pad_pool_size(ARGIN(const Variable_Size_Pool *pool))
+        __attribute__nonnull__(1);
 
 static void Parrot_gc_merge_buffer_pools(PARROT_INTERP,
     ARGMOD(Memory_Pools *mem_pools),
@@ -172,6 +152,8 @@ static int sweep_cb_pmc(PARROT_INTERP,
        PARROT_ASSERT_ARG(mem_pools) \
     , PARROT_ASSERT_ARG(pool) \
     , PARROT_ASSERT_ARG(why))
+#define ASSERT_ARGS_block_is_almost_full __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
+       PARROT_ASSERT_ARG(block))
 #define ASSERT_ARGS_buffer_location __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
        PARROT_ASSERT_ARG(interp) \
     , PARROT_ASSERT_ARG(b))
@@ -181,16 +163,9 @@ static int sweep_cb_pmc(PARROT_INTERP,
        PARROT_ASSERT_ARG(mem_pools))
 #define ASSERT_ARGS_check_var_size_obj_pool __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
        PARROT_ASSERT_ARG(pool))
-#define ASSERT_ARGS_compare_memory_blocks __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
-       PARROT_ASSERT_ARG(lv) \
-    , PARROT_ASSERT_ARG(rv))
 #define ASSERT_ARGS_debug_print_buf __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
        PARROT_ASSERT_ARG(interp) \
     , PARROT_ASSERT_ARG(b))
-#define ASSERT_ARGS_find_block_for_buffer __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
-       PARROT_ASSERT_ARG(interp) \
-    , PARROT_ASSERT_ARG(buf) \
-    , PARROT_ASSERT_ARG(blocks))
 #define ASSERT_ARGS_fix_pmc_syncs __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
        PARROT_ASSERT_ARG(dest_interp) \
     , PARROT_ASSERT_ARG(pool))
@@ -198,18 +173,16 @@ static int sweep_cb_pmc(PARROT_INTERP,
 #define ASSERT_ARGS_free_old_mem_blocks __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
        PARROT_ASSERT_ARG(mem_pools) \
     , PARROT_ASSERT_ARG(pool) \
-    , PARROT_ASSERT_ARG(new_block) \
-    , PARROT_ASSERT_ARG(skip_blocks))
+    , PARROT_ASSERT_ARG(new_block))
 #define ASSERT_ARGS_free_pool __attribute__unused__ int _ASSERT_ARGS_CHECK = (0)
 #define ASSERT_ARGS_move_one_buffer __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
        PARROT_ASSERT_ARG(interp) \
+    , PARROT_ASSERT_ARG(pool) \
     , PARROT_ASSERT_ARG(old_buf) \
     , PARROT_ASSERT_ARG(new_pool_ptr))
 #define ASSERT_ARGS_new_memory_pool __attribute__unused__ int _ASSERT_ARGS_CHECK = (0)
 #define ASSERT_ARGS_pad_pool_size __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
-       PARROT_ASSERT_ARG(pool) \
-    , PARROT_ASSERT_ARG(skip_blocks) \
-    , PARROT_ASSERT_ARG(skip_blocks_count))
+       PARROT_ASSERT_ARG(pool))
 #define ASSERT_ARGS_Parrot_gc_merge_buffer_pools __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
        PARROT_ASSERT_ARG(interp) \
     , PARROT_ASSERT_ARG(mem_pools) \
@@ -477,13 +450,6 @@ compact_pool(PARROT_INTERP,
 
     Fixed_Size_Arena *cur_buffer_arena;
 
-    /* List of Memory Blocks to skip. */
-    /* We don't compcat blocks if they are almost filled */
-    Memory_Block **skip_blocks;
-    Memory_Block  *tmp;
-    size_t         total_blocks = 0;
-    size_t         skip_blocks_count;
-
     /* Bail if we're blocked */
     if (mem_pools->gc_sweep_block_level)
         return;
@@ -495,20 +461,8 @@ compact_pool(PARROT_INTERP,
     mem_pools->header_allocs_since_last_collect = 0;
     mem_pools->gc_collect_runs++;
 
-    /* Calculate how many blocks do we have and reset used_amount */
-    // TODO Keep this number and don't recalculate it! */
-    for (tmp = pool->top_block; tmp; tmp = tmp->prev) {
-        ++total_blocks;
-    }
-
-    /* Allocate storage for skip list */
-    skip_blocks = (Memory_Block**)Parrot_gc_allocate_fixed_size_storage(interp,
-                        sizeof (Memory_Block*) * total_blocks);
-
     /* Snag a block big enough for everything */
-    total_size = pad_pool_size(pool, skip_blocks, &skip_blocks_count);
-
-    fprintf(stderr, "%d %d\n", total_blocks, skip_blocks_count);
+    total_size = pad_pool_size(pool);
 
     alloc_new_block(mem_pools, total_size, pool, "inside compact");
 
@@ -535,13 +489,14 @@ compact_pool(PARROT_INTERP,
             const size_t objects_end = cur_buffer_arena->used;
 
             for (i = objects_end; i; --i) {
-                /* Find buffer in skip list */
-                Memory_Block *block = find_block_for_buffer(interp, b,
-                                        skip_blocks, skip_blocks_count);
 
-                /* ... and don't move it if found */
-                if (!block)
-                    cur_spot = move_one_buffer(interp, b, cur_spot);
+                if (Buffer_buflen(b) && PObj_is_movable_TESTALL(b)) {
+                    INTVAL *buffer_flags = Buffer_bufrefcountptr(b);
+                    Memory_Block *old_block = (Memory_Block*)(*buffer_flags & ~3);
+
+                    if (!block_is_almost_full(old_block))
+                        cur_spot = move_one_buffer(interp, new_block, b, cur_spot);
+                }
 
                 b = (Buffer *)((char *)b + object_size);
             }
@@ -559,91 +514,14 @@ compact_pool(PARROT_INTERP,
     new_block->free = new_block->size - (cur_spot - new_block->start);
     mem_pools->memory_collected +=      (cur_spot - new_block->start);
 
-    free_old_mem_blocks(mem_pools, pool, new_block, total_size, skip_blocks, skip_blocks_count);
-
-    if (total_blocks)
-        Parrot_gc_free_fixed_size_storage(interp,
-                sizeof (Memory_Block*) * total_blocks, skip_blocks);
+    free_old_mem_blocks(mem_pools, pool, new_block, total_size);
 
     --mem_pools->gc_sweep_block_level;
 }
 
 /*
 
-=item C<static int compare_memory_blocks(const void * lv, const void * rv)>
-
-Compare Memory_Block by C<start> element. Used for sorting and binary
-search
-
-=cut
-
-*/
-
-static int
-compare_memory_blocks(ARGIN(const void * lv), ARGIN(const void * rv))
-{
-    ASSERT_ARGS(compare_memory_blocks)
-    const Memory_Block ** l = (const Memory_Pools **)lv;
-    const Memory_Block ** r = (const Memory_Pools **)rv;
-    return (*l)->start > (*r)->start;
-}
-
-/*
-
-=item C<static Memory_Block* find_block_for_buffer(PARROT_INTERP, const Buffer
-*buf, Memory_Block **blocks, size_t blocks_count)>
-
-Find block to which buffer belongs. Returns NULL if block not found.
-
-NB: C<blocks> must be ordered by block->start pointer.
-See C<compare_memory_blocks> function used in C<qsort>.
-
-=cut
-
-*/
-
-PARROT_CAN_RETURN_NULL
-static Memory_Block*
-find_block_for_buffer(PARROT_INTERP, ARGIN(const Buffer *buf),
-        ARGIN(Memory_Block **blocks), size_t blocks_count)
-{
-    ASSERT_ARGS(find_block_for_buffer)
-
-    char         *buf_start = (char*)Buffer_bufstart(buf);
-    size_t       low = 0, high = blocks_count;
-    Memory_Block *block, *middle;
-
-    /* Non-movable buffers are allocated from sysmem (usually) */
-    if (!blocks_count || !Buffer_buflen(buf) || !PObj_is_movable_TESTALL(buf))
-        return NULL;
-
-    /* Poor man std::lower_bound */
-    block = blocks[0];
-
-    while (low < high) {
-        /* It's unlikely to have integer overflow here */
-        size_t mid = (high + low)/2;
-        middle = blocks[mid];
-
-        if (middle->start < buf_start) {
-            block = middle;
-            low   = mid + 1;
-        }
-        else
-            high  = mid;
-    }
-
-    /* And check that is real one */
-    if (block && (block->start <= buf_start) && (buf_start < block->top))
-        return block;
-
-    return NULL;
-}
-
-/*
-
-=item C<static UINTVAL pad_pool_size(const Variable_Size_Pool *pool,
-Memory_Block **skip_blocks, size_t *skip_blocks_count)>
+=item C<static UINTVAL pad_pool_size(const Variable_Size_Pool *pool)>
 
 Calculate the size of the new pool. The currently used size equals the total
 size minus the reclaimable size. Add a minimum block to the current amount, so
@@ -670,53 +548,41 @@ problem easily.
 
 PARROT_CANNOT_RETURN_NULL
 static UINTVAL
-pad_pool_size(ARGIN(const Variable_Size_Pool *pool),
-        ARGMOD(Memory_Block **skip_blocks),
-        ARGMOD(size_t *skip_blocks_count))
+pad_pool_size(ARGIN(const Variable_Size_Pool *pool))
 {
     ASSERT_ARGS(pad_pool_size)
     Memory_Block *cur_block = pool->top_block;
 
-    UINTVAL total_size = 0;
-    size_t skip_pos    = 0;
+    UINTVAL total_size   = 0;
+#ifdef RESOURCE_DEBUG
+    size_t  total_blocks = 0;
+#endif
 
     while (cur_block) {
-        if (cur_block->freed < cur_block->size * 0.2) {
-            /* Don't reclaim almost filled blocks */
-            /* TODO Keep blocks ordered by block->start to use binary search */
-            skip_blocks[skip_pos++] = cur_block;
-        }
-        else {
-            //total_size += cur_block->size - cur_block->free;
-            total_size += cur_block->size - cur_block->freed;
-        }
+        //total_size += cur_block->size - cur_block->free;
+        total_size += cur_block->size - cur_block->freed - cur_block->free;
         cur_block   = cur_block->prev;
+#ifdef RESOURCE_DEBUG
+        ++total_blocks;
+#endif
     }
-
-    /*
-     * XXX for some reason the guarantee isn't correct
-     *     TODO check why
-     */
-
-    /* total_size -= pool->guaranteed_reclaimable; */
 
     /* this makes for ever increasing allocations but fewer collect runs */
 #if WE_WANT_EVER_GROWING_ALLOCATIONS
     total_size += pool->minimum_block_size;
 #endif
 
-    *skip_blocks_count = skip_pos;
-
-    /* Sort skip_blocks to use binary search */
-    qsort(skip_blocks, skip_pos, sizeof(Memory_Block*), compare_memory_blocks);
+#ifdef RESOURCE_DEBUG
+    fprintf(stderr, "Total blocks: %d\n", total_blocks);
+#endif
 
     return total_size;
 }
 
 /*
 
-=item C<static char * move_one_buffer(PARROT_INTERP, Buffer *old_buf, char
-*new_pool_ptr)>
+=item C<static char * move_one_buffer(PARROT_INTERP, Memory_Block *pool, Buffer
+*old_buf, char *new_pool_ptr)>
 
 The compact_pool operation collects disjointed blocks of memory allocated on a
 given pool's free list into one large block of memory. Once the new larger
@@ -730,87 +596,85 @@ memory block to the new memory block and marks that it has been moved.
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 static char *
-move_one_buffer(PARROT_INTERP, ARGMOD(Buffer *old_buf), ARGMOD(char *new_pool_ptr))
+move_one_buffer(PARROT_INTERP, ARGIN(Memory_Block *pool),
+        ARGMOD(Buffer *old_buf), ARGMOD(char *new_pool_ptr))
 {
     ASSERT_ARGS(move_one_buffer)
-    /* ! (on_free_list | constant | external | sysmem) */
-    if (Buffer_buflen(old_buf) && PObj_is_movable_TESTALL(old_buf)) {
-        INTVAL *flags = NULL;
-        ptrdiff_t offset = 0;
+
+    INTVAL       *flags     = NULL;
+    ptrdiff_t     offset    = 0;
+    Memory_Block *old_block = NULL;
 #if RESOURCE_DEBUG
-        if (Buffer_buflen(old_buf) >= RESOURCE_DEBUG_SIZE)
-            debug_print_buf(interp, old_buf);
+    if (Buffer_buflen(old_buf) >= RESOURCE_DEBUG_SIZE)
+        debug_print_buf(interp, old_buf);
 #else
-        UNUSED(interp);
+    UNUSED(interp);
 #endif
 
-        /* we can't perform the math all the time, because
-         * strstart might be in unallocated memory */
-        if (PObj_is_COWable_TEST(old_buf)) {
-            flags = Buffer_bufrefcountptr(old_buf);
+    /* we can't perform the math all the time, because
+        * strstart might be in unallocated memory */
+    if (PObj_is_COWable_TEST(old_buf)) {
+        flags = Buffer_bufrefcountptr(old_buf);
+        old_block = (Memory_Block *)(*flags & ~3);
 
-            if (PObj_is_string_TEST(old_buf)) {
-                offset = (ptrdiff_t)((STRING *)old_buf)->strstart -
-                    (ptrdiff_t)Buffer_bufstart(old_buf);
-            }
+        if (PObj_is_string_TEST(old_buf)) {
+            offset = (ptrdiff_t)((STRING *)old_buf)->strstart -
+                (ptrdiff_t)Buffer_bufstart(old_buf);
         }
+    }
 
-        /* buffer has already been moved; just change the header */
-        if (flags && (*flags & Buffer_shared_FLAG)
-                  && (*flags & Buffer_moved_FLAG)) {
-            /* Find out who else references our data */
-            Buffer * const hdr = *((Buffer **)Buffer_bufstart(old_buf));
+    /* buffer has already been moved; just change the header */
+    if (flags && (*flags & Buffer_shared_FLAG)
+              && (*flags & Buffer_moved_FLAG)) {
+        /* Find out who else references our data */
+        Buffer * const hdr = *((Buffer **)Buffer_bufstart(old_buf));
 
+        PARROT_ASSERT(PObj_is_COWable_TEST(old_buf));
+
+        /* Make sure they know that we own it too */
+        /* Set Buffer_shared_FLAG in new buffer */
+        *Buffer_bufrefcountptr(hdr) |= Buffer_shared_FLAG;
+
+        /* Now make sure we point to where the other guy does */
+        Buffer_bufstart(old_buf) = Buffer_bufstart(hdr);
+
+        /* And if we're a string, update strstart */
+        /* Somewhat of a hack, but if we get per-pool
+            * collections, it should help ease the pain */
+        if (PObj_is_string_TEST(old_buf))
+            ((STRING *)old_buf)->strstart =
+                (char *)Buffer_bufstart(old_buf) + offset;
+    }
+    else {
+        new_pool_ptr = aligned_mem(old_buf, new_pool_ptr);
+
+        /* Copy our memory to the new pool */
+        memcpy(new_pool_ptr, Buffer_bufstart(old_buf),
+                                Buffer_buflen(old_buf));
+
+        /* If we're shared */
+        if (flags && (*flags & Buffer_shared_FLAG)) {
             PARROT_ASSERT(PObj_is_COWable_TEST(old_buf));
 
-            /* Make sure they know that we own it too */
-            /* Set Buffer_shared_FLAG in new buffer */
-            *Buffer_bufrefcountptr(hdr) |= Buffer_shared_FLAG;
+            /* Let the old buffer know how to find us */
+            *((Buffer **)Buffer_bufstart(old_buf)) = old_buf;
 
-            /* Now make sure we point to where the other guy does */
-            Buffer_bufstart(old_buf) = Buffer_bufstart(hdr);
+            /* Finally, let the tail know that we've moved, so
+                * that any other references can know to look for
+                * us and not re-copy */
+            *flags |= Buffer_moved_FLAG;
+        }
 
-            /* And if we're a string, update strstart */
-            /* Somewhat of a hack, but if we get per-pool
-             * collections, it should help ease the pain */
-            if (PObj_is_string_TEST(old_buf))
-                ((STRING *)old_buf)->strstart =
+        Buffer_bufstart(old_buf) = new_pool_ptr;
+
+        /* Remember new pool inside */
+        *Buffer_bufrefcountptr(old_buf) = pool;
+
+        if (PObj_is_string_TEST(old_buf))
+            ((STRING *)old_buf)->strstart =
                     (char *)Buffer_bufstart(old_buf) + offset;
-        }
-        else {
-            new_pool_ptr = aligned_mem(old_buf, new_pool_ptr);
 
-            /* Copy our memory to the new pool */
-            memcpy(new_pool_ptr, Buffer_bufstart(old_buf),
-                                 Buffer_buflen(old_buf));
-
-            /* If we're shared */
-            if (flags && (*flags & Buffer_shared_FLAG)) {
-                PARROT_ASSERT(PObj_is_COWable_TEST(old_buf));
-
-                /* Let the old buffer know how to find us */
-                *((Buffer **)Buffer_bufstart(old_buf)) = old_buf;
-
-                /* Finally, let the tail know that we've moved, so
-                 * that any other references can know to look for
-                 * us and not re-copy */
-                *flags |= Buffer_moved_FLAG;
-            }
-
-            Buffer_bufstart(old_buf) = new_pool_ptr;
-
-            /* No guarantees that our data is still shared, so
-                * assume not, and let the above code fix-up */
-            /* Drop shared FLAG in new buffer */
-            *Buffer_bufrefcountptr(old_buf) &= ~Buffer_shared_FLAG;
-
-
-            if (PObj_is_string_TEST(old_buf))
-                ((STRING *)old_buf)->strstart =
-                     (char *)Buffer_bufstart(old_buf) + offset;
-
-            new_pool_ptr += Buffer_buflen(old_buf);
-        }
+        new_pool_ptr += Buffer_buflen(old_buf);
     }
 
     return new_pool_ptr;
@@ -819,8 +683,7 @@ move_one_buffer(PARROT_INTERP, ARGMOD(Buffer *old_buf), ARGMOD(char *new_pool_pt
 /*
 
 =item C<static void free_old_mem_blocks( Memory_Pools *mem_pools,
-Variable_Size_Pool *pool, Memory_Block *new_block, UINTVAL total_size,
-Memory_Block **skip_blocks, size_t skip_blocks_count)>
+Variable_Size_Pool *pool, Memory_Block *new_block, UINTVAL total_size)>
 
 The compact_pool operation collects disjointed blocks of memory allocated on a
 given pool's free list into one large block of memory, setting it as the new
@@ -839,49 +702,39 @@ free_old_mem_blocks(
         ARGMOD(Memory_Pools *mem_pools),
         ARGMOD(Variable_Size_Pool *pool),
         ARGMOD(Memory_Block *new_block),
-        UINTVAL total_size,
-        ARGIN(Memory_Block **skip_blocks),
-        size_t skip_blocks_count)
+        UINTVAL total_size)
 {
     ASSERT_ARGS(free_old_mem_blocks)
-    Memory_Block *cur_block = new_block->prev;
+    Memory_Block *prev_block = new_block;
+    Memory_Block *cur_block  = new_block->prev;
     size_t i;
 
     PARROT_ASSERT(new_block == pool->top_block);
 
     while (cur_block) {
         Memory_Block * const next_block = cur_block->prev;
-        INTVAL skip = 0;
 
-        /* Check that block isn't on skip list */
-        for (i = 0; i < skip_blocks_count; ++i) {
-            if (skip_blocks[i] == cur_block) {
-                cur_block = next_block;
-                skip = 1;
-                break;
-            }
+        if (block_is_almost_full(cur_block)) {
+            /* Skip block */
+            prev_block = cur_block;
+            cur_block  = next_block;
         }
+        else {
+            /* Note that we don't have it any more */
+            mem_pools->memory_allocated -= cur_block->size;
 
-        if (skip)
-            continue;
+            /* We know the pool body and pool header are a single chunk, so
+             * this is enough to get rid of 'em both */
+            mem_internal_free(cur_block);
+            cur_block        = next_block;
 
-        /* Note that we don't have it any more */
-        mem_pools->memory_allocated -= cur_block->size;
-
-        /* We know the pool body and pool header are a single chunk, so
-         * this is enough to get rid of 'em both */
-        mem_internal_free(cur_block);
-        cur_block = next_block;
-    }
-
-    /* Rebuild list of blocks from skip list */
-    for (i = 0; i < skip_blocks_count; ++i) {
-        new_block->prev = skip_blocks[i];
-        new_block = new_block->prev;
+            /* Unlink it from list */
+            prev_block->prev = next_block;
+        }
     }
 
     /* Terminate list */
-    new_block->prev       = NULL;
+    prev_block->prev = NULL;
 
 
     /* ANR: I suspect this should be set to new_block->size, instead of passing
@@ -891,6 +744,13 @@ free_old_mem_blocks(
     pool->total_allocated        = total_size;
     pool->guaranteed_reclaimable = 0;
     pool->possibly_reclaimable   = 0;
+}
+
+static int
+block_is_almost_full(ARGIN(const Memory_Block *block))
+{
+    ASSERT_ARGS(block_is_almost_full)
+    return (block->free + block->freed) < block->size * 0.2;
 }
 
 /*

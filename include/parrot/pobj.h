@@ -55,7 +55,7 @@ obj->bufstart   ->  +------------------+
 /* Given a pointer to the buffer, find the ref_count and the actual start of
    the allocated space. Setting ref_count is clunky because we avoid lvalue
    casts. */
-#define Buffer_alloc_offset sizeof (INTVAL)
+#define Buffer_alloc_offset sizeof (void*)
 #define Buffer_bufallocstart(b)  ((char *)Buffer_bufstart(b) - Buffer_alloc_offset)
 #define Buffer_bufrefcount(b)    (*(INTVAL *)Buffer_bufallocstart(b))
 #define Buffer_bufrefcountptr(b) ((INTVAL *)Buffer_bufallocstart(b))

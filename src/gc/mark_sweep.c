@@ -716,35 +716,20 @@ free_buffer(SHIM_INTERP,
      * shouldn't happen */
     if (mem_pool) {
         /* Update Memory_Block usage */
-        Memory_Block * block = mem_pool->top_block;
-        INTVAL *buffer_flags = NULL;
-
         if (PObj_is_movable_TESTALL(b)) {
-            buffer_flags = Buffer_bufrefcountptr(b);
-        }
+            INTVAL *buffer_flags = buffer_flags = Buffer_bufrefcountptr(b);
 
-#if 0
-            /* If block was already moved - skip it */
-            if (ref_count && *ref_count & Buffer_counted_FLAG)
-                return;
+            /* Mask low 2 bits used for flags */
+            Memory_Block * block = (Memory_Block *)(*buffer_flags & ~3);
 
-            /* Set counted flag */
-            if (ref_count)
-                *ref_count |= Buffer_counted_FLAG;
-        /* Find our block */
-        if (Buffer_buflen(b) && PObj_is_movable_TESTALL(b)) {
-            while (block) {
-                if (block->start <= (char*)Buffer_bufstart(b)
-                    && (char*)Buffer_bufstart(b) < block->top) {
-                    /* ... and update usage */
-                    block->freed += aligned_string_size(Buffer_buflen(b));
-                    break;
-                }
+            PARROT_ASSERT(block);
 
-                block = block->prev;
+            /* We can have shared buffers. Don't count them (yet) */
+            if (!(*buffer_flags & Buffer_shared_FLAG)) {
+                block->freed  += aligned_string_size(Buffer_buflen(b));
             }
+
         }
-#endif
     }
 
     Buffer_buflen(b) = 0;
