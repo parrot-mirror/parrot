@@ -667,7 +667,7 @@ move_one_buffer(PARROT_INTERP, ARGIN(Memory_Block *pool),
         Buffer_bufstart(old_buf) = new_pool_ptr;
 
         /* Remember new pool inside */
-        *Buffer_pool(old_buf) = pool;
+        *Buffer_poolptr(old_buf) = pool;
 
         if (PObj_is_string_TEST(old_buf))
             ((STRING *)old_buf)->strstart =
