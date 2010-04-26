@@ -704,10 +704,6 @@ free_buffer(SHIM_INTERP,
     ASSERT_ARGS(free_buffer)
     Variable_Size_Pool * const mem_pool = (Variable_Size_Pool *)pool->mem_pool;
 
-    /* If this is header for external buffer - bail out */
-    if (PObj_external_TEST(b))
-        return;
-
     /* If there is no allocated buffer - bail out */
     if (!Buffer_buflen(b))
         return;
@@ -716,7 +712,7 @@ free_buffer(SHIM_INTERP,
      * shouldn't happen */
     if (mem_pool) {
         /* Update Memory_Block usage */
-        if (PObj_is_movable_TESTALL(b)) {
+        if (Buffer_buflen(b) && PObj_is_movable_TESTALL(b)) {
             INTVAL *buffer_flags = buffer_flags = Buffer_bufrefcountptr(b);
 
             /* Mask low 2 bits used for flags */
@@ -726,7 +722,7 @@ free_buffer(SHIM_INTERP,
 
             /* We can have shared buffers. Don't count them (yet) */
             if (!(*buffer_flags & Buffer_shared_FLAG)) {
-                block->freed  += aligned_string_size(Buffer_buflen(b));
+                block->freed  += ALIGNED_STRING_SIZE(Buffer_buflen(b));
             }
 
         }

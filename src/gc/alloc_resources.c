@@ -554,7 +554,7 @@ pad_pool_size(ARGIN(const Variable_Size_Pool *pool))
     Memory_Block *cur_block = pool->top_block;
 
     UINTVAL total_size   = 0;
-#ifdef RESOURCE_DEBUG
+#if RESOURCE_DEBUG
     size_t  total_blocks = 0;
 #endif
 
@@ -562,7 +562,7 @@ pad_pool_size(ARGIN(const Variable_Size_Pool *pool))
         //total_size += cur_block->size - cur_block->free;
         total_size += cur_block->size - cur_block->freed - cur_block->free;
         cur_block   = cur_block->prev;
-#ifdef RESOURCE_DEBUG
+#if RESOURCE_DEBUG
         ++total_blocks;
 #endif
     }
@@ -572,7 +572,7 @@ pad_pool_size(ARGIN(const Variable_Size_Pool *pool))
     total_size += pool->minimum_block_size;
 #endif
 
-#ifdef RESOURCE_DEBUG
+#if RESOURCE_DEBUG
     fprintf(stderr, "Total blocks: %d\n", total_blocks);
 #endif
 
@@ -775,29 +775,6 @@ aligned_mem(SHIM(const Buffer *buffer), ARGIN(char *mem))
     mem  = (char *)(((unsigned long)(mem + WORD_ALIGN_1)) & WORD_ALIGN_MASK);
 
     return mem;
-}
-
-/*
-
-=item C<size_t aligned_string_size(size_t len)>
-
-Determines the size of a string of length C<len> in RAM, accounting for
-alignment.
-
-=cut
-
-*/
-
-PARROT_CONST_FUNCTION
-PARROT_WARN_UNUSED_RESULT
-size_t
-aligned_string_size(size_t len)
-{
-    ASSERT_ARGS(aligned_string_size)
-
-    len += sizeof (void *);
-    len  = (len + WORD_ALIGN_1) & WORD_ALIGN_MASK;
-    return len;
 }
 
 /*

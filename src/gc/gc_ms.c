@@ -834,7 +834,7 @@ gc_ms_allocate_buffer_storage(PARROT_INTERP,
     ARGOUT(Buffer *buffer), size_t size)
 {
     ASSERT_ARGS(gc_ms_allocate_buffer_storage)
-    const size_t new_size   = aligned_string_size(size);
+    const size_t new_size   = ALIGNED_STRING_SIZE(size);
 
     Buffer_bufstart(buffer) = (void *)aligned_mem(buffer,
         (char *)mem_allocate(interp,
@@ -883,8 +883,8 @@ gc_ms_reallocate_buffer_storage(PARROT_INTERP, ARGMOD(Buffer *buffer),
      * normally, which play ping pong with buffers.
      * The normal case is therefore always to allocate a new block
      */
-    new_size = aligned_string_size(newsize);
-    old_size = aligned_string_size(Buffer_buflen(buffer));
+    new_size = ALIGNED_STRING_SIZE(newsize);
+    old_size = ALIGNED_STRING_SIZE(Buffer_buflen(buffer));
     needed   = new_size - old_size;
 
     if ((pool->top_block->free >= needed)
@@ -948,7 +948,7 @@ gc_ms_allocate_string_storage(PARROT_INTERP, ARGOUT(STRING *str),
                 ? interp->mem_pools->constant_string_pool
                 : interp->mem_pools->memory_pool;
 
-    new_size = aligned_string_size(size);
+    new_size = ALIGNED_STRING_SIZE(size);
     mem      = (char *)mem_allocate(interp, interp->mem_pools, new_size, pool);
     mem     += sizeof (void *);
 
@@ -995,8 +995,8 @@ gc_ms_reallocate_string_storage(PARROT_INTERP, ARGMOD(STRING *str),
      * - if the passed strings buffer is the last string in the pool and
      * - if there is enough size, we can just move the pool's top pointer
      */
-    new_size = aligned_string_size(newsize);
-    old_size = aligned_string_size(Buffer_buflen(str));
+    new_size = ALIGNED_STRING_SIZE(newsize);
+    old_size = ALIGNED_STRING_SIZE(Buffer_buflen(str));
     needed   = new_size - old_size;
 
     if (pool->top_block->free >= needed
