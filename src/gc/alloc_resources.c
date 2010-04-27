@@ -50,9 +50,6 @@ static void alloc_new_block(
         FUNC_MODIFIES(*mem_pools)
         FUNC_MODIFIES(*pool);
 
-static int is_block_almost_full(ARGIN(const Memory_Block *block))
-        __attribute__nonnull__(1);
-
 PARROT_CANNOT_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
 static const char * buffer_location(PARROT_INTERP, ARGIN(const Buffer *b))
@@ -93,6 +90,9 @@ static void free_old_mem_blocks(
         FUNC_MODIFIES(*new_block);
 
 static void free_pool(ARGFREE(Fixed_Size_Pool *pool));
+static int is_block_almost_full(ARGIN(const Memory_Block *block))
+        __attribute__nonnull__(1);
+
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 static char * move_one_buffer(PARROT_INTERP,
@@ -152,8 +152,6 @@ static int sweep_cb_pmc(PARROT_INTERP,
        PARROT_ASSERT_ARG(mem_pools) \
     , PARROT_ASSERT_ARG(pool) \
     , PARROT_ASSERT_ARG(why))
-#define ASSERT_ARGS_is_block_almost_full __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
-       PARROT_ASSERT_ARG(block))
 #define ASSERT_ARGS_buffer_location __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
        PARROT_ASSERT_ARG(interp) \
     , PARROT_ASSERT_ARG(b))
@@ -175,6 +173,8 @@ static int sweep_cb_pmc(PARROT_INTERP,
     , PARROT_ASSERT_ARG(pool) \
     , PARROT_ASSERT_ARG(new_block))
 #define ASSERT_ARGS_free_pool __attribute__unused__ int _ASSERT_ARGS_CHECK = (0)
+#define ASSERT_ARGS_is_block_almost_full __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
+       PARROT_ASSERT_ARG(block))
 #define ASSERT_ARGS_move_one_buffer __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
        PARROT_ASSERT_ARG(interp) \
     , PARROT_ASSERT_ARG(pool) \
