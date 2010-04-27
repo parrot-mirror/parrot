@@ -615,7 +615,7 @@ gc_ms_allocate_pmc_header(PARROT_INTERP, UINTVAL flags)
             ? interp->mem_pools->constant_pmc_pool
             : interp->mem_pools->pmc_pool;
 
-    return (PMC*)pool->get_free_object(interp, interp->mem_pools, pool);
+    return (PMC *)pool->get_free_object(interp, interp->mem_pools, pool);
 }
 
 /*
@@ -661,7 +661,9 @@ gc_ms_allocate_string_header(PARROT_INTERP, UINTVAL flags)
             ? interp->mem_pools->constant_string_header_pool
             : interp->mem_pools->string_header_pool;
 
-    return (STRING *)pool->get_free_object(interp, interp->mem_pools, pool);
+    STRING *s = (STRING *)pool->get_free_object(interp, interp->mem_pools, pool);
+    memset(s, 0, sizeof (STRING));
+    return s;
 }
 
 
@@ -1381,9 +1383,6 @@ gc_ms_get_free_object(PARROT_INTERP,
     ptr             = free_list;
     pool->free_list = ((GC_MS_PObj_Wrapper*)ptr)->next_ptr;
 #endif
-
-    /* PObj_flags_SETTO(ptr, 0); */
-    memset(ptr, 0, pool->object_size);
 
     --pool->num_free_objects;
 

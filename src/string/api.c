@@ -766,9 +766,8 @@ Parrot_str_new_init(PARROT_INTERP, ARGIN_NULLOK(const char *buffer), UINTVAL len
         else
             s->strlen = CHARSET_CODEPOINTS(interp, s);
     }
-    else {
+    else
         s->strlen = s->bufused = 0;
-    }
 
     return s;
 }
