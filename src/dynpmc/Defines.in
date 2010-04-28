@@ -1,4 +1,5 @@
 DYNPMC_TARGETS = \
+#IF(has_zlib):    $(DYNEXT_DIR)/gziphandle$(LOAD_EXT) \
     $(DYNEXT_DIR)/dynlexpad$(LOAD_EXT) \
     $(DYNEXT_DIR)/foo_group$(LOAD_EXT) \
     $(DYNEXT_DIR)/pccmethod_test$(LOAD_EXT) \

@@ -88,3 +88,17 @@ src/dynpmc/subproxy.c: src/dynpmc/subproxy.dump
 
 src/dynpmc/subproxy.dump: src/dynpmc/subproxy.pmc vtable.dump
 	$(PMC2CD) src/dynpmc/subproxy.pmc
+
+$(DYNEXT_DIR)/gziphandle$(LOAD_EXT): src/dynpmc/gziphandle$(O)
+	$(LD)  @ld_out@$(DYNEXT_DIR)/gziphandle$(LOAD_EXT) src/dynpmc/gziphandle$(O) $(LINKARGS)
+#IF(win32):	if exist $@.manifest mt.exe -nologo -manifest $@.manifest -outputresource:$@;2
+#IF(cygwin or hpux):   $(CHMOD) 0775 $@
+
+src/dynpmc/gziphandle$(O): src/dynpmc/gziphandle.c src/dynpmc/pmc_gziphandle.h $(DYNPMC_H_FILES)
+
+src/dynpmc/gziphandle.c: src/dynpmc/gziphandle.dump
+	$(PMC2CC) src/dynpmc/gziphandle.pmc
+
+src/dynpmc/gziphandle.dump: src/dynpmc/gziphandle.pmc vtable.dump
+	$(PMC2CD) src/dynpmc/gziphandle.pmc
+
