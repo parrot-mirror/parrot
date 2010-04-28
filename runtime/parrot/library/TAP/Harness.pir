@@ -45,7 +45,7 @@ automatically aggregated and output to STDOUT.
     set_global ['TAP';'Harness'], 'LEGAL_CALLBACK', $P0
 .end
 
-.sub 'init' :vtable :init
+.sub 'init' :vtable :method
     $P0 = get_global ['TAP';'Harness'], 'LEGAL_CALLBACK'
     setattribute self, 'ok_callbacks', $P0
 .end
@@ -339,8 +339,7 @@ files or streams into an archive file (C<.tar.gz>).
     cmd .= " *"
     system(cmd)
     chdir(current_dir)
-    cmd = "gzip --best " . $S0
-    system(cmd)
+    gzip($S0)
     rmtree(dir)
     .return (aggregate)
 .end

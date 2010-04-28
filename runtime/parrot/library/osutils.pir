@@ -260,19 +260,8 @@ osutils - Parrot OS Utilities
     .param string filename
     .param int mode
     .param int verbose          :named('verbose') :optional
-    # see TT #1322
-    $P0 = get_config()
-    .local string cmd
-    cmd = $P0['perl']
-    cmd .= " -MExtUtils::Command -e ExtUtils::Command::chmod "
-    $P1 = new 'FixedIntegerArray'
-    set $P1, 1
-    $P1[0] = mode
-    $S0 = sprintf '0%o', $P1
-    cmd .= $S0
-    cmd .= " "
-    cmd .= filename
-    system(cmd, verbose :named('verbose'))
+    $P0 = new 'OS'
+    $P0.'chmod'(filename, mode)
 .end
 
 =item unlink
@@ -762,6 +751,48 @@ osutils - Parrot OS Utilities
     $S0 = join "/", $P0
     .return ($S0)
   L7:
+.end
+
+=item gzip
+
+=cut
+
+.sub 'gzip'
+    .param string filename
+    .local pmc fh, gh
+    fh = new 'FileHandle'
+    push_eh _handler1
+    $S0 = fh.'readall'(filename)
+    $I0 = length $S0
+    pop_eh
+    $P0 = loadlib 'gziphandle'
+    push_eh _handler2
+    gh = new 'GzipHandle'
+    $S1 = filename . '.gz'
+    gh.'open'($S1, 'wb')
+    gh.'puts'($S0)
+    gh.'close'()
+    unlink(filename)
+    .return ()
+  _handler1:
+    .local pmc e
+    .get_results (e)
+    $S0 = "Can't open '"
+    $S0 .= filename
+    $S0 .= "' ("
+    $S1 = err
+    $S0 .= $S1
+    $S0 .= ")\n"
+    e = $S0
+    rethrow e
+  _handler2:
+    .local pmc e
+    .get_results (e)
+    $S0 = "Can't gzip '"
+    $S0 .= filename
+    $S0 .= "'\n"
+    e = $S0
+    rethrow e
 .end
 
 =back

@@ -48,8 +48,6 @@ sub _init {
             conditioned_lines => 1,
         },
 
-        'compilers/ncigen/Makefile'  =>
-            { SOURCE => 'compilers/ncigen/config/makefiles/ncigen.in' },
         'src/dynpmc/Rules.mak' => {
              SOURCE => 'src/dynpmc/Rules.in',
         },

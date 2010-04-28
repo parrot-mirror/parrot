@@ -320,7 +320,6 @@ init_context(PARROT_INTERP, ARGMOD(PMC *pmcctx), ARGIN_NULLOK(PMC *pmcold))
     ctx->current_object    = NULL;
     ctx->handlers          = PMCNULL;
     ctx->caller_ctx        = NULL;
-    ctx->pred_offset       = 0;
     ctx->current_sig       = PMCNULL;
     ctx->current_sub       = PMCNULL;
 
@@ -330,7 +329,6 @@ init_context(PARROT_INTERP, ARGMOD(PMC *pmcctx), ARGIN_NULLOK(PMC *pmcold))
         ctx->warns             = old->warns;
         ctx->errors            = old->errors;
         ctx->trace_flags       = old->trace_flags;
-        ctx->pred_offset       = old->pred_offset;
         ctx->current_HLL       = old->current_HLL;
         ctx->current_namespace = old->current_namespace;
         /* end COW */
@@ -342,7 +340,6 @@ init_context(PARROT_INTERP, ARGMOD(PMC *pmcctx), ARGIN_NULLOK(PMC *pmcold))
         ctx->warns             = 0;
         ctx->errors            = 0;
         ctx->trace_flags       = 0;
-        ctx->pred_offset       = 0;
         ctx->current_HLL       = 0;
         ctx->current_namespace = PMCNULL;
         ctx->recursion_depth   = 0;
@@ -526,18 +523,12 @@ Parrot_pcc_free_registers(PARROT_INTERP, ARGIN(PMC *pmcctx))
 {
     ASSERT_ARGS(Parrot_pcc_free_registers)
     Parrot_CallContext_attributes * const ctx = PARROT_CALLCONTEXT(pmcctx);
-    size_t reg_size;
 
-    if (!ctx)
-        return;
+    const size_t reg_size =
+        Parrot_pcc_calculate_registers_size(interp, ctx->n_regs_used);
 
-    reg_size = Parrot_pcc_calculate_registers_size(interp, ctx->n_regs_used);
-    if (!reg_size)
-        return;
-
-    /* Free registers */
-    Parrot_gc_free_fixed_size_storage(interp, reg_size, ctx->registers);
-
+    if (reg_size)
+        Parrot_gc_free_fixed_size_storage(interp, reg_size, ctx->registers);
 }
 
 

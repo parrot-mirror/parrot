@@ -474,8 +474,7 @@ pbc_merge_fixups(PARROT_INTERP, ARGIN(pbc_merge_input **inputs),
 {
     ASSERT_ARGS(pbc_merge_fixups)
     PackFile_FixupTable  *fixup_seg;
-    PackFile_FixupEntry **fixups = mem_gc_allocate_typed(interp,
-            PackFile_FixupEntry *);
+    PackFile_FixupEntry  *fixups = NULL;
     opcode_t              cursor = 0;
     int                   i;
 
@@ -504,14 +503,14 @@ pbc_merge_fixups(PARROT_INTERP, ARGIN(pbc_merge_input **inputs),
         /* Allocate space for these fixups, provided we have some. */
         if (in_seg->fixup_count > 0) {
             fixups = mem_gc_realloc_n_typed(interp, fixups,
-                    cursor + in_seg->fixup_count, PackFile_FixupEntry*);
+                    cursor + in_seg->fixup_count, PackFile_FixupEntry);
         }
 
         /* Loop over the fixups and copy them to the output PBC, correcting
            the offsets into the bytecode. */
         for (j = 0; j < in_seg->fixup_count; j++) {
             /* Get the entry and allocate space for copies. */
-            const PackFile_FixupEntry * const cur_entry = in_seg->fixups[j];
+            const PackFile_FixupEntry * const cur_entry = in_seg->fixups + j;
             PackFile_FixupEntry * const copy =
                 mem_gc_allocate_typed(interp, PackFile_FixupEntry);
             char * const name_copy = mem_gc_allocate_n_typed(interp,
@@ -536,7 +535,7 @@ pbc_merge_fixups(PARROT_INTERP, ARGIN(pbc_merge_input **inputs),
             }
 
             /* Slot it into the list. */
-            fixups[cursor] = copy;
+            fixups[cursor] = *copy;
             cursor++;
         }
     }
@@ -566,8 +565,8 @@ pbc_merge_debugs(PARROT_INTERP, ARGMOD(pbc_merge_input **inputs),
     PackFile_Debug                 *debug_seg;
     opcode_t                       *lines    = mem_gc_allocate_typed(interp,
                                                 opcode_t);
-    PackFile_DebugFilenameMapping **mappings =
-        mem_gc_allocate_typed(interp, PackFile_DebugFilenameMapping *);
+    PackFile_DebugFilenameMapping *mappings =
+        mem_gc_allocate_typed(interp, PackFile_DebugFilenameMapping);
 
     opcode_t num_mappings = 0;
     opcode_t num_lines    = 0;
@@ -591,16 +590,14 @@ pbc_merge_debugs(PARROT_INTERP, ARGMOD(pbc_merge_input **inputs),
         /* Concatenate mappings. */
         mappings = mem_gc_realloc_n_typed(interp, mappings,
                 num_mappings + in_seg->num_mappings,
-                PackFile_DebugFilenameMapping*);
+                PackFile_DebugFilenameMapping);
 
         for (j = 0; j < in_seg->num_mappings; j++) {
-            PackFile_DebugFilenameMapping * const mapping =
-                mem_gc_allocate_typed(interp, PackFile_DebugFilenameMapping);
+            PackFile_DebugFilenameMapping *mapping = mappings + num_mappings + j;
 
-            STRUCT_COPY(mapping, in_seg->mappings[j]);
+            STRUCT_COPY_FROM_STRUCT(mapping, in_seg->mappings[j]);
             mapping->offset   += num_lines;
             mapping->filename += inputs[i]->const_start;
-            mappings[num_mappings + j] = mapping;
         }
 
         num_lines    += in_seg->base.size - 1;

@@ -378,11 +378,10 @@ END_OF_FUNCTION
     .param string new_extension
 
     $S0 = substr pbc_path, -4
-    downcase $S0
+    $S0 = downcase $S0
     if $S0 != '.pbc' goto err_pbc_path_not_pbc
     .local string base_path
-     base_path = substr pbc_path, 0
-     substr base_path, -4, 4, ''
+     base_path = replace pbc_path, -4, 4, ''
 
     .local string new_path
     new_path = substr base_path, 0
