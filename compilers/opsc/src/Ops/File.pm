@@ -192,9 +192,9 @@ method new(*@files, :$oplib!, :$nolines) {
     self<compiler>:= pir::compreg__Ps('Ops');
     self<compiler>.set_oplib($oplib);
 
-    self._set_version();
-
     for @files { self.read_ops( $_, $nolines ) }
+
+    self._set_version();
 
     self;
 }
@@ -206,8 +206,6 @@ method new_str($str, :$oplib) {
     self<compiler> := pir::compreg__Ps('Ops');
     self<oplib>    := $oplib;
     self<compiler>.set_oplib($oplib);
-
-    self._set_version();
 
     self._set_version();
 
