@@ -5,7 +5,7 @@ $(DYNEXT_DIR)/dynlexpad$(LOAD_EXT): src/dynpmc/dynlexpad$(O)
 
 src/dynpmc/dynlexpad$(O): src/dynpmc/pmc_dynlexpad.h $(DYNPMC_H_FILES)
 
-src/dynpmc/dynlexpad.c: src/dynpmc/dynlexpad.dump $(DYNPMC_H_FILES)
+src/dynpmc/dynlexpad.c: src/dynpmc/dynlexpad.dump
 	$(PMC2CC) src/dynpmc/dynlexpad.pmc
 
 src/dynpmc/dynlexpad.dump: src/dynpmc/dynlexpad.pmc vtable.dump
@@ -24,7 +24,7 @@ src/dynpmc/foo_group.c: $(DYNPMC_FOO_OBJS)
 
 src/dynpmc/foo$(O): src/dynpmc/pmc_foo.h $(DYNPMC_H_FILES)
 
-src/dynpmc/foo.c: src/dynpmc/foo.dump $(DYNPMC_H_FILES)
+src/dynpmc/foo.c: src/dynpmc/foo.dump
 	$(PMC2CC) src/dynpmc/foo.pmc
 
 src/dynpmc/foo.dump: src/dynpmc/foo.pmc vtable.dump
