@@ -863,7 +863,7 @@ Start debugger.
 
 PARROT_EXPORT
 void
-Parrot_debugger_start(PARROT_INTERP, ARGIN(opcode_t * cur_opcode))
+Parrot_debugger_start(PARROT_INTERP, ARGIN_NULLOK(opcode_t * cur_opcode))
 {
     ASSERT_ARGS(Parrot_debugger_start)
     TRACEDEB_MSG("Parrot_debugger_start");
@@ -966,8 +966,6 @@ void
 PDB_get_command(PARROT_INTERP)
 {
     ASSERT_ARGS(PDB_get_command)
-    unsigned int  i;
-    int           ch;
     char         *c;
     PDB_t        * const pdb = interp->pdb;
 
@@ -987,7 +985,7 @@ PDB_get_command(PARROT_INTERP)
     PARROT_ASSERT(pdb->cur_command);
 
     if (interp->pdb->script_file) {
-        FILE *fd = interp->pdb->script_file;
+        FILE * const fd = interp->pdb->script_file;
         char buf[DEBUG_CMD_BUFFER_LENGTH+1];
         const char *ptr;
 
@@ -1022,29 +1020,25 @@ PDB_get_command(PARROT_INTERP)
         if (pdb->cur_command[0] != '\0')
             strcpy(pdb->last_command, pdb->cur_command);
 
-        i = 0;
-
         c = pdb->cur_command;
 
         Parrot_io_eprintf(pdb->debugger, "\n");
 
         {
-            Interp *interpdeb = interp->pdb->debugger;
-            STRING *readline  = CONST_STRING(interpdeb, "readline_interactive");
-            STRING *prompt    = CONST_STRING(interpdeb, "(pdb) ");
-            STRING *s         = Parrot_str_new(interpdeb, NULL, 0);
-            PMC    *tmp_stdin = Parrot_io_stdhandle(interpdeb, 0, NULL);
+            Interp * const interpdeb = interp->pdb->debugger;
+            STRING * const readline  = CONST_STRING(interpdeb, "readline_interactive");
+            STRING * const prompt    = CONST_STRING(interpdeb, "(pdb) ");
+            STRING * const s         = Parrot_str_new(interpdeb, NULL, 0);
+            PMC    * const tmp_stdin = Parrot_io_stdhandle(interpdeb, 0, NULL);
 
             Parrot_pcc_invoke_method_from_c_args(interpdeb,
                 tmp_stdin, readline,
-                "S->S", prompt, & s);
+                "S->S", prompt, &s);
             {
                 char * const aux = Parrot_str_to_cstring(interpdeb, s);
                 strcpy(c, aux);
                 Parrot_str_free_cstring(aux);
             }
-
-            ch = '\n';
         }
     }
 }
@@ -1302,7 +1296,6 @@ PDB_cond(PARROT_INTERP, ARGIN(const char *command))
     char             str[DEBUG_CMD_BUFFER_LENGTH + 1];
     unsigned short   cond_argleft;
     unsigned short   cond_type;
-    unsigned char    regleft;
     int              i, reg_number;
 
     TRACEDEB_MSG("PDB_cond");
@@ -1321,8 +1314,9 @@ PDB_cond(PARROT_INTERP, ARGIN(const char *command))
     cond_argleft = condition_regtype(command);
 
     /* get the register number */
-    auxcmd = ++command;
-    regleft = (unsigned char)get_uint(&command, 0);
+    auxcmd     = ++command;
+    reg_number = get_uint(&command, 0);
+
     if (auxcmd == command) {
         Parrot_io_eprintf(interp->pdb->debugger, "Invalid register\n");
             return NULL;
@@ -1953,7 +1947,7 @@ char
 PDB_check_condition(PARROT_INTERP, ARGIN(const PDB_condition_t *condition))
 {
     ASSERT_ARGS(PDB_check_condition)
-    PMC *ctx = CURRENT_CONTEXT(interp);
+    PMC * const ctx = CURRENT_CONTEXT(interp);
 
     TRACEDEB_MSG("PDB_check_condition");
 
@@ -2205,7 +2199,14 @@ PDB_escape(PARROT_INTERP, ARGIN(const char *string), UINTVAL length)
             *(fill++) = '"';
             break;
           default:
-            *(fill++) = *string;
+            /* Hide non-ascii chars that may come from utf8 or latin-1
+             * strings in constant strings.
+             * Workaround for TT #1557
+             */
+            if ((unsigned char)*string > 127)
+                *(fill++) = '?';
+            else
+                *(fill++) = *string;
             break;
         }
     }

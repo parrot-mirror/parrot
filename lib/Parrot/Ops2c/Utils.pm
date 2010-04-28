@@ -89,10 +89,10 @@ sub new {
         return;
     }
     my $class_name = shift @argv;
-    my %is_allowed = map { $_ => 1 } qw(C CGoto CGP CSwitch CPrederef);
+    my %is_allowed = map { $_ => 1 } qw( C );
     unless ( $is_allowed{$class_name} ) {
         print STDERR
-            "Parrot::Ops2c::Utils::new() requires C, CGoto, CGP, CSwitch and/or  CPrederef: $!";
+            "Parrot::Ops2c::Utils::new() requires C: $!";
         return;
     }
 
@@ -200,7 +200,7 @@ sub new {
 
     my ( $op_info, $op_func, $getop );
     $op_info = $op_func = 'NULL';
-    $getop = '( int (*)(PARROT_INTERP, const char *, int) )NULL';
+    $getop = 'NULL';
 
     if ($self->{suffix} eq '') {
         $op_func = $self->{bs} . "op_func_table";
@@ -372,10 +372,6 @@ sub print_c_source_top {
 
     $self->_print_run_core_func_decl_source($SOURCE);
 
-    $self->_print_cg_jump_table($SOURCE);
-
-    $self->_print_goto_opcode($SOURCE);
-
     $self->_print_op_function_definitions($SOURCE);
 }
 
@@ -479,6 +475,7 @@ sub _print_preamble_header {
     print $fh <<END_C;
 #include "parrot/parrot.h"
 #include "parrot/oplib.h"
+#include "parrot/runcore_api.h"
 
 $self->{sym_export} op_lib_t *$self->{init_func}(PARROT_INTERP, long init);
 
@@ -649,7 +646,6 @@ sub _iterate_over_ops {
             $one_op .= "$definition $comment {\n$src}\n\n";
             push @op_funcs,  $one_op;
             push @op_protos, $prototype;
-            $prev_src = $src if ( $self->{suffix} eq '_cgp' || $self->{suffix} eq '_switch' );
             $prev_index = $index;
         }
         $index++;
@@ -659,47 +655,6 @@ sub _iterate_over_ops {
     $self->{op_protos}     = \@op_protos;
     $self->{op_func_table} = \@op_func_table;
     $self->{cg_jump_table} = \@cg_jump_table;
-}
-
-sub _print_cg_jump_table {
-    my ( $self, $fh ) = @_;
-
-    my @cg_jump_table = @{ $self->{cg_jump_table} };
-
-    if ( $self->{suffix} =~ /cg/ ) {
-        print $fh @cg_jump_table;
-        print $fh <<END_C;
-        NULL
-    };
-END_C
-        print $fh $self->{trans}->run_core_after_addr_table( $self->{bs} );
-    }
-    return 1;
-}
-
-sub _print_goto_opcode {
-    my ( $self, $fh ) = @_;
-
-    if ( $self->{suffix} =~ /cgp/ ) {
-        print $fh <<END_C;
-#ifdef __GNUC__
-# ifdef I386
-    else if (cur_opcode == (opcode_t *)(void **) 1)
-    __asm__ ("jmp *4(%ebp)");  /* jump to ret addr, used by JIT */
-# endif
-#endif
-    _reg_base = (char*)Parrot_pcc_get_regs_ni(interp, CURRENT_CONTEXT(interp))->regs_i;
-    goto **(void **)cur_opcode;
-
-END_C
-    }
-    elsif ( $self->{suffix} =~ /cg/ ) {
-        print $fh <<END_C;
-goto *$self->{bs}ops_addr[*cur_opcode];
-
-END_C
-    }
-    return 1;
 }
 
 sub _print_op_function_definitions {
@@ -893,8 +848,8 @@ typedef struct hop {
 static HOP **hop;
 
 static void hop_init(PARROT_INTERP);
-static size_t hash_str(const char *str);
-static void store_op(PARROT_INTERP, op_info_t *info, int full);
+static size_t hash_str(ARGIN_NULLOK(const char *str));
+static void store_op(PARROT_INTERP, ARGIN(op_info_t *info), int full);
 
 /* XXX on changing interpreters, this should be called,
    through a hook */
@@ -911,7 +866,8 @@ static void hop_deinit(PARROT_INTERP);
  * returns >= 0 (found idx into info_table), -1 if not
  */
 
-static size_t hash_str(const char *str) {
+static size_t hash_str(ARGIN_NULLOK(const char *str))
+{
     size_t      key = 0;
     const char *s   = str;
 
@@ -923,8 +879,9 @@ static size_t hash_str(const char *str) {
     return key;
 }
 
-static void store_op(PARROT_INTERP, op_info_t *info, int full) {
-    HOP * const p     = mem_gc_allocate_zeroed_typed(interp, HOP);
+static void store_op(PARROT_INTERP, ARGIN(op_info_t *info), int full)
+{
+    HOP * const p     = mem_gc_allocate_typed(interp, HOP);
     const size_t hidx =
         hash_str(full ? info->full_name : info->name) % OP_HASH_SIZE;
 
@@ -932,30 +889,40 @@ static void store_op(PARROT_INTERP, op_info_t *info, int full) {
     p->next   = hop[hidx];
     hop[hidx] = p;
 }
+
 static int get_op(PARROT_INTERP, const char * name, int full) {
-    const HOP * p;
+    const HOP *p;
+
     const size_t hidx = hash_str(name) % OP_HASH_SIZE;
+
     if (!hop) {
-        hop = mem_gc_allocate_n_zeroed_typed(interp, OP_HASH_SIZE,HOP *);
+        hop = mem_gc_allocate_n_zeroed_typed(interp, OP_HASH_SIZE, HOP *);
         hop_init(interp);
     }
+
     for (p = hop[hidx]; p; p = p->next) {
         if (STREQ(name, full ? p->info->full_name : p->info->name))
             return p->info - $self->{bs}op_lib.op_info_table;
     }
+
     return -1;
 }
-static void hop_init(PARROT_INTERP) {
+
+static void hop_init(PARROT_INTERP)
+{
     size_t i;
     op_info_t * const info = $self->{bs}op_lib.op_info_table;
+
     /* store full names */
     for (i = 0; i < $self->{bs}op_lib.op_count; i++)
         store_op(interp, info + i, 1);
+
     /* plus one short name */
     for (i = 0; i < $self->{bs}op_lib.op_count; i++)
         if (get_op(interp, info[i].name, 0) == -1)
             store_op(interp, info + i, 0);
 }
+
 static void hop_deinit(PARROT_INTERP)
 {
     if (hop) {

@@ -15,7 +15,6 @@ our @shared_valid_options = qw{
     cc
     ccflags
     ccwarn
-    cgoto
     configure_trace
     cxx
     darwin_no_fink
@@ -61,6 +60,7 @@ our @shared_valid_options = qw{
     ops
     optimize
     parrot_is_shared
+    pkgconfigdir
     prefix
     profile
     sbindir
@@ -79,6 +79,7 @@ our @shared_valid_options = qw{
     without-opengl
     without-pcre
     without-threads
+    without-zlib
     yacc
 };
 

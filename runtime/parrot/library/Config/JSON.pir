@@ -36,11 +36,10 @@ If the data is not valid, an exception will be thrown.
     text = fh.'readall'()
 
     # Convert the text to an object and return it.
-    .local pmc json, code, config
-    load_language  'data_json'
+    .local pmc json, code
+    load_language 'data_json'
     json = compreg 'data_json'
     code = json.'compile'(text)
-
     .tailcall code()
 .end
 
@@ -71,7 +70,7 @@ the rendered JSON will not be formatted. The default is false.
     expanded = not compact
 
     # render the object as a string.
-    load_bytecode 'JSON.pir'
+    load_bytecode 'JSON.pbc'
     .local string output
     output = _json( config, expanded )
 

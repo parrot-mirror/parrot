@@ -167,7 +167,7 @@ sub hdecls {
     my $name    = $self->name;
     my $lc_name = $self->name;
 
-    # generate decls for all vtable methods in this PMC
+    # generate decls for all vtables in this PMC
     foreach my $vt_method_name ( @{ $self->vtable->names } ) {
         if ( $self->implements_vtable($vt_method_name) ) {
             $hout .=
@@ -274,7 +274,7 @@ Returns the C code for the pmc methods.
 sub gen_methods {
     my ($self) = @_;
 
-    # vtable methods
+    # vtables
     foreach my $method ( @{ $self->vtable->methods } ) {
         my $vt_method_name = $method->name;
         next if $vt_method_name eq 'class_init';
@@ -284,7 +284,7 @@ sub gen_methods {
         }
     }
 
-    # non-vtable methods
+    # methods
     foreach my $method ( @{ $self->methods } ) {
         next if $method->is_vtable;
         $method->generate_body($self);
@@ -476,6 +476,7 @@ sub init_func {
     my $multi_strings = '';
     my $cache         = {};
 
+    my $i = 0;
     for my $multi (@$multi_funcs) {
         my ($name, $ssig, $fsig, $ns, $func) = @$multi;
         my ($name_str, $ssig_str, $fsig_str, $ns_name)     =
@@ -487,21 +488,23 @@ sub init_func {
                    [$ns,   $ns_name ]) {
             my ($raw_string, $name) = @$s;
             next if $strings_seen{$name}++;
-            $multi_strings .=  "        STRING * const $name = "
+            $multi_strings .=  "            STRING * const $name = "
                            . qq|CONST_STRING_GEN(interp, "$raw_string");\n|;
         }
 
         push @multi_list, <<END_MULTI_LIST;
-        { $name_str,
-          $ssig_str,
-          $fsig_str,
-          $ns_name,
-          (funcptr_t) $func }
+            _temp_multi_func_list[$i].multi_name = $name_str;
+            _temp_multi_func_list[$i].short_sig = $ssig_str;
+            _temp_multi_func_list[$i].full_sig = $fsig_str;
+            _temp_multi_func_list[$i].ns_name = $ns_name;
+            _temp_multi_func_list[$i].func_ptr = (funcptr_t) $func;
 END_MULTI_LIST
+        $i++;
 
     }
 
-    my $multi_list = join( ",\n", @multi_list);
+    my $multi_list_size = @multi_list;
+    my $multi_list = join( "\n", @multi_list);
 
     my @isa = grep { $_ ne 'default' } @{ $self->parents };
 
@@ -570,7 +573,7 @@ EOC
         vt->base_type    = entry;
         vt->whoami       = string_make(interp, "$classname", @{[length($classname)]},
                                        "ascii", PObj_constant_FLAG|PObj_external_FLAG);
-        vt->provides_str = Parrot_str_append(interp, vt->provides_str,
+        vt->provides_str = Parrot_str_concat(interp, vt->provides_str,
             string_make(interp, "$provides", @{[length($provides)]}, "ascii",
             PObj_constant_FLAG|PObj_external_FLAG));
 
@@ -692,14 +695,13 @@ EOC
 
 
     if ( @$multi_funcs ) {
+        # Don't const the list, breaks some older C compilers
         $cout .= $multi_strings . <<"EOC";
 
-            $const multi_func_list _temp_multi_func_list[] = {
-                $multi_list
-            };
-#define N_MULTI_LIST (sizeof(_temp_multi_func_list)/sizeof(_temp_multi_func_list[0]))
+            multi_func_list _temp_multi_func_list[$multi_list_size];
+$multi_list
             Parrot_mmd_add_multi_list_from_c_args(interp,
-                _temp_multi_func_list, N_MULTI_LIST);
+                _temp_multi_func_list, $multi_list_size);
 EOC
     }
 
@@ -718,7 +720,7 @@ EOC
 
 =item C<update_vtable_func()>
 
-Returns the C code for the PMC's update_vtable method.
+Returns the C code for the PMC's update_vtable.
 
 =cut
 
@@ -887,7 +889,7 @@ EOC
 
 =item C<get_vtable_func()>
 
-Returns the C code for the PMC's update_vtable method.
+Returns the C code for the PMC's update_vtable.
 
 =cut
 
@@ -989,7 +991,7 @@ sub gen_switch_vtable {
         push @{ $multi_methods{ $name } }, [ $sig[1], $ssig, $fsig, $ns, $func, $method ];
     }
 
-    # vtable methods
+    # vtables
     foreach my $method ( @{ $self->vtable->methods } ) {
         my $vt_method_name = $method->name;
         next if $vt_method_name eq 'class_init';

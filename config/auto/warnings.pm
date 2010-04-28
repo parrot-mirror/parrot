@@ -113,6 +113,7 @@ sub _init {
         -Wcomment
         -Wdisabled-optimization
         -Wdiv-by-zero
+        -Wenum-compare
         -Wendif-labels
         -Wextra
         -Wformat
@@ -125,6 +126,7 @@ sub _init {
         -Winit-self
         -Winline
         -Winvalid-pch
+        -Wjump-misses-init
         -Wlogical-op
         -Wmissing-braces
         -Wmissing-field-initializers
@@ -137,7 +139,6 @@ sub _init {
         -Wpointer-sign
         -Wreturn-type
         -Wsequence-point
-        -Wno-shadow
         -Wsign-compare
         -Wstrict-aliasing
         -Wstrict-aliasing=2
@@ -154,7 +155,7 @@ sub _init {
     $gcc->{'basic'} = [ @gcc_or_gpp ];
     $gpp->{'basic'} = [ @gcc_or_gpp ];
 
-    # Add some gcc only warnings that would break g++
+    # Add some gcc-only warnings that would break g++
     push @{$gcc->{'basic'}}, qw(
         -Wbad-function-cast
         -Wc++-compat
@@ -173,7 +174,7 @@ sub _init {
 
     my $gcc_or_gpp_cage = [ qw(
         -std=c89
-        -Werror-implicit-function-declaration
+        -Werror=implicit-function-declaration
         -Wformat=2
         -Wlarger-than-4096
         -Wlong-long
@@ -193,63 +194,75 @@ sub _init {
     $gpp->{'cage'} = $gcc_or_gpp_cage;
 
     $gcc->{'todo'} = $gpp->{'todo'} = {
-        '-Wformat-nonliteral' => [
-            'src/spf_render.c',
-            'compilers/imcc/optimizer.c',
-        ],
-        '-Wstrict-prototypes' => [
-            'src/nci/extra_thunks.c',
-            'src/extra_nci_thunks.c',
-        ],
+        '-Wformat-nonliteral' => [ qw(
+            src/spf_render.c
+            compilers/imcc/optimizer.c
+        ) ],
+        '-Wstrict-prototypes' => [ qw(
+            src/nci/extra_thunks.c
+            src/extra_nci_thunks.c
+        ) ],
     };
 
     $gcc->{'never'} = $gpp->{'never'} = {
-        '-Wformat-nonliteral' => [
-            'compilers/imcc/imclexer.c',
-        ],
-        '-Wswitch-default' => [
-            'compilers/imcc/imclexer.c',
-        ],
-        '-Wcast-qual' => [
-            'compilers/imcc/imcparser.c',
-        ],
-        '-Wlogical-op' => [
-            'compilers/imcc/imcparser.c',
-        ],
+        '-Wformat-nonliteral' => [ qw(
+            compilers/imcc/imclexer.c
+        ) ],
+        '-Wswitch-default' => [ qw(
+            compilers/imcc/imclexer.c
+        ) ],
+        '-Wcast-qual' => [ qw(
+            compilers/imcc/imcparser.c
+        ) ],
+        '-Wlogical-op' => [ qw(
+            compilers/imcc/imcparser.c
+        ) ],
     };
 
+    # Warning flags docs
+    # http://software.intel.com/sites/products/documentation/hpc/compilerpro/en-us/cpp/lin/compiler_c/index.htm
+
     $icc->{'basic'} = [ qw(
-        -wd269
-        -wd1572
-        -wd1599
-        -wd181
-        -wd869
-        -wd981
-        -wd1419
-        -wd117
-        -wd810
-        -wd177
-        -wd1296
-        -Wall
-        -Wcheck
         -w2
         -Wabi
+        -Wall
+        -Wcheck
         -Wcomment
         -Wdeprecated
+        -Weffc++
+        -Wextra-tokens
+        -Wformat
+        -Wformat-security
         -Wmain
+        -Wmissing-declarations
         -Wmissing-prototypes
         -Wpointer-arith
+        -Wport
         -Wreturn-type
+        -Wshadow
         -Wstrict-prototypes
         -Wuninitialized
         -Wunknown-pragmas
         -Wunused-function
         -Wunused-variable
-    )];
+        -Wwrite-strings
+        ),
+        # Disable some warnings and notifications that are overly noisy
+        '-diag-disable 271',  # trailing comma is nonstandard
+        '-diag-disable 981',  # operands are evaluated in unspecified order
+        '-diag-disable 1572', # floating-point equality and inequality comparisons are unreliable
+        '-diag-disable 2259', # non-pointer conversion from "typeA" to "typeB" may lose significant bits
+    ];
+    $icc->{'cage'} = [
+        # http://software.intel.com/sites/products/documentation/hpc/compilerpro/en-us/cpp/lin/compiler_c/bldaps_cls/common/bldaps_svover.htm
+        '-diag-enable sc3',
+        '-diag-enable sc-include',
+    ];
 
     $data->{'warnings'}{'gcc'} = $gcc;
     $data->{'warnings'}{'g++'} = $gpp;
     $data->{'warnings'}{'icc'} = $icc;
+    $data->{'warnings'}{'clang'} = $gcc;
 
     ## end gcc/g++
 
@@ -268,6 +281,9 @@ sub runstep {
     }
     elsif ( $conf->option_or_data('cc') =~ /icc/ ) {
         $compiler = 'icc';
+    }
+    elsif ( $conf->option_or_data('cc') =~ /clang/ ) {
+        $compiler = 'clang';
     }
 
     if ($compiler eq '') {
@@ -374,7 +390,7 @@ sub valid_warning {
 
     $verbose and print "  output: $output\n";
 
-    if ( $output !~ /error|warning|not supported/i ) {
+    if ( $output !~ /\berror|warning|not supported|ignoring (unknown )?option\b/i ) {
         push @{$self->{'validated'}}, $warning;
         $verbose and print "    valid warning: '$warning'\n";
         return 1;

@@ -51,7 +51,6 @@ typedef enum {
     EXCEPTION_JIT_UNAVAILABLE,
     EXCEPTION_EXEC_UNAVAILABLE,
     EXCEPTION_INTERP_ERROR,
-    EXCEPTION_PREDEREF_LOAD_ERROR,
     EXCEPTION_PARROT_USAGE_ERROR,
     EXCEPTION_PIO_ERROR,
     EXCEPTION_PARROT_POINTER_ERROR,
@@ -118,6 +117,7 @@ typedef enum {
 
 PARROT_EXPORT
 PARROT_DOES_NOT_RETURN
+PARROT_COLD
 void exit_fatal(int exitcode, ARGIN(const char *format), ...)
         __attribute__nonnull__(2);
 
@@ -133,6 +133,7 @@ void Parrot_assert(
 
 PARROT_EXPORT
 PARROT_DOES_NOT_RETURN
+PARROT_COLD
 void Parrot_confess(
     ARGIN(const char *cond),
     ARGIN(const char *file),
@@ -160,6 +161,7 @@ void Parrot_ex_mark_unhandled(PARROT_INTERP, ARGIN(PMC *exception))
 
 PARROT_EXPORT
 PARROT_DOES_NOT_RETURN
+PARROT_COLD
 void Parrot_ex_rethrow_from_c(PARROT_INTERP, ARGIN(PMC *exception))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
@@ -173,12 +175,14 @@ opcode_t * Parrot_ex_rethrow_from_op(PARROT_INTERP, ARGIN(PMC *exception))
 
 PARROT_EXPORT
 PARROT_DOES_NOT_RETURN
+PARROT_COLD
 void Parrot_ex_throw_from_c(PARROT_INTERP, ARGIN(PMC *exception))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
 PARROT_EXPORT
 PARROT_DOES_NOT_RETURN
+PARROT_COLD
 void Parrot_ex_throw_from_c_args(PARROT_INTERP,
     SHIM(void *ret_addr),
     int exitcode,
@@ -206,11 +210,13 @@ opcode_t * Parrot_ex_throw_from_op_args(PARROT_INTERP,
         __attribute__nonnull__(4);
 
 PARROT_DOES_NOT_RETURN
+PARROT_COLD
 void die_from_exception(PARROT_INTERP, ARGIN(PMC *exception))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
 PARROT_DOES_NOT_RETURN
+PARROT_COLD
 void do_panic(
     NULLOK_INTERP,
     ARGIN_NULLOK(const char *message),
