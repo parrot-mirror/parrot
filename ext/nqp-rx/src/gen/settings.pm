@@ -356,7 +356,7 @@ sub subst($original, $regex, $replacement) {
 	     $I1 = $P2
 	     $P3 = find_lex '$replace_string'
 	     $S1 = $P3
-	     substr $S0, $I0, $I1, $S1
+	     $S0 = replace $S0, $I0, $I1, $S1
 	     $P0 = $S0
 	};
 
