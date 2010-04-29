@@ -39,7 +39,8 @@ C<emit> method.
 /* HEADERIZER END: static */
 
 pmclass CodeString extends String provides string auto_attrs {
-    ATTR PMC *linepos;            /* start of line positions */
+    ATTR PMC *linepos;  /* start of line positions */
+    ATTR PMC *strings;  /* array of strings... */
 
 /*
 
@@ -54,6 +55,7 @@ Initialize the CodeString.
     VTABLE void init() {
         SUPER();
         SET_ATTR_linepos(INTERP, SELF, PMCNULL);
+        SET_ATTR_strings(INTERP, SELF, pmc_new(INTERP, enum_class_ResizableStringArray));
         PObj_custom_mark_SET(SELF);
     }
 
@@ -70,11 +72,13 @@ Mark the CodeString as live.
     VTABLE void mark() {
         SUPER();
         if (PMC_data(SELF)) {
-            PMC *linepos;
+            PMC *linepos, *strings;
 
             GET_ATTR_linepos(INTERP, SELF, linepos);
-
             Parrot_gc_mark_PMC_alive(INTERP, linepos);
+
+            GET_ATTR_strings(INTERP, SELF, strings);
+            Parrot_gc_mark_PMC_alive(INTERP, strings);
         }
     }
 
@@ -97,7 +101,8 @@ The currently defined replacements include:
 A percent-sign followed by any other character that is a hash
 key receives the value of the hash element.
 
-A newline is automatically added to the end of the fmt.
+A newline is automatically added to the end of the fmt, if one
+is not already present.
 
 =cut
 
@@ -108,59 +113,130 @@ A newline is automatically added to the end of the fmt.
     STRING * const comma       = CONST_STRING(INTERP, ",");
     STRING * const comma_space = CONST_STRING(INTERP, ", ");
     STRING * const newline     = CONST_STRING(INTERP, "\n");
-    PMC           *parts       = PMCNULL;
-    STRING *key, *repl, *S1;
-    INTVAL pos          = 0;
-    INTVAL replen       = 0;
+    STRING *key;
+    PMC    *strings;
+    INTVAL percentPos;
+    INTVAL pos = 0;
+
+    GET_ATTR_strings(INTERP, SELF, strings);
+
+    /* Loop over the format string, splitting it into chunks
+     * for the string builder.
+     */
 
     while (pos >= 0) {
-        pos += replen;
-        pos = Parrot_str_find_index(INTERP, fmt, percent, pos);
-        if (pos < 0)
-            break;
+        
+        /* Find the next % */
+        percentPos = Parrot_str_find_index(INTERP, fmt, percent, pos);
 
-        key = Parrot_str_substr(INTERP, fmt, pos+1, 1);
+        if (pos < 0) {
+            /* remaining string can be added as is. */
+            VTABLE_push_string(INTERP, strings,
+                Parrot_str_substr(INTERP, fmt, pos,
+                    Parrot_str_byte_length(INTERP, fmt) -pos 
+                )
+            );
+            break;
+        } else {
+            /* slurp up the to just before the % sign... */
+            VTABLE_push_string(INTERP, strings,
+                key = Parrot_str_substr(INTERP, fmt, pos, percentPos - pos)
+            );
+            /* skip the % sign */
+            pos = percentPos + 1 ;
+        }
+
+        /* key is always a single character */
+        key = Parrot_str_substr(INTERP, fmt, pos++, 1);
+
 
         if (VTABLE_exists_keyed_str(INTERP, hash, key)) {
-            repl = VTABLE_get_string_keyed_str(INTERP, hash, key);
+            VTABLE_push_string(INTERP, strings,
+                    VTABLE_get_string_keyed_str(INTERP, hash, key)
+            );
         }
-        else if (Parrot_str_is_cclass(INTERP, enum_cclass_numeric, fmt, (UINTVAL)pos + 1)) {
-            const INTVAL I0 = Parrot_str_to_int(INTERP, key);
-            repl = VTABLE_get_string_keyed_int(INTERP, args, I0);
+        else if (Parrot_str_is_cclass(INTERP, enum_cclass_numeric, key, 0)) {
+            VTABLE_push_string(INTERP, strings,
+                VTABLE_get_string_keyed_int(INTERP, args,
+                    Parrot_str_to_int(INTERP, key)
+                )
+            );
         }
         else if (Parrot_str_equal(INTERP, key, comma)) {
-            repl = Parrot_str_join(INTERP, comma_space, args);
+            INTVAL num_args = VTABLE_elements(INTERP, args);
+            INTVAL pos_args = 1;
+
+            VTABLE_push_string(INTERP, strings, 
+                VTABLE_get_string_keyed_int(INTERP, args, 0)
+            );
+
+            while (pos_args < num_args) {
+                VTABLE_push_string(INTERP, strings, comma_space);
+                VTABLE_push_string(INTERP, strings, 
+                    VTABLE_get_string_keyed_int(INTERP, args, pos_args)
+                );
+                pos_args++;
+            }
         }
         else if (Parrot_str_equal(INTERP, key, percent)) {
-            repl = percent;
+            VTABLE_push_string(INTERP, strings, percent);
         }
         else {
-            /* No substitution is necessary */
-            replen = 2;
-            continue;
+            /* %foo has no special meaning, pass it through unchanged */
+            VTABLE_push_string(INTERP, strings,
+                key = Parrot_str_substr(INTERP, fmt, pos-2, 2)
+            );
         }
-
-        fmt    = Parrot_str_replace(INTERP, fmt, pos, 2, repl);
-        replen = Parrot_str_byte_length(INTERP, repl);
     }
-
-    GET_ATTR_str_val(INTERP, SELF, S1);
-
-    parts = Parrot_pmc_new_temporary(INTERP, enum_class_ResizableStringArray);
-    VTABLE_set_integer_native(INTERP, parts, 3);
-    VTABLE_set_string_keyed_int(INTERP, parts, 0, S1);
-    VTABLE_set_string_keyed_int(INTERP, parts, 1, fmt);
 
     /* Add a newline if necessary */
     if ('\n' != Parrot_str_indexed(INTERP, fmt, Parrot_str_byte_length(INTERP, fmt) - 1))
-        VTABLE_set_string_keyed_int(INTERP, parts, 2, newline);
-
-    S1 = Parrot_str_join(INTERP, STRINGNULL, parts);
-    VTABLE_set_string_native(INTERP, SELF, S1);
-    Parrot_pmc_free_temporary(INTERP, parts);
+        VTABLE_push_string(INTERP, strings, newline);
 
     RETURN(PMC *SELF);
-  }
+ }
+
+
+/*
+
+=item get_string()
+
+Stringify ourselves.
+
+=cut
+
+*/
+
+
+    VTABLE STRING *get_string() {
+        PMC *strings;
+        STRING * const empty = CONST_STRING(INTERP, "");
+        STRING *result;
+        GET_ATTR_strings(INTERP, SELF, strings);
+
+        result = Parrot_str_join(INTERP, empty, strings);
+        /* cache the result */
+        SELF.set_string_native(result);
+
+        return result;
+    }
+
+/*
+
+=item set_string_native()
+
+Stringify ourselves.
+
+=cut
+
+*/
+
+
+    VTABLE void set_string_native(STRING *value) {
+        PMC *strings = pmc_new(INTERP, enum_class_ResizableStringArray);
+        VTABLE_push_string(INTERP, strings, value);
+        SET_ATTR_strings(INTERP, SELF, strings);
+    }
 
 
 /*
@@ -189,7 +265,7 @@ the first line is line number zero.
 
         linepos = Parrot_pmc_new(INTERP, enum_class_ResizableIntegerArray);
         /* get the string itself */
-        GET_ATTR_str_val(INTERP, SELF, str);
+        str = SELF.get_string();
         eos  = Parrot_str_byte_length(INTERP, str);
         /* find the first newline, if any */
         jpos = Parrot_str_find_cclass(INTERP, enum_cclass_newline,
