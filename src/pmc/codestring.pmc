@@ -127,10 +127,15 @@ is not already present.
         percentPos = Parrot_str_find_index(INTERP, fmt, percent, pos);
 
         if (percentPos < 0) {
-            /* remaining string can be added as is. */
-            VTABLE_push_string(INTERP, strings,
-                Parrot_str_substr(INTERP, fmt, pos,
-                    Parrot_str_byte_length(INTERP, fmt) -pos));
+            if (pos == 0) {
+                VTABLE_push_string(INTERP, strings, fmt);
+            }
+            else {
+                /* remaining string can be added as is. */
+                VTABLE_push_string(INTERP, strings,
+                    Parrot_str_substr(INTERP, fmt, pos,
+                        Parrot_str_byte_length(INTERP, fmt) -pos));
+                }
             break;
         }
         else {
