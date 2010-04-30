@@ -125,11 +125,10 @@ is not already present.
      */
 
     while (pos >= 0) {
-        
         /* Find the next % */
         percentPos = Parrot_str_find_index(INTERP, fmt, percent, pos);
 
-        if (pos < 0) {
+        if (percentPos < 0) {
             /* remaining string can be added as is. */
             VTABLE_push_string(INTERP, strings,
                 Parrot_str_substr(INTERP, fmt, pos,
@@ -148,7 +147,6 @@ is not already present.
 
         /* key is always a single character */
         key = Parrot_str_substr(INTERP, fmt, pos++, 1);
-
 
         if (VTABLE_exists_keyed_str(INTERP, hash, key)) {
             VTABLE_push_string(INTERP, strings,
@@ -194,8 +192,7 @@ is not already present.
         VTABLE_push_string(INTERP, strings, newline);
 
     RETURN(PMC *SELF);
- }
-
+}
 
 /*
 
@@ -210,12 +207,15 @@ Stringify ourselves.
 
     VTABLE STRING *get_string() {
         PMC *strings;
-        STRING * const empty = CONST_STRING(INTERP, "");
+        INTVAL elements;
         STRING *result;
+       
         GET_ATTR_strings(INTERP, SELF, strings);
+        elements = VTABLE_elements(INTERP, strings);
 
-        result = Parrot_str_join(INTERP, empty, strings);
-        /* cache the result */
+        result = Parrot_str_join(INTERP, CONST_STRING(INTERP, ""), strings);
+
+        /* cache the result to avoid a join the next time. */
         SELF.set_string_native(result);
 
         return result;
@@ -225,7 +225,7 @@ Stringify ourselves.
 
 =item set_string_native()
 
-Stringify ourselves.
+Save the value both in our string builder and our string-val attribute.
 
 =cut
 
@@ -233,11 +233,13 @@ Stringify ourselves.
 
 
     VTABLE void set_string_native(STRING *value) {
-        PMC *strings = pmc_new(INTERP, enum_class_ResizableStringArray);
-        VTABLE_push_string(INTERP, strings, value);
-        SET_ATTR_strings(INTERP, SELF, strings);
-    }
+        PMC *strings;
+        GET_ATTR_strings(INTERP, SELF, strings);
 
+        /* cache the result in our StringBuilder */
+        VTABLE_set_integer_native(INTERP, strings, 0);
+        VTABLE_push_string(INTERP, strings, value);
+    }
 
 /*
 
