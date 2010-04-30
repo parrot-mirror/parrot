@@ -217,7 +217,7 @@ Stringify ourselves.
 
 =item set_string_native()
 
-Save the value both in our string builder and our string-val attribute.
+Save our value as a single entry in the StringBuilder.
 
 =cut
 
