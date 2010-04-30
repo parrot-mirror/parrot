@@ -92,7 +92,11 @@ Returns the integer representation of the string.
 
     VTABLE INTVAL get_integer() {
         STRING *str_val;
-        GET_ATTR_str_val(INTERP, SELF, str_val);
+        if (SELF->vtable->base_type == enum_class_String) 
+            GET_ATTR_str_val(INTERP, SELF, str_val);
+        else
+            str_val = SELF.get_string();
+
         return Parrot_str_to_int(INTERP, str_val);
     }
 
@@ -108,7 +112,11 @@ Returns the floating-point representation of the string.
 
     VTABLE FLOATVAL get_number() {
         STRING *str_val;
-        GET_ATTR_str_val(interp, SELF, str_val);
+        if (SELF->vtable->base_type == enum_class_String) 
+            GET_ATTR_str_val(INTERP, SELF, str_val);
+        else
+            str_val = SELF.get_string();
+
         return Parrot_str_to_num(INTERP, str_val);
     }
 
@@ -124,7 +132,11 @@ Returns the string itself.
 
     VTABLE STRING *get_string() {
         STRING *str_val;
-        GET_ATTR_str_val(INTERP, SELF, str_val);
+        if (SELF->vtable->base_type == enum_class_String) 
+            GET_ATTR_str_val(INTERP, SELF, str_val);
+        else
+            str_val = SELF.get_string();
+
         return str_val;
     }
 
@@ -140,7 +152,11 @@ Returns the boolean value of the string.
 
     VTABLE INTVAL get_bool() {
         STRING *str_val;
-        GET_ATTR_str_val(INTERP, SELF, str_val);
+        if (SELF->vtable->base_type == enum_class_String) 
+            GET_ATTR_str_val(INTERP, SELF, str_val);
+        else
+            str_val = SELF.get_string();
+
         return Parrot_str_boolean(INTERP, str_val);
     }
 
@@ -202,7 +218,10 @@ Sets the value of the string to that of the specified C<string>.
             Parrot_str_free_cstring(copy);
         }
 
-        SET_ATTR_str_val(INTERP, SELF, value);
+        if (SELF->vtable->base_type == enum_class_String) 
+            SET_ATTR_str_val(INTERP, SELF, value);
+        else
+            SELF.set_string_native(value);
     }
 
 /*
@@ -216,7 +235,10 @@ Sets the value of the string to a copy of the specified C<string>.
 */
 
     VTABLE void assign_string_native(STRING *value) {
-        SET_ATTR_str_val(INTERP, SELF, value);
+        if (SELF->vtable->base_type == enum_class_String) 
+            SET_ATTR_str_val(INTERP, SELF, value);
+        else
+            SELF.set_string_native(value);
     }
 
 /*
@@ -246,7 +268,11 @@ they match.
     VTABLE INTVAL is_equal(PMC *value) {
         STRING *str_val;
         STRING * const v = VTABLE_get_string(INTERP, value);
-        GET_ATTR_str_val(INTERP, SELF, str_val);
+        if (SELF->vtable->base_type == enum_class_String) 
+            GET_ATTR_str_val(INTERP, SELF, str_val);
+        else
+            str_val = SELF.get_string();
+
         return (INTVAL)(Parrot_str_equal(INTERP, str_val, v));
     }
 
@@ -270,7 +296,11 @@ C<value>; returns true if they match.
         FLOATVAL       sf;
         const FLOATVAL vf = VTABLE_get_number(INTERP, value);
 
-        GET_ATTR_str_val(INTERP, SELF, str_val);
+        if (SELF->vtable->base_type == enum_class_String) 
+            GET_ATTR_str_val(INTERP, SELF, str_val);
+        else
+            str_val = SELF.get_string();
+
         sf = Parrot_str_to_num(INTERP, str_val);
 
         return (INTVAL)(sf == vf);
@@ -289,7 +319,12 @@ Compares the string with C<value>; returns FALSE if they match.
     VTABLE INTVAL is_equal_string(PMC *value) {
         STRING *str_val;
         STRING * const v = VTABLE_get_string(INTERP, value);
-        GET_ATTR_str_val(INTERP, SELF, str_val);
+
+        if (SELF->vtable->base_type == enum_class_String) 
+            GET_ATTR_str_val(INTERP, SELF, str_val);
+        else
+            str_val = SELF.get_string();
+
         return Parrot_str_equal(INTERP, str_val, v);
     }
 
@@ -307,7 +342,12 @@ is smaller.
     VTABLE INTVAL cmp(PMC *value) {
         STRING *str_val;
         STRING * const v = VTABLE_get_string(INTERP, value);
-        GET_ATTR_str_val(INTERP, SELF, str_val);
+
+        if (SELF->vtable->base_type == enum_class_String) 
+            GET_ATTR_str_val(INTERP, SELF, str_val);
+        else
+            str_val = SELF.get_string();
+
         return Parrot_str_compare(INTERP, str_val, v);
     }
 
@@ -326,7 +366,12 @@ are equal, and 1 if C<value> is smaller.
         STRING        *str_val;
         FLOATVAL       sf;
         const FLOATVAL vf = VTABLE_get_number(INTERP, value);
-        GET_ATTR_str_val(INTERP, SELF, str_val);
+
+        if (SELF->vtable->base_type == enum_class_String) 
+            GET_ATTR_str_val(INTERP, SELF, str_val);
+        else
+            str_val = SELF.get_string();
+
         sf = Parrot_str_to_num(INTERP, str_val);
 
         if (sf < vf)
@@ -352,7 +397,12 @@ is smaller.
     VTABLE INTVAL cmp_string(PMC *value) {
         STRING        *str_val;
         STRING * const v = VTABLE_get_string(INTERP, value);
-        GET_ATTR_str_val(INTERP, SELF, str_val);
+
+        if (SELF->vtable->base_type == enum_class_String) 
+            GET_ATTR_str_val(INTERP, SELF, str_val);
+        else
+            str_val = SELF.get_string();
+
         return Parrot_str_compare(INTERP, str_val, v);
     }
 
@@ -368,7 +418,12 @@ C<length>, and places it in C<dest>.
 */
     VTABLE void substr(INTVAL offset, INTVAL length, PMC *dest) {
         STRING *str_val, *s2;
-        GET_ATTR_str_val(INTERP, SELF, str_val);
+
+        if (SELF->vtable->base_type == enum_class_String) 
+            GET_ATTR_str_val(INTERP, SELF, str_val);
+        else
+            str_val = SELF.get_string();
+
         s2 = Parrot_str_substr(INTERP, str_val, offset, length);
         VTABLE_set_string_native(INTERP, dest, s2);
     }
@@ -385,7 +440,12 @@ C<length>, and returns it.
 */
     VTABLE STRING *substr_str(INTVAL offset, INTVAL length) {
         STRING *str_val;
-        GET_ATTR_str_val(INTERP, SELF, str_val);
+
+        if (SELF->vtable->base_type == enum_class_String) 
+            GET_ATTR_str_val(INTERP, SELF, str_val);
+        else
+            str_val = SELF.get_string();
+
         return Parrot_str_substr(INTERP, str_val, offset, length);
     }
 
@@ -405,7 +465,11 @@ numbers count from the end.
         INTVAL       n;
         const INTVAL k = VTABLE_get_integer(INTERP, key);
 
-        GET_ATTR_str_val(INTERP, SELF, str_val);
+        if (SELF->vtable->base_type == enum_class_String) 
+            GET_ATTR_str_val(INTERP, SELF, str_val);
+        else
+            str_val = SELF.get_string();
+
         n = Parrot_str_byte_length(INTERP, str_val);
 
         return (INTVAL)((k >= 0 && k <= n) || (k < 0 && -k <= n));
@@ -440,7 +504,12 @@ Replace the string at C<key> with the chr of C<value>.
 
     VTABLE STRING *get_string_keyed_int(INTVAL pos) {
         STRING      *str_val;
-        GET_ATTR_str_val(INTERP, SELF, str_val);
+
+        if (SELF->vtable->base_type == enum_class_String) 
+            GET_ATTR_str_val(INTERP, SELF, str_val);
+        else
+            str_val = SELF.get_string();
+
         return Parrot_str_substr(INTERP, str_val, pos, 1);
     }
 
@@ -450,7 +519,12 @@ Replace the string at C<key> with the chr of C<value>.
 
     VTABLE INTVAL get_integer_keyed_int(INTVAL pos) {
         STRING      *str_val;
-        GET_ATTR_str_val(INTERP, SELF, str_val);
+
+        if (SELF->vtable->base_type == enum_class_String) 
+            GET_ATTR_str_val(INTERP, SELF, str_val);
+        else
+            str_val = SELF.get_string();
+
         return string_ord(INTERP, str_val, pos);
     }
 
@@ -471,9 +545,18 @@ Replace the string at C<key> with the chr of C<value>.
     VTABLE void set_string_keyed_int(INTVAL pos, STRING * const value) {
         STRING      *str_val;
         const INTVAL len = Parrot_str_byte_length(INTERP, value);
-        GET_ATTR_str_val(INTERP, SELF, str_val);
+
+        if (SELF->vtable->base_type == enum_class_String) 
+            GET_ATTR_str_val(INTERP, SELF, str_val);
+        else
+            str_val = SELF.get_string();
+
         str_val = Parrot_str_replace(INTERP, str_val, pos, len, value);
-        SET_ATTR_str_val(INTERP, SELF, str_val);
+
+        if (SELF->vtable->base_type == enum_class_String) 
+            SET_ATTR_str_val(INTERP, SELF, str_val);
+        else
+            SELF.set_string_native(str_val);
     }
 
     VTABLE void set_integer_keyed(PMC *key, INTVAL value) {
@@ -483,9 +566,18 @@ Replace the string at C<key> with the chr of C<value>.
     VTABLE void set_integer_keyed_int(INTVAL pos, INTVAL value) {
         STRING      *str_val;
         STRING * const c = string_chr(INTERP, (UINTVAL) value);
-        GET_ATTR_str_val(INTERP, SELF, str_val);
+
+        if (SELF->vtable->base_type == enum_class_String) 
+            GET_ATTR_str_val(INTERP, SELF, str_val);
+        else
+            str_val = SELF.get_string();
+
         str_val = Parrot_str_replace(INTERP, str_val, pos, 1, c);
-        SET_ATTR_str_val(INTERP, SELF, str_val);
+
+        if (SELF->vtable->base_type == enum_class_String) 
+            SET_ATTR_str_val(INTERP, SELF, str_val);
+        else
+            SELF.set_string_native(str_val);
     }
 
     VTABLE void set_pmc_keyed(PMC *key, PMC *value) {
@@ -606,7 +698,12 @@ Return length of the string.
 
     VTABLE INTVAL elements() {
         STRING *str_val;
-        GET_ATTR_str_val(INTERP, SELF, str_val);
+
+        if (SELF->vtable->base_type == enum_class_String) 
+            GET_ATTR_str_val(INTERP, SELF, str_val);
+        else
+            str_val = SELF.get_string();
+
         return Parrot_str_byte_length(INTERP, str_val);
     }
 
@@ -632,7 +729,12 @@ Used to archive the string.
     VTABLE void freeze(PMC *info) {
         STRING *str_val;
         SUPER(info);
-        GET_ATTR_str_val(INTERP, SELF, str_val);
+
+        if (SELF->vtable->base_type == enum_class_String) 
+            GET_ATTR_str_val(INTERP, SELF, str_val);
+        else
+            str_val = SELF.get_string();
+
         VTABLE_push_string(INTERP, info, str_val);
     }
 
@@ -646,8 +748,16 @@ Used to unarchive the string.
 
 */
     VTABLE void thaw(PMC *info) {
+        STRING *str_val;
+
         SUPER(info);
-        SET_ATTR_str_val(INTERP, SELF, VTABLE_shift_string(INTERP, info));
+
+        str_val = VTABLE_shift_string(INTERP, info);
+
+        if (SELF->vtable->base_type == enum_class_String) 
+            SET_ATTR_str_val(INTERP, SELF, str_val);
+        else
+            SELF.set_string_native(str_val);
     }
 /*
 
