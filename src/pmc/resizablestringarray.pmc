@@ -220,12 +220,25 @@ Resizes the array to C<size> elements.
         }
         else if (new_size <= resize_threshold) {
             /* zero out anything that was previously allocated
-             * if we're growing the array */
-            INTVAL old_size;
+             * if we're growing or shrinking the array */
+            INTVAL old_size, min, max;
             GET_ATTR_size(interp, SELF, old_size);
+
             if (new_size > old_size) {
+                min = new_size;
+                max = old_size;
+            }
+            else if (new_size < old_size) {
+                min = new_size;
+                max = old_size;
+            }
+            else {
+                return;
+            }
+
+            {
                 INTVAL i;
-                for (i = old_size; i < new_size; i++)
+                for (i = min; i < max; i++)
                     str_array[i] = NULL;
             }
 
