@@ -197,12 +197,9 @@ Stringify ourselves.
 
     VTABLE STRING *get_string() {
         PMC *strings;
-        INTVAL elements;
         STRING *result;
 
         GET_ATTR_strings(INTERP, SELF, strings);
-        elements = VTABLE_elements(INTERP, strings);
-
         result = Parrot_str_join(INTERP, CONST_STRING(INTERP, ""), strings);
 
         /* cache the result to avoid a join the next time. */
