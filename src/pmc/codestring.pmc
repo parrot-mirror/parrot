@@ -225,11 +225,12 @@ Save the value both in our string builder and our string-val attribute.
 
 
     VTABLE void set_string_native(STRING *value) {
-        /* create a new StringBuilder */
-        PMC *strings = pmc_new(INTERP, enum_class_ResizablePMCArray);
-        VTABLE_push_string(INTERP, strings, value);
+        /* reuse our old stringBuilder */
+        PMC *strings;
 
-        SET_ATTR_strings(INTERP, SELF, strings);
+        GET_ATTR_strings(INTERP, SELF, strings);
+        VTABLE_set_integer_native(INTERP, strings, 0);
+        VTABLE_push_string(INTERP, strings, value);
     }
 
 /*
