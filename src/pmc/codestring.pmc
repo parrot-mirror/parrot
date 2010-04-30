@@ -139,9 +139,9 @@ is not already present.
             break;
         }
         else {
-            /* slurp up the to just before the % sign... */
+            /* slurp up to just before the % sign... */
             VTABLE_push_string(INTERP, strings,
-                key = Parrot_str_substr(INTERP, fmt, pos, percentPos - pos));
+                Parrot_str_substr(INTERP, fmt, pos, percentPos - pos));
             /* skip the % sign */
             pos = percentPos + 1 ;
         }
