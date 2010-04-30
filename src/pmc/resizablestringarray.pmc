@@ -225,8 +225,8 @@ Resizes the array to C<size> elements.
             GET_ATTR_size(interp, SELF, old_size);
 
             if (new_size > old_size) {
-                min = new_size;
-                max = old_size;
+                min = old_size;
+                max = new_size;
             }
             else if (new_size < old_size) {
                 min = new_size;
