@@ -72,9 +72,14 @@ Mark the CodeString as live.
         if (PMC_data(SELF)) {
             PMC *linepos, *strings;
 
+            /* force the join to avoid marking the RPA and lots of STRINGs */
+            STRING *contents = SELF.get_string();
+            UNUSED(contents);
+
             GET_ATTR_linepos(INTERP, SELF, linepos);
             Parrot_gc_mark_PMC_alive(INTERP, linepos);
 
+            /* all that's in here now is a single STRING */
             GET_ATTR_strings(INTERP, SELF, strings);
             Parrot_gc_mark_PMC_alive(INTERP, strings);
         }
@@ -119,9 +124,7 @@ is not already present.
     GET_ATTR_strings(INTERP, SELF, strings);
 
     /* Loop over the format string, splitting it into chunks
-     * for the string builder.
-     */
-
+     * for the string builder. */
     while (pos >= 0) {
         /* Find the next % */
         percentPos = Parrot_str_find_index(INTERP, fmt, percent, pos);
@@ -201,16 +204,22 @@ Stringify ourselves.
 
 
     VTABLE STRING *get_string() {
-        PMC *strings;
-        STRING *result;
+        PMC    *strings;
 
         GET_ATTR_strings(INTERP, SELF, strings);
-        result = Parrot_str_join(INTERP, CONST_STRING(INTERP, ""), strings);
 
-        /* cache the result to avoid a join the next time. */
-        SELF.set_string_native(result);
+        /* avoid unnecessary joins */
+        if (VTABLE_elements(INTERP, strings) <= 1)
+            return VTABLE_get_string_keyed_int(INTERP, strings, 0);
+        else {
+            STRING const *empty  = CONST_STRING(INTERP, "");
+            STRING const *result = Parrot_str_join(INTERP, empty, strings);
 
-        return result;
+            /* cache the result to avoid a join the next time. */
+            SELF.set_string_native(result);
+
+            return result;
+        }
     }
 
 /*
