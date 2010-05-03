@@ -3,11 +3,11 @@
 
 =head1 NAME
 
-Archive/TAR
+Archive/Tar
 
 =head2 DESCRIPTION
 
-Partial port of Archive::TAR (version 1.60)
+Partial port of Archive::Tar (version 1.60)
 
 See L<http://search.cpan.org/~bingos/Archive-Tar/>
 
@@ -15,17 +15,17 @@ See L<http://search.cpan.org/~bingos/Archive-Tar/>
 
 .include 'stat.pasm'
 
-=head3 Class Archive;TAR;File
+=head3 Class Archive;Tar;File
 
 =over 4
 
 =cut
 
-.namespace ['Archive';'TAR';'File']
+.namespace ['Archive';'Tar';'File']
 
 .sub '' :init :load :anon
-    load_bytecode 'osutils.pbc' # basename, dirname
-    $P0 = newclass ['Archive';'TAR';'File']
+    load_bytecode 'osutils.pbc' # splitpath
+    $P0 = newclass ['Archive';'Tar';'File']
     $P0.'add_attribute'('name')
     $P0.'add_attribute'('mode')
     $P0.'add_attribute'('uid')
@@ -107,7 +107,7 @@ See L<http://search.cpan.org/~bingos/Archive-Tar/>
     .param int has_devmajor     :opt_flag
     .param int devminor         :named('devminor') :optional
     .param int has_devminor     :opt_flag
-    $P0 = new ['Archive';'TAR';'File']
+    $P0 = new ['Archive';'Tar';'File']
     .local string prefix, name
     (prefix, name) = _prefix_and_file(path)
     if has_mode goto L1
@@ -179,12 +179,40 @@ See L<http://search.cpan.org/~bingos/Archive-Tar/>
 
 .sub '_prefix_and_file' :anon
     .param string path
-    $S0 = dirname(path)
-    unless $S0 == '.' goto L1
-    $S0 = ''
+    .local string volume, directories, file
+    (volume, directories, file) = splitpath(path)
+    .return (directories, file)
+.end
+
+=item full_path
+
+=cut
+
+.sub 'full_path' :method
+    .local string prefix, name
+    $P0 = getattribute self, 'name'
+    name = $P0
+    $P0 = getattribute self, 'prefix'
+    prefix = $P0
+    unless prefix == '' goto L1
+    .return (name)
   L1:
-    $S1 = basename(path)
-    .return ($S0, $S1)
+    $S0 = catfile(prefix, name)
+    .return ($S0)
+.end
+
+=item rename
+
+=cut
+
+.sub 'rename' :method
+    .param string path
+    .local string prefix, name
+    (prefix, name) = _prefix_and_file(path)
+    $P0 = box name
+    setattribute self, 'name', $P0
+    $P0 = box prefix
+    setattribute self, 'prefix', $P0
 .end
 
 =item _format_tar_entry
@@ -296,16 +324,16 @@ See L<http://search.cpan.org/~bingos/Archive-Tar/>
 
 =back
 
-=head3 Class Archive;TAR
+=head3 Class Archive;Tar
 
 =over 4
 
 =cut
 
-.namespace ['Archive';'TAR']
+.namespace ['Archive';'Tar']
 
 .sub '' :init :load :anon
-    $P0 = newclass ['Archive';'TAR']
+    $P0 = newclass ['Archive';'Tar']
     $P0.'add_attribute'('data')
 .end
 
@@ -333,7 +361,7 @@ See L<http://search.cpan.org/~bingos/Archive-Tar/>
     goto L1
   L3:
     .local pmc obj
-    $P1 = get_hll_global ['Archive';'TAR';'File'], 'new_from_file'
+    $P1 = get_hll_global ['Archive';'Tar';'File'], 'new_from_file'
     obj = $P1(filename)
     unless null obj goto L4
     self.'_error'("Unable to add file: '", filename, "'")
@@ -362,7 +390,7 @@ See L<http://search.cpan.org/~bingos/Archive-Tar/>
     .param string data
     .param pmc opt :slurpy :named
     .local pmc obj
-    $P0 = get_hll_global ['Archive';'TAR';'File'], 'new_from_data'
+    $P0 = get_hll_global ['Archive';'Tar';'File'], 'new_from_data'
     obj = $P0(filename, data, opt :flat :named)
     $P0 = getattribute self, 'data'
     push $P0, obj

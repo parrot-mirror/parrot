@@ -212,9 +212,8 @@ automatically aggregated and output to STDOUT.
     $I0 = exists $P0['PARROT_TEST_HARNESS_DUMP_TAP']
     unless $I0 goto L1
     .local string spool
-    spool = $P0['PARROT_TEST_HARNESS_DUMP_TAP']
-    spool .= '/'
-    spool .= test
+    $S0 = $P0['PARROT_TEST_HARNESS_DUMP_TAP']
+    spool = catfile($S0, test)
     $S0 = dirname(spool)
     mkpath($S0)
     $P0 = new 'FileHandle'
@@ -295,7 +294,7 @@ files or streams into an archive file (C<.tar.gz>).
 
 .sub 'runtests' :method
     .param pmc files
-    load_bytecode 'Archive/TAR.pbc'
+    load_bytecode 'Archive/Tar.pbc'
     $P0 = getattribute self, 'archive_file'
     unless null $P0 goto L1
     die "You must provide the name of the archive to create!"
@@ -313,7 +312,7 @@ files or streams into an archive file (C<.tar.gz>).
     current_dir = cwd()
     chdir(dir)
     .local pmc archive
-    archive = new ['Archive';'TAR']
+    archive = new ['Archive';'Tar']
     archive.'add_files'(files :flat)
     chdir(current_dir)
     rmtree(dir)

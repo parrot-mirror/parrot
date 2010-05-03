@@ -127,6 +127,13 @@ manual_attrs or auto_attrs must be specified.
 
 L<http://trac.parrot.org/parrot/ticket/1506>
 
+=item Method lower on String [eligible in 3.1]
+
+Use the downcase opcode or subclass with a method name consistent with your
+HLL.
+
+L<http://trac.parrot.org/parrot/ticket/1606>
+
 =back
 
 =head1 Opcodes
@@ -425,6 +432,18 @@ L<https://trac.parrot.org/parrot/ticket/754>
 =item OpenGL bindings and libraries [experimental]
 
 L<https://trac.parrot.org/parrot/ticket/852>
+
+=back
+
+=head1 Experimental
+
+=over 4
+
+=item Threads and Parallelism
+
+L<https://trac.parrot.org/parrot/ticket/1601>
+
+All threads and parallelism constructs are experimental
 
 =back
 
