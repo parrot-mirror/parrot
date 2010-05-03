@@ -126,16 +126,16 @@ Returns the floating-point representation of the string.
 
 Returns the string itself.
 
+Note: If your PMC-based subclass is not using the same string storage,
+you'll need to override this method.
+
 =cut
 
 */
 
     VTABLE STRING *get_string() {
         STRING *str_val;
-        if (SELF->vtable->base_type == enum_class_String)
-            GET_ATTR_str_val(INTERP, SELF, str_val);
-        else
-            str_val = SELF.get_string();
+        GET_ATTR_str_val(INTERP, SELF, str_val);
 
         return str_val;
     }
@@ -201,6 +201,9 @@ Sets the value of the string to the floating-point C<value>.
 
 Sets the value of the string to that of the specified C<string>.
 
+Note: If your PMC-based subclass is not using the same string storage,
+you'll need to override this method.
+
 =cut
 
 */
@@ -218,10 +221,7 @@ Sets the value of the string to that of the specified C<string>.
             Parrot_str_free_cstring(copy);
         }
 
-        if (SELF->vtable->base_type == enum_class_String)
-            SET_ATTR_str_val(INTERP, SELF, value);
-        else
-            SELF.set_string_native(value);
+        SET_ATTR_str_val(INTERP, SELF, value);
     }
 
 /*
