@@ -119,9 +119,6 @@ Parrot_pmc_destroy(PARROT_INTERP, ARGMOD(PMC *pmc))
 
     PObj_gc_CLEAR(pmc);
 
-    if (PObj_is_PMC_shared_TEST(pmc) && PMC_sync(pmc))
-        Parrot_gc_free_pmc_sync(interp, pmc);
-
     if (pmc->vtable->attr_size)
         Parrot_gc_free_pmc_attributes(interp, pmc);
     else
@@ -441,9 +438,6 @@ get_new_pmc_header(PARROT_INTERP, INTVAL base_type, UINTVAL flags)
          * const PMC is const too
          * see e.g. t/pmc/sarray_13.pir
          */
-#if 0
-        flags |= PObj_constant_FLAG;
-#endif
         --base_type;
         vtable = interp->vtables[base_type];
     }
@@ -855,7 +849,6 @@ create_class_pmc(PARROT_INTERP, INTVAL type)
     &&  (_class == _class->vtable->pmc_class))
         interp->vtables[type]->pmc_class = _class;
     else {
-        Parrot_gc_free_pmc_sync(interp, _class);
         gc_flag_CLEAR(is_special_PMC, _class);
         PObj_is_PMC_shared_CLEAR(_class);
         interp->vtables[type]->pmc_class = _class;

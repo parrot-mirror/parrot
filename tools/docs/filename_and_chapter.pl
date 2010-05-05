@@ -10,10 +10,6 @@
 use strict;
 use warnings;
 
-# prototype
-sub write_mod($);
-
-
 use Getopt::Long ();
 use Pod::PseudoPod::LaTeX;
 
@@ -22,7 +18,7 @@ my $item_list_ref = [ ['intro.pod', 'Introduction to Parrot'],
                       ['submissions.pod', 'Submitting bug reports and patches'],
                     ];
 
-my $lang = @$item_list_ref;
+my $lang = @$item_list_ref - 1;
 my $MOD_BUILD_PATH='build/modified_pod/';
 
 my ( $result, $give_out );
@@ -32,18 +28,18 @@ $result = Getopt::Long::GetOptions (
 );
 
 if ($give_out)  {
-    for ( my $i=0; $i<$lang; $i++ )
-        { print $$item_list_ref[$i][0], "\n" }
+    for my $i ( 0.. $lang )
+        { print $item_list_ref->[$i][0], "\n" }
     exit;
 };
 
 
-for ( my $i=0; $i<$lang; $i++ ) {
+for my $i ( 0..$lang ) {
     write_mod( $i );
 }
 
 
-open my $TEX_FH, '>', 'build/parrot-book.tex');
+open my $TEX_FH, '>', 'build/parrot-book.tex';
 
 print $TEX_FH <<'HEADER';
 \documentclass[11pt,a4paper,oneside]{report}
@@ -54,10 +50,10 @@ print $TEX_FH <<'HEADER';
 \tableofcontents
 HEADER
 
-for ( my $i=0; $i<$lang; $i++ ) {
+for my $i ( 0..$lang ) {
     my $parser = Pod::PseudoPod::LaTeX->new();
     $parser->output_fh( $TEX_FH );
-    $parser->parse_file( "${MOD_BUILD_PATH}$$item_list_ref[$i][0]" );
+    $parser->parse_file( "${MOD_BUILD_PATH}$item_list_ref->[$i][0]" );
 }
 
 print $TEX_FH <<'FOOTER';
@@ -67,27 +63,24 @@ FOOTER
 close( $TEX_FH );
 
 
-sub write_mod( $ ) {
+sub write_mod {
     my $icnt;
 
-    open( my $IN_FH, '<', "$$item_list_ref[$_[0]][0]" ) ||
-        die( "$0: can't open $$item_list_ref[$_[0]][0] for reading ($!)\n" );
-    open( my $OUT_FH, '>', "${MOD_BUILD_PATH}$$item_list_ref[$_[0]][0]" );
+    open( my $IN_FH, '<', $item_list_ref->[$_[0]][0] ) or
+        die "$0: can't open $item_list_ref->[$_[0]][0] for reading ($!)\n";
+    open( my $OUT_FH, '>', "${MOD_BUILD_PATH}$item_list_ref->[$_[0]][0]" ) or
+        die "$0: can't open ${MOD_BUILD_PATH}$item_list_ref->[$_[0]][0]: $!\n";
 
-    # do the same as: sed -e '4,6c\=head0 $$item_list_ref[$i][1]'
+    # do the same as: sed -e '4,6c\=head0 $item_list_ref->[$i][1]'
     while( <$IN_FH> ) {
         if ( $icnt = (4..6) ) {
             if ( $icnt =~ /E0$/ ) {
-                print( $OUT_FH "=head0 $$item_list_ref[$_[0]][1]\n");
+                print $OUT_FH "=head0 $item_list_ref->[$_[0]][1]\n";
             }
         }
-        else { print( $OUT_FH ); }
+        else { print $OUT_FH $_ }
     }
-
-    close( $IN_FH );
-    close( $OUT_FH );
 }
-
 
 # Local Variables:
 #   mode: cperl

@@ -114,6 +114,12 @@ STRING * Parrot_str_copy(PARROT_INTERP, ARGIN(const STRING *s))
         __attribute__nonnull__(2);
 
 PARROT_EXPORT
+PARROT_PURE_FUNCTION
+PARROT_CANNOT_RETURN_NULL
+const char * Parrot_str_cstring(SHIM_INTERP, ARGIN(const STRING *str))
+        __attribute__nonnull__(2);
+
+PARROT_EXPORT
 PARROT_CANNOT_RETURN_NULL
 PARROT_MALLOC
 STRING * Parrot_str_downcase(PARROT_INTERP, ARGIN_NULLOK(const STRING *s))
@@ -380,12 +386,6 @@ STRING * Parrot_str_upcase(PARROT_INTERP, ARGIN_NULLOK(const STRING *s))
         __attribute__nonnull__(1);
 
 PARROT_EXPORT
-PARROT_PURE_FUNCTION
-PARROT_CANNOT_RETURN_NULL
-const char * Parrot_string_cstring(SHIM_INTERP, ARGIN(const STRING *str))
-        __attribute__nonnull__(2);
-
-PARROT_EXPORT
 PARROT_CANNOT_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
 STRING * string_chr(PARROT_INTERP, UINTVAL character)
@@ -397,11 +397,6 @@ PARROT_CANNOT_RETURN_NULL
 STRING * string_increment(PARROT_INTERP, ARGIN(const STRING *s))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
-
-PARROT_EXPORT
-PARROT_HOT
-PARROT_PURE_FUNCTION
-INTVAL STRING_is_null(SHIM_INTERP, ARGIN_NULLOK(const STRING *s));
 
 PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
@@ -502,6 +497,8 @@ STRING* Parrot_str_from_uint(PARROT_INTERP,
 #define ASSERT_ARGS_Parrot_str_copy __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
        PARROT_ASSERT_ARG(interp) \
     , PARROT_ASSERT_ARG(s))
+#define ASSERT_ARGS_Parrot_str_cstring __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
+       PARROT_ASSERT_ARG(str))
 #define ASSERT_ARGS_Parrot_str_downcase __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
        PARROT_ASSERT_ARG(interp))
 #define ASSERT_ARGS_Parrot_str_equal __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
@@ -590,14 +587,11 @@ STRING* Parrot_str_from_uint(PARROT_INTERP,
     , PARROT_ASSERT_ARG(s))
 #define ASSERT_ARGS_Parrot_str_upcase __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
        PARROT_ASSERT_ARG(interp))
-#define ASSERT_ARGS_Parrot_string_cstring __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
-       PARROT_ASSERT_ARG(str))
 #define ASSERT_ARGS_string_chr __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
        PARROT_ASSERT_ARG(interp))
 #define ASSERT_ARGS_string_increment __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
        PARROT_ASSERT_ARG(interp) \
     , PARROT_ASSERT_ARG(s))
-#define ASSERT_ARGS_STRING_is_null __attribute__unused__ int _ASSERT_ARGS_CHECK = (0)
 #define ASSERT_ARGS_string_make __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
        PARROT_ASSERT_ARG(interp))
 #define ASSERT_ARGS_string_make_from_charset __attribute__unused__ int _ASSERT_ARGS_CHECK = (\

@@ -248,6 +248,10 @@ MAIN
     push codestring, "\n"
     goto code_loop
   code_done:
+    # Join current strings to avoid storing too much
+    $S0 = join '', codestring
+    codestring = 0
+    push codestring, $S0
     goto read_loop
 
   read_done:
@@ -343,6 +347,10 @@ END_OF_FUNCTION
     push codestring, '"'
     goto code_loop
   code_done:
+    # Join current strings to avoid storing too much
+    $S0 = join '', codestring
+    codestring = 0
+    push codestring, $S0
     goto read_loop
 
   read_done:
@@ -438,6 +446,7 @@ END_OF_DEFINES
 
 
     .local int pbc_size
+    $P0 = loadlib 'os'
     $P1 = new ['OS']
     $P2 = $P1.'stat'(pbc_path)
     pbc_size = $P2[7]
@@ -660,6 +669,7 @@ END_OF_FUNCTION
   check_manifest:
     # Check if there is a MSVC app manifest
     .local pmc file
+    $P0 = loadlib 'file'
     file = new 'File'
     .local string manifest_file_name
     manifest_file_name  = clone exefile

@@ -633,7 +633,7 @@ TODO Currently overflow to BigInt is B<not> handled nor detected.
 
         /* TODO verify encoding */
         const STRING *me  = VTABLE_get_string(INTERP, SELF);
-        char         *str = Parrot_str_to_cstring(INTERP, me);
+        char  * const str = Parrot_str_to_cstring(INTERP, me);
         UINTVAL       i   = 0;
         size_t        j   = 0;
         size_t        len = strlen(str);
@@ -818,38 +818,6 @@ Translate ascii string C<src> with entries from C<trans_table>.
             const unsigned char ch = (unsigned char)tr_data[*p];
             if (ch)
                 *p = ch;
-        }
-    }
-
-/*
-
-=item C<void reverse(STRING *src)>
-
-Reverse the ascii STRING C<src> in place.
-
-=cut
-
-*/
-
-    METHOD reverse(STRING *src) {
-        INTVAL         i;
-        unsigned char *p;
-        INTVAL         len = Parrot_str_byte_length(interp, src);
-
-        if (!len)
-            RETURN(void);
-
-        if (src->charset != Parrot_ascii_charset_ptr)
-            Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INVALID_ENCODING,
-                "Can't reverse non-ascii");
-
-        p = (unsigned char *)Buffer_bufstart(src);
-
-        for (i = 0, --len; i < len; ++i, --len) {
-            const unsigned char ch = p[len];
-
-            p[len] = p[i];
-            p[i]   = ch;
         }
     }
 

@@ -339,8 +339,6 @@ pt_shared_fixup(PARROT_INTERP, ARGMOD(PMC *pmc))
     if (is_ro)
         pmc->vtable = pmc->vtable->ro_variant_vtable;
 
-    Parrot_gc_add_pmc_sync(interp, pmc);
-
     PObj_is_PMC_shared_SET(pmc);
 
     /* make sure metadata doesn't go away unexpectedly */
@@ -713,12 +711,15 @@ create a pt_thread
 
 */
 
+PARROT_EXPORT
+PARROT_CANNOT_RETURN_NULL
+PARROT_WARN_UNUSED_RESULT
 PMC *
 pt_thread_create(PARROT_INTERP, INTVAL type, INTVAL clone_flags)
 {
     ASSERT_ARGS(pt_thread_create)
-    PMC *new_interp_pmc = pmc_new(interp, type);
-    Interp *new_interp  = (Interp *)VTABLE_get_pointer(interp, new_interp_pmc);
+    PMC    * const new_interp_pmc = pmc_new(interp, type);
+    Interp * const new_interp     = (Interp *)VTABLE_get_pointer(interp, new_interp_pmc);
 
     clone_interpreter(new_interp, interp, clone_flags);
     pt_thread_prepare_for_run(new_interp, interp);
@@ -738,10 +739,11 @@ run a pt_thread
 */
 
 int
-pt_thread_run(PARROT_INTERP, PMC *thread_interp_pmc, ARGIN(PMC *sub), ARGIN_NULLOK(PMC *arg))
+pt_thread_run(PARROT_INTERP, ARGMOD(PMC *thread_interp_pmc), ARGIN(PMC *sub),
+        ARGIN_NULLOK(PMC *arg))
 {
     ASSERT_ARGS(pt_thread_run)
-    Interp *thread_interp = (Interp *)VTABLE_get_pointer(interp, thread_interp_pmc);
+    Interp * const thread_interp = (Interp *)VTABLE_get_pointer(interp, thread_interp_pmc);
 
     SETATTR_ParrotInterpreter_sub(interp,
                                   thread_interp_pmc, pt_transfer_sub(thread_interp, interp, sub));
@@ -1059,32 +1061,6 @@ pt_suspend_all_for_gc(PARROT_INTERP)
         UNLOCK(interpreter_array_mutex);
         return;
     }
-
-#if 0
-    for (i = 0; i < n_interpreters; ++i) {
-        Parrot_Interp other_interp;
-        other_interp = interpreter_array[i];
-        if (!other_interp)
-            continue;
-
-        if (is_suspended_for_gc(other_interp) &&
-            other_interp != interp &&
-            (other_interp->thread_data->state & THREAD_STATE_SUSPENDED_GC))
-        {
-            PMC *successp;
-            /* this means that someone else already got this far,
-             * so we have a suspend event in our queue to ignore
-             */
-            /* XXX still reachable? */
-            DEBUG_ONLY(fprintf(stderr, "apparently someone else is doing it [%p]\n", other_interp));
-            fprintf(stderr, "??? found later (%p)\n", other_interp);
-            successp = Parrot_cx_delete_suspend_for_gc(interp);
-            PARROT_ASSERT(successp);
-            UNLOCK(interpreter_array_mutex);
-            return;
-        }
-    }
-#endif
 
     /* now send all the non-suspended threads to suspend for GC */
     for (i = 0; i < n_interpreters; ++i) {

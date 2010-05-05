@@ -85,26 +85,6 @@ Parrot_str_is_null(SHIM_INTERP, ARGIN_NULLOK(const STRING *s))
 
 /*
 
-=item C<INTVAL STRING_is_null(PARROT_INTERP, const STRING *s)>
-
-Tests if the given STRING is STRINGNULL.
-
-=cut
-
-*/
-
-PARROT_EXPORT
-PARROT_HOT
-PARROT_PURE_FUNCTION
-INTVAL
-STRING_is_null(SHIM_INTERP, ARGIN_NULLOK(const STRING *s))
-{
-    ASSERT_ARGS(STRING_is_null)
-    return STRING_IS_NULL(s);
-}
-
-/*
-
 =back
 
 =head2 Basic String Functions
@@ -2736,7 +2716,7 @@ string_increment(PARROT_INTERP, ARGIN(const STRING *s))
 
 /*
 
-=item C<const char * Parrot_string_cstring(PARROT_INTERP, const STRING *str)>
+=item C<const char * Parrot_str_cstring(PARROT_INTERP, const STRING *str)>
 
 Returns a C string from a Parrot string.  Both sides are treated
 as constants -- i.e. do not resize the result.
@@ -2749,9 +2729,9 @@ PARROT_EXPORT
 PARROT_PURE_FUNCTION
 PARROT_CANNOT_RETURN_NULL
 const char *
-Parrot_string_cstring(SHIM_INTERP, ARGIN(const STRING *str))
+Parrot_str_cstring(SHIM_INTERP, ARGIN(const STRING *str))
 {
-    ASSERT_ARGS(Parrot_string_cstring)
+    ASSERT_ARGS(Parrot_str_cstring)
     /* TODO handle NULL and friends */
     return str->strstart;
 }

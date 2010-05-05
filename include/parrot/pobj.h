@@ -83,8 +83,6 @@ struct parrot_string_t {
     const struct _charset  *charset;
 };
 
-struct _Sync;   /* forward decl */
-
 /* note that cache and flags are isomorphic with Buffer and PObj */
 struct PMC {
     Parrot_UInt     flags;
@@ -92,17 +90,11 @@ struct PMC {
     DPOINTER       *data;
 
     PMC *_metadata;      /* properties */
-    /*
-     * PMC access synchronization for shared PMCs
-     * s. parrot/thread.h
-     */
-    struct _Sync *_synchronize;
 };
 
 #define PMC_data(pmc)                   (pmc)->data
 #define PMC_data_typed(pmc, type) (type)(pmc)->data
 #define PMC_metadata(pmc)         ((pmc)->_metadata)
-#define PMC_sync(pmc)             ((pmc)->_synchronize)
 
 #define POBJ_FLAG(n) ((UINTVAL)1 << (n))
 /* PObj flags */
