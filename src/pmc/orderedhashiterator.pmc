@@ -21,6 +21,10 @@ Implementation of Iterator for OrderedHash.
 #include "pmc/pmc_orderedhash.h"
 #include "pmc/pmc_hashiteratorkey.h"
 
+/* HEADERIZER HFILE: none */
+/* HEADERIZER BEGIN: static */
+/* HEADERIZER END: static */
+
 pmclass OrderedHashIterator extends Iterator no_ro auto_attrs {
     ATTR PMC        *pmc_hash;      /* the Hash which this Iterator iterates */
     ATTR PMC        *next_entry;    /* Next entry to shift/pop */
@@ -179,8 +183,8 @@ the next one.
                 ORDERED_HASH_ITEM_KEY);
         attrs->next_entry = VTABLE_get_pmc_keyed_int(INTERP, attrs->next_entry,
                 ORDERED_HASH_ITEM_NEXT);
-        attrs->pos++;
-        attrs->elements--;
+        ++attrs->pos;
+        --attrs->elements;
 
         return ret;
     }
@@ -210,8 +214,8 @@ the next one for reverse iterator.
                 ORDERED_HASH_ITEM_KEY);
         attrs->next_entry = VTABLE_get_pmc_keyed_int(INTERP, attrs->next_entry,
                 ORDERED_HASH_ITEM_PREV);
-        attrs->pos--;
-        attrs->elements--;
+        --attrs->pos;
+        --attrs->elements;
 
         return ret;
     }

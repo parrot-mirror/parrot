@@ -52,16 +52,6 @@ static PMC* new_hll_entry(PARROT_INTERP, ARGIN_NULLOK(STRING *entry_name))
 /* for shared HLL data, do COW stuff */
 #define START_READ_HLL_INFO(interp, hll_info)
 #define END_READ_HLL_INFO(interp, hll_info)
-#define START_WRITE_HLL_INFO(interp, hll_info) \
-    do { \
-        if (PObj_is_PMC_shared_TEST(hll_info) && PMC_sync((interp)->HLL_info)) { \
-            (hll_info) = (interp)->HLL_info = \
-                Parrot_clone((interp), (interp)->HLL_info); \
-            if (PMC_sync((interp)->HLL_info)) \
-                mem_internal_free(PMC_sync((interp)->HLL_info)); \
-        } \
-    } while (0)
-#define END_WRITE_HLL_INFO(interp, hll_info)
 
 
 /*
@@ -88,7 +78,8 @@ new_hll_entry(PARROT_INTERP, ARGIN_NULLOK(STRING *entry_name))
 
     PMC *entry_id;
 
-    PMC * const entry = Parrot_pmc_new_constant(interp, enum_class_FixedPMCArray);
+    PMC * const entry = Parrot_pmc_new_constant_init_int(interp,
+            enum_class_FixedPMCArray, e_HLL_MAX);
 
     if (entry_name && !STRING_IS_EMPTY(entry_name)) {
         VTABLE_set_pmc_keyed_str(interp, hll_info, entry_name, entry);
@@ -96,10 +87,7 @@ new_hll_entry(PARROT_INTERP, ARGIN_NULLOK(STRING *entry_name))
     else
         VTABLE_push_pmc(interp, hll_info, entry);
 
-    VTABLE_set_integer_native(interp, entry, e_HLL_MAX);
-
-    entry_id = Parrot_pmc_new_constant(interp, enum_class_Integer);
-    VTABLE_set_integer_native(interp, entry_id, id);
+    entry_id = Parrot_pmc_new_constant_init_int(interp, enum_class_Integer, id);
     VTABLE_set_pmc_keyed_int(interp, entry, e_HLL_id, entry_id);
 
     return entry;
@@ -162,8 +150,6 @@ Parrot_register_HLL(PARROT_INTERP, ARGIN(STRING *hll_name))
 
     hll_info = interp->HLL_info;
 
-    START_WRITE_HLL_INFO(interp, hll_info);
-
     idx      = VTABLE_elements(interp, hll_info);
     entry    = new_hll_entry(interp, hll_name);
 
@@ -192,9 +178,6 @@ Parrot_register_HLL(PARROT_INTERP, ARGIN(STRING *hll_name))
     VTABLE_set_pointer(interp, type_hash, parrot_new_intval_hash(interp));
     VTABLE_set_pmc_keyed_int(interp, entry, e_HLL_typemap, type_hash);
 
-    /* UNLOCK */
-    END_WRITE_HLL_INFO(interp, hll_info);
-
     return idx;
 }
 
@@ -217,10 +200,7 @@ Parrot_register_HLL_lib(PARROT_INTERP, ARGIN(STRING *hll_lib))
 {
     ASSERT_ARGS(Parrot_register_HLL_lib)
     PMC   *hll_info = interp->HLL_info;
-    PMC   *entry, *name;
     INTVAL nelements, i;
-
-    START_WRITE_HLL_INFO(interp, hll_info);
 
     nelements = VTABLE_elements(interp, hll_info);
 
@@ -229,28 +209,28 @@ Parrot_register_HLL_lib(PARROT_INTERP, ARGIN(STRING *hll_lib))
         PMC * const lib_name = VTABLE_get_pmc_keyed_int(interp, entry, e_HLL_lib);
 
         if (!PMC_IS_NULL(lib_name)) {
-            const STRING * const name = VTABLE_get_string(interp, lib_name);
-            if (Parrot_str_equal(interp, name, hll_lib))
+            const STRING * const lib_name_str = VTABLE_get_string(interp, lib_name);
+            if (Parrot_str_equal(interp, lib_name_str, hll_lib))
                 break;
         }
     }
 
     if (i < nelements)
         return i;
+    else {
+        PMC * const new_entry = new_hll_entry(interp, NULL);
+        PMC *name;
 
-    entry    = new_hll_entry(interp, NULL);
+        VTABLE_set_pmc_keyed_int(interp, new_entry, e_HLL_name, PMCNULL);
 
-    VTABLE_set_pmc_keyed_int(interp, entry, e_HLL_name, PMCNULL);
+        /* register dynlib */
+        name    = Parrot_pmc_new_constant(interp, enum_class_String);
 
-    /* register dynlib */
-    name    = Parrot_pmc_new_constant(interp, enum_class_String);
+        VTABLE_set_string_native(interp, name, hll_lib);
+        VTABLE_set_pmc_keyed_int(interp, new_entry, e_HLL_lib, name);
 
-    VTABLE_set_string_native(interp, name, hll_lib);
-    VTABLE_set_pmc_keyed_int(interp, entry, e_HLL_lib, name);
-
-    END_WRITE_HLL_INFO(interp, hll_info);
-
-    return 0;
+        return 0;
+    }
 }
 
 /*
@@ -271,15 +251,18 @@ INTVAL
 Parrot_get_HLL_id(PARROT_INTERP, ARGIN_NULLOK(STRING *hll_name))
 {
     ASSERT_ARGS(Parrot_get_HLL_id)
+    PMC *       entry;
     PMC * const hll_info = interp->HLL_info;
-    INTVAL      i;
+    INTVAL      i        = -1;
+
+    if (!hll_name)
+        return i;
 
     START_READ_HLL_INFO(interp, hll_info);
 
-    if (!hll_name || !VTABLE_exists_keyed_str(interp, hll_info, hll_name))
-        i = -1;
-    else {
-        PMC * const entry    = VTABLE_get_pmc_keyed_str(interp, hll_info, hll_name);
+    entry = VTABLE_get_pmc_keyed_str(interp, hll_info, hll_name);
+
+    if (!PMC_IS_NULL(entry)) {
         PMC * const entry_id = VTABLE_get_pmc_keyed_int(interp, entry, e_HLL_id);
         i = VTABLE_get_integer(interp, entry_id);
     }
@@ -355,15 +338,6 @@ Parrot_register_HLL_type(PARROT_INTERP, INTVAL hll_id,
         Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_GLOBAL_NOT_FOUND,
             "no such HLL ID (%vd)", hll_id);
 
-    /* the type might already be registered in a non-conflicting way, in which
-     * ca se we can avoid copying */
-    if (PObj_is_PMC_shared_TEST(hll_info) && PMC_sync(hll_info)) {
-        if (hll_type == Parrot_get_HLL_type(interp, hll_id, core_type))
-            return;
-    }
-
-    START_WRITE_HLL_INFO(interp, hll_info);
-
     entry     = VTABLE_get_pmc_keyed_int(interp, hll_info, hll_id);
     PARROT_ASSERT(!PMC_IS_NULL(entry));
 
@@ -371,8 +345,6 @@ Parrot_register_HLL_type(PARROT_INTERP, INTVAL hll_id,
     PARROT_ASSERT(!PMC_IS_NULL(type_hash));
 
     VTABLE_set_integer_keyed_int(interp, type_hash, core_type, hll_type);
-
-    END_WRITE_HLL_INFO(interp, hll_info);
 }
 
 /*
@@ -518,11 +490,11 @@ Parrot_regenerate_HLL_namespaces(PARROT_INTERP)
         if (PMC_IS_NULL(ns_hash) ||
                 ns_hash->vtable->base_type == enum_class_Undef)
         {
-            STRING * const hll_name = Parrot_get_HLL_name(interp, hll_id);
+            STRING * hll_name = Parrot_get_HLL_name(interp, hll_id);
             if (!hll_name)
                 continue;
 
-            Parrot_str_downcase_inplace(interp, hll_name);
+            hll_name = Parrot_str_downcase(interp, hll_name);
 
             /* XXX as in Parrot_register_HLL() this needs to be fixed to use
              * the correct type of namespace. It's relatively easy to do that

@@ -49,7 +49,7 @@ our %deps;
 
 foreach my $file (sort grep /\.[hc]$/, @incfiles) {
     # For now, skip any files that have generated dependencies
-    next if $file =~ m{src/(ops|dynoplibs|dynpmc|pmc)/};
+    next if $file =~ m{src/(ops|dynoplibs|pmc)/};
     next if $file =~ m{src/string/(charset|encoding)/};
 
     open my $fh, '<', $file;
@@ -84,6 +84,11 @@ foreach my $file (sort grep /\.[hc]$/, @incfiles) {
         }
 
         diag "couldn't find $include, included from $file";
+    }
+    # always require an explicit .o -> .c dep. This is lazy and not always
+    # needed. However, missing it when it is needed causes pain.
+    if ($file =~ /\.c$/) {
+        push @{$deps{$file}}, $file;
     }
 }
 
@@ -267,7 +272,7 @@ sub check_files {
         $rule_deps        = join "\n", sort split /\s+/, $rule_deps;
         my $expected_deps = join "\n", sort (get_deps($file));
 
-        eq_or_diff_text($rule_deps, $expected_deps, "$file has correct dependencies $extra_info.", {context => 0});
+        eq_or_diff_text($rule_deps, $expected_deps, "$file $extra_info.", {context => 0});
     }
 }
 

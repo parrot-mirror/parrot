@@ -91,14 +91,14 @@ Destroys C<*vtable>.
 
 PARROT_EXPORT
 void
-Parrot_destroy_vtable(PARROT_INTERP, ARGMOD(VTABLE *vtable))
+Parrot_destroy_vtable(PARROT_INTERP, ARGFREE_NOTNULL(VTABLE *vtable))
 {
     ASSERT_ARGS(Parrot_destroy_vtable)
     /* We sometimes get a type number allocated without any corresponding
      * vtable. E.g. if you load perl_group, perlscalar is this way.  */
 
     if (vtable->ro_variant_vtable) {
-        VTABLE *ro_vtable = vtable->ro_variant_vtable;
+        VTABLE * const ro_vtable = vtable->ro_variant_vtable;
 
         if (ro_vtable->isa_hash) {
             parrot_hash_destroy(interp, ro_vtable->isa_hash);
@@ -184,7 +184,7 @@ parrot_free_vtables(PARROT_INTERP)
     ASSERT_ARGS(parrot_free_vtables)
     int i;
 
-    for (i = 0; i < interp->n_vtable_max; i++)
+    for (i = 0; i < interp->n_vtable_max; ++i)
         Parrot_destroy_vtable(interp, interp->vtables[i]);
 
     mem_internal_free(interp->vtables);
@@ -206,7 +206,7 @@ mark_vtables(PARROT_INTERP)
     ASSERT_ARGS(mark_vtables)
     INTVAL i;
 
-    for (i = 1; i < interp->n_vtable_max; i++) {
+    for (i = 1; i < interp->n_vtable_max; ++i) {
         const VTABLE * const vtable = interp->vtables[i];
 
         /* XXX dynpmc groups have empty slots for abstract objects */

@@ -1,5 +1,5 @@
 #! perl
-# Copyright (C) 2001-2009, Parrot Foundation.
+# Copyright (C) 2001-2010, Parrot Foundation.
 # $Id$
 
 use strict;
@@ -8,7 +8,7 @@ use lib qw( . lib ../lib ../../lib );
 use Test::More;
 use Parrot::Test;
 
-plan tests => 6;
+plan tests => 7;
 
 =head1 NAME
 
@@ -24,7 +24,15 @@ Embedding parrot in C
 
 =cut
 
-c_output_is( <<'CODE', <<'OUTPUT', "Minimal embed, using just the embed.h header" );
+sub linedirective
+{
+    # Provide a #line directive for the C code in the heredoc
+    # starting immediately after where this sub is called.
+    my $linenum = shift() + 1;
+    return "#line " . $linenum . ' "' . __FILE__ . '"' . "\n";
+}
+
+c_output_is(linedirective(__LINE__) . <<'CODE', <<'OUTPUT', "Minimal embed, using just the embed.h header" );
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -39,7 +47,7 @@ void fail(const char *msg)
     exit(EXIT_FAILURE);
 }
 
-int main(int argc, char **argv)
+int main(int argc, const char **argv)
 {
     Parrot_Interp interp;
     interp = Parrot_new(NULL);
@@ -54,7 +62,44 @@ CODE
 Done
 OUTPUT
 
-c_output_is( <<'CODE', <<'OUTPUT', "Hello world from main" );
+c_output_is(linedirective(__LINE__) . <<'CODE', <<'OUTPUT', 'Parrot_compile_string populates the error string when an opcode is given improper arguments');
+
+#include <stdio.h>
+#include <stdlib.h>
+#include "parrot/embed.h"
+#include "parrot/extend.h"
+
+void fail(const char *msg);
+
+void fail(const char *msg)
+{
+    fprintf(stderr, "failed: %s\n", msg);
+    exit(EXIT_FAILURE);
+}
+
+
+int main(int argc, const char **argv)
+{
+    Parrot_Interp interp;
+    Parrot_String err, lang;
+    Parrot_PMC func_pmc;
+    char *str;
+
+    interp = Parrot_new(NULL);
+    if (! interp)
+        fail("Cannot create parrot interpreter");
+    lang = Parrot_new_string(interp, "PIR", 3, (const char*)NULL, 0);
+
+    func_pmc = Parrot_compile_string(interp, lang, ".sub foo\n copy\n.end", &err);
+    Parrot_printf(interp, "%Ss\n", err);
+    Parrot_destroy(interp);
+    return 0;
+}
+CODE
+The opcode 'copy' (copy<0>) was not found. Check the type and number of the arguments
+OUTPUT
+
+c_output_is(linedirective(__LINE__) . <<'CODE', <<'OUTPUT', "Hello world from main" );
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -103,7 +148,7 @@ Hello, parrot
 Hello, pir
 OUTPUT
 
-c_output_is( <<'CODE', <<'OUTPUT', "Hello world from a sub" );
+c_output_is(linedirective(__LINE__) . <<'CODE', <<'OUTPUT', "Hello world from a sub" );
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -169,7 +214,7 @@ CODE
 Hello, sub
 OUTPUT
 
-c_output_is( <<'CODE', <<'OUTPUT', "External sub" );
+c_output_is(linedirective(__LINE__) . <<'CODE', <<'OUTPUT', "External sub" );
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -225,7 +270,7 @@ CODE
 Hello from C
 OUTPUT
 
-c_output_is( <<'CODE', <<'OUTPUT', "Insert external sub in namespace" );
+c_output_is(linedirective(__LINE__) . <<'CODE', <<'OUTPUT', "Insert external sub in namespace" );
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -308,20 +353,20 @@ c_output_is( <<'CODE', <<'OUTPUT', "Parrot Compile API Single call" );
 #include "parrot/embed.h"
 
 static opcode_t *
-run(PARROT_INTERP, int argc, char *argv[])
+run(PARROT_INTERP, int argc, cosnt char *argv[])
 {
     const char *c_src = ".sub main :main\n" "    print \"ok\\n\"\n" ".end\n";
 
-    STRING *src, *smain;
+    Parrot_String *src, *smain;
     PMC *prog, *entry;
     opcode_t *dest;
-    STRING *error;
+    Parrot_String *error;
 
     /* get PIR compiler  - TODO API */
     PMC   *compreg = Parrot_PMC_get_pmc_keyed_int(interp,
                                        interp->iglobals,
                                        IGLOBALS_COMPREG_HASH);
-    STRING *pir    = Parrot_str_new_constant(interp, "PIR");
+    Parrot_String *pir    = Parrot_str_new_constant(interp, "PIR");
     PMC    *comp   = Parrot_PMC_get_pmc_keyed_str(interp, compreg, pir);
 
     if (PMC_IS_NULL(comp) || !Parrot_PMC_defined(interp, comp)) {
@@ -357,7 +402,7 @@ run(PARROT_INTERP, int argc, char *argv[])
 }
 
 int
-main(int margc, char *margv[])
+main(int margc, const char *margv[])
 {
     Parrot_Interp interp;
     PackFile *pf;
@@ -388,12 +433,12 @@ c_output_is( <<'CODE', <<'OUTPUT', "Parrot Compile API Multiple Calls" );
 #include "parrot/embed.h"
 
 static void
-compile_run(PARROT_INTERP, const char *src, STRING *type, int argc,
-            char *argv[])
+compile_run(PARROT_INTERP, const char *src, Parrot_String *type, int argc,
+            const char *argv[])
 {
-    STRING   *smain;
+    Parrot_String   *smain;
     PMC      *entry;
-    STRING   *error;
+    Parrot_String   *error;
     opcode_t *dest;
     PMC      *prog = Parrot_compile_string(interp, type, src, &error);
 
@@ -421,20 +466,20 @@ compile_run(PARROT_INTERP, const char *src, STRING *type, int argc,
 }
 
 static opcode_t *
-run(PARROT_INTERP, int argc, char *argv[])
+run(PARROT_INTERP, int argc, const char *argv[])
 {
     const char *c_src  = ".sub main :main\n" "    print \"ok\\n\"\n" ".end\n";
 
     const char *c2_src =
         ".sub main :main\n" "    print \"hola\\n\"\n" ".end\n";
 
-    STRING *src, *smain;
+    Parrot_String *src, *smain;
 
     /* get PIR compiler  - TODO API */
     PMC    *compreg = Parrot_PMC_get_pmc_keyed_int(interp,
                                        interp->iglobals,
                                        IGLOBALS_COMPREG_HASH);
-    STRING *pir     = Parrot_str_new_constant(interp, "PIR");
+    Parrot_String *pir     = Parrot_str_new_constant(interp, "PIR");
     PMC    *comp    = Parrot_PMC_get_pmc_keyed_str(interp, compreg, pir);
 
     if (PMC_IS_NULL(comp) || !Parrot_PMC_defined(interp, comp)) {
@@ -447,7 +492,7 @@ run(PARROT_INTERP, int argc, char *argv[])
 }
 
 int
-main(int margc, char *margv[])
+main(int margc, const char *margv[])
 {
     Parrot_Interp interp;
     PackFile *pf;
@@ -479,12 +524,12 @@ c_output_is( <<'CODE', <<'OUTPUT', "Parrot Compile API Multiple 1st bad PIR" );
 #include "parrot/embed.h"
 
 static void
-compile_run(PARROT_INTERP, const char *src, STRING *type, int argc,
-            char *argv[])
+compile_run(PARROT_INTERP, const char *src, Parrot_String *type, int argc,
+            const char *argv[])
 {
-    STRING   *smain;
+    Parrot_String   *smain;
     PMC      *entry;
-    STRING   *error;
+    Parrot_String   *error;
     opcode_t *dest;
     PMC      *prog = Parrot_compile_string(interp, type, src, &error);
 
@@ -512,20 +557,20 @@ compile_run(PARROT_INTERP, const char *src, STRING *type, int argc,
 }
 
 static opcode_t *
-run(PARROT_INTERP, int argc, char *argv[])
+run(PARROT_INTERP, int argc, const char *argv[])
 {
     const char *c_src  = ".sub main :main\n" "    print ok\\n\"\n" ".end\n";
 
     const char *c2_src =
         ".sub main :main\n" "    print \"hola\\n\"\n" ".end\n";
 
-    STRING *src, *smain;
+    Parrot_String *src, *smain;
 
     /* get PIR compiler  - TODO API */
     PMC    *compreg = Parrot_PMC_get_pmc_keyed_int(interp,
                                        interp->iglobals,
                                        IGLOBALS_COMPREG_HASH);
-    STRING *pir     = Parrot_str_new_constant(interp, "PIR");
+    Parrot_String *pir     = Parrot_str_new_constant(interp, "PIR");
     PMC    *comp    = Parrot_PMC_get_pmc_keyed_str(interp, compreg, pir);
 
     if (PMC_IS_NULL(comp) || !Parrot_PMC_defined(interp, comp)) {
@@ -538,12 +583,12 @@ run(PARROT_INTERP, int argc, char *argv[])
 }
 
 int
-main(int margc, char *margv[])
+main(int margc, const char *margv[])
 {
     Parrot_Interp interp;
     PackFile *pf;
     int argc = 1;
-    char *argv[] = { "test", NULL };
+    const char *argv[] = { "test", NULL };
 
     PackFile_Segment *seg;
 
@@ -570,12 +615,12 @@ c_output_is( <<'CODE', <<'OUTPUT', "Parrot Compile API Multiple 2nd bad PIR" );
 #include "parrot/embed.h"
 
 static void
-compile_run(PARROT_INTERP, const char *src, STRING *type, int argc,
-            char *argv[])
+compile_run(PARROT_INTERP, const char *src, Parrot_String *type, int argc,
+            const char *argv[])
 {
-    STRING   *smain;
+    Parrot_String   *smain;
     PMC      *entry;
-    STRING   *error;
+    Parrot_String   *error;
     opcode_t *dest;
     PMC      *prog = Parrot_compile_string(interp, type, src, &error);
 
@@ -603,19 +648,19 @@ compile_run(PARROT_INTERP, const char *src, STRING *type, int argc,
 }
 
 static opcode_t *
-run(PARROT_INTERP, int argc, char *argv[])
+run(PARROT_INTERP, int argc, const char *argv[])
 {
     const char *c_src  = ".sub main :main\n" "    print ok\\n\"\n" ".end\n";
 
     const char *c2_src =
         ".sub main :main\n" "    print \"hola\\n\"\n" ".end\n";
 
-    STRING *src, *smain;
+    Parrot_String *src, *smain;
     /* get PIR compiler  - TODO API */
     PMC    *compreg = Parrot_PMC_get_pmc_keyed_int(interp,
                                        interp->iglobals,
                                        IGLOBALS_COMPREG_HASH);
-    STRING *pir     = Parrot_str_new_constant(interp, "PIR");
+    Parrot_String *pir     = Parrot_str_new_constant(interp, "PIR");
     PMC    *comp    = Parrot_PMC_get_pmc_keyed_str(interp, compreg, pir);
 
     if (PMC_IS_NULL(comp) || !Parrot_PMC_defined(interp, comp)) {
@@ -628,7 +673,7 @@ run(PARROT_INTERP, int argc, char *argv[])
 }
 
 int
-main(int margc, char *margv[])
+main(int margc, const char *margv[])
 {
     Parrot_Interp interp;
     PackFile *pf;
@@ -660,12 +705,12 @@ c_output_is( <<'CODE', <<'OUTPUT', "Parrot Compile API Multiple bad PIR" );
 #include "parrot/embed.h"
 
 static void
-compile_run(PARROT_INTERP, const char *src, STRING *type, int argc,
-            char *argv[])
+compile_run(PARROT_INTERP, const char *src, Parrot_String *type, int argc,
+            const char *argv[])
 {
-    STRING   *smain;
+    Parrot_String   *smain;
     PMC      *entry;
-    STRING   *error;
+    Parrot_String   *error;
     opcode_t *dest;
     PMC      *prog = Parrot_compile_string(interp, type, src, &error);
 
@@ -693,18 +738,18 @@ compile_run(PARROT_INTERP, const char *src, STRING *type, int argc,
 }
 
 static opcode_t *
-run(PARROT_INTERP, int argc, char *argv[])
+run(PARROT_INTERP, int argc, const char *argv[])
 {
     const char *c_src  = ".sub main :main\n" "    print ok\\n\"\n" ".end\n";
 
     const char *c2_src = ".sub main :main\n" "    print hola\\n\"\n" ".end\n";
 
-    STRING *src, *smain;
+    Parrot_String *src, *smain;
     /* get PIR compiler  - TODO API */
     PMC    *compreg = Parrot_PMC_get_pmc_keyed_int(interp,
                                        interp->iglobals,
                                        IGLOBALS_COMPREG_HASH);
-    STRING *pir     = Parrot_str_new_constant(interp, "PIR");
+    Parrot_String *pir     = Parrot_str_new_constant(interp, "PIR");
     PMC    *comp    = Parrot_PMC_get_pmc_keyed_str(interp, compreg, pir);
 
     if (PMC_IS_NULL(comp) || !Parrot_PMC_defined(interp, comp)) {
@@ -717,7 +762,7 @@ run(PARROT_INTERP, int argc, char *argv[])
 }
 
 int
-main(int margc, char *margv[])
+main(int margc, const char *margv[])
 {
     Parrot_Interp interp;
     PackFile *pf;

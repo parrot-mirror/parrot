@@ -18,6 +18,10 @@ C<Float> extends C<scalar> to provide floating-point number operations.
 
 */
 
+/* HEADERIZER HFILE: none */
+/* HEADERIZER BEGIN: static */
+/* HEADERIZER END: static */
+
 pmclass Float extends scalar provides float provides scalar auto_attrs {
     ATTR FLOATVAL fv;
 
@@ -296,7 +300,7 @@ Increments the number.
     VTABLE void increment() {
         FLOATVAL fv;
         GET_ATTR_fv(INTERP, SELF, fv);
-        fv++;
+        ++fv;
         SET_ATTR_fv(INTERP, SELF, fv);
     }
 
@@ -313,7 +317,7 @@ Decrements the number.
     VTABLE void decrement() {
         FLOATVAL fv;
         GET_ATTR_fv(INTERP, SELF, fv);
-        fv--;
+        --fv;
         SET_ATTR_fv(INTERP, SELF, fv);
     }
 /*

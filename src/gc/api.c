@@ -177,13 +177,6 @@ Parrot_gc_mark_PMC_alive_fun(PARROT_INTERP, ARGMOD_NULLOK(PMC *obj))
         /* if object is a PMC and contains buffers or PMCs, then attach the PMC
          * to the chained mark list. */
         if (PObj_is_special_PMC_TEST(obj)) {
-            if (PObj_is_PMC_shared_TEST(obj)) {
-                Parrot_Interp i = PMC_sync(obj)->owner;
-
-                if (!i->mem_pools->gc_mark_ptr)
-                    i->mem_pools->gc_mark_ptr = obj;
-            }
-
             if (PObj_custom_mark_TEST(obj))
                 VTABLE_mark(interp, obj);
         }
@@ -205,7 +198,7 @@ A type safe wrapper of Parrot_gc_mark_PObj_alive for STRING.
 
 PARROT_EXPORT
 void
-Parrot_gc_mark_STRING_alive_fun(PARROT_INTERP, ARGMOD_NULLOK(STRING *obj))
+Parrot_gc_mark_STRING_alive_fun(SHIM_INTERP, ARGMOD_NULLOK(STRING *obj))
 {
     ASSERT_ARGS(Parrot_gc_mark_STRING_alive_fun)
     if (!STRING_IS_NULL(obj)) {
@@ -252,14 +245,12 @@ Parrot_gc_initialize(PARROT_INTERP, ARGIN(void *stacktop))
     };
 
     /* Assertions that GC subsystem has complete API */
-    PARROT_ASSERT(interp->gc_sys->finalize_gc_system);
-    PARROT_ASSERT(interp->gc_sys->destroy_child_interp);
-
     PARROT_ASSERT(interp->gc_sys->do_gc_mark);
     PARROT_ASSERT(interp->gc_sys->compact_string_pool);
 
-    PARROT_ASSERT(interp->gc_sys->mark_special);
-    PARROT_ASSERT(interp->gc_sys->pmc_needs_early_collection);
+    /* It should be mandatory. But there is abstraction leak in */
+    /* mark_foo_alive. */
+    /* PARROT_ASSERT(interp->gc_sys->mark_special); */
 
     PARROT_ASSERT(interp->gc_sys->allocate_pmc_header);
     PARROT_ASSERT(interp->gc_sys->free_pmc_header);
@@ -287,14 +278,6 @@ Parrot_gc_initialize(PARROT_INTERP, ARGIN(void *stacktop))
     PARROT_ASSERT(interp->gc_sys->allocate_memory_chunk_with_interior_pointers);
     PARROT_ASSERT(interp->gc_sys->reallocate_memory_chunk_with_interior_pointers);
     PARROT_ASSERT(interp->gc_sys->free_memory_chunk);
-
-    PARROT_ASSERT(interp->gc_sys->block_mark);
-    PARROT_ASSERT(interp->gc_sys->unblock_mark);
-    PARROT_ASSERT(interp->gc_sys->is_blocked_mark);
-
-    PARROT_ASSERT(interp->gc_sys->block_sweep);
-    PARROT_ASSERT(interp->gc_sys->unblock_sweep);
-    PARROT_ASSERT(interp->gc_sys->is_blocked_sweep);
 
     PARROT_ASSERT(interp->gc_sys->get_gc_info);
 }
@@ -346,12 +329,10 @@ Parrot_gc_new_pmc_header(PARROT_INTERP, UINTVAL flags)
         Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_ALLOCATION_ERROR,
             "Parrot VM: PMC allocation failed!\n");
 
-    if (flags & PObj_is_PMC_shared_FLAG)
-        Parrot_gc_add_pmc_sync(interp, pmc);
-
     PObj_get_FLAGS(pmc) = PObj_is_PMC_FLAG|flags;
     pmc->vtable         = NULL;
     PMC_data(pmc)       = NULL;
+    PMC_metadata(pmc)   = PMCNULL;
 
     return pmc;
 }
@@ -371,59 +352,6 @@ Parrot_gc_free_pmc_header(PARROT_INTERP, ARGMOD(PMC *pmc))
 {
     ASSERT_ARGS(Parrot_gc_free_pmc_header)
     interp->gc_sys->free_pmc_header(interp, pmc);
-}
-
-/*
-
-=item C<void Parrot_gc_free_pmc_sync(PARROT_INTERP, PMC *p)>
-
-Frees the PMC_sync field of the PMC, if one exists.
-
-=cut
-
-*/
-
-void
-Parrot_gc_free_pmc_sync(PARROT_INTERP, ARGMOD(PMC *p))
-{
-    ASSERT_ARGS(Parrot_gc_free_pmc_sync)
-
-    if (PObj_is_PMC_shared_TEST(p) && PMC_sync(p)) {
-        MUTEX_DESTROY(PMC_sync(p)->pmc_lock);
-        mem_internal_free(PMC_sync(p));
-        PMC_sync(p) = NULL;
-    }
-}
-
-/*
-
-=item C<void Parrot_gc_add_pmc_sync(PARROT_INTERP, PMC *pmc)>
-
-Adds a C<Sync*> structure to the given C<PMC>. Initializes the PMC's owner
-field and the synchronization mutext. Throws an exception if Sync allocation
-fails.
-
-=cut
-
-*/
-
-void
-Parrot_gc_add_pmc_sync(PARROT_INTERP, ARGMOD(PMC *pmc))
-{
-    ASSERT_ARGS(Parrot_gc_add_pmc_sync)
-
-    /* This mutex already exists, leave it alone. */
-    if (PMC_sync(pmc))
-        return;
-
-    PMC_sync(pmc) = mem_gc_allocate_zeroed_typed(interp, Sync);
-
-    if (!PMC_sync(pmc))
-        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_ALLOCATION_ERROR,
-            "Parrot VM: PMC Sync allocation failed!\n");
-
-    PMC_sync(pmc)->owner = interp;
-    MUTEX_INIT(PMC_sync(pmc)->pmc_lock);
 }
 
 /*
@@ -796,7 +724,8 @@ Parrot_gc_destroy_child_interp(ARGMOD(Interp *dest_interp),
     ARGIN(Interp *source_interp))
 {
     ASSERT_ARGS(Parrot_gc_destroy_child_interp)
-    dest_interp->gc_sys->destroy_child_interp(dest_interp, source_interp);
+    if (dest_interp->gc_sys->destroy_child_interp)
+        dest_interp->gc_sys->destroy_child_interp(dest_interp, source_interp);
 }
 
 /*

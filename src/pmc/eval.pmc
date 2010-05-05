@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2001-2009, Parrot Foundation.
+Copyright (C) 2001-2010, Parrot Foundation.
 $Id$
 
 =head1 NAME
@@ -21,11 +21,44 @@ evaluation and execution.
 
 #include "pmc/pmc_sub.h"
 
+/* HEADERIZER HFILE: none */
+/* HEADERIZER BEGIN: static */
+/* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
+
+static void clear_fixups(PARROT_INTERP,
+    ARGIN(const Parrot_Sub_attributes *sub_data))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+PARROT_WARN_UNUSED_RESULT
+PARROT_CAN_RETURN_NULL
+static PMC* get_sub(PARROT_INTERP, ARGIN(PMC *self), int idx)
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+static void mark_subs(PARROT_INTERP, ARGIN(PMC *self))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+#define ASSERT_ARGS_clear_fixups __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
+       PARROT_ASSERT_ARG(interp) \
+    , PARROT_ASSERT_ARG(sub_data))
+#define ASSERT_ARGS_get_sub __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
+       PARROT_ASSERT_ARG(interp) \
+    , PARROT_ASSERT_ARG(self))
+#define ASSERT_ARGS_mark_subs __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
+       PARROT_ASSERT_ARG(interp) \
+    , PARROT_ASSERT_ARG(self))
+/* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
+/* HEADERIZER END: static */
+
 static void
-clear_fixups(PARROT_INTERP, Parrot_Sub_attributes *sub_data)
+clear_fixups(PARROT_INTERP, ARGIN(const Parrot_Sub_attributes *sub_data))
 {
+    ASSERT_ARGS(clear_fixups)
+
     INTVAL               i;
-    PackFile_ByteCode   *seg = sub_data->seg;
+    PackFile_ByteCode   * const seg = sub_data->seg;
     PackFile_FixupTable *ft;
     PackFile_ConstTable *ct;
 
@@ -40,21 +73,25 @@ clear_fixups(PARROT_INTERP, Parrot_Sub_attributes *sub_data)
     if (!ct)
         return;
 
-    for (i = 0; i < ft->fixup_count; i++) {
-        PackFile_FixupEntry *e = ft->fixups[i];
+    for (i = 0; i < ft->fixup_count; ++i) {
+        PackFile_FixupEntry * const e = ft->fixups + i;
 
         if (e->type == enum_fixup_sub) {
             opcode_t  ci             = e->offset;
 
             ct->constants[ci]->u.key = NULL;
-            ft->fixups[i]->type      = 0;
+            e->type                  = 0;
         }
     }
 }
 
+PARROT_WARN_UNUSED_RESULT
+PARROT_CAN_RETURN_NULL
 static PMC*
-get_sub(PARROT_INTERP, PMC *self, int idx)
+get_sub(PARROT_INTERP, ARGIN(PMC *self), int idx)
 {
+    ASSERT_ARGS(get_sub)
+
     INTVAL                 i, n;
     Parrot_Sub_attributes *sub;
     PackFile_ByteCode     *seg;
@@ -75,8 +112,8 @@ get_sub(PARROT_INTERP, PMC *self, int idx)
     if (!ct)
         return PMCNULL;
 
-    for (i = n = 0; i < ft->fixup_count; i++) {
-        PackFile_FixupEntry *e = ft->fixups[i];
+    for (i = n = 0; i < ft->fixup_count; ++i) {
+        const PackFile_FixupEntry * const e = ft->fixups + i;
 
         if (e->type == enum_fixup_sub) {
             opcode_t ci = e->offset;
@@ -90,8 +127,10 @@ get_sub(PARROT_INTERP, PMC *self, int idx)
 }
 
 static void
-mark_subs(PARROT_INTERP, PMC *self)
+mark_subs(PARROT_INTERP, ARGIN(PMC *self))
 {
+    ASSERT_ARGS(mark_subs)
+
     Parrot_Sub_attributes *sub;
     PackFile_ByteCode   *seg;
     PackFile_FixupTable *ft;
@@ -112,8 +151,8 @@ mark_subs(PARROT_INTERP, PMC *self)
     if (!ct)
         return;
 
-    for (i = 0; i < ft->fixup_count; i++) {
-        PackFile_FixupEntry *e = ft->fixups[i];
+    for (i = 0; i < ft->fixup_count; ++i) {
+        const PackFile_FixupEntry * const e = ft->fixups + i;
 
         if (e->type == enum_fixup_sub) {
             opcode_t  ci  = e->offset;
@@ -185,8 +224,8 @@ Invokes the first subroutine in the eval code.
         }
 
         /* XXX Quick and dirty fix for TT #995 */
-        if ((struct PackFile *)cur_cs == interp->initial_pf
-                || cur_cs == interp->code) {
+        if ((struct PackFile *)cur_cs == INTERP->initial_pf
+                || cur_cs == INTERP->code) {
             SUPER();
             return;
         }
@@ -210,14 +249,9 @@ Invokes the first subroutine in the eval code.
             cur_cs->fixups = NULL;
         }
 
-/* XXX Commenting out this to fix TT #995 and related problems.
- * May leak some memory, need further revision.
-
         seg = (PackFile_Segment *)cur_cs;
         if (seg)
             PackFile_Segment_destroy(INTERP, seg);
- * XXX End of commented out section.
- */
 
         sub_data->seg = NULL;
 
@@ -370,7 +404,7 @@ Unarchives the code.
 
         /*
          * TT #1292 this isn't ok - it seems that the packfile
-         *     gets attached to interp->code and is
+         *     gets attached to INTERP->code and is
          *     destroyed again during interpreter destruction
          */
         /* PackFile_destroy(INTERP, pf); */
@@ -382,7 +416,7 @@ Unarchives the code.
         PackFile_ByteCode   *seg;
         PackFile_FixupTable *ft;
 
-        PMC_get_sub(interp, SELF, sub);
+        PMC_get_sub(INTERP, SELF, sub);
         seg = sub->seg;
 
         if (!seg)
@@ -392,11 +426,11 @@ Unarchives the code.
         if (!ft)
             return 0;
 
-        for (i = n = 0; i < ft->fixup_count; i++) {
-            PackFile_FixupEntry *e = ft->fixups[i];
+        for (i = n = 0; i < ft->fixup_count; ++i) {
+            const PackFile_FixupEntry * const e = ft->fixups + i;
 
             if (e->type == enum_fixup_sub)
-                n++;
+                ++n;
         }
 
         return n;

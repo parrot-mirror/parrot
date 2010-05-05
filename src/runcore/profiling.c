@@ -148,7 +148,7 @@ init_profiling_core(PARROT_INTERP, ARGIN(Parrot_profiling_runcore_t *runcore), A
 {
     ASSERT_ARGS(init_profiling_core)
 
-    char *profile_filename, *output_cstr, *filename_cstr, *annotations_cstr;
+    char *profile_filename, *output_cstr, *filename_cstr;
 
     /* initialize the runcore struct */
     runcore->runops  = (Parrot_runcore_runops_fn_t)  runops_profiling_core;
@@ -227,10 +227,12 @@ init_profiling_core(PARROT_INTERP, ARGIN(Parrot_profiling_runcore_t *runcore), A
     }
 
     /* figure out if annotations are wanted */
-    annotations_cstr = Parrot_getenv(interp, CONST_STRING(interp, "PARROT_PROFILING_ANNOTATIONS"));
-
-    if (annotations_cstr) {
+    if (Parrot_getenv(interp, CONST_STRING(interp, "PARROT_PROFILING_ANNOTATIONS"))) {
         Profiling_report_annotations_SET(runcore);
+    }
+
+    if (Parrot_getenv(interp, CONST_STRING(interp, "PARROT_PROFILING_CANONICAL_OUTPUT"))) {
+        Profiling_canonical_output_SET(runcore);
     }
 
     /* put profile_filename in the gc root set so it won't get collected */
@@ -332,7 +334,7 @@ ARGIN(opcode_t *pc))
         preop_ctx->current_pc = pc;
         preop_pc              = pc;
 
-        runcore->level++;
+        ++runcore->level;
         Profiling_exit_check_CLEAR(runcore);
 
         runcore->op_start  = Parrot_hires_get_time();
@@ -347,7 +349,7 @@ ARGIN(opcode_t *pc))
         else
             op_time = runcore->op_finish - runcore->op_start;
 
-        runcore->level--;
+        --runcore->level;
 
         /* if current context changed since the last printing of a CS line... */
         /* Occasionally the ctx stays the same while the sub changes, possible
@@ -373,7 +375,7 @@ ARGIN(opcode_t *pc))
                 ns_separator = Parrot_str_new(interp, ";", 1);
 
                 i = MAX_NS_DEPTH - 1;
-                for (;ns ; i--) {
+                for (;ns ; --i) {
                     if (i < 0) {
                         /* should probably warn about truncated namespace here */
                         break;
@@ -382,21 +384,28 @@ ARGIN(opcode_t *pc))
                     GETATTR_NameSpace_parent(interp, ns, ns);
                 }
 
-                i++;
-                i++; /* the root namespace has an empty name, so ignore it */
-                for (;i < MAX_NS_DEPTH; i++) {
-                    full_ns = Parrot_str_concat(interp, full_ns, ns_names[i], 0);
-                    full_ns = Parrot_str_concat(interp, full_ns, ns_separator, 0);
+                i += 2; /* the root namespace has an empty name, so ignore it */
+                for (;i < MAX_NS_DEPTH; ++i) {
+                    full_ns = Parrot_str_concat(interp, full_ns, ns_names[i]);
+                    full_ns = Parrot_str_concat(interp, full_ns, ns_separator);
                 }
 
                 GETATTR_Sub_name(interp, preop_ctx->current_sub, sub_name);
-                full_ns = Parrot_str_concat(interp, full_ns, sub_name, 0);
+                full_ns = Parrot_str_concat(interp, full_ns, sub_name);
                 full_ns_cstr = Parrot_str_to_cstring(interp, full_ns);
 
                 pprof_data[PPROF_DATA_NAMESPACE] = (PPROF_DATA) full_ns_cstr;
                 pprof_data[PPROF_DATA_FILENAME]  = (PPROF_DATA) filename_cstr;
-                pprof_data[PPROF_DATA_SUB_ADDR]  = (PPROF_DATA) preop_ctx->current_sub;
-                pprof_data[PPROF_DATA_CTX_ADDR]  = (PPROF_DATA) preop_ctx;
+
+                if (Profiling_canonical_output_TEST(runcore)) {
+                    pprof_data[PPROF_DATA_SUB_ADDR]  = (PPROF_DATA) 0x3;
+                    pprof_data[PPROF_DATA_CTX_ADDR]  = (PPROF_DATA) 0x3;
+                }
+                else {
+                    pprof_data[PPROF_DATA_SUB_ADDR]  = (PPROF_DATA) preop_ctx->current_sub;
+                    pprof_data[PPROF_DATA_CTX_ADDR]  = (PPROF_DATA) preop_ctx;
+                }
+
                 runcore->output_fn(runcore, pprof_data, PPROF_LINE_CONTEXT_SWITCH);
 
                 Parrot_str_free_cstring(full_ns_cstr);
@@ -443,8 +452,13 @@ ARGIN(opcode_t *pc))
             }
         }
 
+        if (Profiling_canonical_output_TEST(runcore)) {
+            pprof_data[PPROF_DATA_TIME] = 1;
+        }
+        else {
+            pprof_data[PPROF_DATA_TIME] = op_time;
+        }
         pprof_data[PPROF_DATA_LINE]   = preop_line;
-        pprof_data[PPROF_DATA_TIME]   = op_time;
         pprof_data[PPROF_DATA_OPNAME] = (PPROF_DATA)(interp->op_info_table)[*preop_pc].name;
         runcore->output_fn(runcore, pprof_data, PPROF_LINE_OP);
     }
@@ -496,7 +510,7 @@ add_bogus_parent_runloop(ARGIN(Parrot_profiling_runcore_t * runcore))
     pprof_data[PPROF_DATA_OPNAME] = (PPROF_DATA) "noop";
     runcore->output_fn(runcore, pprof_data, PPROF_LINE_OP);
 
-    runcore->runloop_count++;
+    ++runcore->runloop_count;
 }
 
 /*

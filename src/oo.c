@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2007-2009, Parrot Foundation.
+Copyright (C) 2007-2010, Parrot Foundation.
 $Id$
 
 =head1 NAME
@@ -130,7 +130,7 @@ Parrot_oo_extract_methods_from_namespace(PARROT_INTERP, ARGIN(PMC *self), ARGIN(
         }
     }
 
-    /* Import any vtable methods. */
+    /* Import any vtables. */
     Parrot_pcc_invoke_method_from_c_args(interp, ns, CONST_STRING(interp, "get_associated_vtable_methods"), "->P", &vtable_overrides);
 
     if (!PMC_IS_NULL(vtable_overrides)) {
@@ -169,49 +169,51 @@ Parrot_oo_get_class(PARROT_INTERP, ARGIN(PMC *key))
     ASSERT_ARGS(Parrot_oo_get_class)
     PMC *classobj = PMCNULL;
 
-    if (PObj_is_class_TEST(key))
-        classobj = key;
-    else {
-        /* Fast select of behavior based on type of the lookup key */
-        switch (key->vtable->base_type) {
-          case enum_class_NameSpace:
-            classobj = VTABLE_get_class(interp, key);
-            break;
-          case enum_class_String:
-          case enum_class_Key:
-          case enum_class_ResizableStringArray:
-            {
-                PMC * const hll_ns = VTABLE_get_pmc_keyed_int(interp,
-                                        interp->HLL_namespace,
-                                        Parrot_pcc_get_HLL(interp, CURRENT_CONTEXT(interp)));
-                PMC * const ns     = Parrot_get_namespace_keyed(interp,
-                                        hll_ns, key);
+    if (!PMC_IS_NULL(key)) {
+        if (PObj_is_class_TEST(key))
+            classobj = key;
+        else {
+            /* Fast select of behavior based on type of the lookup key */
+            switch (key->vtable->base_type) {
+              case enum_class_NameSpace:
+                classobj = VTABLE_get_class(interp, key);
+                break;
+              case enum_class_String:
+              case enum_class_Key:
+              case enum_class_ResizableStringArray:
+                {
+                    PMC * const hll_ns = VTABLE_get_pmc_keyed_int(interp,
+                                            interp->HLL_namespace,
+                                            Parrot_pcc_get_HLL(interp, CURRENT_CONTEXT(interp)));
+                    PMC * const ns     = Parrot_get_namespace_keyed(interp,
+                                            hll_ns, key);
 
-                if (!PMC_IS_NULL(ns))
-                    classobj = VTABLE_get_class(interp, ns);
+                    if (!PMC_IS_NULL(ns))
+                        classobj = VTABLE_get_class(interp, ns);
+                }
+              default:
+                break;
             }
-          default:
-            break;
         }
-    }
 
-    /* If the PMCProxy doesn't exist yet for the given key, we look up the
-       type ID here and create a new one */
-    if (PMC_IS_NULL(classobj)) {
-        INTVAL type;
-        const INTVAL base_type = key->vtable->base_type;
+        /* If the PMCProxy doesn't exist yet for the given key, we look up the
+           type ID here and create a new one */
+        if (PMC_IS_NULL(classobj)) {
+            INTVAL type;
+            const INTVAL base_type = key->vtable->base_type;
 
-        /* This is a hack! All PMCs should be able to be handled through
-           a single codepath, and all of them should be able to avoid
-           stringification because it's so imprecise. */
-        if (base_type == enum_class_Key
-         || base_type == enum_class_ResizableStringArray
-         || base_type == enum_class_String)
-            type = Parrot_pmc_get_type(interp, key);
-        else
-            type = Parrot_pmc_get_type_str(interp, VTABLE_get_string(interp, key));
+            /* This is a hack! All PMCs should be able to be handled through
+               a single codepath, and all of them should be able to avoid
+               stringification because it's so imprecise. */
+            if (base_type == enum_class_Key
+             || base_type == enum_class_ResizableStringArray
+             || base_type == enum_class_String)
+                type = Parrot_pmc_get_type(interp, key);
+            else
+                type = Parrot_pmc_get_type_str(interp, VTABLE_get_string(interp, key));
 
-        classobj = get_pmc_proxy(interp, type);
+            classobj = get_pmc_proxy(interp, type);
+        }
     }
 
     return classobj;
@@ -219,8 +221,7 @@ Parrot_oo_get_class(PARROT_INTERP, ARGIN(PMC *key))
 
 /*
 
-=item C<PMC * Parrot_oo_clone_object(PARROT_INTERP, PMC *pmc, PMC *class_, PMC
-*dest)>
+=item C<PMC * Parrot_oo_clone_object(PARROT_INTERP, PMC *pmc, PMC *dest)>
 
 Clone an Object PMC. If an existing PMC C<dest> is provided, reuse that
 PMC to store copies of the data. Otherwise, create a new PMC and populate
@@ -232,11 +233,10 @@ that with the data.
 
 PARROT_CANNOT_RETURN_NULL
 PMC *
-Parrot_oo_clone_object(PARROT_INTERP, ARGIN(PMC *pmc),
-    ARGMOD_NULLOK(PMC *class_), ARGMOD_NULLOK(PMC *dest))
+Parrot_oo_clone_object(PARROT_INTERP, ARGIN(PMC *pmc), ARGMOD_NULLOK(PMC *dest))
 {
     ASSERT_ARGS(Parrot_oo_clone_object)
-    Parrot_Object_attributes *obj;
+    Parrot_Object_attributes *obj = PARROT_OBJECT(pmc);
     Parrot_Object_attributes *cloned_guts;
     Parrot_Class_attributes  *_class;
     PMC                      *cloned;
@@ -244,13 +244,9 @@ Parrot_oo_clone_object(PARROT_INTERP, ARGIN(PMC *pmc),
     INTVAL                    i, num_attrs;
 
     if (!PMC_IS_NULL(dest)) {
-        PARROT_ASSERT(!PMC_IS_NULL(class_));
-        PARROT_ASSERT(class_->vtable->base_type == enum_class_Class);
-        obj    = PARROT_OBJECT(pmc);
         cloned = dest;
     }
     else {
-        obj    = PARROT_OBJECT(pmc);
         cloned = Parrot_pmc_new_noinit(interp, enum_class_Object);
     }
 
@@ -268,10 +264,10 @@ Parrot_oo_clone_object(PARROT_INTERP, ARGIN(PMC *pmc),
     /* Now clone attributes list.class. */
     cloned_guts               = (Parrot_Object_attributes *) PMC_data(cloned);
     cloned_guts->_class       = obj->_class;
-    cloned_guts->attrib_store = NULL;
+    cloned_guts->attrib_store = NULL; /* XXX Do we need to set ->attrib_store twice? */
     cloned_guts->attrib_store = VTABLE_clone(interp, obj->attrib_store);
     num_attrs                 = VTABLE_elements(interp, cloned_guts->attrib_store);
-    for (i = 0; i < num_attrs; i++) {
+    for (i = 0; i < num_attrs; ++i) {
         PMC * const to_clone = VTABLE_get_pmc_keyed_int(interp, cloned_guts->attrib_store, i);
         if (!PMC_IS_NULL(to_clone)) {
             VTABLE_set_pmc_keyed_int(interp, cloned_guts->attrib_store, i,
@@ -282,9 +278,10 @@ Parrot_oo_clone_object(PARROT_INTERP, ARGIN(PMC *pmc),
     /* Some of the attributes may have been the PMCs providing storage for any
      * PMCs we inherited from; also need to clone those. */
     if (CLASS_has_alien_parents_TEST(obj->_class)) {
+        int j;
         /* Locate any PMC parents. */
-        for (i = 0; i < num_classes; i++) {
-            PMC * const cur_class = VTABLE_get_pmc_keyed_int(interp, _class->all_parents, i);
+        for (j = 0; j < num_classes; ++j) {
+            PMC * const cur_class = VTABLE_get_pmc_keyed_int(interp, _class->all_parents, j);
             if (cur_class->vtable->base_type == enum_class_PMCProxy) {
                 /* Clone this PMC too. */
                 STRING * const proxy = CONST_STRING(interp, "proxy");
@@ -342,9 +339,7 @@ get_pmc_proxy(PARROT_INTERP, INTVAL type)
 
         /* Create proxy if not found */
         if (PMC_IS_NULL(proxy)) {
-            PMC * const type_num = Parrot_pmc_new(interp, enum_class_Integer);
-            VTABLE_set_integer_native(interp, type_num, type);
-            proxy = Parrot_pmc_new_init(interp, enum_class_PMCProxy, type_num);
+            proxy = Parrot_pmc_new_init_int(interp, enum_class_PMCProxy, type);
             Parrot_pcc_invoke_method_from_c_args(interp, pmc_ns, CONST_STRING(interp, "set_class"), "P->", proxy);
         }
         return proxy;
@@ -438,10 +433,9 @@ Parrot_oo_find_vtable_override_for_class(PARROT_INTERP,
         ARGIN(PMC *classobj), ARGIN(STRING *name))
 {
     ASSERT_ARGS(Parrot_oo_find_vtable_override_for_class)
-    Parrot_Class_attributes *class_info;
+    const Parrot_Class_attributes * const class_info = PARROT_CLASS(classobj);;
     PARROT_ASSERT(PObj_is_class_TEST(classobj));
 
-    class_info = PARROT_CLASS(classobj);
     return VTABLE_get_pmc_keyed_str(interp, class_info->vtable_overrides, name);
 }
 
@@ -471,11 +465,11 @@ Parrot_oo_find_vtable_override(PARROT_INTERP,
         VTABLE_get_pmc_keyed_str(interp, _class->parent_overrides, name);
 
     if (PMC_IS_NULL(result)) {
-        /* Walk and search for the vtable method. */
+        /* Walk and search for the vtable. */
         const INTVAL num_classes = VTABLE_elements(interp, _class->all_parents);
         INTVAL       i;
 
-        for (i = 0; i < num_classes; i++) {
+        for (i = 0; i < num_classes; ++i) {
             /* Get the class. */
             PMC * const cur_class =
                 VTABLE_get_pmc_keyed_int(interp, _class->all_parents, i);
@@ -653,11 +647,10 @@ Parrot_oo_register_type(PARROT_INTERP, ARGIN(PMC *name), ARGIN(PMC *_namespace))
     }
     {
         if (!typeid_exists) {
-            PMC * const classname_hash = interp->class_hash;
-            PMC * const item           = Parrot_pmc_new(interp, enum_class_Integer);
             /* set entry in name->type hash */
-            VTABLE_set_integer_native(interp, item, type);
-
+            PMC * const classname_hash = interp->class_hash;
+            PMC * const item           = Parrot_pmc_new_init_int(interp,
+                    enum_class_Integer, type);
             VTABLE_set_pmc_keyed(interp, classname_hash, name, item);
         }
     }
@@ -691,7 +684,7 @@ mark_object_cache(PARROT_INTERP)
     if (!mc)
         return;
 
-    for (type = 0; type < mc->mc_size; type++) {
+    for (type = 0; type < mc->mc_size; ++type) {
         if (!mc->idx[type])
             continue;
 
@@ -744,7 +737,7 @@ destroy_object_cache(PARROT_INTERP)
     Caches * const mc = interp->caches;
 
     /* mc->idx[type][bits] = e; */
-    for (i = 0; i < mc->mc_size; i++) {
+    for (i = 0; i < mc->mc_size; ++i) {
         if (mc->idx[i])
             invalidate_type_caches(interp, i);
     }
@@ -808,8 +801,8 @@ static void
 invalidate_all_caches(PARROT_INTERP)
 {
     ASSERT_ARGS(invalidate_all_caches)
-    UINTVAL i;
-    for (i = 1; i < (UINTVAL)interp->n_vtable_max; ++i)
+    int i;
+    for (i = 1; i < interp->n_vtable_max; ++i)
         invalidate_type_caches(interp, i);
 }
 
@@ -1044,13 +1037,26 @@ find_method_direct_1(PARROT_INTERP, ARGIN(PMC *_class),
 
     PMC * const  mro = _class->vtable->mro;
     const INTVAL n   = VTABLE_elements(interp, mro);
+    STRING * const methods_str = CONST_STRING(interp, "methods");
+    STRING * const class_str = CONST_STRING(interp, "class");
 
     for (i = 0; i < n; ++i) {
-        PMC *method, *ns;
+        PMC * const _class    = VTABLE_get_pmc_keyed_int(interp, mro, i);
+        PMC * const ns        = VTABLE_get_namespace(interp, _class);
+        PMC * const class_obj = VTABLE_inspect_str(interp, ns, class_str);
+        PMC           *method = PMCNULL;
+        PMC * method_hash;
 
-        _class = VTABLE_get_pmc_keyed_int(interp, mro, i);
-        ns     = VTABLE_get_namespace(interp, _class);
-        method = VTABLE_get_pmc_keyed_str(interp, ns, method_name);
+        if (PMC_IS_NULL(class_obj))
+            method_hash = VTABLE_inspect_str(interp, ns, methods_str);
+        else
+            method_hash = VTABLE_inspect_str(interp, class_obj, methods_str);
+
+        if (!PMC_IS_NULL(method_hash))
+            method = VTABLE_get_pmc_keyed_str(interp, method_hash, method_name);
+
+        if (PMC_IS_NULL(method))
+            method = VTABLE_get_pmc_keyed_str(interp, ns, method_name);
 
         TRACE_FM(interp, _class, method_name, method);
 
@@ -1087,7 +1093,7 @@ C3_merge(PARROT_INTERP, ARGIN(PMC *merge_list))
 
     /* Try and find something appropriate to add to the MRO - basically, the
      * first list head that is not in the tail of all the other lists. */
-    for (i = 0; i < list_count; i++) {
+    for (i = 0; i < list_count; ++i) {
         PMC * const cand_list = VTABLE_get_pmc_keyed_int(interp, merge_list, i);
 
         PMC *cand_class;
@@ -1098,9 +1104,9 @@ C3_merge(PARROT_INTERP, ARGIN(PMC *merge_list))
             continue;
 
         cand_class = VTABLE_get_pmc_keyed_int(interp, cand_list, 0);
-        cand_count++;
+        ++cand_count;
 
-        for (j = 0; j < list_count; j++) {
+        for (j = 0; j < list_count; ++j) {
             /* Skip the current list. */
             if (j != i) {
                 /* Is it in the tail? If so, reject. */
@@ -1110,7 +1116,7 @@ C3_merge(PARROT_INTERP, ARGIN(PMC *merge_list))
                 const int check_length = VTABLE_elements(interp, check_list);
                 int k;
 
-                for (k = 1; k < check_length; k++) {
+                for (k = 1; k < check_length; ++k) {
                     if (VTABLE_get_pmc_keyed_int(interp, check_list, k) ==
                         cand_class) {
                         reject = 1;
@@ -1137,13 +1143,13 @@ C3_merge(PARROT_INTERP, ARGIN(PMC *merge_list))
             "Could not build C3 linearization: ambiguous hierarchy");
 
     /* Otherwise, remove what was accepted from the merge lists. */
-    for (i = 0; i < list_count; i++) {
+    for (i = 0; i < list_count; ++i) {
 
-        PMC * const list       = VTABLE_get_pmc_keyed_int(interp, merge_list, i);
-        const INTVAL list_count = VTABLE_elements(interp, list);
+        PMC * const list           = VTABLE_get_pmc_keyed_int(interp, merge_list, i);
+        const INTVAL sublist_count = VTABLE_elements(interp, list);
         INTVAL j;
 
-        for (j = 0; j < list_count; j++) {
+        for (j = 0; j < sublist_count; ++j) {
             if (VTABLE_get_pmc_keyed_int(interp, list, j) == accepted) {
                 VTABLE_delete_keyed_int(interp, list, j);
                 break;
@@ -1191,7 +1197,7 @@ Parrot_ComputeMRO_C3(PARROT_INTERP, ARGIN(PMC *_class))
     INTVAL parent_count;
 
     /* Now get immediate parents list. */
-    if (!immediate_parents)
+    if (PMC_IS_NULL(immediate_parents))
         Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_METHOD_NOT_FOUND,
             "Failed to get parents list from class!");
 
@@ -1207,7 +1213,7 @@ Parrot_ComputeMRO_C3(PARROT_INTERP, ARGIN(PMC *_class))
     /* Otherwise, need to do merge. For that, need linearizations of all of
      * our parents added to the merge list. */
     merge_list = PMCNULL;
-    for (i = 0; i < parent_count; i++) {
+    for (i = 0; i < parent_count; ++i) {
         PMC * const lin = Parrot_ComputeMRO_C3(interp,
             VTABLE_get_pmc_keyed_int(interp, immediate_parents, i));
 
@@ -1275,7 +1281,7 @@ Parrot_ComposeRole(PARROT_INTERP, ARGIN(PMC *role),
     /* Check we have not already composed the role; if so, just ignore it. */
     INTVAL roles_count = VTABLE_elements(interp, roles_list);
 
-    for (i = 0; i < roles_count; i++)
+    for (i = 0; i < roles_count; ++i)
         if (VTABLE_get_pmc_keyed_int(interp, roles_list, i) == role)
             return;
 
@@ -1303,7 +1309,7 @@ Parrot_ComposeRole(PARROT_INTERP, ARGIN(PMC *role),
         if (got_exclude) {
             const int exclude_count = VTABLE_elements(interp, exclude);
 
-            for (i = 0; i < exclude_count; i++) {
+            for (i = 0; i < exclude_count; ++i) {
                 const STRING * const check =
                     VTABLE_get_string_keyed_int(interp, exclude, i);
 
@@ -1399,7 +1405,7 @@ Parrot_ComposeRole(PARROT_INTERP, ARGIN(PMC *role),
                 /* Class already has a multi-sub; need to merge our methods into it. */
                 const INTVAL num_subs = VTABLE_elements(interp, cur_method);
                 INTVAL j;
-                for (j = 0; j < num_subs; j++)
+                for (j = 0; j < num_subs; ++j)
                     VTABLE_push_pmc(interp, cur_entry, VTABLE_get_pmc_keyed_int(interp,
                             cur_method, j));
             }
@@ -1419,7 +1425,7 @@ Parrot_ComposeRole(PARROT_INTERP, ARGIN(PMC *role),
 
     /* Add this role to the roles list. */
     VTABLE_push_pmc(interp, roles_list, role);
-    roles_count++;
+    ++roles_count;
 
     /* As a result of composing this role, we will also now do the roles
      * that it did itself. Note that we already have the correct methods
@@ -1428,13 +1434,13 @@ Parrot_ComposeRole(PARROT_INTERP, ARGIN(PMC *role),
     Parrot_pcc_invoke_method_from_c_args(interp, role, CONST_STRING(interp, "roles"), "->P", &roles_of_role);
     roles_of_role_count = VTABLE_elements(interp, roles_of_role);
 
-    for (i = 0; i < roles_of_role_count; i++) {
+    for (i = 0; i < roles_of_role_count; ++i) {
         /* Only add if we don't already have it in the list. */
         PMC * const cur_role = VTABLE_get_pmc_keyed_int(interp,
                                     roles_of_role, i);
         INTVAL j;
 
-        for (j = 0; j < roles_count; j++) {
+        for (j = 0; j < roles_count; ++j) {
             if (VTABLE_get_pmc_keyed_int(interp, roles_list, j) == cur_role) {
                 /* We ain't be havin' it. */
                 VTABLE_push_pmc(interp, roles_list, cur_role);

@@ -140,7 +140,10 @@ sub generate_accessor {
 /* Generated macro accessors for '$attrname' attribute of $pmcname PMC. */
 #define GETATTR_${pmcname}_${attrname}(interp, pmc, dest) \\
     do { \\
-        if (PObj_is_object_TEST(pmc)) { \\
+        if (!PObj_is_object_TEST(pmc)) { \\
+            (dest) = ((Parrot_${pmcname}_attributes *)PMC_data(pmc))->$attrname; \\
+        } \\
+        else { \\
 EOA
 
     if ($isfuncptr == 1) {
@@ -189,8 +192,6 @@ EOA
 
     $decl .= <<"EOA";
         } \\
-        else \\
-            (dest) = ((Parrot_${pmcname}_attributes *)PMC_data(pmc))->$attrname; \\
     } while (0)
 
 #define SETATTR_${pmcname}_${attrname}(interp, pmc, value) \\
@@ -207,8 +208,7 @@ EOA
     }
     elsif ($attrtype eq "INTVAL") {
         $decl .= <<"EOA";
-            PMC * const attr_value = Parrot_pmc_new(interp, enum_class_Integer); \\
-            VTABLE_set_integer_native(interp, attr_value, value); \\
+            PMC * const attr_value = Parrot_pmc_new_init_int(interp, enum_class_Integer, value); \\
             VTABLE_set_attr_str(interp, pmc, \\
                               Parrot_str_new_constant(interp, "$attrname"), attr_value); \\
 EOA

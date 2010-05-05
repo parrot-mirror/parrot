@@ -122,7 +122,8 @@ unescaped newlines.
   	newline_index = index message, "\n"
 	if newline_index == -1 goto END_LOOP
 	inc newline_index
-	line = substr message, 0, newline_index, ''
+	line    = substr message, 0, newline_index
+	message = replace message, 0, newline_index, ''
 	push lines, line
 	if message goto SPLIT_LOOP
 
@@ -161,7 +162,7 @@ unescaped newlines.
 	.return( message )
 .end
 
-=item C<diag( message )>
+=item C<diag( message, ... )>
 
 Writes the string C<message> to the diagnostic filehandle, TAP-escaping any
 unescaped newlines.
@@ -169,7 +170,9 @@ unescaped newlines.
 =cut
 
 .sub diag :method
-	.param string message
+	.param pmc args :slurpy
+	.local string message
+	message = join '', args
 
 	.local int message_length
 	message_length = length message
@@ -190,7 +193,7 @@ unescaped newlines.
   WRITE_MESSAGE:
 	.local pmc diag_output
 	diag_output = self.'diag_output'()
-	diag_output.'puts'( message )
+	.tailcall diag_output.'puts'( message )
 .end
 
 =back

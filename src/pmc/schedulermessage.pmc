@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2001-2009, Parrot Foundation.
+Copyright (C) 2001-2010, Parrot Foundation.
 $Id$
 
 =head1 NAME
@@ -19,6 +19,10 @@ Implements a message passed between concurrency schedulers.
 */
 
 #include "parrot/scheduler_private.h"
+
+/* HEADERIZER HFILE: none */
+/* HEADERIZER BEGIN: static */
+/* HEADERIZER END: static */
 
 pmclass SchedulerMessage auto_attrs {
     ATTR INTVAL  id;        /* The message's ID. */
@@ -110,7 +114,10 @@ Retrieve the message ID.
 */
 
     VTABLE INTVAL get_integer() {
-        Parrot_SchedulerMessage_attributes * core_struct = PARROT_SCHEDULERMESSAGE(SELF);
+        const Parrot_SchedulerMessage_attributes * const
+            core_struct = PARROT_SCHEDULERMESSAGE(SELF);
+        UNUSED(INTERP);
+
         return core_struct->id;
     }
 
@@ -125,7 +132,8 @@ Set the message ID.
 */
 
     VTABLE void set_integer_native(INTVAL value) {
-        Parrot_SchedulerMessage_attributes * core_struct = PARROT_SCHEDULERMESSAGE(SELF);
+        Parrot_SchedulerMessage_attributes * const core_struct = PARROT_SCHEDULERMESSAGE(SELF);
+        UNUSED(INTERP);
         core_struct->id = value;
     }
 
@@ -141,7 +149,9 @@ Retrieve the message type.
 */
 
     STRING *  get_string() {
-        Parrot_SchedulerMessage_attributes * core_struct = PARROT_SCHEDULERMESSAGE(SELF);
+        const Parrot_SchedulerMessage_attributes * const core_struct =
+            PARROT_SCHEDULERMESSAGE(SELF);
+        UNUSED(INTERP);
         return core_struct->type;
     }
 
@@ -156,7 +166,8 @@ Set the message type.
 */
 
     VTABLE void set_string_native(STRING *value) {
-        Parrot_SchedulerMessage_attributes * core_struct = PARROT_SCHEDULERMESSAGE(SELF);
+        Parrot_SchedulerMessage_attributes * const core_struct = PARROT_SCHEDULERMESSAGE(SELF);
+        UNUSED(INTERP);
         core_struct->type = value;
     }
 
@@ -199,8 +210,8 @@ Mark any referenced strings and PMCs.
             Parrot_SchedulerMessage_attributes * const core_struct =
                 PARROT_SCHEDULERMESSAGE(SELF);
 
-            Parrot_gc_mark_STRING_alive(interp, core_struct->type);
-            Parrot_gc_mark_PMC_alive(interp, core_struct->data);
+            Parrot_gc_mark_STRING_alive(INTERP, core_struct->type);
+            Parrot_gc_mark_PMC_alive(INTERP, core_struct->data);
         }
     }
 

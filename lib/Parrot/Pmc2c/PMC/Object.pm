@@ -22,8 +22,8 @@ PMC to C Methods
 Returns the C code for the method body.
 
 Overrides the default implementation to direct all unknown methods to
-first check if there is an implementation of the vtable method in the
-vtable methods hash of this class of any others, and delegates up to
+first check if there is an implementation of the vtable function in the
+vtable function hash of this class of any others, and delegates up to
 any PMCs in the MRO.
 
 =cut
@@ -31,7 +31,7 @@ any PMCs in the MRO.
 sub pre_method_gen {
     my ($self) = @_;
 
-    # vtable methods
+    # vtables
     foreach my $method ( @{ $self->vtable->methods } ) {
         my $vt_method_name = $method->name;
         next unless $self->normal_unimplemented_vtable($vt_method_name);
@@ -52,11 +52,11 @@ sub pre_method_gen {
         $superargs       =~ s/^,//;
 
         my $method_body_text = <<"EOC";
-    Parrot_Object_attributes * const obj       = PARROT_OBJECT(pmc);
+    Parrot_Object_attributes * const obj       = PARROT_OBJECT(_self);
     Parrot_Class_attributes  * const _class    = PARROT_CLASS(obj->_class);
     STRING        * const meth_name = CONST_STRING_GEN(interp, "$vt_method_name");
 
-    /* Walk and search for the vtable method. */
+    /* Walk and search for the vtable. */
     const int num_classes = VTABLE_elements(interp, _class->all_parents);
     int i;
     for (i = 0; i < num_classes; i++) {
@@ -66,7 +66,7 @@ sub pre_method_gen {
         PMC * const meth = Parrot_oo_find_vtable_override_for_class(interp, cur_class, meth_name);
         if (!PMC_IS_NULL(meth)) {
             $pcc_result_decl
-            Parrot_pcc_invoke_sub_from_c_args(interp, meth, "Pi$pcc_sig", pmc$pcc_args);
+            Parrot_pcc_invoke_sub_from_c_args(interp, meth, "Pi$pcc_sig", _self$pcc_args);
             $pcc_return_stmt
         }
         /* method name is $vt_method_name */
@@ -76,7 +76,7 @@ EOC
         unless ($self->vtable_method_does_multi($vt_method_name)) {
             $method_body_text .= <<"EOC";
         if (cur_class->vtable->base_type == enum_class_PMCProxy) {
-            /* Get the PMC instance and call the vtable method on that. */
+            /* Get the PMC instance and call the vtable on that. */
             STRING * const proxy      = CONST_STRING_GEN(interp, "proxy");
             PMC    * const del_object = VTABLE_get_attr_str(interp, SELF, proxy);
 

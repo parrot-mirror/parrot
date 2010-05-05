@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2001-2008, Parrot Foundation.
+Copyright (C) 2001-2010, Parrot Foundation.
 $Id$
 
 =head1 NAME
@@ -82,6 +82,7 @@ C string version of C<Parrot_vsprintf_s()>.
 
 PARROT_EXPORT
 PARROT_CANNOT_RETURN_NULL
+PARROT_WARN_UNUSED_RESULT
 STRING *
 Parrot_vsprintf_c(PARROT_INTERP, ARGIN(const char *pat), va_list args)
 {
@@ -112,17 +113,16 @@ Parrot_vsnprintf(PARROT_INTERP, ARGOUT(char *targ),
                  size_t len, ARGIN(const char *pat), va_list args)
 {
     ASSERT_ARGS(Parrot_vsnprintf)
-    char   *str_ret;
-    size_t  str_len;
+
     if (len == 0)
         return;
-    len--;
+    --len;
     if (len) {
         const STRING * const ret = Parrot_vsprintf_c(interp, pat, args);
         /* string_transcode(interp, ret, NULL, NULL, &ret); */
 
-        str_ret = Parrot_str_to_cstring(interp, ret);
-        str_len = strlen(str_ret);
+        char     * const str_ret = Parrot_str_to_cstring(interp, ret);
+        const    size_t  str_len = strlen(str_ret);
         if (len > str_len) {
             len = str_len;
         }
@@ -256,6 +256,7 @@ A simulation of C<snprintf> for systems that do not support it.
 
 
 PARROT_EXPORT
+PARROT_IGNORABLE_RESULT
 int
 Parrot_secret_snprintf(ARGOUT(char *buffer), SHIM(const size_t len),
         ARGIN(const char *format), ...)

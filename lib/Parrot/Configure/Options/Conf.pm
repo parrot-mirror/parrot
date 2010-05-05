@@ -91,7 +91,6 @@ Parrot Options:
    --opcode=(type)      Use the given type for opcodes
    --ops=(files)        Use the given ops files
 
-   --cgoto=0            Don't build cgoto core - recommended when short of mem
    --jitcapable         Use JIT
    --execcapable        Use JIT to emit a native executable
    --without-threads    Build parrot without thread support
@@ -99,12 +98,11 @@ Parrot Options:
 
 External Library Options:
 
-   --without-crypto     Build parrot without crypto support (libssl)
-   --without-gdbm       Build parrot without GDBM support
    --without-gettext    Build parrot without gettext support
    --without-gmp        Build parrot without GMP support
    --without-opengl     Build parrot without OpenGL support (GL/GLU/GLUT)
    --without-pcre       Build parrot without pcre support
+   --without-zlib       Build parrot without zlib support
 
 ICU Options:
 
@@ -157,6 +155,8 @@ Install Options:
     --oldincludedir=DIR   C header files for non-gcc [/usr/include]
     --infodir=DIR         info documentation [PREFIX/info]
     --mandir=DIR          man documentation [PREFIX/man]
+    --pkgconfigdir=DIR    subdirectory of <libdir> for pkgconfig
+                              [<libdir>/pkgconfig/<version>]
 
 EOT
     return 1;

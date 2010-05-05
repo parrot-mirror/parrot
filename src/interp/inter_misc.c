@@ -111,10 +111,9 @@ Parrot_mark_method_writes(PARROT_INTERP, int type, ARGIN(const char *name))
 {
     ASSERT_ARGS(Parrot_mark_method_writes)
     STRING *const str_name = Parrot_str_new_constant(interp, name);
-    PMC    *const pmc_true = Parrot_pmc_new(interp, enum_class_Integer);
+    PMC    *const pmc_true = Parrot_pmc_new_init_int(interp, enum_class_Integer, 1);
     PMC    *const method   = VTABLE_get_pmc_keyed_str(
         interp, interp->vtables[type]->_namespace, str_name);
-    VTABLE_set_integer_native(interp, pmc_true, 1);
     VTABLE_setprop(interp, method, CONST_STRING(interp, "write"), pmc_true);
 }
 
@@ -131,17 +130,16 @@ Register a parser/compiler function.
 
 PARROT_EXPORT
 void
-Parrot_compreg(PARROT_INTERP, ARGIN(STRING *type),
-                    NOTNULL(Parrot_compiler_func_t func))
+Parrot_compreg(PARROT_INTERP, ARGIN(STRING *type), ARGIN(Parrot_compiler_func_t func))
 {
     ASSERT_ARGS(Parrot_compreg)
-    PMC* const iglobals = interp->iglobals;
-    PMC        *nci     = Parrot_pmc_new(interp, enum_class_NCI);
-    STRING     *sc      = CONST_STRING(interp, "PJt");
-    PMC        *hash    = VTABLE_get_pmc_keyed_int(interp, interp->iglobals,
+    PMC    * const iglobals = interp->iglobals;
+    PMC    * const nci      = Parrot_pmc_new(interp, enum_class_NCI);
+    STRING * const sc       = CONST_STRING(interp, "PJt");
+    PMC    * hash           = VTABLE_get_pmc_keyed_int(interp, interp->iglobals,
                               IGLOBALS_COMPREG_HASH);
 
-    if (!hash) {
+    if (PMC_IS_NULL(hash)) {
         hash = Parrot_pmc_new_noinit(interp, enum_class_Hash);
         VTABLE_init(interp, hash);
         VTABLE_set_pmc_keyed_int(interp, iglobals,
@@ -238,12 +236,6 @@ interpinfo(PARROT_INTERP, INTVAL what)
             else if (Parrot_str_equal(interp, name, CONST_STRING(interp, "fast")))
                 return PARROT_FAST_CORE;
             else if (Parrot_str_equal(interp, name, CONST_STRING(interp, "switch")))
-                return PARROT_SWITCH_CORE;
-            else if (Parrot_str_equal(interp, name, CONST_STRING(interp, "cgp")))
-                return PARROT_CGP_CORE;
-            else if (Parrot_str_equal(interp, name, CONST_STRING(interp, "cgoto")))
-                return PARROT_CGOTO_CORE;
-            else if (Parrot_str_equal(interp, name, CONST_STRING(interp, "exec")))
                 return PARROT_EXEC_CORE;
             else if (Parrot_str_equal(interp, name, CONST_STRING(interp, "gc_debug")))
                 return PARROT_GC_DEBUG_CORE;
@@ -273,30 +265,33 @@ interpreter.
 
 PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
-PARROT_CAN_RETURN_NULL
+PARROT_CANNOT_RETURN_NULL
 PMC*
 interpinfo_p(PARROT_INTERP, INTVAL what)
 {
     ASSERT_ARGS(interpinfo_p)
+
+    PMC *result;
     switch (what) {
       case CURRENT_SUB:
-        return Parrot_pcc_get_sub(interp, CURRENT_CONTEXT(interp));
+        result = Parrot_pcc_get_sub(interp, CURRENT_CONTEXT(interp));
+        break;
       case CURRENT_CONT:
-        {
-            PMC * const cont = Parrot_pcc_get_continuation(interp, CURRENT_CONTEXT(interp));
-            if (!PMC_IS_NULL(cont) && cont->vtable->base_type ==
-                    enum_class_RetContinuation)
-                return VTABLE_clone(interp, cont);
-            return cont;
-        }
+        result = Parrot_pcc_get_continuation(interp, CURRENT_CONTEXT(interp));
+        break;
       case CURRENT_OBJECT:
-        return Parrot_pcc_get_object(interp, CURRENT_CONTEXT(interp));
+        result = Parrot_pcc_get_object(interp, CURRENT_CONTEXT(interp));
+        break;
       case CURRENT_LEXPAD:
-        return Parrot_pcc_get_lex_pad(interp, CURRENT_CONTEXT(interp));
+        result = Parrot_pcc_get_lex_pad(interp, CURRENT_CONTEXT(interp));
+        break;
       default:        /* or a warning only? */
         Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_UNIMPLEMENTED,
                 "illegal argument in interpinfo");
     }
+
+    /* Don't send NULL values to P registers */
+    return result ? result : PMCNULL;
 }
 
 /*
@@ -323,15 +318,14 @@ interpinfo_s(PARROT_INTERP, INTVAL what)
     ASSERT_ARGS(interpinfo_s)
     switch (what) {
         case EXECUTABLE_FULLNAME: {
-            PMC *exe_name = VTABLE_get_pmc_keyed_int(interp, interp->iglobals,
+            PMC * const exe_name = VTABLE_get_pmc_keyed_int(interp, interp->iglobals,
                     IGLOBALS_EXECUTABLE);
             if (PMC_IS_NULL(exe_name))
                 return string_from_literal(interp, "");
             return VTABLE_get_string(interp, exe_name);
         }
         case EXECUTABLE_BASENAME: {
-            STRING *basename;
-            PMC    *exe_name = VTABLE_get_pmc_keyed_int(interp,
+            PMC    * const exe_name = VTABLE_get_pmc_keyed_int(interp,
                                 interp->iglobals, IGLOBALS_EXECUTABLE);
 
             if (PMC_IS_NULL(exe_name))
@@ -339,17 +333,18 @@ interpinfo_s(PARROT_INTERP, INTVAL what)
 
             else {
                 /* Need to strip back to what follows the final / or \. */
-                STRING *       fullname   = VTABLE_get_string(interp, exe_name);
+                STRING * const fullname   = VTABLE_get_string(interp, exe_name);
                 char   * const fullname_c = Parrot_str_to_cstring(interp, fullname);
                 int            pos        = strlen(fullname_c) - 1;
+                STRING *basename;
 
                 while (pos              >  0
                 &&     fullname_c[pos] != '/'
                 &&     fullname_c[pos] != '\\')
-                    pos--;
+                    --pos;
 
                 if (pos > 0)
-                    pos++;
+                    ++pos;
 
                 basename = Parrot_str_new(interp, fullname_c + pos, 0);
                 Parrot_str_free_cstring(fullname_c);

@@ -402,7 +402,7 @@ D: Documentation patch for Parrot_PMC_get_pointer_intkey()
 
 N: Gerd Pokorra
 E: pokorra@uni-siegen.de
-D: Release manager for 1.9.0
+D: Release manager for 1.9.0 and 2.3.0
 
 N: Goplat
 D: Win98 and other fixes.
@@ -509,9 +509,10 @@ U: jesse
 E: jesse@fsck.com
 
 N: Jimmy Zhuo
-A: jimmy
+A: JimmyZ
+U: jimmy
 E: zhuomingliang@yahoo.com.cn
-D: Bugfixes
+D: Bugfixes, cage cleaning
 
 N: John J. Trammell
 E: trammell@el-swifto.com
@@ -573,7 +574,8 @@ U: jisom
 D: Getopt/Obj.pir
 
 N: Julian Albo
-U: julianalbo
+U: NotFound
+A: julianalbo
 E: julian.notfound@gmail.com
 
 N: Julian Fondren
@@ -767,10 +769,6 @@ E: nnunley@gmail.com
 N: Nigelsandever
 D: Win32 patches
 
-N: Notfound
-D: Bugfixing and cage cleaning.
-E: julian.notfound@gmail.com
-
 N: Nuno 'smash' Carvalho
 U: smash
 D: PGE/perl6/abc debugging and testing
@@ -921,6 +919,11 @@ D: Fix for string_to_num
 
 N: Stefan Lidman
 D: sqrt ops
+
+N: Stefan O'Rear
+E: stefanor@cox.net
+D: Perl 5 interoperability, Blizkost
+U: sorear
 
 N: Stéphane Payrard
 D: Various code fixes and improvements

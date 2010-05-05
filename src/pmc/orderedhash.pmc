@@ -77,11 +77,72 @@ Overall design heavily inspired by C<Tie::StoredOrderHash>.
 
 */
 
+/* HEADERIZER HFILE: none */
+/* HEADERIZER BEGIN: static */
+/* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
+
+PARROT_CANNOT_RETURN_NULL
+PARROT_WARN_UNUSED_RESULT
+static PMC* box_integer(PARROT_INTERP, INTVAL val)
+        __attribute__nonnull__(1);
+
+PARROT_CANNOT_RETURN_NULL
+PARROT_WARN_UNUSED_RESULT
+static PMC* box_number(PARROT_INTERP, FLOATVAL val)
+        __attribute__nonnull__(1);
+
+PARROT_CANNOT_RETURN_NULL
+PARROT_WARN_UNUSED_RESULT
+static PMC* box_string(PARROT_INTERP, ARGIN(STRING *str))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+static void find_bounds(PARROT_INTERP,
+    ARGIN(PMC *pmc_hash),
+    ARGMOD(PMC **first),
+    ARGMOD(PMC **last))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3)
+        __attribute__nonnull__(4)
+        FUNC_MODIFIES(*first)
+        FUNC_MODIFIES(*last);
+
+PARROT_WARN_UNUSED_RESULT
+PARROT_CAN_RETURN_NULL
+static PMC* get_list_item(PARROT_INTERP, ARGIN(PMC *self), INTVAL idx)
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+#define ASSERT_ARGS_box_integer __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
+       PARROT_ASSERT_ARG(interp))
+#define ASSERT_ARGS_box_number __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
+       PARROT_ASSERT_ARG(interp))
+#define ASSERT_ARGS_box_string __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
+       PARROT_ASSERT_ARG(interp) \
+    , PARROT_ASSERT_ARG(str))
+#define ASSERT_ARGS_find_bounds __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
+       PARROT_ASSERT_ARG(interp) \
+    , PARROT_ASSERT_ARG(pmc_hash) \
+    , PARROT_ASSERT_ARG(first) \
+    , PARROT_ASSERT_ARG(last))
+#define ASSERT_ARGS_get_list_item __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
+       PARROT_ASSERT_ARG(interp) \
+    , PARROT_ASSERT_ARG(self))
+/* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
+/* HEADERIZER END: static */
+
 /* Get list_item by index */
+/* XXX Can this actually return NULL or not? */
+PARROT_WARN_UNUSED_RESULT
+PARROT_CAN_RETURN_NULL
 static PMC*
-get_list_item(PARROT_INTERP, ARGIN(PMC *self), INTVAL idx) {
-    Parrot_OrderedHash_attributes *attrs = PARROT_ORDEREDHASH(self);
-    INTVAL                         n = VTABLE_elements(interp, attrs->hash);
+get_list_item(PARROT_INTERP, ARGIN(PMC *self), INTVAL idx)
+{
+    ASSERT_ARGS(get_list_item)
+
+    const Parrot_OrderedHash_attributes * const attrs = PARROT_ORDEREDHASH(self);
+    const INTVAL n = VTABLE_elements(interp, attrs->hash);
     INTVAL                         pos;
     PMC                           *list_entry = attrs->first;
 
@@ -100,11 +161,15 @@ get_list_item(PARROT_INTERP, ARGIN(PMC *self), INTVAL idx) {
 /* Find first/last in cloned/thawed OrderedHash */
 /* Parameter C<pmc_hash> is Hash, not OrderedHash */
 static void
-find_bounds(PARROT_INTERP, PMC *pmc_hash, PMC **first, PMC **last) {
-    PMC *iter = VTABLE_get_iter(interp, pmc_hash);
+find_bounds(PARROT_INTERP, ARGIN(PMC *pmc_hash), ARGMOD(PMC **first), ARGMOD(PMC **last))
+{
+    ASSERT_ARGS(find_bounds)
+
+    PMC * const iter = VTABLE_get_iter(interp, pmc_hash);
+
     while (VTABLE_get_bool(interp, iter)) {
-        PMC *item  = VTABLE_shift_pmc(interp, iter);
-        PMC *entry = VTABLE_get_pmc_keyed(interp, pmc_hash, item);
+        PMC * const item  = VTABLE_shift_pmc(interp, iter);
+        PMC * const entry = VTABLE_get_pmc_keyed(interp, pmc_hash, item);
         /* First entry doesn't have prev */
         PMC *tmp   = VTABLE_get_pmc_keyed_int(interp, entry, ORDERED_HASH_ITEM_PREV);
         if (PMC_IS_NULL(tmp))
@@ -117,24 +182,39 @@ find_bounds(PARROT_INTERP, PMC *pmc_hash, PMC **first, PMC **last) {
 }
 
 /* Helpers for boxing values */
+PARROT_CANNOT_RETURN_NULL
+PARROT_WARN_UNUSED_RESULT
 static PMC*
-box_string(PARROT_INTERP, STRING *str) {
+box_string(PARROT_INTERP, ARGIN(STRING *str))
+{
+    ASSERT_ARGS(box_string)
+
     PMC * const ret = Parrot_pmc_new(interp, Parrot_get_ctx_HLL_type(interp,
                 enum_class_String));
     VTABLE_set_string_native(interp, ret, str);
     return ret;
 }
 
+PARROT_CANNOT_RETURN_NULL
+PARROT_WARN_UNUSED_RESULT
 static PMC*
-box_integer(PARROT_INTERP, INTVAL val) {
+box_integer(PARROT_INTERP, INTVAL val)
+{
+    ASSERT_ARGS(box_integer)
+
     PMC * const ret = Parrot_pmc_new(interp, Parrot_get_ctx_HLL_type(interp,
                 enum_class_Integer));
     VTABLE_set_integer_native(interp, ret, val);
     return ret;
 }
 
+PARROT_CANNOT_RETURN_NULL
+PARROT_WARN_UNUSED_RESULT
 static PMC*
-box_number(PARROT_INTERP, FLOATVAL val) {
+box_number(PARROT_INTERP, FLOATVAL val)
+{
+    ASSERT_ARGS(box_number)
+
     PMC * const ret = Parrot_pmc_new(interp, Parrot_get_ctx_HLL_type(interp,
                 enum_class_Float));
     VTABLE_set_number_native(interp, ret, val);
@@ -238,16 +318,17 @@ Main set function.
 
 */
     VTABLE void set_pmc_keyed(PMC *key, PMC *value) {
-        Parrot_OrderedHash_attributes *attrs =
+        Parrot_OrderedHash_attributes * const attrs =
                 PARROT_ORDEREDHASH(SELF);
 
         /* Check for old entry */
         PMC *list_entry = VTABLE_get_pmc_keyed(INTERP, attrs->hash, key);
         if (!PMC_IS_NULL(list_entry)) {
             /* We have old entry. Just update value */
-            PMC *nextkey = key_next(INTERP, key);
+            PMC * const nextkey = key_next(INTERP, key);
             if (nextkey) {
-                PMC *old_value = VTABLE_get_pmc_keyed_int(INTERP, list_entry,
+                /* XXX old_value is unused.  Should we be storing this at all? */
+                PMC * const old_value = VTABLE_get_pmc_keyed_int(INTERP, list_entry,
                         ORDERED_HASH_ITEM_VALUE);
                 VTABLE_set_pmc_keyed(INTERP, value, nextkey, value);
             }
@@ -257,8 +338,8 @@ Main set function.
         }
 
         /* Create new entry */
-        list_entry = Parrot_pmc_new(INTERP, enum_class_FixedPMCArray);
-        VTABLE_set_integer_native(INTERP, list_entry, ORDERED_HASH_ITEM_MAX);
+        list_entry = Parrot_pmc_new_init_int(INTERP,
+                enum_class_FixedPMCArray, ORDERED_HASH_ITEM_MAX);
         VTABLE_set_pmc_keyed_int(INTERP, list_entry, ORDERED_HASH_ITEM_VALUE, value);
         VTABLE_set_pmc_keyed_int(INTERP, list_entry, ORDERED_HASH_ITEM_KEY, key);
 
@@ -325,7 +406,7 @@ Sets the PMC value of the element at index C<key> to C<val>.
         /* Now we have chicken and egg problem during freeze/thaw */
         /* When we try to thaw OrderedHash which stores HLL mapping */
         /* Reported by François Perrad */
-        PMC *pkey = Parrot_pmc_new(INTERP, enum_class_String);
+        PMC * const pkey = Parrot_pmc_new(INTERP, enum_class_String);
         VTABLE_set_string_native(INTERP, pkey, key);
         VTABLE_set_pmc_keyed(INTERP, SELF, pkey, value);
     }
@@ -358,7 +439,7 @@ Sets the PMC value of the element at index C<key> to C<val>.
 */
 
     VTABLE PMC *get_pmc_keyed_int(INTVAL idx) {
-        PMC *list_entry = get_list_item(INTERP, SELF, idx);
+        PMC * const list_entry = get_list_item(INTERP, SELF, idx);
 
         if (PMC_IS_NULL(list_entry))
             return PMCNULL;
@@ -367,11 +448,11 @@ Sets the PMC value of the element at index C<key> to C<val>.
     }
 
     VTABLE PMC *get_pmc_keyed(PMC *key) {
-        PMC * item;
+        PMC *item;
+
         /* Access by integer index */
-        if ((PObj_get_FLAGS(key) & KEY_type_FLAGS) == KEY_integer_FLAG) {
+        if ((PObj_get_FLAGS(key) & KEY_type_FLAGS) == KEY_integer_FLAG)
             return SELF.get_pmc_keyed_int(VTABLE_get_integer(INTERP, key));
-        }
 
         item = VTABLE_get_pmc_keyed(INTERP, PARROT_ORDEREDHASH(SELF)->hash, key);
         if (PMC_IS_NULL(item))
@@ -380,9 +461,13 @@ Sets the PMC value of the element at index C<key> to C<val>.
     }
 
     VTABLE PMC *get_pmc_keyed_str(STRING *key) {
-        PMC *pkey = Parrot_pmc_new(interp, Parrot_get_ctx_HLL_type(interp, enum_class_String));
-        VTABLE_set_string_native(INTERP, pkey, key);
-        return STATICSELF.get_pmc_keyed(pkey);
+        PMC *item = VTABLE_get_pmc_keyed_str(INTERP,
+            PARROT_ORDEREDHASH(SELF)->hash, key);
+
+        if (PMC_IS_NULL(item))
+            return PMCNULL;
+
+        return VTABLE_get_pmc_keyed_int(INTERP, item, ORDERED_HASH_ITEM_VALUE);
     }
 /*
 
@@ -471,10 +556,7 @@ The created key = "\1idx".
 */
 
     VTABLE void set_pmc_keyed_int(INTVAL idx, PMC *val) {
-        const INTVAL   n   = STATICSELF.elements();
-        STRING * const fmt = CONST_STRING(INTERP, "\1%d");
-        PMC           *list_entry;
-        INTVAL         pos;
+        const INTVAL n = STATICSELF.elements();
 
         if (idx < -n)
             idx = -idx - n - 1;
@@ -483,11 +565,12 @@ The created key = "\1idx".
 
         if (idx >= n) {
             /* TODO warn or fill if there are holes */
+            STRING * const fmt = CONST_STRING(INTERP, "\1%d");
             STRING * const key = Parrot_sprintf_s(INTERP, fmt, idx);
             SELF.set_pmc_keyed_str(key, val);
         }
         else {
-            list_entry = get_list_item(INTERP, SELF, idx);
+            PMC * const list_entry = get_list_item(INTERP, SELF, idx);
             PARROT_ASSERT(!PMC_IS_NULL(list_entry));
             VTABLE_set_pmc_keyed_int(INTERP, list_entry, ORDERED_HASH_ITEM_VALUE, val);
         }
@@ -566,8 +649,8 @@ The created key = "\1idx".
     VTABLE INTVAL exists_keyed(PMC *key) {
         if ((PObj_get_FLAGS(key) & KEY_type_FLAGS) == KEY_integer_FLAG) {
             /* Don't fetch item prematurely. It's costy */
-            INTVAL    intval = VTABLE_get_integer(INTERP, key);
-            PMC * const next = VTABLE_shift_pmc(INTERP, key);
+            const INTVAL intval = VTABLE_get_integer(INTERP, key);
+            PMC * const next    = VTABLE_shift_pmc(INTERP, key);
 
             if (!next)
                 return STATICSELF.exists_keyed_int(intval);
@@ -642,8 +725,8 @@ Deletes the key C<*key> from the hash.
                 PARROT_ORDEREDHASH(SELF);
         PMC *list_entry, *prev, *next;
         if ((PObj_get_FLAGS(key) & KEY_type_FLAGS) == KEY_integer_FLAG) {
-            INTVAL    intval = VTABLE_get_integer(INTERP, key);
-            PMC * const next = VTABLE_shift_pmc(INTERP, key);
+            const INTVAL intval = VTABLE_get_integer(INTERP, key);
+            PMC * const next    = VTABLE_shift_pmc(INTERP, key);
 
             if (next)
                 VTABLE_delete_keyed(INTERP, STATICSELF.get_pmc_keyed_int(intval), next);
@@ -682,13 +765,12 @@ Deletes the key C<*key> from the hash.
     }
 
     VTABLE void delete_keyed_int(INTVAL idx) {
-        PMC *list_entry;
-        if (!STATICSELF.exists_keyed_int(idx))
-            return;
-
-        list_entry = get_list_item(INTERP, SELF, idx);
-        STATICSELF.delete_keyed(
-            VTABLE_get_pmc_keyed_int(INTERP, list_entry, ORDERED_HASH_ITEM_KEY));
+        if (STATICSELF.exists_keyed_int(idx)) {
+            PMC * const list_entry = get_list_item(INTERP, SELF, idx);
+            STATICSELF.delete_keyed(
+                    VTABLE_get_pmc_keyed_int(INTERP, list_entry, ORDERED_HASH_ITEM_KEY));
+        }
+        return;
     }
 
 /*
@@ -765,10 +847,6 @@ Get underlying regular Hash. Used in UnManagedStruct.
 =head1 SEE ALSO
 
 F<docs/pdds/pdd08_keys.pod>.
-
-=head1 HISTORY
-
-Initial rev by leo 2003-08-21.
 
 =cut
 

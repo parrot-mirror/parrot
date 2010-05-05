@@ -1,16 +1,16 @@
-# Copyright (C) 2001-2009, Parrot Foundation.
+# Copyright (C) 2001-2010, Parrot Foundation.
 # $Id$
 
 =head1 PDD 17: Polymorphic Containers
-
-=head2 Version
-
-$Revision$
 
 =head2 Abstract
 
 This PDD describes the internal structure and behavior of the Polymorphic
 Container (PMC) data type.
+
+=head2 Version
+
+$Revision$
 
 =head2 Description
 
@@ -48,7 +48,6 @@ All PMCs have the form:
         VTABLE *vtable;
         DPOINTER *data;
         PMC *_metadata;
-        struct _Sync *_synchronize;    # [Note: may be deprecated, see STM]
     }
 
 C<flags> holds a set of flags associated with the PMC; these are documented
@@ -1656,8 +1655,8 @@ C<ResizablePMCArray>, but that's likely to change.
 =head4 Array types
 
 Note that for the following types you can set the size of the array by using
-the VTABLE_set_integer_native() method. Assigning an integer to the array as a
-whole sets the array to that size.
+the VTABLE_set_integer_native() function. Assigning an integer to the array
+as a whole sets the array to that size.
 
 Size-changing operations (such as push, pop, shift, unshift, and splice)
 on statically-sized arrays will throw an exception.
@@ -1809,17 +1808,9 @@ A subroutine implementing a language compiler. (Derived from NCI.)
 
 =back
 
-=head2 Attachments
-
-None.
-
-=head2 Footnotes
-
-None.
-
 =head2 References
 
-  docs/pmc2c.pod
+F<docs/pmc2c.pod>
 
 =cut
 

@@ -28,6 +28,10 @@ C<Parrot_register_pmc> if it isn't visible to Parrot.
 #include "parrot/hash.h"
 #include "pmc/pmc_hash.h"
 
+/* HEADERIZER HFILE: none */
+/* HEADERIZER BEGIN: static */
+/* HEADERIZER END: static */
+
 pmclass AddrRegistry extends Hash provides hash auto_attrs {
 /*
 
@@ -73,7 +77,7 @@ Returns true if the hash size is not zero.
         Hash       *hash;
         const void *value;
 
-        GET_ATTR_hash(interp, SELF, hash);
+        GET_ATTR_hash(INTERP, SELF, hash);
         value = parrot_hash_get(INTERP, hash, key);
 
         if (value)
@@ -85,7 +89,7 @@ Returns true if the hash size is not zero.
     VTABLE INTVAL elements() {
         const Hash *hash;
 
-        GET_ATTR_hash(interp, SELF, hash);
+        GET_ATTR_hash(INTERP, SELF, hash);
 
         return parrot_hash_size(INTERP, hash);
     }
@@ -93,7 +97,7 @@ Returns true if the hash size is not zero.
     VTABLE INTVAL get_bool() {
         const Hash *hash;
 
-        GET_ATTR_hash(interp, SELF, hash);
+        GET_ATTR_hash(INTERP, SELF, hash);
 
         return parrot_hash_size(INTERP, hash) != 0;
     }
@@ -124,7 +128,7 @@ reaches 0, delete the entry.
         Hash       *hash;
         UNUSED(value);
 
-        GET_ATTR_hash(interp, SELF, hash);
+        GET_ATTR_hash(INTERP, SELF, hash);
 
         oldval = parrot_hash_get(INTERP, hash, key);
 
@@ -136,7 +140,7 @@ reaches 0, delete the entry.
 
     VTABLE void set_integer_keyed(PMC *key, INTVAL value) {
         Hash *hash;
-        GET_ATTR_hash(interp, SELF, hash);
+        GET_ATTR_hash(INTERP, SELF, hash);
         parrot_hash_put(INTERP, hash, key, (void *)value);
     }
 
@@ -144,7 +148,7 @@ reaches 0, delete the entry.
         Hash       *hash;
         void       *value;
 
-        GET_ATTR_hash(interp, SELF, hash);
+        GET_ATTR_hash(INTERP, SELF, hash);
         value = parrot_hash_get(INTERP, hash, key);
 
         /* these casts look bad, but they avoid type punning warnings with -O */

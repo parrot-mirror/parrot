@@ -1,4 +1,4 @@
-#! parrot
+#!./parrot
 # Copyright (C) 2001-2010, Parrot Foundation.
 # $Id$
 
@@ -20,15 +20,13 @@ Tests the C<String> PMC.
 .sub main :main
     .include 'test_more.pir'
 
-    plan(171)
+    plan(166)
 
     set_or_get_strings()
     setting_integers()
     setting_numbers()
     ensure_that_concat_ppp_copies_strings()
     ensure_that_concat_pps_copies_strings()
-    setting_string_references()
-    assigning_string_copies()
     test_repeat()
     test_repeat_without_creating_dest_pmc()
     test_repeat_int()
@@ -51,7 +49,6 @@ Tests the C<String> PMC.
     bnots_null_string()
     test_eq_str()
     test_ne_str()
-    set_const_and_chop()
     check_whether_interface_is_done()
     test_clone()
     test_set_px_i()
@@ -59,7 +56,6 @@ Tests the C<String> PMC.
     test_string_replace()
     set_i0__p0__string_to_int()
     test_string_trans()
-    reverse_p0__reverse_string()
     is_integer__check_integer()
     instantiate_str()
     get_string_returns_cow_string()
@@ -102,6 +98,12 @@ Tests the C<String> PMC.
         set $P0, "0xFFFFFF"
         set $S0, $P0
         is( $S0, "0xFFFFFF", 'String obj set with literal hex string' )
+
+        null $S0
+        set $P0, $S0
+        set $S1, $P0
+        isnull $I0, $S1
+        ok( $I0, 'String obj is null-in null-out' )
 .end
 
 .sub setting_integers
@@ -195,26 +197,6 @@ Tests the C<String> PMC.
     is( $S0, 'Grunties', 'original untouched' )
     is( $P1, 'fnargh', 'original untouched' )
     is( $P0, 'fnarghGrunties', 'concat success' )
-.end
-
-.sub setting_string_references
-    new $P0, ['String']
-    set $S0, "C2H5OH + 10H20"
-    set $P0, $S0
-    chopn $S0, 8
-
-    is( $S0, 'C2H5OH', 'removed last 8 from string' )
-    is( $P0, 'C2H5OH', '...and the PMC still reference $S0' )
-.end
-
-.sub assigning_string_copies
-    new $P0, ['String']
-    set $S0, "C2H5OH + 10H20"
-    assign $P0, $S0
-    chopn $S0, 8
-
-    is( $S0, 'C2H5OH', 'removed the last 8 from string' )
-    is( $P0, 'C2H5OH + 10H20', '...and the assigned PMC is a copy' )
 .end
 
 .sub test_repeat
@@ -763,15 +745,6 @@ OK3:    ok( $I0, 'ne_str "ABC", 0(Integer) -> true' )
 OK4:    ok( $I0, 'ne_str "0(Integer), "ABC" -> true' )
 .end
 
-.sub set_const_and_chop
-   new $P0, ['String']
-   set $P0, "str"
-   set $S0, $P0
-   chopn $S0, 2
-   is( $P0, 'str', 'original not touched' )
-   is( $S0, 's', 'string chopn' )
-.end
-
 .sub check_whether_interface_is_done
     .local pmc pmc1
     pmc1 = new ['String']
@@ -866,13 +839,6 @@ loop:
     .return(tr_array)
 .end
 
-.sub reverse_p0__reverse_string
-    $S0 = 'torrap'
-    $P0 = new ['String']
-    $P0.'reverse'($S0)
-    is( $S0, "parrot", 'reverse string' )
-.end
-
 .sub is_integer__check_integer
   $P0 = new ['String']
 
@@ -905,7 +871,7 @@ loop:
   $P0 = "Foo44"
 
   $S0 = $P0
-  substr $S0, 0, 1, "B"
+  $S0 = replace $S0, 0, 1, "B"
   is( $S0, "Boo44", 'substr replace' )
   is( $P0, "Foo44", '... no change to original' )
 .end
@@ -1036,6 +1002,7 @@ check:
 
     # Set
     s = new ['String']
+    s = ''
 
     $S0 = 'f'
     s[0] = $S0
@@ -1049,6 +1016,16 @@ check:
     $P0 = 'o'
     s[2] = $P0
     is(s, 'foo', 'Set PMC keyed')
+
+    push_eh null_replace
+    s = new ['String']
+    s[0] = 'f'
+    nok('Replace on null string throws')
+    goto done_null_replace
+
+  null_replace:
+    ok(1, 'Replace on null string throws')
+  done_null_replace:
 .end
 
 # Local Variables:

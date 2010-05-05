@@ -120,6 +120,7 @@ Mathematics*, Second Edition. Addison-Wesley, 1994.
 */
 
 PARROT_CONST_FUNCTION
+PARROT_WARN_UNUSED_RESULT
 INTVAL
 intval_mod(INTVAL i2, INTVAL i3)
 {
@@ -167,6 +168,7 @@ Includes a workaround for buggy code generation in the C<lcc> compiler.
 */
 
 PARROT_CONST_FUNCTION
+PARROT_WARN_UNUSED_RESULT
 FLOATVAL
 floatval_mod(FLOATVAL n2, FLOATVAL n3)
 {
@@ -422,6 +424,7 @@ C<how_random> is currently ignored.
 */
 
 PARROT_EXPORT
+PARROT_WARN_UNUSED_RESULT
 FLOATVAL
 Parrot_float_rand(INTVAL how_random)
 {
@@ -444,6 +447,7 @@ C<how_random> is ignored.
 */
 
 PARROT_EXPORT
+PARROT_WARN_UNUSED_RESULT
 INTVAL
 Parrot_uint_rand(INTVAL how_random)
 {
@@ -466,6 +470,7 @@ C<how_random> is ignored.
 */
 
 PARROT_EXPORT
+PARROT_WARN_UNUSED_RESULT
 INTVAL
 Parrot_int_rand(INTVAL how_random)
 {
@@ -488,6 +493,7 @@ C<how_random> is ignored.
 */
 
 PARROT_EXPORT
+PARROT_WARN_UNUSED_RESULT
 INTVAL
 Parrot_range_rand(INTVAL from, INTVAL to, INTVAL how_random)
 {
@@ -582,6 +588,7 @@ Returns an offset value if it is found, or -1 if no match.
 */
 
 PARROT_EXPORT
+PARROT_WARN_UNUSED_RESULT
 INTVAL
 Parrot_byte_index(SHIM_INTERP, ARGIN(const STRING *base),
         ARGIN(const STRING *search), UINTVAL start_offset)
@@ -637,7 +644,7 @@ Parrot_byte_rindex(SHIM_INTERP, ARGIN(const STRING *base),
 {
     ASSERT_ARGS(Parrot_byte_rindex)
     const INTVAL searchlen          = search->strlen;
-    const char * const search_start = (const char *)Buffer_bufstart(search);
+    const char * const search_start = (const char *)(search->strstart);
     UINTVAL max_possible_offset     = (base->strlen - search->strlen);
     INTVAL current_offset;
 
@@ -646,7 +653,7 @@ Parrot_byte_rindex(SHIM_INTERP, ARGIN(const STRING *base),
 
     for (current_offset = max_possible_offset; current_offset >= 0;
             current_offset--) {
-        const char * const base_start = (char *)Buffer_bufstart(base) + current_offset;
+        const char * const base_start = (char *)(base->strstart) + current_offset;
         if (memcmp(base_start, search_start, searchlen) == 0) {
             return current_offset;
         }
@@ -838,7 +845,7 @@ Parrot_register_move(PARROT_INTERP,
     c.temp_reg = temp_reg;
 
     /* compute max_reg, the max reg number + 1 */
-    for (i = 0; i < n_regs; i++) {
+    for (i = 0; i < n_regs; ++i) {
         if (src_regs[i] > max_reg)
             max_reg = src_regs[i];
         if (dest_regs[i] > max_reg)
@@ -854,26 +861,26 @@ Parrot_register_move(PARROT_INTERP,
     c.reg_to_index = reg_to_index = mem_gc_allocate_n_zeroed_typed(interp, max_reg, int);
 
     /* init backup array */
-    for (i = 0; i < n_regs; i++)
+    for (i = 0; i < n_regs; ++i)
         backup[i] = -1;
 
     /* fill in the conversion array between a register number and its index */
-    for (i = 0; i < max_reg; i++)
+    for (i = 0; i < max_reg; ++i)
         reg_to_index[i] = -1;
-    for (i = 0; i < n_regs; i++) {
+    for (i = 0; i < n_regs; ++i) {
         const int index = dest_regs[i];
         if (index != src_regs[i]) /* get rid of self-assignment */
             reg_to_index[index] = i;
     }
 
     /* count the nb of successors for each reg index */
-    for (i = 0; i < n_regs; i++) {
+    for (i = 0; i < n_regs; ++i) {
         const int index = reg_to_index[ src_regs[i] ];
         if (index >= 0) /* not interested in the wells that have no preds */
-            nb_succ[ index ]++;
+            ++nb_succ[index];
     }
     /* process each well if any */
-    for (i = 0; i < n_regs; i++) {
+    for (i = 0; i < n_regs; ++i) {
         if (0 == nb_succ[i]) { /* a well */
             rec_climb_back_and_mark(i, &c);
         }
@@ -881,7 +888,7 @@ Parrot_register_move(PARROT_INTERP,
 
     /* process remaining dest registers not processed */
     /* remaining nodes are members of cycles without exits */
-    for (i = 0; i < n_regs; i++) {
+    for (i = 0; i < n_regs; ++i) {
         if (0 < nb_succ[i] && 0 > backup[i]) { /* not a well nor visited*/
             process_cycle_without_exit(i, &c);
         }
@@ -989,12 +996,6 @@ Parrot_quicksort(PARROT_INTERP, ARGMOD(void **data), UINTVAL n, ARGIN(PMC *cmp))
 /*
 
 =back
-
-=head1 HISTORY
-
-Initial version by leo 2003.09.09.
-
-=cut
 
 */
 

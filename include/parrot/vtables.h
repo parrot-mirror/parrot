@@ -1,13 +1,9 @@
 /* vtables.h
- *  Copyright (C) 2001-2003, Parrot Foundation.
+ *  Copyright (C) 2001-2010, Parrot Foundation.
  *  SVN Info
  *     $Id$
  *  Overview:
  *     Vtable manipulation code. Not to be confused with vtable.h
- *  Data Structure and Algorithms:
- *  History:
- *  Notes:
- *  References:
  */
 
 #ifndef PARROT_VTABLES_H_GUARD
@@ -26,10 +22,9 @@ VTABLE * Parrot_clone_vtable(PARROT_INTERP,
         __attribute__nonnull__(2);
 
 PARROT_EXPORT
-void Parrot_destroy_vtable(PARROT_INTERP, ARGMOD(VTABLE *vtable))
+void Parrot_destroy_vtable(PARROT_INTERP, ARGFREE_NOTNULL(VTABLE *vtable))
         __attribute__nonnull__(1)
-        __attribute__nonnull__(2)
-        FUNC_MODIFIES(*vtable);
+        __attribute__nonnull__(2);
 
 PARROT_EXPORT
 void Parrot_initialize_core_vtables(PARROT_INTERP)
