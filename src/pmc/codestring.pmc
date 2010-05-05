@@ -456,13 +456,6 @@ For example, C<key('Foo', 'Bar')> returns C<["Foo";"Bar"]>.
     RETURN(STRING *out);
 }
 
-    VTABLE void i_concatenate(PMC *value) {
-        PMC *strings;
-        GET_ATTR_strings(INTERP, SELF, strings);
-
-        VTABLE_push_pmc(INTERP, strings, value);
-    }
-
     VTABLE void i_concatenate_str(STRING *value) {
         PMC *strings;
         GET_ATTR_strings(INTERP, SELF, strings);
