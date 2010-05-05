@@ -53,7 +53,7 @@ method prepare_ops($emitter, $ops_file) {
     for $ops_file.ops -> $op {
         #say("# preparing " ~ $op);
         my $func_name := $op.func_name( self );
-        my $definition := "opcode_t *\n$func_name (opcode_t *cur_opcode, PARROT_INTERP)";
+        my $definition := "opcode_t *\n$func_name(opcode_t *cur_opcode, PARROT_INTERP)";
         my $prototype := $emitter.sym_export
                 ~ " opcode_t * $func_name(opcode_t *, PARROT_INTERP);\n";
 
@@ -134,7 +134,7 @@ method op_info($emitter) { $emitter.bs ~ 'op_info_table' }
 method op_func($emitter) { $emitter.bs ~ 'op_func_table' }
 method getop($emitter)   { 'get_op' };
 
-method body_prelude() { '    Parrot_Context const * const CUR_CTX = Parrot_pcc_get_context_struct(interp, interp->ctx);' }
+method body_prelude() { '    const Parrot_Context * const CUR_CTX = Parrot_pcc_get_context_struct(interp, interp->ctx);' }
 
 method emit_source_part($emitter, $fh) {
     self._emit_op_func_table($emitter, $fh);
