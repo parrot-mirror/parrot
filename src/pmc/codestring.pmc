@@ -35,6 +35,9 @@ concat can be used.
 /* HEADERIZER BEGIN: static */
 /* HEADERIZER END: static */
 
+#define PARROT_CODESTRING_MINIMUM_SIZE       32
+#define PARROT_CODESTRING_COALESCE_THRESHOLD 64
+
 pmclass CodeString extends String provides string auto_attrs {
     ATTR PMC *linepos;  /* start of line positions */
     ATTR PMC *strings;  /* array of strings... */
@@ -51,8 +54,13 @@ Initialize the CodeString.
 
     VTABLE void init() {
         SET_ATTR_linepos(INTERP, SELF, PMCNULL);
-        SET_ATTR_strings(INTERP, SELF, pmc_new(INTERP, enum_class_ResizableStringArray));
+
+        SET_ATTR_strings(INTERP, SELF,
+            Parrot_pmc_new_init_int(INTERP, enum_class_ResizableStringArray,
+                PARROT_CODESTRING_MINIMUM_SIZE));
+
         PObj_custom_mark_SET(SELF);
+
     }
 
 /*
@@ -185,6 +193,9 @@ is not already present.
     /* Add a newline if necessary */
     if ('\n' != Parrot_str_indexed(INTERP, fmt, Parrot_str_byte_length(INTERP, fmt) - 1))
         VTABLE_push_string(INTERP, strings, newline);
+
+    if (VTABLE_elements(INTERP, strings) > PARROT_CODESTRING_COALESCE_THRESHOLD)
+        SELF.get_string();
 
     RETURN(PMC *SELF);
 }
@@ -461,6 +472,10 @@ For example, C<key('Foo', 'Bar')> returns C<["Foo";"Bar"]>.
         GET_ATTR_strings(INTERP, SELF, strings);
 
         VTABLE_push_string(INTERP, strings, value);
+
+        if (VTABLE_elements(INTERP, strings) > PARROT_CODESTRING_COALESCE_THRESHOLD)
+            SELF.get_string();
+
     }
 
 /*
