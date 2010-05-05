@@ -9,18 +9,15 @@ src/pmc/codestring.pmc - CodeString PMC Class
 =head1 DESCRIPTION
 
 C<CodeString> is a class intended to simplify the process of emitting code
-strings.  Ideally this will eventually become a form of "CodeBuffer" that is
-more efficient than string concatenation, but for now it works well enough for
-me.
+strings. It uses an internal collection of strings to avoid concatenating
+strings with every emit, but may coalesce those strings into a single
+string to avoid memory pressure at its discretion.
 
 The primary method for C<CodeString> objects is C<emit>, which appends a line
 (or lines) of code to the string according to a format parameter.  The line can
 contain substitution markers (ala printf) that indicate where other parameters
-to the call should be placed.
-
-Note that C<CodeString> is just a subclass of Parrot's native C<String> class,
-so it's easy to combine CodeString objects with other strings outside of the
-C<emit> method.
+to the call should be placed. To add a line with no interpolation, a simple
+concat can be used.
 
 =head2 Methods
 
@@ -458,6 +455,20 @@ For example, C<key('Foo', 'Bar')> returns C<["Foo";"Bar"]>.
 
     RETURN(STRING *out);
 }
+
+    VTABLE void i_concatenate(PMC *value) {
+        PMC *strings;
+        GET_ATTR_strings(INTERP, SELF, strings);
+
+        VTABLE_push_pmc(INTERP, strings, value);
+    }
+
+    VTABLE void i_concatenate_str(STRING *value) {
+        PMC *strings;
+        GET_ATTR_strings(INTERP, SELF, strings);
+
+        VTABLE_push_string(INTERP, strings, value);
+    }
 
 /*
 
