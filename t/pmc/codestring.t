@@ -19,11 +19,12 @@ Tests the CodeString class directly.
 
 .sub main :main
     .include 'test_more.pir'
-    plan(38)
+    plan(39)
 
     create_codestring()
     calls_to_unique()
     basic_emit()
+    basic_concat()
     emit_with_pos_args()
     emit_with_percent_args()
     emit_with_named_args()
@@ -67,6 +68,22 @@ Tests the CodeString class directly.
     code.'emit'('    $I0 = 1')
     code.'emit'('    $N0 = 0.1')
     is(code, <<'CODE', "code string looks fine")
+label:
+    say "Hello, World"
+    $I0 = 1
+    $N0 = 0.1
+CODE
+.end
+
+.sub basic_concat
+    .local pmc code
+    code = new ['CodeString']
+    $P1  = box "label:\n"
+    code .= $P1
+    code .= "    say \"Hello, World\"\n"
+    code .= "    $I0 = 1\n"
+    code .= "    $N0 = 0.1\n"
+    is(code, <<'CODE', "code string looks fine (concat)")
 label:
     say "Hello, World"
     $I0 = 1
