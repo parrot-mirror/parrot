@@ -73,11 +73,10 @@ static local_label * new_local_label(
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 static pir_reg * new_pir_reg(
-    ARGMOD(lexer_state *lexer),
+    ARGIN(lexer_state * const lexer),
     pir_type type,
     int regno)
-        __attribute__nonnull__(1)
-        FUNC_MODIFIES(*lexer);
+        __attribute__nonnull__(1);
 
 static int next_register(ARGIN(lexer_state * const lexer), pir_type type)
         __attribute__nonnull__(1);
@@ -387,7 +386,8 @@ check_unused_symbols(ARGIN(lexer_state * const lexer))
 
 /*
 
-=item C<symbol * find_symbol(lexer_state *lexer, const char *name)>
+=item C<symbol * find_symbol(lexer_state * const lexer, char const * const
+name)>
 
 Return the node for the symbol or NULL if the symbol
 is not defined. If an attempt is made to find a symbol,
@@ -400,7 +400,8 @@ allocate a PASM register for it.
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 symbol *
-find_symbol(ARGMOD(lexer_state *lexer), ARGIN(const char *name))
+find_symbol(ARGIN(lexer_state * const lexer),
+        ARGIN(char const * const name))
 {
     ASSERT_ARGS(find_symbol)
     hashtable    *table    = &CURRENT_SUB(lexer)->symbols;
@@ -410,7 +411,7 @@ find_symbol(ARGMOD(lexer_state *lexer), ARGIN(const char *name))
 
 
     while (buck) {
-        symbol * const sym = bucket_symbol(buck);
+        symbol *sym = bucket_symbol(buck);
 
         if (STREQ(sym->info.id.name, name)) {
 
@@ -440,8 +441,8 @@ find_symbol(ARGMOD(lexer_state *lexer), ARGIN(const char *name))
 
 /*
 
-=item C<static pir_reg * new_pir_reg(lexer_state *lexer, pir_type type, int
-regno)>
+=item C<static pir_reg * new_pir_reg(lexer_state * const lexer, pir_type type,
+int regno)>
 
 Create a new PIR register node representing PIR/symbolic register
 identified by C<regno> and of type C<type>.
@@ -452,7 +453,7 @@ identified by C<regno> and of type C<type>.
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 static pir_reg *
-new_pir_reg(ARGMOD(lexer_state *lexer), pir_type type, int regno)
+new_pir_reg(ARGIN(lexer_state * const lexer), pir_type type, int regno)
 {
     ASSERT_ARGS(new_pir_reg)
     pir_reg *r = pir_mem_allocate_zeroed_typed(lexer, pir_reg);

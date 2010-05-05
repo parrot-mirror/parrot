@@ -299,10 +299,10 @@ PackFile_Constant_dump(PARROT_INTERP, ARGIN(const PackFile_ConstTable *ct),
                     switch (sub->namespace_name->vtable->base_type) {
                       case enum_class_String:
                         namespace_description = Parrot_str_new(interp, "'", 1);
-                        namespace_description = Parrot_str_concat(interp,
+                        namespace_description = Parrot_str_append(interp,
                                         namespace_description,
                                         VTABLE_get_string(interp, sub->namespace_name));
-                        namespace_description = Parrot_str_concat(interp,
+                        namespace_description = Parrot_str_append(interp,
                                         namespace_description,
                                         Parrot_str_new(interp, "'", 1));
                         break;
@@ -378,18 +378,18 @@ PackFile_Fixup_dump(PARROT_INTERP, ARGIN(const PackFile_FixupTable *ft))
 
     for (i = 0; i < ft->fixup_count; i++) {
         Parrot_io_printf(interp, "\t#%d\n", (int) i);
-        switch (ft->fixups[i].type) {
+        switch (ft->fixups[i]->type) {
           case enum_fixup_label:
           case enum_fixup_sub:
             Parrot_io_printf(interp,
                         "\ttype => %d offs => %8d name => '%s',\n",
-                        (int)ft->fixups[i].type,
-                        (int)ft->fixups[i].offset,
-                        ft->fixups[i].name);
+                        (int)ft->fixups[i]->type,
+                        (int)ft->fixups[i]->offset,
+                        ft->fixups[i]->name);
             break;
           default:
             Parrot_io_printf(interp, "\ttype => %d ???,\n",
-                        (int) ft->fixups[i].type);
+                        (int) ft->fixups[i]->type);
             break;
         }
     }

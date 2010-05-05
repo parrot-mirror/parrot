@@ -120,7 +120,6 @@ Mathematics*, Second Edition. Addison-Wesley, 1994.
 */
 
 PARROT_CONST_FUNCTION
-PARROT_WARN_UNUSED_RESULT
 INTVAL
 intval_mod(INTVAL i2, INTVAL i3)
 {
@@ -168,7 +167,6 @@ Includes a workaround for buggy code generation in the C<lcc> compiler.
 */
 
 PARROT_CONST_FUNCTION
-PARROT_WARN_UNUSED_RESULT
 FLOATVAL
 floatval_mod(FLOATVAL n2, FLOATVAL n3)
 {
@@ -424,7 +422,6 @@ C<how_random> is currently ignored.
 */
 
 PARROT_EXPORT
-PARROT_WARN_UNUSED_RESULT
 FLOATVAL
 Parrot_float_rand(INTVAL how_random)
 {
@@ -447,7 +444,6 @@ C<how_random> is ignored.
 */
 
 PARROT_EXPORT
-PARROT_WARN_UNUSED_RESULT
 INTVAL
 Parrot_uint_rand(INTVAL how_random)
 {
@@ -470,7 +466,6 @@ C<how_random> is ignored.
 */
 
 PARROT_EXPORT
-PARROT_WARN_UNUSED_RESULT
 INTVAL
 Parrot_int_rand(INTVAL how_random)
 {
@@ -493,7 +488,6 @@ C<how_random> is ignored.
 */
 
 PARROT_EXPORT
-PARROT_WARN_UNUSED_RESULT
 INTVAL
 Parrot_range_rand(INTVAL from, INTVAL to, INTVAL how_random)
 {
@@ -588,7 +582,6 @@ Returns an offset value if it is found, or -1 if no match.
 */
 
 PARROT_EXPORT
-PARROT_WARN_UNUSED_RESULT
 INTVAL
 Parrot_byte_index(SHIM_INTERP, ARGIN(const STRING *base),
         ARGIN(const STRING *search), UINTVAL start_offset)
@@ -644,7 +637,7 @@ Parrot_byte_rindex(SHIM_INTERP, ARGIN(const STRING *base),
 {
     ASSERT_ARGS(Parrot_byte_rindex)
     const INTVAL searchlen          = search->strlen;
-    const char * const search_start = (const char *)(search->strstart);
+    const char * const search_start = (const char *)Buffer_bufstart(search);
     UINTVAL max_possible_offset     = (base->strlen - search->strlen);
     INTVAL current_offset;
 
@@ -653,7 +646,7 @@ Parrot_byte_rindex(SHIM_INTERP, ARGIN(const STRING *base),
 
     for (current_offset = max_possible_offset; current_offset >= 0;
             current_offset--) {
-        const char * const base_start = (char *)(base->strstart) + current_offset;
+        const char * const base_start = (char *)Buffer_bufstart(base) + current_offset;
         if (memcmp(base_start, search_start, searchlen) == 0) {
             return current_offset;
         }
@@ -996,6 +989,12 @@ Parrot_quicksort(PARROT_INTERP, ARGMOD(void **data), UINTVAL n, ARGIN(PMC *cmp))
 /*
 
 =back
+
+=head1 HISTORY
+
+Initial version by leo 2003.09.09.
+
+=cut
 
 */
 

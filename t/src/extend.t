@@ -1,5 +1,5 @@
 #!perl
-# Copyright (C) 2001-2010, Parrot Foundation.
+# Copyright (C) 2001-2009, Parrot Foundation.
 # $Id$
 
 use strict;
@@ -35,8 +35,7 @@ c_output_is( <<'CODE', <<'OUTPUT', 'set/get_intreg' );
 #include "parrot/extend.h"
 
 int
-main(int argc, const char *argv[])
-{
+main(int argc, char* argv[]) {
     Parrot_Interp interp  = Parrot_new(NULL);
     Parrot_Int    parrot_reg = 0;
     Parrot_Int    value      = 42;
@@ -66,8 +65,7 @@ c_output_is( <<'CODE', <<'OUTPUT', 'set/get_numreg' );
 #include "parrot/extend.h"
 
 int
-main(int argc, const char *argv[])
-{
+main(int argc, char* argv[]) {
     Parrot_Interp interp     = Parrot_new(NULL);
     Parrot_Int    parrot_reg = 1;
     Parrot_Float  value       = 2.5;
@@ -97,8 +95,7 @@ c_output_is( <<'CODE', <<'OUTPUT', 'Parrot_new_string' );
 #include "parrot/extend.h"
 
 int
-main(int argc, const char *argv[])
-{
+main(int argc, char* argv[]) {
     Parrot_Interp interp = Parrot_new(NULL);
     Parrot_String output;
 
@@ -124,8 +121,7 @@ c_output_is( <<'CODE', <<'OUTPUT', 'set/get_strreg' );
 #include "parrot/extend.h"
 
 int
-main(int argc, const char *argv[])
-{
+main(int argc, char* argv[]) {
     Parrot_Interp interp     = Parrot_new(NULL);
     Parrot_Int    parrot_reg = 2;
     Parrot_String value, new_value;
@@ -155,8 +151,7 @@ c_output_is( <<'CODE', <<'OUTPUT', 'PMC_set/get_intval' );
 #include "parrot/extend.h"
 
 int
-main(int argc, const char *argv[])
-{
+main(int argc, char* argv[]) {
     Parrot_Interp interp = Parrot_new(NULL);
     Parrot_Int    value  = 101010;
     Parrot_PMC    testpmc;
@@ -206,8 +201,7 @@ the_test(PARROT_INTERP, opcode_t *cur_op, opcode_t *start)
 }
 
 int
-main(int argc, const char *argv[])
-{
+main(int argc, char* argv[]) {
     Parrot_Interp interp = Parrot_new(NULL);
 
     /* Interpreter set-up */
@@ -229,8 +223,7 @@ c_output_is( <<'CODE', <<'OUTPUT', 'set/get_pmcreg' );
 #include "parrot/extend.h"
 
 int
-main(int argc, const char *argv[])
-{
+main(int argc, char* argv[]) {
     Parrot_Interp interp     = Parrot_new(NULL);
     Parrot_Int    value      = -123;
     Parrot_Int    parrot_reg =  31;
@@ -268,8 +261,7 @@ c_output_is( <<'CODE', <<'OUTPUT', 'PMC_set/get_numval' );
 #include "parrot/extend.h"
 
 int
-main(int argc, const char *argv[])
-{
+main(int argc, char* argv[]) {
     Parrot_Interp interp = Parrot_new(NULL);
     Parrot_Float  value  = 3.1415927;
     Parrot_Int    type;
@@ -302,8 +294,7 @@ c_output_is( <<'CODE', <<'OUTPUT', 'PMC_set/get_string' );
 #include "parrot/extend.h"
 
 int
-main(int argc, const char *argv[])
-{
+main(int argc, char* argv[]) {
     Parrot_Interp interp = Parrot_new(NULL);
     Parrot_Int    type;
     Parrot_String value, new_value;
@@ -336,8 +327,7 @@ c_output_is( <<'CODE', <<'OUTPUT', 'PMC_set/get_cstring' );
 #include "parrot/extend.h"
 
 int
-main(int argc, const char *argv[])
-{
+main(int argc, char* argv[]) {
     Parrot_Interp interp = Parrot_new(NULL);
     Parrot_Int    type;
     Parrot_PMC    testpmc;
@@ -371,8 +361,7 @@ c_output_is( <<'CODE', <<'OUTPUT', 'PMC_set/get_cstringn' );
 #include "parrot/extend.h"
 
 int
-main(int argc, const char *argv[])
-{
+main(int argc, char* argv[]) {
     Parrot_Interp interp = Parrot_new(NULL);
     Parrot_Int    length = 6;
     Parrot_Int    type;
@@ -433,7 +422,7 @@ c_output_is( <<"CODE", <<'OUTPUT', 'call a parrot sub' );
 static opcode_t *the_test(Parrot_Interp, opcode_t *, opcode_t *);
 
 int
-main(int argc, const char *argv[])
+main(int argc, char *argv[])
 {
     Parrot_Interp interp = Parrot_new(NULL);
     if (!interp)
@@ -451,9 +440,9 @@ main(int argc, const char *argv[])
 static opcode_t*
 the_test(PARROT_INTERP, opcode_t *cur_op, opcode_t *start)
 {
-    PackFile      *pf   = Parrot_pbc_read(interp, "$temp_pbc", 0);
-    Parrot_String  name = Parrot_str_new_constant(interp, "_sub1");
-    PMC           *sub, *arg;
+    PackFile *pf = Parrot_pbc_read(interp, "$temp_pbc", 0);
+    STRING   *name = Parrot_str_new_constant(interp, "_sub1");
+    PMC      *sub, *arg;
 
     Parrot_pbc_load(interp, pf);
     sub = Parrot_find_global_cur(interp, name);
@@ -491,7 +480,7 @@ c_output_is( <<"CODE", <<'OUTPUT', 'call a parrot sub using the unified interfac
 static opcode_t *the_test(Parrot_Interp, opcode_t *, opcode_t *);
 
 int
-main(int argc, const char *argv[])
+main(int argc, char *argv[])
 {
     Parrot_Interp interp = Parrot_new(NULL);
     if (!interp)
@@ -509,9 +498,9 @@ main(int argc, const char *argv[])
 static opcode_t*
 the_test(PARROT_INTERP, opcode_t *cur_op, opcode_t *start)
 {
-    PackFile      *pf   = Parrot_pbc_read(interp, "$temp_pbc", 0);
-    Parrot_String  name = Parrot_str_new_constant(interp, "_sub1");
-    PMC           *sub, *arg;
+    PackFile *pf = Parrot_pbc_read(interp, "$temp_pbc", 0);
+    STRING   *name = Parrot_str_new_constant(interp, "_sub1");
+    PMC      *sub, *arg;
 
     Parrot_pbc_load(interp, pf);
     sub = Parrot_find_global_cur(interp, name);
@@ -567,7 +556,7 @@ c_output_is( <<"CODE", <<'OUTPUT', 'call a parrot sub and return an integer' );
 static opcode_t *the_test(Parrot_Interp, opcode_t *, opcode_t *);
 
 int
-main(int argc, const char *argv[])
+main(int argc, char *argv[])
 {
     Parrot_Interp interp = Parrot_new(NULL);
     if (!interp)
@@ -585,10 +574,10 @@ main(int argc, const char *argv[])
 static opcode_t*
 the_test(PARROT_INTERP, opcode_t *cur_op, opcode_t *start)
 {
-    PackFile      *pf   = Parrot_pbc_read(interp, "$temp_pbc", 0);
-    Parrot_String  name = Parrot_str_new_constant(interp, "foo");
-    PMC           *sub, *arg;
-    Parrot_Int     result;
+    PackFile *pf = Parrot_pbc_read(interp, "$temp_pbc", 0);
+    STRING   *name = Parrot_str_new_constant(interp, "foo");
+    PMC      *sub, *arg;
+    Parrot_Int result;
 
     Parrot_pbc_load(interp, pf);
     sub  = Parrot_find_global_cur(interp, name);
@@ -634,7 +623,7 @@ static opcode_t *
 the_test(Parrot_Interp, opcode_t *, opcode_t *);
 
 int
-main(int argc, const char *argv[])
+main(int argc, char *argv[])
 {
     Parrot_Interp interp = Parrot_new(NULL);
     if (!interp)
@@ -652,9 +641,9 @@ main(int argc, const char *argv[])
 static opcode_t*
 the_test(PARROT_INTERP, opcode_t *cur_op, opcode_t *start)
 {
-    PackFile      *pf   = Parrot_pbc_read(interp, "$temp_pbc", 0);
-    Parrot_String  name = Parrot_str_new_constant(interp, "_sub1");
-    PMC           *sub;
+    PackFile         *pf   = Parrot_pbc_read(interp, "$temp_pbc", 0);
+    STRING           *name = Parrot_str_new_constant(interp, "_sub1");
+    PMC              *sub;
     Parrot_runloop jump_point;
 
     Parrot_pbc_load(interp, pf);
@@ -729,10 +718,10 @@ c_output_is( <<"CODE", <<'OUTPUT', 'eval code through a parrot sub - #39669' );
 #include <parrot/embed.h>
 
 int
-main(int argc, const char *argv[])
+main(int argc, char* argv[])
 {
     Parrot_PackFile packfile;
-    const char * code[] = { ".sub foo\\nsay \\"Hello from foo!\\"\\n.end\\n" };
+    char * code[] = { ".sub foo\\nsay \\"Hello from foo!\\"\\n.end\\n" };
 
     Parrot_Interp interp = Parrot_new(NULL);
     if (!interp) {
@@ -766,13 +755,15 @@ c_output_is( <<'CODE', <<'OUTPUT', 'compile string in a fresh interp - #39986' )
 #include <parrot/extend.h>
 
 int
-main(int argc, const char *argv[])
+main(int argc, char* argv[])
 {
     Parrot_Interp   interp    = Parrot_new(NULL);
     const char      *code      = ".sub foo\nprint\"Hello from foo!\\n\"\n.end\n";
     Parrot_PMC      retval;
     Parrot_PMC      sub;
-    Parrot_String   code_type, error, foo_name;
+    STRING         *code_type;
+    STRING         *error;
+    STRING         *foo_name;
 
     if (!interp) {
         printf( "Hiss\n" );
@@ -805,7 +796,7 @@ c_output_is( <<"CODE", <<'OUTPUT', 'call multi sub from C - #41511' );
 #include <parrot/extend.h>
 
 int
-main(int argc, const char *argv[])
+main(int argc, char* argv[])
 {
     Parrot_Int      result;
     Parrot_PMC      sub;
@@ -837,7 +828,7 @@ c_output_is( <<"CODE", <<'OUTPUT', 'call multi sub from C - unified interface' )
 #include <parrot/extend.h>
 
 int
-main(int argc, const char *argv[])
+main(int argc, char* argv[])
 {
     Parrot_Int      result;
     Parrot_PMC      sub;
@@ -890,8 +881,7 @@ void interp_cleanup(PARROT_INTERP, int status)
 }
 
 int
-main(int argc, const char *argv[])
-{
+main(int argc, char *argv[]) {
     Parrot_Interp interp;
     int i, niter = 2;
 

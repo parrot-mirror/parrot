@@ -55,11 +55,10 @@ obj->bufstart   ->  +------------------+
 /* Given a pointer to the buffer, find the ref_count and the actual start of
    the allocated space. Setting ref_count is clunky because we avoid lvalue
    casts. */
-#define Buffer_alloc_offset sizeof (void*)
+#define Buffer_alloc_offset sizeof (INTVAL)
 #define Buffer_bufallocstart(b)  ((char *)Buffer_bufstart(b) - Buffer_alloc_offset)
+#define Buffer_bufrefcount(b)    (*(INTVAL *)Buffer_bufallocstart(b))
 #define Buffer_bufrefcountptr(b) ((INTVAL *)Buffer_bufallocstart(b))
-#define Buffer_pool(b) ((Memory_Block *)( *(INTVAL*)(Buffer_bufallocstart(b)) & ~3 ))
-#define Buffer_poolptr(b) ((Memory_Block **)Buffer_bufallocstart(b))
 
 
 typedef enum {
@@ -143,7 +142,9 @@ typedef enum PObj_enum {
     PObj_sysmem_FLAG            = POBJ_FLAG(15),
 
 /* PObj usage FLAGs, COW & GC */
-    /* The Buffer allows COW copies, and may have some. */
+    /* Mark the contents as Copy on write */
+    PObj_COW_FLAG               = POBJ_FLAG(16),
+    /* the Buffer may have COW copies */
     PObj_is_COWable_FLAG        = POBJ_FLAG(17),
     /* Private flag for the GC system. Set if the PObj's in use as
      * far as the GC's concerned */
@@ -206,6 +207,10 @@ typedef enum PObj_enum {
 
 #define PObj_flags_SETTO(o, f) PObj_get_FLAGS(o) = (f)
 #define PObj_flags_CLEARALL(o) PObj_flags_SETTO((o), 0)
+
+#define PObj_COW_TEST(o) PObj_flag_TEST(COW, o)
+#define PObj_COW_SET(o) PObj_flag_SET(COW, o)
+#define PObj_COW_CLEAR(o) PObj_flag_CLEAR(COW, o)
 
 #define PObj_is_COWable_TEST(o) PObj_flag_TEST(is_COWable, o)
 #define PObj_is_COWable_SET(o) PObj_flag_SET(is_COWable, o)
@@ -297,11 +302,17 @@ typedef enum PObj_enum {
 #define PObj_is_shared_CLEAR(o) PObj_flag_CLEAR(is_shared, o)
 
 /* some combinations */
+#define PObj_is_cowed_TESTALL(o) (PObj_get_FLAGS(o) & \
+            (PObj_COW_FLAG|PObj_constant_FLAG|PObj_external_FLAG))
+#define PObj_is_cowed_SETALL(o) (PObj_get_FLAGS(o) |= \
+            (PObj_COW_FLAG|PObj_constant_FLAG|PObj_external_FLAG))
+
 #define PObj_is_external_or_free_TESTALL(o) (PObj_get_FLAGS(o) & \
             (UINTVAL)(PObj_external_FLAG|PObj_on_free_list_FLAG))
 
 #define PObj_is_external_CLEARALL(o) (PObj_get_FLAGS(o) &= \
-            ~(UINTVAL)(PObj_external_FLAG|PObj_sysmem_FLAG))
+            ~(UINTVAL)(PObj_COW_FLAG| \
+                       PObj_external_FLAG|PObj_sysmem_FLAG))
 
 #define PObj_is_live_or_free_TESTALL(o) (PObj_get_FLAGS(o) & \
         (PObj_live_FLAG | PObj_on_free_list_FLAG))

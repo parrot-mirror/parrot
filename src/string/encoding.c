@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2004-2010, Parrot Foundation.
+Copyright (C) 2004-2009, Parrot Foundation.
 $Id$
 
 =head1 NAME
@@ -114,7 +114,6 @@ if it is successfully found, returns NULL otherwise.
 */
 
 PARROT_EXPORT
-PARROT_PURE_FUNCTION
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 const ENCODING *
@@ -174,7 +173,6 @@ Return the number of the encoding or -1 if not found.
 */
 
 PARROT_EXPORT
-PARROT_PURE_FUNCTION
 PARROT_WARN_UNUSED_RESULT
 INTVAL
 Parrot_encoding_number(PARROT_INTERP, ARGIN(const STRING *encodingname))
@@ -201,7 +199,6 @@ Return the number of the encoding of the given string or -1 if not found.
 */
 
 PARROT_EXPORT
-PARROT_PURE_FUNCTION
 PARROT_WARN_UNUSED_RESULT
 INTVAL
 Parrot_encoding_number_of_str(SHIM_INTERP, ARGIN(const STRING *src))
@@ -229,7 +226,6 @@ C<number_of_encoding> to the All_encodings array.
 */
 
 PARROT_EXPORT
-PARROT_PURE_FUNCTION
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 STRING*
@@ -254,7 +250,6 @@ Returns the encoding given by the INTVAL index C<number_of_encoding>.
 */
 
 PARROT_EXPORT
-PARROT_PURE_FUNCTION
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 const ENCODING*
@@ -280,7 +275,6 @@ given by the C<number_of_encoding>.
 */
 
 PARROT_EXPORT
-PARROT_PURE_FUNCTION
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 const char *
@@ -434,7 +428,6 @@ Gets the default encoding.
 */
 
 PARROT_EXPORT
-PARROT_PURE_FUNCTION
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 const ENCODING *

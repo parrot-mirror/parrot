@@ -57,6 +57,7 @@ typedef enum {
 /* NOTE: Sure wish we could put the types here... */
 
 typedef opcode_t *(*op_func_t)(opcode_t *, PARROT_INTERP);
+typedef void **(*op_func_prederef_t)(void **, PARROT_INTERP);
 
 
 /*

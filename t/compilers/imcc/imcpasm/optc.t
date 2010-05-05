@@ -1,5 +1,5 @@
 #!perl
-# Copyright (C) 2005-2010, Parrot Foundation.
+# Copyright (C) 2005, Parrot Foundation.
 # $Id$
 
 use strict;
@@ -242,8 +242,8 @@ CODE
 @pcc_sub_call_\d:
   set_args
   set_p_pc (P\d+), foo
-  invokecc \2
   get_results
+  invokecc \2
   noop
   end
 foo:
@@ -424,3 +424,4 @@ sub my_permute {
 #   fill-column: 100
 # End:
 # vim: expandtab shiftwidth=4:
+

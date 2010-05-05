@@ -88,7 +88,7 @@ int Parrot_fprintf(PARROT_INTERP,
         __attribute__nonnull__(3);
 
 PARROT_EXPORT
-void Parrot_free_cstring(ARGFREE(char *string));
+void Parrot_free_cstring(ARGIN_NULLOK(char *string));
 
 PARROT_EXPORT
 Parrot_Int Parrot_get_intreg(PARROT_INTERP, Parrot_Int regnum)
@@ -131,15 +131,13 @@ void Parrot_PMC_delete_pmckey(PARROT_INTERP, Parrot_PMC pmc, Parrot_PMC key)
 
 PARROT_EXPORT
 PARROT_MALLOC
-PARROT_CANNOT_RETURN_NULL
-PARROT_WARN_UNUSED_RESULT
+PARROT_CAN_RETURN_NULL
 char * Parrot_PMC_get_cstring(PARROT_INTERP, Parrot_PMC pmc)
         __attribute__nonnull__(1);
 
 PARROT_EXPORT
 PARROT_MALLOC
-PARROT_WARN_UNUSED_RESULT
-PARROT_CANNOT_RETURN_NULL
+PARROT_CAN_RETURN_NULL
 char * Parrot_PMC_get_cstring_intkey(PARROT_INTERP,
     Parrot_PMC pmc,
     Parrot_Int key)
@@ -147,8 +145,7 @@ char * Parrot_PMC_get_cstring_intkey(PARROT_INTERP,
 
 PARROT_EXPORT
 PARROT_MALLOC
-PARROT_WARN_UNUSED_RESULT
-PARROT_CANNOT_RETURN_NULL
+PARROT_CAN_RETURN_NULL
 char * Parrot_PMC_get_cstringn(PARROT_INTERP,
     ARGIN(Parrot_PMC pmc),
     ARGOUT(Parrot_Int *length))
@@ -159,8 +156,7 @@ char * Parrot_PMC_get_cstringn(PARROT_INTERP,
 
 PARROT_EXPORT
 PARROT_MALLOC
-PARROT_WARN_UNUSED_RESULT
-PARROT_CANNOT_RETURN_NULL
+PARROT_CAN_RETURN_NULL
 char * Parrot_PMC_get_cstringn_intkey(PARROT_INTERP,
     ARGIN(Parrot_PMC pmc),
     ARGOUT(Parrot_Int *length),

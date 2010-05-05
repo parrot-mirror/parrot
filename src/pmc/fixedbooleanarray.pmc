@@ -27,23 +27,10 @@ Auxiliar function to avoid repeating the size evaluation.
 
 #define BITS_PER_CHAR 8
 
-/* HEADERIZER HFILE: none */
-/* HEADERIZER BEGIN: static */
-/* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
-
-PARROT_INLINE
-static UINTVAL get_size_in_bytes(UINTVAL size);
-
-#define ASSERT_ARGS_get_size_in_bytes __attribute__unused__ int _ASSERT_ARGS_CHECK = (0)
-/* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
-/* HEADERIZER END: static */
-
 PARROT_INLINE
 static UINTVAL
 get_size_in_bytes(UINTVAL size)
 {
-    ASSERT_ARGS(get_size_in_bytes)
-
     return (size + BITS_PER_CHAR - 1) / BITS_PER_CHAR;
 }
 
@@ -283,9 +270,9 @@ Returns the Parrot string representation of the array.
 
         for (i = 0; i < elems; i++) {
             if (SELF.get_integer_keyed_int((INTVAL)i))
-                str = Parrot_str_concat(INTERP, str, one);
+                str = Parrot_str_concat(INTERP, str, one, 0);
             else
-                str = Parrot_str_concat(INTERP, str, zero);
+                str = Parrot_str_concat(INTERP, str, zero, 0);
         }
 
         return str;

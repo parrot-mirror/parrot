@@ -279,7 +279,7 @@ sub find_methods {
         }
         else {
 
-            # Name-mangle NCI and multi methods to avoid conflict with vtables
+            # Name-mangle NCI and multi methods to avoid conflict with vtable methods.
             if ( $marker) {
                 if ( $marker =~ /MULTI/ ) {
                     $method->type(Parrot::Pmc2c::Method::MULTI);

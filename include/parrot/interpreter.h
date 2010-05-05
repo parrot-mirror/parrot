@@ -64,6 +64,9 @@ typedef enum {
     PARROT_SLOW_CORE,                       /* slow bounds/trace/profile core */
     PARROT_FUNCTION_CORE    = PARROT_SLOW_CORE,
     PARROT_FAST_CORE        = 0x01,         /* fast DO_OP core */
+    PARROT_SWITCH_CORE      = 0x02,         /*   P   = prederef   */
+    PARROT_CGP_CORE         = 0x06,         /*  CP                */
+    PARROT_CGOTO_CORE       = 0x04,         /*  C    = cgoto      */
     PARROT_EXEC_CORE        = 0x20,         /* TODO Parrot_exec_run variants */
     PARROT_GC_DEBUG_CORE    = 0x40,         /* run GC before each op */
     PARROT_DEBUGGER_CORE    = 0x80,         /* used by parrot debugger */
@@ -148,6 +151,18 @@ struct _imc_info_t;
 
 struct _Thread_data;    /* in thread.h */
 struct _Caches;         /* caches .h */
+
+typedef struct _Prederef_branch {       /* item for recording branches */
+    size_t offs;                        /* offset in code */
+    void  *op;                          /* opcode at that position */
+} Prederef_branch;
+
+typedef struct _Prederef {
+    void **code;                        /* prederefed code */
+    Prederef_branch *branches;          /* list of branches in code */
+    size_t n_branches;                  /* entries in that list */
+    size_t n_allocated;                 /* allocated size of it */
+} Prederef;
 
 /* Get Context from interpreter */
 #define CONTEXT(interp)         Parrot_pcc_get_context_struct((interp), (interp)->ctx)
@@ -281,6 +296,7 @@ struct parrot_interp_t {
     /* during a call sequencer the caller fills these objects
      * inside the invoke these get moved to the context structure */
     PMC *current_cont;                        /* the return continuation PMC */
+    PMC *current_object;                      /* invocant, if a method call */
 };
 
 /* typedef struct parrot_interp_t Interp;    done in parrot.h so that
@@ -300,8 +316,6 @@ typedef enum {
     IGLOBALS_COMPREG_HASH,
     IGLOBALS_ARGV_LIST,
     IGLOBALS_NCI_FUNCS,
-    IGLOBALS_NCI_FB_CB,
-    IGLOBALS_NCI_FB_UD,
     IGLOBALS_INTERPRETER,       /* this interpreter as ParrotInterpreter PMC */
     IGLOBALS_DYN_LIBS,          /* Hash of ParrotLibrary loaded dynamic ext */
     IGLOBALS_CONFIG_HASH,
@@ -317,28 +331,30 @@ typedef enum {
 #define PNCONST   PF_NCONST(interp->code)
 
 /* TODO - Make this a config option */
-#ifndef PARROT_CATCH_NULL
-#  ifdef S_SPLINT_S
-#    define PARROT_CATCH_NULL 0
-#  else
-#    define PARROT_CATCH_NULL 1
-#  endif
+/* Splint complains about PMCNULL's storage, so don't use it. */
+#ifdef S_SPLINT_S
+#  define PARROT_CATCH_NULL 0
+#else
+#  define PARROT_CATCH_NULL 1
 #endif
+
+#if PARROT_CATCH_NULL
+PARROT_DATA PMC    *PMCNULL;    /* Holds single Null PMC */
+#else
+#  define PMCNULL         ((PMC *)NULL)
+#endif /* PARROT_CATCH_NULL */
 
 /* Maybe PMC_IS_NULL(interp, pmc) ? */
 #if PARROT_CATCH_NULL
-PARROT_DATA PMC    *PMCNULL;    /* Holds single Null PMC */
-PARROT_DATA STRING *STRINGNULL; /* a single Null STRING */
-#  define PMC_IS_NULL(pmc)  ((pmc) == PMCNULL || (pmc) == NULL)
-#  define STRING_IS_NULL(s) ((s) == STRINGNULL || (s) == NULL)
+#  define PMC_IS_NULL(pmc) ((pmc) == PMCNULL || (pmc) == NULL)
 #else
-#  define PMCNULL ((PMC *)NULL)
-#  define STRINGNULL ((STRING *)NULL)
-#  define PMC_IS_NULL(pmc)       ((pmc) == NULL)
-#  define STRING_IS_NULL(string) ((string) == NULL)
-#endif /* PARROT_CATCH_NULL */
+#  define PMC_IS_NULL(pmc) (pmc) == NULL
+#endif
 
-#define STRING_IS_EMPTY(s) ((s)->strlen == 0)
+PARROT_DATA STRING *STRINGNULL; /* a single Null STRING */
+
+#define STRING_IS_NULL(s) ((s) == STRINGNULL || (s) == NULL)
+#define STRING_IS_EMPTY(s) !(int)(s)->strlen
 
 /* &gen_from_def(sysinfo.pasm) prefix(SYSINFO_) */
 
@@ -493,7 +509,7 @@ void * Parrot_compile_file(PARROT_INTERP,
 PARROT_EXPORT
 void Parrot_compreg(PARROT_INTERP,
     ARGIN(STRING *type),
-    ARGIN(Parrot_compiler_func_t func))
+    NOTNULL(Parrot_compiler_func_t func))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3);
@@ -566,9 +582,20 @@ STRING * sysinfo_s(PARROT_INTERP, INTVAL info_wanted)
 /* HEADERIZER END: src/interp/inter_misc.c */
 
 
-/* parrotinterpreter.pmc */
-/* XXX Would be nice if this could live in some headerized grouping */
+/* interpreter.c */
+void runops_int(Interp *, size_t offset);
+void exec_init_prederef(PARROT_INTERP,
+    void *prederef_arena);
+void prepare_for_run(PARROT_INTERP);
+PARROT_EXPORT void dynop_register(PARROT_INTERP, PMC *op_lib);
+
+/* interpreter.pmc */
 void clone_interpreter(Parrot_Interp dest, Parrot_Interp self, INTVAL flags);
+
+void Parrot_setup_event_func_ptrs(PARROT_INTERP);
+
+PARROT_EXPORT void disable_event_checking(PARROT_INTERP);
+PARROT_EXPORT void enable_event_checking(PARROT_INTERP);
 
 #else /* !PARROT_IN_CORE */
 

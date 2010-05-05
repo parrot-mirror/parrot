@@ -107,7 +107,7 @@ sub decl {
         $newl   = "\n";
         $semi   = '';
     }
-    my $pmcarg = 'PMC *_self';
+    my $pmcarg = 'PMC *pmc';
     $pmcarg    = "SHIM($pmcarg)" if $self->pmc_unused;
 
     return <<"EOC";
@@ -134,7 +134,7 @@ sub rewrite_nci_method {
       \.(\w+)        # other_method
       \(\s*(.*?)\)   # capture argument list
       }x,
-        sub { "_self->vtable->$1(" . full_arguments($2) . ')' }
+        sub { "pmc->vtable->$1(" . full_arguments($2) . ')' }
     );
 
     # Rewrite STATICSELF.other_method(args...)
@@ -151,8 +151,8 @@ sub rewrite_nci_method {
         }
     );
 
-    # Rewrite SELF -> _self, INTERP -> interp
-    $body->subst( qr{\bSELF\b},   sub { '_self' } );
+    # Rewrite SELF -> pmc, INTERP -> interp
+    $body->subst( qr{\bSELF\b},   sub { 'pmc' } );
     $body->subst( qr{\bINTERP\b}, sub { 'interp' } );
 
     # Rewrite GET_ATTR, SET_ATTR with typename
@@ -163,7 +163,7 @@ sub rewrite_nci_method {
 =item C<rewrite_vtable_method($self, $pmc, $super, $super_table)>
 
 Rewrites the method body performing the various macro substitutions for
-vtable function bodies (see F<tools/build/pmc2c.pl>).
+vtable method bodies (see F<tools/build/pmc2c.pl>).
 
 =cut
 
@@ -180,7 +180,7 @@ sub rewrite_vtable_method {
     # Some MMD variants don't have a super mapping.
     if ($super) {
         my $supertype = "enum_class_$super";
-        die "$pmcname defines unknown vtable function '$name'\n" unless defined $super_table->{$name};
+        die "$pmcname defines unknown vtable method '$name'\n" unless defined $super_table->{$name};
         my $supermethod = "Parrot_" . $super_table->{$name} . "_$name";
 
         # Rewrite OtherClass.SUPER(args...)
@@ -219,7 +219,7 @@ sub rewrite_vtable_method {
         \.(\w+)        # other_method
         \(\s*(.*?)\)   # capture argument list
       }x,
-        sub { "_self->vtable->$1(" . full_arguments($2) . ')' }
+        sub { "pmc->vtable->$1(" . full_arguments($2) . ')' }
     );
 
     # Rewrite SELF(args...). See comments above.
@@ -228,7 +228,7 @@ sub rewrite_vtable_method {
         \bSELF\b       # Macro: SELF
         \(\s*(.*?)\)   # capture argument list
       }x,
-        sub { "_self->vtable->$name(" . full_arguments($1) . ')' }
+        sub { "pmc->vtable->$name(" . full_arguments($1) . ')' }
     );
 
     # Rewrite OtherClass.SELF.other_method(args...)
@@ -304,8 +304,8 @@ sub rewrite_vtable_method {
         }
     );
 
-    # Rewrite SELF -> _self, INTERP -> interp
-    $body->subst( qr{\bSELF\b},   sub { '_self' } );
+    # Rewrite SELF -> pmc, INTERP -> interp
+    $body->subst( qr{\bSELF\b},   sub { 'pmc' } );
     $body->subst( qr{\bINTERP\b}, sub { 'interp' } );
 
     # Rewrite GET_ATTR, SET_ATTR with typename

@@ -1,4 +1,4 @@
-# Copyright (C) 2001-2010, Parrot Foundation.
+# Copyright (C) 2001-2008, Parrot Foundation.
 # $Id$
 
 =head1 PDD 3: Calling Conventions
@@ -391,9 +391,13 @@ Specific exceptions to throw for specific errors.
 
 =end PIR_FRAGMENT
 
+=head2 Attachments
+
+None.
+
 =head2 References
 
-F<pdd23_exceptions.pod>
+L<pdd23_exceptions.pod>
 
 =cut
 

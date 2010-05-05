@@ -1,5 +1,5 @@
 # $Id$
-# Copyright (C) 2007-2010, Parrot Foundation.
+# Copyright (C) 2007, Parrot Foundation.
 
 =head1 NAME
 
@@ -68,7 +68,7 @@ sub new {
     my %data = (
         id         => '$' . 'Id$',
         time       => scalar gmtime,
-        cmd        => 'svn',
+        cmd        => -d '.svn' ? 'svn' : 'svk',
         script     => $argsref->{script},
         file       => $argsref->{file}      ? $argsref->{file}      : q{MANIFEST},
         skip       => $argsref->{skip}      ? $argsref->{skip}      : q{MANIFEST.SKIP},
@@ -201,8 +201,7 @@ sub print_manifest {
 #
 # See below for documentation on the format of this file.
 #
-# See docs/submissions.pod and the documentation in
-# $self->{script} on how to recreate this file after SVN
+# See docs/submissions.pod on how to recreate this file after SVN
 # has been told about new or deleted files.
 END_HEADER
 
@@ -242,6 +241,8 @@ sub _get_manifest_entry {
             : m[^lib/Parrot/]                 ? '[devel]lib'
             : m[^runtime/]                    ? '[library]'
             : m[^src/pmc/.*\.h]               ? '[devel]include'
+            : m[^src/pmc/.*\.pmc]             ? '[devel]src'
+            : m[^src/dynpmc/.*\.pmc]          ? '[devel]src'
             : m[^runtime/parrot/library/PCT]  ? '[pct]'
             : m[^runtime/parrot/library/PCT]  ? '[pge]'
             : m[^runtime/parrot/library/TGE]  ? '[tge]'

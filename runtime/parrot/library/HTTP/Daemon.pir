@@ -207,9 +207,10 @@ set_it:
     $P0 = doc_root
 .end
 
-=item get_bool()
+=item __get_bool()
 
-Object is true if the daemon is listening on a socket, that is if the
+Vtable method, called from the C<if> or C<unless> opcode. Returns
+true, if the daemon object is listening on a socket, that is if the
 initialization went ok.
 
 =cut

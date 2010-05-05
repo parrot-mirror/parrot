@@ -1,4 +1,4 @@
-#!./parrot
+#! parrot
 # Copyright (C) 2007-2010, Parrot Foundation.
 # $Id$
 
@@ -34,16 +34,16 @@ Tests role composition in the OO implementation.
     multi_composition()
 .end
 
-.sub badger :method :nsentry('badger')
+.sub badger :method
     .return('Badger!')
 .end
-.sub badger2 :method :nsentry('badger2')
+.sub badger2 :method
     .return('Second Badger!')
 .end
-.sub mushroom :method :nsentry('mushroom')
+.sub mushroom :method
     .return('Mushroom!')
 .end
-.sub snake :method :nsentry('snake')
+.sub snake :method
     .return('Snake!')
 .end
 .sub fire

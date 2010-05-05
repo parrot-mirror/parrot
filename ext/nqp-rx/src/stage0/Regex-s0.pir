@@ -295,7 +295,7 @@ provided, then the new cursor has the same type as lang.
     parrotclass = getattribute $P0, 'parrotclass'
     cur = new parrotclass
 
-    .local pmc from, target, debug
+    .local pmc from, pos, target, debug
 
     from = getattribute self, '$!pos'
     setattribute cur, '$!from', from
@@ -1036,7 +1036,7 @@ Perform a match for protoregex C<name>.
   cand_done:
   token_next:
     unless token > '' goto fail
-    token = chopn token, 1
+    chopn token, 1
     goto token_loop
 
   done:

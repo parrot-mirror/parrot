@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2001-2010, Parrot Foundation.
+Copyright (C) 2001-2009, Parrot Foundation.
 $Id$
 
 =head1 NAME
@@ -21,75 +21,11 @@ Implements an instance of a class.
 #include "parrot/oo_private.h"
 #include "pmc/pmc_class.h"
 
-/* HEADERIZER HFILE: none */
-/* HEADERIZER BEGIN: static */
-/* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
-
-static void cache_method(PARROT_INTERP,
-    ARGIN(PMC *_class),
-    ARGIN(STRING *name),
-    ARGIN(PMC *method))
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(2)
-        __attribute__nonnull__(3)
-        __attribute__nonnull__(4);
-
-PARROT_WARN_UNUSED_RESULT
-PARROT_CAN_RETURN_NULL
-static PMC * find_cached(PARROT_INTERP,
-    ARGIN(PMC *_class),
-    ARGIN(STRING *name))
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(2)
-        __attribute__nonnull__(3);
-
-PARROT_WARN_UNUSED_RESULT
-static INTVAL get_attrib_index(PARROT_INTERP,
-    ARGIN(PMC *self),
-    ARGIN(STRING *name))
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(2)
-        __attribute__nonnull__(3);
-
-PARROT_WARN_UNUSED_RESULT
-static INTVAL get_attrib_index_keyed(PARROT_INTERP,
-    ARGIN(PMC *self),
-    ARGIN(PMC *key),
-    ARGIN(STRING *name))
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(2)
-        __attribute__nonnull__(3)
-        __attribute__nonnull__(4);
-
-#define ASSERT_ARGS_cache_method __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
-       PARROT_ASSERT_ARG(interp) \
-    , PARROT_ASSERT_ARG(_class) \
-    , PARROT_ASSERT_ARG(name) \
-    , PARROT_ASSERT_ARG(method))
-#define ASSERT_ARGS_find_cached __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
-       PARROT_ASSERT_ARG(interp) \
-    , PARROT_ASSERT_ARG(_class) \
-    , PARROT_ASSERT_ARG(name))
-#define ASSERT_ARGS_get_attrib_index __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
-       PARROT_ASSERT_ARG(interp) \
-    , PARROT_ASSERT_ARG(self) \
-    , PARROT_ASSERT_ARG(name))
-#define ASSERT_ARGS_get_attrib_index_keyed __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
-       PARROT_ASSERT_ARG(interp) \
-    , PARROT_ASSERT_ARG(self) \
-    , PARROT_ASSERT_ARG(key) \
-    , PARROT_ASSERT_ARG(name))
-/* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
-/* HEADERIZER END: static */
-
 /* This finds the index of an attribute in an object's attribute store and
  * returns it. Returns -1 if the attribute does not exist. */
-
-PARROT_WARN_UNUSED_RESULT
 static INTVAL
-get_attrib_index(PARROT_INTERP, ARGIN(PMC *self), ARGIN(STRING *name))
+get_attrib_index(PARROT_INTERP, PMC *self, STRING *name)
 {
-    ASSERT_ARGS(get_attrib_index)
     Parrot_Class_attributes * const _class  = PARROT_CLASS(self);
     const INTVAL                    cur_hll = Parrot_pcc_get_HLL(interp, CURRENT_CONTEXT(interp));
     int                             num_classes, i;
@@ -119,7 +55,7 @@ get_attrib_index(PARROT_INTERP, ARGIN(PMC *self), ARGIN(STRING *name))
 
         /* Build a string representing the fully qualified attribute name. */
         STRING *fq_name = VTABLE_get_string(interp, cur_class);
-        fq_name         = Parrot_str_concat(interp, fq_name, name);
+        fq_name         = Parrot_str_append(interp, fq_name, name);
 
         /* Look up. */
         if (VTABLE_exists_keyed_str(interp, _class->attrib_index, fq_name)) {
@@ -142,11 +78,9 @@ get_attrib_index(PARROT_INTERP, ARGIN(PMC *self), ARGIN(STRING *name))
  * parent's attribute in an object's attribute store and returns it. Returns -1
  * if the attribute does not exist. */
 
-PARROT_WARN_UNUSED_RESULT
 static INTVAL
-get_attrib_index_keyed(PARROT_INTERP, ARGIN(PMC *self), ARGIN(PMC *key), ARGIN(STRING *name))
+get_attrib_index_keyed(PARROT_INTERP, PMC *self, PMC *key, STRING *name)
 {
-    ASSERT_ARGS(get_attrib_index_keyed)
     Parrot_Class_attributes * const _class       = PARROT_CLASS(self);
     PMC          * const class_cache  = VTABLE_get_pmc_keyed_str(interp,
                     _class->attrib_cache, VTABLE_get_string(interp, key));
@@ -160,7 +94,7 @@ get_attrib_index_keyed(PARROT_INTERP, ARGIN(PMC *self), ARGIN(PMC *key), ARGIN(S
     /* Build a string representing the fully qualified attribute name. */
     parent_class = Parrot_oo_get_class(interp, key);
     fq_name      = VTABLE_get_string(interp, parent_class);
-    fq_name      = Parrot_str_concat(interp, fq_name, name);
+    fq_name      = Parrot_str_append(interp, fq_name, name);
 
     /* Look up. */
     if (VTABLE_exists_keyed_str(interp, _class->attrib_index, fq_name)) {
@@ -173,12 +107,9 @@ get_attrib_index_keyed(PARROT_INTERP, ARGIN(PMC *self), ARGIN(PMC *key), ARGIN(S
     return -1;
 }
 
-PARROT_WARN_UNUSED_RESULT
-PARROT_CAN_RETURN_NULL
 static PMC *
-find_cached(PARROT_INTERP, ARGIN(PMC *_class), ARGIN(STRING *name))
+find_cached(PARROT_INTERP, PMC *_class, STRING *name)
 {
-    ASSERT_ARGS(find_cached)
     PMC *cache;
     GETATTR_Class_meth_cache(interp, _class, cache);
 
@@ -189,9 +120,8 @@ find_cached(PARROT_INTERP, ARGIN(PMC *_class), ARGIN(STRING *name))
 }
 
 static void
-cache_method(PARROT_INTERP, ARGIN(PMC *_class), ARGIN(STRING *name), ARGIN(PMC *method))
+cache_method(PARROT_INTERP, PMC *_class, STRING *name, PMC *method)
 {
-    ASSERT_ARGS(cache_method)
     PMC *cache;
     GETATTR_Class_meth_cache(interp, _class, cache);
 
@@ -496,11 +426,11 @@ Invoke the PIR-defined vtable override, or call the default get_integer.
 
 */
     VTABLE INTVAL get_integer() {
-        Parrot_Object_attributes * const obj       = PARROT_OBJECT(SELF);
+        Parrot_Object_attributes * const obj       = PARROT_OBJECT(pmc);
         Parrot_Class_attributes  * const _class    = PARROT_CLASS(obj->_class);
         STRING * const meth_name = CONST_STRING(interp, "get_integer");
 
-        /* Walk and search for the vtable. */
+        /* Walk and search for the vtable method. */
         const int num_classes = VTABLE_elements(interp, _class->all_parents);
         int i;
         for (i = 0; i < num_classes; i++) {
@@ -511,15 +441,15 @@ Invoke the PIR-defined vtable override, or call the default get_integer.
                     cur_class, meth_name);
             if (!PMC_IS_NULL(meth)) {
                 INTVAL result;
-                Parrot_pcc_invoke_sub_from_c_args(interp, meth, "Pi->I", SELF, &result);
+                Parrot_pcc_invoke_sub_from_c_args(interp, meth, "Pi->I", pmc, &result);
                 return result;
 
             }
             /* method name is get_integer */
             if (cur_class->vtable->base_type == enum_class_PMCProxy) {
-                /* Get the PMC instance and call the vtable function on that. */
+                /* Get the PMC instance and call the vtable method on that. */
                 STRING * const proxy      = CONST_STRING(interp, "proxy");
-                PMC    * const del_object = VTABLE_get_attr_str(interp, SELF, proxy);
+                PMC    * const del_object = VTABLE_get_attr_str(interp, pmc, proxy);
 
                 if (!PMC_IS_NULL(del_object)) {
                     return (INTVAL)VTABLE_get_integer(interp, del_object);
@@ -527,7 +457,7 @@ Invoke the PIR-defined vtable override, or call the default get_integer.
                 }
             }
         }
-        return interp->vtables[enum_class_default]->get_integer(interp, SELF);
+        return interp->vtables[enum_class_default]->get_integer(interp, pmc);
     }
 
 /*
@@ -710,10 +640,10 @@ Invokes the object (if this vtable function is overridden).
 */
 
     opcode_t * invoke(void *next) {
-        Parrot_Object_attributes * const obj    = PARROT_OBJECT(SELF);
+        Parrot_Object_attributes * const obj    = PARROT_OBJECT(pmc);
         Parrot_Class_attributes  * const _class = PARROT_CLASS(obj->_class);
 
-        /* Walk and search for the vtable. */
+        /* Walk and search for the vtable method. */
         const int num_classes = VTABLE_elements(interp, _class->all_parents);
         int i;
 
@@ -730,7 +660,8 @@ Invokes the object (if this vtable function is overridden).
             if (!PMC_IS_NULL(meth)) {
                 /* Experimental code. See DEPRECATED.pod */
                 PMC *call_sig = Parrot_pcc_get_signature(interp, CURRENT_CONTEXT(interp));
-                if ((VTABLE_elements(interp, call_sig) == 0 ||
+                if (PMC_IS_NULL(interp->current_object) &&
+                        (VTABLE_elements(interp, call_sig) == 0 ||
                         VTABLE_get_pmc_keyed_int(interp, call_sig, 0) != SELF))
                     VTABLE_unshift_pmc(interp, call_sig, SELF);
 
@@ -738,16 +669,16 @@ Invokes the object (if this vtable function is overridden).
             }
 
             if (cur_class->vtable->base_type == enum_class_PMCProxy) {
-                /* Get the PMC instance and call the vtable function on that. */
+                /* Get the PMC instance and call the vtable method on that. */
                 PMC * const del_object =
-                    VTABLE_get_attr_keyed(interp, SELF, cur_class, proxy);
+                    VTABLE_get_attr_keyed(interp, pmc, cur_class, proxy);
 
                 if (!PMC_IS_NULL(del_object))
                     return VTABLE_invoke(interp, del_object, next);
             }
         }
 
-        return (opcode_t *)interp->vtables[enum_class_default]->invoke(interp, SELF, next);
+        return (opcode_t *)interp->vtables[enum_class_default]->invoke(interp, pmc, next);
     }
 
 /*
@@ -776,22 +707,20 @@ Creates a clone of the object.
 */
 
     VTABLE PMC * clone() {
-        Parrot_Object_attributes * const obj = PARROT_OBJECT(SELF);
+        Parrot_Object_attributes * const obj = PARROT_OBJECT(pmc);
         /* If we have a custom override, invoke it.
          * If not, use the oo function. */
         STRING * const meth_name = CONST_STRING(interp, "clone");
         PMC * const meth =
                 Parrot_oo_find_vtable_override(interp, obj->_class, meth_name);
-        PMC *result;
-
         if (!PMC_IS_NULL(meth)) {
-            Parrot_pcc_invoke_sub_from_c_args(interp, meth, "Pi->P", SELF, &result);
+            PMC *result;
+            Parrot_pcc_invoke_sub_from_c_args(interp, meth, "Pi->P",
+                    pmc, &result);
+            return result;
         }
-        else {
-            result = Parrot_oo_clone_object(interp, SELF, NULL);
-        }
-
-        return result;
+        else
+            return Parrot_oo_clone_object(interp, SELF, obj->_class, NULL);
     }
 
 /*
@@ -873,8 +802,8 @@ Used to mark a PMC as read-only shared.
         type_num = SELF->vtable->base_type;
 
         /* make sure metadata doesn't go away unexpectedly */
-        if (PMC_metadata(SELF))
-            PMC_metadata(SELF) = pt_shared_fixup(interp, PMC_metadata(SELF));
+        if (PMC_metadata(pmc))
+            PMC_metadata(pmc) = pt_shared_fixup(interp, PMC_metadata(pmc));
 
         PARROT_ASSERT(master->vtables[type_num]->pmc_class);
         /* don't want the referenced class disappearing on us */

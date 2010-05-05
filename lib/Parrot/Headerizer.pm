@@ -1,7 +1,5 @@
-# Copyright (C) 2004-2010, Parrot Foundation.
+# Copyright (C) 2004-2007, Parrot Foundation.
 # $Id$
-
-package Parrot::Headerizer;
 
 =head1 NAME
 
@@ -15,14 +13,16 @@ Parrot::Headerizer - Parrot Header Generation functionality
 
 =head1 DESCRIPTION
 
-C<Parrot::Headerizer> knows how to extract all kinds of information out
-of C-language files.
+C<Parrot::Headerizer> knows how to strip all kinds of information out of
+C-language files.
 
 =head2 Class Methods
 
 =over 4
 
 =cut
+
+package Parrot::Headerizer;
 
 use strict;
 use warnings;
@@ -33,68 +33,39 @@ TODO
 
 Contructor of headerizer objects
 
+Don't blame me too much, I've never done OO in Perl before.
+
 =cut
+
+## i'm a singleton
+my $headerizer;
 
 sub new {
     my ($class) = @_;
 
-    my $self = bless {
-        warnings => {},
-    }, $class;
+    return $headerizer if defined $headerizer;
 
-    $self->{valid_macros} = { map { ( $_, 1 ) } qw(
-        PARROT_EXPORT
-        PARROT_INLINE
-
-        PARROT_CAN_RETURN_NULL
-        PARROT_CANNOT_RETURN_NULL
-
-        PARROT_IGNORABLE_RESULT
-        PARROT_WARN_UNUSED_RESULT
-
-        PARROT_PURE_FUNCTION
-        PARROT_CONST_FUNCTION
-
-        PARROT_DOES_NOT_RETURN
-        PARROT_DOES_NOT_RETURN_WHEN_FALSE
-
-        PARROT_MALLOC
-        PARROT_OBSERVER
-
-        PARROT_HOT
-        PARROT_COLD
-        )
-    };
+    my $self = bless {}, $class;
 
     return $self;
 }
 
-=item $headerizer->valid_macro( $macro )
+my %warnings;
+my %valid_macros = map { ( $_, 1 ) } qw(
+    PARROT_EXPORT
+    PARROT_INLINE
+    PARROT_CAN_RETURN_NULL
+    PARROT_CANNOT_RETURN_NULL
+    PARROT_IGNORABLE_RESULT
+    PARROT_WARN_UNUSED_RESULT
+    PARROT_PURE_FUNCTION
+    PARROT_CONST_FUNCTION
+    PARROT_DOES_NOT_RETURN
+    PARROT_MALLOC
+    PARROT_OBSERVER
+);
 
-Returns a boolean saying wither I<$macro> is a valid PARROT_XXX macro.
-
-=cut
-
-sub valid_macro {
-    my $self = shift;
-    my $macro = shift;
-
-    return exists $self->{valid_macros}{$macro};
-}
-
-=item $headerizer->valid_macros()
-
-Returns a list of all the valid PARROT_XXX macros.
-
-=cut
-
-sub valid_macros {
-    my $self = shift;
-
-    return sort keys %{$self->{valid_macros}};
-}
-
-=item $headerizer->extract_function_declarations($text)
+=item C<extract_function_declarations($text)>
 
 Extracts the function declarations from the text argument, and returns an
 array of strings containing the function declarations.
@@ -105,16 +76,12 @@ sub extract_function_declarations {
     my $self = shift;
     my $text = shift;
 
-    # Only check the YACC C code if we find what looks like YACC file
-    $text =~ s/%\{(.*)%\}.*/$1/sm;
-
-    # Drop all text after HEADERIZER STOP
     $text =~ s{/\*\s*HEADERIZER STOP.+}{}s;
 
     # Strip blocks of comments
     $text =~ s{^/\*.*?\*/}{}mxsg;
 
-    # Strip # compiler directives
+    # Strip # compiler directives (Thanks, Audrey!)
     $text =~ s{^#(\\\n|.)*}{}mg;
 
     # Strip code blocks
@@ -140,9 +107,6 @@ sub extract_function_declarations {
 
     # Ignore anything with magic words HEADERIZER SKIP
     @funcs = grep { !m{/\*\s*HEADERIZER SKIP\s*\*/} } @funcs;
-
-    # pmclass declarations in PMC files are no good
-    @funcs = grep { !m{^pmclass } } @funcs;
 
     # Variables are of no use to us
     @funcs = grep { !/=/ } @funcs;
@@ -171,15 +135,14 @@ $proto => the function declaration
 
 Returns an anonymous hash of function components:
 
-        file         => $file,
-        name         => $name,
-        args         => \@args,
-        macros       => \@macros,
-        is_static    => $is_static,
-        is_inline    => $parrot_inline,
-        is_api       => $parrot_api,
-        is_ignorable => $is_ignorable,
-        return_type  => $return_type,
+        file        => $file,
+        name        => $name,
+        args        => \@args,
+        macros      => \@macros,
+        is_static   => $is_static,
+        is_inline   => $parrot_inline,
+        is_api      => $parrot_api,
+        return_type => $return_type,
 
 =cut
 
@@ -211,7 +174,7 @@ sub function_components_from_declaration {
 
     $args =~ s/\s+/ /g;
     $args =~ s{([^(]+)\s*\((.+)\);?}{$2}
-        or die qq{Couldn't handle "$proto" in $file\n};
+        or die qq{Couldn't handle "$proto"};
 
     my $name = $1;
     $args = $2;
@@ -227,7 +190,6 @@ sub function_components_from_declaration {
             or die "Bad args in $proto";
     }
 
-    my $is_ignorable = 0;
     my $is_static = 0;
     $is_static = $2 if $return_type =~ s/^((static)\s+)?//i;
 
@@ -236,11 +198,8 @@ sub function_components_from_declaration {
     my %macros;
     for my $macro (@macros) {
         $macros{$macro} = 1;
-        if (not $self->valid_macro($macro)) {
+        if ( not $valid_macros{$macro} ) {
             $self->squawk( $file, $name, "Invalid macro $macro" );
-        }
-        if ( $macro eq 'PARROT_IGNORABLE_RESULT' ) {
-            $is_ignorable = 1;
         }
     }
     if ( $return_type =~ /\*/ ) {
@@ -255,15 +214,14 @@ sub function_components_from_declaration {
     }
 
     return {
-        file         => $file,
-        name         => $name,
-        args         => \@args,
-        macros       => \@macros,
-        is_static    => $is_static,
-        is_inline    => $parrot_inline,
-        is_api       => $parrot_api,
-        is_ignorable => $is_ignorable,
-        return_type  => $return_type,
+        file        => $file,
+        name        => $name,
+        args        => \@args,
+        macros      => \@macros,
+        is_static   => $is_static,
+        is_inline   => $parrot_inline,
+        is_api      => $parrot_api,
+        return_type => $return_type,
     };
 }
 
@@ -279,7 +237,7 @@ sub generate_documentation_signature {
     my $function_decl = shift;
 
     # strip out any PARROT_* function modifiers
-    foreach my $key ($self->valid_macros) {
+    foreach my $key (%valid_macros) {
         $function_decl =~ s/^$key$//m;
     }
 
@@ -287,7 +245,7 @@ sub generate_documentation_signature {
     $function_decl =~ s/\s+/ /g;
 
     # strip out any ARG* modifiers
-    $function_decl =~ s/ARG(?:IN|IN_NULLOK|OUT|OUT_NULLOK|MOD|MOD_NULLOK|FREE|FREE_NOTNULL)\((.*?)\)/$1/g;
+    $function_decl =~ s/ARG(?:IN|IN_NULLOK|OUT|OUT_NULLOK|MOD|MOD_NULLOK|FREE)\((.*?)\)/$1/g;
 
     # strip out the SHIM modifier
     $function_decl =~ s/SHIM\((.*?)\)/$1/g;
@@ -343,7 +301,7 @@ sub squawk {
     my $func  = shift;
     my $error = shift;
 
-    push( @{ $self->{warnings}{$file}{$func} }, $error );
+    push( @{ $warnings{$file}->{$func} }, $error );
 
     return;
 }

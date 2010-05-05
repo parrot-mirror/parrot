@@ -1,4 +1,4 @@
-#!./parrot
+#! parrot
 # Copyright (C) 2007-2010, Parrot Foundation.
 # $Id$
 
@@ -28,19 +28,19 @@ Tests the C3 Method Resolution order for the OO implementation.
     merge_two_pairs()
 .end
 
-.sub method_A :method :nsentry('method_A')
+.sub method_A :method
     .return('Method from A')
 .end
 
-.sub method_B :method :nsentry('method_B')
+.sub method_B :method
     .return('Method from B')
 .end
 
-.sub method_C :method :nsentry('method_C')
+.sub method_C :method
     .return('Method from C')
 .end
 
-.sub method_D :method :nsentry('method_D')
+.sub method_D :method
     .return('Method from D')
 .end
 

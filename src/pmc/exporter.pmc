@@ -49,8 +49,7 @@ the typed namespace interface, as outlined in
 F<docs/pdds/pdd21_namespaces.pod>.
 
 Exporter is not derived from any other PMC, and does not provide any
-vtable interface--its interface consists solely of methods, not
-vtable functions.
+vtable interface--its interface consists solely of non-vtable methods.
 
 =head2 Structure
 
@@ -90,10 +89,6 @@ A Null PMC is allocated during initialization.
 =cut
 
 */
-
-/* HEADERIZER HFILE: none */
-/* HEADERIZER BEGIN: static */
-/* HEADERIZER END: static */
 
 pmclass Exporter auto_attrs {
 

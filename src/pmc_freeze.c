@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2001-2010, Parrot Foundation.
+Copyright (C) 2001-2009, Parrot Foundation.
 $Id$
 
 =head1 NAME
@@ -49,12 +49,12 @@ Freeze using either method.
 
 PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
-PARROT_CANNOT_RETURN_NULL
+PARROT_CAN_RETURN_NULL
 STRING*
 Parrot_freeze(PARROT_INTERP, ARGIN(PMC *pmc))
 {
     ASSERT_ARGS(Parrot_freeze)
-    PMC * const image = Parrot_pmc_new(interp, enum_class_ImageIO);
+    PMC *image = Parrot_pmc_new(interp, enum_class_ImageIO);
     VTABLE_set_pmc(interp, image, pmc);
     return VTABLE_get_string(interp, image);
 }
@@ -73,13 +73,14 @@ Used in C<Packfile_Constant_pack_size>.
 
 PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
+PARROT_CAN_RETURN_NULL
 UINTVAL
 Parrot_freeze_size(PARROT_INTERP, ARGIN(PMC *pmc))
 {
     ASSERT_ARGS(Parrot_freeze_size)
     UINTVAL int_result;
     PMC    *pmc_result;
-    PMC    * const visitor = Parrot_pmc_new(interp, enum_class_ImageIOSize);
+    PMC    *visitor = Parrot_pmc_new(interp, enum_class_ImageIOSize);
     VTABLE_set_pmc(interp, visitor, pmc);
     pmc_result = VTABLE_get_pmc(interp, visitor);
     int_result = VTABLE_get_integer(interp, pmc_result);
@@ -105,13 +106,13 @@ nested containers, for which another approach could be a win.
 
 PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
-PARROT_CANNOT_RETURN_NULL
+PARROT_CAN_RETURN_NULL
 PMC*
 Parrot_thaw(PARROT_INTERP, ARGIN(STRING *image))
 {
     ASSERT_ARGS(Parrot_thaw)
 
-    PMC * const info = Parrot_pmc_new(interp, enum_class_ImageIO);
+    PMC        *info     = Parrot_pmc_new(interp, enum_class_ImageIO);
     int         gc_block = 0;
     PMC        *result;
 
@@ -157,7 +158,7 @@ This is a lie. It does nothing different from Parrot_thaw at the moment.
 
 PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
-PARROT_CANNOT_RETURN_NULL
+PARROT_CAN_RETURN_NULL
 PMC*
 Parrot_thaw_constants(PARROT_INTERP, ARGIN(STRING *image))
 {
@@ -198,8 +199,7 @@ Iterate a visitor PMC visiting each encountered target PMC.
 */
 
 void
-Parrot_visit_loop_visit(PARROT_INTERP, ARGIN(PMC *info))
-{
+Parrot_visit_loop_visit(PARROT_INTERP, ARGIN(PMC *info)) {
     ASSERT_ARGS(Parrot_visit_loop_visit)
 
     INTVAL      i;
@@ -207,7 +207,7 @@ Parrot_visit_loop_visit(PARROT_INTERP, ARGIN(PMC *info))
 
     /* can't cache upper limit, visit may append items */
     for (i = 0; i < VTABLE_elements(interp, todo); i++) {
-        PMC * const current = VTABLE_get_pmc_keyed_int(interp, todo, i);
+        PMC *current = VTABLE_get_pmc_keyed_int(interp, todo, i);
         if (!current)
             Parrot_ex_throw_from_c_args(interp, NULL, 1,
                     "NULL current PMC in visit_loop_todo_list");
@@ -231,8 +231,7 @@ Iterate a visitor PMC thawfinishing each encountered target PMC.
 */
 
 void
-Parrot_visit_loop_thawfinish(PARROT_INTERP, ARGIN(PMC *info))
-{
+Parrot_visit_loop_thawfinish(PARROT_INTERP, ARGIN(PMC *info)) {
     ASSERT_ARGS(Parrot_visit_loop_thawfinish)
 
     /* call thawfinish for each processed PMC */
@@ -267,6 +266,10 @@ The seen-hash version for freezing might go away sometime.
 =head1 SEE ALSO
 
 Lot of discussion on p6i and F<docs/dev/pmc_freeze.pod>.
+
+=head1 HISTORY
+
+Initial version by leo 2003.11.03 - 2003.11.07.
 
 =cut
 

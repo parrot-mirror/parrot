@@ -42,26 +42,22 @@ PARROT_PURE_FUNCTION
 static int is_all_hex_digits(ARGIN(const char *s))
         __attribute__nonnull__(1);
 
-static void Parrot_version(void);
+static void Parrot_version(PARROT_INTERP)
+        __attribute__nonnull__(1);
+
 PARROT_CAN_RETURN_NULL
 static const char * parseflags(PARROT_INTERP,
-    ARGMOD(int *argc),
-    ARGMOD(const char **argv[]),
-    ARGMOD(Parrot_Run_core_t *core),
-    ARGMOD(Parrot_trace_flags *trace))
+    ARGIN(int *argc),
+    ARGIN(char **argv[]),
+    ARGIN(Parrot_Run_core_t *core),
+    ARGIN(Parrot_trace_flags *trace))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3)
         __attribute__nonnull__(4)
-        __attribute__nonnull__(5)
-        FUNC_MODIFIES(*argc)
-        FUNC_MODIFIES(*argv[])
-        FUNC_MODIFIES(*core)
-        FUNC_MODIFIES(*trace);
+        __attribute__nonnull__(5);
 
-static void parseflags_minimal(PARROT_INTERP,
-    int argc,
-    ARGIN(const char *argv[]))
+static void parseflags_minimal(PARROT_INTERP, int argc, ARGIN(char *argv[]))
         __attribute__nonnull__(1)
         __attribute__nonnull__(3);
 
@@ -73,7 +69,8 @@ static void usage(ARGMOD(FILE *fp))
 #define ASSERT_ARGS_help_debug __attribute__unused__ int _ASSERT_ARGS_CHECK = (0)
 #define ASSERT_ARGS_is_all_hex_digits __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
        PARROT_ASSERT_ARG(s))
-#define ASSERT_ARGS_Parrot_version __attribute__unused__ int _ASSERT_ARGS_CHECK = (0)
+#define ASSERT_ARGS_Parrot_version __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
+       PARROT_ASSERT_ARG(interp))
 #define ASSERT_ARGS_parseflags __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
        PARROT_ASSERT_ARG(interp) \
     , PARROT_ASSERT_ARG(argc) \
@@ -90,7 +87,7 @@ static void usage(ARGMOD(FILE *fp))
 
 /*
 
-=item C<int main(int argc, const char *argv[])>
+=item C<int main(int argc, char * argv[])>
 
 The entry point from the command line into Parrot.
 
@@ -99,7 +96,7 @@ The entry point from the command line into Parrot.
 */
 
 int
-main(int argc, const char *argv[])
+main(int argc, char * argv[])
 {
     int         stacktop;
     const char *sourcefile;
@@ -131,6 +128,18 @@ main(int argc, const char *argv[])
     initialize_interpreter(interp, (void*)&stacktop);
     imcc_initialize(interp);
 
+    { /* EXPERIMENTAL: add library and include paths from environment */
+        PMC *env = Parrot_pmc_new(interp, enum_class_Env);
+        STRING *path = VTABLE_get_string_keyed_str(interp, env,
+                Parrot_str_new_constant(interp, "PARROT_LIBRARY"));
+        if (!Parrot_str_is_null(interp, path) && Parrot_str_length(interp, path) > 0)
+            Parrot_lib_add_path(interp, path, PARROT_LIB_PATH_LIBRARY);
+        path = VTABLE_get_string_keyed_str(interp, env,
+                Parrot_str_new_constant(interp, "PARROT_INCLUDE"));
+        if (!Parrot_str_is_null(interp, path) && Parrot_str_length(interp, path) > 0)
+            Parrot_lib_add_path(interp, path, PARROT_LIB_PATH_INCLUDE);
+    }
+
     /* Parse flags */
     sourcefile = parseflags(interp, &argc, &argv, &core, &trace);
 
@@ -151,7 +160,6 @@ main(int argc, const char *argv[])
 #define OPT_HELP_DEBUG     130
 #define OPT_PBC_OUTPUT     131
 #define OPT_RUNTIME_PREFIX 132
-#define OPT_HASH_SEED      133
 
 #define SET_FLAG(flag)   Parrot_set_flag(interp, (flag))
 #define SET_DEBUG(flag)  Parrot_set_debug(interp, (flag))
@@ -162,7 +170,7 @@ static struct longopt_opt_decl options[] = {
     { 'D', 'D', OPTION_optional_FLAG, { "--parrot-debug" } },
     { 'E', 'E', (OPTION_flags)0, { "--pre-process-only" } },
     { 'G', 'G', (OPTION_flags)0, { "--no-gc" } },
-    { '\0', OPT_HASH_SEED, OPTION_required_FLAG, { "--hash-seed" } },
+    { 'H', 'H', OPTION_required_FLAG, { "--hash-seed" } },
     { 'I', 'I', OPTION_required_FLAG, { "--include" } },
     { 'L', 'L', OPTION_required_FLAG, { "--library" } },
     { 'O', 'O', OPTION_optional_FLAG, { "--optimize" } },
@@ -298,11 +306,11 @@ help(void)
     "    -V --version\n"
     "    -I --include add path to include search\n"
     "    -L --library add path to library search\n"
-    "       --hash-seed F00F  specify hex value to use as hash seed\n"
+    "    -H --hash-seed F00F  specify hex value to use as hash seed\n"
     "    -X --dynext add path to dynamic extension search\n"
     "   <Run core options>\n"
-    "    -R --runcore slow|bounds|fast\n"
-    "    -R --runcore trace|profiling|gcdebug\n"
+    "    -R --runcore slow|bounds|fast|cgoto|cgp\n"
+    "    -R --runcore switch|trace|profiling|gcdebug\n"
     "    -t --trace [flags]\n"
     "   <VM options>\n"
     "    -D --parrot-debug[=HEXFLAGS]\n"
@@ -333,7 +341,7 @@ help(void)
 
 /*
 
-=item C<static void Parrot_version(void)>
+=item C<static void Parrot_version(PARROT_INTERP)>
 
 Print out parrot version number.
 
@@ -342,7 +350,7 @@ Print out parrot version number.
 */
 
 static void
-Parrot_version(void)
+Parrot_version(PARROT_INTERP)
 {
     ASSERT_ARGS(Parrot_version)
     printf("This is Parrot version " PARROT_VERSION);
@@ -360,8 +368,7 @@ included in the Parrot source tree.\n\n");
 
 /*
 
-=item C<static void parseflags_minimal(PARROT_INTERP, int argc, const char
-*argv[])>
+=item C<static void parseflags_minimal(PARROT_INTERP, int argc, char *argv[])>
 
 Parse minimal subset of args required for initializing interpreter.
 
@@ -369,15 +376,14 @@ Parse minimal subset of args required for initializing interpreter.
 
 */
 static void
-parseflags_minimal(PARROT_INTERP, int argc, ARGIN(const char *argv[]))
+parseflags_minimal(PARROT_INTERP, int argc, ARGIN(char *argv[]))
 {
     ASSERT_ARGS(parseflags_minimal)
 
     int pos = 0;
-
+    const char *arg;
     while (pos < argc) {
-        const char *arg = argv[pos];
-
+        arg = argv[pos];
         if (STREQ(arg, "--gc")) {
             ++pos;
             if (pos == argc) {
@@ -399,23 +405,12 @@ parseflags_minimal(PARROT_INTERP, int argc, ARGIN(const char *argv[]))
             }
             break;
         }
-        else if (!strncmp(arg, "--hash-seed", 11)) {
-
-            if ((arg = strrchr(arg, '=')))
-                arg++;
-            else
-                arg = argv[++pos];
-
+        else if (STREQ(arg, "--hash-seed")) {
+            ++pos;
+            arg = argv[pos];
             if (is_all_hex_digits(arg)) {
                 interp->hash_seed = strtoul(arg, NULL, 16);
             }
-            else {
-                fprintf(stderr, "error: invalid hash seed specified:"
-                        "'%s'\n", arg);
-                exit(EXIT_FAILURE);
-            }
-            ++pos;
-            arg = argv[pos];
         }
         ++pos;
     }
@@ -423,8 +418,8 @@ parseflags_minimal(PARROT_INTERP, int argc, ARGIN(const char *argv[]))
 
 /*
 
-=item C<static const char * parseflags(PARROT_INTERP, int *argc, const char
-**argv[], Parrot_Run_core_t *core, Parrot_trace_flags *trace)>
+=item C<static const char * parseflags(PARROT_INTERP, int *argc, char **argv[],
+Parrot_Run_core_t *core, Parrot_trace_flags *trace)>
 
 Parse Parrot's command line for options and set appropriate flags.
 
@@ -435,8 +430,8 @@ Parse Parrot's command line for options and set appropriate flags.
 PARROT_CAN_RETURN_NULL
 static const char *
 parseflags(PARROT_INTERP,
-        ARGMOD(int *argc), ARGMOD(const char **argv[]),
-        ARGMOD(Parrot_Run_core_t *core), ARGMOD(Parrot_trace_flags *trace))
+        ARGIN(int *argc), ARGIN(char **argv[]),
+        ARGIN(Parrot_Run_core_t *core), ARGIN(Parrot_trace_flags *trace))
 {
     ASSERT_ARGS(parseflags)
     struct longopt_opt_info opt  = LONGOPT_OPT_INFO_INIT;
@@ -454,15 +449,26 @@ parseflags(PARROT_INTERP,
 
     imcc_start_handling_flags(interp);
 
-    while ((status = longopt_get(interp, *argc, _tempargv, options, &opt)) > 0) {
+    while ((status = longopt_get(interp, *argc, _tempargv, options,
+            &opt)) > 0) {
         switch (opt.opt_id) {
           case 'R':
             if (STREQ(opt.opt_arg, "slow") || STREQ(opt.opt_arg, "bounds"))
                 *core = PARROT_SLOW_CORE;
             else if (STREQ(opt.opt_arg, "fast") || STREQ(opt.opt_arg, "function"))
                 *core = PARROT_FAST_CORE;
+            else if (STREQ(opt.opt_arg, "switch"))
+                *core = PARROT_SWITCH_CORE;
+            else if (STREQ(opt.opt_arg, "cgp"))
+                *core = PARROT_CGP_CORE;
+            else if (STREQ(opt.opt_arg, "cgoto"))
+                *core = PARROT_CGOTO_CORE;
             else if (STREQ(opt.opt_arg, "jit"))
                 *core = PARROT_FAST_CORE;
+            else if (STREQ(opt.opt_arg, "cgp-jit"))
+                *core = PARROT_CGP_CORE;
+            else if (STREQ(opt.opt_arg, "switch-jit"))
+                *core = PARROT_SWITCH_CORE;
             else if (STREQ(opt.opt_arg, "exec"))
                 *core = PARROT_EXEC_CORE;
             else if (STREQ(opt.opt_arg, "trace"))
@@ -506,7 +512,7 @@ parseflags(PARROT_INTERP,
             help();
             exit(EXIT_FAILURE);
             break;
-          case OPT_HASH_SEED:
+          case 'H':
             /* handled in parseflags_minimal */
             break;
           case OPT_HELP_DEBUG:
@@ -518,7 +524,7 @@ parseflags(PARROT_INTERP,
                     Parrot_get_runtime_path(interp));
             exit(EXIT_SUCCESS);
           case 'V':
-            Parrot_version();
+            Parrot_version(interp);
             break;
 
           case OPT_GC_DEBUG:

@@ -95,7 +95,7 @@ Return the C<P6metaclass> of the invocant.
 
 =cut
 
-.sub 'HOW' :method :nsentry
+.sub 'HOW' :method
     $P0 = typeof self
     $P1 = getprop 'metaclass', $P0
     .return ($P1)
@@ -108,7 +108,7 @@ Return the C<P6protoobject> for the invocant.
 
 =cut
 
-.sub 'WHAT' :method :nsentry
+.sub 'WHAT' :method
     .local pmc how, what
     how = self.'HOW'()
     .tailcall how.'WHAT'()
@@ -121,7 +121,7 @@ Return the memory address for the invocant.
 
 =cut
 
-.sub 'WHERE' :method :nsentry
+.sub 'WHERE' :method
     $I0 = get_addr self
     .return ($I0)
 .end
@@ -133,7 +133,7 @@ Return the package for the object.
 
 =cut
 
-.sub 'WHO' :method :nsentry
+.sub 'WHO' :method
     $P0 = typeof self
     $P0 = getprop 'metaclass', $P0
     $P0 = getattribute $P0, 'parrotclass'
@@ -170,7 +170,7 @@ Return the protoobject for this metaclass.
 
 .namespace ['P6metaclass']
 
-.sub 'WHAT' :method :nsentry
+.sub 'WHAT' :method
     $P0 = getattribute self, 'protoobject'
     .return ($P0)
 .end
@@ -727,7 +727,7 @@ Multimethod helper to return the parrotclass for C<x>.
 
 =over 4
 
-=item get_string()
+=item get_string()  (vtable method)
 
 Returns the "shortname" of the protoobject's class and parens.
 
@@ -743,7 +743,7 @@ Returns the "shortname" of the protoobject's class and parens.
     .return ($S0)
 .end
 
-=item defined()
+=item defined()  (vtable method)
 
 Protoobjects are always treated as being undefined.
 
@@ -754,7 +754,7 @@ Protoobjects are always treated as being undefined.
 .end
 
 
-=item name()
+=item name()  (vtable method)
 
 Have protoobjects return their longname in response to a
 C<typeof_s_p> opcode.

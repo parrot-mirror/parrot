@@ -29,7 +29,7 @@ The C<Null> PMC throws an execption for all methods.
 sub pre_method_gen {
     my ($self) = @_;
 
-    # vtables
+    # vtable methods
     foreach my $method ( @{ $self->vtable->methods } ) {
         my $vt_method_name = $method->name;
         next unless $self->normal_unimplemented_vtable($vt_method_name);
@@ -44,7 +44,7 @@ sub pre_method_gen {
         # to avoid compiler warnings
         my $body = <<"EOC";
     UNUSED(interp)
-    UNUSED(_self)
+    UNUSED(pmc)
 EOC
 
         foreach my $param (split /,\s*/, $method->parameters) {

@@ -19,7 +19,7 @@ BEGIN {
     }
     unshift @INC, qq{$topdir/lib};
 }
-use Test::More tests => 10;
+use Test::More tests => 26;
 use Carp;
 use Cwd;
 use File::Copy;
@@ -48,6 +48,10 @@ my ( $msg, $tie );
     require Parrot::Ops2c::Utils;
 
     test_print_c_source_bottom( [qw( C )] );
+    test_print_c_source_bottom( [qw( CGoto )] );
+    test_print_c_source_bottom( [qw( CGP )] );
+    test_print_c_source_bottom( [qw( CSwitch )] );
+    test_print_c_source_bottom( [qw( C CGoto CGP CSwitch CPrederef )] );
 
     ok( chdir($cwd), "returned to starting directory" );
 }

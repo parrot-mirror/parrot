@@ -78,8 +78,6 @@ sub _find_steps_tests {
                 ? qq|$secondlevel-$number|
                 : $number;
             $steps_tests_complex{$category}{$class}{$final}++;
-
-            return;
         }
     } # END wanted()
     finddepth( \&wanted, ( $steps_dir ) );

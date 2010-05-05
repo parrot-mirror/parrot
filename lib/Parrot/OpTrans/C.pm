@@ -1,4 +1,4 @@
-# Copyright (C) 2002-2010, Parrot Foundation.
+# Copyright (C) 2002-2006, Parrot Foundation.
 # $Id$
 
 =head1 NAME
@@ -33,6 +33,16 @@ sub core_type {
     return 'PARROT_FUNCTION_CORE';
 }
 
+=item C<core_prefix()>
+
+Returns an empty string.
+
+=cut
+
+sub core_prefix {
+    return "";
+}
+
 =item C<defines()>
 
 Returns the C C<#define> macros for register access etc.
@@ -58,7 +68,7 @@ END
 
 sub add_body_prelude {
     my ($self) = @_;
-    return "    const Parrot_Context * const CUR_CTX = Parrot_pcc_get_context_struct(interp, interp->ctx);\n";
+    return "    Parrot_Context const * const CUR_CTX = Parrot_pcc_get_context_struct(interp, interp->ctx);\n";
 }
 
 =item C<gen_goto($where)>
@@ -162,6 +172,14 @@ sub restart_address {
 =over 4
 
 =item C<Parrot::OpTrans>
+
+=item C<Parrot::OpTrans::CGP>
+
+=item C<Parrot::OpTrans::CGoto>
+
+=item C<Parrot::OpTrans::CPrederef>
+
+=item C<Parrot::OpTrans::CSwitch>
 
 =back
 

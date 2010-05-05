@@ -391,7 +391,7 @@ reading:
 
 =begin PIR_FRAGMENT
 
-  .local int result
+  .local pmc result, factorial
   result = factorial($I0)
 
 =end PIR_FRAGMENT

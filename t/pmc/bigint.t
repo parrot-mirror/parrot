@@ -1,4 +1,4 @@
-#!./parrot
+#!parrot
 # Copyright (C) 2001-2010, Parrot Foundation.
 # $Id$
 
@@ -51,7 +51,7 @@ Tests the BigInt PMC.
     $P2 = $P1['gmp']
     $I1 = isnull $P2
     if $I1, NoLibGMP
-    say '# This Parrot uses GMP'
+    say 'This Parrot uses GMP'
 
     # check version is >= 4.1.4
     $P0 = new ['BigInt']
@@ -70,16 +70,20 @@ Tests the BigInt PMC.
     lt $I2, 4, OldLibGMP
 
 Config2:
-    diag( 'Suitable GMP version [', $S3, '] available' )
+    print 'Suitable GMP version ['
+    print $S3
+    say '] available'
     goto ret
 
 NoLibGMP:
-    diag( 'No BigInt Lib configured' )
+    say 'No BigInt Lib configured'
     skip(34)
     exit 0
 
 OldLibGMP:
-    diag( 'Buggy GMP version [', $S3, '] with huge digit multiply - please upgrade' )
+    print 'Buggy GMP version ['
+    print $S3
+    say '] with huge digit multiply - please upgrade'
     skip(34)
     exit 0
 
@@ -563,7 +567,7 @@ sz4:
     goto esz
 
 esz:
-    print '# Using '
+    print 'Using '
     $I0 = mul $I0, 8
     print $I0
     print '-bit Integers ['

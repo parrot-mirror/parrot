@@ -19,7 +19,7 @@ BEGIN {
     }
     unshift @INC, qq{$topdir/lib};
 }
-use Test::More tests => 12;
+use Test::More tests => 24;
 use Carp;
 use Cwd;
 use File::Copy;
@@ -47,9 +47,13 @@ my $cwd = cwd();
     require Parrot::Ops2c::Utils;
 
     test_single_trans_and_header(q{C});
+    test_single_trans_and_header(q{CGoto});
+    test_single_trans_and_header(q{CGP});
+    test_single_trans_and_header(q{CSwitch});
+    test_single_trans_and_header(q{CPrederef});
 
     {
-        local @ARGV = qw( C );
+        local @ARGV = qw( C CGoto CGP CSwitch CPrederef );
         my $self = Parrot::Ops2c::Utils->new(
             {
                 argv => [@ARGV],
@@ -69,7 +73,7 @@ pass("Completed all tests in $0");
 
 sub test_single_trans_and_header {
     my $trans = shift;
-    my %available = map { $_, 1 } qw( C );
+    my %available = map { $_, 1 } qw( C CGoto CGP CSwitch CPrederef );
     croak "Bad argument $trans to test_single_trans()"
         unless $available{$trans};
 

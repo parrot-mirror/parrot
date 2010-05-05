@@ -527,18 +527,18 @@ Like C<is>, but succeeds if the arguments I<don't> match.
   done:
 .end
 
-=item C<diag( diagnostic, ... )>
+=item C<diag( diagnostic )>
 
 Prints C<diagnostic> to the screen, without affecting test comparisons.
 
 =cut
 
 .sub diag
-    .param pmc args :slurpy
+    .param string diagnostic
 
     .local pmc test
     get_hll_global test, [ 'Test'; 'More' ], '_test'
-    .tailcall test.'diag'( args :flat )
+    test.'diag'( diagnostic )
 .end
 
 

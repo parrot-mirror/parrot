@@ -78,7 +78,7 @@ static void imcc_run_pbc(PARROT_INTERP,
     int obj_file,
     ARGIN_NULLOK(const char *output_file),
     int argc,
-    ARGIN(const char **argv))
+    ARGIN(char **argv))
         __attribute__nonnull__(1)
         __attribute__nonnull__(5);
 
@@ -251,6 +251,13 @@ imcc_handle_flag(PARROT_INTERP, struct longopt_opt_info *opt,
         if (strchr(opt->opt_arg, '2')) {
             IMCC_INFO(interp)->optimizer_level |= (OPT_PRE | OPT_CFG);
         }
+        if (strchr(opt->opt_arg, 't')) {
+#ifdef HAVE_COMPUTED_GOTO
+            *core = PARROT_CGP_CORE;
+#else
+            *core = PARROT_SWITCH_CORE;
+#endif
+        }
         break;
 
       default:
@@ -407,6 +414,12 @@ imcc_get_optimization_description(const PARROT_INTERP, int opt_level, ARGMOD(cha
     if (opt_level & OPT_SUB)
         opt_desc[i++] = 'c';
 
+    if (PARROT_RUNCORE_JIT_OPS_TEST(interp->run_core))
+        opt_desc[i++] = 'j';
+
+    if (PARROT_RUNCORE_PREDEREF_OPS_TEST(interp->run_core))
+        opt_desc[i++] = 't';
+
     opt_desc[i] = '\0';
     return;
 }
@@ -449,7 +462,7 @@ imcc_initialize(PARROT_INTERP)
 /*
 
 =item C<static void imcc_run_pbc(PARROT_INTERP, int obj_file, const char
-*output_file, int argc, const char **argv)>
+*output_file, int argc, char **argv)>
 
 Write out or run Parrot bytecode.
 
@@ -459,7 +472,7 @@ Write out or run Parrot bytecode.
 
 static void
 imcc_run_pbc(PARROT_INTERP, int obj_file, ARGIN_NULLOK(const char *output_file),
-        int argc, ARGIN(const char **argv))
+        int argc, ARGIN(char **argv))
 {
     ASSERT_ARGS(imcc_run_pbc)
     if (IMCC_INFO(interp)->imcc_warn)
@@ -679,7 +692,7 @@ compile_to_bytecode(PARROT_INTERP,
 
 /*
 
-=item C<int imcc_run(PARROT_INTERP, const char *sourcefile, int argc, const char
+=item C<int imcc_run(PARROT_INTERP, const char *sourcefile, int argc, char
 **argv)>
 
 Entry point of IMCC, as invoked by Parrot's main function.
@@ -692,7 +705,7 @@ and run. This function always returns 0.
 
 int
 imcc_run(PARROT_INTERP, ARGIN(const char *sourcefile), int argc,
-        ARGIN(const char **argv))
+        ARGIN(char **argv))
 {
     int                obj_file;
     yyscan_t           yyscanner   = IMCC_INFO(interp)->yyscanner;

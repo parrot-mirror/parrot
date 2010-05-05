@@ -32,15 +32,7 @@ Note: These tests would benefit from judicial application of Iterators.
 
 =cut
 
-BEGIN {
-    unless ( -e 'DEVELOPING' ) {
-        plan skip_all => "Don't bother running these in a tarball.";
-        exit(0);
-    }
-}
-
-
-my $cmd = 'svn';
+my $cmd = -d '.svn' ? 'svn' : 'svk';
 my @git_svn_metadata;    # set in BEGIN block
 
 # how many files to check at a time. May have to lower this when we run
@@ -245,7 +237,7 @@ BEGIN {
             plan skip_all => q{git svn file metadata not retained};
         }
     }
-    elsif ( ! (-d '.svn' && `svn info .`) ) {
+    elsif ( !( (-d '.svn' && `svn info .`) or `svk info .` ) ) {
         plan skip_all => 'not a working copy';
     }
     else { plan tests => 5 }
@@ -253,7 +245,7 @@ BEGIN {
 
 #
 # Given a list, a count, and a sub, process that list count elements
-# at a time. (do this to speed up execution for the svn commands)
+# at a time. (do this to speed up execution for the svn/svk commands)
 #
 
 sub at_a_time {

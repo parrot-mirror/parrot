@@ -20,10 +20,6 @@ The actual pointer is in C<PMC_data>.
 
 */
 
-/* HEADERIZER HFILE: none */
-/* HEADERIZER BEGIN: static */
-/* HEADERIZER END: static */
-
 pmclass Pointer auto_attrs {
     ATTR void * mark_function;
     ATTR void * pointer;

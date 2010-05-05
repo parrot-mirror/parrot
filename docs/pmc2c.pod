@@ -133,20 +133,9 @@ Requires the C<hll> flag. Note that multiple mappings can be specified:
 
 =item 3.
 
-A list of attribute declarations:
-
-  ATTR INTVAL id;
-
-The ATTR declaration keyword is followed by the type of the attribute and the
-name of the attribute. Any valid C type is a valid attribute type, but only
-INTVAL, FLOATVAL, STRING *, and PMC * can be handled directly from PIR. Other
-types are generally only used by low-level internal PMCs.
+A list of vtable method implementations
 
 =item 4.
-
-A list of vtable function implementations
-
-=item 5.
 
 The final close C<}>
 
@@ -154,7 +143,7 @@ The final close C<}>
 
 =head2 Method Body Substitutions
 
-The vtable function bodies can use the following substitutions:
+The vtable method bodies can use the following substitutions:
 
 =over 4
 
@@ -168,11 +157,11 @@ Converted to the interpreter object.
 
 =item C<OtherClass.SELF.method(a,b,c)>
 
-Calls the static vtable or method 'method' in C<OtherClass>.
+Calls the static vtable method 'method' in C<OtherClass>.
 
 =item C<SELF.method(a,b,c)>
 
-Calls the vtable or method 'method' using the dynamic type of C<SELF>.
+Calls the vtable method 'method' using the dynamic type of C<SELF>.
 
 =item C<SELF(a,b,c)>
 
@@ -180,7 +169,7 @@ Same as above, but calls the current method.
 
 =item C<STATICSELF.method(a,b,c)>
 
-Calls the vtable or method 'method' using the static type of C<SELF> (in
+Calls the vtable method 'method' using the static type of C<SELF> (in
 other words, calls another method defined in the same file).
 
 =item C<OtherClass.SUPER(a,b,c)>

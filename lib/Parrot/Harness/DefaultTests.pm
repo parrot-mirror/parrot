@@ -77,7 +77,6 @@ our @EXPORT_OK = qw(
     t/perl/*.t
 );
 
-
 # library tests are run unless --runcore-tests or --core-tests is present.
 @library_tests = qw(
     t/compilers/pct/*.t
@@ -85,10 +84,8 @@ our @EXPORT_OK = qw(
     t/compilers/pge/p5regex/*.t
     t/compilers/pge/perl6regex/*.t
     t/compilers/tge/*.t
-    t/compilers/data_json/*.t
     t/library/*.t
     t/tools/*.t
-    t/profiling/*.t
 );
 
 # configure tests are tests to be run at the beginning of 'make test';

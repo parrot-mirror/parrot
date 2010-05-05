@@ -36,35 +36,35 @@ method TOP($/, $key) {
         my $past := @?BLOCK.shift();
 
         for $<stat_or_def> {
-            $past.push($_.ast);
+            $past.push($($_));
         }
         make $past;
     }
 }
 
 method stat_or_def($/, $key) {
-    make $/{$key}.ast;
+    make $( $/{$key} );
 }
 
 method statement($/, $key) {
-    make $/{$key}.ast;
+    make $( $/{$key} );
 }
 
 method if_statement($/) {
-    my $cond := $<expression>.ast;
-    my $then := $<block>.ast;
+    my $cond := $( $<expression> );
+    my $then := $( $<block> );
     my $past := PAST::Op.new( $cond, $then, :pasttype('if'), :node($/) );
 
     ## if there's an else clause, add it to the PAST node.
     if $<else> {
-        $past.push( $<else>[0].ast );
+        $past.push( $( $<else>[0] ) );
     }
     make $past;
 }
 
 method while_statement($/) {
-    my $cond := $<expression>.ast;
-    my $body := $<block>.ast;
+    my $cond := $( $<expression> );
+    my $body := $( $<block> );
     make PAST::Op.new( $cond, $body, :pasttype('while'), :node($/) );
 }
 
@@ -83,7 +83,7 @@ method for_statement($/) {
     our $?BLOCK;
     our @?BLOCK;
 
-    my $init := $<for_init>.ast;
+    my $init := $( $<for_init> );
 
     ## cache the name of the loop variable
     my $itername := $init.name();
@@ -100,7 +100,7 @@ method for_statement($/) {
     my $body := @?BLOCK.shift();
     $?BLOCK  := @?BLOCK[0];
     for $<statement> {
-        $body.push( $_.ast );
+        $body.push($($_));
     }
 
     ## if a step was specified, use that; otherwise, use the default of +1.
@@ -108,7 +108,7 @@ method for_statement($/) {
     ##
     my $step;
     if $<step> {
-        my $stepsize := $<step>[0].ast;
+        my $stepsize := $( $<step>[0] );
         $step := PAST::Op.new( $iter, $stepsize, :pirop('add'), :node($/) );
     }
     else { ## default is increment by 1
@@ -117,7 +117,7 @@ method for_statement($/) {
     $body.push($step);
 
     ## while loop iterator <= end-expression
-    my $cond := PAST::Op.new( $iter, $<expression>.ast, :name('infix:<=') );
+    my $cond := PAST::Op.new( $iter, $( $<expression> ), :name('infix:<=') );
     my $loop := PAST::Op.new( $cond, $body, :pasttype('while'), :node($/) );
 
     make PAST::Stmts.new( $init, $loop, :node($/) );
@@ -132,12 +132,12 @@ method for_init($/) {
     $?BLOCK := PAST::Block.new( :blocktype('immediate'), :node($/) );
     @?BLOCK.unshift($?BLOCK);
 
-    my $iter := $<identifier>.ast;
+    my $iter := $( $<identifier> );
     ## set a flag that this identifier is being declared
     $iter.isdecl(1);
     $iter.scope('lexical');
     ## the identifier is initialized with this expression
-    $iter.viviself( $<expression>.ast );
+    $iter.viviself( $( $<expression> ) );
 
     ## enter the loop variable as a local into the symbol table.
     $?BLOCK.symbol($iter.name(), :scope('lexical'));
@@ -147,16 +147,16 @@ method for_init($/) {
 
 method try_statement($/) {
     ## get the try block
-    my $try := $<try>.ast;
+    my $try := $( $<try> );
 
     ## create a new PAST::Stmts node for the catch block;
     ## note that no PAST::Block is created, as this currently
     ## has problems with the exception object. For now this will do.
     my $catch := PAST::Stmts.new( :node($/) );
-    $catch.push( $<catch>.ast );
+    $catch.push( $( $<catch> ) );
 
     ## get the exception identifier;
-    my $exc := $<exception>.ast;
+    my $exc := $( $<exception> );
     $exc.isdecl(1);
     $exc.scope('lexical');
     $exc.viviself( PAST::Val.new( :value(0) ) );
@@ -176,14 +176,14 @@ method try_statement($/) {
 method exception($/) {
     our $?BLOCK;
 
-    my $exc := $<identifier>.ast;
+    my $exc := $( $<identifier> );
     ## the exception identifier is local to the exception handler
     $?BLOCK.symbol($exc.name(), :scope('lexical'));
     make $exc;
 }
 
 method throw_statement($/) {
-    make PAST::Op.new( $<expression>.ast, :pirop('throw'), :node($/) );
+    make PAST::Op.new( $( $<expression> ), :pirop('throw'), :node($/) );
 }
 
 method block($/, $key) {
@@ -201,24 +201,24 @@ method block($/, $key) {
         $?BLOCK  := @?BLOCK[0];
 
         for $<statement> {
-            $past.push( $_.ast );
+            $past.push($($_));
         }
         make $past
     }
 }
 
 method return_statement($/) {
-    my $expr := $<expression>.ast;
+    my $expr := $( $<expression> );
     make PAST::Op.new( $expr, :pasttype('return'), :node($/) );
 }
 
 method do_block($/) {
-    make $<block>.ast;
+    make $( $<block> );
 }
 
 method assignment($/) {
-    my $rhs := $<expression>.ast;
-    my $lhs := $<primary>.ast;
+    my $rhs := $( $<expression> );
+    my $lhs := $( $<primary> );
     $lhs.lvalue(1);
     make PAST::Op.new( $lhs, $rhs, :pasttype('bind'), :node($/) );
 }
@@ -228,13 +228,13 @@ method sub_definition($/) {
     our $?BLOCK;
 
     ## note that $<parameters> creates a new PAST::Block.
-    my $past := $<parameters>.ast;
-    my $name := $<identifier>.ast;
+    my $past := $( $<parameters> );
+    my $name := $( $<identifier> );
 
     ## set the function name
     $past.name( $name.name() );
     for $<statement> {
-        $past.push( $_.ast );
+        $past.push($($_));
     }
 
     ## remove the block from the scope stack
@@ -249,13 +249,13 @@ method sub_definition($/) {
 method variable_declaration($/) {
     our $?BLOCK;
 
-    my $past := $<identifier>.ast;
+    my $past := $( $<identifier> );
     $past.isdecl(1);
     $past.scope('lexical');
 
     ## if there's an initialization value, use it to viviself the variable.
     if $<expression> {
-        $past.viviself( $<expression>[0].ast );
+        $past.viviself( $( $<expression>[0] ) );
     }
     else { ## otherwise initialize to undef.
         $past.viviself( 'Undef' );
@@ -281,7 +281,7 @@ method parameters($/) {
 
     my $past := PAST::Block.new( :blocktype('declaration'), :node($/) );
     for $<identifier> {
-        my $param := $_.ast;
+        my $param := $( $_ );
         $param.scope('parameter');
         $past.push($param);
 
@@ -297,8 +297,8 @@ method parameters($/) {
 }
 
 method sub_call($/) {
-    my $invocant := $<primary>.ast;
-    my $past     := $<arguments>.ast;
+    my $invocant := $( $<primary> );
+    my $past     := $( $<arguments> );
     ## set the invocant as the first child of the PAST::Op(:pasttype('call')) node
     $past.unshift( $invocant );
     make $past;
@@ -307,15 +307,15 @@ method sub_call($/) {
 method arguments($/) {
     my $past := PAST::Op.new( :pasttype('call'), :node($/) );
     for $<expression> {
-        $past.push( $_.ast );
+        $past.push($($_));
     }
     make $past;
 }
 
 method primary($/) {
-    my $past := $<identifier>.ast ;
+    my $past := $( $<identifier> );
     for $<postfix_expression> {
-        my $expr := $_.ast;
+        my $expr := $( $_ );
         ## set the current $past as the first child of $expr;
         ## $expr is either a key or an index; both are "keyed"
         ## variable access, where the first child is assumed
@@ -327,11 +327,11 @@ method primary($/) {
 }
 
 method postfix_expression($/, $key) {
-    make $/{$key}.ast;
+    make $( $/{$key} );
 }
 
 method key($/) {
-    my $key := $<expression>.ast;
+    my $key := $( $<expression> );
 
     make PAST::Var.new( $key, :scope('keyed'),
                               :vivibase('Hash'),
@@ -341,7 +341,7 @@ method key($/) {
 }
 
 method member($/) {
-    my $member := $<identifier>.ast;
+    my $member := $( $<identifier> );
     ## x.y is syntactic sugar for x{"y"}, so stringify the identifier:
     my $key    := PAST::Val.new( :returns('String'), :value($member.name()), :node($/) );
 
@@ -353,7 +353,7 @@ method member($/) {
 }
 
 method index($/) {
-    my $index := $<expression>.ast;
+    my $index := $( $<expression> );
 
     make PAST::Var.new( $index, :scope('keyed'),
                                 :vivibase('ResizablePMCArray'),
@@ -362,8 +362,8 @@ method index($/) {
 }
 
 method named_field($/) {
-    my $past := $<expression>.ast;
-    my $name := $<string_constant>.ast;
+    my $past := $( $<expression> );
+    my $name := $( $<string_constant> );
     ## the passed expression is in fact a named argument,
     ## use the named() accessor to set that name.
     $past.named($name);
@@ -377,7 +377,7 @@ method array_constructor($/) {
     ## (which is not a valid Squaak name)
     my $past := PAST::Op.new( :name('!array'), :pasttype('call'), :node($/) );
     for $<expression> {
-        $past.push( $_.ast );
+        $past.push($($_));
     }
     make $past;
 }
@@ -388,13 +388,13 @@ method hash_constructor($/) {
     ## !hash (which is not a valid Squaak name)
     my $past := PAST::Op.new( :name('!hash'), :pasttype('call'), :node($/) );
     for $<named_field> {
-        $past.push( $_.ast );
+        $past.push($($_));
     }
     make $past;
 }
 
 method term($/, $key) {
-    make $/{$key}.ast;
+    make $( $/{$key} );
 }
 
 method identifier($/) {
@@ -413,13 +413,13 @@ method float_constant($/) {
 }
 
 method string_constant($/) {
-    make PAST::Val.new( :value( $<string_literal>.ast ), :returns('String'), :node($/) );
+    make PAST::Val.new( :value( $($<string_literal>) ), :returns('String'), :node($/) );
 }
 
 ## Handle the operator precedence table.
 method expression($/, $key) {
     if ($key eq 'end') {
-        make $<expr>.ast;
+        make $($<expr>);
     }
     else {
         my $past := PAST::Op.new( :name($<type>),
@@ -429,7 +429,7 @@ method expression($/, $key) {
                                   :node($/)
                                 );
         for @($/) {
-            $past.push( $_.ast );
+            $past.push( $($_) );
         }
         make $past;
     }

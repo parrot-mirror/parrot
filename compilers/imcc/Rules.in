@@ -1,5 +1,4 @@
 compilers/imcc/pcc$(O) : \
-    compilers/imcc/pcc.c \
     compilers/imcc/cfg.h \
     compilers/imcc/debug.h \
     compilers/imcc/imc.h \
@@ -13,7 +12,6 @@ compilers/imcc/pcc$(O) : \
     $(PARROT_H_HEADERS)
 
 compilers/imcc/instructions$(O) : \
-    compilers/imcc/instructions.c \
     compilers/imcc/cfg.h \
     compilers/imcc/debug.h \
     compilers/imcc/imc.h \
@@ -27,7 +25,6 @@ compilers/imcc/instructions$(O) : \
     $(PARROT_H_HEADERS)
 
 compilers/imcc/pbc$(O) : \
-    compilers/imcc/pbc.c \
     compilers/imcc/cfg.h \
     compilers/imcc/debug.h \
     compilers/imcc/imc.h \
@@ -41,7 +38,6 @@ compilers/imcc/pbc$(O) : \
     include/pmc/pmc_sub.h
 
 compilers/imcc/parser_util$(O) : \
-    compilers/imcc/parser_util.c \
     compilers/imcc/cfg.h \
     compilers/imcc/debug.h \
     compilers/imcc/imc.h \
@@ -60,7 +56,6 @@ compilers/imcc/parser_util$(O) : \
     include/pmc/pmc_sub.h
 
 compilers/imcc/imc$(O) : \
-    compilers/imcc/imc.c \
     compilers/imcc/cfg.h \
     compilers/imcc/debug.h \
     compilers/imcc/imc.h \
@@ -73,7 +68,6 @@ compilers/imcc/imc$(O) : \
     $(PARROT_H_HEADERS)
 
 compilers/imcc/cfg$(O) : \
-    compilers/imcc/cfg.c \
     compilers/imcc/cfg.h \
     compilers/imcc/debug.h \
     compilers/imcc/imc.h \
@@ -86,7 +80,6 @@ compilers/imcc/cfg$(O) : \
     $(PARROT_H_HEADERS)
 
 compilers/imcc/debug$(O) : \
-    compilers/imcc/debug.c \
     compilers/imcc/cfg.h \
     compilers/imcc/debug.h \
     compilers/imcc/imc.h \
@@ -133,7 +126,6 @@ compilers/imcc/imcparser$(O) : \
 	$(CC) $(CFLAGS) @optimize::compilers/imcc/imcparser.c@ @ccwarn::compilers/imcc/imcparser.c@ @cc_shared@ -I$(@D) @cc_o_out@$@ -c compilers/imcc/imcparser.c
 
 compilers/imcc/main$(O) : \
-    compilers/imcc/main.c \
     compilers/imcc/cfg.h \
     compilers/imcc/debug.h \
     compilers/imcc/imc.h \
@@ -167,7 +159,6 @@ compilers/imcc/optimizer$(O) : \
 	$(CC) $(CFLAGS) @optimize::compilers/imcc/optimizer.c@ @ccwarn::compilers/imcc/optimizer.c@ @cc_shared@ -I$(@D) @cc_o_out@$@ -c compilers/imcc/optimizer.c
 
 compilers/imcc/reg_alloc$(O) : \
-    compilers/imcc/reg_alloc.c \
     compilers/imcc/cfg.h \
     compilers/imcc/debug.h \
     compilers/imcc/imc.h \
@@ -180,7 +171,6 @@ compilers/imcc/reg_alloc$(O) : \
     $(PARROT_H_HEADERS)
 
 compilers/imcc/sets$(O) : \
-    compilers/imcc/sets.c \
     compilers/imcc/cfg.h \
     compilers/imcc/debug.h \
     compilers/imcc/imc.h \
@@ -192,7 +182,6 @@ compilers/imcc/sets$(O) : \
     $(PARROT_H_HEADERS)
 
 compilers/imcc/symreg$(O) : \
-    compilers/imcc/symreg.c \
     compilers/imcc/cfg.h \
     compilers/imcc/debug.h \
     compilers/imcc/imc.h \

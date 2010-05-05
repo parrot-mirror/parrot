@@ -1,4 +1,4 @@
-# Copyright (C) 2004-2010, Parrot Foundation.
+# Copyright (C) 2004-2008, Parrot Foundation.
 # $Id$
 
 package Parrot::Pmc2c::PCCMETHOD;
@@ -258,8 +258,8 @@ END
     /*BEGIN RETURN $returns */
 END
         $e->emit( <<"END", __FILE__, __LINE__ + 1 );
-    _ret_object = Parrot_pcc_build_call_from_c_args(interp, _call_object,
-        "$returns_signature", $returns_varargs);
+    Parrot_pcc_fill_returns_from_c_args(interp, _call_object, "$returns_signature",
+            $returns_varargs);
     return;
     /*END RETURN $returns */
     }
@@ -399,7 +399,7 @@ sub rewrite_pccmethod {
     unshift @$linear_args,
         {
         type  => convert_type_string_to_reg_type('PMC'),
-        name  => '_self',
+        name  => 'pmc',
         attrs => parse_adverb_attributes(':invocant')
         };
 
@@ -415,7 +415,8 @@ sub rewrite_pccmethod {
     PMC * const _ctx         = CURRENT_CONTEXT(interp);
     PMC * const _ccont       = Parrot_pcc_get_continuation(interp, _ctx);
     PMC * const _call_object = Parrot_pcc_get_signature(interp, _ctx);
-    PMC * _ret_object        = PMCNULL;
+
+    Parrot_pcc_set_signature(interp, _ctx, NULL);
 
     { /* BEGIN PARMS SCOPE */
 END
@@ -428,11 +429,11 @@ END
             $params_varargs);
 END
     }
-    $e->emit( <<'END', __FILE__, __LINE__ + 1 );
+    $e->emit( <<"END", __FILE__, __LINE__ + 1 );
     { /* BEGIN PMETHOD BODY */
 END
 
-    $e_post->emit( <<'END', __FILE__, __LINE__ + 1 );
+    $e_post->emit( <<"END", __FILE__, __LINE__ + 1 );
 
     } /* END PMETHOD BODY */
     } /* END PARAMS SCOPE */
@@ -448,6 +449,10 @@ END
     $self->{PCCMETHOD} = 1;
 
     return 1;
+}
+
+sub isquoted {
+    1;
 }
 
 sub rewrite_pccinvoke {

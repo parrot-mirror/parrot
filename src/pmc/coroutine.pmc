@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2001-2010, Parrot Foundation.
+Copyright (C) 2001-2009, Parrot Foundation.
 $Id$
 
 =head1 NAME
@@ -32,23 +32,8 @@ stopped. See the L<Glossary|docs/glossary.pod> for more information.
 
 #include "parrot/oplib/ops.h"
 
-/* HEADERIZER HFILE: none */
-/* HEADERIZER BEGIN: static */
-/* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
-
-static void print_sub_name(PARROT_INTERP, ARGIN(PMC *sub_pmc))
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(2);
-
-#define ASSERT_ARGS_print_sub_name __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
-       PARROT_ASSERT_ARG(interp) \
-    , PARROT_ASSERT_ARG(sub_pmc))
-/* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
-/* HEADERIZER END: static */
-
-
 static void
-print_sub_name(PARROT_INTERP, ARGIN(PMC *sub_pmc))
+print_sub_name(PARROT_INTERP, PMC *sub_pmc)
 {
     /* It's actually a Parrot_coroutine, but this avoids casting warnings. */
     PMC           *ctx;
@@ -63,7 +48,7 @@ print_sub_name(PARROT_INTERP, ARGIN(PMC *sub_pmc))
         "Calling" : "yielding from",
         Parrot_full_sub_name(interp, sub_pmc));
 
-    if (!PMC_IS_NULL(ctx) && (PObj_get_FLAGS(sub_pmc) & SUB_FLAG_CORO_FF)) {
+    if (ctx && (PObj_get_FLAGS(sub_pmc) & SUB_FLAG_CORO_FF)) {
         Parrot_io_eprintf(tracer, " to '%Ss'",
                 Parrot_full_sub_name(interp,
                     Parrot_pcc_get_sub(interp, Parrot_pcc_get_caller_ctx(interp, ctx))));
@@ -120,6 +105,9 @@ Clones the coroutine.
                 (Parrot_Coroutine_attributes *)PMC_data(SELF),
                 sizeof (Parrot_Coroutine_attributes));
 
+        GET_ATTR_name(INTERP, ret, name);
+        SET_ATTR_name(INTERP, ret, Parrot_str_copy(INTERP, name));
+
         return ret;
     }
 
@@ -152,8 +140,6 @@ Swaps the "context".
         opcode_t          *dest;
         PackFile_ByteCode *wanted_seg;
         opcode_t * const   next_op = (opcode_t *)next;
-        PMC      * const signature = Parrot_pcc_get_signature(interp,
-                                            CURRENT_CONTEXT(interp));
 
         if (Interp_trace_TEST(INTERP, PARROT_TRACE_SUB_CALL_FLAG))
             print_sub_name(INTERP, SELF);
@@ -169,10 +155,8 @@ Swaps the "context".
             PMC               *ctx        = Parrot_pcc_get_signature(INTERP, caller_ctx);
             PMC               *ccont      = INTERP->current_cont;
 
-            if (ccont == NEED_CONTINUATION) {
-                ccont = pmc_new(interp, enum_class_Continuation);
-                VTABLE_set_pointer(interp, ccont, next_op);
-            }
+            if (ccont == NEED_CONTINUATION)
+                ccont = (PMC *)new_ret_continuation_pmc(INTERP, next_op);
 
             if (PObj_get_FLAGS(ccont) & SUB_FLAG_TAILCALL)
                 Parrot_ex_throw_from_c_args(INTERP, NULL, CONTROL_ERROR,
@@ -197,6 +181,7 @@ Swaps the "context".
             Parrot_pcc_set_continuation(INTERP, ctx, ccont);
             Parrot_pcc_set_object(INTERP, ctx, PMCNULL);
 
+            INTERP->current_object = PMCNULL;
             INTERP->current_cont   = PMCNULL;
 
             GET_ATTR_lex_info(INTERP, SELF, lex_info);
@@ -281,8 +266,6 @@ Swaps the "context".
 
             CURRENT_CONTEXT(INTERP) = to_ctx;
         }
-
-        Parrot_pcc_set_signature(interp, CURRENT_CONTEXT(interp), signature);
 
         /* toggle address */
         GET_ATTR_address(INTERP, SELF, dest);

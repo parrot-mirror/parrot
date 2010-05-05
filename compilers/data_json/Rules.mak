@@ -1,5 +1,4 @@
-runtime/parrot/languages/data_json/data_json.pbc: compilers/data_json/data_json.pbc
-	$(MKPATH) runtime/parrot/languages/data_json
+$(LIBRARY_DIR)/data_json.pbc: compilers/data_json/data_json.pbc
 	$(CP) compilers/data_json/data_json.pbc $@
 
 compilers/data_json/data_json.pbc : \

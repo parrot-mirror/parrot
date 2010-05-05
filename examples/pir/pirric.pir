@@ -102,59 +102,57 @@
     addparent cl, $P0
     set_global 'Literal', cl
 
-    .local pmc keywords, methods
-    # Get methods hash to verify
-    methods = inspect runnerclass, 'methods'
+    .local pmc keywords
     keywords = new 'Hash'
-    setkeyword(methods, keywords, 'CLEAR')
-    setkeyword(methods, keywords, 'CONT')
-    setkeyword(methods, keywords, 'END')
-    setkeyword(methods, keywords, 'EXIT')
-    setkeyword(methods, keywords, 'ERROR')
-    setkeyword(methods, keywords, 'FOR')
-    setkeyword(methods, keywords, 'GOSUB')
-    setkeyword(methods, keywords, 'GOTO')
-    setkeyword(methods, keywords, 'IF')
-    setkeyword(methods, keywords, 'LIST')
-    setkeyword(methods, keywords, 'LOAD')
-    setkeyword(methods, keywords, 'NEXT')
-    setkeyword(methods, keywords, 'NEW')
-    setkeyword(methods, keywords, 'ON')
-    setkeyword(methods, keywords, 'PRINT')
-    setkeyword(methods, keywords, 'REM')
-    setkeyword(methods, keywords, 'RETURN')
-    setkeyword(methods, keywords, 'RUN')
-    setkeyword(methods, keywords, 'SAVE')
-    setkeyword(methods, keywords, 'STOP')
-    setkeyword(methods, keywords, 'TROFF')
-    setkeyword(methods, keywords, 'TRON')
+    setkeyword(keywords, 'CLEAR')
+    setkeyword(keywords, 'CONT')
+    setkeyword(keywords, 'END')
+    setkeyword(keywords, 'EXIT')
+    setkeyword(keywords, 'ERROR')
+    setkeyword(keywords, 'FOR')
+    setkeyword(keywords, 'GOSUB')
+    setkeyword(keywords, 'GOTO')
+    setkeyword(keywords, 'IF')
+    setkeyword(keywords, 'LIST')
+    setkeyword(keywords, 'LOAD')
+    setkeyword(keywords, 'NEXT')
+    setkeyword(keywords, 'NEW')
+    setkeyword(keywords, 'ON')
+    setkeyword(keywords, 'PRINT')
+    setkeyword(keywords, 'REM')
+    setkeyword(keywords, 'RETURN')
+    setkeyword(keywords, 'RUN')
+    setkeyword(keywords, 'SAVE')
+    setkeyword(keywords, 'STOP')
+    setkeyword(keywords, 'TROFF')
+    setkeyword(keywords, 'TRON')
     set_global 'keywords', keywords
 
     .local pmc predefs
     predefs = new 'Hash'
-    setpredef(methods, predefs, 'NEW')
-    setpredef(methods, predefs, 'ISA')
-    setpredef(methods, predefs, 'GETPARROTINTERP')
-    setpredef(methods, predefs, 'CHR$', 'CHR_S')
-    setpredef(methods, predefs, 'ASC')
-    setpredef(methods, predefs, 'LEN')
-    setpredef(methods, predefs, 'LEFT$', 'LEFT_S')
-    setpredef(methods, predefs, 'RIGHT$', 'RIGHT_S')
-    setpredef(methods, predefs, 'MID$', 'MID_S')
-    setpredef(methods, predefs, 'COMPLEX')
-    setpredef(methods, predefs, 'COMPREG')
-    setpredef(methods, predefs, 'EXP')
-    setpredef(methods, predefs, 'LN')
-    setpredef(methods, predefs, 'SIN')
-    setpredef(methods, predefs, 'SINH')
-    setpredef(methods, predefs, 'COS')
-    setpredef(methods, predefs, 'COSH')
-    setpredef(methods, predefs, 'TAN')
-    setpredef(methods, predefs, 'TANH')
-    setpredef(methods, predefs, 'ASIN')
-    setpredef(methods, predefs, 'ACOS')
-    setpredef(methods, predefs, 'ATAN')
-    setpredef(methods, predefs, 'SQR')
+    setpredef(predefs, 'NEW')
+    setpredef(predefs, 'ISA')
+    setpredef(predefs, 'GETPARROTINTERP')
+    setpredef(predefs, 'CHR$', 'CHR_S')
+    setpredef(predefs, 'ASC')
+    setpredef(predefs, 'LEN')
+    setpredef(predefs, 'LEFT$', 'LEFT_S')
+    setpredef(predefs, 'RIGHT$', 'RIGHT_S')
+    setpredef(predefs, 'MID$', 'MID_S')
+    setpredef(predefs, 'COMPLEX')
+    setpredef(predefs, 'COMPREG')
+    setpredef(predefs, 'EXP')
+    setpredef(predefs, 'LN')
+    setpredef(predefs, 'SIN')
+    setpredef(predefs, 'SINH')
+    setpredef(predefs, 'COS')
+    setpredef(predefs, 'COSH')
+    setpredef(predefs, 'TAN')
+    setpredef(predefs, 'TANH')
+    setpredef(predefs, 'ASIN')
+    setpredef(predefs, 'ACOS')
+    setpredef(predefs, 'ATAN')
+    setpredef(predefs, 'SQR')
     set_global 'predefs', predefs
 
 # Create classes for control flow exceptions
@@ -254,7 +252,6 @@ start:
 
 #-----------------------------------------------------------------------
 .sub setkeyword
-    .param pmc methods
     .param pmc keywords
     .param string key
 
@@ -262,11 +259,10 @@ start:
     funcname = concat 'func_', key
 
     .local pmc func
-    func = methods[funcname]
+    func = get_global ['Runner'], funcname
     $I0 = defined func
     if $I0 goto good
-    print funcname
-    die ': No func!'
+    say 'No func!'
     exit 1
 good:
     keywords [key] = func
@@ -274,7 +270,6 @@ good:
 
 #-----------------------------------------------------------------------
 .sub setpredef
-    .param pmc methods
     .param pmc predefs
     .param string key
     .param string name :optional
@@ -287,7 +282,7 @@ setfuncname:
     funcname = concat 'predef_', name
 
     .local pmc func
-    func = methods[funcname]
+    func = get_global ['Runner'], funcname
     $I0 = defined func
     if $I0 goto good
     print funcname
@@ -421,7 +416,7 @@ done:
 
     .local pmc vars, var
     vars = getattribute self, 'vars'
-    varname = upcase varname
+    upcase varname
     var = vars[varname]
     .return(var)
 .end
@@ -433,7 +428,7 @@ done:
 
     .local pmc vars, var
     vars = getattribute self, 'vars'
-    varname = upcase varname
+    upcase varname
     vars[varname] = value
 .end
 
@@ -669,7 +664,7 @@ fail:
     $I0 = $P2
     $S0 = chr $I0
     $I1 = find_encoding 'utf8'
-    $S0 = trans_encoding $S0, $I1
+    trans_encoding $S0, $I1
     $P3 = new 'String'
     $P3 = $S0
     .return($P3)
@@ -1015,7 +1010,7 @@ check:
     unless $I0 goto fail
 
     $S0 = token
-    $S0 = upcase $S0
+    upcase $S0
     #print $S0
 
 # Some predefined functions:
@@ -1673,7 +1668,7 @@ check:
     key = 'PRINT'
 
 findkey:
-    key = upcase key
+    upcase key
     .local pmc keywords
     keywords = get_hll_global 'keywords'
     $I0 = keywords
@@ -1802,14 +1797,14 @@ setattrs:
     pvar = tokenizer.'get'()
     .local string var
     var = pvar
-    var = upcase var
+    upcase var
     $P0 = tokenizer.'get'()
     ne $P0, '=', fail
     .local pmc value
     value = self.'evaluate'(tokenizer)
     $P0 = tokenizer.'get'()
     $S0 = $P0
-    $S0 = upcase $S0
+    upcase $S0
     ne $S0, 'TO', fail
 
     .local pmc limit
@@ -1820,7 +1815,7 @@ setattrs:
     $I0 = defined $P0
     unless $I0 goto default_step
     $S0 = $P0
-    $S0 = upcase $S0
+    upcase $S0
     ne $S0, 'STEP', fail
     increment = self.'evaluate'(tokenizer)
     goto prepare
@@ -1901,7 +1896,7 @@ fail:
     $I0 = defined token
     unless $I0 goto fail
     $S0 = token
-    $S0 = upcase $S0
+    upcase $S0
     ne $S0, 'THEN', fail
 
     $I0 = defined arg
@@ -1922,7 +1917,7 @@ nextitem:
     $I0 = isa $P0, 'String'
     unless $I0 goto nextitem
     $S0 = $P0
-    $S0 = upcase $S0
+    upcase $S0
     eq $S0, 'ELSE', is_else
     eq $S0, 'IF', is_if
     goto nextitem
@@ -1964,7 +1959,7 @@ fail:
     $I1 = defined $P1
     unless $I1 goto fail
     $S1 = $P1
-    $S1 = upcase $S1
+    upcase $S1
     ne $S1, 'B', fail
     $S1 = arg
     pirric_aux_loadbytecode($S1)
@@ -2042,13 +2037,13 @@ endloop:
     .local pmc token
     token = tokenizer.'get'()
     $S0 = token
-    $S0 = upcase $S0
+    upcase $S0
     if $S0 == 'ERROR' goto on_error
     goto fail
 on_error:
     token = tokenizer.'get'()
     $S0 = token
-    $S0 = upcase $S0
+    upcase $S0
     if $S0 == 'GOTO' goto on_error_goto
     if $S0 == 'EXIT' goto on_error_exit
     goto fail
@@ -2080,7 +2075,7 @@ finish:
 
 item:
     $S0 = arg
-    $S0 = upcase $S0
+    upcase $S0
     eq $S0, 'ELSE', endline
     arg = self.'evaluate'(tokenizer, arg)
 print_it:
@@ -2091,7 +2086,7 @@ print_it:
     eq arg, ';', nextitem
     eq arg, ',', comma
     $S0 = arg
-    $S0 = upcase $S0
+    upcase $S0
     eq $S0, 'ELSE', endline
     SyntaxError()
 comma:
@@ -2108,7 +2103,7 @@ nextitem:
     $I0 = defined arg
     unless $I0 goto finish
     $S0 = arg
-    $S0 = upcase $S0
+    upcase $S0
     eq $S0, 'ELSE', finish
     goto item
 finish:

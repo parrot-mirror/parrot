@@ -1,4 +1,4 @@
-#!./parrot
+#! parrot
 # Copyright (C) 2007-2008, Parrot Foundation.
 # $Id$
 
@@ -144,10 +144,10 @@ Tests the PMCProxy PMC.
     addparent $P0, $P1
     ok(1, "added Class's PMCProxy as a parent of the PDD15 class")
 
-    #We will override the add_role vtable
+    #We will override the add_role vtable method.
     $P2 = get_global 'no_add_role'
     $P0.'add_vtable_override'('add_role', $P2)
-    ok(1, 'overrode a vtable')
+    ok(1, 'overrode a vtable method')
 
     $P2 = $P0.'new'()
     ok(1, 'instantiated the class')
@@ -178,7 +178,7 @@ Tests the PMCProxy PMC.
     addparent $P0, $P1
     ok(1, "added Class's PMCProxy as a parent of the PDD15 class")
 
-    #We will override the inspect_str vtable
+    #We will override the inspect_str vtable method.
     $P2 = get_global 'always42'
     $P0.'add_vtable_override'('inspect_str', $P2)
     ok(1, 'overrode inspect_str method')
@@ -188,9 +188,9 @@ Tests the PMCProxy PMC.
 
     $P3 = $P2.'inspect'('methods')
     is($P3, 42, "the magic overriding sub was called")
-    ok(1, 'Called non-overridden method, which called overridden vtable')
+    ok(1, 'Called non-overridden method, which called overridden vtable method')
 .end
-.sub always42 :method :nsentry('always42')
+.sub always42 :method
     .param string what
     $P0 = new ['Integer']
     $P0 = 42

@@ -57,10 +57,6 @@ in that aggregate.
 
 */
 
-/* HEADERIZER HFILE: none */
-/* HEADERIZER BEGIN: static */
-/* HEADERIZER END: static */
-
 pmclass Iterator no_ro {
 
 /*

@@ -1,5 +1,5 @@
 #! parrot
-# Copyright (C) 2009-2010, Parrot Foundation.
+# Copyright (C) 2009, Parrot Foundation.
 # $Id$
 
 =head1 NAME
@@ -32,7 +32,7 @@ Warning! With --install there must be no directory prefix in the first arg yet.
     .local string objfile
     .local string exefile
 
-    (infile :optional, cfile :optional, objfile :optional, exefile :optional) = 'handle_args'(argv)
+    (infile, cfile, objfile, exefile) = 'handle_args'(argv)
     unless infile > '' goto err_infile
 
     .local string code_type
@@ -66,7 +66,7 @@ HEADER
     print outfh, codestring
 
     print outfh, <<'MAIN'
-        int main(int argc, const char *argv[])
+        int main(int argc, char *argv[])
         {
             PackFile     *pf;
             Parrot_Interp interp;
@@ -155,8 +155,8 @@ MAIN
   check_install:
     .local string infile, install
 
-    $P0     = shift args
-    infile  = shift args
+    $P0    = shift args
+    infile = shift args
     install = shift args
     if install == '--install' goto proper_install
     .return ()
@@ -217,12 +217,9 @@ MAIN
     .local pmc ifh
     ifh = open infile, 'r'
     unless ifh goto err_infile
-
-    .local pmc codestring
+    .local string codestring
     .local int size
-
-    codestring = new [ 'ResizableStringArray' ]
-    push codestring, "const Parrot_UInt1 program_code[] = {"
+    codestring = "const Parrot_UInt1 program_code[] = {"
     size = 0
 
   read_loop:
@@ -239,13 +236,13 @@ MAIN
     unless pos < pbclength goto code_done
     $I0 = ord pbcstring, pos
     $S0 = $I0
-    push codestring, $S0
-    push codestring, ','
+    codestring .= $S0
+    codestring .= ','
     inc pos
     inc size
     $I0 = size % 32
     unless $I0 == 0 goto code_loop
-    push codestring, "\n"
+    codestring .= "\n"
     goto code_loop
   code_done:
     goto read_loop
@@ -253,19 +250,19 @@ MAIN
   read_done:
     close ifh
 
-    push codestring, "\n};\n\nconst int bytecode_size = "
+    codestring .= "\n};\n\n"
+    codestring .= "const int bytecode_size = "
     $S0 = size
-    push codestring, $S0
-    push codestring, ";\n"
-    push codestring, <<'END_OF_FUNCTION'
+    codestring .= $S0
+    codestring .= ";\n"
+    codestring .= <<'END_OF_FUNCTION'
         const void * get_program_code(void)
         {
             return program_code;
         }
 END_OF_FUNCTION
 
-    $S0 = join '', codestring
-    .return ($S0)
+    .return (codestring)
 
   err_infile:
     die "cannot open infile"
@@ -310,13 +307,10 @@ END_OF_FUNCTION
     .local pmc encoding_table
     encoding_table = 'generate_encoding_table'()
 
-    .local pmc codestring
+    .local string codestring
     .local int size
-
-    codestring = new ['ResizableStringArray']
-
-    push codestring, "const char * program_code =\n"
-    push codestring, '"'
+    codestring = "const char * program_code =\n"
+    codestring .= '"'
     size = 0
 
   read_loop:
@@ -333,14 +327,14 @@ END_OF_FUNCTION
     unless pos < pbclength goto code_done
     $I0 = ord pbcstring, pos
     $S0 = encoding_table[$I0]
-    push codestring, $S0
+    codestring .= $S0
     inc pos
     inc size
     $I0 = size % 32
     unless $I0 == 0 goto code_loop
-    push codestring, '"'
-    push codestring, "\n"
-    push codestring, '"'
+    codestring .= '"'
+    codestring .= "\n"
+    codestring .= '"'
     goto code_loop
   code_done:
     goto read_loop
@@ -348,22 +342,21 @@ END_OF_FUNCTION
   read_done:
     close ifh
 
-    push codestring, '"'
-    push codestring, "\n;\n\n"
-    push codestring, "const int bytecode_size = "
+    codestring .= '"'
+    codestring .= "\n;\n\n"
+    codestring .= "const int bytecode_size = "
     $S0 = size
-    push codestring, $S0
-    push codestring, ";\n"
+    codestring .= $S0
+    codestring .= ";\n"
 
-    push codestring, <<'END_OF_FUNCTION'
+    codestring .= <<'END_OF_FUNCTION'
         const void * get_program_code(void)
         {
             return program_code;
         }
 END_OF_FUNCTION
 
-    $S0 = join '', codestring
-    .return ($S0)
+    .return (codestring)
 
   err_infile:
     die "cannot open infile"
@@ -378,10 +371,11 @@ END_OF_FUNCTION
     .param string new_extension
 
     $S0 = substr pbc_path, -4
-    $S0 = downcase $S0
+    downcase $S0
     if $S0 != '.pbc' goto err_pbc_path_not_pbc
     .local string base_path
-     base_path = replace pbc_path, -4, 4, ''
+     base_path = substr pbc_path, 0
+     substr base_path, -4, 4, ''
 
     .local string new_path
     new_path = substr base_path, 0
@@ -443,16 +437,17 @@ END_OF_DEFINES
     pbc_size = $P2[7]
 
 
-    .local pmc codestring
-    codestring  = new [ 'ResizableStringArray' ]
-    push codestring, "#include <windows.h>\n"
-    push codestring, rc_constant_defines
-    push codestring, "const unsigned int bytecode_size = "
+    .local string codestring
+    codestring  = ''
+    codestring .= '#include <windows.h>'
+    codestring .= "\n"
+    codestring .= rc_constant_defines
+    codestring .= "const unsigned int bytecode_size = "
     $S0 = pbc_size
-    push codestring, $S0
-    push codestring, ";\n"
+    codestring .= $S0
+    codestring .= ";\n"
 
-    push codestring, <<'END_OF_FUNCTION'
+    codestring .= <<'END_OF_FUNCTION'
         const void * get_program_code(void)
         {
             HRSRC   hResource;
@@ -494,10 +489,9 @@ END_OF_FUNCTION
     unless status goto rc_ok
 
     die "RC command failed"
-
   rc_ok:
-    $S0 = join '', codestring
-    .return ($S0)
+
+    .return (codestring)
 
   err_h_open:
     die "cannot open .h file"
@@ -693,14 +687,19 @@ END_OF_FUNCTION
 .sub 'prepend_installable'
     .param string file
 
+    $P0   = '_config'()
+
+    .local string slash
+    slash = $P0['slash']
+
     .local pmc path
-    path     = split '/', file
+    path = split slash, file
 
     file     = path[-1]
     file     = concat 'installable_', file
     path[-1] = file
 
-    file     = join '/', path
+    file     = join slash, path
 
     .return( file )
 .end

@@ -20,10 +20,6 @@ which stores FLOATVALs. It uses Float PMCs to do all necessary conversions.
 
 */
 
-/* HEADERIZER HFILE: none */
-/* HEADERIZER BEGIN: static */
-/* HEADERIZER END: static */
-
 pmclass ResizableFloatArray extends FixedFloatArray auto_attrs provides array {
     ATTR INTVAL resize_threshold; /* max size before array needs resizing */
 
@@ -156,7 +152,7 @@ Creates and returns a copy of the array.
 
         /* copy trimmed extra space */
         GET_ATTR_size(INTERP, SELF, size);
-        SET_ATTR_resize_threshold(INTERP, copy, size);
+        SET_ATTR_resize_threshold(INTERP, SELF, size);
 
         return copy;
     }

@@ -240,11 +240,8 @@ sub find_file {
         return $path if -e $path;
     }
 
-    if ($die_unless_found) {
-        my $includes_list = join q|', '| => @includes;
-        Carp::confess("cannot find file '$file' in path '$includes_list'");
-    }
-
+    print Carp::longmess;
+    die "cannot find file '$file' in path '", join( "', '", @includes ), "'" if $die_unless_found;
     return;
 }
 

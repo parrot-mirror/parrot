@@ -65,7 +65,7 @@ END:
 
 =cut
 
-.sub close :method :nsentry
+.sub close :method
     .local pmc temp
 
     # reset source

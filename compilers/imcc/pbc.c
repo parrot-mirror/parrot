@@ -983,32 +983,31 @@ add_const_str(PARROT_INTERP, ARGIN(const SymReg *r))
     ASSERT_ARGS(add_const_str)
 
     PackFile_ConstTable *table = interp->code->const_table;
-    STRING * const       s     = IMCC_string_from_reg(interp, r);
+    STRING * const s = IMCC_string_from_reg(interp, r);
+    int k = -1;
     int i;
-
     for (i = 0; i < table->const_count; ++i) {
         PackFile_Constant * const constant = table->constants[i];
         if (constant->type == PFC_STRING) {
             STRING * const sc = constant->u.string;
-            if (Parrot_charset_number_of_str(interp, s)
-            ==  Parrot_charset_number_of_str(interp, sc)
-            &&  Parrot_encoding_number_of_str(interp, s)
-            ==  Parrot_encoding_number_of_str(interp, sc)
-            &&  Parrot_str_equal(interp, s, sc)) {
-                return i;
+            if (Parrot_charset_number_of_str(interp, s) ==
+                    Parrot_charset_number_of_str(interp, sc) &&
+                    Parrot_encoding_number_of_str(interp, s) ==
+                    Parrot_encoding_number_of_str(interp, sc) &&
+                    Parrot_str_equal(interp, s, sc)) {
+                k = i;
+                break;
             }
         }
     }
-
-    /* otherwise... */
-    {
-        int                k        = add_const_table(interp);
-        PackFile_Constant *constant = table->constants[k];
-        constant->type              = PFC_STRING;
-        constant->u.string          = s;
-
-        return k;
+    if (k < 0) {
+        PackFile_Constant * constant;
+        k = add_const_table(interp);
+        constant = table->constants[k];
+        constant->type     = PFC_STRING;
+        constant->u.string = s;
     }
+    return k;
 }
 
 
@@ -1065,7 +1064,8 @@ mk_multi_sig(PARROT_INTERP, ARGIN(const SymReg *r))
     if (!pcc_sub->multi[0])
         return Parrot_pmc_new(interp, enum_class_FixedIntegerArray);
 
-    multi_sig = Parrot_pmc_new_init_int(interp, enum_class_FixedPMCArray, n);
+    multi_sig = Parrot_pmc_new(interp, enum_class_FixedPMCArray);
+    VTABLE_set_integer_native(interp, multi_sig, n);
     ct        = interp->code->const_table;
 
     for (i = 0; i < n; ++i) {
@@ -1193,6 +1193,7 @@ find_outer(PARROT_INTERP, ARGIN(const IMC_Unit *unit))
     ASSERT_ARGS(find_outer)
     subs_t      *s;
     PMC         *current;
+    STRING      *cur_name;
     char        *cur_name_str;
     Parrot_Sub_attributes *sub;
     size_t      len;
@@ -1226,6 +1227,7 @@ find_outer(PARROT_INTERP, ARGIN(const IMC_Unit *unit))
                    unit->outer->name);
 
     PMC_get_sub(interp, current, sub);
+    cur_name = sub->name;
 
     cur_name_str = Parrot_str_to_cstring(interp,  sub->name);
     if (strlen(cur_name_str) == len
@@ -1337,10 +1339,8 @@ add_const_pmc_sub(PARROT_INTERP, ARGMOD(SymReg *r), size_t offs, size_t end)
         unit->subid = r;
     else {
         /* trim the quotes  */
-        char *oldname     = unit->subid->name;
         unit->subid->name = mem_sys_strdup(unit->subid->name + 1);
         unit->subid->name[strlen(unit->subid->name) - 1] = 0;
-        mem_sys_free(oldname);
 
         /* create string constant for it. */
         unit->subid->color = add_const_str(interp, unit->subid);
@@ -1397,7 +1397,7 @@ add_const_pmc_sub(PARROT_INTERP, ARGMOD(SymReg *r), size_t offs, size_t end)
         STRING *vtable_name;
         INTVAL  vtable_index;
 
-        /* Work out the name of the vtable function. */
+        /* Work out the name of the vtable method. */
         if (unit->vtable_name) {
             vtable_name = Parrot_str_new(interp, unit->vtable_name + 1,
                     strlen(unit->vtable_name) - 2);
@@ -1406,13 +1406,14 @@ add_const_pmc_sub(PARROT_INTERP, ARGMOD(SymReg *r), size_t offs, size_t end)
         else
             vtable_name = sub->name;
 
-        /* Check this is a valid vtable function to override. */
+        /* Check this is a valid vtable method to override. */
         vtable_index = Parrot_get_vtable_index(interp, vtable_name);
 
-        if (vtable_index == -1)
+        if (vtable_index == -1) {
             IMCC_fatal(interp, 1,
-                "'%S' is not a vtable, but was used with :vtable.\n",
+                "'%S' is not a v-table method, but was used with :vtable.\n",
                 vtable_name);
+        }
 
         /* TODO check for duplicates */
         sub->vtable_index = vtable_index;
@@ -1539,14 +1540,13 @@ static opcode_t
 build_key(PARROT_INTERP, ARGIN(SymReg *key_reg))
 {
     ASSERT_ARGS(build_key)
-#define MAX_KEY_LEN 10
-#define MAX_KEYNAME_LEN 20
-    SymReg   *reg = key_reg->set == 'K' ? key_reg->nextkey : key_reg;
+#define KEYLEN 21
+    SymReg   *reg;
 
-    char      s_key[MAX_KEY_LEN * MAX_KEYNAME_LEN];
-    opcode_t  key[MAX_KEY_LEN * 2 + 1];
+    char      s_key[KEYLEN * 10];
+    opcode_t  key[KEYLEN];
     opcode_t  size;
-    int       key_length = 0;     /* P0["hi;there"; S0; 2] has length 3 */
+    int       key_length;     /* P0["hi;there"; S0; 2] has length 3 */
     int       k;
 
     /* 0 is length */
@@ -1556,14 +1556,15 @@ build_key(PARROT_INTERP, ARGIN(SymReg *key_reg))
     char     *s  = s_key;
 
     *s           = 0;
+    reg          = key_reg->set == 'K' ? key_reg->nextkey : key_reg;
 
     for (key_length = 0; reg ; reg = reg->nextkey, key_length++) {
         SymReg *r = reg;
         int     type;
 
-        if (key_length >= MAX_KEY_LEN)
+        if ((pc - key - 2) >= KEYLEN)
             IMCC_fatal(interp, 1, "build_key:"
-                    "Key too long, increase MAX_KEY_LEN.\n");
+                    "key too complex increase KEYLEN\n");
 
         /* if key is a register, the original sym is in r->reg */
         type = r->type;

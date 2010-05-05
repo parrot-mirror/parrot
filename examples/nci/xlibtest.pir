@@ -285,13 +285,12 @@ finish:
     jsonfile = handle.'readall'()
     close handle
 
-    load_language 'data_json'
-    .local pmc json, jsonobject, jsondata
-    json = compreg 'data_json'
+    load_bytecode 'compilers/json/JSON.pbc'
+    .local pmc json
+    json = compreg 'JSON'
     .local pmc jsonobject
-    jsonobject = json.'compile'(jsonfile)
-    jsondata = jsonobject()
-    listline = jsondata [JKEY_LINES]
+    jsonobject = json(jsonfile)
+    listline = jsonobject [JKEY_LINES]
     goto finish
 
 failed:

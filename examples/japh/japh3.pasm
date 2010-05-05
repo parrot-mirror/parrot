@@ -1,4 +1,4 @@
-# Copyright (C) 2004-2010, Parrot Foundation.
+# Copyright (C) 2004-2009, Parrot Foundation.
 # $Id$
 
 # the substr JaPH
@@ -6,9 +6,10 @@
     set S1, "Parrot "
     set S2, "another "
     set S3, "Just "
-    replace S3, S3, 5,  1, S2
-    replace S3, S3, 13, 1, S1
-    replace S3, S3, 20, 1, S0
+    set S31, S0
+    substr S3, 5,  1, S2
+    substr S3, 13, 1, S1
+    substr S3, 20, 1, S0
     print S3
     end
 

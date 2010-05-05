@@ -309,7 +309,8 @@ at :load time by _opengl_init().
     # Rename all 'glutcb*' symbols to 'glut*'
   rename_callbacks:
     .local string renamed
-    renamed = replace symbol, 4, 2, ''
+    renamed = clone symbol
+    substr renamed, 4, 2, ''
     export_renames[symbol] = renamed
     goto symbol_loop
   symbol_loop_end:
@@ -370,7 +371,8 @@ caller's namespace is assumed.
     # Rename all 'glutcb*' symbols to 'glut*'
   rename_callbacks:
     .local string renamed
-    renamed = replace symbol, 4, 2, ''
+    renamed = clone symbol
+    substr renamed, 4, 2, ''
     export_renames[symbol] = renamed
     goto symbol_loop
   symbol_loop_end:

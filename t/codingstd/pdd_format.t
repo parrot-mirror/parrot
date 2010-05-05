@@ -7,20 +7,22 @@ use warnings;
 
 use Test::More tests =>  1;
 use Carp;
+use Cwd;
 use Tie::File;
 
-my @pdddirs = qw(
-    ./docs/pdds
-    ./docs/pdds/draft
+my $cwd = cwd();
+my @pdddirs = (
+    qq{$cwd/docs/pdds},
+    qq{$cwd/docs/pdds/draft},
 );
 
 my @pddfiles = ();
 foreach my $dir (@pdddirs) {
-    die "Directory '$dir' is not found, or not a directory" if not -d $dir;
-
-    my @pdds = glob "$dir/pdd*.pod"
-        or warn "No PDD files found in directory '$dir'";
-
+    opendir my $DIRH, $dir
+        or croak "Unable to open directory handle: $!";
+    my @pdds = map { qq|$dir/$_| } grep { m/^pdd\d{2,}_.*\.pod$/ }
+        readdir $DIRH;
+    closedir $DIRH or croak "Unable to close directory handle: $!";
     push @pddfiles, @pdds;
 }
 
@@ -32,14 +34,20 @@ foreach my $pdd (@pddfiles) {
     }
 }
 
-for my $msg (@diagnostics) {
-    diag($msg);
+my $errmsg = q{};
+if ( @diagnostics ) {
+    $errmsg = join ("\n" => @diagnostics) . "\n";
 }
-cmp_ok( scalar(@diagnostics), '==', 0, 'PDDs are formatted correctly' );
+
+$errmsg ? fail( qq{\n$errmsg} )
+        : pass( q{All PDDs are formatted correctly} );
 
 sub check_pdd_formatting {
     my $pdd = shift;
-
+    my $base = $pdd;
+    if ($pdd =~ m{((draft/)?[^/]+)$}) {
+        $base = $1;
+    }
     my $diag = q{};
     my @toolong = ();
     my @sections_needed = qw(
@@ -49,7 +57,7 @@ sub check_pdd_formatting {
         Implementation
         References
     );
-    my %sections_seen;
+    my %sections_seen = map { $_, 0 } @sections_needed;
     my @lines;
     tie @lines, 'Tie::File', $pdd
         or croak "Unable to tie to $pdd: $!";
@@ -61,20 +69,20 @@ sub check_pdd_formatting {
         ) {
             push @toolong, ($i + 1);
         }
-        if ( $lines[$i] =~ m{^=head2\s+(.+?)\s*$} ) {
-            $sections_seen{$1}++;
+        foreach my $need ( @sections_needed ) {
+            $sections_seen{$need}++ if $lines[$i] =~ m{^=head2\s+$need};
         }
     }
     untie @lines or croak "Unable to untie from $pdd: $!";
     if ( @toolong ) {
         $diag .=
-            qq{$pdd has } .
+            qq{$base has } .
             scalar(@toolong) .
             qq{ lines > 78 chars:  @toolong\n};
     }
-    foreach my $need (@sections_needed) {
+    foreach my $need ( keys %sections_seen ) {
         if ( ! $sections_seen{$need} ) {
-            $diag .= qq{$pdd lacks 'head2' $need section\n};
+            $diag .= qq{$base lacks 'head2' $need section\n};
         }
     }
     return $diag;

@@ -860,6 +860,7 @@ static int
 int_overflows(ARGIN(const SymReg *r))
 {
     ASSERT_ARGS(int_overflows)
+    INTVAL i;
     int base;
     const char *digits;
 
@@ -882,10 +883,10 @@ int_overflows(ARGIN(const SymReg *r))
 
     errno = 0;
     if (base == 10) {
-        (void)strtol(digits, NULL, base);
+        i = strtol(digits, NULL, base);
     }
     else {
-        (void)strtoul(digits + 2, NULL, base);
+        i = strtoul(digits + 2, NULL, base);
     }
 
     return errno ? 1 : 0;

@@ -343,6 +343,10 @@ Use the given type for opcodes.
 
 Use the given ops files.
 
+=item C<--cgoto=0>
+
+Don't build cgoto core. This is recommended when you are short of memory.
+
 =item C<--jitcapable>
 
 Use JIT system.
@@ -619,6 +623,7 @@ configuration file.
     auto::jit
     auto::frames
     auto::cpu
+    auto::cgoto
     auto::inline
     auto::gc
     auto::memalign
@@ -627,8 +632,10 @@ configuration file.
     auto::env
     auto::gmp
     auto::readline
+    auto::gdbm
     auto::pcre
     auto::opengl
+    auto::crypto
     auto::gettext
     auto::snprintf
     # auto::perldoc
@@ -637,6 +644,7 @@ configuration file.
     auto::icu
     gen::config_h
     gen::core_pmcs
+    gen::crypto
     gen::opengl
     gen::makefiles
     gen::platform

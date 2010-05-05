@@ -439,9 +439,10 @@ target * add_param(
 PARROT_IGNORABLE_RESULT
 PARROT_CANNOT_RETURN_NULL
 target * add_target(
-    SHIM(lexer_state * const lexer),
+    ARGIN(lexer_state * const lexer),
     ARGMOD(target *last),
     ARGIN(target * const t))
+        __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3)
         FUNC_MODIFIES(*last);
@@ -521,7 +522,7 @@ expression * get_operand(ARGIN(lexer_state * const lexer), short n)
         __attribute__nonnull__(1);
 
 PARROT_WARN_UNUSED_RESULT
-unsigned get_operand_count(ARGIN(lexer_state *lexer))
+unsigned get_operand_count(ARGIN(lexer_state * const lexer))
         __attribute__nonnull__(1);
 
 void get_operands(ARGIN(lexer_state * const lexer), int bitmask, ...)
@@ -618,9 +619,8 @@ void new_subr(ARGIN(lexer_state * const lexer), ARGIN(STRING *subname))
 
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
-target * new_target(ARGMOD(lexer_state *lexer))
-        __attribute__nonnull__(1)
-        FUNC_MODIFIES(*lexer);
+target * new_target(ARGIN(lexer_state * const lexer))
+        __attribute__nonnull__(1);
 
 void push_operand(
     ARGIN(lexer_state * const lexer),
@@ -800,17 +800,17 @@ void set_sub_vtable(
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
-void set_target_key(ARGMOD(target *t), ARGIN(key *k))
+void set_target_key(ARGIN(target * const t), ARGIN(key * const k))
         __attribute__nonnull__(1)
-        __attribute__nonnull__(2)
-        FUNC_MODIFIES(*t);
+        __attribute__nonnull__(2);
 
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
-target * target_from_symbol(ARGMOD(lexer_state * lexer), ARGIN(symbol *sym))
+target * target_from_symbol(
+    ARGIN(lexer_state * const lexer),
+    ARGIN(symbol * const sym))
         __attribute__nonnull__(1)
-        __attribute__nonnull__(2)
-        FUNC_MODIFIES(* lexer);
+        __attribute__nonnull__(2);
 
 PARROT_PURE_FUNCTION
 PARROT_WARN_UNUSED_RESULT
@@ -869,7 +869,8 @@ void update_sub_register_usage(
        PARROT_ASSERT_ARG(lexer) \
     , PARROT_ASSERT_ARG(name))
 #define ASSERT_ARGS_add_target __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
-       PARROT_ASSERT_ARG(last) \
+       PARROT_ASSERT_ARG(lexer) \
+    , PARROT_ASSERT_ARG(last) \
     , PARROT_ASSERT_ARG(t))
 #define ASSERT_ARGS_annotate __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
        PARROT_ASSERT_ARG(lexer) \
