@@ -166,9 +166,9 @@ Append string to current buffer.
 
 /*
 
-=item C<VTABLE i_concatenate_str()
+=item C<VTABLE i_concatenate_str()>
 
-=item C<VTABLE i_concatenate()
+=item C<VTABLE i_concatenate()>
 
 Append string. Synonym for push_string
 
@@ -181,6 +181,10 @@ Append string. Synonym for push_string
     }
 
     VTABLE void i_concatenate(PMC *p) {
+        SELF.push_string(VTABLE_get_string(INTERP, p));
+    }
+
+    VTABLE void push_pmc(PMC *p) {
         SELF.push_string(VTABLE_get_string(INTERP, p));
     }
 
