@@ -9,15 +9,13 @@ src/pmc/codestring.pmc - CodeString PMC Class
 =head1 DESCRIPTION
 
 C<CodeString> is a class intended to simplify the process of emitting code
-strings. It uses an internal collection of strings to avoid concatenating
-strings with every emit, but may coalesce those strings into a single
-string to avoid memory pressure at its discretion.
+strings.
 
 The primary method for C<CodeString> objects is C<emit>, which appends a line
 (or lines) of code to the string according to a format parameter.  The line can
 contain substitution markers (ala printf) that indicate where other parameters
 to the call should be placed. To add a line with no interpolation, a simple
-concat can be used.
+concat or push_string can be used.
 
 =head2 Methods
 
@@ -35,12 +33,9 @@ concat can be used.
 /* HEADERIZER BEGIN: static */
 /* HEADERIZER END: static */
 
-#define PARROT_CODESTRING_MINIMUM_SIZE       32
-#define PARROT_CODESTRING_COALESCE_THRESHOLD 64
-
 pmclass CodeString extends String provides string auto_attrs {
-    ATTR PMC *linepos;  /* start of line positions */
-    ATTR PMC *strings;  /* array of strings... */
+    ATTR PMC *linepos;        /* start of line positions */
+    ATTR PMC *stringbuilder;
 
 /*
 
@@ -55,9 +50,8 @@ Initialize the CodeString.
     VTABLE void init() {
         SET_ATTR_linepos(INTERP, SELF, PMCNULL);
 
-        SET_ATTR_strings(INTERP, SELF,
-            Parrot_pmc_new_init_int(INTERP, enum_class_ResizableStringArray,
-                PARROT_CODESTRING_MINIMUM_SIZE));
+        SET_ATTR_stringbuilder(INTERP, SELF,
+            Parrot_pmc_new(INTERP, enum_class_StringBuilder));
 
         PObj_custom_mark_SET(SELF);
 
@@ -75,18 +69,13 @@ Mark the CodeString as live.
 
     VTABLE void mark() {
         if (PMC_data(SELF)) {
-            PMC *linepos, *strings;
-
-            /* force the join to avoid marking the RPA and lots of STRINGs */
-            STRING *contents = SELF.get_string();
-            UNUSED(contents);
+            PMC *linepos, *stringbuilder;
 
             GET_ATTR_linepos(INTERP, SELF, linepos);
             Parrot_gc_mark_PMC_alive(INTERP, linepos);
 
-            /* all that's in here now is a single STRING */
-            GET_ATTR_strings(INTERP, SELF, strings);
-            Parrot_gc_mark_PMC_alive(INTERP, strings);
+            GET_ATTR_stringbuilder(INTERP, SELF, stringbuilder);
+            Parrot_gc_mark_PMC_alive(INTERP, stringbuilder);
         }
     }
 
@@ -122,11 +111,11 @@ is not already present.
     STRING * const comma_space = CONST_STRING(INTERP, ", ");
     STRING * const newline     = CONST_STRING(INTERP, "\n");
     STRING *key;
-    PMC    *strings;
+    PMC    *stringbuilder;
     INTVAL percentPos;
     INTVAL pos = 0;
 
-    GET_ATTR_strings(INTERP, SELF, strings);
+    GET_ATTR_stringbuilder(INTERP, SELF, stringbuilder);
 
     /* Loop over the format string, splitting it into chunks
      * for the string builder. */
@@ -136,11 +125,11 @@ is not already present.
 
         if (percentPos < 0) {
             if (pos == 0) {
-                VTABLE_push_string(INTERP, strings, fmt);
+                VTABLE_push_string(INTERP, stringbuilder, fmt);
             }
             else {
                 /* remaining string can be added as is. */
-                VTABLE_push_string(INTERP, strings,
+                VTABLE_push_string(INTERP, stringbuilder,
                     Parrot_str_substr(INTERP, fmt, pos,
                         Parrot_str_byte_length(INTERP, fmt) -pos));
                 }
@@ -148,7 +137,7 @@ is not already present.
         }
         else {
             /* slurp up to just before the % sign... */
-            VTABLE_push_string(INTERP, strings,
+            VTABLE_push_string(INTERP, stringbuilder,
                 Parrot_str_substr(INTERP, fmt, pos, percentPos - pos));
             /* skip the % sign */
             pos = percentPos + 1 ;
@@ -158,11 +147,11 @@ is not already present.
         key = Parrot_str_substr(INTERP, fmt, pos++, 1);
 
         if (VTABLE_exists_keyed_str(INTERP, hash, key)) {
-            VTABLE_push_string(INTERP, strings,
+            VTABLE_push_string(INTERP, stringbuilder,
                     VTABLE_get_string_keyed_str(INTERP, hash, key));
         }
         else if (Parrot_str_is_cclass(INTERP, enum_cclass_numeric, key, 0)) {
-            VTABLE_push_string(INTERP, strings,
+            VTABLE_push_string(INTERP, stringbuilder,
                 VTABLE_get_string_keyed_int(INTERP, args,
                     Parrot_str_to_int(INTERP, key)));
         }
@@ -170,32 +159,30 @@ is not already present.
             INTVAL num_args = VTABLE_elements(INTERP, args);
             INTVAL pos_args = 1;
 
-            VTABLE_push_string(INTERP, strings,
+            VTABLE_push_string(INTERP, stringbuilder,
                 VTABLE_get_string_keyed_int(INTERP, args, 0));
 
             while (pos_args < num_args) {
-                VTABLE_push_string(INTERP, strings, comma_space);
-                VTABLE_push_string(INTERP, strings,
+                VTABLE_push_string(INTERP, stringbuilder, comma_space);
+                VTABLE_push_string(INTERP, stringbuilder,
                     VTABLE_get_string_keyed_int(INTERP, args, pos_args));
                 pos_args++;
             }
         }
         else if (Parrot_str_equal(INTERP, key, percent)) {
-            VTABLE_push_string(INTERP, strings, percent);
+            VTABLE_push_string(INTERP, stringbuilder, percent);
         }
         else {
             /* %foo has no special meaning, pass it through unchanged */
-            VTABLE_push_string(INTERP, strings,
+            VTABLE_push_string(INTERP, stringbuilder,
                 key = Parrot_str_substr(INTERP, fmt, pos-2, 2));
         }
     }
 
     /* Add a newline if necessary */
     if ('\n' != Parrot_str_indexed(INTERP, fmt, Parrot_str_byte_length(INTERP, fmt) - 1))
-        VTABLE_push_string(INTERP, strings, newline);
+        VTABLE_push_string(INTERP, stringbuilder, newline);
 
-    if (VTABLE_elements(INTERP, strings) > PARROT_CODESTRING_COALESCE_THRESHOLD)
-        SELF.get_string();
 
     RETURN(PMC *SELF);
 }
@@ -212,22 +199,11 @@ Stringify ourselves.
 
 
     VTABLE STRING *get_string() {
-        PMC    *strings;
+        PMC    *stringbuilder;
+        STRING *result;
 
-        GET_ATTR_strings(INTERP, SELF, strings);
-
-        /* avoid unnecessary joins */
-        if (VTABLE_elements(INTERP, strings) <= 1)
-            return VTABLE_get_string_keyed_int(INTERP, strings, 0);
-        else {
-            STRING const *empty  = CONST_STRING(INTERP, "");
-            STRING const *result = Parrot_str_join(INTERP, empty, strings);
-
-            /* cache the result to avoid a join the next time. */
-            SELF.set_string_native(result);
-
-            return result;
-        }
+        GET_ATTR_stringbuilder(INTERP, SELF, stringbuilder);
+        return VTABLE_get_string(INTERP, stringbuilder);
     }
 
 /*
@@ -242,12 +218,11 @@ Save our value as a single entry in the StringBuilder.
 
 
     VTABLE void set_string_native(STRING *value) {
-        /* reuse our old stringBuilder */
-        PMC *strings;
+        PMC    *stringbuilder;
+        STRING *result;
 
-        GET_ATTR_strings(INTERP, SELF, strings);
-        VTABLE_set_integer_native(INTERP, strings, 0);
-        VTABLE_push_string(INTERP, strings, value);
+        GET_ATTR_stringbuilder(INTERP, SELF, stringbuilder);
+        VTABLE_set_string_native(INTERP, stringbuilder, value);
     }
 
 /*
@@ -468,14 +443,17 @@ For example, C<key('Foo', 'Bar')> returns C<["Foo";"Bar"]>.
 }
 
     VTABLE void i_concatenate_str(STRING *value) {
-        PMC *strings;
-        GET_ATTR_strings(INTERP, SELF, strings);
+        PMC *stringbuilder;
+        GET_ATTR_stringbuilder(INTERP, SELF, stringbuilder);
 
-        VTABLE_push_string(INTERP, strings, value);
+        VTABLE_push_string(INTERP, stringbuilder, value);
+    }
 
-        if (VTABLE_elements(INTERP, strings) > PARROT_CODESTRING_COALESCE_THRESHOLD)
-            SELF.get_string();
+    VTABLE void i_concatenate(PMC *value) {
+        PMC *stringbuilder;
+        GET_ATTR_stringbuilder(INTERP, SELF, stringbuilder);
 
+        VTABLE_push_pmc(INTERP, stringbuilder, value);
     }
 
 /*
