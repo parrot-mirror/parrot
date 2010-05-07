@@ -104,7 +104,6 @@ StringBuilder strings are immutable.
         STRING *buffer, *retv;
         GET_ATTR_buffer(INTERP, SELF, buffer);
         retv = Parrot_str_clone(INTERP, buffer);
-        retv->hashval = 0; /* hash is invalid */
         return retv;
     }
 
@@ -162,6 +161,7 @@ Append string to current buffer.
         /* Update buffer */
         buffer->bufused += s->bufused;
         buffer->strlen  += Parrot_str_length(INTERP, s);
+        buffer->hashval = 0; /* hash is invalid */
 
         PARROT_ASSERT(buffer->bufused <= Buffer_buflen(buffer));
     }
