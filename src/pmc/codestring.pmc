@@ -175,7 +175,7 @@ is not already present.
         else {
             /* %foo has no special meaning, pass it through unchanged */
             VTABLE_push_string(INTERP, stringbuilder,
-                key = Parrot_str_substr(INTERP, fmt, pos-2, 2));
+                Parrot_str_substr(INTERP, fmt, pos-2, 2));
         }
     }
 
