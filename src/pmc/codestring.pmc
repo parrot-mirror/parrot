@@ -122,7 +122,7 @@ is not already present.
                     /* remaining string can be added as is. */
                     VTABLE_push_string(INTERP, stringbuilder,
                         Parrot_str_substr(INTERP, fmt, pos,
-                            Parrot_str_byte_length(INTERP, fmt) -pos));
+                            Parrot_str_length(INTERP, fmt) -pos));
                     }
                 break;
             }
