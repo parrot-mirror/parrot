@@ -8,8 +8,8 @@ src/pmc/codestring.pmc - CodeString PMC Class
 
 =head1 DESCRIPTION
 
-C<CodeString> is a class intended to simplify the process of emitting code
-strings.
+C<CodeString> is a class intended to simplify the process of generating
+code strings.
 
 The primary method for C<CodeString> objects is C<emit>, which appends a line
 (or lines) of code to the string according to a format parameter.  The line can
@@ -185,44 +185,6 @@ is not already present.
 
 
         RETURN(PMC *SELF);
-    }
-
-/*
-
-=item get_string()
-
-Stringify ourselves.
-
-=cut
-
-*/
-
-
-    VTABLE STRING *get_string() {
-        PMC    *stringbuilder;
-        STRING *result;
-
-        GET_ATTR_stringbuilder(INTERP, SELF, stringbuilder);
-        return VTABLE_get_string(INTERP, stringbuilder);
-    }
-
-/*
-
-=item set_string_native()
-
-Save our value as a single entry in the StringBuilder.
-
-=cut
-
-*/
-
-
-    VTABLE void set_string_native(STRING *value) {
-        PMC    *stringbuilder;
-        STRING *result;
-
-        GET_ATTR_stringbuilder(INTERP, SELF, stringbuilder);
-        VTABLE_set_string_native(INTERP, stringbuilder, value);
     }
 
 /*
@@ -441,6 +403,24 @@ For example, C<key('Foo', 'Bar')> returns C<["Foo";"Bar"]>.
 
         RETURN(STRING *out);
     }
+
+    /* Dispatch these VTABLE entries to our StringBuilder.  */
+
+    VTABLE STRING *get_string() {
+        PMC    *stringbuilder;
+        STRING *result;
+
+        GET_ATTR_stringbuilder(INTERP, SELF, stringbuilder);
+        return VTABLE_get_string(INTERP, stringbuilder);
+    }
+
+    VTABLE void set_string_native(STRING *value) {
+        PMC    *stringbuilder;
+
+        GET_ATTR_stringbuilder(INTERP, SELF, stringbuilder);
+        VTABLE_set_string_native(INTERP, stringbuilder, value);
+    }
+
 
     VTABLE void i_concatenate_str(STRING *value) {
         PMC *stringbuilder;
