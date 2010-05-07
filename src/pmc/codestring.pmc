@@ -33,9 +33,8 @@ concat or push_string can be used.
 /* HEADERIZER BEGIN: static */
 /* HEADERIZER END: static */
 
-pmclass CodeString extends String provides string auto_attrs {
+pmclass CodeString extends StringBuilder provides string auto_attrs {
     ATTR PMC *linepos;        /* start of line positions */
-    ATTR PMC *stringbuilder;
 
 /*
 
@@ -48,13 +47,9 @@ Initialize the CodeString.
 */
 
     VTABLE void init() {
+        SUPER();
         SET_ATTR_linepos(INTERP, SELF, PMCNULL);
-
-        SET_ATTR_stringbuilder(INTERP, SELF,
-            Parrot_pmc_new(INTERP, enum_class_StringBuilder));
-
         PObj_custom_mark_SET(SELF);
-
     }
 
 /*
@@ -68,14 +63,12 @@ Mark the CodeString as live.
 */
 
     VTABLE void mark() {
+        SUPER();
         if (PMC_data(SELF)) {
-            PMC *linepos, *stringbuilder;
+            PMC *linepos;
 
             GET_ATTR_linepos(INTERP, SELF, linepos);
             Parrot_gc_mark_PMC_alive(INTERP, linepos);
-
-            GET_ATTR_stringbuilder(INTERP, SELF, stringbuilder);
-            Parrot_gc_mark_PMC_alive(INTERP, stringbuilder);
         }
     }
 
@@ -111,11 +104,9 @@ is not already present.
         STRING * const comma_space = CONST_STRING(INTERP, ", ");
         STRING * const newline     = CONST_STRING(INTERP, "\n");
         STRING *key;
-        PMC    *stringbuilder;
+        PMC    *stringbuilder = SELF;
         INTVAL percentPos;
         INTVAL pos = 0;
-
-        GET_ATTR_stringbuilder(INTERP, SELF, stringbuilder);
 
         /* Loop over the format string, splitting it into chunks
          * for the string builder. */
@@ -402,38 +393,6 @@ For example, C<key('Foo', 'Bar')> returns C<["Foo";"Bar"]>.
         out = Parrot_str_concat(INTERP, out, close_bracket);
 
         RETURN(STRING *out);
-    }
-
-    /* Dispatch these VTABLE entries to our StringBuilder.  */
-
-    VTABLE STRING *get_string() {
-        PMC    *stringbuilder;
-        STRING *result;
-
-        GET_ATTR_stringbuilder(INTERP, SELF, stringbuilder);
-        return VTABLE_get_string(INTERP, stringbuilder);
-    }
-
-    VTABLE void set_string_native(STRING *value) {
-        PMC    *stringbuilder;
-
-        GET_ATTR_stringbuilder(INTERP, SELF, stringbuilder);
-        VTABLE_set_string_native(INTERP, stringbuilder, value);
-    }
-
-
-    VTABLE void i_concatenate_str(STRING *value) {
-        PMC *stringbuilder;
-        GET_ATTR_stringbuilder(INTERP, SELF, stringbuilder);
-
-        VTABLE_push_string(INTERP, stringbuilder, value);
-    }
-
-    VTABLE void i_concatenate(PMC *value) {
-        PMC *stringbuilder;
-        GET_ATTR_stringbuilder(INTERP, SELF, stringbuilder);
-
-        VTABLE_push_pmc(INTERP, stringbuilder, value);
     }
 
 /*
