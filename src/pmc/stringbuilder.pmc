@@ -190,15 +190,20 @@ Append string. Synonym for push_string
 
 /*
 
-=item C<VTABLE set_string_native()>
+=item C<VTABLE set_string_native(STRING)>
 
-Set content of buffer to passed string
+=item C<VTABLE set_pmc(PMC)>
+
+Set content of buffer to passed string or PMC
 
 =cut
 
 */
     VTABLE void set_string_native(STRING *s) {
         SET_ATTR_buffer(INTERP, SELF, Parrot_str_clone(INTERP, s));
+    }
+    VTABLE void set_pmc(PMC *s) {
+        SET_ATTR_buffer(INTERP, SELF, VTABLE_get_string(INTERP, s));
     }
 
 
@@ -213,11 +218,27 @@ For testing purpose only?
 =cut
 
 */
+
     INTVAL get_integer() {
         STRING *buffer;
         GET_ATTR_buffer(INTERP, SELF, buffer);
         return Buffer_buflen(buffer);
     }
+
+/*
+
+=item C<VTABLE substr_str()>
+
+=cut
+
+*/
+
+    VTABLE STRING *substr_str(INTVAL offset, INTVAL length) {
+        STRING *buffer;
+        GET_ATTR_buffer(INTERP, SELF, buffer);
+        return Parrot_str_substr(INTERP, buffer, offset, length);
+    }
+
 
 /*
 
