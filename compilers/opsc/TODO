@@ -6,7 +6,6 @@ Required for initial self-hosting:
 
 Required for full implementation:
   * A LOT OF DOCUMENTATION.
-  * Implement Trans::* for other runcores.
   * Implement handling of dynops.
   * Add tests for Trans::C independent from 06-emitter.t
   * Add tests for dynamic mode of Emitter.
