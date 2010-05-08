@@ -251,6 +251,8 @@ typedef struct PackFile_ConstTable {
     opcode_t                   const_count;
     PackFile_Constant        **constants;
     PackFile_ByteCode         *code;  /* where this segment belongs to */
+
+    PMC                       *string_hash; /* Hash for lookup strings and numbers */
 } PackFile_ConstTable;
 
 struct PackFile_ByteCode {
@@ -301,11 +303,11 @@ typedef struct PackFile_Annotations_Entry {
 typedef struct PackFile_Annotations {
     PackFile_Segment            base;
     opcode_t                    num_keys;
-    PackFile_Annotations_Key    **keys;
+    PackFile_Annotations_Key    *keys;
     opcode_t                    num_groups;
-    PackFile_Annotations_Group  **groups;
+    PackFile_Annotations_Group  *groups;
     opcode_t                    num_entries;
-    PackFile_Annotations_Entry  **entries;
+    PackFile_Annotations_Entry  *entries;
     PackFile_ByteCode           *code;
 } PackFile_Annotations;
 
@@ -388,6 +390,15 @@ size_t PackFile_ConstTable_pack_size(PARROT_INTERP,
         __attribute__nonnull__(2);
 
 PARROT_EXPORT
+int PackFile_ConstTable_rlookup(PARROT_INTERP,
+    ARGIN(const PackFile_ConstTable *ct),
+    ARGIN(PMC *key),
+    int type)
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3);
+
+PARROT_EXPORT
 int PackFile_find_in_const(PARROT_INTERP,
     ARGIN(const PackFile_ConstTable *ct),
     ARGIN(PMC *key),
@@ -424,6 +435,10 @@ opcode_t PackFile_pack_size(PARROT_INTERP, ARGMOD(PackFile *self))
 #define ASSERT_ARGS_PackFile_ConstTable_pack_size __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
        PARROT_ASSERT_ARG(interp) \
     , PARROT_ASSERT_ARG(seg))
+#define ASSERT_ARGS_PackFile_ConstTable_rlookup __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
+       PARROT_ASSERT_ARG(interp) \
+    , PARROT_ASSERT_ARG(ct) \
+    , PARROT_ASSERT_ARG(key))
 #define ASSERT_ARGS_PackFile_find_in_const __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
        PARROT_ASSERT_ARG(interp) \
     , PARROT_ASSERT_ARG(ct) \

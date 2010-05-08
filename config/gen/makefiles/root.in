@@ -256,6 +256,7 @@ GEN_MODULES = \
 
 GEN_LIBRARY = \
     $(LIBRARY_DIR)/Archive/Tar.pbc \
+    $(LIBRARY_DIR)/Archive/Zip.pbc \
     $(LIBRARY_DIR)/CGI/QueryHash.pbc \
     $(LIBRARY_DIR)/Crow.pbc \
     $(LIBRARY_DIR)/config.pbc \
@@ -663,6 +664,7 @@ STR_FILES = \
     src/spf_vtable.str \
     src/string/api.str \
     src/sub.str \
+    src/embed.str \
     \
     $(CLASS_STR_FILES)
 

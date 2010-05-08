@@ -294,6 +294,32 @@ string_rep_compatible(SHIM_INTERP,
     return NULL;
 }
 
+/*
+
+=item C<const CHARSET * Parrot_str_rep_compatible(PARROT_INTERP, const STRING
+*a, const STRING *b, const ENCODING **e)>
+
+Find the "lowest" possible charset and encoding for the given string. E.g.
+
+  ascii <op> utf8 => utf8
+                  => ascii, B<if> C<STRING *b> has ascii chars only.
+
+Returns NULL, if no compatible string representation can be found.
+
+=cut
+
+*/
+
+PARROT_INLINE
+PARROT_IGNORABLE_RESULT
+PARROT_CAN_RETURN_NULL
+const CHARSET *
+Parrot_str_rep_compatible(PARROT_INTERP,
+    ARGIN(const STRING *a), ARGIN(const STRING *b), ARGOUT(const ENCODING **e))
+{
+    ASSERT_ARGS(Parrot_str_rep_compatible)
+    return string_rep_compatible(interp, a, b, e);
+}
 
 /*
 
@@ -374,13 +400,13 @@ Parrot_str_copy(PARROT_INTERP, ARGIN(const STRING *s))
 
 /*
 
-=item C<STRING * Parrot_str_concat(PARROT_INTERP, STRING *a, STRING *b)>
+=item C<STRING * Parrot_str_concat(PARROT_INTERP, const STRING *a, const STRING
+*b)>
 
 Concatenates two Parrot strings. If necessary, converts the second
 string's encoding and/or type to match those of the first string. If
 either string is C<NULL>, then a copy of the non-C<NULL> string is
-returned. If both strings are C<NULL>, then a new zero-length string is
-created and returned.
+returned. If both strings are C<NULL>, return C<STRINGNULL>.
 
 =cut
 
@@ -389,37 +415,34 @@ created and returned.
 PARROT_EXPORT
 PARROT_CANNOT_RETURN_NULL
 STRING *
-Parrot_str_concat(PARROT_INTERP, ARGIN_NULLOK(STRING *a),
-            ARGIN_NULLOK(STRING *b))
+Parrot_str_concat(PARROT_INTERP, ARGIN_NULLOK(const STRING *a),
+            ARGIN_NULLOK(const STRING *b))
 {
     ASSERT_ARGS(Parrot_str_concat)
     const CHARSET   *cs;
-    const ENCODING  *enc;
+    const ENCODING  *enc = NULL;
     STRING          *dest;
     UINTVAL          total_length;
 
     /* XXX should this be a CHARSET method? */
 
     /* If B isn't real, we just bail */
-    const UINTVAL b_len = b ? Parrot_str_byte_length(interp, b) : 0;
+    const UINTVAL b_len = b ? Parrot_str_length(interp, b) : 0;
     if (!b_len)
-        return a;
+        return STRING_IS_NULL(a) ? STRINGNULL : Parrot_str_copy(interp, a);
 
     /* Is A real? */
     if (STRING_IS_NULL(a) || Buffer_bufstart(a) == NULL)
-        return b;
+        return Parrot_str_copy(interp, b);
 
     ASSERT_STRING_SANITY(a);
     ASSERT_STRING_SANITY(b);
 
     cs = string_rep_compatible(interp, a, b, &enc);
 
-    if (cs) {
-        a->charset  = cs;
-        a->encoding = enc;
-    }
-    else {
+    if (!cs) {
         /* upgrade strings for concatenation */
+        cs = Parrot_unicode_charset_ptr;
         enc = (a->encoding == Parrot_utf16_encoding_ptr
            ||  b->encoding == Parrot_utf16_encoding_ptr
            ||  a->encoding == Parrot_ucs2_encoding_ptr
@@ -435,13 +458,14 @@ Parrot_str_concat(PARROT_INTERP, ARGIN_NULLOK(STRING *a),
         if (b->encoding != enc)
             b = enc->to_encoding(interp, b);
     }
-
     /* calc usable and total bytes */
     total_length = a->bufused + b->bufused;
 
     dest = Parrot_str_new_noinit(interp, enum_stringrep_one, total_length);
-    dest->encoding = a->encoding;
-    dest->charset  = a->charset;
+    PARROT_ASSERT(enc);
+    PARROT_ASSERT(cs);
+    dest->encoding = enc;
+    dest->charset  = cs;
 
     /* Copy A first */
     mem_sys_memcopy(dest->strstart, a->strstart, a->bufused);
@@ -773,7 +797,7 @@ Parrot_str_byte_length(SHIM_INTERP, ARGIN_NULLOK(const STRING *s))
 {
     ASSERT_ARGS(Parrot_str_byte_length)
 
-    return STRING_IS_NULL(s) ? 0 : s->strlen;
+    return STRING_IS_NULL(s) ? 0 : s->bufused;
 }
 
 
@@ -828,7 +852,7 @@ Parrot_str_find_index(PARROT_INTERP, ARGIN(const STRING *s),
     if (start < 0)
         return -1;
 
-    len = Parrot_str_byte_length(interp, s);
+    len = Parrot_str_length(interp, s);
 
     if (!len)
         return -1;
@@ -836,7 +860,7 @@ Parrot_str_find_index(PARROT_INTERP, ARGIN(const STRING *s),
     if (start >= (INTVAL)len)
         return -1;
 
-    if (!Parrot_str_byte_length(interp, s2))
+    if (!Parrot_str_length(interp, s2))
         return -1;
     else {
         DECL_CONST_CAST;
@@ -872,7 +896,7 @@ string_ord(PARROT_INTERP, ARGIN(const STRING *s), INTVAL idx)
         Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_ORD_OUT_OF_STRING,
             "Cannot get character of NULL string");
 
-    len = Parrot_str_byte_length(interp, s);
+    len = Parrot_str_length(interp, s);
     if (len == 0)
         Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_ORD_OUT_OF_STRING,
             "Cannot get character of empty string");
@@ -899,8 +923,6 @@ string_ord(PARROT_INTERP, ARGIN(const STRING *s), INTVAL idx)
 =item C<STRING * string_chr(PARROT_INTERP, UINTVAL character)>
 
 Returns a single-character Parrot string.
-
-TODO - Allow this to take an array of characters?
 
 =cut
 
@@ -937,7 +959,7 @@ string_chr(PARROT_INTERP, UINTVAL character)
 
 =item C<INTVAL Parrot_str_length(PARROT_INTERP, const STRING *s)>
 
-Calculates and returns the number of characters in the specified Parrot string.
+Returns the number of characters in the specified Parrot string.
 
 =cut
 
@@ -946,11 +968,11 @@ Calculates and returns the number of characters in the specified Parrot string.
 PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
 INTVAL
-Parrot_str_length(SHIM_INTERP, ARGIN(const STRING *s))
+Parrot_str_length(SHIM_INTERP, ARGIN_NULLOK(const STRING *s))
 {
     ASSERT_ARGS(Parrot_str_length)
 
-    return s->strlen;
+    return STRING_IS_NULL(s) ? 0 : s->strlen;
 }
 
 
@@ -1046,7 +1068,7 @@ Parrot_str_substr(PARROT_INTERP,
     ASSERT_STRING_SANITY(src);
 
     /* Allow regexes to return $' easily for "aaa" =~ /aaa/ */
-    if (offset == (INTVAL)Parrot_str_byte_length(interp, src) || length < 1)
+    if (offset == (INTVAL)Parrot_str_length(interp, src) || length < 1)
         return Parrot_str_new_noinit(interp, enum_stringrep_one, 0);
 
     if (offset < 0)
@@ -2217,7 +2239,7 @@ void
 Parrot_str_pin(SHIM_INTERP, ARGMOD(STRING *s))
 {
     ASSERT_ARGS(Parrot_str_pin)
-    size_t size   = Buffer_buflen(s);
+    const size_t size = Buffer_buflen(s);
     char  *memory = (char *)mem_internal_allocate(size);
 
     mem_sys_memcopy(memory, Buffer_bufstart(s), size);
@@ -3048,7 +3070,7 @@ Parrot_str_join(PARROT_INTERP, ARGIN_NULLOK(STRING *j), ARGIN(PMC *ar))
 
 /*
 
-=item C<PMC* Parrot_str_split(PARROT_INTERP, STRING *delim, STRING *str)>
+=item C<PMC* Parrot_str_split(PARROT_INTERP, const STRING *delim, STRING *str)>
 
 Splits the string C<str> at the delimiter C<delim>, returning a
 C<ResizableStringArray>, or his mapped type in the current HLL, of results.
@@ -3063,7 +3085,7 @@ PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 PMC*
 Parrot_str_split(PARROT_INTERP,
-    ARGIN_NULLOK(STRING *delim), ARGIN_NULLOK(STRING *str))
+    ARGIN_NULLOK(const STRING *delim), ARGIN_NULLOK(STRING *str))
 {
     ASSERT_ARGS(Parrot_str_split)
     PMC    *res;
@@ -3074,12 +3096,12 @@ Parrot_str_split(PARROT_INTERP,
 
     res  = Parrot_pmc_new(interp,
             Parrot_get_ctx_HLL_type(interp, enum_class_ResizableStringArray));
-    slen = Parrot_str_byte_length(interp, str);
+    slen = Parrot_str_length(interp, str);
 
     if (!slen)
         return res;
 
-    dlen = Parrot_str_byte_length(interp, delim);
+    dlen = Parrot_str_length(interp, delim);
 
     if (dlen == 0) {
         int i;
@@ -3107,7 +3129,7 @@ Parrot_str_split(PARROT_INTERP,
         STRING * const tstr = Parrot_str_substr(interp, str, ps, pl);
 
         VTABLE_push_string(interp, res, tstr);
-        ps = pe + Parrot_str_byte_length(interp, delim);
+        ps = pe + Parrot_str_length(interp, delim);
 
         if (ps > slen)
             break;
