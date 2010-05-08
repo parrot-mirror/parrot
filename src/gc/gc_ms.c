@@ -64,7 +64,8 @@ static Buffer * gc_ms_allocate_bufferlike_header(PARROT_INTERP, size_t size)
 
 PARROT_MALLOC
 PARROT_CANNOT_RETURN_NULL
-static void * gc_ms_allocate_memory_chunk(SHIM_INTERP, size_t size);
+static void * gc_ms_allocate_memory_chunk(PARROT_INTERP, size_t size)
+        __attribute__nonnull__(1);
 
 PARROT_MALLOC
 PARROT_CANNOT_RETURN_NULL
@@ -265,7 +266,8 @@ static void Parrot_gc_initialize_fixed_size_pools(SHIM_INTERP,
 #define ASSERT_ARGS_gc_ms_allocate_bufferlike_header \
      __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
        PARROT_ASSERT_ARG(interp))
-#define ASSERT_ARGS_gc_ms_allocate_memory_chunk __attribute__unused__ int _ASSERT_ARGS_CHECK = (0)
+#define ASSERT_ARGS_gc_ms_allocate_memory_chunk __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
+       PARROT_ASSERT_ARG(interp))
 #define ASSERT_ARGS_gc_ms_allocate_memory_chunk_zeroed \
      __attribute__unused__ int _ASSERT_ARGS_CHECK = (0)
 #define ASSERT_ARGS_gc_ms_allocate_pmc_attributes __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
@@ -1346,7 +1348,7 @@ TODO Write docu.
 PARROT_MALLOC
 PARROT_CANNOT_RETURN_NULL
 static void *
-gc_ms_allocate_memory_chunk(SHIM_INTERP, size_t size)
+gc_ms_allocate_memory_chunk(PARROT_INTERP, size_t size)
 {
     ASSERT_ARGS(gc_ms_allocate_memory_chunk)
     void * const ptr = malloc(size);
@@ -1355,6 +1357,14 @@ gc_ms_allocate_memory_chunk(SHIM_INTERP, size_t size)
 #endif
     if (!ptr)
         PANIC_OUT_OF_MEM(size);
+
+#ifdef NDEBUG
+    UNUSED(interp);
+#else
+    /* Fill with garbage to identify memory problems early */
+    memset(ptr, size, 0xf);
+#endif
+
     return ptr;
 }
 
