@@ -990,14 +990,13 @@ gc_ms_allocate_pmc_attributes(PARROT_INTERP, ARGMOD(PMC *pmc))
     PMC_Attribute_Pool * const pool = Parrot_gc_get_attribute_pool(interp,
             interp->mem_pools, attr_size);
     void * const attrs = Parrot_gc_get_attributes_from_pool(interp, pool);
+#else
+    void * const attrs =  gc_ms_allocate_memory_chunk(attr_size);
+#endif
+
     memset(attrs, 0, attr_size);
     PMC_data(pmc) = attrs;
     return attrs;
-#else
-    void * const data =  gc_ms_allocate_memory_chunk(attr_size);
-    PMC_data(pmc) = data;
-    return data;
-#endif
 }
 
 /*
