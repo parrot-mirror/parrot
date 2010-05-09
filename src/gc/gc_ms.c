@@ -1362,7 +1362,7 @@ gc_ms_allocate_memory_chunk(PARROT_INTERP, size_t size)
     UNUSED(interp);
 #else
     /* Fill with garbage to identify memory problems early */
-    memset(ptr, size, 0xf);
+    memset(ptr, 0xf, size);
 #endif
 
     return ptr;
