@@ -42,7 +42,7 @@ grammars.
     load_bytecode 'P6object.pbc'
     .local pmc p6meta
     p6meta = new 'P6metaclass'
-    $P0 = p6meta.'new_class'('Regex::Cursor', 'attr'=>'$!target $!from $!pos $!match $!names $!debug @!bstack @!cstack @!caparray')
+    $P0 = p6meta.'new_class'('Regex::Cursor', 'attr'=>'$!target $!from $!pos $!linefinder $!match $!names $!debug @!bstack @!cstack @!caparray')
     $P0 = box 0
     set_global '$!generation', $P0
     $P0 = new ['Boolean']
@@ -285,6 +285,9 @@ Create a new cursor for matching C<target>.
 
     $P0 = new ['CodeString']
     $P0 = target
+    setattribute cur, '$!linefinder', $P0
+    $P0 = new ['String']
+    $P0 = target
     setattribute cur, '$!target', $P0
 
     if has_cont goto cursor_cont
@@ -323,7 +326,7 @@ provided, then the new cursor has the same type as lang.
     parrotclass = getattribute $P0, 'parrotclass'
     cur = new parrotclass
 
-    .local pmc from, target, debug
+    .local pmc from, target, debug, linefr
 
     from = getattribute self, '$!pos'
     setattribute cur, '$!from', from
@@ -331,6 +334,8 @@ provided, then the new cursor has the same type as lang.
 
     target = getattribute self, '$!target'
     setattribute cur, '$!target', target
+    linefr = getattribute self, '$!linefinder'
+    setattribute cur, '$!linefinder', linefr
     debug = getattribute self, '$!debug'
     setattribute cur, '$!debug', debug
 
@@ -427,11 +432,11 @@ Log a debug message.
     $P0 = getattribute self, '$!debug'
     if null $P0 goto done
     unless $P0 goto done
-    .local pmc from, pos, orig
+    .local pmc from, pos, linf
     .local int line
     from = getattribute self, '$!from'
-    orig = getattribute self, '$!target'
-    line = orig.'lineof'(from)
+    linf = getattribute self, '$!linefinder'
+    line = linf.'lineof'(from)
     inc line
     printerr from
     printerr '/'
@@ -943,7 +948,7 @@ Regex::Cursor-builtins - builtin regexes for Cursor objects
     message = concat "Unable to parse ", dba
     message .= ", couldn't find final "
     message .= goal
-    $P0 = getattribute self, '$!target'
+    $P0 = getattribute self, '$!linefinder'
     $I0 = can $P0, 'lineof'
     unless $I0 goto have_line
     message .= ' at line '
