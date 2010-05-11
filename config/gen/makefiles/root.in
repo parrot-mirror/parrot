@@ -798,10 +798,6 @@ bootstrap-ops : $(OPS2C)
 	$(OPS2C) --core
 	make
 
-bootstrap-ops-test : $(OPS2C)
-	$(OPS2C) --core
-	make test
-
 runtime/parrot/include/parrotlib.pbc: runtime/parrot/library/parrotlib.pir $(PARROT) $(GEN_PASM_INCLUDES)
 	$(PARROT) -o $@ runtime/parrot/library/parrotlib.pir
 
