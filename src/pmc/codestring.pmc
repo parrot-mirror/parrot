@@ -203,7 +203,9 @@ the first line is line number zero.
 
             linepos = Parrot_pmc_new(INTERP, enum_class_ResizableIntegerArray);
             /* get the string itself */
-            str = SELF.get_string();
+            /* We don't modify buffer so it's safe to use it directly */
+            GET_ATTR_buffer(INTERP, SELF, str);
+
             eos  = Parrot_str_length(INTERP, str);
             /* find the first newline, if any */
             jpos = Parrot_str_find_cclass(INTERP, enum_cclass_newline,
