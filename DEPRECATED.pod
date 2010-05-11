@@ -124,6 +124,12 @@ HLL.
 
 L<http://trac.parrot.org/parrot/ticket/1606>
 
+=item Method unescape on String [experimental]
+
+This is a helper method for testing of Parrot_str_unescape_string.
+
+L<https://trac.parrot.org/parrot/ticket/1628>
+
 =back
 
 =head1 Opcodes
@@ -252,6 +258,22 @@ L<https://trac.parrot.org/parrot/ticket/1091>
 
 L<https://trac.parrot.org/parrot/ticket/1103>
 
+=item :unique_reg flag [eligible in 3.1]
+
+L<https://trac.parrot.org/parrot/ticket/1622>
+
+=item .nci_call [eligible in 3.1]
+
+As of the latest PCC changes, there is nothing special about calling an NCI sub.
+
+L<https://trac.parrot.org/parrot/ticket/1623>
+
+=item .meth_call [eligible in 3.1]
+
+As of the latest PCC changes, this does nothing different from '.call'.
+
+L<https://trac.parrot.org/parrot/ticket/1624>
+
 =back
 
 =head1 Functions
@@ -313,6 +335,13 @@ These might get revived in some form to allow for creating new types and adding
 vtable-overrides, if that functionality becomes desired.
 
 L<https://trac.parrot.org/parrot/ticket/1588>
+
+=item Parrot_str_unescape_string [experimental]
+
+This function is an experimental addition to enhance and maybe replace
+Parrot_str_unescape
+
+L<https://trac.parrot.org/parrot/ticket/1628>
 
 =back
 

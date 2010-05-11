@@ -356,13 +356,21 @@ add_const_table(PARROT_INTERP)
     PackFile_Constant *new_constant = PackFile_Constant_new(interp);
 
     /* Update the constant count and reallocate */
-    if (interp->code->const_table->constants)
+    if (interp->code->const_table->constants) {
         interp->code->const_table->constants =
             mem_gc_realloc_n_typed_zeroed(interp, interp->code->const_table->constants,
                 newcount, oldcount, PackFile_Constant *);
-    else
+    }
+    else {
+        /* initialize rlookup cache */
+        interp->code->const_table->string_hash =
+            Parrot_pmc_new_init_int(interp, enum_class_Hash, enum_type_INTVAL);
+        ((Hash *)VTABLE_get_pointer(interp, interp->code->const_table->string_hash))->compare =
+            (hash_comp_fn)STRING_compare_distinct_cs_enc;
+
         interp->code->const_table->constants =
             mem_gc_allocate_n_zeroed_typed(interp, newcount, PackFile_Constant *);
+    }
 
     interp->code->const_table->constants[oldcount] = new_constant;
     interp->code->const_table->const_count         = newcount;
@@ -998,6 +1006,8 @@ add_const_str(PARROT_INTERP, ARGIN(STRING *s))
         constant->type              = PFC_STRING;
         constant->u.string          = s;
 
+        VTABLE_set_integer_keyed_str(interp, table->string_hash, s, k);
+
         return k;
     }
 }
@@ -1146,6 +1156,10 @@ create_lexinfo(PARROT_INTERP, ARGMOD(IMC_Unit *unit), ARGIN(PMC *sub_pmc),
                             "add lexical '%s' to sub name '%Ss'\n",
                             n->name, sub->name);
 
+                    if (VTABLE_exists_keyed_str(interp, lex_info, lex_name))
+                        IMCC_fataly(interp, EXCEPTION_INVALID_OPERATION,
+                            "Multiple declarations of lexical '%S'\n", lex_name);
+
                     VTABLE_set_integer_keyed_str(interp, lex_info,
                             lex_name, r->color);
 
@@ -1259,10 +1273,6 @@ add_const_pmc_sub(PARROT_INTERP, ARGMOD(SymReg *r), size_t offs, size_t end)
     IMC_Unit            * const unit  =
         IMCC_INFO(interp)->globals->cs->subs->unit;
 
-    INTVAL               type         =
-        (r->pcc_sub->calls_a_sub & ITPCCYIELD) ?
-            enum_class_Coroutine : enum_class_Sub;
-
     int                  i;
     int                  ns_const = -1;
 
@@ -1304,7 +1314,8 @@ add_const_pmc_sub(PARROT_INTERP, ARGMOD(SymReg *r), size_t offs, size_t end)
     }
     else {
         /* use a possible type mapping for the Sub PMCs, and create it */
-        type = Parrot_get_ctx_HLL_type(interp, type);
+        const INTVAL type = Parrot_get_ctx_HLL_type(interp,
+                                r->pcc_sub->yield ? enum_class_Coroutine : enum_class_Sub);
 
         /* TODO create constant - see also src/packfile.c */
         sub_pmc = Parrot_pmc_new(interp, type);
@@ -2139,10 +2150,6 @@ e_pbc_emit(PARROT_INTERP, SHIM(void *param), ARGIN(const IMC_Unit *unit),
     int        ok = 0;
     int        op, i;
 
-#if IMC_TRACE_HIGH
-    Parrot_io_eprintf(NULL, "e_pbc_emit\n");
-#endif
-
     /* first instruction, do initialisation ... */
     if (ins == unit->instructions) {
         size_t       ins_size;
@@ -2169,30 +2176,16 @@ e_pbc_emit(PARROT_INTERP, SHIM(void *param), ARGIN(const IMC_Unit *unit),
         IMCC_INFO(interp)->pc  = (opcode_t *)interp->code->base.data + oldsize;
         IMCC_INFO(interp)->npc = 0;
 
-        /* add debug if necessary */
-        if (IMCC_INFO(interp)->optimizer_level == 0
-        ||  IMCC_INFO(interp)->optimizer_level == OPT_PASM) {
-            const char * const sourcefile = unit->file;
+        /* FIXME length and multiple subs */
+        IMCC_INFO(interp)->debug_seg  = Parrot_new_debug_seg(interp,
+            interp->code,
+            (size_t)IMCC_INFO(interp)->ins_line + ins_size + 1);
 
-            /* FIXME length and multiple subs */
-            IMCC_INFO(interp)->debug_seg  = Parrot_new_debug_seg(interp,
-                interp->code,
-                (size_t)IMCC_INFO(interp)->ins_line + ins_size + 1);
-
-            Parrot_debug_add_mapping(interp, IMCC_INFO(interp)->debug_seg,
-                IMCC_INFO(interp)->ins_line, sourcefile);
-        }
-        else
-            IMCC_INFO(interp)->debug_seg = NULL;
+        Parrot_debug_add_mapping(interp, IMCC_INFO(interp)->debug_seg,
+            IMCC_INFO(interp)->ins_line, unit->file);
 
         /* if item is a PCC_SUB entry then store it constants */
         if (ins->symregs[0] && ins->symregs[0]->pcc_sub) {
-
-#if IMC_TRACE
-            Parrot_io_eprintf(NULL, "pbc.c: e_pbc_emit (pcc_sub=%s)\n",
-                        ins->symregs[0]->name);
-#endif
-
             add_const_pmc_sub(interp, ins->symregs[0], oldsize,
                               oldsize + code_size);
         }
@@ -2258,10 +2251,6 @@ e_pbc_emit(PARROT_INTERP, SHIM(void *param), ARGIN(const IMC_Unit *unit),
         SymReg  *addr, *r;
         op_info_t *op_info;
         opcode_t last_label = 1;
-
-#if IMC_TRACE_HIGH
-        Parrot_io_eprintf(NULL, "emit_pbc: op [%d %s]\n", ins->opnum, ins->opname);
-#endif
 
         if ((ins->type & ITBRANCH)
         && ((addr = get_branch_reg(ins)) != NULL)

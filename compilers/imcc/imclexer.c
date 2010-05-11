@@ -75,6 +75,7 @@ typedef int flex_int32_t;
 typedef unsigned char flex_uint8_t; 
 typedef unsigned short int flex_uint16_t;
 typedef unsigned int flex_uint32_t;
+#endif /* ! C99 */
 
 /* Limits of integral types. */
 #ifndef INT8_MIN
@@ -104,8 +105,6 @@ typedef unsigned int flex_uint32_t;
 #ifndef UINT32_MAX
 #define UINT32_MAX             (4294967295U)
 #endif
-
-#endif /* ! C99 */
 
 #endif /* ! FLEXINT_H */
 
@@ -180,15 +179,7 @@ typedef void* yyscan_t;
 
 /* Size of default input buffer. */
 #ifndef YY_BUF_SIZE
-#ifdef __ia64__
-/* On IA-64, the buffer size is 16k, not 8k.
- * Moreover, YY_BUF_SIZE is 2*YY_READ_BUF_SIZE in the general case.
- * Ditto for the __ia64__ case accordingly.
- */
-#define YY_BUF_SIZE 32768
-#else
 #define YY_BUF_SIZE 16384
-#endif /* __ia64__ */
 #endif
 
 /* The state buf must be large enough to hold one state per character in the main buffer.
@@ -2475,7 +2466,7 @@ static yyconst flex_int32_t yy_rule_can_match_eol[149] =
 #include "imc.h"
 #include "parser.h"
 
-typedef struct yyguts_t       yyguts_t;
+// typedef struct yyguts_t       yyguts_t;
 typedef struct parser_state_t parser_state_t;
 
 /* parser state structure
@@ -2554,7 +2545,7 @@ static int handle_identifier(PARROT_INTERP, YYSTYPE *valp, ARGIN(const char *id)
 
 
 
-#line 2558 "compilers/imcc/imclexer.c"
+#line 2549 "compilers/imcc/imclexer.c"
 
 #define INITIAL 0
 #define emit 1
@@ -2689,12 +2680,7 @@ static int input (yyscan_t yyscanner );
     
 /* Amount of stuff to slurp up with each read. */
 #ifndef YY_READ_BUF_SIZE
-#ifdef __ia64__
-/* On IA-64, the buffer size is 16k, not 8k */
-#define YY_READ_BUF_SIZE 16384
-#else
 #define YY_READ_BUF_SIZE 8192
-#endif /* __ia64__ */
 #endif
 
 /* Copy whatever the last rule matched to the standard output. */
@@ -2702,7 +2688,7 @@ static int input (yyscan_t yyscanner );
 /* This used to be an fputs(), but since the string might contain NUL's,
  * we now use fwrite().
  */
-#define ECHO do { if (fwrite( yytext, yyleng, 1, yyout )) {} } while (0)
+#define ECHO fwrite( yytext, yyleng, 1, yyout )
 #endif
 
 /* Gets input and stuffs it into "buf".  number of characters read, or YY_NULL,
@@ -2713,7 +2699,7 @@ static int input (yyscan_t yyscanner );
 	if ( YY_CURRENT_BUFFER_LVALUE->yy_is_interactive ) \
 		{ \
 		int c = '*'; \
-		size_t n; \
+		int n; \
 		for ( n = 0; n < max_size && \
 			     (c = getc( yyin )) != EOF && c != '\n'; ++n ) \
 			buf[n] = (char) c; \
@@ -2818,7 +2804,7 @@ YY_DECL
             return 0;
         }
 
-#line 2822 "compilers/imcc/imclexer.c"
+#line 2808 "compilers/imcc/imclexer.c"
 
 	if ( !yyg->yy_init )
 		{
@@ -4027,7 +4013,7 @@ YY_RULE_SETUP
 #line 740 "compilers/imcc/imcc.l"
 ECHO;
 	YY_BREAK
-#line 4031 "compilers/imcc/imclexer.c"
+#line 4017 "compilers/imcc/imclexer.c"
 case YY_STATE_EOF(pod):
 case YY_STATE_EOF(cmt1):
 case YY_STATE_EOF(cmt2):
@@ -4816,8 +4802,8 @@ YY_BUFFER_STATE yy_scan_string (yyconst char * yystr , yyscan_t yyscanner)
 
 /** Setup the input buffer state to scan the given bytes. The next call to yylex() will
  * scan from a @e copy of @a bytes.
- * @param yybytes the byte buffer to scan
- * @param _yybytes_len the number of bytes in the buffer pointed to by @a bytes.
+ * @param bytes the byte buffer to scan
+ * @param len the number of bytes in the buffer pointed to by @a bytes.
  * @param yyscanner The scanner object.
  * @return the newly allocated buffer state object.
  */
@@ -5273,6 +5259,7 @@ int yywrap(void* yyscanner) {
 
 static macro_frame_t *
 new_frame(PARROT_INTERP) {
+    /* XXX non-reentrant */
     static int label   = 0;
     macro_frame_t * const tmp = mem_gc_allocate_zeroed_typed(interp, macro_frame_t);
 
@@ -5833,20 +5820,7 @@ compile_file(PARROT_INTERP, FILE *file, void *yyscanner)
 
     emit_open(interp, 1, NULL);
 
-    IMCC_TRY(IMCC_INFO(interp)->jump_buf, IMCC_INFO(interp)->error_code) {
-        yyparse(yyscanner, interp);
-        imc_compile_all_units(interp);
-    }
-
-    IMCC_CATCH(IMCC_FATAL_EXCEPTION) {
-        IMCC_INFO(interp)->error_code = IMCC_FATAL_EXCEPTION;
-    }
-
-    IMCC_CATCH(IMCC_FATALY_EXCEPTION) {
-        IMCC_INFO(interp)->error_code = IMCC_FATALY_EXCEPTION;
-    }
-
-    IMCC_END_TRY;
+    imcc_run_compilation(interp, yyscanner);
 
     if (buffer)
         yy_switch_to_buffer(buffer,yyscanner);
@@ -5862,10 +5836,24 @@ compile_string(PARROT_INTERP, const char *s, void *yyscanner)
     buffer                            = YY_CURRENT_BUFFER;
 
     yy_scan_string(s,yyscanner);
+
     emit_open(interp, 1, NULL);
 
+    imcc_run_compilation(interp, yyscanner);
+
+    if (buffer)
+        yy_switch_to_buffer(buffer,yyscanner);
+}
+
+void
+imcc_run_compilation(PARROT_INTERP, void *yyscanner) {
     IMCC_TRY(IMCC_INFO(interp)->jump_buf, IMCC_INFO(interp)->error_code) {
-        yyparse(yyscanner, interp);
+        if (yyparse(yyscanner, interp)) {
+            IMCC_INFO(interp)->error_code = IMCC_PARSEFAIL_EXCEPTION;
+            IMCC_INFO(interp)->error_message = string_from_literal(interp, "syntax error ... somewhere");
+            return;
+        }
+
         imc_compile_all_units(interp);
     }
 
@@ -5878,9 +5866,6 @@ compile_string(PARROT_INTERP, const char *s, void *yyscanner)
     }
 
     IMCC_END_TRY;
-
-    if (buffer)
-        yy_switch_to_buffer(buffer,yyscanner);
 }
 
 void

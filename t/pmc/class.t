@@ -17,17 +17,10 @@ Tests the Class PMC.
 =cut
 
 
-.const int TESTS = 73
-
-
 .sub 'main' :main
-     load_bytecode 'Test/More.pbc'
-     .local pmc exporter, test_ns
-     test_ns = get_namespace [ 'Test'; 'More' ]
-     exporter = new ['Exporter']
-     exporter.'import'( test_ns :named('source'), 'plan ok is isa_ok todo' :named('globals') )
+    .include 'test_more.pir'
 
-     plan(TESTS)
+     plan(73)
      'new op'()
      'class flag'()
      'name'()
@@ -273,7 +266,7 @@ Tests the Class PMC.
 
     is(test_string_val, 'bar', 'add_method() invoking method added to class works')
 t_class_meth:
-    todo(0, 'add_method() invoking method added to class works', "classes don't seem to call methods yet")
+    todo( 0, 'add_method() invoking method added to class works', "classes don't seem to call methods yet:  TT #1615")
 
     obj_inst = class.'new'()
     test_string_val = obj_inst.'foo'()

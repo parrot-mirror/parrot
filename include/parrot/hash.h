@@ -39,8 +39,7 @@ typedef UINTVAL BucketIndex;
 #define HASH_ALLOC_SIZE(n) (N_BUCKETS(n) * sizeof (HashBucket) + \
                                      (n) * sizeof (HashBucket *))
 
-typedef int (*hash_comp_fn)(PARROT_INTERP, const void *const, const void *const);
-typedef void (*hash_mark_key_fn)(PARROT_INTERP, PObj *);
+typedef int (*hash_comp_fn)(PARROT_INTERP, ARGIN(const void *), ARGIN(const void *));
 typedef size_t (*hash_hash_key_fn)(PARROT_INTERP, ARGIN(const void *), size_t seed);
 
 /* &gen_from_enum(hash_key_type.pasm) */
@@ -74,7 +73,7 @@ struct _hash {
     hash_hash_key_fn hash_val;  /* generate a hash value for key */
 };
 
-typedef void (*value_free)(void *);
+typedef void (*value_free)(ARGFREE(void *));
 
 /* To avoid creating OrderedHashItem PMC we reuse FixedPMCArray PMC */
 /* So, there is indexes to avoid using of "magick constants" */
@@ -348,7 +347,7 @@ void parrot_chash_destroy(PARROT_INTERP, ARGMOD(Hash *hash))
 
 void parrot_chash_destroy_values(PARROT_INTERP,
     ARGMOD(Hash *hash),
-    ARGIN(value_free func))
+    NOTNULL(value_free func))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3)
@@ -360,8 +359,8 @@ PARROT_MALLOC
 Hash * parrot_create_hash(PARROT_INTERP,
     PARROT_DATA_TYPE val_type,
     Hash_key_type hkey_type,
-    ARGIN(hash_comp_fn compare),
-    ARGIN(hash_hash_key_fn keyhash))
+    NOTNULL(hash_comp_fn compare),
+    NOTNULL(hash_hash_key_fn keyhash))
         __attribute__nonnull__(1)
         __attribute__nonnull__(4)
         __attribute__nonnull__(5);
@@ -379,6 +378,14 @@ int STRING_compare(PARROT_INTERP,
     ARGIN_NULLOK(const void *bucket_key))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
+
+PARROT_WARN_UNUSED_RESULT
+int STRING_compare_distinct_cs_enc(PARROT_INTERP,
+    ARGIN(const void *search_key),
+    ARGIN(const void *bucket_key))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3);
 
 #define ASSERT_ARGS_parrot_dump_hash __attribute__unused__ int _ASSERT_ARGS_CHECK = (0)
 #define ASSERT_ARGS_parrot_hash_clone __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
@@ -505,6 +512,11 @@ int STRING_compare(PARROT_INTERP,
 #define ASSERT_ARGS_STRING_compare __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
        PARROT_ASSERT_ARG(interp) \
     , PARROT_ASSERT_ARG(search_key))
+#define ASSERT_ARGS_STRING_compare_distinct_cs_enc \
+     __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
+       PARROT_ASSERT_ARG(interp) \
+    , PARROT_ASSERT_ARG(search_key) \
+    , PARROT_ASSERT_ARG(bucket_key))
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 /* HEADERIZER END: src/hash.c */
 

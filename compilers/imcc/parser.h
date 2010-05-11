@@ -8,7 +8,6 @@
 
 typedef struct _IdList {
     char* id;
-    int unique_reg;
     struct _IdList*  next;
 } IdList;
 
@@ -21,6 +20,8 @@ typedef struct _IdList {
 #  define YY_TYPEDEF_YY_SCANNER_T
 typedef void* yyscan_t;
 #endif
+
+typedef struct yyguts_t yyguts_t;
 
 void set_filename(PARROT_INTERP, char * const filename);
 
@@ -43,6 +44,7 @@ void yyset_extra(YY_EXTRA_TYPE user_defined, yyscan_t yyscanner);
 
 extern void compile_file(PARROT_INTERP, FILE *file, void *);
 extern void compile_string(PARROT_INTERP, const char *, void *);
+extern void imcc_run_compilation(PARROT_INTERP, void *);
 
 int at_eof(yyscan_t yyscanner);
 

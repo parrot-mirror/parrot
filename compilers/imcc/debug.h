@@ -60,15 +60,6 @@ void IMCC_fataly(PARROT_INTERP,
         __attribute__nonnull__(3);
 
 PARROT_EXPORT
-PARROT_DOES_NOT_RETURN
-void IMCC_fataly_standalone(PARROT_INTERP,
-    int code,
-    ARGIN(const char *fmt),
-    ...)
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(3);
-
-PARROT_EXPORT
 void IMCC_info(PARROT_INTERP, int level, ARGIN(const char *fmt), ...)
         __attribute__nonnull__(1)
         __attribute__nonnull__(3);
@@ -91,20 +82,8 @@ void dump_instructions(PARROT_INTERP, ARGIN(const IMC_Unit *unit))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
-void dump_interference_graph(ARGIN(const IMC_Unit *unit))
-        __attribute__nonnull__(1);
-
 void dump_labels(ARGIN(const IMC_Unit *unit))
         __attribute__nonnull__(1);
-
-void dump_liveness_status(ARGIN(const IMC_Unit *unit))
-        __attribute__nonnull__(1);
-
-void dump_liveness_status_var(
-    ARGIN(const IMC_Unit *unit),
-    ARGIN(const SymReg* r))
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(2);
 
 void dump_loops(ARGIN(const IMC_Unit *unit))
         __attribute__nonnull__(1);
@@ -124,9 +103,6 @@ void dump_symreg(ARGIN(const IMC_Unit *unit))
 #define ASSERT_ARGS_IMCC_fataly __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
        PARROT_ASSERT_ARG(interp) \
     , PARROT_ASSERT_ARG(fmt))
-#define ASSERT_ARGS_IMCC_fataly_standalone __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
-       PARROT_ASSERT_ARG(interp) \
-    , PARROT_ASSERT_ARG(fmt))
 #define ASSERT_ARGS_IMCC_info __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
        PARROT_ASSERT_ARG(interp) \
     , PARROT_ASSERT_ARG(fmt))
@@ -142,15 +118,8 @@ void dump_symreg(ARGIN(const IMC_Unit *unit))
 #define ASSERT_ARGS_dump_instructions __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
        PARROT_ASSERT_ARG(interp) \
     , PARROT_ASSERT_ARG(unit))
-#define ASSERT_ARGS_dump_interference_graph __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
-       PARROT_ASSERT_ARG(unit))
 #define ASSERT_ARGS_dump_labels __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
        PARROT_ASSERT_ARG(unit))
-#define ASSERT_ARGS_dump_liveness_status __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
-       PARROT_ASSERT_ARG(unit))
-#define ASSERT_ARGS_dump_liveness_status_var __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
-       PARROT_ASSERT_ARG(unit) \
-    , PARROT_ASSERT_ARG(r))
 #define ASSERT_ARGS_dump_loops __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
        PARROT_ASSERT_ARG(unit))
 #define ASSERT_ARGS_dump_symreg __attribute__unused__ int _ASSERT_ARGS_CHECK = (\

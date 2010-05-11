@@ -33,7 +33,6 @@
 #define SREG(i) (CUR_CTX->bp_ps.regs_s[cur_opcode[i]])
 #define CONST(i) Parrot_pcc_get_constants(interp, interp->ctx)[cur_opcode[i]]
 
-
 static int get_op(PARROT_INTERP, const char * name, int full);
 
 
@@ -17258,14 +17257,10 @@ Parrot_set_args_pc(opcode_t *cur_opcode, PARROT_INTERP)  {
     const Parrot_Context * const CUR_CTX = Parrot_pcc_get_context_struct(interp, interp->ctx);
     opcode_t * const raw_args = CUR_OPCODE;
     PMC * const signature = CONST(1)->u.key;
-    PMC * call_sig;
-    INTVAL argc;
-
-    call_sig = Parrot_pcc_build_sig_object_from_op(interp,
+    PMC * const call_sig = Parrot_pcc_build_sig_object_from_op(interp,
             PMCNULL, signature, raw_args);
+    const INTVAL argc = VTABLE_elements(interp, signature);
     Parrot_pcc_set_signature(interp, CURRENT_CONTEXT(interp), call_sig);
-
-    argc = VTABLE_elements(interp, signature);
     return (opcode_t *)cur_opcode + argc + 2;
 }
 

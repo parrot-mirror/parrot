@@ -368,6 +368,7 @@ mk_temp_reg(PARROT_INTERP, int t)
 {
     ASSERT_ARGS(mk_temp_reg)
     char       buf[30];
+    /* XXX non-reentrant */
     static int temp;
 
     snprintf(buf, sizeof (buf), "__imcc_temp_%d", ++temp);
@@ -664,34 +665,6 @@ mk_ident(PARROT_INTERP, ARGIN(const char *name), int t)
     }
     else
         mem_sys_free(fullname);
-
-    if (t == 'P') {
-        r->pmc_type                     = IMCC_INFO(interp)->cur_pmc_type;
-        IMCC_INFO(interp)->cur_pmc_type = 0;
-    }
-
-    return r;
-}
-
-
-/*
-
-=item C<SymReg* mk_ident_ur(PARROT_INTERP, const char *name, int t)>
-
-Creates and returns a SymReg representing a unique (non-volatile) register.
-
-=cut
-
-*/
-
-PARROT_CANNOT_RETURN_NULL
-PARROT_IGNORABLE_RESULT
-SymReg*
-mk_ident_ur(PARROT_INTERP, ARGIN(const char *name), int t)
-{
-    ASSERT_ARGS(mk_ident_ur)
-    SymReg * const r = mk_ident(interp, name, t);
-    r->usage        |= U_NON_VOLATILE;
 
     return r;
 }
@@ -1417,9 +1390,6 @@ _store_symreg(PARROT_INTERP, ARGMOD(SymHash *hsh), ARGMOD(SymReg *r))
 {
     ASSERT_ARGS(_store_symreg)
     const int i = hash_str(r->name) % hsh->size;
-#if IMC_TRACE_HIGH
-    printf("    store [%s]\n", r->name);
-#endif
     r->next      = hsh->data[i];
     hsh->data[i] = r;
 
@@ -1468,9 +1438,6 @@ _get_sym(ARGIN(const SymHash *hsh), ARGIN(const char *name))
     const unsigned int i = hash_str(name) % hsh->size;
 
     for (p = hsh->data[i]; p; p = p->next) {
-#if IMC_TRACE_HIGH
-        printf("   [%s]\n", p->name);
-#endif
         if (STREQ(name, p->name))
             return p;
     }
@@ -1608,32 +1575,6 @@ clear_sym_hash(ARGMOD(SymHash *hsh))
 
 /*
 
-=item C<void debug_dump_sym_hash(const SymHash *hsh)>
-
-Prints all identifiers in the specified hash table to stderr.
-
-=cut
-
-*/
-
-void
-debug_dump_sym_hash(ARGIN(const SymHash *hsh))
-{
-    ASSERT_ARGS(debug_dump_sym_hash)
-    unsigned int i;
-
-    for (i = 0; i < hsh->size; i++) {
-        const SymReg *p = hsh->data[i];
-        while (p) {
-            fprintf(stderr, "%s ", p->name);
-            p = p->next;
-        }
-    }
-}
-
-
-/*
-
 =item C<void clear_locals(IMC_Unit *unit)>
 
 Deletes all local symbols and clears life info from the given IMC_Unit.
@@ -1654,10 +1595,6 @@ clear_locals(ARGIN_NULLOK(IMC_Unit *unit))
 
         for (p = hsh->data[i]; p;) {
             SymReg * const next = p->next;
-
-            if (unit && p->life_info)
-                free_life_info(unit, p);
-
             free_sym(p);
             p = next;
         }
