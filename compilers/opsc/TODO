@@ -2,11 +2,11 @@ Simple todo.
 
 Required for initial self-hosting:
  
-  * Update config/gen/makefiles/root.in to use opsc instead of ops2c
+  * NONE! We are selfhosted now!
 
 Required for full implementation:
+  * Handling #line directives.
   * A LOT OF DOCUMENTATION.
-  * Implement handling of dynops.
   * Add tests for Trans::C independent from 06-emitter.t
   * Add tests for dynamic mode of Emitter.
 
