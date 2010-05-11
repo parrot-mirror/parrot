@@ -34,8 +34,6 @@
 #define CONST(i) Parrot_pcc_get_constants(interp, interp->ctx)[cur_opcode[i]]
 
 
-static op_info_t core_op_info_table[1297];
-static op_func_t core_op_func_table[1297];
 static int get_op(PARROT_INTERP, const char * name, int full);
 
 
@@ -65,24 +63,6 @@ static int get_op(PARROT_INTERP, const char * name, int full);
 
 
 #include "../io/io_private.h"
-
-/*
-** op lib descriptor:
-*/
-
-static op_lib_t core_op_lib = {
-  "core",               /* name */
-  "",             /* suffix */
-  PARROT_FUNCTION_CORE,                       /* core_type = PARROT_XX_CORE */
-  0,                                /* flags */
-  2,    /* major_version */
-  3,    /* minor_version */
-  0,    /* patch_version */
-  1296,             /* op_count */
-  core_op_info_table,       /* op_info_table */
-  core_op_func_table,       /* op_func_table */
-  get_op          /* op_code() */ 
-};
 
 
 INTVAL core_numops = 1297;
@@ -30337,6 +30317,24 @@ Parrot_root_new_p_pc_ic(opcode_t *cur_opcode, PARROT_INTERP)  {
 
 return (opcode_t *)cur_opcode + 4;}
 
+
+/*
+** op lib descriptor:
+*/
+
+static op_lib_t core_op_lib = {
+  "core",               /* name */
+  "",             /* suffix */
+  PARROT_FUNCTION_CORE,                       /* core_type = PARROT_XX_CORE */
+  0,                                /* flags */
+  2,    /* major_version */
+  3,    /* minor_version */
+  0,    /* patch_version */
+  1296,             /* op_count */
+  core_op_info_table,       /* op_info_table */
+  core_op_func_table,       /* op_func_table */
+  get_op          /* op_code() */ 
+};
 
 /*
 ** Op lookup function:
