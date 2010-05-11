@@ -5,6 +5,8 @@ compilers/opsc/opsc.pbc: $(NQP_RX) $(OPSC_SOURCES)
 $(OPSC_DIR)/gen/%.pir: $(OPSC_DIR)/src/%.pm $(NQP_RX)
 	$(NQP_RX) --target=pir --output=$@ $<
 
+# Target to force rebuild opsc from main Makefile
+compilers/opsc/ops2c.nqp: compilers/opsc/opsc.pbc
 
 # This is a listing of all targets, that are meant to be called by users
 opsc-help:
