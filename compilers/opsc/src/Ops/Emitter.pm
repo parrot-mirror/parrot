@@ -19,8 +19,13 @@ method new(:$ops_file!, :$trans!, :$script!, :$file, :%flags!) {
 
     # Preparing various bits.
     my $suffix := $trans.suffix();
+    my $base   := 'core';
 
-    my $base := %flags<core> ?? 'core' !! subst( $file, /.ops$$/, '');
+    if !%flags<core> {
+        $base := subst( $file, /.ops$$/, '');
+        $base := subst( $base, /.*\//, '');
+    }
+
     my $base_ops_stub := $base ~ '_ops' ~ $suffix;
     my $base_ops_h    := $base_ops_stub ~ '.h';
 
@@ -34,9 +39,10 @@ method new(:$ops_file!, :$trans!, :$script!, :$file, :%flags!) {
         self<source>  := (~%flags<dir>) ~ "src/ops/$base_ops_stub.c";
     }
     else {
+        my $dynops_dir := subst( $file, /\w+\.ops$$/, '');
         self<include> := $base ~ "_ops.h";
-        self<header>  := self<include>;
-        self<source>  := $base ~ "_ops.c";
+        self<header>  := $dynops_dir ~ self<include>;
+        self<source>  := $dynops_dir ~ $base ~ "_ops.c";
     }
 
     self<sym_export> := %flags<core>
@@ -271,6 +277,7 @@ method _emit_preamble($fh) {
     $fh.print(qq|
 #include "parrot/parrot.h"
 #include "parrot/oplib.h"
+#include "parrot/runcore_api.h"
 
 {self.sym_export} op_lib_t *{self.init_func}(PARROT_INTERP, long init);
 

@@ -9,7 +9,6 @@ my $i := 0;
 
 while ($i lt pir::elements(@args)) {
     if (@args[$i] eq '--core') {
-        my $ops_dir := 'src/ops';
 
         @files := <
             src/ops/core.ops
