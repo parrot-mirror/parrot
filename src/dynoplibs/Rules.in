@@ -11,16 +11,16 @@ src/dynoplibs/obscure_ops$(O): include/pmc/pmc_parrotlibrary.h include/pmc/pmc_c
 
 src/dynoplibs/obscure_ops.h: src/dynoplibs/obscure_ops.c
 
-src/dynoplibs/obscure_ops.c: src/dynoplibs/obscure.ops $(BUILD_TOOLS_DIR)/ops2c.pl
-	$(PERL) $(BUILD_TOOLS_DIR)/ops2c.pl C --dynamic src/dynoplibs/obscure.ops
+src/dynoplibs/obscure_ops.c: src/dynoplibs/obscure.ops opsc
+	$(OPS2C) --dynamic src/dynoplibs/obscure.ops
 
 $(DYNEXT_DIR)/math_ops$(LOAD_EXT): src/dynoplibs/math_ops$(O) $(LIBPARROT)
 	$(LD) @ld_out@$@ src/dynoplibs/math_ops$(O) $(LINKARGS)
 #IF(win32):	if exist $@.manifest mt.exe -nologo -manifest $@.manifest -outputresource:$@;2
 #IF(cygwin or hpux):	$(CHMOD) 0775 $@
 
-src/dynoplibs/math_ops.c: src/dynoplibs/math.ops $(BUILD_TOOLS_DIR)/ops2c.pl
-	$(PERL) $(BUILD_TOOLS_DIR)/ops2c.pl C --dynamic src/dynoplibs/math.ops
+src/dynoplibs/math_ops.c: src/dynoplibs/math.ops opsc
+	$(OPS2C) --dynamic src/dynoplibs/math.ops
 
 src/dynoplibs/math_ops$(O): include/pmc/pmc_parrotlibrary.h include/pmc/pmc_callcontext.h src/dynoplibs/math_ops.c $(PARROT_H_HEADERS)
 

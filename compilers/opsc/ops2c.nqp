@@ -6,6 +6,7 @@ my @args := get_args();
 my $core := 0;
 my @files;
 my $i := 0;
+my $emit_lines := 1;
 
 while ($i lt pir::elements(@args)) {
     if (@args[$i] eq '--core') {
@@ -31,6 +32,11 @@ while ($i lt pir::elements(@args)) {
         $core := 0;
         $i++;
         @files.push( @args[$i] );
+    }
+    elsif (@args[$i] eq '--no-lines') {
+        #TODO: figure out how to generate line numbers
+        # $emit_lines is currently ignored
+        $emit_lines := 0;
     }
     $i++;
 }

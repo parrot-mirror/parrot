@@ -117,6 +117,7 @@ NONGEN_HEADERS   = @TEMP_nongen_headers@
 
 # The headerizer
 HEADERIZER       = $(PERL) $(BUILD_TOOLS_DIR)/headerizer.pl
+OPS2C            = $(NQP_RX) compilers/opsc/ops2c.nqp
 
 include src/dynpmc/Defines.mak
 include src/dynoplibs/Defines.mak
@@ -795,11 +796,11 @@ parrot_utils : $(PDUMP) $(DIS) $(PDB) $(PBC_MERGE) $(PBC_TO_EXE) $(PARROT_CONFIG
 installable: all $(INSTALLABLEPARROT) $(INSTALLABLEPDUMP) $(INSTALLABLEDIS) $(INSTALLABLEPDB) $(INSTALLABLEPBC_MERGE) $(INSTALLABLEPBCTOEXE) $(INSTALLABLECONFIG) $(INSTALLABLENQP) $(INSTALLABLENCITHUNKGEN) $(INSTALLABLETAPIR)
 
 bootstrap-ops : opsc
-	$(NQP_RX) compilers/opsc/ops2c.nqp --core
+	$(OPS2C) --core
 	make
 
 bootstrap-ops-test : opsc
-	$(NQP_RX) compilers/opsc/ops2c.nqp --core
+	$(OPS2C) --core
 	make test
 
 runtime/parrot/include/parrotlib.pbc: runtime/parrot/library/parrotlib.pir $(PARROT) $(GEN_PASM_INCLUDES)
@@ -1544,11 +1545,11 @@ src/ops/core_ops$(O) : src/ops/core_ops.c \
 # .h files are built along with .c
 $(INC_DIR)/oplib/core_ops.h: src/ops/core_ops.c
 
-src/ops/core_ops.c : $(OPS_FILES) $(BUILD_TOOLS_DIR)/ops2c.pl \
+src/ops/core_ops.c : $(OPS_FILES) opsc \
 	lib/Parrot/OpsFile.pm lib/Parrot/Op.pm $(INC_DIR)/config.h \
 	lib/Parrot/OpLib/core.pm lib/Parrot/OpTrans/C.pm \
 	include/pmc/pmc_continuation.h
-	$(PERL) $(BUILD_TOOLS_DIR)/ops2c.pl C --core @no_lines_flag@
+	$(OPS2C) --core @no_lines_flag@
 
 @TEMP_gc_c@
 
@@ -1824,7 +1825,6 @@ clean : \
     ext-clean \
 #UNLESS(win32):    cover-clean \
     editor-clean
-	$(RM_F) $(INC_DIR)/oplib/core_ops_cg.h src/ops/core_ops_cg.c
 	$(RM_F) chartypes "*.s" "*~"
 	$(RM_F) $(FLUID_FILES_1)
 	$(RM_F) $(FLUID_FILES_2)
