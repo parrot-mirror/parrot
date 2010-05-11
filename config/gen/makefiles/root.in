@@ -794,11 +794,11 @@ parrot_utils : $(PDUMP) $(DIS) $(PDB) $(PBC_MERGE) $(PBC_TO_EXE) $(PARROT_CONFIG
 
 installable: all $(INSTALLABLEPARROT) $(INSTALLABLEPDUMP) $(INSTALLABLEDIS) $(INSTALLABLEPDB) $(INSTALLABLEPBC_MERGE) $(INSTALLABLEPBCTOEXE) $(INSTALLABLECONFIG) $(INSTALLABLENQP) $(INSTALLABLENCITHUNKGEN) $(INSTALLABLETAPIR)
 
-bootstrap-ops : opsc
+bootstrap-ops : $(OPS2C)
 	$(OPS2C) --core
 	make
 
-bootstrap-ops-test : opsc
+bootstrap-ops-test : $(OPS2C)
 	$(OPS2C) --core
 	make test
 
@@ -1540,13 +1540,6 @@ src/ops/core_ops$(O) : src/ops/core_ops.c \
     include/pmc/pmc_parrotlibrary.h \
     src/io/io_private.h $(INC_DIR)/dynext.h $(INC_DIR)/embed.h \
     $(INC_DIR)/runcore_api.h
-
-# Separate target to rebuild ops.
-ops_bootstrap: $(OPS_FILES) opsc \
-	lib/Parrot/OpsFile.pm lib/Parrot/Op.pm $(INC_DIR)/config.h \
-	lib/Parrot/OpLib/core.pm lib/Parrot/OpTrans/C.pm \
-	include/pmc/pmc_continuation.h
-	$(OPS2C) --core @no_lines_flag@
 
 @TEMP_gc_c@
 
