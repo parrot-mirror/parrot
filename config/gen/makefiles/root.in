@@ -174,8 +174,7 @@ GEN_CONFIGS = \
     config_lib.pir \
     parrot.pc \
     compilers/imcc/imcc.y.flag \
-    compilers/imcc/imcc.l.flag \
-    src/ops/core_ops.c
+    compilers/imcc/imcc.l.flag
 
 GEN_PASM_INCLUDES = \
 	runtime/parrot/include/cclass.pasm \
@@ -1540,12 +1539,10 @@ src/ops/core_ops$(O) : src/ops/core_ops.c \
     include/pmc/pmc_continuation.h \
     include/pmc/pmc_parrotlibrary.h \
     src/io/io_private.h $(INC_DIR)/dynext.h $(INC_DIR)/embed.h \
-    $(INC_DIR)/oplib/core_ops.h $(INC_DIR)/runcore_api.h
+    $(INC_DIR)/runcore_api.h
 
-# .h files are built along with .c
-$(INC_DIR)/oplib/core_ops.h: src/ops/core_ops.c
-
-src/ops/core_ops.c : $(OPS_FILES) opsc \
+# Separate target to rebuild ops.
+ops_bootstrap: $(OPS_FILES) opsc \
 	lib/Parrot/OpsFile.pm lib/Parrot/Op.pm $(INC_DIR)/config.h \
 	lib/Parrot/OpLib/core.pm lib/Parrot/OpTrans/C.pm \
 	include/pmc/pmc_continuation.h
