@@ -49,7 +49,6 @@ Initialize the CodeString.
     VTABLE void init() {
         SUPER();
         SET_ATTR_linepos(INTERP, SELF, PMCNULL);
-        PObj_custom_mark_SET(SELF);
     }
 
 /*

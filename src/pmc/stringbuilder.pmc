@@ -62,11 +62,17 @@ Initializes the StringBuilder with initial size of buffer.
 */
 
     VTABLE void init_int(INTVAL initial_size) {
-        STRING * const buffer = Parrot_str_new_init(INTERP, NULL, initial_size,
-                Parrot_default_encoding_ptr, Parrot_default_charset_ptr, 0);
+        STRING * const buffer = mem_gc_allocate_zeroed_typed(INTERP, STRING);
+        buffer->encoding  = Parrot_default_encoding_ptr;
+        buffer->charset   = Parrot_default_charset_ptr;
+        buffer->flags     = PObj_external_FLAG;
+        buffer->_bufstart = buffer->strstart = mem_gc_allocate_n_typed(INTERP,
+                initial_size, char);
+        buffer->_buflen   = initial_size;
+
         SET_ATTR_buffer(INTERP, SELF, buffer);
 
-        PObj_custom_mark_SET(SELF);
+        PObj_custom_mark_destroy_SETALL(SELF);
     }
 
 /*
@@ -80,13 +86,18 @@ Marks the StringBuilder as live.
 */
 
     VTABLE void mark() {
+    }
+
+    VTABLE void destroy() {
         STRING *buffer;
 
         if (!PMC_data(SELF))
             return;
 
         GET_ATTR_buffer(INTERP, SELF, buffer);
-        Parrot_gc_mark_STRING_alive(INTERP, buffer);
+        if (buffer->_bufstart)
+            mem_gc_free(INTERP, buffer->_bufstart);
+        mem_gc_free(INTERP, buffer);
     }
 
 /*
@@ -150,8 +161,11 @@ Append string to current buffer.
         total_size = calculate_capacity(INTERP, buffer->bufused, s->bufused);
 
         /* Reallocate if necessary */
-        if (total_size > Buffer_buflen(buffer))
-            Parrot_gc_reallocate_string_storage(INTERP, buffer, total_size);
+        if (total_size > Buffer_buflen(buffer)) {
+            buffer->_bufstart = buffer->strstart = mem_gc_realloc_n_typed(INTERP,
+                    buffer->_bufstart, total_size, char);
+            buffer->_buflen   = total_size;
+        }
 
         /* Tack s on the end of buffer */
         mem_sys_memcopy((void *)((ptrcast_t)buffer->strstart + buffer->bufused),
@@ -201,11 +215,31 @@ Set content of buffer to passed string or PMC
 
 */
     VTABLE void set_string_native(STRING *s) {
-        STRING * tmp = Parrot_str_clone(INTERP, s);
-        /* Unset hashval. We update this string all the time */
-        tmp->hashval = 0;
-        SET_ATTR_buffer(INTERP, SELF, tmp);
+        STRING * buffer;
+
+        /* Calculate (possibly new) total size */
+        size_t total_size = calculate_capacity(INTERP, 0, s->bufused);
+
+        GET_ATTR_buffer(INTERP, SELF, buffer);
+
+        /* Reallocate if necessary */
+        if (total_size > Buffer_buflen(buffer)) {
+            buffer->_bufstart = buffer->strstart = mem_gc_realloc_n_typed(INTERP,
+                    buffer->_bufstart, total_size, char);
+            buffer->_buflen   = total_size;
+        }
+
+        /* Tack s on the buffer */
+        mem_sys_memcopy((void *)((ptrcast_t)buffer->strstart),
+                s->strstart, s->bufused);
+
+        /* Update buffer */
+        buffer->bufused  = s->bufused;
+        buffer->strlen   = Parrot_str_length(INTERP, s);
+        buffer->encoding = s->encoding;
+        buffer->charset  = s->charset;
     }
+
     VTABLE void set_pmc(PMC *s) {
         STATICSELF.set_string_native(VTABLE_get_string(INTERP, s));
     }
