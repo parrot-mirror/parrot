@@ -207,7 +207,7 @@ Set content of buffer to passed string or PMC
         SET_ATTR_buffer(INTERP, SELF, tmp);
     }
     VTABLE void set_pmc(PMC *s) {
-        SET_ATTR_buffer(INTERP, SELF, VTABLE_get_string(INTERP, s));
+        SELF.set_string_native(VTABLE_get_string(INTERP, s));
     }
 
 
