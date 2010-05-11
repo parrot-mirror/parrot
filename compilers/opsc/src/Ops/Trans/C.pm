@@ -123,9 +123,6 @@ method defines($emitter) {
 #define SREG(i) (CUR_CTX->bp_ps.regs_s[cur_opcode[i]])
 #define CONST(i) Parrot_pcc_get_constants(interp, interp->ctx)[cur_opcode[i]]
 
-
-static op_info_t {self.op_info($emitter)}[{self<num_entries>}];
-static op_func{self.suffix}_t {self.op_func($emitter)}[{self<num_entries>}];
 static int get_op(PARROT_INTERP, const char * name, int full);
 |;
 }
