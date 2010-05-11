@@ -77,6 +77,17 @@ our %second_analysis_subs = (
                     delete $files_needing_analysis->{ $file };
                     next SECOND_FILE;
                 }
+
+                # read first line. If it contains "nqp" remove file from test.
+                my $fh;
+                open $fh, '<', $full_file or croak "Can't opend file $full_file $!";
+                my $line = <$fh>;
+                close $fh;
+
+                if ($line =~ m/ nqp | use \s v6 /x) {
+                    delete $files_needing_analysis->{ $file };
+                    next SECOND_FILE;
+                }
             }
         }
         nstore $files_needing_analysis, $sto;
