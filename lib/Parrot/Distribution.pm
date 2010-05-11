@@ -512,6 +512,7 @@ sub get_perl_exemption_regexp {
         lib/File/
         lib/IO/
         lib/Pod/
+        ext/nqp-rx/
     };
 
     my $regex = join '|', map { quotemeta $_ } @paths;
