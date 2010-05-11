@@ -15,6 +15,7 @@
 
 #include "parrot/parrot.h"
 #include "parrot/oplib.h"
+#include "parrot/runcore_api.h"
 
  op_lib_t *Parrot_DynOp_core_2_3_0(PARROT_INTERP, long init);
 
