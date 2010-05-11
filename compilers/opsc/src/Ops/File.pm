@@ -183,11 +183,16 @@ ops file.
 
 =end
 
-method new(*@files, :$oplib!, :$nolines) {
+method new(*@files, :$oplib!, :$nolines, :$core) {
     self<files>   := @files;
     self<oplib>   := $oplib;
+    self<core>    := $core;
     self<ops>     := list(); # Ops
     self<preamble>:= '';
+
+    if !self<core> {
+        self<file> := @files[0];
+    }
 
     self<compiler>:= pir::compreg__Ps('Ops');
     self<compiler>.set_oplib($oplib);
@@ -246,6 +251,9 @@ method compile_ops($str) {
     my $past     := $compiler.compile($str, :target('past'));
 
     for @($past<ops>) {
+        if $_<experimental> && self<core> {
+            say("# Experimental op " ~ $_.full_name ~ " is not in ops.num.");
+        }
         self<ops>.push($_);
     }
 

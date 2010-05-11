@@ -42,10 +42,11 @@ method body($/) {
             if ! $skiptable.exists($full_name) {
                 if $optable.exists($full_name) {
                     $op<code> := $optable{$full_name};
+                    $op<experimental> := 0;
                 }
                 else {
-                    say('# experimental. Not in ops.num ' ~ $full_name);
                     $op<code> := $CODE++;
+                    $op<experimental> := 1;
                 }
 
                 $past<ops>.push($op);
@@ -306,7 +307,7 @@ method macro_param($/) {
 }
 
 method body_word($/) {
-    #say('# body_word');
+    #say('# body_word: '~ ~$<word>);
     my $past;
     if $<word> {
         $past := PAST::Op.new(
@@ -413,13 +414,6 @@ sub process_op_macro_body_word($/, $macro) {
             $macro.push($_.ast) if defined($bit);
         }
     }
-}
-
-method macro_sanity_checks($/) {
-    #can't have NEXT with non-empty param
-    #must have param with OFFSET or ADDRESS
-    #can't have restart ADDRESS
-
 }
 
 # Local Variables:

@@ -234,8 +234,6 @@ CONFIGURE_GENERATED_FILES = \
 #
 ###############################################################################
 
-GEN_OPSFILES =
-
 GEN_HEADERS = \
     $(INC_DIR)/vtable.h \
     $(INC_DIR)/oplib/ops.h \
@@ -330,7 +328,6 @@ GEN_LIBRARY = \
     $(LIBRARY_DIR)/postgres.pbc
 
 FLUID_FILES_1 = \
-    $(GEN_OPSFILES) \
     $(GEN_HEADERS) \
     $(GEN_SOURCES) \
     $(GEN_MODULES) \
@@ -499,7 +496,7 @@ INTERP_O_FILES = \
 #IF(platform_asm):    src/platform_asm$(O) \
 
 
-OPS_FILES = @ops@ $(GEN_OPSFILES)
+OPS_FILES = @ops@
 
 ###############################################################################
 #
@@ -798,11 +795,11 @@ parrot_utils : $(PDUMP) $(DIS) $(PDB) $(PBC_MERGE) $(PBC_TO_EXE) $(PARROT_CONFIG
 installable: all $(INSTALLABLEPARROT) $(INSTALLABLEPDUMP) $(INSTALLABLEDIS) $(INSTALLABLEPDB) $(INSTALLABLEPBC_MERGE) $(INSTALLABLEPBCTOEXE) $(INSTALLABLECONFIG) $(INSTALLABLENQP) $(INSTALLABLENCITHUNKGEN) $(INSTALLABLETAPIR)
 
 bootstrap-ops : opsc
-	$(NQP_RX) compilers/opsc/ops2c.nqp
+	$(NQP_RX) compilers/opsc/ops2c.nqp --core
 	make
 
 bootstrap-ops-test : opsc
-	$(NQP_RX) compilers/opsc/ops2c.nqp
+	$(NQP_RX) compilers/opsc/ops2c.nqp --core
 	make test
 
 runtime/parrot/include/parrotlib.pbc: runtime/parrot/library/parrotlib.pir $(PARROT) $(GEN_PASM_INCLUDES)

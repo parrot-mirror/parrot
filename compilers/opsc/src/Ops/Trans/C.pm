@@ -255,7 +255,7 @@ method _emit_op_function_definitions($emitter, $fh) {
 
 method emit_op_lookup($emitter, $fh) {
 
-    if $emitter.flags<dynamic> {
+    if !$emitter.flags<core> {
         return;
     }
 

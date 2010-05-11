@@ -20,7 +20,7 @@ method new(:$ops_file!, :$trans!, :$script!, :$file, :%flags!) {
     # Preparing various bits.
     my $suffix := $trans.suffix();
 
-    my $base := %flags<core> ?? 'core' !! $file; #FIXME drop .ops
+    my $base := %flags<core> ?? 'core' !! subst( $file, /.ops$$/, '');
     my $base_ops_stub := $base ~ '_ops' ~ $suffix;
     my $base_ops_h    := $base_ops_stub ~ '.h';
 
@@ -28,13 +28,20 @@ method new(:$ops_file!, :$trans!, :$script!, :$file, :%flags!) {
     self<suffix>  := $suffix;
     self<bs>      := $base ~ $suffix ~ '_';
 
-    self<include> := "parrot/oplib/$base_ops_h";
-    self<header>  := (~%flags<dir>) ~ "include/" ~ self<include>;
-    self<source>  := (~%flags<dir>) ~ "src/ops/$base_ops_stub.c";
+    if %flags<core> {
+        self<include> := "parrot/oplib/$base_ops_h";
+        self<header>  := (~%flags<dir>) ~ "include/" ~ self<include>;
+        self<source>  := (~%flags<dir>) ~ "src/ops/$base_ops_stub.c";
+    }
+    else {
+        self<include> := $base ~ "_ops.h";
+        self<header>  := self<include>;
+        self<source>  := $base ~ "_ops.c";
+    }
 
-    self<sym_export> := %flags<dynamic>
-                        ?? 'PARROT_DYNEXT_EXPORT'
-                        !! '';
+    self<sym_export> := %flags<core>
+                        ?? ''
+                        !! 'PARROT_DYNEXT_EXPORT';
 
     self<init_func>  := join('_',
         'Parrot', 'DynOp', $base ~ $suffix, |$ops_file.version );
@@ -173,7 +180,7 @@ op_lib_t *
 
 method _emit_dymanic_lib_load($fh) {
 
-    if ! self.flags<dynamic> {
+    if self.flags<core> {
         return;
     }
 
@@ -257,7 +264,7 @@ method _emit_preamble($fh) {
  */
 |);
 
-    if self.flags<dynamic> {
+    if !self.flags<core> {
         $fh.print("#define PARROT_IN_EXTENSION\n");
     }
 
