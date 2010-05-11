@@ -237,7 +237,7 @@ the first line is line number zero.
         while (line < count
               && VTABLE_get_integer_keyed_int(INTERP, linepos, line) <= pos)
             line++;
-    
+
         RETURN(INTVAL line);
     }
 
