@@ -21,8 +21,6 @@
 #include "pmc/pmc_callcontext.h"
 
 
-#include "pmc/pmc_callcontext.h"
-
 /* defines - Ops::Trans::C */
 #undef CONST
 #define REL_PC     ((size_t)(cur_opcode - (opcode_t *)interp->code->base.data))
