@@ -61,9 +61,6 @@ opsc-help:
 
 opsc: $(LIBRARY_DIR)/opsc.pbc
 
-opsc-test: opsc
-	$(PERL) $(OPSC_DIR)/t/harness $(OPSC_DIR)/t
-
 # Local variables:
 #   mode: makefile
 # End:
