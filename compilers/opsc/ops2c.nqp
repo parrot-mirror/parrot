@@ -1,6 +1,6 @@
 #! ./parrot-nqp
 
-pir::load_bytecode("compilers/opsc/opsc.pbc");
+pir::load_bytecode("opsc.pbc");
 
 my @args := get_args();
 my $core := 0;
