@@ -2,14 +2,38 @@
 runtime/parrot/library/opsc.pbc: $(NQP_RX) $(OPSC_SOURCES)
 	$(PARROT) -o runtime/parrot/library/opsc.pbc compilers/opsc/opsc.pir
 
-$(OPSC_DIR)/gen/%.pir: $(OPSC_DIR)/src/%.pm $(NQP_RX)
-	$(NQP_RX) --target=pir --output=$@ $<
+$(OPSC_DIR)/gen/Ops/Compiler.pir: $(OPSC_DIR)/src/Ops/Compiler.pm $(NQP_RX)
+	$(NQP_RX) --target=pir --output=$@  $(OPSC_DIR)/src/Ops/Compiler.pm
+
+$(OPSC_DIR)/gen/Ops/Compiler/Actions.pir: $(OPSC_DIR)/src/Ops/Compiler/Actions.pm $(NQP_RX)
+	$(NQP_RX) --target=pir --output=$@ $(OPSC_DIR)/src/Ops/Compiler/Actions.pm
+
+$(OPSC_DIR)/gen/Ops/Compiler/Grammar.pir: $(OPSC_DIR)/src/Ops/Compiler/Grammar.pm $(NQP_RX)
+	$(NQP_RX) --target=pir --output=$@ $(OPSC_DIR)/src/Ops/Compiler/Grammar.pm
+
+$(OPSC_DIR)/gen/Ops/Emitter.pir: $(OPSC_DIR)/src/Ops/Emitter.pm $(NQP_RX)
+	$(NQP_RX) --target=pir --output=$@ $(OPSC_DIR)/src/Ops/Emitter.pm
+
+$(OPSC_DIR)/gen/Ops/File.pir: $(OPSC_DIR)/src/Ops/File.pm $(NQP_RX)
+	$(NQP_RX) --target=pir --output=$@ $(OPSC_DIR)/src/Ops/File.pm
+
+$(OPSC_DIR)/gen/Ops/Op.pir: $(OPSC_DIR)/src/Ops/Op.pm $(NQP_RX)
+	$(NQP_RX) --target=pir --output=$@ $(OPSC_DIR)/src/Ops/Op.pm
+
+$(OPSC_DIR)/gen/Ops/OpLib.pir: $(OPSC_DIR)/src/Ops/OpLib.pm $(NQP_RX)
+	$(NQP_RX) --target=pir --output=$@  $(OPSC_DIR)/src/Ops/OpLib.pm
+
+$(OPSC_DIR)/gen/Ops/Trans.pir: $(OPSC_DIR)/src/Ops/Trans.pm $(NQP_RX)
+	$(NQP_RX) --target=pir --output=$@ $(OPSC_DIR)/src/Ops/Trans.pm
+
+$(OPSC_DIR)/gen/Ops/Trans/C.pir: $(OPSC_DIR)/src/Ops/Trans/C.pm $(NQP_RX)
+	$(NQP_RX) --target=pir --output=$@ $(OPSC_DIR)/src/Ops/Trans/C.pm
 
 # Target to force rebuild opsc from main Makefile
 compilers/opsc/ops2c.nqp: runtime/parrot/library/opsc.pbc
 
 $(OPS2C): compilers/opsc/ops2c.nqp opsc $(NQP_RX) $(PBC_TO_EXE)
-	$(NQP_RX) --target=pir $< >ops2c.pir
+	$(NQP_RX) --target=pir compilers/opsc/ops2c.nqp >ops2c.pir
 	$(PARROT) -o ops2c.pbc ops2c.pir
 	$(PBC_TO_EXE) ops2c.pbc
 
