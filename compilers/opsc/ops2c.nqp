@@ -8,6 +8,13 @@ my @files;
 my $i := 0;
 my $emit_lines := 1;
 
+if (pir::elements(@args) == 1) {
+    say("usage:
+ops2c --core
+ops2c --dynamic path/to/dynops.ops");
+    pir::exit(0);
+}
+
 while ($i lt pir::elements(@args)) {
     if (@args[$i] eq '--core') {
 

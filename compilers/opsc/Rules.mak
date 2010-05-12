@@ -1,12 +1,20 @@
 # the default target
-compilers/opsc/opsc.pbc: $(NQP_RX) $(OPSC_SOURCES)
-	$(PARROT) -o compilers/opsc/opsc.pbc compilers/opsc/opsc.pir
+runtime/parrot/library/opsc.pbc: $(NQP_RX) $(OPSC_SOURCES)
+	$(PARROT) -o runtime/parrot/library/opsc.pbc compilers/opsc/opsc.pir
 
 $(OPSC_DIR)/gen/%.pir: $(OPSC_DIR)/src/%.pm $(NQP_RX)
 	$(NQP_RX) --target=pir --output=$@ $<
 
 # Target to force rebuild opsc from main Makefile
-compilers/opsc/ops2c.nqp: compilers/opsc/opsc.pbc
+compilers/opsc/ops2c.nqp: runtime/parrot/library/opsc.pbc
+
+$(OPS2C): compilers/opsc/ops2c.nqp opsc $(NQP_RX) $(PBC_TO_EXE)
+	$(NQP_RX) --target=pir $< >ops2c.pir
+	$(PARROT) -o ops2c.pbc ops2c.pir
+	$(PBC_TO_EXE) ops2c.pbc
+
+$(INSTALLABLEOPS2C): $(OPS2C) src/install_config$(O)
+	$(PBC_TO_EXE) ops2c.pbc --install
 
 # This is a listing of all targets, that are meant to be called by users
 opsc-help:
@@ -28,7 +36,7 @@ opsc-help:
 	@echo "  help:              Print this help message."
 	@echo ""
 
-opsc: compilers/opsc/opsc.pbc
+opsc: runtime/parrot/library/opsc.pbc
 
 opsc-test: opsc
 	$(PERL) compilers/opsc/t/harness compilers/opsc/t

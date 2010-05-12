@@ -21,4 +21,3 @@ OPSC_CLEANUPS = \
 	$(OPSC_DIR)/opsc.pbc \
 	$(OPSC_SOURCES_GENERATED)
 
-

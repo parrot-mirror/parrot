@@ -117,7 +117,6 @@ NONGEN_HEADERS   = @TEMP_nongen_headers@
 
 # The headerizer
 HEADERIZER       = $(PERL) $(BUILD_TOOLS_DIR)/headerizer.pl
-OPS2C            = $(NQP_RX) compilers/opsc/ops2c.nqp
 
 include src/dynpmc/Defines.mak
 include src/dynoplibs/Defines.mak
@@ -517,6 +516,7 @@ PIRC                = .@slash@pirc$(EXE)
 NQP_RX              = .@slash@parrot-nqp$(EXE)
 NCI_THUNK_GEN       = .@slash@parrot_nci_thunk_gen$(EXE)
 TAPIR               = .@slash@tapir$(EXE)
+OPS2C               = .@slash@ops2c$(EXE)
 
 # Installable executables
 INSTALLABLEPARROT    = .@slash@installable_parrot$(EXE)
@@ -529,6 +529,7 @@ INSTALLABLECONFIG    = .@slash@installable_parrot_config$(EXE)
 INSTALLABLENQP       = .@slash@installable_parrot-nqp$(EXE)
 INSTALLABLENCITHUNKGEN = .@slash@installable_parrot_nci_thunk_gen$(EXE)
 INSTALLABLETAPIR    = .@slash@installable_tapir$(EXE)
+INSTALLABLEOPS2C    = .@slash@installable_ops2c$(EXE)
 
 # Libraries
 LIBPARROT_STATIC    = @blib_dir@/@libparrot_static@
@@ -790,9 +791,9 @@ help :
 
 world : all parrot_utils
 
-parrot_utils : $(PDUMP) $(DIS) $(PDB) $(PBC_MERGE) $(PBC_TO_EXE) $(PARROT_CONFIG) src/install_config$(O) $(TAPIR)
+parrot_utils : $(PDUMP) $(DIS) $(PDB) $(PBC_MERGE) $(PBC_TO_EXE) $(PARROT_CONFIG) src/install_config$(O) $(TAPIR) $(OPS2C)
 
-installable: all $(INSTALLABLEPARROT) $(INSTALLABLEPDUMP) $(INSTALLABLEDIS) $(INSTALLABLEPDB) $(INSTALLABLEPBC_MERGE) $(INSTALLABLEPBCTOEXE) $(INSTALLABLECONFIG) $(INSTALLABLENQP) $(INSTALLABLENCITHUNKGEN) $(INSTALLABLETAPIR)
+installable: all $(INSTALLABLEPARROT) $(INSTALLABLEPDUMP) $(INSTALLABLEDIS) $(INSTALLABLEPDB) $(INSTALLABLEPBC_MERGE) $(INSTALLABLEPBCTOEXE) $(INSTALLABLECONFIG) $(INSTALLABLENQP) $(INSTALLABLENCITHUNKGEN) $(INSTALLABLETAPIR) $(INSTALLABLEOPS2C)
 
 bootstrap-ops : $(OPS2C)
 	$(OPS2C) --core
@@ -1829,6 +1830,7 @@ prog-clean :
     $(PARROT) \
     $(MINIPARROT) \
     $(LIBPARROT) \
+    $(INSTALLABLEOPS2C) \
     $(INSTALLABLEPARROT) \
     $(INSTALLABLEDIS) \
     $(INSTALLABLEPDUMP) \
@@ -1841,6 +1843,7 @@ prog-clean :
     $(INSTALLABLETAPIR) \
     pbc_to_exe.pbc pbc_to_exe.c pbc_to_exe$(O) pbc_to_exe$(EXE) \
     $(NCI_THUNK_GEN) parrot_nci_thunk_gen.c parrot_nci_thunk_gen$(O) parrot_nci_thunk_gen.pbc \
+	ops2c.pbc ops2c.c ops2c$(O) ops2c$(EXE) \
     tapir.pbc tapir.c tapir$(O) tapir$(EXE) \
     parrot_config$(EXE) parrot_config.c parrot_config$(O) parrot_config.pbc \
     compilers/imcc/main$(O) \
