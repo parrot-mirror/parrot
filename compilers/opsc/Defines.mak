@@ -18,5 +18,6 @@ OPSC_SOURCES = \
 
 OPSC_CLEANUPS = \
 	$(OPSC_DIR)/opsc.pbc \
+	$(LIBRARY_DIR)/opsc.pbc \
 	$(OPSC_SOURCES_GENERATED)
 
