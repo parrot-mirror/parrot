@@ -41,9 +41,6 @@ opsc: runtime/parrot/library/opsc.pbc
 opsc-test: opsc
 	$(PERL) compilers/opsc/t/harness compilers/opsc/t
 
-opsc-clean:
-	$(RM_F) $(OPSC_CLEANUPS)
-
 # Local variables:
 #   mode: makefile
 # End:
