@@ -7,7 +7,6 @@ OPSC_SOURCES_GENERATED = \
 	$(OPSC_DIR)/gen/Ops/Emitter.pir \
 	$(OPSC_DIR)/gen/Ops/Trans.pir \
 	$(OPSC_DIR)/gen/Ops/Trans/C.pir \
-	\
 	$(OPSC_DIR)/gen/Ops/Op.pir \
 	$(OPSC_DIR)/gen/Ops/OpLib.pir \
 	$(OPSC_DIR)/gen/Ops/File.pir
