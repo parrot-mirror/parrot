@@ -1,6 +1,5 @@
-# the default target
-runtime/parrot/library/opsc.pbc: $(NQP_RX) $(OPSC_SOURCES)
-	$(PARROT) -o runtime/parrot/library/opsc.pbc compilers/opsc/opsc.pir
+$(LIBRARY_DIR)/opsc.pbc: $(NQP_RX) $(OPSC_SOURCES)
+	$(PARROT) -o $(LIBRARY_DIR)/opsc.pbc $(OPSC_DIR)/opsc.pir
 
 $(OPSC_DIR)/gen/Ops/Compiler.pir: $(OPSC_DIR)/src/Ops/Compiler.pm $(NQP_RX)
 	$(NQP_RX) --target=pir --output=$@  $(OPSC_DIR)/src/Ops/Compiler.pm
@@ -30,10 +29,10 @@ $(OPSC_DIR)/gen/Ops/Trans/C.pir: $(OPSC_DIR)/src/Ops/Trans/C.pm $(NQP_RX)
 	$(NQP_RX) --target=pir --output=$@ $(OPSC_DIR)/src/Ops/Trans/C.pm
 
 # Target to force rebuild opsc from main Makefile
-compilers/opsc/ops2c.nqp: runtime/parrot/library/opsc.pbc
+$(OPSC_DIR)/ops2c.nqp: $(LIBRARY_DIR)/opsc.pbc
 
-$(OPS2C): compilers/opsc/ops2c.nqp opsc $(NQP_RX) $(PBC_TO_EXE)
-	$(NQP_RX) --target=pir compilers/opsc/ops2c.nqp >ops2c.pir
+$(OPS2C): $(OPSC_DIR)/ops2c.nqp opsc $(NQP_RX) $(PBC_TO_EXE)
+	$(NQP_RX) --target=pir $(OPSC_DIR)/ops2c.nqp >ops2c.pir
 	$(PARROT) -o ops2c.pbc ops2c.pir
 	$(PBC_TO_EXE) ops2c.pbc
 
@@ -60,10 +59,10 @@ opsc-help:
 	@echo "  help:              Print this help message."
 	@echo ""
 
-opsc: runtime/parrot/library/opsc.pbc
+opsc: $(LIBRARY_DIR)/opsc.pbc
 
 opsc-test: opsc
-	$(PERL) compilers/opsc/t/harness compilers/opsc/t
+	$(PERL) $(OPSC_DIR)/t/harness $(OPSC_DIR)/t
 
 # Local variables:
 #   mode: makefile
