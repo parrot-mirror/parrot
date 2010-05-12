@@ -105,16 +105,17 @@ Marks the StringBuilder as live.
 
 =item C<STRING *get_string()>
 
-Clones and returns current buffer. We need clone because outside of
-StringBuilder strings are immutable.
+Returns created string.
 
 =cut
 
 */
 
     VTABLE STRING *get_string() {
-        STRING *buffer, *retv;
+        STRING *buffer;
         GET_ATTR_buffer(INTERP, SELF, buffer);
+        /* We need to clone buffer because outside of StringBuilder strings */
+        /* are immutable */
         return Parrot_str_clone(INTERP, buffer);
     }
 
