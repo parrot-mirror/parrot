@@ -282,6 +282,104 @@ For testing purpose only?
                 Parrot_str_substr(INTERP, buffer, offset, length));
     }
 
+/*
+
+=item C<append_format(string fmt [, pmc args ] [, pmc hash ])>
+
+Add a line to a C<StringBuilder> object according to C<fmt>.
+The C<fmt> string can contain any number of "%-replacements"
+which are replaced by the corresponding values from C<args>
+or C<hash> prior to being appended to the string.  (Here
+C<args> is a slurpy array, and C<hash> is a slurpy hash.)
+
+The currently defined replacements include:
+
+    %0 %1 ... %9     the value from the args array at index 0..9
+    %,               the values of the args array separated by commas
+    %%               a percent sign
+
+A percent-sign followed by any other character that is a hash
+key receives the value of the hash element.
+
+=cut
+
+*/
+
+    METHOD append_format(STRING *fmt, PMC *args :slurpy, PMC *hash :slurpy :named) {
+        STRING * const percent     = CONST_STRING(INTERP, "%");
+        STRING * const comma       = CONST_STRING(INTERP, ",");
+        STRING * const comma_space = CONST_STRING(INTERP, ", ");
+        STRING * const newline     = CONST_STRING(INTERP, "\n");
+        STRING *key;
+        PMC    *stringbuilder = SELF;
+        INTVAL percentPos;
+        INTVAL pos = 0;
+
+        /* Loop over the format string, splitting it into chunks
+         * for the string builder. */
+        while (pos >= 0) {
+            /* Find the next % */
+            percentPos = Parrot_str_find_index(INTERP, fmt, percent, pos);
+
+            if (percentPos < 0) {
+                if (pos == 0) {
+                    VTABLE_push_string(INTERP, stringbuilder, fmt);
+                }
+                else {
+                    /* remaining string can be added as is. */
+                    VTABLE_push_string(INTERP, stringbuilder,
+                        Parrot_str_substr(INTERP, fmt, pos,
+                            Parrot_str_length(INTERP, fmt) -pos));
+                    }
+                break;
+            }
+            else {
+                /* slurp up to just before the % sign... */
+                VTABLE_push_string(INTERP, stringbuilder,
+                    Parrot_str_substr(INTERP, fmt, pos, percentPos - pos));
+                /* skip the % sign */
+                pos = percentPos + 1 ;
+            }
+
+            /* key is always a single character */
+            key = Parrot_str_substr(INTERP, fmt, pos++, 1);
+
+            if (VTABLE_exists_keyed_str(INTERP, hash, key)) {
+                VTABLE_push_string(INTERP, stringbuilder,
+                        VTABLE_get_string_keyed_str(INTERP, hash, key));
+            }
+            else if (Parrot_str_is_cclass(INTERP, enum_cclass_numeric, key, 0)) {
+                VTABLE_push_string(INTERP, stringbuilder,
+                    VTABLE_get_string_keyed_int(INTERP, args,
+                        Parrot_str_to_int(INTERP, key)));
+            }
+            else if (Parrot_str_equal(INTERP, key, comma)) {
+                INTVAL num_args = VTABLE_elements(INTERP, args);
+                INTVAL pos_args = 1;
+
+                VTABLE_push_string(INTERP, stringbuilder,
+                    VTABLE_get_string_keyed_int(INTERP, args, 0));
+
+                while (pos_args < num_args) {
+                    VTABLE_push_string(INTERP, stringbuilder, comma_space);
+                    VTABLE_push_string(INTERP, stringbuilder,
+                        VTABLE_get_string_keyed_int(INTERP, args, pos_args));
+                    pos_args++;
+                }
+            }
+            else if (Parrot_str_equal(INTERP, key, percent)) {
+                VTABLE_push_string(INTERP, stringbuilder, percent);
+            }
+            else {
+                /* %foo has no special meaning, pass it through unchanged */
+                VTABLE_push_string(INTERP, stringbuilder,
+                    Parrot_str_substr(INTERP, fmt, pos-2, 2));
+            }
+        }
+
+        RETURN(PMC *SELF);
+    }
+
 
 /*
 
