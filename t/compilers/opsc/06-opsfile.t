@@ -20,7 +20,9 @@ my @ops := $f.ops;
 # 116 math
 # We can generate more than 1 Ops::Op per op due args expansion.
 say( "# Parsed " ~ +@ops);
-ok(+@ops == 314, "Ops parsed correctly");
+# There is more than 300 ops in this 2 files.
+# Feel free to update number if you change them.
+ok(+@ops > 300, "Ops parsed correctly");
 
 my $op := @ops[0];
 #_dumper($op);
