@@ -31,7 +31,7 @@ $(OPSC_DIR)/gen/Ops/Trans/C.pir: $(OPSC_DIR)/src/Ops/Trans/C.pm $(NQP_RX)
 # Target to force rebuild opsc from main Makefile
 $(OPSC_DIR)/ops2c.nqp: $(LIBRARY_DIR)/opsc.pbc
 
-$(OPS2C): $(OPSC_DIR)/ops2c.nqp opsc $(NQP_RX) $(PBC_TO_EXE)
+$(OPS2C): $(OPSC_DIR)/ops2c.nqp $(LIBRARY_DIR)/opsc.pbc $(NQP_RX) $(PBC_TO_EXE)
 	$(NQP_RX) --target=pir $(OPSC_DIR)/ops2c.nqp >ops2c.pir
 	$(PARROT) -o ops2c.pbc ops2c.pir
 	$(PBC_TO_EXE) ops2c.pbc
