@@ -43,20 +43,22 @@ method body($/) {
         }
         for @($ops) -> $op {
             my $full_name := $op.full_name;
-            if $OPLIB {
-                if  !$skiptable.exists($full_name) &&
-                     $optable.exists($full_name) {
+            if $OPLIB && !$skiptable.exists($full_name) {
+
+                #ops listed in ops.num are non-experimental
+                if $optable.exists($full_name) {
                     $op<code> := $optable{$full_name};
                     $op<experimental> := 0;
-                    $past<ops>.push($op);
                 }
-                elsif !$skiptable.exists($full_name) {
+                #ops not explicitly listed but not skipped are experimental
+                else {
                     $op<code> := $CODE++;
                     $op<experimental> := 1;
-                    $past<ops>.push($op);
                 }
+                $past<ops>.push($op);
             }
-            else {
+            #if there's no oplib, we're compiling dynops and ops aren't experimental
+            elsif !$OPLIB {
                 $op<code> := $CODE++;
                 $op<experimental> := 0;
                 $past<ops>.push($op);
