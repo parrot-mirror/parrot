@@ -9,7 +9,8 @@ our $OPLIB;
 
 INIT {
     pir::load_bytecode("nqp-settings.pbc");
-    $CODE := 0;
+    $CODE  := 0;
+    $OPLIB := 0;
 }
 
 method TOP($/) {
@@ -17,7 +18,6 @@ method TOP($/) {
 }
 
 method body($/) {
-
     my $past := PAST::Stmts.new(
         :node($/)
     );
@@ -52,13 +52,13 @@ method body($/) {
                     $op<code> := $CODE++;
                     $op<experimental> := 1;
                 }
-
-                $past<ops>.push($op);
             }
             else {
                 $op<code> := $CODE++;
                 $op<experimental> := 0;
             }
+
+            $past<ops>.push($op);
         }
     }
 
