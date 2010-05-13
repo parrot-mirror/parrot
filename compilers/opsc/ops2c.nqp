@@ -87,9 +87,4 @@ my $emitter := Ops::Emitter.new(
 $emitter.print_c_header_file();
 $emitter.print_c_source_file();
 
-sub get_args() {
-    my $interp := pir::getinterp__P();
-    $interp[2];
-}
-
 # vim: expandtab shiftwidth=4 ft=perl6:
