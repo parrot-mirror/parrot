@@ -50,13 +50,21 @@ while ($i lt pir::elements(@args)) {
 
 
 my $trans := Ops::Trans::C.new();
-my $lib := Ops::OpLib.new(
-    :num_file('src/ops/ops.num'),
-    :skip_file('src/ops/ops.skip'),
-);
 
 my $start_time := pir::time__N();
-my $f := Ops::File.new(|@files, :oplib($lib), :core($core));
+my $f;
+
+if $core {
+    my $lib := Ops::OpLib.new(
+        :num_file('src/ops/ops.num'),
+        :skip_file('src/ops/ops.skip'),
+    );
+    $f := Ops::File.new(|@files, :oplib($lib), :core(1));
+}
+else {
+    $f := Ops::File.new(|@files, :core(0));
+}
+
 my $end_time := pir::time__N();
 say('# Ops parsed ' ~ ($end_time - $start_time));
 my $emitter := Ops::Emitter.new(

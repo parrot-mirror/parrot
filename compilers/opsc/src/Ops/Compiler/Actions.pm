@@ -17,7 +17,6 @@ method TOP($/) {
 }
 
 method body($/) {
-    $OPLIB := Ops::OpLib.new() if !defined($OPLIB);
 
     my $past := PAST::Stmts.new(
         :node($/)
@@ -36,11 +35,15 @@ method body($/) {
 
     for $<op> {
         my $ops := $_.ast;
-        my $skiptable := $OPLIB.skiptable;
-        my $optable   := $OPLIB.optable;
+        my $skiptable;
+        my $optable;
+        if $OPLIB {
+            $skiptable := $OPLIB.skiptable;
+            $optable   := $OPLIB.optable;
+        }
         for @($ops) -> $op {
             my $full_name := $op.full_name;
-            if ! $skiptable.exists($full_name) {
+            if $OPLIB && ! $skiptable.exists($full_name) {
                 if $optable.exists($full_name) {
                     $op<code> := $optable{$full_name};
                     $op<experimental> := 0;
@@ -51,6 +54,10 @@ method body($/) {
                 }
 
                 $past<ops>.push($op);
+            }
+            else {
+                $op<code> := $CODE++;
+                $op<experimental> := 0;
             }
         }
     }
