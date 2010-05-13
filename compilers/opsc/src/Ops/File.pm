@@ -183,20 +183,19 @@ ops file.
 
 =end
 
-method new(*@files, :$oplib, :$nolines, :$core) {
+method new(*@files, :$oplib, :$core!, :$nolines) {
     self<files>   := @files;
     self<core>    := $core;
     self<ops>     := list(); # Ops
     self<preamble>:= '';
-
-    if !self<core> {
-        self<file> := @files[0];
-    }
-
     self<compiler>:= pir::compreg__Ps('Ops');
+
     if $core {
         self<oplib>   := $oplib;
         self<compiler>.set_oplib($oplib);
+    }
+    else {
+        self<file> := @files[0];
     }
 
     self._set_version();
