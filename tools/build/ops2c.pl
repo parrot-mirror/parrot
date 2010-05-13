@@ -3,6 +3,8 @@
 # $Id$
 
 warn 'ops2c.pl is deprecated. Use ops2c$(EXE) instead';
+# Ignore "core"
+shift @ARGV;
 exec 'ops2c', @ARGV;
 
 # Local Variables:
