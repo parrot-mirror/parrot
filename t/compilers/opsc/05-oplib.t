@@ -4,7 +4,7 @@
 
 # Checking for OpLib num and skip files parsing.
 
-pir::load_bytecode("compilers/opsc/opsc.pbc");
+pir::load_bytecode("opsc.pbc");
 
 plan(5);
 

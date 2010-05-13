@@ -2,7 +2,7 @@
 # Copyright (C) 2010, Parrot Foundation.
 # $Id$
 
-pir::load_bytecode("compilers/opsc/opsc.pbc");
+pir::load_bytecode("opsc.pbc");
 pir::load_bytecode("nqp-settings.pbc");
 
 plan(7);
@@ -13,7 +13,7 @@ my @files := <
     src/ops/math.ops
 >;
 
-my $f := Ops::File.new(:oplib($oplib), |@files);
+my $f := Ops::File.new(:oplib($oplib), |@files, :core(1));
 
 my @ops := $f.ops;
 # 84 core
@@ -22,7 +22,7 @@ my @ops := $f.ops;
 say( "# Parsed " ~ +@ops);
 # There is more than 300 ops in this 2 files.
 # Feel free to update number if you change them.
-ok(+@ops > 300, "Ops parsed correctly");
+ok(+@ops == 314, "Ops parsed correctly");
 
 my $op := @ops[0];
 #_dumper($op);

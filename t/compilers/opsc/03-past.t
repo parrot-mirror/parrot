@@ -6,7 +6,7 @@
 # "Comprehensive" test for creating PAST for op.
 # Parse single op and check various aspects of created PAST.
 
-pir::load_bytecode('compilers/opsc/opsc.pbc');
+pir::load_bytecode('opsc.pbc');
 pir::load_bytecode('nqp-settings.pbc');
 pir::load_bytecode('dumper.pbc');
 
@@ -28,7 +28,6 @@ inline op foo(out INT, in PMC, inconst NUM) :flow :deprecated {
 }
 
 |;
-
 my $compiler := pir::compreg__Ps('Ops');
 
 my $past := $compiler.compile($buf, target => 'past');
@@ -41,7 +40,7 @@ ok(~$preambles[0] ~~ /HEADER/, 'Header parsed');
 
 my @ops := @($past<ops>);
 # One "bar" and two "foo"
-ok(+@ops == 3, 'We have 2 ops');
+ok(+@ops ==  3, 'We have 3 ops');
 
 my $op := @ops[1];
 ok($op.name == 'foo', "Name parsed");

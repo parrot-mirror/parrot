@@ -7,7 +7,7 @@
 .sub 'main' :main
 
     .include 'test_more.pir'
-    load_bytecode 'compilers/opsc/opsc.pbc'
+    load_bytecode 'opsc.pbc'
 
     plan(12)
 

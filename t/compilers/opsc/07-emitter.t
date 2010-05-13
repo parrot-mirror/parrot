@@ -2,7 +2,7 @@
 # Copyright (C) 2010, Parrot Foundation.
 # $Id$
 
-pir::load_bytecode("compilers/opsc/opsc.pbc");
+pir::load_bytecode("opsc.pbc");
 pir::load_bytecode("nqp-settings.pbc");
 
 plan(22);
@@ -19,6 +19,7 @@ my $lib := Ops::OpLib.new();
 my $emitter := Ops::Emitter.new(
     :ops_file(Ops::File.new(
         :oplib($lib),
+        :core(1),
         |@files)
     ),
     :trans($trans),

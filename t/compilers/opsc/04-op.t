@@ -4,7 +4,7 @@
 
 # Checking Ops::Op
 
-pir::load_bytecode("compilers/opsc/opsc.pbc");
+pir::load_bytecode("opsc.pbc");
 pir::load_bytecode("nqp-settings.pbc");
 
 plan(7);

@@ -6,7 +6,7 @@
 
 .sub 'main' :main
     .include 'test_more.pir'
-    load_bytecode 'compilers/opsc/opsc.pbc'
+    load_bytecode 'opsc.pbc'
 
     .local int total
     .local pmc os, all_files, ops_files, dynops_files
