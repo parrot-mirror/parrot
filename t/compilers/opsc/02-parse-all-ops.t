@@ -2,7 +2,7 @@
 # Copyright (C) 2010, Parrot Foundation.
 # $Id$
 
-.include 'compilers/opsc/t/common.pir'
+.include 't/compilers/opsc/common.pir'
 
 .sub 'main' :main
     .include 'test_more.pir'
