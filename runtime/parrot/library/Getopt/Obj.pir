@@ -205,7 +205,7 @@ endif_4:
     val = argv[i]
     goto beginstore
 
-else_4:    
+else_4:
     if_null val, error_0
     goto beginstore_1
 error_0:
