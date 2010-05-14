@@ -1,6 +1,9 @@
 #! perl
-# Copyright (C) 2001-2008, Parrot Foundation.
+# Copyright (C) 2001-2010, Parrot Foundation.
 # $Id$
+
+use strict;
+use warnings;
 
 warn 'ops2c.pl is deprecated. Use ops2c$(EXE) instead';
 # Ignore "core"
