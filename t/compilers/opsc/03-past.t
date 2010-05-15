@@ -7,7 +7,6 @@
 # Parse single op and check various aspects of created PAST.
 
 pir::load_bytecode('opsc.pbc');
-pir::load_bytecode('nqp-settings.pbc');
 pir::load_bytecode('dumper.pbc');
 
 plan(26);
