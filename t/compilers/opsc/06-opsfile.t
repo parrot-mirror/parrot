@@ -3,7 +3,7 @@
 # $Id$
 
 pir::load_bytecode("opsc.pbc");
-pir::load_bytecode("nqp-settings.pbc");
+pir::load_bytecode("nqp-setting.pbc");
 
 plan(7);
 

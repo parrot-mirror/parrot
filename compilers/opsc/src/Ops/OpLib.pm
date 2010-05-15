@@ -4,7 +4,7 @@
 
 INIT {
     pir::load_bytecode("dumper.pbc");
-    pir::load_bytecode("nqp-settings.pbc");
+    pir::load_bytecode("nqp-setting.pbc");
 };
 
 class Ops::OpLib is Hash;

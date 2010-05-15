@@ -5,7 +5,7 @@
 class Ops::Trans::C is Ops::Trans;
 
 INIT {
-    pir::load_bytecode("nqp-settings.pbc");
+    pir::load_bytecode("nqp-setting.pbc");
 }
 
 method new() {
