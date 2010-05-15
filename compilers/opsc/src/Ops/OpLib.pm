@@ -144,7 +144,6 @@ my method _load_num_file() {
     for $ops<op> {
         my $name    := ~$_<name>;
         my $number  := +$_<number>;
-        #say(@parts[0] ~ ' => ' ~@parts[1]);
         if (+$number) eq $number {
             if ($prev + 1 != $number) {
                 die("hole in ops.num before #$number");
@@ -203,17 +202,11 @@ Various methods for accessing internals.
 
 =end ACCESSORS
 
-method max_op_num() {
-    self<max_op_num>;
-}
+method max_op_num() { self<max_op_num>; }
 
-method optable() {
-    self<optable>;
-}
+method optable()    { self<optable>; }
 
-method skiptable() {
-    self<skiptable>;
-}
+method skiptable()  { self<skiptable>; }
 
 
 # Local Variables:
