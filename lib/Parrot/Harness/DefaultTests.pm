@@ -66,7 +66,6 @@ our @EXPORT_OK = qw(
     t/oo/*.t
     t/native_pbc/*.t
     t/dynpmc/*.t
-    t/dynoplibs/*.t
 );
 
 # core tests are run unless --runcore-tests is present.  Typically
@@ -87,6 +86,7 @@ our @EXPORT_OK = qw(
     t/compilers/tge/*.t
     t/compilers/opsc/*.t
     t/compilers/data_json/*.t
+    t/dynoplibs/*.t
     t/library/*.t
     t/tools/*.t
     t/profiling/*.t
