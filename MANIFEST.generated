@@ -149,7 +149,6 @@ install_config.fpmc                              [main]lib
 lib/Parrot/Config/Generated.pm                   [devel]lib
 libparrot.dll                                    [main]bin
 libparrot.lib                                    [main]bin
-lib/Parrot/OpLib/core.pm                         [devel]lib
 lib/Parrot/Pmc2c/PCCMETHOD_BITS.pm               [devel]lib
 lib/Parrot/PMC.pm                                [devel]lib
 parrot.pc                                        [main]pkgconfig
