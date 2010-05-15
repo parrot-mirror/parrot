@@ -51,6 +51,10 @@ L<https://trac.parrot.org/parrot/ticket/1580>
 
 L<https://trac.parrot.org/parrot/ticket/1599>
 
+=item CodeString [eligible in 2.7]
+
+L<http://trac.parrot.org/parrot/ticket/1633>
+
 =item multiple dispatch within core PMCs [eligible in 1.1]
 
 L<https://trac.parrot.org/parrot/ticket/452>
@@ -217,6 +221,12 @@ All "inplace" string update ops are deprecated. E.g. "chopn_s", etc.
 Part of COW removal.
 
 L<https://trac.parrot.org/parrot/ticket/1540>
+
+=item find_codepoint [experimental]
+
+Intended to replace the CodeString charname_to_ord method.
+
+L<https://trac.parrot.org/parrot/ticket/1629>
 
 =back
 
@@ -406,9 +416,19 @@ L<https://trac.parrot.org/parrot/ticket/1429>
 A way to provide an equivalent of -L and -I parrot command line options
 to language that doesn't support it.
 
-=item Archive::Tar [experimental]
+=item Protoobject [eligible in 2.7]
+
+Use P6Object instead.
+
+L<http://trac.parrot.org/parrot/ticket/1337>
+
+=item Archive::Tar & Archive::Zip [experimental]
 
 L<https://trac.parrot.org/parrot/ticket/1598>
+
+=item LWP, HTTP::Message & URI [experimental]
+
+L<http://trac.parrot.org/parrot/ticket/1637>
 
 =item JSON and Config;JSON [eligible in 1.5]
 
