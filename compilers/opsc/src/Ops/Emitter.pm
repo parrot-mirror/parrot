@@ -74,7 +74,7 @@ method bs()         { self<bs> };
 method print_c_header_files() {
     my $fh := pir::open__PSs(self<func_header>, 'w')
         || die("Can't open "~ self<func_header>);
-    self.emit_c_op_funcs_header($fh);
+    self.emit_c_op_func_header($fh);
     $fh.close();
     if self.ops_file<core> {
         $fh := pir::open__PSs(self<enum_header>, 'w')
@@ -84,7 +84,7 @@ method print_c_header_files() {
     }
 }
 
-method emit_c_op_funcs_header($fh) {
+method emit_c_op_func_header($fh) {
 
     self._emit_guard_prefix($fh, self<func_header>);
 
@@ -269,6 +269,9 @@ method _generate_guard_macro_name($filename) {
 
 method _emit_guard_prefix($fh, $filename) {
     my $guardname := self._generate_guard_macro_name($filename);
+    $fh.print(q|
+/* $Id$ */
+|);
     $fh.print(qq/
 #ifndef $guardname
 #define $guardname

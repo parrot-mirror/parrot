@@ -31,14 +31,14 @@ my $emitter := Ops::Emitter.new(
 ok( $emitter, "Emitter created");
 ok( $emitter<include> eq 'parrot/oplib/core_ops.h', 'Include is correct');
 say('# ' ~ $emitter<include>);
-ok( $emitter<header> ~~ /^tmp/, 'header file in tmp');
-say('# ' ~ $emitter<header>);
+ok( $emitter<func_header> ~~ /^tmp/, 'header file in tmp');
+say('# ' ~ $emitter<func_header>);
 
 #$emitter.print_c_header_file();
 
 my $fh := pir::new__Ps('StringHandle');
 $fh.open('header.h', 'w');
-$emitter.emit_c_header_file($fh);
+$emitter.emit_c_op_func_header($fh);
 
 $fh.close();
 my $header := $fh.readall();
