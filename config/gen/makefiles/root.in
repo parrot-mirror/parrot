@@ -808,7 +808,7 @@ runtime/parrot/include/config.fpmc : myconfig config_lib.pir \
 	$(MINIPARROT) -Iruntime/parrot/include config_lib.pir > $@
 
 $(PARROT) : src/main$(O) $(GEN_HEADERS) $(LIBPARROT) \
-    lib/Parrot/OpLib/core.pm src/parrot_config$(O) \
+    src/parrot_config$(O) \
     $(MINIPARROT)
 	$(LINK) @ld_out@$@ \
 	src/main$(O) src/parrot_config$(O) \
@@ -836,13 +836,13 @@ $(PARROT_CONFIG) : tools/util/parrot-config.pir $(PARROT) $(PBC_TO_EXE)
 	$(PARROT) pbc_to_exe.pbc parrot_config.pbc
 
 $(MINIPARROT) : src/main$(O) $(GEN_HEADERS) $(LIBPARROT) \
-    lib/Parrot/OpLib/core.pm src/null_config$(O)
+    src/null_config$(O)
 	$(LINK) @ld_out@$@ src/main$(O) src/null_config$(O) \
 	@rpath_blib@ $(ALL_PARROT_LIBS) $(LINKFLAGS)
 #IF(win32):	if exist $@.manifest mt.exe -nologo -manifest $@.manifest -outputresource:$@;1
 
 $(INSTALLABLEPARROT) : src/main$(O) $(GEN_HEADERS) $(LIBPARROT) \
-    lib/Parrot/OpLib/core.pm src/install_config$(O) \
+    src/install_config$(O) \
     $(PARROT)
 	$(LINK) @ld_out@$@ \
     src/main$(O) src/install_config$(O) \
