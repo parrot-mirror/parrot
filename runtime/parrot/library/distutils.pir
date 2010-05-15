@@ -1149,12 +1149,7 @@ the value is the OPS pathname
     .local pmc config
     config = get_config()
     .local string cmd
-    cmd = config['perl']
-    cmd .= " "
-    $S0 = get_tool('build/ops2c.pl')
-    cmd .= $S0
-    cmd .= " "
-    cmd .= core
+    cmd = get_executable('ops2c')
     cmd .= " --dynamic "
     cmd .= src
     system(cmd, 1 :named('verbose'))
