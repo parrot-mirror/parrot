@@ -76,8 +76,10 @@ else {
     $f := Ops::File.new(|@files, :core(0));
 }
 
-my $end_time := pir::time__N();
-say('# Ops parsed ' ~ ($end_time - $start_time));
+my @spf_args := list(pir::time__N() - $start_time);
+pir::sprintf(my $time, "%.3f", @spf_args);
+say("# Ops parsed in $time seconds.");
+
 my $emitter := Ops::Emitter.new(
     :ops_file($f), :trans($trans),
     :script('ops2c.nqp'), :file(@files[0]),
