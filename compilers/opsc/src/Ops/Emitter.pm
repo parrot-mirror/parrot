@@ -35,13 +35,14 @@ method new(:$ops_file!, :$trans!, :$script!, :$file, :%flags!) {
 
     if %flags<core> {
         self<include> := "parrot/oplib/$base_ops_h";
-        self<header>  := (~%flags<dir>) ~ "include/" ~ self<include>;
+        self<func_header> := (~%flags<dir>) ~ "include/" ~ self<include>;
+        self<enum_header> := (~%flags<dir>) ~ "include/parrot/oplib/ops.h";
         self<source>  := (~%flags<dir>) ~ "src/ops/$base_ops_stub.c";
     }
     else {
         my $dynops_dir := subst( $file, /\w+\.ops$$/, '');
         self<include> := $base ~ "_ops.h";
-        self<header>  := $dynops_dir ~ self<include>;
+        self<func_header>  := $dynops_dir ~ self<include>;
         self<source>  := $dynops_dir ~ $base ~ "_ops.c";
     }
 
@@ -70,23 +71,44 @@ method base()       { self<base> };
 method suffix()     { self<suffix> };
 method bs()         { self<bs> };
 
-method print_c_header_file() {
-    my $fh := pir::open__PSs(self<header>, 'w') || die("Can't open filehandle");
-    self.emit_c_header_file($fh);
+method print_c_header_files() {
+    my $fh := pir::open__PSs(self<func_header>, 'w')
+        || die("Can't open "~ self<func_header>);
+    self.emit_c_op_funcs_header($fh);
     $fh.close();
-    return self<header>;
+    if self.ops_file<core> {
+        $fh := pir::open__PSs(self<enum_header>, 'w')
+            || die("Can't open "~ self<enum_header>);
+        self.emit_c_op_enum_header($fh);
+        $fh.close();
+    }
 }
 
-method emit_c_header_file($fh) {
+method emit_c_op_funcs_header($fh) {
 
-    self._emit_guard_prefix($fh);
+    self._emit_guard_prefix($fh, self<func_header>);
 
     self._emit_preamble($fh);
 
-    # Emit runcore specific part.
-    self.trans.emit_c_header_part($fh);
+    self._emit_includes($fh);
 
-    self._emit_guard_suffix($fh);
+    # Emit runcore specific part.
+    self.trans.emit_c_op_funcs_header_part($fh);
+
+    self._emit_guard_suffix($fh, self<func_header>);
+
+    self._emit_coda($fh);
+}
+
+method emit_c_op_enum_header($fh) {
+
+    self._emit_guard_prefix($fh, self<enum_header>);
+
+    self._emit_preamble($fh);
+
+    self._emit_c_op_enum_header_part($fh);
+
+    self._emit_guard_suffix($fh, self<enum_header>);
 
     self._emit_coda($fh);
 }
@@ -117,6 +139,25 @@ method emit_c_source_file($fh) {
     self._emit_init_func($fh);
     self._emit_dymanic_lib_load($fh);
     self._emit_coda($fh);
+}
+
+method _emit_c_op_enum_header_part($fh) {
+    my $sb := pir::new__Ps('StringBuilder');
+    my $last_op_code := +self.ops_file.ops - 1;
+    for self.ops_file.ops -> $op {
+        $sb.append_format("    PARROT_OP_%0%1 %2 /* %3 */\n",
+            $op.full_name,
+            ($op.code == $last_op_code ?? ' ' !! ','),
+            pir::repeat__SsI(' ', 30 - pir::length__Is($op.full_name)),
+            $op.code);
+    }
+    $fh.print(q|
+typedef enum {
+|);
+    $fh.print(~$sb);
+    $fh.print(q|
+} parrot_opcode_enums;
+|);
 }
 
 method _emit_source_preamble($fh) {
@@ -215,11 +256,10 @@ $load_func(PARROT_INTERP)
 
 # given a headerfile name like "include/parrot/oplib/core_ops.h", this
 # returns a string like "PARROT_OPLIB_CORE_OPS_H_GUARD"
-method _generate_guard_macro_name() {
-    my $fn   := self<header>;
-    $fn := subst($fn, /.h$/, '');
-    #my @path = File::Spec->splitdir($fn);
-    my @path := split('/', $fn);
+method _generate_guard_macro_name($filename) {
+    $filename := subst($filename, /.h$/, '');
+    #my @path = File::Spec->splitdir($filename);
+    my @path := split('/', $filename);
     @path.shift if @path[0]~'/' eq self<flags><dir>;
     @path.shift if @path[0] eq 'include';
     @path.shift if @path[0] eq 'parrot';
@@ -227,8 +267,8 @@ method _generate_guard_macro_name() {
 }
 
 
-method _emit_guard_prefix($fh) {
-    my $guardname := self._generate_guard_macro_name();
+method _emit_guard_prefix($fh, $filename) {
+    my $guardname := self._generate_guard_macro_name($filename);
     $fh.print(qq/
 #ifndef $guardname
 #define $guardname
@@ -236,8 +276,8 @@ method _emit_guard_prefix($fh) {
 /);
 }
 
-method _emit_guard_suffix($fh) {
-    my $guardname := self._generate_guard_macro_name();
+method _emit_guard_suffix($fh, $filename) {
+    my $guardname := self._generate_guard_macro_name($filename);
     $fh.print(qq|
 
 #endif /* $guardname */
@@ -255,6 +295,18 @@ method _emit_coda($fh) {
  * End:
  * vim: expandtab shiftwidth=4:
  */
+|);
+}
+
+method _emit_includes($fh) {
+
+    $fh.print(qq|
+#include "parrot/parrot.h"
+#include "parrot/oplib.h"
+#include "parrot/runcore_api.h"
+
+{self.sym_export} op_lib_t *{self.init_func}(PARROT_INTERP, long init);
+
 |);
 }
 
@@ -276,14 +328,6 @@ method _emit_preamble($fh) {
         $fh.print("#define PARROT_IN_EXTENSION\n");
     }
 
-    $fh.print(qq|
-#include "parrot/parrot.h"
-#include "parrot/oplib.h"
-#include "parrot/runcore_api.h"
-
-{self.sym_export} op_lib_t *{self.init_func}(PARROT_INTERP, long init);
-
-|);
 }
 
 # vim: expandtab shiftwidth=4 ft=perl6:

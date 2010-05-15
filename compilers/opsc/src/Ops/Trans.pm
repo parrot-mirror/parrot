@@ -21,7 +21,7 @@ method core_type() { die("...") }
 method prepare_ops($emitter, $ops_file) { die('...') }
 
 #
-method emit_c_header_part($fh) { die('...') }
+method emit_c_op_funcs_header_part($fh) { die('...') }
 
 # Called from Ops::Op.
 method body_prelude() { '' }

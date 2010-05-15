@@ -69,7 +69,7 @@ method prepare_ops($emitter, $ops_file) {
     self<num_entries>   := +@op_funcs + 1;
 }
 
-method emit_c_header_part($fh) {
+method emit_c_op_funcs_header_part($fh) {
     for self<op_protos> -> $proto {
         $fh.print($proto);
     }
