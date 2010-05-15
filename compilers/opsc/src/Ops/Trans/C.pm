@@ -4,10 +4,6 @@
 
 class Ops::Trans::C is Ops::Trans;
 
-INIT {
-    pir::load_bytecode("nqp-setting.pbc");
-}
-
 method new() {
     # Storage for generated ops functions.
     self<op_funcs>  := list();
@@ -198,7 +194,7 @@ static op_info_t {self.op_info($emitter)}[{self<num_entries>}] = | ~ q|{
         ## 0 inserted if arrays are empty to prevent msvc compiler errors
         my $arg_types := +$op.arg_types
             ?? '{ ' ~ join( ", ",
-                |map( -> $t { sprintf( "PARROT_ARG_%s", uc($t) ) }, $op.arg_types)
+                |map( -> $t { sprintf( "PARROT_ARG_%s", uc($t) ) }, |$op.arg_types)
             ) ~ ' }'
             !! '{ (arg_type_t) 0 }';
         my $arg_dirs := $op<normalized_args>
@@ -365,7 +361,7 @@ static void hop_deinit(PARROT_INTERP)
     }
 }|;
 
-    $fh.print(subst($res, /'[[' BS ']]'/, $emitter.bs));
+    $fh.print(subst($res, /'[[' BS ']]'/, $emitter.bs, :global));
 }
 
 # vim: expandtab shiftwidth=4 ft=perl6:
