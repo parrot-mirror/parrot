@@ -61,7 +61,6 @@ our @EXPORT_OK = qw(
 # runcore tests are always run.
 @runcore_tests = qw(
     t/compilers/imcc/*/*.t
-    t/compilers/opsc/*.t
     t/op/*.t
     t/pmc/*.t
     t/oo/*.t
@@ -86,6 +85,7 @@ our @EXPORT_OK = qw(
     t/compilers/pge/p5regex/*.t
     t/compilers/pge/perl6regex/*.t
     t/compilers/tge/*.t
+    t/compilers/opsc/*.t
     t/compilers/data_json/*.t
     t/library/*.t
     t/tools/*.t
