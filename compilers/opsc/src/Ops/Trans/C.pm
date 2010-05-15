@@ -199,12 +199,12 @@ static op_info_t {self.op_info($emitter)}[{self<num_entries>}] = | ~ q|{
             !! '{ (arg_type_t) 0 }';
         my $arg_dirs := $op<normalized_args>
             ?? '{ ' ~ join(", ",
-                |map( -> $d { %arg_dir_mapping{$d<direction>} }, $op<normalized_args>)
+                |map( -> $d { %arg_dir_mapping{$d<direction>} }, |$op<normalized_args>)
             ) ~ ' }'
             !! '{ (arg_dir_t) 0 }';
         my $labels := $op<normalized_args>
             ?? '{ ' ~ join(", ",
-                |map( -> $d { $d<is_label> ?? 1 !! 0 }, $op<normalized_args>)
+                |map( -> $d { $d<is_label> ?? 1 !! 0 }, |$op<normalized_args>)
             ) ~ ' }'
             !! '{ 0 }';
 
