@@ -57,7 +57,6 @@ sub new {
             'Tools',
             '',
             $self->new_item( '', 'tools/build/ops2c.pl' ),
-            $self->new_item( '', 'tools/build/ops2pm.pl' ),
         ),
         $self->new_group( 'Opcode Libraries', '', @core_ops ),
         $self->new_group( 'Dynamic Opcode Libraries', '', @dynamic_ops ),

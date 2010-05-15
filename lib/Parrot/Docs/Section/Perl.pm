@@ -40,15 +40,6 @@ sub new {
         'perl.html',
         '',
         $self->new_group(
-            'Operations',
-            '',
-            $self->new_item(
-                'Ops to C Code Generation',
-                'lib/Parrot/OpsFile.pm',    'lib/Parrot/Op.pm',
-                'lib/Parrot/OpTrans.pm',    'lib/Parrot/OpTrans'
-            ),
-        ),
-        $self->new_group(
             'PMCs', '', 'lib/Parrot/Pmc2c', 'lib/Parrot/Pmc2c/PMC',
             $self->new_item( '', 'lib/Parrot/Vtable.pm' ),
         ),
