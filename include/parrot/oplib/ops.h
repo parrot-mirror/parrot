@@ -1244,7 +1244,6 @@ typedef enum {
     PARROT_OP_find_name_p_s,                   /* 1229 */
     PARROT_OP_find_name_p_sc,                  /* 1230 */
     PARROT_OP_find_sub_not_null_p_s,           /* 1231 */
-    PARROT_OP_find_sub_not_null_p_sc,          /* 1297 */
     PARROT_OP_trap,                            /* 1232 */
     PARROT_OP_set_label_p_ic,                  /* 1233 */
     PARROT_OP_get_label_i_p,                   /* 1234 */
@@ -1309,7 +1308,7 @@ typedef enum {
     PARROT_OP_root_new_p_p_ic,                 /* 1293 */
     PARROT_OP_root_new_p_pc_ic,                /* 1294 */
     PARROT_OP_find_codepoint_i_s,              /* 1295 */
-    PARROT_OP_find_codepoint_i_sc,             /* 1296 */
+    PARROT_OP_find_codepoint_i_sc              /* 1296 */
 
 } parrot_opcode_enums;
 

@@ -107,12 +107,21 @@ typedef enum {
 |);
 
     my $sb := pir::new__Ps('StringBuilder');
+    my $last_op;
     for $f.ops -> $op {
-        $sb.append_format("    PARROT_OP_%0, %1 /* %2 */\n",
+        $last_op := $op;
+        if $op.code+1 < $f<oplib>.max_op_num {
+            $sb.append_format("    PARROT_OP_%0, %1 /* %2 */\n",
                 $op.full_name,
                 pir::repeat__SsI(' ', 30 - pir::length__Is($op.full_name)),
                 $op.code);
+        }
     }
+
+    $sb.append_format("    PARROT_OP_%0  %1 /* %2 */\n",
+        $last_op.full_name,
+        pir::repeat__SsI(' ', 30 - pir::length__Is($last_op.full_name)),
+        $last_op.code);
 
     $ops_h.print(~$sb);
 
