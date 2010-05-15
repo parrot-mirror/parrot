@@ -87,7 +87,7 @@ my $emitter := Ops::Emitter.new(
 if $core {
     # Emit oplib/ops.h
     # TODO Move it somewhere else and test it properly.
-    my $ops_h := pir::open__Ps("include/parrot/oplib/ops.h_tmp", "w")
+    my $ops_h := pir::open__Ps("include/parrot/oplib/ops.h", "w")
                       || die("Can't open ops.h");
 
     $ops_h.print(q|
