@@ -235,7 +235,6 @@ CONFIGURE_GENERATED_FILES = \
 
 GEN_HEADERS = \
     $(INC_DIR)/vtable.h \
-    $(INC_DIR)/oplib/ops.h \
     $(INC_DIR)/extend_vtable.h \
     $(INC_DIR)/pbcversion.h
 
@@ -1178,15 +1177,6 @@ runtime/parrot/include/errors.pasm : $(INC_DIR)/warnings.h $(H2INC)
 runtime/parrot/include/tm.pasm : src/utils.c $(H2INC)
 	$(PERL) $(H2INC) src/utils.c $@
 
-
-# ops.h is built by ops2pm.pl after it builds core.pm
-$(INC_DIR)/oplib/ops.h:  lib/Parrot/OpLib/core.pm
-
-$(BUILD_TOOLS_DIR)/ops2c.pl: lib/Parrot/OpLib/core.pm
-
-lib/Parrot/OpLib/core.pm : $(OPS_FILES) $(BUILD_TOOLS_DIR)/ops2pm.pl \
-    lib/Parrot/OpsFile.pm lib/Parrot/Op.pm src/ops/ops.num src/ops/ops.skip
-	$(PERL) $(BUILD_TOOLS_DIR)/ops2pm.pl @no_lines_flag@ $(OPS_FILES)
 
 ###############################################################################
 #
