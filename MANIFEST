@@ -875,7 +875,6 @@ ext/nqp-rx/LICENSE                                          []
 ext/nqp-rx/README                                           []doc
 ext/nqp-rx/Rules.mak                                        []
 ext/nqp-rx/STATUS                                           []
-ext/nqp-rx/src/gen/settings.pm                              []
 ext/nqp-rx/src/stage0/HLL-s0.pir                            []
 ext/nqp-rx/src/stage0/NQP-s0.pir                            []
 ext/nqp-rx/src/stage0/P6Regex-s0.pir                        []
