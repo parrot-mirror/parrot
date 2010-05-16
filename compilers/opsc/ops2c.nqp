@@ -77,8 +77,7 @@ else {
     $f := Ops::File.new(|@files, :core(0));
 }
 
-my @spf_args := list(pir::time__N() - $start_time);
-pir::sprintf(my $time, "%.3f", @spf_args);
+pir::sprintf(my $time, "%.3f", [pir::time__N() - $start_time] );
 say("# Ops parsed in $time seconds.");
 
 my $emitter := Ops::Emitter.new(

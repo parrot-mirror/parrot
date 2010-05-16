@@ -244,8 +244,7 @@ method read_ops($file, $nolines) {
     my $start_time := pir::time__N();
     my $buffer     := slurp($file);
     self.compile_ops($buffer);
-    my @spf_args := list(pir::time__N() - $start_time);
-    pir::sprintf(my $time, "%.3f", @spf_args);
+    pir::sprintf(my $time, "%.3f", [pir::time__N() - $start_time] );
     say("# Parsed $file in $time seconds.");
 }
 
