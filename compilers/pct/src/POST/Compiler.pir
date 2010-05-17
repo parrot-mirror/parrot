@@ -321,6 +321,15 @@ the sub.
     set_global '$?NAMESPACE', ns
     nskey = self.'key_pir'(ns)
 
+    .local pmc multi
+    $P0 = node.'multi'()
+    unless $P0 goto no_multi
+    $S0 = self.'key_pir'($P0)
+    pirflags = concat pirflags, ' :multi('
+    pirflags = concat pirflags, $S0
+    pirflags = concat pirflags, ')'
+  no_multi:
+
   subpir_start:
     $P0 = node['loadinit']
     if null $P0 goto loadinit_done
