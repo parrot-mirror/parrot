@@ -286,6 +286,18 @@ attribute.
     .tailcall self.'attr'('vivibase', value, has_value)
 .end
 
+=item multitype([type])
+
+Get/set MMD type of Var when used as parameter of Block.
+
+=cut
+
+.sub 'multitype' :method
+    .param pmc value           :optional
+    .param int has_value       :opt_flag
+    .tailcall self.'attr'('multitype', value, has_value)
+.end
+
 
 =back
 
