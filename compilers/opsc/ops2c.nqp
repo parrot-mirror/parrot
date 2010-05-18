@@ -13,13 +13,16 @@ my $getopts := Q:PIR{ %r = new ['Getopt';'Obj'] };
 $getopts.notOptStop();
 my $arg := $getopts.add();
 $arg.long('core');
+$arg.short('c');
 
 $arg := $getopts.add();
 $arg.long('dynamic');
+$arg.short('d');
 $arg.type('String');
 
 $arg := $getopts.add();
 $arg.long('no-lines');
+$arg.short('n');
 
 $arg := $getopts.add();
 $arg.long('help');
