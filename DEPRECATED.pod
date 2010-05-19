@@ -121,7 +121,7 @@ will not auto-vivify nested hashes and return PMCNULL early.
 
 L<https://trac.parrot.org/parrot/ticket/1561>
 
-=item Method lower on String [eligible in 3.1]
+=item Method lower on String [eligible in 2.7]
 
 Use the downcase opcode or subclass with a method name consistent with your
 HLL.
@@ -155,13 +155,6 @@ These opcodes are being repurposed. They will always return a unique memory
 address of the PMC. Uses of get_addr and set_addr that would set label values
 for Sub, Exception, and related PMC types will instead be handled by
 get_label and set_label.
-
-=item sizeof [eligible in 2.4]
-
-This opcode uses the old integer ID for a PMC type; this opcode should be changed
-to use the current methods to lookup a PMC or removed entirely.
-
-L<https://trac.parrot.org/parrot/ticket/633>
 
 =item All bitwise ops [eligible in 2.1]
 
@@ -228,6 +221,24 @@ Intended to replace the CodeString charname_to_ord method.
 
 L<https://trac.parrot.org/parrot/ticket/1629>
 
+=item All opcodes that modify non-argument registers. [eligible in 2.7]
+
+E.g. "cleari", etc.
+
+L<https://trac.parrot.org/parrot/ticket/1642>
+
+=item exchange [eligible in 2.7]
+
+This op is too low level for Parrot in its current form.
+
+L<https://trac.parrot.org/parrot/ticket/1643>
+
+=item unroll [experimental]
+
+Unroll inner runloops from exception handlers.
+
+L<https://trac.parrot.org/parrot/ticket/1635>
+
 =back
 
 =head1 Bytecode
@@ -268,17 +279,17 @@ L<https://trac.parrot.org/parrot/ticket/1091>
 
 L<https://trac.parrot.org/parrot/ticket/1103>
 
-=item :unique_reg flag [eligible in 3.1]
+=item :unique_reg flag [eligible in 2.7]
 
 L<https://trac.parrot.org/parrot/ticket/1622>
 
-=item .nci_call [eligible in 3.1]
+=item .nci_call [eligible in 2.7]
 
 As of the latest PCC changes, there is nothing special about calling an NCI sub.
 
 L<https://trac.parrot.org/parrot/ticket/1623>
 
-=item .meth_call [eligible in 3.1]
+=item .meth_call [eligible in 2.7]
 
 As of the latest PCC changes, this does nothing different from '.call'.
 
@@ -323,28 +334,6 @@ COW strings are to be removed. All "inplace" string modification
 functions and all "inplace" string ops are deprecated.
 
 L<https://trac.parrot.org/parrot/ticket/1540>
-
-=item Parrot_PMC_* in src/extend.c [eligible in 2.4]
-
-These are duplicates of functions in src/extend_vtable.c. Exceptions:
-
-  Parrot_PMC_new
-  Parrot_PMC_typenum
-  Parrot_PMC_null
-  Parrot_PMC_set_vtable
-  Parrot_PMC_newclass
-
-L<https://trac.parrot.org/parrot/ticket/1587>
-
-=item Parrot_VTABLE, Parrot_get_vtable, Parrot_PMC_set_vtable [eligible in 2.4]
-
-These do not expose any functionality that should be available to code outside
-of parrot core.
-
-These might get revived in some form to allow for creating new types and adding
-vtable-overrides, if that functionality becomes desired.
-
-L<https://trac.parrot.org/parrot/ticket/1588>
 
 =item Parrot_str_unescape_string [experimental]
 

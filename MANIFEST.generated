@@ -2,11 +2,12 @@
 # See tools/dev/install_files.pl for documentation on the
 # format of this file.
 # Please re-sort this file after *EVERY* modification
-blib/lib/libparrot.2.3.0.dylib                   [main]lib
+blib/lib/libparrot.2.4.0.dylib                   [main]lib
 blib/lib/libparrot.a                             [main]lib
 blib/lib/libparrot.dylib                         [main]lib
 blib/lib/libparrot.so.2.3.0                      [main]lib
 blib/lib/libparrot.so                            [main]lib
+blib/lib/libparrot.so.2.4.0                      [main]lib
 compilers/data_json/data_json.pbc                [data_json]
 config/gen/call_list/opengl.in                   []
 docs/ops/bit.pod                                 [doc]
@@ -127,14 +128,19 @@ include/pmc/pmc_unmanagedstruct.h                [devel]include
 installable_ops2c.exe                            [main]bin
 installable_ops2c                                [main]bin
 installable_parrot_config.exe                    [main]bin
+install_config.fpmc                              [main]lib
+installable_parrot                               [main]bin
+installable_parrot-nqp                           [main]bin
+installable_parrot-nqp.exe                       [main]bin
+installable_parrot-prove                         [main]bin
+installable_parrot-prove.exe                     [main]bin
+installable_parrot.exe                           [main]bin
 installable_parrot_config                        [main]bin
 installable_parrot_debugger.exe                  [main]bin
 installable_parrot_debugger                      [main]bin
 installable_parrot.exe                           [main]bin
 installable_parrot                               [main]bin
 installable_parrot_nci_thunk_gen                 [main]bin
-installable_parrot-nqp.exe                       [main]bin
-installable_parrot-nqp                           [main]bin
 installable_pbc_disassemble.exe                  [main]bin
 installable_pbc_disassemble                      [main]bin
 installable_pbc_dump.exe                         [main]bin
@@ -144,8 +150,6 @@ installable_pbc_merge                            [main]bin
 installable_pbc_to_exe.exe                       [main]bin
 installable_pbc_to_exe                           [main]bin
 installable_tapir.exe                            [main]bin
-installable_tapir                                [main]bin
-install_config.fpmc                              [main]lib
 lib/Parrot/Config/Generated.pm                   [devel]lib
 libparrot.dll                                    [main]bin
 libparrot.lib                                    [main]bin
