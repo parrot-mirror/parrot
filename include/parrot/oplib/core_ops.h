@@ -19,7 +19,7 @@
 #include "parrot/oplib.h"
 #include "parrot/runcore_api.h"
 
- op_lib_t *Parrot_DynOp_core_2_3_0(PARROT_INTERP, long init);
+ op_lib_t *Parrot_DynOp_core_2_4_0(PARROT_INTERP, long init);
 
  opcode_t * Parrot_end(opcode_t *, PARROT_INTERP);
  opcode_t * Parrot_noop(opcode_t *, PARROT_INTERP);
@@ -1193,8 +1193,6 @@
  opcode_t * Parrot_sleep_ic(opcode_t *, PARROT_INTERP);
  opcode_t * Parrot_sleep_n(opcode_t *, PARROT_INTERP);
  opcode_t * Parrot_sleep_nc(opcode_t *, PARROT_INTERP);
- opcode_t * Parrot_sizeof_i_i(opcode_t *, PARROT_INTERP);
- opcode_t * Parrot_sizeof_i_ic(opcode_t *, PARROT_INTERP);
  opcode_t * Parrot_store_lex_s_p(opcode_t *, PARROT_INTERP);
  opcode_t * Parrot_store_lex_sc_p(opcode_t *, PARROT_INTERP);
  opcode_t * Parrot_store_dynamic_lex_s_p(opcode_t *, PARROT_INTERP);
@@ -1319,6 +1317,8 @@
  opcode_t * Parrot_root_new_p_pc_ic(opcode_t *, PARROT_INTERP);
  opcode_t * Parrot_find_codepoint_i_s(opcode_t *, PARROT_INTERP);
  opcode_t * Parrot_find_codepoint_i_sc(opcode_t *, PARROT_INTERP);
+ opcode_t * Parrot_unroll_p(opcode_t *, PARROT_INTERP);
+ opcode_t * Parrot_unroll_pc(opcode_t *, PARROT_INTERP);
 
 
 #endif /* PARROT_OPLIB_CORE_OPS_H_GUARD */
