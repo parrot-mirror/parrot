@@ -1057,6 +1057,8 @@ the value is the OPS pathname
     .param string cflags
     .param string ldflags
     mkpath('dynext', 1 :named('verbose'))
+    .local pmc cores
+    cores = get_cores()
     .local string load_ext
     load_ext = get_load_ext()
     $P0 = iter hash
@@ -1065,10 +1067,18 @@ the value is the OPS pathname
     .local string ops, src
     ops = shift $P0
     src = hash[ops]
-    $S0 = _mk_path_dynops(ops, load_ext)
+    $P1 = iter cores
+  L3:
+    unless $P1 goto L4
+    .local string core, suffix
+    core = shift $P1
+    suffix = cores[core]
+    $S0 = _mk_path_dynops(ops, suffix, load_ext)
     $I0 = newer($S0, src)
-    if $I0 goto L1
-    __build_dynops(src, ops, cflags, ldflags)
+    if $I0 goto L3
+    __build_dynops(src, ops, core, suffix, cflags, ldflags)
+    goto L3
+  L4:
     goto L1
   L2:
 .end
@@ -1076,24 +1086,31 @@ the value is the OPS pathname
 .sub '__build_dynops' :anon
     .param string src
     .param string ops
+    .param string core
+    .param string suffix
     .param string cflags
     .param string ldflags
     .local pmc config
     config = get_config()
     .local string cmd
-    cmd = get_executable('ops2c')
+    cmd = config['perl']
+    cmd .= " "
+    $S0 = get_tool('build/ops2c.pl')
+    cmd .= $S0
+    cmd .= " "
+    cmd .= core
     cmd .= " --dynamic "
     cmd .= src
     system(cmd, 1 :named('verbose'))
 
     $S0 = config['o']
-    $S1 = _mk_path_gen_dynops(src, ops, $S0)
-    $S2 = _mk_path_gen_dynops(src, ops, '.c')
+    $S1 = _mk_path_gen_dynops(src, ops, suffix, $S0)
+    $S2 = _mk_path_gen_dynops(src, ops, suffix, '.c')
     __compile_cc($S1, $S2, cflags)
 
     .local string dynext
     $S0 = config['load_ext']
-    dynext = _mk_path_dynops(ops, $S0)
+    dynext = _mk_path_dynops(ops, suffix, $S0)
     cmd = config['ld']
     cmd .= " "
     $S0 = config['ld_out']
@@ -1101,7 +1118,7 @@ the value is the OPS pathname
     cmd .= dynext
     cmd .= " "
     $S0 = config['o']
-    $S0 = _mk_path_gen_dynops(src, ops, $S0)
+    $S0 = _mk_path_gen_dynops(src, ops, suffix, $S0)
     cmd .= $S0
     cmd .= " "
     $S0 = get_ldflags()
@@ -1159,8 +1176,10 @@ the value is the OPS pathname
 
 .sub '_mk_path_dynops' :anon
     .param string ops
+    .param string suffix
     .param string load_ext
     $S0 = "dynext/" . ops
+    $S0 .= suffix
     $S0 .= load_ext
     .return ($S0)
 .end
@@ -1168,12 +1187,20 @@ the value is the OPS pathname
 .sub '_mk_path_gen_dynops' :anon
     .param string src
     .param string ops
+    .param string suffix
     .param string ext
     $S0 = dirname(src)
     $S0 .= "/"
     $S0 .= ops
+    $S0 .= suffix
     $S0 .= ext
     .return ($S0)
+.end
+
+.sub 'get_cores'
+    $P0 = new 'Hash'
+    $P0['C'] = ''
+    .return ($P0)
 .end
 
 =item dynpmc
@@ -1684,6 +1711,8 @@ the value is the POD pathname
 
 .sub 'clean_dynops'
     .param pmc hash
+    .local pmc cores
+    cores = get_cores()
     .local string load_ext, obj
     load_ext = get_load_ext()
     obj = get_obj()
@@ -1693,14 +1722,22 @@ the value is the POD pathname
     .local string ops, src
     ops = shift $P0
     src = hash[ops]
-    $S0 = _mk_path_dynops(ops, load_ext)
+    $P1 = iter cores
+  L3:
+    unless $P1 goto L4
+    .local string core, suffix
+    core = shift $P1
+    suffix = cores[core]
+    $S0 = _mk_path_dynops(ops, suffix, load_ext)
     unlink($S0, 1 :named('verbose'))
-    $S0 = _mk_path_gen_dynops(src, ops, '.c')
+    $S0 = _mk_path_gen_dynops(src, ops, suffix, '.c')
     unlink($S0, 1 :named('verbose'))
-    $S0 = _mk_path_gen_dynops(src, ops, '.h')
+    $S0 = _mk_path_gen_dynops(src, ops, suffix, '.h')
     unlink($S0, 1 :named('verbose'))
-    $S0 = _mk_path_gen_dynops(src, ops, obj)
+    $S0 = _mk_path_gen_dynops(src, ops, suffix, obj)
     unlink($S0, 1 :named('verbose'))
+    goto L3
+  L4:
     goto L1
   L2:
 .end
@@ -2369,17 +2406,26 @@ array of pathname or a single pathname
 .sub 'get_install_dynops' :anon
     .param pmc files
     .param pmc hash
-    .local string libdir, load_ext, ops
+    .local string libdir, load_ext, ops, suffix
     libdir = get_libdir()
     load_ext = get_load_ext()
+    .local pmc cores
+    cores = get_cores()
     $P0 = iter hash
   L1:
     unless $P0 goto L2
     ops = shift $P0
-    $S1 = _mk_path_dynops(ops, load_ext)
+    $P1 = iter cores
+  L3:
+    unless $P1 goto L4
+    $S0 = shift $P1
+    suffix = cores[$S0]
+    $S1 = _mk_path_dynops(ops, suffix, load_ext)
     $S2 = libdir . "/"
     $S2 .= $S1
     files[$S2] = $S1
+    goto L3
+  L4:
     goto L1
   L2:
 .end

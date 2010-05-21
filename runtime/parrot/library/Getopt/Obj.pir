@@ -572,6 +572,7 @@ When a required argument is missing, throws an exception with the message
     .param string arg
 
     $P0 = new 'Exception'
+    $S0 = "Missing a required argument for option '"
     $S0 = $S0 . arg
     $S0 = $S0 . "'"
     $P0 = $S0
