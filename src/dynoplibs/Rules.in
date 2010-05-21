@@ -45,5 +45,5 @@ src/dynoplibs/deprecated_ops$(O): $(DYNOP_O_DEPS) \
 
 src/dynoplibs/deprecated_ops.h: src/dynoplibs/deprecated_ops.c
 
-src/dynoplibs/deprecated_ops.c: src/dynoplibs/deprecated.ops $(BUILD_TOOLS_DIR)/ops2c.pl
-	$(PERL) $(BUILD_TOOLS_DIR)/ops2c.pl C --dynamic src/dynoplibs/deprecated.ops
+src/dynoplibs/deprecated_ops.c: src/dynoplibs/deprecated.ops $(OPS2C)
+	$(OPS2C) --dynamic src/dynoplibs/deprecated.ops
