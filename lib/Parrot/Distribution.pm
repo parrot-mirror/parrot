@@ -431,6 +431,7 @@ This is to exclude automatically generated C-language files Parrot might have.
             include/parrot/config.h
             include/parrot/has_header.h
             include/parrot/oplib/core_ops.h
+            include/parrot/oplib/ops.h
             src/gc/malloc.c
             src/ops/core_ops.c
             } unless @exemptions;
