@@ -62,6 +62,23 @@ see http://search.cpan.org/~gaas/libwww-perl/
     $P0 = subclass 'Hash', ['HTTP';'Headers']
 .end
 
+.sub 'get_string' :vtable :method
+    $P0 = iter self
+    $P1 = new 'StringBuilder'
+  L1:
+    unless $P0 goto L2
+    $S0 = shift $P0
+    push $P1, $S0
+    push $P1, ": "
+    $S0 = self[$S0]
+    push $P1, $S0
+    push $P1, "\r\n"
+    goto L1
+  L2:
+    $S0 = $P1
+    .return ($S0)
+.end
+
 =head3 Class HTTP;Message
 
 =over 4
@@ -74,13 +91,21 @@ see http://search.cpan.org/~gaas/libwww-perl/
     $P0 = newclass ['HTTP';'Message']
     $P0.'add_attribute'('headers')
     $P0.'add_attribute'('content')
+    $P0.'add_attribute'('protocol')
 .end
 
 .sub 'init' :vtable :method
     $P0 = new ['HTTP';'Headers']
     setattribute self, 'headers', $P0
-    $P0 = box ''
-    setattribute self, 'content', $P0
+.end
+
+=item protocol
+
+=cut
+
+.sub 'protocol' :method
+    $P0 = getattribute self, 'protocol'
+    .return ($P0)
 .end
 
 =item headers
@@ -114,6 +139,16 @@ see http://search.cpan.org/~gaas/libwww-perl/
     .return ($S0)
 .end
 
+=item remove_header
+
+=cut
+
+.sub 'remove_header' :method
+    .param string key
+    $P0 = getattribute self, 'headers'
+    delete $P0[key]
+.end
+
 =item content
 
 =cut
@@ -133,11 +168,14 @@ see http://search.cpan.org/~gaas/libwww-perl/
 
 .namespace ['HTTP';'Request']
 
+.include 'cclass.pasm'
+
 .sub '' :init :load :anon
     load_bytecode 'URI.pir'
     $P0 = subclass ['HTTP';'Message'], ['HTTP';'Request']
     $P0.'add_attribute'('method')
     $P0.'add_attribute'('uri')
+    $P0.'add_attribute'('proxy')
 .end
 
 =item method
@@ -155,6 +193,17 @@ see http://search.cpan.org/~gaas/libwww-perl/
 
 .sub 'uri' :method
     $P0 = getattribute self, 'uri'
+    .return ($P0)
+.end
+
+.sub 'proxy' :method
+    .param pmc val              :optional
+    .param int has_val          :opt_flag
+    unless has_val goto L1
+    setattribute self, 'proxy', val
+    .return ()
+  L1:
+    $P0 = getattribute self, 'proxy'
     .return ($P0)
 .end
 
@@ -203,9 +252,56 @@ see http://search.cpan.org/~gaas/libwww-perl/
 =cut
 
 .sub 'POST'
-    .param pmc args :slurpy
-    .param pmc kv :slurpy :named
-    .tailcall _simple_req('POST', args :flat, kv :flat :named)
+    .param string url
+    .param pmc contents :slurpy
+    .param pmc headers :slurpy :named
+    .local pmc req
+    req = new ['HTTP';'Request']
+    $P0 = box 'POST'
+    setattribute req, 'method', $P0
+    $P0 = get_hll_global ['URI'], 'new_from_string'
+    $P0 = $P0(url)
+    setattribute req, 'uri', $P0
+    $P0 = iter headers
+  L1:
+    unless $P0 goto L2
+    $S0 = shift $P0
+    $S1 = headers[$S0]
+    req.'push_header'($S0, $S1)
+    goto L1
+  L2:
+    .local string ct
+    ct = req.'get_header'('Content-Type')
+    unless ct == '' goto L3
+    ct = 'application/x-www-form-urlencoded'
+    goto L4
+  L3:
+    unless ct == 'form-data' goto L4
+    ct = 'multipart/form-data'
+  L4:
+
+    $I0 = index ct, 'multipart/form-data'
+    if $I0 < 0 goto L5
+    .local string content, boundary
+    (content, boundary) = form_data(contents, req)
+    ct .= '; boundary='
+    ct .= boundary
+    goto L11
+  L5:
+
+    # work in progress
+
+  L11:
+
+    req.'push_header'('Content-Type', ct)
+    $I0 = 0
+    if content == '' goto L12
+    $P0 = box content
+    setattribute req, 'content', $P0
+    $I0 = length content
+  L12:
+    req.'push_header'('Content-Length', $I0)
+    .return (req)
 .end
 
 .sub '_simple_req'
@@ -218,33 +314,185 @@ see http://search.cpan.org/~gaas/libwww-perl/
     $P0 = box method
     setattribute req, 'method', $P0
     $P0 = get_hll_global ['URI'], 'new_from_string'
-    $P1 = $P0(url)
-    setattribute req, 'uri', $P1
+    $P0 = $P0(url)
+    setattribute req, 'uri', $P0
     $P0 = iter headers
   L1:
     unless $P0 goto L2
     $S0 = shift $P0
     $S1 = headers[$S0]
-    req.'push_headers'($S0, $S1)
+    req.'push_header'($S0, $S1)
     goto L1
   L2:
     $P0 = iter contents
+    $P1 = new 'StringBuilder'
     unless $P0 goto L3
-    .local pmc content
-    content = getattribute req, 'content'
   L4:
     unless $P0 goto L5
     $S0 = shift $P0
-    content .= $S0
+    push $P1, $S0
     goto L4
   L5:
+    .local string content
+    content = $P1
+    $P0 = box content
+    setattribute req, 'content', $P0
     $S0 = req.'get_header'('Content-Length')
     unless $S0 == '' goto L3
-    $S0 = content
-    $I0 = length $S0
+    $I0 = length content
     req.'push_header'('Content-Length', $I0)
   L3:
     .return (req)
+.end
+
+.sub 'form_data'
+    .param pmc contents
+    .param pmc req
+    .const string CRLF = "\r\n"
+    .local pmc parts
+    parts = new 'ResizableStringArray'
+    $P0 = iter contents
+  L1:
+    unless $P0 goto L2
+    .local pmc k
+    k = shift $P0
+    unless $P0 goto L2
+    .local pmc v
+    v = shift $P0
+    $I0 = does v, 'array'
+    if $I0 goto L3
+    $P1 = new 'StringBuilder'
+    push $P1, 'Content-Disposition: form-data; name="'
+    push $P1, k
+    push $P1, '"'
+    push $P1, CRLF
+    push $P1, CRLF
+    push $P1, v
+    $S0 = $P1
+    push parts, $S0
+    goto L1
+  L3:
+    $P1 = iter v
+    .local string file
+    file = shift $P1
+    .local string usename
+    usename = file
+    unless $P1 goto L4
+    $S0 = shift $P1
+    if $S0 == '' goto L4
+    usename = $S0
+  L4:
+    .local string disp
+    $P2 = new 'StringBuilder'
+    push $P2, 'form-data; name="'
+    push $P2, k
+    push $P2, '"'
+    if usename == '' goto L5
+    push $P2, '; filename="'
+    push $P2, usename
+    push $P2, '"'
+  L5:
+    disp = $P2
+    .local pmc h
+    h = new ['HTTP';'Headers']
+  L6:
+    unless $P1 goto L7
+    $S1 = shift $P1
+    unless $P1 goto L7
+    $S2 = shift $P1
+    h[$S1] = $S2
+    goto L6
+  L7:
+    .local string content
+    content = ''
+    if file == '' goto L8
+    load_bytecode 'osutils.pbc'
+    content = slurp(file)
+    $I0 = exists h['Content-Type']
+    if $I0 goto L8
+    h['Content-Type'] = 'application/octet-stream'
+  L8:
+    $I0 = exists h['Content-Disposition']
+    unless $I0 goto L9
+    disp = h['Content-Disposition']
+    delete h['Content-Disposition']
+  L9:
+    $I0 = exists h['Content']
+    unless $I0 goto L10
+    content = h['Content']
+    delete h['Content']
+  L10:
+    $P1 = new 'StringBuilder'
+    push $P1, 'Content-Disposition: '
+    push $P1, disp
+    push $P1, CRLF
+    push $P1, h
+    push $P1, CRLF
+    push $P1, content
+    $S0 = $P1
+    push parts, $S0
+    goto L1
+  L2:
+
+    .local string _boundary
+    _boundary = boundary(10)
+    $P0 = iter parts
+    $P1 = new 'StringBuilder'
+  L21:
+    unless $P0 goto L22
+    $S0 = shift $P0
+    push $P1, '--'
+    push $P1, _boundary
+    push $P1, CRLF
+    push $P1, $S0
+    push $P1, CRLF
+    goto L21
+  L22:
+    push $P1, '--'
+    push $P1, _boundary
+    push $P1, '--'
+    push $P1, CRLF
+    $S0 = $P1
+    .return ($S0, _boundary)
+.end
+
+.sub 'boundary'
+    .param int size
+    load_bytecode 'MIME/Base64.pbc'
+    load_bytecode 'Math/Rand.pbc'
+    .local pmc srand
+    srand = get_hll_global ['Math';'Rand'], 'srand'
+    time $I0
+    srand($I0)
+    .local pmc rand
+    rand = get_hll_global ['Math';'Rand'], 'rand'
+    $P0 = new 'StringBuilder'
+    $I0 = size * 3
+  L1:
+    unless $I0 goto L2
+    dec $I0
+    $I1 = rand()
+    $I1 %= 256
+    $S0 = chr $I1
+    push $P0, $S0
+    goto L1
+  L2:
+    $S0 = $P0
+    .local pmc encode
+    encode = get_hll_global ['MIME';'Base64'], 'encode_base64'
+    $S0 = encode($S0)
+    $I1 = length $S0
+    $I0 = 0
+  L3:
+    unless $I0 < $I1 goto L4
+    $I2 = is_cclass .CCLASS_ALPHANUMERIC , $S0, $I0
+    if $I2 goto L5
+    $S0 = replace $S0, $I0, 1, 'X'
+  L5:
+    inc $I0
+    goto L3
+  L4:
+    .return ($S0)
 .end
 
 =back
@@ -261,6 +509,7 @@ see http://search.cpan.org/~gaas/libwww-perl/
     $P0 = subclass ['HTTP';'Message'], ['HTTP';'Response']
     $P0.'add_attribute'('code')
     $P0.'add_attribute'('message')
+    $P0.'add_attribute'('previous')
     $P0.'add_attribute'('request')
 .end
 
@@ -280,6 +529,15 @@ see http://search.cpan.org/~gaas/libwww-perl/
 .sub 'message' :method
     $P0 = getattribute self, 'message'
     .return ($P0)
+.end
+
+=item previous
+
+=cut
+
+.sub 'previous' :method
+    .param pmc prev
+    setattribute self, 'previous', prev
 .end
 
 =item request
@@ -305,6 +563,23 @@ see http://search.cpan.org/~gaas/libwww-perl/
     $S0 .= $S1
   L1:
     .return ($S0)
+.end
+
+=item redirects
+
+=cut
+
+.sub 'redirect' :method
+    $P0 = new 'ResizablePMCArray'
+    $P1 = self
+  L1:
+    $P2 = getattribute $P1, 'previous'
+    if null $P2 goto L2
+    unshift $P0, $P2
+    $P1 = $P2
+    goto L1
+  L2:
+    .return ($P0)
 .end
 
 =item is_info
@@ -375,7 +650,7 @@ see http://search.cpan.org/~gaas/libwww-perl/
 
 =head1 AUTHOR
 
-Franc§ois Perrad
+Francois Perrad
 
 =cut
 

@@ -185,8 +185,6 @@ L<http://gitorious.org/kakapo/kakapo/blobs/master/setup.nqp>
     register_step_after('build', _build_pir_pge)
     .const 'Sub' _build_pir_tge = '_build_pir_tge'
     register_step_after('build', _build_pir_tge)
-    .const 'Sub' _build_pir_nqp = '_build_pir_nqp'
-    register_step_after('build', _build_pir_nqp)
     .const 'Sub' _build_pir_nqp_rx = '_build_pir_nqp_rx'
     register_step_after('build', _build_pir_nqp_rx)
     .const 'Sub' _build_inc_pir = '_build_inc_pir'
@@ -214,8 +212,6 @@ L<http://gitorious.org/kakapo/kakapo/blobs/master/setup.nqp>
     register_step_after('clean', _clean_pir_pge)
     .const 'Sub' _clean_pir_tge = '_clean_pir_tge'
     register_step_after('clean', _clean_pir_tge)
-    .const 'Sub' _clean_pir_nqp = '_clean_pir_nqp'
-    register_step_after('clean', _clean_pir_nqp)
     .const 'Sub' _clean_pir_nqp_rx = '_clean_pir_nqp_rx'
     register_step_after('clean', _clean_pir_nqp_rx)
     .const 'Sub' _clean_inc_pir = '_clean_inc_pir'
@@ -679,61 +675,7 @@ the value is the TGE pathname
     .tailcall run_jobs(jobs)
 .end
 
-=item pir_nqp
-
-hash
-
-the key is the PIR pathname
-
-the value is the NQP pathname
-
-=item pir_nqp_flags
-
-=cut
-
-.sub '_build_pir_nqp' :anon
-    .param pmc kv :slurpy :named
-    $I0 = exists kv['pir_nqp']
-    unless $I0 goto L1
-    $P0 = kv['pir_nqp']
-    $S0 = get_value('pir_nqp_flags', '' :named('default'), kv :flat :named)
-    build_pir_nqp($P0, $S0)
-  L1:
-.end
-
-.sub 'build_pir_nqp'
-    .param pmc hash
-    .param string flags
-    .local pmc jobs
-    jobs = new 'ResizableStringArray'
-    $P0 = iter hash
-  L1:
-    unless $P0 goto L2
-    .local string pir, nqp
-    pir = shift $P0
-    nqp = hash[pir]
-    $I0 = newer(pir, nqp)
-    if $I0 goto L1
-    $S0 = dirname(pir)
-    mkpath($S0, 1 :named('verbose'))
-    .local string cmd
-    cmd = get_parrot()
-    cmd .= " "
-    $S0 = get_compiler('nqp/nqp.pbc')
-    cmd .= $S0
-    cmd .= " --target=pir --output="
-    cmd .= pir
-    cmd .= " "
-    cmd .= flags
-    cmd .= " "
-    cmd .= nqp
-    push jobs, cmd
-    goto L1
-  L2:
-    .tailcall run_jobs(jobs)
-.end
-
-=item pir_nqp-rx / pir_nqprx
+=item pir_nqp-rx / pir_nqprx / pir_nqp
 
 hash
 
@@ -759,6 +701,12 @@ the value is the NQP pathname
     $S0 = get_value('pir_nqp_flags', '' :named('default'), kv :flat :named)
     build_pir_nqp_rx($P0, $S0)
   L2:
+    $I0 = exists kv['pir_nqp']
+    unless $I0 goto L3
+    $P0 = kv['pir_nqp']
+    $S0 = get_value('pir_nqp_flags', '' :named('default'), kv :flat :named)
+    build_pir_nqp_rx($P0, $S0)
+  L3:
 .end
 
 .sub 'build_pir_nqp_rx'
@@ -1619,20 +1567,7 @@ the value is the POD pathname
   L1:
 .end
 
-=item pir_nqp
-
-=cut
-
-.sub '_clean_pir_nqp' :anon
-    .param pmc kv :slurpy :named
-    $I0 = exists kv['pir_nqp']
-    unless $I0 goto L1
-    $P0 = kv['pir_nqp']
-    clean_key($P0)
-  L1:
-.end
-
-=item pir_nqp-rx / pir_nqprx
+=item pir_nqp-rx / pir_nqprx / pir_nqp
 
 =cut
 
@@ -1648,6 +1583,11 @@ the value is the POD pathname
     $P0 = kv['pir_nqprx']
     clean_key($P0)
   L2:
+    $I0 = exists kv['pir_nqp']
+    unless $I0 goto L3
+    $P0 = kv['pir_nqp']
+    clean_key($P0)
+  L3:
 .end
 
 =item pbc_pbc
@@ -2133,6 +2073,8 @@ a hash
     harness.'extra_props'($P0)
   L7:
     aggregate = harness.'runtests'(files)
+    print "creat "
+    say archive
 
     smolder_post(archive, kv :flat :named)
 .end
@@ -2182,7 +2124,13 @@ a hash
     $I0 = response.'code'()
     unless $I0 == 302 goto L1
     $S0 = response.'content'()
-    say $S0
+    $I0 = index $S0, 'Report'
+    unless $I0 == 0 goto L4
+    $I0 = index $S0, "\n"
+    if $I0 < 0 goto L4
+    $S0 = substr $S0, 0, $I0
+  L4:
+    print $S0
   L1:
 .end
 
@@ -3004,6 +2952,8 @@ On Windows calls sdist_zip, otherwise sdist_gztar
     $P0.'open'(archive_file, 'wb')
     archive.'write'($P0)
     $P0.'close'()
+    print "creat "
+    say archive_file
   L1:
 .end
 
@@ -3059,6 +3009,8 @@ On Windows calls sdist_zip, otherwise sdist_gztar
     goto L2
   L3:
     archive.'writeToFileNamed'(archive_file)
+    print "creat "
+    say archive_file
   L1:
 .end
 
