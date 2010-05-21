@@ -35,19 +35,19 @@ method body($/) {
 
     for $<op> {
         my $ops := $_.ast;
-        my $skiptable;
-        my $optable;
+        my $op_skip_table;
+        my $op_num_table;
         if $OPLIB {
-            $skiptable := $OPLIB.skiptable;
-            $optable   := $OPLIB.optable;
+            $op_skip_table := $OPLIB.op_skip_table;
+            $op_num_table  := $OPLIB.op_num_table;
         }
         for @($ops) -> $op {
             my $full_name := $op.full_name;
-            if $OPLIB && !$skiptable.exists($full_name) {
+            if $OPLIB && !$op_skip_table.exists($full_name) {
 
                 #ops listed in ops.num are non-experimental
-                if $optable.exists($full_name) {
-                    $op<code> := $optable{$full_name};
+                if $op_num_table.exists($full_name) {
+                    $op<code> := $op_num_table{$full_name};
                     $op<experimental> := 0;
                 }
                 #ops not explicitly listed but not skipped are experimental

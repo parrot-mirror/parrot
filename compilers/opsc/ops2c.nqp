@@ -68,6 +68,7 @@ if ($opts<no-lines>) {
 my $trans := Ops::Trans::C.new();
 my $start_time := pir::time__N();
 my $f;
+my $renum;
 
 if $core {
     my $lib := Ops::OpLib.new(
@@ -75,13 +76,18 @@ if $core {
         :skip_file('src/ops/ops.skip'),
     );
     $f := Ops::File.new(|@files, :oplib($lib), :core(1));
+    $renum := Ops::Renumberer.new( :ops_file($f) );
+
+    if $renum.needs_renumbering {
+        say("renumbering ops.num...");
+    }
 }
 else {
     $f := Ops::File.new(|@files, :core(0));
 }
 
 pir::sprintf(my $time, "%.3f", [pir::time__N() - $start_time] );
-say("# Ops parsed in $time seconds.");
+#say("# Ops parsed in $time seconds.");
 
 my $emitter := Ops::Emitter.new(
     :ops_file($f), :trans($trans),

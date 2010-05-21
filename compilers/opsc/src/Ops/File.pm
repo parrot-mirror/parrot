@@ -189,6 +189,7 @@ method new(*@files, :$oplib, :$core!, :$nolines) {
     self<ops>     := list(); # Ops
     self<preamble>:= '';
     self<compiler>:= pir::compreg__Ps('Ops');
+    self<op_order>:= 0;
 
     if $core {
         self<oplib>   := $oplib;
@@ -257,6 +258,8 @@ method compile_ops($str) {
             say("# Experimental op " ~ $_.full_name ~ " is not in ops.num.");
         }
         self<ops>.push($_);
+        #say($_.full_name ~ " is number " ~ self<op_order>);
+        self<op_order>++;
     }
 
     for @( $past<preamble> ) {
@@ -271,11 +274,9 @@ method get_parse_tree($str) {
 }
 
 method preamble() { self<preamble> };
-method ops() { self<ops> };
-
-method version() {
-    self<version>;
-}
+method ops()      { self<ops> };
+method oplib()    { self<oplib> };
+method version()  { self<version>; }
 
 method version_major() { self<version_major> }
 method version_minor() { self<version_minor> }

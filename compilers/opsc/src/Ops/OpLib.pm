@@ -42,12 +42,12 @@ Scalar holding number of highest non-experimental op.  Example:
 
     'max_op_num' => 1246,
 
-=item * C<%.optable>
+=item * C<%.op_num_table>
 
 Hash holding mapping of opcode names ops to their numbers.
 Example:
 
-  'optable' => {
+  'op_num_table' => {
     'pow_p_p_i' => 650,
     'say_s' => 463,
     'lsr_p_p_i' => 207,
@@ -62,11 +62,11 @@ Per F<src/ops/ops.num>, this mapping exists so that we can nail down
 the op numbers for the core opcodes in a particular version of the
 bytecode and provide backward-compatibility for bytecode.
 
-=item * C<%.skiptable>
+=item * C<%.op_skip_table>
 
 Reference to a 'seen-hash' of skipped opcodes.
 
-  'skiptable' => {
+  'op_skip_table' => {
     'bor_i_ic_ic' => 1,
     'xor_i_ic_ic' => 1,
     'tanh_n_nc' => 1,
@@ -99,8 +99,8 @@ method new(:$num_file, :$skip_file) {
 
     # Initialize self.
     self<max_op_num> := 0;
-    self<optable>    := hash();
-    self<skiptable>  := hash();
+    self<op_num_table>    := hash();
+    self<op_skip_table>  := hash();
     self<ops_past>   := list();
 
     self.load_op_map_files();
@@ -148,19 +148,20 @@ my method _load_num_file() {
             if ($prev + 1 != $number) {
                 die("hole in ops.num before #$number");
             }
-            if self<optable>.exists($name) {
+            if self<op_num_table>.exists($name) {
                 die("duplicate opcode $name and $number");
             }
 
             $prev := $number;
-            self<optable>{$name} := $number;
+            self<op_num_table>{$name} := $number;
+            #say("$name maps to $number");
             if ( $number > self<max_op_num> ) {
                 self<max_op_num> := $number;
             }
         }
     }
 
-    #_dumper(self<optable>);
+    #_dumper(self<op_num_table>);
 }
 
 method _load_skip_file() {
@@ -180,10 +181,10 @@ method _load_skip_file() {
     my $lines := SKIP.parse($buf);
 
     for $lines<op> {
-        if self<optable>.exists($_<name>) {
+        if self<op_num_table>.exists($_<name>) {
             die("skipped opcode '$_' is also in num_file");
         }
-        self<skiptable>{$_<name>} := 1;
+        self<op_skip_table>{$_<name>} := 1;
     }
 }
 
@@ -196,18 +197,21 @@ Various methods for accessing internals.
 
 =item * C<max_op_num>
 
-=item * C<optable>
+=item * C<op_num_table>
 
-=item * C<skiptable>
+=item * C<op_skip_table>
+
+=item * C<num_file>
 
 =end ACCESSORS
 
-method max_op_num() { self<max_op_num>; }
+method max_op_num()    { self<max_op_num>; }
 
-method optable()    { self<optable>; }
+method op_num_table()  { self<op_num_table>; }
 
-method skiptable()  { self<skiptable>; }
+method op_skip_table() { self<op_skip_table>; }
 
+method num_file()      { self<num_file>; }
 
 # Local Variables:
 #   mode: perl6
