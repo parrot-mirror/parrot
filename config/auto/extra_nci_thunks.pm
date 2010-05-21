@@ -22,7 +22,7 @@ use base 'Parrot::Configure::Step';
 sub _init {
     my $self = shift;
     return {
-	description => 'Determine whether to build extra NCI thunks',
+        description => 'Determine whether to build extra NCI thunks',
     };
 }
 
@@ -31,14 +31,14 @@ sub runstep {
     my $without = $conf->options->get( 'without-extra-nci-thunks' );
 
     if ($without) {
-	$conf->data->set( has_extra_nci_thunks => 0 );
-	$conf->data->set( HAS_EXTRA_NCI_THUNKS => 0 );
-	$self->set_result( 'no' );
+        $conf->data->set( has_extra_nci_thunks => 0 );
+        $conf->data->set( HAS_EXTRA_NCI_THUNKS => 0 );
+        $self->set_result( 'no' );
     }
     else {
-	$conf->data->set( has_extra_nci_thunks => 1 );
-	$conf->data->set( HAS_EXTRA_NCI_THUNKS => 1 );
-	$self->set_result( 'yes' );
+        $conf->data->set( has_extra_nci_thunks => 1 );
+        $conf->data->set( HAS_EXTRA_NCI_THUNKS => 1 );
+        $self->set_result( 'yes' );
     }
 
     return 1;
