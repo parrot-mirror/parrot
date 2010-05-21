@@ -22,7 +22,8 @@ my @ops := $f.ops;
 say( "# Parsed " ~ +@ops);
 # There is more than 300 ops in this 2 files.
 # Feel free to update number if you change them.
-ok(+@ops == 314, "Ops parsed correctly");
+ok(+@ops == 306, "Ops parsed correctly");
+say('# ' ~ +@ops);
 
 my $op := @ops[0];
 #_dumper($op);
@@ -31,7 +32,8 @@ ok($op.name eq 'end',   "First op is end");
 ok($op<code> == 0,      "... with code 0");
 
 $op := @ops[(+@ops)-1];
-ok($op.name eq 'fact',  "Last op is fact");
+ok($op.name eq 'tanh',  "Last op is tanh");
+say('# ' ~ $op.name);
 ok($op<code> > 84 + 116,    "... with non zero code");
 
 my $version := join(' ', |$f.version);
