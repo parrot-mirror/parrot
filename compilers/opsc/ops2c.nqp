@@ -21,6 +21,10 @@ $arg.short('d');
 $arg.type('String');
 
 $arg := $getopts.add();
+$arg.long('debug');
+$arg.short('g');
+
+$arg := $getopts.add();
 $arg.long('no-lines');
 $arg.short('n');
 
@@ -67,6 +71,7 @@ if ($opts<no-lines>) {
 
 my $trans := Ops::Trans::C.new();
 my $start_time := pir::time__N();
+my $debug :=  ?$opts<debug>;
 my $f;
 my $renum;
 
@@ -95,7 +100,9 @@ my $emitter := Ops::Emitter.new(
     :flags( hash( core => $core ) ),
 );
 
-$emitter.print_c_header_files();
-$emitter.print_c_source_file();
+unless $debug {
+    $emitter.print_c_header_files();
+    $emitter.print_c_source_file();
+}
 
 # vim: expandtab shiftwidth=4 ft=perl6:
