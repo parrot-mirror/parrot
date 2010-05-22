@@ -18,7 +18,7 @@ ok( $lib.max_op_num > 1000, "ops.num file parsed");
 say('# ' ~ $lib.max_op_num);
 
 # Check couple random ops.
-ok( $lib.op_num_table<end> == 0, "'end' have code 0");
+ok( $lib.op_num_table<end> == 0, "'end' has code 0");
 ok( $lib.op_num_table<set_addr_p_i> != 42, "'set_addr_p_i' have non 0 code");
 
 ok( $lib.op_skip_table<abs_i_ic>,       "'abs_i_ic' in skiptable");

@@ -98,10 +98,11 @@ method new(:$num_file, :$skip_file) {
     self<skip_file>  := $skip_file // './src/ops/ops.skip';
 
     # Initialize self.
-    self<max_op_num> := 0;
-    self<op_num_table>    := hash();
-    self<op_skip_table>  := hash();
-    self<ops_past>   := list();
+    self<max_op_num>    := 0;
+    self<op_num_table>  := hash();
+    self<op_skip_table> := hash();
+    self<num_file_lines>:= list();
+    self<ops_past>      := list();
 
     self.load_op_map_files();
 
@@ -125,38 +126,44 @@ my method _load_num_file() {
     # slurp isn't very efficient. But extending NQP beyond bare minimum is not in scope.
     my $buf := slurp(self<num_file>);
     grammar NUM {
-        rule TOP { <op>+ }
+        rule TOP { <line>+ }
 
-        rule op { $<name>=(\w+) $<number>=(\d+) }
-        token ws {
+        rule line { 
             [
-            | \s+
-            | '#' \N*
-            ]*
+            | <op>
+            | <dynamic>
+            | <comment>
+            ]
         }
+        rule op { $<name>=(\w+) $<number>=(\d+) }
+        rule dynamic { '###DYNAMIC###' \N* }
+        rule comment { '#' \N* }
     }
 
     #say("Parsing NUM");
     my $ops := NUM.parse($buf);
     #_dumper($ops);
+    #pir::exit(0);
 
     my $prev := -1;
-    for $ops<op> {
-        my $name    := ~$_<name>;
-        my $number  := +$_<number>;
-        if (+$number) eq $number {
-            if ($prev + 1 != $number) {
-                die("hole in ops.num before #$number");
-            }
-            if self<op_num_table>.exists($name) {
-                die("duplicate opcode $name and $number");
-            }
+    for $ops<line> {
+        self<num_file_lines>.push($_);
+        if $_<op> {
+            my $name    := ~$_<op><name>;
+            my $number  := +$_<op><number>;
+            if (+$number) eq $number {
+                if ($prev + 1 != $number) {
+                    die("hole in ops.num before #$number");
+                }
+                if self<op_num_table>.exists($name) {
+                    die("duplicate opcode $name and $number");
+                }
 
-            $prev := $number;
-            self<op_num_table>{$name} := $number;
-            #say("$name maps to $number");
-            if ( $number > self<max_op_num> ) {
-                self<max_op_num> := $number;
+                $prev := $number;
+                self<op_num_table>{$name} := $number;
+                if ( $number > self<max_op_num> ) {
+                    self<max_op_num> := $number;
+                }
             }
         }
     }
@@ -203,15 +210,19 @@ Various methods for accessing internals.
 
 =item * C<num_file>
 
+=item * C<num_file_lines>
+
 =end ACCESSORS
 
-method max_op_num()    { self<max_op_num>; }
+method max_op_num()     { self<max_op_num>; }
 
-method op_num_table()  { self<op_num_table>; }
+method op_num_table()   { self<op_num_table>; }
 
-method op_skip_table() { self<op_skip_table>; }
+method op_skip_table()  { self<op_skip_table>; }
 
-method num_file()      { self<num_file>; }
+method num_file()       { self<num_file>; }
+
+method num_file_lines() { self<num_file_lines>; }
 
 # Local Variables:
 #   mode: perl6
