@@ -103,6 +103,7 @@ method new(:$num_file, :$skip_file) {
     self<op_skip_table> := hash();
     self<num_file_lines>:= list();
     self<ops_past>      := list();
+    self<regen_ops_num> := 0;
 
     self.load_op_map_files();
 
@@ -153,10 +154,12 @@ my method _load_num_file() {
             my $number  := +$_<op><number>;
             if (+$number) eq $number {
                 if ($prev + 1 != $number) {
-                    die("hole in ops.num before #$number");
+                    self<regen_ops_num> := 1;
+                    say("# hole in ops.num before #$number: will regenerate ops.num");
                 }
                 if self<op_num_table>.exists($name) {
-                    die("duplicate opcode $name and $number");
+                    self<regen_ops_num> := 1;
+                    say("# duplicate opcode $name and $number: will regenerate ops.num");
                 }
 
                 $prev := $number;
@@ -188,7 +191,7 @@ method _load_skip_file() {
     my $lines := SKIP.parse($buf);
 
     for $lines<op> {
-        if self<op_num_table>.exists($_<name>) {
+        if self<op_num_table> && self<op_num_table>.exists($_<name>) {
             die("skipped opcode '$_' is also in num_file");
         }
         self<op_skip_table>{$_<name>} := 1;

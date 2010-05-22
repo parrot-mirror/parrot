@@ -81,15 +81,6 @@ if $core {
         :skip_file('src/ops/ops.skip'),
     );
     $f := Ops::File.new(|@files, :oplib($lib), :core(1));
-    $renum := Ops::Renumberer.new( :ops_file($f) );
-
-    if $renum.needs_renumbering {
-        say("# renumbering ops.num...");
-        $renum.renumber_ops();
-    }
-    else {
-        say("# ops.num looks fine: no renumbering needed");
-    }
 }
 else {
     $f := Ops::File.new(|@files, :core(0));

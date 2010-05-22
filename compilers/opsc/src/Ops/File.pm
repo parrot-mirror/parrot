@@ -190,6 +190,7 @@ method new(*@files, :$oplib, :$core!, :$nolines) {
     self<preamble>:= '';
     self<compiler>:= pir::compreg__Ps('Ops');
     self<op_order>:= 0;
+    self<renum>   := Ops::Renumberer.new( :ops_file(self) );
 
     if $core {
         self<oplib> := $oplib;
@@ -202,6 +203,10 @@ method new(*@files, :$oplib, :$core!, :$nolines) {
     self._set_version();
 
     for @files { self.read_ops( $_, $nolines ) }
+
+    if self<renum>.need_regeneration() {
+        self<renum>.regenerate_ops_num();
+    }
 
     self._calculate_op_codes();
                                 
