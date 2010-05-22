@@ -128,7 +128,7 @@ my method _load_num_file() {
     grammar NUM {
         rule TOP { <line>+ }
 
-        rule line { 
+        rule line {
             [
             | <op>
             | <dynamic>
