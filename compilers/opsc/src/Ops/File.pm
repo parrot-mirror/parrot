@@ -252,19 +252,17 @@ method read_ops($file, $nolines) {
     say("# Parsing $file...");
     my $start_time := pir::time__N();
     my $buffer     := slurp($file);
-    self.compile_ops($buffer);
+    self.compile_ops($buffer, :experimental( $file ~~ /experimental\.ops/));
     pir::sprintf(my $time, "%.3f", [pir::time__N() - $start_time] );
     say("# Parsed $file in $time seconds.");
 }
 
-method compile_ops($str) {
+method compile_ops($str, :$experimental? = 0) {
     my $compiler := self<compiler>;
     my $past     := $compiler.compile($str, :target('past'));
 
     for @($past<ops>) {
-        if $_<experimental> {
-            say("# Experimental op " ~ $_.full_name ~ " is not in ops.num.");
-        }
+        $_<experimental> := $experimental;
         self<ops>.push($_);
         #say($_.full_name ~ " is number " ~ self<op_order>);
         self<op_order>++;
@@ -302,18 +300,19 @@ method _calculate_op_codes() {
             my $full_name := $op.full_name;
             if self<oplib>.op_num_table.exists($full_name) {
                 $op<code> := self<oplib>.op_num_table{$full_name};
-                $op<experimental> := 0;
+            }
+            elsif !$op<experimental> && !self<oplib>.op_skip_table.exists($full_name) {
+                die("Non-experimental op " ~ $op.full_name ~ " is not in ops.num.");
             }
             #ops not explicitly listed but not skipped are experimental
             else {
                 $op<code> := $code++;
-                $op<experimental> := 1;
+                say("# Experimental op " ~ $op.full_name ~ " is not in ops.num.");
             }
         }
         #if there's no oplib, we're compiling dynops and ops aren't experimental
         else {
             $op<code> := $code++;
-            $op<experimental> := 0;
         }
     }
 }
