@@ -1208,7 +1208,6 @@ enum OPS_ENUM {
     enum_ops_find_name_p_sc                = 1198,
     enum_ops_find_sub_not_null_p_s         = 1199,
     enum_ops_find_sub_not_null_p_sc        = 1200,
-
 };
 
 #endif /* OPSENUM_H_GUARD */

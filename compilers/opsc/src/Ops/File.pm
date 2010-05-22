@@ -204,12 +204,13 @@ method new(*@files, :$oplib, :$core!, :$nolines) {
 
     for @files { self.read_ops( $_, $nolines ) }
 
+    self._calculate_op_codes();
+
     if self<renum>.need_regeneration() {
         self<renum>.regenerate_ops_num();
+        self._calculate_op_codes();
     }
 
-    self._calculate_op_codes();
-                                
     self;
 }
 
