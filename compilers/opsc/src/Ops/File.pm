@@ -192,7 +192,7 @@ method new(*@files, :$oplib, :$core!, :$nolines) {
     self<op_order>:= 0;
 
     if $core {
-        self<oplib>   := $oplib;
+        self<oplib> := $oplib;
         self<compiler>.set_oplib($oplib);
     }
     else {
@@ -203,6 +203,8 @@ method new(*@files, :$oplib, :$core!, :$nolines) {
 
     for @files { self.read_ops( $_, $nolines ) }
 
+    self._calculate_op_codes();
+                                
     self;
 }
 
@@ -281,6 +283,34 @@ method version()  { self<version>; }
 method version_major() { self<version_major> }
 method version_minor() { self<version_minor> }
 method version_patch() { self<version_patch> }
+
+method _calculate_op_codes() {
+
+    my $code := self<oplib> ?? 
+        self<oplib>.max_op_num + 1 !!
+        0;
+
+    for self<ops> -> $op {
+        #ops listed in ops.num are non-experimental
+        if self<oplib> {
+            my $full_name := $op.full_name;
+            if self<oplib>.op_num_table.exists($full_name) {
+                $op<code> := self<oplib>.op_num_table{$full_name};
+                $op<experimental> := 0;
+            }
+            #ops not explicitly listed but not skipped are experimental
+            else {
+                $op<code> := $code++;
+                $op<experimental> := 1;
+            }
+        }
+        #if there's no oplib, we're compiling dynops and ops aren't experimental
+        else {
+            $op<code> := $code++;
+            $op<experimental> := 0;
+        }
+    }
+}
 
 method _set_version() {
     my $config := _config();

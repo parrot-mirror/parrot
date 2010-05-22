@@ -4,12 +4,10 @@
 
 class Ops::Compiler::Actions is HLL::Actions;
 
-our $CODE;
 our $OPLIB;
 
 INIT {
     pir::load_bytecode("nqp-setting.pbc");
-    $CODE  := 0;
     $OPLIB := 0;
 }
 
@@ -36,34 +34,13 @@ method body($/) {
     for $<op> {
         my $ops := $_.ast;
         my $op_skip_table;
-        my $op_num_table;
         if $OPLIB {
             $op_skip_table := $OPLIB.op_skip_table;
-            $op_num_table  := $OPLIB.op_num_table;
         }
         for @($ops) -> $op {
-            my $full_name := $op.full_name;
-            if $OPLIB && !$op_skip_table.exists($full_name) {
-
-                #ops listed in ops.num are non-experimental
-                if $op_num_table.exists($full_name) {
-                    $op<code> := $op_num_table{$full_name};
-                    $op<experimental> := 0;
-                }
-                #ops not explicitly listed but not skipped are experimental
-                else {
-                    $op<code> := $CODE++;
-                    $op<experimental> := 1;
-                }
+            if $OPLIB && !$op_skip_table.exists($op.full_name) || !$OPLIB {
                 $past<ops>.push($op);
             }
-            #if there's no oplib, we're compiling dynops and ops aren't experimental
-            elsif !$OPLIB {
-                $op<code> := $CODE++;
-                $op<experimental> := 0;
-                $past<ops>.push($op);
-            }
-
         }
     }
 

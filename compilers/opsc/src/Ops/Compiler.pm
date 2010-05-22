@@ -12,7 +12,6 @@ INIT {
 
 method set_oplib($oplib) {
     $Ops::Compiler::Actions::OPLIB := $oplib;
-    $Ops::Compiler::Actions::CODE  := $oplib.max_op_num + 1;
 }
 
 # vim: ft=perl6 expandtab shiftwidth=4:
