@@ -146,7 +146,6 @@ installable_pbc_merge                            [main]bin
 installable_pbc_merge.exe                        [main]bin
 installable_pbc_to_exe                           [main]bin
 installable_pbc_to_exe.exe                       [main]bin
-installable_tapir.exe                            [main]bin
 lib/Parrot/Config/Generated.pm                   [devel]lib
 lib/Parrot/PMC.pm                                [devel]lib
 lib/Parrot/Pmc2c/PCCMETHOD_BITS.pm               [devel]lib
