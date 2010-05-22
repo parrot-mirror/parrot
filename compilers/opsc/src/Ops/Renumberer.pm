@@ -90,27 +90,44 @@ method needs_renumbering() {
 
 method renumber_ops() {
     #grab all ops in ops.num
-    #record which ones are fixed and which just need to be somewhere
-    #iterate through ops::file's ops
-        #if this op is fixed
-            #give it the fixed number
-            #record the fixed number
-        #else
-            #give this op ++fixed
+    my %fixed_ops     := hash();
+    my %numbered_ops  := hash();
+    my $found_dynamic := 0;
+    my $max_op_num    := 0;
+    my $ops_num_fh    := pir::open__PSs(self<ops_file>.oplib.num_file, 'w')
+        || die("Can't open "~ self<ops_file>.oplib.num_file);
+
+    #record which ones have fixed numbers and which just need to be somewhere in ops.num
+    for self<ops_file>.oplib.num_file_lines -> $line {
+
+        #copy all lines through ###DYNAMIC### into the new ops.num verbatim
+        unless $found_dynamic {
+            $ops_num_fh.print(~$line);
+        }
+
+        if $line<op> {
+            if $found_dynamic {
+                %numbered_ops{ $line<op><name> } := 1;
+            }
+            else {
+                %fixed_ops{ $line<op><name> } := +$line<op><number>;
+                $max_op_num := +$line<op><number>;
+            }
+        }
+        elsif $line<dynamic> {
+            $found_dynamic := 1;
+        }
+    }
+
+    #XXX: print header to include/parrot/opsenum.h (ignore fixed ops)
+
+    for self<ops_file>.ops -> $op {
+        if %numbered_ops.exists( $op.full_name ) {
+            $max_op_num++;
+            $ops_num_fh.print($op.full_name ~ "    " ~ $max_op_num ~ "\n");
+        }
+    }
 }
-
-=begin ACCESSORS
-
-Various methods for accessing internals.
-
-=over 4
-
-=item * C<skiptable>
-
-=end ACCESSORS
-
-method skiptable()  { self<skiptable>; }
-
 
 # Local Variables:
 #   mode: perl6
