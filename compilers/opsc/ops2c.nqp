@@ -32,6 +32,10 @@ $arg := $getopts.add();
 $arg.long('help');
 $arg.short('h');
 
+$arg := $getopts.add();
+$arg.long('force-regen');
+$arg.short('f');
+
 my $opts := $getopts.get_options(pir::getinterp__p()[2]);
 
 if $opts<core> {
@@ -57,11 +61,14 @@ elsif $opts<dynamic> {
     @files.push( $opts<dynamic>);
 }
 elsif (+$opts == 0 || $opts<help>) {
-    say("usage:
+    say("This is ops2c, part of Parrot build infrastructure.
+usage:
 ops2c --core
 ops2c --dynamic path/to/dynops.ops");
     pir::exit(0);
 }
+
+my $force_regen := ?$opts<force-regen>;
 
 if ($opts<no-lines>) {
     #TODO: figure out how to generate line numbers
@@ -96,6 +103,9 @@ my $emitter := Ops::Emitter.new(
 );
 
 unless $debug {
+    if $force_regen || $f<renum>.need_regeneration {
+        $emitter.print_ops_num_files();
+    }
     $emitter.print_c_header_files();
     $emitter.print_c_source_file();
 }

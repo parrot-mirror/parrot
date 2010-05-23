@@ -206,11 +206,6 @@ method new(*@files, :$oplib, :$core!, :$nolines) {
 
     self._calculate_op_codes();
 
-    if self<renum>.need_regeneration() {
-        self<renum>.regenerate_ops_num();
-        self._calculate_op_codes();
-    }
-
     self;
 }
 
@@ -327,28 +322,6 @@ method _set_version() {
     self<version_patch> := @bits[2];
     self<version>       := @bits;
 }
-
-=begin
-
-=back
-
-=head1 SEE ALSO
-
-=over 4
-
-=item C<Parrot::Op>
-
-=item C<Parrot::OpTrans>
-
-=item F<tools/build/ops2c.pl>
-
-=item F<tools/build/ops2pm.pl>
-
-=item F<tools/build/pbc2c.pl>
-
-=back
-
-=end
 
 # Local Variables:
 #   mode: cperl
