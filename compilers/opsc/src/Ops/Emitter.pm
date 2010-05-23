@@ -189,7 +189,7 @@ method emit_opsenum_h_body($fh) {
 }
 
 method _prepare_ops_num() {
-    
+
     #grab all ops in ops.num
     self<numbered_ops>     := hash();
     my $found_dynamic      := 0;

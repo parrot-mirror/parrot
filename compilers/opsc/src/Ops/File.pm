@@ -285,7 +285,7 @@ method version_patch() { self<version_patch> }
 
 method _calculate_op_codes() {
 
-    my $code := self<oplib> ?? 
+    my $code := self<oplib> ??
         self<oplib>.max_op_num + 1 !!
         0;
 
