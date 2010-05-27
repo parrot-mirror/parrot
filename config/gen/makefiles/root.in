@@ -820,7 +820,7 @@ parrot_utils : $(PDUMP) $(DIS) $(PDB) $(PBC_MERGE) $(PBC_TO_EXE) $(PARROT_CONFIG
 installable: all $(INSTALLABLEPARROT) $(INSTALLABLEPDUMP) $(INSTALLABLEDIS) $(INSTALLABLEPDB) $(INSTALLABLEPBC_MERGE) $(INSTALLABLEPBCTOEXE) $(INSTALLABLECONFIG) $(INSTALLABLENQP) $(INSTALLABLENCITHUNKGEN) $(INSTALLABLEPROVE) $(INSTALLABLEOPS2C)
 
 bootstrap-ops : $(OPS2C)
-	$(OPS2C) --core
+	$(OPS2C) --core --quiet
 	$(MAKE) .
 
 runtime/parrot/include/parrotlib.pbc: runtime/parrot/library/parrotlib.pir $(PARROT) $(GEN_PASM_INCLUDES)
@@ -1526,6 +1526,7 @@ src/string/charset$(O) : $(PARROT_H_HEADERS) src/string/charset.c \
 	src/string/encoding/utf8.h \
 	src/string/encoding/utf16.h \
 	src/string/encoding/ucs2.h \
+	src/string/encoding/ucs4.h \
 	src/string/charset/ascii.h \
 	src/string/charset/binary.h \
 	src/string/charset/iso-8859-1.h \
