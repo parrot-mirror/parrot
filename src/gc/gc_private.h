@@ -84,8 +84,9 @@ typedef struct GC_MS_PObj_Wrapper {
 
 
 typedef enum _gc_sys_type_enum {
-    MS,  /*mark and sweep*/
-    INF /*infinite memory core*/
+    MS,  /* mark and sweep */
+    INF, /* infinite memory core */
+    TMS, /* tricolor mark and sweep */
 } gc_sys_type_enum;
 
 /* how often to skip a full GC when this pool has nothing free */
