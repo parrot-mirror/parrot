@@ -33,8 +33,8 @@ typedef struct Linked_List {
 
 /* Such headers allocated in front of real objects. */
 /* There is helper macros to convert to/from real objects */
-#define Obj2LLH(p) (List_Item_Header* ((char*)(p) - sizeof (List_Item_Header))
-#define LLH2Obj_typed(p, type), ((type*)((char*)(p) + sizeof (List_Item_Header))
+#define Obj2LLH(p) ((List_Item_Header *)((char*)(p) - sizeof (List_Item_Header)))
+#define LLH2Obj_typed(p, type) ((type*)((char*)(p) + sizeof (List_Item_Header)))
 #define LLH2Obj(p) LLH2Obj_typed(p, void)
 
 
