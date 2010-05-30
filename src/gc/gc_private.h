@@ -123,6 +123,7 @@ typedef struct GC_Subsystem {
     Buffer* (*allocate_bufferlike_header)(PARROT_INTERP, size_t size);
     void    (*free_bufferlike_header)(PARROT_INTERP, Buffer*, size_t size);
 
+    int  (*is_pmc_ptr)(PARROT_INTERP, void*);
     void (*mark_pobj_header)(PARROT_INTERP, PObj*);
     void (*mark_pmc_header)(PARROT_INTERP, PMC *);
 
