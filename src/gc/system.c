@@ -461,7 +461,7 @@ trace_mem_block(PARROT_INTERP,
              * had their bufstart/vtable destroyed due to the linked list of
              * free headers... */
             if ((pmc_min <= ptr) && (ptr < pmc_max) && is_pmc_ptr(mem_pools, (void *)ptr)) {
-                Parrot_gc_mark_PObj_alive(interp, (PObj *)ptr);
+                Parrot_gc_mark_PMC_alive(interp, (PMC *)ptr);
             }
             else if ((buffer_min <= ptr) && (ptr < buffer_max) &&
                     is_buffer_ptr(mem_pools, (void *)ptr)) {
