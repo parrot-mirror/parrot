@@ -476,6 +476,8 @@ Parrot_gc_tms_init(PARROT_INTERP)
     struct TriColor_GC *self;
 
     /* Compatibility with "old" GC */
+    /* Used only in trace_system_stack, etc. */
+    /* Remove after switching to GC.trace_roots */
     interp->mem_pools = mem_internal_allocate_zeroed_typed(Memory_Pools);
     interp->mem_pools->num_sized          = 0;
     interp->mem_pools->num_attribs        = 0;
@@ -607,6 +609,7 @@ gc_tms_mark_and_sweep(PARROT_INTERP, UINTVAL flags)
         self.allocator.free($dead);
     }
     */
+    /* FIXME Move "constant" PMCs into @constant_pmcs */
     tmp = self->dead_objects->first;
     while (tmp) {
         List_Item_Header *next = tmp->next;
