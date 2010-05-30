@@ -26,14 +26,8 @@ static void allocate_new_pool_arena(ARGMOD(Pool_Allocator *pool))
         __attribute__nonnull__(1)
         FUNC_MODIFIES(*pool);
 
-PARROT_CANNOT_RETURN_NULL
-PARROT_MALLOC
-static Pool_Allocator * Parrot_gc_create_pool_allocator(size_t object_size);
-
 #define ASSERT_ARGS_allocate_new_pool_arena __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
        PARROT_ASSERT_ARG(pool))
-#define ASSERT_ARGS_Parrot_gc_create_pool_allocator \
-     __attribute__unused__ int _ASSERT_ARGS_CHECK = (0)
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 /* HEADERIZER END: static */
 
@@ -76,7 +70,7 @@ Create a new pool for fixed-sized data items with the given C<attrib_size>.
 
 PARROT_CANNOT_RETURN_NULL
 PARROT_MALLOC
-static Pool_Allocator *
+Pool_Allocator *
 Parrot_gc_create_pool_allocator(size_t object_size)
 {
     ASSERT_ARGS(Parrot_gc_create_pool_allocator)
