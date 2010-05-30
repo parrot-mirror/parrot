@@ -25,7 +25,6 @@ src/gc/pool_allocator.h - PoolAllocator for Parrot.
    this on at the same time that you increase the size of allocated arenas.
    increase *_HEADERS_PER_ALLOC and GC_FIXED_SIZE_POOL_SIZE to be large
    enough to satisfy most startup costs. */
-#define GC_USE_LAZY_ALLOCATOR 1
 
 typedef struct Pool_Allocator_Free_List {
     struct Pool_Allocator_Free_List * next;
@@ -43,10 +42,8 @@ typedef struct Pool_Allocator {
     size_t num_free_objects;
     Pool_Allocator_Free_List * free_list;
     Pool_Allocator_Arena     * top_arena;
-#if GC_USE_LAZY_ALLOCATOR
     Pool_Allocator_Free_List * newfree;
     Pool_Allocator_Free_List * newlast;
-#endif
 } Pool_Allocator;
 
 
