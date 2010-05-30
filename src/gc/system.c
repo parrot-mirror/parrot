@@ -427,10 +427,10 @@ trace_mem_block(PARROT_INTERP,
     size_t    prefix;
     ptrdiff_t cur_var_ptr;
 
-    const size_t buffer_min = get_min_buffer_address(mem_pools);
-    const size_t buffer_max = get_max_buffer_address(mem_pools);
-    const size_t pmc_min    = get_min_pmc_address(mem_pools);
-    const size_t pmc_max    = get_max_pmc_address(mem_pools);
+    const size_t buffer_min = 0; // get_min_buffer_address(mem_pools);
+    const size_t buffer_max = -1; // get_max_buffer_address(mem_pools);
+    const size_t pmc_min    = 0; // get_min_pmc_address(mem_pools);
+    const size_t pmc_max    = -1; // get_max_pmc_address(mem_pools);
 
     const size_t mask       =
         find_common_mask(interp,
@@ -447,12 +447,15 @@ trace_mem_block(PARROT_INTERP,
     }
 
     /* Get the expected prefix */
-    prefix = mask & buffer_min;
+    prefix = 0; //mask & buffer_min;
 
     for (cur_var_ptr = hi_var_ptr;
             (ptrdiff_t)cur_var_ptr < (ptrdiff_t)lo_var_ptr;
             cur_var_ptr = (size_t)((ptrdiff_t)cur_var_ptr + sizeof (void *))) {
         const size_t ptr = *(size_t *)cur_var_ptr;
+
+        if (!ptr)
+            continue;
 
         /* Do a quick approximate range check by bit-masking */
         if ((ptr & mask) == prefix || !prefix) {
@@ -460,7 +463,7 @@ trace_mem_block(PARROT_INTERP,
              * guaranteed to be live pmcs/buffers, and could very well have
              * had their bufstart/vtable destroyed due to the linked list of
              * free headers... */
-            if ((pmc_min <= ptr) && (ptr < pmc_max) && is_pmc_ptr(mem_pools, (void *)ptr)) {
+            if ((pmc_min <= ptr) && (ptr < pmc_max) && interp->gc_sys->is_pmc_ptr(interp, (void *)ptr)) {
                 Parrot_gc_mark_PMC_alive(interp, (PMC *)ptr);
             }
             else if ((buffer_min <= ptr) && (ptr < buffer_max) &&
