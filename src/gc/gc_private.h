@@ -115,12 +115,15 @@ typedef struct GC_Subsystem {
 
     PMC* (*allocate_pmc_header)(PARROT_INTERP, UINTVAL flags);
     void (*free_pmc_header)(PARROT_INTERP, PMC *);
+    void (*mark_pmc_header)(PARROT_INTERP, PMC *);
 
     STRING* (*allocate_string_header)(PARROT_INTERP, UINTVAL flags);
-    void (*free_string_header)(PARROT_INTERP, STRING*);
+    void    (*free_string_header)(PARROT_INTERP, STRING*);
+    void    (*mark_string_header)(PARROT_INTERP, STRING*);
 
     Buffer* (*allocate_bufferlike_header)(PARROT_INTERP, size_t size);
-    void (*free_bufferlike_header)(PARROT_INTERP, Buffer*, size_t size);
+    void    (*free_bufferlike_header)(PARROT_INTERP, Buffer*, size_t size);
+    void    (*mark_bufferlike_header)(PARROT_INTERP, Buffer*);
 
     void* (*allocate_pmc_attributes)(PARROT_INTERP, PMC *);
     void (*free_pmc_attributes)(PARROT_INTERP, PMC *);
@@ -157,11 +160,9 @@ typedef struct GC_Subsystem {
      *These will be called via the GC API functions Parrot_gc_func_name
      *e.g. read barrier && write barrier hooks can go here later ...*/
 
-    /* Holds system-specific data structures
-     * unused right now, but this is where it should go if we need them ...
-      union {
-      } gc_private;
-     */
+    /* Holds system-specific data structures */
+    void * gc_private;
+
 } GC_Subsystem;
 
 typedef struct Memory_Block {
