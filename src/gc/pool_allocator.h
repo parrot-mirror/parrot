@@ -75,13 +75,11 @@ void Parrot_gc_pool_free(ARGMOD(Pool_Allocator *pool), ARGMOD(void *data))
         FUNC_MODIFIES(*data);
 
 PARROT_EXPORT
-int Parrot_gc_pool_is_owned(
-    ARGMOD(Pool_Allocator *pool),
-    ARGMOD(void *data))
+int Parrot_gc_pool_is_owned(ARGMOD(Pool_Allocator *pool), ARGMOD(void *ptr))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         FUNC_MODIFIES(*pool)
-        FUNC_MODIFIES(*data);
+        FUNC_MODIFIES(*ptr);
 
 PARROT_CANNOT_RETURN_NULL
 PARROT_MALLOC
@@ -99,7 +97,7 @@ Pool_Allocator * Parrot_gc_create_pool_allocator(size_t object_size);
     , PARROT_ASSERT_ARG(data))
 #define ASSERT_ARGS_Parrot_gc_pool_is_owned __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
        PARROT_ASSERT_ARG(pool) \
-    , PARROT_ASSERT_ARG(data))
+    , PARROT_ASSERT_ARG(ptr))
 #define ASSERT_ARGS_Parrot_gc_create_pool_allocator \
      __attribute__unused__ int _ASSERT_ARGS_CHECK = (0)
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
