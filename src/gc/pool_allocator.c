@@ -80,7 +80,7 @@ Parrot_gc_create_pool_allocator(size_t object_size)
     const size_t num_objs = (num_objs_raw == 0)?(1):(num_objs_raw);
     Pool_Allocator * const newpool = mem_internal_allocate_typed(Pool_Allocator);
 
-    newpool->attr_size         = attrib_size;
+    newpool->object_size       = attrib_size;
     newpool->total_objects     = 0;
     newpool->objects_per_alloc = num_objs;
     newpool->num_free_objects  = 0;
@@ -122,7 +122,7 @@ Parrot_gc_pool_allocate(PARROT_INTERP, ARGMOD(Pool_Allocator * pool))
     else if (pool->newfree) {
         item          = pool->newfree;
         pool->newfree = (Pool_Allocator_Free_List *)
-                        ((char *)(pool->newfree) + pool->attr_size);
+                        ((char *)(pool->newfree) + pool->object_size);
         if (pool->newfree >= pool->newlast)
             pool->newfree = NULL;
     }
@@ -172,7 +172,7 @@ Parrot_gc_pool_is_owned(ARGMOD(Pool_Allocator *pool), ARGMOD(void *ptr))
     Pool_Allocator_Arena *arena = pool->top_arena;
     while (arena) {
         const ptrdiff_t ptr_diff =
-            (ptrdiff_t)ptr - (ptrdiff_t)(arena + sizeof (Pool_Allocator_Arena));
+            (ptrdiff_t)ptr - (ptrdiff_t)(arena + 1);
 
         if (0 <= ptr_diff
               && ptr_diff < GC_FIXED_SIZE_POOL_SIZE // It's wrong check.
@@ -193,7 +193,7 @@ allocate_new_pool_arena(ARGMOD(Pool_Allocator *pool))
     Pool_Allocator_Free_List *next;
 
     const size_t num_items  = pool->objects_per_alloc;
-    const size_t item_size  = pool->attr_size;
+    const size_t item_size  = pool->object_size;
     const size_t item_space = item_size * num_items;
     size_t total_size = sizeof (Pool_Allocator_Arena) + item_space;
 
