@@ -61,6 +61,7 @@ Parrot_gc_list_append(SHIM_INTERP, ARGMOD(Linked_List *list), ARGMOD(List_Item_H
     else {
         item->prev = list->last;
         item->next = NULL;
+        list->last->next = item;
         list->last = item;
     }
     list->count++;
