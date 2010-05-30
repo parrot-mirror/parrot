@@ -17,6 +17,16 @@ src/gc/pool_allocator.h - PoolAllocator for Parrot.
 
 #include "parrot/settings.h"
 
+/* these values are used for the attribute allocator */
+#define GC_ATTRIB_POOLS_HEADROOM 8
+#define GC_FIXED_SIZE_POOL_SIZE 4096
+
+/* Use the lazy allocator. Since it amortizes arena allocation costs, turn
+   this on at the same time that you increase the size of allocated arenas.
+   increase *_HEADERS_PER_ALLOC and GC_FIXED_SIZE_POOL_SIZE to be large
+   enough to satisfy most startup costs. */
+#define GC_USE_LAZY_ALLOCATOR 1
+
 typedef struct Pool_Allocator_Free_List {
     struct Pool_Allocator_Free_List * next;
 } Pool_Allocator_Free_List;
@@ -26,7 +36,7 @@ typedef struct Pool_Allocator_Arena {
     struct Pool_Allocator_Arena * prev;
 } Pool_Allocator_Arena;
 
-typedef struct Pool_Allocator_Pool {
+typedef struct Pool_Allocator {
     size_t attr_size;
     size_t total_objects;
     size_t objects_per_alloc;
@@ -37,11 +47,43 @@ typedef struct Pool_Allocator_Pool {
     Pool_Allocator_Free_List * newfree;
     Pool_Allocator_Free_List * newlast;
 #endif
-} Pool_Allocator_Pool;
+} Pool_Allocator;
+
 
 /* HEADERIZER BEGIN: src/gc/pool_allocator.c */
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 
+PARROT_EXPORT
+void Parrot_gc_destroy_pool_alloctor(PARROT_INTERP,
+    ARGMOD(Pool_Allocator *pool))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        FUNC_MODIFIES(*pool);
+
+PARROT_CANNOT_RETURN_NULL
+PARROT_EXPORT
+void * Parrot_gc_pool_allocate(PARROT_INTERP, ARGMOD(Pool_Allocator * pool))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        FUNC_MODIFIES(* pool);
+
+PARROT_EXPORT
+void Parrot_gc_pool_free(ARGMOD(Pool_Allocator *pool), ARGMOD(void *data))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        FUNC_MODIFIES(*pool)
+        FUNC_MODIFIES(*data);
+
+#define ASSERT_ARGS_Parrot_gc_destroy_pool_alloctor \
+     __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
+       PARROT_ASSERT_ARG(interp) \
+    , PARROT_ASSERT_ARG(pool))
+#define ASSERT_ARGS_Parrot_gc_pool_allocate __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
+       PARROT_ASSERT_ARG(interp) \
+    , PARROT_ASSERT_ARG(pool))
+#define ASSERT_ARGS_Parrot_gc_pool_free __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
+       PARROT_ASSERT_ARG(pool) \
+    , PARROT_ASSERT_ARG(data))
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 /* HEADERIZER END: src/gc/pool_allocator.c */
 
