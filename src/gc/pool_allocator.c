@@ -80,7 +80,7 @@ static Pool_Allocator *
 Parrot_gc_create_pool_allocator(size_t object_size)
 {
     ASSERT_ARGS(Parrot_gc_create_pool_allocator)
-    const size_t attrib_size = object_size + sizeof (void *);
+    const size_t attrib_size = object_size < sizeof (void *) ? sizeof (void*) : object_size;
     const size_t num_objs_raw =
         (GC_FIXED_SIZE_POOL_SIZE - sizeof (Pool_Allocator_Arena)) / attrib_size;
     const size_t num_objs = (num_objs_raw == 0)?(1):(num_objs_raw);
@@ -188,6 +188,10 @@ allocate_new_pool_arena(ARGMOD(Pool_Allocator *pool))
     const size_t item_size  = pool->attr_size;
     const size_t item_space = item_size * num_items;
     const size_t total_size = sizeof (Pool_Allocator_Arena) + item_space;
+
+    /* Round up to 4kb */
+    if (total_size < GC_FIXED_SIZE_POOL_SIZE)
+        total_size = GC_FIXED_SIZE_POOL_SIZE;
 
     Pool_Allocator_Arena * const new_arena = (Pool_Allocator_Arena *)mem_internal_allocate(
         total_size);
