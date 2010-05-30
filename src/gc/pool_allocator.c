@@ -94,7 +94,15 @@ PARROT_EXPORT
 void
 Parrot_gc_destroy_pool_alloctor(PARROT_INTERP, ARGMOD(Pool_Allocator *pool))
 {
-    // TODO
+    Pool_Allocator_Arena *arena = pool->top_arena;
+
+    while (arena) {
+        Pool_Allocator_Arena *next = arena->next;
+        mem_internal_free(arena);
+        arena = next;
+    }
+
+    mem_internal_free(pool);
 }
 
 
