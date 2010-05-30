@@ -126,27 +126,16 @@ void
 Parrot_gc_mark_PObj_alive(PARROT_INTERP, ARGMOD(PObj *obj))
 {
     ASSERT_ARGS(Parrot_gc_mark_PObj_alive)
-    /* TODO: Have each core register a ->pobject_lives function pointer in the
-       Memory_Pools struct, and call that pointer directly instead of having a messy
-       set of #if preparser conditions. */
 
     /* if object is live or on free list return */
     if (PObj_is_live_or_free_TESTALL(obj))
         return;
 
-    /* mark it live */
-    PObj_live_SET(obj);
-
-    /* if object is a PMC and contains buffers or PMCs, then attach the PMC
-     * to the chained mark list. */
     if (PObj_is_PMC_TEST(obj)) {
-        PMC * const p = (PMC *)obj;
-
-        if (PObj_is_special_PMC_TEST(obj))
-            interp->gc_sys->mark_special(interp, p);
-
-        else if (PMC_metadata(p))
-            Parrot_gc_mark_PMC_alive(interp, PMC_metadata(p));
+        interp->gc_sys->mark_pmc_header(interp, (PMC*) obj);
+    }
+    else {
+        interp->gc_sys->mark_pobj_header(interp, obj);
     }
 }
 
@@ -183,7 +172,7 @@ void
 Parrot_gc_mark_STRING_alive_fun(PARROT_INTERP, ARGMOD_NULLOK(STRING *obj))
 {
     ASSERT_ARGS(Parrot_gc_mark_STRING_alive_fun)
-    interp->gc_sys->mark_string_header(interp, obj);
+    interp->gc_sys->mark_pobj_header(interp, (PObj*)obj);
 }
 
 /*

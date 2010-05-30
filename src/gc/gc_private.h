@@ -115,15 +115,15 @@ typedef struct GC_Subsystem {
 
     PMC* (*allocate_pmc_header)(PARROT_INTERP, UINTVAL flags);
     void (*free_pmc_header)(PARROT_INTERP, PMC *);
-    void (*mark_pmc_header)(PARROT_INTERP, PMC *);
 
     STRING* (*allocate_string_header)(PARROT_INTERP, UINTVAL flags);
     void    (*free_string_header)(PARROT_INTERP, STRING*);
-    void    (*mark_string_header)(PARROT_INTERP, STRING*);
 
     Buffer* (*allocate_bufferlike_header)(PARROT_INTERP, size_t size);
     void    (*free_bufferlike_header)(PARROT_INTERP, Buffer*, size_t size);
-    void    (*mark_bufferlike_header)(PARROT_INTERP, Buffer*);
+
+    void (*mark_pobj_header)(PARROT_INTERP, PObj*);
+    void (*mark_pmc_header)(PARROT_INTERP, PMC *);
 
     void* (*allocate_pmc_attributes)(PARROT_INTERP, PMC *);
     void (*free_pmc_attributes)(PARROT_INTERP, PMC *);
