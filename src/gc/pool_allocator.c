@@ -187,14 +187,13 @@ allocate_new_pool_arena(ARGMOD(Pool_Allocator *pool))
     const size_t num_items  = pool->objects_per_alloc;
     const size_t item_size  = pool->attr_size;
     const size_t item_space = item_size * num_items;
-    const size_t total_size = sizeof (Pool_Allocator_Arena) + item_space;
+    size_t total_size = sizeof (Pool_Allocator_Arena) + item_space;
 
     /* Round up to 4kb */
-    if (total_size < GC_FIXED_SIZE_POOL_SIZE)
-        total_size = GC_FIXED_SIZE_POOL_SIZE;
-
     Pool_Allocator_Arena * const new_arena = (Pool_Allocator_Arena *)mem_internal_allocate(
-        total_size);
+        total_size < GC_FIXED_SIZE_POOL_SIZE
+            ? GC_FIXED_SIZE_POOL_SIZE
+            : total_size);
 
     new_arena->prev = NULL;
     new_arena->next = pool->top_arena;
