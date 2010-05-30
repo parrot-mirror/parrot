@@ -125,12 +125,18 @@ static void gc_tms_free_pmc_header(PARROT_INTERP, ARGFREE(PMC *pmc))
 
 static void gc_tms_free_string_header(SHIM_INTERP, ARGFREE(STRING *s));
 static size_t gc_tms_get_gc_info(SHIM_INTERP, SHIM(Interpinfo_enum what));
+static int gc_tms_is_pmc_ptr(PARROT_INTERP, ARGIN_NULLOK(void *ptr))
+        __attribute__nonnull__(1);
+
 static void gc_tms_mark_and_sweep(PARROT_INTERP, UINTVAL flags)
         __attribute__nonnull__(1);
 
 static void gc_tms_mark_pmc_header(PARROT_INTERP, ARGIN(PMC *pmc))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
+
+static void gc_tms_mark_pobj_header(PARROT_INTERP, ARGIN_NULLOK(PObj * obj))
+        __attribute__nonnull__(1);
 
 static void gc_tms_real_mark_pmc(PARROT_INTERP,
     ARGIN(struct TriColor_GC *self),
@@ -196,11 +202,15 @@ static void gc_tms_reallocate_string_storage(SHIM_INTERP,
        PARROT_ASSERT_ARG(interp))
 #define ASSERT_ARGS_gc_tms_free_string_header __attribute__unused__ int _ASSERT_ARGS_CHECK = (0)
 #define ASSERT_ARGS_gc_tms_get_gc_info __attribute__unused__ int _ASSERT_ARGS_CHECK = (0)
+#define ASSERT_ARGS_gc_tms_is_pmc_ptr __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
+       PARROT_ASSERT_ARG(interp))
 #define ASSERT_ARGS_gc_tms_mark_and_sweep __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
        PARROT_ASSERT_ARG(interp))
 #define ASSERT_ARGS_gc_tms_mark_pmc_header __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
        PARROT_ASSERT_ARG(interp) \
     , PARROT_ASSERT_ARG(pmc))
+#define ASSERT_ARGS_gc_tms_mark_pobj_header __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
+       PARROT_ASSERT_ARG(interp))
 #define ASSERT_ARGS_gc_tms_real_mark_pmc __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
        PARROT_ASSERT_ARG(interp) \
     , PARROT_ASSERT_ARG(self) \
@@ -465,6 +475,14 @@ Parrot_gc_tms_init(PARROT_INTERP)
     ASSERT_ARGS(Parrot_gc_tms_init)
     struct TriColor_GC *self;
 
+    /* Compatibility with "old" GC */
+    interp->mem_pools = mem_internal_allocate_zeroed_typed(Memory_Pools);
+    interp->mem_pools->num_sized          = 0;
+    interp->mem_pools->num_attribs        = 0;
+    interp->mem_pools->attrib_pools       = NULL;
+    interp->mem_pools->sized_header_pools = NULL;
+
+
     interp->gc_sys->do_gc_mark         = gc_tms_mark_and_sweep;
     interp->gc_sys->finalize_gc_system = NULL;
 
@@ -488,7 +506,9 @@ Parrot_gc_tms_init(PARROT_INTERP)
     interp->gc_sys->allocate_pmc_attributes = gc_tms_allocate_pmc_attributes;
     interp->gc_sys->free_pmc_attributes     = gc_tms_free_pmc_attributes;
 
+    interp->gc_sys->is_pmc_ptr              = gc_tms_is_pmc_ptr;
     interp->gc_sys->mark_pmc_header         = gc_tms_mark_pmc_header;
+    interp->gc_sys->mark_pobj_header        = gc_tms_mark_pobj_header;
 
     interp->gc_sys->allocate_string_storage = gc_tms_allocate_string_storage;
     interp->gc_sys->reallocate_string_storage = gc_tms_reallocate_string_storage;
@@ -529,6 +549,7 @@ gc_tms_allocate_pmc_header(PARROT_INTERP, SHIM(UINTVAL flags))
 
     List_Item_Header *ptr = (List_Item_Header *)Parrot_gc_pool_allocate(interp,
                                 self->pmc_allocator);
+    ptr->next = ptr->prev = NULL;
     Parrot_gc_list_append(interp, self->objects, ptr);
 
     return LLH2Obj_typed(ptr, PMC);
@@ -560,9 +581,14 @@ gc_tms_mark_and_sweep(PARROT_INTERP, UINTVAL flags)
     self->objects      = Parrot_gc_allocate_linked_list(interp);
     self->grey_objects = Parrot_gc_allocate_linked_list(interp);
 
+    //fprintf(stderr, "Before %d\n", self->dead_objects->count);
+
     /*
     self.grey_objects  = self.trace_roots();
     */
+    Parrot_gc_trace_root(interp, interp->mem_pools, 0);
+
+    //fprintf(stderr, "Roots %d\n", self->grey_objects->count);
 
     /*
     # mark_alive will push into self.grey_objects
@@ -588,6 +614,9 @@ gc_tms_mark_and_sweep(PARROT_INTERP, UINTVAL flags)
         tmp = next;
     }
 
+    //fprintf(stderr, "Survived %d\n", self->objects->count);
+    //fprintf(stderr, "Dead %d\n", self->dead_objects->count);
+
     /* Clean up */
     Parrot_gc_destroy_linked_list(interp, self->grey_objects);
     Parrot_gc_destroy_linked_list(interp, self->dead_objects);
@@ -606,6 +635,8 @@ gc_tms_mark_pmc_header(PARROT_INTERP, ARGIN(PMC *pmc))
     ASSERT_ARGS(gc_tms_mark_pmc_header)
     TriColor_GC      *self = (TriColor_GC *)interp->gc_sys->gc_private;
     List_Item_Header *item = Obj2LLH(pmc);
+    if (PObj_is_live_or_free_TESTALL(pmc))
+        return;
     Parrot_gc_list_remove(interp, self->dead_objects, item);
     Parrot_gc_list_append(interp, self->grey_objects, item);
 }
@@ -618,7 +649,30 @@ gc_tms_real_mark_pmc(PARROT_INTERP,
     ASSERT_ARGS(gc_tms_real_mark_pmc)
     Parrot_gc_list_remove(interp, self->grey_objects, li);
     /* self.SUPER.mark($obj) */
+    Parrot_gc_list_append(interp, self->objects, li);
     gc_ms_mark_pmc_header(interp, LLH2Obj_typed(li, PMC));
+}
+
+static int
+gc_tms_is_pmc_ptr(PARROT_INTERP, ARGIN_NULLOK(void *ptr))
+{
+    ASSERT_ARGS(gc_tms_is_pmc_ptr)
+    TriColor_GC      *self = (TriColor_GC *)interp->gc_sys->gc_private;
+    if (!ptr)
+        return 0;
+    return Parrot_gc_pool_is_owned(self->pmc_allocator, Obj2LLH(ptr));
+}
+
+static void
+gc_tms_mark_pobj_header(PARROT_INTERP, ARGIN_NULLOK(PObj * obj))
+{
+    ASSERT_ARGS(gc_tms_mark_pobj_header)
+    if (obj) {
+        if (PObj_is_PMC_TEST(obj))
+            gc_tms_mark_pmc_header(interp, (PObj *)obj);
+        else
+            PObj_live_SET(obj);
+    }
 }
 
 /*
