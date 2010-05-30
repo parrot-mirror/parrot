@@ -16,6 +16,7 @@ This code implements the default mark and sweep garbage collector.
 
 #include "parrot/parrot.h"
 #include "gc_private.h"
+#include "list.h"
 
 PARROT_DOES_NOT_RETURN
 static void failed_allocation(unsigned int line, unsigned long size) /* HEADERIZER SKIP */
@@ -153,9 +154,24 @@ static unsigned int gc_ms_is_blocked_GC_sweep(PARROT_INTERP)
 static void gc_ms_mark_and_sweep(PARROT_INTERP, UINTVAL flags)
         __attribute__nonnull__(1);
 
+static void gc_ms_mark_bufferlike_header(PARROT_INTERP, ARGMOD(Buffer *buf))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        FUNC_MODIFIES(*buf);
+
+static void gc_ms_mark_pmc_header(PARROT_INTERP, ARGMOD(PMC *pmc))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        FUNC_MODIFIES(*pmc);
+
 static void gc_ms_mark_special(PARROT_INTERP, ARGIN(PMC *pmc))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
+
+static void gc_ms_mark_string_header(PARROT_INTERP, ARGMOD(STRING *str))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        FUNC_MODIFIES(*str);
 
 static void gc_ms_more_traceable_objects(PARROT_INTERP,
     ARGIN(Memory_Pools *mem_pools),
@@ -313,9 +329,18 @@ static void Parrot_gc_initialize_fixed_size_pools(SHIM_INTERP,
        PARROT_ASSERT_ARG(interp))
 #define ASSERT_ARGS_gc_ms_mark_and_sweep __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
        PARROT_ASSERT_ARG(interp))
+#define ASSERT_ARGS_gc_ms_mark_bufferlike_header __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
+       PARROT_ASSERT_ARG(interp) \
+    , PARROT_ASSERT_ARG(buf))
+#define ASSERT_ARGS_gc_ms_mark_pmc_header __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
+       PARROT_ASSERT_ARG(interp) \
+    , PARROT_ASSERT_ARG(pmc))
 #define ASSERT_ARGS_gc_ms_mark_special __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
        PARROT_ASSERT_ARG(interp) \
     , PARROT_ASSERT_ARG(pmc))
+#define ASSERT_ARGS_gc_ms_mark_string_header __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
+       PARROT_ASSERT_ARG(interp) \
+    , PARROT_ASSERT_ARG(str))
 #define ASSERT_ARGS_gc_ms_more_traceable_objects __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
        PARROT_ASSERT_ARG(interp) \
     , PARROT_ASSERT_ARG(mem_pools) \
@@ -402,12 +427,15 @@ Parrot_gc_ms_init(PARROT_INTERP)
 
     interp->gc_sys->allocate_pmc_header     = gc_ms_allocate_pmc_header;
     interp->gc_sys->free_pmc_header         = gc_ms_free_pmc_header;
+    interp->gc_sys->mark_pmc_header         = gc_ms_mark_pmc_header;
 
     interp->gc_sys->allocate_string_header  = gc_ms_allocate_string_header;
     interp->gc_sys->free_string_header      = gc_ms_free_string_header;
+    interp->gc_sys->mark_string_header      = gc_ms_mark_string_header;
 
     interp->gc_sys->allocate_bufferlike_header  = gc_ms_allocate_bufferlike_header;
     interp->gc_sys->free_bufferlike_header      = gc_ms_free_bufferlike_header;
+    interp->gc_sys->mark_bufferlike_header      = gc_ms_mark_bufferlike_header;
 
     interp->gc_sys->allocate_pmc_attributes = gc_ms_allocate_pmc_attributes;
     interp->gc_sys->free_pmc_attributes     = gc_ms_free_pmc_attributes;
@@ -439,6 +467,9 @@ Parrot_gc_ms_init(PARROT_INTERP)
     interp->gc_sys->is_blocked_sweep = gc_ms_is_blocked_GC_sweep;
 
     interp->gc_sys->get_gc_info      = gc_ms_get_gc_info;
+
+    /* gc_private is @objects */
+    interp->gc_sys->gc_private       = Parrot_gc_allocate_linked_list(interp);
 
     initialize_var_size_pools(interp, interp->mem_pools);
     initialize_fixed_size_pools(interp, interp->mem_pools);
@@ -692,6 +723,11 @@ gc_ms_free_pmc_header(PARROT_INTERP, ARGMOD(PMC *pmc))
     ++pool->num_free_objects;
 }
 
+static void
+gc_ms_mark_pmc_header(PARROT_INTERP, ARGMOD(PMC *pmc))
+{
+}
+
 /*
 
 =item C<static STRING* gc_ms_allocate_string_header(PARROT_INTERP, UINTVAL
@@ -739,6 +775,11 @@ gc_ms_free_string_header(PARROT_INTERP, ARGMOD(STRING *s))
     }
 }
 
+static void
+gc_ms_mark_string_header(PARROT_INTERP, ARGMOD(STRING *str))
+{
+}
+
 /*
 
 =item C<static Buffer * gc_ms_allocate_bufferlike_header(PARROT_INTERP, size_t
@@ -784,6 +825,11 @@ gc_ms_free_bufferlike_header(PARROT_INTERP, ARGMOD(Buffer *obj),
     ASSERT_ARGS(gc_ms_free_bufferlike_header)
     Fixed_Size_Pool * const pool = get_bufferlike_pool(interp, interp->mem_pools, size);
     pool->add_free_object(interp, interp->mem_pools, pool, obj);
+}
+
+static void
+gc_ms_mark_bufferlike_header(PARROT_INTERP, ARGMOD(Buffer *buf))
+{
 }
 
 /*
