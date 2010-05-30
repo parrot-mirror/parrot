@@ -14,6 +14,8 @@ src/gc/gc_tms.c - TriColour M&S
 
 #include "parrot/parrot.h"
 #include "gc_private.h"
+#include "list.h"
+#include "pool_allocator.h"
 
 #define PANIC_OUT_OF_MEM(size) failed_allocation(__LINE__, (size))
 
@@ -55,7 +57,8 @@ static void* gc_tms_allocate_pmc_attributes(SHIM_INTERP, ARGMOD(PMC *pmc))
 
 PARROT_MALLOC
 PARROT_CAN_RETURN_NULL
-static PMC* gc_tms_allocate_pmc_header(SHIM_INTERP, SHIM(UINTVAL flags));
+static PMC* gc_tms_allocate_pmc_header(PARROT_INTERP, SHIM(UINTVAL flags))
+        __attribute__nonnull__(1);
 
 PARROT_MALLOC
 PARROT_CAN_RETURN_NULL
@@ -84,10 +87,16 @@ static void gc_tms_free_pmc_attributes(SHIM_INTERP, ARGMOD(PMC *pmc))
         __attribute__nonnull__(2)
         FUNC_MODIFIES(*pmc);
 
-static void gc_tms_free_pmc_header(SHIM_INTERP, ARGFREE(PMC *pmc));
+static void gc_tms_free_pmc_header(PARROT_INTERP, ARGFREE(PMC *pmc))
+        __attribute__nonnull__(1);
+
 static void gc_tms_free_string_header(SHIM_INTERP, ARGFREE(STRING *s));
-static size_t gc_tms_get_gc_tmso(SHIM_INTERP, SHIM(Interpinfo_enum what));
+static size_t gc_tms_get_gc_info(SHIM_INTERP, SHIM(Interpinfo_enum what));
 static void gc_tms_mark_and_sweep(SHIM_INTERP, UINTVAL flags);
+static void gc_tms_mark_pmc_header(PARROT_INTERP, ARGIN(PMC *pmc))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
 static void gc_tms_reallocate_buffer_storage(SHIM_INTERP,
     ARGMOD(Buffer *buffer),
     size_t size)
@@ -127,7 +136,8 @@ static void gc_tms_reallocate_string_storage(SHIM_INTERP,
 #define ASSERT_ARGS_gc_tms_allocate_pmc_attributes \
      __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
        PARROT_ASSERT_ARG(pmc))
-#define ASSERT_ARGS_gc_tms_allocate_pmc_header __attribute__unused__ int _ASSERT_ARGS_CHECK = (0)
+#define ASSERT_ARGS_gc_tms_allocate_pmc_header __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
+       PARROT_ASSERT_ARG(interp))
 #define ASSERT_ARGS_gc_tms_allocate_string_header __attribute__unused__ int _ASSERT_ARGS_CHECK = (0)
 #define ASSERT_ARGS_gc_tms_allocate_string_storage \
      __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
@@ -140,10 +150,14 @@ static void gc_tms_reallocate_string_storage(SHIM_INTERP,
 #define ASSERT_ARGS_gc_tms_free_memory_chunk __attribute__unused__ int _ASSERT_ARGS_CHECK = (0)
 #define ASSERT_ARGS_gc_tms_free_pmc_attributes __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
        PARROT_ASSERT_ARG(pmc))
-#define ASSERT_ARGS_gc_tms_free_pmc_header __attribute__unused__ int _ASSERT_ARGS_CHECK = (0)
+#define ASSERT_ARGS_gc_tms_free_pmc_header __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
+       PARROT_ASSERT_ARG(interp))
 #define ASSERT_ARGS_gc_tms_free_string_header __attribute__unused__ int _ASSERT_ARGS_CHECK = (0)
-#define ASSERT_ARGS_gc_tms_get_gc_tmso __attribute__unused__ int _ASSERT_ARGS_CHECK = (0)
+#define ASSERT_ARGS_gc_tms_get_gc_info __attribute__unused__ int _ASSERT_ARGS_CHECK = (0)
 #define ASSERT_ARGS_gc_tms_mark_and_sweep __attribute__unused__ int _ASSERT_ARGS_CHECK = (0)
+#define ASSERT_ARGS_gc_tms_mark_pmc_header __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
+       PARROT_ASSERT_ARG(interp) \
+    , PARROT_ASSERT_ARG(pmc))
 #define ASSERT_ARGS_gc_tms_reallocate_buffer_storage \
      __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
        PARROT_ASSERT_ARG(buffer))
@@ -244,23 +258,6 @@ void *data)>
 Functions for allocating/deallocating various objects.
 
 */
-
-PARROT_MALLOC
-PARROT_CAN_RETURN_NULL
-static PMC*
-gc_tms_allocate_pmc_header(SHIM_INTERP, SHIM(UINTVAL flags))
-{
-    ASSERT_ARGS(gc_tms_allocate_pmc_header)
-    return (PMC*)calloc(sizeof (PMC), 1);
-}
-
-static void
-gc_tms_free_pmc_header(SHIM_INTERP, ARGFREE(PMC *pmc))
-{
-    ASSERT_ARGS(gc_tms_free_pmc_header)
-    if (pmc)
-        free(pmc);
-}
 
 PARROT_MALLOC
 PARROT_CAN_RETURN_NULL
@@ -422,10 +419,44 @@ finalization is necessary.
 
 */
 
+/* Private information */
+typedef struct TriColor_GC {
+    /* Allocator for PMC headers */
+    struct Pool_Allocator *pmc_allocator;
+
+    struct Linked_List    *objects;
+    struct Linked_List    *grey_objects;
+    struct Linked_List    *dead_objects;
+
+    /* We have to keep "constant" PMCs. */
+    struct Linked_List    *constant_pmcs;
+
+    /** statistics for GC **/
+    size_t  gc_mark_runs;       /* Number of times we've done a mark run */
+    size_t  gc_lazy_mark_runs;  /* Number of successful lazy mark runs */
+    size_t  gc_collect_runs;    /* Number of times we've done a memory
+                                   compaction */
+    size_t  mem_allocs_since_last_collect;      /* The number of memory
+                                                 * allocations from the
+                                                 * system since the last
+                                                 * compaction run */
+    size_t  header_allocs_since_last_collect;   /* The size of header
+                                                 * blocks allocated from
+                                                 * the system since the last
+                                                 * GC run */
+    /* GC blocking */
+    UINTVAL gc_mark_block_level;  /* How many outstanding GC block
+                                     requests are there? */
+    UINTVAL gc_sweep_block_level; /* How many outstanding GC block
+                                     requests are there? */
+
+} TriColor_GC;
+
 void
 Parrot_gc_tms_init(PARROT_INTERP)
 {
     ASSERT_ARGS(Parrot_gc_tms_init)
+    struct TriColor_GC *gc_private;
 
     interp->gc_sys->do_gc_mark         = gc_tms_mark_and_sweep;
     interp->gc_sys->finalize_gc_system = NULL;
@@ -470,8 +501,44 @@ Parrot_gc_tms_init(PARROT_INTERP)
                 = gc_tms_reallocate_memory_chunk_zeroed;
     interp->gc_sys->free_memory_chunk       = gc_tms_free_memory_chunk;
 
-    interp->gc_sys->get_gc_tmso      = gc_tms_get_gc_tmso;
+    interp->gc_sys->get_gc_info      = gc_tms_get_gc_info;
 
+    gc_private = mem_allocate_zeroed_typed(TriColor_GC);
+
+    gc_private->pmc_allocator = Parrot_gc_create_pool_allocator(
+            sizeof (List_Item_Header) + sizeof (PMC));
+
+    interp->gc_sys->gc_private = gc_private;
+}
+
+PARROT_MALLOC
+PARROT_CAN_RETURN_NULL
+static PMC*
+gc_tms_allocate_pmc_header(PARROT_INTERP, SHIM(UINTVAL flags))
+{
+    ASSERT_ARGS(gc_tms_allocate_pmc_header)
+    TriColor_GC *self = (TriColor_GC *)interp->gc_sys->gc_private;
+
+    List_Item_Header *ptr = (List_Item_Header *)Parrot_gc_pool_allocate(interp,
+                                self->pmc_allocator);
+    Parrot_gc_list_append(interp, self->objects, ptr);
+
+    return LLH2Obj_typed(ptr, PMC);
+}
+
+static void
+gc_tms_free_pmc_header(PARROT_INTERP, ARGFREE(PMC *pmc))
+{
+    ASSERT_ARGS(gc_tms_free_pmc_header)
+    TriColor_GC *self = (TriColor_GC *)interp->gc_sys->gc_private;
+
+    if (pmc)
+        Parrot_gc_pool_free(self->pmc_allocator, Obj2LLH(pmc));
+}
+
+static void
+gc_tms_mark_pmc_header(PARROT_INTERP, ARGIN(PMC *pmc))
+{
 }
 
 /*
