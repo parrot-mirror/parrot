@@ -456,7 +456,7 @@ void
 Parrot_gc_tms_init(PARROT_INTERP)
 {
     ASSERT_ARGS(Parrot_gc_tms_init)
-    struct TriColor_GC *gc_private;
+    struct TriColor_GC *self;
 
     interp->gc_sys->do_gc_mark         = gc_tms_mark_and_sweep;
     interp->gc_sys->finalize_gc_system = NULL;
@@ -503,12 +503,13 @@ Parrot_gc_tms_init(PARROT_INTERP)
 
     interp->gc_sys->get_gc_info      = gc_tms_get_gc_info;
 
-    gc_private = mem_allocate_zeroed_typed(TriColor_GC);
+    self = mem_allocate_zeroed_typed(TriColor_GC);
 
-    gc_private->pmc_allocator = Parrot_gc_create_pool_allocator(
+    self->pmc_allocator = Parrot_gc_create_pool_allocator(
             sizeof (List_Item_Header) + sizeof (PMC));
+    self->objects = Parrot_gc_allocate_linked_list(interp);
 
-    interp->gc_sys->gc_private = gc_private;
+    interp->gc_sys->gc_private = self;
 }
 
 PARROT_MALLOC
