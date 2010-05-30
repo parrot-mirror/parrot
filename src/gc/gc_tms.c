@@ -23,6 +23,7 @@ src/gc/gc_tms.c - TriColour M&S
 typedef struct TriColor_GC {
     /* Allocator for PMC headers */
     struct Pool_Allocator *pmc_allocator;
+    struct Pool_Allocator *constant_pmc_allocator;
 
     struct Linked_List    *objects;
     struct Linked_List    *grey_objects;
@@ -536,6 +537,10 @@ Parrot_gc_tms_init(PARROT_INTERP)
 
     self->pmc_allocator = Parrot_gc_create_pool_allocator(
             sizeof (List_Item_Header) + sizeof (PMC));
+
+    self->constant_pmc_allocator = Parrot_gc_create_pool_allocator(
+            sizeof (List_Item_Header) + sizeof (PMC));
+
     self->objects = Parrot_gc_allocate_linked_list(interp);
 
     interp->gc_sys->gc_private = self;
@@ -544,15 +549,23 @@ Parrot_gc_tms_init(PARROT_INTERP)
 PARROT_MALLOC
 PARROT_CAN_RETURN_NULL
 static PMC*
-gc_tms_allocate_pmc_header(PARROT_INTERP, SHIM(UINTVAL flags))
+gc_tms_allocate_pmc_header(PARROT_INTERP, UINTVAL flags)
 {
     ASSERT_ARGS(gc_tms_allocate_pmc_header)
-    TriColor_GC *self = (TriColor_GC *)interp->gc_sys->gc_private;
+    TriColor_GC      *self = (TriColor_GC *)interp->gc_sys->gc_private;
+    List_Item_Header *ptr;
 
-    List_Item_Header *ptr = (List_Item_Header *)Parrot_gc_pool_allocate(interp,
-                                self->pmc_allocator);
-    ptr->next = ptr->prev = NULL;
-    Parrot_gc_list_append(interp, self->objects, ptr);
+    /* Allocate "constant" PMCs from constant allocator and forget about them */
+    if (flags & PObj_constant_FLAG) {
+        ptr = (List_Item_Header *)Parrot_gc_pool_allocate(interp,
+            self->constant_pmc_allocator);
+    }
+    else {
+        ptr = (List_Item_Header *)Parrot_gc_pool_allocate(interp,
+            self->pmc_allocator);
+        ptr->next = ptr->prev = NULL;
+        Parrot_gc_list_append(interp, self->objects, ptr);
+    }
 
     return LLH2Obj_typed(ptr, PMC);
 }
@@ -609,7 +622,6 @@ gc_tms_mark_and_sweep(PARROT_INTERP, UINTVAL flags)
         self.allocator.free($dead);
     }
     */
-    /* FIXME Move "constant" PMCs into @constant_pmcs */
     tmp = self->dead_objects->first;
     while (tmp) {
         List_Item_Header *next = tmp->next;
@@ -672,7 +684,7 @@ gc_tms_mark_pobj_header(PARROT_INTERP, ARGIN_NULLOK(PObj * obj))
     ASSERT_ARGS(gc_tms_mark_pobj_header)
     if (obj) {
         if (PObj_is_PMC_TEST(obj))
-            gc_tms_mark_pmc_header(interp, (PObj *)obj);
+            gc_tms_mark_pmc_header(interp, (PMC *)obj);
         else
             PObj_live_SET(obj);
     }
