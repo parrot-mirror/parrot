@@ -33,6 +33,83 @@ This code implements double linked list of GCable objects.
 
 */
 
+PARROT_EXPORT
+PARROT_CANNOT_RETURN_NULL
+struct Linked_List*
+Parrot_gc_allocate_linked_list(SHIM_INTERP)
+{
+    Linked_List *res = (Linked_List*)mem_sys_allocate_zeroed(sizeof (Linked_List));
+    return res;
+}
+
+PARROT_EXPORT
+void
+Parrot_gc_destroy_linked_list(SHIM_INTERP, ARGMOD(Linked_List* list))
+{
+    mem_sys_free(list);
+}
+
+PARROT_EXPORT
+void
+Parrot_gc_list_append(SHIM_INTERP, ARGMOD(Linked_List *list), ARGMOD(List_Item_Header *item))
+{
+    /* First item */
+    if (!list->first) {
+        list->first = list->last = item;
+        item->prev = item->next = NULL;
+    }
+    else {
+        item->prev = list->last;
+        item->next = NULL;
+        list->last = item;
+    }
+    list->count++;
+}
+
+PARROT_EXPORT
+void
+Parrot_gc_list_prepend(SHIM_INTERP, ARGMOD(Linked_List *list), ARGMOD(List_Item_Header *item))
+{
+    /* First item */
+    if (!list->first) {
+        list->first = list->last = item;
+        item->prev = item->next = NULL;
+    }
+    else {
+        item->prev = NULL;
+        item->next = list->first;
+        list->first = item;
+    }
+    list->count++;
+}
+
+PARROT_EXPORT
+void
+Parrot_gc_list_remove(SHIM_INTERP, ARGMOD(Linked_List *list), ARGMOD(List_Item_Header *item))
+{
+    /* First item */
+    if (list->first == item) {
+        list->first = list->first->next;
+        /* Not the last one */
+        if (list->first) {
+            list->first->prev = NULL;
+        }
+    }
+    else if (list->last == item) {
+        list->last = list->last->prev;
+        /* It' can't be last item. */
+        list->last->next = NULL;
+    }
+    else {
+        List_Item_Header *prev = item->prev;
+        List_Item_Header *next = item->next;
+        prev->next = next;
+        next->prev = prev;
+        item->prev = item->next = NULL;
+    }
+}
+
+
 /*
 
 =back
