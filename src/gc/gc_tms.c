@@ -476,16 +476,6 @@ Parrot_gc_tms_init(PARROT_INTERP)
     ASSERT_ARGS(Parrot_gc_tms_init)
     struct TriColor_GC *self;
 
-    /* Compatibility with "old" GC */
-    /* Used only in trace_system_stack, etc. */
-    /* Remove after switching to GC.trace_roots */
-    interp->mem_pools = mem_internal_allocate_zeroed_typed(Memory_Pools);
-    interp->mem_pools->num_sized          = 0;
-    interp->mem_pools->num_attribs        = 0;
-    interp->mem_pools->attrib_pools       = NULL;
-    interp->mem_pools->sized_header_pools = NULL;
-
-
     interp->gc_sys->do_gc_mark         = gc_tms_mark_and_sweep;
     interp->gc_sys->finalize_gc_system = NULL;
 
@@ -601,7 +591,7 @@ gc_tms_mark_and_sweep(PARROT_INTERP, UINTVAL flags)
     /*
     self.grey_objects  = self.trace_roots();
     */
-    Parrot_gc_trace_root(interp, interp->mem_pools, 0);
+    Parrot_gc_trace_root(interp, NULL, 0);
 
     //fprintf(stderr, "Roots %d\n", self->grey_objects->count);
 
