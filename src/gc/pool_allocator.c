@@ -166,13 +166,19 @@ Parrot_gc_pool_free(ARGMOD(Pool_Allocator *pool), ARGMOD(void *data))
 
 PARROT_EXPORT
 int
-Parrot_gc_pool_is_owned(ARGMOD(Pool_Allocator *pool), ARGMOD(void *data))
+Parrot_gc_pool_is_owned(ARGMOD(Pool_Allocator *pool), ARGMOD(void *ptr))
 {
     ASSERT_ARGS(Parrot_gc_pool_is_owned)
     Pool_Allocator_Arena *arena = pool->top_arena;
     while (arena) {
-        if (((char*)data - (char*)arena) < GC_FIXED_SIZE_POOL_SIZE)
+        const ptrdiff_t ptr_diff =
+            (ptrdiff_t)ptr - (ptrdiff_t)(arena + sizeof (Pool_Allocator_Arena));
+
+        if (0 <= ptr_diff
+              && ptr_diff < GC_FIXED_SIZE_POOL_SIZE // It's wrong check.
+        ) //&& ptr_diff % pool->attr_size == 0)
             return 1;
+
         arena = arena->prev;
     }
 
