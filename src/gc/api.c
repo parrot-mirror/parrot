@@ -165,25 +165,7 @@ void
 Parrot_gc_mark_PMC_alive_fun(PARROT_INTERP, ARGMOD_NULLOK(PMC *obj))
 {
     ASSERT_ARGS(Parrot_gc_mark_PMC_alive_fun)
-    if (!PMC_IS_NULL(obj)) {
-        PARROT_ASSERT(PObj_is_PMC_TEST(obj));
-
-        if (PObj_is_live_or_free_TESTALL(obj))
-            return;
-
-        /* mark it live */
-        PObj_live_SET(obj);
-
-        /* if object is a PMC and contains buffers or PMCs, then attach the PMC
-         * to the chained mark list. */
-        if (PObj_is_special_PMC_TEST(obj)) {
-            if (PObj_custom_mark_TEST(obj))
-                VTABLE_mark(interp, obj);
-        }
-
-        if (PMC_metadata(obj))
-            Parrot_gc_mark_PMC_alive(interp, PMC_metadata(obj));
-    }
+    interp->gc_sys->mark_pmc_header(interp, obj);
 }
 
 /*
@@ -198,15 +180,10 @@ A type safe wrapper of Parrot_gc_mark_PObj_alive for STRING.
 
 PARROT_EXPORT
 void
-Parrot_gc_mark_STRING_alive_fun(SHIM_INTERP, ARGMOD_NULLOK(STRING *obj))
+Parrot_gc_mark_STRING_alive_fun(PARROT_INTERP, ARGMOD_NULLOK(STRING *obj))
 {
     ASSERT_ARGS(Parrot_gc_mark_STRING_alive_fun)
-    if (!STRING_IS_NULL(obj)) {
-        PARROT_ASSERT(PObj_is_string_TEST(obj));
-
-        /* mark it live */
-        PObj_live_SET(obj);
-    }
+    interp->gc_sys->mark_string_header(interp, obj);
 }
 
 /*

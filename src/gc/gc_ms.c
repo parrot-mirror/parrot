@@ -154,23 +154,22 @@ static unsigned int gc_ms_is_blocked_GC_sweep(PARROT_INTERP)
 static void gc_ms_mark_and_sweep(PARROT_INTERP, UINTVAL flags)
         __attribute__nonnull__(1);
 
-static void gc_ms_mark_bufferlike_header(PARROT_INTERP, ARGMOD(Buffer *buf))
+static void gc_ms_mark_bufferlike_header(PARROT_INTERP,
+    ARGMOD_NULLOK(Buffer *buf))
         __attribute__nonnull__(1)
-        __attribute__nonnull__(2)
         FUNC_MODIFIES(*buf);
 
-static void gc_ms_mark_pmc_header(PARROT_INTERP, ARGMOD(PMC *pmc))
+static void gc_ms_mark_pmc_header(PARROT_INTERP, ARGMOD_NULLOK(PMC *obj))
         __attribute__nonnull__(1)
-        __attribute__nonnull__(2)
-        FUNC_MODIFIES(*pmc);
+        FUNC_MODIFIES(*obj);
 
 static void gc_ms_mark_special(PARROT_INTERP, ARGIN(PMC *pmc))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
-static void gc_ms_mark_string_header(PARROT_INTERP, ARGMOD(STRING *str))
+static void gc_ms_mark_string_header(PARROT_INTERP,
+    ARGMOD_NULLOK(STRING *str))
         __attribute__nonnull__(1)
-        __attribute__nonnull__(2)
         FUNC_MODIFIES(*str);
 
 static void gc_ms_more_traceable_objects(PARROT_INTERP,
@@ -330,17 +329,14 @@ static void Parrot_gc_initialize_fixed_size_pools(SHIM_INTERP,
 #define ASSERT_ARGS_gc_ms_mark_and_sweep __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
        PARROT_ASSERT_ARG(interp))
 #define ASSERT_ARGS_gc_ms_mark_bufferlike_header __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
-       PARROT_ASSERT_ARG(interp) \
-    , PARROT_ASSERT_ARG(buf))
+       PARROT_ASSERT_ARG(interp))
 #define ASSERT_ARGS_gc_ms_mark_pmc_header __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
-       PARROT_ASSERT_ARG(interp) \
-    , PARROT_ASSERT_ARG(pmc))
+       PARROT_ASSERT_ARG(interp))
 #define ASSERT_ARGS_gc_ms_mark_special __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
        PARROT_ASSERT_ARG(interp) \
     , PARROT_ASSERT_ARG(pmc))
 #define ASSERT_ARGS_gc_ms_mark_string_header __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
-       PARROT_ASSERT_ARG(interp) \
-    , PARROT_ASSERT_ARG(str))
+       PARROT_ASSERT_ARG(interp))
 #define ASSERT_ARGS_gc_ms_more_traceable_objects __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
        PARROT_ASSERT_ARG(interp) \
     , PARROT_ASSERT_ARG(mem_pools) \
@@ -724,8 +720,28 @@ gc_ms_free_pmc_header(PARROT_INTERP, ARGMOD(PMC *pmc))
 }
 
 static void
-gc_ms_mark_pmc_header(PARROT_INTERP, ARGMOD(PMC *pmc))
+gc_ms_mark_pmc_header(PARROT_INTERP, ARGMOD_NULLOK(PMC *obj))
 {
+    ASSERT_ARGS(gc_ms_mark_pmc_header)
+    if (!PMC_IS_NULL(obj)) {
+        PARROT_ASSERT(PObj_is_PMC_TEST(obj));
+
+        if (PObj_is_live_or_free_TESTALL(obj))
+            return;
+
+        /* mark it live */
+        PObj_live_SET(obj);
+
+        /* if object is a PMC and contains buffers or PMCs, then attach the PMC
+         * to the chained mark list. */
+        if (PObj_is_special_PMC_TEST(obj)) {
+            if (PObj_custom_mark_TEST(obj))
+                VTABLE_mark(interp, obj);
+        }
+
+        if (PMC_metadata(obj))
+            Parrot_gc_mark_PMC_alive(interp, PMC_metadata(obj));
+    }
 }
 
 /*
@@ -776,8 +792,15 @@ gc_ms_free_string_header(PARROT_INTERP, ARGMOD(STRING *s))
 }
 
 static void
-gc_ms_mark_string_header(PARROT_INTERP, ARGMOD(STRING *str))
+gc_ms_mark_string_header(PARROT_INTERP, ARGMOD_NULLOK(STRING *str))
 {
+    ASSERT_ARGS(gc_ms_mark_string_header)
+    if (!STRING_IS_NULL(str)) {
+        PARROT_ASSERT(PObj_is_string_TEST(str));
+
+        /* mark it live */
+        PObj_live_SET(str);
+    }
 }
 
 /*
@@ -828,8 +851,12 @@ gc_ms_free_bufferlike_header(PARROT_INTERP, ARGMOD(Buffer *obj),
 }
 
 static void
-gc_ms_mark_bufferlike_header(PARROT_INTERP, ARGMOD(Buffer *buf))
+gc_ms_mark_bufferlike_header(PARROT_INTERP, ARGMOD_NULLOK(Buffer *buf))
 {
+    ASSERT_ARGS(gc_ms_mark_bufferlike_header)
+    if (buf)
+        /* mark it live */
+        PObj_live_SET(buf);
 }
 
 /*
