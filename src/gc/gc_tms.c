@@ -19,6 +19,39 @@ src/gc/gc_tms.c - TriColour M&S
 
 #define PANIC_OUT_OF_MEM(size) failed_allocation(__LINE__, (size))
 
+/* Private information */
+typedef struct TriColor_GC {
+    /* Allocator for PMC headers */
+    struct Pool_Allocator *pmc_allocator;
+
+    struct Linked_List    *objects;
+    struct Linked_List    *grey_objects;
+    struct Linked_List    *dead_objects;
+
+    /* We have to keep "constant" PMCs. */
+    struct Linked_List    *constant_pmcs;
+
+    /** statistics for GC **/
+    size_t  gc_mark_runs;       /* Number of times we've done a mark run */
+    size_t  gc_lazy_mark_runs;  /* Number of successful lazy mark runs */
+    size_t  gc_collect_runs;    /* Number of times we've done a memory
+                                   compaction */
+    size_t  mem_allocs_since_last_collect;      /* The number of memory
+                                                 * allocations from the
+                                                 * system since the last
+                                                 * compaction run */
+    size_t  header_allocs_since_last_collect;   /* The size of header
+                                                 * blocks allocated from
+                                                 * the system since the last
+                                                 * GC run */
+    /* GC blocking */
+    UINTVAL gc_mark_block_level;  /* How many outstanding GC block
+                                     requests are there? */
+    UINTVAL gc_sweep_block_level; /* How many outstanding GC block
+                                     requests are there? */
+
+} TriColor_GC;
+
 /* HEADERIZER HFILE: src/gc/gc_private.h */
 
 /* HEADERIZER BEGIN: static */
@@ -92,10 +125,19 @@ static void gc_tms_free_pmc_header(PARROT_INTERP, ARGFREE(PMC *pmc))
 
 static void gc_tms_free_string_header(SHIM_INTERP, ARGFREE(STRING *s));
 static size_t gc_tms_get_gc_info(SHIM_INTERP, SHIM(Interpinfo_enum what));
-static void gc_tms_mark_and_sweep(SHIM_INTERP, UINTVAL flags);
+static void gc_tms_mark_and_sweep(PARROT_INTERP, UINTVAL flags)
+        __attribute__nonnull__(1);
+
 static void gc_tms_mark_pmc_header(PARROT_INTERP, ARGIN(PMC *pmc))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
+
+static void gc_tms_real_mark_pmc(PARROT_INTERP,
+    ARGIN(struct TriColor_GC *self),
+    ARGIN(struct List_Item_Header *li))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3);
 
 static void gc_tms_reallocate_buffer_storage(SHIM_INTERP,
     ARGMOD(Buffer *buffer),
@@ -154,10 +196,15 @@ static void gc_tms_reallocate_string_storage(SHIM_INTERP,
        PARROT_ASSERT_ARG(interp))
 #define ASSERT_ARGS_gc_tms_free_string_header __attribute__unused__ int _ASSERT_ARGS_CHECK = (0)
 #define ASSERT_ARGS_gc_tms_get_gc_info __attribute__unused__ int _ASSERT_ARGS_CHECK = (0)
-#define ASSERT_ARGS_gc_tms_mark_and_sweep __attribute__unused__ int _ASSERT_ARGS_CHECK = (0)
+#define ASSERT_ARGS_gc_tms_mark_and_sweep __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
+       PARROT_ASSERT_ARG(interp))
 #define ASSERT_ARGS_gc_tms_mark_pmc_header __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
        PARROT_ASSERT_ARG(interp) \
     , PARROT_ASSERT_ARG(pmc))
+#define ASSERT_ARGS_gc_tms_real_mark_pmc __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
+       PARROT_ASSERT_ARG(interp) \
+    , PARROT_ASSERT_ARG(self) \
+    , PARROT_ASSERT_ARG(li))
 #define ASSERT_ARGS_gc_tms_reallocate_buffer_storage \
      __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
        PARROT_ASSERT_ARG(buffer))
@@ -193,13 +240,6 @@ Flags can be a combination of these values:
 =cut
 
 */
-
-static void
-gc_tms_mark_and_sweep(SHIM_INTERP, UINTVAL flags)
-{
-    ASSERT_ARGS(gc_tms_mark_and_sweep)
-    UNUSED(flags);
-}
 
 /*
 
@@ -419,39 +459,6 @@ finalization is necessary.
 
 */
 
-/* Private information */
-typedef struct TriColor_GC {
-    /* Allocator for PMC headers */
-    struct Pool_Allocator *pmc_allocator;
-
-    struct Linked_List    *objects;
-    struct Linked_List    *grey_objects;
-    struct Linked_List    *dead_objects;
-
-    /* We have to keep "constant" PMCs. */
-    struct Linked_List    *constant_pmcs;
-
-    /** statistics for GC **/
-    size_t  gc_mark_runs;       /* Number of times we've done a mark run */
-    size_t  gc_lazy_mark_runs;  /* Number of successful lazy mark runs */
-    size_t  gc_collect_runs;    /* Number of times we've done a memory
-                                   compaction */
-    size_t  mem_allocs_since_last_collect;      /* The number of memory
-                                                 * allocations from the
-                                                 * system since the last
-                                                 * compaction run */
-    size_t  header_allocs_since_last_collect;   /* The size of header
-                                                 * blocks allocated from
-                                                 * the system since the last
-                                                 * GC run */
-    /* GC blocking */
-    UINTVAL gc_mark_block_level;  /* How many outstanding GC block
-                                     requests are there? */
-    UINTVAL gc_sweep_block_level; /* How many outstanding GC block
-                                     requests are there? */
-
-} TriColor_GC;
-
 void
 Parrot_gc_tms_init(PARROT_INTERP)
 {
@@ -538,8 +545,80 @@ gc_tms_free_pmc_header(PARROT_INTERP, ARGFREE(PMC *pmc))
 }
 
 static void
+gc_tms_mark_and_sweep(PARROT_INTERP, UINTVAL flags)
+{
+    ASSERT_ARGS(gc_tms_mark_and_sweep)
+    TriColor_GC      *self = (TriColor_GC *)interp->gc_sys->gc_private;
+    List_Item_Header *tmp;
+    UNUSED(flags);
+
+    /*
+    self.dead_objects  = self.objects;
+    self.objects       = ();
+    */
+    self->dead_objects = self->objects;
+    self->objects      = Parrot_gc_allocate_linked_list(interp);
+    self->grey_objects = Parrot_gc_allocate_linked_list(interp);
+
+    /*
+    self.grey_objects  = self.trace_roots();
+    */
+
+    /*
+    # mark_alive will push into self.grey_objects
+    self.mark_real($_) for self.grey_objects;
+    */
+    tmp = self->grey_objects->first;
+    while (tmp) {
+        gc_tms_real_mark_pmc(interp, self, tmp);
+        tmp = tmp->next;
+    }
+
+    /*
+    # Sweep
+    for self.dead_objects -> $dead {
+        $dead.destroy();
+        self.allocator.free($dead);
+    }
+    */
+    tmp = self->dead_objects->first;
+    while (tmp) {
+        List_Item_Header *next = tmp->next;
+        Parrot_gc_pool_free(self->pmc_allocator, tmp);
+        tmp = next;
+    }
+
+    /* Clean up */
+    Parrot_gc_destroy_linked_list(interp, self->grey_objects);
+    Parrot_gc_destroy_linked_list(interp, self->dead_objects);
+
+    /* Paint live objects white */
+    tmp = self->objects->first;
+    while (tmp) {
+        PObj_live_CLEAR(LLH2Obj_typed(tmp, PMC));
+        tmp = tmp->next;
+    }
+}
+
+static void
 gc_tms_mark_pmc_header(PARROT_INTERP, ARGIN(PMC *pmc))
 {
+    ASSERT_ARGS(gc_tms_mark_pmc_header)
+    TriColor_GC      *self = (TriColor_GC *)interp->gc_sys->gc_private;
+    List_Item_Header *item = Obj2LLH(pmc);
+    Parrot_gc_list_remove(interp, self->dead_objects, item);
+    Parrot_gc_list_append(interp, self->grey_objects, item);
+}
+
+static void
+gc_tms_real_mark_pmc(PARROT_INTERP,
+        ARGIN(struct TriColor_GC *self),
+        ARGIN(struct List_Item_Header *li))
+{
+    ASSERT_ARGS(gc_tms_real_mark_pmc)
+    Parrot_gc_list_remove(interp, self->grey_objects, li);
+    /* self.SUPER.mark($obj) */
+    gc_ms_mark_pmc_header(interp, LLH2Obj_typed(li, PMC));
 }
 
 /*
