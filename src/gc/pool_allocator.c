@@ -162,6 +162,21 @@ Parrot_gc_pool_free(ARGMOD(Pool_Allocator *pool), ARGMOD(void *data))
     ++pool->num_free_objects;
 }
 
+PARROT_EXPORT
+int
+Parrot_gc_pool_is_owned(ARGMOD(Pool_Allocator *pool), ARGMOD(void *data))
+{
+    ASSERT_ARGS(Parrot_gc_pool_is_owned)
+    Pool_Allocator_Arena *arena = pool->top_arena;
+    while (arena) {
+        if (((char*)data - (char*)arena) < GC_FIXED_SIZE_POOL_SIZE)
+            return 1;
+        arena = arena->prev;
+    }
+
+    return 0;
+}
+
 
 static void
 allocate_new_pool_arena(ARGMOD(Pool_Allocator *pool))

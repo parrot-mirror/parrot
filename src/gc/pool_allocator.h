@@ -74,6 +74,15 @@ void Parrot_gc_pool_free(ARGMOD(Pool_Allocator *pool), ARGMOD(void *data))
         FUNC_MODIFIES(*pool)
         FUNC_MODIFIES(*data);
 
+PARROT_EXPORT
+int Parrot_gc_pool_is_owned(
+    ARGMOD(Pool_Allocator *pool),
+    ARGMOD(void *data))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        FUNC_MODIFIES(*pool)
+        FUNC_MODIFIES(*data);
+
 #define ASSERT_ARGS_Parrot_gc_destroy_pool_alloctor \
      __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
        PARROT_ASSERT_ARG(interp) \
@@ -82,6 +91,9 @@ void Parrot_gc_pool_free(ARGMOD(Pool_Allocator *pool), ARGMOD(void *data))
        PARROT_ASSERT_ARG(interp) \
     , PARROT_ASSERT_ARG(pool))
 #define ASSERT_ARGS_Parrot_gc_pool_free __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
+       PARROT_ASSERT_ARG(pool) \
+    , PARROT_ASSERT_ARG(data))
+#define ASSERT_ARGS_Parrot_gc_pool_is_owned __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
        PARROT_ASSERT_ARG(pool) \
     , PARROT_ASSERT_ARG(data))
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
