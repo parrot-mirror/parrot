@@ -320,13 +320,12 @@ typedef struct Memory_Pools {
 /* HEADERIZER BEGIN: src/gc/system.c */
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 
-void trace_system_areas(PARROT_INTERP, ARGIN(const Memory_Pools *mem_pools))
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(2);
+void trace_system_areas(PARROT_INTERP,
+    ARGIN_NULLOK(const Memory_Pools *mem_pools))
+        __attribute__nonnull__(1);
 
 #define ASSERT_ARGS_trace_system_areas __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
-       PARROT_ASSERT_ARG(interp) \
-    , PARROT_ASSERT_ARG(mem_pools))
+       PARROT_ASSERT_ARG(interp))
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 /* HEADERIZER END: src/gc/system.c */
 
@@ -413,10 +412,9 @@ void Parrot_gc_sweep_pool(PARROT_INTERP,
         FUNC_MODIFIES(*pool);
 
 int Parrot_gc_trace_root(PARROT_INTERP,
-    ARGMOD(Memory_Pools *mem_pools),
+    ARGMOD_NULLOK(Memory_Pools *mem_pools),
     Parrot_gc_trace_type trace)
         __attribute__nonnull__(1)
-        __attribute__nonnull__(2)
         FUNC_MODIFIES(*mem_pools);
 
 #define ASSERT_ARGS_contained_in_pool __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
@@ -452,8 +450,7 @@ int Parrot_gc_trace_root(PARROT_INTERP,
     , PARROT_ASSERT_ARG(mem_pools) \
     , PARROT_ASSERT_ARG(pool))
 #define ASSERT_ARGS_Parrot_gc_trace_root __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
-       PARROT_ASSERT_ARG(interp) \
-    , PARROT_ASSERT_ARG(mem_pools))
+       PARROT_ASSERT_ARG(interp))
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 /* HEADERIZER END: src/gc/mark_sweep.c */
 
