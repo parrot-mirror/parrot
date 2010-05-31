@@ -553,7 +553,6 @@ gc_tms_allocate_pmc_header(PARROT_INTERP, UINTVAL flags)
     else {
         ptr = (List_Item_Header *)Parrot_gc_pool_allocate(interp,
             self->pmc_allocator);
-        ptr->next = ptr->prev = NULL;
         Parrot_gc_list_append(interp, self->objects, ptr);
     }
 
