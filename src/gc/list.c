@@ -72,23 +72,6 @@ Parrot_gc_list_append(SHIM_INTERP, ARGMOD(Linked_List *list), ARGMOD(List_Item_H
 
 PARROT_EXPORT
 void
-Parrot_gc_list_prepend(SHIM_INTERP, ARGMOD(Linked_List *list), ARGMOD(List_Item_Header *item))
-{
-    /* First item */
-    if (!list->first) {
-        list->first = list->last = item;
-        item->prev = item->next = NULL;
-    }
-    else {
-        item->prev = NULL;
-        item->next = list->first;
-        list->first = item;
-    }
-    list->count++;
-}
-
-PARROT_EXPORT
-void
 Parrot_gc_list_remove(SHIM_INTERP, ARGMOD(Linked_List *list), ARGMOD(List_Item_Header *item))
 {
     List_Item_Header *next = item->next;
