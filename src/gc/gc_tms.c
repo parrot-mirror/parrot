@@ -600,7 +600,8 @@ gc_tms_allocate_pmc_header(PARROT_INTERP, UINTVAL flags)
         Parrot_gc_list_append(interp, self->objects, ptr);
     }
 
-    return LLH2Obj_typed(ptr, PMC);
+    ret = LLH2Obj_typed(ptr, PMC);
+    return ret;
 }
 
 static void
@@ -657,6 +658,7 @@ gc_tms_mark_and_sweep(PARROT_INTERP, UINTVAL flags)
     counter = 0;
     while (tmp) {
         List_Item_Header *next = tmp->next;
+        PARROT_ASSERT(PObj_grey_TEST(LLH2Obj_typed(tmp, PMC)));
         gc_tms_real_mark_pmc(interp, self, tmp);
         tmp = next;
         ++counter;
@@ -679,6 +681,7 @@ gc_tms_mark_and_sweep(PARROT_INTERP, UINTVAL flags)
         Parrot_gc_pool_free(self->pmc_allocator, tmp);
         tmp = next;
         ++counter;
+        PARROT_ASSERT(counter <= self->dead_objects->count);
     }
     //fprintf(stderr, "Processed dead %d\n", counter);
 
@@ -691,9 +694,14 @@ gc_tms_mark_and_sweep(PARROT_INTERP, UINTVAL flags)
 
     /* Paint live objects white */
     tmp = self->objects->first;
+    counter = 0;
     while (tmp) {
-        PObj_live_CLEAR(LLH2Obj_typed(tmp, PMC));
+        PMC *pmc = LLH2Obj_typed(tmp, PMC);
+        PARROT_ASSERT(PObj_live_TEST(pmc));
+        PObj_live_CLEAR(pmc);
         tmp = tmp->next;
+        counter++;
+        PARROT_ASSERT(counter <= self->objects->count);
     }
 
     self->header_allocs_since_last_collect = 0;
@@ -723,9 +731,9 @@ gc_tms_real_mark_pmc(PARROT_INTERP,
 {
     ASSERT_ARGS(gc_tms_real_mark_pmc)
     Parrot_gc_list_remove(interp, self->grey_objects, li);
-    /* self.SUPER.mark($obj) */
     Parrot_gc_list_append(interp, self->objects, li);
     PObj_grey_CLEAR(LLH2Obj_typed(li, PMC));
+    /* self.SUPER.mark($obj) */
     gc_ms_mark_pmc_header(interp, LLH2Obj_typed(li, PMC));
 }
 
