@@ -88,28 +88,22 @@ PARROT_EXPORT
 void
 Parrot_gc_list_remove(SHIM_INTERP, ARGMOD(Linked_List *list), ARGMOD(List_Item_Header *item))
 {
+    List_Item_Header *next = item->next;
+    List_Item_Header *prev = item->prev;
+
     /* First item */
-    if (list->first == item) {
-        list->first = list->first->next;
-        /* Not the last one */
-        if (list->first) {
-            list->first->prev = NULL;
-        }
-    }
-    else if (list->last == item) {
-        list->last = list->last->prev;
-        /* It' can't be last item. */
-        list->last->next = NULL;
-    }
-    else {
-        List_Item_Header *prev = item->prev;
-        List_Item_Header *next = item->next;
-        if (prev)
-            prev->next = next;
-        if (next)
-            next->prev = prev;
-        item->prev = item->next = NULL;
-    }
+    if (list->first == item)
+        list->first = next;
+
+    if (list->last == item)
+        list->last = prev;
+
+    if (prev)
+        prev->next = next;
+    if (next)
+        next->prev = prev;
+
+    item->prev = item->next = NULL;
     list->count--;
 }
 
