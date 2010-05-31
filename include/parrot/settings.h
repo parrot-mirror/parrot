@@ -37,8 +37,9 @@
  * GC_DEFAULT_TYPE selection
  * MS  -- stop-the-world mark & sweep
  * INF -- infinite memory "collector"
+ * TMS -- TriColor Mark & Sweep
  */
-#define PARROT_GC_DEFAULT_TYPE MS
+#define PARROT_GC_DEFAULT_TYPE TMS
 
 /*
  * JIT/i386 can use the CGP run core for external functions instead
