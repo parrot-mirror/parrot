@@ -110,6 +110,7 @@ Parrot_gc_list_remove(SHIM_INTERP, ARGMOD(Linked_List *list), ARGMOD(List_Item_H
             next->prev = prev;
         item->prev = item->next = NULL;
     }
+    list->count--;
 }
 
 
