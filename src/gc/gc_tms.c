@@ -623,6 +623,7 @@ gc_tms_mark_and_sweep(PARROT_INTERP, UINTVAL flags)
     ASSERT_ARGS(gc_tms_mark_and_sweep)
     TriColor_GC      *self = (TriColor_GC *)interp->gc_sys->gc_private;
     List_Item_Header *tmp;
+    size_t            counter;
     UNUSED(flags);
 
     /* GC is blocked */
@@ -639,25 +640,29 @@ gc_tms_mark_and_sweep(PARROT_INTERP, UINTVAL flags)
     self->objects      = Parrot_gc_allocate_linked_list(interp);
     self->grey_objects = Parrot_gc_allocate_linked_list(interp);
 
-    //fprintf(stderr, "Before %d\n", self->dead_objects->count);
+    fprintf(stderr, "Before %d\n", self->dead_objects->count);
 
     /*
     self.grey_objects  = self.trace_roots();
     */
     Parrot_gc_trace_root(interp, NULL, GC_TRACE_FULL);
 
-    //fprintf(stderr, "Roots %d\n", self->grey_objects->count);
+    fprintf(stderr, "Roots %d\n", self->grey_objects->count);
 
     /*
     # mark_alive will push into self.grey_objects
     self.mark_real($_) for self.grey_objects;
     */
     tmp = self->grey_objects->first;
+    counter = 0;
     while (tmp) {
         List_Item_Header *next = tmp->next;
         gc_tms_real_mark_pmc(interp, self, tmp);
         tmp = next;
+        ++counter;
     }
+
+    fprintf(stderr, "Processed grey: %d\n", counter);
 
     /*
     # Sweep
@@ -666,12 +671,16 @@ gc_tms_mark_and_sweep(PARROT_INTERP, UINTVAL flags)
         self.allocator.free($dead);
     }
     */
+    fprintf(stderr, "Killing %d\n", self->dead_objects->count);
     tmp = self->dead_objects->first;
+    counter = 0;
     while (tmp) {
         List_Item_Header *next = tmp->next;
         Parrot_gc_pool_free(self->pmc_allocator, tmp);
         tmp = next;
+        ++counter;
     }
+    fprintf(stderr, "Processed dead %d\n", counter);
 
     fprintf(stderr, "Survived %d\n", self->objects->count);
     fprintf(stderr, "Dead %d\n", self->dead_objects->count);
@@ -697,11 +706,12 @@ gc_tms_mark_pmc_header(PARROT_INTERP, ARGIN(PMC *pmc))
     ASSERT_ARGS(gc_tms_mark_pmc_header)
     TriColor_GC      *self = (TriColor_GC *)interp->gc_sys->gc_private;
     List_Item_Header *item = Obj2LLH(pmc);
-    if (PObj_is_live_or_free_TESTALL(pmc))
+    if (PObj_is_live_or_free_TESTALL(pmc) || PObj_grey_TEST(pmc))
         return;
     /* "constant" objects aren't managed by GC at all. */
     if (PObj_constant_TEST(pmc))
         return;
+    PObj_grey_SET(pmc);
     Parrot_gc_list_remove(interp, self->dead_objects, item);
     Parrot_gc_list_append(interp, self->grey_objects, item);
 }
@@ -715,6 +725,7 @@ gc_tms_real_mark_pmc(PARROT_INTERP,
     Parrot_gc_list_remove(interp, self->grey_objects, li);
     /* self.SUPER.mark($obj) */
     Parrot_gc_list_append(interp, self->objects, li);
+    PObj_grey_CLEAR(LLH2Obj_typed(li, PMC));
     gc_ms_mark_pmc_header(interp, LLH2Obj_typed(li, PMC));
 }
 
