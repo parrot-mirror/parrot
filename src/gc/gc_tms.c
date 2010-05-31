@@ -640,14 +640,14 @@ gc_tms_mark_and_sweep(PARROT_INTERP, UINTVAL flags)
     self->objects      = Parrot_gc_allocate_linked_list(interp);
     self->grey_objects = Parrot_gc_allocate_linked_list(interp);
 
-    fprintf(stderr, "Before %d\n", self->dead_objects->count);
+    //fprintf(stderr, "Before %d\n", self->dead_objects->count);
 
     /*
     self.grey_objects  = self.trace_roots();
     */
     Parrot_gc_trace_root(interp, NULL, GC_TRACE_FULL);
 
-    fprintf(stderr, "Roots %d\n", self->grey_objects->count);
+    //fprintf(stderr, "Roots %d\n", self->grey_objects->count);
 
     /*
     # mark_alive will push into self.grey_objects
@@ -662,7 +662,7 @@ gc_tms_mark_and_sweep(PARROT_INTERP, UINTVAL flags)
         ++counter;
     }
 
-    fprintf(stderr, "Processed grey: %d\n", counter);
+    //fprintf(stderr, "Processed grey: %d\n", counter);
 
     /*
     # Sweep
@@ -671,7 +671,7 @@ gc_tms_mark_and_sweep(PARROT_INTERP, UINTVAL flags)
         self.allocator.free($dead);
     }
     */
-    fprintf(stderr, "Killing %d\n", self->dead_objects->count);
+    //fprintf(stderr, "Killing %d\n", self->dead_objects->count);
     tmp = self->dead_objects->first;
     counter = 0;
     while (tmp) {
@@ -680,10 +680,10 @@ gc_tms_mark_and_sweep(PARROT_INTERP, UINTVAL flags)
         tmp = next;
         ++counter;
     }
-    fprintf(stderr, "Processed dead %d\n", counter);
+    //fprintf(stderr, "Processed dead %d\n", counter);
 
-    fprintf(stderr, "Survived %d\n", self->objects->count);
-    fprintf(stderr, "Dead %d\n", self->dead_objects->count);
+    //fprintf(stderr, "Survived %d\n", self->objects->count);
+    //fprintf(stderr, "Dead %d\n", self->dead_objects->count);
 
     /* Clean up */
     Parrot_gc_destroy_linked_list(interp, self->grey_objects);
