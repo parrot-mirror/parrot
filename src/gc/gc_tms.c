@@ -743,6 +743,7 @@ gc_tms_mark_and_sweep(PARROT_INTERP, UINTVAL flags)
 
     self->header_allocs_since_last_collect = 0;
     self->gc_mark_block_level--;
+    self->gc_mark_runs++;
 }
 
 static void
