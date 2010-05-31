@@ -807,7 +807,7 @@ static void
 gc_tms_mark_pobj_header(PARROT_INTERP, ARGIN_NULLOK(PObj * obj))
 {
     ASSERT_ARGS(gc_tms_mark_pobj_header)
-    if (obj) {
+    if (obj && !PObj_constant_TEST(obj)) {
         if (PObj_is_PMC_TEST(obj))
             gc_tms_mark_pmc_header(interp, (PMC *)obj);
         else
