@@ -584,6 +584,11 @@ gc_tms_allocate_pmc_header(PARROT_INTERP, UINTVAL flags)
     List_Item_Header *ptr;
     PMC              *ret;
 
+    /* Invoke M&S early. Freshly allocated "header" isn't header yet */
+    if (++self->header_allocs_since_last_collect > 1024) {
+        gc_tms_mark_and_sweep(interp, 0);
+    }
+
     /* Allocate "constant" PMCs from constant allocator and forget about them */
     if (flags & PObj_constant_FLAG) {
         ptr = (List_Item_Header *)Parrot_gc_pool_allocate(interp,
@@ -595,14 +600,7 @@ gc_tms_allocate_pmc_header(PARROT_INTERP, UINTVAL flags)
         Parrot_gc_list_append(interp, self->objects, ptr);
     }
 
-    /* Save real pointer on stack. Otherwise it will not be traced */
-    ret = LLH2Obj_typed(ptr, PMC);
-
-    if (++self->header_allocs_since_last_collect > 1024) {
-        gc_tms_mark_and_sweep(interp, 0);
-    }
-
-    return ret;
+    return LLH2Obj_typed(ptr, PMC);
 }
 
 static void
