@@ -582,6 +582,7 @@ gc_tms_allocate_pmc_header(PARROT_INTERP, UINTVAL flags)
     ASSERT_ARGS(gc_tms_allocate_pmc_header)
     TriColor_GC      *self = (TriColor_GC *)interp->gc_sys->gc_private;
     List_Item_Header *ptr;
+    PMC              *ret;
 
     /* Allocate "constant" PMCs from constant allocator and forget about them */
     if (flags & PObj_constant_FLAG) {
@@ -594,11 +595,14 @@ gc_tms_allocate_pmc_header(PARROT_INTERP, UINTVAL flags)
         Parrot_gc_list_append(interp, self->objects, ptr);
     }
 
+    /* Save real pointer on stack. Otherwise it will not be traced */
+    ret = LLH2Obj_typed(ptr, PMC);
+
     if (++self->header_allocs_since_last_collect > 1024) {
         gc_tms_mark_and_sweep(interp, 0);
     }
 
-    return LLH2Obj_typed(ptr, PMC);
+    return ret;
 }
 
 static void
@@ -607,8 +611,12 @@ gc_tms_free_pmc_header(PARROT_INTERP, ARGFREE(PMC *pmc))
     ASSERT_ARGS(gc_tms_free_pmc_header)
     TriColor_GC *self = (TriColor_GC *)interp->gc_sys->gc_private;
 
-    if (pmc)
+    if (pmc) {
+        if (PObj_on_free_list_TEST(pmc))
+            return;
         Parrot_gc_pool_free(self->pmc_allocator, Obj2LLH(pmc));
+        PObj_on_free_list_SET(pmc);
+    }
 }
 
 static void
@@ -638,7 +646,7 @@ gc_tms_mark_and_sweep(PARROT_INTERP, UINTVAL flags)
     /*
     self.grey_objects  = self.trace_roots();
     */
-    Parrot_gc_trace_root(interp, NULL, 0);
+    Parrot_gc_trace_root(interp, NULL, GC_TRACE_FULL);
 
     //fprintf(stderr, "Roots %d\n", self->grey_objects->count);
 
@@ -648,8 +656,9 @@ gc_tms_mark_and_sweep(PARROT_INTERP, UINTVAL flags)
     */
     tmp = self->grey_objects->first;
     while (tmp) {
+        List_Item_Header *next = tmp->next;
         gc_tms_real_mark_pmc(interp, self, tmp);
-        tmp = tmp->next;
+        tmp = next;
     }
 
     /*
@@ -666,8 +675,8 @@ gc_tms_mark_and_sweep(PARROT_INTERP, UINTVAL flags)
         tmp = next;
     }
 
-    //fprintf(stderr, "Survived %d\n", self->objects->count);
-    //fprintf(stderr, "Dead %d\n", self->dead_objects->count);
+    fprintf(stderr, "Survived %d\n", self->objects->count);
+    fprintf(stderr, "Dead %d\n", self->dead_objects->count);
 
     /* Clean up */
     Parrot_gc_destroy_linked_list(interp, self->grey_objects);
