@@ -66,6 +66,8 @@ Parrot_gc_list_append(SHIM_INTERP, ARGMOD(Linked_List *list), ARGMOD(List_Item_H
         list->first = item;
 
     list->count++;
+
+    item->owner = list;
 }
 
 PARROT_EXPORT
@@ -91,6 +93,8 @@ Parrot_gc_list_remove(SHIM_INTERP, ARGMOD(Linked_List *list), ARGMOD(List_Item_H
 {
     List_Item_Header *next = item->next;
     List_Item_Header *prev = item->prev;
+
+    PARROT_ASSERT(list == item->owner);
 
     /* First item */
     if (list->first == item)

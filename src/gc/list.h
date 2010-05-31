@@ -19,6 +19,8 @@ Implementation of double linked lists used by various GC implementations.
 typedef struct List_Item_Header {
     struct List_Item_Header *prev;
     struct List_Item_Header *next;
+
+    struct Linked_List *owner;
 } List_Item_Header;
 
 /* Double-linked list. */

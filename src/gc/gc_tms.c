@@ -695,14 +695,19 @@ gc_tms_mark_and_sweep(PARROT_INTERP, UINTVAL flags)
     /* Paint live objects white */
     tmp = self->objects->first;
     counter = 0;
+    do {
+    List_Item_Header *prev;
     while (tmp) {
         PMC *pmc = LLH2Obj_typed(tmp, PMC);
+        PARROT_ASSERT(tmp->owner == self->objects);
         PARROT_ASSERT(PObj_live_TEST(pmc));
         PObj_live_CLEAR(pmc);
+        prev = tmp;
         tmp = tmp->next;
         counter++;
         PARROT_ASSERT(counter <= self->objects->count);
     }
+    } while(0);
 
     self->header_allocs_since_last_collect = 0;
     self->gc_mark_block_level--;
