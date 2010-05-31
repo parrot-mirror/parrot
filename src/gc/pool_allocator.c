@@ -156,6 +156,8 @@ Parrot_gc_pool_free(ARGMOD(Pool_Allocator *pool), ARGMOD(void *data))
     ASSERT_ARGS(Parrot_gc_pool_free)
     Pool_Allocator_Free_List * const item = (Pool_Allocator_Free_List *)data;
 
+    PARROT_ASSERT(Parrot_gc_pool_is_owned(pool, data));
+
     item->next      = pool->free_list;
     pool->free_list = item;
 
@@ -179,7 +181,7 @@ Parrot_gc_pool_is_owned(ARGMOD(Pool_Allocator *pool), ARGMOD(void *ptr))
               && ptr_diff % pool->object_size == 0)
             return 1;
 
-        arena = arena->prev;
+        arena = arena->next;
     }
 
     return 0;
