@@ -72,6 +72,9 @@ void Parrot_gc_list_remove(SHIM_INTERP,
         FUNC_MODIFIES(*list)
         FUNC_MODIFIES(*item);
 
+int Parrot_gc_list_check(SHIM_INTERP, ARGIN(Linked_List *list))
+        __attribute__nonnull__(2);
+
 #define ASSERT_ARGS_Parrot_gc_allocate_linked_list \
      __attribute__unused__ int _ASSERT_ARGS_CHECK = (0)
 #define ASSERT_ARGS_Parrot_gc_destroy_linked_list __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
@@ -82,6 +85,8 @@ void Parrot_gc_list_remove(SHIM_INTERP,
 #define ASSERT_ARGS_Parrot_gc_list_remove __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
        PARROT_ASSERT_ARG(list) \
     , PARROT_ASSERT_ARG(item))
+#define ASSERT_ARGS_Parrot_gc_list_check __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
+       PARROT_ASSERT_ARG(list))
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 /* HEADERIZER END: src/gc/list.c */
 

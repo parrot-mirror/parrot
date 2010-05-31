@@ -96,6 +96,22 @@ Parrot_gc_list_remove(SHIM_INTERP, ARGMOD(Linked_List *list), ARGMOD(List_Item_H
     list->count--;
 }
 
+int
+Parrot_gc_list_check(SHIM_INTERP, ARGIN(Linked_List *list))
+{
+    List_Item_Header *tmp = list->first;
+    size_t counter = 0;
+
+    while (tmp) {
+        List_Item_Header *next = tmp->next;
+        PARROT_ASSERT(tmp->owner == list);
+        tmp = next;
+        ++counter;
+        PARROT_ASSERT(counter <= list->count);
+    }
+
+    return 1;
+}
 
 /*
 
