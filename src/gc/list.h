@@ -75,6 +75,12 @@ void Parrot_gc_list_remove(SHIM_INTERP,
 int Parrot_gc_list_check(SHIM_INTERP, ARGIN(Linked_List *list))
         __attribute__nonnull__(2);
 
+int Parrot_gc_list_is_owned(SHIM_INTERP,
+    ARGIN(Linked_List *list),
+    ARGIN(List_Item_Header *item))
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3);
+
 #define ASSERT_ARGS_Parrot_gc_allocate_linked_list \
      __attribute__unused__ int _ASSERT_ARGS_CHECK = (0)
 #define ASSERT_ARGS_Parrot_gc_destroy_linked_list __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
@@ -87,6 +93,9 @@ int Parrot_gc_list_check(SHIM_INTERP, ARGIN(Linked_List *list))
     , PARROT_ASSERT_ARG(item))
 #define ASSERT_ARGS_Parrot_gc_list_check __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
        PARROT_ASSERT_ARG(list))
+#define ASSERT_ARGS_Parrot_gc_list_is_owned __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
+       PARROT_ASSERT_ARG(list) \
+    , PARROT_ASSERT_ARG(item))
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 /* HEADERIZER END: src/gc/list.c */
 

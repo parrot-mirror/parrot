@@ -113,6 +113,23 @@ Parrot_gc_list_check(SHIM_INTERP, ARGIN(Linked_List *list))
     return 1;
 }
 
+int
+Parrot_gc_list_is_owned(SHIM_INTERP, ARGIN(Linked_List *list), ARGIN(List_Item_Header *item))
+{
+    List_Item_Header *tmp = list->first;
+
+    if (item->owner != list)
+        return 0;
+
+    while (tmp) {
+        if (tmp == item)
+            return 1;
+        tmp = tmp->next;
+    }
+
+    return 0;
+}
+
 /*
 
 =back
