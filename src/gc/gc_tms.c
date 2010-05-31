@@ -784,9 +784,23 @@ gc_tms_is_pmc_ptr(PARROT_INTERP, ARGIN_NULLOK(void *ptr))
 {
     ASSERT_ARGS(gc_tms_is_pmc_ptr)
     TriColor_GC      *self = (TriColor_GC *)interp->gc_sys->gc_private;
+    List_Item_Header *item = (List_Item_Header *)ptr;
     if (!ptr || !Obj2LLH(ptr))
         return 0;
-    return Parrot_gc_pool_is_owned(self->pmc_allocator, Obj2LLH(ptr));
+    if (!Parrot_gc_pool_is_owned(self->pmc_allocator, Obj2LLH(ptr)))
+        return 0;
+
+    /* Pool.is_owned isn't precise enough (yet) */
+    /*
+    if (Parrot_gc_list_is_owned(interp, self->grey_objects, item))
+        return 1;
+    if (Parrot_gc_list_is_owned(interp, self->dead_objects, item))
+        return 1;
+    if (Parrot_gc_list_is_owned(interp, self->objects, item))
+        return 1;
+    return 0;
+    */
+    return 1;
 }
 
 static void
