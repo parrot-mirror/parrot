@@ -91,7 +91,7 @@ static void* gc_tms_allocate_pmc_attributes(SHIM_INTERP, ARGMOD(PMC *pmc))
 
 PARROT_MALLOC
 PARROT_CAN_RETURN_NULL
-static PMC* gc_tms_allocate_pmc_header(PARROT_INTERP, SHIM(UINTVAL flags))
+static PMC* gc_tms_allocate_pmc_header(PARROT_INTERP, UINTVAL flags)
         __attribute__nonnull__(1);
 
 PARROT_MALLOC
@@ -104,6 +104,12 @@ static void gc_tms_allocate_string_storage(SHIM_INTERP,
     size_t size)
         __attribute__nonnull__(2)
         FUNC_MODIFIES(*str);
+
+static void gc_tms_block_GC_mark(PARROT_INTERP)
+        __attribute__nonnull__(1);
+
+static void gc_tms_block_GC_sweep(PARROT_INTERP)
+        __attribute__nonnull__(1);
 
 static void gc_tms_compact_memory_pool(SHIM_INTERP);
 static void gc_tms_free_bufferlike_header(SHIM_INTERP,
@@ -126,6 +132,12 @@ static void gc_tms_free_pmc_header(PARROT_INTERP, ARGFREE(PMC *pmc))
 
 static void gc_tms_free_string_header(SHIM_INTERP, ARGFREE(STRING *s));
 static size_t gc_tms_get_gc_info(SHIM_INTERP, SHIM(Interpinfo_enum what));
+static unsigned int gc_tms_is_blocked_GC_mark(PARROT_INTERP)
+        __attribute__nonnull__(1);
+
+static unsigned int gc_tms_is_blocked_GC_sweep(PARROT_INTERP)
+        __attribute__nonnull__(1);
+
 static int gc_tms_is_pmc_ptr(PARROT_INTERP, ARGIN_NULLOK(void *ptr))
         __attribute__nonnull__(1);
 
@@ -171,6 +183,12 @@ static void gc_tms_reallocate_string_storage(SHIM_INTERP,
         __attribute__nonnull__(2)
         FUNC_MODIFIES(*str);
 
+static void gc_tms_unblock_GC_mark(PARROT_INTERP)
+        __attribute__nonnull__(1);
+
+static void gc_tms_unblock_GC_sweep(PARROT_INTERP)
+        __attribute__nonnull__(1);
+
 #define ASSERT_ARGS_failed_allocation __attribute__unused__ int _ASSERT_ARGS_CHECK = (0)
 #define ASSERT_ARGS_gc_tms_allocate_buffer_storage \
      __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
@@ -191,6 +209,10 @@ static void gc_tms_reallocate_string_storage(SHIM_INTERP,
 #define ASSERT_ARGS_gc_tms_allocate_string_storage \
      __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
        PARROT_ASSERT_ARG(str))
+#define ASSERT_ARGS_gc_tms_block_GC_mark __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
+       PARROT_ASSERT_ARG(interp))
+#define ASSERT_ARGS_gc_tms_block_GC_sweep __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
+       PARROT_ASSERT_ARG(interp))
 #define ASSERT_ARGS_gc_tms_compact_memory_pool __attribute__unused__ int _ASSERT_ARGS_CHECK = (0)
 #define ASSERT_ARGS_gc_tms_free_bufferlike_header __attribute__unused__ int _ASSERT_ARGS_CHECK = (0)
 #define ASSERT_ARGS_gc_tms_free_fixed_size_storage \
@@ -203,6 +225,10 @@ static void gc_tms_reallocate_string_storage(SHIM_INTERP,
        PARROT_ASSERT_ARG(interp))
 #define ASSERT_ARGS_gc_tms_free_string_header __attribute__unused__ int _ASSERT_ARGS_CHECK = (0)
 #define ASSERT_ARGS_gc_tms_get_gc_info __attribute__unused__ int _ASSERT_ARGS_CHECK = (0)
+#define ASSERT_ARGS_gc_tms_is_blocked_GC_mark __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
+       PARROT_ASSERT_ARG(interp))
+#define ASSERT_ARGS_gc_tms_is_blocked_GC_sweep __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
+       PARROT_ASSERT_ARG(interp))
 #define ASSERT_ARGS_gc_tms_is_pmc_ptr __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
        PARROT_ASSERT_ARG(interp))
 #define ASSERT_ARGS_gc_tms_mark_and_sweep __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
@@ -226,6 +252,10 @@ static void gc_tms_reallocate_string_storage(SHIM_INTERP,
 #define ASSERT_ARGS_gc_tms_reallocate_string_storage \
      __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
        PARROT_ASSERT_ARG(str))
+#define ASSERT_ARGS_gc_tms_unblock_GC_mark __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
+       PARROT_ASSERT_ARG(interp))
+#define ASSERT_ARGS_gc_tms_unblock_GC_sweep __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
+       PARROT_ASSERT_ARG(interp))
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 /* HEADERIZER END: static */
 
@@ -503,6 +533,14 @@ Parrot_gc_tms_init(PARROT_INTERP)
     interp->gc_sys->mark_pmc_header         = gc_tms_mark_pmc_header;
     interp->gc_sys->mark_pobj_header        = gc_tms_mark_pobj_header;
 
+    interp->gc_sys->block_mark      = gc_tms_block_GC_mark;
+    interp->gc_sys->unblock_mark    = gc_tms_unblock_GC_mark;
+    interp->gc_sys->is_blocked_mark = gc_tms_is_blocked_GC_mark;
+
+    interp->gc_sys->block_sweep      = gc_tms_block_GC_sweep;
+    interp->gc_sys->unblock_sweep    = gc_tms_unblock_GC_sweep;
+    interp->gc_sys->is_blocked_sweep = gc_tms_is_blocked_GC_sweep;
+
     interp->gc_sys->allocate_string_storage = gc_tms_allocate_string_storage;
     interp->gc_sys->reallocate_string_storage = gc_tms_reallocate_string_storage;
 
@@ -556,6 +594,10 @@ gc_tms_allocate_pmc_header(PARROT_INTERP, UINTVAL flags)
         Parrot_gc_list_append(interp, self->objects, ptr);
     }
 
+    if (++self->header_allocs_since_last_collect > 1024) {
+        gc_tms_mark_and_sweep(interp, 0);
+    }
+
     return LLH2Obj_typed(ptr, PMC);
 }
 
@@ -576,6 +618,12 @@ gc_tms_mark_and_sweep(PARROT_INTERP, UINTVAL flags)
     TriColor_GC      *self = (TriColor_GC *)interp->gc_sys->gc_private;
     List_Item_Header *tmp;
     UNUSED(flags);
+
+    /* GC is blocked */
+    if (self->gc_mark_block_level)
+        return;
+
+    ++self->gc_mark_block_level;
 
     /*
     self.dead_objects  = self.objects;
@@ -631,6 +679,9 @@ gc_tms_mark_and_sweep(PARROT_INTERP, UINTVAL flags)
         PObj_live_CLEAR(LLH2Obj_typed(tmp, PMC));
         tmp = tmp->next;
     }
+
+    self->header_allocs_since_last_collect = 0;
+    self->gc_mark_block_level--;
 }
 
 static void
@@ -681,6 +732,92 @@ gc_tms_mark_pobj_header(PARROT_INTERP, ARGIN_NULLOK(PObj * obj))
             PObj_live_SET(obj);
     }
 }
+
+
+/*
+
+=item C<static void gc_tms_block_GC_mark(PARROT_INTERP)>
+
+Blocks the GC from performing its mark phase.
+
+=item C<static void gc_tms_unblock_GC_mark(PARROT_INTERP)>
+
+Unblocks the GC mark.
+
+=item C<static void gc_tms_block_GC_sweep(PARROT_INTERP)>
+
+Blocks the GC from performing its sweep phase.
+
+=item C<static void gc_tms_unblock_GC_sweep(PARROT_INTERP)>
+
+Unblocks GC sweep.
+
+=item C<static unsigned int gc_tms_is_blocked_GC_mark(PARROT_INTERP)>
+
+Determines if the GC mark is currently blocked.
+
+=item C<static unsigned int gc_tms_is_blocked_GC_sweep(PARROT_INTERP)>
+
+Determines if the GC sweep is currently blocked.
+
+=cut
+
+*/
+
+static void
+gc_tms_block_GC_mark(PARROT_INTERP)
+{
+    ASSERT_ARGS(gc_tms_block_GC_mark)
+    TriColor_GC *self = (TriColor_GC *)interp->gc_sys->gc_private;
+    ++self->gc_mark_block_level;
+    Parrot_shared_gc_block(interp);
+}
+
+static void
+gc_tms_unblock_GC_mark(PARROT_INTERP)
+{
+    ASSERT_ARGS(gc_tms_unblock_GC_mark)
+    TriColor_GC *self = (TriColor_GC *)interp->gc_sys->gc_private;
+    if (self->gc_mark_block_level) {
+        --self->gc_mark_block_level;
+        Parrot_shared_gc_unblock(interp);
+    }
+}
+
+static void
+gc_tms_block_GC_sweep(PARROT_INTERP)
+{
+    ASSERT_ARGS(gc_tms_block_GC_sweep)
+    TriColor_GC *self = (TriColor_GC *)interp->gc_sys->gc_private;
+    ++self->gc_sweep_block_level;
+}
+
+static void
+gc_tms_unblock_GC_sweep(PARROT_INTERP)
+{
+    ASSERT_ARGS(gc_tms_unblock_GC_sweep)
+    TriColor_GC *self = (TriColor_GC *)interp->gc_sys->gc_private;
+    if (self->gc_sweep_block_level)
+        --self->gc_sweep_block_level;
+}
+
+static unsigned int
+gc_tms_is_blocked_GC_mark(PARROT_INTERP)
+{
+    ASSERT_ARGS(gc_tms_is_blocked_GC_mark)
+    TriColor_GC *self = (TriColor_GC *)interp->gc_sys->gc_private;
+    return self->gc_mark_block_level;
+}
+
+static unsigned int
+gc_tms_is_blocked_GC_sweep(PARROT_INTERP)
+{
+    ASSERT_ARGS(gc_tms_is_blocked_GC_sweep)
+    TriColor_GC *self = (TriColor_GC *)interp->gc_sys->gc_private;
+    return self->gc_sweep_block_level;
+}
+
+
 
 /*
 
