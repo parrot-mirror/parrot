@@ -641,6 +641,9 @@ gc_tms_mark_pmc_header(PARROT_INTERP, ARGIN(PMC *pmc))
     List_Item_Header *item = Obj2LLH(pmc);
     if (PObj_is_live_or_free_TESTALL(pmc))
         return;
+    /* "constant" objects aren't managed by GC at all. */
+    if (PObj_constant_TEST(pmc))
+        return;
     Parrot_gc_list_remove(interp, self->dead_objects, item);
     Parrot_gc_list_append(interp, self->grey_objects, item);
 }
