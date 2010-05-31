@@ -66,8 +66,9 @@ Parrot_gc_list_append(SHIM_INTERP, ARGMOD(Linked_List *list), ARGMOD(List_Item_H
         list->first = item;
 
     list->count++;
-
+#ifndef NDEBUG
     item->owner = list;
+#endif
 }
 
 PARROT_EXPORT

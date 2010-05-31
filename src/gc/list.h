@@ -20,7 +20,9 @@ typedef struct List_Item_Header {
     struct List_Item_Header *prev;
     struct List_Item_Header *next;
 
+#ifndef NDEBUG
     struct Linked_List *owner;
+#endif
 } List_Item_Header;
 
 /* Double-linked list. */
