@@ -157,8 +157,8 @@ set_cstring_prop(PARROT_INTERP, ARGMOD(PMC *lib_pmc), ARGIN(const char *what),
         ARGIN(STRING *name))
 {
     ASSERT_ARGS(set_cstring_prop)
-    STRING * const key  = Parrot_str_new_constant(interp, what);
-    PMC    * const prop = Parrot_pmc_new_constant(interp, enum_class_String);
+    STRING * const key  = Parrot_str_new(interp, what, 0);
+    PMC    * const prop = Parrot_pmc_new(interp, enum_class_String);
 
     VTABLE_set_string_native(interp, prop, name);
     VTABLE_setprop(interp, lib_pmc, key, prop);
@@ -402,7 +402,7 @@ Parrot_init_lib(PARROT_INTERP,
 
     /* seems to be a native/NCI lib */
     if (!load_func || !lib_pmc)
-        lib_pmc = Parrot_pmc_new_constant(interp, enum_class_ParrotLibrary);
+        lib_pmc = Parrot_pmc_new(interp, enum_class_ParrotLibrary);
 
     /*  Call init, if it exists */
     if (init_func)
@@ -538,7 +538,7 @@ static PMC *
 make_string_pmc(PARROT_INTERP, ARGIN(STRING *string))
 {
     ASSERT_ARGS(make_string_pmc)
-    PMC * const ret = Parrot_pmc_new_constant(interp, enum_class_String);
+    PMC * const ret = Parrot_pmc_new(interp, enum_class_String);
     VTABLE_set_string_native(interp, ret, string);
 
     return ret;
@@ -582,7 +582,7 @@ Parrot_clone_lib_into(ARGMOD(Interp *d), ARGMOD(Interp *s), ARGIN(PMC *lib_pmc))
          * Anyways, if we hope to share bytecode at runtime, we need to have
          * them have identical opcodes anyways.
          */
-        PMC * const new_lib_pmc = Parrot_pmc_new_constant(d, enum_class_ParrotLibrary);
+        PMC * const new_lib_pmc = Parrot_pmc_new(d, enum_class_ParrotLibrary);
 
         PMC_data(new_lib_pmc) = handle;
         VTABLE_setprop(d, new_lib_pmc, CONST_STRING(s, "_filename"), make_string_pmc(d, wo_ext));
