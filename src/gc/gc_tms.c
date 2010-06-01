@@ -722,7 +722,7 @@ gc_tms_mark_and_sweep(PARROT_INTERP, UINTVAL flags)
         counter++;
         PARROT_ASSERT(counter <= self->black_objects->count);
     }
-    } while(0);
+    } while (0);
 
 
     list = self->black_objects;
