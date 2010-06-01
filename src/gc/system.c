@@ -463,11 +463,12 @@ trace_mem_block(PARROT_INTERP,
              * guaranteed to be live pmcs/buffers, and could very well have
              * had their bufstart/vtable destroyed due to the linked list of
              * free headers... */
-            if ((pmc_min <= ptr) && (ptr < pmc_max) && interp->gc_sys->is_pmc_ptr(interp, (void *)ptr)) {
+            if ((pmc_min <= ptr) && (ptr < pmc_max)
+                                 && interp->gc_sys->is_pmc_ptr(interp, (void *)ptr)) {
                 Parrot_gc_mark_PMC_alive(interp, (PMC *)ptr);
             }
-            else if ((buffer_min <= ptr) && (ptr < buffer_max) &&
-                    is_buffer_ptr(mem_pools, (void *)ptr)) {
+            else if ((buffer_min <= ptr) && (ptr < buffer_max)
+                                         && is_buffer_ptr(mem_pools, (void *)ptr)) {
                 /* ...and since Parrot_gc_mark_PObj_alive doesn't care about bufstart, it
                  * doesn't really matter if it sets a flag */
                 Parrot_gc_mark_PObj_alive(interp, (PObj *)ptr);
