@@ -422,6 +422,7 @@ hello from foo_1
 OUTPUT
 
 pir_output_is( <<"CODE", <<'OUTPUT', "eval.freeze+thaw" );
+.loadlib 'io_ops'
 .sub main :main
   .local pmc f, e
   .local pmc io
@@ -466,6 +467,7 @@ MORE
     file = "$temp_file"
     .include "stat.pasm"
     size = stat file, .STAT_FILESIZE
+    io = new ['FileHandle']
     io.'open'(file, 'r')
     \$S0 = read io, size
     io.'close'()
