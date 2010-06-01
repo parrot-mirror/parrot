@@ -67,8 +67,6 @@ attrib_idx)>
 
 Create a new pool for fixed-sized data items with the given C<attrib_size>.
 
-=back
-
 =cut
 
 */
@@ -147,6 +145,8 @@ void *data)>
 Frees a fixed-size data item back to the pool for later reallocation.  Private
 to this file.
 
+=cut
+
 */
 
 PARROT_EXPORT
@@ -215,11 +215,13 @@ allocate_new_pool_arena(ARGMOD(Pool_Allocator *pool))
 }
 
 /*
+
 =item C<static size_t arena_size(const Pool_Allocator *self)>
 
 Calculate size of Arena.
 
 =cut
+
 */
 static size_t
 arena_size(ARGIN(const Pool_Allocator *self))
