@@ -392,7 +392,7 @@ mmd_build_type_tuple_from_type_list(PARROT_INTERP, ARGIN(PMC *type_list))
 {
     ASSERT_ARGS(mmd_build_type_tuple_from_type_list)
     INTVAL param_count = VTABLE_elements(interp, type_list);
-    PMC   *multi_sig   = Parrot_pmc_new_constant_init_int(interp,
+    PMC   *multi_sig   = Parrot_pmc_new_init_int(interp,
             enum_class_FixedIntegerArray, param_count);
     INTVAL i;
 
@@ -901,7 +901,7 @@ mmd_add_multi_global(PARROT_INTERP, ARGIN(STRING *sub_name), ARGIN(PMC *sub_obj)
     PMC           *multi_sub = Parrot_get_global(interp, ns, sub_name);
 
     if (PMC_IS_NULL(multi_sub)) {
-        multi_sub = Parrot_pmc_new_constant(interp, enum_class_MultiSub);
+        multi_sub = Parrot_pmc_new(interp, enum_class_MultiSub);
         Parrot_set_global(interp, ns, sub_name, multi_sub);
     }
 
@@ -934,7 +934,7 @@ mmd_add_multi_to_namespace(PARROT_INTERP, ARGIN(STRING *ns_name),
     PMC        *multi_sub = Parrot_get_global(interp, ns, sub_name);
 
     if (PMC_IS_NULL(multi_sub)) {
-        multi_sub = Parrot_pmc_new_constant(interp, enum_class_MultiSub);
+        multi_sub = Parrot_pmc_new(interp, enum_class_MultiSub);
         Parrot_set_global(interp, ns, sub_name, multi_sub);
     }
 
@@ -1012,7 +1012,7 @@ Parrot_mmd_add_multi_from_c_args(PARROT_INTERP,
     STRING *ns_name       = VTABLE_get_string_keyed_int(interp, type_list, 0);
 
     /* Create an NCI sub for the C function */
-    PMC    *sub_obj       = Parrot_pmc_new_constant(interp, enum_class_NCI);
+    PMC    *sub_obj       = Parrot_pmc_new(interp, enum_class_NCI);
     PMC    *multi_sig     = mmd_build_type_tuple_from_long_sig(interp,
                                 long_sig_str);
 
@@ -1059,7 +1059,7 @@ Parrot_mmd_add_multi_list_from_c_args(PARROT_INTERP,
         STRING   *ns_name   = mmd_info[i].ns_name;
 
         /* Create an NCI sub for the C function */
-        PMC    *sub_obj       = Parrot_pmc_new_constant(interp, enum_class_NCI);
+        PMC    *sub_obj       = Parrot_pmc_new(interp, enum_class_NCI);
 
         VTABLE_set_pointer_keyed_str(interp, sub_obj, short_sig,
                                      F2DPTR(func_ptr));
