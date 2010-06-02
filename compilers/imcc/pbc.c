@@ -1425,7 +1425,7 @@ add_const_pmc_sub(PARROT_INTERP, ARGMOD(SymReg *r), size_t offs, size_t end)
             ns_pmc = ct->constants[ns_const]->u.key;
             break;
           case PFC_STRING:
-            ns_pmc = Parrot_pmc_new_constant(interp, enum_class_String);
+            ns_pmc = Parrot_pmc_new(interp, enum_class_String);
             VTABLE_set_string_native(interp, ns_pmc,
                 ct->constants[ns_const]->u.string);
             break;
