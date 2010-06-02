@@ -141,7 +141,7 @@ Parrot_gc_pool_allocate(PARROT_INTERP, ARGMOD(Pool_Allocator * pool))
 
 =item C<void Parrot_gc_pool_free(Pool_Allocator *pool, void *data)>
 
-free up pool
+Frees a fixed-size data item back to the pool for later reallocation
 
 =cut
 
