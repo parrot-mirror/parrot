@@ -668,7 +668,7 @@ gc_tms_mark_and_sweep(PARROT_INTERP, UINTVAL flags)
     Parrot_gc_trace_root(interp, NULL, GC_TRACE_FULL);
 
     if (interp->pdb && interp->pdb->debugger) {
-        Parrot_gc_trace_root(interp->pdb->debugger, NULL, 0);
+        Parrot_gc_trace_root(interp->pdb->debugger, NULL, Parrot_gc_trace_type(0));
     }
 
     gc_tms_mark_pmc_header(interp, PMCNULL);
@@ -806,7 +806,7 @@ gc_tms_is_pmc_ptr(PARROT_INTERP, ARGIN_NULLOK(void *ptr))
     if (!Parrot_gc_pool_is_owned(self->pmc_allocator, Obj2LLH(ptr)))
         return 0;
 
-#if 1 
+#if 1
     /* Pool.is_owned isn't precise enough (yet) */
     if (Parrot_gc_list_is_owned(interp, self->grey_objects, item))
         return 1;
