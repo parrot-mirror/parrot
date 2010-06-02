@@ -1269,8 +1269,10 @@ op dlfunc(out PMC, invar PMC, in STR, in STR) {
         $1 = Parrot_pmc_new(interp, enum_class_Undef);
     }
     else {
-        $1 = Parrot_pmc_new(interp, enum_class_NCI);
-        VTABLE_set_pointer_keyed_str(interp, $1, $4, F2DPTR(p));
+        PMC * const func = Parrot_pmc_new(interp, enum_class_NCI);
+        VTABLE_set_pointer_keyed_str(interp, func, $4, F2DPTR(p));
+        VTABLE_set_attr_str(INTERP, func, CONST_STRING(INTERP, "library"), $2);
+        $1 = func;
     }
     Parrot_str_free_cstring(name);
 }
