@@ -40,32 +40,9 @@ static size_t arena_size(ARGIN(const Pool_Allocator *self))
 
 =over 4
 
-=item C<static void * Parrot_gc_get_attributes_from_pool(PARROT_INTERP,
-Pool_Allocator * pool)>
+=item C<Pool_Allocator * Parrot_gc_create_pool_allocator(size_t object_size)>
 
-Get a new fixed-size storage space from the given pool. The pool contains
-information on the size of the item to allocate already.
-
-=item C<static void Parrot_gc_allocate_new_attributes_arena(Pool_Allocator
-*pool)>
-
-Allocate a new arena of fixed-sized data structures for the given pool.
-
-=item C<static void Parrot_gc_initialize_fixed_size_pools(PARROT_INTERP,
-Memory_Pools *mem_pools, size_t init_num_pools)>
-
-Initialize the pools (zeroize)
-
-=item C<static Pool_Allocator * Parrot_gc_get_attribute_pool(PARROT_INTERP,
-Memory_Pools *mem_pools, size_t attrib_size)>
-
-Find a fixed-sized data structure pool given the size of the object to
-allocate. If the pool does not exist, create it.
-
-=item C<static Pool_Allocator * Parrot_gc_create_attrib_pool(size_t
-attrib_idx)>
-
-Create a new pool for fixed-sized data items with the given C<attrib_size>.
+Create Pool Alocator
 
 =cut
 
@@ -93,6 +70,17 @@ Parrot_gc_create_pool_allocator(size_t object_size)
     return newpool;
 }
 
+/*
+
+=item C<void Parrot_gc_destroy_pool_alloctor(PARROT_INTERP, Pool_Allocator
+*pool)>
+
+Destroy Allocated Pool - free memory for all areanas in the alocated pool
+
+=cut
+
+*/
+
 PARROT_EXPORT
 void
 Parrot_gc_destroy_pool_alloctor(PARROT_INTERP, ARGMOD(Pool_Allocator *pool))
@@ -110,6 +98,16 @@ Parrot_gc_destroy_pool_alloctor(PARROT_INTERP, ARGMOD(Pool_Allocator *pool))
     mem_internal_free(pool);
 }
 
+
+/*
+
+=item C<void * Parrot_gc_pool_allocate(PARROT_INTERP, Pool_Allocator * pool)>
+
+Allocate pool
+
+=cut
+
+*/
 
 PARROT_CANNOT_RETURN_NULL
 PARROT_EXPORT
@@ -141,11 +139,9 @@ Parrot_gc_pool_allocate(PARROT_INTERP, ARGMOD(Pool_Allocator * pool))
 
 /*
 
-=item C<static void gc_ms_free_attributes_from_pool(Pool_Allocator_Pool *pool,
-void *data)>
+=item C<void Parrot_gc_pool_free(Pool_Allocator *pool, void *data)>
 
-Frees a fixed-size data item back to the pool for later reallocation.  Private
-to this file.
+free up pool
 
 =cut
 
@@ -165,6 +161,16 @@ Parrot_gc_pool_free(ARGMOD(Pool_Allocator *pool), ARGMOD(void *data))
 
     ++pool->num_free_objects;
 }
+
+/*
+
+=item C<int Parrot_gc_pool_is_owned(Pool_Allocator *pool, void *ptr)>
+
+check for pool validity
+
+=cut
+
+*/
 
 PARROT_EXPORT
 int
@@ -189,6 +195,15 @@ Parrot_gc_pool_is_owned(ARGMOD(Pool_Allocator *pool), ARGMOD(void *ptr))
     return 0;
 }
 
+/*
+
+=item C<static void allocate_new_pool_arena(Pool_Allocator *pool)>
+
+Allocate a new pool arena
+
+=cut
+
+*/
 
 static void
 allocate_new_pool_arena(ARGMOD(Pool_Allocator *pool))
