@@ -151,7 +151,7 @@ static unsigned int gc_ms_is_blocked_GC_mark(PARROT_INTERP)
 static unsigned int gc_ms_is_blocked_GC_sweep(PARROT_INTERP)
         __attribute__nonnull__(1);
 
-static int gc_ms_is_pmc_ptr(PARROT_INTERP, void *ptr)
+static int gc_ms_is_pmc_ptr(PARROT_INTERP, ARGIN_NULLOK(void *ptr))
         __attribute__nonnull__(1);
 
 static void gc_ms_mark_and_sweep(PARROT_INTERP, UINTVAL flags)
