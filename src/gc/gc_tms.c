@@ -562,16 +562,22 @@ Parrot_gc_tms_init(PARROT_INTERP)
 
     interp->gc_sys->get_gc_info      = gc_tms_get_gc_info;
 
-    self = mem_allocate_zeroed_typed(TriColor_GC);
+    if (interp->parent_interpreter && interp->parent_interpreter->gc_sys) {
+        /* This is a "child" interpreter. Just reuse parent one */
+        self = (TriColor_GC*)interp->parent_interpreter->gc_sys->gc_private;
+    }
+    else {
+        self = mem_allocate_zeroed_typed(TriColor_GC);
 
-    self->pmc_allocator = Parrot_gc_create_pool_allocator(
+        self->pmc_allocator = Parrot_gc_create_pool_allocator(
             sizeof (List_Item_Header) + sizeof (PMC));
 
-    self->constant_pmc_allocator = Parrot_gc_create_pool_allocator(
+        self->constant_pmc_allocator = Parrot_gc_create_pool_allocator(
             sizeof (List_Item_Header) + sizeof (PMC));
 
-    self->objects = Parrot_gc_allocate_linked_list(interp);
+        self->objects = Parrot_gc_allocate_linked_list(interp);
 
+    }
     interp->gc_sys->gc_private = self;
 }
 
