@@ -469,7 +469,7 @@ gc_tms_free_fixed_size_storage(SHIM_INTERP, SHIM(size_t size), ARGMOD(void *data
 
 /*
 
-=item C<static size_t gc_tms_get_gc_tmso(PARROT_INTERP, Interpinfo_enum what)>
+=item C<static size_t gc_tms_get_gc_info(PARROT_INTERP, Interpinfo_enum what)>
 
 Stub for GC introspection function.
 
@@ -752,6 +752,16 @@ gc_tms_mark_and_sweep(PARROT_INTERP, UINTVAL flags)
     self->gc_mark_runs++;
 }
 
+/*
+
+=item C<static void gc_tms_mark_pmc_header(PARROT_INTERP, PMC *pmc)>
+
+mark as grey
+
+=cut
+
+*/
+
 static void
 gc_tms_mark_pmc_header(PARROT_INTERP, ARGIN(PMC *pmc))
 {
@@ -767,6 +777,17 @@ gc_tms_mark_pmc_header(PARROT_INTERP, ARGIN(PMC *pmc))
     Parrot_gc_list_remove(interp, self->dead_objects, item);
     Parrot_gc_list_append(interp, self->grey_objects, item);
 }
+
+/*
+
+=item C<static void gc_tms_real_mark_pmc(PARROT_INTERP, struct TriColor_GC
+*self, struct List_Item_Header *li)>
+
+mark as live
+
+=cut
+
+*/
 
 static void
 gc_tms_real_mark_pmc(PARROT_INTERP,
@@ -794,6 +815,16 @@ gc_tms_real_mark_pmc(PARROT_INTERP,
         Parrot_gc_mark_PMC_alive(interp, PMC_metadata(obj));
 }
 
+/*
+
+=item C<static int gc_tms_is_pmc_ptr(PARROT_INTERP, void *ptr)>
+
+establish if *ptr is.owned
+
+=cut
+
+*/
+
 static int
 gc_tms_is_pmc_ptr(PARROT_INTERP, ARGIN_NULLOK(void *ptr))
 {
@@ -819,6 +850,16 @@ gc_tms_is_pmc_ptr(PARROT_INTERP, ARGIN_NULLOK(void *ptr))
     return 1;
 #endif
 }
+
+/*
+
+=item C<static void gc_tms_mark_pobj_header(PARROT_INTERP, PObj * obj)>
+
+if already marked mark as grey else make as live
+
+=cut
+
+*/
 
 static void
 gc_tms_mark_pobj_header(PARROT_INTERP, ARGIN_NULLOK(PObj * obj))
