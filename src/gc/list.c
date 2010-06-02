@@ -29,6 +29,10 @@ This code implements double linked list of GCable objects.
 
 =over 4
 
+=item C<struct Linked_List* Parrot_gc_allocate_linked_list(PARROT_INTERP)>
+
+Allocate a doubly link list
+
 =cut
 
 */
@@ -44,6 +48,16 @@ Parrot_gc_allocate_linked_list(SHIM_INTERP)
     return res;
 }
 
+/*
+
+=item C<void Parrot_gc_destroy_linked_list(PARROT_INTERP, Linked_List* list)>
+
+Destroy the specified list (free up memory associated with the list)
+
+=cut
+
+*/
+
 PARROT_EXPORT
 void
 Parrot_gc_destroy_linked_list(SHIM_INTERP, ARGMOD(Linked_List* list))
@@ -52,6 +66,17 @@ Parrot_gc_destroy_linked_list(SHIM_INTERP, ARGMOD(Linked_List* list))
 
     mem_sys_free(list);
 }
+
+/*
+
+=item C<void Parrot_gc_list_append(PARROT_INTERP, Linked_List *list,
+List_Item_Header *item)>
+
+Append an item to the list
+
+=cut
+
+*/
 
 PARROT_EXPORT
 void
@@ -76,6 +101,17 @@ Parrot_gc_list_append(SHIM_INTERP, ARGMOD(Linked_List *list), ARGMOD(List_Item_H
     item->owner = list;
 #endif
 }
+
+/*
+
+=item C<List_Item_Header* Parrot_gc_list_remove(PARROT_INTERP, Linked_List
+*list, List_Item_Header *item)>
+
+Remove an item from the list, returning the (pointer to) item
+
+=cut
+
+*/
 
 PARROT_EXPORT
 List_Item_Header*
@@ -105,6 +141,16 @@ Parrot_gc_list_remove(SHIM_INTERP, ARGMOD(Linked_List *list), ARGMOD(List_Item_H
     return item;
 }
 
+/*
+
+=item C<List_Item_Header* Parrot_gc_list_pop(PARROT_INTERP, Linked_List *list)>
+
+Pop an item off the list - i.e. get the first item in the list and remove it.
+
+=cut
+
+*/
+
 PARROT_EXPORT
 List_Item_Header*
 Parrot_gc_list_pop(PARROT_INTERP, ARGIN(Linked_List *list))
@@ -115,6 +161,16 @@ Parrot_gc_list_pop(PARROT_INTERP, ARGIN(Linked_List *list))
         return NULL;
     return Parrot_gc_list_remove(interp, list, list->first);
 }
+
+/*
+
+=item C<int Parrot_gc_list_check(PARROT_INTERP, Linked_List *list)>
+
+Check the validity of the list
+
+=cut
+
+*/
 
 int
 Parrot_gc_list_check(SHIM_INTERP, ARGIN(Linked_List *list))
@@ -134,6 +190,17 @@ Parrot_gc_list_check(SHIM_INTERP, ARGIN(Linked_List *list))
 
     return 1;
 }
+
+/*
+
+=item C<int Parrot_gc_list_is_owned(PARROT_INTERP, Linked_List *list,
+List_Item_Header *item)>
+
+Returns True if the is owned by the list
+
+=cut
+
+*/
 
 int
 Parrot_gc_list_is_owned(SHIM_INTERP, ARGIN(Linked_List *list), ARGIN(List_Item_Header *item))
