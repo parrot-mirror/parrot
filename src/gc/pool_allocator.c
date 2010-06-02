@@ -97,6 +97,8 @@ PARROT_EXPORT
 void
 Parrot_gc_destroy_pool_alloctor(PARROT_INTERP, ARGMOD(Pool_Allocator *pool))
 {
+    ASSERT_ARGS(Parrot_gc_destroy_pool_alloctor)
+
     Pool_Allocator_Arena *arena = pool->top_arena;
 
     while (arena) {
@@ -226,6 +228,8 @@ Calculate size of Arena.
 static size_t
 arena_size(ARGIN(const Pool_Allocator *self))
 {
+    ASSERT_ARGS(arena_size)
+
     const size_t num_items  = self->objects_per_alloc;
     const size_t item_size  = self->object_size;
     const size_t item_space = item_size * num_items;
