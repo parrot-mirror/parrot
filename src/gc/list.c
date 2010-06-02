@@ -128,8 +128,10 @@ Parrot_gc_list_is_owned(SHIM_INTERP, ARGIN(Linked_List *list), ARGIN(List_Item_H
 {
     List_Item_Header *tmp = list->first;
 
+#ifndef NDEBUG
     if (item->owner != list)
         return 0;
+#endif
 
     while (tmp) {
         if (tmp == item)
