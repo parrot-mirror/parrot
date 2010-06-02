@@ -447,7 +447,9 @@ trace_mem_block(PARROT_INTERP,
     }
 
     /* Get the expected prefix */
-    prefix = 0; //mask & buffer_min;
+    prefix = mem_pools
+                ? mask & buffer_min
+                : 0;
 
     for (cur_var_ptr = hi_var_ptr;
             (ptrdiff_t)cur_var_ptr < (ptrdiff_t)lo_var_ptr;
