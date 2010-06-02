@@ -711,6 +711,16 @@ gc_ms_free_pmc_header(PARROT_INTERP, ARGMOD(PMC *pmc))
     ++pool->num_free_objects;
 }
 
+/*
+
+=item C<void gc_ms_mark_pmc_header(PARROT_INTERP, PMC *obj)>
+
+Mark the PMC *obj as live and attach PMCs and/or buffers
+
+=cut
+
+*/
+
 void
 gc_ms_mark_pmc_header(PARROT_INTERP, ARGMOD_NULLOK(PMC *obj))
 {
@@ -735,6 +745,16 @@ gc_ms_mark_pmc_header(PARROT_INTERP, ARGMOD_NULLOK(PMC *obj))
             Parrot_gc_mark_PMC_alive(interp, PMC_metadata(obj));
     }
 }
+
+/*
+
+=item C<static int gc_ms_is_pmc_ptr(PARROT_INTERP, void *ptr)>
+
+return True if *ptr is contained in the pool
+
+=cut
+
+*/
 
 static int
 gc_ms_is_pmc_ptr(PARROT_INTERP, ARGIN_NULLOK(void *ptr))
@@ -789,6 +809,16 @@ gc_ms_free_string_header(PARROT_INTERP, ARGMOD(STRING *s))
         ++pool->num_free_objects;
     }
 }
+
+/*
+
+=item C<static void gc_ms_mark_pobj_header(PARROT_INTERP, PObj *obj)>
+
+mark *obj as live
+
+=cut
+
+*/
 
 static void
 gc_ms_mark_pobj_header(PARROT_INTERP, ARGMOD_NULLOK(PObj *obj))
