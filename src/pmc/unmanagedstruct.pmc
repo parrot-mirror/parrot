@@ -795,9 +795,10 @@ calc_offsets(PARROT_INTERP, ARGIN(PMC *pmc), ARGIN(PMC *value), size_t toff)
 }
 
 pmclass UnManagedStruct auto_attrs no_ro {
-    ATTR void   *ptr;   /* the struct that this UnManagedStruct isn't managing */
-    ATTR PMC    *init;  /* the initializer used with this UnManagedStruct */
-    ATTR INTVAL  size;  /* the size of the struct */
+    ATTR void   *ptr;     /* the struct that this UnManagedStruct isn't managing */
+    ATTR PMC    *init;    /* the initializer used with this UnManagedStruct */
+    ATTR INTVAL  size;    /* the size of the struct */
+    ATTR PMC    *library; /* The owning ParrotLibrary, if any */
 
 /*
 
@@ -884,8 +885,9 @@ Marks the C<struct> as live.
 */
 
     VTABLE void mark() {
-        PMC * const init = PARROT_UNMANAGEDSTRUCT(SELF)->init;
-        Parrot_gc_mark_PMC_alive(INTERP, init);
+        Parrot_UnManagedStruct_attributes * const attrs = PARROT_UNMANAGEDSTRUCT(SELF);
+        Parrot_gc_mark_PMC_alive(INTERP, attrs->init);
+        Parrot_gc_mark_PMC_alive(INTERP, attrs->library);
     }
 
 /*
@@ -1197,6 +1199,32 @@ Sets the value of the element associated with key C<*key> to C<*value>.
         int   type;
         char * const p = char_offset_key(INTERP, SELF, key, &type);
         set_string(INTERP, p, type, value);
+    }
+
+/*
+
+=item C<void set_attr_str(STRING *idx, PMC *value)>
+
+Set an attribute
+
+=item C<PMC *get_attr_str(STRING *idx)>
+
+Get an attribute
+
+=cut
+
+*/
+
+    VTABLE void set_attr_str(STRING * idx, PMC *value)
+    {
+        if (Parrot_str_equal(INTERP, idx, CONST_STRING(interp, "library")))
+            PARROT_UNMANAGEDSTRUCT(SELF)->library = value;
+    }
+
+    VTABLE PMC * get_attr_str(STRING * idx)
+    {
+        if (Parrot_str_equal(INTERP, idx, CONST_STRING(interp, "library")))
+            return PARROT_UNMANAGEDSTRUCT(SELF)->library;
     }
 
 }
