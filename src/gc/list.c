@@ -38,6 +38,8 @@ PARROT_CANNOT_RETURN_NULL
 struct Linked_List*
 Parrot_gc_allocate_linked_list(SHIM_INTERP)
 {
+    ASSERT_ARGS(Parrot_gc_allocate_linked_list)
+
     Linked_List *res = (Linked_List*)mem_sys_allocate_zeroed(sizeof (Linked_List));
     return res;
 }
@@ -46,6 +48,8 @@ PARROT_EXPORT
 void
 Parrot_gc_destroy_linked_list(SHIM_INTERP, ARGMOD(Linked_List* list))
 {
+    ASSERT_ARGS(Parrot_gc_destroy_linked_list)
+
     mem_sys_free(list);
 }
 
@@ -53,6 +57,8 @@ PARROT_EXPORT
 void
 Parrot_gc_list_append(SHIM_INTERP, ARGMOD(Linked_List *list), ARGMOD(List_Item_Header *item))
 {
+    ASSERT_ARGS(Parrot_gc_list_append)
+
     item->prev = item->next = NULL;
 
     if (list->last) {
@@ -75,6 +81,8 @@ PARROT_EXPORT
 List_Item_Header*
 Parrot_gc_list_remove(SHIM_INTERP, ARGMOD(Linked_List *list), ARGMOD(List_Item_Header *item))
 {
+    ASSERT_ARGS(Parrot_gc_list_remove)
+
     List_Item_Header *next = item->next;
     List_Item_Header *prev = item->prev;
 
@@ -101,6 +109,8 @@ PARROT_EXPORT
 List_Item_Header*
 Parrot_gc_list_pop(PARROT_INTERP, ARGIN(Linked_List *list))
 {
+    ASSERT_ARGS(Parrot_gc_list_pop)
+
     if (!list->first)
         return NULL;
     return Parrot_gc_list_remove(interp, list, list->first);
@@ -109,6 +119,8 @@ Parrot_gc_list_pop(PARROT_INTERP, ARGIN(Linked_List *list))
 int
 Parrot_gc_list_check(SHIM_INTERP, ARGIN(Linked_List *list))
 {
+    ASSERT_ARGS(Parrot_gc_list_check)
+
     List_Item_Header *tmp = list->first;
     size_t counter = 0;
 
@@ -126,6 +138,8 @@ Parrot_gc_list_check(SHIM_INTERP, ARGIN(Linked_List *list))
 int
 Parrot_gc_list_is_owned(SHIM_INTERP, ARGIN(Linked_List *list), ARGIN(List_Item_Header *item))
 {
+    ASSERT_ARGS(Parrot_gc_list_is_owned)
+
     List_Item_Header *tmp = list->first;
 
 #ifndef NDEBUG
