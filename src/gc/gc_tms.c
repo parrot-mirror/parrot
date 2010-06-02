@@ -681,11 +681,8 @@ gc_tms_mark_and_sweep(PARROT_INTERP, UINTVAL flags)
     self.mark_real($_) for self.grey_objects;
     */
     counter = 0;
-    while (self->grey_objects->first) {
-        tmp = self->grey_objects->first;
+    while (tmp = Parrot_gc_list_pop(interp, self->grey_objects)) {
         PARROT_ASSERT(tmp->owner == self->grey_objects);
-
-        Parrot_gc_list_remove(interp, self->grey_objects, tmp);
         PARROT_ASSERT(PObj_grey_TEST(LLH2Obj_typed(tmp, PMC)));
 
         gc_tms_real_mark_pmc(interp, self, tmp);
@@ -739,20 +736,15 @@ gc_tms_mark_and_sweep(PARROT_INTERP, UINTVAL flags)
     } while (0);
 
 
+    /* Appending freshly allocated objects back */
     list = self->black_objects;
     self->black_objects = self->objects;
     self->objects = list;
 
     //fprintf(stderr, "Appending %zd\n", self->black_objects->count);
-
-    tmp = self->black_objects->first;
-    while (tmp) {
-        PMC *pmc = LLH2Obj_typed(tmp, PMC);
-        List_Item_Header *next = tmp->next;
+    while (tmp = Parrot_gc_list_pop(interp, self->black_objects)) {
         PARROT_ASSERT(tmp->owner == self->black_objects);
-        Parrot_gc_list_remove(interp, self->black_objects, tmp);
         Parrot_gc_list_append(interp, self->objects, tmp);
-        tmp = next;
     }
 
     self->header_allocs_since_last_collect = 0;
@@ -782,13 +774,12 @@ gc_tms_real_mark_pmc(PARROT_INTERP,
         ARGIN(struct List_Item_Header *li))
 {
     ASSERT_ARGS(gc_tms_real_mark_pmc)
+
     PMC *obj = LLH2Obj_typed(li, PMC);
-    //Parrot_gc_list_remove(interp, self->grey_objects, li);
     Parrot_gc_list_append(interp, self->black_objects, li);
+
     PObj_grey_CLEAR(obj);
     /* self.SUPER.mark($obj) */
-    //gc_ms_mark_pmc_header(interp, LLH2Obj_typed(li, PMC));
-
     /* mark it live */
     PObj_live_SET(obj);
 
