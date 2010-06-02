@@ -808,8 +808,9 @@ gc_tms_is_pmc_ptr(PARROT_INTERP, ARGIN_NULLOK(void *ptr))
 {
     ASSERT_ARGS(gc_tms_is_pmc_ptr)
     TriColor_GC      *self = (TriColor_GC *)interp->gc_sys->gc_private;
-    List_Item_Header *item = (List_Item_Header *)ptr;
-    if (!ptr || !Obj2LLH(ptr))
+    List_Item_Header *item = Obj2LLH(ptr);
+    PMC              *pmc  = (PMC *)ptr;
+    if (!ptr || !item)
         return 0;
     if (!Parrot_gc_pool_is_owned(self->pmc_allocator, Obj2LLH(ptr)))
         return 0;
