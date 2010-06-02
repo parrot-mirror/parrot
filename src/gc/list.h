@@ -64,7 +64,13 @@ void Parrot_gc_list_append(SHIM_INTERP,
         FUNC_MODIFIES(*item);
 
 PARROT_EXPORT
-void Parrot_gc_list_remove(SHIM_INTERP,
+List_Item_Header* Parrot_gc_list_pop(PARROT_INTERP,
+    ARGIN(Linked_List *list))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
+PARROT_EXPORT
+List_Item_Header* Parrot_gc_list_remove(SHIM_INTERP,
     ARGMOD(Linked_List *list),
     ARGMOD(List_Item_Header *item))
         __attribute__nonnull__(2)
@@ -88,6 +94,9 @@ int Parrot_gc_list_is_owned(SHIM_INTERP,
 #define ASSERT_ARGS_Parrot_gc_list_append __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
        PARROT_ASSERT_ARG(list) \
     , PARROT_ASSERT_ARG(item))
+#define ASSERT_ARGS_Parrot_gc_list_pop __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
+       PARROT_ASSERT_ARG(interp) \
+    , PARROT_ASSERT_ARG(list))
 #define ASSERT_ARGS_Parrot_gc_list_remove __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
        PARROT_ASSERT_ARG(list) \
     , PARROT_ASSERT_ARG(item))

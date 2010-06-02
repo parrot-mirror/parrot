@@ -72,7 +72,7 @@ Parrot_gc_list_append(SHIM_INTERP, ARGMOD(Linked_List *list), ARGMOD(List_Item_H
 }
 
 PARROT_EXPORT
-void
+List_Item_Header*
 Parrot_gc_list_remove(SHIM_INTERP, ARGMOD(Linked_List *list), ARGMOD(List_Item_Header *item))
 {
     List_Item_Header *next = item->next;
@@ -94,6 +94,16 @@ Parrot_gc_list_remove(SHIM_INTERP, ARGMOD(Linked_List *list), ARGMOD(List_Item_H
 
     item->prev = item->next = NULL;
     list->count--;
+    return item;
+}
+
+PARROT_EXPORT
+List_Item_Header*
+Parrot_gc_list_pop(PARROT_INTERP, ARGIN(Linked_List *list))
+{
+    if (!list->first)
+        return NULL;
+    return Parrot_gc_list_remove(interp, list, list->first);
 }
 
 int
