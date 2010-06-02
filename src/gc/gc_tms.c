@@ -641,6 +641,11 @@ gc_tms_mark_and_sweep(PARROT_INTERP, UINTVAL flags)
     if (self->gc_mark_block_level)
         return;
 
+    if (flags & GC_finish_FLAG) {
+        /* FIXME Cleanup here */
+        return;
+    }
+
     ++self->gc_mark_block_level;
 
     /*
@@ -662,6 +667,12 @@ gc_tms_mark_and_sweep(PARROT_INTERP, UINTVAL flags)
     */
     Parrot_gc_trace_root(interp, NULL, GC_TRACE_FULL);
 
+    if (interp->pdb && interp->pdb->debugger) {
+        Parrot_gc_trace_root(interp->pdb->debugger, NULL, 0);
+    }
+
+    gc_tms_mark_pmc_header(interp, PMCNULL);
+
     //fprintf(stderr, "Roots %zd\n", self->grey_objects->count);
     PARROT_ASSERT(Parrot_gc_list_check(interp, self->grey_objects));
 
@@ -669,18 +680,16 @@ gc_tms_mark_and_sweep(PARROT_INTERP, UINTVAL flags)
     # mark_alive will push into self.grey_objects
     self.mark_real($_) for self.grey_objects;
     */
-    tmp = self->grey_objects->first;
     counter = 0;
-    while (tmp) {
-        List_Item_Header *next = tmp->next;
+    while (self->grey_objects->first) {
+        tmp = self->grey_objects->first;
         PARROT_ASSERT(tmp->owner == self->grey_objects);
-        PARROT_ASSERT(PObj_grey_TEST(LLH2Obj_typed(tmp, PMC)));
-        gc_tms_real_mark_pmc(interp, self, tmp);
-        tmp = next;
-        ++counter;
 
-        PARROT_ASSERT(Parrot_gc_list_check(interp, self->grey_objects));
-        PARROT_ASSERT(Parrot_gc_list_check(interp, self->dead_objects));
+        Parrot_gc_list_remove(interp, self->grey_objects, tmp);
+        PARROT_ASSERT(PObj_grey_TEST(LLH2Obj_typed(tmp, PMC)));
+
+        gc_tms_real_mark_pmc(interp, self, tmp);
+        ++counter;
     }
 
     //fprintf(stderr, "Processed grey: %zd\n", counter);
@@ -773,11 +782,25 @@ gc_tms_real_mark_pmc(PARROT_INTERP,
         ARGIN(struct List_Item_Header *li))
 {
     ASSERT_ARGS(gc_tms_real_mark_pmc)
-    Parrot_gc_list_remove(interp, self->grey_objects, li);
+    PMC *obj = LLH2Obj_typed(li, PMC);
+    //Parrot_gc_list_remove(interp, self->grey_objects, li);
     Parrot_gc_list_append(interp, self->black_objects, li);
-    PObj_grey_CLEAR(LLH2Obj_typed(li, PMC));
+    PObj_grey_CLEAR(obj);
     /* self.SUPER.mark($obj) */
-    gc_ms_mark_pmc_header(interp, LLH2Obj_typed(li, PMC));
+    //gc_ms_mark_pmc_header(interp, LLH2Obj_typed(li, PMC));
+
+    /* mark it live */
+    PObj_live_SET(obj);
+
+    /* if object is a PMC and contains buffers or PMCs, then attach the PMC
+     * to the chained mark list. */
+    if (PObj_is_special_PMC_TEST(obj)) {
+        if (PObj_custom_mark_TEST(obj))
+            VTABLE_mark(interp, obj);
+    }
+
+    if (PMC_metadata(obj))
+        Parrot_gc_mark_PMC_alive(interp, PMC_metadata(obj));
 }
 
 static int
@@ -791,8 +814,8 @@ gc_tms_is_pmc_ptr(PARROT_INTERP, ARGIN_NULLOK(void *ptr))
     if (!Parrot_gc_pool_is_owned(self->pmc_allocator, Obj2LLH(ptr)))
         return 0;
 
+#if 1 
     /* Pool.is_owned isn't precise enough (yet) */
-    /*
     if (Parrot_gc_list_is_owned(interp, self->grey_objects, item))
         return 1;
     if (Parrot_gc_list_is_owned(interp, self->dead_objects, item))
