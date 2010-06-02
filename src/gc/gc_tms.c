@@ -596,18 +596,17 @@ gc_tms_allocate_pmc_header(PARROT_INTERP, UINTVAL flags)
         gc_tms_mark_and_sweep(interp, 0);
     }
 
-    /* Allocate "constant" PMCs from constant allocator and forget about them */
-    if (flags & PObj_constant_FLAG) {
-        ptr = (List_Item_Header *)Parrot_gc_pool_allocate(interp,
-            self->constant_pmc_allocator);
-    }
-    else {
-        ptr = (List_Item_Header *)Parrot_gc_pool_allocate(interp,
-            self->pmc_allocator);
-        Parrot_gc_list_append(interp, self->objects, ptr);
-    }
+    ptr = (List_Item_Header *)Parrot_gc_pool_allocate(interp,
+        self->pmc_allocator);
+    Parrot_gc_list_append(interp, self->objects, ptr);
 
     ret = LLH2Obj_typed(ptr, PMC);
+
+    /* Quick hack to register "constant" pmcs */
+    if (flags & PObj_constant_FLAG) {
+        Parrot_pmc_gc_register(interp, ret);
+    }
+
     return ret;
 }
 
@@ -759,10 +758,6 @@ gc_tms_mark_pmc_header(PARROT_INTERP, ARGIN(PMC *pmc))
     TriColor_GC      *self = (TriColor_GC *)interp->gc_sys->gc_private;
     List_Item_Header *item = Obj2LLH(pmc);
 
-    /* "constant" objects aren't managed by GC at all. */
-    if (PObj_constant_TEST(pmc))
-        return;
-
     /* Object was already marked as grey. Skip it */
     if (PObj_grey_TEST(pmc))
         return;
@@ -805,15 +800,16 @@ gc_tms_is_pmc_ptr(PARROT_INTERP, ARGIN_NULLOK(void *ptr))
     if (Parrot_gc_list_is_owned(interp, self->objects, item))
         return 1;
     return 0;
-    */
+#else
     return 1;
+#endif
 }
 
 static void
 gc_tms_mark_pobj_header(PARROT_INTERP, ARGIN_NULLOK(PObj * obj))
 {
     ASSERT_ARGS(gc_tms_mark_pobj_header)
-    if (obj && !PObj_constant_TEST(obj)) {
+    if (obj) {
         if (PObj_is_PMC_TEST(obj))
             gc_tms_mark_pmc_header(interp, (PMC *)obj);
         else
