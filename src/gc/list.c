@@ -136,7 +136,6 @@ Parrot_gc_list_remove(SHIM_INTERP, ARGMOD(Linked_List *list), ARGMOD(List_Item_H
     if (next)
         next->prev = prev;
 
-    item->prev = item->next = NULL;
     list->count--;
     return item;
 }
@@ -157,9 +156,10 @@ Parrot_gc_list_pop(PARROT_INTERP, ARGIN(Linked_List *list))
 {
     ASSERT_ARGS(Parrot_gc_list_pop)
 
-    if (!list->first)
-        return NULL;
-    return Parrot_gc_list_remove(interp, list, list->first);
+    List_Item_Header *ret = list->first;
+    if (ret)
+        LIST_REMOVE(list, ret);
+    return ret;
 }
 
 /*

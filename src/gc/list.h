@@ -41,6 +41,56 @@ typedef struct Linked_List {
 #define LLH2Obj_typed(p, type) ((type*)((char*)(p) + sizeof (List_Item_Header)))
 #define LLH2Obj(p) LLH2Obj_typed(p, void)
 
+#ifdef NDEBUG
+#  define SET_LIST_OWNER(l, i)
+#else
+#  define SET_LIST_OWNER(l, i) (i)->owner = (l);
+#endif
+
+#define LIST_APPEND(l, i)                   \
+do {                                        \
+    List_Item_Header *_item = (i);          \
+    Linked_List      *_list = (l);          \
+    (_item)->prev = (_item)->next = NULL;   \
+                                            \
+    if (_list->last) {                      \
+        _item->prev = _list->last;          \
+        _list->last->next = _item;          \
+    }                                       \
+                                            \
+    _list->last = _item;                    \
+                                            \
+    if (!_list->first)                      \
+        _list->first = _item;               \
+                                            \
+    SET_LIST_OWNER(_list, _item)            \
+    _list->count++;                         \
+} while(0);
+
+#define LIST_REMOVE(l, i)                   \
+do {                                        \
+    List_Item_Header *_item = (i);          \
+    Linked_List      *_list = (l);          \
+    List_Item_Header *next = _item->next;   \
+    List_Item_Header *prev = _item->prev;   \
+                                            \
+    PARROT_ASSERT(_list == _item->owner);   \
+                                            \
+    /* First _item */                       \
+    if (_list->first == _item)              \
+        _list->first = next;                \
+                                            \
+    if (_list->last == _item)               \
+        _list->last = prev;                 \
+                                            \
+    if (prev)                               \
+        prev->next = next;                  \
+    if (next)                               \
+        next->prev = prev;                  \
+                                            \
+    _list->count--;                         \
+} while(0)
+
 
 /* HEADERIZER BEGIN: src/gc/list.c */
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
