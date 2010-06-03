@@ -208,6 +208,9 @@ Parrot_gc_initialize(PARROT_INTERP, ARGIN(void *stacktop))
       case TMS:
         Parrot_gc_tms_init(interp);
         break;
+      case MS2:
+        Parrot_gc_ms2_init(interp);
+        break;
       default:
         /*die horribly because of invalid GC core specified*/
         break;

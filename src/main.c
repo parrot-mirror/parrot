@@ -361,6 +361,8 @@ parseflags_minimal(PARROT_INTERP, int argc, ARGIN(const char *argv[]))
                 interp->gc_sys->sys_type = INF;
             else if (STREQ(arg, "tms"))
                 interp->gc_sys->sys_type = TMS;
+            else if (STREQ(arg, "ms2"))
+                interp->gc_sys->sys_type = MS2;
             else {
                 fprintf(stderr,
                         "main: Unrecognized GC '%s' specified."

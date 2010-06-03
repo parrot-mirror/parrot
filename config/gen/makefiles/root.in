@@ -450,6 +450,7 @@ INTERP_O_FILES = \
     src/gc/gc_ms$(O) \
     src/gc/gc_inf$(O) \
     src/gc/gc_tms$(O) \
+    src/gc/gc_ms2$(O) \
     src/gc/mark_sweep$(O) \
     src/gc/system$(O) \
     src/gc/pool_allocator$(O) \
@@ -1278,7 +1279,9 @@ src/gc/gc_ms$(O) : $(PARROT_H_HEADERS) src/gc/gc_private.h src/gc/pool_allocator
 
 src/gc/gc_inf$(O) : $(PARROT_H_HEADERS) src/gc/gc_private.h src/gc/gc_inf.c
 
-src/gc/gc_tms$(O) : $(PARROT_H_HEADERS) src/gc/gc_private.h src/gc/gc_tms.c
+src/gc/gc_tms$(O) : $(PARROT_H_HEADERS) src/gc/gc_private.h src/gc/list.h src/gc/gc_tms.c
+
+src/gc/gc_ms2$(O) : $(PARROT_H_HEADERS) src/gc/gc_private.h src/gc/list.h src/gc/gc_ms2.c
 
 src/gc/api$(O) : $(PARROT_H_HEADERS) src/gc/gc_private.h src/gc/api.c
 
