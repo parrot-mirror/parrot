@@ -705,6 +705,7 @@ gc_tms_mark_and_sweep(PARROT_INTERP, UINTVAL flags)
     while (tmp) {
         List_Item_Header *next = tmp->next;
         PARROT_ASSERT(tmp->owner == self->dead_objects);
+        PObj_on_free_list_SET(LLH2Obj_typed(tmp, PMC));
         Parrot_gc_pool_free(self->pmc_allocator, tmp);
         tmp = next;
         ++counter;
@@ -838,6 +839,10 @@ gc_tms_is_pmc_ptr(PARROT_INTERP, ARGIN_NULLOK(void *ptr))
         return 0;
 
     if (!Parrot_gc_pool_is_owned(self->pmc_allocator, item))
+        return 0;
+
+    /* black or grey objects marked already. Dead objects are dead */
+    if (PObj_grey_TEST(pmc) || PObj_live_TEST(pmc) || PObj_on_free_list_TEST(pmc))
         return 0;
 
     /* Pool.is_owned isn't precise enough (yet) */
