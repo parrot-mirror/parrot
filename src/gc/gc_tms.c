@@ -13,6 +13,7 @@ src/gc/gc_tms.c - TriColour M&S
 */
 
 #include "parrot/parrot.h"
+#include "parrot/gc_api.h"
 #include "gc_private.h"
 #include "list.h"
 #include "pool_allocator.h"
@@ -668,7 +669,7 @@ gc_tms_mark_and_sweep(PARROT_INTERP, UINTVAL flags)
     Parrot_gc_trace_root(interp, NULL, GC_TRACE_FULL);
 
     if (interp->pdb && interp->pdb->debugger) {
-        Parrot_gc_trace_root(interp->pdb->debugger, NULL, Parrot_gc_trace_type(0));
+        Parrot_gc_trace_root(interp->pdb->debugger, NULL, (Parrot_gc_trace_type)0);
     }
 
     gc_tms_mark_pmc_header(interp, PMCNULL);
@@ -681,7 +682,7 @@ gc_tms_mark_and_sweep(PARROT_INTERP, UINTVAL flags)
     self.mark_real($_) for self.grey_objects;
     */
     counter = 0;
-    while (tmp = Parrot_gc_list_pop(interp, self->grey_objects)) {
+    while ((tmp = Parrot_gc_list_pop(interp, self->grey_objects))) {
         PARROT_ASSERT(tmp->owner == self->grey_objects);
         PARROT_ASSERT(PObj_grey_TEST(LLH2Obj_typed(tmp, PMC)));
 
@@ -742,7 +743,7 @@ gc_tms_mark_and_sweep(PARROT_INTERP, UINTVAL flags)
     self->objects = list;
 
     //fprintf(stderr, "Appending %zd\n", self->black_objects->count);
-    while (tmp = Parrot_gc_list_pop(interp, self->black_objects)) {
+    while ((tmp = Parrot_gc_list_pop(interp, self->black_objects))) {
         PARROT_ASSERT(tmp->owner == self->black_objects);
         Parrot_gc_list_append(interp, self->objects, tmp);
     }
