@@ -599,7 +599,7 @@ gc_tms_allocate_pmc_header(PARROT_INTERP, UINTVAL flags)
 
     ptr = (List_Item_Header *)Parrot_gc_pool_allocate(interp,
         self->pmc_allocator);
-    Parrot_gc_list_append(interp, self->objects, ptr);
+    LIST_APPEND(self->objects, ptr);
 
     ret = LLH2Obj_typed(ptr, PMC);
 
@@ -746,7 +746,7 @@ gc_tms_mark_and_sweep(PARROT_INTERP, UINTVAL flags)
     //fprintf(stderr, "Appending %zd\n", self->black_objects->count);
     while ((tmp = Parrot_gc_list_pop(interp, self->black_objects))) {
         PARROT_ASSERT(tmp->owner == self->black_objects);
-        Parrot_gc_list_append(interp, self->objects, tmp);
+        LIST_APPEND(self->objects, tmp);
     }
 
     self->header_allocs_since_last_collect = 0;
@@ -776,8 +776,8 @@ gc_tms_mark_pmc_header(PARROT_INTERP, ARGIN(PMC *pmc))
         return;
 
     PObj_grey_SET(pmc);
-    Parrot_gc_list_remove(interp, self->dead_objects, item);
-    Parrot_gc_list_append(interp, self->grey_objects, item);
+    LIST_REMOVE(self->dead_objects, item);
+    LIST_APPEND(self->grey_objects, item);
 }
 
 /*
@@ -799,7 +799,7 @@ gc_tms_real_mark_pmc(PARROT_INTERP,
     ASSERT_ARGS(gc_tms_real_mark_pmc)
 
     PMC *obj = LLH2Obj_typed(li, PMC);
-    Parrot_gc_list_append(interp, self->black_objects, li);
+    LIST_APPEND(self->black_objects, li);
 
     PObj_grey_CLEAR(obj);
     /* self.SUPER.mark($obj) */
