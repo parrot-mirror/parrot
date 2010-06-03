@@ -65,7 +65,7 @@ do {                                        \
                                             \
     SET_LIST_OWNER(_list, _item)            \
     _list->count++;                         \
-} while(0);
+} while (0);
 
 #define LIST_REMOVE(l, i)                   \
 do {                                        \
@@ -89,7 +89,7 @@ do {                                        \
         next->prev = prev;                  \
                                             \
     _list->count--;                         \
-} while(0)
+} while (0)
 
 
 /* HEADERIZER BEGIN: src/gc/list.c */
