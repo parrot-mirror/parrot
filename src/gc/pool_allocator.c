@@ -66,6 +66,8 @@ Parrot_gc_create_pool_allocator(size_t object_size)
     newpool->num_free_objects  = 0;
     newpool->free_list         = NULL;
     newpool->top_arena         = NULL;
+    newpool->lo_arena_ptr      = (size_t)-1;
+    newpool->hi_arena_ptr      = 0;
 
     return newpool;
 }
@@ -178,8 +180,13 @@ Parrot_gc_pool_is_owned(ARGMOD(Pool_Allocator *pool), ARGMOD(void *ptr))
 {
     ASSERT_ARGS(Parrot_gc_pool_is_owned)
     Pool_Allocator_Arena *arena = pool->top_arena;
+    size_t                a_size;
+
+    if (ptr < pool->lo_arena_ptr || ptr > pool->hi_arena_ptr)
+        return 0;
+
     /* We can cache this value. All arenas are same size */
-    size_t                a_size = arena_size(pool);
+    a_size = arena_size(pool);
     while (arena) {
         const ptrdiff_t ptr_diff =
             (ptrdiff_t)ptr - (ptrdiff_t)(arena + 1);
@@ -229,6 +236,12 @@ allocate_new_pool_arena(ARGMOD(Pool_Allocator *pool))
 
     pool->num_free_objects += num_items;
     pool->total_objects    += num_items;
+
+    if (pool->lo_arena_ptr > new_arena)
+        pool->lo_arena_ptr = new_arena;
+
+    if (pool->hi_arena_ptr < (char*)new_arena + GC_FIXED_SIZE_POOL_SIZE)
+        pool->hi_arena_ptr = new_arena + GC_FIXED_SIZE_POOL_SIZE;
 }
 
 /*

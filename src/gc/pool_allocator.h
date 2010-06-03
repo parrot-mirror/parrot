@@ -44,6 +44,10 @@ typedef struct Pool_Allocator {
     Pool_Allocator_Arena     * top_arena;
     Pool_Allocator_Free_List * newfree;
     Pool_Allocator_Free_List * newlast;
+
+    /* Pointers of arena bounds. Used in .is_owned check */
+    void *lo_arena_ptr;
+    void *hi_arena_ptr;
 } Pool_Allocator;
 
 
