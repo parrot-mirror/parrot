@@ -771,8 +771,8 @@ gc_tms_mark_pmc_header(PARROT_INTERP, ARGIN(PMC *pmc))
     TriColor_GC      *self = (TriColor_GC *)interp->gc_sys->gc_private;
     List_Item_Header *item = Obj2LLH(pmc);
 
-    /* Object was already marked as grey. Skip it */
-    if (PObj_grey_TEST(pmc))
+    /* Object was already marked as grey. Or live. Or dead. Skip it */
+    if (PObj_grey_TEST(pmc) || PObj_is_live_or_free_TESTALL(pmc))
         return;
 
     PObj_grey_SET(pmc);
