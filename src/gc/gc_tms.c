@@ -615,17 +615,14 @@ static void
 gc_tms_free_pmc_header(PARROT_INTERP, ARGFREE(PMC *pmc))
 {
     ASSERT_ARGS(gc_tms_free_pmc_header)
-    /*
-    XXX Remove it from @objects.
     TriColor_GC *self = (TriColor_GC *)interp->gc_sys->gc_private;
     if (pmc) {
         if (PObj_on_free_list_TEST(pmc))
             return;
-        Parrot_gc_pool_free(self->pmc_allocator, Obj2LLH(pmc));
-        PObj_on_free_list_SET(pmc);
         Parrot_gc_list_remove(interp, self->objects, Obj2LLH(pmc));
+        PObj_on_free_list_SET(pmc);
+        Parrot_gc_pool_free(self->pmc_allocator, Obj2LLH(pmc));
     }
-    */
 }
 
 static void
