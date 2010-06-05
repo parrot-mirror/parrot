@@ -24,8 +24,11 @@ src/gc/gc_tms.c - TriColour M&S
 typedef struct MarkSweep_GC {
     /* Allocator for PMC headers */
     struct Pool_Allocator *pmc_allocator;
-
     struct Linked_List    *objects;
+
+    /* Allocator for strings */
+    struct Pool_Allocator *string_allocator;
+    struct Linked_List    *strings;
 
     /** statistics for GC **/
     size_t  gc_mark_runs;       /* Number of times we've done a mark run */
@@ -91,8 +94,9 @@ static PMC* gc_ms2_allocate_pmc_header(PARROT_INTERP, UINTVAL flags)
 
 PARROT_MALLOC
 PARROT_CAN_RETURN_NULL
-static STRING* gc_ms2_allocate_string_header(SHIM_INTERP,
-    SHIM(UINTVAL flags));
+static STRING* gc_ms2_allocate_string_header(PARROT_INTERP,
+    SHIM(UINTVAL flags))
+        __attribute__nonnull__(1);
 
 static void gc_ms2_allocate_string_storage(SHIM_INTERP,
     ARGMOD(STRING *str),
@@ -125,7 +129,9 @@ static void gc_ms2_free_pmc_attributes(SHIM_INTERP, ARGMOD(PMC *pmc))
 static void gc_ms2_free_pmc_header(PARROT_INTERP, ARGFREE(PMC *pmc))
         __attribute__nonnull__(1);
 
-static void gc_ms2_free_string_header(SHIM_INTERP, ARGFREE(STRING *s));
+static void gc_ms2_free_string_header(PARROT_INTERP, ARGFREE(STRING *s))
+        __attribute__nonnull__(1);
+
 static size_t gc_ms2_get_gc_info(SHIM_INTERP, SHIM(Interpinfo_enum what));
 static unsigned int gc_ms2_is_blocked_GC_mark(PARROT_INTERP)
         __attribute__nonnull__(1);
@@ -193,7 +199,8 @@ static void gc_ms2_unblock_GC_sweep(PARROT_INTERP)
        PARROT_ASSERT_ARG(pmc))
 #define ASSERT_ARGS_gc_ms2_allocate_pmc_header __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
        PARROT_ASSERT_ARG(interp))
-#define ASSERT_ARGS_gc_ms2_allocate_string_header __attribute__unused__ int _ASSERT_ARGS_CHECK = (0)
+#define ASSERT_ARGS_gc_ms2_allocate_string_header __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
+       PARROT_ASSERT_ARG(interp))
 #define ASSERT_ARGS_gc_ms2_allocate_string_storage \
      __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
        PARROT_ASSERT_ARG(str))
@@ -211,7 +218,8 @@ static void gc_ms2_unblock_GC_sweep(PARROT_INTERP)
        PARROT_ASSERT_ARG(pmc))
 #define ASSERT_ARGS_gc_ms2_free_pmc_header __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
        PARROT_ASSERT_ARG(interp))
-#define ASSERT_ARGS_gc_ms2_free_string_header __attribute__unused__ int _ASSERT_ARGS_CHECK = (0)
+#define ASSERT_ARGS_gc_ms2_free_string_header __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
+       PARROT_ASSERT_ARG(interp))
 #define ASSERT_ARGS_gc_ms2_get_gc_info __attribute__unused__ int _ASSERT_ARGS_CHECK = (0)
 #define ASSERT_ARGS_gc_ms2_is_blocked_GC_mark __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
        PARROT_ASSERT_ARG(interp))
@@ -323,23 +331,6 @@ void *data)>
 Functions for allocating/deallocating various objects.
 
 */
-
-PARROT_MALLOC
-PARROT_CAN_RETURN_NULL
-static STRING*
-gc_ms2_allocate_string_header(SHIM_INTERP, SHIM(UINTVAL flags))
-{
-    ASSERT_ARGS(gc_ms2_allocate_string_header)
-    return (STRING*)calloc(sizeof (STRING), 1);
-}
-
-static void
-gc_ms2_free_string_header(SHIM_INTERP, ARGFREE(STRING *s))
-{
-    ASSERT_ARGS(gc_ms2_free_string_header)
-    if (s)
-        free(s);
-}
 
 PARROT_MALLOC
 PARROT_CAN_RETURN_NULL
@@ -554,8 +545,11 @@ Parrot_gc_ms2_init(PARROT_INTERP)
 
         self->pmc_allocator = Parrot_gc_create_pool_allocator(
             sizeof (List_Item_Header) + sizeof (PMC));
-
         self->objects = Parrot_gc_allocate_linked_list(interp);
+
+        self->string_allocator = Parrot_gc_create_pool_allocator(
+            sizeof (List_Item_Header) + sizeof (STRING));
+        self->strings = Parrot_gc_allocate_linked_list(interp);
 
     }
     interp->gc_sys->gc_private = self;
@@ -582,11 +576,6 @@ gc_ms2_allocate_pmc_header(PARROT_INTERP, UINTVAL flags)
 
     ret = LLH2Obj_typed(ptr, PMC);
 
-    /* Quick hack to register "constant" pmcs */
-    if (flags & PObj_constant_FLAG) {
-        //Parrot_pmc_gc_register(interp, ret);
-    }
-
     return ret;
 }
 
@@ -601,6 +590,39 @@ gc_ms2_free_pmc_header(PARROT_INTERP, ARGFREE(PMC *pmc))
         Parrot_gc_list_remove(interp, self->objects, Obj2LLH(pmc));
         PObj_on_free_list_SET(pmc);
         Parrot_gc_pool_free(self->pmc_allocator, Obj2LLH(pmc));
+    }
+}
+
+PARROT_MALLOC
+PARROT_CAN_RETURN_NULL
+static STRING*
+gc_ms2_allocate_string_header(PARROT_INTERP, SHIM(UINTVAL flags))
+{
+    ASSERT_ARGS(gc_ms2_allocate_string_header)
+    MarkSweep_GC     *self = (MarkSweep_GC *)interp->gc_sys->gc_private;
+    List_Item_Header *ptr;
+    STRING           *ret;
+
+    ptr = (List_Item_Header *)Parrot_gc_pool_allocate(interp,
+        self->string_allocator);
+    LIST_APPEND(self->strings, ptr);
+
+    ret = LLH2Obj_typed(ptr, STRING);
+    memset(ret, 0, sizeof (STRING));
+    return ret;
+}
+
+static void
+gc_ms2_free_string_header(PARROT_INTERP, ARGFREE(STRING *s))
+{
+    ASSERT_ARGS(gc_ms2_free_string_header)
+    MarkSweep_GC *self = (MarkSweep_GC *)interp->gc_sys->gc_private;
+    if (s) {
+        if (PObj_on_free_list_TEST(s))
+            return;
+        Parrot_gc_list_remove(interp, self->strings, Obj2LLH(s));
+        PObj_on_free_list_SET(s);
+        Parrot_gc_pool_free(self->string_allocator, Obj2LLH(s));
     }
 }
 
