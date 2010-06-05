@@ -716,6 +716,10 @@ gc_ms2_allocate_string_header(PARROT_INTERP, SHIM(UINTVAL flags))
     List_Item_Header *ptr;
     STRING           *ret;
 
+    if (++self->header_allocs_since_last_collect > 1024) {
+        gc_ms2_mark_and_sweep(interp, 0);
+    }
+
     ptr = (List_Item_Header *)Parrot_gc_pool_allocate(interp,
         self->string_allocator);
     LIST_APPEND(self->strings, ptr);
