@@ -769,6 +769,16 @@ gc_ms_is_pmc_ptr(PARROT_INTERP, ARGIN_NULLOK(void *ptr))
     return contained_in_pool(interp->mem_pools->pmc_pool, ptr);
 }
 
+/*
+
+=item C<static int gc_ms_is_string_ptr(PARROT_INTERP, void *ptr)>
+
+establish if string *ptr is owned
+
+=cut
+
+*/
+
 static int
 gc_ms_is_string_ptr(PARROT_INTERP, ARGIN_NULLOK(void *ptr))
 {
