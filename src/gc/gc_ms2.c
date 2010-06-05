@@ -30,6 +30,9 @@ typedef struct MarkSweep_GC {
     struct Pool_Allocator *string_allocator;
     struct Linked_List    *strings;
 
+    /* Number of allocated objects before trigger gc */
+    size_t gc_theshold;
+
     /** statistics for GC **/
     size_t  gc_mark_runs;       /* Number of times we've done a mark run */
     size_t  gc_lazy_mark_runs;  /* Number of successful lazy mark runs */
@@ -600,6 +603,8 @@ Parrot_gc_ms2_init(PARROT_INTERP)
             sizeof (List_Item_Header) + sizeof (STRING));
         self->strings = Parrot_gc_allocate_linked_list(interp);
 
+        /* Arbitary number */
+        self->gc_theshold = 4096 * 10;
     }
     interp->gc_sys->gc_private = self;
 }
@@ -615,7 +620,8 @@ gc_ms2_allocate_pmc_header(PARROT_INTERP, UINTVAL flags)
     PMC              *ret;
 
     /* Invoke M&S early. Freshly allocated "header" isn't header yet */
-    if (++self->header_allocs_since_last_collect > 1024) {
+    if ((++self->header_allocs_since_last_collect > self->gc_theshold)
+        && self->pmc_allocator->num_free_objects <= 1) {
         gc_ms2_mark_and_sweep(interp, 0);
     }
 
@@ -716,7 +722,8 @@ gc_ms2_allocate_string_header(PARROT_INTERP, SHIM(UINTVAL flags))
     List_Item_Header *ptr;
     STRING           *ret;
 
-    if (++self->header_allocs_since_last_collect > 1024) {
+    if ((++self->header_allocs_since_last_collect > self->gc_theshold)
+        && self->string_allocator->num_free_objects <= 1) {
         gc_ms2_mark_and_sweep(interp, 0);
     }
 
@@ -819,6 +826,9 @@ gc_ms2_mark_and_sweep(PARROT_INTERP, UINTVAL flags)
 
     gc_ms2_sweep_pool(interp, self->pmc_allocator, self->objects, gc_ms2_sweep_pmc_cb);
     gc_ms2_sweep_pool(interp, self->string_allocator, self->strings, gc_ms2_sweep_string_cb);
+
+    /* Wait more next time */
+    self->gc_theshold *= UNITS_PER_ALLOC_GROWTH_FACTOR;
 
     self->header_allocs_since_last_collect = 0;
     self->gc_mark_block_level--;
