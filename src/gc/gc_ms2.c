@@ -707,6 +707,7 @@ gc_ms2_is_pmc_ptr(PARROT_INTERP, ARGIN_NULLOK(void *ptr))
 static void
 gc_ms2_sweep_pmc_cb(PARROT_INTERP, ARGIN(PObj *obj))
 {
+    ASSERT_ARGS(gc_ms2_sweep_pmc_cb)
     PMC *pmc = (PMC *)obj;
     Parrot_pmc_destroy(interp, pmc);
 }
@@ -757,7 +758,7 @@ gc_ms2_free_string_header(PARROT_INTERP, ARGFREE(STRING *s))
 static int
 gc_ms2_is_string_ptr(PARROT_INTERP, ARGIN_NULLOK(void *ptr))
 {
-    ASSERT_ARGS(gc_ms2_is_pmc_ptr)
+    ASSERT_ARGS(gc_ms2_is_string_ptr)
     MarkSweep_GC      *self = (MarkSweep_GC *)interp->gc_sys->gc_private;
     return gc_ms2_is_ptr_owned(interp, ptr, self->string_allocator, self->strings);
 }
@@ -787,6 +788,7 @@ gc_ms2_mark_pobj_header(PARROT_INTERP, ARGIN_NULLOK(PObj * obj))
 static void
 gc_ms2_sweep_string_cb(PARROT_INTERP, ARGIN(PObj *obj))
 {
+    ASSERT_ARGS(gc_ms2_sweep_string_cb)
     STRING *str = (STRING *)obj;
     /* Compact string pool here. Or get rid of "shared buffers" and just free storage */
     if (Buffer_bufstart(str) && !PObj_external_TEST(str))
