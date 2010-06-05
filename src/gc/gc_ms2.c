@@ -188,6 +188,13 @@ static void gc_ms2_reallocate_string_storage(SHIM_INTERP,
         __attribute__nonnull__(2)
         FUNC_MODIFIES(*str);
 
+static void gc_ms2_sweep_pool(PARROT_INTERP,
+    ARGIN(Pool_Allocator *pool),
+    ARGIN(Linked_List *list))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3);
+
 static void gc_ms2_unblock_GC_mark(PARROT_INTERP)
         __attribute__nonnull__(1);
 
@@ -261,6 +268,10 @@ static void gc_ms2_unblock_GC_sweep(PARROT_INTERP)
 #define ASSERT_ARGS_gc_ms2_reallocate_string_storage \
      __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
        PARROT_ASSERT_ARG(str))
+#define ASSERT_ARGS_gc_ms2_sweep_pool __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
+       PARROT_ASSERT_ARG(interp) \
+    , PARROT_ASSERT_ARG(pool) \
+    , PARROT_ASSERT_ARG(list))
 #define ASSERT_ARGS_gc_ms2_unblock_GC_mark __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
        PARROT_ASSERT_ARG(interp))
 #define ASSERT_ARGS_gc_ms2_unblock_GC_sweep __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
@@ -678,15 +689,15 @@ gc_ms2_mark_and_sweep(PARROT_INTERP, UINTVAL flags)
     counter = 0;
     while (tmp) {
         List_Item_Header *next = tmp->next;
-        PMC              *pmc  = LLH2Obj_typed(tmp, PMC);
-        if (PObj_live_TEST(pmc)) {
+        PObj             *obj  = LLH2Obj_typed(tmp, PObj);
+        if (PObj_live_TEST(obj)) {
             /* Paint live objects white */
-            PObj_live_CLEAR(pmc);
+            PObj_live_CLEAR(obj);
         }
-        else if (!PObj_constant_TEST(pmc)) {
-            PObj_on_free_list_SET(pmc);
-            LIST_REMOVE(self->objects, tmp);
-            Parrot_gc_pool_free(self->pmc_allocator, tmp);
+        else if (!PObj_constant_TEST(obj)) {
+            PObj_on_free_list_SET(obj);
+            LIST_REMOVE(self->objects, obj);
+            Parrot_gc_pool_free(self->pmc_allocator, obj);
         }
         tmp = next;
         ++counter;
@@ -756,6 +767,35 @@ gc_ms2_is_string_ptr(PARROT_INTERP, ARGIN_NULLOK(void *ptr))
     ASSERT_ARGS(gc_ms2_is_pmc_ptr)
     MarkSweep_GC      *self = (MarkSweep_GC *)interp->gc_sys->gc_private;
     return gc_ms2_is_ptr_owned(interp, ptr, self->string_allocator, self->strings);
+}
+
+/*
+=item C<static void gc_ms2_sweep_pool(PARROT_INTERP, Pool_Allocator *pool,
+Linked_List *list)>
+
+Helper function to sweep pool.
+
+=cut
+*/
+static void
+gc_ms2_sweep_pool(PARROT_INTERP, ARGIN(Pool_Allocator *pool), ARGIN(Linked_List *list))
+{
+    ASSERT_ARGS(gc_ms2_sweep_pool);
+    tmp = list->first;
+    while (tmp) {
+        List_Item_Header *next = tmp->next;
+        PObj             *obj  = LLH2Obj_typed(tmp, PObj);
+        if (PObj_live_TEST(obj)) {
+            /* Paint live objects white */
+            PObj_live_CLEAR(obj);
+        }
+        else if (!PObj_constant_TEST(obj)) {
+            PObj_on_free_list_SET(obj);
+            LIST_REMOVE(list, obj);
+            Parrot_gc_pool_free(pool, obj);
+        }
+        tmp = next;
+    }
 }
 
 /*
