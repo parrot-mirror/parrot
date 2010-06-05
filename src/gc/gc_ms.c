@@ -154,6 +154,9 @@ static unsigned int gc_ms_is_blocked_GC_sweep(PARROT_INTERP)
 static int gc_ms_is_pmc_ptr(PARROT_INTERP, ARGIN_NULLOK(void *ptr))
         __attribute__nonnull__(1);
 
+static int gc_ms_is_string_ptr(PARROT_INTERP, ARGIN_NULLOK(void *ptr))
+        __attribute__nonnull__(1);
+
 static void gc_ms_mark_and_sweep(PARROT_INTERP, UINTVAL flags)
         __attribute__nonnull__(1);
 
@@ -321,6 +324,8 @@ static void Parrot_gc_initialize_fixed_size_pools(SHIM_INTERP,
        PARROT_ASSERT_ARG(interp))
 #define ASSERT_ARGS_gc_ms_is_pmc_ptr __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
        PARROT_ASSERT_ARG(interp))
+#define ASSERT_ARGS_gc_ms_is_string_ptr __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
+       PARROT_ASSERT_ARG(interp))
 #define ASSERT_ARGS_gc_ms_mark_and_sweep __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
        PARROT_ASSERT_ARG(interp))
 #define ASSERT_ARGS_gc_ms_mark_pobj_header __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
@@ -422,6 +427,7 @@ Parrot_gc_ms_init(PARROT_INTERP)
     interp->gc_sys->free_bufferlike_header      = gc_ms_free_bufferlike_header;
 
     interp->gc_sys->is_pmc_ptr              = gc_ms_is_pmc_ptr;
+    interp->gc_sys->is_string_ptr           = gc_ms_is_string_ptr;
     interp->gc_sys->mark_pmc_header         = gc_ms_mark_pmc_header;
     interp->gc_sys->mark_pobj_header        = gc_ms_mark_pobj_header;
 
@@ -761,6 +767,21 @@ gc_ms_is_pmc_ptr(PARROT_INTERP, ARGIN_NULLOK(void *ptr))
 {
     ASSERT_ARGS(gc_ms_is_pmc_ptr)
     return contained_in_pool(interp->mem_pools->pmc_pool, ptr);
+}
+
+static int
+gc_ms_is_string_ptr(PARROT_INTERP, ARGIN_NULLOK(void *ptr))
+{
+    ASSERT_ARGS(gc_ms_is_string_ptr)
+    UINTVAL        i;
+
+    for (i = 0; i < interp->mem_pools->num_sized; ++i) {
+        if (interp->mem_pools->sized_header_pools[i]
+            &&  contained_in_pool(interp->mem_pools->sized_header_pools[i], ptr))
+            return 1;
+    }
+
+    return 0;
 }
 
 /*
