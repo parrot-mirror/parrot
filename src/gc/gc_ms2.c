@@ -142,6 +142,14 @@ static unsigned int gc_ms2_is_blocked_GC_sweep(PARROT_INTERP)
 static int gc_ms2_is_pmc_ptr(PARROT_INTERP, ARGIN_NULLOK(void *ptr))
         __attribute__nonnull__(1);
 
+static int gc_ms2_is_ptr_owned(PARROT_INTERP,
+    ARGIN_NULLOK(void *ptr),
+    ARGIN(Pool_Allocator *pool),
+    ARGIN(Linked_List *list))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(3)
+        __attribute__nonnull__(4);
+
 static void gc_ms2_mark_and_sweep(PARROT_INTERP, UINTVAL flags)
         __attribute__nonnull__(1);
 
@@ -227,6 +235,10 @@ static void gc_ms2_unblock_GC_sweep(PARROT_INTERP)
        PARROT_ASSERT_ARG(interp))
 #define ASSERT_ARGS_gc_ms2_is_pmc_ptr __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
        PARROT_ASSERT_ARG(interp))
+#define ASSERT_ARGS_gc_ms2_is_ptr_owned __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
+       PARROT_ASSERT_ARG(interp) \
+    , PARROT_ASSERT_ARG(pool) \
+    , PARROT_ASSERT_ARG(list))
 #define ASSERT_ARGS_gc_ms2_mark_and_sweep __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
        PARROT_ASSERT_ARG(interp))
 #define ASSERT_ARGS_gc_ms2_mark_pmc_header __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
@@ -729,24 +741,41 @@ gc_ms2_is_pmc_ptr(PARROT_INTERP, ARGIN_NULLOK(void *ptr))
 {
     ASSERT_ARGS(gc_ms2_is_pmc_ptr)
     MarkSweep_GC      *self = (MarkSweep_GC *)interp->gc_sys->gc_private;
-    List_Item_Header *item = Obj2LLH(ptr);
-    PMC              *pmc  = (PMC *)ptr;
+    return gc_ms2_is_ptr_owned(interp, ptr, self->pmc_allocator, self->objects);
+}
 
-    if (!ptr || !item)
+/*
+=item C<static int gc_ms2_is_ptr_owned(PARROT_INTERP, void *ptr, Pool_Allocator
+*pool, Linked_List *list)>
+
+Helper function to check that we own PObj
+
+=cut
+*/
+
+static int
+gc_ms2_is_ptr_owned(PARROT_INTERP, ARGIN_NULLOK(void *ptr),
+    ARGIN(Pool_Allocator *pool), ARGIN(Linked_List *list))
+{
+    ASSERT_ARGS(gc_ms2_is_ptr_owned)
+    MarkSweep_GC     *self = (MarkSweep_GC *)interp->gc_sys->gc_private;
+    List_Item_Header *item = Obj2LLH(ptr);
+    PObj             *obj  = (PObj *)ptr;
+
+    if (!obj || !item)
         return 0;
 
-    if (!Parrot_gc_pool_is_owned(self->pmc_allocator, item))
+    if (!Parrot_gc_pool_is_owned(pool, item))
         return 0;
 
     /* black or white objects marked already. */
-    if (PObj_is_live_or_free_TESTALL(pmc))
+    if (PObj_is_live_or_free_TESTALL(obj))
         return 0;
 
     /* Pool.is_owned isn't precise enough (yet) */
-    if (Parrot_gc_list_is_owned(interp, self->objects, item))
+    if (Parrot_gc_list_is_owned(interp, list, item))
         return 1;
 
-    /* We don't care about non-dead objects here. They will be marked anyway */
     return 0;
 }
 
