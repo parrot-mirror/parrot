@@ -704,6 +704,16 @@ gc_ms2_is_pmc_ptr(PARROT_INTERP, ARGIN_NULLOK(void *ptr))
     return gc_ms2_is_ptr_owned(interp, ptr, self->pmc_allocator, self->objects);
 }
 
+/*
+
+=item C<static void gc_ms2_sweep_pmc_cb(PARROT_INTERP, PObj *obj)>
+
+destroy pmc *obj
+
+=cut
+
+*/
+
 static void
 gc_ms2_sweep_pmc_cb(PARROT_INTERP, ARGIN(PObj *obj))
 {
@@ -755,6 +765,16 @@ gc_ms2_free_string_header(PARROT_INTERP, ARGFREE(STRING *s))
     }
 }
 
+/*
+
+=item C<static int gc_ms2_is_string_ptr(PARROT_INTERP, void *ptr)>
+
+establish if string *ptr is owned
+
+=cut
+
+*/
+
 static int
 gc_ms2_is_string_ptr(PARROT_INTERP, ARGIN_NULLOK(void *ptr))
 {
@@ -784,6 +804,16 @@ gc_ms2_mark_pobj_header(PARROT_INTERP, ARGIN_NULLOK(PObj * obj))
             PObj_live_SET(obj);
     }
 }
+
+/*
+
+=item C<static void gc_ms2_sweep_string_cb(PARROT_INTERP, PObj *obj)>
+
+destroy string *obj
+
+=cut
+
+*/
 
 static void
 gc_ms2_sweep_string_cb(PARROT_INTERP, ARGIN(PObj *obj))
