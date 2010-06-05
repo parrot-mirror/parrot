@@ -684,24 +684,8 @@ gc_ms2_mark_and_sweep(PARROT_INTERP, UINTVAL flags)
         Parrot_gc_trace_root(interp->pdb->debugger, NULL, (Parrot_gc_trace_type)0);
     }
 
-
-    tmp = self->objects->first;
-    counter = 0;
-    while (tmp) {
-        List_Item_Header *next = tmp->next;
-        PObj             *obj  = LLH2Obj_typed(tmp, PObj);
-        if (PObj_live_TEST(obj)) {
-            /* Paint live objects white */
-            PObj_live_CLEAR(obj);
-        }
-        else if (!PObj_constant_TEST(obj)) {
-            PObj_on_free_list_SET(obj);
-            LIST_REMOVE(self->objects, obj);
-            Parrot_gc_pool_free(self->pmc_allocator, obj);
-        }
-        tmp = next;
-        ++counter;
-    }
+    gc_ms2_sweep_pool(interp, self->pmc_allocator, self->objects);
+    gc_ms2_sweep_pool(interp, self->string_allocator, self->strings);
 
     self->header_allocs_since_last_collect = 0;
     self->gc_mark_block_level--;
