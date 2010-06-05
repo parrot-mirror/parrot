@@ -150,6 +150,9 @@ static int gc_ms2_is_ptr_owned(PARROT_INTERP,
         __attribute__nonnull__(3)
         __attribute__nonnull__(4);
 
+static int gc_ms2_is_string_ptr(PARROT_INTERP, ARGIN_NULLOK(void *ptr))
+        __attribute__nonnull__(1);
+
 static void gc_ms2_mark_and_sweep(PARROT_INTERP, UINTVAL flags)
         __attribute__nonnull__(1);
 
@@ -239,6 +242,8 @@ static void gc_ms2_unblock_GC_sweep(PARROT_INTERP)
        PARROT_ASSERT_ARG(interp) \
     , PARROT_ASSERT_ARG(pool) \
     , PARROT_ASSERT_ARG(list))
+#define ASSERT_ARGS_gc_ms2_is_string_ptr __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
+       PARROT_ASSERT_ARG(interp))
 #define ASSERT_ARGS_gc_ms2_mark_and_sweep __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
        PARROT_ASSERT_ARG(interp))
 #define ASSERT_ARGS_gc_ms2_mark_pmc_header __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
@@ -517,6 +522,7 @@ Parrot_gc_ms2_init(PARROT_INTERP)
     interp->gc_sys->free_pmc_attributes     = gc_ms2_free_pmc_attributes;
 
     interp->gc_sys->is_pmc_ptr              = gc_ms2_is_pmc_ptr;
+    interp->gc_sys->is_string_ptr           = gc_ms2_is_string_ptr;
     interp->gc_sys->mark_pmc_header         = gc_ms2_mark_pmc_header;
     interp->gc_sys->mark_pobj_header        = gc_ms2_mark_pobj_header;
 
@@ -742,6 +748,14 @@ gc_ms2_is_pmc_ptr(PARROT_INTERP, ARGIN_NULLOK(void *ptr))
     ASSERT_ARGS(gc_ms2_is_pmc_ptr)
     MarkSweep_GC      *self = (MarkSweep_GC *)interp->gc_sys->gc_private;
     return gc_ms2_is_ptr_owned(interp, ptr, self->pmc_allocator, self->objects);
+}
+
+static int
+gc_ms2_is_string_ptr(PARROT_INTERP, ARGIN_NULLOK(void *ptr))
+{
+    ASSERT_ARGS(gc_ms2_is_pmc_ptr)
+    MarkSweep_GC      *self = (MarkSweep_GC *)interp->gc_sys->gc_private;
+    return gc_ms2_is_ptr_owned(interp, ptr, self->string_allocator, self->strings);
 }
 
 /*
