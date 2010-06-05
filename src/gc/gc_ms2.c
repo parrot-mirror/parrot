@@ -191,12 +191,22 @@ static void gc_ms2_reallocate_string_storage(SHIM_INTERP,
         __attribute__nonnull__(2)
         FUNC_MODIFIES(*str);
 
+static void gc_ms2_sweep_pmc_cb(PARROT_INTERP, ARGIN(PObj *obj))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
+
 static void gc_ms2_sweep_pool(PARROT_INTERP,
     ARGIN(Pool_Allocator *pool),
-    ARGIN(Linked_List *list))
+    ARGIN(Linked_List *list),
+    ARGIN(sweep_cb callback))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
-        __attribute__nonnull__(3);
+        __attribute__nonnull__(3)
+        __attribute__nonnull__(4);
+
+static void gc_ms2_sweep_string_cb(PARROT_INTERP, ARGIN(PObj *obj))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2);
 
 static void gc_ms2_unblock_GC_mark(PARROT_INTERP)
         __attribute__nonnull__(1);
@@ -271,10 +281,17 @@ static void gc_ms2_unblock_GC_sweep(PARROT_INTERP)
 #define ASSERT_ARGS_gc_ms2_reallocate_string_storage \
      __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
        PARROT_ASSERT_ARG(str))
+#define ASSERT_ARGS_gc_ms2_sweep_pmc_cb __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
+       PARROT_ASSERT_ARG(interp) \
+    , PARROT_ASSERT_ARG(obj))
 #define ASSERT_ARGS_gc_ms2_sweep_pool __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
        PARROT_ASSERT_ARG(interp) \
     , PARROT_ASSERT_ARG(pool) \
-    , PARROT_ASSERT_ARG(list))
+    , PARROT_ASSERT_ARG(list) \
+    , PARROT_ASSERT_ARG(callback))
+#define ASSERT_ARGS_gc_ms2_sweep_string_cb __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
+       PARROT_ASSERT_ARG(interp) \
+    , PARROT_ASSERT_ARG(obj))
 #define ASSERT_ARGS_gc_ms2_unblock_GC_mark __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
        PARROT_ASSERT_ARG(interp))
 #define ASSERT_ARGS_gc_ms2_unblock_GC_sweep __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
@@ -681,6 +698,13 @@ gc_ms2_is_pmc_ptr(PARROT_INTERP, ARGIN_NULLOK(void *ptr))
     return gc_ms2_is_ptr_owned(interp, ptr, self->pmc_allocator, self->objects);
 }
 
+static void
+gc_ms2_sweep_pmc_cb(PARROT_INTERP, ARGIN(PObj *obj))
+{
+    PMC *pmc = (PMC *)obj;
+    Parrot_pmc_destroy(interp, pmc);
+}
+
 
 PARROT_MALLOC
 PARROT_CAN_RETURN_NULL
@@ -745,6 +769,14 @@ gc_ms2_mark_pobj_header(PARROT_INTERP, ARGIN_NULLOK(PObj * obj))
     }
 }
 
+static void
+gc_ms2_sweep_string_cb(PARROT_INTERP, ARGIN(PObj *obj))
+{
+    STRING *str = (STRING *)obj;
+    /* Compact string pool here. Or get rid of "shared buffers" and just free storage */
+}
+
+
 
 static void
 gc_ms2_mark_and_sweep(PARROT_INTERP, UINTVAL flags)
@@ -775,8 +807,8 @@ gc_ms2_mark_and_sweep(PARROT_INTERP, UINTVAL flags)
         Parrot_gc_trace_root(interp->pdb->debugger, NULL, (Parrot_gc_trace_type)0);
     }
 
-    gc_ms2_sweep_pool(interp, self->pmc_allocator, self->objects);
-    gc_ms2_sweep_pool(interp, self->string_allocator, self->strings);
+    gc_ms2_sweep_pool(interp, self->pmc_allocator, self->objects, gc_ms2_sweep_pmc_cb);
+    gc_ms2_sweep_pool(interp, self->string_allocator, self->strings, gc_ms2_sweep_string_cb);
 
     self->header_allocs_since_last_collect = 0;
     self->gc_mark_block_level--;
@@ -787,14 +819,17 @@ gc_ms2_mark_and_sweep(PARROT_INTERP, UINTVAL flags)
 
 /*
 =item C<static void gc_ms2_sweep_pool(PARROT_INTERP, Pool_Allocator *pool,
-Linked_List *list)>
+Linked_List *list, sweep_cb callback)>
 
 Helper function to sweep pool.
 
 =cut
 */
 static void
-gc_ms2_sweep_pool(PARROT_INTERP, ARGIN(Pool_Allocator *pool), ARGIN(Linked_List *list))
+gc_ms2_sweep_pool(PARROT_INTERP,
+        ARGIN(Pool_Allocator *pool),
+        ARGIN(Linked_List *list),
+        ARGIN(sweep_cb callback))
 {
     ASSERT_ARGS(gc_ms2_sweep_pool)
     List_Item_Header *tmp = list->first;
@@ -808,6 +843,9 @@ gc_ms2_sweep_pool(PARROT_INTERP, ARGIN(Pool_Allocator *pool), ARGIN(Linked_List 
         else if (!PObj_constant_TEST(obj)) {
             PObj_on_free_list_SET(obj);
             LIST_REMOVE(list, tmp);
+
+            callback(interp, obj);
+
             Parrot_gc_pool_free(pool, tmp);
         }
         tmp = next;
