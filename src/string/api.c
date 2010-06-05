@@ -386,6 +386,9 @@ Parrot_str_copy(PARROT_INTERP, ARGIN(const STRING *s))
     STRING *d;
     const int is_movable = PObj_is_movable_TESTALL(s);
 
+    /* XXX Don't use shared buffers */
+    return Parrot_str_clone(interp, s);
+
     /* We set COW flag to avoid cloning buffer in compact_pool */
 
     d = Parrot_gc_new_string_header(interp,

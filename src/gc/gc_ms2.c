@@ -735,6 +735,10 @@ gc_ms2_free_string_header(PARROT_INTERP, ARGFREE(STRING *s))
             return;
         Parrot_gc_list_remove(interp, self->strings, Obj2LLH(s));
         PObj_on_free_list_SET(s);
+
+        if (Buffer_bufstart(s) && !PObj_external_TEST(s))
+            mem_sys_free(Buffer_bufstart(s));
+
         Parrot_gc_pool_free(self->string_allocator, Obj2LLH(s));
     }
 }
@@ -774,6 +778,8 @@ gc_ms2_sweep_string_cb(PARROT_INTERP, ARGIN(PObj *obj))
 {
     STRING *str = (STRING *)obj;
     /* Compact string pool here. Or get rid of "shared buffers" and just free storage */
+    if (Buffer_bufstart(str) && !PObj_external_TEST(str))
+        mem_sys_free(Buffer_bufstart(str));
 }
 
 
