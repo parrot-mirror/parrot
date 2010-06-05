@@ -470,10 +470,10 @@ trace_mem_block(PARROT_INTERP,
                 Parrot_gc_mark_PMC_alive(interp, (PMC *)ptr);
             }
             else if ((buffer_min <= ptr) && (ptr < buffer_max)
-                                         && is_buffer_ptr(mem_pools, (void *)ptr)) {
+                     && interp->gc_sys->is_string_ptr(interp, (void *)ptr)) {
                 /* ...and since Parrot_gc_mark_PObj_alive doesn't care about bufstart, it
                  * doesn't really matter if it sets a flag */
-                Parrot_gc_mark_PObj_alive(interp, (PObj *)ptr);
+                Parrot_gc_mark_STRING_alive(interp, (STRING *)ptr);
             }
         }
     }
