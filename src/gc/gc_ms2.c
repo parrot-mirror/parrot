@@ -51,6 +51,9 @@ typedef struct MarkSweep_GC {
 
 } MarkSweep_GC;
 
+/* Callback to destroy PMC or free string storage */
+typedef void (*sweep_cb)(PARROT_INTERP, PObj *obj);
+
 /* HEADERIZER HFILE: src/gc/gc_private.h */
 
 /* HEADERIZER BEGIN: static */
@@ -618,78 +621,11 @@ gc_ms2_free_pmc_header(PARROT_INTERP, ARGFREE(PMC *pmc))
             return;
         Parrot_gc_list_remove(interp, self->objects, Obj2LLH(pmc));
         PObj_on_free_list_SET(pmc);
+
+        Parrot_pmc_destroy(interp, pmc);
+
         Parrot_gc_pool_free(self->pmc_allocator, Obj2LLH(pmc));
     }
-}
-
-PARROT_MALLOC
-PARROT_CAN_RETURN_NULL
-static STRING*
-gc_ms2_allocate_string_header(PARROT_INTERP, SHIM(UINTVAL flags))
-{
-    ASSERT_ARGS(gc_ms2_allocate_string_header)
-    MarkSweep_GC     *self = (MarkSweep_GC *)interp->gc_sys->gc_private;
-    List_Item_Header *ptr;
-    STRING           *ret;
-
-    ptr = (List_Item_Header *)Parrot_gc_pool_allocate(interp,
-        self->string_allocator);
-    LIST_APPEND(self->strings, ptr);
-
-    ret = LLH2Obj_typed(ptr, STRING);
-    memset(ret, 0, sizeof (STRING));
-    return ret;
-}
-
-static void
-gc_ms2_free_string_header(PARROT_INTERP, ARGFREE(STRING *s))
-{
-    ASSERT_ARGS(gc_ms2_free_string_header)
-    MarkSweep_GC *self = (MarkSweep_GC *)interp->gc_sys->gc_private;
-    if (s) {
-        if (PObj_on_free_list_TEST(s))
-            return;
-        Parrot_gc_list_remove(interp, self->strings, Obj2LLH(s));
-        PObj_on_free_list_SET(s);
-        Parrot_gc_pool_free(self->string_allocator, Obj2LLH(s));
-    }
-}
-
-static void
-gc_ms2_mark_and_sweep(PARROT_INTERP, UINTVAL flags)
-{
-    ASSERT_ARGS(gc_ms2_mark_and_sweep)
-    MarkSweep_GC      *self = (MarkSweep_GC *)interp->gc_sys->gc_private;
-    List_Item_Header *tmp;
-    Linked_List      *list;
-    size_t            counter;
-    UNUSED(flags);
-
-    /* GC is blocked */
-    if (self->gc_mark_block_level)
-        return;
-
-    if (flags & GC_finish_FLAG) {
-        /* FIXME Cleanup here */
-        return;
-    }
-
-    ++self->gc_mark_block_level;
-
-    gc_ms2_mark_pmc_header(interp, PMCNULL);
-
-    Parrot_gc_trace_root(interp, NULL, GC_TRACE_FULL);
-
-    if (interp->pdb && interp->pdb->debugger) {
-        Parrot_gc_trace_root(interp->pdb->debugger, NULL, (Parrot_gc_trace_type)0);
-    }
-
-    gc_ms2_sweep_pool(interp, self->pmc_allocator, self->objects);
-    gc_ms2_sweep_pool(interp, self->string_allocator, self->strings);
-
-    self->header_allocs_since_last_collect = 0;
-    self->gc_mark_block_level--;
-    self->gc_mark_runs++;
 }
 
 /*
@@ -745,6 +681,40 @@ gc_ms2_is_pmc_ptr(PARROT_INTERP, ARGIN_NULLOK(void *ptr))
     return gc_ms2_is_ptr_owned(interp, ptr, self->pmc_allocator, self->objects);
 }
 
+
+PARROT_MALLOC
+PARROT_CAN_RETURN_NULL
+static STRING*
+gc_ms2_allocate_string_header(PARROT_INTERP, SHIM(UINTVAL flags))
+{
+    ASSERT_ARGS(gc_ms2_allocate_string_header)
+    MarkSweep_GC     *self = (MarkSweep_GC *)interp->gc_sys->gc_private;
+    List_Item_Header *ptr;
+    STRING           *ret;
+
+    ptr = (List_Item_Header *)Parrot_gc_pool_allocate(interp,
+        self->string_allocator);
+    LIST_APPEND(self->strings, ptr);
+
+    ret = LLH2Obj_typed(ptr, STRING);
+    memset(ret, 0, sizeof (STRING));
+    return ret;
+}
+
+static void
+gc_ms2_free_string_header(PARROT_INTERP, ARGFREE(STRING *s))
+{
+    ASSERT_ARGS(gc_ms2_free_string_header)
+    MarkSweep_GC *self = (MarkSweep_GC *)interp->gc_sys->gc_private;
+    if (s) {
+        if (PObj_on_free_list_TEST(s))
+            return;
+        Parrot_gc_list_remove(interp, self->strings, Obj2LLH(s));
+        PObj_on_free_list_SET(s);
+        Parrot_gc_pool_free(self->string_allocator, Obj2LLH(s));
+    }
+}
+
 static int
 gc_ms2_is_string_ptr(PARROT_INTERP, ARGIN_NULLOK(void *ptr))
 {
@@ -752,6 +722,68 @@ gc_ms2_is_string_ptr(PARROT_INTERP, ARGIN_NULLOK(void *ptr))
     MarkSweep_GC      *self = (MarkSweep_GC *)interp->gc_sys->gc_private;
     return gc_ms2_is_ptr_owned(interp, ptr, self->string_allocator, self->strings);
 }
+
+/*
+
+=item C<static void gc_ms2_mark_pobj_header(PARROT_INTERP, PObj * obj)>
+
+Mark PObj as live.
+
+=cut
+
+*/
+
+static void
+gc_ms2_mark_pobj_header(PARROT_INTERP, ARGIN_NULLOK(PObj * obj))
+{
+    ASSERT_ARGS(gc_ms2_mark_pobj_header)
+    if (obj) {
+        if (PObj_is_PMC_TEST(obj))
+            gc_ms2_mark_pmc_header(interp, (PMC *)obj);
+        else
+            PObj_live_SET(obj);
+    }
+}
+
+
+static void
+gc_ms2_mark_and_sweep(PARROT_INTERP, UINTVAL flags)
+{
+    ASSERT_ARGS(gc_ms2_mark_and_sweep)
+    MarkSweep_GC      *self = (MarkSweep_GC *)interp->gc_sys->gc_private;
+    List_Item_Header *tmp;
+    Linked_List      *list;
+    size_t            counter;
+    UNUSED(flags);
+
+    /* GC is blocked */
+    if (self->gc_mark_block_level)
+        return;
+
+    if (flags & GC_finish_FLAG) {
+        /* FIXME Cleanup here */
+        return;
+    }
+
+    ++self->gc_mark_block_level;
+
+    gc_ms2_mark_pmc_header(interp, PMCNULL);
+
+    Parrot_gc_trace_root(interp, NULL, GC_TRACE_FULL);
+
+    if (interp->pdb && interp->pdb->debugger) {
+        Parrot_gc_trace_root(interp->pdb->debugger, NULL, (Parrot_gc_trace_type)0);
+    }
+
+    gc_ms2_sweep_pool(interp, self->pmc_allocator, self->objects);
+    gc_ms2_sweep_pool(interp, self->string_allocator, self->strings);
+
+    self->header_allocs_since_last_collect = 0;
+    self->gc_mark_block_level--;
+    self->gc_mark_runs++;
+}
+
+
 
 /*
 =item C<static void gc_ms2_sweep_pool(PARROT_INTERP, Pool_Allocator *pool,
@@ -764,8 +796,8 @@ Helper function to sweep pool.
 static void
 gc_ms2_sweep_pool(PARROT_INTERP, ARGIN(Pool_Allocator *pool), ARGIN(Linked_List *list))
 {
-    ASSERT_ARGS(gc_ms2_sweep_pool);
-    tmp = list->first;
+    ASSERT_ARGS(gc_ms2_sweep_pool)
+    List_Item_Header *tmp = list->first;
     while (tmp) {
         List_Item_Header *next = tmp->next;
         PObj             *obj  = LLH2Obj_typed(tmp, PObj);
@@ -775,12 +807,14 @@ gc_ms2_sweep_pool(PARROT_INTERP, ARGIN(Pool_Allocator *pool), ARGIN(Linked_List 
         }
         else if (!PObj_constant_TEST(obj)) {
             PObj_on_free_list_SET(obj);
-            LIST_REMOVE(list, obj);
-            Parrot_gc_pool_free(pool, obj);
+            LIST_REMOVE(list, tmp);
+            Parrot_gc_pool_free(pool, tmp);
         }
         tmp = next;
     }
 }
+
+
 
 /*
 =item C<static int gc_ms2_is_ptr_owned(PARROT_INTERP, void *ptr, Pool_Allocator
@@ -815,28 +849,6 @@ gc_ms2_is_ptr_owned(PARROT_INTERP, ARGIN_NULLOK(void *ptr),
         return 1;
 
     return 0;
-}
-
-/*
-
-=item C<static void gc_ms2_mark_pobj_header(PARROT_INTERP, PObj * obj)>
-
-if already marked mark as grey else make as live
-
-=cut
-
-*/
-
-static void
-gc_ms2_mark_pobj_header(PARROT_INTERP, ARGIN_NULLOK(PObj * obj))
-{
-    ASSERT_ARGS(gc_ms2_mark_pobj_header)
-    if (obj) {
-        if (PObj_is_PMC_TEST(obj))
-            gc_ms2_mark_pmc_header(interp, (PMC *)obj);
-        else
-            PObj_live_SET(obj);
-    }
 }
 
 
