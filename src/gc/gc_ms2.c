@@ -549,8 +549,8 @@ Parrot_gc_ms2_init(PARROT_INTERP)
     interp->gc_sys->allocate_string_header  = gc_ms2_allocate_string_header;
     interp->gc_sys->free_string_header      = gc_ms2_free_string_header;
 
-    interp->gc_sys->allocate_bufferlike_header  = gc_ms2_allocate_bufferlike_header;
-    interp->gc_sys->free_bufferlike_header      = gc_ms2_free_bufferlike_header;
+    interp->gc_sys->allocate_bufferlike_header  = gc_ms2_allocate_string_header;
+    interp->gc_sys->free_bufferlike_header      = gc_ms2_free_string_header;
 
     interp->gc_sys->allocate_pmc_attributes = gc_ms2_allocate_pmc_attributes;
     interp->gc_sys->free_pmc_attributes     = gc_ms2_free_pmc_attributes;
@@ -568,11 +568,11 @@ Parrot_gc_ms2_init(PARROT_INTERP)
     interp->gc_sys->unblock_sweep    = gc_ms2_unblock_GC_sweep;
     interp->gc_sys->is_blocked_sweep = gc_ms2_is_blocked_GC_sweep;
 
-    interp->gc_sys->allocate_string_storage = gc_ms2_allocate_string_storage;
-    interp->gc_sys->reallocate_string_storage = gc_ms2_reallocate_string_storage;
+    interp->gc_sys->allocate_string_storage     = gc_ms2_allocate_string_storage;
+    interp->gc_sys->reallocate_string_storage   = gc_ms2_reallocate_string_storage;
 
-    interp->gc_sys->allocate_buffer_storage = gc_ms2_allocate_buffer_storage;
-    interp->gc_sys->reallocate_buffer_storage = gc_ms2_reallocate_buffer_storage;
+    interp->gc_sys->allocate_buffer_storage     = gc_ms2_allocate_string_storage;
+    interp->gc_sys->reallocate_buffer_storage   = gc_ms2_reallocate_string_storage;
 
     interp->gc_sys->allocate_fixed_size_storage = gc_ms2_allocate_fixed_size_storage;
     interp->gc_sys->free_fixed_size_storage     = gc_ms2_free_fixed_size_storage;
@@ -604,7 +604,7 @@ Parrot_gc_ms2_init(PARROT_INTERP)
         self->strings = Parrot_gc_allocate_linked_list(interp);
 
         /* Arbitary number */
-        self->gc_theshold = 4096 * 10;
+        self->gc_theshold = 4096 * 100;
     }
     interp->gc_sys->gc_private = self;
 }
