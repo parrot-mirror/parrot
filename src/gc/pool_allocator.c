@@ -156,7 +156,9 @@ Parrot_gc_pool_free(ARGMOD(Pool_Allocator *pool), ARGMOD(void *data))
     ASSERT_ARGS(Parrot_gc_pool_free)
     Pool_Allocator_Free_List * const item = (Pool_Allocator_Free_List *)data;
 
+    /* It's too expensive.
     PARROT_ASSERT(Parrot_gc_pool_is_owned(pool, data));
+    */
 
     item->next      = pool->free_list;
     pool->free_list = item;
