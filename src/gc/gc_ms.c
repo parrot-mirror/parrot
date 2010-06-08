@@ -1926,6 +1926,18 @@ gc_ms_get_gc_info(PARROT_INTERP, Interpinfo_enum which)
 /*
 TODO Move it somewhere.
 */
+
+/*
+
+=item C<size_t Parrot_gc_get_info(PARROT_INTERP, Interpinfo_enum which,
+GC_Statistics *stats)>
+
+returns stats as required by enum which
+
+=cut
+
+*/
+
 size_t
 Parrot_gc_get_info(PARROT_INTERP, Interpinfo_enum which, ARGIN(GC_Statistics *stats))
 {
