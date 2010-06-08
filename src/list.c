@@ -15,7 +15,7 @@ This code implements double linked list of GCable objects.
 */
 
 #include "parrot/parrot.h"
-#include "list.h"
+#include "parrot/list.h"
 
 /* HEADERIZER HFILE: src/gc/list.h */
 

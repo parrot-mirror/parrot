@@ -15,7 +15,7 @@ src/gc/gc_tms.c - TriColour M&S
 #include "parrot/parrot.h"
 #include "parrot/gc_api.h"
 #include "gc_private.h"
-#include "list.h"
+#include "parrot/list.h"
 #include "pool_allocator.h"
 
 #define PANIC_OUT_OF_MEM(size) failed_allocation(__LINE__, (size))

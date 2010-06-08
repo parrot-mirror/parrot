@@ -16,7 +16,7 @@ This code implements the default mark and sweep garbage collector.
 
 #include "parrot/parrot.h"
 #include "gc_private.h"
-#include "list.h"
+#include "parrot/list.h"
 
 PARROT_DOES_NOT_RETURN
 static void failed_allocation(unsigned int line, unsigned long size) /* HEADERIZER SKIP */
