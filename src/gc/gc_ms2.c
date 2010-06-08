@@ -135,7 +135,8 @@ static void gc_ms2_free_fixed_size_storage(PARROT_INTERP,
         FUNC_MODIFIES(*data);
 
 static void gc_ms2_free_memory_chunk(SHIM_INTERP, ARGFREE(void *data));
-static void gc_ms2_free_pmc_attributes(SHIM_INTERP, ARGMOD(PMC *pmc))
+static void gc_ms2_free_pmc_attributes(PARROT_INTERP, ARGMOD(PMC *pmc))
+        __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         FUNC_MODIFIES(*pmc);
 
@@ -238,7 +239,8 @@ static void gc_ms2_unblock_GC_sweep(PARROT_INTERP)
      __attribute__unused__ int _ASSERT_ARGS_CHECK = (0)
 #define ASSERT_ARGS_gc_ms2_allocate_pmc_attributes \
      __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
-       PARROT_ASSERT_ARG(pmc))
+       PARROT_ASSERT_ARG(interp) \
+    , PARROT_ASSERT_ARG(pmc))
 #define ASSERT_ARGS_gc_ms2_allocate_pmc_header __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
        PARROT_ASSERT_ARG(interp))
 #define ASSERT_ARGS_gc_ms2_allocate_string_header __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
@@ -254,10 +256,12 @@ static void gc_ms2_unblock_GC_sweep(PARROT_INTERP)
 #define ASSERT_ARGS_gc_ms2_free_bufferlike_header __attribute__unused__ int _ASSERT_ARGS_CHECK = (0)
 #define ASSERT_ARGS_gc_ms2_free_fixed_size_storage \
      __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
-       PARROT_ASSERT_ARG(data))
+       PARROT_ASSERT_ARG(interp) \
+    , PARROT_ASSERT_ARG(data))
 #define ASSERT_ARGS_gc_ms2_free_memory_chunk __attribute__unused__ int _ASSERT_ARGS_CHECK = (0)
 #define ASSERT_ARGS_gc_ms2_free_pmc_attributes __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
-       PARROT_ASSERT_ARG(pmc))
+       PARROT_ASSERT_ARG(interp) \
+    , PARROT_ASSERT_ARG(pmc))
 #define ASSERT_ARGS_gc_ms2_free_pmc_header __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
        PARROT_ASSERT_ARG(interp))
 #define ASSERT_ARGS_gc_ms2_free_string_header __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
@@ -411,20 +415,26 @@ gc_ms2_free_bufferlike_header(SHIM_INTERP, ARGFREE(Buffer *b), SHIM(size_t size)
 PARROT_MALLOC
 PARROT_CAN_RETURN_NULL
 static void*
-gc_ms2_allocate_pmc_attributes(SHIM_INTERP, ARGMOD(PMC *pmc))
+gc_ms2_allocate_pmc_attributes(PARROT_INTERP, ARGMOD(PMC *pmc))
 {
     ASSERT_ARGS(gc_ms2_allocate_pmc_attributes)
-    const size_t attr_size = pmc->vtable->attr_size;
-    PMC_data(pmc) = calloc(attr_size, 1);
+    MarkSweep_GC *self = (MarkSweep_GC *)interp->gc_sys->gc_private;
+    const size_t  attr_size = pmc->vtable->attr_size;
+    PMC_data(pmc) = Parrot_gc_fixed_allocator_allocate(interp,
+                        self->fixed_size_allocator, attr_size);
+    memset(PMC_data(pmc), 0, attr_size);
     return PMC_data(pmc);
 }
 
 static void
-gc_ms2_free_pmc_attributes(SHIM_INTERP, ARGMOD(PMC *pmc))
+gc_ms2_free_pmc_attributes(PARROT_INTERP, ARGMOD(PMC *pmc))
 {
     ASSERT_ARGS(gc_ms2_free_pmc_attributes)
-    if (PMC_data(pmc))
-        free(PMC_data(pmc));
+    if (PMC_data(pmc)) {
+        MarkSweep_GC *self = (MarkSweep_GC *)interp->gc_sys->gc_private;
+        Parrot_gc_fixed_allocator_free(interp, self->fixed_size_allocator,
+                PMC_data(pmc), pmc->vtable->attr_size);
+    }
 }
 
 
