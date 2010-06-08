@@ -4,7 +4,7 @@ $Id$
 
 =head1 NAME
 
-src/gc/list.c - Implementation of double linked lists.
+src/list.c - Implementation of double linked lists.
 
 =head1 DESCRIPTION
 
@@ -17,7 +17,7 @@ This code implements double linked list of GCable objects.
 #include "parrot/parrot.h"
 #include "parrot/list.h"
 
-/* HEADERIZER HFILE: src/gc/list.h */
+/* HEADERIZER HFILE: include/parrot/list.h */
 
 /* HEADERIZER BEGIN: static */
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
@@ -104,8 +104,8 @@ Parrot_list_append(SHIM_INTERP, ARGMOD(Linked_List *list), ARGMOD(List_Item_Head
 
 /*
 
-=item C<List_Item_Header* Parrot_list_remove(PARROT_INTERP, Linked_List
-*list, List_Item_Header *item)>
+=item C<List_Item_Header* Parrot_list_remove(PARROT_INTERP, Linked_List *list,
+List_Item_Header *item)>
 
 Remove an item from the list, returning the (pointer to) item
 
