@@ -29,7 +29,7 @@ typedef struct Fixed_Allocator
 PARROT_EXPORT
 PARROT_CAN_RETURN_NULL
 void* Parrot_gc_fixed_allocator_allocate(PARROT_INTERP,
-    ARGIN(Fixed_Allocator *),
+    ARGIN(Fixed_Allocator *allocator),
     size_t size)
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
@@ -41,9 +41,8 @@ void Parrot_gc_fixed_allocator_destroy(PARROT_INTERP,
         __attribute__nonnull__(2);
 
 PARROT_EXPORT
-PARROT_CAN_RETURN_NULL
-void* Parrot_gc_fixed_allocator_free(PARROT_INTERP,
-    ARGIN(Fixed_Allocator *),
+void Parrot_gc_fixed_allocator_free(PARROT_INTERP,
+    ARGIN(Fixed_Allocator *allocator),
     ARGFREE_NOTNULL(void *data),
     size_t size)
         __attribute__nonnull__(1)
@@ -58,7 +57,7 @@ struct Fixed_Allocator* Parrot_gc_fixed_allocator_new(PARROT_INTERP)
 #define ASSERT_ARGS_Parrot_gc_fixed_allocator_allocate \
      __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
        PARROT_ASSERT_ARG(interp) \
-    , PARROT_ASSERT_ARG(Fixed_Allocator *))
+    , PARROT_ASSERT_ARG(allocator))
 #define ASSERT_ARGS_Parrot_gc_fixed_allocator_destroy \
      __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
        PARROT_ASSERT_ARG(interp) \
@@ -66,7 +65,7 @@ struct Fixed_Allocator* Parrot_gc_fixed_allocator_new(PARROT_INTERP)
 #define ASSERT_ARGS_Parrot_gc_fixed_allocator_free \
      __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
        PARROT_ASSERT_ARG(interp) \
-    , PARROT_ASSERT_ARG(Fixed_Allocator *) \
+    , PARROT_ASSERT_ARG(allocator) \
     , PARROT_ASSERT_ARG(data))
 #define ASSERT_ARGS_Parrot_gc_fixed_allocator_new __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
        PARROT_ASSERT_ARG(interp))

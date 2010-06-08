@@ -39,12 +39,12 @@ Create new Fixed_Allocator.
 Destroy Fixed_Allocator.
 
 =item C<void* Parrot_gc_fixed_allocator_allocate(PARROT_INTERP, Fixed_Allocator
-*, size_t size)>
+*allocator, size_t size)>
 
 Allocate fixed size memory from Fixed_Allocator.
 
-=item C<void* Parrot_gc_fixed_allocator_free(PARROT_INTERP, Fixed_Allocator *,
-void *data, size_t size)>
+=item C<void Parrot_gc_fixed_allocator_free(PARROT_INTERP, Fixed_Allocator
+*allocator, void *data, size_t size)>
 
 Free fixed size memory from Fixed_Allocator.
 
@@ -57,7 +57,7 @@ PARROT_CAN_RETURN_NULL
 struct Fixed_Allocator*
 Parrot_gc_fixed_allocator_new(PARROT_INTERP)
 {
-    return (struct Fixed_Allocator*) mem_sys_allocate(sizeof (Fixed_Allocator));
+    return mem_internal_allocate_zeroed_typed(Fixed_Allocator);
 }
 
 PARROT_EXPORT
@@ -73,15 +73,44 @@ Parrot_gc_fixed_allocator_allocate(PARROT_INTERP,
         ARGIN(Fixed_Allocator *allocator),
         size_t size)
 {
+    /* We always align size to 4/8 bytes. */
+    size_t  index, alloc_size;
+    void   *ret;
+    PARROT_ASSERT(size);
+    index      = (size - 1) / sizeof (void*);
+    alloc_size = (index + 1) * sizeof (void *);
+
+    if (index >= allocator->num_pools) {
+        size_t new_size = index + 1;
+        /* (re)allocate pools */
+        if (allocator->num_pools)
+            allocator->pools = mem_internal_realloc_n_zeroed_typed(allocator->pools, new_size, allocator->num_pools, Pool_Allocator*);
+        else
+            allocator->pools = mem_internal_allocate_n_zeroed_typed(new_size, Pool_Allocator*);
+
+        allocator->num_pools = new_size;
+    }
+
+    if (allocator->pools[index] == NULL)
+        allocator->pools[index] = Parrot_gc_create_pool_allocator(alloc_size);
+
+    ret = Parrot_gc_pool_allocate(interp, allocator->pools[index]);
+    //memset(ret, 0, alloc_size);
+    return ret;
 }
 
 PARROT_EXPORT
-PARROT_CAN_RETURN_NULL
-void*
+void
 Parrot_gc_fixed_allocator_free(PARROT_INTERP,
         ARGIN(Fixed_Allocator *allocator),
         ARGFREE_NOTNULL(void *data), size_t size)
 {
+    /* We always align size to 4/8 bytes. */
+    size_t index = (size - 1) / sizeof (void*);
+
+    PARROT_ASSERT(allocator->pools[index]);
+
+    Parrot_gc_pool_free(allocator->pools[index], data);
 }
 
 
