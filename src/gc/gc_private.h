@@ -582,6 +582,12 @@ void gc_ms_pmc_needs_early_collection(PARROT_INTERP, ARGMOD(PMC *pmc))
         __attribute__nonnull__(2)
         FUNC_MODIFIES(*pmc);
 
+size_t Parrot_gc_get_info(PARROT_INTERP,
+    Interpinfo_enum which,
+    ARGIN(GC_Statistics *stats))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(3);
+
 void Parrot_gc_ms_init(PARROT_INTERP)
         __attribute__nonnull__(1);
 
@@ -605,6 +611,9 @@ void Parrot_gc_ms_init(PARROT_INTERP)
      __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
        PARROT_ASSERT_ARG(interp) \
     , PARROT_ASSERT_ARG(pmc))
+#define ASSERT_ARGS_Parrot_gc_get_info __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
+       PARROT_ASSERT_ARG(interp) \
+    , PARROT_ASSERT_ARG(stats))
 #define ASSERT_ARGS_Parrot_gc_ms_init __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
        PARROT_ASSERT_ARG(interp))
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */

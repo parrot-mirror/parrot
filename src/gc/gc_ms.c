@@ -1905,12 +1905,6 @@ gc_ms_get_gc_info(PARROT_INTERP, Interpinfo_enum which)
 
     Memory_Pools * const mem_pools = interp->mem_pools;
     switch (which) {
-        case TOTAL_MEM_ALLOC:
-            return mem_pools->stats.memory_allocated;
-        case GC_MARK_RUNS:
-            return mem_pools->stats.gc_mark_runs;
-        case GC_COLLECT_RUNS:
-            return mem_pools->stats.gc_collect_runs;
         case ACTIVE_PMCS:
             return mem_pools->pmc_pool->total_objects -
                    mem_pools->pmc_pool->num_free_objects;
@@ -1920,17 +1914,38 @@ gc_ms_get_gc_info(PARROT_INTERP, Interpinfo_enum which)
             return mem_pools->pmc_pool->total_objects;
         case TOTAL_BUFFERS:
             return gc_ms_total_sized_buffers(mem_pools);
-        case HEADER_ALLOCS_SINCE_COLLECT:
-            return mem_pools->stats.header_allocs_since_last_collect;
-        case MEM_ALLOCS_SINCE_COLLECT:
-            return mem_pools->stats.mem_allocs_since_last_collect;
-        case TOTAL_COPIED:
-            return mem_pools->stats.memory_collected;
         case IMPATIENT_PMCS:
             return mem_pools->num_early_gc_PMCs;
+        default:
+            return Parrot_gc_get_info(interp, which, &mem_pools->stats);
+            break;
+    }
+    return 0;
+}
+
+/*
+TODO Move it somewhere.
+*/
+size_t
+Parrot_gc_get_info(PARROT_INTERP, Interpinfo_enum which, ARGIN(GC_Statistics *stats))
+{
+    ASSERT_ARGS(Parrot_gc_get_info)
+
+    switch (which) {
+        case TOTAL_MEM_ALLOC:
+            return stats->memory_allocated;
+        case GC_MARK_RUNS:
+            return stats->gc_mark_runs;
+        case GC_COLLECT_RUNS:
+            return stats->gc_collect_runs;
+        case HEADER_ALLOCS_SINCE_COLLECT:
+            return stats->header_allocs_since_last_collect;
+        case MEM_ALLOCS_SINCE_COLLECT:
+            return stats->mem_allocs_since_last_collect;
+        case TOTAL_COPIED:
+            return stats->memory_collected;
         case GC_LAZY_MARK_RUNS:
-            return mem_pools->stats.gc_lazy_mark_runs;
-        case EXTENDED_PMCS:
+            return stats->gc_lazy_mark_runs;
         default:
             break;
     }
