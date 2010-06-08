@@ -249,7 +249,7 @@ alloc_new_block(
     new_block->top   = new_block->start;
 
     /* Note that we've allocated it */
-    mem_pools->memory_allocated += alloc_size;
+    mem_pools->stats.memory_allocated += alloc_size;
 
     /* If this is for a public pool, add it to the list */
     new_block->prev = pool->top_block;
@@ -322,7 +322,7 @@ mem_allocate(PARROT_INTERP,
          *      so that collection can be skipped if needed
          */
         if (!mem_pools->gc_mark_block_level
-        &&   mem_pools->mem_allocs_since_last_collect) {
+        &&   mem_pools->stats.mem_allocs_since_last_collect) {
             Parrot_gc_mark_and_sweep(interp, GC_trace_stack_FLAG);
 
             if (interp->gc_sys->sys_type != INF) {
@@ -347,7 +347,7 @@ mem_allocate(PARROT_INTERP,
              */
             alloc_new_block(mem_pools, size, pool, "compact failed");
 
-            ++mem_pools->mem_allocs_since_last_collect;
+            ++mem_pools->stats.mem_allocs_since_last_collect;
 
             if (pool->top_block->free < size) {
                 fprintf(stderr, "out of mem\n");
@@ -457,9 +457,9 @@ compact_pool(PARROT_INTERP,
     ++mem_pools->gc_sweep_block_level;
 
     /* We're collecting */
-    mem_pools->mem_allocs_since_last_collect    = 0;
-    mem_pools->header_allocs_since_last_collect = 0;
-    ++mem_pools->gc_collect_runs;
+    mem_pools->stats.mem_allocs_since_last_collect    = 0;
+    mem_pools->stats.header_allocs_since_last_collect = 0;
+    ++mem_pools->stats.gc_collect_runs;
 
     /* Snag a block big enough for everything */
     total_size = pad_pool_size(pool);
@@ -511,7 +511,7 @@ compact_pool(PARROT_INTERP,
 
     /* How much is free. That's the total size minus the amount we used */
     new_block->free = new_block->size - (cur_spot - new_block->start);
-    mem_pools->memory_collected +=      (cur_spot - new_block->start);
+    mem_pools->stats.memory_collected += (cur_spot - new_block->start);
 
     free_old_mem_blocks(mem_pools, pool, new_block, total_size);
 
@@ -718,7 +718,7 @@ free_old_mem_blocks(
         }
         else {
             /* Note that we don't have it any more */
-            mem_pools->memory_allocated -= cur_block->size;
+            mem_pools->stats.memory_allocated -= cur_block->size;
 
             /* We know the pool body and pool header are a single chunk, so
              * this is enough to get rid of 'em both */

@@ -571,7 +571,7 @@ gc_ms_mark_and_sweep(PARROT_INTERP, UINTVAL flags)
 
     }
     else {
-        ++mem_pools->gc_lazy_mark_runs;
+        ++mem_pools->stats.gc_lazy_mark_runs;
 
         Parrot_gc_clear_live_bits(interp, mem_pools->pmc_pool);
     }
@@ -582,9 +582,10 @@ gc_ms_mark_and_sweep(PARROT_INTERP, UINTVAL flags)
     pt_gc_stop_mark(interp);
 
     /* Note it */
-    ++mem_pools->gc_mark_runs;
+    ++mem_pools->stats.gc_mark_runs;
+    mem_pools->stats.header_allocs_since_last_collect = 0;
+
     --mem_pools->gc_mark_block_level;
-    mem_pools->header_allocs_since_last_collect = 0;
 
     return;
 }
@@ -1650,7 +1651,7 @@ gc_ms_more_traceable_objects(PARROT_INTERP,
         pool->skip = GC_NO_SKIP;
     else if (pool->skip == GC_NEVER_SKIP
          || (pool->skip == GC_NO_SKIP
-         &&  mem_pools->header_allocs_since_last_collect >= GC_SIZE_THRESHOLD))
+         &&  mem_pools->stats.header_allocs_since_last_collect >= GC_SIZE_THRESHOLD))
             Parrot_gc_mark_and_sweep(interp, GC_trace_stack_FLAG);
 
     /* requires that num_free_objects be updated in Parrot_gc_mark_and_sweep.
@@ -1905,11 +1906,11 @@ gc_ms_get_gc_info(PARROT_INTERP, Interpinfo_enum which)
     Memory_Pools * const mem_pools = interp->mem_pools;
     switch (which) {
         case TOTAL_MEM_ALLOC:
-            return mem_pools->memory_allocated;
+            return mem_pools->stats.memory_allocated;
         case GC_MARK_RUNS:
-            return mem_pools->gc_mark_runs;
+            return mem_pools->stats.gc_mark_runs;
         case GC_COLLECT_RUNS:
-            return mem_pools->gc_collect_runs;
+            return mem_pools->stats.gc_collect_runs;
         case ACTIVE_PMCS:
             return mem_pools->pmc_pool->total_objects -
                    mem_pools->pmc_pool->num_free_objects;
@@ -1920,15 +1921,15 @@ gc_ms_get_gc_info(PARROT_INTERP, Interpinfo_enum which)
         case TOTAL_BUFFERS:
             return gc_ms_total_sized_buffers(mem_pools);
         case HEADER_ALLOCS_SINCE_COLLECT:
-            return mem_pools->header_allocs_since_last_collect;
+            return mem_pools->stats.header_allocs_since_last_collect;
         case MEM_ALLOCS_SINCE_COLLECT:
-            return mem_pools->mem_allocs_since_last_collect;
+            return mem_pools->stats.mem_allocs_since_last_collect;
         case TOTAL_COPIED:
-            return mem_pools->memory_collected;
+            return mem_pools->stats.memory_collected;
         case IMPATIENT_PMCS:
             return mem_pools->num_early_gc_PMCs;
         case GC_LAZY_MARK_RUNS:
-            return mem_pools->gc_lazy_mark_runs;
+            return mem_pools->stats.gc_lazy_mark_runs;
         case EXTENDED_PMCS:
         default:
             break;

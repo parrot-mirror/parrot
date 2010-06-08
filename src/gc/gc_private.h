@@ -245,20 +245,8 @@ typedef struct Fixed_Size_Pool {
 
 } Fixed_Size_Pool;
 
-typedef struct Memory_Pools {
-    Variable_Size_Pool  *memory_pool;
-    Variable_Size_Pool  *constant_string_pool;
-    Fixed_Size_Pool     *string_header_pool;
-    Fixed_Size_Pool     *pmc_pool;
-    Fixed_Size_Pool     *constant_pmc_pool;
-    Fixed_Size_Pool     *constant_string_header_pool;
-    Fixed_Size_Pool    **sized_header_pools;
-    size_t               num_sized;
-
-    PMC_Attribute_Pool **attrib_pools;
-    size_t               num_attribs;
-
-    /** statistics for GC **/
+/** statistics for GC **/
+typedef struct GC_Statistics {
     size_t  gc_mark_runs;       /* Number of times we've done a mark run */
     size_t  gc_lazy_mark_runs;  /* Number of successful lazy mark runs */
     size_t  gc_collect_runs;    /* Number of times we've done a memory
@@ -279,19 +267,37 @@ typedef struct Memory_Pools {
                                    * anything */
     UINTVAL memory_collected;     /* Total amount of memory copied
                                      during collection */
-    UINTVAL num_early_gc_PMCs;    /* how many PMCs want immediate destruction */
-    UINTVAL num_early_PMCs_seen;  /* how many such PMCs has GC seen */
-    PMC    *gc_mark_start;        /* first PMC marked during a GC run */
-    PMC    *gc_mark_ptr;          /* last PMC marked during a GC run */
-    PMC    *gc_trace_ptr;         /* last PMC trace_children was called on */
-    int     lazy_gc;              /* flag that indicates whether we should stop
-                                     when we've seen all impatient PMCs */
+} GC_Statistics;
+
+typedef struct Memory_Pools {
+    Variable_Size_Pool  *memory_pool;
+    Variable_Size_Pool  *constant_string_pool;
+    Fixed_Size_Pool     *string_header_pool;
+    Fixed_Size_Pool     *pmc_pool;
+    Fixed_Size_Pool     *constant_pmc_pool;
+    Fixed_Size_Pool     *constant_string_header_pool;
+    Fixed_Size_Pool    **sized_header_pools;
+    size_t               num_sized;
+
+    PMC_Attribute_Pool **attrib_pools;
+    size_t               num_attribs;
 
     /* GC blocking */
     UINTVAL gc_mark_block_level;  /* How many outstanding GC block
                                      requests are there? */
     UINTVAL gc_sweep_block_level; /* How many outstanding GC block
                                      requests are there? */
+
+    PMC    *gc_mark_start;        /* first PMC marked during a GC run */
+    PMC    *gc_mark_ptr;          /* last PMC marked during a GC run */
+    PMC    *gc_trace_ptr;         /* last PMC trace_children was called on */
+    int     lazy_gc;              /* flag that indicates whether we should stop
+                                     when we've seen all impatient PMCs */
+    UINTVAL num_early_gc_PMCs;    /* how many PMCs want immediate destruction */
+    UINTVAL num_early_PMCs_seen;  /* how many such PMCs has GC seen */
+
+
+    GC_Statistics        stats;   /* Stats */
 
     /* private data for the GC subsystem */
     void *gc_private;           /* gc subsystem data */
