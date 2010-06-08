@@ -27,10 +27,31 @@ static void allocate_new_pool_arena(ARGMOD(Pool_Allocator *pool))
 static size_t arena_size(ARGIN(const Pool_Allocator *self))
         __attribute__nonnull__(1);
 
+PARROT_CANNOT_RETURN_NULL
+static void* pool_allocate(ARGMOD(Pool_Allocator *pool))
+        __attribute__nonnull__(1)
+        FUNC_MODIFIES(*pool);
+
+static void pool_free(ARGMOD(Pool_Allocator *pool), ARGFREE(void *data))
+        __attribute__nonnull__(1)
+        FUNC_MODIFIES(*pool);
+
+static int pool_is_owned(ARGMOD(Pool_Allocator *pool), ARGIN(void *ptr))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        FUNC_MODIFIES(*pool);
+
 #define ASSERT_ARGS_allocate_new_pool_arena __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
        PARROT_ASSERT_ARG(pool))
 #define ASSERT_ARGS_arena_size __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
        PARROT_ASSERT_ARG(self))
+#define ASSERT_ARGS_pool_allocate __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
+       PARROT_ASSERT_ARG(pool))
+#define ASSERT_ARGS_pool_free __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
+       PARROT_ASSERT_ARG(pool))
+#define ASSERT_ARGS_pool_is_owned __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
+       PARROT_ASSERT_ARG(pool) \
+    , PARROT_ASSERT_ARG(ptr))
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 /* HEADERIZER END: static */
 
@@ -215,6 +236,41 @@ void *
 Parrot_gc_pool_allocate(PARROT_INTERP, ARGMOD(Pool_Allocator * pool))
 {
     ASSERT_ARGS(Parrot_gc_pool_allocate)
+    return pool_allocate(pool);
+}
+
+PARROT_EXPORT
+void
+Parrot_gc_pool_free(SHIM_INTERP, ARGMOD(Pool_Allocator *pool), ARGFREE(void *data))
+{
+    ASSERT_ARGS(Parrot_gc_pool_free)
+    pool_free(pool, data);
+}
+
+PARROT_EXPORT
+int
+Parrot_gc_pool_is_owned(SHIM_INTERP, ARGMOD(Pool_Allocator *pool), ARGMOD(void *ptr))
+{
+    ASSERT_ARGS(Parrot_gc_pool_is_owned)
+    return pool_is_owned(pool, ptr);
+}
+
+/*
+=item C<static void* pool_allocate(Pool_Allocator *pool)>
+
+=item C<static void pool_free(Pool_Allocator *pool, void *data)>
+
+=item C<static int pool_is_owned(Pool_Allocator *pool, void *ptr)>
+
+Static implementation of public methods.
+
+=cut
+*/
+
+PARROT_CANNOT_RETURN_NULL
+static void*
+pool_allocate(ARGMOD(Pool_Allocator *pool))
+{
     Pool_Allocator_Free_List *item;
 
     if (pool->free_list) {
@@ -230,18 +286,16 @@ Parrot_gc_pool_allocate(PARROT_INTERP, ARGMOD(Pool_Allocator * pool))
     }
     else {
         allocate_new_pool_arena(pool);
-        return Parrot_gc_pool_allocate(interp, pool);
+        return pool_allocate(pool);
     }
 
     --pool->num_free_objects;
     return (void *)item;
 }
 
-PARROT_EXPORT
-void
-Parrot_gc_pool_free(SHIM_INTERP, ARGMOD(Pool_Allocator *pool), ARGMOD(void *data))
+static void
+pool_free(ARGMOD(Pool_Allocator *pool), ARGFREE(void *data))
 {
-    ASSERT_ARGS(Parrot_gc_pool_free)
     Pool_Allocator_Free_List * const item = (Pool_Allocator_Free_List *)data;
 
     /* It's too expensive.
@@ -254,11 +308,10 @@ Parrot_gc_pool_free(SHIM_INTERP, ARGMOD(Pool_Allocator *pool), ARGMOD(void *data
     ++pool->num_free_objects;
 }
 
-PARROT_EXPORT
-int
-Parrot_gc_pool_is_owned(SHIM_INTERP, ARGMOD(Pool_Allocator *pool), ARGMOD(void *ptr))
+
+static int
+pool_is_owned(ARGMOD(Pool_Allocator *pool), ARGIN(void *ptr))
 {
-    ASSERT_ARGS(Parrot_gc_pool_is_owned)
     Pool_Allocator_Arena *arena = pool->top_arena;
     size_t                a_size;
 
