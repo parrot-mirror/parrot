@@ -37,18 +37,8 @@ typedef struct MarkSweep_GC {
     size_t gc_theshold;
 
     /** statistics for GC **/
-    size_t  gc_mark_runs;       /* Number of times we've done a mark run */
-    size_t  gc_lazy_mark_runs;  /* Number of successful lazy mark runs */
-    size_t  gc_collect_runs;    /* Number of times we've done a memory
-                                   compaction */
-    size_t  mem_allocs_since_last_collect;      /* The number of memory
-                                                 * allocations from the
-                                                 * system since the last
-                                                 * compaction run */
-    size_t  header_allocs_since_last_collect;   /* The size of header
-                                                 * blocks allocated from
-                                                 * the system since the last
-                                                 * GC run */
+    GC_Statistics stats;
+
     /* GC blocking */
     UINTVAL gc_mark_block_level;  /* How many outstanding GC block
                                      requests are there? */
@@ -642,7 +632,7 @@ gc_ms2_allocate_pmc_header(PARROT_INTERP, UINTVAL flags)
     PMC              *ret;
 
     /* Invoke M&S early. Freshly allocated "header" isn't header yet */
-    if ((++self->header_allocs_since_last_collect > self->gc_theshold)
+    if ((++self->stats.header_allocs_since_last_collect > self->gc_theshold)
         && self->pmc_allocator->num_free_objects <= 1) {
         gc_ms2_mark_and_sweep(interp, 0);
     }
@@ -755,7 +745,7 @@ gc_ms2_allocate_string_header(PARROT_INTERP, SHIM(UINTVAL flags))
     List_Item_Header *ptr;
     STRING           *ret;
 
-    if ((++self->header_allocs_since_last_collect > self->gc_theshold)
+    if ((++self->stats.header_allocs_since_last_collect > self->gc_theshold)
         && self->string_allocator->num_free_objects <= 1) {
         gc_ms2_mark_and_sweep(interp, 0);
     }
@@ -884,9 +874,9 @@ gc_ms2_mark_and_sweep(PARROT_INTERP, UINTVAL flags)
     /* Wait more next time */
     self->gc_theshold *= UNITS_PER_ALLOC_GROWTH_FACTOR;
 
-    self->header_allocs_since_last_collect = 0;
+    self->stats.header_allocs_since_last_collect = 0;
+    self->stats.gc_mark_runs++;
     self->gc_mark_block_level--;
-    self->gc_mark_runs++;
 }
 
 
