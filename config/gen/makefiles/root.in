@@ -909,6 +909,8 @@ src/install_config$(O) : $(PARROT_H_HEADERS) src/install_config.c
 
 src/null_config$(O) : $(PARROT_H_HEADERS) src/null_config.c
 
+src/list$(O): $(PARROT_H_HEADERS) include/pmc/pmc_callcontext.h src/list.c
+
 src/oo$(O) : $(PARROT_H_HEADERS) include/pmc/pmc_class.h src/oo.c \
     include/pmc/pmc_object.h src/oo.str $(INC_DIR)/oo_private.h
 
