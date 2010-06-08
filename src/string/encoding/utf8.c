@@ -455,9 +455,11 @@ utf8_encode_and_advance(PARROT_INTERP, ARGMOD(String_iter *i), UINTVAL c)
     unsigned char * const new_pos = (unsigned char *)utf8_encode(interp, pos, c);
 
     i->bytepos += (new_pos - pos);
-    /* XXX possible buffer overrun exception? */
-    PARROT_ASSERT(i->bytepos <= Buffer_buflen(s));
     ++i->charpos;
+    /* XXX possible buffer overrun exception? */
+    /* We are finished or still have some data. Exact match on strlen to assert overrun */
+    PARROT_ASSERT((i->charpos == s->strlen)
+                  || (i->bytepos <= Buffer_buflen(s)));
 }
 
 /*
