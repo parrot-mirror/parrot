@@ -512,10 +512,11 @@ Stub for GC introspection function.
 
 */
 static size_t
-gc_ms2_get_gc_info(SHIM_INTERP, SHIM(Interpinfo_enum what))
+gc_ms2_get_gc_info(PARROT_INTERP, Interpinfo_enum which)
 {
     ASSERT_ARGS(gc_ms2_get_gc_info)
-    return 0;
+    MarkSweep_GC *self = (MarkSweep_GC *)interp->gc_sys->gc_private;
+    return Parrot_gc_get_info(interp, which, &self->stats);
 }
 
 
