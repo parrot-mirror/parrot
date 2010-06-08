@@ -17,6 +17,7 @@ src/gc/gc_tms.c - TriColour M&S
 #include "parrot/list.h"
 #include "gc_private.h"
 #include "pool_allocator.h"
+#include "fixed_allocator.h"
 
 #define PANIC_OUT_OF_MEM(size) failed_allocation(__LINE__, (size))
 
@@ -29,6 +30,9 @@ typedef struct MarkSweep_GC {
     /* Allocator for strings */
     struct Pool_Allocator *string_allocator;
     struct Linked_List    *strings;
+
+    /* Fixed-size allocator */
+    struct Fixed_Allocator *fixed_size_allocator;
 
     /* Number of allocated objects before trigger gc */
     size_t gc_theshold;
@@ -77,7 +81,8 @@ static Buffer* gc_ms2_allocate_bufferlike_header(SHIM_INTERP,
     SHIM(size_t size));
 
 PARROT_CAN_RETURN_NULL
-static void* gc_ms2_allocate_fixed_size_storage(SHIM_INTERP, size_t size);
+static void* gc_ms2_allocate_fixed_size_storage(PARROT_INTERP, size_t size)
+        __attribute__nonnull__(1);
 
 PARROT_MALLOC
 PARROT_CANNOT_RETURN_NULL
@@ -89,7 +94,8 @@ static void * gc_ms2_allocate_memory_chunk_zeroed(SHIM_INTERP, size_t size);
 
 PARROT_MALLOC
 PARROT_CAN_RETURN_NULL
-static void* gc_ms2_allocate_pmc_attributes(SHIM_INTERP, ARGMOD(PMC *pmc))
+static void* gc_ms2_allocate_pmc_attributes(PARROT_INTERP, ARGMOD(PMC *pmc))
+        __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         FUNC_MODIFIES(*pmc);
 
@@ -121,9 +127,10 @@ static void gc_ms2_free_bufferlike_header(SHIM_INTERP,
     ARGFREE(Buffer *b),
     SHIM(size_t size));
 
-static void gc_ms2_free_fixed_size_storage(SHIM_INTERP,
-    SHIM(size_t size),
+static void gc_ms2_free_fixed_size_storage(PARROT_INTERP,
+    size_t size,
     ARGMOD(void *data))
+        __attribute__nonnull__(1)
         __attribute__nonnull__(3)
         FUNC_MODIFIES(*data);
 
@@ -224,7 +231,8 @@ static void gc_ms2_unblock_GC_sweep(PARROT_INTERP)
 #define ASSERT_ARGS_gc_ms2_allocate_bufferlike_header \
      __attribute__unused__ int _ASSERT_ARGS_CHECK = (0)
 #define ASSERT_ARGS_gc_ms2_allocate_fixed_size_storage \
-     __attribute__unused__ int _ASSERT_ARGS_CHECK = (0)
+     __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
+       PARROT_ASSERT_ARG(interp))
 #define ASSERT_ARGS_gc_ms2_allocate_memory_chunk __attribute__unused__ int _ASSERT_ARGS_CHECK = (0)
 #define ASSERT_ARGS_gc_ms2_allocate_memory_chunk_zeroed \
      __attribute__unused__ int _ASSERT_ARGS_CHECK = (0)
@@ -478,18 +486,21 @@ gc_ms2_reallocate_buffer_storage(SHIM_INTERP, ARGMOD(Buffer *buffer), size_t siz
 
 PARROT_CAN_RETURN_NULL
 static void*
-gc_ms2_allocate_fixed_size_storage(SHIM_INTERP, size_t size)
+gc_ms2_allocate_fixed_size_storage(PARROT_INTERP, size_t size)
 {
     ASSERT_ARGS(gc_ms2_allocate_fixed_size_storage)
-    return calloc(size, 1);
+    MarkSweep_GC *self = (MarkSweep_GC *)interp->gc_sys->gc_private;
+    return Parrot_gc_fixed_allocator_allocate(interp, self->fixed_size_allocator, size);
 }
 
 static void
-gc_ms2_free_fixed_size_storage(SHIM_INTERP, SHIM(size_t size), ARGMOD(void *data))
+gc_ms2_free_fixed_size_storage(PARROT_INTERP, size_t size, ARGMOD(void *data))
 {
     ASSERT_ARGS(gc_ms2_free_fixed_size_storage)
-    if (data)
-        mem_internal_free(data);
+    if (data) {
+        MarkSweep_GC *self = (MarkSweep_GC *)interp->gc_sys->gc_private;
+        Parrot_gc_fixed_allocator_free(interp, self->fixed_size_allocator, data, size);
+    }
 }
 
 /*
@@ -602,6 +613,8 @@ Parrot_gc_ms2_init(PARROT_INTERP)
         self->string_allocator = Parrot_gc_create_pool_allocator(
             sizeof (List_Item_Header) + sizeof (STRING));
         self->strings = Parrot_list_new(interp);
+
+        self->fixed_size_allocator = Parrot_gc_fixed_allocator_new(interp);
 
         /* Arbitary number */
         self->gc_theshold = 4096 * 100;
