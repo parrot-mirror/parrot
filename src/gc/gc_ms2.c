@@ -615,11 +615,11 @@ Parrot_gc_ms2_init(PARROT_INTERP)
     else {
         self = mem_allocate_zeroed_typed(MarkSweep_GC);
 
-        self->pmc_allocator = Parrot_gc_create_pool_allocator(
+        self->pmc_allocator = Parrot_gc_pool_new(interp,
             sizeof (List_Item_Header) + sizeof (PMC));
         self->objects = Parrot_list_new(interp);
 
-        self->string_allocator = Parrot_gc_create_pool_allocator(
+        self->string_allocator = Parrot_gc_pool_new(interp,
             sizeof (List_Item_Header) + sizeof (STRING));
         self->strings = Parrot_list_new(interp);
 
@@ -648,7 +648,7 @@ gc_ms2_allocate_pmc_header(PARROT_INTERP, UINTVAL flags)
     }
 
     ptr = (List_Item_Header *)Parrot_gc_pool_allocate(interp,
-        self->pmc_allocator);
+            self->pmc_allocator);
     LIST_APPEND(self->objects, ptr);
 
     ret = LLH2Obj_typed(ptr, PMC);
@@ -669,7 +669,7 @@ gc_ms2_free_pmc_header(PARROT_INTERP, ARGFREE(PMC *pmc))
 
         Parrot_pmc_destroy(interp, pmc);
 
-        Parrot_gc_pool_free(self->pmc_allocator, Obj2LLH(pmc));
+        Parrot_gc_pool_free(interp, self->pmc_allocator, Obj2LLH(pmc));
     }
 }
 
@@ -761,7 +761,7 @@ gc_ms2_allocate_string_header(PARROT_INTERP, SHIM(UINTVAL flags))
     }
 
     ptr = (List_Item_Header *)Parrot_gc_pool_allocate(interp,
-        self->string_allocator);
+            self->string_allocator);
     LIST_APPEND(self->strings, ptr);
 
     ret = LLH2Obj_typed(ptr, STRING);
@@ -783,7 +783,7 @@ gc_ms2_free_string_header(PARROT_INTERP, ARGFREE(STRING *s))
         if (Buffer_bufstart(s) && !PObj_external_TEST(s))
             mem_sys_free(Buffer_bufstart(s));
 
-        Parrot_gc_pool_free(self->string_allocator, Obj2LLH(s));
+        Parrot_gc_pool_free(interp, self->string_allocator, Obj2LLH(s));
     }
 }
 
@@ -920,7 +920,7 @@ gc_ms2_sweep_pool(PARROT_INTERP,
 
             callback(interp, obj);
 
-            Parrot_gc_pool_free(pool, tmp);
+            Parrot_gc_pool_free(interp, pool, tmp);
         }
         tmp = next;
     }
@@ -949,7 +949,7 @@ gc_ms2_is_ptr_owned(PARROT_INTERP, ARGIN_NULLOK(void *ptr),
     if (!obj || !item)
         return 0;
 
-    if (!Parrot_gc_pool_is_owned(pool, item))
+    if (!Parrot_gc_pool_is_owned(interp, pool, item))
         return 0;
 
     /* black or white objects marked already. */

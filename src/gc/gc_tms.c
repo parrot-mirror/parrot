@@ -570,10 +570,10 @@ Parrot_gc_tms_init(PARROT_INTERP)
     else {
         self = mem_allocate_zeroed_typed(TriColor_GC);
 
-        self->pmc_allocator = Parrot_gc_create_pool_allocator(
+        self->pmc_allocator = Parrot_gc_pool_new(interp,
             sizeof (List_Item_Header) + sizeof (PMC));
 
-        self->constant_pmc_allocator = Parrot_gc_create_pool_allocator(
+        self->constant_pmc_allocator = Parrot_gc_pool_new(interp,
             sizeof (List_Item_Header) + sizeof (PMC));
 
         self->objects = Parrot_list_new(interp);
@@ -621,7 +621,7 @@ gc_tms_free_pmc_header(PARROT_INTERP, ARGFREE(PMC *pmc))
             return;
         Parrot_list_remove(interp, self->objects, Obj2LLH(pmc));
         PObj_on_free_list_SET(pmc);
-        Parrot_gc_pool_free(self->pmc_allocator, Obj2LLH(pmc));
+        Parrot_gc_pool_free(interp, self->pmc_allocator, Obj2LLH(pmc));
     }
 }
 
@@ -703,7 +703,7 @@ gc_tms_mark_and_sweep(PARROT_INTERP, UINTVAL flags)
         List_Item_Header *next = tmp->next;
         PARROT_ASSERT(tmp->owner == self->dead_objects);
         PObj_on_free_list_SET(LLH2Obj_typed(tmp, PMC));
-        Parrot_gc_pool_free(self->pmc_allocator, tmp);
+        Parrot_gc_pool_free(interp, self->pmc_allocator, tmp);
         tmp = next;
         ++counter;
         PARROT_ASSERT(counter <= self->dead_objects->count);
@@ -835,7 +835,7 @@ gc_tms_is_pmc_ptr(PARROT_INTERP, ARGIN_NULLOK(void *ptr))
     if (!ptr || !item)
         return 0;
 
-    if (!Parrot_gc_pool_is_owned(self->pmc_allocator, item))
+    if (!Parrot_gc_pool_is_owned(interp, self->pmc_allocator, item))
         return 0;
 
     /* black or grey objects marked already. Dead objects are dead */
