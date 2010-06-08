@@ -105,6 +105,17 @@ void Parrot_list_append(SHIM_INTERP,
         FUNC_MODIFIES(*item);
 
 PARROT_EXPORT
+INTVAL Parrot_list_check(SHIM_INTERP, ARGIN(Linked_List *list))
+        __attribute__nonnull__(2);
+
+PARROT_EXPORT
+INTVAL Parrot_list_contains(SHIM_INTERP,
+    ARGIN(Linked_List *list),
+    ARGIN(List_Item_Header *item))
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3);
+
+PARROT_EXPORT
 void Parrot_list_destroy(SHIM_INTERP, ARGMOD(Linked_List* list))
         __attribute__nonnull__(2)
         FUNC_MODIFIES(* list);
@@ -127,16 +138,12 @@ List_Item_Header* Parrot_list_remove(SHIM_INTERP,
         FUNC_MODIFIES(*list)
         FUNC_MODIFIES(*item);
 
-int Parrot_list_check(SHIM_INTERP, ARGIN(Linked_List *list))
-        __attribute__nonnull__(2);
-
-int Parrot_list_contains(SHIM_INTERP,
-    ARGIN(Linked_List *list),
-    ARGIN(List_Item_Header *item))
-        __attribute__nonnull__(2)
-        __attribute__nonnull__(3);
-
 #define ASSERT_ARGS_Parrot_list_append __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
+       PARROT_ASSERT_ARG(list) \
+    , PARROT_ASSERT_ARG(item))
+#define ASSERT_ARGS_Parrot_list_check __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
+       PARROT_ASSERT_ARG(list))
+#define ASSERT_ARGS_Parrot_list_contains __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
        PARROT_ASSERT_ARG(list) \
     , PARROT_ASSERT_ARG(item))
 #define ASSERT_ARGS_Parrot_list_destroy __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
@@ -146,11 +153,6 @@ int Parrot_list_contains(SHIM_INTERP,
        PARROT_ASSERT_ARG(interp) \
     , PARROT_ASSERT_ARG(list))
 #define ASSERT_ARGS_Parrot_list_remove __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
-       PARROT_ASSERT_ARG(list) \
-    , PARROT_ASSERT_ARG(item))
-#define ASSERT_ARGS_Parrot_list_check __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
-       PARROT_ASSERT_ARG(list))
-#define ASSERT_ARGS_Parrot_list_contains __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
        PARROT_ASSERT_ARG(list) \
     , PARROT_ASSERT_ARG(item))
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */

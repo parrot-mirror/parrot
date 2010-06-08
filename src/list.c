@@ -164,7 +164,7 @@ Parrot_list_pop(PARROT_INTERP, ARGIN(Linked_List *list))
 
 /*
 
-=item C<int Parrot_list_check(PARROT_INTERP, Linked_List *list)>
+=item C<INTVAL Parrot_list_check(PARROT_INTERP, Linked_List *list)>
 
 Check the validity of the list
 
@@ -172,7 +172,8 @@ Check the validity of the list
 
 */
 
-int
+PARROT_EXPORT
+INTVAL
 Parrot_list_check(SHIM_INTERP, ARGIN(Linked_List *list))
 {
     ASSERT_ARGS(Parrot_list_check)
@@ -193,7 +194,7 @@ Parrot_list_check(SHIM_INTERP, ARGIN(Linked_List *list))
 
 /*
 
-=item C<int Parrot_list_contains(PARROT_INTERP, Linked_List *list,
+=item C<INTVAL Parrot_list_contains(PARROT_INTERP, Linked_List *list,
 List_Item_Header *item)>
 
 Returns True if the is in the list
@@ -202,7 +203,8 @@ Returns True if the is in the list
 
 */
 
-int
+PARROT_EXPORT
+INTVAL
 Parrot_list_contains(SHIM_INTERP, ARGIN(Linked_List *list), ARGIN(List_Item_Header *item))
 {
     ASSERT_ARGS(Parrot_list_contains)
