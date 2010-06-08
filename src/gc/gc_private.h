@@ -17,6 +17,7 @@ Parrot.
 #define PARROT_GC_PRIVATE_H_GUARD
 
 #include "parrot/settings.h"
+#include "variable_size_pool.h"
 
 #if ! DISABLE_GC_DEBUG
 /* Set when walking the system stack. Defined in src/gc/system.c */
@@ -168,29 +169,6 @@ typedef struct GC_Subsystem {
     void * gc_private;
 
 } GC_Subsystem;
-
-typedef struct Memory_Block {
-    size_t free;
-    size_t size;
-    struct Memory_Block *prev;
-    struct Memory_Block *next;
-    char *start;
-    char *top;
-
-    /* Amount of freed memory. Used in compact_pool */
-    size_t freed;
-} Memory_Block;
-
-typedef struct Variable_Size_Pool {
-    Memory_Block *top_block;
-    void (*compact)(PARROT_INTERP, struct Memory_Pools *, struct Variable_Size_Pool *);
-    size_t minimum_block_size;
-    size_t total_allocated; /* total bytes allocated to this pool */
-    size_t guaranteed_reclaimable;     /* bytes that can definitely be reclaimed*/
-    size_t possibly_reclaimable;     /* bytes that can possibly be reclaimed
-                                      * (above plus COW-freed bytes) */
-    FLOATVAL reclaim_factor; /* minimum percentage we will reclaim */
-} Variable_Size_Pool;
 
 typedef struct Fixed_Size_Arena {
     size_t                     used;
