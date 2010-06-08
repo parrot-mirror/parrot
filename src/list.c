@@ -29,7 +29,7 @@ This code implements double linked list of GCable objects.
 
 =over 4
 
-=item C<struct Linked_List* Parrot_gc_allocate_linked_list(PARROT_INTERP)>
+=item C<struct Linked_List* Parrot_list_new(PARROT_INTERP)>
 
 Allocate a doubly link list
 
@@ -40,9 +40,9 @@ Allocate a doubly link list
 PARROT_EXPORT
 PARROT_CANNOT_RETURN_NULL
 struct Linked_List*
-Parrot_gc_allocate_linked_list(SHIM_INTERP)
+Parrot_list_new(SHIM_INTERP)
 {
-    ASSERT_ARGS(Parrot_gc_allocate_linked_list)
+    ASSERT_ARGS(Parrot_list_new)
 
     Linked_List *res = (Linked_List*)mem_sys_allocate_zeroed(sizeof (Linked_List));
     return res;
@@ -50,7 +50,7 @@ Parrot_gc_allocate_linked_list(SHIM_INTERP)
 
 /*
 
-=item C<void Parrot_gc_destroy_linked_list(PARROT_INTERP, Linked_List* list)>
+=item C<void Parrot_list_destroy(PARROT_INTERP, Linked_List* list)>
 
 Destroy the specified list (free up memory associated with the list)
 
@@ -60,16 +60,16 @@ Destroy the specified list (free up memory associated with the list)
 
 PARROT_EXPORT
 void
-Parrot_gc_destroy_linked_list(SHIM_INTERP, ARGMOD(Linked_List* list))
+Parrot_list_destroy(SHIM_INTERP, ARGMOD(Linked_List* list))
 {
-    ASSERT_ARGS(Parrot_gc_destroy_linked_list)
+    ASSERT_ARGS(Parrot_list_destroy)
 
     mem_sys_free(list);
 }
 
 /*
 
-=item C<void Parrot_gc_list_append(PARROT_INTERP, Linked_List *list,
+=item C<void Parrot_list_append(PARROT_INTERP, Linked_List *list,
 List_Item_Header *item)>
 
 Append an item to the list
@@ -80,9 +80,9 @@ Append an item to the list
 
 PARROT_EXPORT
 void
-Parrot_gc_list_append(SHIM_INTERP, ARGMOD(Linked_List *list), ARGMOD(List_Item_Header *item))
+Parrot_list_append(SHIM_INTERP, ARGMOD(Linked_List *list), ARGMOD(List_Item_Header *item))
 {
-    ASSERT_ARGS(Parrot_gc_list_append)
+    ASSERT_ARGS(Parrot_list_append)
 
     item->prev = item->next = NULL;
 
@@ -104,7 +104,7 @@ Parrot_gc_list_append(SHIM_INTERP, ARGMOD(Linked_List *list), ARGMOD(List_Item_H
 
 /*
 
-=item C<List_Item_Header* Parrot_gc_list_remove(PARROT_INTERP, Linked_List
+=item C<List_Item_Header* Parrot_list_remove(PARROT_INTERP, Linked_List
 *list, List_Item_Header *item)>
 
 Remove an item from the list, returning the (pointer to) item
@@ -115,9 +115,9 @@ Remove an item from the list, returning the (pointer to) item
 
 PARROT_EXPORT
 List_Item_Header*
-Parrot_gc_list_remove(SHIM_INTERP, ARGMOD(Linked_List *list), ARGMOD(List_Item_Header *item))
+Parrot_list_remove(SHIM_INTERP, ARGMOD(Linked_List *list), ARGMOD(List_Item_Header *item))
 {
-    ASSERT_ARGS(Parrot_gc_list_remove)
+    ASSERT_ARGS(Parrot_list_remove)
 
     List_Item_Header *next = item->next;
     List_Item_Header *prev = item->prev;
@@ -142,7 +142,7 @@ Parrot_gc_list_remove(SHIM_INTERP, ARGMOD(Linked_List *list), ARGMOD(List_Item_H
 
 /*
 
-=item C<List_Item_Header* Parrot_gc_list_pop(PARROT_INTERP, Linked_List *list)>
+=item C<List_Item_Header* Parrot_list_pop(PARROT_INTERP, Linked_List *list)>
 
 Pop an item off the list - i.e. get the first item in the list and remove it.
 
@@ -152,9 +152,9 @@ Pop an item off the list - i.e. get the first item in the list and remove it.
 
 PARROT_EXPORT
 List_Item_Header*
-Parrot_gc_list_pop(PARROT_INTERP, ARGIN(Linked_List *list))
+Parrot_list_pop(PARROT_INTERP, ARGIN(Linked_List *list))
 {
-    ASSERT_ARGS(Parrot_gc_list_pop)
+    ASSERT_ARGS(Parrot_list_pop)
 
     List_Item_Header *ret = list->first;
     if (ret)
@@ -164,7 +164,7 @@ Parrot_gc_list_pop(PARROT_INTERP, ARGIN(Linked_List *list))
 
 /*
 
-=item C<int Parrot_gc_list_check(PARROT_INTERP, Linked_List *list)>
+=item C<int Parrot_list_check(PARROT_INTERP, Linked_List *list)>
 
 Check the validity of the list
 
@@ -173,9 +173,9 @@ Check the validity of the list
 */
 
 int
-Parrot_gc_list_check(SHIM_INTERP, ARGIN(Linked_List *list))
+Parrot_list_check(SHIM_INTERP, ARGIN(Linked_List *list))
 {
-    ASSERT_ARGS(Parrot_gc_list_check)
+    ASSERT_ARGS(Parrot_list_check)
 
     List_Item_Header *tmp = list->first;
     size_t counter = 0;
@@ -193,19 +193,19 @@ Parrot_gc_list_check(SHIM_INTERP, ARGIN(Linked_List *list))
 
 /*
 
-=item C<int Parrot_gc_list_is_owned(PARROT_INTERP, Linked_List *list,
+=item C<int Parrot_list_contains(PARROT_INTERP, Linked_List *list,
 List_Item_Header *item)>
 
-Returns True if the is owned by the list
+Returns True if the is in the list
 
 =cut
 
 */
 
 int
-Parrot_gc_list_is_owned(SHIM_INTERP, ARGIN(Linked_List *list), ARGIN(List_Item_Header *item))
+Parrot_list_contains(SHIM_INTERP, ARGIN(Linked_List *list), ARGIN(List_Item_Header *item))
 {
-    ASSERT_ARGS(Parrot_gc_list_is_owned)
+    ASSERT_ARGS(Parrot_list_contains)
 
     List_Item_Header *tmp = list->first;
 

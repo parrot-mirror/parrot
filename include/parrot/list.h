@@ -97,15 +97,15 @@ do {                                        \
 
 PARROT_EXPORT
 PARROT_CANNOT_RETURN_NULL
-struct Linked_List* Parrot_gc_allocate_linked_list(SHIM_INTERP);
+struct Linked_List* Parrot_list_new(SHIM_INTERP);
 
 PARROT_EXPORT
-void Parrot_gc_destroy_linked_list(SHIM_INTERP, ARGMOD(Linked_List* list))
+void Parrot_list_destroy(SHIM_INTERP, ARGMOD(Linked_List* list))
         __attribute__nonnull__(2)
         FUNC_MODIFIES(* list);
 
 PARROT_EXPORT
-void Parrot_gc_list_append(SHIM_INTERP,
+void Parrot_list_append(SHIM_INTERP,
     ARGMOD(Linked_List *list),
     ARGMOD(List_Item_Header *item))
         __attribute__nonnull__(2)
@@ -114,13 +114,13 @@ void Parrot_gc_list_append(SHIM_INTERP,
         FUNC_MODIFIES(*item);
 
 PARROT_EXPORT
-List_Item_Header* Parrot_gc_list_pop(PARROT_INTERP,
+List_Item_Header* Parrot_list_pop(PARROT_INTERP,
     ARGIN(Linked_List *list))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
 
 PARROT_EXPORT
-List_Item_Header* Parrot_gc_list_remove(SHIM_INTERP,
+List_Item_Header* Parrot_list_remove(SHIM_INTERP,
     ARGMOD(Linked_List *list),
     ARGMOD(List_Item_Header *item))
         __attribute__nonnull__(2)
@@ -128,31 +128,31 @@ List_Item_Header* Parrot_gc_list_remove(SHIM_INTERP,
         FUNC_MODIFIES(*list)
         FUNC_MODIFIES(*item);
 
-int Parrot_gc_list_check(SHIM_INTERP, ARGIN(Linked_List *list))
+int Parrot_list_check(SHIM_INTERP, ARGIN(Linked_List *list))
         __attribute__nonnull__(2);
 
-int Parrot_gc_list_is_owned(SHIM_INTERP,
+int Parrot_list_contains(SHIM_INTERP,
     ARGIN(Linked_List *list),
     ARGIN(List_Item_Header *item))
         __attribute__nonnull__(2)
         __attribute__nonnull__(3);
 
-#define ASSERT_ARGS_Parrot_gc_allocate_linked_list \
+#define ASSERT_ARGS_Parrot_list_new \
      __attribute__unused__ int _ASSERT_ARGS_CHECK = (0)
-#define ASSERT_ARGS_Parrot_gc_destroy_linked_list __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
+#define ASSERT_ARGS_Parrot_list_destroy __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
        PARROT_ASSERT_ARG(list))
-#define ASSERT_ARGS_Parrot_gc_list_append __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
+#define ASSERT_ARGS_Parrot_list_append __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
        PARROT_ASSERT_ARG(list) \
     , PARROT_ASSERT_ARG(item))
-#define ASSERT_ARGS_Parrot_gc_list_pop __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
+#define ASSERT_ARGS_Parrot_list_pop __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
        PARROT_ASSERT_ARG(interp) \
     , PARROT_ASSERT_ARG(list))
-#define ASSERT_ARGS_Parrot_gc_list_remove __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
+#define ASSERT_ARGS_Parrot_list_remove __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
        PARROT_ASSERT_ARG(list) \
     , PARROT_ASSERT_ARG(item))
-#define ASSERT_ARGS_Parrot_gc_list_check __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
+#define ASSERT_ARGS_Parrot_list_check __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
        PARROT_ASSERT_ARG(list))
-#define ASSERT_ARGS_Parrot_gc_list_is_owned __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
+#define ASSERT_ARGS_Parrot_list_contains __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
        PARROT_ASSERT_ARG(list) \
     , PARROT_ASSERT_ARG(item))
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */

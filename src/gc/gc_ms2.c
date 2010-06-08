@@ -597,11 +597,11 @@ Parrot_gc_ms2_init(PARROT_INTERP)
 
         self->pmc_allocator = Parrot_gc_create_pool_allocator(
             sizeof (List_Item_Header) + sizeof (PMC));
-        self->objects = Parrot_gc_allocate_linked_list(interp);
+        self->objects = Parrot_list_new(interp);
 
         self->string_allocator = Parrot_gc_create_pool_allocator(
             sizeof (List_Item_Header) + sizeof (STRING));
-        self->strings = Parrot_gc_allocate_linked_list(interp);
+        self->strings = Parrot_list_new(interp);
 
         /* Arbitary number */
         self->gc_theshold = 4096 * 100;
@@ -642,7 +642,7 @@ gc_ms2_free_pmc_header(PARROT_INTERP, ARGFREE(PMC *pmc))
     if (pmc) {
         if (PObj_on_free_list_TEST(pmc))
             return;
-        Parrot_gc_list_remove(interp, self->objects, Obj2LLH(pmc));
+        Parrot_list_remove(interp, self->objects, Obj2LLH(pmc));
         PObj_on_free_list_SET(pmc);
 
         Parrot_pmc_destroy(interp, pmc);
@@ -755,7 +755,7 @@ gc_ms2_free_string_header(PARROT_INTERP, ARGFREE(STRING *s))
     if (s) {
         if (PObj_on_free_list_TEST(s))
             return;
-        Parrot_gc_list_remove(interp, self->strings, Obj2LLH(s));
+        Parrot_list_remove(interp, self->strings, Obj2LLH(s));
         PObj_on_free_list_SET(s);
 
         if (Buffer_bufstart(s) && !PObj_external_TEST(s))
@@ -935,7 +935,7 @@ gc_ms2_is_ptr_owned(PARROT_INTERP, ARGIN_NULLOK(void *ptr),
         return 0;
 
     /* Pool.is_owned isn't precise enough (yet) */
-    if (Parrot_gc_list_is_owned(interp, list, item))
+    if (Parrot_list_contains(interp, list, item))
         return 1;
 
     return 0;

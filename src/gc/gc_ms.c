@@ -463,7 +463,7 @@ Parrot_gc_ms_init(PARROT_INTERP)
     interp->gc_sys->get_gc_info      = gc_ms_get_gc_info;
 
     /* gc_private is @objects */
-    interp->gc_sys->gc_private       = Parrot_gc_allocate_linked_list(interp);
+    interp->gc_sys->gc_private       = Parrot_list_new(interp);
 
     initialize_var_size_pools(interp, interp->mem_pools);
     initialize_fixed_size_pools(interp, interp->mem_pools);

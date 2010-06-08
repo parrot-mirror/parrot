@@ -576,7 +576,7 @@ Parrot_gc_tms_init(PARROT_INTERP)
         self->constant_pmc_allocator = Parrot_gc_create_pool_allocator(
             sizeof (List_Item_Header) + sizeof (PMC));
 
-        self->objects = Parrot_gc_allocate_linked_list(interp);
+        self->objects = Parrot_list_new(interp);
 
     }
     interp->gc_sys->gc_private = self;
@@ -619,7 +619,7 @@ gc_tms_free_pmc_header(PARROT_INTERP, ARGFREE(PMC *pmc))
     if (pmc) {
         if (PObj_on_free_list_TEST(pmc))
             return;
-        Parrot_gc_list_remove(interp, self->objects, Obj2LLH(pmc));
+        Parrot_list_remove(interp, self->objects, Obj2LLH(pmc));
         PObj_on_free_list_SET(pmc);
         Parrot_gc_pool_free(self->pmc_allocator, Obj2LLH(pmc));
     }
@@ -651,12 +651,12 @@ gc_tms_mark_and_sweep(PARROT_INTERP, UINTVAL flags)
     self.objects       = ();
     */
     self->dead_objects  = self->objects;
-    self->objects       = Parrot_gc_allocate_linked_list(interp);
-    self->black_objects = Parrot_gc_allocate_linked_list(interp);
-    self->grey_objects  = Parrot_gc_allocate_linked_list(interp);
+    self->objects       = Parrot_list_new(interp);
+    self->black_objects = Parrot_list_new(interp);
+    self->grey_objects  = Parrot_list_new(interp);
 
     /* Put inside ASSERT wo it will not affect non-debug build */
-    PARROT_ASSERT(Parrot_gc_list_check(interp, self->dead_objects));
+    PARROT_ASSERT(Parrot_list_check(interp, self->dead_objects));
 
     //fprintf(stderr, "Before %zd\n", self->dead_objects->count);
 
@@ -672,14 +672,14 @@ gc_tms_mark_and_sweep(PARROT_INTERP, UINTVAL flags)
     gc_tms_mark_pmc_header(interp, PMCNULL);
 
     //fprintf(stderr, "Roots %zd\n", self->grey_objects->count);
-    PARROT_ASSERT(Parrot_gc_list_check(interp, self->grey_objects));
+    PARROT_ASSERT(Parrot_list_check(interp, self->grey_objects));
 
     /*
     # mark_alive will push into self.grey_objects
     self.mark_real($_) for self.grey_objects;
     */
     counter = 0;
-    while ((tmp = Parrot_gc_list_pop(interp, self->grey_objects))) {
+    while ((tmp = Parrot_list_pop(interp, self->grey_objects))) {
         PARROT_ASSERT(tmp->owner == self->grey_objects);
         PARROT_ASSERT(PObj_grey_TEST(LLH2Obj_typed(tmp, PMC)));
 
@@ -714,8 +714,8 @@ gc_tms_mark_and_sweep(PARROT_INTERP, UINTVAL flags)
     //fprintf(stderr, "Dead %d\n", self->dead_objects->count);
 
     /* Clean up */
-    Parrot_gc_destroy_linked_list(interp, self->grey_objects);
-    Parrot_gc_destroy_linked_list(interp, self->dead_objects);
+    Parrot_list_destroy(interp, self->grey_objects);
+    Parrot_list_destroy(interp, self->dead_objects);
 
     /* Paint live objects white */
     tmp = self->black_objects->first;
@@ -741,7 +741,7 @@ gc_tms_mark_and_sweep(PARROT_INTERP, UINTVAL flags)
     self->objects = list;
 
     //fprintf(stderr, "Appending %zd\n", self->black_objects->count);
-    while ((tmp = Parrot_gc_list_pop(interp, self->black_objects))) {
+    while ((tmp = Parrot_list_pop(interp, self->black_objects))) {
         PARROT_ASSERT(tmp->owner == self->black_objects);
         LIST_APPEND(self->objects, tmp);
     }
@@ -843,7 +843,7 @@ gc_tms_is_pmc_ptr(PARROT_INTERP, ARGIN_NULLOK(void *ptr))
         return 0;
 
     /* Pool.is_owned isn't precise enough (yet) */
-    if (Parrot_gc_list_is_owned(interp, self->dead_objects, item))
+    if (Parrot_list_contains(interp, self->dead_objects, item))
         return 1;
 
     /* We don't care about non-dead objects here. They will be marked anyway */
