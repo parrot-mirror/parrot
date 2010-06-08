@@ -271,6 +271,7 @@ PARROT_CANNOT_RETURN_NULL
 static void*
 pool_allocate(ARGMOD(Pool_Allocator *pool))
 {
+    ASSERT_ARGS(pool_allocate)
     Pool_Allocator_Free_List *item;
 
     if (pool->free_list) {
@@ -296,6 +297,7 @@ pool_allocate(ARGMOD(Pool_Allocator *pool))
 static void
 pool_free(ARGMOD(Pool_Allocator *pool), ARGFREE(void *data))
 {
+    ASSERT_ARGS(pool_free)
     Pool_Allocator_Free_List * const item = (Pool_Allocator_Free_List *)data;
 
     /* It's too expensive.
@@ -312,6 +314,7 @@ pool_free(ARGMOD(Pool_Allocator *pool), ARGFREE(void *data))
 static int
 pool_is_owned(ARGMOD(Pool_Allocator *pool), ARGIN(void *ptr))
 {
+    ASSERT_ARGS(pool_is_owned)
     Pool_Allocator_Arena *arena = pool->top_arena;
     size_t                a_size;
 
