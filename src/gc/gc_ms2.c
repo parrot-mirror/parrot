@@ -504,9 +504,10 @@ gc_ms2_free_fixed_size_storage(PARROT_INTERP, size_t size, ARGMOD(void *data))
 
 /*
 
-=item C<static size_t gc_ms2_get_gc_info(PARROT_INTERP, Interpinfo_enum what)>
+=item C<static size_t gc_ms2_get_gc_info(PARROT_INTERP, Interpinfo_enum which)>
 
-Stub for GC introspection function.
+GC introspection function.
+gets stats based on enum which
 
 =cut
 
