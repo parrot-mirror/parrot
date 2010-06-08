@@ -41,7 +41,7 @@ pin/unpin
 
     test_stringinfo()
     $S0 = interpinfo .INTERPINFO_GC_SYS_NAME
-    if $S0 == "inf" goto dont_run_hanging_tests
+    if $S0 != "ms" goto dont_run_hanging_tests
     test_pin_unpin()
     goto test_end
   dont_run_hanging_tests:
