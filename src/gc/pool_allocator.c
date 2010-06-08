@@ -68,6 +68,8 @@ Parrot_gc_create_pool_allocator(size_t object_size)
     newpool->top_arena         = NULL;
     newpool->lo_arena_ptr      = (size_t)-1;
     newpool->hi_arena_ptr      = 0;
+    newpool->newfree           = 0;
+    newpool->newlast           = 0;
 
     return newpool;
 }
