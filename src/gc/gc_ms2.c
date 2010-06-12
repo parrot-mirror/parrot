@@ -34,7 +34,7 @@ typedef struct MarkSweep_GC {
     struct Fixed_Allocator *fixed_size_allocator;
 
     /* Number of allocated objects before trigger gc */
-    size_t gc_theshold;
+    size_t gc_threshold;
 
     /** statistics for GC **/
     GC_Statistics stats;
@@ -618,7 +618,7 @@ Parrot_gc_ms2_init(PARROT_INTERP)
         self->fixed_size_allocator = Parrot_gc_fixed_allocator_new(interp);
 
         /* Arbitary number */
-        self->gc_theshold = 4096 * 100;
+        self->gc_threshold = 1024 * 1024;
     }
     interp->gc_sys->gc_private = self;
 }
@@ -634,7 +634,7 @@ gc_ms2_allocate_pmc_header(PARROT_INTERP, UINTVAL flags)
     PMC              *ret;
 
     /* Invoke M&S early. Freshly allocated "header" isn't header yet */
-    if ((++self->stats.header_allocs_since_last_collect > self->gc_theshold)
+    if ((++self->stats.header_allocs_since_last_collect > self->gc_threshold)
         && self->pmc_allocator->num_free_objects <= 1) {
         gc_ms2_mark_and_sweep(interp, 0);
     }
@@ -747,7 +747,7 @@ gc_ms2_allocate_string_header(PARROT_INTERP, SHIM(UINTVAL flags))
     List_Item_Header *ptr;
     STRING           *ret;
 
-    if ((++self->stats.header_allocs_since_last_collect > self->gc_theshold)
+    if ((++self->stats.header_allocs_since_last_collect > self->gc_threshold)
         && self->string_allocator->num_free_objects <= 1) {
         gc_ms2_mark_and_sweep(interp, 0);
     }
@@ -874,7 +874,8 @@ gc_ms2_mark_and_sweep(PARROT_INTERP, UINTVAL flags)
     gc_ms2_sweep_pool(interp, self->string_allocator, self->strings, gc_ms2_sweep_string_cb);
 
     /* Wait more next time */
-    self->gc_theshold *= UNITS_PER_ALLOC_GROWTH_FACTOR;
+    // FIXME With such simplistic approach we reach multigigabyte liveset of objects
+    //self->gc_threshold *= UNITS_PER_ALLOC_GROWTH_FACTOR;
 
     self->stats.header_allocs_since_last_collect = 0;
     self->stats.gc_mark_runs++;
