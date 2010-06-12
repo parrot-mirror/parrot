@@ -180,6 +180,7 @@ create_buffer(PARROT_INTERP, ARGIN_NULLOK(PMC *pmc), ARGMOD(PMC *info))
         Parrot_gc_new_bufferlike_header(interp, sizeof (Buffer));
     Parrot_gc_allocate_buffer_storage_aligned(interp,
         PARROT_IMAGEIO(info)->buffer, len);
+    memset(Buffer_bufstart(PARROT_IMAGEIO(info)->buffer), 0, len);
     SET_VISIT_CURSOR(info, (char *)Buffer_bufstart(PARROT_IMAGEIO(info)->buffer));
 }
 
@@ -209,6 +210,7 @@ ensure_buffer_size(PARROT_INTERP, ARGIN(PMC *io), size_t len)
             new_size = Buffer_buflen(buf) - need_free + 512;
         Parrot_gc_reallocate_buffer_storage(interp, buf, new_size);
         PARROT_ASSERT(Buffer_buflen(buf) - used - len >= 15);
+        memset(((char*)Buffer_bufstart(buf)) + used, 0, new_size - used);
     }
 
 #ifndef DISABLE_GC_DEBUG
