@@ -45,7 +45,7 @@ TT1465 - http://trac.parrot.org/parrot/ticket/1465 .
     loop:
         $P0 = box 0
         inc counter
-        if counter > 1e6 goto done
+        if counter > 1e7 goto done
         goto loop
     done:
         diag("")
