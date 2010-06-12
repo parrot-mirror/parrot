@@ -432,12 +432,16 @@ gc_ms2_allocate_string_storage(SHIM_INTERP, ARGMOD(STRING *str), size_t size)
 {
     ASSERT_ARGS(gc_ms2_allocate_string_storage)
 
+    /* Packfiles requires aligned strings. */
+    size = (size + WORD_ALIGN_1) & WORD_ALIGN_MASK;
     Buffer_buflen(str)   = size;
 
     if (size > 0) {
         char * const mem = (char *)mem_internal_allocate(size);
 
         Buffer_bufstart(str) = str->strstart = mem;
+        // FIXME Packfile pack garbage from string tail...
+        memset(mem, 0, size);
     }
     else {
         Buffer_bufstart(str) = NULL;
