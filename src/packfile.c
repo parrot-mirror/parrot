@@ -2767,6 +2767,7 @@ byte_code_unpack(PARROT_INTERP, ARGMOD(PackFile_Segment *self), ARGIN(const opco
             const int old_op_count = byte_code->op_count;
             byte_code->op_count += entry->n_ops = PF_fetch_opcode(self->pf, &cursor);
 
+            /* XXX could probably avoid reallocing by filling the func_table later */
             if (!byte_code->op_func_table)
                 byte_code->op_func_table = mem_gc_allocate_n_typed(interp,
                                             byte_code->op_count, op_func_t);

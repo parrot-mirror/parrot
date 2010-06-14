@@ -670,7 +670,7 @@ get_codesize(PARROT_INTERP, ARGIN(const IMC_Unit *unit), ARGOUT(size_t *src_line
             (*src_lines)++;
             if (ins->opnum < 0)
                 IMCC_fatal(interp, 1, "get_codesize: "
-                        "no opnum ins#%d %I\n",
+                        "no opnum ins#%d %d\n",
                         ins->index, ins);
 
             if (ins->opnum == PARROT_OP_set_p_pc) {
@@ -2435,7 +2435,7 @@ e_pbc_emit(PARROT_INTERP, SHIM(void *param), ARGIN(const IMC_Unit *unit),
             }
         }
 
-        IMCC_debug(interp, DEBUG_PBC, "\t%I\n", ins);
+        IMCC_debug(interp, DEBUG_PBC, "\t%d\n", ins);
         IMCC_INFO(interp)->npc += ins->opsize;
     }
 
