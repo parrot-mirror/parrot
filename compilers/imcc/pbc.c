@@ -1442,7 +1442,7 @@ add_const_pmc_sub(PARROT_INTERP, ARGMOD(SymReg *r), size_t offs, size_t end)
     sub->namespace_name = ns_pmc;
     sub->start_offs     = offs;
     sub->end_offs       = end;
-    sub->HLL_id         = Parrot_pcc_get_HLL(interp, CURRENT_CONTEXT(interp));
+    sub->HLL_id         = unit->hll_id;
 
     for (i = 0; i < 4; ++i)
         sub->n_regs_used[i] = unit->n_regs_used[i];

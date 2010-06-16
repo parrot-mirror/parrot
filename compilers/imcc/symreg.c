@@ -407,7 +407,7 @@ mk_pcc_sub(PARROT_INTERP, ARGIN(const char *name), int proto)
 
 =item C<void add_namespace(PARROT_INTERP, IMC_Unit *unit)>
 
-Add the current namespace to a sub declaration.
+Add the current namespace (and HLL id) to a sub declaration.
 
 =cut
 
@@ -418,6 +418,8 @@ add_namespace(PARROT_INTERP, ARGMOD(IMC_Unit *unit))
 {
     ASSERT_ARGS(add_namespace)
     SymReg * const ns = IMCC_INFO(interp)->cur_namespace;
+
+    unit->hll_id = Parrot_pcc_get_HLL(interp, CURRENT_CONTEXT(interp));
 
     if (!ns)
         return;
