@@ -1648,22 +1648,20 @@ build_key(PARROT_INTERP, ARGIN(SymReg *key_reg))
 
     for (key_length = 0; reg ; reg = reg->nextkey, key_length++) {
         SymReg *r = reg;
-        int     type;
 
         if (key_length >= MAX_KEY_LEN)
             IMCC_fatal(interp, 1, "build_key:"
                     "Key too long, increase MAX_KEY_LEN.\n");
 
-        /* if key is a register, the original sym is in r->reg */
-        type = r->type;
-
-        if (r->reg)
-            r = r->reg;
-
-        switch (type) {
+        switch (r->type) {
           case VTIDENTIFIER:       /* P[S0] */
           case VTPASM:             /* P[S0] */
           case VTREG:              /* P[S0] */
+
+            /* if key is a register, the original sym is in r->reg */
+            if (r->reg)
+                r = r->reg;
+
             if (r->set == 'I')
                 *pc++ = PARROT_ARG_I;    /* register type */
             else if (r->set == 'S')
@@ -1683,7 +1681,9 @@ build_key(PARROT_INTERP, ARGIN(SymReg *key_reg))
                     " keypart reg %s %c%d\n",
                     r->name, r->set, (int)r->color);
             break;
+
           case VT_CONSTP:
+            r = r->reg;
           case VTCONST:
           case VTCONST|VT_ENCODED:
             switch (r->set) {
@@ -1716,7 +1716,7 @@ build_key(PARROT_INTERP, ARGIN(SymReg *key_reg))
             break;
           default:
             IMCC_fatal(interp, 1, "build_key: "
-                    "unknown type 0x%x on %s\n", type, r->name);
+                    "unknown type 0x%x on %s\n", r->type, r->name);
         }
     }
 
@@ -1974,7 +1974,7 @@ add_1_const(PARROT_INTERP, ARGMOD(SymReg *r))
             SymReg *key = r;
 
             for (r = r->nextkey; r; r = r->nextkey)
-                if (r->type & VTCONST)
+                if (r->type & (VTCONST|VT_CONSTP))
                     add_1_const(interp, r);
                 build_key(interp, key);
         }
