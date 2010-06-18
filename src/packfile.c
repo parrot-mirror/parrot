@@ -2674,7 +2674,7 @@ byte_code_packed_size(SHIM_INTERP, ARGIN(PackFile_Segment *self))
 
         /* op entries */
         size += 1;            /* n_ops */
-        size += entry->n_ops; /* lib_ops */
+        size += entry->n_ops * 2; /* lib_ops and table_ops */
     }
 
     return size;
@@ -2689,6 +2689,7 @@ byte_code_pack(PARROT_INTERP, ARGMOD(PackFile_Segment *self), ARGOUT(opcode_t *c
     PackFile_ByteCode * const byte_code = (PackFile_ByteCode *)self;
     int i, j;
 
+    *cursor++ = byte_code->op_count;
     *cursor++ = byte_code->op_mapping.n_libs;
 
     for (i = 0; i < byte_code->op_mapping.n_libs; i++) {
@@ -2703,6 +2704,7 @@ byte_code_pack(PARROT_INTERP, ARGMOD(PackFile_Segment *self), ARGOUT(opcode_t *c
         /* op entries */
         *cursor++ = entry->n_ops;
         for (j = 0; j < entry->n_ops; j++)
+            *cursor++ = entry->table_ops[j];
             *cursor++ = entry->lib_ops[j];
     }
 
@@ -2717,9 +2719,12 @@ byte_code_unpack(PARROT_INTERP, ARGMOD(PackFile_Segment *self), ARGIN(const opco
     ASSERT_ARGS(byte_code_unpack)
     PackFile_ByteCode * const byte_code = (PackFile_ByteCode *)self;
     int i;
+    int total_ops = 0;
 
-    byte_code->op_count          = 0;
-    byte_code->op_func_table     = NULL;
+    byte_code->op_count          = PF_fetch_opcode(self->pf, &cursor);
+    byte_code->op_func_table     = mem_gc_allocate_n_zeroed_typed(interp,
+                                        byte_code->op_count, op_func_t);
+
 
     byte_code->op_mapping.n_libs = PF_fetch_opcode(self->pf, &cursor);
     byte_code->op_mapping.libs   = mem_gc_allocate_n_zeroed_typed(interp,
@@ -2764,28 +2769,43 @@ byte_code_unpack(PARROT_INTERP, ARGMOD(PackFile_Segment *self), ARGIN(const opco
         /* op entries */
         {
             int       j;
-            const int old_op_count = byte_code->op_count;
-            byte_code->op_count += entry->n_ops = PF_fetch_opcode(self->pf, &cursor);
+            total_ops += entry->n_ops = PF_fetch_opcode(self->pf, &cursor);
 
-            /* XXX could probably avoid reallocing by filling the func_table later */
-            if (!byte_code->op_func_table)
-                byte_code->op_func_table = mem_gc_allocate_n_typed(interp,
-                                            byte_code->op_count, op_func_t);
-            else
-                mem_gc_realloc_n_typed(interp, byte_code->op_func_table,
-                    byte_code->op_count, op_func_t);
+            entry->table_ops = mem_gc_allocate_n_zeroed_typed(interp,
+                                    entry->n_ops, opcode_t);
+            entry->lib_ops   = mem_gc_allocate_n_zeroed_typed(interp,
+                                    entry->n_ops, opcode_t);
 
             for (j = 0; j < entry->n_ops; j++) {
-                int op = PF_fetch_opcode(self->pf, &cursor);
-                if (0 < op || op < entry->lib->op_count)
+                opcode_t idx = PF_fetch_opcode(self->pf, &cursor);
+                opcode_t op  = PF_fetch_opcode(self->pf, &cursor);
+
+                if (0 > op || op >= entry->lib->op_count)
                     Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_MALFORMED_PACKFILE,
-                        "opcode index out of bounds on library `%s'. Found %d, expection 0 to %d.",
-                        entry->lib->name, op, entry->lib->op_count);
-                entry->lib_ops[j]                          = op;
-                byte_code->op_func_table[old_op_count + j] = entry->lib->op_func_table[j];
+                        "opcode index out of bounds on library `%s'. Found %d, expected 0 to %d.",
+                        entry->lib->name, op, entry->lib->op_count - 1);
+
+                if (0 > idx || idx >= byte_code->op_count)
+                    Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_MALFORMED_PACKFILE,
+                        "op table index out of bounds for entry from library `%s'."
+                        " Found %d, expected 0 to %d",
+                        entry->lib->name, idx, byte_code->op_count - 1);
+
+                if (byte_code->op_func_table[idx])
+                    Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_MALFORMED_PACKFILE,
+                        "duplicate entries in optable");
+
+                entry->table_ops[j]           = idx;
+                entry->lib_ops[j]             = op;
+                byte_code->op_func_table[idx] = entry->lib->op_func_table[op];
             }
         }
     }
+
+    if (total_ops != byte_code->op_count)
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_MALFORMED_PACKFILE,
+            "wrong number of ops decoded for optable. Decoded %d, but expected %d",
+            total_ops, byte_code->op_count);
 
     return cursor;
 }

@@ -254,9 +254,10 @@ typedef struct PackFile_ConstTable {
 } PackFile_ConstTable;
 
 typedef struct PackFile_ByteCode_OpMappingEntry {
-    op_lib_t *lib;     /* library for this entry */
-    opcode_t  n_ops;   /* number of ops used */
-    opcode_t *lib_ops; /* indices of ops within the library */
+    op_lib_t *lib;       /* library for this entry */
+    opcode_t  n_ops;     /* number of ops used */
+    opcode_t *lib_ops;   /* indices of ops within the library */
+    opcode_t *table_ops; /* indices of ops within the op table */
 } PackFile_ByteCode_OpMappingEntry;
 
 typedef struct PackFile_ByteCode_OpMapping {

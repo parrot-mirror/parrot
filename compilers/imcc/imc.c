@@ -50,7 +50,7 @@ static IMC_Unit * imc_new_unit(PARROT_INTERP, IMC_Unit_Type t)
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 /* HEADERIZER END: static */
 
-#define COMPILE_IMMEDIATE 0
+#define COMPILE_IMMEDIATE 1
 
 /*
 
