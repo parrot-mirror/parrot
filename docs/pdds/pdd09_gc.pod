@@ -162,6 +162,8 @@ entirely if the GC provides another mechanism for marking the various life
 stages of the object. These flags are typically not used outside the GC
 subsystem.
 
+=head4 Special PMCs
+
 =head4 Root Set
 
 The root set for the GC mark is the interpreter object and, if necessary,
@@ -208,14 +210,164 @@ The GC does not collect PMCs in any particular order and does not guarantee
 any ordering of collecting between dependant PMCs. Some GC cores may enforce
 some ordering or dependency recognition, but this is not guaranteed.
 
+=head3 Finalization
+
+When the interpreter object is destroyed, the GC system is finalized. During
+finalization, all living PMCs in the system are destroyed and all memory
+owned by the interpreter is freed to the operating system.
+
 =head3 Internal Structures
 
-The different GC cores are independent, but they share some code and
-resources.  The arena structures and arena creation routines are common across
-most GC cores, and some GC cores also share mark routines.
+A GC core is defined in memory by a structure of function pointers to various
+routines that perform the primitive operations of the GC. A GC core must
+define most of the pointers in the C<< interp->gc_sys >> structure, which is
+a C<GC_Subsystem> structure.
 
-The main interpreter structure has an mem_pools member, which is a pointer to
-an Memory_Pools struct.
+C<GC_Subsystem> has the following fields:
+
+=over 4
+
+=item C<void (*finalize_gc_system) (PARROT_INTERP)>
+
+Function to finalize the GC system, by freeing all PMCs and returning all
+allocated memory to the operating system.
+
+=item C<void (*destroy_child_interp)(Interp *dest_interp,
+Interp *child_interp)>
+
+=item C<void (*do_gc_mark)(PARROT_INTERP, UINTVAL flags)>
+
+Perform a GC mark and sweep run, or at least run a single increment of it.
+
+=item C<void (*compact_string_pool)(PARROT_INTERP)>
+
+Compact the string pool and destroy all unused buffers.
+
+=item C<void (*mark_special)(PARROT_INTERP, PMC *)>
+
+Mark a special PMC. A PMC is special if it has the C<PObj_is_special_FLAG>
+flag set.
+
+=item C<void (*pmc_needs_early_collection)(PARROT_INTERP, PMC *)>
+
+Flag a PMC as needing early collection.
+
+=item C<void (*init_pool)(PARROT_INTERP, struct Fixed_Size_Pool *)>
+
+Initialize a new memory pool.
+
+=item C<PMC* (*allocate_pmc_header)(PARROT_INTERP, UINTVAL flags)>
+
+Allocate a new PMC object from the system.
+
+=item C<void (*free_pmc_header)(PARROT_INTERP, PMC *)>
+
+Free a PMC object back to the system.
+
+=item C<STRING* (*allocate_string_header)(PARROT_INTERP, UINTVAL flags)>
+
+Allocate a new STRING header from the system.
+
+=item C<void (*free_string_header)(PARROT_INTERP, STRING*)>
+
+Free a STRING object back to the system.
+
+=item C<Buffer* (*allocate_bufferlike_header)(PARROT_INTERP, size_t size)>
+
+=item C<void    (*free_bufferlike_header)(PARROT_INTERP, Buffer*, size_t size)>
+
+=item C<int  (*is_pmc_ptr)(PARROT_INTERP, void*)>
+
+Determine if the given pointer is or resembles a valid PMC pointer.
+
+=item C<int  (*is_string_ptr)(PARROT_INTERP, void*)>
+
+Determine if the given pointer is or resembles a valid STRING pointer.
+
+=item C<void (*mark_pobj_header)(PARROT_INTERP, PObj*)>
+
+=item C<void (*mark_pmc_header)(PARROT_INTERP, PMC *)>
+
+Mark a PMC alive.
+
+=item C<void* (*allocate_pmc_attributes)(PARROT_INTERP, PMC *)>
+
+Allocate attribute storage for a PMC. The size of the attributes structure is
+determined from the PMCs VTABLE.
+
+=item C<void (*free_pmc_attributes)(PARROT_INTERP, PMC *)>
+
+Free an attribute structure back to the system.
+
+=item C<void (*allocate_string_storage)(PARROT_INTERP, STRING *str, size_t size)>
+
+Allocate buffer storage for a string.
+
+=item C<void (*reallocate_string_storage)(PARROT_INTERP, STRING *str, size_t size)>
+
+Resize existing string storage to fit data of the new size.
+
+=item C<void (*allocate_buffer_storage)(PARROT_INTERP, ARGMOD(Buffer *buffer),
+size_t nsize)>
+
+Allocate buffer storage for any purpose.
+
+=item C<void (*reallocate_buffer_storage)(PARROT_INTERP, ARGMOD(Buffer *buffer),
+size_t newsize)>
+
+Reallocate or resize existing buffer storage.
+
+=item C<void* (*allocate_fixed_size_storage)(PARROT_INTERP, size_t size)>
+
+Allocate storage for a fixed-size header which is not a PMC or a STRING. The
+contents of this structure are not marked automatically by GC.
+
+=item C<void (*free_fixed_size_storage)(PARROT_INTERP, size_t size, void *)>
+
+Free a fixed-size structure back to the system.
+
+=item C<void* (*allocate_memory_chunk)(PARROT_INTERP, size_t size)>
+
+=item C<void* (*reallocate_memory_chunk)(PARROT_INTERP, void *data,
+size_t newsize)>
+
+=item C<void* (*allocate_memory_chunk_with_interior_pointers)(PARROT_INTERP,
+size_t size)>
+
+=item C<void* (*reallocate_memory_chunk_with_interior_pointers)(PARROT_INTERP,
+void *data, size_t oldsize, size_t newsize)>
+
+=item C<void (*free_memory_chunk)(PARROT_INTERP, void *data)>
+
+=item C<void (*block_mark)(PARROT_INTERP)>
+
+Block the GC mark from occuring.
+
+=item C<void (*unblock_mark)(PARROT_INTERP)>
+
+Unblock the GC mark.
+
+=item C<unsigned int (*is_blocked_mark)(PARROT_INTERP)>
+
+Query the blocked state of the GC mark.
+
+=item C<void (*block_sweep)(PARROT_INTERP)>
+
+Block the GC sweep phase.
+
+=item C<void (*unblock_sweep)(PARROT_INTERP)>
+
+Unblock the GC sweep phase.
+
+=item C<unsigned int (*is_blocked_sweep)(PARROT_INTERP)>
+
+Query the blocked state of the GC sweep.
+
+=item C<size_t (*get_gc_info)(PARROT_INTERP, Interpinfo_enum)>
+
+Query information about the GC core.
+
+=back
 
 =head4 The Memory_Pools structure
 
