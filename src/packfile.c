@@ -2663,7 +2663,7 @@ byte_code_packed_size(SHIM_INTERP, ARGIN(PackFile_Segment *self))
     size_t size;
     int i;
 
-    size = 1; /* n_libs */
+    size = 2; /* op_count + n_libs */
 
     for (i = 0; i < byte_code->op_mapping.n_libs; i++) {
         PackFile_ByteCode_OpMappingEntry * const entry = &byte_code->op_mapping.libs[i];
@@ -2673,7 +2673,7 @@ byte_code_packed_size(SHIM_INTERP, ARGIN(PackFile_Segment *self))
         size += 3; /* major + minor + patch */
 
         /* op entries */
-        size += 1;            /* n_ops */
+        size += 1;                /* n_ops */
         size += entry->n_ops * 2; /* lib_ops and table_ops */
     }
 
