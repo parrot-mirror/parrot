@@ -217,6 +217,8 @@ method _emit_source_preamble($fh) {
 
 {self.trans.defines(self)}
 
+static op_lib_t {self.bs}op_lib;
+
 |);
 
     $fh.print(self.ops_file.preamble);
