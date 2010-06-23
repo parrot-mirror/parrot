@@ -36,6 +36,7 @@ about the structure of the frozen bytecode.
 #include "pmc/pmc_key.h"
 #include "pmc/pmc_callcontext.h"
 #include "pmc/pmc_parrotlibrary.h"
+#include "parrot/oplib/core_ops.h"
 
 /* HEADERIZER HFILE: include/parrot/packfile.h */
 
@@ -2703,9 +2704,10 @@ byte_code_pack(PARROT_INTERP, ARGMOD(PackFile_Segment *self), ARGOUT(opcode_t *c
 
         /* op entries */
         *cursor++ = entry->n_ops;
-        for (j = 0; j < entry->n_ops; j++)
+        for (j = 0; j < entry->n_ops; j++) {
             *cursor++ = entry->table_ops[j];
             *cursor++ = entry->lib_ops[j];
+        }
     }
 
     return cursor;
@@ -2740,22 +2742,26 @@ byte_code_unpack(PARROT_INTERP, ARGMOD(PackFile_Segment *self), ARGIN(const opco
             const opcode_t  major    = PF_fetch_opcode(self->pf, &cursor);
             const opcode_t  minor    = PF_fetch_opcode(self->pf, &cursor);
             const opcode_t  patch    = PF_fetch_opcode(self->pf, &cursor);
-            const PMC      *lib_pmc  = Parrot_load_lib(interp,
-                                        Parrot_str_new(interp, lib_name, 0),
-                                        NULL);
 
-            mem_gc_free(interp, lib_name);
-
-            {
-                /* XXX
-                 * broken encapsulation => should make this data easier to access somehow
-                 */
+            /* XXX
+             * broken encapsulation => should make this data easier to access somehow
+             */
+            if (STREQ(lib_name, PARROT_CORE_OPLIB_NAME)) {
+                entry->lib = PARROT_CORE_OPLIB_INIT(interp, 1);
+            }
+            else {
+                const PMC *lib_pmc = Parrot_load_lib(interp,
+                                                Parrot_str_new(interp, lib_name, 0),
+                                                NULL);
                 void *oplib_init;
                 op_lib_t *(*oplib_init_f)(PARROT_INTERP, long init);
                 GETATTR_ParrotLibrary_oplib_init(interp, lib_pmc, oplib_init);
                 oplib_init_f = D2FPTR(oplib_init);
                 entry->lib = oplib_init_f(interp, 1);
             }
+
+
+            mem_gc_free(interp, lib_name);
 
             if (entry->lib->major_version != major
             ||  entry->lib->minor_version != minor
