@@ -695,6 +695,81 @@ get_codesize(PARROT_INTERP, ARGIN(const IMC_Unit *unit), ARGOUT(size_t *src_line
 
 /*
 
+=item C<opcode_t bytecode_map_op(PARROT_INTERP, opcode_t op)>
+
+Lookup the mapping of an op for the current bytecode segment or make one if
+none exists.
+
+=cut
+
+*/
+
+static
+opcode_t
+bytecode_map_op(PARROT_INTERP, opcode_t op) {
+    int i;
+    op_info_t         *info    = &interp->op_info_table[op];
+    op_lib_t          *lib     = info->lib;
+    op_func_t         op_func  = interp->op_func_table[op];
+    PackFile_ByteCode *bc      = interp->code;
+    PackFile_ByteCode_OpMappingEntry *om;
+
+    for (i = 0; i < bc->op_mapping.n_libs; i++) {
+        if (lib == bc->op_mapping.libs[i].lib) {
+            om = &bc->op_mapping.libs[i];
+            goto found_lib;
+        }
+    }
+
+    /* library not yet mapped */
+    bc->op_mapping.n_libs++;
+    bc->op_mapping.libs = mem_gc_realloc_n_typed_zeroed(interp, bc->op_mapping.libs,
+                            bc->op_mapping.n_libs, bc->op_mapping.n_libs - 1,
+                            PackFile_ByteCode_OpMappingEntry);
+
+    /* initialize a new lib entry */
+    om            = &bc->op_mapping.libs[bc->op_mapping.n_libs - 1];
+    om->lib       = lib;
+    om->n_ops     = 0;
+    om->lib_ops   = mem_gc_allocate_n_zeroed_typed(interp, 0, opcode_t);
+    om->table_ops = mem_gc_allocate_n_zeroed_typed(interp, 0, opcode_t);
+
+  found_lib:
+    for (i = 0; i < om->n_ops; i++) {
+        if (bc->op_func_table[om->table_ops[i]] == op_func)
+            return om->table_ops[i];
+    }
+
+    /* op not yet mapped */
+    bc->op_count++;
+    bc->op_func_table =
+        mem_gc_realloc_n_typed_zeroed(interp, bc->op_func_table, bc->op_count, bc->op_count,
+                                        op_func_t);
+    bc->op_func_table[bc->op_count - 1] = op_func;
+
+    /* initialize new op mapping */
+    om->n_ops++;
+
+    om->lib_ops =
+        mem_gc_realloc_n_typed_zeroed(interp, om->lib_ops, om->n_ops, om->n_ops - 1, opcode_t);
+    for (i = 0; i < lib->op_count; i++) {
+        if (lib->op_func_table[i] == op_func) {
+            om->lib_ops[om->n_ops - 1] = i;
+            break;
+        }
+    }
+    PARROT_ASSERT(om->lib_ops[om->n_ops - 1] || !i);
+
+    om->table_ops =
+        mem_gc_realloc_n_typed_zeroed(interp, om->table_ops, om->n_ops, om->n_ops - 1, opcode_t);
+    om->table_ops[om->n_ops - 1] = bc->op_count - 1;
+
+    return bc->op_count - 1;
+}
+
+
+/*
+
 =item C<static subs_t * find_global_label(PARROT_INTERP, const char *name, const
 subs_t *sym, int *pc)>
 
@@ -840,7 +915,7 @@ fixup_globals(PARROT_INTERP)
                     const int op = interp->op_lib->op_code(interp, "find_sub_not_null_p_sc", 1);
                     PARROT_ASSERT(op);
 
-                    interp->code->base.data[addr] = op;
+                    interp->code->base.data[addr] = bytecode_map_op(interp, op);
 
                     if (nam->color < 0)
                         nam->color = add_const_str(interp, IMCC_string_from_reg(interp, nam));
@@ -2211,81 +2286,6 @@ verify_signature(PARROT_INTERP, ARGIN(const Instruction *ins), ARGIN(opcode_t *p
         const int k = add_const_table_pmc(interp, changed_sig);
         pc[-1] = k;
     }
-}
-
-
-/*
-
-=item C<opcode_t bytecode_map_op(PARROT_INTERP, opcode_t op)>
-
-Lookup the mapping of an op for the current bytecode segment or make one if
-none exists.
-
-=cut
-
-*/
-
-static
-opcode_t
-bytecode_map_op(PARROT_INTERP, opcode_t op) {
-    int i;
-    op_info_t         *info    = &interp->op_info_table[op];
-    op_lib_t          *lib     = info->lib;
-    op_func_t         op_func  = interp->op_func_table[op];
-    PackFile_ByteCode *bc      = interp->code;
-    PackFile_ByteCode_OpMappingEntry *om;
-
-    for (i = 0; i < bc->op_mapping.n_libs; i++) {
-        if (lib == bc->op_mapping.libs[i].lib) {
-            om = &bc->op_mapping.libs[i];
-            goto found_lib;
-        }
-    }
-
-    /* library not yet mapped */
-    bc->op_mapping.n_libs++;
-    bc->op_mapping.libs = mem_gc_realloc_n_typed_zeroed(interp, bc->op_mapping.libs,
-                            bc->op_mapping.n_libs, bc->op_mapping.n_libs - 1,
-                            PackFile_ByteCode_OpMappingEntry);
-
-    /* initialize a new lib entry */
-    om            = &bc->op_mapping.libs[bc->op_mapping.n_libs - 1];
-    om->lib       = lib;
-    om->n_ops     = 0;
-    om->lib_ops   = mem_gc_allocate_n_zeroed_typed(interp, 0, opcode_t);
-    om->table_ops = mem_gc_allocate_n_zeroed_typed(interp, 0, opcode_t);
-
-  found_lib:
-    for (i = 0; i < om->n_ops; i++) {
-        if (bc->op_func_table[om->table_ops[i]] == op_func)
-            return om->table_ops[i];
-    }
-
-    /* op not yet mapped */
-    bc->op_count++;
-    bc->op_func_table =
-        mem_gc_realloc_n_typed_zeroed(interp, bc->op_func_table, bc->op_count, bc->op_count,
-                                        op_func_t);
-    bc->op_func_table[bc->op_count - 1] = op_func;
-
-    /* initialize new op mapping */
-    om->n_ops++;
-
-    om->lib_ops =
-        mem_gc_realloc_n_typed_zeroed(interp, om->lib_ops, om->n_ops, om->n_ops - 1, opcode_t);
-    for (i = 0; i < lib->op_count; i++) {
-        if (lib->op_func_table[i] == op_func) {
-            om->lib_ops[om->n_ops - 1] = i;
-            break;
-        }
-    }
-    PARROT_ASSERT(om->lib_ops[om->n_ops - 1] || !i);
-
-    om->table_ops =
-        mem_gc_realloc_n_typed_zeroed(interp, om->table_ops, om->n_ops, om->n_ops - 1, opcode_t);
-    om->table_ops[om->n_ops - 1] = bc->op_count - 1;
-
-    return bc->op_count - 1;
 }
 
 
