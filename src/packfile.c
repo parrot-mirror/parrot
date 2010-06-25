@@ -2623,6 +2623,8 @@ byte_code_destroy(PARROT_INTERP, ARGMOD(PackFile_Segment *self))
 
     if (byte_code->op_func_table)
         mem_gc_free(interp, byte_code->op_func_table);
+    if (byte_code->op_info_table)
+        mem_gc_free(interp, byte_code->op_info_table);
     if (byte_code->op_mapping.libs)
         mem_gc_free(interp, byte_code->op_mapping.libs);
 
@@ -2631,6 +2633,7 @@ byte_code_destroy(PARROT_INTERP, ARGMOD(PackFile_Segment *self))
     byte_code->debugs          = NULL;
     byte_code->op_mapping.libs = NULL;
     byte_code->op_func_table   = NULL;
+    byte_code->op_info_table   = NULL;
 }
 
 
@@ -2726,6 +2729,8 @@ byte_code_unpack(PARROT_INTERP, ARGMOD(PackFile_Segment *self), ARGIN(const opco
     byte_code->op_count          = PF_fetch_opcode(self->pf, &cursor);
     byte_code->op_func_table     = mem_gc_allocate_n_zeroed_typed(interp,
                                         byte_code->op_count, op_func_t);
+    byte_code->op_info_table     = mem_gc_allocate_n_zeroed_typed(interp,
+                                        byte_code->op_count, op_info_t *);
 
 
     byte_code->op_mapping.n_libs = PF_fetch_opcode(self->pf, &cursor);
@@ -2804,6 +2809,7 @@ byte_code_unpack(PARROT_INTERP, ARGMOD(PackFile_Segment *self), ARGIN(const opco
                 entry->table_ops[j]           = idx;
                 entry->lib_ops[j]             = op;
                 byte_code->op_func_table[idx] = entry->lib->op_func_table[op];
+                byte_code->op_info_table[idx] = &entry->lib->op_info_table[op];
             }
         }
     }

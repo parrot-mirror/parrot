@@ -70,7 +70,7 @@ pmclass Opcode auto_attrs {
         if (value >= opcount || value < 0)
             Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_OUT_OF_BOUNDS,
                 "Opcode: Opcode index %d out of bounds", value);
-        attrs->info = &(INTERP->op_info_table[value]);
+        attrs->info      = INTERP->code->op_info_table[value];
         attrs->op_number = value;
     }
 

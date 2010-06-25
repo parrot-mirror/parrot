@@ -648,7 +648,7 @@ pbc_merge_ctpointers(PARROT_INTERP, ARGMOD(pbc_merge_input **inputs),
 
         /* Get info about this op and jump over it. */
         op_num = ops[cur_op];
-        op     = &interp->op_info_table[op_num];
+        op     = interp->cur_cs->op_info_table[op_num];
         op_ptr = ops + cur_op;
         ++cur_op;
 

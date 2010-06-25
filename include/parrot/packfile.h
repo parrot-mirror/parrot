@@ -266,14 +266,15 @@ typedef struct PackFile_ByteCode_OpMapping {
 } PackFile_ByteCode_OpMapping;
 
 struct PackFile_ByteCode {
-    PackFile_Segment             base;
-    struct PackFile_Debug       *debugs;
-    PackFile_ConstTable         *const_table;
-    PackFile_FixupTable         *fixups;
-    struct PackFile_Annotations *annotations;
-    PackFile_ByteCode_OpMapping  op_mapping;    /* opcode mapping information */
-    size_t                       op_count;      /* number of ops in the func table */
-    op_func_t                   *op_func_table; /* opcode dispatch table */
+    PackFile_Segment              base;
+    struct PackFile_Debug        *debugs;
+    PackFile_ConstTable          *const_table;
+    PackFile_FixupTable          *fixups;
+    struct PackFile_Annotations  *annotations;
+    PackFile_ByteCode_OpMapping   op_mapping;    /* opcode mapping information */
+    size_t                        op_count;      /* number of ops in the func table */
+    op_func_t                    *op_func_table; /* opcode dispatch table */
+    op_info_t                   **op_info_table;
 };
 
 typedef struct PackFile_DebugFilenameMapping {

@@ -93,7 +93,7 @@ pmclass OpLib singleton {
             Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_OUT_OF_BOUNDS,
                 "OpLib: Opcode index %d out of bounds", value);
         else {
-            const char * const name   = INTERP->op_info_table[value].full_name;
+            const char * const name   = INTERP->code->op_info_table[value]->full_name;
             STRING     * const newstr = Parrot_str_new(INTERP, name, 0);
             return VTABLE_get_pmc_keyed_str(INTERP, SELF, newstr);
         }
@@ -106,12 +106,12 @@ pmclass OpLib singleton {
     METHOD op_family(STRING *shortname)
     {
         char * const sname = Parrot_str_to_cstring(INTERP, shortname);
-        const op_lib_t * const op_lib = INTERP->op_lib;
-        const op_info_t * const table = op_lib->op_info_table;
+        const op_lib_t  * const op_lib = INTERP->op_lib;
+        const op_info_t ** const table = op_lib->op_info_table;
         PMC *result = PMCNULL;
         UINTVAL i;
         for (i = 0; i < op_lib->op_count; ++i) {
-            if (strcmp(table[i].name, sname) == 0) {
+            if (strcmp(table[i]->name, sname) == 0) {
                 if (PMC_IS_NULL(result))
                     result = Parrot_pmc_new(INTERP, enum_class_ResizablePMCArray);
                 VTABLE_push_pmc(INTERP, result, SELF.get_pmc_keyed_int(i));

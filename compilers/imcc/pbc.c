@@ -746,6 +746,10 @@ bytecode_map_op(PARROT_INTERP, opcode_t op) {
         mem_gc_realloc_n_typed_zeroed(interp, bc->op_func_table, bc->op_count, bc->op_count,
                                         op_func_t);
     bc->op_func_table[bc->op_count - 1] = op_func;
+    bc->op_info_table =
+        mem_gc_realloc_n_typed_zeroed(interp, bc->op_info_table, bc->op_count, bc->op_count,
+                                        op_info_t *);
+    bc->op_info_table[bc->op_count - 1] = info;
 
     /* initialize new op mapping */
     om->n_ops++;
