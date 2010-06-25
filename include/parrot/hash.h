@@ -9,10 +9,6 @@
 #ifndef PARROT_HASH_H_GUARD
 #define PARROT_HASH_H_GUARD
 
-/* Prototypes */
-
-/* Hash is really a hashtable, but 'hash' is standard perl nomenclature. */
-
 typedef enum {
     enum_hash_undef,
     enum_hash_int = enum_type_INTVAL,
@@ -22,14 +18,6 @@ typedef enum {
     enum_hash_ptr = enum_type_ptr
 } HashEntryType;
 
-/*
- * hash_entry is currently unused in the hash structure
-
-typedef struct _hash_entry {
-    HashEntryType type;
-    UnionVal val;
-} HashEntry;
-*/
 
 /* A BucketIndex is an index into the pool of available buckets. */
 typedef UINTVAL BucketIndex;
@@ -64,8 +52,8 @@ struct _hash {
     HashBucket *free_list;      /* empty buckets */
     UINTVAL entries;            /* Number of values stored in hashtable */
     UINTVAL mask;               /* alloced - 1 */
-    PMC *container;             /* e.g. the PerlHash PMC */
-    Hash_key_type key_type;     /* cstring, ascii-string, utf8-string */
+    PMC *container;             /* The owner PMC */
+    Hash_key_type key_type;     /* the type of key object this hash uses */
     PARROT_DATA_TYPE entry_type;/* type of value */
     size_t seed;                /* randomizes the hash_key generation
                                    updated for each new hash */
