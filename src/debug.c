@@ -2452,13 +2452,15 @@ PDB_disassemble_op(PARROT_INTERP, ARGOUT(char *dest), size_t space,
        one fixed parameter (the signature vector), plus a varying number of
        registers/constants.  For each arg/return, we show the register and its
        flags using PIR syntax. */
-    if (*(op) == PARROT_OP_set_args_pc || *(op) == PARROT_OP_set_returns_pc)
+    if (OPCODE_IS(interp, interp->code, *(op), PARROT_OP_set_args_pc)
+    ||  OPCODE_IS(interp, interp->code, *(op), PARROT_OP_set_returns_pc))
         specialop = 1;
 
     /* if it's a retrieving op, specialop = 2, so that later a :flat flag
      * can be changed into a :slurpy flag. See flag handling below.
      */
-    if (*(op) == PARROT_OP_get_results_pc || *(op) == PARROT_OP_get_params_pc)
+    if (OPCODE_IS(interp, interp->code, *(op), PARROT_OP_get_results_pc)
+    ||  OPCODE_IS(interp, interp->code, *(op), PARROT_OP_get_params_pc))
         specialop = 2;
 
     if (specialop > 0) {
