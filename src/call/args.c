@@ -490,15 +490,16 @@ dissect_aggregate_arg(PARROT_INTERP, ARGMOD(PMC *call_object), ARGIN(PMC *aggreg
     else if (VTABLE_does(interp, aggregate, CONST_STRING(interp, "hash"))) {
         const INTVAL elements = VTABLE_elements(interp, aggregate);
         INTVAL index;
-        PMC * const key = Parrot_pmc_new(interp, enum_class_Key);
-        VTABLE_set_integer_native(interp, key, 0);
-        SETATTR_Key_next_key(interp, key, (PMC *)INITBucketIndex);
+        Hash * const hash = (Hash *)VTABLE_get_pointer(interp, aggregate);
+        HashIteratorState state;
+        state.idx = INITBucketIndex;
+        state.current = NULL;
 
         /* Low-level hash iteration. */
         for (index = 0; index < elements; ++index) {
             if (!PMC_IS_NULL(key)) {
-                STRING * const name = (STRING *)parrot_hash_get_idx(interp,
-                                (Hash *)VTABLE_get_pointer(interp, aggregate), key);
+                STRING * const name = (STRING *)Parrot_hash_get_next_key(interp,
+                                hash, &state);
                 PARROT_ASSERT(name);
                 VTABLE_set_pmc_keyed_str(interp, call_object, name,
                     VTABLE_get_pmc_keyed_str(interp, aggregate, name));

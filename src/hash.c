@@ -28,9 +28,13 @@ C<< hash->buckets >> bucket store points to this region.
 #include "pmc/pmc_key.h"
 
 /* the number of entries above which it's faster to hash the hashval instead of
- * looping over the used HashBuckets directly */
+   looping over the used HashBuckets directly */
 #define SMALL_HASH_SIZE  4
 #define INITIAL_BUCKETS  4
+
+/* The ratio of buckets to indices in the hash before we decide to realloc the
+   indices array */
+#define HASH_INDICES_RATIO 2.0
 
 /* HEADERIZER HFILE: include/parrot/hash.h */
 
@@ -785,20 +789,9 @@ expand_hash(PARROT_INTERP, ARGMOD(Hash *hash))
 
     void * const  old_mem    = hash->buckets;
     const UINTVAL old_size   = hash->mask + 1;
-    const UINTVAL new_size   = old_size << 1; /* Double. Right-shift is 2x */
+    const UINTVAL new_size   = old_size << 1; /* Double. Left-shift is 2x */
     const UINTVAL old_nb     = N_BUCKETS(old_size);
     size_t        offset, i;
-
-    /*
-       allocate some less buckets
-       e.g. 3 buckets, 4 pointers:
-
-         +---+---+---+-+-+-+-+
-         | --> buckets |     |
-         +---+---+---+-+-+-+-+
-         ^             ^
-         | old_mem     | hash->bucket_indices
-    */
 
     /* resize mem */
     if (old_offset != old_mem) {
@@ -1007,11 +1000,9 @@ parrot_create_hash(PARROT_INTERP, PARROT_DATA_TYPE val_type, Hash_key_type hkey_
         NOTNULL(hash_comp_fn compare), NOTNULL(hash_hash_key_fn keyhash))
 {
     ASSERT_ARGS(parrot_create_hash)
-    HashBucket  *bp;
-    void        *alloc = Parrot_gc_allocate_memory_chunk_with_interior_pointers(
-                            interp, sizeof (Hash) + HASH_ALLOC_SIZE(INITIAL_BUCKETS));
-    Hash * const hash  = (Hash*)alloc;
-    size_t       i;
+    const INTVAL numbuckets = N_BUCKETS(INITIAL_BUCKETS);
+    Hash * const hash  = (Hash*)Parrot_gc_allocate_fixed_size_storage(interp, sizeof (Hash));
+    HashBucket ** const bp = Parrot_gc_allocate_memory_chunk(interp, HASH_ALLOC_SIZE(INITIAL_BUCKETS));
 
     PARROT_ASSERT(INITIAL_BUCKETS % 4 == 0);
 
@@ -1023,22 +1014,7 @@ parrot_create_hash(PARROT_INTERP, PARROT_DATA_TYPE val_type, Hash_key_type hkey_
     hash->mask       = INITIAL_BUCKETS - 1;
     hash->entries    = 0;
     hash->container  = PMCNULL;
-
-    bp = (HashBucket *)((char *)alloc + sizeof (Hash));
-    hash->free_list = NULL;
-
-    /* fill free_list from hi addresses so that we can use
-     * buckets[i] directly in an OrderedHash, *if* nothing
-     * was deleted */
-
-    hash->buckets = bp;
-    bp += N_BUCKETS(INITIAL_BUCKETS);
-    hash->bucket_indices = (HashBucket **)bp;
-
-    for (i = 0, --bp; i < N_BUCKETS(INITIAL_BUCKETS); ++i, --bp) {
-        bp->next        = hash->free_list;
-        hash->free_list = bp;
-    }
+    hash->bucket_indices = bp;
 
     return hash;
 }
@@ -1061,10 +1037,8 @@ void
 parrot_hash_destroy(PARROT_INTERP, ARGFREE_NOTNULL(Hash *hash))
 {
     ASSERT_ARGS(parrot_hash_destroy)
-    HashBucket * const bp = (HashBucket*)((char*)hash + sizeof (Hash));
-    if (bp != hash->buckets)
-        mem_gc_free(interp, hash->buckets);
-    mem_gc_free(interp, hash);
+    Parrot_gc_free_memory_chunk(interp, hash->bucket_indices);
+    Parrot_gc_free_fixed_size_storage(interp, hash);
 }
 
 
@@ -1153,13 +1127,54 @@ parrot_hash_size(SHIM_INTERP, ARGIN(const Hash *hash))
     return hash->entries;
 }
 
+/*
+
+=item C<void * Parrot_hash_get_next_key(PARROT_INTERP, ARGIN(const Hash * hash),
+    ARGMOD(HashIteratorState *state)>
+
+Iterate through the hash using a state object to keep track of the current
+position in the hash as we go. Results are undefined if you modify the hash
+during iteration. It likely won't do what you want.
+
+=cut
+
+*/
+
+void *
+Parrot_hash_get_next_key(PARROT_INTERP, ARGIN(const Hash * hash),
+    ARGMOD(HashIteratorState *state)
+{
+    INTVAL i = state->idx == INITBucketIndex ?
+        0 : state->idx;
+    HashBucket * bp = state->current == NULL ?
+        hash->bucket_indices[i] : state->current->next;
+    void * result = NULL;
+
+    while(i < hash->entries) {
+        while (bp) {
+            if (bp->key) {
+                result = bp->key;
+                break;
+            }
+            bp = bp->next;
+        }
+        if (result != null)
+            break;
+        i++;
+        bp = hash->bucket_indices[i];
+    }
+    state->idx = i;
+    state->current = bp;
+    return result;
+}
+
 
 /*
 
 =item C<void * parrot_hash_get_idx(PARROT_INTERP, const Hash *hash, PMC *key)>
 
 Finds the next index into the hash's internal storage for the given Key.  Used
-by iterators.  Ugly.
+by iterators.  Ugly, and DEPRECATED.
 
 =cut
 
@@ -1235,29 +1250,14 @@ PARROT_EXPORT
 PARROT_WARN_UNUSED_RESULT
 PARROT_CAN_RETURN_NULL
 HashBucket *
-parrot_hash_get_bucket(PARROT_INTERP, ARGIN(const Hash *hash), ARGIN_NULLOK(const void *key))
+parrot_hash_get_bucket(PARROT_INTERP, ARGIN(const Hash *hash),
+    ARGIN_NULLOK(const void *key))
 {
     ASSERT_ARGS(parrot_hash_get_bucket)
 
     if (hash->entries <= 0)
         return NULL;
-
-    /* a very fast search for very small hashes */
-    if (hash->entries <= SMALL_HASH_SIZE) {
-        const UINTVAL  entries = hash->entries;
-        UINTVAL        i;
-
-        for (i = 0; i < entries; ++i) {
-            HashBucket * const bucket = hash->buckets + i;
-
-            /* the hash->compare cost is too high for this fast path */
-            if (bucket->key == key)
-                return bucket;
-        }
-    }
-
-    /* if the fast search didn't work, try the normal hashing search */
-    {
+    else {
         const UINTVAL hashval = (hash->hash_val)(interp, key, hash->seed);
         HashBucket   *bucket  = hash->bucket_indices[hashval & hash->mask];
 
@@ -1370,19 +1370,15 @@ parrot_hash_put(PARROT_INTERP, ARGMOD(Hash *hash),
     if (bucket)
         bucket->value = value;
     else {
-        /* Get a new bucket off the free list. If the free list is empty, we
-           expand the hash so we get more items on the free list */
-        bucket = hash->free_list;
-        if (!bucket) {
-            expand_hash(interp, hash);
-            bucket = hash->free_list;
-        }
+        bucket = (HashBucket *)Parrot_gc_allocate_fixed_size_storage(interp,
+            sizeof(HashBucket));
+
+        /* TODO: Expand the hash if we need to */
 
         /* Add the value to the new bucket, increasing the count of elements */
         ++hash->entries;
-        hash->free_list                = bucket->next;
-        bucket->key                    = key;
-        bucket->value                  = value;
+        bucket->key   = key;
+        bucket->value = value;
         bucket->next = hash->bucket_indices[hashval & hash->mask];
         hash->bucket_indices[hashval & hash->mask] = bucket;
     }
@@ -1419,9 +1415,7 @@ parrot_hash_delete(PARROT_INTERP, ARGMOD(Hash *hash), ARGIN(void *key))
                 hash->bucket_indices[hashval] = bucket->next;
 
             --hash->entries;
-            bucket->next    = hash->free_list;
-            bucket->key     = NULL;
-            hash->free_list = bucket;
+            Parrot_gc_free_fixed_size_storage(interp, bucket);
 
             return;
         }

@@ -23,9 +23,8 @@ typedef enum {
 typedef UINTVAL BucketIndex;
 #define INITBucketIndex ((BucketIndex)-2)
 
-#define N_BUCKETS(n) ((n) - (n)/4)
-#define HASH_ALLOC_SIZE(n) (N_BUCKETS(n) * sizeof (HashBucket) + \
-                                     (n) * sizeof (HashBucket *))
+#define N_BUCKETS(n) ((n) - (n)/4))
+#define HASH_ALLOC_SIZE(n) ((n) * sizeof (HashBucket *))
 
 typedef int (*hash_comp_fn)(PARROT_INTERP, ARGIN(const void *), ARGIN(const void *));
 typedef size_t (*hash_hash_key_fn)(PARROT_INTERP, ARGIN(const void *), size_t seed);
@@ -46,15 +45,14 @@ typedef struct _hashbucket {
     void *value;
 } HashBucket;
 
-struct _hash {
-    /* Large slab store of buckets */
-    HashBucket *buckets;
+typedef struct _hashiteratorstate {
+    INTVAL idx;
+    HashBucket curr;
+} HashIteratorState;
 
+struct _hash {
     /* List of Bucket pointers */
     HashBucket **bucket_indices;
-
-    /* Store for empty buckets */
-    HashBucket *free_list;
 
     /* Number of values stored in hashtable */
     UINTVAL entries;
