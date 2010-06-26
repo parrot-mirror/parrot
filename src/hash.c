@@ -678,42 +678,61 @@ hash_freeze(PARROT_INTERP, ARGIN(const Hash *hash), ARGMOD(PMC *info))
     size_t           i;
 
     for (i = 0; i < hash->entries; ++i) {
-        HashBucket * const b = hash->buckets + i;
-
-        switch (hash->key_type) {
-          case Hash_key_type_int:
-            VTABLE_push_integer(interp, info, (INTVAL)b->key);
-            break;
-          case Hash_key_type_STRING:
-            VTABLE_push_string(interp, info, (STRING *)b->key);
-            break;
-          case Hash_key_type_PMC:
-            VTABLE_push_pmc(interp, info, (PMC *)b->key);
-            break;
-          default:
-            Parrot_ex_throw_from_c_args(interp, NULL, 1,
-                    "unimplemented key type");
-            break;
-        }
-
-        switch (hash->entry_type) {
-          case enum_hash_int:
-            VTABLE_push_integer(interp, info, (INTVAL)b->value);
-            break;
-          case enum_hash_string:
-            VTABLE_push_string(interp, info, (STRING *)b->value);
-            break;
-          case enum_hash_pmc:
-            VTABLE_push_pmc(interp, info, (PMC *)b->value);
-            break;
-          default:
-            Parrot_ex_throw_from_c_args(interp, NULL, 1,
-                    "unimplemented value type");
-            break;
+        HashBucket * b = hash->entries[i];
+        while (b) {
+            hash_freeze_bucket(interp, hash, info, b);
+            b = b->next;
         }
     }
 }
 
+/*
+
+=item C<static void hash_freeze_bucket(PARROT_INTERP, ARGIN(const Hash *hash),
+ARGMOD(PMC *info), ARGIN(HashBucket * b))>
+
+Freeze the contents of one bucket.
+
+=cut
+
+*/
+
+static void
+hash_freeze_bucket(PARROT_INTERP, ARGIN(const Hash *hash),
+    ARGMOD(PMC *info), ARGIN(HashBucket * b))
+{
+    switch (hash->key_type) {
+      case Hash_key_type_int:
+        VTABLE_push_integer(interp, info, (INTVAL)b->key);
+        break;
+      case Hash_key_type_STRING:
+        VTABLE_push_string(interp, info, (STRING *)b->key);
+        break;
+      case Hash_key_type_PMC:
+        VTABLE_push_pmc(interp, info, (PMC *)b->key);
+        break;
+      default:
+        Parrot_ex_throw_from_c_args(interp, NULL, 1,
+                "unimplemented key type");
+        break;
+    }
+
+    switch (hash->entry_type) {
+      case enum_hash_int:
+        VTABLE_push_integer(interp, info, (INTVAL)b->value);
+        break;
+      case enum_hash_string:
+        VTABLE_push_string(interp, info, (STRING *)b->value);
+        break;
+      case enum_hash_pmc:
+        VTABLE_push_pmc(interp, info, (PMC *)b->value);
+        break;
+      default:
+        Parrot_ex_throw_from_c_args(interp, NULL, 1,
+                "unimplemented value type");
+        break;
+    }
+}
 
 /*
 
@@ -783,98 +802,35 @@ static void
 expand_hash(PARROT_INTERP, ARGMOD(Hash *hash))
 {
     ASSERT_ARGS(expand_hash)
-    HashBucket  **old_bi, **new_bi;
-    HashBucket   *bs, *b, *new_mem;
-    HashBucket * const old_offset = (HashBucket *)((char *)hash + sizeof (Hash));
-
-    void * const  old_mem    = hash->buckets;
-    const UINTVAL old_size   = hash->mask + 1;
-    const UINTVAL new_size   = old_size << 1; /* Double. Left-shift is 2x */
-    const UINTVAL old_nb     = N_BUCKETS(old_size);
-    size_t        offset, i;
-
-    /* resize mem */
-    if (old_offset != old_mem) {
-        /* This buffer has been reallocated at least once before. */
-        new_mem = (HashBucket *)Parrot_gc_reallocate_memory_chunk_with_interior_pointers(
-                interp, old_mem, HASH_ALLOC_SIZE(new_size), HASH_ALLOC_SIZE(old_size));
-    }
-    else {
-        /* Allocate a new buffer. */
-        new_mem = (HashBucket *)Parrot_gc_allocate_memory_chunk_with_interior_pointers(
-                interp, HASH_ALLOC_SIZE(new_size));
-        memcpy(new_mem, old_mem, HASH_ALLOC_SIZE(old_size));
-    }
-
-    /*
-         +---+---+---+---+---+---+-+-+-+-+-+-+-+-+
-         |  buckets  | old_bi    |  new_bi       |
-         +---+---+---+---+---+---+-+-+-+-+-+-+-+-+
-         ^                       ^
-         | new_mem               | hash->bucket_indices
-    */
-
-    bs     = new_mem;
-    old_bi = (HashBucket **)(bs + old_nb);
-    new_bi = (HashBucket **)(bs + N_BUCKETS(new_size));
-
-    /* things can have moved by this offset */
-    offset = (char *)new_mem - (char *)old_mem;
-
-    /* relocate the bucket index */
-    mem_sys_memmove(new_bi, old_bi, old_size * sizeof (HashBucket *));
-
-    /* update hash data */
-    hash->bucket_indices = new_bi;
-    hash->buckets        = bs;
-    hash->mask = new_size - 1;
+    const UINTVAL old_size = hash->mask + 1;
+    const UINTVAL new_size = old_size << 1; /* Double. Left-shift is 2x */
+    const UINTVAL new_mask = new_size - 1;
+    HashBucket ** const old_bi = hash->bucket_indices;
+    HashBucket ** const new_bi = Parrot_gc_reallocate_fixed_size_storage(interp,
+        new_size * sizeof (HashBucket *));
 
     /* clear freshly allocated bucket index */
     memset(new_bi + old_size, 0, sizeof (HashBucket *) * old_size);
 
-    /*
-     * reloc pointers - this part would be also needed, if we
-     * allocate hash memory from GC movable memory, and then
-     * also the free_list needs updating (this is empty now,
-     * as expand_hash is only called for that case).
-     */
-    if (offset) {
-        size_t j;
-        for (j = 0; j < old_size; ++j) {
-            HashBucket **next_p = new_bi + j;
-            while (*next_p) {
-                *next_p = (HashBucket *)((char *)*next_p + offset);
-                b       = *next_p;
-                next_p  = &b->next;
-            }
-        }
-    }
+    /* update hash data */
+    hash->bucket_indices = new_bi;
+    hash->mask = new_size - 1;
 
-    /* recalc bucket index */
+    /* Recalculate the index for each bucket. Some will stay where they are,
+       some will move to a new index. */
     for (i = 0; i < old_size; ++i) {
-        HashBucket **next_p = new_bi + i;
+        HashBucket * b = hash->bucket_indices[i];
 
-        while ((b = *next_p) != NULL) {
-            /* rehash the bucket */
+        while (b) {
             const size_t new_loc =
-                (hash->hash_val)(interp, b->key, hash->seed) & (new_size - 1);
-
+                (hash->hash_val)(interp, b->key, hash->seed) & (new_mask);
+            HashBucket * const next_b = b->next;
             if (i != new_loc) {
-                *next_p         = b->next;
                 b->next         = new_bi[new_loc];
                 new_bi[new_loc] = b;
             }
-            else
-                next_p = &b->next;
+            b = next_b;
         }
-    }
-
-    /* add new buckets to free_list in reverse order
-     * lowest bucket is top on free list and will be used first */
-    for (i = 0, b = (HashBucket *)new_bi - 1; i < old_nb; ++i, --b) {
-        b->next         = hash->free_list;
-        b->key          = b->value         = NULL;
-        hash->free_list = b;
     }
 }
 
@@ -1373,10 +1329,12 @@ parrot_hash_put(PARROT_INTERP, ARGMOD(Hash *hash),
         bucket = (HashBucket *)Parrot_gc_allocate_fixed_size_storage(interp,
             sizeof(HashBucket));
 
-        /* TODO: Expand the hash if we need to */
-
         /* Add the value to the new bucket, increasing the count of elements */
         ++hash->entries;
+
+        if ((double)(hash->entries / (hash->mash + 1)) > HASH_INDICES)
+            expand_hash(interp, hash);
+
         bucket->key   = key;
         bucket->value = value;
         bucket->next = hash->bucket_indices[hashval & hash->mask];
@@ -2126,19 +2084,6 @@ hash_value_to_number(PARROT_INTERP, ARGIN(const Hash *hash), ARGIN_NULLOK(void *
 =head1 SEE ALSO
 
 F<docs/pdds/pdd08_keys.pod>.
-
-=head1 TODO
-
-Future optimizations:
-
-=over 4
-
-=item * Stop reallocating the bucket pool, and instead add chunks on.
-(Saves pointer fixups and copying during C<realloc>.)
-
-=item * Hash contraction (don't if it's worth it)
-
-=back
 
 =cut
 

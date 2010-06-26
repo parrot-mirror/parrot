@@ -47,7 +47,7 @@ typedef struct _hashbucket {
 
 typedef struct _hashiteratorstate {
     INTVAL idx;
-    HashBucket curr;
+    HashBucket current;
 } HashIteratorState;
 
 struct _hash {
