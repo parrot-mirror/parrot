@@ -91,7 +91,6 @@ foreach my $path (@files) {
 }
 
 __DATA__
-compilers/pirc/src/pircapi.c
 
 # Local Variables:
 #   mode: cperl
