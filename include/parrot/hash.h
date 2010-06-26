@@ -23,7 +23,7 @@ typedef enum {
 typedef UINTVAL BucketIndex;
 #define INITBucketIndex ((BucketIndex)-2)
 
-#define N_BUCKETS(n) ((n) - (n)/4))
+#define N_BUCKETS(n) ((n) - (n)/4)
 #define HASH_ALLOC_SIZE(n) ((n) * sizeof (HashBucket *))
 
 typedef int (*hash_comp_fn)(PARROT_INTERP, ARGIN(const void *), ARGIN(const void *));
@@ -46,8 +46,8 @@ typedef struct _hashbucket {
 } HashBucket;
 
 typedef struct _hashiteratorstate {
-    INTVAL idx;
-    HashBucket current;
+    UINTVAL idx;
+    HashBucket * current;
 } HashIteratorState;
 
 struct _hash {
@@ -145,17 +145,6 @@ HashBucket * parrot_hash_get_bucket(PARROT_INTERP,
     ARGIN_NULLOK(const void *key))
         __attribute__nonnull__(1)
         __attribute__nonnull__(2);
-
-PARROT_EXPORT
-PARROT_WARN_UNUSED_RESULT
-PARROT_CAN_RETURN_NULL
-void * parrot_hash_get_idx(PARROT_INTERP,
-    ARGIN(const Hash *hash),
-    ARGMOD(PMC *key))
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(2)
-        __attribute__nonnull__(3)
-        FUNC_MODIFIES(*key);
 
 PARROT_EXPORT
 PARROT_IGNORABLE_RESULT
@@ -380,6 +369,15 @@ void parrot_hash_clone_prunable(PARROT_INTERP,
         __attribute__nonnull__(3)
         FUNC_MODIFIES(*dest);
 
+PARROT_CAN_RETURN_NULL
+void * Parrot_hash_get_next_key(PARROT_INTERP,
+    ARGIN(const Hash * hash),
+    ARGMOD(HashIteratorState *state))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3)
+        FUNC_MODIFIES(*state);
+
 PARROT_WARN_UNUSED_RESULT
 PARROT_PURE_FUNCTION
 int PMC_compare(PARROT_INTERP, ARGIN(PMC *a), ARGIN(PMC *b))
@@ -425,10 +423,6 @@ int STRING_compare_distinct_cs_enc(PARROT_INTERP,
 #define ASSERT_ARGS_parrot_hash_get_bucket __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
        PARROT_ASSERT_ARG(interp) \
     , PARROT_ASSERT_ARG(hash))
-#define ASSERT_ARGS_parrot_hash_get_idx __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
-       PARROT_ASSERT_ARG(interp) \
-    , PARROT_ASSERT_ARG(hash) \
-    , PARROT_ASSERT_ARG(key))
 #define ASSERT_ARGS_parrot_hash_put __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
        PARROT_ASSERT_ARG(interp) \
     , PARROT_ASSERT_ARG(hash))
@@ -524,6 +518,10 @@ int STRING_compare_distinct_cs_enc(PARROT_INTERP,
        PARROT_ASSERT_ARG(interp) \
     , PARROT_ASSERT_ARG(hash) \
     , PARROT_ASSERT_ARG(dest))
+#define ASSERT_ARGS_Parrot_hash_get_next_key __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
+       PARROT_ASSERT_ARG(interp) \
+    , PARROT_ASSERT_ARG(hash) \
+    , PARROT_ASSERT_ARG(state))
 #define ASSERT_ARGS_PMC_compare __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
        PARROT_ASSERT_ARG(interp) \
     , PARROT_ASSERT_ARG(a) \

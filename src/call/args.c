@@ -497,13 +497,11 @@ dissect_aggregate_arg(PARROT_INTERP, ARGMOD(PMC *call_object), ARGIN(PMC *aggreg
 
         /* Low-level hash iteration. */
         for (index = 0; index < elements; ++index) {
-            if (!PMC_IS_NULL(key)) {
-                STRING * const name = (STRING *)Parrot_hash_get_next_key(interp,
-                                hash, &state);
-                PARROT_ASSERT(name);
-                VTABLE_set_pmc_keyed_str(interp, call_object, name,
-                    VTABLE_get_pmc_keyed_str(interp, aggregate, name));
-            }
+            STRING * const name = (STRING *)Parrot_hash_get_next_key(interp,
+                            hash, &state);
+            PARROT_ASSERT(name);
+            VTABLE_set_pmc_keyed_str(interp, call_object, name,
+                VTABLE_get_pmc_keyed_str(interp, aggregate, name));
         }
     }
     else {

@@ -13,9 +13,6 @@ linked list, each containing a C<void *> key and value. During hash
 creation, the types of key and value as well as appropriate compare and
 hashing functions can be set.
 
-This hash implementation uses just one piece of malloced memory. The
-C<< hash->buckets >> bucket store points to this region.
-
 =head2 Functions
 
 =over 4
@@ -60,6 +57,16 @@ static void hash_freeze(PARROT_INTERP,
         __attribute__nonnull__(1)
         __attribute__nonnull__(2)
         __attribute__nonnull__(3)
+        FUNC_MODIFIES(*info);
+
+static void hash_freeze_bucket(PARROT_INTERP,
+    ARGIN(const Hash *hash),
+    ARGMOD(PMC *info),
+    ARGIN(HashBucket * b))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(3)
+        __attribute__nonnull__(4)
         FUNC_MODIFIES(*info);
 
 static void hash_thaw(PARROT_INTERP, ARGMOD(Hash *hash), ARGMOD(PMC *info))
@@ -111,6 +118,11 @@ static int pointer_compare(SHIM_INTERP,
        PARROT_ASSERT_ARG(interp) \
     , PARROT_ASSERT_ARG(hash) \
     , PARROT_ASSERT_ARG(info))
+#define ASSERT_ARGS_hash_freeze_bucket __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
+       PARROT_ASSERT_ARG(interp) \
+    , PARROT_ASSERT_ARG(hash) \
+    , PARROT_ASSERT_ARG(info) \
+    , PARROT_ASSERT_ARG(b))
 #define ASSERT_ARGS_hash_thaw __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
        PARROT_ASSERT_ARG(interp) \
     , PARROT_ASSERT_ARG(hash) \
@@ -678,7 +690,7 @@ hash_freeze(PARROT_INTERP, ARGIN(const Hash *hash), ARGMOD(PMC *info))
     size_t           i;
 
     for (i = 0; i < hash->entries; ++i) {
-        HashBucket * b = hash->entries[i];
+        HashBucket * b = hash->bucket_indices[i];
         while (b) {
             hash_freeze_bucket(interp, hash, info, b);
             b = b->next;
@@ -688,8 +700,8 @@ hash_freeze(PARROT_INTERP, ARGIN(const Hash *hash), ARGMOD(PMC *info))
 
 /*
 
-=item C<static void hash_freeze_bucket(PARROT_INTERP, ARGIN(const Hash *hash),
-ARGMOD(PMC *info), ARGIN(HashBucket * b))>
+=item C<static void hash_freeze_bucket(PARROT_INTERP, const Hash *hash, PMC
+*info, HashBucket * b)>
 
 Freeze the contents of one bucket.
 
@@ -805,9 +817,10 @@ expand_hash(PARROT_INTERP, ARGMOD(Hash *hash))
     const UINTVAL old_size = hash->mask + 1;
     const UINTVAL new_size = old_size << 1; /* Double. Left-shift is 2x */
     const UINTVAL new_mask = new_size - 1;
+    UINTVAL i;
     HashBucket ** const old_bi = hash->bucket_indices;
-    HashBucket ** const new_bi = Parrot_gc_reallocate_fixed_size_storage(interp,
-        new_size * sizeof (HashBucket *));
+    HashBucket ** const new_bi = Parrot_gc_reallocate_memory_chunk(interp,
+        hash->bucket_indices, new_size * sizeof (HashBucket *));
 
     /* clear freshly allocated bucket index */
     memset(new_bi + old_size, 0, sizeof (HashBucket *) * old_size);
@@ -993,8 +1006,9 @@ void
 parrot_hash_destroy(PARROT_INTERP, ARGFREE_NOTNULL(Hash *hash))
 {
     ASSERT_ARGS(parrot_hash_destroy)
+    const UINTVAL size = (hash->mask + 1) * sizeof (HashBucket *);
     Parrot_gc_free_memory_chunk(interp, hash->bucket_indices);
-    Parrot_gc_free_fixed_size_storage(interp, hash);
+    Parrot_gc_free_fixed_size_storage(interp, size, hash);
 }
 
 
@@ -1085,8 +1099,8 @@ parrot_hash_size(SHIM_INTERP, ARGIN(const Hash *hash))
 
 /*
 
-=item C<void * Parrot_hash_get_next_key(PARROT_INTERP, ARGIN(const Hash * hash),
-    ARGMOD(HashIteratorState *state)>
+=item C<void * Parrot_hash_get_next_key(PARROT_INTERP, const Hash * hash,
+HashIteratorState *state)>
 
 Iterate through the hash using a state object to keep track of the current
 position in the hash as we go. Results are undefined if you modify the hash
@@ -1096,9 +1110,10 @@ during iteration. It likely won't do what you want.
 
 */
 
+PARROT_CAN_RETURN_NULL
 void *
 Parrot_hash_get_next_key(PARROT_INTERP, ARGIN(const Hash * hash),
-    ARGMOD(HashIteratorState *state)
+    ARGMOD(HashIteratorState *state))
 {
     INTVAL i = state->idx == INITBucketIndex ?
         0 : state->idx;
@@ -1114,7 +1129,7 @@ Parrot_hash_get_next_key(PARROT_INTERP, ARGIN(const Hash * hash),
             }
             bp = bp->next;
         }
-        if (result != null)
+        if (result != NULL)
             break;
         i++;
         bp = hash->bucket_indices[i];
@@ -1123,73 +1138,6 @@ Parrot_hash_get_next_key(PARROT_INTERP, ARGIN(const Hash * hash),
     state->current = bp;
     return result;
 }
-
-
-/*
-
-=item C<void * parrot_hash_get_idx(PARROT_INTERP, const Hash *hash, PMC *key)>
-
-Finds the next index into the hash's internal storage for the given Key.  Used
-by iterators.  Ugly, and DEPRECATED.
-
-=cut
-
-*/
-
-PARROT_EXPORT
-PARROT_WARN_UNUSED_RESULT
-PARROT_CAN_RETURN_NULL
-void *
-parrot_hash_get_idx(PARROT_INTERP, ARGIN(const Hash *hash), ARGMOD(PMC *key))
-{
-    ASSERT_ARGS(parrot_hash_get_idx)
-    HashBucket       *b;
-    void             *res;
-    INTVAL            i  = VTABLE_get_integer(interp, key);
-    PMC              *fake_bi;
-    BucketIndex       bi;
-
-    /* idx directly in the bucket store, which is at negative
-     * address from the data pointer */
-    /* locate initial */
-    const INTVAL size = (INTVAL)N_BUCKETS(hash->mask + 1);
-
-    GETATTR_Key_next_key(interp, key, fake_bi);
-    bi = (BucketIndex)fake_bi;
-
-    if (bi == INITBucketIndex) {
-        i             = 0;
-        SETATTR_Key_next_key(interp, key, NULL);
-    }
-    else if (i >= size || i < 0) {
-        /* NOTE: These instances of SETATTR_Key_int_key can't be VTABLE
-         * functions because of the "special" way hash iterators work. */
-        SETATTR_Key_int_key(interp, key, -1);
-        return NULL;
-    }
-
-    res = NULL;
-
-    for (b = hash->buckets + i; i < size ; ++i, ++b) {
-        /* XXX int keys may be zero - use different iterator */
-        if (b->key) {
-            if (!res)
-                res = b->key;
-
-            /* found next key - FIXME hash iter does auto next */
-            else
-                break;
-        }
-    }
-
-    if (i >= size)
-        i = -1;
-
-    SETATTR_Key_int_key(interp, key, i);
-
-    return res;
-}
-
 
 /*
 
@@ -1332,7 +1280,7 @@ parrot_hash_put(PARROT_INTERP, ARGMOD(Hash *hash),
         /* Add the value to the new bucket, increasing the count of elements */
         ++hash->entries;
 
-        if ((double)(hash->entries / (hash->mash + 1)) > HASH_INDICES)
+        if ((double)(hash->entries / (hash->mask + 1)) > HASH_INDICES_RATIO)
             expand_hash(interp, hash);
 
         bucket->key   = key;
@@ -1373,7 +1321,7 @@ parrot_hash_delete(PARROT_INTERP, ARGMOD(Hash *hash), ARGIN(void *key))
                 hash->bucket_indices[hashval] = bucket->next;
 
             --hash->entries;
-            Parrot_gc_free_fixed_size_storage(interp, bucket);
+            Parrot_gc_free_fixed_size_storage(interp, sizeof (HashBucket), bucket);
 
             return;
         }
@@ -1422,40 +1370,44 @@ parrot_hash_clone_prunable(PARROT_INTERP, ARGIN(const Hash *hash),
     UINTVAL entries = hash->entries;
     UINTVAL i;
 
-    for (i = 0; i < entries; ++i) {
-        void         *valtmp;
-        HashBucket   *b   = hash->buckets + i;
-        void * const  key = b->key;
+    for (i = 0; i <= hash->mask; ++i) {
+        HashBucket   *b   = hash->bucket_indices[i];
+        while (b) {
+            void * const  key = b->key;
+            void         *valtmp;
 
-        switch (hash->entry_type) {
-          case enum_type_undef:
-          case enum_type_ptr:
-          case enum_type_INTVAL:
-            valtmp = (void *)b->value;
-            break;
+            switch (hash->entry_type) {
+              case enum_type_undef:
+              case enum_type_ptr:
+              case enum_type_INTVAL:
+                valtmp = (void *)b->value;
+                break;
 
-          case enum_type_STRING:
-            valtmp = b->value;
-            break;
+              case enum_type_STRING:
+                valtmp = b->value;
+                break;
 
-          case enum_type_PMC:
-            if (PMC_IS_NULL((PMC *)b->value))
-                valtmp = (void *)PMCNULL;
-            else
-                if (deep)
-                    valtmp = (void *)VTABLE_clone(interp, (PMC*)b->value);
+              case enum_type_PMC:
+                if (PMC_IS_NULL((PMC *)b->value))
+                    valtmp = (void *)PMCNULL;
                 else
-                    valtmp = b->value;
-            break;
+                    if (deep)
+                        valtmp = (void *)VTABLE_clone(interp, (PMC*)b->value);
+                    else
+                        valtmp = b->value;
+                break;
 
-          default:
-            valtmp = NULL; /* avoid warning */
-            Parrot_ex_throw_from_c_args(interp, NULL, -1,
-                    "hash corruption: type = %d\n", hash->entry_type);
-        };
+              default:
+                valtmp = NULL; /* avoid warning */
+                Parrot_ex_throw_from_c_args(interp, NULL, -1,
+                        "hash corruption: type = %d\n", hash->entry_type);
+            };
 
-        if (key)
-            parrot_hash_put(interp, dest, key, valtmp);
+            if (key)
+                parrot_hash_put(interp, dest, key, valtmp);
+
+            b = b->next;
+        }
     }
 }
 
