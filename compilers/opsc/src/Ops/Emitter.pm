@@ -233,8 +233,8 @@ method _emit_op_lib_descriptor($fh) {
 */
 
 static op_lib_t | ~ self.bs ~ q|op_lib = {| ~ qq|
-  "{self.base}",               /* name */
-  "{self.suffix}",             /* suffix */
+  "{self.base}_ops",                /* name */
+  "{self.suffix}",                  /* suffix */
   $core_type,                       /* core_type = PARROT_XX_CORE */
   0,                                /* flags */
   {self.ops_file.version_major},    /* major_version */
