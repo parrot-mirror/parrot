@@ -44,7 +44,7 @@ Parrot_intval_time(void)
 
 =item C<FLOATVAL Parrot_floatval_time(void)>
 
-Note:  We are unable to provide this level of precision under ANSI-C, so we 
+Note:  We are unable to provide this level of precision under ANSI-C, so we
 just fall back to intval time for this.
 
 =cut

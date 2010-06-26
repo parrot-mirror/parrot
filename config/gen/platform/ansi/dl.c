@@ -11,7 +11,8 @@ config/gen/platform/ansi/dl.c
 
 =head1 DESCRIPTION
 
-Parrot functions -- B<none yet implemented> -- which wrap around standard library functions for handling dynamic libraries.
+Parrot functions -- B<none yet implemented> -- which wrap around standard
+library functions for handling dynamic libraries.
 
 =head2 Functions
 
