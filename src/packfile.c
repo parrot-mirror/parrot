@@ -2760,6 +2760,9 @@ byte_code_unpack(PARROT_INTERP, ARGMOD(PackFile_Segment *self), ARGIN(const opco
                                                 NULL);
                 void *oplib_init;
                 op_lib_t *(*oplib_init_f)(PARROT_INTERP, long init);
+                if (!VTABLE_get_bool(interp, lib_pmc))
+                    Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_LIBRARY_ERROR,
+                        "Could not load oplib `%s'", lib_name);
                 GETATTR_ParrotLibrary_oplib_init(interp, lib_pmc, oplib_init);
                 oplib_init_f = D2FPTR(oplib_init);
                 entry->lib = oplib_init_f(interp, 1);
@@ -2772,7 +2775,7 @@ byte_code_unpack(PARROT_INTERP, ARGMOD(PackFile_Segment *self), ARGIN(const opco
             ||  entry->lib->minor_version != minor
             ||  entry->lib->patch_version != patch)
                 Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_LIBRARY_ERROR,
-                    "Incompatible versions of `%s' library. Found %d.%d.%d but loaded %d.%d.%d",
+                    "Incompatible versions of `%s' oplib. Found %d.%d.%d but loaded %d.%d.%d",
                     entry->lib->name, major, minor, patch, entry->lib->major_version,
                     entry->lib->minor_version, entry->lib->patch_version);
         }
