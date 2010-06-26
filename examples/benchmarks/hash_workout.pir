@@ -7,6 +7,8 @@
 .sub main
     'run_benchmark'("million_inserts")
     'run_benchmark'("million_deletes")
+    'run_benchmark'('million_clones_1')
+    'run_benchmark'('million_clones_2')
 .end
 
 .sub 'run_benchmark'
@@ -55,9 +57,12 @@
     $P0[$S0] = $P1
     inc $I0
     unless $I0 > 1000000 goto loop_top
+    say $I0
 .end
 
-# This test rapidly inserts and deletes
+# This test rapidly inserts and deletes. The hash should never resize, so we
+# can avoid the overhead of resize/reallocate stuff. It's a basic test for
+# hash throughput
 .sub 'million_deletes'
     $P0 = new ['Hash']
     $I0 = 0
@@ -80,6 +85,39 @@
     $P0[$S0] = $P1
     inc $I0
     unless $I0 > 1000000 goto delete_loop_top
+    say $I0
+.end
+
+# We create a million clones of a 1-element hash to test clone performance
+.sub 'million_clones_1'
+    $P0 = new ['Hash']
+    $P0["A"] = 1
+
+    $I0 = 0
+  loop_top:
+    $P1 = clone $P0
+    inc $I0
+    unless $I0 > 1000000 goto loop_top
+    say $I0
+.end
+
+# We create a million clones of a multi-element hash. The hash is larger
+# than the number of initial buckets, so every clone will need to resize.
+.sub 'million_clones_2'
+    $P0 = new ['Hash']
+    $P0["A"] = 1
+    $P0["B"] = 2
+    $P0["C"] = 3
+    $P0["D"] = 4
+    $P0["E"] = 5
+    $P0["F"] = 6
+
+    $I0 = 0
+  loop_top:
+    $P1 = clone $P0
+    inc $I0
+    unless $I0 > 1000000 goto loop_top
+    say $I0
 .end
 
 # Local Variables:
