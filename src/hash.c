@@ -16,9 +16,6 @@ hashing functions can be set.
 This hash implementation uses just one piece of malloced memory. The
 C<< hash->buckets >> bucket store points to this region.
 
-This hash doesn't move during GC, therefore a lot of the old caveats
-don't apply.
-
 =head2 Functions
 
 =over 4
@@ -534,7 +531,6 @@ parrot_mark_hash_values(PARROT_INTERP, ARGIN(Hash *hash))
     }
 }
 
-
 /*
 
 =item C<static void parrot_mark_hash_both(PARROT_INTERP, Hash *hash)>
@@ -789,7 +785,7 @@ expand_hash(PARROT_INTERP, ARGMOD(Hash *hash))
 
     void * const  old_mem    = hash->buckets;
     const UINTVAL old_size   = hash->mask + 1;
-    const UINTVAL new_size   = old_size << 1;
+    const UINTVAL new_size   = old_size << 1; /* Double. Right-shift is 2x */
     const UINTVAL old_nb     = N_BUCKETS(old_size);
     size_t        offset, i;
 
@@ -824,6 +820,7 @@ expand_hash(PARROT_INTERP, ARGMOD(Hash *hash))
          ^                       ^
          | new_mem               | hash->bucket_indices
     */
+
     bs     = new_mem;
     old_bi = (HashBucket **)(bs + old_nb);
     new_bi = (HashBucket **)(bs + N_BUCKETS(new_size));
@@ -1045,6 +1042,85 @@ parrot_create_hash(PARROT_INTERP, PARROT_DATA_TYPE val_type, Hash_key_type hkey_
 
     return hash;
 }
+
+/*
+
+=item C<Hash * parrot_create_hash_preallocate(PARROT_INTERP,
+    PARROT_DATA_TYPE val_type, Hash_key_type hkey_type, hash_comp_fn compare,
+    hash_hash_key_fn keyhash)>
+
+Creates and initializes a hash, preallocating storage for a certain number
+of buckets.  Function pointers determine its behaviors.
+The container passed in is the address of the hash PMC that is using it.  The
+hash and the PMC point to each other.
+
+Memory from this function must be freed.
+
+=cut
+
+*/
+
+PARROT_CANNOT_RETURN_NULL
+PARROT_WARN_UNUSED_RESULT
+PARROT_MALLOC
+Hash *
+parrot_create_hash_preallocate(PARROT_INTERP, PARROT_DATA_TYPE val_type,
+        Hash_key_type hkey_type, NOTNULL(hash_comp_fn compare),
+        NOTNULL(hash_hash_key_fn keyhash), INTVAL size)
+{
+    ASSERT_ARGS(parrot_create_hash)
+    HashBucket  *bp;
+    const INTVAL align_size = size % 4 == 0 ? size : ((size + 3) & ~0x03);
+    const INTVAL init_size = (size < INITIAL_BUCKETS) ? INTIAL_BUCKETS : size;
+    void        *alloc = Parrot_gc_allocate_memory_chunk_with_interior_pointers(
+                            interp, sizeof (Hash) + HASH_ALLOC_SIZE(init_size));
+    Hash * const hash  = (Hash*)alloc;
+    size_t       i;
+
+    PARROT_ASSERT(INITIAL_BUCKETS % 4 == 0);
+
+    hash->compare    = compare;
+    hash->hash_val   = keyhash;
+    hash->entry_type = val_type;
+    hash->key_type   = hkey_type;
+    hash->seed       = interp->hash_seed;
+    hash->mask       = init_size - 1;
+    hash->entries    = 0;
+    hash->container  = PMCNULL;
+    hash->free_list = NULL;
+
+    /*
+        Hash memory is laid out in a single contiguous block of memory:
+
+        +-------------+---------+----------------+
+        | struct hash | buckets | bucket_indices |
+        +-------------+---------+----------------+
+                      ^
+                      | bp
+
+
+        bp here gets set to the offset in the block directly after the hash
+        structure. We use that to initialize hash->buckets, then we bump bp
+        to point to the end of that, and call this the start of bucket_indices
+    */
+
+    bp = (HashBucket *)((char *)alloc + sizeof (Hash));
+    hash->buckets = bp;
+    bp += N_BUCKETS(init_size);
+    hash->bucket_indices = (HashBucket **)bp;
+
+    /* fill free_list from hi addresses so that we can use
+       buckets[i] directly in an OrderedHash, *if* nothing
+       was deleted */
+
+    for (i = 0, --bp; i < N_BUCKETS(init_size); ++i, --bp) {
+        bp->next        = hash->free_list;
+        hash->free_list = bp;
+    }
+
+    return hash;
+}
+
 
 /*
 
@@ -1360,6 +1436,7 @@ parrot_hash_put(PARROT_INTERP, ARGMOD(Hash *hash),
                 "Used non-constant value in constant hash.");
     }
 
+    /* See if we have an existing value for this key */
     while (bucket) {
         /* store hash_val or not */
         if ((hash->compare)(interp, key, bucket->key) == 0)
@@ -1367,16 +1444,20 @@ parrot_hash_put(PARROT_INTERP, ARGMOD(Hash *hash),
         bucket = bucket->next;
     }
 
+    /* If we have a bucket already, put the value in it. Otherwise, we need
+       to get a new bucket */
     if (bucket)
         bucket->value = value;
     else {
+        /* Get a new bucket off the free list. If the free list is empty, we
+           expand the hash so we get more items on the free list */
         bucket = hash->free_list;
-
         if (!bucket) {
             expand_hash(interp, hash);
             bucket = hash->free_list;
         }
 
+        /* Add the value to the new bucket, increasing the count of elements */
         ++hash->entries;
         hash->free_list                = bucket->next;
         bucket->key                    = key;
