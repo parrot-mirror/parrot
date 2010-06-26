@@ -23,6 +23,7 @@ bounds access will very likely segfault.
 */
 
 #include "parrot/compiler.h"
+#include "pmc/pmc_orderedhash.h"
 
 /* HEADERIZER HFILE: none */
 /* HEADERIZER BEGIN: static */
@@ -222,7 +223,6 @@ static INTVAL
 key_2_idx(PARROT_INTERP, ARGIN(PMC *pmc), ARGIN(PMC *key))
 {
     ASSERT_ARGS(key_2_idx)
-    int ix = 0;
 
     if (!PARROT_UNMANAGEDSTRUCT(pmc)->init)
         Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_UNEXPECTED_NULL,
@@ -232,27 +232,18 @@ key_2_idx(PARROT_INTERP, ARGIN(PMC *pmc), ARGIN(PMC *key))
         PMC * const types = PARROT_UNMANAGEDSTRUCT(pmc)->init;
 
         if (types->vtable->base_type == enum_class_OrderedHash) {
-            Hash       * const hash = (Hash *)VTABLE_get_pointer(interp,
-                    VTABLE_get_pmc(interp, types));
-            HashBucket * const b    = parrot_hash_get_bucket(interp, hash,
-                    hash_key_from_string(interp, hash, VTABLE_get_string(interp, key)));
-
-            if (!b)
-                Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_KEY_NOT_FOUND,
-                    "key doesn't exist");
-
-            ix = b - hash->buckets;
+            PMC * const hash = VTABLE_get_pmc(interp, types);
+            PMC * target = VTABLE_get_pmc_keyed(interp, hash, key);
+            INTVAL i = -1;
+            while (!PMC_IS_NULL(target)) {
+                target = VTABLE_get_pmc_keyed_int(interp, target, ORDERED_HASH_ITEM_PREV);
+                i++;
+            }
+            return i;
         }
-        else
-            Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INVALID_OPERATION,
-                "unhandled type aggregate");
-
-        ix /= 3;
     }
     else
-        ix = VTABLE_get_integer(interp, key);
-
-    return ix;
+        return VTABLE_get_integer(interp, key);
 }
 
 /*
