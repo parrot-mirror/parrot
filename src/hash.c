@@ -815,19 +815,22 @@ expand_hash(PARROT_INTERP, ARGMOD(Hash *hash))
 {
     ASSERT_ARGS(expand_hash)
     const UINTVAL old_size = hash->mask + 1;
-    const UINTVAL new_size = old_size << 1; /* Double. Left-shift is 2x */
+    const UINTVAL new_size = old_size * 2;
     const UINTVAL new_mask = new_size - 1;
     UINTVAL i;
     HashBucket ** const old_bi = hash->bucket_indices;
     HashBucket ** const new_bi = Parrot_gc_reallocate_memory_chunk(interp,
         hash->bucket_indices, new_size * sizeof (HashBucket *));
 
-    /* clear freshly allocated bucket index */
+    for (i = 0; i < old_size; i++) {
+        PARROT_ASSERT(old_bi[i] == new_bi[i]);
+    }
+
     memset(new_bi + old_size, 0, sizeof (HashBucket *) * old_size);
 
     /* update hash data */
     hash->bucket_indices = new_bi;
-    hash->mask = new_size - 1;
+    hash->mask = new_mask;
 
     /* Recalculate the index for each bucket. Some will stay where they are,
        some will move to a new index. */
@@ -839,9 +842,11 @@ expand_hash(PARROT_INTERP, ARGMOD(Hash *hash))
                 (hash->hash_val)(interp, b->key, hash->seed) & (new_mask);
             HashBucket * const next_b = b->next;
             if (i != new_loc) {
+                PARROT_ASSERT(b != new_bi[new_loc]);
                 b->next         = new_bi[new_loc];
                 new_bi[new_loc] = b;
             }
+            PARROT_ASSERT(b != next_b);
             b = next_b;
         }
     }
