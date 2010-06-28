@@ -45,7 +45,7 @@ Parrot_intval_time(void)
 
 =item C<FLOATVAL Parrot_floatval_time(void)>
 
-Parrot wrapper around standard library function, returning a FLOATVAL.
+Parrot wrapper around standard library C<time()> function, returning a FLOATVAL.
 
 =cut
 

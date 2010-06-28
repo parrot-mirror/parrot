@@ -31,8 +31,8 @@ Parrot functions which wrap around standard library functions for handling dynam
 
 =item C<void * Parrot_dlopen(const char *filename, Parrot_dlopen_flags flags)>
 
-Wrapper around C<dlopen>.  Loads dynamic library file named by first argument
-and returns a handle to it.
+Parrot wrapper around C<dlopen>.  Loads dynamic library file named by first
+argument and returns a handle to it.
 
 =cut
 
@@ -95,7 +95,7 @@ Parrot_dlsym(void *handle, const char *symbol)
 
 =item C<int Parrot_dlclose(void *handle)>
 
-Wrapper around C<dl_close>.  Releases reference to dynamic library specified
+Wrapper around C<dlclose>.  Releases reference to dynamic library specified
 by argument.  Returns C<0> on success and C<-1> on failure.
 
 =cut
