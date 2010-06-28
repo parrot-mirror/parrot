@@ -641,22 +641,22 @@ hash_thaw(PARROT_INTERP, ARGMOD(Hash *hash), ARGMOD(PMC *info))
         }
 
         switch (entry_type) {
-          case enum_hash_int:
+            case enum_type_int:
             {
                 const INTVAL i = VTABLE_shift_integer(interp, info);
-                parrot_hash_put(interp, hash, key, (void *)i);
+                (void)parrot_hash_put(interp, hash, key, (void *)i);
                 break;
             }
-          case enum_hash_string:
+            case enum_type_STRING:
             {
                 STRING * const s = VTABLE_shift_string(interp, info);
-                parrot_hash_put(interp, hash, key, (void *)s);
+                (void)parrot_hash_put(interp, hash, key, (void *)s);
                 break;
             }
-          case enum_hash_pmc:
+            case enum_type_PMC:
             {
                 PMC * const p = VTABLE_shift_pmc(interp, info);
-                parrot_hash_put(interp, hash, key, (void *)p);
+                (void)parrot_hash_put(interp, hash, key, (void *)p);
                 break;
             }
           default:
@@ -730,13 +730,13 @@ hash_freeze_bucket(PARROT_INTERP, ARGIN(const Hash *hash),
     }
 
     switch (hash->entry_type) {
-      case enum_hash_int:
+      case enum_type_int:
         VTABLE_push_integer(interp, info, (INTVAL)b->value);
         break;
-      case enum_hash_string:
+      case enum_type_STRING:
         VTABLE_push_string(interp, info, (STRING *)b->value);
         break;
-      case enum_hash_pmc:
+      case enum_type_PMC:
         VTABLE_push_pmc(interp, info, (PMC *)b->value);
         break;
       default:
