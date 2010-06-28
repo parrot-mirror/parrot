@@ -819,8 +819,9 @@ expand_hash(PARROT_INTERP, ARGMOD(Hash *hash))
     const UINTVAL new_mask = new_size - 1;
     UINTVAL i;
     HashBucket ** const old_bi = hash->bucket_indices;
-    HashBucket ** const new_bi = Parrot_gc_reallocate_memory_chunk(interp,
-        hash->bucket_indices, new_size * sizeof (HashBucket *));
+    HashBucket ** const new_bi =
+        (HashBucket ** const)Parrot_gc_reallocate_memory_chunk(interp,
+            hash->bucket_indices, new_size * sizeof (HashBucket *));
 
     for (i = 0; i < old_size; i++) {
         PARROT_ASSERT(old_bi[i] == new_bi[i]);
@@ -829,13 +830,13 @@ expand_hash(PARROT_INTERP, ARGMOD(Hash *hash))
     memset(new_bi + old_size, 0, sizeof (HashBucket *) * old_size);
 
     /* update hash data */
+    hash->mask           = new_mask;
     hash->bucket_indices = new_bi;
-    hash->mask = new_mask;
 
     /* Recalculate the index for each bucket. Some will stay where they are,
        some will move to a new index. */
     for (i = 0; i < old_size; ++i) {
-        HashBucket * b = hash->bucket_indices[i];
+        HashBucket *b = hash->bucket_indices[i];
 
         while (b) {
             const size_t new_loc =
@@ -975,19 +976,22 @@ parrot_create_hash(PARROT_INTERP, PARROT_DATA_TYPE val_type, Hash_key_type hkey_
 {
     ASSERT_ARGS(parrot_create_hash)
     const INTVAL numbuckets = N_BUCKETS(INITIAL_BUCKETS);
-    Hash * const hash  = (Hash*)Parrot_gc_allocate_fixed_size_storage(interp, sizeof (Hash));
-    HashBucket ** const bp = Parrot_gc_allocate_memory_chunk(interp, HASH_ALLOC_SIZE(INITIAL_BUCKETS));
+    Hash * const hash       =
+        (Hash *)Parrot_gc_allocate_fixed_size_storage(interp, sizeof (Hash));
+    HashBucket ** const bp =
+        (HashBucket ** const)Parrot_gc_allocate_memory_chunk(interp,
+            HASH_ALLOC_SIZE(INITIAL_BUCKETS));
 
     PARROT_ASSERT(INITIAL_BUCKETS % 4 == 0);
 
-    hash->compare    = compare;
-    hash->hash_val   = keyhash;
-    hash->entry_type = val_type;
-    hash->key_type   = hkey_type;
-    hash->seed       = interp->hash_seed;
-    hash->mask       = INITIAL_BUCKETS - 1;
-    hash->entries    = 0;
-    hash->container  = PMCNULL;
+    hash->compare        = compare;
+    hash->hash_val       = keyhash;
+    hash->entry_type     = val_type;
+    hash->key_type       = hkey_type;
+    hash->seed           = interp->hash_seed;
+    hash->mask           = INITIAL_BUCKETS - 1;
+    hash->entries        = 0;
+    hash->container      = PMCNULL;
     hash->bucket_indices = bp;
 
     return hash;
@@ -1120,13 +1124,14 @@ void *
 Parrot_hash_get_next_key(PARROT_INTERP, ARGIN(const Hash * hash),
     ARGMOD(HashIteratorState *state))
 {
-    INTVAL i = state->idx == INITBucketIndex ?
-        0 : state->idx;
-    HashBucket * bp = state->current == NULL ?
-        hash->bucket_indices[i] : state->current->next;
-    void * result = NULL;
+    void       *result = NULL;
+    INTVAL      i      = state->idx == INITBucketIndex ? 0 : state->idx;
+    HashBucket *bp     = state->current == NULL
+                       ? hash->bucket_indices[i]
+                       : state->current->next;
 
-    while(i < hash->entries) {
+
+    while ((UINTVAL)i < hash->entries) {
         while (bp) {
             if (bp->key) {
                 result = bp->key;
@@ -1134,13 +1139,17 @@ Parrot_hash_get_next_key(PARROT_INTERP, ARGIN(const Hash * hash),
             }
             bp = bp->next;
         }
-        if (result != NULL)
+
+        if (result)
             break;
+
         i++;
         bp = hash->bucket_indices[i];
     }
-    state->idx = i;
+
+    state->idx     = i;
     state->current = bp;
+
     return result;
 }
 
@@ -1289,8 +1298,9 @@ parrot_hash_put(PARROT_INTERP, ARGMOD(Hash *hash),
             expand_hash(interp, hash);
 
         bucket->key   = key;
+        bucket->next  = hash->bucket_indices[hashval & hash->mask];
         bucket->value = value;
-        bucket->next = hash->bucket_indices[hashval & hash->mask];
+
         hash->bucket_indices[hashval & hash->mask] = bucket;
     }
 
@@ -1877,8 +1887,8 @@ hash_value_from_number(PARROT_INTERP, ARGIN(const Hash *hash), FLOATVAL value)
     switch (hash->entry_type) {
       case enum_type_INTVAL:
         {
-            const INTVAL tmp = value;
-            ret = (void*)tmp;
+            const INTVAL tmp = (INTVAL)value;
+            ret = (void *)tmp;
         }
         break;
       case enum_type_STRING:
@@ -1985,7 +1995,7 @@ hash_value_to_pmc(PARROT_INTERP, ARGIN(const Hash *hash), ARGIN_NULLOK(void *val
         ret = get_integer_pmc(interp, (INTVAL)value);
         break;
       case enum_type_STRING:
-        ret = get_string_pmc(interp, (STRING*)value);
+        ret = get_string_pmc(interp, (STRING *)value);
         break;
       case enum_type_PMC:
         ret = (PMC *)value;
