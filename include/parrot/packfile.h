@@ -271,9 +271,10 @@ struct PackFile_ByteCode {
     PackFile_ConstTable          *const_table;
     PackFile_FixupTable          *fixups;
     struct PackFile_Annotations  *annotations;
-    PackFile_ByteCode_OpMapping   op_mapping;    /* opcode mapping information */
-    size_t                        op_count;      /* number of ops in the func table */
-    op_func_t                    *op_func_table; /* opcode dispatch table */
+    PackFile_ByteCode_OpMapping   op_mapping;      /* opcode mapping information */
+    size_t                        op_count;        /* number of ops in the func table */
+    op_func_t                    *op_func_table;   /* opcode dispatch table */
+    op_func_t                    *save_func_table; /* for when we hijack op_func_table */
     op_info_t                   **op_info_table;
 };
 

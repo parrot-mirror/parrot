@@ -1091,8 +1091,8 @@ Parrot_run_native(PARROT_INTERP, native_func_t func)
     pf->cur_cs = (PackFile_ByteCode *)
         (pf->PackFuncs[PF_BYTEC_SEG].new_seg)(interp, pf,
                 Parrot_str_new_constant(interp, "code"), 1);
-    pf->cur_cs->base.data = program_code;
-    pf->cur_cs->base.size = 2;
+    pf->cur_cs->base.data     = program_code;
+    pf->cur_cs->base.size     = 2;
     pf->cur_cs->op_func_table = op_func_table;
     /* TODO fill out cur_cs with op_mapping */
 
