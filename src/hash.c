@@ -2013,12 +2013,16 @@ hash_value_to_number(PARROT_INTERP, ARGIN(const Hash *hash), ARGIN_NULLOK(void *
 {
     ASSERT_ARGS(hash_value_to_number)
     FLOATVAL ret;
+
+    if (!value)
+        return 0.0;
+
     switch (hash->entry_type) {
       case enum_type_INTVAL:
         {
             /* Pacify compiler about casting */
             const INTVAL tmp = (INTVAL)value;
-            ret = tmp;
+            ret = (FLOATVAL)tmp;
         }
         break;
       case enum_type_STRING:
@@ -2031,6 +2035,7 @@ hash_value_to_number(PARROT_INTERP, ARGIN(const Hash *hash), ARGIN_NULLOK(void *
         Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_UNIMPLEMENTED,
                     "Hash: unsupported entry_type");
     }
+
     return ret;
 }
 
