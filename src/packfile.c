@@ -2662,6 +2662,18 @@ byte_code_new(PARROT_INTERP, SHIM(PackFile *pf), SHIM(STRING *name), SHIM(int ad
     return (PackFile_Segment *) byte_code;
 }
 
+/*
+
+=item C<static size_t byte_code_packed_size(PARROT_INTERP, PackFile_Segment
+*self)>
+
+Computes the size in multiples of C<opcode_t> required to store the passed
+C<PackFile_ByteCode>.
+
+=cut
+
+*/
+
 static size_t
 byte_code_packed_size(SHIM_INTERP, ARGIN(PackFile_Segment *self))
 {
@@ -2686,6 +2698,17 @@ byte_code_packed_size(SHIM_INTERP, ARGIN(PackFile_Segment *self))
 
     return size;
 }
+
+/*
+
+=item C<static opcode_t * byte_code_pack(PARROT_INTERP, PackFile_Segment *self,
+opcode_t *cursor)>
+
+Stores the passed C<PackFile_ByteCode> segment in bytecode.
+
+=cut
+
+*/
 
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
@@ -2718,6 +2741,17 @@ byte_code_pack(PARROT_INTERP, ARGMOD(PackFile_Segment *self), ARGOUT(opcode_t *c
 
     return cursor;
 }
+
+/*
+
+=item C<static opcode_t * byte_code_unpack(PARROT_INTERP, PackFile_Segment
+*self, const opcode_t *cursor)>
+
+Unpacks a bytecode segment into the passed C<PackFile_ByteCode>.
+
+=cut
+
+*/
 
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL

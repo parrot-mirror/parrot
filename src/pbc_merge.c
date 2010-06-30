@@ -682,8 +682,8 @@ bytecode_remap_op(PARROT_INTERP, PackFile *pf, opcode_t op) {
 
 /*
 
-=item C<static void pbc_fixup_bytecode(PARROT_INTERP, pbc_merge_input
-**inputs, int num_inputs, PackFile_ByteCode *bc)>
+=item C<static void pbc_fixup_bytecode(PARROT_INTERP, pbc_merge_input **inputs,
+int num_inputs, PackFile_ByteCode *bc)>
 
 Fixup bytecode. This includes correcting pointers into the constant table
 and updating the ops mapping.
