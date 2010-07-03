@@ -604,7 +604,6 @@ pbc_merge_debugs(PARROT_INTERP, ARGMOD(pbc_merge_input **inputs),
     /* Create merged debug segment. Replace created data and mappings
        with merged ones we have created. */
     debug_seg = Parrot_new_debug_seg(interp, bc, num_lines);
-    PackFile_add_segment(interp, &pf->directory, (PackFile_Segment*)debug_seg);
     mem_gc_free(interp, debug_seg->base.data);
     debug_seg->base.data    = lines;
     mem_gc_free(interp, debug_seg->mappings);

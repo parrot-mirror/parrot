@@ -2172,14 +2172,11 @@ directory_unpack(PARROT_INTERP, ARGMOD(PackFile_Segment *segp), ARGIN(const opco
                      (int)opcode, (int)seg->file_offset);
         }
 
-        /* XXX TODO: pbc_merge fouls this up */
-#if 0
         if (i) {
             PackFile_Segment *last = dir->segments[i - 1];
             if (last->file_offset + last->op_count != seg->file_offset)
                 fprintf(stderr, "section: sections are not back to back\n");
         }
-#endif
 
         make_code_pointers(seg);
 
