@@ -17,6 +17,22 @@ more methods typical of Perl 6 lists and arrays.
 
 module ResizablePMCArray {
 
+    =begin item delete
+    Remove item at C<$pos>
+    =end item
+
+    method delete($pos) {
+        pir::delete__vQi(self, $pos);
+    }
+
+    =begin item exists
+    Return true if item exists at C<$pos>
+    =end item
+
+    method exists($pos) {
+        pir::exists__IQi(self, $pos);
+    }
+
     =begin item join
     Return all elements joined by $sep.
     =end item
@@ -210,11 +226,11 @@ IO Methods and Functions
 
 =begin item slurp
 Returns the contents of C<$filename> as a single string.
-=end
+=end item
 
 our sub slurp ($filename) {
-    my $handle := FileHandle.new();
-    $handle.open($file, 'r');
+    my $handle := pir::new__Ps('FileHandle');
+    $handle.open($filename, 'r');
     my $contents := $handle.readall;
     $handle.close();
     $contents;
@@ -226,7 +242,7 @@ Write the string value of C<$contents> to C<$filename>.
 =end item
 
 our sub spew($filename, $contents) {
-    my $handle := FileHandle.new();
+    my $handle := pir::new__Ps('FileHandle');
     $handle.open($filename, 'w');
     $handle.print($contents);
     $handle.close();
