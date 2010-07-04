@@ -182,7 +182,7 @@ Parrot_Context_get_info(PARROT_INTERP, ARGIN(PMC *ctx),
         if (!debug)
             return 0;
         for (i = n = 0; n < sub->seg->base.size; ++i) {
-            op_info_t * const op_info = interp->code->op_info_table[*pc];
+            op_info_t * const op_info = sub->seg->op_info_table[*pc];
             opcode_t var_args = 0;
 
             if (i >= debug->base.size)
