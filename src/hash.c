@@ -818,39 +818,34 @@ expand_hash(PARROT_INTERP, ARGMOD(Hash *hash))
     const UINTVAL new_size = old_size * 2;
     const UINTVAL new_mask = new_size - 1;
     UINTVAL i;
+    const UINTVAL total_size = HASH_ALLOC_SIZE(new_size);
     HashBucket ** const old_bi = hash->bucket_indices;
     HashBucket ** const new_bi =
-        (HashBucket ** const)Parrot_gc_reallocate_memory_chunk(interp,
-            hash->bucket_indices, new_size * sizeof (HashBucket *));
+        (HashBucket ** const)Parrot_gc_allocate_memory_chunk(interp,
+            total_size);
 
-    for (i = 0; i < old_size; i++) {
-        PARROT_ASSERT(old_bi[i] == new_bi[i]);
-    }
-
-    memset(new_bi + old_size, 0, sizeof (HashBucket *) * old_size);
+    memset(new_bi, 0, total_size);
 
     /* update hash data */
-    hash->mask           = new_mask;
-    hash->bucket_indices = new_bi;
+
 
     /* Recalculate the index for each bucket. Some will stay where they are,
        some will move to a new index. */
     for (i = 0; i < old_size; ++i) {
-        HashBucket *b = hash->bucket_indices[i];
+        HashBucket *b = old_bi[i];
 
         while (b) {
             const size_t new_loc =
                 (hash->hash_val)(interp, b->key, hash->seed) & (new_mask);
             HashBucket * const next_b = b->next;
-            if (i != new_loc) {
-                PARROT_ASSERT(b != new_bi[new_loc]);
-                b->next         = new_bi[new_loc];
-                new_bi[new_loc] = b;
-            }
-            PARROT_ASSERT(b != next_b);
+            b->next         = new_bi[new_loc];
+            new_bi[new_loc] = b;
             b = next_b;
         }
     }
+    hash->mask           = new_mask;
+    hash->bucket_indices = new_bi;
+    Parrot_gc_free_memory_chunk(interp, old_bi);
 }
 
 
@@ -978,12 +973,13 @@ parrot_create_hash(PARROT_INTERP, PARROT_DATA_TYPE val_type, Hash_key_type hkey_
     const INTVAL numbuckets = N_BUCKETS(INITIAL_BUCKETS);
     Hash * const hash       =
         (Hash *)Parrot_gc_allocate_fixed_size_storage(interp, sizeof (Hash));
+    const INTVAL total_size = HASH_ALLOC_SIZE(INITIAL_BUCKETS);
     HashBucket ** const bp =
         (HashBucket ** const)Parrot_gc_allocate_memory_chunk(interp,
-            HASH_ALLOC_SIZE(INITIAL_BUCKETS));
+            total_size);
 
     PARROT_ASSERT(INITIAL_BUCKETS % 4 == 0);
-
+    memset(bp, 0, total_size);
     hash->compare        = compare;
     hash->hash_val       = keyhash;
     hash->entry_type     = val_type;
