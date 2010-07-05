@@ -1011,9 +1011,8 @@ void
 parrot_hash_destroy(PARROT_INTERP, ARGFREE_NOTNULL(Hash *hash))
 {
     ASSERT_ARGS(parrot_hash_destroy)
-    const UINTVAL size = (hash->mask + 1) * sizeof (HashBucket *);
     Parrot_gc_free_memory_chunk(interp, hash->bucket_indices);
-    Parrot_gc_free_fixed_size_storage(interp, size, hash);
+    Parrot_gc_free_fixed_size_storage(interp, sizeof (Hash), hash);
 }
 
 
