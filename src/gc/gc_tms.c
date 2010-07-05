@@ -658,7 +658,9 @@ gc_tms_mark_and_sweep(PARROT_INTERP, UINTVAL flags)
     /* Put inside ASSERT wo it will not affect non-debug build */
     PARROT_ASSERT(Parrot_list_check(interp, self->dead_objects));
 
-    //fprintf(stderr, "Before %zd\n", self->dead_objects->count);
+    /*
+     * fprintf(stderr, "Before %zd\n", self->dead_objects->count);
+     */
 
     /*
     self.grey_objects  = self.trace_roots();
@@ -671,7 +673,9 @@ gc_tms_mark_and_sweep(PARROT_INTERP, UINTVAL flags)
 
     gc_tms_mark_pmc_header(interp, PMCNULL);
 
-    //fprintf(stderr, "Roots %zd\n", self->grey_objects->count);
+    /*
+     * fprintf(stderr, "Roots %zd\n", self->grey_objects->count);
+     */
     PARROT_ASSERT(Parrot_list_check(interp, self->grey_objects));
 
     /*
@@ -687,7 +691,9 @@ gc_tms_mark_and_sweep(PARROT_INTERP, UINTVAL flags)
         ++counter;
     }
 
-    //fprintf(stderr, "Processed grey: %zd\n", counter);
+    /*
+    fprintf(stderr, "Processed grey: %zd\n", counter);
+    */
 
     /*
     # Sweep
@@ -696,7 +702,9 @@ gc_tms_mark_and_sweep(PARROT_INTERP, UINTVAL flags)
         self.allocator.free($dead);
     }
     */
-    //fprintf(stderr, "Killing %zd\n", self->dead_objects->count);
+    /*
+    fprintf(stderr, "Killing %zd\n", self->dead_objects->count);
+    */
     tmp = self->dead_objects->first;
     counter = 0;
     while (tmp) {
@@ -708,10 +716,11 @@ gc_tms_mark_and_sweep(PARROT_INTERP, UINTVAL flags)
         ++counter;
         PARROT_ASSERT(counter <= self->dead_objects->count);
     }
-    //fprintf(stderr, "Processed dead %d\n", counter);
-
-    //fprintf(stderr, "Survived %zd\n", self->black_objects->count);
-    //fprintf(stderr, "Dead %d\n", self->dead_objects->count);
+    /*
+    fprintf(stderr, "Processed dead %d\n", counter);
+    fprintf(stderr, "Survived %zd\n", self->black_objects->count);
+    fprintf(stderr, "Dead %d\n", self->dead_objects->count);
+    */
 
     /* Clean up */
     Parrot_list_destroy(interp, self->grey_objects);
@@ -740,7 +749,9 @@ gc_tms_mark_and_sweep(PARROT_INTERP, UINTVAL flags)
     self->black_objects = self->objects;
     self->objects = list;
 
-    //fprintf(stderr, "Appending %zd\n", self->black_objects->count);
+    /*
+    fprintf(stderr, "Appending %zd\n", self->black_objects->count);
+    */
     while ((tmp = Parrot_list_pop(interp, self->black_objects))) {
         PARROT_ASSERT(tmp->owner == self->black_objects);
         LIST_APPEND(self->objects, tmp);

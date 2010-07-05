@@ -134,7 +134,9 @@ Parrot_gc_fixed_allocator_allocate(PARROT_INTERP,
         allocator->pools[index] = Parrot_gc_pool_new(interp, alloc_size);
 
     ret = pool_allocate(allocator->pools[index]);
-    //memset(ret, 0, alloc_size);
+    /*
+     * memset(ret, 0, alloc_size);
+     */
     return ret;
 }
 

@@ -274,7 +274,7 @@ Free a STRING object back to the system.
 
 =item C<Buffer* (*allocate_bufferlike_header)(PARROT_INTERP, size_t size)>
 
-=item C<void    (*free_bufferlike_header)(PARROT_INTERP, Buffer*, size_t size)>
+=item C<void (*free_bufferlike_header)(PARROT_INTERP, Buffer*, size_t size)>
 
 =item C<int  (*is_pmc_ptr)(PARROT_INTERP, void*)>
 
@@ -299,21 +299,23 @@ determined from the PMCs VTABLE.
 
 Free an attribute structure back to the system.
 
-=item C<void (*allocate_string_storage)(PARROT_INTERP, STRING *str, size_t size)>
+=item C<void (*allocate_string_storage)
+(PARROT_INTERP, STRING *str, size_t size)>
 
 Allocate buffer storage for a string.
 
-=item C<void (*reallocate_string_storage)(PARROT_INTERP, STRING *str, size_t size)>
+=item C<void (*reallocate_string_storage)
+(PARROT_INTERP, STRING *str, size_t size)>
 
 Resize existing string storage to fit data of the new size.
 
-=item C<void (*allocate_buffer_storage)(PARROT_INTERP, ARGMOD(Buffer *buffer),
-size_t nsize)>
+=item C<void (*allocate_buffer_storage)
+(PARROT_INTERP, ARGMOD(Buffer *buffer), size_t nsize)>
 
 Allocate buffer storage for any purpose.
 
-=item C<void (*reallocate_buffer_storage)(PARROT_INTERP, ARGMOD(Buffer *buffer),
-size_t newsize)>
+=item C<void (*reallocate_buffer_storage)
+(PARROT_INTERP, ARGMOD(Buffer *buffer), size_t newsize)>
 
 Reallocate or resize existing buffer storage.
 
