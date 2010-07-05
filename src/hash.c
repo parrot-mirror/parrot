@@ -826,9 +826,6 @@ expand_hash(PARROT_INTERP, ARGMOD(Hash *hash))
 
     memset(new_bi, 0, total_size);
 
-    /* update hash data */
-
-
     /* Recalculate the index for each bucket. Some will stay where they are,
        some will move to a new index. */
     for (i = 0; i < old_size; ++i) {
@@ -1011,6 +1008,14 @@ void
 parrot_hash_destroy(PARROT_INTERP, ARGFREE_NOTNULL(Hash *hash))
 {
     ASSERT_ARGS(parrot_hash_destroy)
+    UINTVAL i;
+    for (i = 0; i <= hash->mask; i++) {
+        HashBucket * b = hash->bucket_indices[i];
+        while (b) {
+            Parrot_gc_free_fixed_size_storage(interp, sizeof(HashBucket), b);
+            b = b->next;
+        }
+    }
     Parrot_gc_free_memory_chunk(interp, hash->bucket_indices);
     Parrot_gc_free_fixed_size_storage(interp, sizeof (Hash), hash);
 }
