@@ -29,9 +29,8 @@ use warnings;
 
 =item C<new()>
 
-TODO
-
-Contructor of headerizer objects
+Parrot::Headerizer constructor.  Contains within a list of valid Parrot
+macros.
 
 =cut
 
