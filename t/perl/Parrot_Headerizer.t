@@ -6,6 +6,8 @@ use strict;
 use warnings;
 use lib qw( lib );
 
+use Cwd;
+use Parrot::Distribution;
 use Test::More qw(no_plan); # tests => 26;
 
 =head1 NAME
@@ -32,6 +34,13 @@ ok( ! $headerizer->valid_macro( 'IMAGINARY_MACRO_FOO_BAR_BAZ' ),
     'invalid macro reported' );
 my @valid_macros = $headerizer->valid_macros();
 ok( @valid_macros, 'sanity check: at least one valid macro exists' );
+
+my $DIST = Parrot::Distribution->new;
+my $cwd = cwd();
+my $path = qq|$cwd/t/perl/testlib/dummy_imcc.y|;
+my $buf = $DIST->slurp($path);
+#print STDERR $buf;
+my @function_decls = $headerizer->extract_function_declarations($buf);
 
 # Local Variables:
 #   mode: cperl

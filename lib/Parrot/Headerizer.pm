@@ -2,6 +2,7 @@
 # $Id$
 
 package Parrot::Headerizer;
+use Data::Dumper;$Data::Dumper::Indent=1;
 
 =head1 NAME
 
@@ -106,23 +107,26 @@ sub extract_function_declarations {
     my $self = shift;
     my $text = shift;
 
-    # Only check the YACC C code if we find what looks like YACC file
-    $text =~ s/%\{(.*)%\}.*/$1/sm;
-
-    # Drop all text after HEADERIZER STOP
-    $text =~ s{/\*\s*HEADERIZER STOP.+}{}s;
-
-    # Strip blocks of comments
-    $text =~ s{^/\*.*?\*/}{}mxsg;
-
-    # Strip # compiler directives
-    $text =~ s{^#(\\\n|.)*}{}mg;
-
-    # Strip code blocks
-    $text =~ s/^{.+?^}//msg;
-
-    # Split on paragraphs
-    my @funcs = split /\n{2,}/, $text;
+#    # Only check the YACC C code if we find what looks like YACC file
+#    $text =~ s/%\{(.*)%\}.*/$1/sm;
+#
+#    # Drop all text after HEADERIZER STOP
+#    $text =~ s{/\*\s*HEADERIZER STOP.+}{}s;
+#
+#    # Strip blocks of comments
+#    $text =~ s{^/\*.*?\*/}{}mxsg;
+#
+#    # Strip # compiler directives
+#    $text =~ s{^#(\\\n|.)*}{}mg;
+#
+#    # Strip code blocks
+#    $text =~ s/^{.+?^}//msg;
+#
+#    # Split on paragraphs
+#    my @funcs = split /\n{2,}/, $text;
+    my @funcs = _text2funcs( $text );
+print STDERR Dumper \@funcs;
+print STDERR "Saw ", scalar @funcs, " funcs\n";
 
     # If it doesn't start in the left column, it's not a func
     @funcs = grep { /^\S/ } @funcs;
@@ -349,6 +353,27 @@ sub squawk {
     push( @{ $self->{warnings}{$file}{$func} }, $error );
 
     return;
+}
+
+sub _text2funcs {
+    my $text = shift;
+    # Only check the YACC C code if we find what looks like YACC file
+    $text =~ s/%\{(.*)%\}.*/$1/sm;
+
+    # Drop all text after HEADERIZER STOP
+    $text =~ s{/\*\s*HEADERIZER STOP.+}{}s;
+
+    # Strip blocks of comments
+    $text =~ s{^/\*.*?\*/}{}mxsg;
+
+    # Strip # compiler directives
+    $text =~ s{^#(\\\n|.)*}{}mg;
+
+    # Strip code blocks
+    $text =~ s/^{.+?^}//msg;
+
+    # Split on paragraphs
+    return split /\n{2,}/, $text;
 }
 
 1;
