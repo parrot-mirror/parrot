@@ -20,6 +20,7 @@ This file implements the Parrot embedding interface.
 
 #include "parrot/parrot.h"
 #include "parrot/embed.h"
+#include "parrot/extend.h"
 #include "parrot/oplib/ops.h"
 #include "pmc/pmc_sub.h"
 #include "pmc/pmc_callcontext.h"
@@ -808,7 +809,7 @@ Parrot_runcode(PARROT_INTERP, int argc, ARGIN(const char **argv))
     Parrot_pcc_set_sub(interp, CURRENT_CONTEXT(interp), NULL);
     Parrot_pcc_set_constants(interp, interp->ctx, interp->code->const_table->constants);
 
-    Parrot_pcc_invoke_sub_from_c_args(interp, main_sub, "P->", userargv);
+    Parrot_ext_call(interp, main_sub, "P->", userargv);
 }
 
 

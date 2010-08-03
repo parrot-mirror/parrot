@@ -583,15 +583,6 @@ Parrot_pcc_build_call_from_varargs(PARROT_INTERP,
 
         /* Regular arguments just set the value */
         switch (type) {
-          case 'I':
-            VTABLE_push_integer(interp, call_object, va_arg(*args, INTVAL));
-            break;
-          case 'N':
-            VTABLE_push_float(interp, call_object, va_arg(*args, FLOATVAL));
-            break;
-          case 'S':
-            VTABLE_push_string(interp, call_object, va_arg(*args, STRING *));
-            break;
           case 'P':
             {
                 const INTVAL type_lookahead = sig[i+1];
@@ -617,6 +608,15 @@ Parrot_pcc_build_call_from_varargs(PARROT_INTERP,
                             : clone_key_arg(interp, pmc_arg));
                 break;
             }
+          case 'S':
+            VTABLE_push_string(interp, call_object, va_arg(*args, STRING *));
+            break;
+          case 'I':
+            VTABLE_push_integer(interp, call_object, va_arg(*args, INTVAL));
+            break;
+          case 'N':
+            VTABLE_push_float(interp, call_object, va_arg(*args, FLOATVAL));
+            break;
           case '-':
             return call_object;
             break;
@@ -750,16 +750,14 @@ fill_params(PARROT_INTERP, ARGMOD_NULLOK(PMC *call_object),
     INTVAL  param_index     = 0;
     INTVAL  arg_index       = 0;
     INTVAL  named_count     = 0;
-    INTVAL  err_check       = 0;
     INTVAL  param_count;
     INTVAL  positional_args;
+    /* Check if we should be throwing errors. This is configured separately
+     * for parameters and return values. */
+    const INTVAL err_check  = PARROT_ERRORS_test(interp, direction);
 
     GETATTR_FixedIntegerArray_size(interp, raw_sig, param_count);
 
-    /* Check if we should be throwing errors. This is configured separately
-     * for parameters and return values. */
-    if (PARROT_ERRORS_test(interp, direction))
-        err_check = 1;
 
     /* A null call object is fine if there are no arguments and no returns. */
     if (PMC_IS_NULL(call_object)) {

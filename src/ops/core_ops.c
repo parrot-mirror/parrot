@@ -16211,7 +16211,6 @@ return (opcode_t *)cur_opcode + 4;}
 opcode_t *
 Parrot_dlfunc_p_p_s_s(opcode_t *cur_opcode, PARROT_INTERP)  {
     const Parrot_Context * const CUR_CTX = Parrot_pcc_get_context_struct(interp, interp->ctx);
-    char * const  name      = Parrot_str_to_cstring(interp, (SREG(3)));
     void         *dl_handle = NULL;
     void         *ptr       = NULL;
     funcptr_t     p;
@@ -16222,27 +16221,25 @@ Parrot_dlfunc_p_p_s_s(opcode_t *cur_opcode, PARROT_INTERP)  {
         dl_handle = ((Parrot_ParrotLibrary_attributes*)PMC_data(PREG(2)))->dl_handle;
     }
 
-    ptr = Parrot_dlsym(dl_handle, name);
+    ptr = Parrot_dlsym_str(interp, dl_handle, SREG(3));
     p = D2FPTR(ptr);
 
     if (p == NULLfunc) {
         const char * err = Parrot_dlerror();
         Parrot_warn(interp, PARROT_WARNINGS_UNDEF_FLAG,
-                "Symbol '%s' not found: %s\n", name, err ? err : "unknown reason");
+                "Symbol '%Ss' not found: %s\n", SREG(3), err ? err : "unknown reason");
         PREG(1) = Parrot_pmc_new(interp, enum_class_Undef);
     }
     else {
         PREG(1) = Parrot_pmc_new(interp, enum_class_NCI);
         VTABLE_set_pointer_keyed_str(interp, PREG(1), SREG(4), F2DPTR(p));
     }
-    Parrot_str_free_cstring(name);
 
 return (opcode_t *)cur_opcode + 5;}
 
 opcode_t *
 Parrot_dlfunc_p_p_sc_s(opcode_t *cur_opcode, PARROT_INTERP)  {
     const Parrot_Context * const CUR_CTX = Parrot_pcc_get_context_struct(interp, interp->ctx);
-    char * const  name      = Parrot_str_to_cstring(interp, (CONST(3)->u.string));
     void         *dl_handle = NULL;
     void         *ptr       = NULL;
     funcptr_t     p;
@@ -16253,27 +16250,25 @@ Parrot_dlfunc_p_p_sc_s(opcode_t *cur_opcode, PARROT_INTERP)  {
         dl_handle = ((Parrot_ParrotLibrary_attributes*)PMC_data(PREG(2)))->dl_handle;
     }
 
-    ptr = Parrot_dlsym(dl_handle, name);
+    ptr = Parrot_dlsym_str(interp, dl_handle, CONST(3)->u.string);
     p = D2FPTR(ptr);
 
     if (p == NULLfunc) {
         const char * err = Parrot_dlerror();
         Parrot_warn(interp, PARROT_WARNINGS_UNDEF_FLAG,
-                "Symbol '%s' not found: %s\n", name, err ? err : "unknown reason");
+                "Symbol '%Ss' not found: %s\n", CONST(3)->u.string, err ? err : "unknown reason");
         PREG(1) = Parrot_pmc_new(interp, enum_class_Undef);
     }
     else {
         PREG(1) = Parrot_pmc_new(interp, enum_class_NCI);
         VTABLE_set_pointer_keyed_str(interp, PREG(1), SREG(4), F2DPTR(p));
     }
-    Parrot_str_free_cstring(name);
 
 return (opcode_t *)cur_opcode + 5;}
 
 opcode_t *
 Parrot_dlfunc_p_p_s_sc(opcode_t *cur_opcode, PARROT_INTERP)  {
     const Parrot_Context * const CUR_CTX = Parrot_pcc_get_context_struct(interp, interp->ctx);
-    char * const  name      = Parrot_str_to_cstring(interp, (SREG(3)));
     void         *dl_handle = NULL;
     void         *ptr       = NULL;
     funcptr_t     p;
@@ -16284,27 +16279,25 @@ Parrot_dlfunc_p_p_s_sc(opcode_t *cur_opcode, PARROT_INTERP)  {
         dl_handle = ((Parrot_ParrotLibrary_attributes*)PMC_data(PREG(2)))->dl_handle;
     }
 
-    ptr = Parrot_dlsym(dl_handle, name);
+    ptr = Parrot_dlsym_str(interp, dl_handle, SREG(3));
     p = D2FPTR(ptr);
 
     if (p == NULLfunc) {
         const char * err = Parrot_dlerror();
         Parrot_warn(interp, PARROT_WARNINGS_UNDEF_FLAG,
-                "Symbol '%s' not found: %s\n", name, err ? err : "unknown reason");
+                "Symbol '%Ss' not found: %s\n", SREG(3), err ? err : "unknown reason");
         PREG(1) = Parrot_pmc_new(interp, enum_class_Undef);
     }
     else {
         PREG(1) = Parrot_pmc_new(interp, enum_class_NCI);
         VTABLE_set_pointer_keyed_str(interp, PREG(1), CONST(4)->u.string, F2DPTR(p));
     }
-    Parrot_str_free_cstring(name);
 
 return (opcode_t *)cur_opcode + 5;}
 
 opcode_t *
 Parrot_dlfunc_p_p_sc_sc(opcode_t *cur_opcode, PARROT_INTERP)  {
     const Parrot_Context * const CUR_CTX = Parrot_pcc_get_context_struct(interp, interp->ctx);
-    char * const  name      = Parrot_str_to_cstring(interp, (CONST(3)->u.string));
     void         *dl_handle = NULL;
     void         *ptr       = NULL;
     funcptr_t     p;
@@ -16315,27 +16308,25 @@ Parrot_dlfunc_p_p_sc_sc(opcode_t *cur_opcode, PARROT_INTERP)  {
         dl_handle = ((Parrot_ParrotLibrary_attributes*)PMC_data(PREG(2)))->dl_handle;
     }
 
-    ptr = Parrot_dlsym(dl_handle, name);
+    ptr = Parrot_dlsym_str(interp, dl_handle, CONST(3)->u.string);
     p = D2FPTR(ptr);
 
     if (p == NULLfunc) {
         const char * err = Parrot_dlerror();
         Parrot_warn(interp, PARROT_WARNINGS_UNDEF_FLAG,
-                "Symbol '%s' not found: %s\n", name, err ? err : "unknown reason");
+                "Symbol '%Ss' not found: %s\n", CONST(3)->u.string, err ? err : "unknown reason");
         PREG(1) = Parrot_pmc_new(interp, enum_class_Undef);
     }
     else {
         PREG(1) = Parrot_pmc_new(interp, enum_class_NCI);
         VTABLE_set_pointer_keyed_str(interp, PREG(1), CONST(4)->u.string, F2DPTR(p));
     }
-    Parrot_str_free_cstring(name);
 
 return (opcode_t *)cur_opcode + 5;}
 
 opcode_t *
 Parrot_dlvar_p_p_s(opcode_t *cur_opcode, PARROT_INTERP)  {
     const Parrot_Context * const CUR_CTX = Parrot_pcc_get_context_struct(interp, interp->ctx);
-    char * const  name      = Parrot_str_to_cstring(interp, (SREG(3)));
     void *        dl_handle = NULL;
     void *        p         = NULL;
 
@@ -16345,12 +16336,12 @@ Parrot_dlvar_p_p_s(opcode_t *cur_opcode, PARROT_INTERP)  {
         dl_handle = ((Parrot_ParrotLibrary_attributes*)PMC_data(PREG(2)))->dl_handle;
     }
 
-    p = Parrot_dlsym(dl_handle, name);
+    p = Parrot_dlsym_str(interp, dl_handle, SREG(3));
 
     if (p == NULL) {
         const char * const err = Parrot_dlerror();
         Parrot_warn(interp, PARROT_WARNINGS_UNDEF_FLAG,
-                "Symbol '%s' not found: %s\n", name, err ? err : "unknown reason");
+                "Symbol '%Ss' not found: %s\n", SREG(3), err ? err : "unknown reason");
         PREG(1) = Parrot_pmc_new(interp, enum_class_Undef);
     }
     else {
@@ -16359,14 +16350,12 @@ Parrot_dlvar_p_p_s(opcode_t *cur_opcode, PARROT_INTERP)  {
         PREG(1) = Parrot_pmc_new(interp, enum_class_UnManagedStruct);
         VTABLE_set_pointer(interp, PREG(1), p);
     }
-    Parrot_str_free_cstring(name);
 
 return (opcode_t *)cur_opcode + 4;}
 
 opcode_t *
 Parrot_dlvar_p_p_sc(opcode_t *cur_opcode, PARROT_INTERP)  {
     const Parrot_Context * const CUR_CTX = Parrot_pcc_get_context_struct(interp, interp->ctx);
-    char * const  name      = Parrot_str_to_cstring(interp, (CONST(3)->u.string));
     void *        dl_handle = NULL;
     void *        p         = NULL;
 
@@ -16376,12 +16365,12 @@ Parrot_dlvar_p_p_sc(opcode_t *cur_opcode, PARROT_INTERP)  {
         dl_handle = ((Parrot_ParrotLibrary_attributes*)PMC_data(PREG(2)))->dl_handle;
     }
 
-    p = Parrot_dlsym(dl_handle, name);
+    p = Parrot_dlsym_str(interp, dl_handle, CONST(3)->u.string);
 
     if (p == NULL) {
         const char * const err = Parrot_dlerror();
         Parrot_warn(interp, PARROT_WARNINGS_UNDEF_FLAG,
-                "Symbol '%s' not found: %s\n", name, err ? err : "unknown reason");
+                "Symbol '%Ss' not found: %s\n", CONST(3)->u.string, err ? err : "unknown reason");
         PREG(1) = Parrot_pmc_new(interp, enum_class_Undef);
     }
     else {
@@ -16390,7 +16379,6 @@ Parrot_dlvar_p_p_sc(opcode_t *cur_opcode, PARROT_INTERP)  {
         PREG(1) = Parrot_pmc_new(interp, enum_class_UnManagedStruct);
         VTABLE_set_pointer(interp, PREG(1), p);
     }
-    Parrot_str_free_cstring(name);
 
 return (opcode_t *)cur_opcode + 4;}
 
@@ -19003,7 +18991,7 @@ Parrot_fdiv_i_i(opcode_t *cur_opcode, PARROT_INTERP)  {
             "Divide by zero");return (opcode_t *)handler;
     }
 
-    f  = floor(IREG(1) / den);
+    f  = floor(((FLOATVAL)IREG(1)) / den);
     IREG(1) = (INTVAL)f;
 
 return (opcode_t *)cur_opcode + 3;}
@@ -19020,7 +19008,7 @@ Parrot_fdiv_i_ic(opcode_t *cur_opcode, PARROT_INTERP)  {
             "Divide by zero");return (opcode_t *)handler;
     }
 
-    f  = floor(IREG(1) / den);
+    f  = floor(((FLOATVAL)IREG(1)) / den);
     IREG(1) = (INTVAL)f;
 
 return (opcode_t *)cur_opcode + 3;}
@@ -19098,7 +19086,7 @@ Parrot_fdiv_i_i_i(opcode_t *cur_opcode, PARROT_INTERP)  {
             "Divide by zero");return (opcode_t *)handler;
     }
 
-    f  = floor(IREG(2) / den);
+    f  = floor((FLOATVAL)IREG(2) / den);
     IREG(1) = (INTVAL)f;
 
 return (opcode_t *)cur_opcode + 4;}
@@ -19115,7 +19103,7 @@ Parrot_fdiv_i_ic_i(opcode_t *cur_opcode, PARROT_INTERP)  {
             "Divide by zero");return (opcode_t *)handler;
     }
 
-    f  = floor(cur_opcode[2] / den);
+    f  = floor((FLOATVAL)cur_opcode[2] / den);
     IREG(1) = (INTVAL)f;
 
 return (opcode_t *)cur_opcode + 4;}
@@ -19132,7 +19120,7 @@ Parrot_fdiv_i_i_ic(opcode_t *cur_opcode, PARROT_INTERP)  {
             "Divide by zero");return (opcode_t *)handler;
     }
 
-    f  = floor(IREG(2) / den);
+    f  = floor((FLOATVAL)IREG(2) / den);
     IREG(1) = (INTVAL)f;
 
 return (opcode_t *)cur_opcode + 4;}
@@ -26114,7 +26102,7 @@ static op_lib_t core_op_lib = {
   PARROT_FUNCTION_CORE,                       /* core_type = PARROT_XX_CORE */
   0,                                /* flags */
   2,    /* major_version */
-  5,    /* minor_version */
+  6,    /* minor_version */
   0,    /* patch_version */
   1083,             /* op_count */
   core_op_info_table,       /* op_info_table */
@@ -26234,7 +26222,7 @@ static void hop_deinit(PARROT_INTERP)
     }
 }
 op_lib_t *
-Parrot_DynOp_core_2_5_0(PARROT_INTERP, long init) {
+Parrot_DynOp_core_2_6_0(PARROT_INTERP, long init) {
     /* initialize and return op_lib ptr */
     if (init == 1) {
 
@@ -26263,7 +26251,7 @@ Parrot_lib_core_ops_load(PARROT_INTERP)
 
 {
     PMC *const lib = Parrot_pmc_new(interp, enum_class_ParrotLibrary);
-    ((Parrot_ParrotLibrary_attributes*)PMC_data(lib))->oplib_init = (void *) Parrot_DynOp_core_2_5_0;
+    ((Parrot_ParrotLibrary_attributes*)PMC_data(lib))->oplib_init = (void *) Parrot_DynOp_core_2_6_0;
     dynop_register(interp, lib);
     return lib;
 }
