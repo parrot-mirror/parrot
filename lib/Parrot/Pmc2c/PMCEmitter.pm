@@ -139,8 +139,8 @@ EOH
     }
     $h->emit("${export}VTABLE* Parrot_${name}_get_vtable(PARROT_INTERP);\n");
     $h->emit("${export}VTABLE* Parrot_${name}_ro_get_vtable(PARROT_INTERP);\n");
-    $h->emit("${export}PMC*    Parrot_${name}_get_mro(PARROT_INTERP, PMC* mro);\n");
-    $h->emit("${export}Hash*   Parrot_${name}_get_isa(PARROT_INTERP, Hash* isa);\n");
+    $h->emit("${export}PMC*    Parrot_${name}_get_mro(PARROT_INTERP, ARGIN_NULLOK(PMC* mro));\n");
+    $h->emit("${export}Hash*   Parrot_${name}_get_isa(PARROT_INTERP, ARGIN_NULLOK(Hash* isa));\n");
 
 
     $self->gen_attributes;
@@ -506,8 +506,6 @@ END_MULTI_LIST
     my $multi_list_size = @multi_list;
     my $multi_list = join( "\n", @multi_list);
 
-    my @isa = grep { $_ ne 'default' } @{ $self->parents };
-
     my $provides        = join( " ", keys( %{ $self->{flags}{provides} } ) );
     my $class_init_code = "";
 
@@ -586,17 +584,9 @@ EOC
 EOC
     }
 
-    if (@isa) {
-        unshift @isa, $classname;
-        $cout .= <<"EOC";
+    $cout .= <<"EOC";
         vt->isa_hash     = Parrot_${classname}_get_isa(interp, NULL);
 EOC
-    }
-    else {
-        $cout .= <<"EOC";
-        vt->isa_hash     = NULL;
-EOC
-    }
 
     for my $k ( keys %extra_vt ) {
         my $k_flags = $self->$k->vtable_flags;
@@ -832,7 +822,7 @@ sub get_mro_func {
 $export
 PARROT_CANNOT_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
-PMC* Parrot_${classname}_get_mro(PARROT_INTERP, PMC* mro) {
+PMC* Parrot_${classname}_get_mro(PARROT_INTERP, ARGIN_NULLOK(PMC* mro)) {
     if (PMC_IS_NULL(mro)) {
         mro = Parrot_pmc_new(interp, enum_class_ResizableStringArray);
     }
@@ -873,11 +863,20 @@ sub get_isa_func {
 $export
 PARROT_CANNOT_RETURN_NULL
 PARROT_WARN_UNUSED_RESULT
-Hash* Parrot_${classname}_get_isa(PARROT_INTERP, Hash* isa) {
+Hash* Parrot_${classname}_get_isa(PARROT_INTERP, ARGIN_NULLOK(Hash* isa)) {
+EOC
+
+    if ($get_isa ne '') {
+        $cout .= $get_isa;
+    }
+    else {
+        $cout .= <<"EOC";
     if (isa == NULL) {
         isa = parrot_new_hash(interp);
     }
-$get_isa
+EOC
+    }
+    $cout .= <<"EOC";
     parrot_hash_put(interp, isa, (void *)(CONST_STRING_GEN(interp, "$classname")), PMCNULL);
     return isa;
 }

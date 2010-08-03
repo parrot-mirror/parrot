@@ -141,11 +141,24 @@ things that aren't really logical ops (don't do that!).
 
 L<https://trac.parrot.org/parrot/ticket/1655>
 
+=item Method is_tty in PMCs derived from Handle [eligible in 2.7]
+
+Use isatty instead.
+
+L<https://trac.parrot.org/parrot/ticket/1689>
+
 =back
 
 =head1 Opcodes
 
 =over 4
+
+=item open and close opcodes will be removed [eligible in 2.7]
+
+L<https://trac.parrot.org/parrot/ticket/1697>
+
+These opcodes will be removed. The open/close methods on File or
+the FileHandle PMC should be used instead.
 
 =item get_addr and set_addr [eligible in 1.5]
 
@@ -155,15 +168,6 @@ These opcodes are being repurposed. They will always return a unique memory
 address of the PMC. Uses of get_addr and set_addr that would set label values
 for Sub, Exception, and related PMC types will instead be handled by
 get_label and set_label.
-
-=item All bitwise ops [eligible in 2.1]
-
-All bitwise ops (all ops containing C<bitwise> in their names) will be provided
-by dynops.  B<NOTE>: Before removing the bitwise ops, make sure that the
-equivalent dynops are available and that the major HLLs (Rakudo, Partcl, Lua,
-etc) have switched to using them.
-
-L<https://trac.parrot.org/parrot/ticket/1260>
 
 =item get_results opcode order and features [eligible in 2.1]
 
@@ -301,6 +305,27 @@ As of the latest PCC changes, this does nothing different from '.call'.
 
 L<https://trac.parrot.org/parrot/ticket/1624>
 
+=item :main Sub behaviour and selection. [eligible in 2.7]
+
+Currently, if no :main sub is found, the first .sub in a file is used as
+main. Also, arguments are passed to the main sub regardless of the .param
+declarations in that sub.
+
+After this change, if no sub is marked with :main, an exception will be
+raised. Multiple :main declarations will be still be allowed, and all but the
+first will be ignored.
+
+This change will also force all subs, including :main, to have their
+arguments checked - to allow an arbitrary number of arguments, have
+this be the only .param declaration in the sub.
+
+ .param pmc args :slurpy
+
+
+L<https://trac.parrot.org/parrot/ticket/1033>
+L<https://trac.parrot.org/parrot/ticket/1704>
+L<https://trac.parrot.org/parrot/ticket/1705>
+
 =back
 
 =head1 Functions
@@ -318,6 +343,12 @@ All C API functions that aren't currently named according to the
 functions will be kept in the ticket at:
 
 L<https://trac.parrot.org/parrot/ticket/443>
+
+=item C<Parrot_find_global_s> and C<Parrot_store_global_s>
+
+This function is not used or tested anywhere.
+
+http://trac.parrot.org/parrot/ticket/1660
 
 =item PMC Attributes Allocation Functions [experimental]
 
@@ -347,6 +378,12 @@ This function is an experimental addition to enhance and maybe replace
 Parrot_str_unescape
 
 L<https://trac.parrot.org/parrot/ticket/1628>
+
+=item Parrot_get_runtime_prefix [eligible in 2.7]
+
+Use Parrot_get_runtime_path instead.
+
+L<https://trac.parrot.org/parrot/ticket/1191>
 
 =back
 
@@ -390,13 +427,22 @@ use a different detection mechanism or eliminate it altogether.
 
 L<https://trac.parrot.org/parrot/ticket/463>
 
-=item PAST::Val node generation [eligible in 1.5]
+=item PAST::Val node generation [eligible in 1.5] 
 
-The PAST::Compiler may generate the code for PAST::Val nodes
-(i.e., constants) at the beginning of the block (Parrot sub) instead
-of the location where they occur in the PAST tree.
+The PAST::Compiler may generate the code for PAST::Val nodes 
+(i.e., constants) at the beginning of the block (Parrot sub) instead 
+of the location where they occur in the PAST tree. 
 
-L<https://trac.parrot.org/parrot/ticket/868>
+L<https://trac.parrot.org/parrot/ticket/868> 
+
+=item Meta-model implementation used by PCT [eligible in 2.7]
+
+PCT is set to switch to a new meta-model implementation for its classes
+and objects. This will most likely only affect those who rely on the
+interface of what is returned from .HOW, or rely on PCT objects exhibiting
+various other peculiarities of the P6object implementation. (Even when that
+is the case, the HOW API will not be changing too drastically, so for most
+PCT users there should be little to no upheavel.)
 
 =back
 
@@ -421,7 +467,7 @@ L<http://trac.parrot.org/parrot/ticket/1337>
 
 L<https://trac.parrot.org/parrot/ticket/1598>
 
-=item LWP, HTTP::Message & URI [experimental]
+=item LWP, HTTP::Message, URI & URI::Escape [experimental]
 
 L<http://trac.parrot.org/parrot/ticket/1637>
 

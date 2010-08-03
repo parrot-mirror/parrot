@@ -58,57 +58,15 @@ static void Parrot_pcc_add_invocant(PARROT_INTERP,
 =item C<void Parrot_pcc_invoke_sub_from_c_args(PARROT_INTERP, PMC *sub_obj,
 const char *sig, ...)>
 
-Follows the same conventions as C<Parrot_PCCINVOKE>, but the subroutine object
-to invoke is passed as an argument rather than looked up by name. The signature
-string and call arguments are converted to a CallSignature PMC.
-
-=cut
-
-*/
-
-PARROT_EXPORT
-void
-Parrot_pcc_invoke_sub_from_c_args(PARROT_INTERP, ARGIN(PMC *sub_obj),
-        ARGIN(const char *sig), ...)
-{
-    ASSERT_ARGS(Parrot_pcc_invoke_sub_from_c_args)
-    PMC         *call_obj;
-    va_list      args;
-    const char  *arg_sig, *ret_sig;
-    PMC         * const old_call_obj =
-        Parrot_pcc_get_signature(interp, CURRENT_CONTEXT(interp));
-
-    Parrot_pcc_split_signature_string(sig, &arg_sig, &ret_sig);
-
-    va_start(args, sig);
-    call_obj = Parrot_pcc_build_call_from_varargs(interp, PMCNULL,
-         arg_sig, &args);
-    Parrot_pcc_set_signature(interp, CURRENT_CONTEXT(interp), call_obj);
-    Parrot_pcc_invoke_from_sig_object(interp, sub_obj, call_obj);
-    call_obj = Parrot_pcc_get_signature(interp, CURRENT_CONTEXT(interp));
-    Parrot_pcc_fill_params_from_varargs(interp, call_obj, ret_sig, &args,
-            PARROT_ERRORS_RESULT_COUNT_FLAG);
-    va_end(args);
-    Parrot_pcc_set_signature(interp, CURRENT_CONTEXT(interp), old_call_obj);
-}
-
-
-/*
-
-=item C<void Parrot_PCCINVOKE(PARROT_INTERP, PMC* pmc, STRING *method_name,
-const char *signature, ...)>
-
-DEPRECATED. See TT #443. Use Parrot_pcc_invoke_method_from_c_args instead.
-
 C<pmc> is the invocant.
 
-C<method_name> is the same C<method_name> used in the C<find_method>
-VTABLE call
+C<sub_obj> is the sub to invoke.
 
-C<signature> is a C string describing the Parrot calling conventions for
-Parrot_PCCINVOKE.  ... variable args contains the IN arguments followed
-by the OUT results variables.  You must pass the address_of(&) the OUT
-results, of course.
+C<sig> is the signature.
+
+Variable args contains the IN arguments followed by the OUT results variables.
+You must pass the address_of(&) the OUT results, of course.
+
 
 Signatures:
   uppercase letters repesent each arg and denote its types
@@ -147,7 +105,6 @@ Example signature:
     a FLOATVAL: N
     a slurpy PMC: Ps
 
-invokes a PMC method
 
 =cut
 
@@ -155,25 +112,28 @@ invokes a PMC method
 
 PARROT_EXPORT
 void
-Parrot_PCCINVOKE(PARROT_INTERP, ARGIN(PMC* pmc), ARGMOD(STRING *method_name),
-        ARGIN(const char *signature), ...)
+Parrot_pcc_invoke_sub_from_c_args(PARROT_INTERP, ARGIN(PMC *sub_obj),
+        ARGIN(const char *sig), ...)
 {
-    ASSERT_ARGS(Parrot_PCCINVOKE)
-    PMC *sig_obj;
-    PMC *sub_obj;
-    va_list args;
-    va_start(args, signature);
-    sig_obj = Parrot_pcc_build_sig_object_from_varargs(interp, pmc, signature, args);
+    ASSERT_ARGS(Parrot_pcc_invoke_sub_from_c_args)
+    PMC         *call_obj;
+    va_list      args;
+    const char  *arg_sig, *ret_sig;
+    PMC         * const old_call_obj =
+        Parrot_pcc_get_signature(interp, CURRENT_CONTEXT(interp));
+
+    Parrot_pcc_split_signature_string(sig, &arg_sig, &ret_sig);
+
+    va_start(args, sig);
+    call_obj = Parrot_pcc_build_call_from_varargs(interp, PMCNULL,
+         arg_sig, &args);
+    Parrot_pcc_set_signature(interp, CURRENT_CONTEXT(interp), call_obj);
+    Parrot_pcc_invoke_from_sig_object(interp, sub_obj, call_obj);
+    call_obj = Parrot_pcc_get_signature(interp, CURRENT_CONTEXT(interp));
+    Parrot_pcc_fill_params_from_varargs(interp, call_obj, ret_sig, &args,
+            PARROT_ERRORS_RESULT_COUNT_FLAG);
     va_end(args);
-
-    /* Find the subroutine object as a named method on pmc */
-    sub_obj = VTABLE_find_method(interp, pmc, method_name);
-    if (PMC_IS_NULL(sub_obj))
-         Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_METHOD_NOT_FOUND,
-             "Method '%Ss' not found", method_name);
-
-    /* Invoke the subroutine object with the given CallSignature object */
-    Parrot_pcc_invoke_from_sig_object(interp, sub_obj, sig_obj);
+    Parrot_pcc_set_signature(interp, CURRENT_CONTEXT(interp), old_call_obj);
 }
 
 
@@ -291,12 +251,19 @@ do_run_ops(PARROT_INTERP, ARGIN(PMC *sub_obj))
 {
     ASSERT_ARGS(do_run_ops)
 
-    if (sub_obj->vtable->base_type < enum_class_core_max)
-        return sub_obj->vtable->base_type == enum_class_Sub
-            || sub_obj->vtable->base_type == enum_class_MultiSub
-            || sub_obj->vtable->base_type == enum_class_Eval;
-    else
-        return is_invokable(interp, sub_obj);
+    if (sub_obj->vtable->base_type < enum_class_core_max) {
+        switch (sub_obj->vtable->base_type) {
+          case enum_class_Sub:
+          case enum_class_MultiSub:
+          case enum_class_Eval:
+            return 1;
+          case enum_class_Object:
+            break;
+          default:
+            return 0;
+        }
+    }
+    return is_invokable(interp, sub_obj);
 }
 
 /*
@@ -322,9 +289,8 @@ Parrot_pcc_do_run_ops(PARROT_INTERP, ARGIN(PMC *sub_obj))
 =item C<void Parrot_pcc_invoke_from_sig_object(PARROT_INTERP, PMC *sub_obj, PMC
 *call_object)>
 
-Follows the same conventions as C<Parrot_PCCINVOKE>, but the subroutine object
-to invoke is passed as an argument rather than looked up by name, and the
-signature string and call arguments are passed in a CallSignature PMC.
+Follows the same conventions as C<Parrot_pcc_invoke_method_from_c_args>, but
+the signature string and call arguments are passed in a CallSignature PMC.
 
 =cut
 
@@ -352,7 +318,7 @@ Parrot_pcc_invoke_from_sig_object(PARROT_INTERP, ARGIN(PMC *sub_obj),
 
     /* PIR Subs need runops to run their opcodes. Methods and NCI subs
      * don't. */
-    if (do_run_ops(interp, sub_obj)) {
+    if (dest && do_run_ops(interp, sub_obj)) {
         Parrot_runcore_t *old_core = interp->run_core;
         const opcode_t offset = dest - interp->code->base.data;
 

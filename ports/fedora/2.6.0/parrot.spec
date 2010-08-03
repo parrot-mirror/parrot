@@ -1,6 +1,6 @@
 Name:           parrot
-Version:        2.3.0
-Release:        1%{?dist}
+Version:        2.6.0
+Release:        2%{?dist}
 Summary:        a virtual machine
 License:        Artistic 2.0
 Group:          Development/Libraries
@@ -8,14 +8,6 @@ URL:            http://www.parrot.org/
 
 Source0:        ftp://ftp.parrot.org/pub/parrot/releases/stable/%{version}/parrot-%{version}.tar.gz
 Source1:        %{name}.desk.in.tar.gz
-
-Patch0:         parrot.patch
-#
-# see for upstream:       https://trac.parrot.org/parrot/ticket/509
-# patched file:           lib/Parrot/Install.pm
-# is to have the symlink:    libparrot.so  ->  libparrot.so.%{version}
-# Without this %{_libdir}/libparrot.so would not be a symbolic link to
-# %{_libdir}/libparrot.so.%{version}  
 
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildRequires:  readline-devel
@@ -50,7 +42,7 @@ BuildArch:      noarch
 Summary:        Parrot Virtual Machine development headers and libraries
 Group:          Development/Libraries
 Requires:       %{name} = %{version}-%{release}
-Requires:       pkgconfig
+Requires:       pkgconfig, vim-common
 
 #--
 
@@ -93,7 +85,6 @@ Parrot Virtual Machine development files for building languages.
 
 %prep
 %setup -q
-%patch0 -p0
 
 
 cat << \EOF > %{name}-prov
@@ -115,8 +106,9 @@ chmod +x %{__perl_provides}
     RPM_OPT_FLAGS="$RPM_OPT_FLAGS"
 %endif
 
-# there are problems in this version with the optimize="-O2" option on ppc64
-%ifarch ppc64
+# there are problems in this version with the optimize="-O2" option building on
+# ppc64 and ppc with nqp-rx
+%ifarch ppc64 ppc
     RPM_OPT_FLAGS=`echo "$RPM_OPT_FLAGS" | %{__perl} -pi -e 's/-O2//'`
 %endif
 
@@ -151,6 +143,14 @@ rm -rf $RPM_BUILD_ROOT
 export LD_LIBRARY_PATH=$( pwd )/blib/lib
 
 make install DESTDIR=$RPM_BUILD_ROOT
+
+# Generate several files for syntax-highlighting and automatic indenting.
+# First they are installed in BUILD-directory with make and after that
+# they needed to be copied to the RPM_BUILD_ROOT.
+(  cd editor; 
+   make vim-install VIM_DIR=.%{_datadir}/vim/vimfiles \
+                    SKELETON=%{_datadir}/vim/vimfiles;
+   cp -r ./usr $RPM_BUILD_ROOT                                )
 
 # Creating man-pages
 %{__install} -d $RPM_BUILD_ROOT%{_mandir}/man1
@@ -200,10 +200,10 @@ find docs/html -type f -size 0 -exec rm -f {} \;
 find docs -wholename 'docs/doc-prep' -type f -size 0 -exec rm -f {} \;
 
 # Set path for installed programs in docs package
-find examples/json -type f -name "*.pir" \
-    -exec %{__sed} -i -e '1 s&#!../../parrot&#!/usr/bin/parrot&' {} \;
-find examples -type f -path 'examples/*/*/setup.pir' \
-    -exec %{__sed} -i -e '1 s&#! ../../../parrot&#!/usr/bin/parrot&' {} \;
+find examples -type f \( -name "*.pir" -o \
+                         -wholename 'examples/shootout/random.pasm' \)  \
+    -exec %{__sed} -i -e '1 s&#!.*\(parrot\)&#!/usr/bin/\1&' {} \;
+
 find examples -type f \( -name '*.pl' -o \
                          -wholename 'examples/pir/befunge/t/basic.t' -o  \
                          -path 'examples/languages/*/harness'               \) \
@@ -213,14 +213,8 @@ find examples -type f -name "*.py" \
 find examples -type f -name "*.rb" \
     -exec %{__sed} -i -e '1 s&#! ruby&#!/usr/bin/ruby&' {} \;
 
-find examples -type f \( -name "*.pir" -o \
-                         -wholename 'examples/shootout/random.pasm' \)  \
-    -exec %{__sed} -i -e '1 s&#!./parrot&#!/usr/bin/parrot&' {} \;
-
 find examples -wholename 'examples/languages/abc/t/01-tests.t' \
     -exec %{__sed} -i -e '1 s&#!perl&#!/usr/bin/perl&' {} \;
-find examples -wholename 'examples/shootout/revcomp.pir' \
-    -exec %{__sed} -i -e '1 s&#!parrot&#!/usr/bin/parrot&' {} \;
 
 find examples -wholename 'examples/languages/abc/t/harness' \
     -exec %{__perl} -pi -e 's/\r$//' {} \;
@@ -243,7 +237,7 @@ desktop-file-install --delete-original --add-category="Documentation"  \
 export LD_LIBRARY_PATH=$( pwd )/blib/lib
 FULL='full'
 %{?_without_fulltest: FULL=''}
-%{?!_without_tests: make ${FULL}test}
+%{?!_without_tests: make ${FULL}test; rm -f docs/doc-prep}
 
 
 %clean
@@ -266,7 +260,7 @@ rm -rf $RPM_BUILD_ROOT
 
 %files docs
 %defattr(-,root,root,-)
-%doc docs examples
+%doc docs examples LICENSE
 %{_datadir}/applications/parrot_html.desktop
 %{_datadir}/applications/parrot_pdf.desktop
 
@@ -276,11 +270,12 @@ rm -rf $RPM_BUILD_ROOT
 %{_bindir}/parrot_debugger
 %{_bindir}/parrot_nci_thunk_gen
 %{_bindir}/parrot-nqp
+%{_bindir}/parrot-prove
 %{_bindir}/pbc_disassemble
 %{_bindir}/pbc_merge
 %{_bindir}/pbc_to_exe
 %{_bindir}/pbc_dump
-%{_bindir}/tapir
+%{_bindir}/ops2c
 %{_includedir}/parrot
 %{_libdir}/libparrot.so
 %exclude %{_libdir}/libparrot.a
@@ -292,6 +287,10 @@ rm -rf $RPM_BUILD_ROOT
 %{_mandir}/man1/pbc_to_exe.1.gz
 %{_mandir}/man1/pbc_dump.1.gz
 %{_mandir}/man1/parrot-nqp.1.gz
+%{_datadir}/vim/vimfiles/skeleton.pir
+%{_datadir}/vim/vimfiles/plugin/parrot.vim
+%{_datadir}/vim/vimfiles/syntax/*
+%{_datadir}/vim/vimfiles/indent/pir.vim
 
 %files tools
 %defattr(-,root,root,-)
@@ -302,12 +301,19 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
-* Tue Apr 20 2010 Gerd Pokorra <gp@zimt.uni-siegen.de> 2.3.0-1
-- updated to 2.3.0
-- add desktop files to access the documentation for reading
-- add the tapir binary
+* Wed Jul 21 2010 Gerd Pokorra <gp@zimt.uni-siegen.de> 2.6.0-2
+- updated to 2.6.0
+- add vim files for syntax-highlighting and automatic indenting
+- so requires "vim-common" is added
+- add LICENSE file to docs-subpackage
 
-* Tue Mar 16 2010 Gerd Pokorra <gp@zimt.uni-siegen.de> 2.2.0-1
+* Fri Jun 18 2010 Gerd Pokorra <gp@zimt.uni-siegen.de> 2.5.0-1
+- updated to 2.5.0
+- add the ops2c binary
+- add the parrot-prove binary
+
+* Tue Apr 20 2010 Gerd Pokorra <gp@zimt.uni-siegen.de> 2.3.0-1
+- add desktop files to access the documentation for reading
 - add the parrot_nci_thunk_gen binary
 
 * Wed Jan 20 2010 Gerd Pokorra <gp@zimt.uni-siegen.de> 2.0.0-1
@@ -344,7 +350,6 @@ rm -rf $RPM_BUILD_ROOT
 
 * Sun Mar 22 2009 David Fetter <david@fetter.org> 1.0.0-3
 - Removed wrong prefix from pkgconfig per Christoph Wickert
-- Changed i386 to ix86 per Christoph Wickert
 
 * Tue Mar 17 2009 Allison Randal <allison@parrot.org> 1.0.0
 - updated to 1.0.0
@@ -359,7 +364,6 @@ rm -rf $RPM_BUILD_ROOT
 - Update to 0.5.3.
 
 * Sat Mar 10 2007 Steven Pritchard <steve@kspei.com> 0.4.9-1
-- Update to 0.4.9.
 - BuildRequires ncurses-devel.
 - For some reason now I need to force -lm too.
 - Remove some files/directories that shouldn't be included.
@@ -374,6 +378,3 @@ rm -rf $RPM_BUILD_ROOT
 - Force permissions on the doc directories.
 - Add -lcurses to get readline detection to work.
 - Add BuildRequires libicu-devel.
-
-* Tue Mar 18 2003 Steve Fink <sfink@foxglove.localdomain> 0.0.11
-- first .spec file created

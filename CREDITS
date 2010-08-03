@@ -129,8 +129,7 @@ D: Keeps us running
 E: ask@develooper.com
 
 N: Audrey Tang
-U: audreyt
-U: autrijus
+U: au
 E: audreyt@audreyt.org
 D: Pugs, a Perl6->Parrot implementation.
 
@@ -248,6 +247,7 @@ D: Patch for key flags in pdd08
 D: Range check in Env PMC
 A: christoph_googleacct@mksig.org
 A: christop...@mksig.org
+A: Christoph Otto
 D: Pipp
 E: christoph@mksig.org
 
@@ -402,7 +402,7 @@ D: Documentation patch for Parrot_PMC_get_pointer_intkey()
 
 N: Gerd Pokorra
 E: pokorra@uni-siegen.de
-D: Release manager for 1.9.0 and 2.3.0
+D: Release manager for 1.9.0, 2.3.0 and 2.5.0
 
 N: Goplat
 D: Win98 and other fixes.
@@ -514,6 +514,10 @@ U: jimmy
 E: zhuomingliang@yahoo.com.cn
 D: Bugfixes, cage cleaning
 
+N: John Harrison
+E: ash@greatethaninfinity.com 
+U: ash_
+
 N: John J. Trammell
 E: trammell@el-swifto.com
 D: coding standard tests
@@ -576,6 +580,7 @@ D: Getopt/Obj.pir
 N: Julian Albo
 U: NotFound
 A: julianalbo
+A: julian.notfound
 E: julian.notfound@gmail.com
 
 N: Julian Fondren
@@ -1005,6 +1010,14 @@ D: Nicer command line handling in ops2c.pl
 N: Tony Payne
 D: Example hanoi.pasm
 
+N: Tyler Curtis
+U: tcurtis
+E: tyler.l.curtis@gmail.com
+E: ekiru.0@gmail.com
+D: PAST Optimization GSoC 2010
+A: tylercurtis
+A: ekiru
+
 N: Ujwal Reddy Malipeddi
 U: ujwalic
 E: ujwalic@gmail.com
@@ -1032,7 +1045,8 @@ N: Will "Coke" Coleda
 U: coke
 A: wcoleda
 E: will@coleda.com
-D: Tcl language (partcl), APL, website, various languages/ upkeep, misc.
+D: Tcl HLL implementation (partcl), APL, website,
+D: Release Manager, PaFo board member, curmudgeon
 
 N: Zach Lipton
 

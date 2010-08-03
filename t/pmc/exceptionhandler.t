@@ -1,5 +1,5 @@
 #!./parrot
-# Copyright (C) 2006-2008, Parrot Foundation.
+# Copyright (C) 2006-2010, Parrot Foundation.
 # $Id$
 
 =head1 NAME
@@ -23,9 +23,9 @@ Tests the ExceptionHandler PMC.
     .include 'test_more.pir'
 
     # If test exited with "bad plan" MyHandlerCan.can_handle wasn't invoked.
-    plan(9)
+    plan(15)
 
-    .local pmc eh
+    .local pmc eh, eh2
     eh = new ['ExceptionHandler']
     ok(1, 'Instantiated ExceptionHandler')
 
@@ -34,11 +34,21 @@ Tests the ExceptionHandler PMC.
     eh.'max_severity'(.EXCEPT_WARNING)
     push_eh eh
 
-    eh = new ['ExceptionHandler']
-    set_addr eh, error_handler_one
-    eh.'min_severity'(.EXCEPT_ERROR)
-    eh.'max_severity'(.EXCEPT_FATAL)
-    push_eh eh
+    eh2 = new ['ExceptionHandler']
+    set_addr eh2, error_handler_one
+    eh2.'min_severity'(.EXCEPT_ERROR)
+    eh2.'max_severity'(.EXCEPT_FATAL)
+    push_eh eh2
+
+    .local int i
+    i = eh.'min_severity'()
+    is(i, .EXCEPT_NORMAL, 'get min_severity - 1')
+    i = eh.'max_severity'()
+    is(i, .EXCEPT_WARNING, 'get max_severity - 1')
+    i = eh2.'min_severity'()
+    is(i, .EXCEPT_ERROR, 'get min_severity - 2')
+    i = eh2.'max_severity'()
+    is(i, .EXCEPT_FATAL, 'get max_severity - 2')
 
     $P0 = new ['Exception']
     $P0['severity'] = .EXCEPT_NORMAL
@@ -89,6 +99,8 @@ Tests the ExceptionHandler PMC.
 
     pop_eh
     pop_eh
+
+    test_handle_types_except()
 
     goto subclass_handler
 
@@ -216,6 +228,54 @@ Tests the ExceptionHandler PMC.
     .param pmc ex
     ok(1, 'MyHandlerCan.can_handle invoked')
     .return(1)
+.end
+
+.namespace [ ]
+
+.sub 'test_handle_types_except'
+    .local pmc badeh, eh, ex
+    .local int i
+    .const int TYPEUSED = .EXCEPTION_UNEXPECTED_NULL
+    .const int TYPEOTHER = .EXCEPTION_SYNTAX_ERROR
+
+    i = 0
+    eh = new ['ExceptionHandler']
+    badeh = new ['ExceptionHandler']
+    eh.'handle_types_except'(TYPEUSED)
+    set_addr eh, catch
+    set_addr badeh, badcatch
+    push_eh badeh
+    push_eh eh
+    ex = new ['Exception']
+    ex['type'] = TYPEOTHER
+    throw ex
+    goto report1
+  badcatch:
+    finalize eh
+    goto report1
+  catch:
+    finalize eh
+    i = 1
+  report1:
+    ok(i, 'type not in except is list is caught')
+
+    i = 0
+    set_addr badeh, catchall
+    set_addr eh, dontcatch
+    ex = new ['Exception']
+    ex['type'] = TYPEUSED
+    throw ex
+    goto report2
+  catchall:
+    finalize eh
+    i = 1
+    goto report2
+  dontcatch:
+    finalize eh
+  report2:
+    pop_eh
+    pop_eh
+    ok(i, 'type in except is list is not caught')
 .end
 
 # Local Variables:

@@ -15,15 +15,19 @@ t/pmc/packfile.t - test the Packfile PMC
 
 Tests the Packfile PMC.
 
+If you see this tests failing after bumping PBC_COMPAT rerun tools/dev/mk_packfile_pbc.
+
 =cut
 
 .include 't/pmc/testlib/packfile_common.pir'
+.include 'except_types.pasm'
 
 .sub main :main
 .include 'test_more.pir'
 
-    plan(36)
+    plan(37)
     'test_new'()
+    'test_set_string_native'()
     'test_get_string'()
     'test_set_string'()
     'test_get_integer'()
@@ -45,7 +49,30 @@ Tests the Packfile PMC.
     pf = new ['Packfile']
     $I0 = defined pf
     ok($I0, 'new')
+
+    # Make sure the mark vtable function is exercised
+    sweep 1
+
     .tailcall _check_header(pf)
+.end
+
+
+.sub 'test_set_string_native'
+    .local pmc pf, eh
+    .local int result
+
+    eh = new ['ExceptionHandler']
+    eh.'handle_types'(.EXCEPTION_MALFORMED_PACKFILE)
+    set_label eh, catch
+    push_eh eh
+    pf = new ['Packfile']
+    pf = 'This is not data with a valid packfile format'
+    result = 0
+    goto end
+  catch:
+    result = 1
+  end:
+    is(result, 1, 'set_string_native with invalid data throws')
 .end
 
 
@@ -295,27 +322,30 @@ load_error:
 # Packfile.pack.
 # Check that unpack-pack produce correct result.
 .sub 'test_pack'
-    .local string filename, first
+    .local string filename, orig
     push_eh load_error
     $S0 = '_filename'()
     $P0 = new ['FileHandle']
     $P0.'open'($S0, 'r')
 
-    first = $P0.'readall'()
+    orig = $P0.'readall'()
 
     .local pmc packfile
     packfile = new 'Packfile'
-    packfile = first
+    packfile = orig
     pop_eh
 
-    # Packed file should be exactly the same as loaded
-    .local string second
+    # Loaded packfile can be from different platform/config,
+    # packing and unpacking again to avoid that differences.
+    .local string first, second
     # Pack
-    second = packfile
+    first = packfile
+    .local pmc packfilesecond
+    packfilesecond = new 'Packfile'
+    packfilesecond = first
+    second = packfilesecond
 
-    $I0 = cmp first, second
-    $I0 = not $I0
-    todo($I0, 'pack produced same result twice: TT #1614')
+    is(first, second, 'pack produced same result twice: TT #1614')
     .return()
 load_error:
     .get_results($P0)
@@ -325,6 +355,7 @@ load_error:
 .end
 
 # Test pack/set_string unpack/get_string equivalency
+
 .sub 'test_synonyms'
     .local pmc pf
     push_eh load_error
