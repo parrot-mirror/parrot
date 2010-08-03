@@ -457,7 +457,6 @@ INTERP_O_FILES = \
     src/gc/system$(O) \
     src/gc/fixed_allocator$(O) \
     src/gc/variable_size_pool$(O) \
-    src/global$(O) \
     src/global_setup$(O) \
     src/hash$(O) \
     src/hll$(O) \
