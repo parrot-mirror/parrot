@@ -1,6 +1,6 @@
 %{
 /*
- * imcc.y
+ * dummy_imcc.y
  *
  * Dummy .y file for testing headerizer
  *
