@@ -68,6 +68,7 @@ struct PackFile_Constant *
 Parrot_pcc_get_constants_func(SHIM_INTERP, ARGIN(PMC *ctx))
 {
     ASSERT_ARGS(Parrot_pcc_get_constants_func)
+    Parrot_Context * const c = CONTEXT_STRUCT(ctx);
     PARROT_ASSERT(ctx->vtable->base_type == enum_class_CallContext);
     return CONTEXT_STRUCT(ctx)->constants;
 }
@@ -717,8 +718,8 @@ Parrot_pcc_get_int_constant_func(SHIM_INTERP, ARGIN(PMC *ctx), INTVAL idx)
     ASSERT_ARGS(Parrot_pcc_get_int_constant_func)
     const Parrot_Context * const c = CONTEXT_STRUCT(ctx);
     PARROT_ASSERT(ctx->vtable->base_type == enum_class_CallContext);
-    PARROT_ASSERT(c->constants[idx]->type == 'i');
-    return c->constants[idx]->u.integer;
+    PARROT_ASSERT(c->constants[idx].type == 'i');
+    return c->constants[idx].u.integer;
 }
 
 PARROT_EXPORT
@@ -730,8 +731,8 @@ Parrot_pcc_get_num_constant_func(SHIM_INTERP, ARGIN(PMC *ctx), INTVAL idx)
     ASSERT_ARGS(Parrot_pcc_get_num_constant_func)
     const Parrot_Context * const c = CONTEXT_STRUCT(ctx);
     PARROT_ASSERT(ctx->vtable->base_type == enum_class_CallContext);
-    PARROT_ASSERT(c->constants[idx]->type == 'n');
-    return c->constants[idx]->u.number;
+    PARROT_ASSERT(c->constants[idx].type == 'n');
+    return c->constants[idx].u.number;
 }
 
 PARROT_EXPORT
@@ -743,8 +744,8 @@ Parrot_pcc_get_string_constant_func(SHIM_INTERP, ARGIN(PMC *ctx), INTVAL idx)
     ASSERT_ARGS(Parrot_pcc_get_string_constant_func)
     const Parrot_Context * const c = CONTEXT_STRUCT(ctx);
     PARROT_ASSERT(ctx->vtable->base_type == enum_class_CallContext);
-    PARROT_ASSERT(c->constants[idx]->type == 's');
-    return c->constants[idx]->u.string;
+    PARROT_ASSERT(c->constants[idx].type == 's');
+    return c->constants[idx].u.string;
 }
 
 PARROT_EXPORT
@@ -756,9 +757,9 @@ Parrot_pcc_get_pmc_constant_func(SHIM_INTERP, ARGIN(PMC *ctx), INTVAL idx)
     ASSERT_ARGS(Parrot_pcc_get_pmc_constant_func)
     const Parrot_Context * const c = CONTEXT_STRUCT(ctx);
     PARROT_ASSERT(ctx->vtable->base_type == enum_class_CallContext);
-    PARROT_ASSERT((c->constants[idx]->type == 'k')
-            || (c->constants[idx]->type == 'p'));
-    return c->constants[idx]->u.key;
+    PARROT_ASSERT((c->constants[idx].type == 'k')
+            || (c->constants[idx].type == 'p'));
+    return c->constants[idx].u.key;
 }
 
 /*
