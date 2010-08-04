@@ -267,7 +267,9 @@ compose(PARROT_INTERP, ARGIN(const STRING *src))
 {
     ASSERT_ARGS(compose)
 
-    return src;
+    STRING * const dest = Parrot_str_copy(interp, src);
+
+    return dest;
 }
 
 /*
@@ -287,7 +289,9 @@ decompose(PARROT_INTERP, ARGIN(const STRING *src))
 {
     ASSERT_ARGS(decompose)
 
-    return src;
+    STRING * const dest = Parrot_str_copy(interp, src);
+
+    return dest;
 }
 
 /*
