@@ -165,7 +165,7 @@ PMC*
 Parrot_pcc_get_caller_ctx_func(SHIM_INTERP, ARGIN(PMC *ctx))
 {
     ASSERT_ARGS(Parrot_pcc_get_caller_ctx_func)
-    const Parrot_Context *c = CONTEXT_STRUCT(ctx);
+    const Parrot_Context * const c = CONTEXT_STRUCT(ctx);
     PARROT_ASSERT(ctx->vtable->base_type == enum_class_CallContext);
     return c->caller_ctx;
 }
@@ -201,7 +201,7 @@ PMC*
 Parrot_pcc_get_outer_ctx_func(SHIM_INTERP, ARGIN(PMC *ctx))
 {
     ASSERT_ARGS(Parrot_pcc_get_outer_ctx_func)
-    const Parrot_Context *c = CONTEXT_STRUCT(ctx);
+    const Parrot_Context * const c = CONTEXT_STRUCT(ctx);
     PARROT_ASSERT(ctx->vtable->base_type == enum_class_CallContext);
     return c->outer_ctx;
 }
@@ -235,7 +235,7 @@ PMC*
 Parrot_pcc_get_lex_pad_func(SHIM_INTERP, ARGIN(PMC *ctx))
 {
     ASSERT_ARGS(Parrot_pcc_get_lex_pad_func)
-    const Parrot_Context *c = CONTEXT_STRUCT(ctx);
+    const Parrot_Context * const c = CONTEXT_STRUCT(ctx);
     PARROT_ASSERT(ctx->vtable->base_type == enum_class_CallContext);
     return c->lex_pad;
 }
