@@ -879,10 +879,8 @@ gc_ms2_mark_and_sweep(PARROT_INTERP, UINTVAL flags)
     gc_ms2_sweep_pool(interp, self->pmc_allocator, self->objects, gc_ms2_sweep_pmc_cb);
     gc_ms2_sweep_pool(interp, self->string_allocator, self->strings, gc_ms2_sweep_string_cb);
 
-    /* Wait more next time
-    FIXME With such simplistic approach we reach multigigabyte liveset of objects
-    self->gc_threshold *= UNITS_PER_ALLOC_GROWTH_FACTOR;
-     */
+    if (self->gc_threshold < 1024 * 1024 * 10)
+        self->gc_threshold *= 1.1;
 
     self->stats.header_allocs_since_last_collect = 0;
     self->stats.gc_mark_runs++;
