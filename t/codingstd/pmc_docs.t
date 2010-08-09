@@ -10,7 +10,6 @@ use Test::More;
 use Parrot::Config qw(%PConfig);
 use Parrot::Distribution;
 use Parrot::Headerizer;
-use Data::Dumper;$Data::Dumper::Indent=1;
 
 =head1 NAME
 
@@ -39,9 +38,6 @@ my @files = @ARGV ? @ARGV :
     map {s/\\/\//g; $_}
     map {$_->path} $DIST->pmc_source_files();
 
-#print STDERR Dumper \@files;
-#print STDERR "Found ", scalar @files, " .pmc files\n";
-
 plan tests => scalar @files;
 
 my %todos;
@@ -52,45 +48,76 @@ while (<DATA>) {
     $todos{$_} = 1;
 }
 
+my %all_files = ();
+
+# Traverse each file, analyzing each function declaration therein, then 
+# post results in %all_files.
+
 foreach my $path (@files) {
     my $buf = $DIST->slurp($path);
     my @function_decls = $headerizer->extract_function_declarations($buf);
-    my @missing_docs;
+
+    # We start out asserting that every file will have documentation for each
+    # of its function declarations.  We then seek to contradict this
+    # assertion.
+
+    my %this_file = ( overall => 1 );
 
     for my $function_decl (@function_decls) {
+        my $escaped_decl
+            = $headerizer->generate_documentation_signature($function_decl);
+        $this_file{$function_decl}{esc} = $escaped_decl;
 
-        my $escaped_decl = $headerizer->generate_documentation_signature($function_decl);
-
-        my $missing = '';
         if ( $buf =~ m/^\Q$escaped_decl\E$(.*?)^=cut/sm ) {
             my $docs = $1;
             $docs =~ s/\s//g;
-            if ($docs eq '') {
-                $missing = 'boilerplate only';
+            if ($docs eq '') { # boilerplate only
+                $this_file{$function_decl}{status} = 0;
+                $this_file{overall} = 0;
             }
-            # else:  docs!
+            else { # documentation found
+                $this_file{$function_decl}{status} = 1;
+            }
         }
-        else {
-            $missing = 'missing';
-        }
-        if ($missing) {
-            if ($missing eq 'boilerplate only') {
-                push @missing_docs, "$path ($missing)\nIn:\n$escaped_decl\n";
-            }
-            else {
-                push @missing_docs, "$path ($missing)\n$function_decl\nWant:\n$escaped_decl\n";
-            }
+        else { # no documentation found
+            $this_file{$function_decl}{status} = undef;
+            $this_file{overall} = 0;
         }
     }
+    $all_files{$path} = \%this_file;
+}
 
+foreach my $path (sort keys %all_files) {
     TODO: {
         local $TODO = 'Missing function docs' if $todos{$path};
-
-    ok ( ! @missing_docs, $path)
-        or diag( @missing_docs
-            . " function(s) lacking documentation:\n"
-            . join ("\n", @missing_docs, "\n"));
+        ok( $all_files{$path}{overall}, $path )
+            or diag( diagnosis( \%all_files, $path ) );
     }
+}
+
+sub diagnosis {
+    my ($all_files_ref, $path) = @_;
+    my $missing = '';
+    my $boilerplate = '';
+    my %this_file = %{ $all_files_ref->{$path} };
+    delete $this_file{overall};
+    foreach my $decl ( sort keys %this_file ) {
+        if ( ! defined $this_file{$decl}{status} ) {
+            $missing .= "$decl\n";
+            $missing .= "Need:\n";
+            $missing .= "$this_file{$decl}{esc}\n\n";
+        }
+        elsif ( ! $this_file{$decl}{status} ) {
+            $boilerplate .= "$this_file{$decl}{esc}\n\n";
+        }
+        else {
+            # docs!
+        }
+    }
+    my $diagnosis = "$path\n";
+    $diagnosis .= "Undocumented functions:\n\n$missing" if $missing;
+    $diagnosis .= "Boilerplate only:\n$boilerplate" if $boilerplate;
+    return "$diagnosis";
 }
 
 __DATA__
