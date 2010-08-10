@@ -15,6 +15,7 @@ Implements oplib VTABLEs.
 */
 
 #include "parrot/parrot.h"
+#include "parrot/oplib/core_ops.h"
 
 /* HEADERIZER HFILE: none */
 /* HEADERIZER BEGIN: static */
@@ -35,7 +36,7 @@ pmclass OpLib auto_attrs {
         int       i;
 
         if (STREQ(name_cstr, PARROT_CORE_OPLIB_NAME)) {
-            oplib = PARROT_CORE_OPLIB_INIT(interp, 1);
+            oplib = PARROT_CORE_OPLIB_INIT(INTERP, 1);
         }
         else {
             for (i = 0; i < INTERP->n_libs; i++) {
