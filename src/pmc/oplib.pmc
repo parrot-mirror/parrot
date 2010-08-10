@@ -34,10 +34,15 @@ pmclass OpLib auto_attrs {
         op_lib_t *oplib     = NULL;
         int       i;
 
-        for (i = 0; i < INTERP->n_libs; i++) {
-            if (STREQ(name_cstr, INTERP->all_op_libs[i]->name)) {
-                oplib = INTERP->all_op_libs[i];
-                break;
+        if (STREQ(name_cstr, PARROT_CORE_OPLIB_NAME)) {
+            oplib = PARROT_CORE_OPLIB_INIT(interp, 1);
+        }
+        else {
+            for (i = 0; i < INTERP->n_libs; i++) {
+                if (STREQ(name_cstr, INTERP->all_op_libs[i]->name)) {
+                    oplib = INTERP->all_op_libs[i];
+                    break;
+                }
             }
         }
 
@@ -45,7 +50,7 @@ pmclass OpLib auto_attrs {
 
         if (!oplib)
             Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_LIBRARY_NOT_LOADED,
-                    "Could not find oplib `%s'");
+                    "Could not find oplib `%S'", name);
 
         SET_ATTR_oplib(INTERP, SELF, oplib);
     }

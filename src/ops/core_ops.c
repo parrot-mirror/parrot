@@ -26097,8 +26097,8 @@ return (opcode_t *)cur_opcode + 2;}
 */
 
 static op_lib_t core_op_lib = {
-  "core",               /* name */
-  "",             /* suffix */
+  "core_ops",                /* name */
+  "",                  /* suffix */
   PARROT_FUNCTION_CORE,                       /* core_type = PARROT_XX_CORE */
   0,                                /* flags */
   2,    /* major_version */
