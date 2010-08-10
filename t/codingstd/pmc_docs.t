@@ -50,7 +50,7 @@ while (<DATA>) {
 
 my %all_files = ();
 
-# Traverse each file, analyzing each function declaration therein, then 
+# Traverse each file, analyzing each function declaration therein, then
 # post results in %all_files.
 
 foreach my $path (@files) {
