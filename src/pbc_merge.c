@@ -64,6 +64,16 @@ PARROT_DOES_NOT_RETURN
 static void help(PARROT_INTERP)
         __attribute__nonnull__(1);
 
+static void pbc_fixup_bytecode(PARROT_INTERP,
+    ARGMOD(pbc_merge_input **inputs),
+    int num_inputs,
+    ARGMOD(PackFile_ByteCode *bc))
+        __attribute__nonnull__(1)
+        __attribute__nonnull__(2)
+        __attribute__nonnull__(4)
+        FUNC_MODIFIES(*inputs)
+        FUNC_MODIFIES(*bc);
+
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 static PackFile* pbc_merge_begin(PARROT_INTERP,
@@ -98,16 +108,6 @@ static PackFile_ConstTable* pbc_merge_constants(PARROT_INTERP,
         __attribute__nonnull__(5)
         FUNC_MODIFIES(*inputs)
         FUNC_MODIFIES(*pf)
-        FUNC_MODIFIES(*bc);
-
-static void pbc_fixup_bytecode(PARROT_INTERP,
-    ARGMOD(pbc_merge_input **inputs),
-    int num_inputs,
-    ARGMOD(PackFile_ByteCode *bc))
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(2)
-        __attribute__nonnull__(4)
-        FUNC_MODIFIES(*inputs)
         FUNC_MODIFIES(*bc);
 
 static void pbc_merge_debugs(PARROT_INTERP,
@@ -149,6 +149,10 @@ static void pbc_merge_write(PARROT_INTERP,
 
 #define ASSERT_ARGS_help __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
        PARROT_ASSERT_ARG(interp))
+#define ASSERT_ARGS_pbc_fixup_bytecode __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
+       PARROT_ASSERT_ARG(interp) \
+    , PARROT_ASSERT_ARG(inputs) \
+    , PARROT_ASSERT_ARG(bc))
 #define ASSERT_ARGS_pbc_merge_begin __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
        PARROT_ASSERT_ARG(interp) \
     , PARROT_ASSERT_ARG(inputs))
@@ -160,10 +164,6 @@ static void pbc_merge_write(PARROT_INTERP,
        PARROT_ASSERT_ARG(interp) \
     , PARROT_ASSERT_ARG(inputs) \
     , PARROT_ASSERT_ARG(pf) \
-    , PARROT_ASSERT_ARG(bc))
-#define ASSERT_ARGS_pbc_merge_ctpointers __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
-       PARROT_ASSERT_ARG(interp) \
-    , PARROT_ASSERT_ARG(inputs) \
     , PARROT_ASSERT_ARG(bc))
 #define ASSERT_ARGS_pbc_merge_debugs __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
        PARROT_ASSERT_ARG(interp) \

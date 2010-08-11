@@ -81,8 +81,6 @@ static opcode_t * byte_code_unpack(PARROT_INTERP,
         __attribute__nonnull__(3)
         FUNC_MODIFIES(*self);
 
-PARROT_WARN_UNUSED_RESULT
-PARROT_CANNOT_RETURN_NULL
 static void clone_constant(PARROT_INTERP,
     ARGIN(PackFile_Constant *old_const),
     ARGMOD(PackFile_Constant *new_const))
