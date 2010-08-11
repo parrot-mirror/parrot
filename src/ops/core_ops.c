@@ -28,7 +28,8 @@
 static int get_op(PARROT_INTERP, const char * name, int full);
 
 
-static op_lib_t core_op_lib;
+/* XXX should be static, but C++ doesn't want to play ball */
+extern op_lib_t core_op_lib;
 
 
 
@@ -26096,7 +26097,8 @@ return (opcode_t *)cur_opcode + 2;}
 ** op lib descriptor:
 */
 
-static op_lib_t core_op_lib = {
+/* XXX should be static, but C++ doesn't want to play ball */
+op_lib_t core_op_lib = {
   "core_ops",                /* name */
   "",                  /* suffix */
   PARROT_FUNCTION_CORE,                       /* core_type = PARROT_XX_CORE */

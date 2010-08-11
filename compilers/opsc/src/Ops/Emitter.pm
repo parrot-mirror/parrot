@@ -217,7 +217,8 @@ method _emit_source_preamble($fh) {
 
 {self.trans.defines(self)}
 
-static op_lib_t {self.bs}op_lib;
+/* XXX should be static, but C++ doesn't want to play ball */
+extern op_lib_t {self.bs}op_lib;
 
 |);
 
@@ -232,7 +233,8 @@ method _emit_op_lib_descriptor($fh) {
 ** op lib descriptor:
 */
 
-static op_lib_t | ~ self.bs ~ q|op_lib = {| ~ qq|
+/* XXX should be static, but C++ doesn't want to play ball */
+op_lib_t | ~ self.bs ~ q|op_lib = {| ~ qq|
   "{self.base}_ops",                /* name */
   "{self.suffix}",                  /* suffix */
   $core_type,                       /* core_type = PARROT_XX_CORE */
