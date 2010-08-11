@@ -73,7 +73,7 @@ static size_t byte_code_packed_size(SHIM_INTERP,
 
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
-static opcode_t * byte_code_unpack(PARROT_INTERP,
+static const opcode_t * byte_code_unpack(PARROT_INTERP,
     ARGMOD(PackFile_Segment *self),
     ARGIN(const opcode_t *cursor))
         __attribute__nonnull__(1)
@@ -2748,7 +2748,7 @@ byte_code_pack(PARROT_INTERP, ARGMOD(PackFile_Segment *self), ARGOUT(opcode_t *c
 
 /*
 
-=item C<static opcode_t * byte_code_unpack(PARROT_INTERP, PackFile_Segment
+=item C<static const opcode_t * byte_code_unpack(PARROT_INTERP, PackFile_Segment
 *self, const opcode_t *cursor)>
 
 Unpacks a bytecode segment into the passed C<PackFile_ByteCode>.
@@ -2759,7 +2759,7 @@ Unpacks a bytecode segment into the passed C<PackFile_ByteCode>.
 
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
-static opcode_t *
+static const opcode_t *
 byte_code_unpack(PARROT_INTERP, ARGMOD(PackFile_Segment *self), ARGIN(const opcode_t *cursor))
 {
     ASSERT_ARGS(byte_code_unpack)
@@ -2796,16 +2796,17 @@ byte_code_unpack(PARROT_INTERP, ARGMOD(PackFile_Segment *self), ARGIN(const opco
                 entry->lib = PARROT_CORE_OPLIB_INIT(interp, 1);
             }
             else {
-                const PMC *lib_pmc = Parrot_load_lib(interp,
+                PMC *lib_pmc = Parrot_load_lib(interp,
                                                 Parrot_str_new(interp, lib_name, 0),
                                                 NULL);
+                typedef op_lib_t *(*oplib_init_t)(PARROT_INTERP, long init);
                 void *oplib_init;
-                op_lib_t *(*oplib_init_f)(PARROT_INTERP, long init);
+                oplib_init_t oplib_init_f;
                 if (!VTABLE_get_bool(interp, lib_pmc))
                     Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_LIBRARY_ERROR,
                         "Could not load oplib `%s'", lib_name);
                 GETATTR_ParrotLibrary_oplib_init(interp, lib_pmc, oplib_init);
-                oplib_init_f = D2FPTR(oplib_init);
+                oplib_init_f = (oplib_init_t)D2FPTR(oplib_init);
                 entry->lib = oplib_init_f(interp, 1);
             }
 

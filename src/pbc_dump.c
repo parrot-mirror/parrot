@@ -159,9 +159,9 @@ nums_dump(PARROT_INTERP, const PackFile_Segment *self)
     const PackFile_Segment *debug      = PackFile_find_segment(interp,
                                             self->dir, debug_name, 1);
 
-    const opcode_t   * pc            = self->data;
-    const opcode_t   * debug_ops     = debug->data;
-    const op_info_t ** const op_info = interp->code->op_info_table;
+    opcode_t   * pc            = self->data;
+    opcode_t   * debug_ops     = debug->data;
+    op_info_t ** const op_info = interp->code->op_info_table;
 
     while (pc < self->data + self->size) {
         /* n can't be const; the ADD_OP_VAR_PART macro increments it */

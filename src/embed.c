@@ -1079,7 +1079,7 @@ Parrot_run_native(PARROT_INTERP, native_func_t func)
 {
     ASSERT_ARGS(Parrot_run_native)
     PackFile * const pf = PackFile_new(interp, 0);
-    static const opcode_t program_code[2] = {
+    static opcode_t program_code[2] = {
         0, /* enternative */
         1  /* end */
     };

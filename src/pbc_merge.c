@@ -692,7 +692,7 @@ static void
 pbc_fixup_bytecode(PARROT_INTERP, ARGMOD(pbc_merge_input **inputs),
                      int num_inputs, ARGMOD(PackFile_ByteCode *bc))
 {
-    ASSERT_ARGS(pbc_merge_ctpointers)
+    ASSERT_ARGS(pbc_fixup_bytecode)
     int        cur_arg;
     opcode_t  *op_ptr;
     opcode_t  *ops       = bc->base.data;
