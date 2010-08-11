@@ -33,6 +33,16 @@ static void print_sub_name(PARROT_INTERP, ARGIN_NULLOK(PMC *sub))
 /* Don't modify between HEADERIZER BEGIN / HEADERIZER END.  Your changes will be lost. */
 /* HEADERIZER END: static */
 
+/*
+
+=item C<static void print_sub_name(PARROT_INTERP, PMC *sub)>
+
+
+
+=cut
+
+*/
+
 static void
 print_sub_name(PARROT_INTERP, ARGIN_NULLOK(PMC *sub))
 {
@@ -1145,7 +1155,10 @@ slurpy arguments).
 
 (Experimental) Returns Sub flags.
 
+=back
+
 =cut
+
 */
     METHOD comp_flags() {
         Parrot_Sub_attributes  *sub;
