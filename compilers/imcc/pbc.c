@@ -362,8 +362,8 @@ add_const_table(PARROT_INTERP)
         /* initialize rlookup cache */
         interp->code->const_table->string_hash =
             Parrot_pmc_new_init_int(interp, enum_class_Hash, enum_type_INTVAL);
-        ((Hash *)VTABLE_get_pointer(interp, interp->code->const_table->string_hash))->compare =
-            (hash_comp_fn)hash_compare_string_distinct_enc;
+        ((Hash *)VTABLE_get_pointer(interp, interp->code->const_table->string_hash))->key_type =
+            Hash_key_type_STRING_enc;
 
         interp->code->const_table->constants =
             mem_gc_allocate_n_zeroed_typed(interp, newcount, PackFile_Constant);
