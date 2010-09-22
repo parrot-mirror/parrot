@@ -22223,42 +22223,42 @@ return (opcode_t *)cur_opcode + 2;}
 opcode_t *
 Parrot_ord_i_s(opcode_t *cur_opcode, PARROT_INTERP)  {
     const Parrot_Context * const CUR_CTX = Parrot_pcc_get_context_struct(interp, interp->ctx);
-    IREG(1) = string_ord(interp, SREG(2), 0);
+    IREG(1) = STRING_ord(interp, SREG(2), 0);
 
 return (opcode_t *)cur_opcode + 3;}
 
 opcode_t *
 Parrot_ord_i_sc(opcode_t *cur_opcode, PARROT_INTERP)  {
     const Parrot_Context * const CUR_CTX = Parrot_pcc_get_context_struct(interp, interp->ctx);
-    IREG(1) = string_ord(interp, CONST(2).u.string, 0);
+    IREG(1) = STRING_ord(interp, CONST(2).u.string, 0);
 
 return (opcode_t *)cur_opcode + 3;}
 
 opcode_t *
 Parrot_ord_i_s_i(opcode_t *cur_opcode, PARROT_INTERP)  {
     const Parrot_Context * const CUR_CTX = Parrot_pcc_get_context_struct(interp, interp->ctx);
-    IREG(1) = string_ord(interp, SREG(2), IREG(3));
+    IREG(1) = STRING_ord(interp, SREG(2), IREG(3));
 
 return (opcode_t *)cur_opcode + 4;}
 
 opcode_t *
 Parrot_ord_i_sc_i(opcode_t *cur_opcode, PARROT_INTERP)  {
     const Parrot_Context * const CUR_CTX = Parrot_pcc_get_context_struct(interp, interp->ctx);
-    IREG(1) = string_ord(interp, CONST(2).u.string, IREG(3));
+    IREG(1) = STRING_ord(interp, CONST(2).u.string, IREG(3));
 
 return (opcode_t *)cur_opcode + 4;}
 
 opcode_t *
 Parrot_ord_i_s_ic(opcode_t *cur_opcode, PARROT_INTERP)  {
     const Parrot_Context * const CUR_CTX = Parrot_pcc_get_context_struct(interp, interp->ctx);
-    IREG(1) = string_ord(interp, SREG(2), cur_opcode[3]);
+    IREG(1) = STRING_ord(interp, SREG(2), cur_opcode[3]);
 
 return (opcode_t *)cur_opcode + 4;}
 
 opcode_t *
 Parrot_ord_i_sc_ic(opcode_t *cur_opcode, PARROT_INTERP)  {
     const Parrot_Context * const CUR_CTX = Parrot_pcc_get_context_struct(interp, interp->ctx);
-    IREG(1) = string_ord(interp, CONST(2).u.string, cur_opcode[3]);
+    IREG(1) = STRING_ord(interp, CONST(2).u.string, cur_opcode[3]);
 
 return (opcode_t *)cur_opcode + 4;}
 
