@@ -363,7 +363,7 @@ Get or create constant for passed value.
             const INTVAL type = VTABLE_get_integer_keyed_int(INTERP, attrs->types, i);
             if (type == PFC_STRING) {
                 STRING * const str = VTABLE_get_string_keyed_int(INTERP, attrs->constants, i);
-                if (Parrot_str_equal(INTERP, value, str))
+                if (STRING_equal(INTERP, value, str))
                     return i;
             }
         }

@@ -291,7 +291,7 @@ PackFile_ConstTable_rlookup(PARROT_INTERP,
           case PFC_STRING:
             if (constant->type == PFC_STRING) {
                 STRING * const sc = constant->u.string;
-                if (Parrot_str_equal(interp, key_str, sc)
+                if (STRING_equal(interp, key_str, sc)
                 &&  key_str->encoding == sc->encoding) {
                     return i;
                 }
