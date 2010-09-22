@@ -22534,7 +22534,7 @@ opcode_t *
 Parrot_substr_s_s_i(opcode_t *cur_opcode, PARROT_INTERP)  {
     const Parrot_Context * const CUR_CTX = Parrot_pcc_get_context_struct(interp, interp->ctx);
     const INTVAL len = Parrot_str_byte_length(interp, SREG(2));
-    SREG(1) = Parrot_str_substr(interp, SREG(2), IREG(3), len);
+    SREG(1) = STRING_substr(interp, SREG(2), IREG(3), len);
 
 return (opcode_t *)cur_opcode + 4;}
 
@@ -22542,7 +22542,7 @@ opcode_t *
 Parrot_substr_s_sc_i(opcode_t *cur_opcode, PARROT_INTERP)  {
     const Parrot_Context * const CUR_CTX = Parrot_pcc_get_context_struct(interp, interp->ctx);
     const INTVAL len = Parrot_str_byte_length(interp, CONST(2).u.string);
-    SREG(1) = Parrot_str_substr(interp, CONST(2).u.string, IREG(3), len);
+    SREG(1) = STRING_substr(interp, CONST(2).u.string, IREG(3), len);
 
 return (opcode_t *)cur_opcode + 4;}
 
@@ -22550,7 +22550,7 @@ opcode_t *
 Parrot_substr_s_s_ic(opcode_t *cur_opcode, PARROT_INTERP)  {
     const Parrot_Context * const CUR_CTX = Parrot_pcc_get_context_struct(interp, interp->ctx);
     const INTVAL len = Parrot_str_byte_length(interp, SREG(2));
-    SREG(1) = Parrot_str_substr(interp, SREG(2), cur_opcode[3], len);
+    SREG(1) = STRING_substr(interp, SREG(2), cur_opcode[3], len);
 
 return (opcode_t *)cur_opcode + 4;}
 
@@ -22558,63 +22558,63 @@ opcode_t *
 Parrot_substr_s_sc_ic(opcode_t *cur_opcode, PARROT_INTERP)  {
     const Parrot_Context * const CUR_CTX = Parrot_pcc_get_context_struct(interp, interp->ctx);
     const INTVAL len = Parrot_str_byte_length(interp, CONST(2).u.string);
-    SREG(1) = Parrot_str_substr(interp, CONST(2).u.string, cur_opcode[3], len);
+    SREG(1) = STRING_substr(interp, CONST(2).u.string, cur_opcode[3], len);
 
 return (opcode_t *)cur_opcode + 4;}
 
 opcode_t *
 Parrot_substr_s_s_i_i(opcode_t *cur_opcode, PARROT_INTERP)  {
     const Parrot_Context * const CUR_CTX = Parrot_pcc_get_context_struct(interp, interp->ctx);
-    SREG(1) = Parrot_str_substr(interp, SREG(2), IREG(3), IREG(4));
+    SREG(1) = STRING_substr(interp, SREG(2), IREG(3), IREG(4));
 
 return (opcode_t *)cur_opcode + 5;}
 
 opcode_t *
 Parrot_substr_s_sc_i_i(opcode_t *cur_opcode, PARROT_INTERP)  {
     const Parrot_Context * const CUR_CTX = Parrot_pcc_get_context_struct(interp, interp->ctx);
-    SREG(1) = Parrot_str_substr(interp, CONST(2).u.string, IREG(3), IREG(4));
+    SREG(1) = STRING_substr(interp, CONST(2).u.string, IREG(3), IREG(4));
 
 return (opcode_t *)cur_opcode + 5;}
 
 opcode_t *
 Parrot_substr_s_s_ic_i(opcode_t *cur_opcode, PARROT_INTERP)  {
     const Parrot_Context * const CUR_CTX = Parrot_pcc_get_context_struct(interp, interp->ctx);
-    SREG(1) = Parrot_str_substr(interp, SREG(2), cur_opcode[3], IREG(4));
+    SREG(1) = STRING_substr(interp, SREG(2), cur_opcode[3], IREG(4));
 
 return (opcode_t *)cur_opcode + 5;}
 
 opcode_t *
 Parrot_substr_s_sc_ic_i(opcode_t *cur_opcode, PARROT_INTERP)  {
     const Parrot_Context * const CUR_CTX = Parrot_pcc_get_context_struct(interp, interp->ctx);
-    SREG(1) = Parrot_str_substr(interp, CONST(2).u.string, cur_opcode[3], IREG(4));
+    SREG(1) = STRING_substr(interp, CONST(2).u.string, cur_opcode[3], IREG(4));
 
 return (opcode_t *)cur_opcode + 5;}
 
 opcode_t *
 Parrot_substr_s_s_i_ic(opcode_t *cur_opcode, PARROT_INTERP)  {
     const Parrot_Context * const CUR_CTX = Parrot_pcc_get_context_struct(interp, interp->ctx);
-    SREG(1) = Parrot_str_substr(interp, SREG(2), IREG(3), cur_opcode[4]);
+    SREG(1) = STRING_substr(interp, SREG(2), IREG(3), cur_opcode[4]);
 
 return (opcode_t *)cur_opcode + 5;}
 
 opcode_t *
 Parrot_substr_s_sc_i_ic(opcode_t *cur_opcode, PARROT_INTERP)  {
     const Parrot_Context * const CUR_CTX = Parrot_pcc_get_context_struct(interp, interp->ctx);
-    SREG(1) = Parrot_str_substr(interp, CONST(2).u.string, IREG(3), cur_opcode[4]);
+    SREG(1) = STRING_substr(interp, CONST(2).u.string, IREG(3), cur_opcode[4]);
 
 return (opcode_t *)cur_opcode + 5;}
 
 opcode_t *
 Parrot_substr_s_s_ic_ic(opcode_t *cur_opcode, PARROT_INTERP)  {
     const Parrot_Context * const CUR_CTX = Parrot_pcc_get_context_struct(interp, interp->ctx);
-    SREG(1) = Parrot_str_substr(interp, SREG(2), cur_opcode[3], cur_opcode[4]);
+    SREG(1) = STRING_substr(interp, SREG(2), cur_opcode[3], cur_opcode[4]);
 
 return (opcode_t *)cur_opcode + 5;}
 
 opcode_t *
 Parrot_substr_s_sc_ic_ic(opcode_t *cur_opcode, PARROT_INTERP)  {
     const Parrot_Context * const CUR_CTX = Parrot_pcc_get_context_struct(interp, interp->ctx);
-    SREG(1) = Parrot_str_substr(interp, CONST(2).u.string, cur_opcode[3], cur_opcode[4]);
+    SREG(1) = STRING_substr(interp, CONST(2).u.string, cur_opcode[3], cur_opcode[4]);
 
 return (opcode_t *)cur_opcode + 5;}
 
