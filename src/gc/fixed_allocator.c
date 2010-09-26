@@ -143,9 +143,13 @@ Parrot_gc_fixed_allocator_allocate(PARROT_INTERP,
     ASSERT_ARGS(Parrot_gc_fixed_allocator_allocate)
 
     /* We always align size to 4/8 bytes. */
-    const size_t index = (size - 1) / sizeof (void *);
+    size_t  index = (size - 1) / sizeof (void *);
     void   *ret;
     PARROT_ASSERT(size);
+
+    /* Hack: allocate at least two words for Pool_Allocator_Free_List */
+    if (index == 0)
+        index = 1;
 
     if (index >= allocator->num_pools) {
         size_t new_size = index + 1;
@@ -183,6 +187,10 @@ Parrot_gc_fixed_allocator_free(PARROT_INTERP,
 
     /* We always align size to 4/8 bytes. */
     size_t index = (size - 1) / sizeof (void*);
+
+    /* Hack: allocate at least two words for Pool_Allocator_Free_List */
+    if (index == 0)
+        index = 1;
 
     PARROT_ASSERT(allocator->pools[index]);
 

@@ -25,6 +25,8 @@ src/gc/fixed_allocator.h - implementation of allocator for small-size objects.
    enough to satisfy most startup costs. */
 
 typedef struct Pool_Allocator_Free_List {
+    /* We have to leave the PObj_on_free_list flag untouched */
+    Parrot_UInt flags;
     struct Pool_Allocator_Free_List * next;
 } Pool_Allocator_Free_List;
 
