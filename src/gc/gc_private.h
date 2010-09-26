@@ -103,11 +103,13 @@ typedef struct GC_Statistics {
     size_t  mem_allocs_since_last_collect;      /* The number of memory
                                                  * allocations from the
                                                  * system since the last
-                                                 * compaction run */
+                                                 * compaction run.
+                                                 * UNUSED, ALWAYS 0 */
     size_t  header_allocs_since_last_collect;   /* The size of header
                                                  * blocks allocated from
                                                  * the system since the last
-                                                 * GC run */
+                                                 * GC run.
+                                                 * UNUSED, ALWAYS 0 */
     size_t  memory_allocated;     /* The total amount of memory allocated
                                    * in fixed and variable size pools.
                                    * Doesn't count memory for internal

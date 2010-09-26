@@ -39,9 +39,6 @@ typedef struct MarkSweep_GC {
     /* String GC */
     struct String_GC        string_gc;
 
-    /* Number of allocated objects before trigger gc */
-    size_t gc_threshold;
-
     /* GC blocking */
     UINTVAL gc_mark_block_level;  /* How many outstanding GC block
                                      requests are there? */
@@ -101,8 +98,7 @@ static PMC* gc_ms2_allocate_pmc_header(PARROT_INTERP, UINTVAL flags)
 
 PARROT_MALLOC
 PARROT_CAN_RETURN_NULL
-static STRING* gc_ms2_allocate_string_header(PARROT_INTERP,
-    SHIM(UINTVAL flags))
+static STRING* gc_ms2_allocate_string_header(PARROT_INTERP, UINTVAL flags)
         __attribute__nonnull__(1);
 
 static void gc_ms2_allocate_string_storage(PARROT_INTERP,
@@ -193,9 +189,6 @@ static void gc_ms2_mark_pmc_header(PARROT_INTERP, ARGIN(PMC *pmc))
         __attribute__nonnull__(2);
 
 static void gc_ms2_mark_pobj_header(PARROT_INTERP, ARGIN_NULLOK(PObj * obj))
-        __attribute__nonnull__(1);
-
-static void gc_ms2_maybe_mark_and_sweep(PARROT_INTERP)
         __attribute__nonnull__(1);
 
 static void gc_ms2_pmc_needs_early_collection(PARROT_INTERP,
@@ -329,8 +322,6 @@ static void gc_ms2_unblock_GC_sweep(PARROT_INTERP)
     , PARROT_ASSERT_ARG(pmc))
 #define ASSERT_ARGS_gc_ms2_mark_pobj_header __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
        PARROT_ASSERT_ARG(interp))
-#define ASSERT_ARGS_gc_ms2_maybe_mark_and_sweep __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
-       PARROT_ASSERT_ARG(interp))
 #define ASSERT_ARGS_gc_ms2_pmc_needs_early_collection \
      __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
        PARROT_ASSERT_ARG(interp) \
@@ -455,7 +446,8 @@ gc_ms2_allocate_pmc_attributes(PARROT_INTERP, ARGMOD(PMC *pmc))
                         self->fixed_size_allocator, attr_size);
     memset(PMC_data(pmc), 0, attr_size);
 
-    interp->gc_sys->stats.mem_used_last_collect += attr_size;
+    if (!PObj_constant_TEST(pmc))
+        interp->gc_sys->stats.memory_used += attr_size;
 
     return PMC_data(pmc);
 }
@@ -469,7 +461,8 @@ gc_ms2_free_pmc_attributes(PARROT_INTERP, ARGMOD(PMC *pmc))
         Parrot_gc_fixed_allocator_free(interp, self->fixed_size_allocator,
                 PMC_data(pmc), pmc->vtable->attr_size);
 
-        interp->gc_sys->stats.mem_used_last_collect -= pmc->vtable->attr_size;
+        if (!PObj_constant_TEST(pmc))
+            interp->gc_sys->stats.memory_used -= pmc->vtable->attr_size;
     }
 }
 
@@ -480,8 +473,7 @@ gc_ms2_allocate_fixed_size_storage(PARROT_INTERP, size_t size)
     ASSERT_ARGS(gc_ms2_allocate_fixed_size_storage)
     MarkSweep_GC *self = (MarkSweep_GC *)interp->gc_sys->gc_private;
 
-    interp->gc_sys->stats.memory_allocated      += size;
-    interp->gc_sys->stats.mem_used_last_collect += size;
+    interp->gc_sys->stats.memory_used += size;
 
     return Parrot_gc_fixed_allocator_allocate(interp, self->fixed_size_allocator, size);
 }
@@ -493,8 +485,7 @@ gc_ms2_free_fixed_size_storage(PARROT_INTERP, size_t size, ARGMOD(void *data))
     if (data) {
         MarkSweep_GC *self = (MarkSweep_GC *)interp->gc_sys->gc_private;
 
-        interp->gc_sys->stats.memory_allocated      -= size;
-        interp->gc_sys->stats.mem_used_last_collect -= size;
+        interp->gc_sys->stats.memory_used -= size;
 
         Parrot_gc_fixed_allocator_free(interp, self->fixed_size_allocator, data, size);
     }
@@ -620,10 +611,6 @@ Parrot_gc_ms2_init(PARROT_INTERP)
         self->strings = Parrot_list_new(interp);
 
         self->fixed_size_allocator = Parrot_gc_fixed_allocator_new(interp);
-
-        /* Collect every 256M allocated. */
-        /* Hardcode for now. Will be configured via CLI */
-        self->gc_threshold = 256 * 1024 * 1024;
     }
     interp->gc_sys->gc_private = self;
 
@@ -662,12 +649,8 @@ gc_ms2_allocate_pmc_header(PARROT_INTERP, UINTVAL flags)
     List_Item_Header *ptr;
     PMC              *ret;
 
-    gc_ms2_maybe_mark_and_sweep(interp);
-
-    /* Increase used memory. Not precisely accurate due Pool_Allocator paging */
-    ++interp->gc_sys->stats.header_allocs_since_last_collect;
-    interp->gc_sys->stats.memory_allocated      += sizeof (PMC);
-    interp->gc_sys->stats.mem_used_last_collect += sizeof (PMC);
+    if (!(flags & PObj_constant_FLAG))
+        interp->gc_sys->stats.memory_used += sizeof (PMC);
 
     ptr = (List_Item_Header *)Parrot_gc_pool_allocate(interp,
             self->pmc_allocator);
@@ -693,9 +676,8 @@ gc_ms2_free_pmc_header(PARROT_INTERP, ARGFREE(PMC *pmc))
 
         Parrot_gc_pool_free(interp, self->pmc_allocator, Obj2LLH(pmc));
 
-        --interp->gc_sys->stats.header_allocs_since_last_collect;
-        interp->gc_sys->stats.memory_allocated      -= sizeof (PMC);
-        interp->gc_sys->stats.mem_used_last_collect -= sizeof (PMC);
+        if (!PObj_constant_TEST(pmc))
+            interp->gc_sys->stats.memory_used -= sizeof (PMC);
     }
 }
 
@@ -762,6 +744,7 @@ gc_ms2_sweep_pmc_cb(PARROT_INTERP, ARGIN(PObj *obj))
     ASSERT_ARGS(gc_ms2_sweep_pmc_cb)
     PMC *pmc = (PMC *)obj;
     Parrot_pmc_destroy(interp, pmc);
+    interp->gc_sys->stats.memory_used -= sizeof (PMC);
 }
 
 /*
@@ -782,19 +765,15 @@ Allocate/free string/buffer headers.
 PARROT_MALLOC
 PARROT_CAN_RETURN_NULL
 static STRING*
-gc_ms2_allocate_string_header(PARROT_INTERP, SHIM(UINTVAL flags))
+gc_ms2_allocate_string_header(PARROT_INTERP, UINTVAL flags)
 {
     ASSERT_ARGS(gc_ms2_allocate_string_header)
     MarkSweep_GC     *self = (MarkSweep_GC *)interp->gc_sys->gc_private;
     List_Item_Header *ptr;
     STRING           *ret;
 
-    gc_ms2_maybe_mark_and_sweep(interp);
-
-    /* Increase used memory. Not precisely accurate due Pool_Allocator paging */
-    ++interp->gc_sys->stats.header_allocs_since_last_collect;
-    interp->gc_sys->stats.memory_allocated      += sizeof (STRING);
-    interp->gc_sys->stats.mem_used_last_collect += sizeof (STRING);
+    if (!(flags & PObj_constant_FLAG))
+        interp->gc_sys->stats.memory_used += sizeof (STRING);
 
     ptr = (List_Item_Header *)Parrot_gc_pool_allocate(interp,
             self->string_allocator);
@@ -821,9 +800,8 @@ gc_ms2_free_string_header(PARROT_INTERP, ARGFREE(STRING *s))
 
         Parrot_gc_pool_free(interp, self->string_allocator, Obj2LLH(s));
 
-        --interp->gc_sys->stats.header_allocs_since_last_collect;
-        interp->gc_sys->stats.memory_allocated      -= sizeof (STRING);
-        interp->gc_sys->stats.mem_used_last_collect -= sizeof (STRING);
+        if (!PObj_constant_TEST(s))
+            interp->gc_sys->stats.memory_used -= sizeof (STRING);
     }
 }
 
@@ -886,7 +864,6 @@ gc_ms2_allocate_string_storage(PARROT_INTERP, ARGIN(STRING *str), size_t size)
     ASSERT_ARGS(gc_ms2_allocate_string_storage)
     MarkSweep_GC *self = (MarkSweep_GC *)interp->gc_sys->gc_private;
     Parrot_gc_str_allocate_string_storage(interp, &self->string_gc, str, size);
-    interp->gc_sys->stats.mem_used_last_collect += size;
 }
 
 static void
@@ -895,7 +872,6 @@ gc_ms2_reallocate_string_storage(PARROT_INTERP, ARGIN(STRING *str), size_t size)
     ASSERT_ARGS(gc_ms2_reallocate_string_storage)
     MarkSweep_GC *self = (MarkSweep_GC *)interp->gc_sys->gc_private;
     Parrot_gc_str_reallocate_string_storage(interp, &self->string_gc, str, size);
-    interp->gc_sys->stats.mem_used_last_collect += size;
 }
 
 static void
@@ -904,7 +880,6 @@ gc_ms2_allocate_buffer_storage(PARROT_INTERP, ARGIN(Buffer *str), size_t size)
     ASSERT_ARGS(gc_ms2_allocate_buffer_storage)
     MarkSweep_GC *self = (MarkSweep_GC *)interp->gc_sys->gc_private;
     Parrot_gc_str_allocate_buffer_storage(interp, &self->string_gc, str, size);
-    interp->gc_sys->stats.mem_used_last_collect += size;
 }
 
 static void
@@ -913,7 +888,6 @@ gc_ms2_reallocate_buffer_storage(PARROT_INTERP, ARGIN(Buffer *str), size_t size)
     ASSERT_ARGS(gc_ms2_reallocate_buffer_storage)
     MarkSweep_GC *self = (MarkSweep_GC *)interp->gc_sys->gc_private;
     Parrot_gc_str_reallocate_buffer_storage(interp, &self->string_gc, str, size);
-    interp->gc_sys->stats.mem_used_last_collect += size;
 }
 
 /*
@@ -957,6 +931,7 @@ gc_ms2_sweep_string_cb(PARROT_INTERP, ARGIN(PObj *obj))
     /* Compact string pool here. Or get rid of "shared buffers" and just free storage */
     if (Buffer_bufstart(str) && !PObj_external_TEST(str))
         Parrot_gc_str_free_buffer_storage(interp, &self->string_gc, str);
+    interp->gc_sys->stats.memory_used -= sizeof (STRING);
 }
 
 
@@ -995,6 +970,7 @@ gc_ms2_mark_and_sweep(PARROT_INTERP, UINTVAL flags)
     MarkSweep_GC      *self = (MarkSweep_GC *)interp->gc_sys->gc_private;
     List_Item_Header *tmp;
     Linked_List      *list;
+    GC_Statistics    *stats;
     size_t            counter;
     UNUSED(flags);
 
@@ -1004,11 +980,6 @@ gc_ms2_mark_and_sweep(PARROT_INTERP, UINTVAL flags)
 
     if (flags & GC_finish_FLAG) {
         /* Ignore it. Will cleanup in gc_ms2_finalize */
-        return;
-    }
-
-    /* Ignore calls from String GC. We know better when to trigger GC */
-    if (flags & GC_strings_cb_FLAG) {
         return;
     }
 
@@ -1057,14 +1028,15 @@ gc_ms2_mark_and_sweep(PARROT_INTERP, UINTVAL flags)
     self->objects = self->new_objects;
     Parrot_list_destroy(interp, list);
 
-    interp->gc_sys->stats.header_allocs_since_last_collect = 0;
-    interp->gc_sys->stats.mem_used_last_collect            = 0;
-    interp->gc_sys->stats.gc_mark_runs++;
+    gc_ms2_compact_memory_pool(interp);
+
+    stats = &interp->gc_sys->stats;
+    stats->mem_used_last_collect = stats->memory_used;
+    stats->gc_mark_runs++;
+
     self->gc_mark_block_level--;
     /* We swept all dead objects */
-    self->num_early_gc_PMCs                      = 0;
-
-    gc_ms2_compact_memory_pool(interp);
+    self->num_early_gc_PMCs = 0;
 }
 
 
@@ -1350,29 +1322,6 @@ gc_ms2_pmc_needs_early_collection(PARROT_INTERP, ARGMOD(PMC *pmc))
     ASSERT_ARGS(gc_ms2_pmc_needs_early_collection)
     MarkSweep_GC *self = (MarkSweep_GC *)interp->gc_sys->gc_private;
     ++self->num_early_gc_PMCs;
-}
-
-/*
-
-=item C<static void gc_ms2_maybe_mark_and_sweep(PARROT_INTERP)>
-
-Maybe M&S. Depends on total allocated memory, memory allocated since last alloc
-and phase of the Moon.
-
-=cut
-
-*/
-static void
-gc_ms2_maybe_mark_and_sweep(PARROT_INTERP)
-{
-    ASSERT_ARGS(gc_ms2_maybe_mark_and_sweep)
-
-    MarkSweep_GC *self = (MarkSweep_GC *)interp->gc_sys->gc_private;
-
-    /* Collect every 256M. Hardcode for now. Will be configured via CLI */
-    if (interp->gc_sys->stats.mem_used_last_collect > self->gc_threshold) {
-        gc_ms2_mark_and_sweep(interp, 0);
-    }
 }
 
 /*
