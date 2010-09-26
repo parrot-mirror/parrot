@@ -221,10 +221,6 @@ static void gc_ms2_sweep_pool(PARROT_INTERP,
         __attribute__nonnull__(2)
         __attribute__nonnull__(3);
 
-static void gc_ms2_sweep_string_cb(PARROT_INTERP, ARGIN(PObj *obj))
-        __attribute__nonnull__(1)
-        __attribute__nonnull__(2);
-
 static void gc_ms2_unblock_GC_mark(PARROT_INTERP)
         __attribute__nonnull__(1);
 
@@ -323,9 +319,6 @@ static void gc_ms2_unblock_GC_sweep(PARROT_INTERP)
        PARROT_ASSERT_ARG(interp) \
     , PARROT_ASSERT_ARG(pool) \
     , PARROT_ASSERT_ARG(callback))
-#define ASSERT_ARGS_gc_ms2_sweep_string_cb __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
-       PARROT_ASSERT_ARG(interp) \
-    , PARROT_ASSERT_ARG(obj))
 #define ASSERT_ARGS_gc_ms2_unblock_GC_mark __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
        PARROT_ASSERT_ARG(interp))
 #define ASSERT_ARGS_gc_ms2_unblock_GC_sweep __attribute__unused__ int _ASSERT_ARGS_CHECK = (\
@@ -370,7 +363,18 @@ gc_ms2_compact_memory_pool(PARROT_INTERP)
 {
     ASSERT_ARGS(gc_ms2_compact_memory_pool)
     MarkSweep_GC *self = (MarkSweep_GC *)interp->gc_sys->gc_private;
-    Parrot_gc_str_compact_pool(interp, &self->string_gc);
+
+    if (self->gc_sweep_block_level)
+        return;
+
+    if (self->gc_mark_block_level) {
+        /* We currently don't compact without marking, so we simply fake a
+           collect run. */
+        ++interp->gc_sys->stats.gc_collect_runs;
+        return;
+    }
+
+    gc_ms2_mark_and_sweep(interp, GC_trace_stack_FLAG);
 }
 
 /*
@@ -890,29 +894,6 @@ gc_ms2_mark_pobj_header(PARROT_INTERP, ARGIN_NULLOK(PObj * obj))
 
 /*
 
-=item C<static void gc_ms2_sweep_string_cb(PARROT_INTERP, PObj *obj)>
-
-destroy string *obj
-
-=cut
-
-*/
-
-static void
-gc_ms2_sweep_string_cb(PARROT_INTERP, ARGIN(PObj *obj))
-{
-    ASSERT_ARGS(gc_ms2_sweep_string_cb)
-    MarkSweep_GC *self = (MarkSweep_GC *)interp->gc_sys->gc_private;
-    Buffer       *str  = (Buffer *)obj;
-    /* Compact string pool here. Or get rid of "shared buffers" and just free storage */
-    if (Buffer_bufstart(str) && !PObj_external_TEST(str) && !PObj_sysmem_TEST(str))
-        Parrot_gc_str_free_buffer_storage(interp, &self->string_gc, str);
-    interp->gc_sys->stats.memory_used -= sizeof (STRING);
-}
-
-
-/*
-
 =item C<static void gc_ms2_iterate_live_strings(PARROT_INTERP,
 string_iterator_callback callback, void *data)>
 
@@ -938,8 +919,22 @@ gc_ms2_iterate_live_strings(PARROT_INTERP,
         for (i = 0; i < pool->objects_per_alloc; ++i) {
             Buffer *str = (Buffer *)ptr;
 
-            if (str->flags && !PObj_on_free_list_TEST(str))
-                callback(interp, str, data);
+            if (PObj_live_TEST(str)) {
+                /* Paint live objects white */
+                PObj_live_CLEAR(str);
+
+                if (!PObj_constant_TEST(str))
+                    callback(interp, str, data);
+            }
+            else if (str->flags
+                  && !PObj_constant_TEST(str)
+                  && !PObj_on_free_list_TEST(str)) {
+                PObj_on_free_list_SET(str);
+
+                Parrot_gc_pool_free(interp, pool, (PObj *)str);
+
+                interp->gc_sys->stats.memory_used -= sizeof (STRING);
+            }
 
             ptr += pool->object_size;
         }
@@ -993,9 +988,8 @@ gc_ms2_mark_and_sweep(PARROT_INTERP, UINTVAL flags)
     /* Now, all live objects are marked. Walk through the pools, sweep all
        dead objects and clear the live flag of live objects. */
     gc_ms2_sweep_pool(interp, self->pmc_allocator, gc_ms2_sweep_pmc_cb);
-    gc_ms2_sweep_pool(interp, self->string_allocator, gc_ms2_sweep_string_cb);
 
-    gc_ms2_compact_memory_pool(interp);
+    Parrot_gc_str_compact_pool(interp, &self->string_gc);
 
     stats = &interp->gc_sys->stats;
     stats->mem_used_last_collect = stats->memory_used;

@@ -761,23 +761,11 @@ compact_pool(PARROT_INTERP,
 
     Fixed_Size_Arena *cur_buffer_arena;
 
-    /* Bail if we're blocked */
-    if (Parrot_is_blocked_GC_sweep(interp))
-        return;
-
-    Parrot_block_GC_sweep(interp);
-
     /* We're collecting */
     ++stats->gc_collect_runs;
 
     /* Snag a block big enough for everything */
     total_size = pad_pool_size(pool);
-
-    if (total_size == 0) {
-        free_old_mem_blocks(stats, pool, pool->top_block, total_size);
-        Parrot_unblock_GC_sweep(interp);
-        return;
-    }
 
     alloc_new_block(stats, total_size, pool, "inside compact");
     new_block = pool->top_block;
@@ -796,8 +784,6 @@ compact_pool(PARROT_INTERP,
     stats->memory_used      += new_size;
 
     free_old_mem_blocks(stats, pool, new_block, total_size);
-
-    Parrot_unblock_GC_sweep(interp);
 }
 
 /*

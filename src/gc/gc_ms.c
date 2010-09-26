@@ -615,7 +615,7 @@ gc_ms_mark_and_sweep(PARROT_INTERP, UINTVAL flags)
     }
 
     /* compact STRING pools to collect free headers and allocated buffers */
-    Parrot_gc_compact_memory_pool(interp);
+    Parrot_gc_str_compact_pool(interp, &mem_pools->string_gc);
 
     pt_gc_stop_mark(interp);
 
@@ -644,7 +644,19 @@ void
 gc_ms_compact_memory_pool(PARROT_INTERP)
 {
     ASSERT_ARGS(gc_ms_compact_memory_pool)
-    Parrot_gc_str_compact_pool(interp, &interp->mem_pools->string_gc);
+    Memory_Pools * const mem_pools = interp->mem_pools;
+
+    if (mem_pools->gc_sweep_block_level)
+        return;
+
+    if (mem_pools->gc_mark_block_level) {
+        /* We currently don't compact without marking, so we simply fake a
+           collect run. */
+        ++interp->gc_sys->stats.gc_collect_runs;
+        return;
+    }
+
+    gc_ms_mark_and_sweep(interp, GC_trace_stack_FLAG);
 }
 
 /*
