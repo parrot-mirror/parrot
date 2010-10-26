@@ -58,3 +58,26 @@ Parrot_api_destroy_interpreter(ARGIN(Interp *interp))
     Parrot_destroy(interp);
 }
 
+/*
+
+=item C<int Parrot_api_load_bytecode_file(PARROT_INTERP, const char *filename)>
+
+Load a bytecode file into the interpreter by name. Returns C<0> on failure,
+Success otherwise. Writes error information to the interpreter's error file
+stream.
+
+=cut
+
+*/
+
+PARROT_EXPORT
+int
+Parrot_api_load_bytecode_file(PARROT_INTERP, ARGIN(const char *filename))
+{
+    PackFile * const pf = Parrot_pbc_read(interp, filename, 0);
+
+    if (!pf)
+        return 0;
+    Parrot_pbc_load(interp, pf);
+    return 1;
+}
