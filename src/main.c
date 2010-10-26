@@ -130,7 +130,7 @@ main(int argc, const char *argv[])
 
     Parrot_set_config_hash();
 
-    interp = allocate_interpreter(NULL, PARROT_NO_FLAGS);
+    interp = Parrot_api_make_interpreter(NULL, PARROT_NO_FLAGS);
 
     /* We parse the arguments, but first store away the name of the Parrot
        executable, since parsing destroys that and we want to make it
@@ -141,7 +141,7 @@ main(int argc, const char *argv[])
     parseflags_minimal(interp, argc, argv);
 
     /* Now initialize interpreter */
-    initialize_interpreter(interp, (void*)&stacktop);
+    Parrot_api_initialize_interpreter(interp, (void*)&stacktop);
 
     /* Parse flags */
     sourcefile = parseflags(interp, argc, argv, &pir_argc, &pir_argv, &core, &trace);
